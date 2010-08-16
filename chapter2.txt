@@ -593,7 +593,7 @@ int main (int argc, char *argv[])
     node      node      node
 
 
-  Figure # - Simple 0MQ application
+Figure # - Simple 0MQ application
 [[/code]]
 
 And then we expand and refine the "plumbing" using devices in between nodes, usually managing to leave the nodes untouched:
@@ -605,7 +605,7 @@ And then we expand and refine the "plumbing" using devices in between nodes, usu
      +---------+---------+
      |         |         |
      |         |         |
-    node     device     node
+    node    device      node
                |
                |
      +---------+---------+
@@ -614,7 +614,7 @@ And then we expand and refine the "plumbing" using devices in between nodes, usu
     node      node      node
 
 
-  Figure # - Scaled 0MQ application
+Figure # - Scaled 0MQ application
 [[/code]]
 
 0MQ devices:

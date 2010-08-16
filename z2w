@@ -66,7 +66,10 @@ while (<>) {
 print IMAGES "</html>\n";
 close (IMAGES);
 close (WDTEMP);
+
 system ("rm -f images/*");
 system ("java -jar ditaa0_9.jar images.html -o -h -E output.html");
+#   Need to trim twice for reasons I don't care to explore
+system ("mogrify -trim images/*.png");
 system ("mogrify -trim images/*.png");
 system ("rm output.html images.html");
