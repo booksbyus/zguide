@@ -758,20 +758,21 @@ It is the proxy model:
                        bind
              tcp://192.168.55.210:5556
                          |
-                         |  Internal network
+                         |
         +----------------+----------------+
         |                |                |
         |                |                |
-     connect           connect          connect
-  /------------\   /------------\   /------------\
-  |    SUB     |   |    SUB     |   |    SUB     |
-  +------------+   +------------+   +------------+
-  |            |   |            |   |            |
-  | Subscriber |   | Subscriber |   | Forwarder  |
-  |            |   |            |   |            |
-  +------------+   +------------+   +------------+
-                                    |    PUB     |
-  --------------------------------= \------------/ ----------=
+     connect           connect            |
+  /------------\   /------------\       connect
+  |    SUB     |   |    SUB     |   /------------\
+  +------------+   +------------+   |    SUB     |
+  |            |   |            |   +------------+
+  | Subscriber |   | Subscriber |   |            |
+  |            |   |            |   | Forwarder  |
+  +------------+   +------------+   |            |
+                                    +------------+
+   Internal network                 |    PUB     |
+   ---------------------------------\------------/--------
    External network                      bind
                                   tcp://10.1.1.0:8100
                                           |
@@ -791,7 +792,6 @@ It is the proxy model:
 
           Figure # - Forwarder proxy device
 [[/code]]
-
 
 [!-- TODO:
     explain how to run this device using zmq_deviced(1)

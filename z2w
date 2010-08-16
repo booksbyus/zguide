@@ -8,6 +8,8 @@
 #
 #   Creates Wikidot file in wdtemp.txt and images in images/.
 #   By Pieter Hintjens, free for remixing without conditions.
+#   Images are stored in the github repository at
+#   http://github.com/imatix/0MQGuide.
 #
 if (!open (WDTEMP, ">wdtemp.txt")) {
     print "Can't create wdtemp.txt: $!\n";
@@ -46,7 +48,7 @@ while (<>) {
             print IMAGES "$_\n";
         }
         print IMAGES "</pre>\n";
-        print WDTEMP "[[=image fig$image.png]]\n";
+        print WDTEMP "[[=image http://github.com/imatix/0MQGuide/raw/master/images/fig$image.png]]\n";
     }
     else {
         #   Normal text
@@ -66,4 +68,5 @@ close (IMAGES);
 close (WDTEMP);
 system ("rm -f images/*");
 system ("java -jar ditaa0_9.jar images.html -o -h -E output.html");
+system ("mogrify -trim images/*.png");
 system ("rm output.html images.html");
