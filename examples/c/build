@@ -1,0 +1,16 @@
+#! /bin/sh
+#
+#   Examples build helper
+#   Syntax: build all | clean
+#
+MAIN="hwclient hwserver mtserver wuserver wuclient wuproxy taskvent taskwork tasksink msreader taskwork2 tasksink2"
+
+if [ /$1/ = /all/ ]; then
+    echo "Building C examples..."
+    ./c -l -lzmq -q $MAIN
+elif [ /$1/ = /clean/ ]; then
+    echo "Cleaning C examples directory..."
+    rm -f *.o *.lst core $MAIN
+else
+    echo "syntax: build all | clean"
+fi

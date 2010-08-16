@@ -1,0 +1,1506 @@
+++ Intermediate Stuff
+
++++ The Zen of Zero
+
+The Ø in 0MQ is all about tradeoffs. On the one hand this lowers 0MQ's visibility on Google and Twitter.  On the other hand it annoys the heck out of some Danish folk who write us things like "//Ø is not a funny looking zero!//" and "//Rødgrød med Fløde!//", which is apparently an insult that means "may your neighbours be the direct descendents of Grendel!"  Seems like a fair trade.
+
+Originally the zero in 0MQ was meant as "zero broker" and (as close to) "zero latency" (as possible).  In the meantime it has come to cover different goals: zero-copy, zero administration, and zero cost.  More generally, "zero" refers to the culture of minimalism that permeates the project.  We add power by removing complexity rather than exposing new functionality.
+
++++ The Socket API
+
+To be perfectly honest, 0MQ does a kind of switch-and-bait on you.  Which we don't apologize for, it's for your own good and hurts us more than it hurts you.  It presents a familiar BSD socket API but that hides a bunch of message-processing machines that will slowly fix your world-view, and how you write distributed software.
+
+Sockets are the de-facto standard API for network programming, as well as being useful for stopping your eyes from falling onto your cheeks.  One thing that makes 0MQ especially tasty to developers is that it uses a standard socket API.  Kudos to Martin Sustrik for pulling this idea off.  It turns "Message Oriented Middleware", a phrase guaranteed to send the whole room off to Catatonia, into "Extra Spicy Sockets!" which leaves us with a strange craving for pizza, and a desire to know more.
+
+Like a nice pepperoni pizza, 0MQ sockets are easy to digest.  Sockets have a life in four parts, just like BSD sockets:
+
+* Creating and destroying sockets, which go together to form a karmic circle of socket life (see zmq_socket(3), zmq_close(3)).
+* Configuring sockets by setting options on them and checking them if necessary (see zmq_setsockopt(3), zmq_getsockopt(3)).
+* Plugging sockets onto the network topology by creating 0MQ connections to and from them (see zmq_bind(3), zmq_connect(3)).
+* Using the sockets to carry data by writing and receiving messages on them (see zmq_send(3), zmq_recv(3)).
+
+Which looks like this:
+
+[[code type="c"]]
+void *mousetrap;
+
+//  Create socket for catching mice
+mousetrap = zmq_socket (context, ZMQ_XREQ);
+
+//  Configure the socket
+int64_t jawsize = 10000;
+zmq_setsockopt (mousetrap, ZMQ_HWM, &jawsize, sizeof jawsize);
+
+//  Plug socket into mouse hole
+zmq_connect (mousetrap, "tcp://192.168.55.221:5001");
+
+//  Wait for juicy mice to arrive
+zmq_msg_t mouse;
+mouse = zmq_msg_init (&mouse);
+zmq_recv (mousetrap, &mouse, 0);
+//  Let the cute little mice go again
+zmq_send (mousetrap, &mouse, 0);
+
+//  Destroy the socket
+zmq_close (mousetrap);
+[[/code]]
+
+Note that sockets are always void pointers, and messages (which we'll come to very soon) are structures.  So in C you pass sockets as-such, but you pass addresses of messages in all functions that work with messages, like zmq_send(3) and zmq_recv(3).  As a mnemonic, realize that "in 0MQ all ur sockets are belong to us", but messages are things you actually own in your code.
+
+Creating, destroying, and configuring sockets works as you'd expect for any object.  But remember that 0MQ is an asynchronous, elastic fabric.  This has some impact on how we plug sockets into the network topology, and how we use the sockets after that.
+
++++ Plugging Sockets Into the Topology
+
+To create a connection between two nodes you use zmq_bind(3) in one node, and zmq_connect(3) in the other.   As a general rule of thumb, the node which does zmq_bind(3) is a "server", sitting on a well-known network address, and the node which does zmq_connect(3) is a "client", with unknown or arbitrary network addresses.  Thus we say that we "bind a socket to an endpoint" and "connect a socket to an endpoint", the endpoint being that well-known network address.
+
+0MQ connections are somewhat different from old-fashioned TCP connections.  The main notable differences are:
+
+* They go across an arbitrary transport (inproc:, ipc:, tcp:, pgm:, and so on).
+* They exist when a client does zmq_connect(3) to an endpoint, whether or not a server has already done zmq_bind(3) to that endpoint.
+* They are asynchronous, and have queues that magically exist where and when needed.
+* They may express a certain "messaging pattern", according to the type of socket used at each end.
+* One socket may have many outgoing and many incoming connections.
+* There is no zmq_accept() method.  When a socket is bound to an endpoint it automatically starts accepting connections.
+* Your application code cannot work with these connections directly; they are encapsulated under the socket.
+
+Look at the multithreaded server again.  The server binds to an endpoint called  @@tcp://*:5555@@.  What this means is "accept connections on all local TCP interfaces, on port 5555".  The client(s) connect to @@tcp://localhost:5555@@, which is a network address.  But we could also use @@ipc://something@@ as an endpoint, which would let us create an inter-process service.  Or, @@inproc://something@@, which lets us create an in-process service.  That is how the server distributes workload to its worker threads.
+
+Now, imagine we start the client //before// we start the server.  In traditional networking we get a big red Fail flag.  But 0MQ lets us start and stop pieces arbitrarily.  As soon as the client node does zmq_connect(3) the connection exists and that node can start to write messages to the socket.  At some stage (hopefully before messages queue up so much that they start to get discarded, or the client blocks), the server comes alive, does a zmq_bind(3) and 0MQ starts to deliver messages.
+
+Many architectures follow some kind of client-server model, where the server is the component that is most stable, and the clients are the components that come and go the most.  There are sometimes issues of addressing: servers will be visible to clients, but not necessarily vice-versa.  So mostly it's obvious which node should be doing zmq_bind(3) (the server) and which should be doing zmq_connect(3) (the client).  It also depends on the kind of sockets you're using, with some exceptions for unusual network architectures.  We'll look at socket types later.
+
+A server node (we'll continue to emphasize the concepts of //server// and //client//) can bind to many endpoints and it can do this using a single socket.  This means it will accept connections across different transports:
+
+[[code type="c"]]
+zmq_bind (socket, "tcp://*:5555");
+zmq_bind (socket, "tcp://*:9999");
+zmq_bind (socket, "ipc://myserver");
+[[/code]]
+
+You cannot bind to the same endpoint twice, that will cause an exception.
+
+Each time a client node does a zmq_connect(3) to any of these endpoints, the server node's socket gets another connection.  There is no inherent limit to how many connections a socket can have.  A client node can also connect to many endpoints using a single socket.
+
+In most cases, which node acts as client, and which as server, is about network topology rather than message flow.  However, there //are// cases (resending when connections are broken) where the same socket type will behave differently if it's a server or if it's a client.
+
+What this means is that you should always think in terms of "servers" as stable parts of your topology, with more-or-less fixed endpoint addresses, and "clients" as dynamic parts that come and go.  Then, design your application around this model.  The chances that it will "just work" are much better like that.
+
+Sockets have types.  The socket type defines the semantics of the socket, its policies for routing messages inwards and outwards, queueing, etc.  You can connect certain types of socket together, e.g. a publisher socket and a subscriber socket.  Sockets work together in "messaging patterns".  We'll look at this in more detail later.
+
+It's the ability to connect sockets in these different ways that gives 0MQ its basic power as a message queuing system.  There are layers on top of this, such as devices and topic routing, which we'll get to later.  But essentially, with 0MQ you define your network architecture by plugging pieces together like a child's construction toy.
+
++++ Using Sockets to Carry Data
+
+To send and receive messages you use the zmq_send(3) and zmq_recv(3) methods.  The names are conventional but 0MQ's I/O model is different enough from TCP's model that you will need time to get your head around it.
+
+[[code type="textdiagram"]]
+             +------------+
+             |            |
+             |    Node    |
+             |            |
+             +------------+
+             |   Socket   |
+             \------------/
+                   ^
+                   |
+                1 to 1
+                   |
+                   v
+             /------------\
+             |   Socket   |
+             +------------+
+             |            |
+             |    Node    |
+             |            |
+             +------------+
+
+
+   Figure # - TCP sockets are 1 to 1
+[[/code]]
+
+Let's look at the main differences between TCP sockets and 0MQ sockets when it comes to carrying data:
+
+* 0MQ sockets carry messages, rather than bytes (as in TCP) or frames (as in UDP).  A message is a length-specified blob of binary data.  We'll come to messages shortly, their design is optimized for performance and thus somewhat tricky to understand.
+* 0MQ sockets do their I/O in a background thread.  This means that messages arrive in a local input queue, and are sent from a local output queue, no matter what your application is busy doing.  These are configurable memory queues, by the way.
+* 0MQ sockets can, depending on the socket type, be connected to (or from, it's the same) many other sockets.  Where TCP emulates a one-to-one phone call, 0MQ implements one-to-many (like a radio broadcast), many-to-many (like a post office), many-to-one (like a mail box), and even one-to-one.
+* 0MQ sockets can send to many endpoints (creating a fan-in model), or receive from many endpoints (creating a fan-out model).
+
+[[code type="textdiagram"]]
+        +------------+           +------------+
+        |            |           |            |
+        |    Node    |           |    Node    |
+        |            |           |            |
+        +------------+           +------------+
+        |   Socket   |           |   Socket   |
+        \------------/           \------------/
+             | |                        :
+     1 to N  | +------------------------+
+     Fan out |                          |
+             +------------------------+ | N to 1
+             |                        | | Fan in
+             v                        v v
+        /------------\           /------------\
+        |   Socket   |           |   Socket   |
+        +------------+           +------------+
+        |            |           |            |
+        |    Node    |           |    Node    |
+        |            |           |            |
+        +------------+           +------------+
+
+
+           Figure # - 0MQ sockets are N to N
+[[/code]]
+
+So writing a message to a socket may send the message to one or many other places at once, and conversely, one socket will collect messages from all connections sending messages to it.  The zmq_recv(3) method uses a fair-queuing algorithm so each sender gets a fair chance.
+
+The zmq_send(3) method does not actually send the message to the socket connection(s).  It queues the message so that the I/O thread can send it asynchronously.  It does not block except in some exception cases.  So the message is not necessarily sent when zmq_send(3) returns to your application.  If you created a message using zmq_msg_init_data(3) you cannot reuse the data or free it, otherwise the I/O thread will rapidly find itself writing overwritten or unallocated garbage.  This is a common mistake for beginners.  We'll see a little later how to properly work with messages.
+
++++ I/O Threads
+
+We said that 0MQ does I/O in a background thread.  One I/O thread (for all sockets) is sufficient for all but the most extreme applications.  This is the magic '1' that we use when creating a context, meaning "use one I/O thread":
+
+[[code type="c"]]
+void *context;
+context = zmq_init (1);
+[[/code]]
+
+There is a major difference between a 0MQ application and a conventional networked application, which is that you don't create one socket per connection. One socket handles all incoming and outcoming connections for a particular point of work.  E.g. when you publish to a thousand subscribers, it's via one socket.  When you distribute work among twenty services, it's via one socket.  When you collect data from a thousand web applications, it's via one socket.
+
+This has a fundamental impact on how you write applications.  A traditional networked application has one process or one thread per remote connection, and that process or thread handles one socket.  0MQ lets you collapse this entire structure into a single thread, and then break it up as necessary for scaling.
+
++++ The Messaging Patterns
+
+Underneath the brown paper wrapping of 0MQ's socket API lies the world of messaging patterns.  If you have a background in enterprise messaging, these will be vaguely familiar.  But to most 0MQ newcomers they are a surprise, we're so used to the TCP paradigm where a socket represents another node.
+
+Let's recap briefly what 0MQ does for you.  It delivers blobs of data (messages) to nodes, quickly and efficiently.  You can map nodes to threads, processes, or boxes.  It gives your applications a single socket API to work with, no matter what the actual transport (like in-process, inter-process, TCP, or multicast).  It automatically reconnects to peers as they come and go.  It queues messages at both sender and receiver, as needed.  It manages these queues carefully to ensure processes don't run out of memory, overflowing to disk when appropriate.  It handles socket errors.  It does all I/O in background threads.  It uses lock-free techniques for talking between nodes, so there are never locks, waits, semaphores, or deadlocks.
+
+But cutting through that, it routes and queues messages according to precise recipes called //patterns//.  It is these patterns that provide 0MQ's intelligence.  They encapsulate our hard-earned experience of the best ways to distribute data and work.  0MQ's patterns are hard-coded but future versions may allow user-definable patterns.
+
+0MQ patterns are implemented by pairs of sockets with matching types.  In other words, to understand 0MQ patterns you need to understand socket types and how they work together.  Mostly this just takes learning, there is little that is obvious at this level.
+
+The basic 0MQ patterns are:
+
+* **Request-reply**, which connects a set of clients to a set of services.  This is a remote procedure call and task distribution pattern.
+* **Publish-subscribe**, which connects a set of publishers to a set of subscribers.  This is a data distribution pattern.
+* **Pipeline**, connects nodes in a fan-out / fan-in pattern that can have multiple steps, and loops.  This is a parallel task distribution and collection pattern.
+
+We looked at each of these in the first chapter.  There's one more pattern that people tend to try to use when they still think of 0MQ in terms of traditional TCP sockets:
+
+* **Exclusive pair**, which connects two sockets in an exclusive pair.  This is a low-level pattern for specific, advanced use cases.
+
+The zmq_socket(3) [http://api.0MQ.org/zmq_socket.html man page] is fairly clear about the patterns, it's worth reading several times until it starts to make sense.  We'll look at each pattern and the use cases it covers.
+
++++ Messages and Zero-copy
+
+On the wire, 0MQ messages are blobs of any size from zero upwards, fitting in memory.  You do your own serialization using Google Protocol Buffers, XDR, JSON, or whatever else your applications need to speak.  It's wise to choose a data representation that is portable and fast, but you can make your own decisions about trade-offs.
+
+In memory, 0MQ messages are zmq_msg_t structures (or classes depending on your language). This structure has a pointer to the data, and does reference counts, and provides a hook for 0MQ to free the data when it's not needed any longer.
+
+In high-performance applications (hundreds of thousands of messages per second), copying data can make things go slower.  0MQ's message API is therefore focused on zero-copy.  This means you can send and receive messages directly from and to application buffers without copying data.  Given that 0MQ sends messages in the background, zero-copy needs some extra sauce.
+
+I'll say right away that 0MQ's message API is more complex than it could be.  We don't need zero-copy all the time (or even most of the time) but we pay for it by not being able to just send blocks of data directly to and from sockets.  0MQ/3.0 will probably fix this.
+
+Anyhow since we're describing 0MQ/2.x, here are the basic ground rules for using 0MQ messages, first without doing zero copy:
+
+* You create and pass around zmq_msg_t objects, not blocks of data.
+
+* To read a message you use zmq_msg_init(3) to create an empty message, and then you pass that to zmq_recv(3).
+
+* To write a message from new data, you use zmq_msg_init_size(3) to create a message and at the same time allocate a block of data of some size.  You then fill that data, and pass the message to zmq_send(3).  This is the simplest, but not the fastest method.
+
+* To release (not destroy) a message you call zmq_msg_close(3).  This drops a reference, and eventually 0MQ will destroy the message.
+
+* To access the message content you use zmq_msg_data(3), zmq_msg_size(3), zmq_msg_copy(3) and zmq_msg_move(3).
+
+**Note than when you have passed a message to zmq_send(3), 0MQ will clear the message, i.e. set the data to empty.  You cannot send the same message twice, and you cannot access the message data after sending it.**
+
+To do zero copy you use zmq_msg_init_data(3) to create a message that refers to a block of data already allocated on the heap with malloc(), and then you pass that to zmq_send(3).  When you create the message you also pass a function that 0MQ will call to free the block of data, when it has finished sending the message.  This is the simplest example, assuming 'buffer' is a block of 1000 bytes allocated on the heap:
+
+[[code type="c"]]
+void my_free (void *data, void *hint)
+{
+    free (data);
+}
+//  Send message from buffer, which we allocate and 0MQ will free for us
+zmq_msg_t message;
+zmq_msg_init_data (&message, buffer, 1000, my_free, NULL);
+zmq_send (socket, &message, 0);
+[[/code]]
+
+0MQ also supports //multipart// messages, which let you handle a list of blobs as a single message.  This goes further than we need for basic use, and we'll cover multipart messages in the Advanced Concepts section.
+
+Some other things that are worth knowing about messages:
+
+* 0MQ sends and receives them atomically, i.e. you get a whole message, or you don't get it at all.
+* 0MQ does not send a message right away but at some indeterminate later time.
+* You can send zero-length messages, e.g. for sending a signal from one thread to another.
+* A message must fit in memory.  If you want to send files of arbitrary sizes, you should break them into pieces and send each piece as a message.
+* You must call zmq_msg_close(3) when finished with a message, in languages that don't automatically destroy objects when a scope closes.
+
+When you start using 0MQ, a classic error is that messages arrive but are garbled.  It's a beginner's mistake: the sending thread is freeing or reusing the message data before 0MQ has finished sending it, so 0MQ sends garbage.  If you're using zmq_msg_init_data(3), realize that the data is not copied.  if your thread does not own the data, and therefore it cannot pass a free function as in the example above, then you must do this:
+
+[[code type="c"]]
+//  Send a message from buffer, which we do not own
+zmq_msg_t message;
+zmq_msg_init_size (&message, 1000);
+mempcy (zmq_msg_data (&message), buffer, 1000);
+zmq_send (socket, &message, 0);
+[[/code]]
+
++++ Handling Multiple Sockets
+
+In all the examples so far, the main loop of most examples has been:
+
+# wait for message on socket
+# process message
+# repeat
+
+What if we want to read from multiple sockets at the same time?  Let's look at the options:
+
+* We can connect our single socket to multiple endpoints and get 0MQ to do the fanin for us.  This is legal if the remote endpoints are in the same pattern but it would be illegal to e.g. connect a PULL socket to a PUB endpoint.  Fun, but illegal.  If you start mixing patterns you break future scalability.
+* We can use zmq_poll(3), which is the 'right' way to do this.  However it is an ugly API and complex to use.  We'll cover zmq_poll(3), but later.
+* We can wrap zmq_poll(3) in a framework that turns it into a nice event-driven //reactor//. This is perhaps the best solution of all, and we'll make a simple reactor later, but it's significantly more work than we want to cover here.
+* We can somehow try to read from all our sockets in a loop.
+
+The last is a hack but simple and easy to scale.  Here is a simple example of reading from two sockets.  This rather confused program acts both as a subscriber to weather updates, and a worker for parallel tasks:
+
+[[code type="c" title="Multiple socket reader" name="msreader"]]
+//
+//  Reading from multiple sockets in C
+//
+#include <zmq.h>
+#include <time.h>
+
+int main (int argc, char *argv[])
+{
+    void *context;          //  ØMQ context for our process
+    void *s1, *s2;
+
+    //  Prepare our context and sockets
+    context = zmq_init (1);
+
+    //  Connect to task ventilator
+    s1 = zmq_socket (context, ZMQ_PULL);
+    zmq_connect (s1, "tcp://localhost:5557");
+
+    //  Connect to weather server
+    s2 = zmq_socket (context, ZMQ_SUB);
+    zmq_connect (s2, "tcp://localhost:5556");
+    zmq_setsockopt (s2, ZMQ_SUBSCRIBE, "10001 ", 6);
+
+    //  Process messages from both sockets
+    //  We prioritize traffic from the task ventilator
+    while (1) {
+        int rc;
+        struct timespec t;
+        zmq_msg_t message;
+
+        //  Process any waiting tasks
+        for (rc = 0; !rc; ) {
+            zmq_msg_init (&message);
+            if ((rc = zmq_recv (s1, &message, ZMQ_NOBLOCK)) == 0) {
+                //  process task
+            }
+            zmq_msg_close (&message);
+        }
+        //  Process any waiting weather updates
+        for (rc = 0; !rc; ) {
+            zmq_msg_init (&message);
+            if ((rc = zmq_recv (s2, &message, ZMQ_NOBLOCK)) == 0) {
+                //  process weather update
+            }
+            zmq_msg_close (&message);
+        }
+        //  No activity, so sleep for 1 msec
+        t.tv_sec = 0;
+        t.tv_nsec = 1000000;
+        nanosleep (&t, NULL);
+    }
+    return 0;
+}
+[[/code]]
+
+The cost of this approach is some additional latency on the first message (the sleep at the end of the loop, when there are no waiting messages to process).  This would be a problem in applications where sub-millisecond latency was vital.  Also, you need to check the documentation for nanosleep() or whatever function you use to make sure it does not busy-loop.
+
+You can fair-queue from the sockets by reading first from one, then the second rather than prioritizing them as we did in this example.
+
++++ Handling Errors and ETERM
+
+0MQ's error handling philosophy is a mix of fail-fast and resilience.  Processes, we believe, should be as vulnerable as possible to internal errors, and as robust as possible against external attacks and errors.  To give an analogy, a living cell will self-destruct if it detects a single internal error, yet it will resist attack from the outside by all means possible.  Assertions, which pepper the 0MQ code, are absolutely vital to robust code, they just have to be on the right side of the cellular wall.  And there should be such a wall.  If it is unclear whether a fault is internal or external, that is a design flaw that needs to be fixed.
+
+In C, assertions stop the application immediately with an error.  In other languages you may get exceptions or halts.
+
+External faults return errors to the caller, or in some rare cases drop messages silently.  In most of the C examples so far there's been no error handling.  **Realistic programs should do error handling on every single 0MQ call**.  If you're using a language binding other than C, the binding may handle errors for you.  In C you do need to do this yourself.  There are some simple rules, starting with POSIX conventions:
+
+* Methods that create objects will return NULL in case they fail.
+* Other methods will return 0 on success and other values (mostly -1) on an exceptional condition (usually failure).
+* The error code is provided in {{errno}} or zmq_errno(3).
+* A descriptive error text for logging is provided by zmq_strerror(3).
+
+There are two main exceptional conditions that you may want to handle as non-fatal:
+
+* When a thread calls zmq_recv(3) with the ZMQ_NOBLOCK option and there is no waiting data.  0MQ will return -1 and set errno to EAGAIN.
+* When a thread calls zmq_term(3) and other threads are doing blocking work.  The zmq_term(3) call closes the context and all blocking calls exit with -1, and errno set to ETERM.
+
+Let's see how to shut down a process cleanly.  We'll take the parallel pipeline example from the previous section.  If we've start a whole lot of workers in the background, we now want to kill them when the batch is finished.  Let's do this by sending a kill message to the workers.  The best place to do this is the sink, since it really knows when the batch is done.
+
+How do we connect the sink to the workers?  The PUSH/PULL sockets are one-way only.  The standard 0MQ answer is: create a new socket flow for each type of problem you need to solve.  We'll use a publish-subscribe model to send kill messages to the workers:
+
+* The sink creates a PUB socket on a new endpoint.
+* Workers bind their input socket to this endpoint.
+* When the sink detects the end of the batch it sends a kill message on its PUB socket.
+* When a worker detects this kill message, it exits.
+
+It doesn't take much new code in the sink:
+
+[[code]]
+    control = zmq_socket (context, ZMQ_PUB);
+    zmq_bind (control, "tcp://*:5559");
+
+    ...
+    //  Send kill signal to workers
+    zmq_msg_init_data (&message, "KILL", 5);
+    zmq_send (control, &message, 0);
+    zmq_msg_close (&message);
+[[/code]]
+
+[[code type="textdiagram"]]
+                +-------------+
+                |             |
+                |  Ventilator |
+                |             |
+                +-------------+
+                |    PUSH     |
+                \-------------/
+                       |
+                     tasks
+                       |
+       +---------------+---------------+
+       |               |               |
+       |     /---------|-----+---------|-----+------\
+     task    |       task    |        task   |      :
+       |     |         |     |         |     |      |
+       v     v         v     v         v     v      |
+   /------+-----\  /------+-----\  /------+-----\   |
+   | PULL | SUB |  | PULL | SUB |  | PULL | SUB |   |
+   +------+-----+  +------+-----+  +------+-----+   |
+   |            |  |            |  |            |   |
+   |   Worker   |  |   Worker   |  |   Worker   |   |
+   |            |  |            |  |            |   |
+   +------------+  +------------+  +------------+   |
+   |    PUSH    |  |    PUSH    |  |    PUSH    |   |
+   \------------/  \------------/  \------------/   |
+         |               |               |          |
+       result          result          result       |
+         |               |               |          |
+         +---------------+---------------+          |
+                         |                          |
+                      results                       |
+                         |                          |
+                         v                          |
+                  /-------------\                   |
+                  |    PULL     |                   |
+                  +-------------+                   |
+                  |             |                   |
+                  |    Sink     |                   |
+                  |             |                   |
+                  +-------------+                   |
+                  |     PUB     |                   |
+                  \-------------/                   |
+                         |                          |
+                    KILL signal                     |
+                         |                          |
+                         \--------------------------/
+
+     Figure # - Parallel Pipeline with Kill signalling
+[[/code]]
+
+Here is the worker process, which manages two sockets (a PULL socket getting tasks, and a SUB socket getting control commands) using the technique we saw earlier:
+
+[[code type="c" title="Parallel task worker with kill signalling" name="taskwork"]]
+//
+//  Task worker in C - design 2
+//  Adds pub-sub flow to receive and respond to kill signal
+//
+#include <zmq.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdio.h>
+#include <time.h>
+
+int main (int argc, char *argv[])
+{
+    void *context;          //  ØMQ context for our process
+    void *input, *output;   //  Sockets for input and output
+    void *control;          //  Socket for control input
+
+    //  Prepare our context and sockets
+    context = zmq_init (1);
+
+    input = zmq_socket (context, ZMQ_PULL);
+    zmq_connect (input, "tcp://localhost:5557");
+
+    output = zmq_socket (context, ZMQ_PUSH);
+    zmq_connect (output, "tcp://localhost:5558");
+
+    control = zmq_socket (context, ZMQ_SUB);
+    zmq_connect (control, "tcp://localhost:5559");
+    zmq_setsockopt (control, ZMQ_SUBSCRIBE, "", 0);
+
+    //  Process messages from input and control sockets
+    //  We prioritize traffic from the task ventilator
+    while (1) {
+        int rc;
+        struct timespec t;
+        zmq_msg_t message;
+
+        //  Process any waiting tasks
+        for (rc = 0; !rc; ) {
+            zmq_msg_init (&message);
+            if ((rc = zmq_recv (input, &message, ZMQ_NOBLOCK)) == 0) {
+                //  Process task
+                int workload;           //  Workload in msecs
+                struct timespec t;
+                sscanf ((char *) zmq_msg_data (&message), "%d", &workload);
+                t.tv_sec = 0;
+                t.tv_nsec = workload * 1000000;
+
+                //  Do the work
+                nanosleep (&t, NULL);
+
+                //  Send results to sink
+                zmq_msg_init (&message);
+                zmq_send (output, &message, 0);
+
+                //  Simple progress indicator for the viewer
+                printf (".");
+                fflush (stdout);
+            }
+            zmq_msg_close (&message);
+        }
+        //  Any waiting control command acts as 'KILL'
+        zmq_msg_init (&message);
+        if ((rc = zmq_recv (control, &message, ZMQ_NOBLOCK)) == 0)
+            break;                      //  Exit loop
+        zmq_msg_close (&message);
+
+        //  No activity, so sleep for 1 msec
+        t.tv_sec = 0;
+        t.tv_nsec = 1000000;
+        nanosleep (&t, NULL);
+    }
+    //  Finished
+    return 0;
+}
+[[/code]]
+
+Here is the modified sink application.  When it's finished collecting results it broadcasts a KILL message to all workers:
+
+[[code type="c" title="Parallel task sink with kill signalling" name="tasksink"]]
+//
+//  Task sink in C - design 2
+//  Adds pub-sub flow to send kill signal to workers
+//
+#include <zmq.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdio.h>
+#include <time.h>
+#include <sys/time.h>
+
+int main (int argc, char *argv[])
+{
+    void *context;          //  ØMQ context for our process
+    void *input;            //  Socket for input
+    void *control;          //  Socket for worker control
+    int task_nbr;
+    struct timeval
+        tstart, tend, tdiff;
+    int total_msec = 0;     //  Total calculated cost in msecs
+    zmq_msg_t message;
+
+    //  Prepare our context and sockets
+    context = zmq_init (1);
+    input = zmq_socket (context, ZMQ_PULL);
+    zmq_bind (input, "tcp://*:5558");
+
+    control = zmq_socket (context, ZMQ_PUB);
+    zmq_bind (control, "tcp://*:5559");
+
+    //  Wait for start of batch
+    zmq_msg_init (&message);
+    zmq_recv (input, &message, 0);
+    zmq_msg_close (&message);
+
+    //  Start our clock now
+    gettimeofday (&tstart, NULL);
+
+    //  Process 100 confirmations
+    for (task_nbr = 0; task_nbr < 100; task_nbr++) {
+        zmq_msg_init (&message);
+        zmq_recv (input, &message, 0);
+        zmq_msg_close (&message);
+        if ((task_nbr / 10) * 10 == task_nbr)
+            printf (":");
+        else
+            printf (".");
+        fflush (stdout);
+    }
+    //  Calculate and report duration of batch
+    gettimeofday (&tend, NULL);
+
+    if (tend.tv_usec < tstart.tv_usec) {
+        tdiff.tv_sec = tend.tv_sec - tstart.tv_sec - 1;
+        tdiff.tv_usec = 1000000 + tend.tv_usec - tstart.tv_usec;
+    } else {
+        tdiff.tv_sec = tend.tv_sec - tstart.tv_sec;
+        tdiff.tv_usec = tend.tv_usec - tstart.tv_usec;
+    }
+    total_msec = tdiff.tv_sec * 1000 + tdiff.tv_usec / 1000;
+    printf ("Total elapsed time: %d msec\n", total_msec);
+
+    //  Send kill signal to workers
+    zmq_msg_init_data (&message, "KILL", 5, NULL, NULL);
+    zmq_send (control, &message, 0);
+    zmq_msg_close (&message);
+
+    //  Finished
+    sleep (1);              //  Give 0MQ time to deliver
+    return 0;
+}
+[[/code]]
+
+- fair queueing
+- load balancing
+- extension sockets
+- devices
+- multithreading
+    - rules
+    - example
+- queue device
+
++++ 0MQ Devices
+
+0MQ devices let you stretch your distributed application out over a larger-scale network topology.  It sounds harder than it is and like most things in 0MQ, when you try it, it becomes fairly clear.  We usually start building any 0MQ application as a set of nodes on a network:
+
+[[code type="textdiagram"]]
+              node
+               |
+               |
+     +---------+---------+
+     |         |         |
+     |         |         |
+    node      node      node
+
+
+  Figure # - Simple 0MQ application
+[[/code]]
+
+And then we expand and refine the "plumbing" using devices in between nodes, usually managing to leave the nodes untouched:
+
+[[code type="textdiagram"]]
+              node
+               |
+               |
+     +---------+---------+
+     |         |         |
+     |         |         |
+    node     device     node
+               |
+               |
+     +---------+---------+
+     |         |         |
+     |         |         |
+    node      node      node
+
+
+  Figure # - Scaled 0MQ application
+[[/code]]
+
+0MQ devices:
+
+* Are applications that read and write 0MQ sockets in particular ways.
+* Usually connect a 'frontend' socket to a 'backend' socket.
+* May in complex cases work with three or more sockets.
+* Ideally, run without state or persistence.
+* Run as stand-alone processes or within threads.
+* Generally act either as proxies or as brokers.
+
+There are some standard built-in devices, and you can build your own devices fairly easily once you understand the socket types.  For that, you need to learn how the zmq_poll(3) method works.  We'll look at that later.
+
+A broker model device acts as a central stable location in the architecture, so all nodes (no matter what their normal inclination) connect to it as 'clients':
+
+[[code type="textdiagram"]]
+
+  connect   connect   connect
+     |         |         |
+     |         |         |
+     +---------+---------+
+               |
+               v
+             bind
+        /-------------\
+        |   Backend   |
+        +-------------+
+        |             |
+        |   Device    |
+        |             |
+        +-------------+
+        |  Frontend   |
+        \-------------/
+             bind
+               ^
+               |
+     +---------+---------+
+     |         |         |
+     |         |         |
+  connect   connect   connect
+
+
+  Figure # - Device as broker
+[[/code]]
+
+In a request-reply pattern this would mean all clients and all services connect to the device.  In a publish-subscribe pattern, this would mean all publishers and all subscribers connect to the device.  Usually, you want to use the broker model with request-reply and the proxy model with publish-subscribe.  This is the topology for a proxy model device:
+
+[[code type="textdiagram"]]
+   bind       bind      bind
+     |         |         |
+     |         |         |
+     +---------+---------+
+               |
+               v
+  connect   connect   connect
+        /-------------\
+        |   Backend   |
+        +-------------+
+        |             |
+        |   Device    |
+        |             |
+        +-------------+
+        |  Frontend   |
+        \-------------/
+             bind
+               |
+               |
+     +---------+---------+
+     |         |         |
+     v         v         v
+  connect   connect   connect
+
+
+  Figure # - Device as proxy
+[[/code]]
+
+To start a built-in devices the simplest way is to use the zmq_device(3) method, which starts a device from in the current thread.  Here is an example of a FORWARDER device that extends our weather application over a firewall.  The device has two sockets, a frontend facing subscribers on the external network and a backend facing the internal network, where the weather server is sitting.  It subscribes to the weather service on the backend socket, and republishes its data on the frontend socket:
+
+[[code type="c" title="Weather Proxy Server" name="wuproxy"]]
+//
+//  Weather proxy/bridge device
+//
+#include <zmq.h>
+#include <string.h>
+#include <stdio.h>
+#include <unistd.h>
+
+int main (int argc, char *argv[])
+{
+    void *context;          //  ØMQ context for our process
+    void *frontend;          //  Socket facing outside
+    void *backend;         //  Socket facing frontend
+
+    //  This is where the weather update server sits
+    char *frontend_endpoint = "tcp://192.168.55.210:5556";
+
+    //  This is our public IP address and port
+    char *backend_endpoint = "tcp://10.1.1.0:8100";
+
+    //  Prepare our context and sockets
+    context  = zmq_init (1);
+    frontend  = zmq_socket (context, ZMQ_SUB);
+    backend = zmq_socket (context, ZMQ_PUB);
+
+    zmq_connect (frontend,  frontend_endpoint);
+    zmq_bind    (backend, backend_endpoint);
+
+    //  Subscribe on everything
+    zmq_setsockopt (frontend, ZMQ_SUBSCRIBE, "", 0);
+
+    //  Start the forwarder device
+    zmq_device (ZMQ_FORWARDER, frontend, backend);
+    return 0;
+}
+[[/code]]
+
+What the call to zmq_device(3) does, more or less, is:
+
+[[code type="c"]]
+    //  Shunt updates out to our own subscribers
+    while (1) {
+        zmq_msg_t update;
+        zmq_msg_init (&update);
+        zmq_recv (inwards, &update, 0);
+        zmq_send (outwards, &update, 0);
+        zmq_msg_close (&update);
+    }
+[[/code]]
+
+It is the proxy model:
+
+[[code type="textdiagram"]]
+
+                   +-----------+
+                   |           |
+                   | Publisher |
+                   |           |
+                   +-----------+
+                   |    PUB    |
+                   \-----------/
+                       bind
+             tcp://192.168.55.210:5556
+                         |
+                         |  Internal network
+        +----------------+----------------+
+        |                |                |
+        |                |                |
+     connect           connect          connect
+  /------------\   /------------\   /------------\
+  |    SUB     |   |    SUB     |   |    SUB     |
+  +------------+   +------------+   +------------+
+  |            |   |            |   |            |
+  | Subscriber |   | Subscriber |   | Forwarder  |
+  |            |   |            |   |            |
+  +------------+   +------------+   +------------+
+                                    |    PUB     |
+  --------------------------------= \------------/ ----------=
+   External network                      bind
+                                  tcp://10.1.1.0:8100
+                                          |
+                                          |
+                                 +--------+--------+
+                                 |                 |
+                                 |                 |
+                              connect           connect
+                           /------------\    /------------\
+                           |    SUB     |    |    SUB     |
+                           +------------+    +------------+
+                           |            |    |            |
+                           | Subscriber |    | Subscriber |
+                           |            |    |            |
+                           +------------+    +------------+
+
+
+          Figure # - Forwarder proxy device
+[[/code]]
+
+
+[!-- TODO:
+    explain how to run this device using zmq_deviced(1)
+
+The zmq_deviced(1) tool is a wrapper for the zmq_device(3) method: you can either run zmq_device(3) in a thread in your application, or zmq_deviced(1) from the command line, with identical semantics.
+
+You start a queue device by running zmq_deviced(1) from the command line:
+
+[[code]]
+zmq_deviced queue <frontend> <backend>
+[[/code]]
+--]
+
+
+
+
+
++++ A Multithreaded Service
+
+As you can see from the multithreaded server example, we do make multithreaded applications with 0MQ, but we don't use mutexes, locks, or any other form of inter-thread communication except messages sent across 0MQ sockets.
+
+0MQ uses native OS threads rather than virtual "green" threads.  The advantage is that you don't need to learn any new threading API, and that 0MQ threads map cleanly to your operating system.  You can use standard tools like Intel's ThreadChecker to see what your application is doing.  The disadvantages are that your code, when it for instance starts new threads, won't be portable, and that if you have a huge number of threads (thousands), some operating systems will get stressed.
+
+0MQ is probably the nicest way to write multithreaded code, in any language.  However you do need to follow some rules:
+
+* You MUST create a 'context' object for your process, and pass that to all threads.  The context collects 0MQ's state.  To create a connection across the inproc: transport, both server and client thread must share the same context object.
+* You MUST NOT share sockets between threads, not even when using proper exclusion mechanisms like semaphores, locks or mutexes.  0MQ will in some future make it possible to move sockets to different threads.  Right now the thread which creates a socket is the only thread that may use it.
+* You MAY use semaphores, locks and mutexes if you really have to (but NOT to share sockets among threads).  However we'd consider that bad practice and potentially dangerous.
+
+If you follow these rules, you can quite easily split threads into separate processes, giving you a properly scalable elastic architecture.
+
+What ØMQ's thin asynchronous zero-cost messaging ultimately gives you is a "scalable elastic architecture".  Until you try it, you perhaps did not realize how much you missed this.  Let's translate our little Python example into full-blooded C.  The reference manual is in C, so you might as well learn this.  We'll cover the differences between each language later on.
+
+Here is the server code:
+
+[[code type="c" title="Multithreaded Service" name="mtserver"]]
+[[/code]]
+
+The original server was a single thread.  If the work per request is low, that's fine: one ØMQ thread can run at full speed on a CPU core, with no waits, doing an awful lot of work.  But realistic servers have to do non-trivial work per request.  A single core may not be enough when 10,000 clients hit the server all at once.  So this server starts multiple worker threads.  It accepts requests as fast as it can, and distributes these to its worker threads.  The worker threads can then grind through the work, and eventually send their replies back.
+
+This is what the multithreaded server looks like in terms of ØMQ sockets and nodes:
+
+[[code type="textdiagram"]]
+          +------------+
+          |            |
+          |   Client   |
+          |            |
+          +------------+
+          |    REQ     |
+          \------------/
+              |    ^
+              |    |
+         "Hello"  "World"
+              |    |
+              v    |
+          /------------\
+          |    XREP    |
+          +------------+
+          |            |
+          |   Server   |
+          |            |
+          +------------+
+          |            |
+          |   Queue    |
+          |            |
+          +------------+
+          |    XREQ    |
+          \------------/
+                ^
+                |
+    +-----------+-----------+
+    |           |           |
+    v           v           v
+/--------\  /--------\  /--------\
+|  REP   |  |  REP   |  |  REP   |
++--------+  +--------+  +--------+
+|        |  |        |  |        |
+| Worker |  | Worker |  | Worker |
+|        |  |        |  |        |
++--------+  +--------+  +--------+
+
+
+ Figure # - Multithreaded server
+[[/code]]
+
+When you run a queue device from the command line it, it acts as a 'server' (binds to frontend and backend) and all nodes that connect to it act as 'clients':
+
+So the queue device sits between clients and services, taking requests from clients and sending them to services, and returning replies in the opposite direction.  This topology is flexible: you can add and remove services at any time without reconfiguring any other nodes.
+
+Lastly, you can also start a queue device inside a process to connect nodes via in-process communication (the inproc: protocol).  This is how the multithreaded server distributes requests to its worker threads, each acting as a node.
+
+[[code]]
+    //  Frontend is clients, backend is workers
+    zmq_device (ZMQ_QUEUE, clients, workers);
+[[/code]]
+
+When you call zmq_device(3) it's up to you how you connect or bind the frontend and backend. You can create embedded proxies or brokers.  The multithreaded server main thread is a broker:
+
+[[code]]
+    clients = zmq_socket (context, ZMQ_XREP);
+    zmq_bind (clients, "tcp://*:5555");
+    workers = zmq_socket (context, ZMQ_XREQ);
+    zmq_bind (workers, "inproc://workers");
+[[/code]]
+
+So that worker threads act as clients, and the main thread as server:
+[[code]]
+void *worker_routine (void *context) {
+    void *socket;           //  Socket to talk to dispatcher
+
+    socket = zmq_socket (context, ZMQ_REP);
+    zmq_connect (socket, "inproc://workers");
+    ...
+[[/code]]
+
+
+We'll take this server apart piece by piece as we work through different aspects of ØMQ, so don't try to understand the machinery all at once.  Just admire the compact power of the thing for a few seconds...  OK, enough admiration!  Let's take it apart and see what the pieces look like:
+
+* The server starts a set of worker threads.  Each worker thread creates a REP socket and then processes requests on this socket.  Worker threads are just like single-threaded servers.  Compare the C and Python code.  The only differences are the transport (inproc: instead of tcp:), and the bind-connect direction.
+
+* The server creates an XREP (non-blocking reply) socket to talk to clients and binds this to its external interface (over tcp:).  Whereas REP sockets are lock-step (they handle one request at a time), XREP sockets have no such synchronization.  XREP sockets are the most complex type of ØMQ sockets and it'll take more examples to fully explain them.
+
+* The server creates an XREQ (non-blocking request) socket to talk to the workers and binds this to its internal interface (over inproc:).
+
+* The server starts a queue device that connects the two sockets.  We'll explain devices a little later.  The queue device basically keeps a single queue for incoming requests, and distributes those out to workers.  It also routes replies back to their origin.
+
+Here the 'work' is just a one-second pause.  We could do anything in the workers, including talking to other nodes.  You start to see how easy it is connect nodes to each other in realistic architectures.  ØMQ is like a box of pieces that plug together, the only limitation being your imagination and sobriety.
+
+The scalable elastic architecture that ØMQ gives your apps should be an eye-opener.  You might need a coffee or two first.  Don't make the mistake I made once and buy exotic German coffee labeled //Entkoffeiniert//.  That does not mean "Delicious".  Scalable elastic architectures are not a new idea - [http://en.wikipedia.org/wiki/Flow-based_programming flow-based programming] and languages like [http://www.erlang.org/ Erlang] already worked like this - but ØMQ makes it easier to use than ever before.
+
+As [http://permalink.gmane.org/gmane.network.zeromq.devel/2145 Gonzo Diethelm said], '//My gut feeling is summarized in this sentence: "if ØMQ didn't exist, it would be necessary to invent it". Meaning that I ran into ØMQ after years of brain-background processing, and it made instant sense... ØMQ simply seems to me a "bare necessity" nowadays.//'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
++++ Socket polling
+
+
+- example of a device
+- hand-written device
+
+    - read from SUB socket
+    - publish to PUB socket
+
+
+
+
+
+++ The Messaging Patterns
+
+
+
+
+
++++ Request-Reply
+
+In request-reply, requests flow from a set of clients to a set of services.  Requests are distributed (load-balanced) between the services.  Replies flow back from the services to the originating clients.  Standard request-reply is synchronous (one request, one reply).  Advanced request-reply is asynchronous (requests and replies flow arbitrarily and without synchronization).
+
+The request-reply pattern covers these main use cases:
+
+* Remote procedure calls, where a client asks a service for something.
+* Workload distribution, where a set of clients distribute tasks among a set of services.
+
+The socket types you use for request-reply are:
+
+* ZMQ_REQ - for client to send requests and wait for replies.
+* ZMQ_REP - for server to wait for requests and send replies.
+* ZMQ_XREQ - to eXtend a ZMQ_REQ socket over intermediate nodes.
+* ZMQ_XREP - to eXtend a ZMQ_REP socket over intermediate nodes.
+
+We'll start by looking at the simplest case: one client talking to one service.  We'll then see how that scales up to many-to-many, and then how to extend this over intermediate nodes using devices and ZMQ_XREQ and ZMQ_XREP.
+
+Here is how we build the simplest model, one client that talks to one service:
+
+* In the service, we create a ZMQ_REP socket and bind it to an endpoint so that clients can connect to it.
+* In the client, we create a ZMQ_REQ socket, and connect it to the endpoint.
+* The client sends requests to its socket, and waits for replies.
+* The service waits for requests on its socket, and sends replies.
+
+[[code type="textdiagram"]]
+  +---------+   +---------+   +---------+
+  |         |   |         |   |         |
+  | Client  |   | Client  |   | Client  |
+  |         |   |         |   |         |
+  +---------+   +---------+   +---------+
+  |   REQ   |   |   REQ   |   |   REQ   |
+  \---------/   \---------/   \---------/
+    connect       connect       connect
+       |             |             |
+       |             |             |
+       |             |             |
+       +-------------+-------------+
+                     |
+              flow of requests
+                     |
+                     v
+                   bind
+               /-----------\
+               |    REP    |
+               +-----------+
+               |           |
+               |  Service  |
+               |           |
+               +-----------+
+
+
+ Figure # - Basic request-reply topology
+[[/code]]
+
+Here is a minimal service:
+
+[[code type="c" title="Minimal request-reply service"]]
+#   Minimal service
+import zmq
+context = zmq.Context()
+
+#   Bind reply socket to endpoint
+socket = context.socket(zmq.REP)
+socket.bind("tcp://*:5566")
+
+#   Read and process requests
+while True:
+    request = socket.recv()
+    #   Process request and produce reply
+    socket.send(reply)
+[[/code]]
+
+And here is a minimal client:
+
+[[code type="c" title="Minimal request-reply client"]]
+#   Minimal client
+import zmq
+context = zmq.Context()
+
+#   Connect request socket to endpoint
+socket = context.socket(zmq.REQ)
+socket.connect("tcp://localhost:5566")
+
+#   Send request and wait for reply
+socket.send(reply)
+reply = socket.recv()
+[[/code]]
+
+When you use ZMQ_REQ to talk to ZMQ_REP you get a strictly synchronous request-reply dialog.  The client sends a request, the service reads the request and sends a reply.  The client then reads the reply.  If either the client or the service try to do anything else (e.g. sending two requests in a row without waiting for a response) they will get an error.
+
+0MQ does not insist that the service binds to the endpoint before a client can connect to it.  So you can start the client, send a request and //then// start the service.  0MQ will queue the request until it can deliver it to the service.  This is extremely useful.  It means that services can come and go, and clients will be robust against that.
+
+++++ Multiple Clients and Fair Queuing
+
+This client and service style naturally fits the model where services are fixed points and clients are dynamic.  Clients know about services, but not vice-versa.  We can connect many clients to the service, it is a common use case, like any Internet service (web, ftp, email).
+
+[[code type="textdiagram"]]
+  +---------+   +---------+   +---------+
+  |         |   |         |   |         |
+  | Client  |   | Client  |   | Client  |
+  |         |   |         |   |         |
+  +---------+   +---------+   +---------+
+  |   REQ   |   |   REQ   |   |   REQ   |
+  \---------/   \---------/   \---------/
+       |             |             |
+       |             |             |
+    request       request       request
+       |             |             |
+       +-------------+-------------+
+                     |
+               fair queuing
+                     |
+                     v
+               /-----------\
+               |    REP    |
+               +-----------+
+               |           |
+               |  Service  |
+               |           |
+               +-----------+
+
+
+  Figure # - Fair queuing of requests
+[[/code]]
+
+When we have multiple clients connected to our service, 0MQ does a number of neat things for us:
+
+* It automatically collects messages from all client connections into a single queue that it feeds to the service socket one by one.
+* It does "fair queuing" so that each client gets an equal shot at using the service.
+
+Fair queuing is a concept you'll meet often in 0MQ.  It means taking input from each connection in turn, so no single connection can dominate.  So, for example if client A sends a thousand messages, and then a while later client B sends one message, client B's message effectively gets moved to the head of the queue.
+
+++++ Multiple Services and Load Balancing
+
+Next step, let's expand this case to allow multiple servers.  This lets you scale up the power of the service (many threads or processes or boxes rather than just one).  However the service must be stateless, all state being in the request.
+
+There are two ways to connect multiple clients to multiple servers.  The simplest way is to connect each client socket to multiple service endpoints.  One client socket can connect to multiple service sockets, and requests are load-balanced among these services.  Let's say you connect a client socket to three service endpoints, A, B, and C.  The client makes requests R1, R2, R3, R4.  R1 and R4 go to service A, R2 goes to B, and R3 goes to service C.
+
+[[code type="textdiagram"]]
+               +-----------+
+               |           |
+               |   Client  |
+               |           |
+               +-----------+
+               |    REQ    |
+               \-----------/
+                     |
+               R1, R2, R3, R4
+                     |
+       +-------------+-------------+
+       |             |             |
+    R1, R4           R2            R3
+       |             |             |
+       v             v             v
+  /---------\   /---------\   /---------\
+  |   REP   |   |   REP   |   |   REP   |
+  +---------+   +---------+   +---------+
+  |         |   |         |   |         |
+  | Service |   | Service |   | Service |
+  |    A    |   |    B    |   |    C    |
+  |         |   |         |   |         |
+  +---------+   +---------+   +---------+
+
+
+   Figure # - Load balancing of requests
+[[/code]]
+
+This design kind of scales.  You can add more clients.  You can add more services.  Each client will load-balance its requests to the services, which happily fair-queue their work.  But each client has to know the service topology.  If you have 100 clients and then you decide to add three more services, you need to reconfigure and restart 100 clients in order for the clients to know about the three new services.
+
+That's clearly not ideal.  Too many stable pieces make an inflexible topology: knowledge is distributed and more effort to change.  What we want is something sitting in between clients and services that centralizes all knowledge of the topology.  Ideally, we should be able to add and remove services or clients at any time without touching any other part of the topology.
+
+++++ The Queue Device
+
+The queue device lets us create a shared queue that accepts requests from N clients and distributes them fairly to N services.  It looks a lot like a mini-messaging broker that manages precisely one shared queue.
+
+[[code type="textdiagram"]]
+  +---------+   +---------+   +---------+
+  |         |   |         |   |         |
+  | Client  |   | Client  |   | Client  |
+  |         |   |         |   |         |
+  +---------+   +---------+   +---------+
+  |   REQ   |   |   REQ   |   |   REQ   |
+  \---------/   \---------/   \---------/
+       |             |             |
+       |             |             |
+    request       request       request
+       |             |             |
+       +-------------+-------------+
+                     |
+               fair queuing
+                     |
+                     v
+               /-----------\
+               |   XREP    |
+               +-----------+
+               |           |
+               |   Queue   |
+               |   device  |
+               |           |
+               +-----------+
+               |   XREQ    |
+               \-----------/
+                     |
+              load balancing
+                     |
+       +-------------+-------------+
+       |             |             |
+    request       request       request
+       |             |             |
+       v             v             v
+  /---------\   /---------\   /---------\
+  |   REP   |   |   REP   |   |   REP   |
+  +---------+   +---------+   +---------+
+  |         |   |         |   |         |
+  | Service |   | Service |   | Service |
+  |    A    |   |    B    |   |    C    |
+  |         |   |         |   |         |
+  +---------+   +---------+   +---------+
+
+     Figure # - Queue device as a node
+[[/code]]
+
+to two endpoints, one for clients to connect to (the frontend socket) and one for services to connect to (the backend).  When you use a queue device like this, you will want to change your services so that they do not bind to endpoints but rather, connect to the backend socket.  This will make your network easier to scale since clients don't see services, and services don't see clients.  The only stable node is the device in the middle.
+But unless you explicitly need it, stay away from the proxy model for queue devices because it creates fragile topologies where adding or removing a service process means reconfiguring and restarting your queue device.
+
+
+
+
+++++ Extension Sockets
+
+The ZMQ_XREQ and ZMQ_XREP extension sockets let you stretch request-reply across intermediate nodes.  This is not all these socket types do, but it's their main use case.  While ZMQ_REQ and ZMQ_REP are blocking, the extension sockets are fully asynchronous, i.e. they shove requests and replies around without waiting.
+
+ZMQ_REQ talks to ZMQ_XREP and ZMQ_XREQ talks to ZMQ_REP.  In between the ZMQ_XREQ and ZMQ_XREP we have to have code of some sorts that pulls messages off the one socket and shoves them onto the other.  This is exactly how the queue device works.
+
+[[code type="textdiagram"]]
+  +---------+   +---------+   +---------+
+  |   REQ   |   |   REQ   |   |   REQ   |
+  \---------/   \---------/   \---------/
+       |             |             |
+       |             |             |
+       +-------------+-------------+
+                     |
+                     |
+               /-----------\
+               |   XREP    |
+               +-----------+
+               |           |
+               +-----------+
+               |   XREQ    |
+               \-----------/
+                     |
+                     |
+               /-----------\
+               |   XREP    |
+               +-----------+
+               |           |
+               +-----------+
+               |   XREQ    |
+               \-----------/
+                     |
+                     |
+       +-------------+-------------+
+       |             |             |
+       |             |             |
+  /---------\   /---------\   /---------\
+  |   REP   |   |   REP   |   |   REP   |
+  +---------+   +---------+   +---------+
+
+
+    Figure # - Extending request-reply
+[[/code]]
+
+Coming back to fair queuing for a second, when we explained that, we lied.  Fair queuing only becomes relevant when you have multiple requests from one client //at one time//.  If the client is a ZMQ_REQ socket, you never have that.  So a ZMQ_REP or ZMQ_XREP socket will //only// need to do fair queuing when it's pulling requests from multiple ZMQ_XREQ sockets.
+
+This is how it really works:
+
+[[code type="textdiagram"]]
+  +---------+   +---------+   +---------+
+  |  XREQ   |   |  XREQ   |   |  XREQ   |
+  \---------/   \---------/   \---------/
+       |             |             |
+   R1, R2, R3       R4           R5, R6
+       |             |             |
+       +-------------+-------------+
+                     |
+               fair queuing
+           R1, R4, R5, R2, R6, R3
+                     |
+                     v
+              /-------------\
+              | REP or XREP |
+              +-------------+
+
+
+   Figure # - Fair queuing from XREQ
+[[/code]]
+
+As you may start to realize, ZMQ_XREP and ZMQ_XREQ do more than just extend request-reply.  As you become a 0MQ wizard you will start to use these instead of ZMQ_REQ and ZMQ_REP.  It is like driving a stick-shift car instead of an automatic, or learning to ride a bicycle without training wheels.  ZMQ_REQ and ZMQ_REP make things easy but they also restrict your ability to do the truly crazy stuff that makes real applications.
+
+Anyhow, extension is the most common use case, and a good way to start to understand these two socket types.  We'll explore ZMQ_XREQ and ZMQ_XREP in more detail in the Advanced Concepts section.
+
++++ Publish-Subscribe
+
+++++ Basic Principles
+
+In publish-subscribe, updates flow from a set of publishers to a set of subscribers.  Updates are broadcast so that many subscribers may receive the same update.  Publish-subscribe is strictly one-way: data does not flow back from subscribes to publishers.
+
+The publish-subscribe pattern covers one use case:
+
+* Distribution of updates from a set of publishers to a set of subscribers.
+
+The socket types you use for publish-subscribe are:
+
+* ZMQ_PUB - asynchronous publisher socket for sending updates.
+* ZMQ_SUB - asynchronous client socket for receiving updates.
+
+We'll start by looking at the simplest case: one publisher talking to a set of subscribers.  We'll then see how that scales up to many-to-many, and then how to extend this over intermediate nodes using devices.
+
+Here is how we build the simplest model, one publisher that talks to one subscriber:
+
+* In the publisher, we create a ZMQ_PUB socket and bind it to an endpoint so that subscribers can connect to it.
+* In the subscriber, we create a ZMQ_SUB socket, and connect it to the endpoint
+* The subscriber sets a filter on its socket, to receive specific updates.
+* The subscriber waits for updates on its socket.
+* The publisher sends updates on its socket.
+
+[[code type="textdiagram"]]
+                  +-------------+
+                  |             |
+                  |  Publisher  |
+                  |             |
+                  +-------------+
+                  |     PUB     |
+                  \-------------/
+                       bind
+                         |
+                         |
+                   flow of updates
+         +---------------+---------------+
+         |               |               |
+         |               |               |
+         v               v               v
+     connect         connect         connect
+  /------------\  /------------\  /------------\
+  |    SUB     |  |    SUB     |  |    SUB     |
+  +------------+  +------------+  +------------+
+  |            |  |            |  |            |
+  | Subscriber |  | Subscriber |  | Subscriber |
+  |            |  |            |  |            |
+  +------------+  +------------+  +------------+
+
+
+ Figure # - Basic publish-subscribe topology
+[[/code]]
+
+Here is a minimal publisher in Python:
+
+[[code type="c" title="Minimal publisher"]]
+#   Minimal publisher
+import zmq
+context = zmq.Context()
+
+#   Bind publisher socket to endpoint
+socket = context.socket(zmq.PUB)
+socket.bind("tcp://*:5566")
+
+#   Broadcast updates
+while True:
+    socket.send("temp=33")
+    socket.send("rh=60")
+[[/code]]
+
+[[code type="textdiagram"]]
+
+                  +-------------+
+                  |             |
+                  |  Publisher  |
+                  |             |
+                  +-------------+
+                  |     PUB     |
+                  \-------------/
+                         |
+                 "temp=33", "rh=60"
+                         |
+         +---------------+---------------+
+         |               |               |
+     "temp=33"        "rh=60"   "temp=33", "rh=60"
+         |               |               |
+         v               v               v
+  /------------\  /------------\  /------------\
+  | SUB "temp" |  | SUB "rh"   |  | SUB ""     |
+  +------------+  +------------+  +------------+
+  |            |  |            |  |            |
+  | Subscriber |  | Subscriber |  | Subscriber |
+  |            |  |            |  |            |
+  +------------+  +------------+  +------------+
+
+
+      Figure # - Publish-Subscribe Example
+[[/code]]
+
+And here is a minimal subscriber:
+
+[[code type="c" title="Minimal subscriber"]]
+#   Minimal subscriber
+import zmq
+context = zmq.Context()
+
+#   Connect subscriber socket to endpoint
+socket = context.socket(zmq.SUB)
+socket.connect("tcp://localhost:5566")
+
+#   Subscribe to temperature updates
+socket.setsockopt(zmq.SUBSCRIBE, "temp")
+
+#   Subscribe to relative humidity updates
+#socket.setsockopt(zmq.SUBSCRIBE, "rh")
+
+#   Subscribe on every message
+#socket.setsockopt(zmq.SUBSCRIBE, "")
+
+#   Receive updates
+while True:
+    update = socket.recv()
+    #   Process update
+[[/code]]
+
+The subscriber can set many filters, which are added together.  That is, if a update matches ANY filter, the subscriber receives it.  The subscriber can also unsubscribe specific filters.  See zmq_setsockopt(3) for how this works.
+
+You cannot receive updates on a ZMQ_PUB socket, and you cannot send them on a ZMQ_SUB socket.  If a subscriber wants to talk to a publisher (perhaps to get a new decryption key) it needs to do this 'out of band' using a different socket type.  You'll notice that 0MQ forces you to unravel the work you do between nodes into quite clean, precise patterns.  This seems like extra work at first, but you will find that it makes your applications cleaner, simpler, and easier to scale.
+
+++++ Multiple Publishers and Fair Queuing
+
+The publisher and subscriber naturally fit the model where publishers are fixed points and subscribers are dynamic.  Subscribers know about publishers, but not vice-versa.  We can connect a subscriber to multiple publishers, this is how for example you'd collect updates from several sources.
+
+[[code type="textdiagram"]]
+  +-----------+   +-----------+   +-----------+
+  |           |   |           |   |           |
+  | Publisher |   | Publisher |   | Publisher |
+  |     A     |   |     B     |   |     C     |
+  |           |   |           |   |           |
+  +-----------+   +-----------+   +-----------+
+  |    PUB    |   |    PUB    |   |    PUB    |
+  \-----------/   \-----------/   \-----------/
+        |               |               |
+        |               |               |
+    A1, A2, A3         B1            C1, C2
+        |               |               |
+        +---------------+---------------+
+                        |
+                  fair queuing
+              A1, B1, C1, A2, C2, A3
+                        |
+                        v
+                  /------------\
+                  |    SUB     |
+                  +------------+
+                  |            |
+                  | Subscriber |
+                  |            |
+                  +------------+
+
+
+       Figure # - Fair queuing of updates
+[[/code]]
+
+When we connect a subscriber to multiple publishers, 0MQ does a number of things for us:
+
+* It automatically collects updates from all connections into a single queue that it feeds to the subscriber one by one.
+* It does "fair queuing" so that each publisher gets an equal shot at providing updates to the subscriber.
+
+++++ The Forwarder Device
+
+As we saw with request-reply, once we have the basic topology of our application (publishers talking to subscribers), we can stretch that topology using devices.  The publish-subscribe pattern has one device, the forwarder.  A forwarder acts as a subscriber at one side, and a publisher at another side.
+
+A forwarder solves some common problems with large publish-subscribe architectures:
+
+* When you have a group of subscribers in a remote location and you don't want them all to connect across a slow link.
+* When you want to feed some subscribers by TCP and others by PGM multicast.
+
+Here is how to forward TCP unicast over PGM multicast:
+
+You can start a forwarder device in two ways:
+
+# From the command line as a separate process, using zmq_deviced(1).  This starts the device as a proxy.  //Note: zmq_deviced is not yet available.//
+# From your application as a seperate thread, using zmq_device(3).
+
+++++ TCP vs. Multicast
+
+- network usage
+- subscription upstreaming
+- in multicast, switch acts as hardware forwarder
+
+++++ Synchronizing Subscribers
+
+- out of band synchronization
+- recovering historical state
+- show with an example
+
+++++ Subscription Filters
+
+- how to delimit header from data
+- binary, not text
+- done at client side
+
++++ Pipeline
+
+Solvians use case
+butterfly example
+- make a real little application
+- implement some parallel processing example
+
+[!--
+
+++++ Basic Principles
+++++ Architecture 1
+++++ Architecture 2
+++++ The Whatever Device
+++++ Moderately Complex Stuff
+
+ - sockets: upstream, downstream
+ - device: streamer
+ - one-way
+  - gets messages from upstream, load-balances to downstream
+  - lets you create additional steps
+ - routing model: downstream, load-balancing
+  - upstream: fair queuing
+ - exception handling: blocking
+
+--]
+
++++ Exclusive Pair
+
+++++ Basic Principles
+++++ Architecture 1
+++++ Architecture 2
+++++ The Whatever Device
+++++ Moderately Complex Stuff
+
+- bind and connect are independent
+ - connect can go either way
+ - same result
+ - e.g. to cross firewall
+ - you need to add a bind to allow the client to accept a connection
+ - could be usecase for EXCLUSIVE socket
+
+

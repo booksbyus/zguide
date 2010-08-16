@@ -1,0 +1,69 @@
+#! /usr/bin/perl
+#   z2w - convert ZeroMQ document to Wikidot format
+#   - converts [[code type="textdiagram"]] via ditaa
+#   - converts zmq_something(3) into URL to http://api.zeromq.org
+#   Eventually meant to produce print-ready output via tex
+#
+#   Usage: z2w < docfile
+#
+#   Creates Wikidot file in wdtemp.txt and images in images/.
+#   By Pieter Hintjens, free for remixing without conditions.
+#
+if (!open (WDTEMP, ">wdtemp.txt")) {
+    print "Can't create wdtemp.txt: $!\n";
+    exit (1);
+}
+if (!open (IMAGES, ">images.html")) {
+    print "Can't create images.html: $!\n";
+    exit (1);
+}
+
+print WDTEMP "[!-- Generated documentation file, do not edit --]\n";
+print IMAGES "<html>\n";
+
+while (<>) {
+    chop;
+    if (/\[\[code type=\"c\" title=\"(.+)\" name=\"(.+)\"\]\]/) {
+        $title = $1;
+        $name = $2;
+        print WDTEMP "$_\n";
+        while (<>) {
+            chop;
+            print WDTEMP "$_\n";
+            last if /\[\[\/code\]\]/;
+        }
+        print WDTEMP " >> [*http://www.zeromq.org/code:$name See'$title' in other languages...]\n";
+        print "http://www.zeromq.org/code:$name - $title\n";
+    }
+    elsif ($_ eq "[[code type=\"textdiagram\"]]") {
+        #   Text diagram
+        $image = $image + 1;
+        print IMAGES "<pre class=\"textdiagram\" id=\"fig$image\">\n";
+        while (<>) {
+            chop;
+            last if /\[\[\/code\]\]/;
+            s/#/$image/;
+            print IMAGES "$_\n";
+        }
+        print IMAGES "</pre>\n";
+        print WDTEMP "[[=image fig$image.png]]\n";
+    }
+    else {
+        #   Normal text
+        s/0MQ/ØMQ/g;
+        s/0\\MQ/0MQ/g;
+        $remainder = $_;
+        while ($remainder =~ /zmq_([^(]+)\(3\)/) {
+            print WDTEMP $`;
+            print WDTEMP "[http://api.zeromq.org/zmq_$1.html zmq_$1(3)]";
+            $remainder = $';
+        }
+        print WDTEMP $remainder."\n";
+    }
+}
+print IMAGES "</html>\n";
+close (IMAGES);
+close (WDTEMP);
+system ("rm -f images/*");
+system ("java -jar ditaa0_9.jar images.html -o -h -E output.html");
+system ("rm output.html images.html");

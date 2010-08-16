@@ -1,0 +1,797 @@
+The Guide is written by Pieter Hintjens, with help from Martin Sustrik, Gonzalo Diethelm, Zed Shaw, CAF, Guido Goldstein, Oliver Smith,  Pierre Rouleau, Peter Alexander, and others.  We cover 0MQ version 2.x.  Please do not edit this page directly, but instead add errata and suggestions to the [/docs:user-guide-talk talk page] or as patches off [http://github.com/imatix/0MQGuide this git] emailed to ph@imatix.com.  The diagrams are built using ditaa.
+
+[[include :csi:include:css-brackets]]
+
+++ Basic Stuff
+
++++ Fixing the World
+
+How to explain 0MQ?  Some of us start by saying all the wonderful things it does.  //It's sockets on steroids.  It's fast!//  Others try to share their moment of enlightenment, that zap-pow-kaboom satori paradigm-shift moment when it all became obvious.  //Things just become simpler.  Complexity goes away.//  Others try to explain by comparison.  //It's smaller, simpler, but still looks familiar.//  Personally, I like to remember why we made 0MQ at all, because that's most likely where you, the reader, still are today.
+
+Programming is a science dressed up as art, because most of us don't understand the physics of software, and it's rarely if ever taught.  The physics of software is not algorithms, data structures, languages and abstractions.  These are just tools we make, use, throw away.  The real physics of software is the physics of people.
+
+Specifically, our limitations when it comes to complexity, and our desire to work together to solve large problems in pieces.  This is the science of programming: make building blocks that people can understand and use //easily//, and people will work together to solve the very largest problems.
+
+We live in a connected world, and modern software has to navigate this world.  So the building blocks for tomorrow's very largest solutions are connected and massively parallel.  It's not enough for code to be "strong and silent" any more.  Code has to talk to code.  Code has to be chatty, sociable, well-connected.  Code has to run like the human brain, trillions of individual neurons firing off messages to each other, a massively parallel network with no central control, no single point of failure, yet able to solve immensely difficult problems.  And it's no accident that the future of code looks like the human brain, because the endpoints of every network are, at some level, human brains.
+
+If you've done any work with threads, protocols, or networks, you'll realize this is pretty much impossible.  It's a dream.  Even connecting a few programs across a few sockets is plain nasty, when you start to handle real life situations.  Trillions?  The cost would be unimaginable.  Connecting computers is so difficult that software and services to do this is a multi-billion dollar business.
+
+So we live in a world where the wiring is years ahead of our ability to use it.  We had a software crisis in the 1980s, when people like Fred Brooks believed [http://en.wikipedia.org/wiki/No_Silver_Bullet there was no "Silver Bullet"].  Free and open source software solved that crisis, enabling us to share knowledge efficiently.  Today we face another software crisis, but it's one we don't talk about much.  Only the largest, richest firms can afford to create connected applications.  There is a cloud, but it's proprietary.  Our data, our knowledge is disappearing from our personal computers into clouds that we cannot access, cannot compete with.  Who owns our social networks?  It is like the mainframe-PC revolution in reverse.
+
+We can leave the political philosophy for another book.  The point is that while the Internet offers the potential of massively connected code, the reality is that this is out of reach for most of us, and so, large interesting problems (in health, education, economics, transport, and so on) remain unsolved because there is no way to connect the code, and thus no way to connect the brains that could work together to solve these problems.
+
+There have been many attempts to solve the challenge of connected software.  There are thousands of IETF specifications, each solving part of the puzzle.  For application developers, HTTP is perhaps the one solution to have have been simple enough to work, but it arguably makes the problem worse, by encouraging developers and architects to think in terms of big servers and thin, stupid clients.
+
+So today people are still connecting applications using raw UDP and TCP, proprietary protocols, HTTP, WebSockets.  It remains painful, slow, hard to scale, and essentially centralized. Distributed p2p architectures are mostly for play, not work.  How many applications use Skype or Bittorrent to exchange data?
+
+Which brings us back to the science of programming.  To fix the world, we needed to do two things.  One, to solve the general problem of "how to connect any code to any code, anywhere".  Two, to wrap that up in the simplest possible building blocks that people could understand and use //easily//.
+
+It sounds ridiculously simple.  And maybe it is.  That's kind of the whole point.
+
++++ 0MQ in a Hundred Words
+
+0MQ (ZeroMQ, 0\MQ, zmq) looks like an embeddable networking library but acts like a concurrency framework.  It gives you sockets that carry whole messages across various transports like in-process, inter-process, TCP, and multicast.  You can connect sockets N-to-N with patterns like fanout, pubsub, task distribution, and request-reply.  It's fast enough to be the fabric for clustered products.  Its asynchronous I/O model gives you scalable multicore applications, built as asynchronous message-processing tasks.  It has a score of language APIs and runs on most operating systems.  0MQ is from [http://www.imatix.com iMatix] and is LGPL open source.
+
++++ Assumptions
+
+We assume you are using the latest release of 0MQ, or even the current git master.  We assume you are using a Linux box or something similar.  We assume you can read C code, more or less.
+
++++ Ask and Ye Shall Receive
+
+So let's start with some code.  We start of course with a Hello World example.  We'll make a client and a server.  The client sends "Hello" to the server, which replies with "World". Here's the server, which opens a 0MQ socket on port 5555, reads requests on it, and replies with "World" to each request:
+
+[[code type="c" title="Hello World server" name="hwserver"]]
+//
+//  Hello World server in C
+//  Binds REP socket to tcp://*:5555
+//  Expects "Hello" from client, replies with "World"
+//
+
+#include <assert.h>
+#include <pthread.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdio.h>
+#include <zmq.h>
+
+int main () {
+    void *context;          //  0MQ context for our process
+    void *socket;           //  Socket to talk to clients
+
+    //  Prepare our context and socket
+    context = zmq_init (1);
+    socket = zmq_socket (context, ZMQ_REP);
+    zmq_bind (socket, "tcp://*:5555");
+
+    while (1) {
+        zmq_msg_t request, reply;
+
+        //  Wait for next request from client
+        zmq_msg_init (&request);
+        zmq_recv (socket, &request, 0);
+        printf ("Received request: [%s]\n",
+            (char *) zmq_msg_data (&request));
+        zmq_msg_close (&request);
+
+        //  Do some 'work'
+        sleep (1);
+
+        //  Send reply back to client
+        zmq_msg_init_data (&reply, "World", 6, NULL, NULL);
+        zmq_send (socket, &reply, 0);
+        zmq_msg_close (&reply);
+    }
+    return 0;
+}
+[[/code]]
+
+[[code type="textdiagram"]]
+          +------------+
+          |            |
+          |   Client   |
+          |            |
+          +------------+
+          |    REQ     |
+          \------------/
+              |    ^
+              |    |
+         "Hello"  "World"
+              |    |
+              v    |
+          /------------\
+          |    REP     |
+          +------------+
+          |            |
+          |   Server   |
+          |            |
+          +------------+
+
+
+     Figure # - Request-Reply
+[[/code]]
+
+0MQ uses C as its reference language and this is the language we'll use for examples.  If you're reading this online, the link below the example takes you to translations into other programming languages.  Let's compare the same server in C++:
+
+[[code type="c++" title="Hello World server" name="hwserver"]]
+//
+//  Hello World server in C++
+//  Binds REP socket to tcp://*:5555
+//  Expects "Hello" from client, replies with "World"
+//
+#include <assert.h>
+#include <pthread.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdio.h>
+#include <zmq.hpp>
+
+int main () {
+    //  Prepare our context and socket
+    zmq::context_t context (1);
+    zmq::socket_t socket (context, ZMQ_REP);
+    socket.bind ("tcp://*:5555");
+
+    while (true) {
+        zmq::message_t request;
+
+        //  Wait for next request from client
+        socket.recv (&request);
+        printf ("Received request: [%s]\n",
+            (char *) request.data ());
+
+        //  Do some 'work'
+        sleep (1);
+
+        //  Send reply back to client
+        zmq::message_t reply (6);
+        memcpy ((void *) reply.data (), "World", 6);
+        socket.send (reply);
+    }
+    return 0;
+}
+[[/code]]
+
+You can see that the 0MQ API is similar in C and C++.  In a language like Python, we can hide even more and the code becomes even easier to read:
+
+[[code type="python" title="Hello World server" name="hwserver"]]
+#
+#   Hello World server in Python
+#   Binds REP socket to tcp://*:5555
+#   Expects "Hello" from client, replies with "World"
+#
+import zmq
+import time
+
+context = zmq.Context()
+socket = context.socket(zmq.REP)
+socket.bind("tcp://*:5555")
+
+while True:
+    #  Wait for next request from client
+    message = socket.recv()
+    print "Received request: ", message
+
+    #  Do some 'work'
+    time.sleep (1)        #   Do some 'work'
+
+    #  Send reply back to client
+    socket.send("World")
+[[/code]]
+
+Here's the client code in C (click the link below the source to look at, or contribute a translation in your favorite programming language):
+
+[[code type="c" title="Hello World client" name="hwclient"]]
+//
+//  Hello World client in C
+//  Connects REQ socket to tcp://localhost:5555
+//  Sends "Hello" to server, expects "World" back
+//
+#include <zmq.h>
+#include <string.h>
+#include <stdio.h>
+#include <unistd.h>
+
+int main () {
+    void *context;          //  0MQ context for our process
+    void *socket;           //  Socket to talk to server
+    int request_nbr;
+
+    //  Prepare our context and socket
+    context = zmq_init (1);
+    socket = zmq_socket (context, ZMQ_REQ);
+
+    printf ("Connecting to server...\n");
+    zmq_connect (socket, "tcp://localhost:5555");
+    for (request_nbr = 0; request_nbr != 10; request_nbr++) {
+        zmq_msg_t request, reply;
+
+        zmq_msg_init_data (&request, "Hello", 6, NULL, NULL);
+        printf ("Sending request %d...\n", request_nbr);
+        zmq_send (socket, &request, 0);
+        zmq_msg_close (&request);
+
+        zmq_msg_init (&reply);
+        zmq_recv (socket, &reply, 0);
+        printf ("Received reply %d: [%s]\n", request_nbr,
+            (char *) zmq_msg_data (&reply));
+        zmq_msg_close (&reply);
+    }
+    return 0;
+}
+[[/code]]
+
+Now this looks too simple to be realistic, but a 0MQ socket is what you get when you take a normal TCP socket, inject it with a mix of radioactive isotopes stolen from a secret Soviet atomic research project, bombard it with 1950-era cosmic rays, and put it into the hands of a drug-addled comic book author with a badly-disguised fetish for bulging muscles clad in spandex.  Yes, 0MQ sockets are the world-saving superheros of the networking world.
+
+[[code type="textdiagram"]]
+ +------------+        +------------+
+ |            |        |            | Zap!
+ | TCP socket |------->| 0MQ socket |
+ |            | BOOM!  |     cC00   |  POW!!
+ +------------+        +------------+
+   ^    ^    ^
+   |    |    |
+   |    |    +---------+
+   |    |              |
+   |    +----------+   |
+  Illegal          |   |
+  radioisotopes    |   |
+  from secret      |   |
+  Soviet atomic    | Spandex
+  city             |
+               Cosmic rays
+
+
+    Figure # - A terrible accident...
+[[/code]]
+
+You could literally throw thousands of clients at this server, all at once, and it would continue to work happily and quickly.  For fun, try starting the client and //then// starting the server, see how it all still works, then think for a second what this means.
+
+Let me explain briefly what these two programs are actually doing.  They reate a 0MQ context to work with, and a socket.  Don't worry what the words mean.  You'll pick it up.  The server binds its REP (reply) socket to port 5555.  The server waits for a request, in a loop, and responds each time with a reply.  The client sends a request and reads the reply back from the server.
+
+There is a lot happening behind the scenes but what matters to us programmers is how short and sweet the code is, and how often it doesn't crash, even under heavy load.  This is the request-reply pattern, probably the simplest way to use 0MQ.  It maps to RPC and the classic client-server model.
+
++++ Getting the Message Out
+
+The second classic pattern is one-way data distribution, in which a server pushes updates to a set of clients.  Let's see an example that pushes out weather updates consisting of a zipcode, temperature, and relative humidity.  We'll generate random values, just like the real weather stations do.
+
+Here's the server, in C.  We'll use port 5556 for this application:
+
+[[code type="c" title="Weather update server" name="wuserver"]]
+//
+//  Weather update server in C
+//  Binds PUB socket to tcp://*:5556
+//  Publishes random weather updates
+//
+#include <zmq.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+#define within(num)     (int) ((float) num * random () / (RAND_MAX + 1.0))
+
+int main () {
+    void *context;          //  ØMQ context for our process
+    void *socket;           //  Socket to talk to clients
+
+    //  Initialize random number generator
+    srandom ((unsigned) time (NULL));
+
+    //  Prepare our context and socket
+    context = zmq_init (1);
+    socket = zmq_socket (context, ZMQ_PUB);
+    zmq_bind (socket, "tcp://*:5556");
+    zmq_bind (socket, "ipc://weather");
+
+    while (1) {
+        zmq_msg_t message;
+        int zipcode, temperature, relhumidity;
+
+        //  Get values that will fool the boss
+        zipcode     = within (100000);
+        temperature = within (215) - 80;
+        relhumidity = within (50) + 10;
+
+        //  Send message to all subscribers
+        zmq_msg_init_size (&message, 20);
+        sprintf ((char *) zmq_msg_data (&message),
+            "%05d %d %d", zipcode, temperature, relhumidity);
+        zmq_send (socket, &message, 0);
+        zmq_msg_close (&message);
+    }
+    return 0;
+}
+[[/code]]
+
+There's no start, and no end to this stream of updates, it's like a never ending broadcast.
+
+[[code type="textdiagram"]]
+                  +-------------+
+                  |             |
+                  |  Publisher  |
+                  |             |
+                  +-------------+
+                  |     PUB     |
+                  \-------------/
+                         |
+                      update
+                         |
+         +---------------+---------------+
+         |               |               |
+      update          update          update
+         |               |               |
+         v               v               v
+   /------------\  /------------\  /------------\
+   |    SUB     |  |    SUB     |  |    SUB     |
+   +------------+  +------------+  +------------+
+   |            |  |            |  |            |
+   | Subscriber |  | Subscriber |  | Subscriber |
+   |            |  |            |  |            |
+   +------------+  +------------+  +------------+
+
+
+     Figure # - Publish-Subscribe
+[[/code]]
+
+Here is client application, which listens to the stream of updates and grabs anything to do with a specified zipcode, by default New York City because that's a great place to start any adventure:
+
+[[code type="c" title="Weather update client" name="wuclient"]]
+//
+//  Weather update client in C
+//  Connects SUB socket to tcp://localhost:5556
+//  Collects weather updates and finds avg temp in zipcode
+//
+#include <zmq.h>
+#include <string.h>
+#include <stdio.h>
+#include <unistd.h>
+
+int main (int argc, char *argv[])
+{
+    void *context;          //  0MQ context for our process
+    void *socket;           //  Socket to talk to server
+    int update_nbr;
+    long total_temp = 0;
+    //  Grab zipcode, default is NYC, 10001
+    char *filter = (argc > 1)? argv [1]: "10001 ";
+
+    //  Prepare our context and socket
+    context = zmq_init (1);
+    socket = zmq_socket (context, ZMQ_SUB);
+
+    printf ("Collecting updates from weather server...\n");
+    zmq_connect (socket, "tcp://localhost:5556");
+
+    //  Subscribe to updates for our zipcode
+    zmq_setsockopt (socket, ZMQ_SUBSCRIBE, filter, strlen (filter));
+
+    //  Process 100 updates
+    for (update_nbr = 0; update_nbr < 100; update_nbr++) {
+        zmq_msg_t update;
+        int zipcode, temperature, relhumidity;
+
+        zmq_msg_init (&update);
+        zmq_recv (socket, &update, 0);
+        sscanf ((char *) zmq_msg_data (&update), "%d %d %d",
+            &zipcode, &temperature, &relhumidity);
+        total_temp += temperature;
+        zmq_msg_close (&update);
+    }
+    printf ("Average temperature for zipcode '%s' was %dF\n",
+        filter, (int) (total_temp / update_nbr));
+    return 0;
+}
+[[/code]]
+
+The client subscribes to its chosen zipcode and collects a thousand updates for that zipcode.  That means about ten million updates from the server, if zipcodes are randomly distributed.  You can start the client, and then the server, and the client will keep working. You can stop and restart the server as often as you like, and the client will keep working.  When the client has collected its thousand updates, it calculates the average, prints it, and exits.
+
++++ Divide and Conquer
+
+As a final example (you are surely getting tired of juicy code and want to delve back into philological discussions about comparative abstractive norms), let's do a little supercomputing.  Then coffee.  Our supercomputing application is a fairly typical parallel processing model:
+
+* We have a ventilator that produces tasks that can be done in parallel.
+* We have a set of workers that process tasks.
+* We have a sink that collects results back from the worker processes.
+
+In reality, workers run on superfast boxes, perhaps using GPUs (graphic processing units) to do the hard maths.  Here is the ventilator.  It generates 100 tasks, each is a message telling the worker to sleep for some number of milliseconds:
+
+[[code type="c" title="Parallel task ventilator" name="taskvent"]]
+//
+//  Task ventilator in C
+//  Binds PUSH socket to tcp://localhost:5557
+//  Sends batch of tasks to workers via that socket
+//
+#include <zmq.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+#define within(num) (int) ((float) num * random () / (RAND_MAX + 1.0))
+
+int main (int argc, char *argv[])
+{
+    void *context;          //  ØMQ context for our process
+    void *output;           //  Socket for output
+    int task_nbr;
+    int total_msec = 0;     //  Total expected cost in msecs
+    zmq_msg_t message;
+
+    //  Initialize random number generator
+    srandom ((unsigned) time (NULL));
+
+    //  Prepare our context and socket
+    context = zmq_init (1);
+    output = zmq_socket (context, ZMQ_PUSH);
+    zmq_bind (output, "tcp://*:5557");
+
+    printf ("Press Enter when the workers are ready: ");
+    getchar ();
+    printf ("Sending tasks to workers...\n");
+
+    //  The first message is "0" and signals start of batch
+    zmq_msg_init_data (&message, "0", 2, NULL, NULL);
+    zmq_send (output, &message, 0);
+    zmq_msg_close (&message);
+
+    //  Send 100 tasks
+    for (task_nbr = 0; task_nbr < 100; task_nbr++) {
+        int workload;
+        //  Random workload from 1 to 100msecs
+        workload = within (100) + 1;
+        total_msec += workload;
+
+        zmq_msg_init_size (&message, 10);
+        sprintf ((char *) zmq_msg_data (&message), "%d", workload);
+        zmq_send (output, &message, 0);
+        zmq_msg_close (&message);
+    }
+    printf ("Total expected cost: %d msec\n", total_msec);
+    sleep (1);              //  Give 0MQ time to deliver
+
+    return 0;
+}
+[[/code]]
+
+[[code type="textdiagram"]]
+                  +-------------+
+                  |             |
+                  |  Ventilator |
+                  |             |
+                  +-------------+
+                  |    PUSH     |
+                  \-------------/
+                         |
+                       tasks
+                         |
+         +---------------+---------------+
+         |               |               |
+       task            task             task
+         |               |               |
+         v               v               v
+   /------------\  /------------\  /------------\
+   |    PULL    |  |    PULL    |  |    PULL    |
+   +------------+  +------------+  +------------+
+   |            |  |            |  |            |
+   |   Worker   |  |   Worker   |  |   Worker   |
+   |            |  |            |  |            |
+   +------------+  +------------+  +------------+
+   |    PUSH    |  |    PUSH    |  |    PUSH    |
+   \------------/  \------------/  \------------/
+         |               |               |
+       result          result          result
+         |               |               |
+         +---------------+---------------+
+                         |
+                      results
+                         |
+                         v
+                  /-------------\
+                  |    PULL     |
+                  +-------------+
+                  |             |
+                  |    Sink     |
+                  |             |
+                  +-------------+
+
+
+     Figure # - Parallel Pipeline
+[[/code]]
+
+[!-- TODO: remove this note when 0MQ/2.1 is released --]
+Note that we do {{sleep (1);}} before exiting the ventilator.  This is a hack that gets around 0MQ/2.0's design, which discards messages that have not yet been sent, if you exit the program too soon.  If you are using 0MQ/2.1 you can remove this sleep statement.
+
+Here is the worker application.  It receives a message, sleeps for that number of seconds, then signals that it's finished:
+
+[[code type="c" title="Parallel task worker" name="taskwork"]]
+//
+//  Task worker in C
+//  Connects PULL socket to tcp://localhost:5557
+//  Collects workloads from ventilator via that socket
+//  Connects PUSH socket to tcp://localhost:5558
+//  Sends results to sink via that socket
+//
+#include <zmq.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdio.h>
+#include <time.h>
+
+int main (int argc, char *argv[])
+{
+    void *context;          //  ØMQ context for our process
+    void *input, *output;   //  Sockets for input and output
+
+    //  Prepare our context and sockets
+    context = zmq_init (1);
+
+    input = zmq_socket (context, ZMQ_PULL);
+    zmq_connect (input, "tcp://localhost:5557");
+
+    output = zmq_socket (context, ZMQ_PUSH);
+    zmq_connect (output, "tcp://localhost:5558");
+
+    //  Process tasks forever
+    while (1) {
+        zmq_msg_t message;
+        int workload;           //  Workload in msecs
+        struct timespec t;
+
+        zmq_msg_init (&message);
+        zmq_recv (input, &message, 0);
+        sscanf ((char *) zmq_msg_data (&message), "%d", &workload);
+        t.tv_sec = 0;
+        t.tv_nsec = workload * 1000000;
+        zmq_msg_close (&message);
+
+        //  Do the work
+        nanosleep (&t, NULL);
+
+        //  Send results to sink
+        zmq_msg_init (&message);
+        zmq_send (output, &message, 0);
+
+        //  Simple progress indicator for the viewer
+        printf (".");
+        fflush (stdout);
+    }
+    return 0;
+}
+[[/code]]
+
+Here is the sink application.  It collects the 100 tasks, then calculates how long the overall processing took, so we can confirm that the workers really were running in parallel, if there are more than one of them:
+
+[[code type="c" title="Parallel task sink" name="tasksink"]]
+//
+//  Task sink in C
+//  Binds PULL socket to tcp://localhost:5558
+//  Collects results from workers via that socket
+//
+#include <zmq.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdio.h>
+#include <time.h>
+#include <sys/time.h>
+
+int main (int argc, char *argv[])
+{
+    void *context;          //  ØMQ context for our process
+    void *input;            //  Socket for input
+    int task_nbr;
+    struct timeval
+        tstart, tend, tdiff;
+    int total_msec = 0;     //  Total calculated cost in msecs
+    zmq_msg_t message;
+
+    //  Prepare our context and socket
+    context = zmq_init (1);
+    input = zmq_socket (context, ZMQ_PULL);
+    zmq_bind (input, "tcp://*:5558");
+
+    //  Wait for start of batch
+    zmq_msg_init (&message);
+    zmq_recv (input, &message, 0);
+    zmq_msg_close (&message);
+
+    //  Start our clock now
+    gettimeofday (&tstart, NULL);
+
+    //  Process 100 confirmations
+    for (task_nbr = 0; task_nbr < 100; task_nbr++) {
+        zmq_msg_init (&message);
+        zmq_recv (input, &message, 0);
+        zmq_msg_close (&message);
+        if ((task_nbr / 10) * 10 == task_nbr)
+            printf (":");
+        else
+            printf (".");
+        fflush (stdout);
+    }
+    //  Calculate and report duration of batch
+    gettimeofday (&tend, NULL);
+
+    if (tend.tv_usec < tstart.tv_usec) {
+        tdiff.tv_sec = tend.tv_sec - tstart.tv_sec - 1;
+        tdiff.tv_usec = 1000000 + tend.tv_usec - tstart.tv_usec;
+    } else {
+        tdiff.tv_sec = tend.tv_sec - tstart.tv_sec;
+        tdiff.tv_usec = tend.tv_usec - tstart.tv_usec;
+    }
+    total_msec = tdiff.tv_sec * 1000 + tdiff.tv_usec / 1000;
+    printf ("Total elapsed time: %d msec\n", total_msec);
+    return 0;
+}
+[[/code]]
+
+The average cost of a batch is 5 seconds.  When we start 1, 2, 4 workers we get results like this from the sink:
+
+[[code]]
+#   1 worker
+Total elapsed time: 5034 msec
+#   2 workers
+Total elapsed time: 2421 msec
+#   4 workers
+Total elapsed time: 1018 msec
+[[/code]]
+
+Let's look at some aspects of this code in more detail:
+
+* The workers connect upstream to the ventilator, and downstream to the sink.  This means you can add workers arbitrarily.  If the workers bound to their endpoints, you would need (a) more endpoints and (b) to modify the ventilator and/or the sink each time you added a worker.  We say that the ventilator and sink are 'stable' parts of our architecture and the workers are 'dynamic' parts of it.
+
+* We have to synchronize the start of the batch with all workers being up and running.  This is a fairly common gotcha in 0MQ and there is no easy solution.  The 'connect' method takes a certain time.  So when a set of workers connect to the ventilator, the first one to successfully connect will get a whole load of messages in that short time while the others are also connecting.  If you don't synchronize the start of the batch somehow, the system won't run in parallel at all.  Try removing the wait, and see.
+
+* The ventilator's PUSH socket distributes tasks to workers (assuming they are all connected //before// the batch starts going out) evenly.  This is called //load-balancing// and it's something we'll look at again in more detail.
+
++++ Why We Needed 0MQ
+
+Many applications these days consist of components that stretch across some kind of network, either a LAN or the Internet.  So many application developers end up doing some kind of messaging.  Some developers use message queuing products, but most of the time they do it themselves, using TCP or UDP.  These protocols are not hard to use, but there is a great difference between sending a few bytes from A to B, and doing messaging in any kind of reliable way.
+
+Let's look at the typical problems we face when we start to connect pieces using raw TCP.  Any reusable messaging layer would need to solve all or most these:
+
+* How do we handle I/O?  Does our application block, or do we handle I/O in the background?  This is a key design decision.  Blocking I/O creates architectures that do not scale well.  But background I/O can be very hard to do right.
+
+* How do we handle dynamic components, i.e. pieces that go away temporarily?  Do we formally split components into "clients" and "servers" and mandate that servers cannot disappear?  What then if we want to connect servers to servers?  Do we try to reconnect every few seconds?
+
+* How do we represent a message on the wire?  How do we frame data so it's easy to write and read, safe from buffer overflows, efficient for small messages, yet adequate for the very largest videos of dancing cats wearing party hats?
+
+* How do we handle messages that we can't deliver immediately?  Particularly, if we're waiting for a component to come back online?  Do we discard messages, put them into a database, or into a memory queue?
+
+* Where do we store message queues?  What happens if the component reading from a queue is very slow, and causes our queues to build up?  What's our strategy then?
+
+* How do we handle lost messages?  Do we wait for fresh data, request a resend, or do we build some kind of reliability layer that ensures messages cannot be lost?  What if that layer itself crashes?
+
+* What if we need to use a different network transport.  Say, multicast instead of TCP unicast?  Or IPv6?  Do we need to rewrite the applications, or is the transport abstracted in some layer?
+
+* How do we route messages?  Can we send the same message to multiple peers?  Can we send replies back to an original requester?
+
+* How do we write an API for another language?  Do we re-implement a wire-level protocol or do we repackage a library? If the former, how can we guarantee efficient and stable stacks? If the latter, how can we guarantee interoperability?
+
+* How do we represent data so that it can be read between different architectures?  Do we enforce a particular encoding for data types?  How far is this the job of the messaging system rather than a higher layer?
+
+* How do we handle network errors?  Do we wait and retry, ignore them silently, or abort?
+
+Take a typical open source project like [http://hadoop.apache.org/zookeeper/ Hadoop Zookeeper] and read the C API code in [http://github.com/apache/zookeeper/blob/trunk/src/c/src/zookeeper.c src/c/src/zookeeper.c].  It's 3,200 lines of mystery and in there is an undocumented, client-server network communication protocol.  I see it's efficient because it uses poll() instead of select().  But really, Zookeeper should be using a generic messaging layer and an explicitly documented wire level protocol.  It is incredibly wasteful for teams to be building this particular wheel over and over.
+
+[[code type="textdiagram"]]
+             +------------+
+             |            |
+             |  Piece A   |
+             |            |
+             +------------+
+                   ^
+                   |
+                  TCP
+                   |
+                   v
+             +------------+
+             |            |
+             |  Piece B   |
+             |            |
+             +------------+
+
+
+  Figure # - Messaging as it starts
+[[/code]]
+
+But how to make a reusable messaging layer?  Why, when so many projects need this technology, are people still doing it the hard way, by driving TCP sockets in their code, and solving the problems in that long list, over and over?
+
+It turns out that building reusable messaging systems is really difficult, which is why few FOSS projects ever tried, and why commercial messaging products are complex, expensive, inflexible, and brittle.  In 2006 iMatix designed [http://www.amqp.org AMQP] which started to give FOSS developers perhaps the first reusable recipe for a messaging system.  AMQP works better than many other designs [http://www.imatix.com/articles:whats-wrong-with-amqp but remains complex, expensive, and brittle].  It takes weeks to learn to use, and months to create stable architectures that don't crash when things get hairy.
+
+Most messaging projects, like AMQP, that try to solve this long list of problems in a reusable way do so by inventing a new concept, the "broker", that does addressing, routing, and queuing.  This results in a client-server protocol or a set of APIs, on top of some undocumented protocol, that let applications speak to this broker.  But adding broker messaging to a product like Zookeeper would make it worse, not better.  It would mean adding an additional big box, and a new single point of failure.  A broker rapidly becomes a bottleneck and a risk.  If the software supports it, we can add a second, third, fourth broker and make some fail-over scheme.  People do this.  It creates more moving pieces, more complexity, more things to break.
+
+And a broker-centric set-up needs its own operations team.  You literally need to watch the brokers day and night, and beat them with a stick when they start misbehaving.  You need boxes, and you need backup boxes, and you need people to manage those boxes.  It is arguably only worth doing for large applications, built by several teams of people, over several years.
+
+So small to medium application developers are trapped.  Either they avoid network programming, and make monolithic applications that do not scale.  Or they jump into network programming and make brittle, complex applications that are hard to maintain.  Or they bet on a messaging product, and end up with scalable applications that depend on expensive, easily broken technology.  There has been no really good choice, which is maybe why messaging is largely stuck in the last century and stirs strong emotions.  Negative ones for users, gleeful joy for those selling support and licenses.
+
+[[code type="textdiagram"]]
+            +---+          |  +---+
+    +---+   |   |   +---+  |  |   |
+    |   |-->|   |   |   |  |  |   |
+    |   |   +---+   |   |  |  +---+
+    +---+           +---+  |    |
+      |               |    |    |
+      |       +-----------------+
+      |       |       |    |
+      +-----------------------+
+              |       |    |  |
+      +-------|-------|----+--|------+
+      |       v       |       v      |
+    +---+   +---+     |     +---+    |
+    |   |   |   |   +---+   |   |    |
+    |   |   |   |   |   |   |   |    |
+    +---+   +---+   |   |   +---+    |
+              ^     +---+     ^      |
+              |       ^       |    +-+
+      +-------+-------+-------+    |
+      |       |       |            |
+      v     +---+     v     +---+  |
+    +---+   |   |   +---+   |   |  |
+    |   |   |   |<--|   |   |   |<-+
+    |   |   +---+   |   |   +-+-+
+    +---+           +---+
+
+
+   Figure # - Messaging as it becomes
+[[/code]]
+
+What we need is something that does the job of messaging but does it in such a simple and cheap way that it can work in any application, with close to zero cost.  It should be a library that you just link with, without any other dependencies.  No additional moving pieces, so no additional risk.  It should run on any OS and work with any programming language.
+
+And this is 0MQ: an efficient, embeddable library that solves most of the problems an application needs to become nicely elastic across a network, without much cost.
+
+Specifically:
+
+* It handles I/O asynchronously, in background threads.  These communicate with application threads using lock-free data structures, so 0MQ applications need no locks, semaphores, or other wait states.
+* Components can come and go dynamically and 0MQ will automatically reconnect.  This means you can start components in any order.  You can create "service-oriented architectures" (SOAs) where services can join and leave the network at any time.
+* It queues messages automatically when needed.  It does this intelligently, pushing messages to as close as possible to the receiver before queuing them.
+* It has ways of dealing with over-full queues (called "high water mark").  When a queue is full, 0MQ automatically blocks senders, or throws away messages, depending on the kind of messaging you are doing (the so-called "pattern").
+* It lets your applications talk to each other over arbitrary transports: TCP, multicast, in-process, inter-process.  You don't need to change your code to use a different transport.
+* It handles slow/blocked readers safely, using different strategies that depend on the messaging pattern.
+* It lets you route messages using a variety of patterns such as request-reply and publish-subscribe.  These patterns are how you create the topology, the structure of your network.
+* It delivers whole messages exactly as they were sent, using a simple framing on the wire.  If you write a 10k message, you will receive a 10k message.
+* It does not impose any format on messages.  They are blobs of zero to gigabytes large.  When you want to represent data you choose some other product on top, such as Google's protocol buffers, XDR, and others.
+* It handles network errors intelligently.  Sometimes it retries, sometimes it tells you an operation failed.
+* It reduces your carbon footprint.  Doing more with less CPU means your boxes use less power, and you can keep your old boxes in use for longer. Al Gore would love 0MQ.
+
+Actually 0MQ does rather more than this.  It has a subversive effect on how you develop network-capable applications.  Superficially it's just a socket API on which you do zmq_recv(3) and zmq_send(3).  But message processing rapidly becomes the central loop, and your application soon breaks down into a set of message processing tasks.  It is elegant and natural.  And it scales: each of these tasks maps to a node, and the nodes talk to each other across arbitrary transports.  Two nodes in one process (node is a thread), two nodes on one box (node is a process), two boxes on one network (node is a box). With no application code changes.
+
++++ Socket Scalability
+
+Let's see 0MQ's scalability in action.  Here is a shell script that starts the weather server and then a bunch of clients in parallel:
+
+[[code]]
+wuserver &
+wuclient 12345 &
+wuclient 23456 &
+wuclient 34567 &
+wuclient 45678 &
+wuclient 56789 &
+[[/code]]
+
+As the clients run, we take a look at the active processes using 'top', and we see something like (on a 4-core box):
+
+[[code]]
+  PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND
+ 7136 ph        20   0 1040m 959m 1156 R  157 12.0  16:25.47 wuserver
+ 7966 ph        20   0 98608 1804 1372 S   33  0.0   0:03.94 wuclient
+ 7963 ph        20   0 33116 1748 1372 S   14  0.0   0:00.76 wuclient
+ 7965 ph        20   0 33116 1784 1372 S    6  0.0   0:00.47 wuclient
+ 7964 ph        20   0 33116 1788 1372 S    5  0.0   0:00.25 wuclient
+ 7967 ph        20   0 33072 1740 1372 S    5  0.0   0:00.35 wuclient
+[/code]]
+
+Let's think for a second about what is happening here.  The weather server has a single socket, and yet here we have it sending data to five clients in parallel.  We could have thousands of concurrent clients.  The server application doesn't see them, doesn't talk to them directly.
+
++++ Warning!
+
+Traditional network programming is built on the general assumption that one socket talks to one connection, one peer.  There are multicast protocols but they are exotic.  When we assume "one socket = one connection", we scale our architectures in certain ways.  We create threads of logic where each thread work with one socket, one peer.  We place intelligence and state in these threads.
+
+In the 0MQ universe, sockets are clever multithreaded applications that manage a whole set of connections automagically for you.  You can't see, work with, open, close, or attach state to these connections.  Whether you use blocking send or receive, or poll, all you can talk to is the socket, not the connections it manages for you.  The connections are private and invisible, and this is the key to 0MQ's scalability.
+
+Because your code, talking to a socket, can then handle any number of connections across whatever network protocols are around, without change.  A messaging pattern sitting in 0MQ can scale more cheaply than a messaging pattern sitting in your application code.
+
+So the general assumption no longer applies.  As you read the code examples, your brain will try to map them to what you know.  You will read "socket" and think "ah, that represents a connection to another node".  That is wrong.  You will read "thread" and your brain will again think, "ah, a thread represents a connection to another node", and again your brain will be wrong.
+
+If you're reading this Guide for the first time, realize that until you actually write 0MQ code for a day or two (and maybe three or four days), you may feel confused, and you may try to impose that general assumption on 0MQ, and it won't work. And then you will experience your moment of enlightenment, that zap-pow-kaboom satori paradigm-shift moment when it all becomes clear.

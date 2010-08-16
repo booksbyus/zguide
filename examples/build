@@ -1,0 +1,21 @@
+#! /bin/sh
+#
+#   Examples build script
+#   Syntax: build all | clean
+#
+LANGUAGES="c c++"
+if [ /$1/ = /all/ ]; then
+    for LANGUAGE in $LANGUAGES; do
+        cd $LANGUAGE
+        ./build all
+        cd ..
+    done
+elif [ /$1/ = /clean/ ]; then
+    for LANGUAGE in $LANGUAGES; do
+        cd $LANGUAGE
+        ./build clean
+        cd ..
+    done
+else
+    echo "syntax: build all | clean"
+fi
