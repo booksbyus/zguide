@@ -2,7 +2,7 @@
 
 +++ The Zen of Zero
 
-The Ø in 0MQ is all about tradeoffs. On the one hand this strange name lowers 0MQ's visibility on Google and Twitter.  On the other hand it annoys the heck out of some Danish folk who write us things like "//Ø is not a funny looking zero!//" and "//Rødgrød med Fløde!//", which is apparently an insult that means "may your neighbours be the direct descendents of Grendel!"  Seems like a fair trade.
+The Ø in 0MQ is all about tradeoffs. On the one hand this strange name lowers 0MQ's visibility on Google and Twitter.  On the other hand it annoys the heck out of some Danish folk who write us things like "ØMG røtfl", and "//Ø is not a funny looking zero!//" and "//Rødgrød med Fløde!//", which is apparently an insult that means "may your neighbours be the direct descendents of Grendel!"  Seems like a fair trade.
 
 Originally the zero in 0MQ was meant as "zero broker" and (as close to) "zero latency" (as possible).  In the meantime it has come to cover different goals: zero-copy, zero administration, zero cost, zero waste.  More generally, "zero" refers to the culture of minimalism that permeates the project.  We add power by removing complexity rather than exposing new functionality.
 
@@ -687,7 +687,7 @@ We now introduce a class of 0MQ applications called "devices".  Devices are anyt
         +--------+   +--------+
 
 
-Figure # - Small-scale 0MQ application
+Figure # - Small scale 0MQ application
 [[/code]]
 
 And then we stretch the application across a wider network, placing devices in specific places and scaling up the number of nodes:
@@ -728,7 +728,7 @@ And then we stretch the application across a wider network, placing devices in s
                      +--------+   +--------+
 
 
-   Figure # - Large-scaled 0MQ application
+   Figure # - Larger scale 0MQ application
 [[/code]]
 
 0MQ devices:
@@ -852,7 +852,7 @@ We call this a //proxy// because it acts as a subscriber to publishers, and acts
 
 Note that this application is multipart safe.  It correctly detects multipart messages and sends them as it read them.  If we did not set the SNDMORE option on outgoing multipart data, the final recipient would get a corrupted message.  You should always make your devices multipart safe so that there is no risk they will corrupt the data they switch.
 
-+++ A Request-Reply Broker
+++++ A Request-Reply Broker
 
 Let's explore how to solve a problem of scale by writing a little message queuing broker in 0MQ.  We'll look at the request-reply pattern for this case.
 

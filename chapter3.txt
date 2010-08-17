@@ -46,8 +46,7 @@ We'll look at various ways of building a timer into a network.   A clock device 
 
 +++ Building Bridges
 
-zmq_poll(3) lets you mix ZMQ sockets and native system sockets, which is very useful if you have to resort to actual TCP for something, e.g.
-briding an existing TCP protocol with 0MQ.  We'll build a couple of bridges.
+zmq_poll(3) lets you mix ZMQ sockets and native system sockets, which is very useful if you have to resort to actual TCP for something, e.g. bridging an existing TCP protocol with 0MQ.  We'll build a couple of bridges.
 
 +++ Writing a Reactor
 
