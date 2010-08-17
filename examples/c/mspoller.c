@@ -1,6 +1,6 @@
 //
 //  Reading from multiple sockets in C
-//  This version uses a simple recv loop
+//  This version uses zmq_poll()
 //
 #include <zmq.h>
 #include <time.h>
@@ -22,33 +22,27 @@ int main (int argc, char *argv[])
     zmq_connect (s2, "tcp://localhost:5556");
     zmq_setsockopt (s2, ZMQ_SUBSCRIBE, "10001 ", 6);
 
+    //  Initialize poll set
+    zmq_pollitem_t items [2] = {
+        { s1, 0, ZMQ_POLLIN, 0 },
+        { s2, 0, ZMQ_POLLIN, 0 }
+    };
     //  Process messages from both sockets
-    //  We prioritize traffic from the task ventilator
     while (1) {
-        int rc;
-        struct timespec t;
         zmq_msg_t message;
-
-        //  Process any waiting tasks
-        for (rc = 0; !rc; ) {
+        zmq_poll (&items [0], 2, -1);
+        if (items [0].revents & ZMQ_POLLIN) {
             zmq_msg_init (&message);
-            if ((rc = zmq_recv (s1, &message, ZMQ_NOBLOCK)) == 0) {
-                //  process task
-            }
+            zmq_recv (s1, &message, 0);
+            //  Process task
             zmq_msg_close (&message);
         }
-        //  Process any waiting weather updates
-        for (rc = 0; !rc; ) {
+        if (items [1].revents & ZMQ_POLLIN) {
             zmq_msg_init (&message);
-            if ((rc = zmq_recv (s2, &message, ZMQ_NOBLOCK)) == 0) {
-                //  process weather update
-            }
+            zmq_recv (s2, &message, 0);
+            //  Process weather update
             zmq_msg_close (&message);
         }
-        //  No activity, so sleep for 1 msec
-        t.tv_sec = 0;
-        t.tv_nsec = 1000000;
-        nanosleep (&t, NULL);
     }
     return 0;
 }

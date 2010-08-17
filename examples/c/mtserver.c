@@ -1,13 +1,11 @@
-/*
-    Multithreaded Hello World server in C
-*/
-
-#include <assert.h>
+//
+//  Multithreaded Hello World server in C
+//
+#include <zmq.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h>
-#include <zmq.h>
 
 void *worker_routine (void *context) {
     void *socket;           //  Socket to talk to dispatcher

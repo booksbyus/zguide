@@ -1,108 +1,22 @@
-++ Advanced Concepts
-
-+++ Multipart Messages
-
-+++ Identities
-
-+++ Combination Bindings
-
-* Bind to N interfaces to unify protocols or networks
-* Bind to multicast and TCP to do forwarding
-* Devices as proxies
-* Devices as brokers
-* Reverse connections, using PEER sockets
-
-+++ Polling on Sockets
-
-+++ Inter-thread Signaling
-
-+++ Managing Queue Overflows
-
-++++ High Water Mark
-
-++++ Swap to Disk
-
-+++ High-performance I/O
-
-++ Extending 0MQ
-
-+++ Writing Bridges
-
-+++ Writing Devices
+++ Chapter 4 - Under the Hood
 
 +++ The Wire-Level Protocol
 
+- writing a thin client in JavaScript
+
 +++ Building a Language Binding
 
-
-
-[!--
-Multipart Messages
-- messages are set to null / size zero after sending, even if ref counted
-    -> why?
-- multipart lets you chain messages when you send them
- - sent as chain in zmq_send(... ZMQ_MORE)
- - queued and sent in one operation
- - received atomically
- - multipart must fit into memory
-
-Signalling between Threads
-- polling on sockets
-- mixed with system sockets
-
-Identity
-- other peer knows who you are
-- creates persistent resource
-- but can create overflows
-- XREQ, XREP...?
-
-Queue limits, high
-- depends on message pattern
-- above hwm:
- - pubsub: drop
- - reqrep: block
- - pp: block
-unless there is a real backlog on the connection and the socket decides that it wants to make you wait, rather than throw away messages
-We'll see later how different socket types handle a "queue full" situation.
-
-
-Shutdown
-- how to exit blocking calls
-- terminate the context, all blocking calls will unblock with a specific error (ETERM)
-- then close all sockets
-
-Combinations
-- bind to interface 1, then interface 2
- - clients can connect to either interface
- - allows unifying protocols/networks
-
-- bind to multicast group, then tcp port
- - then local clients connect via multicast
- - then remote clients connect via tcp
- - usecase is zmq_forward
-
-- connect to two or more endpoint sockets
- - e.g. subscribe to multiple endpoints/ publishers
- - connect to multiple consumers
- - incoming data is load-balanced per origin
- - distribution depends on messaging patterns
++++ Tuning 0MQ
 
 High performance multiple i/o threads
  - for HP applications, several threads
  - then, set affinity on sockets
 
-Wire level protocols
++++ Contributing to 0MQ
 
-Writing bridges
- - e.g. amqp bridge
-
---]
-
-++ What's Missing from 0MQ
 
 [!--
-
-* on full PUB, drop oldest not newest
++++ What's Missing from 0MQ
 
 * Multicast
 - unbreak PGM
@@ -115,9 +29,7 @@ Writing bridges
 - upstreaming of subscriptions/unsubs
 - timeouts for receiver missing?
 - persistence & reliability
-
 Change proposals
-
 - defaults for identity are to crash the publisher
-
 --]
+

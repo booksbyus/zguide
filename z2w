@@ -34,7 +34,10 @@ while (<>) {
             print WDTEMP "$_\n";
             last if /\[\[\/code\]\]/;
         }
-        print WDTEMP " >> [*http://www.zeromq.org/code:$name See'$title' in other languages...]\n";
+        print WDTEMP "[[>]]\n";
+        print WDTEMP "[*http://www.zeromq.org/code:$name See '$title' in other languages...]\n";
+        print WDTEMP "[[/>]]\n";
+        #   Tell user about the source block
         print "http://www.zeromq.org/code:$name - $title\n";
     }
     elsif ($_ eq "[[code type=\"textdiagram\"]]") {
@@ -48,6 +51,7 @@ while (<>) {
             print IMAGES "$_\n";
         }
         print IMAGES "</pre>\n";
+        #   Link to resource in git, nice way to upload images
         print WDTEMP "[[=image http://github.com/imatix/0MQGuide/raw/master/images/fig$image.png]]\n";
     }
     else {

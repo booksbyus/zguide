@@ -2,7 +2,7 @@ The Guide is written by Pieter Hintjens, with help from Martin Sustrik, Gonzalo 
 
 [[include :csi:include:css-brackets]]
 
-++ Basic Stuff
+++ Chapter 1 - Basic Stuff
 
 +++ Fixing the World
 
@@ -32,9 +32,9 @@ It sounds ridiculously simple.  And maybe it is.  That's kind of the whole point
 
 0MQ (ZeroMQ, 0\MQ, zmq) looks like an embeddable networking library but acts like a concurrency framework.  It gives you sockets that carry whole messages across various transports like in-process, inter-process, TCP, and multicast.  You can connect sockets N-to-N with patterns like fanout, pubsub, task distribution, and request-reply.  It's fast enough to be the fabric for clustered products.  Its asynchronous I/O model gives you scalable multicore applications, built as asynchronous message-processing tasks.  It has a score of language APIs and runs on most operating systems.  0MQ is from [http://www.imatix.com iMatix] and is LGPL open source.
 
-+++ Assumptions
++++ Some Assumptions
 
-We assume you are using the latest release of 0MQ, or even the current git master.  We assume you are using a Linux box or something similar.  We assume you can read C code, more or less.
+We assume you are using the latest release of 0MQ, or even the current git master.  We assume you are using a Linux box or something similar.  We assume you can read C code, more or less.  We assume that when we write constants like PUSH or SUBSCRIBE you can imagine they are really called ZMQ_PUSH or ZMQ_SUBSCRIBE if the programming language needs it.
 
 +++ Ask and Ye Shall Receive
 
@@ -314,24 +314,28 @@ There's no start, and no end to this stream of updates, it's like a never ending
                   +-------------+
                   |     PUB     |
                   \-------------/
+                       bind
                          |
-                      update
+                         |
+                      updates
                          |
          +---------------+---------------+
          |               |               |
-      update          update          update
+      updates         updates         updates
+         |               |               |
          |               |               |
          v               v               v
-   /------------\  /------------\  /------------\
-   |    SUB     |  |    SUB     |  |    SUB     |
-   +------------+  +------------+  +------------+
-   |            |  |            |  |            |
-   | Subscriber |  | Subscriber |  | Subscriber |
-   |            |  |            |  |            |
-   +------------+  +------------+  +------------+
+     connect         connect         connect
+  /------------\  /------------\  /------------\
+  |    SUB     |  |    SUB     |  |    SUB     |
+  +------------+  +------------+  +------------+
+  |            |  |            |  |            |
+  | Subscriber |  | Subscriber |  | Subscriber |
+  |            |  |            |  |            |
+  +------------+  +------------+  +------------+
 
 
-     Figure # - Publish-Subscribe
+           Figure # - Publish-Subscribe
 [[/code]]
 
 Here is client application, which listens to the stream of updates and grabs anything to do with a specified zipcode, by default New York City because that's a great place to start any adventure:
@@ -384,7 +388,21 @@ int main (int argc, char *argv[])
 }
 [[/code]]
 
-The client subscribes to its chosen zipcode and collects a thousand updates for that zipcode.  That means about ten million updates from the server, if zipcodes are randomly distributed.  You can start the client, and then the server, and the client will keep working. You can stop and restart the server as often as you like, and the client will keep working.  When the client has collected its thousand updates, it calculates the average, prints it, and exits.
+Note that when you use a SUB socket you **must** set a filter using zmq_setsockopt(3) and SUBSCRIBE, as in this code.  If you don't set any filter, you won't get any messages.  It's a common mistake for beginners.  The subscriber can set many filters, which are added together.  That is, if a update matches ANY filter, the subscriber receives it.  The subscriber can also unsubscribe specific filters.  Filters are binary.  See zmq_setsockopt(3) for how this works.
+
+So the client subscribes to its chosen zipcode and collects a thousand updates for that zipcode.  That means about ten million updates from the server, if zipcodes are randomly distributed.  You can start the client, and then the server, and the client will keep working. You can stop and restart the server as often as you like, and the client will keep working.  When the client has collected its thousand updates, it calculates the average, prints it, and exits.
+
+This is how long it takes to receive and filter 10M messages on my box, which is an Intel 4 core Q8300, fast but nothing special:
+
+[[/code]]
+ph@ws200901:~/work/git/0MQGuide/examples/c$ time wuclient
+Collecting updates from weather server...
+Average temperature for zipcode '10001 ' was 18F
+
+real    0m5.939s
+user    0m1.590s
+sys     0m2.290s
+[[/code]]
 
 +++ Divide and Conquer
 
@@ -546,8 +564,7 @@ int main (int argc, char *argv[])
         t.tv_nsec = workload * 1000000;
         zmq_msg_close (&message);
 
-        //  Do the work
-        nanosleep (&t, NULL);
+        nanosleep (&t, NULL);   //  Do the work
 
         //  Send results to sink
         zmq_msg_init (&message);
@@ -644,6 +661,29 @@ Let's look at some aspects of this code in more detail:
 * We have to synchronize the start of the batch with all workers being up and running.  This is a fairly common gotcha in 0MQ and there is no easy solution.  The 'connect' method takes a certain time.  So when a set of workers connect to the ventilator, the first one to successfully connect will get a whole load of messages in that short time while the others are also connecting.  If you don't synchronize the start of the batch somehow, the system won't run in parallel at all.  Try removing the wait, and see.
 
 * The ventilator's PUSH socket distributes tasks to workers (assuming they are all connected //before// the batch starts going out) evenly.  This is called //load-balancing// and it's something we'll look at again in more detail.
+
+* The sink's PULL socket collects results from workers evenly.  This is called //fair-queuing//:
+
+[[code type="textdiagram"]]
+  +---------+   +---------+   +---------+
+  |  PUSH   |   |  PUSH   |   |  PUSH   |
+  \---------/   \---------/   \---------/
+       |             |             |
+   R1, R2, R3       R4           R5, R6
+       |             |             |
+       +-------------+-------------+
+                     |
+               fair-queuing
+           R1, R4, R5, R2, R6, R3
+                     |
+                     v
+              /-------------\
+              |     PULL    |
+              +-------------+
+
+
+          Figure # - Fair queuing
+[[/code]]
 
 +++ Why We Needed 0MQ
 
@@ -780,11 +820,11 @@ As the clients run, we take a look at the active processes using 'top', and we s
  7965 ph        20   0 33116 1784 1372 S    6  0.0   0:00.47 wuclient
  7964 ph        20   0 33116 1788 1372 S    5  0.0   0:00.25 wuclient
  7967 ph        20   0 33072 1740 1372 S    5  0.0   0:00.35 wuclient
-[/code]]
+[[/code]]
 
 Let's think for a second about what is happening here.  The weather server has a single socket, and yet here we have it sending data to five clients in parallel.  We could have thousands of concurrent clients.  The server application doesn't see them, doesn't talk to them directly.
 
-+++ Warning!
++++ Warning - Unstable Paradigms!
 
 Traditional network programming is built on the general assumption that one socket talks to one connection, one peer.  There are multicast protocols but they are exotic.  When we assume "one socket = one connection", we scale our architectures in certain ways.  We create threads of logic where each thread work with one socket, one peer.  We place intelligence and state in these threads.
 

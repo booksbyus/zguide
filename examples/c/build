@@ -3,7 +3,9 @@
 #   Examples build helper
 #   Syntax: build all | clean
 #
-MAIN="hwclient hwserver mtserver wuserver wuclient wuproxy taskvent taskwork tasksink msreader taskwork2 tasksink2"
+MAIN="hwclient hwserver mtserver wuserver wuclient wuproxy taskvent"
+MAIN="$MAIN taskwork tasksink msreader mspoller taskwork2 tasksink2"
+MAIN="$MAIN rrbroker msgqueue"
 
 if [ /$1/ = /all/ ]; then
     echo "Building C examples..."

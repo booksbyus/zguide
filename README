@@ -1,6 +1,16 @@
 The Guide is written by Pieter Hintjens, with help from Martin Sustrik, Gonzalo
 Diethelm, Zed Shaw, CAF, Guido Goldstein, Oliver Smith,  Pierre Rouleau, Peter
-Alexander, and others.  We cover 0MQ version 2.x.  Please do not edit this page
-directly, but instead add errata and suggestions to
+Alexander, and others.  We cover 0MQ version 2.x.Add errata and suggestions to
 http://www.zeromq.org/docs:user-guide-talk or as patches off this git emailed to
-ph@imatix.com.  The diagrams are built using ditaa.
+ph@imatix.com.
+
+To build the Guide you need Ditaa (included in this repository), ImageMagick, perl.
+Run the command: "zmq chapter*.txt".  The result is in wdtemp.txt.
+
+Currently, formats the output for Wikidot.com, ready for pasting into a page at
+www.zeromq.org.  Images are hosted here at github.com and to modify an image you
+must commit it to this repository.
+
+
+
+

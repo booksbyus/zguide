@@ -1,25 +1,64 @@
-++ The 0MQ Transports
+++ Chapter 3 - Advanced Stuff
 
-+++ In-Process Communication
+We continue the style of chapter 2 by developing useful mini-applications and each time exploring new aspects of 0MQ in the process.
 
-+++ Inter-Process Communication
++++ Custom Load-Balancing
 
-+++ TCP Unicast
+We'll look at another supercomputing scenario, where we want to distribute tasks to workers.  However we don't want to use round-robin, we want to use a least-recently used algorith.  Our application consists of:
 
-+++ UDP Unicast
+* A ventilator, which has two threads:
+ * One thread creates tasks and sends them to the second thread via a PUSH socket
+ * The second thread manages two sockets, a PULL socket talking to the first thread and a REP socket talking to workers
+* Workers, which connect to the ventilator's REP socket
 
-+++ Reliable Multicast (PGM)
+The workers signal 'ready' by sending an empty message to the ventilator.  The ventilator pops the next task and replies with that.
 
-+++ Embedded Reliable Multicast (EPGM)
++++ Stateful Publish-Subscribe
+
+We'll look at the common question of getting a consistent state across a set of subscribers that come and go at any time.  We will build a simple distributed cache:
+
+* We have a set of peers that each hold a copy of the cache
+* Any peer can update its copy of the cache at any time
+* Updates are published to all other peers
+* A peer can join the network at any time, and get the cache state
+
+I'll leave the design for later.  We'll need a forwarder to act as stable location in the network.  Should be fun!
+
++++ Reliable Request-Reply
+
+We'll create a reliable request-reply application that uses XREQ and XREP and a simple resend mechanism.  When this works between two peers we'll show how it scales across a request-reply broker to effectively create edge-to-edge reliability.  We'll also open up the message format for request-reply and explore identities in horrible detail.
+
++++ Failover and Recovery
+
+We'll look at how to handle crashes in a distributed architecture.  For each pattern there is an ideal architecture, and we'll explore each of these with worked examples.
+
++++ Encrypted Publish-Subscribe
+
+We'll look at how to secure pubsub data against snooping.  The actual technique involves out-of-band exchange of keys, symmetric encryption, and a broker that helps the thing along.  Hopefully all fairly easy to make, as usual, using 0MQ.
+
++++ Building a Multicast Bus
+
+We'll now look at how the pgm: and epgm: protocols work.  With pgm:, the network switch basically acts as a hardware FORWARDER device.
+
++++ A Clock Device
+
+We'll look at various ways of building a timer into a network.   A clock device sends out a signal (a message) at more or less precise intervals so that other nodes can use these signals for internal timing.
+
++++ Building Bridges
+
+zmq_poll(3) lets you mix ZMQ sockets and native system sockets, which is very useful if you have to resort to actual TCP for something, e.g.
+briding an existing TCP protocol with 0MQ.  We'll build a couple of bridges.
+
++++ Writing a Reactor
+
+In this section we'll build a simple reactor framework that turns the zmq_poll(3) function inside out into an event-driven framework.
+
++++ Exotic Devices
+
+Now we'll use the reactor to build some exotic devices.  It should be much easier and readable than using zmq_poll.
 
 
 [!--
-
-- inproc://name
- - connects two threads in a single process
- - supports all messaging patterns
- - typical use case is for multithreading apps
-
 - ipc://name
  - connects two processes on a single box
  - supports all messaging patterns
@@ -32,7 +71,6 @@
 > creates and binds the socket in that folder, and then chmod 777's it. The
 > server must be run as root (which is fine for my project luckily). If it is
 > run as a normal user, the client's still timeout.
-
 
 - tcp://ipaddress:port
  - bind to address:port
@@ -60,51 +98,13 @@
  - does not require root access
  - non-standard to pgm
 
+- add peer example
+   - exclusive lock on peer
+   - for owning other party
+   - solve reverse connection
+ - e.g. to cross firewall
+ - you need to add a bind to allow the client to accept a connection
+ - could be usecase for EXCLUSIVE socket
+
+
 --]
-
-++ The Programming Languages
-
-For each language:
-
-* How to install
-* Syntax notes
-* Example of request-reply
-* Error handling
-* Online resources
-
-[!--
-- one section per language, perhaps server/client demo
---]
-
-+++ Ada
-+++ Basic
-+++ C
-+++ C++
-+++ C#
-+++ Common Lisp
-+++ Erlang
-+++ Go
-+++ Haskell
-+++ Java
-+++ Lua
-+++ Objective-C
-+++ ooc
-+++ Perl
-+++ PHP
-+++ Python
-+++ Ruby
-
-
-++ The Operating Systems
-
-+++ Linux
-+++ Windows
-
-- use zmq_errno
-
-+++ AIX
-+++ Solaris
-+++ Max OS X
-+++ OpenVMS
-+++ Others
-
