@@ -44,6 +44,10 @@ We'll now look at how the pgm: and epgm: protocols work.  With pgm:, the network
 
 We'll look at various ways of building a timer into a network.   A clock device sends out a signal (a message) at more or less precise intervals so that other nodes can use these signals for internal timing.
 
++++ A Logging Device
+
+We'll look at a device that acts as a remote logger.
+
 +++ Building Bridges
 
 zmq_poll(3) lets you mix ZMQ sockets and native system sockets, which is very useful if you have to resort to actual TCP for something, e.g. bridging an existing TCP protocol with 0MQ.  We'll build a couple of bridges.

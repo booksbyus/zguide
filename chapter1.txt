@@ -390,6 +390,8 @@ int main (int argc, char *argv[])
 
 Note that when you use a SUB socket you **must** set a filter using zmq_setsockopt(3) and SUBSCRIBE, as in this code.  If you don't set any filter, you won't get any messages.  It's a common mistake for beginners.  The subscriber can set many filters, which are added together.  That is, if a update matches ANY filter, the subscriber receives it.  The subscriber can also unsubscribe specific filters.  Filters are binary.  See zmq_setsockopt(3) for how this works.
 
+[!--TODO explain about message loss in pubsub scenarios --]
+
 So the client subscribes to its chosen zipcode and collects a thousand updates for that zipcode.  That means about ten million updates from the server, if zipcodes are randomly distributed.  You can start the client, and then the server, and the client will keep working. You can stop and restart the server as often as you like, and the client will keep working.  When the client has collected its thousand updates, it calculates the average, prints it, and exits.
 
 This is how long it takes to receive and filter 10M messages on my box, which is an Intel 4 core Q8300, fast but nothing special:

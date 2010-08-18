@@ -1,0 +1,18 @@
+{
+    "Device configuration": {
+        "type": "queue",
+        "iothreads": 1,
+        "frontend": {
+            "bind": [ "tcp://*:5555", "inproc://mydevice" ],
+            "connect": [ ],
+            "options": {
+                "hwm": 1000,
+                "subscribe": [ "coffee", "tea", "juice" ]
+            }
+        },
+        "backend": {
+            "bind": [ ],
+            "connect": [ "tcp://localhost:5556" ]
+        }
+    }
+}

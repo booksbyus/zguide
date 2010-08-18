@@ -1,4 +1,4 @@
-++ Chapter 2 - Intermediate Stuff
+    ++ Chapter 2 - Intermediate Stuff
 
 +++ The Zen of Zero
 
@@ -426,7 +426,7 @@ Some things to know about multipart messages:
 
 In C, assertions stop the application immediately with an error.  In other languages you may get exceptions or halts.
 
-External faults return errors to the caller, or in some rare cases drop messages silently.  In most of the C examples so far there's been no error handling.  **Realistic programs should do error handling on every single 0MQ call**.  If you're using a language binding other than C, the binding may handle errors for you.  In C you do need to do this yourself.  There are some simple rules, starting with POSIX conventions:
+External faults return errors to the caller, or in some rare cases drop messages silently.  In most of the C examples so far there's been no error handling.  **Real code should do error handling on every single 0MQ call**.  If you're using a language binding other than C, the binding may handle errors for you.  In C you do need to do this yourself.  There are some simple rules, starting with POSIX conventions:
 
 * Methods that create objects will return NULL in case they fail.
 * Other methods will return 0 on success and other values (mostly -1) on an exceptional condition (usually failure).
@@ -739,7 +739,7 @@ And then we stretch the application across a wider network, placing devices in s
 * May in complex cases work with three or more sockets.
 * Run as stand-alone processes or within threads.
 
-Devices are confusing to the new 0MQ user, and the best way as always is to look at real code and see how it works.
+Devices are a confusing concept to the new 0MQ user, and the best way as always is to look at real use cases and see how we solve them.
 
 ++++ A Publish-Subscribe Proxy Server
 
@@ -1138,10 +1138,7 @@ int main (int argc, char *argv[])
 }
 [[/code]]
 
-There are some pros and cons to the built-in devices:
-
-* They do proper error handling, whereas the examples we have shown don't.
-* STREAMER and FORWARDER are not currently multipart-safe.
+The built-in devices do proper error handling, whereas the examples we have shown don't.  So
 
 ++++ Patience is Power
 
