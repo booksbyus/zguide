@@ -1,4 +1,10 @@
-The Guide is written by Pieter Hintjens, with help from Martin Sustrik, Gonzalo Diethelm, Zed Shaw, CAF, Guido Goldstein, Oliver Smith,  Pierre Rouleau, Peter Alexander, and others.  We cover 0MQ version 2.x.  Please do not edit this page directly, but instead add errata and suggestions to the [/docs:user-guide-talk talk page] or as patches off [http://github.com/imatix/0MQGuide this git] emailed to ph@imatix.com.  The diagrams are built using ditaa.
+.-  Instructions for z2w
+.set GIT=http://github.com/imatix/zguide
+.set BRANCH=master
+.set SELF=docs:user-guide
+.set EMAIL=zeromq-dev@lists.zeromq.org
+.-
+The Guide is written by Pieter Hintjens, with help from Martin Sustrik, Gonzalo Diethelm, Zed Shaw, CAF, Guido Goldstein, Oliver Smith,  Pierre Rouleau, Peter Alexander, and others.  We cover 0MQ version 2.x.  Please do not edit this page directly, but instead add errata and suggestions to the [/$(SELF)-talk talk page] or as patches off [$(GIT) this git] emailed to $(EMAIL).  The diagrams are built using ditaa.  This version was published on &date("ddd d mmmm, yyyy") at &time().
 
 [[include :csi:include:css-brackets]]
 
@@ -161,7 +167,7 @@ Here is client application, which listens to the stream of updates and grabs any
 [[code type="C" title="Weather update client" name="wuclient"]]
 [[/code]]
 
-Note that when you use a SUB socket you **must** set a filter using zmq_setsockopt(3) and SUBSCRIBE, as in this code.  If you don't set any filter, you won't get any messages.  It's a common mistake for beginners.  The subscriber can set many filters, which are added together.  That is, if a update matches ANY filter, the subscriber receives it.  The subscriber can also unsubscribe specific filters.  Filters are binary.  See zmq_setsockopt(3) for how this works.
+Note that when you use a SUB socket you **must** set a filter using zmq_setsockopt[3] and SUBSCRIBE, as in this code.  If you don't set any filter, you won't get any messages.  It's a common mistake for beginners.  The subscriber can set many filters, which are added together.  That is, if a update matches ANY filter, the subscriber receives it.  The subscriber can also unsubscribe specific filters.  Filters are binary.  See zmq_setsockopt[3] for how this works.
 
 There is one important thing to know about PUB/SUB sockets: you do not know precisely when the subscriber starts to get messages.  Even if you start the subscriber, wait a while, and then start the publisher, the subscriber will usually miss a few of the first messages that the publisher sends.  This is because as the subscriber connects to the publisher (something that takes a small but non-zero time), the publisher may already be sending messages out.
 
@@ -404,7 +410,7 @@ Specifically:
 * It handles network errors intelligently.  Sometimes it retries, sometimes it tells you an operation failed.
 * It reduces your carbon footprint.  Doing more with less CPU means your boxes use less power, and you can keep your old boxes in use for longer. Al Gore would love 0MQ.
 
-Actually 0MQ does rather more than this.  It has a subversive effect on how you develop network-capable applications.  Superficially it's just a socket API on which you do zmq_recv(3) and zmq_send(3).  But message processing rapidly becomes the central loop, and your application soon breaks down into a set of message processing tasks.  It is elegant and natural.  And it scales: each of these tasks maps to a node, and the nodes talk to each other across arbitrary transports.  Two nodes in one process (node is a thread), two nodes on one box (node is a process), two boxes on one network (node is a box). With no application code changes.
+Actually 0MQ does rather more than this.  It has a subversive effect on how you develop network-capable applications.  Superficially it's just a socket API on which you do zmq_recv[3] and zmq_send[3].  But message processing rapidly becomes the central loop, and your application soon breaks down into a set of message processing tasks.  It is elegant and natural.  And it scales: each of these tasks maps to a node, and the nodes talk to each other across arbitrary transports.  Two nodes in one process (node is a thread), two nodes on one box (node is a process), two boxes on one network (node is a box). With no application code changes.
 
 +++ Socket Scalability
 
