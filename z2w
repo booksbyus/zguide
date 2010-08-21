@@ -11,9 +11,8 @@
 #   Images are stored in the github repository at
 #   http://github.com/imatix/0MQGuide.
 #
+require 'sflcvdp.pl';                   #   SFL date picture formatting
 
-$git = "http://github.com/imatix/zguide";
-$branch = "master";
 @languages = ('Ada', 'Basic', 'C', 'C++', 'C#', 'Common Lisp', 'Erlang',
               'Go', 'Haskell', 'Java', 'Lua', 'Objective-C', 'ooc',
               'Perl', 'PHP', 'Python', 'Ruby');
@@ -35,11 +34,6 @@ $branch = "master";
               'Python' => 'py',
               'Ruby' => 'rb' );
 
-sub get_filename {
-    local ($name, $language) = @_;          #   Get arguments
-    return "examples/$language/$name.$extension{$language}";
-}
-
 #   Ensure all languages have an examples directory
 foreach (@languages) {
     if (!-d "examples/$_") {
@@ -58,16 +52,39 @@ die "Can't create wdtemp.txt: $!"
 die "Can't create images.html: $!"
     unless open (IMAGES, ">images.html");
 
-print WDTEMP "[!-- Generated documentation file, do not edit --]\n";
+writeln ('[!-- Generated documentation file, do not edit --]');
 print IMAGES "<html>\n";
 
 while (<>) {
     chop;
-    if (/\[\[code type=\"(.+)\" title=\"(.+)\" name=\"(.+)\"\]\]/) {
+    if (/^\./) {
+        #   Process directive
+        if (/^\.set\s+(\w+)=(.*)/) {
+            $symbols {$1} = $2;
+        }
+        elsif (/^\.\-/) {
+            #   Comment, ignore
+        }
+        else {
+            print "Illegal directive $_ at line $.\n";
+        }
+    }
+    elsif (/^\+\+/) {
+        writeln ('[[div style="overflow:hidden"]]');
+        writeln ('[[div style="float:left"]]');
+        writeln ($_);
+        writeln ("[[/div]]");
+        writeln ('[[div style="float:right; vertical-align:middle"]]');
+        writeln ("[/$symbols{SELF}# ↑top]");
+        writeln ("[[/div]]");
+        writeln ("[[/div]]");
+    }
+    #  Process named codeblock
+    elsif (/\[\[code type=\"(.+)\" title=\"(.+)\" name=\"(.+)\"\]\]/) {
         $type = $1;
         $title = $2;
         $name = $3;
-        print WDTEMP "$_\n";
+        writeln ($_);
 
         #   Discard any real contents of code block
         while (<>) {
@@ -80,12 +97,17 @@ while (<>) {
         print WDTEMP $_
             while <SOURCE>;
         close (SOURCE);
-        print WDTEMP "[[>]]\n";
-        print WDTEMP "[[collapsible show=\"All languages\" hide=\"Hide languages\"]]\n";
+        writeln ('[[/code]]');
+        writeln ('[[>]]');
+        writeln ('[[collapsible show="All languages" hide="Hide languages"]]');
 
         foreach (@languages) {
             $filename = get_filename ($name, $_);
-            print WDTEMP "* [*$git/blob/$branch/$filename $title in $_]\n";
+            $url = "$symbols{GIT}/blob/$symbols{BRANCH}/$filename";
+            $url =~ s/ /%20/g;
+            $url =~ s/#/%23/g;
+            $url =~ s/\+/%2B/g;
+            writeln ("[*$url $_]");
 
             #   Create empty example if necessary
             if (!-f $filename) {
@@ -96,14 +118,22 @@ No-one has translated the $name example into $_ yet.  Be the first to create
 $name in $_ and get one free Internet!  If you're the author of the $_
 binding, this is a great way to get people to use 0MQ in $_.
 
-To submit a translation, just email it to zeromq-dev@lists.zeromq.org.
+To submit a translation, just email it to $(EMAIL).
 Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
 EOF
                 close (SOURCE);
             }
         }
-        print WDTEMP "[[/collapsible]]\n";
-        print WDTEMP "[[/>]]\n";
+        writeln ('[[/collapsible]]');
+        writeln ('[[/>]]');
+    }
+    #  Process plain code block
+    elsif (/\[\[code\]\]/) {
+        writeln ($_);
+        while (<>) {
+            writeln ($_);
+            last if /\[\[\/code\]\]/;
+        }
     }
     elsif ($_ eq "[[code type=\"textdiagram\"]]") {
         #   Text diagram
@@ -117,19 +147,13 @@ EOF
         }
         print IMAGES "</pre>\n";
         #   Link to resource in git, nice way to upload images
-        print WDTEMP "[[=image $git/raw/$branch/images/fig$image.png]]\n";
+        writeln ("[[=image $symbols{GIT}/raw/$symbols{BRANCH}/images/fig$image.png]]");
     }
     else {
         #   Normal text
         s/0MQ/ØMQ/g;
         s/0\\MQ/0MQ/g;
-        $remainder = $_;
-        while ($remainder =~ /zmq_([^(]+)\(3\)/) {
-            print WDTEMP $`;
-            print WDTEMP "[http://api.zeromq.org/zmq_$1.html zmq_$1(3)]";
-            $remainder = $';
-        }
-        print WDTEMP $remainder."\n";
+        writeln ($_);
     }
 }
 print IMAGES "</html>\n";
@@ -142,3 +166,295 @@ system ("java -jar ditaa0_9.jar images.html -o -h -E output.html");
 system ("mogrify -trim images/*.png");
 system ("mogrify -trim images/*.png");
 system ("rm output.html images.html");
+
+exit (0);
+
+
+#   Writes $_ to WDTEMP after expanding all symbols
+
+sub writeln {
+    local ($_) = @_;
+    $_ = expand_symbols ($_);
+    print WDTEMP "$_\n";
+}
+
+sub get_filename {
+    local ($name, $language) = @_;          #   Get arguments
+    return "examples/$language/$name.$extension{$language}";
+}
+
+
+#-- Symbol expansion code, taken from htmlpp
+
+#   Recursively expand symbols like this (and in this order):
+#
+#   $(xxx)                  - value of variable
+#   $(xxx?zzz)              - value of variable, or zzz if undefined
+#   %(text?zzz)             - value of environment variable, or zzz if undef
+#   &abc(text)              - intrinsic function with arguments
+#   zmq_zzz[n]              - link to 0MQ reference manual page
+#
+sub expand_symbols {
+    local ($_) = @_;
+    local ($before,
+           $match,
+           $after,
+           $expr);
+
+    return unless ($_);                 #   Quit if input string is empty
+    for (;;) {
+        #   Force expansion from end of string first, so things like
+        #   $(xxx?$(yyy)) work properly.
+        if (/[\$%]\(/ || /\&([a-z_]+)\s*\(/i) {
+            $before = $`;
+            $match  = $&;
+            $after  = expand_symbols ($');
+            $_ = $before.$match.$after;
+        }
+        #   $(xxx)
+        if (/\$\(([A-Za-z0-9-_\.]+)\)/) {
+            $_ = $`.&valueof ($1).$';
+        }
+        #   $(xxx?zzz)
+        elsif (/\$\(([A-Za-z0-9-_\.]+)\?([^)\$]*)\)/) {
+            $_ = $`.&valueof ($1, $2).$';
+        }
+        #   %(text)
+        elsif (/\%\(([^\)]+)\)/) {
+            $_ = $`.$ENV {$1}.$';
+        }
+        #   %(text?zzz)
+        elsif (/\%\(([^\)]+)\?([^)\$]*)\)/) {
+            $_ = $`.($ENV {$1}? $ENV {$1}: $2).$';
+        }
+        #   &abc(text)
+        elsif (/\&([a-z_]+)\s*\(([^\)]*)\)/i) {
+            $funct = $1;
+            $args = $2;
+            $before = $`;
+            $after = $';
+            $args =~ s/\\/\\\\/g;
+            $_ = eval ("&intrinsic_$funct ($args)");
+            $_ = $before.$_.$after;
+            if ($@) {                   #   Syntax error in Perl statement?
+                &syntax_error ("$function is not a valid intrinsic function")
+                    unless $nofunc_mode;
+                last;
+            }
+        }
+        elsif (/zmq_([\w_]+)\[(.)\]/) {
+            $_ = $`."[http://api.zeromq.org/zmq_$1.html zmq_$1($2)]".$';
+        }
+        else {
+            last;
+        }
+    }
+    return $_;
+}
+
+
+#   Subroutine returns the value of the specified symbol; it issues a
+#   warning message and returns 'UNDEF' if the symbol is not defined
+#   and the default value is empty.
+#
+sub valueof {
+    local ($symbol, $default) = @_;     #   Argument is symbol name
+    local ($return);                    #   Returned value
+    local ($langed_symbol);             #   Language-dependent symbol
+
+    if (defined ($symbols {$symbol})) {
+        $return = $symbols {$symbol};
+        return $return;
+    }
+    elsif (defined ($default)) {
+        return ($default);
+    }
+    &error ("$_");
+    &error ("($.) undefined symbol \"$symbol\"");
+    $default_warning == 1 || do {
+        &error ("I: Use \$($symbol?default) for default values.");
+        $default_warning = 1;
+    };
+    $symbols {$symbol} = "UNDEF";
+    return $symbols {$symbol};
+}
+
+
+#   INTRINSIC FUNCTIONS
+#
+#   time()                     - Format current time as hh:mm:ss
+#   date()                     - Return current date value
+#   date("picture")            - Format current date using picture
+#   date("picture", date, lc)  - Format specified date using picture & language
+#   week_day([date])           - Get day of week, 0=Sunday to 6=Saturday
+#   year_week([date])          - Get week of year, 1 is first full week
+#   julian_date([date])        - Get Julian date for date
+#   lillian_date([date])       - Get Lillian date for date
+#   date_to_days(date)         - Convert yyyymmdd to Lillian date
+#   days_to_date(days)         - Convert Lillian date to yyyymmdd
+#   future_date(days[,date])   - Calculate a future date
+#   past_date(days[,date])     - Calculate a past date
+#   date_diff(date1[,date2])   - Calculate date1 - date2
+#   image_height("image.ext")  - Get image height (GIF, JPEG)
+#   image_width("image.ext")   - Get image width (GIF, JPEG)
+#   file_size("filename",arg)  - Get size of file: optional arg K or M
+#   file_date("filename")      - Get date of file
+#   file_time("filename")      - Get time of file as hh:mm:ss
+#   normalise("filename")      - Normalise filename to UNIX format
+#   system("command")          - Call a system utility
+#   lower("string")            - Convert string to lower case
+#   upper("string")            - Convert string to upper case
+#
+
+sub intrinsic_date {
+    local ($picture, $value, $language) = @_;
+    $value = &date_now unless $value;
+    $language = $symbols{LANG} unless $language;
+    if ($picture) {
+        return (&conv_date_pict ($value, $picture, $language));
+    }
+    else {
+        return ($value);
+    }
+}
+
+sub intrinsic_time {
+    local ($sec, $min, $hour, $day, $month, $year) = localtime;
+    return (sprintf ("%2d:%02d:%02d", $hour, $min, $sec));
+}
+
+sub intrinsic_week_day {
+    return (&day_of_week ($_ [0]? $_ [0]: &date_now));
+}
+
+sub intrinsic_year_week {
+    return (&week_of_year ($_ [0]? $_ [0]: &date_now));
+}
+
+sub intrinsic_julian_date {
+    return (&julian_date ($_ [0]? $_ [0]: &date_now));
+}
+
+sub intrinsic_lillian_date {
+    return (&date_to_days ($_ [0]? $_ [0]: &date_now));
+}
+
+sub intrinsic_date_to_days {
+    return (&date_to_days ($_ [0]));
+}
+
+sub intrinsic_days_to_date {
+    return (&days_to_date ($_ [0]));
+}
+
+sub intrinsic_future_date {
+    local ($date) = &future_date ($_ [1], 0, $_ [0], 0);
+    return ($date);
+}
+
+sub intrinsic_past_date {
+    local ($date) = &past_date ($_ [1], 0, $_ [0], 0);
+    return ($date);
+}
+
+sub intrinsic_date_diff {
+    local ($date1, $date2) = @_;
+    $date1 = &date_now unless $date1;
+    $date2 = &date_now unless $date2;
+    local ($days) = &date_diff ($date1, 0, $date2, 0);
+    return ($days);
+}
+
+sub intrinsic_image_height {
+    local ($filename) = @_;
+    if (! -e $filename) {
+        &error ("($.) file not found: \"$filename\"");
+    }
+    else {
+        return (&image_height ($filename));
+    }
+}
+
+sub intrinsic_image_width {
+    local ($filename) = @_;
+    if (! -e $filename) {
+        &error ("($.) file not found: \"$filename\"");
+    }
+    else {
+        return (&image_width ($filename));
+    }
+}
+
+sub intrinsic_file_size {
+    local ($filename, $arg) = @_;
+    local ($size) = (stat ($filename)) [7];
+
+    if (! -e $filename) {
+        &error ("($.) file not found: \"$filename\"");
+    }
+    elsif ($arg eq "K") {
+        $size /= 1024;
+    }
+    elsif ($arg eq "M") {
+        $size /= 1048576;
+    }
+    return (int ($size));
+}
+
+sub intrinsic_file_date {
+    local ($filename) = @_;
+    if (! -e $filename) {
+        &error ("($.) file not found: \"$filename\"");
+    }
+    else {
+        local ($mtime) = (stat ($filename)) [9];
+        local ($sec,$min,$hour,$mday,$mon,$year) = localtime ($mtime);
+        return (($year + 1900) * 10000 + ($mon + 1) * 100 + $mday);
+    }
+}
+
+sub intrinsic_file_time {
+    local ($filename) = @_;
+    if (! -e $filename) {
+        &error ("($.) file not found: \"$filename\"");
+    }
+    else {
+        local ($mtime) = (stat ($filename)) [9];
+        local ($sec,$min,$hour,$mday,$mon,$year) = localtime ($mtime);
+        return (sprintf ("%2d:%02d:%02d", $hour, $min, $sec));
+    }
+}
+
+sub intrinsic_normalise {
+    local ($_) = @_;                    #   Get filename argument
+    s/\\/\//g;                          #   Replace DOS-style \ by /
+    s/\s/_/g;                           #   Replace white space by _
+    return ($_);
+}
+
+sub intrinsic_system {
+    local ($_) = `@_`;
+
+    #   Return all but the last character, which should be a newline
+    chop;
+    return ($_);
+}
+
+sub intrinsic_lower {
+    local ($_) = @_;                    #   Get filename argument
+    tr/A-Z/a-z/;
+    return ($_);
+}
+
+sub intrinsic_upper {
+    local ($_) = @_;                    #   Get filename argument
+    tr/a-z/A-Z/;
+    return ($_);
+}
+
+sub error {
+    ($_) = @_;                          #   Get argument
+    print STDERR "E: $_\n";
+    $have_errors = 1;                   #   We have 1 or more errors
+}
+
