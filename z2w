@@ -11,6 +11,27 @@
 #   Images are stored in the github repository at
 #   http://github.com/imatix/0MQGuide.
 #
+
+$git = "http://github.com/imatix/zguide";
+$branch = "master";
+
+sub get_filename {
+    local ($name, $type) = @_;          #   Get arguments
+    if ($type eq "c") {
+        return "examples/c/$name.c";
+    }
+    elsif ($type eq "c++") {
+        return "examples/c++/$name.cpp";
+    }
+    elsif ($type eq "python") {
+        return "examples/python/$name.py";
+    }
+    else {
+        print "Unknown type $type for $name\n";
+        exit (1);
+    }
+}
+
 if (!open (WDTEMP, ">wdtemp.txt")) {
     print "Can't create wdtemp.txt: $!\n";
     exit (1);
@@ -25,20 +46,29 @@ print IMAGES "<html>\n";
 
 while (<>) {
     chop;
-    if (/\[\[code type=\"c\" title=\"(.+)\" name=\"(.+)\"\]\]/) {
-        $title = $1;
-        $name = $2;
+    if (/\[\[code type=\"(.+)\" title=\"(.+)\" name=\"(.+)\"\]\]/) {
+        $type = $1;
+        $title = $2;
+        $name = $3;
         print WDTEMP "$_\n";
+
+        #   Discard any real contents of code block
         while (<>) {
-            chop;
-            print WDTEMP "$_\n";
             last if /\[\[\/code\]\]/;
+            print "W: discarding $type code for $name\n";
         }
+        $filename = get_filename ($name, $type);
+        if (!open (SOURCE, $filename)) {
+            print "Can't open $filename: $!\n";
+            exit (1);
+        }
+        while (<SOURCE>) {
+            print WDTEMP $_;
+        }
+        close (SOURCE);
         print WDTEMP "[[>]]\n";
-        print WDTEMP "[*http://www.zeromq.org/code:$name See '$title' in other languages...]\n";
+        print WDTEMP "[*$git/blob/$branch/$filename Source] | [*$git/tree/$branch/examples Translate]\n";
         print WDTEMP "[[/>]]\n";
-        #   Tell user about the source block
-        print "http://www.zeromq.org/code:$name - $title\n";
     }
     elsif ($_ eq "[[code type=\"textdiagram\"]]") {
         #   Text diagram
@@ -52,7 +82,7 @@ while (<>) {
         }
         print IMAGES "</pre>\n";
         #   Link to resource in git, nice way to upload images
-        print WDTEMP "[[=image http://github.com/imatix/0MQGuide/raw/master/images/fig$image.png]]\n";
+        print WDTEMP "[[=image $git/raw/$branch/images/fig$image.png]]\n";
     }
     else {
         #   Normal text

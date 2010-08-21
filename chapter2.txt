@@ -1,4 +1,4 @@
-    ++ Chapter 2 - Intermediate Stuff
+++ Chapter 2 - Intermediate Stuff
 
 +++ The Zen of Zero
 
@@ -38,6 +38,8 @@ zmq_connect (mousetrap, "tcp://192.168.55.221:5001");
 zmq_msg_t mouse;
 mouse = zmq_msg_init (&mouse);
 zmq_recv (mousetrap, &mouse, 0);
+//  Destroy the mouse
+zmq_close (&mouse);
 
 //  Destroy the socket
 zmq_close (mousetrap);
@@ -258,59 +260,6 @@ The right way is to use zmq_poll(3).  An even better way might be to wrap zmq_po
 Let's start with a dirty hack, partly for the fun of not doing it right, but mainly because it lets me show you how to do non-blocking socket reads.  Here is a simple example of reading from two sockets using non-blocking reads.  This rather confused program acts both as a subscriber to weather updates, and a worker for parallel tasks:
 
 [[code type="c" title="Multiple socket reader" name="msreader"]]
-//
-//  Reading from multiple sockets in C
-//
-#include <zmq.h>
-#include <time.h>
-
-int main (int argc, char *argv[])
-{
-    void *context;          //  ØMQ context for our process
-    void *s1, *s2;
-
-    //  Prepare our context and sockets
-    context = zmq_init (1);
-
-    //  Connect to task ventilator
-    s1 = zmq_socket (context, ZMQ_PULL);
-    zmq_connect (s1, "tcp://localhost:5557");
-
-    //  Connect to weather server
-    s2 = zmq_socket (context, ZMQ_SUB);
-    zmq_connect (s2, "tcp://localhost:5556");
-    zmq_setsockopt (s2, ZMQ_SUBSCRIBE, "10001 ", 6);
-
-    //  Process messages from both sockets
-    //  We prioritize traffic from the task ventilator
-    while (1) {
-        int rc;
-        struct timespec t;
-        zmq_msg_t message;
-
-        //  Process any waiting tasks
-        for (rc = 0; !rc; ) {
-            zmq_msg_init (&message);
-            if ((rc = zmq_recv (s1, &message, ZMQ_NOBLOCK)) == 0) {
-                //  process task
-            }
-            zmq_msg_close (&message);
-        }
-        //  Process any waiting weather updates
-        for (rc = 0; !rc; ) {
-            zmq_msg_init (&message);
-            if ((rc = zmq_recv (s2, &message, ZMQ_NOBLOCK)) == 0) {
-                //  process weather update
-            }
-            zmq_msg_close (&message);
-        }
-        //  No activity, so sleep for 1 msec
-        t.tv_sec = 0;
-        t.tv_nsec = 1000000;
-        nanosleep (&t, NULL);
-    }
-    return 0;
-}
 [[/code]]
 
 The cost of this approach is some additional latency on the first message (the sleep at the end of the loop, when there are no waiting messages to process).  This would be a problem in applications where sub-millisecond latency was vital.  Also, you need to check the documentation for nanosleep() or whatever function you use to make sure it does not busy-loop.
@@ -320,57 +269,6 @@ You can treat the sockets fairly by reading first from one, then the second rath
 Now let's see the same little senseless application done right, using zmq_poll(3):
 
 [[code type="c" title="Multiple socket poller" name="mspoller"]]
-//
-//  Reading from multiple sockets in C
-//  This version uses zmq_poll()
-//
-#include <zmq.h>
-#include <time.h>
-
-int main (int argc, char *argv[])
-{
-    void *context;          //  ØMQ context for our process
-    void *s1, *s2;
-
-    //  Prepare our context and sockets
-    context = zmq_init (1);
-
-    //  Connect to task ventilator
-    s1 = zmq_socket (context, ZMQ_PULL);
-    zmq_connect (s1, "tcp://localhost:5557");
-
-    //  Connect to weather server
-    s2 = zmq_socket (context, ZMQ_SUB);
-    zmq_connect (s2, "tcp://localhost:5556");
-    zmq_setsockopt (s2, ZMQ_SUBSCRIBE, "10001 ", 6);
-
-    //  Initialize poll set
-    zmq_pollitem_t items [2] = {
-        { s1, 0, ZMQ_POLLIN, 0 },
-        { s2, 0, ZMQ_POLLIN, 0 }
-    };
-    //  Process messages from both sockets
-    while (1) {
-        int rc;
-        struct timespec t;
-        zmq_msg_t message;
-
-        zmq_poll (&items [0], 2, -1);
-        if (items [0].revents & ZMQ_POLLIN) {
-            zmq_msg_init (&message);
-            zmq_recv (s1, &message, 0);
-            //  Process task
-            zmq_msg_close (&message);
-        }
-        if (items [1].revents & ZMQ_POLLIN) {
-            zmq_msg_init (&message);
-            zmq_recv (s2, &message, 0);
-            //  Process weather update
-            zmq_msg_close (&message);
-        }
-    }
-    return 0;
-}
 [[/code]]
 
 +++ Multipart Messages
@@ -413,20 +311,15 @@ Some things to know about multipart messages:
 * On sending, 0MQ queues message parts in memory until the last is received, then sends them all.
 * There is no way to cancel a partially sent message, except by closing the socket.
 
-[!-- TODO
-+++ Managing Queue Overflows
-
-* High Water Mark - with example, and per pattern
-* Swap to Disk - with example
---]
-
 +++ Handling Errors and ETERM
 
 0MQ's error handling philosophy is a mix of fail-fast and resilience.  Processes, we believe, should be as vulnerable as possible to internal errors, and as robust as possible against external attacks and errors.  To give an analogy, a living cell will self-destruct if it detects a single internal error, yet it will resist attack from the outside by all means possible.  Assertions, which pepper the 0MQ code, are absolutely vital to robust code, they just have to be on the right side of the cellular wall.  And there should be such a wall.  If it is unclear whether a fault is internal or external, that is a design flaw that needs to be fixed.
 
 In C, assertions stop the application immediately with an error.  In other languages you may get exceptions or halts.
 
-External faults return errors to the caller, or in some rare cases drop messages silently.  In most of the C examples so far there's been no error handling.  **Real code should do error handling on every single 0MQ call**.  If you're using a language binding other than C, the binding may handle errors for you.  In C you do need to do this yourself.  There are some simple rules, starting with POSIX conventions:
+When 0MQ detects an external faults it returns an error to the calling code.  In some rare cases it drops messages silently, if there is no obvious strategy for recovering from the error.  In a few places 0MQ still asserts on external faults, but these are considered bugs.
+
+In most of the C examples we've seen so far there's been no error handling.  **Real code should do error handling on every single 0MQ call**.  If you're using a language binding other than C, the binding may handle errors for you.  In C you do need to do this yourself.  There are some simple rules, starting with POSIX conventions:
 
 * Methods that create objects will return NULL in case they fail.
 * Other methods will return 0 on success and other values (mostly -1) on an exceptional condition (usually failure).
@@ -437,6 +330,16 @@ There are two main exceptional conditions that you may want to handle as non-fat
 
 * When a thread calls zmq_recv(3) with the NOBLOCK option and there is no waiting data.  0MQ will return -1 and set errno to EAGAIN.
 * When a thread calls zmq_term(3) and other threads are doing blocking work.  The zmq_term(3) call closes the context and all blocking calls exit with -1, and errno set to ETERM.
+
+What this boils down to is that in most cases you can wrap 0MQ calls in assertions, like this:
+
+[[code type="c"]]
+    context = zmq_init (1);
+    assert (context);
+    socket = zmq_socket (context, ZMQ_REP);
+    assert (socket);
+    assert (!zmq_bind (socket, "tcp://*:5555"));
+[[/code]]
 
 Let's see how to shut down a process cleanly.  We'll take the parallel pipeline example from the previous section.  If we've start a whole lot of workers in the background, we now want to kill them when the batch is finished.  Let's do this by sending a kill message to the workers.  The best place to do this is the sink, since it really knows when the batch is done.
 
@@ -515,150 +418,11 @@ It doesn't take much new code in the sink:
 Here is the worker process, which manages two sockets (a PULL socket getting tasks, and a SUB socket getting control commands) using the zmq_poll(3) technique we saw earlier:
 
 [[code type="c" title="Parallel task worker with kill signalling" name="taskwork2"]]
-//
-//  Task worker in C - design 2
-//  Adds pub-sub flow to receive and respond to kill signal
-//
-#include <zmq.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdio.h>
-#include <time.h>
-
-int main (int argc, char *argv[])
-{
-    void *context;          //  ØMQ context for our process
-    void *input, *output;   //  Sockets for input and output
-    void *control;          //  Socket for control input
-
-    //  Prepare our context and sockets
-    context = zmq_init (1);
-
-    input = zmq_socket (context, ZMQ_PULL);
-    zmq_connect (input, "tcp://localhost:5557");
-
-    output = zmq_socket (context, ZMQ_PUSH);
-    zmq_connect (output, "tcp://localhost:5558");
-
-    control = zmq_socket (context, ZMQ_SUB);
-    zmq_connect (control, "tcp://localhost:5559");
-    zmq_setsockopt (control, ZMQ_SUBSCRIBE, "", 0);
-
-    //  Process messages from input and control sockets
-    zmq_pollitem_t items [2] = {
-        { input,   0, ZMQ_POLLIN, 0 },
-        { control, 0, ZMQ_POLLIN, 0 }
-    };
-    //  Process messages from both sockets
-    while (1) {
-        zmq_msg_t message;
-        zmq_poll (&items [0], 2, -1);
-        if (items [0].revents & ZMQ_POLLIN) {
-            zmq_msg_init (&message);
-            zmq_recv (input, &message, 0);
-
-            //  Process task
-            int workload;           //  Workload in msecs
-            struct timespec t;
-            sscanf ((char *) zmq_msg_data (&message), "%d", &workload);
-            t.tv_sec = 0;
-            t.tv_nsec = workload * 1000000;
-
-            nanosleep (&t, NULL);   //  Do the work
-
-            //  Send results to sink
-            zmq_msg_init (&message);
-            zmq_send (output, &message, 0);
-
-            //  Simple progress indicator for the viewer
-            printf (".");
-            fflush (stdout);
-
-            zmq_msg_close (&message);
-        }
-        //  Any waiting control command acts as 'KILL'
-        if (items [1].revents & ZMQ_POLLIN)
-            break;                      //  Exit loop
-    }
-    //  Finished
-    return 0;
-}
 [[/code]]
 
 Here is the modified sink application.  When it's finished collecting results it broadcasts a KILL message to all workers:
 
 [[code type="c" title="Parallel task sink with kill signalling" name="tasksink2"]]
-//
-//  Task sink in C - design 2
-//  Adds pub-sub flow to send kill signal to workers
-//
-#include <zmq.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdio.h>
-#include <time.h>
-#include <sys/time.h>
-
-int main (int argc, char *argv[])
-{
-    void *context;          //  ØMQ context for our process
-    void *input;            //  Socket for input
-    void *control;          //  Socket for worker control
-    int task_nbr;
-    struct timeval
-        tstart, tend, tdiff;
-    int total_msec = 0;     //  Total calculated cost in msecs
-    zmq_msg_t message;
-
-    //  Prepare our context and sockets
-    context = zmq_init (1);
-    input = zmq_socket (context, ZMQ_PULL);
-    zmq_bind (input, "tcp://*:5558");
-
-    control = zmq_socket (context, ZMQ_PUB);
-    zmq_bind (control, "tcp://*:5559");
-
-    //  Wait for start of batch
-    zmq_msg_init (&message);
-    zmq_recv (input, &message, 0);
-    zmq_msg_close (&message);
-
-    //  Start our clock now
-    gettimeofday (&tstart, NULL);
-
-    //  Process 100 confirmations
-    for (task_nbr = 0; task_nbr < 100; task_nbr++) {
-        zmq_msg_init (&message);
-        zmq_recv (input, &message, 0);
-        zmq_msg_close (&message);
-        if ((task_nbr / 10) * 10 == task_nbr)
-            printf (":");
-        else
-            printf (".");
-        fflush (stdout);
-    }
-    //  Calculate and report duration of batch
-    gettimeofday (&tend, NULL);
-
-    if (tend.tv_usec < tstart.tv_usec) {
-        tdiff.tv_sec = tend.tv_sec - tstart.tv_sec - 1;
-        tdiff.tv_usec = 1000000 + tend.tv_usec - tstart.tv_usec;
-    } else {
-        tdiff.tv_sec = tend.tv_sec - tstart.tv_sec;
-        tdiff.tv_usec = tend.tv_usec - tstart.tv_usec;
-    }
-    total_msec = tdiff.tv_sec * 1000 + tdiff.tv_usec / 1000;
-    printf ("Total elapsed time: %d msec\n", total_msec);
-
-    //  Send kill signal to workers
-    zmq_msg_init_data (&message, "KILL", 5, NULL, NULL);
-    zmq_send (control, &message, 0);
-    zmq_msg_close (&message);
-
-    //  Finished
-    sleep (1);              //  Give 0MQ time to deliver
-    return 0;
-}
 [[/code]]
 
 +++ Devilish Devices
@@ -733,7 +497,7 @@ And then we stretch the application across a wider network, placing devices in s
 
 0MQ devices:
 
-* Run without state or persistence (if you are smart).
+* Generally run without state or persistence.
 * Are applications that read and write 0MQ sockets in particular ways.
 * Usually connect one 'frontend' socket to one 'backend' socket.
 * May in complex cases work with three or more sockets.
@@ -748,57 +512,6 @@ It is a common requirement to stretch a publish-subscribe architecture over more
 We're going to write a simple proxy server that sits in between a publisher and a set of subscribers, bridging two networks.  This is perhaps the simplest case of a useful device.  The device has two sockets, a frontend facing subscribers on the external network and a backend facing the internal network, where the weather server is sitting.  It subscribes to the weather service on the backend socket, and republishes its data on the frontend socket:
 
 [[code type="c" title="Weather update proxy" name="wuproxy"]]
-//
-//  Weather proxy device
-//
-#include <zmq.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <unistd.h>
-
-int main (int argc, char *argv[])
-{
-    void *context;          //  ØMQ context for our process
-    void *frontend;         //  Socket facing outside
-    void *backend;          //  Socket facing frontend
-
-    //  This is where the weather server sits
-    char *frontend_endpoint = "tcp://192.168.55.210:5556";
-
-    //  This is our public endpoint for subscribers
-    char *backend_endpoint = "tcp://10.1.1.0:8100";
-
-    //  Prepare our context and sockets
-    context  = zmq_init (1);
-    frontend = zmq_socket (context, ZMQ_SUB);
-    backend  = zmq_socket (context, ZMQ_PUB);
-    zmq_connect (frontend, frontend_endpoint);
-    zmq_bind    (backend,  backend_endpoint);
-
-    //  Subscribe on everything
-    zmq_setsockopt (frontend, ZMQ_SUBSCRIBE, "", 0);
-
-    //  Shunt messages out to our own subscribers
-    while (1) {
-        while (1) {
-            zmq_msg_t message;
-            int64_t more;
-            size_t more_size;
-
-            //  Process all parts of the message
-            zmq_msg_init (&message);
-            zmq_recv (frontend, &message, 0);
-            more_size = sizeof (more);
-            zmq_getsockopt (frontend, ZMQ_RCVMORE, &more, &more_size);
-            zmq_send (backend, &message, more? ZMQ_SNDMORE: 0);
-            zmq_msg_close (&message);
-            if (!more)
-                break;      //  Last message part
-        }
-    }
-    return 0;
-}
 [[/code]]
 
 We call this a //proxy// because it acts as a subscriber to publishers, and acts as a publisher to subscribers. That means you can slot this device into an existing network without affecting it (of course the new subscribers need to know to speak to the proxy).
@@ -935,109 +648,14 @@ When we stretch request-reply, REQ talks to XREP and XREQ talks to REP.  In betw
 The request-reply broker binds to two endpoints, one for clients to connect to (the frontend socket) and one for services to connect to (the backend).  To test this broker, you will want to change your services so they connect to the backend socket.  Here are a Python client and service that show what I mean:
 
 [[code type="python" title="Request-reply client" name="rrclient"]]
-#
-#   Request-reply client in Python
-#   Connects REQ socket to tcp://localhost:5559
-#   Sends "Hello" to server, expects "World" back
-#
-import zmq
-
-#  Prepare our context and sockets
-context = zmq.Context()
-socket = context.socket(zmq.REQ)
-socket.connect("tcp://localhost:5559")
-
-#  Do 10 requests, waiting each time for a response
-for request in range(1,10):
-    socket.send("Hello")
-    message = socket.recv()
-    print "Received reply ", request, "[", message, "]"
 [[/code]]
 
 [[code type="python" title="Request-reply service" name="rrserver"]]
-#
-#   Request-reply service in Python
-#   Connects REP socket to tcp://*:5560
-#   Expects "Hello" from client, replies with "World"
-#
-import zmq
-import time
-
-context = zmq.Context()
-socket = context.socket(zmq.REP)
-socket.connect("tcp://localhost:5560")
-
-while True:
-    message = socket.recv()
-    print "Received request: ", message
-    socket.send("World")
 [[/code]]
 
 And here is the broker, in C.  You will see that it's multipart safe:
 
 [[code type="c" title="Request-reply broker" name="rrbroker"]]
-//
-//  Simple request-reply broker
-//
-#include <zmq.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <unistd.h>
-
-int main (int argc, char *argv[])
-{
-    void *context;          //  ØMQ context for our process
-    void *frontend;         //  Socket facing clients
-    void *backend;          //  Socket facing services
-    int64_t more;           //  Multipart detection
-    size_t more_size;
-
-    //  Prepare our context and sockets
-    context = zmq_init (1);
-    frontend = zmq_socket (context, ZMQ_XREP);
-    backend  = zmq_socket (context, ZMQ_XREQ);
-    zmq_bind (frontend, "tcp://*:5559");
-    zmq_bind (backend,  "tcp://*:5560");
-
-    //  Initialize poll set
-    zmq_pollitem_t items [2] = {
-        { frontend, 0, ZMQ_POLLIN, 0 },
-        { backend,  0, ZMQ_POLLIN, 0 }
-    };
-    //  Switch messages between sockets
-    while (1) {
-        zmq_msg_t message;
-        zmq_poll (&items [0], 2, -1);
-        if (items [0].revents & ZMQ_POLLIN) {
-            while (1) {
-                //  Process all parts of the message
-                zmq_msg_init (&message);
-                zmq_recv (frontend, &message, 0);
-                more_size = sizeof (more);
-                zmq_getsockopt (frontend, ZMQ_RCVMORE, &more, &more_size);
-                zmq_send (backend, &message, more? ZMQ_SNDMORE: 0);
-                zmq_msg_close (&message);
-                if (!more)
-                    break;      //  Last message part
-            }
-        }
-        if (items [1].revents & ZMQ_POLLIN) {
-            while (1) {
-                //  Process all parts of the message
-                zmq_msg_init (&message);
-                zmq_recv (backend, &message, 0);
-                more_size = sizeof (more);
-                zmq_getsockopt (backend, ZMQ_RCVMORE, &more, &more_size);
-                zmq_send (frontend, &message, more? ZMQ_SNDMORE: 0);
-                zmq_msg_close (&message);
-                if (!more)
-                    break;      //  Last message part
-            }
-        }
-    }
-    return 0;
-}
 [[/code]]
 
 Using a request-reply broker makes your client-server architectures easier to scale since clients don't see services, and services don't see clients.  The only stable node is the device in the middle:
@@ -1095,7 +713,7 @@ Using a request-reply broker makes your client-server architectures easier to sc
 
 ++++ Built-in Devices
 
-0MQ provides some built-in devices, though most advanced users write their own devices, which as you've seen is not very hard.  The built-in devices are:
+0MQ provides some built-in devices, though most advanced users write their own devices.  The built-in devices are:
 
 * QUEUE, which is like the request-reply broker.
 * FORWARDER, which is like the pub-sub proxy server.
@@ -1104,41 +722,15 @@ Using a request-reply broker makes your client-server architectures easier to sc
 To start a device, you call zmq_queue(3) and pass it two sockets, one for the frontend and one for the backend:
 
 [[code]]
-    zmq_device (ZMQ_QUEUE, frontend, backend);
+zmq_device (ZMQ_QUEUE, frontend, backend);
 [[/code]]
 
 Which if you start a QUEUE device is exactly like plugging the main body of the request-reply broker into your code at that spot.  You need to create the sockets, bind or connect them, and possibly configure them, before calling zmq_device(3).  It is trivial to do.  Here is the request-reply broker re-written to call QUEUE and rebadged as an expensive-sounding "message queue":
 
 [[code type="c" title="Message queue broker" name="msgqueue"]]
-//
-//  Simple message queuing broker
-//  Same as request-reply broker but using QUEUE device
-//
-#include <zmq.h>
-#include <string.h>
-#include <stdio.h>
-#include <unistd.h>
-
-int main (int argc, char *argv[])
-{
-    void *context;          //  ØMQ context for our process
-    void *frontend;         //  Socket facing clients
-    void *backend;          //  Socket facing services
-
-    //  Prepare our context and sockets
-    context = zmq_init (1);
-    frontend = zmq_socket (context, ZMQ_XREP);
-    backend  = zmq_socket (context, ZMQ_XREQ);
-    zmq_bind (frontend, "tcp://*:5559");
-    zmq_bind (backend,  "tcp://*:5560");
-
-    //  Start built-in device
-    zmq_device (ZMQ_QUEUE, frontend, backend);
-    return 0;
-}
 [[/code]]
 
-The built-in devices do proper error handling, whereas the examples we have shown don't.  So
+The built-in devices do proper error handling, whereas the examples we have shown don't.  Since you can configure the sockets as you need to, before starting the device, it's worth using the built-in devices when you can.
 
 ++++ Patience is Power
 
@@ -1146,11 +738,17 @@ If you're like most 0MQ users, at this stage your mind is starting to think, "wh
 
 The short answer is: don't do it.  The longer answer is: don't do it //yet//.  You can mix socket types but the results are going to be weird.  Some socket types like REQ and REP send multipart data, whereas others do not.  Later on we'll look at exotic devices that do things like connect XREP to XREP.
 
+For now, these are the combinations you should stick to:
+
+* XREP to XREQ for queue devices.
+* SUB to PUB for forwarder devices.
+* PULL to PUSH for streamer devices.
+
 +++ Multithreading with 0MQ
 
 0MQ is perhaps the nicest way ever to write multithreaded applications.  Whereas as 0MQ sockets require some readjustment if you are used to traditional sockets, 0MQ multithreading will take everything you know about writing multithreading applications, throw it into a heap in the garden, pour gasoline over it, and set it alite.
 
-**We don't need mutexes, locks, or any other form of inter-thread communication except messages sent across 0MQ sockets.**
+**We don't use mutexes, locks, or any other form of inter-thread communication except messages sent across 0MQ sockets.**
 
 0MQ uses native OS threads rather than virtual "green" threads.  The advantage is that you don't need to learn any new threading API, and that 0MQ threads map cleanly to your operating system.  You can use standard tools like Intel's ThreadChecker to see what your application is doing.  The disadvantages are that your code, when it for instance starts new threads, won't be portable, and that if you have a huge number of threads (thousands), some operating systems will get stressed.
 
@@ -1169,65 +767,6 @@ You can of course do all this using a queue device and external worker processes
 The multithreaded version of the Hello World service basically collapses the queue device and workers into a single process:
 
 [[code type="c" title="Multithreaded Service" name="mtserver"]]
-//
-//  Multithreaded Hello World server in C
-//
-#include <zmq.h>
-#include <pthread.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdio.h>
-
-void *worker_routine (void *context) {
-    void *socket;           //  Socket to talk to dispatcher
-
-    socket = zmq_socket (context, ZMQ_REP);
-    zmq_connect (socket, "inproc://workers");
-
-    while (1) {
-        zmq_msg_t request, reply;
-
-        //  Wait for next request from client
-        zmq_msg_init (&request);
-        zmq_recv (socket, &request, 0);
-        printf ("Received request: [%s]\n",
-            (char *) zmq_msg_data (&request));
-        zmq_msg_close (&request);
-
-        //  Do some 'work'
-        sleep (1);
-
-        //  Send reply back to client
-        zmq_msg_init_size (&reply, 6);
-        memcpy ((void *) zmq_msg_data (&reply), "World", 6);
-        zmq_send (socket, &reply, 0);
-        zmq_msg_close (&reply);
-    }
-    return (NULL);
-}
-
-int main () {
-    void *context;          //  ØMQ context for our process
-    void *clients;          //  Socket to talk to clients
-    void *workers;          //  Socket to talk to workers
-    int thread_nbr;
-
-    //  Prepare our context and sockets
-    context = zmq_init (1);
-    clients = zmq_socket (context, ZMQ_XREP);
-    zmq_bind (clients, "tcp://*:5555");
-    workers = zmq_socket (context, ZMQ_XREQ);
-    zmq_bind (workers, "inproc://workers");
-
-    //  Launch pool of worker threads
-    for (thread_nbr = 0; thread_nbr != 5; thread_nbr++) {
-        pthread_t worker;
-        pthread_create (&worker, NULL, worker_routine, context);
-    }
-    //  Connect work threads to client threads via a queue
-    zmq_device (ZMQ_QUEUE, clients, workers);
-    return 0;
-}
 [[/code]]
 
 All the code should be recognizable to you by now.  How it works:
@@ -1286,6 +825,57 @@ Here the 'work' is just a one-second pause.  We could do anything in the workers
 
  Figure # - Multithreaded server
 [[/code]]
+
++++ Inter-thread Signalling
+
+When you start making multithreaded applications with 0MQ, you'll rapidly hit the question of how to synchronize your threads.  The only mechanism that you should use are 0MQ messages.  Here is a simple example showing three threads that signal each other when they are ready.
+
+[[code type="textdiagram"]]
+        +------------+
+        |            |
+        |   Step 1   |
+        |            |
+        +------------+
+        |    XREQ    |
+        \------------/
+              |
+              |
+            Ready!
+              |
+              v
+        /------------\
+        |    XREP    |
+        +------------+
+        |            |
+        |   Step 2   |
+        |            |
+        +------------+
+        |    XREQ    |
+        \------------/
+              |
+              |
+            Ready!
+              |
+              v
+        /------------\
+        |    XREP    |
+        +------------+
+        |            |
+        |   Step 3   |
+        |            |
+        +------------+
+
+ Figure # - The Relay Race
+[[/code]]
+
+In this example we'll use PULL/PUSH sockets over the //inproc:// transport.  This is easy to remember (you 'pull' messages in to your application and 'push' them out to other nodes):
+
+[[code type="c" title="Multithreaded relay" name="mtrelay"]]
+[[/code]]
+
+Why use PUSH/PULL?
+TODO
+
 
 +++ A Bare Necessity
 

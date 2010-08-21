@@ -41,48 +41,6 @@ We assume you are using the latest release of 0MQ, or even the current git maste
 So let's start with some code.  We start of course with a Hello World example.  We'll make a client and a server.  The client sends "Hello" to the server, which replies with "World". Here's the server, which opens a 0MQ socket on port 5555, reads requests on it, and replies with "World" to each request:
 
 [[code type="c" title="Hello World server" name="hwserver"]]
-//
-//  Hello World server in C
-//  Binds REP socket to tcp://*:5555
-//  Expects "Hello" from client, replies with "World"
-//
-
-#include <assert.h>
-#include <pthread.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdio.h>
-#include <zmq.h>
-
-int main () {
-    void *context;          //  0MQ context for our process
-    void *socket;           //  Socket to talk to clients
-
-    //  Prepare our context and socket
-    context = zmq_init (1);
-    socket = zmq_socket (context, ZMQ_REP);
-    zmq_bind (socket, "tcp://*:5555");
-
-    while (1) {
-        zmq_msg_t request, reply;
-
-        //  Wait for next request from client
-        zmq_msg_init (&request);
-        zmq_recv (socket, &request, 0);
-        printf ("Received request: [%s]\n",
-            (char *) zmq_msg_data (&request));
-        zmq_msg_close (&request);
-
-        //  Do some 'work'
-        sleep (1);
-
-        //  Send reply back to client
-        zmq_msg_init_data (&reply, "World", 6, NULL, NULL);
-        zmq_send (socket, &reply, 0);
-        zmq_msg_close (&reply);
-    }
-    return 0;
-}
 [[/code]]
 
 [[code type="textdiagram"]]
@@ -113,111 +71,16 @@ int main () {
 0MQ uses C as its reference language and this is the language we'll use for examples.  If you're reading this online, the link below the example takes you to translations into other programming languages.  Let's compare the same server in C++:
 
 [[code type="c++" title="Hello World server" name="hwserver"]]
-//
-//  Hello World server in C++
-//  Binds REP socket to tcp://*:5555
-//  Expects "Hello" from client, replies with "World"
-//
-#include <assert.h>
-#include <pthread.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdio.h>
-#include <zmq.hpp>
-
-int main () {
-    //  Prepare our context and socket
-    zmq::context_t context (1);
-    zmq::socket_t socket (context, ZMQ_REP);
-    socket.bind ("tcp://*:5555");
-
-    while (true) {
-        zmq::message_t request;
-
-        //  Wait for next request from client
-        socket.recv (&request);
-        printf ("Received request: [%s]\n",
-            (char *) request.data ());
-
-        //  Do some 'work'
-        sleep (1);
-
-        //  Send reply back to client
-        zmq::message_t reply (6);
-        memcpy ((void *) reply.data (), "World", 6);
-        socket.send (reply);
-    }
-    return 0;
-}
 [[/code]]
 
 You can see that the 0MQ API is similar in C and C++.  In a language like Python, we can hide even more and the code becomes even easier to read:
 
 [[code type="python" title="Hello World server" name="hwserver"]]
-#
-#   Hello World server in Python
-#   Binds REP socket to tcp://*:5555
-#   Expects "Hello" from client, replies with "World"
-#
-import zmq
-import time
-
-context = zmq.Context()
-socket = context.socket(zmq.REP)
-socket.bind("tcp://*:5555")
-
-while True:
-    #  Wait for next request from client
-    message = socket.recv()
-    print "Received request: ", message
-
-    #  Do some 'work'
-    time.sleep (1)        #   Do some 'work'
-
-    #  Send reply back to client
-    socket.send("World")
 [[/code]]
 
 Here's the client code in C (click the link below the source to look at, or contribute a translation in your favorite programming language):
 
 [[code type="c" title="Hello World client" name="hwclient"]]
-//
-//  Hello World client in C
-//  Connects REQ socket to tcp://localhost:5555
-//  Sends "Hello" to server, expects "World" back
-//
-#include <zmq.h>
-#include <string.h>
-#include <stdio.h>
-#include <unistd.h>
-
-int main () {
-    void *context;          //  0MQ context for our process
-    void *socket;           //  Socket to talk to server
-    int request_nbr;
-
-    //  Prepare our context and socket
-    context = zmq_init (1);
-    socket = zmq_socket (context, ZMQ_REQ);
-
-    printf ("Connecting to server...\n");
-    zmq_connect (socket, "tcp://localhost:5555");
-    for (request_nbr = 0; request_nbr != 10; request_nbr++) {
-        zmq_msg_t request, reply;
-
-        zmq_msg_init_data (&request, "Hello", 6, NULL, NULL);
-        printf ("Sending request %d...\n", request_nbr);
-        zmq_send (socket, &request, 0);
-        zmq_msg_close (&request);
-
-        zmq_msg_init (&reply);
-        zmq_recv (socket, &reply, 0);
-        printf ("Received reply %d: [%s]\n", request_nbr,
-            (char *) zmq_msg_data (&reply));
-        zmq_msg_close (&reply);
-    }
-    return 0;
-}
 [[/code]]
 
 Now this looks too simple to be realistic, but a 0MQ socket is what you get when you take a normal TCP socket, inject it with a mix of radioactive isotopes stolen from a secret Soviet atomic research project, bombard it with 1950-era cosmic rays, and put it into the hands of a drug-addled comic book author with a badly-disguised fetish for bulging muscles clad in spandex.  Yes, 0MQ sockets are the world-saving superheros of the networking world.
@@ -257,51 +120,6 @@ The second classic pattern is one-way data distribution, in which a server pushe
 Here's the server, in C.  We'll use port 5556 for this application:
 
 [[code type="c" title="Weather update server" name="wuserver"]]
-//
-//  Weather update server in C
-//  Binds PUB socket to tcp://*:5556
-//  Publishes random weather updates
-//
-#include <zmq.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-
-#define within(num)     (int) ((float) num * random () / (RAND_MAX + 1.0))
-
-int main () {
-    void *context;          //  ØMQ context for our process
-    void *socket;           //  Socket to talk to clients
-
-    //  Initialize random number generator
-    srandom ((unsigned) time (NULL));
-
-    //  Prepare our context and socket
-    context = zmq_init (1);
-    socket = zmq_socket (context, ZMQ_PUB);
-    zmq_bind (socket, "tcp://*:5556");
-    zmq_bind (socket, "ipc://weather");
-
-    while (1) {
-        zmq_msg_t message;
-        int zipcode, temperature, relhumidity;
-
-        //  Get values that will fool the boss
-        zipcode     = within (100000);
-        temperature = within (215) - 80;
-        relhumidity = within (50) + 10;
-
-        //  Send message to all subscribers
-        zmq_msg_init_size (&message, 20);
-        sprintf ((char *) zmq_msg_data (&message),
-            "%05d %d %d", zipcode, temperature, relhumidity);
-        zmq_send (socket, &message, 0);
-        zmq_msg_close (&message);
-    }
-    return 0;
-}
 [[/code]]
 
 There's no start, and no end to this stream of updates, it's like a never ending broadcast.
@@ -341,51 +159,6 @@ There's no start, and no end to this stream of updates, it's like a never ending
 Here is client application, which listens to the stream of updates and grabs anything to do with a specified zipcode, by default New York City because that's a great place to start any adventure:
 
 [[code type="c" title="Weather update client" name="wuclient"]]
-//
-//  Weather update client in C
-//  Connects SUB socket to tcp://localhost:5556
-//  Collects weather updates and finds avg temp in zipcode
-//
-#include <zmq.h>
-#include <string.h>
-#include <stdio.h>
-#include <unistd.h>
-
-int main (int argc, char *argv[])
-{
-    void *context;          //  0MQ context for our process
-    void *socket;           //  Socket to talk to server
-    int update_nbr;
-    long total_temp = 0;
-    //  Grab zipcode, default is NYC, 10001
-    char *filter = (argc > 1)? argv [1]: "10001 ";
-
-    //  Prepare our context and socket
-    context = zmq_init (1);
-    socket = zmq_socket (context, ZMQ_SUB);
-
-    printf ("Collecting updates from weather server...\n");
-    zmq_connect (socket, "tcp://localhost:5556");
-
-    //  Subscribe to updates for our zipcode
-    zmq_setsockopt (socket, ZMQ_SUBSCRIBE, filter, strlen (filter));
-
-    //  Process 100 updates
-    for (update_nbr = 0; update_nbr < 100; update_nbr++) {
-        zmq_msg_t update;
-        int zipcode, temperature, relhumidity;
-
-        zmq_msg_init (&update);
-        zmq_recv (socket, &update, 0);
-        sscanf ((char *) zmq_msg_data (&update), "%d %d %d",
-            &zipcode, &temperature, &relhumidity);
-        total_temp += temperature;
-        zmq_msg_close (&update);
-    }
-    printf ("Average temperature for zipcode '%s' was %dF\n",
-        filter, (int) (total_temp / update_nbr));
-    return 0;
-}
 [[/code]]
 
 Note that when you use a SUB socket you **must** set a filter using zmq_setsockopt(3) and SUBSCRIBE, as in this code.  If you don't set any filter, you won't get any messages.  It's a common mistake for beginners.  The subscriber can set many filters, which are added together.  That is, if a update matches ANY filter, the subscriber receives it.  The subscriber can also unsubscribe specific filters.  Filters are binary.  See zmq_setsockopt(3) for how this works.
@@ -417,62 +190,6 @@ As a final example (you are surely getting tired of juicy code and want to delve
 In reality, workers run on superfast boxes, perhaps using GPUs (graphic processing units) to do the hard maths.  Here is the ventilator.  It generates 100 tasks, each is a message telling the worker to sleep for some number of milliseconds:
 
 [[code type="c" title="Parallel task ventilator" name="taskvent"]]
-//
-//  Task ventilator in C
-//  Binds PUSH socket to tcp://localhost:5557
-//  Sends batch of tasks to workers via that socket
-//
-#include <zmq.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-
-#define within(num) (int) ((float) num * random () / (RAND_MAX + 1.0))
-
-int main (int argc, char *argv[])
-{
-    void *context;          //  ØMQ context for our process
-    void *output;           //  Socket for output
-    int task_nbr;
-    int total_msec = 0;     //  Total expected cost in msecs
-    zmq_msg_t message;
-
-    //  Initialize random number generator
-    srandom ((unsigned) time (NULL));
-
-    //  Prepare our context and socket
-    context = zmq_init (1);
-    output = zmq_socket (context, ZMQ_PUSH);
-    zmq_bind (output, "tcp://*:5557");
-
-    printf ("Press Enter when the workers are ready: ");
-    getchar ();
-    printf ("Sending tasks to workers...\n");
-
-    //  The first message is "0" and signals start of batch
-    zmq_msg_init_data (&message, "0", 2, NULL, NULL);
-    zmq_send (output, &message, 0);
-    zmq_msg_close (&message);
-
-    //  Send 100 tasks
-    for (task_nbr = 0; task_nbr < 100; task_nbr++) {
-        int workload;
-        //  Random workload from 1 to 100msecs
-        workload = within (100) + 1;
-        total_msec += workload;
-
-        zmq_msg_init_size (&message, 10);
-        sprintf ((char *) zmq_msg_data (&message), "%d", workload);
-        zmq_send (output, &message, 0);
-        zmq_msg_close (&message);
-    }
-    printf ("Total expected cost: %d msec\n", total_msec);
-    sleep (1);              //  Give 0MQ time to deliver
-
-    return 0;
-}
 [[/code]]
 
 [[code type="textdiagram"]]
@@ -526,123 +243,11 @@ Note that we do {{sleep (1);}} before exiting the ventilator.  This is a hack th
 Here is the worker application.  It receives a message, sleeps for that number of seconds, then signals that it's finished:
 
 [[code type="c" title="Parallel task worker" name="taskwork"]]
-//
-//  Task worker in C
-//  Connects PULL socket to tcp://localhost:5557
-//  Collects workloads from ventilator via that socket
-//  Connects PUSH socket to tcp://localhost:5558
-//  Sends results to sink via that socket
-//
-#include <zmq.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdio.h>
-#include <time.h>
-
-int main (int argc, char *argv[])
-{
-    void *context;          //  ØMQ context for our process
-    void *input, *output;   //  Sockets for input and output
-
-    //  Prepare our context and sockets
-    context = zmq_init (1);
-
-    input = zmq_socket (context, ZMQ_PULL);
-    zmq_connect (input, "tcp://localhost:5557");
-
-    output = zmq_socket (context, ZMQ_PUSH);
-    zmq_connect (output, "tcp://localhost:5558");
-
-    //  Process tasks forever
-    while (1) {
-        zmq_msg_t message;
-        int workload;           //  Workload in msecs
-        struct timespec t;
-
-        zmq_msg_init (&message);
-        zmq_recv (input, &message, 0);
-        sscanf ((char *) zmq_msg_data (&message), "%d", &workload);
-        t.tv_sec = 0;
-        t.tv_nsec = workload * 1000000;
-        zmq_msg_close (&message);
-
-        nanosleep (&t, NULL);   //  Do the work
-
-        //  Send results to sink
-        zmq_msg_init (&message);
-        zmq_send (output, &message, 0);
-
-        //  Simple progress indicator for the viewer
-        printf (".");
-        fflush (stdout);
-    }
-    return 0;
-}
 [[/code]]
 
 Here is the sink application.  It collects the 100 tasks, then calculates how long the overall processing took, so we can confirm that the workers really were running in parallel, if there are more than one of them:
 
 [[code type="c" title="Parallel task sink" name="tasksink"]]
-//
-//  Task sink in C
-//  Binds PULL socket to tcp://localhost:5558
-//  Collects results from workers via that socket
-//
-#include <zmq.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdio.h>
-#include <time.h>
-#include <sys/time.h>
-
-int main (int argc, char *argv[])
-{
-    void *context;          //  ØMQ context for our process
-    void *input;            //  Socket for input
-    int task_nbr;
-    struct timeval
-        tstart, tend, tdiff;
-    int total_msec = 0;     //  Total calculated cost in msecs
-    zmq_msg_t message;
-
-    //  Prepare our context and socket
-    context = zmq_init (1);
-    input = zmq_socket (context, ZMQ_PULL);
-    zmq_bind (input, "tcp://*:5558");
-
-    //  Wait for start of batch
-    zmq_msg_init (&message);
-    zmq_recv (input, &message, 0);
-    zmq_msg_close (&message);
-
-    //  Start our clock now
-    gettimeofday (&tstart, NULL);
-
-    //  Process 100 confirmations
-    for (task_nbr = 0; task_nbr < 100; task_nbr++) {
-        zmq_msg_init (&message);
-        zmq_recv (input, &message, 0);
-        zmq_msg_close (&message);
-        if ((task_nbr / 10) * 10 == task_nbr)
-            printf (":");
-        else
-            printf (".");
-        fflush (stdout);
-    }
-    //  Calculate and report duration of batch
-    gettimeofday (&tend, NULL);
-
-    if (tend.tv_usec < tstart.tv_usec) {
-        tdiff.tv_sec = tend.tv_sec - tstart.tv_sec - 1;
-        tdiff.tv_usec = 1000000 + tend.tv_usec - tstart.tv_usec;
-    } else {
-        tdiff.tv_sec = tend.tv_sec - tstart.tv_sec;
-        tdiff.tv_usec = tend.tv_usec - tstart.tv_usec;
-    }
-    total_msec = tdiff.tv_sec * 1000 + tdiff.tv_usec / 1000;
-    printf ("Total elapsed time: %d msec\n", total_msec);
-    return 0;
-}
 [[/code]]
 
 The average cost of a batch is 5 seconds.  When we start 1, 2, 4 workers we get results like this from the sink:
