@@ -14,32 +14,49 @@
 
 $git = "http://github.com/imatix/zguide";
 $branch = "master";
+@languages = ('Ada', 'Basic', 'C', 'C++', 'C#', 'Common Lisp', 'Erlang',
+              'Go', 'Haskell', 'Java', 'Lua', 'Objective-C', 'ooc',
+              'Perl', 'PHP', 'Python', 'Ruby');
+%extension = ('Ada' => 'ada',
+              'Basic' => 'bas',
+              'C' => 'c',
+              'C++' => 'cpp',
+              'C#' => 'cs',
+              'Common Lisp' => 'lisp',
+              'Erlang' => 'erl',
+              'Go' => 'go',
+              'Haskell' => 'hs',
+              'Java' => 'java',
+              'Lua' => 'lua',
+              'Objective-C' => 'm',
+              'ooc' => 'ooc',
+              'Perl' => 'pl',
+              'PHP' => 'php',
+              'Python' => 'py',
+              'Ruby' => 'rb' );
 
 sub get_filename {
-    local ($name, $type) = @_;          #   Get arguments
-    if ($type eq "c") {
-        return "examples/c/$name.c";
+    local ($name, $language) = @_;          #   Get arguments
+    return "examples/$language/$name.$extension{$language}";
+}
+
+#   Ensure all languages have an examples directory
+foreach (@languages) {
+    if (!-d "examples/$_") {
+        mkdir ("examples/$_");
     }
-    elsif ($type eq "c++") {
-        return "examples/c++/$name.cpp";
-    }
-    elsif ($type eq "python") {
-        return "examples/python/$name.py";
-    }
-    else {
-        print "Unknown type $type for $name\n";
-        exit (1);
+    if (!-f "examples/$_/README") {
+        die "Can't create examples/$_/README: $!"
+            unless open (README, ">examples/$_/README");
+        print README "Examples in $_\n";
+        print README "See LICENSE in examples directory\n";
     }
 }
 
-if (!open (WDTEMP, ">wdtemp.txt")) {
-    print "Can't create wdtemp.txt: $!\n";
-    exit (1);
-}
-if (!open (IMAGES, ">images.html")) {
-    print "Can't create images.html: $!\n";
-    exit (1);
-}
+die "Can't create wdtemp.txt: $!"
+    unless open (WDTEMP, ">wdtemp.txt");
+die "Can't create images.html: $!"
+    unless open (IMAGES, ">images.html");
 
 print WDTEMP "[!-- Generated documentation file, do not edit --]\n";
 print IMAGES "<html>\n";
@@ -58,16 +75,34 @@ while (<>) {
             print "W: discarding $type code for $name\n";
         }
         $filename = get_filename ($name, $type);
-        if (!open (SOURCE, $filename)) {
-            print "Can't open $filename: $!\n";
-            exit (1);
-        }
-        while (<SOURCE>) {
-            print WDTEMP $_;
-        }
+        die "Can't open $filename: $!"
+            unless open (SOURCE, $filename);
+        print WDTEMP $_
+            while <SOURCE>;
         close (SOURCE);
         print WDTEMP "[[>]]\n";
-        print WDTEMP "[*$git/blob/$branch/$filename Source] | [*$git/tree/$branch/examples Translate]\n";
+        print WDTEMP "[[collapsible show=\"All languages\" hide=\"Hide languages\"]]\n";
+
+        foreach (@languages) {
+            $filename = get_filename ($name, $_);
+            print WDTEMP "* [*$git/blob/$branch/$filename $title in $_]\n";
+
+            #   Create empty example if necessary
+            if (!-f $filename) {
+                die "Can't open $filename: $!"
+                    unless open (SOURCE, ">$filename");
+                print SOURCE<<"EOF";
+No-one has translated the $name example into $_ yet.  Be the first to create
+$name in $_ and get one free Internet!  If you're the author of the $_
+binding, this is a great way to get people to use 0MQ in $_.
+
+To submit a translation, just email it to zeromq-dev@lists.zeromq.org.
+Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+EOF
+                close (SOURCE);
+            }
+        }
+        print WDTEMP "[[/collapsible]]\n";
         print WDTEMP "[[/>]]\n";
     }
     elsif ($_ eq "[[code type=\"textdiagram\"]]") {

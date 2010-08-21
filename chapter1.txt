@@ -40,7 +40,7 @@ We assume you are using the latest release of 0MQ, or even the current git maste
 
 So let's start with some code.  We start of course with a Hello World example.  We'll make a client and a server.  The client sends "Hello" to the server, which replies with "World". Here's the server, which opens a 0MQ socket on port 5555, reads requests on it, and replies with "World" to each request:
 
-[[code type="c" title="Hello World server" name="hwserver"]]
+[[code type="C" title="Hello World server" name="hwserver"]]
 [[/code]]
 
 [[code type="textdiagram"]]
@@ -70,17 +70,17 @@ So let's start with some code.  We start of course with a Hello World example.  
 
 0MQ uses C as its reference language and this is the language we'll use for examples.  If you're reading this online, the link below the example takes you to translations into other programming languages.  Let's compare the same server in C++:
 
-[[code type="c++" title="Hello World server" name="hwserver"]]
+[[code type="C++" title="Hello World server" name="hwserver"]]
 [[/code]]
 
 You can see that the 0MQ API is similar in C and C++.  In a language like Python, we can hide even more and the code becomes even easier to read:
 
-[[code type="python" title="Hello World server" name="hwserver"]]
+[[code type="Python" title="Hello World server" name="hwserver"]]
 [[/code]]
 
 Here's the client code in C (click the link below the source to look at, or contribute a translation in your favorite programming language):
 
-[[code type="c" title="Hello World client" name="hwclient"]]
+[[code type="C" title="Hello World client" name="hwclient"]]
 [[/code]]
 
 Now this looks too simple to be realistic, but a 0MQ socket is what you get when you take a normal TCP socket, inject it with a mix of radioactive isotopes stolen from a secret Soviet atomic research project, bombard it with 1950-era cosmic rays, and put it into the hands of a drug-addled comic book author with a badly-disguised fetish for bulging muscles clad in spandex.  Yes, 0MQ sockets are the world-saving superheros of the networking world.
@@ -119,30 +119,30 @@ The second classic pattern is one-way data distribution, in which a server pushe
 
 Here's the server, in C.  We'll use port 5556 for this application:
 
-[[code type="c" title="Weather update server" name="wuserver"]]
+[[code type="C" title="Weather update server" name="wuserver"]]
 [[/code]]
 
 There's no start, and no end to this stream of updates, it's like a never ending broadcast.
 
 [[code type="textdiagram"]]
-                  +-------------+
-                  |             |
-                  |  Publisher  |
-                  |             |
-                  +-------------+
-                  |     PUB     |
-                  \-------------/
-                       bind
-                         |
-                         |
-                      updates
-                         |
-         +---------------+---------------+
-         |               |               |
-      updates         updates         updates
-         |               |               |
-         |               |               |
-         v               v               v
+                 +-------------+
+                 |             |
+                 |  Publisher  |
+                 |             |
+                 +-------------+
+                 |     PUB     |
+                 \-------------/
+                      bind
+                        |
+                        |
+                     updates
+                        |
+        +---------------+---------------+
+        |               |               |
+     updates         updates         updates
+        |               |               |
+        |               |               |
+        v               v               v
      connect         connect         connect
   /------------\  /------------\  /------------\
   |    SUB     |  |    SUB     |  |    SUB     |
@@ -158,12 +158,14 @@ There's no start, and no end to this stream of updates, it's like a never ending
 
 Here is client application, which listens to the stream of updates and grabs anything to do with a specified zipcode, by default New York City because that's a great place to start any adventure:
 
-[[code type="c" title="Weather update client" name="wuclient"]]
+[[code type="C" title="Weather update client" name="wuclient"]]
 [[/code]]
 
 Note that when you use a SUB socket you **must** set a filter using zmq_setsockopt(3) and SUBSCRIBE, as in this code.  If you don't set any filter, you won't get any messages.  It's a common mistake for beginners.  The subscriber can set many filters, which are added together.  That is, if a update matches ANY filter, the subscriber receives it.  The subscriber can also unsubscribe specific filters.  Filters are binary.  See zmq_setsockopt(3) for how this works.
 
-[!--TODO explain about message loss in pubsub scenarios --]
+There is one important thing to know about PUB/SUB sockets: you do not know precisely when the subscriber starts to get messages.  Even if you start the subscriber, wait a while, and then start the publisher, the subscriber will usually miss a few of the first messages that the publisher sends.  This is because as the subscriber connects to the publisher (something that takes a small but non-zero time), the publisher may already be sending messages out.
+
+While there are ways to synchronize publishers and subscribers, which we'll look at in the next chapter, it is easier and safer to assume that a subscriber does not know the start of a message stream.  Design your applications on that basis, as we're doing in this example.
 
 So the client subscribes to its chosen zipcode and collects a thousand updates for that zipcode.  That means about ten million updates from the server, if zipcodes are randomly distributed.  You can start the client, and then the server, and the client will keep working. You can stop and restart the server as often as you like, and the client will keep working.  When the client has collected its thousand updates, it calculates the average, prints it, and exits.
 
@@ -189,7 +191,7 @@ As a final example (you are surely getting tired of juicy code and want to delve
 
 In reality, workers run on superfast boxes, perhaps using GPUs (graphic processing units) to do the hard maths.  Here is the ventilator.  It generates 100 tasks, each is a message telling the worker to sleep for some number of milliseconds:
 
-[[code type="c" title="Parallel task ventilator" name="taskvent"]]
+[[code type="C" title="Parallel task ventilator" name="taskvent"]]
 [[/code]]
 
 [[code type="textdiagram"]]
@@ -242,12 +244,12 @@ Note that we do {{sleep (1);}} before exiting the ventilator.  This is a hack th
 
 Here is the worker application.  It receives a message, sleeps for that number of seconds, then signals that it's finished:
 
-[[code type="c" title="Parallel task worker" name="taskwork"]]
+[[code type="C" title="Parallel task worker" name="taskwork"]]
 [[/code]]
 
 Here is the sink application.  It collects the 100 tasks, then calculates how long the overall processing took, so we can confirm that the workers really were running in parallel, if there are more than one of them:
 
-[[code type="c" title="Parallel task sink" name="tasksink"]]
+[[code type="C" title="Parallel task sink" name="tasksink"]]
 [[/code]]
 
 The average cost of a batch is 5 seconds.  When we start 1, 2, 4 workers we get results like this from the sink:

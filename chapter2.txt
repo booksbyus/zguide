@@ -21,7 +21,7 @@ Like a nice pepperoni pizza, 0MQ sockets are easy to digest.  Sockets have a lif
 
 Which looks like this:
 
-[[code type="c"]]
+[[code type="C"]]
 void *mousetrap;
 
 //  Create socket for catching mice
@@ -39,7 +39,7 @@ zmq_msg_t mouse;
 mouse = zmq_msg_init (&mouse);
 zmq_recv (mousetrap, &mouse, 0);
 //  Destroy the mouse
-zmq_close (&mouse);
+zmq_msg_close (&mouse);
 
 //  Destroy the socket
 zmq_close (mousetrap);
@@ -69,7 +69,7 @@ Now, imagine we start the client //before// we start the server.  In traditional
 
 A server node can bind to many endpoints and it can do this using a single socket.  This means it will accept connections across different transports:
 
-[[code type="c"]]
+[[code type="C"]]
 zmq_bind (socket, "tcp://*:5555");
 zmq_bind (socket, "tcp://*:9999");
 zmq_bind (socket, "ipc://myserver");
@@ -157,7 +157,7 @@ The zmq_send(3) method does not actually send the message to the socket connecti
 
 We said that 0MQ does I/O in a background thread.  One I/O thread (for all sockets) is sufficient for all but the most extreme applications.  This is the magic '1' that we use when creating a context, meaning "use one I/O thread":
 
-[[code type="c"]]
+[[code type="C"]]
 void *context;
 context = zmq_init (1);
 [[/code]]
@@ -184,9 +184,21 @@ The basic 0MQ patterns are:
 
 We looked at each of these in the first chapter.  There's one more pattern that people tend to try to use when they still think of 0MQ in terms of traditional TCP sockets:
 
-* **Exclusive pair**, which connects two sockets in an exclusive pair.  This is a low-level pattern for specific, advanced use cases.
+* **Exclusive pair**, which connects two sockets in an exclusive pair.  This is a low-level pattern for specific, advanced use cases.  We'll see an example at the end of this chapter.
 
 The zmq_socket(3) [http://api.0MQ.org/zmq_socket.html man page] is fairly clear about the patterns, it's worth reading several times until it starts to make sense.  We'll look at each pattern and the use cases it covers.
+
+These are the socket combinations that are valid for a connect-bind pair (either side can bind):
+
+* PUB and SUB
+* REQ and REP
+* REQ and XREP
+* XREQ and REP
+* XREQ and XREP
+* PUSH and PULL
+* PAIR and PAIR
+
+Any other combination will produce undocumented and unreliable results and future versions of 0MQ will probably return errors if you try them.  You can and will of course combine other socket types //via code//, i.e. read from one socket type and write to another.
 
 +++ Messages and Zero-copy
 
@@ -214,7 +226,7 @@ Anyhow since we're describing 0MQ/2.x, here are the basic ground rules for using
 
 To do zero copy you use zmq_msg_init_data(3) to create a message that refers to a block of data already allocated on the heap with malloc(), and then you pass that to zmq_send(3).  When you create the message you also pass a function that 0MQ will call to free the block of data, when it has finished sending the message.  This is the simplest example, assuming 'buffer' is a block of 1000 bytes allocated on the heap:
 
-[[code type="c"]]
+[[code type="C"]]
 void my_free (void *data, void *hint)
 {
     free (data);
@@ -237,7 +249,7 @@ Some other things that are worth knowing about messages:
 
 When you start using 0MQ, a classic error is that messages arrive but are garbled.  It's a beginner's mistake: the sending thread is freeing or reusing the message data before 0MQ has finished sending it, so 0MQ sends garbage.  If you're using zmq_msg_init_data(3), realize that the data is not copied.  if your thread does not own the data, and therefore it cannot pass a free function as in the example above, then you must do this:
 
-[[code type="c"]]
+[[code type="C"]]
 //  Send a message from buffer, which we do not own
 zmq_msg_t message;
 zmq_msg_init_size (&message, 1000);
@@ -259,7 +271,7 @@ The right way is to use zmq_poll(3).  An even better way might be to wrap zmq_po
 
 Let's start with a dirty hack, partly for the fun of not doing it right, but mainly because it lets me show you how to do non-blocking socket reads.  Here is a simple example of reading from two sockets using non-blocking reads.  This rather confused program acts both as a subscriber to weather updates, and a worker for parallel tasks:
 
-[[code type="c" title="Multiple socket reader" name="msreader"]]
+[[code type="C" title="Multiple socket reader" name="msreader"]]
 [[/code]]
 
 The cost of this approach is some additional latency on the first message (the sleep at the end of the loop, when there are no waiting messages to process).  This would be a problem in applications where sub-millisecond latency was vital.  Also, you need to check the documentation for nanosleep() or whatever function you use to make sure it does not busy-loop.
@@ -268,7 +280,7 @@ You can treat the sockets fairly by reading first from one, then the second rath
 
 Now let's see the same little senseless application done right, using zmq_poll(3):
 
-[[code type="c" title="Multiple socket poller" name="mspoller"]]
+[[code type="C" title="Multiple socket poller" name="mspoller"]]
 [[/code]]
 
 +++ Multipart Messages
@@ -333,7 +345,7 @@ There are two main exceptional conditions that you may want to handle as non-fat
 
 What this boils down to is that in most cases you can wrap 0MQ calls in assertions, like this:
 
-[[code type="c"]]
+[[code type="C"]]
     context = zmq_init (1);
     assert (context);
     socket = zmq_socket (context, ZMQ_REP);
@@ -417,12 +429,12 @@ It doesn't take much new code in the sink:
 
 Here is the worker process, which manages two sockets (a PULL socket getting tasks, and a SUB socket getting control commands) using the zmq_poll(3) technique we saw earlier:
 
-[[code type="c" title="Parallel task worker with kill signalling" name="taskwork2"]]
+[[code type="C" title="Parallel task worker with kill signalling" name="taskwork2"]]
 [[/code]]
 
 Here is the modified sink application.  When it's finished collecting results it broadcasts a KILL message to all workers:
 
-[[code type="c" title="Parallel task sink with kill signalling" name="tasksink2"]]
+[[code type="C" title="Parallel task sink with kill signalling" name="tasksink2"]]
 [[/code]]
 
 +++ Devilish Devices
@@ -492,7 +504,7 @@ And then we stretch the application across a wider network, placing devices in s
                      +--------+   +--------+
 
 
-   Figure # - Larger scale 0MQ application
+    Figure # - Larger scale 0MQ application
 [[/code]]
 
 0MQ devices:
@@ -511,7 +523,7 @@ It is a common requirement to stretch a publish-subscribe architecture over more
 
 We're going to write a simple proxy server that sits in between a publisher and a set of subscribers, bridging two networks.  This is perhaps the simplest case of a useful device.  The device has two sockets, a frontend facing subscribers on the external network and a backend facing the internal network, where the weather server is sitting.  It subscribes to the weather service on the backend socket, and republishes its data on the frontend socket:
 
-[[code type="c" title="Weather update proxy" name="wuproxy"]]
+[[code type="C" title="Weather update proxy" name="wuproxy"]]
 [[/code]]
 
 We call this a //proxy// because it acts as a subscriber to publishers, and acts as a publisher to subscribers. That means you can slot this device into an existing network without affecting it (of course the new subscribers need to know to speak to the proxy).
@@ -560,7 +572,7 @@ We call this a //proxy// because it acts as a subscriber to publishers, and acts
                            +------------+    +------------+
 
 
-          Figure # - Forwarder proxy device
+             Figure # - Forwarder proxy device
 [[/code]]
 
 Note that this application is multipart safe.  It correctly detects multipart messages and sends them as it read them.  If we did not set the SNDMORE option on outgoing multipart data, the final recipient would get a corrupted message.  You should always make your devices multipart safe so that there is no risk they will corrupt the data they switch.
@@ -647,15 +659,15 @@ When we stretch request-reply, REQ talks to XREP and XREQ talks to REP.  In betw
 
 The request-reply broker binds to two endpoints, one for clients to connect to (the frontend socket) and one for services to connect to (the backend).  To test this broker, you will want to change your services so they connect to the backend socket.  Here are a Python client and service that show what I mean:
 
-[[code type="python" title="Request-reply client" name="rrclient"]]
+[[code type="Python" title="Request-reply client" name="rrclient"]]
 [[/code]]
 
-[[code type="python" title="Request-reply service" name="rrserver"]]
+[[code type="Python" title="Request-reply service" name="rrserver"]]
 [[/code]]
 
 And here is the broker, in C.  You will see that it's multipart safe:
 
-[[code type="c" title="Request-reply broker" name="rrbroker"]]
+[[code type="C" title="Request-reply broker" name="rrbroker"]]
 [[/code]]
 
 Using a request-reply broker makes your client-server architectures easier to scale since clients don't see services, and services don't see clients.  The only stable node is the device in the middle:
@@ -727,7 +739,7 @@ zmq_device (ZMQ_QUEUE, frontend, backend);
 
 Which if you start a QUEUE device is exactly like plugging the main body of the request-reply broker into your code at that spot.  You need to create the sockets, bind or connect them, and possibly configure them, before calling zmq_device(3).  It is trivial to do.  Here is the request-reply broker re-written to call QUEUE and rebadged as an expensive-sounding "message queue":
 
-[[code type="c" title="Message queue broker" name="msgqueue"]]
+[[code type="C" title="Message queue broker" name="msgqueue"]]
 [[/code]]
 
 The built-in devices do proper error handling, whereas the examples we have shown don't.  Since you can configure the sockets as you need to, before starting the device, it's worth using the built-in devices when you can.
@@ -754,9 +766,10 @@ For now, these are the combinations you should stick to:
 
 You do need to follow some rules to write multithreaded code with 0MQ:
 
+* You MUST NOT try to access the same data from multiple threads.
 * You MUST create a 'context' object for your process, and pass that to all threads.  The context collects 0MQ's state.  To create a connection across the inproc: transport, both server and client thread must share the same context object.
 * You MUST NOT share sockets between threads, not even when using proper exclusion mechanisms like semaphores, locks or mutexes.  0MQ will in some future make it possible to move sockets to different threads.  Right now the thread which creates a socket is the only thread that may use it.
-* You MAY use semaphores, locks and mutexes if you really have to (but NOT to share sockets among threads).  However we'd consider that bad practice and potentially dangerous.
+* You MAY use semaphores, locks and mutexes //if you really have to// (but NOT to share sockets among threads).  However we'd consider that bad practice and potentially dangerous
 
 If you follow these rules, you can quite easily split threads into separate processes, when you need to.  Application logic can sit in threads, processes, boxes: whatever your scale needs.
 
@@ -766,7 +779,7 @@ You can of course do all this using a queue device and external worker processes
 
 The multithreaded version of the Hello World service basically collapses the queue device and workers into a single process:
 
-[[code type="c" title="Multithreaded Service" name="mtserver"]]
+[[code type="C" title="Multithreaded Service" name="mtserver"]]
 [[/code]]
 
 All the code should be recognizable to you by now.  How it works:
@@ -793,20 +806,20 @@ Here the 'work' is just a one-second pause.  We could do anything in the workers
                      |    |
   /------------------|----|------------------\
   |                  v    |                  :
-  |             /------------\               |
-  |             |    XREP    |               |
-  |             +------------+               |
-  |             |            |               |
-  |             |   Server   |               |
-  |             |            |               |
-  |             +------------+               |
-  |             |            |               |
-  |             |   Queue    |               |
-  |             |   device   |               |
-  |             |            |               |
-  |             +------------+               |
-  |             |    XREQ    |               |
-  |             \------------/               |
+  |              /------------\              |
+  |              |    XREP    |              |
+  |              +------------+              |
+  |              |            |              |
+  |              |   Server   |              |
+  |              |            |              |
+  |              +------------+              |
+  |              |            |              |
+  |              |   Queue    |              |
+  |              |   device   |              |
+  |              |            |              |
+  |              +------------+              |
+  |              |    XREQ    |              |
+  |              \------------/              |
   |                    ^                     |
   |                    |                     |
   |        +-----------+-----------+         |
@@ -826,9 +839,9 @@ Here the 'work' is just a one-second pause.  We could do anything in the workers
  Figure # - Multithreaded server
 [[/code]]
 
-+++ Inter-thread Signalling
++++ Thread Coordination
 
-When you start making multithreaded applications with 0MQ, you'll rapidly hit the question of how to synchronize your threads.  The only mechanism that you should use are 0MQ messages.  Here is a simple example showing three threads that signal each other when they are ready.
+When you start making multithreaded applications with 0MQ, you'll hit the question of how to coordinate your threads.  Though you might be tempted to insert 'sleep' statements, or use multithreading techniques such as semaphores or mutexes, **the only mechanism that you should use are 0MQ messages**.  Here is a simple example showing three threads that signal each other when they are ready.
 
 [[code type="textdiagram"]]
         +------------+
@@ -836,7 +849,7 @@ When you start making multithreaded applications with 0MQ, you'll rapidly hit th
         |   Step 1   |
         |            |
         +------------+
-        |    XREQ    |
+        |    PAIR    |
         \------------/
               |
               |
@@ -844,13 +857,13 @@ When you start making multithreaded applications with 0MQ, you'll rapidly hit th
               |
               v
         /------------\
-        |    XREP    |
+        |    PAIR    |
         +------------+
         |            |
         |   Step 2   |
         |            |
         +------------+
-        |    XREQ    |
+        |    PAIR    |
         \------------/
               |
               |
@@ -858,7 +871,7 @@ When you start making multithreaded applications with 0MQ, you'll rapidly hit th
               |
               v
         /------------\
-        |    XREP    |
+        |    PAIR    |
         +------------+
         |            |
         |   Step 3   |
@@ -868,14 +881,100 @@ When you start making multithreaded applications with 0MQ, you'll rapidly hit th
  Figure # - The Relay Race
 [[/code]]
 
-In this example we'll use PULL/PUSH sockets over the //inproc:// transport.  This is easy to remember (you 'pull' messages in to your application and 'push' them out to other nodes):
+In this example we use PAIR sockets over the //inproc:// transport:
 
-[[code type="c" title="Multithreaded relay" name="mtrelay"]]
+[[code type="C" title="Multithreaded relay" name="mtrelay"]]
 [[/code]]
 
-Why use PUSH/PULL?
-TODO
+This is the first time we've shown an example using PAIR sockets.  Why use PAIR?  Other socket combinations might seem to work but they all have side-effects that could interfere with signalling:
 
+* You can use PUSH for the sender and PULL for the receiver.  This looks simple and will work, but remember that PUSH will load-balance messages to all available receivers.  If you by accident start two receivers (e.g. you already have one running and you start a second), you'll "lose" half of your signals.  PAIR has the advantage of refusing more than one connection, the pair is //exclusive//.
+
+* You can use XREQ for the sender and XREP for the receiver.  XREP however sticks an "identity" part in front of your message, meaning your zero-size signal turns into a multipart message.  If you don't transmit data except the signal itself, that won't matter.  If however you decide to send data, you will suddenly find XREP providing you with "wrong" messages.  XREQ also load-balances, giving the same risk as PUSH.
+
+* You can use PUB for the sender and SUB for the receiver.  This will correctly deliver you messages exactly as you sent them and PUB does not load-balance as PUSH or XREQ do.  However you need to configure the subscriber with an empty subscription, which is annoying.  Worse, the reliability of the PUB-SUB link is timing dependent and messages can get lost if the SUB socket is connecting while the PUB socket is sending its message.
+
+For these reasons, PAIR makes the best choice for coordination between specific threads.
+
++++ Node Coordination
+
+When you want to coordinate nodes, PAIR sockets won't work well any more.  This is one of the few areas where the strategies for threads and nodes are different.  Principally nodes come and go whereas threads are stable.  PAIR sockets do not automatically reconnect if the remote node goes away and comes back.
+
+The second significant difference between threads and nodes is that you typically have a fixed number of threads but a more variable number of nodes.  Let's take one of our earlier scenarios (the weather server and clients) and use node coordination to ensure that subscribers don't lose data when starting up.
+
+This is how the application will work:
+
+* The publisher knows in advance how many subscribers it expects.  This is just a magic number it gets from somewhere.
+* The publisher starts up and waits for all subscribers to connect.  This is the node coordination part.  Each subscriber subscribes and then tells the publisher it's ready via another socket.
+* When the publisher has all subscribers connected, it starts to publish data.
+
+In this case we'll use a REQ-REP socket flow to synchronize subscribers and publisher.  Here is the publisher:
+
+[[code type="C" title="Synchronized publisher" name="syncpub"]]
+[[/code]]
+
+[[code type="textdiagram"]]
+            +----------------+
+            |                |
+            |   Publisher    |
+            |                |
+            +--------+-------+
+            |  PUB   |  REQ  |
+            \--------+-------/
+                |      ^   |
+                |      |   |
+                |     (1)  |
+               (3)     |   |
+                |      |  (2)
+                |      |   |
+                v      |   v
+            /----------------\
+            |  SUB   |  REP  |
+            +----------------+
+            |                |
+            |   Subscriber   |
+            |                |
+            +----------------+
+
+
+  Figure # - Pub-Sub Synchronization
+[[/code]]
+
+And here is the subscriber:
+
+[[code type="C" title="Synchronized subscriber" name="syncsub"]]
+[[/code]]
+
+This Linux shell script will start ten subscribers and then the publisher:
+
+[[code]]
+echo "Starting subscribers..."
+for a in 1 2 3 4 5 6 7 8 9 10; do
+    syncsub &
+done
+echo "Starting publisher..."
+syncpub
+[[/code]]
+
+Which gives us this satisfying output:
+
+[[code]]
+Starting subscribers...
+Starting publisher...
+Received 1000000 updates
+Received 1000000 updates
+Received 1000000 updates
+Received 1000000 updates
+Received 1000000 updates
+Received 1000000 updates
+Received 1000000 updates
+Received 1000000 updates
+Received 1000000 updates
+Received 1000000 updates
+[[/code]]
+
+[!-- TODO: remove this note when 0MQ/2.1 is released --]
+Note that we do {{sleep (1);}} before exiting the publisher.  This is a hack that gets around 0MQ/2.0's design, which discards messages that have not yet been sent, if you exit the program too soon.  If you are using 0MQ/2.1 you can remove this sleep statement.  There is no way in 0MQ/2.0 to properly exit the publisher without such a sleep.
 
 +++ A Bare Necessity
 

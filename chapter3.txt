@@ -2,6 +2,11 @@
 
 We continue the style of chapter 2 by developing useful mini-applications and each time exploring new aspects of 0MQ in the process.
 
++++ Managing Queue Overflows
+
+* High Water Mark - with example, and per pattern
+* Swap to Disk - with example
+
 +++ Custom Load-Balancing
 
 We'll look at another supercomputing scenario, where we want to distribute tasks to workers.  However we don't want to use round-robin, we want to use a least-recently used algorith.  Our application consists of:
@@ -12,6 +17,10 @@ We'll look at another supercomputing scenario, where we want to distribute tasks
 * Workers, which connect to the ventilator's REP socket
 
 The workers signal 'ready' by sending an empty message to the ventilator.  The ventilator pops the next task and replies with that.
+
++++ Configuration Distribution
+
+We'll look at how to dynamically configure a network of devices using a central configuration broker.
 
 +++ Stateful Publish-Subscribe
 
