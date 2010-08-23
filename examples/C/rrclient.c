@@ -1,6 +1,33 @@
-No-one has translated the rrclient example into C yet.  Be the first to create
-rrclient in C and get one free Internet!  If you're the author of the C
-binding, this is a great way to get people to use 0MQ in C.
+//
+//  Hello World client in C
+//  Connects REQ socket to tcp://localhost:5559
+//  Sends "Hello" to server, expects "World" back
+//
+#include <zmq.h>
+#include <string.h>
+#include <stdio.h>
+#include <unistd.h>
 
-To submit a translation, just email it to zeromq-dev.zeromq.org.
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+int main () {
+    void *context = zmq_init (1);
+
+    //  Socket to talk to server
+    void *requester = zmq_socket (context, ZMQ_REQ);
+    zmq_connect (requester, "tcp://localhost:5559");
+
+    int request_nbr;
+    for (request_nbr = 0; request_nbr != 10; request_nbr++) {
+        zmq_msg_t request;
+        zmq_msg_init_data (&request, "Hello", 6, NULL, NULL);
+        zmq_send (requester, &request, 0);
+        zmq_msg_close (&request);
+
+        zmq_msg_t reply;
+        zmq_msg_init (&reply);
+        zmq_recv (requester, &reply, 0);
+        printf ("Received reply %d [%s]\n", request_nbr,
+            (char *) zmq_msg_data (&reply));
+        zmq_msg_close (&reply);
+    }
+    return 0;
+}

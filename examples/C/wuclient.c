@@ -10,24 +10,20 @@
 
 int main (int argc, char *argv[])
 {
-    void *context;          //  ØMQ context for our process
-    void *subscriber;       //  Socket to talk to server
-    int update_nbr;
-    long total_temp = 0;
-    //  Grab zipcode, default is NYC, 10001
-    char *filter = (argc > 1)? argv [1]: "10001 ";
+    void *context = zmq_init (1);
 
-    //  Prepare our context and subscriber
-    context = zmq_init (1);
-    subscriber = zmq_socket (context, ZMQ_SUB);
-
+    //  Socket to talk to server
     printf ("Collecting updates from weather server...\n");
+    void *subscriber = zmq_socket (context, ZMQ_SUB);
     zmq_connect (subscriber, "tcp://localhost:5556");
 
-    //  Subscribe to updates for our zipcode
+    //  Subscribe to zipcode, default is NYC, 10001
+    char *filter = (argc > 1)? argv [1]: "10001 ";
     zmq_setsockopt (subscriber, ZMQ_SUBSCRIBE, filter, strlen (filter));
 
     //  Process 100 updates
+    int update_nbr;
+    long total_temp = 0;
     for (update_nbr = 0; update_nbr < 100; update_nbr++) {
         zmq_msg_t update;
         int zipcode, temperature, relhumidity;

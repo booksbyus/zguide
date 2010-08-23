@@ -11,15 +11,14 @@
 #define SUBSCRIBERS_EXPECTED  10
 
 int main () {
-    void *context;          //  ØMQ context for our process
-    context = zmq_init (1);
+    void *context = zmq_init (1);
 
-    void *publisher;        //  Socket to talk to clients
-    publisher = zmq_socket (context, ZMQ_PUB);
+    //  Socket to talk to clients
+    void *publisher = zmq_socket (context, ZMQ_PUB);
     zmq_bind (publisher, "tcp://*:5561");
 
-    void *syncservice;         //  Socket to receive signals
-    syncservice = zmq_socket (context, ZMQ_REP);
+    //  Socket to receive signals
+    void *syncservice = zmq_socket (context, ZMQ_REP);
     zmq_bind (syncservice, "tcp://*:5562");
 
     //  Get synchronization from subscribers

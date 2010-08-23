@@ -10,8 +10,7 @@
 //  Step 1 pushes one message to step 2
 
 void *step1 (void *context) {
-    void *sender;
-    sender = zmq_socket (context, ZMQ_PAIR);
+    void *sender = zmq_socket (context, ZMQ_PAIR);
     zmq_connect (sender, "inproc://step2");
 
     zmq_msg_t message;
@@ -25,12 +24,10 @@ void *step1 (void *context) {
 //  Step 2 relays the signal to step 3
 
 void *step2 (void *context) {
-    void *receiver;
-    receiver = zmq_socket (context, ZMQ_PAIR);
+    void *receiver = zmq_socket (context, ZMQ_PAIR);
     zmq_bind (receiver, "inproc://step2");
 
-    void *sender;
-    sender = zmq_socket (context, ZMQ_PAIR);
+    void *sender = zmq_socket (context, ZMQ_PAIR);
     zmq_connect (sender, "inproc://step3");
 
     zmq_msg_t message;
@@ -48,11 +45,9 @@ void *step2 (void *context) {
 //  Main program starts steps 1 and 2 and acts as step 3
 
 int main () {
-    void *context;          //  ØMQ context for our process
-    context = zmq_init (1);
+    void *context = zmq_init (1);
 
-    void *receiver;
-    receiver = zmq_socket (context, ZMQ_PAIR);
+    void *receiver = zmq_socket (context, ZMQ_PAIR);
     zmq_bind (receiver, "inproc://step3");
 
     pthread_t thread;

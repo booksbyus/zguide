@@ -13,18 +13,14 @@
 #define within(num) (int) ((float) num * random () / (RAND_MAX + 1.0))
 
 int main () {
-    void *context;          //  ØMQ context for our process
-    void *publisher;        //  Socket to talk to clients
-
-    //  Initialize random number generator
-    srandom ((unsigned) time (NULL));
-
     //  Prepare our context and publisher
-    context = zmq_init (1);
-    publisher = zmq_socket (context, ZMQ_PUB);
+    void *context = zmq_init (1);
+    void *publisher = zmq_socket (context, ZMQ_PUB);
     zmq_bind (publisher, "tcp://*:5556");
     zmq_bind (publisher, "ipc://weather");
 
+    //  Initialize random number generator
+    srandom ((unsigned) time (NULL));
     while (1) {
         zmq_msg_t message;
         int zipcode, temperature, relhumidity;

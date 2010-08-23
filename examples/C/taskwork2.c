@@ -10,21 +10,18 @@
 
 int main (int argc, char *argv[])
 {
-    void *context;          //  ØMQ context for our process
-    void *receiver;         //  Socket to receive messages on
-    void *sender;           //  Socket to send messages to
-    void *controller;       //  Socket for control input
+    void *context = zmq_init (1);
 
-    //  Prepare our context and sockets
-    context = zmq_init (1);
-
-    receiver = zmq_socket (context, ZMQ_PULL);
+    //  Socket to receive messages on
+    void *receiver = zmq_socket (context, ZMQ_PULL);
     zmq_connect (receiver, "tcp://localhost:5557");
 
-    sender = zmq_socket (context, ZMQ_PUSH);
+    //  Socket to send messages to
+    void *sender = zmq_socket (context, ZMQ_PUSH);
     zmq_connect (sender, "tcp://localhost:5558");
 
-    controller = zmq_socket (context, ZMQ_SUB);
+    //  Socket for control input
+    void *controller = zmq_socket (context, ZMQ_SUB);
     zmq_connect (controller, "tcp://localhost:5559");
     zmq_setsockopt (controller, ZMQ_SUBSCRIBE, "", 0);
 

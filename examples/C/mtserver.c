@@ -8,15 +8,13 @@
 #include <stdio.h>
 
 void *worker_routine (void *context) {
-    void *receiver;           //  Socket to talk to dispatcher
-
-    receiver = zmq_socket (context, ZMQ_REP);
+    //  Socket to talk to dispatcher
+    void *receiver = zmq_socket (context, ZMQ_REP);
     zmq_connect (receiver, "inproc://workers");
 
     while (1) {
-        zmq_msg_t request, reply;
-
         //  Wait for next request from client
+        zmq_msg_t request;
         zmq_msg_init (&request);
         zmq_recv (receiver, &request, 0);
         printf ("Received request: [%s]\n",
@@ -27,6 +25,7 @@ void *worker_routine (void *context) {
         sleep (1);
 
         //  Send reply back to client
+        zmq_msg_t reply;
         zmq_msg_init_size (&reply, 6);
         memcpy ((void *) zmq_msg_data (&reply), "World", 6);
         zmq_send (receiver, &reply, 0);
@@ -36,19 +35,19 @@ void *worker_routine (void *context) {
 }
 
 int main () {
-    void *context;          //  ØMQ context for our process
-    void *clients;          //  Socket to talk to clients
-    void *workers;          //  Socket to talk to workers
-    int thread_nbr;
-
     //  Prepare our context and sockets
-    context = zmq_init (1);
-    clients = zmq_socket (context, ZMQ_XREP);
+    void *context = zmq_init (1);
+
+    //  Socket to talk to clients
+    void *clients = zmq_socket (context, ZMQ_XREP);
     zmq_bind (clients, "tcp://*:5555");
-    workers = zmq_socket (context, ZMQ_XREQ);
+
+    //  Socket to talk to workers
+    void *workers = zmq_socket (context, ZMQ_XREQ);
     zmq_bind (workers, "inproc://workers");
 
     //  Launch pool of worker threads
+    int thread_nbr;
     for (thread_nbr = 0; thread_nbr != 5; thread_nbr++) {
         pthread_t worker;
         pthread_create (&worker, NULL, worker_routine, context);

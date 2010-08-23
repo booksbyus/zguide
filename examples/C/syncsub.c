@@ -8,18 +8,15 @@
 
 int main (int argc, char *argv[])
 {
-    void *context;          //  ØMQ context for our process
-    context = zmq_init (1);
+    void *context = zmq_init (1);
 
     //  First, connect our subscriber socket
-    void *subscriber;
-    subscriber = zmq_socket (context, ZMQ_SUB);
+    void *subscriber = zmq_socket (context, ZMQ_SUB);
     zmq_connect (subscriber, "tcp://localhost:5561");
     zmq_setsockopt (subscriber, ZMQ_SUBSCRIBE, "", 0);
 
     //  Second, synchronize with publisher
-    void *syncclient;
-    syncclient = zmq_socket (context, ZMQ_REQ);
+    void *syncclient = zmq_socket (context, ZMQ_REQ);
     zmq_connect (syncclient, "tcp://localhost:5562");
 
     //  - send a synchronization request

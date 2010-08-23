@@ -7,19 +7,14 @@
 
 int main (int argc, char *argv[])
 {
-    void *context;          //  ØMQ context for our process
-    void *receiver;         //  PULL receiver
-    void *subscriber;       //  PUSH susbcriber
-
-    //  Prepare our context and sockets
-    context = zmq_init (1);
+    void *context = zmq_init (1);
 
     //  Connect to task ventilator
-    receiver = zmq_socket (context, ZMQ_PULL);
+    void *receiver = zmq_socket (context, ZMQ_PULL);
     zmq_connect (receiver, "tcp://localhost:5557");
 
     //  Connect to weather server
-    subscriber = zmq_socket (context, ZMQ_SUB);
+    void *subscriber = zmq_socket (context, ZMQ_SUB);
     zmq_connect (subscriber, "tcp://localhost:5556");
     zmq_setsockopt (subscriber, ZMQ_SUBSCRIBE, "10001 ", 6);
 

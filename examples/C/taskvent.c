@@ -14,18 +14,10 @@
 
 int main (int argc, char *argv[])
 {
-    void *context;          //  ØMQ context for our process
-    void *sender;           //  Socket to send messages on
-    int task_nbr;
-    int total_msec = 0;     //  Total expected cost in msecs
-    zmq_msg_t message;
+    void *context = zmq_init (1);
 
-    //  Initialize random number generator
-    srandom ((unsigned) time (NULL));
-
-    //  Prepare our context and sender
-    context = zmq_init (1);
-    sender = zmq_socket (context, ZMQ_PUSH);
+    //  Socket to send messages on
+    void *sender = zmq_socket (context, ZMQ_PUSH);
     zmq_bind (sender, "tcp://*:5557");
 
     printf ("Press Enter when the workers are ready: ");
@@ -33,11 +25,17 @@ int main (int argc, char *argv[])
     printf ("Sending tasks to workers...\n");
 
     //  The first message is "0" and signals start of batch
+    zmq_msg_t message;
     zmq_msg_init_data (&message, "0", 2, NULL, NULL);
     zmq_send (sender, &message, 0);
     zmq_msg_close (&message);
 
+    //  Initialize random number generator
+    srandom ((unsigned) time (NULL));
+
     //  Send 100 tasks
+    int task_nbr;
+    int total_msec = 0;     //  Total expected cost in msecs
     for (task_nbr = 0; task_nbr < 100; task_nbr++) {
         int workload;
         //  Random workload from 1 to 100msecs

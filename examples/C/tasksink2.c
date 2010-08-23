@@ -11,32 +11,29 @@
 
 int main (int argc, char *argv[])
 {
-    void *context;          //  ØMQ context for our process
-    void *receiver;         //  Socket to receive messages on
-    void *controller;       //  Socket for worker control
-    int task_nbr;
-    struct timeval
-        tstart, tend, tdiff;
-    int total_msec = 0;     //  Total calculated cost in msecs
-    zmq_msg_t message;
+    void *context = zmq_init (1);
 
-    //  Prepare our context and sockets
-    context = zmq_init (1);
-    receiver = zmq_socket (context, ZMQ_PULL);
+    //  Socket to receive messages on
+    void *receiver = zmq_socket (context, ZMQ_PULL);
     zmq_bind (receiver, "tcp://*:5558");
 
-    controller = zmq_socket (context, ZMQ_PUB);
+    //  Socket for worker control
+    void *controller = zmq_socket (context, ZMQ_PUB);
     zmq_bind (controller, "tcp://*:5559");
 
     //  Wait for start of batch
+    zmq_msg_t message;
     zmq_msg_init (&message);
     zmq_recv (receiver, &message, 0);
     zmq_msg_close (&message);
 
     //  Start our clock now
+    struct timeval tstart;
     gettimeofday (&tstart, NULL);
 
     //  Process 100 confirmations
+    int task_nbr;
+    int total_msec = 0;     //  Total calculated cost in msecs
     for (task_nbr = 0; task_nbr < 100; task_nbr++) {
         zmq_msg_init (&message);
         zmq_recv (receiver, &message, 0);
@@ -48,12 +45,14 @@ int main (int argc, char *argv[])
         fflush (stdout);
     }
     //  Calculate and report duration of batch
+    struct timeval tend, tdiff;
     gettimeofday (&tend, NULL);
 
     if (tend.tv_usec < tstart.tv_usec) {
         tdiff.tv_sec = tend.tv_sec - tstart.tv_sec - 1;
         tdiff.tv_usec = 1000000 + tend.tv_usec - tstart.tv_usec;
-    } else {
+    }
+    else {
         tdiff.tv_sec = tend.tv_sec - tstart.tv_sec;
         tdiff.tv_usec = tend.tv_usec - tstart.tv_usec;
     }

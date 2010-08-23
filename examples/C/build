@@ -5,7 +5,7 @@
 #
 MAINS="hwclient hwserver mtserver wuserver wuclient wuproxy taskvent"
 MAINS="$MAINS taskwork tasksink msreader mspoller taskwork2 tasksink2"
-MAINS="$MAINS rrbroker msgqueue mtrelay syncpub syncsub"
+MAINS="$MAINS rrbroker rrclient rrserver msgqueue mtrelay syncpub syncsub"
 
 if [ /$1/ = /all/ ]; then
     echo "Building C examples..."
