@@ -131,6 +131,7 @@ EOF
     elsif (/\[\[code\]\]/) {
         writeln ($_);
         while (<>) {
+            chop;
             writeln ($_);
             last if /\[\[\/code\]\]/;
         }
