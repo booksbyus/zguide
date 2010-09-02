@@ -1,6 +1,44 @@
-No-one has translated the hwserver example into Java yet.  Be the first to create
-hwserver in Java and get one free Internet!  If you're the author of the Java
-binding, this is a great way to get people to use 0MQ in Java.
+//
+//  Hello World server in Java
+//  Binds REP socket to tcp://*:5555
+//  Expects "Hello" from client, replies with "World"
+//
+//  Naveen Chawla <naveen.chwl@gmail.com>
+//
+import org.zeromq.ZMQ;
 
-To submit a translation, just email it to zeromq-dev.zeromq.org.
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+public class HelloWorldServer{
+    public static void main(String[] args){
+        //  Prepare our context and socket
+        ZMQ.Context context = ZMQ.context(1);
+        ZMQ.Socket socket = context.socket(ZMQ.REP);
+        socket.bind ("tcp://*:5555");
+
+        while (true) {
+            byte[] request;
+
+            //  Wait for next request from client
+            //  We will wait for a 0-terminated string from the client, so it works with C/C++
+            request = socket.recv (0);
+            //  In order to display the 0-terminated string as a String,
+            //  we omit the last byte from request
+            System.out.println ("Received request: [" +
+                new String(request,0,request.length-1)  //  Creates a String from request, minus the last byte
+                + "]");
+
+            //  Do some 'work'
+            try {
+                Thread.sleep (1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            //  Send reply back to client
+            //  We will send a 0-terminated string back to the client, so it works with C/C++
+            String replyString = "World" + " ";
+            byte[] reply = replyString.getBytes();
+            reply[reply.length-1]=0; //Sets the last byte of the reply to 0
+            socket.send(reply, 0);
+        }
+    }
+}
