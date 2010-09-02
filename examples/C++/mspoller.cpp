@@ -1,6 +1,44 @@
-No-one has translated the mspoller example into C++ yet.  Be the first to create
-mspoller in C++ and get one free Internet!  If you're the author of the C++
-binding, this is a great way to get people to use 0MQ in C++.
+//
+//  Reading from multiple sockets in C++
+//  This version uses zmq_poll()
+//
+//  Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
+//
+#include <zmq.hpp>
+#include <time.h>
+#include <iostream>
 
-To submit a translation, just email it to zeromq-dev.zeromq.org.
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+int main (int argc, char *argv[])
+{
+    zmq::context_t context(1);
+
+    //  Connect to task ventilator
+    zmq::socket_t receiver(context, ZMQ_PULL);
+    receiver.connect("tcp://localhost:5557");
+
+    //  Connect to weather server
+    zmq::socket_t subscriber(context, ZMQ_SUB);
+	subscriber.connect("tcp://localhost:5556");
+    subscriber.setsockopt(ZMQ_SUBSCRIBE, "10001 ", 6);
+
+    //  Initialize poll set
+    zmq::pollitem_t items [2] = {
+        { receiver, 0, ZMQ_POLLIN, 0 },
+        { subscriber, 0, ZMQ_POLLIN, 0 }
+    };
+    //  Process messages from both sockets
+    while (1) {
+        zmq::message_t message;
+        zmq::poll (&items [0], 2, -1);
+
+        if (items [0].revents & ZMQ_POLLIN) {
+            receiver.recv(&message);
+            //  Process task
+        }
+        if (items [1].revents & ZMQ_POLLIN) {
+            subscriber.recv(&message);
+            //  Process weather update
+        }
+    }
+    return 0;
+}

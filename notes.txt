@@ -9,3 +9,24 @@ Use cases for the Guide
     - security
     - etc.
     - ZPL config, zfl, etc.
+
+* How do we tunnel 0MQ connections over 0MQ connections?
+    - e.g. to get 3-4 ports into DMZ via one single port
+    - two devices, one reads, one writes
+    - over other protocols: HTTP, SSH, etc...?
+    - acts as split device, ...
+
+* Cross-language string sending tutorial
+
+* How to publish selectively to individual subscribers:
+
+When a client activates, it chooses a random port that is not in use and creates a SUB socket listening for all traffic on it. The client then sends a message via REQ to the publisher containing the port that it is listening on. The publisher receives this message, acknowledges it, and creates a new pub socket specific to that client. All published events specific to this client go out that socket.
+
+When the client deactivates, it sends a message to the publisher with the port to deactivate and close.
+
+You end up creating a lot more PUB sockets on your server end and doing all of the filtering at the server. This sounds acceptable to you.
+
+I didn't need to do this to avoid network bandwidth bottlenecks; I created this to enforce some security and entitlements.
+
+
+I highly recommend that you try out the simpler topology and *verifying* that 0mq cannot keep up with your message rates when publishing all data to all clients. With smart topics the client can reject the data *very* fast. A 1 GB or 10 Gb switched network can also move quite a bit of data without a lot of blocking behavior in the hardware too. You may be able to save yourself a lot of unnecessary work, so just try it.

@@ -3,15 +3,19 @@
 #   Examples build helper
 #   Syntax: build all | clean
 #
-MAIN="hwclient hwserver mtserver"
 if [ /$1/ = /all/ ]; then
     echo "Building C++ examples..."
-    ./c -p -l -lzmq -q $MAIN
+    for MAIN in *.cpp; do
+        echo "$MAIN"
+        ./c -p -l -lzmq -q $MAIN
+    done
 elif [ /$1/ = /clean/ ]; then
     echo "Cleaning C++ examples directory..."
-    rm -f *.opp *.lst core $MAIN
+    rm -f *.opp *.lst core
+    for MAIN in *.cpp; do
+        rm `basename $MAIN .cpp`
+    done
 else
     echo "syntax: build all | clean"
 fi
-
 

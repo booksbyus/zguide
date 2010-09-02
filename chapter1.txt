@@ -74,6 +74,8 @@ So let's start with some code.  We start of course with a Hello World example.  
      Figure # - Request-Reply
 [[/code]]
 
+The REQ-REP socket pair is lockstep.  The client does zmq_send[3] and then zmq_recv[3], in a loop (or once if that's all it needs).  Doing any other sequence (e.g. sending two messages in a row) will cause an error.  Similarly the service does zmq_recv[3] and then zmq_send[3] in that order, and as often as it needs to.
+
 0MQ uses C as its reference language and this is the language we'll use for examples.  If you're reading this online, the link below the example takes you to translations into other programming languages.  Let's compare the same server in C++:
 
 [[code type="C++" title="Hello World server" name="hwserver"]]
@@ -115,7 +117,7 @@ Now this looks too simple to be realistic, but a 0MQ socket is what you get when
 
 You could literally throw thousands of clients at this server, all at once, and it would continue to work happily and quickly.  For fun, try starting the client and //then// starting the server, see how it all still works, then think for a second what this means.
 
-Let me explain briefly what these two programs are actually doing.  They reate a 0MQ context to work with, and a socket.  Don't worry what the words mean.  You'll pick it up.  The server binds its REP (reply) socket to port 5555.  The server waits for a request, in a loop, and responds each time with a reply.  The client sends a request and reads the reply back from the server.
+Let me explain briefly what these two programs are actually doing.  They create a 0MQ context to work with, and a socket.  Don't worry what the words mean.  You'll pick it up.  The server binds its REP (reply) socket to port 5555.  The server waits for a request, in a loop, and responds each time with a reply.  The client sends a request and reads the reply back from the server.
 
 There is a lot happening behind the scenes but what matters to us programmers is how short and sweet the code is, and how often it doesn't crash, even under heavy load.  This is the request-reply pattern, probably the simplest way to use 0MQ.  It maps to RPC and the classic client-server model.
 
@@ -168,6 +170,8 @@ Here is client application, which listens to the stream of updates and grabs any
 [[/code]]
 
 Note that when you use a SUB socket you **must** set a filter using zmq_setsockopt[3] and SUBSCRIBE, as in this code.  If you don't set any filter, you won't get any messages.  It's a common mistake for beginners.  The subscriber can set many filters, which are added together.  That is, if a update matches ANY filter, the subscriber receives it.  The subscriber can also unsubscribe specific filters.  Filters are binary.  See zmq_setsockopt[3] for how this works.
+
+The PUB-SUB socket pair is asynchronous.  The client does zmq_recv[3], in a loop (or once if that's all it needs).  Trying to send a message to a SUB socket will cause an error.  Similarly the service does zmq_send[3] as often as it needs to, but must not do zmq_recv[3] on a PUB socket.
 
 There is one important thing to know about PUB/SUB sockets: you do not know precisely when the subscriber starts to get messages.  Even if you start the subscriber, wait a while, and then start the publisher, the subscriber will usually miss a few of the first messages that the publisher sends.  This is because as the subscriber connects to the publisher (something that takes a small but non-zero time), the publisher may already be sending messages out.
 

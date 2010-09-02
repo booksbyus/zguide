@@ -1,6 +1,40 @@
-No-one has translated the hwclient example into Java yet.  Be the first to create
-hwclient in Java and get one free Internet!  If you're the author of the Java
-binding, this is a great way to get people to use 0MQ in Java.
+//
+//  Hello World client in Java
+//  Connects REQ socket to tcp://localhost:5555
+//  Sends "Hello" to server, expects "World" back
+//
+//  Contributed by Naveen Chalwa
+//
 
-To submit a translation, just email it to zeromq-dev.zeromq.org.
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+import org.zeromq.ZMQ;
+
+public static void main(String[] args) {
+
+    //  Prepare our context and socket
+    ZMQ.Context context = ZMQ.context(1);
+    ZMQ.Socket socket = context.socket(ZMQ.REQ);
+    System.out.println("Connecting to hello world server...");
+    socket.connect ("tcp://localhost:5555");
+
+    //  Do 10 requests, waiting each time for a response
+    for (int request_nbr = 0; request_nbr != 10; request_nbr++) {
+
+        //  Create a "Hello" message.
+        //  Ensure that the last byte of our "Hello" message is 0 because
+        //  our "Hello World" server is expecting a 0-terminated string:
+        String requestString = "Hello" + " ";
+        byte[] request = requestString.getBytes();
+        request[request.length-1]=0; //Sets the last byte to 0
+
+        // Send the message
+        System.out.println("Sending request " + request_nbr + "...");
+        socket.send(request, 0);
+
+        //  Get the reply.
+        byte[] reply = socket.recv(0);
+        //  When displaying reply as a String, omit the last byte because
+        //  our "Hello World" server has sent us a 0-terminated string:
+        System.out.println("Received reply " + request_nbr
+            + ": " + new String(reply,0,reply.length-1));
+    }
+}

@@ -1,6 +1,14 @@
 ++ Chapter 3 - Advanced Stuff
 
-We continue the style of chapter 2 by developing useful mini-applications and each time exploring new aspects of 0MQ in the process.
+In chapter 2 we worked through the basics of using 0MQ by developing a series of small applications, each exploring new aspects of 0MQ.  We'll continue this approach in chapter 3, as we explore advanced aspects of 0MQ.
+
+We'll cover:
+
+* How to manage queue overflows and disk swap files.
+* How to do LRU (least recently used) load balancing.
+* How to do reliable request-reply.
+
+
 
 +++ Managing Queue Overflows
 
@@ -9,7 +17,7 @@ We continue the style of chapter 2 by developing useful mini-applications and ea
 
 +++ Custom Load-Balancing
 
-We'll look at another supercomputing scenario, where we want to distribute tasks to workers.  However we don't want to use round-robin, we want to use a least-recently used algorith.  Our application consists of:
+We'll look at another supercomputing scenario, where we want to distribute tasks to workers.  However we don't want to use round-robin, we want to use a least-recently used algorithm.  Our application consists of:
 
 * A ventilator, which has two threads:
  * One thread creates tasks and sends them to the second thread via a PUSH socket
@@ -18,9 +26,14 @@ We'll look at another supercomputing scenario, where we want to distribute tasks
 
 The workers signal 'ready' by sending an empty message to the ventilator.  The ventilator pops the next task and replies with that.
 
++++ Reliable Request-Reply
+
+We'll create a reliable request-reply application that uses XREQ and XREP and a simple resend mechanism.  When this works between two peers we'll show how it scales across a request-reply broker to effectively create edge-to-edge reliability.  We'll also open up the message format for request-reply and explore identities in horrible detail.
+
 +++ Configuration Distribution
 
 We'll look at how to dynamically configure a network of devices using a central configuration broker.
+
 
 +++ Stateful Publish-Subscribe
 
@@ -32,10 +45,6 @@ We'll look at the common question of getting a consistent state across a set of 
 * A peer can join the network at any time, and get the cache state
 
 I'll leave the design for later.  We'll need a forwarder to act as stable location in the network.  Should be fun!
-
-+++ Reliable Request-Reply
-
-We'll create a reliable request-reply application that uses XREQ and XREP and a simple resend mechanism.  When this works between two peers we'll show how it scales across a request-reply broker to effectively create edge-to-edge reliability.  We'll also open up the message format for request-reply and explore identities in horrible detail.
 
 +++ Failover and Recovery
 
@@ -69,6 +78,9 @@ In this section we'll build a simple reactor framework that turns the zmq_poll(3
 
 Now we'll use the reactor to build some exotic devices.  It should be much easier and readable than using zmq_poll.
 
++++ Serializing Data
+
+Examples of using Protocol Buffers and other options.
 
 [!--
 - ipc://name
@@ -118,5 +130,6 @@ Now we'll use the reactor to build some exotic devices.  It should be much easie
  - you need to add a bind to allow the client to accept a connection
  - could be usecase for EXCLUSIVE socket
 
+XREQ is like PUSH+PULL, XREP is like PUSH+PULL+routing
 
 --]

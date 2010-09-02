@@ -1,6 +1,58 @@
-No-one has translated the rrbroker example into C++ yet.  Be the first to create
-rrbroker in C++ and get one free Internet!  If you're the author of the C++
-binding, this is a great way to get people to use 0MQ in C++.
+//
+//  Simple request-reply broker in C++
+//
+//  Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
+//
+#include <zmq.hpp>
+#include <stdint.h>
+#include <iostream>
 
-To submit a translation, just email it to zeromq-dev.zeromq.org.
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+int main (int argc, char *argv[])
+{
+    //  Prepare our context and sockets
+    zmq::context_t context(1);
+    zmq::socket_t frontend (context, ZMQ_XREP);
+    zmq::socket_t backend (context, ZMQ_XREQ);
+
+    frontend.bind("tcp://*:5559");
+    backend.bind("tcp://*:5560");
+
+    //  Initialize poll set
+    zmq::pollitem_t items [2] = {
+        { frontend, 0, ZMQ_POLLIN, 0 },
+        { backend,  0, ZMQ_POLLIN, 0 }
+    };
+
+    //  Switch messages between sockets
+    while (1) {
+        zmq::message_t message;
+        int64_t more;           //  Multipart detection
+
+        zmq::poll (&items [0], 2, -1);
+
+        if (items [0].revents & ZMQ_POLLIN) {
+            while (1) {
+                //  Process all parts of the message
+                frontend.recv(&message);
+                size_t more_size = sizeof (more);
+                frontend.getsockopt(ZMQ_RCVMORE, &more, &more_size);
+                backend.send(message, more? ZMQ_SNDMORE: 0);
+
+                if (!more)
+                    break;      //  Last message part
+            }
+        }
+        if (items [1].revents & ZMQ_POLLIN) {
+            while (1) {
+                //  Process all parts of the message
+                backend.recv(&message);
+                size_t more_size = sizeof (more);
+                backend.getsockopt(ZMQ_RCVMORE, &more, &more_size);
+                frontend.send(message, more? ZMQ_SNDMORE: 0);
+                if (!more)
+                    break;      //  Last message part
+            }
+        }
+    }
+    return 0;
+}

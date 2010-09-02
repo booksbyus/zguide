@@ -1,6 +1,30 @@
-No-one has translated the rrclient example into C++ yet.  Be the first to create
-rrclient in C++ and get one free Internet!  If you're the author of the C++
-binding, this is a great way to get people to use 0MQ in C++.
+//  Request-reply client in C++
+//  Connects REQ socket to tcp://localhost:5559
+//  Sends "Hello" to server, expects "World" back
+//
+//  Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
+//
+#include <zmq.hpp>
+#include <iostream>
 
-To submit a translation, just email it to zeromq-dev.zeromq.org.
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+int main (int argc, char *argv[])
+{
+    zmq::context_t context(1);
+
+	zmq::socket_t socket(context, ZMQ_REQ);
+	socket.connect("tcp://localhost:5559");
+
+	for( int request = 0 ; request < 10 ; request++) {
+
+		zmq::message_t message(6);
+		memcpy(message.data(), "Hello\0", 6);
+		socket.send(message);
+
+		message.rebuild();
+		socket.recv(&message);
+
+		std::cout << "Received reply " << request
+				<< "[" << static_cast<char*>(message.data()) << "]"
+				<< std::endl;
+	}
+}

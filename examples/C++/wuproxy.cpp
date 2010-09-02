@@ -1,6 +1,40 @@
-No-one has translated the wuproxy example into C++ yet.  Be the first to create
-wuproxy in C++ and get one free Internet!  If you're the author of the C++
-binding, this is a great way to get people to use 0MQ in C++.
+//
+//  Weather proxy device C++
+//
+//  Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
+//
+#include <zmq.hpp>
+#include <stdint.h>
 
-To submit a translation, just email it to zeromq-dev.zeromq.org.
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+int main (int argc, char *argv[])
+{
+    zmq::context_t context(1);
+
+    //  This is where the weather server sits
+    zmq::socket_t frontend(context, ZMQ_SUB);
+    frontend.connect("tcp://192.168.55.210:5556");
+
+    //  This is our public endpoint for subscribers
+    zmq::socket_t backend (context, ZMQ_PUB);
+    backend.bind("tcp://10.1.1.0:8100");
+
+    //  Subscribe on everything
+    frontend.setsockopt(ZMQ_SUBSCRIBE, "", 0);
+
+    //  Shunt messages out to our own subscribers
+    while (1) {
+        while (1) {
+            zmq::message_t message;
+            int64_t more;
+            size_t more_size = sizeof (more);
+
+            //  Process all parts of the message
+            frontend.recv(&message);
+            frontend.getsockopt( ZMQ_RCVMORE, &more, &more_size);
+            backend.send(message, more? ZMQ_SNDMORE: 0);
+            if (!more)
+                break;      //  Last message part
+        }
+    }
+    return 0;
+}

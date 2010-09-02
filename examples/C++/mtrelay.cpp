@@ -1,6 +1,62 @@
-No-one has translated the mtrelay example into C++ yet.  Be the first to create
-mtrelay in C++ and get one free Internet!  If you're the author of the C++
-binding, this is a great way to get people to use 0MQ in C++.
+//
+//  Multithreaded relay in C++
+//
+//  Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
+//
+#include <zmq.hpp>
+#include <pthread.h>
+#include <iostream>
 
-To submit a translation, just email it to zeromq-dev.zeromq.org.
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+//  Step 1 pushes one message to step 2
+
+void *step1 (void *arg) {
+
+	zmq::context_t * context = static_cast<zmq::context_t*>(arg);
+
+	zmq::socket_t sender (*context, ZMQ_PAIR);
+    sender.connect("inproc://step2");
+
+    zmq::message_t message;
+    sender.send(message);
+
+    return (NULL);
+}
+
+//  Step 2 relays the signal to step 3
+
+void *step2 (void *arg) {
+
+	zmq::context_t * context = static_cast<zmq::context_t*>(arg);
+
+	zmq::socket_t receiver (*context, ZMQ_PAIR);
+    receiver.bind("inproc://step2");
+
+    zmq::socket_t sender (*context, ZMQ_PAIR);
+    sender.connect("inproc://step3");
+
+    zmq::message_t message;
+    receiver.recv(&message);
+
+    sender.send(message);
+
+    return (NULL);
+}
+
+//  Main program starts steps 1 and 2 and acts as step 3
+
+int main () {
+	zmq::context_t context(1);
+
+	zmq::socket_t receiver (context, ZMQ_PAIR);
+    receiver.bind("inproc://step3");
+
+    pthread_t thread;
+    pthread_create (&thread, NULL, step2, &context);
+    pthread_create (&thread, NULL, step1, &context);
+
+    zmq::message_t message;
+	receiver.recv(&message);
+    std::cout << "Test successful!" << std::endl;
+
+    return 0;
+}

@@ -1,10 +1,27 @@
 ++ Chapter 2 - Intermediate Stuff
 
+In chapter 1 we took 0MQ for a drive, with some basic examples of the main 0MQ patterns: request-reply, publish-subscribe, and pipeline.  In this chapter we're going to get our hands dirty and start to learn how to use these tools in real programs.
+
+We'll cover:
+
+* How to create and work with 0MQ sockets.
+* How to send and receive messages on sockets.
+* How 0MQ's asynchronous I/O model affects your code.
+* How to handle multiple sockets in one thread.
+* How to send and receive multipart messages.
+* How to handle errors properly.
+* How to shutdown a 0MQ application cleanly.
+* How to forward messages across networks.
+* How to build a simple message queuing broker.
+* How to write multithreaded applications with 0MQ.
+* How to use 0MQ to signal between threads.
+* How to use 0MQ to coordinate a network of nodes.
+
 +++ The Zen of Zero
 
 The Ø in 0MQ is all about tradeoffs. On the one hand this strange name lowers 0MQ's visibility on Google and Twitter.  On the other hand it annoys the heck out of some Danish folk who write us things like "ØMG røtfl", and "//Ø is not a funny looking zero!//" and "//Rødgrød med Fløde!//", which is apparently an insult that means "may your neighbours be the direct descendents of Grendel!"  Seems like a fair trade.
 
-Originally the zero in 0MQ was meant as "zero broker" and (as close to) "zero latency" (as possible).  In the meantime it has come to cover different goals: zero-copy, zero administration, zero cost, zero waste.  More generally, "zero" refers to the culture of minimalism that permeates the project.  We add power by removing complexity rather than exposing new functionality.
+Originally the zero in 0MQ was meant as "zero broker" and (as close to) "zero latency" (as possible).  The character is the Unicode letter +2205 and refers to the mathematical empty set.  In the meantime it has come to cover different goals: zero-copy, zero administration, zero cost, zero waste.  More generally, "zero" refers to the culture of minimalism that permeates the project.  We add power by removing complexity rather than exposing new functionality.
 
 +++ The Socket API
 
