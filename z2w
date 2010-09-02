@@ -152,7 +152,7 @@ EOF
     }
     else {
         #   Normal text
-        s/0MQ/∅MQ/g;
+        s/0MQ/ØMQ/g;
         s/0\\MQ/0MQ/g;
         writeln ($_);
     }
@@ -458,3 +458,4 @@ sub error {
     print STDERR "E: $_\n";
     $have_errors = 1;                   #   We have 1 or more errors
 }
+

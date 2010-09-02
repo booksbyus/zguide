@@ -1,0 +1,505 @@
+#! /bin/sh
+#
+#   c - C compile command
+#
+#   Copyright (c) 1996-2009 iMatix Corporation
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or (at
+#   your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful, but
+#   WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#   General Public License for more details.
+#
+#   For information on alternative licensing for OEMs, please contact
+#   iMatix Corporation.
+#
+
+#   Syntax:     c filename...     Compile ANSI C program(s)
+#               c -c filename...  (Backwards compatible: compile C programs)
+#               c -l main...      Compile and link main program(s)
+#               c -L main...      Link main program(s), no compile
+#               c -S              Report detected system name
+#               c -C              Report C compiler command syntax
+#               c -r lib file...  Replace object file(s) into library
+#                 -li path        Local include path, additional to INCDIR
+#                 -ll path        Local library path, additional to LIBDIR
+#                 -g              Compile and link with debug information
+#                 -p              Use C++ compiler instead of C
+#                                 When linking, link with C++ runtime
+#                                 When replacing, replace .opp file
+#                 -v              Be verbose
+#                 -q              Be quiet
+#                 -<xxxx>         Arbitrary switch passed to compiler/linker
+#
+#   Requires:   Bourne shell
+#   Usage:      Compiles a subroutine or compiles/links a main program.
+#
+#               The following variables can be set to control the program:
+#                   CCDEFINES     Options required for ANSI C/C++ compilation
+#                   CCLIBS        Options required for ANSI C/C++ linking
+#                   CCNAME        Name of C compiler if not default
+#                   CCPLUS        Name of C++ compiler if not default
+#                   CCCAT         Command used to print listings (cat)
+#                   INCDIR        Directory to search for include files
+#                   LIBDIR        Directory to search for libraries
+#
+#   When using iMatix Boom, if the IBASE environment variable is set and
+#   conflicts with INCDIR or LIBDIR, c will issue a warning.
+#
+#   To make compile/link errors less verbose, set CCCAT to "head".
+#
+#   Note that these environment variables have different semantics to the
+#   "standard" GNU variables such as CFLAGS which is why these are not
+#   used in this script.
+#
+#----------------------------------------------------------------------------
+
+#
+#   Utility functions for parsing BOOM_MODEL
+#
+
+#   Returns a list of all BOOM_MODEL_$MODEL variables set
+boom_model_list () {
+    set |
+        awk 'BEGIN                      { FS="[=_]" }
+             /^BOOM_MODEL_[A-Z0-9]*=1$/ { print $3  }'
+}
+
+#   Expands $BOOM_MODEL into individual BOOM_MODEL_$MODEL variables
+boom_model_expand () {
+    #   Clear any existing settings
+    for MODEL in `boom_model_list`; do
+        eval unset BOOM_MODEL_$MODEL
+    done
+    #   Iterate over BOOM_MODEL using ',' as FS
+    OLD_IFS=$IFS
+    IFS=,
+    for MODEL in $BOOM_MODEL; do
+        MODEL=`echo $MODEL | tr \[a-z\] \[A-Z\]`
+        eval BOOM_MODEL_$MODEL=1
+        eval export BOOM_MODEL_$MODEL
+    done
+    IFS=$OLD_IFS
+}
+
+#   If not already known, detect UNIX system type.
+
+if [ -z "$UTYPE" ]; then
+    UTYPE=Generic                       #   Default system name
+    if [ -s /usr/bin/uname       ]; then UTYPE=`/usr/bin/uname`; fi
+    if [ -s /bin/uname           ]; then UTYPE=`/bin/uname`;     fi
+fi
+
+#
+#   Set default values for BOOM_MODEL
+#
+#   Default is release,mt on all platforms.
+#
+if [ -z "$BOOM_MODEL" ]; then
+    BOOM_MODEL=release,mt
+fi
+boom_model_expand
+if [ "$BOOM_MODEL_RELEASE" != "1" ]; then
+    if [ "$BOOM_MODEL_DEBUG" != "1" ]; then
+        BOOM_MODEL_RELEASE=1
+        BOOM_MODEL="$BOOM_MODEL,release"
+    fi
+fi
+if [ "$BOOM_MODEL_ST" != "1" ]; then
+    if [ "$BOOM_MODEL_MT" != "1" ]; then
+        BOOM_MODEL_MT=1
+        BOOM_MODEL="$BOOM_MODEL,mt"
+    fi
+fi
+
+#   Set specific system compiler options and other flags
+#   CCNAME      Name of compiler
+#   CCOPTS      Compiler options, except -c
+#   LINKTYPE    One of (before, after, gnu)
+#   RANLIB      Use ranlib command to reindex library; else use 'ar rs'
+#
+#   CCOPTS has no sensible default; so has to be either set by the
+#   general configuration variables, or detected based on system type
+#   and compiler.  If CCOPTS is set, we assume the other values are
+#   set or the defaults are correct.
+#
+#   NOTE: CCNAME default is set below these checks, so that we can test
+#   on CCNAME when setting CCOPTS, and/or set CCNAME and CCOPTS together.
+#
+CCCAT="${CCCAT:-cat}"               #   By default, "cat"
+RANLIB="${RANLIB:-0}"               #   By default, "ar rs" is used
+LINKTYPE="${LINKPATH:-after}"       #   By default, accept '-lsfl... -L.'
+
+#
+#  First, check if GCC is present.  If we can't find it and the
+#  user hasn't specified an alternative, then exit.
+#
+if [ -z "$CCNAME" -a -z "$CCOPTS" ]; then
+    if type gcc >/dev/null 2>/dev/null; then
+        CCNAME="gcc"
+        CCPLUS="g++"
+    else
+        cat <<EOM 1>&2
+E: Could not find 'gcc' on PATH.  'c' requires gcc to build.
+E: For other alternatives that may be available on your platform
+E: please consult the 'c' script.
+EOM
+        exit 1
+    fi
+fi
+
+#
+#  Generic modern GCC system
+#
+if [ "$CCNAME" = "gcc" ]; then
+    [ -z "$BOOM_MODEL_NOOPT" ] && CCDEBUG="-O2"
+    [ -z "$BOOM_MODEL_NOOPT" ] && CCNODEBUG="$CCNODEBUG -O2"
+    CCOPTS="-D_REENTRANT -D_GNU_SOURCE -Wall -Wno-unused -fno-strict-aliasing"
+    #  We assume the following standard libraries are all present.
+    #  If your build is failing because of missing libraries then
+    #  either you are missing development packages, or are on a non-standard/old
+    #  system and should add a special case.
+    STDLIBS="-lrt -lcrypt -lpthread -lm"
+
+    #
+    #  Linux-specific subsection
+    #
+    if [ "$UTYPE" = "Linux" ]; then
+        #  Use -start-group / -end-group for linking
+        LINKTYPE="gnu"
+    #
+    #  Solaris-specific subsection
+    #
+    elif [ "$UTYPE" = "SunOS" ]; then
+        #  Extra system libraries needed to link on Solaris
+        STDLIBS="$STDLIBS -lsocket -lnsl -lsendfile"
+        #  Standard "dumb" linker
+        LINKTYPE="before"
+        #  For MT release builds, pick the best possible memory allocator
+        #  out of the available options.  mtmalloc is available in
+        #  at least Solaris 8 and newer, umem is available in
+        #  Solaris 9 update 3 and newer.  If either is available,
+        #  request iCL use direct memory allocator by default for
+        #  MT release builds.
+        if [ "$BOOM_MODEL_MT" -a "$BOOM_MODEL_RELEASE" ]; then
+            if [ -f /usr/lib/libumem.so ]; then
+                STDLIBS="$STDLIBS -lumem"
+            elif [ -f /usr/lib/libmtmalloc.so ]; then
+                STDLIBS="$STDLIBS -lmtmalloc"
+            fi
+        fi
+        #  Workaround for FOR-24
+        STDLIBS="-lapr $STDLIBS"
+    fi
+#
+#  AIX with xlc
+#
+elif [ "$UTYPE" = "AIX" -a "$CCNAME" = "xlc_r" ]; then
+    [ -z "$BOOM_MODEL_NOOPT" ] && CCNODEBUG="-O"
+    CCNAME="xlc_r"            #  Use VAC Threaded Mode
+    CCPLUS="xlC_r"            #  Use VAC Threaded Mode
+    CCOPTS="$CCOPTS -D_REENTRANT"
+    STDLIBS="-lpthread"
+fi
+
+#   Patch together the CC options and defines into one variable
+CCOPTS="$CCOPTS $CCDEFINES"
+if [ "$BOOM_MODEL_DEBUG" ]; then
+    CCOPTS="-g -DDEBUG $CCDEBUG $CCOPTS"
+else
+    CCOPTS="$CCNODEBUG $CCOPTS"
+fi
+
+#   Select ST or MT build for iMatix Base2 framework
+if [ "$BOOM_MODEL_MT" ]; then
+    CCOPTS="$CCOPTS -DBASE_THREADSAFE"
+fi
+
+#   Parse command line arguments, figure out what we are doing
+#   (Parsing is currently fairly simplistic, and depends on ordering
+#   of flags.  Could be improved later if required.)
+LINKUP=no
+COMPILE=yes
+USECPP=no
+VERBOSE=${VERBOSE:-no}
+QUIET=${QUIET:-no}                  #   Default is non-verbose messages
+LOCALLIBDIR=.                       #   By default, search current directory twice
+
+if [ -n "$IBASE" ]; then
+    if [ -z "$INCDIR" ]; then
+        INCDIR=$IBASE/include
+    else
+        if [ "$INCDIR" != "$IBASE/include" ]; then
+            echo "W: INCDIR=$INCDIR is in conflict with IBASE=$IBASE" 1>&2
+        fi
+    fi
+    if [ -z "$LIBDIR" ]; then
+        LIBDIR=$IBASE/lib
+    else
+        if [ "$LIBDIR" != "$IBASE/lib" ]; then
+            echo "W: LIBDIR=$LIBDIR is in conflict with IBASE=$IBASE" 1>&2
+        fi
+    fi
+fi
+
+#   Process switches in no particular order until there are none left
+while true; do
+    #   -v means verbose reports
+    if [ /$1/ = /-v/ ]; then
+        VERBOSE=yes
+        shift
+
+    #   -q means quiet
+    elif [ /$1/ = /-q/ ]; then
+        QUIET=yes
+        shift
+
+    #   -g means compile/link with debugging symbols
+    elif [ /$1/ = /-g/ ]; then
+        BOOM_MODEL_DEBUG=1
+        unset BOOM_MODEL_RELEASE
+        shift
+
+    #   -p means use C++ compiler
+    elif [ /$1/ = /-p/ ]; then
+        USECPP=yes
+        shift
+
+    #   -S means report detected system type
+    elif [ /$1/ = /-S/ ]; then
+        echo "$UTYPE"
+        exit
+
+    #   -C means report compiler syntax type
+    elif [ /$1/ = /-C/ ]; then
+        echo "$CCNAME -c -I$INCDIR $CCOPTS"
+        exit
+
+    #   -c means compile the object -- we were going to do that anyway,
+    #   but this ensures backwards compatibility
+    elif [ /$1/ = /-c/ ]; then
+        shift
+
+    #   -r means replace object file into library
+    #   The RANLIB symbol should be set to 1 if 'ar rs' does not work.
+    elif [ /$1/ = /-r/ ]; then
+        LIBRARY=$2
+        LIBNAME=`echo $LIBRARY | cut -d"." -f1`
+        shift; shift
+
+        for i in $*; do
+            shift
+            OBJECT=`echo $i | cut -d"." -f1`
+            if [ "$USECPP" = "no" ]; then
+                OBJECT=$OBJECT.o
+            else
+                OBJECT=$OBJECT.opp
+            fi
+
+            TRACE="Replacing object $OBJECT in library $LIBRARY"
+            if [ -f $LIBNAME.a ]; then
+                AR_CREATE_OPT=""
+            else
+                AR_CREATE_OPT="c"
+            fi
+            if [ "$RANLIB" = "1" ]; then
+                COMMAND="ar ${AR_CREATE_OPT}r $LIBNAME.a $OBJECT"
+            else
+                COMMAND="ar ${AR_CREATE_OPT}rs $LIBNAME.a $OBJECT"
+            fi
+            if [ "$QUIET" = "no" ]; then
+                if [ "$VERBOSE" = "no" ]; then
+                    echo "$TRACE..."
+                else
+                    echo "$TRACE ($COMMAND)..."
+                fi
+            fi
+            if [ ! -z "$CCTRACE" ]; then
+                echo "$TRACE ($COMMAND)">>$CCTRACE
+            fi
+            $COMMAND
+
+            #   Run ranlib if necessary
+            if [ "$RANLIB" = "1" ]; then
+                ranlib $LIBNAME.a
+            fi
+        done
+        exit
+
+    #   Compile/link main if -l is first argument
+    elif [ /$1/ = /-l/ ]; then
+        LINKUP=yes
+        shift
+
+    #   Link main if -L is first argument (assumed to already be compiled)
+    elif [ /$1/ = /-L/ ]; then
+        LINKUP=yes
+        COMPILE=no
+        shift
+
+    #   -li means use local include path as well as INCDIR
+    elif [ /$1/ = /-li/ ]; then
+        CCOPTS="-I$2 $CCOPTS"
+        shift; shift
+
+    #   -ll means use local library path as well as LIBDIR
+    elif [ /$1/ = /-ll/ ]; then
+        LOCALLIBDIR=$2
+        shift; shift
+
+    elif [ /`echo $1 | cut -c1`/ = /-/ ]; then
+        EXTRA="$EXTRA $1"
+        shift
+
+    else
+        break       #   Not a switch
+    fi
+done
+
+#   If we will be linking, then build list of libraries to link with.
+
+if [ "$LINKUP" = "yes" -o /$1/ = // ]; then
+    LIBLIST=""
+    for LIBRARY in lib*.a $LOCALLIBDIR/lib*.a $LIBDIR/lib*.a; do
+        if [ ! -f $LIBRARY ]; then
+            continue
+        fi
+        #   Pull out the xxx from libxxx.a (or similar)
+        LIBNAME=`basename $LIBRARY | sed -e 's/^...\([^\.]*\)\..*$/\1/'`
+        LIBLIST="$LIBLIST -l$LIBNAME"
+    done
+    LIBLIST="$LIBLIST $STDLIBS $CCLIBS"
+fi
+
+CCOPTS="$EXTRA $CCOPTS"
+#   Show help if no arguments
+if [ /$1/ = // ]; then
+    echo "Detected system=$UTYPE, compiles with:"
+    echo "     $CCNAME -c -I$INCDIR $CCOPTS"
+    echo "Syntax: c filename...    Compile ANSI C program(s)"
+    echo "        c -c filename... Compile ANSI C programs(s)"
+    echo "        c -l main...     Compile and link main program(s)"
+    echo "        c -L main...     Link main(s) with" ${LIBLIST-"no libraries"}
+    echo "        c -S             Report detected system name"
+    echo "        c -C             Report C compiler command syntax"
+    echo "        c -r lib file    Replace file into specified library"
+    echo "          -li path       Local include path, additional to INCDIR"
+    echo "          -ll path       Local library path, additional to LIBDIR"
+    echo "          -g             Compile and link with debug information"
+    echo "          -p             Use C++ compiler instead of C"
+    echo "                         When linking, link with C++ runtime"
+    echo "                         When replacing, replace .opp file"
+    echo "          -v             Be verbose"
+    echo "          -q             Be quiet"
+    echo "          -<xxxx>        Arbitrary switch passed to compiler/linker"
+    exit
+fi
+
+#   Compile and maybe link each filename on the command line
+for i in $*; do
+    if [ "$i" = "-o" ]; then
+        exit 0                          #   Skip -o filename
+    fi
+    FILENAME=`echo $i | cut -d"." -f1`
+
+    #   Compile, if required
+    if [ "$USECPP" = "no" ]; then
+        OBJEXT=o
+    else
+        OBJEXT=opp
+    fi
+    if [ "$COMPILE" = "yes" -o ! -f $FILENAME.$OBJEXT ]; then
+        if [ -f $FILENAME.$OBJEXT ]; then
+            rm $FILENAME.$OBJEXT
+        fi
+
+        TRACE="Compiling $FILENAME"
+        if [ "$USECPP" = "no" ]; then
+            COMMAND="$CCNAME -c $CCOPTS -I$INCDIR $FILENAME.c"
+        else
+            COMMAND="$CCPLUS -c $CCOPTS -I$INCDIR -o $FILENAME.opp $FILENAME.cpp"
+        fi
+        if [ "$QUIET" = "no" ]; then
+            if [ "$VERBOSE" = "no" ]; then
+                echo "$TRACE..."
+            else
+                echo "$TRACE ($COMMAND)..."
+            fi
+        fi
+        if [ ! -z "$CCTRACE" ]; then
+            echo "$TRACE ($COMMAND)">>$CCTRACE
+        fi
+
+        #   Need to remove any quotes in command string to pass as macro
+        SYNTAX=`echo $COMMAND | sed -e "s/\"//g"`
+        $COMMAND -DCCOPTS="\"$SYNTAX\"" >$FILENAME.lst 2>&1
+
+        #   Show listing and abort if there was a compile error
+        if [ $? -eq 0 ]; then
+            cat  $FILENAME.lst
+            rm   $FILENAME.lst
+        else
+            #   Only show start of listing if there was an error
+            $CCCAT $FILENAME.lst
+            if [ ! -z "$CCTRACE" ]; then
+                cat $FILENAME.lst >>$CCTRACE
+            fi
+            exit 1
+        fi
+    fi
+
+    #   If okay, link if required
+    if [ "$LINKUP" = "yes" ]; then
+        TRACE="Linking $FILENAME"
+        if [ "$USECPP" = "no" ]; then
+            COMMAND="$CCNAME $CCOPTS $FILENAME.o -o $FILENAME"
+        else
+            COMMAND="$CCPLUS $CCOPTS $FILENAME.opp -o $FILENAME"
+        fi
+        case "$LINKTYPE" in
+            gnu)
+                COMMAND="$COMMAND -Wl,--start-group $LIBLIST -Wl,--end-group -L. -L$LOCALLIBDIR -L$LIBDIR $STDLIBS"
+                ;;
+            before)
+                COMMAND="$COMMAND -L. -L$LOCALLIBDIR -L$LIBDIR $LIBLIST $LIBLIST $STDLIBS"
+                ;;
+            after)
+                COMMAND="$COMMAND $LIBLIST $LIBLIST -L. -L$LOCALLIBDIR -L$LIBDIR $STDLIBS"
+                ;;
+        esac
+
+        if [ "$QUIET" = "no" ]; then
+            if [ "$VERBOSE" = "no" ]; then
+                echo "$TRACE..."
+            else
+                echo "$TRACE ($COMMAND)..."
+            fi
+        fi
+        if [ ! -z "$CCTRACE" ]; then
+            echo "$TRACE ($COMMAND)">>$CCTRACE
+        fi
+
+        $COMMAND 2> $FILENAME.lst
+
+        #   Show listing and abort if there was a link error
+        if [ $? -eq 0 ]; then
+            cat  $FILENAME.lst
+            rm   $FILENAME.lst
+        else
+            if [ "$VERBOSE" = "yes" ]; then
+                cat $FILENAME.lst
+            else
+                #   Show first page of link errors only
+                head $FILENAME.lst
+            fi
+            if [ ! -z "$CCTRACE" ]; then
+                cat $FILENAME.lst >>$CCTRACE
+            fi
+            exit 1
+        fi
+    fi
+done

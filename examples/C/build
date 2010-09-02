@@ -3,22 +3,19 @@
 #   Examples build helper
 #   Syntax: build all | clean
 #
-MAINS="hwclient hwserver mtserver wuserver wuclient wuproxy taskvent"
-MAINS="$MAINS taskwork tasksink msreader mspoller taskwork2 tasksink2"
-MAINS="$MAINS rrbroker rrclient rrserver msgqueue mtrelay syncpub syncsub"
-
 if [ /$1/ = /all/ ]; then
     echo "Building C examples..."
-    for MAIN in $MAINS; do
-        echo -n "$MAIN "
-        gcc -g -DDEBUG -O2 -Wall -lzmq $MAIN.c -o $MAIN
+    for MAIN in *.c; do
+        echo "$MAIN"
+        ./c -l -lzmq -q $MAIN
     done
-    echo "Done"
 elif [ /$1/ = /clean/ ]; then
     echo "Cleaning C examples directory..."
-    rm -f *.o *.lst core $MAINS
-elif [ -f $1.c ]; then
-    gcc -g -DDEBUG -O2 -Wall -lzmq $1.c -o $1
+    rm -f *.o *.lst core
+    for MAIN in *.c; do
+        rm `basename $MAIN .c`
+    done
 else
     echo "syntax: build all | clean"
 fi
+
