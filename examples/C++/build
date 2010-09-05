@@ -13,7 +13,7 @@ elif [ /$1/ = /clean/ ]; then
     echo "Cleaning C++ examples directory..."
     rm -f *.opp *.lst core
     for MAIN in *.cpp; do
-        rm `basename $MAIN .cpp`
+        rm -f `basename $MAIN .cpp`
     done
 else
     echo "syntax: build all | clean"
