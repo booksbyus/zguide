@@ -2,8 +2,7 @@
 //  Reading from multiple sockets in C
 //  This version uses zmq_poll()
 //
-#include <zmq.h>
-#include <time.h>
+#include "zhelpers.h"
 
 int main (int argc, char *argv[])
 {

@@ -1,11 +1,7 @@
 //
 //  Synchronized publisher in C
 //
-#include <zmq.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include "zhelpers.h"
 
 //  We wait for 10 subscribers
 #define SUBSCRIBERS_EXPECTED  10
@@ -25,32 +21,19 @@ int main () {
     int subscribers = 0;
     while (subscribers < SUBSCRIBERS_EXPECTED) {
         //  - wait for synchronization request
-        zmq_msg_t request;
-        zmq_msg_init (&request);
-        zmq_recv (syncservice, &request, 0);
-        zmq_msg_close (&request);
-
+        char *string = s_recv (syncservice);
+        free (string);
         //  - send synchronization reply
-        zmq_msg_t reply;
-        zmq_msg_init (&reply);
-        zmq_send (syncservice, &reply, 0);
-        zmq_msg_close (&reply);
-
+        s_send (syncservice, "");
         subscribers++;
     }
     //  Now broadcast exactly 1M updates followed by END
     int update_nbr;
-    for (update_nbr = 0; update_nbr < 1000000; update_nbr++) {
-        zmq_msg_t update;
-        zmq_msg_init_data (&update, "Rhubarb", 8, NULL, NULL);
-        zmq_send (publisher, &update, 0);
-        zmq_msg_close (&update);
-    }
-    zmq_msg_t end;
-    zmq_msg_init_data (&end, "END", 4, NULL, NULL);
-    zmq_send (publisher, &end, 0);
-    zmq_msg_close (&end);
+    for (update_nbr = 0; update_nbr < 1000000; update_nbr++)
+        s_send (publisher, "Rhubarb");
 
-    sleep (1);              //  Give 0MQ time to flush output
+    s_send (publisher, "END");
+
+    sleep (1);              //  Give 0MQ/2.0.x time to flush output
     return 0;
 }

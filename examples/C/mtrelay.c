@@ -1,23 +1,14 @@
 //
 //  Multithreaded relay in C
 //
-#include <zmq.h>
-#include <pthread.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdio.h>
+#include "zhelpers.h"
 
 //  Step 1 pushes one message to step 2
 
 void *step1 (void *context) {
     void *sender = zmq_socket (context, ZMQ_PAIR);
     zmq_connect (sender, "inproc://step2");
-
-    zmq_msg_t message;
-    zmq_msg_init (&message);
-    zmq_send (sender, &message, 0);
-    zmq_msg_close (&message);
-
+    s_send (sender, "");
     return (NULL);
 }
 
@@ -26,19 +17,12 @@ void *step1 (void *context) {
 void *step2 (void *context) {
     void *receiver = zmq_socket (context, ZMQ_PAIR);
     zmq_bind (receiver, "inproc://step2");
+    char *string = s_recv (receiver);
+    free (string);
 
     void *sender = zmq_socket (context, ZMQ_PAIR);
     zmq_connect (sender, "inproc://step3");
-
-    zmq_msg_t message;
-    zmq_msg_init (&message);
-    zmq_recv (receiver, &message, 0);
-    zmq_msg_close (&message);
-
-    zmq_msg_init (&message);
-    zmq_send (sender, &message, 0);
-    zmq_msg_close (&message);
-
+    s_send (sender, "");
     return (NULL);
 }
 
@@ -46,19 +30,18 @@ void *step2 (void *context) {
 
 int main () {
     void *context = zmq_init (1);
-
     void *receiver = zmq_socket (context, ZMQ_PAIR);
     zmq_bind (receiver, "inproc://step3");
 
     pthread_t thread;
     pthread_create (&thread, NULL, step2, context);
+    //  Workaround for 0MQ issue 62
+    sleep (1);
     pthread_create (&thread, NULL, step1, context);
 
-    zmq_msg_t message;
-    zmq_msg_init (&message);
-    zmq_recv (receiver, &message, 0);
-    zmq_msg_close (&message);
-    printf ("Test successful!\n");
+    char *string = s_recv (receiver);
+    free (string);
 
+    printf ("Test successful!\n");
     return 0;
 }

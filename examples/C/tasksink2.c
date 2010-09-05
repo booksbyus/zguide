@@ -2,12 +2,7 @@
 //  Task sink in C - design 2
 //  Adds pub-sub flow to send kill signal to workers
 //
-#include <zmq.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdio.h>
-#include <time.h>
-#include <sys/time.h>
+#include "zhelpers.h"
 
 int main (int argc, char *argv[])
 {
@@ -22,10 +17,8 @@ int main (int argc, char *argv[])
     zmq_bind (controller, "tcp://*:5559");
 
     //  Wait for start of batch
-    zmq_msg_t message;
-    zmq_msg_init (&message);
-    zmq_recv (receiver, &message, 0);
-    zmq_msg_close (&message);
+    char *string = s_recv (receiver);
+    free (string);
 
     //  Start our clock now
     struct timeval tstart;
@@ -35,9 +28,8 @@ int main (int argc, char *argv[])
     int task_nbr;
     int total_msec = 0;     //  Total calculated cost in msecs
     for (task_nbr = 0; task_nbr < 100; task_nbr++) {
-        zmq_msg_init (&message);
-        zmq_recv (receiver, &message, 0);
-        zmq_msg_close (&message);
+        char *string = s_recv (receiver);
+        free (string);
         if ((task_nbr / 10) * 10 == task_nbr)
             printf (":");
         else
@@ -60,9 +52,7 @@ int main (int argc, char *argv[])
     printf ("Total elapsed time: %d msec\n", total_msec);
 
     //  Send kill signal to workers
-    zmq_msg_init_data (&message, "KILL", 5, NULL, NULL);
-    zmq_send (controller, &message, 0);
-    zmq_msg_close (&message);
+    s_send (controller, "KILL");
 
     //  Finished
     sleep (1);              //  Give 0MQ time to deliver

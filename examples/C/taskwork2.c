@@ -2,11 +2,7 @@
 //  Task worker in C - design 2
 //  Adds pub-sub flow to receive and respond to kill signal
 //
-#include <zmq.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdio.h>
-#include <time.h>
+#include "zhelpers.h"
 
 int main (int argc, char *argv[])
 {

@@ -3,10 +3,7 @@
 //  Connects SUB socket to tcp://localhost:5556
 //  Collects weather updates and finds avg temp in zipcode
 //
-#include <zmq.h>
-#include <string.h>
-#include <stdio.h>
-#include <unistd.h>
+#include "zhelpers.h"
 
 int main (int argc, char *argv[])
 {
@@ -25,15 +22,12 @@ int main (int argc, char *argv[])
     int update_nbr;
     long total_temp = 0;
     for (update_nbr = 0; update_nbr < 100; update_nbr++) {
-        zmq_msg_t update;
+        char *string = s_recv (subscriber);
         int zipcode, temperature, relhumidity;
-
-        zmq_msg_init (&update);
-        zmq_recv (subscriber, &update, 0);
-        sscanf ((char *) zmq_msg_data (&update), "%d %d %d",
+        sscanf (string, "%d %d %d",
             &zipcode, &temperature, &relhumidity);
         total_temp += temperature;
-        zmq_msg_close (&update);
+        free (string);
     }
     printf ("Average temperature for zipcode '%s' was %dF\n",
         filter, (int) (total_temp / update_nbr));

@@ -3,12 +3,7 @@
 //  Binds PULL socket to tcp://localhost:5558
 //  Collects results from workers via that socket
 //
-#include <zmq.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdio.h>
-#include <time.h>
-#include <sys/time.h>
+#include "zhelpers.h"
 
 int main (int argc, char *argv[])
 {
@@ -18,10 +13,8 @@ int main (int argc, char *argv[])
     zmq_bind (receiver, "tcp://*:5558");
 
     //  Wait for start of batch
-    zmq_msg_t message;
-    zmq_msg_init (&message);
-    zmq_recv (receiver, &message, 0);
-    zmq_msg_close (&message);
+    char *string = s_recv (receiver);
+    free (string);
 
     //  Start our clock now
     struct timeval tstart;
@@ -31,9 +24,8 @@ int main (int argc, char *argv[])
     int task_nbr;
     int total_msec = 0;     //  Total calculated cost in msecs
     for (task_nbr = 0; task_nbr < 100; task_nbr++) {
-        zmq_msg_init (&message);
-        zmq_recv (receiver, &message, 0);
-        zmq_msg_close (&message);
+        char *string = s_recv (receiver);
+        free (string);
         if ((task_nbr / 10) * 10 == task_nbr)
             printf (":");
         else

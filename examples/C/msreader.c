@@ -2,8 +2,7 @@
 //  Reading from multiple sockets in C
 //  This version uses a simple recv loop
 //
-#include <zmq.h>
-#include <time.h>
+#include "zhelpers.h"
 
 int main (int argc, char *argv[])
 {

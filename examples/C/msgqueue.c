@@ -2,10 +2,7 @@
 //  Simple message queuing broker
 //  Same as request-reply broker but using QUEUE device
 //
-#include <zmq.h>
-#include <string.h>
-#include <stdio.h>
-#include <unistd.h>
+#include "zhelpers.h"
 
 int main (int argc, char *argv[])
 {

@@ -1,11 +1,7 @@
 //
 //  Multithreaded Hello World server in C
 //
-#include <zmq.h>
-#include <pthread.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdio.h>
+#include "zhelpers.h"
 
 void *worker_routine (void *context) {
     //  Socket to talk to dispatcher
@@ -13,23 +9,13 @@ void *worker_routine (void *context) {
     zmq_connect (receiver, "inproc://workers");
 
     while (1) {
-        //  Wait for next request from client
-        zmq_msg_t request;
-        zmq_msg_init (&request);
-        zmq_recv (receiver, &request, 0);
-        printf ("Received request: [%s]\n",
-            (char *) zmq_msg_data (&request));
-        zmq_msg_close (&request);
-
+        char *string = s_recv (receiver);
+        printf ("Received request: [%s]\n", string);
+        free (string);
         //  Do some 'work'
         sleep (1);
-
         //  Send reply back to client
-        zmq_msg_t reply;
-        zmq_msg_init_size (&reply, 6);
-        memcpy ((void *) zmq_msg_data (&reply), "World", 6);
-        zmq_send (receiver, &reply, 0);
-        zmq_msg_close (&reply);
+        s_send (receiver, "World");
     }
     return (NULL);
 }

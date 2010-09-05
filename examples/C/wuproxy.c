@@ -1,11 +1,7 @@
 //
 //  Weather proxy device
 //
-#include <zmq.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <unistd.h>
+#include "zhelpers.h"
 
 int main (int argc, char *argv[])
 {

@@ -3,12 +3,7 @@
 //  Binds PUSH socket to tcp://localhost:5557
 //  Sends batch of tasks to workers via that socket
 //
-#include <zmq.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
+#include "zhelpers.h"
 
 #define within(num) (int) ((float) num * random () / (RAND_MAX + 1.0))
 
@@ -25,10 +20,7 @@ int main (int argc, char *argv[])
     printf ("Sending tasks to workers...\n");
 
     //  The first message is "0" and signals start of batch
-    zmq_msg_t message;
-    zmq_msg_init_data (&message, "0", 2, NULL, NULL);
-    zmq_send (sender, &message, 0);
-    zmq_msg_close (&message);
+    s_send (sender, "0");
 
     //  Initialize random number generator
     srandom ((unsigned) time (NULL));
@@ -41,11 +33,10 @@ int main (int argc, char *argv[])
         //  Random workload from 1 to 100msecs
         workload = within (100) + 1;
         total_msec += workload;
-
-        zmq_msg_init_size (&message, 10);
-        sprintf ((char *) zmq_msg_data (&message), "%d", workload);
-        zmq_send (sender, &message, 0);
-        zmq_msg_close (&message);
+printf ("%d.", workload);
+        char string [10];
+        sprintf (string, "%d", workload);
+        s_send (sender, string);
     }
     printf ("Total expected cost: %d msec\n", total_msec);
     sleep (1);              //  Give 0MQ time to deliver

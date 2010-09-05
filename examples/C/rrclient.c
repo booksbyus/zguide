@@ -3,10 +3,7 @@
 //  Connects REQ socket to tcp://localhost:5559
 //  Sends "Hello" to server, expects "World" back
 //
-#include <zmq.h>
-#include <string.h>
-#include <stdio.h>
-#include <unistd.h>
+#include "zhelpers.h"
 
 int main () {
     void *context = zmq_init (1);
@@ -17,17 +14,10 @@ int main () {
 
     int request_nbr;
     for (request_nbr = 0; request_nbr != 10; request_nbr++) {
-        zmq_msg_t request;
-        zmq_msg_init_data (&request, "Hello", 6, NULL, NULL);
-        zmq_send (requester, &request, 0);
-        zmq_msg_close (&request);
-
-        zmq_msg_t reply;
-        zmq_msg_init (&reply);
-        zmq_recv (requester, &reply, 0);
-        printf ("Received reply %d [%s]\n", request_nbr,
-            (char *) zmq_msg_data (&reply));
-        zmq_msg_close (&reply);
+        s_send (requester, "Hello");
+        char *string = s_recv (requester);
+        printf ("Received reply %d [%s]\n", request_nbr, string);
+        free (string);
     }
     return 0;
 }

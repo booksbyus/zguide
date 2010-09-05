@@ -5,11 +5,7 @@
 //  Connects PUSH socket to tcp://localhost:5558
 //  Sends results to sink via that socket
 //
-#include <zmq.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdio.h>
-#include <time.h>
+#include "zhelpers.h"
 
 int main (int argc, char *argv[])
 {
@@ -25,27 +21,20 @@ int main (int argc, char *argv[])
 
     //  Process tasks forever
     while (1) {
-        zmq_msg_t message;
-        int workload;           //  Workload in msecs
+        char *string = s_recv (receiver);
         struct timespec t;
-
-        zmq_msg_init (&message);
-        zmq_recv (receiver, &message, 0);
-        sscanf ((char *) zmq_msg_data (&message), "%d", &workload);
         t.tv_sec = 0;
-        t.tv_nsec = workload * 1000000;
-        zmq_msg_close (&message);
+        t.tv_nsec = atoi (string) * 1000000;
+        //  Simple progress indicator for the viewer
+        fflush (stdout);
+        printf ("%s.", string);
+        free (string);
 
         //  Do the work
         nanosleep (&t, NULL);
 
         //  Send results to sink
-        zmq_msg_init (&message);
-        zmq_send (sender, &message, 0);
-
-        //  Simple progress indicator for the viewer
-        printf (".");
-        fflush (stdout);
+        s_send (sender, "");
     }
     return 0;
 }

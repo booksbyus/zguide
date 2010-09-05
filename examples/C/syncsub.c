@@ -1,10 +1,7 @@
 //
 //  Synchronized subscriber in C
 //
-#include <zmq.h>
-#include <string.h>
-#include <stdio.h>
-#include <unistd.h>
+#include "zhelpers.h"
 
 int main (int argc, char *argv[])
 {
@@ -20,27 +17,21 @@ int main (int argc, char *argv[])
     zmq_connect (syncclient, "tcp://localhost:5562");
 
     //  - send a synchronization request
-    zmq_msg_t request;
-    zmq_msg_init (&request);
-    zmq_send (syncclient, &request, 0);
-    zmq_msg_close (&request);
+    s_send (syncclient, "");
 
     //  - wait for synchronization reply
-    zmq_msg_t reply;
-    zmq_msg_init (&reply);
-    zmq_recv (syncclient, &reply, 0);
-    zmq_msg_close (&reply);
+    char *string = s_recv (syncclient);
+    free (string);
 
     //  Third, get our updates and report how many we got
     int update_nbr = 0;
     while (1) {
-        zmq_msg_t update;
-        zmq_msg_init (&update);
-        zmq_recv (subscriber, &update, 0);
-        if (zmq_msg_size (&update) == 4
-        && memcmp (zmq_msg_data (&update), "END", 4) == 0)
+        char *string = s_recv (subscriber);
+        if (strcmp (string, "END") == 0) {
+            free (string);
             break;
-        zmq_msg_close (&update);
+        }
+        free (string);
         update_nbr++;
     }
     printf ("Received %d updates\n", update_nbr);
