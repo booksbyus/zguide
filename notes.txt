@@ -1,4 +1,176 @@
-Use cases for the Guide
+Notes for The Guide
+
+In chapter 3 we'll continue to cover 0MQ core functionality with examples.  We need to cover:
+
+- HWM, SWAP
+- identities
+
+Then we can use this to start building some reusable pieces:
+
+- timer device
+- name service
+- custom load-balancing
+- custom publish-subscribe
+- stateful publish-subscribe
+- reliable request-reply
+- logging device
+- reactor (Matt Weinstein's)
+
+
+
++++ Setting Queue Limits
+
+- setting queue limits prevents nodes from overflowing memory
+- by default 0MQ does not set any limits
+- example of application that will overflow memory
+    - publish to subscribe socket but don't read
+- now fix this by setting queue limit, ZMQ_HWM
+- actual behaviour with automagic LWM
+- how this works on different socket types
+    - 'exception' on each socket type, from man page
+- adding capacity for disk offload, ZMQ_SWAP
+- creating persistent queues using identity
+    - example of HWM 1 plus massive SWAP
+
++++ Identities
+
+- use cases for identities
+    - automatic, for routing replies back
+    - explicit, for persistent queues
+- when do identities cause problems?
+    - if used in pubsub without SWAP
+
+
+
+
+
++++ Custom Load-Balancing
+
+We'll look at another supercomputing scenario, where we want to distribute tasks to workers.  However we don't want to use round-robin, we want to use a least-recently used algorithm.  Our application consists of:
+
+* A ventilator, which has two threads:
+ * One thread creates tasks and sends them to the second thread via a PUSH socket
+ * The second thread manages two sockets, a PULL socket talking to the first thread and a REP socket talking to workers
+* Workers, which connect to the ventilator's REP socket
+
+The workers signal 'ready' by sending an empty message to the ventilator.  The ventilator pops the next task and replies with that.
+
++++ Reliable Request-Reply
+
+We'll create a reliable request-reply application that uses XREQ and XREP and a simple resend mechanism.  When this works between two peers we'll show how it scales across a request-reply broker to effectively create edge-to-edge reliability.  We'll also open up the message format for request-reply and explore identities in horrible detail.
+
++++ Configuration Distribution
+
+We'll look at how to dynamically configure a network of devices using a central configuration broker.
+
++++ Logging Subsystem
+
+many applications
+many subscribers
+broker in the middle
+persistent logfiles
+replay via subscribe socket
+
+
++++ Stateful Publish-Subscribe
+
+We'll look at the common question of getting a consistent state across a set of subscribers that come and go at any time.  We will build a simple distributed cache:
+
+* We have a set of peers that each hold a copy of the cache
+* Any peer can update its copy of the cache at any time
+* Updates are published to all other peers
+* A peer can join the network at any time, and get the cache state
+
+I'll leave the design for later.  We'll need a forwarder to act as stable location in the network.  Should be fun!
+
++++ Failover and Recovery
+
+We'll look at how to handle crashes in a distributed architecture.  For each pattern there is an ideal architecture, and we'll explore each of these with worked examples.
+
++++ Encrypted Publish-Subscribe
+
+We'll look at how to secure pubsub data against snooping.  The actual technique involves out-of-band exchange of keys, symmetric encryption, and a broker that helps the thing along.  Hopefully all fairly easy to make, as usual, using 0MQ.
+
++++ Building a Multicast Bus
+
+We'll now look at how the pgm: and epgm: protocols work.  With pgm:, the network switch basically acts as a hardware FORWARDER device.
+
++++ A Clock Device
+
+We'll look at various ways of building a timer into a network.   A clock device sends out a signal (a message) at more or less precise intervals so that other nodes can use these signals for internal timing.
+
++++ A Logging Device
+
+We'll look at a device that acts as a remote logger.
+
++++ Building Bridges
+
+zmq_poll(3) lets you mix ZMQ sockets and native system sockets, which is very useful if you have to resort to actual TCP for something, e.g. bridging an existing TCP protocol with 0MQ.  We'll build a couple of bridges.
+
++++ Writing a Reactor
+
+In this section we'll build a simple reactor framework that turns the zmq_poll(3) function inside out into an event-driven framework.
+
++++ Exotic Devices
+
+Now we'll use the reactor to build some exotic devices.  It should be much easier and readable than using zmq_poll.
+
++++ Serializing Data
+
+Examples of using Protocol Buffers and other options.
+
+[!--
+- ipc://name
+ - connects two processes on a single box
+ - supports all messaging patterns
+ - typical use case is for multithreading apps
+ - runs on Unix domain sockets (not available on Windows, OpenVMS)
+ - permissions issues:
+
+> Since I want to work under /tmp, this all had to be done programatically. My
+> server now mkdir -p's a socket subdirectory and chmod 777's it. The server
+> creates and binds the socket in that folder, and then chmod 777's it. The
+> server must be run as root (which is fine for my project luckily). If it is
+> run as a normal user, the client's still timeout.
+
+- tcp://ipaddress:port
+ - bind to address:port
+ - bind to *:5555
+ - localhost
+  - also bind to interface: lo:port, eth1:port, etc.
+  - Linux: eth1, eth2, eth3
+  - Mac OS X: en1, en2, en3
+  - Solaris: e1000g, etc.
+ - connect to remote address: host:port
+
+- pgm://address;multicastgroup:port
+ - address can be interface name
+ - requires decent hardware support
+ - means enterprise level switches with IGNP snooping
+ - some routers also support PGM
+ - runs over IP, requires root privileges
+ - more standard
+ - rate-limited protocol, sender must define bandwidth
+ - pgm is currently broken
+
+- epgm://address;multicastgroup:port
+ - encapsulated in UDP packets
+ - requires decent hardware support
+ - does not require root access
+ - non-standard to pgm
+
+- add peer example
+   - exclusive lock on peer
+   - for owning other party
+   - solve reverse connection
+ - e.g. to cross firewall
+ - you need to add a bind to allow the client to accept a connection
+ - could be usecase for EXCLUSIVE socket
+
+XREQ is like PUSH+PULL, XREP is like PUSH+PULL+routing
+
+--]
+
 
 * Tutorial: chat client/server
 
@@ -22,6 +194,7 @@ Use cases for the Guide
 
 * How to publish selectively to individual subscribers:
 
+
 When a client activates, it chooses a random port that is not in use and creates a SUB socket listening for all traffic on it. The client then sends a message via REQ to the publisher containing the port that it is listening on. The publisher receives this message, acknowledges it, and creates a new pub socket specific to that client. All published events specific to this client go out that socket.
 
 When the client deactivates, it sends a message to the publisher with the port to deactivate and close.
@@ -32,3 +205,129 @@ I didn't need to do this to avoid network bandwidth bottlenecks; I created this 
 
 
 I highly recommend that you try out the simpler topology and *verifying* that 0mq cannot keep up with your message rates when publishing all data to all clients. With smart topics the client can reject the data *very* fast. A 1 GB or 10 Gb switched network can also move quite a bit of data without a lot of blocking behavior in the hardware too. You may be able to save yourself a lot of unnecessary work, so just try it.
+
+
+
+- explain in
+- debugging message flow
+    - using a queue device that prints out message parts
+    - debugging versions of devices...
+
+- heartbeating
+    - set HWM to 1 message only
+
+[!--
+
+
+In case you were wondering, ØMQ auto-magically figures out which client to send replies back to, using so-called //identities// in the messages.  We'll explore identities later.
+
+If identity is not set, ØMQ generates an unique identity (UUID) for the connection. If identity is set, it's used instead.
+
+
+
+
+
+It has nothing to do with client vs. server.
+
+Each socket can have an identity, if set by user (ZMQ_IDENTITY sockopt).
+
+If not set, it's empty.
+
+Some socket types (reqrep pattern) use identities for routing. In such case, if the peer doesn't provide identity, they'll generate a transient UUID to identify it.
+
+
+- when and how is identity sent over the wire?
+
+First message sent in either direction is identity. It doesn't happen on top of multicast transport.
+
+
+- for all or some socket types?
+
+Currently yes. In the future I would say PUB/SUB sockets need not to provide identity.
+
+
+- if you use req?
+    - send multipart with N identities
+    - then empty part (size zero)
+    - then content part
+
+- empty identity on request means load balance to anyone
+- when you receive you will get at least 3 parts back
+    - first is identity of whomever sent reply
+    - delimiter
+    - content
+
+ - if sending to non-existent identity, message is silently discarded
+ - identities automatic or manual
+ - no garbage collection in service: will eventually die
+
+ --]
+
+
+- handling crashing peers
+
+- non-blocking send/recv
+    EAGAIN
+
+- reliable pub
+    - pub connects to all subs
+    - subs send request to pub
+
+- reliable messaging over xreq / xrep
+- how to do timer events
+
+
+- there is no way to disconnect; second connection creates two
+    - need to destroy the socket
+
+- list known encoding libraries with pros / cons of each
+- list each OS
+
+For External Use Only!
+More Connections Than Oprah!
+Save The Fail Whale!
+DEVOPS_BORAT say "Why Not?"
+Now With More Vitamins!
+Sufficiently Advanced Tech
+High Lifestyle, Low Carbon
+Must Has Cat to Enter
+
+
+- how to send multipart job and execute / cancel
+
+
+
+* Client-server data distribution (like custom pubsub), with some restrictions.
+
+
+Either of the two client socket types send requests and replies as a multipart message with two parts.  The first part is a unique UUID, that identifies the client.  The second is the actual message blob.  The ZMQ_XREP socket uses the identity to know what ØMQ connection to send the message to.
+
+What this means... take deep breath... is that you can use ZMQ_XREQ and ZMQ_XREP to build servers that do authentication and arbitrary routing.  Don't like the existing topic pubsub?  You can build your own.  Here's how to build an authenticated pubsub server:
+
+* Client creates ZMQ_XREQ sends its authentication credentials and subscription pattern as a request.
+* Service reads credentials, authenticates them, and if they are OK, stores the client identity in a table of "authorized identities".  This is in effect treating an identity as an abstracted connection.
+* Service builds routing tables using subscription pattern, so that any new message can be routed to a set of identities.
+* Service does separate zmq_send() to its ZMQ_XREP socket for each matching subscriber, each time specifying the correct identity.
+* Service maintains its table of identities periodically to remove old identities.
+* Client periodically resends its credentials ("keep-alive"), which server handles by reading on the socket.
+
+It is not trivial, and should maybe sit in the "Advanced Concepts" section, but this use case is one that so many new users ask about that it's good to know at least that ØMQ handles it.
+
+
+Here is, I think, how to build an authenticated pubsub service using ØMQ.  The design handles authentication, arbitrary routing criteria, and flushing of dead client connections.
+
+You will use ZMQ_XREQ at the client side and ZMQ_XREP at the service side.  There is a simple protocol between client and server that is loosely modelled on HTTP:
+
+* Client sends messages containing: identity (ØMQ adds this automatically), authentication credentials, and subscription criteria.
+* Server sends messages containing: identity (automatic), error/success code, and content.
+
+The server has two main data structures:
+
+* A connection table that stores authenticated identities and timestamps.  Each identity corresponds to a client connection.
+* A routing table that maps message keys (e.g. topic value) to identities.  There are techniques for doing [http://www.ØMQ.org/whitepapers:message-matching high speed message matching].
+
+The client has a single thread that polls on its ZMQ_XREQ socket.  At regular time intervals it (re)sends its authentication and subscription message.  This acts as a keep-alive.
+
+The server has a two threads, one that polls on its ZMQ_XREP socket and one that receives outgoing messages and passes them to the polling thread via inproc sockets.  The polling thread processes any incoming client requests and updates its data structures.  It processes any outgoing messages by looking up the message key in its routing table and then sending the message (one to one) to all matching identities.  As it does this it deletes any expired identities.
+
+That's it.  Sorry if I got some things wrong here, it's theory and not based on running code.

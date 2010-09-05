@@ -8,9 +8,9 @@ We'll cover:
 * How to send and receive messages on sockets.
 * How 0MQ's asynchronous I/O model affects your code.
 * How to handle multiple sockets in one thread.
-* How to send and receive multipart messages.
 * How to handle errors properly.
 * How to shutdown a 0MQ application cleanly.
+* How to send and receive multipart messages.
 * How to forward messages across networks.
 * How to build a simple message queuing broker.
 * How to write multithreaded applications with 0MQ.
@@ -21,7 +21,7 @@ We'll cover:
 
 The Ø in 0MQ is all about tradeoffs. On the one hand this strange name lowers 0MQ's visibility on Google and Twitter.  On the other hand it annoys the heck out of some Danish folk who write us things like "ØMG røtfl", and "//Ø is not a funny looking zero!//" and "//Rødgrød med Fløde!//", which is apparently an insult that means "may your neighbours be the direct descendents of Grendel!"  Seems like a fair trade.
 
-Originally the zero in 0MQ was meant as "zero broker" and (as close to) "zero latency" (as possible).  The character is the Unicode letter +2205 and refers to the mathematical empty set.  In the meantime it has come to cover different goals: zero-copy, zero administration, zero cost, zero waste.  More generally, "zero" refers to the culture of minimalism that permeates the project.  We add power by removing complexity rather than exposing new functionality.
+Originally the zero in 0MQ was meant as "zero broker" and (as close to) "zero latency" (as possible).  In the meantime it has come to cover different goals: zero-copy, zero administration, zero cost, zero waste.  More generally, "zero" refers to the culture of minimalism that permeates the project.  We add power by removing complexity rather than exposing new functionality.
 
 +++ The Socket API
 
@@ -212,10 +212,12 @@ These are the socket combinations that are valid for a connect-bind pair (either
 * REQ and XREP
 * XREQ and REP
 * XREQ and XREP
+* XREQ and XREQ
+* XREP and XREP
 * PUSH and PULL
 * PAIR and PAIR
 
-Any other combination will produce undocumented and unreliable results and future versions of 0MQ will probably return errors if you try them.  You can and will of course combine other socket types //via code//, i.e. read from one socket type and write to another.
+Any other combination will produce undocumented and unreliable results and future versions of 0MQ will probably return errors if you try them.  You can and will of course bridge other socket types //via code//, i.e. read from one socket type and write to another.
 
 +++ Messages and Zero-copy
 
@@ -254,7 +256,7 @@ zmq_msg_init_data (&message, buffer, 1000, my_free, NULL);
 zmq_send (socket, &message, 0);
 [[/code]]
 
-0MQ also supports //multipart// messages, which let you handle a list of blobs as a single message.  This goes further than we need for basic use, and we'll cover multipart messages in the Advanced Concepts section.
+0MQ also supports //multipart// messages, which let you handle a list of blobs as a single message.  This is really useful and we'll look at that a little later.
 
 Some other things that are worth knowing about messages:
 
@@ -267,7 +269,7 @@ Some other things that are worth knowing about messages:
 When you start using 0MQ, a classic error is that messages arrive but are garbled.  It's a beginner's mistake: the sending thread is freeing or reusing the message data before 0MQ has finished sending it, so 0MQ sends garbage.  If you're using zmq_msg_init_data[3], realize that the data is not copied.  if your thread does not own the data, and therefore it cannot pass a free function as in the example above, then you must do this:
 
 [[code type="C"]]
-//  Send a message from buffer, which we do not own
+//  Send a message from buffer that we don't own
 zmq_msg_t message;
 zmq_msg_init_size (&message, 1000);
 mempcy (zmq_msg_data (&message), buffer, 1000);
@@ -300,46 +302,6 @@ Now let's see the same little senseless application done right, using zmq_poll[3
 [[code type="C" title="Multiple socket poller" name="mspoller"]]
 [[/code]]
 
-+++ Multipart Messages
-
-Multipart messages are messages consisting of more than one part (technically, frames).  0MQ uses these for some particular cases that we'll look at in the Advanced Concepts chapter.  What we'll look at now is how to send, and how to receive multipart messages.
-
-Here is how we send the frames in a multipart message (each frame is a message object):
-
-[[code]]
-zmq_send (socket, &message, ZMQ_SNDMORE);
-...
-zmq_send (socket, &message, ZMQ_SNDMORE);
-...
-zmq_send (socket, &message, 0);
-[[/code]]
-
-Here is how we receive and process all the parts in a message, be it single part or multipart:
-
-[[code]]
-zmq_msg_t message;
-int64_t more;
-size_t more_size;
-
-while (1) {
-    zmq_msg_init (&message);
-    zmq_recv (socket, &message, 0);
-    //  Process the message part
-    zmq_msg_close (&message);
-    more_size = sizeof (more);
-    zmq_getsockopt (socket, ZMQ_RCVMORE, &more, &more_size);
-    if (!more)
-        break;      //  Last message part
-}
-[[/code]]
-
-Some things to know about multipart messages:
-
-* You will receive all parts of a message, or none at all.
-* You will receive all parts of a message whether or not you check the RCVMORE option.
-* On sending, 0MQ queues message parts in memory until the last is received, then sends them all.
-* There is no way to cancel a partially sent message, except by closing the socket.
-
 +++ Handling Errors and ETERM
 
 0MQ's error handling philosophy is a mix of fail-fast and resilience.  Processes, we believe, should be as vulnerable as possible to internal errors, and as robust as possible against external attacks and errors.  To give an analogy, a living cell will self-destruct if it detects a single internal error, yet it will resist attack from the outside by all means possible.  Assertions, which pepper the 0MQ code, are absolutely vital to robust code, they just have to be on the right side of the cellular wall.  And there should be such a wall.  If it is unclear whether a fault is internal or external, that is a design flaw that needs to be fixed.
@@ -363,9 +325,9 @@ There are two main exceptional conditions that you may want to handle as non-fat
 What this boils down to is that in most cases you can wrap 0MQ calls in assertions, like this:
 
 [[code type="C"]]
-    context = zmq_init (1);
+    void *context = zmq_init (1);
     assert (context);
-    socket = zmq_socket (context, ZMQ_REP);
+    void *socket = zmq_socket (context, ZMQ_REP);
     assert (socket);
     assert (!zmq_bind (socket, "tcp://*:5555"));
 [[/code]]
@@ -382,9 +344,8 @@ How do we connect the sink to the workers?  The PUSH/PULL sockets are one-way on
 It doesn't take much new code in the sink:
 
 [[code]]
-    control = zmq_socket (context, ZMQ_PUB);
+    void *control = zmq_socket (context, ZMQ_PUB);
     zmq_bind (control, "tcp://*:5559");
-
     ...
     //  Send kill signal to workers
     zmq_msg_init_data (&message, "KILL", 5);
@@ -454,9 +415,49 @@ Here is the modified sink application.  When it's finished collecting results it
 [[code type="C" title="Parallel task sink with kill signalling" name="tasksink2"]]
 [[/code]]
 
-+++ Devilish Devices
++++ Multipart Messages
 
-We now introduce a class of 0MQ applications called "devices".  Devices are anything that sit between your real applications.  We usually start building any 0MQ application as a set of nodes on a network with the nodes talking to each other:
+0MQ lets us compose a message out of several frames, giving us a 'multipart message'.  Realistic applications use multipart messages heavily, especially to make "envelopes".  We'll look at them in chapter 3.  What we'll learn now is simply how to safely (but blindly) read and write multipart messages because otherwise the devices we write won't work with applications that use multipart messages.
+
+Here is how we send the frames in a multipart message (we receive each frame into a message object):
+
+[[code]]
+zmq_send (socket, &message, ZMQ_SNDMORE);
+...
+zmq_send (socket, &message, ZMQ_SNDMORE);
+...
+zmq_send (socket, &message, 0);
+[[/code]]
+
+Here is how we receive and process all the parts in a message, be it single part or multipart:
+
+[[code]]
+while (1) {
+    zmq_msg_t message;
+    zmq_msg_init (&message);
+    zmq_recv (socket, &message, 0);
+    //  Process the message part
+    zmq_msg_close (&message);
+    int64_t more;
+    size_t more_size = sizeof (more);
+    zmq_getsockopt (socket, ZMQ_RCVMORE, &more, &more_size);
+    if (!more)
+        break;      //  Last message part
+}
+[[/code]]
+
+Some things to know about multipart messages:
+
+* You will receive all parts of a message, or none at all.
+* You will receive all parts of a message whether or not you check the RCVMORE option.
+* On sending, 0MQ queues message parts in memory until the last is received, then sends them all.
+* There is no way to cancel a partially sent message, except by closing the socket.
+
++++ Infernal Devices
+
+We now introduce a class of 0MQ applications called "devices".  Devices are anything that sit between your real applications.  The general rule is that any N-to-N architecture needs devices to avoid connection explosion.
+
+When we use 0MQ we usually start building our applications as a set of nodes on a network with the nodes talking to each other:
 
 [[code type="textdiagram"]]
                +--------+
@@ -754,7 +755,7 @@ To start a device, you call zmq_queue[3] and pass it two sockets, one for the fr
 zmq_device (ZMQ_QUEUE, frontend, backend);
 [[/code]]
 
-Which if you start a QUEUE device is exactly like plugging the main body of the request-reply broker into your code at that spot.  You need to create the sockets, bind or connect them, and possibly configure them, before calling zmq_device[3].  It is trivial to do.  Here is the request-reply broker re-written to call QUEUE and rebadged as an expensive-sounding "message queue":
+Which if you start a QUEUE device is exactly like plugging the main body of the request-reply broker into your code at that spot.  You need to create the sockets, bind or connect them, and possibly configure them, before calling zmq_device[3].  It is trivial to do.  Here is the request-reply broker re-written to call QUEUE and rebadged as an expensive-sounding "message queue" (people have charged houses for code that did less):
 
 [[code type="C" title="Message queue broker" name="msgqueue"]]
 [[/code]]
@@ -775,26 +776,32 @@ For now, these are the combinations you should stick to:
 
 +++ Multithreading with 0MQ
 
-0MQ is perhaps the nicest way ever to write multithreaded applications.  Whereas as 0MQ sockets require some readjustment if you are used to traditional sockets, 0MQ multithreading will take everything you know about writing multithreading applications, throw it into a heap in the garden, pour gasoline over it, and set it alite.
+0MQ is perhaps the nicest way ever to write multithreaded (MT) applications.  Whereas as 0MQ sockets require some readjustment if you are used to traditional sockets, 0MQ multithreading will take everything you know about writing MT applications, throw it into a heap in the garden, pour gasoline over it, and set it alite.  It's a rare book that deserves burning, but most books on concurrent programming do.
 
-**We don't use mutexes, locks, or any other form of inter-thread communication except messages sent across 0MQ sockets.**
+To make utterly perfect MT programs (and I mean that literally) **we don't need mutexes, locks, or any other form of inter-thread communication except messages sent across 0MQ sockets.**
 
-0MQ uses native OS threads rather than virtual "green" threads.  The advantage is that you don't need to learn any new threading API, and that 0MQ threads map cleanly to your operating system.  You can use standard tools like Intel's ThreadChecker to see what your application is doing.  The disadvantages are that your code, when it for instance starts new threads, won't be portable, and that if you have a huge number of threads (thousands), some operating systems will get stressed.
+By "perfect" MT programs I mean code that's easy to write and understand, that works with one technology in any language and on any operating system, and that scales across any number of CPUs with zero wait states and no point of diminishing returns.
 
-You do need to follow some rules to write multithreaded code with 0MQ:
+If you've spent years learning tricks to make your MT code work at all, let alone rapidly, with locks and semaphores and critical sections, you will be disgusted when you realize it was all for nothing.  If there's one lesson we've learned from 30+ years of concurrent programming it is: //just don't share state//. It's like two drunkards trying to share a beer.  It doesn't matter if they're good buddies. Sooner or later they're going to get into a fight. And the more drunkards you add to the pavement, the more they fight each other over the beer.  The tragic majority of MT applications look like drunken bar fights.
+
+Real code that wants to scale does it like the Internet does, by sending messages and sharing nothing except a common contempt for broken programming metaphors.
+
+You do need to follow some rules to write MT code with 0MQ:
 
 * You MUST NOT try to access the same data from multiple threads.
 * You MUST create a 'context' object for your process, and pass that to all threads.  The context collects 0MQ's state.  To create a connection across the inproc: transport, both server and client thread must share the same context object.
 * You MUST NOT share sockets between threads, not even when using proper exclusion mechanisms like semaphores, locks or mutexes.  0MQ will in some future make it possible to move sockets to different threads.  Right now the thread which creates a socket is the only thread that may use it.
-* You MAY use semaphores, locks and mutexes //if you really have to// (but NOT to share sockets among threads).  However we'd consider that bad practice and potentially dangerous
+* If you have to work with existing drunkard code, find a way to isolate yourself from it.  Don't use mutexes, semaphores, critical sections, but use 0MQ messages.
 
 If you follow these rules, you can quite easily split threads into separate processes, when you need to.  Application logic can sit in threads, processes, boxes: whatever your scale needs.
 
-Let's turn our old Hello World server into something more capable.  The original server was a single thread.  If the work per request is low, that's fine: one ØMQ thread can run at full speed on a CPU core, with no waits, doing an awful lot of work.  But realistic servers have to do non-trivial work per request.  A single core may not be enough when 10,000 clients hit the server all at once.  So a realistic server must starts multiple worker threads.  It then accepts requests as fast as it can, and distributes these to its worker threads.  The worker threads grind through the work, and eventually send their replies back.
+0MQ uses native OS threads rather than virtual "green" threads.  The advantage is that you don't need to learn any new threading API, and that 0MQ threads map cleanly to your operating system.  You can use standard tools like Intel's ThreadChecker to see what your application is doing.  The disadvantages are that your code, when it for instance starts new threads, won't be portable, and that if you have a huge number of threads (thousands), some operating systems will get stressed.
+
+Let's see how this works in pratice.  We'll turn our old Hello World server into something more capable.  The original server was a single thread.  If the work per request is low, that's fine: one ØMQ thread can run at full speed on a CPU core, with no waits, doing an awful lot of work.  But realistic servers have to do non-trivial work per request.  A single core may not be enough when 10,000 clients hit the server all at once.  So a realistic server must starts multiple worker threads.  It then accepts requests as fast as it can, and distributes these to its worker threads.  The worker threads grind through the work, and eventually send their replies back.
 
 You can of course do all this using a queue device and external worker processes, but often it's easier to start one process that gobbles up sixteen cores, than sixteen processes, each gobbling up one core.  Further, running workers as threads will cut out a network hop, latency, and network traffic.
 
-The multithreaded version of the Hello World service basically collapses the queue device and workers into a single process:
+The MT version of the Hello World service basically collapses the queue device and workers into a single process:
 
 [[code type="C" title="Multithreaded Service" name="mtserver"]]
 [[/code]]
@@ -802,12 +809,11 @@ The multithreaded version of the Hello World service basically collapses the que
 All the code should be recognizable to you by now.  How it works:
 
 * The server starts a set of worker threads.  Each worker thread creates a REP socket and then processes requests on this socket.  Worker threads are just like single-threaded servers.  The only differences are the transport (inproc: instead of tcp:), and the bind-connect direction.
-
 * The server creates an XREP (extended reply) socket to talk to clients and binds this to its external interface (over tcp:).
 * The server creates an XREQ (extended request) socket to talk to the workers and binds this to its internal interface (over inproc:).
 * The server starts a QUEUE device that connects the two sockets.  The QUEUE device keeps a single queue for incoming requests, and distributes those out to workers.  It also routes replies back to their origin.
 
-Here the 'work' is just a one-second pause.  We could do anything in the workers, including talking to other nodes.  This is what the multithreaded server looks like in terms of ØMQ sockets and nodes.  Note how the request-reply chain is {{REQ-XREP-queue-XREQ-REP}}:
+Here the 'work' is just a one-second pause.  We could do anything in the workers, including talking to other nodes.  This is what the MT server looks like in terms of ØMQ sockets and nodes.  Note how the request-reply chain is {{REQ-XREP-queue-XREQ-REP}}:
 
 [[code type="textdiagram"]]
                  +------------+
@@ -853,12 +859,12 @@ Here the 'work' is just a one-second pause.  We could do anything in the workers
   \------------------------------------------/
 
 
- Figure # - Multithreaded server
+        Figure # - Multithreaded server
 [[/code]]
 
 +++ Thread Coordination
 
-When you start making multithreaded applications with 0MQ, you'll hit the question of how to coordinate your threads.  Though you might be tempted to insert 'sleep' statements, or use multithreading techniques such as semaphores or mutexes, **the only mechanism that you should use are 0MQ messages**.  Here is a simple example showing three threads that signal each other when they are ready.
+When you start making multithreaded applications with 0MQ, you'll hit the question of how to coordinate your threads.  Though you might be tempted to insert 'sleep' statements, or use multithreading techniques such as semaphores or mutexes, **the only mechanism that you should use are 0MQ messages**.  Remember the story of The Drunkards and the Beer Bottle.  Here is a simple example showing three threads that signal each other when they are ready.
 
 [[code type="textdiagram"]]
         +------------+
@@ -903,11 +909,13 @@ In this example we use PAIR sockets over the //inproc:// transport:
 [[code type="C" title="Multithreaded relay" name="mtrelay"]]
 [[/code]]
 
+The {{inproc}} transport has a specific limitation compared to {{ipc}} and {{tcp}}: **you must do bind before connect**.  This is something future versions of 0MQ may fix, but for today it has some impact on the way you use inproc sockets.  In the example here, we carefully bind to each endpoint before connecting to it.  If you connect first, and then bind, the connect will return an error, and if you ignore that error, the recv will block.
+
 This is the first time we've shown an example using PAIR sockets.  Why use PAIR?  Other socket combinations might seem to work but they all have side-effects that could interfere with signalling:
 
 * You can use PUSH for the sender and PULL for the receiver.  This looks simple and will work, but remember that PUSH will load-balance messages to all available receivers.  If you by accident start two receivers (e.g. you already have one running and you start a second), you'll "lose" half of your signals.  PAIR has the advantage of refusing more than one connection, the pair is //exclusive//.
 
-* You can use XREQ for the sender and XREP for the receiver.  XREP however sticks an "identity" part in front of your message, meaning your zero-size signal turns into a multipart message.  If you don't transmit data except the signal itself, that won't matter.  If however you decide to send data, you will suddenly find XREP providing you with "wrong" messages.  XREQ also load-balances, giving the same risk as PUSH.
+* You can use XREQ for the sender and XREP for the receiver.  XREP however wraps your message in an "envelope", meaning your zero-size signal turns into a multipart message.  If you don't care about the data, and treat anything as a valid signal, and if you don't read more than once from the socket, that won't matter.  If however you decide to send real data, you will suddenly find XREP providing you with "wrong" messages.  XREQ also load-balances, giving the same risk as PUSH.
 
 * You can use PUB for the sender and SUB for the receiver.  This will correctly deliver you messages exactly as you sent them and PUB does not load-balance as PUSH or XREQ do.  However you need to configure the subscriber with an empty subscription, which is annoying.  Worse, the reliability of the PUB-SUB link is timing dependent and messages can get lost if the SUB socket is connecting while the PUB socket is sending its message.
 

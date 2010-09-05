@@ -1,135 +1,151 @@
 ++ Chapter 3 - Advanced Stuff
 
-In chapter 2 we worked through the basics of using 0MQ by developing a series of small applications, each exploring new aspects of 0MQ.  We'll continue this approach in chapter 3, as we explore advanced aspects of 0MQ.
+In chapter 2 we worked through the basics of using 0MQ by developing a series of small applications, each time exploring new aspects of 0MQ.  We'll continue this approach in chapter 3, as we explore advanced aspects of 0MQ.
 
 We'll cover:
 
-* How to manage queue overflows and disk swap files.
-* How to do LRU (least recently used) load balancing.
-* How to do reliable request-reply.
+* How to create and use message envelopes for pubsub and request-reply.
+* How the request-reply pattern works, in detail, including XREQ and XREP.
+
++++ Message Envelopes
+
+We looked briefly at multipart messages in chapter 2.  Let's now look at their main use case, which is to create message envelopes.  An envelope is a way of safely packaging up data with an address, without touching the data itself.
+
+0MQ has two main use cases for message envelopes:
+
+* In the pubsub pattern, where the envelope holds the subscription key for filtering.
+* In the reqrep pattern, where the envelope holds the return address for replies.
+
+In a high-performance world, we don't want to copy data.  The problem with traditional message framing is that to create a message composed of pieces, we have to copy stuff around, and this costs CPU cycles.  0MQ's multipart message format lets us work with a message in pieces, while using zero copy.  We send each field as a length-delimited frame.  To the application it looks like a series of send and recv calls.  But internally the multiple parts get written to the network and read back with single system calls, so it's very efficient.
+
+++++ Pubsub Message Envelopes
+
+If you want to use pubsub envelopes, you make them yourself.  It's optional, and in previous pubsub examples we didn't do this.  Using a pubsub envelope is a little more work for simple cases but it's cleaner especially for real cases, where the key and the data are naturally separate things.  It's also faster, if you are writing the data directly from an application buffer.
+
+Here is what a publish-subscribe message with an envelope looks like:
+
+[[code type="textdiagram"]]
+            +-------------+
+  Frame 1   |     Key     |     This is the envelope.
+            +-------------+
+
+            +-----------------------------------------+
+  Frame 2   |     Data                                |
+            +-----------------------------------------+
 
 
+           Figure # - Multipart pubsub message
+[[/code]]
 
-+++ Managing Queue Overflows
+Recall that pubsub matches messages based on the prefix.  Putting the key into a separate frame makes the matching very obvious, since there is no chance an application will accidentally match on part of the data.
 
-* High Water Mark - with example, and per pattern
-* Swap to Disk - with example
+Here is a minimalist example of how pubsub envelopes look in code.  This publisher sends messages of two types, A and B.  The envelope holds the message type:
 
-+++ Custom Load-Balancing
+[[code type="C" title="Pubsub envelope publisher" name="psenvpub"]]
+[[/code]]
 
-We'll look at another supercomputing scenario, where we want to distribute tasks to workers.  However we don't want to use round-robin, we want to use a least-recently used algorithm.  Our application consists of:
+The subscriber only wants messages of type B:
 
-* A ventilator, which has two threads:
- * One thread creates tasks and sends them to the second thread via a PUSH socket
- * The second thread manages two sockets, a PULL socket talking to the first thread and a REP socket talking to workers
-* Workers, which connect to the ventilator's REP socket
+[[code type="C" title="Pubsub envelope subscriber" name="psenvsub"]]
+[[/code]]
 
-The workers signal 'ready' by sending an empty message to the ventilator.  The ventilator pops the next task and replies with that.
+When you run the two programs, the subscriber should show you this:
 
-+++ Reliable Request-Reply
+[[code]]
+[B] We would like to see this
+[B] We would like to see this
+[B] We would like to see this
+[B] We would like to see this
+...
+[[/code]]
 
-We'll create a reliable request-reply application that uses XREQ and XREP and a simple resend mechanism.  When this works between two peers we'll show how it scales across a request-reply broker to effectively create edge-to-edge reliability.  We'll also open up the message format for request-reply and explore identities in horrible detail.
+This examples shows that the subscription filter rejects or accepts the entire multipart message (key plus data).  You won't get part of a multipart message, ever.
 
-+++ Configuration Distribution
+++++ Request-Reply Message Envelopes
 
-We'll look at how to dynamically configure a network of devices using a central configuration broker.
+For the request-reply case, 0MQ always creates and uses envelopes and you don't need to understand how they work to use them.  Firstly, when you use REQ and REP, your sockets build and use envelopes automatically.  Second, when you write a device, and we covered this in the last chapter, you just need to read and write all the parts of a message.
+
+However, getting under the hood and playing with request-reply envelopes is profitable.  It's time to explain how XREP works.  This is really a //request-reply router//:
+
+* When you receive a message from an XREP socket, it shoves a brown paper envelope around the message and scribbles on with indelible ink, "This came from Joe Blogs".  Then it gives that to you.  That is, the XREP socket gives you what came off the wire, wrapped up in an envelope with the reply address on it.
+
+* when you send a message to an XREP socket, it rips off that brown paper envelope, tries to read its own handwriting, and if it knows who "Joe Blogs" is, sends the contents back to Joe.  That is the reverse process of receiving a message.
+
+If you leave the brown envelope alone, and then pass that message to another XREP socket (e.g. by sending to an XREQ connected to an XREP), the second XREP socket will in turn stick another brown envelope on it, and scribble the name of that XREQ on it.
+
+The whole point of this is that each XREP knows how to send replies back to the right place.  All you need to do, in your application, is respect the brown envelopes.  Now the REP socket makes sense.  It carefully slices open the brown envelopes, one by one, keeps them safely aside, and gives you the original message.  When you send the reply, it re-wraps the reply in the brown paper envelopes, so that it can hand that back to the XREP sockets down the chain.
+
+Which lets you insert XREP-XREQ devices into a request-reply pattern like this:
+
+[[code]]
+[REQ] <--> [REP]
+[REQ] <--> [XREP--XREQ] <--> [REP]
+[REQ] <--> [XREP--XREQ] <--> [XREP--XREQ] <--> [REP]
+...etc.
+[[/code]]
+
+If you connect a REQ socket to an XREP socket, and send one request message, this is what you get when you receive from the XREP socket:
+
+[[code type="textdiagram"]]
+            +--------------+
+  Frame 1   |   Identity   |
+            +--------------+
+
+            +---+
+  Frame 2   |   |   <------ Empty multipart message
+            +---+
+
+            +-----------------------------------------+
+  Frame 3   |     Data                                |
+            +-----------------------------------------+
 
 
-+++ Stateful Publish-Subscribe
+       Figure # - Single-hop request-reply envelope
+[[/code]]
 
-We'll look at the common question of getting a consistent state across a set of subscribers that come and go at any time.  We will build a simple distributed cache:
+We can write a simple inspector that dumps the contents of the message, and test this with the hello world client:
 
-* We have a set of peers that each hold a copy of the cache
-* Any peer can update its copy of the cache at any time
-* Updates are published to all other peers
-* A peer can join the network at any time, and get the cache state
+[[code type="C" title="Request-reply inspector" name="rrinspect"]]
+[[/code]]
 
-I'll leave the design for later.  We'll need a forwarder to act as stable location in the network.  Should be fun!
+Now if we extend this with a chain of devices, we get envelope wrapping envelope, with the newest envelope always stuck at the beginning of the stack:
 
-+++ Failover and Recovery
+[[code type="textdiagram"]]
 
-We'll look at how to handle crashes in a distributed architecture.  For each pattern there is an ideal architecture, and we'll explore each of these with worked examples.
+       (Next envelope will go here)
 
-+++ Encrypted Publish-Subscribe
+            +--------------+
+  Frame 1   |  Envelope 3  |
+            +--------------+
 
-We'll look at how to secure pubsub data against snooping.  The actual technique involves out-of-band exchange of keys, symmetric encryption, and a broker that helps the thing along.  Hopefully all fairly easy to make, as usual, using 0MQ.
+            +--------------+
+  Frame 2   |  Envelope 2  |
+            +--------------+
 
-+++ Building a Multicast Bus
+            +--------------+
+  Frame 3   |  Envelope 1  |
+            +--------------+
 
-We'll now look at how the pgm: and epgm: protocols work.  With pgm:, the network switch basically acts as a hardware FORWARDER device.
+            +---+
+  Frame 4   |   |   <------ Empty message part
+            +---+
 
-+++ A Clock Device
+            +-----------------------------------------+
+  Frame 5   |     Data                                |
+            +-----------------------------------------+
 
-We'll look at various ways of building a timer into a network.   A clock device sends out a signal (a message) at more or less precise intervals so that other nodes can use these signals for internal timing.
 
-+++ A Logging Device
+       Figure # - Multihop request-reply envelope
+[[/code]]
 
-We'll look at a device that acts as a remote logger.
+Here now is an explanation of the four socket types we use for request-reply patterns:
 
-+++ Building Bridges
+* XREQ just load-balances the messages you send to all connected nodes, and fair-queues the messages it receives.  It is exactly like a PUSH and PULL socket combined.
 
-zmq_poll(3) lets you mix ZMQ sockets and native system sockets, which is very useful if you have to resort to actual TCP for something, e.g. bridging an existing TCP protocol with 0MQ.  We'll build a couple of bridges.
+* REQ prepends an empty message part to every message you send, and removes the empty message part from each message you receive.  It then works just like XREQ (and in fact is built on XREQ).
 
-+++ Writing a Reactor
+* XREP prepends a message part containing the peer's identity to each message it receives, before passing it to the application.  It also chops off the first message part from every message it sends, and uses that to decide which peer the message should go to.
 
-In this section we'll build a simple reactor framework that turns the zmq_poll(3) function inside out into an event-driven framework.
+* REP stores all the message parts up to the first empty message part, when you receive a message and it passes the rest (the data) to your application.  When you send a reply, REP prepends the saved envelopes to the message and sends it back using the same semantics as XREP (and in fact REP is built on top of XREP).
 
-+++ Exotic Devices
-
-Now we'll use the reactor to build some exotic devices.  It should be much easier and readable than using zmq_poll.
-
-+++ Serializing Data
-
-Examples of using Protocol Buffers and other options.
-
-[!--
-- ipc://name
- - connects two processes on a single box
- - supports all messaging patterns
- - typical use case is for multithreading apps
- - runs on Unix domain sockets (not available on Windows, OpenVMS)
- - permissions issues:
-
-> Since I want to work under /tmp, this all had to be done programatically. My
-> server now mkdir -p's a socket subdirectory and chmod 777's it. The server
-> creates and binds the socket in that folder, and then chmod 777's it. The
-> server must be run as root (which is fine for my project luckily). If it is
-> run as a normal user, the client's still timeout.
-
-- tcp://ipaddress:port
- - bind to address:port
- - bind to *:5555
- - localhost
-  - also bind to interface: lo:port, eth1:port, etc.
-  - Linux: eth1, eth2, eth3
-  - Mac OS X: en1, en2, en3
-  - Solaris: e1000g, etc.
- - connect to remote address: host:port
-
-- pgm://address;multicastgroup:port
- - address can be interface name
- - requires decent hardware support
- - means enterprise level switches with IGNP snooping
- - some routers also support PGM
- - runs over IP, requires root privileges
- - more standard
- - rate-limited protocol, sender must define bandwidth
- - pgm is currently broken
-
-- epgm://address;multicastgroup:port
- - encapsulated in UDP packets
- - requires decent hardware support
- - does not require root access
- - non-standard to pgm
-
-- add peer example
-   - exclusive lock on peer
-   - for owning other party
-   - solve reverse connection
- - e.g. to cross firewall
- - you need to add a bind to allow the client to accept a connection
- - could be usecase for EXCLUSIVE socket
-
-XREQ is like PUSH+PULL, XREP is like PUSH+PULL+routing
-
---]
+REP requires that the envelopes end with an empty message part.  If you're not using REQ at the other end of the chain then you must add the empty message part yourself.

@@ -4,7 +4,7 @@
 .set SELF=docs:user-guide
 .set EMAIL=zeromq-dev@lists.zeromq.org
 .-
-The Guide is written by Pieter Hintjens, with help from Martin Sustrik, Gonzalo Diethelm, Zed Shaw, CAF, Guido Goldstein, Oliver Smith,  Pierre Rouleau, Peter Alexander, and others.  We cover 0MQ version 2.x.  Please do not edit this page directly, but instead add errata and suggestions to the [/$(SELF)-talk talk page] or as patches off [$(GIT) this git] emailed to $(EMAIL).  The diagrams are built using ditaa.  This version was published on &date("ddd d mmmm, yyyy") at &time().
+The Guide is written by Pieter Hintjens <ph@imatix.com>, with help from Martin Sustrik, Gonzalo Diethelm, Zed Shaw, CAF, Guido Goldstein, Oliver Smith, Pierre Rouleau, Peter Alexander, and others.  We cover 0MQ version 2.x.  Please do not edit this page directly, but instead add errata and suggestions to the [/$(SELF)-talk talk page] or as patches off [$(GIT) this git] emailed to $(EMAIL).  The diagrams are built using ditaa.  This version was published on &date("ddd d mmmm, yyyy") at &time().
 
 [[include :csi:include:css-brackets]]
 
@@ -40,7 +40,7 @@ It sounds ridiculously simple.  And maybe it is.  That's kind of the whole point
 
 +++ Some Assumptions
 
-We assume you are using the latest release of 0MQ, or even the current git master.  We assume you are using a Linux box or something similar.  We assume you can read C code, more or less.  We assume that when we write constants like PUSH or SUBSCRIBE you can imagine they are really called ZMQ_PUSH or ZMQ_SUBSCRIBE if the programming language needs it.
+We assume you are using the latest release of 0MQ, or even the current git master.  We assume you are using a Linux box or something similar.  We assume you can read C code, more or less, because most of the examples are in C.  We assume that when we write constants like PUSH or SUBSCRIBE you can imagine they are really called ZMQ_PUSH or ZMQ_SUBSCRIBE if the programming language needs it.
 
 +++ Ask and Ye Shall Receive
 
@@ -121,6 +121,107 @@ Let me explain briefly what these two programs are actually doing.  They create 
 
 There is a lot happening behind the scenes but what matters to us programmers is how short and sweet the code is, and how often it doesn't crash, even under heavy load.  This is the request-reply pattern, probably the simplest way to use 0MQ.  It maps to RPC and the classic client-server model.
 
++++ A Minor Note on Strings
+
+0MQ doesn't know anything about the data you send except its size in bytes.  That means you are responsible for formatting it safely so that applications can read it back.  Doing this for objects and complex data types is a job for specialized libraries like Protocol Buffers.  But even for strings you need to take care.
+
+In C and some other languages, strings are terminated with a null byte.  In the Hello World example we just saw, we sent the string along with that null byte:
+
+[[code]]
+zmq_msg_init_data (&request, "Hello", 6, NULL, NULL);
+[[/code]]
+
+However if you send a string from another language it probably will not include that null byte.  For example, when we send that same string in Python, we do this:
+
+[[code]]
+socket.send ("Hello")
+[[/code]]
+
+Then what goes onto the wire is:
+
+[[code type="textdiagram"]]
++-----+    +-----+-----+-----+-----+-----+
+|  5  |    |  H  |  e  |  l  |  l  |  o  |
++-----+    +-----+-----+-----+-----+-----+
+
+
+          Figure # - A 0MQ string
+[[/code]]
+
+And if you read this from a C program, you will get something that looks like a string, and might by accident act like a string (if by luck the six bytes find themselves followed by an innocently lurking null), but isn't a proper string.
+
+Which means that if you try the Hello World server and client, mixing C and another language, you will probably get weird results.  Actually, I'd hope you get weird results because that will help you understand this section.
+
+When you receive string data from 0MQ, in C, you simply cannot trust that it's safely terminated.  Every single time you read a string you should allocate a new buffer with space for an extra byte, copy the string, and terminate it properly with a null.
+
+So let's establish the rule that **0MQ strings are length-specified, and are sent on the wire //without// a trailing null**.  In the simplest case (and we'll do this in our examples) a 0MQ string maps neatly to a 0MQ message frame, which looks like the above figure, a length and some bytes.
+
+Here is what we need to do, in C, to receive a 0MQ string and deliver it to the application as a valid C string:
+
+[[code]]
+//  Receive 0MQ string from socket and convert into C string
+static char *
+s_recv (void *socket) {
+    zmq_msg_t message;
+    zmq_msg_init (&message);
+    zmq_recv (socket, &message, 0);
+    int size = zmq_msg_size (&message);
+    char *string = malloc (size + 1);
+    memcpy (string, zmq_msg_data (&message), size);
+    zmq_msg_close (&message);
+    string [size] = 0;
+    return (string);
+}
+[[/code]]
+
+This makes a very handy helper function and in the spirit of making things we can reuse profitably, let's write a similar 's_send' function that sends strings in the correct 0MQ format, and package this into a header file we can reuse.
+
+The result is {{zhelper.h}}, which lets us write sweeter and shorter C code, and looks more or less like this:
+
+[[code]]
+#ifndef __ZHELPERS_H_INCLUDED__
+#define __ZHELPERS_H_INCLUDED__
+
+//  Include a bunch of headers that we will need in the examples
+
+#include <zmq.h>
+
+#include <pthread.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/time.h>
+#include <time.h>
+#include <unistd.h>
+
+//  Receive 0MQ string from socket and convert into C string
+static char *
+s_recv (void *socket) {
+    zmq_msg_t message;
+    zmq_msg_init (&message);
+    zmq_recv (socket, &message, 0);
+    int size = zmq_msg_size (&message);
+    char *string = malloc (size + 1);
+    memcpy (string, zmq_msg_data (&message), size);
+    zmq_msg_close (&message);
+    string [size] = 0;
+    return (string);
+}
+
+//  Convert C string to 0MQ string and send to socket
+static int
+s_send (void *socket, char *string) {
+    int rc;
+    zmq_msg_t message;
+    zmq_msg_init_data (&message, string, strlen (string), NULL, NULL);
+    rc = zmq_send (socket, &message, 0);
+    zmq_msg_close (&message);
+    return (rc);
+}
+#endif
+[[/code]]
+
 +++ Getting the Message Out
 
 The second classic pattern is one-way data distribution, in which a server pushes updates to a set of clients.  Let's see an example that pushes out weather updates consisting of a zipcode, temperature, and relative humidity.  We'll generate random values, just like the real weather stations do.
@@ -169,15 +270,19 @@ Here is client application, which listens to the stream of updates and grabs any
 [[code type="C" title="Weather update client" name="wuclient"]]
 [[/code]]
 
-Note that when you use a SUB socket you **must** set a filter using zmq_setsockopt[3] and SUBSCRIBE, as in this code.  If you don't set any filter, you won't get any messages.  It's a common mistake for beginners.  The subscriber can set many filters, which are added together.  That is, if a update matches ANY filter, the subscriber receives it.  The subscriber can also unsubscribe specific filters.  Filters are binary.  See zmq_setsockopt[3] for how this works.
+Note that when you use a SUB socket you **must** set a subscription using zmq_setsockopt[3] and SUBSCRIBE, as in this code.  If you don't set any subscription, you won't get any messages.  It's a common mistake for beginners.  The subscriber can set many subscriptions, which are added together.  That is, if a update matches ANY subscription, the subscriber receives it.  The subscriber can also unsubscribe specific subscriptions.  Subscriptions are binary.  See zmq_setsockopt[3] for how this works.
 
 The PUB-SUB socket pair is asynchronous.  The client does zmq_recv[3], in a loop (or once if that's all it needs).  Trying to send a message to a SUB socket will cause an error.  Similarly the service does zmq_send[3] as often as it needs to, but must not do zmq_recv[3] on a PUB socket.
 
-There is one important thing to know about PUB/SUB sockets: you do not know precisely when the subscriber starts to get messages.  Even if you start the subscriber, wait a while, and then start the publisher, the subscriber will usually miss a few of the first messages that the publisher sends.  This is because as the subscriber connects to the publisher (something that takes a small but non-zero time), the publisher may already be sending messages out.
+There is one important thing to know about PUB/SUB sockets: you do not know precisely when a subscriber starts to get messages.  Even if you start a subscriber, wait a while, and then start the publisher, the subscriber will usually miss a few of the first messages that the publisher sends.  This is because as the subscriber connects to the publisher (something that takes a small but non-zero time), the publisher may already be sending messages out.
 
 While there are ways to synchronize publishers and subscribers, which we'll look at in the next chapter, it is easier and safer to assume that a subscriber does not know the start of a message stream.  Design your applications on that basis, as we're doing in this example.
 
 So the client subscribes to its chosen zipcode and collects a thousand updates for that zipcode.  That means about ten million updates from the server, if zipcodes are randomly distributed.  You can start the client, and then the server, and the client will keep working. You can stop and restart the server as often as you like, and the client will keep working.  When the client has collected its thousand updates, it calculates the average, prints it, and exits.
+
+A subscriber can in fact connect to more than one publisher, using one 'connect' call each time.  Data will then arrive and be interleaved so that no single publisher drowns out the others.
+
+If a publisher has no connected subscribers, then it will simply drop all messages.
 
 This is how long it takes to receive and filter 10M messages on my box, which is an Intel 4 core Q8300, fast but nothing special:
 
@@ -246,7 +351,7 @@ In reality, workers run on superfast boxes, perhaps using GPUs (graphic processi
                   +-------------+
 
 
-     Figure # - Parallel Pipeline
+           Figure # - Parallel Pipeline
 [[/code]]
 
 [!-- TODO: remove this note when 0MQ/2.1 is released --]
@@ -305,6 +410,8 @@ Let's look at some aspects of this code in more detail:
 [[/code]]
 
 +++ Why We Needed 0MQ
+
+Now that you've seen 0MQ in action, let's go back to the "why".
 
 Many applications these days consist of components that stretch across some kind of network, either a LAN or the Internet.  So many application developers end up doing some kind of messaging.  Some developers use message queuing products, but most of the time they do it themselves, using TCP or UDP.  These protocols are not hard to use, but there is a great difference between sending a few bytes from A to B, and doing messaging in any kind of reliable way.
 
@@ -453,4 +560,4 @@ Because your code, talking to a socket, can then handle any number of connection
 
 So the general assumption no longer applies.  As you read the code examples, your brain will try to map them to what you know.  You will read "socket" and think "ah, that represents a connection to another node".  That is wrong.  You will read "thread" and your brain will again think, "ah, a thread represents a connection to another node", and again your brain will be wrong.
 
-If you're reading this Guide for the first time, realize that until you actually write 0MQ code for a day or two (and maybe three or four days), you may feel confused, and you may try to impose that general assumption on 0MQ, and it won't work. And then you will experience your moment of enlightenment, that zap-pow-kaboom satori paradigm-shift moment when it all becomes clear.
+If you're reading this Guide for the first time, realize that until you actually write 0MQ code for a day or two (and maybe three or four days), you may feel confused, especially by how simple 0MQ makes things for you, and you may try to impose that general assumption on 0MQ, and it won't work.  And then you will experience your moment of enlightenment and trust, that //zap-pow-kaboom// satori paradigm-shift moment when it all becomes clear.
