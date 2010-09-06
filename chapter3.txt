@@ -6,6 +6,7 @@ We'll cover:
 
 * How to create and use message envelopes for pubsub and request-reply.
 * How the request-reply pattern works, in detail, including XREQ and XREP.
+* The concept of //identities// and what they are used for.
 
 +++ Message Envelopes
 
@@ -26,7 +27,7 @@ Here is what a publish-subscribe message with an envelope looks like:
 
 [[code type="textdiagram"]]
             +-------------+
-  Frame 1   |     Key     |     This is the envelope.
+  Frame 1   |     Key     |     This is the envelope
             +-------------+
 
             +-----------------------------------------+
@@ -92,7 +93,7 @@ If you connect a REQ socket to an XREP socket, and send one request message, thi
             +--------------+
 
             +---+
-  Frame 2   |   |   <------ Empty multipart message
+  Frame 2   |   |   <------ Empty message part
             +---+
 
             +-----------------------------------------+
@@ -101,11 +102,6 @@ If you connect a REQ socket to an XREP socket, and send one request message, thi
 
 
        Figure # - Single-hop request-reply envelope
-[[/code]]
-
-We can write a simple inspector that dumps the contents of the message, and test this with the hello world client:
-
-[[code type="C" title="Request-reply inspector" name="rrinspect"]]
 [[/code]]
 
 Now if we extend this with a chain of devices, we get envelope wrapping envelope, with the newest envelope always stuck at the beginning of the stack:
@@ -149,3 +145,12 @@ Here now is an explanation of the four socket types we use for request-reply pat
 * REP stores all the message parts up to the first empty message part, when you receive a message and it passes the rest (the data) to your application.  When you send a reply, REP prepends the saved envelopes to the message and sends it back using the same semantics as XREP (and in fact REP is built on top of XREP).
 
 REP requires that the envelopes end with an empty message part.  If you're not using REQ at the other end of the chain then you must add the empty message part yourself.
+
++++ Identities
+
+
+- use cases for identities
+    - automatic, for routing replies back
+    - explicit, for persistent queues
+- when do identities cause problems?
+    - if used in pubsub without SWAP

@@ -32,13 +32,6 @@ Then we can use this to start building some reusable pieces:
 - creating persistent queues using identity
     - example of HWM 1 plus massive SWAP
 
-+++ Identities
-
-- use cases for identities
-    - automatic, for routing replies back
-    - explicit, for persistent queues
-- when do identities cause problems?
-    - if used in pubsub without SWAP
 
 
 
