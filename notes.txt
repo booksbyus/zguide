@@ -185,17 +185,6 @@ XREQ is like PUSH+PULL, XREP is like PUSH+PULL+routing
 
 * Cross-language string sending tutorial
 
-* How to publish selectively to individual subscribers:
-
-
-When a client activates, it chooses a random port that is not in use and creates a SUB socket listening for all traffic on it. The client then sends a message via REQ to the publisher containing the port that it is listening on. The publisher receives this message, acknowledges it, and creates a new pub socket specific to that client. All published events specific to this client go out that socket.
-
-When the client deactivates, it sends a message to the publisher with the port to deactivate and close.
-
-You end up creating a lot more PUB sockets on your server end and doing all of the filtering at the server. This sounds acceptable to you.
-
-I didn't need to do this to avoid network bandwidth bottlenecks; I created this to enforce some security and entitlements.
-
 
 I highly recommend that you try out the simpler topology and *verifying* that 0mq cannot keep up with your message rates when publishing all data to all clients. With smart topics the client can reject the data *very* fast. A 1 GB or 10 Gb switched network can also move quite a bit of data without a lot of blocking behavior in the hardware too. You may be able to save yourself a lot of unnecessary work, so just try it.
 
@@ -210,51 +199,6 @@ I highly recommend that you try out the simpler topology and *verifying* that 0m
     - set HWM to 1 message only
 
 [!--
-
-
-In case you were wondering, ØMQ auto-magically figures out which client to send replies back to, using so-called //identities// in the messages.  We'll explore identities later.
-
-If identity is not set, ØMQ generates an unique identity (UUID) for the connection. If identity is set, it's used instead.
-
-
-
-
-
-It has nothing to do with client vs. server.
-
-Each socket can have an identity, if set by user (ZMQ_IDENTITY sockopt).
-
-If not set, it's empty.
-
-Some socket types (reqrep pattern) use identities for routing. In such case, if the peer doesn't provide identity, they'll generate a transient UUID to identify it.
-
-
-- when and how is identity sent over the wire?
-
-First message sent in either direction is identity. It doesn't happen on top of multicast transport.
-
-
-- for all or some socket types?
-
-Currently yes. In the future I would say PUB/SUB sockets need not to provide identity.
-
-
-- if you use req?
-    - send multipart with N identities
-    - then empty part (size zero)
-    - then content part
-
-- empty identity on request means load balance to anyone
-- when you receive you will get at least 3 parts back
-    - first is identity of whomever sent reply
-    - delimiter
-    - content
-
- - if sending to non-existent identity, message is silently discarded
- - identities automatic or manual
- - no garbage collection in service: will eventually die
-
- --]
 
 
 - handling crashing peers

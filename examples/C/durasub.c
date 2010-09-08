@@ -1,5 +1,5 @@
 //
-//  Durable subscriber in C
+//  Durable subscriber
 //
 #include "zhelpers.h"
 

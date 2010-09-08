@@ -1,5 +1,5 @@
 //
-//  Synchronized publisher in C
+//  Synchronized publisher 
 //
 #include "zhelpers.h"
 

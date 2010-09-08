@@ -1,5 +1,5 @@
 //
-//  Weather update client in C
+//  Weather update client
 //  Connects SUB socket to tcp://localhost:5556
 //  Collects weather updates and finds avg temp in zipcode
 //

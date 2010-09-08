@@ -1,5 +1,5 @@
 //
-//  Task ventilator in C
+//  Task ventilator
 //  Binds PUSH socket to tcp://localhost:5557
 //  Sends batch of tasks to workers via that socket
 //
@@ -33,7 +33,6 @@ int main (int argc, char *argv[])
         //  Random workload from 1 to 100msecs
         workload = within (100) + 1;
         total_msec += workload;
-printf ("%d.", workload);
         char string [10];
         sprintf (string, "%d", workload);
         s_send (sender, string);

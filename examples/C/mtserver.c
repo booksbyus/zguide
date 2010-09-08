@@ -1,5 +1,5 @@
 //
-//  Multithreaded Hello World server in C
+//  Multithreaded Hello World server
 //
 #include "zhelpers.h"
 

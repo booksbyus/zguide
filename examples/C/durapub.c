@@ -1,5 +1,5 @@
 //
-//  Publisher for durable subscriber, in C
+//  Publisher for durable subscriber
 //
 #include "zhelpers.h"
 

@@ -1,6 +1,6 @@
-++ Chapter 2 - Intermediate Stuff
+++ Chapter Two - Intermediate Stuff
 
-In chapter 1 we took 0MQ for a drive, with some basic examples of the main 0MQ patterns: request-reply, publish-subscribe, and pipeline.  In this chapter we're going to get our hands dirty and start to learn how to use these tools in real programs.
+In Chapter One we took 0MQ for a drive, with some basic examples of the main 0MQ patterns: request-reply, publish-subscribe, and pipeline.  In this chapter we're going to get our hands dirty and start to learn how to use these tools in real programs.
 
 We'll cover:
 
@@ -417,7 +417,7 @@ Here is the modified sink application.  When it's finished collecting results it
 
 +++ Multipart Messages
 
-0MQ lets us compose a message out of several frames, giving us a 'multipart message'.  Realistic applications use multipart messages heavily, especially to make "envelopes".  We'll look at them in chapter 3.  What we'll learn now is simply how to safely (but blindly) read and write multipart messages because otherwise the devices we write won't work with applications that use multipart messages.
+0MQ lets us compose a message out of several frames, giving us a 'multipart message'.  Realistic applications use multipart messages heavily, especially to make "envelopes".  We'll look at them in Chapter Three.  What we'll learn now is simply how to safely (but blindly) read and write multipart messages because otherwise the devices we write won't work with applications that use multipart messages.
 
 Here is how we send the frames in a multipart message (we receive each frame into a message object):
 
@@ -448,6 +448,8 @@ while (1) {
 
 Some things to know about multipart messages:
 
+* When you send a multipart message, the first part (and all following parts) are only sent when you send the final part.
+* If you are using zmq_poll[3], when you receive the first part of a message, all the rest have also arrived.
 * You will receive all parts of a message, or none at all.
 * You will receive all parts of a message whether or not you check the RCVMORE option.
 * On sending, 0MQ queues message parts in memory until the last is received, then sends them all.

@@ -1,5 +1,5 @@
 //
-//  Task worker in C
+//  Task worker
 //  Connects PULL socket to tcp://localhost:5557
 //  Collects workloads from ventilator via that socket
 //  Connects PUSH socket to tcp://localhost:5558
