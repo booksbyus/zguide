@@ -1,6 +1,17 @@
-No-one has translated the hwclient example into Ruby yet.  Be the first to create
-hwclient in Ruby and get one free Internet!  If you're the author of the Ruby
-binding, this is a great way to get people to use 0MQ in Ruby.
+require 'rubygems'
+require 'ffi-rzmq'
 
-To submit a translation, just email it to zeromq-dev.zeromq.org.
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+context = ZMQ::Context.new(1)
+
+# Socket to talk to server
+puts "Connecting to hello world server..."
+requester = context.socket(ZMQ::REQ)
+requester.connect("tcp://localhost:5555")
+
+0.upto(9) do |request_nbr|
+  puts "Sending request #{request_nbr}..."
+  requester.send_string "Hello"
+
+  reply = requester.recv_string
+  puts "Received reply #{request_nbr}: [#{reply}]"
+end

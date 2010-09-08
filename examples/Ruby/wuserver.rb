@@ -1,6 +1,23 @@
-No-one has translated the wuserver example into Ruby yet.  Be the first to create
-wuserver in Ruby and get one free Internet!  If you're the author of the Ruby
-binding, this is a great way to get people to use 0MQ in Ruby.
+#
+# Weather update server in Ruby
+# Binds PUB socket to tcp://*:5556
+# Publishes random weather updates
+#
 
-To submit a translation, just email it to zeromq-dev.zeromq.org.
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+require 'rubygems'
+require 'ffi-rzmq'
+
+context = ZMQ::Context.new(1)
+publisher = context.socket(ZMQ::PUB)
+publisher.bind("tcp://*:5556")
+publisher.bind("ipc://weather")
+
+while true
+  # Get values that will fool the boss
+  zipcode = rand(100000)
+  temperature = rand(215) - 80
+  relhumidity = rand(50) + 10
+
+  update = "%05d %d %d" % [zipcode, temperature, relhumidity]
+  publisher.send_string(update)
+end
