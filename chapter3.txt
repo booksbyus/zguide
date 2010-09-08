@@ -65,7 +65,7 @@ This examples shows that the subscription filter rejects or accepts the entire m
 
 ++++ Request-Reply Message Envelopes
 
-For the request-reply case, 0MQ always creates and uses envelopes and you don't need to understand how they work to use them.  Firstly, when you use REQ and REP, your sockets build and use envelopes automatically.  Second, when you write a device, and we covered this in the last chapter, you just need to read and write all the parts of a message.
+For the request-reply case, 0MQ always creates and uses envelopes and you don't need to understand how they work to use them.  Firstly, when you use REQ and REP, your sockets build and use envelopes automatically.  Second, when you write a device, and we covered this in the last chapter, you just need to read and write all the parts of a message, which means envelopes are safely copied from input socket to output socket.
 
 However, getting under the hood and playing with request-reply envelopes is profitable.  It's time to explain how XREP works, in terms of envelopes:
 
@@ -200,9 +200,22 @@ However if you set the identity explicitly on the REQ socket, it tells the XREP 
 [[code type="C" title="Identity check" name="identity"]]
 [[/code]]
 
+Here is what the dump function prints:
+
+[[code]]
+----------------------------------------
+[017] 00314F043F46C441E28DD0AC54BE8DA727
+[000]
+[026] XREP uses a generated UUID
+----------------------------------------
+[005] Hello
+[000]
+[038] XREP socket uses REQ's socket identity
+[[/code]]
+
 **Warning**
 
-0MQ/2.0.9 and earlier versions crash with assertions if you connect via two sockets using the same identity, e.g. if two subscribers connect to a publisher using the same identity.  0MQ will also crash if you change the identity of a peer and restart it, while there are other peers connected to it.  There are ongoing discussions about how these situations should be handled.  If you get assertions while using 0MQ, report them to the zeromq-dev list.
+0MQ/2.0.9 and earlier versions crash with assertions if you connect via two sockets using the same identity, e.g. if two subscribers connect to a publisher using the same identity.  0MQ will also crash if you change the identity of a peer and restart it, while there are other peers connected to it.  There are ongoing discussions about how these situations should be handled.  As a general rule, if you get assertions while using 0MQ, report them to the zeromq-dev list.
 
 +++ Durable Subscribers
 
@@ -241,7 +254,7 @@ $ durasub
 Update 8
 Update 9
 END
-[[code]]
+[[/code]]
 
 Just to see the difference, comment out the line in the subscriber that sets the socket identity, and try again.  You will see that it loses messages.  Setting an identity turns a transient subscriber into a durable subscriber.  You would in practice want to choose identities carefully, perhaps using a UUID, since using the same identity for two clients does not do nice things (it provokes an assertion failure in xrep.cpp:60).
 
@@ -250,8 +263,8 @@ So when we set a socket identity, the server holds onto messages until it can de
 Let's test this by setting the publisher HWM to 2 messages, before we start publishing to the socket:
 
 [[code]]
-    uint64_t hwm = 2;
-    zmq_setsockopt (publisher, ZMQ_HWM, &hwm, sizeof (hwm));
+uint64_t hwm = 2;
+zmq_setsockopt (publisher, ZMQ_HWM, &hwm, sizeof (hwm));
 [[/code]]
 
 Now running our test, killing and restarting the subscriber after a couple of seconds' pause will show something like this:
@@ -275,9 +288,9 @@ Look carefully: we have two messages kept for us (2 and 3), then a gap of severa
 In short, if you use subscriber identities, you must set the high-water mark on publisher sockets, or else you risk servers that run out of memory and crash.  However, there is a way out.  0MQ provides something called a "swap", which is a disk file that holds messages we can't store to the queue.  It is very simple to enable:
 
 [[code]]
-    //  Specify swap space in bytes
-    uint64_t swap = 25000000;
-    zmq_setsockopt (publisher, ZMQ_SWAP, &swap, sizeof (swap));
+//  Specify swap space in bytes
+uint64_t swap = 25000000;
+zmq_setsockopt (publisher, ZMQ_SWAP, &swap, sizeof (swap));
 [[/code]]
 
 We can put this together to make a cynical publisher that is immune to slow, blocked, or absent subscribers while still offering durable subscriptions to those that need it:
@@ -294,7 +307,7 @@ In practice, setting the HWM to 1 and shoving everything to disk will make a pub
 
 We already saw that XREP uses the message envelope to decide which client to route a reply back to.  Now let me express that in another way: //XREP will route messages asynchronously to any peer connected to it, if you provide the correct routing address via a properly constructed envelope.//
 
-So XREP is really a fully controllable router.  Let's look at this magic in detail.  But first, let's fix the parsing pain we feel when we read "REP"/"REQ"/"XREP"/"XREQ".  There should be a law against names that are so similar.
+So XREP is really a fully controllable router.  Let's look at this magic in detail.  But first, let's fix the parsing pain we feel when we try to distinguish "REP", "REQ", "XREP", and "XREQ" from each other.  There should be a law against names that are so similar. :-)
 
 For readability, and because we're going to go off-road into some rough terrain now, let's rename these four socket types just for this section of the text:
 
@@ -367,7 +380,7 @@ Here's code that shows how this works:
 
 Some comments on this code:
 
-* Since the router does not know when the dealers are ready, and it would be distracting to add in the signalling for that, the router just does a "sleep (1)" after starting the dealer threads.
+* Since the router does not know when the dealers are ready, and it would be distracting in our example to add in the signalling for that, the router just does a "sleep (1)" after starting the dealer threads.
 
 To route to a dealer, we create an envelope like this:
 

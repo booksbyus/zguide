@@ -18,7 +18,7 @@ int main (int argc, char *argv[])
     zmq_connect (sync, "tcp://localhost:5564");
     s_send (sync, "");
 
-    //  Get updates and randomly crash
+    //  Get updates, expect random Ctrl-C death
     while (1) {
         char *string = s_recv (subscriber);
         printf ("%s\n", string);
