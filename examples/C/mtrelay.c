@@ -1,5 +1,5 @@
 //
-//  Multithreaded relay in C
+//  Multithreaded relay
 //
 #include "zhelpers.h"
 

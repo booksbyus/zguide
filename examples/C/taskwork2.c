@@ -1,5 +1,5 @@
 //
-//  Task worker in C - design 2
+//  Task worker - design 2
 //  Adds pub-sub flow to receive and respond to kill signal
 //
 #include "zhelpers.h"

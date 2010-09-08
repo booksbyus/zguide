@@ -1,5 +1,5 @@
 //
-//  Task sink in C
+//  Task sink
 //  Binds PULL socket to tcp://localhost:5558
 //  Collects results from workers via that socket
 //

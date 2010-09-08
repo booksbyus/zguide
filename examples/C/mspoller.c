@@ -1,5 +1,5 @@
 //
-//  Reading from multiple sockets in C
+//  Reading from multiple sockets
 //  This version uses zmq_poll()
 //
 #include "zhelpers.h"

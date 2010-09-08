@@ -1,5 +1,5 @@
 //
-//  Synchronized subscriber in C
+//  Synchronized subscriber
 //
 #include "zhelpers.h"
 

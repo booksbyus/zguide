@@ -99,6 +99,7 @@ while (<>) {
         close (SOURCE);
         writeln ('[[/code]]');
         writeln ('[[>]]');
+        writeln ($filename);
         writeln ('[[collapsible show="All languages" hide="Hide languages"]]');
 
         foreach (@languages) {

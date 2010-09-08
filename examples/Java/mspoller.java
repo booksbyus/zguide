@@ -1,6 +1,42 @@
-No-one has translated the mspoller example into Java yet.  Be the first to create
-mspoller in Java and get one free Internet!  If you're the author of the Java
-binding, this is a great way to get people to use 0MQ in Java.
+import org.zeromq.ZMQ;
 
-To submit a translation, just email it to zeromq-dev.zeromq.org.
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+//
+//  Reading from multiple sockets in Java
+//  This version uses ZMQ.Poller
+//
+//  Nicola Peduzzi <thenikso@gmail.com>
+//
+public class mspoller {
+
+	public static void main(String[] args) {
+		ZMQ.Context context = ZMQ.context(1);
+
+		// Connect to task ventilator
+		ZMQ.Socket receiver = context.socket(ZMQ.PULL);
+		receiver.connect("tcp://localhost:5557");
+
+		//  Connect to weather server
+		ZMQ.Socket subscriber = context.socket(ZMQ.SUB);
+		subscriber.connect("tcp://localhost:5556");
+		subscriber.subscribe("10001 ".getBytes());
+
+		//  Initialize poll set
+		ZMQ.Poller items = context.poller(2);
+		items.register(receiver, 0);
+		items.register(subscriber, 0);
+
+		//  Process messages from both sockets
+		while (true) {
+			byte[] message;
+			items.poll();
+			if (items.pollin(0)) {
+				message = receiver.recv(0);
+				//  Process task
+			}
+			if (items.pollin(1)) {
+				message = subscriber.recv(0);
+				//  Process weather update
+			}
+		}
+	}
+}

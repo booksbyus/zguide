@@ -1,5 +1,5 @@
 //
-//  Hello World server in C
+//  Hello World server
 //  Connects REP socket to tcp://*:5560
 //  Expects "Hello" from client, replies with "World"
 //

@@ -1,5 +1,5 @@
 //
-//  Task sink in C - design 2
+//  Task sink - design 2
 //  Adds pub-sub flow to send kill signal to workers
 //
 #include "zhelpers.h"
