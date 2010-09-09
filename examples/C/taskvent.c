@@ -38,5 +38,6 @@ int main (int argc, char *argv[])
     printf ("Total expected cost: %d msec\n", total_msec);
     sleep (1);              //  Give 0MQ time to deliver
 
+    zmq_term (context);
     return 0;
 }

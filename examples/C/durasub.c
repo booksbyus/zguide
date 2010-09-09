@@ -28,5 +28,6 @@ int main (int argc, char *argv[])
         }
         free (string);
     }
+    zmq_term (context);
     return 0;
 }

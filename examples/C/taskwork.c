@@ -36,5 +36,6 @@ int main (int argc, char *argv[])
         //  Send results to sink
         s_send (sender, "");
     }
+    zmq_term (context);
     return 0;
 }

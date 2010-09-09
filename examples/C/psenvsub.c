@@ -19,5 +19,6 @@ int main () {
         free (address);
         free (contents);
     }
+    zmq_term (context);
     return 0;
 }

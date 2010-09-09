@@ -24,5 +24,6 @@ int main () {
         //  Send reply back to client
         s_send (responder, "World");
     }
+    zmq_term (context);
     return 0;
 }

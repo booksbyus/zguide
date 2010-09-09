@@ -41,5 +41,7 @@ int main () {
     }
     //  Connect work threads to client threads via a queue
     zmq_device (ZMQ_QUEUE, clients, workers);
+
+    zmq_term (context);
     return 0;
 }

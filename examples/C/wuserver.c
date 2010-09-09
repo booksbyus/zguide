@@ -1,5 +1,5 @@
 //
-//  Weather update server 
+//  Weather update server
 //  Binds PUB socket to tcp://*:5556
 //  Publishes random weather updates
 //
@@ -26,5 +26,6 @@ int main () {
         sprintf (update, "%05d %d %d", zipcode, temperature, relhumidity);
         s_send (publisher, update);
     }
+    zmq_term (context);
     return 0;
 }

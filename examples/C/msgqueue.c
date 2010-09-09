@@ -18,5 +18,7 @@ int main (int argc, char *argv[])
 
     //  Start built-in device
     zmq_device (ZMQ_QUEUE, frontend, backend);
+
+    zmq_term (context);
     return 0;
 }

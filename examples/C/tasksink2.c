@@ -56,5 +56,7 @@ int main (int argc, char *argv[])
 
     //  Finished
     sleep (1);              //  Give 0MQ time to deliver
+
+    zmq_term (context);
     return 0;
 }

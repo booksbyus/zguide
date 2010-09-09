@@ -1,5 +1,5 @@
 //
-//  Hello World client 
+//  Hello World client
 //  Connects REQ socket to tcp://localhost:5555
 //  Sends "Hello" to server, expects "World" back
 //
@@ -31,5 +31,6 @@ int main () {
             (char *) zmq_msg_data (&reply));
         zmq_msg_close (&reply);
     }
+    zmq_term (context);
     return 0;
 }

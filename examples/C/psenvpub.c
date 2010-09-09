@@ -18,5 +18,6 @@ int main () {
         s_send (publisher, "We would like to see this");
         sleep (1);
     }
+    zmq_term (context);
     return 0;
 }

@@ -39,5 +39,6 @@ int main (int argc, char *argv[])
             zmq_msg_close (&message);
         }
     }
+    zmq_term (context);
     return 0;
 }

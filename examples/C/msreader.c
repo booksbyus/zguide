@@ -46,5 +46,6 @@ int main (int argc, char *argv[])
         t.tv_nsec = 1000000;
         nanosleep (&t, NULL);
     }
+    zmq_term (context);
     return 0;
 }

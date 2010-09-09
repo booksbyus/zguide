@@ -36,5 +36,6 @@ int main (int argc, char *argv[])
     }
     printf ("Received %d updates\n", update_nbr);
 
+    zmq_term (context);
     return 0;
 }

@@ -59,5 +59,6 @@ int main (int argc, char *argv[])
             break;                      //  Exit loop
     }
     //  Finished
+    zmq_term (context);
     return 0;
 }
