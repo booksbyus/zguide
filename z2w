@@ -65,6 +65,10 @@ while (<>) {
         elsif (/^\.\-/) {
             #   Comment, ignore
         }
+        elsif (/^.end/) {
+            writeln ("(More coming soon...)");
+            $EOD = 1;       #   Stop output here
+        }
         else {
             print "Illegal directive $_ at line $.\n";
         }
@@ -119,7 +123,14 @@ No-one has translated the $name example into $_ yet.  Be the first to create
 $name in $_ and get one free Internet!  If you're the author of the $_
 binding, this is a great way to get people to use 0MQ in $_.
 
-To submit a translation, just email it to $(EMAIL).
+To submit a new translation email it to $(EMAIL).  Please:
+
+* Stick to identical functionality and naming used in examples so that readers
+  can easily compare languages.
+* You MUST place your name as author in the examples so readers can contact you.
+* You MUST state in the email that you license your code under the MIT/X11
+  license.
+
 Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
 EOF
                 close (SOURCE);
@@ -177,7 +188,7 @@ exit (0);
 sub writeln {
     local ($_) = @_;
     $_ = expand_symbols ($_);
-    print WDTEMP "$_\n";
+    print WDTEMP "$_\n" unless $EOD;
 }
 
 sub get_filename {
