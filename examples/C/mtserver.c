@@ -3,7 +3,8 @@
 //
 #include "zhelpers.h"
 
-void *worker_routine (void *context) {
+static void *
+worker_routine (void *context) {
     //  Socket to talk to dispatcher
     void *receiver = zmq_socket (context, ZMQ_REP);
     zmq_connect (receiver, "inproc://workers");

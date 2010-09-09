@@ -2,7 +2,6 @@
 //  Custom routing Router to Dealer (XREP to XREQ)
 //
 #include "zhelpers.h"
-#define within(num) (int) ((float) num * random () / (RAND_MAX + 1.0))
 
 //  We have two workers, here we copy the code, normally these would
 //  run on different boxes...

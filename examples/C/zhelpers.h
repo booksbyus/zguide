@@ -35,6 +35,8 @@
 #include <unistd.h>
 #include <assert.h>
 
+#define within(num) (int) ((float) num * random () / (RAND_MAX + 1.0))
+
 //  Receive 0MQ string from socket and convert into C string
 static char *
 s_recv (void *socket) {
@@ -67,7 +69,8 @@ static int
 s_sendmore (void *socket, char *string) {
     int rc;
     zmq_msg_t message;
-    zmq_msg_init_data (&message, string, strlen (string), NULL, NULL);
+    zmq_msg_init_size (&message, strlen (string));
+    memcpy (zmq_msg_data (&message), string, strlen (string));
     rc = zmq_send (socket, &message, ZMQ_SNDMORE);
     zmq_msg_close (&message);
     assert (!rc);
@@ -112,4 +115,15 @@ s_dump (void *socket)
             break;      //  Last message part
     }
 }
+
+//  Set simple random printable identity on socket
+//
+static void
+s_set_id (void *socket)
+{
+    char identity [10];
+    sprintf (identity, "%04X-%04X", within (0x10000), within (0x10000));
+    zmq_setsockopt (socket, ZMQ_IDENTITY, identity, strlen (identity));
+}
+
 #endif

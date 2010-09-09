@@ -3,7 +3,8 @@
 //
 #include "zhelpers.h"
 
-void *step1 (void *context) {
+static void *
+step1 (void *context) {
     //  Signal downstream to step 2
     void *sender = zmq_socket (context, ZMQ_PAIR);
     zmq_connect (sender, "inproc://step2");
@@ -12,7 +13,8 @@ void *step1 (void *context) {
     return (NULL);
 }
 
-void *step2 (void *context) {
+static void *
+step2 (void *context) {
     //  Bind to inproc: endpoint, then start upstream thread
     void *receiver = zmq_socket (context, ZMQ_PAIR);
     zmq_bind (receiver, "inproc://step2");

@@ -2,16 +2,15 @@
 //  Custom routing Router to Mama (XREP to REQ)
 //
 #include "zhelpers.h"
-#define within(num) (int) ((float) num * random () / (RAND_MAX + 1.0))
+
 #define NBR_WORKERS 10
 
-void *worker_thread (void *context) {
+static void *
+worker_thread (void *context) {
     void *worker = zmq_socket (context, ZMQ_REQ);
 
     //  We use a string identity for ease here
-    char identity [20];
-    sprintf (identity, "%04X-%04x", within (0x10000), within (0x10000));
-    zmq_setsockopt (worker, ZMQ_IDENTITY, identity, strlen (identity));
+    s_set_id (worker);
     zmq_connect (worker, "ipc://routing");
 
     int total = 0;
@@ -19,8 +18,7 @@ void *worker_thread (void *context) {
         //  Tell the router we're ready for work
         s_send (worker, "ready");
 
-        //  Get workload from router and execute it
-        //  as number of msecs to sleep
+        //  Get workload from router, until finished
         char *workload = s_recv (worker);
         int finished = (strcmp (workload, "END") == 0);
         free (workload);
@@ -30,7 +28,7 @@ void *worker_thread (void *context) {
         }
         total++;
 
-        //  Do the work
+        //  Do some random work
         struct timespec t;
         t.tv_sec = 0;
         t.tv_nsec = within (100000000) + 1;
@@ -51,8 +49,7 @@ int main () {
     }
     int task_nbr;
     for (task_nbr = 0; task_nbr < NBR_WORKERS * 10; task_nbr++) {
-        //  Use socket queue to implement LRU algorithm
-        //  LRU worker is next waiting in queue, I think... :-)
+        //  LRU worker is next waiting in queue
         char *address = s_recv (client);
         char *empty = s_recv (client);
         free (empty);

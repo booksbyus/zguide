@@ -5,8 +5,6 @@
 //
 #include "zhelpers.h"
 
-#define within(num) (int) ((float) num * random () / (RAND_MAX + 1.0))
-
 int main (int argc, char *argv[])
 {
     void *context = zmq_init (1);
