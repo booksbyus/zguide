@@ -1,6 +1,37 @@
-No-one has translated the syncpub example into Python yet.  Be the first to create
-syncpub in Python and get one free Internet!  If you're the author of the Python
-binding, this is a great way to get people to use 0MQ in Python.
+#
+#  Synchronized publisher
+#
+import zmq
 
-To submit a translation, just email it to zeromq-dev.zeromq.org.
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+#  We wait for 10 subscribers
+SUBSCRIBERS_EXPECTED = 2
+
+def main():
+    context = zmq.Context()
+    
+    # Socket to talk to clients
+    publisher = context.socket(zmq.PUB)
+    publisher.bind('tcp://*:5561')
+
+    # Socket to receive signals
+    syncservice = context.socket(zmq.REP)
+    syncservice.bind('tcp://*:5562')
+
+    # Get synchronization from subscribers
+    subscribers = 0
+    while subscribers < SUBSCRIBERS_EXPECTED:
+        # wait for synchronization request
+        msg = syncservice.recv()
+        # send synchronization reply
+        syncservice.send('')
+        subscribers += 1
+        print "+1 subscriber"
+    
+    # Now broadcast exactly 1M updates followed by END
+    for i in range(1000000):
+       publisher.send('Rhubarb');
+
+    publisher.send('END')
+
+if __name__ == '__main__':
+    main()

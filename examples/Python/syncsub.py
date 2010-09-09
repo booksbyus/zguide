@@ -1,6 +1,35 @@
-No-one has translated the syncsub example into Python yet.  Be the first to create
-syncsub in Python and get one free Internet!  If you're the author of the Python
-binding, this is a great way to get people to use 0MQ in Python.
+#
+#  Synchronized subscriber
+#
+import zmq
 
-To submit a translation, just email it to zeromq-dev.zeromq.org.
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+def main():
+    context = zmq.Context()
+    
+    # First, connect our subscriber socket
+    subscriber = context.socket(zmq.SUB)
+    subscriber.connect('tcp://localhost:5561')
+    subscriber.setsockopt(zmq.SUBSCRIBE, "")
+
+    # Second, synchronize with publisher
+    syncclient = context.socket(zmq.REQ)
+    syncclient.connect('tcp://localhost:5562')
+    
+    # send a synchronization request
+    syncclient.send('')
+    
+    # wait for synchronization reply
+    syncclient.recv()
+
+    # Third, get our updates and report how many we got
+    nbr = 0
+    while True:
+        msg = subscriber.recv()
+        if msg == 'END':
+            break
+        nbr += 1
+    
+    print 'Received %d updates' % nbr
+
+if __name__ == '__main__':
+    main()
