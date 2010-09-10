@@ -1,21 +1,3 @@
-clean exits...
-remove all zerocopy references till later
-explain how to carefully develop 0MQ code
-- use clearer style to help others read your code
-- develop gradually and test repeatedly, each time you add something new
-- do not write more code than you can test in one small step
-explain how to start device threads
-- create sockets in threads, not callers
-
-- "I'm not getting messages!?"
- - problem solver flowchart
-    - multithreade?
-    - problem happens every time?
-    - transport?
-    - socket types?
-    - list all the causes, 3 questions to get to them...
-
-
 .-  Instructions for z2w
 .set GIT=http://github.com/imatix/zguide
 .set BRANCH=master
@@ -376,9 +358,6 @@ In reality, workers run on superfast boxes, perhaps using GPUs (graphic processi
            Figure # - Parallel Pipeline
 [[/code]]
 
-[!-- TODO: remove this note when 0MQ/2.1 is released --]
-Note that we do {{sleep (1);}} before exiting the ventilator.  This is a hack that gets around 0MQ/2.0's design, which discards messages that have not yet been sent, if you exit the program too soon.  If you are using 0MQ/2.1 you can remove this sleep statement.
-
 Here is the worker application.  It receives a message, sleeps for that number of seconds, then signals that it's finished:
 
 [[code type="C" title="Parallel task worker" name="taskwork"]]
@@ -430,6 +409,26 @@ Let's look at some aspects of this code in more detail:
 
           Figure # - Fair queuing
 [[/code]]
+
++++ Making a Clean Exit
+
+Classy programmers share the same motto as classy hitmen: always clean up after you.  When you use 0MQ in a language like Python, stuff gets automatically freed for you.  But when using C you must carefully free objects when you're finished with them, or you get memory leaks, unstable applications, and generally bad karma.
+
+The 0MQ objects we need to worry about are messages, sockets, and contexts.  Luckily it's quite simple:
+
+* Always close a message the moment you are done with it, using zmq_msg_close[3].
+* Don't close sockets.  If you are opening and closing a lot of sockets, redesign your application.
+* When you exit the program, call zmq_term[3].  This destroys the context and all sockets associated with it.
+
+In 0MQ/2.0.x and earlier, calling zmq_close[3], or zmq_term[3], or exiting the main program too hastily will cause messages you //think// you just sent to disappear.  It's a bug in 0MQ that's fixed in version 2.1 and later.
+
+So all the examples that exit while there is still data in flight do this:
+
+[[code]]
+sleep (1);
+[[/code]]
+
+Which is a quick and dirty way around a problem that there's no other solution for in 0MQ/2.0.x.
 
 +++ Why We Needed 0MQ
 
