@@ -410,6 +410,104 @@ Let's look at some aspects of this code in more detail:
           Figure # - Fair queuing
 [[/code]]
 
++++ Programming with 0MQ
+
+Having seen some examples, you're eager to start using 0MQ in some apps.  Before you start that, take a deep breath, chillax, and reflect on some basic advice that will save you stress and confusion.
+
+* Learn 0MQ step by step.  It's just one simple API but it hides a world of possibilities.  Take the possibilities slowly, master each one.
+* Write nice code.  Ugly code hides problems and makes it hard for others to help you.  You might get used to meaningless variable names, but people reading your code won't.  Use names that are real words, that say something other than "I'm too careless to tell you what this variable is really for".  Use consistent indentation, clean layout.  Write nice code and your world will be more comfortable.
+* Test what you make as you make it.  When your program doesn't work, you should know what five lines are to blame.  This is especially true when you do 0MQ magic, which just //won't// work the first times you try it.
+* When you find that things don't work as expected, break your code into pieces, test each one, see which one is not working.  0MQ lets you make essentially modular code, use that to your advantage.
+* Make abstractions (classes, methods, whatever) as you need them.  If you copy/paste a lot of code you're going to copy/paste errors too.
+
+To illustrate, here is a fragment of code someone asked me to help fix:
+
+[[code]]
+static char *topic_str = "msg.x|";
+
+void* pub_worker(void* arg){
+    void *ctx = arg;
+    assert(ctx);
+
+    void *qskt = zmq_socket(ctx, ZMQ_REP);
+    assert(qskt);
+
+    int rc = zmq_connect(qskt, "inproc://querys");
+    assert(rc == 0);
+
+    void *pubskt = zmq_socket(ctx, ZMQ_PUB);
+    assert(pubskt);
+
+    rc = zmq_bind(pubskt, "inproc://publish");
+    assert(rc == 0);
+
+    uint8_t cmd;
+    uint32_t nb;
+    zmq_msg_t topic_msg, cmd_msg, nb_msg, resp_msg;
+
+    zmq_msg_init_data(&topic_msg, topic_str, strlen(topic_str) , NULL, NULL);
+
+    fprintf(stdout,"WORKER: ready to recieve messages\n");
+    while (1){
+    zmq_send(pubskt, &topic_msg, ZMQ_SNDMORE);
+
+    zmq_msg_init(&cmd_msg);
+    zmq_recv(qskt, &cmd_msg, 0);
+    memcpy(&cmd, zmq_msg_data(&cmd_msg), sizeof(uint8_t));
+    zmq_send(pubskt, &cmd_msg, ZMQ_SNDMORE);
+    zmq_msg_close(&cmd_msg);
+
+    fprintf(stdout, "recieved cmd %u\n", cmd);
+
+    zmq_msg_init(&nb_msg);
+    zmq_recv(qskt, &nb_msg, 0);
+    memcpy(&nb, zmq_msg_data(&nb_msg), sizeof(uint32_t));
+    zmq_send(pubskt, &nb_msg, 0);
+    zmq_msg_close(&nb_msg);
+
+    fprintf(stdout, "recieved nb %u\n", nb);
+
+    zmq_msg_init_size(&resp_msg, sizeof(uint8_t));
+    memset(zmq_msg_data(&resp_msg), 0, sizeof(uint8_t));
+    zmq_send(qskt, &resp_msg, 0);
+    zmq_msg_close(&resp_msg);
+
+    }
+
+    return NULL;
+}
+[[/code]]
+
+This is what I rewrote it to, as part of finding the bug:
+
+[[code]]
+static void *
+worker_thread (void *arg) {
+    void *context = arg;
+    void *worker = zmq_socket (context, ZMQ_REP);
+    assert (worker);
+    assert (zmq_connect (worker, "ipc://worker") == 0);
+
+    void *broadcast = zmq_socket (context, ZMQ_PUB);
+    assert (broadcast);
+    assert (zmq_bind (broadcast, "ipc://publish") == 0);
+
+    while (1) {
+        char *part1 = s_recv (worker);
+        char *part2 = s_recv (worker);
+        printf ("Worker got [%s][%s]\n", part1, part2);
+        s_sendmore (broadcast, "msg");
+        s_sendmore (broadcast, part1);
+        s_send     (broadcast, part2);
+        free (part1);
+        free (part2);
+
+        s_send (worker, "OK");
+    }
+    return NULL;
+}
+[[/code]]
+
 +++ Making a Clean Exit
 
 Classy programmers share the same motto as classy hitmen: always clean up after you.  When you use 0MQ in a language like Python, stuff gets automatically freed for you.  But when using C you must carefully free objects when you're finished with them, or you get memory leaks, unstable applications, and generally bad karma.
