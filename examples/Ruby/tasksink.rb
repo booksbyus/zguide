@@ -1,13 +1,29 @@
-No-one has translated the tasksink example into Ruby yet.  Be the first to create
-tasksink in Ruby and get one free Internet!  If you're the author of the Ruby
-binding, this is a great way to get people to use 0MQ in Ruby.
+#
+# Task sink in C
+# Binds PULL socket to tcp://localhost:5558
+# Collects results from workers via that socket
+#
 
-To submit a new translation email it to 1000 4 20 24 25 29 30 44 46 107 109 114 121 1000EMAIL).  Please:
+require 'rubygems'
+require 'ffi-rzmq'
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+# Prepare our context and socket
+context = ZMQ::Context.new(1)
+receiver = context.socket(ZMQ::PULL)
+receiver.bind("tcp://*:5558")
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+# Wait for start of batch
+receiver.recv_string
+tstart = Time.now
+
+# Process 100 confirmations
+100.times do |task_nbr|
+  receiver.recv_string
+  $stdout << ((task_nbr % 10 == 0) ? ':' : '.')
+  $stdout.flush
+end
+
+# Calculate and report duration of batch
+tend = Time.now
+total_msec = (tend-tstart) * 1000
+puts "Total elapsed time: #{total_msec} msec"

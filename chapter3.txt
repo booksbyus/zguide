@@ -1,4 +1,6 @@
-++ Chapter 3 - Advanced Stuff
+.output chapter3.wd
+.set SELF=docs:user-guide-3
+++ Chapter Three - Advanced Stuff
 
 In Chapter Two we worked through the basics of using 0MQ by developing a series of small applications, each time exploring new aspects of 0MQ.  We'll continue this approach in this chapter, as we explore advanced aspects of 0MQ.
 
@@ -75,7 +77,7 @@ However, getting under the hood and playing with request-reply envelopes is prof
 
 If you leave the brown envelope alone, and then pass that message to another XREP socket (e.g. by sending to an XREQ connected to an XREP), the second XREP socket will in turn stick another brown envelope on it, and scribble the name of that XREQ on it.
 
-The whole point of this is that each XREP knows how to send replies back to the right place.  All you need to do, in your application, is respect the brown envelopes.  Now the REP socket makes sense.  It carefully slices open the brown envelopes, one by one, keeps them safely aside, and gives you the original message.  When you send the reply, it re-wraps the reply in the brown paper envelopes, so that it can hand that back to the XREP sockets down the chain.
+The whole point of this is that each XREP knows how to send replies back to the right place.  All you need to do, in your application, is respect the brown envelopes.  Now the REP socket makes sense.  It carefully slices open the brown envelopes, one by one, keeps them safely aside, and gives you (the application code that owns the REP socket) the original message.  When you send the reply, it re-wraps the reply in the brown paper envelopes, so it can hand the resulting brown package back to the XREP sockets down the chain.
 
 Which lets you insert XREP-XREQ devices into a request-reply pattern like this:
 
@@ -174,9 +176,9 @@ However if you set the identity explicitly on the REQ socket, it tells the XREP 
 
 [[code type="textdiagram"]]
         +-----------+
+        |           |       zmq_setsockopt (socket,
+        |   Client  |           ZMQ_IDENTITY, "Hello", 5);
         |           |
-        |   Client  |       zmq_setsockopt (socket, ZMQ_IDENTITY,
-        |           |                       "Hello", 5);
         +-----------+       +---------+
         |    REQ    |       |  Data   |     Client sends this
         \-----------/       +---------+
@@ -195,7 +197,7 @@ However if you set the identity explicitly on the REQ socket, it tells the XREP 
                    Figure # - XREP uses identity when set
 [[/code]]
 
-**You must set the identity before connecting the socket.**  Let's observe the above two cases in practice.  This program dumps the contents of the message parts that an XREP socket receives from two REP sockets, one not using identities, and one using an identity 'Hello':
+**If you set an identity you must do this before connecting the socket.**  Let's observe the above two cases in practice.  This program dumps the contents of the message parts that an XREP socket receives from two REP sockets, one not using identities, and one using an identity 'Hello':
 
 [[code type="C" title="Identity check" name="identity"]]
 [[/code]]
@@ -219,7 +221,7 @@ Here is what the dump function prints:
 
 +++ Durable Subscribers
 
-Identities work on all socket types.  On a SUB socket, setting an identity on a socket creates a durable subscriber.  This is a subscriber that exists even if the program handling it has gone away for a while.
+Identities work on all socket types.  Setting an identity on a SUB socket creates a durable subscriber.  This is a subscriber that exists even if the program handling it has gone away for a while.
 
 This is both wonderful and terrible at the same time.  It's wonderful because it means updates can wait for you in a queue somewhere, until you connect and collect them.  It's terrible because that's a classic way of killing publishers: queues that grow and grow and then eat all available memory.
 
@@ -258,7 +260,9 @@ END
 
 Just to see the difference, comment out the line in the subscriber that sets the socket identity, and try again.  You will see that it loses messages.  Setting an identity turns a transient subscriber into a durable subscriber.  You would in practice want to choose identities carefully, perhaps using a UUID, since using the same identity for two clients does not do nice things (it provokes an assertion failure in xrep.cpp:60).
 
-So when we set a socket identity, the server holds onto messages until it can deliver them to the subscriber.  This will rapidly kill the server in high-volume scenarios.  The way to do this properly is tell the server "only keep so many messages for me", which we do by setting the HWM on the //publisher// socket.
+So when we set a socket identity, the server holds onto messages until it can deliver them to the subscriber.  This will rapidly kill the server in high-volume scenarios.  The way to do this properly is tell the server "only keep so many messages for me", which we do by setting the high-water mark (HWM) on the //publisher// socket.
+
+Incidentally, publishers will also queue messages for subscribers that are connected over TCP, and that are just a little slow in reading them.  To protect against the "slow consumer" problem it's wise to //always// set a high-water mark on a PUB socket that's used in anger.
 
 Let's test this by setting the publisher HWM to 2 messages, before we start publishing to the socket:
 
@@ -311,12 +315,16 @@ So XREP is really a fully controllable router.  Let's look at this magic in deta
 
 For readability, and because we're going to go off-road into some rough terrain now, let's rename these four socket types just for this section of the text:
 
-* REQ is a MAMA socket, making insistent demands to anyone who will listen.
-* REP is a PAPA socket, patiently answering Mama's demands one by one.
+* REQ is a MAMA socket, doesn't listen but always expects an answer.
+* REP is a PAPA socket, always answers, but never starts a conversation.
 * XREQ is a DEALER socket, shuffling messages to and fro.
 * XREP is a ROUTER socket, able to route messages to specific peers.
 
-While we usually think of request-reply as a to-and-fro pattern, in fact it can be fully asynchronous.  All we need to know is the address of the peer we want to talk to, and then we can then send it messages asynchronously, via a router.  The router is the one and only 0MQ socket type capable of being told "send this message to X" where X is the address of a connected peer.
+The thing about Mama sockets is, as we all learned as kids, you can't speak until spoken to.  Mamas do not have simple open-mindedness of papas, nor the ambiguous "sure, whatever" shrugged-shoulder aloofness of a dealer.  So to speak to a mama socket, you have to get the mama socket to talk to you first.  The good part is mamas don't care if you reply now, or much later.  Just bring a good sob story and a bag of laundry.
+
+Papa sockets on the other hand are strong and silent, and pedantic.  They do just one thing, which is to give you an answer to whatever you ask, perfectly framed and precise.  Don't expect a papa socket to be chatty, or to pass a message on to someone else, this is just not going to happen.
+
+While we usually think of request-reply as a to-and-fro pattern, in fact it can be fully asynchronous, as long as we understand that any mamas or papas will be at the end of a chain, never in the middle of it, and always synchronous.  All we need to know is the address of the peer we want to talk to, and then we can then send it messages asynchronously, via a router.  The router is the one and only 0MQ socket type capable of being told "send this message to X" where X is the address of a connected peer.
 
 These are the ways we can know the address to send a message to:
 
@@ -403,9 +411,7 @@ Dealers look a bit like PULL sockets here and in fact they work exactly as PUSH 
 
 ++++ Router-to-Mama
 
-The problem with Mama sockets is, as we all learned as kids, you can't speak until spoken to.  Mamas do not have simple open-mindedness of papas, nor the ambiguous "sure, whatever" shrugged-shoulder aloofness of a dealer.
-
-So to route to a mama socket, you have to get the mama socket to talk to you first.  The good part is mamas don't care if you reply now, or much later.  Just bring a good sob story and a bag of laundry.
+Like we said, Mamas don't listen to you, and if you try to speak out of turn they'll ignore you.  You have to wait for them to say something, //then// you can give a sarcastic answer.  This is very useful for routing because it means we can keep a bunch of mamas waiting for answers.  In effect, mamas tell us when they're ready.
 
 You can connect one router to many mamas, and distribute messages as you would to dealers.  Mamas will usually want to reply, but they will let you have the last word.  However it's one thing at a time:
 
@@ -489,7 +495,7 @@ To route to a mama, we must create a mama-friendly envelope like this:
 
 ++++ Router-to-Papa
 
-Papa sockets are strong and silent, pedantic.  They can do just one thing, which is to give you an answer to whatever you ask, perfectly framed and precise.  Don't ask a papa socket to pass a message on to someone else, it'll be disasterous.
+Papas are, if we care about them at all, only there to answer questions.  And to pay the bills, fix the car when mama drives it into the garage wall, put up shelves, and walk the dog when it's raining.  But apart from that, papas are only there to answer questions.
 
 In a classic request-reply pattern a router wouldn't talk to a papa socket at all, but rather would get a dealer to do the job for it.  That's what dealers are for: to pass questions onto random papas and come back with their answers.  Routers are generally more comfortable talking to mamas.  OK, dear reader, you may stop the psychoanalysis.  These are analogies, not life stories.
 
@@ -587,7 +593,7 @@ To route to a papa, we must create a papa-friendly envelope like this:
        Figure # - Routing envelope for papa
 [[/code]]
 
-+++ Router-to-Router
+++++ Router-to-Router
 
 Routers talking to routers is fairly hard to grok.  Let's skip the topic for now and come back to it later, when we have a concrete use case.
 
@@ -833,4 +839,28 @@ how to map names?
 
 lrudevice.c
     - imitates a queue device except...
+
+
+
+
++++ Zero Copy
+
+We teased you in Chapter One, when you were still a 0MQ newbie, about zero-copy.  If you survived this far, you are probabably ready to use zero-copy.  However, remember that there are many roads to Hell, and premature optimization is not the most enjoyable nor profitable one, by far.
+
+0MQ's message API lets you can send and receive messages directly from and to application buffers without copying data.  Given that 0MQ sends messages in the background, zero-copy needs some extra sauce.
+
+To do zero-copy you use zmq_msg_init_data[3] to create a message that refers to a block of data already allocated on the heap with malloc(), and then you pass that to zmq_send[3].  When you create the message you also pass a function that 0MQ will call to free the block of data, when it has finished sending the message.  This is the simplest example, assuming 'buffer' is a block of 1000 bytes allocated on the heap:
+
+[[code type="C"]]
+void my_free (void *data, void *hint)
+{
+    free (data);
+}
+//  Send message from buffer, which we allocate and 0MQ will free for us
+zmq_msg_t message;
+zmq_msg_init_data (&message, buffer, 1000, my_free, NULL);
+zmq_send (socket, &message, 0);
+[[/code]]
+
+I'm sure there is also a zero-copy on receive but honestly, I can't find it.  Let's assume the pixies take care of this.
 

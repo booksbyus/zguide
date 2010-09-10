@@ -1,3 +1,5 @@
+.output chapter2.wd
+.set SELF=docs:user-guide-2
 ++ Chapter Two - Intermediate Stuff
 
 In Chapter One we took 0MQ for a drive, with some basic examples of the main 0MQ patterns: request-reply, publish-subscribe, and pipeline.  In this chapter we're going to get our hands dirty and start to learn how to use these tools in real programs.
@@ -21,7 +23,7 @@ We'll cover:
 
 The Ø in 0MQ is all about tradeoffs. On the one hand this strange name lowers 0MQ's visibility on Google and Twitter.  On the other hand it annoys the heck out of some Danish folk who write us things like "ØMG røtfl", and "//Ø is not a funny looking zero!//" and "//Rødgrød med Fløde!//", which is apparently an insult that means "may your neighbours be the direct descendents of Grendel!"  Seems like a fair trade.
 
-Originally the zero in 0MQ was meant as "zero broker" and (as close to) "zero latency" (as possible).  In the meantime it has come to cover different goals: zero-copy, zero administration, zero cost, zero waste.  More generally, "zero" refers to the culture of minimalism that permeates the project.  We add power by removing complexity rather than exposing new functionality.
+Originally the zero in 0MQ was meant as "zero broker" and (as close to) "zero latency" (as possible).  In the meantime it has come to cover different goals: zero administration, zero cost, zero waste.  More generally, "zero" refers to the culture of minimalism that permeates the project.  We add power by removing complexity rather than exposing new functionality.
 
 +++ The Socket API
 
@@ -53,7 +55,7 @@ zmq_connect (mousetrap, "tcp://192.168.55.221:5001");
 
 //  Wait for juicy mouse to arrive
 zmq_msg_t mouse;
-mouse = zmq_msg_init (&mouse);
+zmq_msg_init (&mouse);
 zmq_recv (mousetrap, &mouse, 0);
 //  Destroy the mouse
 zmq_msg_close (&mouse);
@@ -219,62 +221,65 @@ These are the socket combinations that are valid for a connect-bind pair (either
 
 Any other combination will produce undocumented and unreliable results and future versions of 0MQ will probably return errors if you try them.  You can and will of course bridge other socket types //via code//, i.e. read from one socket type and write to another.
 
-+++ Messages and Zero-copy
++++ Working with Messages
 
 On the wire, 0MQ messages are blobs of any size from zero upwards, fitting in memory.  You do your own serialization using Google Protocol Buffers, XDR, JSON, or whatever else your applications need to speak.  It's wise to choose a data representation that is portable and fast, but you can make your own decisions about trade-offs.
 
-In memory, 0MQ messages are zmq_msg_t structures (or classes depending on your language). This structure has a pointer to the data, and does reference counts, and provides a hook for 0MQ to free the data when it's not needed any longer.
-
-In high-performance applications (hundreds of thousands of messages per second), copying data can make things go slower.  0MQ's message API is therefore focused on zero-copy.  This means you can send and receive messages directly from and to application buffers without copying data.  Given that 0MQ sends messages in the background, zero-copy needs some extra sauce.
-
-I'll say right away that 0MQ's message API is more complex than it could be.  We don't need zero-copy all the time (or even most of the time) but we pay for it by not being able to just send blocks of data directly to and from sockets.  0MQ/3.0 will probably fix this.
-
-Anyhow since we're describing 0MQ/2.x, here are the basic ground rules for using 0MQ messages, first without doing zero copy:
+In memory, 0MQ messages are zmq_msg_t structures (or classes depending on your language).  Here are the basic ground rules for using 0MQ messages in C:
 
 * You create and pass around zmq_msg_t objects, not blocks of data.
-
 * To read a message you use zmq_msg_init[3] to create an empty message, and then you pass that to zmq_recv[3].
-
-* To write a message from new data, you use zmq_msg_init_size[3] to create a message and at the same time allocate a block of data of some size.  You then fill that data, and pass the message to zmq_send[3].  This is the simplest, but not the fastest method.
-
+* To write a message from new data, you use zmq_msg_init_size[3] to create a message and at the same time allocate a block of data of some size.  You then fill that data using memcpy, and pass the message to zmq_send[3].
 * To release (not destroy) a message you call zmq_msg_close[3].  This drops a reference, and eventually 0MQ will destroy the message.
+* To access the message content you use zmq_msg_data[3].  To know how much data the message contains, use zmq_msg_size[3].
+* Do not use zmq_msg_move[3], zmq_msg_copy[3], or zmq_msg_init_data[3] unless you read the man pages and know precisely why you need these.
 
-* To access the message content you use zmq_msg_data[3], zmq_msg_size[3], zmq_msg_copy[3] and zmq_msg_move[3].
+Here is a typical chunk of code working with messages, which should be familiar if you have been paying attention.  This is from the zhelpers.h file we use in all the examples:
+
+[[code]]
+//  Receive 0MQ string from socket and convert into C string
+static char *
+s_recv (void *socket) {
+    zmq_msg_t message;
+    zmq_msg_init (&message);
+    zmq_recv (socket, &message, 0);
+    int size = zmq_msg_size (&message);
+    char *string = malloc (size + 1);
+    memcpy (string, zmq_msg_data (&message), size);
+    zmq_msg_close (&message);
+    string [size] = 0;
+    return (string);
+}
+
+//  Convert C string to 0MQ string and send to socket
+static int
+s_send (void *socket, char *string) {
+    int rc;
+    zmq_msg_t message;
+    zmq_msg_init_size (&message, strlen (string));
+    memcpy (zmq_msg_data (&message), string, strlen (string));
+    rc = zmq_send (socket, &message, 0);
+    assert (!rc);
+    zmq_msg_close (&message);
+    return (rc);
+}
+[[/code]]
+
+You can easily extend this code to send and receive blobs of arbitrary length.
 
 **Note than when you have passed a message to zmq_send[3], 0MQ will clear the message, i.e. set the data to empty.  You cannot send the same message twice, and you cannot access the message data after sending it.**
 
-To do zero copy you use zmq_msg_init_data[3] to create a message that refers to a block of data already allocated on the heap with malloc(), and then you pass that to zmq_send[3].  When you create the message you also pass a function that 0MQ will call to free the block of data, when it has finished sending the message.  This is the simplest example, assuming 'buffer' is a block of 1000 bytes allocated on the heap:
-
-[[code type="C"]]
-void my_free (void *data, void *hint)
-{
-    free (data);
-}
-//  Send message from buffer, which we allocate and 0MQ will free for us
-zmq_msg_t message;
-zmq_msg_init_data (&message, buffer, 1000, my_free, NULL);
-zmq_send (socket, &message, 0);
-[[/code]]
-
-0MQ also supports //multipart// messages, which let you handle a list of blobs as a single message.  This is really useful and we'll look at that a little later.
+0MQ also supports //multipart// messages, which let you handle a list of blobs as a single message.  This is widely used in real applications and we'll look at that later in this chapter and in detail in Chapter 3.
 
 Some other things that are worth knowing about messages:
 
 * 0MQ sends and receives them atomically, i.e. you get a whole message, or you don't get it at all.
 * 0MQ does not send a message right away but at some indeterminate later time.
 * You can send zero-length messages, e.g. for sending a signal from one thread to another.
-* A message must fit in memory.  If you want to send files of arbitrary sizes, you should break them into pieces and send each piece as a message.
+* A message must fit in memory.  If you want to send files of arbitrary sizes, you should break them into pieces and send each piece as a separate message.
 * You must call zmq_msg_close[3] when finished with a message, in languages that don't automatically destroy objects when a scope closes.
 
-When you start using 0MQ, a classic error is that messages arrive but are garbled.  It's a beginner's mistake: the sending thread is freeing or reusing the message data before 0MQ has finished sending it, so 0MQ sends garbage.  If you're using zmq_msg_init_data[3], realize that the data is not copied.  if your thread does not own the data, and therefore it cannot pass a free function as in the example above, then you must do this:
-
-[[code type="C"]]
-//  Send a message from buffer that we don't own
-zmq_msg_t message;
-zmq_msg_init_size (&message, 1000);
-mempcy (zmq_msg_data (&message), buffer, 1000);
-zmq_send (socket, &message, 0);
-[[/code]]
+And to be necessarily repetitive, do not use zmq_msg_init_data[3], yet.  This is a zero-copy method and guaranteed to create trouble for you.  There are far more important things to learn about 0MQ before you start to worry about shaving off microseconds.
 
 +++ Handling Multiple Sockets
 

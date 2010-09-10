@@ -1,13 +1,30 @@
-No-one has translated the wuclient example into Ruby yet.  Be the first to create
-wuclient in Ruby and get one free Internet!  If you're the author of the Ruby
-binding, this is a great way to get people to use 0MQ in Ruby.
+#
+# Weather update client in Ruby
+# Connects SUB socket to tcp://localhost:5556
+# Collects weather updates and finds avg temp in zipcode
+#
 
-To submit a new translation email it to 1000 4 20 24 25 29 30 44 46 107 109 114 121 1000EMAIL).  Please:
+require 'rubygems'
+require 'ffi-rzmq'
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+COUNT = 100
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+context = ZMQ::Context.new(1)
+
+# Socket to talk to server
+puts "Collecting updates from weather server..."
+subscriber = context.socket(ZMQ::SUB)
+subscriber.connect("tcp://localhost:5556")
+
+# Subscribe to zipcode, default is NYC, 10001
+filter = ARGV.size > 0 ? argv[0] : "10001 "
+subscriber.setsockopt(ZMQ::SUBSCRIBE, filter)
+
+# Process 100 updates
+total_temp = 0
+1.upto(COUNT) do |update_nbr|
+  zipcode, temperature, relhumidity = subscriber.recv_string.split.map(&:to_i)
+  total_temp += temperature
+end
+
+puts "Average temperature for zipcode '#{filter}' was #{total_temp / COUNT}F"

@@ -1,13 +1,31 @@
+clean exits...
+remove all zerocopy references till later
+explain how to carefully develop 0MQ code
+- use clearer style to help others read your code
+- develop gradually and test repeatedly, each time you add something new
+- do not write more code than you can test in one small step
+explain how to start device threads
+- create sockets in threads, not callers
+
+- "I'm not getting messages!?"
+ - problem solver flowchart
+    - multithreade?
+    - problem happens every time?
+    - transport?
+    - socket types?
+    - list all the causes, 3 questions to get to them...
+
+
 .-  Instructions for z2w
 .set GIT=http://github.com/imatix/zguide
 .set BRANCH=master
 .set SELF=docs:user-guide
 .set EMAIL=zeromq-dev@lists.zeromq.org
-.-
-The Guide is written by Pieter Hintjens <ph@imatix.com>, with help from Martin Sustrik, Gonzalo Diethelm, Zed Shaw, CAF, Guido Goldstein, Oliver Smith, Pierre Rouleau, Peter Alexander, and others.  We cover 0MQ version 2.0.x.  Please use the  [$(GIT)/issues issue tracker] for all comments and errata.  The diagrams are built using ditaa.  This version was published on &date("ddd d mmmm, yyyy") at &time().
+.-  This gets repeated in each chapter output
+.prelude prelude.txt
 
-[[include :csi:include:css-brackets]]
-
+.output chapter1.wd
+.set SELF=docs:user-guide-1
 ++ Chapter One - Basic Stuff
 
 +++ Fixing the World
@@ -176,7 +194,7 @@ s_recv (void *socket) {
 
 This makes a very handy helper function and in the spirit of making things we can reuse profitably, let's write a similar 's_send' function that sends strings in the correct 0MQ format, and package this into a header file we can reuse.
 
-The result is {{zhelper.h}}, which lets us write sweeter and shorter C code, and looks more or less like this:
+The result is {{zhelper.h}}, which lets us write sweeter and shorter C code, and looks more or less like this (the full code is [$(GIT)/blob/master/examples/C/zhelpers.h online here):
 
 [[code]]
 #ifndef __ZHELPERS_H_INCLUDED__
@@ -282,9 +300,11 @@ While there are ways to synchronize publishers and subscribers, which we'll look
 
 So the client subscribes to its chosen zipcode and collects a thousand updates for that zipcode.  That means about ten million updates from the server, if zipcodes are randomly distributed.  You can start the client, and then the server, and the client will keep working. You can stop and restart the server as often as you like, and the client will keep working.  When the client has collected its thousand updates, it calculates the average, prints it, and exits.
 
-A subscriber can in fact connect to more than one publisher, using one 'connect' call each time.  Data will then arrive and be interleaved so that no single publisher drowns out the others.
+Some points about the publish-subscribe pattern:
 
-If a publisher has no connected subscribers, then it will simply drop all messages.
+* A subscriber can in fact connect to more than one publisher, using one 'connect' call each time.  Data will then arrive and be interleaved so that no single publisher drowns out the others.
+* If a publisher has no connected subscribers, then it will simply drop all messages.
+* If you're using TCP, and a subscriber is slow, messages will queue up on the publisher.  We'll look at how to protect publishers against this, using the "high water mark" later.
 
 This is how long it takes to receive and filter 10M messages on my box, which is an Intel 4 core Q8300, fast but nothing special:
 

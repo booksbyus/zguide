@@ -1,13 +1,35 @@
-No-one has translated the taskwork example into Ruby yet.  Be the first to create
-taskwork in Ruby and get one free Internet!  If you're the author of the Ruby
-binding, this is a great way to get people to use 0MQ in Ruby.
+#
+#   Task worker in Ruby
+#   Connects PULL socket to tcp://localhost:5557
+#   Collects workloads from ventilator via that socket
+#   Connects PUSH socket to tcp://localhost:5558
+#   Sends results to sink via that socket
+#
 
-To submit a new translation email it to 1000 4 20 24 25 29 30 44 46 107 109 114 121 1000EMAIL).  Please:
+require 'rubygems'
+require 'ffi-rzmq'
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+context = ZMQ::Context.new(1)
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+# Socket to receive messages on
+receiver = context.socket(ZMQ::PULL)
+receiver.connect("tcp://localhost:5557")
+
+# Socket to send messages to
+sender = context.socket(ZMQ::PUSH)
+sender.connect("tcp://localhost:5558")
+
+# Process tasks forever
+while true
+  msec = receiver.recv_string
+
+  # Simple progress indicator for the viewer
+  $stdout << "#{msec}."
+  $stdout.flush
+
+  # Do the work
+  sleep(msec.to_f / 1000)
+
+  # Send results to sink
+  sender.send_string("")
+end

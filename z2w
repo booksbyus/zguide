@@ -6,7 +6,8 @@
 #
 #   Usage: z2w < docfile
 #
-#   Creates Wikidot file in wdtemp.txt and images in images/.
+#   Creates Wikidot file as specified by .output and images in images/.
+#
 #   By Pieter Hintjens, free for remixing without conditions.
 #   Images are stored in the github repository at
 #   http://github.com/imatix/0MQGuide.
@@ -48,7 +49,7 @@ foreach (@languages) {
 }
 
 die "Can't create wdtemp.txt: $!"
-    unless open (WDTEMP, ">wdtemp.txt");
+    unless open (OUTPUT, ">wdtemp.txt");
 die "Can't create images.html: $!"
     unless open (IMAGES, ">images.html");
 
@@ -65,9 +66,26 @@ while (<>) {
         elsif (/^\.\-/) {
             #   Comment, ignore
         }
-        elsif (/^.end/) {
+        elsif (/^\.end/) {
             writeln ("(More coming soon...)");
             $EOD = 1;       #   Stop output here
+        }
+        elsif (/^\.output\s+(\w.*)/) {
+            close (OUTPUT);
+            die "Can't create $1: $!"
+                unless open (OUTPUT, ">$1");
+            if ($prelude) {
+                die "Can't open $prelude: $!"
+                    unless open (PRELUDE, $prelude);
+                while (<PRELUDE>) {
+                    chop;
+                    writeln ($_)
+                }
+                close (PRELUDE);
+            }
+        }
+        elsif (/^\.prelude\s+(\w.*)/) {
+            $prelude = $1;
         }
         else {
             print "Illegal directive $_ at line $.\n";
@@ -98,7 +116,7 @@ while (<>) {
         $filename = get_filename ($name, $type);
         die "Can't open $filename: $!"
             unless open (SOURCE, $filename);
-        print WDTEMP $_
+        print OUTPUT $_
             while <SOURCE>;
         close (SOURCE);
         writeln ('[[/code]]');
@@ -156,6 +174,7 @@ EOF
             chop;
             last if /\[\[\/code\]\]/;
             s/#/$image/;
+            s/\-/ /;
             print IMAGES "$_\n";
         }
         print IMAGES "</pre>\n";
@@ -171,24 +190,24 @@ EOF
 }
 print IMAGES "</html>\n";
 close (IMAGES);
-close (WDTEMP);
+close (OUTPUT);
 
 system ("rm -f images/*");
 system ("java -jar ditaa0_9.jar images.html -o -h -E output.html");
 #   Need to trim twice for reasons I don't care to explore
-system ("mogrify -trim images/*.png");
-system ("mogrify -trim images/*.png");
-system ("rm output.html images.html");
+#system ("mogrify -trim images/*.png");
+#system ("mogrify -trim images/*.png");
+#system ("rm output.html images.html");
 
 exit (0);
 
 
-#   Writes $_ to WDTEMP after expanding all symbols
+#   Writes $_ to OUTPUT after expanding all symbols
 
 sub writeln {
     local ($_) = @_;
     $_ = expand_symbols ($_);
-    print WDTEMP "$_\n" unless $EOD;
+    print OUTPUT "$_\n" unless $EOD;
 }
 
 sub get_filename {
