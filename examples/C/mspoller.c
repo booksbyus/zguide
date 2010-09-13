@@ -25,7 +25,7 @@ int main (int argc, char *argv[])
     //  Process messages from both sockets
     while (1) {
         zmq_msg_t message;
-        zmq_poll (&items [0], 2, -1);
+        zmq_poll (items, 2, -1);
         if (items [0].revents & ZMQ_POLLIN) {
             zmq_msg_init (&message);
             zmq_recv (receiver, &message, 0);

@@ -90,9 +90,9 @@ int main (int argc, char *argv[])
             { frontend, 0, ZMQ_POLLIN, 0 }
         };
         if (available_workers)
-            zmq_poll (&items [0], 2, -1);
+            zmq_poll (items, 2, -1);
         else
-            zmq_poll (&items [0], 1, -1);
+            zmq_poll (items, 1, -1);
 
         //  Handle worker activity on backend
         if (items [0].revents & ZMQ_POLLIN) {

@@ -22,7 +22,7 @@ int main (int argc, char *argv[])
         zmq_msg_t message;
         int64_t more;           //  Multipart detection
 
-        zmq_poll (&items [0], 2, -1);
+        zmq_poll (items, 2, -1);
         if (items [0].revents & ZMQ_POLLIN) {
             while (1) {
                 //  Process all parts of the message
