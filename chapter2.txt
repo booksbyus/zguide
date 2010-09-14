@@ -422,7 +422,7 @@ Here is the modified sink application.  When it's finished collecting results it
 
 +++ Multipart Messages
 
-0MQ lets us compose a message out of several frames, giving us a 'multipart message'.  Realistic applications use multipart messages heavily, especially to make "envelopes".  We'll look at them in Chapter Three.  What we'll learn now is simply how to safely (but blindly) read and write multipart messages because otherwise the devices we write won't work with applications that use multipart messages.
+0MQ lets us compose a message out of several frames, giving us a 'multipart message'.  Realistic applications use multipart messages heavily, especially to make "envelopes".  We'll look at them in Chapters Three and Four.  What we'll learn now is simply how to safely (but blindly) read and write multipart messages because otherwise the devices we write won't work with applications that use multipart messages.
 
 Here is how we send the frames in a multipart message (we receive each frame into a message object):
 
@@ -491,7 +491,7 @@ When we use 0MQ we usually start building our applications as a set of nodes on 
 Figure # - Small scale 0MQ application
 [[/code]]
 
-And then we stretch the application across a wider network, placing devices in specific places and scaling up the number of nodes:
+And then we extend the application across a wider network, placing devices in specific places and scaling up the number of nodes:
 
 [[code type="textdiagram"]]
                 +--------+
@@ -544,7 +544,7 @@ Devices are a confusing concept to the new 0MQ user, and the best way as always 
 
 ++++ A Publish-Subscribe Proxy Server
 
-It is a common requirement to stretch a publish-subscribe architecture over more than one network segment or transport.  Perhaps there are a group of subscribers sitting at a remote location.  Perhaps we want to publish to local subscribers via multicast, and to remote subscribers via TCP.
+It is a common requirement to extend a publish-subscribe architecture over more than one network segment or transport.  Perhaps there are a group of subscribers sitting at a remote location.  Perhaps we want to publish to local subscribers via multicast, and to remote subscribers via TCP.
 
 We're going to write a simple proxy server that sits in between a publisher and a set of subscribers, bridging two networks.  This is perhaps the simplest case of a useful device.  The device has two sockets, a frontend facing subscribers on the external network and a backend facing the internal network, where the weather server is sitting.  It subscribes to the weather service on the backend socket, and republishes its data on the frontend socket:
 
@@ -649,9 +649,9 @@ When you use REQ to talk to REP you get a strictly synchronous request-reply dia
 
 But our broker has to be non-blocking.  Obviously we can use zmq_poll[3] to wait for activity on either socket, but we can't use REP and REQ.
 
-Luckily there are non-blocking versions of these two sockets, called XREQ and XREP.  These "extended request/reply" sockets let you stretch request-reply across intermediate nodes, such as our message queuing broker.
+Luckily there are non-blocking versions of these two sockets, called XREQ and XREP.  These "extended request/reply" sockets let you extend request-reply across intermediate nodes, such as our message queuing broker.
 
-When we stretch request-reply, REQ talks to XREP and XREQ talks to REP.  In between the XREQ and XREP we have to have code (like our broker) that pulls messages off the one socket and shoves them onto the other:
+When we extend request-reply, REQ talks to XREP and XREQ talks to REP.  In between the XREQ and XREP we have to have code (like our broker) that pulls messages off the one socket and shoves them onto the other:
 
 [[code type="textdiagram"]]
   +---------+   +---------+   +---------+
@@ -769,17 +769,9 @@ Which if you start a QUEUE device is exactly like plugging the main body of the 
 
 The built-in devices do proper error handling, whereas the examples we have shown don't.  Since you can configure the sockets as you need to, before starting the device, it's worth using the built-in devices when you can.
 
-++++ Patience is Power
+If you're like most 0MQ users, at this stage your mind is starting to think, "//what kind of evil stuff can I do if I plug random socket types into devices?//"  The short answer is: don't do it.  You can mix socket types but the results are going to be weird.  So stick to using XREP/XREQ for queue devices, SUB/PUB for forwarders and PULL/PUSH for streamers.
 
-If you're like most 0MQ users, at this stage your mind is starting to think, "what kind of evil stuff can I do if I plug random socket types into devices?"
-
-The short answer is: don't do it.  The longer answer is: don't do it //yet//.  You can mix socket types but the results are going to be weird.  Some socket types like REQ and REP send multipart data, whereas others do not.  Later on we'll look at exotic devices that do things like connect XREP to XREP.
-
-For now, these are the combinations you should stick to:
-
-* XREP to XREQ for queue devices.
-* SUB to PUB for forwarder devices.
-* PULL to PUSH for streamer devices.
+When you start to need other combinations, it's time to write your own devices.
 
 +++ Multithreading with 0MQ
 
@@ -791,7 +783,11 @@ By "perfect" MT programs I mean code that's easy to write and understand, that w
 
 If you've spent years learning tricks to make your MT code work at all, let alone rapidly, with locks and semaphores and critical sections, you will be disgusted when you realize it was all for nothing.  If there's one lesson we've learned from 30+ years of concurrent programming it is: //just don't share state//. It's like two drunkards trying to share a beer.  It doesn't matter if they're good buddies. Sooner or later they're going to get into a fight. And the more drunkards you add to the pavement, the more they fight each other over the beer.  The tragic majority of MT applications look like drunken bar fights.
 
-Real code that wants to scale does it like the Internet does, by sending messages and sharing nothing except a common contempt for broken programming metaphors.
+The list of weird problems that you need to fight as you write classic shared-state MT code would be hillarious if it didn't translate directly into stress and risk, as code that seems to work suddenly fails under stress.  Here is a list of "11 Likely Problems In Your Multithreaded Code" from a large firm with experience in buggy code: forgotten synchronization, incorrect granularity, read and write tearing, lock-free reordering, lock convoys, two-step dance, and priority inversion.
+
+Yeah, we also counted seven, not eleven.  That's not the point though.  The point is, do you realy want that code running the power grid or stock market to start getting two-step lock convoys at 3pm on a busy Thursday?  Who cares what the terms actually mean, this is not why we learned to program.
+
+Some widely used metaphors, despite being the basis for billion-dollar industries, are fundamentally broken, and shared state concurrency is one of them.  Code that wants to scale without limit does it like the Internet does, by sending messages and sharing nothing except a common contempt for broken programming metaphors.
 
 You do need to follow some rules to write MT code with 0MQ:
 
@@ -799,6 +795,8 @@ You do need to follow some rules to write MT code with 0MQ:
 * You MUST create a 'context' object for your process, and pass that to all threads.  The context collects 0MQ's state.  To create a connection across the inproc: transport, both server and client thread must share the same context object.
 * You MUST NOT share sockets between threads, not even when using proper exclusion mechanisms like semaphores, locks or mutexes.  0MQ will in some future make it possible to move sockets to different threads.  Right now the thread which creates a socket is the only thread that may use it.
 * If you have to work with existing drunkard code, find a way to isolate yourself from it.  Don't use mutexes, semaphores, critical sections, but use 0MQ messages.
+
+If you need to start more than one device in an application, for example, you will want to run each in their own thread.  It is easy to make the error of creating the device sockets in one thread, and then passing the sockets to the device in another thread.  This may appear to work but will fail randomly.  Remember: //You cannot use sockets except in the thread that created them.//
 
 If you follow these rules, you can quite easily split threads into separate processes, when you need to.  Application logic can sit in threads, processes, boxes: whatever your scale needs.
 
@@ -1008,6 +1006,29 @@ Received 1000000 updates
 [!-- TODO: remove this note when 0MQ/2.1 is released --]
 Note that we do {{sleep (1);}} before exiting the publisher.  This is a hack that gets around 0MQ/2.0's design, which discards messages that have not yet been sent, if you exit the program too soon.  If you are using 0MQ/2.1 you can remove this sleep statement.  There is no way in 0MQ/2.0 to properly exit the publisher without such a sleep.
 
++++ Zero Copy
+
+We teased you in Chapter One, when you were still a 0MQ newbie, about zero-copy.  If you survived this far, you are probabably ready to use zero-copy.  However, remember that there are many roads to Hell, and premature optimization is not the most enjoyable nor profitable one, by far.  In English, trying to do zero-copy properly while your architecture is not perfect is a waste of time and will make things worse, not better.
+
+0MQ's message API lets you can send and receive messages directly from and to application buffers without copying data.  Given that 0MQ sends messages in the background, zero-copy needs some extra sauce.
+
+To do zero-copy you use zmq_msg_init_data[3] to create a message that refers to a block of data already allocated on the heap with malloc(), and then you pass that to zmq_send[3].  When you create the message you also pass a function that 0MQ will call to free the block of data, when it has finished sending the message.  This is the simplest example, assuming 'buffer' is a block of 1000 bytes allocated on the heap:
+
+[[code type="C"]]
+void my_free (void *data, void *hint)
+{
+    free (data);
+}
+//  Send message from buffer, which we allocate and 0MQ will free for us
+zmq_msg_t message;
+zmq_msg_init_data (&message, buffer, 1000, my_free, NULL);
+zmq_send (socket, &message, 0);
+[[/code]]
+
+There is no way to do zero-copy on receive: 0MQ delivers you a buffer that you can store as long as you wish but it will not write data directly into application buffers.
+
+On writing, 0MQ's multipart messages work nicely together with zero-copy.  In traditional messaging you need to marshal different buffers together into one buffer that you can send.  That means copying data.  With 0MQ, you can send multiple buffers coming from different sources as individual message parts.  We send each field as a length-delimited frame.  To the application it looks like a series of send and recv calls.  But internally the multiple parts get written to the network and read back with single system calls, so it's very efficient.
+
 +++ A Bare Necessity
 
 ØMQ is like a box of pieces that plug together, the only limitation being your imagination and sobriety.
@@ -1015,3 +1036,5 @@ Note that we do {{sleep (1);}} before exiting the publisher.  This is a hack tha
 The scalable elastic architecture you get should be an eye-opener.  You might need a coffee or two first.  Don't make the mistake I made once and buy exotic German coffee labeled //Entkoffeiniert//.  That does not mean "Delicious".  Scalable elastic architectures are not a new idea - [http://en.wikipedia.org/wiki/Flow-based_programming flow-based programming] and languages like [http://www.erlang.org/ Erlang] already worked like this - but ØMQ makes it easier to use than ever before.
 
 As [http://permalink.gmane.org/gmane.network.zeromq.devel/2145 Gonzo Diethelm said], '//My gut feeling is summarized in this sentence: "if ØMQ didn't exist, it would be necessary to invent it". Meaning that I ran into ØMQ after years of brain-background processing, and it made instant sense... ØMQ simply seems to me a "bare necessity" nowadays.//'
+
+.end

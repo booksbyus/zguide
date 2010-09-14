@@ -727,6 +727,26 @@ As you start to program with 0MQ you will come across one problem more than once
                  |                 +-----------------+
                  |
                  v
+        +-----------------+        +--------------------+
+        |                 |        | With REQ, send and |
+        |  Are you using  |        | recv in a loop and |
+        |   REQ and REP   +------->| check the return   |
+        |     sockets?    | Yes    | codes.  With REP   |
+        |             {o} |        | it's recv + send.  |
+        +--------+--------+        +--------------------+
+                 | No
+                 |
+                 v
+        +-----------------+        +-----------------+
+        |                 |        |                 |
+        |  Do you check   |        | Check every 0MQ |
+        | return codes on +------->| method call. In |
+        |  all methods?   | No     | C, use asserts. |
+        |             {o} |        |                 |
+        +--------+--------+        +-----------------+
+                 | Yes
+                 |
+                 v
         +-----------------+        +-----------------+        +------------------+
         |                 |        |                 |        |                  |
         | Are you using   |        |   Do you pass   |        | Create a socket  |
@@ -746,16 +766,6 @@ As you start to program with 0MQ you will come across one problem more than once
         |             {o} |        |                 |
         +--------+--------+        +-----------------+
                  | No
-                 |
-                 v
-        +-----------------+        +-----------------+
-        |                 |        |                 |
-        |  Do you check   |        | Check every 0MQ |
-        | return codes on +------->| method call. In |
-        |  all methods?   | No     | C, use asserts. |
-        |             {o} |        |                 |
-        +--------+--------+        +-----------------+
-                 | Yes
                  |
                  v
         +-----------------+        +-----------------+        +------------------+
