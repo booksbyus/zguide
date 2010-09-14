@@ -1,13 +1,51 @@
-No-one has translated the mtserver example into Java yet.  Be the first to create
-mtserver in Java and get one free Internet!  If you're the author of the Java
-binding, this is a great way to get people to use 0MQ in Java.
+/*
+Multithreaded Hello World server in Java
 
-To submit a new translation email it to 1000 4 20 24 25 29 30 44 46 107 109 114 121 1000EMAIL).  Please:
+Naveen Chawla <naveen.chwl@gmail.com>
+*/
+import org.zeromq.ZMQ;
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+public class MultiThreadedHelloWorldServer {
+    public static void main(String[] args) {
+        //  Prepare our context and sockets
+        final ZMQ.Context context = ZMQ.context(1);
+        ZMQ.Socket clients = context.socket(ZMQ.XREP);
+        clients.bind ("tcp://*:5555");
+        ZMQ.Socket workers = context.socket(ZMQ.XREQ);
+        workers.bind ("inproc://workers");
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+        //  Launch pool of worker threads
+        for (int thread_nbr = 0; thread_nbr != 5; thread_nbr++) {
+            Thread worker_routine = new Thread(){
+                                        public void run(){
+                                            ZMQ.Socket socket = context.socket(ZMQ.REP);
+                                            socket.connect ("inproc://workers");
+
+                                            while (true) {
+                                                //  Wait for next request from client (C string)
+                                                byte[] request;
+                                                request = socket.recv (0);
+                                                System.out.println ("Received request: ["+new String(request,0,request.length-1)+"]");
+
+                                                //  Do some 'work'
+                                                try{
+                                                    Thread.sleep (1000);
+                                                }
+                                                catch (InterruptedException e){
+													e.printStackTrace();
+												}
+
+                                                //  Send reply back to client (C string)
+                                                String replyString = "World" + " ";
+                                                byte[] reply = replyString.getBytes ();
+                                                reply[reply.length-1]=0; //Sets the last byte of the reply to 0
+                                                socket.send (reply, 0);
+                                            }
+                                        }
+                                    };
+            worker_routine.start();
+        }
+        //  Connect work threads to client threads via a queue
+        ZMQ.device(ZMQ.QUEUE, clients, workers);
+    }
+}

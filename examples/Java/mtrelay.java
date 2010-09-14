@@ -1,13 +1,51 @@
-No-one has translated the mtrelay example into Java yet.  Be the first to create
-mtrelay in Java and get one free Internet!  If you're the author of the Java
-binding, this is a great way to get people to use 0MQ in Java.
+//
+//  Multithreaded relay in Java
+//
+//  Naveen Chawla <naveen.chwl@gmail.com>
+//
+import org.zeromq.ZMQ;
 
-To submit a new translation email it to 1000 4 20 24 25 29 30 44 46 107 109 114 121 1000EMAIL).  Please:
+public class MultiThreadedRelay{
+    public static void main(String[] args) {
+        final ZMQ.Context context = ZMQ.context(1);
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+        //  Bind to inproc: endpoint, then start upstream thread
+        ZMQ.Socket receiver = context.socket(ZMQ.PAIR);
+        receiver.bind("inproc://step3");
+        
+        //  Step 2 relays the signal to step 3
+        Thread step2 = 	new Thread(){
+                            public void run(){
+                                //  Bind to inproc: endpoint, then start upstream thread
+                                ZMQ.Socket receiver = context.socket(ZMQ.PAIR);
+                                receiver.bind("inproc://step2");
+                                Thread step1 = new Thread(){
+                                                   public void run(){
+                                                       //  Signal downstream to step 2
+                                                       ZMQ.Socket sender = context.socket(ZMQ.PAIR);
+                                                       sender.connect("inproc://step2");
+                                                       sender.send("".getBytes(),0);
+                                                   }
+                                               };
+				                
+                                step1.start();
+				                
+                                //  Wait for signal
+                                byte[] message;
+                                message=receiver.recv(0);
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+                                //  Signal downstream to step 3
+                                ZMQ.Socket sender = context.socket(ZMQ.PAIR);
+                                sender.connect("inproc://step3");
+                                sender.send(message,0);
+                            }
+                        };
+        step2.start();
+        
+        //  Wait for signal
+        byte[] message;
+        message = receiver.recv(0);
+
+        System.out.println ("Test successful!");
+    }
+}
