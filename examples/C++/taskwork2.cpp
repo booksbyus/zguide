@@ -2,17 +2,15 @@
 //  Task worker in C++ - design 2
 //  Adds pub-sub flow to receive and respond to kill signal
 //
-//  Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
-//
-#include <zmq.hpp>
-#include <time.h>
-#include <sstream>
-#include <iostream>
+// Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
+
+#include "zhelpers.hpp"
+
 
 int main (int argc, char *argv[])
 {
     zmq::context_t context(1);
-
+    
     //  Socket to receive messages on
     zmq::socket_t receiver(context, ZMQ_PULL);
     receiver.connect("tcp://localhost:5557");
@@ -35,14 +33,14 @@ int main (int argc, char *argv[])
     while (1) {
         zmq::message_t message;
         zmq::poll (&items [0], 2, -1);
-
+        
         if (items [0].revents & ZMQ_POLLIN) {
 			receiver.recv(&message);
 
             //  Process task
             int workload;           //  Workload in msecs
             struct timespec t;
-
+            
             std::istringstream iss(static_cast<char*>(message.data()));
             iss >> workload;
 

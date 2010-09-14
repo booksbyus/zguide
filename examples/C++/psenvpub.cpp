@@ -1,13 +1,24 @@
-No-one has translated the psenvpub example into C++ yet.  Be the first to create
-psenvpub in C++ and get one free Internet!  If you're the author of the C++
-binding, this is a great way to get people to use 0MQ in C++.
+//
+//  Pubsub envelope publisher
+//  Note that the zhelpers.h file also provides s_sendmore
+//
+// Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
 
-To submit a new translation email it to 1000 4 20 24 25 29 30 44 46 107 109 114 121 1000EMAIL).  Please:
+#include "zhelpers.hpp"
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+int main () {
+    //  Prepare our context and publisher
+    zmq::context_t context(1);
+    zmq::socket_t publisher(context, ZMQ_PUB);
+    publisher.bind("tcp://*:5563");
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+    while (1) {
+        //  Write two messages, each with an envelope and content
+        s_sendmore (publisher, "A");
+        s_send (publisher, "We don't want to see this");
+        s_sendmore (publisher, "B");
+        s_send (publisher, "We would like to see this");
+        sleep (1);
+    }
+    return 0;
+}

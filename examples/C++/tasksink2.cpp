@@ -2,12 +2,9 @@
 //  Task sink in C++ - design 2
 //  Adds pub-sub flow to send kill signal to workers
 //
-//  Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
-//
-#include <zmq.hpp>
-#include <time.h>
-#include <sys/time.h>
-#include <iostream>
+// Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
+
+#include "zhelpers.hpp"
 
 int main (int argc, char *argv[])
 {
@@ -22,9 +19,9 @@ int main (int argc, char *argv[])
     controller.bind("tcp://*:5559");
 
     //  Wait for start of batch
-    zmq::message_t message;
-	receiver.recv(&message);
-
+	std::string *string = s_recv (receiver);
+	delete (string);
+	
     //  Start our clock now
     struct timeval tstart;
     gettimeofday (&tstart, NULL);
@@ -33,8 +30,11 @@ int main (int argc, char *argv[])
     int task_nbr;
     int total_msec = 0;     //  Total calculated cost in msecs
     for (task_nbr = 0; task_nbr < 100; task_nbr++) {
-		receiver.recv(&message);
-        if ((task_nbr / 10) * 10 == task_nbr)
+    	
+		std::string *string = s_recv (receiver);
+		delete (string);
+		
+		if ((task_nbr / 10) * 10 == task_nbr)
             std::cout << ":" ;
         else
             std::cout << "." ;
@@ -52,14 +52,11 @@ int main (int argc, char *argv[])
         tdiff.tv_usec = tend.tv_usec - tstart.tv_usec;
     }
     total_msec = tdiff.tv_sec * 1000 + tdiff.tv_usec / 1000;
-    std::cout 	<< "\nTotal elapsed time: " << total_msec
-    			<< " msec\n" << std::endl;
+    std::cout << "\nTotal elapsed time: " << total_msec 
+    		<< " msec\n" << std::endl;
 
     //  Send kill signal to workers
-    message.rebuild(5);
-    memcpy(message.data(), "KILL", 5);
-    controller.send(message);
-
+    s_send (controller, "KILL");
 
     //  Finished
     sleep (1);              //  Give 0MQ time to deliver

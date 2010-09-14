@@ -1,13 +1,44 @@
-No-one has translated the durapub2 example into C++ yet.  Be the first to create
-durapub2 in C++ and get one free Internet!  If you're the author of the C++
-binding, this is a great way to get people to use 0MQ in C++.
+//
+//  Publisher for durable subscriber
+//
+// Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
 
-To submit a new translation email it to 1000 4 20 24 25 29 30 44 46 107 109 114 121 1000EMAIL).  Please:
+#include "zhelpers.hpp"
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+int main () {
+    zmq::context_t context(1);
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+    //  Subscriber tells us when it's ready here
+    zmq::socket_t sync(context, ZMQ_PULL);
+    sync.bind("tcp://*:5564");
+
+    //  We send updates via this socket
+    zmq::socket_t publisher (context, ZMQ_PUB);
+    publisher.bind("tcp://*:5565");
+
+    //  Prevent publisher overflow from slow subscribers
+    uint64_t hwm = 1;
+    publisher.setsockopt( ZMQ_HWM, &hwm, sizeof (hwm));
+
+    //  Specify swap space in bytes, this covers all subscribers
+    uint64_t swap = 25000000;
+    publisher.setsockopt( ZMQ_SWAP, &swap, sizeof (swap));
+
+    //  Wait for synchronization request
+    std::string *string = s_recv (sync);
+    delete (string);
+
+    //  Now broadcast exactly 10 updates with pause
+    int update_nbr;
+    for (update_nbr = 0; update_nbr < 10; update_nbr++) {
+       
+        std::ostringstream oss;
+        oss << "Update "<< update_nbr ;
+        s_send (publisher, oss.str());
+        sleep (1);
+    }
+    s_send (publisher, "END");
+
+    sleep (1);              //  Give 0MQ/2.0.x time to flush output
+    return 0;
+}

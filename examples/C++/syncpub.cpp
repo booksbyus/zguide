@@ -1,10 +1,10 @@
 //
 //  Synchronized publisher in C++
 //
-//  Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
-//
-#include <zmq.hpp>
-#include <iostream>
+// Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
+
+
+#include "zhelpers.hpp"
 
 //  We wait for 10 subscribers
 #define SUBSCRIBERS_EXPECTED  10
@@ -23,29 +23,25 @@ int main () {
     //  Get synchronization from subscribers
     int subscribers = 0;
     while (subscribers < SUBSCRIBERS_EXPECTED) {
-        //  - wait for synchronization request
-        zmq::message_t request;
-        syncservice.recv(&request);
+        
+		//  - wait for synchronization request
+		std::string *string = s_recv (syncservice);
+		delete (string);
+       
+		//  - send synchronization reply
+		s_send (syncservice, "");
 
-        //  - send synchronization reply
-        zmq::message_t reply;
-        syncservice.send(reply);
 
         subscribers++;
     }
-
+    
     //  Now broadcast exactly 1M updates followed by END
     int update_nbr;
-    for (update_nbr = 0; update_nbr < 1000000; update_nbr++) {
-
-        zmq::message_t update(8);
-        memcpy(update.data(), "Rhubarb\0", 8);
-        publisher.send(update);
-    }
-
-    zmq::message_t end(4);
-    memcpy(end.data(), "END\0", 4);
-	publisher.send(end);
+    for (update_nbr = 0; update_nbr < 1000000; update_nbr++) {	
+		s_send (publisher, "Rhubarb");
+	}
+	
+    s_send (publisher, "END");
 
     sleep (1);              //  Give 0MQ time to flush output
     return 0;

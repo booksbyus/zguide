@@ -3,30 +3,32 @@
 //   Connects REP socket to tcp://localhost:5560
 //   Expects "Hello" from client, replies with "World"
 //
-//  Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
-//
-#include <zmq.hpp>
-#include <iostream>
+// Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
 
+
+#include "zhelpers.hpp"
+ 
 int main (int argc, char *argv[])
 {
     zmq::context_t context(1);
 
-	zmq::socket_t socket(context, ZMQ_REP);
-	socket.connect("tcp://localhost:5560");
-
+	zmq::socket_t responder(context, ZMQ_REP);
+	responder.connect("tcp://localhost:5560");
+ 
 	while(1)
 	{
-		zmq::message_t message;
-		socket.recv(&message);
-
-		std::cout << "Received request: "
-				<< static_cast<char*>(message.data()) << std::endl;
-
-		message.rebuild(6);
-		memcpy(message.data(), "World\0", 6);
-		socket.send(message);
-
+		//  Wait for next request from client
+		std::string *string = s_recv (responder);
+		
+		std::cout << "Received request: " << *string << std::endl;
+		delete(string);
+		
+		// Do some 'work'
+        sleep (1);
+        
+        //  Send reply back to client
+		s_send (responder, "World");
+		
 	}
 }
 

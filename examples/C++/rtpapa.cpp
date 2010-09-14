@@ -1,13 +1,41 @@
-No-one has translated the rtpapa example into C++ yet.  Be the first to create
-rtpapa in C++ and get one free Internet!  If you're the author of the C++
-binding, this is a great way to get people to use 0MQ in C++.
+//
+//  Custom routing Router to Papa (XREP to REP)
+//
+// Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
 
-To submit a new translation email it to 1000 4 20 24 25 29 30 44 46 107 109 114 121 1000EMAIL).  Please:
+#include "zhelpers.hpp"
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+//  We will do this all in one thread to emphasize the sequence
+//  of events...
+int main () {
+    zmq::context_t context(1);
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+    zmq::socket_t client (context, ZMQ_XREP);
+   client.bind("ipc://routing");
+
+    zmq::socket_t worker (context, ZMQ_REP);
+    worker.setsockopt(ZMQ_IDENTITY, "A", 1);
+    worker.connect("ipc://routing");
+
+    //  Wait for sockets to stabilize
+    sleep (1);
+
+    //  Send papa address, address stack, empty part, and request
+    s_sendmore (client, "A");
+    s_sendmore (client, "address 3");
+    s_sendmore (client, "address 2");
+    s_sendmore (client, "address 1");
+    s_sendmore (client, "");
+    s_send     (client, "This is the workload");
+
+    //  Worker should get just the workload
+    s_dump (worker);
+
+    //  We don't play with envelopes in the worker
+    s_send (worker, "This is the reply");
+
+    //  Now dump what we got off the XREP socket...
+    s_dump (client);
+
+    return 0;
+}

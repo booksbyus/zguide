@@ -1,13 +1,84 @@
-No-one has translated the rtmama example into C++ yet.  Be the first to create
-rtmama in C++ and get one free Internet!  If you're the author of the C++
-binding, this is a great way to get people to use 0MQ in C++.
+//
+//  Custom routing Router to Mama (XREP to REQ)
+//
+// Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
 
-To submit a new translation email it to 1000 4 20 24 25 29 30 44 46 107 109 114 121 1000EMAIL).  Please:
+#include "zhelpers.hpp"
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+#define NBR_WORKERS 10
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+static void *
+worker_thread (void *arg) {
+
+	zmq::context_t * context = (zmq::context_t *)arg;
+    zmq::socket_t worker (*context, ZMQ_REQ);
+    
+    //  We use a string identity for ease here
+    s_set_id (worker);
+    worker.connect("ipc://routing");
+
+    int total = 0;
+    while (1) {
+        //  Tell the router we're ready for work
+        s_send (worker, "ready");
+
+        //  Get workload from router, until finished
+        std::string *workload = s_recv (worker);
+        int finished = (workload->compare("END") == 0);
+        delete (workload);
+        
+        if (finished) {
+            std::cout << "Processed: " << total << " tasks" << std::endl;
+            break;
+        }
+        total++;
+
+        //  Do some random work
+        struct timespec t;
+        t.tv_sec = 0;
+        t.tv_nsec = within (100000000) + 1;
+        nanosleep (&t, NULL);
+    }
+    return (NULL);
+}
+
+int main () {
+    zmq::context_t context(1);
+    zmq::socket_t client (context, ZMQ_XREP);
+    client.bind("ipc://routing");
+
+    int worker_nbr;
+    for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++) {
+        pthread_t worker;
+        pthread_create (&worker, NULL, worker_thread, &context);
+    }
+    int task_nbr;
+    for (task_nbr = 0; task_nbr < NBR_WORKERS * 10; task_nbr++) {
+        //  LRU worker is next waiting in queue
+        std::string *address = s_recv (client);
+        std::string *empty = s_recv (client);
+        delete (empty);
+        std::string *ready = s_recv (client);
+        delete (ready);
+
+        s_sendmore (client, *address);
+        s_sendmore (client, "");
+        s_send (client, "This is the workload");
+        delete (address);
+    }
+    //  Now ask mamas to shut down and report their results
+    for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++) {
+        std::string *address = s_recv (client);
+        std::string *empty = s_recv (client);
+        delete (empty);
+        std::string *ready = s_recv (client);
+        delete (ready);
+
+        s_sendmore (client, *address);
+        s_sendmore (client, "");
+        s_send (client, "END");
+        delete (address);
+    }
+    sleep (1);              //  Give 0MQ/2.0.x time to flush output
+    return 0;
+}

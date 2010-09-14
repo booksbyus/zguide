@@ -1,10 +1,10 @@
 //
 //  Weather proxy device C++
 //
-//  Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
+// Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
 //
-#include <zmq.hpp>
-#include <stdint.h>
+
+#include "zhelpers.hpp"
 
 int main (int argc, char *argv[])
 {

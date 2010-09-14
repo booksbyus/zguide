@@ -1,13 +1,35 @@
-No-one has translated the durasub example into C++ yet.  Be the first to create
-durasub in C++ and get one free Internet!  If you're the author of the C++
-binding, this is a great way to get people to use 0MQ in C++.
+//
+//  Durable subscriber
+//
+// Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
 
-To submit a new translation email it to 1000 4 20 24 25 29 30 44 46 107 109 114 121 1000EMAIL).  Please:
+#include "zhelpers.hpp"
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+int main (int argc, char *argv[])
+{
+    zmq::context_t context(1);
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+    //  Connect our subscriber socket
+    zmq::socket_t subscriber (context, ZMQ_SUB);
+    subscriber.setsockopt(ZMQ_IDENTITY, "Hello", 5);
+    subscriber.setsockopt(ZMQ_SUBSCRIBE, "", 0);
+    subscriber.connect("tcp://localhost:5565");
+
+    //  Synchronize with publisher
+    zmq::socket_t sync (context, ZMQ_PUSH);
+    sync.connect("tcp://localhost:5564");
+    s_send (sync, "");
+
+    //  Get updates, expect random Ctrl-C death
+    while (1) {
+        std::string *string = s_recv (subscriber);
+        std::cout << *string << std::endl;
+        
+        if (string->compare("END") == 0) {
+            delete (string);
+            break;
+        }
+        delete (string);
+    }
+    return 0;
+}

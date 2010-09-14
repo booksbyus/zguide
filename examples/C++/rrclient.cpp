@@ -1,30 +1,27 @@
-//  Request-reply client in C++
-//  Connects REQ socket to tcp://localhost:5559
-//  Sends "Hello" to server, expects "World" back
+//   Request-reply client in C++
+//   Connects REQ socket to tcp://localhost:5559
+//   Sends "Hello" to server, expects "World" back
 //
-//  Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
-//
-#include <zmq.hpp>
-#include <iostream>
+// Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
 
+
+#include "zhelpers.hpp"
+ 
 int main (int argc, char *argv[])
 {
     zmq::context_t context(1);
 
-	zmq::socket_t socket(context, ZMQ_REQ);
-	socket.connect("tcp://localhost:5559");
-
+	zmq::socket_t requester(context, ZMQ_REQ);
+	requester.connect("tcp://localhost:5559");
+ 
 	for( int request = 0 ; request < 10 ; request++) {
-
-		zmq::message_t message(6);
-		memcpy(message.data(), "Hello\0", 6);
-		socket.send(message);
-
-		message.rebuild();
-		socket.recv(&message);
-
-		std::cout << "Received reply " << request
-				<< "[" << static_cast<char*>(message.data()) << "]"
-				<< std::endl;
+		
+		s_send (requester, "Hello");
+        std::string *string = s_recv (requester);
+		
+		std::cout << "Received reply " << request 
+				<< " [" << *string << "]" << std::endl;
+				
+		delete(string);
 	}
 }

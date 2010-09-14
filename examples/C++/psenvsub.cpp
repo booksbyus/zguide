@@ -1,13 +1,28 @@
-No-one has translated the psenvsub example into C++ yet.  Be the first to create
-psenvsub in C++ and get one free Internet!  If you're the author of the C++
-binding, this is a great way to get people to use 0MQ in C++.
+//
+//  Pubsub envelope subscriber
+//
+// Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
 
-To submit a new translation email it to 1000 4 20 24 25 29 30 44 46 107 109 114 121 1000EMAIL).  Please:
+#include "zhelpers.hpp"
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+int main () {
+    //  Prepare our context and subscriber
+    zmq::context_t context(1);
+    zmq::socket_t subscriber (context, ZMQ_SUB);
+    subscriber.connect("tcp://localhost:5563");
+    subscriber.setsockopt( ZMQ_SUBSCRIBE, "B", 1);
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+    while (1) {
+ 
+		//  Read envelope with address
+		std::string * address = s_recv (subscriber);
+		//  Read message contents
+		std::string * contents = s_recv (subscriber);
+		
+        std::cout << "[" << *address << "] " << *contents << std::endl;
+        
+        delete(address);
+        delete(contents);
+    }
+    return 0;
+}

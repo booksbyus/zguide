@@ -1,11 +1,11 @@
 //
 //  Simple request-reply broker in C++
 //
-//  Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
-//
-#include <zmq.hpp>
-#include <stdint.h>
-#include <iostream>
+// Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
+
+
+#include "zhelpers.hpp"
+
 
 int main (int argc, char *argv[])
 {
@@ -22,14 +22,14 @@ int main (int argc, char *argv[])
         { frontend, 0, ZMQ_POLLIN, 0 },
         { backend,  0, ZMQ_POLLIN, 0 }
     };
-
+    
     //  Switch messages between sockets
     while (1) {
         zmq::message_t message;
         int64_t more;           //  Multipart detection
 
         zmq::poll (&items [0], 2, -1);
-
+        
         if (items [0].revents & ZMQ_POLLIN) {
             while (1) {
                 //  Process all parts of the message
@@ -37,7 +37,7 @@ int main (int argc, char *argv[])
                 size_t more_size = sizeof (more);
                 frontend.getsockopt(ZMQ_RCVMORE, &more, &more_size);
                 backend.send(message, more? ZMQ_SNDMORE: 0);
-
+                
                 if (!more)
                     break;      //  Last message part
             }

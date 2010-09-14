@@ -1,10 +1,10 @@
 //
 //  Synchronized subscriber in C++
 //
-//  Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
-//
-#include <zmq.hpp>
-#include <iostream>
+// Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
+
+
+#include "zhelpers.hpp"
 
 int main (int argc, char *argv[])
 {
@@ -20,22 +20,22 @@ int main (int argc, char *argv[])
     syncclient.connect("tcp://localhost:5562");
 
     //  - send a synchronization request
-    zmq::message_t request;
-    syncclient.send(request);
+    s_send (syncclient, "");
 
     //  - wait for synchronization reply
-    zmq::message_t reply;
-    syncclient.recv(&reply);
+    std::string *string = s_recv (syncclient);
+    delete (string);
 
     //  Third, get our updates and report how many we got
     int update_nbr = 0;
     while (1) {
-        zmq::message_t update;
-        subscriber.recv(&update);
-
-        if (update.size() == 4
-        && memcmp (update.data(), "END\0", 4) == 0)
+    	
+        std::string *string = s_recv (subscriber);
+        if (string->compare("END") == 0) {
+            delete (string);
             break;
+        }
+        delete (string);
 
         update_nbr++;
     }

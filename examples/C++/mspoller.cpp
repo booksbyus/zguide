@@ -2,11 +2,10 @@
 //  Reading from multiple sockets in C++
 //  This version uses zmq_poll()
 //
-//  Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
-//
-#include <zmq.hpp>
-#include <time.h>
-#include <iostream>
+// Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
+
+#include "zhelpers.hpp"
+
 
 int main (int argc, char *argv[])
 {
@@ -30,7 +29,7 @@ int main (int argc, char *argv[])
     while (1) {
         zmq::message_t message;
         zmq::poll (&items [0], 2, -1);
-
+        
         if (items [0].revents & ZMQ_POLLIN) {
             receiver.recv(&message);
             //  Process task

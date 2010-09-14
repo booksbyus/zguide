@@ -1,13 +1,90 @@
-No-one has translated the rtdealer example into C++ yet.  Be the first to create
-rtdealer in C++ and get one free Internet!  If you're the author of the C++
-binding, this is a great way to get people to use 0MQ in C++.
+//
+//  Custom routing Router to Dealer (XREP to XREQ)
+//
+// Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
 
-To submit a new translation email it to 1000 4 20 24 25 29 30 44 46 107 109 114 121 1000EMAIL).  Please:
+#include "zhelpers.hpp"
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+//  We have two workers, here we copy the code, normally these would
+//  run on different boxes...
+//
+void *worker_a (void *arg) {
+	
+	zmq::context_t * context = (zmq::context_t *)arg;
+    zmq::socket_t worker (*context, ZMQ_XREQ);
+    worker.setsockopt( ZMQ_IDENTITY, "A", 1);
+    worker.connect("ipc://routing");
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+    int total = 0;
+    while (1) {
+        //  We receive one part, with the workload
+        std::string *request = s_recv (worker);
+        int finished = (request->compare("END") == 0);
+        delete (request);
+        if (finished) {
+            std::cout <<"A received: " << total << std::endl;
+            break;
+        }
+        total++;
+    }
+    return (NULL);
+}
+
+void *worker_b (void *arg) {
+	
+	zmq::context_t * context = (zmq::context_t *)arg;
+    zmq::socket_t worker (*context, ZMQ_XREQ);
+    worker.setsockopt( ZMQ_IDENTITY, "B", 1);
+    worker.connect("ipc://routing");
+
+    int total = 0;
+    while (1) {
+        //  We receive one part, with the workload
+        std::string *request = s_recv (worker);
+        int finished = (request->compare("END") == 0);
+        delete (request);
+        if (finished) {
+            std::cout <<"B received: " << total << std::endl;
+            break;
+        }
+        total++;
+    }
+    return (NULL);
+}
+
+int main () {
+
+    zmq::context_t context(1);
+
+    zmq::socket_t client (context, ZMQ_XREP);
+    client.bind("ipc://routing");
+
+    pthread_t worker;
+    pthread_create (&worker, NULL, worker_a, &context);
+    pthread_create (&worker, NULL, worker_b, &context);
+
+    //  Wait for threads to stabilize
+    sleep (1);
+
+    //  Send 10 tasks scattered to A twice as often as B
+    int task_nbr;
+    srandom ((unsigned) time (NULL));
+    for (task_nbr = 0; task_nbr < 10; task_nbr++) {
+        //  Send two message parts, first the address...
+        if (within (3) > 0)
+            s_sendmore (client, "A");
+        else
+            s_sendmore (client, "B");
+
+        //  And then the workload
+        s_send (client, "This is the workload");
+    }
+    s_sendmore (client, "A");
+    s_send     (client, "END");
+
+    s_sendmore (client, "B");
+    s_send     (client, "END");
+
+    sleep (1);              //  Give 0MQ/2.0.x time to flush output
+    return 0;
+}

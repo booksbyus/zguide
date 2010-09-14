@@ -2,11 +2,10 @@
 //  Reading from multiple sockets in C++
 //  This version uses a simple recv loop
 //
-//  Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
-//
-#include <zmq.hpp>
-#include <time.h>
-#include <iostream>
+// Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
+
+#include "zhelpers.hpp"
+
 
 int main (int argc, char *argv[])
 {
@@ -25,7 +24,7 @@ int main (int argc, char *argv[])
     //  Process messages from both sockets
     //  We prioritize traffic from the task ventilator
     while (1) {
-
+    	
         //  Process any waiting tasks
         bool rc;
         do {
@@ -34,7 +33,7 @@ int main (int argc, char *argv[])
                 //  process task
             }
         } while(rc == true);
-
+        
         //  Process any waiting weather updates
         do {
             zmq::message_t update;
@@ -43,7 +42,7 @@ int main (int argc, char *argv[])
 
             }
         } while(rc == true);
-
+        
         //  No activity, so sleep for 1 msec
         struct timespec t;
         t.tv_sec = 0;

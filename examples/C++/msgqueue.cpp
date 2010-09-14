@@ -2,9 +2,10 @@
 //  Simple message queuing broker in C++
 //  Same as request-reply broker but using QUEUE device
 //
-//  Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
-//
-#include <zmq.hpp>
+// Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
+
+
+#include "zhelpers.hpp"
 
 int main (int argc, char *argv[])
 {
