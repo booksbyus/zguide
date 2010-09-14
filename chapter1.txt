@@ -300,6 +300,12 @@ user    0m1.590s
 sys     0m2.290s
 [[/code]]
 
++++ Getting the Context Right
+
+0MQ applications always start by creating a 'context', and then using that for creating sockets.  In C, it's the zmq_init[3] call.  You should create and use exactly one context in your application.  Technically, the context is the container for all sockets that you use, and acts as the transport for "inproc" sockets, which are the fastest way to connect threads in one process.  If at runtime a process has two contexts, these are like separate 0MQ instances.  If that's explicitly what you want, OK, but otherwise remember:
+
+**Do one zmq_init[3] at the start of your main line code, and one zmq_term[3] at the end.**
+
 +++ Divide and Conquer
 
 As a final example (you are surely getting tired of juicy code and want to delve back into philological discussions about comparative abstractive norms), let's do a little supercomputing.  Then coffee.  Our supercomputing application is a fairly typical parallel processing model:
@@ -668,6 +674,130 @@ As the clients run, we take a look at the active processes using 'top', and we s
 [[/code]]
 
 Let's think for a second about what is happening here.  The weather server has a single socket, and yet here we have it sending data to five clients in parallel.  We could have thousands of concurrent clients.  The server application doesn't see them, doesn't talk to them directly.
+
++++ Problem Solver
+
+As you start to program with 0MQ you will come across one problem more than once: you lose messages that you expect to receive.  Here is a basic problem solver that walks through the most common causes for this.  Don't worry if some of the terminology is unfamiliar still, it'll become clearer in the next chapters.
+
+[[code type="textdiagram"]]
+        +-----------------+
+        |                 |
+        | I'm not getting |
+        |     my data!    |
+        |             {o} |
+        +--------+--------+
+                 |
+                 |
+                 v
+        +-----------------+        +------------------+
+        |     Do you      |        | Add sleep(1) to  |
+        |  close sockets  |        | give 0MQ time to |
+        |   right after   +------->| send. 0MQ/2.1    |
+        |  sending data?  | Yes    | will fix this.   |
+        |             {o} |        |                  |
+        +--------+--------+        +------------------+
+                 | No                       ^
+                 |                          |
+                 v                          |
+        +-----------------+                 |
+        |     Do you      |                 |
+        |  send messages  |                 |
+        |  and then exit  +-----------------+
+        |   immediately?  | Yes
+        |             {o} |
+        +--------+--------+
+                 | No
+                 |
+                 v
+        +-----------------+        +-----------------+        +------------------+
+        |                 |        |                 |        | Use the          |
+        | Are you losing  |        |  Do you set a   |        | zmq_setsockopt   |
+        |  messages in a  +------->|  subscription   +------->| ZMQ_SUBSCRIBE    |
+        |   SUB socket?   | Yes    |  for messages?  | No     | ("") option      |
+        |             {o} |        |             {o} |        |                  |
+        +--------+--------+        +--------+--------+        +------------------+
+                 | No                       | Yes
+                 |                          |
+                 |                          v
+                 |                 +-----------------+
+                 |                 | A SUB socket    |
+                 |                 | can miss data   |
+                 |                 | as it connects. |
+                 |                 | It's normal.    |
+                 |                 +-----------------+
+                 |
+                 v
+        +-----------------+        +-----------------+        +------------------+
+        |                 |        |                 |        |                  |
+        | Are you using   |        |   Do you pass   |        | Create a socket  |
+        | threads in your +------->| sockets between +------->| in the thread    |
+        |  app already?   | Yes    |    threads?     | Yes    | where you use it |
+        |             {o} |        |             {o} |        |                  |
+        +--------+--------+        +--------+--------+        +------------------+
+                 | No                       | No
+                 +--------------------------+
+                 |
+                 v
+        +-----------------+        +-----------------+
+        |                 |        |                 |
+        |   Do you use    |        | Call zmq_init   |
+        |    the fork()   +------->| exactly once in |
+        |      call?      | Yes    | every process.  |
+        |             {o} |        |                 |
+        +--------+--------+        +-----------------+
+                 | No
+                 |
+                 v
+        +-----------------+        +-----------------+
+        |                 |        |                 |
+        |  Do you check   |        | Check every 0MQ |
+        | return codes on +------->| method call. In |
+        |  all methods?   | No     | C, use asserts. |
+        |             {o} |        |                 |
+        +--------+--------+        +-----------------+
+                 | Yes
+                 |
+                 v
+        +-----------------+        +-----------------+        +------------------+
+        |                 |        |                 |        |                  |
+        |  Are you using  |        | Are you calling |        | Call zmq_init    |
+        |   the inproc:   +------->|  zmq_init more  +------->| exactly once in  |
+        |   transport?    | Yes    |    than once?   | Yes    | every process.   |
+        |             {o} |        |             {o} |        |                  |
+        +--------+--------+        +--------+--------+        +------------------+
+                 | No                       | No
+                 |                          |
+                 |                          v
+                 |                 +-----------------+
+                 |                 |                 |
+                 |                 | Check that you  |
+                 |                 | bind before you |
+                 |                 | connect.        |
+                 |                 |                 |
+                 |                 +-----------------+
+                 |
+                 v
+        +-----------------+        +-----------------+
+        |                 |        | Check that the  |
+        |  Are you using  |        | reply envelope  |
+        |  XREP sockets?  +------->| is valid. 0MQ   |
+        |                 |        | drops messages  |
+        |             {o} |        | it can't route. |
+        +--------+--------+        +-----------------+
+                 | No
+                 |
+                 v
+        +-----------------+
+        |                 |
+        | Make a minimal  |
+        | test case, ask  |
+        | on zeromq IRC.  |
+        |                 |
+        +-----------------+
+
+
+                               Figure # - 0MQ Problem Solver
+[[/code]]
 
 +++ Warning - Unstable Paradigms!
 
