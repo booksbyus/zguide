@@ -1,10 +1,5 @@
 Notes for The Guide
 
-In chapter 3 we'll continue to cover 0MQ core functionality with examples.  We need to cover:
-
-- HWM, SWAP
-- identities
-
 Then we can use this to start building some reusable pieces:
 
 - timer device
@@ -200,6 +195,40 @@ I highly recommend that you try out the simpler topology and *verifying* that 0m
 
 [!--
 
+[!--
++++ The Wire-Level Protocol
+
+- writing a thin client in JavaScript
+
++++ Building a Language Binding
+
++++ Tuning 0MQ
+
+High performance multiple i/o threads
+ - for HP applications, several threads
+ - then, set affinity on sockets
+
++++ Contributing to 0MQ
+
+
++++ What's Missing from 0MQ
+
+* Multicast
+- unbreak PGM
+- make PGM work on Windows
+- exclusive pair reconnect is broken
+- location lookup
+- abstracted interfaces
+- other IPC mechanisms, e.g. shared memory
+- IPC on OpenVMS, Windows
+- upstreaming of subscriptions/unsubs
+- timeouts for receiver missing?
+- persistence & reliability
+Change proposals
+- defaults for identity are to crash the publisher
+--]
+
+
 
 - handling crashing peers
 
@@ -268,3 +297,11 @@ The client has a single thread that polls on its ZMQ_XREQ socket.  At regular ti
 The server has a two threads, one that polls on its ZMQ_XREP socket and one that receives outgoing messages and passes them to the polling thread via inproc sockets.  The polling thread processes any incoming client requests and updates its data structures.  It processes any outgoing messages by looking up the message key in its routing table and then sending the message (one to one) to all matching identities.  As it does this it deletes any expired identities.
 
 That's it.  Sorry if I got some things wrong here, it's theory and not based on running code.
+
+- setsockopt validation
+ - identities don't start with zero byte
+ - integer values are not negative
+
+- fixes to documentation
+ - REP sockets can't drop data on HWM because they are lock-step
+ - HWM says n/a for PULL and for SUB, which is wrong

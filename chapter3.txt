@@ -34,13 +34,13 @@ Here is the general model of two sockets happily chatting about the weather, and
          +---------+
          +---------+    0MQ Transmit buffer
          +---------+
-         +---------+
+         +----+----+
               |
               |
               v
          +---------+
          +---------+    Network I/O buffers
-         +---------+
+         +----+----+
               |
               |
               v
@@ -76,7 +76,7 @@ Behind the scenes, and invisibly to you, when one socket connects to another, th
         |           |
         +-----------+
         |  Socket   |
-        \-----------/
+        \-----+-----/
               |  "Not telling you my name!"
               |
               |
@@ -102,7 +102,7 @@ But a socket can also tell the other its identity, and then the next time the tw
         |           |
         +-----------+
         |  Socket   |
-        \-----------/
+        \-----+-----/
               |  "My name's Lucy"
               |
               |
@@ -229,6 +229,7 @@ We can put this together to make a cynical publisher that is immune to slow, blo
 In practice, setting the HWM to 1 and shoving everything to disk will make a pubsub system very slow.  Here is a more reasonable 'best practice' for publishers that have to deal with unknown subscribers:
 
 * Always set a HWM on the socket, based on the expected maximum number of subscribers, the amount of memory you are willing to dedicated to queuing, and the average size of a message.  For example if you expect up to 5,000 subscribers, and have 1GB of memory to play with, and messages of ~200 bytes, then a safe HWM would be (1,000,000,000 / 200 / 5,000) = 1,000.
+
 * If you don't want slow or crashing subscribers to lose data, set a SWAP that's large enough to handle the peaks, based on the number of subscribers, peak message rate, average size of messages, and time you want to cover.  For example with 5,000 subscribers and messages of ~200 bytes coming in at 100,000 per second, you will need up to 100MB of disk space per second.  To cover an outage of up to 1 minute, therefore, you'd need 6GB of disk space, and it would have to be fast, but that's a different story.
 
 Some notes on durable subscribers:
@@ -338,7 +339,7 @@ This is what it looks like for transient sockets:
         |           |
         +-----------+       +---------+
         |    REQ    |       |  Data   |     Client sends this
-        \-----------/       +---------+
+        \-----+-----/       +---------+
               |
               |  "My identity is empty"
               v
@@ -363,7 +364,7 @@ This is what it looks like for durable sockets:
         |           |
         +-----------+       +---------+
         |    REQ    |       |  Data   |     Client sends this
-        \-----------/       +---------+
+        \-----+-----/       +---------+
               |
               |  "Hi, my name is Lucy"
               v
@@ -458,7 +459,7 @@ We'll make an example where the dealers don't talk back, they're pure sinks.  Ou
           |             |
           +-------------+
           |   ROUTER    |   OK, it's really XREP
-          \-------------/
+          \------+------/
                  |
                  |
          +-------+-------+
@@ -703,13 +704,13 @@ To start with, let's look back at the classic request-reply pattern and then see
             | Client |
             +--------+
             |  Mama  |
-            +--------+
+            +---+----+
                 |
                 |
     +-----------+-----------+
     |           |           |
     |           |           |
-+--------+  +--------+  +--------+
++---+----+  +---+----+  +---+----+
 |  Papa  |  |  Papa  |  |  Papa  |
 +--------+  +--------+  +--------+
 | Worker |  | Worker |  | Worker |
@@ -726,21 +727,21 @@ This extends to multiple papas, but if we want to handle multiple mamas as well 
 | Client |  | Client |  | Client |
 +--------+  +--------+  +--------+
 |  Mama  |  |  Mama  |  |  Mama  |
-+--------+  +--------+  +--------+
++---+----+  +---+----+  +---+----+
     |           |           |
     +-----------+-----------+
                 |
-            +--------+
+            +---+----+
             | Router |
             +--------+
             | Device |
             +--------+
             | Dealer |
-            +--------+
+            +---+----+
                 |
     +-----------+-----------+
     |           |           |
-+--------+  +--------+  +--------+
++---+----+  +---+----+  +---+----+
 |  Papa  |  |  Papa  |  |  Papa  |
 +--------+  +--------+  +--------+
 | Worker |  | Worker |  | Worker |
@@ -759,21 +760,21 @@ In this design, we're using the built-in load balancing routing that the dealer 
     | Client |  | Client |  | Client |
     +--------+  +--------+  +--------+
     |  Mama  |  |  Mama  |  |  Mama  |
-    +--------+  +--------+  +--------+
+    +---+----+  +---+----+  +---+----+
         |           |           |
         +-----------+-----------+
                     |
-                +--------+
+                +---+----+
                 | Router |  Frontend
                 +--------+
                 | Device |  LRU queue
                 +--------+
                 | Router |  Backend
-                +--------+
+                +---+----+
                     |
         +-----------+-----------+
         |           |           |
-    +--------+  +--------+  +--------+
+    +---+----+  +---+----+  +---+----+
     |  Mama  |  |  Mama  |  |  Mama  |
     +--------+  +--------+  +--------+
     | Worker |  | Worker |  | Worker |
@@ -884,21 +885,21 @@ We don't connect clients and workers to each other because that makes it painful
     | Client |  | Client |  | Client |
     +--------+  +--------+  +--------+
     |  Mama  |  |  Mama  |  |  Mama  |
-    +--------+  +--------+  +--------+
+    +---+----+  +---+----+  +---+----+
         |           |           |
         +-----------+-----------+
                     |
-              +------------+
+              +-----+------+
               |   Router   |
               +------------+
               | LRU Queue  |
               +------------+
               |   Router   |
-              +------------+
+              +-----+------+
                     |
         +-----------+-----------+
         |           |           |
-    +--------+  +--------+  +--------+
+    +---+----+  +---+----+  +---+----+
     |  Mama  |  |  Mama  |  |  Mama  |
     +--------+  +--------+  +--------+
     | Worker |  | Worker |  | Worker |
@@ -917,15 +918,15 @@ Now we scale this out to more than one data center.  Let's illustrate with two d
                             :
     +---+  +---+  +---+     :     +---+  +---+  +---+
     | C |  | C |  | C |     :     | C |  | C |  | C |
-    +---+  +---+  +---+     :     +---+  +---+  +---+
+    +-+-+  +-+-+  +-+-+     :     +-+-+  +-+-+  +-+-+
       |      |      |       :       |      |      |
       |      |      |       :       |      |      |
-    +-----------------+     :     +-----------------+
+    +-+------+------+-+     :     +-+------+------+-+
     |     Router      |     :     |     Router      |
-    +-----------------+     :     +-----------------+
+    +-+------+------+-+     :     +-+------+------+-+
       |      |      |       :       |      |      |
       |      |      |       :       |      |      |
-    +---+  +---+  +---+     :     +---+  +---+  +---+
+    +-+-+  +-+-+  +-+-+     :     +-+-+  +-+-+  +-+-+
     | W |  | W |  | W |     :     | W |  | W |  | W |
     +---+  +---+  +---+     :     +---+  +---+  +---+
                             :
@@ -949,14 +950,14 @@ Let's explore Idea #1.  Workers connecting to both routers and accepting jobs fr
               |            |               |            |
               +------------+               +------------+
               |   Router   |               |   Router   |
-              +------------+               +------------+
+              +-----+------+               +-----+------+
                     |                            |
           +---------|-+--=--------+--------------+
           :         | :           :
         +-----------+-----------+ :
         | :         | :         | :
         | :         | :         | :
-    +--------+  +--------+  +--------+
+    +---+-+--+  +---+-+--+  +---+-+--+
     | Router |  | Router |  | Router |
     +--------+  +--------+  +--------+
     | Worker |  | Worker |  | Worker |
@@ -977,15 +978,15 @@ So idea #2 then.  We interconnect the routers and don't touch the clients or wor
                             :
     +---+  +---+  +---+     :     +---+  +---+  +---+
     | C |  | C |  | C |     :     | C |  | C |  | C |
-    +---+  +---+  +---+     :     +---+  +---+  +---+
+    +-+-+  +-+-+  +-+-+     :     +-+-+  +-+-+  +-+-+
       |      |      |       :       |      |      |
       |      |      |       :       |      |      |
-    +-----------------+     :     +-----------------+
+    +-+------+------+-+     :     +-+------+------+-+
     |     Router      |<--------->|     Router      |
-    +-----------------+     :     +-----------------+
+    +-+------+------+-+     :     +-+------+------+-+
       |      |      |       :       |      |      |
       |      |      |       :       |      |      |
-    +---+  +---+  +---+     :     +---+  +---+  +---+
+    +-+-+  +-+-+  +-+-+     :     +-+-+  +-+-+  +-+-+
     | W |  | W |  | W |     :     | W |  | W |  | W |
     +---+  +---+  +---+     :     +---+  +---+  +---+
                             :
@@ -1020,15 +1021,15 @@ The simplest interconnect is //federation// in which each broker acts as a worke
                             :
     +---+  +---+            :             +---+  +---+
     | C |  | C |            :             | C |  | C |
-    +---+  +---+    +----+  :  +-----+    +---+  +---+
+    +-+-+  +-+-+    +----+  :  +-----+    +-+-+  +-+-+
       |      |      |    |  :  |     |      |      |
       |      |      |    |  :  |     |      |      |
-    +-----------------+  |  :  |   +-----------------+
+    +-+------+------+-+  |  :  |   +-+------+------+-+
     |     Router      |  |  :  |   |     Router      |
-    +-----------------+  |  :  |   +-----------------+
+    +-+------+--------+  |  :  |   +--------+------+-+
       |      |      ^    |  :  |     ^      |      |
       |      |      |    |  :  |     |      |      |
-    +---+  +---+    |    +-----------+    +---+  +---+
+    +-+-+  +-+-+    |    +-----------+    +-+-+  +-+-+
     | W |  | W |    |       :  |          | W |  | W |
     +---+  +---+    +----------+          +---+  +---+
                             :
@@ -1049,15 +1050,15 @@ What we need is an asynchronous routable flow of information between brokers.  T
                                   :
     +---+  +---+  +---+           :           +---+  +---+  +---+
     | C |  | C |  | C |           :           | C |  | C |  | C |
-    +---+  +---+  +---+           :           +---+  +---+  +---+
+    +-+-+  +-+-+  +-+-+           :           +-+-+  +-+-+  +-+-+
       |      |      |             :             |      |      |
       |      |      |             :             |      |      |
-    +-----------------+-----+     :     +-----+-----------------+
+    +-+------+------+-+-----+     :     +-----+-+------+------+-+
     |     Router      | ??? |<--------->| ??? |     Router      |
-    +-----------------+-----+     :     +-----+-----------------+
+    +-+------+------+-+-----+     :     +-----+-+------+------+-+
       |      |      |             :             |      |      |
       |      |      |             :             |      |      |
-    +---+  +---+  +---+           :           +---+  +---+  +---+
+    +-+-+  +-+-+  +-+-+           :           +-+-+  +-+-+  +-+-+
     | W |  | W |  | W |           :           | W |  | W |  | W |
     +---+  +---+  +---+           :           +---+  +---+  +---+
                                   :
@@ -1074,30 +1075,15 @@ Each router now manages //four// XREP router sockets.  Clear naming conventions 
 * The //inward// socket talks to master routers and accepts tasks;
 * The //onward// socket talks to slave routers and passes on tasks.
 
-When a router starts up it binds its onward socket, and connects its inward socket to all other routers.  When it has idle workers, it scatters this out to
+When a router starts up it binds its onward socket, and connects its inward socket to all other routers.  When it has idle workers, it scatters this out to ...
 
 
-
-It now needs to tell each of its masters that it's ready.  But it doesn't know their identities.
-
-/
-
-
-
-
-
-
-- worked eexample
+- worked example
 - single point of failure
 - presence detection
 
 - router trees
  (federation)
--
-
-
-
-.end
 
 +++ Presence Detection
 
