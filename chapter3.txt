@@ -58,7 +58,7 @@ Here is the general model of two sockets happily chatting about the weather, and
         +-----------+
 
 
-Figure # - Sender boring the pants of receiver
+Figure # - Sender boring the pants off receiver
 [[/code]]
 
 What durable sockets give you is the promise that the 0MQ //transmit buffer// is kept alive as long as the sender exists.  If the receiver crashes, it will lose its receive buffer, and the network will lose its I/O buffers, but the sender can continue to push data into its transmit buffer and the receiver can then pick this up.
