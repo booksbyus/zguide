@@ -10,7 +10,7 @@
 static void *
 worker_thread (void *arg) {
 
-	zmq::context_t * context = (zmq::context_t *)arg;
+    zmq::context_t * context = (zmq::context_t *)arg;
     zmq::socket_t worker (*context, ZMQ_REQ);
     
     //  We use a string identity for ease here
