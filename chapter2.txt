@@ -1,5 +1,5 @@
+.set SELF=chapter:2
 .output chapter2.wd
-.set SELF=docs:user-guide-2
 ++ Chapter Two - Intermediate Stuff
 
 In Chapter One we took 0MQ for a drive, with some basic examples of the main 0MQ patterns: request-reply, publish-subscribe, and pipeline.  In this chapter we're going to get our hands dirty and start to learn how to use these tools in real programs.
@@ -149,7 +149,7 @@ Let's look at the main differences between TCP sockets and 0MQ sockets when it c
         |            |           |            |
         +------------+           +------------+
         |   Socket   |           |   Socket   |
-        \------------/           \------------/
+        \----+-+-----/           \------+-----/
              | |                        :
      1 to N  | +------------------------+
      Fan out |                          |
@@ -365,7 +365,7 @@ It doesn't take much new code in the sink:
                 |             |
                 +-------------+
                 |    PUSH     |
-                \-------------/
+                \------+------/
                        |
                      tasks
                        |
@@ -383,7 +383,7 @@ It doesn't take much new code in the sink:
    |            |  |            |  |            |   |
    +------------+  +------------+  +------------+   |
    |    PUSH    |  |    PUSH    |  |    PUSH    |   |
-   \------------/  \------------/  \------------/   |
+   \-----+------/  \-----+------/  \-----+------/   |
          |               |               |          |
        result          result          result       |
          |               |               |          |
@@ -400,7 +400,7 @@ It doesn't take much new code in the sink:
                   |             |                   |
                   +-------------+                   |
                   |     PUB     |                   |
-                  \-------------/                   |
+                  \------+------/                   |
                          |                          |
                     KILL signal                     |
                          |                          |
@@ -467,25 +467,25 @@ We now introduce a class of 0MQ applications called "devices".  Devices are anyt
 When we use 0MQ we usually start building our applications as a set of nodes on a network with the nodes talking to each other:
 
 [[code type="textdiagram"]]
-               +--------+
-               |        |
-               |  Node  |
-               |        |
-               +--------+
-               | Socket |
-               \--------/
-                   |
-                   |
-             +-----+-----+
-             |           |
-             |           |
-        /--------\   /--------\
-        | Socket |   | Socket |
-        +--------+   +--------+
-        |        |   |        |
-        |  Node  |   |  Node  |
-        |        |   |        |
-        +--------+   +--------+
+               +---------+
+               |         |
+               |  Node   |
+               |         |
+               +---------+
+               | Socket  |
+               \----+----/
+                    |
+                    |
+             +------+------+
+             |             |
+             |             |
+        /----+----\   /----+----\
+        | Socket  |   | Socket  |
+        +---------+   +---------+
+        |         |   |         |
+        |  Node   |   |  Node   |
+        |         |   |         |
+        +---------+   +---------+
 
 
 Figure # - Small scale 0MQ application
@@ -494,42 +494,42 @@ Figure # - Small scale 0MQ application
 And then we extend the application across a wider network, placing devices in specific places and scaling up the number of nodes:
 
 [[code type="textdiagram"]]
-                +--------+
-                |        |
-                |  Node  |
-                |        |
-                +--------+
-                | Socket |
-                \--------/
-                    |
-                    |
-        +-----------+-----------+
-        |           |           |
-        |           |           |
-    /--------\  /--------\  /--------\
-    | Socket |  | Socket |  | Socket |
-    +--------+  +--------+  +--------+
-    |        |  |        |  |        |
-    |  Node  |  |  Node  |  | Device |
-    |        |  |        |  |        |
-    +--------+  +--------+  +--------+
-                            | Socket |
-                            \--------/
-                                |
-                                |
-                          +-----+-----+
-                          |           |
-                          |           |
-                     /--------\   /--------\
-                     | Socket |   | Socket |
-                     +--------+   +--------+
-                     |        |   |        |
-                     |  Node  |   |  Node  |
-                     |        |   |        |
-                     +--------+   +--------+
+                  +---------+
+                  |         |
+                  |  Node   |
+                  |         |
+                  +---------+
+                  | Socket  |
+                  \----+----/
+                       |
+                       |
+         +-------------+-------------+
+         |             |             |
+         |             |             |
+    /----+----\   /----+----\   /----+----\
+    | Socket  |   | Socket  |   | Socket  |
+    +---------+   +---------+   +---------+
+    |         |   |         |   |         |
+    |  Node   |   |  Node   |   | Device  |
+    |         |   |         |   |         |
+    +---------+   +---------+   +---------+
+                                | Socket  |
+                                \----+----/
+                                     |
+                                     |
+                              +------+------+
+                              |             |
+                              |             |
+                         /----+----\   /----+----\
+                         | Socket  |   | Socket  |
+                         +---------+   +---------+
+                         |         |   |         |
+                         |  Node   |   |  Node   |
+                         |         |   |         |
+                         +---------+   +---------+
 
 
-    Figure # - Larger scale 0MQ application
+       Figure # - Larger scale 0MQ application
 [[/code]]
 
 0MQ devices:
@@ -617,7 +617,7 @@ There are two ways to connect multiple clients to multiple servers.  The brute-f
                |           |
                +-----------+
                |    REQ    |
-               \-----------/
+               \-----+-----/
                      |
                R1, R2, R3, R4
                      |
@@ -656,25 +656,25 @@ When we extend request-reply, REQ talks to XREP and XREQ talks to REP.  In betwe
 [[code type="textdiagram"]]
   +---------+   +---------+   +---------+
   |   REQ   |   |   REQ   |   |   REQ   |
-  \---------/   \---------/   \---------/
+  \----+----/   \----+----/   \----+----/
        |             |             |
        |             |             |
        +-------------+-------------+
                      |
                      |
-               /-----------\
+               /-----+-----\
                |   XREP    |
                +-----------+
                |   code    |
                +-----------+
                |   XREQ    |
-               \-----------/
+               \-----+-----/
                      |
                      |
        +-------------+-------------+
        |             |             |
        |             |             |
-  /---------\   /---------\   /---------\
+  /----+----\   /----+----\   /----+----\
   |   REP   |   |   REP   |   |   REP   |
   +---------+   +---------+   +---------+
 
@@ -827,14 +827,14 @@ Here the 'work' is just a one-second pause.  We could do anything in the workers
                  |            |
                  +------------+
                  |    REQ     |
-                 \------------/
+                 \---+--------/
                      |    ^
                      |    |
                 "Hello"  "World"
                      |    |
-  /------------------|----|------------------\
+  /------------------|--=-|------------------\
   |                  v    |                  :
-  |              /------------\              |
+  |              /--------+---\              |
   |              |    XREP    |              |
   |              +------------+              |
   |              |            |              |
@@ -878,7 +878,7 @@ When you start making multithreaded applications with 0MQ, you'll hit the questi
         |            |
         +------------+
         |    PAIR    |
-        \------------/
+        \-----+------/
               |
               |
             Ready!
@@ -892,7 +892,7 @@ When you start making multithreaded applications with 0MQ, you'll hit the questi
         |            |
         +------------+
         |    PAIR    |
-        \------------/
+        \-----+------/
               |
               |
             Ready!
@@ -950,7 +950,7 @@ In this case we'll use a REQ-REP socket flow to synchronize subscribers and publ
             |                |
             +--------+-------+
             |  PUB   |  REQ  |
-            \--------+-------/
+            \---+----+-----+-/
                 |      ^   |
                 |      |   |
                 |     (1)  |
@@ -958,9 +958,9 @@ In this case we'll use a REQ-REP socket flow to synchronize subscribers and publ
                 |      |  (2)
                 |      |   |
                 v      |   v
-            /----------------\
+            /--------+-+-----\
             |  SUB   |  REP  |
-            +----------------+
+            +--------+-------+
             |                |
             |   Subscriber   |
             |                |
@@ -1037,4 +1037,5 @@ The scalable elastic architecture you get should be an eye-opener.  You might ne
 
 As [http://permalink.gmane.org/gmane.network.zeromq.devel/2145 Gonzo Diethelm said], '//My gut feeling is summarized in this sentence: "if ØMQ didn't exist, it would be necessary to invent it". Meaning that I ran into ØMQ after years of brain-background processing, and it made instant sense... ØMQ simply seems to me a "bare necessity" nowadays.//'
 
-.end
+ >> [/chapter:1 Return to Chapter 1 of The Guide]
+ >> [/chapter:3 Continue reading Chapter 3 of The Guide]

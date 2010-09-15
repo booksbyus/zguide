@@ -6,8 +6,8 @@
 .-  This gets repeated in each chapter output
 .prelude prelude.txt
 
+.set SELF=chapter:1
 .output chapter1.wd
-.set SELF=docs:user-guide-1
 ++ Chapter One - Basic Stuff
 
 +++ Fixing the World
@@ -56,13 +56,13 @@ So let's start with some code.  We start of course with a Hello World example.  
           |            |
           +------------+
           |    REQ     |
-          \------------/
+          \---+--------/
               |    ^
               |    |
          "Hello"  "World"
               |    |
               v    |
-          /------------\
+          /--------+---\
           |    REP     |
           +------------+
           |            |
@@ -76,7 +76,7 @@ So let's start with some code.  We start of course with a Hello World example.  
 
 The REQ-REP socket pair is lockstep.  The client does zmq_send[3] and then zmq_recv[3], in a loop (or once if that's all it needs).  Doing any other sequence (e.g. sending two messages in a row) will cause an error.  Similarly the service does zmq_recv[3] and then zmq_send[3] in that order, and as often as it needs to.
 
-0MQ uses C as its reference language and this is the language we'll use for examples.  If you're reading this online, the link below the example takes you to translations into other programming languages.  Let's compare the same server in C++:
+0MQ uses C as its reference language and this is the language we'll use for examples.  If you're reading this on-line, the link below the example takes you to translations into other programming languages.  Let's compare the same server in C++:
 
 [[code type="C++" title="Hello World server" name="hwserver"]]
 [[/code]]
@@ -96,7 +96,7 @@ Now this looks too simple to be realistic, but a 0MQ socket is what you get when
 [[code type="textdiagram"]]
  +------------+        +------------+
  |            |        |            | Zap!
- | TCP socket |------->| 0MQ socket |
+ | TCP socket +------->| 0MQ socket |
  |            | BOOM!  |     cC00   |  POW!!
  +------------+        +------------+
    ^    ^    ^
@@ -280,7 +280,7 @@ There is one important thing to know about PUB/SUB sockets: you do not know prec
 
 While there are ways to synchronize publishers and subscribers, which we'll look at in the Chapter Two, it is easier and safer to assume that a subscriber does not know the start of a message stream.  Design your applications on that basis, as we're doing in this example.
 
-So the client subscribes to its chosen zipcode and collects a thousand updates for that zipcode.  That means about ten million updates from the server, if zipcodes are randomly distributed.  You can start the client, and then the server, and the client will keep working. You can stop and restart the server as often as you like, and the client will keep working.  When the client has collected its thousand updates, it calculates the average, prints it, and exits.
+So the client subscribes to its chosen zip-code and collects a thousand updates for that zip-code.  That means about ten million updates from the server, if zip-codes are randomly distributed.  You can start the client, and then the server, and the client will keep working. You can stop and restart the server as often as you like, and the client will keep working.  When the client has collected its thousand updates, it calculates the average, prints it, and exits.
 
 Some points about the publish-subscribe pattern:
 
@@ -299,12 +299,6 @@ real    0m5.939s
 user    0m1.590s
 sys     0m2.290s
 [[/code]]
-
-+++ Getting the Context Right
-
-0MQ applications always start by creating a 'context', and then using that for creating sockets.  In C, it's the zmq_init[3] call.  You should create and use exactly one context in your application.  Technically, the context is the container for all sockets that you use, and acts as the transport for "inproc" sockets, which are the fastest way to connect threads in one process.  If at runtime a process has two contexts, these are like separate 0MQ instances.  If that's explicitly what you want, OK, but otherwise remember:
-
-**Do one zmq_init[3] at the start of your main line code, and one zmq_term[3] at the end.**
 
 +++ Divide and Conquer
 
@@ -326,7 +320,7 @@ In reality, workers run on superfast boxes, perhaps using GPUs (graphic processi
                   |             |
                   +-------------+
                   |    PUSH     |
-                  \-------------/
+                  \------+------/
                          |
                        tasks
                          |
@@ -343,7 +337,7 @@ In reality, workers run on superfast boxes, perhaps using GPUs (graphic processi
    |            |  |            |  |            |
    +------------+  +------------+  +------------+
    |    PUSH    |  |    PUSH    |  |    PUSH    |
-   \------------/  \------------/  \------------/
+   \-----+------/  \-----+------/  \-----+------/
          |               |               |
        result          result          result
          |               |               |
@@ -398,7 +392,7 @@ Let's look at some aspects of this code in more detail:
 [[code type="textdiagram"]]
   +---------+   +---------+   +---------+
   |  PUSH   |   |  PUSH   |   |  PUSH   |
-  \---------/   \---------/   \---------/
+  \----+----/   \----+----/   \----+----/
        |             |             |
    R1, R2, R3       R4           R5, R6
        |             |             |
@@ -514,9 +508,17 @@ worker_thread (void *arg) {
 }
 [[/code]]
 
++++ Getting the Context Right
+
+0MQ applications always start by creating a //context//, and then using that for creating sockets.  In C, it's the zmq_init[3] call.  You should create and use exactly one context in your process.  Technically, the context is the container for all sockets in a single process, and acts as the transport for "inproc" sockets, which are the fastest way to connect threads in one process.  If at runtime a process has two contexts, these are like separate 0MQ instances.  If that's explicitly what you want, OK, but otherwise remember:
+
+**Do one zmq_init[3] at the start of your main line code, and one zmq_term[3] at the end.**
+
+If you're using the fork() system call, each process needs its own context.  If you do zmq_init[3] in the main process before calling fork(), the child processes //must not// use that context.  Each child process must always create and use its own context.
+
 +++ Making a Clean Exit
 
-Classy programmers share the same motto as classy hitmen: always clean up after you.  When you use 0MQ in a language like Python, stuff gets automatically freed for you.  But when using C you must carefully free objects when you're finished with them, or you get memory leaks, unstable applications, and generally bad karma.
+Classy programmers share the same motto as classy hit men: always clean up after you.  When you use 0MQ in a language like Python, stuff gets automatically freed for you.  But when using C you must carefully free objects when you're finished with them, or you get memory leaks, unstable applications, and generally bad karma.
 
 The 0MQ objects we need to worry about are messages, sockets, and contexts.  Luckily it's quite simple:
 
@@ -548,7 +550,7 @@ Let's look at the typical problems we face when we start to connect pieces using
 
 * How do we represent a message on the wire?  How do we frame data so it's easy to write and read, safe from buffer overflows, efficient for small messages, yet adequate for the very largest videos of dancing cats wearing party hats?
 
-* How do we handle messages that we can't deliver immediately?  Particularly, if we're waiting for a component to come back online?  Do we discard messages, put them into a database, or into a memory queue?
+* How do we handle messages that we can't deliver immediately?  Particularly, if we're waiting for a component to come back on-line?  Do we discard messages, put them into a database, or into a memory queue?
 
 * Where do we store message queues?  What happens if the component reading from a queue is very slow, and causes our queues to build up?  What's our strategy then?
 
@@ -600,9 +602,9 @@ So small to medium application developers are trapped.  Either they avoid networ
 [[code type="textdiagram"]]
             +---+          |  +---+
     +---+   |   |   +---+  |  |   |
-    |   |-->|   |   |   |  |  |   |
-    |   |   +---+   |   |  |  +---+
-    +---+           +---+  |    |
+    |   +-->|   |   |   |  |  |   |
+    |   |   +---+   |   |  |  +-+-+
+    +-+-+           +-+-+  |    |
       |               |    |    |
       |       +-----------------+
       |       |       |    |
@@ -610,17 +612,17 @@ So small to medium application developers are trapped.  Either they avoid networ
               |       |    |  |
       +-------|-------|----+--|------+
       |       v       |       v      |
-    +---+   +---+     |     +---+    |
-    |   |   |   |   +---+   |   |    |
+    +-+-+   +---+     |     +---+    |
+    |   |   |   |   +-+-+   |   |    |
     |   |   |   |   |   |   |   |    |
     +---+   +---+   |   |   +---+    |
               ^     +---+     ^      |
               |       ^       |    +-+
       +-------+-------+-------+    |
       |       |       |            |
-      v     +---+     v     +---+  |
+      v     +-+-+     v     +---+  |
     +---+   |   |   +---+   |   |  |
-    |   |   |   |<--|   |   |   |<-+
+    |   |   |   |<--+   |   |   |<-+
     |   |   +---+   |   |   +-+-+
     +---+           +---+
 
@@ -690,10 +692,10 @@ As you start to program with 0MQ you will come across one problem more than once
                  |
                  v
         +-----------------+        +------------------+
-        |     Do you      |        | Add sleep(1) to  |
-        |  close sockets  |        | give 0MQ time to |
-        |   right after   +------->| send. 0MQ/2.1    |
-        |  sending data?  | Yes    | will fix this.   |
+        |     Do you      |        | Before exiting,  |
+        |  close sockets  |        | do sleep (1).    |
+        |   right after   +------->| 0MQ/2.0 does not |
+        |  sending data?  | Yes    | flush. 2.1 will. |
         |             {o} |        |                  |
         +--------+--------+        +------------------+
                  | No                       ^
@@ -701,9 +703,9 @@ As you start to program with 0MQ you will come across one problem more than once
                  v                          |
         +-----------------+                 |
         |     Do you      |                 |
-        |  send messages  |                 |
-        |  and then exit  +-----------------+
-        |   immediately?  | Yes
+        |  exit the appl  |                 |
+        |   right after   +-----------------+
+        |  sending data?  | Yes
         |             {o} |
         +--------+--------+
                  | No
@@ -731,7 +733,7 @@ As you start to program with 0MQ you will come across one problem more than once
         |                 |        | With REQ, send and |
         |  Are you using  |        | recv in a loop and |
         |   REQ and REP   +------->| check the return   |
-        |     sockets?    | Yes    | codes.  With REP   |
+        |     sockets?    | Yes    | codes. With REP    |
         |             {o} |        | it's recv + send.  |
         +--------+--------+        +--------------------+
                  | No
@@ -791,9 +793,19 @@ As you start to program with 0MQ you will come across one problem more than once
         |                 |        | Check that the  |
         |  Are you using  |        | reply envelope  |
         |  XREP sockets?  +------->| is valid. 0MQ   |
-        |                 |        | drops messages  |
+        |                 | Yes    | drops messages  |
         |             {o} |        | it can't route. |
         +--------+--------+        +-----------------+
+                 | No
+                 |
+                 v
+        +-----------------+        +--------------------+
+        |                 |        | You probably have  |
+        | Are you losing  |        | a client running   |
+        |   one message   +------->| in the background. |
+        |    in two?      | Yes    | Kill it and start  |
+        |             {o} |        | again.             |
+        +--------+--------+        +--------------------+
                  | No
                  |
                  v
@@ -806,7 +818,7 @@ As you start to program with 0MQ you will come across one problem more than once
         +-----------------+
 
 
-                               Figure # - 0MQ Problem Solver
+                 Figure # - 0MQ Problem Solver
 [[/code]]
 
 +++ Warning - Unstable Paradigms!
@@ -820,3 +832,5 @@ Because your code, talking to a socket, can then handle any number of connection
 So the general assumption no longer applies.  As you read the code examples, your brain will try to map them to what you know.  You will read "socket" and think "ah, that represents a connection to another node".  That is wrong.  You will read "thread" and your brain will again think, "ah, a thread represents a connection to another node", and again your brain will be wrong.
 
 If you're reading this Guide for the first time, realize that until you actually write 0MQ code for a day or two (and maybe three or four days), you may feel confused, especially by how simple 0MQ makes things for you, and you may try to impose that general assumption on 0MQ, and it won't work.  And then you will experience your moment of enlightenment and trust, that //zap-pow-kaboom// satori paradigm-shift moment when it all becomes clear.
+
+ >> [/chapter:1 Continue reading Chapter Two of The Guide]

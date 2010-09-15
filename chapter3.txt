@@ -1,79 +1,263 @@
+.set SELF=chapter:3
 .output chapter3.wd
-.set SELF=docs:user-guide-3
-++ Chapter Three - Advanced Stuff
+++ Chapter Three - Advanced Request-Reply
 
 In Chapter Two we worked through the basics of using 0MQ by developing a series of small applications, each time exploring new aspects of 0MQ.  We'll continue this approach in this chapter, as we explore advanced aspects of 0MQ.
 
 We'll cover:
 
-* How to create and use message envelopes for pubsub and request-reply.
+* Transient vs durable sockets, identities, and queues.
+* How to do make durable subscribers that can recover from crashes.
+* Using the high-water mark (HWM) to protect against memory overflows.
+* How to create and use message envelopes for request-reply.
 * How the request-reply pattern works, in detail, including XREQ and XREP.
 * Automatic vs. manual reply addresses (using identities).
-* How to do reliable publish-subscribe that recovers from subscriber crashes.
-* Using the high-water mark (HWM) to protect against memory overflows.
 * How to do custom routing instead of 0MQ's load-balancing.
 
-+++ Message Envelopes
++++ Transient vs. Durable Sockets
 
-We looked briefly at multipart messages in Chapter Two.  Let's now look at their main use case, which is to create message envelopes.  An envelope is a way of safely packaging up data with an address, without touching the data itself.
+The concept of a durable socket is one more of those surprisingly obvious 0MQ inventions that when you see, you wonder why no-one ever thought of it before.  In classic networking, sockets are API objects, and their lifespan is never longer than the code that uses them.  But if you look at a socket you see that it collects a bunch of resources - network buffers - and at some stage, a 0MQ user asked, "isn't there some way these could hang around if my program crashes, so I can get them back?"
 
-0MQ has two main use cases for message envelopes:
+This turns out to be very useful.  It's not foolproof, but it gives 0MQ a kind of "better than a kick in the nuts" reliability, particularly for pubsub cases.  We'll look at that shortly.
 
-* In the pubsub pattern, where the envelope holds the subscription key for filtering.
-* In the reqrep pattern, where the envelope holds the return address for replies.
-
-In a high-performance world, we don't want to copy data.  The problem with traditional message framing is that to create a message composed of pieces, we have to copy stuff around, and this costs CPU cycles.  0MQ's multipart message format lets us work with a message in pieces, while using zero copy.  We send each field as a length-delimited frame.  To the application it looks like a series of send and recv calls.  But internally the multiple parts get written to the network and read back with single system calls, so it's very efficient.
-
-++++ Pubsub Message Envelopes
-
-If you want to use pubsub envelopes, you make them yourself.  It's optional, and in previous pubsub examples we didn't do this.  Using a pubsub envelope is a little more work for simple cases but it's cleaner especially for real cases, where the key and the data are naturally separate things.  It's also faster, if you are writing the data directly from an application buffer.
-
-Here is what a publish-subscribe message with an envelope looks like:
+Here is the general model of two sockets happily chatting about the weather, and who kissed who and where and when precisely, cause I heard something different, at the last staff party, not to mention did you see that new family up the road who do they think they are with that car and what's with the prices at the shops these days don't they know it's a crisis?
 
 [[code type="textdiagram"]]
-            +-------------+
-  Frame 1   |     Key     |     This is the envelope
-            +-------------+---------------------------+
-  Frame 2   |     Data                                |
-            +-----------------------------------------+
+        +-----------+
+        |           |
+        |  Sender   |
+        |           |
+        +-----------+
+        |  Socket   |
+        \-----------/
+         +---------+
+         +---------+
+         +---------+    0MQ Transmit buffer
+         +---------+
+         +---------+
+              |
+              |
+              v
+         +---------+
+         +---------+    Network I/O buffers
+         +---------+
+              |
+              |
+              v
+         +---------+
+         +---------+
+         +---------+    0MQ Receive buffer
+         +---------+
+         +---------+
+        /-----------\
+        |  Socket   |
+        +-----------+
+        |           |
+        | Receiver  |
+        |           |
+        +-----------+
 
 
-           Figure # - Multipart pubsub message
+Figure # - Sender boring the pants of receiver
 [[/code]]
 
-Recall that pubsub matches messages based on the prefix.  Putting the key into a separate frame makes the matching very obvious, since there is no chance an application will accidentally match on part of the data.
+What durable sockets give you is the promise that the 0MQ //transmit buffer// is kept alive as long as the sender exists.  If the receiver crashes, it will lose its receive buffer, and the network will lose its I/O buffers, but the sender can continue to push data into its transmit buffer and the receiver can then pick this up.
 
-Here is a minimalist example of how pubsub envelopes look in code.  This publisher sends messages of two types, A and B.  The envelope holds the message type:
+Note that 0MQ's transmit and receive buffers are invisible and automatic, just like TCP's buffers are.
 
-[[code type="C" title="Pubsub envelope publisher" name="psenvpub"]]
+All the sockets we've used so far were transient.  To turn a transient socket into a durable one you give it an explicit //identity//.  All 0MQ sockets have identities but by default they are generated 'unique universal identifiers' (UUIDs) that the peer uses to recall who it's talking to.
+
+Behind the scenes, and invisibly to you, when one socket connects to another, the two sockets exchange identities.  Normally sockets don't tell their peers their identity, so peers invent random identities for each other:
+
+[[code type="textdiagram"]]
+        +-----------+
+        |           |
+        | Receiver  |
+        |           |
+        +-----------+
+        |  Socket   |
+        \-----------/
+              |  "Not telling you my name!"
+              |
+              |
+              v  "Fine, I'll call you Luv"
+        /-----------\
+        |  Socket   |
+        +-----------+
+        |           |
+        |  Sender   |
+        |           |
+        +-----------+
+
+
+         Figure # - Transient socket
 [[/code]]
 
-The subscriber only wants messages of type B:
+But a socket can also tell the other its identity, and then the next time the two meet, it'll be "so as I was saying what I heard was quite different but anyhow you know how it goes at the office, they're all tattletales I'd never say anything about anyone that wasn't true or at least based on a sure thing".
 
-[[code type="C" title="Pubsub envelope subscriber" name="psenvsub"]]
+[[code type="textdiagram"]]
+        +-----------+
+        |           |
+        | Receiver  |
+        |           |
+        +-----------+
+        |  Socket   |
+        \-----------/
+              |  "My name's Lucy"
+              |
+              |
+              v  "Lucy! Nice to see you again..."
+        /-----------\
+        |  Socket   |
+        +-----------+
+        |           |
+        |  Sender   |
+        |           |
+        +-----------+
+
+
+       Figure # - Durable socket aka. Can't Escape
 [[/code]]
 
-When you run the two programs, the subscriber should show you this:
+Here's how you set the identity of a socket, to create a durable socket:
 
 [[code]]
-[B] We would like to see this
-[B] We would like to see this
-[B] We would like to see this
-[B] We would like to see this
-...
+zmq_setsockopt (socket, ZMQ_IDENTITY, "Lucy", 4);
 [[/code]]
 
-This examples shows that the subscription filter rejects or accepts the entire multipart message (key plus data).  You won't get part of a multipart message, ever.
+Some comments on setting a socket identity:
 
-++++ Request-Reply Message Envelopes
+* If you want to set an identity you must do it //before// connecting or binding the socket.
+* Identities are binary strings: identities starting with a zero byte are reserved for 0MQ use.
+* Do not use the same identity for more than one socket.  On 0MQ/2.0.9 and earlier versions this will cause an assertion failure in the //other// socket.  Yes, that's a bug, and yes, it'll be fixed.
+* Do not modify the identity of a socket after binding, or if you restart a peer, this will cause an assertion failure in sockets connected to it.  Yes, that's also a bug and yes, it'll also be fixed.
+* Do not use random identities in applications that create lots of sockets.  What this will do is cause lots and lots of durable sockets to pile up, eventually crashing nodes.
 
-For the request-reply case, 0MQ always creates and uses envelopes and you don't need to understand how they work to use them.  Firstly, when you use REQ and REP, your sockets build and use envelopes automatically.  Second, when you write a device, and we covered this in the last chapter, you just need to read and write all the parts of a message, which means envelopes are safely copied from input socket to output socket.
+See zmq_setsockopt[3] for a summary of the ZMQ_IDENTITY socket option.
 
-However, getting under the hood and playing with request-reply envelopes is profitable.  It's time to explain how XREP works, in terms of envelopes:
+About these assertion failures, 0MQ shouldn't assert when it's misused, only when it thinks it's actually hitting an internal bug.  Code should be full of assertions that //never// fail.  There are ongoing discussions about how these situations should be handled.  As a general rule, if you get assertions while using 0MQ, report them to the zeromq-dev list.
 
-* When you receive a message from an XREP socket, it shoves a brown paper envelope around the message and scribbles on with indelible ink, "This came from Joe Blogs".  Then it gives that to you.  That is, the XREP socket gives you what came off the wire, wrapped up in an envelope with the reply address on it.
++++ Making a (Semi-)Durable Subscriber
 
-* when you send a message to an XREP socket, it rips off that brown paper envelope, tries to read its own handwriting, and if it knows who "Joe Blogs" is, sends the contents back to Joe.  That is the reverse process of receiving a message.
+Identities work on all socket types.  If you have a PUB and a SUB socket, and the subscriber gives the publisher its identity, the publisher holds onto data until it can deliver it to the subscriber.
+
+This is both wonderful and terrible at the same time.  It's wonderful because it means updates can wait for you in the publisher's transmit buffer, until you connect and collect them.  It's terrible because by default this will rapidly kill a publisher and lock up your system.
+
+**If you use durable subscriber sockets (i.e. if you set the identity on a SUB socket) you //must// also guard against queue explosion by using the //high water mark// or HWM, on the publisher socket.**
+
+If you want to prove this, take the wuclient and wuserver from Chapter 1, and add this line to the wuclient before it connects:
+
+[[code]]
+    zmq_setsockopt (subscriber, ZMQ_IDENTITY, "Hello", 5);
+[[/code]]
+
+Build and run the two programs.  It all looks normal.  But keep an eye on the memory used by the publisher, and you'll see that as the subscriber finishes, the publisher memory grows and grows.  If you restart the subscriber, the publisher queues stop growing.  As soon as the subscriber goes away, they grow again.  It'll rapidly overwhelm your system.
+
+We'll first look at how to do this, and then at how to do it properly.  Here are a publisher and subscriber that use the 'node coordination' technique from Chapter 2 to synchronize.  The publisher then sends ten messages, waiting a second between each one.  That wait is for you to kill the subscriber using Ctrl-C, wait a few seconds, and restart it.
+
+Here's the publisher:
+
+[[code type="C" title="Durable publisher" name="durapub"]]
+[[/code]]
+
+And here's the subscriber:
+
+[[code type="C" title="Durable subscriber" name="durasub"]]
+[[/code]]
+
+To run this, start the publisher, then the subscriber, each in their own window.  Allow the subscriber to collect one or two messages, then Ctrl-C it.  Count to three, and restart it.  What you will see is something like this:
+
+[[code]]
+$ durasub
+Update 0
+Update 1
+Update 2
+^C
+$ durasub
+Update 3
+Update 4
+Update 5
+Update 6
+Update 7
+^C
+$ durasub
+Update 8
+Update 9
+END
+[[/code]]
+
+Just to see the difference, comment out the line in the subscriber that sets the socket identity, and try again.  You will see that it loses messages.  Setting an identity turns a transient subscriber into a durable subscriber.  You would in practice want to choose identities carefully, either taking them from configuration files, or generating UUIDs and storing them somewhere.
+
+When we set a high-water mark on the PUB socket, the publisher stores that many messages, but no more.  Let's test this by setting the publisher HWM to 2 messages, before we start publishing to the socket:
+
+[[code]]
+uint64_t hwm = 2;
+zmq_setsockopt (publisher, ZMQ_HWM, &hwm, sizeof (hwm));
+[[/code]]
+
+Now running our test, killing and restarting the subscriber after a couple of seconds' pause will show something like this:
+
+[[code]]
+$ durasub
+Update 0
+Update 1
+^C
+$ durasub
+Update 2
+Update 3
+Update 7
+Update 8
+Update 9
+END
+[[/code]]
+
+Look carefully: we have two messages kept for us (2 and 3), then a gap of several messages, and then new updates again.  The HWM causes 0MQ to drop messages it can't put onto the queue, something the 0MQ Reference Manual calls an "exceptional condition".
+
+In short, if you use subscriber identities, you must set the high-water mark on publisher sockets, or else you risk servers that run out of memory and crash.  However, there is a way out.  0MQ provides something called a "swap", which is a disk file that holds messages we can't store to the queue.  It is very simple to enable:
+
+[[code]]
+//  Specify swap space in bytes
+uint64_t swap = 25000000;
+zmq_setsockopt (publisher, ZMQ_SWAP, &swap, sizeof (swap));
+[[/code]]
+
+We can put this together to make a cynical publisher that is immune to slow, blocked, or absent subscribers while still offering durable subscriptions to those that need it:
+
+[[code type="C" title="Durable but cynical publisher" name="durapub2"]]
+[[/code]]
+
+In practice, setting the HWM to 1 and shoving everything to disk will make a pubsub system very slow.  Here is a more reasonable 'best practice' for publishers that have to deal with unknown subscribers:
+
+* Always set a HWM on the socket, based on the expected maximum number of subscribers, the amount of memory you are willing to dedicated to queuing, and the average size of a message.  For example if you expect up to 5,000 subscribers, and have 1GB of memory to play with, and messages of ~200 bytes, then a safe HWM would be (1,000,000,000 / 200 / 5,000) = 1,000.
+* If you don't want slow or crashing subscribers to lose data, set a SWAP that's large enough to handle the peaks, based on the number of subscribers, peak message rate, average size of messages, and time you want to cover.  For example with 5,000 subscribers and messages of ~200 bytes coming in at 100,000 per second, you will need up to 100MB of disk space per second.  To cover an outage of up to 1 minute, therefore, you'd need 6GB of disk space, and it would have to be fast, but that's a different story.
+
+Some notes on durable subscribers:
+
+* Depending on how the subscriber dies, and the frequency of updates, and the size of network buffers, and the transport protocol you are using, data may be lost.  Durable subscribers will have //much better// reliability than transient ones, but they will not be perfect.
+
+* The SWAP file is not recoverable, so if a publisher dies and restarts, it will lose data that was in its transmit buffers, and that was in the network I/O buffers.
+
+Some notes on using the HWM option:
+
+* This affects both the transmit and receive buffers of a single socket.  Some sockets (PUB, PUSH) only have transmit buffers.  Some (SUB, PULL, REQ, REP) only have receive buffers.  Some (XREQ, XREP, PAIR) have both transmit and receive buffers.
+
+* Future versions of 0MQ might offer high-water marks on transmit and receive buffers separately.  However this isn't something people seem particularly worried about.
+
+* When your socket reaches its high-water mark, it will either block or drop data depending on the socket type.  PUB sockets will drop data if they reach their high-water mark, while other socket types will block.
+
++++ Request-Reply Envelopes
+
+We looked briefly at multipart messages in Chapter Two.  Let's now look at what we use them most often, which is to create //message envelopes//.  An envelope is a way of safely packaging up data with an address, without touching the data itself.
+
+In the request-reply pattern, the envelope holds the return address for replies.  It is how a 0MQ network with no state can create round-trip request-reply dialogs.
+
+You don't in fact need to understand how request-reply envelopes work to use them for common cases.  When you use REQ and REP, your sockets build and use envelopes automatically.  When you write a device, and we covered this in the last chapter, you just need to read and write all the parts of a message.  0MQ implements envelopes using multipart data, so if you copy multipart data safely, you implicitly copy envelopes too.
+
+However, getting under the hood and playing with request-reply envelopes is necessary for advanced request-reply work.  It's time to explain how XREP works, in terms of envelopes:
+
+* When you receive a message from an XREP socket, it shoves a brown paper envelope around the message and scribbles on with indelible ink, "This came from Lucy".  Then it gives that to you.  That is, the XREP socket gives you what came off the wire, wrapped up in an envelope with the reply address on it.
+
+* when you send a message to an XREP socket, it rips off that brown paper envelope, tries to read its own handwriting, and if it knows who "Lucy" is, sends the contents back to Lucy.  That is the reverse process of receiving a message.
 
 If you leave the brown envelope alone, and then pass that message to another XREP socket (e.g. by sending to an XREQ connected to an XREP), the second XREP socket will in turn stick another brown envelope on it, and scribble the name of that XREQ on it.
 
@@ -143,11 +327,9 @@ Here now is a more detailed explanation of the four socket types we use for requ
 
 REP requires that the envelopes end with an empty message part.  If you're not using REQ at the other end of the chain then you must add the empty message part yourself.
 
-+++ Identities
+So the obvious question about XREP is, where does it get the reply addresses from? And the obvious answer is, it uses the socket's identity.  As we already learned, a socket can be transient in which case the //other// socket (XREP in this case) generates an identity that it can associate with the socket.  Or, the socket can be durable in which case it explicitly tells the other socket (XREP, again) its identity and XREP can use that rather than generating a temporary label.
 
-One thing we didn't explain about XREP.  Where does it get the reply addresses from?  If you read the reference manual for zmq_setsockopt[3] you'll see a discussion of 'identities'.  You can set the identity of any socket.  In some cases, such as XREP, 0MQ will use temporary identities if the socket is anonymous, i.e. has no explicit identity.
-
-Behind the scenes, invisibly to you, every time a socket connects to another socket, the two sockets exchange identities.  Thus an XREP socket knows the identity of the REQ socket that sends it a request, and it uses this identity as the reply address.  If the REQ socket is anonymous, it has an empty identity and the XREP socket generates a universally unique identifier (UUID) and uses that as the identity for the socket connection.
+This is what it looks like for transient sockets:
 
 [[code type="textdiagram"]]
         +-----------+
@@ -169,24 +351,24 @@ Behind the scenes, invisibly to you, every time a socket connects to another soc
         +-----------+       +---------+
 
 
-             Figure # - XREP uses UUID if no identity set
+          Figure # - XREP invents a UUID for transient sockets
 [[/code]]
 
-However if you set the identity explicitly on the REQ socket, it tells the XREP socket this:
+This is what it looks like for durable sockets:
 
 [[code type="textdiagram"]]
         +-----------+
         |           |       zmq_setsockopt (socket,
-        |   Client  |           ZMQ_IDENTITY, "Hello", 5);
+        |   Client  |           ZMQ_IDENTITY, "Lucy", 4);
         |           |
         +-----------+       +---------+
         |    REQ    |       |  Data   |     Client sends this
         \-----------/       +---------+
               |
-              | "My identity is 'Hello'"
+              |  "Hi, my name is Lucy"
               v
         /-----------\       +---------+
-        |   XREP    |       | 'Hello' |     XREP uses identity of
+        |   XREP    |       | 'Lucy'  |     XREP uses identity of
         +-----------+       +-+-------+     client as reply address
         |           |       | |
         |  Service  |       +-+-------+
@@ -194,10 +376,10 @@ However if you set the identity explicitly on the REQ socket, it tells the XREP 
         +-----------+       +---------+
 
 
-                   Figure # - XREP uses identity when set
+           Figure # - XREP uses identity if it knows it
 [[/code]]
 
-**If you set an identity you must do this before connecting the socket.**  Let's observe the above two cases in practice.  This program dumps the contents of the message parts that an XREP socket receives from two REP sockets, one not using identities, and one using an identity 'Hello':
+Let's observe the above two cases in practice.  This program dumps the contents of the message parts that an XREP socket receives from two REP sockets, one not using identities, and one using an identity 'Hello':
 
 [[code type="C" title="Identity check" name="identity"]]
 [[/code]]
@@ -215,110 +397,18 @@ Here is what the dump function prints:
 [038] XREP socket uses REQ's socket identity
 [[/code]]
 
-**Warning**
-
-0MQ/2.0.9 and earlier versions crash with assertions if you connect via two sockets using the same identity, e.g. if two subscribers connect to a publisher using the same identity.  0MQ will also crash if you change the identity of a peer and restart it, while there are other peers connected to it.  There are ongoing discussions about how these situations should be handled.  As a general rule, if you get assertions while using 0MQ, report them to the zeromq-dev list.
-
-+++ Durable Subscribers
-
-Identities work on all socket types.  Setting an identity on a SUB socket creates a durable subscriber.  This is a subscriber that exists even if the program handling it has gone away for a while.
-
-This is both wonderful and terrible at the same time.  It's wonderful because it means updates can wait for you in a queue somewhere, until you connect and collect them.  It's terrible because that's a classic way of killing publishers: queues that grow and grow and then eat all available memory.
-
-We'll first look at how to do this, and then at how to do it properly.  Here are a publisher and subscriber that use the 'node coordination' technique from Chapter 2 to synchronize.  The publisher then sends ten messages, waiting a second between each one.  That wait is for you to kill the subscriber using Ctrl-C, wait a few seconds, and restart it.
-
-Here's the publisher:
-
-[[code type="C" title="Durable publisher" name="durapub"]]
-[[/code]]
-
-And here's the subscriber:
-
-[[code type="C" title="Durable subscriber" name="durasub"]]
-[[/code]]
-
-To run this, start the publisher, then the subscriber, each in their own window.  Allow the subscriber to collect one or two messages, then Ctrl-C it.  Count to three, and restart it.  What you will see is something like this:
-
-[[code]]
-$ durasub
-Update 0
-Update 1
-Update 2
-^C
-$ durasub
-Update 3
-Update 4
-Update 5
-Update 6
-Update 7
-^C
-$ durasub
-Update 8
-Update 9
-END
-[[/code]]
-
-Just to see the difference, comment out the line in the subscriber that sets the socket identity, and try again.  You will see that it loses messages.  Setting an identity turns a transient subscriber into a durable subscriber.  You would in practice want to choose identities carefully, perhaps using a UUID, since using the same identity for two clients does not do nice things (it provokes an assertion failure in xrep.cpp:60).
-
-So when we set a socket identity, the server holds onto messages until it can deliver them to the subscriber.  This will rapidly kill the server in high-volume scenarios.  The way to do this properly is tell the server "only keep so many messages for me", which we do by setting the high-water mark (HWM) on the //publisher// socket.
-
-Incidentally, publishers will also queue messages for subscribers that are connected over TCP, and that are just a little slow in reading them.  To protect against the "slow consumer" problem it's wise to //always// set a high-water mark on a PUB socket that's used in anger.
-
-Let's test this by setting the publisher HWM to 2 messages, before we start publishing to the socket:
-
-[[code]]
-uint64_t hwm = 2;
-zmq_setsockopt (publisher, ZMQ_HWM, &hwm, sizeof (hwm));
-[[/code]]
-
-Now running our test, killing and restarting the subscriber after a couple of seconds' pause will show something like this:
-
-[[code]]
-$ durasub
-Update 0
-Update 1
-^C
-$ durasub
-Update 2
-Update 3
-Update 7
-Update 8
-Update 9
-END
-[[/code]]
-
-Look carefully: we have two messages kept for us (2 and 3), then a gap of several messages, and then new updates again.  The HWM causes 0MQ to drop messages it can't put onto the queue, something the 0MQ Reference Manual calls an "exceptional condition".
-
-In short, if you use subscriber identities, you must set the high-water mark on publisher sockets, or else you risk servers that run out of memory and crash.  However, there is a way out.  0MQ provides something called a "swap", which is a disk file that holds messages we can't store to the queue.  It is very simple to enable:
-
-[[code]]
-//  Specify swap space in bytes
-uint64_t swap = 25000000;
-zmq_setsockopt (publisher, ZMQ_SWAP, &swap, sizeof (swap));
-[[/code]]
-
-We can put this together to make a cynical publisher that is immune to slow, blocked, or absent subscribers while still offering durable subscriptions to those that need it:
-
-[[code type="C" title="Durable but cynical publisher" name="durapub2"]]
-[[/code]]
-
-In practice, setting the HWM to 1 and shoving everything to disk will make a pubsub system slow.  Here is a more reasonable 'best practice' for publishers that have to deal with unknown subscribers:
-
-* Always set a HWM on the socket, based on the expected maximum number of subscribers, the amount of memory you are willing to dedicated to queuing, and the average size of a message.  For example if you expect up to 5,000 subscribers, and have 1GB of memory to play with, and messages of ~200 bytes, then a safe HWM would be (1,000,000,000 / 200 / 5,000) = 1,000.
-* If you don't want slow or crashing subscribers to lose data, set a SWAP that's large enough to handle the peaks, based on the number of subscribers, peak message rate, average size of messages, and time you want to cover.  For example with 5,000 subscribers and messages of ~200 bytes coming in at 100,000 per second, you will need up to 100MB of disk space per second.  To cover an outage of up to 1 minute, therefore, you'd need 6GB of disk space, and it would have to be fast, but that's a different story.
-
 +++ Custom Request-Reply Routing
 
 We already saw that XREP uses the message envelope to decide which client to route a reply back to.  Now let me express that in another way: //XREP will route messages asynchronously to any peer connected to it, if you provide the correct routing address via a properly constructed envelope.//
 
 So XREP is really a fully controllable router.  Let's look at this magic in detail.  But first, let's fix the parsing pain we feel when we try to distinguish "REP", "REQ", "XREP", and "XREQ" from each other.  There should be a law against names that are so similar. :-)
 
-For readability, and because we're going to go off-road into some rough terrain now, let's rename these four socket types just for this section of the text:
+For readability, and because we're going to go off-road into some rough and possibly illegal terrain now, let's rename these four socket types just for this section of the text:
 
-* REQ is a MAMA socket, doesn't listen but always expects an answer.
-* REP is a PAPA socket, always answers, but never starts a conversation.
-* XREQ is a DEALER socket, shuffling messages to and fro.
-* XREP is a ROUTER socket, able to route messages to specific peers.
+* REQ is a **mama** socket, doesn't listen but always expects an answer.
+* REP is a **papa** socket, always answers, but never starts a conversation.
+* XREQ is a **dealer** socket, shuffling messages to and fro.
+* XREP is a **router** socket, able to route messages to specific peers.
 
 The thing about Mama sockets is, as we all learned as kids, you can't speak until spoken to.  Mamas do not have simple open-mindedness of papas, nor the ambiguous "sure, whatever" shrugged-shoulder aloofness of a dealer.  So to speak to a mama socket, you have to get the mama socket to talk to you first.  The good part is mamas don't care if you reply now, or much later.  Just bring a good sob story and a bag of laundry.
 
@@ -326,25 +416,32 @@ Papa sockets on the other hand are strong and silent, and pedantic.  They do jus
 
 While we usually think of request-reply as a to-and-fro pattern, in fact it can be fully asynchronous, as long as we understand that any mamas or papas will be at the end of a chain, never in the middle of it, and always synchronous.  All we need to know is the address of the peer we want to talk to, and then we can then send it messages asynchronously, via a router.  The router is the one and only 0MQ socket type capable of being told "send this message to X" where X is the address of a connected peer.
 
-These are the ways we can know the address to send a message to:
+These are the ways we can know the address to send a message to, and you'll see most of these used in the examples of custom request-reply routing:
 
 * If it's an anonymous peer, i.e. did not set any identity, the router will generate a UUID and use that to refer to the connection when it delivers you an incoming request envelope.
 * If it is a peer with explicit identity, the router will give that identity when it delivers you an incoming request envelope.
 * Peers with explicit identities can send them via some other mechanism, e.g. via some other sockets.
 * Peers can have prior knowledge of each others' identities, e.g. via configuration files or some other magic.
 
-You'll see most of these used in the examples of custom request-reply routing.
-
-There are four custom routing patterns, one for each of the socket types we can connect to a router:
+There are three custom routing patterns, one for each of the socket types we can connect to a router:
 
 * Router-to-dealer, also called XREP-to-XREQ.
 * Router-to-mama, aka XREP-to-REQ.
 * Router-to-papa, aka XREP-to-REP.
-* Router-to-router, aka XREP-to-XREP.
 
-In each of these cases we have total control over how we route messages, but the different patterns cover different use cases and message flows.  Let's break it down...
+You might be tempted to try to connect a router to a router but since request-reply is essentially asymmetric, that really makes no sense.  In the advanced cases we'll see we do router-to-router routing by creating two asymmetric connections rather than one bidirectional connection.
 
-++++ Router-to-Dealer
+In each of these cases we have total control over how we route messages, but the different patterns cover different use cases and message flows.  Let's break it down over the next sections with examples of different routing algorithms.
+
+But first some warnings about custom routing:
+
+* This goes against a fairly solid 0MQ rule: delegate peer addressing to the socket.  The only reason we do it is because 0MQ lacks a wide range of routing algorithms.
+* Future versions of 0MQ will probably do some of the routing we're going to build here.  That means the code we design now may break, or become redundant in the future.
+* While the built-in routing has certain guarantees of scalability, such as being friendly to devices, custom routing doesn't.  You will need to make your own devices.
+
+So overall, custom routing is more expensive and more fragile than delegating this to 0MQ.  Only do it if you need it.  Having said that, let's jump in, the water's great!
+
++++ Random Scatter Routing
 
 The router-to-dealer pattern is the simplest.  You connect one router to many dealers, and then distribute messages to the dealers using any algorithm you like.  The dealers can be sinks (process the messages without any response), proxies (send the messages on to other nodes), or services (send back replies).
 
@@ -360,7 +457,7 @@ We'll make an example where the dealers don't talk back, they're pure sinks.  Ou
           |   Client    |   Send to "A" or "B"
           |             |
           +-------------+
-          |   ROUTER    |   Ok, it's really XREP
+          |   ROUTER    |   OK, it's really XREP
           \-------------/
                  |
                  |
@@ -388,7 +485,7 @@ Here's code that shows how this works:
 
 Some comments on this code:
 
-* Since the router does not know when the dealers are ready, and it would be distracting in our example to add in the signalling for that, the router just does a "sleep (1)" after starting the dealer threads.
+* The router doesn't know when the dealers are ready, and it would be distracting for our example to add in the signaling to do that.  So the router just does a "sleep (1)" after starting the dealer threads.
 
 To route to a dealer, we create an envelope like this:
 
@@ -409,7 +506,7 @@ Something to note: if you use an invalid address, the router discards the messag
 
 Dealers look a bit like PULL sockets here and in fact they work exactly as PUSH and PULL combined.  It's illegal to connect PULL or PUSH to a request-reply socket, and pointless, so don't do it.
 
-++++ Router-to-Mama
++++ Least-Recently Used Routing
 
 Like we said, Mamas don't listen to you, and if you try to speak out of turn they'll ignore you.  You have to wait for them to say something, //then// you can give a sarcastic answer.  This is very useful for routing because it means we can keep a bunch of mamas waiting for answers.  In effect, mamas tell us when they're ready.
 
@@ -429,7 +526,7 @@ Like dealers, mamas can only talk to one router and since mamas always start by 
           |   Client    |   Send to "A" or "B"
           |             |
           +-------------+
-          |   ROUTER    |   Ok, it's really XREP
+          |   ROUTER    |   OK, it's really XREP
           \-------------/
                  ^
                  |  (1) Mama says Hi
@@ -476,7 +573,9 @@ Processed: 10 tasks
 Some comments on this code
 
 * We don't need any settle time, since the mamas explicitly tell the router when they are ready.
-* We're generating our own identities here, as printable strings, using the zhelpers.h s_set_id function.  That's just to make our life a little simpler.  In a realistic application the mamas could be fully anonymous and then you'd not use the zhelpers s_recv() call but call zmq_recv() directly.
+* We're generating our own identities here, as printable strings, using the zhelpers.h s_set_id function.  That's just to make our life a little simpler.  In a realistic application the mamas would be fully anonymous and then you'd call zmq_recv[3] and zmq_send[3] directly instead of the zhelpers s_recv() and s_send() functions, which can only handle strings.
+* Worse, we're using //random// identities.  Don't do this in real code, please.  Randomized durable sockets are not good in real life.
+* If you copy and paste example code without understanding it, you deserve what you get.  It's like watching Spiderman leap off the roof and then trying that yourself.
 
 To route to a mama, we must create a mama-friendly envelope like this:
 
@@ -493,7 +592,7 @@ To route to a mama, we must create a mama-friendly envelope like this:
        Figure # - Routing envelope for mama
 [[/code]]
 
-++++ Router-to-Papa
++++ Address-based Routing
 
 Papas are, if we care about them at all, only there to answer questions.  And to pay the bills, fix the car when mama drives it into the garage wall, put up shelves, and walk the dog when it's raining.  But apart from that, papas are only there to answer questions.
 
@@ -501,12 +600,12 @@ In a classic request-reply pattern a router wouldn't talk to a papa socket at al
 
 It's worth remembering with 0MQ that the classic patterns are the ones that work best, that the beaten path is there for a reason, and that when we go off-road we take the risk of falling off cliffs and getting eaten by zombies.  Having said that, let's plug a router into a papa and see what the heck emerges.
 
-The special thing about papas, all joking aside, is two things:
+The special thing about papas, all joking aside, is actually two things:
 
 * One, they are strictly lockstep request-reply.
 * Two, they accept an envelope stack of any size and will return that intact.
 
-In the normal request-reply pattern, papas are anonymous and replaceable (wow, these analogies are scary), but we're learning about custom routing.  So, in our use case we have reason to send a request to papa A rather than papa B.  This is essential if you want to keep some kind of a conversation going between you, at one end of a large network, and a papa sitting somewhere far away.
+In the normal request-reply pattern, papas are anonymous and replaceable (wow, these analogies //are// scary), but we're learning about custom routing.  So, in our use case we have reason to send a request to papa A rather than papa B.  This is essential if you want to keep some kind of a conversation going between you, at one end of a large network, and a papa sitting somewhere far away.
 
 A core philosophy of 0MQ is that the edges are smart and many, and the middle is vast and dumb.  This does mean the edges can address each other, and this also means we want to know how to reach a given papa.  Doing routing across multiple hops is something we'll look at later but for now we'll look just at the final step: a router talking to a specific papa:
 
@@ -593,13 +692,9 @@ To route to a papa, we must create a papa-friendly envelope like this:
        Figure # - Routing envelope for papa
 [[/code]]
 
-++++ Router-to-Router
++++ A Generic Routing Device
 
-Routers talking to routers is fairly hard to grok.  Let's skip the topic for now and come back to it later, when we have a concrete use case.
-
-++++ A Custom Routing Queue Device
-
-In this section we'll take all the knowledge we have so far about doing weird stuff with 0MQ message envelopes, and build the core of a generic custom routing queue device.  Sorry for all the buzzwords.  What we'll make is a queue device that connects a bunch of clients to a bunch of workers, and lets you use any routing algorithm you want.  What we'll do is least-recently used, since it's obvious use case.
+We'll recap the knowledge we have so far about doing weird stuff with 0MQ message envelopes, and build the core of a generic custom routing queue device.  Sorry for all the buzzwords.  What we'll make is a //queue device// that connects a bunch of //clients// to a bunch of //workers//, and lets you use //any routing algorithm// you want.  What we'll do is //least-recently used//, since it's the most obvious use case apart from load-balancing.
 
 To start with, let's look back at the classic request-reply pattern and then see how it extends over a larger and larger service-oriented network.  The basic pattern is:
 
@@ -705,7 +800,7 @@ We can now walk through a full request-reply chain from client to worker and bac
              +---+-------+
 
 
-       Figure # - Message that client sends
+    Figure # - Message that client sends
 [[/code]]
 
 What the queue gets, when reading off the router frontend socket is this:
@@ -720,7 +815,7 @@ What the queue gets, when reading off the router frontend socket is this:
              +---+-------+
 
 
-          Figure # - Message coming in on frontend
+       Figure # - Message coming in on frontend
 [[/code]]
 
 The queue device sends this to the worker, prefixed by the address of the worker, taken from the LRU queue, plus an additional empty part to keep the mama at the other end happy:
@@ -739,7 +834,7 @@ The queue device sends this to the worker, prefixed by the address of the worker
              +---+-------+
 
 
-              Figure # - Message sent to backend
+          Figure # - Message sent to backend
 [[/code]]
 
 This complex envelope stack gets chewed up first by the backend router socket, which removes the first frame.  Then the mama socket in the worker removes the empty part, and provides the rest to the worker:
@@ -754,7 +849,7 @@ This complex envelope stack gets chewed up first by the backend router socket, w
              +---+-------+
 
 
-            Figure # - Message delivered to worker
+        Figure # - Message delivered to worker
 [[/code]]
 
 Which is exactly the same as what the queue received on its frontend router socket.  The worker has to save the envelope (which is all the parts up to and including the empty message part) and then it can do what's needed with the data part.
@@ -774,6 +869,236 @@ You should now see that you can extend the LRU algorithm with variations based o
 
 .end
 
++++ Router-to-Router Connections
+
+Our last case, router sockets talking to router sockets, is complex.  If the other peer is a sink, you'd just use a dealer.  If the other peer talks back but doesn't do routing, again a dealer would be enough.  So router-to-router only makes sense if the other router is going to talk back to you, and has to route between multiple "YOUs".  The difficulty is that routers can't initiate a dialog, only respond to one, because they need to know the identity of the peer they should speak to.  If two routers are both sitting waiting for the other to initiate a dialog... well, you see the problem.
+
+We'll find a way to do this, but let's make it concrete with a realistic use case that we'll then solve.
+
+We're going to build a large cloud computing facility (or rather, a tiny simulation of a large cloud).  It's composed of data centers that each have a bunch of workers and a bunch of clients.  The workers are fast boxes able to compute results.  The clients collect jobs from the outside world, pass them to workers and send the replies back out.
+
+We don't connect clients and workers to each other because that makes it painful to add or remove clients and workers dynamically.  So our basic model consists of the generic router-to-mama routing device we just built:
+
+[[code type="textdiagram"]]
+    +--------+  +--------+  +--------+
+    | Client |  | Client |  | Client |
+    +--------+  +--------+  +--------+
+    |  Mama  |  |  Mama  |  |  Mama  |
+    +--------+  +--------+  +--------+
+        |           |           |
+        +-----------+-----------+
+                    |
+              +------------+
+              |   Router   |
+              +------------+
+              | LRU Queue  |
+              +------------+
+              |   Router   |
+              +------------+
+                    |
+        +-----------+-----------+
+        |           |           |
+    +--------+  +--------+  +--------+
+    |  Mama  |  |  Mama  |  |  Mama  |
+    +--------+  +--------+  +--------+
+    | Worker |  | Worker |  | Worker |
+    +--------+  +--------+  +--------+
+
+
+    Figure # - Datacenter Architecture
+[[/code]]
+
+Now we scale this out to more than one data center.  Let's illustrate with two data centers, the most common case (one primary, one backup), but keep in mind that we want to solve the problem for N data centers, not just two.  Each data center has a set of clients and workers, and a router that joins these together as a LRU queue:
+
+[[code type="textdiagram"]]
+
+    Primary Data Center     :     Backup Data Center
+                            :
+                            :
+    +---+  +---+  +---+     :     +---+  +---+  +---+
+    | C |  | C |  | C |     :     | C |  | C |  | C |
+    +---+  +---+  +---+     :     +---+  +---+  +---+
+      |      |      |       :       |      |      |
+      |      |      |       :       |      |      |
+    +-----------------+     :     +-----------------+
+    |     Router      |     :     |     Router      |
+    +-----------------+     :     +-----------------+
+      |      |      |       :       |      |      |
+      |      |      |       :       |      |      |
+    +---+  +---+  +---+     :     +---+  +---+  +---+
+    | W |  | W |  | W |     :     | W |  | W |  | W |
+    +---+  +---+  +---+     :     +---+  +---+  +---+
+                            :
+
+        Figure # - Primary and Backup Datacenters
+[[/code]]
+
+The question is: how do we get the clients of each data center talking to the workers of the other data center?  There are a few possibilities, each with pros and cons:
+
+* Clients could connect directly to both routers.  The advantage is that we don't need to modify routers or workers.  But clients get more complex, and become aware of the overall topology.  If we want to add, e.g. a third or forth data center, all the clients are affected.  In effect we have to move routing and failover logic into the clients and that's not nice.
+* Workers might connect directly to both routers.  But mama workers can't do that, they can only reply to one router.  We might use papas but papas don't give us customizable router-to-worker routing like LRU, only the built-in load balancing.  That's a fail, if we want to distribute work to idle workers: we precisely need LRU.  One solution would be to use router sockets for the worker nodes.  Let's label this "Idea #1".
+* Routers could connect to each other.  This looks neatest because it creates the fewest additional connections.  We can't add data centers on the fly but that is probably out of scope.  Now clients and workers remain ignorant of the real network topology, and routers tell each other when they have spare capacity.  Let's label this "Idea #2".
+
+Let's explore Idea #1.  Workers connecting to both routers and accepting jobs from either:
+
+[[code type="textdiagram"]]
+
+               Data center 1       :       Data center 2
+                                   :
+                                   :
+              |            |               |            |
+              +------------+               +------------+
+              |   Router   |               |   Router   |
+              +------------+               +------------+
+                    |                            |
+          +---------|-+--=--------+--------------+
+          :         | :           :
+        +-----------+-----------+ :
+        | :         | :         | :
+        | :         | :         | :
+    +--------+  +--------+  +--------+
+    | Router |  | Router |  | Router |
+    +--------+  +--------+  +--------+
+    | Worker |  | Worker |  | Worker |
+    +--------+  +--------+  +--------+
+
+
+         Figure # - Idea 1 - cross-connected workers
+[[/code]]
+
+It looks feasible.  However it doesn't provide what we wanted, which was that clients get local workers if possible and remote workers only if it's better than waiting.  Also workers will signal "ready" to both routers and can get two jobs at once, while other workers remain idle.  It seems this design fails because again we're putting routing logic at the edges.
+
+So idea #2 then.  We interconnect the routers and don't touch the clients or workers, which are mamas like we're used to:
+
+[[code type="textdiagram"]]
+
+    Primary Data Center     :     Backup Data Center
+                            :
+                            :
+    +---+  +---+  +---+     :     +---+  +---+  +---+
+    | C |  | C |  | C |     :     | C |  | C |  | C |
+    +---+  +---+  +---+     :     +---+  +---+  +---+
+      |      |      |       :       |      |      |
+      |      |      |       :       |      |      |
+    +-----------------+     :     +-----------------+
+    |     Router      |<--------->|     Router      |
+    +-----------------+     :     +-----------------+
+      |      |      |       :       |      |      |
+      |      |      |       :       |      |      |
+    +---+  +---+  +---+     :     +---+  +---+  +---+
+    | W |  | W |  | W |     :     | W |  | W |  | W |
+    +---+  +---+  +---+     :     +---+  +---+  +---+
+                            :
+
+    Figure # - Idea 2 - routers talking to each other
+[[/code]]
+
+This design is appealing because the problem is solved in one place, invisibly to the rest of the world.  Basically, routers open secret channels to each other and whisper, like camel traders, "//hey, I've got some spare capacity, if you have too many clients give me a shout and we'll deal".//
+
+It is in effect just a more sophisticated routing algorithm: routers become subcontractors for each other.  Other things to like about this design, even before we play with real code:
+
+* It treats the common case (clients and workers on the same cluster) as default and does extra work for the exceptional case (shuffling jobs between data centers).
+* It lets us use different message flows for the different types of work.  That means we can handle them differently, e.g. using different types of network connection.
+* It feels like it would scale smoothly.  Interconnecting three, or more routers doesn't get over-complex.  If we find this to be a problem, it's easy to solve by adding a super-router.
+
+We'll now make a worked example.  We'll pack an entire data center into one process.  That is obviously not realistic but it makes it simple to simulate, and the simulation can accurately scale to real processes.  This is the beauty of 0MQ, you can design at the microlevel and scale that up to the macro level.  Thread become processes, become boxes and the patterns and logic remain the same.  Each of our 'data center' processes contains client threads, worker threads, and a router thread.
+
+We know the basic model well by now:
+
+* The client threads create workloads and pass them to the router.  It uses a mama (REQ) socket and a request-reply flow.
+* The worker threads process workloads and return the results to the router.  It uses a mama (REQ) socket and a ready-go flow as we saw in the LRU routing model.
+* The router queues and distributes workloads using the LRU routing model.
+
+There are several ways of interconnecting the routers.  What we //want// is to be able to tell other routers, "we have capacity", and then receive multiple tasks.  We also need to be able to tell other routers "stop, we're full".  It doesn't need to be perfect: sometimes we may accept jobs we can't process immediately, then we'll do them as soon as possible.
+
+The simplest interconnect is //federation// in which each broker acts as a worker for the other.  We would do this by connecting our frontend to the other broker's backend socket.  Note that it is legal to both bind a socket to an endpoint and connect it to other endpoints.
+
+[[code type="textdiagram"]]
+
+    Primary Data Center     :     Backup Data Center
+                            :
+                            :
+    +---+  +---+            :             +---+  +---+
+    | C |  | C |            :             | C |  | C |
+    +---+  +---+    +----+  :  +-----+    +---+  +---+
+      |      |      |    |  :  |     |      |      |
+      |      |      |    |  :  |     |      |      |
+    +-----------------+  |  :  |   +-----------------+
+    |     Router      |  |  :  |   |     Router      |
+    +-----------------+  |  :  |   +-----------------+
+      |      |      ^    |  :  |     ^      |      |
+      |      |      |    |  :  |     |      |      |
+    +---+  +---+    |    +-----------+    +---+  +---+
+    | W |  | W |    |       :  |          | W |  | W |
+    +---+  +---+    +----------+          +---+  +---+
+                            :
+
+   Figure # - Cross-connected routers in federation model
+[[/code]]
+
+This would give us simple logic in both routers and a reasonably good mechanism: when there are no clients, tell the other broker 'ready', and accept one job from it.  The problem is also that it's too simple, able to handle only one task at once.  If we have lots of available workers they won't be used.
+
+The federation model is perfect for other kinds of routing, especially server-oriented architectures (routing by service name and proximity rather than LRU or load-balancing or random scatter) and we'll come back to that later.  So don't dismiss it as useless, it's just not right for least-recently used and cluster load-balancing.
+
+What we need is an asynchronous routable flow of information between brokers.  This means we need a separate set of sockets, capable of asynchronous routing, and this router sockets:
+
+[[code type="textdiagram"]]
+
+       Primary Data Center        :        Backup Data Center
+                                  :
+                                  :
+    +---+  +---+  +---+           :           +---+  +---+  +---+
+    | C |  | C |  | C |           :           | C |  | C |  | C |
+    +---+  +---+  +---+           :           +---+  +---+  +---+
+      |      |      |             :             |      |      |
+      |      |      |             :             |      |      |
+    +-----------------+-----+     :     +-----+-----------------+
+    |     Router      | ??? |<--------->| ??? |     Router      |
+    +-----------------+-----+     :     +-----+-----------------+
+      |      |      |             :             |      |      |
+      |      |      |             :             |      |      |
+    +---+  +---+  +---+           :           +---+  +---+  +---+
+    | W |  | W |  | W |           :           | W |  | W |  | W |
+    +---+  +---+  +---+           :           +---+  +---+  +---+
+                                  :
+
+            Figure # - And Router shall speak unto Router...
+[[/code]]
+
+With two data centers we could make an asymmetric flow, with one router binding and the other connecting.  But this does not scale.  It would be nicer that we have two sockets, one for incoming data, that we bind to, and one for outgoing data, that we connect.  It gives us a client-server model that is consistent with clients connecting, and servers binding.
+
+Each router now manages //four// XREP router sockets.  Clear naming conventions will save us from categorical confusion, leaving just enough background bafflement to make this magic worth doing:
+
+* The //frontend// socket talks to the clients;
+* The //backend// socket talks to the workers;
+* The //inward// socket talks to master routers and accepts tasks;
+* The //onward// socket talks to slave routers and passes on tasks.
+
+When a router starts up it binds its onward socket, and connects its inward socket to all other routers.  When it has idle workers, it scatters this out to
+
+
+
+It now needs to tell each of its masters that it's ready.  But it doesn't know their identities.
+
+/
+
+
+
+
+
+
+- worked eexample
+- single point of failure
+- presence detection
+
+- router trees
+ (federation)
+-
+
+
+
+.end
+
 +++ Presence Detection
 
 - peers come and go
@@ -783,22 +1108,6 @@ You should now see that you can extend the LRU algorithm with variations based o
 - purging old identities from routing tables
 - example of eight robots and console
 - robots come and go...
-
-
-++++ Customized Publish-Subscribe
-
-- use identity to route message explicitly to A or B
-- not using PUBSUB at all but XREP/????
-    - limitations: no multicast, only TCP
-    - how to scale with devices...
-
-When a client activates, it chooses a random port that is not in use and creates a SUB socket listening for all traffic on it. The client then sends a message via REQ to the publisher containing the port that it is listening on. The publisher receives this message, acknowledges it, and creates a new pub socket specific to that client. All published events specific to this client go out that socket.
-
-When the client deactivates, it sends a message to the publisher with the port to deactivate and close.
-
-You end up creating a lot more PUB sockets on your server end and doing all of the filtering at the server. This sounds acceptable to you.
-
-I didn't need to do this to avoid network bandwidth bottlenecks; I created this to enforce some security and entitlements.
 
 
 +++ A Service-Oriented Queue Device
@@ -843,24 +1152,5 @@ lrudevice.c
 
 
 
-+++ Zero Copy
-
-We teased you in Chapter One, when you were still a 0MQ newbie, about zero-copy.  If you survived this far, you are probabably ready to use zero-copy.  However, remember that there are many roads to Hell, and premature optimization is not the most enjoyable nor profitable one, by far.
-
-0MQ's message API lets you can send and receive messages directly from and to application buffers without copying data.  Given that 0MQ sends messages in the background, zero-copy needs some extra sauce.
-
-To do zero-copy you use zmq_msg_init_data[3] to create a message that refers to a block of data already allocated on the heap with malloc(), and then you pass that to zmq_send[3].  When you create the message you also pass a function that 0MQ will call to free the block of data, when it has finished sending the message.  This is the simplest example, assuming 'buffer' is a block of 1000 bytes allocated on the heap:
-
-[[code type="C"]]
-void my_free (void *data, void *hint)
-{
-    free (data);
-}
-//  Send message from buffer, which we allocate and 0MQ will free for us
-zmq_msg_t message;
-zmq_msg_init_data (&message, buffer, 1000, my_free, NULL);
-zmq_send (socket, &message, 0);
-[[/code]]
-
-I'm sure there is also a zero-copy on receive but honestly, I can't find it.  Let's assume the pixies take care of this.
-
+ >> [/chapter:2 Return to Chapter 2 of The Guide]
+ >> [/chapter:4 Continue reading Chapter 4 of The Guide]
