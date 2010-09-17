@@ -10,7 +10,7 @@ static void *
 client_thread (void *context) {
     void *client = zmq_socket (context, ZMQ_REQ);
     s_set_id (client);          //  Makes tracing easier
-    zmq_connect (client, "ipc://frontend");
+    zmq_connect (client, "ipc://frontend.ipc");
 
     //  Send request, get reply
     s_send (client, "HELLO");
@@ -26,7 +26,7 @@ static void *
 worker_thread (void *context) {
     void *worker = zmq_socket (context, ZMQ_REQ);
     s_set_id (worker);          //  Makes tracing easier
-    zmq_connect (worker, "ipc://backend");
+    zmq_connect (worker, "ipc://backend.ipc");
 
     //  Tell backend we're ready for work
     s_send (worker, "READY");
@@ -58,8 +58,8 @@ int main (int argc, char *argv[])
     void *context = zmq_init (1);
     void *frontend = zmq_socket (context, ZMQ_XREP);
     void *backend  = zmq_socket (context, ZMQ_XREP);
-    zmq_bind (frontend, "ipc://frontend");
-    zmq_bind (backend,  "ipc://backend");
+    zmq_bind (frontend, "ipc://frontend.ipc");
+    zmq_bind (backend,  "ipc://backend.ipc");
 
     int client_nbr;
     for (client_nbr = 0; client_nbr < 10; client_nbr++) {

@@ -10,7 +10,7 @@ int main () {
     void *context = zmq_init (1);
     void *publisher = zmq_socket (context, ZMQ_PUB);
     zmq_bind (publisher, "tcp://*:5556");
-    zmq_bind (publisher, "ipc://weather");
+    zmq_bind (publisher, "ipc://weather.ipc");
 
     //  Initialize random number generator
     srandom ((unsigned) time (NULL));
