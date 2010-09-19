@@ -2,8 +2,7 @@
 //  Test zmsg class
 //
 #include "zhelpers.h"
-#include "zmsg.h"
-
+#include "zmsg.c"
 
 int main (int argc, char *argv[])
 {
