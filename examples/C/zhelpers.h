@@ -1,19 +1,25 @@
 /*  =========================================================================
-    zhelpers.h - ZeroMQ helpers for example applications
+    zhelpers.h
 
-    Copyright (c) 1991-2010 iMatix Corporation and contributors
+    Helper header file for example applications.
 
-    This is free software; you can redistribute it and/or modify it under
-    the terms of the Lesser GNU General Public License as published by
-    the Free Software Foundation; either version 3 of the License, or
-    (at your option) any later version.
+    -------------------------------------------------------------------------
+    Copyright (c) 1991-2010 iMatix Corporation <www.imatix.com>
+    Copyright other contributors as noted in the AUTHORS file.
 
-    This software is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-    Lesser GNU General Public License for more details.
+    This file is part of the ZeroMQ Guide: http://zguide.zeromq.org
 
-    You should have received a copy of the Lesser GNU General Public License
+    This is free software; you can redistribute it and/or modify it under the
+    terms of the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your option)
+    any later version.
+
+    This software is distributed in the hope that it will be useful, but
+    WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABIL-
+    ITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
+    Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
     along with this program. If not, see <http://www.gnu.org/licenses/>.
     =========================================================================
 */
