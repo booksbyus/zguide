@@ -119,7 +119,7 @@ int main (int argc, char *argv[])
                 s_send     (frontend, reply);
                 free (reply);
                 if (--client_nbr == 0)
-                    break;
+                    break;      //  Exit after N messages
             }
             free (client_addr);
         }
