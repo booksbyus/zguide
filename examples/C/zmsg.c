@@ -1,7 +1,7 @@
 /*  =========================================================================
     zmsg.h
 
-    Multipart message class for example applications. Requires zhelpers.h.
+    Multipart message class for example applications.
 
     Follows the ZFL class conventions and is further developed as the ZFL
     zfl_msg class.  See http://zfl.zeromq.org for more details.
@@ -48,9 +48,9 @@ void    zmsg_send     (zmsg_t **self, void *socket);
 //  Report size of message
 size_t  zmsg_parts    (zmsg_t *self);
 
-//  Read and set message body part
+//  Read and set message body part as C string
 char   *zmsg_body     (zmsg_t *self);
-void    zmsg_set_body (zmsg_t *self, char *body);
+void    zmsg_body_set (zmsg_t *self, char *body);
 
 //  Generic push/pop message part off front
 void    zmsg_push     (zmsg_t *self, char *part);
@@ -78,7 +78,9 @@ int     zmsg_test     (int verbose);
 
 struct _zmsg_t {
     //  Part data follows message recv/send order
-    char *_part_data [ZMSG_MAX_PARTS];
+    unsigned char
+          *_part_data [ZMSG_MAX_PARTS];
+    size_t _part_size [ZMSG_MAX_PARTS];
     size_t _part_count;
 };
 
@@ -118,6 +120,19 @@ zmsg_destroy (zmsg_t **self_p)
     }
 }
 
+//  --------------------------------------------------------------------------
+//  Private helper function to store a single message part
+
+static void
+_set_part (zmsg_t *self, int part_nbr, unsigned char *data, size_t size)
+{
+    self->_part_size [part_nbr] = size;
+    self->_part_data [part_nbr] = malloc (size + 1);
+    memcpy (self->_part_data [part_nbr], data, size);
+    //  Convert to C string if needed
+    self->_part_data [part_nbr][size] = 0;
+}
+
 
 //  --------------------------------------------------------------------------
 //  Receive message from socket
@@ -131,7 +146,21 @@ zmsg_recv (void *socket)
 
     zmsg_t *self = zmsg_new ();
     while (1) {
-        self->_part_data [self->_part_count++] = s_recv (socket);
+        zmq_msg_t message;
+        zmq_msg_init (&message);
+        if (zmq_recv (socket, &message, 0))
+            exit (1);           //  Context terminated, exit
+
+        //  Mangle 0MQ identities using a nasty hack
+        unsigned char *data = zmq_msg_data (&message);
+        size_t size = zmq_msg_size (&message);
+        if (size == 17 && data [0] == 0)
+            data [0] = 255;
+
+        //  Store this message part
+        _set_part (self, self->_part_count++, data, size);
+        zmq_msg_close (&message);
+
         int64_t more;
         size_t more_size = sizeof (more);
         zmq_getsockopt (socket, ZMQ_RCVMORE, &more, &more_size);
@@ -154,9 +183,22 @@ void zmsg_send (zmsg_t **self_p, void *socket)
     zmsg_t *self = *self_p;
 
     int part_nbr;
-    for (part_nbr = 0; part_nbr < self->_part_count - 1; part_nbr++)
-        s_sendmore (socket, self->_part_data [part_nbr]);
-    s_send (socket, self->_part_data [part_nbr]);
+    for (part_nbr = 0; part_nbr < self->_part_count; part_nbr++) {
+        //  Unmangle 0MQ identities for writing to the socket
+        unsigned char *data = self->_part_data [part_nbr];
+        size_t size = self->_part_size [part_nbr];
+        if (size == 17 && data [0] == 255)
+            data [0] = 0;
+
+        //  Could be improved to use zero-copy since we destroy
+        //  the message parts after sending anyhow...
+        zmq_msg_t message;
+        zmq_msg_init_size (&message, size);
+        memcpy (zmq_msg_data (&message), data, size);
+        assert (zmq_send (socket, &message,
+            part_nbr < self->_part_count - 1? ZMQ_SNDMORE: 0) == 0);
+        zmq_msg_close (&message);
+    }
     zmsg_destroy (self_p);
 }
 
@@ -181,7 +223,7 @@ zmsg_body (zmsg_t *self)
     assert (self);
 
     if (self->_part_count)
-        return (self->_part_data [self->_part_count - 1]);
+        return ((char *) self->_part_data [self->_part_count - 1]);
     else
         return (NULL);
 }
@@ -203,7 +245,7 @@ void zmsg_set_body (zmsg_t *self, char *body)
     else
         self->_part_count = 1;
 
-    self->_part_data [self->_part_count - 1] = strdup (body);
+    _set_part (self, self->_part_count - 1, (void *) body, strlen (body));
 }
 
 
@@ -217,11 +259,11 @@ void zmsg_push (zmsg_t *self, char *part)
     assert (self->_part_count < ZMSG_MAX_PARTS - 1);
 
     //  Move part stack up one element and insert new part
-    memmove (
-        &self->_part_data [1],
-        &self->_part_data [0],
-        sizeof (char *) * (ZMSG_MAX_PARTS - 1));
-    self->_part_data [0] = strdup (part);
+    memmove (&self->_part_data [1], &self->_part_data [0],
+        (ZMSG_MAX_PARTS - 1) * sizeof (unsigned char *));
+    memmove (&self->_part_size [1], &self->_part_size [0],
+        (ZMSG_MAX_PARTS - 1) * sizeof (size_t));
+    _set_part (self, 0, (void *) part, strlen (part));
     self->_part_count += 1;
 }
 
@@ -236,11 +278,11 @@ char *zmsg_pop (zmsg_t *self)
     assert (self->_part_count);
 
     //  Remove first part and move part stack down one element
-    char *part = self->_part_data [0];
-    memmove (
-        &self->_part_data [0],
-        &self->_part_data [1],
-        sizeof (char *) * (ZMSG_MAX_PARTS - 1));
+    char *part = (char *) self->_part_data [0];
+    memmove (&self->_part_data [0], &self->_part_data [1],
+        (ZMSG_MAX_PARTS - 1) * sizeof (unsigned char *));
+    memmove (&self->_part_size [0], &self->_part_size [1],
+        (ZMSG_MAX_PARTS - 1) * sizeof (size_t));
     self->_part_count--;
     return (part);
 }
@@ -255,7 +297,7 @@ char *zmsg_address (zmsg_t *self)
     assert (self);
 
     if (self->_part_count)
-        return (self->_part_data [0]);
+        return ((char *) self->_part_data [0]);
     else
         return (NULL);
 }
@@ -359,6 +401,6 @@ int zmsg_test (int verbose)
     assert (zmsg == NULL);
 
     printf ("OK\n");
-//? broken    zmq_term (context);
+    zmq_term (context);
     return 0;
 }
