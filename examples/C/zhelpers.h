@@ -44,11 +44,14 @@
 #define within(num) (int) ((float) num * random () / (RAND_MAX + 1.0))
 
 //  Receive 0MQ string from socket and convert into C string
+//  Caller must free returned string.
 static char *
 s_recv (void *socket) {
     zmq_msg_t message;
     zmq_msg_init (&message);
-    assert (zmq_recv (socket, &message, 0) == 0);
+    if (zmq_recv (socket, &message, 0))
+        exit (1);           //  Context terminated, exit
+
     int size = zmq_msg_size (&message);
     char *string = malloc (size + 1);
     memcpy (string, zmq_msg_data (&message), size);
