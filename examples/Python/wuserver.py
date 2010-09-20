@@ -1,13 +1,19 @@
-No-one has translated the wuserver example into Python yet.  Be the first to create
-wuserver in Python and get one free Internet!  If you're the author of the Python
-binding, this is a great way to get people to use 0MQ in Python.
+#
+#   Weather update server
+#   Binds PUB socket to tcp://*:5556
+#   Publishes random weather updates
+#
 
-To submit a new translation email it to 1000 4 20 24 25 29 30 44 46 107 109 114 121 1000EMAIL).  Please:
+import zmq
+import random
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+context = zmq.Context()
+socket = context.socket(zmq.PUB)
+socket.bind("tcp://*:5556")
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+while True:
+    zipcode = random.randrange(1,100000)
+    temperature = random.randrange(1,215) - 80
+    relhumidity = random.randrange(1,50) + 10
+
+    socket.send("%d %d %d" % (zipcode, temperature, relhumidity))
