@@ -4,6 +4,12 @@
 //
 #include "zhelpers.h"
 
+#define NBR_CLIENTS 10
+#define NBR_WORKERS 3
+
+//  A simple dequeue operation for queue implemented as array
+#define DEQUEUE(q) memmove (&(q)[0], &(q)[1], sizeof (q) - sizeof (q [0]))
+
 //  Basic request-reply client using REQ socket
 //
 static void *
@@ -28,7 +34,7 @@ worker_thread (void *context) {
     s_set_id (worker);          //  Makes tracing easier
     zmq_connect (worker, "ipc://backend.ipc");
 
-    //  Tell backend we're ready for work
+    //  Tell broker we're ready for work
     s_send (worker, "READY");
 
     while (1) {
@@ -62,12 +68,12 @@ int main (int argc, char *argv[])
     zmq_bind (backend,  "ipc://backend.ipc");
 
     int client_nbr;
-    for (client_nbr = 0; client_nbr < 10; client_nbr++) {
+    for (client_nbr = 0; client_nbr < NBR_CLIENTS; client_nbr++) {
         pthread_t client;
         pthread_create (&client, NULL, client_thread, context);
     }
     int worker_nbr;
-    for (worker_nbr = 0; worker_nbr < 3; worker_nbr++) {
+    for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++) {
         pthread_t worker;
         pthread_create (&worker, NULL, worker_thread, context);
     }
@@ -76,14 +82,14 @@ int main (int argc, char *argv[])
     //  - If worker replies, queue worker as ready and forward reply
     //    to client if necessary
     //  - If client requests, pop next worker and send request to it
-    //
-    //  A very simple queue structure with known max size
+
+    //  Queue of available workers
     int available_workers = 0;
     char *worker_queue [10];
 
     while (1) {
         //  Initialize poll set
-        zmq_pollitem_t items [2] = {
+        zmq_pollitem_t items [] = {
             //  Always poll for worker activity on backend
             { backend,  0, ZMQ_POLLIN, 0 },
             //  Poll front-end only if we have available workers
@@ -98,6 +104,7 @@ int main (int argc, char *argv[])
         if (items [0].revents & ZMQ_POLLIN) {
             //  Queue worker address for LRU routing
             char *worker_addr = s_recv (backend);
+            assert (available_workers < NBR_WORKERS);
             worker_queue [available_workers++] = worker_addr;
 
             //  Second frame is empty
@@ -132,20 +139,19 @@ int main (int argc, char *argv[])
             free (empty);
             char *request = s_recv (frontend);
 
-            //  Here is a sweet and simple "pop" operation
-            char *worker_addr = worker_queue [0];
-            memmove (&worker_queue [0], &worker_queue [1], sizeof (char *) * 9);
-            available_workers--;
-
-            s_sendmore (backend, worker_addr);
+            s_sendmore (backend, worker_queue [0]);
             s_sendmore (backend, "");
             s_sendmore (backend, client_addr);
             s_sendmore (backend, "");
             s_send     (backend, request);
 
-            free (worker_addr);
             free (client_addr);
             free (request);
+
+            //  Dequeue and drop the next worker address
+            free (worker_queue [0]);
+            DEQUEUE (worker_queue);
+            available_workers--;
         }
     }
     sleep (1);

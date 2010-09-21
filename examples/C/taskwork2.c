@@ -22,7 +22,7 @@ int main (int argc, char *argv[])
     zmq_setsockopt (controller, ZMQ_SUBSCRIBE, "", 0);
 
     //  Process messages from receiver and controller
-    zmq_pollitem_t items [2] = {
+    zmq_pollitem_t items [] = {
         { receiver, 0, ZMQ_POLLIN, 0 },
         { controller, 0, ZMQ_POLLIN, 0 }
     };

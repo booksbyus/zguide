@@ -5,6 +5,12 @@
 #include "zhelpers.h"
 #include "zmsg.c"
 
+#define NBR_CLIENTS 10
+#define NBR_WORKERS 3
+
+//  A simple dequeue operation for queue implemented as array
+#define DEQUEUE(q) memmove (&(q)[0], &(q)[1], sizeof (q) - sizeof (q [0]))
+
 //  Basic request-reply client using REQ socket
 //
 static void *
@@ -29,13 +35,13 @@ worker_thread (void *context) {
     s_set_id (worker);          //  Makes tracing easier
     zmq_connect (worker, "ipc://backend.ipc");
 
-    //  Tell backend we're ready for work
+    //  Tell broker we're ready for work
     s_send (worker, "READY");
 
     while (1) {
         zmsg_t *zmsg = zmsg_recv (worker);
         printf ("Worker: %s\n", zmsg_body (zmsg));
-        zmsg_set_body (zmsg, "OK");
+        zmsg_body_set (zmsg, "OK");
         zmsg_send (&zmsg, worker);
     }
     return (NULL);
@@ -51,12 +57,12 @@ int main (int argc, char *argv[])
     zmq_bind (backend,  "ipc://backend.ipc");
 
     int client_nbr;
-    for (client_nbr = 0; client_nbr < 10; client_nbr++) {
+    for (client_nbr = 0; client_nbr < NBR_CLIENTS; client_nbr++) {
         pthread_t client;
         pthread_create (&client, NULL, client_thread, context);
     }
     int worker_nbr;
-    for (worker_nbr = 0; worker_nbr < 3; worker_nbr++) {
+    for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++) {
         pthread_t worker;
         pthread_create (&worker, NULL, worker_thread, context);
     }
@@ -65,14 +71,14 @@ int main (int argc, char *argv[])
     //  - If worker replies, queue worker as ready and forward reply
     //    to client if necessary
     //  - If client requests, pop next worker and send request to it
-    //
-    //  A very simple queue structure with known max size
+
+    //  Queue of available workers
     int available_workers = 0;
-    char *worker_queue [10];
+    char *worker_queue [NBR_WORKERS];
 
     while (1) {
         //  Initialize poll set
-        zmq_pollitem_t items [2] = {
+        zmq_pollitem_t items [] = {
             //  Always poll for worker activity on backend
             { backend,  0, ZMQ_POLLIN, 0 },
             //  Poll front-end only if we have available workers
@@ -87,23 +93,27 @@ int main (int argc, char *argv[])
         if (items [0].revents & ZMQ_POLLIN) {
             zmsg_t *zmsg = zmsg_recv (backend);
             //  Use worker address for LRU routing
+            assert (available_workers < NBR_WORKERS);
             worker_queue [available_workers++] = zmsg_unwrap (zmsg);
 
             //  Forward message to client if it's not a READY
-            if (strcmp (zmsg_address (zmsg), "READY") != 0) {
+            if (strcmp (zmsg_address (zmsg), "READY") == 0)
+                zmsg_destroy (&zmsg);
+            else {
                 zmsg_send (&zmsg, frontend);
                 if (--client_nbr == 0)
                     break;      //  Exit after N messages
             }
         }
         if (items [1].revents & ZMQ_POLLIN) {
-            //  Now get next client request, route to LRU worker
+            //  Now get next client request, route to next worker
             zmsg_t *zmsg = zmsg_recv (frontend);
             zmsg_wrap (zmsg, worker_queue [0], "");
             zmsg_send (&zmsg, backend);
 
-            //  Here is a sweet and simple "pop" operation
-            memmove (&worker_queue [0], &worker_queue [1], sizeof (char *) * 9);
+            //  Dequeue and drop the next worker address
+            free (worker_queue [0]);
+            DEQUEUE (worker_queue);
             available_workers--;
         }
     }
