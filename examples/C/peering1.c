@@ -3,6 +3,7 @@
 //  Prototypes the state flow
 //
 #include "zhelpers.h"
+#include "zmsg.c"
 
 int main (int argc, char *argv[])
 {
@@ -38,7 +39,7 @@ int main (int argc, char *argv[])
     //  The zmq_poll timeout defines our own heartbeating
     while (1) {
         //  Initialize poll set
-        zmq_pollitem_t items [1] = {
+        zmq_pollitem_t items [] = {
             { statefe, 0, ZMQ_POLLIN, 0 }
         };
         //  Poll for activity, or 1 second timeout
@@ -46,22 +47,18 @@ int main (int argc, char *argv[])
 
         //  Handle incoming status message
         if (items [0].revents & ZMQ_POLLIN) {
-            //  Get address of peer broker
-            char *broker_addr = s_recv (statefe);
-            //  Get number of available workers
-            char *broker_status = s_recv (statefe);
-
-            printf ("%s - %s workers free\n", broker_addr, broker_status);
-            free (broker_addr);
-            free (broker_status);
+            zmsg_t *zmsg = zmsg_recv (statefe);
+            printf ("%s - %s workers free\n",
+                zmsg_address (zmsg), zmsg_body (zmsg));
+            zmsg_destroy (&zmsg);
         }
         else {
-            //  Send message envelope and body
-            //  Here, just some random value for worker availability
-            char status [3];
-            snprintf (status, 2, "%d", within (10));
-            s_sendmore (statebe, self);
-            s_send     (statebe, status);
+            //  Send random value for worker availability
+            zmsg_t *zmsg = zmsg_new ();
+            zmsg_body_fmt (zmsg, "%d", within (10));
+            //  We stick our own address onto the envelope
+            zmsg_wrap (zmsg, self, NULL);
+            zmsg_send (&zmsg, statebe);
         }
     }
     zmq_term (context);
