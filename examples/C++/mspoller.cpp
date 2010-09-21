@@ -21,7 +21,7 @@ int main (int argc, char *argv[])
     subscriber.setsockopt(ZMQ_SUBSCRIBE, "10001 ", 6);
 
     //  Initialize poll set
-    zmq::pollitem_t items [2] = {
+    zmq::pollitem_t items [] = {
         { receiver, 0, ZMQ_POLLIN, 0 },
         { subscriber, 0, ZMQ_POLLIN, 0 }
     };

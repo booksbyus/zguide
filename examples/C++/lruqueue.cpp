@@ -91,7 +91,7 @@ int main (int argc, char *argv[])
     while (1) {
     	
         //  Initialize poll set
-        zmq::pollitem_t items [2] = {
+        zmq::pollitem_t items [] = {
             //  Always poll for worker activity on backend
             { backend,  0, ZMQ_POLLIN, 0 },
             //  Poll front-end only if we have available workers

@@ -18,7 +18,7 @@ int main (int argc, char *argv[])
     backend.bind("tcp://*:5560");
 
     //  Initialize poll set
-    zmq::pollitem_t items [2] = {
+    zmq::pollitem_t items [] = {
         { frontend, 0, ZMQ_POLLIN, 0 },
         { backend,  0, ZMQ_POLLIN, 0 }
     };
