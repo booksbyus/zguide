@@ -30,6 +30,8 @@
 #ifndef __ZMSG_H_INCLUDED__
 #define __ZMSG_H_INCLUDED__
 
+#include <stdarg.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -51,6 +53,7 @@ size_t  zmsg_parts    (zmsg_t *self);
 //  Read and set message body part as C string
 char   *zmsg_body     (zmsg_t *self);
 void    zmsg_body_set (zmsg_t *self, char *body);
+void    zmsg_body_fmt (zmsg_t *self, char *format, ...);
 
 //  Generic push/pop message part off front
 void    zmsg_push     (zmsg_t *self, char *part);
@@ -60,6 +63,9 @@ char   *zmsg_pop      (zmsg_t *self);
 char   *zmsg_address  (zmsg_t *self);
 void    zmsg_wrap     (zmsg_t *self, char *address, char *delim);
 char   *zmsg_unwrap   (zmsg_t *self);
+
+//  Dump message to stderr, for debugging and tracing
+void    zmsg_dump     (zmsg_t *self);
 
 //  Selftest for the class
 int     zmsg_test     (int verbose);
@@ -153,9 +159,9 @@ zmsg_recv (void *socket)
 
         //  Mangle 0MQ identities using a nasty hack
         unsigned char *data = zmq_msg_data (&message);
-        size_t size = zmq_msg_size (&message);
+        size_t         size = zmq_msg_size (&message);
         if (size == 17 && data [0] == 0)
-            data [0] = 255;
+            data [0] = ' ';
 
         //  Store this message part
         _set_part (self, self->_part_count++, data, size);
@@ -175,7 +181,8 @@ zmsg_recv (void *socket)
 //  Send message to socket
 //  Destroys message after sending
 
-void zmsg_send (zmsg_t **self_p, void *socket)
+void
+zmsg_send (zmsg_t **self_p, void *socket)
 {
     assert (self_p);
     assert (*self_p);
@@ -186,8 +193,8 @@ void zmsg_send (zmsg_t **self_p, void *socket)
     for (part_nbr = 0; part_nbr < self->_part_count; part_nbr++) {
         //  Unmangle 0MQ identities for writing to the socket
         unsigned char *data = self->_part_data [part_nbr];
-        size_t size = self->_part_size [part_nbr];
-        if (size == 17 && data [0] == 255)
+        size_t         size = self->_part_size [part_nbr];
+        if (size == 17 && data [0] == ' ')
             data [0] = 0;
 
         //  Could be improved to use zero-copy since we destroy
@@ -233,7 +240,8 @@ zmsg_body (zmsg_t *self)
 //  Set message body as copy of provided string
 //  If message is empty, creates a new message body
 
-void zmsg_set_body (zmsg_t *self, char *body)
+void
+zmsg_body_set (zmsg_t *self, char *body)
 {
     assert (self);
     assert (body);
@@ -250,9 +258,29 @@ void zmsg_set_body (zmsg_t *self, char *body)
 
 
 //  --------------------------------------------------------------------------
+//  Set message body using printf format
+//  If message is empty, creates a new message body
+//  Hard-coded to max. 255 characters for this simplified class
+
+void
+zmsg_body_fmt (zmsg_t *self, char *format, ...)
+{
+    char value [255 + 1];
+    va_list args;
+
+    assert (self);
+    va_start (args, format);
+    vsnprintf (value, 255, format, args);
+    va_end (args);
+    zmsg_body_set (self, value);
+}
+
+
+//  --------------------------------------------------------------------------
 //  Push message part to front of message parts
 
-void zmsg_push (zmsg_t *self, char *part)
+void
+zmsg_push (zmsg_t *self, char *part)
 {
     assert (self);
     assert (part);
@@ -272,7 +300,8 @@ void zmsg_push (zmsg_t *self, char *part)
 //  Pop message part off front of message parts
 //  Caller should free returned string when finished with it
 
-char *zmsg_pop (zmsg_t *self)
+char *
+zmsg_pop (zmsg_t *self)
 {
     assert (self);
     assert (self->_part_count);
@@ -292,7 +321,8 @@ char *zmsg_pop (zmsg_t *self)
 //  Return pointer to outer message address, if any
 //  Caller should not modify the provided data
 
-char *zmsg_address (zmsg_t *self)
+char *
+zmsg_address (zmsg_t *self)
 {
     assert (self);
 
@@ -307,7 +337,8 @@ char *zmsg_address (zmsg_t *self)
 //  Wraps message in new address envelope
 //  If delim is not null, creates two-part envelope
 
-void zmsg_wrap (zmsg_t *self, char *address, char *delim)
+void
+zmsg_wrap (zmsg_t *self, char *address, char *delim)
 {
     assert (self);
     assert (address);
@@ -324,7 +355,8 @@ void zmsg_wrap (zmsg_t *self, char *address, char *delim)
 //  Discards empty message part after address, if any
 //  Caller should free returned string when finished with it
 
-char *zmsg_unwrap (zmsg_t *self)
+char *
+zmsg_unwrap (zmsg_t *self)
 {
     assert (self);
 
@@ -336,9 +368,43 @@ char *zmsg_unwrap (zmsg_t *self)
 
 
 //  --------------------------------------------------------------------------
+//  Dump message to stderr, for debugging and tracing
+
+void
+zmsg_dump (zmsg_t *self)
+{
+    fprintf (stderr, "----------------------------------------\n");
+    int part_nbr;
+    for (part_nbr = 0; part_nbr < self->_part_count; part_nbr++) {
+        unsigned char *data = self->_part_data [part_nbr];
+        size_t         size = self->_part_size [part_nbr];
+
+        //  Dump the message as text or binary
+        int is_text = 1;
+        int char_nbr;
+        for (char_nbr = 0; char_nbr < size; char_nbr++)
+            if (data [char_nbr] < 32 || data [char_nbr] > 127)
+                is_text = 0;
+
+        fprintf (stderr, "[%03d] ", size);
+        for (char_nbr = 0; char_nbr < size; char_nbr++) {
+            if (is_text)
+                fprintf (stderr, "%c", data [char_nbr]);
+            else
+                fprintf (stderr, "%02X", (unsigned char) data [char_nbr]);
+        }
+        fprintf (stderr, "\n");
+    }
+    fflush (stderr);
+}
+
+
+
+//  --------------------------------------------------------------------------
 //  Runs self test of class
 
-int zmsg_test (int verbose)
+int
+zmsg_test (int verbose)
 {
     zmsg_t
         *zmsg;
@@ -347,38 +413,45 @@ int zmsg_test (int verbose)
 
     //  Prepare our context and sockets
     void *context = zmq_init (1);
-    void *output = zmq_socket (context, ZMQ_PUSH);
+    void *output = zmq_socket (context, ZMQ_XREQ);
     assert (zmq_bind (output, "ipc://zmsg_selftest.ipc") == 0);
-    void *input = zmq_socket (context, ZMQ_PULL);
+    void *input = zmq_socket (context, ZMQ_XREP);
     assert (zmq_connect (input, "ipc://zmsg_selftest.ipc") == 0);
 
     //  Test send and receive of single-part message
     zmsg = zmsg_new ();
     assert (zmsg);
-    zmsg_set_body (zmsg, "Hello");
+    zmsg_body_set (zmsg, "Hello");
     assert (strcmp (zmsg_body (zmsg), "Hello") == 0);
     zmsg_send (&zmsg, output);
     assert (zmsg == NULL);
 
     zmsg = zmsg_recv (input);
-    assert (zmsg_parts (zmsg) == 1);
+    assert (zmsg_parts (zmsg) == 2);
+    if (verbose)
+        zmsg_dump (zmsg);
     assert (strcmp (zmsg_body (zmsg), "Hello") == 0);
 
     //  Test send and receive of multi-part message
     zmsg = zmsg_new ();
-    zmsg_set_body (zmsg, "Hello");
+    zmsg_body_set (zmsg, "Hello");
     zmsg_wrap     (zmsg, "address1", "");
     zmsg_wrap     (zmsg, "address2", NULL);
     assert (zmsg_parts (zmsg) == 4);
     zmsg_send (&zmsg, output);
 
     zmsg = zmsg_recv (input);
-    assert (zmsg_parts (zmsg) == 4);
+    if (verbose)
+        zmsg_dump (zmsg);
+    assert (zmsg_parts (zmsg) == 5);
+    assert (strlen (zmsg_address (zmsg)) == 17);
+    free (zmsg_unwrap (zmsg));
     assert (strcmp (zmsg_address (zmsg), "address2") == 0);
-    zmsg_set_body (zmsg, "World");
+    zmsg_body_fmt (zmsg, "%c%s", 'W', "orld");
     zmsg_send (&zmsg, output);
 
     zmsg = zmsg_recv (input);
+    free (zmsg_unwrap (zmsg));
     assert (zmsg_parts (zmsg) == 4);
     assert (strcmp (zmsg_body (zmsg), "World") == 0);
     char *part;
