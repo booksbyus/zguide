@@ -37,8 +37,9 @@
 #include <assert.h>
 #include <pthread.h>
 #include <stdlib.h>		// random()  RAND_MAX
+#include <stdio.h>
 
-#define within(num) (int) ((float) num * random () / (RAND_MAX + 1.0))
+#define within(num) (int) ((float) (num) * random () / (RAND_MAX + 1.0))
 
 //  Receive 0MQ string from socket and convert into string
 static std::string *
@@ -105,7 +106,6 @@ s_dump (zmq::socket_t & socket)
                 printf ("%c", data [char_nbr]);
             else
                 printf ("%02X", (unsigned char) data [char_nbr]);
-
         }
         printf ("\n");
 
