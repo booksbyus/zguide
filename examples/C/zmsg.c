@@ -30,7 +30,7 @@
 #ifndef __ZMSG_H_INCLUDED__
 #define __ZMSG_H_INCLUDED__
 
-#include <stdarg.h>
+#include "zhelpers.h"
 
 #ifdef __cplusplus
 extern "C" {
