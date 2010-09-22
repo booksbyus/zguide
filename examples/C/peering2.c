@@ -54,11 +54,11 @@ worker_thread (void *context) {
 
 int main (int argc, char *argv[])
 {
-    //  First argument is this cluster's name
+    //  First argument is this broker's name
     //  Other arguments are our peers' names
     //
-    if (argc < 3) {
-        printf ("syntax: peering2 me other1 other2...\n");
+    if (argc < 2) {
+        printf ("syntax: peering2 me {you}...\n");
         exit (EXIT_FAILURE);
     }
     char *self = argv [1];
@@ -173,7 +173,7 @@ int main (int argc, char *argv[])
 
             //  If reroutable, send to cloud 20% of the time
             //  Here we'd normally use cloud status information
-            if (reroutable && within (5) == 0) {
+            if (reroutable && argc > 2 && within (5) == 0) {
                 //  Route to random broker peer
                 int random_peer = within (argc - 2) + 2;
                 zmsg_wrap (zmsg, argv [random_peer], NULL);

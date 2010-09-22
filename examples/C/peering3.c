@@ -5,10 +5,6 @@
 #include "zhelpers.h"
 #include "zmsg.c"
 
-//  To simulate load on this cluster, we have clients that issue
-//  requests once per second.  Workers take on average one second
-//  to do their work
-
 #define NBR_CLIENTS 10
 #define NBR_WORKERS 10
 
@@ -16,6 +12,8 @@
 #define DEQUEUE(q) memmove (&(q)[0], &(q)[1], sizeof (q) - sizeof (q [0]))
 
 //  Request-reply client using REQ socket
+//  To simulate load, clients issue a burst of requests and then
+//  sleep for a random period.
 //
 static void *
 client_thread (void *context) {
@@ -24,11 +22,15 @@ client_thread (void *context) {
 
     zmsg_t *zmsg = zmsg_new ();
     while (1) {
-        //  Send request, get reply
-        zmsg_body_set (zmsg, "HELLO");
-        zmsg_send (&zmsg, client);
-        zmsg = zmsg_recv (client);
-        printf ("I: client status: %s\n", zmsg_body (zmsg));
+        sleep (within (5));
+        int burst = within (5);
+        while (burst--) {
+            //  Send request, get reply
+            zmsg_body_set (zmsg, "HELLO");
+            zmsg_send (&zmsg, client);
+            zmsg = zmsg_recv (client);
+            printf ("I: client status: %s\n", zmsg_body (zmsg));
+        }
     }
     return (NULL);
 }
@@ -46,14 +48,13 @@ worker_thread (void *context) {
     zmsg_send (&zmsg, worker);
 
     while (1) {
-        zmsg = zmsg_recv (worker);
-
-        //  Do some random work 0..1 second
+        //  Workers are always busy for 1 msec
         struct timespec t;
         t.tv_sec = 0;
-        t.tv_nsec = within (1000) * 1000000;
+        t.tv_nsec = 1000000;
         nanosleep (&t, NULL);
 
+        zmsg = zmsg_recv (worker);
         zmsg_body_set (zmsg, "OK");
         zmsg_send (&zmsg, worker);
     }
@@ -63,11 +64,11 @@ worker_thread (void *context) {
 
 int main (int argc, char *argv[])
 {
-    //  First argument is this cluster's name
+    //  First argument is this broker's name
     //  Other arguments are our peers' names
     //
-    if (argc < 3) {
-        printf ("syntax: peering3 me other1 other2...\n");
+    if (argc < 2) {
+        printf ("syntax: peering3 me {you}...\n");
         exit (EXIT_FAILURE);
     }
     char *self = argv [1];
@@ -213,7 +214,7 @@ int main (int argc, char *argv[])
             //  If reroutable, send to cloud if it has spare capacity
             //  and our own capacity is at zero
             //  Here we'd normally use cloud status information
-            if (reroutable && within (5) == 0) {
+            if (reroutable && argc > 2 && within (5) == 0) {
                 //  Route to random broker peer
                 int random_peer = within (argc - 2) + 2;
                 zmsg_wrap (zmsg, argv [random_peer], NULL);
