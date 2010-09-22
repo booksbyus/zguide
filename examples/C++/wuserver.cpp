@@ -18,7 +18,7 @@ int main () {
     zmq::context_t context (1);
     zmq::socket_t publisher (context, ZMQ_PUB);
     publisher.bind("tcp://*:5556");
-    publisher.bind("ipc://weather");
+    publisher.bind("ipc://weather.ipc");
 
     //  Initialize random number generator
     srandom ((unsigned) time (NULL));

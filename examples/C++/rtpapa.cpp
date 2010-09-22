@@ -11,11 +11,11 @@ int main () {
     zmq::context_t context(1);
 
     zmq::socket_t client (context, ZMQ_XREP);
-   client.bind("ipc://routing");
+   client.bind("ipc://routing.ipc");
 
     zmq::socket_t worker (context, ZMQ_REP);
     worker.setsockopt(ZMQ_IDENTITY, "A", 1);
-    worker.connect("ipc://routing");
+    worker.connect("ipc://routing.ipc");
 
     //  Wait for sockets to stabilize
     sleep (1);

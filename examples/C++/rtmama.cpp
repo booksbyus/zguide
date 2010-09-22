@@ -15,7 +15,7 @@ worker_thread (void *arg) {
     
     //  We use a string identity for ease here
     s_set_id (worker);
-    worker.connect("ipc://routing");
+    worker.connect("ipc://routing.ipc");
 
     int total = 0;
     while (1) {
@@ -45,7 +45,7 @@ worker_thread (void *arg) {
 int main () {
     zmq::context_t context(1);
     zmq::socket_t client (context, ZMQ_XREP);
-    client.bind("ipc://routing");
+    client.bind("ipc://routing.ipc");
 
     int worker_nbr;
     for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++) {

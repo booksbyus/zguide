@@ -9,7 +9,7 @@
 void *worker_a (void *context) {
     void *worker = zmq_socket (context, ZMQ_XREQ);
     zmq_setsockopt (worker, ZMQ_IDENTITY, "A", 1);
-    zmq_connect (worker, "ipc://routing");
+    zmq_connect (worker, "ipc://routing.ipc");
 
     int total = 0;
     while (1) {
@@ -29,7 +29,7 @@ void *worker_a (void *context) {
 void *worker_b (void *context) {
     void *worker = zmq_socket (context, ZMQ_XREQ);
     zmq_setsockopt (worker, ZMQ_IDENTITY, "B", 1);
-    zmq_connect (worker, "ipc://routing");
+    zmq_connect (worker, "ipc://routing.ipc");
 
     int total = 0;
     while (1) {
@@ -50,7 +50,7 @@ int main () {
     void *context = zmq_init (1);
 
     void *client = zmq_socket (context, ZMQ_XREP);
-    zmq_bind (client, "ipc://routing");
+    zmq_bind (client, "ipc://routing.ipc");
 
     pthread_t worker;
     pthread_create (&worker, NULL, worker_a, context);

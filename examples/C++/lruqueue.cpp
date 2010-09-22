@@ -14,7 +14,7 @@ client_thread (void *arg) {
 	zmq::context_t * context = (zmq::context_t *)arg;
     zmq::socket_t client (*context, ZMQ_REQ);
     s_set_id (client);			//  Makes tracing easier
-    client.connect("ipc://frontend");
+    client.connect("ipc://frontend.ipc");
 
     //  Send request, get reply
     s_send (client, "HELLO");
@@ -32,7 +32,7 @@ worker_thread (void *arg) {
 	zmq::context_t * context = (zmq::context_t *)arg;
     zmq::socket_t worker (*context, ZMQ_REQ);
     s_set_id (worker);          //  Makes tracing easier
-    worker.connect("ipc://backend");
+    worker.connect("ipc://backend.ipc");
 
     //  Tell backend we're ready for work
     s_send (worker, "READY");
@@ -65,8 +65,8 @@ int main (int argc, char *argv[])
     zmq::context_t context(1);
     zmq::socket_t frontend (context, ZMQ_XREP);
     zmq::socket_t backend (context, ZMQ_XREP);
-    frontend.bind("ipc://frontend");
-    backend.bind("ipc://backend");
+    frontend.bind("ipc://frontend.ipc");
+    backend.bind("ipc://backend.ipc");
 
     int client_nbr;
     for (client_nbr = 0; client_nbr < 10; client_nbr++) {
@@ -91,7 +91,7 @@ int main (int argc, char *argv[])
     while (1) {
     	
         //  Initialize poll set
-        zmq::pollitem_t items [2] = {
+        zmq::pollitem_t items [] = {
             //  Always poll for worker activity on backend
             { backend,  0, ZMQ_POLLIN, 0 },
             //  Poll front-end only if we have available workers

@@ -10,11 +10,11 @@ int main () {
     void *context = zmq_init (1);
 
     void *client = zmq_socket (context, ZMQ_XREP);
-    zmq_bind (client, "ipc://routing");
+    zmq_bind (client, "ipc://routing.ipc");
 
     void *worker = zmq_socket (context, ZMQ_REP);
     zmq_setsockopt (worker, ZMQ_IDENTITY, "A", 1);
-    zmq_connect (worker, "ipc://routing");
+    zmq_connect (worker, "ipc://routing.ipc");
 
     //  Wait for sockets to stabilize
     sleep (1);

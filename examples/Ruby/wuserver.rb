@@ -10,7 +10,7 @@ require 'ffi-rzmq'
 context = ZMQ::Context.new(1)
 publisher = context.socket(ZMQ::PUB)
 publisher.bind("tcp://*:5556")
-publisher.bind("ipc://weather")
+publisher.bind("ipc://weather.ipc")
 
 while true
   # Get values that will fool the boss

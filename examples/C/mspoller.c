@@ -18,7 +18,7 @@ int main (int argc, char *argv[])
     zmq_setsockopt (subscriber, ZMQ_SUBSCRIBE, "10001 ", 6);
 
     //  Initialize poll set
-    zmq_pollitem_t items [2] = {
+    zmq_pollitem_t items [] = {
         { receiver, 0, ZMQ_POLLIN, 0 },
         { subscriber, 0, ZMQ_POLLIN, 0 }
     };

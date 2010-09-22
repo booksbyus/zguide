@@ -8,9 +8,9 @@ We'll cover:
 
 * How to create and work with 0MQ sockets.
 * How to send and receive messages on sockets.
-* How 0MQ's asynchronous I/O model affects your code.
+* How to build your apps around 0MQ's asynchronous I/O model.
 * How to handle multiple sockets in one thread.
-* How to handle errors properly.
+* How to handle fatal and non-fatal errors properly.
 * How to shutdown a 0MQ application cleanly.
 * How to send and receive multipart messages.
 * How to forward messages across networks.
@@ -18,6 +18,10 @@ We'll cover:
 * How to write multithreaded applications with 0MQ.
 * How to use 0MQ to signal between threads.
 * How to use 0MQ to coordinate a network of nodes.
+* How to create durable sockets using socket identities.
+* How to create and use message envelopes for publish-subscribe.
+* How to do make durable subscribers that can recover from crashes.
+* Using the high-water mark (HWM) to protect against memory overflows.
 
 +++ The Zen of Zero
 
@@ -34,8 +38,11 @@ Sockets are the de-facto standard API for network programming, as well as being 
 Like a nice pepperoni pizza, 0MQ sockets are easy to digest.  Sockets have a life in four parts, just like BSD sockets:
 
 * Creating and destroying sockets, which go together to form a karmic circle of socket life (see zmq_socket[3], zmq_close[3]).
+
 * Configuring sockets by setting options on them and checking them if necessary (see zmq_setsockopt[3], zmq_getsockopt[3]).
+
 * Plugging sockets onto the network topology by creating 0MQ connections to and from them (see zmq_bind[3], zmq_connect[3]).
+
 * Using the sockets to carry data by writing and receiving messages on them (see zmq_send[3], zmq_recv[3]).
 
 Which looks like this:
@@ -75,11 +82,17 @@ To create a connection between two nodes you use zmq_bind[3] in one node, and zm
 0MQ connections are somewhat different from old-fashioned TCP connections.  The main notable differences are:
 
 * They go across an arbitrary transport (inproc:, ipc:, tcp:, pgm: or epgm:).  See zmq_inproc[7], zmq_ipc[7], zmq_tcp[7], zmq_pgm[7], and zmq_epgm[7].
+
 * They exist when a client does zmq_connect[3] to an endpoint, whether or not a server has already done zmq_bind[3] to that endpoint.
+
 * They are asynchronous, and have queues that magically exist where and when needed.
+
 * They may express a certain "messaging pattern", according to the type of socket used at each end.
+
 * One socket may have many outgoing and many incoming connections.
+
 * There is no zmq_accept() method.  When a socket is bound to an endpoint it automatically starts accepting connections.
+
 * Your application code cannot work with these connections directly; they are encapsulated under the socket.
 
 Many architectures follow some kind of client-server model, where the server is the component that is most stable, and the clients are the components that are most dynamic, i.e. they come and go the most.  There are sometimes issues of addressing: servers will be visible to clients, but not necessarily vice-versa.  So mostly it's obvious which node should be doing zmq_bind[3] (the server) and which should be doing zmq_connect[3] (the client).  It also depends on the kind of sockets you're using, with some exceptions for unusual network architectures.  We'll look at socket types later.
@@ -91,7 +104,7 @@ A server node can bind to many endpoints and it can do this using a single socke
 [[code type="C"]]
 zmq_bind (socket, "tcp://*:5555");
 zmq_bind (socket, "tcp://*:9999");
-zmq_bind (socket, "ipc://myserver");
+zmq_bind (socket, "ipc://myserver.ipc");
 [[/code]]
 
 You cannot bind to the same endpoint twice, that will cause an exception.
@@ -138,8 +151,11 @@ To send and receive messages you use the zmq_send[3] and zmq_recv[3] methods.  T
 Let's look at the main differences between TCP sockets and 0MQ sockets when it comes to carrying data:
 
 * 0MQ sockets carry messages, rather than bytes (as in TCP) or frames (as in UDP).  A message is a length-specified blob of binary data.  We'll come to messages shortly, their design is optimized for performance and thus somewhat tricky to understand.
+
 * 0MQ sockets do their I/O in a background thread.  This means that messages arrive in a local input queue, and are sent from a local output queue, no matter what your application is busy doing.  These are configurable memory queues, by the way.
+
 * 0MQ sockets can, depending on the socket type, be connected to (or from, it's the same) many other sockets.  Where TCP emulates a one-to-one phone call, 0MQ implements one-to-many (like a radio broadcast), many-to-many (like a post office), many-to-one (like a mail box), and even one-to-one.
+
 * 0MQ sockets can send to many endpoints (creating a fan-in model), or receive from many endpoints (creating a fan-out model).
 
 [[code type="textdiagram"]]
@@ -172,6 +188,16 @@ So writing a message to a socket may send the message to one or many other place
 
 The zmq_send[3] method does not actually send the message to the socket connection(s).  It queues the message so that the I/O thread can send it asynchronously.  It does not block except in some exception cases.  So the message is not necessarily sent when zmq_send[3] returns to your application.  If you created a message using zmq_msg_init_data[3] you cannot reuse the data or free it, otherwise the I/O thread will rapidly find itself writing overwritten or unallocated garbage.  This is a common mistake for beginners.  We'll see a little later how to properly work with messages.
 
++++ Unicast Transports
+
+0MQ provides a set of unicast transports (inproc, ipc, and tcp) and multicast transports (epgm, pgm).  Multicast is an advanced technique that we'll come to later.  Don't even start using it unless you know that your fanout ratios will make 1-to-N unicast impossible.
+
+For most common cases, use **tcp**, which is a //disconnected TCP// transport.  It is elastic, portable, and fast enough for most cases.  We call this 'disconnected' because 0MQ's {{tcp}} transport doesn't require that the endpoint exists before you connect to it.  Clients and servers can connect and bind at any time, can go and come back, and it remains transparent to applications.
+
+The inter-process transport, **icp**, is like {{tcp}} except that it is abstracted from the LAN, so you don't need to specify IP addresses or domain names.  This makes it better for some purposes, and we use it quite often in the examples in this book.  0MQ's {{ipc}} transport is disconnected, like {{tcp}}.  It has one limitation: it does not work on Windows.  This may be fixed in future versions of 0MQ.  By convention we use endpoint names with an ".ipc" extension to avoid potential conflict with other file names.  On UNIX systems, if you use {{ipc}} endpoints you need to create these with appropriate permissions otherwise they may not be shareable between processes running under different user ids.
+
+The inter-thread transport, **inproc**, is a connected signaling transport.  It is much faster than {{tcp}} or {{ipc}}.  This transport has a specific limitation compared to {{ipc}} and {{tcp}}: **you must do bind before connect**.  This is something future versions of 0MQ may fix, but for today it has some impact on the way you use {{inproc}} sockets.  When we use this in examples, we carefully bind to each endpoint before connecting to it.  If we connect first, and then bind, the connect will return an error, and if we ignore that error, the recv will block.
+
 +++ I/O Threads
 
 We said that 0MQ does I/O in a background thread.  One I/O thread (for all sockets) is sufficient for all but the most extreme applications.  This is the magic '1' that we use when creating a context, meaning "use one I/O thread":
@@ -198,14 +224,16 @@ But cutting through that, it routes and queues messages according to precise rec
 The basic 0MQ patterns are:
 
 * **Request-reply**, which connects a set of clients to a set of services.  This is a remote procedure call and task distribution pattern.
+
 * **Publish-subscribe**, which connects a set of publishers to a set of subscribers.  This is a data distribution pattern.
+
 * **Pipeline**, connects nodes in a fan-out / fan-in pattern that can have multiple steps, and loops.  This is a parallel task distribution and collection pattern.
 
 We looked at each of these in the first chapter.  There's one more pattern that people tend to try to use when they still think of 0MQ in terms of traditional TCP sockets:
 
-* **Exclusive pair**, which connects two sockets in an exclusive pair.  This is a low-level pattern for specific, advanced use cases.  We'll see an example at the end of this chapter.
+* **Exclusive pair**, which connects two sockets in an exclusive pair.  This is a low-level pattern for specific, advanced use-cases.  We'll see an example at the end of this chapter.
 
-The zmq_socket[3] [http://api.0MQ.org/zmq_socket.html man page] is fairly clear about the patterns, it's worth reading several times until it starts to make sense.  We'll look at each pattern and the use cases it covers.
+The zmq_socket[3] [http://api.0MQ.org/zmq_socket.html man page] is fairly clear about the patterns, it's worth reading several times until it starts to make sense.  We'll look at each pattern and the use-cases it covers.
 
 These are the socket combinations that are valid for a connect-bind pair (either side can bind):
 
@@ -228,10 +256,15 @@ On the wire, 0MQ messages are blobs of any size from zero upwards, fitting in me
 In memory, 0MQ messages are zmq_msg_t structures (or classes depending on your language).  Here are the basic ground rules for using 0MQ messages in C:
 
 * You create and pass around zmq_msg_t objects, not blocks of data.
+
 * To read a message you use zmq_msg_init[3] to create an empty message, and then you pass that to zmq_recv[3].
+
 * To write a message from new data, you use zmq_msg_init_size[3] to create a message and at the same time allocate a block of data of some size.  You then fill that data using memcpy, and pass the message to zmq_send[3].
+
 * To release (not destroy) a message you call zmq_msg_close[3].  This drops a reference, and eventually 0MQ will destroy the message.
+
 * To access the message content you use zmq_msg_data[3].  To know how much data the message contains, use zmq_msg_size[3].
+
 * Do not use zmq_msg_move[3], zmq_msg_copy[3], or zmq_msg_init_data[3] unless you read the man pages and know precisely why you need these.
 
 Here is a typical chunk of code working with messages, which should be familiar if you have been paying attention.  This is from the zhelpers.h file we use in all the examples:
@@ -269,14 +302,18 @@ You can easily extend this code to send and receive blobs of arbitrary length.
 
 **Note than when you have passed a message to zmq_send[3], 0MQ will clear the message, i.e. set the data to empty.  You cannot send the same message twice, and you cannot access the message data after sending it.**
 
-0MQ also supports //multipart// messages, which let you handle a list of blobs as a single message.  This is widely used in real applications and we'll look at that later in this chapter and in detail in Chapter 3.
+0MQ also supports //multipart// messages, which let you handle a list of blobs as a single message.  This is widely used in real applications and we'll look at that later in this chapter and in Chapter Three.
 
 Some other things that are worth knowing about messages:
 
 * 0MQ sends and receives them atomically, i.e. you get a whole message, or you don't get it at all.
+
 * 0MQ does not send a message right away but at some indeterminate later time.
+
 * You can send zero-length messages, e.g. for sending a signal from one thread to another.
+
 * A message must fit in memory.  If you want to send files of arbitrary sizes, you should break them into pieces and send each piece as a separate message.
+
 * You must call zmq_msg_close[3] when finished with a message, in languages that don't automatically destroy objects when a scope closes.
 
 And to be necessarily repetitive, do not use zmq_msg_init_data[3], yet.  This is a zero-copy method and guaranteed to create trouble for you.  There are far more important things to learn about 0MQ before you start to worry about shaving off microseconds.
@@ -318,13 +355,17 @@ When 0MQ detects an external faults it returns an error to the calling code.  In
 In most of the C examples we've seen so far there's been no error handling.  **Real code should do error handling on every single 0MQ call**.  If you're using a language binding other than C, the binding may handle errors for you.  In C you do need to do this yourself.  There are some simple rules, starting with POSIX conventions:
 
 * Methods that create objects will return NULL in case they fail.
+
 * Other methods will return 0 on success and other values (mostly -1) on an exceptional condition (usually failure).
+
 * The error code is provided in {{errno}} or zmq_errno[3].
+
 * A descriptive error text for logging is provided by zmq_strerror[3].
 
 There are two main exceptional conditions that you may want to handle as non-fatal:
 
 * When a thread calls zmq_recv[3] with the NOBLOCK option and there is no waiting data.  0MQ will return -1 and set errno to EAGAIN.
+
 * When a thread calls zmq_term[3] and other threads are doing blocking work.  The zmq_term[3] call closes the context and all blocking calls exit with -1, and errno set to ETERM.
 
 What this boils down to is that in most cases you can wrap 0MQ calls in assertions, like this:
@@ -343,7 +384,7 @@ How do we connect the sink to the workers?  The PUSH/PULL sockets are one-way on
 
 * The sink creates a PUB socket on a new endpoint.
 * Workers bind their input socket to this endpoint.
-* When the sink detects the end of the batch it sends a kill message on its PUB socket.
+* When the sink detects the end of the batch it sends a kill to its PUB socket.
 * When a worker detects this kill message, it exits.
 
 It doesn't take much new code in the sink:
@@ -422,7 +463,7 @@ Here is the modified sink application.  When it's finished collecting results it
 
 +++ Multipart Messages
 
-0MQ lets us compose a message out of several frames, giving us a 'multipart message'.  Realistic applications use multipart messages heavily, especially to make "envelopes".  We'll look at them in Chapters Three and Four.  What we'll learn now is simply how to safely (but blindly) read and write multipart messages because otherwise the devices we write won't work with applications that use multipart messages.
+0MQ lets us compose a message out of several frames, giving us a 'multipart message'.  Realistic applications use multipart messages heavily, especially to make "envelopes".  We'll look at them later.  What we'll learn now is simply how to safely (but blindly) read and write multipart messages because otherwise the devices we write won't work with applications that use multipart messages.
 
 Here is how we send the frames in a multipart message (we receive each frame into a message object):
 
@@ -454,10 +495,15 @@ while (1) {
 Some things to know about multipart messages:
 
 * When you send a multipart message, the first part (and all following parts) are only sent when you send the final part.
+
 * If you are using zmq_poll[3], when you receive the first part of a message, all the rest have also arrived.
+
 * You will receive all parts of a message, or none at all.
+
 * You will receive all parts of a message whether or not you check the RCVMORE option.
+
 * On sending, 0MQ queues message parts in memory until the last is received, then sends them all.
+
 * There is no way to cancel a partially sent message, except by closing the socket.
 
 +++ Infernal Devices
@@ -540,7 +586,7 @@ And then we extend the application across a wider network, placing devices in sp
 * May in complex cases work with three or more sockets.
 * Run as stand-alone processes or within threads.
 
-Devices are a confusing concept to the new 0MQ user, and the best way as always is to look at real use cases and see how we solve them.
+Devices are a confusing concept to the new 0MQ user, and the best way as always is to look at real use-cases and see how we solve them.
 
 ++++ A Publish-Subscribe Proxy Server
 
@@ -792,8 +838,11 @@ Some widely used metaphors, despite being the basis for billion-dollar industrie
 You do need to follow some rules to write MT code with 0MQ:
 
 * You MUST NOT try to access the same data from multiple threads.
+
 * You MUST create a 'context' object for your process, and pass that to all threads.  The context collects 0MQ's state.  To create a connection across the inproc: transport, both server and client thread must share the same context object.
+
 * You MUST NOT share sockets between threads, not even when using proper exclusion mechanisms like semaphores, locks or mutexes.  0MQ will in some future make it possible to move sockets to different threads.  Right now the thread which creates a socket is the only thread that may use it.
+
 * If you have to work with existing drunkard code, find a way to isolate yourself from it.  Don't use mutexes, semaphores, critical sections, but use 0MQ messages.
 
 If you need to start more than one device in an application, for example, you will want to run each in their own thread.  It is easy to make the error of creating the device sockets in one thread, and then passing the sockets to the device in another thread.  This may appear to work but will fail randomly.  Remember: //You cannot use sockets except in the thread that created them.//
@@ -814,8 +863,11 @@ The MT version of the Hello World service basically collapses the queue device a
 All the code should be recognizable to you by now.  How it works:
 
 * The server starts a set of worker threads.  Each worker thread creates a REP socket and then processes requests on this socket.  Worker threads are just like single-threaded servers.  The only differences are the transport (inproc: instead of tcp:), and the bind-connect direction.
+
 * The server creates an XREP (extended reply) socket to talk to clients and binds this to its external interface (over tcp:).
+
 * The server creates an XREQ (extended request) socket to talk to the workers and binds this to its internal interface (over inproc:).
+
 * The server starts a QUEUE device that connects the two sockets.  The QUEUE device keeps a single queue for incoming requests, and distributes those out to workers.  It also routes replies back to their origin.
 
 Here the 'work' is just a one-second pause.  We could do anything in the workers, including talking to other nodes.  This is what the MT server looks like in terms of ØMQ sockets and nodes.  Note how the request-reply chain is {{REQ-XREP-queue-XREQ-REP}}:
@@ -914,8 +966,6 @@ In this example we use PAIR sockets over the //inproc:// transport:
 [[code type="C" title="Multithreaded relay" name="mtrelay"]]
 [[/code]]
 
-The {{inproc}} transport has a specific limitation compared to {{ipc}} and {{tcp}}: **you must do bind before connect**.  This is something future versions of 0MQ may fix, but for today it has some impact on the way you use inproc sockets.  In the example here, we carefully bind to each endpoint before connecting to it.  If you connect first, and then bind, the connect will return an error, and if you ignore that error, the recv will block.
-
 This is the first time we've shown an example using PAIR sockets.  Why use PAIR?  Other socket combinations might seem to work but they all have side-effects that could interfere with signalling:
 
 * You can use PUSH for the sender and PULL for the receiver.  This looks simple and will work, but remember that PUSH will load-balance messages to all available receivers.  If you by accident start two receivers (e.g. you already have one running and you start a second), you'll "lose" half of your signals.  PAIR has the advantage of refusing more than one connection, the pair is //exclusive//.
@@ -935,7 +985,9 @@ The second significant difference between threads and nodes is that you typicall
 This is how the application will work:
 
 * The publisher knows in advance how many subscribers it expects.  This is just a magic number it gets from somewhere.
+
 * The publisher starts up and waits for all subscribers to connect.  This is the node coordination part.  Each subscriber subscribes and then tells the publisher it's ready via another socket.
+
 * When the publisher has all subscribers connected, it starts to publish data.
 
 In this case we'll use a REQ-REP socket flow to synchronize subscribers and publisher.  Here is the publisher:
@@ -1028,6 +1080,305 @@ zmq_send (socket, &message, 0);
 There is no way to do zero-copy on receive: 0MQ delivers you a buffer that you can store as long as you wish but it will not write data directly into application buffers.
 
 On writing, 0MQ's multipart messages work nicely together with zero-copy.  In traditional messaging you need to marshal different buffers together into one buffer that you can send.  That means copying data.  With 0MQ, you can send multiple buffers coming from different sources as individual message parts.  We send each field as a length-delimited frame.  To the application it looks like a series of send and recv calls.  But internally the multiple parts get written to the network and read back with single system calls, so it's very efficient.
+
++++ Transient vs. Durable Sockets
+
+The concept of a durable socket is one more of those surprisingly obvious 0MQ inventions that when you see, you wonder why no-one ever thought of it before.  In classic networking, sockets are API objects, and their lifespan is never longer than the code that uses them.  But if you look at a socket you see that it collects a bunch of resources - network buffers - and at some stage, a 0MQ user asked, "isn't there some way these could hang around if my program crashes, so I can get them back?"
+
+This turns out to be very useful.  It's not foolproof, but it gives 0MQ a kind of "better than a kick in the nuts" reliability, particularly useful for pubsub cases.  We'll look at that shortly.
+
+Here is the general model of two sockets happily chatting about the weather, and who kissed who and where and when precisely, cause I heard something different, at the last staff party, not to mention did you see that new family up the road who do they think they are with that car and what's with the prices at the shops these days don't they know it's a crisis?
+
+[[code type="textdiagram"]]
+        +-----------+
+        |           |
+        |  Sender   |
+        |           |
+        +-----------+
+        |  Socket   |
+        \-----------/
+         +---------+
+         +---------+
+         +---------+    0MQ Transmit buffer
+         +---------+
+         +----+----+
+              |
+              |
+              v
+         +---------+
+         +---------+    Network I/O buffers
+         +----+----+
+              |
+              |
+              v
+         +---------+
+         +---------+
+         +---------+    0MQ Receive buffer
+         +---------+
+         +---------+
+        /-----------\
+        |  Socket   |
+        +-----------+
+        |           |
+        | Receiver  |
+        |           |
+        +-----------+
+
+
+Figure # - Sender boring the pants off receiver
+[[/code]]
+
+What durable sockets give you is the promise that the 0MQ //transmit buffer// is kept alive as long as the sender exists.  If the receiver crashes, it will lose its receive buffer, and the network will lose its I/O buffers, but the sender can continue to push data into its transmit buffer and the receiver can then pick this up.
+
+Note that 0MQ's transmit and receive buffers are invisible and automatic, just like TCP's buffers are.
+
+All the sockets we've used so far were transient.  To turn a transient socket into a durable one you give it an explicit //identity//.  All 0MQ sockets have identities but by default they are generated 'unique universal identifiers' (UUIDs) that the peer uses to recall who it's talking to.
+
+Behind the scenes, and invisibly to you, when one socket connects to another, the two sockets exchange identities.  Normally sockets don't tell their peers their identity, so peers invent random identities for each other:
+
+[[code type="textdiagram"]]
+        +-----------+
+        |           |
+        | Receiver  |
+        |           |
+        +-----------+
+        |  Socket   |
+        \-----+-----/
+              |  "Not telling you my name!"
+              |
+              |
+              v  "Fine, I'll call you Luv"
+        /-----------\
+        |  Socket   |
+        +-----------+
+        |           |
+        |  Sender   |
+        |           |
+        +-----------+
+
+
+         Figure # - Transient socket
+[[/code]]
+
+But a socket can also tell the other its identity, and then the next time the two meet, it'll be "so as I was saying what I heard was quite different but anyhow you know how it goes at the office, they're all tattletales I'd never say anything about anyone that wasn't true or at least based on a sure thing".
+
+[[code type="textdiagram"]]
+        +-----------+
+        |           |
+        | Receiver  |
+        |           |
+        +-----------+
+        |  Socket   |
+        \-----+-----/
+              |  "My name's Lucy"
+              |
+              |
+              v  "Lucy! Nice to see you again..."
+        /-----------\
+        |  Socket   |
+        +-----------+
+        |           |
+        |  Sender   |
+        |           |
+        +-----------+
+
+
+       Figure # - Durable socket aka. Can't Escape
+[[/code]]
+
+Here's how you set the identity of a socket, to create a durable socket:
+
+[[code]]
+zmq_setsockopt (socket, ZMQ_IDENTITY, "Lucy", 4);
+[[/code]]
+
+Some comments on setting a socket identity:
+
+* If you want to set an identity you must do it //before// connecting or binding the socket.
+
+* Identities are binary strings: identities starting with a zero byte are reserved for 0MQ use.
+
+* Do not use the same identity for more than one socket.  On 0MQ/2.0.9 and earlier versions this will cause an assertion failure in the //other// socket.  Yes, that's a bug, and yes, it'll be fixed.
+
+* Do not modify the identity of a socket after binding, or if you restart a peer, this will cause an assertion failure in sockets connected to it.  Yes, that's also a bug and yes, it'll also be fixed.
+
+* Do not use random identities in applications that create lots of sockets.  What this will do is cause lots and lots of durable sockets to pile up, eventually crashing nodes.
+
+* If you need to know the identity of the //peer// you got a message from, only the XREP socket does this for you automatically.  For any other socket type you must send the address explicitly, as a message part.
+
+See zmq_setsockopt[3] for a summary of the ZMQ_IDENTITY socket option.  Note that the zmq_getsockopt[3] method gives you the identity of the socket you are working with, //not// any peer it might be connected to.
+
+About these assertion failures, 0MQ shouldn't assert when it's misused, only when it thinks it's actually hitting an internal bug.  Code should be full of assertions that //never// fail.  There are ongoing discussions about how these situations should be handled.  As a general rule, if you get assertions while using 0MQ, report them to the zeromq-dev list.
+
++++ Pubsub Message Envelopes
+
+We've looked briefly at multipart messages.  Let's now look at their main use-case, which is //message envelopes//.  An envelope is a way of safely packaging up data with an address, without touching the data itself.
+
+In the pubsub pattern, the envelope at least holds the subscription key for filtering but you can also add the sender identity in the envelope.
+
+If you want to use pubsub envelopes, you make them yourself.  It's optional, and in previous pubsub examples we didn't do this.  Using a pubsub envelope is a little more work for simple cases but it's cleaner especially for real cases, where the key and the data are naturally separate things.  It's also faster, if you are writing the data directly from an application buffer.
+
+Here is what a publish-subscribe message with an envelope looks like:
+
+[[code type="textdiagram"]]
+            +-------------+
+  Frame 1   |  Key        |     Subscription key
+            +-------------+
+  Frame 2   |  Data       |     Actual message body
+            +-------------+
+
+
+    Figure # - Pubsub envelope with separate key
+[[/code]]
+
+
+Recall that pubsub matches messages based on the prefix.  Putting the key into a separate frame makes the matching very obvious, since there is no chance an application will accidentally match on part of the data.
+
+Here is a minimalist example of how pubsub envelopes look in code.  This publisher sends messages of two types, A and B.  The envelope holds the message type:
+
+[[code type="C" title="Pubsub envelope publisher" name="psenvpub"]]
+[[/code]]
+
+The subscriber only wants messages of type B:
+
+[[code type="C" title="Pubsub envelope subscriber" name="psenvsub"]]
+[[/code]]
+
+When you run the two programs, the subscriber should show you this:
+
+[[code]]
+[B] We would like to see this
+[B] We would like to see this
+[B] We would like to see this
+[B] We would like to see this
+...
+[[/code]]
+
+This examples shows that the subscription filter rejects or accepts the entire multipart message (key plus data).  You won't get part of a multipart message, ever.
+
+If you subscribe to multiple publishers and you want to know their identity so that you can send them data via another socket (and this is a fairly typical use-case), you create a three-part message:
+
+[[code type="textdiagram"]]
+            +-------------+
+  Frame 1   |  Key        |     Subscription key
+            +-------------+
+  Frame 2   |  Identity   |     Address of publisher
+            +-------------+
+  Frame 3   |  Data       |     Actual message body
+            +-------------+
+
+
+    Figure # - Pubsub envelope with sender address
+[[/code]]
+
++++ Making a (Semi-)Durable Subscriber
+
+Identities work on all socket types.  If you have a PUB and a SUB socket, and the subscriber gives the publisher its identity, the publisher holds onto data until it can deliver it to the subscriber.
+
+This is both wonderful and terrible at the same time.  It's wonderful because it means updates can wait for you in the publisher's transmit buffer, until you connect and collect them.  It's terrible because by default this will rapidly kill a publisher and lock up your system.
+
+**If you use durable subscriber sockets (i.e. if you set the identity on a SUB socket) you //must// also guard against queue explosion by using the //high water mark// or HWM, on the publisher socket.**
+
+If you want to prove this, take the wuclient and wuserver from Chapter One, and add this line to the wuclient before it connects:
+
+[[code]]
+    zmq_setsockopt (subscriber, ZMQ_IDENTITY, "Hello", 5);
+[[/code]]
+
+Build and run the two programs.  It all looks normal.  But keep an eye on the memory used by the publisher, and you'll see that as the subscriber finishes, the publisher memory grows and grows.  If you restart the subscriber, the publisher queues stop growing.  As soon as the subscriber goes away, they grow again.  It'll rapidly overwhelm your system.
+
+We'll first look at how to do this, and then at how to do it properly.  Here are a publisher and subscriber that use the 'node coordination' technique from Chapter Two to synchronize.  The publisher then sends ten messages, waiting a second between each one.  That wait is for you to kill the subscriber using Ctrl-C, wait a few seconds, and restart it.
+
+Here's the publisher:
+
+[[code type="C" title="Durable publisher" name="durapub"]]
+[[/code]]
+
+And here's the subscriber:
+
+[[code type="C" title="Durable subscriber" name="durasub"]]
+[[/code]]
+
+To run this, start the publisher, then the subscriber, each in their own window.  Allow the subscriber to collect one or two messages, then Ctrl-C it.  Count to three, and restart it.  What you will see is something like this:
+
+[[code]]
+$ durasub
+Update 0
+Update 1
+Update 2
+^C
+$ durasub
+Update 3
+Update 4
+Update 5
+Update 6
+Update 7
+^C
+$ durasub
+Update 8
+Update 9
+END
+[[/code]]
+
+Just to see the difference, comment out the line in the subscriber that sets the socket identity, and try again.  You will see that it loses messages.  Setting an identity turns a transient subscriber into a durable subscriber.  You would in practice want to choose identities carefully, either taking them from configuration files, or generating UUIDs and storing them somewhere.
+
+When we set a high-water mark on the PUB socket, the publisher stores that many messages, but no more.  Let's test this by setting the publisher HWM to 2 messages, before we start publishing to the socket:
+
+[[code]]
+uint64_t hwm = 2;
+zmq_setsockopt (publisher, ZMQ_HWM, &hwm, sizeof (hwm));
+[[/code]]
+
+Now running our test, killing and restarting the subscriber after a couple of seconds' pause will show something like this:
+
+[[code]]
+$ durasub
+Update 0
+Update 1
+^C
+$ durasub
+Update 2
+Update 3
+Update 7
+Update 8
+Update 9
+END
+[[/code]]
+
+Look carefully: we have two messages kept for us (2 and 3), then a gap of several messages, and then new updates again.  The HWM causes 0MQ to drop messages it can't put onto the queue, something the 0MQ Reference Manual calls an "exceptional condition".
+
+In short, if you use subscriber identities, you must set the high-water mark on publisher sockets, or else you risk servers that run out of memory and crash.  However, there is a way out.  0MQ provides something called a "swap", which is a disk file that holds messages we can't store to the queue.  It is very simple to enable:
+
+[[code]]
+//  Specify swap space in bytes
+uint64_t swap = 25000000;
+zmq_setsockopt (publisher, ZMQ_SWAP, &swap, sizeof (swap));
+[[/code]]
+
+We can put this together to make a cynical publisher that is immune to slow, blocked, or absent subscribers while still offering durable subscriptions to those that need it:
+
+[[code type="C" title="Durable but cynical publisher" name="durapub2"]]
+[[/code]]
+
+In practice, setting the HWM to 1 and shoving everything to disk will make a pubsub system very slow.  Here is a more reasonable 'best practice' for publishers that have to deal with unknown subscribers:
+
+* Always set a HWM on the socket, based on the expected maximum number of subscribers, the amount of memory you are willing to dedicated to queuing, and the average size of a message.  For example if you expect up to 5,000 subscribers, and have 1GB of memory to play with, and messages of ~200 bytes, then a safe HWM would be (1,000,000,000 / 200 / 5,000) = 1,000.
+
+* If you don't want slow or crashing subscribers to lose data, set a SWAP that's large enough to handle the peaks, based on the number of subscribers, peak message rate, average size of messages, and time you want to cover.  For example with 5,000 subscribers and messages of ~200 bytes coming in at 100,000 per second, you will need up to 100MB of disk space per second.  To cover an outage of up to 1 minute, therefore, you'd need 6GB of disk space, and it would have to be fast, but that's a different story.
+
+Some notes on durable subscribers:
+
+* Depending on how the subscriber dies, and the frequency of updates, and the size of network buffers, and the transport protocol you are using, data may be lost.  Durable subscribers will have //much better// reliability than transient ones, but they will not be perfect.
+
+* The SWAP file is not recoverable, so if a publisher dies and restarts, it will lose data that was in its transmit buffers, and that was in the network I/O buffers.
+
+Some notes on using the HWM option:
+
+* This affects both the transmit and receive buffers of a single socket.  Some sockets (PUB, PUSH) only have transmit buffers.  Some (SUB, PULL, REQ, REP) only have receive buffers.  Some (XREQ, XREP, PAIR) have both transmit and receive buffers.
+
+* Future versions of 0MQ might offer high-water marks on transmit and receive buffers separately.  However this isn't something people seem particularly worried about.
+
+* When your socket reaches its high-water mark, it will either block or drop data depending on the socket type.  PUB sockets will drop data if they reach their high-water mark, while other socket types will block.
 
 +++ A Bare Necessity
 

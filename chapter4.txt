@@ -6,52 +6,9 @@ In Chapter Three we looked at advanced use of 0MQ's request-reply pattern with w
 
 We'll cover:
 
-* How to create and use message envelopes for publish-subscribe.
 
 
 
-+++ Pubsub Message Envelopes
-
-* In the pubsub pattern, where the envelope holds the subscription key for filtering.
-
-If you want to use pubsub envelopes, you make them yourself.  It's optional, and in previous pubsub examples we didn't do this.  Using a pubsub envelope is a little more work for simple cases but it's cleaner especially for real cases, where the key and the data are naturally separate things.  It's also faster, if you are writing the data directly from an application buffer.
-
-Here is what a publish-subscribe message with an envelope looks like:
-
-[[code type="textdiagram"]]
-            +-------------+
-  Frame 1   |     Key     |     This is the envelope
-            +-------------+---------------------------+
-  Frame 2   |     Data                                |
-            +-----------------------------------------+
-
-
-           Figure # - Multipart pubsub message
-[[/code]]
-
-Recall that pubsub matches messages based on the prefix.  Putting the key into a separate frame makes the matching very obvious, since there is no chance an application will accidentally match on part of the data.
-
-Here is a minimalist example of how pubsub envelopes look in code.  This publisher sends messages of two types, A and B.  The envelope holds the message type:
-
-[[code type="C" title="Pubsub envelope publisher" name="psenvpub"]]
-[[/code]]
-
-The subscriber only wants messages of type B:
-
-[[code type="C" title="Pubsub envelope subscriber" name="psenvsub"]]
-[[/code]]
-
-When you run the two programs, the subscriber should show you this:
-
-[[code]]
-[B] We would like to see this
-[B] We would like to see this
-[B] We would like to see this
-[B] We would like to see this
-...
-[[/code]]
-
-This examples shows that the subscription filter rejects or accepts the entire multipart message (key plus data).  You won't get part of a multipart message, ever.
 
 
 

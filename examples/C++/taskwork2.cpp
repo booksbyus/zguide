@@ -25,7 +25,7 @@ int main (int argc, char *argv[])
    	controller.setsockopt(ZMQ_SUBSCRIBE, "", 0);
 
     //  Process messages from receiver and controller
-    zmq::pollitem_t items [2] = {
+    zmq::pollitem_t items [] = {
         { receiver, 0, ZMQ_POLLIN, 0 },
         { controller, 0, ZMQ_POLLIN, 0 }
     };

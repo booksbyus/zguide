@@ -13,7 +13,7 @@ int main (int argc, char *argv[])
     zmq_bind (backend,  "tcp://*:5560");
 
     //  Initialize poll set
-    zmq_pollitem_t items [2] = {
+    zmq_pollitem_t items [] = {
         { frontend, 0, ZMQ_POLLIN, 0 },
         { backend,  0, ZMQ_POLLIN, 0 }
     };
