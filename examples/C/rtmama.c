@@ -41,6 +41,7 @@ int main () {
     void *context = zmq_init (1);
     void *client = zmq_socket (context, ZMQ_XREP);
     zmq_bind (client, "ipc://routing.ipc");
+    srandom ((unsigned) time (NULL));
 
     int worker_nbr;
     for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++) {

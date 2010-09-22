@@ -16,22 +16,24 @@ int main (int argc, char *argv[])
     }
     char *self = argv [1];
     printf ("I: preparing broker at %s...\n", self);
+    srandom ((unsigned) time (NULL));
 
     //  Prepare our context and sockets
     void *context = zmq_init (1);
     char endpoint [256];
 
-    //  Bind statebe to endpoint, connect statefe to all peers
+    //  Bind statebe to endpoint
     void *statebe = zmq_socket (context, ZMQ_PUB);
     snprintf (endpoint, 255, "ipc://%s-state.ipc", self);
     assert (zmq_bind (statebe, endpoint) == 0);
 
-    int argn;
+    //  Connect statefe to all peers
     void *statefe = zmq_socket (context, ZMQ_SUB);
     zmq_setsockopt (statefe, ZMQ_SUBSCRIBE, "", 0);
+    int argn;
     for (argn = 2; argn < argc; argn++) {
         char *peer = argv [argn];
-        printf ("I: peering with broker at '%s'\n", peer);
+        printf ("I: connecting to state backend at '%s'\n", peer);
         snprintf (endpoint, 255, "ipc://%s-state.ipc", peer);
         assert (zmq_connect (statefe, endpoint) == 0);
     }

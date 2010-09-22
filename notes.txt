@@ -1,5 +1,21 @@
 Notes for The Guide
 
+
+
+
+- worked example
+- single point of failure
+- presence detection
+
+- router trees
+ (federation)
+
+
+
+
+
+
+
 Then we can use this to start building some reusable pieces:
 
 - timer device
@@ -10,6 +26,57 @@ Then we can use this to start building some reusable pieces:
 - reliable request-reply
 - logging device
 - reactor (Matt Weinstein's)
+
+
++++ Presence Detection
+
+- peers come and go
+- if we want to route to them explicitly, we need to know if they are present
+- heartbeating, liveness, etc.
+- fresh data, failover, etc.
+- purging old identities from routing tables
+- example of eight robots and console
+- robots come and go...
+
+
++++ A Service-Oriented Queue Device
+
+- how to route to workers based on service names
+- kind of like custom pubsub but with answers going back to clients
+
+
++++ A ZeroMQ Name Service
+
+- name service
+    translate logical name into connect or bind string
+    service runs locally, connect via icp://zns
+    gets name updates asynchronously from central server
+    also local zns lookup file
+    using zpl syntax
+    pubsub state / refresh example
+
+how to map names?
+    - XXX -> tcp://lo:5050 if I'm on server 1
+    - XXX -> tcp://somename:5050
+    -> does ZMQ do host lookup?  Doesn't seem like it...
+    -> resolve host...
+
+
+
+
+
+
+
++++ Generating Identities
+
+-> need zfl here
+
+- generic LRU device
+    - accept input from REQs
+    - load balance to bunch of mamas
+
+lrudevice.c
+    - imitates a queue device except...
 
 
 
@@ -27,21 +94,6 @@ Then we can use this to start building some reusable pieces:
 - creating persistent queues using identity
     - example of HWM 1 plus massive SWAP
 
-
-
-
-
-
-+++ Custom Load-Balancing
-
-We'll look at another supercomputing scenario, where we want to distribute tasks to workers.  However we don't want to use round-robin, we want to use a least-recently used algorithm.  Our application consists of:
-
-* A ventilator, which has two threads:
- * One thread creates tasks and sends them to the second thread via a PUSH socket
- * The second thread manages two sockets, a PULL socket talking to the first thread and a REP socket talking to workers
-* Workers, which connect to the ventilator's REP socket
-
-The workers signal 'ready' by sending an empty message to the ventilator.  The ventilator pops the next task and replies with that.
 
 +++ Reliable Request-Reply
 
@@ -290,7 +342,7 @@ You will use ZMQ_XREQ at the client side and ZMQ_XREP at the service side.  Ther
 The server has two main data structures:
 
 * A connection table that stores authenticated identities and timestamps.  Each identity corresponds to a client connection.
-* A routing table that maps message keys (e.g. topic value) to identities.  There are techniques for doing [http://www.ØMQ.org/whitepapers:message-matching high speed message matching].
+* A routing table that maps message keys (e.g. topic value) to identities.  There are techniques for doing [http://www.zeromq.org/whitepapers:message-matching high speed message matching].
 
 The client has a single thread that polls on its ZMQ_XREQ socket.  At regular time intervals it (re)sends its authentication and subscription message.  This acts as a keep-alive.
 

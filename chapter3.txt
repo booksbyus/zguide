@@ -2,253 +2,19 @@
 .output chapter3.wd
 ++ Chapter Three - Advanced Request-Reply
 
-In Chapter Two we worked through the basics of using 0MQ by developing a series of small applications, each time exploring new aspects of 0MQ.  We'll continue this approach in this chapter, as we explore advanced aspects of 0MQ.
+In Chapter Two we worked through the basics of using 0MQ by developing a series of small applications, each time exploring new aspects of 0MQ.  We'll continue this approach in this chapter, as we explore advanced aspects of 0MQ's request-reply pattern.
 
 We'll cover:
 
-* Transient vs durable sockets, identities, and queues.
-* How to do make durable subscribers that can recover from crashes.
-* Using the high-water mark (HWM) to protect against memory overflows.
 * How to create and use message envelopes for request-reply.
-* How the request-reply pattern works, in detail, including XREQ and XREP.
-* Automatic vs. manual reply addresses (using identities).
-* How to do custom routing instead of 0MQ's load-balancing.
-
-+++ Transient vs. Durable Sockets
-
-The concept of a durable socket is one more of those surprisingly obvious 0MQ inventions that when you see, you wonder why no-one ever thought of it before.  In classic networking, sockets are API objects, and their lifespan is never longer than the code that uses them.  But if you look at a socket you see that it collects a bunch of resources - network buffers - and at some stage, a 0MQ user asked, "isn't there some way these could hang around if my program crashes, so I can get them back?"
-
-This turns out to be very useful.  It's not foolproof, but it gives 0MQ a kind of "better than a kick in the nuts" reliability, particularly for pubsub cases.  We'll look at that shortly.
-
-Here is the general model of two sockets happily chatting about the weather, and who kissed who and where and when precisely, cause I heard something different, at the last staff party, not to mention did you see that new family up the road who do they think they are with that car and what's with the prices at the shops these days don't they know it's a crisis?
-
-[[code type="textdiagram"]]
-        +-----------+
-        |           |
-        |  Sender   |
-        |           |
-        +-----------+
-        |  Socket   |
-        \-----------/
-         +---------+
-         +---------+
-         +---------+    0MQ Transmit buffer
-         +---------+
-         +----+----+
-              |
-              |
-              v
-         +---------+
-         +---------+    Network I/O buffers
-         +----+----+
-              |
-              |
-              v
-         +---------+
-         +---------+
-         +---------+    0MQ Receive buffer
-         +---------+
-         +---------+
-        /-----------\
-        |  Socket   |
-        +-----------+
-        |           |
-        | Receiver  |
-        |           |
-        +-----------+
-
-
-Figure # - Sender boring the pants off receiver
-[[/code]]
-
-What durable sockets give you is the promise that the 0MQ //transmit buffer// is kept alive as long as the sender exists.  If the receiver crashes, it will lose its receive buffer, and the network will lose its I/O buffers, but the sender can continue to push data into its transmit buffer and the receiver can then pick this up.
-
-Note that 0MQ's transmit and receive buffers are invisible and automatic, just like TCP's buffers are.
-
-All the sockets we've used so far were transient.  To turn a transient socket into a durable one you give it an explicit //identity//.  All 0MQ sockets have identities but by default they are generated 'unique universal identifiers' (UUIDs) that the peer uses to recall who it's talking to.
-
-Behind the scenes, and invisibly to you, when one socket connects to another, the two sockets exchange identities.  Normally sockets don't tell their peers their identity, so peers invent random identities for each other:
-
-[[code type="textdiagram"]]
-        +-----------+
-        |           |
-        | Receiver  |
-        |           |
-        +-----------+
-        |  Socket   |
-        \-----+-----/
-              |  "Not telling you my name!"
-              |
-              |
-              v  "Fine, I'll call you Luv"
-        /-----------\
-        |  Socket   |
-        +-----------+
-        |           |
-        |  Sender   |
-        |           |
-        +-----------+
-
-
-         Figure # - Transient socket
-[[/code]]
-
-But a socket can also tell the other its identity, and then the next time the two meet, it'll be "so as I was saying what I heard was quite different but anyhow you know how it goes at the office, they're all tattletales I'd never say anything about anyone that wasn't true or at least based on a sure thing".
-
-[[code type="textdiagram"]]
-        +-----------+
-        |           |
-        | Receiver  |
-        |           |
-        +-----------+
-        |  Socket   |
-        \-----+-----/
-              |  "My name's Lucy"
-              |
-              |
-              v  "Lucy! Nice to see you again..."
-        /-----------\
-        |  Socket   |
-        +-----------+
-        |           |
-        |  Sender   |
-        |           |
-        +-----------+
-
-
-       Figure # - Durable socket aka. Can't Escape
-[[/code]]
-
-Here's how you set the identity of a socket, to create a durable socket:
-
-[[code]]
-zmq_setsockopt (socket, ZMQ_IDENTITY, "Lucy", 4);
-[[/code]]
-
-Some comments on setting a socket identity:
-
-* If you want to set an identity you must do it //before// connecting or binding the socket.
-* Identities are binary strings: identities starting with a zero byte are reserved for 0MQ use.
-* Do not use the same identity for more than one socket.  On 0MQ/2.0.9 and earlier versions this will cause an assertion failure in the //other// socket.  Yes, that's a bug, and yes, it'll be fixed.
-* Do not modify the identity of a socket after binding, or if you restart a peer, this will cause an assertion failure in sockets connected to it.  Yes, that's also a bug and yes, it'll also be fixed.
-* Do not use random identities in applications that create lots of sockets.  What this will do is cause lots and lots of durable sockets to pile up, eventually crashing nodes.
-
-See zmq_setsockopt[3] for a summary of the ZMQ_IDENTITY socket option.
-
-About these assertion failures, 0MQ shouldn't assert when it's misused, only when it thinks it's actually hitting an internal bug.  Code should be full of assertions that //never// fail.  There are ongoing discussions about how these situations should be handled.  As a general rule, if you get assertions while using 0MQ, report them to the zeromq-dev list.
-
-+++ Making a (Semi-)Durable Subscriber
-
-Identities work on all socket types.  If you have a PUB and a SUB socket, and the subscriber gives the publisher its identity, the publisher holds onto data until it can deliver it to the subscriber.
-
-This is both wonderful and terrible at the same time.  It's wonderful because it means updates can wait for you in the publisher's transmit buffer, until you connect and collect them.  It's terrible because by default this will rapidly kill a publisher and lock up your system.
-
-**If you use durable subscriber sockets (i.e. if you set the identity on a SUB socket) you //must// also guard against queue explosion by using the //high water mark// or HWM, on the publisher socket.**
-
-If you want to prove this, take the wuclient and wuserver from Chapter 1, and add this line to the wuclient before it connects:
-
-[[code]]
-    zmq_setsockopt (subscriber, ZMQ_IDENTITY, "Hello", 5);
-[[/code]]
-
-Build and run the two programs.  It all looks normal.  But keep an eye on the memory used by the publisher, and you'll see that as the subscriber finishes, the publisher memory grows and grows.  If you restart the subscriber, the publisher queues stop growing.  As soon as the subscriber goes away, they grow again.  It'll rapidly overwhelm your system.
-
-We'll first look at how to do this, and then at how to do it properly.  Here are a publisher and subscriber that use the 'node coordination' technique from Chapter 2 to synchronize.  The publisher then sends ten messages, waiting a second between each one.  That wait is for you to kill the subscriber using Ctrl-C, wait a few seconds, and restart it.
-
-Here's the publisher:
-
-[[code type="C" title="Durable publisher" name="durapub"]]
-[[/code]]
-
-And here's the subscriber:
-
-[[code type="C" title="Durable subscriber" name="durasub"]]
-[[/code]]
-
-To run this, start the publisher, then the subscriber, each in their own window.  Allow the subscriber to collect one or two messages, then Ctrl-C it.  Count to three, and restart it.  What you will see is something like this:
-
-[[code]]
-$ durasub
-Update 0
-Update 1
-Update 2
-^C
-$ durasub
-Update 3
-Update 4
-Update 5
-Update 6
-Update 7
-^C
-$ durasub
-Update 8
-Update 9
-END
-[[/code]]
-
-Just to see the difference, comment out the line in the subscriber that sets the socket identity, and try again.  You will see that it loses messages.  Setting an identity turns a transient subscriber into a durable subscriber.  You would in practice want to choose identities carefully, either taking them from configuration files, or generating UUIDs and storing them somewhere.
-
-When we set a high-water mark on the PUB socket, the publisher stores that many messages, but no more.  Let's test this by setting the publisher HWM to 2 messages, before we start publishing to the socket:
-
-[[code]]
-uint64_t hwm = 2;
-zmq_setsockopt (publisher, ZMQ_HWM, &hwm, sizeof (hwm));
-[[/code]]
-
-Now running our test, killing and restarting the subscriber after a couple of seconds' pause will show something like this:
-
-[[code]]
-$ durasub
-Update 0
-Update 1
-^C
-$ durasub
-Update 2
-Update 3
-Update 7
-Update 8
-Update 9
-END
-[[/code]]
-
-Look carefully: we have two messages kept for us (2 and 3), then a gap of several messages, and then new updates again.  The HWM causes 0MQ to drop messages it can't put onto the queue, something the 0MQ Reference Manual calls an "exceptional condition".
-
-In short, if you use subscriber identities, you must set the high-water mark on publisher sockets, or else you risk servers that run out of memory and crash.  However, there is a way out.  0MQ provides something called a "swap", which is a disk file that holds messages we can't store to the queue.  It is very simple to enable:
-
-[[code]]
-//  Specify swap space in bytes
-uint64_t swap = 25000000;
-zmq_setsockopt (publisher, ZMQ_SWAP, &swap, sizeof (swap));
-[[/code]]
-
-We can put this together to make a cynical publisher that is immune to slow, blocked, or absent subscribers while still offering durable subscriptions to those that need it:
-
-[[code type="C" title="Durable but cynical publisher" name="durapub2"]]
-[[/code]]
-
-In practice, setting the HWM to 1 and shoving everything to disk will make a pubsub system very slow.  Here is a more reasonable 'best practice' for publishers that have to deal with unknown subscribers:
-
-* Always set a HWM on the socket, based on the expected maximum number of subscribers, the amount of memory you are willing to dedicated to queuing, and the average size of a message.  For example if you expect up to 5,000 subscribers, and have 1GB of memory to play with, and messages of ~200 bytes, then a safe HWM would be (1,000,000,000 / 200 / 5,000) = 1,000.
-
-* If you don't want slow or crashing subscribers to lose data, set a SWAP that's large enough to handle the peaks, based on the number of subscribers, peak message rate, average size of messages, and time you want to cover.  For example with 5,000 subscribers and messages of ~200 bytes coming in at 100,000 per second, you will need up to 100MB of disk space per second.  To cover an outage of up to 1 minute, therefore, you'd need 6GB of disk space, and it would have to be fast, but that's a different story.
-
-Some notes on durable subscribers:
-
-* Depending on how the subscriber dies, and the frequency of updates, and the size of network buffers, and the transport protocol you are using, data may be lost.  Durable subscribers will have //much better// reliability than transient ones, but they will not be perfect.
-
-* The SWAP file is not recoverable, so if a publisher dies and restarts, it will lose data that was in its transmit buffers, and that was in the network I/O buffers.
-
-Some notes on using the HWM option:
-
-* This affects both the transmit and receive buffers of a single socket.  Some sockets (PUB, PUSH) only have transmit buffers.  Some (SUB, PULL, REQ, REP) only have receive buffers.  Some (XREQ, XREP, PAIR) have both transmit and receive buffers.
-
-* Future versions of 0MQ might offer high-water marks on transmit and receive buffers separately.  However this isn't something people seem particularly worried about.
-
-* When your socket reaches its high-water mark, it will either block or drop data depending on the socket type.  PUB sockets will drop data if they reach their high-water mark, while other socket types will block.
+* How to use the REQ, REP, XREQ, and XREP sockets.
+* How to set manual reply addresses using identities.
+* How to do custom random scatter routing.
+* How to do least-recently used routing.
+* How to build a basic request-reply broker.
+* How to build a scalable cloud of request-reply brokers.
 
 +++ Request-Reply Envelopes
-
-We looked briefly at multipart messages in Chapter Two.  Let's now look at what we use them most often, which is to create //message envelopes//.  An envelope is a way of safely packaging up data with an address, without touching the data itself.
 
 In the request-reply pattern, the envelope holds the return address for replies.  It is how a 0MQ network with no state can create round-trip request-reply dialogs.
 
@@ -291,7 +57,9 @@ If you connect a REQ socket to an XREP socket, and send one request message, thi
 Breaking this down:
 
 * The data in frame 3 is what the sending application sends to the REQ socket.
+
 * The empty message part in frame 2 is prepended by the REQ socket when it sends the message to the XREP socket.
+
 * The reply address in frame 1 is prepended by the XREP before it passes the message to the receiving application.
 
 Now if we extend this with a chain of devices, we get envelope on envelope, with the newest envelope always stuck at the beginning of the stack:
@@ -406,22 +174,29 @@ So XREP is really a fully controllable router.  Let's look at this magic in deta
 
 For readability, and because we're going to go off-road into some rough and possibly illegal terrain now, let's rename these four socket types just for this section of the text:
 
-* REQ is a **mama** socket, doesn't listen but always expects an answer.
-* REP is a **papa** socket, always answers, but never starts a conversation.
-* XREQ is a **dealer** socket, shuffling messages to and fro.
-* XREP is a **router** socket, able to route messages to specific peers.
+* REQ is a **mama** socket, doesn't listen but always expects an answer.  Mamas are strictly synchronous and if you use them they are always the 'request' end of a chain.
+* REP is a **papa** socket, always answers, but never starts a conversation.  Papas are strictly synchronous and if you use them, they are always the 'reply' end of a chain.
+* XREQ is a **dealer** socket, shuffling messages to and fro.  Dealers can deal requests evenly to N papas (sending requests, waiting for replies) and/or one router (waiting for requests, and sending back replies).
+* XREP is a **router** socket, able to route messages to specific peers.  Routers can talk to N peers of any kind, but they're naturally most at ease with mama sockets.
 
 The thing about Mama sockets is, as we all learned as kids, you can't speak until spoken to.  Mamas do not have simple open-mindedness of papas, nor the ambiguous "sure, whatever" shrugged-shoulder aloofness of a dealer.  So to speak to a mama socket, you have to get the mama socket to talk to you first.  The good part is mamas don't care if you reply now, or much later.  Just bring a good sob story and a bag of laundry.
 
 Papa sockets on the other hand are strong and silent, and pedantic.  They do just one thing, which is to give you an answer to whatever you ask, perfectly framed and precise.  Don't expect a papa socket to be chatty, or to pass a message on to someone else, this is just not going to happen.
+
+Dealers are used to talking to papas, and treat a group of papas fairly by dealing each of them one card, round and round.  You cannot bribe a dealer to treat any papa specially, they are immune to all forms of persuasion.
+
+Routers are the diplomats of the 0MQ request-reply world, able to talk to all the other sockets.  If you ask a router to do pass a message to someone it doesn't know, it won't complain or say "no", it'll just drop the message discretely into the trash.  Whenever you need to talk to //specific// peers, you need a router.
 
 While we usually think of request-reply as a to-and-fro pattern, in fact it can be fully asynchronous, as long as we understand that any mamas or papas will be at the end of a chain, never in the middle of it, and always synchronous.  All we need to know is the address of the peer we want to talk to, and then we can then send it messages asynchronously, via a router.  The router is the one and only 0MQ socket type capable of being told "send this message to X" where X is the address of a connected peer.
 
 These are the ways we can know the address to send a message to, and you'll see most of these used in the examples of custom request-reply routing:
 
 * If it's an anonymous peer, i.e. did not set any identity, the router will generate a UUID and use that to refer to the connection when it delivers you an incoming request envelope.
+
 * If it is a peer with explicit identity, the router will give that identity when it delivers you an incoming request envelope.
+
 * Peers with explicit identities can send them via some other mechanism, e.g. via some other sockets.
+
 * Peers can have prior knowledge of each others' identities, e.g. via configuration files or some other magic.
 
 There are three custom routing patterns, one for each of the socket types we can connect to a router:
@@ -429,15 +204,16 @@ There are three custom routing patterns, one for each of the socket types we can
 * Router-to-dealer, also called XREP-to-XREQ.
 * Router-to-mama, aka XREP-to-REQ.
 * Router-to-papa, aka XREP-to-REP.
+* Router-to-router, aka XREP-to-XREP.
 
-You might be tempted to try to connect a router to a router but since request-reply is essentially asymmetric, that really makes no sense.  In the advanced cases we'll see we do router-to-router routing by creating two asymmetric connections rather than one bidirectional connection.
-
-In each of these cases we have total control over how we route messages, but the different patterns cover different use cases and message flows.  Let's break it down over the next sections with examples of different routing algorithms.
+In each of these cases we have total control over how we route messages, but the different patterns cover different use-cases and message flows.  Let's break it down over the next sections with examples of different routing algorithms.
 
 But first some warnings about custom routing:
 
-* This goes against a fairly solid 0MQ rule: delegate peer addressing to the socket.  The only reason we do it is because 0MQ lacks a wide range of routing algorithms.
+* This goes against a fairly solid 0MQ rule: //delegate peer addressing to the socket//.  The only reason we do it is because 0MQ lacks a wide range of routing algorithms.
+
 * Future versions of 0MQ will probably do some of the routing we're going to build here.  That means the code we design now may break, or become redundant in the future.
+
 * While the built-in routing has certain guarantees of scalability, such as being friendly to devices, custom routing doesn't.  You will need to make your own devices.
 
 So overall, custom routing is more expensive and more fragile than delegating this to 0MQ.  Only do it if you need it.  Having said that, let's jump in, the water's great!
@@ -574,8 +350,11 @@ Processed: 10 tasks
 Some comments on this code
 
 * We don't need any settle time, since the mamas explicitly tell the router when they are ready.
+
 * We're generating our own identities here, as printable strings, using the zhelpers.h s_set_id function.  That's just to make our life a little simpler.  In a realistic application the mamas would be fully anonymous and then you'd call zmq_recv[3] and zmq_send[3] directly instead of the zhelpers s_recv() and s_send() functions, which can only handle strings.
+
 * Worse, we're using //random// identities.  Don't do this in real code, please.  Randomized durable sockets are not good in real life.
+
 * If you copy and paste example code without understanding it, you deserve what you get.  It's like watching Spiderman leap off the roof and then trying that yourself.
 
 To route to a mama, we must create a mama-friendly envelope like this:
@@ -606,7 +385,7 @@ The special thing about papas, all joking aside, is actually two things:
 * One, they are strictly lockstep request-reply.
 * Two, they accept an envelope stack of any size and will return that intact.
 
-In the normal request-reply pattern, papas are anonymous and replaceable (wow, these analogies //are// scary), but we're learning about custom routing.  So, in our use case we have reason to send a request to papa A rather than papa B.  This is essential if you want to keep some kind of a conversation going between you, at one end of a large network, and a papa sitting somewhere far away.
+In the normal request-reply pattern, papas are anonymous and replaceable (wow, these analogies //are// scary), but we're learning about custom routing.  So, in our use-case we have reason to send a request to papa A rather than papa B.  This is essential if you want to keep some kind of a conversation going between you, at one end of a large network, and a papa sitting somewhere far away.
 
 A core philosophy of 0MQ is that the edges are smart and many, and the middle is vast and dumb.  This does mean the edges can address each other, and this also means we want to know how to reach a given papa.  Doing routing across multiple hops is something we'll look at later but for now we'll look just at the final step: a router talking to a specific papa:
 
@@ -693,9 +472,9 @@ To route to a papa, we must create a papa-friendly envelope like this:
        Figure # - Routing envelope for papa
 [[/code]]
 
-+++ A Generic Routing Device
++++ A Request-Reply Message Broker
 
-We'll recap the knowledge we have so far about doing weird stuff with 0MQ message envelopes, and build the core of a generic custom routing queue device.  Sorry for all the buzzwords.  What we'll make is a //queue device// that connects a bunch of //clients// to a bunch of //workers//, and lets you use //any routing algorithm// you want.  What we'll do is //least-recently used//, since it's the most obvious use case apart from load-balancing.
+We'll recap the knowledge we have so far about doing weird stuff with 0MQ message envelopes, and build the core of a generic custom routing queue device that we can properly call a //message broker//.  Sorry for all the buzzwords.  What we'll make is a //queue device// that connects a bunch of //clients// to a bunch of //workers//, and lets you use //any routing algorithm// you want.  What we'll do is //least-recently used//, since it's the most obvious use-case apart from load-balancing.
 
 To start with, let's look back at the classic request-reply pattern and then see how it extends over a larger and larger service-oriented network.  The basic pattern is:
 
@@ -753,7 +532,7 @@ Figure # - Extended request-reply
 
 The key here is that the router stores the originating mama address in the request envelope, the dealer and papas don't touch that, and so the router knows which mama to send the reply back to.  Papas are anonymous and not addressed in this pattern, all papas are assumed to provide the same service.
 
-In this design, we're using the built-in load balancing routing that the dealer socket provides. If we want, for example to have least-recently used, we can take the router-mama pattern we learned, and apply that:
+In the above design, we're using the built-in load balancing routing that the dealer socket provides.  However we want for our broker to use a least-recently used (LRU) algorithm, so we take the router-mama pattern we learned, and apply that:
 
 [[code type="textdiagram"]]
     +--------+  +--------+  +--------+
@@ -784,9 +563,9 @@ In this design, we're using the built-in load balancing routing that the dealer 
 Figure # - Extended request-reply with LRU
 [[/code]]
 
-This router-to-router LRU queue device can't simply copy message parts blindly.  Here is the code, it's fairly complex but the core logic is reusable in any LRU queuing device:
+Our broker - a router-to-router LRU queue - can't simply copy message parts blindly.  Here is the code, it's fairly complex but the core logic is reusable in any request-reply broker that wants to do LRU routing:
 
-[[code type="C" title="LRU queue device" name="lruqueue"]]
+[[code type="C" title="LRU queue broker" name="lruqueue"]]
 [[/code]]
 
 The difficult part of this program is (a) the envelopes that each socket reads and writes, and (b) the LRU algorithm.  We'll take these in turn, starting with the message envelope formats.
@@ -819,7 +598,7 @@ What the queue gets, when reading off the router frontend socket is this:
        Figure # - Message coming in on frontend
 [[/code]]
 
-The queue device sends this to the worker, prefixed by the address of the worker, taken from the LRU queue, plus an additional empty part to keep the mama at the other end happy:
+The broker sends this to the worker, prefixed by the address of the worker, taken from the LRU queue, plus an additional empty part to keep the mama at the other end happy:
 
 [[code type="textdiagram"]]
              +---+--------+
@@ -857,28 +636,195 @@ Which is exactly the same as what the queue received on its frontend router sock
 
 On the return path the messages are the same as when they come in, i.e. the backend socket gives the queue a message in five parts, and the queue sends the frontend socket a message in three parts, and the client gets a message in one part.
 
-Now let's look at the LRU algorithm.  This is a reusable algorithm.  It requires that both clients and workers use mama sockets, and that workers correctly store and replay the envelope on messages they get.
-
-The algorithm is:
+Now let's look at the LRU algorithm.  It requires that both clients and workers use mama sockets, and that workers correctly store and replay the envelope on messages they get.  The algorithm is:
 
 * Create a pollset which polls the backend always, and the frontend only if there are one or more workers available.
+
 * Poll for activity with infinite timeout.
+
 * If there is activity on the backend, we either have a "ready" message or a reply for a client.  In either case we store the worker address (the first part) on our LRU queue, and if the rest is a client reply we send it back to that client via the frontend.
+
 * If there is activity on the frontend, we take the client request, pop the next worker (which is the least-recently used), and send the request to the backend.  This means sending the worker address, empty part, and then the three parts of the client request.
 
-You should now see that you can extend the LRU algorithm with variations based on the information the worker provides in its initial "ready" message.  For example, workers might start up and do a performance self-test, then tell the queue device how fast they are.  The queue can then choose the fastest available worker rather than LRU or round-robin.
+You should now see that you can reuse and extend the LRU algorithm with variations based on the information the worker provides in its initial "ready" message.  For example, workers might start up and do a performance self-test, then tell the broker how fast they are.  The broker can then choose the fastest available worker rather than LRU or round-robin.
 
-.end
++++ A Multipart Message Class
 
-+++ Router-to-Router Connections
+Reading and writing multipart messages rapidly gets tedious and error-prone.  Look at the core of the worker thread from our LRU queue broker:
 
-Our last case, router sockets talking to router sockets, is complex.  If the other peer is a sink, you'd just use a dealer.  If the other peer talks back but doesn't do routing, again a dealer would be enough.  So router-to-router only makes sense if the other router is going to talk back to you, and has to route between multiple "YOUs".  The difficulty is that routers can't initiate a dialog, only respond to one, because they need to know the identity of the peer they should speak to.  If two routers are both sitting waiting for the other to initiate a dialog... well, you see the problem.
+[[code]]
+    while (1) {
+        //  Read and save all frames until we get an empty frame
+        //  In this example there is only 1 but it could be more
+        char *address = s_recv (worker);
+        char *empty = s_recv (worker);
+        assert (*empty == 0);
+        free (empty);
 
-We'll find a way to do this, but let's make it concrete with a realistic use case that we'll then solve.
+        //  Get request, send reply
+        char *request = s_recv (worker);
+        printf ("Worker: %s\n", request);
+        free (request);
 
-We're going to build a large cloud computing facility (or rather, a tiny simulation of a large cloud).  It's composed of data centers that each have a bunch of workers and a bunch of clients.  The workers are fast boxes able to compute results.  The clients collect jobs from the outside world, pass them to workers and send the replies back out.
+        s_sendmore (worker, address);
+        s_sendmore (worker, "");
+        s_send     (worker, "OK");
+        free (address);
+    }
+[[/code]]
 
-We don't connect clients and workers to each other because that makes it painful to add or remove clients and workers dynamically.  So our basic model consists of the generic router-to-mama routing device we just built:
+That code isn't even reusable, because it can only handle one envelope.  What we want is an API that lets us receive and send an entire message in one shot, including all envelopes.  The 0MQ API itself doesn't aim to do this, but nothing prevents us making layers on top, and part of learning to use 0MQ intelligently is to do exactly that.
+
+The best way to design an API is to start by writing test code, i.e. see what the API would look like in real code.  Here's how I'd like that worker code to look:
+
+[[code]]
+    while (1) {
+        zmsg_t *zmsg = zmsg_recv (worker);
+        printf ("Worker: %s\n", zmsg_body (zmsg));
+        zmsg_body_set (zmsg, "OK");
+        zmsg_send (&zmsg, worker);
+    }
+[[/code]]
+
+I'll use every sneaky assumption in the book to make this API minimalistic:
+
+* We don't care about zero-copy performance.
+* Receiving a message always calls the constructor.
+* Sending a message always calls the destructor.
+* Message parts (addresses and data) are always printable strings.
+
+That last one is tricky because 0MQ uses a binary zero at the start of generated identities.  It is painful in C to pass length-specified blobs in and out of APIs.  So, our message class will mangle 0MQ identities to make them usable internally as C strings.  In other languages you'll be able to make an API that handles binary message parts without such hacks.
+
+So here's the class:
+
+[[code type="C" title="zmsg helper class" name="zmsg"]]
+[[/code]]
+
+Here is a test wrapper:
+
+[[code type="C" title="zmsg test wrapper" name="zmsg_test"]]
+[[/code]]
+
+Build and run the test wrapper, and it should print something like this, including a couple of message dumps that show 0MQ-generated socket identities:
+
+[[code]]
+----------------------------------------
+[017] 20B60BC50DC16542C2A9AB7B01872F359D
+[005] Hello
+----------------------------------------
+[017] 20B60BC50DC16542C2A9AB7B01872F359D
+[008] address2
+[008] address1
+[000]
+[005] Hello
+ * zmsg: OK
+[[/code]]
+
+And here is the LRU queue broker rewritten to use the zmsg class.  Compare the code that works with messages, you'll see it's much shorter and 'just works':
+
+[[code type="C" title="LRU queue broker using zmsg" name="lruqueue2"]]
+[[/code]]
+
++++ Router-to-Router (N-to-N) Routing
+
+We've seen XREP/router sockets talking to dealers, mamas, and papas.  The last case is routers talking to routers.  One use-case for this is a web farm that has redundant HTTP front-ends talking to an array of asynchronous back-end workers.  Each worker accepts requests from any of the front-end HTTP servers, and processes them asynchronously, sending asynchronous replies back.  A fully asynchronous worker has some internal concurrency but we don't really care about that here.  What interests us is how N workers can talk to N front-ends.
+
+[[code type="textdiagram"]]
+   +-----------+     +-----------+
+   |           |     |           |
+   |   HTTP    |     |    HTTP   |
+   | Front-end |     | Front-end |
+   |           |     |           |
+   +-----------+     +-----------+
+   |  Router   |     |  Router   |
+   \-----------/     \-----------/
+      connect           connect
+         ^                 ^
+         |                 |
+         +--------+--------+
+                  |
+                  |
+         +--------+--------+
+         |                 |
+         v                 v
+       bind              bind
+   /-----------\     /-----------\
+   |  Router   |     |  Router   |
+   +-----------+     +-----------+
+   |           |     |           |
+   |  Worker   |     |  Worker   |
+   |           |     |           |
+   +-----------+     +-----------+
+
+
+      Figure # - N-to-N routing
+[[/code]]
+
+Here's a simplified example with a single front-end and a single worker, cross connected and routing to each other.  We just send a message each way, and dump the message envelopes:
+
+[[code type="C" title="Cross-connected routers" name="rtrouter"]]
+[[/code]]
+
+The program produces this output:
+
+[[code]]
+----------------------------------------
+[008] FRONTEND
+[000]
+[014] send to worker
+----------------------------------------
+[006] WORKER
+[000]
+[017] send to front-end
+[[/code]]
+
+Some comments on this code:
+
+* We need to give the two sockets time to connect and exchange identities.  If we don't, then they will discard the messages you try to send to them, not recognizing the address.  Try commenting out the sleep(1), and then trying again.
+
+* We can set and use identities on both bound and connected sockets, as this example shows.
+
+Although the router-to-router pattern looks ideal for asynchronous N-to-N routing, it has some pitfalls.  First, any design with N-to-N connections will not scale.  You should really create a device in the middle that turns it into two 1-to-N patterns.  This gives you a structure like the LRU queue broker, though you would use XREQ at the front-end and worker sides to get streaming.
+
+Second, a it may become confusing if you try to put two XREP sockets at the same logical level.  One must bind, one must connect, and request-reply is inherently asymmetric.
+
++++ Worked Example: Inter-Broker Routing
+
+Let's take everything we've seen so far, and scale things up.  Your best client calls you urgently and asks for a design of a large cloud computing facility.  He has this vision of a cloud that spans many data centers, each a cluster of clients and workers, and that works together as a whole.
+
+Because you're smart enough to know that practice always beats theory, you propose to make a working simulation using 0MQ.  Your client, desperate to lock down the budget before his own boss changes his mind, and having read great things about 0MQ on Twitter, agrees.
+
+++++ Establishing the Details
+
+With several espressos under our belt, you want to jump on it right away but a little voice tells you to get more details before making a sensational solution to the entirely wrong problem.  What kind of work is the cloud doing?, you ask.  Your client explains:
+
+* Workers run on various kinds of hardware, but they are all able to handle any task.  We have several hundred workers per cluster, and as many as a dozen clusters in total.
+
+* Clients create tasks for workers.  Each task is an independent unit of work and all the client wants is to find an available worker, and send it the task, as soon as possible.  There will be a lot of clients and they'll come and go arbitrarily.
+
+* The real difficulty is to be able to add and remove clusters at any time.  A cluster can can leave or join the cloud instantly, bringing all its workers and clients with it.
+
+* If there are no workers in their own cluster, clients' tasks will go off to other available workers in the cloud.
+
+* Clients send out one task at a time, waiting for a reply.  If they don't get an answer within X seconds they'll just send out the task again. This ain't our concern, the client API does it already.
+
+* Workers process one task at a time, they are very simple beasts.  If they crash, they restart and pretend nothing happened.
+
+So you double check to make sure that you understood this correctly:
+
+* There will be some kind of super-duper interconnect between clusters, right?  The client says, yes, of course, we're not idiots.
+
+* What kind of volumes are you talking about, you ask?  The client replies, up to a thousand clients per cluster, each doing max. ten requests per second.  Requests are small, and replies are also small, no more than 1K bytes each.
+
+So you do a little calculation and see that this will work nicely over plain TCP. 2,500 clients x 10/second x 1,000 bytes x 2 directions = 50MB/sec or 400Mb/sec, not a problem for a 1Gb network.
+
+It's a straight-forward problem that requires no exotic hardware or protocols, just some clever routing algorithms and careful design.  You start by designing one cluster (one data center) and then you figure out how to connect clusters together.
+
+++++ Architecture of a Single Cluster
+
+Workers and clients are synchronous.  We want to use the least-recently used algorithm to route tasks to workers.  Workers are all identical, our facility has no notion of different services.  Workers are anonymous, clients never address them directly.  We make no attempt here to provide guaranteed delivery, retry, etc.
+
+For reasons we already looked at, clients and workers won't speak to each other directly.  It makes it impossible to add or remove nodes dynamically.  So our basic model consists of the request-reply message broker we saw earlier:
 
 [[code type="textdiagram"]]
     +--------+  +--------+  +--------+
@@ -889,13 +835,18 @@ We don't connect clients and workers to each other because that makes it painful
         |           |           |
         +-----------+-----------+
                     |
-              +-----+------+
-              |   Router   |
-              +------------+
-              | LRU Queue  |
-              +------------+
-              |   Router   |
-              +-----+------+
+    +--------------------------------+
+    |               |                |
+    |         +-----+------+         |
+    |         |   Router   |         |
+    |         +------------+         |
+    |         | LRU Queue  |         |
+    |         +------------+         |
+    |         |   Router   |         |
+    |         +-----+------+         |
+    |               |         Broker :
+    +--------------------------------+
+                    |
                     |
         +-----------+-----------+
         |           |           |
@@ -906,14 +857,16 @@ We don't connect clients and workers to each other because that makes it painful
     +--------+  +--------+  +--------+
 
 
-    Figure # - Datacenter Architecture
+    Figure # - Cluster architecture
 [[/code]]
 
-Now we scale this out to more than one data center.  Let's illustrate with two data centers, the most common case (one primary, one backup), but keep in mind that we want to solve the problem for N data centers, not just two.  Each data center has a set of clients and workers, and a router that joins these together as a LRU queue:
+++++ Scaling to Multiple Clusters
+
+Now we scale this out to more than one cluster.  Each cluster has a set of clients and workers, and a broker that joins these together:
 
 [[code type="textdiagram"]]
 
-    Primary Data Center     :     Backup Data Center
+         Cluster 1          :          Cluster 2
                             :
                             :
     +---+  +---+  +---+     :     +---+  +---+  +---+
@@ -922,7 +875,7 @@ Now we scale this out to more than one data center.  Let's illustrate with two d
       |      |      |       :       |      |      |
       |      |      |       :       |      |      |
     +-+------+------+-+     :     +-+------+------+-+
-    |     Router      |     :     |     Router      |
+    |     Broker      |     :     |     Broker      |
     +-+------+------+-+     :     +-+------+------+-+
       |      |      |       :       |      |      |
       |      |      |       :       |      |      |
@@ -931,20 +884,22 @@ Now we scale this out to more than one data center.  Let's illustrate with two d
     +---+  +---+  +---+     :     +---+  +---+  +---+
                             :
 
-        Figure # - Primary and Backup Datacenters
+        Figure # - Multiple clusters
 [[/code]]
 
-The question is: how do we get the clients of each data center talking to the workers of the other data center?  There are a few possibilities, each with pros and cons:
+The question is: how do we get the clients of each cluster talking to the workers of the other cluster?  There are a few possibilities, each with pros and cons:
 
-* Clients could connect directly to both routers.  The advantage is that we don't need to modify routers or workers.  But clients get more complex, and become aware of the overall topology.  If we want to add, e.g. a third or forth data center, all the clients are affected.  In effect we have to move routing and failover logic into the clients and that's not nice.
-* Workers might connect directly to both routers.  But mama workers can't do that, they can only reply to one router.  We might use papas but papas don't give us customizable router-to-worker routing like LRU, only the built-in load balancing.  That's a fail, if we want to distribute work to idle workers: we precisely need LRU.  One solution would be to use router sockets for the worker nodes.  Let's label this "Idea #1".
-* Routers could connect to each other.  This looks neatest because it creates the fewest additional connections.  We can't add data centers on the fly but that is probably out of scope.  Now clients and workers remain ignorant of the real network topology, and routers tell each other when they have spare capacity.  Let's label this "Idea #2".
+* Clients could connect directly to both brokers.  The advantage is that we don't need to modify brokers or workers.  But clients get more complex, and become aware of the overall topology.  If we want to add, e.g. a third or forth cluster, all the clients are affected.  In effect we have to move routing and failover logic into the clients and that's not nice.
 
-Let's explore Idea #1.  Workers connecting to both routers and accepting jobs from either:
+* Workers might connect directly to both brokers.  But mama workers can't do that, they can only reply to one broker.  We might use papas but papas don't give us customizable broker-to-worker routing like LRU, only the built-in load balancing.  That's a fail, if we want to distribute work to idle workers: we precisely need LRU.  One solution would be to use router sockets for the worker nodes.  Let's label this "Idea #1".
+
+* Brokers could connect to each other.  This looks neatest because it creates the fewest additional connections.  We can't add clusters on the fly but that is probably out of scope.  Now clients and workers remain ignorant of the real network topology, and brokers tell each other when they have spare capacity.  Let's label this "Idea #2".
+
+Let's explore Idea #1.  Workers connecting to both brokers and accepting jobs from either:
 
 [[code type="textdiagram"]]
 
-               Data center 1       :       Data center 2
+                Cluster 1          :         Cluster 2
                                    :
                                    :
               |            |               |            |
@@ -967,13 +922,13 @@ Let's explore Idea #1.  Workers connecting to both routers and accepting jobs fr
          Figure # - Idea 1 - cross-connected workers
 [[/code]]
 
-It looks feasible.  However it doesn't provide what we wanted, which was that clients get local workers if possible and remote workers only if it's better than waiting.  Also workers will signal "ready" to both routers and can get two jobs at once, while other workers remain idle.  It seems this design fails because again we're putting routing logic at the edges.
+It looks feasible.  However it doesn't provide what we wanted, which was that clients get local workers if possible and remote workers only if it's better than waiting.  Also workers will signal "ready" to both brokers and can get two jobs at once, while other workers remain idle.  It seems this design fails because again we're putting routing logic at the edges.
 
-So idea #2 then.  We interconnect the routers and don't touch the clients or workers, which are mamas like we're used to:
+So idea #2 then.  We interconnect the brokers and don't touch the clients or workers, which are mamas like we're used to:
 
 [[code type="textdiagram"]]
 
-    Primary Data Center     :     Backup Data Center
+         Cluster 1          :          Cluster 2
                             :
                             :
     +---+  +---+  +---+     :     +---+  +---+  +---+
@@ -982,7 +937,7 @@ So idea #2 then.  We interconnect the routers and don't touch the clients or wor
       |      |      |       :       |      |      |
       |      |      |       :       |      |      |
     +-+------+------+-+     :     +-+------+------+-+
-    |     Router      |<--------->|     Router      |
+    |     Broker      |<--------->|     Broker      |
     +-+------+------+-+     :     +-+------+------+-+
       |      |      |       :       |      |      |
       |      |      |       :       |      |      |
@@ -991,32 +946,36 @@ So idea #2 then.  We interconnect the routers and don't touch the clients or wor
     +---+  +---+  +---+     :     +---+  +---+  +---+
                             :
 
-    Figure # - Idea 2 - routers talking to each other
+    Figure # - Idea 2 - brokers talking to each other
 [[/code]]
 
-This design is appealing because the problem is solved in one place, invisibly to the rest of the world.  Basically, routers open secret channels to each other and whisper, like camel traders, "//hey, I've got some spare capacity, if you have too many clients give me a shout and we'll deal".//
+This design is appealing because the problem is solved in one place, invisibly to the rest of the world.  Basically, brokers open secret channels to each other and whisper, like camel traders, "//hey, I've got some spare capacity, if you have too many clients give me a shout and we'll deal".//
 
-It is in effect just a more sophisticated routing algorithm: routers become subcontractors for each other.  Other things to like about this design, even before we play with real code:
+It is in effect just a more sophisticated routing algorithm: brokers become subcontractors for each other.  Other things to like about this design, even before we play with real code:
 
-* It treats the common case (clients and workers on the same cluster) as default and does extra work for the exceptional case (shuffling jobs between data centers).
+* It treats the common case (clients and workers on the same cluster) as default and does extra work for the exceptional case (shuffling jobs between clusters).
+
 * It lets us use different message flows for the different types of work.  That means we can handle them differently, e.g. using different types of network connection.
-* It feels like it would scale smoothly.  Interconnecting three, or more routers doesn't get over-complex.  If we find this to be a problem, it's easy to solve by adding a super-router.
 
-We'll now make a worked example.  We'll pack an entire data center into one process.  That is obviously not realistic but it makes it simple to simulate, and the simulation can accurately scale to real processes.  This is the beauty of 0MQ, you can design at the microlevel and scale that up to the macro level.  Thread become processes, become boxes and the patterns and logic remain the same.  Each of our 'data center' processes contains client threads, worker threads, and a router thread.
+* It feels like it would scale smoothly.  Interconnecting three, or more brokers doesn't get over-complex.  If we find this to be a problem, it's easy to solve by adding a super-broker.
+
+We'll now make a worked example.  We'll pack an entire cluster into one process.  That is obviously not realistic but it makes it simple to simulate, and the simulation can accurately scale to real processes.  This is the beauty of 0MQ, you can design at the microlevel and scale that up to the macro level.  Thread become processes, become boxes and the patterns and logic remain the same.  Each of our 'cluster' processes contains client threads, worker threads, and a broker thread.
 
 We know the basic model well by now:
 
-* The client threads create workloads and pass them to the router.  It uses a mama (REQ) socket and a request-reply flow.
-* The worker threads process workloads and return the results to the router.  It uses a mama (REQ) socket and a ready-go flow as we saw in the LRU routing model.
-* The router queues and distributes workloads using the LRU routing model.
+* The client (mama/REQ) threads create workloads and pass them to the broker (router/XREP).
+* The worker (mama/REQ) threads process workloads and return the results to the broker (router/XREP).
+* The broker queues and distributes workloads using the LRU routing model.
 
-There are several ways of interconnecting the routers.  What we //want// is to be able to tell other routers, "we have capacity", and then receive multiple tasks.  We also need to be able to tell other routers "stop, we're full".  It doesn't need to be perfect: sometimes we may accept jobs we can't process immediately, then we'll do them as soon as possible.
+++++ Federation vs. Peering
 
-The simplest interconnect is //federation// in which each broker acts as a worker for the other.  We would do this by connecting our frontend to the other broker's backend socket.  Note that it is legal to both bind a socket to an endpoint and connect it to other endpoints.
+There are several possible way to interconnecting brokers.  What we //want// is to be able to tell other brokers, "we have capacity", and then receive multiple tasks.  We also need to be able to tell other brokers "stop, we're full".  It doesn't need to be perfect: sometimes we may accept jobs we can't process immediately, then we'll do them as soon as possible.
+
+The simplest interconnect is //federation// in which brokers simulate clients and workers for each other.  We would do this by connecting our frontend to the other broker's backend socket.  Note that it is legal to both bind a socket to an endpoint and connect it to other endpoints.
 
 [[code type="textdiagram"]]
 
-    Primary Data Center     :     Backup Data Center
+         Cluster 1          :          Cluster 2
                             :
                             :
     +---+  +---+            :             +---+  +---+
@@ -1025,7 +984,7 @@ The simplest interconnect is //federation// in which each broker acts as a worke
       |      |      |    |  :  |     |      |      |
       |      |      |    |  :  |     |      |      |
     +-+------+------+-+  |  :  |   +-+------+------+-+
-    |     Router      |  |  :  |   |     Router      |
+    |     Broker      |  |  :  |   |     Broker      |
     +-+------+--------+  |  :  |   +--------+------+-+
       |      |      ^    |  :  |     ^      |      |
       |      |      |    |  :  |     |      |      |
@@ -1034,106 +993,264 @@ The simplest interconnect is //federation// in which each broker acts as a worke
     +---+  +---+    +----------+          +---+  +---+
                             :
 
-   Figure # - Cross-connected routers in federation model
+   Figure # - Cross-connected brokers in federation model
 [[/code]]
 
-This would give us simple logic in both routers and a reasonably good mechanism: when there are no clients, tell the other broker 'ready', and accept one job from it.  The problem is also that it's too simple, able to handle only one task at once.  If we have lots of available workers they won't be used.
+This would give us simple logic in both brokers and a reasonably good mechanism: when there are no clients, tell the other broker 'ready', and accept one job from it.  The problem is also that it is too simple for this problem.  A federated broker would be able to handle only one task at once.  If the broker emulates a lock-step client and worker, it is by definition also going to be lock-step and if it has lots of available workers they won't be used.  Our brokers need to be connected in a fully asynchronous fashion.
 
-The federation model is perfect for other kinds of routing, especially server-oriented architectures (routing by service name and proximity rather than LRU or load-balancing or random scatter) and we'll come back to that later.  So don't dismiss it as useless, it's just not right for least-recently used and cluster load-balancing.
+The federation model is perfect for other kinds of routing, especially server-oriented architectures (routing by service name and proximity rather than LRU or load-balancing or random scatter).  So don't dismiss it as useless, it's just not right for least-recently used and cluster load-balancing.
 
-What we need is an asynchronous routable flow of information between brokers.  This means we need a separate set of sockets, capable of asynchronous routing, and this router sockets:
+So instead of federation, let's look at a //peering// approach in which brokers are explicitly aware of each other and talk over privileged channels.  Let's break this down, assuming we want to interconnect N brokers.  Each broker has (N - 1) peers, and all brokers are using exactly the same code and logic.  There are two distinct flows of information between brokers:
+
+* Each broker needs to tell its peers how many workers it has available at any time.  This can be fairly simple information, just a quantity that is updated regularly.  The obvious (and correct) socket pattern for this is publish-subscribe.  So every broker opens a PUB socket and publishes state information on that, and every broker also opens a SUB socket and connects that to the PUB socket of every other broker, to get state information from its peers.
+
+* Each broker needs a way to delegate tasks to a peer and get replies back, asynchronously.  We'll do this using router/router (XREP/XREP) sockets, no other combination works.  Each broker has two such sockets: one for tasks it receives, one for tasks it delegates.  If we didn't use two sockets it would be more work to know whether we were reading a request or a reply each time. That would mean adding more information to the message envelope.
+
+And there is also the flow of information between a broker and its local clients and workers.
+
+++++ The Naming Ceremony
+
+Three flows x two sockets for each flow = six sockets that we have to manage in the broker.    Choosing good names is vital to keeping a multi-socket juggling act reasonably coherent in our minds.  Sockets //do// something and what they do should form the basis for their names.  It's about being able to read the code several weeks later on a cold Monday morning before coffee, and not feeling pain.
+
+Let's do a shamanistic naming ceremony for the sockets.  The three flows are:
+
+* A //local// request-reply flow between the broker and its clients and workers.
+* A //cloud// request-reply flow between the broker and its peer brokers.
+* A //state// flow between the broker and its peer brokers.
+
+Finding meaningful names that are all the same length means our code will align beautifully.  It may seem irrelevant but such attention to such details turn ordinary code into something more like art.
+
+For each flow the broker has two sockets that we can orthogonally call the "frontend" and "backend".  We've used these names quite often.  A frontend receives information or tasks.  A backend sends those out to other peers.  The conceptual flow is from front to back (with replies going in the opposite direction from back to front).
+
+So in all the code we write for this tutorial will use these socket names:
+
+* //localfe// and //localbe// for the local flow.
+* //cloudfe// and //cloudbe// for the cloud flow.
+* //statefe// and //statebe// for the state flow.
+
+For our transport we'll use {{ipc}} for everything.  This has the advantage of working like {{tcp}} in terms of connectivity (i.e. it's a disconnected transport, unlike {{inproc}}), yet we don't need IP addresses or DNS names, which would be a pain here.  Instead, we will use {{ipc}} endpoints called //something//-{{local}}, //something//-{{cloud}}, and //something//-{{state}}, where //something// is the name of our simulated cluster.
+
+You may be thinking that this is a lot of work for some names.  Why not call them s1, s2, s3, s4, etc.?  The answer is that if your brain is not a perfect machine, you need a lot of help when reading code, and we'll see that these names do help.  It is a lot easier to remember "two directions, three flows" than "six different sockets".
+
+Here is the broker socket arrangement, then:
 
 [[code type="textdiagram"]]
 
-       Primary Data Center        :        Backup Data Center
-                                  :
-                                  :
-    +---+  +---+  +---+           :           +---+  +---+  +---+
-    | C |  | C |  | C |           :           | C |  | C |  | C |
-    +-+-+  +-+-+  +-+-+           :           +-+-+  +-+-+  +-+-+
-      |      |      |             :             |      |      |
-      |      |      |             :             |      |      |
-    +-+------+------+-+-----+     :     +-----+-+------+------+-+
-    |     Router      | ??? |<--------->| ??? |     Router      |
-    +-+------+------+-+-----+     :     +-----+-+------+------+-+
-      |      |      |             :             |      |      |
-      |      |      |             :             |      |      |
-    +-+-+  +-+-+  +-+-+           :           +-+-+  +-+-+  +-+-+
-    | W |  | W |  | W |           :           | W |  | W |  | W |
-    +---+  +---+  +---+           :           +---+  +---+  +---+
-                                  :
+      +---------+ +---------+ +---------+
+      | Client  | | Broker  | | Broker  |
+      |         | | cloudbe | | statebe |
+      +---------+ +---------+ +---------+
+      | connect | | connect | |  bind   |
+      +---------+ +---------+ +---------+
+        request     request      state
+           |           |           |
+           +-+         |         +-+
+             |         |         |
+             v         v         v
+        +---------+---------+---------+
+        |  bind   |  bind   | connect |
+        +---------+---------+---------+
+        | localfe | cloudfe | statefe |     Frontends
+        | router  | router  |   SUB   |     (incoming)
+        +---------+---------+---------+
+        |                             |
+        |           Broker            |
+        |                             |
+        +---------+---------+---------+
+        | router  | router  |   PUB   |     Backends
+        | localbe | cloudbe | statebe |     (outgoing)
+        +---------+---------+---------+
+        |  bind   | connect |  bind   |
+        +---------+---------+---------+
+          request   request    state
+             |         |         |
+           +-+         |         +-+
+           |           |           |
+           v           v           v
+      +---------+ +---------+ +---------+
+      | connect | |  bind   | | connect |
+      +---------+ +---------+ +---------+
+      | Worker  | | Broker  | | Broker  |
+      |         | | cloudfe | | statefe |
+      +---------+ +---------+ +---------+
 
-            Figure # - And Router shall speak unto Router...
+
+       Figure # - Broker socket arrangement
 [[/code]]
 
-With two data centers we could make an asymmetric flow, with one router binding and the other connecting.  But this does not scale.  It would be nicer that we have two sockets, one for incoming data, that we bind to, and one for outgoing data, that we connect.  It gives us a client-server model that is consistent with clients connecting, and servers binding.
+Note that we connect the cloudbe in each broker to the cloudfe in every other broker, and likewise we connect the statefe in each broker to the statefe in every other broker.
 
-Each router now manages //four// XREP router sockets.  Clear naming conventions will save us from categorical confusion, leaving just enough background bafflement to make this magic worth doing:
+++++ Prototyping the State Flow
 
-* The //frontend// socket talks to the clients;
-* The //backend// socket talks to the workers;
-* The //inward// socket talks to master routers and accepts tasks;
-* The //onward// socket talks to slave routers and passes on tasks.
+Since each socket flow has its own little traps for the unwary, we will test them in real code one by one, rather than try to throw the whole lot into code in one go.  When we're happy with each flow, we can put them together into a full program.  We'll start with the state flow:
 
-When a router starts up it binds its onward socket, and connects its inward socket to all other routers.  When it has idle workers, it scatters this out to ...
+[[code type="textdiagram"]]
 
-
-- worked example
-- single point of failure
-- presence detection
-
-- router trees
- (federation)
-
-+++ Presence Detection
-
-- peers come and go
-- if we want to route to them explicitly, we need to know if they are present
-- heartbeating, liveness, etc.
-- fresh data, failover, etc.
-- purging old identities from routing tables
-- example of eight robots and console
-- robots come and go...
-
-
-+++ A Service-Oriented Queue Device
-
-- how to route to workers based on service names
-- kind of like custom pubsub but with answers going back to clients
-
-
-+++ A ZeroMQ Name Service
-
-- name service
-    translate logical name into connect or bind string
-    service runs locally, connect via icp://zns
-    gets name updates asynchronously from central server
-    also local zns lookup file
-    using zpl syntax
-    pubsub state / refresh example
-
-how to map names?
-    - XXX -> tcp://lo:5050 if I'm on server 1
-    - XXX -> tcp://somename:5050
-    -> does ZMQ do host lookup?  Doesn't seem like it...
-    -> resolve host...
+                              +---------+
+                              | Broker  |
+                              | statebe |
+                              +---------+
+                              |  bind   |
+                              +---------+
+                                 state
+                                   |
+                                 +-+
+                                 |
+                                 v
+        +---------+---------+---------+
+        |         |         | connect |
+        +---------+---------+---------+
+        |         |         | statefe |
+        |         |         |   SUB   |
+        +---------+---------+---------+
+        |                             |
+        |           Broker            |
+        |                             |
+        +---------+---------+---------+
+        |         |         |   PUB   |
+        |         |         | statebe |
+        +---------+---------+---------+
+        |         |         |  bind   |
+        +---------+---------+---------+
+                               state
+                                 |
+                                 +-+
+                                   |
+                                   v
+                              +---------+
+                              | connect |
+                              +---------+
+                              | statefe |
+                              | Broker  |
+                              +---------+
 
 
+          Figure # - The state flow
+[[/code]]
+
+Here is how this works in code:
+
+[[code type="C" title="Prototype state flow" name="peering1"]]
+[[/code]]
+
+Notes about this code:
+
+* Each broker has an identity that we use to construct {{ipc}} endpoint names.  A real broker would need to work with TCP and a more sophisticated configuration scheme.  We'll look at such schemes later in this book but for now, using generated {{ipc}} names lets us ignore the problem of where to get TCP/IP addresses or names from.
+
+* We use a zmq_poll[3] loop as the core of the program.  This processes incoming messages and sends out state messages.  We send a state message //only// if we did not get any incoming messages //and// we waited for a second.  If we send out a state message each time we get one in, we'll get message storms.
+
+* We use a two-part pubsub message consisting of sender address and data.  Note that we will need to know the address of the publisher in order to send it tasks, and the only way is to send this explicitly as a part of the message.
+
+* We don't set identities on subscribers, because if we did then we'd get out of date state information when connecting to running brokers.
+
+* We don't set a HWM on the publisher, since subscribers are transient.  We might set a HWM of 1 but it's extra work for nothing here.
+
+We can build this little program and run it three times to simulate three clusters.  Let's call them DC1, DC2, and DC3 (the names are arbitrary).  We run these three commands, each in a separate window:
+
+[[code]]
+peering1 DC1 DC2 DC3  #  Start DC1 and connect to DC2 and DC3
+peering1 DC2 DC1 DC3  #  Start DC2 and connect to DC1 and DC3
+peering1 DC3 DC1 DC2  #  Start DC3 and connect to DC1 and DC2
+[[code]]
+
+You'll see each cluster report the state of its peers, and after a few seconds they will all happily be printing random numbers once per second.  Try this and satisfy yourself that the three brokers all match up and synchronize to per-second state updates.
+
+In real life we'd not send out state messages at regular intervals but rather whenever we had a state change, i.e. whenever a worker becomes available or unavailable.  That may seem like a lot of traffic but state messages are small and we've established that the inter-cluster connections are super-fast.
+
+If we wanted to send state messages at precise intervals we'd create a child thread and open the statebe socket in that thread.  We'd then send irregular state updates to that child thread from our main thread, and allow the child thread to conflate them into regular outgoing messages.  This is more work than we need here.
+
+++++ Prototyping the Local and Cloud Flows
+
+Let's now prototype at the flow of tasks via the local and cloud sockets.  This code pulls requests from clients and then distributes them to local workers and cloud peers on a random basis:
+
+[[code type="textdiagram"]]
+
+      +---------+ +---------+
+      | Client  | | Broker  |
+      |         | | cloudbe |
+      +---------+ +---------+
+      | connect | | connect |
+      +---------+ +---------+
+        request     request
+           |           |
+           +-+         |
+             |         |
+             v         v
+        +---------+---------+---------+
+        |  bind   |  bind   |         |
+        +---------+---------+---------+
+        | localfe | cloudfe |         |
+        | router  | router  |         |
+        +---------+---------+---------+
+        |                             |
+        |           Broker            |
+        |                             |
+        +---------+---------+---------+
+        | router  | router  |         |
+        | localbe | cloudbe |         |
+        +---------+---------+---------+
+        |  bind   | connect |         |
+        +---------+---------+---------+
+          request   request
+             |         |
+           +-+         |
+           |           |
+           v           v
+      +---------+ +---------+
+      | connect | |  bind   |
+      +---------+ +---------+
+      |         | | cloudfe |
+      | Worker  | | Broker  |
+      +---------+ +---------+
+
+
+       Figure # - The flow of tasks
+[[/code]]
+
+Before we jump into the code, which is getting a little complex, let's sketch the core routing logic and break it down into a simple but robust design.
+
+We need two queues, one for requests from local clients and one for requests from cloud clients.  One option would be to pull messages off the local and cloud frontends, and pump these onto their respective queues.  But this is kind of pointless because 0MQ sockets //are// queues already.  So let's use the 0MQ socket buffers as queues.
+
+This was the technique we used in the LRU queue broker, and it worked nicely.  We only read from the two frontends when there is somewhere to send the requests.  We can always read from the backends, since they give us replies to route back.  As long as the backends aren't talking to us, there's no point in even looking at the frontends.
+
+So our main loop becomes:
+
+* Poll the backends for activity.  When we get a message, it may be "READY" from a worker or it may be a reply.  If it's a reply, route back via the local or cloud frontend.
+
+* If a worker replied, it became available, so we queue it and count it.
+
+* While there are workers available, take a request, if any, from either frontend and route to a local worker, or randomly, a cloud peer.
+
+Randomly sending tasks to a peer broker rather than a worker simulates work distribution across the cluster.  It's idiot but that is fine for this stage.
+
+We use broker identities to route messages between brokers.  Each broker has a name, which we provide on the command line in this simple prototype.  As long as these names don't overlap with the 0MQ-generated UUIDs used for client nodes, we can figure out whether to route a reply back to a client or to a broker.
+
+Here is how this works in code.  The interesting part starts around the comment "Interesting part".
+
+[[code type="C" title="Prototype local and cloud flow" name="peering2"]]
+[[/code]]
+
+Run this by, for instance, starting two instance of the broker in two windows:
+
+[[code]]
+peering2 me you
+peering2 you me
+[[/code]]
+
+Some comments on this code:
+
+* Using the zmsg class makes life much easier, and our code much shorter.  It's obviously a abstraction that works, and which should form part of your toolbox as a 0MQ programmer.
+
+* Since we're not getting any state information from peers, we naively assume they are running.  The code prompts you to confirm when you've started all the brokers.  In the real case we'd not send anything to brokers who had not told us they exist.
+
+You can satisfy yourself that the code works by watching it run forever.  If there were any misrouted messages, clients would end up blocking, and the brokers would stop printing trace information.  You can prove that by killing one of the broker.  Messages will be lost, and clients will one by one stop.
+
+++++ Putting it All Together
+
+Let's put this together into a single package.  As before, we'll run an entire cluster as one process.  We're going to take the two previous examples and merge them into one properly working design.
 
 
 
-
-
-+++ Generating Identities
-
--> need zfl here
-
-- generic LRU device
-    - accept input from REQs
-    - load balance to bunch of mamas
-
-lrudevice.c
-    - imitates a queue device except...
 
 
 

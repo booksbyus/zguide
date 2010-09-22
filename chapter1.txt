@@ -12,7 +12,7 @@
 
 +++ Fixing the World
 
-How to explain 0MQ?  Some of us start by saying all the wonderful things it does.  //It's sockets on steroids.  It's fast!//  Others try to share their moment of enlightenment, that zap-pow-kaboom satori paradigm-shift moment when it all became obvious.  //Things just become simpler.  Complexity goes away.//  Others try to explain by comparison.  //It's smaller, simpler, but still looks familiar.//  Personally, I like to remember why we made 0MQ at all, because that's most likely where you, the reader, still are today.
+How to explain 0MQ?  Some of us start by saying all the wonderful things it does.  //It's sockets on steroids.  It's like mailboxes with routing.  It's fast!//  Others try to share their moment of enlightenment, that zap-pow-kaboom satori paradigm-shift moment when it all became obvious.  //Things just become simpler.  Complexity goes away.//  Others try to explain by comparison.  //It's smaller, simpler, but still looks familiar.//  Personally, I like to remember why we made 0MQ at all, because that's most likely where you, the reader, still are today.
 
 Programming is a science dressed up as art, because most of us don't understand the physics of software, and it's rarely if ever taught.  The physics of software is not algorithms, data structures, languages and abstractions.  These are just tools we make, use, throw away.  The real physics of software is the physics of people.
 
@@ -285,7 +285,9 @@ So the client subscribes to its chosen zip-code and collects a thousand updates 
 Some points about the publish-subscribe pattern:
 
 * A subscriber can in fact connect to more than one publisher, using one 'connect' call each time.  Data will then arrive and be interleaved so that no single publisher drowns out the others.
+
 * If a publisher has no connected subscribers, then it will simply drop all messages.
+
 * If you're using TCP, and a subscriber is slow, messages will queue up on the publisher.  We'll look at how to protect publishers against this, using the "high water mark" later.
 
 This is how long it takes to receive and filter 10M messages on my box, which is an Intel 4 core Q8300, fast but nothing special:
@@ -415,9 +417,13 @@ Let's look at some aspects of this code in more detail:
 Having seen some examples, you're eager to start using 0MQ in some apps.  Before you start that, take a deep breath, chillax, and reflect on some basic advice that will save you stress and confusion.
 
 * Learn 0MQ step by step.  It's just one simple API but it hides a world of possibilities.  Take the possibilities slowly, master each one.
+
 * Write nice code.  Ugly code hides problems and makes it hard for others to help you.  You might get used to meaningless variable names, but people reading your code won't.  Use names that are real words, that say something other than "I'm too careless to tell you what this variable is really for".  Use consistent indentation, clean layout.  Write nice code and your world will be more comfortable.
+
 * Test what you make as you make it.  When your program doesn't work, you should know what five lines are to blame.  This is especially true when you do 0MQ magic, which just //won't// work the first times you try it.
+
 * When you find that things don't work as expected, break your code into pieces, test each one, see which one is not working.  0MQ lets you make essentially modular code, use that to your advantage.
+
 * Make abstractions (classes, methods, whatever) as you need them.  If you copy/paste a lot of code you're going to copy/paste errors too.
 
 To illustrate, here is a fragment of code someone asked me to help fix:
@@ -514,7 +520,7 @@ worker_thread (void *arg) {
 
 **Do one zmq_init[3] at the start of your main line code, and one zmq_term[3] at the end.**
 
-If you're using the fork() system call, each process needs its own context.  If you do zmq_init[3] in the main process before calling fork(), the child processes //must not// use that context.  Each child process must always create and use its own context.
+If you're using the fork() system call, each process needs its own context.  If you do zmq_init[3] in the main process before calling fork(), the child processes get their own contexts.  In general you want to do the interesting stuff in the child processes, and just manage these from the parent process.
 
 +++ Making a Clean Exit
 
@@ -523,7 +529,9 @@ Classy programmers share the same motto as classy hit men: always clean up after
 The 0MQ objects we need to worry about are messages, sockets, and contexts.  Luckily it's quite simple:
 
 * Always close a message the moment you are done with it, using zmq_msg_close[3].
+
 * Don't close sockets.  If you are opening and closing a lot of sockets, redesign your application.
+
 * When you exit the program, call zmq_term[3].  This destroys the context and all sockets associated with it.
 
 In 0MQ/2.0.x and earlier, calling zmq_close[3], or zmq_term[3], or exiting the main program too hastily will cause messages you //think// you just sent to disappear.  It's a bug in 0MQ that's fixed in version 2.1 and later.
@@ -637,15 +645,25 @@ And this is 0MQ: an efficient, embeddable library that solves most of the proble
 Specifically:
 
 * It handles I/O asynchronously, in background threads.  These communicate with application threads using lock-free data structures, so 0MQ applications need no locks, semaphores, or other wait states.
+
 * Components can come and go dynamically and 0MQ will automatically reconnect.  This means you can start components in any order.  You can create "service-oriented architectures" (SOAs) where services can join and leave the network at any time.
+
 * It queues messages automatically when needed.  It does this intelligently, pushing messages to as close as possible to the receiver before queuing them.
+
 * It has ways of dealing with over-full queues (called "high water mark").  When a queue is full, 0MQ automatically blocks senders, or throws away messages, depending on the kind of messaging you are doing (the so-called "pattern").
+
 * It lets your applications talk to each other over arbitrary transports: TCP, multicast, in-process, inter-process.  You don't need to change your code to use a different transport.
+
 * It handles slow/blocked readers safely, using different strategies that depend on the messaging pattern.
+
 * It lets you route messages using a variety of patterns such as request-reply and publish-subscribe.  These patterns are how you create the topology, the structure of your network.
+
 * It delivers whole messages exactly as they were sent, using a simple framing on the wire.  If you write a 10k message, you will receive a 10k message.
+
 * It does not impose any format on messages.  They are blobs of zero to gigabytes large.  When you want to represent data you choose some other product on top, such as Google's protocol buffers, XDR, and others.
+
 * It handles network errors intelligently.  Sometimes it retries, sometimes it tells you an operation failed.
+
 * It reduces your carbon footprint.  Doing more with less CPU means your boxes use less power, and you can keep your old boxes in use for longer. Al Gore would love 0MQ.
 
 Actually 0MQ does rather more than this.  It has a subversive effect on how you develop network-capable applications.  Superficially it's just a socket API on which you do zmq_recv[3] and zmq_send[3].  But message processing rapidly becomes the central loop, and your application soon breaks down into a set of message processing tasks.  It is elegant and natural.  And it scales: each of these tasks maps to a node, and the nodes talk to each other across arbitrary transports.  Two nodes in one process (node is a thread), two nodes on one box (node is a process), two boxes on one network (node is a box). With no application code changes.
@@ -820,6 +838,8 @@ As you start to program with 0MQ you will come across one problem more than once
 
                  Figure # - 0MQ Problem Solver
 [[/code]]
+
+If you're using 0MQ in an enterprise context, you will want a support contract from iMatix.  It can be enormously stressful to find that your shiny 0MQ framework is doing weird stuff just as you scale it up in production.  Smart businesses using 0MQ make sure they have someone to call, just in case.
 
 +++ Warning - Unstable Paradigms!
 
