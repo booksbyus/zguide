@@ -739,6 +739,16 @@ As you start to program with 0MQ you will come across one problem more than once
                  | No                       | Yes
                  |                          |
                  |                          v
+                 |                 +-----------------+        +------------------+
+                 |                 |                 |        | Start the PUB    |
+                 |                 |  Do you start   |        | first, then      |
+                 |                 |  the SUB socket +------->| all SUB sockets  |
+                 |                 |  after the PUB? | Yes    | to avoid loss    |
+                 |                 |             {o} |        |                  |
+                 |                 +--------+--------+        +------------------+
+                 |                          | No
+                 |                          |
+                 |                          v
                  |                 +-----------------+
                  |                 | A SUB socket    |
                  |                 | can miss data   |

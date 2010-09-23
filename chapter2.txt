@@ -300,7 +300,7 @@ s_send (void *socket, char *string) {
 
 You can easily extend this code to send and receive blobs of arbitrary length.
 
-**Note than when you have passed a message to zmq_send[3], 0MQ will clear the message, i.e. set the data to empty.  You cannot send the same message twice, and you cannot access the message data after sending it.**
+**Note than when you call zmq_send[3], 0MQ will clear any previous data in the message, effectively doing the same as zmq_msg_close[3].**
 
 0MQ also supports //multipart// messages, which let you handle a list of blobs as a single message.  This is widely used in real applications and we'll look at that later in this chapter and in Chapter Three.
 
