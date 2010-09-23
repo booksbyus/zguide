@@ -106,7 +106,8 @@ s_dump (void *socket)
         int is_text = 1;
         int char_nbr;
         for (char_nbr = 0; char_nbr < size; char_nbr++)
-            if (data [char_nbr] < 32 || data [char_nbr] > 127)
+            if ((unsigned char) data [char_nbr] < 32
+            ||  (unsigned char) data [char_nbr] > 127)
                 is_text = 0;
 
         printf ("[%03d] ", size);
