@@ -1,4 +1,3 @@
-.set SELF=chapter:2
 .output chapter2.wd
 ++ Chapter Two - Intermediate Stuff
 
@@ -300,7 +299,9 @@ s_send (void *socket, char *string) {
 
 You can easily extend this code to send and receive blobs of arbitrary length.
 
-**Note than when you call zmq_send[3], 0MQ will clear any previous data in the message, effectively doing the same as zmq_msg_close[3].**
+**Note than when you have passed a message to zmq_send(3), ØMQ will clear the message, i.e. set the size to zero. You cannot send the same message twice, and you cannot access the message data after sending it.**
+
+If you want to send the same message more than once, create a second message and explicitly copy the data to that second message.
 
 0MQ also supports //multipart// messages, which let you handle a list of blobs as a single message.  This is widely used in real applications and we'll look at that later in this chapter and in Chapter Three.
 
@@ -1387,6 +1388,3 @@ Some notes on using the HWM option:
 The scalable elastic architecture you get should be an eye-opener.  You might need a coffee or two first.  Don't make the mistake I made once and buy exotic German coffee labeled //Entkoffeiniert//.  That does not mean "Delicious".  Scalable elastic architectures are not a new idea - [http://en.wikipedia.org/wiki/Flow-based_programming flow-based programming] and languages like [http://www.erlang.org/ Erlang] already worked like this - but ØMQ makes it easier to use than ever before.
 
 As [http://permalink.gmane.org/gmane.network.zeromq.devel/2145 Gonzo Diethelm said], '//My gut feeling is summarized in this sentence: "if ØMQ didn't exist, it would be necessary to invent it". Meaning that I ran into ØMQ after years of brain-background processing, and it made instant sense... ØMQ simply seems to me a "bare necessity" nowadays.//'
-
- >> [/chapter:1 Return to Chapter 1 of The Guide]
- >> [/chapter:3 Continue reading Chapter 3 of The Guide]

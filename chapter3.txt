@@ -1,4 +1,3 @@
-.set SELF=chapter:3
 .output chapter3.wd
 ++ Chapter Three - Advanced Request-Reply
 
@@ -1249,11 +1248,7 @@ You can satisfy yourself that the code works by watching it run forever.  If the
 
 Let's put this together into a single package.  As before, we'll run an entire cluster as one process.  We're going to take the two previous examples and merge them into one properly working design.
 
+.end
 
 
 
-
-
-
- >> [/chapter:2 Return to Chapter 2 of The Guide]
- >> [/chapter:4 Continue reading Chapter 4 of The Guide]

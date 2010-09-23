@@ -1,13 +1,13 @@
 .-  Instructions for z2w
 .set GIT=http://github.com/imatix/zguide
 .set BRANCH=master
-.set SELF=docs:user-guide
+.set SELF=chapter:all
 .set EMAIL=zeromq-dev@lists.zeromq.org
-.-  This gets repeated in each chapter output
 .prelude prelude.txt
 
-.set SELF=chapter:1
 .output chapter1.wd
+The Guide is written by Pieter Hintjens <ph@imatix.com>, with help from Martin Sustrik and [http://github.com/imatix/zguide/blob/master/CONTRIBUTORS many others].  We cover 0MQ version 2.0.x.  Please use the [$(GIT)/issues issue tracker] for all comments and errata.  The diagrams are built using [http://www.ditaa.org ditaa].  This version was published on &date("ddd d mmmm, yyyy") at &time().
+
 ++ Chapter One - Basic Stuff
 
 +++ Fixing the World
@@ -862,5 +862,3 @@ Because your code, talking to a socket, can then handle any number of connection
 So the general assumption no longer applies.  As you read the code examples, your brain will try to map them to what you know.  You will read "socket" and think "ah, that represents a connection to another node".  That is wrong.  You will read "thread" and your brain will again think, "ah, a thread represents a connection to another node", and again your brain will be wrong.
 
 If you're reading this Guide for the first time, realize that until you actually write 0MQ code for a day or two (and maybe three or four days), you may feel confused, especially by how simple 0MQ makes things for you, and you may try to impose that general assumption on 0MQ, and it won't work.  And then you will experience your moment of enlightenment and trust, that //zap-pow-kaboom// satori paradigm-shift moment when it all becomes clear.
-
- >> [/chapter:2 Continue reading Chapter Two of The Guide]
