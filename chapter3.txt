@@ -9,7 +9,8 @@ We'll cover:
 * How to use the REQ, REP, XREQ, and XREP sockets.
 * How to set manual reply addresses using identities.
 * How to do custom random scatter routing.
-* How to do least-recently used routing.
+* How to do custom least-recently used routing.
+* How to build a higher-level message class.
 * How to build a basic request-reply broker.
 * How to build a scalable cloud of request-reply brokers.
 
@@ -672,7 +673,42 @@ Reading and writing multipart messages rapidly gets tedious and error-prone.  Lo
     }
 [[/code]]
 
-That code isn't even reusable, because it can only handle one envelope.  What we want is an API that lets us receive and send an entire message in one shot, including all envelopes.  The 0MQ API itself doesn't aim to do this, but nothing prevents us making layers on top, and part of learning to use 0MQ intelligently is to do exactly that.
+That code isn't even reusable, because it can only handle one envelope.  And this code already does some wrapping around the 0MQ API.  If we used the raw API carefully this is what we'd have to write:
+
+[[code]]
+    while (1) {
+        //  Read and save all frames until we get an empty frame
+        //  In this example there is only 1 but it could be more
+        zmq_msg_t address;
+        zmq_msg_init (&address);
+        zmq_recv (worker, &address, 0);
+
+        zmq_msg_t empty;
+        zmq_msg_init (&empty);
+        zmq_recv (worker, &empty, 0);
+
+        //  Get request, send reply
+        zmq_msg_t payload;
+        zmq_msg_init (&payload);
+        zmq_recv (worker, &payload, 0);
+        int char_nbr;
+        printf ("Worker: ");
+        for (char_nbr = 0; char_nbr < zmq_msg_size (&payload); char_nbr++)
+            printf ("%c", *(char *) (zmq_msg_data (&payload) + char_nbr));
+        printf ("\n");
+        zmq_msg_init_size (&payload, 2);
+        memcpy (zmq_msg_data (&payload), "OK", 2);
+
+        zmq_send (worker, &address, ZMQ_SNDMORE);
+        zmq_close (&address);
+        zmq_send (worker, &empty, ZMQ_SNDMORE);
+        zmq_close (&empty);
+        zmq_send (worker, &payload, 0);
+        zmq_close (&payload);
+    }
+[[/code]]
+
+What we want is an API that lets us receive and send an entire message in one shot, including all envelopes.  One that lets us do what we want with the absolute least lines of code.  The 0MQ API itself doesn't aim to do this, but nothing prevents us making layers on top, and part of learning to use 0MQ intelligently is to do exactly that.
 
 The best way to design an API is to start by writing test code, i.e. see what the API would look like in real code.  Here's how I'd like that worker code to look:
 
@@ -685,11 +721,11 @@ The best way to design an API is to start by writing test code, i.e. see what th
     }
 [[/code]]
 
-I'll use every sneaky assumption in the book to make this API minimalistic:
+Replacing 22 lines of code with 4 is a good deal, especially since the results are easy to read and understand.  I'll use every sneaky assumption in the book to make this API minimalistic:
 
-* We don't care about zero-copy performance.
-* Receiving a message always calls the constructor.
-* Sending a message always calls the destructor.
+* We don't care about zero-copy performance, so messages hold copies of data.
+* Receiving a message always calls the constructor so we don't need extra constructors.
+* Sending a message always calls the destructor, and sets the message reference to null.
 * Message parts (addresses and data) are always printable strings.
 
 That last one is tricky because 0MQ uses a binary zero at the start of generated identities.  It is painful in C to pass length-specified blobs in and out of APIs.  So, our message class will mangle 0MQ identities to make them usable internally as C strings.  In other languages you'll be able to make an API that handles binary message parts without such hacks.
@@ -789,15 +825,15 @@ Second, a it may become confusing if you try to put two XREP sockets at the same
 
 +++ Worked Example: Inter-Broker Routing
 
-Let's take everything we've seen so far, and scale things up.  Your best client calls you urgently and asks for a design of a large cloud computing facility.  He has this vision of a cloud that spans many data centers, each a cluster of clients and workers, and that works together as a whole.
+Let's take everything we've seen so far, and scale things up.  Our best client calls us urgently and asks for a design of a large cloud computing facility.  He has this vision of a cloud that spans many data centers, each a cluster of clients and workers, and that works together as a whole.
 
-Because you're smart enough to know that practice always beats theory, you propose to make a working simulation using 0MQ.  Your client, desperate to lock down the budget before his own boss changes his mind, and having read great things about 0MQ on Twitter, agrees.
+Because we're smart enough to know that practice always beats theory, we propose to make a working simulation using 0MQ.  Our client, eager to lock down the budget before his own boss changes his mind, and having read great things about 0MQ on Twitter, agrees.
 
 ++++ Establishing the Details
 
-With several espressos under our belt, you want to jump on it right away but a little voice tells you to get more details before making a sensational solution to the entirely wrong problem.  What kind of work is the cloud doing?, you ask.  Your client explains:
+Several espressos later, we want to jump into writing code but a little voice tells us to get more details before making a sensational solution to entirely the wrong problem.  What kind of work is the cloud doing?, we ask.  The client explains:
 
-* Workers run on various kinds of hardware, but they are all able to handle any task.  We have several hundred workers per cluster, and as many as a dozen clusters in total.
+* Workers run on various kinds of hardware, but they are all able to handle any task.  There are several hundred workers per cluster, and as many as a dozen clusters in total.
 
 * Clients create tasks for workers.  Each task is an independent unit of work and all the client wants is to find an available worker, and send it the task, as soon as possible.  There will be a lot of clients and they'll come and go arbitrarily.
 
@@ -807,17 +843,17 @@ With several espressos under our belt, you want to jump on it right away but a l
 
 * Clients send out one task at a time, waiting for a reply.  If they don't get an answer within X seconds they'll just send out the task again. This ain't our concern, the client API does it already.
 
-* Workers process one task at a time, they are very simple beasts.  If they crash, they restart and pretend nothing happened.
+* Workers process one task at a time, they are very simple beasts.  If they crash, they get restarted by whatever script started them.
 
-So you double check to make sure that you understood this correctly:
+So we double check to make sure that we understood this correctly:
 
-* There will be some kind of super-duper interconnect between clusters, right?  The client says, yes, of course, we're not idiots.
+* There will be some kind of super-duper network interconnect between clusters, right?  The client says, yes, of course, we're not idiots.
 
-* What kind of volumes are you talking about, you ask?  The client replies, up to a thousand clients per cluster, each doing max. ten requests per second.  Requests are small, and replies are also small, no more than 1K bytes each.
+* What kind of volumes are we talking about, we ask?  The client replies, up to a thousand clients per cluster, each doing max. ten requests per second.  Requests are small, and replies are also small, no more than 1K bytes each.
 
-So you do a little calculation and see that this will work nicely over plain TCP. 2,500 clients x 10/second x 1,000 bytes x 2 directions = 50MB/sec or 400Mb/sec, not a problem for a 1Gb network.
+So we do a little calculation and see that this will work nicely over plain TCP. 2,500 clients x 10/second x 1,000 bytes x 2 directions = 50MB/sec or 400Mb/sec, not a problem for a 1Gb network.
 
-It's a straight-forward problem that requires no exotic hardware or protocols, just some clever routing algorithms and careful design.  You start by designing one cluster (one data center) and then you figure out how to connect clusters together.
+It's a straight-forward problem that requires no exotic hardware or protocols, just some clever routing algorithms and careful design.  We start by designing one cluster (one data center) and then we figure out how to connect clusters together.
 
 ++++ Architecture of a Single Cluster
 
@@ -1150,7 +1186,7 @@ We can build this little program and run it three times to simulate three cluste
 peering1 DC1 DC2 DC3  #  Start DC1 and connect to DC2 and DC3
 peering1 DC2 DC1 DC3  #  Start DC2 and connect to DC1 and DC3
 peering1 DC3 DC1 DC2  #  Start DC3 and connect to DC1 and DC2
-[[code]]
+[[/code]]
 
 You'll see each cluster report the state of its peers, and after a few seconds they will all happily be printing random numbers once per second.  Try this and satisfy yourself that the three brokers all match up and synchronize to per-second state updates.
 
