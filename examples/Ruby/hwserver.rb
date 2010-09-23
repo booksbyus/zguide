@@ -1,8 +1,8 @@
-require 'rubygems'
-require 'ffi-rzmq'
+No-one has translated the hwserver example into Ruby yet.  Be the first to create
+hwserver in Ruby and get one free Internet!  If you're the author of the Ruby
+binding, this is a great way to get people to use 0MQ in Ruby.
 
-<<<<<<< HEAD
-To submit a new translation email it to 1000 4 20 24 25 29 30 44 46 107 109 114 121 1000EMAIL).  Please:
+To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
 
 * Stick to identical functionality and naming used in examples so that readers
   can easily compare languages.
@@ -11,22 +11,3 @@ To submit a new translation email it to 1000 4 20 24 25 29 30 44 46 107 109 114 
   license.
 
 Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
-=======
-context = ZMQ::Context.new(1)
-
-# Socket to talk to clients
-responder = context.socket(ZMQ::REP)
-responder.bind('tcp://*:5555')
-
-while true
-  # Wait for next request from client
-  message = responder.recv_string
-  print "Received request: #{message}\n"
-
-  # Do some 'work'
-  sleep 1
-
-  # Send reply back to client
-  responder.send_string("World")
-end
->>>>>>> mlc/master

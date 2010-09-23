@@ -848,10 +848,10 @@ As you start to program with 0MQ you will come across one problem more than once
                  |                          |
                  |                          v
                  |                 +-----------------+
-                 |                 | A SUB socket    |
-                 |                 | can miss data   |
-                 |                 | as it connects. |
-                 |                 | It's normal.    |
+                 |                 | A SUB socket can|
+                 |                 | miss data as it |
+                 |                 | connects. That's|
+                 |                 | normal.         |
                  |                 +-----------------+
                  |
                  v
