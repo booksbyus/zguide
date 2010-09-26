@@ -34,7 +34,9 @@ client_thread (void *context) {
             zmsg_send (&zmsg, client);
 
             //  Wait max ten seconds for a reply, then complain
-            zmq_pollitem_t pollset [1] = { { client, 0, ZMQ_POLLIN, 0 } };
+            zmq_pollitem_t pollset [1] = {
+                { client, 0, ZMQ_POLLIN, 0 }
+            };
             assert (zmq_poll (pollset, 1, 10 * 1000000) >= 0);
             if (pollset [0].revents & ZMQ_POLLIN) {
                 zmsg = zmsg_recv (client);
@@ -43,7 +45,8 @@ client_thread (void *context) {
             }
             else {
                 zmsg = zmsg_new ();
-                zmsg_body_fmt (zmsg, "E: CLIENT EXIT - lost task %s", task_id);
+                zmsg_body_fmt (zmsg,
+                    "E: CLIENT EXIT - lost task %s", task_id);
                 zmsg_send (&zmsg, monitor);
                 return (NULL);
             }
@@ -80,11 +83,11 @@ int main (int argc, char *argv[])
     //
     s_version ();
     if (argc < 2) {
-        fprintf (stderr, "syntax: peering3 me {you}...\n");
+        printf ("syntax: peering3 me {you}...\n");
         exit (EXIT_FAILURE);
     }
     char *self = argv [1];
-    fprintf (stderr, "I: preparing broker at %s...\n", self);
+    printf ("I: preparing broker at %s...\n", self);
     srandom ((unsigned) time (NULL));
 
     //  Prepare our context and sockets
@@ -108,7 +111,7 @@ int main (int argc, char *argv[])
     int argn;
     for (argn = 2; argn < argc; argn++) {
         char *peer = argv [argn];
-        fprintf (stderr, "I: connecting to cloud frontend at '%s'\n", peer);
+        printf ("I: connecting to cloud frontend at '%s'\n", peer);
         snprintf (endpoint, 255, "ipc://%s-cloud.ipc", peer);
         assert (zmq_connect (cloudbe, endpoint) == 0);
     }
@@ -117,7 +120,7 @@ int main (int argc, char *argv[])
     zmq_setsockopt (statefe, ZMQ_SUBSCRIBE, "", 0);
     for (argn = 2; argn < argc; argn++) {
         char *peer = argv [argn];
-        fprintf (stderr, "I: connecting to state backend at '%s'\n", peer);
+        printf ("I: connecting to state backend at '%s'\n", peer);
         snprintf (endpoint, 255, "ipc://%s-state.ipc", peer);
         assert (zmq_connect (statefe, endpoint) == 0);
     }
@@ -206,7 +209,7 @@ int main (int argc, char *argv[])
         //  Handle monitor message
         if (primary [3].revents & ZMQ_POLLIN) {
             zmsg_t *zmsg = zmsg_recv (monitor);
-            fprintf (stderr, "%s\n", zmsg_body (zmsg));
+            printf ("%s\n", zmsg_body (zmsg));
             zmsg_destroy (&zmsg);
         }
 
@@ -244,7 +247,8 @@ int main (int argc, char *argv[])
             }
             else {
                 //  Route to random broker peer
-                fprintf (stderr, "I: route request %s to cloud...\n", zmsg_body (zmsg));
+                printf ("I: route request %s to cloud...\n",
+                    zmsg_body (zmsg));
                 int random_peer = within (argc - 2) + 2;
                 zmsg_wrap (zmsg, argv [random_peer], NULL);
                 zmsg_send (&zmsg, cloudbe);
