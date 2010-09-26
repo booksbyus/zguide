@@ -5,14 +5,14 @@
 #
 if [ /$1/ = /all/ ]; then
     echo "Building C examples..."
-    for MAIN in *.c; do
+    for MAIN in `egrep -l main *.c`; do
         echo "$MAIN"
         ./c -l -lzmq -q $MAIN
     done
 elif [ /$1/ = /clean/ ]; then
     echo "Cleaning C examples directory..."
     rm -f *.o *.lst core
-    for MAIN in *.c; do
+    for MAIN in `egrep -l main *.c`; do
         rm -f `basename $MAIN .c`
     done
 elif [ -f $1.c ]; then
