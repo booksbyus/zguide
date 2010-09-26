@@ -507,11 +507,13 @@ Some things to know about multipart messages:
 
 * There is no way to cancel a partially sent message, except by closing the socket.
 
-+++ Infernal Devices
++++ Intermediates and Devices
 
-We now introduce a class of 0MQ applications called "devices".  Devices are anything that sit between your real applications.  The general rule is that any N-to-N architecture needs devices to avoid connection explosion.
+Any connected set hits a complexity curve as the number of set members increases.  A small number of members can all know about each other but as the set gets larger, the cost to each member of knowing all other interesting members grows linearly, and the overall cost of connecting members grows factorially.  The solution is to break sets into smaller ones, and use intermediates to connect the sets.
 
-When we use 0MQ we usually start building our applications as a set of nodes on a network with the nodes talking to each other:
+This pattern is extremely common in the real world and is why our societies and economies are filled with intermediaries who have no other real function than to reduce the complexity and scaling costs of larger networks.  Intermediaries are typically called wholesalers, distributors, managers, etc.
+
+A 0MQ network like any cannot grow beyond a certain size without needing intermediaries.  In 0MQ, we call these "devices".  When we use 0MQ we usually start building our applications as a set of nodes on a network with the nodes talking to each other, without intermediaries:
 
 [[code type="textdiagram"]]
                +---------+
@@ -579,15 +581,16 @@ And then we extend the application across a wider network, placing devices in sp
        Figure # - Larger scale 0MQ application
 [[/code]]
 
-0MQ devices:
+0MQ devices generally connect a set of 'frontend' sockets to a set of 'backend' sockets, though there are no strict design rules.  They ideally run with no state, so that it becomes possible to stretch applications over as many intermediates as needed.  You can run them as threads within a process, or as stand-alone processes.  0MQ provides some very basic devices but you will in practice develop your own.
 
-* Generally run without state or persistence.
-* Are applications that read and write 0MQ sockets in particular ways.
+0MQ devices can do intermediation of addresses, services, queues, or any other abstraction you care to define above the message and socket layers.  Different messaging patterns have different complexity issues and need different kinds of intermediation.  For example, request-reply works well with queue and service abstractions, while publish-subscribe works well with streams or topics.
+
+What's interesting about 0MQ as compared to traditional centralized brokers is that you can place devices precisely where you need them, and they can do the optimal intermediation.
+
+Let's look at some simple cases.
+
 * Usually connect one 'frontend' socket to one 'backend' socket.
 * May in complex cases work with three or more sockets.
-* Run as stand-alone processes or within threads.
-
-Devices are a confusing concept to the new 0MQ user, and the best way as always is to look at real use-cases and see how we solve them.
 
 ++++ A Publish-Subscribe Proxy Server
 
@@ -1058,6 +1061,14 @@ Received 1000000 updates
 
 [!-- TODO: remove this note when 0MQ/2.1 is released --]
 Note that we do {{sleep (1);}} before exiting the publisher.  This is a hack that gets around 0MQ/2.0's design, which discards messages that have not yet been sent, if you exit the program too soon.  If you are using 0MQ/2.1 you can remove this sleep statement.  There is no way in 0MQ/2.0 to properly exit the publisher without such a sleep.
+
+The example assumes that the SUB connect will be finished by the time the REQ/REP dialog is complete.  However there are no //guarantees// that outbound connects are ordered.  If using a single IO thread, and connecting to the same hostname, it is highly likely.  If you are connecting via two different network routes, i.e. to two different interfaces or hostnames, one route could be arbitrarily slower than the other.
+
+A more robust model would be:
+
+* Publisher opens PUB socket and starts sending "Hello" messages (not data).
+* Subscribers connect SUB socket and when they receive a Hello message they tell the publisher via a REQ/REP socket pair.
+* When the publisher has had all the necessary confirmations, it starts to send real data.
 
 +++ Zero Copy
 

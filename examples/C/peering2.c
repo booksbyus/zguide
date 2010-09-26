@@ -45,7 +45,7 @@ worker_thread (void *context) {
         zmsg = zmsg_recv (worker);
         //  Do some 'work'
         sleep (1);
-        zmsg_body_set (zmsg, "OK");
+        zmsg_body_fmt (zmsg, "OK - %04x", within (0x10000));
         zmsg_send (&zmsg, worker);
     }
     return (NULL);
@@ -91,6 +91,10 @@ int main (int argc, char *argv[])
     void *localbe = zmq_socket (context, ZMQ_XREP);
     zmq_bind (localbe, "inproc://localbe");
 
+    //  Get user to tell us when we can start...
+    printf ("Press Enter when all brokers are started: ");
+    getchar ();
+
     //  Start local clients and local workers
     int client_nbr;
     for (client_nbr = 0; client_nbr < NBR_CLIENTS; client_nbr++) {
@@ -102,9 +106,6 @@ int main (int argc, char *argv[])
         pthread_t worker;
         pthread_create (&worker, NULL, worker_thread, context);
     }
-    //  Get user to tell us when we can start...
-    printf ("Press Enter when all brokers are started: ");
-    getchar ();
 
     //  Interesting part
     //  -------------------------------------------------------------
@@ -125,7 +126,7 @@ int main (int argc, char *argv[])
         assert (zmq_poll (backends, 2, capacity? 1000000: -1) >= 0);
 
         //  Handle reply from local worker
-        zmsg_t *zmsg;
+        zmsg_t *zmsg = NULL;
         if (backends [0].revents & ZMQ_POLLIN) {
             zmsg = zmsg_recv (localbe);
 
@@ -135,7 +136,8 @@ int main (int argc, char *argv[])
             if (strcmp (zmsg_address (zmsg), "READY") == 0)
                 zmsg_destroy (&zmsg);   //  Don't route it
         }
-        //  Handle reply from peer broker
+        //  Or handle reply from peer broker
+        else
         if (backends [1].revents & ZMQ_POLLIN) {
             zmsg = zmsg_recv (cloudbe);
             //  We don't use peer broker address for anything

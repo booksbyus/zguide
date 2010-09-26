@@ -126,6 +126,61 @@ zmsg_destroy (zmsg_t **self_p)
     }
 }
 
+
+//  --------------------------------------------------------------------------
+//  Formats 17-byte UUID as 33-char string starting with '@'
+//  Lets us print UUIDs as C strings and use them as addresses
+//
+static char *
+s_encode_uuid (unsigned char *data)
+{
+    static char
+        hex_char [] = "0123456789ABCDEF";
+
+    assert (data [0] == 0);
+    char *uuidstr = malloc (34);
+    uuidstr [0] = '@';
+    int byte_nbr;
+    for (byte_nbr = 0; byte_nbr < 16; byte_nbr++) {
+        uuidstr [byte_nbr * 2 + 1] = hex_char [data [byte_nbr + 1] >> 4];
+        uuidstr [byte_nbr * 2 + 2] = hex_char [data [byte_nbr + 1] & 15];
+    }
+    uuidstr [33] = 0;
+    return (uuidstr);
+}
+
+
+//  --------------------------------------------------------------------------
+//  Formats 17-byte UUID as 33-char string starting with '@'
+//  Lets us print UUIDs as C strings and use them as addresses
+//
+static unsigned char *
+s_decode_uuid (char *uuidstr)
+{
+    static char
+        hex_to_bin [128] = {
+           -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,    /*            */
+           -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,    /*            */
+           -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,    /*            */
+            0, 1, 2, 3, 4, 5, 6, 7, 8, 9,-1,-1,-1,-1,-1,-1,    /*   0..9     */
+           -1,10,11,12,13,14,15,-1,-1,-1,-1,-1,-1,-1,-1,-1,    /*   A..F     */
+           -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,    /*            */
+           -1,10,11,12,13,14,15,-1,-1,-1,-1,-1,-1,-1,-1,-1,    /*   a..f     */
+           -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 };  /*            */
+
+    assert (strlen (uuidstr) == 33);
+    assert (uuidstr [0] == '@');
+    unsigned char *data = malloc (17);
+    int byte_nbr;
+    data [0] = 0;
+    for (byte_nbr = 0; byte_nbr < 16; byte_nbr++)
+        data [byte_nbr + 1]
+            = (hex_to_bin [uuidstr [byte_nbr * 2 + 1] & 127] << 4)
+            + (hex_to_bin [uuidstr [byte_nbr * 2 + 2] & 127]);
+
+    return (data);
+}
+
 //  --------------------------------------------------------------------------
 //  Private helper function to store a single message part
 
@@ -157,14 +212,20 @@ zmsg_recv (void *socket)
         if (zmq_recv (socket, &message, 0))
             exit (1);           //  Context terminated, exit
 
-        //  Mangle 0MQ identities using a nasty hack
+        //  We handle 0MQ UUIDs as printable strings
         unsigned char *data = zmq_msg_data (&message);
         size_t         size = zmq_msg_size (&message);
-        if (size == 17 && data [0] == 0)
-            data [0] = ' ';
+        if (size == 17 && data [0] == 0) {
+            //  Store message part as string uuid
+            char *uuidstr = s_encode_uuid (data);
+            self->_part_size [self->_part_count] = strlen (uuidstr);
+            self->_part_data [self->_part_count] = (unsigned char *) uuidstr;
+            self->_part_count++;
+        }
+        else
+            //  Store this message part
+            _set_part (self, self->_part_count++, data, size);
 
-        //  Store this message part
-        _set_part (self, self->_part_count++, data, size);
         zmq_msg_close (&message);
 
         int64_t more;
@@ -191,17 +252,23 @@ zmsg_send (zmsg_t **self_p, void *socket)
 
     int part_nbr;
     for (part_nbr = 0; part_nbr < self->_part_count; part_nbr++) {
-        //  Unmangle 0MQ identities for writing to the socket
-        unsigned char *data = self->_part_data [part_nbr];
-        size_t         size = self->_part_size [part_nbr];
-        if (size == 17 && data [0] == ' ')
-            data [0] = 0;
-
         //  Could be improved to use zero-copy since we destroy
         //  the message parts after sending anyhow...
         zmq_msg_t message;
-        zmq_msg_init_size (&message, size);
-        memcpy (zmq_msg_data (&message), data, size);
+
+        //  Unmangle 0MQ identities for writing to the socket
+        unsigned char *data = self->_part_data [part_nbr];
+        size_t         size = self->_part_size [part_nbr];
+        if (size == 33 && data [0] == '@') {
+            unsigned char *uuidbin = s_decode_uuid ((char *) data);
+            zmq_msg_init_size (&message, 17);
+            memcpy (zmq_msg_data (&message), uuidbin, 17);
+            free (uuidbin);
+        }
+        else {
+            zmq_msg_init_size (&message, size);
+            memcpy (zmq_msg_data (&message), data, size);
+        }
         assert (zmq_send (socket, &message,
             part_nbr < self->_part_count - 1? ZMQ_SNDMORE: 0) == 0);
         zmq_msg_close (&message);
@@ -373,7 +440,6 @@ zmsg_unwrap (zmsg_t *self)
 void
 zmsg_dump (zmsg_t *self)
 {
-    fprintf (stderr, "----------------------------------------\n");
     int part_nbr;
     for (part_nbr = 0; part_nbr < self->_part_count; part_nbr++) {
         unsigned char *data = self->_part_data [part_nbr];
@@ -444,7 +510,7 @@ zmsg_test (int verbose)
     if (verbose)
         zmsg_dump (zmsg);
     assert (zmsg_parts (zmsg) == 5);
-    assert (strlen (zmsg_address (zmsg)) == 17);
+    assert (strlen (zmsg_address (zmsg)) == 33);
     free (zmsg_unwrap (zmsg));
     assert (strcmp (zmsg_address (zmsg), "address2") == 0);
     zmsg_body_fmt (zmsg, "%c%s", 'W', "orld");

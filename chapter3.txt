@@ -12,7 +12,10 @@ We'll cover:
 * How to do custom least-recently used routing.
 * How to build a higher-level message class.
 * How to build a basic request-reply broker.
-* How to build a scalable cloud of request-reply brokers.
+* How to choose good names for sockets.
+* How to simulate a cluster of clients and workers.
+* How to build a scalable cloud of request-reply clusters.
+* How to use pipeline sockets for monitoring threads.
 
 +++ Request-Reply Envelopes
 
@@ -728,7 +731,7 @@ Replacing 22 lines of code with 4 is a good deal, especially since the results a
 * Sending a message always calls the destructor, and sets the message reference to null.
 * Message parts (addresses and data) are always printable strings.
 
-That last one is tricky because 0MQ uses a binary zero at the start of generated identities.  It is painful in C to pass length-specified blobs in and out of APIs.  So, our message class will mangle 0MQ identities to make them usable internally as C strings.  In other languages you'll be able to make an API that handles binary message parts without such hacks.
+That last one is tricky because 0MQ uses a binary zero at the start of generated identities.  It is painful in C to pass length-specified blobs in and out of APIs.  So, our message class encodes and decodes 0MQ identities to make them usable internally as C strings.  This is not a high-performance design but it is simple and safe.  In other languages you'll be able to make an API that handles binary message parts without such hacks.
 
 So here's the class:
 
@@ -1280,13 +1283,37 @@ Some comments on this code:
 
 * Since we're not getting any state information from peers, we naively assume they are running.  The code prompts you to confirm when you've started all the brokers.  In the real case we'd not send anything to brokers who had not told us they exist.
 
-You can satisfy yourself that the code works by watching it run forever.  If there were any misrouted messages, clients would end up blocking, and the brokers would stop printing trace information.  You can prove that by killing one of the broker.  Messages will be lost, and clients will one by one stop.
+You can satisfy yourself that the code works by watching it run forever.  If there were any misrouted messages, clients would end up blocking, and the brokers would stop printing trace information.  You can prove that by killing either of the brokers.  The other broker tries to send requests to the cloud, and one by one its clients block, waiting for an answer.
 
 ++++ Putting it All Together
 
-Let's put this together into a single package.  As before, we'll run an entire cluster as one process.  We're going to take the two previous examples and merge them into one properly working design.
+Let's put this together into a single package.  As before, we'll run an entire cluster as one process.  We're going to take the two previous examples and merge them into one properly working design that lets you simulate any number of clusters.
+
+This code is just the size of both previous prototypes together, at 300 LoC.  That's pretty good for a simulation of a cluster that includes clients and workers and cloud workload distribution.  Here is the code:
+
+[[code type="C" title="Full cluster simulation" name="peering3"]]
+[[/code]]
+
+It's a non-trivial program and took about a day to get working.  These are the highlights:
+
+* The client threads detect and report a failed request.  They do this by polling for a response and if none arrives after a while (10 seconds), printing an error message.
+
+* Client threads don't print directly, but instead send a message to a 'monitor' socket (PUSH) that the main loop collects (PULL) and prints off.  This is the first case we've seen of using 0MQ sockets for monitoring and logging; this is a big use case we'll come back to later.
+
+* Clients simulate varying loads to get the cluster 100% at random moments, so that tasks are shifted over to the cloud.  The number of clients and workers, and delays in the client and worker threads control this.  Feel free to play with them to see if you can make a more realistic simulation.
+
+* All {{inproc}} endpoints bind first, then connect.  This is required by the {{inproc}} transport.
+
+* The main loop uses two pollsets.  It could in fact use three: information, backends, and frontends.  As in the earlier prototype, there is no point in taking a frontend message if there is no backend capacity.
+
+These are some of the problems that hit during development of this program:
+
+* Clients would freeze, due to requests or replies getting lost somewhere.  Recall that the 0MQ XREP/router socket drops messages it can't route.  The first tactic here was to modify the client thread to detect and report such problems.  Secondly, I put zmsg_dump() calls after every recv() and before every send() in the main loop, until it was clear what the problems were.
+
+* The main loop was mistakenly reading from more than one ready socket.  This caused the first message to be lost.  Fixed that by reading only from the first ready socket.
+
+* The zmsg class was not properly encoding UUIDs as C strings.  This caused UUIDs that contain 0 bytes to be corrupted.  Fixed by modifying zmsg to encode UUIDs as printable hex strings.
+
+This simulation does not detect disappearance of a cloud peer.  If you start several peers and stop one, and it was broadcasting capacity to the others, they will continue to send it work even if it's gone.  You can try this, and you will get clients that complain of lost requests.  The solution is twofold: first, only keep the capacity information for a short time so that if a peer does disappear, its capacity is quickly set to 'zero'.  Second, add reliability to the request-reply chain.  We'll look at both these in the next chapter.
 
 .end
-
-
-
