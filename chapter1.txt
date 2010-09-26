@@ -3,6 +3,7 @@
 .set BRANCH=master
 .set SELF=chapter:all
 .set EMAIL=zeromq-dev@lists.zeromq.org
+.set LIST=http://lists.zeromq.org/mailman/listinfo/zeromq-dev
 .prelude prelude.txt
 
 .output chapter1.wd
@@ -176,150 +177,16 @@ s_recv (void *socket) {
 
 This makes a very handy helper function and in the spirit of making things we can reuse profitably, let's write a similar 's_send' function that sends strings in the correct 0MQ format, and package this into a header file we can reuse.
 
-The result is {{zhelper.h}}, which lets us write sweeter and shorter C code, and looks more or less like this (the latest code is [$(GIT)/blob/master/examples/C/zhelpers.h always here]):
+The result is {{zhelpers.h}}, which lets us write sweeter and shorter 0MQ applications in C:
 
-[[code]]
-/*  =========================================================================
-    zhelpers.h
+[[code filename="examples/C/zhelpers.h"]]
+[[/code]]
 
-    Helper header file for example applications.
++++ Version Reporting
 
-    -------------------------------------------------------------------------
-    Copyright (c) 1991-2010 iMatix Corporation <www.imatix.com>
-    Copyright other contributors as noted in the AUTHORS file.
+0MQ does come in several versions and quite often, if you hit a problem, it'll be something that's been fixed in a later version.  So it's a useful trick to know //exactly// what version of 0MQ you're actually linking with.  Here is a tiny program that does that, using a function from {{zhelpers.h}}:
 
-    This file is part of the ZeroMQ Guide: http://zguide.zeromq.org
-
-    This is free software; you can redistribute it and/or modify it under the
-    terms of the GNU Lesser General Public License as published by the Free
-    Software Foundation; either version 3 of the License, or (at your option)
-    any later version.
-
-    This software is distributed in the hope that it will be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABIL-
-    ITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
-    Public License for more details.
-
-    You should have received a copy of the GNU Lesser General Public License
-    along with this program. If not, see <http://www.gnu.org/licenses/>.
-    =========================================================================
-*/
-
-#ifndef __ZHELPERS_H_INCLUDED__
-#define __ZHELPERS_H_INCLUDED__
-
-//  Include a bunch of headers that we will need in the examples
-
-#include <zmq.h>
-
-#include <pthread.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
-#include <sys/time.h>
-#include <time.h>
-#include <unistd.h>
-#include <assert.h>
-
-//  Provide random number from 0..(num-1)
-#define within(num) (int) ((float) (num) * random () / (RAND_MAX + 1.0))
-
-//  Receive 0MQ string from socket and convert into C string
-//  Caller must free returned string.
-static char *
-s_recv (void *socket) {
-    zmq_msg_t message;
-    zmq_msg_init (&message);
-    if (zmq_recv (socket, &message, 0))
-        exit (1);           //  Context terminated, exit
-
-    int size = zmq_msg_size (&message);
-    char *string = malloc (size + 1);
-    memcpy (string, zmq_msg_data (&message), size);
-    zmq_msg_close (&message);
-    string [size] = 0;
-    return (string);
-}
-
-//  Convert C string to 0MQ string and send to socket
-static int
-s_send (void *socket, char *string) {
-    int rc;
-    zmq_msg_t message;
-    zmq_msg_init_size (&message, strlen (string));
-    memcpy (zmq_msg_data (&message), string, strlen (string));
-    rc = zmq_send (socket, &message, 0);
-    assert (!rc);
-    zmq_msg_close (&message);
-    return (rc);
-}
-
-//  Sends string as 0MQ string, as multipart non-terminal
-static int
-s_sendmore (void *socket, char *string) {
-    int rc;
-    zmq_msg_t message;
-    zmq_msg_init_size (&message, strlen (string));
-    memcpy (zmq_msg_data (&message), string, strlen (string));
-    rc = zmq_send (socket, &message, ZMQ_SNDMORE);
-    zmq_msg_close (&message);
-    assert (!rc);
-    return (rc);
-}
-
-//  Receives all message parts from socket, prints neatly
-//
-static void
-s_dump (void *socket)
-{
-    puts ("----------------------------------------");
-    while (1) {
-        //  Process all parts of the message
-        zmq_msg_t message;
-        zmq_msg_init (&message);
-        zmq_recv (socket, &message, 0);
-
-        //  Dump the message as text or binary
-        char *data = zmq_msg_data (&message);
-        int size = zmq_msg_size (&message);
-        int is_text = 1;
-        int char_nbr;
-        for (char_nbr = 0; char_nbr < size; char_nbr++)
-            if ((unsigned char) data [char_nbr] < 32
-            ||  (unsigned char) data [char_nbr] > 127)
-                is_text = 0;
-
-        printf ("[%03d] ", size);
-        for (char_nbr = 0; char_nbr < size; char_nbr++) {
-            if (is_text)
-                printf ("%c", data [char_nbr]);
-            else
-                printf ("%02X", (unsigned char) data [char_nbr]);
-        }
-        printf ("\n");
-
-        int64_t more;           //  Multipart detection
-        size_t more_size = sizeof (more);
-        zmq_getsockopt (socket, ZMQ_RCVMORE, &more, &more_size);
-        zmq_msg_close (&message);
-        if (!more)
-            break;      //  Last message part
-    }
-}
-
-//  Set simple random printable identity on socket
-//
-static void
-s_set_id (void *socket)
-{
-    char identity [10];
-    sprintf (identity, "%04X-%04X", within (0x10000), within (0x10000));
-    zmq_setsockopt (socket, ZMQ_IDENTITY, identity, strlen (identity));
-}
-
-#endif
+[[code type="C" title="0MQ version reporting" name="zversion"]]
 [[/code]]
 
 +++ Getting the Message Out

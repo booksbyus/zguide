@@ -101,6 +101,23 @@ while (<>) {
         writeln ("[[/div]]");
         writeln ("[[/div]]");
     }
+    #  Process literal codeblock
+    elsif (/\[\[code filename=\"(.+)\"\]\]/) {
+        $filename = $1;
+        writeln ($_);
+
+        #   Discard any real contents of code block
+        while (<>) {
+            last if /\[\[\/code\]\]/;
+            print "W: discarding $type code for $filename\n";
+        }
+        die "Can't open $filename: $!"
+            unless open (SOURCE, $filename);
+        print OUTPUT $_
+            while <SOURCE>;
+        close (SOURCE);
+        writeln ('[[/code]]');
+    }
     #  Process named codeblock
     elsif (/\[\[code type=\"(.+)\" title=\"(.+)\" name=\"(.+)\"\]\]/) {
         $type = $1;
@@ -149,7 +166,7 @@ To submit a new translation email it to $symbols{EMAIL}.  Please:
 * You MUST state in the email that you license your code under the MIT/X11
   license.
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+Subscribe to the email list at $symbols{LIST}.
 EOF
                 close (SOURCE);
             }
@@ -272,7 +289,7 @@ sub expand_symbols {
             $_ = eval ("&intrinsic_$funct ($args)");
             $_ = $before.$_.$after;
             if ($@) {                   #   Syntax error in Perl statement?
-                &syntax_error ("$function is not a valid intrinsic function")
+                &error ("$function is not a valid intrinsic function")
                     unless $nofunc_mode;
                 last;
             }
@@ -492,4 +509,3 @@ sub error {
     print STDERR "E: $_\n";
     $have_errors = 1;                   #   We have 1 or more errors
 }
-

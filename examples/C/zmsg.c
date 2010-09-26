@@ -386,7 +386,7 @@ zmsg_dump (zmsg_t *self)
             if (data [char_nbr] < 32 || data [char_nbr] > 127)
                 is_text = 0;
 
-        fprintf (stderr, "[%03d] ", size);
+        fprintf (stderr, "[%03d] ", (int) size);
         for (char_nbr = 0; char_nbr < size; char_nbr++) {
             if (is_text)
                 fprintf (stderr, "%c", data [char_nbr]);

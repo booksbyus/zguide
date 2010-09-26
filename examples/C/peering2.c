@@ -122,7 +122,7 @@ int main (int argc, char *argv[])
             { cloudbe, 0, ZMQ_POLLIN, 0 }
         };
         //  If we have no workers anyhow, wait indefinitely
-        zmq_poll (backends, 2, capacity? 1000000: -1);
+        assert (zmq_poll (backends, 2, capacity? 1000000: -1) >= 0);
 
         //  Handle reply from local worker
         zmsg_t *zmsg;
@@ -156,7 +156,7 @@ int main (int argc, char *argv[])
                 { localfe, 0, ZMQ_POLLIN, 0 },
                 { cloudfe, 0, ZMQ_POLLIN, 0 }
             };
-            zmq_poll (frontends, 2, 0);
+            assert (zmq_poll (frontends, 2, 0) >= 0);
             int reroutable = 0;
             //  We'll do peer brokers first, to prevent starvation
             if (frontends [1].revents & ZMQ_POLLIN) {
@@ -191,5 +191,5 @@ int main (int argc, char *argv[])
         }
     }
     zmq_term (context);
-    return 0;
+    return EXIT_SUCCESS;
 }

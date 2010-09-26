@@ -67,6 +67,7 @@ int main (int argc, char *argv[])
     //  First argument is this broker's name
     //  Other arguments are our peers' names
     //
+    s_version ();
     if (argc < 2) {
         printf ("syntax: peering3 me {you}...\n");
         exit (EXIT_FAILURE);
@@ -151,7 +152,7 @@ int main (int argc, char *argv[])
         };
         //  If we have no workers anyhow, wait indefinitely
         printf ("T: poll backends capacity=%d\n", capacity);
-        zmq_poll (backends, 3, capacity? 1000000: -1);
+        assert (zmq_poll (backends, 3, capacity? 1000000: -1) >= 0);
 
         //  Track if capacity changes during this iteration
         int previous = capacity;
@@ -196,7 +197,7 @@ int main (int argc, char *argv[])
                 { cloudfe, 0, ZMQ_POLLIN, 0 }
             };
             printf ("T: poll frontends capacity=%d\n", capacity);
-            zmq_poll (frontends, 2, 0);
+            assert (zmq_poll (frontends, 2, 0) >= 0);
             int reroutable = 0;
             //  We'll do peer brokers first, to prevent starvation
             if (frontends [1].revents & ZMQ_POLLIN) {
@@ -241,5 +242,5 @@ int main (int argc, char *argv[])
         }
     }
     zmq_term (context);
-    return 0;
+    return EXIT_SUCCESS;
 }
