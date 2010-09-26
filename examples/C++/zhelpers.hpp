@@ -44,7 +44,7 @@
 //  Receive 0MQ string from socket and convert into string
 static std::string *
 s_recv (zmq::socket_t & socket) {
-	
+
     zmq::message_t message;
     socket.recv(&message);
 
@@ -56,10 +56,10 @@ s_recv (zmq::socket_t & socket) {
 //  Convert string to 0MQ string and send to socket
 static bool
 s_send (zmq::socket_t & socket, std::string string) {
-    
+
     zmq::message_t message(string.size());
     memcpy(message.data(), string.c_str(), string.size());
-    
+
     bool rc = socket.send(message);
     return (rc);
 }
@@ -67,7 +67,7 @@ s_send (zmq::socket_t & socket, std::string string) {
 //  Sends string as 0MQ string, as multipart non-terminal
 static bool
 s_sendmore (zmq::socket_t & socket, std::string string) {
-    
+
     zmq::message_t message(string.size());
     memcpy(message.data(), string.c_str(), string.size());
 
@@ -81,7 +81,7 @@ static void
 s_dump (zmq::socket_t & socket)
 {
     std::cout << "----------------------------------------" << std::endl;
-    
+
     while (1) {
         //  Process all parts of the message
 
@@ -91,16 +91,16 @@ s_dump (zmq::socket_t & socket)
         //  Dump the message as text or binary
         std::string data(static_cast<char*>(message.data()));
         int size = message.size();
-        
+
         bool is_text = true;
-        
+
         int char_nbr;
         for (char_nbr = 0; char_nbr < size; char_nbr++)
             if (data [char_nbr] < 32 || data [char_nbr] > 127)
                 is_text = 0;
 
         printf ("[%03d] ", size);
-        
+
         for (char_nbr = 0; char_nbr < size; char_nbr++) {
             if (is_text)
                 printf ("%c", data [char_nbr]);
@@ -128,4 +128,13 @@ s_set_id (zmq::socket_t & socket)
     socket.setsockopt(ZMQ_IDENTITY, identity, strlen (identity));
 }
 
+//  Report 0MQ version number
+//
+static void
+s_version (void)
+{
+    int major, minor, patch;
+    zmq_version (&major, &minor, &patch);
+    printf ("Current 0MQ version is %d.%d.%d\n", major, minor, patch);
+}
 #endif

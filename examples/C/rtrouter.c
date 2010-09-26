@@ -6,26 +6,24 @@
 int main () {
     void *context = zmq_init (1);
 
+    void *worker = zmq_socket (context, ZMQ_XREP);
+    zmq_setsockopt (worker, ZMQ_IDENTITY, "WORKER", 6);
+    zmq_bind (worker, "ipc://rtrouter.ipc");
+
     void *server = zmq_socket (context, ZMQ_XREP);
-    zmq_setsockopt (server, ZMQ_IDENTITY, "WORKER", 6);
-    zmq_bind (server, "ipc://rtrouter.ipc");
+    zmq_setsockopt (server, ZMQ_IDENTITY, "CLIENT", 6);
+    zmq_connect (server, "ipc://rtrouter.ipc");
 
-    void *client = zmq_socket (context, ZMQ_XREP);
-    zmq_setsockopt (client, ZMQ_IDENTITY, "FRONTEND", 8);
-    zmq_connect (client, "ipc://rtrouter.ipc");
-
-    //  Give client time to connect...
     sleep (1);
-
-    s_sendmore (client, "WORKER");
-    s_sendmore (client, "");
-    s_send (client, "send to worker");
-    s_dump (server);
-
-    s_sendmore (server, "FRONTEND");
+    s_sendmore (server, "WORKER");
     s_sendmore (server, "");
-    s_send (server, "send to front-end");
-    s_dump (client);
+    s_send     (server, "send to worker");
+    s_dump     (worker);
+
+    s_sendmore (worker, "CLIENT");
+    s_sendmore (worker, "");
+    s_send     (worker, "send to front-end");
+    s_dump     (server);
 
     zmq_term (context);
     return 0;
