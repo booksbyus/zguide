@@ -1223,9 +1223,9 @@ Here is what a publish-subscribe message with an envelope looks like:
 
 [[code type="textdiagram"]]
             +-------------+
-  Frame 1   |  Key        |     Subscription key
+  Frame 1   | Key         |     Subscription key
             +-------------+
-  Frame 2   |  Data       |     Actual message body
+  Frame 2   | Data        |     Actual message body
             +-------------+
 
 
@@ -1261,11 +1261,11 @@ If you subscribe to multiple publishers and you want to know their identity so t
 
 [[code type="textdiagram"]]
             +-------------+
-  Frame 1   |  Key        |     Subscription key
+  Frame 1   | Key         |     Subscription key
             +-------------+
-  Frame 2   |  Identity   |     Address of publisher
+  Frame 2   | Identity    |     Address of publisher
             +-------------+
-  Frame 3   |  Data       |     Actual message body
+  Frame 3   | Data        |     Actual message body
             +-------------+
 
 

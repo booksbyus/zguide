@@ -47,7 +47,7 @@ If you connect a REQ socket to an XREP socket, and send one request message, thi
             +---+-----------+
   Frame 2   |   |   <------ Empty message part
             +---+-------------------------------------+
-  Frame 3   |     Data                                |
+  Frame 3   | Data                                    |
             +-----------------------------------------+
 
 
@@ -77,7 +77,7 @@ Now if we extend this with a chain of devices, we get envelope on envelope, with
             +---+-----------+
   Frame 4   |   |   <------ Empty message part (REQ)
             +---+-------------------------------------+
-  Frame 5   |     Data                                |
+  Frame 5   | Data                                    |
             +-----------------------------------------+
 
 
@@ -267,11 +267,11 @@ Some comments on this code:
 To route to a dealer, we create an envelope like this:
 
 [[code type="textdiagram"]]
-            +---------------+
-  Frame 1   |   Address     |
-            +---------------+-------------------------+
-  Frame 2   |   Data                                  |
-            +-----------------------------------------+
+            +-------------+
+  Frame 1   | Address     |
+            +-------------+-------------------------+
+  Frame 2   | Data                                  |
+            +---------------------------------------+
 
 
        Figure # - Routing envelope for dealer
@@ -360,13 +360,13 @@ Some comments on this code
 To route to a mama, we must create a mama-friendly envelope like this:
 
 [[code type="textdiagram"]]
-            +---------------+
-  Frame 1   |   Address     |
-            +---+-----------+
+            +-------------+
+  Frame 1   | Address     |
+            +---+---------+
   Frame 2   |   |   <------ Empty message part
-            +---+-------------------------------------+
-  Frame 3   |   Data                                  |
-            +-----------------------------------------+
+            +---+-----------------------------------+
+  Frame 3   | Data                                  |
+            +---------------------------------------+
 
 
        Figure # - Routing envelope for mama
@@ -460,13 +460,13 @@ Some comments on this code:
 To route to a papa, we must create a papa-friendly envelope like this:
 
 [[code type="textdiagram"]]
-            +---------------+
-  Frame 1   |   Address     |  <--- Zero or more of these
-            +---+-----------+
+            +-------------+
+  Frame 1   | Address     |  <--- Zero or more of these
+            +---+---------+
   Frame 2   |   |   <------ Exactly one empty message part
-            +---+-------------------------------------+
-  Frame 3   |   Data                                  |
-            +-----------------------------------------+
+            +---+-----------------------------------+
+  Frame 3   | Data                                  |
+            +---------------------------------------+
 
 
        Figure # - Routing envelope for papa
