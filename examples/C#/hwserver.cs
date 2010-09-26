@@ -1,13 +1,45 @@
-No-one has translated the hwserver example into C# yet.  Be the first to create
-hwserver in C# and get one free Internet!  If you're the author of the C#
-binding, this is a great way to get people to use 0MQ in C#.
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Text;
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+/**
+ *  Author: Randy Dryburgh
+ *  Email: me@rwd.im
+ *  License: This example code licensed under the MIT/X11 license.
+ */
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+namespace Examples {
+    class hwserver {
+        static void Main(string[] args) {
+            // allocate a buffer
+            byte[] zmq_buffer = new byte[1024];
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+            //  Prepare our context and socket
+            ZMQ.Context context = new ZMQ.Context(1);
+            ZMQ.Socket  socket = context.Socket(ZMQ.REP);
+            socket.Bind("tcp://*:5555");
+
+            while (true) {
+                try {
+                    //  Wait for next request from client
+                    socket.Recv(out zmq_buffer);
+                    string request = Encoding.ASCII.GetString(zmq_buffer);
+
+                    // log that we got one
+                    Console.WriteLine("Received request: [%s]", request);
+
+                    //  Do some 'work'
+                    Thread.Sleep(1);
+
+                    //  Send reply back to client
+                    socket.Send(Encoding.ASCII.GetBytes("World".ToCharArray()));
+
+                } catch (ZMQ.Exception z) {
+                    // report the exception
+                    Console.WriteLine("ZMQ Exception occurred : {0}", z.Message);
+                }
+            }
+        }
+    }
+}
