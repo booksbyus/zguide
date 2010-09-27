@@ -587,11 +587,6 @@ And then we extend the application across a wider network, placing devices in sp
 
 What's interesting about 0MQ as compared to traditional centralized brokers is that you can place devices precisely where you need them, and they can do the optimal intermediation.
 
-Let's look at some simple cases.
-
-* Usually connect one 'frontend' socket to one 'backend' socket.
-* May in complex cases work with three or more sockets.
-
 ++++ A Publish-Subscribe Proxy Server
 
 It is a common requirement to extend a publish-subscribe architecture over more than one network segment or transport.  Perhaps there are a group of subscribers sitting at a remote location.  Perhaps we want to publish to local subscribers via multicast, and to remote subscribers via TCP.
