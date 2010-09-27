@@ -5,7 +5,7 @@
 #include "zhelpers.h"
 #include "zmsg.c"
 
-int main (int argc, char *argv[])
+int main (int argc, char *argv [])
 {
     //  First argument is this broker's name
     //  Other arguments are our peers' names
@@ -30,6 +30,7 @@ int main (int argc, char *argv[])
     //  Connect statefe to all peers
     void *statefe = zmq_socket (context, ZMQ_SUB);
     zmq_setsockopt (statefe, ZMQ_SUBSCRIBE, "", 0);
+
     int argn;
     for (argn = 2; argn < argc; argn++) {
         char *peer = argv [argn];
@@ -39,6 +40,7 @@ int main (int argc, char *argv[])
     }
     //  Send out status messages to peers, and collect from peers
     //  The zmq_poll timeout defines our own heartbeating
+    //
     while (1) {
         //  Initialize poll set
         zmq_pollitem_t items [] = {

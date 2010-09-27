@@ -52,7 +52,7 @@ worker_thread (void *context) {
 }
 
 
-int main (int argc, char *argv[])
+int main (int argc, char *argv [])
 {
     //  First argument is this broker's name
     //  Other arguments are our peers' names
@@ -78,6 +78,7 @@ int main (int argc, char *argv[])
     //  Connect cloud backend to all peers
     void *cloudbe = zmq_socket (context, ZMQ_XREP);
     zmq_setsockopt (cloudbe, ZMQ_IDENTITY, self, strlen (self));
+
     int argn;
     for (argn = 2; argn < argc; argn++) {
         char *peer = argv [argn];
@@ -85,6 +86,7 @@ int main (int argc, char *argv[])
         snprintf (endpoint, 255, "ipc://%s-cloud.ipc", peer);
         assert (zmq_connect (cloudbe, endpoint) == 0);
     }
+
     //  Prepare local frontend and backend
     void *localfe = zmq_socket (context, ZMQ_XREP);
     zmq_bind (localfe, "inproc://localfe");
@@ -95,16 +97,17 @@ int main (int argc, char *argv[])
     printf ("Press Enter when all brokers are started: ");
     getchar ();
 
-    //  Start local clients and local workers
-    int client_nbr;
-    for (client_nbr = 0; client_nbr < NBR_CLIENTS; client_nbr++) {
-        pthread_t client;
-        pthread_create (&client, NULL, client_thread, context);
-    }
+    //  Start local workers
     int worker_nbr;
     for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++) {
         pthread_t worker;
         pthread_create (&worker, NULL, worker_thread, context);
+    }
+    //  Start local clients
+    int client_nbr;
+    for (client_nbr = 0; client_nbr < NBR_CLIENTS; client_nbr++) {
+        pthread_t client;
+        pthread_create (&client, NULL, client_thread, context);
     }
 
     //  Interesting part
@@ -153,6 +156,7 @@ int main (int argc, char *argv[])
             zmsg_send (&zmsg, localfe);
 
         //  Now route as many clients requests as we can handle
+        //
         while (capacity) {
             zmq_pollitem_t frontends [] = {
                 { localfe, 0, ZMQ_POLLIN, 0 },
@@ -175,6 +179,7 @@ int main (int argc, char *argv[])
 
             //  If reroutable, send to cloud 20% of the time
             //  Here we'd normally use cloud status information
+            //
             if (reroutable && argc > 2 && within (5) == 0) {
                 //  Route to random broker peer
                 int random_peer = within (argc - 2) + 2;

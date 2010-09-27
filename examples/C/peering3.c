@@ -25,6 +25,7 @@ client_thread (void *context) {
     zmsg_t *zmsg = zmsg_new ();
     while (1) {
         sleep (within (5));
+
         int burst = within (15);
         while (burst--) {
             //  Send request with random hex ID
@@ -76,7 +77,7 @@ worker_thread (void *context) {
     return (NULL);
 }
 
-int main (int argc, char *argv[])
+int main (int argc, char *argv [])
 {
     //  First argument is this broker's name
     //  Other arguments are our peers' names
@@ -108,6 +109,7 @@ int main (int argc, char *argv[])
     //  Connect cloud backend to all peers
     void *cloudbe = zmq_socket (context, ZMQ_XREP);
     zmq_setsockopt (cloudbe, ZMQ_IDENTITY, self, strlen (self));
+
     int argn;
     for (argn = 2; argn < argc; argn++) {
         char *peer = argv [argn];
@@ -115,9 +117,11 @@ int main (int argc, char *argv[])
         snprintf (endpoint, 255, "ipc://%s-cloud.ipc", peer);
         assert (zmq_connect (cloudbe, endpoint) == 0);
     }
+
     //  Connect statefe to all peers
     void *statefe = zmq_socket (context, ZMQ_SUB);
     zmq_setsockopt (statefe, ZMQ_SUBSCRIBE, "", 0);
+
     for (argn = 2; argn < argc; argn++) {
         char *peer = argv [argn];
         printf ("I: connecting to state backend at '%s'\n", peer);
@@ -176,6 +180,7 @@ int main (int argc, char *argv[])
 
         //  Handle reply from local worker
         zmsg_t *zmsg = NULL;
+
         if (primary [0].revents & ZMQ_POLLIN) {
             assert (local_capacity < NBR_WORKERS);
             //  Use worker address for LRU routing

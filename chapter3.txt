@@ -924,7 +924,7 @@ Now we scale this out to more than one cluster.  Each cluster has a set of clien
     +---+  +---+  +---+     :     +---+  +---+  +---+
                             :
 
-        Figure # - Multiple clusters
+             Figure # - Multiple clusters
 [[/code]]
 
 The question is: how do we get the clients of each cluster talking to the workers of the other cluster?  There are a few possibilities, each with pros and cons:
@@ -986,7 +986,7 @@ So idea #2 then.  We interconnect the brokers and don't touch the clients or wor
     +---+  +---+  +---+     :     +---+  +---+  +---+
                             :
 
-    Figure # - Idea 2 - brokers talking to each other
+     Figure # - Idea 2 - brokers talking to each other
 [[/code]]
 
 This design is appealing because the problem is solved in one place, invisibly to the rest of the world.  Basically, brokers open secret channels to each other and whisper, like camel traders, "//hey, I've got some spare capacity, if you have too many clients give me a shout and we'll deal".//
@@ -1115,7 +1115,7 @@ Here is the broker socket arrangement, then:
       +---------+ +---------+ +---------+
 
 
-       Figure # - Broker socket arrangement
+      Figure # - Broker socket arrangement
 [[/code]]
 
 Note that we connect the cloudbe in each broker to the cloudfe in every other broker, and likewise we connect the statefe in each broker to the statefe in every other broker.
@@ -1289,7 +1289,7 @@ You can satisfy yourself that the code works by watching it run forever.  If the
 
 Let's put this together into a single package.  As before, we'll run an entire cluster as one process.  We're going to take the two previous examples and merge them into one properly working design that lets you simulate any number of clusters.
 
-This code is just the size of both previous prototypes together, at 300 LoC.  That's pretty good for a simulation of a cluster that includes clients and workers and cloud workload distribution.  Here is the code:
+This code is the size of both previous prototypes together, at 270 LoC.  That's pretty good for a simulation of a cluster that includes clients and workers and cloud workload distribution.  Here is the code:
 
 [[code type="C" title="Full cluster simulation" name="peering3"]]
 [[/code]]
