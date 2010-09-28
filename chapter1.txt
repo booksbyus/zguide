@@ -149,7 +149,7 @@ Then what goes onto the wire is:
           Figure # - A 0MQ string
 [[/code]]
 
-And if you read this from a C program, you will get something that looks like a string, and might by accident act like a string (if by luck the six bytes find themselves followed by an innocently lurking null), but isn't a proper string.
+And if you read this from a C program, you will get something that looks like a string, and might by accident act like a string (if by luck the five bytes find themselves followed by an innocently lurking null), but isn't a proper string.
 
 Which means that if you try the Hello World server and client, mixing C and another language, you will probably get weird results.  Actually, I'd hope you get weird results because that will help you understand this section.
 
@@ -753,16 +753,6 @@ As you start to program with 0MQ you will come across one problem more than once
         +--------+--------+        +--------+--------+        +------------------+
                  | No                       | No
                  +--------------------------+
-                 |
-                 v
-        +-----------------+        +-----------------+
-        |                 |        |                 |
-        |   Do you use    |        | Call zmq_init   |
-        |    the fork()   +------->| exactly once in |
-        |      call?      | Yes    | every process.  |
-        |             {o} |        |                 |
-        +--------+--------+        +-----------------+
-                 | No
                  |
                  v
         +-----------------+        +-----------------+        +------------------+
