@@ -58,7 +58,7 @@ static bool
 s_send (zmq::socket_t & socket, std::string string) {
 
     zmq::message_t message(string.size());
-    memcpy(message.data(), string.c_str(), string.size());
+    memcpy(message.data(), string.data(), string.size());
 
     bool rc = socket.send(message);
     return (rc);
@@ -69,7 +69,7 @@ static bool
 s_sendmore (zmq::socket_t & socket, std::string string) {
 
     zmq::message_t message(string.size());
-    memcpy(message.data(), string.c_str(), string.size());
+    memcpy(message.data(), string.data(), string.size());
 
     bool rc = socket.send(message, ZMQ_SNDMORE);
     return (rc);
