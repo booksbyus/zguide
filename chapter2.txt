@@ -301,7 +301,7 @@ You can easily extend this code to send and receive blobs of arbitrary length.
 
 **Note than when you have passed a message to zmq_send(3), ØMQ will clear the message, i.e. set the size to zero. You cannot send the same message twice, and you cannot access the message data after sending it.**
 
-If you want to send the same message more than once, create a second message and explicitly copy the data to that second message.
+If you want to send the same message more than once, create a second message, initialize it using zmq_init[3] and then use zmq_msg_copy[3] to create a copy of the first message.  This does not copy the data but the reference.  You can then send the message twice (or more, if you create more copies) and the message will only be finally destroyed when the last copy is sent or closed.
 
 0MQ also supports //multipart// messages, which let you handle a list of blobs as a single message.  This is widely used in real applications and we'll look at that later in this chapter and in Chapter Three.
 

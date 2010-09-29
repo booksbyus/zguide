@@ -241,9 +241,20 @@ Note that when you use a SUB socket you **must** set a subscription using zmq_se
 
 The PUB-SUB socket pair is asynchronous.  The client does zmq_recv[3], in a loop (or once if that's all it needs).  Trying to send a message to a SUB socket will cause an error.  Similarly the service does zmq_send[3] as often as it needs to, but must not do zmq_recv[3] on a PUB socket.
 
-There is one important thing to know about PUB/SUB sockets: you do not know precisely when a subscriber starts to get messages.  Even if you start a subscriber, wait a while, and then start the publisher, the subscriber will usually miss a few of the first messages that the publisher sends.  This is because as the subscriber connects to the publisher (something that takes a small but non-zero time), the publisher may already be sending messages out.
+There is one important thing to know about PUB/SUB sockets: you do not know precisely when a subscriber starts to get messages.  Even if you start a subscriber, wait a while, and then start the publisher, **the subscriber will always miss the first messages that the publisher sends**.  This is because as the subscriber connects to the publisher (something that takes a small but non-zero time), the publisher may already be sending messages out.
 
-While there are ways to synchronize publishers and subscribers, which we'll look at in the Chapter Two, it is easier and safer to assume that a subscriber does not know the start of a message stream.  Design your applications on that basis, as we're doing in this example.
+This "slow subscriber connect" symptom hits enough people, often enough, that I'm going to explain it in detail.  Remember that 0MQ does asynchronous I/O, i.e. in the background.  Say you have two nodes doing this, in this order:
+
+* Subscriber connects to an endpoint and receives and counts messages.
+* Publisher binds to an endpoint and immediately sends 1,000 messages.
+
+Then the subscriber will most likely not receive anything.  You'll blink, check that you set a correct filter, and try again, and the subscriber will still not receive anything.
+
+Making a TCP connection involves to and fro handshaking that takes several milliseconds depending on your network and the number of hops between peers.  In that time, 0MQ can send very many messages.  For sake of argument assume it takes 5 msecs to establish a connection, and that same link can handle 1M messages per second.  During the 5 msecs that the subscriber is connecting to the publisher, it takes the publisher only 1 msec to send out that 1K messages.
+
+In Chapter 2 I'll explain how to synchronize a publisher and subscribers so that you don't start to publish data until the subscriber(s) really are connected and ready.  There is a simple and stupid way to delay the publisher, which is to sleep.  I'd never do this in a real application though, it is extremely fragile as well as inelegant and slow.  Use sleeps to prove to yourself what's happening, and then wait for Chapter 2 to see how to do this right.
+
+The alternative to synchronization is to simply assume that the published data stream is infinite and has no start, and no end.  This is how we built our weather client example.
 
 So the client subscribes to its chosen zip-code and collects a thousand updates for that zip-code.  That means about ten million updates from the server, if zip-codes are randomly distributed.  You can start the client, and then the server, and the client will keep working. You can stop and restart the server as often as you like, and the client will keep working.  When the client has collected its thousand updates, it calculates the average, prints it, and exits.
 
@@ -716,12 +727,12 @@ As you start to program with 0MQ you will come across one problem more than once
                  |                          | No
                  |                          |
                  |                          v
-                 |                 +-----------------+
-                 |                 | A SUB socket can|
-                 |                 | miss data as it |
-                 |                 | connects. That's|
-                 |                 | normal.         |
-                 |                 +-----------------+
+                 |             +---------------------------+
+                 |             |  See explanation of the   |
+                 |             | "slow subscriber connect" |
+                 |             |   syndrome in this text.  |
+                 |             +---------------------------+
+                 |
                  |
                  v
         +-----------------+        +--------------------+
