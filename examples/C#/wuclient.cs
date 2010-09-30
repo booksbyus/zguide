@@ -1,13 +1,51 @@
-No-one has translated the wuclient example into C# yet.  Be the first to create
-wuclient in C# and get one free Internet!  If you're the author of the C#
-binding, this is a great way to get people to use 0MQ in C#.
+using System;
+using System.Text;
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+/**
+* Author: Eric Desgranges
+* Email: eric@vcardprocessor.com
+* License: This example code licensed under the MIT/X11 license.
+*/
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+namespace Client
+{
+    public class Program
+    {
+        //
+        //  Weather update client
+        //  Connects SUB socket to tcp://localhost:5556
+        //  Collects weather updates and finds avg temp in zipcode
+        //
+        public static void Main()
+        {
+            using (var context = new ZMQ.Context(1))
+            {
+                //  Socket to talk to server
+                Console.WriteLine("Collecting updates from weather server...");
+                var subscriber = context.Socket(ZMQ.SUB);
+                subscriber.Connect("tcp://localhost:5556");
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+                //  Subscribe to zipcode NYC, 10001
+                string filter = "10001";
+                subscriber.SetSockOpt(ZMQ.SUBSCRIBE, filter);
+
+                //  Process 100 updates
+                int update_nbr;
+                long total_temp = 0;
+                for (update_nbr = 0; update_nbr < 100; update_nbr++)
+                {
+                    byte[] bytes;
+                    subscriber.Recv(out bytes);
+                    string astring = Encoding.ASCII.GetString(bytes);
+                    string[] result = astring.Split(new char[] { ' ' });
+                    int zipcode, temperature, relhumidity;
+                    int.TryParse(result[0], out zipcode);
+                    int.TryParse(result[1], out temperature);
+                    int.TryParse(result[0], out relhumidity);
+                    total_temp += temperature;
+                }
+                Console.WriteLine("Average temperature for zipcode {0} was {1}F", filter, total_temp / update_nbr);
+            }
+        }
+    }
+}
