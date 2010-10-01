@@ -6,7 +6,7 @@
 if [ /$1/ = /all/ ]; then
     echo "Building Common Lisp examples..."
     for MAIN in `egrep -l main *.lisp`; do
-        ./c `basename $MAIN .lisp`
+        ./compile `basename $MAIN .lisp`
     done
 elif [ /$1/ = /clean/ ]; then
     echo "Cleaning Common Lisp examples directory..."
@@ -15,7 +15,7 @@ elif [ /$1/ = /clean/ ]; then
         rm -f `basename $MAIN .lisp`
     done
 elif [ -f $1.lisp ]; then
-    ./c $1
+    ./compile $1
 else
     echo "syntax: build all | clean"
 fi

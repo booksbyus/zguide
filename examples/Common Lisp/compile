@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#   c - Common Lisp compile command
+#   compile - Common Lisp compile command
 #
 
 if [ ! -n "${LISP+x}" ]; then
