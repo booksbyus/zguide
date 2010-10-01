@@ -1,13 +1,37 @@
-No-one has translated the hwserver example into Common Lisp yet.  Be the first to create
-hwserver in Common Lisp and get one free Internet!  If you're the author of the Common Lisp
-binding, this is a great way to get people to use 0MQ in Common Lisp.
+;;; -*- Mode:Lisp; Syntax:ANSI-Common-Lisp; -*-
+;;;
+;;;  Hello World server in Common Lisp
+;;;  Binds REP socket to tcp://*:5555
+;;;  Expects "Hello" from client, replies with "World"
+;;;
+;;; Kamil Shakirov <kamils80@gmail.com>
+;;;
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+(defpackage #:zguide.hwserver
+  (:nicknames #:hwserver)
+  (:use #:cl #:zhelpers)
+  (:export #:main))
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+(in-package :zguide.hwserver)
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+(defun main ()
+  ;; Prepare our context and socket
+  (zmq:with-context (context 1)
+    (zmq:with-socket (socket context zmq:rep)
+      (zmq:bind socket "tcp://*:5555")
+
+      (loop
+        (let ((request (make-instance 'zmq:msg)))
+          ;; Wait for next request from client
+          (zmq:recv socket request)
+          (format t "Received request: [~A]~%"
+                  (zmq:msg-data-as-string request))
+
+          ;; Do some 'work'
+          (sleep 1)
+
+          ;; Send reply back to client
+          (let ((reply (make-instance 'zmq:msg :data "World")))
+            (zmq:send socket reply))))))
+
+  (cleanup))

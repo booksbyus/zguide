@@ -1,13 +1,44 @@
-No-one has translated the wuserver example into Common Lisp yet.  Be the first to create
-wuserver in Common Lisp and get one free Internet!  If you're the author of the Common Lisp
-binding, this is a great way to get people to use 0MQ in Common Lisp.
+;;; -*- Mode:Lisp; Syntax:ANSI-Common-Lisp; -*-
+;;;
+;;;  Weather update server in Common Lisp
+;;;  Binds PUB socket to tcp://*:5556
+;;;  Publishes random weather updates
+;;;
+;;; Kamil Shakirov <kamils80@gmail.com>
+;;;
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+(defpackage #:zguide.wuserver
+  (:nicknames #:wuserver)
+  (:use #:cl #:zhelpers)
+  (:export #:main))
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+(in-package :zguide.wuserver)
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+(defun within (num)
+  (1+ (random num)))
+
+(defun main ()
+  ;; Prepare our context and socket
+  (zmq:with-context (context 1)
+    (zmq:with-socket (publisher context zmq:pub)
+      (zmq:bind publisher "tcp://*:5556")
+      (zmq:bind publisher "ipc://weather.ipc")
+
+      (loop
+        ;; Get values that will fool the boss
+        (let ((zipcode (within 100000))
+              (temperature (- (within 215) 80))
+              (relhumidity (+ (within 50) 10)))
+
+          ;; Send message to all subscribers
+          (let ((message
+                 (make-instance 'zmq:msg
+                                :data (format nil "~5,'0D ~D ~D"
+                                              zipcode
+                                              temperature
+                                              relhumidity))))
+
+            ;; Send message to all subscribers
+            (zmq:send publisher message))))))
+
+  (cleanup))

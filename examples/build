@@ -3,18 +3,22 @@
 #   Examples build script
 #   Syntax: build all | clean
 #
-LANGUAGES="c c++"
+
 if [ /$1/ = /all/ ]; then
-    for LANGUAGE in $LANGUAGES; do
-        cd $LANGUAGE
-        ./build all
-        cd ..
+    find . -mindepth 1 -type d | while read LANGUAGE; do
+        if [ -f "$LANGUAGE"/build ]; then
+            cd "$LANGUAGE"
+            ./build all
+            cd ..
+        fi
     done
 elif [ /$1/ = /clean/ ]; then
-    for LANGUAGE in $LANGUAGES; do
-        cd $LANGUAGE
-        ./build clean
-        cd ..
+    find . -mindepth 1 -type d | while read LANGUAGE; do
+        if [ -f "$LANGUAGE"/build ]; then
+            cd "$LANGUAGE"
+            ./build clean
+            cd ..
+        fi
     done
 else
     echo "syntax: build all | clean"

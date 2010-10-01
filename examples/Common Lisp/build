@@ -1,0 +1,21 @@
+#! /bin/sh
+#
+#   Examples build helper
+#   Syntax: build all | clean
+#
+if [ /$1/ = /all/ ]; then
+    echo "Building Common Lisp examples..."
+    for MAIN in `egrep -l main *.lisp`; do
+        ./c `basename $MAIN .lisp`
+    done
+elif [ /$1/ = /clean/ ]; then
+    echo "Cleaning Common Lisp examples directory..."
+    rm -f *.fas* core
+    for MAIN in `egrep -l main *.lisp`; do
+        rm -f `basename $MAIN .lisp`
+    done
+elif [ -f $1.lisp ]; then
+    ./c $1
+else
+    echo "syntax: build all | clean"
+fi

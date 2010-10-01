@@ -1,13 +1,46 @@
-No-one has translated the wuclient example into Common Lisp yet.  Be the first to create
-wuclient in Common Lisp and get one free Internet!  If you're the author of the Common Lisp
-binding, this is a great way to get people to use 0MQ in Common Lisp.
+;;; -*- Mode:Lisp; Syntax:ANSI-Common-Lisp; -*-
+;;;
+;;;  Weather update client in Common Lisp
+;;;  Connects SUB socket to tcp://localhost:5556
+;;;  Collects weather updates and finds avg temp in zipcode
+;;;
+;;; Kamil Shakirov <kamils80@gmail.com>
+;;;
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+(defpackage #:zguide.wuclient
+  (:nicknames #:wuclient)
+  (:use #:cl #:zhelpers)
+  (:export #:main))
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+(in-package :zguide.wuclient)
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+(defun main ()
+  (zmq:with-context (context 1)
+    (format t "Collecting updates from weather server...~%")
+
+    ;; Socket to talk to server
+    (zmq:with-socket (subscriber context zmq:sub)
+      (zmq:connect subscriber "tcp://localhost:5556")
+
+      ;; Subscribe to zipcode, default is NYC, 10001
+      (let ((filter (or (nth 1 (cmd-args)) "10001")))
+        (zmq:setsockopt subscriber zmq:subscribe filter)
+
+        ;; Process 100 updates
+        (let ((number-updates 100)
+              (total-temp 0.0))
+
+          (dotimes (update-nbr number-updates)
+            (let ((update (make-instance 'zmq:msg)))
+              (zmq:recv subscriber update)
+
+              (destructuring-bind (zipcode_ temperature relhumidity_)
+                  (split-sequence:split-sequence #\Space (zmq:msg-data-as-string update))
+
+                (declare (ignore zipcode_ relhumidity_))
+                (incf total-temp (parse-integer temperature)))))
+
+          (format t "Average temperature for zipcode ~A was ~FF~%"
+                  filter (/ total-temp number-updates))))))
+
+  (cleanup))

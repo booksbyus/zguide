@@ -1,0 +1,25 @@
+#! /bin/sh
+#
+#   c - Common Lisp compile command
+#
+
+if [ ! -n "${LISP+x}" ]; then
+    LISP=sbcl
+fi
+
+LISP_OPTS=
+
+case $LISP in
+    sbcl)
+        LISP_OPTS="--load build.lisp --load zhelpers.lisp --load $1.lisp --eval"
+        ;;
+    ccl)
+        LISP_OPTS="--load build.lisp --load zhelpers.lisp --load $1.lisp --eval"
+        ;;
+    *)
+        echo "'LISP=$LISP' is not supported!"
+        exit 1
+        ;;
+esac
+
+$LISP $LISP_OPTS "(build:build \"$1\" #'$1:main)"
