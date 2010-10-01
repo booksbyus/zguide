@@ -1,13 +1,57 @@
-No-one has translated the tasksink example into C# yet.  Be the first to create
-tasksink in C# and get one free Internet!  If you're the author of the C#
-binding, this is a great way to get people to use 0MQ in C#.
+using System;
+using System.Text;
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+/**
+* Author: Eric Desgranges
+* Email: eric@vcardprocessor.com
+* License: This example code licensed under the MIT/X11 license.
+*/
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+namespace Sink
+{
+    class Program
+    {
+        //
+        //  Task sink
+        //  Binds PULL socket to tcp://localhost:5558
+        //  Collects results from workers via that socket
+        //
+        static void Main(string[] args)
+        {
+            using (var context = new ZMQ.Context(1))
+            {
+                var receiver = context.Socket(ZMQ.PULL);
+                receiver.Bind("tcp://*:5558");
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+                //  Wait for start of batch
+                byte[] bytes;
+                receiver.Recv(out bytes);
+
+                //  Start our clock now
+                DateTime tstart = DateTime.Now;
+                Console.WriteLine(string.Format("Started at {0}", tstart.TimeOfDay));
+
+                //  Process 100 confirmations
+                for (int task_nbr = 0; task_nbr < 100; task_nbr++)
+                {
+                    receiver.Recv(out bytes);
+                    if ((task_nbr / 10) * 10 == task_nbr)
+                        Console.Write(":");
+                    else
+                        Console.Write(".");
+                };
+                Console.WriteLine();
+
+                //  Calculate and report duration of batch
+                DateTime tend = DateTime.Now;
+                Console.WriteLine(string.Format("Ended at {0}", tend.TimeOfDay));
+                TimeSpan tdiff = tend - tstart;
+                Console.WriteLine();
+                Console.WriteLine("Total elapsed time: {0} msec", tdiff.TotalMilliseconds);
+
+                Console.WriteLine("Hit a key to exit");
+                Console.ReadKey();
+            }
+        }
+    }
+}

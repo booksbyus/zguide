@@ -1,13 +1,52 @@
-No-one has translated the taskwork example into C# yet.  Be the first to create
-taskwork in C# and get one free Internet!  If you're the author of the C#
-binding, this is a great way to get people to use 0MQ in C#.
+using System;
+using System.Text;
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+/**
+* Author: Eric Desgranges
+* Email: eric@vcardprocessor.com
+* License: This example code licensed under the MIT/X11 license.
+*/
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+namespace Client
+{
+    static class Program
+    {
+        //
+        //  Task worker
+        //  Connects PULL socket to tcp://localhost:5557
+        //  Collects workloads from ventilator via that socket
+        //  Connects PUSH socket to tcp://localhost:5558
+        //  Sends results to sink via that socket
+        //
+        public static void Start()
+        {
+            using (var context = new ZMQ.Context(1))
+            {
+                //  Socket to receive messages on
+                var receiver = context.Socket(ZMQ.PULL);
+                receiver.Connect("tcp://localhost:5557");
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+                //  Socket to send messages to
+                var sender = context.Socket(ZMQ.PUSH);
+                sender.Connect("tcp://localhost:5558");
+
+                //  Process tasks forever
+                while (true)
+                {
+                    byte[] bytes;
+                    receiver.Recv(out bytes);
+                    int milliseconds;
+                    int.TryParse(Encoding.ASCII.GetString(bytes), out milliseconds);
+                    //  Simple progress indicator for the viewer
+                    Console.Write(new string('.', milliseconds / 10));
+
+                    //  Do the work
+                    System.Threading.Thread.Sleep(milliseconds);
+
+                    //  Send results to sink
+                    sender.Send(Encoding.ASCII.GetBytes(""));
+                }
+            }
+        }
+    }
+}
