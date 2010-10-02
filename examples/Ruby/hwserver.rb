@@ -1,13 +1,27 @@
-No-one has translated the hwserver example into Ruby yet.  Be the first to create
-hwserver in Ruby and get one free Internet!  If you're the author of the Ruby
-binding, this is a great way to get people to use 0MQ in Ruby.
+# author: Bill Desmarais bill@witsaid.com
+# this code is licenced under the MIT/X11 licence.
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+require 'rubygems'
+require 'zmq'
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+context = ZMQ::Context.new(1)
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+puts "Starting Hello World server..."
+
+# socket to listen for clients
+socket = context.socket(ZMQ::REP)
+socket.bind("tcp://*:5555")
+
+while true do
+  # Wait for next request from client
+  request = socket.recv
+
+  puts "Recieved request. Data: #{request.inspect}"
+
+  # Do some 'work'
+  sleep 1
+
+  # Send reply back to client
+  socket.send("world")
+
+end
