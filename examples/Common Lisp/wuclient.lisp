@@ -16,21 +16,21 @@
 
 (defun main ()
   (zmq:with-context (context 1)
-    (format t "Collecting updates from weather server...~%")
+    (message "Collecting updates from weather server...~%")
 
     ;; Socket to talk to server
     (zmq:with-socket (subscriber context zmq:sub)
       (zmq:connect subscriber "tcp://localhost:5556")
 
       ;; Subscribe to zipcode, default is NYC, 10001
-      (let ((filter (or (nth 1 (cmd-args)) "10001")))
+      (let ((filter (or (first (cmd-args)) "10001 ")))
         (zmq:setsockopt subscriber zmq:subscribe filter)
 
         ;; Process 100 updates
         (let ((number-updates 100)
               (total-temp 0.0))
 
-          (dotimes (update-nbr number-updates)
+          (loop :repeat number-updates :do
             (let ((update (make-instance 'zmq:msg)))
               (zmq:recv subscriber update)
 
@@ -40,7 +40,7 @@
                 (declare (ignore zipcode_ relhumidity_))
                 (incf total-temp (parse-integer temperature)))))
 
-          (format t "Average temperature for zipcode ~A was ~FF~%"
-                  filter (/ total-temp number-updates))))))
+          (message "Average temperature for zipcode ~A was ~FF~%"
+                   filter (/ total-temp number-updates))))))
 
   (cleanup))

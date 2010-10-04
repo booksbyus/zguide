@@ -10,7 +10,7 @@ if [ /$1/ = /all/ ]; then
     done
 elif [ /$1/ = /clean/ ]; then
     echo "Cleaning Common Lisp examples directory..."
-    rm -f *.fas* core
+    rm -f *.fas* *.*fsl core
     for MAIN in `egrep -l main *.lisp`; do
         rm -f `basename $MAIN .lisp`
     done

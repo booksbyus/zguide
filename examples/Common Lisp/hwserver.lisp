@@ -24,8 +24,8 @@
         (let ((request (make-instance 'zmq:msg)))
           ;; Wait for next request from client
           (zmq:recv socket request)
-          (format t "Received request: [~A]~%"
-                  (zmq:msg-data-as-string request))
+          (message "Received request: [~A]~%"
+                   (zmq:msg-data-as-string request))
 
           ;; Do some 'work'
           (sleep 1)

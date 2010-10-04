@@ -11,10 +11,10 @@ LISP_OPTS=
 
 case $LISP in
     sbcl)
-        LISP_OPTS="--load build.lisp --load zhelpers.lisp --load $1.lisp --eval"
+        LISP_OPTS="--load build.lisp --eval"
         ;;
     ccl)
-        LISP_OPTS="--load build.lisp --load zhelpers.lisp --load $1.lisp --eval"
+        LISP_OPTS="--load build.lisp --eval"
         ;;
     *)
         echo "'LISP=$LISP' is not supported!"
@@ -22,4 +22,4 @@ case $LISP in
         ;;
 esac
 
-$LISP $LISP_OPTS "(build:build \"$1\" #'$1:main)"
+$LISP $LISP_OPTS "(build:build \"$1\")"

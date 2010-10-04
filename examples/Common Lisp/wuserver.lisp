@@ -14,9 +14,6 @@
 
 (in-package :zguide.wuserver)
 
-(defun within (num)
-  (1+ (random num)))
-
 (defun main ()
   ;; Prepare our context and socket
   (zmq:with-context (context 1)
