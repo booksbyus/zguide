@@ -25,7 +25,8 @@ int main (int argc, char *argv [])
     //  Bind statebe to endpoint
     void *statebe = zmq_socket (context, ZMQ_PUB);
     snprintf (endpoint, 255, "ipc://%s-state.ipc", self);
-    assert (zmq_bind (statebe, endpoint) == 0);
+    int rc = zmq_bind (statebe, endpoint);
+    assert (rc == 0);
 
     //  Connect statefe to all peers
     void *statefe = zmq_socket (context, ZMQ_SUB);
@@ -36,7 +37,8 @@ int main (int argc, char *argv [])
         char *peer = argv [argn];
         printf ("I: connecting to state backend at '%s'\n", peer);
         snprintf (endpoint, 255, "ipc://%s-state.ipc", peer);
-        assert (zmq_connect (statefe, endpoint) == 0);
+        rc = zmq_connect (statefe, endpoint);
+        assert (rc == 0);
     }
     //  Send out status messages to peers, and collect from peers
     //  The zmq_poll timeout defines our own heartbeating
@@ -47,7 +49,8 @@ int main (int argc, char *argv [])
             { statefe, 0, ZMQ_POLLIN, 0 }
         };
         //  Poll for activity, or 1 second timeout
-        assert (zmq_poll (items, 1, 1000000) >= 0);
+        rc = zmq_poll (items, 1, 1000000);
+        assert (rc >= 0);
 
         //  Handle incoming status message
         if (items [0].revents & ZMQ_POLLIN) {

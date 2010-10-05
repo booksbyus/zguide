@@ -17,10 +17,13 @@
 //
 static void *
 client_thread (void *context) {
+    int rc;
     void *client = zmq_socket (context, ZMQ_REQ);
-    assert (zmq_connect (client, "inproc://localfe") == 0);
+    rc = zmq_connect (client, "inproc://localfe");
+    assert (rc == 0);
     void *monitor = zmq_socket (context, ZMQ_PUSH);
-    assert (zmq_connect (monitor, "inproc://monitor") == 0);
+    rc = zmq_connect (monitor, "inproc://monitor");
+    assert (rc == 0);
 
     zmsg_t *zmsg = zmsg_new ();
     while (1) {
@@ -38,7 +41,8 @@ client_thread (void *context) {
             zmq_pollitem_t pollset [1] = {
                 { client, 0, ZMQ_POLLIN, 0 }
             };
-            assert (zmq_poll (pollset, 1, 10 * 1000000) >= 0);
+            rc = zmq_poll (pollset, 1, 10 * 1000000);
+            assert (rc >= 0);
             if (pollset [0].revents & ZMQ_POLLIN) {
                 zmsg = zmsg_recv (client);
                 //  Worker is supposed to answer us with our task id
@@ -61,7 +65,8 @@ client_thread (void *context) {
 static void *
 worker_thread (void *context) {
     void *worker = zmq_socket (context, ZMQ_REQ);
-    assert (zmq_connect (worker, "inproc://localbe") == 0);
+    int rc = zmq_connect (worker, "inproc://localbe");
+    assert (rc == 0);
 
     //  Tell broker we're ready for work
     zmsg_t *zmsg = zmsg_new ();
@@ -99,12 +104,14 @@ int main (int argc, char *argv [])
     void *cloudfe = zmq_socket (context, ZMQ_XREP);
     snprintf (endpoint, 255, "ipc://%s-cloud.ipc", self);
     zmq_setsockopt (cloudfe, ZMQ_IDENTITY, self, strlen (self));
-    assert (zmq_bind (cloudfe, endpoint) == 0);
+    int rc = zmq_bind (cloudfe, endpoint);
+    assert (rc == 0);
 
     //  Bind state backend / publisher to endpoint
     void *statebe = zmq_socket (context, ZMQ_PUB);
     snprintf (endpoint, 255, "ipc://%s-state.ipc", self);
-    assert (zmq_bind (statebe, endpoint) == 0);
+    rc = zmq_bind (statebe, endpoint);
+    assert (rc == 0);
 
     //  Connect cloud backend to all peers
     void *cloudbe = zmq_socket (context, ZMQ_XREP);
@@ -115,7 +122,8 @@ int main (int argc, char *argv [])
         char *peer = argv [argn];
         printf ("I: connecting to cloud frontend at '%s'\n", peer);
         snprintf (endpoint, 255, "ipc://%s-cloud.ipc", peer);
-        assert (zmq_connect (cloudbe, endpoint) == 0);
+        rc = zmq_connect (cloudbe, endpoint);
+        assert (rc == 0);
     }
 
     //  Connect statefe to all peers
@@ -126,7 +134,8 @@ int main (int argc, char *argv [])
         char *peer = argv [argn];
         printf ("I: connecting to state backend at '%s'\n", peer);
         snprintf (endpoint, 255, "ipc://%s-state.ipc", peer);
-        assert (zmq_connect (statefe, endpoint) == 0);
+        rc = zmq_connect (statefe, endpoint);
+        assert (rc == 0);
     }
     //  Prepare local frontend and backend
     void *localfe = zmq_socket (context, ZMQ_XREP);
@@ -173,7 +182,8 @@ int main (int argc, char *argv [])
             { monitor, 0, ZMQ_POLLIN, 0 }
         };
         //  If we have no workers anyhow, wait indefinitely
-        assert (zmq_poll (primary, 4, local_capacity? 1000000: -1) >= 0);
+        rc = zmq_poll (primary, 4, local_capacity? 1000000: -1);
+        assert (rc >= 0);
 
         //  Track if capacity changes during this iteration
         int previous = local_capacity;
@@ -229,9 +239,10 @@ int main (int argc, char *argv [])
                 { cloudfe, 0, ZMQ_POLLIN, 0 }
             };
             if (local_capacity)
-                assert (zmq_poll (secondary, 2, 0) >= 0);
+                rc = zmq_poll (secondary, 2, 0);
             else
-                assert (zmq_poll (secondary, 1, 0) >= 0);
+                rc = zmq_poll (secondary, 1, 0);
+            assert (rc >= 0);
 
             if (secondary [0].revents & ZMQ_POLLIN)
                 zmsg = zmsg_recv (localfe);

@@ -73,7 +73,8 @@ int main (int argc, char *argv [])
     void *cloudfe = zmq_socket (context, ZMQ_XREP);
     snprintf (endpoint, 255, "ipc://%s-cloud.ipc", self);
     zmq_setsockopt (cloudfe, ZMQ_IDENTITY, self, strlen (self));
-    assert (zmq_bind (cloudfe, endpoint) == 0);
+    int rc = zmq_bind (cloudfe, endpoint);
+    assert (rc == 0);
 
     //  Connect cloud backend to all peers
     void *cloudbe = zmq_socket (context, ZMQ_XREP);
@@ -84,7 +85,8 @@ int main (int argc, char *argv [])
         char *peer = argv [argn];
         printf ("I: connecting to cloud frontend at '%s'\n", peer);
         snprintf (endpoint, 255, "ipc://%s-cloud.ipc", peer);
-        assert (zmq_connect (cloudbe, endpoint) == 0);
+        rc = zmq_connect (cloudbe, endpoint);
+        assert (rc == 0);
     }
 
     //  Prepare local frontend and backend
@@ -126,7 +128,8 @@ int main (int argc, char *argv [])
             { cloudbe, 0, ZMQ_POLLIN, 0 }
         };
         //  If we have no workers anyhow, wait indefinitely
-        assert (zmq_poll (backends, 2, capacity? 1000000: -1) >= 0);
+        rc = zmq_poll (backends, 2, capacity? 1000000: -1);
+        assert (rc >= 0);
 
         //  Handle reply from local worker
         zmsg_t *zmsg = NULL;
@@ -162,7 +165,8 @@ int main (int argc, char *argv [])
                 { localfe, 0, ZMQ_POLLIN, 0 },
                 { cloudfe, 0, ZMQ_POLLIN, 0 }
             };
-            assert (zmq_poll (frontends, 2, 0) >= 0);
+            rc = zmq_poll (frontends, 2, 0);
+            assert (rc >= 0);
             int reroutable = 0;
             //  We'll do peer brokers first, to prevent starvation
             if (frontends [1].revents & ZMQ_POLLIN) {

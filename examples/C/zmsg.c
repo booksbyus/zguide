@@ -269,8 +269,9 @@ zmsg_send (zmsg_t **self_p, void *socket)
             zmq_msg_init_size (&message, size);
             memcpy (zmq_msg_data (&message), data, size);
         }
-        assert (zmq_send (socket, &message,
-            part_nbr < self->_part_count - 1? ZMQ_SNDMORE: 0) == 0);
+        int rc = zmq_send (socket, &message,
+            part_nbr < self->_part_count - 1? ZMQ_SNDMORE: 0);
+        assert (rc == 0);
         zmq_msg_close (&message);
     }
     zmsg_destroy (self_p);
@@ -474,15 +475,18 @@ zmsg_test (int verbose)
 {
     zmsg_t
         *zmsg;
+    int rc;
 
     printf (" * zmsg: ");
 
     //  Prepare our context and sockets
     void *context = zmq_init (1);
     void *output = zmq_socket (context, ZMQ_XREQ);
-    assert (zmq_bind (output, "ipc://zmsg_selftest.ipc") == 0);
+    rc = zmq_bind (output, "ipc://zmsg_selftest.ipc");
+    assert (rc == 0);
     void *input = zmq_socket (context, ZMQ_XREP);
-    assert (zmq_connect (input, "ipc://zmsg_selftest.ipc") == 0);
+    rc = zmq_connect (input, "ipc://zmsg_selftest.ipc");
+    assert (rc == 0);
 
     //  Test send and receive of single-part message
     zmsg = zmsg_new ();
