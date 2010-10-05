@@ -785,13 +785,13 @@ As you start to program with 0MQ you will come across one problem more than once
                  |                 +-----------------+
                  |
                  v
-        +-----------------+        +-----------------+
-        |                 |        | Check that the  |
-        |  Are you using  |        | reply envelope  |
-        |  XREP sockets?  +------->| is valid. 0MQ   |
-        |                 | Yes    | drops messages  |
-        |             {o} |        | it can't route. |
-        +--------+--------+        +-----------------+
+        +-----------------+        +-----------------+        +-----------------+
+        |                 |        | Check that the  |        | If you're using |
+        |  Are you using  |        | reply envelope  |        | identities make |
+        |  XREP sockets?  +------->| is valid. 0MQ   +------->| sure to set them|
+        |                 | Yes    | drops messages  |        | before not after|
+        |             {o} |        | it can't route. |        | you connect.    |
+        +--------+--------+        +-----------------+        +-----------------+
                  | No
                  |
                  v
