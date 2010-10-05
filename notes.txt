@@ -60,7 +60,7 @@ Then we can use this to start building some reusable pieces:
 
 - name service
     translate logical name into connect or bind string
-    service runs locally, connect via icp://zns
+    service runs locally, connect via ipc://zns
     gets name updates asynchronously from central server
     also local zns lookup file
     using zpl syntax
