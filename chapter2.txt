@@ -369,15 +369,19 @@ There are two main exceptional conditions that you may want to handle as non-fat
 
 * When a thread calls zmq_term[3] and other threads are doing blocking work.  The zmq_term[3] call closes the context and all blocking calls exit with -1, and errno set to ETERM.
 
-What this boils down to is that in most cases you can wrap 0MQ calls in assertions, like this:
+What this boils down to is that in most cases you can use assertions on 0MQ calls, like this:
 
 [[code type="C"]]
     void *context = zmq_init (1);
     assert (context);
     void *socket = zmq_socket (context, ZMQ_REP);
     assert (socket);
-    assert (!zmq_bind (socket, "tcp://*:5555"));
+    int rc;
+    rc = zmq_bind (socket, "tcp://*:5555");
+    assert (rc == 0);
 [[/code]]
+
+In the first version of this code I put the assert() call around the function.  Not a good idea, since an optimized build will turn all assert() macros to null and happily wallop those functions.  Use a return code, and assert the return code.
 
 Let's see how to shut down a process cleanly.  We'll take the parallel pipeline example from the previous section.  If we've start a whole lot of workers in the background, we now want to kill them when the batch is finished.  Let's do this by sending a kill message to the workers.  The best place to do this is the sink, since it really knows when the batch is done.
 

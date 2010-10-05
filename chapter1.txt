@@ -468,11 +468,14 @@ worker_thread (void *arg) {
     void *context = arg;
     void *worker = zmq_socket (context, ZMQ_REP);
     assert (worker);
-    assert (zmq_connect (worker, "ipc://worker") == 0);
+    int rc;
+    rc = zmq_connect (worker, "ipc://worker");
+    assert (rc == 0);
 
     void *broadcast = zmq_socket (context, ZMQ_PUB);
     assert (broadcast);
-    assert (zmq_bind (broadcast, "ipc://publish") == 0);
+    rc = zmq_bind (broadcast, "ipc://publish");
+    assert (rc == 0);
 
     while (1) {
         char *part1 = s_recv (worker);
