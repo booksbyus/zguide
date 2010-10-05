@@ -1,7 +1,7 @@
 //
 //  Report 0MQ version
 //
-#include "zhelpers.h"
+#include "zhelpers.hpp"
 
 int main ()
 {

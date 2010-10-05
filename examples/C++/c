@@ -163,20 +163,27 @@ if [ "$CCNAME" = "gcc" ]; then
     #  If your build is failing because of missing libraries then
     #  either you are missing development packages, or are on a non-standard/old
     #  system and should add a special case.
-    STDLIBS="-lrt -lcrypt -lpthread -lm"
+    STDLIBS="-lpthread -lm"
 
     #
     #  Linux-specific subsection
     #
     if [ "$UTYPE" = "Linux" ]; then
         #  Use -start-group / -end-group for linking
+        STDLIBS="$STDLIBS -lrt -lcrypt"
         LINKTYPE="gnu"
+    #
+    #  Darwin-specific subsection
+    #
+    elif [ "$UTYPE" = "Darwin" ]; then
+        #  Use -start-group / -end-group for linking
+        LINKTYPE="after"
     #
     #  Solaris-specific subsection
     #
     elif [ "$UTYPE" = "SunOS" ]; then
         #  Extra system libraries needed to link on Solaris
-        STDLIBS="$STDLIBS -lsocket -lnsl -lsendfile"
+        STDLIBS="$STDLIBS -lrt -lcrypt -lsocket -lnsl -lsendfile"
         #  Standard "dumb" linker
         LINKTYPE="before"
         #  For MT release builds, pick the best possible memory allocator

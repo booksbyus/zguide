@@ -95,9 +95,12 @@ s_dump (zmq::socket_t & socket)
         bool is_text = true;
 
         int char_nbr;
-        for (char_nbr = 0; char_nbr < size; char_nbr++)
-            if (data [char_nbr] < 32 || data [char_nbr] > 127)
-                is_text = 0;
+        unsigned char byte;
+        for (char_nbr = 0; char_nbr < size; char_nbr++) {
+            byte = data [char_nbr];
+            if (byte < 32 || byte > 127)
+              is_text = false;
+        }
 
         printf ("[%03d] ", size);
 
