@@ -5,6 +5,8 @@
 
 #include "zhelpers.hpp"
 
+#include <stdint.h>
+
 int main () {
     zmq::context_t context(1);
 
