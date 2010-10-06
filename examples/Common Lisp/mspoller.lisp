@@ -1,13 +1,45 @@
-No-one has translated the mspoller example into Common Lisp yet.  Be the first to create
-mspoller in Common Lisp and get one free Internet!  If you're the author of the Common Lisp
-binding, this is a great way to get people to use 0MQ in Common Lisp.
+;;; -*- Mode:Lisp; Syntax:ANSI-Common-Lisp; -*-
+;;;
+;;;  Reading from multiple sockets in Common Lisp
+;;;  This version uses zmq_poll()
+;;;
+;;; Kamil Shakirov <kamils80@gmail.com>
+;;;
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+(defpackage #:zguide.mspoller
+  (:nicknames #:mspoller)
+  (:use #:cl #:zhelpers)
+  (:export #:main))
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+(in-package :zguide.mspoller)
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+(defun main ()
+  (zmq:with-context (context 1)
+    ;; Connect to task ventilator
+    (zmq:with-socket (receiver context zmq:pull)
+      (zmq:connect receiver "tcp://localhost:5557")
+      ;; Connect to weather server
+      (zmq:with-socket (subscriber context zmq:sub)
+        (zmq:connect subscriber "tcp://localhost:5556")
+        (zmq:setsockopt subscriber zmq:subscribe "10001 ")
+
+        ;; Initialize poll set
+        (zmq:with-polls ((items . ((receiver   . zmq:pollin)
+                                   (subscriber . zmq:pollin))))
+          ;; Process messages from both sockets
+          (loop
+            (let* ((message (make-instance 'zmq:msg))
+                   (revents (zmq:poll items)))
+              (when (= (first revents) zmq:pollin)
+                (zmq:recv receiver message)
+                ;; Process task
+                (dump-message message)
+                (finish-output))
+
+              (when (= (second revents) zmq:pollin)
+                (zmq:recv subscriber message)
+                ;; Process weather update
+                (dump-message message)
+                (finish-output))))))))
+
+  (cleanup))

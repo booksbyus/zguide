@@ -1,11 +1,8 @@
 ;;; -*- Mode:Lisp; Syntax:ANSI-Common-Lisp; -*-
 ;;;
-;;;  Task sink
+;;;  Task sink in Common Lisp
 ;;;  Binds PULL socket to tcp://localhost:5558
 ;;;  Collects results from workers via that socket
-;;;
-;;; 'with-stopwatch' macro is taken from 'cl-zmq'
-;;; by Vitaly Mayatskikh <v.mayatskih@gmail.com>
 ;;;
 ;;; Kamil Shakirov <kamils80@gmail.com>
 ;;;
@@ -16,20 +13,6 @@
   (:export #:main))
 
 (in-package :zguide.tasksink)
-
-(defmacro with-stopwatch (&body body)
-  (let ((sec0 (gensym))
-        (sec1 (gensym))
-        (usec0 (gensym))
-        (usec1 (gensym)))
-    `(multiple-value-bind (,sec0 ,usec0)
-         (isys:gettimeofday)
-       (unwind-protect
-            (progn ,@body))
-       (multiple-value-bind (,sec1 ,usec1)
-           (isys:gettimeofday)
-         (+ (* 1e6 (- ,sec1 ,sec0))
-            ,usec1 (- ,usec0))))))
 
 (defun main ()
   ;; Prepare our context and socket

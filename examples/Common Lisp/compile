@@ -11,10 +11,10 @@ LISP_OPTS=
 
 case $LISP in
     sbcl)
-        LISP_OPTS="--load build.lisp --eval"
+        LISP_OPTS="--load build.lisp --load $1.asd --eval"
         ;;
     ccl)
-        LISP_OPTS="--load build.lisp --eval"
+        LISP_OPTS="--load build.lisp --load $1.asd --eval"
         ;;
     *)
         echo "'LISP=$LISP' is not supported!"
@@ -22,4 +22,7 @@ case $LISP in
         ;;
 esac
 
-$LISP $LISP_OPTS "(build:build \"$1\")"
+$LISP $LISP_OPTS                     \
+"(progn                              \
+  (asdf:load-system \"$1\")          \
+  (build:build-example \"$1\"))"

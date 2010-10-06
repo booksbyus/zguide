@@ -1,8 +1,6 @@
 ;;; -*- Mode:Lisp; Syntax:ANSI-Common-Lisp; -*-
 ;;;
-;;;  Hello World client in Common Lisp
-;;;  Connects REQ socket to tcp://localhost:5555
-;;;  Sends "Hello" to server, expects "World" back
+;;; Report 0MQ version
 ;;;
 ;;; Kamil Shakirov <kamils80@gmail.com>
 ;;;

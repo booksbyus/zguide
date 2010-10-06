@@ -2,6 +2,9 @@
 ;;;
 ;;;  Helpers for example applications
 ;;;
+;;; 'with-stopwatch' macro is taken from 'cl-zmq'
+;;; by Vitaly Mayatskikh <v.mayatskih@gmail.com>
+;;;
 ;;; Kamil Shakirov <kamils80@gmail.com>
 ;;;
 
@@ -16,7 +19,8 @@
    #:version
    #:set-socket-id
    #:dump-message
-   #:dump-socket))
+   #:dump-socket
+   #:with-stopwatch))
 
 (in-package :zguide.zhelpers)
 
@@ -94,3 +98,17 @@
      ;; Multipart detection
      (when (zerop (zmq:getsockopt socket zmq:rcvmore))
        (return)))))
+
+(defmacro with-stopwatch (&body body)
+  (let ((sec0 (gensym))
+        (sec1 (gensym))
+        (usec0 (gensym))
+        (usec1 (gensym)))
+    `(multiple-value-bind (,sec0 ,usec0)
+         (isys:gettimeofday)
+       (unwind-protect
+            (progn ,@body))
+       (multiple-value-bind (,sec1 ,usec1)
+           (isys:gettimeofday)
+         (+ (* 1e6 (- ,sec1 ,sec0))
+            ,usec1 (- ,usec0))))))

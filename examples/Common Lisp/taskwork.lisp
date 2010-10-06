@@ -1,6 +1,6 @@
 ;;; -*- Mode:Lisp; Syntax:ANSI-Common-Lisp; -*-
 ;;;
-;;;  Task worker
+;;;  Task worker in Common Lisp
 ;;;  Connects PULL socket to tcp://localhost:5557
 ;;;  Collects workloads from ventilator via that socket
 ;;;  Connects PUSH socket to tcp://localhost:5558

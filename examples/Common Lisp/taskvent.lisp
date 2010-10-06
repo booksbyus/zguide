@@ -1,6 +1,6 @@
 ;;; -*- Mode:Lisp; Syntax:ANSI-Common-Lisp; -*-
 ;;;
-;;;  Task ventilator
+;;;  Task ventilator in Common Lisp
 ;;;  Binds PUSH socket to tcp://localhost:5557
 ;;;  Sends batch of tasks to workers via that socket
 ;;;
