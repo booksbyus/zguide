@@ -1,13 +1,53 @@
-No-one has translated the tasksink2 example into Common Lisp yet.  Be the first to create
-tasksink2 in Common Lisp and get one free Internet!  If you're the author of the Common Lisp
-binding, this is a great way to get people to use 0MQ in Common Lisp.
+;;; -*- Mode:Lisp; Syntax:ANSI-Common-Lisp; -*-
+;;;
+;;;  Task sink - design 2 in Common Lisp
+;;;  Binds PULL socket to tcp://localhost:5558
+;;;  Collects results from workers via that socket
+;;;  Adds pub-sub flow to send kill signal to workers
+;;;
+;;; Kamil Shakirov <kamils80@gmail.com>
+;;;
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+(defpackage #:zguide.tasksink2
+  (:nicknames #:tasksink2)
+  (:use #:cl #:zhelpers)
+  (:export #:main))
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+(in-package :zguide.tasksink2)
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+(defun main ()
+  (zmq:with-context (context 1)
+    ;; Socket to receive messages on
+    (zmq:with-socket (receiver context zmq:pull)
+      (zmq:bind receiver "tcp://*:5558")
+      ;; Socket for worker control
+      (zmq:with-socket (controller context zmq:pub)
+        (zmq:bind controller "tcp://*:5559")
+        ;; Wait for start of batch
+        (let ((msg (make-instance 'zmq:msg)))
+          (zmq:recv receiver msg))
+
+        ;; Start our clock now
+        (let ((elapsed-time
+               (with-stopwatch
+                 (dotimes (task-nbr 100)
+                   (let ((msg (make-instance 'zmq:msg)))
+                     (zmq:recv receiver msg)
+                     (let ((string (zmq:msg-data-as-string msg)))
+                       (declare (ignore string))
+
+                       (if (= 1 (denominator (/ task-nbr 10)))
+                           (message ":")
+                           (message "."))))))))
+
+          ;; Calculate and report duration of batch
+          (message "Total elapsed time: ~F msec~%" (/ elapsed-time 1000.0)))
+
+        ;; Send kill signal to workers
+        (let ((kill (make-instance 'zmq:msg :data "KILL")))
+          (zmq:send controller kill))
+
+        ;; Give 0MQ time to deliver
+        (sleep 1))))
+
+  (cleanup))

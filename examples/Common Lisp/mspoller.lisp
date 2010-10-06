@@ -28,18 +28,19 @@
                                    (subscriber . zmq:pollin))))
           ;; Process messages from both sockets
           (loop
-            (let* ((message (make-instance 'zmq:msg))
-                   (revents (zmq:poll items)))
+            (let ((revents (zmq:poll items)))
               (when (= (first revents) zmq:pollin)
-                (zmq:recv receiver message)
-                ;; Process task
-                (dump-message message)
-                (finish-output))
+                (let ((message (make-instance 'zmq:msg)))
+                  (zmq:recv receiver message)
+                  ;; Process task
+                  (dump-message message)
+                  (finish-output)))
 
               (when (= (second revents) zmq:pollin)
-                (zmq:recv subscriber message)
-                ;; Process weather update
-                (dump-message message)
-                (finish-output))))))))
+                (let ((message (make-instance 'zmq:msg)))
+                  (zmq:recv subscriber message)
+                  ;; Process weather update
+                  (dump-message message)
+                  (finish-output)))))))))
 
   (cleanup))

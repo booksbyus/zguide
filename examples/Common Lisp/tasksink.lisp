@@ -22,20 +22,22 @@
 
       ;; Wait for start of batch
       (let ((msg (make-instance 'zmq:msg)))
-        (zmq:recv receiver msg)
-        (let ((string (zmq:msg-data-as-string msg)))
-          ;; Start our clock now
-          (let ((elapsed-time
-                 (with-stopwatch
-                   (dotimes (task-nbr 100)
-                     (zmq:recv receiver msg)
-                     (setf string (zmq:msg-data-as-string msg))
+        (zmq:recv receiver msg))
+
+      ;; Start our clock now
+      (let ((elapsed-time
+             (with-stopwatch
+               (dotimes (task-nbr 100)
+                 (let ((msg (make-instance 'zmq:msg)))
+                   (zmq:recv receiver msg)
+                   (let ((string (zmq:msg-data-as-string msg)))
+                     (declare (ignore string))
 
                      (if (= 1 (denominator (/ task-nbr 10)))
                          (message ":")
-                         (message "."))))))
+                         (message "."))))))))
 
-            ;; Calculate and report duration of batch
-            (message "Total elapsed time: ~F msec~%" (/ elapsed-time 1000.0)))))))
+        ;; Calculate and report duration of batch
+        (message "Total elapsed time: ~F msec~%" (/ elapsed-time 1000.0)))))
 
   (cleanup))
