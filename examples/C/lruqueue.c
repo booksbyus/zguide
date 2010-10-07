@@ -23,7 +23,7 @@ client_thread (void *context) {
     char *reply = s_recv (client);
     printf ("Client: %s\n", reply);
     free (reply);
-    return (NULL);
+    return NULL;
 }
 
 //  Worker using REQ socket to do LRU routing
@@ -55,7 +55,7 @@ worker_thread (void *context) {
         s_send     (worker, "OK");
         free (address);
     }
-    return (NULL);
+    return NULL;
 }
 
 int main (int argc, char *argv[])

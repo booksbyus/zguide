@@ -24,7 +24,7 @@ client_thread (void *context) {
     char *reply = s_recv (client);
     printf ("Client: %s\n", reply);
     free (reply);
-    return (NULL);
+    return NULL;
 }
 
 //  Worker using REQ socket to do LRU routing
@@ -44,7 +44,7 @@ worker_thread (void *context) {
         zmsg_body_set (zmsg, "OK");
         zmsg_send (&zmsg, worker);
     }
-    return (NULL);
+    return NULL;
 }
 
 int main (int argc, char *argv[])

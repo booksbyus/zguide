@@ -10,7 +10,7 @@ step1 (void *context) {
     zmq_connect (sender, "inproc://step2");
     s_send (sender, "");
 
-    return (NULL);
+    return NULL;
 }
 
 static void *
@@ -30,7 +30,7 @@ step2 (void *context) {
     zmq_connect (sender, "inproc://step3");
     s_send (sender, "");
 
-    return (NULL);
+    return NULL;
 }
 
 int main () {
