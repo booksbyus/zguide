@@ -18,6 +18,9 @@
    #:within
    #:version
    #:set-socket-id
+   #:recv-text
+   #:send-text
+   #:send-more-text
    #:dump-message
    #:dump-socket
    #:with-stopwatch))
@@ -61,6 +64,22 @@
   (zmq:setsockopt socket zmq:identity
                   (format nil "~4,'0X-~4,'0X"
                           (within #x10000) (within #x10000))))
+
+(defun recv-text (socket)
+  "Receive 0MQ string from socket and convert into text"
+  (let ((msg (make-instance 'zmq:msg)))
+    (zmq:recv socket msg)
+    (zmq:msg-data-as-string msg)))
+
+(defun send-text (socket text)
+  "Convert text to 0MQ string and send to socket"
+  (let ((msg (make-instance 'zmq:msg :data text)))
+    (zmq:send socket msg)))
+
+(defun send-more-text (socket text)
+  "Sends text as 0MQ string, as multipart non-terminal"
+  (let ((msg (make-instance 'zmq:msg :data text)))
+    (zmq:send socket msg zmq:sndmore)))
 
 (defun text-message-p (msg)
   (let ((data (zmq:msg-data-as-is msg)))

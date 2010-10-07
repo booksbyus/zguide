@@ -1,13 +1,53 @@
-No-one has translated the mtrelay example into Common Lisp yet.  Be the first to create
-mtrelay in Common Lisp and get one free Internet!  If you're the author of the Common Lisp
-binding, this is a great way to get people to use 0MQ in Common Lisp.
+;;; -*- Mode:Lisp; Syntax:ANSI-Common-Lisp; -*-
+;;;
+;;;  Multithreaded relay in Common Lisp
+;;;
+;;; Kamil Shakirov <kamils80@gmail.com>
+;;;
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+(defpackage #:zguide.mtrelay
+  (:nicknames #:mtrelay)
+  (:use #:cl #:zhelpers)
+  (:export #:main))
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+(in-package :zguide.mtrelay)
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+(defun step1 (context)
+  ;; Signal downstream to step 2
+  (zmq:with-socket (sender context zmq:pair)
+    (zmq:connect sender "inproc://step2")
+
+    (let ((msg (make-instance 'zmq:msg :data "")))
+      (zmq:send sender msg))))
+
+(defun step2 (context)
+  ;; Bind to inproc: endpoint, then start upstream thread
+  (zmq:with-socket (receiver context zmq:pair)
+    (zmq:bind receiver "inproc://step2")
+    (bt:make-thread (lambda () (step1 context)))
+
+    ;; Wait for signal
+    (let ((msg (make-instance 'zmq:msg)))
+      (zmq:recv receiver msg))
+
+    ;; Signal downstream to step 3
+    (zmq:with-socket (sender context zmq:pair)
+      (zmq:connect sender "inproc://step3")
+
+      (let ((msg (make-instance 'zmq:msg :data "")))
+        (zmq:send sender msg)))))
+
+(defun main ()
+  (zmq:with-context (context 1)
+    ;; Bind to inproc: endpoint, then start upstream thread
+    (zmq:with-socket (receiver context zmq:pair)
+      (zmq:bind receiver "inproc://step3")
+      (bt:make-thread (lambda () (step2 context)))
+
+      ;; Wait for signal
+      (let ((msg (make-instance 'zmq:msg)))
+        (zmq:recv receiver msg)))
+
+    (message "Test successful!~%"))
+
+  (cleanup))

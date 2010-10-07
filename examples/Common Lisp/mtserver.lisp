@@ -1,13 +1,50 @@
-No-one has translated the mtserver example into Common Lisp yet.  Be the first to create
-mtserver in Common Lisp and get one free Internet!  If you're the author of the Common Lisp
-binding, this is a great way to get people to use 0MQ in Common Lisp.
+;;; -*- Mode:Lisp; Syntax:ANSI-Common-Lisp; -*-
+;;;
+;;;  Multithreaded Hello World server in Common Lisp
+;;;
+;;; Kamil Shakirov <kamils80@gmail.com>
+;;;
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+(defpackage #:zguide.mtserver
+  (:nicknames #:mtserver)
+  (:use #:cl #:zhelpers)
+  (:export #:main))
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+(in-package :zguide.mtserver)
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+(defun worker-routine (context)
+  ;; Socket to talk to dispatcher
+  (zmq:with-socket (receiver context zmq:rep)
+    (zmq:connect receiver "inproc://workers")
+
+    (loop
+      (let ((request (make-instance 'zmq:msg)))
+        (zmq:recv receiver request)
+        (message "Received request: [~A]~%" (zmq:msg-data-as-string request))
+
+        ;; Do some 'work'
+        (sleep 1)
+
+        ;; Send reply back to client
+        (let ((reply (make-instance 'zmq:msg :data "World")))
+          (zmq:send receiver reply))))))
+
+(defun main ()
+  ;; Prepare our context and socket
+  (zmq:with-context (context 1)
+    ;; Socket to talk to clients
+    (zmq:with-socket (clients context zmq:xrep)
+      (zmq:bind clients "tcp://*:5555")
+      ;; Socket to talk to workers
+      (zmq:with-socket (workers context zmq:xreq)
+        (zmq:bind workers "inproc://workers")
+
+        ;; Launch pool of worker threads
+        (dotimes (i 5)
+          (bt:make-thread (lambda () (worker-routine context))
+                          :name (format nil "worker-~D" i)))
+
+        ;; Connect work threads to client threads via a queue
+        (zmq:device zmq:queue clients workers))))
+
+  (cleanup))

@@ -1,13 +1,55 @@
-No-one has translated the rrbroker example into Common Lisp yet.  Be the first to create
-rrbroker in Common Lisp and get one free Internet!  If you're the author of the Common Lisp
-binding, this is a great way to get people to use 0MQ in Common Lisp.
+;;; -*- Mode:Lisp; Syntax:ANSI-Common-Lisp; -*-
+;;;
+;;;  Simple request-reply broker in Common Lisp
+;;;
+;;; Kamil Shakirov <kamils80@gmail.com>
+;;;
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+(defpackage #:zguide.rrbroker
+  (:nicknames #:rrbroker)
+  (:use #:cl #:zhelpers)
+  (:export #:main))
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+(in-package :zguide.rrbroker)
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+(defun main ()
+  ;; Prepare our context and sockets
+  (zmq:with-context (context 1)
+    (zmq:with-socket (frontend context zmq:xrep)
+      (zmq:with-socket (backend context zmq:xreq)
+        (zmq:bind frontend "tcp://*:5559")
+        (zmq:bind backend  "tcp://*:5560")
+
+        ;; Initialize poll set
+        (zmq:with-polls ((items . ((frontend . zmq:pollin)
+                                   (backend  . zmq:pollin))))
+          ;; Switch messages between sockets
+          (loop
+            (let ((revents (zmq:poll items)))
+              (when (= (first revents) zmq:pollin)
+                (loop
+                  ;; Process all parts of the message
+                 (let ((message (make-instance 'zmq:msg)))
+                   (zmq:recv frontend message)
+
+                   (if (not (zerop (zmq:getsockopt frontend zmq:rcvmore)))
+                       (zmq:send backend message zmq:sndmore)
+                       (progn
+                         (zmq:send backend message 0)
+                         ;; Last message part
+                         (return))))))
+
+              (when (= (second revents) zmq:pollin)
+                (loop
+                  ;; Process all parts of the message
+                 (let ((message (make-instance 'zmq:msg)))
+                   (zmq:recv backend message)
+
+                   (if (not (zerop (zmq:getsockopt backend zmq:rcvmore)))
+                       (zmq:send frontend message zmq:sndmore)
+                       (progn
+                         (zmq:send frontend message 0)
+                         ;; Last message part
+                         (return))))))))))))
+
+  (cleanup))

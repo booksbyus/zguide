@@ -1,13 +1,46 @@
-No-one has translated the syncpub example into Common Lisp yet.  Be the first to create
-syncpub in Common Lisp and get one free Internet!  If you're the author of the Common Lisp
-binding, this is a great way to get people to use 0MQ in Common Lisp.
+;;; -*- Mode:Lisp; Syntax:ANSI-Common-Lisp; -*-
+;;;
+;;;  Synchronized publisher in Common Lisp
+;;;
+;;; Kamil Shakirov <kamils80@gmail.com>
+;;;
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+(defpackage #:zguide.syncpub
+  (:nicknames #:syncpub)
+  (:use #:cl #:zhelpers)
+  (:export #:main))
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+(in-package :zguide.syncpub)
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+;; We wait for 10 subscribers
+(defparameter *expected-subscribers* 10)
+
+(defun main ()
+  (zmq:with-context (context 1)
+    ;; Socket to talk to clients
+    (zmq:with-socket (publisher context zmq:pub)
+      (zmq:bind publisher "tcp://*:5561")
+      ;; Socket to receive signals
+      (zmq:with-socket (syncservice context zmq:rep)
+        (zmq:bind syncservice "tcp://*:5562")
+
+        ;; Get synchronization from subscribers
+        (loop :repeat *expected-subscribers* :do
+          ;; - wait for synchronization request
+          (let ((msg (make-instance 'zmq:msg)))
+            (zmq:recv syncservice msg))
+          ;; - send synchronization reply
+          (let ((msg (make-instance 'zmq:msg :data "")))
+            (zmq:send syncservice msg)))
+
+        ;; Now broadcast exactly 1M updates followed by END
+        (loop :repeat 1000000 :do
+          (let ((msg (make-instance 'zmq:msg :data "Rhubarb")))
+            (zmq:send publisher msg)))
+        (let ((msg (make-instance 'zmq:msg :data "END")))
+          (zmq:send publisher msg))))
+
+    ;; Give 0MQ/2.0.x time to flush output
+    (sleep 1))
+
+  (cleanup))

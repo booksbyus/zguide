@@ -1,13 +1,42 @@
-No-one has translated the wuproxy example into Common Lisp yet.  Be the first to create
-wuproxy in Common Lisp and get one free Internet!  If you're the author of the Common Lisp
-binding, this is a great way to get people to use 0MQ in Common Lisp.
+;;; -*- Mode:Lisp; Syntax:ANSI-Common-Lisp; -*-
+;;;
+;;;  Weather proxy device in Common Lisp
+;;;
+;;; Kamil Shakirov <kamils80@gmail.com>
+;;;
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+(defpackage #:zguide.wuproxy
+  (:nicknames #:wuproxy)
+  (:use #:cl #:zhelpers)
+  (:export #:main))
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+(in-package :zguide.wuproxy)
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+(defun main ()
+  (zmq:with-context (context 1)
+    ;; This is where the weather server sits
+    (zmq:with-socket (frontend context zmq:sub)
+      (zmq:connect frontend "tcp://192.168.55.210:5556")
+
+      ;; This is our public endpoint for subscribers
+      (zmq:with-socket (backend context zmq:pub)
+        (zmq:bind backend "tcp://10.1.1.0:8100")
+
+        ;; Subscribe on everything
+        (zmq:setsockopt frontend zmq:subscribe "")
+
+        ;; Shunt messages out to our own subscribers
+        (loop
+          (loop
+            ;; Process all parts of the message
+           (let ((message (make-instance 'zmq:msg)))
+             (zmq:recv frontend message)
+
+             (if (not (zerop (zmq:getsockopt frontend zmq:rcvmore)))
+                 (zmq:send backend message zmq:sndmore)
+                 (progn
+                   (zmq:send backend message 0)
+                   ;; Last message part
+                   (return)))))))))
+
+  (cleanup))
