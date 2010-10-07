@@ -1,13 +1,36 @@
-No-one has translated the durapub example into Common Lisp yet.  Be the first to create
-durapub in Common Lisp and get one free Internet!  If you're the author of the Common Lisp
-binding, this is a great way to get people to use 0MQ in Common Lisp.
+;;; -*- Mode:Lisp; Syntax:ANSI-Common-Lisp; -*-
+;;;
+;;;  Publisher for durable subscriber in Common Lisp
+;;;
+;;; Kamil Shakirov <kamils80@gmail.com>
+;;;
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+(defpackage #:zguide.durapub
+  (:nicknames #:durapub)
+  (:use #:cl #:zhelpers)
+  (:export #:main))
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+(in-package :zguide.durapub)
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+(defun main ()
+  (zmq:with-context (context 1)
+    ;; Subscriber tells us when it's ready here
+    (zmq:with-socket (sync context zmq:pull)
+      (zmq:bind sync "tcp://*:5564")
+      ;; We send updates via this socket
+      (zmq:with-socket (publisher context zmq:pub)
+        (zmq:bind publisher "tcp://*:5565")
+
+        ;; Wait for synchronization request
+        (recv-text sync)
+
+        ;; Now broadcast exactly 10 updates with pause
+        (dotimes (update-nbr 10)
+          (send-text publisher (format nil "Update ~D" update-nbr))
+          (sleep 1))
+        (send-text publisher "END")))
+
+    ;; Give 0MQ/2.0.x time to flush output
+    (sleep 1))
+
+  (cleanup))

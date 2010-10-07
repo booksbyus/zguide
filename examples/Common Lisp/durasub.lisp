@@ -1,13 +1,36 @@
-No-one has translated the durasub example into Common Lisp yet.  Be the first to create
-durasub in Common Lisp and get one free Internet!  If you're the author of the Common Lisp
-binding, this is a great way to get people to use 0MQ in Common Lisp.
+;;; -*- Mode:Lisp; Syntax:ANSI-Common-Lisp; -*-
+;;;
+;;;  Durable subscriber in Common Lisp
+;;;
+;;; Kamil Shakirov <kamils80@gmail.com>
+;;;
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+(defpackage #:zguide.durasub
+  (:nicknames #:durasub)
+  (:use #:cl #:zhelpers)
+  (:export #:main))
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+(in-package :zguide.durasub)
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+(defun main ()
+  (zmq:with-context (context 1)
+    ;; Connect our subscriber socket
+    (zmq:with-socket (subscriber context zmq:sub)
+      (zmq:setsockopt subscriber zmq:identity "Hello")
+      (zmq:setsockopt subscriber zmq:subscribe "")
+      (zmq:connect subscriber "tcp://localhost:5565")
+
+      ;; Synchronize with publisher
+      (zmq:with-socket (sync context zmq:push)
+        (zmq:connect sync "tcp://localhost:5564")
+        (send-text sync "")
+
+        ;; Get updates, expect random Ctrl-C death
+        (loop
+          (let ((string (recv-text subscriber)))
+            (message "~A~%" string)
+
+            (when (string= string "END")
+              (return)))))))
+
+  (cleanup))
