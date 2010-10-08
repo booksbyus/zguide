@@ -237,7 +237,7 @@ Here is client application, which listens to the stream of updates and grabs any
 [[code type="C" title="Weather update client" name="wuclient"]]
 [[/code]]
 
-Note that when you use a SUB socket you **must** set a subscription using zmq_setsockopt[3] and SUBSCRIBE, as in this code.  If you don't set any subscription, you won't get any messages.  It's a common mistake for beginners.  The subscriber can set many subscriptions, which are added together.  That is, if a update matches ANY subscription, the subscriber receives it.  The subscriber can also unsubscribe specific subscriptions.  Subscriptions are binary.  See zmq_setsockopt[3] for how this works.
+Note that when you use a SUB socket you **must** set a subscription using zmq_setsockopt[3] and SUBSCRIBE, as in this code.  If you don't set any subscription, you won't get any messages.  It's a common mistake for beginners.  The subscriber can set many subscriptions, which are added together.  That is, if a update matches ANY subscription, the subscriber receives it.  The subscriber can also unsubscribe specific subscriptions.  Subscriptions are length-specified blobs.  See zmq_setsockopt[3] for how this works.
 
 The PUB-SUB socket pair is asynchronous.  The client does zmq_recv[3], in a loop (or once if that's all it needs).  Trying to send a message to a SUB socket will cause an error.  Similarly the service does zmq_send[3] as often as it needs to, but must not do zmq_recv[3] on a PUB socket.
 
@@ -509,11 +509,13 @@ The 0MQ objects we need to worry about are messages, sockets, and contexts.  Luc
 
 * Always close a message the moment you are done with it, using zmq_msg_close[3].
 
-* Don't close sockets.  If you are opening and closing a lot of sockets, redesign your application.
+* If you are opening and closing a lot of sockets, that's probably a sign you need to redesign your application.
 
-* When you exit the program, call zmq_term[3].  This destroys the context and all sockets associated with it.
+* When you exit the program, close your sockets and then call zmq_term[3].  This destroys the context.
 
 In 0MQ/2.0.x and earlier, calling zmq_close[3], or zmq_term[3], or exiting the main program too hastily will cause messages you //think// you just sent to disappear.  It's a bug in 0MQ that's fixed in version 2.1 and later.
+
+In 0MQ/2.1.x calling zmq_term[3] while you have open sockets can cause 0MQ to hang forever.  It's a bug that's caused some controversey but hopefully will be fixed.
 
 So all the examples that exit while there is still data in flight do this:
 

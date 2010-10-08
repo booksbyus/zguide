@@ -372,7 +372,7 @@ To route to a mama, we must create a mama-friendly envelope like this:
             +---------------------------------------+
 
 
-       Figure # - Routing envelope for mama
+     Figure # - Routing envelope for mama aka REQ
 [[/code]]
 
 +++ Address-based Routing
@@ -417,7 +417,7 @@ A core philosophy of 0MQ is that the edges are smart and many, and the middle is
    +-----------+   +-----------+
 
 
-Figure # - Router to papa custom routing
+    Figure # - Router to papa custom routing
 [[/code]]
 
 This example shows a very specific chain of events:
@@ -472,7 +472,7 @@ To route to a papa, we must create a papa-friendly envelope like this:
             +---------------------------------------+
 
 
-       Figure # - Routing envelope for papa
+       Figure # - Routing envelope for papa aka REP
 [[/code]]
 
 +++ A Request-Reply Message Broker
@@ -485,15 +485,15 @@ To start with, let's look back at the classic request-reply pattern and then see
             +--------+
             | Client |
             +--------+
-            |  Mama  |
-            +---+----+
-                |
-                |
-    +-----------+-----------+
-    |           |           |
-    |           |           |
-+---+----+  +---+----+  +---+----+
-|  Papa  |  |  Papa  |  |  Papa  |
+            |  Mama  |               REQ
+            +---+----+                ^
+                |                     |
+                |                     |
+    +-----------+-----------+         |
+    |           |           |         |
+    |           |           |         |
++---+----+  +---+----+  +---+----+    v
+|  Papa  |  |  Papa  |  |  Papa  |   REP
 +--------+  +--------+  +--------+
 | Worker |  | Worker |  | Worker |
 +--------+  +--------+  +--------+
@@ -508,23 +508,23 @@ This extends to multiple papas, but if we want to handle multiple mamas as well 
 +--------+  +--------+  +--------+
 | Client |  | Client |  | Client |
 +--------+  +--------+  +--------+
-|  Mama  |  |  Mama  |  |  Mama  |
-+---+----+  +---+----+  +---+----+
-    |           |           |
-    +-----------+-----------+
-                |
-            +---+----+
-            | Router |
-            +--------+
-            | Device |
-            +--------+
-            | Dealer |
-            +---+----+
-                |
-    +-----------+-----------+
-    |           |           |
-+---+----+  +---+----+  +---+----+
-|  Papa  |  |  Papa  |  |  Papa  |
+|  Mama  |  |  Mama  |  |  Mama  |   REQ
++---+----+  +---+----+  +---+----+    ^
+    |           |           |         |
+    +-----------+-----------+         |
+                |                     |
+            +---+----+                v
+            | Router |               XREP
+            +--------+                :
+            | Device |                :
+            +--------+                :
+            | Dealer |               XREQ
+            +---+----+                ^
+                |                     |
+    +-----------+-----------+         |
+    |           |           |         |
++---+----+  +---+----+  +---+----+    v
+|  Papa  |  |  Papa  |  |  Papa  |   REP
 +--------+  +--------+  +--------+
 | Worker |  | Worker |  | Worker |
 +--------+  +--------+  +--------+
@@ -541,29 +541,29 @@ In the above design, we're using the built-in load balancing routing that the de
     +--------+  +--------+  +--------+
     | Client |  | Client |  | Client |
     +--------+  +--------+  +--------+
-    |  Mama  |  |  Mama  |  |  Mama  |
-    +---+----+  +---+----+  +---+----+
-        |           |           |
-        +-----------+-----------+
-                    |
-                +---+----+
-                | Router |  Frontend
-                +--------+
-                | Device |  LRU queue
-                +--------+
-                | Router |  Backend
-                +---+----+
-                    |
-        +-----------+-----------+
-        |           |           |
-    +---+----+  +---+----+  +---+----+
-    |  Mama  |  |  Mama  |  |  Mama  |
+    |  Mama  |  |  Mama  |  |  Mama  |   REQ
+    +---+----+  +---+----+  +---+----+    ^
+        |           |           |         |
+        +-----------+-----------+         |
+                    |                     |
+                +---+----+                v
+                | Router |  Frontend     XREP
+                +--------+                :
+                | Device |  LRU queue     :
+                +--------+                :
+                | Router |  Backend      XREP
+                +---+----+                ^
+                    |                     |
+        +-----------+-----------+         |
+        |           |           |         |
+    +---+----+  +---+----+  +---+----+    v
+    |  Mama  |  |  Mama  |  |  Mama  |   REQ
     +--------+  +--------+  +--------+
     | Worker |  | Worker |  | Worker |
     +--------+  +--------+  +--------+
 
 
-Figure # - Extended request-reply with LRU
+  Figure # - Extended request-reply with LRU
 [[/code]]
 
 Our broker - a router-to-router LRU queue - can't simply copy message parts blindly.  Here is the code, it's fairly complex but the core logic is reusable in any request-reply broker that wants to do LRU routing:
@@ -774,20 +774,20 @@ We've seen XREP/router sockets talking to dealers, mamas, and papas.  The last c
    | Front-end |     | Front-end |
    |           |     |           |
    +-----------+     +-----------+
-   |  Router   |     |  Router   |
-   \-----------/     \-----------/
-      connect           connect
-         ^                 ^
-         |                 |
-         +--------+--------+
-                  |
-                  |
-         +--------+--------+
-         |                 |
-         v                 v
-       bind              bind
-   /-----------\     /-----------\
-   |  Router   |     |  Router   |
+   |  Router   |     |  Router   |   XREP
+   \-----------/     \-----------/    ^
+      connect           connect       |
+         ^                 ^          |
+         |                 |          |
+         +--------+--------+          |
+                  |                   |
+                  |                   |
+         +--------+--------+          |
+         |                 |          |
+         v                 v          |
+       bind              bind         |
+   /-----------\     /-----------\    v
+   |  Router   |     |  Router   |   XREP
    +-----------+     +-----------+
    |           |     |           |
    |  Worker   |     |  Worker   |
@@ -870,7 +870,7 @@ For reasons we already looked at, clients and workers won't speak to each other 
     +--------+  +--------+  +--------+
     | Client |  | Client |  | Client |
     +--------+  +--------+  +--------+
-    |  Mama  |  |  Mama  |  |  Mama  |
+    |  Mama  |  |  Mama  |  |  Mama  |  REQ
     +---+----+  +---+----+  +---+----+
         |           |           |
         +-----------+-----------+
@@ -878,11 +878,11 @@ For reasons we already looked at, clients and workers won't speak to each other 
     +--------------------------------+
     |               |                |
     |         +-----+------+         |
-    |         |   Router   |         |
+    |         |   Router   |         |  XREP
     |         +------------+         |
     |         | LRU Queue  |         |
     |         +------------+         |
-    |         |   Router   |         |
+    |         |   Router   |         |  XREP
     |         +-----+------+         |
     |               |         Broker :
     +--------------------------------+
@@ -891,13 +891,13 @@ For reasons we already looked at, clients and workers won't speak to each other 
         +-----------+-----------+
         |           |           |
     +---+----+  +---+----+  +---+----+
-    |  Mama  |  |  Mama  |  |  Mama  |
+    |  Mama  |  |  Mama  |  |  Mama  |  REQ
     +--------+  +--------+  +--------+
     | Worker |  | Worker |  | Worker |
     +--------+  +--------+  +--------+
 
 
-    Figure # - Cluster architecture
+     Figure # - Cluster architecture
 [[/code]]
 
 ++++ Scaling to Multiple Clusters
@@ -1091,13 +1091,13 @@ Here is the broker socket arrangement, then:
         |  bind   |  bind   | connect |
         +---------+---------+---------+
         | localfe | cloudfe | statefe |     Frontends
-        | router  | router  |   SUB   |     (incoming)
+        |  XREP   |  XREP   |   SUB   |     (incoming)
         +---------+---------+---------+
         |                             |
         |           Broker            |
         |                             |
         +---------+---------+---------+
-        | router  | router  |   PUB   |     Backends
+        |  XREP   |  XREP   |   PUB   |     Backends
         | localbe | cloudbe | statebe |     (outgoing)
         +---------+---------+---------+
         |  bind   | connect |  bind   |
@@ -1220,13 +1220,13 @@ Let's now prototype at the flow of tasks via the local and cloud sockets.  This 
         |  bind   |  bind   |         |
         +---------+---------+---------+
         | localfe | cloudfe |         |
-        | router  | router  |         |
+        |  XREP   |  XREP   |         |
         +---------+---------+---------+
         |                             |
         |           Broker            |
         |                             |
         +---------+---------+---------+
-        | router  | router  |         |
+        |  XREP   |  XREP   |         |
         | localbe | cloudbe |         |
         +---------+---------+---------+
         |  bind   | connect |         |
