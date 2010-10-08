@@ -2,7 +2,6 @@
 //  Broker peering simulation (part 2)
 //  Prototypes the request-reply flow
 //
-#include "zhelpers.h"
 #include "zmsg.c"
 
 #define NBR_CLIENTS 10

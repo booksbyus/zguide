@@ -209,9 +209,11 @@ zmsg_recv (void *socket)
     while (1) {
         zmq_msg_t message;
         zmq_msg_init (&message);
-        if (zmq_recv (socket, &message, 0))
-            exit (1);           //  Context terminated, exit
-
+        if (zmq_recv (socket, &message, 0)) {
+            if (errno != ETERM)
+                printf ("E: %s\n", zmq_strerror (errno));
+            exit (1);
+        }
         //  We handle 0MQ UUIDs as printable strings
         unsigned char *data = zmq_msg_data (&message);
         size_t         size = zmq_msg_size (&message);
