@@ -1,13 +1,81 @@
-No-one has translated the rtdealer example into Common Lisp yet.  Be the first to create
-rtdealer in Common Lisp and get one free Internet!  If you're the author of the Common Lisp
-binding, this is a great way to get people to use 0MQ in Common Lisp.
+;;; -*- Mode:Lisp; Syntax:ANSI-Common-Lisp; -*-
+;;;
+;;;  Custom routing Router to Dealer (XREP to XREQ) in Common Lisp
+;;;
+;;; Kamil Shakirov <kamils80@gmail.com>
+;;;
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+;;;  We have two workers, here we copy the code, normally these would run on
+;;;  different boxes...
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+(defpackage #:zguide.rtdealer
+  (:nicknames #:rtdealer)
+  (:use #:cl #:zhelpers)
+  (:export #:main))
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+(in-package :zguide.rtdealer)
+
+(defun worker-a (context)
+  (zmq:with-socket (worker context zmq:xreq)
+    (zmq:setsockopt worker zmq:identity "A")
+    (zmq:connect worker "ipc://routing.ipc")
+
+    (let ((total 0))
+      (loop
+        ;; We receive one part, with the workload
+        (let ((request (recv-text worker)))
+          (when (string= request "END")
+            (message "A received: ~D~%" total)
+            (return))
+          (incf total))))))
+
+(defun worker-b (context)
+  (zmq:with-socket (worker context zmq:xreq)
+    (zmq:setsockopt worker zmq:identity "B")
+    (zmq:connect worker "ipc://routing.ipc")
+
+    (let ((total 0))
+      (loop
+        ;; We receive one part, with the workload
+        (let ((request (recv-text worker)))
+          (when (string= request "END")
+            (message "B received: ~D~%" total)
+            (return))
+          (incf total))))))
+
+(defun main ()
+  (zmq:with-context (context 1)
+    (zmq:with-socket (client context zmq:xrep)
+      (zmq:bind client "ipc://routing.ipc")
+
+      (bt:make-thread (lambda () (worker-a context))
+                      :name "worker-a")
+      (bt:make-thread (lambda () (worker-b context))
+                      :name "worker-b")
+
+      ;; Wait for threads to stabilize
+      (sleep 1)
+
+      ;; Send 10 tasks scattered to A twice as often as B
+      (loop :repeat 10 :do
+        ;; Send two message parts, first the address...
+        (if (> (1- (within 3)) 0)
+            (send-more-text client "A")
+            (send-more-text client "B"))
+
+        ;; And then the workload
+        (send-text client "This is the workload"))
+
+      (send-more-text client "A")
+      (send-text client "END")
+      ;; we can get messy output when two threads concurrently print results
+      ;; so Let worker-a to print results first
+      (sleep 0.1)
+
+      (send-more-text client "B")
+      (send-text client "END")
+
+      ;; Give 0MQ/2.0.x time to flush output
+      (sleep 1)))
+
+  (cleanup))

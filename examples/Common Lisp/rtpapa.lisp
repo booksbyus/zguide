@@ -1,13 +1,44 @@
-No-one has translated the rtpapa example into Common Lisp yet.  Be the first to create
-rtpapa in Common Lisp and get one free Internet!  If you're the author of the Common Lisp
-binding, this is a great way to get people to use 0MQ in Common Lisp.
+;;; -*- Mode:Lisp; Syntax:ANSI-Common-Lisp; -*-
+;;;
+;;;  Custom routing Router to Papa (XREP to REP) in Common Lisp
+;;;
+;;; Kamil Shakirov <kamils80@gmail.com>
+;;;
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+(defpackage #:zguide.rtpapa
+  (:nicknames #:rtpapa)
+  (:use #:cl #:zhelpers)
+  (:export #:main))
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+(in-package :zguide.rtpapa)
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+;; We will do this all in one thread to emphasize the sequence of events...
+(defun main ()
+  (zmq:with-context (context 1)
+    (zmq:with-socket (client context zmq:xrep)
+      (zmq:bind client "ipc://routing.ipc")
+      (zmq:with-socket (worker context zmq:rep)
+        (zmq:setsockopt worker zmq:identity "A")
+        (zmq:connect worker "ipc://routing.ipc")
+
+        ;; Wait for sockets to stabilize
+        (sleep 1)
+
+        ;; Send papa address, address stack, empty part, and request
+        (send-more-text client "A")
+        (send-more-text client "address 3")
+        (send-more-text client "address 2")
+        (send-more-text client "address 1")
+        (send-more-text client "")
+        (send-text client "This is the workload")
+
+        ;; Worker should get just the workload
+        (dump-socket worker)
+
+        ;; We don't play with envelopes in the worker
+        (send-text worker "This is the reply")
+
+        ;; Now dump what we got off the XREP socket...
+        (dump-socket client))))
+
+  (cleanup))

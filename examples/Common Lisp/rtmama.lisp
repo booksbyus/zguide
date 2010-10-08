@@ -1,13 +1,71 @@
-No-one has translated the rtmama example into Common Lisp yet.  Be the first to create
-rtmama in Common Lisp and get one free Internet!  If you're the author of the Common Lisp
-binding, this is a great way to get people to use 0MQ in Common Lisp.
+;;; -*- Mode:Lisp; Syntax:ANSI-Common-Lisp; -*-
+;;;
+;;;  Custom routing Router to Mama (XREP to REQ) in Common Lisp
+;;;
+;;; Kamil Shakirov <kamils80@gmail.com>
+;;;
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+(defpackage #:zguide.rtmama
+  (:nicknames #:rtmama)
+  (:use #:cl #:zhelpers)
+  (:export #:main))
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+(in-package :zguide.rtmama)
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+(defparameter *number-workers* 10)
+
+(defun worker-thread (context)
+  (zmq:with-socket (worker context zmq:req)
+    ;; We use a string identity for ease here
+    (set-socket-id worker)
+    (zmq:connect worker "ipc://routing.ipc")
+
+    (let ((total 0))
+      (loop
+        ;; Tell the router we're ready for work
+        (send-text worker "ready")
+
+        ;; Get workload from router, until finished
+        (let ((workload (recv-text worker)))
+          (when (string= workload "END")
+            (message "Processed: ~D tasks~%" total)
+            (return))
+          (incf total))
+
+        ;; Do some random work
+        (isys:usleep (within 100000))))))
+
+(defun main ()
+  (zmq:with-context (context 1)
+    (zmq:with-socket (client context zmq:xrep)
+      (zmq:bind client "ipc://routing.ipc")
+
+      (dotimes (i *number-workers*)
+        (bt:make-thread (lambda () (worker-thread context))
+                        :name (format nil "worker-thread-~D" i)))
+
+      (loop :repeat (* 10 *number-workers*) :do
+        ;; LRU worker is next waiting in queue
+        (let ((address (recv-text client)))
+          (recv-text client) ; empty
+          (recv-text client) ; ready
+
+          (send-more-text client address)
+          (send-more-text client "")
+          (send-text client "This is the workload")))
+
+      ;; Now ask mamas to shut down and report their results
+      (loop :repeat *number-workers* :do
+        ;; LRU worker is next waiting in queue
+        (let ((address (recv-text client)))
+          (recv-text client) ; empty
+          (recv-text client) ; ready
+
+          (send-more-text client address)
+          (send-more-text client "")
+          (send-text client "END")))
+
+      ;; Give 0MQ/2.0.x time to flush output
+      (sleep 1)))
+
+  (cleanup))

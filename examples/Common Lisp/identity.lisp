@@ -1,13 +1,35 @@
-No-one has translated the identity example into Common Lisp yet.  Be the first to create
-identity in Common Lisp and get one free Internet!  If you're the author of the Common Lisp
-binding, this is a great way to get people to use 0MQ in Common Lisp.
+;;; -*- Mode:Lisp; Syntax:ANSI-Common-Lisp; -*-
+;;;
+;;;  Demonstrate identities as used by the request-reply pattern in Common Lisp.
+;;;  Run this program by itself.  Note that the utility functions are
+;;;  provided by zhelpers.lisp.  It gets boring for everyone to keep repeating
+;;;  this code.
+;;;
+;;; Kamil Shakirov <kamils80@gmail.com>
+;;;
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+(defpackage #:zguide.identity
+  (:nicknames #:identity)
+  (:use #:cl #:zhelpers)
+  (:export #:main))
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+(in-package :zguide.identity)
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+(defun main ()
+  (zmq:with-context (context 1)
+    ;; First allow 0MQ to set the identity
+    (zmq:with-socket (sink context zmq:xrep)
+      (zmq:bind sink "inproc://example")
+
+      (zmq:with-socket (anonymous context zmq:req)
+        (zmq:connect anonymous "inproc://example")
+        (send-text anonymous "XREP uses a generated UUID")
+        (dump-socket sink)
+
+        (zmq:with-socket (identified context zmq:req)
+          (zmq:setsockopt identified zmq:identity "Hello")
+          (zmq:connect identified "inproc://example")
+          (send-text identified "XREP socket uses REQ's socket identity")
+          (dump-socket sink)))))
+
+  (cleanup))
