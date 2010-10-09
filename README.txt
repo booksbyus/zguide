@@ -4,6 +4,8 @@
 0MQ - The Guide
 ===============
 
+Written by Pieter Hintjens <ph@imatix.com>, CEO iMatix Corporation.
+
 A 0MQ socket is what you get when you take a normal TCP socket, inject it with a mix of radioactive isotopes stolen from a secret Soviet atomic research project, bombard it with 1950-era cosmic rays, and put it into the hands of a drug-addled comic book author with a badly-disguised fetish for bulging muscles clad in spandex.  Yes, 0MQ sockets are the world-saving superheros of the networking world.
 
 [diagram]
@@ -27,8 +29,6 @@ A 0MQ socket is what you get when you take a normal TCP socket, inject it with a
 
         A terrible accident...
 [/diagram]
-
-Written by Pieter Hintjens <ph@imatix.com>, CEO iMatix Corporation
 
 Contents
 --------
@@ -79,7 +79,7 @@ Thanks!
 Build Process
 -------------
 
-To rebuild the Guide from this git repository you need Ditaa (included in this repository), ImageMagick, perl. Run the command: "z2w chapter*.txt".  The result is a series of files named `chapter1.wd`, `chapter2.wd`, etc.  Paste these into a Wikidot site appropriately.
+To rebuild the Guide from this git repository you need z2w and Ditaa (included in the bin directory), ImageMagick, perl. Run the command: "z2w chapter*.txt".  The result is a series of files named `chapter1.wd`, `chapter2.wd`, etc.  Paste these into a Wikidot site appropriately.
 
 Images and source examples are hosted here at github.com and to modify an image or example we commit it to this repository.
 
