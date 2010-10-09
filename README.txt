@@ -23,7 +23,7 @@ General
 
 The Guide is a general introduction to 0MQ, and covers version 2.0.x.  It will be updated to cover 2.1.0 as soon as that is formally released.
 
-To submit an errata use the [issue tracker][http://github.com/imatix/zguide/issues].  All discussion of the contents or examples happens on the zeromq-dev list or #zeromq IRC channel.
+To submit an errata use the [issue tracker](http://github.com/imatix/zguide/issues).  All discussion of the contents or examples happens on the zeromq-dev list or #zeromq IRC channel.
 
 Examples
 --------
@@ -56,4 +56,4 @@ To rebuild the Guide from this git repository you need Ditaa (included in this r
 
 Images and source examples are hosted here at github.com and to modify an image or example we commit it to this repository.
 
-This document is originally at README.txt and is built using [gitdown][http://github.com/imatix/gitdown], a great little tool by the same author.
+This document is originally at README.txt and is built using [gitdown](http://github.com/imatix/gitdown), a great little tool by the same author.
