@@ -42,6 +42,13 @@
 #include <unistd.h>
 #include <assert.h>
 
+//  Bring Windows MSVC up to C99 scratch
+#if (defined (__WINDOWS__))
+    typedef unsigned long ulong;
+    typedef unsigned int  uint;
+    typedef __int64 int64_t;
+#endif
+
 //  Provide random number from 0..(num-1)
 #define within(num) (int) ((float) (num) * random () / (RAND_MAX + 1.0))
 
