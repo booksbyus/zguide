@@ -1,55 +1,59 @@
-Welcome
+.set GIT=http://github.com/imatix/zguide
+.sub 0MQ=ØMQ
+
+0MQ - The Guide
+===============
+
+Written by Pieter Hintjens <ph@imatix.com>, CEO iMatix Corporation
+
+.toc
+
+License
 -------
 
-The Guide is written by Pieter Hintjens, with help from Martin Sustrik, Gonzalo
-Diethelm, Zed Shaw, CAF, Guido Goldstein, Oliver Smith,  Pierre Rouleau, Peter
-Alexander, and others.  We cover 0MQ version 2.x.  Add errata and suggestions to
-http://www.zeromq.org/docs:user-guide-talk or as patches off this git emailed to
-the zeromq-dev list.
+The text of "0MQ - The Guide" is copyright (c) 2010 Pieter Hintjens, and is licensed under the Creative Commons Attribution-Share Alike 3.0 License.  The source code examples are licensed under MIT/X11.  `z2w` is placed into the public domain.
 
-To build the Guide you need Ditaa (included in this repository), ImageMagick, perl.
-Run the command: "z2w chapter*.txt".  The result is in wdtemp.txt.
+Thanks
+------
 
-Currently, formats wdtemp.txt ready for pasting into a page at www.zeromq.org.
-Images and source examples are hosted here at github.com and to modify an image
-or example we commit it to this repository.
+Thanks to Bill Desmarais, Brian Dorsey, CAF, Daniel Lin, Eric Desgranges, Gonzalo Diethelm, Guido Goldstein, Hunter Ford, Kamil Shakirov, Martin Sustrik, Mike Castleman, Naveen Chawla, Nicola Peduzzi, Oliver Smith, Olivier Chamoux, Peter Alexander, Pierre Rouleau, Randy Dryburgh, and Zed Shaw for their contributions.  Thanks to Stathis Sideris for Ditaa.
+
+General
+-------
+
+The Guide is a general introduction to 0MQ, and covers version 2.0.x.  It will be updated to cover 2.1.0 as soon as that is formally released.
+
+To submit an errata use the [issue tracker][http://github.com/imatix/zguide/issues].  All discussion of the contents or examples happens on the zeromq-dev list or #zeromq IRC channel.
 
 Examples
 --------
 
-The examples from the 0MQ Guide help people to learn and use 0MQ.  While we
-wrote most of the examples in C, we welcome translations into other languages.
-All example code is licensed under MIT/X11.
+The examples from the Guide help people to learn and use 0MQ.  While we wrote most of the examples in C, we welcome translations into other languages. All example code is licensed under MIT/X11.
 
-Please send your translations, and fixes as patches to the zeromq-dev list
-with the subject line "[PATCH] zguide: <filename>". We'll review the code and
-add it to the zguide repository if it's ok.
+Please send your translations, and fixes as patches to the zeromq-dev list with the subject line "[PATCH] zguide: <filename>". We'll review the code and add it to the zguide repository if it's ok.
 
-Patches are the way we accept contributions.  It ensures that more than one
-person can work on code at the same time.
+Patches are the way we accept contributions.  It ensures that more than one person can work on code at the same time.
 
-The best way to submit patches is to clone this repository, make your changes,
-and use git to create a patch.  Google "make git patch" for lots of examples.
+The best way to submit patches is to clone this repository, make your changes, and use git to create a patch.  See http://www.zeromq.org/docs:contributing.
 
-If you don't want to use git, you can send us entire examples but only if the
-code was empty before.  If you want to update or change an example you MUST
-use git patches.
+If you don't want to use git, you can send us entire examples but only if the code was empty before.  If you want to update or change an example you MUST use git patches.
 
 Guidelines
 ----------
 
 Please:
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
+* Stick to identical functionality and naming used in examples so that readers can easily compare languages.
 * You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+* You MUST state in the email that you license your code under the MIT/X11 license, or else use git's signoff feature as explained on this page: http://www.zeromq.org/docs:contributing
 
 Thanks!
 
-Resources
----------
+Build Process
+-------------
 
-* http://en.wikipedia.org/wiki/MIT_License.
-* http://www.gimp.org/bugs/howtos/submit-patch.html
+To rebuild the Guide from this git repository you need Ditaa (included in this repository), ImageMagick, perl. Run the command: "z2w chapter*.txt".  The result is a series of files named `chapter1.wd`, `chapter2.wd`, etc.  Paste these into a Wikidot site appropriately.
+
+Images and source examples are hosted here at github.com and to modify an image or example we commit it to this repository.
+
+This document is originally at README.txt and is built using [gitdown][http://github.com/imatix/gitdown], a great little tool by the same author.
