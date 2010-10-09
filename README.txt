@@ -30,7 +30,10 @@ A 0MQ socket is what you get when you take a normal TCP socket, inject it with a
 
 Written by Pieter Hintjens <ph@imatix.com>, CEO iMatix Corporation
 
-.toc
+Contents
+--------
+
+.toc 1
 
 License
 -------

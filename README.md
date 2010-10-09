@@ -11,32 +11,30 @@ A ØMQ socket is what you get when you take a normal TCP socket, inject it with 
 
 Written by Pieter Hintjens <ph@imatix.com>, CEO iMatix Corporation
 
+<A name="toc2-34" title="Contents" />
+Contents
+--------
 
-**<a href="#toc2-36">License</a>**
+&emsp;<a href="#toc2-40">License</a>
+&emsp;<a href="#toc2-46">Thanks</a>
+&emsp;<a href="#toc2-52">General</a>
+&emsp;<a href="#toc2-60">Examples</a>
+&emsp;<a href="#toc2-74">Guidelines</a>
+&emsp;<a href="#toc2-86">Build Process</a>
 
-**<a href="#toc2-42">Thanks</a>**
-
-**<a href="#toc2-48">General</a>**
-
-**<a href="#toc2-56">Examples</a>**
-
-**<a href="#toc2-70">Guidelines</a>**
-
-**<a href="#toc2-82">Build Process</a>**
-
-<A name="toc2-36" title="License" />
+<A name="toc2-40" title="License" />
 License
 -------
 
 The text of "ØMQ - The Guide" is copyright (c) 2010 Pieter Hintjens, and is licensed under the Creative Commons Attribution-Share Alike 3.0 License.  The source code examples are licensed under MIT/X11.  `z2w` is placed into the public domain.
 
-<A name="toc2-42" title="Thanks" />
+<A name="toc2-46" title="Thanks" />
 Thanks
 ------
 
 Thanks to Bill Desmarais, Brian Dorsey, CAF, Daniel Lin, Eric Desgranges, Gonzalo Diethelm, Guido Goldstein, Hunter Ford, Kamil Shakirov, Martin Sustrik, Mike Castleman, Naveen Chawla, Nicola Peduzzi, Oliver Smith, Olivier Chamoux, Peter Alexander, Pierre Rouleau, Randy Dryburgh, and Zed Shaw for their contributions.  Thanks to Stathis Sideris for Ditaa.
 
-<A name="toc2-48" title="General" />
+<A name="toc2-52" title="General" />
 General
 -------
 
@@ -44,7 +42,7 @@ The Guide is a general introduction to ØMQ, and covers version 2.0.x.  It will 
 
 To submit an errata use the [issue tracker](http://github.com/imatix/zguide/issues).  All discussion of the contents or examples happens on the zeromq-dev list or #zeromq IRC channel.
 
-<A name="toc2-56" title="Examples" />
+<A name="toc2-60" title="Examples" />
 Examples
 --------
 
@@ -58,7 +56,7 @@ The best way to submit patches is to clone this repository, make your changes, a
 
 If you don't want to use git, you can send us entire examples but only if the code was empty before.  If you want to update or change an example you MUST use git patches.
 
-<A name="toc2-70" title="Guidelines" />
+<A name="toc2-74" title="Guidelines" />
 Guidelines
 ----------
 
@@ -70,7 +68,7 @@ Please:
 
 Thanks!
 
-<A name="toc2-82" title="Build Process" />
+<A name="toc2-86" title="Build Process" />
 Build Process
 -------------
 
