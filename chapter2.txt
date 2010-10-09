@@ -834,7 +834,7 @@ If you've spent years learning tricks to make your MT code work at all, let alon
 
 The list of weird problems that you need to fight as you write classic shared-state MT code would be hillarious if it didn't translate directly into stress and risk, as code that seems to work suddenly fails under stress.  Here is a list of "11 Likely Problems In Your Multithreaded Code" from a large firm with experience in buggy code: forgotten synchronization, incorrect granularity, read and write tearing, lock-free reordering, lock convoys, two-step dance, and priority inversion.
 
-Yeah, we also counted seven, not eleven.  That's not the point though.  The point is, do you realy want that code running the power grid or stock market to start getting two-step lock convoys at 3pm on a busy Thursday?  Who cares what the terms actually mean, this is not why we learned to program.
+Yeah, we also counted seven, not eleven.  That's not the point though.  The point is, do you really want that code running the power grid or stock market to start getting two-step lock convoys at 3pm on a busy Thursday?  Who cares what the terms actually mean.  This is not what turned us on to programming, fighting ever more complex side-effects with ever more complex hacks.
 
 Some widely used metaphors, despite being the basis for billion-dollar industries, are fundamentally broken, and shared state concurrency is one of them.  Code that wants to scale without limit does it like the Internet does, by sending messages and sharing nothing except a common contempt for broken programming metaphors.
 
