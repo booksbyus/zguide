@@ -3,34 +3,40 @@
 ØMQ - The Guide
 ===============
 
+A ØMQ socket is what you get when you take a normal TCP socket, inject it with a mix of radioactive isotopes stolen from a secret Soviet atomic research project, bombard it with 1950-era cosmic rays, and put it into the hands of a drug-addled comic book author with a badly-disguised fetish for bulging muscles clad in spandex.  Yes, ØMQ sockets are the world-saving superheros of the networking world.
+
+<center>
+<img src="http://github.com/imatix/zguide/raw/master/images/README_1.png" alt="1">
+</center>
+
 Written by Pieter Hintjens <ph@imatix.com>, CEO iMatix Corporation
 
 
-**<a href="#toc2-12">License</a>**
+**<a href="#toc2-36">License</a>**
 
-**<a href="#toc2-18">Thanks</a>**
+**<a href="#toc2-42">Thanks</a>**
 
-**<a href="#toc2-24">General</a>**
+**<a href="#toc2-48">General</a>**
 
-**<a href="#toc2-32">Examples</a>**
+**<a href="#toc2-56">Examples</a>**
 
-**<a href="#toc2-46">Guidelines</a>**
+**<a href="#toc2-70">Guidelines</a>**
 
-**<a href="#toc2-58">Build Process</a>**
+**<a href="#toc2-82">Build Process</a>**
 
-<A name="toc2-12" title="License" />
+<A name="toc2-36" title="License" />
 License
 -------
 
 The text of "ØMQ - The Guide" is copyright (c) 2010 Pieter Hintjens, and is licensed under the Creative Commons Attribution-Share Alike 3.0 License.  The source code examples are licensed under MIT/X11.  `z2w` is placed into the public domain.
 
-<A name="toc2-18" title="Thanks" />
+<A name="toc2-42" title="Thanks" />
 Thanks
 ------
 
 Thanks to Bill Desmarais, Brian Dorsey, CAF, Daniel Lin, Eric Desgranges, Gonzalo Diethelm, Guido Goldstein, Hunter Ford, Kamil Shakirov, Martin Sustrik, Mike Castleman, Naveen Chawla, Nicola Peduzzi, Oliver Smith, Olivier Chamoux, Peter Alexander, Pierre Rouleau, Randy Dryburgh, and Zed Shaw for their contributions.  Thanks to Stathis Sideris for Ditaa.
 
-<A name="toc2-24" title="General" />
+<A name="toc2-48" title="General" />
 General
 -------
 
@@ -38,7 +44,7 @@ The Guide is a general introduction to ØMQ, and covers version 2.0.x.  It will 
 
 To submit an errata use the [issue tracker](http://github.com/imatix/zguide/issues).  All discussion of the contents or examples happens on the zeromq-dev list or #zeromq IRC channel.
 
-<A name="toc2-32" title="Examples" />
+<A name="toc2-56" title="Examples" />
 Examples
 --------
 
@@ -52,7 +58,7 @@ The best way to submit patches is to clone this repository, make your changes, a
 
 If you don't want to use git, you can send us entire examples but only if the code was empty before.  If you want to update or change an example you MUST use git patches.
 
-<A name="toc2-46" title="Guidelines" />
+<A name="toc2-70" title="Guidelines" />
 Guidelines
 ----------
 
@@ -64,7 +70,7 @@ Please:
 
 Thanks!
 
-<A name="toc2-58" title="Build Process" />
+<A name="toc2-82" title="Build Process" />
 Build Process
 -------------
 

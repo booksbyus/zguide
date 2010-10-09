@@ -143,14 +143,14 @@ while (<>) {
 
         foreach (@languages) {
             $filename = get_filename ($name, $_);
-            $url = "$symbols{GIT}/blob/$symbols{BRANCH}/$filename";
-            $url =~ s/ /%20/g;
-            $url =~ s/#/%23/g;
-            $url =~ s/\+/%2B/g;
-            writeln ("[*$url $_]");
 
             #   Create empty example if necessary
-            if (!-f $filename) {
+            if (-f $filename) {
+                $missing = `egrep -c 'No-one has translated' '$filename'`;
+                print "$filename - $missing\n";
+            }
+            else {
+                $missing = 1;
                 die "Can't open $filename: $!"
                     unless open (SOURCE, ">$filename");
                 print SOURCE<<"EOF";
@@ -169,6 +169,17 @@ To submit a new translation email it to $symbols{EMAIL}.  Please:
 Subscribe to the email list at $symbols{LIST}.
 EOF
                 close (SOURCE);
+            }
+            #   Add link in list, italic if missing
+            $url = "$symbols{GIT}/blob/$symbols{BRANCH}/$filename";
+            $url =~ s/ /%20/g;
+            $url =~ s/#/%23/g;
+            $url =~ s/\+/%2B/g;
+            if ($missing == 1) {
+                writeln ("//[*$url $_]//");
+            }
+            else {
+                writeln ("**[*$url $_]**");
             }
         }
         writeln ('[[/collapsible]]');
