@@ -7,7 +7,9 @@
 .prelude prelude.txt
 
 .output chapter1.wd
-The Guide is written by Pieter Hintjens <ph@imatix.com>, with help from Martin Sustrik and [http://github.com/imatix/zguide/blob/master/CONTRIBUTORS many others].  We cover 0MQ version 2.0.x.  Please use the [$(GIT)/issues issue tracker] for all comments and errata.  The diagrams are built using [http://www.ditaa.org ditaa].  This version was published on &date("ddd d mmmm, yyyy") at &time().
+Written by Pieter Hintjens <ph@imatix.com>, CEO iMatix Corporation.  Thanks to Bill Desmarais, Brian Dorsey, CAF, Daniel Lin, Eric Desgranges, Gonzalo Diethelm, Guido Goldstein, Hunter Ford, Kamil Shakirov, Martin Sustrik, Mike Castleman, Naveen Chawla, Nicola Peduzzi, Oliver Smith, Olivier Chamoux, Peter Alexander, Pierre Rouleau, Randy Dryburgh, and Zed Shaw for their contributions, and to Stathis Sideris for [Ditaa](ditaa.org).
+
+Please use the [$(GIT)/issues issue tracker] for all comments and errata.  This version covers 0MQ version 2.0.x and was published on &date("ddd d mmmm, yyyy") at &time().
 
 ++ Chapter One - Basic Stuff
 

@@ -147,7 +147,6 @@ while (<>) {
             #   Create empty example if necessary
             if (-f $filename) {
                 $missing = `egrep -c 'No-one has translated' '$filename'`;
-                print "$filename - $missing\n";
             }
             else {
                 $missing = 1;
@@ -220,7 +219,7 @@ close (IMAGES);
 close (OUTPUT);
 
 system ("rm -f images/*");
-system ("java -jar ditaa0_9.jar images.html -o -h -E output.html");
+system ("java -jar /usr/local/bin/ditaa0_9.jar images.html -o -h -E output.html");
 #   Need to trim twice for reasons I don't care to explore
 system ("mogrify -trim images/*.png");
 system ("mogrify -trim images/*.png");
