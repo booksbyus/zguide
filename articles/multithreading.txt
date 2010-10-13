@@ -1,5 +1,5 @@
 .set GIT=http://github.com/imatix/zguide
-.set SUBDIR=/articles
+.set SUBDIR=articles/
 .sub 0MQ=ØMQ
 
 # 0MQ for Multithreading
@@ -312,6 +312,22 @@ int main ()
 
 There is no direct mapping from traditional MT code to 0MQ code.  Whereas dog pit shared state threads interact in many indirect and subtle ways, 0MQ threads interact only by sending and receiving messages.
 
+
+## About this document
+
+This document is $(SUBDIR)$(INPUT) and is processed by [gitdown][].  To change, edit, run `gitdown $(INPUT)`, commit and push back to repository.
+
+[zeromq]: http://www.zeromq.com
+[iMatix]: http://www.imatix.com
+[zhelpers.h]: http://github.com/imatix/zguide/blob/master/examples/C/zhelpers.h
+[zmsg.c]: http://github.com/imatix/zguide/blob/master/examples/C/zmsg.c
+[actor]: http://en.wikipedia.org/wiki/Actor_model#History
+[gitdown]: http://github.com/imatix/gitdown
+
+(Document is not finished)
+
+.end
+
 Note bind before start child thread...
 
 - how to use inproc to connect two threads
@@ -335,15 +351,3 @@ Note bind before start child thread...
             Figure # - Basic Architecture
 [/diagram]
 
-
-## Modifying this document
-
-This document is README.txt and is processed by [gitdown][].  To change, edit, run `gitdown README.txt`, commit and push back to repository.
-
-
-[zeromq]: http://www.zeromq.com
-[iMatix]: http://www.imatix.com
-[zhelpers.h]: http://github.com/imatix/zguide/blob/master/examples/C/zhelpers.h
-[zmsg.c]: http://github.com/imatix/zguide/blob/master/examples/C/zmsg.c
-[actor]: http://en.wikipedia.org/wiki/Actor_model#History
-[gitdown]: http://github.com/imatix/gitdown

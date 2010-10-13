@@ -1,0 +1,101 @@
+.set GIT=http://github.com/imatix/zguide
+.set SUBDIR=articles/
+.sub 0MQ=ØMQ
+
+Sketch for Reliable Request-Reply
+=================================
+
+Authors: Pieter Hintjens <ph@imatix.com>
+
+Published &date("ddd d mmmm, yyyy"), &time().
+
+.toc
+
+## Overview & Goals
+
+This sketch is for a reliable request-reply model between a client and a set of servers.  The assumption is that servers will randomly block and/or die.  The goal is to detect a failure, to handle it, and to recover over time.
+
+## Architecture
+
+The architecture has these components:
+
+* A set of clients that send requests.
+* A set of servers that process requests and send replies.
+* A queue device that connects the clients to the servers.
+
+[diagram]
+
+    +-----------+   +-----------+   +-----------+
+    |           |   |           |   |           |
+    |  Client   |   |  Client   |   |  Client   |
+    |           |   |           |   |           |
+    +-----------+   +-----------+   +-----------+
+    |    REQ    |   |    REQ    |   |    REQ    |
+    \-----+-----/   \-----+-----/   \-----+-----/
+          ^               ^               ^
+          |               |               |
+          \---------------+---------------/
+                          |
+                          v
+                    /-----+-----\
+                    |   XREP    |
+                    +-----------+
+                    |           |
+                    |   Queue   |
+                    |           |
+                    +-----------+
+                    |   XREP    |
+                    \-----------/
+                          ^
+                          |
+          /---------------+---------------\
+          |               |               |
+          v               v               v
+    /-----------\   /-----------\   /-----------\
+    |    REQ    |   |    REQ    |   |    REQ    |
+    +-----------+   +-----------+   +-----------+
+    |           |   |           |   |           |
+    |  Server   |   |  Server   |   |  Server   |
+    |           |   |           |   |           |
+    +-----------+   +-----------+   +-----------+
+
+         Figure # - Reliable Request-Reply
+[/diagram]
+
+## Client design
+
+The client connects to the queue and sends requests in a synchronous fashion.  If it does not get a reply within a certain time (1 second), it reports an error, and retries.  It will retry three times, then exit with a final message.  It uses a REQ socket and zmq_poll.
+
+## Server design
+
+The server connects to the queue and uses the [least-recently used routing][lru] design, i.e. connects a REQ socket to the queue's XREP socket and signals when ready for a new task.  The server will randomly simulate two problems:
+
+1. A crash and restart while processing a request, i.e. close its socket, block for 5 seconds, reopen its socket and restart.
+2. A temporary busy wait, i.e. sleep 1 second then continue as normal.
+
+[lru]: http://zguide.zeromq.org/chapter:all#toc46
+
+## Queue design
+
+The queue binds to a frontend and backend socket and handles requests and replies asynchronously on these using the LRU design.  It manages two lists of servers:
+
+* Servers that are ready for work.
+* Servers that are disabled.
+
+Its basic logic is:
+
+* Wait until there is at least one server ready.
+* Receive next client request.
+* Route request to next ready server and mark that server as busy.
+* Wait a short time (10ms) for server response.
+* If the server does not respond within this timeout, mark as disabled and resend request to next available server.
+* If a reply comes back from a disabled server, discard it.
+* When a disabled server signals that it is ready again, move off disabled list.
+
+## Server design
+
+The server connects to the queue's backend socket.  It waits for requests and responds with unique reply messages.  It caches the last request message and reply and if it receives the same request twice, will resend the corresponding reply message.
+
+## About this document
+
+This document is $(SUBDIR)$(INPUT) and is processed by [gitdown][].  To change, edit, run `gitdown $(INPUT)`, commit and push back to repository.

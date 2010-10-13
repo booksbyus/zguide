@@ -1,21 +1,26 @@
 
+<A name="toc1-4" title="ØMQ for Multithreading" />
 # ØMQ for Multithreading
 
-By Pieter Hintjens <ph@imatix.com>, published Fri 1 October, 2010, 15:31:21.
+By Pieter Hintjens <ph@imatix.com>, published Wed 13 October, 2010, 11:46:07.
 
+<A name="toc2-9" title="Introduction" />
 ## Introduction
 
 [ØMQ][zeromq] wasn't quite sent from the Shiny Future to make our lives better, but it sometimes feels like it.  We originally planned to create a low-latency message-carrying fabric for high-performance applications.  ØMQ is indeed this.  But ØMQ is also probably the best way to build fast, stable multithreaded applications.  I'll explain how ØMQ does this and what it means for you as developer of large, concurrent applications that use as many cores as you can throw at them, with perfect scaling.
 
 This is an introduction, and you don't need any prior experience with ØMQ to read and understand it.  I'll throw sample code at you when it helps.  You do need to be a developer with some experience in multithreading.  Actually the more you've suffered from multithreaded code, the more you'll enjoy this article.  I'll assume you're working on some brand of Linux but the code and explanations are pretty portable.
 
+<A name="toc2-16" title="Getting Started" />
 ## Getting Started
 
 This article is a rant combined with history lesson, and it will gently turn into a hands-on hacking tutorial.  We will explain the nitty-gritty with running code, using ANSI C because that's the language of the ØMQ API.  However it's trivial to translate these examples into the language you actually want to use.  Nothing important you see will depend on C.
 
 To run these examples you will want to install ØMQ.  It is straight-forward and will take you just a few minutes.  Grab the latest stable package from <http://www.zeromq.com> and follow the instructions on that site.  It's `sh configure; make; sudo make install; sudo ldconfig`.  To install a language binding, check the bindings on <http://www.zeromq.org> and pick the one you want, then follow the instructions.
 
-![Diagram 1](http://github.com/imatix/zguide/raw/master/articles/images/multithreading_1.png)
+<center>
+<img src="http://github.com/imatix/zguide/raw/masterarticles//images/multithreading_1.png" alt="1">
+</center>
 
 Create a directory to work in, and if you want to follow the examples in C, grab two files from the ØMQ Guide examples directory, [zhelpers.h][] and [zmsg.c][].  These wrap ØMQ's message API, which is a bit low-level, with nicer abstractions.
 
@@ -36,8 +41,11 @@ And when it compiles and links without errors, and you run it, it will say somet
 
     Current ØMQ version is 2.0.9
 
-![Diagram 2](http://github.com/imatix/zguide/raw/master/articles/images/multithreading_2.png)
+<center>
+<img src="http://github.com/imatix/zguide/raw/masterarticles//images/multithreading_2.png" alt="2">
+</center>
 
+<A name="toc2-103" title="Why Write Multithreaded Code?" />
 ## Why Write Multithreaded Code?
 
 Before we look at how to write multithreaded code using ØMQ, it's worth asking why we want to do this at all.  In my experience, there are two reasons why people write multithreaded code.  Three if you count random insanity, but apart from that:
@@ -55,10 +63,13 @@ The result was two years of late nights tracking down weird errors and making th
 
 Worse, OpenAMQ was slower on one core and did not scale linearly.  It did 35K when running on one core, and 120K when running on four.  So the exercise was worth it, in terms of meeting our goals, but it was horribly expensive.  Worst of all, the client didn't pay for this, we did, it was a fixed price project.
 
-![Diagram 3](http://github.com/imatix/zguide/raw/master/articles/images/multithreading_3.png)
+<center>
+<img src="http://github.com/imatix/zguide/raw/masterarticles//images/multithreading_3.png" alt="3">
+</center>
 
 Before we leaped into the piranha-infested white water of concurrency, I had this vague plan of building OpenAMQ as a cluster of single-threaded processes that would talk to each other without sharing anything.  But we lacked the tools to make that happen.
 
+<A name="toc2-139" title="The Failure of Traditional Multithreading" />
 ## The Failure of Traditional Multithreading
 
 Concurrent programming was part of my CompSci class in 1981.  That says something about my age but it also says a lot about how long a many very smart people have been trying to solve this problem.
@@ -69,7 +80,9 @@ Before we expound a less insane model of software, let's see why placing data st
 
 In the Dikstran model of software, its object-oriented successors, and even the IBM-gifted relational database, data is the golden honey comb that the little busy bees of algorithms work on.  It's all about the data structures, the relations, the indexes, the sets, and the algorithms we use to compute on these sets.  We can call this the "Data + Compute" model of software:
 
-![Diagram 4](http://github.com/imatix/zguide/raw/master/articles/images/multithreading_4.png)
+<center>
+<img src="http://github.com/imatix/zguide/raw/masterarticles//images/multithreading_4.png" alt="4">
+</center>
 
 When two busy algorithmic bees try to modify the same data, they naturally negotiate with each other over who will go first.  It's what you would do in the real world when you 'negotiate' with a smaller, weaker car for that one remaining parking place right next to the Starbucks.  First one in wins, the other has to wait or go somewhere else.
 
@@ -97,6 +110,7 @@ In practice, and this is being optimistic, the best classic multithreaded applic
 
 The only way to scale beyond single digit concurrency is to share less data.  If you share less data, or use black magic techniques like flipped data structures (you lock and modify a copy of a structure, then use an atomic compare-and-swap to flip a pointer from the live copy to your new version), you can scale further.  (That last technique serializes writers only, and lets readers work on a safe copy.)
 
+<A name="toc2-196" title="Lots of Chatty Boxes" />
 ## Lots of Chatty Boxes
 
 Reducing the conflicts over data is the way to scale concurrency.  The more you reduce the conflicts, the more you can scale.  So if there was a way to write real software with zero shared data, that would scale infinitely, right?
@@ -105,79 +119,119 @@ The answer is "yes", there is no catch.
 
 As with many things in technology, this is not a new idea, it's simply an old one that never made the mainstream.  Many fantastically great ideas are like this, they don't build on existing (mediocre) work, so are never adopted by the market.  It's the reason we don't all light our homes with safe nuclear power, aka thorium liquid salt.  It's the reason our keyboards still come with a useless CAPS key where the Ctrl key should be.
 
-Historically, the Data + Compute theory of software stems from the earliest days of computers, when IBM estimated the global market at 5,000 computers.  The Von Neumann model of computing is basically "huge big thing that does stuff":
+Historically, the Data + Compute theory of software stems from the earliest days of commercial computers, when IBM estimated the global market at 5,000 computers.  The original model of computing is basically "huge big thing that does stuff":
 
-![Diagram 5](http://github.com/imatix/zguide/raw/master/articles/images/multithreading_5.png)
+<center>
+<img src="http://github.com/imatix/zguide/raw/masterarticles//images/multithreading_5.png" alt="5">
+</center>
 
+And hardware models become software models, so the Big Iron model became Data + Compute.  But in a world where every movable object will eventually have a computer embedded in it, Data + Compute turns into the shared state dog pit where algorithms fight it out over memory that is so expensive it has to be shared.
 
-The insane "dog pit" theory of concurrency stems from the mainstream "software = data structures + algorithms" metaphor which stems directly from Von Neuman's "computer = memory + processing" model.  Von Neuman's model made great sense in a universe which had approximately 0 computers, but not one which has trillions.
-
-![Diagram 6](http://github.com/imatix/zguide/raw/master/articles/images/multithreading_6.png)
-
-But there are alternative models of computing than the one embraced by IBM and Algol and Java, and the relevant alternate reality from the early 1970's is "computer = lots of boxes that send each other messages".  As Wikipedia says of the [Actor][] model of computing:
+But there are alternative models of concurrent computing than the shared state dog pit that most mainstream languages and manufacturers have adoped.  The relevant alternate reality from the early 1970's is "computing = lots of boxes that send each other messages".  As Wikipedia says of the [Actor][] model of computing:
 
 > Unlike previous models of computation, the Actor model was inspired by physical laws. ... Its development was "motivated by the prospect of highly parallel computing machines consisting of dozens, hundreds or even thousands of independent microprocessors, each with its own local memory and communications processor, communicating via a high-performance communications network." Since that time, the advent of massive concurrency through multi-core computer architectures has rekindled interest in the Actor model.
 
-As Von Neuman's mainframe view of the world translated into software, the Actor model of lots of chatty boxes translates into a new model for software.  Instead of boxes, think "tasks".  *Software = tasks + messages*.  Turns out that works a lot better than focusing on pretty bijoux data structures (and who doesn't enjoy crafting an elegant doubly-linked list or super-efficient hash table?)
+Just as Von Neumann's Big Iron view of the world translated into software, the Actor model of lots of chatty boxes translates into a new model for software.  Instead of boxes, think "tasks".  *Software = tasks + messages*.  It turns out that this works a lot better than focusing on pretty bijoux data structures (and who doesn't enjoy crafting an elegant doubly-linked list or super-efficient hash table?)
 
 So here's are some interesting things about the Actor model, apart from "how on earth did mainstream computer science ignore such a powerfully accurate view of software for so long":
 
-* It's a better model of the real world.
+* It's a better model of a real world with trillions of CPUs.
 * It lets you create massive concurrency with no resource conflicts.
-* It scales without limit.
+* It scales literally without limit.
 * It lets you exercise every CPU to maximum capacity.
 
-To explain again how... suboptimal the shared-state model is, imagine there was just one mobile phone directory in the world.  Forget the questions of privacy and who gets to choose which number goes with "Bastard".  Just consider the pain if access had to be serialized.  It would be like going to the post office.  "Ticket number 19,216,855 please!"  "Hello, I'd like the number of..." "HEY, I WAS HERE FIRST!!!"  "But..."  "PISS OFF, OR I'LL CLOBBER YOU!!"
+To explain again how broken the shared-state model is, imagine there was just one mobile phone directory in the world.  Forget the questions of privacy and who gets to choose which number goes with "Mommy".  Just consider the pain if access had to be serialized.  It would be like going to the post office.  "Ticket number 19,216,855 please!"  "Hello, I'd like the number of..." "HEY, I WAS HERE FIRST!!!"  "But..."  "PISS OFF, OR I'LL CLOBBER YOU!!"
 
-Luckily every little mobile phone has its own directory, and they communicate with each other by getting their captive human slaves to send verbal messages, or type in "text messages".  It's a great system for the mobile phones, and scales to the point where we have over 3 billion mobile phones on the planet and yet it's a fact that no-one has ever seen two mobile phones get into "road rage" over a SIM card.
+Luckily every little mobile phone has its own directory, and they communicate with each other by getting their captive human slaves to send messages.  It's a great system for the mobile phones, and scales to the point where we have over 3 billion mobile phones on the planet and yet it's a fact that no-one has ever seen two mobile phones get into "road rage" over a SIM card.
 
-But it gets better.  The actor model has more advantages over shared state concurrency (SSC):
+But it gets better.  The actor model has more advantages over shared state concurrency:
 
-* While SSC has very fuzzy contracts between threads, Actor thrives on contractual interfaces.  Messages are contracts (if you have even half a brain).  Easy to document, validate, and enforce.
+* While shared state has very fuzzy contracts between threads, Actor thrives on contractual interfaces.  Messages are contracts (if you have even half a brain), that are easy to document, validate, and enforce.
 
-* While SSC is insanely sensitive, like a disturbed girlfriend, to every possible aspect of the environment, Actor is insensitive to language, operating system, CPU architecture, time of day, and choice of decor.
+* While shared state is insanely sensitive, like a disturbed girlfriend, to every possible aspect of the environment, Actor is insensitive to language, operating system, CPU architecture, time of day, and choice of decor.
 
-* While SSC is sensitive to timing, and demands precise coordination and synchronization, Actor doesn't know or care.  Tasks are asynchronous and do what they do as they want to do it.
+* While shared state is sensitive to timing, and demands precise coordination and synchronization, Actor doesn't know or care.  Tasks are asynchronous and do what they do as they want to do it.
 
-* While SSC looks calm and reliable, it cannot handle stress.  Actor on the other hand, performs as elegantly when hit by massive storms of data.  It just crunches through the work, pedantically, without slowing or stopping.
+* While shared state looks calm and reliable, it cannot handle stress.  Actor on the other hand, performs as elegantly when hit by massive storms of data.  It just crunches through the work, pedantically, without slowing or stopping.
 
-* While SSC code is complex and has many cross-thread dependencies, Actor code is serial and event driven.  It is 10-100x easier to live with... uhm... write Actor code.
+* While shared state code is complex and has many cross-thread dependencies, Actor code is serial and event driven.  It is 10-100x easier to live with... uhm... write Actor code.
 
-* While SSC code is practically impossible to fully test, Actor code is trivial to stress test and once it works, it always works.
+* While shared state code is practically impossible to fully test, Actor code is trivial to stress test and once it works, it always works.
 
-Ironically, the reason IBM were able to run thousands of concurrent interactive sessions on their mainframes in the 80's and 90's was that they basically reinvented the Actor model, ripped out the joy, stuck a suit and tie on what remained, and called it "CICS".
+Ironically, the reason IBM were able to run thousands of concurrent interactive sessions on their mainframes in the 80's and 90's was that they basically reinvented the Actor model, ripped out the joy, stuck a suit and tie on what remained, and called it "CICS".  Mainframe transaction monitors turned COBOL sloths into nimble Actors.  For decades the worlds' airlines and banks depended on this to scale their applications up to handle tens of thousands of interactive users.
 
 So, eliminate shared state, turn your application into tasks that communicate only by sending each other messages, and those tasks can run without ever locking or waiting for other tasks to make way for them.  It's kind of like discovering that hey, there are other Starbucks, other parking spaces, and frankly it's easy enough to give every Joe his own private damn city if that's what it takes to stop them fighting.
 
-Of course you need some good connectivity between your tasks.  If you connect them with RFC1149 (avian-flu-over-TCP), they won't get much work done unless you can find a **lot** of pigeons.  And even then, the latency and droppings will kill you.
+Of course you need some good connectivity between your tasks.  If you connect them with RFC1149 (avian-flu-over-TCP), they won't get much work done unless you can find a **lot** of pigeons.  And even then, the latency and droppings will wipe you out.
 
+<A name="toc2-266" title="How to use ØMQ for Multithreading" />
 ## How to use ØMQ for Multithreading
 
-ØMQ is not RFC1149.  No bird seed, no mops.  Just a small library you link into your applications.  What it gives you is...
+ØMQ is not RFC1149.  No bird seed, no mops.  Just a small library you link into your applications.  Let's look how to send a message from one thread to another.  This program has a main thread and a child thread.  The main thread wants to know when the child thread has finished doing its work:
+
+<code>
+//
+//  Show inter-thread signalling using ØMQ sockets
+//
+#include "zhelpers.h"
+
+static void *
+child_thread (void *context)
+{
+    void *socket = zmq_socket (context, ZMQ_PAIR);
+    assert (zmq_connect (socket, "inproc://sink") == 0);
+
+    s_send (socket, "happy");
+    s_send (socket, "sad");
+    s_send (socket, "done");
+
+    zmq_close (socket);
+    return (NULL);
+}
+
+int main ()
+{
+    s_version ();
+    //  Threads communicate via shared context
+    void *context = zmq_init (1);
+
+    //  Create sink socket, bind to inproc endpoint
+    void *socket = zmq_socket (context, ZMQ_PAIR);
+    assert (zmq_bind (socket, "inproc://sink") == 0);
+
+    //  Start child thread
+    pthread_t thread;
+    pthread_create (&thread, NULL, child_thread, context);
+
+    //  Get messages from child thread
+    while (1) {
+        char *mood = s_recv (socket);
+        printf ("You're %s\n", mood);
+        if (strcmp (mood, "done") == 0)
+            break;
+        free (mood);
+    }
+    zmq_close (socket);
+    zmq_term (context);
+    return 0;
+}
+</code>
+
+There is no direct mapping from traditional MT code to ØMQ code.  Whereas dog pit shared state threads interact in many indirect and subtle ways, ØMQ threads interact only by sending and receiving messages.
 
 
+<A name="toc2-322" title="About this document" />
+## About this document
 
-- messages on inproc sockets
-- where you would send a signal, send a message
-- conventional mt, shared state, why it breaks
-- ideal solution: mb concurrency, lockfree, any language
-- better, same model for threads, processes, boxes, clusters
-- worked example in C
--
-
-
-
-![Diagram 7](http://github.com/imatix/zguide/raw/master/articles/images/multithreading_7.png)
-
-
-## Modifying this document
-
-This document is README.txt and is processed by [gitdown][].  To change, edit, run `gitdown README.txt`, commit and push back to repository.
-
+This document is articles/multithreading.txt and is processed by [gitdown][].  To change, edit, run `gitdown multithreading.txt`, commit and push back to repository.
 
 [zeromq]: http://www.zeromq.com
 [iMatix]: http://www.imatix.com
 [zhelpers.h]: http://github.com/imatix/zguide/blob/master/examples/C/zhelpers.h
 [zmsg.c]: http://github.com/imatix/zguide/blob/master/examples/C/zmsg.c
 [actor]: http://en.wikipedia.org/wiki/Actor_model#History
-[gitdown]: http://github.com/imatix/gitdow
+[gitdown]: http://github.com/imatix/gitdown
+
+(Document is not finished)
+
+(More coming soon...)
