@@ -425,11 +425,8 @@ for i in $*; do
         fi
 
         TRACE="Compiling $FILENAME"
-        if [ "$USECPP" = "no" ]; then
-            COMMAND="$CCNAME -c $CCOPTS -I$INCDIR $FILENAME.c"
-        else
-            COMMAND="$CCPLUS -c $CCOPTS -I$INCDIR -o $FILENAME.opp $FILENAME.cpp"
-        fi
+        COMMAND="$CCPLUS -c $CCOPTS -I$INCDIR -o $FILENAME.$OBJEXT $FILENAME.cpp"
+
         if [ "$QUIET" = "no" ]; then
             if [ "$VERBOSE" = "no" ]; then
                 echo "$TRACE..."
@@ -462,11 +459,8 @@ for i in $*; do
     #   If okay, link if required
     if [ "$LINKUP" = "yes" ]; then
         TRACE="Linking $FILENAME"
-        if [ "$USECPP" = "no" ]; then
-            COMMAND="$CCNAME $CCOPTS $FILENAME.o -o $FILENAME"
-        else
-            COMMAND="$CCPLUS $CCOPTS $FILENAME.opp -o $FILENAME"
-        fi
+        COMMAND="$CCNAME $CCOPTS $FILENAME.$OBJEXT -o $FILENAME"
+
         case "$LINKTYPE" in
             gnu)
                 COMMAND="$COMMAND -Wl,--start-group $LIBLIST -Wl,--end-group -L. -L$LOCALLIBDIR -L$LIBDIR $STDLIBS"

@@ -3,6 +3,9 @@
 #   Examples build helper
 #   Syntax: build all | clean
 #
+#   Note: may fail with g++/4.0.x, then
+#   build examples using 'g++ -o filename -lzmq filename.cpp'
+#
 if [ /$1/ = /all/ ]; then
     echo "Building C++ examples..."
     for MAIN in `egrep -l main *.cpp`; do
