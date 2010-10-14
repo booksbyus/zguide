@@ -1,13 +1,40 @@
-No-one has translated the durapub example into Go yet.  Be the first to create
-durapub in Go and get one free Internet!  If you're the author of the Go
-binding, this is a great way to get people to use 0MQ in Go.
+//
+// Durable publisher.
+//
+// Author: Alec Thomas <alec@swapoff.org>
+// Requires: http://github.com/alecthomas/gozmq
+//
+package main
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+import (
+	"fmt"
+	"time"
+	"zmq"
+)
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+func main() {
+	context := zmq.Context()
+	defer context.Close()
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+	//  Subscriber tells us when it's ready here
+	sync := context.Socket(zmq.PULL)
+	defer sync.Close()
+	sync.Bind("tcp://*:5564")
+
+	//  We send updates via this socket
+	publisher := context.Socket(zmq.PUB)
+	defer publisher.Close()
+	publisher.Bind("tcp://*:5565")
+
+	//  Wait for synchronization request
+	sync.Recv(0)
+
+	for update_nbr := 0; update_nbr < 10; update_nbr++ {
+		str := fmt.Sprintf("Update %d", update_nbr)
+		publisher.Send([]byte(str), 0)
+		time.Sleep(1e9)
+	}
+	publisher.Send([]byte("END"), 0)
+
+	time.Sleep(1)
+}

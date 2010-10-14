@@ -1,13 +1,39 @@
-No-one has translated the durasub example into Go yet.  Be the first to create
-durasub in Go and get one free Internet!  If you're the author of the Go
-binding, this is a great way to get people to use 0MQ in Go.
+//
+// Durable subscriber.
+//
+// Author: Alec Thomas <alec@swapoff.org>
+// Requires: http://github.com/alecthomas/gozmq
+//
+package main
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+import (
+	"zmq"
+)
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+func main() {
+	context := zmq.Context()
+	defer context.Close()
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+    //  Connect our subscriber socket
+    subscriber := context.Socket(zmq.SUB)
+	defer subscriber.Close()
+    subscriber.SetSockOptString(zmq.IDENTITY, "Hello")
+	subscriber.SetSockOptString(zmq.SUBSCRIBE, "")
+	subscriber.Connect("tcp://localhost:5565")
+
+    //  Synchronize with publisher
+    sync := context.Socket(zmq.PUSH)
+	defer sync.Close()
+	sync.Connect("tcp://localhost:5564")
+	sync.Send([]byte{}, 0)
+
+    //  Get updates, expect random Ctrl-C death
+	for {
+		data, _ := subscriber.Recv(0)
+		str := string(data)
+		println(str)
+		if str == "END" {
+			break
+		}
+    }
+}
