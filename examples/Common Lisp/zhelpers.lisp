@@ -2,8 +2,12 @@
 ;;;
 ;;;  Helpers for example applications
 ;;;
-;;; 'with-stopwatch' macro is taken from 'cl-zmq'
-;;; by Vitaly Mayatskikh <v.mayatskih@gmail.com>
+;;; 'with-stopwatch' macro is taken from 'cl-zmq' by Vitaly Mayatskikh
+;;; <v.mayatskih@gmail.com>
+;;;
+;;; A simple, but efficient, queue implementation was originally written by
+;;; Peter Keller (psilord@cs.wisc.edu) and is released under the same license
+;;; as IOLib.
 ;;;
 ;;; Kamil Shakirov <kamils80@gmail.com>
 ;;;
@@ -23,7 +27,11 @@
    #:send-more-text
    #:dump-message
    #:dump-socket
-   #:with-stopwatch))
+   #:with-stopwatch
+   #:make-queue
+   #:enqueue
+   #:dequeue
+   #:empty-queue-p))
 
 (in-package :zguide.zhelpers)
 
@@ -39,7 +47,9 @@
     nil)))
 
 (defun message (fmt &rest args)
-  (apply #'format t fmt args)
+  (let ((new-fmt (format nil "[~A] ~A"
+                         (bt:thread-name (bt:current-thread)) fmt)))
+    (apply #'format t new-fmt args))
   (finish-output))
 
 (defun cleanup ()
@@ -131,3 +141,19 @@
            (isys:gettimeofday)
          (+ (* 1e6 (- ,sec1 ,sec0))
             ,usec1 (- ,usec0))))))
+
+(defun make-queue ()
+  (cons nil nil))
+
+(defun enqueue (q obj)
+  (if (null (car q))
+      (setf (cdr q) (setf (car q) (list obj)))
+      (setf (cdr (cdr q)) (list obj)
+            (cdr q) (cdr (cdr q))))
+  (car q))
+
+(defun dequeue (q)
+  (pop (car q)))
+
+(defun empty-queue-p (q)
+  (null (car q)))
