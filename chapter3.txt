@@ -807,13 +807,13 @@ The program produces this output:
 
 [[code]]
 ----------------------------------------
-[008] FRONTEND
+[008] SERVER
 [000]
 [014] send to worker
 ----------------------------------------
 [006] WORKER
 [000]
-[017] send to front-end
+[017] send to server
 [[/code]]
 
 Some comments on this code:
