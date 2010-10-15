@@ -47,9 +47,7 @@
     nil)))
 
 (defun message (fmt &rest args)
-  (let ((new-fmt (format nil "[~A] ~A"
-                         (bt:thread-name (bt:current-thread)) fmt)))
-    (apply #'format t new-fmt args))
+  (apply #'format t fmt args)
   (finish-output))
 
 (defun cleanup ()

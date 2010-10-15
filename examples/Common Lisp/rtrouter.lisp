@@ -1,13 +1,37 @@
-No-one has translated the rtrouter example into Common Lisp yet.  Be the first to create
-rtrouter in Common Lisp and get one free Internet!  If you're the author of the Common Lisp
-binding, this is a great way to get people to use 0MQ in Common Lisp.
+;;; -*- Mode:Lisp; Syntax:ANSI-Common-Lisp; -*-
+;;;
+;;;  Cross-connected XREP sockets addressing each other in Common Lisp
+;;;
+;;; Kamil Shakirov <kamils80@gmail.com>
+;;;
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+(defpackage #:zguide.rtrouter
+  (:nicknames #:rtrouter)
+  (:use #:cl #:zhelpers)
+  (:export #:main))
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+(in-package :zguide.rtrouter)
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+(defun main ()
+  (zmq:with-context (context 1)
+    (zmq:with-socket (worker context zmq:xrep)
+      (zmq:setsockopt worker zmq:identity "WORKER")
+      (zmq:bind worker "ipc://rtrouter.ipc")
+
+      (zmq:with-socket (server context zmq:xrep)
+        (zmq:setsockopt server zmq:identity "SERVER")
+        (zmq:connect server "ipc://rtrouter.ipc")
+
+        (sleep 1)
+
+        (send-more-text server "WORKER")
+        (send-more-text server "")
+        (send-text server "send to worker")
+        (dump-socket worker)
+
+        (send-more-text worker "SERVER")
+        (send-more-text worker "")
+        (send-text worker "send to server")
+        (dump-socket server))))
+
+  (cleanup))

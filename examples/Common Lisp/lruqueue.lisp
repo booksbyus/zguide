@@ -9,9 +9,15 @@
 (defpackage #:zguide.lruqueue
   (:nicknames #:lruqueue)
   (:use #:cl #:zhelpers)
+  (:shadow #:message)
   (:export #:main))
 
 (in-package :zguide.lruqueue)
+
+(defun message (fmt &rest args)
+  (let ((new-fmt (format nil "[~A] ~A"
+                         (bt:thread-name (bt:current-thread)) fmt)))
+    (apply #'zhelpers:message new-fmt args)))
 
 (defparameter *number-clients* 10)
 (defparameter *number-workers* 3)
