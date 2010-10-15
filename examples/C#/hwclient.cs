@@ -1,13 +1,36 @@
-No-one has translated the hwclient example into C# yet.  Be the first to create
-hwclient in C# and get one free Internet!  If you're the author of the C#
-binding, this is a great way to get people to use 0MQ in C#.
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Text;
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+/**
+ *  Author: John Unwin
+ *  Email: john@kaitrade.com
+ *  License: This example code licensed under the MIT/X11 license.
+ */
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+namespace Examples
+{
+    class hwclient
+    {
+        static void Main(string[] args)
+        {
+            // allocate a buffer
+            byte[] zmq_buffer = new byte[1024];
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+            //  Prepare our context and socket
+            ZMQ.Context context = new ZMQ.Context(1);
+            ZMQ.Socket socket = context.Socket(ZMQ.REQ);
+            socket.Connect("tcp://localhost:5555");
+
+            string request = "";
+            for (long requestNum = 0; requestNum != 10; requestNum++)
+            {
+                socket.Send(Encoding.ASCII.GetBytes("Hello".ToCharArray()));
+                //  Wait for next request from client
+                socket.Recv(out zmq_buffer);
+                request = Encoding.ASCII.GetString(zmq_buffer);
+           }
+        }
+    }
+}
