@@ -232,7 +232,7 @@ We looked at each of these in the first chapter.  There's one more pattern that 
 
 * **Exclusive pair**, which connects two sockets in an exclusive pair.  This is a low-level pattern for specific, advanced use-cases.  We'll see an example at the end of this chapter.
 
-The zmq_socket[3] [http://api.0MQ.org/zmq_socket.html man page] is fairly clear about the patterns, it's worth reading several times until it starts to make sense.  We'll look at each pattern and the use-cases it covers.
+The zmq_socket[3] man page is fairly clear about the patterns, it's worth reading several times until it starts to make sense.  We'll look at each pattern and the use-cases it covers.
 
 These are the socket combinations that are valid for a connect-bind pair (either side can bind):
 
@@ -301,7 +301,7 @@ You can easily extend this code to send and receive blobs of arbitrary length.
 
 **Note than when you have passed a message to zmq_send(3), ØMQ will clear the message, i.e. set the size to zero. You cannot send the same message twice, and you cannot access the message data after sending it.**
 
-If you want to send the same message more than once, create a second message, initialize it using zmq_init[3] and then use zmq_msg_copy[3] to create a copy of the first message.  This does not copy the data but the reference.  You can then send the message twice (or more, if you create more copies) and the message will only be finally destroyed when the last copy is sent or closed.
+If you want to send the same message more than once, create a second message, initialize it using zmq_msg_init[3] and then use zmq_msg_copy[3] to create a copy of the first message.  This does not copy the data but the reference.  You can then send the message twice (or more, if you create more copies) and the message will only be finally destroyed when the last copy is sent or closed.
 
 0MQ also supports //multipart// messages, which let you handle a list of blobs as a single message.  This is widely used in real applications and we'll look at that later in this chapter and in Chapter Three.
 
@@ -470,6 +470,8 @@ Here is the modified sink application.  When it's finished collecting results it
 
 0MQ lets us compose a message out of several frames, giving us a 'multipart message'.  Realistic applications use multipart messages heavily, especially to make "envelopes".  We'll look at them later.  What we'll learn now is simply how to safely (but blindly) read and write multipart messages because otherwise the devices we write won't work with applications that use multipart messages.
 
+When you work with multipart messages, each part is a zmq_msg item.  E.g. if you are sending a message with five parts, you must construct, send, and destroy five zmq_msg items.  You can do this in advance (and store the zmq_msg items in an array or structure), or as you send them, one by one.
+
 Here is how we send the frames in a multipart message (we receive each frame into a message object):
 
 [[code]]
@@ -504,6 +506,8 @@ Some things to know about multipart messages:
 * If you are using zmq_poll[3], when you receive the first part of a message, all the rest have also arrived.
 
 * You will receive all parts of a message, or none at all.
+
+* Each part of a message is a separate zmq_msg item.
 
 * You will receive all parts of a message whether or not you check the RCVMORE option.
 
@@ -595,7 +599,7 @@ What's interesting about 0MQ as compared to traditional centralized brokers is t
 
 It is a common requirement to extend a publish-subscribe architecture over more than one network segment or transport.  Perhaps there are a group of subscribers sitting at a remote location.  Perhaps we want to publish to local subscribers via multicast, and to remote subscribers via TCP.
 
-We're going to write a simple proxy server that sits in between a publisher and a set of subscribers, bridging two networks.  This is perhaps the simplest case of a useful device.  The device has two sockets, a frontend facing subscribers on the external network and a backend facing the internal network, where the weather server is sitting.  It subscribes to the weather service on the backend socket, and republishes its data on the frontend socket:
+We're going to write a simple proxy server that sits in between a publisher and a set of subscribers, bridging two networks.  This is perhaps the simplest case of a useful device.  The device has two sockets, a frontend facing the internal network, where the weather server is sitting, and a backend facing subscribers on the external network.  It subscribes to the weather service on the frontend socket, and republishes its data on the backend socket:
 
 [[code type="C" title="Weather update proxy" name="wuproxy"]]
 [[/code]]
