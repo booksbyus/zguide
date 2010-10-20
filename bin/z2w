@@ -218,11 +218,11 @@ print IMAGES "</html>\n";
 close (IMAGES);
 close (OUTPUT);
 
-system ("rm -f images/*");
+system ("rm -f images/fig*");
 system ("java -jar /usr/local/bin/ditaa0_9.jar images.html -o -h -E output.html");
 #   Need to trim twice for reasons I don't care to explore
-system ("mogrify -trim images/*.png");
-system ("mogrify -trim images/*.png");
+system ("mogrify -trim images/fig*.png");
+system ("mogrify -trim images/fig*.png");
 system ("rm output.html images.html");
 
 exit (0);
