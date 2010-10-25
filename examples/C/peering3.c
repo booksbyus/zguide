@@ -279,6 +279,11 @@ int main (int argc, char *argv [])
             zmsg_send (&zmsg, statebe);
         }
     }
+    //  We never get here but clean up anyhow
+    zmq_close (localbe);
+    zmq_close (cloudbe);
+    zmq_close (statefe);
+    zmq_close (monitor);
     zmq_term (context);
     return EXIT_SUCCESS;
 }

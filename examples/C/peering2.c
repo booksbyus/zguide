@@ -200,6 +200,9 @@ int main (int argc, char *argv [])
             }
         }
     }
+    //  We never get here but clean up anyhow
+    zmq_close (localbe);
+    zmq_close (cloudbe);
     zmq_term (context);
     return EXIT_SUCCESS;
 }

@@ -32,6 +32,7 @@ int main (int argc, char *argv[])
     printf ("Average temperature for zipcode '%s' was %dF\n",
         filter, (int) (total_temp / update_nbr));
 
+    zmq_close (subscriber);
     zmq_term (context);
     return 0;
 }

@@ -47,6 +47,7 @@ int main (int argc, char *argv[])
     total_msec = tdiff.tv_sec * 1000 + tdiff.tv_usec / 1000;
     printf ("Total elapsed time: %d msec\n", total_msec);
 
+    zmq_close (receiver);
     zmq_term (context);
     return 0;
 }

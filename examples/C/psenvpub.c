@@ -18,6 +18,8 @@ int main () {
         s_send (publisher, "We would like to see this");
         sleep (1);
     }
+    //  We never get here but clean up anyhow
+    zmq_close (publisher);
     zmq_term (context);
     return 0;
 }

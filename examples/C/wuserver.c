@@ -26,6 +26,7 @@ int main () {
         sprintf (update, "%05d %d %d", zipcode, temperature, relhumidity);
         s_send (publisher, update);
     }
+    zmq_close (publisher);
     zmq_term (context);
     return 0;
 }

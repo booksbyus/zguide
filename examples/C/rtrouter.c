@@ -25,6 +25,8 @@ int main () {
     s_send     (worker, "send to server");
     s_dump     (server);
 
+    zmq_close (worker);
+    zmq_close (server);
     zmq_term (context);
     return 0;
 }

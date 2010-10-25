@@ -19,6 +19,7 @@ int main () {
         printf ("Received reply %d [%s]\n", request_nbr, string);
         free (string);
     }
+    zmq_close (requester);
     zmq_term (context);
     return 0;
 }

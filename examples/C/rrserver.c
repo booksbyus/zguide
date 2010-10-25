@@ -24,6 +24,8 @@ int main () {
         //  Send reply back to client
         s_send (responder, "World");
     }
+    //  We never get here but clean up anyhow
+    zmq_close (responder);
     zmq_term (context);
     return 0;
 }

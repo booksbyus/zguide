@@ -155,6 +155,8 @@ int main (int argc, char *argv[])
         }
     }
     sleep (1);
+    zmq_close (frontend);
+    zmq_close (backend);
     zmq_term (context);
     return 0;
 }

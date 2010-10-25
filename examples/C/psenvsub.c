@@ -19,6 +19,8 @@ int main () {
         free (address);
         free (contents);
     }
+    //  We never get here but clean up anyhow
+    zmq_close (subscriber);
     zmq_term (context);
     return 0;
 }

@@ -50,6 +50,9 @@ int main (int argc, char *argv[])
             }
         }
     }
+    //  We never get here but clean up anyhow
+    zmq_close (frontend);
+    zmq_close (backend);
     zmq_term (context);
     return 0;
 }

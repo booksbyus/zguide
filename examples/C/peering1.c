@@ -68,6 +68,8 @@ int main (int argc, char *argv [])
             zmsg_send (&zmsg, statebe);
         }
     }
+    //  We never get here but clean up anyhow
+    zmq_close (statefe);
     zmq_term (context);
     return EXIT_SUCCESS;
 }

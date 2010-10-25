@@ -36,6 +36,8 @@ int main (int argc, char *argv[])
     }
     printf ("Received %d updates\n", update_nbr);
 
+    zmq_close (subscriber);
+    zmq_close (syncclient);
     zmq_term (context);
     return 0;
 }

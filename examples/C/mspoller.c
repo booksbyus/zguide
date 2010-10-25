@@ -39,6 +39,9 @@ int main (int argc, char *argv[])
             zmq_msg_close (&message);
         }
     }
+    //  We never get here
+    zmq_close (receiver);
+    zmq_close (subscriber);
     zmq_term (context);
     return 0;
 }

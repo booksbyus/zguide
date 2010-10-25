@@ -59,6 +59,9 @@ int main (int argc, char *argv[])
             break;                      //  Exit loop
     }
     //  Finished
+    zmq_close (receiver);
+    zmq_close (sender);
+    zmq_close (controller);
     zmq_term (context);
     return 0;
 }

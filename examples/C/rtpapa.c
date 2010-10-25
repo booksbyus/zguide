@@ -36,6 +36,7 @@ int main () {
     //  Now dump what we got off the XREP socket...
     s_dump (client);
 
+    zmq_close (client);
     zmq_term (context);
     return 0;
 }

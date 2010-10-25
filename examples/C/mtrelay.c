@@ -47,6 +47,7 @@ int main () {
     free (string);
 
     printf ("Test successful!\n");
+    zmq_close (receiver);
     zmq_term (context);
     return 0;
 }

@@ -31,6 +31,7 @@ int main () {
             (char *) zmq_msg_data (&reply));
         zmq_msg_close (&reply);
     }
+    zmq_close (requester);
     zmq_term (context);
     return 0;
 }

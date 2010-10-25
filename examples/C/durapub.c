@@ -29,6 +29,9 @@ int main () {
     s_send (publisher, "END");
 
     sleep (1);              //  Give 0MQ/2.0.x time to flush output
+
+    zmq_close (sync);
+    zmq_close (publisher);
     zmq_term (context);
     return 0;
 }

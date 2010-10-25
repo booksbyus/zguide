@@ -23,6 +23,8 @@ int main () {
     s_send (identified, "XREP socket uses REQ's socket identity");
     s_dump (sink);
 
+    zmq_close (anonymous);
+    zmq_close (identified);
     zmq_term (context);
     return 0;
 }
