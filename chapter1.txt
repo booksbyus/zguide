@@ -7,7 +7,7 @@
 .prelude prelude.txt
 
 .output chapter1.wd
-Written by Pieter Hintjens <ph@imatix.com>, CEO iMatix Corporation.  Thanks to Bill Desmarais, Brian Dorsey, CAF, Daniel Lin, Eric Desgranges, Gonzalo Diethelm, Guido Goldstein, Hunter Ford, Kamil Shakirov, Martin Sustrik, Mike Castleman, Naveen Chawla, Nicola Peduzzi, Oliver Smith, Olivier Chamoux, Peter Alexander, Pierre Rouleau, Randy Dryburgh, John Unwin, Alex Thomas, rofl0r and Zed Shaw for their contributions, and to Stathis Sideris for [http://www.ditaa.org Ditaa].
+Written by Pieter Hintjens <ph@imatix.com>, CEO iMatix Corporation.  Thanks to Bill Desmarais, Brian Dorsey, CAF, Daniel Lin, Eric Desgranges, Gonzalo Diethelm, Guido Goldstein, Hunter Ford, Kamil Shakirov, Martin Sustrik, Mike Castleman, Naveen Chawla, Nicola Peduzzi, Oliver Smith, Olivier Chamoux, Peter Alexander, Pierre Rouleau, Randy Dryburgh, John Unwin, Alex Thomas, rofl0r, Mihail Minkov and Zed Shaw for their contributions, and to Stathis Sideris for [http://www.ditaa.org Ditaa].
 
 Please use the [$(GIT)/issues issue tracker] for all comments and errata.  This version covers 0MQ version 2.0.x and was published on &date("ddd d mmmm, yyyy") at &time().
 
@@ -495,6 +495,8 @@ worker_thread (void *arg) {
 }
 [[/code]]
 
+In the end, the application was passing sockets between threads, which crashed weirdly on 0MQ/2.0.x, but was fixed 0MQ/2.1.x.  It wasn't really a coding error at all, just misuse of the API.
+
 +++ Getting the Context Right
 
 0MQ applications always start by creating a //context//, and then using that for creating sockets.  In C, it's the zmq_init[3] call.  You should create and use exactly one context in your process.  Technically, the context is the container for all sockets in a single process, and acts as the transport for "inproc" sockets, which are the fastest way to connect threads in one process.  If at runtime a process has two contexts, these are like separate 0MQ instances.  If that's explicitly what you want, OK, but otherwise remember:
@@ -824,7 +826,9 @@ As you start to program with 0MQ you will come across one problem more than once
                  Figure # - 0MQ Problem Solver
 [[/code]]
 
-If you're using 0MQ in an enterprise context, you will want a support contract from iMatix.  It can be enormously stressful to find that your shiny 0MQ framework is doing weird stuff just as you scale it up in production.  Smart businesses using 0MQ make sure they have someone to call, just in case.
+If you're using 0MQ in a context where failures are expensive, then you want plan properly.  First, build prototypes that let you learn and test the different aspects of your design.  Stress them until they break, so that you know exactly how strong your designs are.  Second, invest in testing.  This means building test frameworks, ensuring you have access to realistic setups with sufficient computer power, and getting time or help to actually test seriously.  Ideally, one team writes the code, a second team tries to break it.  Lastly, do get your organization to [http://www.imatix.com/contact contact iMatix] to discuss how we can help to make sure things work properly, and can be fixed rapidly if they break.
+
+In short: if you have not proven an architecture works in realistic conditions, it will most likely break at the worst possible moment.
 
 +++ Warning - Unstable Paradigms!
 

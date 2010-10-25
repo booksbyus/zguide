@@ -155,7 +155,7 @@ Let's look at the main differences between TCP sockets and 0MQ sockets when it c
 
 * 0MQ sockets can, depending on the socket type, be connected to (or from, it's the same) many other sockets.  Where TCP emulates a one-to-one phone call, 0MQ implements one-to-many (like a radio broadcast), many-to-many (like a post office), many-to-one (like a mail box), and even one-to-one.
 
-* 0MQ sockets can send to many endpoints (creating a fan-in model), or receive from many endpoints (creating a fan-out model).
+* 0MQ sockets can send to many endpoints (creating a fan-out model), or receive from many endpoints (creating a fan-in model).
 
 [[code type="textdiagram"]]
         +------------+           +------------+
@@ -196,6 +196,36 @@ For most common cases, use **tcp**, which is a //disconnected TCP// transport.  
 The inter-process transport, **ipc**, is like {{tcp}} except that it is abstracted from the LAN, so you don't need to specify IP addresses or domain names.  This makes it better for some purposes, and we use it quite often in the examples in this book.  0MQ's {{ipc}} transport is disconnected, like {{tcp}}.  It has one limitation: it does not work on Windows.  This may be fixed in future versions of 0MQ.  By convention we use endpoint names with an ".ipc" extension to avoid potential conflict with other file names.  On UNIX systems, if you use {{ipc}} endpoints you need to create these with appropriate permissions otherwise they may not be shareable between processes running under different user ids.
 
 The inter-thread transport, **inproc**, is a connected signaling transport.  It is much faster than {{tcp}} or {{ipc}}.  This transport has a specific limitation compared to {{ipc}} and {{tcp}}: **you must do bind before connect**.  This is something future versions of 0MQ may fix, but for today it has some impact on the way you use {{inproc}} sockets.  When we use this in examples, we carefully bind to each endpoint before connecting to it.  If we connect first, and then bind, the connect will return an error, and if we ignore that error, the recv will block.
+
++++ 0MQ is Not a Neutral Carrier
+
+A common question that newcomers to 0MQ ask (it's one I asked myself) is something like, "//how do I write a XYZ server in 0MQ?//"  For example, "how do I write an HTTP server in 0MQ?"
+
+The implication is that if we use normal sockets to carry HTTP requests and responses, we should be able to use 0MQ sockets to do the same, only much faster and better.
+
+Sadly the answer is "this is not how it works".  0MQ is not a neutral carrier, it imposes a framing on the transport protocols it uses.  This framing is not compatible with existing protocols, which tend to use their own framing.  For example, here is an HTTP request, and a 0MQ request, both over TCP/IP:
+
+[[code type="textdiagram"]]
+    +----------------+----+----+----+----+
+    | GET /index.html| 13 | 10 | 13 | 10 |
+    +----------------+----+----+----+----+
+
+           Figure # - HTTP request
+[[/code]]
+
+Where the HTTP request uses CR-LF as its simplest framing delimiter, and 0MQ uses a length-specified frame:
+
+[[code type="textdiagram"]]
+    +---+---+---+---+---+---+
+    | 5 | H | E | L | L | O |
+    +---+---+---+---+---+---+
+
+      Figure # - 0MQ request
+[[/code]]
+
+So you could write a HTTP-like protocol using 0MQ, using for example the request-reply socket pattern.  But it would not be HTTP.
+
+There is however a good answer to the question, "how can I make profitable use of 0MQ when making my new XYZ server?"  You need to implement whatever protocol you want to speak in any case, but you can connect that protocol server (which can be extremely thin) to a 0MQ backend that does the real work.  The beautiful part here is that you can then extend your backend with code in any language, running locally or remotely, as you wish.  Zed Shaw's [http://www.mongrel2.org Mongrel2] web server is a great example of such an architecture.
 
 +++ I/O Threads
 
@@ -809,7 +839,7 @@ Using a request-reply broker makes your client-server architectures easier to sc
 * FORWARDER, which is like the pub-sub proxy server.
 * STREAMER, which is like FORWARDER but for pipeline flows.
 
-To start a device, you call zmq_queue[3] and pass it two sockets, one for the frontend and one for the backend:
+To start a device, you call zmq_device[3] and pass it two sockets, one for the frontend and one for the backend:
 
 [[code]]
 zmq_device (ZMQ_QUEUE, frontend, backend);

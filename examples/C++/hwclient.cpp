@@ -23,7 +23,7 @@ int main ()
         printf ("Sending request %d...\n", request_nbr);
         socket.send (request);
 
-        //  Get the reply. 
+        //  Get the reply.
         zmq::message_t reply;
         socket.recv (&reply);
         printf ("Received reply %d: [%s]\n", request_nbr,
