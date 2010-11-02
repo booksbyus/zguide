@@ -1,13 +1,40 @@
-No-one has translated the taskvent example into Python yet.  Be the first to create
-taskvent in Python and get one free Internet!  If you're the author of the Python
-binding, this is a great way to get people to use 0MQ in Python.
+# Task ventilator
+# Binds PUSH socket to tcp://localhost:5557
+# Sends batch of tasks to workers via that socket
+#
+# Author: Lev Givon <lev(at)columbia(dot)edu>
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+import zmq
+import random
+import time
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+context = zmq.Context()
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+# Socket to send messages on
+sender = context.socket(zmq.PUSH)
+sender.bind("tcp://*:5557")
+
+print "Press Enter when the workers are ready: "
+_ = raw_input()
+print "Sending tasks to workers..."
+
+# The first message is "0" and signals start of batch
+sender.send('0')
+
+# Initialize random number generator
+random.seed()
+
+# Send 100 tasks
+total_msec = 0
+for task_nbr in range(100):
+
+    # Random workload from 1 to 100 msecs
+    workload = random.randint(1, 100)
+    total_msec += workload
+
+    sender.send(str(workload))
+
+print "Total expected cost: %s msec" % total_msec
+
+# Give 0MQ time to deliver
+time.sleep(1)

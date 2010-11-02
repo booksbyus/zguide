@@ -1,13 +1,35 @@
-No-one has translated the tasksink example into Python yet.  Be the first to create
-tasksink in Python and get one free Internet!  If you're the author of the Python
-binding, this is a great way to get people to use 0MQ in Python.
+# Task sink
+# Binds PULL socket to tcp://localhost:5558
+# Collects results from workers via that socket
+#
+# Author: Lev Givon <lev(at)columbia(dot)edu>
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+import sys
+import time
+import zmq
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+context = zmq.Context()
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+# Socket to receive messages on
+receiver = context.socket(zmq.PULL)
+receiver.bind("tcp://*:5558")
+
+# Wait for start of batch
+s = receiver.recv()
+
+# Start our clock now
+tstart = time.time()
+
+# Process 100 confirmations
+total_msec = 0
+for task_nbr in range(100):
+    s = receiver.recv()
+    if task_nbr % 10 == 0:
+        sys.stdout.write(':')
+    else:
+        sys.stdout.write('.')
+
+# Calculate and report duration of batch
+tend = time.time()
+print "Total elapsed time: %d msec" % ((tend-tstart)*1000)
+
