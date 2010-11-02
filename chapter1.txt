@@ -7,7 +7,7 @@
 .prelude prelude.txt
 
 .output chapter1.wd
-Written by Pieter Hintjens <ph@imatix.com>, CEO iMatix Corporation.  Thanks to Bill Desmarais, Brian Dorsey, CAF, Daniel Lin, Eric Desgranges, Gonzalo Diethelm, Guido Goldstein, Hunter Ford, Kamil Shakirov, Martin Sustrik, Mike Castleman, Naveen Chawla, Nicola Peduzzi, Oliver Smith, Olivier Chamoux, Peter Alexander, Pierre Rouleau, Randy Dryburgh, John Unwin, Alex Thomas, rofl0r, Mihail Minkov and Zed Shaw for their contributions, and to Stathis Sideris for [http://www.ditaa.org Ditaa].
+Written by Pieter Hintjens <ph@imatix.com>, CEO iMatix Corporation.  Thanks to Bill Desmarais, Brian Dorsey, CAF, Daniel Lin, Eric Desgranges, Gonzalo Diethelm, Guido Goldstein, Hunter Ford, Kamil Shakirov, Martin Sustrik, Mike Castleman, Naveen Chawla, Nicola Peduzzi, Oliver Smith, Olivier Chamoux, Peter Alexander, Pierre Rouleau, Randy Dryburgh, John Unwin, Alex Thomas, rofl0r, Mihail Minkov, Jeremy Avnet, and Zed Shaw for their contributions, and to Stathis Sideris for [http://www.ditaa.org Ditaa].
 
 Please use the [$(GIT)/issues issue tracker] for all comments and errata.  This version covers 0MQ version 2.0.x and was published on &date("ddd d mmmm, yyyy") at &time().
 
@@ -407,6 +407,7 @@ Having seen some examples, you're eager to start using 0MQ in some apps.  Before
 To illustrate, here is a fragment of code someone asked me to help fix:
 
 [[code]]
+//  NOTE: do NOT reuse this example code!
 static char *topic_str = "msg.x|";
 
 void* pub_worker(void* arg){
@@ -432,6 +433,8 @@ void* pub_worker(void* arg){
     zmq_msg_init_data(&topic_msg, topic_str, strlen(topic_str) , NULL, NULL);
 
     fprintf(stdout,"WORKER: ready to recieve messages\n");
+    //  NOTE: do NOT reuse this example code, It's broken.
+    //  e.g. topic_msg will be invalid the second time through
     while (1){
     zmq_send(pubskt, &topic_msg, ZMQ_SNDMORE);
 
