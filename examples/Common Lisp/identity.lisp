@@ -17,15 +17,16 @@
 
 (defun main ()
   (zmq:with-context (context 1)
-    ;; First allow 0MQ to set the identity
     (zmq:with-socket (sink context zmq:xrep)
       (zmq:bind sink "inproc://example")
 
+      ;; First allow 0MQ to set the identity
       (zmq:with-socket (anonymous context zmq:req)
         (zmq:connect anonymous "inproc://example")
         (send-text anonymous "XREP uses a generated UUID")
         (dump-socket sink)
 
+        ;; Then set the identity ourself
         (zmq:with-socket (identified context zmq:req)
           (zmq:setsockopt identified zmq:identity "Hello")
           (zmq:connect identified "inproc://example")
