@@ -8,15 +8,16 @@
 int main () {
     void *context = zmq_init (1);
 
-    //  First allow 0MQ to set the identity
     void *sink = zmq_socket (context, ZMQ_XREP);
     zmq_bind (sink, "inproc://example");
 
+    //  First allow 0MQ to set the identity
     void *anonymous = zmq_socket (context, ZMQ_REQ);
     zmq_connect (anonymous, "inproc://example");
     s_send (anonymous, "XREP uses a generated UUID");
     s_dump (sink);
 
+    //  Then set the identity ourself
     void *identified = zmq_socket (context, ZMQ_REQ);
     zmq_setsockopt (identified, ZMQ_IDENTITY, "Hello", 5);
     zmq_connect (identified, "inproc://example");
