@@ -251,6 +251,13 @@ if [ -n "$IBASE" ]; then
             echo "W: LIBDIR=$LIBDIR is in conflict with IBASE=$IBASE" 1>&2
         fi
     fi
+else
+    if [ -z "$INCDIR" ]; then
+        INCDIR=.
+    fi
+    if [ -z "$LIBDIR" ]; then
+        LIBDIR=.
+    fi
 fi
 
 #   Process switches in no particular order until there are none left
