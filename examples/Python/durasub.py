@@ -1,13 +1,29 @@
-No-one has translated the durasub example into Python yet.  Be the first to create
-durasub in Python and get one free Internet!  If you're the author of the Python
-binding, this is a great way to get people to use 0MQ in Python.
+# encoding: utf-8
+#
+#   Durable subscriber
+#
+#   Author: Jeremy Avnet (brainsik) <spork(dash)zmq(at)theory(dot)org>
+#
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+import zmq
+import time
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+context = zmq.Context()
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+# Connect our subscriber socket
+subscriber = context.socket(zmq.SUB)
+subscriber.setsockopt(zmq.IDENTITY, "Hello")
+subscriber.setsockopt(zmq.SUBSCRIBE, "")
+subscriber.connect("tcp://localhost:5565")
+
+# Syncronize with the publisher
+sync = context.socket(zmq.PUSH)
+sync.connect("tcp://localhost:5564")
+sync.send("")
+
+# Get updates, expect random Ctrl-C death
+while True:
+    data = subscriber.recv()
+    print data
+    if data == "END":
+        break
