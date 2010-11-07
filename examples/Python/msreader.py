@@ -2,6 +2,8 @@
 # Reading from multiple sockets
 # This version uses a simple recv loop
 #
+# Author: Kamil Kisiel <kamil@kamilkisiel.net>
+#
 import zmq
 import time
 

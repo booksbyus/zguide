@@ -2,6 +2,8 @@
 # Reading from multiple sockets
 # This version uses socket.poll()
 #
+# Author: Kamil Kisiel <kamil@kamilkisiel.net>
+#
 import zmq
 
 context = zmq.Context()
