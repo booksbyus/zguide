@@ -10,4 +10,4 @@ To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
 * You MUST state in the email that you license your code under the MIT/X11
   license.
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+Subscribe to the email list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.

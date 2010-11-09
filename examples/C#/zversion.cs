@@ -1,13 +1,17 @@
-No-one has translated the zversion example into C# yet.  Be the first to create
-zversion in C# and get one free Internet!  If you're the author of the C#
-binding, this is a great way to get people to use 0MQ in C#.
+﻿//
+//  Report 0MQ version
+//
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+//  Author:     Michael Compton
+//  Email:      michael.compton@littleedge.co.uk
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+using System;
+using ZMQ;
 
-Subscribe to the email list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+namespace ZMQGuide {
+    class Program {
+        static void Main(string[] args) {
+            Console.WriteLine(ZHelpers.Version());
+        }
+    }
+}
