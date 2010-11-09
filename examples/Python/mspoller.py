@@ -29,10 +29,10 @@ poller.register(subscriber, zmq.POLLIN)
 while True:
     socks = dict(poller.poll())
 
-    if receiver in socks:
+    if receiver in socks and socks[receiver] == zmq.POLLIN:
         message = receiver.recv()
         # process task
 
-    if subscriber in socks:
+    if subscriber in socks and socks[subscriber] == zmq.POLLIN:
         message = subscriber.recv()
         # process weather update

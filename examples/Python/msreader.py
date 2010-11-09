@@ -42,4 +42,4 @@ while True:
         # process weather update
 
     # No activity, so sleep for 1 msec
-    time.sleep(0.1)
+    time.sleep(0.001)
