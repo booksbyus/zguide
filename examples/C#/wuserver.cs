@@ -1,13 +1,40 @@
-No-one has translated the wuserver example into C# yet.  Be the first to create
-wuserver in C# and get one free Internet!  If you're the author of the C#
-binding, this is a great way to get people to use 0MQ in C#.
+﻿//
+//  Weather update server
+//  Binds PUB socket to tcp://*:5556
+//  Publishes random weather updates
+//
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+//  Author:     Michael Compton
+//  Email:      michael.compton@littleedge.co.uk
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+using System;
+using System.Text;
+using ZMQ;
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+namespace ZMQGuide {
+    class Program {
+        static void Main(string[] args) {
+            //  Prepare our context and publisher
+            using (Context context = new Context(1)) {
+                using (Socket publisher = context.Socket(SocketType.PUB)) {
+                    publisher.Connect("tcp://localhost:5556");
+                    
+                    //  Initialize random number generator
+                    Random rand = new Random(System.DateTime.Now.Millisecond);
+                    while (true) {
+                        //  Get values that will fool the boss
+                        int zipcode, temperature, relHumidity;
+                        zipcode = rand.Next(0, 100000);
+                        temperature = rand.Next(-80, 135);
+                        relHumidity = rand.Next(10, 60);
+
+                        //  Send message to all subscribers
+                        string update = zipcode.ToString() + " " + temperature.ToString() +
+                            " " + relHumidity.ToString();
+                        publisher.Send(update, Encoding.Unicode);
+                    }
+                }
+            }
+        }
+    }
+}

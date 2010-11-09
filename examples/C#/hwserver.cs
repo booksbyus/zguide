@@ -1,43 +1,37 @@
+﻿//
+//  Hello World server
+//  Binds REP socket to tcp://*:5555
+//  Expects "Hello" from client, replies with "World"
+//
+
+//  Author:     Michael Compton
+//  Email:      michael.compton@littleedge.co.uk
+
 using System;
-using System.Collections.Generic;
-using System.Threading;
 using System.Text;
+using System.Threading;
+using ZMQ;
 
-/**
- *  Author: Randy Dryburgh
- *  Email: me@rwd.im
- *  License: This example code licensed under the MIT/X11 license.
- */
-
-namespace Examples {
-    class hwserver {
+namespace ZMQGuide {
+    class Program {
         static void Main(string[] args) {
-            // allocate a buffer
-            byte[] zmq_buffer = new byte[1024];
+            // ZMQ Context
+            using (Context context = new Context(1)) {
+                // Socket to talk to clients
+                using (Socket socket = context.Socket(SocketType.REP)) {
+                    socket.Bind("tcp://*:5555");
+                    
+                    while (true) {
+                        // Wait for next request from client
+                        string message = socket.Recv(Encoding.Unicode);
+                        Console.WriteLine("Received request: {0}", message);
 
-            //  Prepare our context and socket
-            ZMQ.Context context = new ZMQ.Context(1);
-            ZMQ.Socket  socket = context.Socket(ZMQ.REP);
-            socket.Bind("tcp://*:5555");
+                        // Do Some 'work'
+                        Thread.Sleep(1000);
 
-            while (true) {
-                try {
-                    //  Wait for next request from client
-                    socket.Recv(out zmq_buffer);
-                    string request = Encoding.ASCII.GetString(zmq_buffer);
-
-                    // log that we got one
-                    Console.WriteLine("Received request: [%s]", request);
-
-                    //  Do some 'work'
-                    Thread.Sleep(1);
-
-                    //  Send reply back to client
-                    socket.Send(Encoding.ASCII.GetBytes("World".ToCharArray()));
-
-                } catch (ZMQ.Exception z) {
-                    // report the exception
-                    Console.WriteLine("ZMQ Exception occurred : {0}", z.Message);
+                        // Send reply back to client
+                        socket.Send("World", Encoding.Unicode);
+                    }
                 }
             }
         }
