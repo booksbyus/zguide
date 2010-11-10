@@ -27,7 +27,6 @@ receiver.recv()
 tstart = time.time()
 
 # Process 100 confirmiations
-total_msec = 0  # Total calculated cost in msecs
 for task_nbr in xrange(100):
     receiver.recv()
     if task_nbr % 10 == 0:
@@ -35,6 +34,7 @@ for task_nbr in xrange(100):
     else:
         sys.stdout.write(".")
     sys.stdout.flush()
+
 # Calculate and report duration of batch
 tend = time.time()
 tdiff = tend - tstart
