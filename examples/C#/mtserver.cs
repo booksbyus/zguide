@@ -1,13 +1,51 @@
-No-one has translated the mtserver example into C# yet.  Be the first to create
-mtserver in C# and get one free Internet!  If you're the author of the C#
-binding, this is a great way to get people to use 0MQ in C#.
+﻿//
+//  Multithreaded Hello World server
+//
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+//  Author:     Michael Compton
+//  Email:      michael.compton@littleedge.co.uk
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+using System;
+using System.Text;
+using System.Threading;
+using ZMQ;
 
-Subscribe to the email list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+namespace ZMQGuide {
+    class Program {
+
+        static void WorkerRoutine(object context) {
+            //  Socket to talk to dispatcher
+            Socket receiver = ((Context)context).Socket(SocketType.REP);
+            receiver.Connect("inproc://workers");
+            while (true) {
+                string message = receiver.Recv(Encoding.Unicode);
+                //  Do some 'work'
+                Thread.Sleep(1000);
+                //  Send reply back to client
+                receiver.Send("World", Encoding.Unicode);
+            }
+        }
+
+        static void Main(string[] args) {
+            using (Context context = new Context(1)) {
+                using (Socket clients = context.Socket(SocketType.XREP),
+                workers = context.Socket(SocketType.XREQ)) {
+                    //  Socket to talk to clients
+                    clients.Bind("tcp://*:5555");
+                    //  Socket to talk to workers
+                    workers.Bind("inproc://workers");
+                    
+                    //  Launch pool of worker threads
+                    Thread[] workerThreads = new Thread[5];
+                    for (int count = 0; count < workerThreads.Length; count++) {
+                        workerThreads[count] = new Thread(WorkerRoutine);
+                        workerThreads[count].Start(context);
+                    }
+
+                    //  Connect work threads to client threads via a queue
+                    Socket.Device.Queue(clients, workers);
+                }
+            }
+        }
+    }
+}

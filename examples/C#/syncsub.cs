@@ -1,13 +1,42 @@
-No-one has translated the syncsub example into C# yet.  Be the first to create
-syncsub in C# and get one free Internet!  If you're the author of the C#
-binding, this is a great way to get people to use 0MQ in C#.
+﻿//
+//  Synchronized subscriber
+//
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+//  Author:     Michael Compton
+//  Email:      michael.compton@littleedge.co.uk
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+using System;
+using System.Text;
+using System.Threading;
+using ZMQ;
 
-Subscribe to the email list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+namespace ZMQGuide {
+    class Program {
+        static void Main(string[] args) {
+            using (Context context = new Context(1)) {
+                using (Socket subscriber = context.Socket(SocketType.SUB),
+                    syncClient = context.Socket(SocketType.REQ)) {
+                    
+                    //  First, connect our subscriber socket
+                    subscriber.Connect("tcp://localhost:5561");
+                    subscriber.Subscribe("", Encoding.Unicode);
+
+                    //  Second, synchronize with publisher
+                    syncClient.Connect("tcp://localhost:5562");
+                    
+                    //  - send a synchronization request
+                    syncClient.Send("", Encoding.Unicode);
+                    //  - wait for synchronization reply
+                    syncClient.Recv();
+                    
+                    //  Third, get our updates and report how many we got
+                    int nbrUpdates = 0;
+                    while (!subscriber.Recv(Encoding.Unicode).Equals("END")) {
+                        nbrUpdates++;
+                    }
+                    Console.WriteLine("Received {0} updates.", nbrUpdates);
+                }
+            }
+        }
+    }
+}

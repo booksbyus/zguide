@@ -1,13 +1,33 @@
-No-one has translated the psenvsub example into C# yet.  Be the first to create
-psenvsub in C# and get one free Internet!  If you're the author of the C#
-binding, this is a great way to get people to use 0MQ in C#.
+﻿//
+//  Pubsub envelope subscriber
+//
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+//  Author:     Michael Compton
+//  Email:      michael.compton@littleedge.co.uk
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+using System;
+using System.Text;
+using System.Threading;
+using ZMQ;
 
-Subscribe to the email list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+namespace ZMQGuide {
+    class Program {
+        static void Main(string[] args) {
+            //  Prepare our context and subscriber  
+            using (Context context = new Context(1)) {
+                using (Socket subscriber = context.Socket(SocketType.SUB)) {
+                    subscriber.Connect("tcp://localhost:5563");
+                    subscriber.Subscribe("B", Encoding.Unicode);
+
+                    while (true) {
+                        //  Read envelope with address
+                        string address = subscriber.Recv(Encoding.Unicode);
+                        //  Read message contents
+                        string contents = subscriber.Recv(Encoding.Unicode);
+                        Console.WriteLine("{0} : {1}", address, contents);
+                    }
+                }
+            }
+        }
+    }
+}
