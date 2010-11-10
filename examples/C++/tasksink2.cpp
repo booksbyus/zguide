@@ -49,7 +49,7 @@ int main (int argc, char *argv[])
         tdiff.tv_sec = tend.tv_sec - tstart.tv_sec;
         tdiff.tv_usec = tend.tv_usec - tstart.tv_usec;
     }
-    total_msec = tdiff.tv_sec * 1000 + tdiff.tv_usec / 1000;
+    int total_msec = tdiff.tv_sec * 1000 + tdiff.tv_usec / 1000;
     std::cout << "\nTotal elapsed time: " << total_msec 
     		<< " msec\n" << std::endl;
 
