@@ -1,13 +1,48 @@
-No-one has translated the tasksink2 example into Python yet.  Be the first to create
-tasksink2 in Python and get one free Internet!  If you're the author of the Python
-binding, this is a great way to get people to use 0MQ in Python.
+# encoding: utf-8
+#
+#   Task sink - design 2
+#   Adds pub-sub flow to send kill signal to workers
+#
+#   Author: Jeremy Avnet (brainsik) <spork(dash)zmq(at)theory(dot)org>
+#
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+import sys
+import time
+import zmq
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+context = zmq.Context()
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+# Socket to receive messages on
+receiver = context.socket(zmq.PULL)
+receiver.bind("tcp://*:5558")
+
+# Socket for worker control
+controller = context.socket(zmq.PUB)
+controller.bind("tcp://*:5559")
+
+# Wait for start of batch
+receiver.recv()
+
+# Start our clock now
+tstart = time.time()
+
+# Process 100 confirmiations
+total_msec = 0  # Total calculated cost in msecs
+for task_nbr in xrange(100):
+    receiver.recv()
+    if task_nbr % 10 == 0:
+        sys.stdout.write(":")
+    else:
+        sys.stdout.write(".")
+    sys.stdout.flush()
+# Calculate and report duration of batch
+tend = time.time()
+tdiff = tend - tstart
+total_msec = tdiff * 1000
+print "Total elapsed time: %d msec" % total_msec
+
+# Send kill signal to workers
+controller.send("KILL")
+
+# Finished
+time.sleep(1)  # Give 0MQ time to deliver

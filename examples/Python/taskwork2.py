@@ -1,13 +1,54 @@
-No-one has translated the taskwork2 example into Python yet.  Be the first to create
-taskwork2 in Python and get one free Internet!  If you're the author of the Python
-binding, this is a great way to get people to use 0MQ in Python.
+# encoding: utf-8
+#
+#   Task worker - design 2
+#   Adds pub-sub flow to receive and respond to kill signal
+#
+#   Author: Jeremy Avnet (brainsik) <spork(dash)zmq(at)theory(dot)org>
+#
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+import sys
+import time
+import zmq
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+context = zmq.Context()
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+# Socket to receive messages on
+receiver = context.socket(zmq.PULL)
+receiver.connect("tcp://localhost:5557")
+
+# Socket to send messages to
+sender = context.socket(zmq.PUSH)
+sender.connect("tcp://localhost:5558")
+
+# Socket for control input
+controller = context.socket(zmq.SUB)
+controller.connect("tcp://localhost:5559")
+controller.setsockopt(zmq.SUBSCRIBE, "")
+
+# Process messages from receiver and controller
+poller = zmq.Poller()
+poller.register(receiver, zmq.POLLIN)
+poller.register(controller, zmq.POLLIN)
+# Process messages from both sockets
+while True:
+    socks = dict(poller.poll())
+
+    if socks.get(receiver) == zmq.POLLIN:
+        message = receiver.recv()
+
+        # Process task
+        workload = int(message)  # Workload in msecs
+
+        # Do the work
+        time.sleep(workload / 1000.0)
+
+        # Send results to sink
+        sender.send(message)
+
+        # Simple progress indicator for the viewer
+        sys.stdout.write(".")
+        sys.stdout.flush()
+
+    # Any waiting controller command acts as 'KILL'
+    if socks.get(controller) == zmq.POLLIN:
+        break
