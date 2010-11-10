@@ -1,13 +1,41 @@
-No-one has translated the syncpub example into C# yet.  Be the first to create
-syncpub in C# and get one free Internet!  If you're the author of the C#
-binding, this is a great way to get people to use 0MQ in C#.
+﻿//
+//  Synchronized publisher
+//
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+//  Author:     Michael Compton
+//  Email:      michael.compton@littleedge.co.uk
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+using System;
+using System.Text;
+using System.Threading;
+using ZMQ;
 
-Subscribe to the email list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+namespace ZMQGuide {
+    class Program {
+        const int NUM_OF_SUBSCRIBERS = 10;
+
+        static void Main(string[] args) {
+            using (Context context = new Context(1)) {
+                using (Socket publisher = context.Socket(SocketType.PUB),
+                    syncService = context.Socket(SocketType.REP)) {
+                    //  Socket to talk to clients
+                    publisher.Bind("tcp://*:5561");
+                    //  Socket to receive signals
+                    syncService.Bind("tcp://*:5562");
+
+                    //  Get synchronization from subscribers
+                    for (int count = 0; count < NUM_OF_SUBSCRIBERS; count++) {
+                        syncService.Recv();
+                        syncService.Send("", Encoding.Unicode);
+                    }
+                    //  Now broadcast exactly 1M updates followed by END
+                    for (int nbrOfUpdates = 0; nbrOfUpdates < 1000000; nbrOfUpdates++) {
+                        publisher.Send("Rhubard", Encoding.Unicode);
+                    }
+                    publisher.Send("END", Encoding.Unicode);
+                    Thread.Sleep(1000);  //  Give 0MQ/2.0.x time to flush output
+                }
+            }
+        }
+    }
+}

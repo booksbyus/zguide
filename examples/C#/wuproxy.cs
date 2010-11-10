@@ -1,13 +1,37 @@
-No-one has translated the wuproxy example into C# yet.  Be the first to create
-wuproxy in C# and get one free Internet!  If you're the author of the C#
-binding, this is a great way to get people to use 0MQ in C#.
+﻿//
+//  Weather proxy device
+//
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+//  Author:     Michael Compton
+//  Email:      michael.compton@littleedge.co.uk
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+using System;
+using System.Text;
+using ZMQ;
 
-Subscribe to the email list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+namespace ZMQGuide {
+    class Program {
+        static void Main(string[] args) {
+            using (Context context = new Context(1)) {
+                using (Socket frontend = context.Socket(SocketType.SUB),
+                    backend = context.Socket(SocketType.PUB)) {
+                    //  This is where the weather server sits
+                    frontend.Connect("tcp://192.168.55.210:5556");
+                    //  Subscribe on everything
+                    frontend.Subscribe("", Encoding.Unicode);
+
+                    //  This is our public endpoint for subscribers
+                    backend.Bind("tcp://10.1.1.0:8100");
+
+                    //  Shunt messages out to our own subscribers
+                    bool isProcessing = true;
+                    while (isProcessing) {
+                        byte[] message = frontend.Recv();
+                        backend.Send(message, SendRecvOpt.SNDMORE);
+                        isProcessing = frontend.RcvMore;
+                    }
+                }
+            }
+        }
+    }
+}
