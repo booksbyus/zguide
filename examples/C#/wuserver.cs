@@ -17,7 +17,7 @@ namespace ZMQGuide {
             //  Prepare our context and publisher
             using (Context context = new Context(1)) {
                 using (Socket publisher = context.Socket(SocketType.PUB)) {
-                    publisher.Connect("tcp://localhost:5556");
+                    publisher.Bind("tcp://*:5556");
                     
                     //  Initialize random number generator
                     Random rand = new Random(System.DateTime.Now.Millisecond);
