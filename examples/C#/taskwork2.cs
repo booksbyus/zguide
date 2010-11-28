@@ -1,13 +1,55 @@
-No-one has translated the taskwork2 example into C# yet.  Be the first to create
-taskwork2 in C# and get one free Internet!  If you're the author of the C#
-binding, this is a great way to get people to use 0MQ in C#.
+//  Author:     Mark Kharitonov
+//  Email:      Mark.Kharitonov@shunra.co.il
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+using System;
+using System.Text;
+using System.Threading;
+using ZMQ;
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+namespace Worker
+{
+  class Program
+  {
+    static void Main(string[] args)
+    {
+      using (var context = new Context(1))
+      using (var receiver = context.Socket(SocketType.PULL))
+      {
+        receiver.Connect("tcp://localhost:5557");
 
-Subscribe to the email list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+        using (var sender = context.Socket(SocketType.PUSH))
+        {
+          sender.Connect("tcp://localhost:5558");
+
+          using (var controller = context.Socket(SocketType.SUB))
+          {
+            controller.Connect("tcp://localhost:5559");
+            controller.Subscribe(string.Empty, Encoding.Unicode);
+
+            bool run = true;
+            PollItem[] items = new PollItem[2];
+            items[0] = receiver.CreatePollItem(IOMultiPlex.POLLIN);
+            items[0].PollInHandler += (socket, revents) => ReceiverPollInHandler(socket, sender);
+            items[1] = controller.CreatePollItem(IOMultiPlex.POLLIN);
+            items[1].PollInHandler += delegate { run = false; };
+
+            //  Process tasks as long as the controller does not signal the end.
+            while (run)
+            {
+              context.Poll(items);
+            }
+          }
+        }
+      }
+    }
+
+    private static void ReceiverPollInHandler(Socket receiver, Socket sender)
+    {
+      var ms = receiver.Recv(Encoding.UTF8);
+      var timeout = TimeSpan.FromTicks(int.Parse(ms) * 10000L);
+      Console.WriteLine(ms);
+      Thread.Sleep(timeout);
+      sender.Send(string.Empty, Encoding.UTF8);
+    }
+  }
+}
