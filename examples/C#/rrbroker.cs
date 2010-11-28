@@ -1,13 +1,67 @@
-No-one has translated the rrbroker example into C# yet.  Be the first to create
-rrbroker in C# and get one free Internet!  If you're the author of the C#
-binding, this is a great way to get people to use 0MQ in C#.
+﻿//
+//  Simple request-reply broker
+//
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+//  Author:     Michael Compton
+//  Email:      michael.compton@littleedge.co.uk
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+using System;
+using System.Text;
+using ZMQ;
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+namespace ZMQGuide {
+    public class RRBroker {
+        private Context context;
+        private Socket backend;
+        private Socket frontend;
+
+        public RRBroker() {
+            //  Prepare our context and sockets
+            context = new Context(1);
+            frontend = context.Socket(SocketType.XREP);
+            backend = context.Socket(SocketType.XREQ);
+            frontend.Bind("tcp://*:5559");
+            backend.Bind("tcp://*:5560");
+        }
+
+        public void Broker() {
+            //  Initialize poll set
+            PollItem[] pollItems = new PollItem[2];
+            pollItems[0] = frontend.CreatePollItem(IOMultiPlex.POLLIN);
+            pollItems[0].PollInHandler += new PollHandler(FrontendPollInHandler);
+            pollItems[1] = backend.CreatePollItem(IOMultiPlex.POLLIN);
+            pollItems[1].PollInHandler += new PollHandler(BackendPollInHandler);
+            //  Switch messages between sockets
+            while (true) {
+                context.Poll(pollItems, -1);
+            }
+        }
+
+        private void FrontendPollInHandler(Socket socket, IOMultiPlex revents) {
+            //  Process all parts of the message
+            bool isProcessing = true;
+            while (isProcessing) {
+                byte[] message = socket.Recv();
+                backend.Send(message, socket.RcvMore ? SendRecvOpt.SNDMORE : 0);
+                isProcessing = socket.RcvMore;
+            }
+        }
+
+        private void BackendPollInHandler(Socket socket, IOMultiPlex revents) {
+            //  Process all parts of the message
+            bool isProcessing = true;
+            while (isProcessing) {
+                byte[] message = socket.Recv();
+                frontend.Send(message, socket.RcvMore ? SendRecvOpt.SNDMORE : 0);
+                isProcessing = socket.RcvMore;
+            }
+        }
+    }
+
+    class Program {
+        static void Main(string[] args) {
+            RRBroker broker = new RRBroker();
+            broker.Broker();
+        }
+    }
+}

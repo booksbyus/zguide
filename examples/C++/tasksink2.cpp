@@ -28,13 +28,11 @@ int main (int argc, char *argv[])
 
     //  Process 100 confirmations
     int task_nbr;
-    int total_msec = 0;     //  Total calculated cost in msecs
     for (task_nbr = 0; task_nbr < 100; task_nbr++) {
-    	
-		std::string *string = s_recv (receiver);
-		delete (string);
+        std::string *string = s_recv (receiver);
+        delete (string);
 		
-		if ((task_nbr / 10) * 10 == task_nbr)
+        if ((task_nbr / 10) * 10 == task_nbr)
             std::cout << ":" ;
         else
             std::cout << "." ;
@@ -51,7 +49,7 @@ int main (int argc, char *argv[])
         tdiff.tv_sec = tend.tv_sec - tstart.tv_sec;
         tdiff.tv_usec = tend.tv_usec - tstart.tv_usec;
     }
-    total_msec = tdiff.tv_sec * 1000 + tdiff.tv_usec / 1000;
+    int total_msec = tdiff.tv_sec * 1000 + tdiff.tv_usec / 1000;
     std::cout << "\nTotal elapsed time: " << total_msec 
     		<< " msec\n" << std::endl;
 

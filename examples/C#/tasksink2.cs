@@ -1,13 +1,53 @@
-No-one has translated the tasksink2 example into C# yet.  Be the first to create
-tasksink2 in C# and get one free Internet!  If you're the author of the C#
-binding, this is a great way to get people to use 0MQ in C#.
+﻿//
+//  Task worker - design 2
+//  Adds pub-sub flow to receive and respond to kill signal
+//
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+//  Author:     Michael Compton
+//  Email:      michael.compton@littleedge.co.uk
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+using System;
+using System.Text;
+using System.Diagnostics;
+using ZMQ;
+using System.Threading;
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+namespace ZMQGuide {
+    class Program {
+        static void Main(string[] args) {
+            using (Context context = new Context(1)) {
+                using (Socket receiver = context.Socket(SocketType.PULL),
+                    controller = context.Socket(SocketType.PUB)) {
+                    //  Socket to receive messages on
+                    receiver.Bind("tcp://*:5558");
+                    //  Socket for worker control
+                    controller.Bind("tcp://*:5559");
+                    
+                    //  Wait for start of batch
+                    receiver.Recv();
+
+                    //  Start our clock now
+                    Stopwatch stopwatch = new Stopwatch();
+                    stopwatch.Start();
+                    
+                    //  Process 100 confirmations
+                    int taskNbr = 0;
+                    for (; taskNbr < 100; taskNbr++) {
+                        receiver.Recv();
+                        if ((taskNbr / 10) * 10 == taskNbr)
+                            Console.WriteLine(":");
+                        else
+                            Console.WriteLine(".");
+                    }
+                    //  Calculate and report duration of batch
+                    stopwatch.Stop();
+                    Console.WriteLine("Total elapsed time: {0} msec", stopwatch.ElapsedMilliseconds);
+                    
+                    //  Send kill signal to workers
+                    controller.Send("KILL", Encoding.Unicode);
+                    Thread.Sleep(1000);     //  Give 0MQ time to deliver
+                }
+            }
+        }
+    }
+}

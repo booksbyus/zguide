@@ -1,36 +1,35 @@
+﻿//
+//  Hello World client
+//  Connects REQ socket to tcp://localhost:5555
+//  Sends "Hello" to server, expects "World" back
+//
+
+//  Author:     Michael Compton
+//  Email:      michael.compton@littleedge.co.uk
+
 using System;
-using System.Collections.Generic;
-using System.Threading;
 using System.Text;
+using ZMQ;
 
-/**
- *  Author: John Unwin
- *  Email: john@kaitrade.com
- *  License: This example code licensed under the MIT/X11 license.
- */
+namespace ZMQGuide {
+    class Program {
+        static void Main(string[] args) {
+            // ZMQ Context
+            using (Context context = new Context(1)) {
+                //  Socket to talk to server
+                using (Socket requester = context.Socket(SocketType.REQ)) {
+                    requester.Connect("tcp://localhost:5555");
 
-namespace Examples
-{
-    class hwclient
-    {
-        static void Main(string[] args)
-        {
-            // allocate a buffer
-            byte[] zmq_buffer = new byte[1024];
+                    string request = "Hello";
+                    for (int requestNbr = 0; requestNbr < 10; requestNbr++) {
+                        Console.WriteLine("Sending request {0}...", requestNbr);
+                        requester.Send(request, Encoding.Unicode);
 
-            //  Prepare our context and socket
-            ZMQ.Context context = new ZMQ.Context(1);
-            ZMQ.Socket socket = context.Socket(ZMQ.REQ);
-            socket.Connect("tcp://localhost:5555");
-
-            string request = "";
-            for (long requestNum = 0; requestNum != 10; requestNum++)
-            {
-                socket.Send(Encoding.ASCII.GetBytes("Hello".ToCharArray()));
-                //  Wait for next request from client
-                socket.Recv(out zmq_buffer);
-                request = Encoding.ASCII.GetString(zmq_buffer);
-           }
+                        string reply = requester.Recv(Encoding.Unicode);
+                        Console.WriteLine("Received reply {0}: {1}", requestNbr, reply);
+                    }
+                }
+            }
         }
     }
 }

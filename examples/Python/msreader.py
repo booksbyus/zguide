@@ -1,13 +1,45 @@
-No-one has translated the msreader example into Python yet.  Be the first to create
-msreader in Python and get one free Internet!  If you're the author of the Python
-binding, this is a great way to get people to use 0MQ in Python.
+# encoding: utf-8
+#
+#   Reading from multiple sockets
+#   This version uses a simple recv loop
+#
+#   Author: Jeremy Avnet (brainsik) <spork(dash)zmq(at)theory(dot)org>
+#
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+import zmq
+import time
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+# Prepare our context and sockets
+context = zmq.Context()
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+# Connect to task ventilator
+receiver = context.socket(zmq.PULL)
+receiver.connect("tcp://localhost:5557")
+
+# Connect to weather server
+subscriber = context.socket(zmq.SUB)
+subscriber.connect("tcp://localhost:5556")
+subscriber.setsockopt(zmq.SUBSCRIBE, "10001")
+
+# Process messages from both sockets
+# We prioritize traffic from the task ventilator
+while True:
+
+    # Process any waiting tasks
+    while True:
+        try:
+            rc = receiver.recv(zmq.NOBLOCK)
+        except zmq.ZMQError:
+            break
+        # process task
+
+    # Process any waiting weather updates
+    while True:
+        try:
+            rc = subscriber.recv(zmq.NOBLOCK)
+        except zmq.ZMQError:
+            break
+        # process weather update
+
+    # No activity, so sleep for 1 msec
+    time.sleep(0.001)

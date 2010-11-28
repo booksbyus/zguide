@@ -1,13 +1,30 @@
-No-one has translated the rrserver example into C# yet.  Be the first to create
-rrserver in C# and get one free Internet!  If you're the author of the C#
-binding, this is a great way to get people to use 0MQ in C#.
+﻿//
+//  Request-reply service
+//  Connects REP socket to tcp://localhost:5560
+//  Expects "Hello" from client, replies with "World"
+//
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+//  Author:     Michael Compton
+//  Email:      michael.compton@littleedge.co.uk
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+using System;
+using System.Text;
+using ZMQ;
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+namespace ZMQGuide {
+    class Program {
+        static void Main(string[] args) {
+            // Prepare our context and sockets
+            using (Context context = new Context(1)) {
+                using (Socket socket = context.Socket(SocketType.REP)) {
+                    socket.Connect("tcp://localhost:5560");
+                    while (true) {
+                        string message = socket.Recv(Encoding.Unicode);
+                        Console.WriteLine("Received request: " + message);
+                        socket.Send("World", Encoding.Unicode);
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,13 +1,53 @@
-No-one has translated the msreader example into C# yet.  Be the first to create
-msreader in C# and get one free Internet!  If you're the author of the C#
-binding, this is a great way to get people to use 0MQ in C#.
+﻿//
+//  Reading from multiple sockets
+//  This version uses a simple recv loop
+//
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+//  Author:     Michael Compton
+//  Email:      michael.compton@littleedge.co.uk
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+using System;
+using System.Text;
+using System.Threading;
+using ZMQ;
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+namespace ZMQGuide {
+    class Program {
+        static void Main(string[] args) {
+            //  Prepare our context and socket
+            using (Context context = new Context(1)) {
+                //  Connect to task ventilator and weather server
+                using (Socket receiver = context.Socket(SocketType.PULL),
+                    subscriber = context.Socket(SocketType.SUB)) {
+                    receiver.Connect("tcp://localhost:5557");
+                    subscriber.Connect("tcp://localhost:5556");
+                    subscriber.Subscribe("10001 ", Encoding.Unicode);
+
+                    //  Process messages from both sockets
+                    //  We prioritize traffic from the task ventilator
+                    while (true) {
+                        //  Process any waiting tasks
+                        while (true) {
+                            byte[] msg = receiver.Recv(SendRecvOpt.NOBLOCK);
+                            if (msg != null) {
+                                Console.WriteLine("Process Task");
+                            } else {
+                                break;
+                            }
+                        }
+                        //  Process any waiting weather updates
+                        while (true) {
+                            byte[] msg = subscriber.Recv(SendRecvOpt.NOBLOCK);
+                            if (msg != null) {
+                                Console.WriteLine("Process Weather");
+                            } else {
+                                break;
+                            }
+                        }
+                        Thread.Sleep(1000);
+                    }
+                }
+            }
+        }
+    }
+}

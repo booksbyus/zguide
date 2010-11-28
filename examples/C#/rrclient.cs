@@ -1,13 +1,32 @@
-No-one has translated the rrclient example into C# yet.  Be the first to create
-rrclient in C# and get one free Internet!  If you're the author of the C#
-binding, this is a great way to get people to use 0MQ in C#.
+﻿//
+//  Request-reply client
+//  Connects REQ socket to tcp://localhost:5559
+//  Sends "Hello" to server, expects "World" back
+//
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+//  Author:     Michael Compton
+//  Email:      michael.compton@littleedge.co.uk
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+using System;
+using System.Text;
+using ZMQ;
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+namespace ZMQGuide {
+    class Program {
+        static void Main(string[] args) {
+            // Prepare our context and sockets
+            using (Context context = new Context(1)) {
+                using (Socket socket = context.Socket(SocketType.REQ)) {
+                    socket.Connect("tcp://localhost:5559");
+
+                    // Do 10 requests, waiting each time for a response
+                    for (int count = 0; count < 10; count++) {
+                        socket.Send("Hello", Encoding.Unicode);
+                        string message = socket.Recv(Encoding.Unicode);
+                        Console.WriteLine("Received reply: " + message);
+                    }
+                }
+            }
+        }
+    }
+}

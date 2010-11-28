@@ -26,7 +26,6 @@ int main (int argc, char *argv[])
 
     //  Process 100 confirmations
     int task_nbr;
-    int total_msec = 0;     //  Total calculated cost in msecs
     for (task_nbr = 0; task_nbr < 100; task_nbr++) {
         char *string = s_recv (receiver);
         free (string);
@@ -48,7 +47,7 @@ int main (int argc, char *argv[])
         tdiff.tv_sec = tend.tv_sec - tstart.tv_sec;
         tdiff.tv_usec = tend.tv_usec - tstart.tv_usec;
     }
-    total_msec = tdiff.tv_sec * 1000 + tdiff.tv_usec / 1000;
+    int total_msec = tdiff.tv_sec * 1000 + tdiff.tv_usec / 1000;
     printf ("Total elapsed time: %d msec\n", total_msec);
 
     //  Send kill signal to workers
