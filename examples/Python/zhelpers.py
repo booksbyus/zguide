@@ -3,6 +3,12 @@
 Helper module for example applications. Mimics ZeroMQ Guide's zhelpers.h.
 """
 
+from random import randint
+
+import zmq
+
+
+# Receives all message parts from socket, prints neatly
 def dump(zsocket):
     print "----------------------------------------"
     for part in zsocket.recv_multipart():
@@ -11,3 +17,9 @@ def dump(zsocket):
             print part
         else:
             print "".join("%x" % ord(c) for c in part)
+
+
+# Set simple random printable identity on socket
+def set_id(zsocket):
+    identity = "%04x-%04x" % (randint(0, 0x10000), randint(0, 0x10000))
+    zsocket.setsockopt(zmq.IDENTITY, identity)
