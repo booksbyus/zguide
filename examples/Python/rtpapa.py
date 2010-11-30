@@ -1,13 +1,40 @@
-No-one has translated the rtpapa example into Python yet.  Be the first to create
-rtpapa in Python and get one free Internet!  If you're the author of the Python
-binding, this is a great way to get people to use 0MQ in Python.
+# encoding: utf-8
+#
+#   Custom routing Router to Papa (XREP to REP)
+#
+#   Author: Jeremy Avnet (brainsik) <spork(dash)zmq(at)theory(dot)org>
+#
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+import time
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+import zmq
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+import zhelpers
+
+
+context = zmq.Context()
+client = context.socket(zmq.XREP)
+client.bind("ipc://routing.ipc")
+
+worker = context.socket(zmq.REP)
+worker.setsockopt(zmq.IDENTITY, "A")
+worker.connect("ipc://routing.ipc")
+
+# Wait for sockets to stabilize
+time.sleep(1)
+
+client.send("A", zmq.SNDMORE)
+client.send("address 3", zmq.SNDMORE)
+client.send("address 2", zmq.SNDMORE)
+client.send("address 1", zmq.SNDMORE)
+client.send("", zmq.SNDMORE)
+client.send("This is the workload")
+
+# Worker should get just the workload
+zhelpers.dump(worker)
+
+# We don't play with envelopes in the worker
+worker.send("This is the reply")
+
+# Now dump what we got off the XREP socket...
+zhelpers.dump(client)
