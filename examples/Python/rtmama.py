@@ -1,13 +1,70 @@
-No-one has translated the rtmama example into Python yet.  Be the first to create
-rtmama in Python and get one free Internet!  If you're the author of the Python
-binding, this is a great way to get people to use 0MQ in Python.
+# encoding: utf-8
+#
+#   Custom routing Router to Mama (XREP to REQ)
+#
+#   Author: Jeremy Avnet (brainsik) <spork(dash)zmq(at)theory(dot)org>
+#
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+import time
+import random
+from threading import Thread
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+import zmq
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+import zhelpers
+
+NBR_WORKERS = 10
+
+
+def worker_thread(context):
+    worker = context.socket(zmq.REQ)
+
+    # We use a string identity for ease here
+    zhelpers.set_id(worker)
+    worker.connect("ipc://routing.ipc")
+
+    total = 0
+    while True:
+        # Tell the router we're ready for work
+        worker.send("ready")
+
+        # Get workload from router, until finished
+        workload = worker.recv()
+        finished = workload == "END"
+        if finished:
+            print "Processed: %d tasks" % total
+            break
+        total += 1
+
+        # Do some random work
+        time.sleep(random.random() / 10 + 10 ** -9)
+
+
+context = zmq.Context()
+client = context.socket(zmq.XREP)
+client.bind("ipc://routing.ipc")
+
+for _ in xrange(NBR_WORKERS):
+    Thread(target=worker_thread, args=(context,)).start()
+
+for _ in xrange(NBR_WORKERS * 10):
+    # LRU worker is next waiting in the queue
+    address = client.recv()
+    empty = client.recv()
+    ready = client.recv()
+
+    client.send(address, zmq.SNDMORE)
+    client.send("", zmq.SNDMORE)
+    client.send("This is the workload")
+
+# Now ask mama to shut down and report their results
+for _ in xrange(NBR_WORKERS):
+    address = client.recv()
+    empty = client.recv()
+    ready = client.recv()
+
+    client.send(address, zmq.SNDMORE)
+    client.send("", zmq.SNDMORE)
+    client.send("END")
+
+time.sleep(1)  # Give 0MQ/2.0.x time to flush output

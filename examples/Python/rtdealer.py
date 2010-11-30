@@ -1,13 +1,77 @@
-No-one has translated the rtdealer example into Python yet.  Be the first to create
-rtdealer in Python and get one free Internet!  If you're the author of the Python
-binding, this is a great way to get people to use 0MQ in Python.
+# encoding: utf-8
+#
+#   Custom routing Router to Dealer (XREP to XREQ)
+#
+#   Author: Jeremy Avnet (brainsik) <spork(dash)zmq(at)theory(dot)org>
+#
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+import time
+import random
+from threading import Thread
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+import zmq
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+
+# We have two workers, here we copy the code, normally these would
+# run on different boxes...
+#
+def worker_a(context):
+    worker = context.socket(zmq.XREQ)
+    worker.setsockopt(zmq.IDENTITY, 'A')
+    worker.connect("ipc://routing.ipc")
+
+    total = 0
+    while True:
+        # We receive one part, with the workload
+        request = worker.recv()
+        finished = request == "END"
+        if finished:
+            print "A received:", total
+            break
+        total += 1
+
+
+def worker_b(context):
+    worker = context.socket(zmq.XREQ)
+    worker.setsockopt(zmq.IDENTITY, 'B')
+    worker.connect("ipc://routing.ipc")
+
+    total = 0
+    while True:
+        # We receive one part, with the workload
+        request = worker.recv()
+        finished = request == "END"
+        if finished:
+            print "B received:", total
+            break
+        total += 1
+
+
+context = zmq.Context()
+client = context.socket(zmq.XREP)
+client.bind("ipc://routing.ipc")
+
+Thread(target=worker_a, args=(context,)).start()
+Thread(target=worker_b, args=(context,)).start()
+
+# Wait for threads to stabilize
+time.sleep(1)
+
+# Send 10 tasks scattered to A twice as often as B
+for _ in xrange(10):
+    # Send two message parts, first the address...
+    if random.randint(0, 2) > 0:
+        client.send("A", zmq.SNDMORE)
+    else:
+        client.send("B", zmq.SNDMORE)
+
+    # And then the workload
+    client.send("This is the workload")
+
+client.send("A", zmq.SNDMORE)
+client.send("END")
+
+client.send("B", zmq.SNDMORE)
+client.send("END")
+
+time.sleep(1)  # Give 0MQ/2.0.x time to flush output
