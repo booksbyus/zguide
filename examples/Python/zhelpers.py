@@ -10,4 +10,4 @@ def dump(zsocket):
         if all(31 < ord(c) < 128 for c in part):
             print part
         else:
-            print "".join(map(lambda x: hex(x).lstrip('0x'), map(ord, part)))
+            print "".join("%x" % ord(c) for c in part)
