@@ -1,13 +1,35 @@
-No-one has translated the taskvent example into PHP yet.  Be the first to create
-taskvent in PHP and get one free Internet!  If you're the author of the PHP
-binding, this is a great way to get people to use 0MQ in PHP.
+<?php 
+/*
+ *  Task ventilator
+ *  Binds PUSH socket to tcp://localhost:5557
+ *  Sends batch of tasks to workers via that socket
+ * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
+ */
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+$context = new ZMQContext();
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+//  Socket to send messages on
+$sender = new ZMQSocket($context, ZMQ::SOCKET_PUSH);
+$sender->bind("tcp://*:5557");
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+echo "Press Enter when the workers are ready: ";
+$fp = fopen('php://stdin', 'r');
+$line = fgets($fp, 512);
+fclose($fp);
+echo "Sending tasks to workers...", PHP_EOL;
+
+//  The first message is "0" and signals start of batch
+$sender->send(0);
+    
+//  Send 100 tasks
+$total_msec = 0;     //  Total expected cost in msecs
+for ($task_nbr = 0; $task_nbr < 100; $task_nbr++) {
+	//  Random workload from 1 to 100msecs
+	$workload = mt_rand(1, 100);
+	$total_msecs += $workload;
+	$sender->send($workload);
+	
+}
+
+printf ("Total expected cost: %d msec\n", $total_msec);
+sleep (1);              //  Give 0MQ time to deliver
