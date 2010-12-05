@@ -2,6 +2,7 @@
 /*
  *  Reading from multiple sockets
  *  This version uses zmq_poll()
+ * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
  */
 
 $context = new ZMQContext();

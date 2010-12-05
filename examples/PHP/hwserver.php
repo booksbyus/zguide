@@ -3,6 +3,7 @@
  *  Hello World server
  *  Binds REP socket to tcp://*:5555
  *  Expects "Hello" from client, replies with "World"
+ * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
  */
 
 $context = new ZMQContext(1);

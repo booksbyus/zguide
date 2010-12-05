@@ -3,6 +3,7 @@
  *  Least-recently used (LRU) queue device
  *  Clients and workers are shown here as IPC as PHP
  *  does not have threads. 
+ * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
  */
 define("NBR_CLIENTS", 10);
 define("NBR_WORKERS", 3);

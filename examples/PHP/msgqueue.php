@@ -3,6 +3,7 @@
 /*
  *  Simple message queuing broker
  *  Same as request-reply broker but using QUEUE device
+ * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
  */
 
 $context = new ZMQContext();

@@ -1,13 +1,47 @@
-No-one has translated the msreader example into PHP yet.  Be the first to create
-msreader in PHP and get one free Internet!  If you're the author of the PHP
-binding, this is a great way to get people to use 0MQ in PHP.
+<?php
+/*
+ *  Reading from multiple sockets
+ *  This version uses a simple recv loop
+ * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
+ */
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+//  Prepare our context and sockets
+$context = new ZMQContext();
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+//  Connect to task ventilator
+$receiver = new ZMQSocket($context, ZMQ::SOCKET_PULL);
+$receiver->connect("tcp://localhost:5557");
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+//  Connect to weather server
+$subscriber = new ZMQSocket($context, ZMQ::SOCKET_SUB);
+$subscriber->connect("tcp://localhost:5556");
+$subscriber->setSockOpt(ZMQ::SOCKOPT_SUBSCRIBE, "10001");
+
+//  Process messages from both sockets
+//  We prioritize traffic from the task ventilator
+while(true) {
+	//  Process any waiting tasks
+	try {
+		for($rc = 0; !$rc;) {
+			if($rc = $receiver->recv(ZMQ::MODE_NOBLOCK)) {
+				// process task
+			}
+		}
+	} catch (ZMQSocketException $e) {
+		// do nothing 
+	}
+	
+	try {
+		//  Process any waiting weather updates
+		for($rc = 0; !$rc;) {
+			if($rc = $subscriber->recv(ZMQ::MODE_NOBLOCK)) {
+				// process weather update
+			}
+		}
+	} catch (ZMQSocketException $e) {
+		// do nothing 
+	}
+		
+	//  No activity, so sleep for 1 msec
+	usleep(1);
+}

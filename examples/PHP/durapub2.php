@@ -1,6 +1,7 @@
 <?php
 /*
  *  Publisher for durable subscriber
+ * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
  */
 
 $context = new ZMQContext(1);
