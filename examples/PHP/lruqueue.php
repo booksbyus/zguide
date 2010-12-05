@@ -6,27 +6,23 @@
  */
 define("NBR_CLIENTS", 10);
 define("NBR_WORKERS", 3);
-$context = new ZMQContext();
 
 //  Basic request-reply client using REQ socket
 function client_thread() {
-	global $context;
-	//$context = new ZMQContext();
+	$context = new ZMQContext();
 	$client = new ZMQSocket($context, ZMQ::SOCKET_REQ);
 	$client->connect("ipc://frontend.ipc");
-	echo "Connected \n";
 	
 	//  Send request, get reply
-	//$client->send("HELLO");
-	//$reply = $client->recv();
-	//printf("Client: %s\n", $reply);
+	$client->send("HELLO");
+	$reply = $client->recv();
+	printf("Client: %s\n", $reply);
 }
 
 //  Worker using REQ socket to do LRU routing
 function worker_thread () {
-	global $context;
-	//$context = new ZMQContext();
-	$worker = new ZMQSocket(ZMQ::SOCKET_REQ);
+	$context = new ZMQContext();
+	$worker = $context->getSocket(ZMQ::SOCKET_REQ);
 	$worker->connect("ipc://backend.ipc");
 
     //  Tell broker we're ready for work
@@ -50,23 +46,14 @@ function worker_thread () {
 }
 
 function main() {
-	global $context;
-	//$context = new ZMQContext();
-	$frontend = new ZMQSocket($context, ZMQ::SOCKET_XREP);
-	$backend = new ZMQSocket($context, ZMQ::SOCKET_XREP);
-	$frontend->bind("ipc://frontend.ipc");
-	$backend->bind("ipc://backend.ipc");
-	
 	for($client_nbr = 0; $client_nbr < NBR_CLIENTS; $client_nbr++) {
-		echo "Forking $client_nbr\n";
 		$pid = pcntl_fork();
 		if($pid == 0) {
 			client_thread();
 			return;
 		}
 	}
-	echo "here";
-	/*
+
 	for($worker_nbr = 0; $worker_nbr < NBR_WORKERS; $worker_nbr++) {
 		$pid = pcntl_fork();
 		if($pid == 0) {
@@ -74,7 +61,12 @@ function main() {
 			return;
 		}
 	}
-	*/
+	
+	$context = new ZMQContext();
+	$frontend = new ZMQSocket($context, ZMQ::SOCKET_XREP);
+	$backend = new ZMQSocket($context, ZMQ::SOCKET_XREP);
+	$frontend->bind("ipc://frontend.ipc");
+	$backend->bind("ipc://backend.ipc");
 	
 	//  Logic of LRU loop
     //  - Poll backend always, frontend only if 1+ worker ready
@@ -85,18 +77,18 @@ function main() {
     //  Queue of available workers
 	$available_workers = 0;
 	$worker_queue = array();
-	$readable = array();
+	$writeable = $readable = array();
 	$frontend_id = $backend_id = null;
-	/*
+	
 	while(true) {
 		$poll = new ZMQPoll();
 		//  Poll front-end only if we have available workers
-		if($available_workers) {
+		if($available_workers > 0) {
 			$frontend_id = $poll->add($frontend, ZMQ::POLL_IN);
 		}
 		//  Always poll for worker activity on backend
 		$backend_id = $poll->add($backend, ZMQ::POLL_IN);
-		$events = $poll->poll($readable);
+		$events = $poll->poll($readable, $writeable);
 
 		foreach($readable as $id => $socket) {
 			//  Handle worker activity on backend
@@ -117,7 +109,7 @@ function main() {
 				if($client_addr != "READY") {
 					$empty = $socket->recv();
 					assert(empty($empty));
-					$reply = $backend->recv();
+					$reply = $socket->recv();
 					$frontend->send($client_addr, ZMQ::MODE_SNDMORE);
 					$frontend->send("", ZMQ::MODE_SNDMORE);
 					$frontend->send($reply);
@@ -125,8 +117,7 @@ function main() {
 						break;
 					}
 				}
-			}
-			if($id == $frontend_id) {
+			} else if($id == $frontend_id) {
 				//  Now get next client request, route to LRU worker
 				//  Client request is [address][empty][request]
 				$client_addr = $socket->recv();
@@ -143,9 +134,9 @@ function main() {
 				$available_workers; 
 			}
 		}
-
+		echo "Finished read loop";
 	}
-	*/
+	
 	sleep(1);
 }
 
