@@ -32,6 +32,11 @@ function worker_thread () {
 		//  Read and save all frames until we get an empty frame
         //  In this example there is only 1 but it could be more
 		$address = $worker->recv();
+		
+		// Additional logic to clean up workers. 
+		if($address == "END") {
+			exit();
+		}
 		$empty = $worker->recv();
 		assert(empty($empty));
 		
@@ -78,63 +83,72 @@ function main() {
 	$available_workers = 0;
 	$worker_queue = array();
 	$writeable = $readable = array();
-	$frontend_id = $backend_id = null;
 	
-	while(true) {
+	while($client_nbr > 0) {
 		$poll = new ZMQPoll();
+		
 		//  Poll front-end only if we have available workers
 		if($available_workers > 0) {
-			$frontend_id = $poll->add($frontend, ZMQ::POLL_IN);
+			$poll->add($frontend, ZMQ::POLL_IN);
 		}
+		
 		//  Always poll for worker activity on backend
-		$backend_id = $poll->add($backend, ZMQ::POLL_IN);
+		$poll->add($backend, ZMQ::POLL_IN);
 		$events = $poll->poll($readable, $writeable);
 
-		foreach($readable as $id => $socket) {
-			//  Handle worker activity on backend
-			if($id == $backend_id) {
-				//  Queue worker address for LRU routing
-				$worker_addr = $socket->recv();
-				assert($available_workers < NBR_WORKERS);
-				$available_workers++;
-				array_push($worker_queue, $worker_addr);
+		if($events > 0) {
+			foreach($readable as $socket) {
+				//  Handle worker activity on backend
+				if($socket === $backend) {
+					//  Queue worker address for LRU routing
+					$worker_addr = $socket->recv();
+					assert($available_workers < NBR_WORKERS);
+					$available_workers++;
+					array_push($worker_queue, $worker_addr);
 			
-				//  Second frame is empty
-				$empty = $socket->recv();
-				assert(empty($empty));
-				
-				//  Third frame is READY or else a client reply address
-				$client_addr = $socket->recv();
-				
-				if($client_addr != "READY") {
+					//  Second frame is empty
 					$empty = $socket->recv();
 					assert(empty($empty));
-					$reply = $socket->recv();
-					$frontend->send($client_addr, ZMQ::MODE_SNDMORE);
-					$frontend->send("", ZMQ::MODE_SNDMORE);
-					$frontend->send($reply);
-					if(--$client_nbr == 0) {
-						break;
+				
+					//  Third frame is READY or else a client reply address
+					$client_addr = $socket->recv();
+				
+					if($client_addr != "READY") {
+						$empty = $socket->recv();
+						assert(empty($empty));
+						$reply = $socket->recv();
+						$frontend->send($client_addr, ZMQ::MODE_SNDMORE);
+						$frontend->send("", ZMQ::MODE_SNDMORE);
+						$frontend->send($reply);
+						
+						// exit after all messages relayed
+						$client_nbr--;
 					}
-				}
-			} else if($id == $frontend_id) {
-				//  Now get next client request, route to LRU worker
-				//  Client request is [address][empty][request]
-				$client_addr = $socket->recv();
-				$empty = $socket->recv();
-				assert(empty($empty));
-				$request = $socket->recv();
-				
-				$backend->send(array_pop($worker_queue), ZMQ::MODE_SNDMORE);
-				$backend->send("", ZMQ::MODE_SNDMORE);
-				$backend->send($client_addr, ZMQ::MODE_SNDMORE);
-				$backend->send("", ZMQ::MODE_SNDMORE);
-				$backend->send($request);
-				
-				$available_workers; 
+				} else if($socket === $frontend) {
+					//  Now get next client request, route to LRU worker
+					//  Client request is [address][empty][request]
+					$client_addr = $socket->recv();
+					$empty = $socket->recv();
+					assert(empty($empty));
+					$request = $socket->recv();
+
+					$backend->send(array_shift($worker_queue), ZMQ::MODE_SNDMORE);
+					$backend->send("", ZMQ::MODE_SNDMORE);
+					$backend->send($client_addr, ZMQ::MODE_SNDMORE);
+					$backend->send("", ZMQ::MODE_SNDMORE);
+					$backend->send($request);
+
+					$available_workers--; 
+				} 
 			}
 		}
-		echo "Finished read loop";
+	}
+	
+	// Clean up our worker processes
+	foreach($worker_queue as $worker) {
+		$backend->send($worker, ZMQ::MODE_SNDMORE);
+		$backend->send("", ZMQ::MODE_SNDMORE);
+		$backend->send('END');
 	}
 	
 	sleep(1);
