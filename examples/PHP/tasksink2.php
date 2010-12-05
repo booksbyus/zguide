@@ -1,13 +1,44 @@
-No-one has translated the tasksink2 example into PHP yet.  Be the first to create
-tasksink2 in PHP and get one free Internet!  If you're the author of the PHP
-binding, this is a great way to get people to use 0MQ in PHP.
+<?php
+/*
+ *  Task design 2
+ *  Adds pub-sub flow to send kill signal to workers
+ * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
+ */
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+$context = new ZMQContext();
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+//  Socket to receive messages on
+$receiver = new ZMQSocket($context, ZMQ::SOCKET_PULL);
+$receiver->bind("tcp://*:5558");
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+//  Socket for worker control
+$controller = new ZMQSocket($context, ZMQ::SOCKET_PUB);
+$controller->bind("tcp://*:5559");
+
+//  Wait for start of batch
+$string = $receiver->recv();
+
+//  Process 100 confirmations
+$tstart = microtime(true);
+$total_msec = 0;     //  Total calculated cost in msecs
+for ($task_nbr = 0; $task_nbr < 100; $task_nbr++) {
+	$string = $receiver->recv();
+	if($task_nbr % 10 == 0) {
+		echo ":";
+	} else {
+		echo ".";
+	}
+}
+
+$tend = microtime(true);
+
+$total_msec = ($tend - $tstart) * 1000;
+echo PHP_EOL;
+printf ("Total elapsed time: %d msec", $total_msec);
+echo PHP_EOL;
+
+//  Send kill signal to workers
+$controller->send("KILL");
+
+//  Finished
+sleep (1);              //  Give 0MQ time to deliver
