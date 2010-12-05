@@ -26,7 +26,7 @@ $total_msec = 0;     //  Total expected cost in msecs
 for ($task_nbr = 0; $task_nbr < 100; $task_nbr++) {
 	//  Random workload from 1 to 100msecs
 	$workload = mt_rand(1, 100);
-	$total_msecs += $workload;
+	$total_msec += $workload;
 	$sender->send($workload);
 	
 }

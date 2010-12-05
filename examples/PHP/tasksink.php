@@ -1,13 +1,36 @@
-No-one has translated the tasksink example into PHP yet.  Be the first to create
-tasksink in PHP and get one free Internet!  If you're the author of the PHP
-binding, this is a great way to get people to use 0MQ in PHP.
+<?php
+/*
+ *  Task sink
+ *  Binds PULL socket to tcp://localhost:5558
+ *  Collects results from workers via that socket
+ * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
+ */
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+//  Prepare our context and socket
+$context = new ZMQContext();
+$receiver = new ZMQSocket($context, ZMQ::SOCKET_PULL);
+$receiver->bind("tcp://*:5558");
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+//  Wait for start of batch
+$string = $receiver->recv();
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+//  Start our clock now
+$tstart = microtime(true);
+
+//  Process 100 confirmations
+$total_msec = 0;     //  Total calculated cost in msecs
+for ($task_nbr = 0; $task_nbr < 100; $task_nbr++) {
+	$string = $receiver->recv();
+	if($task_nbr % 10 == 0) {
+		echo ":";
+	} else {
+		echo ".";
+	}
+}
+
+$tend = microtime(true);
+
+$total_msec = ($tend - $tstart) * 1000;
+echo PHP_EOL;
+printf ("Total elapsed time: %d msec", $total_msec);
+echo PHP_EOL;

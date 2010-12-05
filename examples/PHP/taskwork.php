@@ -1,13 +1,33 @@
-No-one has translated the taskwork example into PHP yet.  Be the first to create
-taskwork in PHP and get one free Internet!  If you're the author of the PHP
-binding, this is a great way to get people to use 0MQ in PHP.
+<?php
+/*
+ *  Task worker
+ *  Connects PULL socket to tcp://localhost:5557
+ *  Collects workloads from ventilator via that socket
+ *  Connects PUSH socket to tcp://localhost:5558
+ *  Sends results to sink via that socket
+ * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
+ */
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+$context = new ZMQContext();
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+//  Socket to receive messages on
+$receiver = new ZMQSocket($context, ZMQ::SOCKET_PULL);
+$receiver->connect("tcp://localhost:5557");
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+//  Socket to send messages to
+$sender = new ZMQSocket($context, ZMQ::SOCKET_PUSH);
+$sender->connect("tcp://localhost:5558");
+
+//  Process tasks forever
+while (true) {
+	$string = $receiver->recv();
+	
+	//  Simple progress indicator for the viewer
+	echo $string, PHP_EOL;
+   
+	//  Do the work
+	usleep($string * 1000);
+
+   //  Send results to sink
+	$sender->send("");
+}
