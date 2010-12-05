@@ -1,13 +1,27 @@
-No-one has translated the durasub example into PHP yet.  Be the first to create
-durasub in PHP and get one free Internet!  If you're the author of the PHP
-binding, this is a great way to get people to use 0MQ in PHP.
+<?php
+/*
+ *  Durable subscriber
+ */
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+$context = new ZMQContext(1);
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+//  Connect our subscriber socket
+$subscriber = new ZMQSocket($context, ZMQ::SOCKET_SUB);
+$subscriber->setSockOpt(ZMQ::SOCKOPT_IDENTITY, "Hello");
+$subscriber->setSockOpt(ZMQ::SOCKOPT_SUBSCRIBE, "");
+$subscriber->connect("tcp://localhost:5565");
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+
+//  Synchronize with publisher
+$sync = new ZMQSocket($context, ZMQ::SOCKET_PUSH);
+$sync->connect("tcp://localhost:5564");
+$sync->send("");
+
+//  Get updates, expect random Ctrl-C death
+while(true) {
+	$string = $subscriber->recv();
+	echo $string, "\n";
+	if($string == "END") {
+		break;
+	}
+}
