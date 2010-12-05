@@ -1,13 +1,153 @@
-No-one has translated the lruqueue example into PHP yet.  Be the first to create
-lruqueue in PHP and get one free Internet!  If you're the author of the PHP
-binding, this is a great way to get people to use 0MQ in PHP.
+<?php
+/*
+ *  Least-recently used (LRU) queue device
+ *  Clients and workers are shown here as IPC as PHP
+ *  does not have threads. 
+ */
+define("NBR_CLIENTS", 10);
+define("NBR_WORKERS", 3);
+$context = new ZMQContext();
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+//  Basic request-reply client using REQ socket
+function client_thread() {
+	global $context;
+	//$context = new ZMQContext();
+	$client = new ZMQSocket($context, ZMQ::SOCKET_REQ);
+	$client->connect("ipc://frontend.ipc");
+	echo "Connected \n";
+	
+	//  Send request, get reply
+	//$client->send("HELLO");
+	//$reply = $client->recv();
+	//printf("Client: %s\n", $reply);
+}
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+//  Worker using REQ socket to do LRU routing
+function worker_thread () {
+	global $context;
+	//$context = new ZMQContext();
+	$worker = new ZMQSocket(ZMQ::SOCKET_REQ);
+	$worker->connect("ipc://backend.ipc");
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+    //  Tell broker we're ready for work
+	$worker->send("READY");
+	
+	while(true) {
+		//  Read and save all frames until we get an empty frame
+        //  In this example there is only 1 but it could be more
+		$address = $worker->recv();
+		$empty = $worker->recv();
+		assert(empty($empty));
+		
+		//  Get request, send reply
+		$request = $worker->recv();
+		printf ("Worker: %s\n", $request);
+		
+		$worker->send($address, ZMQ::MODE_SNDMORE);
+		$worker->send("", ZMQ::MODE_SNDMORE);
+		$worker->send("OK");
+    }
+}
+
+function main() {
+	global $context;
+	//$context = new ZMQContext();
+	$frontend = new ZMQSocket($context, ZMQ::SOCKET_XREP);
+	$backend = new ZMQSocket($context, ZMQ::SOCKET_XREP);
+	$frontend->bind("ipc://frontend.ipc");
+	$backend->bind("ipc://backend.ipc");
+	
+	for($client_nbr = 0; $client_nbr < NBR_CLIENTS; $client_nbr++) {
+		echo "Forking $client_nbr\n";
+		$pid = pcntl_fork();
+		if($pid == 0) {
+			client_thread();
+			return;
+		}
+	}
+	echo "here";
+	/*
+	for($worker_nbr = 0; $worker_nbr < NBR_WORKERS; $worker_nbr++) {
+		$pid = pcntl_fork();
+		if($pid == 0) {
+			worker_thread();
+			return;
+		}
+	}
+	*/
+	
+	//  Logic of LRU loop
+    //  - Poll backend always, frontend only if 1+ worker ready
+    //  - If worker replies, queue worker as ready and forward reply
+    //    to client if necessary
+    //  - If client requests, pop next worker and send request to it
+
+    //  Queue of available workers
+	$available_workers = 0;
+	$worker_queue = array();
+	$readable = array();
+	$frontend_id = $backend_id = null;
+	/*
+	while(true) {
+		$poll = new ZMQPoll();
+		//  Poll front-end only if we have available workers
+		if($available_workers) {
+			$frontend_id = $poll->add($frontend, ZMQ::POLL_IN);
+		}
+		//  Always poll for worker activity on backend
+		$backend_id = $poll->add($backend, ZMQ::POLL_IN);
+		$events = $poll->poll($readable);
+
+		foreach($readable as $id => $socket) {
+			//  Handle worker activity on backend
+			if($id == $backend_id) {
+				//  Queue worker address for LRU routing
+				$worker_addr = $socket->recv();
+				assert($available_workers < NBR_WORKERS);
+				$available_workers++;
+				array_push($worker_queue, $worker_addr);
+			
+				//  Second frame is empty
+				$empty = $socket->recv();
+				assert(empty($empty));
+				
+				//  Third frame is READY or else a client reply address
+				$client_addr = $socket->recv();
+				
+				if($client_addr != "READY") {
+					$empty = $socket->recv();
+					assert(empty($empty));
+					$reply = $backend->recv();
+					$frontend->send($client_addr, ZMQ::MODE_SNDMORE);
+					$frontend->send("", ZMQ::MODE_SNDMORE);
+					$frontend->send($reply);
+					if(--$client_nbr == 0) {
+						break;
+					}
+				}
+			}
+			if($id == $frontend_id) {
+				//  Now get next client request, route to LRU worker
+				//  Client request is [address][empty][request]
+				$client_addr = $socket->recv();
+				$empty = $socket->recv();
+				assert(empty($empty));
+				$request = $socket->recv();
+				
+				$backend->send(array_pop($worker_queue), ZMQ::MODE_SNDMORE);
+				$backend->send("", ZMQ::MODE_SNDMORE);
+				$backend->send($client_addr, ZMQ::MODE_SNDMORE);
+				$backend->send("", ZMQ::MODE_SNDMORE);
+				$backend->send($request);
+				
+				$available_workers; 
+			}
+		}
+
+	}
+	*/
+	sleep(1);
+}
+
+main();
+
