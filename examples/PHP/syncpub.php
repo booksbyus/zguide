@@ -1,13 +1,38 @@
-No-one has translated the syncpub example into PHP yet.  Be the first to create
-syncpub in PHP and get one free Internet!  If you're the author of the PHP
-binding, this is a great way to get people to use 0MQ in PHP.
+<?php
+/*
+ * Synchronized publisher
+ *
+ * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
+ */
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+//  We wait for 10 subscribers
+define("SUBSCRIBERS_EXPECTED", 10);
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+$context = new ZMQContext();
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+//  Socket to talk to clients
+$publisher = new ZMQSocket($context, ZMQ::SOCKET_PUB);
+$publisher->bind("tcp://*:5561");
+
+//  Socket to receive signals
+$syncservice = new ZMQSocket($context, ZMQ::SOCKET_REP);
+$syncservice->bind("tcp://*:5562");
+
+//  Get synchronization from subscribers
+$subscribers = 0;
+while ($subscribers < SUBSCRIBERS_EXPECTED) {
+	//  - wait for synchronization request
+	$string = $syncservice->recv();
+	//  - send synchronization reply
+	$syncservice->send("");
+	$subscribers++;
+}
+
+//  Now broadcast exactly 1M updates followed by END
+for ($update_nbr = 0; $update_nbr < 1000000; $update_nbr++) {
+	$publisher->send("Rhubarb");
+}
+
+$publisher->send("END");
+
+sleep (1);              //  Give 0MQ/2.0.x time to flush output
