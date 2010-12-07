@@ -79,10 +79,11 @@ class Zmsg {
 	 * Set the internal socket to use for sending or receiving.
 	 *
 	 * @param ZMQSocket $socket 
-	 * @return void
+	 * @return Zmsg
 	 */
 	public function set_socket(ZMQSocket $socket) {
 		$this->_socket = $socket;
+		return $this;
 	}
 	
 	/**
@@ -91,7 +92,7 @@ class Zmsg {
 	 *  Blocks on recv if socket is not ready for input
 	 * 
 	 * @throws Exception if no socket present
-	 * @return void
+	 * @return Zmsg
 	 */
 	public function recv() {
 		if(!isset($this->_socket)) {
@@ -104,13 +105,14 @@ class Zmsg {
 				break;
 			}
 		}
+		return $this;
 	}
 	
 	/**
 	 * Send message to socket. Destroys message after sending.
 	 *
 	 * @throws Exception if no socket present
-	 * @return void
+	 * @return Zmsg
 	 */
 	public function send() {
 		if(!isset($this->_socket)) {
@@ -123,6 +125,7 @@ class Zmsg {
 			$this->_socket->send($part, $mode);
 		}
 		unset($this->_parts);
+		return $this;
 	}
 	
 	/**

@@ -17,7 +17,7 @@ function client_thread() {
 	//  Send request, get reply
 	$client->send("HELLO");
 	$reply = $client->recv();
-	printf("Client: %s\n", $reply);
+	printf("Client: %s%s", $reply, PHP_EOL);
 }
 
 //  Worker using REQ socket to do LRU routing
@@ -43,7 +43,7 @@ function worker_thread () {
 		
 		//  Get request, send reply
 		$request = $worker->recv();
-		printf ("Worker: %s\n", $request);
+		printf ("Worker: %s%s", $request, PHP_EOL);
 		
 		$worker->send($address, ZMQ::MODE_SNDMORE);
 		$worker->send("", ZMQ::MODE_SNDMORE);
