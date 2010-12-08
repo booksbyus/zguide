@@ -1,7 +1,7 @@
 <?php
 /*
  * Custom routing Router to Mama (XREP to REQ)
- * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
+ * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>a
  */
 
 define("NBR_WORKERS", 10);

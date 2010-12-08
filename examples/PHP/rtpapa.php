@@ -1,13 +1,33 @@
-No-one has translated the rtpapa example into PHP yet.  Be the first to create
-rtpapa in PHP and get one free Internet!  If you're the author of the PHP
-binding, this is a great way to get people to use 0MQ in PHP.
+<?php
+/*
+ * Custom routing Router to Papa (XREP to REP)
+ * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>a
+ */
+include "zhelpers.php";
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+//  We will do this all in one thread to emphasize the sequence
+//  of events...
+$context = new ZMQContext();
+$client = new ZMQSocket($context, ZMQ::SOCKET_XREP);
+$client->bind("inproc://routing");
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+$worker = new ZMQSocket($context, ZMQ::SOCKET_REP);
+$worker->setSockOpt(ZMQ::SOCKOPT_IDENTITY, "A");
+$worker->connect("inproc://routing");
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+//  Send papa address, address stack, empty part, and request
+$client->send("A", ZMQ::MODE_SNDMORE);
+$client->send("address 3", ZMQ::MODE_SNDMORE);
+$client->send("address 2", ZMQ::MODE_SNDMORE);
+$client->send("address 1", ZMQ::MODE_SNDMORE);
+$client->send("", ZMQ::MODE_SNDMORE);
+$client->send("This is the workload");
+
+//  Worker should get just the workload
+s_dump($worker);
+
+//  We don't play with envelopes in the worker
+$worker->send("This is the reply");
+
+//  Now dump what we got off the XREP socket...
+s_dump($client);
