@@ -1,13 +1,25 @@
-No-one has translated the rrserver example into PHP yet.  Be the first to create
-rrserver in PHP and get one free Internet!  If you're the author of the PHP
-binding, this is a great way to get people to use 0MQ in PHP.
+<?php
+/*
+ * Hello World server
+ * Connects REP socket to tcp://*:5560
+ * Expects "Hello" from client, replies with "World"
+ * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
+ */
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+$context = new ZMQContext();
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+//  Socket to talk to clients
+$responder = new ZMQSocket($context, ZMQ::SOCKET_REP);
+$responder->connect("tcp://localhost:5560");
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+while(true) {
+	//  Wait for next request from client
+	$string = $responder->recv();
+	printf ("Received request: [%s]%s", $string, PHP_EOL);
+	
+	// Do some 'work'
+	sleep(1);
+	
+	//  Send reply back to client
+	$responder->send("World");
+}
