@@ -1,13 +1,28 @@
-No-one has translated the rtrouter example into PHP yet.  Be the first to create
-rtrouter in PHP and get one free Internet!  If you're the author of the PHP
-binding, this is a great way to get people to use 0MQ in PHP.
+<?php
+/*
+ * Cross-connected XREP sockets addressing each other
+ * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
+ */
+include "zhelpers.php";
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+$context = new ZMQContext();
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+$worker = new ZMQSocket($context, ZMQ::SOCKET_XREP);
+$worker->setSockOpt(ZMQ::SOCKOPT_IDENTITY, "WORKER");
+$worker->bind("ipc://rtrouter.ipc");
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+$server = new ZMQSocket($context, ZMQ::SOCKET_XREP);
+$server->setSockOpt(ZMQ::SOCKOPT_IDENTITY, "SERVER");
+$server->connect("ipc://rtrouter.ipc");
+
+sleep(1);
+
+$server->send("WORKER", ZMQ::MODE_SNDMORE);
+$server->send("", ZMQ::MODE_SNDMORE);
+$server->send("send to worker");
+s_dump($worker);
+
+$worker->send("SERVER", ZMQ::MODE_SNDMORE);
+$worker->send("", ZMQ::MODE_SNDMORE);
+$worker->send("send to server");
+s_dump($server);
