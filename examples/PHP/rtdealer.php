@@ -1,13 +1,77 @@
-No-one has translated the rtdealer example into PHP yet.  Be the first to create
-rtdealer in PHP and get one free Internet!  If you're the author of the PHP
-binding, this is a great way to get people to use 0MQ in PHP.
+<?php 
+/*
+ * Custom routing Router to Dealer (XREP to XREQ)
+ * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
+ */
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+//  We have two workers, here we copy the code, normally these would
+//  run on different boxes...
+function worker_a() {
+	$context = new ZMQContext();
+	$worker = $context->getSocket(ZMQ::SOCKET_XREQ);
+	$worker->setSockOpt(ZMQ::SOCKOPT_IDENTITY, "A");
+	$worker->connect("ipc://routing.ipc");
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+	$total = 0;
+	while(true) {
+		//  We receive one part, with the workload
+		$request = $worker->recv();
+		if($request == 'END') {
+			printf ("A received: %d%s", $total, PHP_EOL);
+			break;
+		}
+		$total++;
+	}
+}
+
+function worker_b() {
+	$context = new ZMQContext();
+	$worker = $context->getSocket(ZMQ::SOCKET_XREQ);
+	$worker->setSockOpt(ZMQ::SOCKOPT_IDENTITY, "B");
+	$worker->connect("ipc://routing.ipc");
+	
+	$total = 0;
+	while(true) {
+		//  We receive one part, with the workload
+		$request = $worker->recv();
+		if($request == 'END') {
+			printf ("B received: %d%s", $total, PHP_EOL);
+			break;
+		}
+		$total++;
+	}
+}
+
+$pid = pcntl_fork();
+if($pid == 0) { worker_a(); exit(); }
+$pid = pcntl_fork();
+if($pid == 0) { worker_b(); exit(); }
+
+$context = new ZMQContext();
+$client = new ZMQSocket($context, ZMQ::SOCKET_XREP);
+$client->bind("ipc://routing.ipc");
+
+//  Wait for threads to stabilize
+sleep(1);
+
+//  Send 10 tasks scattered to A twice as often as B
+for ($task_nbr = 0; $task_nbr != 10; $task_nbr++) {
+	//  Send two message parts, first the address...
+	if(mt_rand(0, 2) > 0) {
+		$client->send("A", ZMQ::MODE_SNDMORE);
+	} else {
+		$client->send("B", ZMQ::MODE_SNDMORE);
+	}
+	//  And then the workload
+	$client->send("This is the workload");
+}
+
+$client->send("A", ZMQ::MODE_SNDMORE);
+$client->send("END");
+
+$client->send("B", ZMQ::MODE_SNDMORE);
+$client->send("END");
+
+sleep (1);              //  Give 0MQ/2.0.x time to flush output
+
