@@ -1,13 +1,67 @@
-No-one has translated the mtrelay example into Python yet.  Be the first to create
-mtrelay in Python and get one free Internet!  If you're the author of the Python
-binding, this is a great way to get people to use 0MQ in Python.
+"""
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+   Multithreaded relay
+ 
+   Author: Guillaume Aubert (gaubert) <guillaume(dot)aubert(at)gmail(dot)com>
+  
+"""
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+import threading
+import zmq
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+def step1(context):
+    """ step1 """
+    
+    # Signal downstream to step 2
+    sender = context.socket(zmq.PAIR)
+    sender.connect("inproc://step2")
+    
+    sender.send("")
+    
+
+
+def step2(context):
+    """ step2 """
+    
+    # Bind to inproc: endpoint, then start upstream thread
+    receiver = context.socket(zmq.PAIR)
+    receiver.bind("inproc://step2")
+    
+    thread = threading.Thread(target=step1, args=(context, ))
+    thread.start()
+    
+    # Wait for signal
+    string = receiver.recv()
+
+    # Signal downstream to step 3
+    sender = context.socket(zmq.PAIR)
+    sender.connect("inproc://step3")
+    sender.send("")
+    
+    return
+
+def main():
+    """ server routine """ 
+    # Prepare our context and sockets
+    context = zmq.Context(1)
+    
+    # Bind to inproc: endpoint, then start upstream thread
+    receiver = context.socket(zmq.PAIR)
+    receiver.bind("inproc://step3")
+    
+    thread = threading.Thread(target=step2, args=(context, ))
+    thread.start()
+    
+    # Wait for signal 
+    string = receiver.recv()
+    
+    print("Test successful!\n")
+    
+    receiver.close()
+    context.term()
+    
+    return
+
+
+if __name__ == "__main__":
+    main()

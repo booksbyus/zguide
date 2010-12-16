@@ -1,13 +1,36 @@
-No-one has translated the msgqueue example into Python yet.  Be the first to create
-msgqueue in Python and get one free Internet!  If you're the author of the Python
-binding, this is a great way to get people to use 0MQ in Python.
+"""
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+   Simple message queuing broker
+   Same as request-reply broker but using QUEUE device
+ 
+   Author: Guillaume Aubert (gaubert) <guillaume(dot)aubert(at)gmail(dot)com>
+  
+"""
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+import zmq
+
+def main():
+    """ main method """
+    
+    context = zmq.Context(1)
+    
+    # Socket facing clients
+    frontend = context.socket(zmq.XREP)
+    frontend.bind("tcp://*:5559")
+    
+    # Socket facing services
+    backend  = context.socket(zmq.XREQ)
+    backend.bind("tcp://*:5560")
+    
+    zmq.device(zmq.QUEUE, frontend, backend)
+    
+    # We never get here...
+    frontend.close()
+    backend.close()
+    context.term()
+    
+
+
+if __name__ == "__main__":
+    main()
