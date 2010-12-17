@@ -1,13 +1,31 @@
-No-one has translated the psenvpub example into Python yet.  Be the first to create
-psenvpub in Python and get one free Internet!  If you're the author of the Python
-binding, this is a great way to get people to use 0MQ in Python.
+"""
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+   Pubsub envelope publisher   
+ 
+   Author: Guillaume Aubert (gaubert) <guillaume(dot)aubert(at)gmail(dot)com>
+  
+"""
+import time
+import zmq
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+def main():
+    """ main method """
+    
+    # Prepare our context and publisher
+    context   = zmq.Context(1)
+    publisher = context.socket(zmq.PUB)
+    publisher.bind("tcp://*:5563")
+    
+    while True:
+        # Write two messages, each with an envelope and content
+        publisher.send_multipart(["A", "We don't want to see this"])
+        publisher.send_multipart(["B", "We would like to see this"])
+        time.sleep(1)
+    
+    # We never get here but clean up anyhow
+    publisher.close()
+    context.term()
+    
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+if __name__ == "__main__":
+    main()
