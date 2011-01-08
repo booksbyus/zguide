@@ -1,13 +1,47 @@
-No-one has translated the rrbroker example into PHP yet.  Be the first to create
-rrbroker in PHP and get one free Internet!  If you're the author of the PHP
-binding, this is a great way to get people to use 0MQ in PHP.
+<?php
+/*
+ * Simple request-reply broker
+ * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
+ */
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+//  Prepare our context and sockets
+$context = new ZMQContext();
+$frontend = new ZMQSocket($context, ZMQ::SOCKET_XREP);
+$backend = new ZMQSocket($context, ZMQ::SOCKET_XREQ);
+$frontend->bind("tcp://*:5559");
+$backend->bind("tcp://*:5560");
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+//  Initialize poll set
+$poll = new ZMQPoll();
+$poll->add($frontend, ZMQ::POLL_IN);
+$poll->add($backend, ZMQ::POLL_IN);
+$readable = $writeable = array();
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+//  Switch messages between sockets
+while(true) {
+	$events = $poll->poll($readable, $writeable);
+	
+	foreach($readable as $socket) {
+		if($socket === $frontend) {
+			//  Process all parts of the message
+			while(true) {
+				$message = $socket->recv();
+				//  Multipart detection
+				$more = $socket->getSockOpt(ZMQ::SOCKOPT_RCVMORE);
+				$backend->send($message, $more ? ZMQ::MODE_SNDMORE : null);
+				if(!$more) {
+					break; //  Last message part
+				}
+			}
+		} 
+		else if($socket === $backend) {
+			$message = $socket->recv();
+			//  Multipart detection
+			$more = $socket->getSockOpt(ZMQ::SOCKOPT_RCVMORE);
+			$frontend->send($message, $more ? ZMQ::MODE_SNDMORE : null);
+			if(!$more) {
+				break; //  Last message part
+			}
+		}
+	}
+}

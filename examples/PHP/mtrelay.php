@@ -1,13 +1,54 @@
-No-one has translated the mtrelay example into PHP yet.  Be the first to create
-mtrelay in PHP and get one free Internet!  If you're the author of the PHP
-binding, this is a great way to get people to use 0MQ in PHP.
+<?php
+/*
+ * Multithreaded relay. Actually using processes due a lack 
+ * of PHP threads.  
+ * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
+ */
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+function step1() {
+	$context = new ZMQContext(); 
+	// Signal downstream to step 2
+	$sender = new ZMQSocket($context, ZMQ::SOCKET_PAIR);
+	$sender->connect("ipc://step2.ipc");
+	$sender->send("");
+}
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+function step2() {
+	$pid = pcntl_fork();
+	if($pid == 0) {
+		step1();
+		exit();
+	}
+	
+	$context = new ZMQContext(); 
+	//  Bind to ipc: endpoint, then start upstream thread
+	$receiver = new ZMQSocket($context, ZMQ::SOCKET_PAIR);
+	$receiver->bind("ipc://step2.ipc");
+	
+	// Wait for signal
+	$receiver->recv();
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+	// Signal downstream to step 3
+	$sender = new ZMQSocket($context, ZMQ::SOCKET_PAIR);
+	$sender->connect("ipc://step3.ipc");
+	$sender->send("");
+}
+
+
+
+// Start upstream thread then bind to icp: endpoint
+$pid = pcntl_fork();
+if($pid == 0) {
+	step2();
+	exit();
+}
+
+$context = new ZMQContext();
+$receiver = new ZMQSocket($context, ZMQ::SOCKET_PAIR);
+$receiver->bind("ipc://step3.ipc");
+
+
+// Wait for signal
+$receiver->recv();
+
+echo "Test succesful!", PHP_EOL;

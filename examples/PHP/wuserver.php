@@ -1,13 +1,24 @@
-No-one has translated the wuserver example into PHP yet.  Be the first to create
-wuserver in PHP and get one free Internet!  If you're the author of the PHP
-binding, this is a great way to get people to use 0MQ in PHP.
+<?php
+/*
+ *  Weather update server
+ *  Binds PUB socket to tcp://*:5556
+ *  Publishes random weather updates
+ * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
+ */
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+//  Prepare our context and publisher
+$context = new ZMQContext();
+$publisher = $context->getSocket(ZMQ::SOCKET_PUB);
+$publisher->bind("tcp://*:5556");
+$publisher->bind("ipc://weather.ipc");
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+while (true) {
+	//  Get values that will fool the boss
+	$zipcode     = mt_rand(0, 100000);
+	$temperature = mt_rand(-80, 135);
+	$relhumidity = mt_rand(10, 60);
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+	//  Send message to all subscribers
+	$update = sprintf ("%05d %d %d", $zipcode, $temperature, $relhumidity);
+	$publisher->send($update);
+}

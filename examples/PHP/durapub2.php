@@ -1,13 +1,34 @@
-No-one has translated the durapub2 example into PHP yet.  Be the first to create
-durapub2 in PHP and get one free Internet!  If you're the author of the PHP
-binding, this is a great way to get people to use 0MQ in PHP.
+<?php
+/*
+ *  Publisher for durable subscriber
+ * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
+ */
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+$context = new ZMQContext(1);
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+//  Subscriber tells us when it's ready here
+$sync = new ZMQSocket($context, ZMQ::SOCKET_PULL);
+$sync->bind("htcp://*:5564");
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+//  We send updates via this socket
+$publisher = new ZMQSocket($context, ZMQ::SOCKET_PUB);
+$publisher->bind("tcp://*:5565");
+
+//  Prevent publisher overflow from slow subscribers
+$publisher->setSockOpt(ZMQ::SOCKOPT_HWM, 1);
+
+//  Specify swap space in bytes, this covers all subscribers
+$publisher->setSockOpt(ZMQ::SOCKOPT_SWAP, 25000000);
+
+//  Wait for synchronization request
+$string = $sync->recv();
+
+//  Now broadcast exactly 10 updates with pause
+for($update_nbr = 0; $update_nbr < 10; $update_nbr++) {
+	$string = sprintf("Update %d", $update_nbr);
+	$publisher->send($string);
+	sleep(1);
+}
+$publisher->send("END");
+
+sleep (1);              //  Give 0MQ/2.0.x time to flush output

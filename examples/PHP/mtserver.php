@@ -1,13 +1,47 @@
-No-one has translated the mtserver example into PHP yet.  Be the first to create
-mtserver in PHP and get one free Internet!  If you're the author of the PHP
-binding, this is a great way to get people to use 0MQ in PHP.
+<?php
+/*
+ * Multithreaded Hello World server. Uses proceses due
+ * to PHP's lack of threads!
+ * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
+ */
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+function worker_routine() {
+	$context = new ZMQContext();
+	// Socket to talk to dispatcher
+	$receiver = new ZMQSocket($context, ZMQ::SOCKET_REP);
+	$receiver->connect("ipc://workers.ipc");
+	
+	while(true) {
+		$string = $receiver->recv();
+		printf ("Received request: [%s]%s", $string, PHP_EOL);
+		
+		// Do some 'work'
+		sleep(1);
+		
+		// Send reply back to client
+		$receiver->send("World");
+	}
+}
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+//  Launch pool of worker threads
+for($thread_nbr = 0; $thread_nbr != 5; $thread_nbr++) {	
+	$pid = pcntl_fork();
+	if($pid == 0) {
+		worker_routine();
+		exit();
+	}
+}
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+//  Prepare our context and sockets
+$context = new ZMQContext();
+
+//  Socket to talk to clients
+$clients = new ZMQSocket($context, ZMQ::SOCKET_XREP);
+$clients->bind("tcp://*:5555");
+
+//  Socket to talk to workers
+$workers = new ZMQSocket($context, ZMQ::SOCKET_XREQ);
+$workers->bind("ipc://workers.ipc");
+
+//  Connect work threads to client threads via a queue
+$device = new ZMQDevice(ZMQ::DEVICE_QUEUE, $clients, $workers);

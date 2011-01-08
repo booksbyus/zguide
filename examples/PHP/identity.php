@@ -1,13 +1,26 @@
-No-one has translated the identity example into PHP yet.  Be the first to create
-identity in PHP and get one free Internet!  If you're the author of the PHP
-binding, this is a great way to get people to use 0MQ in PHP.
+<?php
+/*
+ * Demonstrate identities as used by the request-reply pattern.  Run this
+ * program by itself.  Note that the utility functions s_ are provided by
+ * zhelpers.h.  It gets boring for everyone to keep repeating this code.
+ * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
+ */
+include "zhelpers.php";
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+$context = new ZMQContext();
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+$sink = new ZMQSocket($context, ZMQ::SOCKET_XREP);
+$sink->bind("inproc://example");
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+//  First allow 0MQ to set the identity
+$anonymous = new ZMQSocket($context, ZMQ::SOCKET_REQ);
+$anonymous->connect("inproc://example");
+$anonymous->send("XREP uses a generated UUID");
+s_dump ($sink);
+
+//  Then set the identity ourself
+$identified = new ZMQSocket($context, ZMQ::SOCKET_REQ);
+$identified->setSockOpt(ZMQ::SOCKOPT_IDENTITY, "Hello");
+$identified->connect("inproc://example");
+$identified->send("XREP socket uses REQ's socket identity");
+s_dump ($sink);

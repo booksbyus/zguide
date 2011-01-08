@@ -1,13 +1,66 @@
-No-one has translated the rtmama example into PHP yet.  Be the first to create
-rtmama in PHP and get one free Internet!  If you're the author of the PHP
-binding, this is a great way to get people to use 0MQ in PHP.
+<?php
+/*
+ * Custom routing Router to Mama (XREP to REQ)
+ * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>a
+ */
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+define("NBR_WORKERS", 10);
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+function worker_thread() {
+	$context = new ZMQContext();
+	$worker = new ZMQSocket($context, ZMQ::SOCKET_REQ);
+	$worker->connect("ipc://routing.ipc");
+	
+	$total = 0;
+	while(true) {
+		//  Tell the router we're ready for work
+		$worker->send("ready");
+		
+		//  Get workload from router, until finished
+		$workload = $worker->recv();
+		if($workload == 'END') {
+			printf ("Processed: %d tasks%s", $total, PHP_EOL);
+			break;
+		}
+		$total++;
+		
+		//  Do some random work
+		usleep(mt_rand(1, 1000000));
+	}
+}
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+for ($worker_nbr = 0; $worker_nbr < NBR_WORKERS; $worker_nbr++) {
+	if(pcntl_fork() == 0) {
+		worker_thread(); 
+		exit();
+	}
+}
+
+$context = new ZMQContext();
+$client = $context->getSocket(ZMQ::SOCKET_XREP);
+$client->bind("ipc://routing.ipc");
+
+for ($task_nbr = 0; $task_nbr < NBR_WORKERS * 10; $task_nbr++) {
+	//  LRU worker is next waiting in queue
+	$address = $client->recv();
+	$empty = $client->recv();
+	$read = $client->recv();
+	
+	$client->send($address, ZMQ::MODE_SNDMORE);
+	$client->send("", ZMQ::MODE_SNDMORE);
+	$client->send("This is the workload");
+}
+
+//  Now ask mamas to shut down and report their results
+for ($task_nbr = 0; $task_nbr < NBR_WORKERS; $task_nbr++) {
+	//  LRU worker is next waiting in queue
+	$address = $client->recv();
+	$empty = $client->recv();
+	$read = $client->recv();
+	
+	$client->send($address, ZMQ::MODE_SNDMORE);
+	$client->send("", ZMQ::MODE_SNDMORE);
+	$client->send("END");
+}
+
+sleep (1);              //  Give 0MQ/2.0.x time to flush output

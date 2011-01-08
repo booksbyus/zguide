@@ -1,13 +1,28 @@
-No-one has translated the wuclient example into PHP yet.  Be the first to create
-wuclient in PHP and get one free Internet!  If you're the author of the PHP
-binding, this is a great way to get people to use 0MQ in PHP.
+<?php
+/*
+ *  Weather update client
+ *  Connects SUB socket to tcp://localhost:5556
+ *  Collects weather updates and finds avg temp in zipcode
+ * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
+ */
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+$context = new ZMQContext();
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+//  Socket to talk to server
+echo "Collecting updates from weather server...", PHP_EOL;
+$subscriber = new ZMQSocket($context, ZMQ::SOCKET_SUB);
+$subscriber->connect("tcp://localhost:5556");
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+//  Subscribe to zipcode, default is NYC, 10001
+$filter = $_SERVER['argc'] > 1 ? $_SERVER['argv'][1] : "10001";
+$subscriber->setSockOpt(ZMQ::SOCKOPT_SUBSCRIBE, $filter);
+
+//  Process 100 updates
+$total_temp = 0;
+for ($update_nbr = 0; $update_nbr < 100; $update_nbr++) {
+	$string = $subscriber->recv();
+	sscanf ($string, "%d %d %d", $zipcode, $temperature, $relhumidity);
+	$total_temp += $temperature;
+}
+printf ("Average temperature for zipcode '%s' was %dF\n",
+    $filter, (int) ($total_temp / $update_nbr));

@@ -1,13 +1,20 @@
-No-one has translated the psenvsub example into PHP yet.  Be the first to create
-psenvsub in PHP and get one free Internet!  If you're the author of the PHP
-binding, this is a great way to get people to use 0MQ in PHP.
+<?php
+/*
+ * Pubsub envelope subscriber
+ * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
+ */
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+//  Prepare our context and subscriber
+$context = new ZMQContext();
+$subscriber = new ZMQSocket($context, ZMQ::SOCKET_SUB);
+$subscriber->connect("tcp://localhost:5563");
+$subscriber->setSockOpt(ZMQ::SOCKOPT_SUBSCRIBE, "B");
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
-
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+while (true) {
+	//  Read envelope with address
+	$address = $subscriber->recv();
+	//  Read message contents
+	$contents = $subscriber->recv();
+	printf ("[%s] %s%s", $address, $contents, PHP_EOL);
+}
+//  We never get here 

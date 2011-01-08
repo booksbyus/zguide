@@ -1,13 +1,31 @@
-No-one has translated the wuproxy example into PHP yet.  Be the first to create
-wuproxy in PHP and get one free Internet!  If you're the author of the PHP
-binding, this is a great way to get people to use 0MQ in PHP.
+<?php
+/*
+ *  Weather proxy device
+ * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
+ */
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+$context = new ZMQContext();
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+//  This is where the weather server sits
+$frontend = new ZMQSocket($context, ZMQ::SOCKET_SUB);
+$frontend->connect("tcp://192.168.55.210:5556");
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+//  This is our public endpoint for subscribers
+$backend = new ZMQSocket($context, ZMQ::SOCKET_PUB);
+$backend->bind("tcp://10.1.1.0:8100");
+
+//  Subscribe on everything
+$frontend->setSockOpt(ZMQ::SOCKOPT_SUBSCRIBE, "");
+
+//  Shunt messages out to our own subscribers
+while(true) {
+	while(true) {
+		//  Process all parts of the message
+		$message = $frontend->recv();
+		$more = $frontend->getSockOpt(ZMQ::SOCKOPT_RCVMORE);
+		$backend->send($message, $more ? ZMQ::SOCKOPT_SNDMORE : 0);
+		if(!$more) {
+			break; // Last message part
+		}
+	}
+}

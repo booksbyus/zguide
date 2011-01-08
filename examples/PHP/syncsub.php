@@ -1,13 +1,34 @@
-No-one has translated the syncsub example into PHP yet.  Be the first to create
-syncsub in PHP and get one free Internet!  If you're the author of the PHP
-binding, this is a great way to get people to use 0MQ in PHP.
+<?php
+/*
+ * Synchronized subscriber
+ *
+ * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
+ */
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+$context = new ZMQContext();
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+//  First, connect our subscriber socket
+$subscriber = $context->getSocket(ZMQ::SOCKET_SUB);
+$subscriber->connect("tcp://localhost:5561");
+$subscriber->setSockOpt(ZMQ::SOCKOPT_SUBSCRIBE, "");
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+//  Second, synchronize with publisher
+$syncclient = $context->getSocket(ZMQ::SOCKET_REQ);
+$syncclient->connect("tcp://localhost:5562");
+
+//  - send a synchronization request
+$syncclient->send("");
+
+//  - wait for synchronization reply
+$string = $syncclient->recv();
+
+//  Third, get our updates and report how many we got
+$update_nbr = 0;
+while (true) {
+	$string = $subscriber->recv();
+	if($string == "END") {
+		break;
+	}
+	$update_nbr++;
+}
+printf ("Received %d updates %s", $update_nbr, PHP_EOL);

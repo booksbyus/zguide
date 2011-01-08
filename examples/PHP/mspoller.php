@@ -1,13 +1,43 @@
-No-one has translated the mspoller example into PHP yet.  Be the first to create
-mspoller in PHP and get one free Internet!  If you're the author of the PHP
-binding, this is a great way to get people to use 0MQ in PHP.
+<?php 
+/*
+ *  Reading from multiple sockets
+ *  This version uses zmq_poll()
+ * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
+ */
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+$context = new ZMQContext();
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+//  Connect to task ventilator
+$receiver = new ZMQSocket($context, ZMQ::SOCKET_PULL);
+$receiver->connect("tcp://localhost:5557");
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+//  Connect to weather server
+$subscriber = new ZMQSocket($context, ZMQ::SOCKET_SUB);
+$subscriber->connect("tcp://localhost:5556");
+$subscriber->setSockOpt(ZMQ::SOCKOPT_SUBSCRIBE, "10001");
+
+//  Initialize poll set
+$poll = new ZMQPoll();
+$poll->add($receiver, ZMQ::POLL_IN);
+$poll->add($subscriber, ZMQ::POLL_IN);
+
+$readable = $writeable = array();
+
+//  Process messages from both sockets
+while(true) {
+	$events = $poll->poll($readable, $writeable);
+	if($events > 0) {
+		foreach($readable as $socket) {
+			if($socket === $receiver) {
+				$message = $socket->recv();
+				// Process task
+			} 
+			else if($socket === $subscriber) {
+				$mesage = $socket->recv();
+				// Process weather update
+			}
+		}
+	}
+}
+   
+//  We never get here

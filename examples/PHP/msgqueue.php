@@ -1,13 +1,22 @@
-No-one has translated the msgqueue example into PHP yet.  Be the first to create
-msgqueue in PHP and get one free Internet!  If you're the author of the PHP
-binding, this is a great way to get people to use 0MQ in PHP.
+<?php
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+/*
+ *  Simple message queuing broker
+ *  Same as request-reply broker but using QUEUE device
+ * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
+ */
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+$context = new ZMQContext();
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+//  Socket facing clients
+$frontend = $context->getSocket(ZMQ::SOCKET_XREP);
+$frontend->bind("tcp://*:5559");
+
+//  Socket facing services
+$backend = $context->getSocket(ZMQ::SOCKET_XREQ);
+$backend->bind("tcp://*:5560");
+
+//  Start built-in device
+new ZMQDevice(ZMQ::DEVICE_QUEUE, $frontend, $backend);
+
+//  We never get here...
