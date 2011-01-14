@@ -1,13 +1,49 @@
-No-one has translated the taskwork example into C# yet.  Be the first to create
-taskwork in C# and get one free Internet!  If you're the author of the C#
-binding, this is a great way to get people to use 0MQ in C#.
+//  Author:     Mike Sheridan
+//  Email:      mike@westforkconsulting.com
+//
+//  Task worker
+//  Connects PULL socket to tcp://localhost:5557
+//  Collects workloads from ventilator via that socket
+//  Connects PUSH socket to tcp://localhost:5558
+//  Sends results to sink via that socket
+//
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+using System;
+using System.Text;
+using System.Threading;
+using ZMQ;
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+class Program
+{
+    static int Main(string[] argv)
+    {
+        Context context = new Context(1);
 
-Subscribe to the email list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+        //  Socket to receive messages on
+        Socket receiver = context.Socket(SocketType.PULL);
+        sender.Connect("tcp://localhost:5557");
+
+        //  Socket to send messages on
+        Socket sender = context.Socket(SocketType.PUSH);
+        sender.Connect("tcp://localhost:5557");
+
+        //  Process tasks forever
+        while (true) {
+            string _string = receiver.Recv(Encoding.Unicode);
+            int t;
+            t = Convert.ToInt32(_string) * 1000;
+            //  Simple progress indicator for the viewer;
+            Console.WriteLine("{0}.", _string);
+
+            //  Do the work
+            Thread.Sleep(t);
+
+            sender.Send("", Encoding.Unicode);
+        }
+
+        receiver.Close();
+        sender.Close();
+        context.Terminate();
+        return 0;
+    }
+}
