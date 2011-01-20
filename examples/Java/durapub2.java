@@ -1,13 +1,59 @@
-No-one has translated the durapub2 example into Java yet.  Be the first to create
-durapub2 in Java and get one free Internet!  If you're the author of the Java
-binding, this is a great way to get people to use 0MQ in Java.
+import org.zeromq.ZMQ;
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+/**
+ * @author Faruk Akgul
+ * @email faakgul@gmail.com
+ */
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+public class durapub2 {
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+  public static void main(String[] args) throws InterruptedException {
+    ZMQ.Context context = ZMQ.context(1);
+    ZMQ.Socket sync = context.socket(ZMQ.PULL);
+    ZMQ.Socket publisher = context.socket(ZMQ.PUB);
+
+    // Subscriber tells us when it's ready
+    sync.bind("tcp://*:5564");
+
+    // We send updates via this socket
+    publisher.bind("tcp://*:5565");
+
+    // Prevent publisher overflow from slow subscribers
+    publisher.setHWM(1);
+
+    // Specify swap space in bytes, this covers all subscribers
+    publisher.setSwap(25000000);
+
+    // Wait for synchronization request
+    sync.recv(0);
+
+    // Now broadcast exactly 10 updates with pause
+    for (int i = 0; i < 10; i++) {
+      String msg = String.format("Update %d", i);
+      publisher.send(msg.getBytes(), 0);
+      Thread.sleep(1000);
+    }
+    publisher.send("END".getBytes(), 0);
+    Thread.sleep(1000); // Give 0MQ/2.0.x time to flush output
+
+  }
+
+}
+
+ribers
+    publisher.setHWM(1);
+
+    // Specify swap space in bytes, this covers all subscribers
+    publisher.setSwap(25000000);
+
+    // Wait for synchronization request
+    sync.recv(0);
+
+    // Now broadcast exactly 10 updates with pause
+    for (int i = 0; i < 10; i++) {
+      String msg = String.format("Update %d", i);
+      publisher.send(msg.getBytes(), 0);
+      Thread.sleep(1000);
+    }
+    publisher.send("END".getBytes(), 0);
+    Thread.sleep(1000); // Give 0MQ/2.0.x time to flush outpu

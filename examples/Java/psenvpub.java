@@ -1,13 +1,35 @@
-No-one has translated the psenvpub example into Java yet.  Be the first to create
-psenvpub in Java and get one free Internet!  If you're the author of the Java
-binding, this is a great way to get people to use 0MQ in Java.
+import org.zeromq.ZMQ;
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+/**
+ * @author Faruk Akgul
+ * @email faakgul@gmail.com
+ */
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+public class psenvpub {
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+  public static void main(String[] args) throws InterruptedException {
+    // Prepare our context and publisher
+    ZMQ.Context context = ZMQ.context(1);
+    ZMQ.Socket publisher = context.socket(ZMQ.PUB);
+
+    publisher.bind("tcp://*:5563");
+    while (true) {
+      // Write two messages, each with an envelope and content
+      publisher.send("A".getBytes(), ZMQ.SNDMORE);
+      publisher.send("We don't want to see this".getBytes(), 0);
+      publisher.send("B".getBytes(), ZMQ.SNDMORE);
+      publisher.send("We would like to see this".getBytes(), 0);
+      Thread.sleep(1000);
+    }
+
+  }
+}
+e our context and publisher
+    ZMQ.Context context = ZMQ.context(1);
+    ZMQ.Socket publisher = context.socket(ZMQ.PUB);
+
+    publisher.bind("tcp://*:5563");
+    while (true) {
+      // Write two messages, each with an envelope and content
+      publisher.send("A".getBytes(), ZMQ.SNDMORE);
+      publisher.send("We do

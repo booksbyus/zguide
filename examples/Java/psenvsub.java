@@ -1,13 +1,38 @@
-No-one has translated the psenvsub example into Java yet.  Be the first to create
-psenvsub in Java and get one free Internet!  If you're the author of the Java
-binding, this is a great way to get people to use 0MQ in Java.
+import org.zeromq.ZMQ;
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+/**
+ * @author Faruk Akgul
+ * @email faakgul@gmail.com
+ */
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+public class psenvsub {
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+  public static void main(String[] args) {
+
+    // Prepare our context and subscriber
+    ZMQ.Context context = ZMQ.context(1);
+    ZMQ.Socket subscriber = context.socket(ZMQ.SUB);
+
+    subscriber.connect("tcp://localhost:5563");
+    subscriber.subscribe("B".getBytes());
+    while (true) {
+      // Read envelope with address
+      String address = new String(subscriber.recv(0));
+      // Read message contents
+      String contents = new String(subscriber.recv(0));
+      System.out.println(address + " : " + contents);
+    }
+  }
+}
+in(String[] args) {
+
+    // Prepare our context and subscriber
+    ZMQ.Context context = ZMQ.context(1);
+    ZMQ.Socket subscriber = context.socket(ZMQ.SUB);
+
+    subscriber.connect("tcp://localhost:5563");
+    subscriber.subscribe("B".getBytes());
+    while (true) {
+      // Read envelope with address
+      String address = new String(subscriber.recv(0));
+      // Read message
