@@ -1,13 +1,37 @@
-No-one has translated the rrbroker example into Ruby yet.  Be the first to create
-rrbroker in Ruby and get one free Internet!  If you're the author of the Ruby
-binding, this is a great way to get people to use 0MQ in Ruby.
+# author: Oleg Sidorov <4pcbr> i4pcbr@gmail.com
+# this code is licenced under the MIT/X11 licence.
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+require 'rubygems'
+require 'ffi-rzmq'
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+context = ZMQ::Context.new(1)
+frontend = context.socket(ZMQ::XREP)
+backend = context.socket(ZMQ::XREQ)
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+frontend.bind('tcp://*:5559')
+backend.bind('tcp://*:5560')
+
+poller = ZMQ::Poller.new
+poller.register(frontend, ZMQ::POLLIN)
+poller.register(backend, ZMQ::POLLIN)
+
+while true
+  poller.poll(:blocking)
+  poller.readables.each do |socket|
+    if socket === frontend
+      while true
+        message = socket.recv_string
+        more = socket.more_parts?
+        backend.send_string(message, more ? ZMQ::SNDMORE : 0)
+        break if !more
+      end
+    elsif socket === backend
+      while true
+        message = socket.recv_string
+        more = socket.more_parts?
+        frontend.send_string(message, more ? ZMQ::SNDMORE : 0)
+        break if !more
+      end
+    end
+  end
+end

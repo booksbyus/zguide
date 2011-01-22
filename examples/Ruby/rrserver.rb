@@ -1,13 +1,15 @@
-No-one has translated the rrserver example into Ruby yet.  Be the first to create
-rrserver in Ruby and get one free Internet!  If you're the author of the Ruby
-binding, this is a great way to get people to use 0MQ in Ruby.
+# author: Oleg Sidorov <4pcbr> i4pcbr@gmail.com
+# this code is licenced under the MIT/X11 licence.
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+require 'rubygems'
+require 'ffi-rzmq'
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+context = ZMQ::Context.new(1)
+socket = context.socket(ZMQ::REP)
+socket.connect('tcp://localhost:5560')
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+while true
+  message = socket.recv_string
+  puts "Recieved request: #{message}"
+  socket.send_string('World')
+end
