@@ -1,13 +1,32 @@
-No-one has translated the msreader example into Ruby yet.  Be the first to create
-msreader in Ruby and get one free Internet!  If you're the author of the Ruby
-binding, this is a great way to get people to use 0MQ in Ruby.
+# author: Oleg Sidorov <4pcbr> i4pcbr@gmail.com
+# this code is licenced under the MIT/X11 licence.
+#
+# Reading from multiple sockets
+# This version uses a simple recv loop
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+require 'rubygems'
+require 'ffi-rzmq'
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+context = ZMQ::Context.new
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+# Connect to task ventilator
+reciever = context.socket(ZMQ::PULL)
+reciever.connect('tcp://localhost:5557')
+
+# Connect to weather server
+subscriber = context.socket(ZMQ::SUB)
+subscriber.connect('tcp://localhost:5556')
+subscriber.setsockopt(ZMQ::SUBSCRIBE, '10001')
+
+while true
+  if reciever_msg = reciever.recv_string(ZMQ::NOBLOCK) && !reciever_msg.empty?
+    # process task
+  end
+
+  if subscriber_msg = subscriber.recv_string(ZMQ::NOBLOCK) && !subscriber_msg.empty?
+    # process weather update
+  end
+
+  # No activity, so sleep for 1 msec
+  sleep 0.001
+end

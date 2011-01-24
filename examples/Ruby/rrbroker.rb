@@ -4,7 +4,7 @@
 require 'rubygems'
 require 'ffi-rzmq'
 
-context = ZMQ::Context.new(1)
+context = ZMQ::Context.new
 frontend = context.socket(ZMQ::XREP)
 backend = context.socket(ZMQ::XREQ)
 

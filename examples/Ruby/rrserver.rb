@@ -4,7 +4,7 @@
 require 'rubygems'
 require 'ffi-rzmq'
 
-context = ZMQ::Context.new(1)
+context = ZMQ::Context.new
 socket = context.socket(ZMQ::REP)
 socket.connect('tcp://localhost:5560')
 
