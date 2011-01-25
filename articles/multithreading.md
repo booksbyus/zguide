@@ -19,7 +19,7 @@ This article is a rant combined with history lesson, and it will gently turn int
 To run these examples you will want to install ØMQ.  It is straight-forward and will take you just a few minutes.  Grab the latest stable package from <http://www.zeromq.com> and follow the instructions on that site.  It's `sh configure; make; sudo make install; sudo ldconfig`.  To install a language binding, check the bindings on <http://www.zeromq.org> and pick the one you want, then follow the instructions.
 
 <center>
-<img src="http://github.com/imatix/zguide/raw/master/articles/images/multithreading_1.png" alt="1">
+<img src="images/multithreading_1.png" alt="1">
 </center>
 
 Create a directory to work in, and if you want to follow the examples in C, grab two files from the ØMQ Guide examples directory, [zhelpers.h][] and [zmsg.c][].  These wrap ØMQ's message API, which is a bit low-level, with nicer abstractions.
