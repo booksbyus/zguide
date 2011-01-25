@@ -2,7 +2,7 @@
 <A name="toc1-4" title="ØMQ for Multithreading" />
 # ØMQ for Multithreading
 
-By Pieter Hintjens <ph@imatix.com>, published Tue 25 January, 2011, 15:59:54.
+By Pieter Hintjens <ph@imatix.com>, published Tue 25 January, 2011, 16:11:43.
 
 <A name="toc2-9" title="Introduction" />
 ## Introduction
