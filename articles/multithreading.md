@@ -19,7 +19,7 @@ This article is a rant combined with history lesson, and it will gently turn int
 To run these examples you will want to install ØMQ.  It is straight-forward and will take you just a few minutes.  Grab the latest stable package from <http://www.zeromq.com> and follow the instructions on that site.  It's `sh configure; make; sudo make install; sudo ldconfig`.  To install a language binding, check the bindings on <http://www.zeromq.org> and pick the one you want, then follow the instructions.
 
 <center>
-<img src="images/multithreading_1.png" alt="1">
+<img src="https://github.com/imatix/zguide/raw/master/articles/images/multithreading_1.png" alt="1">
 </center>
 
 Create a directory to work in, and if you want to follow the examples in C, grab two files from the ØMQ Guide examples directory, [zhelpers.h][] and [zmsg.c][].  These wrap ØMQ's message API, which is a bit low-level, with nicer abstractions.
@@ -42,7 +42,7 @@ And when it compiles and links without errors, and you run it, it will say somet
     Current ØMQ version is 2.0.9
 
 <center>
-<img src="http://github.com/imatix/zguide/raw/master/articles/images/multithreading_2.png" alt="2">
+<img src="https://github.com/imatix/zguide/raw/master/articles/images/multithreading_2.png" alt="2">
 </center>
 
 <A name="toc2-103" title="Why Write Multithreaded Code?" />
@@ -64,7 +64,7 @@ The result was two years of late nights tracking down weird errors and making th
 Worse, OpenAMQ was slower on one core and did not scale linearly.  It did 35K when running on one core, and 120K when running on four.  So the exercise was worth it, in terms of meeting our goals, but it was horribly expensive.  Worst of all, the client didn't pay for this, we did, it was a fixed price project.
 
 <center>
-<img src="http://github.com/imatix/zguide/raw/master/articles/images/multithreading_3.png" alt="3">
+<img src="https://github.com/imatix/zguide/raw/master/articles/images/multithreading_3.png" alt="3">
 </center>
 
 Before we leaped into the piranha-infested white water of concurrency, I had this vague plan of building OpenAMQ as a cluster of single-threaded processes that would talk to each other without sharing anything.  But we lacked the tools to make that happen.
@@ -81,7 +81,7 @@ Before we expound a less insane model of software, let's see why placing data st
 In the Dikstran model of software, its object-oriented successors, and even the IBM-gifted relational database, data is the golden honey comb that the little busy bees of algorithms work on.  It's all about the data structures, the relations, the indexes, the sets, and the algorithms we use to compute on these sets.  We can call this the "Data + Compute" model of software:
 
 <center>
-<img src="http://github.com/imatix/zguide/raw/master/articles/images/multithreading_4.png" alt="4">
+<img src="https://github.com/imatix/zguide/raw/master/articles/images/multithreading_4.png" alt="4">
 </center>
 
 When two busy algorithmic bees try to modify the same data, they naturally negotiate with each other over who will go first.  It's what you would do in the real world when you 'negotiate' with a smaller, weaker car for that one remaining parking place right next to the Starbucks.  First one in wins, the other has to wait or go somewhere else.
@@ -122,7 +122,7 @@ As with many things in technology, this is not a new idea, it's simply an old on
 Historically, the Data + Compute theory of software stems from the earliest days of commercial computers, when IBM estimated the global market at 5,000 computers.  The original model of computing is basically "huge big thing that does stuff":
 
 <center>
-<img src="http://github.com/imatix/zguide/raw/master/articles/images/multithreading_5.png" alt="5">
+<img src="https://github.com/imatix/zguide/raw/master/articles/images/multithreading_5.png" alt="5">
 </center>
 
 And hardware models become software models, so the Big Iron model became Data + Compute.  But in a world where every movable object will eventually have a computer embedded in it, Data + Compute turns into the shared state dog pit where algorithms fight it out over memory that is so expensive it has to be shared.
