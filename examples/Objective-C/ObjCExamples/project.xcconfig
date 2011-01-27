@@ -1,0 +1,6 @@
+//! @author Jeremy W. Sherman
+//! @date 2011-01-26
+HEADER_SEARCH_PATHS = /usr/local/include
+LIBRARY_SEARCH_PATHS = /usr/local/lib
+OTHER_LDFLAGS = -framework Foundation -lzmq
+OTHER_CFLAGS = -Werror -Wnewline-eof -Wall -Wextra -Wformat=2
