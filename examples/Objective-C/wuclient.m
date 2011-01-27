@@ -24,6 +24,11 @@ main(int argc, const char *argv[])
 	NSData *filterData = [NSData dataWithBytes:filter length:strlen(filter)];
 	[subscriber setData:filterData forOption:ZMQ_SUBSCRIBE];
 
+	/* Write to stdout immediately rather than at each newline.
+	 * This makes the incremental temperatures appear incrementally.
+	 */
+	(void)setvbuf(stdout, NULL, _IONBF, BUFSIZ);
+
 	/* Process updates. */
 	NSLog(@"Collecting temperatures for zipcode %s from weather server...", filter);
 	const int kMaxUpdate = 100;
