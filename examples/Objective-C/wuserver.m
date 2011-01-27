@@ -1,13 +1,46 @@
-No-one has translated the wuserver example into Objective-C yet.  Be the first to create
-wuserver in Objective-C and get one free Internet!  If you're the author of the Objective-C
-binding, this is a great way to get people to use 0MQ in Objective-C.
+//
+//  Weather update server
+//  Binds PUB socket to tcp://*:5556
+//  Publishes random weather updates
+//
+#import "ZMQObjC.h"
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+// Returns a random integer within the range [0, i).
+static inline int within(int i);
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+int
+main(void)
+{
+	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+	//  Prepare our context and publisher
+	ZMQContext *ctx = [[[ZMQContext alloc] initWithIOThreads:1] autorelease];
+	ZMQSocket *publisher = [ctx socketWithType:ZMQ_PUB];
+	[publisher bindToEndpoint:@"tcp://*:5556"];
+	[publisher bindToEndpoint:@"ipc://weather.ipc"];
+
+	//  Initialize random number generator
+	srandom ((unsigned) time (NULL));
+	for (;;) {
+		//  Get values that will fool the boss
+		int zipcode, temperature, relhumidity;
+		zipcode     = within (100000);
+		temperature = within (215) - 80;
+		relhumidity = within (50) + 10;
+
+		// Send message to all subscribers
+		NSString *update = [NSString stringWithFormat:@"%05d %d %d",
+				zipcode, temperature, relhumidity];
+		NSData *data = [update dataUsingEncoding:NSUTF8StringEncoding];
+		[publisher sendData:data withFlags:0];
+	}
+	[publisher close];
+	[pool drain];
+	return EXIT_SUCCESS;
+}
+
+static inline int
+within(int i) {
+	float frac = ((float)RAND_MAX - random()) / RAND_MAX;
+	return i * frac;
+}

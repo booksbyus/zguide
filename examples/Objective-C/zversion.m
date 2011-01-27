@@ -1,3 +1,4 @@
+/* Reports the 0MQ version. */
 #import "ZMQObjC.h"
 
 int

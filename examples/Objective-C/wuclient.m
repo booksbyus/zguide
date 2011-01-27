@@ -1,13 +1,55 @@
-No-one has translated the wuclient example into Objective-C yet.  Be the first to create
-wuclient in Objective-C and get one free Internet!  If you're the author of the Objective-C
-binding, this is a great way to get people to use 0MQ in Objective-C.
+//
+//  Weather update client
+//  Connects SUB socket to tcp://localhost:5556
+//  Collects weather updates and finds avg temp in zipcode
+//
+#import "ZMQObjC.h"
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+int
+main(int argc, const char *argv[])
+{
+	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+	ZMQContext *ctx = [[[ZMQContext alloc] initWithIOThreads:1] autorelease];
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+	// Socket to talk to server
+	ZMQSocket *subscriber = [ctx socketWithType:ZMQ_SUB];
+	if (![subscriber connectToEndpoint:@"tcp://localhost:5556"]) {
+		/* ZMQSocket will already have logged the error. */
+		return EXIT_FAILURE;
+	}
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+	/* Subscribe to zipcode (defaults to NYC, 10001). */
+	const char *kNYCZipCode = "10001";
+	const char *filter = (argc > 1)? argv[1] : kNYCZipCode;
+	NSData *filterData = [NSData dataWithBytes:filter length:strlen(filter)];
+	[subscriber setData:filterData forOption:ZMQ_SUBSCRIBE];
+
+	/* Process updates. */
+	NSLog(@"Collecting temperatures for zipcode %s from weather server...", filter);
+	const int kMaxUpdate = 100;
+	long total_temp = 0;
+	for (int update_nbr = 0; update_nbr < kMaxUpdate; ++update_nbr) {
+		NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+
+		NSData *msg = [subscriber receiveDataWithFlags:0];
+		const char *string = [msg bytes];
+
+		int zipcode = 0, temperature = 0, relhumidity = 0;
+		(void)sscanf(string, "%d %d %d", &zipcode, &temperature, &relhumidity);
+
+		printf("%d ", temperature);
+		total_temp += temperature;
+
+		[pool drain];
+	}
+	/* End line of temperatures. */
+	putchar('\n');
+
+	NSLog(@"Average temperature for zipcode '%s' was %ld degF.",
+			filter, total_temp / kMaxUpdate);
+
+	/* [ZMQContext sockets] makes it easy to close all associated sockets. */
+	[[ctx sockets] makeObjectsPerformSelector:@selector(close)];
+	[pool drain];
+	return EXIT_SUCCESS;
+}
