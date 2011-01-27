@@ -15,7 +15,11 @@ main(void)
 	/* Get a socket to talk to clients. */
 	static NSString *const kEndpoint = @"tcp://*:5555";
 	ZMQSocket *responder = [ctx socketWithType:ZMQ_REP];
-	[responder bindToEndpoint:kEndpoint];
+	BOOL didBind = [responder bindToEndpoint:kEndpoint];
+	if (!didBind) {
+		NSLog(@"*** Failed to bind to endpoint [%@].", kEndpoint);
+		return EXIT_FAILURE;
+	}
 
 	for (;;) {
 		/* Create a local pool so that autoreleased objects can be disposed of
@@ -45,6 +49,8 @@ main(void)
 		[localPool drain];
 	}
 
+	/* Close the socket to avoid blocking in -[ZMQContext terminate]. */
+	[responder close];
 	/* Dispose of the context and socket. */
 	[pool drain];
 	return EXIT_SUCCESS;

@@ -6,11 +6,46 @@
 	objectVersion = 45;
 	objects = {
 
+/* Begin PBXAggregateTarget section */
+		3FFFDBDC12F12FB200E2D54F /* All Examples */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = 3FFFDBE512F12FE300E2D54F /* Build configuration list for PBXAggregateTarget "All Examples" */;
+			buildPhases = (
+			);
+			dependencies = (
+				3FFFDBE212F12FBF00E2D54F /* PBXTargetDependency */,
+				3FFFDBE012F12FBB00E2D54F /* PBXTargetDependency */,
+			);
+			name = "All Examples";
+			productName = "All Examples";
+		};
+/* End PBXAggregateTarget section */
+
 /* Begin PBXBuildFile section */
 		3FFFDB8812F1222600E2D54F /* ZMQContext.m in Sources */ = {isa = PBXBuildFile; fileRef = 3FFFDB8512F1222600E2D54F /* ZMQContext.m */; };
 		3FFFDB8912F1222600E2D54F /* ZMQSocket.m in Sources */ = {isa = PBXBuildFile; fileRef = 3FFFDB8712F1222600E2D54F /* ZMQSocket.m */; };
 		3FFFDBA112F125A100E2D54F /* hwserver.m in Sources */ = {isa = PBXBuildFile; fileRef = 3FFFDAD212F11C7200E2D54F /* hwserver.m */; };
+		3FFFDBCA12F12CF300E2D54F /* ZMQContext.m in Sources */ = {isa = PBXBuildFile; fileRef = 3FFFDB8512F1222600E2D54F /* ZMQContext.m */; };
+		3FFFDBCB12F12CF300E2D54F /* ZMQSocket.m in Sources */ = {isa = PBXBuildFile; fileRef = 3FFFDB8712F1222600E2D54F /* ZMQSocket.m */; };
+		3FFFDBD312F12D0C00E2D54F /* hwclient.m in Sources */ = {isa = PBXBuildFile; fileRef = 3FFFDBC712F12CD300E2D54F /* hwclient.m */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		3FFFDBDF12F12FBB00E2D54F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3FFFDBC812F12CF300E2D54F /* hwclient */;
+			remoteInfo = hwclient;
+		};
+		3FFFDBE112F12FBF00E2D54F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3FFFDAD512F11C8C00E2D54F /* hwserver */;
+			remoteInfo = hwserver;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		08FB779EFE84155DC02AAC07 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
@@ -18,15 +53,24 @@
 		3FFFDAD212F11C7200E2D54F /* hwserver.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = hwserver.m; sourceTree = "<group>"; };
 		3FFFDAD612F11C8C00E2D54F /* hwserver */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = hwserver; sourceTree = BUILT_PRODUCTS_DIR; };
 		3FFFDB6B12F11E2A00E2D54F /* project.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = project.xcconfig; sourceTree = "<group>"; };
-		3FFFDB8312F1222600E2D54F /* ZMQObjc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ZMQObjc.h; path = "../../../../objc-zmq/src/ZMQObjc.h"; sourceTree = SOURCE_ROOT; };
+		3FFFDB8312F1222600E2D54F /* ZMQObjC.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ZMQObjC.h; path = "../../../../objc-zmq/src/ZMQObjC.h"; sourceTree = SOURCE_ROOT; };
 		3FFFDB8412F1222600E2D54F /* ZMQContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ZMQContext.h; path = "../../../../objc-zmq/src/ZMQContext.h"; sourceTree = SOURCE_ROOT; };
 		3FFFDB8512F1222600E2D54F /* ZMQContext.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ZMQContext.m; path = "../../../../objc-zmq/src/ZMQContext.m"; sourceTree = SOURCE_ROOT; };
 		3FFFDB8612F1222600E2D54F /* ZMQSocket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ZMQSocket.h; path = "../../../../objc-zmq/src/ZMQSocket.h"; sourceTree = SOURCE_ROOT; };
 		3FFFDB8712F1222600E2D54F /* ZMQSocket.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ZMQSocket.m; path = "../../../../objc-zmq/src/ZMQSocket.m"; sourceTree = SOURCE_ROOT; };
+		3FFFDBC712F12CD300E2D54F /* hwclient.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = hwclient.m; sourceTree = "<group>"; };
+		3FFFDBD112F12CF300E2D54F /* hwclient */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = hwclient; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		3FFFDAD412F11C8C00E2D54F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3FFFDBCD12F12CF300E2D54F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -39,7 +83,7 @@
 		08FB7794FE84155DC02AAC07 /* ObjCExamples */ = {
 			isa = PBXGroup;
 			children = (
-				3FFFDB8212F1221B00E2D54F /* ZMQObjc */,
+				3FFFDB8212F1221B00E2D54F /* ZMQObjC */,
 				3FFFDB6C12F11E7D00E2D54F /* Other Files */,
 				08FB7795FE84155DC02AAC07 /* Examples */,
 				08FB779DFE84155DC02AAC07 /* External Frameworks and Libraries */,
@@ -51,6 +95,7 @@
 		08FB7795FE84155DC02AAC07 /* Examples */ = {
 			isa = PBXGroup;
 			children = (
+				3FFFDBC712F12CD300E2D54F /* hwclient.m */,
 				3FFFDAD212F11C7200E2D54F /* hwserver.m */,
 			);
 			name = Examples;
@@ -69,6 +114,7 @@
 			isa = PBXGroup;
 			children = (
 				3FFFDAD612F11C8C00E2D54F /* hwserver */,
+				3FFFDBD112F12CF300E2D54F /* hwclient */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -82,16 +128,16 @@
 			name = "Other Files";
 			sourceTree = "<group>";
 		};
-		3FFFDB8212F1221B00E2D54F /* ZMQObjc */ = {
+		3FFFDB8212F1221B00E2D54F /* ZMQObjC */ = {
 			isa = PBXGroup;
 			children = (
-				3FFFDB8312F1222600E2D54F /* ZMQObjc.h */,
+				3FFFDB8312F1222600E2D54F /* ZMQObjC.h */,
 				3FFFDB8412F1222600E2D54F /* ZMQContext.h */,
 				3FFFDB8512F1222600E2D54F /* ZMQContext.m */,
 				3FFFDB8612F1222600E2D54F /* ZMQSocket.h */,
 				3FFFDB8712F1222600E2D54F /* ZMQSocket.m */,
 			);
-			name = ZMQObjc;
+			name = ZMQObjC;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -111,6 +157,22 @@
 			name = hwserver;
 			productName = hwserver;
 			productReference = 3FFFDAD612F11C8C00E2D54F /* hwserver */;
+			productType = "com.apple.product-type.tool";
+		};
+		3FFFDBC812F12CF300E2D54F /* hwclient */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3FFFDBCE12F12CF300E2D54F /* Build configuration list for PBXNativeTarget "hwclient" */;
+			buildPhases = (
+				3FFFDBC912F12CF300E2D54F /* Sources */,
+				3FFFDBCD12F12CF300E2D54F /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = hwclient;
+			productName = hwserver;
+			productReference = 3FFFDBD112F12CF300E2D54F /* hwclient */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -133,6 +195,8 @@
 			projectRoot = "";
 			targets = (
 				3FFFDAD512F11C8C00E2D54F /* hwserver */,
+				3FFFDBC812F12CF300E2D54F /* hwclient */,
+				3FFFDBDC12F12FB200E2D54F /* All Examples */,
 			);
 		};
 /* End PBXProject section */
@@ -148,7 +212,30 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		3FFFDBC912F12CF300E2D54F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3FFFDBD312F12D0C00E2D54F /* hwclient.m in Sources */,
+				3FFFDBCA12F12CF300E2D54F /* ZMQContext.m in Sources */,
+				3FFFDBCB12F12CF300E2D54F /* ZMQSocket.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		3FFFDBE012F12FBB00E2D54F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3FFFDBC812F12CF300E2D54F /* hwclient */;
+			targetProxy = 3FFFDBDF12F12FBB00E2D54F /* PBXContainerItemProxy */;
+		};
+		3FFFDBE212F12FBF00E2D54F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3FFFDAD512F11C8C00E2D54F /* hwserver */;
+			targetProxy = 3FFFDBE112F12FBF00E2D54F /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		1DEB927908733DD40010E9CD /* Debug */ = {
@@ -213,6 +300,61 @@
 			};
 			name = Release;
 		};
+		3FFFDBCF12F12CF300E2D54F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/AppKit.framework/Headers/AppKit.h";
+				INSTALL_PATH = /usr/local/bin;
+				PREBINDING = NO;
+				PRODUCT_NAME = hwclient;
+			};
+			name = Debug;
+		};
+		3FFFDBD012F12CF300E2D54F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_MODEL_TUNING = G5;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/AppKit.framework/Headers/AppKit.h";
+				INSTALL_PATH = /usr/local/bin;
+				PREBINDING = NO;
+				PRODUCT_NAME = hwclient;
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
+		3FFFDBDD12F12FB300E2D54F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				PRODUCT_NAME = "All Examples";
+			};
+			name = Debug;
+		};
+		3FFFDBDE12F12FB300E2D54F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				PRODUCT_NAME = "All Examples";
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -230,6 +372,24 @@
 			buildConfigurations = (
 				3FFFDAD812F11C8D00E2D54F /* Debug */,
 				3FFFDAD912F11C8D00E2D54F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		3FFFDBCE12F12CF300E2D54F /* Build configuration list for PBXNativeTarget "hwclient" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3FFFDBCF12F12CF300E2D54F /* Debug */,
+				3FFFDBD012F12CF300E2D54F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		3FFFDBE512F12FE300E2D54F /* Build configuration list for PBXAggregateTarget "All Examples" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3FFFDBDD12F12FB300E2D54F /* Debug */,
+				3FFFDBDE12F12FB300E2D54F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

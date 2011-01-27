@@ -1,13 +1,42 @@
-No-one has translated the hwclient example into Objective-C yet.  Be the first to create
-hwclient in Objective-C and get one free Internet!  If you're the author of the Objective-C
-binding, this is a great way to get people to use 0MQ in Objective-C.
+//
+//  Hello World client
+//  Connects REQ socket to tcp://localhost:5555
+//  Sends "Hello" to server, expects "World" back
+//
+#import "ZMQObjC.h"
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+int
+main (void)
+{
+	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+	ZMQContext *ctx = [[[ZMQContext alloc] initWithIOThreads:1] autorelease];
+	
+	/* Get a socket to talk to clients. */
+	NSLog(@"Connecting to hello world server...");
+	static NSString *const kEndpoint = @"tcp://localhost:5555";
+	ZMQSocket *requester = [ctx socketWithType:ZMQ_REQ];
+	BOOL didBind = [requester connectToEndpoint:kEndpoint];
+	if (!didBind) {
+		NSLog(@"*** Failed to bind to endpoint [%@].", kEndpoint);
+		return EXIT_FAILURE;
+	}
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+	static const int kMaxRequest = 10;
+	NSData *const request = [@"Hello" dataUsingEncoding:NSUTF8StringEncoding];
+	for (int request_nbr = 0; request_nbr < kMaxRequest; ++request_nbr) {
+		NSAutoreleasePool *localPool = [[NSAutoreleasePool alloc] init];
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+		NSLog(@"Sending request %d.", request_nbr);
+		[requester sendData:request withFlags:0];
+		NSData *reply = [requester receiveDataWithFlags:0];
+		NSString *text = [[[NSString alloc]
+				initWithData:reply encoding:NSUTF8StringEncoding] autorelease];
+		NSLog(@"Received reply %d: %@", request_nbr, text);
+
+		[localPool drain];
+	}
+
+	[requester close];
+	[pool drain];
+	return EXIT_SUCCESS;
+}
