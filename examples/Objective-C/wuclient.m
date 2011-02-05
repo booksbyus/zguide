@@ -9,7 +9,7 @@ int
 main(int argc, const char *argv[])
 {
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-	ZMQContext *ctx = [[[ZMQContext alloc] initWithIOThreads:1] autorelease];
+	ZMQContext *ctx = [[[ZMQContext alloc] initWithIOThreads:1U] autorelease];
 
 	// Socket to talk to server
 	ZMQSocket *subscriber = [ctx socketWithType:ZMQ_SUB];

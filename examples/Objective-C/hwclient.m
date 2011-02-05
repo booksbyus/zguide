@@ -9,7 +9,7 @@ int
 main (void)
 {
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-	ZMQContext *ctx = [[[ZMQContext alloc] initWithIOThreads:1] autorelease];
+	ZMQContext *ctx = [[[ZMQContext alloc] initWithIOThreads:1U] autorelease];
 	
 	/* Get a socket to talk to clients. */
 	NSLog(@"Connecting to hello world server...");

@@ -61,27 +61,29 @@
 			isa = PBXContainerItemProxy;
 			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 3FFFDC5A12F13F2D00E2D54F /* zversion */;
+			remoteGlobalIDString = 3FFFDC5A12F13F2D00E2D54F;
 			remoteInfo = zversion;
 		};
 		3FFFDC7A12F13FF000E2D54F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 3FFFDC7212F13FD600E2D54F /* wuserver */;
+			remoteGlobalIDString = 3FFFDC7212F13FD600E2D54F;
 			remoteInfo = wuserver;
 		};
 		3FFFDD3812F1551800E2D54F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 3FFFDD1712F151AD00E2D54F /* wuclient */;
+			remoteGlobalIDString = 3FFFDD1712F151AD00E2D54F;
 			remoteInfo = wuclient;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		08FB779EFE84155DC02AAC07 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
+		3F6612F012FD16B500052F8D /* ZMQHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZMQHelper.h; sourceTree = "<group>"; };
+		3F6612F112FD16B500052F8D /* ZMQHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ZMQHelper.m; sourceTree = "<group>"; };
 		3FFFDAD112F11AF400E2D54F /* ObjCExamples_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ObjCExamples_Prefix.pch; sourceTree = "<group>"; };
 		3FFFDAD212F11C7200E2D54F /* hwserver.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = hwserver.m; sourceTree = "<group>"; };
 		3FFFDAD612F11C8C00E2D54F /* hwserver */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = hwserver; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -155,6 +157,8 @@
 		08FB7795FE84155DC02AAC07 /* Examples */ = {
 			isa = PBXGroup;
 			children = (
+				3F6612F012FD16B500052F8D /* ZMQHelper.h */,
+				3F6612F112FD16B500052F8D /* ZMQHelper.m */,
 				3FFFDBC712F12CD300E2D54F /* hwclient.m */,
 				3FFFDAD212F11C7200E2D54F /* hwserver.m */,
 				3FFFDC5912F13F2200E2D54F /* zversion.m */,
@@ -425,6 +429,57 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				PREBINDING = NO;
 				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		3F6612B912FD111C00052F8D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_MODEL_TUNING = G5;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/AppKit.framework/Headers/AppKit.h";
+				INSTALL_PATH = /usr/local/bin;
+				PREBINDING = NO;
+				PRODUCT_NAME = wuclient;
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
+		3F66130112FD176F00052F8D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_MODEL_TUNING = G5;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/AppKit.framework/Headers/AppKit.h";
+				INSTALL_PATH = /usr/local/bin;
+				PREBINDING = NO;
+				PRODUCT_NAME = wuclient;
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
+		3F66134012FD1B8900052F8D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_MODEL_TUNING = G5;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/AppKit.framework/Headers/AppKit.h";
+				INSTALL_PATH = /usr/local/bin;
+				PREBINDING = NO;
+				PRODUCT_NAME = wuclient;
+				ZERO_LINK = NO;
 			};
 			name = Release;
 		};

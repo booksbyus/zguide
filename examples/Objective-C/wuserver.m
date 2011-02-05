@@ -4,9 +4,7 @@
 //  Publishes random weather updates
 //
 #import "ZMQObjC.h"
-
-// Returns a random integer within the range [0, i).
-static inline int within(int i);
+#import "ZMQHelper.h"
 
 int
 main(void)
@@ -14,7 +12,7 @@ main(void)
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 
 	//  Prepare our context and publisher
-	ZMQContext *ctx = [[[ZMQContext alloc] initWithIOThreads:1] autorelease];
+	ZMQContext *ctx = [[[ZMQContext alloc] initWithIOThreads:1U] autorelease];
 	ZMQSocket *publisher = [ctx socketWithType:ZMQ_PUB];
 	[publisher bindToEndpoint:@"tcp://*:5556"];
 	[publisher bindToEndpoint:@"ipc://weather.ipc"];
@@ -37,10 +35,4 @@ main(void)
 	[publisher close];
 	[pool drain];
 	return EXIT_SUCCESS;
-}
-
-static inline int
-within(int i) {
-	float frac = ((float)RAND_MAX - random()) / RAND_MAX;
-	return i * frac;
 }
