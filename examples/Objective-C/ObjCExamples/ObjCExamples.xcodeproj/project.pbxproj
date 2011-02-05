@@ -13,6 +13,9 @@
 			buildPhases = (
 			);
 			dependencies = (
+				3F66137412FD233800052F8D /* PBXTargetDependency */,
+				3F66132A12FD1ACC00052F8D /* PBXTargetDependency */,
+				3F6612EC12FD166700052F8D /* PBXTargetDependency */,
 				3FFFDD3912F1551800E2D54F /* PBXTargetDependency */,
 				3FFFDC7B12F13FF000E2D54F /* PBXTargetDependency */,
 				3FFFDC6712F13F4D00E2D54F /* PBXTargetDependency */,
@@ -25,6 +28,15 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		3F6612B312FD111C00052F8D /* ZMQContext.m in Sources */ = {isa = PBXBuildFile; fileRef = 3FFFDB8512F1222600E2D54F /* ZMQContext.m */; };
+		3F6612B412FD111C00052F8D /* ZMQSocket.m in Sources */ = {isa = PBXBuildFile; fileRef = 3FFFDB8712F1222600E2D54F /* ZMQSocket.m */; };
+		3F6612BD12FD114A00052F8D /* taskvent.m in Sources */ = {isa = PBXBuildFile; fileRef = 3F6612BC12FD114A00052F8D /* taskvent.m */; };
+		3F6612FA12FD176F00052F8D /* ZMQContext.m in Sources */ = {isa = PBXBuildFile; fileRef = 3FFFDB8512F1222600E2D54F /* ZMQContext.m */; };
+		3F6612FB12FD176F00052F8D /* ZMQSocket.m in Sources */ = {isa = PBXBuildFile; fileRef = 3FFFDB8712F1222600E2D54F /* ZMQSocket.m */; };
+		3F66130B12FD17B200052F8D /* taskwork.m in Sources */ = {isa = PBXBuildFile; fileRef = 3F66130A12FD17B200052F8D /* taskwork.m */; };
+		3F66133912FD1B8900052F8D /* ZMQContext.m in Sources */ = {isa = PBXBuildFile; fileRef = 3FFFDB8512F1222600E2D54F /* ZMQContext.m */; };
+		3F66133A12FD1B8900052F8D /* ZMQSocket.m in Sources */ = {isa = PBXBuildFile; fileRef = 3FFFDB8712F1222600E2D54F /* ZMQSocket.m */; };
+		3F66134512FD1B9C00052F8D /* tasksink.m in Sources */ = {isa = PBXBuildFile; fileRef = 3F66133612FD1B7F00052F8D /* tasksink.m */; };
 		3FFFDB8812F1222600E2D54F /* ZMQContext.m in Sources */ = {isa = PBXBuildFile; fileRef = 3FFFDB8512F1222600E2D54F /* ZMQContext.m */; };
 		3FFFDB8912F1222600E2D54F /* ZMQSocket.m in Sources */ = {isa = PBXBuildFile; fileRef = 3FFFDB8712F1222600E2D54F /* ZMQSocket.m */; };
 		3FFFDBA112F125A100E2D54F /* hwserver.m in Sources */ = {isa = PBXBuildFile; fileRef = 3FFFDAD212F11C7200E2D54F /* hwserver.m */; };
@@ -43,6 +55,27 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		3F6612EB12FD166700052F8D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3F6612B112FD111C00052F8D /* taskvent */;
+			remoteInfo = taskvent;
+		};
+		3F66132912FD1ACC00052F8D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3F6612F812FD176F00052F8D /* taskwork */;
+			remoteInfo = taskwork;
+		};
+		3F66137312FD233800052F8D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3F66133712FD1B8900052F8D /* tasksink */;
+			remoteInfo = tasksink;
+		};
 		3FFFDBDF12F12FBB00E2D54F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
@@ -82,8 +115,14 @@
 
 /* Begin PBXFileReference section */
 		08FB779EFE84155DC02AAC07 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
+		3F6612BA12FD111C00052F8D /* taskvent */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = taskvent; sourceTree = BUILT_PRODUCTS_DIR; };
+		3F6612BC12FD114A00052F8D /* taskvent.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = taskvent.m; sourceTree = "<group>"; };
 		3F6612F012FD16B500052F8D /* ZMQHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZMQHelper.h; sourceTree = "<group>"; };
 		3F6612F112FD16B500052F8D /* ZMQHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ZMQHelper.m; sourceTree = "<group>"; };
+		3F66130212FD176F00052F8D /* taskwork */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = taskwork; sourceTree = BUILT_PRODUCTS_DIR; };
+		3F66130A12FD17B200052F8D /* taskwork.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = taskwork.m; sourceTree = "<group>"; };
+		3F66133612FD1B7F00052F8D /* tasksink.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = tasksink.m; sourceTree = "<group>"; };
+		3F66134112FD1B8900052F8D /* tasksink */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = tasksink; sourceTree = BUILT_PRODUCTS_DIR; };
 		3FFFDAD112F11AF400E2D54F /* ObjCExamples_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ObjCExamples_Prefix.pch; sourceTree = "<group>"; };
 		3FFFDAD212F11C7200E2D54F /* hwserver.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = hwserver.m; sourceTree = "<group>"; };
 		3FFFDAD612F11C8C00E2D54F /* hwserver */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = hwserver; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -104,6 +143,27 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		3F6612B612FD111C00052F8D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3F6612FE12FD176F00052F8D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3F66133D12FD1B8900052F8D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		3FFFDAD412F11C8C00E2D54F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -164,6 +224,9 @@
 				3FFFDC5912F13F2200E2D54F /* zversion.m */,
 				3FFFDC7712F13FEB00E2D54F /* wuserver.m */,
 				3FFFDD2212F151CA00E2D54F /* wuclient.m */,
+				3F6612BC12FD114A00052F8D /* taskvent.m */,
+				3F66130A12FD17B200052F8D /* taskwork.m */,
+				3F66133612FD1B7F00052F8D /* tasksink.m */,
 			);
 			name = Examples;
 			path = ..;
@@ -185,6 +248,9 @@
 				3FFFDC6312F13F2D00E2D54F /* zversion */,
 				3FFFDC7312F13FD600E2D54F /* wuserver */,
 				3FFFDD2012F151AD00E2D54F /* wuclient */,
+				3F6612BA12FD111C00052F8D /* taskvent */,
+				3F66130212FD176F00052F8D /* taskwork */,
+				3F66134112FD1B8900052F8D /* tasksink */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -213,6 +279,54 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		3F6612B112FD111C00052F8D /* taskvent */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3F6612B712FD111C00052F8D /* Build configuration list for PBXNativeTarget "taskvent" */;
+			buildPhases = (
+				3F6612B212FD111C00052F8D /* Sources */,
+				3F6612B612FD111C00052F8D /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = taskvent;
+			productName = wuserver;
+			productReference = 3F6612BA12FD111C00052F8D /* taskvent */;
+			productType = "com.apple.product-type.tool";
+		};
+		3F6612F812FD176F00052F8D /* taskwork */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3F6612FF12FD176F00052F8D /* Build configuration list for PBXNativeTarget "taskwork" */;
+			buildPhases = (
+				3F6612F912FD176F00052F8D /* Sources */,
+				3F6612FE12FD176F00052F8D /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = taskwork;
+			productName = wuserver;
+			productReference = 3F66130212FD176F00052F8D /* taskwork */;
+			productType = "com.apple.product-type.tool";
+		};
+		3F66133712FD1B8900052F8D /* tasksink */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3F66133E12FD1B8900052F8D /* Build configuration list for PBXNativeTarget "tasksink" */;
+			buildPhases = (
+				3F66133812FD1B8900052F8D /* Sources */,
+				3F66133D12FD1B8900052F8D /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = tasksink;
+			productName = wuserver;
+			productReference = 3F66134112FD1B8900052F8D /* tasksink */;
+			productType = "com.apple.product-type.tool";
+		};
 		3FFFDAD512F11C8C00E2D54F /* hwserver */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 3FFFDADA12F11CAF00E2D54F /* Build configuration list for PBXNativeTarget "hwserver" */;
@@ -318,11 +432,44 @@
 				3FFFDC5A12F13F2D00E2D54F /* zversion */,
 				3FFFDC7212F13FD600E2D54F /* wuserver */,
 				3FFFDD1712F151AD00E2D54F /* wuclient */,
+				3F6612B112FD111C00052F8D /* taskvent */,
+				3F6612F812FD176F00052F8D /* taskwork */,
+				3F66133712FD1B8900052F8D /* tasksink */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXSourcesBuildPhase section */
+		3F6612B212FD111C00052F8D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3F6612B312FD111C00052F8D /* ZMQContext.m in Sources */,
+				3F6612B412FD111C00052F8D /* ZMQSocket.m in Sources */,
+				3F6612BD12FD114A00052F8D /* taskvent.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3F6612F912FD176F00052F8D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3F6612FA12FD176F00052F8D /* ZMQContext.m in Sources */,
+				3F6612FB12FD176F00052F8D /* ZMQSocket.m in Sources */,
+				3F66130B12FD17B200052F8D /* taskwork.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3F66133812FD1B8900052F8D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3F66133912FD1B8900052F8D /* ZMQContext.m in Sources */,
+				3F66133A12FD1B8900052F8D /* ZMQSocket.m in Sources */,
+				3F66134512FD1B9C00052F8D /* tasksink.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		3FFFDAD312F11C8C00E2D54F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -376,6 +523,21 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		3F6612EC12FD166700052F8D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3F6612B112FD111C00052F8D /* taskvent */;
+			targetProxy = 3F6612EB12FD166700052F8D /* PBXContainerItemProxy */;
+		};
+		3F66132A12FD1ACC00052F8D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3F6612F812FD176F00052F8D /* taskwork */;
+			targetProxy = 3F66132912FD1ACC00052F8D /* PBXContainerItemProxy */;
+		};
+		3F66137412FD233800052F8D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3F66133712FD1B8900052F8D /* tasksink */;
+			targetProxy = 3F66137312FD233800052F8D /* PBXContainerItemProxy */;
+		};
 		3FFFDBE012F12FBB00E2D54F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 3FFFDBC812F12CF300E2D54F /* hwclient */;
@@ -432,6 +594,23 @@
 			};
 			name = Release;
 		};
+		3F6612B812FD111C00052F8D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/AppKit.framework/Headers/AppKit.h";
+				INSTALL_PATH = /usr/local/bin;
+				PREBINDING = NO;
+				PRODUCT_NAME = taskvent;
+			};
+			name = Debug;
+		};
 		3F6612B912FD111C00052F8D /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -449,6 +628,23 @@
 			};
 			name = Release;
 		};
+		3F66130012FD176F00052F8D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/AppKit.framework/Headers/AppKit.h";
+				INSTALL_PATH = /usr/local/bin;
+				PREBINDING = NO;
+				PRODUCT_NAME = taskwork;
+			};
+			name = Debug;
+		};
 		3F66130112FD176F00052F8D /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -465,6 +661,24 @@
 				ZERO_LINK = NO;
 			};
 			name = Release;
+		};
+		3F66133F12FD1B8900052F8D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/AppKit.framework/Headers/AppKit.h";
+				GCC_VERSION = "";
+				INSTALL_PATH = /usr/local/bin;
+				PREBINDING = NO;
+				PRODUCT_NAME = tasksink;
+			};
+			name = Debug;
 		};
 		3F66134012FD1B8900052F8D /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -682,6 +896,33 @@
 			buildConfigurations = (
 				1DEB927908733DD40010E9CD /* Debug */,
 				1DEB927A08733DD40010E9CD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		3F6612B712FD111C00052F8D /* Build configuration list for PBXNativeTarget "taskvent" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3F6612B812FD111C00052F8D /* Debug */,
+				3F6612B912FD111C00052F8D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		3F6612FF12FD176F00052F8D /* Build configuration list for PBXNativeTarget "taskwork" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3F66130012FD176F00052F8D /* Debug */,
+				3F66130112FD176F00052F8D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		3F66133E12FD1B8900052F8D /* Build configuration list for PBXNativeTarget "tasksink" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3F66133F12FD1B8900052F8D /* Debug */,
+				3F66134012FD1B8900052F8D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

@@ -1,13 +1,44 @@
-No-one has translated the taskvent example into Objective-C yet.  Be the first to create
-taskvent in Objective-C and get one free Internet!  If you're the author of the Objective-C
-binding, this is a great way to get people to use 0MQ in Objective-C.
+/* Task ventilator - sends task batch to workers via PUSH socket. */
+#import <Foundation/Foundation.h>
+#import "ZMQObjC.h"
+#import "ZMQHelper.h"
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+int
+main(void)
+{
+	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+	ZMQContext *ctx = [[[ZMQContext alloc] initWithIOThreads:1U] autorelease];
+	ZMQSocket *sender = [ctx socketWithType:ZMQ_PUSH];
+	[sender bindToEndpoint:@"tcp://*:5557"];
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+	NSLog(@"Press Enter when the workers are ready: ");
+	(void)getchar();
+	NSLog(@"Sending tasks to workers...");
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+	/* Signal batch start with message of "0". */
+	NSData *signalData = [@"0" dataUsingEncoding:NSUTF8StringEncoding];
+	[sender sendData:signalData withFlags:0];
+
+	/* Initialize random number generator. */
+	(void)srandom((unsigned)time(NULL));
+
+	/* Send kTaskCount tasks. */
+	unsigned long totalMsec = 0UL;
+	static const int kTaskCount = 100;
+	for (int task = 0; task < kTaskCount; ++task) {
+		/* Random workload from 1 to 100 msec. */
+		int workload = within(100) + 1;
+		totalMsec += workload;
+		NSString *text = [NSString stringWithFormat:@"%d", workload];
+		NSData *textData = [text dataUsingEncoding:NSUTF8StringEncoding];
+		[sender sendData:textData withFlags:0];
+	}
+	NSLog(@"Total expected cost: %lu ms", totalMsec);
+
+	/* Let IOThreads finish sending. */
+	sleep(1);
+
+	[sender close];
+	[pool drain];
+	return EXIT_SUCCESS;
+}
