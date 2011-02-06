@@ -1,13 +1,40 @@
-No-one has translated the mspoller example into Objective-C yet.  Be the first to create
-mspoller in Objective-C and get one free Internet!  If you're the author of the Objective-C
-binding, this is a great way to get people to use 0MQ in Objective-C.
+/* msreader.m: Reads from multiple sockets the right way. */
+#import "ZMQObjC.h"
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+static NSString *const kTaskVentEndpoint = @"tcp://localhost:5557";
+static NSString *const kWeatherServerEndpoint = @"tcp://localhost:5556";
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+int
+main(void)
+{
+	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+	ZMQContext *ctx = [[[ZMQContext alloc] initWithIOThreads:1U] autorelease];
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+	/* Connect to task ventilator. */
+	ZMQSocket *receiver = [ctx socketWithType:ZMQ_PULL];
+	[receiver connectToEndpoint:kTaskVentEndpoint];
+
+	/* Connect to weather server. */
+	ZMQSocket *subscriber = [ctx socketWithType:ZMQ_SUB];
+	[subscriber connectToEndpoint:kWeatherServerEndpoint];
+	NSData *subData = [@"10001" dataUsingEncoding:NSUTF8StringEncoding];
+	[subscriber setData:subData forOption:ZMQ_SUBSCRIBE];
+
+	/* Initialize poll set. */
+	zmq_pollitem_t items[2];
+	[receiver getPollItem:&items[0] forEvents:ZMQ_POLLIN];
+	[subscriber getPollItem:&items[1] forEvents:ZMQ_POLLIN];
+
+	/* Process messages from both sockets. */
+	for (;;) {
+		NSAutoreleasePool *p = [[NSAutoreleasePool alloc] init];
+		[ZMQContext pollWithItems:items count:2
+				timeoutAfterUsec:ZMQPollTimeoutNever];
+		[p drain];
+	}
+
+	/* NOT REACHED */
+	[ctx closeSockets];
+	[pool drain];  /* This finally releases the autoreleased context. */
+	return EXIT_SUCCESS;
+}
