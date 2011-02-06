@@ -202,7 +202,7 @@ These are the ways we can know the address to send a message to, and you'll see 
 
 * Peers can have prior knowledge of each others' identities, e.g. via configuration files or some other magic.
 
-There are three custom routing patterns, one for each of the socket types we can connect to a router:
+There are four custom routing patterns, one for each of the socket types we can connect to a router:
 
 * Router-to-dealer, also called XREP-to-XREQ.
 * Router-to-mama, aka XREP-to-REQ.
@@ -1040,7 +1040,7 @@ The simplest interconnect is //federation// in which brokers simulate clients an
 
 This would give us simple logic in both brokers and a reasonably good mechanism: when there are no clients, tell the other broker 'ready', and accept one job from it.  The problem is also that it is too simple for this problem.  A federated broker would be able to handle only one task at once.  If the broker emulates a lock-step client and worker, it is by definition also going to be lock-step and if it has lots of available workers they won't be used.  Our brokers need to be connected in a fully asynchronous fashion.
 
-The federation model is perfect for other kinds of routing, especially server-oriented architectures (routing by service name and proximity rather than LRU or load-balancing or random scatter).  So don't dismiss it as useless, it's just not right for least-recently used and cluster load-balancing.
+The federation model is perfect for other kinds of routing, especially service-oriented architectures or SOAs (which route by service name and proximity rather than LRU or load-balancing or random scatter).  So don't dismiss it as useless, it's just not right for least-recently used and cluster load-balancing.
 
 So instead of federation, let's look at a //peering// approach in which brokers are explicitly aware of each other and talk over privileged channels.  Let's break this down, assuming we want to interconnect N brokers.  Each broker has (N - 1) peers, and all brokers are using exactly the same code and logic.  There are two distinct flows of information between brokers:
 
@@ -1072,7 +1072,7 @@ So in all the code we write for this tutorial will use these socket names:
 
 For our transport we'll use {{ipc}} for everything.  This has the advantage of working like {{tcp}} in terms of connectivity (i.e. it's a disconnected transport, unlike {{inproc}}), yet we don't need IP addresses or DNS names, which would be a pain here.  Instead, we will use {{ipc}} endpoints called //something//-{{local}}, //something//-{{cloud}}, and //something//-{{state}}, where //something// is the name of our simulated cluster.
 
-You may be thinking that this is a lot of work for some names.  Why not call them s1, s2, s3, s4, etc.?  The answer is that if your brain is not a perfect machine, you need a lot of help when reading code, and we'll see that these names do help.  It is a lot easier to remember "two directions, three flows" than "six different sockets".
+You may be thinking that this is a lot of work for some names.  Why not call them s1, s2, s3, s4, etc.?  The answer is that if your brain is not a perfect machine, you need a lot of help when reading code, and we'll see that these names do help.  It is a lot easier to remember "three flows, two directions" than "six different sockets".
 
 Here is the broker socket arrangement, then:
 
@@ -1120,7 +1120,7 @@ Here is the broker socket arrangement, then:
       Figure # - Broker socket arrangement
 [[/code]]
 
-Note that we connect the cloudbe in each broker to the cloudfe in every other broker, and likewise we connect the statefe in each broker to the statefe in every other broker.
+Note that we connect the cloudbe in each broker to the cloudfe in every other broker, and likewise we connect the statebe in each broker to the statefe in every other broker.
 
 ++++ Prototyping the State Flow
 
@@ -1303,8 +1303,6 @@ It's a non-trivial program and took about a day to get working.  These are the h
 * Client threads don't print directly, but instead send a message to a 'monitor' socket (PUSH) that the main loop collects (PULL) and prints off.  This is the first case we've seen of using 0MQ sockets for monitoring and logging; this is a big use case we'll come back to later.
 
 * Clients simulate varying loads to get the cluster 100% at random moments, so that tasks are shifted over to the cloud.  The number of clients and workers, and delays in the client and worker threads control this.  Feel free to play with them to see if you can make a more realistic simulation.
-
-* All {{inproc}} endpoints bind first, then connect.  This is required by the {{inproc}} transport.
 
 * The main loop uses two pollsets.  It could in fact use three: information, backends, and frontends.  As in the earlier prototype, there is no point in taking a frontend message if there is no backend capacity.
 

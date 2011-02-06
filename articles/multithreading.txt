@@ -310,7 +310,7 @@ int main ()
 }
 </code>
 
-There is no direct mapping from traditional MT code to 0MQ code.  Whereas dog pit shared state threads interact in many indirect and subtle ways, 0MQ threads interact only by sending and receiving messages.
+There is no direct mapping from traditional MT code to 0MQ code.  Whereas shared state threads interact in many indirect and subtle ways, 0MQ threads interact only by sending and receiving messages.
 
 
 ## About this document

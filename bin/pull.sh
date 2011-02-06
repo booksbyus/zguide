@@ -5,6 +5,7 @@
 #
 # Syntax: sh bin/pull.sh contributor
 #
+set -x
 
 git checkout -b $1-master master
 git pull https://github.com/$1/zguide.git master
