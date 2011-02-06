@@ -23,7 +23,6 @@ while True:
     if socks.get(frontend) == zmq.POLLIN:
         message = frontend.recv()
         more = frontend.getsockopt(zmq.RCVMORE)
-        #print 'from frontend: ',message
         if more:
             backend.send(message, zmq.SNDMORE)
         else:
@@ -32,7 +31,6 @@ while True:
     if socks.get(backend) == zmq.POLLIN:
         message = backend.recv()
         more = backend.getsockopt(zmq.RCVMORE)
-        #print 'from backend: ',message
         if more:
             frontend.send(message, zmq.SNDMORE)
         else:
