@@ -1,13 +1,39 @@
-No-one has translated the rrbroker example into Python yet.  Be the first to create
-rrbroker in Python and get one free Internet!  If you're the author of the Python
-binding, this is a great way to get people to use 0MQ in Python.
+# Simple request-reply broker
+#
+# Author: Lev Givon <lev(at)columbia(dot)edu>
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+import zmq
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+# Prepare our context and sockets
+context = zmq.Context()
+frontend = context.socket(zmq.XREP)
+backend = context.socket(zmq.XREQ)
+frontend.bind("tcp://*:5559")
+backend.bind("tcp://*:5560")
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+# Initialize poll set
+poller = zmq.Poller()
+poller.register(frontend, zmq.POLLIN)
+poller.register(backend, zmq.POLLIN)
+
+# Switch messages between sockets
+while True:
+    socks = dict(poller.poll())
+
+    if socks.get(frontend) == zmq.POLLIN:
+        message = frontend.recv()
+        more = frontend.getsockopt(zmq.RCVMORE)
+        #print 'from frontend: ',message
+        if more:
+            backend.send(message, zmq.SNDMORE)
+        else:
+            backend.send(message)
+
+    if socks.get(backend) == zmq.POLLIN:
+        message = backend.recv()
+        more = backend.getsockopt(zmq.RCVMORE)
+        #print 'from backend: ',message
+        if more:
+            frontend.send(message, zmq.SNDMORE)
+        else:
+            frontend.send(message)
