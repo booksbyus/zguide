@@ -1,13 +1,25 @@
-No-one has translated the rtrouter example into Python yet.  Be the first to create
-rtrouter in Python and get one free Internet!  If you're the author of the Python
-binding, this is a great way to get people to use 0MQ in Python.
+# Cross-connected XREP sockets addressing each other
+#
+# Author: Lev Givon <lev(at)columbia(dot)edu>
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+import zmq
+import time
+import zhelpers
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+context = zmq.Context()
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+worker = context.socket(zmq.XREP)
+worker.setsockopt(zmq.IDENTITY, "WORKER")
+worker.bind("ipc://rtrouter.ipc")
+
+server = context.socket(zmq.XREP)
+server.setsockopt(zmq.IDENTITY, "SERVER")
+server.connect("ipc://rtrouter.ipc")
+
+time.sleep(1)
+
+server.send_multipart(["WORKER", "", "send to worker"])
+zhelpers.dump(worker)
+
+worker.send_multipart(["SERVER", "", "send to server"])
+zhelpers.dump(server)
