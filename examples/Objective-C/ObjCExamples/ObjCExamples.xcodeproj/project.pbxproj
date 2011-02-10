@@ -13,6 +13,8 @@
 			buildPhases = (
 			);
 			dependencies = (
+				3F661CB31303B6E500052F8D /* PBXTargetDependency */,
+				3F661CA81303B6D900052F8D /* PBXTargetDependency */,
 				3F66142312FE90E800052F8D /* PBXTargetDependency */,
 				3F66142112FE90E500052F8D /* PBXTargetDependency */,
 				3F66137412FD233800052F8D /* PBXTargetDependency */,
@@ -45,6 +47,12 @@
 		3F6613F012FE8BFA00052F8D /* ZMQSocket.m in Sources */ = {isa = PBXBuildFile; fileRef = 3FFFDB8712F1222600E2D54F /* ZMQSocket.m */; };
 		3F6613FC12FE8C2200052F8D /* msreader.m in Sources */ = {isa = PBXBuildFile; fileRef = 3F6613FA12FE8C2200052F8D /* msreader.m */; };
 		3F6613FD12FE8C2200052F8D /* mspoller.m in Sources */ = {isa = PBXBuildFile; fileRef = 3F6613F912FE8C2200052F8D /* mspoller.m */; };
+		3F661C831303AF3200052F8D /* ZMQContext.m in Sources */ = {isa = PBXBuildFile; fileRef = 3FFFDB8512F1222600E2D54F /* ZMQContext.m */; };
+		3F661C841303AF3200052F8D /* ZMQSocket.m in Sources */ = {isa = PBXBuildFile; fileRef = 3FFFDB8712F1222600E2D54F /* ZMQSocket.m */; };
+		3F661C8E1303AF3900052F8D /* ZMQContext.m in Sources */ = {isa = PBXBuildFile; fileRef = 3FFFDB8512F1222600E2D54F /* ZMQContext.m */; };
+		3F661C8F1303AF3900052F8D /* ZMQSocket.m in Sources */ = {isa = PBXBuildFile; fileRef = 3FFFDB8712F1222600E2D54F /* ZMQSocket.m */; };
+		3F661CA41303B2E900052F8D /* taskwork2.m in Sources */ = {isa = PBXBuildFile; fileRef = 3F661CA31303B2E900052F8D /* taskwork2.m */; };
+		3F661CA61303B2FA00052F8D /* tasksink2.m in Sources */ = {isa = PBXBuildFile; fileRef = 3F661CA51303B2FA00052F8D /* tasksink2.m */; };
 		3FFFDB8812F1222600E2D54F /* ZMQContext.m in Sources */ = {isa = PBXBuildFile; fileRef = 3FFFDB8512F1222600E2D54F /* ZMQContext.m */; };
 		3FFFDB8912F1222600E2D54F /* ZMQSocket.m in Sources */ = {isa = PBXBuildFile; fileRef = 3FFFDB8712F1222600E2D54F /* ZMQSocket.m */; };
 		3FFFDBA112F125A100E2D54F /* hwserver.m in Sources */ = {isa = PBXBuildFile; fileRef = 3FFFDAD212F11C7200E2D54F /* hwserver.m */; };
@@ -98,6 +106,20 @@
 			remoteGlobalIDString = 3F6613ED12FE8BFA00052F8D;
 			remoteInfo = mspoller;
 		};
+		3F661CA71303B6D900052F8D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3F661C8C1303AF3900052F8D /* taskwork2 */;
+			remoteInfo = taskwork2;
+		};
+		3F661CB21303B6E500052F8D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3F661C811303AF3200052F8D /* tasksink2 */;
+			remoteInfo = tasksink2;
+		};
 		3FFFDBDF12F12FBB00E2D54F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
@@ -149,6 +171,10 @@
 		3F6613F612FE8BFA00052F8D /* mspoller */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = mspoller; sourceTree = BUILT_PRODUCTS_DIR; };
 		3F6613F912FE8C2200052F8D /* mspoller.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = mspoller.m; sourceTree = "<group>"; };
 		3F6613FA12FE8C2200052F8D /* msreader.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = msreader.m; sourceTree = "<group>"; };
+		3F661C8A1303AF3200052F8D /* tasksink2 */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = tasksink2; sourceTree = BUILT_PRODUCTS_DIR; };
+		3F661C951303AF3900052F8D /* taskwork2 */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = taskwork2; sourceTree = BUILT_PRODUCTS_DIR; };
+		3F661CA31303B2E900052F8D /* taskwork2.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = taskwork2.m; sourceTree = "<group>"; };
+		3F661CA51303B2FA00052F8D /* tasksink2.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = tasksink2.m; sourceTree = "<group>"; };
 		3FFFDAD112F11AF400E2D54F /* ObjCExamples_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ObjCExamples_Prefix.pch; sourceTree = "<group>"; };
 		3FFFDAD212F11C7200E2D54F /* hwserver.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = hwserver.m; sourceTree = "<group>"; };
 		3FFFDAD612F11C8C00E2D54F /* hwserver */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = hwserver; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -198,6 +224,20 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		3F6613F212FE8BFA00052F8D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3F661C861303AF3200052F8D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3F661C911303AF3900052F8D /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -269,6 +309,8 @@
 				3F66133612FD1B7F00052F8D /* tasksink.m */,
 				3F6613FA12FE8C2200052F8D /* msreader.m */,
 				3F6613F912FE8C2200052F8D /* mspoller.m */,
+				3F661CA31303B2E900052F8D /* taskwork2.m */,
+				3F661CA51303B2FA00052F8D /* tasksink2.m */,
 			);
 			name = Examples;
 			path = ..;
@@ -295,6 +337,8 @@
 				3F66134112FD1B8900052F8D /* tasksink */,
 				3F6613E612FE8BE000052F8D /* msreader */,
 				3F6613F612FE8BFA00052F8D /* mspoller */,
+				3F661C8A1303AF3200052F8D /* tasksink2 */,
+				3F661C951303AF3900052F8D /* taskwork2 */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -401,6 +445,38 @@
 			name = mspoller;
 			productName = wuserver;
 			productReference = 3F6613F612FE8BFA00052F8D /* mspoller */;
+			productType = "com.apple.product-type.tool";
+		};
+		3F661C811303AF3200052F8D /* tasksink2 */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3F661C871303AF3200052F8D /* Build configuration list for PBXNativeTarget "tasksink2" */;
+			buildPhases = (
+				3F661C821303AF3200052F8D /* Sources */,
+				3F661C861303AF3200052F8D /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = tasksink2;
+			productName = wuserver;
+			productReference = 3F661C8A1303AF3200052F8D /* tasksink2 */;
+			productType = "com.apple.product-type.tool";
+		};
+		3F661C8C1303AF3900052F8D /* taskwork2 */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3F661C921303AF3900052F8D /* Build configuration list for PBXNativeTarget "taskwork2" */;
+			buildPhases = (
+				3F661C8D1303AF3900052F8D /* Sources */,
+				3F661C911303AF3900052F8D /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = taskwork2;
+			productName = wuserver;
+			productReference = 3F661C951303AF3900052F8D /* taskwork2 */;
 			productType = "com.apple.product-type.tool";
 		};
 		3FFFDAD512F11C8C00E2D54F /* hwserver */ = {
@@ -513,6 +589,8 @@
 				3F66133712FD1B8900052F8D /* tasksink */,
 				3F6613DD12FE8BE000052F8D /* msreader */,
 				3F6613ED12FE8BFA00052F8D /* mspoller */,
+				3F661C8C1303AF3900052F8D /* taskwork2 */,
+				3F661C811303AF3200052F8D /* tasksink2 */,
 			);
 		};
 /* End PBXProject section */
@@ -565,6 +643,26 @@
 				3F6613EF12FE8BFA00052F8D /* ZMQContext.m in Sources */,
 				3F6613F012FE8BFA00052F8D /* ZMQSocket.m in Sources */,
 				3F6613FD12FE8C2200052F8D /* mspoller.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3F661C821303AF3200052F8D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3F661C831303AF3200052F8D /* ZMQContext.m in Sources */,
+				3F661C841303AF3200052F8D /* ZMQSocket.m in Sources */,
+				3F661CA61303B2FA00052F8D /* tasksink2.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3F661C8D1303AF3900052F8D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3F661C8E1303AF3900052F8D /* ZMQContext.m in Sources */,
+				3F661C8F1303AF3900052F8D /* ZMQSocket.m in Sources */,
+				3F661CA41303B2E900052F8D /* taskwork2.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -645,6 +743,16 @@
 			isa = PBXTargetDependency;
 			target = 3F6613ED12FE8BFA00052F8D /* mspoller */;
 			targetProxy = 3F66142212FE90E800052F8D /* PBXContainerItemProxy */;
+		};
+		3F661CA81303B6D900052F8D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3F661C8C1303AF3900052F8D /* taskwork2 */;
+			targetProxy = 3F661CA71303B6D900052F8D /* PBXContainerItemProxy */;
+		};
+		3F661CB31303B6E500052F8D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3F661C811303AF3200052F8D /* tasksink2 */;
+			targetProxy = 3F661CB21303B6E500052F8D /* PBXContainerItemProxy */;
 		};
 		3FFFDBE012F12FBB00E2D54F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -770,75 +878,6 @@
 			};
 			name = Release;
 		};
-		3F661C881303AF3200052F8D /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = NO;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_MODEL_TUNING = G5;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/AppKit.framework/Headers/AppKit.h";
-				GCC_VERSION = "";
-				INSTALL_PATH = /usr/local/bin;
-				PREBINDING = NO;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-			};
-			name = Debug;
-		};
-		3F661C891303AF3200052F8D /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				GCC_MODEL_TUNING = G5;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/AppKit.framework/Headers/AppKit.h";
-				INSTALL_PATH = /usr/local/bin;
-				PREBINDING = NO;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				ZERO_LINK = NO;
-			};
-			name = Release;
-		};
-		3F661C931303AF3900052F8D /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = NO;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_MODEL_TUNING = G5;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/AppKit.framework/Headers/AppKit.h";
-				INSTALL_PATH = /usr/local/bin;
-				PREBINDING = NO;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-			};
-			name = Debug;
-		};
-		3F661C941303AF3900052F8D /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				GCC_MODEL_TUNING = G5;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/AppKit.framework/Headers/AppKit.h";
-				INSTALL_PATH = /usr/local/bin;
-				PREBINDING = NO;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				ZERO_LINK = NO;
-			};
-			name = Release;
-		};
 		3F66133F12FD1B8900052F8D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -928,6 +967,75 @@
 			name = Debug;
 		};
 		3F6613F512FE8BFA00052F8D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_MODEL_TUNING = G5;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/AppKit.framework/Headers/AppKit.h";
+				INSTALL_PATH = /usr/local/bin;
+				PREBINDING = NO;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
+		3F661C881303AF3200052F8D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/AppKit.framework/Headers/AppKit.h";
+				GCC_VERSION = "";
+				INSTALL_PATH = /usr/local/bin;
+				PREBINDING = NO;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		3F661C891303AF3200052F8D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_MODEL_TUNING = G5;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/AppKit.framework/Headers/AppKit.h";
+				INSTALL_PATH = /usr/local/bin;
+				PREBINDING = NO;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
+		3F661C931303AF3900052F8D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/AppKit.framework/Headers/AppKit.h";
+				INSTALL_PATH = /usr/local/bin;
+				PREBINDING = NO;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		3F661C941303AF3900052F8D /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -1188,6 +1296,24 @@
 			buildConfigurations = (
 				3F6613F412FE8BFA00052F8D /* Debug */,
 				3F6613F512FE8BFA00052F8D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		3F661C871303AF3200052F8D /* Build configuration list for PBXNativeTarget "tasksink2" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3F661C881303AF3200052F8D /* Debug */,
+				3F661C891303AF3200052F8D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		3F661C921303AF3900052F8D /* Build configuration list for PBXNativeTarget "taskwork2" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3F661C931303AF3900052F8D /* Debug */,
+				3F661C941303AF3900052F8D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
