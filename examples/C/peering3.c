@@ -27,13 +27,13 @@ client_thread (void *context) {
 
     zmsg_t *zmsg = zmsg_new ();
     while (1) {
-        sleep (within (5));
+        sleep (randof (5));
 
-        int burst = within (15);
+        int burst = randof (15);
         while (burst--) {
             //  Send request with random hex ID
             char task_id [5];
-            sprintf (task_id, "%04X", within (0x10000));
+            sprintf (task_id, "%04X", randof (0x10000));
             zmsg_body_set (zmsg, task_id);
             zmsg_send (&zmsg, client);
 
@@ -76,7 +76,7 @@ worker_thread (void *context) {
     while (1) {
         //  Workers are busy for 0/1/2 seconds
         zmsg = zmsg_recv (worker);
-        sleep (within (2));
+        sleep (randof (2));
         zmsg_send (&zmsg, worker);
     }
     return (NULL);
@@ -265,7 +265,7 @@ int main (int argc, char *argv [])
                 //  Route to random broker peer
                 printf ("I: route request %s to cloud...\n",
                     zmsg_body (zmsg));
-                int random_peer = within (argc - 2) + 2;
+                int random_peer = randof (argc - 2) + 2;
                 zmsg_wrap (zmsg, argv [random_peer], NULL);
                 zmsg_send (&zmsg, cloudbe);
             }

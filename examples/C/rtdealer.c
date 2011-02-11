@@ -64,7 +64,7 @@ int main () {
     srandom ((unsigned) time (NULL));
     for (task_nbr = 0; task_nbr < 10; task_nbr++) {
         //  Send two message parts, first the address...
-        if (within (3) > 0)
+        if (randof (3) > 0)
             s_sendmore (client, "A");
         else
             s_sendmore (client, "B");

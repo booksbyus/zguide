@@ -31,7 +31,7 @@ worker_thread (void *context) {
         //  Do some random work
         struct timespec t;
         t.tv_sec = 0;
-        t.tv_nsec = within (100000000) + 1;
+        t.tv_nsec = randof (100000000) + 1;
         nanosleep (&t, NULL);
     }
     return (NULL);

@@ -50,7 +50,7 @@
 #endif
 
 //  Provide random number from 0..(num-1)
-#define within(num) (int) ((float) (num) * random () / (RAND_MAX + 1.0))
+#define randof(num)   (int) ((float) (num) * random () / (RAND_MAX + 1.0))
 
 //  Receive 0MQ string from socket and convert into C string
 //  Caller must free returned string.
@@ -141,7 +141,7 @@ static void
 s_set_id (void *socket)
 {
     char identity [10];
-    sprintf (identity, "%04X-%04X", within (0x10000), within (0x10000));
+    sprintf (identity, "%04X-%04X", randof (0x10000), randof (0x10000));
     zmq_setsockopt (socket, ZMQ_IDENTITY, identity, strlen (identity));
 }
 

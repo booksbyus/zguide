@@ -29,7 +29,7 @@ int main (int argc, char *argv[])
     for (task_nbr = 0; task_nbr < 100; task_nbr++) {
         int workload;
         //  Random workload from 1 to 100msecs
-        workload = within (100) + 1;
+        workload = randof (100) + 1;
         total_msec += workload;
         char string [10];
         sprintf (string, "%d", workload);
