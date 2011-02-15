@@ -26,10 +26,10 @@ poller.register(subscriber, ZMQ::POLLIN)
 while true
   poller.poll(:blocking)
   poller.readables.each do |socket|
-    if socket === frontend
+    if socket === reciever
       message = socket.recv_string
       # process task
-    elsif socket === backend
+    elsif socket === subscriber
       message = socket.recv_string
       # process weather update
     end
