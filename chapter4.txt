@@ -1,16 +1,138 @@
 .output chapter4.wd
-++ Chapter 4 - Advanced Publish-Subscribe
+++ Chapter 4 - Reliability
 
-In Chapter Three we looked at advanced use of 0MQ's request-reply pattern with worked examples. We'll continue this approach in this chapter, as we explore advanced aspects of 0MQ's publish-subscribe pattern.
+In Chapter Three we looked at advanced use of 0MQ's request-reply pattern with worked examples. In this chapter we'll look at the general question of reliability and learn how to build reliable messaging on top of 0MQ's patterns.
 
-We'll cover:
++++ Necessary Philosophy
+
+++++ What is "Reliability"?
+
+If you're using tcp://, ipc:// or inproc:// transports then messages don't just get lost. It's not as if messages need a GPS to get to their destination. Transports like TCP are explicitly designed to retry and resend, to the point of silliness sometimes. So to understand what reliability means, we have to look at its opposite, namely *failure*. If we can handle a certain set of failures, we are reliable with respect to those failures. No more, no less.
+
+So let's look at the possible causes of failure in a distributed application, in descending order of probability:
+
+* Application code is the worst offender. It can crash and exit, freeze and stop responding to input, run too slowly for its input, exhaust all memory, etc.
+* System code - like brokers we write using 0MQ - comes next. It should be more reliable than application code but can still crash and burn, and especially run out of memory if it tries to compensate for slow clients.
+* Hardware can fail and take with it all the processes running on that box.
+* Networks can fail in exotic ways, e.g. some ports on a switch may die and those parts of the network become inaccessible.
+* Entire data centers can be struck by lightning, earthquakes, fire, or more mundane power or cooling failures.
+
+To make a software system fully reliable against *all* of these possible failures is an enormously difficult and expensive job and goes beyond the scope of this modest guide.
+
+Since the first two or three cases cover 99.9% (according to a highly scientific study I just ran) of real world requirements outside large companies, that's what we'll look at. If you're a large company with money to spend on cases four and five, contact me immediately, there's a large hole behind my beach house waiting to be converted into a pool.
+
+++++ Reliable Patterns
+
+So to make things brutally simple, reliability is "keeping things working properly when code freezes or crashes", a situation we'll shorten to "dies". However the things we want to keep working properly are more complex than just messages. We need to take each 0MQ messaging pattern and see how to make it work (if we can) even when code dies.
+
+Let's take them one by one:
+
+* Request-reply: if the server dies (while processing a request), the client can figure that out since it won't get an answer back. Then it can give up in a huff, wait and try again later, find another server, etc. As for the client dying, we can brush that off as "someone else's problem" for now.
+
+* Publish-subscribe: if the client dies (having gotten some data), the server doesn't know about it. Pubsub doesn't send any information back from client to server. But the client can contact the server out-of-band, e.g. via request-reply, and ask, "please resend everything I missed". As for the server dying, that's out of scope for here.
+
+* Pipeline: if a worker dies (while working), the ventilator doesn't know about it. Pipelines, like pubsub, and the grinding gears of time, only work in one direction. But the downstream collector can detect that one task didn't get done, and send a message back to the ventilator saying, "hey, resend task 324!" If the ventilator or collector die, then whatever upstream client originally sent the work batch can get tired of waiting and resend the whole lot. It's not elegant but system code should really not die often enough to matter.
+
+++++ Disk-based Reliability
+
+You can, and people do, use spinning rust to store messages. It rather makes a mess of the idea of "performance" but we're usually more comfortable knowing a really important message (such as that transfer of $400M to my Cyprus account) is stored on disk rather than only in memory. Spinning rust only makes sense for some patterns, mainly request-reply. If we get bored in this chapter we'll play with that, but otherwise, just shove really critical messages into a database that all parties can access, and skip 0MQ for those parts of your dialog.
+
++++ Reliable Request-Reply (RPC)
+
+In this section we'll look at a reliable request-reply model between a set of clients and a set of servers. We assume that servers will randomly block and/or die. How do we handle that?
+
+We'll assume that all servers are equal. If one server dies, the client needs to find out about this, and talk to another server instead. If the server comes alive again, the client can talk to it again.
+
+++++ Centralized (Queue-based) RPC
+
+In the general case we have many clients and many servers. We could start with a single client and server but this is Chapter 4, and we're moving fast now. Grab another coffee. When we have N to N nodes, as a rule we stick a device in the middle, because it makes things simpler.
+
+This is the architecture, which is a lot like the LRU (least-recently used) queue broker from Chapter 3:
+
+[[code type="textdiagram"]]
+
+    +-----------+   +-----------+   +-----------+
+    |           |   |           |   |           |
+    |  Client   |   |  Client   |   |  Client   |
+    |           |   |           |   |           |
+    +-----------+   +-----------+   +-----------+
+    |    REQ    |   |    REQ    |   |    REQ    |
+    \-----------/   \-----------/   \-----------/
+          ^               ^               ^
+          |               |               |
+          \---------------+---------------/
+                          |
+                          v
+                    /-----------\
+                    |   XREP    |
+                    +-----------+
+                    |           |
+                    |   Queue   |
+                    |           |
+                    +-----------+
+                    |   XREP    |
+                    \-----------/
+                          ^
+                          |
+          /---------------+---------------\
+          |               |               |
+          v               v               v
+    /-----------\   /-----------\   /-----------\
+    |   XREQ    |   |   XREQ    |   |   XREQ    |
+    +-----------+   +-----------+   +-----------+
+    |           |   |           |   |           |
+    |  Server   |   |  Server   |   |  Server   |
+    |           |   |           |   |           |
+    +-----------+   +-----------+   +-----------+
+
+
+           Figure # - Centralized RPC
+[[/code]]
+
+The client connects its REQ socket to the queue and sends requests, one by one, waiting each time for an answer. If it doesn't get a reply within a certain time, say 1 second, it retries. After a few retries, it gives up in exasperation.
+
+The server connects its XREQ socket to the queue and uses the LRU worker approach, i.e. it signals when it's ready for a new task by sending a request, and the queue then sends the task as a reply. It does its work, and sends its results back as a new "I'm ready (oh, and BTW here is the stuff I worked on)" request message. When waiting for work, the server sends a heartbeat message (which is an empty message) to the queue each second. This is why the server uses an XREQ socket instead of a REQ socket (which does not allow multiple requests to be sent before a response arrives).
+
+All the complex work happens in the queue, which is another nice thing about the centralized RPC architecture. Clients and servers remain simple. The first nice thing was scalability, even with many servers and clients, you only need one DNS name everyone connects to.
+
+The queue binds to XREP frontend and backend sockets, and handles requests and replies asynchronously on these using the LRU logic we developed in Chapter 3. It works with these data structures:
+
+* A set (a hash map) of all known servers, which identify themselves using unique IDs.
+* A list of servers that are ready for work.
+* A list of servers that are busy doing work.
+* A list of requests sent by clients but not yet successfully processed.
+
+The queue polls all sockets for input and then processes all incoming messages. It queues tasks and distributes them to workers that are alive. Any replies from workers are sent back to their original clients, unless the worker is disabled, in which case the reply is dropped.
+
+Idle workers must signal that they are alive with a ready message or a heartbeat, or they will be marked as disabled until they send a message again. This is to detect blocked and disconnected workers (since 0MQ does not report disconnections).
+
+The queue detects a disabled worker in two ways: heartbeating, as explained, and timeouts on request processing. If a reply does not come back within (e.g.) 10ms, the queue marks the worker as disabled, and retries with the next worker.
+
+
+The server will randomly simulate two problems when it receives a task:
+1. A crash and restart while processing a request, i.e. close its socket, block for 5 seconds, reopen its socket and restart.
+2. A temporary busy wait, i.e. sleep 1 second then continue as normal.
+
+.end
+
+
+
+++++ Distributed (Peer-to-peer) RPC
 
 
 
 
 
++++ Stateful Publish-Subscribe
 
+We'll look at the common question of getting a consistent state across a set of subscribers that come and go at any time. We will build a simple distributed cache:
 
+* We have a set of peers that each hold a copy of the cache
+* Any peer can update its copy of the cache at any time
+* Updates are published to all other peers
+* A peer can join the network at any time, and get the cache state
+
+I'll leave the design for later. We'll need a forwarder to act as stable location in the network. Should be fun!
 
 
 ++++ Customized Publish-Subscribe
@@ -29,3 +151,7 @@ You end up creating a lot more PUB sockets on your server end and doing all of t
 I didn't need to do this to avoid network bandwidth bottlenecks; I created this to enforce some security and entitlements.
 
 
+- chapter 4
+  - heartbeating & presence detection
+  - reliable request-reply
+  -
