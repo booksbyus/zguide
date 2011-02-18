@@ -1,9 +1,5 @@
 Notes for The Guide
 
-- chapter 4
-  - heartbeating & presence detection
-  - reliable request-reply
-  -
 
 - how to make a TCP-to-0MQ bridge, with examples (email)
 - pseudo-recursive job queues
@@ -86,16 +82,6 @@ how to map names?
 
 +++ Generating Identities
 
--> need zfl here
-
-- generic LRU device
-    - accept input from REQs
-    - load balance to bunch of mamas
-
-lrudevice.c
-    - imitates a queue device except...
-
-
 
 +++ Setting Queue Limits
 
@@ -128,17 +114,6 @@ broker in the middle
 persistent logfiles
 replay via subscribe socket
 
-
-+++ Stateful Publish-Subscribe
-
-We'll look at the common question of getting a consistent state across a set of subscribers that come and go at any time.  We will build a simple distributed cache:
-
-* We have a set of peers that each hold a copy of the cache
-* Any peer can update its copy of the cache at any time
-* Updates are published to all other peers
-* A peer can join the network at any time, and get the cache state
-
-I'll leave the design for later.  We'll need a forwarder to act as stable location in the network.  Should be fun!
 
 +++ Failover and Recovery
 
