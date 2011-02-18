@@ -39,9 +39,19 @@ You can, and people do, use spinning rust to store messages. It rather makes a m
 
 +++ Reliable Request-Reply (RPC)
 
+The request-reply pattern plus reliability maps to the RPC (remote procedure call) pattern used in older messaging systems, so we'll use 'RPC' as a shorthand for 'reliable request-reply'.
+
+- not accurate; RPC is a misnomer here
+- can we call this reliable-request-reply? R3?
+
+Remote-procedure calls
 In this section we'll look at a reliable request-reply model between a set of clients and a set of servers. We assume that servers will randomly block and/or die. How do we handle that?
 
 We'll assume that all servers are equal. If one server dies, the client needs to find out about this, and talk to another server instead. If the server comes alive again, the client can talk to it again.
+
+++++ Elements of Reliable RPC
+
+
 
 ++++ Centralized (Queue-based) RPC
 
