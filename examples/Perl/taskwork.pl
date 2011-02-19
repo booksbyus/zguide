@@ -1,13 +1,51 @@
-No-one has translated the taskwork example into Perl yet.  Be the first to create
-taskwork in Perl and get one free Internet!  If you're the author of the Perl
-binding, this is a great way to get people to use 0MQ in Perl.
+#!/usr/bin/perl
+=pod
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+Task worker
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+Connects PULL socket to tcp://localhost:5557
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+Collects workloads from ventilator via that socket
+
+Connects PUSH socket to tcp://localhost:5558
+
+Sends results to sink via that socket
+
+Based on examples/C/taskwork.c; translated to Perl by darksuji
+
+=cut
+
+use strict;
+use warnings;
+use feature ':5.10';
+
+use ZeroMQ qw/:all/;
+use Time::HiRes qw/nanosleep/;
+use English qw/-no_match_vars/;
+
+use constant NSECS_PER_MSEC => 1000000;
+
+my $context = ZeroMQ::Context->new();
+
+# Socket to receive messages on
+my $receiver = $context->socket(ZMQ_PULL);
+$receiver->connect('tcp://localhost:5557');
+
+# Socket to send messages to
+my $sender = $context->socket(ZMQ_PUSH);
+$sender->connect('tcp://localhost:5558');
+
+# Process tasks forever
+$OUTPUT_AUTOFLUSH = 1;
+while (1) {
+    my $string = $receiver->recv()->data;
+    my $time = $string * NSECS_PER_MSEC;
+    # Simple progress indicator for the viewer
+    print "$string.";
+
+    # Do the work
+    nanosleep $time;
+
+    # Send results to sink
+    $sender->send('');
+}

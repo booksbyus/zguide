@@ -1,13 +1,51 @@
-No-one has translated the taskvent example into Perl yet.  Be the first to create
-taskvent in Perl and get one free Internet!  If you're the author of the Perl
-binding, this is a great way to get people to use 0MQ in Perl.
+#!/usr/bin/perl
+=pod
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+Task ventilator
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+Binds PUSH socket to tcp://localhost:5557
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+Sends batch of tasks to workers via that socket
+
+Based on examples/C/taskvent.c; translated to Perl by darksuji
+
+=cut
+
+use strict;
+use warnings;
+use feature ':5.10';
+
+use ZeroMQ qw/:all/;
+
+sub within {
+    my ($upper) = @_;
+
+    return int(rand($upper)) + 1;
+}
+
+my $context = ZeroMQ::Context->new();
+
+#  Socket to send messages on
+my $sender = $context->socket(ZMQ_PUSH);
+$sender->bind('tcp://*:5557');
+
+print 'Press Enter when the workers are ready: ';
+<STDIN>;
+say 'Sending tasks to workers...';
+
+# The first message is "0" and signals start of batch
+$sender->send('0');
+
+# Initialize random number generator
+srand();
+
+# Send 100 tasks
+my $total_msec = 0;     # Total expected cost in msecs
+for (1 .. 100) {
+    # Random workload from 1 to 100msecs
+    my $workload = within(100) + 1;
+    $total_msec += $workload;
+    $sender->send($workload);
+}
+say "Total expected cost: $total_msec msec";
+sleep (1);              # Give 0MQ time to deliver
