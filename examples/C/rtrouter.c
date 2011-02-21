@@ -14,7 +14,10 @@ int main () {
     zmq_setsockopt (server, ZMQ_IDENTITY, "SERVER", 6);
     zmq_connect (server, "ipc://rtrouter.ipc");
 
+    //  Wait for the worker to connect so that when we send a message
+    //  with routing envelope, it will actually match the worker...
     sleep (1);
+
     s_sendmore (server, "WORKER");
     s_sendmore (server, "");
     s_send     (server, "send to worker");

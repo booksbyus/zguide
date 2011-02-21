@@ -1,12 +1,18 @@
 //
 //  Synchronized publisher
 //
+//  Changes for 2.1:
+//  - added version assertion
+//  - close syncservice socket in main thread
+//  - removed sleep(1) at end of main thread
+//
 #include "zhelpers.h"
 
 //  We wait for 10 subscribers
 #define SUBSCRIBERS_EXPECTED  10
 
 int main () {
+    s_version_assert (2, 1);
     void *context = zmq_init (1);
 
     //  Socket to talk to clients
@@ -34,8 +40,8 @@ int main () {
 
     s_send (publisher, "END");
 
-    sleep (1);              //  Give 0MQ/2.0.x time to flush output
     zmq_close (publisher);
+    zmq_close (syncservice);
     zmq_term (context);
     return 0;
 }

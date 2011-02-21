@@ -102,6 +102,9 @@ Let's observe the above two cases in practice. This program dumps the contents o
 //  program by itself.  Note that the utility functions s_ are provided by
 //  zhelpers.h.  It gets boring for everyone to keep repeating this code.
 //
+//  Changes for 2.1:
+//  - added close sink before terminating
+//
 #include "zhelpers.h"
 
 int main () {
@@ -123,6 +126,7 @@ int main () {
     s_send (identified, "XREP socket uses REQ's socket identity");
     s_dump (sink);
 
+    zmq_close (sink);
     zmq_close (anonymous);
     zmq_close (identified);
     zmq_term (context);
@@ -249,12 +253,20 @@ Here's code that shows how this works:
 //
 //  Custom routing Router to Dealer (XREP to XREQ)
 //
+//  Changes for 2.1:
+//  - added version assertion
+//  - use separate contexts for each thread
+//  - close sockets in each child thread
+//  - call zmq_term in each thread before ending
+//  - removed sleep(1) at end of main thread
+//
 #include "zhelpers.h"
 
 //  We have two workers, here we copy the code, normally these would
 //  run on different boxes...
 //
-void *worker_a (void *context) {
+void *worker_a (void *args) {
+    void *context = zmq_init (1);
     void *worker = zmq_socket (context, ZMQ_XREQ);
     zmq_setsockopt (worker, ZMQ_IDENTITY, "A", 1);
     zmq_connect (worker, "ipc://routing.ipc");
@@ -271,10 +283,13 @@ void *worker_a (void *context) {
         }
         total++;
     }
+    zmq_close (worker);
+    zmq_term (context);
     return (NULL);
 }
 
-void *worker_b (void *context) {
+void *worker_b (void *args) {
+    void *context = zmq_init (1);
     void *worker = zmq_socket (context, ZMQ_XREQ);
     zmq_setsockopt (worker, ZMQ_IDENTITY, "B", 1);
     zmq_connect (worker, "ipc://routing.ipc");
@@ -291,20 +306,24 @@ void *worker_b (void *context) {
         }
         total++;
     }
+    zmq_close (worker);
+    zmq_term (context);
     return (NULL);
 }
 
 int main () {
+    s_version_assert (2, 1);
     void *context = zmq_init (1);
 
     void *client = zmq_socket (context, ZMQ_XREP);
     zmq_bind (client, "ipc://routing.ipc");
 
     pthread_t worker;
-    pthread_create (&worker, NULL, worker_a, context);
-    pthread_create (&worker, NULL, worker_b, context);
+    pthread_create (&worker, NULL, worker_a, NULL);
+    pthread_create (&worker, NULL, worker_b, NULL);
 
-    //  Wait for threads to stabilize
+    //  Wait for threads to connect, since otherwise the messages
+    //  we send won't be routable.
     sleep (1);
 
     //  Send 10 tasks scattered to A twice as often as B
@@ -312,7 +331,7 @@ int main () {
     srandom ((unsigned) time (NULL));
     for (task_nbr = 0; task_nbr < 10; task_nbr++) {
         //  Send two message parts, first the address...
-        if (within (3) > 0)
+        if (randof (3) > 0)
             s_sendmore (client, "A");
         else
             s_sendmore (client, "B");
@@ -326,7 +345,6 @@ int main () {
     s_sendmore (client, "B");
     s_send     (client, "END");
 
-    sleep (1);              //  Give 0MQ/2.0.x time to flush output
     zmq_close (client);
     zmq_term (context);
     return 0;
@@ -357,7 +375,8 @@ examples/C/rtdealer.c
 
 Some comments on this code:
 
-* The router doesn't know when the dealers are ready, and it would be distracting for our example to add in the signaling to do that. So the router just does a "sleep (1)" after starting the dealer threads.
+* The router doesn't know when the dealers are ready, and it would be distracting for our example to add in the signaling to do that. So the router just does a "sleep (1)" after starting the dealer threads. Without this sleep, the router will send out messages that can't be routed, and ØMQ will discard them.
+* Note that this behavior is specific to ROUTER sockets. PUB sockets will also discard messages if there are no subscribers, but all other socket types will queue sent messages until there's a peer to receive them.
 
 To route to a dealer, we create an envelope like this:
 
@@ -398,12 +417,20 @@ What kind of routing can you do with a router-to-mama pattern?  Probably the mos
 //
 //  Custom routing Router to Mama (XREP to REQ)
 //
+//  Changes for 2.1:
+//  - added version assertion
+//  - use separate contexts for each thread
+//  - close sockets in each child thread
+//  - call zmq_term in each thread before ending
+//  - removed sleep(1) at end of main thread
+//
 #include "zhelpers.h"
 
 #define NBR_WORKERS 10
 
 static void *
-worker_thread (void *context) {
+worker_thread (void *args) {
+    void *context = zmq_init (1);
     void *worker = zmq_socket (context, ZMQ_REQ);
 
     //  We use a string identity for ease here
@@ -428,14 +455,18 @@ worker_thread (void *context) {
         //  Do some random work
         struct timespec t;
         t.tv_sec = 0;
-        t.tv_nsec = within (100000000) + 1;
+        t.tv_nsec = randof (100000000) + 1;
         nanosleep (&t, NULL);
     }
+    zmq_close (worker);
+    zmq_term (context);
     return (NULL);
 }
 
 int main () {
+    s_version_assert (2, 1);
     void *context = zmq_init (1);
+
     void *client = zmq_socket (context, ZMQ_XREP);
     zmq_bind (client, "ipc://routing.ipc");
     srandom ((unsigned) time (NULL));
@@ -443,7 +474,7 @@ int main () {
     int worker_nbr;
     for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++) {
         pthread_t worker;
-        pthread_create (&worker, NULL, worker_thread, context);
+        pthread_create (&worker, NULL, worker_thread, NULL);
     }
     int task_nbr;
     for (task_nbr = 0; task_nbr < NBR_WORKERS * 10; task_nbr++) {
@@ -472,7 +503,6 @@ int main () {
         s_send (client, "END");
         free (address);
     }
-    sleep (1);              //  Give 0MQ/2.0.x time to flush output
     zmq_close (client);
     zmq_term (context);
     return 0;
@@ -575,8 +605,10 @@ It's complex but worth working through until you understand it. Just remember a 
 //
 //  Custom routing Router to Papa (XREP to REP)
 //
+//  Changes for 2.1:
+//  - close worker socket properly
+//
 #include "zhelpers.h"
-
 
 //  We will do this all in one thread to emphasize the sequence
 //  of events...
@@ -590,7 +622,8 @@ int main () {
     zmq_setsockopt (worker, ZMQ_IDENTITY, "A", 1);
     zmq_connect (worker, "ipc://routing.ipc");
 
-    //  Wait for sockets to stabilize
+    //  Wait for the worker to connect so that when we send a message
+    //  with routing envelope, it will actually match the worker...
     sleep (1);
 
     //  Send papa address, address stack, empty part, and request
@@ -611,6 +644,7 @@ int main () {
     s_dump (client);
 
     zmq_close (client);
+    zmq_close (worker);
     zmq_term (context);
     return 0;
 }
@@ -698,6 +732,13 @@ Our broker - a router-to-router LRU queue - can't simply copy message parts blin
 //  Least-recently used (LRU) queue device
 //  Clients and workers are shown here in-process
 //
+//  Changes for 2.1:
+//  - added version assertion
+//  - use separate contexts for each thread
+//  - close sockets in each child thread
+//  - call zmq_term in each thread before ending
+//  - removed sleep(1) at end of main thread
+//
 #include "zhelpers.h"
 
 #define NBR_CLIENTS 10
@@ -709,7 +750,8 @@ Our broker - a router-to-router LRU queue - can't simply copy message parts blin
 //  Basic request-reply client using REQ socket
 //
 static void *
-client_thread (void *context) {
+client_thread (void *args) {
+    void *context = zmq_init (1);
     void *client = zmq_socket (context, ZMQ_REQ);
     s_set_id (client);          //  Makes tracing easier
     zmq_connect (client, "ipc://frontend.ipc");
@@ -719,13 +761,16 @@ client_thread (void *context) {
     char *reply = s_recv (client);
     printf ("Client: %s\n", reply);
     free (reply);
+    zmq_close (client);
+    zmq_term (context);
     return NULL;
 }
 
 //  Worker using REQ socket to do LRU routing
 //
 static void *
-worker_thread (void *context) {
+worker_thread (void *args) {
+    void *context = zmq_init (1);
     void *worker = zmq_socket (context, ZMQ_REQ);
     s_set_id (worker);          //  Makes tracing easier
     zmq_connect (worker, "ipc://backend.ipc");
@@ -751,11 +796,15 @@ worker_thread (void *context) {
         s_send     (worker, "OK");
         free (address);
     }
+    zmq_close (worker);
+    zmq_term (context);
     return NULL;
 }
 
 int main (int argc, char *argv[])
 {
+    s_version_assert (2, 1);
+
     //  Prepare our context and sockets
     void *context = zmq_init (1);
     void *frontend = zmq_socket (context, ZMQ_XREP);
@@ -766,12 +815,12 @@ int main (int argc, char *argv[])
     int client_nbr;
     for (client_nbr = 0; client_nbr < NBR_CLIENTS; client_nbr++) {
         pthread_t client;
-        pthread_create (&client, NULL, client_thread, context);
+        pthread_create (&client, NULL, client_thread, NULL);
     }
     int worker_nbr;
     for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++) {
         pthread_t worker;
-        pthread_create (&worker, NULL, worker_thread, context);
+        pthread_create (&worker, NULL, worker_thread, NULL);
     }
     //  Logic of LRU loop
     //  - Poll backend always, frontend only if 1+ worker ready
@@ -850,7 +899,6 @@ int main (int argc, char *argv[])
             available_workers--;
         }
     }
-    sleep (1);
     zmq_close (frontend);
     zmq_close (backend);
     zmq_term (context);
@@ -1643,6 +1691,13 @@ And here is the LRU queue broker rewritten to use the zmsg class. Compare the co
 //  Least-recently used (LRU) queue device
 //  Demonstrates use of the zmsg class
 //
+//  Changes for 2.1:
+//  - added version assertion
+//  - use separate contexts for each thread
+//  - close sockets in each child thread
+//  - call zmq_term in each thread before ending
+//  - removed sleep(1) at end of main thread
+//
 #include "zhelpers.h"
 #include "zmsg.c"
 
@@ -1655,7 +1710,8 @@ And here is the LRU queue broker rewritten to use the zmsg class. Compare the co
 //  Basic request-reply client using REQ socket
 //
 static void *
-client_thread (void *context) {
+client_thread (void *args) {
+    void *context = zmq_init (1);
     void *client = zmq_socket (context, ZMQ_REQ);
     s_set_id (client);          //  Makes tracing easier
     zmq_connect (client, "ipc://frontend.ipc");
@@ -1665,13 +1721,17 @@ client_thread (void *context) {
     char *reply = s_recv (client);
     printf ("Client: %s\n", reply);
     free (reply);
+
+    zmq_close (client);
+    zmq_term (context);
     return NULL;
 }
 
 //  Worker using REQ socket to do LRU routing
 //
 static void *
-worker_thread (void *context) {
+worker_thread (void *args) {
+    void *context = zmq_init (1);
     void *worker = zmq_socket (context, ZMQ_REQ);
     s_set_id (worker);          //  Makes tracing easier
     zmq_connect (worker, "ipc://backend.ipc");
@@ -1685,11 +1745,15 @@ worker_thread (void *context) {
         zmsg_body_set (zmsg, "OK");
         zmsg_send (&zmsg, worker);
     }
+    zmq_close (worker);
+    zmq_term (context);
     return NULL;
 }
 
 int main (int argc, char *argv[])
 {
+    s_version_assert (2, 1);
+
     //  Prepare our context and sockets
     void *context = zmq_init (1);
     void *frontend = zmq_socket (context, ZMQ_XREP);
@@ -1700,12 +1764,12 @@ int main (int argc, char *argv[])
     int client_nbr;
     for (client_nbr = 0; client_nbr < NBR_CLIENTS; client_nbr++) {
         pthread_t client;
-        pthread_create (&client, NULL, client_thread, context);
+        pthread_create (&client, NULL, client_thread, NULL);
     }
     int worker_nbr;
     for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++) {
         pthread_t worker;
-        pthread_create (&worker, NULL, worker_thread, context);
+        pthread_create (&worker, NULL, worker_thread, NULL);
     }
     //  Logic of LRU loop
     //  - Poll backend always, frontend only if 1+ worker ready
@@ -1758,7 +1822,6 @@ int main (int argc, char *argv[])
             available_workers--;
         }
     }
-    sleep (1);
     zmq_close (frontend);
     zmq_close (backend);
     zmq_term (context);
@@ -1820,7 +1883,10 @@ int main () {
     zmq_setsockopt (server, ZMQ_IDENTITY, "SERVER", 6);
     zmq_connect (server, "ipc://rtrouter.ipc");
 
+    //  Wait for the worker to connect so that when we send a message
+    //  with routing envelope, it will actually match the worker...
     sleep (1);
+
     s_sendmore (server, "WORKER");
     s_sendmore (server, "");
     s_send     (server, "send to worker");
@@ -2141,7 +2207,7 @@ int main (int argc, char *argv [])
         else {
             //  Send random value for worker availability
             zmsg_t *zmsg = zmsg_new ();
-            zmsg_body_fmt (zmsg, "%d", within (10));
+            zmsg_body_fmt (zmsg, "%d", randof (10));
             //  We stick our own address onto the envelope
             zmsg_wrap (zmsg, self, NULL);
             zmsg_send (&zmsg, statebe);
@@ -2282,7 +2348,7 @@ worker_thread (void *context) {
         zmsg = zmsg_recv (worker);
         //  Do some 'work'
         sleep (1);
-        zmsg_body_fmt (zmsg, "OK - %04x", within (0x10000));
+        zmsg_body_fmt (zmsg, "OK - %04x", randof (0x10000));
         zmsg_send (&zmsg, worker);
     }
     return (NULL);
@@ -2421,9 +2487,9 @@ int main (int argc, char *argv [])
             //  If reroutable, send to cloud 20% of the time
             //  Here we'd normally use cloud status information
             //
-            if (reroutable && argc > 2 && within (5) == 0) {
+            if (reroutable && argc > 2 && randof (5) == 0) {
                 //  Route to random broker peer
-                int random_peer = within (argc - 2) + 2;
+                int random_peer = randof (argc - 2) + 2;
                 zmsg_wrap (zmsg, argv [random_peer], NULL);
                 zmsg_send (&zmsg, cloudbe);
             }
@@ -2501,6 +2567,13 @@ This code is the size of both previous prototypes together, at 270 LoC. That's p
 //  Broker peering simulation (part 3)
 //  Prototypes the full flow of status and tasks
 //
+//  Changes for 2.1:
+//  - added version assertion
+//  - use separate contexts for each thread
+//  - use ipc:// instead of inproc://
+//  - close sockets in each child thread
+//  - call zmq_term in each thread before ending
+//
 #include "zhelpers.h"
 #include "zmsg.c"
 
@@ -2515,24 +2588,25 @@ This code is the size of both previous prototypes together, at 270 LoC. That's p
 //  sleep for a random period.
 //
 static void *
-client_thread (void *context) {
+client_thread (void *args) {
     int rc;
+    void *context = zmq_init (1);
     void *client = zmq_socket (context, ZMQ_REQ);
-    rc = zmq_connect (client, "inproc://localfe");
+    rc = zmq_connect (client, "ipc://localfe.ipc");
     assert (rc == 0);
     void *monitor = zmq_socket (context, ZMQ_PUSH);
-    rc = zmq_connect (monitor, "inproc://monitor");
+    rc = zmq_connect (monitor, "ipc://monitor.ipc");
     assert (rc == 0);
 
     zmsg_t *zmsg = zmsg_new ();
     while (1) {
-        sleep (within (5));
+        sleep (randof (5));
 
-        int burst = within (15);
+        int burst = randof (15);
         while (burst--) {
             //  Send request with random hex ID
             char task_id [5];
-            sprintf (task_id, "%04X", within (0x10000));
+            sprintf (task_id, "%04X", randof (0x10000));
             zmsg_body_set (zmsg, task_id);
             zmsg_send (&zmsg, client);
 
@@ -2556,15 +2630,20 @@ client_thread (void *context) {
             }
         }
     }
+    //  We never get here but if we did, this is how we'd exit cleanly
+    zmq_close (client);
+    zmq_close (monitor);
+    zmq_term (context);
     return (NULL);
 }
 
 //  Worker using REQ socket to do LRU routing
 //
 static void *
-worker_thread (void *context) {
+worker_thread (void *args) {
+    void *context = zmq_init (1);
     void *worker = zmq_socket (context, ZMQ_REQ);
-    int rc = zmq_connect (worker, "inproc://localbe");
+    int rc = zmq_connect (worker, "ipc://localbe.ipc");
     assert (rc == 0);
 
     //  Tell broker we're ready for work
@@ -2575,9 +2654,12 @@ worker_thread (void *context) {
     while (1) {
         //  Workers are busy for 0/1/2 seconds
         zmsg = zmsg_recv (worker);
-        sleep (within (2));
+        sleep (randof (2));
         zmsg_send (&zmsg, worker);
     }
+    //  We never get here but if we did, this is how we'd exit cleanly
+    zmq_close (worker);
+    zmq_term (context);
     return (NULL);
 }
 
@@ -2586,7 +2668,7 @@ int main (int argc, char *argv [])
     //  First argument is this broker's name
     //  Other arguments are our peers' names
     //
-    s_version ();
+    s_version_assert (2, 1);
     if (argc < 2) {
         printf ("syntax: peering3 me {you}...\n");
         exit (EXIT_FAILURE);
@@ -2638,25 +2720,25 @@ int main (int argc, char *argv [])
     }
     //  Prepare local frontend and backend
     void *localfe = zmq_socket (context, ZMQ_XREP);
-    zmq_bind (localfe, "inproc://localfe");
+    zmq_bind (localfe, "ipc://localfe.ipc");
     void *localbe = zmq_socket (context, ZMQ_XREP);
-    zmq_bind (localbe, "inproc://localbe");
+    zmq_bind (localbe, "ipc://localbe.ipc");
 
     //  Prepare monitor socket
     void *monitor = zmq_socket (context, ZMQ_PULL);
-    zmq_bind (monitor, "inproc://monitor");
+    zmq_bind (monitor, "ipc://monitor.ipc");
 
     //  Start local workers
     int worker_nbr;
     for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++) {
         pthread_t worker;
-        pthread_create (&worker, NULL, worker_thread, context);
+        pthread_create (&worker, NULL, worker_thread, NULL);
     }
     //  Start local clients
     int client_nbr;
     for (client_nbr = 0; client_nbr < NBR_CLIENTS; client_nbr++) {
         pthread_t client;
-        pthread_create (&client, NULL, client_thread, context);
+        pthread_create (&client, NULL, client_thread, NULL);
     }
 
     //  Interesting part
@@ -2764,7 +2846,7 @@ int main (int argc, char *argv [])
                 //  Route to random broker peer
                 printf ("I: route request %s to cloud...\n",
                     zmsg_body (zmsg));
-                int random_peer = within (argc - 2) + 2;
+                int random_peer = randof (argc - 2) + 2;
                 zmsg_wrap (zmsg, argv [random_peer], NULL);
                 zmsg_send (&zmsg, cloudbe);
             }

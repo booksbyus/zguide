@@ -1,8 +1,10 @@
 //
 //  Custom routing Router to Papa (XREP to REP)
 //
+//  Changes for 2.1:
+//  - close worker socket properly
+//
 #include "zhelpers.h"
-
 
 //  We will do this all in one thread to emphasize the sequence
 //  of events...
@@ -16,7 +18,8 @@ int main () {
     zmq_setsockopt (worker, ZMQ_IDENTITY, "A", 1);
     zmq_connect (worker, "ipc://routing.ipc");
 
-    //  Wait for sockets to stabilize
+    //  Wait for the worker to connect so that when we send a message
+    //  with routing envelope, it will actually match the worker...
     sleep (1);
 
     //  Send papa address, address stack, empty part, and request
@@ -37,6 +40,7 @@ int main () {
     s_dump (client);
 
     zmq_close (client);
+    zmq_close (worker);
     zmq_term (context);
     return 0;
 }

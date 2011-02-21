@@ -44,7 +44,7 @@ worker_thread (void *context) {
         zmsg = zmsg_recv (worker);
         //  Do some 'work'
         sleep (1);
-        zmsg_body_fmt (zmsg, "OK - %04x", within (0x10000));
+        zmsg_body_fmt (zmsg, "OK - %04x", randof (0x10000));
         zmsg_send (&zmsg, worker);
     }
     return (NULL);
@@ -183,9 +183,9 @@ int main (int argc, char *argv [])
             //  If reroutable, send to cloud 20% of the time
             //  Here we'd normally use cloud status information
             //
-            if (reroutable && argc > 2 && within (5) == 0) {
+            if (reroutable && argc > 2 && randof (5) == 0) {
                 //  Route to random broker peer
-                int random_peer = within (argc - 2) + 2;
+                int random_peer = randof (argc - 2) + 2;
                 zmsg_wrap (zmsg, argv [random_peer], NULL);
                 zmsg_send (&zmsg, cloudbe);
             }

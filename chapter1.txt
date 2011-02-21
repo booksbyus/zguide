@@ -9,7 +9,7 @@
 .output chapter1.wd
 Written by Pieter Hintjens <ph@imatix.com>, CEO iMatix Corporation. Thanks to Bill Desmarais, Brian Dorsey, CAF, Daniel Lin, Eric Desgranges, Gonzalo Diethelm, Guido Goldstein, Hunter Ford, Kamil Shakirov, Martin Sustrik, Mike Castleman, Naveen Chawla, Nicola Peduzzi, Oliver Smith, Olivier Chamoux, Peter Alexander, Pierre Rouleau, Randy Dryburgh, John Unwin, Alex Thomas, Mihail Minkov, Jeremy Avnet, Michael Compton, Kamil Kisiel, Mark Kharitonov, Guillaume Aubert, Ian Barber, Mike Sheridan, Faruk Akgul, Oleg Sidorov, Lev Givon, and Zed Shaw for their contributions, and to Stathis Sideris for [http://www.ditaa.org Ditaa].
 
-Please use the [$(GIT)/issues issue tracker] for all comments and errata. This version covers 0MQ version 2.0.x and was published on &date("ddd d mmmm, yyyy") at &time().
+Please use the [$(GIT)/issues issue tracker] for all comments and errata. This version covers 0MQ 2.1.x and was published on &date("ddd d mmmm, yyyy") at &time().
 
 ++ Chapter One - Basic Stuff
 
@@ -498,11 +498,29 @@ worker_thread (void *arg) {
 }
 [[/code]]
 
-In the end, the application was passing sockets between threads, which crashed weirdly on 0MQ/2.0.x, but was fixed 0MQ/2.1.x. It wasn't really a coding error at all, just misuse of the API.
+In the end, the application was passing sockets between threads, which crashed weirdly on 0MQ/2.0, but became legal behavior in 0MQ/2.1.0. It wasn't really a coding error at all, just inadvertent time travel.
+
++++ The 0MQ 2.1 Generation
+
+History tells us that 0MQ 2.0 is when low-latency distributed messaging crawled out of the primeval mud, shook off a heavy coat of buzzwords and enterprise jargon, and reached its branches up to the sky, as if to cry, "no limits!". We've been using this stable branch since it spawned 0MQ 2.0.8 during the hot days of August, 2010. So long ago!
+
+But times change, and what was cool in 2010 is no longer //a la mode// in 2011. The 0MQ developers and community have been frantically busy redefining messaging chic, and anyone who's anyone knows that 2.1 is the new stable. Well, technically perhaps not quite yet. But soon, very soon...
+
+Since the Guide aims to be a leader, not a follower, we've updated it to cover 2.1.x. In this section we'll cover the differences as they affect your applications.
+
+* In 2.0, zmq_close[3] and zmq_term[3] discarded any in-flight messages, so it was unsafe to close a socket and terminate right after sending messages. In 2.1, these calls are safe: zmq_term will flush anything that's waiting to be sent. In 2.0 examples we often added a sleep(1) to get around the problem. In 2.1, this isn't needed.
+
+* In 2.0, it was safe to call zmq_term[3] even if there were open sockets. In 2.1, this is not safe, and it can cause zmq_term to block. So in 2.1 we always close every socket, before exiting. If your program mysteriously hangs at zmq_term, you're missing a zmq_close or two.
+
+* In 2.0, you created a socket in the thread that used it, period. 2.1 introduces the funky possibility of "socket migration", which means thread A can create a socket and then pass it to a child thread B. This technique works very nicely for multithreading, with the {{inproc}} transport (thread A creates a socket pair, binds and connects them, then passes one socket to child thread B as it starts it).
+
+* In 2.0, zmq_poll[3] would return arbitrarily early, so you could not use it as a timer. We hacked around this with a loop that would see how much time was left, and would call zmq_poll again if needed. In 2.1, this call properly waits for the full timeout if there are not events.
+
+There are [https://github.com/zeromq/zeromq2/raw/master/NEWS a lot of other] good changes in 2.1, making this overall a more stable and rewarding understructure for your applications.
 
 +++ Getting the Context Right
 
-0MQ applications always start by creating a //context//, and then using that for creating sockets. In C, it's the zmq_init[3] call. You should create and use exactly one context in your process. Technically, the context is the container for all sockets in a single process, and acts as the transport for "inproc" sockets, which are the fastest way to connect threads in one process. If at runtime a process has two contexts, these are like separate 0MQ instances. If that's explicitly what you want, OK, but otherwise remember:
+0MQ applications always start by creating a //context//, and then using that for creating sockets. In C, it's the zmq_init[3] call. You should create and use exactly one context in your process. Technically, the context is the container for all sockets in a single process, and acts as the transport for {{inproc}} sockets, which are the fastest way to connect threads in one process. If at runtime a process has two contexts, these are like separate 0MQ instances. If that's explicitly what you want, OK, but otherwise remember:
 
 **Do one zmq_init[3] at the start of your main line code, and one zmq_term[3] at the end.**
 
@@ -520,17 +538,7 @@ The 0MQ objects we need to worry about are messages, sockets, and contexts. Luck
 
 * When you exit the program, close your sockets and then call zmq_term[3]. This destroys the context.
 
-In 0MQ/2.0.x and earlier, calling zmq_close[3], or zmq_term[3], or exiting the main program too hastily will cause messages you //think// you just sent to disappear. It's a bug in 0MQ that's fixed in version 2.1 and later.
-
-In 0MQ/2.1.x calling zmq_term[3] while you have open sockets can cause 0MQ to hang forever. It's a bug that's caused some controversey but hopefully will be fixed.
-
-So all the examples that exit while there is still data in flight do this:
-
-[[code]]
-sleep (1);
-[[/code]]
-
-Which is a quick and dirty way around a problem that there's no other solution for in 0MQ/2.0.x.
+Calling zmq_term[3] while you have open sockets will cause 0MQ to hang forever. It's a bug that's caused some controversey but hopefully will be fixed. Just be sure to close all your sockets before calling zmq_term.
 
 +++ Why We Needed 0MQ
 
@@ -685,7 +693,7 @@ As the clients run, we take a look at the active processes using 'top', and we s
 
 Let's think for a second about what is happening here. The weather server has a single socket, and yet here we have it sending data to five clients in parallel. We could have thousands of concurrent clients. The server application doesn't see them, doesn't talk to them directly.
 
-+++ Problem Solver
++++ Missing Message Problem Solver
 
 As you start to program with 0MQ you will come across one problem more than once: you lose messages that you expect to receive. Here is a basic problem solver that walks through the most common causes for this. Don't worry if some of the terminology is unfamiliar still, it'll become clearer in the next chapters.
 
@@ -697,26 +705,6 @@ As you start to program with 0MQ you will come across one problem more than once
         |             {o} |
         +--------+--------+
                  |
-                 |
-                 v
-        +-----------------+        +------------------+
-        |     Do you      |        | Before exiting,  |
-        |  close sockets  |        | do sleep (1).   |
-        |   right after   +------->| 0MQ/2.0 does not |
-        |  sending data?  | Yes    | flush. 2.1 will. |
-        |             {o} |        |                  |
-        +--------+--------+        +------------------+
-                 | No                       ^
-                 |                          |
-                 v                          |
-        +-----------------+                 |
-        |     Do you      |                 |
-        |  exit the appl  |                 |
-        |   right after   +-----------------+
-        |  sending data?  | Yes
-        |             {o} |
-        +--------+--------+
-                 | No
                  |
                  v
         +-----------------+        +-----------------+        +------------------+
@@ -742,7 +730,7 @@ As you start to program with 0MQ you will come across one problem more than once
                  |             +---------------------------+
                  |             |  See explanation of the   |
                  |             | "slow subscriber connect" |
-                 |             |   syndrome in this text. |
+                 |             |   syndrome in this text.  |
                  |             +---------------------------+
                  |
                  |
@@ -752,7 +740,7 @@ As you start to program with 0MQ you will come across one problem more than once
         |  Are you using  |        | recv in a loop and |
         |   REQ and REP   +------->| check the return   |
         |     sockets?    | Yes    | codes. With REP    |
-        |             {o} |        | it's recv + send. |
+        |             {o} |        | it's recv + send.  |
         +--------+--------+        +--------------------+
                  | No
                  |
@@ -781,8 +769,8 @@ As you start to program with 0MQ you will come across one problem more than once
         +-----------------+        +-----------------+        +------------------+
         |                 |        |                 |        |                  |
         |  Are you using  |        | Are you calling |        | Call zmq_init    |
-        |   the inproc:   +------->|  zmq_init more  +------->| exactly once in  |
-        |   transport?    | Yes    |    than once?   | Yes    | every process.  |
+        |   the inproc    +------->|  zmq_init more  +------->| exactly once in  |
+        |   transport?    | Yes    |    than once?   | Yes    | every process.   |
         |             {o} |        |             {o} |        |                  |
         +--------+--------+        +--------+--------+        +------------------+
                  | No                       | No
@@ -792,7 +780,7 @@ As you start to program with 0MQ you will come across one problem more than once
                  |                 |                 |
                  |                 | Check that you  |
                  |                 | bind before you |
-                 |                 | connect.       |
+                 |                 | connect.        |
                  |                 |                 |
                  |                 +-----------------+
                  |
@@ -802,7 +790,7 @@ As you start to program with 0MQ you will come across one problem more than once
         |  Are you using  |        | reply envelope  |        | identities make |
         |  XREP sockets?  +------->| is valid. 0MQ   +------->| sure to set them|
         |                 | Yes    | drops messages  |        | before not after|
-        |             {o} |        | it can't route. |        | you connect.   |
+        |             {o} |        | it can't route. |        | you connect.    |
         +--------+--------+        +-----------------+        +-----------------+
                  | No
                  |
@@ -812,7 +800,7 @@ As you start to program with 0MQ you will come across one problem more than once
         | Are you losing  |        | a client running   |
         |   one message   +------->| in the background. |
         |    in two?      | Yes    | Kill it and start  |
-        |             {o} |        | again.            |
+        |             {o} |        | again.             |
         +--------+--------+        +--------------------+
                  | No
                  |
@@ -821,12 +809,12 @@ As you start to program with 0MQ you will come across one problem more than once
         |                 |
         | Make a minimal  |
         | test case, ask  |
-        | on zeromq IRC. |
+        | on #zeromq IRC. |
         |                 |
         +-----------------+
 
 
-                 Figure # - 0MQ Problem Solver
+                 Figure # - Missing Message Problem Solver
 [[/code]]
 
 If you're using 0MQ in a context where failures are expensive, then you want plan properly. First, build prototypes that let you learn and test the different aspects of your design. Stress them until they break, so that you know exactly how strong your designs are. Second, invest in testing. This means building test frameworks, ensuring you have access to realistic setups with sufficient computer power, and getting time or help to actually test seriously. Ideally, one team writes the code, a second team tries to break it. Lastly, do get your organization to [http://www.imatix.com/contact contact iMatix] to discuss how we can help to make sure things work properly, and can be fixed rapidly if they break.

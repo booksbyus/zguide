@@ -1,12 +1,20 @@
 //
 //  Custom routing Router to Mama (XREP to REQ)
 //
+//  Changes for 2.1:
+//  - added version assertion
+//  - use separate contexts for each thread
+//  - close sockets in each child thread
+//  - call zmq_term in each thread before ending
+//  - removed sleep(1) at end of main thread
+//
 #include "zhelpers.h"
 
 #define NBR_WORKERS 10
 
 static void *
-worker_thread (void *context) {
+worker_thread (void *args) {
+    void *context = zmq_init (1);
     void *worker = zmq_socket (context, ZMQ_REQ);
 
     //  We use a string identity for ease here
@@ -31,14 +39,18 @@ worker_thread (void *context) {
         //  Do some random work
         struct timespec t;
         t.tv_sec = 0;
-        t.tv_nsec = within (100000000) + 1;
+        t.tv_nsec = randof (100000000) + 1;
         nanosleep (&t, NULL);
     }
+    zmq_close (worker);
+    zmq_term (context);
     return (NULL);
 }
 
 int main () {
+    s_version_assert (2, 1);
     void *context = zmq_init (1);
+
     void *client = zmq_socket (context, ZMQ_XREP);
     zmq_bind (client, "ipc://routing.ipc");
     srandom ((unsigned) time (NULL));
@@ -46,7 +58,7 @@ int main () {
     int worker_nbr;
     for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++) {
         pthread_t worker;
-        pthread_create (&worker, NULL, worker_thread, context);
+        pthread_create (&worker, NULL, worker_thread, NULL);
     }
     int task_nbr;
     for (task_nbr = 0; task_nbr < NBR_WORKERS * 10; task_nbr++) {
@@ -75,7 +87,6 @@ int main () {
         s_send (client, "END");
         free (address);
     }
-    sleep (1);              //  Give 0MQ/2.0.x time to flush output
     zmq_close (client);
     zmq_term (context);
     return 0;

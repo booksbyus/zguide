@@ -50,17 +50,17 @@
 #endif
 
 //  Provide random number from 0..(num-1)
-#define within(num) (int) ((float) (num) * random () / (RAND_MAX + 1.0))
+#define randof(num)   (int) ((float) (num) * random () / (RAND_MAX + 1.0))
 
 //  Receive 0MQ string from socket and convert into C string
-//  Caller must free returned string.
+//  Caller must free returned string. Returns NULL if the context
+//  is being terminated.
 static char *
 s_recv (void *socket) {
     zmq_msg_t message;
     zmq_msg_init (&message);
     if (zmq_recv (socket, &message, 0))
-        exit (1);           //  Context terminated, exit
-
+        return (NULL);
     int size = zmq_msg_size (&message);
     char *string = malloc (size + 1);
     memcpy (string, zmq_msg_data (&message), size);
@@ -141,7 +141,7 @@ static void
 s_set_id (void *socket)
 {
     char identity [10];
-    sprintf (identity, "%04X-%04X", within (0x10000), within (0x10000));
+    sprintf (identity, "%04X-%04X", randof (0x10000), randof (0x10000));
     zmq_setsockopt (socket, ZMQ_IDENTITY, identity, strlen (identity));
 }
 
@@ -154,6 +154,20 @@ s_version (void)
     int major, minor, patch;
     zmq_version (&major, &minor, &patch);
     printf ("Current 0MQ version is %d.%d.%d\n", major, minor, patch);
+}
+
+//  Require at least some specified version
+static void
+s_version_assert (int want_major, int want_minor)
+{
+    int major, minor, patch;
+    zmq_version (&major, &minor, &patch);
+    if (major < want_major
+    || (major == want_major && minor < want_minor)) {
+        printf ("Current 0MQ version is %d.%d\n", major, minor);
+        printf ("Application needs at least %d.%d - cannot continue\n", major, minor);
+        exit (EXIT_FAILURE);
+    }
 }
 
 #endif

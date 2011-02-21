@@ -2,6 +2,13 @@
 //  Broker peering simulation (part 3)
 //  Prototypes the full flow of status and tasks
 //
+//  Changes for 2.1:
+//  - added version assertion
+//  - use separate contexts for each thread
+//  - use ipc:// instead of inproc://
+//  - close sockets in each child thread
+//  - call zmq_term in each thread before ending
+//
 #include "zhelpers.h"
 #include "zmsg.c"
 
@@ -16,24 +23,25 @@
 //  sleep for a random period.
 //
 static void *
-client_thread (void *context) {
+client_thread (void *args) {
     int rc;
+    void *context = zmq_init (1);
     void *client = zmq_socket (context, ZMQ_REQ);
-    rc = zmq_connect (client, "inproc://localfe");
+    rc = zmq_connect (client, "ipc://localfe.ipc");
     assert (rc == 0);
     void *monitor = zmq_socket (context, ZMQ_PUSH);
-    rc = zmq_connect (monitor, "inproc://monitor");
+    rc = zmq_connect (monitor, "ipc://monitor.ipc");
     assert (rc == 0);
 
     zmsg_t *zmsg = zmsg_new ();
     while (1) {
-        sleep (within (5));
+        sleep (randof (5));
 
-        int burst = within (15);
+        int burst = randof (15);
         while (burst--) {
             //  Send request with random hex ID
             char task_id [5];
-            sprintf (task_id, "%04X", within (0x10000));
+            sprintf (task_id, "%04X", randof (0x10000));
             zmsg_body_set (zmsg, task_id);
             zmsg_send (&zmsg, client);
 
@@ -57,15 +65,20 @@ client_thread (void *context) {
             }
         }
     }
+    //  We never get here but if we did, this is how we'd exit cleanly
+    zmq_close (client);
+    zmq_close (monitor);
+    zmq_term (context);
     return (NULL);
 }
 
 //  Worker using REQ socket to do LRU routing
 //
 static void *
-worker_thread (void *context) {
+worker_thread (void *args) {
+    void *context = zmq_init (1);
     void *worker = zmq_socket (context, ZMQ_REQ);
-    int rc = zmq_connect (worker, "inproc://localbe");
+    int rc = zmq_connect (worker, "ipc://localbe.ipc");
     assert (rc == 0);
 
     //  Tell broker we're ready for work
@@ -76,9 +89,12 @@ worker_thread (void *context) {
     while (1) {
         //  Workers are busy for 0/1/2 seconds
         zmsg = zmsg_recv (worker);
-        sleep (within (2));
+        sleep (randof (2));
         zmsg_send (&zmsg, worker);
     }
+    //  We never get here but if we did, this is how we'd exit cleanly
+    zmq_close (worker);
+    zmq_term (context);
     return (NULL);
 }
 
@@ -87,7 +103,7 @@ int main (int argc, char *argv [])
     //  First argument is this broker's name
     //  Other arguments are our peers' names
     //
-    s_version ();
+    s_version_assert (2, 1);
     if (argc < 2) {
         printf ("syntax: peering3 me {you}...\n");
         exit (EXIT_FAILURE);
@@ -139,25 +155,25 @@ int main (int argc, char *argv [])
     }
     //  Prepare local frontend and backend
     void *localfe = zmq_socket (context, ZMQ_XREP);
-    zmq_bind (localfe, "inproc://localfe");
+    zmq_bind (localfe, "ipc://localfe.ipc");
     void *localbe = zmq_socket (context, ZMQ_XREP);
-    zmq_bind (localbe, "inproc://localbe");
+    zmq_bind (localbe, "ipc://localbe.ipc");
 
     //  Prepare monitor socket
     void *monitor = zmq_socket (context, ZMQ_PULL);
-    zmq_bind (monitor, "inproc://monitor");
+    zmq_bind (monitor, "ipc://monitor.ipc");
 
     //  Start local workers
     int worker_nbr;
     for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++) {
         pthread_t worker;
-        pthread_create (&worker, NULL, worker_thread, context);
+        pthread_create (&worker, NULL, worker_thread, NULL);
     }
     //  Start local clients
     int client_nbr;
     for (client_nbr = 0; client_nbr < NBR_CLIENTS; client_nbr++) {
         pthread_t client;
-        pthread_create (&client, NULL, client_thread, context);
+        pthread_create (&client, NULL, client_thread, NULL);
     }
 
     //  Interesting part
@@ -265,7 +281,7 @@ int main (int argc, char *argv [])
                 //  Route to random broker peer
                 printf ("I: route request %s to cloud...\n",
                     zmsg_body (zmsg));
-                int random_peer = within (argc - 2) + 2;
+                int random_peer = randof (argc - 2) + 2;
                 zmsg_wrap (zmsg, argv [random_peer], NULL);
                 zmsg_send (&zmsg, cloudbe);
             }

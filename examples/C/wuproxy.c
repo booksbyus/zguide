@@ -12,7 +12,7 @@ int main (int argc, char *argv[])
     zmq_connect (frontend, "tcp://192.168.55.210:5556");
 
     //  This is our public endpoint for subscribers
-    void *backend  = zmq_socket (context, ZMQ_PUB);
+    void *backend = zmq_socket (context, ZMQ_PUB);
     zmq_bind (backend, "tcp://10.1.1.0:8100");
 
     //  Subscribe on everything
@@ -35,6 +35,7 @@ int main (int argc, char *argv[])
                 break;      //  Last message part
         }
     }
+    //  We don't actually get here but if we did, we'd shut down neatly
     zmq_close (frontend);
     zmq_close (backend);
     zmq_term (context);
