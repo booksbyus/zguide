@@ -1,13 +1,30 @@
-No-one has translated the rrclient example into Perl yet.  Be the first to create
-rrclient in Perl and get one free Internet!  If you're the author of the Perl
-binding, this is a great way to get people to use 0MQ in Perl.
+#!/usr/bin/perl
+=pod
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+Hello World client
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+Connects REQ socket to tcp://localhost:5559
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+Sends "Hello" to server, expects "World" back
+
+Based on examples/C/rrclient.c; translated to Perl by darksuji
+
+=cut
+
+use strict;
+use warnings;
+use feature ':5.10';
+
+use ZeroMQ qw/:all/;
+
+my $context = ZeroMQ::Context->new();
+
+# Socket to talk to server
+my $requester = $context->socket(ZMQ_REQ);
+$requester->connect('tcp://localhost:5559');
+
+for (my $request_count = 0; $request_count < 10; ++$request_count) {
+    $requester->send('Hello');
+    my $string = $requester->recv()->data;
+    printf ("Received reply %d [%s]\n", $request_count, $string);
+}

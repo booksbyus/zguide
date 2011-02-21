@@ -1,13 +1,57 @@
-No-one has translated the rrbroker example into Perl yet.  Be the first to create
-rrbroker in Perl and get one free Internet!  If you're the author of the Perl
-binding, this is a great way to get people to use 0MQ in Perl.
+#!/usr/bin/perl
+=pod
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+Simple request-reply broker
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+Based on examples/C/rrbroker.c; translated to Perl by darksuji
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+=cut
+
+use strict;
+use warnings;
+use feature ':5.10';
+
+use ZeroMQ qw/:all/;
+
+# Prepare our context and sockets
+my $context = ZeroMQ::Context->new();
+my $frontend = $context->socket(ZMQ_XREP);
+my $backend  = $context->socket(ZMQ_XREQ);
+$frontend->bind('tcp://*:5559');
+$backend->bind('tcp://*:5560');
+
+# Initialize poll set
+my $poller = ZeroMQ::Poller->new(
+    {
+        name    => 'frontend',
+        socket  => $frontend,
+        events  => ZMQ_POLLIN,
+    }, {
+        name    => 'backend',
+        socket  => $backend,
+        events  => ZMQ_POLLIN,
+    },
+);
+
+# Switch messages between sockets
+while (1) {
+    $poller->poll();
+    if ($poller->has_event('frontend')) {
+        while (1) {
+            # Process all parts of the message
+            my $message = $frontend->recv();
+            my $more = $frontend->getsockopt(ZMQ_RCVMORE);
+            $backend->send($message, $more ? ZMQ_SNDMORE : 0);
+            last unless $more;
+        }
+    }
+    if ($poller->has_event('backend')) {
+        while (1) {
+            # Process all parts of the message
+            my $message = $backend->recv();
+            my $more = $backend->getsockopt(ZMQ_RCVMORE);
+            $frontend->send($message, $more ? ZMQ_SNDMORE : 0);
+            last unless $more;
+        }
+    }
+}

@@ -1,13 +1,53 @@
-No-one has translated the mtserver example into Perl yet.  Be the first to create
-mtserver in Perl and get one free Internet!  If you're the author of the Perl
-binding, this is a great way to get people to use 0MQ in Perl.
+#!/usr/bin/perl
+=pod
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+Multithreaded Hello World server
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+Based on examples/C/mtserver.c; translated to Perl by darksuji
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+=cut
+
+use strict;
+use warnings;
+use feature ':5.10';
+use threads;
+
+use ZeroMQ qw/:all/;
+use ZeroMQ::Raw qw/zmq_device/;
+
+sub worker_routine {
+    my ($context) = @_;
+
+    # Socket to talk to dispatcher
+    my $receiver = $context->socket(ZMQ_REP);
+    $receiver->connect('inproc://workers');
+
+    while (1) {
+        my $string = $receiver->recv()->data;
+        printf("Received request: [%s]\n", $string);
+        # Do some 'work'
+        sleep (1);
+        # Send reply back to client
+        $receiver->send('World');
+    }
+}
+
+# Prepare our context and sockets
+my $context = ZeroMQ::Context->new();
+
+# Socket to talk to clients
+my $clients = $context->socket(ZMQ_XREP);
+$clients->bind('tcp://*:5555');
+
+# Socket to talk to workers
+my $workers = $context->socket(ZMQ_XREQ);
+$workers->bind('inproc://workers');
+
+# Launch pool of worker threads
+for (1 .. 5) {
+    threads->create('worker_routine', $context);
+}
+# Connect work threads to client threads via a queue
+zmq_device (ZMQ_QUEUE, $clients->socket, $workers->socket); # FIXME:  Higher-level abstraction please...
+
+# We never get here but clean up anyhow
