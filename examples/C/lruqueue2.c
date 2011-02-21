@@ -2,6 +2,13 @@
 //  Least-recently used (LRU) queue device
 //  Demonstrates use of the zmsg class
 //
+//  Changes for 2.1:
+//  - added version assertion
+//  - use separate contexts for each thread
+//  - close sockets in each child thread
+//  - call zmq_term in each thread before ending
+//  - removed sleep(1) at end of main thread
+//
 #include "zhelpers.h"
 #include "zmsg.c"
 
@@ -14,7 +21,8 @@
 //  Basic request-reply client using REQ socket
 //
 static void *
-client_thread (void *context) {
+client_thread (void *args) {
+    void *context = zmq_init (1);
     void *client = zmq_socket (context, ZMQ_REQ);
     s_set_id (client);          //  Makes tracing easier
     zmq_connect (client, "ipc://frontend.ipc");
@@ -24,13 +32,17 @@ client_thread (void *context) {
     char *reply = s_recv (client);
     printf ("Client: %s\n", reply);
     free (reply);
+
+    zmq_close (client);
+    zmq_term (context);
     return NULL;
 }
 
 //  Worker using REQ socket to do LRU routing
 //
 static void *
-worker_thread (void *context) {
+worker_thread (void *args) {
+    void *context = zmq_init (1);
     void *worker = zmq_socket (context, ZMQ_REQ);
     s_set_id (worker);          //  Makes tracing easier
     zmq_connect (worker, "ipc://backend.ipc");
@@ -44,11 +56,15 @@ worker_thread (void *context) {
         zmsg_body_set (zmsg, "OK");
         zmsg_send (&zmsg, worker);
     }
+    zmq_close (worker);
+    zmq_term (context);
     return NULL;
 }
 
 int main (int argc, char *argv[])
 {
+    s_version_assert (2, 1);
+
     //  Prepare our context and sockets
     void *context = zmq_init (1);
     void *frontend = zmq_socket (context, ZMQ_XREP);
@@ -59,12 +75,12 @@ int main (int argc, char *argv[])
     int client_nbr;
     for (client_nbr = 0; client_nbr < NBR_CLIENTS; client_nbr++) {
         pthread_t client;
-        pthread_create (&client, NULL, client_thread, context);
+        pthread_create (&client, NULL, client_thread, NULL);
     }
     int worker_nbr;
     for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++) {
         pthread_t worker;
-        pthread_create (&worker, NULL, worker_thread, context);
+        pthread_create (&worker, NULL, worker_thread, NULL);
     }
     //  Logic of LRU loop
     //  - Poll backend always, frontend only if 1+ worker ready
@@ -117,7 +133,6 @@ int main (int argc, char *argv[])
             available_workers--;
         }
     }
-    sleep (1);
     zmq_close (frontend);
     zmq_close (backend);
     zmq_term (context);

@@ -1,7 +1,7 @@
 [[include :csi:include:css-brackets]]
 Written by Pieter Hintjens <ph@imatix.com>, CEO iMatix Corporation. Thanks to Bill Desmarais, Brian Dorsey, CAF, Daniel Lin, Eric Desgranges, Gonzalo Diethelm, Guido Goldstein, Hunter Ford, Kamil Shakirov, Martin Sustrik, Mike Castleman, Naveen Chawla, Nicola Peduzzi, Oliver Smith, Olivier Chamoux, Peter Alexander, Pierre Rouleau, Randy Dryburgh, John Unwin, Alex Thomas, Mihail Minkov, Jeremy Avnet, Michael Compton, Kamil Kisiel, Mark Kharitonov, Guillaume Aubert, Ian Barber, Mike Sheridan, Faruk Akgul, Oleg Sidorov, Lev Givon, and Zed Shaw for their contributions, and to Stathis Sideris for [http://www.ditaa.org Ditaa].
 
-Please use the [http://github.com/imatix/zguide/issues issue tracker] for all comments and errata. This version covers ØMQ version 2.0.x and was published on Thu 17 February, 2011 at 20:57:42.
+Please use the [http://github.com/imatix/zguide/issues issue tracker] for all comments and errata. This version covers ØMQ 2.1.x and was published on Mon 21 February, 2011 at 21:44:43.
 
 [[div style="overflow:hidden"]]
 [[div style="float:left"]]
@@ -82,6 +82,9 @@ So let's start with some code. We start of course with a Hello World example. We
 //  Binds REP socket to tcp://*:5555
 //  Expects "Hello" from client, replies with "World"
 //
+//  Changes for 2.1:
+//  - added socket close before terminating
+//
 #include <zmq.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -113,6 +116,8 @@ int main () {
         zmq_send (responder, &reply, 0);
         zmq_msg_close (&reply);
     }
+    //  We never get here but if we did, this would be how we end
+    zmq_close (responder);
     zmq_term (context);
     return 0;
 }
@@ -438,17 +443,17 @@ The result is {{zhelpers.h}}, which lets us write sweeter and shorter ØMQ appli
 #endif
 
 //  Provide random number from 0..(num-1)
-#define within(num) (int) ((float) (num) * random () / (RAND_MAX + 1.0))
+#define randof(num)   (int) ((float) (num) * random () / (RAND_MAX + 1.0))
 
 //  Receive 0MQ string from socket and convert into C string
-//  Caller must free returned string.
+//  Caller must free returned string. Returns NULL if the context
+//  is being terminated.
 static char *
 s_recv (void *socket) {
     zmq_msg_t message;
     zmq_msg_init (&message);
     if (zmq_recv (socket, &message, 0))
-        exit (1);           //  Context terminated, exit
-
+        return (NULL);
     int size = zmq_msg_size (&message);
     char *string = malloc (size + 1);
     memcpy (string, zmq_msg_data (&message), size);
@@ -529,7 +534,7 @@ static void
 s_set_id (void *socket)
 {
     char identity [10];
-    sprintf (identity, "%04X-%04X", within (0x10000), within (0x10000));
+    sprintf (identity, "%04X-%04X", randof (0x10000), randof (0x10000));
     zmq_setsockopt (socket, ZMQ_IDENTITY, identity, strlen (identity));
 }
 
@@ -542,6 +547,20 @@ s_version (void)
     int major, minor, patch;
     zmq_version (&major, &minor, &patch);
     printf ("Current 0MQ version is %d.%d.%d\n", major, minor, patch);
+}
+
+//  Require at least some specified version
+static void
+s_version_assert (int want_major, int want_minor)
+{
+    int major, minor, patch;
+    zmq_version (&major, &minor, &patch);
+    if (major < want_major
+    || (major == want_major && minor < want_minor)) {
+        printf ("Current 0MQ version is %d.%d\n", major, minor);
+        printf ("Application needs at least %d.%d - cannot continue\n", major, minor);
+        exit (EXIT_FAILURE);
+    }
 }
 
 #endif
@@ -626,9 +645,9 @@ int main () {
     while (1) {
         //  Get values that will fool the boss
         int zipcode, temperature, relhumidity;
-        zipcode     = within (100000);
-        temperature = within (215) - 80;
-        relhumidity = within (50) + 10;
+        zipcode     = randof (100000);
+        temperature = randof (215) - 80;
+        relhumidity = randof (50) + 10;
 
         //  Send message to all subscribers
         char update [20];
@@ -822,7 +841,7 @@ int main (int argc, char *argv[])
     for (task_nbr = 0; task_nbr < 100; task_nbr++) {
         int workload;
         //  Random workload from 1 to 100msecs
-        workload = within (100) + 1;
+        workload = randof (100) + 1;
         total_msec += workload;
         char string [10];
         sprintf (string, "%d", workload);
@@ -1149,7 +1168,32 @@ worker_thread (void *arg) {
 }
 [[/code]]
 
-In the end, the application was passing sockets between threads, which crashed weirdly on ØMQ/2.0.x, but was fixed ØMQ/2.1.x. It wasn't really a coding error at all, just misuse of the API.
+In the end, the application was passing sockets between threads, which crashed weirdly on ØMQ/2.0, but became legal behavior in ØMQ/2.1.0. It wasn't really a coding error at all, just inadvertent time travel.
+
+[[div style="overflow:hidden"]]
+[[div style="float:left"]]
++++ The ØMQ 2.1 Generation
+[[/div]]
+[[div style="float:right; vertical-align:middle"]]
+[/chapter:all# ↑top]
+[[/div]]
+[[/div]]
+
+History tells us that ØMQ 2.0 is when low-latency distributed messaging crawled out of the primeval mud, shook off a heavy coat of buzzwords and enterprise jargon, and reached its branches up to the sky, as if to cry, "no limits!". We've been using this stable branch since it spawned ØMQ 2.0.8 during the hot days of August, 2010. So long ago!
+
+But times change, and what was cool in 2010 is no longer //a la mode// in 2011. The ØMQ developers and community have been frantically busy redefining messaging chic, and anyone who's anyone knows that 2.1 is the new stable. Well, technically perhaps not quite yet. But soon, very soon...
+
+Since the Guide aims to be a leader, not a follower, we've updated it to cover 2.1.x. In this section we'll cover the differences as they affect your applications.
+
+* In 2.0, [http://api.zeromq.org/zmq_close.html zmq_close(3)] and [http://api.zeromq.org/zmq_term.html zmq_term(3)] discarded any in-flight messages, so it was unsafe to close a socket and terminate right after sending messages. In 2.1, these calls are safe: zmq_term will flush anything that's waiting to be sent. In 2.0 examples we often added a sleep(1) to get around the problem. In 2.1, this isn't needed.
+
+* In 2.0, it was safe to call [http://api.zeromq.org/zmq_term.html zmq_term(3)] even if there were open sockets. In 2.1, this is not safe, and it can cause zmq_term to block. So in 2.1 we always close every socket, before exiting. If your program mysteriously hangs at zmq_term, you're missing a zmq_close or two.
+
+* In 2.0, you created a socket in the thread that used it, period. 2.1 introduces the funky possibility of "socket migration", which means thread A can create a socket and then pass it to a child thread B. This technique works very nicely for multithreading, with the {{inproc}} transport (thread A creates a socket pair, binds and connects them, then passes one socket to child thread B as it starts it).
+
+* In 2.0, [http://api.zeromq.org/zmq_poll.html zmq_poll(3)] would return arbitrarily early, so you could not use it as a timer. We hacked around this with a loop that would see how much time was left, and would call zmq_poll again if needed. In 2.1, this call properly waits for the full timeout if there are not events.
+
+There are [https://github.com/zeromq/zeromq2/raw/master/NEWS a lot of other] good changes in 2.1, making this overall a more stable and rewarding understructure for your applications.
 
 [[div style="overflow:hidden"]]
 [[div style="float:left"]]
@@ -1160,7 +1204,7 @@ In the end, the application was passing sockets between threads, which crashed w
 [[/div]]
 [[/div]]
 
-ØMQ applications always start by creating a //context//, and then using that for creating sockets. In C, it's the [http://api.zeromq.org/zmq_init.html zmq_init(3)] call. You should create and use exactly one context in your process. Technically, the context is the container for all sockets in a single process, and acts as the transport for "inproc" sockets, which are the fastest way to connect threads in one process. If at runtime a process has two contexts, these are like separate ØMQ instances. If that's explicitly what you want, OK, but otherwise remember:
+ØMQ applications always start by creating a //context//, and then using that for creating sockets. In C, it's the [http://api.zeromq.org/zmq_init.html zmq_init(3)] call. You should create and use exactly one context in your process. Technically, the context is the container for all sockets in a single process, and acts as the transport for {{inproc}} sockets, which are the fastest way to connect threads in one process. If at runtime a process has two contexts, these are like separate ØMQ instances. If that's explicitly what you want, OK, but otherwise remember:
 
 **Do one [http://api.zeromq.org/zmq_init.html zmq_init(3)] at the start of your main line code, and one [http://api.zeromq.org/zmq_term.html zmq_term(3)] at the end.**
 
@@ -1185,17 +1229,7 @@ The ØMQ objects we need to worry about are messages, sockets, and contexts. Luc
 
 * When you exit the program, close your sockets and then call [http://api.zeromq.org/zmq_term.html zmq_term(3)]. This destroys the context.
 
-In ØMQ/2.0.x and earlier, calling [http://api.zeromq.org/zmq_close.html zmq_close(3)], or [http://api.zeromq.org/zmq_term.html zmq_term(3)], or exiting the main program too hastily will cause messages you //think// you just sent to disappear. It's a bug in ØMQ that's fixed in version 2.1 and later.
-
-In ØMQ/2.1.x calling [http://api.zeromq.org/zmq_term.html zmq_term(3)] while you have open sockets can cause ØMQ to hang forever. It's a bug that's caused some controversey but hopefully will be fixed.
-
-So all the examples that exit while there is still data in flight do this:
-
-[[code]]
-sleep (1);
-[[/code]]
-
-Which is a quick and dirty way around a problem that there's no other solution for in ØMQ/2.0.x.
+Calling [http://api.zeromq.org/zmq_term.html zmq_term(3)] while you have open sockets will cause ØMQ to hang forever. It's a bug that's caused some controversey but hopefully will be fixed. Just be sure to close all your sockets before calling zmq_term.
 
 [[div style="overflow:hidden"]]
 [[div style="float:left"]]
@@ -1318,7 +1352,7 @@ Let's think for a second about what is happening here. The weather server has a 
 
 [[div style="overflow:hidden"]]
 [[div style="float:left"]]
-+++ Problem Solver
++++ Missing Message Problem Solver
 [[/div]]
 [[div style="float:right; vertical-align:middle"]]
 [/chapter:all# ↑top]

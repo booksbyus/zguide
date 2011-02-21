@@ -3,6 +3,9 @@
 //  program by itself.  Note that the utility functions s_ are provided by
 //  zhelpers.h.  It gets boring for everyone to keep repeating this code.
 //
+//  Changes for 2.1:
+//  - added close sink before terminating
+//
 #include "zhelpers.h"
 
 int main () {
@@ -24,6 +27,7 @@ int main () {
     s_send (identified, "XREP socket uses REQ's socket identity");
     s_dump (sink);
 
+    zmq_close (sink);
     zmq_close (anonymous);
     zmq_close (identified);
     zmq_term (context);

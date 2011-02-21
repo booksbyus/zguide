@@ -1,9 +1,14 @@
 //
 //  Publisher for durable subscriber
 //
+//  Changes for 2.1:
+//  - added version assertion
+//  - removed sleep(1) at end of main thread
+//
 #include "zhelpers.h"
 
 int main () {
+    s_version_assert (2, 1);
     void *context = zmq_init (1);
 
     //  Subscriber tells us when it's ready here
@@ -27,8 +32,6 @@ int main () {
         sleep (1);
     }
     s_send (publisher, "END");
-
-    sleep (1);              //  Give 0MQ/2.0.x time to flush output
 
     zmq_close (sync);
     zmq_close (publisher);

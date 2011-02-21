@@ -3,6 +3,9 @@
 //  Binds REP socket to tcp://*:5555
 //  Expects "Hello" from client, replies with "World"
 //
+//  Changes for 2.1:
+//  - added socket close before terminating
+//
 #include <zmq.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -34,6 +37,8 @@ int main () {
         zmq_send (responder, &reply, 0);
         zmq_msg_close (&reply);
     }
+    //  We never get here but if we did, this would be how we end
+    zmq_close (responder);
     zmq_term (context);
     return 0;
 }

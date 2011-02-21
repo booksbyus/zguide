@@ -108,7 +108,7 @@ To create a connection between two nodes you use [http://api.zeromq.org/zmq_bind
 
 ØMQ connections are somewhat different from old-fashioned TCP connections. The main notable differences are:
 
-* They go across an arbitrary transport (inproc:, ipc:, tcp:, pgm: or epgm:). See [http://api.zeromq.org/zmq_inproc.html zmq_inproc(7)], [http://api.zeromq.org/zmq_ipc.html zmq_ipc(7)], [http://api.zeromq.org/zmq_tcp.html zmq_tcp(7)], [http://api.zeromq.org/zmq_pgm.html zmq_pgm(7)], and [http://api.zeromq.org/zmq_epgm.html zmq_epgm(7)].
+* They go across an arbitrary transport ({{inproc}}, {{ipc}}, {{tcp}}, {{pgm}} or {{epgm}}). See [http://api.zeromq.org/zmq_inproc.html zmq_inproc(7)], [http://api.zeromq.org/zmq_ipc.html zmq_ipc(7)], [http://api.zeromq.org/zmq_tcp.html zmq_tcp(7)], [http://api.zeromq.org/zmq_pgm.html zmq_pgm(7)], and [http://api.zeromq.org/zmq_epgm.html zmq_epgm(7)].
 
 * They exist when a client does [http://api.zeromq.org/zmq_connect.html zmq_connect(3)] to an endpoint, whether or not a server has already done [http://api.zeromq.org/zmq_bind.html zmq_bind(3)] to that endpoint.
 
@@ -184,13 +184,13 @@ The [http://api.zeromq.org/zmq_send.html zmq_send(3)] method does not actually s
 [[/div]]
 [[/div]]
 
-ØMQ provides a set of unicast transports (inproc, ipc, and tcp) and multicast transports (epgm, pgm). Multicast is an advanced technique that we'll come to later. Don't even start using it unless you know that your fanout ratios will make 1-to-N unicast impossible.
+ØMQ provides a set of unicast transports ({{inproc}}, {{ipc}}, and {{tcp}}) and multicast transports (epgm, pgm). Multicast is an advanced technique that we'll come to later. Don't even start using it unless you know that your fanout ratios will make 1-to-N unicast impossible.
 
-For most common cases, use **tcp**, which is a //disconnected TCP// transport. It is elastic, portable, and fast enough for most cases. We call this 'disconnected' because ØMQ's {{tcp}} transport doesn't require that the endpoint exists before you connect to it. Clients and servers can connect and bind at any time, can go and come back, and it remains transparent to applications.
+For most common cases, use **{{tcp}}**, which is a //disconnected TCP// transport. It is elastic, portable, and fast enough for most cases. We call this 'disconnected' because ØMQ's {{tcp}} transport doesn't require that the endpoint exists before you connect to it. Clients and servers can connect and bind at any time, can go and come back, and it remains transparent to applications.
 
-The inter-process transport, **ipc**, is like {{tcp}} except that it is abstracted from the LAN, so you don't need to specify IP addresses or domain names. This makes it better for some purposes, and we use it quite often in the examples in this book. ØMQ's {{ipc}} transport is disconnected, like {{tcp}}. It has one limitation: it does not work on Windows. This may be fixed in future versions of ØMQ. By convention we use endpoint names with an ".ipc" extension to avoid potential conflict with other file names. On UNIX systems, if you use {{ipc}} endpoints you need to create these with appropriate permissions otherwise they may not be shareable between processes running under different user ids.
+The inter-process transport, **{{ipc}}**, is like {{tcp}} except that it is abstracted from the LAN, so you don't need to specify IP addresses or domain names. This makes it better for some purposes, and we use it quite often in the examples in this book. ØMQ's {{ipc}} transport is disconnected, like {{tcp}}. It has one limitation: it does not work on Windows. This may be fixed in future versions of ØMQ. By convention we use endpoint names with an ".ipc" extension to avoid potential conflict with other file names. On UNIX systems, if you use {{ipc}} endpoints you need to create these with appropriate permissions otherwise they may not be shareable between processes running under different user ids. You must also make sure all processes can access the files, e.g. by running in the same working directory.
 
-The inter-thread transport, **inproc**, is a connected signaling transport. It is much faster than {{tcp}} or {{ipc}}. This transport has a specific limitation compared to {{ipc}} and {{tcp}}: **you must do bind before connect**. This is something future versions of ØMQ may fix, but for today it has some impact on the way you use {{inproc}} sockets. When we use this in examples, we carefully bind to each endpoint before connecting to it. If we connect first, and then bind, the connect will return an error, and if we ignore that error, the recv will block.
+The inter-thread transport, **{{inproc}}**, is a connected signaling transport. It is much faster than {{tcp}} or {{ipc}}. This transport has a specific limitation compared to {{ipc}} and {{tcp}}: **you must do bind before connect**. This is something future versions of ØMQ may fix, but for today it has some impact on the way you use {{inproc}} sockets. When we use this in examples, we carefully bind to each endpoint before connecting to it. If we connect first, and then bind, the connect will return an error, and if we ignore that error, the recv will block.
 
 [[div style="overflow:hidden"]]
 [[div style="float:left"]]
@@ -377,7 +377,7 @@ In all the examples so far, the main loop of most examples has been:
 
 What if we want to read from multiple sockets at the same time?  The simplest way is to connect one socket to multiple endpoints and get ØMQ to do the fanin for us. This is legal if the remote endpoints are in the same pattern but it would be illegal to e.g. connect a PULL socket to a PUB endpoint. Fun, but illegal. If you start mixing patterns you break future scalability.
 
-The right way is to use [http://api.zeromq.org/zmq_poll.html zmq_poll(3)]. An even better way might be to wrap [http://api.zeromq.org/zmq_poll.html zmq_poll(3)] in a framework that turns it into a nice event-driven //reactor//. This is perhaps the best solution of all, and we'll make a simple reactor later, but it's significantly more work than we want to cover here.
+The right way is to use [http://api.zeromq.org/zmq_poll.html zmq_poll(3)]. An even better way might be to wrap [http://api.zeromq.org/zmq_poll.html zmq_poll(3)] in a framework that turns it into a nice event-driven //reactor//, but it's significantly more work than we want to cover here.
 
 Let's start with a dirty hack, partly for the fun of not doing it right, but mainly because it lets me show you how to do non-blocking socket reads. Here is a simple example of reading from two sockets using non-blocking reads. This rather confused program acts both as a subscriber to weather updates, and a worker for parallel tasks:
 
@@ -901,7 +901,7 @@ int main (int argc, char *argv[])
     zmq_connect (frontend, "tcp://192.168.55.210:5556");
 
     //  This is our public endpoint for subscribers
-    void *backend  = zmq_socket (context, ZMQ_PUB);
+    void *backend = zmq_socket (context, ZMQ_PUB);
     zmq_bind (backend, "tcp://10.1.1.0:8100");
 
     //  Subscribe on everything
@@ -924,6 +924,7 @@ int main (int argc, char *argv[])
                 break;      //  Last message part
         }
     }
+    //  We don't actually get here but if we did, we'd shut down neatly
     zmq_close (frontend);
     zmq_close (backend);
     zmq_term (context);
@@ -1263,7 +1264,7 @@ By "perfect" MT programs I mean code that's easy to write and understand, that w
 
 If you've spent years learning tricks to make your MT code work at all, let alone rapidly, with locks and semaphores and critical sections, you will be disgusted when you realize it was all for nothing. If there's one lesson we've learned from 30+ years of concurrent programming it is: //just don't share state//. It's like two drunkards trying to share a beer. It doesn't matter if they're good buddies. Sooner or later they're going to get into a fight. And the more drunkards you add to the pavement, the more they fight each other over the beer. The tragic majority of MT applications look like drunken bar fights.
 
-The list of weird problems that you need to fight as you write classic shared-state MT code would be hillarious if it didn't translate directly into stress and risk, as code that seems to work suddenly fails under stress. Here is a list of "11 Likely Problems In Your Multithreaded Code" from a large firm with experience in buggy code: forgotten synchronization, incorrect granularity, read and write tearing, lock-free reordering, lock convoys, two-step dance, and priority inversion.
+The list of weird problems that you need to fight as you write classic shared-state MT code would be hillarious if it didn't translate directly into stress and risk, as code that seems to work suddenly fails under pressure. Here is a list of "//11 Likely Problems In Your Multithreaded Code//" from a large firm with world-beating experience in buggy code: forgotten synchronization, incorrect granularity, read and write tearing, lock-free reordering, lock convoys, two-step dance, and priority inversion.
 
 Yeah, we also counted seven, not eleven. That's not the point though. The point is, do you really want that code running the power grid or stock market to start getting two-step lock convoys at 3pm on a busy Thursday?  Who cares what the terms actually mean. This is not what turned us on to programming, fighting ever more complex side-effects with ever more complex hacks.
 
@@ -1273,7 +1274,7 @@ You do need to follow some rules to write MT code with ØMQ:
 
 * You MUST NOT try to access the same data from multiple threads.
 
-* You MUST create a 'context' object for your process, and pass that to all threads. The context collects ØMQ's state. To create a connection across the inproc: transport, both server and client thread must share the same context object.
+* You MUST create a 'context' object for your process, and pass that to all threads. The context collects ØMQ's state. To create a connection across the {{inproc}} transport, both server and client thread must share the same context object.
 
 * You MUST NOT share sockets between threads, not even when using proper exclusion mechanisms like semaphores, locks or mutexes. ØMQ will in some future make it possible to move sockets to different threads. Right now the thread which creates a socket is the only thread that may use it.
 
@@ -1295,6 +1296,10 @@ The MT version of the Hello World service basically collapses the queue device a
 //
 //  Multithreaded Hello World server
 //
+//  Changes for 2.1:
+//  - added version assertion
+//  - close sockets in each child thread
+//
 #include "zhelpers.h"
 
 static void *
@@ -1312,11 +1317,12 @@ worker_routine (void *context) {
         //  Send reply back to client
         s_send (receiver, "World");
     }
+    zmq_close (receiver);
     return (NULL);
 }
 
 int main () {
-    //  Prepare our context and sockets
+    s_version_assert (2, 1);
     void *context = zmq_init (1);
 
     //  Socket to talk to clients
@@ -1368,11 +1374,11 @@ examples/C/mtserver.c
 
 All the code should be recognizable to you by now. How it works:
 
-* The server starts a set of worker threads. Each worker thread creates a REP socket and then processes requests on this socket. Worker threads are just like single-threaded servers. The only differences are the transport (inproc: instead of tcp:), and the bind-connect direction.
+* The server starts a set of worker threads. Each worker thread creates a REP socket and then processes requests on this socket. Worker threads are just like single-threaded servers. The only differences are the transport ({{inproc}} instead of {{tcp}}), and the bind-connect direction.
 
-* The server creates an XREP (extended reply) socket to talk to clients and binds this to its external interface (over tcp:).
+* The server creates an XREP (extended reply) socket to talk to clients and binds this to its external interface (over {{tcp}}).
 
-* The server creates an XREQ (extended request) socket to talk to the workers and binds this to its internal interface (over inproc:).
+* The server creates an XREQ (extended request) socket to talk to the workers and binds this to its internal interface (over {{inproc}}).
 
 * The server starts a QUEUE device that connects the two sockets. The QUEUE device keeps a single queue for incoming requests, and distributes those out to workers. It also routes replies back to their origin.
 
@@ -1382,63 +1388,93 @@ Here the 'work' is just a one-second pause. We could do anything in the workers,
 
 [[div style="overflow:hidden"]]
 [[div style="float:left"]]
-+++ Thread Coordination
++++ Multithreading with ØMQ
 [[/div]]
 [[div style="float:right; vertical-align:middle"]]
 [/chapter:all# ↑top]
 [[/div]]
 [[/div]]
 
-When you start making multithreaded applications with ØMQ, you'll hit the question of how to coordinate your threads. Though you might be tempted to insert 'sleep' statements, or use multithreading techniques such as semaphores or mutexes, **the only mechanism that you should use are ØMQ messages**. Remember the story of The Drunkards and the Beer Bottle. Here is a simple example showing three threads that signal each other when they are ready.
+When you start making multithreaded applications with ØMQ, you'll hit the question of how to coordinate your threads. Though you might be tempted to insert 'sleep' statements, or use multithreading techniques such as semaphores or mutexes, **the only mechanism that you should use are ØMQ messages**. Remember the story of The Drunkards and the Beer Bottle.
+
+Here is a simple example showing three threads that signal each other when they are ready.
 
 [[=image http://github.com/imatix/zguide/raw/master/images/fig22.png]]
 
-In this example we use PAIR sockets over the //inproc:// transport:
+In this example we use PAIR sockets over the {{inproc}} transport:
 
 [[code type="C" title="Multithreaded relay" name="mtrelay"]]
 //
 //  Multithreaded relay
 //
+//  Changes for 2.1:
+//  - added version assertion
+//  - pass context & thread to child threads
+//  - create socket pair for inproc communications
+//  - close sockets in each child thread
+//
 #include "zhelpers.h"
 
-static void *
-step1 (void *context) {
-    //  Signal downstream to step 2
-    void *sender = zmq_socket (context, ZMQ_PAIR);
-    zmq_connect (sender, "inproc://step2");
-    s_send (sender, "");
+//  This is the structure we pass to child threads
+typedef struct {
+    void *context;
+    void *socket;
+} thread_args_t;
 
+//  Each thread receives a threads_args_t structure that it uses
+//  It frees its arguments when done with them.
+static void *
+step1 (void *args) {
+    thread_args_t *self = (thread_args_t *) args;
+
+    //  Signal downstream to step 2
+    s_send (self->socket, "");
+    zmq_close (self->socket);
+    free (self);
     return NULL;
 }
 
 static void *
-step2 (void *context) {
-    //  Bind to inproc: endpoint, then start upstream thread
-    void *receiver = zmq_socket (context, ZMQ_PAIR);
+step2 (void *args) {
+    thread_args_t *self = (thread_args_t *) args;
+
+    //  Create socket pair, then pass one socket to upstream thread
+    thread_args_t *child = malloc (sizeof (thread_args_t));
+    child->context = self->context;
+    child->socket = zmq_socket (self->context, ZMQ_PAIR);
+
+    void *receiver = zmq_socket (self->context, ZMQ_PAIR);
     zmq_bind (receiver, "inproc://step2");
+    zmq_connect (child->socket, "inproc://step2");
     pthread_t thread;
-    pthread_create (&thread, NULL, step1, context);
+    pthread_create (&thread, NULL, step1, child);
 
     //  Wait for signal
     char *string = s_recv (receiver);
     free (string);
+    zmq_close (receiver);
 
     //  Signal downstream to step 3
-    void *sender = zmq_socket (context, ZMQ_PAIR);
-    zmq_connect (sender, "inproc://step3");
-    s_send (sender, "");
-
+    s_send (self->socket, "");
+    zmq_close (self->socket);
+    free (self);
     return NULL;
 }
 
 int main () {
+    s_version_assert (2, 1);
     void *context = zmq_init (1);
 
-    //  Bind to inproc: endpoint, then start upstream thread
+    //  Create socket pair, then pass one socket to upstream thread
+    thread_args_t *child = malloc (sizeof (thread_args_t));
+    child->context = context;
+    child->socket = zmq_socket (context, ZMQ_PAIR);
+
     void *receiver = zmq_socket (context, ZMQ_PAIR);
     zmq_bind (receiver, "inproc://step3");
+    zmq_connect (child->socket, "inproc://step3");
     pthread_t thread;
-    pthread_create (&thread, NULL, step2, context);
+    pthread_create (&thread, NULL, step2, child);
 
     //  Wait for signal
     char *string = s_recv (receiver);
@@ -1473,7 +1509,16 @@ examples/C/mtrelay.c
 [[/collapsible]]
 [[/>]]
 
-This is the first time we've shown an example using PAIR sockets. Why use PAIR?  Other socket combinations might seem to work but they all have side-effects that could interfere with signalling:
+This is a classic pattern for multithreading with ØMQ. Read it carefully and try to understand it, it'll help you enormously when you write your own multithreaded apps. The use of PAIR sockets is not critical. The use of {{inproc}}, and the way we start the child threads is.
+
+Some comments on this code:
+
+* To establish a connection with a child thread, we create socket pairs, bind and connect them, then pass one of the sockets, together with the context, to the child thread. This is the sanest way to ensure that bind happens //before// connect, something {{inproc}} insists on.
+* Passing a socket from one thread to another used to be illegal in ØMQ/2.0 but ØMQ/2.1 allows this, and we depend on it.
+* It's important that the child thread takes control of the arguments, so the parent thread can exit without timing issues (otherwise the child thread will randomly crash, trying to access data the parent thread already freed).
+* Multithreading code using this pattern is **//not scalable out to processes//**. If you use {{inproc}} and socket pairs, you are building a tightly-bound application. Do this when low latency is really vital. For all normal apps, use one context per thread, and {{ipc}} or {{tcp}}. Then you can easily break your threads out to separate processes, or boxes, as needed.
+
+This is the first time we've shown an example using PAIR sockets. Why use PAIR? Other socket combinations might seem to work but they all have side-effects that could interfere with signalling:
 
 * You can use PUSH for the sender and PULL for the receiver. This looks simple and will work, but remember that PUSH will load-balance messages to all available receivers. If you by accident start two receivers (e.g. you already have one running and you start a second), you'll "lose" half of your signals. PAIR has the advantage of refusing more than one connection, the pair is //exclusive//.
 
@@ -1481,7 +1526,7 @@ This is the first time we've shown an example using PAIR sockets. Why use PAIR? 
 
 * You can use PUB for the sender and SUB for the receiver. This will correctly deliver you messages exactly as you sent them and PUB does not load-balance as PUSH or XREQ do. However you need to configure the subscriber with an empty subscription, which is annoying. Worse, the reliability of the PUB-SUB link is timing dependent and messages can get lost if the SUB socket is connecting while the PUB socket is sending its message.
 
-For these reasons, PAIR makes the best choice for coordination between specific threads.
+For these reasons, PAIR makes the best choice for coordination between pairs of threads.
 
 [[div style="overflow:hidden"]]
 [[div style="float:left"]]
@@ -1510,12 +1555,18 @@ In this case we'll use a REQ-REP socket flow to synchronize subscribers and publ
 //
 //  Synchronized publisher
 //
+//  Changes for 2.1:
+//  - added version assertion
+//  - close syncservice socket in main thread
+//  - removed sleep(1) at end of main thread
+//
 #include "zhelpers.h"
 
 //  We wait for 10 subscribers
 #define SUBSCRIBERS_EXPECTED  10
 
 int main () {
+    s_version_assert (2, 1);
     void *context = zmq_init (1);
 
     //  Socket to talk to clients
@@ -1543,8 +1594,8 @@ int main () {
 
     s_send (publisher, "END");
 
-    sleep (1);              //  Give 0MQ/2.0.x time to flush output
     zmq_close (publisher);
+    zmq_close (syncservice);
     zmq_term (context);
     return 0;
 }
@@ -1580,6 +1631,9 @@ And here is the subscriber:
 //
 //  Synchronized subscriber
 //
+//  Changes for 2.1:
+//  - added sleep(1) before synchronization step
+//
 #include "zhelpers.h"
 
 int main (int argc, char *argv[])
@@ -1590,6 +1644,9 @@ int main (int argc, char *argv[])
     void *subscriber = zmq_socket (context, ZMQ_SUB);
     zmq_connect (subscriber, "tcp://localhost:5561");
     zmq_setsockopt (subscriber, ZMQ_SUBSCRIBE, "", 0);
+
+    //  0MQ is so fast, we need to wait a while...
+    sleep (1);
 
     //  Second, synchronize with publisher
     void *syncclient = zmq_socket (context, ZMQ_REQ);
@@ -1672,12 +1729,9 @@ Received 1000000 updates
 Received 1000000 updates
 [[/code]]
 
-[!-- TODO: remove this note when ØMQ/2.1 is released --]
-Note that we do {{sleep (1);}} before exiting the publisher. This is a hack that gets around ØMQ/2.0's design, which discards messages that have not yet been sent, if you exit the program too soon. If you are using ØMQ/2.1 you can remove this sleep statement. There is no way in ØMQ/2.0 to properly exit the publisher without such a sleep.
+We can't assume that the SUB connect will be finished by the time the REQ/REP dialog is complete. There are no guarantees that outbound connects will finish in any order whatsoever, if you're using any transport except {{inproc}}. So, the example does a brute-force sleep of one second between subscribing, and sending the REQ/REP synchronization.
 
-The example assumes that the SUB connect will be finished by the time the REQ/REP dialog is complete. However there are no //guarantees// that outbound connects are ordered. If using a single IO thread, and connecting to the same hostname, it is highly likely. If you are connecting via two different network routes, i.e. to two different interfaces or hostnames, one route could be arbitrarily slower than the other.
-
-A more robust model would be:
+A more robust model could be:
 
 * Publisher opens PUB socket and starts sending "Hello" messages (not data).
 * Subscribers connect SUB socket and when they receive a Hello message they tell the publisher via a REQ/REP socket pair.
@@ -1756,7 +1810,7 @@ Some comments on setting a socket identity:
 
 * Identities are binary strings: identities starting with a zero byte are reserved for ØMQ use.
 
-* Do not use the same identity for more than one socket. On ØMQ/2.0.9 and earlier versions this will cause an assertion failure in the //other// socket. Yes, that's a bug, and yes, it'll be fixed.
+* Do not use the same identity for more than one socket. Any socket trying to connect using an identity already taken by another socket will just be disconnected.
 
 * Do not modify the identity of a socket after binding, or if you restart a peer, this will cause an assertion failure in sockets connected to it. Yes, that's also a bug and yes, it'll also be fixed.
 
@@ -1942,9 +1996,14 @@ Here's the publisher:
 //
 //  Publisher for durable subscriber
 //
+//  Changes for 2.1:
+//  - added version assertion
+//  - removed sleep(1) at end of main thread
+//
 #include "zhelpers.h"
 
 int main () {
+    s_version_assert (2, 1);
     void *context = zmq_init (1);
 
     //  Subscriber tells us when it's ready here
@@ -1968,8 +2027,6 @@ int main () {
         sleep (1);
     }
     s_send (publisher, "END");
-
-    sleep (1);              //  Give 0MQ/2.0.x time to flush output
 
     zmq_close (sync);
     zmq_close (publisher);
@@ -2123,9 +2180,14 @@ We can put this together to make a cynical publisher that is immune to slow, blo
 //
 //  Publisher for durable subscriber
 //
+//  Changes for 2.1:
+//  - added version assertion
+//  - removed sleep(1) at end of main thread
+//
 #include "zhelpers.h"
 
 int main () {
+    s_version_assert (2, 1);
     void *context = zmq_init (1);
 
     //  Subscriber tells us when it's ready here
@@ -2157,8 +2219,6 @@ int main () {
         sleep (1);
     }
     s_send (publisher, "END");
-
-    sleep (1);              //  Give 0MQ/2.0.x time to flush output
 
     zmq_close (sync);
     zmq_close (publisher);
