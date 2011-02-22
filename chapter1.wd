@@ -1,7 +1,7 @@
 [[include :csi:include:css-brackets]]
-Written by Pieter Hintjens <ph@imatix.com>, CEO iMatix Corporation. Thanks to Bill Desmarais, Brian Dorsey, CAF, Daniel Lin, Eric Desgranges, Gonzalo Diethelm, Guido Goldstein, Hunter Ford, Kamil Shakirov, Martin Sustrik, Mike Castleman, Naveen Chawla, Nicola Peduzzi, Oliver Smith, Olivier Chamoux, Peter Alexander, Pierre Rouleau, Randy Dryburgh, John Unwin, Alex Thomas, Mihail Minkov, Jeremy Avnet, Michael Compton, Kamil Kisiel, Mark Kharitonov, Guillaume Aubert, Ian Barber, Mike Sheridan, Faruk Akgul, Oleg Sidorov, Lev Givon, and Zed Shaw for their contributions, and to Stathis Sideris for [http://www.ditaa.org Ditaa].
+Written by Pieter Hintjens <ph@imatix.com>, CEO iMatix Corporation. Thanks to Bill Desmarais, Brian Dorsey, CAF, Daniel Lin, Eric Desgranges, Gonzalo Diethelm, Guido Goldstein, Hunter Ford, Kamil Shakirov, Martin Sustrik, Mike Castleman, Naveen Chawla, Nicola Peduzzi, Oliver Smith, Olivier Chamoux, Peter Alexander, Pierre Rouleau, Randy Dryburgh, John Unwin, Alex Thomas, Mihail Minkov, Jeremy Avnet, Michael Compton, Kamil Kisiel, Mark Kharitonov, Guillaume Aubert, Ian Barber, Mike Sheridan, Faruk Akgul, Oleg Sidorov, Lev Givon, Allister MacLeod, and Zed Shaw for their contributions, and to Stathis Sideris for [http://www.ditaa.org Ditaa].
 
-Please use the [http://github.com/imatix/zguide/issues issue tracker] for all comments and errata. This version covers ØMQ 2.1.x and was published on Mon 21 February, 2011 at 21:44:43.
+Please use the [http://github.com/imatix/zguide/issues issue tracker] for all comments and errata. This version covers ØMQ 2.1.x and was published on Tue 22 February, 2011 at 17:15:30.
 
 [[div style="overflow:hidden"]]
 [[div style="float:left"]]
@@ -907,16 +907,14 @@ int main (int argc, char *argv[])
     //  Process tasks forever
     while (1) {
         char *string = s_recv (receiver);
-        struct timespec t;
-        t.tv_sec = 0;
-        t.tv_nsec = atoi (string) * 1000000;
         //  Simple progress indicator for the viewer
         fflush (stdout);
         printf ("%s.", string);
-        free (string);
 
         //  Do the work
+        struct timespec t = { 0, atoi (string) * 1000000 };
         nanosleep (&t, NULL);
+        free (string);
 
         //  Send results to sink
         s_send (sender, "");

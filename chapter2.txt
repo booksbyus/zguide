@@ -964,7 +964,7 @@ Here the 'work' is just a one-second pause. We could do anything in the workers,
         Figure # - Multithreaded server
 [[/code]]
 
-+++ Multithreading with 0MQ
++++ Signalling between Threads
 
 When you start making multithreaded applications with 0MQ, you'll hit the question of how to coordinate your threads. Though you might be tempted to insert 'sleep' statements, or use multithreading techniques such as semaphores or mutexes, **the only mechanism that you should use are 0MQ messages**. Remember the story of The Drunkards and the Beer Bottle.
 
