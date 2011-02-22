@@ -240,7 +240,7 @@ There is a major difference between a 0MQ application and a conventional network
 
 This has a fundamental impact on how you write applications. A traditional networked application has one process or one thread per remote connection, and that process or thread handles one socket. 0MQ lets you collapse this entire structure into a single thread, and then break it up as necessary for scaling.
 
-+++ The Messaging Patterns
++++ Core Messaging Patterns
 
 Underneath the brown paper wrapping of 0MQ's socket API lies the world of messaging patterns. If you have a background in enterprise messaging, these will be vaguely familiar. But to most 0MQ newcomers they are a surprise, we're so used to the TCP paradigm where a socket represents another node.
 
@@ -277,6 +277,14 @@ These are the socket combinations that are valid for a connect-bind pair (either
 * PAIR and PAIR
 
 Any other combination will produce undocumented and unreliable results and future versions of 0MQ will probably return errors if you try them. You can and will of course bridge other socket types //via code//, i.e. read from one socket type and write to another.
+
++++ High-level Messaging Patterns
+
+These four core patterns are cooked-in to 0MQ. They are part of the 0MQ API, implemented in the core C++ library, and guaranteed to be available in all fine retail stores. If one day the Linux kernel includes 0MQ, for example, these patterns would be there.
+
+On top, we add //high-level patterns//. We build these high-level patterns on top of 0MQ and implement them in whatever language we're using for our application. They are not part of the core library, do not come with the 0MQ package, and exist in their own space, as part of the 0MQ community.
+
+One of the things we aim to provide you with this guide are a set of such high-level patterns, both small (how to handle messages sanely) to large (how to make a reliable publish-subscribe architecture).
 
 +++ Working with Messages
 

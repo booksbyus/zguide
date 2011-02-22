@@ -194,9 +194,9 @@ While we usually think of request-reply as a to-and-fro pattern, in fact it can 
 
 These are the ways we can know the address to send a message to, and you'll see most of these used in the examples of custom request-reply routing:
 
-* If it's an anonymous peer, i.e. did not set any identity, the router will generate a UUID and use that to refer to the connection when it delivers you an incoming request envelope.
+* If it's an transient socket, i.e. did not set any identity, the router will generate a UUID and use that to refer to the connection when it delivers you an incoming request envelope.
 
-* If it is a peer with explicit identity, the router will give that identity when it delivers you an incoming request envelope.
+* If it is a durable socket, the router will give the peer's identity when it delivers you an incoming request envelope.
 
 * Peers with explicit identities can send them via some other mechanism, e.g. via some other sockets.
 
@@ -221,7 +221,7 @@ But first some warnings about custom routing:
 
 So overall, custom routing is more expensive and more fragile than delegating this to 0MQ. Only do it if you need it. Having said that, let's jump in, the water's great!
 
-+++ Random Scatter Routing
++++ Router-to-Dealer Routing
 
 The router-to-dealer pattern is the simplest. You connect one router to many dealers, and then distribute messages to the dealers using any algorithm you like. The dealers can be sinks (process the messages without any response), proxies (send the messages on to other nodes), or services (send back replies).
 
@@ -237,7 +237,7 @@ We'll make an example where the dealers don't talk back, they're pure sinks. Our
           |   Client    |   Send to "A" or "B"
           |             |
           +-------------+
-          |   ROUTER    |   OK, it's really XREP
+          |   ROUTER    |   
           \------+------/
                  |
                  |
@@ -246,7 +246,7 @@ We'll make an example where the dealers don't talk back, they're pure sinks. Our
          |               |
          v               v
    /-----------\   /-----------\
-   |  DEALER   |   |  DEALER   |   Aka. XREQ
+   |  DEALER   |   |  DEALER   |
    |    "A"    |   |    "B"    |
    +-----------+   +-----------+
    |           |   |           |
@@ -281,11 +281,11 @@ To route to a dealer, we create an envelope like this:
        Figure # - Routing envelope for dealer
 [[/code]]
 
-The router removes the first frame, routes the second frame, which the dealer gets as-is. If the dealer was to reply, we'd get back a similar envelope in two parts.
+The router socket removes the first frame, and sends the second frame, which the dealer gets as-is. When the dealer sends a message to the router, it sends one frame. The router prepends the dealer's address and gives us back a similar envelope in two parts.
 
-Something to note: if you use an invalid address, the router discards the message silently. There is not much else it can do usefully. In normal cases this either means the peer has gone away, or that there is a programming error somewhere and you're using a bogus address. 0MQ may in future report dropped messages via a sys://log bus, and may distinguish these two different cases. In any case you cannot ever assume a message will be routed successfully until and unless you get a reply of some sorts from the destination node. We'll come to creating reliable patterns later on.
+Something to note: if you use an invalid address, the router discards the message silently. There is not much else it can do usefully. In normal cases this either means the peer has gone away, or that there is a programming error somewhere and you're using a bogus address. In any case you cannot ever assume a message will be routed successfully until and unless you get a reply of some sorts from the destination node. We'll come to creating reliable patterns later on.
 
-Dealers look a bit like PULL sockets here and in fact they work exactly as PUSH and PULL combined. It's illegal to connect PULL or PUSH to a request-reply socket, and pointless, so don't do it.
+Dealers in fact they work exactly like PUSH and PULL combined. It's however illegal and pointless to connect PULL or PUSH to a request-reply socket.
 
 +++ Least-Recently Used Routing
 
@@ -764,6 +764,129 @@ And here is the LRU queue broker rewritten to use the zmsg class. Compare the co
 [[code type="C" title="LRU queue broker using zmsg" name="lruqueue2"]]
 [[/code]]
 
++++ Asynchronous Client-Server
+
+In the router-to-dealer example we saw a 1-to-N use case where one client talks asynchronously to multiple workers. We can turn this upside-down to get a very useful N-to-1 architecture where various clients talk to a single server, and do this asynchronously:
+
+[[code type="textdiagram"]]
+     +-----------+   +-----------+
+     |           |   |           |
+     |  Client   |   |  Client   |
+     |           |   |           |
+     +-----------+   +-----------+
+     |  DEALER   |   |  DEALER   |
+     \-----------/   \-----------/
+           ^               ^
+           |               |
+           |               |
+           +-------+-------+
+                   |
+                   |
+                   v
+            /------+------\
+            |   ROUTER    |
+            +-------------+
+            |             |
+            |   Server    |
+            |             |
+            +-------------+
+
+
+Figure # - Asynchronous Client-Server
+[[/code]]
+
+Here's how it works:
+
+* Clients connect to the server and send requests.
+* For each request, the server sends 0 to N replies.
+* Clients can send multiple requests without waiting for a reply.
+* Servers can send multiple replies without waiting for new requests.
+
+Here's code that shows how this works:
+
+[[code type="C" title="Asynchronous Client-Server" name="asyncsrv"]]
+[[/code]]
+
+Just run that example by itself. Like other multi-task examples, it runs in a single process but each task has its own context and conceptually acts as a separate process. You will see three clients (each with a random ID), printing out the replies they get from the server. Look carefully and you'll see each client task gets 0 or more replies per request.
+
+Some comments on this code:
+
+* The clients send a request once per second, and get zero or more replies back. To make this work using zmq_poll[3], we can't simply poll with a 1-second timeout, or we'd end up sending a new request only one second //after we received the last reply//. So we poll at a high frequency (100 times at 1/100th of a second per poll), which is approximately accurate. This means the server could use requests as a form of heartbeat, i.e. detecting when clients are present or disconnected.
+
+* The server uses a pool of worker threads, each processing one request synchronously. It connects these to its frontend socket using an internal queue. To help debug this, the code implements its own queue device logic. In the C code, you can uncomment the zmsg_dump() calls to get debugging output.
+
+The socket logic in the server is fairly wicked. This is the detailed architecture of the server:
+
+[[code type="textdiagram"]]
+          +---------+   +---------+   +---------+
+          |         |   |         |   |         |
+          | Client  |   | Client  |   | Client  |
+          |         |   |         |   |         |
+          +---------+   +---------+   +---------+
+          |  XREQ   |   |  XREQ   |   |  XREQ   |
+          \---------/   \---------/   \---------/
+            connect       connect       connect
+               |             |             |
+               |             |             |
+               +-------------+-------------+
+                             |
+      /----------------------|----------------------\
+      :                      v                      :
+      :                    bind                     :
+      :                /-----------\                :
+      :                |   XREP    |                :
+      :                +-----------+                :
+      :                |           |                :
+      :                |  Server   |                :
+      :                |           |                :
+      :                +-----------+                :
+      :                |   XREQ    |                :
+      :                \-----------/                :
+      :                    bind                     :
+      :                      |                      :
+      :        +-------------+-------------+        :
+      :        |             |             |        :
+      :        v             v             v        : 
+      :     connect       connect       connect     :
+      :   /---------\   /---------\   /---------\   :
+      :   |  XREQ   |   |  XREQ   |   |  XREQ   |   :
+      :   +---------+   +---------+   +---------+   :
+      :   |         |   |         |   |         |   :
+      :   | Worker  |   | Worker  |   | Worker  |   :
+      :   |         |   |         |   |         |   :
+      :   +---------+   +---------+   +---------+   :
+      :                                             :
+      \---------------------------------------------/
+      
+            Figure # - Detail of async server
+[[/code]]
+
+Note that we're doing a dealer-to-router dialog between client and server, but internally between the server main thread and workers we're doing dealer-to-dealer. If the workers were strictly synchronous, we'd use REP. But since we want to send multiple replies we need an async socket. We do //not// want to route replies, they always go to the single server thread that sent us the request.
+
+Let's think about the routing envelope. The client sends a simple message. The server thread receives a two-part message (real message prefixed by client identity). We have two possible designs for the server-to-worker interface:
+
+* Workers get unaddressed messages, and we manage the connections from server thread to worker threads explicitly using a router socket as backend. This would require that workers start by telling the server they exist, which can then route requests to workers and track which client is 'connected' to which worker.  This is the least-recently routing pattern already covered.
+
+* Workers get addressed messages, and they return addressed replies. This requires that workers can properly decode and recode envelopes but it doesn't need any other mechanisms.
+
+The second design is much simpler, so that's what we use:
+
+[[code]]
+     client        server     frontend     worker
+    [ XREQ ]<---->[ XREP <----> XREQ <----> XREQ ]
+            1 part       2 parts     2 parts
+[[/code]]
+
+When you build servers that maintain stateful conversations with clients, you will run into a classic problem. If the server keeps some state per client, and clients keep coming and going, eventually it will run of resources. Even if the same clients keep connecting, if you're using transient sockets (no explicit identity), each connection will look like a new one.
+
+We cheat in the above example by keeping state only for a very short time (the time it takes a worker to process a request) and then throwing away the state. But that's not practical for many cases. 
+
+To properly manage client state in a stateful asynchronous server you must:
+
+* Do heartbeating from client to server. In our example we send a request once per second, which can reliably be used as a heartbeat. 
+* Store state using the client identity as key. This works for both durable and transient sockets.
+* Detect a stopped heartbeat. If there's no request from a client within, say, two seconds, the server can detect this and destroy any state it's holding for that client.
+
 +++ Router-to-Router (N-to-N) Routing
 
 We've seen XREP/router sockets talking to dealers, mamas, and papas. The last case is routers talking to routers. One use-case for this is a web farm that has redundant HTTP front-ends talking to an array of asynchronous back-end workers. Each worker accepts requests from any of the front-end HTTP servers, and processes them asynchronously, sending asynchronous replies back. A fully asynchronous worker has some internal concurrency but we don't really care about that here. What interests us is how N workers can talk to N front-ends.
@@ -829,7 +952,7 @@ Although the router-to-router pattern looks ideal for asynchronous N-to-N routin
 
 Second, it may become confusing if you try to put two XREP sockets at the same logical level. One must bind, one must connect, and request-reply is inherently asymmetric. However, the next point takes care of this.
 
-Third, one side of the connection must know the identity of the other. You cannot do xrep-to-xrep flows between two anonymous sockets. In practice this means you need a name service, configuration data, or some other magic to define and share the identities of one of the peers. It's convenient therefore to treat the more static side of the flow as 'server', and give it a fixed, known identity, and then treat the dynamic side as 'client'. The client will have to connect to the server, then send it a message using the server's known identity as address, and then the server can respond to the client.
+Third, one side of the connection must know the identity of the other. You cannot do xrep-to-xrep flows between two transient sockets. In practice this means you need a name service, configuration data, or some other magic to define and share the identities of one of the peers. It's convenient therefore to treat the more static side of the flow as 'server', and give it a fixed, known identity, and then treat the dynamic side as 'client'. The client will have to connect to the server, then send it a message using the server's known identity as address, and then the server can respond to the client.
 
 +++ Worked Example: Inter-Broker Routing
 
