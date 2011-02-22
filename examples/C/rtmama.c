@@ -1,6 +1,10 @@
 //
 //  Custom routing Router to Mama (XREP to REQ)
 //
+//  While this example runs in a single process, that is just to make
+//  it easier to start and stop the example. Each thread has its own
+//  context and conceptually acts as a separate process.
+//
 //  Changes for 2.1:
 //  - added version assertion
 //  - use separate contexts for each thread
@@ -37,9 +41,7 @@ worker_thread (void *args) {
         total++;
 
         //  Do some random work
-        struct timespec t;
-        t.tv_sec = 0;
-        t.tv_nsec = randof (100000000) + 1;
+        struct timespec t = { 0, randof (100000000) + 1 };
         nanosleep (&t, NULL);
     }
     zmq_close (worker);

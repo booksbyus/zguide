@@ -2,6 +2,10 @@
 //  Least-recently used (LRU) queue device
 //  Clients and workers are shown here in-process
 //
+//  While this example runs in a single process, that is just to make
+//  it easier to start and stop the example. Each thread has its own
+//  context and conceptually acts as a separate process.
+//
 //  Changes for 2.1:
 //  - added version assertion
 //  - use separate contexts for each thread

@@ -1,6 +1,10 @@
 //
 //  Custom routing Router to Dealer (XREP to XREQ)
 //
+//  While this example runs in a single process, that is just to make
+//  it easier to start and stop the example. Each thread has its own
+//  context and conceptually acts as a separate process.
+//
 //  Changes for 2.1:
 //  - added version assertion
 //  - use separate contexts for each thread
@@ -13,7 +17,8 @@
 //  We have two workers, here we copy the code, normally these would
 //  run on different boxes...
 //
-void *worker_a (void *args) {
+static void *
+worker_a (void *args) {
     void *context = zmq_init (1);
     void *worker = zmq_socket (context, ZMQ_XREQ);
     zmq_setsockopt (worker, ZMQ_IDENTITY, "A", 1);
@@ -36,7 +41,8 @@ void *worker_a (void *args) {
     return (NULL);
 }
 
-void *worker_b (void *args) {
+static void *
+worker_b (void *args) {
     void *context = zmq_init (1);
     void *worker = zmq_socket (context, ZMQ_XREQ);
     zmq_setsockopt (worker, ZMQ_IDENTITY, "B", 1);
