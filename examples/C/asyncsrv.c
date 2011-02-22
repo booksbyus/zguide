@@ -1,5 +1,5 @@
 //
-//  Asynchronous client-to-server (XREQ to XRER)
+//  Asynchronous client-to-server (XREQ to XREP)
 //
 //  While this example runs in a single process, that is just to make
 //  it easier to start and stop the example. Each task has its own
@@ -18,12 +18,12 @@ static void *
 client_task (void *args) {
     void *context = zmq_init (1);
     void *client = zmq_socket (context, ZMQ_XREQ);
-    zmq_connect (client, "tcp://localhost:5570");
 
     //  Generate printable identity for the client
     char identity [5];
     sprintf (identity, "%04X", randof (0x10000));
     zmq_setsockopt (client, ZMQ_IDENTITY, identity, strlen (identity));
+    zmq_connect (client, "tcp://localhost:5570");
 
     zmq_pollitem_t items [] = { { client, 0, ZMQ_POLLIN, 0 } };
     int request_nbr = 0;
@@ -61,7 +61,7 @@ void *server_task (void *args) {
     void *context = zmq_init (1);
     
     //  Frontend socket talks to clients over TCP
-    void *frontend = zmq_socket (context, ZMQ_XREQ);
+    void *frontend = zmq_socket (context, ZMQ_XREP);
     zmq_bind (frontend, "tcp://*:5570");
 
     //  Backend socket talks to workers over inproc
@@ -74,9 +74,31 @@ void *server_task (void *args) {
         pthread_t worker_thread;
         pthread_create (&worker_thread, NULL, server_worker, context);
     }
-    //  Connect backend to frontend via an inprocess queue device
-    zmq_device (ZMQ_QUEUE, frontend, backend);
-
+    //  Connect backend to frontend via a queue device
+    //  We could do this:
+    //      zmq_device (ZMQ_QUEUE, frontend, backend);
+    //  But doing it ourselves means we can debug this more easily
+    
+    //  Switch messages between frontend and backend
+    while (1) {
+        zmq_pollitem_t items [] = {
+            { frontend, 0, ZMQ_POLLIN, 0 },
+            { backend,  0, ZMQ_POLLIN, 0 }
+        };
+        zmq_poll (items, 2, -1);
+        if (items [0].revents & ZMQ_POLLIN) {
+            zmsg_t *msg = zmsg_recv (frontend);
+            //puts ("Request from client:");
+            //zmsg_dump (msg);
+            zmsg_send (&msg, backend);
+        }
+        if (items [1].revents & ZMQ_POLLIN) {
+            zmsg_t *msg = zmsg_recv (backend);
+            //puts ("Reply from worker:");
+            //zmsg_dump (msg);
+            zmsg_send (&msg, frontend);
+        }
+    }
     zmq_close (frontend);
     zmq_close (backend);
     zmq_term (context);
@@ -92,17 +114,20 @@ server_worker (void *context) {
     zmq_connect (worker, "inproc://backend");
 
     while (1) {
-        //  The XREQ socket gives us a message (without envelope)
-        char *message = s_recv (worker);
+        //  The XREQ socket gives us the address envelope and message
+        zmsg_t *msg = zmsg_recv (worker);
+        assert (zmsg_parts (msg) == 2);
+        
         //  Send 0..4 replies back
         int reply, replies = randof (5);
         for (reply = 0; reply < replies; reply++) {
             //  Sleep for some fraction of a second
             struct timespec t = { 0, randof (100000000) + 1 };
             nanosleep (&t, NULL);
-            s_send (worker, message);
+            zmsg_t *dup = zmsg_dup (msg);
+            zmsg_send (&dup, worker);
         }
-        free (message);
+        zmsg_destroy (&msg);
     }
     zmq_close (worker);
     return (NULL);
