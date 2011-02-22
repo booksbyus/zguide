@@ -4,7 +4,7 @@
     Multipart message class for example applications.
 
     Follows the ZFL class conventions and is further developed as the ZFL
-    zfl_msg class.  See http://zfl.zeromq.org for more details.
+    zmsg class.  See http://zfl.zeromq.org for more details.
 
     -------------------------------------------------------------------------
     Copyright (c) 1991-2010 iMatix Corporation <www.imatix.com>
@@ -185,7 +185,7 @@ s_decode_uuid (char *uuidstr)
 //  Private helper function to store a single message part
 
 static void
-_set_part (zmsg_t *self, int part_nbr, unsigned char *data, size_t size)
+s_set_part (zmsg_t *self, int part_nbr, unsigned char *data, size_t size)
 {
     self->_part_size [part_nbr] = size;
     self->_part_data [part_nbr] = malloc (size + 1);
@@ -194,6 +194,25 @@ _set_part (zmsg_t *self, int part_nbr, unsigned char *data, size_t size)
     self->_part_data [part_nbr][size] = 0;
 }
 
+
+//  --------------------------------------------------------------------------
+//  Duplicate message
+
+zmsg_t *
+zmsg_dup (zmsg_t *self)
+{
+    assert (self);
+    zmsg_t *dup = zmsg_new ();
+    assert (dup);
+
+    uint part_nbr;
+    for (part_nbr = 0; part_nbr < self->_part_count; part_nbr++)
+        s_set_part (dup, part_nbr,
+            self->_part_data [part_nbr], self->_part_size [part_nbr]);
+    dup->_part_count = self->_part_count;
+
+    return dup;
+}
 
 //  --------------------------------------------------------------------------
 //  Receive message from socket
@@ -226,7 +245,7 @@ zmsg_recv (void *socket)
         }
         else
             //  Store this message part
-            _set_part (self, self->_part_count++, data, size);
+            s_set_part (self, self->_part_count++, data, size);
 
         zmq_msg_close (&message);
 
@@ -323,7 +342,7 @@ zmsg_body_set (zmsg_t *self, char *body)
     else
         self->_part_count = 1;
 
-    _set_part (self, self->_part_count - 1, (void *) body, strlen (body));
+    s_set_part (self, self->_part_count - 1, (void *) body, strlen (body));
 }
 
 
@@ -361,7 +380,7 @@ zmsg_push (zmsg_t *self, char *part)
         (ZMSG_MAX_PARTS - 1) * sizeof (unsigned char *));
     memmove (&self->_part_size [1], &self->_part_size [0],
         (ZMSG_MAX_PARTS - 1) * sizeof (size_t));
-    _set_part (self, 0, (void *) part, strlen (part));
+    s_set_part (self, 0, (void *) part, strlen (part));
     self->_part_count += 1;
 }
 
