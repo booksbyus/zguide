@@ -24,15 +24,3 @@ public class psenvsub {
     }
   }
 }
-in(String[] args) {
-
-    // Prepare our context and subscriber
-    ZMQ.Context context = ZMQ.context(1);
-    ZMQ.Socket subscriber = context.socket(ZMQ.SUB);
-
-    subscriber.connect("tcp://localhost:5563");
-    subscriber.subscribe("B".getBytes());
-    while (true) {
-      // Read envelope with address
-      String address = new String(subscriber.recv(0));
-      // Read message
