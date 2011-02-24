@@ -1,13 +1,59 @@
-No-one has translated the mtrelay example into Perl yet.  Be the first to create
-mtrelay in Perl and get one free Internet!  If you're the author of the Perl
-binding, this is a great way to get people to use 0MQ in Perl.
+#!/usr/bin/perl
+=pod
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+Multithreaded relay
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+NOTE:  As of v0.9, ZeroMQ does not allow us to pass sockets around so as to
+retain compatibility with ligzmq-2.0.  This example is therefore not a precise
+rendition of the official, libzmq-2.1-exploiting C example.
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+Based on examples/C/mtrelay.c; translated to Perl by darksuji
+
+=cut
+
+use strict;
+use warnings;
+use 5.10.0;
+use threads;
+
+use ZeroMQ qw/:all/;
+
+sub step1 {
+    my ($context) = @_;
+
+    my $socket = $context->socket(ZMQ_PAIR);
+    $socket->connect('inproc://step2');
+
+    # Signal downstream to step 2
+    $socket->send('');
+    return;
+}
+
+sub step2 {
+    my ($context) = @_;
+
+    my $socket = $context->socket(ZMQ_PAIR);
+    $socket->connect('inproc://step3');
+
+    my $receiver = $context->socket(ZMQ_PAIR);
+    $receiver->bind('inproc://step2');
+    threads->create('step1', $context)->detach();
+
+    # Wait for signal
+    $receiver->recv();
+
+    # Signal downstream to step 3
+    $socket->send('');
+    return;
+}
+
+my $context = ZeroMQ::Context->new();
+
+my $receiver = $context->socket(ZMQ_PAIR);
+$receiver->bind('inproc://step3');
+threads->create('step2', $context)->detach();
+
+# Wait for signal
+$receiver->recv();
+
+say 'Test successful!';

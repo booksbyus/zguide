@@ -1,13 +1,34 @@
-No-one has translated the durapub example into Perl yet.  Be the first to create
-durapub in Perl and get one free Internet!  If you're the author of the Perl
-binding, this is a great way to get people to use 0MQ in Perl.
+#!/usr/bin/perl
+=pod
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+Publisher for durable subscriber
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+Based on examples/C/durapub.c; translated to Perl by darksuji
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+=cut
+
+use strict;
+use warnings;
+use 5.10.0;
+
+use ZeroMQ qw/:all/;
+
+my $context = ZeroMQ::Context->new();
+
+# Subscriber tells us when it's ready here
+my $sync = $context->socket(ZMQ_PULL);
+$sync->bind('tcp://*:5564');
+
+# We send updates via this socket
+my $publisher = $context->socket(ZMQ_PUB);
+$publisher->bind('tcp://*:5565');
+
+# Wait for synchronization request
+$sync->recv();
+
+# Now broadcast exactly 10 updates with pause
+for (my $update_count = 0; $update_count < 10; ++$update_count) {
+    $publisher->send("Update $update_count");
+    sleep (1);
+}
+$publisher->send('END');

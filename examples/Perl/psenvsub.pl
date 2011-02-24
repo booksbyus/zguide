@@ -1,13 +1,28 @@
-No-one has translated the psenvsub example into Perl yet.  Be the first to create
-psenvsub in Perl and get one free Internet!  If you're the author of the Perl
-binding, this is a great way to get people to use 0MQ in Perl.
+#!/usr/bin/perl
+=pod
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+Pubsub envelope subscriber
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+Based on examples/C/psenvsub.c; translated to Perl by darksuji
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+=cut
+
+use strict;
+use warnings;
+use 5.10.0;
+
+use ZeroMQ qw/:all/;
+
+# Prepare our context and subscriber
+my $context = ZeroMQ::Context->new();
+my $subscriber = $context->socket(ZMQ_SUB);
+$subscriber->connect('tcp://localhost:5563');
+$subscriber->setsockopt(ZMQ_SUBSCRIBE, 'B');
+
+while (1) {
+    # Read envelope with address
+    my $address = $subscriber->recv()->data;
+    # Read message contents
+    my $contents = $subscriber->recv()->data;
+    printf("[%s] %s\n", $address, $contents);
+}
