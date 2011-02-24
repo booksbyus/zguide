@@ -170,4 +170,18 @@ s_version_assert (int want_major, int want_minor)
     }
 }
 
+//  Sleep for a number of milliseconds
+static void
+s_sleep (int msecs) 
+{
+#if (defined (__WINDOWS__))
+    Sleep (msecs);
+#else
+    struct timespec t;
+    t.tv_sec = msecs / 1000;
+    t.tv_nsec = msecs * 1000000;
+    nanosleep (&t, NULL);
+#endif
+}
+
 #endif

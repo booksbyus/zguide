@@ -41,8 +41,7 @@ worker_thread (void *args) {
         total++;
 
         //  Do some random work
-        struct timespec t = { 0, randof (100000000) + 1 };
-        nanosleep (&t, NULL);
+        s_sleep (randof (1000) + 1);
     }
     zmq_close (worker);
     zmq_term (context);

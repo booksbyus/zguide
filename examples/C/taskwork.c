@@ -27,8 +27,7 @@ int main (int argc, char *argv[])
         printf ("%s.", string);
 
         //  Do the work
-        struct timespec t = { 0, atoi (string) * 1000000 };
-        nanosleep (&t, NULL);
+        s_sleep (atoi (string));
         free (string);
 
         //  Send results to sink

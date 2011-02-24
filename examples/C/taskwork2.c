@@ -35,9 +35,7 @@ int main (int argc, char *argv[])
             zmq_recv (receiver, &message, 0);
 
             //  Do the work
-            struct timespec t = { 
-                0, atoi ((char *) zmq_msg_data (&message)) * 1000000 };
-            nanosleep (&t, NULL);
+            s_sleep (atoi ((char *) zmq_msg_data (&message)));
 
             //  Send results to sink
             zmq_msg_init (&message);

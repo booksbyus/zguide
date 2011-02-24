@@ -122,8 +122,7 @@ server_worker (void *context) {
         int reply, replies = randof (5);
         for (reply = 0; reply < replies; reply++) {
             //  Sleep for some fraction of a second
-            struct timespec t = { 0, randof (100000000) + 1 };
-            nanosleep (&t, NULL);
+            s_sleep (randof (1000) + 1);
             zmsg_t *dup = zmsg_dup (msg);
             zmsg_send (&dup, worker);
         }

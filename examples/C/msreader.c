@@ -41,8 +41,7 @@ int main (int argc, char *argv[])
             zmq_msg_close (&update);
         }
         //  No activity, so sleep for 1 msec
-        struct timespec t = { 0, 1000000 };
-        nanosleep (&t, NULL);
+        s_sleep (1);
     }
     //  We never get here but clean up anyhow
     zmq_close (receiver);
