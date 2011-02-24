@@ -41,6 +41,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <assert.h>
+#include <inttypes.h>
 
 //  Bring Windows MSVC up to C99 scratch
 #if (defined (__WINDOWS__))
@@ -165,7 +166,8 @@ s_version_assert (int want_major, int want_minor)
     if (major < want_major
     || (major == want_major && minor < want_minor)) {
         printf ("Current 0MQ version is %d.%d\n", major, minor);
-        printf ("Application needs at least %d.%d - cannot continue\n", major, minor);
+        printf ("Application needs at least %d.%d - cannot continue\n", 
+            want_major, want_minor);
         exit (EXIT_FAILURE);
     }
 }
@@ -184,4 +186,21 @@ s_sleep (int msecs)
 #endif
 }
 
+//  Return current system clock as milliseconds
+static int64_t 
+s_clock (void)
+{
+#if (defined (__WINDOWS__))
+    SYSTEMTIME st;
+    GetSystemTime (&st);
+    return (int64_t) st.wSecond * 1000 + st.wMilliseconds;
+#else
+    struct timeval tv;
+    int rc = gettimeofday (&tv, NULL);
+    assert (rc == 0);
+    return (int64_t) (tv.tv_sec * 1000 + tv.tv_usec / 1000);
 #endif
+}
+
+
+#endif  //  __ZHELPERS_H_INCLUDED__
