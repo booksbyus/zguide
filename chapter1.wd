@@ -1,7 +1,7 @@
 [[include :csi:include:css-brackets]]
 Written by Pieter Hintjens <ph@imatix.com>, CEO iMatix Corporation. Thanks to Bill Desmarais, Brian Dorsey, CAF, Daniel Lin, Eric Desgranges, Gonzalo Diethelm, Guido Goldstein, Hunter Ford, Kamil Shakirov, Martin Sustrik, Mike Castleman, Naveen Chawla, Nicola Peduzzi, Oliver Smith, Olivier Chamoux, Peter Alexander, Pierre Rouleau, Randy Dryburgh, John Unwin, Alex Thomas, Mihail Minkov, Jeremy Avnet, Michael Compton, Kamil Kisiel, Mark Kharitonov, Guillaume Aubert, Ian Barber, Mike Sheridan, Faruk Akgul, Oleg Sidorov, Lev Givon, Allister MacLeod, and Zed Shaw for their contributions, and to Stathis Sideris for [http://www.ditaa.org Ditaa].
 
-Please use the [http://github.com/imatix/zguide/issues issue tracker] for all comments and errata. This version covers ØMQ 2.1.x and was published on Tue 22 February, 2011 at 17:15:30.
+Please use the [http://github.com/imatix/zguide/issues issue tracker] for all comments and errata. This version covers ØMQ 2.1.x and was published on Thu 24 February, 2011 at 21:55:34.
 
 [[div style="overflow:hidden"]]
 [[div style="float:left"]]
@@ -138,7 +138,7 @@ examples/C/hwserver.c
 //[*http://github.com/imatix/zguide/blob/master/examples/Lua/hwserver.lua Lua]//
 //[*http://github.com/imatix/zguide/blob/master/examples/Objective-C/hwserver.m Objective-C]//
 //[*http://github.com/imatix/zguide/blob/master/examples/ooc/hwserver.ooc ooc]//
-//[*http://github.com/imatix/zguide/blob/master/examples/Perl/hwserver.pl Perl]//
+**[*http://github.com/imatix/zguide/blob/master/examples/Perl/hwserver.pl Perl]**
 **[*http://github.com/imatix/zguide/blob/master/examples/PHP/hwserver.php PHP]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Python/hwserver.py Python]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Ruby/hwserver.rb Ruby]**
@@ -203,7 +203,7 @@ examples/C++/hwserver.cpp
 //[*http://github.com/imatix/zguide/blob/master/examples/Lua/hwserver.lua Lua]//
 //[*http://github.com/imatix/zguide/blob/master/examples/Objective-C/hwserver.m Objective-C]//
 //[*http://github.com/imatix/zguide/blob/master/examples/ooc/hwserver.ooc ooc]//
-//[*http://github.com/imatix/zguide/blob/master/examples/Perl/hwserver.pl Perl]//
+**[*http://github.com/imatix/zguide/blob/master/examples/Perl/hwserver.pl Perl]**
 **[*http://github.com/imatix/zguide/blob/master/examples/PHP/hwserver.php PHP]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Python/hwserver.py Python]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Ruby/hwserver.rb Ruby]**
@@ -252,7 +252,7 @@ examples/Python/hwserver.py
 //[*http://github.com/imatix/zguide/blob/master/examples/Lua/hwserver.lua Lua]//
 //[*http://github.com/imatix/zguide/blob/master/examples/Objective-C/hwserver.m Objective-C]//
 //[*http://github.com/imatix/zguide/blob/master/examples/ooc/hwserver.ooc ooc]//
-//[*http://github.com/imatix/zguide/blob/master/examples/Perl/hwserver.pl Perl]//
+**[*http://github.com/imatix/zguide/blob/master/examples/Perl/hwserver.pl Perl]**
 **[*http://github.com/imatix/zguide/blob/master/examples/PHP/hwserver.php PHP]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Python/hwserver.py Python]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Ruby/hwserver.rb Ruby]**
@@ -316,7 +316,7 @@ examples/C/hwclient.c
 //[*http://github.com/imatix/zguide/blob/master/examples/Lua/hwclient.lua Lua]//
 //[*http://github.com/imatix/zguide/blob/master/examples/Objective-C/hwclient.m Objective-C]//
 //[*http://github.com/imatix/zguide/blob/master/examples/ooc/hwclient.ooc ooc]//
-//[*http://github.com/imatix/zguide/blob/master/examples/Perl/hwclient.pl Perl]//
+**[*http://github.com/imatix/zguide/blob/master/examples/Perl/hwclient.pl Perl]**
 **[*http://github.com/imatix/zguide/blob/master/examples/PHP/hwclient.php PHP]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Python/hwclient.py Python]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Ruby/hwclient.rb Ruby]**
@@ -434,6 +434,7 @@ The result is {{zhelpers.h}}, which lets us write sweeter and shorter ØMQ appli
 #include <time.h>
 #include <unistd.h>
 #include <assert.h>
+#include <inttypes.h>
 
 //  Bring Windows MSVC up to C99 scratch
 #if (defined (__WINDOWS__))
@@ -558,12 +559,45 @@ s_version_assert (int want_major, int want_minor)
     if (major < want_major
     || (major == want_major && minor < want_minor)) {
         printf ("Current 0MQ version is %d.%d\n", major, minor);
-        printf ("Application needs at least %d.%d - cannot continue\n", major, minor);
+        printf ("Application needs at least %d.%d - cannot continue\n", 
+            want_major, want_minor);
         exit (EXIT_FAILURE);
     }
 }
 
+//  Sleep for a number of milliseconds
+static void
+s_sleep (int msecs) 
+{
+#if (defined (__WINDOWS__))
+    Sleep (msecs);
+#else
+    struct timespec t;
+    t.tv_sec  =  msecs / 1000;
+    t.tv_nsec = (msecs % 1000) * 1000000;
+    int rc = nanosleep (&t, NULL);
+    assert (rc == 0);
 #endif
+}
+
+//  Return current system clock as milliseconds
+static int64_t
+s_clock (void)
+{
+#if (defined (__WINDOWS__))
+    SYSTEMTIME st;
+    GetSystemTime (&st);
+    return (int64_t) st.wSecond * 1000 + st.wMilliseconds;
+#else
+    struct timeval tv;
+    int rc = gettimeofday (&tv, NULL);
+    assert (rc == 0);
+    return (int64_t) (tv.tv_sec * 1000 + tv.tv_usec / 1000);
+#endif
+}
+
+
+#endif  //  __ZHELPERS_H_INCLUDED__
 [[/code]]
 
 [[div style="overflow:hidden"]]
@@ -675,7 +709,7 @@ examples/C/wuserver.c
 //[*http://github.com/imatix/zguide/blob/master/examples/Lua/wuserver.lua Lua]//
 //[*http://github.com/imatix/zguide/blob/master/examples/Objective-C/wuserver.m Objective-C]//
 //[*http://github.com/imatix/zguide/blob/master/examples/ooc/wuserver.ooc ooc]//
-//[*http://github.com/imatix/zguide/blob/master/examples/Perl/wuserver.pl Perl]//
+**[*http://github.com/imatix/zguide/blob/master/examples/Perl/wuserver.pl Perl]**
 **[*http://github.com/imatix/zguide/blob/master/examples/PHP/wuserver.php PHP]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Python/wuserver.py Python]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Ruby/wuserver.rb Ruby]**
@@ -744,7 +778,7 @@ examples/C/wuclient.c
 //[*http://github.com/imatix/zguide/blob/master/examples/Lua/wuclient.lua Lua]//
 //[*http://github.com/imatix/zguide/blob/master/examples/Objective-C/wuclient.m Objective-C]//
 //[*http://github.com/imatix/zguide/blob/master/examples/ooc/wuclient.ooc ooc]//
-//[*http://github.com/imatix/zguide/blob/master/examples/Perl/wuclient.pl Perl]//
+**[*http://github.com/imatix/zguide/blob/master/examples/Perl/wuclient.pl Perl]**
 **[*http://github.com/imatix/zguide/blob/master/examples/PHP/wuclient.php PHP]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Python/wuclient.py Python]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Ruby/wuclient.rb Ruby]**
@@ -871,7 +905,7 @@ examples/C/taskvent.c
 //[*http://github.com/imatix/zguide/blob/master/examples/Lua/taskvent.lua Lua]//
 //[*http://github.com/imatix/zguide/blob/master/examples/Objective-C/taskvent.m Objective-C]//
 //[*http://github.com/imatix/zguide/blob/master/examples/ooc/taskvent.ooc ooc]//
-//[*http://github.com/imatix/zguide/blob/master/examples/Perl/taskvent.pl Perl]//
+**[*http://github.com/imatix/zguide/blob/master/examples/Perl/taskvent.pl Perl]**
 **[*http://github.com/imatix/zguide/blob/master/examples/PHP/taskvent.php PHP]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Python/taskvent.py Python]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Ruby/taskvent.rb Ruby]**
@@ -912,8 +946,7 @@ int main (int argc, char *argv[])
         printf ("%s.", string);
 
         //  Do the work
-        struct timespec t = { 0, atoi (string) * 1000000 };
-        nanosleep (&t, NULL);
+        s_sleep (atoi (string));
         free (string);
 
         //  Send results to sink
@@ -941,7 +974,7 @@ examples/C/taskwork.c
 //[*http://github.com/imatix/zguide/blob/master/examples/Lua/taskwork.lua Lua]//
 //[*http://github.com/imatix/zguide/blob/master/examples/Objective-C/taskwork.m Objective-C]//
 //[*http://github.com/imatix/zguide/blob/master/examples/ooc/taskwork.ooc ooc]//
-//[*http://github.com/imatix/zguide/blob/master/examples/Perl/taskwork.pl Perl]//
+**[*http://github.com/imatix/zguide/blob/master/examples/Perl/taskwork.pl Perl]**
 **[*http://github.com/imatix/zguide/blob/master/examples/PHP/taskwork.php PHP]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Python/taskwork.py Python]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Ruby/taskwork.rb Ruby]**
@@ -1021,7 +1054,7 @@ examples/C/tasksink.c
 //[*http://github.com/imatix/zguide/blob/master/examples/Lua/tasksink.lua Lua]//
 //[*http://github.com/imatix/zguide/blob/master/examples/Objective-C/tasksink.m Objective-C]//
 //[*http://github.com/imatix/zguide/blob/master/examples/ooc/tasksink.ooc ooc]//
-//[*http://github.com/imatix/zguide/blob/master/examples/Perl/tasksink.pl Perl]//
+**[*http://github.com/imatix/zguide/blob/master/examples/Perl/tasksink.pl Perl]**
 **[*http://github.com/imatix/zguide/blob/master/examples/PHP/tasksink.php PHP]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Python/tasksink.py Python]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Ruby/tasksink.rb Ruby]**

@@ -440,8 +440,7 @@ int main (int argc, char *argv[])
             zmq_msg_close (&update);
         }
         //  No activity, so sleep for 1 msec
-        struct timespec t = { 0, 1000000 };
-        nanosleep (&t, NULL);
+        s_sleep (1);
     }
     //  We never get here but clean up anyhow
     zmq_close (receiver);
@@ -466,7 +465,7 @@ examples/C/msreader.c
 //[*http://github.com/imatix/zguide/blob/master/examples/Lua/msreader.lua Lua]//
 //[*http://github.com/imatix/zguide/blob/master/examples/Objective-C/msreader.m Objective-C]//
 //[*http://github.com/imatix/zguide/blob/master/examples/ooc/msreader.ooc ooc]//
-//[*http://github.com/imatix/zguide/blob/master/examples/Perl/msreader.pl Perl]//
+**[*http://github.com/imatix/zguide/blob/master/examples/Perl/msreader.pl Perl]**
 **[*http://github.com/imatix/zguide/blob/master/examples/PHP/msreader.php PHP]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Python/msreader.py Python]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Ruby/msreader.rb Ruby]**
@@ -544,7 +543,7 @@ examples/C/mspoller.c
 //[*http://github.com/imatix/zguide/blob/master/examples/Lua/mspoller.lua Lua]//
 //[*http://github.com/imatix/zguide/blob/master/examples/Objective-C/mspoller.m Objective-C]//
 //[*http://github.com/imatix/zguide/blob/master/examples/ooc/mspoller.ooc ooc]//
-//[*http://github.com/imatix/zguide/blob/master/examples/Perl/mspoller.pl Perl]//
+**[*http://github.com/imatix/zguide/blob/master/examples/Perl/mspoller.pl Perl]**
 **[*http://github.com/imatix/zguide/blob/master/examples/PHP/mspoller.php PHP]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Python/mspoller.py Python]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Ruby/mspoller.rb Ruby]**
@@ -659,9 +658,7 @@ int main (int argc, char *argv[])
             zmq_recv (receiver, &message, 0);
 
             //  Do the work
-            struct timespec t = { 
-                0, atoi ((char *) zmq_msg_data (&message)) * 1000000 };
-            nanosleep (&t, NULL);
+            s_sleep (atoi ((char *) zmq_msg_data (&message)));
 
             //  Send results to sink
             zmq_msg_init (&message);
@@ -701,7 +698,7 @@ examples/C/taskwork2.c
 //[*http://github.com/imatix/zguide/blob/master/examples/Lua/taskwork2.lua Lua]//
 //[*http://github.com/imatix/zguide/blob/master/examples/Objective-C/taskwork2.m Objective-C]//
 //[*http://github.com/imatix/zguide/blob/master/examples/ooc/taskwork2.ooc ooc]//
-//[*http://github.com/imatix/zguide/blob/master/examples/Perl/taskwork2.pl Perl]//
+**[*http://github.com/imatix/zguide/blob/master/examples/Perl/taskwork2.pl Perl]**
 **[*http://github.com/imatix/zguide/blob/master/examples/PHP/taskwork2.php PHP]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Python/taskwork2.py Python]**
 //[*http://github.com/imatix/zguide/blob/master/examples/Ruby/taskwork2.rb Ruby]//
@@ -791,7 +788,7 @@ examples/C/tasksink2.c
 //[*http://github.com/imatix/zguide/blob/master/examples/Lua/tasksink2.lua Lua]//
 //[*http://github.com/imatix/zguide/blob/master/examples/Objective-C/tasksink2.m Objective-C]//
 //[*http://github.com/imatix/zguide/blob/master/examples/ooc/tasksink2.ooc ooc]//
-//[*http://github.com/imatix/zguide/blob/master/examples/Perl/tasksink2.pl Perl]//
+**[*http://github.com/imatix/zguide/blob/master/examples/Perl/tasksink2.pl Perl]**
 **[*http://github.com/imatix/zguide/blob/master/examples/PHP/tasksink2.php PHP]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Python/tasksink2.py Python]**
 //[*http://github.com/imatix/zguide/blob/master/examples/Ruby/tasksink2.rb Ruby]//
@@ -955,7 +952,7 @@ examples/C/wuproxy.c
 //[*http://github.com/imatix/zguide/blob/master/examples/Lua/wuproxy.lua Lua]//
 //[*http://github.com/imatix/zguide/blob/master/examples/Objective-C/wuproxy.m Objective-C]//
 //[*http://github.com/imatix/zguide/blob/master/examples/ooc/wuproxy.ooc ooc]//
-//[*http://github.com/imatix/zguide/blob/master/examples/Perl/wuproxy.pl Perl]//
+**[*http://github.com/imatix/zguide/blob/master/examples/Perl/wuproxy.pl Perl]**
 **[*http://github.com/imatix/zguide/blob/master/examples/PHP/wuproxy.php PHP]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Python/wuproxy.py Python]**
 //[*http://github.com/imatix/zguide/blob/master/examples/Ruby/wuproxy.rb Ruby]//
@@ -1038,7 +1035,7 @@ examples/Python/rrclient.py
 //[*http://github.com/imatix/zguide/blob/master/examples/Lua/rrclient.lua Lua]//
 //[*http://github.com/imatix/zguide/blob/master/examples/Objective-C/rrclient.m Objective-C]//
 //[*http://github.com/imatix/zguide/blob/master/examples/ooc/rrclient.ooc ooc]//
-//[*http://github.com/imatix/zguide/blob/master/examples/Perl/rrclient.pl Perl]//
+**[*http://github.com/imatix/zguide/blob/master/examples/Perl/rrclient.pl Perl]**
 **[*http://github.com/imatix/zguide/blob/master/examples/PHP/rrclient.php PHP]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Python/rrclient.py Python]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Ruby/rrclient.rb Ruby]**
@@ -1078,7 +1075,7 @@ examples/Python/rrserver.py
 //[*http://github.com/imatix/zguide/blob/master/examples/Lua/rrserver.lua Lua]//
 //[*http://github.com/imatix/zguide/blob/master/examples/Objective-C/rrserver.m Objective-C]//
 //[*http://github.com/imatix/zguide/blob/master/examples/ooc/rrserver.ooc ooc]//
-//[*http://github.com/imatix/zguide/blob/master/examples/Perl/rrserver.pl Perl]//
+**[*http://github.com/imatix/zguide/blob/master/examples/Perl/rrserver.pl Perl]**
 **[*http://github.com/imatix/zguide/blob/master/examples/PHP/rrserver.php PHP]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Python/rrserver.py Python]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Ruby/rrserver.rb Ruby]**
@@ -1163,7 +1160,7 @@ examples/C/rrbroker.c
 //[*http://github.com/imatix/zguide/blob/master/examples/Lua/rrbroker.lua Lua]//
 //[*http://github.com/imatix/zguide/blob/master/examples/Objective-C/rrbroker.m Objective-C]//
 //[*http://github.com/imatix/zguide/blob/master/examples/ooc/rrbroker.ooc ooc]//
-//[*http://github.com/imatix/zguide/blob/master/examples/Perl/rrbroker.pl Perl]//
+**[*http://github.com/imatix/zguide/blob/master/examples/Perl/rrbroker.pl Perl]**
 **[*http://github.com/imatix/zguide/blob/master/examples/PHP/rrbroker.php PHP]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Python/rrbroker.py Python]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Ruby/rrbroker.rb Ruby]**
@@ -1242,7 +1239,7 @@ examples/C/msgqueue.c
 //[*http://github.com/imatix/zguide/blob/master/examples/Lua/msgqueue.lua Lua]//
 //[*http://github.com/imatix/zguide/blob/master/examples/Objective-C/msgqueue.m Objective-C]//
 //[*http://github.com/imatix/zguide/blob/master/examples/ooc/msgqueue.ooc ooc]//
-//[*http://github.com/imatix/zguide/blob/master/examples/Perl/msgqueue.pl Perl]//
+**[*http://github.com/imatix/zguide/blob/master/examples/Perl/msgqueue.pl Perl]**
 **[*http://github.com/imatix/zguide/blob/master/examples/PHP/msgqueue.php PHP]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Python/msgqueue.py Python]**
 //[*http://github.com/imatix/zguide/blob/master/examples/Ruby/msgqueue.rb Ruby]//
@@ -1373,7 +1370,7 @@ examples/C/mtserver.c
 //[*http://github.com/imatix/zguide/blob/master/examples/Lua/mtserver.lua Lua]//
 //[*http://github.com/imatix/zguide/blob/master/examples/Objective-C/mtserver.m Objective-C]//
 //[*http://github.com/imatix/zguide/blob/master/examples/ooc/mtserver.ooc ooc]//
-//[*http://github.com/imatix/zguide/blob/master/examples/Perl/mtserver.pl Perl]//
+**[*http://github.com/imatix/zguide/blob/master/examples/Perl/mtserver.pl Perl]**
 **[*http://github.com/imatix/zguide/blob/master/examples/PHP/mtserver.php PHP]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Python/mtserver.py Python]**
 //[*http://github.com/imatix/zguide/blob/master/examples/Ruby/mtserver.rb Ruby]//
@@ -1510,7 +1507,7 @@ examples/C/mtrelay.c
 //[*http://github.com/imatix/zguide/blob/master/examples/Lua/mtrelay.lua Lua]//
 //[*http://github.com/imatix/zguide/blob/master/examples/Objective-C/mtrelay.m Objective-C]//
 //[*http://github.com/imatix/zguide/blob/master/examples/ooc/mtrelay.ooc ooc]//
-//[*http://github.com/imatix/zguide/blob/master/examples/Perl/mtrelay.pl Perl]//
+**[*http://github.com/imatix/zguide/blob/master/examples/Perl/mtrelay.pl Perl]**
 **[*http://github.com/imatix/zguide/blob/master/examples/PHP/mtrelay.php PHP]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Python/mtrelay.py Python]**
 //[*http://github.com/imatix/zguide/blob/master/examples/Ruby/mtrelay.rb Ruby]//
@@ -1624,7 +1621,7 @@ examples/C/syncpub.c
 //[*http://github.com/imatix/zguide/blob/master/examples/Lua/syncpub.lua Lua]//
 //[*http://github.com/imatix/zguide/blob/master/examples/Objective-C/syncpub.m Objective-C]//
 //[*http://github.com/imatix/zguide/blob/master/examples/ooc/syncpub.ooc ooc]//
-//[*http://github.com/imatix/zguide/blob/master/examples/Perl/syncpub.pl Perl]//
+**[*http://github.com/imatix/zguide/blob/master/examples/Perl/syncpub.pl Perl]**
 **[*http://github.com/imatix/zguide/blob/master/examples/PHP/syncpub.php PHP]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Python/syncpub.py Python]**
 //[*http://github.com/imatix/zguide/blob/master/examples/Ruby/syncpub.rb Ruby]//
@@ -1702,7 +1699,7 @@ examples/C/syncsub.c
 //[*http://github.com/imatix/zguide/blob/master/examples/Lua/syncsub.lua Lua]//
 //[*http://github.com/imatix/zguide/blob/master/examples/Objective-C/syncsub.m Objective-C]//
 //[*http://github.com/imatix/zguide/blob/master/examples/ooc/syncsub.ooc ooc]//
-//[*http://github.com/imatix/zguide/blob/master/examples/Perl/syncsub.pl Perl]//
+**[*http://github.com/imatix/zguide/blob/master/examples/Perl/syncsub.pl Perl]**
 **[*http://github.com/imatix/zguide/blob/master/examples/PHP/syncsub.php PHP]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Python/syncsub.py Python]**
 //[*http://github.com/imatix/zguide/blob/master/examples/Ruby/syncsub.rb Ruby]//
@@ -1897,7 +1894,7 @@ examples/C/psenvpub.c
 //[*http://github.com/imatix/zguide/blob/master/examples/Lua/psenvpub.lua Lua]//
 //[*http://github.com/imatix/zguide/blob/master/examples/Objective-C/psenvpub.m Objective-C]//
 //[*http://github.com/imatix/zguide/blob/master/examples/ooc/psenvpub.ooc ooc]//
-//[*http://github.com/imatix/zguide/blob/master/examples/Perl/psenvpub.pl Perl]//
+**[*http://github.com/imatix/zguide/blob/master/examples/Perl/psenvpub.pl Perl]**
 **[*http://github.com/imatix/zguide/blob/master/examples/PHP/psenvpub.php PHP]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Python/psenvpub.py Python]**
 //[*http://github.com/imatix/zguide/blob/master/examples/Ruby/psenvpub.rb Ruby]//
@@ -1950,7 +1947,7 @@ examples/C/psenvsub.c
 //[*http://github.com/imatix/zguide/blob/master/examples/Lua/psenvsub.lua Lua]//
 //[*http://github.com/imatix/zguide/blob/master/examples/Objective-C/psenvsub.m Objective-C]//
 //[*http://github.com/imatix/zguide/blob/master/examples/ooc/psenvsub.ooc ooc]//
-//[*http://github.com/imatix/zguide/blob/master/examples/Perl/psenvsub.pl Perl]//
+**[*http://github.com/imatix/zguide/blob/master/examples/Perl/psenvsub.pl Perl]**
 **[*http://github.com/imatix/zguide/blob/master/examples/PHP/psenvsub.php PHP]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Python/psenvsub.py Python]**
 //[*http://github.com/imatix/zguide/blob/master/examples/Ruby/psenvsub.rb Ruby]//
@@ -1986,7 +1983,7 @@ Identities work on all socket types. If you have a PUB and a SUB socket, and the
 
 This is both wonderful and terrible at the same time. It's wonderful because it means updates can wait for you in the publisher's transmit buffer, until you connect and collect them. It's terrible because by default this will rapidly kill a publisher and lock up your system.
 
-**If you use durable subscriber sockets (i.e. if you set the identity on a SUB socket) you //must// also guard against queue explosion by using the //high water mark// or HWM, on the publisher socket.**
+**If you use durable subscriber sockets (i.e. if you set the identity on a SUB socket) you //must// also guard against queue explosion by using the //high water mark// or HWM, on the publisher socket.** The publisher's HWM affects all subscribers, independently.
 
 If you want to prove this, take the wuclient and wuserver from Chapter One, and add this line to the wuclient before it connects:
 
@@ -2058,7 +2055,7 @@ examples/C/durapub.c
 //[*http://github.com/imatix/zguide/blob/master/examples/Lua/durapub.lua Lua]//
 //[*http://github.com/imatix/zguide/blob/master/examples/Objective-C/durapub.m Objective-C]//
 //[*http://github.com/imatix/zguide/blob/master/examples/ooc/durapub.ooc ooc]//
-//[*http://github.com/imatix/zguide/blob/master/examples/Perl/durapub.pl Perl]//
+**[*http://github.com/imatix/zguide/blob/master/examples/Perl/durapub.pl Perl]**
 **[*http://github.com/imatix/zguide/blob/master/examples/PHP/durapub.php PHP]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Python/durapub.py Python]**
 //[*http://github.com/imatix/zguide/blob/master/examples/Ruby/durapub.rb Ruby]//
@@ -2119,7 +2116,7 @@ examples/C/durasub.c
 //[*http://github.com/imatix/zguide/blob/master/examples/Lua/durasub.lua Lua]//
 //[*http://github.com/imatix/zguide/blob/master/examples/Objective-C/durasub.m Objective-C]//
 //[*http://github.com/imatix/zguide/blob/master/examples/ooc/durasub.ooc ooc]//
-//[*http://github.com/imatix/zguide/blob/master/examples/Perl/durasub.pl Perl]//
+**[*http://github.com/imatix/zguide/blob/master/examples/Perl/durasub.pl Perl]**
 **[*http://github.com/imatix/zguide/blob/master/examples/PHP/durasub.php PHP]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Python/durasub.py Python]**
 //[*http://github.com/imatix/zguide/blob/master/examples/Ruby/durasub.rb Ruby]//
@@ -2250,7 +2247,7 @@ examples/C/durapub2.c
 //[*http://github.com/imatix/zguide/blob/master/examples/Lua/durapub2.lua Lua]//
 //[*http://github.com/imatix/zguide/blob/master/examples/Objective-C/durapub2.m Objective-C]//
 //[*http://github.com/imatix/zguide/blob/master/examples/ooc/durapub2.ooc ooc]//
-//[*http://github.com/imatix/zguide/blob/master/examples/Perl/durapub2.pl Perl]//
+**[*http://github.com/imatix/zguide/blob/master/examples/Perl/durapub2.pl Perl]**
 **[*http://github.com/imatix/zguide/blob/master/examples/PHP/durapub2.php PHP]**
 **[*http://github.com/imatix/zguide/blob/master/examples/Python/durapub2.py Python]**
 //[*http://github.com/imatix/zguide/blob/master/examples/Ruby/durapub2.rb Ruby]//

@@ -1,11 +1,11 @@
-#! /bin/python
+#! /usr/bin/python
 #
 #   sendguide.py - Upload the Guide to zguide.wikidot.com
 #
 #   Author: Pieter Hintjens <ph@imatix.com>
 #   License: public domain
 #
-#   syntax: pythin bin/sendpage.py
+#   syntax: bin/sendpage.py
 #
 #   Supply your Wikidot user name as an environment variable APISITE_USER
 #   Supply your Wikidot API key as an environment variable APISITE_KEY

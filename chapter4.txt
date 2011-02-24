@@ -1,26 +1,32 @@
 .output chapter4.wd
-++ Chapter 4 - Reliability
+++ Chapter 4 - Reliability Patterns
 
-In Chapter Three we looked at advanced use of 0MQ's request-reply pattern with worked examples. In this chapter we'll look at the general question of reliability and learn how to build reliable messaging on top of 0MQ's patterns.
+In Chapter Three we looked at advanced use of 0MQ's request-reply pattern with worked examples. In this chapter we'll look at the general question of reliability and build a set of reliable messaging patterns on top of 0MQ's core patterns.
 
-+++ Design Discussions
+We'll cover:
 
-++++ What is "Reliability"?
+* How we define 'reliability'.
+* The most common types of failures we will experience in 0MQ applications.
+* How to handle slow clients.
+* How to build a reliable request-reply framework.
+* How to build a reliable publish-subscribe framework.
+* How to build a reliable push-pull pipeline framework.
 
-If you're using {{tcp}}, {{ipc}} or {{inproc}} then messages don't just get lost. It's not as if messages need a GPS to get to their destination. Transports like TCP are explicitly designed to retry and resend, to the point of silliness sometimes. So to understand what reliability means, we have to look at its opposite, namely *failure*. If we can handle a certain set of failures, we are reliable with respect to those failures. No more, no less.
++++ What is "Reliability"?
 
-So let's look at the possible causes of failure in a distributed application, in descending order of probability:
+To understand what 'reliability' means, we have to look at its opposite, namely *failure*. If we can handle a certain set of failures, we are reliable with respect to those failures. No more, no less. So let's look at the possible causes of failure in a distributed 0MQ application, in roughly descending order of probability:
 
 * Application code is the worst offender. It can crash and exit, freeze and stop responding to input, run too slowly for its input, exhaust all memory, etc.
 * System code - like brokers we write using 0MQ - can die. System code should be more reliable than application code but can still crash and burn, and especially run out of memory if it tries to compensate for slow clients.
 * Message queues can overflow, typically in system code that has learned to deal brutally with slow clients. When a queue overflows, it starts to discard messages.
+* Networks can fail temporarily, causing intermittent message loss. Such errors are hidden to 0MQ applications since it automatically reconnects peers after a network-forced disconnection.
 * Hardware can fail and take with it all the processes running on that box.
 * Networks can fail in exotic ways, e.g. some ports on a switch may die and those parts of the network become inaccessible.
 * Entire data centers can be struck by lightning, earthquakes, fire, or more mundane power or cooling failures.
 
 To make a software system fully reliable against *all* of these possible failures is an enormously difficult and expensive job and goes beyond the scope of this modest guide.
 
-Since the first three or four cases cover 99.9% of real world requirements outside large companies (according to a highly scientific study I just ran), that's what we'll look at. If you're a large company with money to spend on the last two cases, contact me immediately, there's a large hole behind my beach house waiting to be converted into a pool.
+Since the first five cases cover 99.9% of real world requirements outside large companies (according to a highly scientific study I just ran), that's what we'll look at. If you're a large company with money to spend on the last two cases, contact me immediately, there's a large hole behind my beach house waiting to be converted into a pool.
 
 ++++ The Slow Client Problem
 
@@ -38,19 +44,53 @@ Handling slow clients correctly is delicate. On the one hand, you really don't w
 
 You can, and people do, use spinning rust to store messages. It rather makes a mess of the idea of "performance" but we're usually more comfortable knowing a really important message (such as that transfer of $400M to my Cyprus account) is stored on disk rather than only in memory. Spinning rust only makes sense for some patterns, mainly request-reply. If we get bored in this chapter we'll play with that, but otherwise, just shove really critical messages into a database that all parties can access, and skip 0MQ for those parts of your dialog.
 
-+++ Reliability Patterns
+++++ Designing Reliability
 
-So to make things brutally simple, reliability is "keeping things working properly when code freezes or crashes", a situation we'll shorten to "dies". However the things we want to keep working properly are more complex than just messages. We need to take each 0MQ messaging pattern and see how to make it work (if we can) even when code dies.
+So to make things brutally simple, reliability is "keeping things working properly when code freezes or crashes", a situation we'll shorten to "dies". However the things we want to keep working properly are more complex than just messages. We need to take each core 0MQ messaging pattern and see how to make it work (if we can) even when code dies.
 
 Let's take them one by one:
 
 * Request-reply: if the server dies (while processing a request), the client can figure that out since it won't get an answer back. Then it can give up in a huff, wait and try again later, find another server, etc. As for the client dying, we can brush that off as "someone else's problem" for now.
 
-* Publish-subscribe: if the client dies (having gotten some data), the server doesn't know about it. Pubsub doesn't send any information back from client to server. But the client can contact the server out-of-band, e.g. via request-reply, and ask, "please resend everything I missed". As for the server dying, that's out of scope for here.
+* Publish-subscribe: if the client dies (having gotten some data), the server doesn't know about it. Pubsub doesn't send any information back from client to server. But the client can contact the server out-of-band, e.g. via request-reply, and ask, "please resend everything I missed". As for the server dying, that's out of scope for here. Subscribers can also self-verify that they're not running too slowly, and take action (e.g. warn the operator, and die) if they are.
 
 * Pipeline: if a worker dies (while working), the ventilator doesn't know about it. Pipelines, like pubsub, and the grinding gears of time, only work in one direction. But the downstream collector can detect that one task didn't get done, and send a message back to the ventilator saying, "hey, resend task 324!" If the ventilator or collector die, then whatever upstream client originally sent the work batch can get tired of waiting and resend the whole lot. It's not elegant but system code should really not die often enough to matter.
 
-++++ Reliable Request-Reply - the Pirate Pattern
++++ Slow Subscriber Detection (Suicidal Snail Pattern)
+
+One of the most common problems you will hit when using the pubsub pattern is the slow subscriber. In an ideal world, we stream data at full speed from publishers to subscribers. In reality, subscriber applications are often written in interpreted languages, or just do a lot of work, or are just badly written, to the extent that they can't keep up with publishers.
+
+How do we handle a slow subscriber? The ideal fix is to make the subscriber faster, but that might take work and time. Some of the classic strategies for handling a slow subscriber are:
+
+* **Queue messages on the publisher**. This is what Gmail does when I don't read my email for a couple of hours. But in high-volume messaging, pushing queues upstream has the thrilling but unprofitable result of making publishers run out of memory and crash. Especially if there are lots of subscribers and it's not possible to flush to disk for performance reasons.
+
+* **Queue messages on the subscriber**. This is much better, and it's what 0MQ does by default if the network can keep up with things. If anyone's going to run out of memory and crash, it'll be the subscriber rather than the publisher, which is fair. This is perfect for "peaky" streams where a subscriber can't keep up for a while, but can catch up when the stream slows down. However it's no answer to a subscriber that's simply too slow in general.
+
+* **Stop queuing new messages after a while**. This is what Gmail does when my mailbox overflows its 7.554GB, no 7.555GB of space. New messages just get rejected or dropped. This is a great strategy from the perspective of the publisher, and it's what 0MQ does when the publisher sets a high water mark or HWM. However it still doesn't help us fix the slow subscriber. Now we just get gaps in our message stream.
+
+* **Punish slow subscribers with disconnect**. This is what Hotmail does when I don't login for two weeks, which is why I'm on my fifteenth Hotmail account. It's a nice brutal strategy that forces subscribers to sit up and pay attention, and would be ideal, but 0MQ doesn't do this, and there's no way to layer it on top since subscribers are invisible to publisher applications.
+
+None of these classic strategies fit. So we need to get creative. Rather than disconnect the publisher, let's convince the subscriber to kill itself. This is the Suicidal Snail pattern. When a subscriber detects that it's running too slowly (where "too slowly" is presumably a configured option that really means "so slowly that if you ever get here, shout really loudly because I need to know, so I can fix this!"), it croaks and dies.
+
+How can a subscriber detect this? One way would be to sequence messages (number them in order), and use a HWM at the publisher. Now, if the subscriber detects a gap (i.e. the numbering isn't consecutive), it knows something is wrong. We then tune the HWM to the "croak and die if you hit this" level.
+
+Problems with this solution are (a) what if we have many publishers, (b) how do we fine-tune per subscriber, and (c) what if we use filtering?
+
+We can solve the first one by giving each publisher a unique ID, so messages start with a header that contains publisher ID //and// sequence number. We can solve the second by asking, "who cares?!" and ignoring it. But the last one is a show stopper. If we use a ZMQ_SUBSCRIBE filter, we'll by definition get gaps and that precious sequencing is for nothing.
+
+Some use cases won't use filters, and sequencing will work for them. But a more general solution is to stamp each message, at the publisher, with the time. When a subscriber gets a message it checks the time, and if the difference is more than, say, 10 seconds, it does the "croak and die" thing. Possibly firing off a squawk to some operator console first.
+
+So here is a minimal example of a Suicidal Snail:
+
+[[code type="C" title="Suicidal Snail" name="suisnail"]]
+[[/code]]
+
+Notes about this example:
+
+* The message here consists simply of the current system clock as a number of milliseconds. In a realistic application you'd have at least a message header with the timestamp, and a message body with data.
+* The example has subscriber and publisher in a single process, as two threads. In reality they would be separate processes. Using threads is just convenient for the demonstration.
+
++++ Reliable Request-Reply (Pirate Pattern)
 
 The basic request-reply pattern (a REQ socket talking to a REP socket) fails miserably if the  server or network dies, so it's basically unreliable. By default the REQ socket blocks on a receive, meaning the client just waits forever. If there's a problem down the line, too bad. I'd probably only use the basic request-reply pattern between two threads in the same process where there's no network or separate server process to die.
 
@@ -98,9 +138,10 @@ The final touch to a robust Pirate pattern is server heartbeating. This means ge
 
 We'll explore Pirates with running code later. For now, let's continue the design discussion by looking at reliable pubsub.
 
-++++ Reliable Publish-Subscribe - the Clone Pattern
 
-Pubsub is like a radio broadcast, you miss everything before you join, and then how much information you get depends on the quality of your reception. It's so easy to lose messages with this pattern that you might wonder why 0MQ bothers to implement it at all.[[footnote]]If you're German or Norwegian, that is a form of 'humor'. There are many cases where simplicity and speed are more important than pedantic delivery. In fact the radio broadcast covers perhaps the majority of information distribution in the real world. Think of Facebook and Twitter. No, I'm not still joking.[[/footnote]]
+++++ Reliable Publish-Subscribe (Clone Pattern)
+
+Pubsub is like a radio broadcast, you miss everything before you join, and then how much information you get depends on the quality of your reception. It's so easy to lose messages with this pattern that you might wonder why 0MQ bothers to implement it at all.[[footnote]]If you're German or Norwegian, that is what we call 'humor'. There are many cases where simplicity and speed are more important than pedantic delivery. In fact the radio broadcast covers perhaps the majority of information distribution in the real world. Think of Facebook and Twitter. No, I'm not still joking.[[/footnote]]
 
 However, reliable pubsub is also a useful tool. Let's do as before and define what that 'reliability' means in terms of what can go wrong.
 
@@ -153,7 +194,7 @@ Clone is complex enough in practice that you don't want to implement it directly
 
 .end
 
-++++ Reliable Pipeline - the Harmony Pattern
+++++ Reliable Pipeline (Harmony Pattern)
 
 0MQ's pipeline pattern (using PUSH and PULL sockets) is reliable to the extent that:
 

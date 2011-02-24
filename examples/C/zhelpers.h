@@ -188,7 +188,7 @@ s_sleep (int msecs)
 }
 
 //  Return current system clock as milliseconds
-static int64_t 
+static int64_t
 s_clock (void)
 {
 #if (defined (__WINDOWS__))

@@ -1,14 +1,14 @@
 [[include :csi:include:css-brackets]]
 [[div style="overflow:hidden"]]
 [[div style="float:left"]]
-++ Chapter Three - Advanced Request-Reply
+++ Chapter Three - Advanced Request-Reply Patterns
 [[/div]]
 [[div style="float:right; vertical-align:middle"]]
 [/chapter:all# ↑top]
 [[/div]]
 [[/div]]
 
-In Chapter Two we worked through the basics of using ØMQ by developing a series of small applications, each time exploring new aspects of ØMQ. We'll continue this approach in this chapter, as we explore advanced aspects of ØMQ's request-reply pattern.
+In Chapter Two we worked through the basics of using ØMQ by developing a series of small applications, each time exploring new aspects of ØMQ. We'll continue this approach in this chapter, as we explore advanced patterns built on top of ØMQ's core request-reply pattern.
 
 We'll cover:
 
@@ -463,8 +463,7 @@ worker_thread (void *args) {
         total++;
 
         //  Do some random work
-        struct timespec t = { 0, randof (100000000) + 1 };
-        nanosleep (&t, NULL);
+        s_sleep (randof (1000) + 1);
     }
     zmq_close (worker);
     zmq_term (context);
@@ -2033,8 +2032,7 @@ server_worker (void *context) {
         int reply, replies = randof (5);
         for (reply = 0; reply < replies; reply++) {
             //  Sleep for some fraction of a second
-            struct timespec t = { 0, randof (100000000) + 1 };
-            nanosleep (&t, NULL);
+            s_sleep (randof (1000) + 1);
             zmsg_t *dup = zmsg_dup (msg);
             zmsg_send (&dup, worker);
         }

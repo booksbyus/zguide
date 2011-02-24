@@ -1057,7 +1057,7 @@ In this case we'll use a REQ-REP socket flow to synchronize subscribers and publ
             |   Publisher    |
             |                |
             +--------+-------+
-            |  PUB   |  REQ  |
+            |  PUB   |  REP  |
             \---+----+-----+-/
                 |      ^   |
                 |      |   |
@@ -1067,7 +1067,7 @@ In this case we'll use a REQ-REP socket flow to synchronize subscribers and publ
                 |      |   |
                 v      |   v
             /--------+-+-----\
-            |  SUB   |  REP  |
+            |  SUB   |  REQ  |
             +--------+-------+
             |                |
             |   Subscriber   |
@@ -1338,7 +1338,7 @@ Identities work on all socket types. If you have a PUB and a SUB socket, and the
 
 This is both wonderful and terrible at the same time. It's wonderful because it means updates can wait for you in the publisher's transmit buffer, until you connect and collect them. It's terrible because by default this will rapidly kill a publisher and lock up your system.
 
-**If you use durable subscriber sockets (i.e. if you set the identity on a SUB socket) you //must// also guard against queue explosion by using the //high water mark// or HWM, on the publisher socket.**
+**If you use durable subscriber sockets (i.e. if you set the identity on a SUB socket) you //must// also guard against queue explosion by using the //high water mark// or HWM, on the publisher socket.** The publisher's HWM affects all subscribers, independently.
 
 If you want to prove this, take the wuclient and wuserver from Chapter One, and add this line to the wuclient before it connects:
 
