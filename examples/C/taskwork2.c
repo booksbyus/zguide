@@ -34,14 +34,9 @@ int main (int argc, char *argv[])
             zmq_msg_init (&message);
             zmq_recv (receiver, &message, 0);
 
-            //  Process task
-            int workload;           //  Workload in msecs
-            struct timespec t;
-            sscanf ((char *) zmq_msg_data (&message), "%d", &workload);
-            t.tv_sec = 0;
-            t.tv_nsec = workload * 1000000;
-
             //  Do the work
+            struct timespec t = { 
+                0, atoi ((char *) zmq_msg_data (&message)) * 1000000 };
             nanosleep (&t, NULL);
 
             //  Send results to sink

@@ -2,6 +2,17 @@
 //  Broker peering simulation (part 2)
 //  Prototypes the request-reply flow
 //
+//  While this example runs in a single process, that is just to make
+//  it easier to start and stop the example. Each thread has its own
+//  context and conceptually acts as a separate process.
+//
+//  Changes for 2.1:
+//  - added version assertion
+//  - use separate contexts for each thread
+//  - use ipc:// instead of inproc://
+//  - close sockets in each child thread
+//  - call zmq_term in each thread before ending
+//
 #include "zmsg.c"
 
 #define NBR_CLIENTS 10
@@ -13,9 +24,10 @@
 //  Request-reply client using REQ socket
 //
 static void *
-client_thread (void *context) {
+client_thread (void *args) {
+    void *context = zmq_init (1);
     void *client = zmq_socket (context, ZMQ_REQ);
-    zmq_connect (client, "inproc://localfe");
+    zmq_connect (client, "ipc://localfe.ipc");
 
     zmsg_t *zmsg = zmsg_new ();
     while (1) {
@@ -25,15 +37,19 @@ client_thread (void *context) {
         zmsg = zmsg_recv (client);
         printf ("I: client status: %s\n", zmsg_body (zmsg));
     }
+    //  We never get here but if we did, this is how we'd exit cleanly
+    zmq_close (client);
+    zmq_term (context);
     return (NULL);
 }
 
 //  Worker using REQ socket to do LRU routing
 //
 static void *
-worker_thread (void *context) {
+worker_thread (void *args) {
+    void *context = zmq_init (1);
     void *worker = zmq_socket (context, ZMQ_REQ);
-    zmq_connect (worker, "inproc://localbe");
+    zmq_connect (worker, "ipc://localbe.ipc");
 
     //  Tell broker we're ready for work
     zmsg_t *zmsg = zmsg_new ();
@@ -47,6 +63,9 @@ worker_thread (void *context) {
         zmsg_body_fmt (zmsg, "OK - %04x", randof (0x10000));
         zmsg_send (&zmsg, worker);
     }
+    //  We never get here but if we did, this is how we'd exit cleanly
+    zmq_close (worker);
+    zmq_term (context);
     return (NULL);
 }
 
@@ -56,6 +75,7 @@ int main (int argc, char *argv [])
     //  First argument is this broker's name
     //  Other arguments are our peers' names
     //
+    s_version_assert (2, 1);
     if (argc < 2) {
         printf ("syntax: peering2 me {you}...\n");
         exit (EXIT_FAILURE);
@@ -90,9 +110,9 @@ int main (int argc, char *argv [])
 
     //  Prepare local frontend and backend
     void *localfe = zmq_socket (context, ZMQ_XREP);
-    zmq_bind (localfe, "inproc://localfe");
+    zmq_bind (localfe, "ipc://localfe.ipc");
     void *localbe = zmq_socket (context, ZMQ_XREP);
-    zmq_bind (localbe, "inproc://localbe");
+    zmq_bind (localbe, "ipc://localbe.ipc");
 
     //  Get user to tell us when we can start...
     printf ("Press Enter when all brokers are started: ");
@@ -102,13 +122,13 @@ int main (int argc, char *argv [])
     int worker_nbr;
     for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++) {
         pthread_t worker;
-        pthread_create (&worker, NULL, worker_thread, context);
+        pthread_create (&worker, NULL, worker_thread, NULL);
     }
     //  Start local clients
     int client_nbr;
     for (client_nbr = 0; client_nbr < NBR_CLIENTS; client_nbr++) {
         pthread_t client;
-        pthread_create (&client, NULL, client_thread, context);
+        pthread_create (&client, NULL, client_thread, NULL);
     }
 
     //  Interesting part

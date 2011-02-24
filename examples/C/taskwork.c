@@ -22,16 +22,14 @@ int main (int argc, char *argv[])
     //  Process tasks forever
     while (1) {
         char *string = s_recv (receiver);
-        struct timespec t;
-        t.tv_sec = 0;
-        t.tv_nsec = atoi (string) * 1000000;
         //  Simple progress indicator for the viewer
         fflush (stdout);
         printf ("%s.", string);
-        free (string);
 
         //  Do the work
+        struct timespec t = { 0, atoi (string) * 1000000 };
         nanosleep (&t, NULL);
+        free (string);
 
         //  Send results to sink
         s_send (sender, "");

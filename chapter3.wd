@@ -201,9 +201,9 @@ While we usually think of request-reply as a to-and-fro pattern, in fact it can 
 
 These are the ways we can know the address to send a message to, and you'll see most of these used in the examples of custom request-reply routing:
 
-* If it's an anonymous peer, i.e. did not set any identity, the router will generate a UUID and use that to refer to the connection when it delivers you an incoming request envelope.
+* If it's an transient socket, i.e. did not set any identity, the router will generate a UUID and use that to refer to the connection when it delivers you an incoming request envelope.
 
-* If it is a peer with explicit identity, the router will give that identity when it delivers you an incoming request envelope.
+* If it is a durable socket, the router will give the peer's identity when it delivers you an incoming request envelope.
 
 * Peers with explicit identities can send them via some other mechanism, e.g. via some other sockets.
 
@@ -230,7 +230,7 @@ So overall, custom routing is more expensive and more fragile than delegating th
 
 [[div style="overflow:hidden"]]
 [[div style="float:left"]]
-+++ Random Scatter Routing
++++ Router-to-Dealer Routing
 [[/div]]
 [[div style="float:right; vertical-align:middle"]]
 [/chapter:all# ↑top]
@@ -253,6 +253,10 @@ Here's code that shows how this works:
 //
 //  Custom routing Router to Dealer (XREP to XREQ)
 //
+//  While this example runs in a single process, that is just to make
+//  it easier to start and stop the example. Each thread has its own
+//  context and conceptually acts as a separate process.
+//
 //  Changes for 2.1:
 //  - added version assertion
 //  - use separate contexts for each thread
@@ -265,7 +269,8 @@ Here's code that shows how this works:
 //  We have two workers, here we copy the code, normally these would
 //  run on different boxes...
 //
-void *worker_a (void *args) {
+static void *
+worker_a (void *args) {
     void *context = zmq_init (1);
     void *worker = zmq_socket (context, ZMQ_XREQ);
     zmq_setsockopt (worker, ZMQ_IDENTITY, "A", 1);
@@ -288,7 +293,8 @@ void *worker_a (void *args) {
     return (NULL);
 }
 
-void *worker_b (void *args) {
+static void *
+worker_b (void *args) {
     void *context = zmq_init (1);
     void *worker = zmq_socket (context, ZMQ_XREQ);
     zmq_setsockopt (worker, ZMQ_IDENTITY, "B", 1);
@@ -362,7 +368,7 @@ examples/C/rtdealer.c
 //[*http://github.com/imatix/zguide/blob/master/examples/Erlang/rtdealer.erl Erlang]//
 //[*http://github.com/imatix/zguide/blob/master/examples/Go/rtdealer.go Go]//
 //[*http://github.com/imatix/zguide/blob/master/examples/Haskell/rtdealer.hs Haskell]//
-//[*http://github.com/imatix/zguide/blob/master/examples/Java/rtdealer.java Java]//
+**[*http://github.com/imatix/zguide/blob/master/examples/Java/rtdealer.java Java]**
 //[*http://github.com/imatix/zguide/blob/master/examples/Lua/rtdealer.lua Lua]//
 //[*http://github.com/imatix/zguide/blob/master/examples/Objective-C/rtdealer.m Objective-C]//
 //[*http://github.com/imatix/zguide/blob/master/examples/ooc/rtdealer.ooc ooc]//
@@ -382,11 +388,11 @@ To route to a dealer, we create an envelope like this:
 
 [[=image http://github.com/imatix/zguide/raw/master/images/fig34.png]]
 
-The router removes the first frame, routes the second frame, which the dealer gets as-is. If the dealer was to reply, we'd get back a similar envelope in two parts.
+The router socket removes the first frame, and sends the second frame, which the dealer gets as-is. When the dealer sends a message to the router, it sends one frame. The router prepends the dealer's address and gives us back a similar envelope in two parts.
 
-Something to note: if you use an invalid address, the router discards the message silently. There is not much else it can do usefully. In normal cases this either means the peer has gone away, or that there is a programming error somewhere and you're using a bogus address. ØMQ may in future report dropped messages via a sys://log bus, and may distinguish these two different cases. In any case you cannot ever assume a message will be routed successfully until and unless you get a reply of some sorts from the destination node. We'll come to creating reliable patterns later on.
+Something to note: if you use an invalid address, the router discards the message silently. There is not much else it can do usefully. In normal cases this either means the peer has gone away, or that there is a programming error somewhere and you're using a bogus address. In any case you cannot ever assume a message will be routed successfully until and unless you get a reply of some sorts from the destination node. We'll come to creating reliable patterns later on.
 
-Dealers look a bit like PULL sockets here and in fact they work exactly as PUSH and PULL combined. It's illegal to connect PULL or PUSH to a request-reply socket, and pointless, so don't do it.
+Dealers in fact they work exactly like PUSH and PULL combined. It's however illegal and pointless to connect PULL or PUSH to a request-reply socket.
 
 [[div style="overflow:hidden"]]
 [[div style="float:left"]]
@@ -416,6 +422,10 @@ What kind of routing can you do with a router-to-mama pattern?  Probably the mos
 [[code type="C" title="Router-to-mama" name="rtmama"]]
 //
 //  Custom routing Router to Mama (XREP to REQ)
+//
+//  While this example runs in a single process, that is just to make
+//  it easier to start and stop the example. Each thread has its own
+//  context and conceptually acts as a separate process.
 //
 //  Changes for 2.1:
 //  - added version assertion
@@ -453,9 +463,7 @@ worker_thread (void *args) {
         total++;
 
         //  Do some random work
-        struct timespec t;
-        t.tv_sec = 0;
-        t.tv_nsec = randof (100000000) + 1;
+        struct timespec t = { 0, randof (100000000) + 1 };
         nanosleep (&t, NULL);
     }
     zmq_close (worker);
@@ -731,6 +739,10 @@ Our broker - a router-to-router LRU queue - can't simply copy message parts blin
 //
 //  Least-recently used (LRU) queue device
 //  Clients and workers are shown here in-process
+//
+//  While this example runs in a single process, that is just to make
+//  it easier to start and stop the example. Each thread has its own
+//  context and conceptually acts as a separate process.
 //
 //  Changes for 2.1:
 //  - added version assertion
@@ -1062,7 +1074,7 @@ So here's the class:
     Multipart message class for example applications.
 
     Follows the ZFL class conventions and is further developed as the ZFL
-    zfl_msg class.  See http://zfl.zeromq.org for more details.
+    zmsg class.  See http://zfl.zeromq.org for more details.
 
     -------------------------------------------------------------------------
     Copyright (c) 1991-2010 iMatix Corporation <www.imatix.com>
@@ -1243,7 +1255,7 @@ s_decode_uuid (char *uuidstr)
 //  Private helper function to store a single message part
 
 static void
-_set_part (zmsg_t *self, int part_nbr, unsigned char *data, size_t size)
+s_set_part (zmsg_t *self, int part_nbr, unsigned char *data, size_t size)
 {
     self->_part_size [part_nbr] = size;
     self->_part_data [part_nbr] = malloc (size + 1);
@@ -1252,6 +1264,25 @@ _set_part (zmsg_t *self, int part_nbr, unsigned char *data, size_t size)
     self->_part_data [part_nbr][size] = 0;
 }
 
+
+//  --------------------------------------------------------------------------
+//  Duplicate message
+
+zmsg_t *
+zmsg_dup (zmsg_t *self)
+{
+    assert (self);
+    zmsg_t *dup = zmsg_new ();
+    assert (dup);
+
+    uint part_nbr;
+    for (part_nbr = 0; part_nbr < self->_part_count; part_nbr++)
+        s_set_part (dup, part_nbr,
+            self->_part_data [part_nbr], self->_part_size [part_nbr]);
+    dup->_part_count = self->_part_count;
+
+    return dup;
+}
 
 //  --------------------------------------------------------------------------
 //  Receive message from socket
@@ -1284,7 +1315,7 @@ zmsg_recv (void *socket)
         }
         else
             //  Store this message part
-            _set_part (self, self->_part_count++, data, size);
+            s_set_part (self, self->_part_count++, data, size);
 
         zmq_msg_close (&message);
 
@@ -1381,7 +1412,7 @@ zmsg_body_set (zmsg_t *self, char *body)
     else
         self->_part_count = 1;
 
-    _set_part (self, self->_part_count - 1, (void *) body, strlen (body));
+    s_set_part (self, self->_part_count - 1, (void *) body, strlen (body));
 }
 
 
@@ -1419,7 +1450,7 @@ zmsg_push (zmsg_t *self, char *part)
         (ZMSG_MAX_PARTS - 1) * sizeof (unsigned char *));
     memmove (&self->_part_size [1], &self->_part_size [0],
         (ZMSG_MAX_PARTS - 1) * sizeof (size_t));
-    _set_part (self, 0, (void *) part, strlen (part));
+    s_set_part (self, 0, (void *) part, strlen (part));
     self->_part_count += 1;
 }
 
@@ -1691,6 +1722,10 @@ And here is the LRU queue broker rewritten to use the zmsg class. Compare the co
 //  Least-recently used (LRU) queue device
 //  Demonstrates use of the zmsg class
 //
+//  While this example runs in a single process, that is just to make
+//  it easier to start and stop the example. Each thread has its own
+//  context and conceptually acts as a separate process.
+//
 //  Changes for 2.1:
 //  - added version assertion
 //  - use separate contexts for each thread
@@ -1853,6 +1888,243 @@ examples/C/lruqueue2.c
 
 [[div style="overflow:hidden"]]
 [[div style="float:left"]]
++++ Asynchronous Client-Server
+[[/div]]
+[[div style="float:right; vertical-align:middle"]]
+[/chapter:all# ↑top]
+[[/div]]
+[[/div]]
+
+In the router-to-dealer example we saw a 1-to-N use case where one client talks asynchronously to multiple workers. We can turn this upside-down to get a very useful N-to-1 architecture where various clients talk to a single server, and do this asynchronously:
+
+[[=image http://github.com/imatix/zguide/raw/master/images/fig46.png]]
+
+Here's how it works:
+
+* Clients connect to the server and send requests.
+* For each request, the server sends 0 to N replies.
+* Clients can send multiple requests without waiting for a reply.
+* Servers can send multiple replies without waiting for new requests.
+
+Here's code that shows how this works:
+
+[[code type="C" title="Asynchronous Client-Server" name="asyncsrv"]]
+//
+//  Asynchronous client-to-server (XREQ to XREP)
+//
+//  While this example runs in a single process, that is just to make
+//  it easier to start and stop the example. Each task has its own
+//  context and conceptually acts as a separate process.
+
+#include "zhelpers.h"
+#include "zmsg.c"
+
+//  ---------------------------------------------------------------------
+//  This is our client task
+//  It connects to the server, and then sends a request once per second
+//  It collects responses as they arrive, and it prints them out. We will
+//  run several client tasks in parallel, each with a different random ID.
+
+static void *
+client_task (void *args) {
+    void *context = zmq_init (1);
+    void *client = zmq_socket (context, ZMQ_XREQ);
+
+    //  Generate printable identity for the client
+    char identity [5];
+    sprintf (identity, "%04X", randof (0x10000));
+    zmq_setsockopt (client, ZMQ_IDENTITY, identity, strlen (identity));
+    zmq_connect (client, "tcp://localhost:5570");
+
+    zmq_pollitem_t items [] = { { client, 0, ZMQ_POLLIN, 0 } };
+    int request_nbr = 0;
+    while (1) {
+        //  Tick once per second, pulling in arriving messages
+        int centitick;
+        for (centitick = 0; centitick < 100; centitick++) {
+            zmq_poll (items, 1, 10000);
+            if (items [0].revents & ZMQ_POLLIN) {
+                zmsg_t *zmsg = zmsg_recv (client);
+                printf ("%s: %s\n", identity, zmsg_body (zmsg));
+                zmsg_destroy (&zmsg);
+            }
+        }
+        zmsg_t *zmsg = zmsg_new ();
+        zmsg_body_fmt (zmsg, "request #%d", ++request_nbr);
+        zmsg_send (&zmsg, client);
+    }
+    //  Clean up and end task properly
+    zmq_close (client);
+    zmq_term (context);
+    return (NULL);
+}
+
+//  ---------------------------------------------------------------------
+//  This is our server task
+//  It uses the multithreaded server model to deal requests out to a pool
+//  of workers and route replies back to clients. One worker can handle
+//  one request at a time but one client can talk to multiple workers at
+//  once.
+
+static void *server_worker (void *socket);
+
+void *server_task (void *args) {
+    void *context = zmq_init (1);
+    
+    //  Frontend socket talks to clients over TCP
+    void *frontend = zmq_socket (context, ZMQ_XREP);
+    zmq_bind (frontend, "tcp://*:5570");
+
+    //  Backend socket talks to workers over inproc
+    void *backend = zmq_socket (context, ZMQ_XREQ);
+    zmq_bind (backend, "inproc://backend");
+
+    //  Launch pool of worker threads, precise number is not critical
+    int thread_nbr;
+    for (thread_nbr = 0; thread_nbr < 5; thread_nbr++) {
+        pthread_t worker_thread;
+        pthread_create (&worker_thread, NULL, server_worker, context);
+    }
+    //  Connect backend to frontend via a queue device
+    //  We could do this:
+    //      zmq_device (ZMQ_QUEUE, frontend, backend);
+    //  But doing it ourselves means we can debug this more easily
+    
+    //  Switch messages between frontend and backend
+    while (1) {
+        zmq_pollitem_t items [] = {
+            { frontend, 0, ZMQ_POLLIN, 0 },
+            { backend,  0, ZMQ_POLLIN, 0 }
+        };
+        zmq_poll (items, 2, -1);
+        if (items [0].revents & ZMQ_POLLIN) {
+            zmsg_t *msg = zmsg_recv (frontend);
+            //puts ("Request from client:");
+            //zmsg_dump (msg);
+            zmsg_send (&msg, backend);
+        }
+        if (items [1].revents & ZMQ_POLLIN) {
+            zmsg_t *msg = zmsg_recv (backend);
+            //puts ("Reply from worker:");
+            //zmsg_dump (msg);
+            zmsg_send (&msg, frontend);
+        }
+    }
+    zmq_close (frontend);
+    zmq_close (backend);
+    zmq_term (context);
+    return (NULL);
+}
+
+//  Accept a request and reply with the same text a random number of
+//  times, with random delays between replies.
+//
+static void *
+server_worker (void *context) {
+    void *worker = zmq_socket (context, ZMQ_XREQ);
+    zmq_connect (worker, "inproc://backend");
+
+    while (1) {
+        //  The XREQ socket gives us the address envelope and message
+        zmsg_t *msg = zmsg_recv (worker);
+        assert (zmsg_parts (msg) == 2);
+        
+        //  Send 0..4 replies back
+        int reply, replies = randof (5);
+        for (reply = 0; reply < replies; reply++) {
+            //  Sleep for some fraction of a second
+            struct timespec t = { 0, randof (100000000) + 1 };
+            nanosleep (&t, NULL);
+            zmsg_t *dup = zmsg_dup (msg);
+            zmsg_send (&dup, worker);
+        }
+        zmsg_destroy (&msg);
+    }
+    zmq_close (worker);
+    return (NULL);
+}
+
+
+//  This main thread simply starts several clients, and a server, and then
+//  waits for the server to finish.
+//
+int main () {
+    s_version_assert (2, 1);
+
+    pthread_t client_thread;
+    pthread_create (&client_thread, NULL, client_task, NULL);
+    pthread_create (&client_thread, NULL, client_task, NULL);
+    pthread_create (&client_thread, NULL, client_task, NULL);
+
+    pthread_t server_thread;
+    pthread_create (&server_thread, NULL, server_task, NULL);
+    pthread_join (server_thread, NULL);
+    return 0;
+}
+[[/code]]
+[[>]]
+examples/C/asyncsrv.c
+[[collapsible show="All languages" hide="Hide languages"]]
+//[*http://github.com/imatix/zguide/blob/master/examples/Ada/asyncsrv.ada Ada]//
+//[*http://github.com/imatix/zguide/blob/master/examples/Basic/asyncsrv.bas Basic]//
+**[*http://github.com/imatix/zguide/blob/master/examples/C/asyncsrv.c C]**
+//[*http://github.com/imatix/zguide/blob/master/examples/C%2B%2B/asyncsrv.cpp C++]//
+//[*http://github.com/imatix/zguide/blob/master/examples/C%23/asyncsrv.cs C#]//
+//[*http://github.com/imatix/zguide/blob/master/examples/Common%20Lisp/asyncsrv.lisp Common Lisp]//
+//[*http://github.com/imatix/zguide/blob/master/examples/Erlang/asyncsrv.erl Erlang]//
+//[*http://github.com/imatix/zguide/blob/master/examples/Go/asyncsrv.go Go]//
+//[*http://github.com/imatix/zguide/blob/master/examples/Haskell/asyncsrv.hs Haskell]//
+//[*http://github.com/imatix/zguide/blob/master/examples/Java/asyncsrv.java Java]//
+//[*http://github.com/imatix/zguide/blob/master/examples/Lua/asyncsrv.lua Lua]//
+//[*http://github.com/imatix/zguide/blob/master/examples/Objective-C/asyncsrv.m Objective-C]//
+//[*http://github.com/imatix/zguide/blob/master/examples/ooc/asyncsrv.ooc ooc]//
+//[*http://github.com/imatix/zguide/blob/master/examples/Perl/asyncsrv.pl Perl]//
+//[*http://github.com/imatix/zguide/blob/master/examples/PHP/asyncsrv.php PHP]//
+//[*http://github.com/imatix/zguide/blob/master/examples/Python/asyncsrv.py Python]//
+//[*http://github.com/imatix/zguide/blob/master/examples/Ruby/asyncsrv.rb Ruby]//
+[[/collapsible]]
+[[/>]]
+
+Just run that example by itself. Like other multi-task examples, it runs in a single process but each task has its own context and conceptually acts as a separate process. You will see three clients (each with a random ID), printing out the replies they get from the server. Look carefully and you'll see each client task gets 0 or more replies per request.
+
+Some comments on this code:
+
+* The clients send a request once per second, and get zero or more replies back. To make this work using [http://api.zeromq.org/zmq_poll.html zmq_poll(3)], we can't simply poll with a 1-second timeout, or we'd end up sending a new request only one second //after we received the last reply//. So we poll at a high frequency (100 times at 1/100th of a second per poll), which is approximately accurate. This means the server could use requests as a form of heartbeat, i.e. detecting when clients are present or disconnected.
+
+* The server uses a pool of worker threads, each processing one request synchronously. It connects these to its frontend socket using an internal queue. To help debug this, the code implements its own queue device logic. In the C code, you can uncomment the zmsg_dump() calls to get debugging output.
+
+The socket logic in the server is fairly wicked. This is the detailed architecture of the server:
+
+[[=image http://github.com/imatix/zguide/raw/master/images/fig47.png]]
+
+Note that we're doing a dealer-to-router dialog between client and server, but internally between the server main thread and workers we're doing dealer-to-dealer. If the workers were strictly synchronous, we'd use REP. But since we want to send multiple replies we need an async socket. We do //not// want to route replies, they always go to the single server thread that sent us the request.
+
+Let's think about the routing envelope. The client sends a simple message. The server thread receives a two-part message (real message prefixed by client identity). We have two possible designs for the server-to-worker interface:
+
+* Workers get unaddressed messages, and we manage the connections from server thread to worker threads explicitly using a router socket as backend. This would require that workers start by telling the server they exist, which can then route requests to workers and track which client is 'connected' to which worker.  This is the least-recently routing pattern already covered.
+
+* Workers get addressed messages, and they return addressed replies. This requires that workers can properly decode and recode envelopes but it doesn't need any other mechanisms.
+
+The second design is much simpler, so that's what we use:
+
+[[code]]
+     client        server     frontend     worker
+    [ XREQ ]<---->[ XREP <----> XREQ <----> XREQ ]
+            1 part       2 parts     2 parts
+[[/code]]
+
+When you build servers that maintain stateful conversations with clients, you will run into a classic problem. If the server keeps some state per client, and clients keep coming and going, eventually it will run of resources. Even if the same clients keep connecting, if you're using transient sockets (no explicit identity), each connection will look like a new one.
+
+We cheat in the above example by keeping state only for a very short time (the time it takes a worker to process a request) and then throwing away the state. But that's not practical for many cases. 
+
+To properly manage client state in a stateful asynchronous server you must:
+
+* Do heartbeating from client to server. In our example we send a request once per second, which can reliably be used as a heartbeat. 
+* Store state using the client identity as key. This works for both durable and transient sockets.
+* Detect a stopped heartbeat. If there's no request from a client within, say, two seconds, the server can detect this and destroy any state it's holding for that client.
+
+[[div style="overflow:hidden"]]
+[[div style="float:left"]]
 +++ Router-to-Router (N-to-N) Routing
 [[/div]]
 [[div style="float:right; vertical-align:middle"]]
@@ -1862,7 +2134,7 @@ examples/C/lruqueue2.c
 
 We've seen XREP/router sockets talking to dealers, mamas, and papas. The last case is routers talking to routers. One use-case for this is a web farm that has redundant HTTP front-ends talking to an array of asynchronous back-end workers. Each worker accepts requests from any of the front-end HTTP servers, and processes them asynchronously, sending asynchronous replies back. A fully asynchronous worker has some internal concurrency but we don't really care about that here. What interests us is how N workers can talk to N front-ends.
 
-[[=image http://github.com/imatix/zguide/raw/master/images/fig46.png]]
+[[=image http://github.com/imatix/zguide/raw/master/images/fig48.png]]
 
 Here's a simplified example with a single front-end and a single worker, cross connected and routing to each other. We just send a message each way, and dump the message envelopes:
 
@@ -1951,7 +2223,7 @@ Although the router-to-router pattern looks ideal for asynchronous N-to-N routin
 
 Second, it may become confusing if you try to put two XREP sockets at the same logical level. One must bind, one must connect, and request-reply is inherently asymmetric. However, the next point takes care of this.
 
-Third, one side of the connection must know the identity of the other. You cannot do xrep-to-xrep flows between two anonymous sockets. In practice this means you need a name service, configuration data, or some other magic to define and share the identities of one of the peers. It's convenient therefore to treat the more static side of the flow as 'server', and give it a fixed, known identity, and then treat the dynamic side as 'client'. The client will have to connect to the server, then send it a message using the server's known identity as address, and then the server can respond to the client.
+Third, one side of the connection must know the identity of the other. You cannot do xrep-to-xrep flows between two transient sockets. In practice this means you need a name service, configuration data, or some other magic to define and share the identities of one of the peers. It's convenient therefore to treat the more static side of the flow as 'server', and give it a fixed, known identity, and then treat the dynamic side as 'client'. The client will have to connect to the server, then send it a message using the server's known identity as address, and then the server can respond to the client.
 
 [[div style="overflow:hidden"]]
 [[div style="float:left"]]
@@ -2012,7 +2284,7 @@ Workers and clients are synchronous. We want to use the least-recently used algo
 
 For reasons we already looked at, clients and workers won't speak to each other directly. It makes it impossible to add or remove nodes dynamically. So our basic model consists of the request-reply message broker we saw earlier:
 
-[[=image http://github.com/imatix/zguide/raw/master/images/fig47.png]]
+[[=image http://github.com/imatix/zguide/raw/master/images/fig49.png]]
 
 [[div style="overflow:hidden"]]
 [[div style="float:left"]]
@@ -2025,7 +2297,7 @@ For reasons we already looked at, clients and workers won't speak to each other 
 
 Now we scale this out to more than one cluster. Each cluster has a set of clients and workers, and a broker that joins these together:
 
-[[=image http://github.com/imatix/zguide/raw/master/images/fig48.png]]
+[[=image http://github.com/imatix/zguide/raw/master/images/fig50.png]]
 
 The question is: how do we get the clients of each cluster talking to the workers of the other cluster?  There are a few possibilities, each with pros and cons:
 
@@ -2037,13 +2309,13 @@ The question is: how do we get the clients of each cluster talking to the worker
 
 Let's explore Idea #1. Workers connecting to both brokers and accepting jobs from either:
 
-[[=image http://github.com/imatix/zguide/raw/master/images/fig49.png]]
+[[=image http://github.com/imatix/zguide/raw/master/images/fig51.png]]
 
 It looks feasible. However it doesn't provide what we wanted, which was that clients get local workers if possible and remote workers only if it's better than waiting. Also workers will signal "ready" to both brokers and can get two jobs at once, while other workers remain idle. It seems this design fails because again we're putting routing logic at the edges.
 
 So idea #2 then. We interconnect the brokers and don't touch the clients or workers, which are mamas like we're used to:
 
-[[=image http://github.com/imatix/zguide/raw/master/images/fig50.png]]
+[[=image http://github.com/imatix/zguide/raw/master/images/fig52.png]]
 
 This design is appealing because the problem is solved in one place, invisibly to the rest of the world. Basically, brokers open secret channels to each other and whisper, like camel traders, "//hey, I've got some spare capacity, if you have too many clients give me a shout and we'll deal".//
 
@@ -2076,7 +2348,7 @@ There are several possible way to interconnecting brokers. What we //want// is t
 
 The simplest interconnect is //federation// in which brokers simulate clients and workers for each other. We would do this by connecting our frontend to the other broker's backend socket. Note that it is legal to both bind a socket to an endpoint and connect it to other endpoints.
 
-[[=image http://github.com/imatix/zguide/raw/master/images/fig51.png]]
+[[=image http://github.com/imatix/zguide/raw/master/images/fig53.png]]
 
 This would give us simple logic in both brokers and a reasonably good mechanism: when there are no clients, tell the other broker 'ready', and accept one job from it. The problem is also that it is too simple for this problem. A federated broker would be able to handle only one task at once. If the broker emulates a lock-step client and worker, it is by definition also going to be lock-step and if it has lots of available workers they won't be used. Our brokers need to be connected in a fully asynchronous fashion.
 
@@ -2123,7 +2395,7 @@ You may be thinking that this is a lot of work for some names. Why not call them
 
 Here is the broker socket arrangement, then:
 
-[[=image http://github.com/imatix/zguide/raw/master/images/fig52.png]]
+[[=image http://github.com/imatix/zguide/raw/master/images/fig54.png]]
 
 Note that we connect the cloudbe in each broker to the cloudfe in every other broker, and likewise we connect the statebe in each broker to the statefe in every other broker.
 
@@ -2138,7 +2410,7 @@ Note that we connect the cloudbe in each broker to the cloudfe in every other br
 
 Since each socket flow has its own little traps for the unwary, we will test them in real code one by one, rather than try to throw the whole lot into code in one go. When we're happy with each flow, we can put them together into a full program. We'll start with the state flow:
 
-[[=image http://github.com/imatix/zguide/raw/master/images/fig53.png]]
+[[=image http://github.com/imatix/zguide/raw/master/images/fig55.png]]
 
 Here is how this works in code:
 
@@ -2279,7 +2551,7 @@ If we wanted to send state messages at precise intervals we'd create a child thr
 
 Let's now prototype at the flow of tasks via the local and cloud sockets. This code pulls requests from clients and then distributes them to local workers and cloud peers on a random basis:
 
-[[=image http://github.com/imatix/zguide/raw/master/images/fig54.png]]
+[[=image http://github.com/imatix/zguide/raw/master/images/fig56.png]]
 
 Before we jump into the code, which is getting a little complex, let's sketch the core routing logic and break it down into a simple but robust design.
 
@@ -2306,6 +2578,17 @@ Here is how this works in code. The interesting part starts around the comment "
 //  Broker peering simulation (part 2)
 //  Prototypes the request-reply flow
 //
+//  While this example runs in a single process, that is just to make
+//  it easier to start and stop the example. Each thread has its own
+//  context and conceptually acts as a separate process.
+//
+//  Changes for 2.1:
+//  - added version assertion
+//  - use separate contexts for each thread
+//  - use ipc:// instead of inproc://
+//  - close sockets in each child thread
+//  - call zmq_term in each thread before ending
+//
 #include "zmsg.c"
 
 #define NBR_CLIENTS 10
@@ -2317,9 +2600,10 @@ Here is how this works in code. The interesting part starts around the comment "
 //  Request-reply client using REQ socket
 //
 static void *
-client_thread (void *context) {
+client_thread (void *args) {
+    void *context = zmq_init (1);
     void *client = zmq_socket (context, ZMQ_REQ);
-    zmq_connect (client, "inproc://localfe");
+    zmq_connect (client, "ipc://localfe.ipc");
 
     zmsg_t *zmsg = zmsg_new ();
     while (1) {
@@ -2329,15 +2613,19 @@ client_thread (void *context) {
         zmsg = zmsg_recv (client);
         printf ("I: client status: %s\n", zmsg_body (zmsg));
     }
+    //  We never get here but if we did, this is how we'd exit cleanly
+    zmq_close (client);
+    zmq_term (context);
     return (NULL);
 }
 
 //  Worker using REQ socket to do LRU routing
 //
 static void *
-worker_thread (void *context) {
+worker_thread (void *args) {
+    void *context = zmq_init (1);
     void *worker = zmq_socket (context, ZMQ_REQ);
-    zmq_connect (worker, "inproc://localbe");
+    zmq_connect (worker, "ipc://localbe.ipc");
 
     //  Tell broker we're ready for work
     zmsg_t *zmsg = zmsg_new ();
@@ -2351,6 +2639,9 @@ worker_thread (void *context) {
         zmsg_body_fmt (zmsg, "OK - %04x", randof (0x10000));
         zmsg_send (&zmsg, worker);
     }
+    //  We never get here but if we did, this is how we'd exit cleanly
+    zmq_close (worker);
+    zmq_term (context);
     return (NULL);
 }
 
@@ -2360,6 +2651,7 @@ int main (int argc, char *argv [])
     //  First argument is this broker's name
     //  Other arguments are our peers' names
     //
+    s_version_assert (2, 1);
     if (argc < 2) {
         printf ("syntax: peering2 me {you}...\n");
         exit (EXIT_FAILURE);
@@ -2394,9 +2686,9 @@ int main (int argc, char *argv [])
 
     //  Prepare local frontend and backend
     void *localfe = zmq_socket (context, ZMQ_XREP);
-    zmq_bind (localfe, "inproc://localfe");
+    zmq_bind (localfe, "ipc://localfe.ipc");
     void *localbe = zmq_socket (context, ZMQ_XREP);
-    zmq_bind (localbe, "inproc://localbe");
+    zmq_bind (localbe, "ipc://localbe.ipc");
 
     //  Get user to tell us when we can start...
     printf ("Press Enter when all brokers are started: ");
@@ -2406,13 +2698,13 @@ int main (int argc, char *argv [])
     int worker_nbr;
     for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++) {
         pthread_t worker;
-        pthread_create (&worker, NULL, worker_thread, context);
+        pthread_create (&worker, NULL, worker_thread, NULL);
     }
     //  Start local clients
     int client_nbr;
     for (client_nbr = 0; client_nbr < NBR_CLIENTS; client_nbr++) {
         pthread_t client;
-        pthread_create (&client, NULL, client_thread, context);
+        pthread_create (&client, NULL, client_thread, NULL);
     }
 
     //  Interesting part
@@ -2566,6 +2858,10 @@ This code is the size of both previous prototypes together, at 270 LoC. That's p
 //
 //  Broker peering simulation (part 3)
 //  Prototypes the full flow of status and tasks
+//
+//  While this example runs in a single process, that is just to make
+//  it easier to start and stop the example. Each thread has its own
+//  context and conceptually acts as a separate process.
 //
 //  Changes for 2.1:
 //  - added version assertion

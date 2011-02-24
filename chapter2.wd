@@ -239,7 +239,7 @@ This has a fundamental impact on how you write applications. A traditional netwo
 
 [[div style="overflow:hidden"]]
 [[div style="float:left"]]
-+++ The Messaging Patterns
++++ Core Messaging Patterns
 [[/div]]
 [[div style="float:right; vertical-align:middle"]]
 [/chapter:all# ↑top]
@@ -281,6 +281,21 @@ These are the socket combinations that are valid for a connect-bind pair (either
 * PAIR and PAIR
 
 Any other combination will produce undocumented and unreliable results and future versions of ØMQ will probably return errors if you try them. You can and will of course bridge other socket types //via code//, i.e. read from one socket type and write to another.
+
+[[div style="overflow:hidden"]]
+[[div style="float:left"]]
++++ High-level Messaging Patterns
+[[/div]]
+[[div style="float:right; vertical-align:middle"]]
+[/chapter:all# ↑top]
+[[/div]]
+[[/div]]
+
+These four core patterns are cooked-in to ØMQ. They are part of the ØMQ API, implemented in the core C++ library, and guaranteed to be available in all fine retail stores. If one day the Linux kernel includes ØMQ, for example, these patterns would be there.
+
+On top, we add //high-level patterns//. We build these high-level patterns on top of ØMQ and implement them in whatever language we're using for our application. They are not part of the core library, do not come with the ØMQ package, and exist in their own space, as part of the ØMQ community.
+
+One of the things we aim to provide you with this guide are a set of such high-level patterns, both small (how to handle messages sanely) to large (how to make a reliable publish-subscribe architecture).
 
 [[div style="overflow:hidden"]]
 [[div style="float:left"]]
@@ -425,9 +440,7 @@ int main (int argc, char *argv[])
             zmq_msg_close (&update);
         }
         //  No activity, so sleep for 1 msec
-        struct timespec t;
-        t.tv_sec = 0;
-        t.tv_nsec = 1000000;
+        struct timespec t = { 0, 1000000 };
         nanosleep (&t, NULL);
     }
     //  We never get here but clean up anyhow
@@ -645,14 +658,9 @@ int main (int argc, char *argv[])
             zmq_msg_init (&message);
             zmq_recv (receiver, &message, 0);
 
-            //  Process task
-            int workload;           //  Workload in msecs
-            struct timespec t;
-            sscanf ((char *) zmq_msg_data (&message), "%d", &workload);
-            t.tv_sec = 0;
-            t.tv_nsec = workload * 1000000;
-
             //  Do the work
+            struct timespec t = { 
+                0, atoi ((char *) zmq_msg_data (&message)) * 1000000 };
             nanosleep (&t, NULL);
 
             //  Send results to sink
@@ -1335,7 +1343,7 @@ int main () {
 
     //  Launch pool of worker threads
     int thread_nbr;
-    for (thread_nbr = 0; thread_nbr != 5; thread_nbr++) {
+    for (thread_nbr = 0; thread_nbr < 5; thread_nbr++) {
         pthread_t worker;
         pthread_create (&worker, NULL, worker_routine, context);
     }
@@ -1388,7 +1396,7 @@ Here the 'work' is just a one-second pause. We could do anything in the workers,
 
 [[div style="overflow:hidden"]]
 [[div style="float:left"]]
-+++ Multithreading with ØMQ
++++ Signalling between Threads
 [[/div]]
 [[div style="float:right; vertical-align:middle"]]
 [/chapter:all# ↑top]

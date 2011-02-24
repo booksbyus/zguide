@@ -40,7 +40,7 @@ int main () {
 
     //  Launch pool of worker threads
     int thread_nbr;
-    for (thread_nbr = 0; thread_nbr != 5; thread_nbr++) {
+    for (thread_nbr = 0; thread_nbr < 5; thread_nbr++) {
         pthread_t worker;
         pthread_create (&worker, NULL, worker_routine, context);
     }

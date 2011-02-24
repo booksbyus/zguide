@@ -156,7 +156,7 @@ We'll explore Pirates with running code later. For now, let's continue the desig
 [[/div]]
 [[/div]]
 
-Pubsub is inherently unreliable. In fact it's so easy to lose messages with this pattern that you might wonder why ØMQ bothers to implement it at all. :-) That's a rhetorical question. There are many cases where simplicity and speed are more important than pedantic delivery. In fact this covers perhaps the majority of information distribution in the real world.
+Pubsub is like a radio broadcast, you miss everything before you join, and then how much information you get depends on the quality of your reception. It's so easy to lose messages with this pattern that you might wonder why ØMQ bothers to implement it at all.[[footnote]]If you're German or Norwegian, that is a form of 'humor'. There are many cases where simplicity and speed are more important than pedantic delivery. In fact the radio broadcast covers perhaps the majority of information distribution in the real world. Think of Facebook and Twitter. No, I'm not still joking.[[/footnote]]
 
 However, reliable pubsub is also a useful tool. Let's do as before and define what that 'reliability' means in terms of what can go wrong.
 
