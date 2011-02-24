@@ -7,13 +7,13 @@ Binds PUSH socket to tcp://localhost:5557
 
 Sends batch of tasks to workers via that socket
 
-Based on examples/C/taskvent.c; translated to Perl by darksuji
+Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
 
 =cut
 
 use strict;
 use warnings;
-use feature ':5.10';
+use 5.10.0;
 
 use ZeroMQ qw/:all/;
 

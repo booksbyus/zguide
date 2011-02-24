@@ -3,7 +3,7 @@
 
 Pubsub envelope publisher
 
-Based on examples/C/psenvpub.c; translated to Perl by darksuji
+Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
 
 =cut
 

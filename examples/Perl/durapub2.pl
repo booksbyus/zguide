@@ -3,7 +3,7 @@
 
 Publisher for durable subscriber
 
-Based on examples/C/durapub2.c; translated to Perl by darksuji
+Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
 
 =cut
 
@@ -24,7 +24,7 @@ my $publisher = $context->socket(ZMQ_PUB);
 $publisher->bind('tcp://*:5565');
 
 # Prevent publisher overflow from slow subscribers
-$publisher->setsockopt(ZMQ_HWM, 1)
+$publisher->setsockopt(ZMQ_HWM, 1);
 
 # Specify swap space in bytes, this covers all subscribers
 $publisher->setsockopt(ZMQ_SWAP, 25_000_000);
@@ -33,8 +33,8 @@ $publisher->setsockopt(ZMQ_SWAP, 25_000_000);
 $sync->recv();
 
 # Now broadcast exactly 10 updates with pause
-for (my $update_count = 0; $update_count < 10; ++$update_count) {
-    $publisher->send("Update $update_count");
+for my $update_nbr (0 .. 9) {
+    $publisher->send("Update $update_nbr");
     sleep (1);
 }
 $publisher->send('END');

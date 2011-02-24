@@ -3,11 +3,11 @@
 
 Multithreaded relay
 
-NOTE:  As of v0.9, ZeroMQ does not allow us to pass sockets around so as to
+NOTE:  As of v0.09, ZeroMQ does not allow us to pass sockets around so as to
 retain compatibility with ligzmq-2.0.  This example is therefore not a precise
 rendition of the official, libzmq-2.1-exploiting C example.
 
-Based on examples/C/mtrelay.c; translated to Perl by darksuji
+Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
 
 =cut
 

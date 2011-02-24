@@ -2,15 +2,18 @@
 =pod
 
 Task sink - design 2
+
 Adds pub-sub flow to send kill signal to workers
 
-Based on examples/C/tasksink2.c; translated to Perl by darksuji
+Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
 
 =cut
 
 use strict;
 use warnings;
-use feature ':5.10';
+use 5.10.0;
+
+use IO::Handle;
 
 use ZeroMQ qw/:all/;
 use Time::HiRes qw/time/;
@@ -35,12 +38,15 @@ $receiver->recv();
 my $tstart = time;
 
 # Process 100 confirmations
-my $task_count = 0;
-$OUTPUT_AUTOFLUSH = 1;
-while ($task_count++ < 100) {
+for my $task_nbr (0 .. 99) {
     $receiver->recv();
     use integer;
-    print '' . (($task_count / 10) * 10 == $task_count) ? ':' : '.';
+    if (($task_nbr / 10) * 10 == $task_nbr) {
+        print ':';
+    } else {
+        print '.';
+    }
+    STDOUT->flush();
 }
 # Calculate and report duration of batch
 my $tend = time;

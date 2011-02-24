@@ -5,13 +5,13 @@ Reading from multiple sockets
 
 This version uses a simple recv loop
 
-Based on examples/C/msreader.c; translated to Perl by darksuji
+Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
 
 =cut
 
 use strict;
 use warnings;
-use feature ':5.10';
+use 5.10.0;
 
 use ZeroMQ qw/:all/;
 use Time::HiRes qw/nanosleep/;

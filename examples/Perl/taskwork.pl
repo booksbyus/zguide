@@ -11,13 +11,15 @@ Connects PUSH socket to tcp://localhost:5558
 
 Sends results to sink via that socket
 
-Based on examples/C/taskwork.c; translated to Perl by darksuji
+Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
 
 =cut
 
 use strict;
 use warnings;
-use feature ':5.10';
+use 5.10.0;
+
+use IO::Handle;
 
 use ZeroMQ qw/:all/;
 use Time::HiRes qw/nanosleep/;
@@ -36,12 +38,11 @@ my $sender = $context->socket(ZMQ_PUSH);
 $sender->connect('tcp://localhost:5558');
 
 # Process tasks forever
-$OUTPUT_AUTOFLUSH = 1;
 while (1) {
     my $string = $receiver->recv()->data;
     my $time = $string * NSECS_PER_MSEC;
     # Simple progress indicator for the viewer
-    print "$string.";
+    STDOUT->printflush("$string.");
 
     # Do the work
     nanosleep $time;

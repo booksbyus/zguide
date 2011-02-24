@@ -5,13 +5,13 @@ Reading from multiple sockets
 
 This version uses zmq_poll()
 
-Based on examples/C/mspoller.c; translated to Perl by darksuji
+Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
 
 =cut
 
 use strict;
 use warnings;
-use feature ':5.10';
+use 5.10.0;
 
 use ZeroMQ qw/:all/;
 

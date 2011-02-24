@@ -7,13 +7,13 @@ Connects REQ socket to tcp://localhost:5559
 
 Sends "Hello" to server, expects "World" back
 
-Based on examples/C/rrclient.c; translated to Perl by darksuji
+Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
 
 =cut
 
 use strict;
 use warnings;
-use feature ':5.10';
+use 5.10.0;
 
 use ZeroMQ qw/:all/;
 
@@ -23,8 +23,8 @@ my $context = ZeroMQ::Context->new();
 my $requester = $context->socket(ZMQ_REQ);
 $requester->connect('tcp://localhost:5559');
 
-for (my $request_count = 0; $request_count < 10; ++$request_count) {
+for my $request_nbr (0 .. 9) {
     $requester->send('Hello');
     my $string = $requester->recv()->data;
-    printf ("Received reply %d [%s]\n", $request_count, $string);
+    say "Received reply $request_nbr [$string]";
 }

@@ -7,13 +7,13 @@ Binds PUB socket to tcp://*:5556
 
 Publishes random weather updates
 
-Based on examples/C/wuserver.c; translated to Perl by darksuji
+Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
 
 =cut
 
 use strict;
 use warnings;
-use feature ':5.10';
+use 5.10.0;
 
 use ZeroMQ qw/:all/;
 

@@ -7,13 +7,13 @@ Connects REP socket to tcp://*:5560
 
 Expects "Hello" from client, replies with "World"
 
-Based on examples/C/taskwork2.c; translated to Perl by darksuji
+Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
 
 =cut
 
 use strict;
 use warnings;
-use feature ':5.10';
+use 5.10.0;
 
 use ZeroMQ qw/:all/;
 
@@ -26,7 +26,7 @@ $responder->connect('tcp://localhost:5560');
 while (1) {
     # Wait for next request from client
     my $string = $responder->recv()->data;
-    printf("Received request: [%s]\n", $string);
+    say "Received request: [$string]";
 
     # Do some 'work'
     sleep (1);

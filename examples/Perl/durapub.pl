@@ -3,7 +3,7 @@
 
 Publisher for durable subscriber
 
-Based on examples/C/durapub.c; translated to Perl by darksuji
+Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
 
 =cut
 
@@ -27,8 +27,8 @@ $publisher->bind('tcp://*:5565');
 $sync->recv();
 
 # Now broadcast exactly 10 updates with pause
-for (my $update_count = 0; $update_count < 10; ++$update_count) {
-    $publisher->send("Update $update_count");
+for my $update_nbr (0 .. 9) {
+    $publisher->send("Update $update_nbr");
     sleep (1);
 }
 $publisher->send('END');

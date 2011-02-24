@@ -3,7 +3,7 @@
 
 Synchronized subscriber
 
-Based on examples/C/syncsub.c; translated to Perl by darksuji
+Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
 
 =cut
 
@@ -34,10 +34,10 @@ $syncclient->send('');
 $syncclient->recv();
 
 # Third, get our updates and report how many we got
-my $update_count = 0;
+my $update_nbr = 0;
 while (1) {
     my $string = $subscriber->recv()->data;
     last if $string eq 'END';
-    ++$update_count;
+    $update_nbr++;
 }
-say "Received $update_count updates";
+say "Received $update_nbr updates";

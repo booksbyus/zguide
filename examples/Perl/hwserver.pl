@@ -7,13 +7,13 @@ Binds REP socket to tcp://*:5555
 
 Expects "Hello" from client, replies with "World"
 
-Based on examples/C/hwserver.c; translated to Perl by darksuji
+Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
 
 =cut
 
 use strict;
 use warnings;
-use feature ':5.12';
+use 5.10.0;
 
 use ZeroMQ qw/:all/;
 

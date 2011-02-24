@@ -3,13 +3,13 @@
 
 Multithreaded Hello World server
 
-Based on examples/C/mtserver.c; translated to Perl by darksuji
+Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
 
 =cut
 
 use strict;
 use warnings;
-use feature ':5.10';
+use 5.10.0;
 use threads;
 
 use ZeroMQ qw/:all/;
@@ -24,7 +24,7 @@ sub worker_routine {
 
     while (1) {
         my $string = $receiver->recv()->data;
-        printf("Received request: [%s]\n", $string);
+        say "Received request: [$string]");
         # Do some 'work'
         sleep (1);
         # Send reply back to client
@@ -48,6 +48,7 @@ for (1 .. 5) {
     threads->create('worker_routine', $context);
 }
 # Connect work threads to client threads via a queue
-zmq_device (ZMQ_QUEUE, $clients->socket, $workers->socket); # FIXME:  Higher-level abstraction please...
+# Having to send raw sockets here is an infelicity in ZeroMQ 0.09
+zmq_device (ZMQ_QUEUE, $clients->socket, $workers->socket);
 
 # We never get here but clean up anyhow

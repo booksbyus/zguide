@@ -3,7 +3,7 @@
 
 Pubsub envelope subscriber
 
-Based on examples/C/psenvsub.c; translated to Perl by darksuji
+Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
 
 =cut
 
@@ -24,5 +24,5 @@ while (1) {
     my $address = $subscriber->recv()->data;
     # Read message contents
     my $contents = $subscriber->recv()->data;
-    printf("[%s] %s\n", $address, $contents);
+    say "[$address] $contents";
 }

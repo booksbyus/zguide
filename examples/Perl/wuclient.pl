@@ -7,13 +7,13 @@ Connects SUB socket to tcp://localhost:5556
 
 Collects weather updates and finds avg temp in zipcode
 
-Based on examples/C/wuclient.c; translated to Perl by darksuji
+Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
 
 =cut
 
 use strict;
 use warnings;
-use feature ':5.10';
+use 5.10.0;
 
 use ZeroMQ qw/:all/;
 
@@ -29,9 +29,8 @@ my $filter = @ARGV ? $ARGV[0] : '10001 ';
 $subscriber->setsockopt(ZMQ_SUBSCRIBE, $filter);
 
 # Process 100 updates
-my $update_count = 0;
 my $total_temp = 0;
-while ($update_count++ < 100) {
+for (1 .. 100) {
     my $string = $subscriber->recv->data;
     my ($zipcode, $temperature, $relhumidity) = split(/ /, $string);
     $total_temp += $temperature;
