@@ -180,9 +180,10 @@ s_sleep (int msecs)
     Sleep (msecs);
 #else
     struct timespec t;
-    t.tv_sec = msecs / 1000;
-    t.tv_nsec = msecs * 1000000;
-    nanosleep (&t, NULL);
+    t.tv_sec  =  msecs / 1000;
+    t.tv_nsec = (msecs % 1000) * 1000000;
+    int rc = nanosleep (&t, NULL);
+    assert (rc == 0);
 #endif
 }
 
