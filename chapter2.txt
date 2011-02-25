@@ -46,7 +46,7 @@ Like a nice pepperoni pizza, 0MQ sockets are easy to digest. Sockets have a life
 
 Which looks like this:
 
-[[code type="C"]]
+[[code type="example"]]
 void *mousetrap;
 
 //  Create socket for catching mice
@@ -100,7 +100,7 @@ Now, imagine we start the client //before// we start the server. In traditional 
 
 A server node can bind to many endpoints and it can do this using a single socket. This means it will accept connections across different transports:
 
-[[code type="C"]]
+[[code type="example"]]
 zmq_bind (socket, "tcp://*:5555");
 zmq_bind (socket, "tcp://*:9999");
 zmq_bind (socket, "ipc://myserver.ipc");
@@ -231,7 +231,7 @@ There is however a good answer to the question, "how can I make profitable use o
 
 We said that 0MQ does I/O in a background thread. One I/O thread (for all sockets) is sufficient for all but the most extreme applications. This is the magic '1' that we use when creating a context, meaning "use one I/O thread":
 
-[[code type="C"]]
+[[code type="example"]]
 void *context;
 context = zmq_init (1);
 [[/code]]
@@ -371,7 +371,7 @@ The right way is to use zmq_poll[3]. An even better way might be to wrap zmq_pol
 
 Let's start with a dirty hack, partly for the fun of not doing it right, but mainly because it lets me show you how to do non-blocking socket reads. Here is a simple example of reading from two sockets using non-blocking reads. This rather confused program acts both as a subscriber to weather updates, and a worker for parallel tasks:
 
-[[code type="C" title="Multiple socket reader" name="msreader"]]
+[[code type="example" title="Multiple socket reader" name="msreader"]]
 [[/code]]
 
 The cost of this approach is some additional latency on the first message (the sleep at the end of the loop, when there are no waiting messages to process). This would be a problem in applications where sub-millisecond latency was vital. Also, you need to check the documentation for nanosleep() or whatever function you use to make sure it does not busy-loop.
@@ -380,7 +380,7 @@ You can treat the sockets fairly by reading first from one, then the second rath
 
 Now let's see the same little senseless application done right, using zmq_poll[3]:
 
-[[code type="C" title="Multiple socket poller" name="mspoller"]]
+[[code type="example" title="Multiple socket poller" name="mspoller"]]
 [[/code]]
 
 +++ Handling Errors and ETERM
@@ -409,7 +409,7 @@ There are two main exceptional conditions that you may want to handle as non-fat
 
 What this boils down to is that in most cases you can use assertions on 0MQ calls, like this:
 
-[[code type="C"]]
+[[code type="example"]]
     void *context = zmq_init (1);
     assert (context);
     void *socket = zmq_socket (context, ZMQ_REP);
@@ -496,12 +496,12 @@ It doesn't take much new code in the sink:
 
 Here is the worker process, which manages two sockets (a PULL socket getting tasks, and a SUB socket getting control commands) using the zmq_poll[3] technique we saw earlier:
 
-[[code type="C" title="Parallel task worker with kill signalling" name="taskwork2"]]
+[[code type="example" title="Parallel task worker with kill signalling" name="taskwork2"]]
 [[/code]]
 
 Here is the modified sink application. When it's finished collecting results it broadcasts a KILL message to all workers:
 
-[[code type="C" title="Parallel task sink with kill signalling" name="tasksink2"]]
+[[code type="example" title="Parallel task sink with kill signalling" name="tasksink2"]]
 [[/code]]
 
 +++ Multipart Messages
@@ -639,7 +639,7 @@ It is a common requirement to extend a publish-subscribe architecture over more 
 
 We're going to write a simple proxy server that sits in between a publisher and a set of subscribers, bridging two networks. This is perhaps the simplest case of a useful device. The device has two sockets, a frontend facing the internal network, where the weather server is sitting, and a backend facing subscribers on the external network. It subscribes to the weather service on the frontend socket, and republishes its data on the backend socket:
 
-[[code type="C" title="Weather update proxy" name="wuproxy"]]
+[[code type="example" title="Weather update proxy" name="wuproxy"]]
 [[/code]]
 
 We call this a //proxy// because it acts as a subscriber to publishers, and acts as a publisher to subscribers. That means you can slot this device into an existing network without affecting it (of course the new subscribers need to know to speak to the proxy).
@@ -783,7 +783,7 @@ The request-reply broker binds to two endpoints, one for clients to connect to (
 
 And here is the broker, in C. You will see that it's multipart safe:
 
-[[code type="C" title="Request-reply broker" name="rrbroker"]]
+[[code type="example" title="Request-reply broker" name="rrbroker"]]
 [[/code]]
 
 Using a request-reply broker makes your client-server architectures easier to scale since clients don't see services, and services don't see clients. The only stable node is the device in the middle:
@@ -855,7 +855,7 @@ zmq_device (ZMQ_QUEUE, frontend, backend);
 
 Which if you start a QUEUE device is exactly like plugging the main body of the request-reply broker into your code at that spot. You need to create the sockets, bind or connect them, and possibly configure them, before calling zmq_device[3]. It is trivial to do. Here is the request-reply broker re-written to call QUEUE and rebadged as an expensive-sounding "message queue" (people have charged houses for code that did less):
 
-[[code type="C" title="Message queue broker" name="msgqueue"]]
+[[code type="example" title="Message queue broker" name="msgqueue"]]
 [[/code]]
 
 The built-in devices do proper error handling, whereas the examples we have shown don't. Since you can configure the sockets as you need to, before starting the device, it's worth using the built-in devices when you can.
@@ -902,7 +902,7 @@ You can of course do all this using a queue device and external worker processes
 
 The MT version of the Hello World service basically collapses the queue device and workers into a single process:
 
-[[code type="C" title="Multithreaded Service" name="mtserver"]]
+[[code type="example" title="Multithreaded Service" name="mtserver"]]
 [[/code]]
 
 All the code should be recognizable to you by now. How it works:
@@ -1010,7 +1010,7 @@ Here is a simple example showing three threads that signal each other when they 
 
 In this example we use PAIR sockets over the {{inproc}} transport:
 
-[[code type="C" title="Multithreaded relay" name="mtrelay"]]
+[[code type="example" title="Multithreaded relay" name="mtrelay"]]
 [[/code]]
 
 This is a classic pattern for multithreading with 0MQ. Read it carefully and try to understand it, it'll help you enormously when you write your own multithreaded apps. The use of PAIR sockets is not critical. The use of {{inproc}}, and the way we start the child threads is.
@@ -1048,7 +1048,7 @@ This is how the application will work:
 
 In this case we'll use a REQ-REP socket flow to synchronize subscribers and publisher. Here is the publisher:
 
-[[code type="C" title="Synchronized publisher" name="syncpub"]]
+[[code type="example" title="Synchronized publisher" name="syncpub"]]
 [[/code]]
 
 [[code type="textdiagram"]]
@@ -1080,7 +1080,7 @@ In this case we'll use a REQ-REP socket flow to synchronize subscribers and publ
 
 And here is the subscriber:
 
-[[code type="C" title="Synchronized subscriber" name="syncsub"]]
+[[code type="example" title="Synchronized subscriber" name="syncsub"]]
 [[/code]]
 
 This Linux shell script will start ten subscribers and then the publisher:
@@ -1127,7 +1127,7 @@ We teased you in Chapter One, when you were still a 0MQ newbie, about zero-copy.
 
 To do zero-copy you use zmq_msg_init_data[3] to create a message that refers to a block of data already allocated on the heap with malloc(), and then you pass that to zmq_send[3]. When you create the message you also pass a function that 0MQ will call to free the block of data, when it has finished sending the message. This is the simplest example, assuming 'buffer' is a block of 1000 bytes allocated on the heap:
 
-[[code type="C"]]
+[[code type="example"]]
 void my_free (void *data, void *hint)
 {
     free (data);
@@ -1297,12 +1297,12 @@ Recall that pubsub matches messages based on the prefix. Putting the key into a 
 
 Here is a minimalist example of how pubsub envelopes look in code. This publisher sends messages of two types, A and B. The envelope holds the message type:
 
-[[code type="C" title="Pubsub envelope publisher" name="psenvpub"]]
+[[code type="example" title="Pubsub envelope publisher" name="psenvpub"]]
 [[/code]]
 
 The subscriber only wants messages of type B:
 
-[[code type="C" title="Pubsub envelope subscriber" name="psenvsub"]]
+[[code type="example" title="Pubsub envelope subscriber" name="psenvsub"]]
 [[/code]]
 
 When you run the two programs, the subscriber should show you this:
@@ -1352,12 +1352,12 @@ We'll first look at how to do this, and then at how to do it properly. Here are 
 
 Here's the publisher:
 
-[[code type="C" title="Durable publisher" name="durapub"]]
+[[code type="example" title="Durable publisher" name="durapub"]]
 [[/code]]
 
 And here's the subscriber:
 
-[[code type="C" title="Durable subscriber" name="durasub"]]
+[[code type="example" title="Durable subscriber" name="durasub"]]
 [[/code]]
 
 To run this, start the publisher, then the subscriber, each in their own window. Allow the subscriber to collect one or two messages, then Ctrl-C it. Count to three, and restart it. What you will see is something like this:
@@ -1418,7 +1418,7 @@ zmq_setsockopt (publisher, ZMQ_SWAP, &swap, sizeof (swap));
 
 We can put this together to make a cynical publisher that is immune to slow, blocked, or absent subscribers while still offering durable subscriptions to those that need it:
 
-[[code type="C" title="Durable but cynical publisher" name="durapub2"]]
+[[code type="example" title="Durable but cynical publisher" name="durapub2"]]
 [[/code]]
 
 In practice, setting the HWM to 1 and shoving everything to disk will make a pubsub system very slow. Here is a more reasonable 'best practice' for publishers that have to deal with unknown subscribers:

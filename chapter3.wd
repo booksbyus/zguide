@@ -96,7 +96,7 @@ This is what it looks like for durable sockets:
 
 Let's observe the above two cases in practice. This program dumps the contents of the message parts that an XREP socket receives from two REP sockets, one not using identities, and one using an identity 'Hello':
 
-[[code type="C" title="Identity check" name="identity"]]
+[[code type="example" title="Identity check" name="identity"]]
 //
 //  Demonstrate identities as used by the request-reply pattern.  Run this
 //  program by itself.  Note that the utility functions s_ are provided by
@@ -241,7 +241,7 @@ The router-to-dealer pattern is the simplest. You connect one router to many dea
 
 If you expect the dealer to reply, there should only be one router talking to it. Dealers have no idea how to reply to a specific peer, so if they have multiple peers, they will load-balance between them, which would be weird. If the dealer is a sink, any number of routers can talk to it.
 
-What kind of routing can you do with a router-to-dealer pattern?  If the dealers talk back to the router, e.g. telling the router when they finished a task, you can use that knowledge to route depending on how fast a dealer is. Since both router and dealer are asynchronous, it can get a little tricky. You'd need to use [http://api.zeromq.org/zmq_poll.html zmq_poll(3)] at least.
+What kind of routing can you do with a router-to-dealer pattern?  If the dealers talk back to the router, e.g. telling the router when they finished a task, you can use that knowledge to route depending on how fast a dealer is. Since both router and dealer are asynchronous, it can get a little tricky. You'd need to use [http://api.zero.org/master:zmq_poll zmq_poll(3)] at least.
 
 We'll make an example where the dealers don't talk back, they're pure sinks. Our routing algorithm will be a weighted random scatter: we have two dealers and we send twice as many messages to one as to the other.
 
@@ -249,7 +249,7 @@ We'll make an example where the dealers don't talk back, they're pure sinks. Our
 
 Here's code that shows how this works:
 
-[[code type="C" title="Router-to-dealer" name="rtdealer"]]
+[[code type="example" title="Router-to-dealer" name="rtdealer"]]
 //
 //  Custom routing Router to Dealer (XREP to XREQ)
 //
@@ -419,7 +419,7 @@ Like dealers, mamas can only talk to one router and since mamas always start by 
 
 What kind of routing can you do with a router-to-mama pattern?  Probably the most obvious is "least-recently-used" (LRU), where we always route to the mama that's been waiting longest. Here is an example that does LRU routing to a set of mamas:
 
-[[code type="C" title="Router-to-mama" name="rtmama"]]
+[[code type="example" title="Router-to-mama" name="rtmama"]]
 //
 //  Custom routing Router to Mama (XREP to REQ)
 //
@@ -559,7 +559,7 @@ Some comments on this code
 
 * We don't need any settle time, since the mamas explicitly tell the router when they are ready.
 
-* We're generating our own identities here, as printable strings, using the zhelpers.h s_set_id function. That's just to make our life a little simpler. In a realistic application the mamas would be fully anonymous and then you'd call [http://api.zeromq.org/zmq_recv.html zmq_recv(3)] and [http://api.zeromq.org/zmq_send.html zmq_send(3)] directly instead of the zhelpers s_recv() and s_send() functions, which can only handle strings.
+* We're generating our own identities here, as printable strings, using the zhelpers.h s_set_id function. That's just to make our life a little simpler. In a realistic application the mamas would be fully anonymous and then you'd call [http://api.zero.org/master:zmq_recv zmq_recv(3)] and [http://api.zero.org/master:zmq_send zmq_send(3)] directly instead of the zhelpers s_recv() and s_send() functions, which can only handle strings.
 
 * Worse, we're using //random// identities. Don't do this in real code, please. Randomized durable sockets are not good in real life.
 
@@ -608,7 +608,7 @@ This example shows a very specific chain of events:
 
 It's complex but worth working through until you understand it. Just remember a papa is garbage in, garbage out.
 
-[[code type="C" title="Router-to-papa" name="rtpapa"]]
+[[code type="example" title="Router-to-papa" name="rtpapa"]]
 //
 //  Custom routing Router to Papa (XREP to REP)
 //
@@ -697,7 +697,7 @@ Some comments on this code:
 
 * In reality we'd have the papa and router in separate nodes. This example does it all in one thread because it makes the sequence of events really clear.
 
-* [http://api.zeromq.org/zmq_connect.html zmq_connect(3)] doesn't happen instantly. When the papa socket connects to the router, that takes a certain time and happens in the background. In a realistic application the router wouldn't even know the papa existed until there had been some previous dialog. In our toy example we'll just {{sleep (1);}} to make sure the connection's done. If you remove the sleep, the papa socket won't get the message. (Try it.)
+* [http://api.zero.org/master:zmq_connect zmq_connect(3)] doesn't happen instantly. When the papa socket connects to the router, that takes a certain time and happens in the background. In a realistic application the router wouldn't even know the papa existed until there had been some previous dialog. In our toy example we'll just {{sleep (1);}} to make sure the connection's done. If you remove the sleep, the papa socket won't get the message. (Try it.)
 
 * We're routing using the papa's identity. Just to convince yourself this really is happening, try sending to a wrong address, like "B". The papa won't get the message.
 
@@ -734,7 +734,7 @@ In the above design, we're using the built-in load balancing routing that the de
 
 Our broker - a router-to-router LRU queue - can't simply copy message parts blindly. Here is the code, it's fairly complex but the core logic is reusable in any request-reply broker that wants to do LRU routing:
 
-[[code type="C" title="LRU queue broker" name="lruqueue"]]
+[[code type="example" title="LRU queue broker" name="lruqueue"]]
 //
 //  Least-recently used (LRU) queue device
 //  Clients and workers are shown here in-process
@@ -1066,7 +1066,7 @@ That last one is tricky because ØMQ uses a binary zero at the start of generate
 
 So here's the class:
 
-[[code type="C" title="zmsg helper class" name="zmsg"]]
+[[code type="example" title="zmsg helper class" name="zmsg"]]
 /*  =========================================================================
     zmsg.h
 
@@ -1663,7 +1663,7 @@ examples/C/zmsg.c
 
 Here is a test wrapper:
 
-[[code type="C" title="zmsg test wrapper" name="zmsg_test"]]
+[[code type="example" title="zmsg test wrapper" name="zmsg_test"]]
 //
 //  Test zmsg class
 //
@@ -1716,7 +1716,7 @@ Build and run the test wrapper, and it should print something like this, includi
 
 And here is the LRU queue broker rewritten to use the zmsg class. Compare the code that works with messages, you'll see it's much shorter and 'just works':
 
-[[code type="C" title="LRU queue broker using zmsg" name="lruqueue2"]]
+[[code type="example" title="LRU queue broker using zmsg" name="lruqueue2"]]
 //
 //  Least-recently used (LRU) queue device
 //  Demonstrates use of the zmsg class
@@ -1907,7 +1907,7 @@ Here's how it works:
 
 Here's code that shows how this works:
 
-[[code type="C" title="Asynchronous Client-Server" name="asyncsrv"]]
+[[code type="example" title="Asynchronous Client-Server" name="asyncsrv"]]
 //
 //  Asynchronous client-to-server (XREQ to XREP)
 //
@@ -2087,7 +2087,7 @@ Just run that example by itself. Like other multi-task examples, it runs in a si
 
 Some comments on this code:
 
-* The clients send a request once per second, and get zero or more replies back. To make this work using [http://api.zeromq.org/zmq_poll.html zmq_poll(3)], we can't simply poll with a 1-second timeout, or we'd end up sending a new request only one second //after we received the last reply//. So we poll at a high frequency (100 times at 1/100th of a second per poll), which is approximately accurate. This means the server could use requests as a form of heartbeat, i.e. detecting when clients are present or disconnected.
+* The clients send a request once per second, and get zero or more replies back. To make this work using [http://api.zero.org/master:zmq_poll zmq_poll(3)], we can't simply poll with a 1-second timeout, or we'd end up sending a new request only one second //after we received the last reply//. So we poll at a high frequency (100 times at 1/100th of a second per poll), which is approximately accurate. This means the server could use requests as a form of heartbeat, i.e. detecting when clients are present or disconnected.
 
 * The server uses a pool of worker threads, each processing one request synchronously. It connects these to its frontend socket using an internal queue. To help debug this, the code implements its own queue device logic. In the C code, you can uncomment the zmsg_dump() calls to get debugging output.
 
@@ -2136,7 +2136,7 @@ We've seen XREP/router sockets talking to dealers, mamas, and papas. The last ca
 
 Here's a simplified example with a single front-end and a single worker, cross connected and routing to each other. We just send a message each way, and dump the message envelopes:
 
-[[code type="C" title="Cross-connected routers" name="rtrouter"]]
+[[code type="example" title="Cross-connected routers" name="rtrouter"]]
 //
 //  Cross-connected XREP sockets addressing each other
 //
@@ -2412,7 +2412,7 @@ Since each socket flow has its own little traps for the unwary, we will test the
 
 Here is how this works in code:
 
-[[code type="C" title="Prototype state flow" name="peering1"]]
+[[code type="example" title="Prototype state flow" name="peering1"]]
 //
 //  Broker peering simulation (part 1)
 //  Prototypes the state flow
@@ -2516,7 +2516,7 @@ Notes about this code:
 
 * Each broker has an identity that we use to construct {{ipc}} endpoint names. A real broker would need to work with TCP and a more sophisticated configuration scheme. We'll look at such schemes later in this book but for now, using generated {{ipc}} names lets us ignore the problem of where to get TCP/IP addresses or names from.
 
-* We use a [http://api.zeromq.org/zmq_poll.html zmq_poll(3)] loop as the core of the program. This processes incoming messages and sends out state messages. We send a state message //only// if we did not get any incoming messages //and// we waited for a second. If we send out a state message each time we get one in, we'll get message storms.
+* We use a [http://api.zero.org/master:zmq_poll zmq_poll(3)] loop as the core of the program. This processes incoming messages and sends out state messages. We send a state message //only// if we did not get any incoming messages //and// we waited for a second. If we send out a state message each time we get one in, we'll get message storms.
 
 * We use a two-part pubsub message consisting of sender address and data. Note that we will need to know the address of the publisher in order to send it tasks, and the only way is to send this explicitly as a part of the message.
 
@@ -2571,7 +2571,7 @@ We use broker identities to route messages between brokers. Each broker has a na
 
 Here is how this works in code. The interesting part starts around the comment "Interesting part".
 
-[[code type="C" title="Prototype local and cloud flow" name="peering2"]]
+[[code type="example" title="Prototype local and cloud flow" name="peering2"]]
 //
 //  Broker peering simulation (part 2)
 //  Prototypes the request-reply flow
@@ -2852,7 +2852,7 @@ Let's put this together into a single package. As before, we'll run an entire cl
 
 This code is the size of both previous prototypes together, at 270 LoC. That's pretty good for a simulation of a cluster that includes clients and workers and cloud workload distribution. Here is the code:
 
-[[code type="C" title="Full cluster simulation" name="peering3"]]
+[[code type="example" title="Full cluster simulation" name="peering3"]]
 //
 //  Broker peering simulation (part 3)
 //  Prototypes the full flow of status and tasks

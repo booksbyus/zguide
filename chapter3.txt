@@ -153,7 +153,7 @@ This is what it looks like for durable sockets:
 
 Let's observe the above two cases in practice. This program dumps the contents of the message parts that an XREP socket receives from two REP sockets, one not using identities, and one using an identity 'Hello':
 
-[[code type="C" title="Identity check" name="identity"]]
+[[code type="example" title="Identity check" name="identity"]]
 [[/code]]
 
 Here is what the dump function prints:
@@ -260,7 +260,7 @@ Figure # - Router to dealer custom routing
 
 Here's code that shows how this works:
 
-[[code type="C" title="Router-to-dealer" name="rtdealer"]]
+[[code type="example" title="Router-to-dealer" name="rtdealer"]]
 [[/code]]
 
 Some comments on this code:
@@ -331,7 +331,7 @@ Figure # - Router to mama custom routing
 
 What kind of routing can you do with a router-to-mama pattern?  Probably the most obvious is "least-recently-used" (LRU), where we always route to the mama that's been waiting longest. Here is an example that does LRU routing to a set of mamas:
 
-[[code type="C" title="Router-to-mama" name="rtmama"]]
+[[code type="example" title="Router-to-mama" name="rtmama"]]
 [[/code]]
 
 For this example the LRU doesn't need any particular data structures above what 0MQ gives us (message queues) because we don't need to synchronize the workers with anything. A more realistic LRU algorithm would have to collect workers as they become ready, into a queue, and the use this queue when routing client requests. We'll do this in a later example.
@@ -434,7 +434,7 @@ This example shows a very specific chain of events:
 
 It's complex but worth working through until you understand it. Just remember a papa is garbage in, garbage out.
 
-[[code type="C" title="Router-to-papa" name="rtpapa"]]
+[[code type="example" title="Router-to-papa" name="rtpapa"]]
 [[/code]]
 
 Run this program and it should show you this:
@@ -569,7 +569,7 @@ In the above design, we're using the built-in load balancing routing that the de
 
 Our broker - a router-to-router LRU queue - can't simply copy message parts blindly. Here is the code, it's fairly complex but the core logic is reusable in any request-reply broker that wants to do LRU routing:
 
-[[code type="C" title="LRU queue broker" name="lruqueue"]]
+[[code type="example" title="LRU queue broker" name="lruqueue"]]
 [[/code]]
 
 The difficult part of this program is (a) the envelopes that each socket reads and writes, and (b) the LRU algorithm. We'll take these in turn, starting with the message envelope formats.
@@ -736,12 +736,12 @@ That last one is tricky because 0MQ uses a binary zero at the start of generated
 
 So here's the class:
 
-[[code type="C" title="zmsg helper class" name="zmsg"]]
+[[code type="example" title="zmsg helper class" name="zmsg"]]
 [[/code]]
 
 Here is a test wrapper:
 
-[[code type="C" title="zmsg test wrapper" name="zmsg_test"]]
+[[code type="example" title="zmsg test wrapper" name="zmsg_test"]]
 [[/code]]
 
 Build and run the test wrapper, and it should print something like this, including a couple of message dumps that show 0MQ-generated socket identities:
@@ -761,7 +761,7 @@ Build and run the test wrapper, and it should print something like this, includi
 
 And here is the LRU queue broker rewritten to use the zmsg class. Compare the code that works with messages, you'll see it's much shorter and 'just works':
 
-[[code type="C" title="LRU queue broker using zmsg" name="lruqueue2"]]
+[[code type="example" title="LRU queue broker using zmsg" name="lruqueue2"]]
 [[/code]]
 
 +++ Asynchronous Client-Server
@@ -804,7 +804,7 @@ Here's how it works:
 
 Here's code that shows how this works:
 
-[[code type="C" title="Asynchronous Client-Server" name="asyncsrv"]]
+[[code type="example" title="Asynchronous Client-Server" name="asyncsrv"]]
 [[/code]]
 
 Just run that example by itself. Like other multi-task examples, it runs in a single process but each task has its own context and conceptually acts as a separate process. You will see three clients (each with a random ID), printing out the replies they get from the server. Look carefully and you'll see each client task gets 0 or more replies per request.
@@ -924,7 +924,7 @@ We've seen XREP/router sockets talking to dealers, mamas, and papas. The last ca
 
 Here's a simplified example with a single front-end and a single worker, cross connected and routing to each other. We just send a message each way, and dump the message envelopes:
 
-[[code type="C" title="Cross-connected routers" name="rtrouter"]]
+[[code type="example" title="Cross-connected routers" name="rtrouter"]]
 [[/code]]
 
 The program produces this output:
@@ -1296,7 +1296,7 @@ Since each socket flow has its own little traps for the unwary, we will test the
 
 Here is how this works in code:
 
-[[code type="C" title="Prototype state flow" name="peering1"]]
+[[code type="example" title="Prototype state flow" name="peering1"]]
 [[/code]]
 
 Notes about this code:
@@ -1393,7 +1393,7 @@ We use broker identities to route messages between brokers. Each broker has a na
 
 Here is how this works in code. The interesting part starts around the comment "Interesting part".
 
-[[code type="C" title="Prototype local and cloud flow" name="peering2"]]
+[[code type="example" title="Prototype local and cloud flow" name="peering2"]]
 [[/code]]
 
 Run this by, for instance, starting two instance of the broker in two windows:
@@ -1417,7 +1417,7 @@ Let's put this together into a single package. As before, we'll run an entire cl
 
 This code is the size of both previous prototypes together, at 270 LoC. That's pretty good for a simulation of a cluster that includes clients and workers and cloud workload distribution. Here is the code:
 
-[[code type="C" title="Full cluster simulation" name="peering3"]]
+[[code type="example" title="Full cluster simulation" name="peering3"]]
 [[/code]]
 
 It's a non-trivial program and took about a day to get working. These are the highlights:

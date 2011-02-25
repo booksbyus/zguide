@@ -82,7 +82,7 @@ The Suicide Snail pattern works especially when subscribers have their own clien
 
 So here is a minimal example of a Suicidal Snail:
 
-[[code type="C" title="Suicidal Snail" name="suisnail"]]
+[[code type="example" title="Suicidal Snail" name="suisnail"]]
 [[/code]]
 
 Notes about this example:
@@ -106,7 +106,7 @@ The simplest Pirate pattern only requires changes in the client. Rather than doi
 * Resend a request several times, it no reply arrived within a timeout period.
 * Abandon the transaction if after several requests, there is still no reply.
 
-[[code type="C" title="Client-side Pirate" name="piclient"]]
+[[code type="example" title="Client-side Pirate" name="piclient"]]
 [[/code]]
 
 This approach works when we have a set of clients talking to a single server. It can handle a server crash, but only if recovery means restarting that same server. If there's a permanent error - e.g. a dead power supply on the server hardware - this approach won't work.
@@ -206,7 +206,7 @@ This is the architecture. We take the client-side pirate and add something like 
 
 We assume that the servers - which contain application code - will crash far more often than the queue. So the client uses the client-side pirate pattern to create a reliable link to the queue. The real work of managing servers sits in the queue, with a thin layer in the server:
 
-[[code type="C" title="Pirate Queue" name="piqueue"]]
+[[code type="example" title="Pirate Queue" name="piqueue"]]
 [[/code]]
 
 The server connects its XREQ socket to the queue and uses the LRU approach, i.e. it signals when it's ready for a new task by sending a request, and the queue then sends the task as a reply. It does its work, and sends its results back as a new "I'm ready (oh, and BTW here is the stuff I worked on)" request message. When waiting for work, the server sends a heartbeat message (which is an empty message) to the queue each second. This is why the server uses an XREQ socket instead of a REQ socket (which does not allow multiple requests to be sent before a response arrives).

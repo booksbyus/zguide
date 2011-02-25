@@ -1,16 +1,16 @@
 #! /usr/bin/perl
 #   z2w - convert ZeroMQ document to Wikidot format
 #   - converts [[code type="textdiagram"]] via ditaa
-#   - converts zmq_something(3) into URL to http://api.zeromq.org
+#   - converts zmq_something(3) into URL to http://api.zero.org
 #   Eventually meant to produce print-ready output via tex
 #
-#   Usage: z2w < docfile
+#   Usage: z2w docfile
 #
 #   Creates Wikidot file as specified by .output and images in images/.
 #
 #   By Pieter Hintjens, free for remixing without conditions.
 #   Images are stored in the github repository at
-#   http://github.com/imatix/0MQGuide.
+#   https://github.com/imatix/zguide
 #
 require 'sflcvdp.pl';                   #   SFL date picture formatting
 
@@ -36,8 +36,12 @@ require 'sflcvdp.pl';                   #   SFL date picture formatting
               'Racket' => 'rkt',
               'Ruby' => 'rb' );
 
+$source = $ENV {Z2W_LANG} || "C";
+printf "Generating $source version of Guide...\n";
+
 #   Ensure all languages have an examples directory
 foreach (@languages) {
+    $translations {$_} = 0;
     if (!-d "examples/$_") {
         mkdir ("examples/$_");
     }
@@ -48,6 +52,7 @@ foreach (@languages) {
         print README "See LICENSE in examples directory\n";
     }
 }
+$examples = 0;
 
 die "Can't create wdtemp.txt: $!"
     unless open (OUTPUT, ">wdtemp.txt");
@@ -120,18 +125,17 @@ while (<>) {
         writeln ('[[/code]]');
     }
     #  Process named codeblock
-    elsif (/\[\[code type=\"(.+)\" title=\"(.+)\" name=\"(.+)\"\]\]/) {
-        $type = $1;
-        $title = $2;
-        $name = $3;
+    elsif (/\[\[code type=\"example\" title=\"(.+)\" name=\"(.+)\"\]\]/) {
+        $title = $1;
+        $name = $2;
         writeln ($_);
 
         #   Discard any real contents of code block
         while (<>) {
             last if /\[\[\/code\]\]/;
-            print "W: discarding $type code for $name\n";
+            print "W: discarding code for $title - $name\n";
         }
-        $filename = get_filename ($name, $type);
+        $filename = get_filename ($name, $source);
         die "Can't open $filename: $!"
             unless open (SOURCE, $filename);
         print OUTPUT $_
@@ -180,8 +184,10 @@ EOF
             }
             else {
                 writeln ("**[*$url $_]**");
+                $translations {$_} += 1;
             }
         }
+        $examples++;
         writeln ('[[/collapsible]]');
         writeln ('[[/>]]');
     }
@@ -218,6 +224,11 @@ EOF
 print IMAGES "</html>\n";
 close (IMAGES);
 close (OUTPUT);
+
+printf "Translations ($examples in total):\n";
+foreach (@languages) {
+    printf "%-15s %3d, %3d%%\n", $_, $translations {$_}, ($translations {$_} * 100) / $examples;
+}
 
 system ("rm -f images/fig*");
 system ("java -jar /usr/local/bin/ditaa0_9.jar images.html -o -h -E output.html");
@@ -306,7 +317,7 @@ sub expand_symbols {
             }
         }
         elsif (/zmq_([\w_]+)\[(.)\]/) {
-            $_ = $`."[http://api.zeromq.org/zmq_$1.html zmq_$1($2)]".$';
+            $_ = $`."[http://api.zero.org/master:zmq_$1 zmq_$1($2)]".$';
         }
         else {
             last;

@@ -1,7 +1,7 @@
 [[include :csi:include:css-brackets]]
 Written by Pieter Hintjens <ph@imatix.com>, CEO iMatix Corporation. Thanks to Bill Desmarais, Brian Dorsey, CAF, Daniel Lin, Eric Desgranges, Gonzalo Diethelm, Guido Goldstein, Hunter Ford, Kamil Shakirov, Martin Sustrik, Mike Castleman, Naveen Chawla, Nicola Peduzzi, Oliver Smith, Olivier Chamoux, Peter Alexander, Pierre Rouleau, Randy Dryburgh, John Unwin, Alex Thomas, Mihail Minkov, Jeremy Avnet, Michael Compton, Kamil Kisiel, Mark Kharitonov, Guillaume Aubert, Ian Barber, Mike Sheridan, Faruk Akgul, Oleg Sidorov, Lev Givon, Allister MacLeod, and Zed Shaw for their contributions, and to Stathis Sideris for [http://www.ditaa.org Ditaa].
 
-Please use the [http://github.com/imatix/zguide/issues issue tracker] for all comments and errata. This version covers ØMQ 2.1.x and was published on Thu 24 February, 2011 at 21:55:34.
+Please use the [http://github.com/imatix/zguide/issues issue tracker] for all comments and errata. This version covers ØMQ 2.1.x and was published on Fri 25 February, 2011 at 17:14:13.
 
 [[div style="overflow:hidden"]]
 [[div style="float:left"]]
@@ -63,7 +63,7 @@ It sounds ridiculously simple. And maybe it is. That's kind of the whole point.
 [[/div]]
 [[/div]]
 
-We assume you are using the latest release of ØMQ, or even the current git master. We assume you are using a Linux box or something similar. We assume you can read C code, more or less, because most of the examples are in C. We assume that when we write constants like PUSH or SUBSCRIBE you can imagine they are really called ZMQ_PUSH or ZMQ_SUBSCRIBE if the programming language needs it.
+We assume you are using the latest release of ØMQ, or even the current git master. We assume you are using a Linux box or something similar. We assume you can read C code, more or less, that's the default language for the examples. We assume that when we write constants like PUSH or SUBSCRIBE you can imagine they are really called ZMQ_PUSH or ZMQ_SUBSCRIBE if the programming language needs it.
 
 [[div style="overflow:hidden"]]
 [[div style="float:left"]]
@@ -76,7 +76,7 @@ We assume you are using the latest release of ØMQ, or even the current git mast
 
 So let's start with some code. We start of course with a Hello World example. We'll make a client and a server. The client sends "Hello" to the server, which replies with "World". Here's the server, which opens a ØMQ socket on port 5555, reads requests on it, and replies with "World" to each request:
 
-[[code type="C" title="Hello World server" name="hwserver"]]
+[[code type="example" title="Hello World server" name="hwserver"]]
 //
 //  Hello World server
 //  Binds REP socket to tcp://*:5555
@@ -147,11 +147,11 @@ examples/C/hwserver.c
 
 [[=image http://github.com/imatix/zguide/raw/master/images/fig1.png]]
 
-The REQ-REP socket pair is lockstep. The client does [http://api.zeromq.org/zmq_send.html zmq_send(3)] and then [http://api.zeromq.org/zmq_recv.html zmq_recv(3)], in a loop (or once if that's all it needs). Doing any other sequence (e.g. sending two messages in a row) will cause an error. Similarly the service does [http://api.zeromq.org/zmq_recv.html zmq_recv(3)] and then [http://api.zeromq.org/zmq_send.html zmq_send(3)] in that order, and as often as it needs to.
+The REQ-REP socket pair is lockstep. The client does [http://api.zero.org/master:zmq_send zmq_send(3)] and then [http://api.zero.org/master:zmq_recv zmq_recv(3)], in a loop (or once if that's all it needs). Doing any other sequence (e.g. sending two messages in a row) will cause an error. Similarly the service does [http://api.zero.org/master:zmq_recv zmq_recv(3)] and then [http://api.zero.org/master:zmq_send zmq_send(3)] in that order, and as often as it needs to.
 
 ØMQ uses C as its reference language and this is the language we'll use for examples. If you're reading this on-line, the link below the example takes you to translations into other programming languages. Let's compare the same server in C++:
 
-[[code type="C++" title="Hello World server" name="hwserver"]]
+[[code filename="examples/C++/hwserver.cpp"]]
 //
 //  Hello World server in C++
 //  Binds REP socket to tcp://*:5555
@@ -187,32 +187,10 @@ int main () {
     return 0;
 }
 [[/code]]
-[[>]]
-examples/C++/hwserver.cpp
-[[collapsible show="All languages" hide="Hide languages"]]
-//[*http://github.com/imatix/zguide/blob/master/examples/Ada/hwserver.ada Ada]//
-//[*http://github.com/imatix/zguide/blob/master/examples/Basic/hwserver.bas Basic]//
-**[*http://github.com/imatix/zguide/blob/master/examples/C/hwserver.c C]**
-**[*http://github.com/imatix/zguide/blob/master/examples/C%2B%2B/hwserver.cpp C++]**
-**[*http://github.com/imatix/zguide/blob/master/examples/C%23/hwserver.cs C#]**
-**[*http://github.com/imatix/zguide/blob/master/examples/Common%20Lisp/hwserver.lisp Common Lisp]**
-//[*http://github.com/imatix/zguide/blob/master/examples/Erlang/hwserver.erl Erlang]//
-//[*http://github.com/imatix/zguide/blob/master/examples/Go/hwserver.go Go]//
-//[*http://github.com/imatix/zguide/blob/master/examples/Haskell/hwserver.hs Haskell]//
-**[*http://github.com/imatix/zguide/blob/master/examples/Java/hwserver.java Java]**
-//[*http://github.com/imatix/zguide/blob/master/examples/Lua/hwserver.lua Lua]//
-//[*http://github.com/imatix/zguide/blob/master/examples/Objective-C/hwserver.m Objective-C]//
-//[*http://github.com/imatix/zguide/blob/master/examples/ooc/hwserver.ooc ooc]//
-**[*http://github.com/imatix/zguide/blob/master/examples/Perl/hwserver.pl Perl]**
-**[*http://github.com/imatix/zguide/blob/master/examples/PHP/hwserver.php PHP]**
-**[*http://github.com/imatix/zguide/blob/master/examples/Python/hwserver.py Python]**
-**[*http://github.com/imatix/zguide/blob/master/examples/Ruby/hwserver.rb Ruby]**
-[[/collapsible]]
-[[/>]]
 
 You can see that the ØMQ API is similar in C and C++. In a language like Python, we can hide even more and the code becomes even easier to read:
 
-[[code type="Python" title="Hello World server" name="hwserver"]]
+[[code filename="examples/Python/hwserver.py"]]
 #
 #   Hello World server in Python
 #   Binds REP socket to tcp://*:5555
@@ -236,32 +214,10 @@ while True:
     #  Send reply back to client
     socket.send("World")
 [[/code]]
-[[>]]
-examples/Python/hwserver.py
-[[collapsible show="All languages" hide="Hide languages"]]
-//[*http://github.com/imatix/zguide/blob/master/examples/Ada/hwserver.ada Ada]//
-//[*http://github.com/imatix/zguide/blob/master/examples/Basic/hwserver.bas Basic]//
-**[*http://github.com/imatix/zguide/blob/master/examples/C/hwserver.c C]**
-**[*http://github.com/imatix/zguide/blob/master/examples/C%2B%2B/hwserver.cpp C++]**
-**[*http://github.com/imatix/zguide/blob/master/examples/C%23/hwserver.cs C#]**
-**[*http://github.com/imatix/zguide/blob/master/examples/Common%20Lisp/hwserver.lisp Common Lisp]**
-//[*http://github.com/imatix/zguide/blob/master/examples/Erlang/hwserver.erl Erlang]//
-//[*http://github.com/imatix/zguide/blob/master/examples/Go/hwserver.go Go]//
-//[*http://github.com/imatix/zguide/blob/master/examples/Haskell/hwserver.hs Haskell]//
-**[*http://github.com/imatix/zguide/blob/master/examples/Java/hwserver.java Java]**
-//[*http://github.com/imatix/zguide/blob/master/examples/Lua/hwserver.lua Lua]//
-//[*http://github.com/imatix/zguide/blob/master/examples/Objective-C/hwserver.m Objective-C]//
-//[*http://github.com/imatix/zguide/blob/master/examples/ooc/hwserver.ooc ooc]//
-**[*http://github.com/imatix/zguide/blob/master/examples/Perl/hwserver.pl Perl]**
-**[*http://github.com/imatix/zguide/blob/master/examples/PHP/hwserver.php PHP]**
-**[*http://github.com/imatix/zguide/blob/master/examples/Python/hwserver.py Python]**
-**[*http://github.com/imatix/zguide/blob/master/examples/Ruby/hwserver.rb Ruby]**
-[[/collapsible]]
-[[/>]]
 
-Here's the client code in C (click the link below the source to look at, or contribute a translation in your favorite programming language):
+Here's the client code (click the link below the source to look at, or contribute a translation in your favorite programming language):
 
-[[code type="C" title="Hello World client" name="hwclient"]]
+[[code type="example" title="Hello World client" name="hwclient"]]
 //
 //  Hello World client
 //  Connects REQ socket to tcp://localhost:5555
@@ -611,7 +567,7 @@ s_clock (void)
 
 ØMQ does come in several versions and quite often, if you hit a problem, it'll be something that's been fixed in a later version. So it's a useful trick to know //exactly// what version of ØMQ you're actually linking with. Here is a tiny program that does that, using a function from {{zhelpers.h}}:
 
-[[code type="C" title="ØMQ version reporting" name="zversion"]]
+[[code type="example" title="ØMQ version reporting" name="zversion"]]
 //
 //  Report 0MQ version
 //
@@ -657,9 +613,9 @@ examples/C/zversion.c
 
 The second classic pattern is one-way data distribution, in which a server pushes updates to a set of clients. Let's see an example that pushes out weather updates consisting of a zipcode, temperature, and relative humidity. We'll generate random values, just like the real weather stations do.
 
-Here's the server, in C. We'll use port 5556 for this application:
+Here's the server. We'll use port 5556 for this application:
 
-[[code type="C" title="Weather update server" name="wuserver"]]
+[[code type="example" title="Weather update server" name="wuserver"]]
 //
 //  Weather update server
 //  Binds PUB socket to tcp://*:5556
@@ -722,7 +678,7 @@ There's no start, and no end to this stream of updates, it's like a never ending
 
 Here is client application, which listens to the stream of updates and grabs anything to do with a specified zipcode, by default New York City because that's a great place to start any adventure:
 
-[[code type="C" title="Weather update client" name="wuclient"]]
+[[code type="example" title="Weather update client" name="wuclient"]]
 //
 //  Weather update client
 //  Connects SUB socket to tcp://localhost:5556
@@ -785,9 +741,9 @@ examples/C/wuclient.c
 [[/collapsible]]
 [[/>]]
 
-Note that when you use a SUB socket you **must** set a subscription using [http://api.zeromq.org/zmq_setsockopt.html zmq_setsockopt(3)] and SUBSCRIBE, as in this code. If you don't set any subscription, you won't get any messages. It's a common mistake for beginners. The subscriber can set many subscriptions, which are added together. That is, if a update matches ANY subscription, the subscriber receives it. The subscriber can also unsubscribe specific subscriptions. Subscriptions are length-specified blobs. See [http://api.zeromq.org/zmq_setsockopt.html zmq_setsockopt(3)] for how this works.
+Note that when you use a SUB socket you **must** set a subscription using [http://api.zero.org/master:zmq_setsockopt zmq_setsockopt(3)] and SUBSCRIBE, as in this code. If you don't set any subscription, you won't get any messages. It's a common mistake for beginners. The subscriber can set many subscriptions, which are added together. That is, if a update matches ANY subscription, the subscriber receives it. The subscriber can also unsubscribe specific subscriptions. Subscriptions are length-specified blobs. See [http://api.zero.org/master:zmq_setsockopt zmq_setsockopt(3)] for how this works.
 
-The PUB-SUB socket pair is asynchronous. The client does [http://api.zeromq.org/zmq_recv.html zmq_recv(3)], in a loop (or once if that's all it needs). Trying to send a message to a SUB socket will cause an error. Similarly the service does [http://api.zeromq.org/zmq_send.html zmq_send(3)] as often as it needs to, but must not do [http://api.zeromq.org/zmq_recv.html zmq_recv(3)] on a PUB socket.
+The PUB-SUB socket pair is asynchronous. The client does [http://api.zero.org/master:zmq_recv zmq_recv(3)], in a loop (or once if that's all it needs). Trying to send a message to a SUB socket will cause an error. Similarly the service does [http://api.zero.org/master:zmq_send zmq_send(3)] as often as it needs to, but must not do [http://api.zero.org/master:zmq_recv zmq_recv(3)] on a PUB socket.
 
 There is one important thing to know about PUB/SUB sockets: you do not know precisely when a subscriber starts to get messages. Even if you start a subscriber, wait a while, and then start the publisher, **the subscriber will always miss the first messages that the publisher sends**. This is because as the subscriber connects to the publisher (something that takes a small but non-zero time), the publisher may already be sending messages out.
 
@@ -843,7 +799,7 @@ As a final example (you are surely getting tired of juicy code and want to delve
 
 In reality, workers run on superfast boxes, perhaps using GPUs (graphic processing units) to do the hard maths. Here is the ventilator. It generates 100 tasks, each is a message telling the worker to sleep for some number of milliseconds:
 
-[[code type="C" title="Parallel task ventilator" name="taskvent"]]
+[[code type="example" title="Parallel task ventilator" name="taskvent"]]
 //
 //  Task ventilator
 //  Binds PUSH socket to tcp://localhost:5557
@@ -916,7 +872,7 @@ examples/C/taskvent.c
 
 Here is the worker application. It receives a message, sleeps for that number of seconds, then signals that it's finished:
 
-[[code type="C" title="Parallel task worker" name="taskwork"]]
+[[code type="example" title="Parallel task worker" name="taskwork"]]
 //
 //  Task worker
 //  Connects PULL socket to tcp://localhost:5557
@@ -983,7 +939,7 @@ examples/C/taskwork.c
 
 Here is the sink application. It collects the 100 tasks, then calculates how long the overall processing took, so we can confirm that the workers really were running in parallel, if there are more than one of them:
 
-[[code type="C" title="Parallel task sink" name="tasksink"]]
+[[code type="example" title="Parallel task sink" name="tasksink"]]
 //
 //  Task sink
 //  Binds PULL socket to tcp://localhost:5558
@@ -1216,13 +1172,13 @@ But times change, and what was cool in 2010 is no longer //a la mode// in 2011. 
 
 Since the Guide aims to be a leader, not a follower, we've updated it to cover 2.1.x. In this section we'll cover the differences as they affect your applications.
 
-* In 2.0, [http://api.zeromq.org/zmq_close.html zmq_close(3)] and [http://api.zeromq.org/zmq_term.html zmq_term(3)] discarded any in-flight messages, so it was unsafe to close a socket and terminate right after sending messages. In 2.1, these calls are safe: zmq_term will flush anything that's waiting to be sent. In 2.0 examples we often added a sleep(1) to get around the problem. In 2.1, this isn't needed.
+* In 2.0, [http://api.zero.org/master:zmq_close zmq_close(3)] and [http://api.zero.org/master:zmq_term zmq_term(3)] discarded any in-flight messages, so it was unsafe to close a socket and terminate right after sending messages. In 2.1, these calls are safe: zmq_term will flush anything that's waiting to be sent. In 2.0 examples we often added a sleep(1) to get around the problem. In 2.1, this isn't needed.
 
-* In 2.0, it was safe to call [http://api.zeromq.org/zmq_term.html zmq_term(3)] even if there were open sockets. In 2.1, this is not safe, and it can cause zmq_term to block. So in 2.1 we always close every socket, before exiting. If your program mysteriously hangs at zmq_term, you're missing a zmq_close or two.
+* In 2.0, it was safe to call [http://api.zero.org/master:zmq_term zmq_term(3)] even if there were open sockets. In 2.1, this is not safe, and it can cause zmq_term to block. So in 2.1 we always close every socket, before exiting. If your program mysteriously hangs at zmq_term, you're missing a zmq_close or two.
 
 * In 2.0, you created a socket in the thread that used it, period. 2.1 introduces the funky possibility of "socket migration", which means thread A can create a socket and then pass it to a child thread B. This technique works very nicely for multithreading, with the {{inproc}} transport (thread A creates a socket pair, binds and connects them, then passes one socket to child thread B as it starts it).
 
-* In 2.0, [http://api.zeromq.org/zmq_poll.html zmq_poll(3)] would return arbitrarily early, so you could not use it as a timer. We hacked around this with a loop that would see how much time was left, and would call zmq_poll again if needed. In 2.1, this call properly waits for the full timeout if there are not events.
+* In 2.0, [http://api.zero.org/master:zmq_poll zmq_poll(3)] would return arbitrarily early, so you could not use it as a timer. We hacked around this with a loop that would see how much time was left, and would call zmq_poll again if needed. In 2.1, this call properly waits for the full timeout if there are not events.
 
 There are [https://github.com/zeromq/zeromq2/raw/master/NEWS a lot of other] good changes in 2.1, making this overall a more stable and rewarding understructure for your applications.
 
@@ -1235,11 +1191,11 @@ There are [https://github.com/zeromq/zeromq2/raw/master/NEWS a lot of other] goo
 [[/div]]
 [[/div]]
 
-ØMQ applications always start by creating a //context//, and then using that for creating sockets. In C, it's the [http://api.zeromq.org/zmq_init.html zmq_init(3)] call. You should create and use exactly one context in your process. Technically, the context is the container for all sockets in a single process, and acts as the transport for {{inproc}} sockets, which are the fastest way to connect threads in one process. If at runtime a process has two contexts, these are like separate ØMQ instances. If that's explicitly what you want, OK, but otherwise remember:
+ØMQ applications always start by creating a //context//, and then using that for creating sockets. In C, it's the [http://api.zero.org/master:zmq_init zmq_init(3)] call. You should create and use exactly one context in your process. Technically, the context is the container for all sockets in a single process, and acts as the transport for {{inproc}} sockets, which are the fastest way to connect threads in one process. If at runtime a process has two contexts, these are like separate ØMQ instances. If that's explicitly what you want, OK, but otherwise remember:
 
-**Do one [http://api.zeromq.org/zmq_init.html zmq_init(3)] at the start of your main line code, and one [http://api.zeromq.org/zmq_term.html zmq_term(3)] at the end.**
+**Do one [http://api.zero.org/master:zmq_init zmq_init(3)] at the start of your main line code, and one [http://api.zero.org/master:zmq_term zmq_term(3)] at the end.**
 
-If you're using the fork() system call, each process needs its own context. If you do [http://api.zeromq.org/zmq_init.html zmq_init(3)] in the main process before calling fork(), the child processes get their own contexts. In general you want to do the interesting stuff in the child processes, and just manage these from the parent process.
+If you're using the fork() system call, each process needs its own context. If you do [http://api.zero.org/master:zmq_init zmq_init(3)] in the main process before calling fork(), the child processes get their own contexts. In general you want to do the interesting stuff in the child processes, and just manage these from the parent process.
 
 [[div style="overflow:hidden"]]
 [[div style="float:left"]]
@@ -1254,13 +1210,13 @@ Classy programmers share the same motto as classy hit men: always clean up after
 
 The ØMQ objects we need to worry about are messages, sockets, and contexts. Luckily it's quite simple:
 
-* Always close a message the moment you are done with it, using [http://api.zeromq.org/zmq_msg_close.html zmq_msg_close(3)].
+* Always close a message the moment you are done with it, using [http://api.zero.org/master:zmq_msg_close zmq_msg_close(3)].
 
 * If you are opening and closing a lot of sockets, that's probably a sign you need to redesign your application.
 
-* When you exit the program, close your sockets and then call [http://api.zeromq.org/zmq_term.html zmq_term(3)]. This destroys the context.
+* When you exit the program, close your sockets and then call [http://api.zero.org/master:zmq_term zmq_term(3)]. This destroys the context.
 
-Calling [http://api.zeromq.org/zmq_term.html zmq_term(3)] while you have open sockets will cause ØMQ to hang forever. It's a bug that's caused some controversey but hopefully will be fixed. Just be sure to close all your sockets before calling zmq_term.
+Calling [http://api.zero.org/master:zmq_term zmq_term(3)] while you have open sockets will cause ØMQ to hang forever. It's a bug that's caused some controversey but hopefully will be fixed. Just be sure to close all your sockets before calling zmq_term.
 
 [[div style="overflow:hidden"]]
 [[div style="float:left"]]
@@ -1345,7 +1301,7 @@ Specifically:
 
 * It reduces your carbon footprint. Doing more with less CPU means your boxes use less power, and you can keep your old boxes in use for longer. Al Gore would love ØMQ.
 
-Actually ØMQ does rather more than this. It has a subversive effect on how you develop network-capable applications. Superficially it's just a socket API on which you do [http://api.zeromq.org/zmq_recv.html zmq_recv(3)] and [http://api.zeromq.org/zmq_send.html zmq_send(3)]. But message processing rapidly becomes the central loop, and your application soon breaks down into a set of message processing tasks. It is elegant and natural. And it scales: each of these tasks maps to a node, and the nodes talk to each other across arbitrary transports. Two nodes in one process (node is a thread), two nodes on one box (node is a process), two boxes on one network (node is a box). With no application code changes.
+Actually ØMQ does rather more than this. It has a subversive effect on how you develop network-capable applications. Superficially it's just a socket API on which you do [http://api.zero.org/master:zmq_recv zmq_recv(3)] and [http://api.zero.org/master:zmq_send zmq_send(3)]. But message processing rapidly becomes the central loop, and your application soon breaks down into a set of message processing tasks. It is elegant and natural. And it scales: each of these tasks maps to a node, and the nodes talk to each other across arbitrary transports. Two nodes in one process (node is a thread), two nodes on one box (node is a process), two boxes on one network (node is a box). With no application code changes.
 
 [[div style="overflow:hidden"]]
 [[div style="float:left"]]

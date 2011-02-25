@@ -43,13 +43,13 @@ It sounds ridiculously simple. And maybe it is. That's kind of the whole point.
 
 +++ Some Assumptions
 
-We assume you are using the latest release of 0MQ, or even the current git master. We assume you are using a Linux box or something similar. We assume you can read C code, more or less, because most of the examples are in C. We assume that when we write constants like PUSH or SUBSCRIBE you can imagine they are really called ZMQ_PUSH or ZMQ_SUBSCRIBE if the programming language needs it.
+We assume you are using the latest release of 0MQ, or even the current git master. We assume you are using a Linux box or something similar. We assume you can read C code, more or less, that's the default language for the examples. We assume that when we write constants like PUSH or SUBSCRIBE you can imagine they are really called ZMQ_PUSH or ZMQ_SUBSCRIBE if the programming language needs it.
 
 +++ Ask and Ye Shall Receive
 
 So let's start with some code. We start of course with a Hello World example. We'll make a client and a server. The client sends "Hello" to the server, which replies with "World". Here's the server, which opens a 0MQ socket on port 5555, reads requests on it, and replies with "World" to each request:
 
-[[code type="C" title="Hello World server" name="hwserver"]]
+[[code type="example" title="Hello World server" name="hwserver"]]
 [[/code]]
 
 [[code type="textdiagram"]]
@@ -81,17 +81,17 @@ The REQ-REP socket pair is lockstep. The client does zmq_send[3] and then zmq_re
 
 0MQ uses C as its reference language and this is the language we'll use for examples. If you're reading this on-line, the link below the example takes you to translations into other programming languages. Let's compare the same server in C++:
 
-[[code type="C++" title="Hello World server" name="hwserver"]]
+[[code filename="examples/C++/hwserver.cpp"]]
 [[/code]]
 
 You can see that the 0MQ API is similar in C and C++. In a language like Python, we can hide even more and the code becomes even easier to read:
 
-[[code type="Python" title="Hello World server" name="hwserver"]]
+[[code filename="examples/Python/hwserver.py"]]
 [[/code]]
 
-Here's the client code in C (click the link below the source to look at, or contribute a translation in your favorite programming language):
+Here's the client code (click the link below the source to look at, or contribute a translation in your favorite programming language):
 
-[[code type="C" title="Hello World client" name="hwclient"]]
+[[code type="example" title="Hello World client" name="hwclient"]]
 [[/code]]
 
 Now this looks too simple to be realistic, but a 0MQ socket is what you get when you take a normal TCP socket, inject it with a mix of radioactive isotopes stolen from a secret Soviet atomic research project, bombard it with 1950-era cosmic rays, and put it into the hands of a drug-addled comic book author with a badly-disguised fetish for bulging muscles clad in spandex. Yes, 0MQ sockets are the world-saving superheros of the networking world.
@@ -188,16 +188,16 @@ The result is {{zhelpers.h}}, which lets us write sweeter and shorter 0MQ applic
 
 0MQ does come in several versions and quite often, if you hit a problem, it'll be something that's been fixed in a later version. So it's a useful trick to know //exactly// what version of 0MQ you're actually linking with. Here is a tiny program that does that, using a function from {{zhelpers.h}}:
 
-[[code type="C" title="0MQ version reporting" name="zversion"]]
+[[code type="example" title="0MQ version reporting" name="zversion"]]
 [[/code]]
 
 +++ Getting the Message Out
 
 The second classic pattern is one-way data distribution, in which a server pushes updates to a set of clients. Let's see an example that pushes out weather updates consisting of a zipcode, temperature, and relative humidity. We'll generate random values, just like the real weather stations do.
 
-Here's the server, in C. We'll use port 5556 for this application:
+Here's the server. We'll use port 5556 for this application:
 
-[[code type="C" title="Weather update server" name="wuserver"]]
+[[code type="example" title="Weather update server" name="wuserver"]]
 [[/code]]
 
 There's no start, and no end to this stream of updates, it's like a never ending broadcast.
@@ -236,7 +236,7 @@ There's no start, and no end to this stream of updates, it's like a never ending
 
 Here is client application, which listens to the stream of updates and grabs anything to do with a specified zipcode, by default New York City because that's a great place to start any adventure:
 
-[[code type="C" title="Weather update client" name="wuclient"]]
+[[code type="example" title="Weather update client" name="wuclient"]]
 [[/code]]
 
 Note that when you use a SUB socket you **must** set a subscription using zmq_setsockopt[3] and SUBSCRIBE, as in this code. If you don't set any subscription, you won't get any messages. It's a common mistake for beginners. The subscriber can set many subscriptions, which are added together. That is, if a update matches ANY subscription, the subscriber receives it. The subscriber can also unsubscribe specific subscriptions. Subscriptions are length-specified blobs. See zmq_setsockopt[3] for how this works.
@@ -290,7 +290,7 @@ As a final example (you are surely getting tired of juicy code and want to delve
 
 In reality, workers run on superfast boxes, perhaps using GPUs (graphic processing units) to do the hard maths. Here is the ventilator. It generates 100 tasks, each is a message telling the worker to sleep for some number of milliseconds:
 
-[[code type="C" title="Parallel task ventilator" name="taskvent"]]
+[[code type="example" title="Parallel task ventilator" name="taskvent"]]
 [[/code]]
 
 [[code type="textdiagram"]]
@@ -340,12 +340,12 @@ In reality, workers run on superfast boxes, perhaps using GPUs (graphic processi
 
 Here is the worker application. It receives a message, sleeps for that number of seconds, then signals that it's finished:
 
-[[code type="C" title="Parallel task worker" name="taskwork"]]
+[[code type="example" title="Parallel task worker" name="taskwork"]]
 [[/code]]
 
 Here is the sink application. It collects the 100 tasks, then calculates how long the overall processing took, so we can confirm that the workers really were running in parallel, if there are more than one of them:
 
-[[code type="C" title="Parallel task sink" name="tasksink"]]
+[[code type="example" title="Parallel task sink" name="tasksink"]]
 [[/code]]
 
 The average cost of a batch is 5 seconds. When we start 1, 2, 4 workers we get results like this from the sink:
