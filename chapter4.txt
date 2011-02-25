@@ -74,11 +74,11 @@ None of these classic strategies fit. So we need to get creative. Rather than di
 
 How can a subscriber detect this? One way would be to sequence messages (number them in order), and use a HWM at the publisher. Now, if the subscriber detects a gap (i.e. the numbering isn't consecutive), it knows something is wrong. We then tune the HWM to the "croak and die if you hit this" level.
 
-Problems with this solution are (a) what if we have many publishers, (b) how do we fine-tune per subscriber, and (c) what if we use filtering?
+There are two problems with this solution. One, if we have many publishers, how do we sequence messages? The solution is to give each publisher a unique ID and add that to the sequencing. Second, if subscribers use ZMQ_SUBSCRIBE filters, they will get gaps by definition. Our precious sequencing will be for nothing.
 
-We can solve the first one by giving each publisher a unique ID, so messages start with a header that contains publisher ID //and// sequence number. We can solve the second by asking, "who cares?!" and ignoring it. But the last one is a show stopper. If we use a ZMQ_SUBSCRIBE filter, we'll by definition get gaps and that precious sequencing is for nothing.
+Some use cases won't use filters, and sequencing will work for them. But a more general solution is that the publisher timestamps each message. When a subscriber gets a message it checks the time, and if the difference is more than, say, one second, it does the "croak and die" thing. Possibly firing off a squawk to some operator console first.
 
-Some use cases won't use filters, and sequencing will work for them. But a more general solution is to stamp each message, at the publisher, with the time. When a subscriber gets a message it checks the time, and if the difference is more than, say, 10 seconds, it does the "croak and die" thing. Possibly firing off a squawk to some operator console first.
+The Suicide Snail pattern works especially when subscribers have their own clients and service-level agreements and need to guarantee certain maximum latencies. Aborting a subscriber may not seem like a constructive way to guarantee a maximum latency, but it's the assertion model. Abort today, and the problem will be fixed. Allow late data to flow downstream, and the problem may cause wider damage and take longer to appear on the radar.
 
 So here is a minimal example of a Suicidal Snail:
 
@@ -92,13 +92,54 @@ Notes about this example:
 
 +++ Reliable Request-Reply (Pirate Pattern)
 
-The basic request-reply pattern (a REQ socket talking to a REP socket) fails miserably if the  server or network dies, so it's basically unreliable. By default the REQ socket blocks on a receive, meaning the client just waits forever. If there's a problem down the line, too bad. I'd probably only use the basic request-reply pattern between two threads in the same process where there's no network or separate server process to die.
+The basic request-reply pattern (a REQ client socket doing a blocking send/recv to a REP server socket) scores low on handling the most common types of failure. If the server crashes while processing the request, the client just hangs forever. If the network loses the request or the reply, the client hangs forever.
 
-However, with a little extra work it becomes a good basis for real work across a distributed network, and we get a reliable pattern I like to call the "Pirate" pattern. RRR! The minimum Pirate sits just in the client, which needs to:
+It is a lot better than TCP, thanks to 0MQ's ability to reconnect peers silently, to load-balance messages, and so on. But it's still not good enough for real work. The only use case where you can trust the basic request-reply pattern is between two threads in the same process where there's no network or separate server process to die.
+
+However, with a little extra work this humble pattern becomes a good basis for real work across a distributed network, and we get a reliable request-reply pattern I like to call the "Pirate" pattern. RRR!
+
+++++ The Client-side Pirate
+
+The simplest Pirate pattern only requires changes in the client. Rather than doing a blocking receive, we:
 
 * Poll the REQ socket and only receive from it when it's sure a reply has arrived.
 * Resend a request several times, it no reply arrived within a timeout period.
 * Abandon the transaction if after several requests, there is still no reply.
+
+[[code type="C" title="Client-side Pirate" name="piclient"]]
+[[/code]]
+
+This approach works when we have a set of clients talking to a single server. It can handle a server crash, but only if recovery means restarting that same server. If there's a permanent error - e.g. a dead power supply on the server hardware - this approach won't work.
+
+[[code type="textdiagram"]]
+    +-----------+   +-----------+   +-----------+
+    |           |   |           |   |           |
+    |  Client   |   |  Client   |   |  Client   |
+    |           |   |           |   |           |
+    +-----------+   +-----------+   +-----------+
+    |   Poll    |   |   Poll    |   |   Poll    |
+    |   Retry   |   |   Retry   |   |   Retry   |
+    +-----------+   +-----------+   +-----------+
+    |    REQ    |   |    REQ    |   |    REQ    |
+    \-----------/   \-----------/   \-----------/
+          ^               ^               ^
+          |               |               |
+          \---------------+---------------/
+                          |
+                          v
+                   /-------------\
+                   |     REP     |
+                   +-------------+
+                   |             |
+                   |    Server   |
+                   |             |
+                   +-------------+
+
+
+           Figure # - Client-side Pirate
+[[/code]]
+
+++++ Pirate Queue Devices
 
 Rather than rely on a single server, which may die and be unavailable for a long period, Pirate works better with a pool of servers. A good model is live-live redundant, i.e. a client can send a request to any server. If one server dies, the others take over. In practice that usually means servers need some common storage, e.g. shared access to a single database. To work with a pool of servers, we need to:
 
@@ -107,11 +148,102 @@ Rather than rely on a single server, which may die and be unavailable for a long
 * Detect a server that dies while processing a request. We do this with a timeout: if the server does not reply within a certain time, we treat it as dead.
 * Track dead servers so we don't send requests to them (again). A simple list will work.
 
-With a pool of servers, we can make the client's retry strategy smarter:
+With a pool of servers, we can make the our retry strategy smarter:
 
-* If there is just one server in the pool, the client waits with a timeout for the server to reply. If the server does not reply within the timeout, the client will retry a number of times before abandoning.
-* If there are multiple servers in the pool, the client tries each server in succession, but does not retry the same server twice.
-* If a server appears to be really dead (i.e. has not responded for some time), the client removes it from its pool.
+* If there is just one server in the pool, the we wait with a timeout for the server to reply. If the server does not reply within the timeout, we retry a number of times before abandoning.
+* If there are multiple servers in the pool, we try each server in succession, but do not retry the same server twice.
+* If a server appears to be really dead (i.e. has not responded for some time), we remove it from the pool.
+
+This is a lot of work to do and get right in every client application that needs reliability. It's simpler to place a queue device in the middle, to which all clients and servers connect. Now we can put the server management logic in that queue device.
+
+This is the architecture. We take the client-side pirate and add something like the LRU (least-recently used) queue broker from Chapter 3:
+
+[[code type="textdiagram"]]
+
+    +-----------+   +-----------+   +-----------+
+    |           |   |           |   |           |
+    |  Client   |   |  Client   |   |  Client   |
+    |           |   |           |   |           |
+    +-----------+   +-----------+   +-----------+
+    |   Poll    |   |   Poll    |   |   Poll    |
+    |   Retry   |   |   Retry   |   |   Retry   |
+    +-----------+   +-----------+   +-----------+
+    |    REQ    |   |    REQ    |   |    REQ    |
+    \-----------/   \-----------/   \-----------/
+          ^               ^               ^
+          |               |               |
+          \---------------+---------------/
+                          |
+                          v
+                    /-----------\
+                    |   XREP    |
+                    +-----------+
+                    |           |
+                    |   Queue   |
+                    |           |
+                    +-----------+
+                    |   XREP    |
+                    \-----------/
+                          ^
+                          |
+          /---------------+---------------\
+          |               |               |
+          v               v               v
+    /-----------\   /-----------\   /-----------\
+    |   XREQ    |   |   XREQ    |   |   XREQ    |
+    +-----------+   +-----------+   +-----------+
+    |   Poll    |   |   Poll    |   |   Poll    |
+    | Heartbeat |   | Heartbeat |   | Heartbeat |
+    +-----------+   +-----------+   +-----------+
+    |           |   |           |   |           |
+    |  Server   |   |  Server   |   |  Server   |
+    |           |   |           |   |           |
+    +-----------+   +-----------+   +-----------+
+
+
+               Figure # - Pirate Queue
+[[/code]]
+
+We assume that the servers - which contain application code - will crash far more often than the queue. So the client uses the client-side pirate pattern to create a reliable link to the queue. The real work of managing servers sits in the queue, with a thin layer in the server:
+
+[[code type="C" title="Pirate Queue" name="piqueue"]]
+[[/code]]
+
+The server connects its XREQ socket to the queue and uses the LRU approach, i.e. it signals when it's ready for a new task by sending a request, and the queue then sends the task as a reply. It does its work, and sends its results back as a new "I'm ready (oh, and BTW here is the stuff I worked on)" request message. When waiting for work, the server sends a heartbeat message (which is an empty message) to the queue each second. This is why the server uses an XREQ socket instead of a REQ socket (which does not allow multiple requests to be sent before a response arrives).
+
+The queue binds to XREP frontend and backend sockets, and handles requests and replies asynchronously on these using the LRU logic we developed in Chapter 3. It works with these data structures:
+
+* A pool (a hash map) of all known servers, which identify themselves using unique IDs.
+* A list of servers that are ready for work.
+* A list of servers that are busy doing work.
+* A list of requests sent by clients but not yet successfully processed.
+
+The queue polls all sockets for input and then processes all incoming messages. It queues tasks and distributes them to servers that are alive. Any replies from servers are sent back to their original clients, unless the server is disabled, in which case the reply is dropped.
+
+Idle servers must signal that they are alive with a ready message or a heartbeat, or they will be marked as disabled until they send a message again. This is to detect blocked and disconnected servers (since 0MQ does not report disconnections).
+
+The queue detects a disabled server in two ways: heartbeating, as explained, and timeouts on request processing. If a reply does not come back within (e.g.) 10ms, the queue marks the server as disabled, and retries with the next server.
+
+----
+* If there is just one server in the pool, the we wait with a timeout for the server to reply. If the server does not reply within the timeout, we retry a number of times before abandoning.
+* If there are multiple servers in the pool, we try each server in succession, but do not retry the same server twice.
+* If a server appears to be really dead (i.e. has not responded for some time), we remove it from the pool.
+
+
+
+The server randomly simulates two problems when it receives a task:
+1. A crash and restart while processing a request, i.e. close its socket, block for 5 seconds, reopen its socket and restart.
+2. A temporary busy wait, i.e. sleep 1 second then continue as normal.
+
+
+
+
+
+
+
+++++ Peer-to-Peer Pirate
+
+
 
 While many Pirate use cases are *idempotent* (i.e. executing the same request more than once is safe), some are not. Examples of an idempotent Pirate include:
 
@@ -124,9 +256,9 @@ And here are examples of a non-idempotent Pirate pattern:
 * Any service that has impact on downstream nodes, e.g. sends on information to other nodes. If that service gets the same request more than once, downstream nodes will get duplicate information.
 * Any service that modifies shared data in some non-idempotent way. E.g. a service that debits a bank account is definitely not idempotent.
 
-When our server is not idempotent, we have to think more carefully about when exactly a server can crash. If it dies when it's idle, or while it's processing a request, that's usually fine. We can use database transactions to make sure a debit and a credit are always done together, if at all. If the server dies while sending its reply, that's a problem, because as far as its concerned, it's done its work.
+When our server is not idempotent, we have to think more carefully about when exactly a server might crash. If it dies when it's idle, or while it's processing a request, that's usually fine. We can use database transactions to make sure a debit and a credit are always done together, if at all. If the server dies while sending its reply, that's a problem, because as far as its concerned, it's done its work.
 
-if the network dies just as the reply is making its way back to the client, the same situation arises. The client will think the server died, will resend the request, and the server will do the same work twice. Which is not what we want.
+if the network dies just as the reply is making its way back to the client, the same problem arises. The client will think the server died, will resend the request, and the server will do the same work twice. Which is not what we want.
 
 We use the standard solution of detecting and rejecting duplicate requests. This means:
 
@@ -136,7 +268,26 @@ We use the standard solution of detecting and rejecting duplicate requests. This
 
 The final touch to a robust Pirate pattern is server heartbeating. This means getting the server to say "hello" every so often even when it's not doing any work. The smoothest design is where the client pings the server, which pongs back. We don't need to send heartbeats to a working server, only one that's idle. Knowing when an idle server has died means we don't uselessly send requests to dead servers, which improves response time in those cases.
 
-We'll explore Pirates with running code later. For now, let's continue the design discussion by looking at reliable pubsub.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ++++ Reliable Publish-Subscribe (Clone Pattern)
@@ -203,7 +354,7 @@ Clone is complex enough in practice that you don't want to implement it directly
 
 As with all our reliability patterns, we'll ignore what happens if an upstream node (the ventilator for a pipeline pattern) dies. In practice a ventilator will be the client of another reliability pattern, e.g. Clone.
 
-The Harmony pattern takes pipeline and makes it robust against the only failure we can reasonably handle, namely workers and (less commonly) collectors that crash and lose messages or work. 
+The Harmony pattern takes pipeline and makes it robust against the only failure we can reasonably handle, namely workers and (less commonly) collectors that crash and lose messages or work.
 
 - assume workers are idempotent
 - assume batch size is known in advance (because...)
@@ -226,82 +377,6 @@ The Harmony pattern takes pipeline and makes it robust against the only failure 
 +++ Harmony
 
 
-
-++++ Centralized (Queue-based) RPC
-
-In the general case we have many clients and many servers. We could start with a single client and server but this is Chapter 4, and we're moving fast now. Grab another coffee. When we have N to N nodes, as a rule we stick a device in the middle, because it makes things simpler.
-
-This is the architecture, which is a lot like the LRU (least-recently used) queue broker from Chapter 3:
-
-[[code type="textdiagram"]]
-
-    +-----------+   +-----------+   +-----------+
-    |           |   |           |   |           |
-    |  Client   |   |  Client   |   |  Client   |
-    |           |   |           |   |           |
-    +-----------+   +-----------+   +-----------+
-    |    REQ    |   |    REQ    |   |    REQ    |
-    \-----------/   \-----------/   \-----------/
-          ^               ^               ^
-          |               |               |
-          \---------------+---------------/
-                          |
-                          v
-                    /-----------\
-                    |   XREP    |
-                    +-----------+
-                    |           |
-                    |   Queue   |
-                    |           |
-                    +-----------+
-                    |   XREP    |
-                    \-----------/
-                          ^
-                          |
-          /---------------+---------------\
-          |               |               |
-          v               v               v
-    /-----------\   /-----------\   /-----------\
-    |   XREQ    |   |   XREQ    |   |   XREQ    |
-    +-----------+   +-----------+   +-----------+
-    |           |   |           |   |           |
-    |  Server   |   |  Server   |   |  Server   |
-    |           |   |           |   |           |
-    +-----------+   +-----------+   +-----------+
-
-
-           Figure # - Centralized RPC
-[[/code]]
-
-The client connects its REQ socket to the queue and sends requests, one by one, waiting each time for an answer. If it doesn't get a reply within a certain time, say 1 second, it retries. After a few retries, it gives up in exasperation.
-
-The server connects its XREQ socket to the queue and uses the LRU worker approach, i.e. it signals when it's ready for a new task by sending a request, and the queue then sends the task as a reply. It does its work, and sends its results back as a new "I'm ready (oh, and BTW here is the stuff I worked on)" request message. When waiting for work, the server sends a heartbeat message (which is an empty message) to the queue each second. This is why the server uses an XREQ socket instead of a REQ socket (which does not allow multiple requests to be sent before a response arrives).
-
-All the complex work happens in the queue, which is another nice thing about the centralized RPC architecture. Clients and servers remain simple. The first nice thing was scalability, even with many servers and clients, you only need one DNS name everyone connects to.
-
-The queue binds to XREP frontend and backend sockets, and handles requests and replies asynchronously on these using the LRU logic we developed in Chapter 3. It works with these data structures:
-
-* A set (a hash map) of all known servers, which identify themselves using unique IDs.
-* A list of servers that are ready for work.
-* A list of servers that are busy doing work.
-* A list of requests sent by clients but not yet successfully processed.
-
-The queue polls all sockets for input and then processes all incoming messages. It queues tasks and distributes them to workers that are alive. Any replies from workers are sent back to their original clients, unless the worker is disabled, in which case the reply is dropped.
-
-Idle workers must signal that they are alive with a ready message or a heartbeat, or they will be marked as disabled until they send a message again. This is to detect blocked and disconnected workers (since 0MQ does not report disconnections).
-
-The queue detects a disabled worker in two ways: heartbeating, as explained, and timeouts on request processing. If a reply does not come back within (e.g.) 10ms, the queue marks the worker as disabled, and retries with the next worker.
-
-
-The server will randomly simulate two problems when it receives a task:
-1. A crash and restart while processing a request, i.e. close its socket, block for 5 seconds, reopen its socket and restart.
-2. A temporary busy wait, i.e. sleep 1 second then continue as normal.
-
-.end
-
-
-
-++++ Distributed (Peer-to-peer) RPC
 
 
 
