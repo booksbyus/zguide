@@ -78,7 +78,6 @@ s_send (void *socket, char *string) {
     zmq_msg_init_size (&message, strlen (string));
     memcpy (zmq_msg_data (&message), string, strlen (string));
     rc = zmq_send (socket, &message, 0);
-    assert (!rc);
     zmq_msg_close (&message);
     return (rc);
 }
@@ -92,7 +91,6 @@ s_sendmore (void *socket, char *string) {
     memcpy (zmq_msg_data (&message), string, strlen (string));
     rc = zmq_send (socket, &message, ZMQ_SNDMORE);
     zmq_msg_close (&message);
-    assert (!rc);
     return (rc);
 }
 

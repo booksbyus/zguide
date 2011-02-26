@@ -773,12 +773,12 @@ When we extend request-reply, REQ talks to XREP and XREQ talks to REP. In betwee
     Figure # - Extending request-reply
 [[/code]]
 
-The request-reply broker binds to two endpoints, one for clients to connect to (the frontend socket) and one for services to connect to (the backend). To test this broker, you will want to change your services so they connect to the backend socket. Here are a Python client and service that show what I mean:
+The request-reply broker binds to two endpoints, one for clients to connect to (the frontend socket) and one for services to connect to (the backend). To test this broker, you will want to change your services so they connect to the backend socket. Here are a client and service that show what I mean:
 
-[[code type="Python" title="Request-reply client" name="rrclient"]]
+[[code type="example" title="Request-reply client" name="rrclient"]]
 [[/code]]
 
-[[code type="Python" title="Request-reply service" name="rrserver"]]
+[[code type="example" title="Request-reply service" name="rrserver"]]
 [[/code]]
 
 And here is the broker, in C. You will see that it's multipart safe:

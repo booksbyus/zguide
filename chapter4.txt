@@ -192,9 +192,6 @@ This is the architecture. We take the client-side pirate and add something like 
     /-----------\   /-----------\   /-----------\
     |   XREQ    |   |   XREQ    |   |   XREQ    |
     +-----------+   +-----------+   +-----------+
-    |   Poll    |   |   Poll    |   |   Poll    |
-    | Heartbeat |   | Heartbeat |   | Heartbeat |
-    +-----------+   +-----------+   +-----------+
     |           |   |           |   |           |
     |  Server   |   |  Server   |   |  Server   |
     |           |   |           |   |           |
@@ -204,12 +201,14 @@ This is the architecture. We take the client-side pirate and add something like 
                Figure # - Pirate Queue
 [[/code]]
 
-We assume that the servers - which contain application code - will crash far more often than the queue. So the client uses the client-side pirate pattern to create a reliable link to the queue. The real work of managing servers sits in the queue, with a thin layer in the server:
+We assume that the servers - which contain application code - will crash far more often than the queue. So the client uses the client-side pirate pattern to create a reliable link to the queue. The real work of managing servers sits in the queue:
 
 [[code type="example" title="Pirate Queue" name="piqueue"]]
 [[/code]]
 
-The server connects its XREQ socket to the queue and uses the LRU approach, i.e. it signals when it's ready for a new task by sending a request, and the queue then sends the task as a reply. It does its work, and sends its results back as a new "I'm ready (oh, and BTW here is the stuff I worked on)" request message. When waiting for work, the server sends a heartbeat message (which is an empty message) to the queue each second. This is why the server uses an XREQ socket instead of a REQ socket (which does not allow multiple requests to be sent before a response arrives).
+This example runs the clients, servers, and queue in a single process using multiple threads. In reality each of these layers would be a stand-alone process. The code is largely ready for that: each task already creates its own context.
+
+The server connects its REQ socket to the queue and uses the LRU approach, i.e. it signals when it's ready for a new task by sending a request, and the queue then sends the task as a reply. It does its work, and sends its results back as a new "I'm ready (oh, and BTW here is the stuff I worked on)" request message.
 
 The queue binds to XREP frontend and backend sockets, and handles requests and replies asynchronously on these using the LRU logic we developed in Chapter 3. It works with these data structures:
 
@@ -225,6 +224,11 @@ Idle servers must signal that they are alive with a ready message or a heartbeat
 The queue detects a disabled server in two ways: heartbeating, as explained, and timeouts on request processing. If a reply does not come back within (e.g.) 10ms, the queue marks the server as disabled, and retries with the next server.
 
 ----
+The server connects its XREQ socket to the queue and uses the LRU approach, i.e. it signals when it's ready for a new task by sending a request, and the queue then sends the task as a reply. It does its work, and sends its results back as a new "I'm ready (oh, and BTW here is the stuff I worked on)" request message. When waiting for work, the server sends a heartbeat message (which is an empty message) to the queue each second. This is why the server uses an XREQ socket instead of a REQ socket (which does not allow multiple requests to be sent before a response arrives).
+    +-----------+   +-----------+   +-----------+
+    |   Poll    |   |   Poll    |   |   Poll    |
+    | Heartbeat |   | Heartbeat |   | Heartbeat |
+
 * If there is just one server in the pool, the we wait with a timeout for the server to reply. If the server does not reply within the timeout, we retry a number of times before abandoning.
 * If there are multiple servers in the pool, we try each server in succession, but do not retry the same server twice.
 * If a server appears to be really dead (i.e. has not responded for some time), we remove it from the pool.
