@@ -19,16 +19,15 @@ int main () {
     int request_nbr;
     for (request_nbr = 0; request_nbr != 10; request_nbr++) {
         zmq_msg_t request;
-        zmq_msg_init_data (&request, "Hello", 6, NULL, NULL);
-        printf ("Sending request %d...\n", request_nbr);
+        zmq_msg_init_data (&request, "Hello", 5, NULL, NULL);
+        printf ("Sending Hello %d...\n", request_nbr);
         zmq_send (requester, &request, 0);
         zmq_msg_close (&request);
 
         zmq_msg_t reply;
         zmq_msg_init (&reply);
         zmq_recv (requester, &reply, 0);
-        printf ("Received reply %d: [%s]\n", request_nbr,
-            (char *) zmq_msg_data (&reply));
+        printf ("Received World %d\n", request_nbr);
         zmq_msg_close (&reply);
     }
     zmq_close (requester);

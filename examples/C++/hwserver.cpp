@@ -19,15 +19,14 @@ int main () {
 
         //  Wait for next request from client
         socket.recv (&request);
-        printf ("Received request: [%s]\n",
-            (char *) request.data ());
+        printf ("Received Hello");
 
         //  Do some 'work'
         sleep (1);
 
         //  Send reply back to client
         zmq::message_t reply (6);
-        memcpy ((void *) reply.data (), "World", 6);
+        memcpy ((void *) reply.data (), "World", 5);
         socket.send (reply);
     }
     return 0;

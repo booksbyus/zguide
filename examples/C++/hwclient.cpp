@@ -19,15 +19,14 @@ int main ()
     //  Do 10 requests, waiting each time for a response
     for (int request_nbr = 0; request_nbr != 10; request_nbr++) {
         zmq::message_t request (6);
-        memcpy ((void *) request.data (), "Hello", 6);
-        printf ("Sending request %d...\n", request_nbr);
+        memcpy ((void *) request.data (), "Hello", 5);
+        printf ("Sending Hello %d...\n", request_nbr);
         socket.send (request);
 
         //  Get the reply.
         zmq::message_t reply;
         socket.recv (&reply);
-        printf ("Received reply %d: [%s]\n", request_nbr,
-            (char *) reply.data ());
+        printf ("Received World %d\n", request_nbr);
     }
     return 0;
 }

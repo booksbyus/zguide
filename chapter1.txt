@@ -128,7 +128,7 @@ There is a lot happening behind the scenes but what matters to us programmers is
 
 0MQ doesn't know anything about the data you send except its size in bytes. That means you are responsible for formatting it safely so that applications can read it back. Doing this for objects and complex data types is a job for specialized libraries like Protocol Buffers. But even for strings you need to take care.
 
-In C and some other languages, strings are terminated with a null byte. In the Hello World example we just saw, we sent the string along with that null byte:
+In C and some other languages, strings are terminated with a null byte. We could send a string like "HELLO" with that extra null byte:
 
 [[code]]
 zmq_msg_init_data (&request, "Hello", 6, NULL, NULL);
@@ -151,9 +151,7 @@ Then what goes onto the wire is:
           Figure # - A 0MQ string
 [[/code]]
 
-And if you read this from a C program, you will get something that looks like a string, and might by accident act like a string (if by luck the five bytes find themselves followed by an innocently lurking null), but isn't a proper string.
-
-Which means that if you try the Hello World server and client, mixing C and another language, you will probably get weird results. Actually, I'd hope you get weird results because that will help you understand this section.
+And if you read this from a C program, you will get something that looks like a string, and might by accident act like a string (if by luck the five bytes find themselves followed by an innocently lurking null), but isn't a proper string. Which means that your client and server don't agree on the string format, you will get weird results.
 
 When you receive string data from 0MQ, in C, you simply cannot trust that it's safely terminated. Every single time you read a string you should allocate a new buffer with space for an extra byte, copy the string, and terminate it properly with a null.
 
@@ -510,7 +508,7 @@ Since the Guide aims to be a leader, not a follower, we've updated it to cover 2
 
 * In 2.0, zmq_close[3] and zmq_term[3] discarded any in-flight messages, so it was unsafe to close a socket and terminate right after sending messages. In 2.1, these calls are safe: zmq_term will flush anything that's waiting to be sent. In 2.0 examples we often added a sleep(1) to get around the problem. In 2.1, this isn't needed.
 
-* In 2.0, it was safe to call zmq_term[3] even if there were open sockets. In 2.1, this is not safe, and it can cause zmq_term to block. So in 2.1 we always close every socket, before exiting. If your program mysteriously hangs at zmq_term, you're missing a zmq_close or two.
+* In 2.0, it was safe to call zmq_term[3] even if there were open sockets. In 2.1, this is not safe, and it can cause zmq_term to block. So in 2.1 we always close every socket, before exiting. Furthermore, if you have any outgoing messages waiting on a socket, 2.1 will **by default wait forever** trying to deliver these. You must set the LINGER socket option (e.g. to zero) before calling zmq_term.
 
 * In 2.0, you created a socket in the thread that used it, period. 2.1 introduces the funky possibility of "socket migration", which means thread A can create a socket and then pass it to a child thread B. This technique works very nicely for multithreading, with the {{inproc}} transport (thread A creates a socket pair, binds and connects them, then passes one socket to child thread B as it starts it).
 
