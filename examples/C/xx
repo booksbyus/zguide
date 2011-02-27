@@ -1,0 +1,15 @@
+build piworker1
+build piqueue1
+build piclient
+
+piworker1 &
+sleep 1
+piworker1 &
+sleep 1
+piworker1 &
+sleep 1
+piworker1 &
+sleep 1
+piqueue1 &
+piclient &
+
