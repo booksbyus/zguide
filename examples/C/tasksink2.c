@@ -4,7 +4,7 @@
 //
 #include "zhelpers.h"
 
-int main (int argc, char *argv[])
+int main (void) 
 {
     void *context = zmq_init (1);
 
@@ -21,8 +21,7 @@ int main (int argc, char *argv[])
     free (string);
 
     //  Start our clock now
-    struct timeval tstart;
-    gettimeofday (&tstart, NULL);
+    int64_t start_time = s_clock ();
 
     //  Process 100 confirmations
     int task_nbr;
@@ -35,20 +34,8 @@ int main (int argc, char *argv[])
             printf (".");
         fflush (stdout);
     }
-    //  Calculate and report duration of batch
-    struct timeval tend, tdiff;
-    gettimeofday (&tend, NULL);
-
-    if (tend.tv_usec < tstart.tv_usec) {
-        tdiff.tv_sec = tend.tv_sec - tstart.tv_sec - 1;
-        tdiff.tv_usec = 1000000 + tend.tv_usec - tstart.tv_usec;
-    }
-    else {
-        tdiff.tv_sec = tend.tv_sec - tstart.tv_sec;
-        tdiff.tv_usec = tend.tv_usec - tstart.tv_usec;
-    }
-    int total_msec = tdiff.tv_sec * 1000 + tdiff.tv_usec / 1000;
-    printf ("Total elapsed time: %d msec\n", total_msec);
+    printf ("Total elapsed time: %d msec\n", 
+        (int) (s_clock () - start_time));
 
     //  Send kill signal to workers
     s_send (controller, "KILL");
