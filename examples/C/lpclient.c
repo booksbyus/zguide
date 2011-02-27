@@ -1,5 +1,5 @@
 //
-//  Client-side pirate
+//  Lazy Pirate client
 //  Use zmq_poll to do a safe request-reply
 //  To run, start piserver and then randomly kill/restart it
 //
