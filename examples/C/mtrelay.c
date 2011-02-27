@@ -55,7 +55,8 @@ step2 (void *args) {
     return NULL;
 }
 
-int main () {
+int main (void) 
+{
     s_version_assert (2, 1);
     void *context = zmq_init (1);
 

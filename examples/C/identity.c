@@ -8,7 +8,8 @@
 //
 #include "zhelpers.h"
 
-int main () {
+int main (void) 
+{
     void *context = zmq_init (1);
 
     void *sink = zmq_socket (context, ZMQ_XREP);

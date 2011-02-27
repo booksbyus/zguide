@@ -70,7 +70,8 @@ publisher (void *args) {
 //  This main thread simply starts a client, and a server, and then
 //  waits for the client to croak.
 //
-int main (void) {
+int main (void) 
+{
     pthread_t server_thread;
     pthread_create (&server_thread, NULL, publisher, NULL);
     

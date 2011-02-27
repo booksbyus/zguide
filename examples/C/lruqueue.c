@@ -75,7 +75,7 @@ worker_thread (void *args) {
     return NULL;
 }
 
-int main (int argc, char *argv[])
+int main (void) 
 {
     s_version_assert (2, 1);
 

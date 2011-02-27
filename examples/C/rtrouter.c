@@ -3,7 +3,8 @@
 //
 #include "zhelpers.h"
 
-int main () {
+int main (void) 
+{
     void *context = zmq_init (1);
 
     void *worker = zmq_socket (context, ZMQ_XREP);

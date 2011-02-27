@@ -3,7 +3,8 @@
 //
 #include "zhelpers.h"
 
-int main () {
+int main (void) 
+{
     //  Prepare our context and subscriber
     void *context = zmq_init (1);
     void *subscriber = zmq_socket (context, ZMQ_SUB);

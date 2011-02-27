@@ -8,7 +8,8 @@
 
 //  We will do this all in one thread to emphasize the sequence
 //  of events...
-int main () {
+int main (void) 
+{
     void *context = zmq_init (1);
 
     void *client = zmq_socket (context, ZMQ_XREP);

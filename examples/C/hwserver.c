@@ -11,7 +11,8 @@
 #include <unistd.h>
 #include <string.h>
 
-int main () {
+int main (void) 
+{
     void *context = zmq_init (1);
 
     //  Socket to talk to clients

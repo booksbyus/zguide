@@ -8,7 +8,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
-int main () {
+int main (void) 
+{
     void *context = zmq_init (1);
 
     //  Socket to talk to server

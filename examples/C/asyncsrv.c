@@ -136,7 +136,8 @@ server_worker (void *context) {
 //  This main thread simply starts several clients, and a server, and then
 //  waits for the server to finish.
 //
-int main () {
+int main (void) 
+{
     s_version_assert (2, 1);
 
     pthread_t client_thread;

@@ -5,7 +5,7 @@
 //
 #include "zhelpers.h"
 
-int main (int argc, char *argv[])
+int main (void) 
 {
     void *context = zmq_init (1);
 

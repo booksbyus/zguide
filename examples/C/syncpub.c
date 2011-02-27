@@ -11,7 +11,8 @@
 //  We wait for 10 subscribers
 #define SUBSCRIBERS_EXPECTED  10
 
-int main () {
+int main (void) 
+{
     s_version_assert (2, 1);
     void *context = zmq_init (1);
 
