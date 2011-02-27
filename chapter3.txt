@@ -234,10 +234,10 @@ We'll make an example where the dealers don't talk back, they're pure sinks. Our
 [[code type="textdiagram"]]
           +-------------+
           |             |
-          |   Client    |   Send to "A" or "B"
+          |   Client    |  Send to "A" or "B"
           |             |
           +-------------+
-          |   ROUTER    |   
+          |     XREP    |  (ROUTER)
           \------+------/
                  |
                  |
@@ -246,7 +246,7 @@ We'll make an example where the dealers don't talk back, they're pure sinks. Our
          |               |
          v               v
    /-----------\   /-----------\
-   |  DEALER   |   |  DEALER   |
+   |   XREQ    |   |   XREQ    |  (DEALER)
    |    "A"    |   |    "B"    |
    +-----------+   +-----------+
    |           |   |           |
@@ -287,7 +287,7 @@ Something to note: if you use an invalid address, the router discards the messag
 
 Dealers in fact they work exactly like PUSH and PULL combined. It's however illegal and pointless to connect PULL or PUSH to a request-reply socket.
 
-+++ Least-Recently Used Routing
++++ Least-Recently Used Routing (LRU Pattern)
 
 Like we said, Mamas don't listen to you, and if you try to speak out of turn they'll ignore you. You have to wait for them to say something, //then// you can give a sarcastic answer. This is very useful for routing because it means we can keep a bunch of mamas waiting for answers. In effect, mamas tell us when they're ready.
 
@@ -307,7 +307,7 @@ Like dealers, mamas can only talk to one router and since mamas always start by 
           |   Client    |   Send to "A" or "B"
           |             |
           +-------------+
-          |   ROUTER    |   OK, it's really XREP
+          |     XREP    |   (ROUTER)
           \-------------/
                  ^
                  |  (1) Mama says Hi
@@ -317,7 +317,7 @@ Like dealers, mamas can only talk to one router and since mamas always start by 
          |               |   (2) Router gives laundry
          v               v
    /-----------\   /-----------\
-   |   MAMA    |   |   MAMA    |   Aka. REQ
+   |    REQ    |   |    REQ    |   (MAMA)
    |    "A"    |   |    "B"    |
    +-----------+   +-----------+
    |           |   |           |
@@ -399,7 +399,7 @@ A core philosophy of 0MQ is that the edges are smart and many, and the middle is
           |   Client    |   Send to "A" or "B"
           |             |
           +-------------+
-          |   ROUTER    |   Yes, it's still XREP
+          |     XREP    |   (ROUTER)
           \-------------/
                  ^
                  |
@@ -409,7 +409,7 @@ A core philosophy of 0MQ is that the edges are smart and many, and the middle is
          |               |
          v               v
    /-----------\   /-----------\
-   |   PAPA    |   |   PAPA    |   REP, naturally
+   |    REP    |   |    REP    |   (PAPA)
    |    "A"    |   |    "B"    |
    +-----------+   +-----------+
    |           |   |           |
@@ -486,15 +486,15 @@ To start with, let's look back at the classic request-reply pattern and then see
             +--------+
             | Client |
             +--------+
-            |  Mama  |               REQ
-            +---+----+                ^
-                |                     |
-                |                     |
-    +-----------+-----------+         |
-    |           |           |         |
-    |           |           |         |
-+---+----+  +---+----+  +---+----+    v
-|  Papa  |  |  Papa  |  |  Papa  |   REP
+            |  REQ   |   (MAMA)
+            +---+----+
+                |
+                |
+    +-----------+-----------+
+    |           |           |
+    |           |           |
++---+----+  +---+----+  +---+----+
+|  REP   |  |  REP   |  |  REP   |  (PAPA)
 +--------+  +--------+  +--------+
 | Worker |  | Worker |  | Worker |
 +--------+  +--------+  +--------+
@@ -509,23 +509,23 @@ This extends to multiple papas, but if we want to handle multiple mamas as well 
 +--------+  +--------+  +--------+
 | Client |  | Client |  | Client |
 +--------+  +--------+  +--------+
-|  Mama  |  |  Mama  |  |  Mama  |   REQ
+|  REQ   |  |  REQ   |  |  REQ   |   MAMA
 +---+----+  +---+----+  +---+----+    ^
     |           |           |         |
     +-----------+-----------+         |
                 |                     |
             +---+----+                v
-            | Router |               XREP
+            |  XREP  |              ROUTER
             +--------+                :
             | Device |                :
             +--------+                :
-            | Dealer |               XREQ
+            |  XREQ  |              DEALER
             +---+----+                ^
                 |                     |
     +-----------+-----------+         |
     |           |           |         |
 +---+----+  +---+----+  +---+----+    v
-|  Papa  |  |  Papa  |  |  Papa  |   REP
+|  REP   |  |  REP   |  |  REP   |   PAPA
 +--------+  +--------+  +--------+
 | Worker |  | Worker |  | Worker |
 +--------+  +--------+  +--------+
@@ -536,29 +536,29 @@ Figure # - Extended request-reply
 
 The key here is that the router stores the originating mama address in the request envelope, the dealer and papas don't touch that, and so the router knows which mama to send the reply back to. Papas are anonymous and not addressed in this pattern, all papas are assumed to provide the same service.
 
-In the above design, we're using the built-in load balancing routing that the dealer socket provides. However we want for our broker to use a least-recently used (LRU) algorithm, so we take the router-mama pattern we learned, and apply that:
+In the above design, we're using the built-in load balancing routing that the dealer socket provides. However we want for our broker to use a least-recently used algorithm, so we take the router-mama pattern we learned, and apply that:
 
 [[code type="textdiagram"]]
     +--------+  +--------+  +--------+
     | Client |  | Client |  | Client |
     +--------+  +--------+  +--------+
-    |  Mama  |  |  Mama  |  |  Mama  |   REQ
+    |  REQ   |  |  REQ   |  |  REQ   |   MAMA
     +---+----+  +---+----+  +---+----+    ^
         |           |           |         |
         +-----------+-----------+         |
                     |                     |
                 +---+----+                v
-                | Router |  Frontend     XREP
+                |  XREP  |  Frontend    ROUTER
                 +--------+                :
                 | Device |  LRU queue     :
                 +--------+                :
-                | Router |  Backend      XREP
+                |  XREP  |  Backend     ROUTER
                 +---+----+                ^
                     |                     |
         +-----------+-----------+         |
         |           |           |         |
     +---+----+  +---+----+  +---+----+    v
-    |  Mama  |  |  Mama  |  |  Mama  |   REQ
+    |  REQ   |  |  REQ   |  |  REQ   |   MAMA
     +--------+  +--------+  +--------+
     | Worker |  | Worker |  | Worker |
     +--------+  +--------+  +--------+
@@ -774,7 +774,7 @@ In the router-to-dealer example we saw a 1-to-N use case where one client talks 
      |  Client   |   |  Client   |
      |           |   |           |
      +-----------+   +-----------+
-     |  DEALER   |   |  DEALER   |
+     |   XREQ    |   |    XREQ   |  (DEALER)
      \-----------/   \-----------/
            ^               ^
            |               |
@@ -784,7 +784,7 @@ In the router-to-dealer example we saw a 1-to-N use case where one client talks 
                    |
                    v
             /------+------\
-            |   ROUTER    |
+            |    XREP     |  (ROUTER)
             +-------------+
             |             |
             |   Server    |
@@ -846,7 +846,7 @@ The socket logic in the server is fairly wicked. This is the detailed architectu
       :                      |                      :
       :        +-------------+-------------+        :
       :        |             |             |        :
-      :        v             v             v        : 
+      :        v             v             v        :
       :     connect       connect       connect     :
       :   /---------\   /---------\   /---------\   :
       :   |  XREQ   |   |  XREQ   |   |  XREQ   |   :
@@ -857,7 +857,7 @@ The socket logic in the server is fairly wicked. This is the detailed architectu
       :   +---------+   +---------+   +---------+   :
       :                                             :
       \---------------------------------------------/
-      
+
             Figure # - Detail of async server
 [[/code]]
 
@@ -865,7 +865,7 @@ Note that we're doing a dealer-to-router dialog between client and server, but i
 
 Let's think about the routing envelope. The client sends a simple message. The server thread receives a two-part message (real message prefixed by client identity). We have two possible designs for the server-to-worker interface:
 
-* Workers get unaddressed messages, and we manage the connections from server thread to worker threads explicitly using a router socket as backend. This would require that workers start by telling the server they exist, which can then route requests to workers and track which client is 'connected' to which worker.  This is the least-recently routing pattern already covered.
+* Workers get unaddressed messages, and we manage the connections from server thread to worker threads explicitly using a router socket as backend. This would require that workers start by telling the server they exist, which can then route requests to workers and track which client is 'connected' to which worker. This is the LRU pattern we already covered.
 
 * Workers get addressed messages, and they return addressed replies. This requires that workers can properly decode and recode envelopes but it doesn't need any other mechanisms.
 
@@ -879,11 +879,11 @@ The second design is much simpler, so that's what we use:
 
 When you build servers that maintain stateful conversations with clients, you will run into a classic problem. If the server keeps some state per client, and clients keep coming and going, eventually it will run of resources. Even if the same clients keep connecting, if you're using transient sockets (no explicit identity), each connection will look like a new one.
 
-We cheat in the above example by keeping state only for a very short time (the time it takes a worker to process a request) and then throwing away the state. But that's not practical for many cases. 
+We cheat in the above example by keeping state only for a very short time (the time it takes a worker to process a request) and then throwing away the state. But that's not practical for many cases.
 
 To properly manage client state in a stateful asynchronous server you must:
 
-* Do heartbeating from client to server. In our example we send a request once per second, which can reliably be used as a heartbeat. 
+* Do heartbeating from client to server. In our example we send a request once per second, which can reliably be used as a heartbeat.
 * Store state using the client identity as key. This works for both durable and transient sockets.
 * Detect a stopped heartbeat. If there's no request from a client within, say, two seconds, the server can detect this and destroy any state it's holding for that client.
 
@@ -898,7 +898,7 @@ We've seen XREP/router sockets talking to dealers, mamas, and papas. The last ca
    | Front-end |     | Front-end |
    |           |     |           |
    +-----------+     +-----------+
-   |  Router   |     |  Router   |   XREP
+   |   XREP    |     |   XREP    |  ROUTER
    \-----------/     \-----------/    ^
       connect           connect       |
          ^                 ^          |
@@ -911,7 +911,7 @@ We've seen XREP/router sockets talking to dealers, mamas, and papas. The last ca
          v                 v          |
        bind              bind         |
    /-----------\     /-----------\    v
-   |  Router   |     |  Router   |   XREP
+   |   XREP    |     |   XREP    |  ROUTER
    +-----------+     +-----------+
    |           |     |           |
    |  Worker   |     |  Worker   |
@@ -988,7 +988,7 @@ It's a straight-forward problem that requires no exotic hardware or protocols, j
 
 ++++ Architecture of a Single Cluster
 
-Workers and clients are synchronous. We want to use the least-recently used algorithm to route tasks to workers. Workers are all identical, our facility has no notion of different services. Workers are anonymous, clients never address them directly. We make no attempt here to provide guaranteed delivery, retry, etc.
+Workers and clients are synchronous. We want to use the LRU pattern to route tasks to workers. Workers are all identical, our facility has no notion of different services. Workers are anonymous, clients never address them directly. We make no attempt here to provide guaranteed delivery, retry, etc.
 
 For reasons we already looked at, clients and workers won't speak to each other directly. It makes it impossible to add or remove nodes dynamically. So our basic model consists of the request-reply message broker we saw earlier:
 
@@ -996,7 +996,7 @@ For reasons we already looked at, clients and workers won't speak to each other 
     +--------+  +--------+  +--------+
     | Client |  | Client |  | Client |
     +--------+  +--------+  +--------+
-    |  Mama  |  |  Mama  |  |  Mama  |  REQ
+    |  REQ   |  |  REQ   |  |  REQ   |  (MAMA)
     +---+----+  +---+----+  +---+----+
         |           |           |
         +-----------+-----------+
@@ -1004,11 +1004,11 @@ For reasons we already looked at, clients and workers won't speak to each other 
     +--------------------------------+
     |               |                |
     |         +-----+------+         |
-    |         |   Router   |         |  XREP
+    |         |    XREP    |         |  (ROUTER)
     |         +------------+         |
     |         | LRU Queue  |         |
     |         +------------+         |
-    |         |   Router   |         |  XREP
+    |         |    XREP    |         |  (ROUTER)
     |         +-----+------+         |
     |               |         Broker :
     +--------------------------------+
@@ -1017,7 +1017,7 @@ For reasons we already looked at, clients and workers won't speak to each other 
         +-----------+-----------+
         |           |           |
     +---+----+  +---+----+  +---+----+
-    |  Mama  |  |  Mama  |  |  Mama  |  REQ
+    |  REQ   |  |  REQ   |  |  REQ   |  (MAMA)
     +--------+  +--------+  +--------+
     | Worker |  | Worker |  | Worker |
     +--------+  +--------+  +--------+
@@ -1070,7 +1070,7 @@ Let's explore Idea #1. Workers connecting to both brokers and accepting jobs fro
                                    :
               |            |               |            |
               +------------+               +------------+
-              |   Router   |               |   Router   |
+              |    XREP    |               |    XREP    |
               +-----+------+               +-----+------+
                     |                            |
           +---------|-+--=--------+--------------+
@@ -1079,7 +1079,7 @@ Let's explore Idea #1. Workers connecting to both brokers and accepting jobs fro
         | :         | :         | :
         | :         | :         | :
     +---+-+--+  +---+-+--+  +---+-+--+
-    | Router |  | Router |  | Router |
+    |  XREP  |  |  XREP  |  |  XREP  |
     +--------+  +--------+  +--------+
     | Worker |  | Worker |  | Worker |
     +--------+  +--------+  +--------+
@@ -1176,7 +1176,7 @@ And there is also the flow of information between a broker and its local clients
 
 ++++ The Naming Ceremony
 
-Three flows x two sockets for each flow = six sockets that we have to manage in the broker.   Choosing good names is vital to keeping a multi-socket juggling act reasonably coherent in our minds. Sockets //do// something and what they do should form the basis for their names. It's about being able to read the code several weeks later on a cold Monday morning before coffee, and not feeling pain.
+Three flows x two sockets for each flow = six sockets that we have to manage in the broker.  Choosing good names is vital to keeping a multi-socket juggling act reasonably coherent in our minds. Sockets //do// something and what they do should form the basis for their names. It's about being able to read the code several weeks later on a cold Monday morning before coffee, and not feeling pain.
 
 Let's do a shamanistic naming ceremony for the sockets. The three flows are:
 

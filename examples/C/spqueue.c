@@ -1,8 +1,7 @@
 //
-//  Pirate work queue, design 1
-//
-//  This has no recovery mechanisms at all, it depends on the client for
-//  recovery. Runs forever.
+//  Simple Pirate queue
+//  This is identical to the LRU pattern, with no reliability mechanisms
+//  at all. It depends on the client for recovery. Runs forever.
 //
 #include "zhelpers.h"
 #include "zmsg.c"

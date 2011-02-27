@@ -1,5 +1,5 @@
 //
-//  Client-side pirate worker
+//  Simple Pirate worker
 //  Connects REQ socket to tcp://*:5556
 //  Implements worker part of LRU queueing
 //
