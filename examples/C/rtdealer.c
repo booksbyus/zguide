@@ -18,7 +18,8 @@
 //  run on different boxes...
 //
 static void *
-worker_a (void *args) {
+worker_task_a (void *args)
+{
     void *context = zmq_init (1);
     void *worker = zmq_socket (context, ZMQ_XREQ);
     zmq_setsockopt (worker, ZMQ_IDENTITY, "A", 1);
@@ -42,7 +43,8 @@ worker_a (void *args) {
 }
 
 static void *
-worker_b (void *args) {
+worker_task_b (void *args)
+{
     void *context = zmq_init (1);
     void *worker = zmq_socket (context, ZMQ_XREQ);
     zmq_setsockopt (worker, ZMQ_IDENTITY, "B", 1);
@@ -74,8 +76,8 @@ int main (void)
     zmq_bind (client, "ipc://routing.ipc");
 
     pthread_t worker;
-    pthread_create (&worker, NULL, worker_a, NULL);
-    pthread_create (&worker, NULL, worker_b, NULL);
+    pthread_create (&worker, NULL, worker_task_a, NULL);
+    pthread_create (&worker, NULL, worker_task_b, NULL);
 
     //  Wait for threads to connect, since otherwise the messages
     //  we send won't be routable.

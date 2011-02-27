@@ -17,7 +17,8 @@
 #define NBR_WORKERS 10
 
 static void *
-worker_thread (void *args) {
+worker_task (void *args) 
+{
     void *context = zmq_init (1);
     void *worker = zmq_socket (context, ZMQ_REQ);
 
@@ -60,7 +61,7 @@ int main (void)
     int worker_nbr;
     for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++) {
         pthread_t worker;
-        pthread_create (&worker, NULL, worker_thread, NULL);
+        pthread_create (&worker, NULL, worker_task, NULL);
     }
     int task_nbr;
     for (task_nbr = 0; task_nbr < NBR_WORKERS * 10; task_nbr++) {

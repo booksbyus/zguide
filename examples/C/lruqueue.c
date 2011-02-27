@@ -24,7 +24,8 @@
 //  Basic request-reply client using REQ socket
 //
 static void *
-client_thread (void *args) {
+client_task (void *args)
+{
     void *context = zmq_init (1);
     void *client = zmq_socket (context, ZMQ_REQ);
     s_set_id (client);          //  Makes tracing easier
@@ -43,7 +44,8 @@ client_thread (void *args) {
 //  Worker using REQ socket to do LRU routing
 //
 static void *
-worker_thread (void *args) {
+worker_task (void *args)
+{
     void *context = zmq_init (1);
     void *worker = zmq_socket (context, ZMQ_REQ);
     s_set_id (worker);          //  Makes tracing easier
@@ -89,12 +91,12 @@ int main (void)
     int client_nbr;
     for (client_nbr = 0; client_nbr < NBR_CLIENTS; client_nbr++) {
         pthread_t client;
-        pthread_create (&client, NULL, client_thread, NULL);
+        pthread_create (&client, NULL, client_task, NULL);
     }
     int worker_nbr;
     for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++) {
         pthread_t worker;
-        pthread_create (&worker, NULL, worker_thread, NULL);
+        pthread_create (&worker, NULL, worker_task, NULL);
     }
     //  Logic of LRU loop
     //  - Poll backend always, frontend only if 1+ worker ready

@@ -15,7 +15,8 @@
 //  run several client tasks in parallel, each with a different random ID.
 
 static void *
-client_task (void *args) {
+client_task (void *args)
+{
     void *context = zmq_init (1);
     void *client = zmq_socket (context, ZMQ_XREQ);
 
@@ -57,7 +58,8 @@ client_task (void *args) {
 
 static void *server_worker (void *socket);
 
-void *server_task (void *args) {
+void *server_task (void *args)
+{
     void *context = zmq_init (1);
     
     //  Frontend socket talks to clients over TCP
@@ -109,7 +111,8 @@ void *server_task (void *args) {
 //  times, with random delays between replies.
 //
 static void *
-server_worker (void *context) {
+server_worker (void *context)
+{
     void *worker = zmq_socket (context, ZMQ_XREQ);
     zmq_connect (worker, "inproc://backend");
 

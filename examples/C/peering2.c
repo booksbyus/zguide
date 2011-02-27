@@ -24,7 +24,8 @@
 //  Request-reply client using REQ socket
 //
 static void *
-client_thread (void *args) {
+client_task (void *args)
+{
     void *context = zmq_init (1);
     void *client = zmq_socket (context, ZMQ_REQ);
     zmq_connect (client, "ipc://localfe.ipc");
@@ -46,7 +47,8 @@ client_thread (void *args) {
 //  Worker using REQ socket to do LRU routing
 //
 static void *
-worker_thread (void *args) {
+worker_task (void *args)
+{
     void *context = zmq_init (1);
     void *worker = zmq_socket (context, ZMQ_REQ);
     zmq_connect (worker, "ipc://localbe.ipc");
@@ -122,13 +124,13 @@ int main (int argc, char *argv [])
     int worker_nbr;
     for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++) {
         pthread_t worker;
-        pthread_create (&worker, NULL, worker_thread, NULL);
+        pthread_create (&worker, NULL, worker_task, NULL);
     }
     //  Start local clients
     int client_nbr;
     for (client_nbr = 0; client_nbr < NBR_CLIENTS; client_nbr++) {
         pthread_t client;
-        pthread_create (&client, NULL, client_thread, NULL);
+        pthread_create (&client, NULL, client_task, NULL);
     }
 
     //  Interesting part
