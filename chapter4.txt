@@ -143,18 +143,10 @@ This approach works when we have a set of clients talking to a single server. It
 
 Rather than rely on a single server, which may die and be unavailable for a long period, Pirate works better with a pool of servers. A good model is live-live redundant, i.e. a client can send a request to any server. If one server dies, the others take over. In practice that usually means servers need some common storage, e.g. shared access to a single database. To work with a pool of servers, we need to:
 
-* Know a list of servers to connect to, rather than a single server. This makes configuration and management more work, but there are answers for that.
-* Choose a server to send a request to. The least-recently-used routing from Chapter 3 is suitable here, it means we won't send a request to a server that is not up and running.
+* Choose a server to send a request to. The least-recently-used routing from Chapter 3 is a good start. It means we won't send a request to a server that is not up and running.
 * Detect a server that dies while processing a request. We do this with a timeout: if the server does not reply within a certain time, we treat it as dead.
-* Track dead servers so we don't send requests to them (again). A simple list will work.
 
-With a pool of servers, we can make the our retry strategy smarter:
-
-* If there is just one server in the pool, the we wait with a timeout for the server to reply. If the server does not reply within the timeout, we retry a number of times before abandoning.
-* If there are multiple servers in the pool, we try each server in succession, but do not retry the same server twice.
-* If a server appears to be really dead (i.e. has not responded for some time), we remove it from the pool.
-
-This is a lot of work to do and get right in every client application that needs reliability. It's simpler to place a queue device in the middle, to which all clients and servers connect. Now we can put the server management logic in that queue device.
+This is a fair amount of work to do and get right in every client application that needs reliability. It's simpler to place a queue device in the middle, to which all clients and servers connect. Now we can put the server management logic in that queue device.
 
 This is the architecture. We take the client-side pirate and add something like the LRU (least-recently used) queue broker from Chapter 3:
 
@@ -190,7 +182,7 @@ This is the architecture. We take the client-side pirate and add something like 
           |               |               |
           v               v               v
     /-----------\   /-----------\   /-----------\
-    |   XREQ    |   |   XREQ    |   |   XREQ    |
+    |    REQ    |   |    REQ    |   |    REQ    |
     +-----------+   +-----------+   +-----------+
     |           |   |           |   |           |
     |  Server   |   |  Server   |   |  Server   |
@@ -208,9 +200,9 @@ We assume that the servers - which contain application code - will crash far mor
 
 This example runs the clients, servers, and queue in a single process using multiple threads. In reality each of these layers would be a stand-alone process. The code is largely ready for that: each task already creates its own context.
 
-The server connects its REQ socket to the queue and uses the LRU approach, i.e. it signals when it's ready for a new task by sending a request, and the queue then sends the task as a reply. It does its work, and sends its results back as a new "I'm ready (oh, and BTW here is the stuff I worked on)" request message.
+Servers are just the same as the LRU worker tasks from the lruqueue example in Chapter 3. The server connects its REQ socket to the queue and signals that it's ready for a new task by sending a request. The queue then sends the task as a reply. The server does its work, and sends its results back as a new "I'm ready (oh, and BTW here is the stuff I worked on)" request message.
 
-The queue binds to XREP frontend and backend sockets, and handles requests and replies asynchronously on these using the LRU logic we developed in Chapter 3. It works with these data structures:
+The queue binds to XREP frontend and backend sockets, and handles requests and replies asynchronously on these using the LRU queue logic. It works with these data structures:
 
 * A pool (a hash map) of all known servers, which identify themselves using unique IDs.
 * A list of servers that are ready for work.
@@ -221,7 +213,7 @@ The queue polls all sockets for input and then processes all incoming messages. 
 
 Idle servers must signal that they are alive with a ready message or a heartbeat, or they will be marked as disabled until they send a message again. This is to detect blocked and disconnected servers (since 0MQ does not report disconnections).
 
-The queue detects a disabled server in two ways: heartbeating, as explained, and timeouts on request processing. If a reply does not come back within (e.g.) 10ms, the queue marks the server as disabled, and retries with the next server.
+The queue detects a disabled server with a timeout on request processing. If a reply does not come back within (e.g.) 10ms, the queue marks the server as disabled, and retries with the next server.
 
 ----
 The server connects its XREQ socket to the queue and uses the LRU approach, i.e. it signals when it's ready for a new task by sending a request, and the queue then sends the task as a reply. It does its work, and sends its results back as a new "I'm ready (oh, and BTW here is the stuff I worked on)" request message. When waiting for work, the server sends a heartbeat message (which is an empty message) to the queue each second. This is why the server uses an XREQ socket instead of a REQ socket (which does not allow multiple requests to be sent before a response arrives).
@@ -233,13 +225,12 @@ The server connects its XREQ socket to the queue and uses the LRU approach, i.e.
 * If there are multiple servers in the pool, we try each server in succession, but do not retry the same server twice.
 * If a server appears to be really dead (i.e. has not responded for some time), we remove it from the pool.
 
-
-
 The server randomly simulates two problems when it receives a task:
 1. A crash and restart while processing a request, i.e. close its socket, block for 5 seconds, reopen its socket and restart.
 2. A temporary busy wait, i.e. sleep 1 second then continue as normal.
 
-
+When waiting for work, the server sends a heartbeat message (which is an empty message) to the queue each second. This is why the server uses an XREQ socket instead of a REQ socket (which does not allow multiple requests to be sent before a response arrives).
+* Detect a server that dies while idle. We do this with heartbeating: if the idle server does not send a heartbeat within a certain time, we treat it as dead.
 
 
 
