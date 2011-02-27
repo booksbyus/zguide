@@ -35,8 +35,6 @@ int main (void)
         //  We send a request, then we work to get a reply
         char request [10];
         sprintf (request, "%d", ++sequence);
-        //  Wait one second in between requests
-        sleep (1);
         s_send (client, request);
 
         int expect_reply = 1;

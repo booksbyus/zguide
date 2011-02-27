@@ -17,7 +17,6 @@ int main (void)
     char identity [10];
     sprintf (identity, "%04X-%04X", randof (0x10000), randof (0x10000));
     zmq_setsockopt (worker, ZMQ_IDENTITY, identity, strlen (identity));
-
     zmq_connect (worker, "tcp://localhost:5556");
 
     //  Tell queue we're ready for work

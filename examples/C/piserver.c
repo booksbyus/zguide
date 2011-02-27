@@ -31,6 +31,7 @@ int main (void)
             sleep (5);
         }
         printf ("I: normal request (%s)\n", request);
+        sleep (1);
         s_send (server, request);
         free (request);
     }
