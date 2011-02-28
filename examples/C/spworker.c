@@ -20,26 +20,27 @@ int main (void)
     zmq_connect (worker, "tcp://localhost:5556");
 
     //  Tell queue we're ready for work
-    printf ("I: worker %s is ready\n", identity);
+    printf ("I: (%s) worker ready\n", identity);
     s_send (worker, "READY");
 
     int cycles = 0;
     while (1) {
         zmsg_t *zmsg = zmsg_recv (worker);
-        cycles++;
 
         //  Simulate various problems, after a few cycles
+        cycles++;
         if (cycles > 3 && randof (5) == 0) {
-            printf ("I: worker %s simulating a crash\n", identity);
+            printf ("I: (%s) simulating a crash\n", identity);
             zmsg_destroy (&zmsg);
             break;
         }
         else
         if (cycles > 3 && randof (5) == 0) {
-            printf ("I: worker %s simulating CPU overload\n", identity);
+            printf ("I: (%s) simulating CPU overload\n", identity);
             sleep (5);
         }
-        printf ("I: worker %s normal reply (%s)\n", identity, zmsg_body (zmsg));
+        printf ("I: (%s) normal reply - %s\n", identity, zmsg_body (zmsg));
+        sleep (1);              //  Do some heavy work
         zmsg_send (&zmsg, worker);
     }
     zmq_close (worker);

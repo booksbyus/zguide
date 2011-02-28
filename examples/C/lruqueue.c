@@ -18,7 +18,7 @@
 #define NBR_CLIENTS 10
 #define NBR_WORKERS 3
 
-//  A simple dequeue operation for queue implemented as array
+//  Dequeue operation for queue implemented as array of anything
 #define DEQUEUE(q) memmove (&(q)[0], &(q)[1], sizeof (q) - sizeof (q [0]))
 
 //  Basic request-reply client using REQ socket
@@ -77,7 +77,7 @@ worker_task (void *args)
     return NULL;
 }
 
-int main (void) 
+int main (void)
 {
     s_version_assert (2, 1);
 

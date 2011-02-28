@@ -8,7 +8,7 @@
 
 #define MAX_WORKERS 100
 
-//  A simple dequeue operation for queue implemented as array
+//  Dequeue operation for queue implemented as array of anything
 #define DEQUEUE(q) memmove (&(q)[0], &(q)[1], sizeof (q) - sizeof (q [0]))
 
 int main (void)
@@ -53,6 +53,7 @@ int main (void)
         if (items [1].revents & ZMQ_POLLIN) {
             //  Now get next client request, route to next worker
             zmsg_t *zmsg = zmsg_recv (frontend);
+            //  REQ socket in worker needs an envelope delimiter
             zmsg_wrap (zmsg, worker_queue [0], "");
             zmsg_send (&zmsg, backend);
 

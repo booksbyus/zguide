@@ -19,7 +19,7 @@
 #define NBR_CLIENTS 10
 #define NBR_WORKERS 5
 
-//  A simple dequeue operation for queue implemented as array
+//  Dequeue operation for queue implemented as array of anything
 #define DEQUEUE(q) memmove (&(q)[0], &(q)[1], sizeof (q) - sizeof (q [0]))
 
 //  Request-reply client using REQ socket

@@ -425,6 +425,7 @@ zmsg_address (zmsg_t *self)
 //  --------------------------------------------------------------------------
 //  Wraps message in new address envelope
 //  If delim is not null, creates two-part envelope
+//  Call this _after_ zmq_body_set (), not before
 
 void
 zmsg_wrap (zmsg_t *self, char *address, char *delim)
