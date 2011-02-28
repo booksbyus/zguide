@@ -1,0 +1,179 @@
+discuss Disk-based Reliability
+
+You can, and people do, use spinning rust to store messages. It rather makes a mess of the idea of "performance" but we're usually more comfortable knowing a really important message (such as that transfer of $400M to my Cyprus account) is stored on disk rather than only in memory. Spinning rust only makes sense for some patterns, mainly request-reply. If we get bored in this chapter we'll play with that, but otherwise, just shove really critical messages into a database that all parties can access, and skip 0MQ for those parts of your dialog.
+
+
+Doing this right is non-trivial, as we'll see.
+This is a fair amount of work to do and get right in every client application that needs reliability. It's simpler to place a queue device in the middle, to which all clients and servers connect. Now we can put the server management logic in that queue device.
+
+Here is the architecture. We take the client-side pirate and add the LRU Pattern queue from Chapter 3, with some extra sauce:
+
+There are two levels of reliability at play here. First, from client to queue. Second, from queue to servers.
+
+++++ Reliable Queuing, Advanced
+
+### Handshaking at Startup
+
+We must use XREP-to-XREP sockets because we want to connect N clients to N servers without (necessarily) an intermediary queue device.
+
+In an XREP-to-XREP socket connection, one side of the connection must know the identity of the other.  You cannot do xrep-to-xrep flows between two anonymous sockets since an XREP socket requires an explicit identity.  In practice this means we will need a name service share the identities of the servers.  The client will connect to the server, then send it a message using the server's known identity as address, and then the server can respond to the client.
+
+In this prototype we'll use fixed, hardcoded identities for the servers.  We'll develop the name service in a later prototype.
+
+
+
+We assume that the servers - which contain application code - will crash far more often than the queue. So the client uses the client-side pirate pattern to create a reliable link to the queue. The real work of managing servers sits in the queue:
+
+
+This example runs the clients, servers, and queue in a single process using multiple threads. In reality each of these layers would be a stand-alone process. The code is largely ready for that: each task already creates its own context.
+
+Servers are just the same as the LRU worker tasks from the lruqueue example in Chapter 3. The server connects its REQ socket to the queue and signals that it's ready for a new task by sending a request. The queue then sends the task as a reply. The server does its work, and sends its results back as a new "I'm ready (oh, and BTW here is the stuff I worked on)" request message.
+
+The queue binds to XREP frontend and backend sockets, and handles requests and replies asynchronously on these using the LRU queue logic. It works with these data structures:
+
+* A pool (a hash map) of all known servers, which identify themselves using unique IDs.
+* A list of servers that are ready for work.
+* A list of servers that are busy doing work.
+* A list of requests sent by clients but not yet successfully processed.
+
+The queue polls all sockets for input and then processes all incoming messages. It queues tasks and distributes them to servers that are alive. Any replies from servers are sent back to their original clients, unless the server is disabled, in which case the reply is dropped.
+
+Idle servers must signal that they are alive with a ready message or a heartbeat, or they will be marked as disabled until they send a message again. This is to detect blocked and disconnected servers (since 0MQ does not report disconnections).
+
+The queue detects a disabled server with a timeout on request processing. If a reply does not come back within (e.g.) 10ms, the queue marks the server as disabled, and retries with the next server.
+
+
+
+++++ Server Idle Failure Detection
+
+
+
+The server connects its XREQ socket to the queue and uses the LRU approach, i.e. it signals when it's ready for a new task by sending a request, and the queue then sends the task as a reply. It does its work, and sends its results back as a new "I'm ready (oh, and BTW here is the stuff I worked on)" request message. When waiting for work, the server sends a heartbeat message (which is an empty message) to the queue each second. This is why the server uses an XREQ socket instead of a REQ socket (which does not allow multiple requests to be sent before a response arrives).
+    +-----------+   +-----------+   +-----------+
+    |   Poll    |   |   Poll    |   |   Poll    |
+    | Heartbeat |   | Heartbeat |   | Heartbeat |
+
+* If there is just one server in the pool, the we wait with a timeout for the server to reply. If the server does not reply within the timeout, we retry a number of times before abandoning.
+* If there are multiple servers in the pool, we try each server in succession, but do not retry the same server twice.
+* If a server appears to be really dead (i.e. has not responded for some time), we remove it from the pool.
+
+The server randomly simulates two problems when it receives a task:
+1. A crash and restart while processing a request, i.e. close its socket, block for 5 seconds, reopen its socket and restart.
+2. A temporary busy wait, i.e. sleep 1 second then continue as normal.
+
+When waiting for work, the server sends a heartbeat message (which is an empty message) to the queue each second. This is why the server uses an XREQ socket instead of a REQ socket (which does not allow multiple requests to be sent before a response arrives).
+* Detect a server that dies while idle. We do this with heartbeating: if the idle server does not send a heartbeat within a certain time, we treat it as dead.
+
+
+
+
+
+++++ Peer-to-Peer Pirate
+
+
+
+While many Pirate use cases are *idempotent* (i.e. executing the same request more than once is safe), some are not. Examples of an idempotent Pirate include:
+
+* Stateless task distribution, i.e. a collapsed pipeline where the client is both ventilator and sink, and the servers are stateless workers that compute a reply based purely on the state provided by a request. In such a case it's safe (though inefficient) to execute the same request many times.
+* A name service that translates logical addresses into endpoints to bind or connect to. In such a case it's safe to make the same lookup request many times.
+
+And here are examples of a non-idempotent Pirate pattern:
+
+* A logging service. One does not want the same log information recorded more than once.
+* Any service that has impact on downstream nodes, e.g. sends on information to other nodes. If that service gets the same request more than once, downstream nodes will get duplicate information.
+* Any service that modifies shared data in some non-idempotent way. E.g. a service that debits a bank account is definitely not idempotent.
+
+When our server is not idempotent, we have to think more carefully about when exactly a server might crash. If it dies when it's idle, or while it's processing a request, that's usually fine. We can use database transactions to make sure a debit and a credit are always done together, if at all. If the server dies while sending its reply, that's a problem, because as far as its concerned, it's done its work.
+
+if the network dies just as the reply is making its way back to the client, the same problem arises. The client will think the server died, will resend the request, and the server will do the same work twice. Which is not what we want.
+
+We use the standard solution of detecting and rejecting duplicate requests. This means:
+
+* The client must stamp every request with a unique client identifier and a unique message number.
+* The server, before sending back a reply, stores it using the client id + message number as a key.
+* The server, when getting a request from a given client, first checks if it has a reply for that client id + message number. If so, it does not process the request but just resends the reply.
+
+The final touch to a robust Pirate pattern is server heartbeating. This means getting the server to say "hello" every so often even when it's not doing any work. The smoothest design is where the client pings the server, which pongs back. We don't need to send heartbeats to a working server, only one that's idle. Knowing when an idle server has died means we don't uselessly send requests to dead servers, which improves response time in those cases.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+++++ Reliable Pipeline (Harmony Pattern)
+
+0MQ's pipeline pattern (using PUSH and PULL sockets) is reliable to the extent that:
+
+* Workers and collectors don't crash;
+* Workers and collectors read their data fast enough to avoid queue overflows.
+
+As with all our reliability patterns, we'll ignore what happens if an upstream node (the ventilator for a pipeline pattern) dies. In practice a ventilator will be the client of another reliability pattern, e.g. Clone.
+
+The Harmony pattern takes pipeline and makes it robust against the only failure we can reasonably handle, namely workers and (less commonly) collectors that crash and lose messages or work.
+
+- assume workers are idempotent
+- assume batch size is known in advance (because...)
+- assume memory enough to hold full batch
+- batch: start (address of collector), tasks, end
+- messages numbered 0 upwards inside batch
+- assume multiple ventilators for same cluster
+- assume collector talks to ventilator, (not same to allow walk-up-and use by ventilators)
+- call ventilator the 'client'
+- if task missing, resend
+- if end of batch missing, resend from last response
+
+
++++ Pirates
+
+
++++ Clones
+
+
++++ Harmony
+
+
+
+
+
+
+
+
+
+++++ Customized Publish-Subscribe
+
+- use identity to route message explicitly to A or B
+- not using PUBSUB at all but XREP/????
+    - limitations: no multicast, only TCP
+    - how to scale with devices...
+
+When a client activates, it chooses a random port that is not in use and creates a SUB socket listening for all traffic on it. The client then sends a message via REQ to the publisher containing the port that it is listening on. The publisher receives this message, acknowledges it, and creates a new pub socket specific to that client. All published events specific to this client go out that socket.
+
+When the client deactivates, it sends a message to the publisher with the port to deactivate and close.
+
+You end up creating a lot more PUB sockets on your server end and doing all of the filtering at the server. This sounds acceptable to you.
+
+I didn't need to do this to avoid network bandwidth bottlenecks; I created this to enforce some security and entitlements.
+
+
+- chapter 4
+  - heartbeating & presence detection
+  - reliable request-reply
+  -

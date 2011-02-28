@@ -44,5 +44,10 @@ zmsg_test
 zversion
 asyncsrv
 suisnail
-piclient
-piqueue
+lpclient
+lpserver
+spqueue
+spworker
+ppqueue
+ppworker
+

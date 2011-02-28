@@ -7,7 +7,7 @@
 #define HEARTBEAT_LIVENESS  3       //  3-5 is reasonable
 #define HEARTBEAT_INTERVAL  1000    //  msecs
 #define INTERVAL_INIT       1000    //  Initial reconnect
-#define INTERVAL_MAX        1000   //  After exponential backoff
+#define INTERVAL_MAX       32000    //  After exponential backoff
 
 //  Helper function that returns a new configured socket
 //  connected to the Hello World server
@@ -49,7 +49,6 @@ int main (void)
     //  Send out heartbeats at regular intervals
     uint64_t heartbeat_at = s_clock () + HEARTBEAT_INTERVAL;
 
-    int hbcount = 0;
     int cycles = 0;
     while (1) {
         zmq_pollitem_t items [] = { { worker,  0, ZMQ_POLLIN, 0 } };

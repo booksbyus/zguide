@@ -178,6 +178,13 @@ The client uses a REQ socket, and does the brute-force close/reopen because REQ 
 
 Handling failures only at the client works when we have a set of clients talking to a single server. It can handle a server crash, but only if recovery means restarting that same server. If there's a permanent error - e.g. a dead power supply on the server hardware - this approach won't work. Since the application code in servers is usually the biggest source of failures in any architecture, depending on a single server is not a great idea.
 
+So, pros and cons:
+
+* Pro: simple to understand and implement.
+* Pro: works easily with existing client and server application code.
+* Pro: 0MQ automatically retries the actual reconnection until it works.
+* Con: doesn't do failover to backup / alternate servers.
+
 ++++ Basic Reliable Queuing (Simple Pirate Pattern)
 
 Our second approach takes Lazy Pirate pattern and extends it with a queue device that lets us talk, transparently, to multiple servers, which we can more accurately call 'workers'. We'll develop this in stages, starting with a minimal working model, the Simple Pirate pattern.
@@ -238,7 +245,7 @@ To test this, start a handlful of workers, a client, and the queue, in any order
 
 ++++ Robust Reliable Queuing (Paranoid Pirate Pattern)
 
-The Simple Pirate Queue pattern works pretty well but it has some weaknesses:
+The Simple Pirate Queue pattern works pretty well, especially since it's just a combination of two existing patterns, but it has some weaknesses:
 
 * It's not robust against a queue crash and restart. The client will recover, but the workers won't. While 0MQ will reconnect workers' sockets automatically, as far as the newly started queue is concerned, the workers haven't signalled "READY", so don't exist. To fix this we have to do heartbeating from queue to worker, so that the worker can detect when the queue has gone away.
 
@@ -290,244 +297,88 @@ We previously used a REQ socket for the worker. For the Paranoid Pirate worker w
 
 We're still using the Lazy Pirate client. Here is the Paranoid Pirate queue device:
 
-[[code type="example" title="Paranoid Pirate queue" name="spqueue"]]
+[[code type="example" title="Paranoid Pirate queue" name="ppqueue"]]
 [[/code]]
+
+Some comments about this example:
+
+* In C, it's quite horrid to manage any kind of data structure. The queue really needs two data structures: a least-recently used list of servers, and a hash of the same set of servers. The C code is not optimized, and won't scale as such. A proper version would use hash and list containers such as the [http://zfl.zeromq.org ZFL project] provides.
+* The queue extends the LRU pattern with heartbeating of workers. It's simple once it works, but quite difficult to invent. I'll explain more about heartbeating in a second.
 
 Here is the Paranoid Pirate worker:
 
-[[code type="example" title="Paranoid Pirate worker" name="spworker"]]
+[[code type="example" title="Paranoid Pirate worker" name="ppworker"]]
 [[/code]]
 
-You'll see that the Paranoid Pirate worker uses a somewhat different approach from previous examples. I've introduced a couple of new concepts that make this properly paranoid:
+Some comments about this example:
 
-* A proper protocol, rather than ad-hoc messages.
-* A finite state machine that
+* The code includes simulation of failures, as before. This makes it (a) very hard to debug, and (b) dangerous to reuse. When you want to debug this, disable the failure simulation.
+* As for the Paranoid Pirate queue, the heartbeating is quite tricky to get right. See below for a discussion about this.
+* The worker uses a reconnect strategy similar to the one we designed for the Lazy Pirate client. With two major differences: (a) it does an exponential back-off, and (b) it never abandons.
 
-- document the protocol as Worker Presence Protocol (WPP) v0.1 on rfc.zeromq.org
-- add a FSM diagram to the protocol specification
-- add the worker FSM as executable XML
+Try the client, queue, and workers, e.g. using a script like this:
 
+[[code]]
+ppqueue &
+for i in 1 2 3 4; do
+    ppworker &
+    sleep 1
+done
+lpclient &
+[[/code]]
 
-Paranoid Pirate Protocol
+You should see the workers die, one by one, as they simulate a crash, and the client eventually give up. You can stop and restart the queue and both client and workers will reconnect and carry on. And matter what you do to queues and workers, the client will never get an out-of-order reply: the whole chain either works, or the client abandons.
 
-- workers don't give up, retry forever
-- define the protocol
-- define the state machines for queue and for worker
+++++ Heartbeating
 
-worker:
+When writing the Paranoid Pirate examples, it took about five hours to get the heartbeating working properly. The rest of the request-reply chain took perhaps ten minutes. Heartbeating is one of those reliability layers that often causes more trouble than it saves. It is especially easy to create 'false failures', i.e. peers decide that they are disconnected because the heartbeats aren't sent properly.
 
+Here are some tips to getting this right:
 
-    while (self->state != TERMINATE) {
-        if (self->state == START) {
-            if (self->event == OK) {
-                connect_to_queue (self);
-                send_ready_to_queue (self);
-                poll_for_activity (self);
-                self->state = WAITING;
-            }
-            else
-                signal_error (self, "Invalid event: %d\n");
+* First, get the heartbeating working, and only //then// add in the rest of the message flow. You should be able to prove the heartbeating works by starting peers in any order, stopping and restarting them, simulating freezes, and so on.
+
+* When your main loop is based on zmq_poll[3], use a secondary timer to trigger heartbeats. Do //not// use the poll loop for this, because it will either send too many heartbeats (overloading the network), or too few (causing peers to disconnect). The zhelpers package provides an s_clock() method that returns the current system clock in milliseconds. It's easy to use this to calculate when to send the next heartbeats. Thus, in C:
+
+[[code]]
+    //  Send out heartbeats at regular intervals
+    uint64_t heartbeat_at = s_clock () + HEARTBEAT_INTERVAL;
+    while (1) {
+        ...
+        zmq_poll (items, 1, HEARTBEAT_INTERVAL * 1000);
+        ...
+        //  Do this unconditionally, whatever zmq_poll did
+        if (s_clock () > heartbeat_at) {
+            ... Send heartbeats to all peers that expect them
+            //  Set timer for next heartbeat
+            heartbeat_at = s_clock () + HEARTBEAT_INTERVAL;
         }
-        elsif (self->state == WAITING) {
-            if (self->event == HAVE_INPUT) {
-            }
-            elsif (self->event == TIMEOUT) {
-            }
-            else
-                signal_error (self, "Invalid event: %d\n");
-        }
-        elsif (self->state == PROCESSING) {
-            else
-                signal_error (self, "Invalid event: %d\n");
+    }
+[[/code]]
 
-        }
-        elsif (self->state == SUSPICIOUS) {
-            else
-                signal_error (self, "Invalid event: %d\n");
+* Your main poll loop should use the heartbeat interval as its timeout. Obviously, don't use infinity. Anything less will just waste cycles.
 
-        }
+* Use simple tracing, i.e. print to console, to get this working. Some tricks to help you trace the flow of messages between peers: a dump method such as zmsg offers; number messages incrementally so you can see if there are gaps.
 
+* In a real application, heartbeating must be configurable and usually negotiated with the peer. Some peers will want aggressive heartbeating, as low as 10 msecs. Other peers will be far away and want heartbeating as high as 30 seconds.
 
-    <state name = "start">
-        <event name = "ok" nextstate = "waiting">
-            <action name = "connect to queue" />
-            <action name = "send ready to queue" />
-            <action name = "poll for activity" />
-        </event>
-    </state>
+++++ Contracts and Protocols
 
-    <state name = "waiting">
-        <event name = "have input" nextstate = "processing">
-            <action name = "check input message type" />
-        </event>
-        <event name = "timeout" nextstate = "suspicious">
-            <action name = "judge if queue is alive" />
-        </event>
-    </state>
+If you're paying attention you'll realize that Paranoid Pirate is not compatible with Simple Pirate, because of the heartbeats.
 
-    <state name = "processing">
-        <event name = "heartbeat" nextstate = "waiting">
-            <action name = "process heartbeat" />
-            <action name = "poll for activity" />
-        </event>
-        <event name = "request" nextstate = "waiting">
-            <action name = "process request" />
-            <action name = "send reply to queue" />
-            <action name = "poll for activity" />
-        </event>
-    </state>
+In fact what we have here is a protocol that needs writing down. It's fun to experiment without specifications, but that's not a sensible basis for real applications. What happens if we want to write a worker in another language? Do we have to read code to see how things work? What if we want to change the protocol for some reason? The protocol may be simple but it's not obvious, and if it's successful it'll become more complex.
 
-    <state name = "suspicious">
-        <event name = "ok" nextstate = "waiting">
-            <action name = "send heartbeat to queue" />
-            <action name = "poll for activity" />
-        </event>
-        <event name = "error" nextstate = "waiting">
-            <action name = "disconnect from queue" />
-            <action name = "do exponential backoff" />
-            <action name = "connect to queue" />
-            <action name = "send ready to queue" />
-            <action name = "poll for activity" />
-        </event>
-    </state>
+Lack of contracts is a sure sign of a disposable application. So, let's write a contract for this protocol. How do we do that?
 
+* There's a wiki, at [http://rfc.zeromq.org rfc.zeromq.org], that we made especially as a home for public 0MQ contracts.
+* To create a new specification, register, and follow the instructions. It's fairly simple if you are not afraid of writing contracts.
 
-- worker handle queue failure/recovery
-- worker heartbeating so queue can detect idle failures
+It took me about fifteen minutes to draft the new [http://rfc.zeromq.org/spec:6 Pirate Pattern Protocol]. It's not a big specification but it does capture enough to act as the basis for arguments ("your queue isn't PPP compatible, please fix it!").
 
-- put protocol version into header
-- server presence protocol SPP
-    W: OK 1.0
-    Q: OK 1.0
-    Q: request
-    W: reply
-    W: heartbeat (async)
+Turning PPP into a real protocol would take more work:
 
-- define/implement as state machine
-- separate article on FSM generation using GSL
-- separate article on FSM generation using Libero
-
-
-
-
-discuss Disk-based Reliability
-
-You can, and people do, use spinning rust to store messages. It rather makes a mess of the idea of "performance" but we're usually more comfortable knowing a really important message (such as that transfer of $400M to my Cyprus account) is stored on disk rather than only in memory. Spinning rust only makes sense for some patterns, mainly request-reply. If we get bored in this chapter we'll play with that, but otherwise, just shove really critical messages into a database that all parties can access, and skip 0MQ for those parts of your dialog.
-
-
-Doing this right is non-trivial, as we'll see.
-This is a fair amount of work to do and get right in every client application that needs reliability. It's simpler to place a queue device in the middle, to which all clients and servers connect. Now we can put the server management logic in that queue device.
-
-Here is the architecture. We take the client-side pirate and add the LRU Pattern queue from Chapter 3, with some extra sauce:
-
-There are two levels of reliability at play here. First, from client to queue. Second, from queue to servers.
-
-++++ Reliable Queuing, Advanced
-
-### Handshaking at Startup
-
-We must use XREP-to-XREP sockets because we want to connect N clients to N servers without (necessarily) an intermediary queue device.
-
-In an XREP-to-XREP socket connection, one side of the connection must know the identity of the other.  You cannot do xrep-to-xrep flows between two anonymous sockets since an XREP socket requires an explicit identity.  In practice this means we will need a name service share the identities of the servers.  The client will connect to the server, then send it a message using the server's known identity as address, and then the server can respond to the client.
-
-In this prototype we'll use fixed, hardcoded identities for the servers.  We'll develop the name service in a later prototype.
-
-
-
-We assume that the servers - which contain application code - will crash far more often than the queue. So the client uses the client-side pirate pattern to create a reliable link to the queue. The real work of managing servers sits in the queue:
-
-
-This example runs the clients, servers, and queue in a single process using multiple threads. In reality each of these layers would be a stand-alone process. The code is largely ready for that: each task already creates its own context.
-
-Servers are just the same as the LRU worker tasks from the lruqueue example in Chapter 3. The server connects its REQ socket to the queue and signals that it's ready for a new task by sending a request. The queue then sends the task as a reply. The server does its work, and sends its results back as a new "I'm ready (oh, and BTW here is the stuff I worked on)" request message.
-
-The queue binds to XREP frontend and backend sockets, and handles requests and replies asynchronously on these using the LRU queue logic. It works with these data structures:
-
-* A pool (a hash map) of all known servers, which identify themselves using unique IDs.
-* A list of servers that are ready for work.
-* A list of servers that are busy doing work.
-* A list of requests sent by clients but not yet successfully processed.
-
-The queue polls all sockets for input and then processes all incoming messages. It queues tasks and distributes them to servers that are alive. Any replies from servers are sent back to their original clients, unless the server is disabled, in which case the reply is dropped.
-
-Idle servers must signal that they are alive with a ready message or a heartbeat, or they will be marked as disabled until they send a message again. This is to detect blocked and disconnected servers (since 0MQ does not report disconnections).
-
-The queue detects a disabled server with a timeout on request processing. If a reply does not come back within (e.g.) 10ms, the queue marks the server as disabled, and retries with the next server.
-
-
-
-++++ Server Idle Failure Detection
-
-
-
-The server connects its XREQ socket to the queue and uses the LRU approach, i.e. it signals when it's ready for a new task by sending a request, and the queue then sends the task as a reply. It does its work, and sends its results back as a new "I'm ready (oh, and BTW here is the stuff I worked on)" request message. When waiting for work, the server sends a heartbeat message (which is an empty message) to the queue each second. This is why the server uses an XREQ socket instead of a REQ socket (which does not allow multiple requests to be sent before a response arrives).
-    +-----------+   +-----------+   +-----------+
-    |   Poll    |   |   Poll    |   |   Poll    |
-    | Heartbeat |   | Heartbeat |   | Heartbeat |
-
-* If there is just one server in the pool, the we wait with a timeout for the server to reply. If the server does not reply within the timeout, we retry a number of times before abandoning.
-* If there are multiple servers in the pool, we try each server in succession, but do not retry the same server twice.
-* If a server appears to be really dead (i.e. has not responded for some time), we remove it from the pool.
-
-The server randomly simulates two problems when it receives a task:
-1. A crash and restart while processing a request, i.e. close its socket, block for 5 seconds, reopen its socket and restart.
-2. A temporary busy wait, i.e. sleep 1 second then continue as normal.
-
-When waiting for work, the server sends a heartbeat message (which is an empty message) to the queue each second. This is why the server uses an XREQ socket instead of a REQ socket (which does not allow multiple requests to be sent before a response arrives).
-* Detect a server that dies while idle. We do this with heartbeating: if the idle server does not send a heartbeat within a certain time, we treat it as dead.
-
-
-
-
-
-++++ Peer-to-Peer Pirate
-
-
-
-While many Pirate use cases are *idempotent* (i.e. executing the same request more than once is safe), some are not. Examples of an idempotent Pirate include:
-
-* Stateless task distribution, i.e. a collapsed pipeline where the client is both ventilator and sink, and the servers are stateless workers that compute a reply based purely on the state provided by a request. In such a case it's safe (though inefficient) to execute the same request many times.
-* A name service that translates logical addresses into endpoints to bind or connect to. In such a case it's safe to make the same lookup request many times.
-
-And here are examples of a non-idempotent Pirate pattern:
-
-* A logging service. One does not want the same log information recorded more than once.
-* Any service that has impact on downstream nodes, e.g. sends on information to other nodes. If that service gets the same request more than once, downstream nodes will get duplicate information.
-* Any service that modifies shared data in some non-idempotent way. E.g. a service that debits a bank account is definitely not idempotent.
-
-When our server is not idempotent, we have to think more carefully about when exactly a server might crash. If it dies when it's idle, or while it's processing a request, that's usually fine. We can use database transactions to make sure a debit and a credit are always done together, if at all. If the server dies while sending its reply, that's a problem, because as far as its concerned, it's done its work.
-
-if the network dies just as the reply is making its way back to the client, the same problem arises. The client will think the server died, will resend the request, and the server will do the same work twice. Which is not what we want.
-
-We use the standard solution of detecting and rejecting duplicate requests. This means:
-
-* The client must stamp every request with a unique client identifier and a unique message number.
-* The server, before sending back a reply, stores it using the client id + message number as a key.
-* The server, when getting a request from a given client, first checks if it has a reply for that client id + message number. If so, it does not process the request but just resends the reply.
-
-The final touch to a robust Pirate pattern is server heartbeating. This means getting the server to say "hello" every so often even when it's not doing any work. The smoothest design is where the client pings the server, which pongs back. We don't need to send heartbeats to a working server, only one that's idle. Knowing when an idle server has died means we don't uselessly send requests to dead servers, which improves response time in those cases.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+* There should be a protocol version number in the READY command so that it's possible to create new versions of PPP safely.
+* Right now, READY and HEARTBEAT are not entirely distinct from requests and replies. To make them distinct, we would want a message structure that includes a "message type" part.
+* Client-assigned sequence numbers in messages would probably be useful for debugging.
 
 ++++ Reliable Publish-Subscribe (Clone Pattern)
 
@@ -583,63 +434,3 @@ With unique sequencing, clients can detect the nastier failures - network conges
 Clone is complex enough in practice that you don't want to implement it directly in your applications. Instead, it makes a good basis for an application server framework, which talks to applications via the key-value table.
 
 .end
-
-++++ Reliable Pipeline (Harmony Pattern)
-
-0MQ's pipeline pattern (using PUSH and PULL sockets) is reliable to the extent that:
-
-* Workers and collectors don't crash;
-* Workers and collectors read their data fast enough to avoid queue overflows.
-
-As with all our reliability patterns, we'll ignore what happens if an upstream node (the ventilator for a pipeline pattern) dies. In practice a ventilator will be the client of another reliability pattern, e.g. Clone.
-
-The Harmony pattern takes pipeline and makes it robust against the only failure we can reasonably handle, namely workers and (less commonly) collectors that crash and lose messages or work.
-
-- assume workers are idempotent
-- assume batch size is known in advance (because...)
-- assume memory enough to hold full batch
-- batch: start (address of collector), tasks, end
-- messages numbered 0 upwards inside batch
-- assume multiple ventilators for same cluster
-- assume collector talks to ventilator, (not same to allow walk-up-and use by ventilators)
-- call ventilator the 'client'
-- if task missing, resend
-- if end of batch missing, resend from last response
-
-
-+++ Pirates
-
-
-+++ Clones
-
-
-+++ Harmony
-
-
-
-
-
-
-
-
-
-++++ Customized Publish-Subscribe
-
-- use identity to route message explicitly to A or B
-- not using PUBSUB at all but XREP/????
-    - limitations: no multicast, only TCP
-    - how to scale with devices...
-
-When a client activates, it chooses a random port that is not in use and creates a SUB socket listening for all traffic on it. The client then sends a message via REQ to the publisher containing the port that it is listening on. The publisher receives this message, acknowledges it, and creates a new pub socket specific to that client. All published events specific to this client go out that socket.
-
-When the client deactivates, it sends a message to the publisher with the port to deactivate and close.
-
-You end up creating a lot more PUB sockets on your server end and doing all of the filtering at the server. This sounds acceptable to you.
-
-I didn't need to do this to avoid network bandwidth bottlenecks; I created this to enforce some security and entitlements.
-
-
-- chapter 4
-  - heartbeating & presence detection
-  - reliable request-reply
-  -

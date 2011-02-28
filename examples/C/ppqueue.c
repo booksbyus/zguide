@@ -7,7 +7,6 @@
 #define MAX_WORKERS         100
 #define HEARTBEAT_LIVENESS  3       //  3-5 is reasonable
 #define HEARTBEAT_INTERVAL  1000    //  msecs
-static uint64_t start;
 
 //  This defines one active worker in our worker queue
 
@@ -98,9 +97,6 @@ s_queue_purge (queue_t *queue)
     int index;
     for (index = queue->size - 1; index >= 0; index--) {
         if (s_clock () > queue->workers [index].expiry) {
-printf ("[%5d] PURGE EXPIRED %s\n",
-    (int) (s_clock () - start),
-    queue->workers [index].identity);
             free (queue->workers [index].identity);
             DEQUEUE (queue->workers, index);
             queue->size--;
@@ -112,8 +108,6 @@ printf ("[%5d] PURGE EXPIRED %s\n",
 int main (void)
 {
     s_version_assert (2, 1);
-
-    start = s_clock ();
 
     //  Prepare our context and sockets
     void *context = zmq_init (1);
@@ -128,7 +122,6 @@ int main (void)
     //  Send out heartbeats at regular intervals
     uint64_t heartbeat_at = s_clock () + HEARTBEAT_INTERVAL;
 
-    int hbcount = 0;
     while (1) {
         zmq_pollitem_t items [] = {
             { backend,  0, ZMQ_POLLIN, 0 },
@@ -155,7 +148,7 @@ int main (void)
                 if (strcmp (zmsg_address (zmsg), "HEARTBEAT") == 0)
                     s_worker_refresh (queue, identity);
                 else {
-                    printf ("E: (ppqueue) invalid message\n");
+                    printf ("E: invalid message from %s\n", identity);
                     zmsg_dump (zmsg);
                     free (identity);
                 }
@@ -170,7 +163,7 @@ int main (void)
             //  Now get next client request, route to next worker
             zmsg_t *zmsg = zmsg_recv (frontend);
             char *identity = s_worker_dequeue (queue);
-            zmsg_wrap (zmsg, identity, NULL);
+            zmsg_wrap (zmsg, identity, "");
             zmsg_send (&zmsg, backend);
             free (identity);
         }
