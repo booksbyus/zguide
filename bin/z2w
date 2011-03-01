@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 #   z2w - convert ZeroMQ document to Wikidot format
 #   - converts [[code type="textdiagram"]] via ditaa
-#   - converts zmq_something(3) into URL to http://api.zero.org
+#   - converts zmq_something(3) into URL to http://api.zeromq.org
 #   Eventually meant to produce print-ready output via tex
 #
 #   Usage: z2w docfile
@@ -38,6 +38,8 @@ require 'sflcvdp.pl';                   #   SFL date picture formatting
 
 $source = $ENV {Z2W_LANG} || "C";
 printf "Generating $source version of Guide...\n";
+
+$make_diagrams = $ENV {Z2W_DIAGRAMS} || 1;
 
 #   Ensure all languages have an examples directory
 foreach (@languages) {
@@ -230,12 +232,15 @@ foreach (@languages) {
     printf "%-15s %3d, %3d%%\n", $_, $translations {$_}, ($translations {$_} * 100) / $examples;
 }
 
-system ("rm -f images/fig*");
-system ("java -jar /usr/local/bin/ditaa0_9.jar images.html -o -h -E output.html");
-#   Need to trim twice for reasons I don't care to explore
-system ("mogrify -trim images/fig*.png");
-system ("mogrify -trim images/fig*.png");
-system ("rm output.html images.html");
+if ($make_diagrams == 1) {
+    system ("rm -f images/fig*");
+    system ("java -jar /usr/local/bin/ditaa0_9.jar images.html -o -h -E output.html");
+    #   Need to trim twice for reasons I don't care to explore
+    system ("mogrify -trim images/fig*.png");
+    system ("mogrify -trim images/fig*.png");
+    system ("rm output.html");
+}
+system ("rm images.html");
 
 exit (0);
 
@@ -317,7 +322,7 @@ sub expand_symbols {
             }
         }
         elsif (/zmq_([\w_]+)\[(.)\]/) {
-            $_ = $`."[http://api.zero.org/master:zmq_$1 zmq_$1($2)]".$';
+            $_ = $`."[http://api.zeromq.org/2-1-1:zmq_$1 zmq_$1($2)]".$';
         }
         else {
             last;

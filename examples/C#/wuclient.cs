@@ -18,7 +18,7 @@ namespace ZMQGuide {
             //  Prepare our context
             using (Context context = new Context(1)) {
                 //  Socket to talk to server
-                using (Socket subscriber = context.Socket(SocketType.PUB)) {
+                using (Socket subscriber = context.Socket(SocketType.SUB)) {
                     //  Subscribe to zipcode, default is NYC, 10001
                     string filter = "10001 ";
                     subscriber.Subscribe(filter, Encoding.Unicode);

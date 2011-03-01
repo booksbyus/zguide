@@ -31,12 +31,14 @@
 */
 
 class Zmsg {
+	const NOCLEAR = 2;
+	
 	/**
 	 * Store the parts of the message
 	 *
 	 * @var array
 	 */
-	private $_parts;
+	private $_parts = array();
 	
 	/**
 	 * Socket to send and receive via
@@ -114,7 +116,7 @@ class Zmsg {
 	 * @throws Exception if no socket present
 	 * @return Zmsg
 	 */
-	public function send() {
+	public function send($options = 0) {
 		if(!isset($this->_socket)) {
 			throw new Exception("No socket supplied");
 		}
@@ -124,7 +126,10 @@ class Zmsg {
 			$mode = $i++ == $count ? null : ZMQ::MODE_SNDMORE;
 			$this->_socket->send($part, $mode);
 		}
-		unset($this->_parts);
+		if(!($options & self::NOCLEAR)) {
+			unset($this->_parts);
+			$this->_parts = array();
+		}
 		return $this;
 	}
 	
