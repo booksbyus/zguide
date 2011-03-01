@@ -1,122 +1,57 @@
-discuss Disk-based Reliability
+Chapter 4
 
-You can, and people do, use spinning rust to store messages. It rather makes a mess of the idea of "performance" but we're usually more comfortable knowing a really important message (such as that transfer of $400M to my Cyprus account) is stored on disk rather than only in memory. Spinning rust only makes sense for some patterns, mainly request-reply. If we get bored in this chapter we'll play with that, but otherwise, just shove really critical messages into a database that all parties can access, and skip 0MQ for those parts of your dialog.
++++ Reliable Publish-Subscribe (Clone Pattern)
 
+Pubsub is like a radio broadcast, you miss everything before you join, and then how much information you get depends on the quality of your reception. It's so easy to lose messages with this pattern that you might wonder why 0MQ bothers to implement it at all.[[footnote]]If you're German or Norwegian, that is what we call 'humor'. There are many cases where simplicity and speed are more important than pedantic delivery. In fact the radio broadcast covers perhaps the majority of information distribution in the real world. Think of Facebook and Twitter. No, I'm not still joking.[[/footnote]]
 
-Doing this right is non-trivial, as we'll see.
-This is a fair amount of work to do and get right in every client application that needs reliability. It's simpler to place a queue device in the middle, to which all clients and servers connect. Now we can put the server management logic in that queue device.
+However, reliable pubsub is also a useful tool. Let's do as before and define what that 'reliability' means in terms of what can go wrong.
 
-Here is the architecture. We take the client-side pirate and add the LRU Pattern queue from Chapter 3, with some extra sauce:
+Happens all the time:
 
-There are two levels of reliability at play here. First, from client to queue. Second, from queue to servers.
+* Subscribers join late, so miss messages the server already sent.
+* Subscriber connections take a non-zero time, and can lose messages during that time.
 
-++++ Reliable Queuing, Advanced
+Happens exceptionally:
 
-### Handshaking at Startup
+* Subscribers can crash, and restart, and lose whatever data they already received.
+* Subscribers can fetch messages too slowly, so queues build up and then overflow.
+* Networks can become overloaded and drop data (specifically, for PGM).
+* Networks can become too slow, so publisher-side queues overflow.
 
-We must use XREP-to-XREP sockets because we want to connect N clients to N servers without (necessarily) an intermediary queue device.
+A lot more can go wrong but these are the typical failures we see in a realistic system. The difficulty in defining 'reliability' now is that we have no idea, at the messaging level, what the application actually does with its data. So we need a generic model that we can implement once, and then use for a wide range of applications.
 
-In an XREP-to-XREP socket connection, one side of the connection must know the identity of the other.  You cannot do xrep-to-xrep flows between two anonymous sockets since an XREP socket requires an explicit identity.  In practice this means we will need a name service share the identities of the servers.  The client will connect to the server, then send it a message using the server's known identity as address, and then the server can respond to the client.
+What we'll design is a simple *shared key-value cache* that stores a set of blobs indexed by unique keys. Don't confuse this with *distributed hash tables*, which solve the wider problem of connecting peers in a distributed network, or with *distributed key-value tables*, which act like non-SQL databases. All we will build is a system that reliably clones some in-memory state from a server to a set of clients. We want to:
 
-In this prototype we'll use fixed, hardcoded identities for the servers.  We'll develop the name service in a later prototype.
+* Let a client join the network at any time, and reliably get the current server state.
+* Let any client update the key-value cache (inserting new key-value pairs, updating existing ones, or deleting them).
+* Reliably propagates changes to all clients, and does this with minimum latency overhead.
+* Handle very large numbers of clients, e.g. tens of thousands or more.
 
+The key aspect of the Clone pattern is that clients talk back to servers, which is more than we do in a simple pub-sub dialog. This is why I use the terms 'server' and 'client' instead of 'publisher' and 'subscriber'. We'll use pubsub as part of the Clone pattern but it is more than that.
 
+When a client joins the network, it subscribes a SUB socket, as we'd expect, to the data stream coming from the server (the publisher). This goes across some pub-sub topology (a multicast bus, perhaps, or a tree of forwarder devices, or direct client-to-server connections).
 
-We assume that the servers - which contain application code - will crash far more often than the queue. So the client uses the client-side pirate pattern to create a reliable link to the queue. The real work of managing servers sits in the queue:
+At some undetermined point, it will start getting messages from the server. Note that we can't predict what the client will receive as its first message. If a zmq_connect[3] call takes 10msec, and in that time the server has sent 100 messages, the client might get messages starting from the 100th message.
 
+Let's define a message as a key-value pair. The semantics are simple: if the value is provided, it's an insert or update operation. If there is no value, it's a delete operation. The key provides the subscription filter, so clients can treat the cache as a tree, and select whatever branches of the tree they want to hold.
 
-This example runs the clients, servers, and queue in a single process using multiple threads. In reality each of these layers would be a stand-alone process. The code is largely ready for that: each task already creates its own context.
+The client now connects to the server using a different socket (a REQ socket) and asks for a snapshot of the cache. It tells the server two things: which message it received (which means the server has to number messages), and which branch or branches of the cache it wants. To keep things simple we'll assume that any client has exactly one server that it talks to, and gets its cache from. The server *must* be running; we do not try to solve the question of what happens if the server crashes (that's left as an exercise for you to hurt your brain over).
 
-Servers are just the same as the LRU worker tasks from the lruqueue example in Chapter 3. The server connects its REQ socket to the queue and signals that it's ready for a new task by sending a request. The queue then sends the task as a reply. The server does its work, and sends its results back as a new "I'm ready (oh, and BTW here is the stuff I worked on)" request message.
+The server builds a snapshot and sends that to the client's REQ socket. This can take some time, especially if the cache is large. The client continues to receive updates from the server on its SUB socket, which it queues but does not process. We'll assume these updates fit into memory. At some point it gets the snapshot on its REQ socket. It then applies the updates to that snapshot, which gives it a working cache.
 
-The queue binds to XREP frontend and backend sockets, and handles requests and replies asynchronously on these using the LRU queue logic. It works with these data structures:
+You'll perhaps see one difficulty here. If the client asks for a snapshot based on message 100, how does the server provide this? After all, it may have sent out lots of updates in the meantime. We solve this by cheating gracefully. The server just sends its current snapshot, but tells the client what its latest message number is. Say that's 200. The client gets the snapshot, and in its queue, it has messages 100 to 300. It throws out 100 to 200, and starts applying 201 to 300 to the snapshot.
 
-* A pool (a hash map) of all known servers, which identify themselves using unique IDs.
-* A list of servers that are ready for work.
-* A list of servers that are busy doing work.
-* A list of requests sent by clients but not yet successfully processed.
+Once the client has happily gotten its cache, it disconnects from the server (destroys that REQ socket), which is not used for anything more.
 
-The queue polls all sockets for input and then processes all incoming messages. It queues tasks and distributes them to servers that are alive. Any replies from servers are sent back to their original clients, unless the server is disabled, in which case the reply is dropped.
+How does Clone handle updates from clients? There are several options but the simplest seems to be that each client acts as a publisher back to the server, which subscribes. In a TCP network this will mean persistent connections between clients and servers. In a PGM network this will mean using a shared multicast bus that clients write to, and the server listens to.
 
-Idle servers must signal that they are alive with a ready message or a heartbeat, or they will be marked as disabled until they send a message again. This is to detect blocked and disconnected servers (since 0MQ does not report disconnections).
+So the client, at startup, opens a PUB socket and part of its initial request to the server includes the address of that socket, so the server can open a SUB socket and connect back to it.
 
-The queue detects a disabled server with a timeout on request processing. If a reply does not come back within (e.g.) 10ms, the queue marks the server as disabled, and retries with the next server.
+Why don't we allow clients to publish updates directly to other clients? While this would reduce latency, it makes it impossible to sequence messages. Updates *must* pass through the server to make sense to other clients. There's a more subtle second reason. In many applications it's important that updates have a single order, across many clients. Forcing all updates through the server ensures that they have the same order when they finally get to clients.
 
+With unique sequencing, clients can detect the nastier failures - network congestion and queue overflow. If a client discovers that its incoming message stream has a hole, it can take action. It seems sensible that the client contact the server and ask for the missing messages, but in practice that isn't useful. If there are holes, adding more stress to the network will make things worse. All the client can really do is warn its users "Unable to continue", and stop, and not restart until someone has manually checked the cause of the problem.
 
-
-++++ Server Idle Failure Detection
-
-
-
-The server connects its XREQ socket to the queue and uses the LRU approach, i.e. it signals when it's ready for a new task by sending a request, and the queue then sends the task as a reply. It does its work, and sends its results back as a new "I'm ready (oh, and BTW here is the stuff I worked on)" request message. When waiting for work, the server sends a heartbeat message (which is an empty message) to the queue each second. This is why the server uses an XREQ socket instead of a REQ socket (which does not allow multiple requests to be sent before a response arrives).
-    +-----------+   +-----------+   +-----------+
-    |   Poll    |   |   Poll    |   |   Poll    |
-    | Heartbeat |   | Heartbeat |   | Heartbeat |
-
-* If there is just one server in the pool, the we wait with a timeout for the server to reply. If the server does not reply within the timeout, we retry a number of times before abandoning.
-* If there are multiple servers in the pool, we try each server in succession, but do not retry the same server twice.
-* If a server appears to be really dead (i.e. has not responded for some time), we remove it from the pool.
-
-The server randomly simulates two problems when it receives a task:
-1. A crash and restart while processing a request, i.e. close its socket, block for 5 seconds, reopen its socket and restart.
-2. A temporary busy wait, i.e. sleep 1 second then continue as normal.
-
-When waiting for work, the server sends a heartbeat message (which is an empty message) to the queue each second. This is why the server uses an XREQ socket instead of a REQ socket (which does not allow multiple requests to be sent before a response arrives).
-* Detect a server that dies while idle. We do this with heartbeating: if the idle server does not send a heartbeat within a certain time, we treat it as dead.
-
-
-
-
-
-++++ Peer-to-Peer Pirate
-
-
-
-While many Pirate use cases are *idempotent* (i.e. executing the same request more than once is safe), some are not. Examples of an idempotent Pirate include:
-
-* Stateless task distribution, i.e. a collapsed pipeline where the client is both ventilator and sink, and the servers are stateless workers that compute a reply based purely on the state provided by a request. In such a case it's safe (though inefficient) to execute the same request many times.
-* A name service that translates logical addresses into endpoints to bind or connect to. In such a case it's safe to make the same lookup request many times.
-
-And here are examples of a non-idempotent Pirate pattern:
-
-* A logging service. One does not want the same log information recorded more than once.
-* Any service that has impact on downstream nodes, e.g. sends on information to other nodes. If that service gets the same request more than once, downstream nodes will get duplicate information.
-* Any service that modifies shared data in some non-idempotent way. E.g. a service that debits a bank account is definitely not idempotent.
-
-When our server is not idempotent, we have to think more carefully about when exactly a server might crash. If it dies when it's idle, or while it's processing a request, that's usually fine. We can use database transactions to make sure a debit and a credit are always done together, if at all. If the server dies while sending its reply, that's a problem, because as far as its concerned, it's done its work.
-
-if the network dies just as the reply is making its way back to the client, the same problem arises. The client will think the server died, will resend the request, and the server will do the same work twice. Which is not what we want.
-
-We use the standard solution of detecting and rejecting duplicate requests. This means:
-
-* The client must stamp every request with a unique client identifier and a unique message number.
-* The server, before sending back a reply, stores it using the client id + message number as a key.
-* The server, when getting a request from a given client, first checks if it has a reply for that client id + message number. If so, it does not process the request but just resends the reply.
-
-The final touch to a robust Pirate pattern is server heartbeating. This means getting the server to say "hello" every so often even when it's not doing any work. The smoothest design is where the client pings the server, which pongs back. We don't need to send heartbeats to a working server, only one that's idle. Knowing when an idle server has died means we don't uselessly send requests to dead servers, which improves response time in those cases.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Clone is complex enough in practice that you don't want to implement it directly in your applications. Instead, it makes a good basis for an application server framework, which talks to applications via the key-value table.
 
 ++++ Reliable Pipeline (Harmony Pattern)
 
@@ -141,39 +76,3 @@ The Harmony pattern takes pipeline and makes it robust against the only failure 
 - if end of batch missing, resend from last response
 
 
-+++ Pirates
-
-
-+++ Clones
-
-
-+++ Harmony
-
-
-
-
-
-
-
-
-
-++++ Customized Publish-Subscribe
-
-- use identity to route message explicitly to A or B
-- not using PUBSUB at all but XREP/????
-    - limitations: no multicast, only TCP
-    - how to scale with devices...
-
-When a client activates, it chooses a random port that is not in use and creates a SUB socket listening for all traffic on it. The client then sends a message via REQ to the publisher containing the port that it is listening on. The publisher receives this message, acknowledges it, and creates a new pub socket specific to that client. All published events specific to this client go out that socket.
-
-When the client deactivates, it sends a message to the publisher with the port to deactivate and close.
-
-You end up creating a lot more PUB sockets on your server end and doing all of the filtering at the server. This sounds acceptable to you.
-
-I didn't need to do this to avoid network bandwidth bottlenecks; I created this to enforce some security and entitlements.
-
-
-- chapter 4
-  - heartbeating & presence detection
-  - reliable request-reply
-  -

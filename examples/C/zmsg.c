@@ -419,7 +419,7 @@ zmsg_append (zmsg_t *self, char *part)
     assert (part);
     assert (self->_part_count < ZMSG_MAX_PARTS - 1);
 
-    s_set_part (self, self->_part_count - 1, (void *) part, strlen (part));
+    s_set_part (self, self->_part_count, (void *) part, strlen (part));
     self->_part_count++;
 }
 
@@ -579,6 +579,12 @@ zmsg_test (int verbose)
     part = zmsg_pop (zmsg);
     assert (strcmp (part, "World") == 0);
     assert (zmsg_parts (zmsg) == 0);
+
+    //  Check append method
+    zmsg_append (zmsg, "Hello");
+    zmsg_append (zmsg, "World!");
+    assert (zmsg_parts (zmsg) == 2);
+    assert (strcmp (zmsg_body (zmsg), "World!") == 0);
 
     zmsg_destroy (&zmsg);
     assert (zmsg == NULL);

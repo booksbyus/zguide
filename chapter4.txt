@@ -6,11 +6,22 @@ In Chapter Three we looked at advanced use of 0MQ's request-reply pattern with w
 We'll cover:
 
 * How we define 'reliability'.
-* The most common types of failures we will experience in 0MQ applications.
-* How to handle slow clients.
-* How to build a reliable request-reply framework.
-* How to build a reliable publish-subscribe framework.
-* How to build a reliable push-pull pipeline framework.
+* The types of failures we will experience in 0MQ applications.
+* How to implement reliability on top of the 0MQ core patterns.
+* How to implement heartbeating between 0MQ peers.
+* How to write a reusable protocol specification.
+* How to design a service-oriented framework API.
+
+In this chapter we focus heavily on user-space 'patterns', which are reusable models that help you design your 0MQ architecture:
+
+* The //Suicidal Snail// pattern: how to handle slow clients.
+* The //Lazy Pirate// pattern: reliable request reply from the client side.
+* The //Simple Pirate// pattern: reliable request-reply using a LRU queue.
+* The //Paranoid Pirate// pattern: reliable request-reply with heartbeating.
+* The //Majordomo// pattern: service-oriented reliable queuing.
+* The //Titanic// pattern: disk-based reliable queuing.
+* The //Freelance// pattern: brokerless reliable request-reply.
+* The //Clone// pattern: reliable publish-subscribe using distributed key-value tables.
 
 +++ What is "Reliability"?
 
@@ -24,7 +35,7 @@ To understand what 'reliability' means, we have to look at its opposite, namely 
 * Networks can fail in exotic ways, e.g. some ports on a switch may die and those parts of the network become inaccessible.
 * Entire data centers can be struck by lightning, earthquakes, fire, or more mundane power or cooling failures.
 
-To make a software system fully reliable against *all* of these possible failures is an enormously difficult and expensive job and goes beyond the scope of this modest guide.
+To make a software system fully reliable against //all// of these possible failures is an enormously difficult and expensive job and goes beyond the scope of this modest guide.
 
 Since the first five cases cover 99.9% of real world requirements outside large companies (according to a highly scientific study I just ran), that's what we'll look at. If you're a large company with money to spend on the last two cases, contact me immediately, there's a large hole behind my beach house waiting to be converted into a pool.
 
@@ -139,12 +150,12 @@ We can get very simple reliable request-reply with only some changes in the clie
 
 If you try to use a REQ socket in anything than a strict send-recv fashion, you'll get an EFSM error. This is slightly annoying when we want to use REQ in a pirate pattern, because we may send several requests before getting a reply. The pretty good brute-force solution is to close and reopen the REQ socket after an error:
 
-[[code type="example" title="Lazy Pirate client" name="lapicli"]]
+[[code type="example" title="Lazy Pirate client" name="lpclient"]]
 [[/code]]
 
 Run this together with the matching server:
 
-[[code type="example" title="Lazy Pirate server" name="lapisrv"]]
+[[code type="example" title="Lazy Pirate server" name="lpserver"]]
 [[/code]]
 
 To run this testcase, start the client and the server in two console windows. The server will randomly misbehave after a few messages. You can check the client's response. Here is a typical output from the server:
@@ -335,6 +346,10 @@ When writing the Paranoid Pirate examples, it took about five hours to get the h
 
 Here are some tips to getting this right:
 
+* Note that heartbeats are not request-reply. They flow asynchronously in both directions. Either peer can decide the other is 'dead' and stop talking to it.
+
+* If one of the peers uses durable sockets, this means it may get heartbeats queued up that it will receive if it reconnects. For this reason, workers should //not// reuse durable sockets. The example code uses durable sockets for debugging purposes but they are randomized to (in theory) never reuse an existing socket.
+
 * First, get the heartbeating working, and only //then// add in the rest of the message flow. You should be able to prove the heartbeating works by starting peers in any order, stopping and restarting them, simulating freezes, and so on.
 
 * When your main loop is based on zmq_poll[3], use a secondary timer to trigger heartbeats. Do //not// use the poll loop for this, because it will either send too many heartbeats (overloading the network), or too few (causing peers to disconnect). The zhelpers package provides an s_clock() method that returns the current system clock in milliseconds. It's easy to use this to calculate when to send the next heartbeats. Thus, in C:
@@ -361,6 +376,10 @@ Here are some tips to getting this right:
 
 * In a real application, heartbeating must be configurable and usually negotiated with the peer. Some peers will want aggressive heartbeating, as low as 10 msecs. Other peers will be far away and want heartbeating as high as 30 seconds.
 
+* If you have different heartbeat intervals for different peers, your poll timeout should be the lowest of these.
+
+* You might be tempted to open a separate socket dialog for heartbeats. This is superficially nice because you can separate different dialogs, e.g. the synchronous request-reply from the asynchronous heartbeating. However it's a bad idea for several reasons. First, if you're sending data you don't need to send heartbeats. Second, sockets may, due to network vagaries, become jammed. You need to know when your main data socket is silent because it's dead, rather than just not busy, so you need heartbeats on that socket. Lastly, two sockets is more complex than one.
+
 ++++ Contracts and Protocols
 
 If you're paying attention you'll realize that Paranoid Pirate is not compatible with Simple Pirate, because of the heartbeats.
@@ -378,59 +397,176 @@ Turning PPP into a real protocol would take more work:
 
 * There should be a protocol version number in the READY command so that it's possible to create new versions of PPP safely.
 * Right now, READY and HEARTBEAT are not entirely distinct from requests and replies. To make them distinct, we would want a message structure that includes a "message type" part.
-* Client-assigned sequence numbers in messages would probably be useful for debugging.
 
-++++ Reliable Publish-Subscribe (Clone Pattern)
+++++ Service-Oriented Reliable Queuing (Majordomo Pattern)
 
-Pubsub is like a radio broadcast, you miss everything before you join, and then how much information you get depends on the quality of your reception. It's so easy to lose messages with this pattern that you might wonder why 0MQ bothers to implement it at all.[[footnote]]If you're German or Norwegian, that is what we call 'humor'. There are many cases where simplicity and speed are more important than pedantic delivery. In fact the radio broadcast covers perhaps the majority of information distribution in the real world. Think of Facebook and Twitter. No, I'm not still joking.[[/footnote]]
+The nice thing about progress is how fast it happens. Just a few sentences ago we were dreaming of a better protocol that would fix the world. And here we have it:
 
-However, reliable pubsub is also a useful tool. Let's do as before and define what that 'reliability' means in terms of what can go wrong.
+* http://rfc.zeromq.org/spec:7
 
-Happens all the time:
+This one-page specification takes PPP and turns it into something more solid. This is how we should design complex architectures: start by writing down the contracts, and only //then// write software to implement them.
 
-* Subscribers join late, so miss messages the server already sent.
-* Subscriber connections take a non-zero time, and can lose messages during that time.
+The Majordomo Protocol extends and improves PPP in one interesting way apart from the two points above. It adds a "service name" to requests that the client sends, and asks workers to register for specific services.
 
-Happens exceptionally:
+This is a small but significant change that turns our Paranoid Pirate queue into a service-oriented broker:
 
-* Subscribers can crash, and restart, and lose whatever data they already received.
-* Subscribers can fetch messages too slowly, so queues build up and then overflow.
-* Networks can become overloaded and drop data (specifically, for PGM).
-* Networks can become too slow, so publisher-side queues overflow.
+[[code type="textdiagram"]]
 
-A lot more can go wrong but these are the typical failures we see in a realistic system. The difficulty in defining 'reliability' now is that we have no idea, at the messaging level, what the application actually does with its data. So we need a generic model that we can implement once, and then use for a wide range of applications.
+    +-----------+   +-----------+   +-----------+
+    |           |   |           |   |           |
+    |  Client   |   |  Client   |   |  Client   |
+    |           |   |           |   |           |
+    \-----------/   \-----------/   \-----------/
+          ^               ^               ^
+          |               |               |
+          \---------------+---------------/
+   "Give me coffee"       |         "Give me tea"
+                          v
+                    /-----------\
+                    |           |
+                    |  Broker   |
+                    |           |
+                    \-----------/
+                          ^
+                          |
+          /---------------+---------------\
+          |               |               |
+          v               v               v
+    /-----------\   /-----------\   /-----------\
+    |  "Water"  |   |   "Tea"   |   | "Coffee"  |
+    +-----------+   +-----------+   +-----------+
+    |           |   |           |   |           |
+    |   Worker  |   |   Worker  |   |   Worker  |
+    |           |   |           |   |           |
+    +-----------+   +-----------+   +-----------+
 
-What we'll design is a simple *shared key-value cache* that stores a set of blobs indexed by unique keys. Don't confuse this with *distributed hash tables*, which solve the wider problem of connecting peers in a distributed network, or with *distributed key-value tables*, which act like non-SQL databases. All we will build is a system that reliably clones some in-memory state from a server to a set of clients. We want to:
 
-* Let a client join the network at any time, and reliably get the current server state.
-* Let any client update the key-value cache (inserting new key-value pairs, updating existing ones, or deleting them).
-* Reliably propagates changes to all clients, and does this with minimum latency overhead.
-* Handle very large numbers of clients, e.g. tens of thousands or more.
+            Figure # - Majordomo Pattern
+[[/code]]
 
-The key aspect of the Clone pattern is that clients talk back to servers, which is more than we do in a simple pub-sub dialog. This is why I use the terms 'server' and 'client' instead of 'publisher' and 'subscriber'. We'll use pubsub as part of the Clone pattern but it is more than that.
+To implement Majordomo we need to write a framework for clients and workers. It's really not efficient to ask every application to read the spec and make it work, when they could be using a simpler API.
 
-When a client joins the network, it subscribes a SUB socket, as we'd expect, to the data stream coming from the server (the publisher). This goes across some pub-sub topology (a multicast bus, perhaps, or a tree of forwarder devices, or direct client-to-server connections).
+So, while our first contract defines how the pieces of our distributed architecture talk to each other, our second contract defines how user applications talk to the technical framework we're going to design.
 
-At some undetermined point, it will start getting messages from the server. Note that we can't predict what the client will receive as its first message. If a zmq_connect[3] call takes 10msec, and in that time the server has sent 100 messages, the client might get messages starting from the 100th message.
+Majordomo has two halves, a client side and a worker side. Since we'll write both client and worker applications, we will need two APIs. Here is a sketch for the client API, using a simple object-oriented approach. We write this in C, using the style of the [http://zfl.zeromq.org/page:read-the-manual ZFL library]:
 
-Let's define a message as a key-value pair. The semantics are simple: if the value is provided, it's an insert or update operation. If there is no value, it's a delete operation. The key provides the subscription filter, so clients can treat the cache as a tree, and select whatever branches of the tree they want to hold.
+[[code]]
+mdcli_t *mdcli_new     (char *broker);
+void     mdcli_destroy (mdcli_t **self_p);
+zmsg_t  *mdcli_send    (mdcli_t *self, char *service, zmsg_t *request);
+[[/code]]
 
-The client now connects to the server using a different socket (a REQ socket) and asks for a snapshot of the cache. It tells the server two things: which message it received (which means the server has to number messages), and which branch or branches of the cache it wants. To keep things simple we'll assume that any client has exactly one server that it talks to, and gets its cache from. The server *must* be running; we do not try to solve the question of what happens if the server crashes (that's left as an exercise for you to hurt your brain over).
+That's it. We open a  to the broker, we send a request message and get a reply message back, and we eventually close the connection. Here's a sketch for the worker API:
 
-The server builds a snapshot and sends that to the client's REQ socket. This can take some time, especially if the cache is large. The client continues to receive updates from the server on its SUB socket, which it queues but does not process. We'll assume these updates fit into memory. At some point it gets the snapshot on its REQ socket. It then applies the updates to that snapshot, which gives it a working cache.
+[[code]]
+mdwrk_t *mdwrk_new     (char *broker,char *service);
+void     mdwrk_destroy (mdwrk_t **self_p);
+zmsg_t  *mdwrk_recv    (mdwrk_t *self, zmsg_t *reply);
+[[/code]]
 
-You'll perhaps see one difficulty here. If the client asks for a snapshot based on message 100, how does the server provide this? After all, it may have sent out lots of updates in the meantime. We solve this by cheating gracefully. The server just sends its current snapshot, but tells the client what its latest message number is. Say that's 200. The client gets the snapshot, and in its queue, it has messages 100 to 300. It throws out 100 to 200, and starts applying 201 to 300 to the snapshot.
+It's more or less symmetrical but the worker dialog is a little different. The first time a worker does a recv (), it passes a null reply, thereafter it passes the current reply, and gets a new request.
 
-Once the client has happily gotten its cache, it disconnects from the server (destroys that REQ socket), which is not used for anything more.
-
-How does Clone handle updates from clients? There are several options but the simplest seems to be that each client acts as a publisher back to the server, which subscribes. In a TCP network this will mean persistent connections between clients and servers. In a PGM network this will mean using a shared multicast bus that clients write to, and the server listens to.
-
-So the client, at startup, opens a PUB socket and part of its initial request to the server includes the address of that socket, so the server can open a SUB socket and connect back to it.
-
-Why don't we allow clients to publish updates directly to other clients? While this would reduce latency, it makes it impossible to sequence messages. Updates *must* pass through the server to make sense to other clients. There's a more subtle second reason. In many applications it's important that updates have a single order, across many clients. Forcing all updates through the server ensures that they have the same order when they finally get to clients.
-
-With unique sequencing, clients can detect the nastier failures - network congestion and queue overflow. If a client discovers that its incoming message stream has a hole, it can take action. It seems sensible that the client contact the server and ask for the missing messages, but in practice that isn't useful. If there are holes, adding more stress to the network will make things worse. All the client can really do is warn its users "Unable to continue", and stop, and not restart until someone has manually checked the cause of the problem.
-
-Clone is complex enough in practice that you don't want to implement it directly in your applications. Instead, it makes a good basis for an application server framework, which talks to applications via the key-value table.
+The client and worker APIs are fairly simple to construct.
 
 .end
+
+- single threaded worker API
+- will not send heartbeats while busy
+- synchronous, simple
+
+broker
+    - design first
+    - containers, zlist, zhash
+
+
+
+++++ Rust-based Reliability (Titanic Pattern)
+
+- Majordomo + rust
+
+Once you realize that the Paranoid Pirate queue is basically a message broker, you might be tempted to add rust-based reliability to it. After all, this works for all the enterprise messaging systems. It's such a tempting idea that it's a little sad to have to be negative. But that's one of my specialties. So, reasons you don't want rust-based brokers sitting in the center of your architecture:
+
+* As you've seen, the Lazy Pirate client performs surprisingly well. It works across a whole range of architectures, from direct client-to-server to distributed queue devices. It does assume that workers are stateless and idempotent (see below). But we can work around that limitation without resorting to rust.
+
+* Rust brings a whole set of problems, from slow performance to additional pieces to have to manage, repair, and create 6am panics as they inevitably break at the start of trading. The beauty of the Pirate queues we saw is their simplicity. They won't crash. And if you're still worried about the hardware, you can move to a peer-to-peer pattern that has no broker at all. I'll explain later in this chapter.
+
+There is one sane use case for rust-based reliability, which is asynchronous fire-and-forget. This pattern, which I'll just sketch, works as follows:
+
+* Clients use durable sockets to talk to a broker.
+* They use a request-reply dialog to send requests to the broker, which accepts them and stores them on disk.
+* When the broker has confirmed receipt of a request, this means it's stored on disk, safely.
+* The broker then looks for workers to process the request, and it does this over time as fast as it can.
+* Replies from workers are in the same way saved to disk, with an acknowledgement from the broker to the worker that the reply was received.
+* When clients reconnect (or immediately if they stay connected), they receive these replies, and they confirm to the broker that they've received them, again with a request-reply handshake.
+* The broker erases requests and replies only when they've been processed.
+
+This model makes sense when clients and workers come and go. It solves the major problem with the Pirate pattern, namely that a client waits for an answer in realtime. When clients and workers are randomly connected like this, raw performance is not a big concern: it's far more important to just never lose messages. Some people will argue that "just never lose messages" is a use case by itself, but if clients and workers are connected, you don't need rust to do that: Pirate can work, as we've demonstrated.
+
+++++ Idempotency
+
+Idempotency is not something to take a pill for. What it means is that it's safe to repeat an operation. While many client-to-server use cases are idempotent, some are not. Examples of idempotent use cases are:
+
+* Stateless task distribution, i.e. a collapsed pipeline where the client is both ventilator and sink, and the servers are stateless workers that compute a reply based purely on the state provided by a request. In such a case it's safe (though inefficient) to execute the same request many times.
+* A name service that translates logical addresses into endpoints to bind or connect to. In such a case it's safe to make the same lookup request many times.
+
+And here are examples of a non-idempotent use cases:
+
+* A logging service. One does not want the same log information recorded more than once.
+* Any service that has impact on downstream nodes, e.g. sends on information to other nodes. If that service gets the same request more than once, downstream nodes will get duplicate information.
+* Any service that modifies shared data in some non-idempotent way. E.g. a service that debits a bank account is definitely not idempotent.
+
+When our server is not idempotent, we have to think more carefully about when exactly a server might crash. If it dies when it's idle, or while it's processing a request, that's usually fine. We can use database transactions to make sure a debit and a credit are always done together, if at all. If the server dies while sending its reply, that's a problem, because as far as its concerned, it's done its work.
+
+if the network dies just as the reply is making its way back to the client, the same problem arises. The client will think the server died, will resend the request, and the server will do the same work twice. Which is not what we want.
+
+We use the common solution of detecting and rejecting duplicate requests. This means:
+
+* The client must stamp every request with a unique client identifier and a unique message number.
+* The server, before sending back a reply, stores it using the client id + message number as a key.
+* The server, when getting a request from a given client, first checks if it has a reply for that client id + message number. If so, it does not process the request but just resends the reply.
+
+++++ Distributed Reliable Client-Server (P2P Pirate Pattern)
+
+We've seen how to make a reliable client-server architecture using a queue device (essentially a broker) in the middle. We've discussed the advantages of a central broker a few times. The biggest pro is that workers can come and go silently, there is just one 'stable' node on the network.
+
+But for many cases this isn't worth the hassle of an extra device. If you are not managing a pool of anonymous workers, but want to make the intelligence explicitly addressable, then a broker is an extra step for little gain.
+
+Again, this is a matter of taste. Some architects will swear by a broker. Others hate them. Let's take a real example and see how this plays. Say we want a name service (we do, we do!) that translates logical names (like "authentication") into physical network addresses (like "tcp://192.168.55.121:5051").
+
+Without a broker, every application needs to know the address of the name service. It can then talk to the name service (using a Pirate pattern) to translate logical names into endpoints as needed. Fair enough.
+
+With a broker, every application needs to know the address of the broker. The broker hopefully supports some kind of service-based routing. So clients can then send a request to the "name lookup service" and this will be routed to
+
+
+
+Lastly...
+
+* Multiple clients talking to multiple servers with no intermediary devices. Use case: distributed services such as name resolution. Types of failure we aim to handle: service crashes and restarts, service busy looping, service overload, network disconnects.
+
+- N clients to N servers
+- move queue logic into client-side class
+- ditto for server, make framework
+- talk to it via inproc...
+
+
+Handshaking at Startup
+
+We must use XREP-to-XREP sockets because we want to connect N clients to N servers without (necessarily) an intermediary queue device.
+
+In an XREP-to-XREP socket connection, one side of the connection must know the identity of the other.  You cannot do xrep-to-xrep flows between two anonymous sockets since an XREP socket requires an explicit identity.  In practice this means we will need a name service share the identities of the servers.  The client will connect to the server, then send it a message using the server's known identity as address, and then the server can respond to the client.
+
+In this prototype we'll use fixed, hardcoded identities for the servers.  We'll develop the name service in a later prototype.
+
+
+Pool management
+
+* If there is just one server in the pool, the we wait with a timeout for the server to reply. If the server does not reply within the timeout, we retry a number of times before abandoning.
+* If there are multiple servers in the pool, we try each server in succession, but do not retry the same server twice.
+* If a server appears to be really dead (i.e. has not responded for some time), we remove it from the pool.
+
+
+
+
+
+
+
