@@ -1,5 +1,5 @@
 /*  =========================================================================
-    zmsg.h
+    zmsg.c
 
     Multipart message class for example applications.
 
@@ -58,6 +58,9 @@ void    zmsg_body_fmt (zmsg_t *self, char *format, ...);
 //  Generic push/pop message part off front
 void    zmsg_push     (zmsg_t *self, char *part);
 char   *zmsg_pop      (zmsg_t *self);
+
+//  Generic append message part to end
+void    zmsg_append   (zmsg_t *self, char *part);
 
 //  Read and set message envelopes
 char   *zmsg_address  (zmsg_t *self);
@@ -381,7 +384,7 @@ zmsg_push (zmsg_t *self, char *part)
     memmove (&self->_part_size [1], &self->_part_size [0],
         (ZMSG_MAX_PARTS - 1) * sizeof (size_t));
     s_set_part (self, 0, (void *) part, strlen (part));
-    self->_part_count += 1;
+    self->_part_count++;
 }
 
 
@@ -403,6 +406,21 @@ zmsg_pop (zmsg_t *self)
         (ZMSG_MAX_PARTS - 1) * sizeof (size_t));
     self->_part_count--;
     return (part);
+}
+
+
+//  --------------------------------------------------------------------------
+//  Append message part to end of message parts
+
+void
+zmsg_append (zmsg_t *self, char *part)
+{
+    assert (self);
+    assert (part);
+    assert (self->_part_count < ZMSG_MAX_PARTS - 1);
+
+    s_set_part (self, self->_part_count, (void *) part, strlen (part));
+    self->_part_count++;
 }
 
 
@@ -561,6 +579,12 @@ zmsg_test (int verbose)
     part = zmsg_pop (zmsg);
     assert (strcmp (part, "World") == 0);
     assert (zmsg_parts (zmsg) == 0);
+
+    //  Check append method
+    zmsg_append (zmsg, "Hello");
+    zmsg_append (zmsg, "World!");
+    assert (zmsg_parts (zmsg) == 2);
+    assert (strcmp (zmsg_body (zmsg), "World!") == 0);
 
     zmsg_destroy (&zmsg);
     assert (zmsg == NULL);

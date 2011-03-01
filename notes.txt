@@ -1,5 +1,12 @@
 Notes for The Guide
 
++++ A Service-Oriented Queue Device
+
+- how to route to workers based on service names
+- kind of like custom pubsub but with answers going back to clients
+
+
+
 - collection of patterns
     Least Recently Used
     Asynchronous Client-Server
@@ -53,12 +60,6 @@ Then we can use this to start building some reusable pieces:
 - purging old identities from routing tables
 - example of eight robots and console
 - robots come and go...
-
-
-+++ A Service-Oriented Queue Device
-
-- how to route to workers based on service names
-- kind of like custom pubsub but with answers going back to clients
 
 
 +++ A ZeroMQ Name Service
@@ -135,6 +136,21 @@ We'll look at how to secure pubsub data against snooping.  The actual technique 
 +++ Building a Multicast Bus
 
 We'll now look at how the pgm: and epgm: protocols work.  With pgm:, the network switch basically acts as a hardware FORWARDER device.
+
+++++ Customized Publish-Subscribe
+
+- use identity to route message explicitly to A or B
+- not using PUBSUB at all but XREP/????
+    - limitations: no multicast, only TCP
+    - how to scale with devices...
+
+When a client activates, it chooses a random port that is not in use and creates a SUB socket listening for all traffic on it. The client then sends a message via REQ to the publisher containing the port that it is listening on. The publisher receives this message, acknowledges it, and creates a new pub socket specific to that client. All published events specific to this client go out that socket.
+
+When the client deactivates, it sends a message to the publisher with the port to deactivate and close.
+
+You end up creating a lot more PUB sockets on your server end and doing all of the filtering at the server. This sounds acceptable to you.
+
+I didn't need to do this to avoid network bandwidth bottlenecks; I created this to enforce some security and entitlements.
 
 +++ A Clock Device
 
