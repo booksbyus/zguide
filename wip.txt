@@ -75,4 +75,5 @@ The Harmony pattern takes pipeline and makes it robust against the only failure 
 - if task missing, resend
 - if end of batch missing, resend from last response
 
+++ How to deliver jobs one by one using push/pull? i.e. ensure jobs don't get lost...
 

@@ -134,8 +134,9 @@ mdcli_send (mdcli_t *self, char *service, zmsg_t *request)
         //  Frame 1: "MDPCxy" (six bytes, MDP/Client x.y)
         //  Frame 2: Service name (printable string)
         zmsg_t *msg = zmsg_dup (request);
-        zmsg_wrap (msg, MDPC_HEADER, service);
-        zmsg_send (self->client, &msg);
+        zmsg_push (msg, service);
+        zmsg_push (msg, MDPC_HEADER);
+        zmsg_send (&msg, self->client);
 
         while (1) {
             //  Poll socket for a reply, with timeout
@@ -164,8 +165,9 @@ mdcli_send (mdcli_t *self, char *service, zmsg_t *request)
                 //  Reconnect, and resend message
                 s_connect_to_broker (self);
                 zmsg_t *msg = zmsg_dup (request);
-                zmsg_wrap (msg, MDPC_HEADER, service);
-                zmsg_send (self->client, &msg);
+                zmsg_push (msg, service);
+                zmsg_push (msg, MDPC_HEADER);
+                zmsg_send (&msg, self->client);
             }
             else
                 break;          //  Give up

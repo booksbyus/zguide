@@ -342,9 +342,9 @@ You should see the workers die, one by one, as they simulate a crash, and the cl
 
 ++++ Heartbeating
 
-When writing the Paranoid Pirate examples, it took about five hours to get the heartbeating working properly. The rest of the request-reply chain took perhaps ten minutes. Heartbeating is one of those reliability layers that often causes more trouble than it saves. It is especially easy to create 'false failures', i.e. peers decide that they are disconnected because the heartbeats aren't sent properly.
+When writing the Paranoid Pirate examples, it took about five hours to get the queue-to-worker heartbeating working properly. The rest of the request-reply chain took perhaps ten minutes. Heartbeating is one of those reliability layers that often causes more trouble than it saves. It is especially easy to create 'false failures', i.e. peers decide that they are disconnected because the heartbeats aren't sent properly.
 
-Here are some tips to getting this right:
+Some points to consider when understanding and implementing heartbeating:
 
 * Note that heartbeats are not request-reply. They flow asynchronously in both directions. Either peer can decide the other is 'dead' and stop talking to it.
 
@@ -380,6 +380,8 @@ Here are some tips to getting this right:
 
 * You might be tempted to open a separate socket dialog for heartbeats. This is superficially nice because you can separate different dialogs, e.g. the synchronous request-reply from the asynchronous heartbeating. However it's a bad idea for several reasons. First, if you're sending data you don't need to send heartbeats. Second, sockets may, due to network vagaries, become jammed. You need to know when your main data socket is silent because it's dead, rather than just not busy, so you need heartbeats on that socket. Lastly, two sockets is more complex than one.
 
+* We're not doing heartbeating from client to queue. We could, but it would add //significant// complexity for no real benefit.
+
 ++++ Contracts and Protocols
 
 If you're paying attention you'll realize that Paranoid Pirate is not compatible with Simple Pirate, because of the heartbeats.
@@ -406,9 +408,9 @@ The nice thing about progress is how fast it happens. Just a few sentences ago w
 
 This one-page specification takes PPP and turns it into something more solid. This is how we should design complex architectures: start by writing down the contracts, and only //then// write software to implement them.
 
-The Majordomo Protocol extends and improves PPP in one interesting way apart from the two points above. It adds a "service name" to requests that the client sends, and asks workers to register for specific services.
+The Majordomo Protocol (MDP) extends and improves PPP in one interesting way apart from the two points above. It adds a "service name" to requests that the client sends, and asks workers to register for specific services. The nice thing about MDP is that it came from working code, a simpler protocol, and a precise set of improvements. It took literally only a couple of hours to draft, review, and publish.
 
-This is a small but significant change that turns our Paranoid Pirate queue into a service-oriented broker:
+Adding service names is a small but significant change that turns our Paranoid Pirate queue into a service-oriented broker:
 
 [[code type="textdiagram"]]
 
@@ -444,9 +446,9 @@ This is a small but significant change that turns our Paranoid Pirate queue into
             Figure # - Majordomo Pattern
 [[/code]]
 
-To implement Majordomo we need to write a framework for clients and workers. It's really not efficient to ask every application to read the spec and make it work, when they could be using a simpler API.
+To implement Majordomo we need to write a framework for clients and workers. It's really not sane to ask every application developer to read the spec and make it work, when they could be using a simpler API built and tested just once.
 
-So, while our first contract defines how the pieces of our distributed architecture talk to each other, our second contract defines how user applications talk to the technical framework we're going to design.
+So, while our first contract (MDP itself) defines how the pieces of our distributed architecture talk to each other, our second contract defines how user applications talk to the technical framework we're going to design.
 
 Majordomo has two halves, a client side and a worker side. Since we'll write both client and worker applications, we will need two APIs. Here is a sketch for the client API, using a simple object-oriented approach. We write this in C, using the style of the [http://zfl.zeromq.org/page:read-the-manual ZFL library]:
 
@@ -468,7 +470,11 @@ It's more or less symmetrical but the worker dialog is a little different. The f
 
 The client and worker APIs are fairly simple to construct.
 
+
 .end
+
+- reconnect interval fixed, no backoff
+- timeout for worker recv?
 
 - single threaded worker API
 - will not send heartbeats while busy
@@ -525,7 +531,10 @@ We use the common solution of detecting and rejecting duplicate requests. This m
 * The server, before sending back a reply, stores it using the client id + message number as a key.
 * The server, when getting a request from a given client, first checks if it has a reply for that client id + message number. If so, it does not process the request but just resends the reply.
 
-++++ Distributed Reliable Client-Server (P2P Pirate Pattern)
+++++ Distributed Reliable Client-Server (Freelance Pattern)
+
+- heartbeating from clients outwards
+- ZMQ_ROOT service
 
 We've seen how to make a reliable client-server architecture using a queue device (essentially a broker) in the middle. We've discussed the advantages of a central broker a few times. The biggest pro is that workers can come and go silently, there is just one 'stable' node on the network.
 

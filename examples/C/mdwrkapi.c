@@ -40,8 +40,7 @@
 //  Reliability parameters
 #define HEARTBEAT_LIVENESS  3       //  3-5 is reasonable
 #define HEARTBEAT_INTERVAL  1000    //  msecs
-#define INTERVAL_INIT       1000    //  Initial reconnect
-#define INTERVAL_MAX       32000    //  After exponential backoff
+#define RECONNECT_INTERVAL  1000    //  Delay between attempts
 
 //  Protocol commands
 #define MDPS_READY          "\001"
@@ -79,7 +78,9 @@ struct _mdwrk_t {
     //  Heartbeat management
     uint64_t heartbeat_at;      //  When to send HEARTBEAT
     size_t liveness;            //  How many attempts left
-    size_t interval;            //  Reconnect interval
+
+    //  Internal state
+    int expect_reply;           //  Zero only at start
 };
 
 
@@ -104,7 +105,6 @@ void s_connect_to_broker (mdwrk_t *self)
 
     //  If liveness hits zero, queue is considered disconnected
     self->liveness = HEARTBEAT_LIVENESS;
-    self->interval = INTERVAL_INIT;
     self->heartbeat_at = s_clock () + HEARTBEAT_INTERVAL;
 }
 
@@ -152,74 +152,62 @@ mdwrk_destroy (mdwrk_t **self_p)
 
 
 //  --------------------------------------------------------------------------
-//  Send reply, if any, to broker and wait for request.
+//  Send reply, if any, to broker and wait for next request.
 
 zmsg_t *
 mdwrk_recv (mdwrk_t *self, zmsg_t *reply)
 {
-        //  Prefix reply with protocol frames
-        //  Frame 1: "MDPSxy" (six bytes, MDP/Server x.y)
-        //  Frame 2: Service name (printable string)
-//        zmsg_t *msg = zmsg_dup (request);
- //       zmsg_wrap (msg, MDPS_HEADER, service);
-  //      zmsg_send (self->worker, &msg);
-
-    - if reply not null,
-        take copy
-        prefix with frames
-        send to broker
-
-    - poll loop for input request
-        return to caller
+    //  Format and send the reply if we were provided one
+    assert (reply || !self->expect_reply);
+    if (reply) {
+        zmsg_t *msg = zmsg_dup (reply);
+        zmsg_push (msg, MDPS_REPLY);
+        zmsg_push (msg, MDPS_HEADER);
+        zmsg_send (&msg, self->worker);
+    }
+    self->expect_reply = 1;
 
     while (1) {
-        zmq_pollitem_t items [] = { { worker,  0, ZMQ_POLLIN, 0 } };
+        zmq_pollitem_t items [] = { { self->worker,  0, ZMQ_POLLIN, 0 } };
         zmq_poll (items, 1, HEARTBEAT_INTERVAL * 1000);
 
         if (items [0].revents & ZMQ_POLLIN) {
-            //  Get message
-            //  - 3-part envelope + content -> request
-            //  - 1-part "HEARTBEAT" -> heartbeat
-            zmsg_t *zmsg = zmsg_recv (worker);
+            zmsg_t *msg = zmsg_recv (self->worker);
+            self->liveness = HEARTBEAT_LIVENESS;
 
-            if (zmsg_parts (zmsg) == 3) {
-                zmsg_send (&zmsg, worker);
-                liveness = HEARTBEAT_LIVENESS;
-            }
+            //  Don't try to handle errors, just assert noisily
+            assert (zmsg_parts (msg) >= 3);
+
+            char *header = zmsg_pop (msg);
+            assert (strcmp (header, MDPS_HEADER) == 0);
+            free (header);
+
+            char *command = zmsg_pop (msg);
+            if (strcmp (command, MDPS_REQUEST) == 0)
+                return msg;     //  We have a request to process
             else
-            if (zmsg_parts (zmsg) == 1
-            && strcmp (zmsg_body (zmsg), "HEARTBEAT") == 0)
-                liveness = HEARTBEAT_LIVENESS;
+            if (strcmp (command, MDPS_HEARTBEAT) == 0)
+                ;               //  Do nothing for heartbeats
+            else
+            if (strcmp (command, MDPS_DISCONNECT) == 0)
+                break;          //  Return empty handed
             else {
-                printf ("E: (%s) invalid message\n", identity);
-                zmsg_dump (zmsg);
+                printf ("E: invalid input message (%d)\n", (int) command [1]);
+                zmsg_dump (msg);
             }
-            interval = INTERVAL_INIT;
+            free (command);
         }
         else
-        if (--liveness == 0) {
-            printf ("W: (%s) heartbeat failure, can't reach queue\n",
-                identity);
-            printf ("W: (%s) reconnecting in %zd msec...\n",
-                identity, interval);
-            s_sleep (interval);
-
-            if (interval < INTERVAL_MAX)
-                interval *= 2;
-            zmq_close (worker);
-            worker = s_worker_socket (context);
-            liveness = HEARTBEAT_LIVENESS;
+        if (--self->liveness == 0) {
+            s_sleep (RECONNECT_INTERVAL);
+            s_connect_to_broker (self);
         }
-
-        //  Send heartbeat to queue if it's time
+        //  Send HEARTBEAT if it's time
         if (s_clock () > self->heartbeat_at) {
-            heartbeat_at = s_clock () + HEARTBEAT_INTERVAL;
-            printf ("I: (%s) worker heartbeat\n", identity);
-            s_send (worker, "HEARTBEAT");
+            self->heartbeat_at = s_clock () + HEARTBEAT_INTERVAL;
+            s_send (self->worker, "HEARTBEAT");
         }
     }
-
-
-//    return request;
-return NULL;
+    //  We exit if we've been disconnected
+    return NULL;
 }
