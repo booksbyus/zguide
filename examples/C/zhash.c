@@ -1,5 +1,5 @@
 /*  =========================================================================
-    zfl_hash.h - ZFL singly-linked hash class
+    zhash.h - ZFL singly-linked hash class
 
     -------------------------------------------------------------------------
     Copyright (c) 1991-2011 iMatix Corporation <www.imatix.com>
@@ -22,47 +22,57 @@
     =========================================================================
 */
 
-#ifndef __ZFL_HASH_H_INCLUDED__
-#define __ZFL_HASH_H_INCLUDED__
+#ifndef __ZHASH_INCLUDED__
+#define __ZHASH_INCLUDED__
+
+#include "zhelpers.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-//  Callback function for zfl_hash_apply method
-typedef int (zfl_hash_apply_fn) (char *key, void *value, void *argument);
-//  Callback function for zfl_hash_freefn method
-typedef void (zfl_hash_free_fn) (void *data);
+//  Callback function for zhash_apply method
+typedef int (zhash_apply_fn) (char *key, void *value, void *argument);
+//  Callback function for zhash_freefn method
+typedef void (zhash_free_fn) (void *data);
 
 //  Opaque class structure
-typedef struct _zfl_hash zfl_hash_t;
+typedef struct _zhash zhash_t;
 
-zfl_hash_t *
-    zfl_hash_new (void);
+zhash_t *
+    zhash_new (void);
 void
-    zfl_hash_destroy (zfl_hash_t **self_p);
+    zhash_destroy (zhash_t **self_p);
 int
-    zfl_hash_insert (zfl_hash_t *self, char *key, void *value);
+    zhash_insert (zhash_t *self, char *key, void *value);
 void
-    zfl_hash_delete (zfl_hash_t *self, char *key);
+    zhash_delete (zhash_t *self, char *key);
 void *
-    zfl_hash_lookup (zfl_hash_t *self, char *key);
+    zhash_lookup (zhash_t *self, char *key);
 void *
-    zfl_hash_freefn (zfl_hash_t *self, char *key, zfl_hash_free_fn *free_fn);
+    zhash_freefn (zhash_t *self, char *key, zhash_free_fn *free_fn);
 size_t
-    zfl_hash_size (zfl_hash_t *self);
+    zhash_size (zhash_t *self);
 int
-    zfl_hash_apply (zfl_hash_t *self, zfl_hash_apply_fn *callback, void *argument);
+    zhash_apply (zhash_t *self, zhash_apply_fn *callback, void *argument);
 void
-    zfl_hash_test (int verbose);
+    zhash_test (int verbose);
 
 #ifdef __cplusplus
 }
 #endif
 
+//  Macros and typedefs defined by the ZFL header
+#define zmalloc(size) calloc(1,(size))
+#define streq(s1,s2)  (!strcmp ((s1), (s2)))
+#define TRUE            1               //  ANSI standard
+#define FALSE           0
+typedef          int    Bool;           //  Boolean TRUE/FALSE value
+typedef unsigned int    qbyte;          //  Quad byte = 32 bits
+
 #endif
 /*  =========================================================================
-    zfl_hash.h - hash table
+    zhash.c - hash table
 
     Expandable hash table container
 
@@ -91,8 +101,8 @@ void
     =========================================================================
 */
 
-#include "../include/zfl_prelude.h"
-#include "../include/zfl_hash.h"
+//#include "../include/zfl_prelude.h"
+//#include "../include/zhash.h"
 
 //  Hash table performance parameters
 
@@ -113,13 +123,13 @@ struct _item_t {
         index;                  //  Index of item in table
     char
         *key;                   //  Item's original key
-    zfl_hash_free_fn
+    zhash_free_fn
         *free_fn;               //  Value free function if any
 };
 
 //  Hash table structure
 
-struct _zfl_hash {
+struct _zhash {
     size_t
         size;                   //  Current size of hash table
     size_t
@@ -157,7 +167,7 @@ s_item_hash (char *key, size_t limit)
 //  Lookup item in hash table, returns item or NULL
 
 static item_t *
-s_item_lookup (zfl_hash_t *self, char *key)
+s_item_lookup (zhash_t *self, char *key)
 {
     //  Look in bucket list for item by key
     self->cached_index = s_item_hash (key, self->limit);
@@ -177,7 +187,7 @@ s_item_lookup (zfl_hash_t *self, char *key)
 //  If item already existed, returns NULL
 
 static item_t *
-s_item_insert (zfl_hash_t *self, char *key, void *value)
+s_item_insert (zhash_t *self, char *key, void *value)
 {
     //  Check that item does not already exist in hash table
     //  Leaves self->cached_index with calculated hash value
@@ -203,7 +213,7 @@ s_item_insert (zfl_hash_t *self, char *key, void *value)
 //  Destroy item in hash table, item must exist in table
 
 static void
-s_item_destroy (zfl_hash_t *self, item_t *item)
+s_item_destroy (zhash_t *self, item_t *item)
 {
     //  Find previous item since it's a singly-linked list
     item_t *cur_item = self->items [item->index];
@@ -227,10 +237,10 @@ s_item_destroy (zfl_hash_t *self, item_t *item)
 //  --------------------------------------------------------------------------
 //  Hash table constructor
 
-zfl_hash_t *
-zfl_hash_new (void)
+zhash_t *
+zhash_new (void)
 {
-    zfl_hash_t *self = (zfl_hash_t *) zmalloc (sizeof (zfl_hash_t));
+    zhash_t *self = (zhash_t *) zmalloc (sizeof (zhash_t));
     self->limit = INITIAL_SIZE;
     self->items = (item_t **) zmalloc (sizeof (item_t *) * self->limit);
     return self;
@@ -241,11 +251,11 @@ zfl_hash_new (void)
 //  Hash table destructor
 
 void
-zfl_hash_destroy (zfl_hash_t **self_p)
+zhash_destroy (zhash_t **self_p)
 {
     assert (self_p);
     if (*self_p) {
-        zfl_hash_t *self = *self_p;
+        zhash_t *self = *self_p;
         uint index;
         for (index = 0; index < self->limit; index++) {
             //  Destroy all items in this hash bucket
@@ -271,7 +281,7 @@ zfl_hash_destroy (zfl_hash_t **self_p)
 //  Returns 0 on success.
 
 int
-zfl_hash_insert (zfl_hash_t *self, char *key, void *value)
+zhash_insert (zhash_t *self, char *key, void *value)
 {
     assert (self);
     assert (key);
@@ -321,7 +331,7 @@ zfl_hash_insert (zfl_hash_t *self, char *key, void *value)
 //  item, this function does nothing.
 
 void
-zfl_hash_delete (zfl_hash_t *self, char *key)
+zhash_delete (zhash_t *self, char *key)
 {
     assert (self);
     assert (key);
@@ -336,7 +346,7 @@ zfl_hash_delete (zfl_hash_t *self, char *key)
 //  Look for item in hash table and return its value, or NULL
 
 void *
-zfl_hash_lookup (zfl_hash_t *self, char *key)
+zhash_lookup (zhash_t *self, char *key)
 {
     assert (self);
     assert (key);
@@ -357,7 +367,7 @@ zfl_hash_lookup (zfl_hash_t *self, char *key)
 //  Returns the item value, or NULL if there is no such item.
 
 void *
-zfl_hash_freefn (zfl_hash_t *self, char *key, zfl_hash_free_fn *free_fn)
+zhash_freefn (zhash_t *self, char *key, zhash_free_fn *free_fn)
 {
     assert (self);
     assert (key);
@@ -376,7 +386,7 @@ zfl_hash_freefn (zfl_hash_t *self, char *key, zfl_hash_free_fn *free_fn)
 //  Return size of hash table
 
 size_t
-zfl_hash_size (zfl_hash_t *self)
+zhash_size (zhash_t *self)
 {
     assert (self);
     return self->size;
@@ -389,7 +399,7 @@ zfl_hash_size (zfl_hash_t *self)
 //  final return code from callback function (zero = success).
 
 int
-zfl_hash_apply (zfl_hash_t *self, zfl_hash_apply_fn *callback, void *argument)
+zhash_apply (zhash_t *self, zhash_apply_fn *callback, void *argument)
 {
     assert (self);
     uint
@@ -417,52 +427,52 @@ zfl_hash_apply (zfl_hash_t *self, zfl_hash_apply_fn *callback, void *argument)
 //  Runs selftest of class
 
 void
-zfl_hash_test (int verbose)
+zhash_test (int verbose)
 {
-    printf (" * zfl_hash: ");
+    printf (" * zhash: ");
 
-    zfl_hash_t *hash = zfl_hash_new ();
+    zhash_t *hash = zhash_new ();
     assert (hash);
-    assert (zfl_hash_size (hash) == 0);
+    assert (zhash_size (hash) == 0);
 
     //  Insert some values
     int rc;
-    rc = zfl_hash_insert (hash, "DEADBEEF", (void *) 0xDEADBEEF);
+    rc = zhash_insert (hash, "DEADBEEF", (void *) 0xDEADBEEF);
     assert (rc == 0);
-    rc = zfl_hash_insert (hash, "ABADCAFE", (void *) 0xABADCAFE);
+    rc = zhash_insert (hash, "ABADCAFE", (void *) 0xABADCAFE);
     assert (rc == 0);
-    rc = zfl_hash_insert (hash, "C0DEDBAD", (void *) 0xC0DEDBAD);
+    rc = zhash_insert (hash, "C0DEDBAD", (void *) 0xC0DEDBAD);
     assert (rc == 0);
-    rc = zfl_hash_insert (hash, "DEADF00D", (void *) 0xDEADF00D);
+    rc = zhash_insert (hash, "DEADF00D", (void *) 0xDEADF00D);
     assert (rc == 0);
-    assert (zfl_hash_size (hash) == 4);
+    assert (zhash_size (hash) == 4);
 
     //  Look for existing values
     void *value;
-    value = zfl_hash_lookup (hash, "DEADBEEF");
+    value = zhash_lookup (hash, "DEADBEEF");
     assert (value == (void *) 0xDEADBEEF);
-    value = zfl_hash_lookup (hash, "ABADCAFE");
+    value = zhash_lookup (hash, "ABADCAFE");
     assert (value == (void *) 0xABADCAFE);
-    value = zfl_hash_lookup (hash, "C0DEDBAD");
+    value = zhash_lookup (hash, "C0DEDBAD");
     assert (value == (void *) 0xC0DEDBAD);
-    value = zfl_hash_lookup (hash, "DEADF00D");
+    value = zhash_lookup (hash, "DEADF00D");
     assert (value == (void *) 0xDEADF00D);
 
     //  Look for non-existent values
-    value = zfl_hash_lookup (hash, "0xF0000000");
+    value = zhash_lookup (hash, "0xF0000000");
     assert (value == NULL);
 
     //  Try to insert duplicate values
-    rc = zfl_hash_insert (hash, "DEADBEEF", (void *) 0xF0000000);
+    rc = zhash_insert (hash, "DEADBEEF", (void *) 0xF0000000);
     assert (rc == -1);
-    value = zfl_hash_lookup (hash, "DEADBEEF");
+    value = zhash_lookup (hash, "DEADBEEF");
     assert (value == (void *) 0xDEADBEEF);
 
     //  Delete a value
-    zfl_hash_delete (hash, "DEADBEEF");
-    value = zfl_hash_lookup (hash, "DEADBEEF");
+    zhash_delete (hash, "DEADBEEF");
+    value = zhash_lookup (hash, "DEADBEEF");
     assert (value == NULL);
-    assert (zfl_hash_size (hash) == 3);
+    assert (zhash_size (hash) == 3);
 
     //  Check that the queue is robust against random usage
     struct {
@@ -480,24 +490,24 @@ zfl_hash_test (int verbose)
     for (iteration = 0; iteration < 25000; iteration++) {
         testnbr = randof (testmax);
         if (testset [testnbr].exists) {
-            value = zfl_hash_lookup (hash, testset [testnbr].name);
+            value = zhash_lookup (hash, testset [testnbr].name);
             assert (value);
-            zfl_hash_delete (hash, testset [testnbr].name);
+            zhash_delete (hash, testset [testnbr].name);
             testset [testnbr].exists = FALSE;
         }
         else {
             sprintf (testset [testnbr].name, "%x-%x", rand (), rand ());
-            if (zfl_hash_insert (hash, testset [testnbr].name, "") == 0)
+            if (zhash_insert (hash, testset [testnbr].name, "") == 0)
                 testset [testnbr].exists = TRUE;
         }
     }
     //  Test 1M lookups
     for (iteration = 0; iteration < 1000000; iteration++)
-        value = zfl_hash_lookup (hash, "DEADBEEFABADCAFE");
+        value = zhash_lookup (hash, "DEADBEEFABADCAFE");
 
     //  Destructor should be safe to call twice
-    zfl_hash_destroy (&hash);
-    zfl_hash_destroy (&hash);
+    zhash_destroy (&hash);
+    zhash_destroy (&hash);
     assert (hash == NULL);
 
     printf ("OK\n");

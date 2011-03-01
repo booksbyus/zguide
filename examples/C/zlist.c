@@ -1,5 +1,5 @@
 /*  =========================================================================
-    zfl_list.h - ZFL singly-linked list class
+    zlist.h - import of ZFL singly-linked list class
 
     -------------------------------------------------------------------------
     Copyright (c) 1991-2011 iMatix Corporation <www.imatix.com>
@@ -22,42 +22,48 @@
     =========================================================================
 */
 
-#ifndef __ZFL_LIST_H_INCLUDED__
-#define __ZFL_LIST_H_INCLUDED__
+#ifndef __ZLIST_INCLUDED__
+#define __ZLIST_INCLUDED__
+
+#include "zhelpers.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 //  Opaque class structure
-typedef struct _zfl_list zfl_list_t;
+typedef struct _zlist zlist_t;
 
-zfl_list_t *
-    zfl_list_new (void);
+zlist_t *
+    zlist_new (void);
 void
-    zfl_list_destroy (zfl_list_t **self_p);
+    zlist_destroy (zlist_t **self_p);
 void *
-    zfl_list_first (zfl_list_t *self);
+    zlist_first (zlist_t *self);
 void
-    zfl_list_append (zfl_list_t *self, void *value);
+    zlist_append (zlist_t *self, void *value);
 void
-    zfl_list_push (zfl_list_t *self, void *value);
+    zlist_push (zlist_t *self, void *value);
 void
-    zfl_list_remove (zfl_list_t *self, void *value);
-zfl_list_t *
-    zfl_list_copy (zfl_list_t *self);
+    zlist_remove (zlist_t *self, void *value);
+zlist_t *
+    zlist_copy (zlist_t *self);
 size_t
-    zfl_list_size (zfl_list_t *self);
+    zlist_size (zlist_t *self);
 void
-    zfl_list_test (int verbose);
+    zlist_test (int verbose);
 
 #ifdef __cplusplus
 }
 #endif
 
+//  Macros and typedefs defined by the ZFL header
+#define zmalloc(size) calloc(1,(size))
+
 #endif
+
 /*  =========================================================================
-    zfl_list.c - singly-linked list container
+    zlist.c - singly-linked list container
 
     Provides a generic container implementing a fast singly-linked list. You
     can use this to construct multi-dimensional lists, and other structures
@@ -84,8 +90,8 @@ void
     =========================================================================
 */
 
-#include "../include/zfl_prelude.h"
-#include "../include/zfl_list.h"
+//#include "../include/zfl_prelude.h"
+//#include "../include/zlist.h"
 
 //  List node, used internally only
 
@@ -98,7 +104,7 @@ struct node_t {
 
 //  Actual list object
 
-struct _zfl_list {
+struct _zlist {
     struct node_t
         *head, *tail;
     size_t
@@ -109,10 +115,10 @@ struct _zfl_list {
 //  --------------------------------------------------------------------------
 //  List constructor
 
-zfl_list_t *
-zfl_list_new (void)
+zlist_t *
+zlist_new (void)
 {
-    zfl_list_t *self = (zfl_list_t *) zmalloc (sizeof (zfl_list_t));
+    zlist_t *self = (zlist_t *) zmalloc (sizeof (zlist_t));
     return self;
 }
 
@@ -121,11 +127,11 @@ zfl_list_new (void)
 //  List destructor
 
 void
-zfl_list_destroy (zfl_list_t **self_p)
+zlist_destroy (zlist_t **self_p)
 {
     assert (self_p);
     if (*self_p) {
-        zfl_list_t *self = *self_p;
+        zlist_t *self = *self_p;
         struct node_t *node, *next;
         for (node = (*self_p)->head; node != NULL; node = next) {
             next = node->next;
@@ -142,7 +148,7 @@ zfl_list_destroy (zfl_list_t **self_p)
 //  Note that this function does not remove the value from the list.
 
 void *
-zfl_list_first (zfl_list_t *self)
+zlist_first (zlist_t *self)
 {
     assert (self);
     if (self->head)
@@ -156,7 +162,7 @@ zfl_list_first (zfl_list_t *self)
 //  Add value to the end of the list
 
 void
-zfl_list_append (zfl_list_t *self, void *value)
+zlist_append (zlist_t *self, void *value)
 {
     struct node_t *node;
     node = (struct node_t *) zmalloc (sizeof (struct node_t));
@@ -175,7 +181,7 @@ zfl_list_append (zfl_list_t *self, void *value)
 //  Insert value at the beginning of the list
 
 void
-zfl_list_push (zfl_list_t *self, void *value)
+zlist_push (zlist_t *self, void *value)
 {
     struct node_t *node;
     node = (struct node_t *) zmalloc (sizeof (struct node_t));
@@ -193,7 +199,7 @@ zfl_list_push (zfl_list_t *self, void *value)
 //  The function does not deallocate the memory pointed to by the removed value.
 
 void
-zfl_list_remove (zfl_list_t *self, void *value)
+zlist_remove (zlist_t *self, void *value)
 {
     struct node_t *node, *prev = NULL;
 
@@ -221,18 +227,18 @@ zfl_list_remove (zfl_list_t *self, void *value)
 //  --------------------------------------------------------------------------
 //  Make copy of itself
 
-zfl_list_t *
-zfl_list_copy (zfl_list_t *self)
+zlist_t *
+zlist_copy (zlist_t *self)
 {
     if (!self)
         return NULL;
 
-    zfl_list_t *copy = zfl_list_new ();
+    zlist_t *copy = zlist_new ();
     assert (copy);
 
     struct node_t *node;
     for (node = self->head; node; node = node->next)
-        zfl_list_append (copy, node->value);
+        zlist_append (copy, node->value);
     return copy;
 }
 
@@ -241,7 +247,7 @@ zfl_list_copy (zfl_list_t *self)
 //  Return the number of items in the list
 
 size_t
-zfl_list_size (zfl_list_t *self)
+zlist_size (zlist_t *self)
 {
     return self->size;
 }
@@ -251,13 +257,13 @@ zfl_list_size (zfl_list_t *self)
 //  Runs selftest of class
 
 void
-zfl_list_test (int verbose)
+zlist_test (int verbose)
 {
-    printf (" * zfl_list: ");
+    printf (" * zlist: ");
 
-    zfl_list_t *list = zfl_list_new ();
+    zlist_t *list = zlist_new ();
     assert (list);
-    assert (zfl_list_size (list) == 0);
+    assert (zlist_size (list) == 0);
 
     //  Three values we'll use as test data
     //  List values are void *, not particularly strings
@@ -265,50 +271,50 @@ zfl_list_test (int verbose)
     char *bread = "baguette";
     char *wine = "bordeaux";
 
-    zfl_list_append (list, cheese);
-    assert (zfl_list_size (list) == 1);
-    zfl_list_append (list, bread);
-    assert (zfl_list_size (list) == 2);
-    zfl_list_append (list, wine);
-    assert (zfl_list_size (list) == 3);
+    zlist_append (list, cheese);
+    assert (zlist_size (list) == 1);
+    zlist_append (list, bread);
+    assert (zlist_size (list) == 2);
+    zlist_append (list, wine);
+    assert (zlist_size (list) == 3);
 
-    assert (zfl_list_first (list) == cheese);
-    assert (zfl_list_size (list) == 3);
-    zfl_list_remove (list, wine);
-    assert (zfl_list_size (list) == 2);
+    assert (zlist_first (list) == cheese);
+    assert (zlist_size (list) == 3);
+    zlist_remove (list, wine);
+    assert (zlist_size (list) == 2);
 
-    assert (zfl_list_first (list) == cheese);
-    zfl_list_remove (list, cheese);
-    assert (zfl_list_size (list) == 1);
-    assert (zfl_list_first (list) == bread);
+    assert (zlist_first (list) == cheese);
+    zlist_remove (list, cheese);
+    assert (zlist_size (list) == 1);
+    assert (zlist_first (list) == bread);
 
-    zfl_list_remove (list, bread);
-    assert (zfl_list_size (list) == 0);
+    zlist_remove (list, bread);
+    assert (zlist_size (list) == 0);
 
-    zfl_list_push (list, cheese);
-    assert (zfl_list_size (list) == 1);
-    assert (zfl_list_first (list) == cheese);
+    zlist_push (list, cheese);
+    assert (zlist_size (list) == 1);
+    assert (zlist_first (list) == cheese);
 
-    zfl_list_push (list, bread);
-    assert (zfl_list_size (list) == 2);
-    assert (zfl_list_first (list) == bread);
+    zlist_push (list, bread);
+    assert (zlist_size (list) == 2);
+    assert (zlist_first (list) == bread);
 
-    zfl_list_append (list, wine);
-    assert (zfl_list_size (list) == 3);
-    assert (zfl_list_first (list) == bread);
+    zlist_append (list, wine);
+    assert (zlist_size (list) == 3);
+    assert (zlist_first (list) == bread);
 
-    zfl_list_remove (list, bread);
-    assert (zfl_list_first (list) == cheese);
+    zlist_remove (list, bread);
+    assert (zlist_first (list) == cheese);
 
-    zfl_list_remove (list, cheese);
-    assert (zfl_list_first (list) == wine);
+    zlist_remove (list, cheese);
+    assert (zlist_first (list) == wine);
 
-    zfl_list_remove (list, wine);
-    assert (zfl_list_size (list) == 0);
+    zlist_remove (list, wine);
+    assert (zlist_size (list) == 0);
 
     //  Destructor should be safe to call twice
-    zfl_list_destroy (&list);
-    zfl_list_destroy (&list);
+    zlist_destroy (&list);
+    zlist_destroy (&list);
     assert (list == NULL);
 
     printf ("OK\n");
