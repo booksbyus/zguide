@@ -1,41 +1,10 @@
-/*  =========================================================================
-    mdcliapi.c
-
-    Majordomo Protocol Client API
-    Implements the MDP/Client spec at http://rfc.zeromq.org/spec:7.
-
-    Follows the ZFL class conventions and is further developed as the ZFL
-    mdcli class.  See http://zfl.zeromq.org for more details.
-
-    -------------------------------------------------------------------------
-    Copyright (c) 1991-2011 iMatix Corporation <www.imatix.com>
-    Copyright other contributors as noted in the AUTHORS file.
-
-    This file is part of the ZeroMQ Guide: http://zguide.zeromq.org
-
-    This is free software; you can redistribute it and/or modify it under the
-    terms of the GNU Lesser General Public License as published by the Free
-    Software Foundation; either version 3 of the License, or (at your option)
-    any later version.
-
-    This software is distributed in the hope that it will be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABIL-
-    ITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
-    Public License for more details.
-
-    You should have received a copy of the GNU Lesser General Public License
-    along with this program. If not, see <http://www.gnu.org/licenses/>.
-    =========================================================================
-*/
-
-#ifndef __MDCLIAPI_H_INCLUDED__
-#define __MDCLIAPI_H_INCLUDED__
-
+//
+//  Majordomo Protocol Client API
+//  Implements the MDP/Client spec at http://rfc.zeromq.org/spec:7
+//
 #include "zhelpers.h"
 #include "zmsg.c"
-
-//  This is the version of MDP/Client we implement
-#define MDPC_HEADER         "MDPC01"
+#include "mdp.h"
 
 //  Reliability parameters
 #define REQUEST_TIMEOUT     2500    //  msecs, (> 1000!)
@@ -54,8 +23,6 @@ zmsg_t  *mdcli_send    (mdcli_t *self, char *service, zmsg_t *request);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif
 
 //  Structure of our class
@@ -135,7 +102,7 @@ mdcli_send (mdcli_t *self, char *service, zmsg_t *request)
         //  Frame 2: Service name (printable string)
         zmsg_t *msg = zmsg_dup (request);
         zmsg_push (msg, service);
-        zmsg_push (msg, MDPC_HEADER);
+        zmsg_push (msg, MDPC_CLIENT);
         zmsg_send (&msg, self->client);
 
         while (1) {
@@ -151,7 +118,7 @@ mdcli_send (mdcli_t *self, char *service, zmsg_t *request)
                 assert (zmsg_parts (msg) >= 3);
 
                 char *header = zmsg_pop (msg);
-                assert (strcmp (header, MDPC_HEADER) == 0);
+                assert (strcmp (header, MDPC_CLIENT) == 0);
                 free (header);
 
                 char *service = zmsg_pop (msg);
@@ -166,7 +133,7 @@ mdcli_send (mdcli_t *self, char *service, zmsg_t *request)
                 s_connect_to_broker (self);
                 zmsg_t *msg = zmsg_dup (request);
                 zmsg_push (msg, service);
-                zmsg_push (msg, MDPC_HEADER);
+                zmsg_push (msg, MDPC_CLIENT);
                 zmsg_send (&msg, self->client);
             }
             else
@@ -175,4 +142,3 @@ mdcli_send (mdcli_t *self, char *service, zmsg_t *request)
     }
     return NULL;
 }
-

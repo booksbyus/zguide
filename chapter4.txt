@@ -391,7 +391,7 @@ In fact what we have here is a protocol that needs writing down. It's fun to exp
 Lack of contracts is a sure sign of a disposable application. So, let's write a contract for this protocol. How do we do that?
 
 * There's a wiki, at [http://rfc.zeromq.org rfc.zeromq.org], that we made especially as a home for public 0MQ contracts.
-* To create a new specification, register, and follow the instructions. It's fairly simple if you are not afraid of writing contracts.
+* To create a new specification, register, and follow the instructions. It's straight-forward, though technical writing is not for everyone.
 
 It took me about fifteen minutes to draft the new [http://rfc.zeromq.org/spec:6 Pirate Pattern Protocol]. It's not a big specification but it does capture enough to act as the basis for arguments ("your queue isn't PPP compatible, please fix it!").
 
@@ -408,7 +408,7 @@ The nice thing about progress is how fast it happens. Just a few sentences ago w
 
 This one-page specification takes PPP and turns it into something more solid. This is how we should design complex architectures: start by writing down the contracts, and only //then// write software to implement them.
 
-The Majordomo Protocol (MDP) extends and improves PPP in one interesting way apart from the two points above. It adds a "service name" to requests that the client sends, and asks workers to register for specific services. The nice thing about MDP is that it came from working code, a simpler protocol, and a precise set of improvements. It took literally only a couple of hours to draft, review, and publish.
+The Majordomo Protocol (MDP) extends and improves PPP in one interesting way apart from the two points above. It adds a "service name" to requests that the client sends, and asks workers to register for specific services. The nice thing about MDP is that it came from working code, a simpler protocol, and a precise set of improvements. It took literally only an hour to draft.
 
 Adding service names is a small but significant change that turns our Paranoid Pirate queue into a service-oriented broker:
 
@@ -468,22 +468,40 @@ zmsg_t  *mdwrk_recv    (mdwrk_t *self, zmsg_t *reply);
 
 It's more or less symmetrical but the worker dialog is a little different. The first time a worker does a recv (), it passes a null reply, thereafter it passes the current reply, and gets a new request.
 
-The client and worker APIs are fairly simple to construct.
+The client and worker APIs are fairly simple to construct, since they're heavily based on the Paranoid Pirate code we already developed. Here is the client API:
+
+[[code type="example" title="Majordomo Client API" name="mdcliapi"]]
+[[/code]]
+
+And here is the worker API:
+
+[[code type="example" title="Majordomo Worker API" name="mdwrkapi"]]
+[[/code]]
+
+Notes on this code:
+
+* The APIs are single threaded. This means, for example, that the worker won't send heartbeats in the background. Happily, this is exactly what we want: if the worker application gets stuck, heartbeats will stop and the broker will stop sending requests to the worker.
+* The worker API doesn't do an exponential backoff, it's not worth the extra complexity.
+* The APIs don't do any error reporting. If something isn't as expected, they raise an assertion (or exception depending on the language). This is ideal for a reference implementation, so any protocol errors show immediately. For real applications the API should be robust against invalid messages.
+
+Let's design the Majordomo broker. Its core structure is a set of queues, one per service. We will create these queues as workers appear (we could delete them as workers disappear but forget that for now, it gets complex). Additionally, we keep a queue of workers per service.
+
+To make the C examples easier to write and read, I've taken the hash and list containers from the [http://zfl.zeromq.org ZFL project], and renamed them as zlist and zhash, similar to what we did with zmsg. In any modern language you can of course use built-in containers.
 
 
 .end
 
-- reconnect interval fixed, no backoff
-- timeout for worker recv?
 
-- single threaded worker API
-- will not send heartbeats while busy
-- synchronous, simple
+ provides.
+
 
 broker
     - design first
     - containers, zlist, zhash
 
+- extensions to MD
+- service presence
+- delivery failure - mandatory, immediate
 
 
 ++++ Rust-based Reliability (Titanic Pattern)

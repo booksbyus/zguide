@@ -1,53 +1,15 @@
-/*  =========================================================================
-    mdwrkapi.c
-
-    Majordomo Protocol Worker API
-    Implements the MDP/Server spec at http://rfc.zeromq.org/spec:7.
-
-    Follows the ZFL class conventions and is further developed as the ZFL
-    mdwrk class.  See http://zfl.zeromq.org for more details.
-
-    -------------------------------------------------------------------------
-    Copyright (c) 1991-2011 iMatix Corporation <www.imatix.com>
-    Copyright other contributors as noted in the AUTHORS file.
-
-    This file is part of the ZeroMQ Guide: http://zguide.zeromq.org
-
-    This is free software; you can redistribute it and/or modify it under the
-    terms of the GNU Lesser General Public License as published by the Free
-    Software Foundation; either version 3 of the License, or (at your option)
-    any later version.
-
-    This software is distributed in the hope that it will be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABIL-
-    ITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
-    Public License for more details.
-
-    You should have received a copy of the GNU Lesser General Public License
-    along with this program. If not, see <http://www.gnu.org/licenses/>.
-    =========================================================================
-*/
-
-#ifndef __MDWRKAPI_H_INCLUDED__
-#define __MDWRKAPI_H_INCLUDED__
-
+//
+//  Majordomo Protocol Worker API
+//  Implements the MDP/Worker spec at http://rfc.zeromq.org/spec:7.
+//
 #include "zhelpers.h"
 #include "zmsg.c"
-
-//  This is the version of MDP/Server we implement
-#define MDPS_HEADER         "MDPS01"
+#include "mdp.h"
 
 //  Reliability parameters
 #define HEARTBEAT_LIVENESS  3       //  3-5 is reasonable
 #define HEARTBEAT_INTERVAL  1000    //  msecs
 #define RECONNECT_INTERVAL  1000    //  Delay between attempts
-
-//  Protocol commands
-#define MDPS_READY          "\001"
-#define MDPS_REQUEST        "\002"
-#define MDPS_REPLY          "\003"
-#define MDPS_HEARTBEAT      "\004"
-#define MDPS_DISCONNECT     "\005"
 
 #ifdef __cplusplus
 extern "C" {
@@ -62,8 +24,6 @@ zmsg_t  *mdwrk_recv    (mdwrk_t *self, zmsg_t *reply);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif
 
 //  Structure of our class
@@ -98,7 +58,7 @@ void s_connect_to_broker (mdwrk_t *self)
 
     //  Register service with broker
     zmsg_t *msg = zmsg_new ();
-    zmsg_append (msg, MDPS_HEADER);
+    zmsg_append (msg, MDPS_WORKER);
     zmsg_append (msg, MDPS_READY);
     zmsg_append (msg, self->service);
     zmsg_send (&msg, self->worker);
@@ -162,7 +122,7 @@ mdwrk_recv (mdwrk_t *self, zmsg_t *reply)
     if (reply) {
         zmsg_t *msg = zmsg_dup (reply);
         zmsg_push (msg, MDPS_REPLY);
-        zmsg_push (msg, MDPS_HEADER);
+        zmsg_push (msg, MDPS_WORKER);
         zmsg_send (&msg, self->worker);
     }
     self->expect_reply = 1;
@@ -179,7 +139,7 @@ mdwrk_recv (mdwrk_t *self, zmsg_t *reply)
             assert (zmsg_parts (msg) >= 3);
 
             char *header = zmsg_pop (msg);
-            assert (strcmp (header, MDPS_HEADER) == 0);
+            assert (strcmp (header, MDPS_WORKER) == 0);
             free (header);
 
             char *command = zmsg_pop (msg);

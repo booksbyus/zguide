@@ -946,8 +946,6 @@ Some comments on this code:
 
 * We can set and use identities on both bound and connected sockets, as this example shows.
 
-* 0MQ currently has [http://github.com/zeromq/zeromq2/issues/issue/82 a bug] when cross-connecting XREP sockets over {{inproc}}. The binding socket does not use any identity you set, and always uses a generated UUID.
-
 Although the router-to-router pattern looks ideal for asynchronous N-to-N routing, it has some pitfalls. First, any design with N-to-N connections will not scale beyond a small number of clients and servers. You should really create a device in the middle that turns it into two 1-to-N patterns. This gives you a structure like the LRU queue broker, though you would use XREQ at the front-end and worker sides to get streaming.
 
 Second, it may become confusing if you try to put two XREP sockets at the same logical level. One must bind, one must connect, and request-reply is inherently asymmetric. However, the next point takes care of this.
