@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 #   z2w - convert ZeroMQ document to Wikidot format
 #   - converts [[code type="textdiagram"]] via ditaa
-#   - converts zmq_something(3) into URL to http://api.zero.org
+#   - converts zmq_something(3) into URL to http://api.zeromq.org
 #   Eventually meant to produce print-ready output via tex
 #
 #   Usage: z2w docfile
@@ -322,7 +322,7 @@ sub expand_symbols {
             }
         }
         elsif (/zmq_([\w_]+)\[(.)\]/) {
-            $_ = $`."[http://api.zero.org/master:zmq_$1 zmq_$1($2)]".$';
+            $_ = $`."[http://api.zeromq.org/2-1-1:zmq_$1 zmq_$1($2)]".$';
         }
         else {
             last;
