@@ -1,13 +1,39 @@
-No-one has translated the lpserver example into C++ yet.  Be the first to create
-lpserver in C++ and get one free Internet!  If you're the author of the C++
-binding, this is a great way to get people to use 0MQ in C++.
+//
+// Lazy Pirate server
+// Binds REQ socket to tcp://*:5555
+// Like hwserver except:
+// - echoes request as-is
+// - randomly runs slowly, or exits to simulate a crash.
+//
+#include "zhelpers.hpp"
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+int main ()
+{
+    srandom ((unsigned) time (NULL));
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+    zmq::context_t context(1);
+    zmq::socket_t server(context, ZMQ_REP);
+    server.bind("tcp://*:5555");
 
-Subscribe to the email list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+    int cycles = 0;
+    while (1) {
+        std::string *request = s_recv (server);
+        cycles++;
+
+        // Simulate various problems, after a few cycles
+        if (cycles > 3 && within (3) == 0) {
+            printf ("I: simulating a crash\n");
+            break;
+        }
+        else
+        if (cycles > 3 && within (3) == 0) {
+            printf ("I: simulating CPU overload\n");
+            sleep (5);
+        }
+        printf ("I: normal request (%s)\n", request->c_str());
+        sleep (1); // Do some heavy work
+        s_send (server, *request);
+        delete request;
+    }
+    return 0;
+}
