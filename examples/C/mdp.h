@@ -18,5 +18,9 @@
 #define MDPS_HEARTBEAT      "\004"
 #define MDPS_DISCONNECT     "\005"
 
+static char *mdps_commands [] = {
+    NULL, "READY", "REQUEST", "REPLY", "HEARTBEAT", "DISCONNECT"
+};
+
 #endif
 

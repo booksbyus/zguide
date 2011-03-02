@@ -139,6 +139,35 @@ s_require_worker (broker_t *self, char *identity, char *service)
 }
 
 
+//  --------------------------------------------------------------------------
+//  Send message to worker
+//  If no _msg is provided, creates one internally
+
+static void
+s_send_to_worker (
+    broker_t *self, worker_t *worker,
+    char *command, char *option, zmsg_t *_msg)
+{
+    zmsg_t *msg = _msg? zmsg_dup (_msg): zmsg_new ();
+
+    //  Stack protocol envelope to start of message
+    if (option)
+        zmsg_push (msg, option);
+    zmsg_push (msg, command);
+    zmsg_push (msg, MDPS_WORKER);
+
+    //  Stack routing envelope to start of message
+    zmsg_push (msg, worker->identity);
+
+    if (self->verbose) {
+        s_console ("I: sending %s to worker %s",
+            mdps_commands [(int) *command], worker->identity);
+        zmsg_dump (msg);
+    }
+    zmsg_send (&msg, self->broker);
+}
+
+
 //  ----------------------------------------------------------------------
 
 static void
@@ -149,8 +178,9 @@ s_process_worker_message (broker_t *self, char *sender, zmsg_t *msg)
     assert (zmsg_parts (msg) >= 1);     //  At least, command
 
     char *command = zmsg_pop (msg);
+    s_console (mdps_commands [(int) *command]);
+
     if (strcmp (command, MDPS_READY) == 0) {
-        s_console ("READY");
         char *service = zmsg_pop (msg);
         worker_t *worker = s_require_worker (self, sender, service);
         free (service);
@@ -159,15 +189,12 @@ s_process_worker_message (broker_t *self, char *sender, zmsg_t *msg)
     }
     else
     if (strcmp (command, MDPS_REPLY) == 0) {
-        s_console ("REPLY");
     }
     else
     if (strcmp (command, MDPS_HEARTBEAT) == 0) {
-        s_console ("HEARTBEAT");
     }
     else
     if (strcmp (command, MDPS_DISCONNECT) == 0) {
-        s_console ("DISCONNECT");
     }
     else {
         s_console ("E: invalid input message (%d)", (int) *command);
@@ -280,15 +307,7 @@ int main (void)
             s_purge_expired_workers (self);
             worker_t *worker = zlist_first (self->idle_workers);
             while (worker) {
-                zmsg_t *msg = zmsg_new ();
-                zmsg_append (msg, worker->identity);
-                zmsg_append (msg, MDPS_WORKER);
-                zmsg_append (msg, MDPS_HEARTBEAT);
-                if (self->verbose) {
-                    s_console ("I: sending HEARTBEAT to worker:");
-                    zmsg_dump (msg);
-                }
-                zmsg_send (&msg, self->broker);
+                s_send_to_worker (self, worker, MDPS_HEARTBEAT, NULL, NULL);
                 worker = zlist_next (self->idle_workers);
             }
             self->heartbeat_at = s_clock () + HEARTBEAT_INTERVAL;

@@ -49,6 +49,30 @@ struct _mdwrk_t {
 
 
 //  --------------------------------------------------------------------------
+//  Send message to broker
+//  If no _msg is provided, creates one internally
+
+static void
+s_send_to_broker (mdwrk_t *self, char *command, char *option, zmsg_t *_msg)
+{
+    zmsg_t *msg = _msg? zmsg_dup (_msg): zmsg_new ();
+
+    //  Stack protocol envelope to start of message
+    if (option)
+        zmsg_push (msg, option);
+    zmsg_push (msg, command);
+    zmsg_push (msg, MDPS_WORKER);
+
+    if (self->verbose) {
+        s_console ("I: sending %s to broker",
+            mdps_commands [(int) *command]);
+        zmsg_dump (msg);
+    }
+    zmsg_send (&msg, self->worker);
+}
+
+
+//  --------------------------------------------------------------------------
 //  Connect or reconnect to broker
 
 void s_connect_to_broker (mdwrk_t *self)
@@ -63,15 +87,7 @@ void s_connect_to_broker (mdwrk_t *self)
         s_console ("I: connecting to broker at %s...", self->broker);
 
     //  Register service with broker
-    zmsg_t *msg = zmsg_new ();
-    zmsg_append (msg, MDPS_WORKER);
-    zmsg_append (msg, MDPS_READY);
-    zmsg_append (msg, self->service);
-    if (self->verbose) {
-        s_console ("I: registering for service: '%s'", self->service);
-        zmsg_dump (msg);
-    }
-    zmsg_send (&msg, self->worker);
+    s_send_to_broker (self, MDPS_READY, self->service, NULL);
 
     //  If liveness hits zero, queue is considered disconnected
     self->liveness = HEARTBEAT_LIVENESS;
@@ -130,16 +146,8 @@ mdwrk_recv (mdwrk_t *self, zmsg_t *reply)
 {
     //  Format and send the reply if we were provided one
     assert (reply || !self->expect_reply);
-    if (reply) {
-        zmsg_t *msg = zmsg_dup (reply);
-        zmsg_push (msg, MDPS_REPLY);
-        zmsg_push (msg, MDPS_WORKER);
-        if (self->verbose) {
-            s_console ("I: sending REPLY to broker");
-            zmsg_dump (msg);
-        }
-        zmsg_send (&msg, self->worker);
-    }
+    if (reply)
+        s_send_to_broker (self, MDPS_REPLY, NULL, reply);
     self->expect_reply = 1;
 
     while (1) {
@@ -185,14 +193,7 @@ mdwrk_recv (mdwrk_t *self, zmsg_t *reply)
         }
         //  Send HEARTBEAT if it's time
         if (s_clock () > self->heartbeat_at) {
-            zmsg_t *msg = zmsg_new ();
-            zmsg_append (msg, MDPS_WORKER);
-            zmsg_append (msg, MDPS_HEARTBEAT);
-            if (self->verbose) {
-                s_console ("I: sending HEARTBEAT to broker");
-                zmsg_dump (msg);
-            }
-            zmsg_send (&msg, self->worker);
+            s_send_to_broker (self, MDPS_HEARTBEAT, NULL, NULL);
             self->heartbeat_at = s_clock () + HEARTBEAT_INTERVAL;
         }
     }
