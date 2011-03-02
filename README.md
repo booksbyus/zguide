@@ -8,7 +8,7 @@ Written by Pieter Hintjens <ph@imatix.com>, CEO iMatix Corporation.
 A ØMQ socket is what you get when you take a normal TCP socket, inject it with a mix of radioactive isotopes stolen from a secret Soviet atomic research project, bombard it with 1950-era cosmic rays, and put it into the hands of a drug-addled comic book author with a badly-disguised fetish for bulging muscles clad in spandex.  Yes, ØMQ sockets are the world-saving superheros of the networking world.
 
 <center>
-<img src="http://github.com/imatix/zguide/raw/master/images/README_1.png" alt="1">
+<img src="https://github.com/imatix/zguide/raw/master/images/README_1.png" alt="1">
 </center>
 
 <A name="toc2-34" title="Contents" />
