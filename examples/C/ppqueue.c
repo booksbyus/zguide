@@ -135,36 +135,36 @@ int main (void)
 
         //  Handle worker activity on backend
         if (items [0].revents & ZMQ_POLLIN) {
-            zmsg_t *zmsg = zmsg_recv (backend);
-            char *identity = zmsg_unwrap (zmsg);
+            zmsg_t *msg = zmsg_recv (backend);
+            char *identity = zmsg_unwrap (msg);
 
             //  Return reply to client if it's not a control message
-            if (zmsg_parts (zmsg) == 1) {
-                if (strcmp (zmsg_address (zmsg), "READY") == 0) {
+            if (zmsg_parts (msg) == 1) {
+                if (strcmp (zmsg_address (msg), "READY") == 0) {
                     s_worker_delete (queue, identity);
                     s_worker_append (queue, identity);
                 }
                 else
-                if (strcmp (zmsg_address (zmsg), "HEARTBEAT") == 0)
+                if (strcmp (zmsg_address (msg), "HEARTBEAT") == 0)
                     s_worker_refresh (queue, identity);
                 else {
                     printf ("E: invalid message from %s\n", identity);
-                    zmsg_dump (zmsg);
+                    zmsg_dump (msg);
                     free (identity);
                 }
-                zmsg_destroy (&zmsg);
+                zmsg_destroy (&msg);
             }
             else {
-                zmsg_send (&zmsg, frontend);
+                zmsg_send (&msg, frontend);
                 s_worker_append (queue, identity);
             }
         }
         if (items [1].revents & ZMQ_POLLIN) {
             //  Now get next client request, route to next worker
-            zmsg_t *zmsg = zmsg_recv (frontend);
+            zmsg_t *msg = zmsg_recv (frontend);
             char *identity = s_worker_dequeue (queue);
-            zmsg_wrap (zmsg, identity, "");
-            zmsg_send (&zmsg, backend);
+            zmsg_wrap (msg, identity, "");
+            zmsg_send (&msg, backend);
             free (identity);
         }
 
@@ -172,10 +172,10 @@ int main (void)
         if (s_clock () > heartbeat_at) {
             int index;
             for (index = 0; index < queue->size; index++) {
-                zmsg_t *zmsg = zmsg_new ();
-                zmsg_body_set (zmsg, "HEARTBEAT");
-                zmsg_wrap (zmsg, queue->workers [index].identity, NULL);
-                zmsg_send (&zmsg, backend);
+                zmsg_t *msg = zmsg_new ();
+                zmsg_body_set (msg, "HEARTBEAT");
+                zmsg_wrap (msg, queue->workers [index].identity, NULL);
+                zmsg_send (&msg, backend);
             }
             heartbeat_at = s_clock () + HEARTBEAT_INTERVAL;
         }

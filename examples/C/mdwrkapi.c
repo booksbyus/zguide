@@ -164,8 +164,11 @@ mdwrk_recv (mdwrk_t *self, zmsg_t *reply)
         }
         //  Send HEARTBEAT if it's time
         if (s_clock () > self->heartbeat_at) {
+            zmsg_t *msg = zmsg_new ();
+            zmsg_append (msg, MDPS_WORKER);
+            zmsg_append (msg, MDPS_HEARTBEAT);
+            zmsg_send (&msg, self->worker);
             self->heartbeat_at = s_clock () + HEARTBEAT_INTERVAL;
-            s_send (self->worker, "HEARTBEAT");
         }
     }
     //  We exit if we've been disconnected

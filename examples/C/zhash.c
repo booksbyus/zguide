@@ -101,9 +101,6 @@ typedef unsigned int    qbyte;          //  Quad byte = 32 bits
     =========================================================================
 */
 
-//#include "../include/zfl_prelude.h"
-//#include "../include/zhash.h"
-
 //  Hash table performance parameters
 
 #define INITIAL_SIZE    255     //  Initial size in items

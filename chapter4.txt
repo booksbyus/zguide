@@ -402,13 +402,13 @@ Turning PPP into a real protocol would take more work:
 
 ++++ Service-Oriented Reliable Queuing (Majordomo Pattern)
 
-The nice thing about progress is how fast it happens. Just a few sentences ago we were dreaming of a better protocol that would fix the world. And here we have it:
+The nice thing about progress is how fast it happens when lawyers and committees aren't involved. Just a few sentences ago we were dreaming of a better protocol that would fix the world. And here we have it:
 
 * http://rfc.zeromq.org/spec:7
 
 This one-page specification takes PPP and turns it into something more solid. This is how we should design complex architectures: start by writing down the contracts, and only //then// write software to implement them.
 
-The Majordomo Protocol (MDP) extends and improves PPP in one interesting way apart from the two points above. It adds a "service name" to requests that the client sends, and asks workers to register for specific services. The nice thing about MDP is that it came from working code, a simpler protocol, and a precise set of improvements. It took literally only an hour to draft.
+The Majordomo Protocol (MDP) extends and improves PPP in one interesting way apart from the two points above. It adds a "service name" to requests that the client sends, and asks workers to register for specific services. The nice thing about MDP is that it came from working code, a simpler protocol, and a precise set of improvements. This made it easy to draft.
 
 Adding service names is a small but significant change that turns our Paranoid Pirate queue into a service-oriented broker:
 
@@ -486,8 +486,12 @@ Notes on this code:
 
 Let's design the Majordomo broker. Its core structure is a set of queues, one per service. We will create these queues as workers appear (we could delete them as workers disappear but forget that for now, it gets complex). Additionally, we keep a queue of workers per service.
 
-To make the C examples easier to write and read, I've taken the hash and list containers from the [http://zfl.zeromq.org ZFL project], and renamed them as zlist and zhash, similar to what we did with zmsg. In any modern language you can of course use built-in containers.
+To make the C examples easier to write and read, I've taken the hash and list containers from the [http://zfl.zeromq.org ZFL project], and renamed them as zlist and zhash, as we did with zmsg. In any modern language you can of course use built-in containers.
 
+
+- broker as thread, multiple in one process
+- test, dev, etc... easy to do
+- how to handle broker failure - live/live
 
 .end
 

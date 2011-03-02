@@ -44,6 +44,8 @@ void
     zlist_append (zlist_t *self, void *value);
 void
     zlist_push (zlist_t *self, void *value);
+void *
+    zlist_pop (zlist_t *self);
 void
     zlist_remove (zlist_t *self, void *value);
 zlist_t *
@@ -90,9 +92,6 @@ void
     =========================================================================
 */
 
-//#include "../include/zfl_prelude.h"
-//#include "../include/zlist.h"
-
 //  List node, used internally only
 
 struct node_t {
@@ -107,6 +106,8 @@ struct node_t {
 struct _zlist {
     struct node_t
         *head, *tail;
+    struct node_t
+        *cursor;
     size_t
         size;
 };
@@ -145,14 +146,32 @@ zlist_destroy (zlist_t **self_p)
 
 //  --------------------------------------------------------------------------
 //  Return the value at the head of list. If the list is empty, returns NULL.
-//  Note that this function does not remove the value from the list.
+//  Leaves cursor pointing at the head item, or NULL if the list is empty.
 
 void *
 zlist_first (zlist_t *self)
 {
     assert (self);
+    self->cursor = self->head;
     if (self->head)
         return self->head->value;
+    else
+        return NULL;
+}
+
+
+//  --------------------------------------------------------------------------
+//  Return the next value. If the list is empty, returns NULL. To move to
+//  the start of the list call zlist_first(). Advances the cursor.
+
+void *
+zlist_next (zlist_t *self)
+{
+    assert (self);
+    if (self->cursor)
+        self->cursor = self->cursor->next;
+    if (self->cursor)
+        return self->cursor->value;
     else
         return NULL;
 }
@@ -174,6 +193,7 @@ zlist_append (zlist_t *self, void *value)
     self->tail = node;
     node->next = NULL;
     self->size++;
+    self->cursor = NULL;
 }
 
 
@@ -191,6 +211,28 @@ zlist_push (zlist_t *self, void *value)
     if (self->tail == NULL)
         self->tail = node;
     self->size++;
+    self->cursor = NULL;
+}
+
+
+//  --------------------------------------------------------------------------
+//  Remove value from the beginning of the list, returns NULL if none
+
+void *
+zlist_pop (zlist_t *self)
+{
+    struct node_t *node = self->head;
+    void *value = NULL;
+    if (node) {
+        value = node->value;
+        self->head = node->next;
+        if (self->tail == node)
+            self->tail = NULL;
+    }
+    free (node);
+    self->size--;
+    self->cursor = NULL;
+    return value;
 }
 
 
@@ -210,7 +252,6 @@ zlist_remove (zlist_t *self, void *value)
         prev = node;
     }
     assert (node);
-
     if (prev)
         prev->next = node->next;
     else
@@ -221,6 +262,7 @@ zlist_remove (zlist_t *self, void *value)
 
     free (node);
     self->size--;
+    self->cursor = NULL;
 }
 
 
@@ -279,7 +321,10 @@ zlist_test (int verbose)
     assert (zlist_size (list) == 3);
 
     assert (zlist_first (list) == cheese);
+    assert (zlist_next (list) == bread);
+    assert (zlist_next (list) == wine);
     assert (zlist_size (list) == 3);
+
     zlist_remove (list, wine);
     assert (zlist_size (list) == 2);
 

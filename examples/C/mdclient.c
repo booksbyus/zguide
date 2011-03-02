@@ -5,14 +5,15 @@
 
 int main (void)
 {
-    mdcli_t *mdcli;
-    int rc;
+    mdcli_t *client = mdcli_new ("tcp://localhost:5555");
 
-    printf (" * mdcli: ");
-    mdcli = mdcli_new ("tcp://127.0.0.1:5055");
+    zmsg_t *request = zmsg_new ();
+    zmsg_append (request, "Hello world");
+    zmsg_t *reply = mdcli_send (client, "echo", request);
+    zmsg_dump (reply);
+    zmsg_destroy (&reply);
 
-    mdcli_destroy (&mdcli);
-    return 0;
+    mdcli_destroy (&client);
 
     return 0;
 }

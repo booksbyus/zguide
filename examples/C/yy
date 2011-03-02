@@ -1,0 +1,4 @@
+killall --quiet mdbroker
+killall --quiet mdworker
+killall --quiet mdclient
+ps

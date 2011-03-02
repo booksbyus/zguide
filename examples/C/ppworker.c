@@ -58,14 +58,14 @@ int main (void)
             //  Get message
             //  - 3-part envelope + content -> request
             //  - 1-part "HEARTBEAT" -> heartbeat
-            zmsg_t *zmsg = zmsg_recv (worker);
+            zmsg_t *msg = zmsg_recv (worker);
 
-            if (zmsg_parts (zmsg) == 3) {
+            if (msg_parts (msg) == 3) {
                 //  Simulate various problems, after a few cycles
                 cycles++;
                 if (cycles > 3 && randof (5) == 0) {
                     printf ("I: (%s) simulating a crash\n", identity);
-                    zmsg_destroy (&zmsg);
+                    zmsg_destroy (&msg);
                     break;
                 }
                 else
@@ -74,18 +74,18 @@ int main (void)
                     sleep (5);
                 }
                 printf ("I: (%s) normal reply - %s\n",
-                    identity, zmsg_body (zmsg));
-                zmsg_send (&zmsg, worker);
+                    identity, zmsg_body (msg));
+                zmsg_send (&msg, worker);
                 liveness = HEARTBEAT_LIVENESS;
                 sleep (1);              //  Do some heavy work
             }
             else
-            if (zmsg_parts (zmsg) == 1
-            && strcmp (zmsg_body (zmsg), "HEARTBEAT") == 0)
+            if (msg_parts (msg) == 1
+            && strcmp (msg_body (msg), "HEARTBEAT") == 0)
                 liveness = HEARTBEAT_LIVENESS;
             else {
                 printf ("E: (%s) invalid message\n", identity);
-                zmsg_dump (zmsg);
+                zmsg_dump (msg);
             }
             interval = INTERVAL_INIT;
         }
