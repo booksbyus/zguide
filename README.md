@@ -19,8 +19,8 @@ Contents
 &emsp;<a href="#toc2-46">Thanks</a>
 &emsp;<a href="#toc2-52">General</a>
 &emsp;<a href="#toc2-60">Examples</a>
-&emsp;<a href="#toc2-74">Guidelines</a>
-&emsp;<a href="#toc2-86">Build Process</a>
+&emsp;<a href="#toc2-70">Guidelines</a>
+&emsp;<a href="#toc2-82">Build Process</a>
 
 <A name="toc2-40" title="License" />
 License
@@ -48,15 +48,11 @@ Examples
 
 The examples from the Guide help people to learn and use ØMQ.  While we wrote most of the examples in C, we welcome translations into other languages. All example code is licensed under MIT/X11.
 
-Please send your translations, and fixes as patches to the zeromq-dev list with the subject line "[PATCH] zguide: <filename>". We'll review the code and add it to the zguide repository if it's ok.
+Languages with a 100% translation of examples get their own version of the Guide. So far, only the PHP community have managed this. To send us a translation, please clone this git and make a pull request, following the process explained here: http://www.zeromq.org/docs:contributing.
 
-Patches are the way we accept contributions.  It ensures that more than one person can work on code at the same time.
+If you don't want to use git, you can email us entire examples but only if the code was empty before.  If you want to update or change an example you MUST use git pull requests.
 
-The best way to submit patches is to clone this repository, make your changes, and use git to create a patch.  See http://www.zeromq.org/docs:contributing.
-
-If you don't want to use git, you can send us entire examples but only if the code was empty before.  If you want to update or change an example you MUST use git patches.
-
-<A name="toc2-74" title="Guidelines" />
+<A name="toc2-70" title="Guidelines" />
 Guidelines
 ----------
 
@@ -68,7 +64,7 @@ Please:
 
 Thanks!
 
-<A name="toc2-86" title="Build Process" />
+<A name="toc2-82" title="Build Process" />
 Build Process
 -------------
 
