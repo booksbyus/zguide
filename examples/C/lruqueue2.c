@@ -12,9 +12,8 @@
 //  - close sockets in each child thread
 //  - call zmq_term in each thread before ending
 //  - removed sleep(1) at end of main thread
-//
-#include "zhelpers.h"
-#include "zmsg.c"
+
+#include "zmsg.class"
 
 #define NBR_CLIENTS 10
 #define NBR_WORKERS 3

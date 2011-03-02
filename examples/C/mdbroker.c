@@ -2,10 +2,9 @@
 //  Majordomo broker
 //  A minimal implementation
 //
-#include "zhelpers.h"
-#include "zmsg.c"
-#include "zlist.c"
-#include "zhash.c"
+#include "zmsg.class"
+#include "zlist.class"
+#include "zhash.class"
 #include "mdp.h"
 
 #define HEARTBEAT_LIVENESS  3       //  3-5 is reasonable

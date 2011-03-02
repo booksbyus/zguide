@@ -2,8 +2,7 @@
 //  Majordomo Protocol Client API
 //  Implements the MDP/Client spec at http://rfc.zeromq.org/spec:7
 //
-#include "zhelpers.h"
-#include "zmsg.c"
+#include "zmsg.class"
 #include "mdp.h"
 
 //  Reliability parameters

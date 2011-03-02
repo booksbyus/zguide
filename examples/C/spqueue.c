@@ -3,8 +3,7 @@
 //  This is identical to the LRU pattern, with no reliability mechanisms
 //  at all. It depends on the client for recovery. Runs forever.
 //
-#include "zhelpers.h"
-#include "zmsg.c"
+#include "zmsg.class"
 
 #define MAX_WORKERS 100
 
