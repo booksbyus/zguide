@@ -59,7 +59,7 @@ int main (void)
             //  - 1-part "HEARTBEAT" -> heartbeat
             zmsg_t *msg = zmsg_recv (worker);
 
-            if (msg_parts (msg) == 3) {
+            if (zmsg_parts (msg) == 3) {
                 //  Simulate various problems, after a few cycles
                 cycles++;
                 if (cycles > 3 && randof (5) == 0) {
@@ -79,8 +79,8 @@ int main (void)
                 sleep (1);              //  Do some heavy work
             }
             else
-            if (msg_parts (msg) == 1
-            && strcmp (msg_body (msg), "HEARTBEAT") == 0)
+            if (zmsg_parts (msg) == 1
+            && strcmp (zmsg_body (msg), "HEARTBEAT") == 0)
                 liveness = HEARTBEAT_LIVENESS;
             else {
                 printf ("E: (%s) invalid message\n", identity);
