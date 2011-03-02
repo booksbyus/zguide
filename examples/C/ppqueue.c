@@ -1,8 +1,7 @@
 //
 //  Paranoid Pirate queue
 //
-#include "zhelpers.h"
-#include "zmsg.c"
+#include "zmsg.class"
 
 #define MAX_WORKERS         100
 #define HEARTBEAT_LIVENESS  3       //  3-5 is reasonable

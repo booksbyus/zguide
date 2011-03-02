@@ -1,8 +1,7 @@
 //
 //  Paranoid Pirate worker
 //
-#include "zhelpers.h"
-#include "zmsg.c"
+#include "zmsg.class"
 
 #define HEARTBEAT_LIVENESS  3       //  3-5 is reasonable
 #define HEARTBEAT_INTERVAL  1000    //  msecs

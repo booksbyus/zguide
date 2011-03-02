@@ -3,8 +3,7 @@
 //  Connects REQ socket to tcp://*:5556
 //  Implements worker part of LRU queueing
 //
-#include "zhelpers.h"
-#include "zmsg.c"
+#include "zmsg.class"
 
 int main (void)
 {

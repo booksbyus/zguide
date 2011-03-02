@@ -2,10 +2,9 @@
 //  Majordomo Protocol broker
 //  A minimal implementation
 //
-#include "zhelpers.h"
-#include "zmsg.c"
-#include "zlist.c"
-#include "zhash.c"
+#include "zmsg.class"
+#include "zlist.class"
+#include "zhash.class"
 #include "mdp.h"
 
 //  We'd normally pull these from config data
