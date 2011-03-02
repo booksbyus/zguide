@@ -1,22 +1,23 @@
 //
-//  Majordomo worker
+//  Majordomo Protocol worker example
+//  Uses the mdwrk API to hide all MDP aspects
 //
 #include "mdwrkapi.c"
 
 int main (void)
 {
-    zmsg_t *reply = NULL;
+    mdwrk_t *session = mdwrk_new ("tcp://localhost:5555", "echo", 1);
 
-    mdwrk_t *worker = mdwrk_new ("tcp://localhost:5555", "echo");
+    zmsg_t *reply = NULL;
     while (1) {
-        zmsg_t *request = mdwrk_recv (worker, reply);
+        zmsg_t *request = mdwrk_recv (session, reply);
         if (request == NULL)
             break;
         zmsg_dump (request);
 
-        //  Echo is complex...
+        //  Echo is complex... :-)
         reply = request;
     }
-    mdwrk_destroy (&worker);
+    mdwrk_destroy (&session);
     return 0;
 }

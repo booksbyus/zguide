@@ -488,7 +488,12 @@ Let's design the Majordomo broker. Its core structure is a set of queues, one pe
 
 To make the C examples easier to write and read, I've taken the hash and list containers from the [http://zfl.zeromq.org ZFL project], and renamed them as zlist and zhash, as we did with zmsg. In any modern language you can of course use built-in containers.
 
-
+- handling multiple protocols on one port
+- how long should a heartbeat failure be?
+    - time to restart service... 10-30 seconds?
+- live/live failover
+- multithreaded clients & workers
+- multithreaded brokers
 - broker as thread, multiple in one process
 - test, dev, etc... easy to do
 - how to handle broker failure - live/live

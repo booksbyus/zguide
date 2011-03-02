@@ -17,9 +17,12 @@ extern "C" {
 //  Opaque class structure
 typedef struct _mdcli_t mdcli_t;
 
-mdcli_t *mdcli_new     (char *broker);
-void     mdcli_destroy (mdcli_t **self_p);
-zmsg_t  *mdcli_send    (mdcli_t *self, char *service, zmsg_t *request);
+mdcli_t *
+    mdcli_new (char *broker, int verbose);
+void
+    mdcli_destroy (mdcli_t **self_p);
+zmsg_t *
+    mdcli_send (mdcli_t *self, char *service, zmsg_t *request);
 
 #ifdef __cplusplus
 }
@@ -32,6 +35,7 @@ struct _mdcli_t {
     char *broker;
     void *context;
     void *client;               //  Socket to broker
+    int verbose;                //  Print activity to stdout
 };
 
 
@@ -46,6 +50,8 @@ void s_connect_to_broker (mdcli_t *self)
     int linger = 0;
     zmq_setsockopt (self->client, ZMQ_LINGER, &linger, sizeof (linger));
     zmq_connect (self->client, self->broker);
+    if (self->verbose)
+        s_console ("I: connecting to broker at %s...", self->broker);
 }
 
 
@@ -53,7 +59,7 @@ void s_connect_to_broker (mdcli_t *self)
 //  Constructor
 
 mdcli_t *
-mdcli_new (char *broker)
+mdcli_new (char *broker, int verbose)
 {
     mdcli_t
         *self;
@@ -65,6 +71,7 @@ mdcli_new (char *broker)
 
     self->broker = strdup (broker);
     self->context = zmq_init (1);
+    self->verbose = verbose;
     s_connect_to_broker (self);
     return (self);
 }
@@ -103,6 +110,10 @@ mdcli_send (mdcli_t *self, char *service, zmsg_t *request)
         zmsg_t *msg = zmsg_dup (request);
         zmsg_push (msg, service);
         zmsg_push (msg, MDPC_CLIENT);
+        if (self->verbose) {
+            s_console ("I: send request to '%s' service:", service);
+            zmsg_dump (msg);
+        }
         zmsg_send (&msg, self->client);
 
         while (1) {
@@ -113,7 +124,10 @@ mdcli_send (mdcli_t *self, char *service, zmsg_t *request)
             //  If we got a reply, process it
             if (items [0].revents & ZMQ_POLLIN) {
                 zmsg_t *msg = zmsg_recv (self->client);
-
+                if (self->verbose) {
+                    s_console ("I: received reply:");
+                    zmsg_dump (msg);
+                }
                 //  Don't try to handle errors, just assert noisily
                 assert (zmsg_parts (msg) >= 3);
 
@@ -129,6 +143,8 @@ mdcli_send (mdcli_t *self, char *service, zmsg_t *request)
             }
             else
             if (--retries_left) {
+                if (self->verbose)
+                    s_console ("W: no reply, disconnecting and retrying...");
                 //  Reconnect, and resend message
                 s_connect_to_broker (self);
                 zmsg_t *msg = zmsg_dup (request);
@@ -136,8 +152,11 @@ mdcli_send (mdcli_t *self, char *service, zmsg_t *request)
                 zmsg_push (msg, MDPC_CLIENT);
                 zmsg_send (&msg, self->client);
             }
-            else
+            else {
+                if (self->verbose)
+                    s_console ("W: permanent error, abandoning session");
                 break;          //  Give up
+            }
         }
     }
     return NULL;

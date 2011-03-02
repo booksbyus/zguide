@@ -164,7 +164,7 @@ s_version_assert (int want_major, int want_minor)
     if (major < want_major
     || (major == want_major && minor < want_minor)) {
         printf ("Current 0MQ version is %d.%d\n", major, minor);
-        printf ("Application needs at least %d.%d - cannot continue\n", 
+        printf ("Application needs at least %d.%d - cannot continue\n",
             want_major, want_minor);
         exit (EXIT_FAILURE);
     }
@@ -172,7 +172,7 @@ s_version_assert (int want_major, int want_minor)
 
 //  Sleep for a number of milliseconds
 static void
-s_sleep (int msecs) 
+s_sleep (int msecs)
 {
 #if (defined (__WINDOWS__))
     Sleep (msecs);
@@ -201,5 +201,24 @@ s_clock (void)
 #endif
 }
 
+//  Print formatted string to stdout, prefixed by date/time and
+//  terminated with a newline.
+
+static void
+s_console (const char *format, ...)
+{
+    time_t curtime = time (NULL);
+    struct tm *loctime = localtime (&curtime);
+    char *formatted = malloc (20);
+    strftime (formatted, 20, "%y-%m-%d %H:%M:%S ", loctime);
+    printf ("%s", formatted);
+    free (formatted);
+
+    va_list argptr;
+    va_start (argptr, format);
+    vprintf (format, argptr);
+    va_end (argptr);
+    printf ("\n");
+}
 
 #endif  //  __ZHELPERS_H_INCLUDED__

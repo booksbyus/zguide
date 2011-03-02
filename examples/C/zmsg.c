@@ -481,6 +481,8 @@ zmsg_unwrap (zmsg_t *self)
 void
 zmsg_dump (zmsg_t *self)
 {
+    assert (self);
+
     int part_nbr;
     for (part_nbr = 0; part_nbr < self->_part_count; part_nbr++) {
         unsigned char *data = self->_part_data [part_nbr];
