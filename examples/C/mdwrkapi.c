@@ -1,5 +1,5 @@
 /*  =========================================================================
-    mdwrkapi.h
+    mdwrkapi.c
 
     Majordomo Protocol Worker API
     Implements the MDP/Worker spec at http://rfc.zeromq.org/spec:7.
@@ -25,34 +25,10 @@
     =========================================================================
 */
 
-#ifndef __MDWRKAPI_H_INCLUDED__
-#define __MDWRKAPI_H_INCLUDED__
-
-#include "zmsg.h"
-#include "mdp.h"
+#include "mdwrkapi.h"
 
 //  Reliability parameters
 #define HEARTBEAT_LIVENESS  3       //  3-5 is reasonable
-#define HEARTBEAT_INTERVAL  5000    //  msecs
-#define RECONNECT_INTERVAL  2500    //  Delay between reconnects
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-//  Opaque class structure
-typedef struct _mdwrk_t mdwrk_t;
-
-mdwrk_t *
-    mdwrk_new (char *broker,char *service, int verbose);
-void
-    mdwrk_destroy (mdwrk_t **self_p);
-zmsg_t *
-    mdwrk_recv (mdwrk_t *self, zmsg_t *reply);
-
-#ifdef __cplusplus
-}
-#endif
 
 //  Structure of our class
 //  We access these properties only via class methods
@@ -67,6 +43,8 @@ struct _mdwrk_t {
     //  Heartbeat management
     uint64_t heartbeat_at;      //  When to send HEARTBEAT
     size_t liveness;            //  How many attempts left
+    int heartbeat;              //  Heartbeat delay, msecs
+    int reconnect;              //  Reconnect delay, msecs
 
     //  Internal state
     int expect_reply;           //  Zero only at start
@@ -116,7 +94,7 @@ void s_connect_to_broker (mdwrk_t *self)
 
     //  If liveness hits zero, queue is considered disconnected
     self->liveness = HEARTBEAT_LIVENESS;
-    self->heartbeat_at = s_clock () + HEARTBEAT_INTERVAL;
+    self->heartbeat_at = s_clock () + self->heartbeat;
 }
 
 
@@ -139,6 +117,8 @@ mdwrk_new (char *broker,char *service, int verbose)
     self->service = strdup (service);
     self->context = zmq_init (1);
     self->verbose = verbose;
+    self->heartbeat = 5000;     //  msecs
+    self->reconnect = 2500;     //  msecs
 
     s_catch_signals ();
     s_connect_to_broker (self);
@@ -166,6 +146,26 @@ mdwrk_destroy (mdwrk_t **self_p)
 
 
 //  --------------------------------------------------------------------------
+//  Set heartbeat delay
+
+void
+mdwrk_set_heartbeat (mdwrk_t *self, int heartbeat)
+{
+    self->heartbeat = heartbeat;
+}
+
+
+//  --------------------------------------------------------------------------
+//  Set reconnect delay
+
+void
+mdwrk_set_reconnect (mdwrk_t *self, int reconnect)
+{
+    self->reconnect = reconnect;
+}
+
+
+//  --------------------------------------------------------------------------
 //  Send reply, if any, to broker and wait for next request.
 
 zmsg_t *
@@ -179,7 +179,7 @@ mdwrk_recv (mdwrk_t *self, zmsg_t *reply)
 
     while (!s_interrupted) {
         zmq_pollitem_t items [] = { { self->worker,  0, ZMQ_POLLIN, 0 } };
-        zmq_poll (items, 1, HEARTBEAT_INTERVAL * 1000);
+        zmq_poll (items, 1, self->heartbeat * 1000);
 
         if (items [0].revents & ZMQ_POLLIN) {
             zmsg_t *msg = zmsg_recv (self->worker);
@@ -218,18 +218,16 @@ mdwrk_recv (mdwrk_t *self, zmsg_t *reply)
         if (--self->liveness == 0) {
             if (self->verbose)
                 s_console ("W: disconnected from broker - retrying...");
-            s_sleep (RECONNECT_INTERVAL);
+            s_sleep (self->reconnect);
             s_connect_to_broker (self);
         }
         //  Send HEARTBEAT if it's time
         if (s_clock () > self->heartbeat_at) {
             s_send_to_broker (self, MDPS_HEARTBEAT, NULL, NULL);
-            self->heartbeat_at = s_clock () + HEARTBEAT_INTERVAL;
+            self->heartbeat_at = s_clock () + self->heartbeat;
         }
     }
     if (s_interrupted)
         printf ("W: interrupt received, killing worker...\n");
     return NULL;
 }
-
-#endif

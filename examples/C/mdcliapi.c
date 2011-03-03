@@ -1,5 +1,5 @@
 /*  =========================================================================
-    mdcliapi.h
+    mdcliapi.c
 
     Majordomo Protocol Client API
     Implements the MDP/Worker spec at http://rfc.zeromq.org/spec:7.
@@ -25,33 +25,8 @@
     =========================================================================
 */
 
-#ifndef __MDCLIAPI_H_INCLUDED__
-#define __MDCLIAPI_H_INCLUDED__
+#include "mdcliapi.h"
 
-#include "zmsg.h"
-#include "mdp.h"
-
-//  Reliability parameters
-#define REQUEST_TIMEOUT     2500    //  msecs, (> 1000!)
-#define REQUEST_RETRIES     3       //  Before we abandon
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-//  Opaque class structure
-typedef struct _mdcli_t mdcli_t;
-
-mdcli_t *
-    mdcli_new (char *broker, int verbose);
-void
-    mdcli_destroy (mdcli_t **self_p);
-zmsg_t *
-    mdcli_send (mdcli_t *self, char *service, zmsg_t *request);
-
-#ifdef __cplusplus
-}
-#endif
 
 //  Structure of our class
 //  We access these properties only via class methods
@@ -61,6 +36,8 @@ struct _mdcli_t {
     void *context;
     void *client;               //  Socket to broker
     int verbose;                //  Print activity to stdout
+    int timeout;                //  Request timeout
+    int retries;                //  Request retries
 };
 
 
@@ -97,6 +74,8 @@ mdcli_new (char *broker, int verbose)
     self->broker = strdup (broker);
     self->context = zmq_init (1);
     self->verbose = verbose;
+    self->timeout = 2500;           //  msecs, (> 1000!)
+    self->retries = 3;              //  Before we abandon
 
     s_catch_signals ();
     s_connect_to_broker (self);
@@ -121,6 +100,27 @@ mdcli_destroy (mdcli_t **self_p)
     }
 }
 
+//  --------------------------------------------------------------------------
+//  Set request timeout
+
+void
+mdcli_set_timeout (mdcli_t *self, int timeout)
+{
+    assert (self);
+    self->timeout = timeout;
+}
+
+
+//  --------------------------------------------------------------------------
+//  Set request retries
+
+void
+mdcli_set_retries (mdcli_t *self, int retries)
+{
+    assert (self);
+    self->retries = retries;
+}
+
 
 //  --------------------------------------------------------------------------
 //  Send request to broker and get reply by hook or crook
@@ -129,7 +129,8 @@ mdcli_destroy (mdcli_t **self_p)
 zmsg_t *
 mdcli_send (mdcli_t *self, char *service, zmsg_t *request)
 {
-    int retries_left = REQUEST_RETRIES;
+    assert (self);
+    int retries_left = self->retries;
     while (retries_left && !s_interrupted) {
         //  Prefix request with protocol frames
         //  Frame 1: "MDPCxy" (six bytes, MDP/Client x.y)
@@ -146,7 +147,7 @@ mdcli_send (mdcli_t *self, char *service, zmsg_t *request)
         while (!s_interrupted) {
             //  Poll socket for a reply, with timeout
             zmq_pollitem_t items [] = { { self->client, 0, ZMQ_POLLIN, 0 } };
-            zmq_poll (items, 1, REQUEST_TIMEOUT * 1000);
+            zmq_poll (items, 1, self->timeout * 1000);
 
             //  If we got a reply, process it
             if (items [0].revents & ZMQ_POLLIN) {
@@ -190,5 +191,3 @@ mdcli_send (mdcli_t *self, char *service, zmsg_t *request)
         printf ("W: interrupt received, killing client...\n");
     return NULL;
 }
-
-#endif

@@ -21,4 +21,3 @@ elif [ -f $1.c ]; then
 else
     echo "syntax: build all | clean"
 fi
-

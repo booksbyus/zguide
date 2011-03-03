@@ -3,6 +3,7 @@
 //  Uses the mdcli API to hide all MDP aspects
 //
 #include "mdcliapi.h"
+#include "mdcliapi.c"
 
 int main (void)
 {
