@@ -113,7 +113,7 @@ mdwrk_new (char *broker,char *service, int verbose)
     self->service = strdup (service);
     self->context = zmq_init (1);
     self->verbose = verbose;
-    self->heartbeat = 5000;     //  msecs
+    self->heartbeat = 1000;     //  msecs
     self->reconnect = 2500;     //  msecs
 
     s_catch_signals ();

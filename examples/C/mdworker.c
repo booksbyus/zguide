@@ -7,7 +7,7 @@
 
 int main (void)
 {
-    mdwrk_t *session = mdwrk_new ("tcp://localhost:5555", "echo", 1);
+    mdwrk_t *session = mdwrk_new ("tcp://localhost:5555", "echo", 0);
 
     zmsg_t *reply = NULL;
     while (1) {

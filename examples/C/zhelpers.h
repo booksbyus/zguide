@@ -181,8 +181,7 @@ s_sleep (int msecs)
     struct timespec t;
     t.tv_sec  =  msecs / 1000;
     t.tv_nsec = (msecs % 1000) * 1000000;
-    int rc = nanosleep (&t, NULL);
-    assert (rc == 0);
+    nanosleep (&t, NULL);
 #endif
 }
 
@@ -196,8 +195,7 @@ s_clock (void)
     return (int64_t) st.wSecond * 1000 + st.wMilliseconds;
 #else
     struct timeval tv;
-    int rc = gettimeofday (&tv, NULL);
-    assert (rc == 0);
+    gettimeofday (&tv, NULL);
     return (int64_t) (tv.tv_sec * 1000 + tv.tv_usec / 1000);
 #endif
 }

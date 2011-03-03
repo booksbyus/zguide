@@ -7,7 +7,7 @@
 
 int main (void)
 {
-    mdcli_t *session = mdcli_new ("tcp://localhost:5555", 1);
+    mdcli_t *session = mdcli_new ("tcp://localhost:5555", 0);
 
     int count;
     for (count = 0; count < 100000; count++) {

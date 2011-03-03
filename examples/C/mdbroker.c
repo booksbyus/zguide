@@ -10,9 +10,9 @@
 //  We'd normally pull these from config data
 
 #define HEARTBEAT_LIVENESS  3       //  3-5 is reasonable
-#define HEARTBEAT_INTERVAL  5000    //  msecs
+#define HEARTBEAT_INTERVAL  1000    //  msecs
 #define HEARTBEAT_EXPIRY    HEARTBEAT_INTERVAL * HEARTBEAT_LIVENESS
-#define VERBOSE_BROKER      1       //  Trace activity?
+#define VERBOSE_BROKER      0       //  Trace activity?
 
 //  This defines a single broker
 typedef struct {
@@ -207,6 +207,7 @@ s_service_dispatch (broker_t *self, service_t *service, zmsg_t *msg)
         && zlist_size (service->requests))
     {
         worker_t *worker = zlist_pop (service->waiting);
+        zlist_remove (self->waiting, worker);
         zmsg_t *msg = zlist_pop (service->requests);
         s_worker_send (self, worker, MDPW_REQUEST, NULL, msg);
         zmsg_destroy (&msg);
