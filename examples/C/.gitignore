@@ -1,7 +1,7 @@
 core
 *.o
 *.lst
-
+*.log
 hwclient
 hwserver
 msgqueue
@@ -53,4 +53,5 @@ ppworker
 mdclient
 mdbroker
 mdworker
+interrupt
 

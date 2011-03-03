@@ -113,6 +113,8 @@ mdwrk_new (char *broker,char *service, int verbose)
     self->service = strdup (service);
     self->context = zmq_init (1);
     self->verbose = verbose;
+
+    s_catch_signals ();
     s_connect_to_broker (self);
     return (self);
 }
@@ -149,7 +151,7 @@ mdwrk_recv (mdwrk_t *self, zmsg_t *reply)
         s_send_to_broker (self, MDPS_REPLY, NULL, reply);
     self->expect_reply = 1;
 
-    while (1) {
+    while (!s_interrupted) {
         zmq_pollitem_t items [] = { { self->worker,  0, ZMQ_POLLIN, 0 } };
         zmq_poll (items, 1, HEARTBEAT_INTERVAL * 1000);
 
@@ -169,8 +171,10 @@ mdwrk_recv (mdwrk_t *self, zmsg_t *reply)
             free (header);
 
             char *command = zmsg_pop (msg);
-            if (strcmp (command, MDPS_REQUEST) == 0)
+            if (strcmp (command, MDPS_REQUEST) == 0) {
+                free (command);
                 return msg;     //  We have a request to process
+            }
             else
             if (strcmp (command, MDPS_HEARTBEAT) == 0)
                 ;               //  Do nothing for heartbeats
@@ -197,6 +201,7 @@ mdwrk_recv (mdwrk_t *self, zmsg_t *reply)
             self->heartbeat_at = s_clock () + HEARTBEAT_INTERVAL;
         }
     }
-    //  We exit if we've been disconnected
+    if (s_interrupted)
+        printf ("W: interrupt received, killing worker...\n");
     return NULL;
 }

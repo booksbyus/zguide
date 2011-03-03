@@ -71,6 +71,8 @@ mdcli_new (char *broker, int verbose)
     self->broker = strdup (broker);
     self->context = zmq_init (1);
     self->verbose = verbose;
+
+    s_catch_signals ();
     s_connect_to_broker (self);
     return (self);
 }
@@ -102,7 +104,7 @@ zmsg_t *
 mdcli_send (mdcli_t *self, char *service, zmsg_t *request)
 {
     int retries_left = REQUEST_RETRIES;
-    while (retries_left) {
+    while (retries_left && !s_interrupted) {
         //  Prefix request with protocol frames
         //  Frame 1: "MDPCxy" (six bytes, MDP/Client x.y)
         //  Frame 2: Service name (printable string)
@@ -115,7 +117,7 @@ mdcli_send (mdcli_t *self, char *service, zmsg_t *request)
         }
         zmsg_send (&msg, self->client);
 
-        while (1) {
+        while (!s_interrupted) {
             //  Poll socket for a reply, with timeout
             zmq_pollitem_t items [] = { { self->client, 0, ZMQ_POLLIN, 0 } };
             zmq_poll (items, 1, REQUEST_TIMEOUT * 1000);
@@ -158,5 +160,7 @@ mdcli_send (mdcli_t *self, char *service, zmsg_t *request)
             }
         }
     }
+    if (s_interrupted)
+        printf ("W: interrupt received, killing client...\n");
     return NULL;
 }

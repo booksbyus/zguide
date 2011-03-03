@@ -10,6 +10,7 @@ We'll cover:
 * How to build your apps around 0MQ's asynchronous I/O model.
 * How to handle multiple sockets in one thread.
 * How to handle fatal and non-fatal errors properly.
+* How to handle interrupt signals like Ctrl-C.
 * How to shutdown a 0MQ application cleanly.
 * How to send and receive multipart messages.
 * How to forward messages across networks.
@@ -491,18 +492,35 @@ It doesn't take much new code in the sink:
                          \--------------------------/
 
 
-     Figure # - Parallel Pipeline with Kill signalling
+     Figure # - Parallel Pipeline with Kill signaling
 [[/code]]
 
 Here is the worker process, which manages two sockets (a PULL socket getting tasks, and a SUB socket getting control commands) using the zmq_poll[3] technique we saw earlier:
 
-[[code type="example" title="Parallel task worker with kill signalling" name="taskwork2"]]
+[[code type="example" title="Parallel task worker with kill signaling" name="taskwork2"]]
 [[/code]]
 
 Here is the modified sink application. When it's finished collecting results it broadcasts a KILL message to all workers:
 
-[[code type="example" title="Parallel task sink with kill signalling" name="tasksink2"]]
+[[code type="example" title="Parallel task sink with kill signaling" name="tasksink2"]]
 [[/code]]
+
++++ Handling Interrupt Signals
+
+Realistic applications need to shutdown cleanly when interrupted with Ctrl-C or another signal such as SIGTERM. By default, these simply kill the process, meaning messages won't be flushed, files won't be closed cleanly, etc.
+
+Here is how we handle a signal in C. Your mileage may vary in other languages:
+
+[[code type="example" title="Handling Ctrl-C Cleanly" name="interrupt"]]
+[[/code]]
+
+Note that the zhelpers.h provides s_catch_signals() and s_interrupted. To use these correctly:
+
+* Call s_catch_signals() at the start of your main code.
+* Check s_interrupted after every blocking receive, or zmq_poll[3] call.
+* Shutdown as normal if s_interrupted is set.
+
+If you do not check s_interrupted then your application will become immune to Ctrl-C and SIGTERM, which may be useful but is usually not.
 
 +++ Multipart Messages
 
@@ -962,7 +980,7 @@ Here the 'work' is just a one-second pause. We could do anything in the workers,
         Figure # - Multithreaded server
 [[/code]]
 
-+++ Signalling between Threads
++++ Signaling between Threads
 
 When you start making multithreaded applications with 0MQ, you'll hit the question of how to coordinate your threads. Though you might be tempted to insert 'sleep' statements, or use multithreading techniques such as semaphores or mutexes, **the only mechanism that you should use are 0MQ messages**. Remember the story of The Drunkards and the Beer Bottle.
 

@@ -12,10 +12,13 @@ int main (void)
     for (count = 0; count < 100000; count++) {
         zmsg_t *request = zmsg_new ("Hello world");
         zmsg_t *reply = mdcli_send (session, "echo", request);
-        zmsg_destroy (&reply);
         zmsg_destroy (&request);
+        if (reply)
+            zmsg_destroy (&reply);
+        else
+            break;              //  Interrupted by Ctrl-C
     }
-    puts ("100K requests/replies processed");
+    printf ("%d requests/replies processed\n", count);
     mdcli_destroy (&session);
     return 0;
 }
