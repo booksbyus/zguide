@@ -11,15 +11,10 @@ int main (void)
     zmsg_t *reply = NULL;
     while (1) {
         zmsg_t *request = mdwrk_recv (session, reply);
-        // todo free reply
         zmsg_destroy (&reply);
         if (request == NULL)
-            break;
-//        s_console ("I: Worker application received request");
- //       zmsg_dump (request);
-
-        //  Echo is complex... :-)
-        reply = request;
+            break;              //  Worker abandoned session
+        reply = request;        //  Echo is complex... :-)
     }
     mdwrk_destroy (&session);
     return 0;

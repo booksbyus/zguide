@@ -40,7 +40,7 @@ extern "C" {
 typedef struct _zmsg_t zmsg_t;
 
 //  Constructor and destructor
-zmsg_t *zmsg_new      (void);
+zmsg_t *zmsg_new      (char *body);
 void    zmsg_destroy  (zmsg_t **self_p);
 
 //  Receive and send message, wrapping new/destroy
@@ -95,16 +95,18 @@ struct _zmsg_t {
 
 
 //  --------------------------------------------------------------------------
-//  Constructor
+//  Constructor, sets initial body if provided
 
 zmsg_t *
-zmsg_new (void)
+zmsg_new (char *body)
 {
     zmsg_t
         *self;
 
     self = malloc (sizeof (zmsg_t));
     memset (self, 0, sizeof (zmsg_t));
+    if (body)
+        zmsg_body_set (self, body);
     return (self);
 }
 
@@ -205,7 +207,7 @@ zmsg_t *
 zmsg_dup (zmsg_t *self)
 {
     assert (self);
-    zmsg_t *dup = zmsg_new ();
+    zmsg_t *dup = zmsg_new (NULL);
     assert (dup);
 
     uint part_nbr;
@@ -227,7 +229,7 @@ zmsg_recv (void *socket)
 {
     assert (socket);
 
-    zmsg_t *self = zmsg_new ();
+    zmsg_t *self = zmsg_new (NULL);
     while (1) {
         zmq_msg_t message;
         zmq_msg_init (&message);
@@ -531,9 +533,7 @@ zmsg_test (int verbose)
     assert (rc == 0);
 
     //  Test send and receive of single-part message
-    zmsg = zmsg_new ();
-    assert (zmsg);
-    zmsg_body_set (zmsg, "Hello");
+    zmsg = zmsg_new ("Hello");
     assert (strcmp (zmsg_body (zmsg), "Hello") == 0);
     zmsg_send (&zmsg, output);
     assert (zmsg == NULL);
@@ -545,10 +545,9 @@ zmsg_test (int verbose)
     assert (strcmp (zmsg_body (zmsg), "Hello") == 0);
 
     //  Test send and receive of multi-part message
-    zmsg = zmsg_new ();
-    zmsg_body_set (zmsg, "Hello");
-    zmsg_wrap     (zmsg, "address1", "");
-    zmsg_wrap     (zmsg, "address2", NULL);
+    zmsg = zmsg_new ("Hello");
+    zmsg_wrap (zmsg, "address1", "");
+    zmsg_wrap (zmsg, "address2", NULL);
     assert (zmsg_parts (zmsg) == 4);
     zmsg_send (&zmsg, output);
 

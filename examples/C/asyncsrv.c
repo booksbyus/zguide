@@ -38,7 +38,7 @@ client_task (void *args)
                 zmsg_destroy (&zmsg);
             }
         }
-        zmsg_t *zmsg = zmsg_new ();
+        zmsg_t *zmsg = zmsg_new (NULL);
         zmsg_body_fmt (zmsg, "request #%d", ++request_nbr);
         zmsg_send (&zmsg, client);
     }
@@ -60,7 +60,7 @@ static void *server_worker (void *socket);
 void *server_task (void *args)
 {
     void *context = zmq_init (1);
-    
+
     //  Frontend socket talks to clients over TCP
     void *frontend = zmq_socket (context, ZMQ_XREP);
     zmq_bind (frontend, "tcp://*:5570");
@@ -79,7 +79,7 @@ void *server_task (void *args)
     //  We could do this:
     //      zmq_device (ZMQ_QUEUE, frontend, backend);
     //  But doing it ourselves means we can debug this more easily
-    
+
     //  Switch messages between frontend and backend
     while (1) {
         zmq_pollitem_t items [] = {
@@ -119,7 +119,7 @@ server_worker (void *context)
         //  The XREQ socket gives us the address envelope and message
         zmsg_t *msg = zmsg_recv (worker);
         assert (zmsg_parts (msg) == 2);
-        
+
         //  Send 0..4 replies back
         int reply, replies = randof (5);
         for (reply = 0; reply < replies; reply++) {
@@ -138,7 +138,7 @@ server_worker (void *context)
 //  This main thread simply starts several clients, and a server, and then
 //  waits for the server to finish.
 //
-int main (void) 
+int main (void)
 {
     s_version_assert (2, 1);
 

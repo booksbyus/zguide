@@ -60,7 +60,7 @@ int main (int argc, char *argv [])
         }
         else {
             //  Send random value for worker availability
-            zmsg_t *zmsg = zmsg_new ();
+            zmsg_t *zmsg = zmsg_new (NULL);
             zmsg_body_fmt (zmsg, "%d", randof (10));
             //  We stick our own address onto the envelope
             zmsg_wrap (zmsg, self, NULL);

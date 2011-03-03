@@ -10,8 +10,7 @@ int main (void)
 
     int count;
     for (count = 0; count < 100000; count++) {
-        zmsg_t *request = zmsg_new ();
-        zmsg_append (request, "Hello world");
+        zmsg_t *request = zmsg_new ("Hello world");
         zmsg_t *reply = mdcli_send (session, "echo", request);
         zmsg_destroy (&reply);
         zmsg_destroy (&request);

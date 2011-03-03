@@ -54,7 +54,7 @@ struct _mdwrk_t {
 static void
 s_send_to_broker (mdwrk_t *self, char *command, char *option, zmsg_t *_msg)
 {
-    zmsg_t *msg = _msg? zmsg_dup (_msg): zmsg_new ();
+    zmsg_t *msg = _msg? zmsg_dup (_msg): zmsg_new (NULL);
 
     //  Stack protocol envelope to start of message
     if (option)

@@ -171,8 +171,7 @@ int main (void)
         if (s_clock () > heartbeat_at) {
             int index;
             for (index = 0; index < queue->size; index++) {
-                zmsg_t *msg = zmsg_new ();
-                zmsg_body_set (msg, "HEARTBEAT");
+                zmsg_t *msg = zmsg_new ("HEARTBEAT");
                 zmsg_wrap (msg, queue->workers [index].identity, NULL);
                 zmsg_send (&msg, backend);
             }

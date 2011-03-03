@@ -49,7 +49,7 @@ s_send_to_worker (
     broker_t *self, worker_t *worker,
     char *command, char *option, zmsg_t *msg)
 {
-    msg = msg? zmsg_dup (msg): zmsg_new ();
+    msg = msg? zmsg_dup (msg): zmsg_new (NULL);
 
     //  Stack protocol envelope to start of message
     if (option)                 //  Optional frame after command

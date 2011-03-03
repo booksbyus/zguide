@@ -30,13 +30,13 @@ client_task (void *args)
     void *client = zmq_socket (context, ZMQ_REQ);
     zmq_connect (client, "ipc://localfe.ipc");
 
-    zmsg_t *zmsg = zmsg_new ();
     while (1) {
         //  Send request, get reply
-        zmsg_body_set (zmsg, "HELLO");
+        zmsg_t *zmsg = zmsg_new ("HELLO");
         zmsg_send (&zmsg, client);
         zmsg = zmsg_recv (client);
         printf ("I: client status: %s\n", zmsg_body (zmsg));
+        zmsg_destroy (&zmsg);
     }
     //  We never get here but if we did, this is how we'd exit cleanly
     zmq_close (client);
@@ -54,8 +54,7 @@ worker_task (void *args)
     zmq_connect (worker, "ipc://localbe.ipc");
 
     //  Tell broker we're ready for work
-    zmsg_t *zmsg = zmsg_new ();
-    zmsg_body_set (zmsg, "READY");
+    zmsg_t *zmsg = zmsg_new ("READY");
     zmsg_send (&zmsg, worker);
 
     while (1) {

@@ -37,7 +37,6 @@ client_task (void *args)
     rc = zmq_connect (monitor, "ipc://monitor.ipc");
     assert (rc == 0);
 
-    zmsg_t *zmsg = zmsg_new ();
     while (1) {
         sleep (randof (5));
 
@@ -46,22 +45,22 @@ client_task (void *args)
             //  Send request with random hex ID
             char task_id [5];
             sprintf (task_id, "%04X", randof (0x10000));
-            zmsg_body_set (zmsg, task_id);
+            zmsg_t *zmsg = zmsg_new (task_id);
             zmsg_send (&zmsg, client);
 
             //  Wait max ten seconds for a reply, then complain
-            zmq_pollitem_t pollset [1] = {
-                { client, 0, ZMQ_POLLIN, 0 }
-            };
+            zmq_pollitem_t pollset [1] = { { client, 0, ZMQ_POLLIN, 0 } };
             rc = zmq_poll (pollset, 1, 10 * 1000000);
             assert (rc >= 0);
+
             if (pollset [0].revents & ZMQ_POLLIN) {
-                zmsg = zmsg_recv (client);
+                zmsg_t *zmsg = zmsg_recv (client);
                 //  Worker is supposed to answer us with our task id
                 assert (strcmp (zmsg_body (zmsg), task_id) == 0);
+                zmsg_destroy (&zmsg);
             }
             else {
-                zmsg = zmsg_new ();
+                zmsg_t *zmsg = zmsg_new (NULL);
                 zmsg_body_fmt (zmsg,
                     "E: CLIENT EXIT - lost task %s", task_id);
                 zmsg_send (&zmsg, monitor);
@@ -87,8 +86,7 @@ worker_task (void *args)
     assert (rc == 0);
 
     //  Tell broker we're ready for work
-    zmsg_t *zmsg = zmsg_new ();
-    zmsg_body_set (zmsg, "READY");
+    zmsg_t *zmsg = zmsg_new ("READY");
     zmsg_send (&zmsg, worker);
 
     while (1) {
@@ -293,7 +291,7 @@ int main (int argc, char *argv [])
         }
         if (local_capacity != previous) {
             //  Broadcast new capacity
-            zmsg_t *zmsg = zmsg_new ();
+            zmsg_t *zmsg = zmsg_new (NULL);
             zmsg_body_fmt (zmsg, "%d", local_capacity);
             //  We stick our own address onto the envelope
             zmsg_wrap (zmsg, self, NULL);
