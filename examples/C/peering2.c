@@ -12,8 +12,8 @@
 //  - use ipc:// instead of inproc://
 //  - close sockets in each child thread
 //  - call zmq_term in each thread before ending
-//
-#include "zmsg.class"
+
+#include "zmsg.h"
 
 #define NBR_CLIENTS 10
 #define NBR_WORKERS 3

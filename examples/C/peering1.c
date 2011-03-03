@@ -2,7 +2,7 @@
 //  Broker peering simulation (part 1)
 //  Prototypes the state flow
 //
-#include "zmsg.class"
+#include "zmsg.h"
 
 int main (int argc, char *argv [])
 {

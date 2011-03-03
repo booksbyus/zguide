@@ -2,7 +2,7 @@
 //  Majordomo Protocol worker example
 //  Uses the mdwrk API to hide all MDP aspects
 //
-#include "mdwrkapi.class"
+#include "mdwrkapi.h"
 
 int main (void)
 {

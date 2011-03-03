@@ -70,7 +70,7 @@ void
 typedef          int    Bool;           //  Boolean TRUE/FALSE value
 typedef unsigned int    qbyte;          //  Quad byte = 32 bits
 
-#endif
+
 /*  =========================================================================
     zhash.c - hash table
 
@@ -509,3 +509,5 @@ zhash_test (int verbose)
 
     printf ("OK\n");
 }
+
+#endif

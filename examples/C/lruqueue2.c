@@ -13,7 +13,7 @@
 //  - call zmq_term in each thread before ending
 //  - removed sleep(1) at end of main thread
 
-#include "zmsg.class"
+#include "zmsg.h"
 
 #define NBR_CLIENTS 10
 #define NBR_WORKERS 3

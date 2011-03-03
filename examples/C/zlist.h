@@ -62,7 +62,6 @@ void
 //  Macros and typedefs defined by the ZFL header
 #define zmalloc(size) calloc(1,(size))
 
-#endif
 
 /*  =========================================================================
     zlist.c - singly-linked list container
@@ -365,3 +364,5 @@ zlist_test (int verbose)
 
     printf ("OK\n");
 }
+
+#endif
