@@ -717,12 +717,12 @@ What we want is an API that lets us receive and send an entire message in one sh
 The best way to design an API is to start by writing test code, i.e. see what the API would look like in real code. Here's how I'd like that worker code to look:
 
 [[code]]
-    while (1) {
-        zmsg_t *zmsg = zmsg_recv (worker);
-        printf ("Worker: %s\n", zmsg_body (zmsg));
-        zmsg_body_set (zmsg, "OK");
-        zmsg_send (&zmsg, worker);
-    }
+while (1) {
+    zmsg_t *zmsg = zmsg_recv (worker);
+    printf ("Worker: %s\n", zmsg_body (zmsg));
+    zmsg_body_set (zmsg, "OK");
+    zmsg_send (&zmsg, worker);
+}
 [[/code]]
 
 Replacing 22 lines of code with 4 is a good deal, especially since the results are easy to read and understand. I'll use every sneaky assumption in the book to make this API minimalistic:
@@ -734,30 +734,7 @@ Replacing 22 lines of code with 4 is a good deal, especially since the results a
 
 That last one is tricky because 0MQ uses a binary zero at the start of generated identities. It is painful in C to pass length-specified blobs in and out of APIs. So, our message class encodes and decodes 0MQ identities to make them usable internally as C strings. This is not a high-performance design but it is simple and safe. In other languages you'll be able to make an API that handles binary message parts without such hacks.
 
-So here's the class:
-
-[[code type="example" title="zmsg helper class" name="zmsg"]]
-[[/code]]
-
-Here is a test wrapper:
-
-[[code type="example" title="zmsg test wrapper" name="zmsg_test"]]
-[[/code]]
-
-Build and run the test wrapper, and it should print something like this, including a couple of message dumps that show 0MQ-generated socket identities:
-
-[[code]]
-----------------------------------------
-[017] 20B60BC50DC16542C2A9AB7B01872F359D
-[005] Hello
-----------------------------------------
-[017] 20B60BC50DC16542C2A9AB7B01872F359D
-[008] address2
-[008] address1
-[000]
-[005] Hello
- * zmsg: OK
-[[/code]]
+The result is a C source creatively called {{zmsg.class}}, which you can  [https://github.com/imatix/zguide/blob/master/examples/C/zmsg.class read at leisure].
 
 And here is the LRU queue broker rewritten to use the zmsg class. Compare the code that works with messages, you'll see it's much shorter and 'just works':
 

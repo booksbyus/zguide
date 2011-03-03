@@ -177,10 +177,7 @@ s_recv (void *socket) {
 
 This makes a very handy helper function and in the spirit of making things we can reuse profitably, let's write a similar 's_send' function that sends strings in the correct 0MQ format, and package this into a header file we can reuse.
 
-The result is {{zhelpers.h}}, which lets us write sweeter and shorter 0MQ applications in C:
-
-[[code filename="examples/C/zhelpers.h"]]
-[[/code]]
+The result is {{zhelpers.h}}, which lets us write sweeter and shorter 0MQ applications in C. It is a fairly long source, and only fun for C developers, so [https://github.com/imatix/zguide/blob/master/examples/C/zhelpers.h read it at leisure].
 
 +++ Version Reporting
 

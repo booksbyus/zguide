@@ -156,7 +156,7 @@ mdwrk_recv (mdwrk_t *self, zmsg_t *reply)
         if (items [0].revents & ZMQ_POLLIN) {
             zmsg_t *msg = zmsg_recv (self->worker);
             if (self->verbose) {
-                s_console ("I: received input message:");
+                s_console ("I: received message from broker:");
                 zmsg_dump (msg);
             }
             self->liveness = HEARTBEAT_LIVENESS;
@@ -176,12 +176,13 @@ mdwrk_recv (mdwrk_t *self, zmsg_t *reply)
                 ;               //  Do nothing for heartbeats
             else
             if (strcmp (command, MDPS_DISCONNECT) == 0)
-                break;          //  Return empty handed
+                s_connect_to_broker (self);
             else {
                 s_console ("E: invalid input message (%d)", (int) *command);
                 zmsg_dump (msg);
             }
             free (command);
+            zmsg_destroy (&msg);
         }
         else
         if (--self->liveness == 0) {

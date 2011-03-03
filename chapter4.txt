@@ -466,9 +466,9 @@ void     mdwrk_destroy (mdwrk_t **self_p);
 zmsg_t  *mdwrk_recv    (mdwrk_t *self, zmsg_t *reply);
 [[/code]]
 
-It's more or less symmetrical but the worker dialog is a little different. The first time a worker does a recv (), it passes a null reply, thereafter it passes the current reply, and gets a new request.
+It's more or less symmetrical but the worker dialog is a little different. The first time a worker does a recv(), it passes a null reply, thereafter it passes the current reply, and gets a new request.
 
-The client and worker APIs are fairly simple to construct, since they're heavily based on the Paranoid Pirate code we already developed. Here is the client API:
+The client and worker APIs were fairly simple to construct, since they're heavily based on the Paranoid Pirate code we already developed. Here is the client API:
 
 [[code type="example" title="Majordomo Client API" name="mdcliapi"]]
 [[/code]]
@@ -486,17 +486,24 @@ Notes on this code:
 
 Let's design the Majordomo broker. Its core structure is a set of queues, one per service. We will create these queues as workers appear (we could delete them as workers disappear but forget that for now, it gets complex). Additionally, we keep a queue of workers per service.
 
-To make the C examples easier to write and read, I've taken the hash and list containers from the [http://zfl.zeromq.org ZFL project], and renamed them as zlist and zhash, as we did with zmsg. In any modern language you can of course use built-in containers.
+To make the C examples easier to write and read, I've taken the hash and list container classes from the [http://zfl.zeromq.org ZFL project], and renamed them as [[https://github.com/imatix/zguide/blob/master/examples/C/zlist.class zlist] and [https://github.com/imatix/zguide/blob/master/examples/C/zhash.class zhash], as we did with zmsg. In any modern language you can of course use built-in containers.
 
-- handling multiple protocols on one port
-- how long should a heartbeat failure be?
-    - time to restart service... 10-30 seconds?
-- live/live failover
-- multithreaded clients & workers
-- multithreaded brokers
-- broker as thread, multiple in one process
-- test, dev, etc... easy to do
-- how to handle broker failure - live/live
+And here is the broker, which unlike all the examples we've seen so far is a complex program that only manages a single 0MQ socket:
+
+[[code type="example" title="Majordomo Worker API" name="mdwrkapi"]]
+[[/code]]
+
+The Majordomo Protocol lets us handle both clients and workers on a single socket. This is nicer for those deploying and managing the broker: it just sits on one 0MQ endpoint rather than two, like most devices.
+
+Notes on this code:
+
+* It implements all of MDP/0.1 properly (as far as I know), including disconnection if the broker sends invalid commands, heartbeating, and the rest.
+
+* It can be extended to run multiple threads, each managing one socket and one set of clients and workers. This could be interesting for segmenting large architectures.
+
+* A primary-failover or live-live broker reliability model is easy, since the broker essentially has no state except service presence. It's up to clients and workers to choose another broker if their first choice isn't up and running.
+
+* The examples use 5-second heartbeats, mainly to reduce the amount of output when you enable tracing. Realistic values would be lower for most LAN applications. However, any retry has to be slow enough to allow for a service to restart, say 10 seconds at least.
 
 .end
 
