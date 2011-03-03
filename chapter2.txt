@@ -195,7 +195,7 @@ For most common cases, use **{{tcp}}**, which is a //disconnected TCP// transpor
 
 The inter-process transport, **{{ipc}}**, is like {{tcp}} except that it is abstracted from the LAN, so you don't need to specify IP addresses or domain names. This makes it better for some purposes, and we use it quite often in the examples in this book. 0MQ's {{ipc}} transport is disconnected, like {{tcp}}. It has one limitation: it does not work on Windows. This may be fixed in future versions of 0MQ. By convention we use endpoint names with an ".ipc" extension to avoid potential conflict with other file names. On UNIX systems, if you use {{ipc}} endpoints you need to create these with appropriate permissions otherwise they may not be shareable between processes running under different user ids. You must also make sure all processes can access the files, e.g. by running in the same working directory.
 
-The inter-thread transport, **{{inproc}}**, is a connected signaling transport. It is much faster than {{tcp}} or {{ipc}}. This transport has a specific limitation compared to {{ipc}} and {{tcp}}: **you must do bind before connect**. This is something future versions of 0MQ may fix, but for today it has some impact on the way you use {{inproc}} sockets. When we use this in examples, we carefully bind to each endpoint before connecting to it. If we connect first, and then bind, the connect will return an error, and if we ignore that error, the recv will block.
+The inter-thread transport, **{{inproc}}**, is a connected signaling transport. It is much faster than {{tcp}} or {{ipc}}. This transport has a specific limitation compared to {{ipc}} and {{tcp}}: **you must do bind before connect**. This is something future versions of 0MQ may fix, but at present this defines you use {{inproc}} sockets. We create and bind one socket, start the child threads, which create and connect the other sockets.
 
 +++ 0MQ is Not a Neutral Carrier
 
@@ -250,7 +250,7 @@ But cutting through that, it routes and queues messages according to precise rec
 
 0MQ patterns are implemented by pairs of sockets with matching types. In other words, to understand 0MQ patterns you need to understand socket types and how they work together. Mostly this just takes learning, there is little that is obvious at this level.
 
-The basic 0MQ patterns are:
+The built-in core 0MQ patterns are:
 
 * **Request-reply**, which connects a set of clients to a set of services. This is a remote procedure call and task distribution pattern.
 
@@ -880,23 +880,21 @@ Yeah, we also counted seven, not eleven. That's not the point though. The point 
 
 Some widely used metaphors, despite being the basis for billion-dollar industries, are fundamentally broken, and shared state concurrency is one of them. Code that wants to scale without limit does it like the Internet does, by sending messages and sharing nothing except a common contempt for broken programming metaphors.
 
-You do need to follow some rules to write MT code with 0MQ:
+You should follow some rules to write happy multithreaded code with 0MQ:
 
-* You MUST NOT try to access the same data from multiple threads.
+* You MUST NOT access the same data from multiple threads. Using classic MT techniques like mutexes are an anti-pattern in 0MQ applications.
 
-* You MUST create a 'context' object for your process, and pass that to all threads. The context collects 0MQ's state. To create a connection across the {{inproc}} transport, both server and client thread must share the same context object.
+* You MUST create a 'context' object for your process, and pass that to all threads. The context holds 0MQ's state and acts as the transport for {{inproc}} socket connections.
 
-* You MUST NOT share sockets between threads, not even when using proper exclusion mechanisms like semaphores, locks or mutexes. 0MQ will in some future make it possible to move sockets to different threads. Right now the thread which creates a socket is the only thread that may use it.
+* You SHOULD NOT share sockets between threads, period. 0MQ sockets are not threadsafe. Technically it's possible to do this, but it demands semaphores, locks, or mutexes. This will make your application slow and fragile. The only place where it's remotely sane to share sockets between threads are in language bindings that need to do magic like garbage collection on sockets.
 
-* If you have to work with existing drunkard code, find a way to isolate yourself from it. Don't use mutexes, semaphores, critical sections, but use 0MQ messages.
-
-If you need to start more than one device in an application, for example, you will want to run each in their own thread. It is easy to make the error of creating the device sockets in one thread, and then passing the sockets to the device in another thread. This may appear to work but will fail randomly. Remember: //You cannot use sockets except in the thread that created them.//
+If you need to start more than one device in an application, for example, you will want to run each in their own thread. It is easy to make the error of creating the device sockets in one thread, and then passing the sockets to the device in another thread. This may appear to work but will fail randomly. Remember: //Do not use sockets except in the thread that created them.//
 
 If you follow these rules, you can quite easily split threads into separate processes, when you need to. Application logic can sit in threads, processes, boxes: whatever your scale needs.
 
 0MQ uses native OS threads rather than virtual "green" threads. The advantage is that you don't need to learn any new threading API, and that 0MQ threads map cleanly to your operating system. You can use standard tools like Intel's ThreadChecker to see what your application is doing. The disadvantages are that your code, when it for instance starts new threads, won't be portable, and that if you have a huge number of threads (thousands), some operating systems will get stressed.
 
-Let's see how this works in pratice. We'll turn our old Hello World server into something more capable. The original server was a single thread. If the work per request is low, that's fine: one ØMQ thread can run at full speed on a CPU core, with no waits, doing an awful lot of work. But realistic servers have to do non-trivial work per request. A single core may not be enough when 10,000 clients hit the server all at once. So a realistic server must starts multiple worker threads. It then accepts requests as fast as it can, and distributes these to its worker threads. The worker threads grind through the work, and eventually send their replies back.
+Let's see how this works in practice. We'll turn our old Hello World server into something more capable. The original server was a single thread. If the work per request is low, that's fine: one ØMQ thread can run at full speed on a CPU core, with no waits, doing an awful lot of work. But realistic servers have to do non-trivial work per request. A single core may not be enough when 10,000 clients hit the server all at once. So a realistic server must starts multiple worker threads. It then accepts requests as fast as it can, and distributes these to its worker threads. The worker threads grind through the work, and eventually send their replies back.
 
 You can of course do all this using a queue device and external worker processes, but often it's easier to start one process that gobbles up sixteen cores, than sixteen processes, each gobbling up one core. Further, running workers as threads will cut out a network hop, latency, and network traffic.
 
@@ -1013,16 +1011,15 @@ In this example we use PAIR sockets over the {{inproc}} transport:
 [[code type="example" title="Multithreaded relay" name="mtrelay"]]
 [[/code]]
 
-This is a classic pattern for multithreading with 0MQ. Read it carefully and try to understand it, it'll help you enormously when you write your own multithreaded apps. The use of PAIR sockets is not critical. The use of {{inproc}}, and the way we start the child threads is.
+This is a classic pattern for multithreading with 0MQ:
 
-Some comments on this code:
+# Two threads communicate over {{inproc}}, using a shared context.
+# The parent thread creates one socket, binds it to an inproc:// endpoint, and //then// starts the child thread, passing the context to it.
+# The child thread creates the second socket, connects it to that inproc:// endpoint, and //then// signals to the parent thread that it's ready.
 
-* To establish a connection with a child thread, we create socket pairs, bind and connect them, then pass one of the sockets, together with the context, to the child thread. This is the sanest way to ensure that bind happens //before// connect, something {{inproc}} insists on.
-* Passing a socket from one thread to another used to be illegal in 0MQ/2.0 but 0MQ/2.1 allows this, and we depend on it.
-* It's important that the child thread takes control of the arguments, so the parent thread can exit without timing issues (otherwise the child thread will randomly crash, trying to access data the parent thread already freed).
-* Multithreading code using this pattern is **//not scalable out to processes//**. If you use {{inproc}} and socket pairs, you are building a tightly-bound application. Do this when low latency is really vital. For all normal apps, use one context per thread, and {{ipc}} or {{tcp}}. Then you can easily break your threads out to separate processes, or boxes, as needed.
+Note that multithreading code using this pattern is **//not scalable out to processes//**. If you use {{inproc}} and socket pairs, you are building a tightly-bound application. Do this when low latency is really vital. For all normal apps, use one context per thread, and {{ipc}} or {{tcp}}. Then you can easily break your threads out to separate processes, or boxes, as needed.
 
-This is the first time we've shown an example using PAIR sockets. Why use PAIR? Other socket combinations might seem to work but they all have side-effects that could interfere with signalling:
+This is the first time we've shown an example using PAIR sockets. Why use PAIR? Other socket combinations might seem to work but they all have side-effects that could interfere with signaling:
 
 * You can use PUSH for the sender and PULL for the receiver. This looks simple and will work, but remember that PUSH will load-balance messages to all available receivers. If you by accident start two receivers (e.g. you already have one running and you start a second), you'll "lose" half of your signals. PAIR has the advantage of refusing more than one connection, the pair is //exclusive//.
 

@@ -507,8 +507,6 @@ Since the Guide aims to be a leader, not a follower, we've updated it to cover 2
 
 * In 2.0, it was safe to call zmq_term[3] even if there were open sockets. In 2.1, this is not safe, and it can cause zmq_term to block. So in 2.1 we always close every socket, before exiting. Furthermore, if you have any outgoing messages waiting on a socket, 2.1 will **by default wait forever** trying to deliver these. You must set the LINGER socket option (e.g. to zero) before calling zmq_term.
 
-* In 2.0, you created a socket in the thread that used it, period. 2.1 introduces the funky possibility of "socket migration", which means thread A can create a socket and then pass it to a child thread B. This technique works very nicely for multithreading, with the {{inproc}} transport (thread A creates a socket pair, binds and connects them, then passes one socket to child thread B as it starts it).
-
 * In 2.0, zmq_poll[3] would return arbitrarily early, so you could not use it as a timer. We hacked around this with a loop that would see how much time was left, and would call zmq_poll again if needed. In 2.1, this call properly waits for the full timeout if there are not events.
 
 There are [https://github.com/zeromq/zeromq2/raw/master/NEWS a lot of other] good changes in 2.1, making this overall a more stable and rewarding understructure for your applications.
