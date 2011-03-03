@@ -2,11 +2,12 @@
 //  Majordomo Protocol worker example
 //  Uses the mdwrk API to hide all MDP aspects
 //
+//  Lets us 'build mdworker' and 'build all'
 #include "mdwrkapi.c"
 
 int main (void)
 {
-    mdwrk_t *session = mdwrk_new ("tcp://localhost:5555", "echo", 0);
+    mdwrk_t *session = mdwrk_new ("tcp://localhost:5555", "echo", 1);
 
     zmsg_t *reply = NULL;
     while (1) {

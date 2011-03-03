@@ -103,8 +103,7 @@ zmsg_new (char *body)
     zmsg_t
         *self;
 
-    self = malloc (sizeof (zmsg_t));
-    memset (self, 0, sizeof (zmsg_t));
+    self = (zmsg_t *) calloc (1, sizeof (zmsg_t));
     if (body)
         zmsg_body_set (self, body);
     return (self);
@@ -381,9 +380,9 @@ zmsg_push (zmsg_t *self, char *part)
 
     //  Move part stack up one element and insert new part
     memmove (&self->_part_data [1], &self->_part_data [0],
-        (ZMSG_MAX_PARTS - 1) * sizeof (unsigned char *));
+        (self->_part_count) * sizeof (unsigned char *));
     memmove (&self->_part_size [1], &self->_part_size [0],
-        (ZMSG_MAX_PARTS - 1) * sizeof (size_t));
+        (self->_part_count) * sizeof (size_t));
     s_set_part (self, 0, (void *) part, strlen (part));
     self->_part_count++;
 }
@@ -401,11 +400,11 @@ zmsg_pop (zmsg_t *self)
 
     //  Remove first part and move part stack down one element
     char *part = (char *) self->_part_data [0];
-    memmove (&self->_part_data [0], &self->_part_data [1],
-        (ZMSG_MAX_PARTS - 1) * sizeof (unsigned char *));
-    memmove (&self->_part_size [0], &self->_part_size [1],
-        (ZMSG_MAX_PARTS - 1) * sizeof (size_t));
     self->_part_count--;
+    memmove (&self->_part_data [0], &self->_part_data [1],
+        (self->_part_count) * sizeof (unsigned char *));
+    memmove (&self->_part_size [0], &self->_part_size [1],
+        (self->_part_count) * sizeof (size_t));
     return (part);
 }
 

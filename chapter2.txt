@@ -12,6 +12,7 @@ We'll cover:
 * How to handle fatal and non-fatal errors properly.
 * How to handle interrupt signals like Ctrl-C.
 * How to shutdown a 0MQ application cleanly.
+* How to check a 0MQ application for memory leaks.
 * How to send and receive multipart messages.
 * How to forward messages across networks.
 * How to build a simple message queuing broker.
@@ -521,6 +522,36 @@ Note that the zhelpers.h provides s_catch_signals() and s_interrupted. To use th
 * Shutdown as normal if s_interrupted is set.
 
 If you do not check s_interrupted then your application will become immune to Ctrl-C and SIGTERM, which may be useful but is usually not.
+
++++ Detecting Memory Leaks
+
+Any long-running application has to manage memory correctly, or eventually it'll use up all available memory and crash. If you use a language that handles this automatically for you, congratulations. If you program in C or C++ or any other language where you're responsible for memory management, here's a short tutorial on using valgrind, which among other things will report on any leaks your programs have.
+
+* To install valgrind, e.g. on Ubuntu or Debian: {{sudo apt-get install valgrind}}.
+
+* By default, 0MQ will cause valgrind to complain a lot. To remove these warnings, rebuild 0MQ with the ZMQ_MAKE_VALGRIND_HAPPY macro, thus:
+
+[[code]]
+$ cd zeromq2
+$ export CPPFLAGS=-DZMQ_MAKE_VALGRIND_HAPPY
+$ make clean; make; sudo make install
+[[/code]]
+
+* Fix your applications to exit cleanly after Ctrl-C. For any application that exits by itself, that's not needed, but for long-running applications (like devices), this is essential, otherwise valgrind will complain about all currently allocated memory.
+
+* Build your application with -DDEBUG, if it's not your default setting. That ensures valgrind can tell you exactly where memory is being leaked.
+
+* Finally, run valgrind thus:
+
+[[code]]
+valgrind --tool=memcheck --leak-check=full someprog
+[[/code]]
+
+And after fixing any errors it reported, you should get the pleasant message:
+
+[[code]]
+==30536== ERROR SUMMARY: 0 errors from 0 contexts...
+[[/code]]
 
 +++ Multipart Messages
 

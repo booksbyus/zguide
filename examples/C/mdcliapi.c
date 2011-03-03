@@ -63,14 +63,10 @@ void s_connect_to_broker (mdcli_t *self)
 mdcli_t *
 mdcli_new (char *broker, int verbose)
 {
-    mdcli_t
-        *self;
-
     assert (broker);
     s_version_assert (2, 1);
-    self = malloc (sizeof (mdcli_t));
-    memset (self, 0, sizeof (mdcli_t));
 
+    mdcli_t *self = (mdcli_t *) calloc (1, sizeof (mdcli_t));
     self->broker = strdup (broker);
     self->context = zmq_init (1);
     self->verbose = verbose;
@@ -99,6 +95,7 @@ mdcli_destroy (mdcli_t **self_p)
         *self_p = NULL;
     }
 }
+
 
 //  --------------------------------------------------------------------------
 //  Set request timeout

@@ -64,7 +64,7 @@ s_send_to_broker (mdwrk_t *self, char *command, char *option, zmsg_t *_msg)
     if (option)
         zmsg_push (msg, option);
     zmsg_push (msg, command);
-    zmsg_push (msg, MDPS_WORKER);
+    zmsg_push (msg, MDPW_WORKER);
 
     if (self->verbose) {
         s_console ("I: sending %s to broker",
@@ -90,7 +90,7 @@ void s_connect_to_broker (mdwrk_t *self)
         s_console ("I: connecting to broker at %s...", self->broker);
 
     //  Register service with broker
-    s_send_to_broker (self, MDPS_READY, self->service, NULL);
+    s_send_to_broker (self, MDPW_READY, self->service, NULL);
 
     //  If liveness hits zero, queue is considered disconnected
     self->liveness = HEARTBEAT_LIVENESS;
@@ -104,15 +104,11 @@ void s_connect_to_broker (mdwrk_t *self)
 mdwrk_t *
 mdwrk_new (char *broker,char *service, int verbose)
 {
-    mdwrk_t
-        *self;
-
     assert (broker);
     assert (service);
     s_version_assert (2, 1);
-    self = malloc (sizeof (mdwrk_t));
-    memset (self, 0, sizeof (mdwrk_t));
 
+    mdwrk_t *self = (mdwrk_t *) calloc (1, sizeof (mdwrk_t));
     self->broker = strdup (broker);
     self->service = strdup (service);
     self->context = zmq_init (1);
@@ -174,7 +170,7 @@ mdwrk_recv (mdwrk_t *self, zmsg_t *reply)
     //  Format and send the reply if we were provided one
     assert (reply || !self->expect_reply);
     if (reply)
-        s_send_to_broker (self, MDPS_REPLY, NULL, reply);
+        s_send_to_broker (self, MDPW_REPLY, NULL, reply);
     self->expect_reply = 1;
 
     while (!s_interrupted) {
@@ -193,19 +189,19 @@ mdwrk_recv (mdwrk_t *self, zmsg_t *reply)
             assert (zmsg_parts (msg) >= 2);
 
             char *header = zmsg_pop (msg);
-            assert (strcmp (header, MDPS_WORKER) == 0);
+            assert (strcmp (header, MDPW_WORKER) == 0);
             free (header);
 
             char *command = zmsg_pop (msg);
-            if (strcmp (command, MDPS_REQUEST) == 0) {
+            if (strcmp (command, MDPW_REQUEST) == 0) {
                 free (command);
                 return msg;     //  We have a request to process
             }
             else
-            if (strcmp (command, MDPS_HEARTBEAT) == 0)
+            if (strcmp (command, MDPW_HEARTBEAT) == 0)
                 ;               //  Do nothing for heartbeats
             else
-            if (strcmp (command, MDPS_DISCONNECT) == 0)
+            if (strcmp (command, MDPW_DISCONNECT) == 0)
                 s_connect_to_broker (self);
             else {
                 s_console ("E: invalid input message (%d)", (int) *command);
@@ -223,7 +219,7 @@ mdwrk_recv (mdwrk_t *self, zmsg_t *reply)
         }
         //  Send HEARTBEAT if it's time
         if (s_clock () > self->heartbeat_at) {
-            s_send_to_broker (self, MDPS_HEARTBEAT, NULL, NULL);
+            s_send_to_broker (self, MDPW_HEARTBEAT, NULL, NULL);
             self->heartbeat_at = s_clock () + self->heartbeat;
         }
     }

@@ -12,13 +12,14 @@
 #define HEARTBEAT_LIVENESS  3       //  3-5 is reasonable
 #define HEARTBEAT_INTERVAL  5000    //  msecs
 #define HEARTBEAT_EXPIRY    HEARTBEAT_INTERVAL * HEARTBEAT_LIVENESS
-#define VERBOSE_BROKER      0       //  Trace activity?
+#define VERBOSE_BROKER      1       //  Trace activity?
 
 //  This defines a single broker
 typedef struct {
     void *context;              //  0MQ context
-    void *broker;               //  Socket for clients & workers
+    void *socket;               //  Socket for clients & workers
     int verbose;                //  Print activity to stdout
+    char *endpoint;             //  Broker binds to this endpoint
     zhash_t *services;          //  Hash of known services
     zhash_t *workers;           //  Hash of known workers
     zlist_t *waiting;           //  List of waiting workers
@@ -41,35 +42,118 @@ typedef struct {
 
 
 //  --------------------------------------------------------------------------
-//  Send message to worker
-//  If pointer to message is provided, sends & destroys that message
-
+//  Broker functions
+static broker_t *
+    s_broker_new (int verbose);
 static void
-s_send_to_worker (
-    broker_t *self, worker_t *worker,
-    char *command, char *option, zmsg_t *msg)
+    s_broker_destroy (broker_t **self_p);
+static void
+    s_broker_bind (broker_t *self, char *endpoint);
+static void
+    s_broker_purge_workers (broker_t *self);
+
+//  Service functions
+static service_t *
+    s_service_require (broker_t *self, char *name);
+static void
+    s_service_destroy (void *argument);
+static void
+    s_service_dispatch (broker_t *self, service_t *service, zmsg_t *msg);
+
+//  Worker functions
+static worker_t *
+    s_worker_require (broker_t *self, char *identity);
+static void
+    s_worker_delete (broker_t *self, worker_t *worker, int disconnect);
+static void
+    s_worker_destroy (void *argument);
+static void
+    s_worker_process (broker_t *self, char *sender, zmsg_t *msg);
+static void
+    s_worker_send (broker_t *self, worker_t *worker, char *command,
+                   char *option, zmsg_t *msg);
+static void
+    s_worker_waiting (broker_t *self, worker_t *worker);
+static int
+    s_worker_expired (worker_t *worker);
+
+//  Client functions
+static void
+    s_client_process (broker_t *self, char *sender, zmsg_t *msg);
+
+//  --------------------------------------------------------------------------
+//  Constructor for broker object
+
+static broker_t *
+s_broker_new (int verbose)
 {
-    msg = msg? zmsg_dup (msg): zmsg_new (NULL);
+    broker_t *self = (broker_t *) calloc (1, sizeof (broker_t));
 
-    //  Stack protocol envelope to start of message
-    if (option)                 //  Optional frame after command
-        zmsg_push (msg, option);
-    zmsg_push (msg, command);
-    zmsg_push (msg, MDPS_WORKER);
-    //  Stack routing envelope to start of message
-    zmsg_push (msg, worker->identity);
-
-    if (self->verbose) {
-        s_console ("I: sending %s to worker",
-            mdps_commands [(int) *command]);
-        zmsg_dump (msg);
-    }
-    zmsg_send (&msg, self->broker);
+    //  Initialize broker state
+    self->context = zmq_init (1);
+    self->socket = zmq_socket (self->context, ZMQ_XREP);
+    self->verbose = verbose;
+    self->services = zhash_new ();
+    self->workers = zhash_new ();
+    self->waiting = zlist_new ();
+    self->heartbeat_at = s_clock () + HEARTBEAT_INTERVAL;
+    return (self);
 }
 
+//  --------------------------------------------------------------------------
+//  Destructor for broker object
+
+static void
+s_broker_destroy (broker_t **self_p)
+{
+    assert (self_p);
+    if (*self_p) {
+        broker_t *self = *self_p;
+        zmq_close (self->socket);
+        zmq_term (self->context);
+        zhash_destroy (&self->services);
+        zhash_destroy (&self->workers);
+        zlist_destroy (&self->waiting);
+        free (self);
+        *self_p = NULL;
+    }
+}
+
+//  --------------------------------------------------------------------------
+//  Bind broker to endpoint, can call this multiple times
+//  We use a single socket for both clients and workers.
+
+void
+s_broker_bind (broker_t *self, char *endpoint)
+{
+    zmq_bind (self->socket, endpoint);
+    s_console ("I: broker is active at %s", endpoint);
+}
+
+//  ----------------------------------------------------------------------
+//  Delete any idle workers that haven't pinged us in a while. Workers
+//  are oldest to most recent, so we stop at the first alive worker.
+
+static void
+s_broker_purge_workers (broker_t *self)
+{
+    worker_t *worker = zlist_first (self->waiting);
+    while (worker) {
+        if (!s_worker_expired (worker))
+            break;              //  Worker is alive, we're done here
+        if (self->verbose)
+            s_console ("I: deleting expired worker: %s", worker->identity);
+
+        s_worker_delete (self, worker, 0);
+        worker = zlist_first (self->waiting);
+    }
+}
+
+//  ----------------------------------------------------------------------
 //  Locate or create new service entry, free name when done
+
 static service_t *
-s_require_service (broker_t *self, char *name)
+s_service_require (broker_t *self, char *name)
 {
     assert (name);
     service_t *service = zhash_lookup (self->services, name);
@@ -79,6 +163,7 @@ s_require_service (broker_t *self, char *name)
         service->requests = zlist_new ();
         service->waiting = zlist_new ();
         zhash_insert (self->services, name, service);
+        zhash_freefn (self->services, name, s_service_destroy);
         if (self->verbose) {
             s_console ("I: received message:");
             s_console ("I: registering new service: %s", name);
@@ -89,10 +174,50 @@ s_require_service (broker_t *self, char *name)
 }
 
 //  ----------------------------------------------------------------------
+//  Destroy service object, called when service is removed from
+//  broker->services.
+
+static void
+s_service_destroy (void *argument)
+{
+    service_t *service = argument;
+    //  Destroy all queued requests
+    while (zlist_size (service->requests)) {
+        zmsg_t *msg = zlist_pop (service->requests);
+        zmsg_destroy (&msg);
+    }
+    zlist_destroy (&service->requests);
+    zlist_destroy (&service->waiting);
+    free (service->name);
+    free (service);
+}
+
+//  ----------------------------------------------------------------------
+//  Dispatch requests to waiting workers as possible
+
+static void
+s_service_dispatch (broker_t *self, service_t *service, zmsg_t *msg)
+{
+    assert (service);
+    if (msg)                    //  Queue message if any
+        zlist_append (service->requests, msg);
+
+    s_broker_purge_workers (self);
+    while (zlist_size (service->waiting)
+        && zlist_size (service->requests))
+    {
+        worker_t *worker = zlist_pop (service->waiting);
+        zmsg_t *msg = zlist_pop (service->requests);
+        s_worker_send (self, worker, MDPW_REQUEST, NULL, msg);
+        zmsg_destroy (&msg);
+    }
+}
+
+//  ----------------------------------------------------------------------
 //  Creates worker if necessary
 
 static worker_t *
-s_require_worker (broker_t *self, char *identity)
+s_worker_require (broker_t *self, char *identity)
 {
     assert (identity);
 
@@ -102,6 +227,7 @@ s_require_worker (broker_t *self, char *identity)
         worker = (worker_t *) calloc (1, sizeof (worker_t));
         worker->identity = strdup (identity);
         zhash_insert (self->workers, identity, worker);
+        zhash_freefn (self->workers, identity, s_worker_destroy);
         if (self->verbose)
             s_console ("I: registering new worker: %s", identity);
     }
@@ -112,54 +238,55 @@ s_require_worker (broker_t *self, char *identity)
 //  Deletes worker from all data structures, and destroys worker
 
 static void
-s_delete_worker (broker_t *self, worker_t *worker, int disconnect)
+s_worker_delete (broker_t *self, worker_t *worker, int disconnect)
 {
     assert (worker);
     if (disconnect)
-        s_send_to_worker (self, worker, MDPS_DISCONNECT, NULL, NULL);
+        s_worker_send (self, worker, MDPW_DISCONNECT, NULL, NULL);
 
-    zhash_delete (self->workers, worker->identity);
-    zlist_remove (self->waiting, worker);
     if (worker->service)
         zlist_remove (worker->service->waiting, worker);
+    zlist_remove (self->waiting, worker);
+    //  This implicitly calls s_worker_destroy
+    zhash_delete (self->workers, worker->identity);
+}
+
+//  ----------------------------------------------------------------------
+//  Destroy worker object, called when worker is removed from
+//  broker->workers.
+
+static void
+s_worker_destroy (void *argument)
+{
+    worker_t *worker = argument;
     if (worker->identity)
         free (worker->identity);
     free (worker);
 }
 
 //  ----------------------------------------------------------------------
+//  Process message sent to us by a worker
 
 static void
-s_waiting_worker (broker_t *self, worker_t *worker)
-{
-    //  Queue to broker and service waiting lists
-    zlist_append (self->waiting, (void *) worker);
-    zlist_append (worker->service->waiting, (void *) worker);
-    worker->expiry = s_clock () + HEARTBEAT_EXPIRY;
-}
-
-//  ----------------------------------------------------------------------
-
-static void
-s_process_worker_message (broker_t *self, char *sender, zmsg_t *msg)
+s_worker_process (broker_t *self, char *sender, zmsg_t *msg)
 {
     assert (zmsg_parts (msg) >= 1);     //  At least, command
 
     char *command = zmsg_pop (msg);
     int worker_ready = (zhash_lookup (self->workers, sender) != NULL);
-    worker_t *worker = s_require_worker (self, sender);
+    worker_t *worker = s_worker_require (self, sender);
 
-    if (strcmp (command, MDPS_READY) == 0) {
+    if (strcmp (command, MDPW_READY) == 0) {
         if (worker_ready)               //  Not first command in session
-            s_delete_worker (self, worker, 1);
+            s_worker_delete (self, worker, 1);
         else {
             //  Attach worker to service and mark as idle
-            worker->service = s_require_service (self, zmsg_pop (msg));
-            s_waiting_worker (self, worker);
+            worker->service = s_service_require (self, zmsg_pop (msg));
+            s_worker_waiting (self, worker);
         }
     }
     else
-    if (strcmp (command, MDPS_REPLY) == 0) {
+    if (strcmp (command, MDPW_REPLY) == 0) {
         if (worker_ready) {
             //  Remove & save client return envelope and insert the
             //  protocol header and service name, then rewrap envelope.
@@ -167,22 +294,22 @@ s_process_worker_message (broker_t *self, char *sender, zmsg_t *msg)
             zmsg_wrap (msg, MDPC_CLIENT, worker->service->name);
             zmsg_wrap (msg, client, "");
             free (client);
-            zmsg_send (&msg, self->broker);
-            s_waiting_worker (self, worker);
+            zmsg_send (&msg, self->socket);
+            s_worker_waiting (self, worker);
         }
         else
-            s_delete_worker (self, worker, 1);
+            s_worker_delete (self, worker, 1);
     }
     else
-    if (strcmp (command, MDPS_HEARTBEAT) == 0) {
+    if (strcmp (command, MDPW_HEARTBEAT) == 0) {
         if (worker_ready)
             worker->expiry = s_clock () + HEARTBEAT_EXPIRY;
         else
-            s_delete_worker (self, worker, 1);
+            s_worker_delete (self, worker, 1);
     }
     else
-    if (strcmp (command, MDPS_DISCONNECT) == 0)
-        s_delete_worker (self, worker, 0);
+    if (strcmp (command, MDPW_DISCONNECT) == 0)
+        s_worker_delete (self, worker, 0);
     else {
         s_console ("E: invalid input message (%d)", (int) *command);
         zmsg_dump (msg);
@@ -191,7 +318,49 @@ s_process_worker_message (broker_t *self, char *sender, zmsg_t *msg)
     zmsg_destroy (&msg);
 }
 
+//  --------------------------------------------------------------------------
+//  Send message to worker
+//  If pointer to message is provided, sends & destroys that message
+
+static void
+s_worker_send (
+    broker_t *self, worker_t *worker,
+    char *command, char *option, zmsg_t *msg)
+{
+    msg = msg? zmsg_dup (msg): zmsg_new (NULL);
+
+    //  Stack protocol envelope to start of message
+    if (option)                 //  Optional frame after command
+        zmsg_push (msg, option);
+    zmsg_push (msg, command);
+    zmsg_push (msg, MDPW_WORKER);
+    //  Stack routing envelope to start of message
+    zmsg_push (msg, worker->identity);
+
+    if (self->verbose) {
+        s_console ("I: sending %s to worker",
+            mdps_commands [(int) *command]);
+        zmsg_dump (msg);
+    }
+    zmsg_send (&msg, self->socket);
+}
+
+//  ----------------------------------------------------------------------
+//  This worker is now waiting for work
+
+static void
+s_worker_waiting (broker_t *self, worker_t *worker)
+{
+    //  Queue to broker and service waiting lists
+    zlist_append (self->waiting, (void *) worker);
+    zlist_append (worker->service->waiting, (void *) worker);
+    worker->expiry = s_clock () + HEARTBEAT_EXPIRY;
+    s_service_dispatch (self, worker->service, NULL);
+}
+
+//  ----------------------------------------------------------------------
 //  Return 1 if worker has expired and must be deleted
+
 static int
 s_worker_expired (worker_t *worker)
 {
@@ -199,87 +368,38 @@ s_worker_expired (worker_t *worker)
 }
 
 //  ----------------------------------------------------------------------
-//  Delete any idle workers that haven't pinged us in a while. Workers
-//  are oldest to most recent, so we stop at the first alive worker.
-
-static void
-s_purge_expired_workers (broker_t *self)
-{
-    worker_t *worker = zlist_first (self->waiting);
-    while (worker) {
-        if (!s_worker_expired (worker))
-            break;              //  Worker is alive, we're done here
-        if (self->verbose)
-            s_console ("I: deleting expired worker: %s", worker->identity);
-
-        s_delete_worker (self, worker, 0);
-        worker = zlist_first (self->waiting);
-    }
-}
-
-//  Dispatch requests to waiting workers as possible
-static void
-s_dispatch_service (broker_t *self, service_t *service, zmsg_t *msg)
-{
-    assert (service);
-
-    if (msg)                    //  Queue message if any
-        zlist_append (service->requests, msg);
-
-    s_purge_expired_workers (self);
-    while (zlist_size (service->waiting)
-        && zlist_size (service->requests))
-    {
-        worker_t *worker = zlist_pop (service->waiting);
-        zmsg_t *msg = zlist_pop (service->requests);
-        s_send_to_worker (self, worker, MDPS_REQUEST, NULL, msg);
-        zmsg_destroy (&msg);
-    }
-}
-
 //  Process a request coming from a client
+
 static void
-s_process_client_message (broker_t *self, char *sender, zmsg_t *msg)
+s_client_process (broker_t *self, char *sender, zmsg_t *msg)
 {
     assert (zmsg_parts (msg) >= 2);     //  Service name + body
-    service_t *service = s_require_service (self, zmsg_pop (msg));
+    service_t *service = s_service_require (self, zmsg_pop (msg));
     //  Set reply return address to client sender
     zmsg_wrap (msg, sender, "");
     //  Takes ownership of the message
-    s_dispatch_service (self, service, msg);
+    s_service_dispatch (self, service, msg);
 }
 
 
 //  ----------------------------------------------------------------------
+//  Main broker work happens here
 
 int main (void)
 {
     s_version_assert (2, 1);
+    s_catch_signals ();
+    broker_t *self = s_broker_new (VERBOSE_BROKER);
+    s_broker_bind (self, "tcp://*:5555");
 
-    //  Initialize broker state
-    broker_t *self = (broker_t *) calloc (1, sizeof (broker_t));
-    self->context = zmq_init (1);
-    self->broker = zmq_socket (self->context, ZMQ_XREP);
-    self->verbose = VERBOSE_BROKER;
-    self->services = zhash_new ();
-    self->workers = zhash_new ();
-    self->waiting = zlist_new ();
-    self->heartbeat_at = s_clock () + HEARTBEAT_INTERVAL;
-
-    //  We use a single socket for both clients and workers
-    char *endpoint = "tcp://*:5555";
-    zmq_bind (self->broker, endpoint);
-
-    s_console ("I: MDP broker ready at %s", endpoint);
-
-    //  Get and process messages forever
-    while (1) {
-        zmq_pollitem_t items [] = { { self->broker,  0, ZMQ_POLLIN, 0 } };
+    //  Get and process messages forever or until interrupted
+    while (!s_interrupted) {
+        zmq_pollitem_t items [] = { { self->socket,  0, ZMQ_POLLIN, 0 } };
         zmq_poll (items, 1, HEARTBEAT_INTERVAL * 1000);
 
         //  Process next input message, if any
         if (items [0].revents & ZMQ_POLLIN) {
-            zmsg_t *msg = zmsg_recv (self->broker);
+            zmsg_t *msg = zmsg_recv (self->socket);
             if (self->verbose) {
                 s_console ("I: received message:");
                 zmsg_dump (msg);
@@ -288,10 +408,10 @@ int main (void)
             char *header = zmsg_pop (msg);
 
             if (strcmp (header, MDPC_CLIENT) == 0)
-                s_process_client_message (self, sender, msg);
+                s_client_process (self, sender, msg);
             else
-            if (strcmp (header, MDPS_WORKER) == 0)
-                s_process_worker_message (self, sender, msg);
+            if (strcmp (header, MDPW_WORKER) == 0)
+                s_worker_process (self, sender, msg);
             else {
                 s_console ("E: invalid message:");
                 zmsg_dump (msg);
@@ -303,15 +423,18 @@ int main (void)
         //  Disconnect and delete any expired workers
         //  Send heartbeats to idle workers if needed
         if (s_clock () > self->heartbeat_at) {
-            s_purge_expired_workers (self);
+            s_broker_purge_workers (self);
             worker_t *worker = zlist_first (self->waiting);
             while (worker) {
-                s_send_to_worker (self, worker, MDPS_HEARTBEAT, NULL, NULL);
+                s_worker_send (self, worker, MDPW_HEARTBEAT, NULL, NULL);
                 worker = zlist_next (self->waiting);
             }
             self->heartbeat_at = s_clock () + HEARTBEAT_INTERVAL;
         }
     }
-    //  We never exit the main loop
+    if (s_interrupted)
+        printf ("W: interrupt received, shutting down...\n");
+
+    s_broker_destroy (&self);
     return 0;
 }

@@ -488,128 +488,22 @@ Let's design the Majordomo broker. Its core structure is a set of queues, one pe
 
 To make the C examples easier to write and read, I've taken the hash and list container classes from the [http://zfl.zeromq.org ZFL project], and renamed them as [[https://github.com/imatix/zguide/blob/master/examples/C/zlist.class zlist] and [https://github.com/imatix/zguide/blob/master/examples/C/zhash.class zhash], as we did with zmsg. In any modern language you can of course use built-in containers.
 
-And here is the broker, which unlike all the examples we've seen so far is a complex program that only manages a single 0MQ socket:
+And here is the broker:
 
-[[code type="example" title="Majordomo Worker API" name="mdwrkapi"]]
+[[code type="example" title="Majordomo Worker API" name="mdbroker"]]
 [[/code]]
 
-The Majordomo Protocol lets us handle both clients and workers on a single socket. This is nicer for those deploying and managing the broker: it just sits on one 0MQ endpoint rather than two, like most devices.
+This is by far the most complex example we've seen. It's almost 500 lines of code. To write this, and make it fully robust took two days. However this is still a short piece of code for a full service-oriented broker.
 
 Notes on this code:
 
-* It implements all of MDP/0.1 properly (as far as I know), including disconnection if the broker sends invalid commands, heartbeating, and the rest.
+* The Majordomo Protocol lets us handle both clients and workers on a single socket. This is nicer for those deploying and managing the broker: it just sits on one 0MQ endpoint rather than the two that most devices need.
 
-* It can be extended to run multiple threads, each managing one socket and one set of clients and workers. This could be interesting for segmenting large architectures.
+* The broker implements all of MDP/0.1 properly (as far as I know), including disconnection if the broker sends invalid commands, heartbeating, and the rest.
+
+* It can be extended to run multiple threads, each managing one socket and one set of clients and workers. This could be interesting for segmenting large architectures. The C code is already organized around a broker class to make this trivial.
 
 * A primary-failover or live-live broker reliability model is easy, since the broker essentially has no state except service presence. It's up to clients and workers to choose another broker if their first choice isn't up and running.
 
 * The examples use 5-second heartbeats, mainly to reduce the amount of output when you enable tracing. Realistic values would be lower for most LAN applications. However, any retry has to be slow enough to allow for a service to restart, say 10 seconds at least.
-
-.end
-
-
- provides.
-
-
-broker
-    - design first
-    - containers, zlist, zhash
-
-- extensions to MD
-- service presence
-- delivery failure - mandatory, immediate
-
-
-++++ Rust-based Reliability (Titanic Pattern)
-
-- Majordomo + rust
-
-Once you realize that the Paranoid Pirate queue is basically a message broker, you might be tempted to add rust-based reliability to it. After all, this works for all the enterprise messaging systems. It's such a tempting idea that it's a little sad to have to be negative. But that's one of my specialties. So, reasons you don't want rust-based brokers sitting in the center of your architecture:
-
-* As you've seen, the Lazy Pirate client performs surprisingly well. It works across a whole range of architectures, from direct client-to-server to distributed queue devices. It does assume that workers are stateless and idempotent (see below). But we can work around that limitation without resorting to rust.
-
-* Rust brings a whole set of problems, from slow performance to additional pieces to have to manage, repair, and create 6am panics as they inevitably break at the start of trading. The beauty of the Pirate queues we saw is their simplicity. They won't crash. And if you're still worried about the hardware, you can move to a peer-to-peer pattern that has no broker at all. I'll explain later in this chapter.
-
-There is one sane use case for rust-based reliability, which is asynchronous fire-and-forget. This pattern, which I'll just sketch, works as follows:
-
-* Clients use durable sockets to talk to a broker.
-* They use a request-reply dialog to send requests to the broker, which accepts them and stores them on disk.
-* When the broker has confirmed receipt of a request, this means it's stored on disk, safely.
-* The broker then looks for workers to process the request, and it does this over time as fast as it can.
-* Replies from workers are in the same way saved to disk, with an acknowledgement from the broker to the worker that the reply was received.
-* When clients reconnect (or immediately if they stay connected), they receive these replies, and they confirm to the broker that they've received them, again with a request-reply handshake.
-* The broker erases requests and replies only when they've been processed.
-
-This model makes sense when clients and workers come and go. It solves the major problem with the Pirate pattern, namely that a client waits for an answer in realtime. When clients and workers are randomly connected like this, raw performance is not a big concern: it's far more important to just never lose messages. Some people will argue that "just never lose messages" is a use case by itself, but if clients and workers are connected, you don't need rust to do that: Pirate can work, as we've demonstrated.
-
-++++ Idempotency
-
-Idempotency is not something to take a pill for. What it means is that it's safe to repeat an operation. While many client-to-server use cases are idempotent, some are not. Examples of idempotent use cases are:
-
-* Stateless task distribution, i.e. a collapsed pipeline where the client is both ventilator and sink, and the servers are stateless workers that compute a reply based purely on the state provided by a request. In such a case it's safe (though inefficient) to execute the same request many times.
-* A name service that translates logical addresses into endpoints to bind or connect to. In such a case it's safe to make the same lookup request many times.
-
-And here are examples of a non-idempotent use cases:
-
-* A logging service. One does not want the same log information recorded more than once.
-* Any service that has impact on downstream nodes, e.g. sends on information to other nodes. If that service gets the same request more than once, downstream nodes will get duplicate information.
-* Any service that modifies shared data in some non-idempotent way. E.g. a service that debits a bank account is definitely not idempotent.
-
-When our server is not idempotent, we have to think more carefully about when exactly a server might crash. If it dies when it's idle, or while it's processing a request, that's usually fine. We can use database transactions to make sure a debit and a credit are always done together, if at all. If the server dies while sending its reply, that's a problem, because as far as its concerned, it's done its work.
-
-if the network dies just as the reply is making its way back to the client, the same problem arises. The client will think the server died, will resend the request, and the server will do the same work twice. Which is not what we want.
-
-We use the common solution of detecting and rejecting duplicate requests. This means:
-
-* The client must stamp every request with a unique client identifier and a unique message number.
-* The server, before sending back a reply, stores it using the client id + message number as a key.
-* The server, when getting a request from a given client, first checks if it has a reply for that client id + message number. If so, it does not process the request but just resends the reply.
-
-++++ Distributed Reliable Client-Server (Freelance Pattern)
-
-- heartbeating from clients outwards
-- ZMQ_ROOT service
-
-We've seen how to make a reliable client-server architecture using a queue device (essentially a broker) in the middle. We've discussed the advantages of a central broker a few times. The biggest pro is that workers can come and go silently, there is just one 'stable' node on the network.
-
-But for many cases this isn't worth the hassle of an extra device. If you are not managing a pool of anonymous workers, but want to make the intelligence explicitly addressable, then a broker is an extra step for little gain.
-
-Again, this is a matter of taste. Some architects will swear by a broker. Others hate them. Let's take a real example and see how this plays. Say we want a name service (we do, we do!) that translates logical names (like "authentication") into physical network addresses (like "tcp://192.168.55.121:5051").
-
-Without a broker, every application needs to know the address of the name service. It can then talk to the name service (using a Pirate pattern) to translate logical names into endpoints as needed. Fair enough.
-
-With a broker, every application needs to know the address of the broker. The broker hopefully supports some kind of service-based routing. So clients can then send a request to the "name lookup service" and this will be routed to
-
-
-
-Lastly...
-
-* Multiple clients talking to multiple servers with no intermediary devices. Use case: distributed services such as name resolution. Types of failure we aim to handle: service crashes and restarts, service busy looping, service overload, network disconnects.
-
-- N clients to N servers
-- move queue logic into client-side class
-- ditto for server, make framework
-- talk to it via inproc...
-
-
-Handshaking at Startup
-
-We must use XREP-to-XREP sockets because we want to connect N clients to N servers without (necessarily) an intermediary queue device.
-
-In an XREP-to-XREP socket connection, one side of the connection must know the identity of the other.  You cannot do xrep-to-xrep flows between two anonymous sockets since an XREP socket requires an explicit identity.  In practice this means we will need a name service share the identities of the servers.  The client will connect to the server, then send it a message using the server's known identity as address, and then the server can respond to the client.
-
-In this prototype we'll use fixed, hardcoded identities for the servers.  We'll develop the name service in a later prototype.
-
-
-Pool management
-
-* If there is just one server in the pool, the we wait with a timeout for the server to reply. If the server does not reply within the timeout, we retry a number of times before abandoning.
-* If there are multiple servers in the pool, we try each server in succession, but do not retry the same server twice.
-* If a server appears to be really dead (i.e. has not responded for some time), we remove it from the pool.
-
-
-
-
-
-
 

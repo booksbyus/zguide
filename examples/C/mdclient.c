@@ -2,12 +2,12 @@
 //  Majordomo Protocol client example
 //  Uses the mdcli API to hide all MDP aspects
 //
-#include "mdcliapi.h"
+//  Lets us 'build mdclient' and 'build all'
 #include "mdcliapi.c"
 
 int main (void)
 {
-    mdcli_t *session = mdcli_new ("tcp://localhost:5555", 0);
+    mdcli_t *session = mdcli_new ("tcp://localhost:5555", 1);
 
     int count;
     for (count = 0; count < 100000; count++) {

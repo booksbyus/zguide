@@ -1,2 +1,2 @@
 build $1
-valgrind --tool=memcheck --leak-check=full --log-file=$1.log $1
+valgrind --tool=memcheck --leak-check=full $1
