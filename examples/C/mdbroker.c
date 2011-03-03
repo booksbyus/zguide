@@ -127,7 +127,7 @@ void
 s_broker_bind (broker_t *self, char *endpoint)
 {
     zmq_bind (self->socket, endpoint);
-    s_console ("I: broker is active at %s", endpoint);
+    s_console ("I: MDP broker/0.1.1 is active at %s", endpoint);
 }
 
 //  ----------------------------------------------------------------------
