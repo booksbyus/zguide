@@ -1,9 +1,9 @@
 //
-//  Majordomo Protocol client example
+//  Majordomo Protocol client example - asynchronous
 //  Uses the mdcli API to hide all MDP aspects
 //
 //  Lets us 'build mdclient' and 'build all'
-#include "mdcliapi.c"
+#include "mdcliapi2.c"
 
 int main (void)
 {
@@ -12,13 +12,16 @@ int main (void)
     int count;
     for (count = 0; count < 100000; count++) {
         zmsg_t *request = zmsg_new ("Hello world");
-        zmsg_t *reply = mdcli_send (session, "echo", &request);
+        mdcli_send (session, "echo", &request);
+    }
+    for (count = 0; count < 100000; count++) {
+        zmsg_t *reply = mdcli_recv (session);
         if (reply)
             zmsg_destroy (&reply);
         else
             break;              //  Interrupted by Ctrl-C
     }
-    printf ("%d requests/replies processed\n", count);
+    printf ("%d replies received\n", count);
     mdcli_destroy (&session);
     return 0;
 }

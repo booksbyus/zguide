@@ -380,9 +380,9 @@ zmsg_push (zmsg_t *self, char *part)
 
     //  Move part stack up one element and insert new part
     memmove (&self->_part_data [1], &self->_part_data [0],
-        (self->_part_count) * sizeof (unsigned char *));
+        self->_part_count * sizeof (unsigned char *));
     memmove (&self->_part_size [1], &self->_part_size [0],
-        (self->_part_count) * sizeof (size_t));
+        self->_part_count * sizeof (size_t));
     s_set_part (self, 0, (void *) part, strlen (part));
     self->_part_count++;
 }
@@ -402,9 +402,9 @@ zmsg_pop (zmsg_t *self)
     char *part = (char *) self->_part_data [0];
     self->_part_count--;
     memmove (&self->_part_data [0], &self->_part_data [1],
-        (self->_part_count) * sizeof (unsigned char *));
+        self->_part_count * sizeof (unsigned char *));
     memmove (&self->_part_size [0], &self->_part_size [1],
-        (self->_part_count) * sizeof (size_t));
+        self->_part_count * sizeof (size_t));
     return (part);
 }
 

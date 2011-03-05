@@ -711,11 +711,11 @@ As you start to program with 0MQ you will come across one problem more than once
                  |                          |
                  |                          v
                  |                 +-----------------+        +------------------+
-                 |                 |                 |        | Start the PUB    |
-                 |                 |  Do you start   |        | first, then      |
-                 |                 |  the SUB socket +------->| all SUB sockets  |
-                 |                 |  after the PUB? | No     | to avoid loss    |
-                 |                 |             {o} |        |                  |
+                 |                 |                 |        | Start all SUB    |
+                 |                 |  Do you start   |        | sockets first,   |
+                 |                 |  the SUB socket +------->| then the PUB     |
+                 |                 |  after the PUB? | No     | sockets to avoid |
+                 |                 |             {o} |        | loss             |
                  |                 +--------+--------+        +------------------+
                  |                          | Yes
                  |                          |
@@ -802,7 +802,7 @@ As you start to program with 0MQ you will come across one problem more than once
         |                 |
         | Make a minimal  |
         | test case, ask  |
-        | on #zeromq IRC. |
+        | on zeromq IRC.  |
         |                 |
         +-----------------+
 

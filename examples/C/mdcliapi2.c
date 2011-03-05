@@ -1,7 +1,7 @@
 /*  =========================================================================
-    mdcliapi.c
+    mdcliapi2.c
 
-    Majordomo Protocol Client API
+    Majordomo Protocol Client API (async version)
     Implements the MDP/Worker spec at http://rfc.zeromq.org/spec:7.
 
     -------------------------------------------------------------------------
@@ -25,7 +25,7 @@
     =========================================================================
 */
 
-#include "mdcliapi.h"
+#include "mdcliapi2.h"
 
 
 //  Structure of our class
@@ -37,7 +37,6 @@ struct _mdcli_t {
     void *client;               //  Socket to broker
     int verbose;                //  Print activity to stdout
     int timeout;                //  Request timeout
-    int retries;                //  Request retries
 };
 
 
@@ -48,7 +47,7 @@ void s_connect_to_broker (mdcli_t *self)
 {
     if (self->client)
         zmq_close (self->client);
-    self->client = zmq_socket (self->context, ZMQ_REQ);
+    self->client = zmq_socket (self->context, ZMQ_XREQ);
     int linger = 0;
     zmq_setsockopt (self->client, ZMQ_LINGER, &linger, sizeof (linger));
     zmq_connect (self->client, self->broker);
@@ -71,7 +70,6 @@ mdcli_new (char *broker, int verbose)
     self->context = zmq_init (1);
     self->verbose = verbose;
     self->timeout = 2500;           //  msecs, (> 1000!)
-    self->retries = 3;              //  Before we abandon
 
     s_catch_signals ();
     s_connect_to_broker (self);
@@ -109,22 +107,10 @@ mdcli_set_timeout (mdcli_t *self, int timeout)
 
 
 //  --------------------------------------------------------------------------
-//  Set request retries
-
-void
-mdcli_set_retries (mdcli_t *self, int retries)
-{
-    assert (self);
-    self->retries = retries;
-}
-
-
-//  --------------------------------------------------------------------------
-//  Send request to broker and get reply by hook or crook
+//  Send request to broker
 //  Takes ownership of request message and destroys it when sent.
-//  Returns the reply message or NULL if there was no reply.
 
-zmsg_t *
+int
 mdcli_send (mdcli_t *self, char *service, zmsg_t **request_p)
 {
     assert (self);
@@ -132,64 +118,64 @@ mdcli_send (mdcli_t *self, char *service, zmsg_t **request_p)
     zmsg_t *request = *request_p;
 
     //  Prefix request with protocol frames
+    //  Frame 0: empty (REQ emulation)
     //  Frame 1: "MDPCxy" (six bytes, MDP/Client x.y)
     //  Frame 2: Service name (printable string)
     zmsg_push (request, service);
     zmsg_push (request, MDPC_CLIENT);
+    zmsg_push (request, "");
     if (self->verbose) {
         s_console ("I: send request to '%s' service:", service);
         zmsg_dump (request);
     }
+    zmsg_send (&request, self->client);
+    return 0;
+}
 
-    int retries_left = self->retries;
-    while (retries_left && !s_interrupted) {
-        zmsg_t *msg = zmsg_dup (request);
-        zmsg_send (&msg, self->client);
 
-        while (!s_interrupted) {
-            //  Poll socket for a reply, with timeout
-            zmq_pollitem_t items [] = { { self->client, 0, ZMQ_POLLIN, 0 } };
-            zmq_poll (items, 1, self->timeout * 1000);
+//  --------------------------------------------------------------------------
+//  Returns the reply message or NULL if there was no reply.
+//  Does not attempt to recover from a broker failure, this is not possible
+//  without storing all unanswered requests and resending them all...
 
-            //  If we got a reply, process it
-            if (items [0].revents & ZMQ_POLLIN) {
-                zmsg_t *msg = zmsg_recv (self->client);
-                if (self->verbose) {
-                    s_console ("I: received reply:");
-                    zmsg_dump (msg);
-                }
-                //  Don't try to handle errors, just assert noisily
-                assert (zmsg_parts (msg) >= 3);
+zmsg_t *
+mdcli_recv (mdcli_t *self)
+{
+    assert (self);
 
-                char *header = zmsg_pop (msg);
-                assert (strcmp (header, MDPC_CLIENT) == 0);
-                free (header);
+    //  Poll socket for a reply, with timeout
+    zmq_pollitem_t items [] = { { self->client, 0, ZMQ_POLLIN, 0 } };
+    zmq_poll (items, 1, self->timeout * 1000);
 
-                char *service = zmsg_pop (msg);
-                assert (strcmp (service, service) == 0);
-                free (service);
-
-                zmsg_destroy (&request);
-                return msg;     //  Success
-            }
-            else
-            if (--retries_left) {
-                if (self->verbose)
-                    s_console ("W: no reply, disconnecting and retrying...");
-                //  Reconnect, and resend message
-                s_connect_to_broker (self);
-                zmsg_t *msg = zmsg_dup (request);
-                zmsg_send (&msg, self->client);
-            }
-            else {
-                if (self->verbose)
-                    s_console ("W: permanent error, abandoning session");
-                break;          //  Give up
-            }
+    //  If we got a reply, process it
+    if (items [0].revents & ZMQ_POLLIN) {
+        zmsg_t *msg = zmsg_recv (self->client);
+        if (self->verbose) {
+            s_console ("I: received reply:");
+            zmsg_dump (msg);
         }
+        //  Don't try to handle errors, just assert noisily
+        assert (zmsg_parts (msg) >= 4);
+
+        char *empty = zmsg_pop (msg);
+        assert (strcmp (empty, "") == 0);
+        free (empty);
+
+        char *header = zmsg_pop (msg);
+        assert (strcmp (header, MDPC_CLIENT) == 0);
+        free (header);
+
+        char *service = zmsg_pop (msg);
+        assert (strcmp (service, service) == 0);
+        free (service);
+
+        return msg;     //  Success
     }
     if (s_interrupted)
         printf ("W: interrupt received, killing client...\n");
-    zmsg_destroy (&request);
+    else
+    if (self->verbose)
+        s_console ("W: permanent error, abandoning session");
+
     return NULL;
 }

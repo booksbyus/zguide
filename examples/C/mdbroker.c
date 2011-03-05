@@ -1,6 +1,6 @@
 //
 //  Majordomo Protocol broker
-//  A minimal implementation
+//  A minimal implementation of http://rfc.zeromq.org/spec:7 and spec:8
 //
 #include "zmsg.h"
 #include "zlist.h"
@@ -31,6 +31,7 @@ typedef struct {
     char *name;                 //  Service name
     zlist_t *requests;          //  List of client requests
     zlist_t *waiting;           //  List of waiting workers
+    size_t workers;             //  How many workers we have
 } service_t;
 
 //  This defines one worker, idle or active
@@ -59,6 +60,8 @@ static void
     s_service_destroy (void *argument);
 static void
     s_service_dispatch (broker_t *self, service_t *service, zmsg_t *msg);
+static void
+    s_service_internal (broker_t *self, char *service_name, zmsg_t *msg);
 
 //  Worker functions
 static worker_t *
@@ -80,6 +83,65 @@ static int
 //  Client functions
 static void
     s_client_process (broker_t *self, char *sender, zmsg_t *msg);
+
+
+//  ----------------------------------------------------------------------
+//  Main broker work happens here
+
+int main (void)
+{
+    s_version_assert (2, 1);
+    s_catch_signals ();
+    broker_t *self = s_broker_new (VERBOSE_BROKER);
+    s_broker_bind (self, "tcp://*:5555");
+
+    //  Get and process messages forever or until interrupted
+    while (!s_interrupted) {
+        zmq_pollitem_t items [] = { { self->socket,  0, ZMQ_POLLIN, 0 } };
+        zmq_poll (items, 1, HEARTBEAT_INTERVAL * 1000);
+
+        //  Process next input message, if any
+        if (items [0].revents & ZMQ_POLLIN) {
+            zmsg_t *msg = zmsg_recv (self->socket);
+            if (self->verbose) {
+                s_console ("I: received message:");
+                zmsg_dump (msg);
+            }
+            char *sender = zmsg_unwrap (msg);
+            char *header = zmsg_pop (msg);
+
+            if (strcmp (header, MDPC_CLIENT) == 0)
+                s_client_process (self, sender, msg);
+            else
+            if (strcmp (header, MDPW_WORKER) == 0)
+                s_worker_process (self, sender, msg);
+            else {
+                s_console ("E: invalid message:");
+                zmsg_dump (msg);
+                zmsg_destroy (&msg);
+            }
+            free (sender);
+            free (header);
+        }
+        //  Disconnect and delete any expired workers
+        //  Send heartbeats to idle workers if needed
+        if (s_clock () > self->heartbeat_at) {
+            s_broker_purge_workers (self);
+            worker_t *worker = zlist_first (self->waiting);
+            while (worker) {
+                s_worker_send (self, worker, MDPW_HEARTBEAT, NULL, NULL);
+                worker = zlist_next (self->waiting);
+            }
+            self->heartbeat_at = s_clock () + HEARTBEAT_INTERVAL;
+        }
+    }
+    if (s_interrupted)
+        printf ("W: interrupt received, shutting down...\n");
+
+    s_broker_destroy (&self);
+    return 0;
+}
+
 
 //  --------------------------------------------------------------------------
 //  Constructor for broker object
@@ -150,7 +212,7 @@ s_broker_purge_workers (broker_t *self)
 }
 
 //  ----------------------------------------------------------------------
-//  Locate or create new service entry, free name when done
+//  Locate or create new service entry
 
 static service_t *
 s_service_require (broker_t *self, char *name)
@@ -169,7 +231,6 @@ s_service_require (broker_t *self, char *name)
             s_console ("I: registering new service: %s", name);
         }
     }
-    free (name);                //  It's always a popped frame
     return service;
 }
 
@@ -215,6 +276,31 @@ s_service_dispatch (broker_t *self, service_t *service, zmsg_t *msg)
 }
 
 //  ----------------------------------------------------------------------
+//  Handle internal service according to 8/MMI specification
+
+static void
+s_service_internal (broker_t *self, char *service_name, zmsg_t *msg)
+{
+    if (strcmp (service_name, "mmi.service") == 0) {
+        service_t *service = zhash_lookup (self->services, zmsg_body (msg));
+        if (service && service->workers)
+            zmsg_body_set (msg, "200");
+        else
+            zmsg_body_set (msg, "404");
+    }
+    else
+        zmsg_body_set (msg, "501");
+
+    //  Remove & save client return envelope and insert the
+    //  protocol header and service name, then rewrap envelope.
+    char *client = zmsg_unwrap (msg);
+    zmsg_wrap (msg, MDPC_CLIENT, service_name);
+    zmsg_wrap (msg, client, "");
+    free (client);
+    zmsg_send (&msg, self->socket);
+}
+
+//  ----------------------------------------------------------------------
 //  Creates worker if necessary
 
 static worker_t *
@@ -245,8 +331,10 @@ s_worker_delete (broker_t *self, worker_t *worker, int disconnect)
     if (disconnect)
         s_worker_send (self, worker, MDPW_DISCONNECT, NULL, NULL);
 
-    if (worker->service)
+    if (worker->service) {
         zlist_remove (worker->service->waiting, worker);
+        worker->service->workers--;
+    }
     zlist_remove (self->waiting, worker);
     //  This implicitly calls s_worker_destroy
     zhash_delete (self->workers, worker->identity);
@@ -280,10 +368,17 @@ s_worker_process (broker_t *self, char *sender, zmsg_t *msg)
     if (strcmp (command, MDPW_READY) == 0) {
         if (worker_ready)               //  Not first command in session
             s_worker_delete (self, worker, 1);
+        else
+        if (strlen (service_name) >= 4  //  Reserved service name
+        &&  memcmp (service_name, "mmi.", 4) == 0)
+            s_worker_delete (self, worker, 1);
         else {
             //  Attach worker to service and mark as idle
-            worker->service = s_service_require (self, zmsg_pop (msg));
+            char *service_name = zmsg_pop (msg);
+            worker->service = s_service_require (self, service_name);
+            worker->service->workers++;
             s_worker_waiting (self, worker);
+            free (service_name);
         }
     }
     else
@@ -375,67 +470,15 @@ static void
 s_client_process (broker_t *self, char *sender, zmsg_t *msg)
 {
     assert (zmsg_parts (msg) >= 2);     //  Service name + body
-    service_t *service = s_service_require (self, zmsg_pop (msg));
+
+    char *service_name = zmsg_pop (msg);
+    service_t *service = s_service_require (self, service_name);
     //  Set reply return address to client sender
     zmsg_wrap (msg, sender, "");
-    //  Takes ownership of the message
-    s_service_dispatch (self, service, msg);
-}
-
-
-//  ----------------------------------------------------------------------
-//  Main broker work happens here
-
-int main (void)
-{
-    s_version_assert (2, 1);
-    s_catch_signals ();
-    broker_t *self = s_broker_new (VERBOSE_BROKER);
-    s_broker_bind (self, "tcp://*:5555");
-
-    //  Get and process messages forever or until interrupted
-    while (!s_interrupted) {
-        zmq_pollitem_t items [] = { { self->socket,  0, ZMQ_POLLIN, 0 } };
-        zmq_poll (items, 1, HEARTBEAT_INTERVAL * 1000);
-
-        //  Process next input message, if any
-        if (items [0].revents & ZMQ_POLLIN) {
-            zmsg_t *msg = zmsg_recv (self->socket);
-            if (self->verbose) {
-                s_console ("I: received message:");
-                zmsg_dump (msg);
-            }
-            char *sender = zmsg_unwrap (msg);
-            char *header = zmsg_pop (msg);
-
-            if (strcmp (header, MDPC_CLIENT) == 0)
-                s_client_process (self, sender, msg);
-            else
-            if (strcmp (header, MDPW_WORKER) == 0)
-                s_worker_process (self, sender, msg);
-            else {
-                s_console ("E: invalid message:");
-                zmsg_dump (msg);
-                zmsg_destroy (&msg);
-            }
-            free (sender);
-            free (header);
-        }
-        //  Disconnect and delete any expired workers
-        //  Send heartbeats to idle workers if needed
-        if (s_clock () > self->heartbeat_at) {
-            s_broker_purge_workers (self);
-            worker_t *worker = zlist_first (self->waiting);
-            while (worker) {
-                s_worker_send (self, worker, MDPW_HEARTBEAT, NULL, NULL);
-                worker = zlist_next (self->waiting);
-            }
-            self->heartbeat_at = s_clock () + HEARTBEAT_INTERVAL;
-        }
-    }
-    if (s_interrupted)
-        printf ("W: interrupt received, shutting down...\n");
-
-    s_broker_destroy (&self);
-    return 0;
+    if (strlen (service_name) >= 4
+    &&  memcmp (service_name, "mmi.", 4) == 0)
+        s_service_internal (self, service_name, msg);
+    else
+        s_service_dispatch (self, service, msg);
+    free (service_name);
 }

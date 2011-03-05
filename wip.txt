@@ -1,5 +1,79 @@
 Chapter 4
 
+
+
+++++ Rust-based Reliability (Titanic Pattern)
+
+- Majordomo + rust
+
+Once you realize that the Paranoid Pirate queue is basically a message broker, you might be tempted to add rust-based reliability to it. After all, this works for all the enterprise messaging systems. It's such a tempting idea that it's a little sad to have to be negative. But that's one of my specialties. So, reasons you don't want rust-based brokers sitting in the center of your architecture:
+
+* As you've seen, the Lazy Pirate client performs surprisingly well. It works across a whole range of architectures, from direct client-to-server to distributed queue devices. It does assume that workers are stateless and idempotent (see below). But we can work around that limitation without resorting to rust.
+
+* Rust brings a whole set of problems, from slow performance to additional pieces to have to manage, repair, and create 6am panics as they inevitably break at the start of trading. The beauty of the Pirate queues we saw is their simplicity. They won't crash. And if you're still worried about the hardware, you can move to a peer-to-peer pattern that has no broker at all. I'll explain later in this chapter.
+
+There is one sane use case for rust-based reliability, which is asynchronous fire-and-forget. This pattern, which I'll just sketch, works as follows:
+
+* Clients use durable sockets to talk to a broker.
+* They use a request-reply dialog to send requests to the broker, which accepts them and stores them on disk.
+* When the broker has confirmed receipt of a request, this means it's stored on disk, safely.
+* The broker then looks for workers to process the request, and it does this over time as fast as it can.
+* Replies from workers are in the same way saved to disk, with an acknowledgement from the broker to the worker that the reply was received.
+* When clients reconnect (or immediately if they stay connected), they receive these replies, and they confirm to the broker that they've received them, again with a request-reply handshake.
+* The broker erases requests and replies only when they've been processed.
+
+This model makes sense when clients and workers come and go. It solves the major problem with the Pirate pattern, namely that a client waits for an answer in realtime. When clients and workers are randomly connected like this, raw performance is not a big concern: it's far more important to just never lose messages. Some people will argue that "just never lose messages" is a use case by itself, but if clients and workers are connected, you don't need rust to do that: Pirate can work, as we've demonstrated.
+
+
+++++ Distributed Reliable Client-Server (Freelance Pattern)
+
+- heartbeating from clients outwards
+- ZMQ_ROOT service
+
+We've seen how to make a reliable client-server architecture using a queue device (essentially a broker) in the middle. We've discussed the advantages of a central broker a few times. The biggest pro is that workers can come and go silently, there is just one 'stable' node on the network.
+
+But for many cases this isn't worth the hassle of an extra device. If you are not managing a pool of anonymous workers, but want to make the intelligence explicitly addressable, then a broker is an extra step for little gain.
+
+Again, this is a matter of taste. Some architects will swear by a broker. Others hate them. Let's take a real example and see how this plays. Say we want a name service (we do, we do!) that translates logical names (like "authentication") into physical network addresses (like "tcp://192.168.55.121:5051").
+
+Without a broker, every application needs to know the address of the name service. It can then talk to the name service (using a Pirate pattern) to translate logical names into endpoints as needed. Fair enough.
+
+With a broker, every application needs to know the address of the broker. The broker hopefully supports some kind of service-based routing. So clients can then send a request to the "name lookup service" and this will be routed to
+
+
+
+Lastly...
+
+* Multiple clients talking to multiple servers with no intermediary devices. Use case: distributed services such as name resolution. Types of failure we aim to handle: service crashes and restarts, service busy looping, service overload, network disconnects.
+
+- N clients to N servers
+- move queue logic into client-side class
+- ditto for server, make framework
+- talk to it via inproc...
+
+
+Handshaking at Startup
+
+We must use XREP-to-XREP sockets because we want to connect N clients to N servers without (necessarily) an intermediary queue device.
+
+In an XREP-to-XREP socket connection, one side of the connection must know the identity of the other.  You cannot do xrep-to-xrep flows between two anonymous sockets since an XREP socket requires an explicit identity.  In practice this means we will need a name service share the identities of the servers.  The client will connect to the server, then send it a message using the server's known identity as address, and then the server can respond to the client.
+
+In this prototype we'll use fixed, hardcoded identities for the servers.  We'll develop the name service in a later prototype.
+
+
+Pool management
+
+* If there is just one server in the pool, the we wait with a timeout for the server to reply. If the server does not reply within the timeout, we retry a number of times before abandoning.
+* If there are multiple servers in the pool, we try each server in succession, but do not retry the same server twice.
+* If a server appears to be really dead (i.e. has not responded for some time), we remove it from the pool.
+
+
+
+
+
+
+
+
 +++ Reliable Publish-Subscribe (Clone Pattern)
 
 Pubsub is like a radio broadcast, you miss everything before you join, and then how much information you get depends on the quality of your reception. It's so easy to lose messages with this pattern that you might wonder why 0MQ bothers to implement it at all.[[footnote]]If you're German or Norwegian, that is what we call 'humor'. There are many cases where simplicity and speed are more important than pedantic delivery. In fact the radio broadcast covers perhaps the majority of information distribution in the real world. Think of Facebook and Twitter. No, I'm not still joking.[[/footnote]]
