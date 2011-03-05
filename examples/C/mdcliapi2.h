@@ -1,7 +1,7 @@
 /*  =========================================================================
-    mdcliapi.h
+    mdcliapi2.h
 
-    Majordomo Protocol Client API
+    Majordomo Protocol Client API (async version)
     Implements the MDP/Worker spec at http://rfc.zeromq.org/spec:7.
 
     -------------------------------------------------------------------------
@@ -44,10 +44,10 @@ void
     mdcli_destroy (mdcli_t **self_p);
 void
     mdcli_set_timeout (mdcli_t *self, int timeout);
-void
-    mdcli_set_retries (mdcli_t *self, int retries);
-zmsg_t *
+int
     mdcli_send (mdcli_t *self, char *service, zmsg_t **request_p);
+zmsg_t *
+    mdcli_recv (mdcli_t *self);
 
 #ifdef __cplusplus
 }
