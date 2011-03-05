@@ -177,6 +177,7 @@ if [ "$CCNAME" = "gcc" ]; then
     #
     elif [ "$UTYPE" = "Darwin" ]; then
         #  Use -start-group / -end-group for linking
+        STDLIBS="$STDLIBS -lstdc++"
         LINKTYPE="after"
     #
     #  Solaris-specific subsection
