@@ -22,13 +22,15 @@
 #define DEQUEUE(q) memmove (&(q)[0], &(q)[1], sizeof (q) - sizeof (q [0]))
 
 //  Basic request-reply client using REQ socket
+//  Since s_send and s_recv can't handle 0MQ binary identities we
+//  set a printable text identity to allow routing.
 //
 static void *
 client_task (void *args)
 {
     void *context = zmq_init (1);
     void *client = zmq_socket (context, ZMQ_REQ);
-    s_set_id (client);          //  Makes tracing easier
+    s_set_id (client);          //  Set a printable identity
     zmq_connect (client, "ipc://frontend.ipc");
 
     //  Send request, get reply
@@ -42,13 +44,15 @@ client_task (void *args)
 }
 
 //  Worker using REQ socket to do LRU routing
+//  Since s_send and s_recv can't handle 0MQ binary identities we
+//  set a printable text identity to allow routing.
 //
 static void *
 worker_task (void *args)
 {
     void *context = zmq_init (1);
     void *worker = zmq_socket (context, ZMQ_REQ);
-    s_set_id (worker);          //  Makes tracing easier
+    s_set_id (worker);          //  Set a printable identity
     zmq_connect (worker, "ipc://backend.ipc");
 
     //  Tell broker we're ready for work
