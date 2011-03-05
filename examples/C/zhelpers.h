@@ -49,6 +49,9 @@
     typedef unsigned long ulong;
     typedef unsigned int  uint;
     typedef __int64 int64_t;
+#elif (defined (__APPLE__))
+    typedef unsigned long ulong;
+    typedef unsigned int  uint;
 #endif
 
 //  Provide random number from 0..(num-1)
