@@ -523,7 +523,24 @@ Notes on this code:
 
 The way we implemented Majordomo, above, is simple and stupid. The client is just the original Simple Pirate, wrapped up in a sexy API. When I fire up a client, broker, and worker on a test box, it can process 100,000 requests in about 14 seconds. That is partly due to the code, which cheerfully copies message frames around as if CPU cycles were free. But the real problem is that we're 'round-tripping'. TCP does not send data immediately; it waits a little while to see if anything more arrives. Using raw TCP sockets you can switch off this [http://en.wikipedia.org/wiki/Nagle's_algorithm delay], but 0MQ doesn't expose this option.
 
-The proper solution is to switch from a synchronous to an asynchronous pattern so that the client can chuck a hundred thousand requests at the broker, which can distribute them to workers, which can chuck their responses back. It won't be fully asynchronous since workers get their messages on a strict LRU basis. But it will scale better with more workers.
+Theory is great in theory, but in practice I prefer practice. Let's measure the cost of round-tripping with a simple test program. This sends a bunch of messages, first waiting for a reply to each message, and second as a batch, reading all the replies back as a batch. Both approaches do the same work, but they give very different results. We mockup a client, broker, and worker:
+
+[[code type="example" title="Round-trip demonstrator" name="tripping"]]
+[[/code]]
+
+On my slow laptop, this program says:
+
+[[code]]
+Setting up test...
+Synchronous round-trip test...
+ 1743 calls/second
+Asynchronous round-trip test...
+ 80580 calls/second
+[[/code]]
+
+Note that the client thread does a small pause before starting. This is to get around one of the features of the ROUTING (XREP) socket: if you send a message with the address of a peer that's not yet connected, the message gets discarded. In this example we don't use the LRU mechanism, so without the sleep, messages to the worker sometimes get discarded, making a mess of our test.
+
+As we see, round-tripping in the simplest case is 40-50 times slower than "shove it down the pipe as fast as it'll go" asynchronous approach. Let's see if we can apply this to Majordomo.
 
 First, let's modify the client API to have separate send and recv methods:
 
@@ -539,7 +556,7 @@ It's literally a few minutes' work to refactor the synchronous client API to bec
 [[code type="example" title="Majordomo asynchronous client API" name="mdcliapi2"]]
 [[/code]]
 
-And here's the corresponding test program:
+And here's the corresponding client test program:
 
 [[code type="example" title="Majordomo client application" name="mdclient2"]]
 [[/code]]
@@ -577,7 +594,7 @@ user    0m0.730s
 sys     0m0.470s
 [[/code]]
 
-On my test rig, after eight or so workers it doesn't get any faster. Four cores only stretches so far. But we got a 4x improvement in throughput with just a few minutes' work. The broker is still unoptimized. It spends most of its time copying message frames around, instead of doing zero copy, which it could. But we're getting 25K reliable request/reply cycles a second, with pretty low effort.
+It isn't fully asynchronous since workers get their messages on a strict LRU basis. But it will scale better with more workers. On my fast test box, after eight or so workers it doesn't get any faster. Four cores only stretches so far. But we got a 4x improvement in throughput with just a few minutes' work. The broker is still unoptimized. It spends most of its time copying message frames around, instead of doing zero copy, which it could. But we're getting 25K reliable request/reply cycles a second, with pretty low effort.
 
 However the asynchronous Majordomo pattern isn't all roses. It has a fundamental weakness, namely that it cannot survive a broker crash without a more work. If you look at the mdcliapi2 code you'll see it does not attempt to reconnect after a failure. A proper reconnect would require:
 

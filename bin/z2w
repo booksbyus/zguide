@@ -227,25 +227,6 @@ print IMAGES "</html>\n";
 close (IMAGES);
 close (OUTPUT);
 
-||~ Translations (48 in total): ||||
-|| Ada          ||      0 ||    0% ||
-|| Basic        ||      0 ||    0% ||
-|| C            ||     48 ||  100% ||
-|| C++          ||     33 ||   68% ||
-|| C#           ||     26 ||   54% ||
-|| Common Lisp  ||     32 ||   66% ||
-|| Erlang       ||      0 ||    0% ||
-|| Go           ||      2 ||    4% ||
-|| Haskell      ||      0 ||    0% ||
-|| Java         ||     17 ||   35% ||
-|| Lua          ||      0 ||    0% ||
-|| Objective-C  ||      0 ||    0% ||
-|| ooc          ||      0 ||    0% ||
-|| Perl         ||     25 ||   52% ||
-|| PHP          ||     38 ||   79% ||
-|| Python       ||     34 ||   70% ||
-|| Ruby         ||     13 ||   27% ||
-
 printf "||||||~ Translations ($examples in total)||\n";
 foreach (@languages) {
     printf "|| %s || %3d || %3d%% ||\n", $_, $translations {$_}, ($translations {$_} * 100) / $examples;

@@ -227,7 +227,7 @@ The router-to-dealer pattern is the simplest. You connect one router to many dea
 
 If you expect the dealer to reply, there should only be one router talking to it. Dealers have no idea how to reply to a specific peer, so if they have multiple peers, they will load-balance between them, which would be weird. If the dealer is a sink, any number of routers can talk to it.
 
-What kind of routing can you do with a router-to-dealer pattern?  If the dealers talk back to the router, e.g. telling the router when they finished a task, you can use that knowledge to route depending on how fast a dealer is. Since both router and dealer are asynchronous, it can get a little tricky. You'd need to use zmq_poll[3] at least.
+What kind of routing can you do with a router-to-dealer pattern? If the dealers talk back to the router, e.g. telling the router when they finished a task, you can use that knowledge to route depending on how fast a dealer is. Since both router and dealer are asynchronous, it can get a little tricky. You'd need to use zmq_poll[3] at least.
 
 We'll make an example where the dealers don't talk back, they're pure sinks. Our routing algorithm will be a weighted random scatter: we have two dealers and we send twice as many messages to one as to the other.
 
@@ -329,7 +329,7 @@ Like dealers, mamas can only talk to one router and since mamas always start by 
 Figure # - Router to mama custom routing
 [[/code]]
 
-What kind of routing can you do with a router-to-mama pattern?  Probably the most obvious is "least-recently-used" (LRU), where we always route to the mama that's been waiting longest. Here is an example that does LRU routing to a set of mamas:
+What kind of routing can you do with a router-to-mama pattern? Probably the most obvious is "least-recently-used" (LRU), where we always route to the mama that's been waiting longest. Here is an example that does LRU routing to a set of mamas:
 
 [[code type="example" title="Router-to-mama" name="rtmama"]]
 [[/code]]
@@ -953,9 +953,9 @@ Several espressos later, we want to jump into writing code but a little voice te
 
 So we double check to make sure that we understood this correctly:
 
-* There will be some kind of super-duper network interconnect between clusters, right?  The client says, yes, of course, we're not idiots.
+* There will be some kind of super-duper network interconnect between clusters, right? The client says, yes, of course, we're not idiots.
 
-* What kind of volumes are we talking about, we ask?  The client replies, up to a thousand clients per cluster, each doing max. ten requests per second. Requests are small, and replies are also small, no more than 1K bytes each.
+* What kind of volumes are we talking about, we ask? The client replies, up to a thousand clients per cluster, each doing max. ten requests per second. Requests are small, and replies are also small, no more than 1K bytes each.
 
 So we do a little calculation and see that this will work nicely over plain TCP. 2,500 clients x 10/second x 1,000 bytes x 2 directions = 50MB/sec or 400Mb/sec, not a problem for a 1Gb network.
 
@@ -1028,7 +1028,7 @@ Now we scale this out to more than one cluster. Each cluster has a set of client
              Figure # - Multiple clusters
 [[/code]]
 
-The question is: how do we get the clients of each cluster talking to the workers of the other cluster?  There are a few possibilities, each with pros and cons:
+The question is: how do we get the clients of each cluster talking to the workers of the other cluster? There are a few possibilities, each with pros and cons:
 
 * Clients could connect directly to both brokers. The advantage is that we don't need to modify brokers or workers. But clients get more complex, and become aware of the overall topology. If we want to add, e.g. a third or forth cluster, all the clients are affected. In effect we have to move routing and failover logic into the clients and that's not nice.
 
@@ -1171,7 +1171,7 @@ So in all the code we write for this tutorial will use these socket names:
 
 For our transport we'll use {{ipc}} for everything. This has the advantage of working like {{tcp}} in terms of connectivity (i.e. it's a disconnected transport, unlike {{inproc}}), yet we don't need IP addresses or DNS names, which would be a pain here. Instead, we will use {{ipc}} endpoints called //something//-{{local}}, //something//-{{cloud}}, and //something//-{{state}}, where //something// is the name of our simulated cluster.
 
-You may be thinking that this is a lot of work for some names. Why not call them s1, s2, s3, s4, etc.?  The answer is that if your brain is not a perfect machine, you need a lot of help when reading code, and we'll see that these names do help. It is a lot easier to remember "three flows, two directions" than "six different sockets".
+You may be thinking that this is a lot of work for some names. Why not call them s1, s2, s3, s4, etc.? The answer is that if your brain is not a perfect machine, you need a lot of help when reading code, and we'll see that these names do help. It is a lot easier to remember "three flows, two directions" than "six different sockets".
 
 Here is the broker socket arrangement, then:
 
