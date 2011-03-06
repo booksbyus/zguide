@@ -107,7 +107,8 @@ int main (void)
                 s_console ("I: received message:");
                 zmsg_dump (msg);
             }
-            char *sender = zmsg_unwrap (msg);
+            char *sender = zmsg_pop (msg);
+            char *empty  = zmsg_pop (msg);
             char *header = zmsg_pop (msg);
 
             if (strcmp (header, MDPC_CLIENT) == 0)
@@ -121,6 +122,7 @@ int main (void)
                 zmsg_destroy (&msg);
             }
             free (sender);
+            free (empty);
             free (header);
         }
         //  Disconnect and delete any expired workers

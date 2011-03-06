@@ -65,6 +65,7 @@ s_send_to_broker (mdwrk_t *self, char *command, char *option, zmsg_t *_msg)
         zmsg_push (msg, option);
     zmsg_push (msg, command);
     zmsg_push (msg, MDPW_WORKER);
+    zmsg_push (msg, "");
 
     if (self->verbose) {
         s_console ("I: sending %s to broker",
@@ -186,7 +187,11 @@ mdwrk_recv (mdwrk_t *self, zmsg_t *reply)
             self->liveness = HEARTBEAT_LIVENESS;
 
             //  Don't try to handle errors, just assert noisily
-            assert (zmsg_parts (msg) >= 2);
+            assert (zmsg_parts (msg) >= 3);
+
+            char *empty = zmsg_pop (msg);
+            assert (strcmp (empty, "") == 0);
+            free (empty);
 
             char *header = zmsg_pop (msg);
             assert (strcmp (header, MDPW_WORKER) == 0);
