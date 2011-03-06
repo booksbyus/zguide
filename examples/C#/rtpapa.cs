@@ -1,13 +1,51 @@
-No-one has translated the rtpapa example into C# yet.  Be the first to create
-rtpapa in C# and get one free Internet!  If you're the author of the C#
-binding, this is a great way to get people to use 0MQ in C#.
+﻿//
+//  Custom routing Router to Papa (XREP to REP)
+//
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+//  Author:     Michael Compton
+//  Email:      michael.compton@littleedge.co.uk
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Threading;
+using ZMQ;
 
-Subscribe to the email list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+namespace rtpapa {
+    class Program {
+        //  We will do this all in one thread to emphasize the sequence
+        //  of events...
+        static void Main(string[] args) {
+            using (Context ctx = new Context(1)) {
+                using (Socket client = ctx.Socket(SocketType.XREP),
+                    worker = ctx.Socket(SocketType.REP)) {
+
+                    client.Bind("inproc://routing");
+                    worker.StringToIdentity("A", Encoding.Unicode);
+                    worker.Connect("inproc://routing");
+
+                    //  Wait for the worker to connect so that when we send a message
+                    //  with routing envelope, it will actually match the worker...
+                    Thread.Sleep(1000);
+
+                    //  Send papa address, address stack, empty part, and request
+                    client.SendMore("A", Encoding.Unicode);
+                    client.SendMore("address 3", Encoding.Unicode);
+                    client.SendMore("address 2", Encoding.Unicode);
+                    client.SendMore("address 1", Encoding.Unicode);
+                    client.SendMore("", Encoding.Unicode);
+                    client.Send("This is the workload", Encoding.Unicode);
+
+                    //  Worker should get just the workload
+                    ZHelpers.Dump(worker, Encoding.Unicode);
+
+                    //  We don't play with envelopes in the worker
+                    worker.Send("This is the reply", Encoding.Unicode);
+
+                    //  Now dump what we got off the XREP socket...
+                    ZHelpers.Dump(client, Encoding.Unicode);
+                }
+            }
+        }
+    }
+}
