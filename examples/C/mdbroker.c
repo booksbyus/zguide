@@ -369,8 +369,8 @@ s_worker_process (broker_t *self, char *sender, zmsg_t *msg)
         if (worker_ready)               //  Not first command in session
             s_worker_delete (self, worker, 1);
         else
-        if (strlen (service_name) >= 4  //  Reserved service name
-        &&  memcmp (service_name, "mmi.", 4) == 0)
+        if (strlen (sender) >= 4  //  Reserved service name
+        &&  memcmp (sender, "mmi.", 4) == 0)
             s_worker_delete (self, worker, 1);
         else {
             //  Attach worker to service and mark as idle
