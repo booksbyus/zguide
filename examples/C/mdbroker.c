@@ -107,7 +107,8 @@ int main (void)
                 s_console ("I: received message:");
                 zmsg_dump (msg);
             }
-            char *sender = zmsg_unwrap (msg);
+            char *sender = zmsg_pop (msg);
+            char *empty  = zmsg_pop (msg);
             char *header = zmsg_pop (msg);
 
             if (strcmp (header, MDPC_CLIENT) == 0)
@@ -121,6 +122,7 @@ int main (void)
                 zmsg_destroy (&msg);
             }
             free (sender);
+            free (empty);
             free (header);
         }
         //  Disconnect and delete any expired workers
@@ -369,8 +371,8 @@ s_worker_process (broker_t *self, char *sender, zmsg_t *msg)
         if (worker_ready)               //  Not first command in session
             s_worker_delete (self, worker, 1);
         else
-        if (strlen (service_name) >= 4  //  Reserved service name
-        &&  memcmp (service_name, "mmi.", 4) == 0)
+        if (strlen (sender) >= 4  //  Reserved service name
+        &&  memcmp (sender, "mmi.", 4) == 0)
             s_worker_delete (self, worker, 1);
         else {
             //  Attach worker to service and mark as idle
@@ -431,7 +433,7 @@ s_worker_send (
     zmsg_push (msg, command);
     zmsg_push (msg, MDPW_WORKER);
     //  Stack routing envelope to start of message
-    zmsg_push (msg, worker->identity);
+    zmsg_wrap (msg, worker->identity, "");
 
     if (self->verbose) {
         s_console ("I: sending %s to worker",
