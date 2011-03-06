@@ -516,19 +516,19 @@ Theory is great in theory, but in practice I prefer practice. Let's measure the 
 [[code type="example" title="Round-trip demonstrator" name="tripping"]]
 [[/code]]
 
-On my slow laptop, this program says:
+On my development box, this program says:
 
 [[code]]
 Setting up test...
 Synchronous round-trip test...
- 1743 calls/second
+ 9057 calls/second
 Asynchronous round-trip test...
- 80580 calls/second
+ 173010 calls/second
 [[/code]]
 
 Note that the client thread does a small pause before starting. This is to get around one of the 'features' of the ROUTING (XREP) socket: if you send a message with the address of a peer that's not yet connected, the message gets discarded. In this example we don't use the LRU mechanism, so without the sleep, if the worker thread is too slow to connect, it'll lose messages, making a mess of our test.
 
-As we see, round-tripping in the simplest case is 40-50 times slower than "shove it down the pipe as fast as it'll go" asynchronous approach. Let's see if we can apply this to Majordomo.
+As we see, round-tripping in the simplest case is 20 times slower than "shove it down the pipe as fast as it'll go" asynchronous approach. Let's see if we can apply this to Majordomo.
 
 First, let's modify the client API to have separate send and recv methods:
 
@@ -648,66 +648,75 @@ So, here's the Titanic pattern, in which we write messages to disk to ensure the
 
 The only downside is that there's an extra network hop between broker and hard disk. This is easily worth it.
 
-Titanic takes Majordomo and messes with it somewhat. Workers become "service clients" and we add a special worker called "titanic":
+Titanic plugs into a Majordomo architecture as a proxy service:
 
 [[code type="textdiagram"]]
 
-    +-----------+                   +-----------+
-    |           |                   |           |
-    |  Caller   |                   |  Service  |
-    |  client   |                   |  client   |
-    |           |                   |           |
-    \-----------/                   \-----------/
-          ^                               ^
-          |                               |
+    +-----------+   +-----------+   +-----------+
+    |           |   |           |   |           |
+    |  Client   |   |  Client   |   |  Client   |
+    |           |   |           |   |           |
+    \-----------/   \-----------/   \-----------/
+          ^               ^               ^
+          |               |               |
           \---------------+---------------/
-   "Give me coffee"       |       "Who wants coffee?"
-                          v
-                    /-----------\
-                    |           |
-                    |  Broker   |
-                    |           |
-                    \-----------/
+   "Titanic,              |         "Titanic,
+    give me coffee"       |          give me tea"
+                          v                            Disk
+                    /-----------\     +---------+     +-------+
+                    |           |     |         |     |       |
+                    |  Broker   |<--->| Titanic |<--->|  {s}  |
+                    |           |     |         |     |       |
+                    \-----------/     +---------+     +-------+
                           ^
                           |
-                          |
-                          v
-                    /-----------\
-                    | "titanic" |   Persistent queues
-                    +-----------+      +--------+
-                    |           |      |        |
-                    |  Titanic  |<---->|  {s}   | 
-                    |  Worker   |      |        |
-                    |           |      |        |
-                    +-----------+      +--------+
+          /---------------+---------------\
+          |               |               |
+          v               v               v
+    /-----------\   /-----------\   /-----------\
+    |  "Water"  |   |   "Tea"   |   | "Coffee"  |
+    +-----------+   +-----------+   +-----------+
+    |           |   |           |   |           |
+    |  Worker   |   |  Worker   |   |  Worker   |
+    |           |   |           |   |           |
+    +-----------+   +-----------+   +-----------+
 
 
              Figure # - Titanic Pattern
 [[/code]]
 
-Titanic operates as a layer //above// Majordomo. This means it's free to redefine the roles of nodes and how they connect. What it does is define a set of request-reply dialogs that lets clients applications store and retrieve requests and replies off a set of named persistent queues.
+There are many ways to make a persistent request-reply architecture. We'll aim for simple and painless. The simplest design I could come up with, after playing with this for a few hours, is Titanic as a "proxy service". That is, it doesn't affect workers at all. If a client wants a reply immediately, it talks directly to a service and hopes the service is available. If a client is happy to wait a while, it talks to Titanic instead and asks, "hey, buddy, would you take care of this for me while I go buy my groceries?"
 
-In effect any client application can act as a service, and 'normal' Majordomo workers do not have access to Titanic queues. This may confuse you at first but it lets us mix the different kinds of services on a single network without making any layer too complex.
+Titanic is thus both a worker, and a client. The dialog between client and Titanic goes along these lines:
 
-Let's look first at the protocol we need to make, and second at how to implement these named persistent queues.
+* Client: please accept this request for me. Titanic: OK, done.
+* Client: do you have a reply for me? Titanic: Yes, here it is. Or, no, not yet.
+* Client: ok, you can wipe that request now, it's all happy. Titanic: OK, done.
 
-The protocol lets clients talk to the Titanic service, and implements four request-reply dialogs:
+Whereas the dialog between Titanic and broker and worker goes like this:
 
-* Put a request onto a queue.
-* Get a request off a queue.
-* Send a reply back to a queue.
-* Receive a repy off a queue.
+* Titanic: hey, broker, is there an echo service? Broker: uhm, yeah, seems like.
+* Titanic: hey, echo, please handle this for me. Echo: sure, here you are.
+* Titanic: sweeeeet!
 
-Then, we add our own protocol on top of MDP:
+You can work though this, and the possible failure scenarios. If a worker crashes while processing a request, Titanic retries, indefinitely. We'll use the MMI protocol to make this reasonably efficient. If a reply gets lost somewhere, Titanic will retry. If the request gets processed but the client doesn't get the reply, it will ask again.
 
-- Clients have an address which is independent of the current socket identity, and unique to each client. This is like an email Sender: address.
-- Workers become MDP clients, Titanic workers.
-- Clients do request-reply to post a request which goes to the Titanic service.
-- Clients do request-reply to poll for replies, again to the Titanic service.
-- Workers do request-reply to poll for requests, ditto.
-- Requests have state: waiting, in process, done.
-- If a worker is disconnected, any in process request is requeued.
-- Titanic erases requests only when reply has been handshook back to client.
+The handshaking is pedantic, but can be pipelined, i.e. clients can use the asynchronous Majordomo pattern to do a lot of work and then get the responses later.
+
+We need some way for a client to request //its// replies. We'll have many clients asking for the same services, and clients disappear and reappear with different identities. So here is a simple, reasonably secure solution:
+
+* Every request generates a universally unique ID (UUID), which Titanic returns to the client when it's queued the request.
+* When a client asks for a reply, it must specify the UUID for the original request.
+
+This puts some onus on the client to store its request UUIDs safely, but it removes any need for authentication. What alternatives are there? We could use durable sockets, i.e. explicit client identities. That creates a management issue when we have many clients, and opens the door for the inevitable errors caused by two clients using the same identity.
+
+Before we jump off and write yet another formal specification (fun, fun!) let's consider how the client talks to Titanic. One way is to use a single service and send it three different request types. Another way, which seems simpler, is to use three services:
+
+* **titanic-request** - store a request message, return a UUID for the request.
+* **titanic-reply** - fetch a reply, if available, for a given request UUID.
+* **titanic-close** - confirm that a reply has been stored and processed.
+
+We'll just make a multithreaded worker, which as we've seen from our multithreading experience with 0MQ, is trivial.
 
 .end
 

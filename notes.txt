@@ -1,12 +1,5 @@
 Notes for The Guide
 
-+++ A Service-Oriented Queue Device
-
-- how to route to workers based on service names
-- kind of like custom pubsub but with answers going back to clients
-
-
-
 - collection of patterns
     Least Recently Used
     Asynchronous Client-Server
@@ -282,71 +275,21 @@ High performance multiple i/o threads
 
 +++ What's Missing from 0MQ
 
-* Multicast
-- unbreak PGM
-- make PGM work on Windows
-- exclusive pair reconnect is broken
-- location lookup
-- abstracted interfaces
-- other IPC mechanisms, e.g. shared memory
-- IPC on OpenVMS, Windows
-- upstreaming of subscriptions/unsubs
-- timeouts for receiver missing?
-- persistence & reliability
-Change proposals
-- defaults for identity are to crash the publisher
---]
-
 
 
 - handling crashing peers
-
 - non-blocking send/recv
     EAGAIN
-
 - reliable pub
     - pub connects to all subs
     - subs send request to pub
-
 - reliable messaging over xreq / xrep
 - how to do timer events
-
-
 - there is no way to disconnect; second connection creates two
     - need to destroy the socket
-
-- list known encoding libraries with pros / cons of each
-- list each OS
-
-For External Use Only!
-More Connections Than Oprah!
-Save The Fail Whale!
-DEVOPS_BORAT say "Why Not?"
-Now With More Vitamins!
-Sufficiently Advanced Tech
-High Lifestyle, Low Carbon
-Must Has Cat to Enter
-
-
 - how to send multipart job and execute / cancel
 
 
-
-* Client-server data distribution (like custom pubsub), with some restrictions.
-
-
-Either of the two client socket types send requests and replies as a multipart message with two parts.  The first part is a unique UUID, that identifies the client.  The second is the actual message blob.  The ZMQ_XREP socket uses the identity to know what ØMQ connection to send the message to.
-
-What this means... take deep breath... is that you can use ZMQ_XREQ and ZMQ_XREP to build servers that do authentication and arbitrary routing.  Don't like the existing topic pubsub?  You can build your own.  Here's how to build an authenticated pubsub server:
-
-* Client creates ZMQ_XREQ sends its authentication credentials and subscription pattern as a request.
-* Service reads credentials, authenticates them, and if they are OK, stores the client identity in a table of "authorized identities".  This is in effect treating an identity as an abstracted connection.
-* Service builds routing tables using subscription pattern, so that any new message can be routed to a set of identities.
-* Service does separate zmq_send() to its ZMQ_XREP socket for each matching subscriber, each time specifying the correct identity.
-* Service maintains its table of identities periodically to remove old identities.
-* Client periodically resends its credentials ("keep-alive"), which server handles by reading on the socket.
-
-It is not trivial, and should maybe sit in the "Advanced Concepts" section, but this use case is one that so many new users ask about that it's good to know at least that ØMQ handles it.
 
 
 Here is, I think, how to build an authenticated pubsub service using ØMQ.  The design handles authentication, arbitrary routing criteria, and flushing of dead client connections.
@@ -360,20 +303,6 @@ The server has two main data structures:
 
 * A connection table that stores authenticated identities and timestamps.  Each identity corresponds to a client connection.
 * A routing table that maps message keys (e.g. topic value) to identities.  There are techniques for doing [http://www.zeromq.org/whitepapers:message-matching high speed message matching].
-
-The client has a single thread that polls on its ZMQ_XREQ socket.  At regular time intervals it (re)sends its authentication and subscription message.  This acts as a keep-alive.
-
-The server has a two threads, one that polls on its ZMQ_XREP socket and one that receives outgoing messages and passes them to the polling thread via inproc sockets.  The polling thread processes any incoming client requests and updates its data structures.  It processes any outgoing messages by looking up the message key in its routing table and then sending the message (one to one) to all matching identities.  As it does this it deletes any expired identities.
-
-That's it.  Sorry if I got some things wrong here, it's theory and not based on running code.
-
-- setsockopt validation
- - identities don't start with zero byte
- - integer values are not negative
-
-- fixes to documentation
- - REP sockets can't drop data on HWM because they are lock-step
- - HWM says n/a for PULL and for SUB, which is wrong
 
 
 
