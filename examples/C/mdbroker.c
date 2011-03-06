@@ -431,7 +431,7 @@ s_worker_send (
     zmsg_push (msg, command);
     zmsg_push (msg, MDPW_WORKER);
     //  Stack routing envelope to start of message
-    zmsg_push (msg, worker->identity);
+    zmsg_wrap (msg, worker->identity, "");
 
     if (self->verbose) {
         s_console ("I: sending %s to worker",
