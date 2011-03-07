@@ -1,5 +1,8 @@
 Notes for The Guide
 
+- problem solving faq
+    send a frame, receive nothing: you sent from a transient buffer that disappeared before send completed.
+
 - collection of patterns
     Least Recently Used
     Asynchronous Client-Server
