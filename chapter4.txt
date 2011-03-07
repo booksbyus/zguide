@@ -41,19 +41,7 @@ To make a software system fully reliable against //all// of these possible failu
 
 Since the first five cases cover 99.9% of real world requirements outside large companies (according to a highly scientific study I just ran), that's what we'll look at. If you're a large company with money to spend on the last two cases, contact me immediately, there's a large hole behind my beach house waiting to be converted into a pool.
 
-++++ The Slow Client Problem
-
-In any high-volume architecture (data or workload distribution), applications need to be able to keep up with incoming data. The problem is that application developers too often don't have the skills to write fast code, or use languages that are inherently slow, or deploy to boxes that can easily run very slowly. Even a fast, well-written client application can appear to run "slowly" if the network is congested, or the application gets temporarily disconnected from the server.
-
-Handling slow clients correctly is delicate. On the one hand, you really don't want to face application developers with an excuse like "sorry, our messaging layer lost your message somewhere". On the other hand, if you allow message queues to build up, especially in publishers that handle many clients, things just break.
-
-0MQ does two things to handle the slow client problem:
-
-* It moves messages as rapidly as possible to the client, and queues them there. In all the asynchronous messaging patterns (that is, all except synchronous request-reply), messages are sent to their destination without pause. By itself, this strategy avoids the bulk of queue overflow problems. If the client application runs out of memory, we don't really care.
-
-* For cases where network congestion or client disconnection stops the sender getting rid of messages, 0MQ offers a "high water mark" that limits the size of a given socket queue. Since each use case has its own needs, 0MQ lets you set this per outgoing socket. When a queue hits the HWM, messages are just dropped. It's brutal, but there is no other sane strategy.
-
-++++ Designing Reliability
++++ Designing Reliability
 
 So to make things brutally simple, reliability is "keeping things working properly when code freezes or crashes", a situation we'll shorten to "dies". However the things we want to keep working properly are more complex than just messages. We need to take each core 0MQ messaging pattern and see how to make it work (if we can) even when code dies.
 
@@ -67,7 +55,7 @@ Let's take them one by one:
 
 +++ Slow Subscriber Detection (Suicidal Snail Pattern)
 
-One of the most common problems you will hit when using the pubsub pattern is the slow subscriber. In an ideal world, we stream data at full speed from publishers to subscribers. In reality, subscriber applications are often written in interpreted languages, or just do a lot of work, or are just badly written, to the extent that they can't keep up with publishers.
+A common problem you will hit when using the pubsub pattern in real life is the slow subscriber. In an ideal world, we stream data at full speed from publishers to subscribers. In reality, subscriber applications are often written in interpreted languages, or just do a lot of work, or are just badly written, to the extent that they can't keep up with publishers.
 
 How do we handle a slow subscriber? The ideal fix is to make the subscriber faster, but that might take work and time. Some of the classic strategies for handling a slow subscriber are:
 
@@ -117,7 +105,7 @@ There are, roughly, three ways to connect clients to servers, each needing a spe
 
 Each of these has their trade-offs and often you'll mix them. We'll look at all three of these in detail.
 
-++++ Client-side Reliability (Lazy Pirate Pattern)
++++ Client-side Reliability (Lazy Pirate Pattern)
 
 We can get very simple reliable request-reply with only some changes in the client. We call this the Lazy Pirate pattern. Rather than doing a blocking receive, we:
 
@@ -198,7 +186,7 @@ So, pros and cons:
 * Pro: 0MQ automatically retries the actual reconnection until it works.
 * Con: doesn't do failover to backup / alternate servers.
 
-++++ Basic Reliable Queuing (Simple Pirate Pattern)
++++ Basic Reliable Queuing (Simple Pirate Pattern)
 
 Our second approach takes Lazy Pirate pattern and extends it with a queue device that lets us talk, transparently, to multiple servers, which we can more accurately call 'workers'. We'll develop this in stages, starting with a minimal working model, the Simple Pirate pattern.
 
@@ -256,7 +244,7 @@ Here is the worker, which takes the Lazy Pirate server and adapts it for the LRU
 
 To test this, start a handlful of workers, a client, and the queue, in any order. You'll see that the workers eventually all crash and burn, and the client retries and then gives up. The queue never stops, and you can restart workers and clients ad-nauseam. This model works with any number of clients and workers.
 
-++++ Robust Reliable Queuing (Paranoid Pirate Pattern)
++++ Robust Reliable Queuing (Paranoid Pirate Pattern)
 
 The Simple Pirate Queue pattern works pretty well, especially since it's just a combination of two existing patterns, but it has some weaknesses:
 
@@ -342,7 +330,7 @@ lpclient &
 
 You should see the workers die, one by one, as they simulate a crash, and the client eventually give up. You can stop and restart the queue and both client and workers will reconnect and carry on. And matter what you do to queues and workers, the client will never get an out-of-order reply: the whole chain either works, or the client abandons.
 
-++++ Heartbeating
++++ Heartbeating
 
 When writing the Paranoid Pirate examples, it took about five hours to get the queue-to-worker heartbeating working properly. The rest of the request-reply chain took perhaps ten minutes. Heartbeating is one of those reliability layers that often causes more trouble than it saves. It is especially easy to create 'false failures', i.e. peers decide that they are disconnected because the heartbeats aren't sent properly.
 
@@ -384,7 +372,7 @@ Some points to consider when understanding and implementing heartbeating:
 
 * We're not doing heartbeating from client to queue. We could, but it would add //significant// complexity for no real benefit.
 
-++++ Contracts and Protocols
++++ Contracts and Protocols
 
 If you're paying attention you'll realize that Paranoid Pirate is not compatible with Simple Pirate, because of the heartbeats.
 
@@ -402,7 +390,7 @@ Turning PPP into a real protocol would take more work:
 * There should be a protocol version number in the READY command so that it's possible to create new versions of PPP safely.
 * Right now, READY and HEARTBEAT are not entirely distinct from requests and replies. To make them distinct, we would want a message structure that includes a "message type" part.
 
-++++ Service-Oriented Reliable Queuing (Majordomo Pattern)
++++ Service-Oriented Reliable Queuing (Majordomo Pattern)
 
 The nice thing about progress is how fast it happens when lawyers and committees aren't involved. Just a few sentences ago we were dreaming of a better protocol that would fix the world. And here we have it:
 
@@ -519,7 +507,7 @@ Notes on this code:
 
 * The examples use 5-second heartbeats, mainly to reduce the amount of output when you enable tracing. Realistic values would be lower for most LAN applications. However, any retry has to be slow enough to allow for a service to restart, say 10 seconds at least.
 
-++++ Asynchronous Majordomo Pattern
++++ Asynchronous Majordomo Pattern
 
 The way we implemented Majordomo, above, is simple and stupid. The client is just the original Simple Pirate, wrapped up in a sexy API. When I fire up a client, broker, and worker on a test box, it can process 100,000 requests in about 14 seconds. That is partly due to the code, which cheerfully copies message frames around as if CPU cycles were free. But the real problem is that we're 'round-tripping'. TCP does not send data immediately; it waits a little while to see if anything more arrives. Using raw TCP sockets you can switch off this [http://en.wikipedia.org/wiki/Nagle's_algorithm delay], but 0MQ doesn't expose this option.
 
@@ -528,19 +516,19 @@ Theory is great in theory, but in practice I prefer practice. Let's measure the 
 [[code type="example" title="Round-trip demonstrator" name="tripping"]]
 [[/code]]
 
-On my slow laptop, this program says:
+On my development box, this program says:
 
 [[code]]
 Setting up test...
 Synchronous round-trip test...
- 1743 calls/second
+ 9057 calls/second
 Asynchronous round-trip test...
- 80580 calls/second
+ 173010 calls/second
 [[/code]]
 
-Note that the client thread does a small pause before starting. This is to get around one of the features of the ROUTING (XREP) socket: if you send a message with the address of a peer that's not yet connected, the message gets discarded. In this example we don't use the LRU mechanism, so without the sleep, messages to the worker sometimes get discarded, making a mess of our test.
+Note that the client thread does a small pause before starting. This is to get around one of the 'features' of the ROUTING (XREP) socket: if you send a message with the address of a peer that's not yet connected, the message gets discarded. In this example we don't use the LRU mechanism, so without the sleep, if the worker thread is too slow to connect, it'll lose messages, making a mess of our test.
 
-As we see, round-tripping in the simplest case is 40-50 times slower than "shove it down the pipe as fast as it'll go" asynchronous approach. Let's see if we can apply this to Majordomo.
+As we see, round-tripping in the simplest case is 20 times slower than "shove it down the pipe as fast as it'll go" asynchronous approach. Let's see if we can apply this to Majordomo.
 
 First, let's modify the client API to have separate send and recv methods:
 
@@ -583,7 +571,7 @@ user    0m0.920s
 sys     0m1.550s
 [[/code]]
 
-Now let's fire up 10 workers, and see how this handles:
+Twice as fast. Not bad, but let's fire up 10 workers, and see how it handles:
 
 [[code]]
 $ time mdclient2
@@ -594,17 +582,17 @@ user    0m0.730s
 sys     0m0.470s
 [[/code]]
 
-It isn't fully asynchronous since workers get their messages on a strict LRU basis. But it will scale better with more workers. On my fast test box, after eight or so workers it doesn't get any faster. Four cores only stretches so far. But we got a 4x improvement in throughput with just a few minutes' work. The broker is still unoptimized. It spends most of its time copying message frames around, instead of doing zero copy, which it could. But we're getting 25K reliable request/reply cycles a second, with pretty low effort.
+It isn't fully asynchronous since workers get their messages on a strict LRU basis. But it will scale better with more workers. On my fast test box, after eight or so workers it doesn't get any faster. Four cores only stretches so far. But we got a 4x improvement in throughput with just a few minutes' work. The broker is still unoptimized. It spends most of its time copying message frames around, instead of doing zero copy, which it could. But we're getting 25K reliable request/reply calls a second, with pretty low effort.
 
 However the asynchronous Majordomo pattern isn't all roses. It has a fundamental weakness, namely that it cannot survive a broker crash without a more work. If you look at the mdcliapi2 code you'll see it does not attempt to reconnect after a failure. A proper reconnect would require:
 
-* That every request was numbered, and every reply had a matching number, which would ideally require a change to the protocol to enforce.
-* That the client API tracked and held onto all outstanding requests, i.e. for which no reply had yet been received.
-* That in case of failover, the client API //resent// all outstanding requests to the broker.
+* That every request is numbered, and every reply has a matching number, which would ideally require a change to the protocol to enforce.
+* That the client API tracks and holds onto all outstanding requests, i.e. for which no reply had yet been received.
+* That in case of failover, the client API //resends// all outstanding requests to the broker.
 
 It's not a deal breaker but it does show that performance often means complexity. Is this worth doing for Majordomo? It depends on your use case. For a name lookup service you call once per session, no. For a web front-end serving thousands of clients, probably yes.
 
-++++ Service Discovery
++++ Service Discovery
 
 So, we have a nice service-oriented broker, but we have no way of knowing whether a particular service is available or not. We know if a request failed, but we don't know why. It is useful to be able to ask the broker, "is the echo service running?" The most obvious way would be to modify our MDP/Client protocol to add commands to ask the broker, "is service X running?" But MDP/Client has the great charm of being simple. Adding service discovery to it would make it as complex as the MDP/Worker protocol.
 
@@ -619,9 +607,9 @@ So here's a small RFC that layers this on top of MDP: http://rfc.zeromq.org/spec
 
 The broker checks the service name, and handles any service starting with "mmi." itself, rather than passing the request on to a worker. Try this with and without a worker running, and you should see the little program report '200' or '404' accordingly.
 
-++++ Idempotency
++++ Idempotent Services
 
-Idempotency is not something to take a pill for. What it means is that it's safe to repeat an operation. Checking the clock is idempotent. Lending your credit card to your wife is not. While many client-to-server use cases are idempotent, some are not. Examples of idempotent use cases include:
+Idempotency is not something to take a pill for. What it means is that it's safe to repeat an operation. Checking the clock is idempotent. Lending ones credit card to ones wife is not. While many client-to-server use cases are idempotent, some are not. Examples of idempotent use cases include:
 
 * Stateless task distribution, i.e. a pipeline where the servers are stateless workers that compute a reply based purely on the state provided by a request. In such a case it's safe (though inefficient) to execute the same request many times.
 * A name service that translates logical addresses into endpoints to bind or connect to. In such a case it's safe to make the same lookup request many times.
@@ -642,7 +630,7 @@ We use the fairly standard solution of detecting and rejecting duplicate request
 * The server, before sending back a reply, stores it using the client id + message number as a key.
 * The server, when getting a request from a given client, first checks if it has a reply for that client id + message number. If so, it does not process the request but just resends the reply.
 
-++++ Fire-and-Forget Reliability (Titanic Pattern)
++++ Fire-and-Forget Reliability (Titanic Pattern)
 
 Once you realize that Majordomo is a 'reliable' message broker, you might be tempted to add some spinning rust to it. After all, this works for all the enterprise messaging systems. It's such a tempting idea that it's a little sad to have to be negative. But that's one of my specialties. So, reasons you don't want rust-based brokers sitting in the center of your architecture:
 
@@ -652,7 +640,7 @@ Once you realize that Majordomo is a 'reliable' message broker, you might be tem
 
 Having said this, however, there is one sane use case for rust-based reliability, which is asynchronous fire-and-forget. It solves a major problem with Pirate, namely that a client has to wait for an answer in real time. If clients and workers are only sporadically connected (think of email as an analogy), we can't use a stateless in between clients and workers.
 
-So, here's the Titanic pattern, in which we write messages to disk to ensure they never get lost, no matter how sporadically clients and workers are connected. As we did for service discovery, we're going to layer Titanic on top of Majordomo rather than extend MDP. It's wonderfully lazy because it means we implement our fire-and-forget reliability in a specialized worker, rather than in the broker. This is excellent for several reasons:
+So, here's the Titanic pattern, in which we write messages to disk to ensure they never get lost, no matter how sporadically clients and workers are connected. As we did for service discovery, we're going to layer Titanic on top of Majordomo rather than extend MDP. It's wonderfully lazy because it means we can implement our fire-and-forget reliability in a specialized worker, rather than in the broker. This is excellent for several reasons:
 
 * It's much, //much// easier.
 * It lets us mix brokers written in one language with workers written in another.
@@ -660,7 +648,7 @@ So, here's the Titanic pattern, in which we write messages to disk to ensure the
 
 The only downside is that there's an extra network hop between broker and hard disk. This is easily worth it.
 
-Titanic takes Majordomo and messes with it delicately. We add a special worker called "Titanic":
+Titanic plugs into a Majordomo architecture as a proxy service:
 
 [[code type="textdiagram"]]
 
@@ -672,13 +660,14 @@ Titanic takes Majordomo and messes with it delicately. We add a special worker c
           ^               ^               ^
           |               |               |
           \---------------+---------------/
-   "Give me coffee"       |         "Give me tea"
-                          v
-                    /-----------\       /-----------\
-                    |           |       |           |
-                    |  Broker   |<----->|  Titanic  |
-                    |           |       |     cC00  |
-                    \-----------/       \-----------/
+   "Titanic,              |         "Titanic,
+    give me coffee"       |          give me tea"
+                          v                            Disk
+                    /-----------\     +---------+     +-------+
+                    |           |     |         |     |       |
+                    |  Broker   |<--->| Titanic |<--->|  {s}  |
+                    |           |     |         |     |       |
+                    \-----------/     +---------+     +-------+
                           ^
                           |
           /---------------+---------------\
@@ -696,16 +685,38 @@ Titanic takes Majordomo and messes with it delicately. We add a special worker c
              Figure # - Titanic Pattern
 [[/code]]
 
-Then, we add our own protocol on top of MDP:
+There are many ways to make a persistent request-reply architecture. We'll aim for simple and painless. The simplest design I could come up with, after playing with this for a few hours, is Titanic as a "proxy service". That is, it doesn't affect workers at all. If a client wants a reply immediately, it talks directly to a service and hopes the service is available. If a client is happy to wait a while, it talks to Titanic instead and asks, "hey, buddy, would you take care of this for me while I go buy my groceries?"
 
-- Clients have an address which is independent of the current socket identity, and unique to each client. This is like an email Sender: address.
-- Workers become MDP clients, Titanic workers.
-- Clients do request-reply to post a request which goes to the Titanic service.
-- Clients do request-reply to poll for replies, again to the Titanic service.
-- Workers do request-reply to poll for requests, ditto.
-- Requests have state: waiting, in process, done.
-- If a worker is disconnected, any in process request is requeued.
-- Titanic erases requests only when reply has been handshook back to client.
+Titanic is thus both a worker, and a client. The dialog between client and Titanic goes along these lines:
+
+* Client: please accept this request for me. Titanic: OK, done.
+* Client: do you have a reply for me? Titanic: Yes, here it is. Or, no, not yet.
+* Client: ok, you can wipe that request now, it's all happy. Titanic: OK, done.
+
+Whereas the dialog between Titanic and broker and worker goes like this:
+
+* Titanic: hey, broker, is there an echo service? Broker: uhm, yeah, seems like.
+* Titanic: hey, echo, please handle this for me. Echo: sure, here you are.
+* Titanic: sweeeeet!
+
+You can work though this, and the possible failure scenarios. If a worker crashes while processing a request, Titanic retries, indefinitely. We'll use the MMI protocol to make this reasonably efficient. If a reply gets lost somewhere, Titanic will retry. If the request gets processed but the client doesn't get the reply, it will ask again.
+
+The handshaking is pedantic, but can be pipelined, i.e. clients can use the asynchronous Majordomo pattern to do a lot of work and then get the responses later.
+
+We need some way for a client to request //its// replies. We'll have many clients asking for the same services, and clients disappear and reappear with different identities. So here is a simple, reasonably secure solution:
+
+* Every request generates a universally unique ID (UUID), which Titanic returns to the client when it's queued the request.
+* When a client asks for a reply, it must specify the UUID for the original request.
+
+This puts some onus on the client to store its request UUIDs safely, but it removes any need for authentication. What alternatives are there? We could use durable sockets, i.e. explicit client identities. That creates a management issue when we have many clients, and opens the door for the inevitable errors caused by two clients using the same identity.
+
+Before we jump off and write yet another formal specification (fun, fun!) let's consider how the client talks to Titanic. One way is to use a single service and send it three different request types. Another way, which seems simpler, is to use three services:
+
+* **titanic-request** - store a request message, return a UUID for the request.
+* **titanic-reply** - fetch a reply, if available, for a given request UUID.
+* **titanic-close** - confirm that a reply has been stored and processed.
+
+We'll just make a multithreaded worker, which as we've seen from our multithreading experience with 0MQ, is trivial.
 
 .end
 

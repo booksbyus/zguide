@@ -1,5 +1,5 @@
 /*  =========================================================================
-    zmsg.class
+    zmsg.h
 
     Multipart message class for example applications.
 
@@ -66,6 +66,10 @@ void    zmsg_append   (zmsg_t *self, char *part);
 char   *zmsg_address  (zmsg_t *self);
 void    zmsg_wrap     (zmsg_t *self, char *address, char *delim);
 char   *zmsg_unwrap   (zmsg_t *self);
+
+//  Load/save message to/from disk, wrapping new/destroy
+zmsg_t *zmsg_load     (FILE *file);
+void    zmsg_save     (zmsg_t **self, FILE *file);
 
 //  Dump message to stderr, for debugging and tracing
 void    zmsg_dump     (zmsg_t *self);
@@ -217,6 +221,7 @@ zmsg_dup (zmsg_t *self)
 
     return dup;
 }
+
 
 //  --------------------------------------------------------------------------
 //  Receive message from socket
@@ -476,6 +481,58 @@ zmsg_unwrap (zmsg_t *self)
 
 
 //  --------------------------------------------------------------------------
+//  Load message from file
+//  Creates a new message and returns as many parts as can be read.
+
+zmsg_t *
+zmsg_load (FILE *file)
+{
+    assert (file);
+
+    zmsg_t *self = zmsg_new (NULL);
+    int part_nbr;
+    for (part_nbr = 0; part_nbr < ZMSG_MAX_PARTS; part_nbr++) {
+        //  Read length from file
+        size_t part_size;
+        size_t rc = fread (&part_size, sizeof (part_size), 1, file);
+        if (rc == 1) {
+            self->_part_size [part_nbr] = part_size;
+            self->_part_data [part_nbr] = malloc (part_size + 1);
+            rc = fread (self->_part_data [part_nbr], part_size, 1, file);
+            if (part_size && rc != 1)
+                break;
+        }
+        else
+            break;
+    }
+    self->_part_count = part_nbr;
+    return (self);
+}
+
+
+//  --------------------------------------------------------------------------
+//  Send message to socket
+//  Destroys message after sending
+
+void
+zmsg_save (zmsg_t **self_p, FILE *file)
+{
+    assert (self_p);
+    assert (*self_p);
+    assert (file);
+    zmsg_t *self = *self_p;
+
+    int part_nbr;
+    for (part_nbr = 0; part_nbr < self->_part_count; part_nbr++) {
+        size_t part_size = self->_part_size [part_nbr];
+        fwrite (&part_size, sizeof (part_size), 1, file);
+        fwrite (self->_part_data [part_nbr], part_size, 1, file);
+    }
+    zmsg_destroy (self_p);
+}
+
+
+//  --------------------------------------------------------------------------
 //  Dump message to stderr, for debugging and tracing
 
 void
@@ -506,7 +563,6 @@ zmsg_dump (zmsg_t *self)
     }
     fflush (stderr);
 }
-
 
 
 //  --------------------------------------------------------------------------
