@@ -21,6 +21,9 @@
 //  Dequeue operation for queue implemented as array of anything
 #define DEQUEUE(q) memmove (&(q)[0], &(q)[1], sizeof (q) - sizeof (q [0]))
 
+//  Our own name; in practice this'd be configured per node
+static char *self;
+
 //  Request-reply client using REQ socket
 //  To simulate load, clients issue a burst of requests and then
 //  sleep for a random period.
@@ -28,13 +31,17 @@
 static void *
 client_task (void *args)
 {
-    int rc;
     void *context = zmq_init (1);
+
     void *client = zmq_socket (context, ZMQ_REQ);
-    rc = zmq_connect (client, "ipc://localfe.ipc");
+    char endpoint [256];
+    snprintf (endpoint, 255, "ipc://%s-localfe.ipc", self);
+    int rc = zmq_connect (client, endpoint);
     assert (rc == 0);
+
     void *monitor = zmq_socket (context, ZMQ_PUSH);
-    rc = zmq_connect (monitor, "ipc://monitor.ipc");
+    snprintf (endpoint, 255, "ipc://%s-monitor.ipc", self);
+    rc = zmq_connect (monitor, endpoint);
     assert (rc == 0);
 
     while (1) {
@@ -81,8 +88,11 @@ static void *
 worker_task (void *args)
 {
     void *context = zmq_init (1);
+
     void *worker = zmq_socket (context, ZMQ_REQ);
-    int rc = zmq_connect (worker, "ipc://localbe.ipc");
+    char endpoint [256];
+    snprintf (endpoint, 255, "ipc://%s-localbe.ipc", self);
+    int rc = zmq_connect (worker, endpoint);
     assert (rc == 0);
 
     //  Tell broker we're ready for work
@@ -111,7 +121,7 @@ int main (int argc, char *argv [])
         printf ("syntax: peering3 me {you}...\n");
         exit (EXIT_FAILURE);
     }
-    char *self = argv [1];
+    self = argv [1];
     printf ("I: preparing broker at %s...\n", self);
     srandom ((unsigned) time (NULL));
 
@@ -158,13 +168,20 @@ int main (int argc, char *argv [])
     }
     //  Prepare local frontend and backend
     void *localfe = zmq_socket (context, ZMQ_XREP);
-    zmq_bind (localfe, "ipc://localfe.ipc");
+    snprintf (endpoint, 255, "ipc://%s-localfe.ipc", self);
+    rc = zmq_bind (localfe, endpoint);
+    assert (rc == 0);
+
     void *localbe = zmq_socket (context, ZMQ_XREP);
-    zmq_bind (localbe, "ipc://localbe.ipc");
+    snprintf (endpoint, 255, "ipc://%s-localbe.ipc", self);
+    rc = zmq_bind (localbe, endpoint);
+    assert (rc == 0);
 
     //  Prepare monitor socket
     void *monitor = zmq_socket (context, ZMQ_PULL);
-    zmq_bind (monitor, "ipc://monitor.ipc");
+    snprintf (endpoint, 255, "ipc://%s-monitor.ipc", self);
+    rc = zmq_bind (monitor, endpoint);
+    assert (rc == 0);
 
     //  Start local workers
     int worker_nbr;

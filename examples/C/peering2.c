@@ -21,14 +21,21 @@
 //  Dequeue operation for queue implemented as array of anything
 #define DEQUEUE(q) memmove (&(q)[0], &(q)[1], sizeof (q) - sizeof (q [0]))
 
+//  Our own name; in practice this'd be configured per node
+static char *self;
+
 //  Request-reply client using REQ socket
 //
 static void *
 client_task (void *args)
 {
     void *context = zmq_init (1);
+
     void *client = zmq_socket (context, ZMQ_REQ);
-    zmq_connect (client, "ipc://localfe.ipc");
+    char endpoint [256];
+    snprintf (endpoint, 255, "ipc://%s-localfe.ipc", self);
+    int rc = zmq_connect (client, endpoint);
+    assert (rc == 0);
 
     while (1) {
         //  Send request, get reply
@@ -50,8 +57,12 @@ static void *
 worker_task (void *args)
 {
     void *context = zmq_init (1);
+
     void *worker = zmq_socket (context, ZMQ_REQ);
-    zmq_connect (worker, "ipc://localbe.ipc");
+    char endpoint [256];
+    snprintf (endpoint, 255, "ipc://%s-localbe.ipc", self);
+    int rc = zmq_connect (worker, endpoint);
+    assert (rc == 0);
 
     //  Tell broker we're ready for work
     zmsg_t *zmsg = zmsg_new ("READY");
@@ -81,7 +92,7 @@ int main (int argc, char *argv [])
         printf ("syntax: peering2 me {you}...\n");
         exit (EXIT_FAILURE);
     }
-    char *self = argv [1];
+    self = argv [1];
     printf ("I: preparing broker at %s...\n", self);
     srandom ((unsigned) time (NULL));
 
@@ -111,9 +122,14 @@ int main (int argc, char *argv [])
 
     //  Prepare local frontend and backend
     void *localfe = zmq_socket (context, ZMQ_XREP);
-    zmq_bind (localfe, "ipc://localfe.ipc");
+    snprintf (endpoint, 255, "ipc://%s-localfe.ipc", self);
+    rc = zmq_bind (localfe, endpoint);
+    assert (rc == 0);
+
     void *localbe = zmq_socket (context, ZMQ_XREP);
-    zmq_bind (localbe, "ipc://localbe.ipc");
+    snprintf (endpoint, 255, "ipc://%s-localbe.ipc", self);
+    rc = zmq_bind (localbe, endpoint);
+    assert (rc == 0);
 
     //  Get user to tell us when we can start...
     printf ("Press Enter when all brokers are started: ");
