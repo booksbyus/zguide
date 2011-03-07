@@ -474,7 +474,7 @@ zmsg_unwrap (zmsg_t *self)
     assert (self);
 
     char *address = zmsg_pop (self);
-    if (*zmsg_address (self) == 0)
+    if (zmsg_address (self) && *zmsg_address (self) == 0)
         free (zmsg_pop (self));
     return (address);
 }
