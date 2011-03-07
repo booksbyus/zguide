@@ -486,7 +486,7 @@ Notes on this code:
 
 Let's design the Majordomo broker. Its core structure is a set of queues, one per service. We will create these queues as workers appear (we could delete them as workers disappear but forget that for now, it gets complex). Additionally, we keep a queue of workers per service.
 
-To make the C examples easier to write and read, I've taken the hash and list container classes from the [http://zfl.zeromq.org ZFL project], and renamed them as [[https://github.com/imatix/zguide/blob/master/examples/C/zlist.class zlist] and [https://github.com/imatix/zguide/blob/master/examples/C/zhash.class zhash], as we did with zmsg. In any modern language you can of course use built-in containers.
+To make the C examples easier to write and read, I've taken the hash and list container classes from the [http://zfl.zeromq.org ZFL project], and renamed them as [[https://github.com/imatix/zguide/blob/master/examples/C/zlist.h zlist] and [https://github.com/imatix/zguide/blob/master/examples/C/zhash.h zhash], as we did with zmsg. In any modern language you can of course use built-in containers.
 
 And here is the broker:
 
