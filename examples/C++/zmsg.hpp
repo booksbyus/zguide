@@ -256,7 +256,7 @@ public:
          return NULL;
       }
       char *addr = (char*)pop_front().c_str();
-      if (*address() == 0) {
+      if (address() && *address() == 0) {
          pop_front();
       }
       return addr;
