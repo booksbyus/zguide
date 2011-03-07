@@ -49,7 +49,7 @@ void
 void
     mdwrk_set_reconnect (mdwrk_t *self, int reconnect);
 zmsg_t *
-    mdwrk_recv (mdwrk_t *self, zmsg_t *reply);
+    mdwrk_recv (mdwrk_t *self, zmsg_t **reply_p);
 
 #ifdef __cplusplus
 }

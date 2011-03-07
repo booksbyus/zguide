@@ -48,6 +48,9 @@ struct _mdwrk_t {
 
     //  Internal state
     int expect_reply;           //  Zero only at start
+
+    //  Return address, if any
+    char *reply_to;
 };
 
 
@@ -114,7 +117,7 @@ mdwrk_new (char *broker,char *service, int verbose)
     self->service = strdup (service);
     self->context = zmq_init (1);
     self->verbose = verbose;
-    self->heartbeat = 1000;     //  msecs
+    self->heartbeat = 2500;     //  msecs
     self->reconnect = 2500;     //  msecs
 
     s_catch_signals ();
@@ -166,12 +169,19 @@ mdwrk_set_reconnect (mdwrk_t *self, int reconnect)
 //  Send reply, if any, to broker and wait for next request.
 
 zmsg_t *
-mdwrk_recv (mdwrk_t *self, zmsg_t *reply)
+mdwrk_recv (mdwrk_t *self, zmsg_t **reply_p)
 {
     //  Format and send the reply if we were provided one
+    assert (reply_p);
+    zmsg_t *reply = *reply_p;
     assert (reply || !self->expect_reply);
-    if (reply)
+    if (reply) {
+        assert (self->reply_to);
+        zmsg_wrap (reply, self->reply_to, "");
+        free (self->reply_to);
         s_send_to_broker (self, MDPW_REPLY, NULL, reply);
+        zmsg_destroy (reply_p);
+    }
     self->expect_reply = 1;
 
     while (!s_interrupted) {
@@ -199,6 +209,9 @@ mdwrk_recv (mdwrk_t *self, zmsg_t *reply)
 
             char *command = zmsg_pop (msg);
             if (strcmp (command, MDPW_REQUEST) == 0) {
+                //  We should pop and save as many addresses as there are
+                //  up to a null part, but for now, just save one...
+                self->reply_to = zmsg_unwrap (msg);
                 free (command);
                 return msg;     //  We have a request to process
             }

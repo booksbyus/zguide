@@ -10,9 +10,9 @@
 //  We'd normally pull these from config data
 
 #define HEARTBEAT_LIVENESS  3       //  3-5 is reasonable
-#define HEARTBEAT_INTERVAL  1000    //  msecs
+#define HEARTBEAT_INTERVAL  2500    //  msecs
 #define HEARTBEAT_EXPIRY    HEARTBEAT_INTERVAL * HEARTBEAT_LIVENESS
-#define VERBOSE_BROKER      0       //  Trace activity?
+#define VERBOSE_BROKER      1       //  Trace activity?
 
 //  This defines a single broker
 typedef struct {
