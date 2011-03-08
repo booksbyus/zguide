@@ -1,46 +1,4 @@
-Chapter 4
-
-++++ Distributed Reliable Client-Server (Freelance Pattern)
-
-- heartbeating from clients outwards
-- ZMQ_ROOT service
-
-We've seen how to make a reliable client-server architecture using a queue device (essentially a broker) in the middle. We've discussed the advantages of a central broker a few times. The biggest pro is that workers can come and go silently, there is just one 'stable' node on the network.
-
-But for many cases this isn't worth the hassle of an extra device. If you are not managing a pool of anonymous workers, but want to make the intelligence explicitly addressable, then a broker is an extra step for little gain.
-
-Again, this is a matter of taste. Some architects will swear by a broker. Others hate them. Let's take a real example and see how this plays. Say we want a name service (we do, we do!) that translates logical names (like "authentication") into physical network addresses (like "tcp://192.168.55.121:5051").
-
-Without a broker, every application needs to know the address of the name service. It can then talk to the name service (using a Pirate pattern) to translate logical names into endpoints as needed. Fair enough.
-
-With a broker, every application needs to know the address of the broker. The broker hopefully supports some kind of service-based routing. So clients can then send a request to the "name lookup service" and this will be routed to
-
-
-
-Lastly...
-
-* Multiple clients talking to multiple servers with no intermediary devices. Use case: distributed services such as name resolution. Types of failure we aim to handle: service crashes and restarts, service busy looping, service overload, network disconnects.
-
-- N clients to N servers
-- move queue logic into client-side class
-- ditto for server, make framework
-- talk to it via inproc...
-
-
-Handshaking at Startup
-
-We must use XREP-to-XREP sockets because we want to connect N clients to N servers without (necessarily) an intermediary queue device.
-
-In an XREP-to-XREP socket connection, one side of the connection must know the identity of the other.  You cannot do xrep-to-xrep flows between two anonymous sockets since an XREP socket requires an explicit identity.  In practice this means we will need a name service share the identities of the servers.  The client will connect to the server, then send it a message using the server's known identity as address, and then the server can respond to the client.
-
-In this prototype we'll use fixed, hardcoded identities for the servers.  We'll develop the name service in a later prototype.
-
-
-Pool management
-
-* If there is just one server in the pool, the we wait with a timeout for the server to reply. If the server does not reply within the timeout, we retry a number of times before abandoning.
-* If there are multiple servers in the pool, we try each server in succession, but do not retry the same server twice.
-* If a server appears to be really dead (i.e. has not responded for some time), we remove it from the pool.
+Chapter 6
 
 
 
@@ -48,59 +6,6 @@ Pool management
 
 
 
-
-+++ Reliable Publish-Subscribe (Clone Pattern)
-
-Pubsub is like a radio broadcast, you miss everything before you join, and then how much information you get depends on the quality of your reception. It's so easy to lose messages with this pattern that you might wonder why 0MQ bothers to implement it at all.[[footnote]]If you're German or Norwegian, that is what we call 'humor'. There are many cases where simplicity and speed are more important than pedantic delivery. In fact the radio broadcast covers perhaps the majority of information distribution in the real world. Think of Facebook and Twitter. No, I'm not still joking.[[/footnote]]
-
-However, reliable pubsub is also a useful tool. Let's do as before and define what that 'reliability' means in terms of what can go wrong.
-
-Happens all the time:
-
-* Subscribers join late, so miss messages the server already sent.
-* Subscriber connections take a non-zero time, and can lose messages during that time.
-
-Happens exceptionally:
-
-* Subscribers can crash, and restart, and lose whatever data they already received.
-* Subscribers can fetch messages too slowly, so queues build up and then overflow.
-* Networks can become overloaded and drop data (specifically, for PGM).
-* Networks can become too slow, so publisher-side queues overflow.
-
-A lot more can go wrong but these are the typical failures we see in a realistic system. The difficulty in defining 'reliability' now is that we have no idea, at the messaging level, what the application actually does with its data. So we need a generic model that we can implement once, and then use for a wide range of applications.
-
-What we'll design is a simple *shared key-value cache* that stores a set of blobs indexed by unique keys. Don't confuse this with *distributed hash tables*, which solve the wider problem of connecting peers in a distributed network, or with *distributed key-value tables*, which act like non-SQL databases. All we will build is a system that reliably clones some in-memory state from a server to a set of clients. We want to:
-
-* Let a client join the network at any time, and reliably get the current server state.
-* Let any client update the key-value cache (inserting new key-value pairs, updating existing ones, or deleting them).
-* Reliably propagates changes to all clients, and does this with minimum latency overhead.
-* Handle very large numbers of clients, e.g. tens of thousands or more.
-
-The key aspect of the Clone pattern is that clients talk back to servers, which is more than we do in a simple pub-sub dialog. This is why I use the terms 'server' and 'client' instead of 'publisher' and 'subscriber'. We'll use pubsub as part of the Clone pattern but it is more than that.
-
-When a client joins the network, it subscribes a SUB socket, as we'd expect, to the data stream coming from the server (the publisher). This goes across some pub-sub topology (a multicast bus, perhaps, or a tree of forwarder devices, or direct client-to-server connections).
-
-At some undetermined point, it will start getting messages from the server. Note that we can't predict what the client will receive as its first message. If a zmq_connect[3] call takes 10msec, and in that time the server has sent 100 messages, the client might get messages starting from the 100th message.
-
-Let's define a message as a key-value pair. The semantics are simple: if the value is provided, it's an insert or update operation. If there is no value, it's a delete operation. The key provides the subscription filter, so clients can treat the cache as a tree, and select whatever branches of the tree they want to hold.
-
-The client now connects to the server using a different socket (a REQ socket) and asks for a snapshot of the cache. It tells the server two things: which message it received (which means the server has to number messages), and which branch or branches of the cache it wants. To keep things simple we'll assume that any client has exactly one server that it talks to, and gets its cache from. The server *must* be running; we do not try to solve the question of what happens if the server crashes (that's left as an exercise for you to hurt your brain over).
-
-The server builds a snapshot and sends that to the client's REQ socket. This can take some time, especially if the cache is large. The client continues to receive updates from the server on its SUB socket, which it queues but does not process. We'll assume these updates fit into memory. At some point it gets the snapshot on its REQ socket. It then applies the updates to that snapshot, which gives it a working cache.
-
-You'll perhaps see one difficulty here. If the client asks for a snapshot based on message 100, how does the server provide this? After all, it may have sent out lots of updates in the meantime. We solve this by cheating gracefully. The server just sends its current snapshot, but tells the client what its latest message number is. Say that's 200. The client gets the snapshot, and in its queue, it has messages 100 to 300. It throws out 100 to 200, and starts applying 201 to 300 to the snapshot.
-
-Once the client has happily gotten its cache, it disconnects from the server (destroys that REQ socket), which is not used for anything more.
-
-How does Clone handle updates from clients? There are several options but the simplest seems to be that each client acts as a publisher back to the server, which subscribes. In a TCP network this will mean persistent connections between clients and servers. In a PGM network this will mean using a shared multicast bus that clients write to, and the server listens to.
-
-So the client, at startup, opens a PUB socket and part of its initial request to the server includes the address of that socket, so the server can open a SUB socket and connect back to it.
-
-Why don't we allow clients to publish updates directly to other clients? While this would reduce latency, it makes it impossible to sequence messages. Updates *must* pass through the server to make sense to other clients. There's a more subtle second reason. In many applications it's important that updates have a single order, across many clients. Forcing all updates through the server ensures that they have the same order when they finally get to clients.
-
-With unique sequencing, clients can detect the nastier failures - network congestion and queue overflow. If a client discovers that its incoming message stream has a hole, it can take action. It seems sensible that the client contact the server and ask for the missing messages, but in practice that isn't useful. If there are holes, adding more stress to the network will make things worse. All the client can really do is warn its users "Unable to continue", and stop, and not restart until someone has manually checked the cause of the problem.
-
-Clone is complex enough in practice that you don't want to implement it directly in your applications. Instead, it makes a good basis for an application server framework, which talks to applications via the key-value table.
 
 ++++ Reliable Pipeline (Harmony Pattern)
 
@@ -127,3 +32,52 @@ The Harmony pattern takes pipeline and makes it robust against the only failure 
 ++ How to deliver jobs one by one using push/pull? i.e. ensure jobs don't get lost...
 
 - Majordomo?
+
+
+
++++ The Programming Languages
+
+For each language:
+
+* How to install
+* Syntax notes
+* Example of request-reply
+* Error handling
+* Online resources
+
+[!--
+- one section per language, perhaps server/client demo
+--]
+
+++++ Ada
+++++ Basic
+++++ C
+++++ C++
+++++ C#
+++++ Common Lisp
+++++ Erlang
+++++ Go
+++++ Haskell
+++++ Java
+++++ Lua
+++++ Objective-C
+++++ ooc
+++++ Perl
+++++ PHP
+++++ Python
+++++ Ruby
+
+
++++ The Operating Systems
+
+++++ Linux
+++++ Windows
+
+- use zmq_errno
+
+++++ AIX
+++++ Solaris
+++++ Max OS X
+++++ OpenVMS
+++++ Others
+

@@ -1,15 +1,9 @@
 //
 //  Titanic service
 //
-//  Implements these MDP services:
-//  titanic-request
-//      - store a request message, return a UUID for the request.
-//  titanic-reply
-//      - fetch a reply, if available, for a given request UUID.
-//  titanic-close
-//      - confirm that a reply has been stored and processed.
-//
+//  Implements server side of http://rfc.zeromq.org/spec:9
 
+//  Lets us 'build titanic' and 'build all'
 #include "mdwrkapi.c"
 #include "mdcliapi.c"
 #include "zfile.h"
@@ -65,7 +59,7 @@ titanic_request (void *context)
     zmq_connect (queue, "inproc://queue");
 
     mdwrk_t *worker = mdwrk_new (
-        "tcp://localhost:5555", "titanic-request", 0);
+        "tcp://localhost:5555", "titanic.request", 0);
     zmsg_t *reply = NULL;
 
     while (1) {
@@ -92,6 +86,7 @@ titanic_request (void *context)
 
         //  Now send UUID back to client
         reply = zmsg_new (uuid);
+        zmsg_push (reply, "200 OK");
         free (uuid);
     }
     mdwrk_destroy (&worker);
@@ -106,7 +101,7 @@ static void *
 titanic_reply (void *context)
 {
     mdwrk_t *worker = mdwrk_new (
-        "tcp://localhost:5555", "titanic-reply", 0);
+        "tcp://localhost:5555", "titanic.reply", 0);
     zmsg_t *reply = NULL;
 
     while (1) {
@@ -122,9 +117,14 @@ titanic_reply (void *context)
             zmsg_push (reply, "200 OK");
             fclose (file);
         }
-        else
-            reply = zmsg_new ("404 NOT FOUND");
-
+        else {
+            char *filename = s_request_filename (zmsg_body (request));
+            if (file_exists (filename))
+                reply = zmsg_new ("300 PENDING");
+            else
+                reply = zmsg_new ("400 UNKNOWN");
+            free (filename);
+        }
         zmsg_destroy (&request);
         free (filename);
     }
@@ -140,7 +140,7 @@ static void *
 titanic_close (void *context)
 {
     mdwrk_t *worker = mdwrk_new (
-        "tcp://localhost:5555", "titanic-close", 0);
+        "tcp://localhost:5555", "titanic.close", 0);
     zmsg_t *reply = NULL;
 
     while (1) {

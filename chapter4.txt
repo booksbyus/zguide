@@ -1,29 +1,27 @@
 .output chapter4.wd
-++ Chapter 4 - Reliability Patterns
+++ Chapter 4 - Reliable Request-Reply
 
-In Chapter Three we looked at advanced use of 0MQ's request-reply pattern with worked examples. In this chapter we'll look at the general question of reliability and build a set of reliable messaging patterns on top of 0MQ's core patterns.
+In Chapter Three we looked at advanced use of 0MQ's request-reply pattern with worked examples. In this chapter we'll look at the general question of reliability and build a set of reliable messaging patterns on top of 0MQ's core request-reply pattern.
 
 We'll cover:
 
-* How to define 'reliability'.
-* The types of failures we will experience in 0MQ applications.
+* How to define 'reliability' in 0MQ applications.
 * How to implement reliability on top of the 0MQ core patterns.
 * How to implement heartbeating between 0MQ peers.
 * How to write a reusable protocol specification.
 * How to design a service-oriented framework API.
-* How to do service discovery on top of the Majordomo pattern.
+* How to implement service discovery.
 * How to implement non-idempotent server applications.
+* How to implement disk-based reliability.
 
 In this chapter we focus heavily on user-space 'patterns', which are reusable models that help you design your 0MQ architecture:
 
-* The //Suicidal Snail// pattern: how to handle slow clients.
 * The //Lazy Pirate// pattern: reliable request reply from the client side.
 * The //Simple Pirate// pattern: reliable request-reply using a LRU queue.
 * The //Paranoid Pirate// pattern: reliable request-reply with heartbeating.
 * The //Majordomo// pattern: service-oriented reliable queuing.
-* The //Titanic// pattern: disk-based reliable queuing.
+* The //Titanic// pattern: disk-based / disconnected reliable queuing.
 * The //Freelance// pattern: brokerless reliable request-reply.
-* The //Clone// pattern: reliable publish-subscribe using distributed key-value tables.
 
 +++ What is "Reliability"?
 
@@ -53,41 +51,7 @@ Let's take them one by one:
 
 * Pipeline: if a worker dies (while working), the ventilator doesn't know about it. Pipelines, like pubsub, and the grinding gears of time, only work in one direction. But the downstream collector can detect that one task didn't get done, and send a message back to the ventilator saying, "hey, resend task 324!" If the ventilator or collector die, then whatever upstream client originally sent the work batch can get tired of waiting and resend the whole lot. It's not elegant but system code should really not die often enough to matter.
 
-+++ Slow Subscriber Detection (Suicidal Snail Pattern)
-
-A common problem you will hit when using the pubsub pattern in real life is the slow subscriber. In an ideal world, we stream data at full speed from publishers to subscribers. In reality, subscriber applications are often written in interpreted languages, or just do a lot of work, or are just badly written, to the extent that they can't keep up with publishers.
-
-How do we handle a slow subscriber? The ideal fix is to make the subscriber faster, but that might take work and time. Some of the classic strategies for handling a slow subscriber are:
-
-* **Queue messages on the publisher**. This is what Gmail does when I don't read my email for a couple of hours. But in high-volume messaging, pushing queues upstream has the thrilling but unprofitable result of making publishers run out of memory and crash. Especially if there are lots of subscribers and it's not possible to flush to disk for performance reasons.
-
-* **Queue messages on the subscriber**. This is much better, and it's what 0MQ does by default if the network can keep up with things. If anyone's going to run out of memory and crash, it'll be the subscriber rather than the publisher, which is fair. This is perfect for "peaky" streams where a subscriber can't keep up for a while, but can catch up when the stream slows down. However it's no answer to a subscriber that's simply too slow in general.
-
-* **Stop queuing new messages after a while**. This is what Gmail does when my mailbox overflows its 7.554GB, no 7.555GB of space. New messages just get rejected or dropped. This is a great strategy from the perspective of the publisher, and it's what 0MQ does when the publisher sets a high water mark or HWM. However it still doesn't help us fix the slow subscriber. Now we just get gaps in our message stream.
-
-* **Punish slow subscribers with disconnect**. This is what Hotmail does when I don't login for two weeks, which is why I'm on my fifteenth Hotmail account. It's a nice brutal strategy that forces subscribers to sit up and pay attention, and would be ideal, but 0MQ doesn't do this, and there's no way to layer it on top since subscribers are invisible to publisher applications.
-
-None of these classic strategies fit. So we need to get creative. Rather than disconnect the publisher, let's convince the subscriber to kill itself. This is the Suicidal Snail pattern. When a subscriber detects that it's running too slowly (where "too slowly" is presumably a configured option that really means "so slowly that if you ever get here, shout really loudly because I need to know, so I can fix this!"), it croaks and dies.
-
-How can a subscriber detect this? One way would be to sequence messages (number them in order), and use a HWM at the publisher. Now, if the subscriber detects a gap (i.e. the numbering isn't consecutive), it knows something is wrong. We then tune the HWM to the "croak and die if you hit this" level.
-
-There are two problems with this solution. One, if we have many publishers, how do we sequence messages? The solution is to give each publisher a unique ID and add that to the sequencing. Second, if subscribers use ZMQ_SUBSCRIBE filters, they will get gaps by definition. Our precious sequencing will be for nothing.
-
-Some use cases won't use filters, and sequencing will work for them. But a more general solution is that the publisher timestamps each message. When a subscriber gets a message it checks the time, and if the difference is more than, say, one second, it does the "croak and die" thing. Possibly firing off a squawk to some operator console first.
-
-The Suicide Snail pattern works especially when subscribers have their own clients and service-level agreements and need to guarantee certain maximum latencies. Aborting a subscriber may not seem like a constructive way to guarantee a maximum latency, but it's the assertion model. Abort today, and the problem will be fixed. Allow late data to flow downstream, and the problem may cause wider damage and take longer to appear on the radar.
-
-So here is a minimal example of a Suicidal Snail:
-
-[[code type="example" title="Suicidal Snail" name="suisnail"]]
-[[/code]]
-
-Notes about this example:
-
-* The message here consists simply of the current system clock as a number of milliseconds. In a realistic application you'd have at least a message header with the timestamp, and a message body with data.
-* The example has subscriber and publisher in a single process, as two threads. In reality they would be separate processes. Using threads is just convenient for the demonstration.
-
-+++ Reliable Request-Reply (Pirate Pattern)
+In this chapter we'll focus on request-reply, and we'll cover reliable pub-sub and pipeline in the following chapters.
 
 The basic request-reply pattern (a REQ client socket doing a blocking send/recv to a REP server socket) scores low on handling the most common types of failure. If the server crashes while processing the request, the client just hangs forever. If the network loses the request or the reply, the client hangs forever.
 
@@ -600,12 +564,12 @@ An other option is to do what email does, and ask that undeliverable requests be
 
 Let's try to use what we've already built, building on top of MDP instead of modifying it. Service discovery is, itself, a service. It might indeed be one of several management services, such as "disable service X", "provide statistics", and so on. What we want is a general, extensible solution that doesn't affect the protocol nor existing applications.
 
-So here's a small RFC that layers this on top of MDP: http://rfc.zeromq.org/spec:8. We already implemented it in the broker, though unless you read the whole thing you probably missed that. Here's how we use the service discovery in an application:
+So here's a small RFC - MMI, or the Majordomo Management Interface - that layers this on top of MDP: http://rfc.zeromq.org/spec:8. We already implemented it in the broker, though unless you read the whole thing you probably missed that. Here's how we use the service discovery in an application:
 
 [[code type="example" title="Service discovery over Majordomo" name="mmiecho"]]
 [[/code]]
 
-The broker checks the service name, and handles any service starting with "mmi." itself, rather than passing the request on to a worker. Try this with and without a worker running, and you should see the little program report '200' or '404' accordingly.
+The broker checks the service name, and handles any service starting with "mmi." itself, rather than passing the request on to a worker. Try this with and without a worker running, and you should see the little program report '200' or '404' accordingly. The implementation of MMI in our example broker is pretty weak. For example if a worker disappears, services remain "present". In practice a broker should remove services that have no workers after some configurable timeout.
 
 +++ Idempotent Services
 
@@ -630,7 +594,7 @@ We use the fairly standard solution of detecting and rejecting duplicate request
 * The server, before sending back a reply, stores it using the client id + message number as a key.
 * The server, when getting a request from a given client, first checks if it has a reply for that client id + message number. If so, it does not process the request but just resends the reply.
 
-+++ Fire-and-Forget Reliability (Titanic Pattern)
++++ Disconnected Reliability (Titanic Pattern)
 
 Once you realize that Majordomo is a 'reliable' message broker, you might be tempted to add some spinning rust[[footnote]]I.e. ferrous-based hard disk platters.[[/footnote]]. After all, this works for all the enterprise messaging systems. It's such a tempting idea that it's a little sad to have to be negative. But that's one of my specialties. So, some reasons you don't want rust-based brokers sitting in the center of your architecture are:
 
@@ -638,7 +602,7 @@ Once you realize that Majordomo is a 'reliable' message broker, you might be tem
 
 * Rust brings a whole set of problems, from slow performance to additional pieces to have to manage, repair, and create 6am panics as they inevitably break at the start of daily operations. The beauty of the Pirate patterns in general is their simplicity. They won't crash. And if you're still worried about the hardware, you can move to a peer-to-peer pattern that has no broker at all. I'll explain later in this chapter.
 
-Having said this, however, there is one sane use case for rust-based reliability, which is asynchronous fire-and-forget. It solves a major problem with Pirate, namely that a client has to wait for an answer in real time. If clients and workers are only sporadically connected (think of email as an analogy), we can't use a stateless network between clients and workers.
+Having said this, however, there is one sane use case for rust-based reliability, which is an asynchronous deconnected network. It solves a major problem with Pirate, namely that a client has to wait for an answer in real time. If clients and workers are only sporadically connected (think of email as an analogy), we can't use a stateless network between clients and workers. We have to put state in the middle.
 
 So, here's the Titanic pattern, in which we write messages to disk to ensure they never get lost, no matter how sporadically clients and workers are connected. As we did for service discovery, we're going to layer Titanic on top of Majordomo rather than extend MDP. It's wonderfully lazy because it means we can implement our fire-and-forget reliability in a specialized worker, rather than in the broker. This is excellent for several reasons:
 
@@ -710,11 +674,88 @@ This puts some onus on the client to store its request UUIDs safely, but it remo
 
 Before we jump off and write yet another formal specification (fun, fun!) let's consider how the client talks to Titanic. One way is to use a single service and send it three different request types. Another way, which seems simpler, is to use three services:
 
-* **titanic-request** - store a request message, return a UUID for the request.
-* **titanic-reply** - fetch a reply, if available, for a given request UUID.
-* **titanic-close** - confirm that a reply has been stored and processed.
+* **titanic.request** - store a request message, return a UUID for the request.
+* **titanic.reply** - fetch a reply, if available, for a given request UUID.
+* **titanic.close** - confirm that a reply has been stored and processed.
 
-We'll just make a multithreaded worker, which as we've seen from our multithreading experience with 0MQ, is trivial.
+We'll just make a multithreaded worker, which as we've seen from our multithreading experience with 0MQ, is trivial. However before jumping into code let's sketch down what Titanic would look like in terms of 0MQ messages and frames: http://rfc.zeromq.org/spec:9. This is the "Titanic Service Protocol", or TSP.
+
+Using TSP is clearly more work for client applications than accessing a service directly via MDP. Here's the shortest robust 'echo' client example:
+
+[[code type="example" title="Titanic client example" name="ticlient"]]
+[[/code]]
+
+Of course this can and in practice would be wrapped up in some kind of framework. Real application developers should never see messaging up close, it's a tool for more technically-minded experts to build frameworks and APIs. If we had infinite time to explore this, I'd make a TSP API example, and bring the client application back down to a few lines of code. But it's the same principle as we saw for MDP, no need to be repetitive.
+
+Here's the Titanic implementation. This server handles the three services using three threads, as proposed. It does full persistence to disk using the most brute-force approach possible: one file per message. It's so simple it's scary, the only complex part is that it keeps a separate 'queue' of all requests to avoid reading the directory over and over:
+
+[[code type="example" title="Titanic client example" name="titanic"]]
+[[/code]]
+
+Some notes about this code:
+
+* We use MMI to only send requests to services that appear to be running. This works as well as the MMI implementation in the broker.
+* We use an inproc connection to send new request data from the **titanic.request** service through to the main dispatcher. This saves the dispatcher from having to scan the disk directory, load all request files, and sort them by date/time.
+
+The important thing about this example is not performance (which is surely terrible, I've not tested it), but how well it implements the reliability contract. To try it, start the mdbroker and titanic programs. Then start the ticlient, and then start the mdworker echo service. You can run all four of these using the '-v' option to do verbose tracing of activity. You can stop and restart any piece //except// the client and nothing will get lost.
+
+If you want to use Titanic in real cases, you'll rapidly be asking "how do we make this faster?" Here's what I'd do, starting with the example implementation:
+
+* Use a single disk file for all data, rather than multiple files. Operating systems are usually better at handling a few large files than many smaller ones.
+* Organize that disk file as a circular buffer so that new requests can be written contiguously (with very occasional wraparound). One thread, writing full speed to a disk file can work rapidly.
+* Keep the index in memory and rebuild the index at startup time, from the disk buffer. This saves the extra disk head flutter needed to keep the index fully safe on disk. You would want an fsync after every message, or every N milliseconds if you were prepared to lose the last M messages in case of a system failure.
+* Use a solid-state drive rather than spinning iron oxide platters.
+* Preallocate the entire file, or allocate in large chunks allowing the circular buffer to grow and shrink as needed. This avoids fragmentation and ensures most reads and writes are contiguous.
+
+And so on. What I'd not recommend is storing messages in a database, not even a 'fast' key/value store, unless you really like a specific database and don't have performance worries. You will pay a steep price for the abstraction, 10 to 1000x over a raw disk file.
+
+If you want to make Titanic //even more reliable//, you can do this by duplicating requests to a second server, which you'd place in a second location just far enough to survive nuclear attack on your primary location, yet not so far that you get too much latency.
+
+If you want to make Titanic //much faster and less reliable//, you can store requests and replies purely in memory. This will give you the functionality of a disconnected network, but it won't survive a crash of the Titanic server itself.
+
++++ Brokerless Reliability (Freelance Pattern)
+
+It might seem ironic to focus so much on broker-based reliability, when we often explain 0MQ as "brokerless messaging". In fact, brokers add a certain complexity, and they remove a certain complexity. In messaging, as in real life, the middleman is both a burden and a benefit. And as in real life, any //real// messaging architecture will need a mix of distributed and brokered messaging.
+
+Let me give you an example. You open your browser and go to http://www.google.com. Your browser is talking to 74.125.230.80 (or whatever) directly, without going through any broker. You now type a search term and press Enter. Stuff happens. That web server you were talking to is now talking to dozens of workers, invisibly to you. After a few milliseconds, your results come back. The web server is a broker.
+
+Similarly, in a 0MQ architecture there are reliable request-reply cases where going via a broker would be counter-productive. The most flagrant example would be a name resolution service. We want this to be reliable, because if it fails our applications can't work. However we don't want to have to pass via a broker to reach a name service. How would we know what endpoint the broker is on?
+
+Without a broker, every application needs to know the address of the name service. It can then talk to the name service (using a Pirate pattern) to translate logical names into endpoints as needed. Fair enough. With a broker, every application needs to know the address of the broker. The broker hopefully supports some kind of service-based routing. So clients can then send a request to the "name lookup service" and this will work. But if you think this through, you realize it's not sensible. When we put our name service behind a broker, there are only two possible outcomes:
+
+* The broker is the only broker on the network, which ain't going to happen in a 0MQ world.
+* The broker //is// the name service, which is equivalent to not having a broker.
+
+If you need to, draw some pictures until this logic becomes clear.
+
+Meanwhile, let's think how to build brokerless reliability.
+
+- multiple clients
+- small pool of servers
+- reliability in client using PPP approach
+
+Types of failure we aim to handle: service crashes and restarts, service busy looping, service overload, network disconnects.
+
+- N clients to N servers
+- move queue logic into client-side class
+- ditto for server, make framework
+- talk to it via inproc...
+
+fpcliapi.c
+fpwrkapi.c
+
+Handshaking at Startup
+
+We must use XREP-to-XREP sockets because we want to connect N clients to N servers without (necessarily) an intermediary queue device.
+
+In an XREP-to-XREP socket connection, one side of the connection must know the identity of the other.  You cannot do xrep-to-xrep flows between two anonymous sockets since an XREP socket requires an explicit identity.  In practice this means we will need a name service share the identities of the servers.  The client will connect to the server, then send it a message using the server's known identity as address, and then the server can respond to the client.
+
+In this prototype we'll use fixed, hardcoded identities for the servers. We'll develop the name service later.
+
+Pool management
+
+* If there is just one server in the pool, the we wait with a timeout for the server to reply. If the server does not reply within the timeout, we retry a number of times before abandoning.
+* If there are multiple servers in the pool, we try each server in succession, but do not retry the same server twice.
+* If a server appears to be really dead (i.e. has not responded for some time), we remove it from the pool.
 
 .end
-
