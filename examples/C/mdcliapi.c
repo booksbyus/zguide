@@ -164,9 +164,9 @@ mdcli_send (mdcli_t *self, char *service, zmsg_t **request_p)
                 assert (strcmp (header, MDPC_CLIENT) == 0);
                 free (header);
 
-                char *service = zmsg_pop (msg);
-                assert (strcmp (service, service) == 0);
-                free (service);
+                char *reply_service = zmsg_pop (msg);
+                assert (strcmp (reply_service, service) == 0);
+                free (reply_service);
 
                 zmsg_destroy (&request);
                 return msg;     //  Success
