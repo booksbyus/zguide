@@ -2,6 +2,8 @@ Notes for The Guide
 
 - problem solving faq
     send a frame, receive nothing: you sent from a transient buffer that disappeared before send completed.
+    pull sockets connect, one gets all messages: async slow connects vs. push out
+    
 
 - collection of patterns
     Least Recently Used

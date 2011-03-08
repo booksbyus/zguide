@@ -509,9 +509,9 @@ Notes on this code:
 
 +++ Asynchronous Majordomo Pattern
 
-The way we implemented Majordomo, above, is simple and stupid. The client is just the original Simple Pirate, wrapped up in a sexy API. When I fire up a client, broker, and worker on a test box, it can process 100,000 requests in about 14 seconds. That is partly due to the code, which cheerfully copies message frames around as if CPU cycles were free. But the real problem is that we're 'round-tripping'. TCP does not send data immediately; it waits a little while to see if anything more arrives. Using raw TCP sockets you can switch off this [http://en.wikipedia.org/wiki/Nagle's_algorithm delay], but 0MQ doesn't expose this option.
+The way we implemented Majordomo, above, is simple and stupid. The client is just the original Simple Pirate, wrapped up in a sexy API. When I fire up a client, broker, and worker on a test box, it can process 100,000 requests in about 14 seconds. That is partly due to the code, which cheerfully copies message frames around as if CPU cycles were free. But the real problem is that we're 'round-tripping'. 0MQ disables [http://en.wikipedia.org/wiki/Nagle's_algorithm], but round-tripping is still slow.
 
-Theory is great in theory, but in practice I prefer practice. Let's measure the cost of round-tripping with a simple test program. This sends a bunch of messages, first waiting for a reply to each message, and second as a batch, reading all the replies back as a batch. Both approaches do the same work, but they give very different results. We mockup a client, broker, and worker:
+Theory is great in theory, but in practice, practice is better. Let's measure the cost of round-tripping with a simple test program. This sends a bunch of messages, first waiting for a reply to each message, and second as a batch, reading all the replies back as a batch. Both approaches do the same work, but they give very different results. We mockup a client, broker, and worker:
 
 [[code type="example" title="Round-trip demonstrator" name="tripping"]]
 [[/code]]
@@ -634,7 +634,7 @@ We use the fairly standard solution of detecting and rejecting duplicate request
 
 Once you realize that Majordomo is a 'reliable' message broker, you might be tempted to add some spinning rust to it. After all, this works for all the enterprise messaging systems. It's such a tempting idea that it's a little sad to have to be negative. But that's one of my specialties. So, reasons you don't want rust-based brokers sitting in the center of your architecture:
 
-* As you've seen, the Lazy Pirate client performs surprisingly well. It works across a whole range of architectures, from direct client-to-server to distributed queue devices. It does assume that workers are stateless and idempotent (see below). But we can work around that limitation without resorting to rust.
+* As you've seen, the Lazy Pirate client performs surprisingly well. It works across a whole range of architectures, from direct client-to-server to distributed queue devices. It does tend to assume that workers are stateless and idempotent. But we can work around that limitation without resorting to rust.
 
 * Rust brings a whole set of problems, from slow performance to additional pieces to have to manage, repair, and create 6am panics as they inevitably break at the start of daily operations. The beauty of the Pirate patterns in general is their simplicity. They won't crash. And if you're still worried about the hardware, you can move to a peer-to-peer pattern that has no broker at all. I'll explain later in this chapter.
 
@@ -648,7 +648,7 @@ So, here's the Titanic pattern, in which we write messages to disk to ensure the
 
 The only downside is that there's an extra network hop between broker and hard disk. This is easily worth it.
 
-Titanic plugs into a Majordomo architecture as a proxy service:
+There are many ways to make a persistent request-reply architecture. We'll aim for simple and painless. The simplest design I could come up with, after playing with this for a few hours, is Titanic as a "proxy service". That is, it doesn't affect workers at all. If a client wants a reply immediately, it talks directly to a service and hopes the service is available. If a client is happy to wait a while, it talks to Titanic instead and asks, "hey, buddy, would you take care of this for me while I go buy my groceries?"
 
 [[code type="textdiagram"]]
 
@@ -685,8 +685,6 @@ Titanic plugs into a Majordomo architecture as a proxy service:
              Figure # - Titanic Pattern
 [[/code]]
 
-There are many ways to make a persistent request-reply architecture. We'll aim for simple and painless. The simplest design I could come up with, after playing with this for a few hours, is Titanic as a "proxy service". That is, it doesn't affect workers at all. If a client wants a reply immediately, it talks directly to a service and hopes the service is available. If a client is happy to wait a while, it talks to Titanic instead and asks, "hey, buddy, would you take care of this for me while I go buy my groceries?"
-
 Titanic is thus both a worker, and a client. The dialog between client and Titanic goes along these lines:
 
 * Client: please accept this request for me. Titanic: OK, done.
@@ -699,7 +697,7 @@ Whereas the dialog between Titanic and broker and worker goes like this:
 * Titanic: hey, echo, please handle this for me. Echo: sure, here you are.
 * Titanic: sweeeeet!
 
-You can work though this, and the possible failure scenarios. If a worker crashes while processing a request, Titanic retries, indefinitely. We'll use the MMI protocol to make this reasonably efficient. If a reply gets lost somewhere, Titanic will retry. If the request gets processed but the client doesn't get the reply, it will ask again.
+You can work though this, and the possible failure scenarios. If a worker crashes while processing a request, Titanic retries, indefinitely. If a reply gets lost somewhere, Titanic will retry. If the request gets processed but the client doesn't get the reply, it will ask again. If Titanic crashes while processing a request, or a reply, the client will try again. As long as requests are fully committed to safe storage, work can't get lost.
 
 The handshaking is pedantic, but can be pipelined, i.e. clients can use the asynchronous Majordomo pattern to do a lot of work and then get the responses later.
 
