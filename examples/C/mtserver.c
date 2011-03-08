@@ -23,10 +23,10 @@ worker_routine (void *context) {
         s_send (receiver, "World");
     }
     zmq_close (receiver);
-    return (NULL);
+    return NULL;
 }
 
-int main (void) 
+int main (void)
 {
     s_version_assert (2, 1);
     void *context = zmq_init (1);

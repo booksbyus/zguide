@@ -12,7 +12,6 @@
 #define HEARTBEAT_LIVENESS  3       //  3-5 is reasonable
 #define HEARTBEAT_INTERVAL  2500    //  msecs
 #define HEARTBEAT_EXPIRY    HEARTBEAT_INTERVAL * HEARTBEAT_LIVENESS
-#define VERBOSE_BROKER      1       //  Trace activity?
 
 //  This defines a single broker
 typedef struct {
@@ -88,11 +87,13 @@ static void
 //  ----------------------------------------------------------------------
 //  Main broker work happens here
 
-int main (void)
+int main (int argc, char *argv [])
 {
+    int verbose = (argc > 1 && strcmp (argv [1], "-v") == 0);
+
     s_version_assert (2, 1);
     s_catch_signals ();
-    broker_t *self = s_broker_new (VERBOSE_BROKER);
+    broker_t *self = s_broker_new (verbose);
     s_broker_bind (self, "tcp://*:5555");
 
     //  Get and process messages forever or until interrupted
@@ -161,7 +162,7 @@ s_broker_new (int verbose)
     self->workers = zhash_new ();
     self->waiting = zlist_new ();
     self->heartbeat_at = s_clock () + HEARTBEAT_INTERVAL;
-    return (self);
+    return self;
 }
 
 //  --------------------------------------------------------------------------
@@ -228,10 +229,8 @@ s_service_require (broker_t *self, char *name)
         service->waiting = zlist_new ();
         zhash_insert (self->services, name, service);
         zhash_freefn (self->services, name, s_service_destroy);
-        if (self->verbose) {
+        if (self->verbose)
             s_console ("I: received message:");
-            s_console ("I: registering new service: %s", name);
-        }
     }
     return service;
 }

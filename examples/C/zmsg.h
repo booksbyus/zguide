@@ -81,7 +81,6 @@ int     zmsg_test     (int verbose);
 }
 #endif
 
-#endif
 
 //  Pretty arbitrary limit on complexity of a message
 #define ZMSG_MAX_PARTS  255
@@ -501,6 +500,8 @@ zmsg_load (FILE *file)
             rc = fread (self->_part_data [part_nbr], part_size, 1, file);
             if (part_size && rc != 1)
                 break;
+            //  Create valid C string if we loaded text data
+            self->_part_data [part_nbr][part_size] = 0;
         }
         else
             break;
@@ -648,3 +649,5 @@ zmsg_test (int verbose)
     zmq_term (context);
     return 0;
 }
+
+#endif      //  Included

@@ -5,9 +5,10 @@
 //  Lets us 'build mdclient' and 'build all'
 #include "mdcliapi2.c"
 
-int main (void)
+int main (int argc, char *argv [])
 {
-    mdcli_t *session = mdcli_new ("tcp://localhost:5555", 0);
+    int verbose = (argc > 1 && strcmp (argv [1], "-v") == 0);
+    mdcli_t *session = mdcli_new ("tcp://localhost:5555", verbose);
 
     int count;
     for (count = 0; count < 100000; count++) {

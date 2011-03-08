@@ -4,9 +4,10 @@
 //  Lets us 'build mmiecho' and 'build all'
 #include "mdcliapi.c"
 
-int main (void)
+int main (int argc, char *argv [])
 {
-    mdcli_t *session = mdcli_new ("tcp://localhost:5555", 0);
+    int verbose = (argc > 1 && strcmp (argv [1], "-v") == 0);
+    mdcli_t *session = mdcli_new ("tcp://localhost:5555", verbose);
 
     //  This is the service we want to look up
     zmsg_t *request = zmsg_new ("echo");

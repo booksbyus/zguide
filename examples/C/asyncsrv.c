@@ -45,7 +45,7 @@ client_task (void *args)
     //  Clean up and end task properly
     zmq_close (client);
     zmq_term (context);
-    return (NULL);
+    return NULL;
 }
 
 //  ---------------------------------------------------------------------
@@ -103,7 +103,7 @@ void *server_task (void *args)
     zmq_close (frontend);
     zmq_close (backend);
     zmq_term (context);
-    return (NULL);
+    return NULL;
 }
 
 //  Accept a request and reply with the same text a random number of
@@ -131,7 +131,7 @@ server_worker (void *context)
         zmsg_destroy (&msg);
     }
     zmq_close (worker);
-    return (NULL);
+    return NULL;
 }
 
 

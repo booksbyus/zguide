@@ -584,7 +584,7 @@ sys     0m0.470s
 
 It isn't fully asynchronous since workers get their messages on a strict LRU basis. But it will scale better with more workers. On my fast test box, after eight or so workers it doesn't get any faster. Four cores only stretches so far. But we got a 4x improvement in throughput with just a few minutes' work. The broker is still unoptimized. It spends most of its time copying message frames around, instead of doing zero copy, which it could. But we're getting 25K reliable request/reply calls a second, with pretty low effort.
 
-However the asynchronous Majordomo pattern isn't all roses. It has a fundamental weakness, namely that it cannot survive a broker crash without a more work. If you look at the mdcliapi2 code you'll see it does not attempt to reconnect after a failure. A proper reconnect would require:
+However the asynchronous Majordomo pattern isn't all roses. It has a fundamental weakness, namely that it cannot survive a broker crash without fmore work. If you look at the mdcliapi2 code you'll see it does not attempt to reconnect after a failure. A proper reconnect would require:
 
 * That every request is numbered, and every reply has a matching number, which would ideally require a change to the protocol to enforce.
 * That the client API tracks and holds onto all outstanding requests, i.e. for which no reply had yet been received.
@@ -632,13 +632,13 @@ We use the fairly standard solution of detecting and rejecting duplicate request
 
 +++ Fire-and-Forget Reliability (Titanic Pattern)
 
-Once you realize that Majordomo is a 'reliable' message broker, you might be tempted to add some spinning rust to it. After all, this works for all the enterprise messaging systems. It's such a tempting idea that it's a little sad to have to be negative. But that's one of my specialties. So, reasons you don't want rust-based brokers sitting in the center of your architecture:
+Once you realize that Majordomo is a 'reliable' message broker, you might be tempted to add some spinning rust[[footnote]]I.e. ferrous-based hard disk platters.[[/footnote]]. After all, this works for all the enterprise messaging systems. It's such a tempting idea that it's a little sad to have to be negative. But that's one of my specialties. So, some reasons you don't want rust-based brokers sitting in the center of your architecture are:
 
 * As you've seen, the Lazy Pirate client performs surprisingly well. It works across a whole range of architectures, from direct client-to-server to distributed queue devices. It does tend to assume that workers are stateless and idempotent. But we can work around that limitation without resorting to rust.
 
 * Rust brings a whole set of problems, from slow performance to additional pieces to have to manage, repair, and create 6am panics as they inevitably break at the start of daily operations. The beauty of the Pirate patterns in general is their simplicity. They won't crash. And if you're still worried about the hardware, you can move to a peer-to-peer pattern that has no broker at all. I'll explain later in this chapter.
 
-Having said this, however, there is one sane use case for rust-based reliability, which is asynchronous fire-and-forget. It solves a major problem with Pirate, namely that a client has to wait for an answer in real time. If clients and workers are only sporadically connected (think of email as an analogy), we can't use a stateless in between clients and workers.
+Having said this, however, there is one sane use case for rust-based reliability, which is asynchronous fire-and-forget. It solves a major problem with Pirate, namely that a client has to wait for an answer in real time. If clients and workers are only sporadically connected (think of email as an analogy), we can't use a stateless network between clients and workers.
 
 So, here's the Titanic pattern, in which we write messages to disk to ensure they never get lost, no matter how sporadically clients and workers are connected. As we did for service discovery, we're going to layer Titanic on top of Majordomo rather than extend MDP. It's wonderfully lazy because it means we can implement our fire-and-forget reliability in a specialized worker, rather than in the broker. This is excellent for several reasons:
 
@@ -697,7 +697,7 @@ Whereas the dialog between Titanic and broker and worker goes like this:
 * Titanic: hey, echo, please handle this for me. Echo: sure, here you are.
 * Titanic: sweeeeet!
 
-You can work though this, and the possible failure scenarios. If a worker crashes while processing a request, Titanic retries, indefinitely. If a reply gets lost somewhere, Titanic will retry. If the request gets processed but the client doesn't get the reply, it will ask again. If Titanic crashes while processing a request, or a reply, the client will try again. As long as requests are fully committed to safe storage, work can't get lost.
+You can work through this, and the possible failure scenarios. If a worker crashes while processing a request, Titanic retries, indefinitely. If a reply gets lost somewhere, Titanic will retry. If the request gets processed but the client doesn't get the reply, it will ask again. If Titanic crashes while processing a request, or a reply, the client will try again. As long as requests are fully committed to safe storage, work can't get lost.
 
 The handshaking is pedantic, but can be pipelined, i.e. clients can use the asynchronous Majordomo pattern to do a lot of work and then get the responses later.
 

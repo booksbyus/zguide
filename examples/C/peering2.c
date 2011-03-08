@@ -48,7 +48,7 @@ client_task (void *args)
     //  We never get here but if we did, this is how we'd exit cleanly
     zmq_close (client);
     zmq_term (context);
-    return (NULL);
+    return NULL;
 }
 
 //  Worker using REQ socket to do LRU routing
@@ -78,7 +78,7 @@ worker_task (void *args)
     //  We never get here but if we did, this is how we'd exit cleanly
     zmq_close (worker);
     zmq_term (context);
-    return (NULL);
+    return NULL;
 }
 
 

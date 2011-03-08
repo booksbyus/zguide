@@ -27,7 +27,6 @@
 
 #include "mdcliapi2.h"
 
-
 //  Structure of our class
 //  We access these properties only via class methods
 
@@ -43,7 +42,7 @@ struct _mdcli_t {
 //  --------------------------------------------------------------------------
 //  Connect or reconnect to broker
 
-void s_connect_to_broker (mdcli_t *self)
+void s_mdcli_connect_to_broker (mdcli_t *self)
 {
     if (self->client)
         zmq_close (self->client);
@@ -69,11 +68,11 @@ mdcli_new (char *broker, int verbose)
     self->broker = strdup (broker);
     self->context = zmq_init (1);
     self->verbose = verbose;
-    self->timeout = 2500;           //  msecs, (> 1000!)
+    self->timeout = 2500;           //  msecs
 
     s_catch_signals ();
-    s_connect_to_broker (self);
-    return (self);
+    s_mdcli_connect_to_broker (self);
+    return self;
 }
 
 
@@ -175,7 +174,7 @@ mdcli_recv (mdcli_t *self)
         printf ("W: interrupt received, killing client...\n");
     else
     if (self->verbose)
-        s_console ("W: permanent error, abandoning session");
+        s_console ("W: permanent error, abandoning request");
 
     return NULL;
 }

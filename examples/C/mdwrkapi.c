@@ -59,7 +59,7 @@ struct _mdwrk_t {
 //  If no _msg is provided, creates one internally
 
 static void
-s_send_to_broker (mdwrk_t *self, char *command, char *option, zmsg_t *_msg)
+s_mdwrk_send_to_broker (mdwrk_t *self, char *command, char *option, zmsg_t *_msg)
 {
     zmsg_t *msg = _msg? zmsg_dup (_msg): zmsg_new (NULL);
 
@@ -82,7 +82,7 @@ s_send_to_broker (mdwrk_t *self, char *command, char *option, zmsg_t *_msg)
 //  --------------------------------------------------------------------------
 //  Connect or reconnect to broker
 
-void s_connect_to_broker (mdwrk_t *self)
+void s_mdwrk_connect_to_broker (mdwrk_t *self)
 {
     if (self->worker)
         zmq_close (self->worker);
@@ -94,7 +94,7 @@ void s_connect_to_broker (mdwrk_t *self)
         s_console ("I: connecting to broker at %s...", self->broker);
 
     //  Register service with broker
-    s_send_to_broker (self, MDPW_READY, self->service, NULL);
+    s_mdwrk_send_to_broker (self, MDPW_READY, self->service, NULL);
 
     //  If liveness hits zero, queue is considered disconnected
     self->liveness = HEARTBEAT_LIVENESS;
@@ -121,8 +121,8 @@ mdwrk_new (char *broker,char *service, int verbose)
     self->reconnect = 2500;     //  msecs
 
     s_catch_signals ();
-    s_connect_to_broker (self);
-    return (self);
+    s_mdwrk_connect_to_broker (self);
+    return self;
 }
 
 
@@ -179,7 +179,7 @@ mdwrk_recv (mdwrk_t *self, zmsg_t **reply_p)
         assert (self->reply_to);
         zmsg_wrap (reply, self->reply_to, "");
         free (self->reply_to);
-        s_send_to_broker (self, MDPW_REPLY, NULL, reply);
+        s_mdwrk_send_to_broker (self, MDPW_REPLY, NULL, reply);
         zmsg_destroy (reply_p);
     }
     self->expect_reply = 1;
@@ -220,7 +220,7 @@ mdwrk_recv (mdwrk_t *self, zmsg_t **reply_p)
                 ;               //  Do nothing for heartbeats
             else
             if (strcmp (command, MDPW_DISCONNECT) == 0)
-                s_connect_to_broker (self);
+                s_mdwrk_connect_to_broker (self);
             else {
                 s_console ("E: invalid input message (%d)", (int) *command);
                 zmsg_dump (msg);
@@ -233,11 +233,11 @@ mdwrk_recv (mdwrk_t *self, zmsg_t **reply_p)
             if (self->verbose)
                 s_console ("W: disconnected from broker - retrying...");
             s_sleep (self->reconnect);
-            s_connect_to_broker (self);
+            s_mdwrk_connect_to_broker (self);
         }
         //  Send HEARTBEAT if it's time
         if (s_clock () > self->heartbeat_at) {
-            s_send_to_broker (self, MDPW_HEARTBEAT, NULL, NULL);
+            s_mdwrk_send_to_broker (self, MDPW_HEARTBEAT, NULL, NULL);
             self->heartbeat_at = s_clock () + self->heartbeat;
         }
     }

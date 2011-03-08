@@ -17,7 +17,7 @@
 #define NBR_WORKERS 10
 
 static void *
-worker_task (void *args) 
+worker_task (void *args)
 {
     void *context = zmq_init (1);
     void *worker = zmq_socket (context, ZMQ_REQ);
@@ -46,10 +46,10 @@ worker_task (void *args)
     }
     zmq_close (worker);
     zmq_term (context);
-    return (NULL);
+    return NULL;
 }
 
-int main (void) 
+int main (void)
 {
     s_version_assert (2, 1);
     void *context = zmq_init (1);

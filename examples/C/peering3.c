@@ -71,7 +71,7 @@ client_task (void *args)
                 zmsg_body_fmt (zmsg,
                     "E: CLIENT EXIT - lost task %s", task_id);
                 zmsg_send (&zmsg, monitor);
-                return (NULL);
+                return NULL;
             }
         }
     }
@@ -79,7 +79,7 @@ client_task (void *args)
     zmq_close (client);
     zmq_close (monitor);
     zmq_term (context);
-    return (NULL);
+    return NULL;
 }
 
 //  Worker using REQ socket to do LRU routing
@@ -108,7 +108,7 @@ worker_task (void *args)
     //  We never get here but if we did, this is how we'd exit cleanly
     zmq_close (worker);
     zmq_term (context);
-    return (NULL);
+    return NULL;
 }
 
 int main (int argc, char *argv [])
