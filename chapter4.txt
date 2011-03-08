@@ -713,6 +713,8 @@ If you want to make Titanic //even more reliable//, you can do this by duplicati
 
 If you want to make Titanic //much faster and less reliable//, you can store requests and replies purely in memory. This will give you the functionality of a disconnected network, but it won't survive a crash of the Titanic server itself.
 
+.end
+
 +++ Brokerless Reliability (Freelance Pattern)
 
 It might seem ironic to focus so much on broker-based reliability, when we often explain 0MQ as "brokerless messaging". In fact, brokers add a certain complexity, and they remove a certain complexity. In messaging, as in real life, the middleman is both a burden and a benefit. And as in real life, any //real// messaging architecture will need a mix of distributed and brokered messaging.
@@ -758,4 +760,3 @@ Pool management
 * If there are multiple servers in the pool, we try each server in succession, but do not retry the same server twice.
 * If a server appears to be really dead (i.e. has not responded for some time), we remove it from the pool.
 
-.end
