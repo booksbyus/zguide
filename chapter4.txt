@@ -102,7 +102,7 @@ We can get very simple reliable request-reply with only some changes in the clie
           Figure # - Lazy Pirate pattern
 [[/code]]
 
-If you try to use a REQ socket in anything than a strict send-recv fashion, you'll get an EFSM error. This is slightly annoying when we want to use REQ in a pirate pattern, because we may send several requests before getting a reply. The pretty good brute-force solution is to close and reopen the REQ socket after an error:
+If you try to use a REQ socket in anything than a strict send-recv fashion, you'll get an error (technically, the REQ socket implements a small finite-state machine to enforce the send-recv ping-pong, and so the error code is called "EFSM"). This is slightly annoying when we want to use REQ in a pirate pattern, because we may send several requests before getting a reply. The pretty good brute-force solution is to close and reopen the REQ socket after an error:
 
 [[code type="example" title="Lazy Pirate client" name="lpclient"]]
 [[/code]]

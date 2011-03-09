@@ -1,7 +1,7 @@
 //
 //  Lazy Pirate client
 //  Use zmq_poll to do a safe request-reply
-//  To run, start piserver and then randomly kill/restart it
+//  To run, start lpserver and then randomly kill/restart it
 //
 #include "zhelpers.h"
 
@@ -12,7 +12,8 @@
 //  connected to the Hello World server
 //
 static void *
-s_client_socket (void *context) {
+s_client_socket (void *context)
+{
     printf ("I: connecting to server...\n");
     void *client = zmq_socket (context, ZMQ_REQ);
     zmq_connect (client, "tcp://localhost:5555");
