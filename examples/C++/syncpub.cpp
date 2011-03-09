@@ -25,8 +25,7 @@ int main () {
     while (subscribers < SUBSCRIBERS_EXPECTED) {
         
 		//  - wait for synchronization request
-		std::string *string = s_recv (syncservice);
-		delete (string);
+		s_recv (syncservice);
        
 		//  - send synchronization reply
 		s_send (syncservice, "");

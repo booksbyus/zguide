@@ -1,13 +1,84 @@
-No-one has translated the suisnail example into C++ yet.  Be the first to create
-suisnail in C++ and get one free Internet!  If you're the author of the C++
-binding, this is a great way to get people to use 0MQ in C++.
+//
+// Suicidal Snail
+//
+// Andreas Hoelzlwimmer <andreas.hoelzlwimmer@fh-hagenberg.at>
+#include "zhelpers.hpp"
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+// ---------------------------------------------------------------------
+// This is our subscriber
+// It connects to the publisher and subscribes to everything. It
+// sleeps for a short time between messages to simulate doing too
+// much work. If a message is more than 1 second late, it croaks.
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+#define MAX_ALLOWED_DELAY 1000 // msecs
 
-Subscribe to the email list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+static void *
+subscriber (void *args) {
+    zmq::context_t context(1);
+
+    // Subscribe to everything
+    zmq::socket_t subscriber(context, ZMQ_SUB);
+    subscriber.connect("tcp://localhost:5556");
+    subscriber.setsockopt (ZMQ_SUBSCRIBE, "", 0);
+
+    std::stringstream ss;
+    // Get and process messages
+    while (1) {
+        ss.clear();
+        ss.str(s_recv (subscriber));
+        int64_t clock;
+        assert ((ss >> clock));
+
+        // Suicide snail logic
+        if (s_clock () - clock > MAX_ALLOWED_DELAY) {
+            fprintf (stderr, "E: subscriber cannot keep up, aborting\n");
+            break;
+        }
+        // Work for 1 msec plus some random additional time
+        s_sleep(1000*(1+within(2)));
+    }
+    return (NULL);
+}
+
+
+// ---------------------------------------------------------------------
+// This is our server task
+// It publishes a time-stamped message to its pub socket every 1ms.
+
+static void *
+publisher (void *args) {
+    zmq::context_t context (1);
+
+    // Prepare publisher
+    zmq::socket_t publisher(context, ZMQ_PUB);
+    publisher.bind("tcp://*:5556");
+
+    std::stringstream ss;
+
+    while (1) {
+        // Send current clock (msecs) to subscribers
+        ss.str("");
+        ss << s_clock();
+        s_send (publisher, ss.str());
+
+        s_sleep(1);
+    }
+    return 0;
+}
+
+
+// This main thread simply starts a client, and a server, and then
+// waits for the client to croak.
+//
+int main (void)
+{
+    pthread_t server_thread;
+    pthread_create (&server_thread, NULL, publisher, NULL);
+
+    pthread_t client_thread;
+    pthread_create (&client_thread, NULL, subscriber, NULL);
+    pthread_join (client_thread, NULL);
+
+    return 0;
+}
+

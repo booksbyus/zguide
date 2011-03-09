@@ -27,8 +27,7 @@ int main () {
     publisher.setsockopt( ZMQ_SWAP, &swap, sizeof (swap));
 
     //  Wait for synchronization request
-    std::string *string = s_recv (sync);
-    delete (string);
+    s_recv (sync);
 
     //  Now broadcast exactly 10 updates with pause
     int update_nbr;

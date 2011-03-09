@@ -7,10 +7,7 @@
 //
 //  Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
 //
-#include <zmq.hpp>
-#include <time.h>
-#include <iostream>
-#include <sstream>
+#include "zhelpers.hpp"
 
 int main (int argc, char *argv[])
 {
@@ -29,18 +26,14 @@ int main (int argc, char *argv[])
 
         zmq::message_t message;
         int workload;           //  Workload in msecs
-        struct timespec t;
 
         receiver.recv(&message);
 
         std::istringstream iss(static_cast<char*>(message.data()));
         iss >> workload;
 
-        t.tv_sec = 0;
-        t.tv_nsec = workload * 1000000;
-
         //  Do the work
-        nanosleep (&t, NULL);
+        s_sleep(workload);
 
         //  Send results to sink
         message.rebuild();

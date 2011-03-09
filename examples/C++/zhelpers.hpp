@@ -36,7 +36,7 @@
 #include <time.h>
 #include <assert.h>
 #include <pthread.h>
-#include <stdlib.h>		// random()  RAND_MAX
+#include <stdlib.h>        // random()  RAND_MAX
 #include <stdio.h>
 
 //  Bring Windows MSVC up to C99 scratch
@@ -50,15 +50,13 @@
 #define within(num) (int) ((float) (num) * random () / (RAND_MAX + 1.0))
 
 //  Receive 0MQ string from socket and convert into string
-static std::string *
+static std::string
 s_recv (zmq::socket_t & socket) {
 
     zmq::message_t message;
     socket.recv(&message);
 
-    std::string * string = new std::string(static_cast<char*>(message.data()), message.size());
-
-    return (string);
+    return std::string(static_cast<char*>(message.data()), message.size());
 }
 
 //  Convert string to 0MQ string and send to socket
@@ -93,7 +91,7 @@ s_dump (zmq::socket_t & socket)
     while (1) {
         //  Process all parts of the message
 
-		zmq::message_t message;
+        zmq::message_t message;
         socket.recv(&message);
 
         //  Dump the message as text or binary
@@ -148,4 +146,34 @@ s_version (void)
     zmq_version (&major, &minor, &patch);
     printf ("Current 0MQ version is %d.%d.%d\n", major, minor, patch);
 }
+
+//  Return current system clock as milliseconds
+static int64_t
+s_clock (void)
+{
+#if (defined (__WINDOWS__))
+    SYSTEMTIME st;
+    GetSystemTime (&st);
+    return (int64_t) st.wSecond * 1000 + st.wMilliseconds;
+#else
+    struct timeval tv;
+    gettimeofday (&tv, NULL);
+    return (int64_t) (tv.tv_sec * 1000 + tv.tv_usec / 1000);
+#endif
+}
+
+//  Sleep for a number of milliseconds
+static void
+s_sleep (int msecs)
+{
+#if (defined (__WINDOWS__))
+    Sleep (msecs);
+#else
+    struct timespec t;
+    t.tv_sec = msecs / 1000;
+    t.tv_nsec = (msecs % 1000) * 1000000;
+    nanosleep (&t, NULL);
+#endif
+}
+
 #endif

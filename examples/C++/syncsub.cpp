@@ -23,19 +23,15 @@ int main (int argc, char *argv[])
     s_send (syncclient, "");
 
     //  - wait for synchronization reply
-    std::string *string = s_recv (syncclient);
-    delete (string);
+    s_recv (syncclient);
 
     //  Third, get our updates and report how many we got
     int update_nbr = 0;
     while (1) {
-    	
-        std::string *string = s_recv (subscriber);
-        if (string->compare("END") == 0) {
-            delete (string);
+
+        if (s_recv (subscriber).compare("END") == 0) {
             break;
         }
-        delete (string);
 
         update_nbr++;
     }

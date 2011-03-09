@@ -15,14 +15,11 @@ int main () {
     while (1) {
  
 		//  Read envelope with address
-		std::string * address = s_recv (subscriber);
+		std::string address = s_recv (subscriber);
 		//  Read message contents
-		std::string * contents = s_recv (subscriber);
+		std::string contents = s_recv (subscriber);
 		
-        std::cout << "[" << *address << "] " << *contents << std::endl;
-        
-        delete(address);
-        delete(contents);
+        std::cout << "[" << address << "] " << contents << std::endl;
     }
     return 0;
 }

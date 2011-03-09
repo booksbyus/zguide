@@ -22,14 +22,12 @@ int main (int argc, char *argv[])
 
     //  Get updates, expect random Ctrl-C death
     while (1) {
-        std::string *string = s_recv (subscriber);
-        std::cout << *string << std::endl;
+        std::string string = s_recv (subscriber);
+        std::cout << string << std::endl;
         
-        if (string->compare("END") == 0) {
-            delete (string);
+        if (string.compare("END") == 0) {
             break;
         }
-        delete (string);
     }
     return 0;
 }
