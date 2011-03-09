@@ -17,7 +17,7 @@ int main ()
 
     int cycles = 0;
     while (1) {
-        std::string *request = s_recv (server);
+        std::string request = s_recv (server);
         cycles++;
 
         // Simulate various problems, after a few cycles
@@ -30,10 +30,9 @@ int main ()
             printf ("I: simulating CPU overload\n");
             sleep (5);
         }
-        printf ("I: normal request (%s)\n", request->c_str());
+        printf ("I: normal request (%s)\n", request.c_str());
         sleep (1); // Do some heavy work
-        s_send (server, *request);
-        delete request;
+        s_send (server, request);
     }
     return 0;
 }

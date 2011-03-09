@@ -48,17 +48,16 @@ int main () {
             //  If we got a reply, process it
             if (items[0].revents & ZMQ_POLLIN) {
                 //  We got a reply from the server, must match sequence
-                std::string *reply = s_recv (*client);
+                std::string reply = s_recv (*client);
                 if (atoi (reply->c_str ()) == sequence) {
-                    printf ("I: server replied OK (%s)\n", reply->c_str ());
+                    printf ("I: server replied OK (%s)\n", reply.c_str ());
                     retries_left = REQUEST_RETRIES;
                     expect_reply = 0;
                 }
-                else
+                else {
                     printf ("E: malformed reply from server: %s\n",
-                        reply->c_str ());
-
-                delete reply;
+                        reply.c_str ());
+                }
             }
             else
             if (--retries_left == 0) {
