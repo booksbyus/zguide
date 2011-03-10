@@ -1,13 +1,50 @@
-No-one has translated the lpclient example into Ruby yet.  Be the first to create
-lpclient in Ruby and get one free Internet!  If you're the author of the Ruby
-binding, this is a great way to get people to use 0MQ in Ruby.
+#!/usr/bin/ruby
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+# Author: Han Holl <han.holl@pobox.com>
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+require 'rubygems'
+require 'zmq'
 
-Subscribe to the email list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+class LazyPirate
+  def initialize(connect, retries = nil, timeout = nil)
+    @connect = connect
+    @retries = (retries || 3).to_i
+    @timeout = (timeout || 10).to_i
+    @ctx = ZMQ::Context.new(1)
+    client_sock
+    at_exit do
+      @socket.close
+    end
+  end
+  
+  def client_sock
+    @socket = @ctx.socket(ZMQ::REQ)
+    @socket.setsockopt(ZMQ::LINGER, 0)
+    @socket.connect(@connect)
+  end
+
+  def send(message)
+    @retries.times do |tries|
+      raise("Send: #{message} failed") unless @socket.send(message)
+      if ZMQ.select( [@socket], nil, nil, @timeout)
+        yield @socket.recv
+        return
+      else
+        @socket.close
+        client_sock
+      end
+    end
+    raise 'Server down'
+  end
+      
+end
+
+if $0 == __FILE__
+    server = LazyPirate.new(ARGV[0] || "tcp://localhost:599", ARGV[1], ARGV[2])
+    server.send('hello there') do |response|
+      puts response
+    end
+    puts 'success'
+end
+
+  
