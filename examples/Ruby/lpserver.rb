@@ -1,13 +1,50 @@
-No-one has translated the lpserver example into Ruby yet.  Be the first to create
-lpserver in Ruby and get one free Internet!  If you're the author of the Ruby
-binding, this is a great way to get people to use 0MQ in Ruby.
+#!/usr/bin/ruby
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+# Author: Han Holl <han.holl@pobox.com>
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+require 'rubygems'
+require 'zmq'
 
-Subscribe to the email list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+class LPServer
+  def initialize(connect)
+    @ctx = ZMQ::Context.new(1)
+    @socket = @ctx.socket(ZMQ::REP)
+    @socket.bind(connect)
+  end
+
+  def run
+    begin
+      loop do
+        rsl = yield @socket.recv
+        @socket.send rsl
+      end
+    ensure
+      @socket.close
+      @ctx.close
+    end
+  end
+      
+end
+
+if $0 == __FILE__
+  cycles = 0
+  srand
+  LPServer.new(ARGV[0] || "tcp://*:5555").run do |request|
+    cycles += 1
+    if cycles > 3
+      if rand(3) == 0
+        puts "I: simulating a crash"
+        break
+      elsif rand(3) == 0
+        puts "I: simulating CPU overload"
+        sleep(3)
+      end
+    end
+    puts "I: normal request (#{request})"
+    sleep(1)
+    request
+  end
+    
+end
+
+  

@@ -5,11 +5,11 @@
 require 'rubygems'
 require 'zmq'
 
-class LazyPirate
+class LPClient
   def initialize(connect, retries = nil, timeout = nil)
     @connect = connect
     @retries = (retries || 3).to_i
-    @timeout = (timeout || 10).to_i
+    @timeout = (timeout || 3).to_i
     @ctx = ZMQ::Context.new(1)
     client_sock
     at_exit do
@@ -40,9 +40,18 @@ class LazyPirate
 end
 
 if $0 == __FILE__
-    server = LazyPirate.new(ARGV[0] || "tcp://localhost:599", ARGV[1], ARGV[2])
-    server.send('hello there') do |response|
-      puts response
+    server = LPClient.new(ARGV[0] || "tcp://localhost:5555", ARGV[1], ARGV[2])
+    count = 0
+    loop do
+      request = "#{count}"
+      count += 1
+      server.send(request) do |reply|
+        if reply == request
+          puts("I: server replied OK (#{reply})")
+        else
+          puts("E: malformed reply from server: #{reply}")
+        end
+      end
     end
     puts 'success'
 end
