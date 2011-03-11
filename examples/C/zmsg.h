@@ -237,9 +237,8 @@ zmsg_recv (void *socket)
         zmq_msg_t message;
         zmq_msg_init (&message);
         if (zmq_recv (socket, &message, 0)) {
-            if (errno != ETERM)
-                printf ("E: %s\n", zmq_strerror (errno));
-            exit (1);
+            zmsg_destroy (&self);
+            break;
         }
         //  We handle 0MQ UUIDs as printable strings
         unsigned char *data = zmq_msg_data (&message);
