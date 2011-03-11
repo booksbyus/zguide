@@ -1,13 +1,68 @@
-No-one has translated the rrbroker example into Java yet.  Be the first to create
-rrbroker in Java and get one free Internet!  If you're the author of the Java
-binding, this is a great way to get people to use 0MQ in Java.
+import org.zeromq.ZMQ;
+import org.zeromq.ZMQ.Context;
+import org.zeromq.ZMQ.Poller;
+import org.zeromq.ZMQ.Socket;
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+/**
+ * Simple request-reply broker
+ * 
+ * Christophe Huntzinger <chuntz@laposte.net>
+ *
+ */
+public class RrBroker{
+	public static void main (String[] args) {
+		//  Prepare our context and sockets
+		Context context = ZMQ.context(1);
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+		Socket frontend = context.socket(ZMQ.XREP);
+		Socket backend  = context.socket(ZMQ.XREQ);
+		frontend.bind("tcp://*:5559");
+		backend.bind("tcp://*:5560");
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+		System.out.println("launch and connect broker.");
+
+		//  Initialize poll set
+		Poller items = context.poller(2);
+		items.register(frontend, Poller.POLLIN);
+		items.register(backend, Poller.POLLIN);
+
+		boolean more = false;
+		byte[] message;
+
+		//  Switch messages between sockets
+		while (!Thread.currentThread().isInterrupted()) {			
+			//  poll and memorize multipart detection
+			items.poll();
+
+			if (items.pollin(0)) {
+				while (true) {
+					// receive message
+					message = frontend.recv(0);
+					more = frontend.hasReceiveMore();
+
+					// Broker it
+					backend.send(message, more ? ZMQ.SNDMORE : 0);
+					if(!more){
+						break;
+					}
+				}
+			}
+			if (items.pollin(1)) {
+				while (true) {
+					// receive message
+					message = backend.recv(0);
+					more = backend.hasReceiveMore();
+					// Broker it
+					frontend.send(message,  more ? ZMQ.SNDMORE : 0);
+					if(!more){
+						break;
+					}
+				}
+			}
+		}
+		//  We never get here but clean up anyhow
+		frontend.close();
+		backend.close();
+		context.term();
+	}
+}

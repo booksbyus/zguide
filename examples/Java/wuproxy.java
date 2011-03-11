@@ -1,13 +1,49 @@
-No-one has translated the wuproxy example into Java yet.  Be the first to create
-wuproxy in Java and get one free Internet!  If you're the author of the Java
-binding, this is a great way to get people to use 0MQ in Java.
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+import org.zeromq.ZMQ;
+import org.zeromq.ZMQ.Context;
+import org.zeromq.ZMQ.Socket;
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+/**
+ * Weather proxy device.
+ * 
+ * Christophe Huntzinger <chuntz@laposte.net>
+ */
+public class WuProxy{
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+	public static void main (String[] args) {
+		//  Prepare our context and sockets
+		Context context = ZMQ.context(1);
+
+		//  This is where the weather server sits
+		Socket frontend =  context.socket(ZMQ.SUB);
+		frontend.connect("tcp://192.168.55.210:5556");
+
+		//  This is our public endpoint for subscribers
+		Socket backend  = context.socket(ZMQ.PUB);
+		frontend.bind("tcp://10.1.1.0:8100");
+
+		//  Subscribe on everything
+		frontend.subscribe("".getBytes());
+
+		boolean more = false;
+		byte[] message;
+
+		//  Shunt messages out to our own subscribers
+		while (!Thread.currentThread().isInterrupted()) {
+			while (true) {
+				// receive message
+				message = frontend.recv(0);
+				more = frontend.hasReceiveMore();
+
+				// proxy it
+				backend.send(message, more ? ZMQ.SNDMORE : 0);
+				if(!more){
+					break;
+				}
+			}
+		}
+		frontend.close();
+		backend.close();
+		context.term();
+	}
+}

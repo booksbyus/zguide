@@ -1,13 +1,33 @@
-No-one has translated the rrclient example into Java yet.  Be the first to create
-rrclient in Java and get one free Internet!  If you're the author of the Java
-binding, this is a great way to get people to use 0MQ in Java.
+import org.zeromq.ZMQ;
+import org.zeromq.ZMQ.Context;
+import org.zeromq.ZMQ.Socket;
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+/**
+ * Hello World client
+ * Connects REQ socket to tcp://localhost:5559
+ * Sends "Hello" to server, expects "World" back
+ * 
+ * Christophe Huntzinger <chuntzin_at_wanadoo.fr>
+ */
+public class RrClient{
+	public static void main (String[] args) {
+		Context context = ZMQ.context(1);
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+		//  Socket to talk to server
+		Socket requester = context.socket(ZMQ.REQ);
+		requester.connect("tcp://localhost:5559");
+		
+		System.out.println("launch and connect client.");
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+		for (int request_nbr = 0; request_nbr < 10; request_nbr++) {
+			requester.send("Hello".getBytes(), 0);
+			byte[] reply = requester.recv(0);
+			String replyValue = new String(reply);
+			System.out.println("Received reply "+request_nbr+" ["+replyValue+"]");
+		}
+		
+		//  We never get here but clean up anyhow
+		requester.close();
+		context.term();
+	}
+}
