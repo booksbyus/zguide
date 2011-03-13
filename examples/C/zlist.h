@@ -40,6 +40,8 @@ void
     zlist_destroy (zlist_t **self_p);
 void *
     zlist_first (zlist_t *self);
+void *
+    zlist_next (zlist_t *self);
 void
     zlist_append (zlist_t *self, void *value);
 void

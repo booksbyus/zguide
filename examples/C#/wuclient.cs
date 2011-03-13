@@ -22,6 +22,7 @@ namespace ZMQGuide {
                     //  Subscribe to zipcode, default is NYC, 10001
                     string filter = "10001 ";
                     subscriber.Subscribe(filter, Encoding.Unicode);
+                    subscriber.Connect("tcp://localhost:5556");
                     int totalTemp = 0;
                     int updateNbr = 0;
                     for (; updateNbr < 10; updateNbr++) {

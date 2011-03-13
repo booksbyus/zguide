@@ -1,5 +1,5 @@
 .output chapter4.wd
-++ Chapter 4 - Reliable Request-Reply
+++ Chapter Four - Advanced Request-Reply: Reliability
 
 In Chapter Three we looked at advanced use of 0MQ's request-reply pattern with worked examples. In this chapter we'll look at the general question of reliability and build a set of reliable messaging patterns on top of 0MQ's core request-reply pattern.
 
@@ -719,7 +719,7 @@ It might seem ironic to focus so much on broker-based reliability, when we often
 
 Which is why 0MQ does not //impose// a broker-centric architecture, though it gives you the tools to build brokers, aka "devices", and we've built a dozen or so different ones so far, just for practice.
 
-So we'll end this chapter by deconstructing the broker-based reliability we've built so far, and turning it back into a distributed peer-to-peer architecture. Our use case will be a name resolution service. This is a common problem with 0MQ architectures: how do we know the endpoint to connect to? Hard-coding TCP/IP addresses in code is insanely fragile. Using configuration files creates an administration nightmare. Imagine if you had to hand-configure your web browser, on every PC or mobile phone you used, to realize that "google.com" was "74.125.230.82".
+So we'll end this chapter by deconstructing the broker-based reliability we've built so far, and turning it back into a distributed peer-to-peer architecture I call the Freelance pattern. Our use case will be a name resolution service. This is a common problem with 0MQ architectures: how do we know the endpoint to connect to? Hard-coding TCP/IP addresses in code is insanely fragile. Using configuration files creates an administration nightmare. Imagine if you had to hand-configure your web browser, on every PC or mobile phone you used, to realize that "google.com" was "74.125.230.82".
 
 A 0MQ name service (and we'll make a simple implementation) has to:
 
@@ -727,9 +727,9 @@ A 0MQ name service (and we'll make a simple implementation) has to:
 * Allow us to manage multiple parallel environments, e.g. "test" vs. "production" without modifying code.
 * Be reliable, because if it is unavailable, applications won't be able to connect to the network.
 
-Putting a name service behind a service-oriented Majordomo broker is clever from some points of view. However it's simpler and much less surprising to just expose the name service as a server that clients can connect to directly. If we do this right, the name service becomes the //only// global network endpoint we need to fix in our code or config files.
+Putting a name service behind a service-oriented Majordomo broker is clever from some points of view. However it's simpler and much less surprising to just expose the name service as a server that clients can connect to directly. If we do this right, the name service becomes the //only// global network endpoint we need to hard-code in our code or config files.
 
-To get reliability, we'll create a pool of name servers so if one crashes, clients can connect to another, and so on. In practice, two would be enough. But for the example, we'll assume the pool can be any size:
+The types of failure we aim to handle are service crashes and restarts, service busy looping, service overload, and network issues. To get reliability, we'll create a pool of name servers so if one crashes or goes away, clients can connect to another, and so on. In practice, two would be enough. But for the example, we'll assume the pool can be any size:
 
 [[code type="textdiagram"]]
 
@@ -737,8 +737,6 @@ To get reliability, we'll create a pool of name servers so if one crashes, clien
     |           |   |           |   |           |
     |  Client   |   |  Client   |   |  Client   |
     |           |   |           |   |           |
-    +-----------+   +-----------+   +-----------+
-    |  ROUTER   |   |  ROUTER   |   |  ROUTER   |
     \-----------/   \-----------/   \-----------/
        connect         connect         connect
           |               |               |
@@ -748,53 +746,143 @@ To get reliability, we'll create a pool of name servers so if one crashes, clien
           |               |               |
         bind            bind            bind
     /-----------\   /-----------\   /-----------\
-    |    REP    |   |    REP    |   |    REP    |
-    +-----------+   +-----------+   +-----------+
     |           |   |           |   |           |
     |  Service  |   |  Service  |   |  Service  |
     |           |   |           |   |           |
     +-----------+   +-----------+   +-----------+
 
 
-       Figure # - Brokerless Client-to-Service
+          Figure # - The Freelance Pattern
 [[/code]]
 
-In this architecture a large set of clients connect to a small set of services directly. The services bind to their respective addresses. Services do not use any particular reliability mechanisms such as heartbeating. They listen on a REP socket and process requests one by one. Clients use ROUTER (XREP) sockets so they can address specific services. (They could also use DEALER (XREQ) sockets and blast out requests until they get a reply from anyone, but that would be inelegant.)
+In this architecture a large set of clients connect to a small set of services directly. The services bind to their respective addresses. It's fundamentally different from a broker-based approach like Majordomo, where workers connect to the broker. For clients, there are a couple of options:
+
+* Clients could use REQ sockets and the Lazy Pirate pattern. Easy, but would need some additional intelligence to not stupidly reconnect to dead services over and over.
+
+* Clients could use DEALER (XREQ) sockets and blast out requests (which will be load balanced to all connected services) until they get a reply. Brutal, but not elegant.
+
+* Clients could use ROUTER (XREP) sockets so they can address specific services. But how does the client know the identity of the service sockets? Either the service has to ping the client first (complex), or the each service has to use a hard-coded, fixed identity known to the client (nasty).
+
+++++ Model 1 - Simple Retry and Failover
+
+So our menu appears to offer: simple, brutal, complex, or nasty. Let's start with 'simple' and then work out the kinks. We take Lazy Pirate and rewrite it to work with multiple service endpoints. Start the server first, specifying a bind endpoint as argument. Run one or several servers:
+
+[[code type="example" title="Freelance server, Model 1" name="flserver1"]]
+[[/code]]
+
+Then start the client, specifying one or more connect endpoints as arguments:
+
+[[code type="example" title="Freelance client, Model 1" name="flclient1"]]
+[[/code]]
+
+While the basic approach is Lazy Pirate, the client aims to just get one successful reply. It has two techniques, depending on whether you are running a single service, or multiple services:
+
+* With a single service, the client will retry several times, exactly as for Lazy Pirate.
+* With multiple services, the client will try each service at most once, until it's received a reply, or has tried all services.
+
+This solves the main weakness of Lazy Pirate, namely that it could not do failover to backup / alternate servers.
+
+However this design won't work well in a real application. If we're connecting many sockets, and our primary name server is down, we're going to do this painful timeout each time.
+
+++++ Model 2 - Brutal Shotgun Massacre
+
+Let's switch our client to using a DEALER socket. Our goal here is to make sure we get a reply back within the shortest possible time, no matter whether the primary server is down or not. Our client takes this approach:
+
+* We set things up, connecting to all services.
+* When we have a request, we blast it out as many times as we have services. 
+* We wait for the first reply, and take that.
+* We ignore any other replies.
+
+What will happen in practice is that when all services are running, 0MQ will distribute the requests so each service gets one request, and sends one reply. When any service is offline, and disconnected, 0MQ will distribute the requests to the remaining services. So a service may in some cases get the same request more than once.
+
+What's more annoying for the client is that we'll get multiple replies back, but there's no guarantee we'll get a precise number of replies. Requests and replies can get lost (e.g. if the service crashes while processing a request).
+
+So, we have to number requests, and ignore any replies that don't match the request number. Our Model 1 server will work, since it's an echo server, but coincidence is not a great basis for understanding. So we'll make a Model 2 server that chews up the message, returns a correctly-numbered reply with the content "OK". We'll use messages consisting of two parts, a sequence number and a body.
+
+Start the server once or more:
+
+[[code type="example" title="Freelance server, Model 2" name="flserver2"]]
+[[/code]]
+
+Then start the client, specifying the connect endpoints as arguments:
+
+[[code type="example" title="Freelance client, Model 2" name="flclient2"]]
+[[/code]]
+
+Some notes on this code:
+
+* The client is structured as a nice little class-based API that hides the dirty work of creating 0MQ contexts and sockets, and talking to the server. If a shotgun blast to the midriff can be called "talking".
+
+* The client will abandon the chase if it can't find //any// responsive service within a few seconds.
+
+* The client has to create a valid REP envelope, i.e. add an empty message part to the front of the message.
+
+The client does 10,000 name resolution requests (fake ones, since our server does essentially nothing), and measures the average cost. On my test box, talking to one server, it's about 60 usec. Talking to three servers, it's about 80 usec.
+
+So pros and cons of our shotgun approach:
+
+* Pro: it is simple, easy to make and easy to understand.
+* Pro: it does the job of failover, and works rapidly, so long as there is at least one service running.
+* Con: it creates redundant network traffic.
+* Con: we can't prioritize our servers, i.e. Primary, then Secondary.
+* Con: the server can do at most one request at a time, period.
+
+++++ Model 3 - Complex and Nasty
+
+The shotgun approach seems too good to be true. Let's be scientific and try the complex/nasty option, even if it's only to finally realize that we preferred brutal. 
+
+We can solve the main problems of the client by switching to a ROUTER (XREP) socket. That lets us send requests to specific services, avoid services we know are dead, and thus act as intelligently as we'd expect. We can also solve the main problem of the server (single threadedness) by switching to a ROUTER socket.
+
+But doing ROUTER-to-ROUTER between two transient sockets is not possible. Both sides generate an identity (at their own end of the conversation) only when they receive a first message, and thus neither can talk to the other until it has first received a message. The only way out of this conundrum is to cheat, and use hard-coded identities in one direction. The proper way to cheat, in a client server case, is that the client 'knows' the identity of the server. Vice-versa would be insane, on top of complex and nasty. Great attributes for a genocidal dictator, terrible ones for software.
+
+For our example we'll use the connection endpoint as identity. This is at least a unique string both sides can agree on without more prior knowledge than they already have for the shotgun model. It's sneaky.
+
+Remember how 0MQ identities work. The server sets an identity before it binds its socket. When a client connects, they exchange identities, before either side sends a message. The client, having not set an identity, sends a null identity to the server. The server generates a random UUID for the client. The server sends its identity (which we've agreed is going to be an endpoint string) to the client.
+
+This means our client can route a message to the server (i.e. send on its ROUTER socket, specifying the server endpoint as identity) as soon as the connection is established. That's not //immediately// after doing a zmq_connect, but some random time thereafter. Herein lies one problem: we don't know when the server will actually be available and complete its connection handshake. It could be after 1 millisecond. It could be after one hour, if the sysadmin was out for lunch and forgot to start the server process.
+
+We want to send requests only to servers that we know are probably on-line. But in the Freelance pattern, unlike broker-based patterns, servers are silent until they get a request. Thus we can't talk to a server until it's told us it's on-line, which it can't do until we've asked it.
+
+There are probably several solutions to this paradox. The one I'll demonstrate uses the shotgun approach to build a list of "known active servers" that may be used for real work. Basically, we fire blanks at random and when something reacts, we mark it as "alive".
+
+- control endpoints not unique, won't allow multiple instances in an app.
 
 
-xxx 
+--- can client initiate conversation with server?
+... server binds, sets identity
+... client connects, sends message to identity
+
+
+- client maintains list of connected servers
+- client maintains list of known servers
 
 
 
-If you need to, draw some pictures until this logic becomes clear.
+- client keep servers in a list
+- client connect to all servers
+- server replies, no heartbeating
+- server status:
+    - active
+    - dead (retry again in a while)
 
-Meanwhile, let's think how to build brokerless reliability.
 
-- multiple clients
-- small pool of servers
-- reliability in client using PPP approach
+Model 3 of the server is just slightly different:
 
-Types of failure we aim to handle: service crashes and restarts, service busy looping, service overload, network disconnects.
+[[code type="example" title="Freelance server, Model 3" name="flserver3"]]
 
-- N clients to N servers
-- move queue logic into client-side class
-- ditto for server, make framework
-- talk to it via inproc...
+[[/code]]
 
-fpcliapi.c
-fpwrkapi.c
+Here's the client:
 
-Handshaking at Startup
+[[code type="example" title="Freelance client, Model 3" name="flclient3"]]
+[[/code]]
 
-We must use XREP-to-XREP sockets because we want to connect N clients to N servers without (necessarily) an intermediary queue device.
+Some notes on this code:
 
-In an XREP-to-XREP socket connection, one side of the connection must know the identity of the other.  You cannot do xrep-to-xrep flows between two anonymous sockets since an XREP socket requires an explicit identity.  In practice this means we will need a name service share the identities of the servers.  The client will connect to the server, then send it a message using the server's known identity as address, and then the server can respond to the client.
 
-In this prototype we'll use fixed, hardcoded identities for the servers. We'll develop the name service later.
 
-Pool management
+    
 
-* If there is just one server in the pool, the we wait with a timeout for the server to reply. If the server does not reply within the timeout, we retry a number of times before abandoning.
-* If there are multiple servers in the pool, we try each server in succession, but do not retry the same server twice.
-* If a server appears to be really dead (i.e. has not responded for some time), we remove it from the pool.
 
+
+.end
