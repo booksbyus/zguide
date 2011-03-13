@@ -1,4 +1,31 @@
+.output chapter5.wd
 ++ Chapter Five - Advanced Publish-Subscribe
+
+In Chapters Three and Four we looked at advanced use of 0MQ's request-reply pattern. In this chapter we'll focus on publish-subscribe, and extend 0MQ's core pattern with higher-level patterns for reliability, security, and state distribution.
+
+We'll cover:
+
+* How to define 'reliability' in 0MQ applications.
+* How to implement reliability on top of the 0MQ core patterns.
+* How to implement heartbeating between 0MQ peers.
+* How to write a reusable protocol specification.
+* How to design a service-oriented framework API.
+* How to implement service discovery.
+* How to implement non-idempotent server applications.
+* How to implement disk-based reliability.
+* How to build peer-to-peer reliability without brokers.
+
+In this chapter we focus heavily on user-space 'patterns', which are reusable models that help you design your 0MQ architecture:
+
+* The //Lazy Pirate// pattern: reliable request reply from the client side.
+* The //Simple Pirate// pattern: reliable request-reply using a LRU queue.
+* The //Paranoid Pirate// pattern: reliable request-reply with heartbeating.
+* The //Majordomo// pattern: service-oriented reliable queuing.
+* The //Titanic// pattern: disk-based / disconnected reliable queuing.
+* The //Freelance// pattern: brokerless reliable request-reply.
+
+
+
 
 - extreme high speed subscribers
     - frontend TCP
