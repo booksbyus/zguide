@@ -231,7 +231,6 @@ zmsg_t *
 zmsg_recv (void *socket)
 {
     assert (socket);
-
     zmsg_t *self = zmsg_new (NULL);
     while (1) {
         zmq_msg_t message;
@@ -538,8 +537,11 @@ zmsg_save (zmsg_t **self_p, FILE *file)
 void
 zmsg_dump (zmsg_t *self)
 {
-    assert (self);
-
+    fprintf (stderr, "--------------------------------------\n");
+    if (!self) {
+        fprintf (stderr, "NULL");
+        return;
+    }
     int part_nbr;
     for (part_nbr = 0; part_nbr < self->_part_count; part_nbr++) {
         unsigned char *data = self->_part_data [part_nbr];

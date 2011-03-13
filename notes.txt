@@ -1,9 +1,15 @@
+Visualization of examples
+- load each example into a page
+    example:name-language
+    only if not empty, tag with language name
+    various lists showing current scores & results...
+- in text, [[include]] instead of inlining the code
+- link direct to new tab showing example, if present
+- else link to page explaining how to translate & contribute
+
+
 Notes for The Guide
 
-- problem solving faq
-    send a frame, receive nothing: you sent from a transient buffer that disappeared before send completed.
-    pull sockets connect, one gets all messages: async slow connects vs. push out
-    
 
 - collection of patterns
     Least Recently Used

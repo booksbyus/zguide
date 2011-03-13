@@ -1,5 +1,5 @@
 /*  =========================================================================
-    zhash.class - ZFL singly-linked hash class
+    zhash.h - ZFL singly-linked hash class
 
     -------------------------------------------------------------------------
     Copyright (c) 1991-2011 iMatix Corporation <www.imatix.com>

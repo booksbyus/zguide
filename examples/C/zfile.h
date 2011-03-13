@@ -1,7 +1,5 @@
 /*  =========================================================================
-    zfile.h
-
-    Helper functions for working with files.
+    zfile.h - helper functions for working with files.
 
     -------------------------------------------------------------------------
     Copyright (c) 1991-2011 iMatix Corporation <www.imatix.com>
