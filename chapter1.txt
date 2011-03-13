@@ -505,7 +505,12 @@ Since the Guide aims to be a leader, not a follower, we've updated it to cover 2
 
 * In 2.0, zmq_close[3] and zmq_term[3] discarded any in-flight messages, so it was unsafe to close a socket and terminate right after sending messages. In 2.1, these calls are safe: zmq_term will flush anything that's waiting to be sent. In 2.0 examples we often added a sleep(1) to get around the problem. In 2.1, this isn't needed.
 
-* In 2.0, it was safe to call zmq_term[3] even if there were open sockets. In 2.1, this is not safe, and it can cause zmq_term to block. So in 2.1 we always close every socket, before exiting. Furthermore, if you have any outgoing messages waiting on a socket, 2.1 will **by default wait forever** trying to deliver these. You must set the LINGER socket option (e.g. to zero) before calling zmq_term.
+* In 2.0, it was safe to call zmq_term[3] even if there were open sockets. In 2.1, this is not safe, and it can cause zmq_term to block. So in 2.1 we always close every socket, before exiting. Furthermore, if you have any outgoing messages or connects waiting on a socket, 2.1 will **by default wait forever** trying to deliver these. You must set the LINGER socket option (e.g. to zero), on every socket which may still be busy, before calling zmq_term:
+
+[[code]]
+int zero = 0;
+zmq_setsockopt (mysocket, ZMQ_LINGER, &zero, sizeof (zero));
+[[/code]]
 
 * In 2.0, zmq_poll[3] would return arbitrarily early, so you could not use it as a timer. We hacked around this with a loop that would see how much time was left, and would call zmq_poll again if needed. In 2.1, this call properly waits for the full timeout if there are not events.
 
@@ -704,7 +709,7 @@ As you start to program with 0MQ you will come across one problem more than once
         |                 |        |                 |        | Use the          |
         | Are you losing  |        |  Do you set a   |        | zmq_setsockopt   |
         |  messages in a  +------->|  subscription   +------->| ZMQ_SUBSCRIBE    |
-        |   SUB socket?  | Yes    |  for messages? | No     | ("") option      |
+        |   SUB socket?   | Yes    |  for messages?  | No     | ("") option      |
         |             {o} |        |             {o} |        |                  |
         +--------+--------+        +--------+--------+        +------------------+
                  | No                       | Yes
@@ -732,9 +737,19 @@ As you start to program with 0MQ you will come across one problem more than once
         |                 |        | With REQ, send and |
         |  Are you using  |        | recv in a loop and |
         |   REQ and REP   +------->| check the return   |
-        |     sockets?   | Yes    | codes. With REP    |
+        |     sockets?    | Yes    | codes. With REP    |
         |             {o} |        | it's recv + send.  |
         +--------+--------+        +--------------------+
+                 | No
+                 |
+                 v
+        +-----------------+        +---------------------+        +-----------------+
+        |                 |        | The 1st PULL socket |        | You may need to |
+        |  Are you using  |        | to connect can grab |        | do extra work to|
+        |  PUSH sockets?  +------->| 1000's of messages  +------->| synchronize your|
+        |                 | Yes    | before the others   |        | sockets before  |
+        |             {o} |        | get there.          |        | sending tasks.  |
+        +--------+--------+        +---------------------+        +-----------------+
                  | No
                  |
                  v
@@ -742,7 +757,7 @@ As you start to program with 0MQ you will come across one problem more than once
         |                 |        |                 |
         |  Do you check   |        | Check every 0MQ |
         | return codes on +------->| method call. In |
-        |  all methods?  | No     | C, use asserts. |
+        |  all methods?   | No     | C, use asserts. |
         |             {o} |        |                 |
         +--------+--------+        +-----------------+
                  | Yes
@@ -752,7 +767,7 @@ As you start to program with 0MQ you will come across one problem more than once
         |                 |        |                 |        |                  |
         | Are you using   |        |   Do you pass   |        | Create a socket  |
         | threads in your +------->| sockets between +------->| in the thread    |
-        |  app already?  | Yes    |    threads?    | Yes    | where you use it |
+        |  app already?   | Yes    |    threads?     | Yes    | where you use it |
         |             {o} |        |             {o} |        |                  |
         +--------+--------+        +--------+--------+        +------------------+
                  | No                       | No
@@ -763,7 +778,7 @@ As you start to program with 0MQ you will come across one problem more than once
         |                 |        |                 |        |                  |
         |  Are you using  |        | Are you calling |        | Call zmq_init    |
         |   the inproc    +------->|  zmq_init more  +------->| exactly once in  |
-        |   transport?   | Yes    |    than once?  | Yes    | every process.   |
+        |   transport?    | Yes    |    than once?   | Yes    | every process.   |
         |             {o} |        |             {o} |        |                  |
         +--------+--------+        +--------+--------+        +------------------+
                  | No                       | No
@@ -780,19 +795,19 @@ As you start to program with 0MQ you will come across one problem more than once
                  v
         +-----------------+        +-----------------+        +-----------------+
         |                 |        | Check that the  |        | If you're using |
-        |  Are you using  |        | reply envelope  |        | identities make |
-        |  XREP sockets? +------->| is valid. 0MQ   +------->| sure to set them|
+        |  Are you using  |        | reply address   |        | identities make |
+        |  XREP sockets?  +------->| is valid. 0MQ   +------->| sure to set them|
         |                 | Yes    | drops messages  |        | before not after|
         |             {o} |        | it can't route. |        | you connect.    |
-        +--------+--------+        +-----------------+        +-----------------+
-                 | No
-                 |
-                 v
+        +--------+--------+        +-----------------+        +--------+--------+
+                 | No                                                    
+                 |                                                       
+                 v                                                       
         +-----------------+        +--------------------+
-        |                 |        | You probably have  |
+        |                 |        | You probably have  |     
         | Are you losing  |        | a client running   |
         |   one message   +------->| in the background. |
-        |    in two?     | Yes    | Kill it and start  |
+        |    in two?      | Yes    | Kill it and start  |
         |             {o} |        | again.             |
         +--------+--------+        +--------------------+
                  | No

@@ -221,7 +221,7 @@ static service_t *
 s_service_require (broker_t *self, char *name)
 {
     assert (name);
-    service_t *service = zhash_lookup (self->services, name);
+    service_t *service = (service_t *) zhash_lookup (self->services, name);
     if (service == NULL) {
         service = (service_t *) calloc (1, sizeof (service_t));
         service->name = strdup (name);
@@ -242,7 +242,7 @@ s_service_require (broker_t *self, char *name)
 static void
 s_service_destroy (void *argument)
 {
-    service_t *service = argument;
+    service_t *service = (service_t *) argument;
     //  Destroy all queued requests
     while (zlist_size (service->requests)) {
         zmsg_t *msg = zlist_pop (service->requests);
@@ -283,7 +283,8 @@ static void
 s_service_internal (broker_t *self, char *service_name, zmsg_t *msg)
 {
     if (strcmp (service_name, "mmi.service") == 0) {
-        service_t *service = zhash_lookup (self->services, zmsg_body (msg));
+        service_t *service = 
+            (service_t *) zhash_lookup (self->services, zmsg_body (msg));
         if (service && service->workers)
             zmsg_body_set (msg, "200");
         else
@@ -310,7 +311,7 @@ s_worker_require (broker_t *self, char *identity)
     assert (identity);
 
     //  self->workers is keyed off worker identity
-    worker_t *worker = zhash_lookup (self->workers, identity);
+    worker_t *worker = (worker_t *) zhash_lookup (self->workers, identity);
     if (worker == NULL) {
         worker = (worker_t *) calloc (1, sizeof (worker_t));
         worker->identity = strdup (identity);
@@ -348,7 +349,7 @@ s_worker_delete (broker_t *self, worker_t *worker, int disconnect)
 static void
 s_worker_destroy (void *argument)
 {
-    worker_t *worker = argument;
+    worker_t *worker = (worker_t *) argument;
     if (worker->identity)
         free (worker->identity);
     free (worker);
@@ -449,8 +450,8 @@ static void
 s_worker_waiting (broker_t *self, worker_t *worker)
 {
     //  Queue to broker and service waiting lists
-    zlist_append (self->waiting, (void *) worker);
-    zlist_append (worker->service->waiting, (void *) worker);
+    zlist_append (self->waiting, worker);
+    zlist_append (worker->service->waiting, worker);
     worker->expiry = s_clock () + HEARTBEAT_EXPIRY;
     s_service_dispatch (self, worker->service, NULL);
 }

@@ -1,3 +1,15 @@
+++ Chapter Five - Advanced Publish-Subscribe
+
+- extreme high speed subscribers
+    - frontend TCP
+    - workers, callback on inproc
+    - segment your feeds
+    - one NIC per slice
+    - one socket per slice
+    - one thread per slice
+    - large box for subscribers
+
+
 ++ Reference Material
 
 * The //Suicidal Snail// pattern: how to handle slow clients.
