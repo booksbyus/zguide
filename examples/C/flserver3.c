@@ -7,7 +7,7 @@
 int main (int argc, char *argv [])
 {
     int verbose = (argc > 1 && strcmp (argv [1], "-v") == 0);
-    
+
     void *context = zmq_init (1);
     s_catch_signals ();
 
@@ -19,7 +19,7 @@ int main (int argc, char *argv [])
         ZMQ_IDENTITY, connect_endpoint, strlen (connect_endpoint));
     zmq_bind (server, bind_endpoint);
     printf ("I: service is ready at %s\n", bind_endpoint);
-    
+
     while (!s_interrupted) {
         zmsg_t *request = zmsg_recv (server);
         zmsg_t *reply = NULL;

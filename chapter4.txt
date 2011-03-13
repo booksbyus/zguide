@@ -829,60 +829,70 @@ So pros and cons of our shotgun approach:
 
 ++++ Model 3 - Complex and Nasty
 
-The shotgun approach seems too good to be true. Let's be scientific and try the complex/nasty option, even if it's only to finally realize that we preferred brutal. 
+The shotgun approach seems too good to be true. Let's be scientific and work through all the alternatives. We're going to explore the complex/nasty option, even if it's only to finally realize that we preferred brutal. Ah, the story of my life.
 
-We can solve the main problems of the client by switching to a ROUTER (XREP) socket. That lets us send requests to specific services, avoid services we know are dead, and thus act as intelligently as we'd expect. We can also solve the main problem of the server (single threadedness) by switching to a ROUTER socket.
+We can solve the main problems of the client by switching to a ROUTER (XREP) socket. That lets us send requests to specific services, avoid services we know are dead, and in general be as smart as we want to make it. We can also solve the main problem of the server (single threadedness) by switching to a ROUTER socket.
 
 But doing ROUTER-to-ROUTER between two transient sockets is not possible. Both sides generate an identity (at their own end of the conversation) only when they receive a first message, and thus neither can talk to the other until it has first received a message. The only way out of this conundrum is to cheat, and use hard-coded identities in one direction. The proper way to cheat, in a client server case, is that the client 'knows' the identity of the server. Vice-versa would be insane, on top of complex and nasty. Great attributes for a genocidal dictator, terrible ones for software.
 
-For our example we'll use the connection endpoint as identity. This is at least a unique string both sides can agree on without more prior knowledge than they already have for the shotgun model. It's sneaky.
+Rather than invent yet another concept to manage, we'll use the connection endpoint as identity. This is a unique string both sides can agree on without more prior knowledge than they already have for the shotgun model. It's sneaky, and effective.
 
-Remember how 0MQ identities work. The server sets an identity before it binds its socket. When a client connects, they exchange identities, before either side sends a message. The client, having not set an identity, sends a null identity to the server. The server generates a random UUID for the client. The server sends its identity (which we've agreed is going to be an endpoint string) to the client.
+Remember how 0MQ identities work. The server ROUTER socket sets an identity before it binds its socket. When a client connects, they do a little handshake to exchange identities, before either side sends a real message. The client ROUTER socket, having not set an identity, sends a null identity to the server. The server generates a random UUID for the client, for its own use. The server sends its identity (which we've agreed is going to be an endpoint string) to the client.
 
-This means our client can route a message to the server (i.e. send on its ROUTER socket, specifying the server endpoint as identity) as soon as the connection is established. That's not //immediately// after doing a zmq_connect, but some random time thereafter. Herein lies one problem: we don't know when the server will actually be available and complete its connection handshake. It could be after 1 millisecond. It could be after one hour, if the sysadmin was out for lunch and forgot to start the server process.
+This means our client can route a message to the server (i.e. send on its ROUTER socket, specifying the server endpoint as identity) as soon as the connection is established. That's not //immediately// after doing a zmq_connect, but some random time thereafter. Herein lies one problem: we don't know when the server will actually be available and complete its connection handshake. If the server is actually online, it could be after a few milliseconds. If the server is down, and the sysadmin is out to lunch, it could be an hour.
 
-We want to send requests only to servers that we know are probably on-line. But in the Freelance pattern, unlike broker-based patterns, servers are silent until they get a request. Thus we can't talk to a server until it's told us it's on-line, which it can't do until we've asked it.
+There's a small paradox here. We need to know when servers become connected and available for work. In the Freelance pattern, unlike the broker-based patterns we saw earlier in this chapter, servers are silent until spoken to. Thus we can't talk to a server until it's told us it's on-line, which it can't do until we've asked it.
 
-There are probably several solutions to this paradox. The one I'll demonstrate uses the shotgun approach to build a list of "known active servers" that may be used for real work. Basically, we fire blanks at random and when something reacts, we mark it as "alive".
+My solution is to mix in a little of the shotgun approach from model 2, meaning we'll fire (harmless) shots at anything we can, and if anything moves, we know it's alive. We're not going to fire real requests, but rather a kind of ping-pong heartbeat.
 
-- control endpoints not unique, won't allow multiple instances in an app.
+This brings us to the realm of protocols again, so here's a short spec that defines how a Freelance client and server exchange PING-PONG commands, and request-reply commands:
 
+* http://rfc.zeromq.org/spec:10
 
---- can client initiate conversation with server?
-... server binds, sets identity
-... client connects, sends message to identity
-
-
-- client maintains list of connected servers
-- client maintains list of known servers
-
-
-
-- client keep servers in a list
-- client connect to all servers
-- server replies, no heartbeating
-- server status:
-    - active
-    - dead (retry again in a while)
-
+It is short and sweet to implement as a server. Here's our echo server, model 3, now speaking FLP:
 
 Model 3 of the server is just slightly different:
 
 [[code type="example" title="Freelance server, Model 3" name="flserver3"]]
-
 [[/code]]
 
-Here's the client:
+The Freelance client, however, has gotten large. For clarity, it's split into an example application and a class that does the hard work. Here's the top-level application:
 
 [[code type="example" title="Freelance client, Model 3" name="flclient3"]]
 [[/code]]
 
-Some notes on this code:
+And here, almost as complex and large as the Majordomo broker, is the client API class:
 
+[[code type="example" title="Freelance client API" name="flcliapi"]]
+[[/code]]
 
+This API implementation is fairly sophisticated and uses a number of techniques that we've not seen before.
 
-    
+**Asynchronous agent classes**
 
+The client API consists of two parts, a synchronous 'flclient' class that runs in the application thread, and an asynchronous 'agent' class that runs in the background. The flclient and agent classes talk to each other over an {{inproc}} socket. All 0MQ aspects (such as creating and terminating a context) are hidden in the API. The agent in effect acts like a mini-broker, talking to servers in the background, so that when we make a request, it can make a best effort to reach a server it believes is available.
 
+**Patient connections**
 
-.end
+ROUTER sockets have the feature of silently dropping messages they can't route. This means if you connect a client to a server, ROUTER-to-ROUTER, and then immediately try to send a message, it won't work. The flclient API does a short sleep when the application does an initial connect to a server. Thereafter, since these are durable sockets, 0MQ will never throw away messages to a server it's seen, even if the server does go away.
+
+**Ping silence**
+
+0MQ will queue messages for a dead server indefinitely, which means if a client repeatedly PINGs a dead server, when that server comes back to life it'll get a whole bunch of PING messages all at once. Rather than continuing to ping a server we know is offline, we count on 0MQ's handling of durable sockets to deliver the old PING messages when the server comes back online. As soon as a server reconnects, it'll get PINGs from all clients that were connected to it, it'll PONG back, and those clients will recognize it as alive again.
+
+**Tickless poll timer**
+
+In previous poll loops we always used a fixed tick interval, e.g. 1 second, which is simple enough but not excellent on power-sensitive clients, where waking the CPU costs power. For fun, the agent uses a 'tickless timer', which calculates the poll delay based on the next timeout we're expecting. A proper implementation would keep an ordered list of timeouts. We just check them all for the lowest:
+
+[[code]]
+    timeout = one hour
+    if we're waiting for a reply
+        timeout is reply expiry
+    if any server expiry is earlier
+        timeout is that server expiry
+    poll for (timeout - now) microseconds
+[[/code]]
+
+++++ Conclusion
+
+In this chapter we've seen a variety of reliable request-reply mechanisms, each with certain costs and benefits. The example code is largely ready for real use, though it is not optimized. Of all the different patterns, the two that stand out are the Majordomo pattern, for broker-based reliability, and the Freelance pattern for brokerless reliability. Both form the basis for real applications (being) built on 0MQ, such as the [http://zns.zeromq.org ZeroMQ Name Service (zns)].

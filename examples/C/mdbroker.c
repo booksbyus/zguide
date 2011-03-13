@@ -227,7 +227,7 @@ s_service_require (broker_t *self, char *name)
         service->name = strdup (name);
         service->requests = zlist_new ();
         service->waiting = zlist_new ();
-        zhash_insert (self->services, name, (void *) service);
+        zhash_insert (self->services, name, service);
         zhash_freefn (self->services, name, s_service_destroy);
         if (self->verbose)
             s_console ("I: received message:");
@@ -262,7 +262,7 @@ s_service_dispatch (broker_t *self, service_t *service, zmsg_t *msg)
 {
     assert (service);
     if (msg)                    //  Queue message if any
-        zlist_append (service->requests, (void *) msg);
+        zlist_append (service->requests, msg);
 
     s_broker_purge_workers (self);
     while (zlist_size (service->waiting)
@@ -315,7 +315,7 @@ s_worker_require (broker_t *self, char *identity)
     if (worker == NULL) {
         worker = (worker_t *) calloc (1, sizeof (worker_t));
         worker->identity = strdup (identity);
-        zhash_insert (self->workers, identity, (void *) worker);
+        zhash_insert (self->workers, identity, worker);
         zhash_freefn (self->workers, identity, s_worker_destroy);
         if (self->verbose)
             s_console ("I: registering new worker: %s", identity);
@@ -450,8 +450,8 @@ static void
 s_worker_waiting (broker_t *self, worker_t *worker)
 {
     //  Queue to broker and service waiting lists
-    zlist_append (self->waiting, (void *) worker);
-    zlist_append (worker->service->waiting, (void *) worker);
+    zlist_append (self->waiting, worker);
+    zlist_append (worker->service->waiting, worker);
     worker->expiry = s_clock () + HEARTBEAT_EXPIRY;
     s_service_dispatch (self, worker->service, NULL);
 }

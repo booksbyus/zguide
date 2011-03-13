@@ -1,5 +1,5 @@
 /*  =========================================================================
-    zlist.class - import of ZFL singly-linked list class
+    zlist.h - import of ZFL singly-linked list class
 
     -------------------------------------------------------------------------
     Copyright (c) 1991-2011 iMatix Corporation <www.imatix.com>
