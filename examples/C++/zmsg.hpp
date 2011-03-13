@@ -263,6 +263,7 @@ public:
    }
 
    void dump() {
+      fprintf (stderr, "--------------------------------------\n");
       for (unsigned int part_nbr = 0; part_nbr < m_part_data.size(); part_nbr++) {
           ustring data = m_part_data [part_nbr];
 
