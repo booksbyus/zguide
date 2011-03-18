@@ -28,7 +28,7 @@ int main (void)
         else
         if (cycles > 3 && randof (3) == 0) {
             printf ("I: simulating CPU overload\n");
-            sleep (5);
+            sleep (2);
         }
         printf ("I: normal request (%s)\n", request);
         sleep (1);              //  Do some heavy work
