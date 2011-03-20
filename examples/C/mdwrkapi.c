@@ -1,28 +1,29 @@
-/*  =========================================================================
+/*  =====================================================================
     mdwrkapi.c
 
     Majordomo Protocol Worker API
     Implements the MDP/Worker spec at http://rfc.zeromq.org/spec:7.
 
-    -------------------------------------------------------------------------
+    ---------------------------------------------------------------------
     Copyright (c) 1991-2011 iMatix Corporation <www.imatix.com>
     Copyright other contributors as noted in the AUTHORS file.
 
     This file is part of the ZeroMQ Guide: http://zguide.zeromq.org
 
-    This is free software; you can redistribute it and/or modify it under the
-    terms of the GNU Lesser General Public License as published by the Free
-    Software Foundation; either version 3 of the License, or (at your option)
-    any later version.
+    This is free software; you can redistribute it and/or modify it under
+    the terms of the GNU Lesser General Public License as published by 
+    the Free Software Foundation; either version 3 of the License, or (at 
+    your option) any later version.
 
     This software is distributed in the hope that it will be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABIL-
-    ITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
-    Public License for more details.
+    WITHOUT ANY WARRANTY; without even the implied warranty of 
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+    Lesser General Public License for more details.
 
-    You should have received a copy of the GNU Lesser General Public License
-    along with this program. If not, see <http://www.gnu.org/licenses/>.
-    =========================================================================
+    You should have received a copy of the GNU Lesser General Public 
+    License along with this program. If not, see 
+    <http://www.gnu.org/licenses/>.
+    =====================================================================
 */
 
 #include "mdwrkapi.h"
@@ -54,12 +55,13 @@ struct _mdwrk_t {
 };
 
 
-//  --------------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Send message to broker
 //  If no _msg is provided, creates one internally
 
 static void
-s_mdwrk_send_to_broker (mdwrk_t *self, char *command, char *option, zmsg_t *_msg)
+s_mdwrk_send_to_broker (mdwrk_t *self, char *command, char *option, 
+                        zmsg_t *_msg)
 {
     zmsg_t *msg = _msg? zmsg_dup (_msg): zmsg_new (NULL);
 
@@ -79,7 +81,7 @@ s_mdwrk_send_to_broker (mdwrk_t *self, char *command, char *option, zmsg_t *_msg
 }
 
 
-//  --------------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Connect or reconnect to broker
 
 void s_mdwrk_connect_to_broker (mdwrk_t *self)
@@ -102,7 +104,7 @@ void s_mdwrk_connect_to_broker (mdwrk_t *self)
 }
 
 
-//  --------------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Constructor
 
 mdwrk_t *
@@ -126,7 +128,7 @@ mdwrk_new (char *broker,char *service, int verbose)
 }
 
 
-//  --------------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Destructor
 
 void
@@ -145,7 +147,7 @@ mdwrk_destroy (mdwrk_t **self_p)
 }
 
 
-//  --------------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Set heartbeat delay
 
 void
@@ -155,7 +157,7 @@ mdwrk_set_heartbeat (mdwrk_t *self, int heartbeat)
 }
 
 
-//  --------------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Set reconnect delay
 
 void
@@ -165,7 +167,7 @@ mdwrk_set_reconnect (mdwrk_t *self, int reconnect)
 }
 
 
-//  --------------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Send reply, if any, to broker and wait for next request.
 
 zmsg_t *
@@ -185,7 +187,8 @@ mdwrk_recv (mdwrk_t *self, zmsg_t **reply_p)
     self->expect_reply = 1;
 
     while (!s_interrupted) {
-        zmq_pollitem_t items [] = { { self->worker,  0, ZMQ_POLLIN, 0 } };
+        zmq_pollitem_t items [] = { 
+            { self->worker,  0, ZMQ_POLLIN, 0 } };
         zmq_poll (items, 1, self->heartbeat * 1000);
 
         if (items [0].revents & ZMQ_POLLIN) {
@@ -222,7 +225,8 @@ mdwrk_recv (mdwrk_t *self, zmsg_t **reply_p)
             if (strcmp (command, MDPW_DISCONNECT) == 0)
                 s_mdwrk_connect_to_broker (self);
             else {
-                s_console ("E: invalid input message (%d)", (int) *command);
+                s_console ("E: invalid input message (%d)", 
+                    (int) *command);
                 zmsg_dump (msg);
             }
             free (command);

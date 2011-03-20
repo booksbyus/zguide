@@ -69,7 +69,8 @@ int main (void)
                 }
                 else
                 if (cycles > 3 && randof (5) == 0) {
-                    printf ("I: (%s) simulating CPU overload\n", identity);
+                    printf ("I: (%s) simulating CPU overload\n", 
+                        identity);
                     sleep (5);
                 }
                 printf ("I: (%s) normal reply - %s\n",

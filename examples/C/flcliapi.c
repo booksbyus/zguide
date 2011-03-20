@@ -1,27 +1,28 @@
-/*  =========================================================================
+/*  =====================================================================
     flcliapi.c - Freelance Pattern agent class
     Model 3: uses ROUTER socket to address specific services
     Defined as .c to allow inclusion in Guide as example.
 
-    -------------------------------------------------------------------------
+    ---------------------------------------------------------------------
     Copyright (c) 1991-2011 iMatix Corporation <www.imatix.com>
     Copyright other contributors as noted in the AUTHORS file.
 
-    This file is part of the ZeroMQ Function Library: http://zfl.zeromq.org
+    This file is part of the ZeroMQ Guide: http://zguide.zeromq.org
 
-    This is free software; you can redistribute it and/or modify it under the
-    terms of the GNU Lesser General Public License as published by the Free
-    Software Foundation; either version 3 of the License, or (at your option)
-    any later version.
+    This is free software; you can redistribute it and/or modify it under
+    the terms of the GNU Lesser General Public License as published by 
+    the Free Software Foundation; either version 3 of the License, or (at 
+    your option) any later version.
 
     This software is distributed in the hope that it will be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABIL-
-    ITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
-    Public License for more details.
+    WITHOUT ANY WARRANTY; without even the implied warranty of 
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+    Lesser General Public License for more details.
 
-    You should have received a copy of the GNU Lesser General Public License
-    along with this program. If not, see <http://www.gnu.org/licenses/>.
-    =========================================================================
+    You should have received a copy of the GNU Lesser General Public 
+    License along with this program. If not, see 
+    <http://www.gnu.org/licenses/>.
+    =====================================================================
 */
 
 #ifndef __FLCLIAPI_INCLUDED__
@@ -57,10 +58,10 @@ zmsg_t *    flcliapi_request (flcliapi_t *self, zmsg_t **request_p);
 #endif
 
 
-//  ====================================================================
+//  =====================================================================
 //  Synchronous part, works in our application thread
 
-//  --------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Structure of our class
 
 struct _flcliapi_t {
@@ -70,7 +71,7 @@ struct _flcliapi_t {
 
 static void *flcliapi_task (void *context);
 
-//  --------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Constructor
 
 flcliapi_t *
@@ -94,7 +95,7 @@ flcliapi_new (void)
     return self;
 }
 
-//  --------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Destructor
 
 void
@@ -111,7 +112,7 @@ flcliapi_destroy (flcliapi_t **self_p)
     }
 }
 
-//  --------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Connect to new server endpoint
 
 void
@@ -125,7 +126,7 @@ flcliapi_connect (flcliapi_t *self, char *endpoint)
     s_sleep (100);      //  Allow connection to come up
 }
 
-//  --------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Send & destroy request, get reply
 
 zmsg_t *
@@ -147,10 +148,10 @@ flcliapi_request (flcliapi_t *self, zmsg_t **request_p)
 }
 
 
-//  ====================================================================
+//  =====================================================================
 //  Asynchronous part, works in the background
 
-//  --------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Simple class for one server we talk to
 
 typedef struct {
@@ -207,7 +208,7 @@ server_tickless (char *key, void *server, void *arg)
 }
 
 
-//  --------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Simple class for one background agent
 
 typedef struct {
@@ -306,7 +307,8 @@ agent_router_message (agent_t *self)
 
     //  Frame 0 is server that replied
     char *endpoint = zmsg_pop (reply);
-    server_t *server = (server_t *) zhash_lookup (self->servers, endpoint);
+    server_t *server = 
+        (server_t *) zhash_lookup (self->servers, endpoint);
     assert (server);
     free (endpoint);
     if (!server->alive) {
@@ -328,7 +330,7 @@ agent_router_message (agent_t *self)
 }
 
 
-//  --------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Asynchronous agent manages server pool and handles request/reply
 //  dialog when the application asks for it.
 
@@ -370,7 +372,8 @@ flcliapi_task (void *context)
             else {
                 //  Find server to talk to, remove any expired ones
                 while (zlist_size (self->actives)) {
-                    server_t *server = (server_t *) zlist_first (self->actives);
+                    server_t *server = 
+                        (server_t *) zlist_first (self->actives);
                     if (s_clock () >= server->expires) {
                         zlist_pop (self->actives);
                         server->alive = 0;
