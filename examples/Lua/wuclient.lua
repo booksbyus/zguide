@@ -1,13 +1,34 @@
-No-one has translated the wuclient example into Lua yet.  Be the first to create
-wuclient in Lua and get one free Internet!  If you're the author of the Lua
-binding, this is a great way to get people to use 0MQ in Lua.
+--
+--  Weather update client
+--  Connects SUB socket to tcp://localhost:5556
+--  Collects weather updates and finds avg temp in zipcode
+--
+--  Author: Robert G. Jakabosky <bobby@sharedrealm.com>
+--
+local zmq = require"zmq"
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+local context = zmq.init(1)
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+--  Socket to talk to server
+print("Collecting updates from weather server...")
+local subscriber = context:socket(zmq.SUB)
+subscriber:connect(arg[2] or "tcp://localhost:5556")
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+--  Subscribe to zipcode, default is NYC, 10001
+local filter = arg[1] or "10001 "
+subscriber:setopt(zmq.SUBSCRIBE, filter)
+
+--  Process 100 updates
+local update_nbr = 0
+local total_temp = 0
+for n=1,100 do
+    local message = subscriber:recv()
+    local zipcode, temperature, relhumidity = message:match("([%d-]*) ([%d-]*) ([%d-]*)")
+    total_temp = total_temp + temperature
+    update_nbr = update_nbr + 1
+end
+print(string.format("Average temperature for zipcode '%s' was %dF, total = %d",
+    filter, (total_temp / update_nbr), total_temp))
+
+subscriber:close()
+context:term()

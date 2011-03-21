@@ -1,13 +1,37 @@
-No-one has translated the wuproxy example into Lua yet.  Be the first to create
-wuproxy in Lua and get one free Internet!  If you're the author of the Lua
-binding, this is a great way to get people to use 0MQ in Lua.
+--
+--  Weather proxy device
+--
+--  Author: Robert G. Jakabosky <bobby@sharedrealm.com>
+--
+local zmq = require"zmq"
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+local context = zmq.init(1)
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+--  This is where the weather server sits
+local frontend = context:socket(zmq.SUB)
+frontend:connect(arg[1] or "tcp://192.168.55.210:5556")
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+--  This is our public endpolocal for subscribers
+local backend = context:socket(zmq.PUB)
+backend:bind(arg[2] or "tcp://10.1.1.0:8100")
+
+--  Subscribe on everything
+frontend:setopt(zmq.SUBSCRIBE, "")
+
+--  Shunt messages out to our own subscribers
+while true do
+    while true do
+        --  Process all parts of the message
+        local message = frontend:recv()
+        if frontend:getopt(zmq.RCVMORE) == 1 then
+            backend:send(message, zmq.SNDMORE)
+        else
+            backend:send(message)
+            break      --  Last message part
+        end
+    end
+end
+--  We don't actually get here but if we did, we'd shut down neatly
+frontend:close()
+backend:close()
+context:term()
