@@ -7,7 +7,7 @@
     zfl_msg class.  See http://zfl.zeromq.org for more details.
 
     -------------------------------------------------------------------------
-    Copyright (c) 1991-2010 iMatix Corporation <www.imatix.com>
+    Copyright (c) 1991-2011 iMatix Corporation <www.imatix.com>
     Copyright other contributors as noted in the AUTHORS file.
 
     This file is part of the ZeroMQ Guide: http://zguide.zeromq.org
@@ -109,7 +109,7 @@ zmsg_new (char *body)
     self = (zmsg_t *) calloc (1, sizeof (zmsg_t));
     if (body)
         zmsg_body_set (self, body);
-    return (self);
+    return self;
 }
 
 
@@ -153,7 +153,7 @@ s_encode_uuid (unsigned char *data)
         uuidstr [byte_nbr * 2 + 2] = hex_char [data [byte_nbr + 1] & 15];
     }
     uuidstr [33] = 0;
-    return (uuidstr);
+    return uuidstr;
 }
 
 
@@ -185,7 +185,7 @@ s_decode_uuid (char *uuidstr)
             = (hex_to_bin [uuidstr [byte_nbr * 2 + 1] & 127] << 4)
             + (hex_to_bin [uuidstr [byte_nbr * 2 + 2] & 127]);
 
-    return (data);
+    return data;
 }
 
 //  --------------------------------------------------------------------------
@@ -261,7 +261,7 @@ zmsg_recv (void *socket)
         if (!more)
             break;      //  Last message part
     }
-    return (self);
+    return self;
 }
 
 
@@ -310,7 +310,7 @@ zmsg_send (zmsg_t **self_p, void *socket)
 size_t
 zmsg_parts (zmsg_t *self)
 {
-    return (self->_part_count);
+    return self->_part_count;
 }
 
 
@@ -324,9 +324,9 @@ zmsg_body (zmsg_t *self)
     assert (self);
 
     if (self->_part_count)
-        return ((char *) self->_part_data [self->_part_count - 1]);
+        return (char *) self->_part_data [self->_part_count - 1];
     else
-        return (NULL);
+        return NULL;
 }
 
 
@@ -407,7 +407,7 @@ zmsg_pop (zmsg_t *self)
         self->_part_count * sizeof (unsigned char *));
     memmove (&self->_part_size [0], &self->_part_size [1],
         self->_part_count * sizeof (size_t));
-    return (part);
+    return part;
 }
 
 
@@ -436,9 +436,9 @@ zmsg_address (zmsg_t *self)
     assert (self);
 
     if (self->_part_count)
-        return ((char *) self->_part_data [0]);
+        return (char *) self->_part_data [0];
     else
-        return (NULL);
+        return NULL;
 }
 
 
@@ -473,7 +473,7 @@ zmsg_unwrap (zmsg_t *self)
     char *address = zmsg_pop (self);
     if (zmsg_address (self) && *zmsg_address (self) == 0)
         free (zmsg_pop (self));
-    return (address);
+    return address;
 }
 
 
@@ -505,7 +505,7 @@ zmsg_load (FILE *file)
             break;
     }
     self->_part_count = part_nbr;
-    return (self);
+    return self;
 }
 
 
@@ -647,6 +647,8 @@ zmsg_test (int verbose)
     assert (zmsg == NULL);
 
     printf ("OK\n");
+    zmq_close (input);
+    zmq_close (output);
     zmq_term (context);
     return 0;
 }
