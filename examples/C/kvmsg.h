@@ -63,7 +63,7 @@ void
 kvmsg_t *
     kvmsg_recv (void *socket);
 void
-    kvmsg_send (kvmsg_t **self, void *socket);
+    kvmsg_send (kvmsg_t *self, void *socket);
 void
     kvmsg_hash_put (kvmsg_t *self, zhash_t *hash);
 void
@@ -104,13 +104,14 @@ kvmsg_new (void)
     kvmsg_t
         *self;
 
-    self = (kvmsg_t *) malloc (sizeof (kvmsg_t));
+    self = (kvmsg_t *) calloc (1, sizeof (kvmsg_t));
 
     //  Create empty message frames
     int frame_nbr;
     for (frame_nbr = 0; frame_nbr < KVMSG_FRAMES; frame_nbr++)
         self->present [frame_nbr] = 0;
-
+    
+    *self->key = 0;
     return self;
 }
 
@@ -118,13 +119,12 @@ kvmsg_new (void)
 //  --------------------------------------------------------------------------
 //  Destructor
 
+//  Free shim, compatible with zhash_free_fn
 void
-kvmsg_destroy (kvmsg_t **self_p)
+kvmsg_free (void *ptr)
 {
-    assert (self_p);
-    if (*self_p) {
-        kvmsg_t *self = *self_p;
-
+    if (ptr) {
+        kvmsg_t *self = (kvmsg_t *) ptr;
         //  Destroy message frames if any
         int frame_nbr;
         for (frame_nbr = 0; frame_nbr < KVMSG_FRAMES; frame_nbr++)
@@ -133,6 +133,15 @@ kvmsg_destroy (kvmsg_t **self_p)
 
         //  Free object structure
         free (self);
+    }
+}
+
+void
+kvmsg_destroy (kvmsg_t **self_p)
+{
+    assert (self_p);
+    if (*self_p) {
+        kvmsg_free (*self_p);
         *self_p = NULL;
     }
 }
@@ -171,11 +180,13 @@ kvmsg_key (kvmsg_t *self)
 {
     assert (self);
     if (self->present [1]) {
-        size_t size = zmq_msg_size (&self->frame [1]);
-        if (size > KVMSG_KEY_MAX)
-            size = KVMSG_KEY_MAX;
-        memcpy (self->key, zmq_msg_data (&self->frame [1]), size);
-        self->key [size] = 0;
+        if (!*self->key) {
+            size_t size = zmq_msg_size (&self->frame [1]);
+            if (size > KVMSG_KEY_MAX)
+                size = KVMSG_KEY_MAX;
+            memcpy (self->key, zmq_msg_data (&self->frame [1]), size);
+            self->key [size] = 0;
+        }
         return self->key;
     }
     else
@@ -336,15 +347,12 @@ kvmsg_recv (void *socket)
 
 //  --------------------------------------------------------------------------
 //  Send message to socket
-//  Destroys message after sending
 
 void
-kvmsg_send (kvmsg_t **self_p, void *socket)
+kvmsg_send (kvmsg_t *self, void *socket)
 {
-    assert (self_p);
-    assert (*self_p);
+    assert (self);
     assert (socket);
-    kvmsg_t *self = *self_p;
 
     int frame_nbr;
     for (frame_nbr = 0; frame_nbr < KVMSG_FRAMES; frame_nbr++) {
@@ -352,26 +360,22 @@ kvmsg_send (kvmsg_t **self_p, void *socket)
         zmq_send (socket, &self->frame [frame_nbr],
             (frame_nbr < KVMSG_FRAMES - 1)? ZMQ_SNDMORE: 0);
     }
-    kvmsg_destroy (self_p);
 }
 
 
 //  --------------------------------------------------------------------------
-//  Store key/value into hash map, if key/value are set
+//  Store entire kvmsg into hash map, if key/value are set
+//  If you do this, don't destroy the kvmsg, it'll be destroyed automatically
+//  when needed.
 
 void
 kvmsg_hash_put (kvmsg_t *self, zhash_t *hash)
 {
     assert (self);
-
     if (self->present [1]
     &&  self->present [2]) {
-        char *key = kvmsg_key (self);
-        byte *body = malloc (kvmsg_size (self));
-        memcpy (body, kvmsg_body (self), kvmsg_size (self));
-        zhash_update (hash, key, body);
-        body = zhash_freefn (hash, key, free);
-        assert (body);
+        zhash_update (hash, kvmsg_key (self), self);
+        zhash_freefn (hash, kvmsg_key (self), kvmsg_free);
     }
 }
 
@@ -421,6 +425,8 @@ kvmsg_test (int verbose)
     rc = zmq_connect (input, "ipc://kvmsg_selftest.ipc");
     assert (rc == 0);
 
+    zhash_t *kvmap = zhash_new ();
+    
     //  Test send and receive of single-part message
     kvmsg = kvmsg_new ();
     kvmsg_set_sequence (kvmsg, 1);
@@ -428,22 +434,25 @@ kvmsg_test (int verbose)
     kvmsg_set_body     (kvmsg, (byte *) "body", 4);
     if (verbose)
         kvmsg_dump (kvmsg);
-    kvmsg_send (&kvmsg, output);
-    assert (kvmsg == NULL);
+    kvmsg_send (kvmsg, output);
+    kvmsg_hash_put (kvmsg, kvmap);
 
     kvmsg = kvmsg_recv (input);
     if (verbose)
         kvmsg_dump (kvmsg);
     assert (strcmp (kvmsg_key (kvmsg), "key") == 0);
+    kvmsg_hash_put (kvmsg, kvmap);
 
-    kvmsg_destroy (&kvmsg);
-    assert (kvmsg == NULL);
+    //  Should destroy all messages stored in map
+    zhash_destroy (&kvmap);
 
-    printf ("OK\n");
     zmq_close (input);
     zmq_close (output);
     zmq_term (context);
+    
+    printf ("OK\n");
     return 0;
 }
 
 #endif      //  Included
+    

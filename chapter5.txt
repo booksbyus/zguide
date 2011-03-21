@@ -201,9 +201,10 @@ The key aspect of the Clone pattern is that clients talk back to servers, which 
 We'll develop Clone in stages, solving one problem at a time. First, let's look at how to distribute key-value updates from a server to a set of clients. We'll take our weather server from Chapter One and refactor it to send messages as key-value pairs. We'll modify our client to store these in a hash table:
 
 [[code type="textdiagram"]]
+
                  +-------------+
                  |             |
-                 |  Publisher  |
+                 |   Server    |
                  |             |
                  +-------------+
                  |     PUB     |
@@ -220,47 +221,78 @@ We'll develop Clone in stages, solving one problem at a time. First, let's look 
   |    SUB     |  |    SUB     |  |    SUB     |
   +------------+  +------------+  +------------+
   |            |  |            |  |            |
-  | Subscriber |  | Subscriber |  | Subscriber |
+  |   Client   |  |   Client   |  |   Client   |
   |            |  |            |  |            |
   +------------+  +------------+  +------------+
 
 
-        Figure # - Basic Publish-Subscribe
+        Figure # - Simplest Clone Model
+[[/code]]
+
+This is the server:
+
+[[code type="example" title="Clone server, model 1" name="clonesrv1"]]
+[[/code]]
+
+And here is the client:
+
+[[code type="example" title="Clone client, model 1" name="clonecli1"]]
 [[/code]]
 
 Some notes about this code:
 
-* 
+* All the hard work is done in a class called **kvmsg**. This class works with key-value message objects, which are multipart 0MQ messages structured as three frames: a key (a 0MQ string), a sequence number (64-bit value, in network byte order), and a binary body (holds everything else).
+* The server generates messages with a randomized 4-digit key, which lets us simulate a large but not enormous hash table (10K entries).
+* The server does a 200 millisecond pause after binding its socket. This is to prevent "slow joiner syndrome" where the subscriber loses messages as it connects to the server's socket. We'll remove that in later models.
+* We'll use the terms 'publisher' and 'subscriber' in the code to refer to sockets. This will help later when we have multiple sockets doing different things.
 
-
+Both the server and client maintain hash tables, but this first model only works properly if we start all clients before the server, and the clients never crash. That's not 'reliability'.
 
 ++++ Getting a Snapshot
 
+In order to allow a late (or recovering) client to catch up with a server it has to get a snapshot of the server's state. Just as we've reduced "message" to mean "a sequenced key-value pair", we can reduce "state" to mean "a hash table". To get the server state, a client opens a REQ socket and asks for it explicitly:
 
-- publisher sends out messages in regular stream
-    - message is key + value
-    - server numbers messages incrementally
+[[code type="textdiagram"]]
 
-- client subscribes SUB to PUB
-    - starts to get and queue updates
+                 +-------------+
+                 |             |
+                 |   Server    |
+                 |             |
+                 +------+------+
+                 |  PUB | XREP |
+                 \---+--+------/
+                     |     ^
+                     |     |    state request
+                  updates  +----------------+
+                     |                      |
+     +---------------+---------------+      |
+     |               |               |      |
+     |               |               |      |
+     v               v               v      |
+  /------+-----\  /------+-----\  /------+--+--\
+  | SUB  |     |  | SUB  |     |  | SUB  | REQ |
+  +------+-----+  +------+-----+  +------+-----+
+  |            |  |            |  |            |
+  |   Client   |  |   Client   |  |   Client   |
+  |            |  |            |  |            |
+  +------------+  +------------+  +------------+
 
-- client requests snapshot REQ to XREP
-    - if server is not present, retry lazy pirate
 
-- server responds with current snapshot
-    - plus number of last message applied
-    - 'snapshot revision'
+          Figure # - State Replication
+[[/code]]
 
-- client takes snapshot and applies queued updates
-    - from message following snapshot revision
-    - any prior messages are discarded
+To make this work, we have to solve the timing problem. Getting a state snapshot will take a certain time, possibly fairly long if the snapshot is large. We need to correctly apply updates to the snapshot. But the server won't know when to start sending us updates. One way would be to start susbcribing, get a first update, and then ask for "state for update N". This would require the server storing one snapshot for each update, which isn't practical.
 
-- client then applies further messages
+So we will do the synchronization in the client, as follows:
+
+* The client first subscribes to updates and when it receives its first update, it makes a state request. This guarantees that the state is going to be newer than the oldest update it has.
+* The client waits for the server to reply with state, and meanwhile queues all updates. It can do this simply by not reading them, 0MQ will keep them queued on the socket queue, since we don't set a high-water mark.
+* When the client receives its state update, it begins once again to read updates. However it discards any updates that are older than the state update. So if the state update includes updates up to 200, the client will discard updates up to 201.
+* The client then applies updates to its own state snapshot.
+
+It's a simple model that exploits 0MQ's own internal queues. Here's the client:
 
 
-    sub socket talks to server
-    req for getting snapshot only
-    send snapshot through, then destroy req socket
 
 
 -------------------
@@ -293,6 +325,13 @@ With unique sequencing, clients can detect the nastier failures - network conges
 Clone is complex enough in practice that you don't want to implement it directly in your applications. Instead, it makes a good basis for an application server framework, which talks to applications via the key-value table.
 
 .end
+
++++ Cluster-wide topic distribution
+
+- anyone can publish
+- anyone can subscribe
+- reliable
+- using 1 or two forwarders
 
 
 +++ Atomic Group Multicast (Platoon Pattern)
