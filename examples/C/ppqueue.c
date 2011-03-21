@@ -162,7 +162,7 @@ int main (void)
             //  Now get next client request, route to next worker
             zmsg_t *msg = zmsg_recv (frontend);
             char *identity = s_worker_dequeue (queue);
-            zmsg_wrap (msg, identity, "");
+            zmsg_push (msg, identity);
             zmsg_send (&msg, backend);
             free (identity);
         }

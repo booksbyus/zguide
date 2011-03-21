@@ -8,7 +8,8 @@
 int main (int argc, char *argv [])
 {
     int verbose = (argc > 1 && strcmp (argv [1], "-v") == 0);
-    mdwrk_t *session = mdwrk_new ("tcp://localhost:5555", "echo", verbose);
+    mdwrk_t *session = mdwrk_new (
+        "tcp://localhost:5555", "echo", verbose);
 
     zmsg_t *reply = NULL;
     while (1) {

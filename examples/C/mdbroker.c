@@ -41,7 +41,7 @@ typedef struct {
 } worker_t;
 
 
-//  --------------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Broker functions
 static broker_t *
     s_broker_new (int verbose);
@@ -84,7 +84,7 @@ static void
     s_client_process (broker_t *self, char *sender, zmsg_t *msg);
 
 
-//  ----------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Main broker work happens here
 
 int main (int argc, char *argv [])
@@ -98,7 +98,8 @@ int main (int argc, char *argv [])
 
     //  Get and process messages forever or until interrupted
     while (!s_interrupted) {
-        zmq_pollitem_t items [] = { { self->socket,  0, ZMQ_POLLIN, 0 } };
+        zmq_pollitem_t items [] = { 
+            { self->socket,  0, ZMQ_POLLIN, 0 } };
         zmq_poll (items, 1, HEARTBEAT_INTERVAL * 1000);
 
         //  Process next input message, if any
@@ -146,7 +147,7 @@ int main (int argc, char *argv [])
 }
 
 
-//  --------------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Constructor for broker object
 
 static broker_t *
@@ -165,7 +166,7 @@ s_broker_new (int verbose)
     return self;
 }
 
-//  --------------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Destructor for broker object
 
 static void
@@ -184,7 +185,7 @@ s_broker_destroy (broker_t **self_p)
     }
 }
 
-//  --------------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Bind broker to endpoint, can call this multiple times
 //  We use a single socket for both clients and workers.
 
@@ -195,7 +196,7 @@ s_broker_bind (broker_t *self, char *endpoint)
     s_console ("I: MDP broker/0.1.1 is active at %s", endpoint);
 }
 
-//  ----------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Delete any idle workers that haven't pinged us in a while. Workers
 //  are oldest to most recent, so we stop at the first alive worker.
 
@@ -207,21 +208,23 @@ s_broker_purge_workers (broker_t *self)
         if (!s_worker_expired (worker))
             break;              //  Worker is alive, we're done here
         if (self->verbose)
-            s_console ("I: deleting expired worker: %s", worker->identity);
+            s_console ("I: deleting expired worker: %s", 
+                worker->identity);
 
         s_worker_delete (self, worker, 0);
         worker = zlist_first (self->waiting);
     }
 }
 
-//  ----------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Locate or create new service entry
 
 static service_t *
 s_service_require (broker_t *self, char *name)
 {
     assert (name);
-    service_t *service = (service_t *) zhash_lookup (self->services, name);
+    service_t *service = 
+        (service_t *) zhash_lookup (self->services, name);
     if (service == NULL) {
         service = (service_t *) calloc (1, sizeof (service_t));
         service->name = strdup (name);
@@ -235,7 +238,7 @@ s_service_require (broker_t *self, char *name)
     return service;
 }
 
-//  ----------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Destroy service object, called when service is removed from
 //  broker->services.
 
@@ -254,7 +257,7 @@ s_service_destroy (void *argument)
     free (service);
 }
 
-//  ----------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Dispatch requests to waiting workers as possible
 
 static void
@@ -276,7 +279,7 @@ s_service_dispatch (broker_t *self, service_t *service, zmsg_t *msg)
     }
 }
 
-//  ----------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Handle internal service according to 8/MMI specification
 
 static void
@@ -302,7 +305,7 @@ s_service_internal (broker_t *self, char *service_name, zmsg_t *msg)
     zmsg_send (&msg, self->socket);
 }
 
-//  ----------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Creates worker if necessary
 
 static worker_t *
@@ -311,7 +314,8 @@ s_worker_require (broker_t *self, char *identity)
     assert (identity);
 
     //  self->workers is keyed off worker identity
-    worker_t *worker = (worker_t *) zhash_lookup (self->workers, identity);
+    worker_t *worker = 
+        (worker_t *) zhash_lookup (self->workers, identity);
     if (worker == NULL) {
         worker = (worker_t *) calloc (1, sizeof (worker_t));
         worker->identity = strdup (identity);
@@ -323,7 +327,7 @@ s_worker_require (broker_t *self, char *identity)
     return worker;
 }
 
-//  ----------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Deletes worker from all data structures, and destroys worker
 
 static void
@@ -342,7 +346,7 @@ s_worker_delete (broker_t *self, worker_t *worker, int disconnect)
     zhash_delete (self->workers, worker->identity);
 }
 
-//  ----------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Destroy worker object, called when worker is removed from
 //  broker->workers.
 
@@ -355,7 +359,7 @@ s_worker_destroy (void *argument)
     free (worker);
 }
 
-//  ----------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Process message sent to us by a worker
 
 static void
@@ -416,7 +420,7 @@ s_worker_process (broker_t *self, char *sender, zmsg_t *msg)
     zmsg_destroy (&msg);
 }
 
-//  --------------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Send message to worker
 //  If pointer to message is provided, sends & destroys that message
 
@@ -443,7 +447,7 @@ s_worker_send (
     zmsg_send (&msg, self->socket);
 }
 
-//  ----------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  This worker is now waiting for work
 
 static void
@@ -456,7 +460,7 @@ s_worker_waiting (broker_t *self, worker_t *worker)
     s_service_dispatch (self, worker->service, NULL);
 }
 
-//  ----------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Return 1 if worker has expired and must be deleted
 
 static int
@@ -465,7 +469,7 @@ s_worker_expired (worker_t *worker)
     return worker->expiry < s_clock ();
 }
 
-//  ----------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Process a request coming from a client
 
 static void

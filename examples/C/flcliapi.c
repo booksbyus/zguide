@@ -1,31 +1,32 @@
-/*  =========================================================================
-    flclient.c - Freelance Pattern agent class
+/*  =====================================================================
+    flcliapi.c - Freelance Pattern agent class
     Model 3: uses ROUTER socket to address specific services
     Defined as .c to allow inclusion in Guide as example.
 
-    -------------------------------------------------------------------------
+    ---------------------------------------------------------------------
     Copyright (c) 1991-2011 iMatix Corporation <www.imatix.com>
     Copyright other contributors as noted in the AUTHORS file.
 
-    This file is part of the ZeroMQ Function Library: http://zfl.zeromq.org
+    This file is part of the ZeroMQ Guide: http://zguide.zeromq.org
 
-    This is free software; you can redistribute it and/or modify it under the
-    terms of the GNU Lesser General Public License as published by the Free
-    Software Foundation; either version 3 of the License, or (at your option)
-    any later version.
+    This is free software; you can redistribute it and/or modify it under
+    the terms of the GNU Lesser General Public License as published by 
+    the Free Software Foundation; either version 3 of the License, or (at 
+    your option) any later version.
 
     This software is distributed in the hope that it will be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABIL-
-    ITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
-    Public License for more details.
+    WITHOUT ANY WARRANTY; without even the implied warranty of 
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+    Lesser General Public License for more details.
 
-    You should have received a copy of the GNU Lesser General Public License
-    along with this program. If not, see <http://www.gnu.org/licenses/>.
-    =========================================================================
+    You should have received a copy of the GNU Lesser General Public 
+    License along with this program. If not, see 
+    <http://www.gnu.org/licenses/>.
+    =====================================================================
 */
 
-#ifndef __FLCLIENT_INCLUDED__
-#define __FLCLIENT_INCLUDED__
+#ifndef __FLCLIAPI_INCLUDED__
+#define __FLCLIAPI_INCLUDED__
 
 #include "zmsg.h"
 #include "zhash.h"
@@ -45,64 +46,64 @@ extern "C" {
 #endif
 
 //  Opaque class structure
-typedef struct _flclient_t flclient_t;
+typedef struct _flcliapi_t flcliapi_t;
 
-flclient_t *flclient_new     (void);
-void        flclient_destroy (flclient_t **self_p);
-void        flclient_connect (flclient_t *self, char *endpoint);
-zmsg_t *    flclient_request (flclient_t *self, zmsg_t **request_p);
+flcliapi_t *flcliapi_new     (void);
+void        flcliapi_destroy (flcliapi_t **self_p);
+void        flcliapi_connect (flcliapi_t *self, char *endpoint);
+zmsg_t *    flcliapi_request (flcliapi_t *self, zmsg_t **request_p);
 
 #ifdef __cplusplus
 }
 #endif
 
 
-//  ====================================================================
+//  =====================================================================
 //  Synchronous part, works in our application thread
 
-//  --------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Structure of our class
 
-struct _flclient_t {
+struct _flcliapi_t {
     void *context;      //  Our 0MQ context
-    void *control;      //  Inproc socket talking to flclient task
+    void *control;      //  Inproc socket talking to flcliapi task
 };
 
-static void *flclient_task (void *context);
+static void *flcliapi_task (void *context);
 
-//  --------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Constructor
 
-flclient_t *
-flclient_new (void)
+flcliapi_t *
+flcliapi_new (void)
 {
-    flclient_t
+    flcliapi_t
         *self;
 
     s_catch_signals ();
-    self = (flclient_t *) malloc (sizeof (flclient_t));
+    self = (flcliapi_t *) malloc (sizeof (flcliapi_t));
     self->context = zmq_init (1);
     self->control = zmq_socket (self->context, ZMQ_PAIR);
 
-    int rc = zmq_bind (self->control, "inproc://flclient");
+    int rc = zmq_bind (self->control, "inproc://flcliapi");
     assert (rc == 0);
 
     pthread_t thread;
-    pthread_create (&thread, NULL, flclient_task, self->context);
+    pthread_create (&thread, NULL, flcliapi_task, self->context);
     pthread_detach (thread);
 
     return self;
 }
 
-//  --------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Destructor
 
 void
-flclient_destroy (flclient_t **self_p)
+flcliapi_destroy (flcliapi_t **self_p)
 {
     assert (self_p);
     if (*self_p) {
-        flclient_t *self = *self_p;
+        flcliapi_t *self = *self_p;
         zmq_close (self->control);
         zmq_term (self->context);
         //  Free object structure
@@ -111,11 +112,11 @@ flclient_destroy (flclient_t **self_p)
     }
 }
 
-//  --------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Connect to new server endpoint
 
 void
-flclient_connect (flclient_t *self, char *endpoint)
+flcliapi_connect (flcliapi_t *self, char *endpoint)
 {
     assert (self);
     assert (endpoint);
@@ -125,11 +126,11 @@ flclient_connect (flclient_t *self, char *endpoint)
     s_sleep (100);      //  Allow connection to come up
 }
 
-//  --------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Send & destroy request, get reply
 
 zmsg_t *
-flclient_request (flclient_t *self, zmsg_t **request_p)
+flcliapi_request (flcliapi_t *self, zmsg_t **request_p)
 {
     assert (self);
     assert (*request_p);
@@ -147,10 +148,10 @@ flclient_request (flclient_t *self, zmsg_t **request_p)
 }
 
 
-//  ====================================================================
+//  =====================================================================
 //  Asynchronous part, works in the background
 
-//  --------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Simple class for one server we talk to
 
 typedef struct {
@@ -207,7 +208,7 @@ server_tickless (char *key, void *server, void *arg)
 }
 
 
-//  --------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Simple class for one background agent
 
 typedef struct {
@@ -306,7 +307,8 @@ agent_router_message (agent_t *self)
 
     //  Frame 0 is server that replied
     char *endpoint = zmsg_pop (reply);
-    server_t *server = (server_t *) zhash_lookup (self->servers, endpoint);
+    server_t *server = 
+        (server_t *) zhash_lookup (self->servers, endpoint);
     assert (server);
     free (endpoint);
     if (!server->alive) {
@@ -328,14 +330,14 @@ agent_router_message (agent_t *self)
 }
 
 
-//  --------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Asynchronous agent manages server pool and handles request/reply
 //  dialog when the application asks for it.
 
 static void *
-flclient_task (void *context) 
+flcliapi_task (void *context) 
 {
-    agent_t *self = agent_new (context, "inproc://flclient");
+    agent_t *self = agent_new (context, "inproc://flcliapi");
     zmq_pollitem_t items [] = { 
         { self->control, 0, ZMQ_POLLIN, 0 },
         { self->router, 0, ZMQ_POLLIN, 0 } 
@@ -370,7 +372,8 @@ flclient_task (void *context)
             else {
                 //  Find server to talk to, remove any expired ones
                 while (zlist_size (self->actives)) {
-                    server_t *server = (server_t *) zlist_first (self->actives);
+                    server_t *server = 
+                        (server_t *) zlist_first (self->actives);
                     if (s_clock () >= server->expires) {
                         zlist_pop (self->actives);
                         server->alive = 0;

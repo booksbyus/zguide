@@ -240,7 +240,7 @@ The PUB-SUB socket pair is asynchronous. The client does zmq_recv[3], in a loop 
 
 There is one important thing to know about PUB/SUB sockets: you do not know precisely when a subscriber starts to get messages. Even if you start a subscriber, wait a while, and then start the publisher, **the subscriber will always miss the first messages that the publisher sends**. This is because as the subscriber connects to the publisher (something that takes a small but non-zero time), the publisher may already be sending messages out.
 
-This "slow subscriber connect" symptom hits enough people, often enough, that I'm going to explain it in detail. Remember that 0MQ does asynchronous I/O, i.e. in the background. Say you have two nodes doing this, in this order:
+This "slow joiner" symptom hits enough people, often enough, that I'm going to explain it in detail. Remember that 0MQ does asynchronous I/O, i.e. in the background. Say you have two nodes doing this, in this order:
 
 * Subscriber connects to an endpoint and receives and counts messages.
 * Publisher binds to an endpoint and immediately sends 1,000 messages.
@@ -384,6 +384,8 @@ Let's look at some aspects of this code in more detail:
 
           Figure # - Fair queuing
 [[/code]]
+
+The pipeline pattern also exhibits the "slow joiner" syndrome, leading to accusations that PUSH sockets don't load balance properly. If you are using PUSH and PULL, and one of your workers gets way more messages than the others, it's because that PULL socket has joined faster than the others, and grabs a lot of messages before the others manage to connect.
 
 +++ Programming with 0MQ
 
@@ -722,11 +724,11 @@ As you start to program with 0MQ you will come across one problem more than once
                  |                          | Yes
                  |                          |
                  |                          v
-                 |             +---------------------------+
-                 |             |  See explanation of the   |
-                 |             | "slow subscriber connect" |
-                 |             |   syndrome in this text.  |
-                 |             +---------------------------+
+                 |              +-------------------------+
+                 |              |  See explanation of the |
+                 |              | "slow joiner" syndrome  |
+                 |              |  syndrome in this text. |
+                 |              +-------------------------+
                  |
                  |
                  v
