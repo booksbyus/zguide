@@ -157,7 +157,7 @@ Our second approach takes Lazy Pirate pattern and extends it with a queue device
 
 In all these Pirate patterns, workers are stateless, or have some shared state we don't know about, e.g. a shared database. Having a queue device means workers can come and go without clients knowing anything about it. If one worker dies, another takes over. This is a nice simple topology with only one real weakness, namely the central queue itself, which can become a problem to manage, and a single point of failure.
 
-The basis for the queue device is the least-recently-used (LRU) routing queue from Chapter 3. What is the very //minimum// we need to do to handle dead or blocked workers? Turns out, its surprisingly little. We already have a retry mechanism in the client. So using the standard LRU queue will work pretty well. This fits with 0MQ's philosophy that we can extend a peer-to-peer pattern like request-reply by plugging naive devices in the middle:
+The basis for the queue device is the least-recently-used (LRU) routing queue from Chapter Three. What is the very //minimum// we need to do to handle dead or blocked workers? Turns out, its surprisingly little. We already have a retry mechanism in the client. So using the standard LRU queue will work pretty well. This fits with 0MQ's philosophy that we can extend a peer-to-peer pattern like request-reply by plugging naive devices in the middle:
 
 [[code type="textdiagram"]]
 
@@ -219,7 +219,7 @@ The Simple Pirate Queue pattern works pretty well, especially since it's just a 
 
 We'll fix these in a properly pedantic Paranoid Pirate Pattern.
 
-We previously used a REQ socket for the worker. For the Paranoid Pirate worker we'll switch to a DEALER (XREQ) socket. This has the advantage of letting us send and receive messages at any time, rather than the lock-step send/receive that REQ imposes. The downside of DEALER is that we have to do our own envelope management. If you don't know what I mean, please re-read Chapter 3.
+We previously used a REQ socket for the worker. For the Paranoid Pirate worker we'll switch to a DEALER (XREQ) socket. This has the advantage of letting us send and receive messages at any time, rather than the lock-step send/receive that REQ imposes. The downside of DEALER is that we have to do our own envelope management. If you don't know what I mean, please re-read Chapter Three.
 
 [[code type="textdiagram"]]
 

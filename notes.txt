@@ -34,7 +34,21 @@ Notes for The Guide
 - router trees
  (federation)
 
+- cross-over router
+    - send to, send from
+    - flips addresses, gives you reply model
 
+- FD_EVENT integration
+
+    //  If socket is a ROUTER, get identity first
+    int socket_type;
+    size_t type_size = sizeof (socket_type);
+    zmq_getsockopt (socket, ZMQ_TYPE, &socket_type, &type_size);
+    if (socket_type == ZMQ_XREP) {
+        zmq_msg_t mesg;
+        zmq_msg_init (&mesg);
+        zmq_recv (socket, &mesg, 0);
+    }
 
 - example of monitoring bus
     - cluster broker, send out state
