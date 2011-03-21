@@ -31,8 +31,8 @@
 extern "C" {
 #endif
 
-//  Callback function for zhash_apply method
-typedef int (zhash_apply_fn) (char *key, void *value, void *argument);
+//  Callback function for zhash_foreach method
+typedef int (zhash_foreach_fn) (char *key, void *value, void *argument);
 //  Callback function for zhash_freefn method
 typedef void (zhash_free_fn) (void *data);
 
@@ -56,7 +56,7 @@ void *
 size_t
     zhash_size (zhash_t *self);
 int
-    zhash_apply (zhash_t *self, zhash_apply_fn *callback, void *argument);
+    zhash_foreach (zhash_t *self, zhash_foreach_fn *callback, void *argument);
 void
     zhash_test (int verbose);
 
@@ -419,7 +419,7 @@ zhash_size (zhash_t *self)
 //  final return code from callback function (zero = success).
 
 int
-zhash_apply (zhash_t *self, zhash_apply_fn *callback, void *argument)
+zhash_foreach (zhash_t *self, zhash_foreach_fn *callback, void *argument)
 {
     assert (self);
     uint

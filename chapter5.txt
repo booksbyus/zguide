@@ -290,31 +290,29 @@ So we will do the synchronization in the client, as follows:
 * When the client receives its state update, it begins once again to read updates. However it discards any updates that are older than the state update. So if the state update includes updates up to 200, the client will discard updates up to 201.
 * The client then applies updates to its own state snapshot.
 
-It's a simple model that exploits 0MQ's own internal queues. Here's the client:
+It's a simple model that exploits 0MQ's own internal queues. Here's the server:
 
+[[code type="example" title="Clone server, model 2" name="clonesrv2"]]
+[[/code]]
 
+And here is the client:
 
+[[code type="example" title="Clone client, model 2" name="clonecli2"]]
+[[/code]]
 
--------------------
+Some notes about this code:
 
-When a client joins the network, it subscribes a SUB socket, as we'd expect, to the data stream coming from the server (the publisher). This goes across some pub-sub topology (a multicast bus, perhaps, or a tree of forwarder devices, or direct client-to-server connections).
+* The server uses two threads, for simpler design. One thread produces random updates, and the second thread handles state. The two communicate across PAIR sockets. You might like to use SUB sockets but you'd hit the "slow joiner" problem where the subscriber would randomly miss some messages while connecting. PAIR sockets let us explicitly synchronize the two threads.
+* The client is really simple. In C, under 60 lines of code. A lot of the heavy lifting is done in the kvmsg class, but still, the Clone pattern is much easier to implement than it would appear.
+* We don't use anything fancy for serializing the state. The hash table holds a set of kvmsg objects, and the server sends these, as a batch of messages, to the client requesting state. If multiple clients request state at once, each will get a different snapshot.
+* We assume that the client has exactly one server to talk to. The server **must** be running; we do not try to solve the question of what happens if the server crashes.
 
-At some undetermined point, it will start getting messages from the server. Note that we can't predict what the client will receive as its first message. If a zmq_connect[3] call takes 10 msec, and in that time the server has sent 100 messages, the client might get messages starting from the 100th message.
+Right now, these two programs don't do anything real, but they correctly synchronize state. It's a neat example of how to mix different patterns: PAIR-over-inproc, PUB-SUB, and ROUTER-DEALER.
 
-Let's define a message as a key-value pair. The semantics are simple: if the value is provided, it's an insert or update operation. If there is no value, it's a delete operation. The key provides the subscription filter, so clients can treat the cache as a tree, and select whatever branches of the tree they want to hold.
+++++ Republishing Updates
 
-The client now connects to the server using a different socket (a REQ socket) and asks for a snapshot of the cache. It tells the server two things: which message it received (which means the server has to number messages), and which branch or branches of the cache it wants. To keep things simple we'll assume that any client has exactly one server that it talks to, and gets its cache from. The server **must** be running; we do not try to solve the question of what happens if the server crashes (that's left as an exercise for you to hurt your brain over).
-
-The server builds a snapshot and sends that to the client's REQ socket. This can take some time, especially if the cache is large. The client continues to receive updates from the server on its SUB socket, which it queues but does not process. We'll assume these updates fit into memory. At some point it gets the snapshot on its REQ socket. It then applies the updates to that snapshot, which gives it a working cache.
-
-You'll perhaps see one difficulty here. If the client asks for a snapshot based on message 100, how does the server provide this? After all, it may have sent out lots of updates in the meantime. We solve this by cheating gracefully. The server just sends its current snapshot, but tells the client what its latest message number is. Say that's 200. The client gets the snapshot, and in its queue, it has messages 100 to 300. It throws out 100 to 200, and starts applying 201 to 300 to the snapshot.
-
-Once the client has happily gotten its cache, it disconnects from the server (destroys that REQ socket), which is not used for anything more.
-
-
--------------------
-
-How does Clone handle updates from clients? There are several options but the simplest seems to be that each client acts as a publisher back to the server, which subscribes. In a TCP network this will mean persistent connections between clients and servers. In a PGM network this will mean using a shared multicast bus that clients write to, and the server listens to.
+- clones will not have identical state, unless all started at once and cloned in parallel
+- clients may send updates back to server, via pub/sub
 
 So the client, at startup, opens a PUB socket and part of its initial request to the server includes the address of that socket, so the server can open a SUB socket and connect back to it.
 
@@ -324,7 +322,24 @@ With unique sequencing, clients can detect the nastier failures - network conges
 
 Clone is complex enough in practice that you don't want to implement it directly in your applications. Instead, it makes a good basis for an application server framework, which talks to applications via the key-value table.
 
+++++ Clone API
+
+- event driven on changes?
+- wrap as API cloneapi.h
+
+++++ Reliable Clone Server
+
+- primary/backup
+- second server as client of first
+- clients able to connect to either of two
+
+++++ Using Clone in Practice
+
+- distributed name service
+
+
 .end
+
 
 +++ Cluster-wide topic distribution
 

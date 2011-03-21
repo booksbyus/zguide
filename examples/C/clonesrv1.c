@@ -5,7 +5,7 @@
 
 int main (void) 
 {
-    //  Prepare our context and publisher
+    //  Prepare our context and publisher socket
     void *context = zmq_init (1);
     void *publisher = zmq_socket (context, ZMQ_PUB);
     zmq_bind (publisher, "tcp://*:5556");
@@ -18,12 +18,11 @@ int main (void)
 
     while (!s_interrupted) {
         //  Distribute as key-value message
-        kvmsg_t *kvmsg = kvmsg_new ();
-        kvmsg_set_sequence (kvmsg, sequence++);
+        kvmsg_t *kvmsg = kvmsg_new (++sequence);
         kvmsg_fmt_key  (kvmsg, "%d", randof (10000));
         kvmsg_fmt_body (kvmsg, "%d", randof (1000000));
-        kvmsg_hash_put (kvmsg, kvmap);
-        kvmsg_send (&kvmsg, publisher);
+        kvmsg_send (kvmsg, publisher);
+        kvmsg_store (kvmsg, kvmap);
     }
     printf (" Interrupted\n%" PRId64 " messages out\n", sequence);
     zhash_destroy (&kvmap);

@@ -40,7 +40,7 @@ extern "C" {
 #endif
 
 kvmsg_t *
-    kvmsg_new (void);
+    kvmsg_new (int64_t sequence);
 void
     kvmsg_destroy (kvmsg_t **self_p);
 int64_t
@@ -66,7 +66,7 @@ kvmsg_t *
 void
     kvmsg_send (kvmsg_t *self, void *socket);
 void
-    kvmsg_hash_put (kvmsg_t *self, zhash_t *hash);
+    kvmsg_store (kvmsg_t *self, zhash_t *hash);
 void
     kvmsg_dump (kvmsg_t *self);
 int
@@ -100,7 +100,7 @@ struct _kvmsg {
 //  Constructor, sets initial body if provided
 
 kvmsg_t *
-kvmsg_new (void)
+kvmsg_new (int64_t sequence)
 {
     kvmsg_t
         *self;
@@ -113,6 +113,7 @@ kvmsg_new (void)
         self->present [frame_nbr] = 0;
     
     *self->key = 0;
+    kvmsg_set_sequence (self, sequence);
     return self;
 }
 
@@ -318,7 +319,7 @@ kvmsg_t *
 kvmsg_recv (void *socket)
 {
     assert (socket);
-    kvmsg_t *self = kvmsg_new ();
+    kvmsg_t *self = kvmsg_new (0);
 
     //  Read all frames off the wire, reject if bogus
     int frame_nbr;
@@ -327,7 +328,6 @@ kvmsg_recv (void *socket)
             zmq_msg_close (&self->frame [frame_nbr]);
         zmq_msg_init (&self->frame [frame_nbr]);
         self->present [frame_nbr] = 1;
-
         if (zmq_recv (socket, &self->frame [frame_nbr], 0)) {
             kvmsg_destroy (&self);
             break;
@@ -347,7 +347,7 @@ kvmsg_recv (void *socket)
 
 
 //  --------------------------------------------------------------------------
-//  Send message to socket
+//  Send key-value message to socket
 
 void
 kvmsg_send (kvmsg_t *self, void *socket)
@@ -358,8 +358,12 @@ kvmsg_send (kvmsg_t *self, void *socket)
     int frame_nbr;
     for (frame_nbr = 0; frame_nbr < KVMSG_FRAMES; frame_nbr++) {
         assert (self->present [frame_nbr]);
-        zmq_send (socket, &self->frame [frame_nbr],
+        zmq_msg_t copy;
+        zmq_msg_init (&copy);
+        zmq_msg_copy (&copy, &self->frame [frame_nbr]);
+        zmq_send (socket, &copy,
             (frame_nbr < KVMSG_FRAMES - 1)? ZMQ_SNDMORE: 0);
+        zmq_msg_close (&copy);
     }
 }
 
@@ -370,7 +374,7 @@ kvmsg_send (kvmsg_t *self, void *socket)
 //  when needed.
 
 void
-kvmsg_hash_put (kvmsg_t *self, zhash_t *hash)
+kvmsg_store (kvmsg_t *self, zhash_t *hash)
 {
     assert (self);
     if (self->present [1]
@@ -387,22 +391,25 @@ kvmsg_hash_put (kvmsg_t *self, zhash_t *hash)
 void
 kvmsg_dump (kvmsg_t *self)
 {
-    assert (self);
-    fprintf (stderr, "--------------------------------------\n");
-    if (!self) {
-        fprintf (stderr, "NULL");
-        return;
-    }
-    size_t size = kvmsg_size (self);
-    byte  *body = kvmsg_body (self);
-    fprintf (stderr, "[%" PRId64 "]\n", kvmsg_sequence (self));
-    fprintf (stderr, "[%s]\n", kvmsg_key (self));
-    fprintf (stderr, "[%03zd] ", size);
+    if (self) {
+        fprintf (stderr, "--------------------------------------\n");
+        if (!self) {
+            fprintf (stderr, "NULL");
+            return;
+        }
+        size_t size = kvmsg_size (self);
+        byte  *body = kvmsg_body (self);
+        fprintf (stderr, "[%" PRId64 "]\n", kvmsg_sequence (self));
+        fprintf (stderr, "[%s]\n", kvmsg_key (self));
+        fprintf (stderr, "[%03zd] ", size);
 
-    int char_nbr;
-    for (char_nbr = 0; char_nbr < size; char_nbr++)
-        fprintf (stderr, "%02X", body [char_nbr]);
-    fprintf (stderr, "\n");
+        int char_nbr;
+        for (char_nbr = 0; char_nbr < size; char_nbr++)
+            fprintf (stderr, "%02X", body [char_nbr]);
+        fprintf (stderr, "\n");
+    }
+    else
+        fprintf (stderr, "NULL message\n");
 }
 
 
@@ -429,20 +436,19 @@ kvmsg_test (int verbose)
     zhash_t *kvmap = zhash_new ();
     
     //  Test send and receive of single-part message
-    kvmsg = kvmsg_new ();
-    kvmsg_set_sequence (kvmsg, 1);
-    kvmsg_set_key      (kvmsg, "key");
-    kvmsg_set_body     (kvmsg, (byte *) "body", 4);
+    kvmsg = kvmsg_new (1);
+    kvmsg_set_key (kvmsg, "key");
+    kvmsg_set_body (kvmsg, (byte *) "body", 4);
     if (verbose)
         kvmsg_dump (kvmsg);
     kvmsg_send (kvmsg, output);
-    kvmsg_hash_put (kvmsg, kvmap);
+    kvmsg_store (kvmsg, kvmap);
 
     kvmsg = kvmsg_recv (input);
     if (verbose)
         kvmsg_dump (kvmsg);
     assert (strcmp (kvmsg_key (kvmsg), "key") == 0);
-    kvmsg_hash_put (kvmsg, kvmap);
+    kvmsg_store (kvmsg, kvmap);
 
     //  Should destroy all messages stored in map
     zhash_destroy (&kvmap);
