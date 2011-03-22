@@ -1,13 +1,37 @@
-No-one has translated the spworker example into PHP yet.  Be the first to create
-spworker in PHP and get one free Internet!  If you're the author of the PHP
-binding, this is a great way to get people to use 0MQ in PHP.
+<?php
+/*
+ * Simple Pirate worker
+ * Connects REQ socket to tcp://*:5556
+ * Implements worker part of LRU queueing
+ */
+include "zmsg.php";
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+$context = new ZMQContext();
+$worker = new ZMQSocket($context, ZMQ::SOCKET_REQ);
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+//  Set random identity to make tracing easier
+$identity = sprintf ("%04X-%04X", rand(0, 0x10000), rand(0, 0x10000));
+$worker->setSockOpt(ZMQ::SOCKOPT_IDENTITY, $identity);
+$worker->connect("tcp://localhost:5556");
 
-Subscribe to the email list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+//  Tell queue we're ready for work
+printf ("I: (%s) worker ready%s", $identity, PHP_EOL);
+$worker->send("READY");
+
+$cycles = 0;
+while(true) {
+	$zmsg = new Zmsg($worker);
+	$zmsg->recv();
+	
+	//  Simulate various problems, after a few cycles
+	if($cycles > 3 && rand(0, 3) == 0) {
+		echo "I: (%s) simulating a crash", $identity, PHP_EOL;
+		break;
+	} else if($cycles > 3 && rand(0, 3) == 0) {
+		echo "I: (%s) simulating CPU overload", $identity, PHP_EOL;
+		sleep(5);
+	}
+	printf ("I: (%s) normal reply - %s%s", $identity, $zmsg->body(), PHP_EOL);
+	sleep(1); // Do some heavy work
+	$zmsg->send();
+}

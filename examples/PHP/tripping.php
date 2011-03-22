@@ -9,7 +9,7 @@
  */
 include "zmsg.php";
 
-public function client_task() {
+function client_task() {
 	$context = new ZMQContext();
 	$client = new ZMQSocket($context, ZMQ::SOCKET_XREQ);
 	$client->setSockOpt(ZMQ::SOCKOPT_IDENTITY, "C");
@@ -24,92 +24,80 @@ public function client_task() {
 		$client->send("HELLO");
 		$msg = $client->recv();
 	}
+	printf (" %d calls/second%s",
+		(1000 * 10000) / (int) ((microtime(true) - $start) * 1000), 
+		PHP_EOL);
+	
+	echo "Asynchronous round-trip test...", PHP_EOL;
+	$start = microtime(true);
+	for($requests = 0; $requests < 100000; $requests++) {
+		$client->send("HELLO");
+	}
+	
+	for($requests = 0; $requests < 100000; $requests++) {
+		$client->recv();
+	}
+	
+	printf (" %d calls/second%s",
+		(1000 * 100000) / (int) ((microtime(true) - $start) * 1000), 
+		PHP_EOL);
 }
 
-    printf (" %d calls/second\n",
-        (1000 * 10000) / (int) (s_clock () - start));
 
-    printf ("Asynchronous round-trip test...\n");
-    start = s_clock ();
-    for (requests = 0; requests < 100000; requests++) {
-        zmsg_t *msg = zmsg_new ("HELLO");
-        zmsg_send (&msg, client);
-    }
-    for (requests = 0; requests < 100000; requests++) {
-        zmsg_t *msg = zmsg_recv (client);
-        zmsg_destroy (&msg);
-    }
-    printf (" %d calls/second\n",
-        (1000 * 100000) / (int) (s_clock () - start));
-
-    zmq_close (client);
-    zmq_term (context);
-    return NULL;
+function worker_task() {
+	$context = new ZMQContext();
+	$worker = new ZMQSocket($context, ZMQ::SOCKET_XREQ);
+	$worker->setSockOpt(ZMQ::SOCKOPT_IDENTITY, "W");
+	$worker->connect("tcp://localhost:5556");
+	
+	while(true) {
+		$zmsg = new Zmsg($worker);
+		$zmsg->recv();
+		$zmsg->send();
+	}
 }
 
-static void *
-worker_task (void *args)
-{
-    void *context = zmq_init (1);
-    void *worker = zmq_socket (context, ZMQ_XREQ);
-    zmq_setsockopt (worker, ZMQ_IDENTITY, "W", 1);
-    zmq_connect (worker, "tcp://localhost:5556");
-
-    while (1) {
-        zmsg_t *msg = zmsg_recv (worker);
-        zmsg_send (&msg, worker);
-    }
-    zmq_close (worker);
-    zmq_term (context);
-    return NULL;
+function broker_task() {
+	//  Prepare our context and sockets
+	$context = new ZMQContext();
+	$frontend = new ZMQSocket($context, ZMQ::SOCKET_XREP);
+	$backend = new ZMQSocket($context, ZMQ::SOCKET_XREP);
+	$frontend->bind("tcp://*:5555");
+	$backend->bind("tcp://*:5556");
+	
+	//  Initialize poll set
+	$poll = new ZMQPoll();
+	$poll->add($frontend, ZMQ::POLL_IN);
+	$poll->add($backend, ZMQ::POLL_IN);
+	$read = $write = array();
+	
+	while(true) {
+		$events = $poll->poll($read, $write);
+		foreach($read as $socket) {
+			$zmsg = new Zmsg($socket);
+			$zmsg->recv();
+			if($socket === $frontend) {
+				$zmsg->push("W");
+				$zmsg->set_socket($backend)->send();
+			} else if($socket === $backend) {
+				$zmsg->pop();
+				$zmsg->push("C");
+				$zmsg->set_socket($frontend)->send();
+			}
+			
+		}
+	}
 }
 
-static void *
-broker_task (void *args)
-{
-    //  Prepare our context and sockets
-    void *context = zmq_init (1);
-    void *frontend = zmq_socket (context, ZMQ_XREP);
-    void *backend  = zmq_socket (context, ZMQ_XREP);
-    zmq_bind (frontend, "tcp://*:5555");
-    zmq_bind (backend,  "tcp://*:5556");
-
-    //  Initialize poll set
-    zmq_pollitem_t items [] = {
-        { frontend, 0, ZMQ_POLLIN, 0 },
-        { backend,  0, ZMQ_POLLIN, 0 }
-    };
-    while (1) {
-        zmq_poll (items, 2, -1);
-        if (items [0].revents & ZMQ_POLLIN) {
-            zmsg_t *msg = zmsg_recv (frontend);
-            free (zmsg_pop (msg));
-            zmsg_push (msg, "W");
-            zmsg_send (&msg, backend);
-        }
-        if (items [1].revents & ZMQ_POLLIN) {
-            zmsg_t *msg = zmsg_recv (backend);
-            free (zmsg_pop (msg));
-            zmsg_push (msg, "C");
-            zmsg_send (&msg, frontend);
-        }
-    }
-    zmq_close (frontend);
-    zmq_close (backend);
-    zmq_term (context);
-    return NULL;
+$wpid = pcntl_fork();
+if($wpid == 0) {
+	worker_task();
+}
+$bpid = pcntl_fork();
+if($bpid == 0) {
+	broker_task();
 }
 
-int main (void)
-{
-    s_version_assert (2, 1);
-
-    pthread_t client;
-    pthread_create (&client, NULL, client_task, NULL);
-    pthread_t worker;
-    pthread_create (&worker, NULL, worker_task, NULL);
-    pthread_t broker;
-    pthread_create (&broker, NULL, broker_task, NULL);
-    pthread_join (client, NULL);
-    return 0;
-}
+client_task();
+posix_kill($wpid, SIGKILL);
+posix_kill($bpid, SIGKILL);
