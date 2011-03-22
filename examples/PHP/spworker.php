@@ -3,6 +3,8 @@
  * Simple Pirate worker
  * Connects REQ socket to tcp://*:5556
  * Implements worker part of LRU queueing
+ * 
+ * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
  */
 include "zmsg.php";
 

@@ -5,6 +5,8 @@
  * Like hwserver except:
  * - echoes request as-is
  * - randomly runs slowly, or exits to simulate a crash.
+ * 
+ * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
  */
 
 $context = new ZMQContext();

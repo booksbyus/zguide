@@ -6,6 +6,8 @@
  * While this example runs in a single process, that is just to make
  * it easier to start and stop the example. Each thread has its own
  * context and conceptually acts as a separate process.
+ * 
+ * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
  */
 include "zmsg.php";
 

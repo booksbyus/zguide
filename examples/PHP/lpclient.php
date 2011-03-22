@@ -3,6 +3,8 @@
  * Lazy Pirate client
  * Use zmq_poll to do a safe request-reply
  * To run, start lpserver and then randomly kill/restart it
+ * 
+ * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
  */
 
 define("REQUEST_TIMEOUT", 2500); //  msecs, (> 1000!)
