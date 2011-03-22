@@ -1,3 +1,8 @@
+--
+--  Ported functions from zhelpers.h
+--
+--  Author: Robert G. Jakabosky <bobby@sharedrealm.com>
+--
 
 local format = string.format
 local random = math.random
@@ -26,47 +31,46 @@ function s_recv(socket)
 end
 
 --  Convert C string to 0MQ string and send to socket
-function s_send(socket, string)
-    return socket:recv(string)
+function s_send(socket, msg)
+    return socket:send(msg)
 end
 
 --  Sends string as 0MQ string, as multipart non-terminal
-function s_sendmore(socket, string)
-    return socket:recv(string, zmq.SNDMORE)
+function s_sendmore(socket, msg)
+    return socket:send(msg, zmq.SNDMORE)
 end
 
 --  Receives all message parts from socket, prints neatly
 --
 function s_dump(socket)
-    puts ("----------------------------------------");
+    print("----------------------------------------")
     while true do
         --  Process all parts of the message
-        local data = socket:recv();
+        local data = socket:recv()
 
         --  Dump the message as text or binary
-        local is_text = 1;
+        local is_text = true
         for i=1,#data do
             local c = data:byte(i)
             if (c < 32 or c > 127) then
-                is_text = 0
+                is_text = false
                 break
             end
         end
 
-        printf ("[%03d] ", #data);
-        if (is_text) then
-            write(data);
+        printf("[%03d] ", #data)
+        if is_text then
+            write(data)
         else
             for i=1,#data do
-                printf ("%02X", data:byte(i));
+                printf("%02X", data:byte(i))
             end
         end
-        printf ("\n");
+        printf("\n")
 
         --  Multipart detection
-        local more = socket:getopt(zmq.RCVMORE)
-        if (more == 0) then
-            break;      --  Last message part
+        if (socket:getopt(zmq.RCVMORE) == 0) then
+            break      --  Last message part
         end
     end
 end
@@ -74,8 +78,8 @@ end
 --  Set simple random printable identity on socket
 --
 function s_set_id(socket)
-    local identity = format("%04X-%04X", randof (0x10000), randof (0x10000));
-    return socket:setopt(zmq.IDENTITY, identity);
+    local identity = format("%04X-%04X", randof (0x10000), randof (0x10000))
+    return socket:setopt(zmq.IDENTITY, identity)
 end
 
 
@@ -83,17 +87,17 @@ end
 --
 function s_version()
     local major, minor, patch = unpack(zmq.version())
-    printf ("Current 0MQ version is %d.%d.%d\n", major, minor, patch);
+    printf ("Current 0MQ version is %d.%d.%d\n", major, minor, patch)
 end
 
 --  Require at least some specified version
 function s_version_assert(want_major, want_minor)
     local major, minor, patch = unpack(zmq.version())
     if (major < want_major or (major == want_major and minor < want_minor)) then
-        printf ("Current 0MQ version is %d.%d\n", major, minor);
+        printf ("Current 0MQ version is %d.%d\n", major, minor)
         printf ("Application needs at least %d.%d - cannot continue\n",
-            want_major, want_minor);
-        os.exit(-1);
+            want_major, want_minor)
+        os.exit(-1)
     end
 end
 
@@ -127,8 +131,21 @@ end
 --  terminated with a newline.
 
 function s_console(format, ...)
-    print(os.date("%y-%m-%d %H:%M:%S "));
-    printf(fmt, ...);
+    print(os.date("%y-%m-%d %H:%M:%S "))
+    printf(fmt, ...)
     print()
+end
+
+
+--  ---------------------------------------------------------------------
+--  Signal handling
+--
+--  Call s_catch_signals() in your application at startup, and then exit 
+--  your main loop if s_interrupted is ever 1. Works especially well with 
+--  zmq_poll.
+
+s_interrupted = false
+
+function s_catch_signals()
 end
 

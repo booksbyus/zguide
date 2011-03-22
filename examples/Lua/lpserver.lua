@@ -1,13 +1,39 @@
-No-one has translated the lpserver example into Lua yet.  Be the first to create
-lpserver in Lua and get one free Internet!  If you're the author of the Lua
-binding, this is a great way to get people to use 0MQ in Lua.
+--
+--  Lazy Pirate server
+--  Binds REQ socket to tcp://*:5555
+--  Like hwserver except:
+--   - echoes request as-is
+--   - randomly runs slowly, or exits to simulate a crash.
+--
+--  Author: Robert G. Jakabosky <bobby@sharedrealm.com>
+--
+require"zmq"
+require"zhelpers"
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+math.randomseed(os.time())
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+local context = zmq.init(1)
+local server = context:socket(zmq.REP)
+server:bind("tcp://*:5555")
 
-Subscribe to the email list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+local cycles = 0
+while true do
+    local request = server:recv()
+    cycles = cycles + 1
+
+    --  Simulate various problems, after a few cycles
+    if (cycles > 3 and randof (3) == 0) then
+        printf("I: simulating a crash\n")
+        break
+    elseif (cycles > 3 and randof (3) == 0) then
+        printf("I: simulating CPU overload\n")
+        s_sleep(5000)
+    end
+    printf("I: normal request (%s)\n", request)
+    s_sleep(1000)              --  Do some heavy work
+    server:send(request)
+end
+server:close()
+context:term()
+
+

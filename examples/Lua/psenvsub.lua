@@ -1,13 +1,27 @@
-No-one has translated the psenvsub example into Lua yet.  Be the first to create
-psenvsub in Lua and get one free Internet!  If you're the author of the Lua
-binding, this is a great way to get people to use 0MQ in Lua.
+--
+--  Pubsub envelope subscriber
+--
+--  Author: Robert G. Jakabosky <bobby@sharedrealm.com>
+--
+require"zmq"
+require"zhelpers"
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+--  Prepare our context and subscriber
+local context = zmq.init(1)
+local subscriber = context:socket(zmq.SUB)
+subscriber:connect("tcp://localhost:5563")
+subscriber:setopt(zmq.SUBSCRIBE, "B")
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+while true do
+    --  Read envelope with address
+    local address = subscriber:recv()
+    --  Read message contents
+    local contents = subscriber:recv()
+    printf("[%s] %s\n", address, contents)
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+end
+--  We never get here but clean up anyhow
+subscriber:close()
+context:term()
+
+

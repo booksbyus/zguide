@@ -5,7 +5,8 @@
 --
 --  Author: Robert G. Jakabosky <bobby@sharedrealm.com>
 --
-local zmq = require"zmq"
+require"zmq"
+require"zhelpers"
 
 local context = zmq.init(1)
 
@@ -19,7 +20,7 @@ while true do
     print("Received Hello [" .. request .. "]")
 
     --  Do some 'work'
-		os.execute("sleep 1")
+		s_sleep(1000)
 
     --  Send reply back to client
     socket:send("World")

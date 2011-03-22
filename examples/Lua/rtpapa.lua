@@ -1,13 +1,46 @@
-No-one has translated the rtpapa example into Lua yet.  Be the first to create
-rtpapa in Lua and get one free Internet!  If you're the author of the Lua
-binding, this is a great way to get people to use 0MQ in Lua.
+--
+--  Custom routing Router to Papa (XREP to REP)
+--
+--  Author: Robert G. Jakabosky <bobby@sharedrealm.com>
+--
+require"zmq"
+require"zhelpers"
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+--  We will do this all in one thread to emphasize the sequence
+--  of events...
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+local context = zmq.init(1)
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+local client = context:socket(zmq.XREP)
+client:bind("ipc://routing.ipc")
+
+local worker = context:socket(zmq.REP)
+worker:setopt(zmq.IDENTITY, "A")
+worker:connect("ipc://routing.ipc")
+
+--  Wait for the worker to connect so that when we send a message
+--  with routing envelope, it will actually match the worker...
+s_sleep (1000)
+
+--  Send papa address, address stack, empty part, and request
+client:send("A", zmq.SNDMORE)
+client:send("address 3", zmq.SNDMORE)
+client:send("address 2", zmq.SNDMORE)
+client:send("address 1", zmq.SNDMORE)
+client:send("", zmq.SNDMORE)
+client:send("This is the workload")
+
+--  Worker should get just the workload
+s_dump (worker)
+
+--  We don't play with envelopes in the worker
+worker:send("This is the reply")
+
+--  Now dump what we got off the XREP socket...
+s_dump (client)
+
+client:close()
+worker:close()
+context:term()
+
+

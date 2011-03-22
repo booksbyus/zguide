@@ -1,13 +1,27 @@
-No-one has translated the msgqueue example into Lua yet.  Be the first to create
-msgqueue in Lua and get one free Internet!  If you're the author of the Lua
-binding, this is a great way to get people to use 0MQ in Lua.
+--
+--  Simple message queuing broker
+--  Same as request-reply broker but using QUEUE device
+--
+--  Author: Robert G. Jakabosky <bobby@sharedrealm.com>
+--
+require"zmq"
+require"zhelpers"
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+local context = zmq.init(1)
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+--  Socket facing clients
+local frontend = context:socket(zmq.XREP)
+frontend:bind("tcp://*:5559")
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+--  Socket facing services
+local backend = context:socket(zmq.XREQ)
+backend:bind("tcp://*:5560")
+
+--  Start built-in device
+zmq.device(zmq.QUEUE, frontend, backend)
+
+--  We never get here...
+frontend:close()
+backend:close()
+context:term()
+

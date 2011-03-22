@@ -1,13 +1,38 @@
-No-one has translated the flserver2 example into Lua yet.  Be the first to create
-flserver2 in Lua and get one free Internet!  If you're the author of the Lua
-binding, this is a great way to get people to use 0MQ in Lua.
+--
+--  Freelance server - Model 2
+--  Does some work, replies OK, with message sequencing
+--
+--  Author: Robert G. Jakabosky <bobby@sharedrealm.com>
+--
+require"zmq"
+require"zmsg"
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+if (#arg < 1) then
+    printf ("I: syntax: %s <endpoint>\n", arg[0])
+    os.exit (0)
+end
+local context = zmq.init(1)
+s_catch_signals()
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+local server = context:socket(zmq.REP)
+server:bind(arg[1])
+printf ("I: service is ready at %s\n", arg[1])
+while (not s_interrupted) do
+    local msg, err = zmsg.recv(server)
+    if err then
+        print('recv error:', err)
+        break          --  Interrupted
+    end
+    --  Fail nastily if run against wrong client
+    assert (msg:parts() == 2)
 
-Subscribe to the email list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+    msg:body_set("OK")
+    msg:send(server)
+end
+if (s_interrupted) then
+    printf("W: interrupted\n")
+end
+server:close()
+context:term()
+
+

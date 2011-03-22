@@ -1,13 +1,44 @@
-No-one has translated the taskvent example into Lua yet.  Be the first to create
-taskvent in Lua and get one free Internet!  If you're the author of the Lua
-binding, this is a great way to get people to use 0MQ in Lua.
+--
+--  Task ventilator
+--  Binds PUSH socket to tcp://localhost:5557
+--  Sends batch of tasks to workers via that socket
+--
+--  Author: Robert G. Jakabosky <bobby@sharedrealm.com>
+--
+require"zmq"
+require"zhelpers"
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+local context = zmq.init(1)
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+--  Socket to send messages on
+local sender = context:socket(zmq.PUSH)
+sender:bind("tcp://*:5557")
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+printf ("Press Enter when the workers are ready: ")
+getchar ()
+printf ("Sending tasks to workers...\n")
+
+--  The first message is "0" and signals start of batch
+sender:send("0")
+
+--  Initialize random number generator
+math.randomseed(os.time())
+
+--  Send 100 tasks
+local task_nbr
+local total_msec = 0     --  Total expected cost in msecs
+for task_nbr=0,99 do
+    local workload
+    --  Random workload from 1 to 100msecs
+    workload = randof (100) + 1
+    total_msec = total_msec + workload
+    local msg = string.format("%d", workload)
+    sender:send(msg)
+end
+printf ("Total expected cost: %d msec\n", total_msec)
+s_sleep (1000)              --  Give 0MQ time to deliver
+
+sender:close()
+context:term()
+
+

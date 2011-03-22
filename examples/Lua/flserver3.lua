@@ -1,13 +1,55 @@
-No-one has translated the flserver3 example into Lua yet.  Be the first to create
-flserver3 in Lua and get one free Internet!  If you're the author of the Lua
-binding, this is a great way to get people to use 0MQ in Lua.
+--
+--  Freelance server - Model 3
+--  Uses an ROUTER/XREP socket but just one thread
+--
+--  Author: Robert G. Jakabosky <bobby@sharedrealm.com>
+--
+require"zmq"
+require"zmsg"
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+local verbose = (arg[1] == "-v")
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+local context = zmq.init(1)
+s_catch_signals ()
 
-Subscribe to the email list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+--  Prepare server socket with predictable identity
+local bind_endpolocal = "tcp://*:5555"
+local connect_endpolocal = "tcp://localhost:5555"
+local server = context:socket(zmq.XREP)
+server:setopt(zmq.IDENTITY, connect_endpoint)
+server:bind(bind_endpoint)
+printf ("I: service is ready at %s\n", bind_endpoint)
+
+while (not s_interrupted) do
+    local request = zmsg.recv (server)
+    local reply = nil
+    if (not request) then
+        break          --  Interrupted
+    end
+    if (verbose) then
+        request:dump()
+    end
+    --  Frame 0: identity of client
+    --  Frame 1: PING, or client control frame
+    --  Frame 2: request body
+    local address = request:pop()
+    if (request:parts() == 1 and request:body() == "PING") then
+        reply = zmsg.new ("PONG")
+    elseif (request:parts() > 1) then
+        reply = request
+        request = nil
+        reply:body_set("OK")
+    end
+    reply:push(address)
+    if (verbose and reply) then
+        reply:dump()
+    end
+    reply:send(server)
+end
+if (s_interrupted) then
+    printf ("W: interrupted\n")
+end
+server:close()
+context:term()
+
+

@@ -1,13 +1,45 @@
-No-one has translated the syncpub example into Lua yet.  Be the first to create
-syncpub in Lua and get one free Internet!  If you're the author of the Lua
-binding, this is a great way to get people to use 0MQ in Lua.
+--
+--  Synchronized publisher
+--
+--  Author: Robert G. Jakabosky <bobby@sharedrealm.com>
+--
+require"zmq"
+require"zhelpers"
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+--  We wait for 10 subscribers
+SUBSCRIBERS_EXPECTED   = 10
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+s_version_assert (2, 1)
+local context = zmq.init(1)
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+--  Socket to talk to clients
+local publisher = context:socket(zmq.PUB)
+publisher:bind("tcp://*:5561")
+
+--  Socket to receive signals
+local syncservice = context:socket(zmq.REP)
+syncservice:bind("tcp://*:5562")
+
+--  Get synchronization from subscribers
+local subscribers = 0
+while (subscribers < SUBSCRIBERS_EXPECTED) do
+    --  - wait for synchronization request
+    local msg = syncservice:recv()
+
+    --  - send synchronization reply
+    syncservice:send("")
+    subscribers = subscribers + 1
+end
+--  Now broadcast exactly 1M updates followed by END
+local update_nbr
+for update_nbr=0,999999 do
+    publisher:send("Rhubarb")
+end
+
+publisher:send("END")
+
+publisher:close()
+syncservice:close()
+context:term()
+
+

@@ -5,7 +5,7 @@
 --
 --  Author: Robert G. Jakabosky <bobby@sharedrealm.com>
 --
-local zmq = require"zmq"
+require"zmq"
 
 --  Prepare our context and publisher
 local context = zmq.init(1)

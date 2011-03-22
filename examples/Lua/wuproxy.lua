@@ -3,7 +3,7 @@
 --
 --  Author: Robert G. Jakabosky <bobby@sharedrealm.com>
 --
-local zmq = require"zmq"
+require"zmq"
 
 local context = zmq.init(1)
 

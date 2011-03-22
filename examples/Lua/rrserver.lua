@@ -1,13 +1,32 @@
-No-one has translated the rrserver example into Lua yet.  Be the first to create
-rrserver in Lua and get one free Internet!  If you're the author of the Lua
-binding, this is a great way to get people to use 0MQ in Lua.
+--
+--  Hello World server
+--  Connects REP socket to tcp://*:5560
+--  Expects "Hello" from client, replies with "World"
+--
+--  Author: Robert G. Jakabosky <bobby@sharedrealm.com>
+--
+require"zmq"
+require"zhelpers"
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+local context = zmq.init(1)
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+--  Socket to talk to clients
+local responder = context:socket(zmq.REP)
+responder:connect("tcp://localhost:5560")
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+while true do
+    --  Wait for next request from client
+    local msg = responder:recv()
+    printf ("Received request: [%s]\n", msg)
+
+    --  Do some 'work'
+    s_sleep (1000)
+
+    --  Send reply back to client
+    responder:send("World")
+end
+--  We never get here but clean up anyhow
+responder:close()
+context:term()
+
+

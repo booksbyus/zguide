@@ -1,13 +1,44 @@
-No-one has translated the syncsub example into Lua yet.  Be the first to create
-syncsub in Lua and get one free Internet!  If you're the author of the Lua
-binding, this is a great way to get people to use 0MQ in Lua.
+--
+--  Synchronized subscriber
+--
+--  Author: Robert G. Jakabosky <bobby@sharedrealm.com>
+--
+require"zmq"
+require"zhelpers"
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+local context = zmq.init(1)
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+--  First, connect our subscriber socket
+local subscriber = context:socket(zmq.SUB)
+subscriber:connect("tcp://localhost:5561")
+subscriber:setopt(zmq.SUBSCRIBE, "")
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+--  0MQ is so fast, we need to wait a while...
+s_sleep (1000)
+
+--  Second, synchronize with publisher
+local syncclient = context:socket(zmq.REQ)
+syncclient:connect("tcp://localhost:5562")
+
+--  - send a synchronization request
+syncclient:send("")
+
+--  - wait for synchronization reply
+local msg = syncclient:recv()
+
+--  Third, get our updates and report how many we got
+local update_nbr = 0
+while true do
+    local msg = subscriber:recv()
+    if (msg == "END") then
+        break
+    end
+    update_nbr = update_nbr + 1
+end
+printf ("Received %d updates\n", update_nbr)
+
+subscriber:close()
+syncclient:close()
+context:term()
+
+
