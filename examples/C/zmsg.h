@@ -510,8 +510,8 @@ zmsg_load (FILE *file)
 
 
 //  --------------------------------------------------------------------------
-//  Send message to socket
-//  Destroys message after sending
+//  Save message to file
+//  Destroys message after saving.
 
 void
 zmsg_save (zmsg_t **self_p, FILE *file)
