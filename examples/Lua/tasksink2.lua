@@ -6,6 +6,7 @@
 --
 require"zmq"
 require"zhelpers"
+local fmod = math.fmod
 
 local context = zmq.init(1)
 
@@ -28,7 +29,7 @@ local task_nbr
 for task_nbr=0,99 do
     local msg = receiver:recv()
 
-    if ((task_nbr / 10) * 10 == task_nbr) then
+    if (fmod(task_nbr, 10) == 0) then
         printf (":")
     else
         printf (".")

@@ -15,7 +15,7 @@ local sender = context:socket(zmq.PUSH)
 sender:bind("tcp://*:5557")
 
 printf ("Press Enter when the workers are ready: ")
-getchar ()
+io.read('*l')
 printf ("Sending tasks to workers...\n")
 
 --  The first message is "0" and signals start of batch
