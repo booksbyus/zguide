@@ -927,7 +927,7 @@ Although the router-to-router pattern looks ideal for asynchronous N-to-N routin
 
 Second, it may become confusing if you try to put two XREP sockets at the same logical level. One must bind, one must connect, and request-reply is inherently asymmetric. However, the next point takes care of this.
 
-Third, one side of the connection must know the identity of the other. You cannot do xrep-to-xrep flows between two transient sockets. In practice this means you need a name service, configuration data, or some other magic to define and share the identities of one of the peers. It's convenient therefore to treat the more static side of the flow as 'server', and give it a fixed, known identity, and then treat the dynamic side as 'client'. The client will have to connect to the server, then send it a message using the server's known identity as address, and then the server can respond to the client.
+Third, one side of the connection has to know the identity of the other, //up front//. You cannot do xrep-to-xrep flows between two transient sockets. In practice this means you need a name service, configuration data, or some other magic to define and share the identities of one of the peers. It's convenient therefore to treat the more static side of the flow as 'server', and give it a fixed, known identity, and then treat the dynamic side as 'client'. The client will have to connect to the server, then send it a message using the server's known identity as address, and then the server can respond to the client.
 
 +++ Worked Example: Inter-Broker Routing
 

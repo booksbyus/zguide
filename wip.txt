@@ -2,6 +2,18 @@ Chapter 6
 
 
 
+On Thu, Mar 10, 2011 at 7:09 PM, Michael Andersen <michael@ibab.dk> wrote:
+
+> Given an active ZMQ_PUSH socket with a number of ZMQ_PULL worker threads
+> connected - is there a way to:
+> 1) Determine how many workers are currently ready. To be more specific:
+> how many connected ZMQ_PULL threads are currently connected and blocked
+> in recv() ?
+
+No.
+
+> 2) Determine how many messages are currently pushed on the socket,
+> queued up, waiting to be recv()'ed by an available worker ?
 
 
 

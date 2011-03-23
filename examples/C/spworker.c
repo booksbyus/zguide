@@ -38,7 +38,8 @@ int main (void)
             printf ("I: (%s) simulating CPU overload\n", identity);
             sleep (5);
         }
-        printf ("I: (%s) normal reply - %s\n", identity, zmsg_body (zmsg));
+        printf ("I: (%s) normal reply - %s\n", 
+                identity, zmsg_body (zmsg));
         sleep (1);              //  Do some heavy work
         zmsg_send (&zmsg, worker);
     }

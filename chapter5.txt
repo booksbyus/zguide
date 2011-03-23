@@ -1,7 +1,13 @@
-++ Reference Material
+.output chapter5.wd
+++ Chapter Five - Advanced Publish-Subscribe
 
-* The //Suicidal Snail// pattern: how to handle slow clients.
-* The //Clone// pattern: reliable publish-subscribe using distributed key-value tables.
+In Chapters Three and Four we looked at advanced use of 0MQ's request-reply pattern. If you managed to digest all that, congratulations. In this chapter we'll focus on publish-subscribe, and extend 0MQ's core pubsub pattern with higher-level patterns for reliability, security, and state distribution.
+
+We'll cover:
+
+* How to handle too-slow subscribers (the //Suicidal Snail// pattern).
+* How to design high-speed subscribers (the //Black Box// pattern).
+
 
 +++ Slow Subscriber Detection (Suicidal Snail Pattern)
 
@@ -36,6 +42,117 @@ Notes about this example:
 
 * The message here consists simply of the current system clock as a number of milliseconds. In a realistic application you'd have at least a message header with the timestamp, and a message body with data.
 * The example has subscriber and publisher in a single process, as two threads. In reality they would be separate processes. Using threads is just convenient for the demonstration.
+
++++ High-speed Subscribers (Black Box Pattern)
+
+A common use case for pubsub is distributing large data streams. For example, 'market data' coming from stock exchanges. A typical set-up would have a publisher connected to a stock exchange, taking price quotes, and sending them out to a number of subscribers. If there are a handful of subscribers, we could use TCP. If we have a larger number of subscribers, we'd probably use reliable multicast, i.e. PGM.
+
+Let's imagine our feed has an average of 100,000 100-byte messages a second. That's a typical rate, after filtering market data we don't need to send on to subscribers. Now we decide to record a day's data (maybe 250 GB in 8 hours), and then replay it to a simulation network, i.e. a small group of subscribers. While 100K messages a second is easy for a 0MQ application, we want to replay //much faster//.
+
+So we set-up our architecture with a bunch of boxes, one for the publisher, and one for each subscriber. These are well-specified boxes, eight cores, twelve for the publisher. (If you're reading this in 2015, which is when the Guide is scheduled to be finished, please add a zero to those numbers.)
+
+And as we pump data into our subscribers, we notice two things:
+
+# When we do even the slightest amount of work with a message, it slows down our subscriber to the point where it can't catch up with the publisher again.
+# We're stuck, at both publisher and subscriber, to around say 6M messages a second, even after careful optimization and TCP tuning.
+
+The first thing we have to do is break our subscriber into a multithreaded design so that we can do work with messages in one set of threads, while reading messages in another. Typically we don't want to process every message the same way. Rather, the subscriber will filter some messages, perhaps by prefix key.
+
+[[code type="textdiagram"]]
+
+                        +-----------+   
+                        |           |   
+                        | Publisher |   
+                        +-----------+   
+                        |    PUB    |   
+                        \-----+-----/   
+                              |         
+  +---------------------------|---------------------------+
+  :                           |                Fast box   :
+  :                           v                           :
+  :                     /-----------\                     :
+  :                     |    SUB    |                     :
+  :                     +-----------+                     :
+  :                     |           |                     :
+  :                     | Subscriber|                     :
+  :                     |           |                     :
+  :                     +-----------+                     :
+  :                     |   ROUTER  |                     :
+  :                     \-----+-----/                     :
+  :                           |                           :
+  :                           |                           :
+  :           /---------------+---------------\           :
+  :           |               |               |           :
+  :           v               v               v           :
+  :     /-----------\   /-----------\   /-----------\     :
+  :     |  DEALER   |   |  DEALER   |   |  DEALER   |     :
+  :     +-----------+   +-----------+   +-----------+     :
+  :     |           |   |           |   |           |     :
+  :     |  Worker   |   |  Worker   |   |  Worker   |     :
+  :     |           |   |           |   |           |     :
+  :     +-----------+   +-----------+   +-----------+     :
+  :                                                       :
+  +-------------------------------------------------------+
+
+           Figure # - Simple Black Box Pattern
+[[/code]]
+
+
+
+
+
+[[code type="textdiagram"]]
+
+                        +-----------+
+                        |           |
+                        | Publisher |
+                        +-----+-----+
+                        | PUB | PUB |
+                        \--+--+--+--/
+                           |     |   
+  +------------------------|--=--|------------------------+
+  :                        |     |             Fast box   :
+  :                        v     v                        :
+  :                     /-----+-----\                     :
+  :                     | SUB | SUB |                     :
+  :                     +-----+-----+                     :
+  :                     |           |                     :
+  :                     | Subscriber|                     :
+  :                     |           |                     :
+  :                     +-----+-----+                     :
+  :                     | RTR | RTR |                     :
+  :                     \--+--+--+--/                     :
+  :                        |     |                        :
+  :                        |     |                        :
+  :           /------------+--+  +------------\           :
+  :           |               |               |           :
+  :           v               v               v           :
+  :     /-----------\   /-----------\   /-----------\     :
+  :     |  DEALER   |   |  DEALER   |   |  DEALER   |     :
+  :     +-----------+   +-----------+   +-----------+     :
+  :     |           |   |           |   |           |     :
+  :     |  Worker   |   |  Worker   |   |  Worker   |     :
+  :     |           |   |           |   |           |     :
+  :     +-----------+   +-----------+   +-----------+     :
+  :                                                       :
+  +-------------------------------------------------------+
+
+              Figure # - Mad Black Box Pattern
+[[/code]]
+
+
+- design for high-speed subscriber
+    SUB socket TCP
+    inproc to workers
+    callback on message prefix
+    
+- feed segmentation
+    - one NIC per slice
+    - one socket per slice
+    - one app thread per slice
+    - one I/O thread per slice
+    - sufficient cores
+    
 
 +++ Reliable Publish-Subscribe (Clone Pattern)
 
@@ -90,3 +207,4 @@ With unique sequencing, clients can detect the nastier failures - network conges
 
 Clone is complex enough in practice that you don't want to implement it directly in your applications. Instead, it makes a good basis for an application server framework, which talks to applications via the key-value table.
 
+.end

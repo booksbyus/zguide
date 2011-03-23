@@ -39,7 +39,7 @@ require 'sflcvdp.pl';                   #   SFL date picture formatting
 $source = $ENV {Z2W_LANG} || "C";
 printf "Generating $source version of Guide...\n";
 
-$make_diagrams = $ENV {Z2W_DIAGRAMS} || 1;
+$make_diagrams = $ENV {'Z2W_DIAGRAMS'};
 
 #   Ensure all languages have an examples directory
 foreach (@languages) {
@@ -231,6 +231,9 @@ printf "||||||~ Translations ($examples in total)||\n";
 foreach (@languages) {
     printf "|| %s || %3d || %3d%% ||\n", $_, $translations {$_}, ($translations {$_} * 100) / $examples;
 }
+
+print "MAKE: $make_diagrams\n";
+exit;
 
 if ($make_diagrams == 1) {
     system ("rm -f images/fig*");
