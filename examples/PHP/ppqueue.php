@@ -55,6 +55,7 @@ class Queue_T implements Iterator{
 	 * Pop next available worker off queue, return identity
 	 */
 	public function s_worker_dequeue() {
+		reset($this->queue);
 		$identity = key($this->queue);
 		unset($this->queue[$identity]);
 		return $identity;
@@ -104,7 +105,6 @@ while(true) {
 	
 	$events = $poll->poll($read, $write, HEARTBEAT_INTERVAL * 1000 * 1000); // microseconds
 	
-	
 	if($events > 0) {
 		foreach($read as $socket) {
 			$zmsg = new Zmsg($socket);
@@ -131,7 +131,7 @@ while(true) {
 			} else {
 				//  Now get next client request, route to next worker
 				$identity = $queue->s_worker_dequeue();
-				$zmsg->wrap($identity, "");
+				$zmsg->wrap($identity);
 				$zmsg->set_socket($backend)->send();
 			}
 		}		
@@ -145,6 +145,6 @@ while(true) {
 			}
 			$heartbeat_at = microtime(true) + HEARTBEAT_INTERVAL;
 		}
-		$queue->s_purge_queue();
+		$queue->s_queue_purge();
 	}
 }
