@@ -1,13 +1,50 @@
-No-one has translated the rrbroker example into Lua yet.  Be the first to create
-rrbroker in Lua and get one free Internet!  If you're the author of the Lua
-binding, this is a great way to get people to use 0MQ in Lua.
+--
+--  Simple request-reply broker
+--
+require"zmq"
+require"zmq.poller"
+require"zhelpers"
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+--  Prepare our context and sockets
+local context = zmq.init(1)
+local frontend = context:socket(zmq.XREP)
+local backend  = context:socket(zmq.XREQ)
+frontend:bind("tcp://*:5559")
+backend:bind("tcp://*:5560")
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+--  Switch messages between sockets
+local poller = zmq.poller(2)
+poller:add(frontend, zmq.POLLIN, function()
+    while true do
+        --  Process all parts of the message
+        local msg = frontend:recv()
+        if (frontend:getopt(zmq.RCVMORE) == 1) then
+            backend:send(msg, zmq.SNDMORE)
+        else
+            backend:send(msg, 0)
+            break;      --  Last message part
+        end
+    end
+end)
+poller:add(backend, zmq.POLLIN, function()
+    while true do
+        --  Process all parts of the message
+        local msg = backend:recv()
+        if (backend:getopt(zmq.RCVMORE) == 1) then
+            frontend:send(msg, zmq.SNDMORE)
+        else
+            frontend:send(msg, 0)
+            break;      --  Last message part
+        end
+    end
+end)
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+-- start poller's event loop
+poller:start()
+
+--  We never get here but clean up anyhow
+frontend:close()
+backend:close()
+context:term()
+
+
