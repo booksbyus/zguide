@@ -1,13 +1,109 @@
-No-one has translated the asyncsrv example into Python yet.  Be the first to create
-asyncsrv in Python and get one free Internet!  If you're the author of the Python
-binding, this is a great way to get people to use 0MQ in Python.
+import zmq
+import threading
+import time
+from random import choice
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+class ClientTask(threading.Thread):
+    """ClientTask"""
+    def __init__(self):
+        threading.Thread.__init__ (self)
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+    def run(self):
+        context = zmq.Context()
+        socket = context.socket(zmq.XREQ)
+        identity = 'worker-%d' % (choice([0,1,2,3,4,5,6,7,8,9]))
+        socket.setsockopt(zmq.IDENTITY, identity )
+        socket.connect('tcp://localhost:5570')
+        print 'Client %s started' % (identity)
+        poll = zmq.Poller()
+        poll.register(socket, zmq.POLLIN)
+        reqs = 0
+        while True:
+            for i in xrange(5):
+                sockets = dict(poll.poll(1000))
+                if socket in sockets:
+                    if sockets[socket] == zmq.POLLIN:
+                        msg = socket.recv()
+                        print '%s: %s\n' % (identity, msg)
+                        del msg
+            reqs = reqs + 1
+            print 'Req #%d sent..' % (reqs)
+            socket.send('request #%d' % (reqs))
 
-Subscribe to the email list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+        socket.close()
+        context.term()
+
+class ServerTask(threading.Thread):
+    """ServerTask"""
+    def __init__(self):
+        threading.Thread.__init__ (self)
+
+    def run(self):
+        context = zmq.Context()
+        frontend = context.socket(zmq.XREP)
+        frontend.bind('tcp://*:5570')
+
+        backend = context.socket(zmq.XREQ)
+        backend.bind('inproc://backend')
+
+        workers = []
+        for i in xrange(5):
+            worker = ServerWorker(context)
+            worker.start()
+            workers.append(worker)
+
+        poll = zmq.Poller()
+        poll.register(frontend, zmq.POLLIN)
+        poll.register(backend,  zmq.POLLIN)
+
+        while True:
+            sockets = dict(poll.poll())
+            if frontend in sockets:
+                if sockets[frontend] == zmq.POLLIN:
+                    msg = frontend.recv()
+                    print 'Server received %s' % (msg)
+                    backend.send(msg)
+            if backend in sockets:
+                if sockets[backend] == zmq.POLLIN:
+                    msg = backend.recv()
+                    frontend.send(msg)
+
+        frontend.close()
+        backend.close()
+        context.term()
+ 
+class ServerWorker(threading.Thread):
+    """ServerWorker"""
+    def __init__(self, context):
+        threading.Thread.__init__ (self)
+        self.context = context
+
+    def run(self):
+        worker = self.context.socket(zmq.XREQ)
+        worker.connect('inproc://backend')
+        print 'Worker started'
+        while True:
+            msg = worker.recv()
+            print 'Worker received %s' % (msg)
+            replies = choice(xrange(5))
+            for i in xrange(replies):
+                time.sleep(1/choice(range(1,10)))
+                worker.send(msg)
+            del msg
+
+        worker.close()
+
+
+def main():
+    """main function"""
+    server = ServerTask()
+    server.start()
+    for i in xrange(3):
+        client = ClientTask()
+        client.start()
+    
+    server.join()
+    
+
+if __name__ == "__main__":
+    main()
