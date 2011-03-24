@@ -1,13 +1,105 @@
-No-one has translated the tripping example into PHP yet.  Be the first to create
-tripping in PHP and get one free Internet!  If you're the author of the PHP
-binding, this is a great way to get people to use 0MQ in PHP.
+<?php
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+/*
+ * Round-trip demonstrator
+ * 
+ * While this example runs in a single process, that is just to make
+ * it easier to start and stop the example. Each thread has its own
+ * context and conceptually acts as a separate process.
+ * 
+ * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
+ */
+include "zmsg.php";
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+function client_task() {
+	$context = new ZMQContext();
+	$client = new ZMQSocket($context, ZMQ::SOCKET_XREQ);
+	$client->setSockOpt(ZMQ::SOCKOPT_IDENTITY, "C");
+	$client->connect("tcp://localhost:5555");
+	
+	echo "Setting up test...", PHP_EOL;
+	usleep(10000);
+	
+	echo "Synchronous round-trip test...", PHP_EOL;
+	$start = microtime(true);
+	for($requests = 0; $requests < 10000; $requests++) {
+		$client->send("HELLO");
+		$msg = $client->recv();
+	}
+	printf (" %d calls/second%s",
+		(1000 * 10000) / (int) ((microtime(true) - $start) * 1000), 
+		PHP_EOL);
+	
+	echo "Asynchronous round-trip test...", PHP_EOL;
+	$start = microtime(true);
+	for($requests = 0; $requests < 100000; $requests++) {
+		$client->send("HELLO");
+	}
+	
+	for($requests = 0; $requests < 100000; $requests++) {
+		$client->recv();
+	}
+	
+	printf (" %d calls/second%s",
+		(1000 * 100000) / (int) ((microtime(true) - $start) * 1000), 
+		PHP_EOL);
+}
 
-Subscribe to the email list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+
+function worker_task() {
+	$context = new ZMQContext();
+	$worker = new ZMQSocket($context, ZMQ::SOCKET_XREQ);
+	$worker->setSockOpt(ZMQ::SOCKOPT_IDENTITY, "W");
+	$worker->connect("tcp://localhost:5556");
+	
+	while(true) {
+		$zmsg = new Zmsg($worker);
+		$zmsg->recv();
+		$zmsg->send();
+	}
+}
+
+function broker_task() {
+	//  Prepare our context and sockets
+	$context = new ZMQContext();
+	$frontend = new ZMQSocket($context, ZMQ::SOCKET_XREP);
+	$backend = new ZMQSocket($context, ZMQ::SOCKET_XREP);
+	$frontend->bind("tcp://*:5555");
+	$backend->bind("tcp://*:5556");
+	
+	//  Initialize poll set
+	$poll = new ZMQPoll();
+	$poll->add($frontend, ZMQ::POLL_IN);
+	$poll->add($backend, ZMQ::POLL_IN);
+	$read = $write = array();
+	
+	while(true) {
+		$events = $poll->poll($read, $write);
+		foreach($read as $socket) {
+			$zmsg = new Zmsg($socket);
+			$zmsg->recv();
+			if($socket === $frontend) {
+				$zmsg->push("W");
+				$zmsg->set_socket($backend)->send();
+			} else if($socket === $backend) {
+				$zmsg->pop();
+				$zmsg->push("C");
+				$zmsg->set_socket($frontend)->send();
+			}
+			
+		}
+	}
+}
+
+$wpid = pcntl_fork();
+if($wpid == 0) {
+	worker_task();
+}
+$bpid = pcntl_fork();
+if($bpid == 0) {
+	broker_task();
+}
+
+client_task();
+posix_kill($wpid, SIGKILL);
+posix_kill($bpid, SIGKILL);
