@@ -3,6 +3,9 @@ import threading
 import time
 from random import choice
 
+__author__ = "Felipe Cruz <felipecruz@loogica.net>"
+__license__ = "MIT/X11"
+
 class ClientTask(threading.Thread):
     """ClientTask"""
     def __init__(self):
