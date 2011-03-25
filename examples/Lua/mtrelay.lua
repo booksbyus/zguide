@@ -1,13 +1,69 @@
-No-one has translated the mtrelay example into Lua yet.  Be the first to create
-mtrelay in Lua and get one free Internet!  If you're the author of the Lua
-binding, this is a great way to get people to use 0MQ in Lua.
+--
+--  Multithreaded relay
+--
+--  Changes for 2.1:
+--  - close sockets in each child thread
+--  - added version assert
+--
+require"zmq"
+require"zhelpers"
+require"zmq.threads"
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+local pre_code = [[
+    local zmq = require"zmq"
+    require"zhelpers"
+    local threads = require"zmq.threads"
+    local context = threads.get_parent_ctx()
+]]
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+local step1 = pre_code .. [[
+    --  Connect to step2 and tell it we're ready
+    local xmitter = context:socket(zmq.PAIR)
+    xmitter:connect("inproc://step2")
+    xmitter:send("READY")
+    xmitter:close()
+]]
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+local step2 = pre_code .. [[
+    local step1 = ...
+    --  Bind inproc socket before starting step1
+    local receiver = context:socket(zmq.PAIR)
+    receiver:bind("inproc://step2")
+    local thread = zmq.threads.runstring(context, step1)
+    thread:start()
+
+    --  Wait for signal and pass it on
+    local msg = receiver:recv()
+
+    receiver:close()
+
+    --  Connect to step3 and tell it we're ready
+    local xmitter = context:socket(zmq.PAIR)
+    xmitter:connect("inproc://step3")
+    xmitter:send("READY")
+    xmitter:close()
+
+    assert(thread:join())
+]]
+
+s_version_assert (2, 1)
+local context = zmq.init(1)
+
+--  Bind inproc socket before starting step2
+local receiver = context:socket(zmq.PAIR)
+receiver:bind("inproc://step3")
+local thread = zmq.threads.runstring(context, step2, step1)
+thread:start()
+
+--  Wait for signal
+local msg = receiver:recv()
+
+receiver:close()
+
+printf ("Test successful!\n")
+
+assert(thread:join())
+
+context:term()
+
+

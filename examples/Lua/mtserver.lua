@@ -6,7 +6,7 @@
 --  - close sockets in each child thread
 --
 require"zmq"
-require"zmq.thread"
+require"zmq.threads"
 require"zhelpers"
 
 local worker_code = [[
@@ -14,8 +14,8 @@ local worker_code = [[
 
     local zmq = require"zmq"
     require"zhelpers"
-    local thread = require"zmq.thread"
-    local context = thread.get_parent_ctx()
+    local threads = require"zmq.threads"
+    local context = threads.get_parent_ctx()
 
     --  Socket to talk to dispatcher
     local receiver = context:socket(zmq.REP)
@@ -49,7 +49,7 @@ workers:bind("inproc://workers")
 --  Launch pool of worker threads
 local worker_pool = {}
 for n=1,5 do
-    worker_pool[n] = zmq.thread.runstring(context, worker_code, n)
+    worker_pool[n] = zmq.threads.runstring(context, worker_code, n)
     worker_pool[n]:start()
 end
 --  Connect work threads to client threads via a queue
