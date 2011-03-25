@@ -1,6 +1,9 @@
 //
 //  Clone server model 2
 //
+//  TODO: don't send faster than state manager can shove into
+//  its hash table, or the process will overflow memory and die.
+
 #include "kvmsg.h"
 #include "zmsg.h"
 
