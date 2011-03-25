@@ -1,28 +1,29 @@
-/*  =========================================================================
+/*  =====================================================================
     mdcliapi.c
 
     Majordomo Protocol Client API
     Implements the MDP/Worker spec at http://rfc.zeromq.org/spec:7.
 
-    -------------------------------------------------------------------------
+    ---------------------------------------------------------------------
     Copyright (c) 1991-2011 iMatix Corporation <www.imatix.com>
     Copyright other contributors as noted in the AUTHORS file.
 
     This file is part of the ZeroMQ Guide: http://zguide.zeromq.org
 
-    This is free software; you can redistribute it and/or modify it under the
-    terms of the GNU Lesser General Public License as published by the Free
-    Software Foundation; either version 3 of the License, or (at your option)
-    any later version.
+    This is free software; you can redistribute it and/or modify it under
+    the terms of the GNU Lesser General Public License as published by 
+    the Free Software Foundation; either version 3 of the License, or (at 
+    your option) any later version.
 
     This software is distributed in the hope that it will be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABIL-
-    ITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
-    Public License for more details.
+    WITHOUT ANY WARRANTY; without even the implied warranty of 
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+    Lesser General Public License for more details.
 
-    You should have received a copy of the GNU Lesser General Public License
-    along with this program. If not, see <http://www.gnu.org/licenses/>.
-    =========================================================================
+    You should have received a copy of the GNU Lesser General Public 
+    License along with this program. If not, see 
+    <http://www.gnu.org/licenses/>.
+    =====================================================================
 */
 
 #include "mdcliapi.h"
@@ -40,7 +41,7 @@ struct _mdcli_t {
 };
 
 
-//  --------------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Connect or reconnect to broker
 
 void s_mdcli_connect_to_broker (mdcli_t *self)
@@ -56,7 +57,7 @@ void s_mdcli_connect_to_broker (mdcli_t *self)
 }
 
 
-//  --------------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Constructor
 
 mdcli_t *
@@ -78,7 +79,7 @@ mdcli_new (char *broker, int verbose)
 }
 
 
-//  --------------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Destructor
 
 void
@@ -96,7 +97,7 @@ mdcli_destroy (mdcli_t **self_p)
 }
 
 
-//  --------------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Set request timeout
 
 void
@@ -107,7 +108,7 @@ mdcli_set_timeout (mdcli_t *self, int timeout)
 }
 
 
-//  --------------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Set request retries
 
 void
@@ -118,7 +119,7 @@ mdcli_set_retries (mdcli_t *self, int retries)
 }
 
 
-//  --------------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Send request to broker and get reply by hook or crook
 //  Takes ownership of request message and destroys it when sent.
 //  Returns the reply message or NULL if there was no reply.
@@ -147,7 +148,8 @@ mdcli_send (mdcli_t *self, char *service, zmsg_t **request_p)
 
         while (!s_interrupted) {
             //  Poll socket for a reply, with timeout
-            zmq_pollitem_t items [] = { { self->client, 0, ZMQ_POLLIN, 0 } };
+            zmq_pollitem_t items [] = { 
+                { self->client, 0, ZMQ_POLLIN, 0 } };
             zmq_poll (items, 1, self->timeout * 1000);
 
             //  If we got a reply, process it
@@ -174,7 +176,7 @@ mdcli_send (mdcli_t *self, char *service, zmsg_t **request_p)
             else
             if (--retries_left) {
                 if (self->verbose)
-                    s_console ("W: no reply, disconnecting and retrying...");
+                    s_console ("W: no reply, reconnecting...");
                 //  Reconnect, and resend message
                 s_mdcli_connect_to_broker (self);
                 zmsg_t *msg = zmsg_dup (request);

@@ -54,7 +54,8 @@ int main (void)
                     expect_reply = 0;
                 }
                 else
-                    printf ("E: malformed reply from server: %s\n", reply);
+                    printf ("E: malformed reply from server: %s\n", 
+                        reply);
 
                 free (reply);
             }
@@ -65,7 +66,7 @@ int main (void)
             }
             else {
                 printf ("W: no response from server, retrying...\n");
-                //  Old socket will be confused; close it and open a new one
+                //  Old socket is confused; close it and open a new one
                 zmq_close (client);
                 client = s_client_socket (context);
                 //  Send request again, on new socket

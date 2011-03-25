@@ -1,13 +1,67 @@
-No-one has translated the lpclient example into PHP yet.  Be the first to create
-lpclient in PHP and get one free Internet!  If you're the author of the PHP
-binding, this is a great way to get people to use 0MQ in PHP.
+<?php
+/* 
+ * Lazy Pirate client
+ * Use zmq_poll to do a safe request-reply
+ * To run, start lpserver and then randomly kill/restart it
+ * 
+ * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
+ */
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+define("REQUEST_TIMEOUT", 2500); //  msecs, (> 1000!)
+define("REQUEST_RETRIES", 3); //  Before we abandon
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+/* 
+ * Helper function that returns a new configured socket
+ * connected to the Hello World server
+ */
+function client_socket(ZMQContext $context) {
+	echo "I: connecting to server...", PHP_EOL;
+	$client = new ZMQSocket($context,ZMQ::SOCKET_REQ);
+	$client->connect("tcp://localhost:5555");
 
-Subscribe to the email list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+    //  Configure socket to not wait at close time
+	$client->setSockOpt(ZMQ::SOCKOPT_LINGER, 0);
+    return $client;
+}
+
+$context = new ZMQContext();
+$client = client_socket($context);
+
+$sequence = 0; 
+$retries_left = REQUEST_RETRIES;
+$read = $write = array();
+
+while($retries_left) {
+	//  We send a request, then we work to get a reply
+	$client->send(++$sequence);
+	
+	$expect_reply = true;
+	while($expect_reply) {
+		//  Poll socket for a reply, with timeout
+		$poll = new ZMQPoll();
+		$poll->add($client, ZMQ::POLL_IN);
+		$events = $poll->poll($read, $write, REQUEST_TIMEOUT * 1000);
+		
+		//  If we got a reply, process it
+		if($events > 0) {
+			//  We got a reply from the server, must match sequence
+			$reply = $client->recv();
+			if(intval($reply) == $sequence) {
+				printf ("I: server replied OK (%s)%s", $reply, PHP_EOL);
+				$retries_left = REQUEST_RETRIES;
+				$expect_reply = false;
+			} else {
+				printf ("E: malformed reply from server: %s%s", $reply, PHP_EOL);
+			}
+		} else if(--$retries_left == 0) {
+			echo "E: server seems to be offline, abandoning", PHP_EOL;
+			break;
+		} else {
+			echo "W: no response from server, retrying...", PHP_EOL;
+			//  Old socket will be confused; close it and open a new one
+			$client = client_socket($context);
+			//  Send request again, on new socket
+			$client->send($sequence);
+		}
+	}
+}

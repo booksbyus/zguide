@@ -45,7 +45,8 @@ int main (int argc, char *argv [])
     //  1. Send 'echo' request to Titanic
     zmsg_t *request = zmsg_new ("Hello world");
     zmsg_push (request, "echo");
-    zmsg_t *reply = s_service_call (session, "titanic.request", &request);
+    zmsg_t *reply = s_service_call (
+        session, "titanic.request", &request);
     char *uuid = NULL;
     if (reply) {
         uuid = zmsg_pop (reply);
@@ -57,7 +58,8 @@ int main (int argc, char *argv [])
     while (!s_interrupted) {
         s_sleep (100);
         request = zmsg_new (uuid);
-        zmsg_t *reply = s_service_call (session, "titanic.reply", &request);
+        zmsg_t *reply = s_service_call (
+            session, "titanic.reply", &request);
         if (reply) {
             printf ("Reply: %s\n", zmsg_body (reply));
             zmsg_destroy (&reply);

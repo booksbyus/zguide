@@ -1,28 +1,29 @@
-/*  =========================================================================
+/*  =====================================================================
     mdcliapi2.c
 
     Majordomo Protocol Client API (async version)
     Implements the MDP/Worker spec at http://rfc.zeromq.org/spec:7.
 
-    -------------------------------------------------------------------------
+    ---------------------------------------------------------------------
     Copyright (c) 1991-2011 iMatix Corporation <www.imatix.com>
     Copyright other contributors as noted in the AUTHORS file.
 
     This file is part of the ZeroMQ Guide: http://zguide.zeromq.org
 
-    This is free software; you can redistribute it and/or modify it under the
-    terms of the GNU Lesser General Public License as published by the Free
-    Software Foundation; either version 3 of the License, or (at your option)
-    any later version.
+    This is free software; you can redistribute it and/or modify it under
+    the terms of the GNU Lesser General Public License as published by 
+    the Free Software Foundation; either version 3 of the License, or (at 
+    your option) any later version.
 
     This software is distributed in the hope that it will be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABIL-
-    ITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
-    Public License for more details.
+    WITHOUT ANY WARRANTY; without even the implied warranty of 
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+    Lesser General Public License for more details.
 
-    You should have received a copy of the GNU Lesser General Public License
-    along with this program. If not, see <http://www.gnu.org/licenses/>.
-    =========================================================================
+    You should have received a copy of the GNU Lesser General Public 
+    License along with this program. If not, see 
+    <http://www.gnu.org/licenses/>.
+    =====================================================================
 */
 
 #include "mdcliapi2.h"
@@ -39,7 +40,7 @@ struct _mdcli_t {
 };
 
 
-//  --------------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Connect or reconnect to broker
 
 void s_mdcli_connect_to_broker (mdcli_t *self)
@@ -55,7 +56,7 @@ void s_mdcli_connect_to_broker (mdcli_t *self)
 }
 
 
-//  --------------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Constructor
 
 mdcli_t *
@@ -76,7 +77,7 @@ mdcli_new (char *broker, int verbose)
 }
 
 
-//  --------------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Destructor
 
 void
@@ -94,7 +95,7 @@ mdcli_destroy (mdcli_t **self_p)
 }
 
 
-//  --------------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Set request timeout
 
 void
@@ -105,7 +106,7 @@ mdcli_set_timeout (mdcli_t *self, int timeout)
 }
 
 
-//  --------------------------------------------------------------------------
+//  ---------------------------------------------------------------------
 //  Send request to broker
 //  Takes ownership of request message and destroys it when sent.
 
@@ -132,9 +133,9 @@ mdcli_send (mdcli_t *self, char *service, zmsg_t **request_p)
 }
 
 
-//  --------------------------------------------------------------------------
-//  Returns the reply message or NULL if there was no reply.
-//  Does not attempt to recover from a broker failure, this is not possible
+//  ---------------------------------------------------------------------
+//  Returns the reply message or NULL if there was no reply. Does not
+//  attempt to recover from a broker failure, this is not possible
 //  without storing all unanswered requests and resending them all...
 
 zmsg_t *
