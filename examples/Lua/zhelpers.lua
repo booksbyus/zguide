@@ -10,6 +10,9 @@ local write = io.write
 
 local zmq = require"zmq"
 
+-- check for LuaJIT2's FFI module
+local has_ffi, ffi = pcall(require, "ffi")
+
 function printf(fmt, ...)
     return write(format(fmt, ...))
 end
@@ -113,6 +116,18 @@ else
     function s_sleep(msecs)
         os.execute("sleep " .. tostring(msecs / 1000))
     end
+end
+if has_ffi then
+    function install_ffi_sleep()
+        if ffi.os == "Windows" then
+            ffi.cdef[[ void Sleep(int msg); ]]
+            function s_sleep(msecs) return ffi.C.Sleep(msecs) end
+        else
+            ffi.cdef[[ int poll(struct pollfd *fds, unsigned long nfds, int timeout); ]]
+            function s_sleep(msecs) return ffi.C.poll(nil, 0, msecs) end
+        end
+    end
+    pcall(install_ffi_sleep)
 end
 
 --  Return current system clock as milliseconds

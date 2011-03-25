@@ -4,6 +4,7 @@
 --  Author: Robert G. Jakabosky <bobby@sharedrealm.com>
 --
 require"zmq"
+require"zhelpers"
 
 local context = zmq.init(1)
 
@@ -21,7 +22,7 @@ sync:send("")
 --  Get updates, expect random Ctrl-C death
 while true do
     local msg = subscriber:recv()
-    print("%s\n", msg)
+    printf("%s\n", msg)
     if (msg == "END") then
         break
     end

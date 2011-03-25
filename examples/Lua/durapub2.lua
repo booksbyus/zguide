@@ -4,6 +4,7 @@
 --  Author: Robert G. Jakabosky <bobby@sharedrealm.com>
 --
 require"zmq"
+require"zhelpers"
 
 s_version_assert(2, 1)
 
@@ -30,7 +31,7 @@ local message = sync:recv()
 for n=0,9 do
     local message = string.format("Update %d", n)
     publisher:send(message)
-    s_sleep (1)
+    s_sleep (1000)
 end
 publisher:send("END")
 

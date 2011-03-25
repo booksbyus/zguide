@@ -35,7 +35,7 @@ poller:add(receiver, zmq.POLLIN, function()
     sender:send("")
 
     --  Simple progress indicator for the viewer
-    printf (".")
+    io.write(".")
     io.stdout:flush()
 end)
 poller:add(controller, zmq.POLLIN, function()

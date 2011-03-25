@@ -32,7 +32,7 @@ while (subscribers < SUBSCRIBERS_EXPECTED) do
 end
 --  Now broadcast exactly 1M updates followed by END
 local update_nbr
-for update_nbr=0,999999 do
+for update_nbr=1,1000000 do
     publisher:send("Rhubarb")
 end
 
