@@ -17,8 +17,6 @@ local pre_code = [[
     local identity, seed = ...
     local zmq = require"zmq"
     require"zhelpers"
-    local threads = require"zmq.threads"
-    local context = threads.get_parent_ctx()
     math.randomseed(seed)
 ]]
 
@@ -50,7 +48,6 @@ local worker_task = pre_code .. [[
     end
     worker:close()
     context:term()
-    return nil
 ]]
 
 s_version_assert (2, 1)
@@ -91,6 +88,11 @@ for n=1,NBR_WORKERS do
     client:send("END")
 
 end
+
+for n=1,NBR_WORKERS do
+    assert(workers[n]:join())
+end
+
 client:close()
 context:term()
 
