@@ -29,6 +29,7 @@
 #include <zmq.hpp>
 
 #include <iostream>
+#include <iomanip>
 #include <string>
 #include <sstream>
 
@@ -108,15 +109,17 @@ s_dump (zmq::socket_t & socket)
               is_text = false;
         }
 
-        printf ("[%03d] ", size);
+        std::cout << std::setfill('0') << std::setw(3) << "[" << size << "]";
 
         for (char_nbr = 0; char_nbr < size; char_nbr++) {
-            if (is_text)
-                printf ("%c", data [char_nbr]);
-            else
-                printf ("%02X", (unsigned char) data [char_nbr]);
+            if (is_text) {
+                std::cout << (char)data [char_nbr];
+            } else {
+                std::cout << std::setfill('0') << std::setw(2)
+                   << std::hex << (unsigned char) data [char_nbr];
+            }
         }
-        printf ("\n");
+        std::cout << std::endl;
 
         int64_t more;           //  Multipart detection
         size_t more_size = sizeof (more);
@@ -129,12 +132,15 @@ s_dump (zmq::socket_t & socket)
 
 //  Set simple random printable identity on socket
 //
-static void
+std::string
 s_set_id (zmq::socket_t & socket)
 {
-    char identity [10];
-    sprintf (identity, "%04X-%04X", within (0x10000), within (0x10000));
-    socket.setsockopt(ZMQ_IDENTITY, identity, strlen (identity));
+    std::stringstream ss;
+    ss << std::hex << std::uppercase
+          << std::setw(4) << std::setfill('0') << within (0x10000) << "-"
+          << std::setw(4) << std::setfill('0') << within (0x10000);
+    socket.setsockopt(ZMQ_IDENTITY, ss.str().c_str(), ss.str().length());
+    return ss.str();
 }
 
 //  Report 0MQ version number
@@ -144,7 +150,21 @@ s_version (void)
 {
     int major, minor, patch;
     zmq_version (&major, &minor, &patch);
-    printf ("Current 0MQ version is %d.%d.%d\n", major, minor, patch);
+    std::cout << "Current 0MQ version is " << major << "." << minor << "." << patch << std::endl;
+}
+
+static void
+s_version_assert (int want_major, int want_minor)
+{
+    int major, minor, patch;
+    zmq_version (&major, &minor, &patch);
+    if (major < want_major
+    || (major == want_major && minor < want_minor)) {
+        std::cout << "Current 0MQ version is " << major << "." << minor << std::endl;
+        std::cout << "Application needs at least " << want_major << "." << want_minor
+              << " - cannot continue" << std::endl;
+        exit (EXIT_FAILURE);
+    }
 }
 
 //  Return current system clock as milliseconds
