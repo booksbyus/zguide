@@ -131,7 +131,11 @@ end
 --  Caller should not modify the provided data
 
 function msg_mt:body()
-    return self[#self]
+    local len = #self
+    if len > 0 then
+        return self[len]
+    end
+    return nil
 end
 
 
@@ -140,7 +144,12 @@ end
 --  If message is empty, creates a new message body
 
 function msg_mt:body_set(body)
-    self[#self] = body
+    local len = #self
+    if len > 0 then
+        self[len] = body
+    else
+        self[1] = body
+    end
 end
 
 
@@ -150,7 +159,7 @@ end
 --  Hard-coded to max. 255 characters for this simplified class
 
 function msg_mt:body_fmt(fmt, ...)
-    self[#self] = fmt:format(...)
+    self:body_set(fmt:format(...))
 end
 
 
