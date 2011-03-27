@@ -47,9 +47,9 @@ We assume you are using the latest release of 0MQ, or even the current git maste
 
 +++ Ask and Ye Shall Receive
 
-So let's start with some code. We start of course with a Hello World example. We'll make a client and a server. The client sends "Hello" to the server, which replies with "World". Here's the server, which opens a 0MQ socket on port 5555, reads requests on it, and replies with "World" to each request:
+So let's start with some code. We start of course with a Hello World example. We'll make a client and a server. The client sends "Hello" to the server, which replies with "World". Here's the server in C, which opens a 0MQ socket on port 5555, reads requests on it, and replies with "World" to each request:
 
-[[code type="example" title="Hello World server" name="hwserver"]]
+[[code type="example" title="Hello World server" name="hwserver" language="C"]]
 [[/code]]
 
 [[code type="textdiagram"]]
@@ -79,14 +79,14 @@ So let's start with some code. We start of course with a Hello World example. We
 
 The REQ-REP socket pair is lockstep. The client does zmq_send[3] and then zmq_recv[3], in a loop (or once if that's all it needs). Doing any other sequence (e.g. sending two messages in a row) will cause an error. Similarly the service does zmq_recv[3] and then zmq_send[3] in that order, and as often as it needs to.
 
-0MQ uses C as its reference language and this is the language we'll use for examples. If you're reading this on-line, the link below the example takes you to translations into other programming languages. Let's compare the same server in C++:
+0MQ uses C as its reference language and this is the main language we'll use for examples. If you're reading this on-line, the link below the example takes you to translations into other programming languages. Let's compare the same server in C++:
 
-[[code filename="examples/C++/hwserver.cpp"]]
+[[code type="example" title="Hello World server" name="hwserver" language="C++"]]
 [[/code]]
 
-You can see that the 0MQ API is similar in C and C++. In a language like Python, we can hide even more and the code becomes even easier to read:
+You can see that the 0MQ API is similar in C and C++. In a language like PHP, we can hide even more and the code becomes even easier to read:
 
-[[code filename="examples/Python/hwserver.py"]]
+[[code type="example" title="Hello World server" name="hwserver" language="PHP"]]
 [[/code]]
 
 Here's the client code (click the link below the source to look at, or contribute a translation in your favorite programming language):
@@ -130,13 +130,13 @@ There is a lot happening behind the scenes but what matters to us programmers is
 
 In C and some other languages, strings are terminated with a null byte. We could send a string like "HELLO" with that extra null byte:
 
-[[code]]
+[[code language="C"]]
 zmq_msg_init_data (&request, "Hello", 6, NULL, NULL);
 [[/code]]
 
 However if you send a string from another language it probably will not include that null byte. For example, when we send that same string in Python, we do this:
 
-[[code]]
+[[code language="Python"]]
 socket.send ("Hello")
 [[/code]]
 
@@ -159,7 +159,7 @@ So let's establish the rule that **0MQ strings are length-specified, and are sen
 
 Here is what we need to do, in C, to receive a 0MQ string and deliver it to the application as a valid C string:
 
-[[code]]
+[[code language="C"]]
 //  Receive 0MQ string from socket and convert into C string
 static char *
 s_recv (void *socket) {
@@ -464,7 +464,7 @@ void* pub_worker(void* arg){
 
 This is what I rewrote it to, as part of finding the bug:
 
-[[code]]
+[[code language="C"]]
 static void *
 worker_thread (void *arg) {
     void *context = arg;
@@ -509,7 +509,7 @@ Since the Guide aims to be a leader, not a follower, we've updated it to cover 2
 
 * In 2.0, it was safe to call zmq_term[3] even if there were open sockets. In 2.1, this is not safe, and it can cause zmq_term to block. So in 2.1 we always close every socket, before exiting. Furthermore, if you have any outgoing messages or connects waiting on a socket, 2.1 will **by default wait forever** trying to deliver these. You must set the LINGER socket option (e.g. to zero), on every socket which may still be busy, before calling zmq_term:
 
-[[code]]
+[[code language="C"]]
 int zero = 0;
 zmq_setsockopt (mysocket, ZMQ_LINGER, &zero, sizeof (zero));
 [[/code]]

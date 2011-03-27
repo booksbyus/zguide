@@ -8,13 +8,17 @@
 #
 #   Creates Wikidot file as specified by .output and images in images/.
 #
+#   Dependencies (Ubuntu 10.10 packages):
+#       pygmentize
+#       imagemagick (mogrify tool)
+#
 #   By Pieter Hintjens, free for remixing without conditions.
 #   Images are stored in the github repository at
 #   https://github.com/imatix/zguide
 #
 require 'sflcvdp.pl';                   #   SFL date picture formatting
 
-@languages = ('Ada', 'Basic', 'C', 'C++', 'C#', 'Common Lisp', 'Erlang',
+@languages = ('Ada', 'Basic', 'C', 'C++', 'C#', 'CommonLisp', 'Erlang',
               'Go', 'Haskell', 'Java', 'Lua', 'Objective-C', 'ooc',
               'Perl', 'PHP', 'Python', 'Ruby');
 %extension = ('Ada' => 'ada',
@@ -22,7 +26,7 @@ require 'sflcvdp.pl';                   #   SFL date picture formatting
               'C' => 'c',
               'C++' => 'cpp',
               'C#' => 'cs',
-              'Common Lisp' => 'lisp',
+              'CommonLisp' => 'lisp',
               'Erlang' => 'erl',
               'Go' => 'go',
               'Haskell' => 'hs',
@@ -36,13 +40,10 @@ require 'sflcvdp.pl';                   #   SFL date picture formatting
               'Racket' => 'rkt',
               'Ruby' => 'rb' );
 
-$source = $ENV {Z2W_LANG} || "C";
-printf "Generating $source version of Guide...\n";
-
-$make_diagrams = $ENV {'Z2W_DIAGRAMS'};
+printf "Generating the Guide...\n";
 
 #   Ensure all languages have an examples directory
-foreach (@languages) {
+foreach (@languages, "listings") {
     $translations {$_} = 0;
     if (!-d "examples/$_") {
         mkdir ("examples/$_");
@@ -55,12 +56,16 @@ foreach (@languages) {
     }
 }
 $examples = 0;
+$listings = 0;
 
 die "Can't create wdtemp.txt: $!"
     unless open (OUTPUT, ">wdtemp.txt");
 die "Can't create images.html: $!"
     unless open (IMAGES, ">images.html");
+die "Can't create upload.sh: $!"
+    unless open (UPLOAD, ">upload.sh");
 
+signatures_load ();
 writeln ('[!-- Generated documentation file, do not edit --]');
 print IMAGES "<html>\n";
 
@@ -109,89 +114,46 @@ while (<>) {
         writeln ("[[/div]]");
         writeln ("[[/div]]");
     }
-    #  Process literal codeblock
-    elsif (/\[\[code filename=\"(.+)\"\]\]/) {
-        $filename = $1;
-        writeln ($_);
-
-        #   Discard any real contents of code block
+    #  Process unnamed code listing
+    elsif (/\[\[code\s+language=\"(.+)\"\]\]/) {
+        $listings++;
+        $title = "Listing $listings";
+        $name = "listing_$listings";
+        $language = $1;
+        $filename = "examples/$language/$name.$extension{$language}";
+        die "Can't create $filename: $!"
+            unless open (LISTING, ">$filename");
         while (<>) {
             last if /\[\[\/code\]\]/;
-            print "W: discarding $type code for $filename\n";
+            print LISTING $_;
         }
-        die "Can't open $filename: $!"
-            unless open (SOURCE, $filename);
-        print OUTPUT $_
-            while <SOURCE>;
-        close (SOURCE);
-        writeln ('[[/code]]');
+        process_one_language ($title, $name, $language, 1);
     }
     #  Process named codeblock
-    elsif (/\[\[code type=\"example\" title=\"(.+)\" name=\"(.+)\"\]\]/) {
+    elsif (/\[\[code\s+type=\"example\"\s+title=\"([^"]+)\"\s+name=\"([^"]+)\"(\s+language=\"([^"]+)\")?\]\]/) {
         $title = $1;
         $name = $2;
-        writeln ($_);
-
+        $language = $4;
+        if ($language) {
+            process_one_language ($title, $name, $language, 1);
+        }
+        else {
+            $missing = "";
+            foreach $language (@languages) {
+                if (process_one_language ($title, $name, $language, 0)) {
+                    $translations {$language} += 1;
+                }
+            }
+            if ($missing) {
+                writeln ("[/main:translate Contribute translation in $missing...]");
+            }
+            $examples++;
+        }
         #   Discard any real contents of code block
         while (<>) {
             last if /\[\[\/code\]\]/;
             print "W: discarding code for $title - $name\n";
         }
-        $filename = get_filename ($name, $source);
-        die "Can't open $filename: $!"
-            unless open (SOURCE, $filename);
-        print OUTPUT $_
-            while <SOURCE>;
-        close (SOURCE);
-        writeln ('[[/code]]');
-        writeln ('[[>]]');
-        writeln ($filename);
-        writeln ('[[collapsible show="All languages" hide="Hide languages"]]');
-
-        foreach (@languages) {
-            $filename = get_filename ($name, $_);
-
-            #   Create empty example if necessary
-            if (-f $filename) {
-                $missing = `egrep -c 'No-one has translated' '$filename'`;
-            }
-            else {
-                $missing = 1;
-                die "Can't open $filename: $!"
-                    unless open (SOURCE, ">$filename");
-                print SOURCE<<"EOF";
-No-one has translated the $name example into $_ yet.  Be the first to create
-$name in $_ and get one free Internet!  If you're the author of the $_
-binding, this is a great way to get people to use 0MQ in $_.
-
-To submit a new translation email it to $symbols{EMAIL}.  Please:
-
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
-
-Subscribe to the email list at $symbols{LIST}.
-EOF
-                close (SOURCE);
-            }
-            #   Add link in list, italic if missing
-            $url = "$symbols{GIT}/blob/$symbols{BRANCH}/$filename";
-            $url =~ s/ /%20/g;
-            $url =~ s/#/%23/g;
-            $url =~ s/\+/%2B/g;
-            if ($missing == 1) {
-                writeln ("//[*$url $_]//");
-            }
-            else {
-                writeln ("**[*$url $_]**");
-                $translations {$_} += 1;
-            }
-        }
-        $examples++;
-        writeln ('[[/collapsible]]');
-        writeln ('[[/>]]');
     }
     #  Process plain code block
     elsif (/\[\[code\]\]/) {
@@ -218,31 +180,38 @@ EOF
         #   Link to resource in git, nice way to upload images
         writeln ("[[=image $symbols{GIT}/raw/$symbols{BRANCH}/images/fig$image.png]]");
     }
+    elsif (/\[\[code/) {
+        print "E: unparsed code block: $_\n";
+    }
     else {
         #   Normal text
         writeln ($_);
     }
 }
+die "Can't create scoreboard.wd: $!"
+    unless open (SCOREBOARD, ">scoreboard.wd");
+print (SCOREBOARD "||||||~ Translations ($examples in total)||\n");
+foreach (@languages) {
+    printf (SCOREBOARD "|| %s || %3d || %3d%% ||\n", $_, $translations {$_}, ($translations {$_} * 100) / $examples);
+}
+close (SCOREBOARD);
+print UPLOAD "wdput zguide main scoreboard \"Language scoreboard\"\n";
+
 print IMAGES "</html>\n";
 close (IMAGES);
 close (OUTPUT);
+close (UPLOAD);
 
-printf "||||||~ Translations ($examples in total)||\n";
-foreach (@languages) {
-    printf "|| %s || %3d || %3d%% ||\n", $_, $translations {$_}, ($translations {$_} * 100) / $examples;
-}
+signatures_save ();
 
-print "MAKE: $make_diagrams\n";
-exit;
-
-if ($make_diagrams == 1) {
-    system ("rm -f images/fig*");
-    system ("java -jar /usr/local/bin/ditaa0_9.jar images.html -o -h -E output.html");
-    #   Need to trim twice for reasons I don't care to explore
-    system ("mogrify -trim images/fig*.png");
-    system ("mogrify -trim images/fig*.png");
-    system ("rm output.html");
-}
+system ("rm -f images/fig*");
+system ("java -jar bin/ditaa0_9.jar images.html -o -h -E output.html");
+exit (1) if $?;
+#   Need to trim twice for reasons I don't care to explore
+system ("mogrify -trim images/fig*.png");
+system ("mogrify -trim images/fig*.png");
+exit (1) if $?;
+system ("rm output.html");
 system ("rm images.html");
 
 exit (0);
@@ -256,9 +225,99 @@ sub writeln {
     print OUTPUT "$_\n" unless $EOD;
 }
 
-sub get_filename {
-    local ($name, $language) = @_;          #   Get arguments
-    return "examples/$language/$name.$extension{$language}";
+#   Process one example in one language
+
+sub process_one_language {
+    local ($title, $name, $language, $show) = @_;
+    $filename = "examples/$language/$name.$extension{$language}";
+
+    #   Create empty example if necessary
+    if (-f $filename) {
+        writeln ("[[collapsible show=\"$title in $language\" hide=\"$title in $language\"]]")
+            unless $show;
+        writeln ("[[include $extension{$language}:$name]]");
+        writeln ("[[/collapsible]]")
+            unless $show;
+        if (signature_changed ($filename)) {
+            print "Processing $name (in $language)...\n";
+            system ("echo \"[[html]]\">examples/$language/$name.wd");
+            system ("pygmentize -f html -O full $filename >>examples/$language/$name.wd");
+            exit (1) if $?;
+            system ("echo \"[[/html]]\">>examples/$language/$name.wd");
+            print UPLOAD "cd examples/$language\n";
+            print UPLOAD "    wdput zguide $extension{$language} $name \"$title in $language\"\n";
+            print UPLOAD "    rm $name.wd\n";
+            print UPLOAD "cd ../..\n";
+            signature_update ($filename);
+        }
+        return 1;       #   File exists
+    }
+    else {
+        $missing = "$missing, " if $missing;
+        $missing = "$missing$language";
+        return 0;
+    }
+}
+
+
+#   Load signatures hash table
+sub signatures_load {
+    print "I: loading signatures... ";
+    undef %signatures;
+    local $count = 0;
+    if (open (SIGNATURES, ".signatures")) {
+        while (<SIGNATURES>) {
+            /([^\s]+)\s+([^\s]+)/;
+            $signatures {$2} = $1;
+            $count++;
+        }
+    }
+    print "$count signatures loaded\n";
+}
+
+#   If file signature has changed, return 1, else 0
+sub signature_changed {
+    local ($filename) = @_;
+    $_ = `sha1sum $filename`;
+    if (/([^\s]+)\s+/) {
+        if ($signatures {$filename} eq $1) {
+            return 0;
+        }
+        else {
+            return 1;
+        }
+    }
+    else {
+        "E: can't sha1sum $filename\n";
+        return 0;
+    }
+}
+
+#   Save file signature into table
+sub signature_update {
+    local ($filename) = @_;
+    $_ = `sha1sum $filename`;
+    if (/([^\s]+)\s+/) {
+        $signatures {$filename} = $1;
+    }
+    else {
+        "E: can't sha1sum $filename\n";
+        return 0;
+    }
+}
+
+#   Save signatures table
+sub signatures_save {
+    print "I: saving signatures... ";
+    local $count = 0;
+    local $filename;
+    if (open (SIGNATURES, ">.signatures")) {
+        foreach $filename (keys %signatures) {
+            print SIGNATURES "$signatures{$filename} $filename\n";
+            $count++;
+        }
+    }
+    print "$count signatures saved\n";
 }
 
 
