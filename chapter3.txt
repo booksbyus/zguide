@@ -656,7 +656,7 @@ You should now see that you can reuse and extend the LRU algorithm with variatio
 
 Reading and writing multipart messages rapidly gets tedious and error-prone. Look at the core of the worker thread from our LRU queue broker:
 
-[[code]]
+[[code language="C"]]
     while (1) {
         //  Read and save all frames until we get an empty frame
         //  In this example there is only 1 but it could be more
@@ -679,7 +679,7 @@ Reading and writing multipart messages rapidly gets tedious and error-prone. Loo
 
 That code isn't even reusable, because it can only handle one envelope. And this code already does some wrapping around the 0MQ API. If we used the raw API carefully this is what we'd have to write:
 
-[[code]]
+[[code language="C"]]
     while (1) {
         //  Read and save all frames until we get an empty frame
         //  In this example there is only 1 but it could be more
@@ -716,7 +716,7 @@ What we want is an API that lets us receive and send an entire message in one sh
 
 The best way to design an API is to start by writing test code, i.e. see what the API would look like in real code. Here's how I'd like that worker code to look:
 
-[[code]]
+[[code language="C"]]
 while (1) {
     zmsg_t *zmsg = zmsg_recv (worker);
     printf ("Worker: %s\n", zmsg_body (zmsg));

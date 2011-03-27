@@ -309,7 +309,7 @@ Some points to consider when understanding and implementing heartbeating:
 
 * When your main loop is based on zmq_poll[3], use a secondary timer to trigger heartbeats. Do //not// use the poll loop for this, because it will either send too many heartbeats (overloading the network), or too few (causing peers to disconnect). The zhelpers package provides an s_clock() method that returns the current system clock in milliseconds. It's easy to use this to calculate when to send the next heartbeats. Thus, in C:
 
-[[code]]
+[[code language="C"]]
     //  Send out heartbeats at regular intervals
     uint64_t heartbeat_at = s_clock () + HEARTBEAT_INTERVAL;
     while (1) {
@@ -407,7 +407,7 @@ So, while our first contract (MDP itself) defines how the pieces of our distribu
 
 Majordomo has two halves, a client side and a worker side. Since we'll write both client and worker applications, we will need two APIs. Here is a sketch for the client API, using a simple object-oriented approach. We write this in C, using the style of the [http://zfl.zeromq.org/page:read-the-manual ZFL library]:
 
-[[code]]
+[[code language="C"]]
 mdcli_t *mdcli_new     (char *broker);
 void     mdcli_destroy (mdcli_t **self_p);
 zmsg_t  *mdcli_send    (mdcli_t *self, char *service, zmsg_t **request_p);
@@ -415,7 +415,7 @@ zmsg_t  *mdcli_send    (mdcli_t *self, char *service, zmsg_t **request_p);
 
 That's it. We open a session to the broker, we send a request message and get a reply message back, and we eventually close the connection. Here's a sketch for the worker API:
 
-[[code]]
+[[code language="C"]]
 mdwrk_t *mdwrk_new     (char *broker,char *service);
 void     mdwrk_destroy (mdwrk_t **self_p);
 zmsg_t  *mdwrk_recv    (mdwrk_t *self, zmsg_t *reply);
@@ -497,7 +497,7 @@ As we see, round-tripping in the simplest case is 20 times slower than "shove it
 
 First, let's modify the client API to have separate send and recv methods:
 
-[[code]]
+[[code language="C"]]
 mdcli_t *mdcli_new     (char *broker);
 void     mdcli_destroy (mdcli_t **self_p);
 int      mdcli_send    (mdcli_t *self, char *service, zmsg_t **request_p);

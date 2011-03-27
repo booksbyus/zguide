@@ -48,7 +48,7 @@ Like a nice pepperoni pizza, 0MQ sockets are easy to digest. Sockets have a life
 
 Which looks like this, in C:
 
-[[code type="example"]]
+[[code language="C"]]
 void *mousetrap;
 
 //  Create socket for catching mice
@@ -102,7 +102,7 @@ Now, imagine we start the client //before// we start the server. In traditional 
 
 A server node can bind to many endpoints and it can do this using a single socket. This means it will accept connections across different transports:
 
-[[code type="example"]]
+[[code language="C"]]
 zmq_bind (socket, "tcp://*:5555");
 zmq_bind (socket, "tcp://*:9999");
 zmq_bind (socket, "ipc://myserver.ipc");
@@ -233,7 +233,7 @@ There is however a good answer to the question, "how can I make profitable use o
 
 We said that 0MQ does I/O in a background thread. One I/O thread (for all sockets) is sufficient for all but the most extreme applications. This is the magic '1' that we use when creating a context, meaning "use one I/O thread":
 
-[[code type="example"]]
+[[code language="C"]]
 void *context = zmq_init (1);
 [[/code]]
 
@@ -307,7 +307,7 @@ In memory, 0MQ messages are zmq_msg_t structures (or classes depending on your l
 
 Here is a typical chunk of code working with messages, which should be familiar if you have been paying attention. This is from the zhelpers.h file we use in all the examples:
 
-[[code]]
+[[code language="C"]]
 //  Receive 0MQ string from socket and convert into C string
 static char *
 s_recv (void *socket) {
@@ -410,7 +410,7 @@ There are two main exceptional conditions that you may want to handle as non-fat
 
 What this boils down to is that in most cases you can use assertions on 0MQ calls, like this, in C:
 
-[[code type="example"]]
+[[code language="C"]]
     void *context = zmq_init (1);
     assert (context);
     void *socket = zmq_socket (context, ZMQ_REP);
@@ -433,7 +433,7 @@ How do we connect the sink to the workers? The PUSH/PULL sockets are one-way onl
 
 It doesn't take much new code in the sink:
 
-[[code]]
+[[code language="C"]]
     void *control = zmq_socket (context, ZMQ_PUB);
     zmq_bind (control, "tcp://*:5559");
     ...
@@ -562,7 +562,7 @@ When you work with multipart messages, each part is a zmq_msg item. E.g. if you 
 
 Here is how we send the frames in a multipart message (we receive each frame into a message object):
 
-[[code]]
+[[code language="C"]]
 zmq_send (socket, &message, ZMQ_SNDMORE);
 ...
 zmq_send (socket, &message, ZMQ_SNDMORE);
@@ -572,7 +572,7 @@ zmq_send (socket, &message, 0);
 
 Here is how we receive and process all the parts in a message, be it single part or multipart:
 
-[[code]]
+[[code language="C"]]
 while (1) {
     zmq_msg_t message;
     zmq_msg_init (&message);
@@ -899,7 +899,7 @@ Using a request-reply broker makes your client-server architectures easier to sc
 
 To start a device, you call zmq_device[3] and pass it two sockets, one for the frontend and one for the backend:
 
-[[code]]
+[[code language="C"]]
 zmq_device (ZMQ_QUEUE, frontend, backend);
 [[/code]]
 
@@ -1176,7 +1176,7 @@ We teased you in Chapter One, when you were still a 0MQ newbie, about zero-copy.
 
 To do zero-copy you use zmq_msg_init_data[3] to create a message that refers to a block of data already allocated on the heap with malloc(), and then you pass that to zmq_send[3]. When you create the message you also pass a function that 0MQ will call to free the block of data, when it has finished sending the message. This is the simplest example, assuming 'buffer' is a block of 1000 bytes allocated on the heap:
 
-[[code type="example"]]
+[[code language="C"]]
 void my_free (void *data, void *hint) {
     free (data);
 }
@@ -1297,7 +1297,7 @@ But a socket can also tell the other its identity, and then the next time the tw
 
 Here's how you set the identity of a socket, to create a durable socket:
 
-[[code]]
+[[code language="C"]]
 zmq_setsockopt (socket, ZMQ_IDENTITY, "Lucy", 4);
 [[/code]]
 
@@ -1390,7 +1390,7 @@ This is both wonderful and terrible at the same time. It's wonderful because it 
 
 If you want to prove this, take the wuclient and wuserver from Chapter One, and add this line to the wuclient before it connects:
 
-[[code]]
+[[code language="C"]]
     zmq_setsockopt (subscriber, ZMQ_IDENTITY, "Hello", 5);
 [[/code]]
 
@@ -1433,7 +1433,7 @@ Just to see the difference, comment out the line in the subscriber that sets the
 
 When we set a high-water mark on the PUB socket, the publisher stores that many messages, but no more. Let's test this by setting the publisher HWM to 2 messages, before we start publishing to the socket:
 
-[[code]]
+[[code language="C"]]
 uint64_t hwm = 2;
 zmq_setsockopt (publisher, ZMQ_HWM, &hwm, sizeof (hwm));
 [[/code]]
@@ -1458,7 +1458,7 @@ Look carefully: we have two messages kept for us (2 and 3), then a gap of severa
 
 In short, if you use subscriber identities, you must set the high-water mark on publisher sockets, or else you risk servers that run out of memory and crash. However, there is a way out. 0MQ provides something called a "swap", which is a disk file that holds messages we can't store to the queue. It is very simple to enable:
 
-[[code]]
+[[code language="C"]]
 //  Specify swap space in bytes
 uint64_t swap = 25000000;
 zmq_setsockopt (publisher, ZMQ_SWAP, &swap, sizeof (swap));

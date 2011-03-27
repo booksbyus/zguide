@@ -2,6 +2,9 @@
 - remove zmsg, zlist, zhash
 - remove all from zhelpers that is provided by zapi
 
+next:
+- use sha1 signatures to only generate changed images
+
 Visualization of examples
 - load each example into a page
     example:name-language
@@ -11,6 +14,7 @@ Visualization of examples
 - collapsible blocks for code and for translated versions
 - link direct to new tab showing example, if present
 - else link to page explaining how to translate & contribute
+--- done
 
 
 Notes for The Guide

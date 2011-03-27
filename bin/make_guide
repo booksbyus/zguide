@@ -22,10 +22,11 @@ echo "[[include php:chapter2]]" >> all.wd
 echo "[[include php:chapter3]]" >> all.wd
 echo "[[include php:chapter4]]" >> all.wd
 bin/z2w chapter*.txt
-python bin/sendpage.py php all "ØMQ - The Guide - PHP"
-python bin/sendpage.py php chapter1 "Chapter 1"
-python bin/sendpage.py php chapter2 "Chapter 2"
-python bin/sendpage.py php chapter3 "Chapter 3"
-python bin/sendpage.py php chapter4 "Chapter 4"
+wdput zguide php all "ØMQ - The Guide - PHP"
+wdput zguide php chapter1 "Chapter 1"
+wdput zguide php chapter2 "Chapter 2"
+wdput zguide php chapter3 "Chapter 3"
+wdput zguide php chapter4 "Chapter 4"
 
-rm *.wd wdtemp.txt
+sh ./upload.sh
+rm *.wd wdtemp.txt upload.sh
