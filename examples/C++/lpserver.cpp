@@ -22,15 +22,15 @@ int main ()
 
         // Simulate various problems, after a few cycles
         if (cycles > 3 && within (3) == 0) {
-            printf ("I: simulating a crash\n");
+            std::cout << "I: simulating a crash" << std::endl;
             break;
         }
         else
         if (cycles > 3 && within (3) == 0) {
-            printf ("I: simulating CPU overload\n");
-            sleep (5);
+            std::cout << "I: simulating CPU overload" << std::endl;
+            sleep (2);
         }
-        printf ("I: normal request (%s)\n", request.c_str());
+        std::cout << "I: normal request (" << request << ")" << std::endl;
         sleep (1); // Do some heavy work
         s_send (server, request);
     }

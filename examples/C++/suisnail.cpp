@@ -31,7 +31,7 @@ subscriber (void *args) {
 
         // Suicide snail logic
         if (s_clock () - clock > MAX_ALLOWED_DELAY) {
-            fprintf (stderr, "E: subscriber cannot keep up, aborting\n");
+            std::cerr << "E: subscriber cannot keep up, aborting" << std::endl;
             break;
         }
         // Work for 1 msec plus some random additional time

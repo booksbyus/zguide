@@ -48,8 +48,14 @@ public:
 
    //  --------------------------------------------------------------------------
    //  Constructor, sets initial body
-   zmsg(char *body) {
+   zmsg(char const *body) {
       body_set(body);
+   }
+
+   //  --------------------------------------------------------------------------
+   //  Constructor, calls first receive automatically
+   zmsg(zmq::socket_t &socket) {
+      recv(socket);
    }
 
    virtual ~zmsg() {
@@ -77,7 +83,7 @@ public:
                return false;
             }
          } catch (zmq::error_t error) {
-            printf("E: %s\n", error.what());
+            std::cout << "E: " << error.what() << std::endl;
             return false;
          }
          ustring data = (unsigned char*) message.data();
@@ -105,15 +111,14 @@ public:
           zmq::message_t message;
           ustring data = m_part_data[part_nbr];
           if (data.size() == 33 && data [0] == '@') {
-             ustring uuidbin = decode_uuid ((char *) data.c_str());
+             unsigned char * uuidbin = decode_uuid ((char *) data.c_str());
              message.rebuild(17);
-             memcpy(message.data(), uuidbin.c_str(), uuidbin.size());
-             //message.rebuild((void *) uuidbin.c_str(), 17, NULL, NULL);
+             memcpy(message.data(), uuidbin, 17);
+             delete uuidbin;
           }
           else {
              message.rebuild(data.size());
              memcpy(message.data(), data.c_str(), data.size());
-             //(void *) data.c_str(), data.size(), NULL, NULL);
           }
           try {
              socket.send(message, part_nbr < m_part_data.size() - 1 ? ZMQ_SNDMORE : 0);
@@ -273,17 +278,16 @@ public:
               if (data [char_nbr] < 32 || data [char_nbr] > 127)
                   is_text = 0;
 
-          fprintf (stderr, "[%03d] ", (int) data.size());
+          std::cerr << std::setw(3) << std::setfill('0') << "[" << (int) data.size() << "] ";
           for (unsigned int char_nbr = 0; char_nbr < data.size(); char_nbr++) {
-              if (is_text)
-                  fprintf (stderr, "%c", data [char_nbr]);
-              else
-                  fprintf (stderr, "%02X", (unsigned char) data [char_nbr]);
+              if (is_text) {
+                  std::cerr << (char) data [char_nbr];
+              } else {
+                  std::cerr << std::setw(2) << std::setfill('0') << (unsigned char) data [char_nbr];
+              }
           }
-          fprintf (stderr, "\n");
+          std::cerr << std::endl;
       }
-      fprintf (stderr, "\n");
-      fflush (stderr);
    }
 
    static int
@@ -362,7 +366,7 @@ public:
       zm.clear();
       assert (zm.parts() == 0);
 
-      printf ("OK\n");
+      std::cout << "OK" << std::endl;
       return 0;
    }
 

@@ -4,9 +4,9 @@
 //  Expects "Hello" from client, replies with "World"
 //
 #include <zmq.hpp>
+#include <string>
+#include <iostream>
 #include <unistd.h>
-#include <stdio.h>
-#include <string.h>
 
 int main () {
     //  Prepare our context and socket
@@ -19,7 +19,7 @@ int main () {
 
         //  Wait for next request from client
         socket.recv (&request);
-        printf ("Received Hello");
+        std::cout << "Received Hello" << std::endl;
 
         //  Do some 'work'
         sleep (1);

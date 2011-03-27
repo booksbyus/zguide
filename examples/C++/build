@@ -18,6 +18,9 @@ elif [ /$1/ = /clean/ ]; then
     for MAIN in `egrep -l main *.cpp`; do
         rm -f `basename $MAIN .cpp`
     done
+elif [ -f $1.cpp ]; then
+    echo "$1"
+    ./c -p -l -lzmq -q $1
 else
     echo "syntax: build all | clean"
 fi

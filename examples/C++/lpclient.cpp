@@ -5,6 +5,8 @@
 //
 #include "zhelpers.hpp"
 
+#include <sstream>
+
 #define REQUEST_TIMEOUT     2500    //  msecs, (> 1000!)
 #define REQUEST_RETRIES     3       //  Before we abandon
 
@@ -12,7 +14,7 @@
 //  connected to the Hello World server
 //
 static zmq::socket_t * s_client_socket (zmq::context_t & context) {
-    printf ("I: connecting to server...\n");
+    std::cout << "I: connecting to server..." << std::endl;
     zmq::socket_t * client = new zmq::socket_t (context, ZMQ_REQ);
     client->connect ("tcp://localhost:5555");
 
@@ -27,19 +29,16 @@ int main () {
 
     zmq::socket_t * client = s_client_socket (context);
 
-    printf ("I: connecting to server...\n");
-
     int sequence = 0;
     int retries_left = REQUEST_RETRIES;
 
     while (retries_left) {
-        //  We send a request, then we work to get a reply
-        char request [10];
-        sprintf (request, "%d", ++sequence);
-        s_send (*client, request);
+        std::stringstream request;
+        request << ++sequence;
+        s_send (*client, request.str());
         sleep (1);
 
-        int expect_reply = 1;
+        bool expect_reply = true;
         while (expect_reply) {
             //  Poll socket for a reply, with timeout
             zmq::pollitem_t items[] = { { *client, 0, ZMQ_POLLIN, 0 } };
@@ -49,30 +48,31 @@ int main () {
             if (items[0].revents & ZMQ_POLLIN) {
                 //  We got a reply from the server, must match sequence
                 std::string reply = s_recv (*client);
-                if (atoi (reply->c_str ()) == sequence) {
-                    printf ("I: server replied OK (%s)\n", reply.c_str ());
+                if (atoi (reply.c_str ()) == sequence) {
+                    std::cout << "I: server replied OK (" << reply << ")" << std::endl;
                     retries_left = REQUEST_RETRIES;
-                    expect_reply = 0;
+                    expect_reply = false;
                 }
                 else {
-                    printf ("E: malformed reply from server: %s\n",
-                        reply.c_str ());
+                    std::cout << "E: malformed reply from server: " << reply << std::endl;
                 }
             }
             else
             if (--retries_left == 0) {
-                printf ("E: server seems to be offline, abandoning\n");
+                std::cout << "E: server seems to be offline, abandoning" << std::endl;
+                expect_reply = false;
                 break;
             }
             else {
-                printf ("W: no response from server, retrying...\n");
+                std::cout << "W: no response from server, retrying..." << std::endl;
                 //  Old socket will be confused; close it and open a new one
                 delete client;
                 client = s_client_socket (context);
                 //  Send request again, on new socket
-                s_send (*client, request);
+                s_send (*client, request.str());
             }
         }
     }
+    delete client;
     return 0;
 }
