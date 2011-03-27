@@ -40,7 +40,9 @@ require 'sflcvdp.pl';                   #   SFL date picture formatting
               'Racket' => 'rkt',
               'Ruby' => 'rb' );
 
-printf "Generating the Guide...\n";
+$images = $ENV {'Z2W_DIAGRAMS'};
+$source = $ENV {'Z2W_LANG'} || "C";
+printf "Generating $source version of Guide...\n";
 
 #   Ensure all languages have an examples directory
 foreach (@languages, "listings") {
@@ -139,13 +141,18 @@ while (<>) {
         }
         else {
             $missing = "";
+            #   Show primary language example inline
+            process_one_language ($title, $name, $source, 2);
+            #   Show other languages as new tabs
             foreach $language (@languages) {
-                if (process_one_language ($title, $name, $language, 0)) {
-                    $translations {$language} += 1;
+                if ($language ne $source) {
+                    if (process_one_language ($title, $name, $language, 0)) {
+                        $translations {$language} += 1;
+                    }
                 }
             }
             if ($missing) {
-                writeln ("[/main:translate Contribute translation in $missing...]");
+                writeln ("[/main:translate $title in $missing...]");
             }
             $examples++;
         }
@@ -203,15 +210,16 @@ close (OUTPUT);
 close (UPLOAD);
 
 signatures_save ();
-
-system ("rm -f images/fig*");
-system ("java -jar bin/ditaa0_9.jar images.html -o -h -E output.html");
-exit (1) if $?;
-#   Need to trim twice for reasons I don't care to explore
-system ("mogrify -trim images/fig*.png");
-system ("mogrify -trim images/fig*.png");
-exit (1) if $?;
-system ("rm output.html");
+if ($images == 1) {
+    system ("rm -f images/fig*");
+    system ("java -jar bin/ditaa0_9.jar images.html -o -h -E output.html");
+    exit (1) if $?;
+    #   Need to trim twice for reasons I don't care to explore
+    system ("mogrify -trim images/fig*.png");
+    exit (1) if $?;
+    system ("mogrify -trim images/fig*.png");
+    system ("rm output.html");
+}
 system ("rm images.html");
 
 exit (0);
@@ -228,16 +236,22 @@ sub writeln {
 #   Process one example in one language
 
 sub process_one_language {
-    local ($title, $name, $language, $show) = @_;
+    local ($title, $name, $language, $inline) = @_;
     $filename = "examples/$language/$name.$extension{$language}";
 
     #   Create empty example if necessary
     if (-f $filename) {
-        writeln ("[[collapsible show=\"$title in $language\" hide=\"$title in $language\"]]")
-            unless $show;
-        writeln ("[[include $extension{$language}:$name]]");
-        writeln ("[[/collapsible]]")
-            unless $show;
+        if ($inline == 0) {
+            writeln ("[*/$extension{$language}:$name $title in $language]");
+        }
+        elsif ($inline == 1) {
+            writeln ("[[include $extension{$language}:$name]]");
+        }
+        elsif ($inline == 2) {
+            writeln ("[[collapsible show=\"$title in $language\" hide=\"$title in $language\"]]");
+            writeln ("[[include $extension{$language}:$name]]");
+            writeln ("[[/collapsible]]");
+        }
         if (signature_changed ($filename)) {
             print "Processing $name (in $language)...\n";
             system ("echo \"[[html]]\">examples/$language/$name.wd");
