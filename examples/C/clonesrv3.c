@@ -1,7 +1,6 @@
 //
-//  Clone server model 2
+//  Clone server model 3
 //
-
 #include "kvmsg.h"
 #include "zmsg.h"
 
@@ -29,42 +28,44 @@ send_one_kvmsg (char *key, void *data, void *args)
     return 0;
 }
 
-//  This thread maintains the state and handles requests from
-//  clients for snapshots.
-//  
-static void *
-state_manager (void *context) 
+int main (void) 
 {
-    zhash_t *kvmap = zhash_new ();
-
-    void *updates = zmq_socket (context, ZMQ_PAIR);
-    uint64_t hwm = 1;
-    zmq_setsockopt (updates, ZMQ_HWM, &hwm, sizeof (hwm));
-    int rc = zmq_connect (updates, "inproc://updates");
+    //  Prepare our context and sockets
+    void *context = zmq_init (1);
+    void *publisher = zmq_socket (context, ZMQ_PUB);
+    int rc = zmq_bind (publisher, "tcp://*:5556");
     assert (rc == 0);
-    s_send (updates, "OK");
 
     void *snapshot = zmq_socket (context, ZMQ_ROUTER);
     rc = zmq_bind (snapshot, "tcp://*:5557");
     assert (rc == 0);
     
+    void *collector = zmq_socket (context, ZMQ_PULL);
+    uint64_t hwm = 1;
+    zmq_setsockopt (collector, ZMQ_HWM, &hwm, sizeof (hwm));
+    rc = zmq_bind (collector, "tcp://*:5558");
+    assert (rc == 0);
+
+    s_catch_signals ();
+    int64_t sequence = 0;
+    zhash_t *kvmap = zhash_new ();
+
     zmq_pollitem_t items [] = { 
-        { updates, 0, ZMQ_POLLIN, 0 },
+        { collector, 0, ZMQ_POLLIN, 0 },
         { snapshot, 0, ZMQ_POLLIN, 0 } 
     };
-    int64_t sequence = 0;       //  Current snapshot version number
     while (!s_interrupted) {
-        int rc = zmq_poll (items, 2, -1);
-        if (rc == -1 && errno == ETERM)
-            break;              //  Context has been shut down
+        int rc = zmq_poll (items, 2, 1000 * 1000);
 
-        //  Apply state update from main thread
+        //  Apply state update sent from client
         if (items [0].revents & ZMQ_POLLIN) {
-            kvmsg_t *kvmsg = kvmsg_recv (updates);
+            kvmsg_t *kvmsg = kvmsg_recv (collector);
             if (!kvmsg)
                 break;          //  Interrupted
-            sequence = kvmsg_sequence (kvmsg);
+            kvmsg_set_sequence (kvmsg, ++sequence);
+            kvmsg_send (kvmsg, publisher);
             kvmsg_store (&kvmsg, kvmap);
+            printf ("I: publishing update %" PRId64 "\n", sequence);
         }
         //  Execute state snapshot request
         if (items [1].revents & ZMQ_POLLIN) {
@@ -87,7 +88,7 @@ state_manager (void *context)
             zhash_foreach (kvmap, send_one_kvmsg, &routing);
 
             //  Now send END message with sequence number
-            printf ("Sending state shapshot=%" PRId64 "\n", sequence);
+            printf ("I: sending shapshot=%" PRId64 "\n", sequence);
             zmq_send (snapshot, &identity, ZMQ_SNDMORE);
             zmq_msg_close (&identity);
             kvmsg_t *kvmsg = kvmsg_new (sequence);
@@ -97,49 +98,12 @@ state_manager (void *context)
             kvmsg_destroy (&kvmsg);
         }
     }
+    printf (" Interrupted\n%" PRId64 " messages handled\n", sequence);
     zhash_destroy (&kvmap);
-    zmq_close (updates);
-    zmq_close (snapshot);
-    return NULL;
-}
-
-
-int main (void) 
-{
-    //  Prepare our context and sockets
-    void *context = zmq_init (1);
-    void *publisher = zmq_socket (context, ZMQ_PUB);
-    int rc = zmq_bind (publisher, "tcp://*:5556");
-    assert (rc == 0);
-    
-    void *updates = zmq_socket (context, ZMQ_PAIR);
-    uint64_t hwm = 1;
-    zmq_setsockopt (updates, ZMQ_HWM, &hwm, sizeof (hwm));
-    rc = zmq_bind (updates, "inproc://updates");
-    assert (rc == 0);
-
-    s_catch_signals ();
-    int64_t sequence = 0;
-    srandom ((unsigned) time (NULL));
-
-    //  Start state manager and wait for synchronization signal
-    pthread_t thread;
-    pthread_create (&thread, NULL, state_manager, context);
-    pthread_detach (thread);
-    free (s_recv (updates));
-    
-    while (!s_interrupted) {
-        //  Distribute as key-value message
-        kvmsg_t *kvmsg = kvmsg_new (++sequence);
-        kvmsg_fmt_key  (kvmsg, "%d", randof (10000));
-        kvmsg_fmt_body (kvmsg, "%d", randof (1000000));
-        kvmsg_send (kvmsg, publisher);
-        kvmsg_send (kvmsg, updates);
-        kvmsg_destroy (&kvmsg);
-    }
-    printf (" Interrupted\n%" PRId64 " messages out\n", sequence);
     zmq_close (publisher);
-    zmq_close (updates);
+    zmq_close (collector);
+    zmq_close (snapshot);
     zmq_term (context);
+    
     return 0;
 }

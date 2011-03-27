@@ -66,7 +66,7 @@ kvmsg_t *
 void
     kvmsg_send (kvmsg_t *self, void *socket);
 void
-    kvmsg_store (kvmsg_t *self, zhash_t *hash);
+    kvmsg_store (kvmsg_t **self_p, zhash_t *hash);
 void
     kvmsg_dump (kvmsg_t *self);
 int
@@ -370,17 +370,22 @@ kvmsg_send (kvmsg_t *self, void *socket)
 
 //  --------------------------------------------------------------------------
 //  Store entire kvmsg into hash map, if key/value are set
-//  If you do this, don't destroy the kvmsg, it'll be destroyed automatically
-//  when needed.
+//  Nullifies kvmsg reference, and destroys automatically when no longer 
+//  needed.
 
 void
-kvmsg_store (kvmsg_t *self, zhash_t *hash)
+kvmsg_store (kvmsg_t **self_p, zhash_t *hash)
 {
-    assert (self);
-    if (self->present [1]
-    &&  self->present [2]) {
-        zhash_update (hash, kvmsg_key (self), self);
-        zhash_freefn (hash, kvmsg_key (self), kvmsg_free);
+    assert (self_p);
+    if (*self_p) {
+        kvmsg_t *self = *self_p;
+        assert (self);
+        if (self->present [1]
+        &&  self->present [2]) {
+            zhash_update (hash, kvmsg_key (self), self);
+            zhash_freefn (hash, kvmsg_key (self), kvmsg_free);
+        }
+        *self_p = NULL;
     }
 }
 
@@ -442,13 +447,13 @@ kvmsg_test (int verbose)
     if (verbose)
         kvmsg_dump (kvmsg);
     kvmsg_send (kvmsg, output);
-    kvmsg_store (kvmsg, kvmap);
+    kvmsg_store (&kvmsg, kvmap);
 
     kvmsg = kvmsg_recv (input);
     if (verbose)
         kvmsg_dump (kvmsg);
     assert (strcmp (kvmsg_key (kvmsg), "key") == 0);
-    kvmsg_store (kvmsg, kvmap);
+    kvmsg_store (&kvmsg, kvmap);
 
     //  Should destroy all messages stored in map
     zhash_destroy (&kvmap);

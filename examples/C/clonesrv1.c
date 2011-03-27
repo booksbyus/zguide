@@ -22,7 +22,7 @@ int main (void)
         kvmsg_fmt_key  (kvmsg, "%d", randof (10000));
         kvmsg_fmt_body (kvmsg, "%d", randof (1000000));
         kvmsg_send (kvmsg, publisher);
-        kvmsg_store (kvmsg, kvmap);
+        kvmsg_store (&kvmsg, kvmap);
     }
     printf (" Interrupted\n%" PRId64 " messages out\n", sequence);
     zhash_destroy (&kvmap);

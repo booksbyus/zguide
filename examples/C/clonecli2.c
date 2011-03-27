@@ -11,18 +11,15 @@ int main (void)
     zmq_setsockopt (subscriber, ZMQ_SUBSCRIBE, "", 0);
     zmq_connect (subscriber, "tcp://localhost:5556");
 
-    s_catch_signals ();
-    zhash_t *kvmap = zhash_new ();
-    
-    //  Get first update, then get a state snapshot
-    kvmsg_t *update = kvmsg_recv (subscriber);
-    
     void *snapshot = zmq_socket (context, ZMQ_XREQ);
     zmq_connect (snapshot, "tcp://localhost:5557");
-    s_send (snapshot, "I can haz state?");
-    
-    //  Get all state messages until interrupted or done
+
+    s_catch_signals ();
+    zhash_t *kvmap = zhash_new ();
+
+    //  Get state snapshot
     int64_t sequence = 0;
+    s_send (snapshot, "I can haz state?");
     while (!s_interrupted) {
         kvmsg_t *kvmsg = kvmsg_recv (snapshot);
         if (!kvmsg)
@@ -32,22 +29,25 @@ int main (void)
             kvmsg_destroy (&kvmsg);
             break;          //  Done
         }
-        kvmsg_store (kvmsg, kvmap);
+        kvmsg_store (&kvmsg, kvmap);
     }
-    printf ("Received sequence=%" PRId64 "\n", sequence);
+    printf ("Received snapshot=%" PRId64 "\n", sequence);
     
-    //  We'll need to cancel the pending message we were interrupted
     int zero = 0;
     zmq_setsockopt (snapshot, ZMQ_LINGER, &zero, sizeof (zero));
     zmq_close (snapshot);
     
-    //  Now apply pending updates from (sequence + 1)
-    while (update && !s_interrupted) {
-        if (kvmsg_sequence (update) <= sequence)
-            kvmsg_destroy (&update);
+    //  Now apply pending updates, discard out-of-sequence messages
+    while (!s_interrupted) {
+        kvmsg_t *kvmsg = kvmsg_recv (subscriber);
+        if (!kvmsg)
+            break;          //  Interrupted
+        if (kvmsg_sequence (kvmsg) > sequence) {
+            sequence = kvmsg_sequence (kvmsg);
+            kvmsg_store (&kvmsg, kvmap);
+        }
         else
-            kvmsg_store (update, kvmap);
-        update = kvmsg_recv (subscriber);
+            kvmsg_destroy (&kvmsg);
     }
     zhash_destroy (&kvmap);
     zmq_close (subscriber);

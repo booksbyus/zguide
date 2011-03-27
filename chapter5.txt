@@ -231,12 +231,12 @@ We'll develop Clone in stages, solving one problem at a time. First, let's look 
 
 This is the server:
 
-[[code type="example" title="Clone server, model 1" name="clonesrv1"]]
+[[code type="example" title="Clone server, Model One" name="clonesrv1"]]
 [[/code]]
 
 And here is the client:
 
-[[code type="example" title="Clone client, model 1" name="clonecli1"]]
+[[code type="example" title="Clone client, Model One" name="clonecli1"]]
 [[/code]]
 
 Some notes about this code:
@@ -285,25 +285,26 @@ To make this work, we have to solve the timing problem. Getting a state snapshot
 
 So we will do the synchronization in the client, as follows:
 
-* The client first subscribes to updates and when it receives its first update, it makes a state request. This guarantees that the state is going to be newer than the oldest update it has.
-* The client waits for the server to reply with state, and meanwhile queues all updates. It can do this simply by not reading them, 0MQ will keep them queued on the socket queue, since we don't set a high-water mark.
+* The client first subscribes to updates and then makes a state request. This guarantees that the state is going to be newer than the oldest update it has.
+* The client waits for the server to reply with state, and meanwhile queues all updates. It does this simply by not reading them: 0MQ keeps them queued on the socket queue, since we don't set a HWM.
 * When the client receives its state update, it begins once again to read updates. However it discards any updates that are older than the state update. So if the state update includes updates up to 200, the client will discard updates up to 201.
 * The client then applies updates to its own state snapshot.
 
 It's a simple model that exploits 0MQ's own internal queues. Here's the server:
 
-[[code type="example" title="Clone server, model 2" name="clonesrv2"]]
+[[code type="example" title="Clone server, Model Two" name="clonesrv2"]]
 [[/code]]
 
 And here is the client:
 
-[[code type="example" title="Clone client, model 2" name="clonecli2"]]
+[[code type="example" title="Clone client, Model Two" name="clonecli2"]]
 [[/code]]
 
 Some notes about this code:
 
 * The server uses two threads, for simpler design. One thread produces random updates, and the second thread handles state. The two communicate across PAIR sockets. You might like to use SUB sockets but you'd hit the "slow joiner" problem where the subscriber would randomly miss some messages while connecting. PAIR sockets let us explicitly synchronize the two threads.
-* The client is really simple. In C, under 60 lines of code. A lot of the heavy lifting is done in the kvmsg class, but still, the Clone pattern is much easier to implement than it would appear.
+* We set a HWM on the updates socket pair, since hash table insertions are relatively slow. Without this, the server runs out of memory. On {{inproc}} connections, the real HWM is the sum of the HWM of //both// sockets, so we set the HWM on each socket.
+* The client is really simple. In C, under 60 lines of code. A lot of the heavy lifting is done in the kvmsg class, but still, the Clone pattern is easier to implement than it seemed at first.
 * We don't use anything fancy for serializing the state. The hash table holds a set of kvmsg objects, and the server sends these, as a batch of messages, to the client requesting state. If multiple clients request state at once, each will get a different snapshot.
 * We assume that the client has exactly one server to talk to. The server **must** be running; we do not try to solve the question of what happens if the server crashes.
 
@@ -311,35 +312,187 @@ Right now, these two programs don't do anything real, but they correctly synchro
 
 ++++ Republishing Updates
 
-- clones will not have identical state, unless all started at once and cloned in parallel
-- clients may send updates back to server, via pub/sub
+In our second model, changes to the key-value cache came from the server itself. This is a centralized model, useful for example if we have a central configuration file we want to distribute, with local cacheing on each node. A more interesting model takes updates from clients, not the server. The server thus becomes a stateless broker. This gives us some benefits:
 
-So the client, at startup, opens a PUB socket and part of its initial request to the server includes the address of that socket, so the server can open a SUB socket and connect back to it.
+* We're less worried about the reliability of the server. If it crashes, we can start a new instance, and feed it new values.
+* We can use the key-value cache to share knowledge between dynamic peers.
+
+Updates from clients go via a PUSH-PULL socket flow from client to server:
+
+[[code type="textdiagram"]]
+
+                 +-------------+
+                 |             |
+                 |   Server    |
+                 |             |
+                 +------+------+
+                 |  PUB | PULL |
+                 \---+--+------/
+                     |     ^
+                     |     |    state update
+                  updates  +----------------+
+                     |                      |
+     +---------------+---------------+      |
+     |               |               |      |
+     |               |               |      |
+     v               v               v      |
+  /------+-----\  /------+-----\  /------+--+--\
+  | SUB  |     |  | SUB  |     |  | SUB  | PUSH|
+  +------+-----+  +------+-----+  +------+-----+
+  |            |  |            |  |            |
+  |   Client   |  |   Client   |  |   Client   |
+  |            |  |            |  |            |
+  +------------+  +------------+  +------------+
+
+
+         Figure # - Republishing Updates
+[[/code]]
 
 Why don't we allow clients to publish updates directly to other clients? While this would reduce latency, it makes it impossible to sequence messages. Updates **must** pass through the server to make sense to other clients. There's a more subtle second reason. In many applications it's important that updates have a single order, across many clients. Forcing all updates through the server ensures that they have the same order when they finally get to clients.
 
-With unique sequencing, clients can detect the nastier failures - network congestion and queue overflow. If a client discovers that its incoming message stream has a hole, it can take action. It seems sensible that the client contact the server and ask for the missing messages, but in practice that isn't useful. If there are holes, adding more stress to the network will make things worse. All the client can really do is warn its users "Unable to continue", and stop, and not restart until someone has manually checked the cause of the problem.
+With unique sequencing, clients can detect the nastier failures - network congestion and queue overflow. If a client discovers that its incoming message stream has a hole, it can take action. It seems sensible that the client contact the server and ask for the missing messages, but in practice that isn't useful. If there are holes, they're caused by network stress, and adding more stress to the network will make things worse. All the client can really do is warn its users "Unable to continue", and stop, and not restart until someone has manually checked the cause of the problem.
 
-Clone is complex enough in practice that you don't want to implement it directly in your applications. Instead, it makes a good basis for an application server framework, which talks to applications via the key-value table.
+We'll now generate state updates in the client. Here's the server:
 
-++++ Clone API
+[[code type="example" title="Clone server, Model Three" name="clonesrv3"]]
+[[/code]]
 
-- event driven on changes?
-- wrap as API cloneapi.h
+And here is the client:
 
-++++ Reliable Clone Server
+[[code type="example" title="Clone client, Model Three" name="clonecli3"]]
+[[/code]]
 
-- primary/backup
-- second server as client of first
-- clients able to connect to either of two
+Some notes about this code:
 
-++++ Using Clone in Practice
+* The server has collapsed to one thread, which collects updates from clients and redistributes them. It manages a PULL socket for incoming updates, a ROUTER socket for state requests, and a PUB socket for outgoing updates.
+* The client uses a simple tickless timer to send a random update to the server once a second. In reality, updates would be driven by application code.
 
-- distributed name service
+++++ Clone Server Reliability
+
+Clone models one to three are relatively simple. We're now going to get into unpleasantly complex territory here that has me getting up for another espresso. You should appreciate that making "reliable" messaging is complex enough that you always need to ask, "do we actually need this?" before jumping into it. If you can get away with unreliable, or "good enough" reliability, you can make a huge win in terms of cost and complexity. Sure, you may lose some data now and then. It is often a good trade-off.
+
+As you play with model three, you'll stop and restart the server. It might look like it recovers, but of course it's applying updates to an empty state, instead of the proper current state. Any new client joining the network will get just the latest updates, instead of all of them. So let's work out a design for making Clone work despite server failures.
+
+Let's list the failures we want to be able to handle:
+
+* Clone server process crashes and is automatically or manually restarted. The process loses its state and has to get it back from somewhere.
+* Clone server machine dies and is off-line for a significant time. Clients have to switch to an alternate server somewhere.
+* Clone server process or machine gets disconnected from the network, e.g. a switch dies. It may come back at some point, but in the meantime clients need an alternate server.
+
+To detect server failure in the client, we need some type of heartbeating. It's not enough to listen for silence, since the server will be silent if there are no updates from other clients. We can use the sub-pub flow for heartbeating. We also need to detect if the server is unresponsive when we start up and make a state request, so we can switch over to an alternate server.
+
+Now, how to create an alternate server? At its simplest, an alternate server is a proxy that acts like a client to a main server, and a server to clients. This would work, except that when the primary server dies, we'll lose any updates that it had received from clients, but not yet published back to them.
+
+The obvious solution is to synchronously transact updates between the two servers, so that primary will only publish updates when backup acknowledges "OK". Apart from increasing the latency of every update (a TCP round-trip costs several hundred microseconds), this won't in fact give reliability. The backup still doesn't know what updates clients //actually// got, when the primary crashed.
+
+A better solution is to send out updates at full speed but after a primary server crash, have clients detect what updates were lost, and resend them. Only clients have both the knowledge of what updates they sent out, and what updates they received back. It's still not a reliable design, however, because a client can get an update before the backup server gets it. And in that case, the client will think, "this update is safe", when in fact it's not.
+
+Any fully reliable solution has to involve hand-shaking between //all three parties//, client, primary, and backup. If there are N servers acting as a group, every single server in the group has to participate in some kind of asynchronous transaction.
+
+What we need to make here is a form of atomic multicast, where we know that the whole group of servers receive a message, or none of them do. We'll look at a general design for this a bit later, for now we'll make it as simple as it can be for the Clone use case.
+
+So here are the elements of our server failover design:
+
+* Exactly two known servers, S1 and S2.
+* Zero, one, or both servers can be running at any time.
+* Both servers know about each other, all clients know about both servers.
+* S1 and S2 are not symmetric; 
+* First server to get a client request becomes head, second becomes tail.
+* If head crashes, tail becomes head.
+* If head rejoins, it becomes tail.
+* Clients request status snapshots from tail.
+* Clients push updates to head, and listen for updates from tail.
+
+This is half of the design. The other half is where clients track which of their updates have hit both head and tail, and use that information to resend updates that appear to have gotten lost.
+
+Let's eat the apple in two bites, then. First, server head/tail election. It's a classic primary/failover negotiation problem, and enormously difficult to get right. There are so many traps it's like /b/ on a bad weekend. Some of the ways failover can go wrong:
+
+* //Split-brain syndrome// caused by network failure between the servers, so that both servers think they are in charge. This results in some of the clients thinking one server is head, other clients thinking the other server is head, causing loss of data and general misery.
+* //Phantom failover syndrome//, caused by lost heartbeats or unexpected congestion, causing failover without reason. This is relatively OK if failover actually works, but often failover is badly tested, and clients simply don't fail over properly.
+* //Bargepole syndrome//, where failover is so complex to understand and configure that system administrators simply refuse to use it, meaning it's not properly tested, meaning it doesn't work properly.
+* //Thrashing//, where the two servers get into utter confusion, flipping between roles rapidly, and bringing the application to a halt.
+
+And so on. Presumably a correct and simple model can avoid these traps, but that's much easier said than done. Our best tool to force a design to be correct and simple on a is to implement it in pieces. We can then understand each piece really well, test it to destruction, and have higher confidence in how it behaves under stress.
+
+Thus, Model Four just test our failover design. Clients do play a role, in determining which server is head, but we'll chop out the whole Clone pattern here, so the failover is more visible.
+
+
+
+
+- head election
+- random wait, get timestamps
+- exchange timestamps
+- lowest timestamp becomes head
+- same timestamp = try again
+
+- router to router sockets
+    - no connection -> message lost
+    - identities = group endpoint
+- client requests group status, gets tail/head info
+- then client works as normal
+
+
+- head / tail election
+- 
+
+
 
 
 .end
 
+
+
+
+
+
+
+++++ Clone Protocol Specification
+
+
+++++ Clone API
+
+We don't need a lot of code to make a Clone client, but it's still subtle enough to be profitably hidden in a small API. 
+
+While the code we need to implement Clone is short, it's subtle. You'd not want to implement this directly in your applications. The server is fine, this can be a generic process that doesn't include any application code. For the client, let's make an event-driven API.
+
+
+Clone is complex enough in practice that you don't want to implement it directly in your applications. Instead, it makes a good basis for an application server framework, which talks to applications via the key-value table.
+
+- event driven on changes?
+- wrap as API cloneapi.h
+
+++++ Synchronized Clients
+
+- two or more clients asking for same state
+- ...? how
+
+Changes to the 
+
+- clones will not have identical state, unless all started at once and cloned in parallel
+- clients may send updates back to server, via pub/sub
+
+++++ Practical Clone Example
+
+- distributed name service
+- ephemeral names
+
+.end
+
+
+
++++ Atomic Multicast
+
+* N servers, where N is zero or more. In the degenerate case no servers are running. In the normal case, all servers are running.
+* The servers know about each other, through a fixed configuration. That is, we do not attempt to create a dynamic pool of servers that can come and go.
+* The clients know about all the servers, through a fixed configuration. Again, we do not attempt to allow clients to discover new servers.
+* The servers are all exact copies of each other, and at any time hold the same state.
+* The servers organize themselves into an ordered list, with a group "head" and a group "tail". Clients speak to the group head, and listen to the group tail.
+* When a server joins or rejoins the group, it always becomes the new tail.
+* If the group head crashes, the next server in the list, if any, becomes the new head.
+* If the group tail crashes, the previous server in the list, if any, becomes the new tail.
+* When any other server crashes, the previous server in the list links instead to the following server.
+
++++ Federation?
 
 +++ Cluster-wide topic distribution
 

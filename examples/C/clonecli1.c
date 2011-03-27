@@ -19,7 +19,7 @@ int main (void)
         kvmsg_t *kvmsg = kvmsg_recv (updates);
         if (!kvmsg)
             break;          //  Interrupted
-        kvmsg_store (kvmsg, kvmap);
+        kvmsg_store (&kvmsg, kvmap);
         sequence++;
     }
     printf (" Interrupted\n%" PRId64 " messages in\n", sequence);
