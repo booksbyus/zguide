@@ -157,7 +157,7 @@ Our second approach takes Lazy Pirate pattern and extends it with a queue device
 
 In all these Pirate patterns, workers are stateless, or have some shared state we don't know about, e.g. a shared database. Having a queue device means workers can come and go without clients knowing anything about it. If one worker dies, another takes over. This is a nice simple topology with only one real weakness, namely the central queue itself, which can become a problem to manage, and a single point of failure.
 
-The basis for the queue device is the least-recently-used (LRU) routing queue from Chapter 3. What is the very //minimum// we need to do to handle dead or blocked workers? Turns out, its surprisingly little. We already have a retry mechanism in the client. So using the standard LRU queue will work pretty well. This fits with 0MQ's philosophy that we can extend a peer-to-peer pattern like request-reply by plugging naive devices in the middle:
+The basis for the queue device is the least-recently-used (LRU) routing queue from Chapter Three. What is the very //minimum// we need to do to handle dead or blocked workers? Turns out, its surprisingly little. We already have a retry mechanism in the client. So using the standard LRU queue will work pretty well. This fits with 0MQ's philosophy that we can extend a peer-to-peer pattern like request-reply by plugging naive devices in the middle:
 
 [[code type="textdiagram"]]
 
@@ -219,7 +219,7 @@ The Simple Pirate Queue pattern works pretty well, especially since it's just a 
 
 We'll fix these in a properly pedantic Paranoid Pirate Pattern.
 
-We previously used a REQ socket for the worker. For the Paranoid Pirate worker we'll switch to a DEALER (XREQ) socket. This has the advantage of letting us send and receive messages at any time, rather than the lock-step send/receive that REQ imposes. The downside of DEALER is that we have to do our own envelope management. If you don't know what I mean, please re-read Chapter 3.
+We previously used a REQ socket for the worker. For the Paranoid Pirate worker we'll switch to a DEALER (XREQ) socket. This has the advantage of letting us send and receive messages at any time, rather than the lock-step send/receive that REQ imposes. The downside of DEALER is that we have to do our own envelope management. If you don't know what I mean, please re-read Chapter Three.
 
 [[code type="textdiagram"]]
 
@@ -714,6 +714,203 @@ If you want to make Titanic //even more reliable//, you can do this by duplicati
 
 If you want to make Titanic //much faster and less reliable//, you can store requests and replies purely in memory. This will give you the functionality of a disconnected network, but it won't survive a crash of the Titanic server itself.
 
++++ High-availability Pair (Binary Star Pattern)
+
+The Binary Star pattern puts two servers in a primary-backup high-availability pair. At any given time, one of these accepts connections from client applications (it is the "master") and one does not (it is the "slave"). Each server monitors the other. If the master disappears from the network, after a certain time the slave takes over as master.
+
+Binary Star pattern was first developed in the iMatix [http://www.openamq.org OpenAMQ server]. It is designed:
+
+* To provide a straight-forward high-availability solution.
+* To be simple enough to actually understand and use.
+* To failover reliably when needed, and only when needed.
+
+[[code type="textdiagram"]]
+
+    +------------+               +------------+
+    |            |               |            |
+    |  Primary   |<------------->|   Backup   |
+    |  "master"  |               |   "slave"  |
+    +------------+               +------------+
+          ^                                  
+          |
+          |
+          |
+    +-----+------+
+    |            |
+    |   Client   |
+    |            |
+    +------------+
+
+
+Figure # - High-availability pair, normal operation
+[[/code]]
+
+++++ Failover Scenarios
+
+Assuming we have a Binary Star pair running, here are the different scenarios that will result in failover happening:
+
+# The hardware running the primary server has a fatal problem (power supply explodes, machine catches fire, or someone simply unplugs it by mistake), and disappears. Applications see this, and reconnect to the backup server.
+# The network segment on which the primary server sits crashes - perhaps a router gets hit by a power spike - and applications start to reconnect to the backup server.
+# The primary server crashes or is killed by the operator and does not restart automatically.
+
+++++ Recovery Process
+
+Recovery from failover works as follows:
+
+# The operators restart the primary server and fix whatever problems were causing it to disappear from the network.
+# The operators stop the backup server, at a moment that will cause minimal disruption to applications.
+# When applications have reconnected to the primary server, the operators restart the backup server.
+
+Recovery (to using the primary server as master) is a manual operation. Painful experience teaches us that automatic recovery is undesirable. There are several reasons:
+
+* Failover creates an interruption of service to applications, possibly lasting 10-30 seconds. If there is a real emergency, this is much better than total outage. But if recovery creates a further 10-30 second outage, it is better that this happens off-peak, when users have gone off the network.
+
+* When there is an emergency, it's a Good Idea to create predictability for those trying to fix things. Automatic recovery creates uncertainty for system admins, who can no longer be sure which server is in charge without double-checking.
+
+* Last, you can get situations with automatic recovery where networks will fail over, and then recover, and operators are then placed in a difficult position to analyze what happened. There was an interruption of service, but the cause isn't clear.
+
+Having said this, the Binary Star pattern will fail back to the primary server if this is running (again) and the backup server fails. In fact this is how we provoke recovery.
+
+[[code type="textdiagram"]]
+
+    +------------+               +------------+
+    |            |               |            |
+    |  Primary   |<------------->|   Backup   |
+    |  "slave"   |               |  "master"  |
+    +------------+               +------------+
+                                        ^   
+                                        |
+          +-----------------------------+
+          |
+    +-----+------+
+    |            |
+    |   Client   |
+    |            |
+    +------------+
+
+
+Figure # - High-availability pair, during failover
+[[/code]]
+
+++++ Normal Shutdown Process
+
+The shutdown process for a Binary Star pair is to either:
+
+# Stop the passive server and then stop the active server at any later time, or
+# Stop both servers in any order but within a few seconds of each other.
+
+Stopping the active and then the passive server with any delay longer than the failover timeout will cause applications to disconnect, then reconnect, then disconnect again, which may disturb users.
+
+++++ Preventing Split-Brain Syndrome
+
+"Split-brain syndrome" is when different parts of a cluster think they are 'master' at the same time. It causes applications to stop seeing each other. Binary Star has an algorithm for detecting and eliminating split brain, based on a three-way decision mechanism (a server will not decide to become master until it gets application connection requests and it cannot see its peer server).
+
+However it is still possible to (mis)design a network to fool this algorithm. A typical scenario would a Binary Star pair distributed between two buildings, where each building also had a set of applications, and there was a single network link between both buildings. Breaking this link would create two sets of client applications, each with half of the Binary Star pair, and each failover server would become active.
+
+To prevent split-brain situations, we //MUST// connect Binary Star pairs using a dedicated network link, which can be as simple as plugging them both into the same switch or better, using a cross-over cable directly between two machines.
+
+We must not split a Binary Star architecture into two islands, each with a set of applications. While this may be a common type of network architecture, we'd use federation, not high-availability failover, in such cases.
+
+A suitably paranoid network configuration would use two private cluster interconnects, rather than a single one. Further, the network cards used for the cluster would be different to those used for message in/out, and possibly even on different PCI paths on the server hardware. The goal being to separate possible failures in the network from possible failures in the cluster. Network ports have a relatively high failure rate.
+
+++++ Alternatives to Failover
+
+In general, servers should be designed to never crash. This is actually doable, we've built servers that run for years without crashing. 0MQ helps a lot by allowing us to strictly control queue sizes on the server. Further, servers can be designed to be restarted rapidly using a shell script. In other words, simply restarting a single server may be more appropriate to the level of reliability you need than failover.
+
+++++ Detailed Requirements
+
+Binary Star is as simple as it can be, while still working accurately. In fact the current design is the third complete redesign. Each of the previous designs we found to be too complex, trying to do too much, and we stripped out functionality until we came to a design that was understandable and use, and reliable enough to be worth using.
+
+These are our requirements for a high-availability architecture:
+
+# The failover is meant to provide insurance against catastrophic system failures, such as hardware breakdown, fire, accident, etc. To guard against ordinary server crashes there are simpler ways to recover.
+# Failover time should be under 60 seconds and preferably under 10 seconds.
+# Failover has to happen automatically, whereas recover must happen manually. We want applications to switch over to the backup server automatically but we do not want them to switch back to the primary server except when the operators have fixed whatever problem there was, and decided that it is a good time to interrupt applications again.
+# The semantics for client applications should be simple and easy for developers to understand. Ideally they should be hidden in the client API.
+# There should be clear instructions for network architects on how to avoid designs that could lead to split brain syndrome in which both servers in a Binary Star pair think they are the master server.
+# There should be no dependencies on the order in which the two servers are started.
+# It must be possible to make planned stops and restarts of either server without stopping client applications (though they may be forced to reconnect).
+# Operators must be able to monitor both servers at all times.
+# It must be possible to connect the two servers using a high-speed dedicated network connection. That is, failover synchronization must be able to use a a specific IP route.
+
+We make these assumptions:
+
+# A single backup server provides enough insurance, we don't need multiple levels of backup.
+# The primary and backup server are equally capable of carrying the application load. We do not attempt to balance load across the servers.
+# There is sufficient budget to cover a fully redundant backup server that does nothing almost all the time.
+
+++++ Out of Scope
+
+We don't attempt to cover:
+
+# The use of an active backup server or load balancing. In a Binary Star pair, the backup server is inactive and does no useful work until the primary server goes off-line.
+# The handling of persistent messages or transactions in any way. We assuming a network of unreliable (and probably untrusted) servers or Binary Star pairs.
+# Any automatic exploration of the network. The Binary Star pair is manually and explicitly defined in the network and is known to applications (at least in their configuration data).
+# Replication of state or messages between servers. All server-side state much be recreated by applications when they fail over.
+
+++++ Terminology
+
+: **Primary** : The primary server is the one that is normally 'master'.
+: **Backup** : The backup server is the one that is normally 'slave', it will become master if and when the primary server disappears from the network, and when client applications ask the backup server to connect.
+: **Master** : The master server is the one of a Binary Star pair that accepts client connections. There is always exactly one master server.
+: **Slave** : The slave server is the one that takes over if the master disappears. Note that when a Binary Star pair is running normally, the primary server is master, and the backup is slave. When a failover has happened, the roles are switched.
+: **Peering** : A peering is the relationship between two servers. A Binary Star pair uses two peerings, one in each direction.
+
+++++ Server Configuration
+
+To configure a Binary Star pair, you need to:
+
+# Tell the primary server where the backup server is.
+# Tell the backup server where the primary server is.
+# Optionally, tune the failover response times, which must be the same for both servers.
+
+++++ Client-side API Support
+
+For client applications to use a Binary Star pair, they must:
+
+# Know both server addresses.
+# Try to connect to the primary server, and if that fails, to the backup server.
+# Retry this connection at least twice, and with a delay between retries. The delay should be equal to or greater than the sum of the server's failover timeout setting.
+# Be able to recreate all of their state on a server.
+# Be able to retransmit messages lost during a failover, if messages need to be reliable.
+
+To detect and provoke a proper failover, client applications must:
+
+* Detect a failed connection, typically using heartbeating.
+* Wait for some short interval (for example, five seconds).
+* Connect to the first available server, trying //first primary and then backup//.
+
+It's not trivial work, and we'd almost always wrap this in an API that hides it from real end-user applications.
+
+++++ Known Limitations
+
+These are the known limitations of the Binary Star pattern:
+
+* A server process cannot be part of more than one Binary Star pair.
+* A primary server can have a single backup server, no more.
+* The backup server cannot do useful work while in slave mode.
+* The backup server must be capable of handling full application loads.
+* Failover configuration cannot be modified at runtime.
+* Client applications must do some work to benefit from failover.
+
+++++ Tuning Binary Star
+
+The main tuning concern is how frequently you want the servers to check their peering status, and how quickly you want to activate failover. In our example, the failover timeout value defaults to 1000 msec. If you reduce this, the backup server will take over as master more rapidly but may take over in cases where the primary server could recover. You may for example have wrapped the primary server in a shell script that restarts it if it crashes. In that case the timeout should be higher than the time needed to restart the primary server.
+
+The application behavior can also have an impact. Safe values are a five-second timeout in applications, with a 10-second pause between reconnection attempts.
+
+++++ Binary Star Server and Client
+
+Without further ado, here is the Binary Star server:
+
+[[code type="example" title="Binary Star server" name="bstarsrv"]]
+[[/code]]
+
+And here is the client:
+
+[[code type="example" title="Binary Star client" name="bstarcli"]]
+[[/code]]
+
 +++ Brokerless Reliability (Freelance Pattern)
 
 It might seem ironic to focus so much on broker-based reliability, when we often explain 0MQ as "brokerless messaging". However in messaging, as in real life, the middleman is both a burden and a benefit. In practice, most messaging architectures benefit from a mix of distributed and brokered messaging. You get the best results when you can decide freely what tradeoffs you want to make. This is why I can drive 10km to a wholesaler to buy five cases of wine for a party, but I can also walk 10 minutes to a corner store to buy one bottle for a dinner. Our highly context-sensitive relative valuations of time, energy, and cost are essential to the real world economy. And they are essential to an optimal message based architecture.
@@ -764,16 +961,16 @@ In this architecture a large set of clients connect to a small set of servers di
 
 * Clients could use ROUTER (XREP) sockets so they can address specific servers. But how does the client know the identity of the server sockets? Either the server has to ping the client first (complex), or the each server has to use a hard-coded, fixed identity known to the client (nasty).
 
-++++ Model 1 - Simple Retry and Failover
+++++ Model One - Simple Retry and Failover
 
 So our menu appears to offer: simple, brutal, complex, or nasty. Let's start with 'simple' and then work out the kinks. We take Lazy Pirate and rewrite it to work with multiple server endpoints. Start the server first, specifying a bind endpoint as argument. Run one or several servers:
 
-[[code type="example" title="Freelance server, Model 1" name="flserver1"]]
+[[code type="example" title="Freelance server, Model One" name="flserver1"]]
 [[/code]]
 
 Then start the client, specifying one or more connect endpoints as arguments:
 
-[[code type="example" title="Freelance client, Model 1" name="flclient1"]]
+[[code type="example" title="Freelance client, Model One" name="flclient1"]]
 [[/code]]
 
 While the basic approach is Lazy Pirate, the client aims to just get one successful reply. It has two techniques, depending on whether you are running a single server, or multiple servers:
@@ -785,7 +982,7 @@ This solves the main weakness of Lazy Pirate, namely that it could not do failov
 
 However this design won't work well in a real application. If we're connecting many sockets, and our primary name server is down, we're going to do this painful timeout each time.
 
-++++ Model 2 - Brutal Shotgun Massacre
+++++ Model Two - Brutal Shotgun Massacre
 
 Let's switch our client to using a DEALER socket. Our goal here is to make sure we get a reply back within the shortest possible time, no matter whether the primary server is down or not. Our client takes this approach:
 
@@ -798,16 +995,16 @@ What will happen in practice is that when all servers are running, 0MQ will dist
 
 What's more annoying for the client is that we'll get multiple replies back, but there's no guarantee we'll get a precise number of replies. Requests and replies can get lost (e.g. if the server crashes while processing a request).
 
-So, we have to number requests, and ignore any replies that don't match the request number. Our Model 1 server will work, since it's an echo server, but coincidence is not a great basis for understanding. So we'll make a Model 2 server that chews up the message, returns a correctly-numbered reply with the content "OK". We'll use messages consisting of two parts, a sequence number and a body.
+So, we have to number requests, and ignore any replies that don't match the request number. Our Model One server will work, since it's an echo server, but coincidence is not a great basis for understanding. So we'll make a Model Two server that chews up the message, returns a correctly-numbered reply with the content "OK". We'll use messages consisting of two parts, a sequence number and a body.
 
 Start the server once or more:
 
-[[code type="example" title="Freelance server, Model 2" name="flserver2"]]
+[[code type="example" title="Freelance server, Model Two" name="flserver2"]]
 [[/code]]
 
 Then start the client, specifying the connect endpoints as arguments:
 
-[[code type="example" title="Freelance client, Model 2" name="flclient2"]]
+[[code type="example" title="Freelance client, Model Two" name="flclient2"]]
 [[/code]]
 
 Some notes on this code:
@@ -828,7 +1025,7 @@ So pros and cons of our shotgun approach:
 * Con: we can't prioritize our servers, i.e. Primary, then Secondary.
 * Con: the server can do at most one request at a time, period.
 
-++++ Model 3 - Complex and Nasty
+++++ Model Three - Complex and Nasty
 
 The shotgun approach seems too good to be true. Let's be scientific and work through all the alternatives. We're going to explore the complex/nasty option, even if it's only to finally realize that we preferred brutal. Ah, the story of my life.
 
@@ -850,16 +1047,16 @@ This brings us to the realm of protocols again, so here's a short spec that defi
 
 * http://rfc.zeromq.org/spec:10
 
-It is short and sweet to implement as a server. Here's our echo server, model 3, now speaking FLP:
+It is short and sweet to implement as a server. Here's our echo server, Model Three, now speaking FLP:
 
-Model 3 of the server is just slightly different:
+Model Three of the server is just slightly different:
 
-[[code type="example" title="Freelance server, Model 3" name="flserver3"]]
+[[code type="example" title="Freelance server, Model Three" name="flserver3"]]
 [[/code]]
 
 The Freelance client, however, has gotten large. For clarity, it's split into an example application and a class that does the hard work. Here's the top-level application:
 
-[[code type="example" title="Freelance client, Model 3" name="flclient3"]]
+[[code type="example" title="Freelance client, Model Three" name="flclient3"]]
 [[/code]]
 
 And here, almost as complex and large as the Majordomo broker, is the client API class:

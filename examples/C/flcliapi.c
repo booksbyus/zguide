@@ -349,7 +349,7 @@ flcliapi_task (void *context)
         if (self->request
         &&  tickless > self->expires)
             tickless = self->expires;
-        zhash_apply (self->servers, server_tickless, &tickless);
+        zhash_foreach (self->servers, server_tickless, &tickless);
 
         int rc = zmq_poll (items, 2, (tickless - s_clock ()) * 1000);
         if (rc == -1 && errno == ETERM)
@@ -389,7 +389,7 @@ flcliapi_task (void *context)
         }
         //  Disconnect and delete any expired servers
         //  Send heartbeats to idle servers if needed
-        zhash_apply (self->servers, server_ping, self->router);
+        zhash_foreach (self->servers, server_ping, self->router);
     }
     agent_destroy (&self);
     return NULL;

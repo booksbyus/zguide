@@ -31,8 +31,8 @@
 extern "C" {
 #endif
 
-//  Callback function for zhash_apply method
-typedef int (zhash_apply_fn) (char *key, void *value, void *argument);
+//  Callback function for zhash_foreach method
+typedef int (zhash_foreach_fn) (char *key, void *value, void *argument);
 //  Callback function for zhash_freefn method
 typedef void (zhash_free_fn) (void *data);
 
@@ -46,6 +46,8 @@ void
 int
     zhash_insert (zhash_t *self, char *key, void *value);
 void
+    zhash_update (zhash_t *self, char *key, void *value);
+void
     zhash_delete (zhash_t *self, char *key);
 void *
     zhash_lookup (zhash_t *self, char *key);
@@ -54,7 +56,7 @@ void *
 size_t
     zhash_size (zhash_t *self);
 int
-    zhash_apply (zhash_t *self, zhash_apply_fn *callback, void *argument);
+    zhash_foreach (zhash_t *self, zhash_foreach_fn *callback, void *argument);
 void
     zhash_test (int verbose);
 
@@ -78,7 +80,7 @@ typedef unsigned int    qbyte;          //  Quad byte = 32 bits
 
     Note that it's relatively slow (~50k insertions/deletes per second), so
     don't do inserts/updates on the critical path for message I/O.  It can
-    do ~2.5M lookups per second for 16-char keys.  Timed on a 1.6GHz CPU.
+    do ~2.5M lookups per second for 16-char keys. Timed on a 1.6GHz CPU.
 
     -------------------------------------------------------------------------
     Copyright (c) 1991-2011 iMatix Corporation <www.imatix.com>
@@ -324,6 +326,27 @@ zhash_insert (zhash_t *self, char *key, void *value)
 
 
 //  --------------------------------------------------------------------------
+//  Update item into hash table with specified key and value.
+//  If key is already present, destroys old value and inserts new one.
+//  Use free_fn method to ensure deallocator is properly called on value.
+
+void
+zhash_update (zhash_t *self, char *key, void *value)
+{
+    assert (self);
+    assert (key);
+    item_t *item = s_item_lookup (self, key);
+    if (item) {
+        if (item->free_fn)
+            (item->free_fn) (item->value);
+        item->value = value;
+    }
+    else
+        zhash_insert (self, key, value);
+}
+
+
+//  --------------------------------------------------------------------------
 //  Remove an item specified by key from the hash table. If there was no such
 //  item, this function does nothing.
 
@@ -396,7 +419,7 @@ zhash_size (zhash_t *self)
 //  final return code from callback function (zero = success).
 
 int
-zhash_apply (zhash_t *self, zhash_apply_fn *callback, void *argument)
+zhash_foreach (zhash_t *self, zhash_foreach_fn *callback, void *argument)
 {
     assert (self);
     uint

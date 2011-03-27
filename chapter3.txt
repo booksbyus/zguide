@@ -564,7 +564,7 @@ In the above design, we're using the built-in load balancing routing that the de
     +--------+  +--------+  +--------+
 
 
-  Figure # - Extended request-reply with LRU
+    Figure # - Extended request-reply with LRU
 [[/code]]
 
 Our broker - a router-to-router LRU queue - can't simply copy message parts blindly. Here is the code, it's fairly complex but the core logic is reusable in any request-reply broker that wants to do LRU routing:
@@ -769,7 +769,7 @@ In the router-to-dealer example we saw a 1-to-N use case where one client talks 
             +-------------+
 
 
-Figure # - Asynchronous Client-Server
+    Figure # - Asynchronous Client-Server
 [[/code]]
 
 Here's how it works:

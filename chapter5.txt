@@ -1,13 +1,15 @@
 .output chapter5.wd
 ++ Chapter Five - Advanced Publish-Subscribe
 
-In Chapters Three and Four we looked at advanced use of 0MQ's request-reply pattern. If you managed to digest all that, congratulations. In this chapter we'll focus on publish-subscribe, and extend 0MQ's core pubsub pattern with higher-level patterns for reliability, security, and state distribution.
+In Chapters Three and Four we looked at advanced use of 0MQ's request-reply pattern. If you managed to digest all that, congratulations. In this chapter we'll focus on publish-subscribe, and extend 0MQ's core pubsub pattern with higher-level patterns for performance, reliability, state distribution, and security.
 
 We'll cover:
 
 * How to handle too-slow subscribers (the //Suicidal Snail// pattern).
 * How to design high-speed subscribers (the //Black Box// pattern).
-
+* How to build a shared key-value cache (the //Clone// pattern).
+* How to do atomic group multicast (the //Platoon// pattern).
+* How to do secure publish-subscribe (the //Need to Know// pattern).
 
 +++ Slow Subscriber Detection (Suicidal Snail Pattern)
 
@@ -45,7 +47,7 @@ Notes about this example:
 
 +++ High-speed Subscribers (Black Box Pattern)
 
-A common use case for pubsub is distributing large data streams. For example, 'market data' coming from stock exchanges. A typical set-up would have a publisher connected to a stock exchange, taking price quotes, and sending them out to a number of subscribers. If there are a handful of subscribers, we could use TCP. If we have a larger number of subscribers, we'd probably use reliable multicast, i.e. PGM.
+A common use case for pubsub is distributing large data streams. For example, 'market data' coming from stock exchanges. A typical set-up would have a publisher connected to a stock exchange, taking price quotes, and sending them out to a number of subscribers. If there are a handful of subscribers, we could use TCP. If we have a larger number of subscribers, we'd probably use reliable multicast, i.e. {{pgm}}.
 
 Let's imagine our feed has an average of 100,000 100-byte messages a second. That's a typical rate, after filtering market data we don't need to send on to subscribers. Now we decide to record a day's data (maybe 250 GB in 8 hours), and then replay it to a simulation network, i.e. a small group of subscribers. While 100K messages a second is easy for a 0MQ application, we want to replay //much faster//.
 
@@ -54,15 +56,18 @@ So we set-up our architecture with a bunch of boxes, one for the publisher, and 
 And as we pump data into our subscribers, we notice two things:
 
 # When we do even the slightest amount of work with a message, it slows down our subscriber to the point where it can't catch up with the publisher again.
-# We're stuck, at both publisher and subscriber, to around say 6M messages a second, even after careful optimization and TCP tuning.
+# We're hitting a ceiling, at both publisher and subscriber, to around say 6M messages a second, even after careful optimization and TCP tuning.
 
-The first thing we have to do is break our subscriber into a multithreaded design so that we can do work with messages in one set of threads, while reading messages in another. Typically we don't want to process every message the same way. Rather, the subscriber will filter some messages, perhaps by prefix key.
+The first thing we have to do is break our subscriber into a multithreaded design so that we can do work with messages in one set of threads, while reading messages in another. Typically we don't want to process every message the same way. Rather, the subscriber will filter some messages, perhaps by prefix key. When a message matches some criteria, the subscriber will call a worker to deal with it. In 0MQ terms this means sending the message to a worker thread.
+
+So the subscriber looks something like a queue device. We could use various sockets to connect the subscriber and workers. If we assume one-way traffic, and workers that are all identical, we can use PUSH and PULL, and delegate all the routing work to 0MQ. This is the simplest and fastest approach:
 
 [[code type="textdiagram"]]
 
                         +-----------+   
                         |           |   
                         | Publisher |   
+                        |           |
                         +-----------+   
                         |    PUB    |   
                         \-----+-----/   
@@ -77,7 +82,7 @@ The first thing we have to do is break our subscriber into a multithreaded desig
   :                     | Subscriber|                     :
   :                     |           |                     :
   :                     +-----------+                     :
-  :                     |   ROUTER  |                     :
+  :                     |   PUSH    |                     :
   :                     \-----+-----/                     :
   :                           |                           :
   :                           |                           :
@@ -85,7 +90,7 @@ The first thing we have to do is break our subscriber into a multithreaded desig
   :           |               |               |           :
   :           v               v               v           :
   :     /-----------\   /-----------\   /-----------\     :
-  :     |  DEALER   |   |  DEALER   |   |  DEALER   |     :
+  :     |   PULL    |   |   PULL    |   |   PULL    |     :
   :     +-----------+   +-----------+   +-----------+     :
   :     |           |   |           |   |           |     :
   :     |  Worker   |   |  Worker   |   |  Worker   |     :
@@ -97,15 +102,20 @@ The first thing we have to do is break our subscriber into a multithreaded desig
            Figure # - Simple Black Box Pattern
 [[/code]]
 
+The subscriber talks to the publisher over TCP or PGM. The subscriber talks to its workers, which are all in the same process, over inproc.
 
+Now to break that ceiling. What happens is that the subscriber thread hits 100% of CPU, and since it is one thread, it cannot use more than one core. A single thread will always hit a ceiling, be it at 2M, 6M, or more messages per second. We want to split the work across multiple threads that can run in parallel.
 
+The approach used by many high-performance products, which works here, is //sharding//, meaning we split the work into parallel and independent streams. E.g. half of the topic keys are in one stream, half in another. We could use many streams, but performance won't scale unless we have free cores.
 
+So let's see how to shard into two streams:
 
 [[code type="textdiagram"]]
 
                         +-----------+
                         |           |
                         | Publisher |
+                        |           |
                         +-----+-----+
                         | PUB | PUB |
                         \--+--+--+--/
@@ -120,7 +130,7 @@ The first thing we have to do is break our subscriber into a multithreaded desig
   :                     | Subscriber|                     :
   :                     |           |                     :
   :                     +-----+-----+                     :
-  :                     | RTR | RTR |                     :
+  :                     | PUSH|PUSH |                     :
   :                     \--+--+--+--/                     :
   :                        |     |                        :
   :                        |     |                        :
@@ -128,7 +138,7 @@ The first thing we have to do is break our subscriber into a multithreaded desig
   :           |               |               |           :
   :           v               v               v           :
   :     /-----------\   /-----------\   /-----------\     :
-  :     |  DEALER   |   |  DEALER   |   |  DEALER   |     :
+  :     |   PULL    |   |   PULL    |   |   PULL    |     :
   :     +-----------+   +-----------+   +-----------+     :
   :     |           |   |           |   |           |     :
   :     |  Worker   |   |  Worker   |   |  Worker   |     :
@@ -140,71 +150,357 @@ The first thing we have to do is break our subscriber into a multithreaded desig
               Figure # - Mad Black Box Pattern
 [[/code]]
 
+With two streams, working at full speed, we would configure 0MQ as follows:
 
-- design for high-speed subscriber
-    SUB socket TCP
-    inproc to workers
-    callback on message prefix
-    
-- feed segmentation
-    - one NIC per slice
-    - one socket per slice
-    - one app thread per slice
-    - one I/O thread per slice
-    - sufficient cores
-    
+* Two I/O threads, rather than one.
+* Two network interfaces (NIC), one per subscriber.
+* Each I/O thread bound to a specific NIC.
+* Two subscriber threads, bound to specific cores.
+* Two SUB sockets, one per subscriber thread.
+* The remaining cores assigned to worker threads.
+* Worker threads connected to both subscriber PUSH sockets.
 
-+++ Reliable Publish-Subscribe (Clone Pattern)
+With ideally, no more threads in our architecture than we had cores. Once we create more threads than cores, we get contention between threads, and diminishing returns. There would be no benefit, for example, in creating more I/O threads.
 
-Pubsub is like a radio broadcast, you miss everything before you join, and then how much information you get depends on the quality of your reception. It's so easy to lose messages with this pattern that you might wonder why 0MQ bothers to implement it at all.[[footnote]]If you're German or Norwegian, that is what we call 'humor'. There are many cases where simplicity and speed are more important than pedantic delivery. In fact the radio broadcast covers perhaps the majority of information distribution in the real world. Think of Facebook and Twitter. No, I'm not still joking.[[/footnote]]
++++ A Shared Key-Value Cache (Clone Pattern)
 
-However, reliable pubsub is also a useful tool. Let's do as before and define what that 'reliability' means in terms of what can go wrong.
+Pubsub is like a radio broadcast, you miss everything before you join, and then how much information you get depends on the quality of your reception. Surprisingly, for engineers who are used to aiming for "perfection", this model is useful and wide-spread, because it maps perfectly to real-world distribution of information. Think of Facebook and Twitter, the BBC World Service, and the sports results.
 
-Happens all the time:
+However, there are also a whole lot of cases where more reliable pub-sub would be valuable, if we could do it. As we did for request-reply, let's define ''reliability' in terms of what can go wrong. Here are the classic problems with pub-sub:
 
 * Subscribers join late, so miss messages the server already sent.
-* Subscriber connections take a non-zero time, and can lose messages during that time.
+* Subscriber connections are slow, and can lose messages during that time.
+* Subscribers go away, and lose messages while they are away.
 
-Happens exceptionally:
+Less often, we see problems like these:
 
 * Subscribers can crash, and restart, and lose whatever data they already received.
 * Subscribers can fetch messages too slowly, so queues build up and then overflow.
 * Networks can become overloaded and drop data (specifically, for PGM).
-* Networks can become too slow, so publisher-side queues overflow.
+* Networks can become too slow, so publisher-side queues overflow, and publishers crash.
 
-A lot more can go wrong but these are the typical failures we see in a realistic system. The difficulty in defining 'reliability' now is that we have no idea, at the messaging level, what the application actually does with its data. So we need a generic model that we can implement once, and then use for a wide range of applications.
+A lot more can go wrong but these are the typical failures we see in a realistic system.
 
-What we'll design is a simple *shared key-value cache* that stores a set of blobs indexed by unique keys. Don't confuse this with *distributed hash tables*, which solve the wider problem of connecting peers in a distributed network, or with *distributed key-value tables*, which act like non-SQL databases. All we will build is a system that reliably clones some in-memory state from a server to a set of clients. We want to:
+We've already solved some of these, such as the slow subscriber, which we handle with the Suicidal Snail pattern. But for the rest, it would be nice to have a generic, reusable framework for reliable pub-sub.
+
+The difficulty is that we have no idea what our target applications actually want to do with their data. Do they filter it, and process only a subset of messages? Do they log the data somewhere for later reuse? Do they distribute the data further to workers? There are dozens of plausible scenarios, and each will have its own ideas about what reliability means and how much it's worth in terms of effort and performance.
+
+So we'll build an abstraction that we can implement once, and then reuse for many applications. This abstraction is a **shared value-key cache**, which stores a set of blobs indexed by unique keys.
+
+Don't confuse this with //distributed hash tables//, which solve the wider problem of connecting peers in a distributed network, or with //distributed key-value tables//, which act like non-SQL databases. All we will build is a system that reliably clones some in-memory state from a server to a set of clients. We want to:
 
 * Let a client join the network at any time, and reliably get the current server state.
 * Let any client update the key-value cache (inserting new key-value pairs, updating existing ones, or deleting them).
 * Reliably propagates changes to all clients, and does this with minimum latency overhead.
 * Handle very large numbers of clients, e.g. tens of thousands or more.
 
-The key aspect of the Clone pattern is that clients talk back to servers, which is more than we do in a simple pub-sub dialog. This is why I use the terms 'server' and 'client' instead of 'publisher' and 'subscriber'. We'll use pubsub as part of the Clone pattern but it is more than that.
+The key aspect of the Clone pattern is that clients talk back to servers, which is more than we do in a simple pub-sub dialog. This is why I use the terms 'server' and 'client' instead of 'publisher' and 'subscriber'. We'll use pub-sub as the core of Clone but it is a bit more than that.
 
-When a client joins the network, it subscribes a SUB socket, as we'd expect, to the data stream coming from the server (the publisher). This goes across some pub-sub topology (a multicast bus, perhaps, or a tree of forwarder devices, or direct client-to-server connections).
+++++ Distributing Key-Value Updates
 
-At some undetermined point, it will start getting messages from the server. Note that we can't predict what the client will receive as its first message. If a zmq_connect[3] call takes 10msec, and in that time the server has sent 100 messages, the client might get messages starting from the 100th message.
+We'll develop Clone in stages, solving one problem at a time. First, let's look at how to distribute key-value updates from a server to a set of clients. We'll take our weather server from Chapter One and refactor it to send messages as key-value pairs. We'll modify our client to store these in a hash table:
 
-Let's define a message as a key-value pair. The semantics are simple: if the value is provided, it's an insert or update operation. If there is no value, it's a delete operation. The key provides the subscription filter, so clients can treat the cache as a tree, and select whatever branches of the tree they want to hold.
+[[code type="textdiagram"]]
 
-The client now connects to the server using a different socket (a REQ socket) and asks for a snapshot of the cache. It tells the server two things: which message it received (which means the server has to number messages), and which branch or branches of the cache it wants. To keep things simple we'll assume that any client has exactly one server that it talks to, and gets its cache from. The server *must* be running; we do not try to solve the question of what happens if the server crashes (that's left as an exercise for you to hurt your brain over).
+                 +-------------+
+                 |             |
+                 |   Server    |
+                 |             |
+                 +-------------+
+                 |     PUB     |
+                 \-------------/
+                        |
+                        |
+                     updates
+                        |
+        +---------------+---------------+
+        |               |               |
+        |               |               |
+        v               v               v
+  /------------\  /------------\  /------------\
+  |    SUB     |  |    SUB     |  |    SUB     |
+  +------------+  +------------+  +------------+
+  |            |  |            |  |            |
+  |   Client   |  |   Client   |  |   Client   |
+  |            |  |            |  |            |
+  +------------+  +------------+  +------------+
 
-The server builds a snapshot and sends that to the client's REQ socket. This can take some time, especially if the cache is large. The client continues to receive updates from the server on its SUB socket, which it queues but does not process. We'll assume these updates fit into memory. At some point it gets the snapshot on its REQ socket. It then applies the updates to that snapshot, which gives it a working cache.
 
-You'll perhaps see one difficulty here. If the client asks for a snapshot based on message 100, how does the server provide this? After all, it may have sent out lots of updates in the meantime. We solve this by cheating gracefully. The server just sends its current snapshot, but tells the client what its latest message number is. Say that's 200. The client gets the snapshot, and in its queue, it has messages 100 to 300. It throws out 100 to 200, and starts applying 201 to 300 to the snapshot.
+        Figure # - Simplest Clone Model
+[[/code]]
 
-Once the client has happily gotten its cache, it disconnects from the server (destroys that REQ socket), which is not used for anything more.
+This is the server:
 
-How does Clone handle updates from clients? There are several options but the simplest seems to be that each client acts as a publisher back to the server, which subscribes. In a TCP network this will mean persistent connections between clients and servers. In a PGM network this will mean using a shared multicast bus that clients write to, and the server listens to.
+[[code type="example" title="Clone server, Model One" name="clonesrv1"]]
+[[/code]]
 
-So the client, at startup, opens a PUB socket and part of its initial request to the server includes the address of that socket, so the server can open a SUB socket and connect back to it.
+And here is the client:
 
-Why don't we allow clients to publish updates directly to other clients? While this would reduce latency, it makes it impossible to sequence messages. Updates *must* pass through the server to make sense to other clients. There's a more subtle second reason. In many applications it's important that updates have a single order, across many clients. Forcing all updates through the server ensures that they have the same order when they finally get to clients.
+[[code type="example" title="Clone client, Model One" name="clonecli1"]]
+[[/code]]
 
-With unique sequencing, clients can detect the nastier failures - network congestion and queue overflow. If a client discovers that its incoming message stream has a hole, it can take action. It seems sensible that the client contact the server and ask for the missing messages, but in practice that isn't useful. If there are holes, adding more stress to the network will make things worse. All the client can really do is warn its users "Unable to continue", and stop, and not restart until someone has manually checked the cause of the problem.
+Some notes about this code:
+
+* All the hard work is done in a class called **kvmsg**. This class works with key-value message objects, which are multipart 0MQ messages structured as three frames: a key (a 0MQ string), a sequence number (64-bit value, in network byte order), and a binary body (holds everything else).
+* The server generates messages with a randomized 4-digit key, which lets us simulate a large but not enormous hash table (10K entries).
+* The server does a 200 millisecond pause after binding its socket. This is to prevent "slow joiner syndrome" where the subscriber loses messages as it connects to the server's socket. We'll remove that in later models.
+* We'll use the terms 'publisher' and 'subscriber' in the code to refer to sockets. This will help later when we have multiple sockets doing different things.
+
+Both the server and client maintain hash tables, but this first model only works properly if we start all clients before the server, and the clients never crash. That's not 'reliability'.
+
+++++ Getting a Snapshot
+
+In order to allow a late (or recovering) client to catch up with a server it has to get a snapshot of the server's state. Just as we've reduced "message" to mean "a sequenced key-value pair", we can reduce "state" to mean "a hash table". To get the server state, a client opens a REQ socket and asks for it explicitly:
+
+[[code type="textdiagram"]]
+
+                 +-------------+
+                 |             |
+                 |   Server    |
+                 |             |
+                 +------+------+
+                 |  PUB | XREP |
+                 \---+--+------/
+                     |     ^
+                     |     |    state request
+                  updates  +----------------+
+                     |                      |
+     +---------------+---------------+      |
+     |               |               |      |
+     |               |               |      |
+     v               v               v      |
+  /------+-----\  /------+-----\  /------+--+--\
+  | SUB  |     |  | SUB  |     |  | SUB  | REQ |
+  +------+-----+  +------+-----+  +------+-----+
+  |            |  |            |  |            |
+  |   Client   |  |   Client   |  |   Client   |
+  |            |  |            |  |            |
+  +------------+  +------------+  +------------+
+
+
+          Figure # - State Replication
+[[/code]]
+
+To make this work, we have to solve the timing problem. Getting a state snapshot will take a certain time, possibly fairly long if the snapshot is large. We need to correctly apply updates to the snapshot. But the server won't know when to start sending us updates. One way would be to start susbcribing, get a first update, and then ask for "state for update N". This would require the server storing one snapshot for each update, which isn't practical.
+
+So we will do the synchronization in the client, as follows:
+
+* The client first subscribes to updates and then makes a state request. This guarantees that the state is going to be newer than the oldest update it has.
+* The client waits for the server to reply with state, and meanwhile queues all updates. It does this simply by not reading them: 0MQ keeps them queued on the socket queue, since we don't set a HWM.
+* When the client receives its state update, it begins once again to read updates. However it discards any updates that are older than the state update. So if the state update includes updates up to 200, the client will discard updates up to 201.
+* The client then applies updates to its own state snapshot.
+
+It's a simple model that exploits 0MQ's own internal queues. Here's the server:
+
+[[code type="example" title="Clone server, Model Two" name="clonesrv2"]]
+[[/code]]
+
+And here is the client:
+
+[[code type="example" title="Clone client, Model Two" name="clonecli2"]]
+[[/code]]
+
+Some notes about this code:
+
+* The server uses two threads, for simpler design. One thread produces random updates, and the second thread handles state. The two communicate across PAIR sockets. You might like to use SUB sockets but you'd hit the "slow joiner" problem where the subscriber would randomly miss some messages while connecting. PAIR sockets let us explicitly synchronize the two threads.
+* We set a HWM on the updates socket pair, since hash table insertions are relatively slow. Without this, the server runs out of memory. On {{inproc}} connections, the real HWM is the sum of the HWM of //both// sockets, so we set the HWM on each socket.
+* The client is really simple. In C, under 60 lines of code. A lot of the heavy lifting is done in the kvmsg class, but still, the Clone pattern is easier to implement than it seemed at first.
+* We don't use anything fancy for serializing the state. The hash table holds a set of kvmsg objects, and the server sends these, as a batch of messages, to the client requesting state. If multiple clients request state at once, each will get a different snapshot.
+* We assume that the client has exactly one server to talk to. The server **must** be running; we do not try to solve the question of what happens if the server crashes.
+
+Right now, these two programs don't do anything real, but they correctly synchronize state. It's a neat example of how to mix different patterns: PAIR-over-inproc, PUB-SUB, and ROUTER-DEALER.
+
+++++ Republishing Updates
+
+In our second model, changes to the key-value cache came from the server itself. This is a centralized model, useful for example if we have a central configuration file we want to distribute, with local cacheing on each node. A more interesting model takes updates from clients, not the server. The server thus becomes a stateless broker. This gives us some benefits:
+
+* We're less worried about the reliability of the server. If it crashes, we can start a new instance, and feed it new values.
+* We can use the key-value cache to share knowledge between dynamic peers.
+
+Updates from clients go via a PUSH-PULL socket flow from client to server:
+
+[[code type="textdiagram"]]
+
+                 +-------------+
+                 |             |
+                 |   Server    |
+                 |             |
+                 +------+------+
+                 |  PUB | PULL |
+                 \---+--+------/
+                     |     ^
+                     |     |    state update
+                  updates  +----------------+
+                     |                      |
+     +---------------+---------------+      |
+     |               |               |      |
+     |               |               |      |
+     v               v               v      |
+  /------+-----\  /------+-----\  /------+--+--\
+  | SUB  |     |  | SUB  |     |  | SUB  | PUSH|
+  +------+-----+  +------+-----+  +------+-----+
+  |            |  |            |  |            |
+  |   Client   |  |   Client   |  |   Client   |
+  |            |  |            |  |            |
+  +------------+  +------------+  +------------+
+
+
+         Figure # - Republishing Updates
+[[/code]]
+
+Why don't we allow clients to publish updates directly to other clients? While this would reduce latency, it makes it impossible to sequence messages. Updates **must** pass through the server to make sense to other clients. There's a more subtle second reason. In many applications it's important that updates have a single order, across many clients. Forcing all updates through the server ensures that they have the same order when they finally get to clients.
+
+With unique sequencing, clients can detect the nastier failures - network congestion and queue overflow. If a client discovers that its incoming message stream has a hole, it can take action. It seems sensible that the client contact the server and ask for the missing messages, but in practice that isn't useful. If there are holes, they're caused by network stress, and adding more stress to the network will make things worse. All the client can really do is warn its users "Unable to continue", and stop, and not restart until someone has manually checked the cause of the problem.
+
+We'll now generate state updates in the client. Here's the server:
+
+[[code type="example" title="Clone server, Model Three" name="clonesrv3"]]
+[[/code]]
+
+And here is the client:
+
+[[code type="example" title="Clone client, Model Three" name="clonecli3"]]
+[[/code]]
+
+Some notes about this code:
+
+* The server has collapsed to one thread, which collects updates from clients and redistributes them. It manages a PULL socket for incoming updates, a ROUTER socket for state requests, and a PUB socket for outgoing updates.
+* The client uses a simple tickless timer to send a random update to the server once a second. In reality, updates would be driven by application code.
+
+++++ Clone Server Reliability
+
+Clone models one to three are relatively simple. We're now going to get into unpleasantly complex territory here that has me getting up for another espresso. You should appreciate that making "reliable" messaging is complex enough that you always need to ask, "do we actually need this?" before jumping into it. If you can get away with unreliable, or "good enough" reliability, you can make a huge win in terms of cost and complexity. Sure, you may lose some data now and then. It is often a good trade-off.
+
+As you play with model three, you'll stop and restart the server. It might look like it recovers, but of course it's applying updates to an empty state, instead of the proper current state. Any new client joining the network will get just the latest updates, instead of all of them. So let's work out a design for making Clone work despite server failures.
+
+Let's list the failures we want to be able to handle:
+
+* Clone server process crashes and is automatically or manually restarted. The process loses its state and has to get it back from somewhere.
+* Clone server machine dies and is off-line for a significant time. Clients have to switch to an alternate server somewhere.
+* Clone server process or machine gets disconnected from the network, e.g. a switch dies. It may come back at some point, but in the meantime clients need an alternate server.
+
+To detect server failure in the client, we need some type of heartbeating. It's not enough to listen for silence, since the server will be silent if there are no updates from other clients. We can use the sub-pub flow for heartbeating. We also need to detect if the server is unresponsive when we start up and make a state request, so we can switch over to an alternate server.
+
+Now, how to create an alternate server? At its simplest, an alternate server is a proxy that acts like a client to a main server, and a server to clients. This would work, except that when the primary server dies, we'll lose any updates that it had received from clients, but not yet published back to them.
+
+The obvious solution is to synchronously transact updates between the two servers, so that primary will only publish updates when backup acknowledges "OK". Apart from increasing the latency of every update (a TCP round-trip costs several hundred microseconds), this won't in fact give reliability. The backup still doesn't know what updates clients //actually// got, when the primary crashed.
+
+A better solution is to send out updates at full speed but after a primary server crash, have clients detect what updates were lost, and resend them. Only clients have both the knowledge of what updates they sent out, and what updates they received back. It's still not a reliable design, however, because a client can get an update before the backup server gets it. And in that case, the client will think, "this update is safe", when in fact it's not.
+
+Any fully reliable solution has to involve hand-shaking between //all three parties//, client, primary, and backup. If there are N servers acting as a group, every single server in the group has to participate in some kind of asynchronous transaction.
+
+What we need to make here is a form of atomic multicast, where we know that the whole group of servers receive a message, or none of them do. We'll look at a general design for this a bit later, for now we'll make it as simple as it can be for the Clone use case.
+
+So here are the elements of our server failover design:
+
+* Exactly two known servers, S1 and S2.
+* Zero, one, or both servers can be running at any time.
+* Both servers know about each other, all clients know about both servers.
+* S1 and S2 are not symmetric; 
+* First server to get a client request becomes head, second becomes tail.
+* If head crashes, tail becomes head.
+* If head rejoins, it becomes tail.
+* Clients request status snapshots from tail.
+* Clients push updates to head, and listen for updates from tail.
+
+This is half of the design. The other half is where clients track which of their updates have hit both head and tail, and use that information to resend updates that appear to have gotten lost.
+
+Let's eat the apple in two bites, then. First, server head/tail election. It's a classic primary/failover negotiation problem, and enormously difficult to get right. There are so many traps it's like /b/ on a bad weekend. Some of the ways failover can go wrong:
+
+* //Split-brain syndrome// caused by network failure between the servers, so that both servers think they are in charge. This results in some of the clients thinking one server is head, other clients thinking the other server is head, causing loss of data and general misery.
+* //Phantom failover syndrome//, caused by lost heartbeats or unexpected congestion, causing failover without reason. This is relatively OK if failover actually works, but often failover is badly tested, and clients simply don't fail over properly.
+* //Bargepole syndrome//, where failover is so complex to understand and configure that system administrators simply refuse to use it, meaning it's not properly tested, meaning it doesn't work properly.
+* //Thrashing//, where the two servers get into utter confusion, flipping between roles rapidly, and bringing the application to a halt.
+
+And so on. Presumably a correct and simple model can avoid these traps, but that's much easier said than done. Our best tool to force a design to be correct and simple on a is to implement it in pieces. We can then understand each piece really well, test it to destruction, and have higher confidence in how it behaves under stress.
+
+Thus, Model Four just test our failover design. Clients do play a role, in determining which server is head, but we'll chop out the whole Clone pattern here, so the failover is more visible.
+
+
+
+
+- head election
+- random wait, get timestamps
+- exchange timestamps
+- lowest timestamp becomes head
+- same timestamp = try again
+
+- router to router sockets
+    - no connection -> message lost
+    - identities = group endpoint
+- client requests group status, gets tail/head info
+- then client works as normal
+
+
+- head / tail election
+- 
+
+
+
+
+.end
+
+
+
+
+
+
+
+++++ Clone Protocol Specification
+
+
+++++ Clone API
+
+We don't need a lot of code to make a Clone client, but it's still subtle enough to be profitably hidden in a small API. 
+
+While the code we need to implement Clone is short, it's subtle. You'd not want to implement this directly in your applications. The server is fine, this can be a generic process that doesn't include any application code. For the client, let's make an event-driven API.
+
 
 Clone is complex enough in practice that you don't want to implement it directly in your applications. Instead, it makes a good basis for an application server framework, which talks to applications via the key-value table.
 
+- event driven on changes?
+- wrap as API cloneapi.h
+
+++++ Synchronized Clients
+
+- two or more clients asking for same state
+- ...? how
+
+Changes to the 
+
+- clones will not have identical state, unless all started at once and cloned in parallel
+- clients may send updates back to server, via pub/sub
+
+++++ Practical Clone Example
+
+- distributed name service
+- ephemeral names
+
 .end
+
+
+
++++ Atomic Multicast
+
+* N servers, where N is zero or more. In the degenerate case no servers are running. In the normal case, all servers are running.
+* The servers know about each other, through a fixed configuration. That is, we do not attempt to create a dynamic pool of servers that can come and go.
+* The clients know about all the servers, through a fixed configuration. Again, we do not attempt to allow clients to discover new servers.
+* The servers are all exact copies of each other, and at any time hold the same state.
+* The servers organize themselves into an ordered list, with a group "head" and a group "tail". Clients speak to the group head, and listen to the group tail.
+* When a server joins or rejoins the group, it always becomes the new tail.
+* If the group head crashes, the next server in the list, if any, becomes the new head.
+* If the group tail crashes, the previous server in the list, if any, becomes the new tail.
+* When any other server crashes, the previous server in the list links instead to the following server.
+
++++ Federation?
+
++++ Cluster-wide topic distribution
+
+- anyone can publish
+- anyone can subscribe
+- reliable
+- using 1 or two forwarders
+
+
++++ Atomic Group Multicast (Platoon Pattern)
++++ Secure Publish-Subscribe (Need to Know Pattern)

@@ -249,7 +249,7 @@ Then the subscriber will most likely not receive anything. You'll blink, check t
 
 Making a TCP connection involves to and fro handshaking that takes several milliseconds depending on your network and the number of hops between peers. In that time, 0MQ can send very many messages. For sake of argument assume it takes 5 msecs to establish a connection, and that same link can handle 1M messages per second. During the 5 msecs that the subscriber is connecting to the publisher, it takes the publisher only 1 msec to send out that 1K messages.
 
-In Chapter 2 I'll explain how to synchronize a publisher and subscribers so that you don't start to publish data until the subscriber(s) really are connected and ready. There is a simple and stupid way to delay the publisher, which is to sleep. I'd never do this in a real application though, it is extremely fragile as well as inelegant and slow. Use sleeps to prove to yourself what's happening, and then wait for Chapter 2 to see how to do this right.
+In Chapter Two I'll explain how to synchronize a publisher and subscribers so that you don't start to publish data until the subscriber(s) really are connected and ready. There is a simple and stupid way to delay the publisher, which is to sleep. I'd never do this in a real application though, it is extremely fragile as well as inelegant and slow. Use sleeps to prove to yourself what's happening, and then wait for Chapter 2 to see how to do this right.
 
 The alternative to synchronization is to simply assume that the published data stream is infinite and has no start, and no end. This is how we built our weather client example.
 
@@ -457,7 +457,6 @@ void* pub_worker(void* arg){
     zmq_msg_close(&resp_msg);
 
     }
-
     return NULL;
 }
 [[/code]]
@@ -495,28 +494,26 @@ worker_thread (void *arg) {
 }
 [[/code]]
 
-In the end, the application was passing sockets between threads, which crashed weirdly on 0MQ/2.0, but became legal behavior in 0MQ/2.1.0. It wasn't really a coding error at all, just inadvertent time travel.
+In the end, the problem was that the application was passing sockets between threads, which crashed weirdly. It became legal behavior in 0MQ/2.1, but remains dangerous and something we advise against doing.
 
-+++ The 0MQ 2.1 Generation
++++ 0MQ 2.1
 
-History tells us that 0MQ 2.0 is when low-latency distributed messaging crawled out of the primeval mud, shook off a heavy coat of buzzwords and enterprise jargon, and reached its branches up to the sky, as if to cry, "no limits!". We've been using this stable branch since it spawned 0MQ 2.0.8 during the hot days of August, 2010. So long ago!
+History tells us that 0MQ 2.0 is when low-latency distributed messaging crawled out of the primeval mud, shook off a heavy coat of buzzwords and enterprise jargon, and reached its branches up to the sky, as if to cry, "no limits!". We've been using this stable branch since it spawned 0MQ 2.0.8 during the hot days of August, 2010.
 
-But times change, and what was cool in 2010 is no longer //a la mode// in 2011. The 0MQ developers and community have been frantically busy redefining messaging chic, and anyone who's anyone knows that 2.1 is the new stable. Well, technically perhaps not quite yet. But soon, very soon...
+But times change, and what was cool in 2010 is no longer //a la mode// in 2011. The 0MQ developers and community have been frantically busy redefining messaging chic, and anyone who's anyone knows that 2.1 is the new stable.
 
-Since the Guide aims to be a leader, not a follower, we've updated it to cover 2.1.x. In this section we'll cover the differences as they affect your applications.
+The Guide therefore assumes you're running 2.1.x. Let's look at the differences, as they affect your applications coming from the old 2.0:
 
 * In 2.0, zmq_close[3] and zmq_term[3] discarded any in-flight messages, so it was unsafe to close a socket and terminate right after sending messages. In 2.1, these calls are safe: zmq_term will flush anything that's waiting to be sent. In 2.0 examples we often added a sleep(1) to get around the problem. In 2.1, this isn't needed.
 
-* In 2.0, it was safe to call zmq_term[3] even if there were open sockets. In 2.1, this is not safe, and it can cause zmq_term to block. So in 2.1 we always close every socket, before exiting. Furthermore, if you have any outgoing messages or connects waiting on a socket, 2.1 will **by default wait forever** trying to deliver these. You must set the LINGER socket option (e.g. to zero), on every socket which may still be busy, before calling zmq_term:
+* By contrast, in 2.0, it was safe to call zmq_term[3] even if there were open sockets. In 2.1, this is not safe, and it can cause zmq_term to block. So in 2.1 we //always close every socket//, before exiting. Furthermore, if you have any outgoing messages or connects waiting on a socket, 2.1 will by default wait forever trying to deliver these. You must //set the LINGER socket option// (e.g. to zero), on every socket which may still be busy, before calling zmq_term:
 
 [[code language="C"]]
 int zero = 0;
 zmq_setsockopt (mysocket, ZMQ_LINGER, &zero, sizeof (zero));
 [[/code]]
 
-* In 2.0, zmq_poll[3] would return arbitrarily early, so you could not use it as a timer. We hacked around this with a loop that would see how much time was left, and would call zmq_poll again if needed. In 2.1, this call properly waits for the full timeout if there are not events.
-
-There are [https://github.com/zeromq/zeromq2/raw/master/NEWS a lot of other] good changes in 2.1, making this overall a more stable and rewarding understructure for your applications.
+* In 2.0, zmq_poll[3] would return arbitrarily early, so you could not use it as a timer. We would work around this with a loop checked how much time was left, and called zmq_poll again as needed. In 2.1, zmq_poll properly waits for the full timeout if there are no events.
 
 +++ Getting the Context Right
 
@@ -595,7 +592,7 @@ Take a typical open source project like [http://hadoop.apache.org/zookeeper/ Had
 
 But how to make a reusable messaging layer? Why, when so many projects need this technology, are people still doing it the hard way, by driving TCP sockets in their code, and solving the problems in that long list, over and over?
 
-It turns out that building reusable messaging systems is really difficult, which is why few FOSS projects ever tried, and why commercial messaging products are complex, expensive, inflexible, and brittle. In 2006 iMatix designed [http://www.amqp.org AMQP] which started to give FOSS developers perhaps the first reusable recipe for a messaging system. AMQP works better than many other designs [http://www.imatix.com/articles:whats-wrong-with-amqp but remains complex, expensive, and brittle]. It takes weeks to learn to use, and months to create stable architectures that don't crash when things get hairy.
+It turns out that building reusable messaging systems is really difficult, which is why few FOSS projects ever tried, and why commercial messaging products are complex, expensive, inflexible, and brittle. In 2006 iMatix designed [http://www.amqp.org AMQP] which started to give FOSS developers perhaps the first reusable recipe for a messaging system. AMQP works better than many other designs [http://www.imatix.com/articles:whats-wrong-with-amqp but remains relatively complex, expensive, and brittle]. It takes weeks to learn to use, and months to create stable architectures that don't crash when things get hairy.
 
 Most messaging projects, like AMQP, that try to solve this long list of problems in a reusable way do so by inventing a new concept, the "broker", that does addressing, routing, and queuing. This results in a client-server protocol or a set of APIs on top of some undocumented protocol, that let applications speak to this broker. Brokers are an excellent thing in reducing the complexity of large networks. But adding broker-based messaging to a product like Zookeeper would make it worse, not better. It would mean adding an additional big box, and a new single point of failure. A broker rapidly becomes a bottleneck and a new risk to manage. If the software supports it, we can add a second, third, fourth broker and make some fail-over scheme. People do this. It creates more moving pieces, more complexity, more things to break.
 

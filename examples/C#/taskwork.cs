@@ -25,7 +25,7 @@ class Program
 
         //  Socket to send messages on
         Socket sender = context.Socket(SocketType.PUSH);
-        sender.Connect("tcp://localhost:5557");
+        sender.Connect("tcp://localhost:5558");
 
         //  Process tasks forever
         while (true) {
