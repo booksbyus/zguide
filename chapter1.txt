@@ -501,7 +501,7 @@ In the end, the application was passing sockets between threads, which crashed w
 
 History tells us that 0MQ 2.0 is when low-latency distributed messaging crawled out of the primeval mud, shook off a heavy coat of buzzwords and enterprise jargon, and reached its branches up to the sky, as if to cry, "no limits!". We've been using this stable branch since it spawned 0MQ 2.0.8 during the hot days of August, 2010. So long ago!
 
-But times change, and what was cool in 2010 is no longer //a la mode// in 2011. The 0MQ developers and community have been frantically busy redefining messaging chic, and anyone who's anyone knows that 2.1 is the new stable. Well, technically perhaps not quite yet. But soon, very soon...
+But times change, and what was cool in 2010 is no longer //a la mode// in 2011. The 0MQ developers and community have been frantically busy redefining messaging chic, and anyone who's anyone knows that 2.1 is the new stable.
 
 Since the Guide aims to be a leader, not a follower, we've updated it to cover 2.1.x. In this section we'll cover the differences as they affect your applications.
 
@@ -528,7 +528,7 @@ If you're using the fork() system call, each process needs its own context. If y
 
 +++ Making a Clean Exit
 
-Classy programmers share the same motto as classy hit men: always clean up after you. When you use 0MQ in a language like Python, stuff gets automatically freed for you. But when using C you must carefully free objects when you're finished with them, or you get memory leaks, unstable applications, and generally bad karma.
+Classy programmers share the same motto as classy hit men: always clean up after yourself. When you use 0MQ in a language like Python, stuff gets automatically freed for you. But when using C you must carefully free objects when you're finished with them, or you get memory leaks, unstable applications, and generally bad karma.
 
 The 0MQ objects we need to worry about are messages, sockets, and contexts. Luckily it's quite simple:
 
