@@ -3,18 +3,6 @@
 
 In Chapter Three we looked at advanced use of 0MQ's request-reply pattern with worked examples. In this chapter we'll look at the general question of reliability and build a set of reliable messaging patterns on top of 0MQ's core request-reply pattern.
 
-We'll cover:
-
-* How to define 'reliability' in 0MQ applications.
-* How to implement reliability on top of the 0MQ core patterns.
-* How to implement heartbeating between 0MQ peers.
-* How to write a reusable protocol specification.
-* How to design a service-oriented framework API.
-* How to implement service discovery.
-* How to implement non-idempotent server applications.
-* How to implement disk-based reliability.
-* How to build peer-to-peer reliability without brokers.
-
 In this chapter we focus heavily on user-space 'patterns', which are reusable models that help you design your 0MQ architecture:
 
 * The //Lazy Pirate// pattern: reliable request reply from the client side.
@@ -22,6 +10,7 @@ In this chapter we focus heavily on user-space 'patterns', which are reusable mo
 * The //Paranoid Pirate// pattern: reliable request-reply with heartbeating.
 * The //Majordomo// pattern: service-oriented reliable queuing.
 * The //Titanic// pattern: disk-based / disconnected reliable queuing.
+* The //Binary Star// pattern: primary-backup server failover.
 * The //Freelance// pattern: brokerless reliable request-reply.
 
 +++ What is "Reliability"?
@@ -1125,5 +1114,3 @@ In previous poll loops we always used a fixed tick interval, e.g. 1 second, whic
 +++ Conclusion
 
 In this chapter we've seen a variety of reliable request-reply mechanisms, each with certain costs and benefits. The example code is largely ready for real use, though it is not optimized. Of all the different patterns, the two that stand out are the Majordomo pattern, for broker-based reliability, and the Freelance pattern for brokerless reliability.
-
-.end
