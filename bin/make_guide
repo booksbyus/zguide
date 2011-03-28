@@ -8,12 +8,14 @@ echo "[[include page:chapter1]]"  > all.wd
 echo "[[include page:chapter2]]" >> all.wd
 echo "[[include page:chapter3]]" >> all.wd
 echo "[[include page:chapter4]]" >> all.wd
+echo "[[include page:chapter5]]" >> all.wd
 bin/z2w chapter*.txt
-python bin/sendpage.py page all "ØMQ - The Guide"
-python bin/sendpage.py page chapter1 "Chapter 1"
-python bin/sendpage.py page chapter2 "Chapter 2"
-python bin/sendpage.py page chapter3 "Chapter 3"
-python bin/sendpage.py page chapter4 "Chapter 4"
+wdput zguide page all "ØMQ - The Guide"
+wdput zguide page chapter1 "Chapter One"
+wdput zguide page chapter2 "Chapter Two"
+wdput zguide page chapter3 "Chapter Three"
+wdput zguide page chapter4 "Chapter Four"
+wdput zguide page chapter5 "Chapter Five"
 sh ./upload.sh
 
 export Z2W_LANG=PHP
@@ -22,11 +24,13 @@ echo "[[include php:chapter1]]"  > all.wd
 echo "[[include php:chapter2]]" >> all.wd
 echo "[[include php:chapter3]]" >> all.wd
 echo "[[include php:chapter4]]" >> all.wd
+echo "[[include php:chapter5]]" >> all.wd
 bin/z2w chapter*.txt
 wdput zguide php all "ØMQ - The Guide - PHP"
-wdput zguide php chapter1 "Chapter 1"
-wdput zguide php chapter2 "Chapter 2"
-wdput zguide php chapter3 "Chapter 3"
-wdput zguide php chapter4 "Chapter 4"
+wdput zguide php chapter1 "Chapter One"
+wdput zguide php chapter2 "Chapter Two"
+wdput zguide php chapter3 "Chapter Three"
+wdput zguide php chapter4 "Chapter Four"
+wdput zguide php chapter5 "Chapter Five"
 
 rm *.wd wdtemp.txt upload.sh
