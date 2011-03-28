@@ -4,130 +4,66 @@
 #include "zmsg.h"
 
 #define FAILOVER_TIMEOUT 5000    #   In msecs
+typedef enum {
+    state_pending = 0,   //  Waiting for peer to connect
+    state_active  = 1,   //  Active - accepting connections
+    state_passive = 2    //  Passive - not accepting connections
+} state_t;
 
-int main (int argc, char *argv [])
-{
-    //  Arguments can be either of:
-    //      -p  primary server
-    //      -b  backup server
-    int primary = 0;
-    void *context = zmq_init (1);
-    void *peering = zmq_socket (context, ZMQ_DEALER);
-    void *frontend = zmq_socket (context, ZMQ_ROUTER);
+typedef enum {
+    peer_pending   = 0,  //  HA peer is pending
+    peer_active    = 1,  //  HA peer is active
+    peer_passive   = 2,  //  HA peer is passive
+    client_request = 3   //  Client makes request
+} event_t;
 
-    if (argc == 2 && strcmp (argv [2], "-p") == 0) {
-        zmq_bind (frontend, "tcp://*:5001");
-        zmq_bind (peering, "tcp://*:5003");
-        primary = 1;
-        printf ("I: Primary master, waiting for backup (slave)\n");
-    }
-    else
-    if (argc == 2 && strcmp (argv [2], "-b") == 0) {
-        zmq_bind (frontend, "tcp://*:5002");
-        zmq_connect (peering, "tcp://localhost:5003");
-        primary = 0;
-        printf ("I: Backup slave, waiting for primary (master)\n");
-    }
-    else {
-        printf ("Usage: bstarsrv { -p | -b }\n");
-        exit (0);
-    }
-    s_catch_signals ();
-    int state = state_pending;
-    int64_t last_peer_time = 0;
-
-    while (!s_interrupted) {
-        //  poll tickless 1 second
-        //  appl message on frontend
-        //      - check if valid in current state
-        //  peer state
-        //      - process in current state
-
-        
-        zmsg_t *request = zmsg_recv (server);
-        zmsg_t *reply = NULL;
-        if (verbose && request)
-            zmsg_dump (request);
-        if (!request)
-            break;          //  Interrupted
-
-        //  Frame 0: identity of client
-        //  Frame 1: PING, or client control frame
-        //  Frame 2: request body
-        char *address = zmsg_pop (request);
-        if (zmsg_parts (request) == 1
-        && strcmp (zmsg_body (request), "PING") == 0)
-            reply = zmsg_new ("PONG");
-        else
-        if (zmsg_parts (request) > 1) {
-            reply = request;
-            request = NULL;
-            zmsg_body_set (reply, "OK");
-        }
-        zmsg_destroy (&request);
-        zmsg_push (reply, address);
-        if (verbose && reply)
-            zmsg_dump (reply);
-        zmsg_send (&reply, server);
-        free (address);
-    }
-    if (s_interrupted)
-        printf ("W: interrupted\n");
-
-    zmq_close (server);
-    zmq_term (context);
-    return 0;
+//  Next state for current state / event
+state_t nextstate [][] = {
+    { 1, 2, 0, 0 },
+    { 1, 2, 0, 0 },
+    { 1, 2, 0, 0 },
 }
 
-
-
-
-
-    
-typedef enum
+//  Return new state, given state/event and if primary 
+static state_t
+s_state_machine (state_t state, event_t event, Bool primary)
 {
-    state_pending = 1,   //  Waiting for peer to connect
-    state_active  = 2,   //  Active - accepting connections
-    state_passive = 3    //  Passive - not accepting connections
-} state;
-
-typedef enum
-{
-    event_peer_pending   = 1,  //  HA peer became pending
-    event_peer_active    = 2,  //  HA peer became active
-    event_peer_passive   = 3,  //  HA peer became passive
-    event_new_connection = 4   //  Client wants to connect
-} event;
-
-
-
-send state to peer, every heartbeat:
-    icl_shortstr_fmt (state, "%d", state);
-
-
-//  State machine
-void execute (self) {
-    switch (state) {
-      case state_pending:
-        switch (event) {
-          case event_peer_pending:
+    if (state == state_pending) {
+        if (event == peer_pending) {
             if (primary) {
                 state = state_active;
                 printf ("I: failover: connected to backup (slave), READY as master");
             }
-            break;
-          case event_peer_active:
+        }
+        else
+        if (event == peer_active) {
             state = state_passive;
             printf ("I: failover: connected to %s (master), READY as slave",
                 primary? "backup": "primary");
-            break;
-          case event_peer_passive:
+        }
+        else
+        if (event == peer_passive) {
             //  Do nothing; wait while peer switches to active
-            break;
-          case event_new_connection:
+        }
+        else
+        if (event == client_request) {
             //  If pending, accept connection only if primary peer
             rc = (primary);
-            break;
+        }
+    }
+    else
+    if (state == state_active) {
+    }
+    else
+    if (state == state_passive) {
+    }
+    return state;
+}
+
+//  State machine
+void s_execute (self) {
+    switch (state) {
+      case state_pending:
           default:
             assert (0);
         }
@@ -194,6 +130,95 @@ void execute (self) {
     }
 }
 
+int main (int argc, char *argv [])
+{
+    //  Arguments can be either of:
+    //      -p  primary server, at tcp://localhost:5001
+    //      -b  backup server, at tcp://localhost:5002
+    Bool primary = FALSE;
+    void *context = zmq_init (1);
+    void *peering = zmq_socket (context, ZMQ_DEALER);
+    void *frontend = zmq_socket (context, ZMQ_ROUTER);
+
+    if (argc == 2 && streq (argv [1], "-p")) {
+        zmq_bind (frontend, "tcp://*:5001");
+        zmq_bind (peering, "tcp://*:5003");
+        primary = TRUE;
+        printf ("I: Primary master, waiting for backup (slave)\n");
+    }
+    else
+    if (argc == 2 && streq (argv [1], "-b")) {
+        zmq_bind (frontend, "tcp://*:5002");
+        zmq_connect (peering, "tcp://localhost:5003");
+        primary = FALSE;
+        printf ("I: Backup slave, waiting for primary (master)\n");
+    }
+    else {
+        printf ("Usage: bstarsrv { -p | -b }\n");
+        exit (0);
+    }
+    s_catch_signals ();
+    state_t cur_state = state_pending;
+    int64_t last_peer_time = 0;
+
+
+    zmq_close (peering);
+    zmq_close (frontend);
+    zmq_term (context);
+    return 0;
+}
+
+
+#if 0
+    while (!s_interrupted) {
+        //  poll tickless 1 second
+        //  appl message on frontend
+        //      - check if valid in current state
+        //  peer state
+        //      - process in current state
+
+
+        zmsg_t *request = zmsg_recv (server);
+        zmsg_t *reply = NULL;
+        if (verbose && request)
+            zmsg_dump (request);
+        if (!request)
+            break;          //  Interrupted
+
+        //  Frame 0: identity of client
+        //  Frame 1: PING, or client control frame
+        //  Frame 2: request body
+        char *address = zmsg_pop (request);
+        if (zmsg_parts (request) == 1
+        && strcmp (zmsg_body (request), "PING") == 0)
+            reply = zmsg_new ("PONG");
+        else
+        if (zmsg_parts (request) > 1) {
+            reply = request;
+            request = NULL;
+            zmsg_body_set (reply, "OK");
+        }
+        zmsg_destroy (&request);
+        zmsg_push (reply, address);
+        if (verbose && reply)
+            zmsg_dump (reply);
+        zmsg_send (&reply, server);
+        free (address);
+    }
+    if (s_interrupted)
+        printf ("W: interrupted\n");
+
+
+    
+
+
+
+
+send state to peer, every heartbeat:
+    icl_shortstr_fmt (state, "%d", state);
+
+
+
     
 
     amq_peering_t
@@ -240,3 +265,4 @@ void execute (self) {
     execute (self, event);
 }
 
+#endif
