@@ -398,7 +398,7 @@ sub expand_symbols {
             }
         }
         elsif (/zmq_([\w_]+)\[(.)\]/) {
-            $_ = $`."[http://api.zeromq.org/2-1-1:zmq_$1 zmq_$1($2)]".$';
+            $_ = $`."[http://api.zeromq.org/2-1-3:zmq_$1 zmq_$1($2)]".$';
         }
         else {
             last;
