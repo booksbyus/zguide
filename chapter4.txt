@@ -705,9 +705,11 @@ If you want to make Titanic //much faster and less reliable//, you can store req
 
 +++ High-availability Pair (Binary Star Pattern)
 
+++++ Overview
+
 The Binary Star pattern puts two servers in a primary-backup high-availability pair. At any given time, one of these accepts connections from client applications (it is the "master") and one does not (it is the "slave"). Each server monitors the other. If the master disappears from the network, after a certain time the slave takes over as master.
 
-Binary Star pattern was first developed in the iMatix [http://www.openamq.org OpenAMQ server]. It is designed:
+Binary Star pattern was developed by Pieter Hintjens and Martin Sustrik for the iMatix [http://www.openamq.org OpenAMQ server]. It is designed:
 
 * To provide a straight-forward high-availability solution.
 * To be simple enough to actually understand and use.
@@ -735,15 +737,11 @@ Binary Star pattern was first developed in the iMatix [http://www.openamq.org Op
 Figure # - High-availability pair, normal operation
 [[/code]]
 
-++++ Failover Scenarios
-
 Assuming we have a Binary Star pair running, here are the different scenarios that will result in failover happening:
 
 # The hardware running the primary server has a fatal problem (power supply explodes, machine catches fire, or someone simply unplugs it by mistake), and disappears. Applications see this, and reconnect to the backup server.
 # The network segment on which the primary server sits crashes - perhaps a router gets hit by a power spike - and applications start to reconnect to the backup server.
 # The primary server crashes or is killed by the operator and does not restart automatically.
-
-++++ Recovery Process
 
 Recovery from failover works as follows:
 
@@ -783,14 +781,89 @@ Having said this, the Binary Star pattern will fail back to the primary server i
 Figure # - High-availability pair, during failover
 [[/code]]
 
-++++ Normal Shutdown Process
-
 The shutdown process for a Binary Star pair is to either:
 
 # Stop the passive server and then stop the active server at any later time, or
 # Stop both servers in any order but within a few seconds of each other.
 
 Stopping the active and then the passive server with any delay longer than the failover timeout will cause applications to disconnect, then reconnect, then disconnect again, which may disturb users.
+
+++++ Detailed Requirements
+
+Binary Star is as simple as it can be, while still working accurately. In fact the current design is the third complete redesign. Each of the previous designs we found to be too complex, trying to do too much, and we stripped out functionality until we came to a design that was understandable and use, and reliable enough to be worth using.
+
+These are our requirements for a high-availability architecture:
+
+* The failover is meant to provide insurance against catastrophic system failures, such as hardware breakdown, fire, accident, etc. To guard against ordinary server crashes there are simpler ways to recover.
+
+* Failover time should be under 60 seconds and preferably under 10 seconds.
+
+* Failover has to happen automatically, whereas recover must happen manually. We want applications to switch over to the backup server automatically but we do not want them to switch back to the primary server except when the operators have fixed whatever problem there was, and decided that it is a good time to interrupt applications again.
+
+* The semantics for client applications should be simple and easy for developers to understand. Ideally they should be hidden in the client API.
+
+* There should be clear instructions for network architects on how to avoid designs that could lead to split brain syndrome in which both servers in a Binary Star pair think they are the master server.
+
+* There should be no dependencies on the order in which the two servers are started.
+
+* It must be possible to make planned stops and restarts of either server without stopping client applications (though they may be forced to reconnect).
+
+* Operators must be able to monitor both servers at all times.
+
+* It must be possible to connect the two servers using a high-speed dedicated network connection. That is, failover synchronization must be able to use a a specific IP route.
+
+We make these assumptions:
+
+* A single backup server provides enough insurance, we don't need multiple levels of backup.
+
+* The primary and backup server are equally capable of carrying the application load. We do not attempt to balance load across the servers.
+
+* There is sufficient budget to cover a fully redundant backup server that does nothing almost all the time.
+
+We don't attempt to cover:
+
+* The use of an active backup server or load balancing. In a Binary Star pair, the backup server is inactive and does no useful work until the primary server goes off-line.
+
+* The handling of persistent messages or transactions in any way. We assuming a network of unreliable (and probably untrusted) servers or Binary Star pairs.
+
+* Any automatic exploration of the network. The Binary Star pair is manually and explicitly defined in the network and is known to applications (at least in their configuration data).
+
+* Replication of state or messages between servers. All server-side state much be recreated by applications when they fail over.
+
+Here is the key terminology we use in Binary Star:
+
+: **Primary** : The primary server is the one that is normally 'master'.
+: **Backup** : The backup server is the one that is normally 'slave', it will become master if and when the primary server disappears from the network, and when client applications ask the backup server to connect.
+: **Master** : The master server is the one of a Binary Star pair that accepts client connections. There is always exactly one master server.
+: **Slave** : The slave server is the one that takes over if the master disappears. Note that when a Binary Star pair is running normally, the primary server is master, and the backup is slave. When a failover has happened, the roles are switched.
+
+To configure a Binary Star pair, you need to:
+
+# Tell the primary server where the backup server is.
+# Tell the backup server where the primary server is.
+# Optionally, tune the failover response times, which must be the same for both servers.
+
+The main tuning concern is how frequently you want the servers to check their peering status, and how quickly you want to activate failover. In our example, the failover timeout value defaults to 2000 msec. If you reduce this, the backup server will take over as master more rapidly but may take over in cases where the primary server could recover. You may for example have wrapped the primary server in a shell script that restarts it if it crashes. In that case the timeout should be higher than the time needed to restart the primary server.
+
+For client applications to work properly with a Binary Star pair, they must:
+
+# Know both server addresses.
+# Try to connect to the primary server, and if that fails, to the backup server.
+# Detect a failed connection, typically using heartbeating.
+# Try to reconnect to primary, and then backup, with a delay between retries that is at least as high as the server failover timeout.
+# Recreate all of the state they require on a server.
+# Retransmit messages lost during a failover, if messages need to be reliable.
+
+It's not trivial work, and we'd almost always wrap this in an API that hides it from real end-user applications.
+
+These are the main limitations of the Binary Star pattern:
+
+* A server process cannot be part of more than one Binary Star pair.
+* A primary server can have a single backup server, no more.
+* The backup server cannot do useful work while in slave mode.
+* The backup server must be capable of handling full application loads.
+* Failover configuration cannot be modified at runtime.
+* Client applications must do some work to benefit from failover.
 
 ++++ Preventing Split-Brain Syndrome
 
@@ -804,72 +877,7 @@ We must not split a Binary Star architecture into two islands, each with a set o
 
 A suitably paranoid network configuration would use two private cluster interconnects, rather than a single one. Further, the network cards used for the cluster would be different to those used for message in/out, and possibly even on different PCI paths on the server hardware. The goal being to separate possible failures in the network from possible failures in the cluster. Network ports have a relatively high failure rate.
 
-++++ Alternatives to Failover
-
-In general, servers should be designed to never crash. This is actually doable, we've built servers that run for years without crashing. 0MQ helps a lot by allowing us to strictly control queue sizes on the server. Further, servers can be designed to be restarted rapidly using a shell script. In other words, simply restarting a single server may be more appropriate to the level of reliability you need than failover.
-
-++++ Detailed Requirements
-
-Binary Star is as simple as it can be, while still working accurately. In fact the current design is the third complete redesign. Each of the previous designs we found to be too complex, trying to do too much, and we stripped out functionality until we came to a design that was understandable and use, and reliable enough to be worth using.
-
-These are our requirements for a high-availability architecture:
-
-# The failover is meant to provide insurance against catastrophic system failures, such as hardware breakdown, fire, accident, etc. To guard against ordinary server crashes there are simpler ways to recover.
-# Failover time should be under 60 seconds and preferably under 10 seconds.
-# Failover has to happen automatically, whereas recover must happen manually. We want applications to switch over to the backup server automatically but we do not want them to switch back to the primary server except when the operators have fixed whatever problem there was, and decided that it is a good time to interrupt applications again.
-# The semantics for client applications should be simple and easy for developers to understand. Ideally they should be hidden in the client API.
-# There should be clear instructions for network architects on how to avoid designs that could lead to split brain syndrome in which both servers in a Binary Star pair think they are the master server.
-# There should be no dependencies on the order in which the two servers are started.
-# It must be possible to make planned stops and restarts of either server without stopping client applications (though they may be forced to reconnect).
-# Operators must be able to monitor both servers at all times.
-# It must be possible to connect the two servers using a high-speed dedicated network connection. That is, failover synchronization must be able to use a a specific IP route.
-
-We make these assumptions:
-
-# A single backup server provides enough insurance, we don't need multiple levels of backup.
-# The primary and backup server are equally capable of carrying the application load. We do not attempt to balance load across the servers.
-# There is sufficient budget to cover a fully redundant backup server that does nothing almost all the time.
-
-++++ Out of Scope
-
-We don't attempt to cover:
-
-# The use of an active backup server or load balancing. In a Binary Star pair, the backup server is inactive and does no useful work until the primary server goes off-line.
-# The handling of persistent messages or transactions in any way. We assuming a network of unreliable (and probably untrusted) servers or Binary Star pairs.
-# Any automatic exploration of the network. The Binary Star pair is manually and explicitly defined in the network and is known to applications (at least in their configuration data).
-# Replication of state or messages between servers. All server-side state much be recreated by applications when they fail over.
-
-++++ Terminology
-
-: **Primary** : The primary server is the one that is normally 'master'.
-: **Backup** : The backup server is the one that is normally 'slave', it will become master if and when the primary server disappears from the network, and when client applications ask the backup server to connect.
-: **Master** : The master server is the one of a Binary Star pair that accepts client connections. There is always exactly one master server.
-: **Slave** : The slave server is the one that takes over if the master disappears. Note that when a Binary Star pair is running normally, the primary server is master, and the backup is slave. When a failover has happened, the roles are switched.
-
-++++ Server Configuration
-
-To configure a Binary Star pair, you need to:
-
-# Tell the primary server where the backup server is.
-# Tell the backup server where the primary server is.
-# Optionally, tune the failover response times, which must be the same for both servers.
-
-The main tuning concern is how frequently you want the servers to check their peering status, and how quickly you want to activate failover. In our example, the failover timeout value defaults to 2000 msec. If you reduce this, the backup server will take over as master more rapidly but may take over in cases where the primary server could recover. You may for example have wrapped the primary server in a shell script that restarts it if it crashes. In that case the timeout should be higher than the time needed to restart the primary server.
-
-++++ Client-side API Support
-
-For client applications to properly work with a Binary Star pair, they must:
-
-# Know both server addresses.
-# Try to connect to the primary server, and if that fails, to the backup server.
-# Detect a failed connection, typically using heartbeating.
-# Try to reconnect to primary, and then backup, with a delay between retries that is at least as high as the server failover timeout.
-# Recreate all of the state they require on a server.
-# Retransmit messages lost during a failover, if messages need to be reliable.
-
-It's not trivial work, and we'd almost always wrap this in an API that hides it from real end-user applications.
-
-++++ Binary Star Server and Client
+++++ Binary Star Implementation
 
 Without further ado, here is the Binary Star server:
 
@@ -920,7 +928,7 @@ This diagram shows the finite state machine. States in green accept client reque
           |             |         |           +------/        |        |
           |             \---------+  Passive  +---------------/        |
           \---------------------->|           |<-----------------------/
-                                  | {o} cF9B  |                             
+                                  | {o} cF9B  |                            
                                   +-----------+
 
 
@@ -928,17 +936,6 @@ This diagram shows the finite state machine. States in green accept client reque
 [[/code]]
 
 Note that the servers use PUB-SUB sockets for state exchange. No other socket combination will work here. PUSH and DEALER block if there is no peer ready to receive a message. PAIR does not reconnect if the peer disappears and comes back. ROUTER needs the address of the peer before it can send it a message.
-
-++++ Limitations of Binary Star
-
-These are the main limitations of the Binary Star pattern:
-
-* A server process cannot be part of more than one Binary Star pair.
-* A primary server can have a single backup server, no more.
-* The backup server cannot do useful work while in slave mode.
-* The backup server must be capable of handling full application loads.
-* Failover configuration cannot be modified at runtime.
-* Client applications must do some work to benefit from failover.
 
 +++ Brokerless Reliability (Freelance Pattern)
 

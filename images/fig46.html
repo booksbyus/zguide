@@ -1,0 +1,28 @@
+<html>
+<pre class="textdiagram" id="fig46">
+     +-----------+   +-----------+
+     |           |   |           |
+     |  Client   |   |  Client   |
+     |           |   |           |
+     +-----------+   +-----------+
+     |   XREQ    |   |    XREQ   |  (DEALER)
+     \-----------/   \-----------/
+           ^               ^
+           |               |
+           |               |
+           +-------+-------+
+                   |
+                   |
+                   v
+            /------+------\
+            |    XREP     |  (ROUTER)
+            +-------------+
+            |             |
+            |   Server    |
+            |             |
+            +-------------+
+
+
+    Figure 46 - Asynchronous Client-Server
+</pre>
+</html>

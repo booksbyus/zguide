@@ -1,0 +1,32 @@
+<html>
+<pre class="textdiagram" id="fig48">
+   +-----------+     +-----------+
+   |           |     |           |
+   |   HTTP    |     |    HTTP   |
+   | Front-end |     | Front-end |
+   |           |     |           |
+   +-----------+     +-----------+
+   |   XREP    |     |   XREP    |  ROUTER
+   \-----------/     \-----------/    ^
+      connect           connect       |
+         ^                 ^          |
+         |                 |          |
+         +--------+--------+          |
+                  |                   |
+                  |                   |
+         +--------+--------+          |
+         |                 |          |
+         v                 v          |
+       bind              bind         |
+   /-----------\     /-----------\    v
+   |   XREP    |     |   XREP    |  ROUTER
+   +-----------+     +-----------+
+   |           |     |           |
+   |  Worker   |     |  Worker   |
+   |           |     |           |
+   +-----------+     +-----------+
+
+
+      Figure 48 - N-to-N routing
+</pre>
+</html>

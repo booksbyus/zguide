@@ -1,0 +1,21 @@
+<html>
+<pre class="textdiagram" id="fig30">
+
+       (Next envelope will go here)
+
+            +---------------+
+  Frame 1   | Reply address |   <----- Envelope (XREP)
+            +---------------+
+  Frame 2   | Reply address |   <----- Envelope (XREP)
+            +---------------+
+  Frame 3   | Reply address |   <----- Envelope (XREP)
+            +---+-----------+
+  Frame 4   |   |   <------ Empty message part (REQ)
+            +---+-------------------------------------+
+  Frame 5   | Data                                    |
+            +-----------------------------------------+
+
+
+       Figure 30 - Multihop request-reply envelope
+</pre>
+</html>

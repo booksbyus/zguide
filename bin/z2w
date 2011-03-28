@@ -17,6 +17,7 @@
 #   https://github.com/imatix/zguide
 #
 require 'sflcvdp.pl';                   #   SFL date picture formatting
+use Digest::SHA1 qw(sha1_hex);
 
 @languages = ('Ada', 'Basic', 'C', 'C++', 'C#', 'CLisp', 'Erlang',
               'Go', 'Haskell', 'Java', 'Lua', 'Objective-C', 'ooc',
@@ -40,7 +41,6 @@ require 'sflcvdp.pl';                   #   SFL date picture formatting
               'Racket' => 'rkt',
               'Ruby' => 'rb' );
 
-$images = $ENV {'Z2W_DIAGRAMS'};
 $source = $ENV {'Z2W_LANG'} || "C";
 printf "Generating $source version of Guide...\n";
 
@@ -62,14 +62,11 @@ $listings = 0;
 
 die "Can't create wdtemp.txt: $!"
     unless open (OUTPUT, ">wdtemp.txt");
-die "Can't create images.html: $!"
-    unless open (IMAGES, ">images.html");
 die "Can't create upload.sh: $!"
     unless open (UPLOAD, ">upload.sh");
 
 signatures_load ();
 writeln ('[!-- Generated documentation file, do not edit --]');
-print IMAGES "<html>\n";
 
 while (<>) {
     chop;
@@ -178,19 +175,35 @@ while (<>) {
     }
     elsif ($_ eq "[[code type=\"textdiagram\"]]") {
         #   Text diagram
-        $image = $image + 1;
-        print IMAGES "<pre class=\"textdiagram\" id=\"fig$image\">\n";
+        $figure = $figure + 1;
+        $filename = "images/fig$figure.html";
+        die "Can't create $filename: $!"
+            unless open (IMAGE, ">$filename");
+
+        print IMAGE "<html>\n";
+        print IMAGE "<pre class=\"textdiagram\" id=\"fig$figure\">\n";
         while (<>) {
             chop;
             last if /\[\[\/code\]\]/;
-            s/#/$image/;
+            s/#/$figure/;
             s/0MQ/ØMQ/g;
             s/0\\MQ/0MQ/g;
-            print IMAGES "$_\n";
+            print IMAGE "$_\n";
         }
-        print IMAGES "</pre>\n";
+        print IMAGE "</pre>\n";
+        print IMAGE "</html>\n";
+        close (IMAGE);
+        if (signature_changed ($filename)) {
+            print "Processing $filename...\n";
+            system ("java -jar bin/ditaa0_9.jar $filename -o -h -E output.html >/dev/null");
+            #   Need to trim twice for reasons I don't care to explore
+            system ("mogrify -trim images/fig$figure.png");
+            system ("mogrify -trim images/fig$figure.png");
+            system ("rm output.html");
+            signature_update ($filename);
+        }
         #   Link to resource in git, nice way to upload images
-        writeln ("[[=image $symbols{GIT}/raw/$symbols{BRANCH}/images/fig$image.png]]");
+        writeln ("[[=image $symbols{GIT}/raw/$symbols{BRANCH}/images/fig$figure.png]]");
     }
     elsif (/\[\[code/) {
         print "E: unparsed code block: $_\n";
@@ -209,24 +222,10 @@ foreach (@languages) {
 close (SCOREBOARD);
 print UPLOAD "wdput zguide main scoreboard \"Language scoreboard\"\n";
 
-print IMAGES "</html>\n";
-close (IMAGES);
 close (OUTPUT);
 close (UPLOAD);
 
 signatures_save ();
-if ($images == 1) {
-    system ("rm -f images/fig*");
-    system ("java -jar bin/ditaa0_9.jar images.html -o -h -E output.html");
-    exit (1) if $?;
-    #   Need to trim twice for reasons I don't care to explore
-    system ("mogrify -trim images/fig*.png");
-    exit (1) if $?;
-    system ("mogrify -trim images/fig*.png");
-    system ("rm output.html");
-}
-system ("rm images.html");
-
 exit (0);
 
 
@@ -280,7 +279,7 @@ sub process_one_language {
 }
 
 
-#   Load signatures hash table
+#   Load signatures hash tables
 sub signatures_load {
     print "I: loading signatures... ";
     undef %signatures;
@@ -292,7 +291,7 @@ sub signatures_load {
             $count++;
         }
     }
-    print "$count signatures loaded\n";
+    print "$count loaded\n";
 }
 
 #   If file signature has changed, return 1, else 0
@@ -337,7 +336,7 @@ sub signatures_save {
             $count++;
         }
     }
-    print "$count signatures saved\n";
+    print "$count saved\n";
 }
 
 
