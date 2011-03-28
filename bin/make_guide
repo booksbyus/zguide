@@ -14,6 +14,7 @@ python bin/sendpage.py page chapter1 "Chapter 1"
 python bin/sendpage.py page chapter2 "Chapter 2"
 python bin/sendpage.py page chapter3 "Chapter 3"
 python bin/sendpage.py page chapter4 "Chapter 4"
+sh ./upload.sh
 
 export Z2W_LANG=PHP
 export Z2W_DIAGRAMS=0
@@ -28,5 +29,4 @@ wdput zguide php chapter2 "Chapter 2"
 wdput zguide php chapter3 "Chapter 3"
 wdput zguide php chapter4 "Chapter 4"
 
-sh ./upload.sh
 rm *.wd wdtemp.txt upload.sh

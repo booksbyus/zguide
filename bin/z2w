@@ -18,7 +18,7 @@
 #
 require 'sflcvdp.pl';                   #   SFL date picture formatting
 
-@languages = ('Ada', 'Basic', 'C', 'C++', 'C#', 'CommonLisp', 'Erlang',
+@languages = ('Ada', 'Basic', 'C', 'C++', 'C#', 'CLisp', 'Erlang',
               'Go', 'Haskell', 'Java', 'Lua', 'Objective-C', 'ooc',
               'Perl', 'PHP', 'Python', 'Ruby');
 %extension = ('Ada' => 'ada',
@@ -26,7 +26,7 @@ require 'sflcvdp.pl';                   #   SFL date picture formatting
               'C' => 'c',
               'C++' => 'cpp',
               'C#' => 'cs',
-              'CommonLisp' => 'lisp',
+              'CLisp' => 'lisp',
               'Erlang' => 'erl',
               'Go' => 'go',
               'Haskell' => 'hs',
@@ -143,7 +143,9 @@ while (<>) {
             $actions = "";
             $missing = "";
             #   Show primary language example inline
-            process_one_language ($title, $name, $source, 2);
+            if (process_one_language ($title, $name, $source, 2)) {
+                $translations {$source} += 1;
+            }
             #   Show other languages as new tabs
             foreach $language (@languages) {
                 if ($language ne $source) {
