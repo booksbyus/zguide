@@ -509,7 +509,7 @@ Here is the modified sink application. When it's finished collecting results it 
 
 Realistic applications need to shutdown cleanly when interrupted with Ctrl-C or another signal such as SIGTERM. By default, these simply kill the process, meaning messages won't be flushed, files won't be closed cleanly, etc.
 
-Here is how we handle a signal in C. Your mileage may vary in other languages:
+Here is how we handle a signal in various languages:
 
 [[code type="example" title="Handling Ctrl-C Cleanly" name="interrupt"]]
 [[/code]]
@@ -828,10 +828,12 @@ The request-reply broker binds to two endpoints, one for clients to connect to (
 [[code type="example" title="Request-reply client" name="rrclient"]]
 [[/code]]
 
+Here is the service:
+
 [[code type="example" title="Request-reply service" name="rrserver"]]
 [[/code]]
 
-And here is the broker, in C. You will see that it's multipart safe:
+And here is the broker. You will see that it's multipart safe:
 
 [[code type="example" title="Request-reply broker" name="rrbroker"]]
 [[/code]]
