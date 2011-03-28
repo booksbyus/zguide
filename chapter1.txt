@@ -525,7 +525,7 @@ If you're using the fork() system call, each process needs its own context. If y
 
 +++ Making a Clean Exit
 
-Classy programmers share the same motto as classy hit men: always clean up after you. When you use 0MQ in a language like Python, stuff gets automatically freed for you. But when using C you must carefully free objects when you're finished with them, or you get memory leaks, unstable applications, and generally bad karma.
+Classy programmers share the same motto as classy hit men: always clean up after yourself. When you use 0MQ in a language like Python, stuff gets automatically freed for you. But when using C you must carefully free objects when you're finished with them, or you get memory leaks, unstable applications, and generally bad karma.
 
 The 0MQ objects we need to worry about are messages, sockets, and contexts. Luckily it's quite simple:
 
