@@ -3,7 +3,6 @@
 #   Generates and uploads the Guide in main languages
 #
 export Z2W_LANG=C
-export Z2W_DIAGRAMS=1
 echo "[[include page:chapter1]]"  > all.wd
 echo "[[include page:chapter2]]" >> all.wd
 echo "[[include page:chapter3]]" >> all.wd
@@ -19,7 +18,6 @@ wdput zguide page chapter5 "Chapter Five"
 sh ./upload.sh
 
 export Z2W_LANG=PHP
-export Z2W_DIAGRAMS=0
 echo "[[include php:chapter1]]"  > all.wd
 echo "[[include php:chapter2]]" >> all.wd
 echo "[[include php:chapter3]]" >> all.wd
