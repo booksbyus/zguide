@@ -63,7 +63,7 @@ client_task (void *args)
             if (pollset [0].revents & ZMQ_POLLIN) {
                 zmsg_t *zmsg = zmsg_recv (client);
                 //  Worker is supposed to answer us with our task id
-                assert (strcmp (zmsg_body (zmsg), task_id) == 0);
+                assert (streq (zmsg_body (zmsg), task_id));
                 zmsg_destroy (&zmsg);
             }
             else {
@@ -232,7 +232,7 @@ int main (int argc, char *argv [])
             //  Use worker address for LRU routing
             zmsg = zmsg_recv (localbe);
             worker_queue [local_capacity++] = zmsg_unwrap (zmsg);
-            if (strcmp (zmsg_address (zmsg), "READY") == 0)
+            if (streq (zmsg_address (zmsg), "READY"))
                 zmsg_destroy (&zmsg);   //  Don't route it
         }
         //  Or handle reply from peer broker
@@ -244,7 +244,7 @@ int main (int argc, char *argv [])
         }
         //  Route reply to cloud if it's addressed to a broker
         for (argn = 2; zmsg && argn < argc; argn++) {
-            if (strcmp (zmsg_address (zmsg), argv [argn]) == 0)
+            if (streq (zmsg_address (zmsg), argv [argn]))
                 zmsg_send (&zmsg, cloudfe);
         }
         //  Route reply to client if we still need to

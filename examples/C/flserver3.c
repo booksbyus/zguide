@@ -6,7 +6,7 @@
 
 int main (int argc, char *argv [])
 {
-    int verbose = (argc > 1 && strcmp (argv [1], "-v") == 0);
+    int verbose = (argc > 1 && streq (argv [1], "-v"));
 
     void *context = zmq_init (1);
     s_catch_signals ();
@@ -33,7 +33,7 @@ int main (int argc, char *argv [])
         //  Frame 2: request body
         char *address = zmsg_pop (request);
         if (zmsg_parts (request) == 1 
-        && strcmp (zmsg_body (request), "PING") == 0)
+        && streq (zmsg_body (request), "PING"))
             reply = zmsg_new ("PONG");
         else
         if (zmsg_parts (request) > 1) {

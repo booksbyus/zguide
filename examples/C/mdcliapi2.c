@@ -158,15 +158,15 @@ mdcli_recv (mdcli_t *self)
         assert (zmsg_parts (msg) >= 4);
 
         char *empty = zmsg_pop (msg);
-        assert (strcmp (empty, "") == 0);
+        assert (streq (empty, ""));
         free (empty);
 
         char *header = zmsg_pop (msg);
-        assert (strcmp (header, MDPC_CLIENT) == 0);
+        assert (streq (header, MDPC_CLIENT));
         free (header);
 
         char *service = zmsg_pop (msg);
-        assert (strcmp (service, service) == 0);
+        assert (streq (service, service));
         free (service);
 
         return msg;     //  Success

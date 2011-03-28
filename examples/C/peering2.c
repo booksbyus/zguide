@@ -175,7 +175,7 @@ int main (int argc, char *argv [])
             assert (capacity < NBR_WORKERS);
             //  Use worker address for LRU routing
             worker_queue [capacity++] = zmsg_unwrap (zmsg);
-            if (strcmp (zmsg_address (zmsg), "READY") == 0)
+            if (streq (zmsg_address (zmsg), "READY"))
                 zmsg_destroy (&zmsg);   //  Don't route it
         }
         //  Or handle reply from peer broker
@@ -187,7 +187,7 @@ int main (int argc, char *argv [])
         }
         //  Route reply to cloud if it's addressed to a broker
         for (argn = 2; zmsg && argn < argc; argn++) {
-            if (strcmp (zmsg_address (zmsg), argv [argn]) == 0)
+            if (streq (zmsg_address (zmsg), argv [argn]))
                 zmsg_send (&zmsg, cloudfe);
         }
         //  Route reply to client if we still need to

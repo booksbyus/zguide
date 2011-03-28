@@ -22,7 +22,7 @@ int main (void)
     while (1) {
         char *string = s_recv (subscriber);
         printf ("%s\n", string);
-        if (strcmp (string, "END") == 0) {
+        if (streq (string, "END")) {
             free (string);
             break;
         }

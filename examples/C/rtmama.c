@@ -33,7 +33,7 @@ worker_task (void *args)
 
         //  Get workload from router, until finished
         char *workload = s_recv (worker);
-        int finished = (strcmp (workload, "END") == 0);
+        int finished = (streq (workload, "END"));
         free (workload);
         if (finished) {
             printf ("Processed: %d tasks\n", total);

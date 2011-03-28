@@ -3,266 +3,200 @@
 //
 #include "zmsg.h"
 
-#define FAILOVER_TIMEOUT 5000    #   In msecs
+//  We send state information every this often
+//  If peer doesn't respond in two heartbeats, it is 'dead'
+#define HEARTBEAT 1000          //  In msecs
+
 typedef enum {
-    state_pending = 0,   //  Waiting for peer to connect
-    state_active  = 1,   //  Active - accepting connections
-    state_passive = 2    //  Passive - not accepting connections
+    STATE_PRIMARY = 1,          //  Primary, waiting for peer to connect
+    STATE_BACKUP = 2,           //  Backup, waiting for peer to connect
+    STATE_ACTIVE = 3,           //  Active - accepting connections
+    STATE_PASSIVE = 4           //  Passive - not accepting connections
 } state_t;
 
-typedef enum {
-    peer_pending   = 0,  //  HA peer is pending
-    peer_active    = 1,  //  HA peer is active
-    peer_passive   = 2,  //  HA peer is passive
-    client_request = 3   //  Client makes request
+typedef enum {                  //  Must overlap with state
+    PEER_PRIMARY = 1,           //  HA peer is pending primary
+    PEER_BACKUP = 2,            //  HA peer is pending backup
+    PEER_ACTIVE = 3,            //  HA peer is active
+    PEER_PASSIVE = 4,           //  HA peer is passive
+    CLIENT_REQUEST = 5          //  Client makes request
 } event_t;
 
-//  Next state for current state / event
-state_t nextstate [][] = {
-    { 1, 2, 0, 0 },
-    { 1, 2, 0, 0 },
-    { 1, 2, 0, 0 },
-}
+typedef struct {
+    state_t state;              //  Current state
+    event_t event;              //  Current event
+} state_machine_t;
 
-//  Return new state, given state/event and if primary 
-static state_t
-s_state_machine (state_t state, event_t event, Bool primary)
+
+//  Execute finite state machine (apply event to state)
+//  Returns TRUE if there was an exception
+
+static Bool
+s_state_machine (state_machine_t *fsm, int64_t peer_expiry) 
 {
-    if (state == state_pending) {
-        if (event == peer_pending) {
-            if (primary) {
-                state = state_active;
-                printf ("I: failover: connected to backup (slave), READY as master");
-            }
+    Bool exception = FALSE;
+    //  Primary server is waiting for peer to connect
+    //  Accepts CLIENT_REQUEST events in this state
+    if (fsm->state == STATE_PRIMARY) {
+        if (fsm->event == PEER_BACKUP) {
+            printf ("I: connected to backup (slave), ready as master\n");
+            fsm->state = STATE_ACTIVE;
         }
         else
-        if (event == peer_active) {
-            state = state_passive;
-            printf ("I: failover: connected to %s (master), READY as slave",
-                primary? "backup": "primary");
-        }
-        else
-        if (event == peer_passive) {
-            //  Do nothing; wait while peer switches to active
-        }
-        else
-        if (event == client_request) {
-            //  If pending, accept connection only if primary peer
-            rc = (primary);
+        if (fsm->event == PEER_ACTIVE) {
+            printf ("I: connected to backup (master), ready as slave\n");
+            fsm->state = STATE_PASSIVE;
         }
     }
     else
-    if (state == state_active) {
+    //  Backup server is waiting for peer to connect
+    //  Rejects CLIENT_REQUEST events in this state
+    if (fsm->state == STATE_BACKUP) {
+        if (fsm->event == PEER_ACTIVE) {
+            printf ("I: connected to primary (master), ready as slave\n");
+            fsm->state = STATE_PASSIVE;
+        }
+        else
+        if (fsm->event == CLIENT_REQUEST) {
+            exception = TRUE;
+        }
     }
     else
-    if (state == state_passive) {
+    //  Server is active
+    //  Accepts CLIENT_REQUEST events in this state
+    if (fsm->state == STATE_ACTIVE) {
+        if (fsm->event == PEER_ACTIVE) {
+            //  Two masters would mean split-brain
+            printf ("E: fatal error - dual masters, aborting\n");
+            exception = TRUE;
+        }
     }
-    return state;
-}
-
-//  State machine
-void s_execute (self) {
-    switch (state) {
-      case state_pending:
-          default:
-            assert (0);
+    else
+    //  Server is passive
+    //  CLIENT_REQUEST events can trigger failover if peer looks dead
+    if (fsm->state == STATE_PASSIVE) {
+        if (fsm->event == PEER_PRIMARY) {
+            //  Peer is restarting - become active, peer will go passive
+            printf ("I: primary (slave) is restarting, ready as master\n");
+            fsm->state = STATE_ACTIVE;
         }
-        break;
-
-      case state_active:
-        switch (event) {
-          case event_peer_pending:
-            //  Do nothing; slave is starting
-            break;
-          case event_peer_active:
-            //  No way to have two masters - that would mean split-brain
-            printf ("E: failover: fatal error - dual masters detected, aborting");
-            assert (0);
-            break;
-          case event_peer_passive:
-            //  Do nothing; everything is OK
-            break;
-          case event_new_connection:
-            //  Active state, we do accept new connections
-            rc = 1;
-            break;
-          default:
-            assert (0);
+        else
+        if (fsm->event == PEER_BACKUP) {
+            //  Peer is restarting - become active, peer will go passive
+            printf ("I: backup (slave) is restarting, ready as master\n");
+            fsm->state = STATE_ACTIVE;
         }
-        break;
-
-      case state_passive:
-        switch (event) {
-          case event_peer_pending:
-            //  The peer is restarting; become active (peer will become passive)
-            state = state_active;
-            printf ("I: failover: %s (slave) is restarting, READY as master",
-                primary? "backup": "primary");
-            break;
-          case event_peer_active:
-            //  Do nothing; everything is OK
-            break;
-          case event_peer_passive:
-            //  No way to have two passives - cluster would be non-responsive
-            printf ("E: failover: fatal error - dual slaves, aborting");
-            assert (0);
-            break;
-          case event_new_connection:
+        else
+        if (fsm->event == PEER_PASSIVE) {
+            //  Two passives would mean cluster would be non-responsive
+            printf ("E: fatal error - dual slaves, aborting\n");
+            exception = TRUE;
+        }
+        else
+        if (fsm->event == CLIENT_REQUEST) {
             //  Peer becomes master if timeout has passed
-            //  It's the connection request that triggers the failover
-            if (smt_time_now () - last_peer_time > timeout) {
+            //  It's the client request that triggers the failover
+            assert (peer_expiry > 0);
+            if (s_clock () > peer_expiry) {
                 //  If peer is dead, switch to the active state
-                state = state_active;
-                printf ("I: failover: failover successful, READY as master");
-                rc = 1;                 //  Accept the request, then
+                printf ("I: failover successful, ready as master\n");
+                fsm->state = STATE_ACTIVE;
             }
-            else
+            else {
                 //  If peer is alive, reject connections
-                rc = 0;
-            break;
-          default:
-            assert (0);
+                exception = TRUE;
+            }
         }
-        break;
-
-      default:
-        assert (0);
     }
+    return exception;
 }
+
 
 int main (int argc, char *argv [])
 {
     //  Arguments can be either of:
     //      -p  primary server, at tcp://localhost:5001
     //      -b  backup server, at tcp://localhost:5002
-    Bool primary = FALSE;
     void *context = zmq_init (1);
-    void *peering = zmq_socket (context, ZMQ_DEALER);
+    void *statepub = zmq_socket (context, ZMQ_PUB);
+    void *statesub = zmq_socket (context, ZMQ_SUB);
+    zmq_setsockopt (statesub, ZMQ_SUBSCRIBE, "", 0);
     void *frontend = zmq_socket (context, ZMQ_ROUTER);
+    state_machine_t fsm = { 0 };
+    s_catch_signals ();
 
     if (argc == 2 && streq (argv [1], "-p")) {
-        zmq_bind (frontend, "tcp://*:5001");
-        zmq_bind (peering, "tcp://*:5003");
-        primary = TRUE;
         printf ("I: Primary master, waiting for backup (slave)\n");
+        zmq_bind (frontend, "tcp://*:5001");
+        zmq_bind (statepub, "tcp://*:5003");
+        zmq_connect (statesub, "tcp://localhost:5004");
+        fsm.state = STATE_PRIMARY;
     }
     else
     if (argc == 2 && streq (argv [1], "-b")) {
-        zmq_bind (frontend, "tcp://*:5002");
-        zmq_connect (peering, "tcp://localhost:5003");
-        primary = FALSE;
         printf ("I: Backup slave, waiting for primary (master)\n");
+        zmq_bind (frontend, "tcp://*:5002");
+        zmq_bind (statepub, "tcp://*:5004");
+        zmq_connect (statesub, "tcp://localhost:5003");
+        fsm.state = STATE_BACKUP;
     }
     else {
         printf ("Usage: bstarsrv { -p | -b }\n");
         exit (0);
     }
-    s_catch_signals ();
-    state_t cur_state = state_pending;
-    int64_t last_peer_time = 0;
-
-
-    zmq_close (peering);
-    zmq_close (frontend);
-    zmq_term (context);
-    return 0;
-}
-
-
-#if 0
+    //  Peer considered dead if no ping arrives by this time
+    int64_t peer_expiry = 0;
+    int64_t ping_at = s_clock () + HEARTBEAT;
+        
     while (!s_interrupted) {
-        //  poll tickless 1 second
-        //  appl message on frontend
-        //      - check if valid in current state
-        //  peer state
-        //      - process in current state
+        zmq_pollitem_t items [] = { 
+            { frontend, 0, ZMQ_POLLIN, 0 }, 
+            { statesub, 0, ZMQ_POLLIN, 0 }
+        };
+        int time_left = (int) ((ping_at - s_clock ()));
+        if (time_left < 0)
+            time_left = 0;
+        int rc = zmq_poll (items, 2, time_left * 1000);
+        if (rc == -1)
+            break;              //  Context has been shut down
 
-
-        zmsg_t *request = zmsg_recv (server);
-        zmsg_t *reply = NULL;
-        if (verbose && request)
-            zmsg_dump (request);
-        if (!request)
-            break;          //  Interrupted
-
-        //  Frame 0: identity of client
-        //  Frame 1: PING, or client control frame
-        //  Frame 2: request body
-        char *address = zmsg_pop (request);
-        if (zmsg_parts (request) == 1
-        && strcmp (zmsg_body (request), "PING") == 0)
-            reply = zmsg_new ("PONG");
-        else
-        if (zmsg_parts (request) > 1) {
-            reply = request;
-            request = NULL;
-            zmsg_body_set (reply, "OK");
+        if (items [0].revents & ZMQ_POLLIN) {
+            //  Have a client request
+            zmsg_t *msg = zmsg_recv (frontend);
+            fsm.event = CLIENT_REQUEST;
+            if (s_state_machine (&fsm, peer_expiry) == FALSE) {
+                //  Answer client by echoing request back
+                zmsg_send (&msg, frontend);
+            }
+            else {
+                zmsg_destroy (&msg);
+            }
         }
-        zmsg_destroy (&request);
-        zmsg_push (reply, address);
-        if (verbose && reply)
-            zmsg_dump (reply);
-        zmsg_send (&reply, server);
-        free (address);
+        if (items [1].revents & ZMQ_POLLIN) {
+            //  Have state from our peer, execute as event
+            char *message = s_recv (statesub);
+            fsm.event = atoi (message);
+            free (message);
+            if (s_state_machine (&fsm, peer_expiry)) {
+                break;          //  Error, so exit
+            }
+            peer_expiry = s_clock () + 2 * HEARTBEAT;
+        }
+        //  If we timed-out, send state to peer
+        if (s_clock () >= ping_at) {
+            char message [2];
+            sprintf (message, "%d", fsm.state);
+            s_send (statepub, message);
+            ping_at = s_clock () + HEARTBEAT;
+        }
     }
     if (s_interrupted)
         printf ("W: interrupted\n");
 
-
-    
-
-
-
-
-send state to peer, every heartbeat:
-    icl_shortstr_fmt (state, "%d", state);
-
-
-
-    
-
-    amq_peering_t
-        *peering;                       //  The peering to the other HA peer
-    Bool
-        enabled,                        //  If FALSE, broker is standalone
-        primary;                        //  TRUE = primary, FALSE = backup
-    long
-        timeout;                        //  Failover timeout in usec
-    state
-        state;                          //  State of failover FSM
-    apr_time_t
-        last_peer_time;                 //  Time when peer state arrived lately
-                                        //  If this time is older than the failover
-                                        //  timeout, the peer is considered dead
-
-
-
-    //  --------------- message handling --------------------------
-    
-    //  We got something from peer, record time
-    last_peer_time = time_now ();
-
-    //  Parse content
-    state = atoi ((char *) body->data);
-    assert (state != 0);
-
-    //  Convert peer's state to FSM event
-    //  This isn't really great design...
-    switch (state) {
-        case state_pending:
-            event = event_peer_pending;
-            break;
-        case state_active:
-            event = event_peer_active;
-            break;
-        case state_passive:
-            event = event_peer_passive;
-            break;
-        default:
-            assert (0);
-    }
-    //  Run the FSM
-    execute (self, event);
+    //  Shutdown sockets and context
+    zmq_close (statepub);
+    zmq_close (statesub);
+    zmq_close (frontend);
+    zmq_term (context);
+    return 0;
 }
-
-#endif

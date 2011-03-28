@@ -211,7 +211,7 @@ s_service_success (mdcli_t *client, char *uuid)
 
 int main (int argc, char *argv [])
 {
-    int verbose = (argc > 1 && strcmp (argv [1], "-v") == 0);
+    int verbose = (argc > 1 && streq (argv [1], "-v"));
     s_version_assert (2, 1);
     void *context = zmq_init (1);
 

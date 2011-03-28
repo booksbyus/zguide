@@ -89,7 +89,7 @@ static void
 
 int main (int argc, char *argv [])
 {
-    int verbose = (argc > 1 && strcmp (argv [1], "-v") == 0);
+    int verbose = (argc > 1 && streq (argv [1], "-v"));
 
     s_version_assert (2, 1);
     s_catch_signals ();
@@ -113,10 +113,10 @@ int main (int argc, char *argv [])
             char *empty  = zmsg_pop (msg);
             char *header = zmsg_pop (msg);
 
-            if (strcmp (header, MDPC_CLIENT) == 0)
+            if (streq (header, MDPC_CLIENT))
                 s_client_process (self, sender, msg);
             else
-            if (strcmp (header, MDPW_WORKER) == 0)
+            if (streq (header, MDPW_WORKER))
                 s_worker_process (self, sender, msg);
             else {
                 s_console ("E: invalid message:");
@@ -285,7 +285,7 @@ s_service_dispatch (broker_t *self, service_t *service, zmsg_t *msg)
 static void
 s_service_internal (broker_t *self, char *service_name, zmsg_t *msg)
 {
-    if (strcmp (service_name, "mmi.service") == 0) {
+    if (streq (service_name, "mmi.service")) {
         service_t *service = 
             (service_t *) zhash_lookup (self->services, zmsg_body (msg));
         if (service && service->workers)
@@ -371,7 +371,7 @@ s_worker_process (broker_t *self, char *sender, zmsg_t *msg)
     int worker_ready = (zhash_lookup (self->workers, sender) != NULL);
     worker_t *worker = s_worker_require (self, sender);
 
-    if (strcmp (command, MDPW_READY) == 0) {
+    if (streq (command, MDPW_READY)) {
         if (worker_ready)               //  Not first command in session
             s_worker_delete (self, worker, 1);
         else
@@ -388,7 +388,7 @@ s_worker_process (broker_t *self, char *sender, zmsg_t *msg)
         }
     }
     else
-    if (strcmp (command, MDPW_REPLY) == 0) {
+    if (streq (command, MDPW_REPLY)) {
         if (worker_ready) {
             //  Remove & save client return envelope and insert the
             //  protocol header and service name, then rewrap envelope.
@@ -403,14 +403,14 @@ s_worker_process (broker_t *self, char *sender, zmsg_t *msg)
             s_worker_delete (self, worker, 1);
     }
     else
-    if (strcmp (command, MDPW_HEARTBEAT) == 0) {
+    if (streq (command, MDPW_HEARTBEAT)) {
         if (worker_ready)
             worker->expiry = s_clock () + HEARTBEAT_EXPIRY;
         else
             s_worker_delete (self, worker, 1);
     }
     else
-    if (strcmp (command, MDPW_DISCONNECT) == 0)
+    if (streq (command, MDPW_DISCONNECT))
         s_worker_delete (self, worker, 0);
     else {
         s_console ("E: invalid input message (%d)", (int) *command);

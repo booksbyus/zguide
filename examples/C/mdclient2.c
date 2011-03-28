@@ -7,7 +7,7 @@
 
 int main (int argc, char *argv [])
 {
-    int verbose = (argc > 1 && strcmp (argv [1], "-v") == 0);
+    int verbose = (argc > 1 && streq (argv [1], "-v"));
     mdcli_t *session = mdcli_new ("tcp://localhost:5555", verbose);
 
     int count;

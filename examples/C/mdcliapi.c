@@ -163,11 +163,11 @@ mdcli_send (mdcli_t *self, char *service, zmsg_t **request_p)
                 assert (zmsg_parts (msg) >= 3);
 
                 char *header = zmsg_pop (msg);
-                assert (strcmp (header, MDPC_CLIENT) == 0);
+                assert (streq (header, MDPC_CLIENT));
                 free (header);
 
                 char *reply_service = zmsg_pop (msg);
-                assert (strcmp (reply_service, service) == 0);
+                assert (streq (reply_service, service));
                 free (reply_service);
 
                 zmsg_destroy (&request);

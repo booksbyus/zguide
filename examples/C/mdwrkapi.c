@@ -203,15 +203,15 @@ mdwrk_recv (mdwrk_t *self, zmsg_t **reply_p)
             assert (zmsg_parts (msg) >= 3);
 
             char *empty = zmsg_pop (msg);
-            assert (strcmp (empty, "") == 0);
+            assert (streq (empty, ""));
             free (empty);
 
             char *header = zmsg_pop (msg);
-            assert (strcmp (header, MDPW_WORKER) == 0);
+            assert (streq (header, MDPW_WORKER));
             free (header);
 
             char *command = zmsg_pop (msg);
-            if (strcmp (command, MDPW_REQUEST) == 0) {
+            if (streq (command, MDPW_REQUEST)) {
                 //  We should pop and save as many addresses as there are
                 //  up to a null part, but for now, just save one...
                 self->reply_to = zmsg_unwrap (msg);
@@ -219,10 +219,10 @@ mdwrk_recv (mdwrk_t *self, zmsg_t **reply_p)
                 return msg;     //  We have a request to process
             }
             else
-            if (strcmp (command, MDPW_HEARTBEAT) == 0)
+            if (streq (command, MDPW_HEARTBEAT))
                 ;               //  Do nothing for heartbeats
             else
-            if (strcmp (command, MDPW_DISCONNECT) == 0)
+            if (streq (command, MDPW_DISCONNECT))
                 s_mdwrk_connect_to_broker (self);
             else {
                 s_console ("E: invalid input message (%d)", 

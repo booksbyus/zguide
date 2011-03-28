@@ -141,7 +141,7 @@ int main (void)
             char *client_addr = s_recv (backend);
 
             //  If client reply, send rest back to frontend
-            if (strcmp (client_addr, "READY") != 0) {
+            if (strneq (client_addr, "READY")) {
                 empty = s_recv (backend);
                 assert (empty [0] == 0);
                 free (empty);

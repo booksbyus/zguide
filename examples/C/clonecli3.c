@@ -28,7 +28,7 @@ int main (void)
         kvmsg_t *kvmsg = kvmsg_recv (snapshot);
         if (!kvmsg)
             break;          //  Interrupted
-        if (strcmp (kvmsg_key (kvmsg), "KTHXBAI") == 0) {
+        if (streq (kvmsg_key (kvmsg), "KTHXBAI")) {
             sequence = kvmsg_sequence (kvmsg);
             kvmsg_destroy (&kvmsg);
             break;          //  Done
@@ -65,7 +65,7 @@ int main (void)
                 kvmsg_destroy (&kvmsg);
         }
         //  If we timed-out, generate a random kvmsg
-        if (s_clock () > alarm) {
+        if (s_clock () >= alarm) {
             kvmsg_t *kvmsg = kvmsg_new (0);
             kvmsg_fmt_key  (kvmsg, "%d", randof (10000));
             kvmsg_fmt_body (kvmsg, "%d", randof (1000000));

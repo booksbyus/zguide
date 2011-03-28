@@ -118,7 +118,7 @@ int main (void)
             worker_queue [available_workers++] = zmsg_unwrap (zmsg);
 
             //  Forward message to client if it's not a READY
-            if (strcmp (zmsg_address (zmsg), "READY") == 0)
+            if (streq (zmsg_address (zmsg), "READY"))
                 zmsg_destroy (&zmsg);
             else {
                 zmsg_send (&zmsg, frontend);

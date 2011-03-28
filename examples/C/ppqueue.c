@@ -31,7 +31,7 @@ s_worker_append (queue_t *queue, char *identity)
 {
     int index;
     for (index = 0; index < queue->size; index++)
-        if (strcmp (queue->workers [index].identity, identity) == 0)
+        if (streq (queue->workers [index].identity, identity))
             break;
 
     if (index < queue->size)
@@ -51,7 +51,7 @@ s_worker_delete (queue_t *queue, char *identity)
 {
     int index;
     for (index = 0; index < queue->size; index++)
-        if (strcmp (queue->workers [index].identity, identity) == 0)
+        if (streq (queue->workers [index].identity, identity))
             break;
 
     if (index < queue->size) {
@@ -67,7 +67,7 @@ s_worker_refresh (queue_t *queue, char *identity)
 {
     int index;
     for (index = 0; index < queue->size; index++)
-        if (strcmp (queue->workers [index].identity, identity) == 0)
+        if (streq (queue->workers [index].identity, identity))
             break;
 
     if (index < queue->size)
@@ -139,12 +139,12 @@ int main (void)
 
             //  Return reply to client if it's not a control message
             if (zmsg_parts (msg) == 1) {
-                if (strcmp (zmsg_address (msg), "READY") == 0) {
+                if (streq (zmsg_address (msg), "READY")) {
                     s_worker_delete (queue, identity);
                     s_worker_append (queue, identity);
                 }
                 else
-                if (strcmp (zmsg_address (msg), "HEARTBEAT") == 0)
+                if (streq (zmsg_address (msg), "HEARTBEAT"))
                     s_worker_refresh (queue, identity);
                 else {
                     printf ("E: invalid message from %s\n", identity);

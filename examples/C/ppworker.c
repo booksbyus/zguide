@@ -81,7 +81,7 @@ int main (void)
             }
             else
             if (zmsg_parts (msg) == 1
-            && strcmp (zmsg_body (msg), "HEARTBEAT") == 0)
+            &&  streq (zmsg_body (msg), "HEARTBEAT"))
                 liveness = HEARTBEAT_LIVENESS;
             else {
                 printf ("E: (%s) invalid message\n", identity);

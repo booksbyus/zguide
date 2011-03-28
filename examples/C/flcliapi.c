@@ -140,7 +140,7 @@ flcliapi_request (flcliapi_t *self, zmsg_t **request_p)
     zmsg_t *reply = zmsg_recv (self->control);
     if (reply) {
         char *status = zmsg_pop (reply);
-        if (strcmp (status, "FAILED") == 0)
+        if (streq (status, "FAILED"))
             zmsg_destroy (&reply);
         free (status);
     }
@@ -270,7 +270,7 @@ agent_control_message (agent_t *self)
     zmsg_t *msg = zmsg_recv (self->control);
     char *command = zmsg_pop (msg);
 
-    if (strcmp (command, "CONNECT") == 0) {
+    if (streq (command, "CONNECT")) {
         char *endpoint = zmsg_pop (msg);
         printf ("I: connecting to %s...\n", endpoint);
         int rc = zmq_connect (self->router, endpoint);
@@ -284,7 +284,7 @@ agent_control_message (agent_t *self)
         free (endpoint);
     }
     else
-    if (strcmp (command, "REQUEST") == 0) {
+    if (streq (command, "REQUEST")) {
         assert (!self->request);    //  Strict request-reply cycle
         //  Prefix request with sequence number and empty envelope
         char sequence_text [10];

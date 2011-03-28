@@ -24,7 +24,7 @@ int main (void)
         kvmsg_t *kvmsg = kvmsg_recv (snapshot);
         if (!kvmsg)
             break;          //  Interrupted
-        if (strcmp (kvmsg_key (kvmsg), "KTHXBAI") == 0) {
+        if (streq (kvmsg_key (kvmsg), "KTHXBAI")) {
             sequence = kvmsg_sequence (kvmsg);
             kvmsg_destroy (&kvmsg);
             break;          //  Done

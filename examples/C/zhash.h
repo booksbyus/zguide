@@ -66,11 +66,6 @@ void
 
 //  Macros and typedefs defined by the ZFL header
 #define zmalloc(size) calloc(1,(size))
-#define streq(s1,s2)  (!strcmp ((s1), (s2)))
-#define TRUE            1               //  ANSI standard
-#define FALSE           0
-typedef          int    Bool;           //  Boolean TRUE/FALSE value
-typedef unsigned int    qbyte;          //  Quad byte = 32 bits
 
 
 /*  =========================================================================

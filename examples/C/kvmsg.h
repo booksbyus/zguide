@@ -33,7 +33,6 @@
 
 //  Opaque class structure
 typedef struct _kvmsg kvmsg_t;
-typedef unsigned char byte;
 
 #ifdef __cplusplus
 extern "C" {

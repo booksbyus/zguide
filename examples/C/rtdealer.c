@@ -29,7 +29,7 @@ worker_task_a (void *args)
     while (1) {
         //  We receive one part, with the workload
         char *request = s_recv (worker);
-        int finished = (strcmp (request, "END") == 0);
+        int finished = (streq (request, "END"));
         free (request);
         if (finished) {
             printf ("A received: %d\n", total);
@@ -54,7 +54,7 @@ worker_task_b (void *args)
     while (1) {
         //  We receive one part, with the workload
         char *request = s_recv (worker);
-        int finished = (strcmp (request, "END") == 0);
+        int finished = (streq (request, "END"));
         free (request);
         if (finished) {
             printf ("B received: %d\n", total);

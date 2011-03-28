@@ -4,24 +4,13 @@
 - strcmp -> streq
 - remove v2.1 stuff from examples
 - switch to full brackets style
+- remove s_version_assert calls
 
 next:
 - use sha1 signatures to only generate changed images
 
-Visualization of examples
-- load each example into a page
-    example:name-language
-    only if not empty, tag with language name
-    various lists showing current scores & results...
-- in text, [[include]] instead of inlining the code
-- collapsible blocks for code and for translated versions
-- link direct to new tab showing example, if present
-- else link to page explaining how to translate & contribute
---- done
-
 
 Notes for The Guide
-
 
 - collection of patterns
     Least Recently Used
@@ -78,7 +67,6 @@ Then we can use this to start building some reusable pieces:
 - stateful publish-subscribe
 - reliable request-reply
 - logging device
-- reactor (Matt Weinstein's)
 
 
 +++ Presence Detection

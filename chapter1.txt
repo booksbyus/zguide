@@ -38,7 +38,7 @@ It sounds ridiculously simple. And maybe it is. That's kind of the whole point.
 
 +++ 0MQ in a Hundred Words
 
-0MQ (ZeroMQ, 0\MQ, zmq) looks like an embeddable networking library but acts like a concurrency framework. It gives you sockets that carry whole messages across various transports like in-process, inter-process, TCP, and multicast. You can connect sockets N-to-N with patterns like fanout, pubsub, task distribution, and request-reply. It's fast enough to be the fabric for clustered products. Its asynchronous I/O model gives you scalable multicore applications, built as asynchronous message-processing tasks. It has a score of language APIs and runs on most operating systems. 0MQ is from [http://www.imatix.com iMatix] and is LGPL open source.
+0MQ (ZeroMQ, 0\MQ, zmq) looks like an embeddable networking library but acts like a concurrency framework. It gives you sockets that carry whole messages across various transports like in-process, inter-process, TCP, and multicast. You can connect sockets N-to-N with patterns like fanout, pub-sub, task distribution, and request-reply. It's fast enough to be the fabric for clustered products. Its asynchronous I/O model gives you scalable multicore applications, built as asynchronous message-processing tasks. It has a score of language APIs and runs on most operating systems. 0MQ is from [http://www.imatix.com iMatix] and is LGPL open source.
 
 +++ Some Assumptions
 
@@ -237,7 +237,7 @@ Note that when you use a SUB socket you **must** set a subscription using zmq_se
 
 The PUB-SUB socket pair is asynchronous. The client does zmq_recv[3], in a loop (or once if that's all it needs). Trying to send a message to a SUB socket will cause an error. Similarly the service does zmq_send[3] as often as it needs to, but must not do zmq_recv[3] on a PUB socket.
 
-There is one important thing to know about PUB/SUB sockets: you do not know precisely when a subscriber starts to get messages. Even if you start a subscriber, wait a while, and then start the publisher, **the subscriber will always miss the first messages that the publisher sends**. This is because as the subscriber connects to the publisher (something that takes a small but non-zero time), the publisher may already be sending messages out.
+There is one important thing to know about PUB-SUB sockets: you do not know precisely when a subscriber starts to get messages. Even if you start a subscriber, wait a while, and then start the publisher, **the subscriber will always miss the first messages that the publisher sends**. This is because as the subscriber connects to the publisher (something that takes a small but non-zero time), the publisher may already be sending messages out.
 
 This "slow joiner" symptom hits enough people, often enough, that I'm going to explain it in detail. Remember that 0MQ does asynchronous I/O, i.e. in the background. Say you have two nodes doing this, in this order:
 
@@ -260,7 +260,7 @@ Some points about the publish-subscribe pattern:
 
 * If a publisher has no connected subscribers, then it will simply drop all messages.
 
-* If you're using TCP, and a subscriber is slow, messages will queue up on the publisher. We'll look at how to protect publishers against this, using the "high water mark" later.
+* If you're using TCP, and a subscriber is slow, messages will queue up on the publisher. We'll look at how to protect publishers against this, using the "high-water mark" later.
 
 This is how long it takes to receive and filter 10M messages on my box, which is an Intel 4 core Q8300, fast but nothing special:
 

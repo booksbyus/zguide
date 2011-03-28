@@ -1196,7 +1196,7 @@ On writing, 0MQ's multipart messages work nicely together with zero-copy. In tra
 
 The concept of a durable socket is one more of those surprisingly obvious 0MQ inventions that when you see, you wonder why no-one ever thought of it before. In classic networking, sockets are API objects, and their lifespan is never longer than the code that uses them. But if you look at a socket you see that it collects a bunch of resources - network buffers - and at some stage, a 0MQ user asked, "isn't there some way these could hang around if my program crashes, so I can get them back?"
 
-This turns out to be very useful. It's not foolproof, but it gives 0MQ a kind of "better than a kick in the nuts" reliability, particularly useful for pubsub cases. We'll look at that shortly.
+This turns out to be very useful. It's not foolproof, but it gives 0MQ a kind of "better than a kick in the nuts" reliability, particularly useful for pub-sub cases. We'll look at that shortly.
 
 Here is the general model of two sockets happily chatting about the weather, and who kissed who and where and when precisely, cause I heard something different, at the last staff party, not to mention did you see that new family up the road who do they think they are with that car and what's with the prices at the shops these days don't they know it's a crisis?
 
@@ -1321,13 +1321,13 @@ See zmq_setsockopt[3] for a summary of the ZMQ_IDENTITY socket option. Note that
 
 About these assertion failures, 0MQ shouldn't assert when it's misused, only when it thinks it's actually hitting an internal bug. Code should be full of assertions that //never// fail. There are ongoing discussions about how these situations should be handled. As a general rule, if you get assertions while using 0MQ, report them to the zeromq-dev list.
 
-+++ Pubsub Message Envelopes
++++ Pub-sub Message Envelopes
 
 We've looked briefly at multipart messages. Let's now look at their main use-case, which is //message envelopes//. An envelope is a way of safely packaging up data with an address, without touching the data itself.
 
-In the pubsub pattern, the envelope at least holds the subscription key for filtering but you can also add the sender identity in the envelope.
+In the pub-sub pattern, the envelope at least holds the subscription key for filtering but you can also add the sender identity in the envelope.
 
-If you want to use pubsub envelopes, you make them yourself. It's optional, and in previous pubsub examples we didn't do this. Using a pubsub envelope is a little more work for simple cases but it's cleaner especially for real cases, where the key and the data are naturally separate things. It's also faster, if you are writing the data directly from an application buffer.
+If you want to use pub-sub envelopes, you make them yourself. It's optional, and in previous pub-sub examples we didn't do this. Using a pub-sub envelope is a little more work for simple cases but it's cleaner especially for real cases, where the key and the data are naturally separate things. It's also faster, if you are writing the data directly from an application buffer.
 
 Here is what a publish-subscribe message with an envelope looks like:
 
@@ -1339,20 +1339,20 @@ Here is what a publish-subscribe message with an envelope looks like:
             +-------------+
 
 
-    Figure # - Pubsub envelope with separate key
+    Figure # - Pub-sub envelope with separate key
 [[/code]]
 
 
-Recall that pubsub matches messages based on the prefix. Putting the key into a separate frame makes the matching very obvious, since there is no chance an application will accidentally match on part of the data.
+Recall that pub-sub matches messages based on the prefix. Putting the key into a separate frame makes the matching very obvious, since there is no chance an application will accidentally match on part of the data.
 
-Here is a minimalist example of how pubsub envelopes look in code. This publisher sends messages of two types, A and B. The envelope holds the message type:
+Here is a minimalist example of how pub-sub envelopes look in code. This publisher sends messages of two types, A and B. The envelope holds the message type:
 
-[[code type="example" title="Pubsub envelope publisher" name="psenvpub"]]
+[[code type="example" title="Pub-sub envelope publisher" name="psenvpub"]]
 [[/code]]
 
 The subscriber only wants messages of type B:
 
-[[code type="example" title="Pubsub envelope subscriber" name="psenvsub"]]
+[[code type="example" title="Pub-sub envelope subscriber" name="psenvsub"]]
 [[/code]]
 
 When you run the two programs, the subscriber should show you this:
@@ -1379,16 +1379,16 @@ If you subscribe to multiple publishers and you want to know their identity so t
             +-------------+
 
 
-    Figure # - Pubsub envelope with sender address
+    Figure # - Pub-sub envelope with sender address
 [[/code]]
 
-+++ Making a (Semi-)Durable Subscriber
++++ (Semi-)Durable Subscribers and High-Water Marks
 
 Identities work on all socket types. If you have a PUB and a SUB socket, and the subscriber gives the publisher its identity, the publisher holds onto data until it can deliver it to the subscriber.
 
 This is both wonderful and terrible at the same time. It's wonderful because it means updates can wait for you in the publisher's transmit buffer, until you connect and collect them. It's terrible because by default this will rapidly kill a publisher and lock up your system.
 
-**If you use durable subscriber sockets (i.e. if you set the identity on a SUB socket) you //must// also guard against queue explosion by using the //high water mark// or HWM, on the publisher socket.** The publisher's HWM affects all subscribers, independently.
+**If you use durable subscriber sockets (i.e. if you set the identity on a SUB socket) you //must// also guard against queue explosion by using the //high-water mark// or HWM, on the publisher socket.** The publisher's HWM affects all subscribers, independently.
 
 If you want to prove this, take the wuclient and wuserver from Chapter One, and add this line to the wuclient before it connects:
 
@@ -1471,9 +1471,9 @@ We can put this together to make a cynical publisher that is immune to slow, blo
 [[code type="example" title="Durable but cynical publisher" name="durapub2"]]
 [[/code]]
 
-In practice, setting the HWM to 1 and shoving everything to disk will make a pubsub system very slow. Here is a more reasonable 'best practice' for publishers that have to deal with unknown subscribers:
+In practice, setting the HWM to 1 and shoving everything to disk will make a pub-sub system very slow. Here is a more reasonable 'best practice' for publishers that have to deal with unknown subscribers:
 
-* Always set a HWM on the socket, based on the expected maximum number of subscribers, the amount of memory you are willing to dedicated to queuing, and the average size of a message. For example if you expect up to 5,000 subscribers, and have 1GB of memory to play with, and messages of ~200 bytes, then a safe HWM would be (1,000,000,000 / 200 / 5,000) = 1,000.
+* **Always set a HWM on the PUB socket**, based on the expected maximum number of subscribers, the amount of memory you are willing to dedicated to queuing, and the average size of a message. For example if you expect up to 5,000 subscribers, and have 1GB of memory to play with, and messages of ~200 bytes, then a safe HWM would be (1,000,000,000 / 200 / 5,000) = 1,000.
 
 * If you don't want slow or crashing subscribers to lose data, set a SWAP that's large enough to handle the peaks, based on the number of subscribers, peak message rate, average size of messages, and time you want to cover. For example with 5,000 subscribers and messages of ~200 bytes coming in at 100,000 per second, you will need up to 100MB of disk space per second. To cover an outage of up to 1 minute, therefore, you'd need 6GB of disk space, and it would have to be fast, but that's a different story.
 
@@ -1487,9 +1487,9 @@ Some notes on using the HWM option:
 
 * This affects both the transmit and receive buffers of a single socket. Some sockets (PUB, PUSH) only have transmit buffers. Some (SUB, PULL, REQ, REP) only have receive buffers. Some (XREQ, XREP, PAIR) have both transmit and receive buffers.
 
-* Future versions of 0MQ might offer high-water marks on transmit and receive buffers separately. However this isn't something people seem particularly worried about.
-
 * When your socket reaches its high-water mark, it will either block or drop data depending on the socket type. PUB sockets will drop data if they reach their high-water mark, while other socket types will block.
+
+* Over the {{inproc}} transport, the sender and reciever share the same buffers, so the real HWM is the sum of the HWM set by both sides. This means in effect that if one side does not set a HWM, there is no limit to the buffer size.
 
 +++ A Bare Necessity
 

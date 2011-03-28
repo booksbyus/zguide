@@ -33,7 +33,7 @@ int main (void)
     int update_nbr = 0;
     while (1) {
         char *string = s_recv (subscriber);
-        if (strcmp (string, "END") == 0) {
+        if (streq (string, "END")) {
             free (string);
             break;
         }
