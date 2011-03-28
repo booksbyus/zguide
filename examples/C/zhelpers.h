@@ -45,6 +45,24 @@
 #include <inttypes.h>
 #include <signal.h>
 
+//- Data types --------------------------------------------------------------
+
+typedef          int    Bool;           //  Boolean TRUE/FALSE value
+typedef unsigned char   byte;           //  Single unsigned byte = 8 bits
+typedef unsigned short  dbyte;          //  Double byte = 16 bits
+typedef unsigned int    qbyte;          //  Quad byte = 32 bits
+
+//- Inevitable macros -------------------------------------------------------
+
+#define streq(s1,s2)    (!strcmp ((s1), (s2)))
+#define strneq(s1,s2)   (strcmp ((s1), (s2)))
+//  Provide random number from 0..(num-1)
+#define randof(num)     (int) ((float) (num) * random () / (RAND_MAX + 1.0))
+#if (!defined (TRUE))
+#    define TRUE        1               //  ANSI standard
+#    define FALSE       0
+#endif
+
 //  Bring Windows MSVC up to C99 scratch
 #if (defined (__WINDOWS__))
     typedef unsigned long ulong;
