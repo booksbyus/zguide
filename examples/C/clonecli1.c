@@ -1,7 +1,8 @@
 //
 //  Clone client model 1
 //
-#include "kvmsg.h"
+//  Lets us 'build clonecli1' and 'build all'
+#include "kvmsg.c"
 
 int main (void)
 {

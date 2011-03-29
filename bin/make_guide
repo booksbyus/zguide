@@ -31,4 +31,22 @@ wdput zguide php chapter3 "Chapter Three"
 wdput zguide php chapter4 "Chapter Four"
 wdput zguide php chapter5 "Chapter Five"
 
+export Z2W_LANG=Lua
+echo "[[include lua:chapter1]]"  > all.wd
+echo "[[include lua:chapter2]]" >> all.wd
+echo "[[include lua:chapter3]]" >> all.wd
+echo "[[include lua:chapter4]]" >> all.wd
+echo "[[include lua:chapter5]]" >> all.wd
+bin/z2w chapter*.txt
+wdput zguide lua all "ØMQ - The Guide - Lua"
+wdput zguide lua chapter1 "Chapter One"
+wdput zguide lua chapter2 "Chapter Two"
+wdput zguide lua chapter3 "Chapter Three"
+wdput zguide lua chapter4 "Chapter Four"
+wdput zguide lua chapter5 "Chapter Five"
+
 rm *.wd wdtemp.txt upload.sh
+
+git add images/fig*.png .signatures
+git commit -m "Published Guide"
+git push origin master
