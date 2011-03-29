@@ -1,10 +1,6 @@
 //
 //  Multithreaded Hello World server
 //
-//  Changes for 2.1:
-//  - added version assertion
-//  - close sockets in each child thread
-//
 #include "zhelpers.h"
 
 static void *

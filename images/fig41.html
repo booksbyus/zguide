@@ -1,0 +1,30 @@
+<html>
+<pre class="textdiagram" id="fig41">
+    +--------+  +--------+  +--------+
+    | Client |  | Client |  | Client |
+    +--------+  +--------+  +--------+
+    |  REQ   |  |  REQ   |  |  REQ   |   MAMA
+    +---+----+  +---+----+  +---+----+    ^
+        |           |           |         |
+        +-----------+-----------+         |
+                    |                     |
+                +---+----+                v
+                |  XREP  |  Frontend    ROUTER
+                +--------+                :
+                | Device |  LRU queue     :
+                +--------+                :
+                |  XREP  |  Backend     ROUTER
+                +---+----+                ^
+                    |                     |
+        +-----------+-----------+         |
+        |           |           |         |
+    +---+----+  +---+----+  +---+----+    v
+    |  REQ   |  |  REQ   |  |  REQ   |   MAMA
+    +--------+  +--------+  +--------+
+    | Worker |  | Worker |  | Worker |
+    +--------+  +--------+  +--------+
+
+
+    Figure 41 - Extended request-reply with LRU
+</pre>
+</html>

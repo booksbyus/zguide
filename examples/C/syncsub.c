@@ -1,9 +1,6 @@
 //
 //  Synchronized subscriber
 //
-//  Changes for 2.1:
-//  - added sleep(1) before synchronization step
-//
 #include "zhelpers.h"
 
 int main (void) 

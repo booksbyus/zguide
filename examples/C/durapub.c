@@ -1,10 +1,6 @@
 //
 //  Publisher for durable subscriber
 //
-//  Changes for 2.1:
-//  - added version assertion
-//  - removed sleep(1) at end of main thread
-//
 #include "zhelpers.h"
 
 int main (void) 

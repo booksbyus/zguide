@@ -1,9 +1,6 @@
 //
 //  Custom routing Router to Papa (XREP to REP)
 //
-//  Changes for 2.1:
-//  - close worker socket properly
-//
 #include "zhelpers.h"
 
 //  We will do this all in one thread to emphasize the sequence

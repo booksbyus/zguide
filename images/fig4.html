@@ -1,0 +1,33 @@
+<html>
+<pre class="textdiagram" id="fig4">
+                 +-------------+
+                 |             |
+                 |  Publisher  |
+                 |             |
+                 +-------------+
+                 |     PUB     |
+                 \-------------/
+                      bind
+                        |
+                        |
+                     updates
+                        |
+        +---------------+---------------+
+        |               |               |
+     updates         updates         updates
+        |               |               |
+        |               |               |
+        v               v               v
+     connect         connect         connect
+  /------------\  /------------\  /------------\
+  |    SUB     |  |    SUB     |  |    SUB     |
+  +------------+  +------------+  +------------+
+  |            |  |            |  |            |
+  | Subscriber |  | Subscriber |  | Subscriber |
+  |            |  |            |  |            |
+  +------------+  +------------+  +------------+
+
+
+           Figure 4 - Publish-Subscribe
+</pre>
+</html>

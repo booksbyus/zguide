@@ -1,0 +1,40 @@
+<html>
+<pre class="textdiagram" id="fig24">
+        +-----------+
+        |           |
+        |  Sender   |
+        |           |
+        +-----------+
+        |  Socket   |
+        \-----------/
+         +---------+
+         +---------+
+         +---------+    ØMQ Transmit buffer
+         +---------+
+         +----+----+
+              |
+              |
+              v
+         +---------+
+         +---------+    Network I/O buffers
+         +----+----+
+              |
+              |
+              v
+         +---------+
+         +---------+
+         +---------+    ØMQ Receive buffer
+         +---------+
+         +---------+
+        /-----------\
+        |  Socket   |
+        +-----------+
+        |           |
+        | Receiver  |
+        |           |
+        +-----------+
+
+
+Figure 24 - Sender boring the pants off receiver
+</pre>
+</html>

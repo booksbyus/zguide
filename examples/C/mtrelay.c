@@ -1,10 +1,6 @@
 //
 //  Multithreaded relay
 //
-//  Changes for 2.1:
-//  - close sockets in each child thread
-//  - added version assert
-//
 #include "zhelpers.h"
 
 static void *

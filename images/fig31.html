@@ -1,0 +1,24 @@
+<html>
+<pre class="textdiagram" id="fig31">
+        +-----------+
+        |           |
+        |   Client  |
+        |           |
+        +-----------+       +---------+
+        |    REQ    |       |  Data   |     Client sends this
+        \-----+-----/       +---------+
+              |
+              |  "My identity is empty"
+              v
+        /-----------\       +---------+
+        |   XREP    |       |  UUID   |     XREP invents UUID to
+        +-----------+       +-+-------+     use as reply address
+        |           |       | |
+        |  Service  |       +-+-------+
+        |           |       |  Data   |
+        +-----------+       +---------+
+
+
+          Figure 31 - XREP invents a UUID for transient sockets
+</pre>
+</html>

@@ -1,0 +1,29 @@
+<html>
+<pre class="textdiagram" id="fig37">
+          +-------------+
+          |             |
+          |   Client    |   Send to "A" or "B"
+          |             |
+          +-------------+
+          |     XREP    |   (ROUTER)
+          \-------------/
+                 ^
+                 |
+                 |
+         +-------+-------+
+         |               |
+         |               |
+         v               v
+   /-----------\   /-----------\
+   |    REP    |   |    REP    |   (PAPA)
+   |    "A"    |   |    "B"    |
+   +-----------+   +-----------+
+   |           |   |           |
+   |  Worker   |   |   Worker  |
+   |           |   |           |
+   +-----------+   +-----------+
+
+
+    Figure 37 - Router to papa custom routing
+</pre>
+</html>
