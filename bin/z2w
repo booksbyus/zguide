@@ -216,8 +216,10 @@ while (<>) {
 die "Can't create scoreboard.wd: $!"
     unless open (SCOREBOARD, ">scoreboard.wd");
 print (SCOREBOARD "||||||~ Translations ($examples in total)||\n");
-foreach (@languages) {
-    printf (SCOREBOARD "|| [/$extension{$language}:_start %s] || %3d || %3d%% ||\n", $_, $translations {$_}, ($translations {$_} * 100) / $examples);
+foreach $language (@languages) {
+    printf (SCOREBOARD "|| [/$extension{$language}:_start %s] || %3d || %3d%% ||\n", 
+        $language, $translations {$language}, 
+        ($translations {$language} * 100) / $examples);
 }
 close (SCOREBOARD);
 close (OUTPUT);
