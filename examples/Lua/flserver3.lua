@@ -13,8 +13,8 @@ local context = zmq.init(1)
 s_catch_signals ()
 
 --  Prepare server socket with predictable identity
-local bind_endpolocal = "tcp://*:5555"
-local connect_endpolocal = "tcp://localhost:5555"
+local bind_endpoint = "tcp://*:5555"
+local connect_endpoint = "tcp://localhost:5555"
 local server = context:socket(zmq.XREP)
 server:setopt(zmq.IDENTITY, connect_endpoint)
 server:bind(bind_endpoint)
