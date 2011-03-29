@@ -14,6 +14,8 @@ s/\n\[\/color\]/\[\/color\]\n/mg;
 s/\/(\/+)/@@\/$1@@/mg;
 s/\*(\*+)/@@*$1@@/mg;
 s/\-(\-+)/@@\-$1@@/mg;
+s/>>/@@>>@@/mg;
+s/<</@@<<@@/mg;
 
 #   Replace spaces with Unicode non-breaking space
 s/ / /mg;
