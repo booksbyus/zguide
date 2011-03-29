@@ -289,12 +289,12 @@ _M.new = zmsg_new
 --  Creates a new message and returns it
 --  Blocks on recv if socket is not ready for input
 
-function recv(socket)
+function recv(socket, flags)
     assert(socket)
     local self = zmsg_new()
 
     while true do
-        local data, err = socket:recv()
+        local data, err = socket:recv(flags)
         if not data then
             return self, err
         end

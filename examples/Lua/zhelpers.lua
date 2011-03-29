@@ -6,6 +6,7 @@
 
 local format = string.format
 local random = math.random
+local floor = math.floor
 local write = io.write
 
 local zmq = require"zmq"
@@ -21,9 +22,9 @@ function fprintf(file, fmt, ...)
     return file:write(format(fmt, ...))
 end
 
---  Provide random number from 0..(num-1)
+--  Provide random whole number from 0..(num-1)
 function randof(num)
-    return random(0, num-1)
+    return floor(random(0, num-1))
 end
 
 --  Receive 0MQ string from socket and convert into C string
