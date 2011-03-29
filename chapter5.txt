@@ -381,68 +381,75 @@ Let's list the failures we want to be able to handle:
 * Clone server machine dies and is off-line for a significant time. Clients have to switch to an alternate server somewhere.
 * Clone server process or machine gets disconnected from the network, e.g. a switch dies. It may come back at some point, but in the meantime clients need an alternate server.
 
-We already built a high-availability server in Chapter Four, the Binary Star pattern. We can take this and expand it to work for Clone. Binary Star gives us two servers that monitor each other, and use client voting to organize into a master and slave.
+Our first step is to add a second server. We can use the Binary Star pattern from Chapter four to organize these into primary and backup.
 
-Clients vote in two places: when they request a state snapshot, and when they send an update to the server. Clients need heartbeating to detect if a server dies, so we'll add a heartbeat to the publisher.
+We need to ensure that updates are not lost if the primary server crashes. The simplest technique is to send them to both servers.
+
+The backup server can then act as a client, and keep its state synchronized by receiving updates as all clients do. It'll also get new updates from clients. It can't yet store these in its hash table, but it can hold onto them for a while.
+
+So, Model Four introduces these changes over Model Three:
+
+* We use a pub-sub flow instead of a push-pull flow for client updates (to the servers). The reasons: push sockets will block if there is no recipient, and they round-robin, so we need to open two of them. We'll bind the servers' SUB sockets and connect the clients' PUB sockets to them. This takes care of fanning out from one client to two servers.
+
+* We add heartbeats to server updates (to clients), so that a client can detect when the primary server has died. It can then switch over to the backup server.
+
+* We connect the two servers using the Binary Star class. Binary Star relies on the clients to 'vote' by making an explicit request to the server they consider "master". We can't use client updates for voting, since both servers accept these at all times.
+
+* We make all update messages uniquely identifiable by adding a UUID field. The client generates this, and the server propagates it back on re-published updates.
+
+* The backup server keeps a "pending list" of updates that it has received from clients, but not yet from the primary server. The list is ordered from oldest to newest, so that it's fast to remove updates off the head.
+
+Failover happens as follows:
+
+* The client detects that primary server is no longer sending heartbeats, so has died. The client connects to backup server and requests a new state snapshot.
+
+* The backup server starts to receive snapshot requests from clients, and detects that primary server has gone, so takes over as primary.
+
+* The backup server applies its pending list to its own hash table, and then starts to process state snapshot requests.
+
+When the primary server comes back online, it will:
+
+* Start up as slave server, and connect to the backup server as a Clone client.
+
+* Start to receive updates from clients, via its SUB socket.
+
+We make some assumptions:
+
+* That at least one server will keep running. If both servers crash, we lose all server state and there's no way to recover it.
+
+* That multiple clients do not update the same hash keys, at the same time. Client updates will arrive at the two servers in a different order. So, the backup server may apply updates from its pending list in a different order than the primary server would or did. Updates from one client will always arrive in the same order on both servers, so that is safe.
 
 So here is our high-availability server pair, using the Binary Star pattern:
 
 [[code type="textdiagram"]]
 
-                 +--------------------------+      +--------------------------+
-                 |                          |      |                          |
-                 |         Primary          |<---->|          Backup          |
-                 |                          |      |                          |
-                 +--------+--------+--------+      +--------+--------+--------+
-                 |   PUB  | ROUTER |  PULL  |      |   PUB  | ROUTER |  PULL  |
-                 \----+---+--------+--------/      \--------+--------+--------/
-                      |       ^        ^                        ^         ^
-                      |       |        |                        :         :
-                      |       |        \--------\  /------------:--------=/
-                      |       |                 |  :            : 
-                      |       \-----------\ /===================/  
-                      |                   | :   |  :
-          /-----------+-------------\     | :   |  :
-          |                         |     | :   |  :
-          |      ^     ^            |     | :   |  :
-          v      |     |            v     | :   |  :
-       /------+--+--+--+---\     /------+-+-+-+-+--+-\
-       | SUB  | REQ | PUSH |     | SUB  | REQ | PUSH |
-       +------+-----+------+     +------+-----+------+
-       |                   |     |                   |
-       |       Client      |     |       Client      |
-       |                   |     |                   |
-       +-------------------+     +-------------------+
+        +--------------------+                 +--------------------+
+        |                    |      Binary     |                    |
+        |       Primary      |<--------------->|       Backup       |
+        |                    |       Star      |                    |
+        +-----+--------+-----+                 +-----+--------+-----+
+        | PUB | ROUTER | SUB |                 | PUB | ROUTER | SUB |
+        \--+--+--------+-----/                 \-----+--------+-----/
+           |       ^      ^                                      ^
+           |       |      |                                      |
+           |       |      |                                      |
+           |       |      +--------------------------------------/
+           |       |      |
+           v       |      |
+        /-----+----+---+--+--\
+        | SUB |  REQ   | PUB |
+        +-----+--------+-----+
+        |                    |
+        |       Client       |
+        |                    |
+        +--------------------+
 
 
-                   Figure # - High-availability Clone Server Pair
+               Figure # - High-availability Clone Server Pair
 [[/code]]
 
-Switching to a backup server gives us something to start with, but we still need some way to ensure that data is consistent after a failover (or recovery). We have clients sending updates to the primary server, which crashes and loses them. How do we ensure the backup server has the right copy of everything so it can properly take over?
+Since we need 
 
-Hand-shaking between the servers would mean adding round-trip latency (several hundred microseconds) to every update. That is too slow to treat as a serious option. Any design we make has to be asynchronous //except// when there's a failure. Recovery can be relatively slow, that's acceptable.
-
-conditions
-- if both servers die, it won't work... one must always be running
-
-- backup can join at any time, acts as client and starts receiving updates from master
-    - get snapshot
-    - then initialize binary star peering
-    - need cloneapi.c client API
-- backup republishes 
-- master continues to publish
-- clients subscribe to both, discard duplicate updates
-- clients roll-over if no heartbeat from one publisher
-- clients request state from one, if no response, the other
-- clients send updates to current master
-- clients cache updates for X seconds...?
-    - how to resend missing updates after failover?
-    - backup will have version X of hash
-    - clients will have version X+1 of hash
-    - ... 
-        - clients send whole hash through to server?
-        - clients send just their latest updates?
-        - sliding window of X seconds?
 .end
 
 
