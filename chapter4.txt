@@ -860,8 +860,6 @@ We don't attempt to cover:
 
 * **Slave** - the slave server is the one that takes over if the master disappears. Note that when a Binary Star pair is running normally, the primary server is master, and the backup is slave. When a failover has happened, the roles are switched.
 
-++++ Server Configuration
-
 To configure a Binary Star pair, you need to:
 
 # Tell the primary server where the backup server is.
@@ -965,8 +963,6 @@ This diagram shows the finite state machine. States in green accept client reque
 
 Note that the servers use PUB-SUB sockets for state exchange. No other socket combination will work here. PUSH and DEALER block if there is no peer ready to receive a message. PAIR does not reconnect if the peer disappears and comes back. ROUTER needs the address of the peer before it can send it a message.
 
-++++ Limitations of Binary Star
-
 These are the main limitations of the Binary Star pattern:
 
 * A server process cannot be part of more than one Binary Star pair.
@@ -1018,7 +1014,6 @@ Which gives us the following short main program for the server:
 
 [[code type="example" title="Binary Star server, Model 2" name="bstarsrv2"]]
 [[/code]]
->>>>>>> Stashed changes
 
 +++ Brokerless Reliability (Freelance Pattern)
 
