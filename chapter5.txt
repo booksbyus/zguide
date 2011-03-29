@@ -31,7 +31,7 @@ How can a subscriber detect this? One way would be to sequence messages (number 
 
 There are two problems with this solution. One, if we have many publishers, how do we sequence messages? The solution is to give each publisher a unique ID and add that to the sequencing. Second, if subscribers use ZMQ_SUBSCRIBE filters, they will get gaps by definition. Our precious sequencing will be for nothing.
 
-Some use cases won't use filters, and sequencing will work for them. But a more general solution is that the publisher timestamps each message. When a subscriber gets a message it checks the time, and if the difference is more than, say, one second, it does the "croak and die" thing. Possibly firing off a squawk to some operator console first.
+Some use-cases won't use filters, and sequencing will work for them. But a more general solution is that the publisher timestamps each message. When a subscriber gets a message it checks the time, and if the difference is more than, say, one second, it does the "croak and die" thing. Possibly firing off a squawk to some operator console first.
 
 The Suicide Snail pattern works especially when subscribers have their own clients and service-level agreements and need to guarantee certain maximum latencies. Aborting a subscriber may not seem like a constructive way to guarantee a maximum latency, but it's the assertion model. Abort today, and the problem will be fixed. Allow late data to flow downstream, and the problem may cause wider damage and take longer to appear on the radar.
 
@@ -47,7 +47,7 @@ Notes about this example:
 
 +++ High-speed Subscribers (Black Box Pattern)
 
-A common use case for pub-sub is distributing large data streams. For example, 'market data' coming from stock exchanges. A typical set-up would have a publisher connected to a stock exchange, taking price quotes, and sending them out to a number of subscribers. If there are a handful of subscribers, we could use TCP. If we have a larger number of subscribers, we'd probably use reliable multicast, i.e. {{pgm}}.
+A common use-case for pub-sub is distributing large data streams. For example, 'market data' coming from stock exchanges. A typical set-up would have a publisher connected to a stock exchange, taking price quotes, and sending them out to a number of subscribers. If there are a handful of subscribers, we could use TCP. If we have a larger number of subscribers, we'd probably use reliable multicast, i.e. {{pgm}}.
 
 Let's imagine our feed has an average of 100,000 100-byte messages a second. That's a typical rate, after filtering market data we don't need to send on to subscribers. Now we decide to record a day's data (maybe 250 GB in 8 hours), and then replay it to a simulation network, i.e. a small group of subscribers. While 100K messages a second is easy for a 0MQ application, we want to replay //much faster//.
 
@@ -281,7 +281,7 @@ In order to allow a late (or recovering) client to catch up with a server it has
           Figure # - State Replication
 [[/code]]
 
-To make this work, we have to solve the timing problem. Getting a state snapshot will take a certain time, possibly fairly long if the snapshot is large. We need to correctly apply updates to the snapshot. But the server won't know when to start sending us updates. One way would be to start susbcribing, get a first update, and then ask for "state for update N". This would require the server storing one snapshot for each update, which isn't practical.
+To make this work, we have to solve the timing problem. Getting a state snapshot will take a certain time, possibly fairly long if the snapshot is large. We need to correctly apply updates to the snapshot. But the server won't know when to start sending us updates. One way would be to start subscribing, get a first update, and then ask for "state for update N". This would require the server storing one snapshot for each update, which isn't practical.
 
 So we will do the synchronization in the client, as follows:
 
@@ -371,7 +371,7 @@ Some notes about this code:
 
 ++++ Clone Server Reliability
 
-Clone models one to three are relatively simple. We're now going to get into unpleasantly complex territory here that has me getting up for another espresso. You should appreciate that making "reliable" messaging is complex enough that you always need to ask, "do we actually need this?" before jumping into it. If you can get away with unreliable, or "good enough" reliability, you can make a huge win in terms of cost and complexity. Sure, you may lose some data now and then. It is often a good trade-off.
+Clone models one to three are relatively simple. We're now going to get into unpleasantly complex territory here that has me getting up for another espresso. You should appreciate that making "reliable" messaging is complex enough that you always need to ask, "do we actually need this?" before jumping into it. If you can get away with unreliable, or "good enough" reliability, you can make a huge win in terms of cost and complexity. Sure, you may lose some data now and then. It is often a good trade-off. Having said, that, and since the espresso is really good, let's jump in!
 
 As you play with model three, you'll stop and restart the server. It might look like it recovers, but of course it's applying updates to an empty state, instead of the proper current state. Any new client joining the network will get just the latest updates, instead of all of them. So let's work out a design for making Clone work despite server failures.
 
@@ -391,7 +391,20 @@ A better solution is to send out updates at full speed but after a primary serve
 
 Any fully reliable solution has to involve hand-shaking between //all three parties//, client, primary, and backup. If there are N servers acting as a group, every single server in the group has to participate in some kind of asynchronous transaction.
 
-What we need to make here is a form of atomic multicast, where we know that the whole group of servers receive a message, or none of them do. We'll look at a general design for this a bit later, for now we'll make it as simple as it can be for the Clone use case.
+What we need to make here is a form of atomic multicast, where we know that the whole group of servers receive a message, or none of them do. We'll look at a general design for this a bit later, for now we'll make it as simple as it can be for the Clone use-case.
+
+We already built a high-availability server in Chapter Four, the Binary Star pattern. Let's take this and expand it to work for Clone. Binary Star gives us two servers that monitor each other, and use client voting to organize into a master and slave.
+
+- master/slave HA pair
+- client updates sent to master
+- client expects heartbeat via PUB socket
+- if client doesn't get heartbeat, it fails over to second server
+- servers use collector OR snapshot to get client vote
+    - extend bstar class to allow multiple frontends
+    - bstar_listen (endpoint, type)
+- when server takes control, it accepts client updates
+- ???
+
 
 So here are the elements of our server failover design:
 
@@ -399,6 +412,7 @@ So here are the elements of our server failover design:
 * Zero, one, or both servers can be running at any time.
 * Both servers know about each other, all clients know about both servers.
 * S1 and S2 are not symmetric; 
+
 * First server to get a client request becomes head, second becomes tail.
 * If head crashes, tail becomes head.
 * If head rejoins, it becomes tail.
@@ -417,6 +431,8 @@ Let's eat the apple in two bites, then. First, server head/tail election. It's a
 And so on. Presumably a correct and simple model can avoid these traps, but that's much easier said than done. Our best tool to force a design to be correct and simple on a is to implement it in pieces. We can then understand each piece really well, test it to destruction, and have higher confidence in how it behaves under stress.
 
 * server failover is Binary Star pattern from Chapter 4.
+
+++++ Clone Subtrees
 
 ++++ Clone Protocol Specification
 

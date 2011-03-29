@@ -7,6 +7,7 @@
 //  If peer doesn't respond in two heartbeats, it is 'dead'
 #define HEARTBEAT 1000          //  In msecs
 
+//  States we can be in at any point in time
 typedef enum {
     STATE_PRIMARY = 1,          //  Primary, waiting for peer to connect
     STATE_BACKUP = 2,           //  Backup, waiting for peer to connect
@@ -14,7 +15,8 @@ typedef enum {
     STATE_PASSIVE = 4           //  Passive - not accepting connections
 } state_t;
 
-typedef enum {                  //  Must overlap with state
+//  Events, which start with the states our peer can be in
+typedef enum {
     PEER_PRIMARY = 1,           //  HA peer is pending primary
     PEER_BACKUP = 2,            //  HA peer is pending backup
     PEER_ACTIVE = 3,            //  HA peer is active
@@ -22,17 +24,19 @@ typedef enum {                  //  Must overlap with state
     CLIENT_REQUEST = 5          //  Client makes request
 } event_t;
 
+//  Our finite state machine
 typedef struct {
     state_t state;              //  Current state
     event_t event;              //  Current event
-} state_machine_t;
+    int64_t peer_expiry;        //  When peer is considered 'dead'
+} bstar_t;
 
 
 //  Execute finite state machine (apply event to state)
 //  Returns TRUE if there was an exception
 
 static Bool
-s_state_machine (state_machine_t *fsm, int64_t peer_expiry) 
+s_state_machine (bstar_t *fsm) 
 {
     Bool exception = FALSE;
     //  Primary server is waiting for peer to connect
@@ -57,9 +61,8 @@ s_state_machine (state_machine_t *fsm, int64_t peer_expiry)
             fsm->state = STATE_PASSIVE;
         }
         else
-        if (fsm->event == CLIENT_REQUEST) {
+        if (fsm->event == CLIENT_REQUEST)
             exception = TRUE;
-        }
     }
     else
     //  Server is active
@@ -96,16 +99,15 @@ s_state_machine (state_machine_t *fsm, int64_t peer_expiry)
         if (fsm->event == CLIENT_REQUEST) {
             //  Peer becomes master if timeout has passed
             //  It's the client request that triggers the failover
-            assert (peer_expiry > 0);
-            if (s_clock () > peer_expiry) {
+            assert (fsm->peer_expiry > 0);
+            if (s_clock () > fsm->peer_expiry) {
                 //  If peer is dead, switch to the active state
                 printf ("I: failover successful, ready as master\n");
                 fsm->state = STATE_ACTIVE;
             }
-            else {
+            else
                 //  If peer is alive, reject connections
                 exception = TRUE;
-            }
         }
     }
     return exception;
@@ -122,7 +124,7 @@ int main (int argc, char *argv [])
     void *statesub = zmq_socket (context, ZMQ_SUB);
     zmq_setsockopt (statesub, ZMQ_SUBSCRIBE, "", 0);
     void *frontend = zmq_socket (context, ZMQ_ROUTER);
-    state_machine_t fsm = { 0 };
+    bstar_t fsm = { 0 };
     s_catch_signals ();
 
     if (argc == 2 && streq (argv [1], "-p")) {
@@ -144,16 +146,15 @@ int main (int argc, char *argv [])
         printf ("Usage: bstarsrv { -p | -b }\n");
         exit (0);
     }
-    //  Peer considered dead if no ping arrives by this time
-    int64_t peer_expiry = 0;
-    int64_t ping_at = s_clock () + HEARTBEAT;
+    //  Set timer for next outgoing state message
+    int64_t send_state_at = s_clock () + HEARTBEAT;
         
     while (!s_interrupted) {
         zmq_pollitem_t items [] = { 
             { frontend, 0, ZMQ_POLLIN, 0 }, 
             { statesub, 0, ZMQ_POLLIN, 0 }
         };
-        int time_left = (int) ((ping_at - s_clock ()));
+        int time_left = (int) ((send_state_at - s_clock ()));
         if (time_left < 0)
             time_left = 0;
         int rc = zmq_poll (items, 2, time_left * 1000);
@@ -164,30 +165,27 @@ int main (int argc, char *argv [])
             //  Have a client request
             zmsg_t *msg = zmsg_recv (frontend);
             fsm.event = CLIENT_REQUEST;
-            if (s_state_machine (&fsm, peer_expiry) == FALSE) {
+            if (s_state_machine (&fsm) == FALSE)
                 //  Answer client by echoing request back
                 zmsg_send (&msg, frontend);
-            }
-            else {
+            else
                 zmsg_destroy (&msg);
-            }
         }
         if (items [1].revents & ZMQ_POLLIN) {
             //  Have state from our peer, execute as event
             char *message = s_recv (statesub);
             fsm.event = atoi (message);
             free (message);
-            if (s_state_machine (&fsm, peer_expiry)) {
+            if (s_state_machine (&fsm))
                 break;          //  Error, so exit
-            }
-            peer_expiry = s_clock () + 2 * HEARTBEAT;
+            fsm.peer_expiry = s_clock () + 2 * HEARTBEAT;
         }
         //  If we timed-out, send state to peer
-        if (s_clock () >= ping_at) {
+        if (s_clock () >= send_state_at) {
             char message [2];
             sprintf (message, "%d", fsm.state);
             s_send (statepub, message);
-            ping_at = s_clock () + HEARTBEAT;
+            send_state_at = s_clock () + HEARTBEAT;
         }
     }
     if (s_interrupted)
