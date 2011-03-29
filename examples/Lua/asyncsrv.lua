@@ -4,6 +4,9 @@
 --  While this example runs in a single process, that is just to make
 --  it easier to start and stop the example. Each task has its own
 --  context and conceptually acts as a separate process.
+--
+--  Author: Robert G. Jakabosky <bobby@sharedrealm.com>
+--
 
 require"zmq"
 require"zmq.threads"

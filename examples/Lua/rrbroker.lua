@@ -1,6 +1,8 @@
 --
 --  Simple request-reply broker
 --
+--  Author: Robert G. Jakabosky <bobby@sharedrealm.com>
+--
 require"zmq"
 require"zmq.poller"
 require"zhelpers"

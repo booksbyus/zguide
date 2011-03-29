@@ -1,9 +1,7 @@
 --
 --  Multithreaded Hello World server
 --
---  Changes for 2.1:
---  - added version assertion
---  - close sockets in each child thread
+--  Author: Robert G. Jakabosky <bobby@sharedrealm.com>
 --
 require"zmq"
 require"zmq.threads"

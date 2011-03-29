@@ -1,9 +1,7 @@
 --
 --  Multithreaded relay
 --
---  Changes for 2.1:
---  - close sockets in each child thread
---  - added version assert
+--  Author: Robert G. Jakabosky <bobby@sharedrealm.com>
 --
 require"zmq"
 require"zhelpers"
