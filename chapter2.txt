@@ -1250,20 +1250,20 @@ Behind the scenes, and invisibly to you, when one socket connects to another, th
 [[code type="textdiagram"]]
         +-----------+
         |           |
-        | Receiver  |
-        |           |
-        +-----------+
-        |  Socket   |
-        \-----+-----/
-              |  "Not telling you my name!"
-              |
-              |
-              v  "Fine, I'll call you Luv"
-        /-----------\
-        |  Socket   |
-        +-----------+
-        |           |
         |  Sender   |
+        |           |
+        +-----------+
+        |  Socket   |
+        \-----------/
+              ^  "Fine, I'll call you Luv"
+              |
+              |
+              |  "Not telling you my name!"
+        /-----+-----\
+        |  Socket   |
+        +-----------+
+        |           |
+        | Receiver  |
         |           |
         +-----------+
 
@@ -1276,25 +1276,25 @@ But a socket can also tell the other its identity, and then the next time the tw
 [[code type="textdiagram"]]
         +-----------+
         |           |
-        | Receiver  |
-        |           |
-        +-----------+
-        |  Socket   |
-        \-----+-----/
-              |  "My name's Lucy"
-              |
-              |
-              v  "Lucy! Nice to see you again..."
-        /-----------\
-        |  Socket   |
-        +-----------+
-        |           |
         |  Sender   |
         |           |
         +-----------+
+        |  Socket   |
+        \-----------/
+              ^  "Lucy! Nice to see you again..."
+              |
+              |
+              |  "My name's Lucy"
+        /-----+-----\
+        |  Socket   |
+        +-----------+
+        |           |
+        | Receiver  |
+        |           |
+        +-----------+
 
 
-       Figure # - Durable socket aka. Can't Escape
+        Figure # - Durable socket
 [[/code]]
 
 Here's how you set the identity of a socket, to create a durable socket:
