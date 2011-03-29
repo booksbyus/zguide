@@ -259,10 +259,10 @@ sub process_one_language {
         }
         if (signature_changed ($filename)) {
             print "Processing $name (in $language)...\n";
-            system ("echo \"[[html]]\">examples/$language/$name.wd");
-            system ("pygmentize -f html -O full $filename >>examples/$language/$name.wd");
+            system ("pygmentize -f bb $filename > tempfile.bb");
             exit (1) if $?;
-            system ("echo \"[[/html]]\">>examples/$language/$name.wd");
+            system ("bin/bb2wd tempfile.bb >examples/$language/$name.wd");
+            system ("rm tempfile.bb");
             print UPLOAD "cd examples/$language\n";
             print UPLOAD "    wdput zguide $extension{$language} $name \"$title in $language\"\n";
             print UPLOAD "    rm $name.wd\n";
