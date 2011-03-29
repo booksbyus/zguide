@@ -2,8 +2,8 @@
 //  Clone server model 2
 //
 
-#include "kvmsg.h"
-#include "zmsg.h"
+//  Lets us 'build clonesrv2' and 'build all'
+#include "kvmsg.c"
 
 //  Routing information for a KV snapshot
 typedef struct {

@@ -1,7 +1,5 @@
 /*  =====================================================================
-    kvmsg.h
-
-    Key-value message class for example applications
+    kvmsg - key-value message class for example applications
 
     ---------------------------------------------------------------------
     Copyright (c) 1991-2011 iMatix Corporation <www.imatix.com>
@@ -25,60 +23,13 @@
     =====================================================================
 */
 
-#ifndef __KVMSG_H_INCLUDED__
-#define __KVMSG_H_INCLUDED__
-
-#include "zhelpers.h"
-#include "zhash.h"
-
-//  Opaque class structure
-typedef struct _kvmsg kvmsg_t;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-kvmsg_t *
-    kvmsg_new (int64_t sequence);
-void
-    kvmsg_destroy (kvmsg_t **self_p);
-int64_t
-    kvmsg_sequence (kvmsg_t *self);
-char *
-    kvmsg_key (kvmsg_t *self);
-byte *
-    kvmsg_body (kvmsg_t *self);
-size_t
-    kvmsg_size (kvmsg_t *self);
-void
-    kvmsg_set_sequence (kvmsg_t *self, int64_t sequence);
-void
-    kvmsg_set_key (kvmsg_t *self, char *key);
-void
-    kvmsg_set_body (kvmsg_t *self, byte *body, size_t size);
-void
-    kvmsg_fmt_key (kvmsg_t *self, char *format, ...);
-void
-    kvmsg_fmt_body (kvmsg_t *self, char *format, ...);
-kvmsg_t *
-    kvmsg_recv (void *socket);
-void
-    kvmsg_send (kvmsg_t *self, void *socket);
-void
-    kvmsg_store (kvmsg_t **self_p, zhash_t *hash);
-void
-    kvmsg_dump (kvmsg_t *self);
-int
-    kvmsg_test (int verbose);
-
-#ifdef __cplusplus
-}
-#endif
-
+#include "kvmsg.h"
 
 //  Keys are short strings
 #define KVMSG_KEY_MAX   255
 #define KVMSG_FRAMES    3
+
+//  Structure of our class
 
 //  Message is formatted on wire as three frames:
 //  frame 0: key (0MQ string)
@@ -464,5 +415,3 @@ kvmsg_test (int verbose)
     printf ("OK\n");
     return 0;
 }
-
-#endif      //  Included

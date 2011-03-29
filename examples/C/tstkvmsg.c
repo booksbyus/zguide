@@ -1,7 +1,7 @@
 //
 //  Test kvmsg class
 //
-#include "kvmsg.h"
+#include "kvmsg.c"
 
 int main (int argc, char *argv [])
 {
