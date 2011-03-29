@@ -19,8 +19,6 @@ s/\-(\-+)/@@\-$1@@/mg;
 s/ / /mg;
 s/\t/    /mg;
 
-#   Replace [color] on one line
-#s/\[color=#(......)\]([^\[]*)\s*\[\/color\]/##$1|##/mg;
 #   Replace [color] on multiple lines
 s/\[color=#(......)\]/\[\[span style="color:#$1"\]\]/mg;
 s/\[\/color\]/\[\[\/span\]\]/mg;

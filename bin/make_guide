@@ -47,6 +47,6 @@ wdput zguide lua chapter5 "Chapter Five"
 
 rm *.wd wdtemp.txt upload.sh
 
-git add images/fig*.png
+git add images/fig*.png .signatures
 git commit -m "Published Guide"
 git push origin master
