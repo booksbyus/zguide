@@ -217,11 +217,9 @@ die "Can't create scoreboard.wd: $!"
     unless open (SCOREBOARD, ">scoreboard.wd");
 print (SCOREBOARD "||||||~ Translations ($examples in total)||\n");
 foreach (@languages) {
-    printf (SCOREBOARD "|| %s || %3d || %3d%% ||\n", $_, $translations {$_}, ($translations {$_} * 100) / $examples);
+    printf (SCOREBOARD "|| [/$_:_start %s] || %3d || %3d%% ||\n", $_, $translations {$_}, ($translations {$_} * 100) / $examples);
 }
 close (SCOREBOARD);
-print UPLOAD "wdput zguide main scoreboard \"Language scoreboard\"\n";
-
 close (OUTPUT);
 close (UPLOAD);
 

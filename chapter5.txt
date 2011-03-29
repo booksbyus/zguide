@@ -412,7 +412,7 @@ Failover happens as follows:
 
 * The backup server applies its pending list to its own hash table, and then starts to process state snapshot requests.
 
-When the primary server comes back online, it will:
+When the primary server comes back on-line, it will:
 
 * Start up as slave server, and connect to the backup server as a Clone client.
 
@@ -453,10 +453,7 @@ So here is our high-availability server pair, using the Binary Star pattern:
                Figure # - High-availability Clone Server Pair
 [[/code]]
 
-Since we need 
-
 .end
-
 
 ++++ Clone Subtrees
 

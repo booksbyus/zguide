@@ -48,6 +48,9 @@ s/\@\@\[\[\@\@\/span\@\@\]\](\]+)\@\@/\[\[\/span\]\]\@\@$1\@\@/mg;
 s/\@\@\@\@//mg;
 
 $/ = "\n";
+print "[[collapsible show=\"All\" hide=\"All\"]]\n";
+print "[[include c:_start]]\n";
+print "[[/collapsible]]\n";
 print "[[module css]]\n";
 print ".foldedtoc { display: none; }\n";
 print "[[/module]]\n";
