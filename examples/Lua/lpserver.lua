@@ -27,7 +27,7 @@ while true do
         break
     elseif (cycles > 3 and randof (3) == 0) then
         printf("I: simulating CPU overload\n")
-        s_sleep(5000)
+        s_sleep(2000)
     end
     printf("I: normal request (%s)\n", request)
     s_sleep(1000)              --  Do some heavy work
