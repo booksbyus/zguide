@@ -31,7 +31,7 @@ How can a subscriber detect this? One way would be to sequence messages (number 
 
 There are two problems with this solution. One, if we have many publishers, how do we sequence messages? The solution is to give each publisher a unique ID and add that to the sequencing. Second, if subscribers use ZMQ_SUBSCRIBE filters, they will get gaps by definition. Our precious sequencing will be for nothing.
 
-Some use cases won't use filters, and sequencing will work for them. But a more general solution is that the publisher timestamps each message. When a subscriber gets a message it checks the time, and if the difference is more than, say, one second, it does the "croak and die" thing. Possibly firing off a squawk to some operator console first.
+Some use-cases won't use filters, and sequencing will work for them. But a more general solution is that the publisher timestamps each message. When a subscriber gets a message it checks the time, and if the difference is more than, say, one second, it does the "croak and die" thing. Possibly firing off a squawk to some operator console first.
 
 The Suicide Snail pattern works especially when subscribers have their own clients and service-level agreements and need to guarantee certain maximum latencies. Aborting a subscriber may not seem like a constructive way to guarantee a maximum latency, but it's the assertion model. Abort today, and the problem will be fixed. Allow late data to flow downstream, and the problem may cause wider damage and take longer to appear on the radar.
 
@@ -47,7 +47,7 @@ Notes about this example:
 
 +++ High-speed Subscribers (Black Box Pattern)
 
-A common use case for pub-sub is distributing large data streams. For example, 'market data' coming from stock exchanges. A typical set-up would have a publisher connected to a stock exchange, taking price quotes, and sending them out to a number of subscribers. If there are a handful of subscribers, we could use TCP. If we have a larger number of subscribers, we'd probably use reliable multicast, i.e. {{pgm}}.
+A common use-case for pub-sub is distributing large data streams. For example, 'market data' coming from stock exchanges. A typical set-up would have a publisher connected to a stock exchange, taking price quotes, and sending them out to a number of subscribers. If there are a handful of subscribers, we could use TCP. If we have a larger number of subscribers, we'd probably use reliable multicast, i.e. {{pgm}}.
 
 Let's imagine our feed has an average of 100,000 100-byte messages a second. That's a typical rate, after filtering market data we don't need to send on to subscribers. Now we decide to record a day's data (maybe 250 GB in 8 hours), and then replay it to a simulation network, i.e. a small group of subscribers. While 100K messages a second is easy for a 0MQ application, we want to replay //much faster//.
 
@@ -259,34 +259,34 @@ In order to allow a late (or recovering) client to catch up with a server it has
 
 [[code type="textdiagram"]]
 
-                 +-------------+
-                 |             |
-                 |   Server    |
-                 |             |
-                 +------+------+
-                 |  PUB | XREP |
-                 \---+--+------/
-                     |     ^
-                     |     |    state request
-                  updates  +----------------+
-                     |                      |
-     +---------------+---------------+      |
-     |               |               |      |
-     |               |               |      |
-     v               v               v      |
-  /------+-----\  /------+-----\  /------+--+--\
-  | SUB  |     |  | SUB  |     |  | SUB  | REQ |
-  +------+-----+  +------+-----+  +------+-----+
-  |            |  |            |  |            |
-  |   Client   |  |   Client   |  |   Client   |
-  |            |  |            |  |            |
-  +------------+  +------------+  +------------+
+                 +-----------------+
+                 |                 |
+                 |     Server      |
+                 |                 |
+                 +--------+--------+
+                 |   PUB  | ROUTER |
+                 \----+---+--------/
+                      |       ^
+                      |       | state request
+                   updates    +---------------\
+                      |                       |
+     /----------------+----------------\      |
+     |                |                |      |       
+     |                |                |      |       
+     v                v                v      |
+  /------+-----\   /------+-----\   /------+--+--\
+  | SUB  | REQ |   | SUB  | REQ |   | SUB  | REQ |
+  +------+-----+   +------+-----+   +------+-----+
+  |            |   |            |   |            |
+  |   Client   |   |   Client   |   |   Client   |
+  |            |   |            |   |            |
+  +------------+   +------------+   +------------+
 
 
           Figure # - State Replication
 [[/code]]
 
-To make this work, we have to solve the timing problem. Getting a state snapshot will take a certain time, possibly fairly long if the snapshot is large. We need to correctly apply updates to the snapshot. But the server won't know when to start sending us updates. One way would be to start susbcribing, get a first update, and then ask for "state for update N". This would require the server storing one snapshot for each update, which isn't practical.
+To make this work, we have to solve the timing problem. Getting a state snapshot will take a certain time, possibly fairly long if the snapshot is large. We need to correctly apply updates to the snapshot. But the server won't know when to start sending us updates. One way would be to start subscribing, get a first update, and then ask for "state for update N". This would require the server storing one snapshot for each update, which isn't practical.
 
 So we will do the synchronization in the client, as follows:
 
@@ -326,31 +326,33 @@ Updates from clients go via a PUSH-PULL socket flow from client to server:
 
 [[code type="textdiagram"]]
 
-                 +-------------+
-                 |             |
-                 |   Server    |
-                 |             |
-                 +------+------+
-                 |  PUB | PULL |
-                 \---+--+------/
-                     |     ^
-                     |     |    state update
-                  updates  +----------------+
-                     |                      |
-     +---------------+---------------+      |
-     |               |               |      |
-     |               |               |      |
-     v               v               v      |
-  /------+-----\  /------+-----\  /------+--+--\
-  | SUB  |     |  | SUB  |     |  | SUB  | PUSH|
-  +------+-----+  +------+-----+  +------+-----+
-  |            |  |            |  |            |
-  |   Client   |  |   Client   |  |   Client   |
-  |            |  |            |  |            |
-  +------------+  +------------+  +------------+
+                 +--------------------------+
+                 |                          |
+                 |          Server          |
+                 |                          |
+                 +--------+--------+--------+
+                 |   PUB  | ROUTER |  PULL  |
+                 \----+---+--------+--------/
+                      |       ^        ^
+                      |       |        | state update
+                      |       |        \---------\ 
+                      |       | state request    | 
+                   updates    \------------\     |
+                      |                    |     |
+          /-----------+-------------\      |     |
+          |                         |      |     | 
+          |      ^     ^            |      |     |
+          v      |     |            v      |     |
+       /------+--+--+--+---\     /------+--+--+--+---\
+       | SUB  | REQ | PUSH |     | SUB  | REQ | PUSH |
+       +------+-----+------+     +------+-----+------+
+       |                   |     |                   |
+       |       Client      |     |       Client      |
+       |                   |     |                   |
+       +-------------------+     +-------------------+
 
 
-         Figure # - Republishing Updates
+              Figure # - Republishing Updates
 [[/code]]
 
 Why don't we allow clients to publish updates directly to other clients? While this would reduce latency, it makes it impossible to sequence messages. Updates **must** pass through the server to make sense to other clients. There's a more subtle second reason. In many applications it's important that updates have a single order, across many clients. Forcing all updates through the server ensures that they have the same order when they finally get to clients.
@@ -372,11 +374,9 @@ Some notes about this code:
 * The server has collapsed to one thread, which collects updates from clients and redistributes them. It manages a PULL socket for incoming updates, a ROUTER socket for state requests, and a PUB socket for outgoing updates.
 * The client uses a simple tickless timer to send a random update to the server once a second. In reality, updates would be driven by application code.
 
-.end
-
 ++++ Clone Server Reliability
 
-Clone models one to three are relatively simple. We're now going to get into unpleasantly complex territory here that has me getting up for another espresso. You should appreciate that making "reliable" messaging is complex enough that you always need to ask, "do we actually need this?" before jumping into it. If you can get away with unreliable, or "good enough" reliability, you can make a huge win in terms of cost and complexity. Sure, you may lose some data now and then. It is often a good trade-off.
+Clone models one to three are relatively simple. We're now going to get into unpleasantly complex territory here that has me getting up for another espresso. You should appreciate that making "reliable" messaging is complex enough that you always need to ask, "do we actually need this?" before jumping into it. If you can get away with unreliable, or "good enough" reliability, you can make a huge win in terms of cost and complexity. Sure, you may lose some data now and then. It is often a good trade-off. Having said, that, and since the espresso is really good, let's jump in!
 
 As you play with model three, you'll stop and restart the server. It might look like it recovers, but of course it's applying updates to an empty state, instead of the proper current state. Any new client joining the network will get just the latest updates, instead of all of them. So let's work out a design for making Clone work despite server failures.
 
@@ -386,42 +386,79 @@ Let's list the failures we want to be able to handle:
 * Clone server machine dies and is off-line for a significant time. Clients have to switch to an alternate server somewhere.
 * Clone server process or machine gets disconnected from the network, e.g. a switch dies. It may come back at some point, but in the meantime clients need an alternate server.
 
-To detect server failure in the client, we need some type of heartbeating. It's not enough to listen for silence, since the server will be silent if there are no updates from other clients. We can use the sub-pub flow for heartbeating. We also need to detect if the server is unresponsive when we start up and make a state request, so we can switch over to an alternate server.
+Our first step is to add a second server. We can use the Binary Star pattern from Chapter four to organize these into primary and backup.
 
-Now, how to create an alternate server? At its simplest, an alternate server is a proxy that acts like a client to a main server, and a server to clients. This would work, except that when the primary server dies, we'll lose any updates that it had received from clients, but not yet published back to them.
+We need to ensure that updates are not lost if the primary server crashes. The simplest technique is to send them to both servers.
 
-The obvious solution is to synchronously transact updates between the two servers, so that primary will only publish updates when backup acknowledges "OK". Apart from increasing the latency of every update (a TCP round-trip costs several hundred microseconds), this won't in fact give reliability. The backup still doesn't know what updates clients //actually// got, when the primary crashed.
+The backup server can then act as a client, and keep its state synchronized by receiving updates as all clients do. It'll also get new updates from clients. It can't yet store these in its hash table, but it can hold onto them for a while.
 
-A better solution is to send out updates at full speed but after a primary server crash, have clients detect what updates were lost, and resend them. Only clients have both the knowledge of what updates they sent out, and what updates they received back. It's still not a reliable design, however, because a client can get an update before the backup server gets it. And in that case, the client will think, "this update is safe", when in fact it's not.
+So, Model Four introduces these changes over Model Three:
 
-Any fully reliable solution has to involve hand-shaking between //all three parties//, client, primary, and backup. If there are N servers acting as a group, every single server in the group has to participate in some kind of asynchronous transaction.
+* We use a pub-sub flow instead of a push-pull flow for client updates (to the servers). The reasons: push sockets will block if there is no recipient, and they round-robin, so we need to open two of them. We'll bind the servers' SUB sockets and connect the clients' PUB sockets to them. This takes care of fanning out from one client to two servers.
 
-What we need to make here is a form of atomic multicast, where we know that the whole group of servers receive a message, or none of them do. We'll look at a general design for this a bit later, for now we'll make it as simple as it can be for the Clone use case.
+* We add heartbeats to server updates (to clients), so that a client can detect when the primary server has died. It can then switch over to the backup server.
 
-So here are the elements of our server failover design:
+* We connect the two servers using the Binary Star class. Binary Star relies on the clients to 'vote' by making an explicit request to the server they consider "master". We can't use client updates for voting, since both servers accept these at all times.
 
-* Exactly two known servers, S1 and S2.
-* Zero, one, or both servers can be running at any time.
-* Both servers know about each other, all clients know about both servers.
-* S1 and S2 are not symmetric; 
-* First server to get a client request becomes head, second becomes tail.
-* If head crashes, tail becomes head.
-* If head rejoins, it becomes tail.
-* Clients request status snapshots from tail.
-* Clients push updates to head, and listen for updates from tail.
+* We make all update messages uniquely identifiable by adding a UUID field. The client generates this, and the server propagates it back on re-published updates.
 
-This is half of the design. The other half is where clients track which of their updates have hit both head and tail, and use that information to resend updates that appear to have gotten lost.
+* The backup server keeps a "pending list" of updates that it has received from clients, but not yet from the primary server. The list is ordered from oldest to newest, so that it's fast to remove updates off the head.
 
-Let's eat the apple in two bites, then. First, server head/tail election. It's a classic primary/failover negotiation problem, and enormously difficult to get right. There are so many traps it's like /b/ on a bad weekend. Some of the ways failover can go wrong:
+Failover happens as follows:
 
-* //Split-brain syndrome// caused by network failure between the servers, so that both servers think they are in charge. This results in some of the clients thinking one server is head, other clients thinking the other server is head, causing loss of data and general misery.
-* //Phantom failover syndrome//, caused by lost heartbeats or unexpected congestion, causing failover without reason. This is relatively OK if failover actually works, but often failover is badly tested, and clients simply don't fail over properly.
-* //Bargepole syndrome//, where failover is so complex to understand and configure that system administrators simply refuse to use it, meaning it's not properly tested, meaning it doesn't work properly.
-* //Thrashing//, where the two servers get into utter confusion, flipping between roles rapidly, and bringing the application to a halt.
+* The client detects that primary server is no longer sending heartbeats, so has died. The client connects to backup server and requests a new state snapshot.
 
-And so on. Presumably a correct and simple model can avoid these traps, but that's much easier said than done. Our best tool to force a design to be correct and simple on a is to implement it in pieces. We can then understand each piece really well, test it to destruction, and have higher confidence in how it behaves under stress.
+* The backup server starts to receive snapshot requests from clients, and detects that primary server has gone, so takes over as primary.
 
-* server failover is Binary Star pattern from Chapter 4.
+* The backup server applies its pending list to its own hash table, and then starts to process state snapshot requests.
+
+When the primary server comes back online, it will:
+
+* Start up as slave server, and connect to the backup server as a Clone client.
+
+* Start to receive updates from clients, via its SUB socket.
+
+We make some assumptions:
+
+* That at least one server will keep running. If both servers crash, we lose all server state and there's no way to recover it.
+
+* That multiple clients do not update the same hash keys, at the same time. Client updates will arrive at the two servers in a different order. So, the backup server may apply updates from its pending list in a different order than the primary server would or did. Updates from one client will always arrive in the same order on both servers, so that is safe.
+
+So here is our high-availability server pair, using the Binary Star pattern:
+
+[[code type="textdiagram"]]
+
+        +--------------------+                 +--------------------+
+        |                    |      Binary     |                    |
+        |       Primary      |<--------------->|       Backup       |
+        |                    |       Star      |                    |
+        +-----+--------+-----+                 +-----+--------+-----+
+        | PUB | ROUTER | SUB |                 | PUB | ROUTER | SUB |
+        \--+--+--------+-----/                 \-----+--------+-----/
+           |       ^      ^                                      ^
+           |       |      |                                      |
+           |       |      |                                      |
+           |       |      +--------------------------------------/
+           |       |      |
+           v       |      |
+        /-----+----+---+--+--\
+        | SUB |  REQ   | PUB |
+        +-----+--------+-----+
+        |                    |
+        |       Client       |
+        |                    |
+        +--------------------+
+
+
+               Figure # - High-availability Clone Server Pair
+[[/code]]
+
+Since we need 
+
+.end
+
+
+++++ Clone Subtrees
 
 ++++ Clone Protocol Specification
 

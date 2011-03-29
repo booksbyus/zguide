@@ -48,6 +48,9 @@ s/\@\@\[\[\@\@\/span\@\@\]\](\]+)\@\@/\[\[\/span\]\]\@\@$1\@\@/mg;
 s/\@\@\@\@//mg;
 
 $/ = "\n";
+print "[[module css]]\n";
+print ".foldedtoc { display: none; }\n";
+print "[[/module]]\n";
 print "[[div class=\"code\"]]\n";
 print $_;
 print "[[/div]]\n";
