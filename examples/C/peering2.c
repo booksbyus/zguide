@@ -6,13 +6,6 @@
 //  it easier to start and stop the example. Each thread has its own
 //  context and conceptually acts as a separate process.
 //
-//  Changes for 2.1:
-//  - added version assertion
-//  - use separate contexts for each thread
-//  - use ipc:// instead of inproc://
-//  - close sockets in each child thread
-//  - call zmq_term in each thread before ending
-
 #include "zmsg.h"
 
 #define NBR_CLIENTS 10

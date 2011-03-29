@@ -5,13 +5,6 @@
 //  it easier to start and stop the example. Each thread has its own
 //  context and conceptually acts as a separate process.
 //
-//  Changes for 2.1:
-//  - added version assertion
-//  - use separate contexts for each thread
-//  - close sockets in each child thread
-//  - call zmq_term in each thread before ending
-//  - removed sleep(1) at end of main thread
-//
 #include "zhelpers.h"
 
 //  We have two workers, here we copy the code, normally these would

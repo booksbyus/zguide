@@ -1,11 +1,6 @@
 //
 //  Synchronized publisher
 //
-//  Changes for 2.1:
-//  - added version assertion
-//  - close syncservice socket in main thread
-//  - removed sleep(1) at end of main thread
-//
 #include "zhelpers.h"
 
 //  We wait for 10 subscribers
