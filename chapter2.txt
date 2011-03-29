@@ -511,7 +511,7 @@ Realistic applications need to shutdown cleanly when interrupted with Ctrl-C or 
 
 Here is how we handle a signal in various languages:
 
-[[code type="example" title="Handling Ctrl-C Cleanly" name="interrupt"]]
+[[code type="example" title="Handling Ctrl-C cleanly" name="interrupt"]]
 [[/code]]
 
 Note that the zhelpers.h provides s_catch_signals() and s_interrupted. To use these correctly:
@@ -954,7 +954,7 @@ You can of course do all this using a queue device and external worker processes
 
 The MT version of the Hello World service basically collapses the queue device and workers into a single process:
 
-[[code type="example" title="Multithreaded Service" name="mtserver"]]
+[[code type="example" title="Multithreaded service" name="mtserver"]]
 [[/code]]
 
 All the code should be recognizable to you by now. How it works:

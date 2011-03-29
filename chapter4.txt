@@ -444,7 +444,7 @@ To make the C examples easier to write and read, I've taken the hash and list co
 
 And here is the broker:
 
-[[code type="example" title="Majordomo Worker API" name="mdbroker"]]
+[[code type="example" title="Majordomo broker" name="mdbroker"]]
 [[/code]]
 
 This is by far the most complex example we've seen. It's almost 500 lines of code. To write this, and make it fully robust took two days. However this is still a short piece of code for a full service-oriented broker.
@@ -895,7 +895,7 @@ A suitably paranoid network configuration would use two private cluster intercon
 
 ++++ Binary Star Implementation
 
-Without further ado, here is the Binary Star server:
+Without further ado, here is an implementation of the Binary Star server:
 
 [[code type="example" title="Binary Star server" name="bstarsrv"]]
 [[/code]]
@@ -967,46 +967,34 @@ These are the main limitations of the Binary Star pattern:
 Binary Star is useful and generic enough to package up as a reusable class. The class handles state exchange, the finite state machine, and the poll loop. Here is the interface in C:
 
 [[code language="C"]]
-//  Create a new Binary Star instance
+//  Create a new Binary Star instance, bind PUB and connect SUB
 bstar_t *
-    bstar_new (int frontend_type);
+    bstar_new (int primary, char *bind_to, char *connect_to);
 
 //  Destroy a Binary Star instance
 void
     bstar_destroy (bstar_t **self_p);
 
-//  Establish peering, bind PUB and connect SUB
+//  Listen on this endpoint for client votes
 void
-    bstar_peer (bstar_t *self, char *bind_to, char *connect_to);
+    bstar_listen (bstar_t *self, char *endpoint, int type);
 
-//  Initialize Binary Star, bind frontend and set initial state
-void
-    bstar_init (bstar_t *self, char *bind_to, Bool primary);
-    
-//  Return frontend socket
+//  Wait for valid activity on client socket, return socket
 void *
-    bstar_frontend (bstar_t *self);
+    bstar_wait (bstar_t *self);
     
-//  Receive message off frontend socket
-zmsg_t *
-    bstar_recv (bstar_t *self);
-    
-//  Send message to frontend socket
-void
-    bstar_send (bstar_t *self, zmsg_t **msg_p);
-    
-//  Execute state machine, return -1 on errors
-int
-    bstar_execute (bstar_t *self);
+[[/code]]
+
+And here is the class implementation:
+
+[[code type="example" title="Binary Star core class" name="bstar"]]
 [[/code]]
 
 Which gives us the following short main program for the server:
 
-[[code type="example" title="Binary Star server, Model 2" name="bstarsrv2"]]
+[[code type="example" title="Binary Star server, using core class" name="bstarsrv2"]]
 [[/code]]
 
-=======
->>>>>>> master
 +++ Brokerless Reliability (Freelance Pattern)
 
 It might seem ironic to focus so much on broker-based reliability, when we often explain 0MQ as "brokerless messaging". However in messaging, as in real life, the middleman is both a burden and a benefit. In practice, most messaging architectures benefit from a mix of distributed and brokered messaging. You get the best results when you can decide freely what tradeoffs you want to make. This is why I can drive 10km to a wholesaler to buy five cases of wine for a party, but I can also walk 10 minutes to a corner store to buy one bottle for a dinner. Our highly context-sensitive relative valuations of time, energy, and cost are essential to the real world economy. And they are essential to an optimal message based architecture.
