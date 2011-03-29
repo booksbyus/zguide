@@ -65,6 +65,6 @@ upload lua chapter5 "Chapter Five"
 
 rm *.wd wdtemp.txt upload.sh
 
-git add images/fig*.png .signatures .cache_*
+git add images/ .signatures .cache_* bin/
 git commit -m "Published Guide"
 git push origin master
