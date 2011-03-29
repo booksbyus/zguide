@@ -1,13 +1,72 @@
-No-one has translated the spqueue example into Lua yet.  Be the first to create
-spqueue in Lua and get one free Internet!  If you're the author of the Lua
-binding, this is a great way to get people to use 0MQ in Lua.
+--
+--  Simple Pirate queue
+--  This is identical to the LRU pattern, with no reliability mechanisms
+--  at all. It depends on the client for recovery. Runs forever.
+--
+--  Author: Robert G. Jakabosky <bobby@sharedrealm.com>
+--
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+require"zmq"
+require"zmq.poller"
+require"zhelpers"
+require"zmsg"
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+local tremove = table.remove
 
-Subscribe to the email list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+local MAX_WORKERS  = 100
+
+s_version_assert (2, 1)
+
+--  Prepare our context and sockets
+local context = zmq.init(1)
+local frontend = context:socket(zmq.XREP)
+local backend  = context:socket(zmq.XREP)
+frontend:bind("tcp://*:5555");    --  For clients
+backend:bind("tcp://*:5556");    --  For workers
+
+--  Queue of available workers
+local worker_queue = {}
+local is_accepting = false
+
+local poller = zmq.poller(2)
+
+local function frontend_cb()
+    --  Now get next client request, route to next worker
+    local msg = zmsg.recv (frontend)
+
+    -- Dequeue a worker from the queue.
+    local worker = tremove(worker_queue, 1)
+
+    msg:wrap(worker, "")
+    msg:send(backend)
+
+    if (#worker_queue == 0) then
+        -- stop accepting work from clients, when no workers are available.
+        poller:remove(frontend)
+        is_accepting = false
+    end
+end
+
+--  Handle worker activity on backend
+poller:add(backend, zmq.POLLIN, function()
+    local msg = zmsg.recv(backend)
+    --  Use worker address for LRU routing
+    worker_queue[#worker_queue + 1] = msg:unwrap()
+
+    -- start accepting client requests, if we are not already doing so.
+    if not is_accepting then
+        is_accepting = true
+        poller:add(frontend, zmq.POLLIN, frontend_cb)
+    end
+
+    --  Forward message to client if it's not a READY
+    if (msg:address() ~= "READY") then
+        msg:send(frontend)
+    end
+end)
+
+-- start poller's event loop
+poller:start()
+
+--  We never exit the main loop
+
