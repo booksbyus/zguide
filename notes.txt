@@ -52,6 +52,11 @@ Notes for The Guide
         zmq_recv (socket, &mesg, 0);
     }
 
+- explain why callbacks are a pita
+    - what thread do they run in?
+    - how do you connect them to main app thread
+    - how do you wait, do you sleep, call something, etc.?
+    
 - example of monitoring bus
     - cluster broker, send out state
     - capture via some visual tool...?
