@@ -45,11 +45,9 @@ $source = $ENV {'Z2W_LANG'} || "C";
 printf "Generating $source version of Guide...\n";
 
 #   Ensure all languages have an examples directory
-foreach (@languages, "listings") {
+foreach (@languages) {
     $translations {$_} = 0;
-    if (!-d "examples/$_") {
-        mkdir ("examples/$_");
-    }
+    mkdir ("examples/$_") unless -d "examples/$_";
     if (!-f "examples/$_/README") {
         die "Can't create examples/$_/README: $!"
             unless open (README, ">examples/$_/README");
@@ -119,14 +117,17 @@ while (<>) {
         $title = "Listing $listings";
         $name = "listing_$listings";
         $language = $1;
-        $filename = "examples/$language/$name.$extension{$language}";
+        $filename = "listings/$language/$name.$extension{$language}";
+        mkdir ("listings") unless -d "listings";
+        mkdir ("listings/$language") unless -d "listings/$language";
+        
         die "Can't create $filename: $!"
             unless open (LISTING, ">$filename");
         while (<>) {
             last if /\[\[\/code\]\]/;
             print LISTING $_;
         }
-        process_one_language ($title, $name, $language, 1);
+        process_one_language ("listings", $name, $language, $title, 1);
     }
     #  Process named codeblock
     elsif (/\[\[code\s+type=\"example\"\s+title=\"([^"]+)\"\s+name=\"([^"]+)\"(\s+language=\"([^"]+)\")?\]\]/) {
@@ -134,19 +135,19 @@ while (<>) {
         $name = $2;
         $language = $4;
         if ($language) {
-            process_one_language ($title, $name, $language, 1);
+            process_one_language ("examples", $filename, $name, $language, $title, 1);
         }
         else {
             $actions = "";
             $missing = "";
             #   Show primary language example inline
-            if (process_one_language ($title, $name, $source, 2)) {
+            if (process_one_language ("examples", $filename, $name, $source, $title, 2)) {
                 $translations {$source} += 1;
             }
             #   Show other languages as new tabs
             foreach $language (@languages) {
                 if ($language ne $source) {
-                    if (process_one_language ($title, $name, $language, 0)) {
+                    if (process_one_language ("examples", $name, $language, $title, 0)) {
                         $translations {$language} += 1;
                     }
                 }
@@ -240,10 +241,9 @@ sub writeln {
 #   Process one example in one language
 
 sub process_one_language {
-    local ($title, $name, $language, $inline) = @_;
-    $filename = "examples/$language/$name.$extension{$language}";
+    local ($directory, $name, $language, $title, $inline) = @_;
 
-    #   Create empty example if necessary
+    $filename = "$directory/$language/$name.$extension{$language}";
     if (-f $filename) {
         if ($inline == 0) {
             $actions = $actions." | " if $actions;
