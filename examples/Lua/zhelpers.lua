@@ -146,8 +146,8 @@ end
 --  Print formatted string to stdout, prefixed by date/time and
 --  terminated with a newline.
 
-function s_console(format, ...)
-    print(os.date("%y-%m-%d %H:%M:%S "))
+function s_console(fmt, ...)
+    write(os.date("%y-%m-%d %H:%M:%S "))
     printf(fmt, ...)
     print()
 end

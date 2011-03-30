@@ -128,7 +128,6 @@ end
 
 --  --------------------------------------------------------------------------
 --  Return pointer to message body, if any
---  Caller should not modify the provided data
 
 function msg_mt:body()
     local len = #self
@@ -173,7 +172,6 @@ end
 
 --  --------------------------------------------------------------------------
 --  Pop message part off front of message parts
---  Caller should free returned string when finished with it
 
 function msg_mt:pop()
     return tremove(self, 1)
@@ -190,7 +188,6 @@ end
 
 --  --------------------------------------------------------------------------
 --  Return pointer to outer message address, if any
---  Caller should not modify the provided data
 
 function msg_mt:address()
     return self[1]
@@ -207,26 +204,25 @@ function msg_mt:wrap(address, delim)
 
     --  Push optional delimiter and then address
     if delim then
-        tinsert(self, 1, delim)
+        self:push(delim)
     end
-    tinsert(self, 1, address)
+    self:push(address)
 end
 
 
 --  --------------------------------------------------------------------------
 --  Unwraps outer message envelope and returns address
 --  Discards empty message part after address, if any
---  Caller should free returned string when finished with it
 
 function msg_mt:unwrap()
     assert(self)
 
-    local address = tremove(self, 1)
+    local address = self:pop()
     -- check for deliminator
-    local peek = self[1]
+    local peek = self:address()
     if (peek and #peek == 0) then
         -- pop deliminator
-        tremove(self, 1)
+        self:pop()
     end
     return address
 end
