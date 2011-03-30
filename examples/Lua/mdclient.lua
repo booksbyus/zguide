@@ -2,8 +2,6 @@
 --  Majordomo Protocol client example
 --  Uses the mdcli API to hide all MDP aspects
 --
---  Lets us 'build mdclient' and 'build all'
---
 --  Author: Robert G. Jakabosky <bobby@sharedrealm.com>
 --
 

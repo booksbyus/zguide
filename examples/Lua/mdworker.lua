@@ -2,8 +2,6 @@
 --  Majordomo Protocol worker example
 --  Uses the mdwrk API to hide all MDP aspects
 --
---  Lets us 'build mdworker' and 'build all'
---
 --  Author: Robert G. Jakabosky <bobby@sharedrealm.com>
 --
 
