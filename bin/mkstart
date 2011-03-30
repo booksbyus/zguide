@@ -1,0 +1,27 @@
+#! /bin/bash
+#
+#   Creates _start pages in each language category
+
+echo "[[module ListPages limit=\"999\" perPage=\"999\" separate=\"no\" order=\"name\"]]" > _start.wd
+echo "[/%%fullname%% %%name%%.%%category%%] | \\" >> _start.wd
+echo "[[/module]]" >> _start.wd
+
+wdput zguide ada  _start "Examples in Ada"
+wdput zguide bas  _start "Examples in Basic"
+wdput zguide c    _start "Examples in C"
+wdput zguide cpp  _start "Examples in C++"
+wdput zguide cs   _start "Examples in C#"
+wdput zguide lisp _start "Examples in CLisp"
+wdput zguide erl  _start "Examples in Erlang"
+wdput zguide go   _start "Examples in Go"
+wdput zguide hs   _start "Examples in Haskell"
+wdput zguide java _start "Examples in Java"
+wdput zguide lua  _start "Examples in Lua"
+wdput zguide m    _start "Examples in Objective-C"
+wdput zguide ooc  _start "Examples in ooc"
+wdput zguide pl   _start "Examples in Perl"
+wdput zguide php  _start "Examples in PHP"
+wdput zguide py   _start "Examples in Python"
+wdput zguide rkt  _start "Examples in Racket"
+wdput zguide rb   _start "Examples in Ruby"
+rm _start.wd

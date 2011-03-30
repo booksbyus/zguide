@@ -7,42 +7,44 @@ $/ = undef;
 $_ = <>;
 
 #   [/i][/color] often comes at start of next line for some reason
-s/\n\[\/i\]/\[\/i\]\n/mg;
-s/\n\[\/color\]/\[\/color\]\n/mg;
+s/\n\[\/i\]/[\/i]\n/mg;
+s/\n\[\/color\]/[\/color]\n/mg;
 
 #   Escape stuff Wikidot treats as special
-s/\/(\/+)/@@\/$1@@/mg;
-s/\*(\*+)/@@*$1@@/mg;
-s/\-(\-+)/@@\-$1@@/mg;
-s/>>/@@>>@@/mg;
-s/<</@@<<@@/mg;
+s/\/(\/+)/\@\@\/$1\@\@/mg;
+s/\*(\*+)/\@\@*$1\@\@/mg;
+s/\-(\-+)/\@\@\-$1\@\@/mg;
+s/>>/\@\@>>\@\@/mg;
+s/<</\@\@<<\@\@/mg;
 
 #   Replace spaces with Unicode non-breaking space
 s/ / /mg;
 s/\t/    /mg;
 
 #   Replace [color] on multiple lines
-s/\[color=#(......)\]/\[\[span style="color:#$1"\]\]/mg;
-s/\[\/color\]/\[\[\/span\]\]/mg;
+s/\[color=#(......)\]/[[span style="color:#$1"]]/mg;
+s/\[\/color\]/[[\/span]]/mg;
 
 #   Replace [i] on one line
 s/\[i\]([^\n\[]*)\s*\[\/i\]/\/\/$1\/\//mg;
 #   Replace [i] on multiple lines
-s/\[i\]/\[\[span style="font-style:italic"\]\]/mg;
-s/\[\/i\]/\[\[\/span\]\]/mg;
+s/\[i\]/[[span style="font-style:italic"]]/mg;
+s/\[\/i\]/[[\/span]]/mg;
 
-s/\[b\]/\*\*/mg;
-s/\s*\[\/b\]/\*\*/mg;
+s/\[b\]/**/mg;
+s/\s*\[\/b\]/**/mg;
 
 #   Escape [ and ]
-s/\[(\[*)/@@\[$1@@/mg;
-s/\](\]*)/@@\]$1@@/mg;
+s/\[(\[*)/\@\@[$1\@\@/mg;
+s/\](\]*)/\@\@]$1\@\@/mg;
 
 #   Fix up [[span...]]
-s/\@\@\[\[\@\@span style="([^"]*)"\@\@\]\]\@\@/\[\[span style="$1"\]\]/mg;
-s/\@\@\[\[\@\@\/span\@\@\]\]\@\@/\[\[\/span\]\]/mg;
-s/\@\@(\[+)\[\[\@\@span style="([^"]*)"\@\@\]\]\@\@/\@\@$1\@\@\[\[span style="$2"\]\]/mg;
-s/\@\@\[\[\@\@\/span\@\@\]\](\]+)\@\@/\[\[\/span\]\]\@\@$1\@\@/mg;
+s/\@\@\[\[\@\@span style="([^"]*)"\@\@\]\]\@\@/[[span style="$1"]]/mg;
+s/\@\@\[\[\@\@\/span\@\@\]\]\@\@/[[\/span]]/mg;
+s/\@\@(\[+)\[\[\@\@span style="([^"]*)"\@\@\]\]\@\@/\@\@$1\@\@[[span style="$2"]]/mg;
+s/\@\@\[\[\@\@\/span\@\@\]\](\]+)\@\@/[[\/span]]\@\@$1\@\@/mg;
+s/\@\@\[\[\[\@\@\/span\@\@\]\]\@\@/\@\@[\@\@[[\/span]]/mg;
+s/\@\@\[\[\@\@span style="([^"]*)"\@\@\]\]\]\@\@/[[span style="$1"]]\@\@]\@\@/mg;
 
 #   Wikidot doesn't like @@@@ in a row
 s/\@\@\@\@//mg;
