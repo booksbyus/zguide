@@ -1,5 +1,5 @@
 /*  =====================================================================
-    dhash - distributed hash
+    clone - client-side Clone Pattern class
 
     ---------------------------------------------------------------------
     Copyright (c) 1991-2011 iMatix Corporation <www.imatix.com>
@@ -23,7 +23,7 @@
     =====================================================================
 */
 
-#include "dhash.h"
+#include "clone.h"
 
 //  If no server replies within this time, abandon request
 #define GLOBAL_TIMEOUT  3000    //  msecs
@@ -39,31 +39,31 @@
 //  ---------------------------------------------------------------------
 //  Structure of our class
 
-struct _dhash_t {
+struct _clone_t {
     void *context;      //  Our 0MQ context
-    void *control;      //  Inproc socket talking to dhash task
+    void *control;      //  Inproc socket talking to clone task
 };
 
-static void *dhash_agent (void *context);
+static void *clone_agent (void *context);
 
 //  ---------------------------------------------------------------------
 //  Constructor
 
-dhash_t *
-dhash_new (void)
+clone_t *
+clone_new (void)
 {
-    dhash_t
+    clone_t
         *self;
 
     s_catch_signals ();
-    self = (dhash_t *) malloc (sizeof (dhash_t));
+    self = (clone_t *) malloc (sizeof (clone_t));
     self->context = zmq_init (1);
     self->control = zmq_socket (self->context, ZMQ_PAIR);
-    int rc = zmq_bind (self->control, "inproc://dhash");
+    int rc = zmq_bind (self->control, "inproc://clone");
     assert (rc == 0);
 
     pthread_t thread;
-    pthread_create (&thread, NULL, dhash_agent, self->context);
+    pthread_create (&thread, NULL, clone_agent, self->context);
     pthread_detach (thread);
 
     return self;
@@ -73,11 +73,11 @@ dhash_new (void)
 //  Destructor
 
 void
-dhash_destroy (dhash_t **self_p)
+clone_destroy (clone_t **self_p)
 {
     assert (self_p);
     if (*self_p) {
-        dhash_t *self = *self_p;
+        clone_t *self = *self_p;
         zmq_close (self->control);
         zmq_term (self->context);
         free (self);
@@ -90,7 +90,7 @@ dhash_destroy (dhash_t **self_p)
 //  Sends [CONNECT][endpoint] to the agent
 
 void
-dhash_connect (dhash_t *self, char *address, int port)
+clone_connect (clone_t *self, char *address, int port)
 {
     assert (self);
     assert (endpoint);
@@ -104,7 +104,7 @@ dhash_connect (dhash_t *self, char *address, int port)
 //  Sends [SET][key][value] to the agent
 
 void
-dhash_set (dhash_t *self, char *key, char *value)
+clone_set (clone_t *self, char *key, char *value)
 {
     assert (self);
     assert (endpoint);
@@ -117,10 +117,10 @@ dhash_set (dhash_t *self, char *key, char *value)
 //  ---------------------------------------------------------------------
 //  Lookup value in distributed hash table
 //  Sends [GET][key][value] to the agent and waits for a value response
-//  If there is no dhash available, will eventually return NULL.
+//  If there is no clone available, will eventually return NULL.
 
 char *
-dhash_get (dhash_t *self, char *key)
+clone_get (clone_t *self, char *key)
 {
     assert (self);
     assert (endpoint);
@@ -339,9 +339,9 @@ agent_router_message (agent_t *self)
 //  dialog when the application asks for it.
 
 static void *
-dhash_agent (void *context)
+clone_agent (void *context)
 {
-    agent_t *self = agent_new (context, "inproc://dhash");
+    agent_t *self = agent_new (context, "inproc://clone");
     zmq_pollitem_t items [] = { 
         { self->control, 0, ZMQ_POLLIN, 0 },
         { self->router, 0, ZMQ_POLLIN, 0 } 

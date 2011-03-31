@@ -455,28 +455,28 @@ So here is our high-availability server pair, using the Binary Star pattern:
 
 As a first step to building this, we need to refactor the client as a reusable class. This will make it reusable both in applications, and in servers (which have to act as clients when they are in the backup/slave role).
 
-My usual design approach is to first design an API that feels right, then to implement that. So, we start by taking the clone client, and rewriting it to sit on top of some imaginary class API called **dhash** (distributed hash). Turning random code into an API means defining a reasonably stable and abstract contract with applications. For example, in Model Three, the client opened three separate sockets to the server, using endpoints that were hard-coded in the source. We could make an API with three methods, like this:
+My usual design approach is to first design an API that feels right, then to implement that. So, we start by taking the clone client, and rewriting it to sit on top of some imaginary class API called **clone**. Turning random code into an API means defining a reasonably stable and abstract contract with applications. For example, in Model Three, the client opened three separate sockets to the server, using endpoints that were hard-coded in the source. We could make an API with three methods, like this:
 
 [[code language="C"]]
     //  Specify endpoints for each socket we need
-    dhash_subscribe (dhash, DHASH_PRIMARY, "tcp://localhost:5556");
-    dhash_snapshot  (dhash, DHASH_PRIMARY, "tcp://localhost:5557");
-    dhash_endpoints (dhash, DHASH_PRIMARY, "tcp://localhost:5558");
+    clone_subscribe (clone, "tcp://localhost:5556");
+    clone_snapshot  (clone, "tcp://localhost:5557");
+    clone_endpoints (clone, "tcp://localhost:5558");
 
     //  Times two, since we have two servers
-    dhash_subscribe (dhash, DHASH_BACKUP, "tcp://localhost:5566");
-    dhash_snapshot  (dhash, DHASH_BACKUP, "tcp://localhost:5567");
-    dhash_endpoints (dhash, DHASH_BACKUP, "tcp://localhost:5568");
+    clone_subscribe (clone, "tcp://localhost:5566");
+    clone_snapshot  (clone, "tcp://localhost:5567");
+    clone_endpoints (clone, "tcp://localhost:5568");
 [[/code]]
 
-But this is both verbose and fragile. It's not a good idea to expose the internals of a design to applications. Today, we use three sockets. Tomorrow, two, or four. Do we really want to go and change every application that uses the dhash class?
+But this is both verbose and fragile. It's not a good idea to expose the internals of a design to applications. Today, we use three sockets. Tomorrow, two, or four. Do we really want to go and change every application that uses the clone class?
 
 So we make a small abstraction, like this:
 
 [[code language="C"]]
     //  Specify primary and backup servers
-    dhash_connect (dhash, "tcp://localhost:5551");
-    dhash_connect (dhash, "tcp://localhost:5561");
+    clone_connect (clone, "tcp://localhost:5551");
+    clone_connect (clone, "tcp://localhost:5561");
 [[/code]]
 
 Which has the advantage of simplicity (one server sits at one endpoint) but has an impact on our internal design. We now need to somehow turn that single endpoint into three endpoints. One way would be to bake the knowledge "client and server talk over three consecutive ports" into our client-server protocol. Another way would be to get the two missing endpoints from the server. We'll take the simplest way, i.e.:
@@ -485,12 +485,12 @@ Which has the advantage of simplicity (one server sits at one endpoint) but has 
 * The server state router (ROUTER) is at port P + 1.
 * The server updates subscriber (SUB) is at port P + 2.
 
-So here is Model Four of the clone client, which has now become just a thin shell using the dhash class:
+So here is Model Four of the clone client, which has now become just a thin shell using the clone class:
 
 [[code type="example" title="Clone client, Model Four" name="clonecli4"]]
 [[/code]]
 
-To implement the dhash class we'll take the same rough design as the flcliapi class from Chapter Four. Like the Freelance client, we have to manage a pool of servers (two, it's a small pool). So we implement our API as a class consisting of an //asynchronous agent// thread that talks to the servers, plus a synchronous frontend API that talks to our applications. The frontend is in our application thread, and talks to the agent thread over an inproc socket.
+To implement the clone class we'll take the same rough design as the flcliapi class from Chapter Four. Like the Freelance client, we have to manage a pool of servers (two, it's a small pool). So we implement our API as a class consisting of an //asynchronous agent// thread that talks to the servers, plus a synchronous frontend API that talks to our applications. The frontend is in our application thread, and talks to the agent thread over an inproc socket.
 
 This is an advanced architecture for asynchronous APIs, and usually takes weeks to build and get properly working. Months to make it really good. As usual, 0MQ lets us produce working, highly efficient code almost as fast as we can design it.
 

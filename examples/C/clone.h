@@ -1,5 +1,5 @@
 /*  =====================================================================
-    dhash - distributed hash
+    clone - client-side Clone Pattern class
 
     ---------------------------------------------------------------------
     Copyright (c) 1991-2011 iMatix Corporation <www.imatix.com>
@@ -23,8 +23,8 @@
     =====================================================================
 */
 
-#ifndef __DHASH_INCLUDED__
-#define __DHASH_INCLUDED__
+#ifndef __CLONE_INCLUDED__
+#define __CLONE_INCLUDED__
 
 #include "kvmsg.c"
 
@@ -33,18 +33,18 @@ extern "C" {
 #endif
 
 //  Opaque class structure
-typedef struct _dhash_t dhash_t;
+typedef struct _clone_t clone_t;
 
-dhash_t *
-    dhash_new (void);
+clone_t *
+    clone_new (void);
 void
-    dhash_destroy (dhash_t **self_p);
+    clone_destroy (clone_t **self_p);
 void
-    dhash_connect (dhash_t *self, char *address, int port);
+    clone_connect (clone_t *self, char *address, int port);
 void
-    dhash_set (dhash_t *self, char *key, char *value);
+    clone_set (clone_t *self, char *key, char *value);
 char *
-    dhash_get (dhash_t *self, char *key);
+    clone_get (clone_t *self, char *key);
 
 #ifdef __cplusplus
 }
