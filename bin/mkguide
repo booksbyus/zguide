@@ -26,12 +26,12 @@ echo "[[include page:chapter3]]" >> all.wd
 echo "[[include page:chapter4]]" >> all.wd
 echo "[[include page:chapter5]]" >> all.wd
 bin/z2w chapter*.txt
-upload page all "ØMQ - The Guide"
 upload page chapter1 "Chapter One"
 upload page chapter2 "Chapter Two"
 upload page chapter3 "Chapter Three"
 upload page chapter4 "Chapter Four"
 upload page chapter5 "Chapter Five"
+upload page all "ØMQ - The Guide"
 upload main scoreboard "Language scoreboard"
 sh ./upload.sh
 
@@ -42,12 +42,12 @@ echo "[[include php:chapter3]]" >> all.wd
 echo "[[include php:chapter4]]" >> all.wd
 echo "[[include php:chapter5]]" >> all.wd
 bin/z2w chapter*.txt
-upload php all "ØMQ - The Guide - PHP"
 upload php chapter1 "Chapter One"
 upload php chapter2 "Chapter Two"
 upload php chapter3 "Chapter Three"
 upload php chapter4 "Chapter Four"
 upload php chapter5 "Chapter Five"
+upload php all "ØMQ - The Guide - PHP"
 
 export Z2W_LANG=Lua
 echo "[[include lua:chapter1]]"  > all.wd
@@ -56,12 +56,12 @@ echo "[[include lua:chapter3]]" >> all.wd
 echo "[[include lua:chapter4]]" >> all.wd
 echo "[[include lua:chapter5]]" >> all.wd
 bin/z2w chapter*.txt
-upload lua all "ØMQ - The Guide - Lua"
 upload lua chapter1 "Chapter One"
 upload lua chapter2 "Chapter Two"
 upload lua chapter3 "Chapter Three"
 upload lua chapter4 "Chapter Four"
 upload lua chapter5 "Chapter Five"
+upload lua all "ØMQ - The Guide - Lua"
 
 rm *.wd wdtemp.txt upload.sh
 
