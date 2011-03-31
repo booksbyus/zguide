@@ -1,7 +1,6 @@
 /*  =====================================================================
-    flcliapi.c - Freelance Pattern agent class
+    flcliapi - Freelance Pattern agent class
     Model 3: uses ROUTER socket to address specific services
-    Defined as .c to allow inclusion in Guide as example.
 
     ---------------------------------------------------------------------
     Copyright (c) 1991-2011 iMatix Corporation <www.imatix.com>
@@ -25,12 +24,7 @@
     =====================================================================
 */
 
-#ifndef __FLCLIAPI_INCLUDED__
-#define __FLCLIAPI_INCLUDED__
-
-#include "zmsg.h"
-#include "zhash.h"
-#include "zlist.h"
+#include "flcliapi.h"
 
 //  If no server replies within this time, abandon request
 #define GLOBAL_TIMEOUT  3000    //  msecs
@@ -38,24 +32,6 @@
 #define PING_INTERVAL   2000    //  msecs
 //  Server considered dead if silent for this long
 #define SERVER_TTL      6000    //  msecs
-
-//  We design our client API as a class
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-//  Opaque class structure
-typedef struct _flcliapi_t flcliapi_t;
-
-flcliapi_t *flcliapi_new     (void);
-void        flcliapi_destroy (flcliapi_t **self_p);
-void        flcliapi_connect (flcliapi_t *self, char *endpoint);
-zmsg_t *    flcliapi_request (flcliapi_t *self, zmsg_t **request_p);
-
-#ifdef __cplusplus
-}
-#endif
 
 
 //  =====================================================================
@@ -69,7 +45,7 @@ struct _flcliapi_t {
     void *control;      //  Inproc socket talking to flcliapi task
 };
 
-static void *flcliapi_task (void *context);
+static void *flcliapi_agent (void *context);
 
 //  ---------------------------------------------------------------------
 //  Constructor
@@ -89,7 +65,7 @@ flcliapi_new (void)
     assert (rc == 0);
 
     pthread_t thread;
-    pthread_create (&thread, NULL, flcliapi_task, self->context);
+    pthread_create (&thread, NULL, flcliapi_agent, self->context);
     pthread_detach (thread);
 
     return self;
@@ -335,7 +311,7 @@ agent_router_message (agent_t *self)
 //  dialog when the application asks for it.
 
 static void *
-flcliapi_task (void *context) 
+flcliapi_agent (void *context)
 {
     agent_t *self = agent_new (context, "inproc://flcliapi");
     zmq_pollitem_t items [] = { 
@@ -394,5 +370,3 @@ flcliapi_task (void *context)
     agent_destroy (&self);
     return NULL;
 }
-
-#endif

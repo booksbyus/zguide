@@ -1,106 +1,5 @@
-//
-//  Clone client API (Model 4)
-//
-
-#include "kvmsg.c"
-
-- hash table in main thread
-
-    dhast_t *dhash = dhash_new ();
-    dhash_server (dhash, "tcp://localhost:5551");
-    dhash_server (dhash, "tcp://localhost:5561");
-    dhash_handler (dhash, s_handler, "", NULL);
-    dhash_set (dhash, key, value);
-    char *check = dhash_get (dhash, key);
-    char *key = dhash_sniff (dhash);
-    dhash_destroy (&dhash);
-
-    
-int main (void) 
-{
-    //  Prepare our context and subscriber
-    void *context = zmq_init (1);
-    void *subscriber = zmq_socket (context, ZMQ_SUB);
-    zmq_setsockopt (subscriber, ZMQ_SUBSCRIBE, "", 0);
-    zmq_connect (subscriber, "tcp://localhost:5556");
-
-    void *snapshot = zmq_socket (context, ZMQ_XREQ);
-    zmq_connect (snapshot, "tcp://localhost:5557");
-
-    void *updates = zmq_socket (context, ZMQ_PUSH);
-    zmq_connect (updates, "tcp://localhost:5558");
-
-    s_catch_signals ();
-    zhash_t *kvmap = zhash_new ();
-    srandom ((unsigned) time (NULL));
-    
-    //  Get state snapshot
-    int64_t sequence = 0;
-    s_send (snapshot, "I can haz state?");
-    while (!s_interrupted) {
-        kvmsg_t *kvmsg = kvmsg_recv (snapshot);
-        if (!kvmsg)
-            break;          //  Interrupted
-        if (streq (kvmsg_key (kvmsg), "KTHXBAI")) {
-            sequence = kvmsg_sequence (kvmsg);
-            kvmsg_destroy (&kvmsg);
-            break;          //  Done
-        }
-        kvmsg_store (&kvmsg, kvmap);
-    }
-    printf ("I: received snapshot=%" PRId64 "\n", sequence);
-    int zero = 0;
-    zmq_setsockopt (snapshot, ZMQ_LINGER, &zero, sizeof (zero));
-    zmq_close (snapshot);
-
-    int64_t alarm = s_clock () + 1000;
-    while (!s_interrupted) {
-        zmq_pollitem_t items [] = { { subscriber, 0, ZMQ_POLLIN, 0 } };
-        int tickless = (int) ((alarm - s_clock ()));
-        if (tickless < 0)
-            tickless = 0;
-        int rc = zmq_poll (items, 1, tickless * 1000);
-        if (rc == -1)
-            break;              //  Context has been shut down
-        
-        if (items [0].revents & ZMQ_POLLIN) {
-            kvmsg_t *kvmsg = kvmsg_recv (subscriber);
-            if (!kvmsg)
-                break;          //  Interrupted
-
-            //  Discard out-of-sequence kvmsgs, incl. heartbeats
-            if (kvmsg_sequence (kvmsg) > sequence) {
-                sequence = kvmsg_sequence (kvmsg);
-                kvmsg_store (&kvmsg, kvmap);
-                printf ("I: received update=%" PRId64 "\n", sequence);
-            }
-            else
-                kvmsg_destroy (&kvmsg);
-        }
-        //  If we timed-out, generate a random kvmsg
-        if (s_clock () >= alarm) {
-            kvmsg_t *kvmsg = kvmsg_new (0);
-            kvmsg_fmt_key  (kvmsg, "%d", randof (10000));
-            kvmsg_fmt_body (kvmsg, "%d", randof (1000000));
-            kvmsg_send (kvmsg, updates);
-            kvmsg_destroy (&kvmsg);
-            alarm = s_clock () + 1000;
-        }
-    }
-    zhash_destroy (&kvmap);
-
-    printf (" Interrupted\n%" PRId64 " messages in\n", sequence);
-    zmq_setsockopt (updates, ZMQ_LINGER, &zero, sizeof (zero));
-    zmq_close (updates);
-    zmq_close (subscriber);
-    zmq_term (context);
-    return 0;
-}
-
-
 /*  =====================================================================
     dhash - distributed hash
-    Defined as .c to allow inclusion in Guide as example.
 
     ---------------------------------------------------------------------
     Copyright (c) 1991-2011 iMatix Corporation <www.imatix.com>
@@ -124,12 +23,7 @@ int main (void)
     =====================================================================
 */
 
-#ifndef __DHASH_INCLUDED__
-#define __DHASH_INCLUDED__
-
-#include "zmsg.h"
-#include "zhash.h"
-#include "zlist.h"
+#include "dhash.h"
 
 //  If no server replies within this time, abandon request
 #define GLOBAL_TIMEOUT  3000    //  msecs
@@ -137,24 +31,6 @@ int main (void)
 #define PING_INTERVAL   2000    //  msecs
 //  Server considered dead if silent for this long
 #define SERVER_TTL      6000    //  msecs
-
-//  We design our client API as a class
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-//  Opaque class structure
-typedef struct _dhash_t dhash_t;
-
-dhash_t *dhash_new     (void);
-void     dhash_destroy (dhash_t **self_p);
-void     dhash_connect (dhash_t *self, char *endpoint);
-zmsg_t * dhash_request (dhash_t *self, zmsg_t **request_p);
-
-#ifdef __cplusplus
-}
-#endif
 
 
 //  =====================================================================
@@ -168,7 +44,7 @@ struct _dhash_t {
     void *control;      //  Inproc socket talking to dhash task
 };
 
-static void *dhash_task (void *context);
+static void *dhash_agent (void *context);
 
 //  ---------------------------------------------------------------------
 //  Constructor
@@ -183,12 +59,11 @@ dhash_new (void)
     self = (dhash_t *) malloc (sizeof (dhash_t));
     self->context = zmq_init (1);
     self->control = zmq_socket (self->context, ZMQ_PAIR);
-
     int rc = zmq_bind (self->control, "inproc://dhash");
     assert (rc == 0);
 
     pthread_t thread;
-    pthread_create (&thread, NULL, dhash_task, self->context);
+    pthread_create (&thread, NULL, dhash_agent, self->context);
     pthread_detach (thread);
 
     return self;
@@ -205,7 +80,6 @@ dhash_destroy (dhash_t **self_p)
         dhash_t *self = *self_p;
         zmq_close (self->control);
         zmq_term (self->context);
-        //  Free object structure
         free (self);
         *self_p = NULL;
     }
@@ -213,37 +87,54 @@ dhash_destroy (dhash_t **self_p)
 
 //  ---------------------------------------------------------------------
 //  Connect to new server endpoint
+//  Sends [CONNECT][endpoint] to the agent
 
 void
-dhash_connect (dhash_t *self, char *endpoint)
+dhash_connect (dhash_t *self, char *address, int port)
 {
     assert (self);
     assert (endpoint);
-    zmsg_t *msg = zmsg_new (endpoint);
+    zmsg_t *msg = zmsg_new (address);
     zmsg_push (msg, "CONNECT");
     zmsg_send (&msg, self->control);
-    s_sleep (100);      //  Allow connection to come up
 }
 
 //  ---------------------------------------------------------------------
-//  Send & destroy request, get reply
+//  Set new value in distributed hash table
+//  Sends [SET][key][value] to the agent
 
-zmsg_t *
-dhash_request (dhash_t *self, zmsg_t **request_p)
+void
+dhash_set (dhash_t *self, char *key, char *value)
 {
     assert (self);
-    assert (*request_p);
+    assert (endpoint);
+    zmsg_t *msg = zmsg_new (value);
+    zmsg_push (msg, key);
+    zmsg_push (msg, "SET");
+    zmsg_send (&msg, self->control);
+}
 
-    zmsg_push (*request_p, "REQUEST");
-    zmsg_send (request_p, self->control);
+//  ---------------------------------------------------------------------
+//  Lookup value in distributed hash table
+//  Sends [GET][key][value] to the agent and waits for a value response
+//  If there is no dhash available, will eventually return NULL.
+
+char *
+dhash_get (dhash_t *self, char *key)
+{
+    assert (self);
+    assert (endpoint);
+    zmsg_t *msg = zmsg_new (key);
+    zmsg_push (msg, "GET");
+    zmsg_send (&msg, self->control);
+
     zmsg_t *reply = zmsg_recv (self->control);
     if (reply) {
-        char *status = zmsg_pop (reply);
-        if (streq (status, "FAILED"))
-            zmsg_destroy (&reply);
-        free (status);
+        char *value = zmsg_pop (reply);
+        zmsg_destroy (&reply);
+        return value;
     }
-    return reply;
+    return NULL;
 }
 
 
@@ -310,8 +201,14 @@ server_tickless (char *key, void *server, void *arg)
 //  ---------------------------------------------------------------------
 //  Simple class for one background agent
 
+- keep primary & secondary server, no more or less
+- each server three sockets, three endpoints
+- connect to port P (PUB), P+1 (ROUTER), P+2 (SUB)
+- specify port separatel from address
+
 typedef struct {
     void *context;              //  0MQ context
+    zhash_t *kvmap;             //  Actual key/value table
     zhash_t *servers;           //  Servers we've connected to
     zlist_t *actives;           //  Servers we know are alive
     uint sequence;              //  Number of requests ever sent
@@ -327,6 +224,7 @@ agent_new (void *context, char *endpoint)
 {
     agent_t *self = (agent_t *) calloc (1, sizeof (agent_t));
     self->context = context;
+    self->kvmap = zhash_new ();
     self->servers = zhash_new ();
     self->actives = zlist_new ();
     self->control = zmq_socket (self->context, ZMQ_PAIR);
@@ -341,6 +239,7 @@ agent_destroy (agent_t **self_p)
     assert (self_p);
     if (*self_p) {
         agent_t *self = *self_p;
+        zhash_destroy (&self->kvmap);
         zhash_destroy (&self->servers);
         zlist_destroy (&self->actives);
         zmq_close (self->control);
@@ -381,6 +280,12 @@ agent_control_message (agent_t *self)
         server->ping_at = s_clock () + PING_INTERVAL;
         server->expires = s_clock () + SERVER_TTL;
         free (endpoint);
+    }
+    else
+    if (streq (command, "GET")) {
+    }
+    else
+    if (streq (command, "SET")) {
     }
     else
     if (streq (command, "REQUEST")) {
@@ -434,7 +339,7 @@ agent_router_message (agent_t *self)
 //  dialog when the application asks for it.
 
 static void *
-dhash_task (void *context) 
+dhash_agent (void *context)
 {
     agent_t *self = agent_new (context, "inproc://dhash");
     zmq_pollitem_t items [] = { 
@@ -442,6 +347,87 @@ dhash_task (void *context)
         { self->router, 0, ZMQ_POLLIN, 0 } 
     };
 
+
+
+
+    //  Prepare our context and subscriber
+    void *context = zmq_init (1);
+    void *subscriber = zmq_socket (context, ZMQ_SUB);
+    zmq_setsockopt (subscriber, ZMQ_SUBSCRIBE, "", 0);
+    zmq_connect (subscriber, "tcp://localhost:5556");
+
+    void *snapshot = zmq_socket (context, ZMQ_XREQ);
+    zmq_connect (snapshot, "tcp://localhost:5557");
+
+    void *updates = zmq_socket (context, ZMQ_PUSH);
+    zmq_connect (updates, "tcp://localhost:5558");
+
+    s_catch_signals ();
+    srandom ((unsigned) time (NULL));
+
+    //  Get state snapshot
+    int64_t sequence = 0;
+    s_send (snapshot, "I can haz state?");
+    while (!s_interrupted) {
+        kvmsg_t *kvmsg = kvmsg_recv (snapshot);
+        if (!kvmsg)
+            break;          //  Interrupted
+        if (streq (kvmsg_key (kvmsg), "KTHXBAI")) {
+            sequence = kvmsg_sequence (kvmsg);
+            kvmsg_destroy (&kvmsg);
+            break;          //  Done
+        }
+        kvmsg_store (&kvmsg, kvmap);
+    }
+    printf ("I: received snapshot=%" PRId64 "\n", sequence);
+    int zero = 0;
+    zmq_setsockopt (snapshot, ZMQ_LINGER, &zero, sizeof (zero));
+    zmq_close (snapshot);
+
+    int64_t alarm = s_clock () + 1000;
+    while (!s_interrupted) {
+        zmq_pollitem_t items [] = { { subscriber, 0, ZMQ_POLLIN, 0 } };
+        int tickless = (int) ((alarm - s_clock ()));
+        if (tickless < 0)
+            tickless = 0;
+        int rc = zmq_poll (items, 1, tickless * 1000);
+        if (rc == -1)
+            break;              //  Context has been shut down
+
+        if (items [0].revents & ZMQ_POLLIN) {
+            kvmsg_t *kvmsg = kvmsg_recv (subscriber);
+            if (!kvmsg)
+                break;          //  Interrupted
+
+            //  Discard out-of-sequence kvmsgs, incl. heartbeats
+            if (kvmsg_sequence (kvmsg) > sequence) {
+                sequence = kvmsg_sequence (kvmsg);
+                kvmsg_store (&kvmsg, kvmap);
+                printf ("I: received update=%" PRId64 "\n", sequence);
+            }
+            else
+                kvmsg_destroy (&kvmsg);
+        }
+        //  If we timed-out, generate a random kvmsg
+        if (s_clock () >= alarm) {
+            kvmsg_t *kvmsg = kvmsg_new (0);
+            kvmsg_fmt_key  (kvmsg, "%d", randof (10000));
+            kvmsg_fmt_body (kvmsg, "%d", randof (1000000));
+            kvmsg_send (kvmsg, updates);
+            kvmsg_destroy (&kvmsg);
+            alarm = s_clock () + 1000;
+        }
+    }
+
+    printf (" Interrupted\n%" PRId64 " messages in\n", sequence);
+    zmq_setsockopt (updates, ZMQ_LINGER, &zero, sizeof (zero));
+    zmq_close (updates);
+    zmq_close (subscriber);
+    zmq_term (context);
+    return 0;
+
+
+    
     while (!s_interrupted) {
         //  Calculate tickless timer, up to 1 hour
         uint64_t tickless = s_clock () + 1000 * 3600;
@@ -494,4 +480,3 @@ dhash_task (void *context)
     return NULL;
 }
 
-#endif
