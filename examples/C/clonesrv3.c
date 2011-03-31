@@ -29,7 +29,7 @@ send_one_kvmsg (char *key, void *data, void *args)
     return 0;
 }
 
-int main (void) 
+int main (void)
 {
     //  Prepare our context and sockets
     void *context = zmq_init (1);
@@ -42,8 +42,6 @@ int main (void)
     assert (rc == 0);
 
     void *collector = zmq_socket (context, ZMQ_PULL);
-    uint64_t hwm = 1;
-    zmq_setsockopt (collector, ZMQ_HWM, &hwm, sizeof (hwm));
     rc = zmq_bind (collector, "tcp://*:5558");
     assert (rc == 0);
 
@@ -51,9 +49,9 @@ int main (void)
     int64_t sequence = 0;
     zhash_t *kvmap = zhash_new ();
 
-    zmq_pollitem_t items [] = { 
+    zmq_pollitem_t items [] = {
         { collector, 0, ZMQ_POLLIN, 0 },
-        { snapshot, 0, ZMQ_POLLIN, 0 } 
+        { snapshot, 0, ZMQ_POLLIN, 0 }
     };
     while (!s_interrupted) {
         int rc = zmq_poll (items, 2, 1000 * 1000);

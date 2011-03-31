@@ -50,7 +50,7 @@ typedef enum {
 //  Structure of our class
 
 struct _bstar_t {
-    void *context;              //  0MQ context 
+    void *context;              //  0MQ context
     void *statepub;             //  State publisher
     void *statesub;             //  State subscriber
     zlist_t *frontends;         //  List of frontends
@@ -78,7 +78,7 @@ bstar_new (int primary, char *bind_to, char *connect_to)
     self->frontends = zlist_new ();
     self->send_state = s_clock () + BSTAR_HEARTBEAT;
     s_catch_signals ();
-    
+
     //  We'll manage our own 0MQ context and sockets
     self->context = zmq_init (1);
 
@@ -86,7 +86,7 @@ bstar_new (int primary, char *bind_to, char *connect_to)
     self->statepub = zmq_socket (self->context, ZMQ_PUB);
     int rc = zmq_bind (self->statepub, bind_to);
     assert (rc == 0);
-    
+
     //  Create subscriber for state coming from peer
     self->statesub = zmq_socket (self->context, ZMQ_SUB);
     zmq_setsockopt (self->statesub, ZMQ_SUBSCRIBE, "", 0);
@@ -106,7 +106,7 @@ bstar_destroy (bstar_t **self_p)
     assert (self_p);
     if (*self_p) {
         bstar_t *self = *self_p;
-        
+
         //  Shutdown sockets and context
         int zero = 0;
         zmq_setsockopt (self->statepub, ZMQ_LINGER, &zero, sizeof (zero));
@@ -141,7 +141,7 @@ bstar_listen (bstar_t *self, char *endpoint, int type)
     zlist_append (self->frontends, frontend);
 }
 
-    
+
 //  --------------------------------------------------------------------------
 //  Execute finite state machine (apply event to state)
 //  Returns -1 if there was an exception, 0 if event was valid.
@@ -233,7 +233,7 @@ bstar_wait (bstar_t *self)
 {
     //  Build poll set
     int poll_size = zlist_size (self->frontends) + 1;
-    zmq_pollitem_t *poll_set 
+    zmq_pollitem_t *poll_set
         = calloc (1, poll_size * sizeof (zmq_pollitem_t));
     poll_set [0].socket = self->statesub;
     poll_set [0].events = ZMQ_POLLIN;

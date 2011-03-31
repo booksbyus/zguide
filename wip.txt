@@ -20,17 +20,17 @@ i use the scheme of having the workers report status back via a PUSH-PULL to the
 source (or control process). then pump down no-op data until all workers report no-ops.
 - Hide quoted text -
 
-When streaming a fixed quantity of data through a pipeline via PUSH-PULL 
-sockets, I find myself wanting to signal all of the downstream workers 
-when the input data has been exhausted.  To do that, I have to send my 
-"finished" message multiple times, which means that each upstream PUSHer 
-must be explicitly configured to know how many downstream PULLers there 
-will be, which spreads-around knowledge of the pipeline topology and 
-introduces lots of complexity, e.g. waiting for every PULLer to connect, 
-etc.  Is there an easier way to "broadcast" a message to every PULL 
-socket connected to a PUSH?  Using a separate PUB-SUB connection seems 
-equally problematic - I'm assuming that there's no guarantee that a 
-published "finished" message would arrive after the last data message in 
+When streaming a fixed quantity of data through a pipeline via PUSH-PULL
+sockets, I find myself wanting to signal all of the downstream workers
+when the input data has been exhausted.  To do that, I have to send my
+"finished" message multiple times, which means that each upstream PUSHer
+must be explicitly configured to know how many downstream PULLers there
+will be, which spreads-around knowledge of the pipeline topology and
+introduces lots of complexity, e.g. waiting for every PULLer to connect,
+etc.  Is there an easier way to "broadcast" a message to every PULL
+socket connected to a PUSH?  Using a separate PUB-SUB connection seems
+equally problematic - I'm assuming that there's no guarantee that a
+published "finished" message would arrive after the last data message in
 the PUSH-PULL connection.
 
 Thanks in advance,
@@ -63,52 +63,3 @@ The Harmony pattern takes pipeline and makes it robust against the only failure 
 ++ How to deliver jobs one by one using push/pull? i.e. ensure jobs don't get lost...
 
 - Majordomo?
-
-
-
-+++ The Programming Languages
-
-For each language:
-
-* How to install
-* Syntax notes
-* Example of request-reply
-* Error handling
-* Online resources
-
-[!--
-- one section per language, perhaps server/client demo
---]
-
-++++ Ada
-++++ Basic
-++++ C
-++++ C++
-++++ C#
-++++ Common Lisp
-++++ Erlang
-++++ Go
-++++ Haskell
-++++ Java
-++++ Lua
-++++ Objective-C
-++++ ooc
-++++ Perl
-++++ PHP
-++++ Python
-++++ Ruby
-
-
-+++ The Operating Systems
-
-++++ Linux
-++++ Windows
-
-- use zmq_errno
-
-++++ AIX
-++++ Solaris
-++++ Max OS X
-++++ OpenVMS
-++++ Others
-

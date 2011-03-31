@@ -40,7 +40,7 @@ clone_t *
 void
     clone_destroy (clone_t **self_p);
 void
-    clone_connect (clone_t *self, char *address, int port);
+    clone_connect (clone_t *self, char *address, char *service);
 void
     clone_set (clone_t *self, char *key, char *value);
 char *

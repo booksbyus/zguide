@@ -13,7 +13,7 @@ int main (int argc, char *argv [])
     bstar_t *bstar;
     if (argc == 2 && streq (argv [1], "-p")) {
         printf ("I: Primary master, waiting for backup (slave)\n");
-        bstar = bstar_new (BSTAR_PRIMARY, 
+        bstar = bstar_new (BSTAR_PRIMARY,
             "tcp://*:5003", "tcp://localhost:5004");
         bstar_listen (bstar, "tcp://*:5001", ZMQ_ROUTER);
     }
@@ -25,7 +25,7 @@ int main (int argc, char *argv [])
         bstar_listen (bstar, "tcp://*:5002", ZMQ_ROUTER);
     }
     else {
-        printf ("Usage: bstarsrv { -p | -b }\n");
+        printf ("Usage: bstarsrvs { -p | -b }\n");
         exit (0);
     }
     //  Now handle activity from clients

@@ -7,9 +7,6 @@
 - switch to full brackets style
 - remove s_version_assert calls
 
-next:
-- use sha1 signatures to only generate changed images
-
 
 Notes for The Guide
 
@@ -24,14 +21,10 @@ Notes for The Guide
 
 - how to make an error logging console
 
-- how to make a TCP-to-0MQ bridge, with examples (email)
-- pseudo-recursive job queues
-    - zqueue class
-    - http://www.leif.org/as400/other/pseudor.htm
+- how to make a TCP-to-0MQ bridge, with examples
+http://lists.zeromq.org/pipermail/zeromq-dev/2011-March/010186.html
+- FD_EVENT integration
 
-- worked example
-- single point of failure
-- presence detection
 
 - router trees
  (federation)
@@ -39,8 +32,6 @@ Notes for The Guide
 - cross-over router
     - send to, send from
     - flips addresses, gives you reply model
-
-- FD_EVENT integration
 
     //  If socket is a ROUTER, get identity first
     int socket_type;
@@ -56,13 +47,8 @@ Notes for The Guide
     - what thread do they run in?
     - how do you connect them to main app thread
     - how do you wait, do you sleep, call something, etc.?
-    
-- example of monitoring bus
-    - cluster broker, send out state
-    - capture via some visual tool...?
-- monitoring and logging
 
-
+- integrating 0MQ into TCP loops: http://lists.zeromq.org/pipermail/zeromq-dev/2011-March/010186.html
 
 Then we can use this to start building some reusable pieces:
 
@@ -103,20 +89,12 @@ how to map names?
     -> resolve host...
 
 
-
-+++ Custom pub/sub
-
-- req/rep socket for subscriptions
-- timeout for resubscriptions
-- pub/sub socket on dynamic endpoints
-
-
 +++ Pipelines
 
 - does PUSH block if there are no PULL sockets ready?
 - how do maintain a queue?
 
-+++ File Transfer 
++++ File Transfer
 
 example of file transfer
 
@@ -186,22 +164,6 @@ I didn't need to do this to avoid network bandwidth bottlenecks; I created this 
 
 We'll look at various ways of building a timer into a network.   A clock device sends out a signal (a message) at more or less precise intervals so that other nodes can use these signals for internal timing.
 
-+++ A Logging Device
-
-We'll look at a device that acts as a remote logger.
-
-+++ Building Bridges
-
-zmq_poll(3) lets you mix ZMQ sockets and native system sockets, which is very useful if you have to resort to actual TCP for something, e.g. bridging an existing TCP protocol with 0MQ.  We'll build a couple of bridges.
-
-+++ Writing a Reactor
-
-In this section we'll build a simple reactor framework that turns the zmq_poll(3) function inside out into an event-driven framework.
-
-+++ Exotic Devices
-
-Now we'll use the reactor to build some exotic devices.  It should be much easier and readable than using zmq_poll.
-
 +++ Serializing Data
 
 Examples of using Protocol Buffers and other options.
@@ -259,26 +221,11 @@ XREQ is like PUSH+PULL, XREP is like PUSH+PULL+routing
 --]
 
 
-* Tutorial: chat client/server
-
-* How to handle a REQ/REP socket without it blocking forever
-
-* Related question: how to stop a single thread blocked on recv()
-
-* How to write services in C
-    - memory leak checking
-    - security
-    - etc.
-    - ZPL config, zfl, etc.
-
 * How do we tunnel 0MQ connections over 0MQ connections?
     - e.g. to get 3-4 ports into DMZ via one single port
     - two devices, one reads, one writes
     - over other protocols: HTTP, SSH, etc...?
     - acts as split device, ...
-
-* Cross-language string sending tutorial
-
 
 I highly recommend that you try out the simpler topology and *verifying* that 0mq cannot keep up with your message rates when publishing all data to all clients. With smart topics the client can reject the data *very* fast. A 1 GB or 10 Gb switched network can also move quite a bit of data without a lot of blocking behavior in the hardware too. You may be able to save yourself a lot of unnecessary work, so just try it.
 
