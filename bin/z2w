@@ -57,6 +57,7 @@ foreach (@languages) {
 }
 $examples = 0;
 $listings = 0;
+$this = 0;
 
 die "Can't create wdtemp.txt: $!"
     unless open (OUTPUT, ">wdtemp.txt");
@@ -102,20 +103,23 @@ while (<>) {
         }
     }
     elsif (/^([\+]+)\s+(.*)$/) {
+        $this++;
+        $prev = $this - 1;
+        $next = $this + 1;
         $indent = $1;
         $header = $2;
         $anchor = $header;
         $anchor =~ s/[^a-zA-Z]/-/g;
         $anchor =~ s/\-+/-/g;
         $anchor =~ s/\-$//;
-        writeln ("[[# $anchor]]");
-        writeln ("[[table]]");
+        writeln ("[[# $anchor]][[# header-$this]]");
+        writeln ("[[table style=\"width:100%\"]]");
         writeln ("[[row]]");
         writeln ("[[cell]]");
         writeln ("$indent [#$anchor $header]");
         writeln ("[[/cell]]");
-        writeln ("[[cell]]");
-        writeln ("[#top ↑]");
+        writeln ("[[cell style=\"align:right\"]]");
+        writeln ("[#top ↑] [#header-$prev ←] [#header-$next →]");
         writeln ("[[/cell]]");
         writeln ("[[/row]]");
         writeln ("[[/table]]");
