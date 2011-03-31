@@ -3,9 +3,10 @@
 //
 //  Implements server side of http://rfc.zeromq.org/spec:9
 
-//  Lets us 'build titanic' and 'build all'
+//  Lets us build this source without creating a library
 #include "mdwrkapi.c"
 #include "mdcliapi.c"
+
 #include "zfile.h"
 #include <uuid/uuid.h>
 

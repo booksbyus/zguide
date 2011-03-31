@@ -2,7 +2,8 @@
 //  Majordomo Protocol worker example
 //  Uses the mdwrk API to hide all MDP aspects
 //
-//  Lets us 'build mdworker' and 'build all'
+
+//  Lets us build this source without creating a library
 #include "mdwrkapi.c"
 
 int main (int argc, char *argv [])

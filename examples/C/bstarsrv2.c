@@ -2,7 +2,7 @@
 //  Binary Star server
 //
 
-//  Lets us 'build bstarsrv2' and 'build all'
+//  Lets us build this source without creating a library
 #include "bstar.c"
 
 int main (int argc, char *argv [])

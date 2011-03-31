@@ -1,18 +1,19 @@
 //
 //  Clone client model 4
 //
-//  Lets us 'build clonecli4' and 'build all'
-#include "dhash.c"
+
+//  Lets us build this source without creating a library
+#include "clone.c"
 
 void
 int main (void)
 {
     //  Create distributed hash instance
-    dhast_t *dhash = dhash_new ();
+    dhast_t *clone = clone_new ();
 
     //  Specify primary and backup servers
-    dhash_server (dhash, "tcp://localhost:5551");
-    dhash_server (dhash, "tcp://localhost:5561");
+    clone_server (clone, "tcp://localhost:5551");
+    clone_server (clone, "tcp://localhost:5561");
 
     //  Set random tuples into the distributed hash
     while (!s_interrupted) {
@@ -21,9 +22,9 @@ int main (void)
         char value [10];
         sprintf (key, randof (10000));
         sprintf (value, randof (1000000));
-        dhash_set (dhash, key, value);
+        clone_set (clone, key, value);
         sleep (1);
     }
-    dhash_destroy (&dhash);
+    clone_destroy (&clone);
     return 0;
 }

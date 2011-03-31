@@ -2,7 +2,7 @@
 //  Titanic client example
 //  Implements client side of http://rfc.zeromq.org/spec:9
 
-//  Lets us 'build mdclient' and 'build all'
+//  Lets us build this source without creating a library
 #include "mdcliapi.c"
 
 //  Calls a TSP service

@@ -1,7 +1,8 @@
 //
 //  Clone server model 3
 //
-//  Lets us 'build clonesrv3' and 'build all'
+
+//  Lets us build this source without creating a library
 #include "kvmsg.c"
 
 //  Routing information for a KV snapshot

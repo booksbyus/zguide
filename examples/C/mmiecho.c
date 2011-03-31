@@ -1,7 +1,8 @@
 //
 //  MMI echo query example
 //
-//  Lets us 'build mmiecho' and 'build all'
+
+//  Lets us build this source without creating a library
 #include "mdcliapi.c"
 
 int main (int argc, char *argv [])

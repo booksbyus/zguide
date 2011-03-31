@@ -2,6 +2,7 @@
 //  Freelance client - Model 3
 //  Uses flcliapi class to encapsulate Freelance pattern
 //
+//  Lets us build this source without creating a library
 #include "flcliapi.c"
 
 int main (void)

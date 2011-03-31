@@ -1,7 +1,8 @@
 //
 //  Clone client model 3
 //
-//  Lets us 'build clonecli3' and 'build all'
+
+//  Lets us build this source without creating a library
 #include "kvmsg.c"
 
 int main (void) 

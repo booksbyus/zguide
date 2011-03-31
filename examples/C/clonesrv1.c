@@ -1,7 +1,8 @@
 //
 //  Clone server model 1
 //
-//  Lets us 'build clonesrv1' and 'build all'
+
+//  Lets us build this source without creating a library
 #include "kvmsg.c"
 
 int main (void) 

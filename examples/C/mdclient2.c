@@ -2,7 +2,7 @@
 //  Majordomo Protocol client example - asynchronous
 //  Uses the mdcli API to hide all MDP aspects
 //
-//  Lets us 'build mdclient' and 'build all'
+//  Lets us build this source without creating a library
 #include "mdcliapi2.c"
 
 int main (int argc, char *argv [])
