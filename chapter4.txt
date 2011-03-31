@@ -870,19 +870,6 @@ These are the main limitations of the Binary Star pattern:
 
 ++++ Preventing Split-Brain Syndrome
 
-"Split-brain syndrome" is when different parts of a cluster think they are 'master' at the same time. It causes applications to stop seeing each other. Binary Star has a trick for detecting and eliminating split brain, based on a three-way decision mechanism (a server will not decide to become master until it gets application connection requests and it cannot see its peer server).
-
-These are the main limitations of the Binary Star pattern:
-
-* A server process cannot be part of more than one Binary Star pair.
-* A primary server can have a single backup server, no more.
-* The backup server cannot do useful work while in slave mode.
-* The backup server must be capable of handling full application loads.
-* Failover configuration cannot be modified at runtime.
-* Client applications must do some work to benefit from failover.
-
-++++ Preventing Split-Brain Syndrome
-
 "Split-brain syndrome" is when different parts of a cluster think they are 'master' at the same time. It causes applications to stop seeing each other. Binary Star has an algorithm for detecting and eliminating split brain, based on a three-way decision mechanism (a server will not decide to become master until it gets application connection requests and it cannot see its peer server).
 
 However it is still possible to (mis)design a network to fool this algorithm. A typical scenario would a Binary Star pair distributed between two buildings, where each building also had a set of applications, and there was a single network link between both buildings. Breaking this link would create two sets of client applications, each with half of the Binary Star pair, and each failover server would become active.
