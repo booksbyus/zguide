@@ -3,7 +3,7 @@
 //
 #include "zhelpers.h"
 
-int main (void) 
+int main (void)
 {
     //  Prepare our context and subscriber
     void *context = zmq_init (1);

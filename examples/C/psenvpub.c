@@ -4,7 +4,7 @@
 //
 #include "zhelpers.h"
 
-int main (void) 
+int main (void)
 {
     //  Prepare our context and publisher
     void *context = zmq_init (1);

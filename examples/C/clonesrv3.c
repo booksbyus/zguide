@@ -39,7 +39,7 @@ int main (void)
     void *snapshot = zmq_socket (context, ZMQ_ROUTER);
     rc = zmq_bind (snapshot, "tcp://*:5557");
     assert (rc == 0);
-    
+
     void *collector = zmq_socket (context, ZMQ_PULL);
     uint64_t hwm = 1;
     zmq_setsockopt (collector, ZMQ_HWM, &hwm, sizeof (hwm));
@@ -104,6 +104,6 @@ int main (void)
     zmq_close (collector);
     zmq_close (snapshot);
     zmq_term (context);
-    
+
     return 0;
 }

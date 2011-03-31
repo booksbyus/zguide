@@ -21,7 +21,7 @@ int main (void)
     s_catch_signals ();
     zhash_t *kvmap = zhash_new ();
     srandom ((unsigned) time (NULL));
-    
+
     //  Get state snapshot
     int64_t sequence = 0;
     s_send (snapshot, "I can haz state?");
@@ -50,7 +50,7 @@ int main (void)
         int rc = zmq_poll (items, 1, tickless * 1000);
         if (rc == -1)
             break;              //  Context has been shut down
-        
+
         if (items [0].revents & ZMQ_POLLIN) {
             kvmsg_t *kvmsg = kvmsg_recv (subscriber);
             if (!kvmsg)
