@@ -109,7 +109,16 @@ while (<>) {
         $anchor =~ s/\-+/-/g;
         $anchor =~ s/\-$//;
         writeln ("[[# $anchor]]");
-        writeln ("$indent [#top ↑] [#$anchor $header]");
+        writeln ("[[table]]");
+        writeln ("[[row]]");
+        writeln ("[[cell]]");
+        writeln ("$indent [#$anchor $header]");
+        writeln ("[[/cell]]");
+        writeln ("[[cell]]");
+        writeln ("[#top ↑]");
+        writeln ("[[/cell]]");
+        writeln ("[[/row]]");
+        writeln ("[[/table]]");
     }
     #  Process unnamed code listing
     elsif (/\[\[code\s+language=\"(.+)\"\]\]/) {
