@@ -101,15 +101,15 @@ while (<>) {
             print "Illegal directive $_ at line $.\n";
         }
     }
-    elsif (/^\+\+/) {
-        writeln ('[[div style="overflow:hidden"]]');
-        writeln ('[[div style="float:left"]]');
-        writeln ($_);
-        writeln ("[[/div]]");
-        writeln ('[[div style="float:right; vertical-align:middle"]]');
-        writeln ("[/$symbols{SELF}# ↑top]");
-        writeln ("[[/div]]");
-        writeln ("[[/div]]");
+    elsif (/^([\+]+)\s+(.*)$/) {
+        $indent = $1;
+        $header = $2;
+        $anchor = $header;
+        $anchor =~ s/[^a-zA-Z]/-/g;
+        $anchor =~ s/\-+/-/g;
+        $anchor =~ s/\-$//;
+        writeln ("[[# $anchor]]");
+        writeln ("$indent [#top ↑] [#$anchor $header]");
     }
     #  Process unnamed code listing
     elsif (/\[\[code\s+language=\"(.+)\"\]\]/) {
