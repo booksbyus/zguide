@@ -135,13 +135,13 @@ while (<>) {
         $name = $2;
         $language = $4;
         if ($language) {
-            process_one_language ("examples", $filename, $name, $language, $title, 1);
+            process_one_language ("examples", $name, $language, $title, 1);
         }
         else {
             $actions = "";
             $missing = "";
             #   Show primary language example inline
-            if (process_one_language ("examples", $filename, $name, $source, $title, 2)) {
+            if (process_one_language ("examples", $name, $source, $title, 2)) {
                 $translations {$source} += 1;
             }
             #   Show other languages as new tabs
