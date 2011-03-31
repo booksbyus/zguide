@@ -1,2 +1,2 @@
 build $1
-valgrind --tool=memcheck --leak-check=full $1
+valgrind --tool=memcheck --leak-check=full $*

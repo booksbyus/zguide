@@ -25,6 +25,7 @@ int main (void)
     uint server_nbr = 0;
     void *context = zmq_init (1);
     void *client = s_client_socket (context, server [server_nbr]);
+    s_catch_signals ();
 
     int sequence = 0;
     while (!s_interrupted) {
@@ -38,7 +39,7 @@ int main (void)
             //  Poll socket for a reply, with timeout
             zmq_pollitem_t items [] = { { client, 0, ZMQ_POLLIN, 0 } };
             zmq_poll (items, 1, REQUEST_TIMEOUT * 1000);
-
+            
             //  If we got a reply, process it
             if (items [0].revents & ZMQ_POLLIN) {
                 //  We got a reply from the server, must match sequence
@@ -66,6 +67,7 @@ int main (void)
             }
         }
     }
+    puts ("INTERRUIPTED");
     zmq_close (client);
     zmq_term (context);
     return 0;

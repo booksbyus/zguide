@@ -781,7 +781,7 @@ Here's how it works:
 
 Here's code that shows how this works:
 
-[[code type="example" title="Asynchronous Client-Server" name="asyncsrv"]]
+[[code type="example" title="Asynchronous client-server" name="asyncsrv"]]
 [[/code]]
 
 Just run that example by itself. Like other multi-task examples, it runs in a single process but each task has its own context and conceptually acts as a separate process. You will see three clients (each with a random ID), printing out the replies they get from the server. Look carefully and you'll see each client task gets 0 or more replies per request.

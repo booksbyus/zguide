@@ -422,7 +422,8 @@ s_worker_process (broker_t *self, char *sender, zmsg_t *msg)
 
 //  ---------------------------------------------------------------------
 //  Send message to worker
-//  If pointer to message is provided, sends & destroys that message
+//  If pointer to message is provided, sends that message. Does not 
+//  destroy the message, this is the caller's job.
 
 static void
 s_worker_send (

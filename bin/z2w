@@ -45,11 +45,9 @@ $source = $ENV {'Z2W_LANG'} || "C";
 printf "Generating $source version of Guide...\n";
 
 #   Ensure all languages have an examples directory
-foreach (@languages, "listings") {
+foreach (@languages) {
     $translations {$_} = 0;
-    if (!-d "examples/$_") {
-        mkdir ("examples/$_");
-    }
+    mkdir ("examples/$_") unless -d "examples/$_";
     if (!-f "examples/$_/README") {
         die "Can't create examples/$_/README: $!"
             unless open (README, ">examples/$_/README");
@@ -59,6 +57,7 @@ foreach (@languages, "listings") {
 }
 $examples = 0;
 $listings = 0;
+$this = 0;
 
 die "Can't create wdtemp.txt: $!"
     unless open (OUTPUT, ">wdtemp.txt");
@@ -103,15 +102,27 @@ while (<>) {
             print "Illegal directive $_ at line $.\n";
         }
     }
-    elsif (/^\+\+/) {
-        writeln ('[[div style="overflow:hidden"]]');
-        writeln ('[[div style="float:left"]]');
-        writeln ($_);
-        writeln ("[[/div]]");
-        writeln ('[[div style="float:right; vertical-align:middle"]]');
-        writeln ("[/$symbols{SELF}# ↑top]");
-        writeln ("[[/div]]");
-        writeln ("[[/div]]");
+    elsif (/^([\+]+)\s+(.*)$/) {
+        $this++;
+        $prev = $this - 1;
+        $next = $this + 1;
+        $indent = $1;
+        $header = $2;
+        $anchor = $header;
+        $anchor =~ s/[^a-zA-Z]/-/g;
+        $anchor =~ s/\-+/-/g;
+        $anchor =~ s/\-$//;
+        writeln ("[[# $anchor]][[# header-$this]]");
+        writeln ("[[table style=\"width:100%\"]]");
+        writeln ("[[row]]");
+        writeln ("[[cell]]");
+        writeln ("$indent [#$anchor $header]");
+        writeln ("[[/cell]]");
+        writeln ("[[cell style=\"text-align:right\"]]");
+        writeln ("[#top ↑] [#header-$prev ←] [#header-$next →]");
+        writeln ("[[/cell]]");
+        writeln ("[[/row]]");
+        writeln ("[[/table]]");
     }
     #  Process unnamed code listing
     elsif (/\[\[code\s+language=\"(.+)\"\]\]/) {
@@ -119,14 +130,17 @@ while (<>) {
         $title = "Listing $listings";
         $name = "listing_$listings";
         $language = $1;
-        $filename = "examples/$language/$name.$extension{$language}";
+        $filename = "listings/$language/$name.$extension{$language}";
+        mkdir ("listings") unless -d "listings";
+        mkdir ("listings/$language") unless -d "listings/$language";
+        
         die "Can't create $filename: $!"
             unless open (LISTING, ">$filename");
         while (<>) {
             last if /\[\[\/code\]\]/;
             print LISTING $_;
         }
-        process_one_language ($title, $name, $language, 1);
+        process_one_language ("listings", $name, $language, $title, 1);
     }
     #  Process named codeblock
     elsif (/\[\[code\s+type=\"example\"\s+title=\"([^"]+)\"\s+name=\"([^"]+)\"(\s+language=\"([^"]+)\")?\]\]/) {
@@ -134,19 +148,19 @@ while (<>) {
         $name = $2;
         $language = $4;
         if ($language) {
-            process_one_language ($title, $name, $language, 1);
+            process_one_language ("examples", $name, $language, $title, 1);
         }
         else {
             $actions = "";
             $missing = "";
             #   Show primary language example inline
-            if (process_one_language ($title, $name, $source, 2)) {
+            if (process_one_language ("examples", $name, $source, $title, 2)) {
                 $translations {$source} += 1;
             }
             #   Show other languages as new tabs
             foreach $language (@languages) {
                 if ($language ne $source) {
-                    if (process_one_language ($title, $name, $language, 0)) {
+                    if (process_one_language ("examples", $name, $language, $title, 0)) {
                         $translations {$language} += 1;
                     }
                 }
@@ -216,12 +230,12 @@ while (<>) {
 die "Can't create scoreboard.wd: $!"
     unless open (SCOREBOARD, ">scoreboard.wd");
 print (SCOREBOARD "||||||~ Translations ($examples in total)||\n");
-foreach (@languages) {
-    printf (SCOREBOARD "|| %s || %3d || %3d%% ||\n", $_, $translations {$_}, ($translations {$_} * 100) / $examples);
+foreach $language (@languages) {
+    printf (SCOREBOARD "|| [/$extension{$language}:_start %s] || %3d || %3d%% ||\n", 
+        $language, $translations {$language}, 
+        ($translations {$language} * 100) / $examples);
 }
 close (SCOREBOARD);
-print UPLOAD "wdput zguide main scoreboard \"Language scoreboard\"\n";
-
 close (OUTPUT);
 close (UPLOAD);
 
@@ -240,10 +254,9 @@ sub writeln {
 #   Process one example in one language
 
 sub process_one_language {
-    local ($title, $name, $language, $inline) = @_;
-    $filename = "examples/$language/$name.$extension{$language}";
+    local ($directory, $name, $language, $title, $inline) = @_;
 
-    #   Create empty example if necessary
+    $filename = "$directory/$language/$name.$extension{$language}";
     if (-f $filename) {
         if ($inline == 0) {
             $actions = $actions." | " if $actions;
@@ -259,10 +272,10 @@ sub process_one_language {
         }
         if (signature_changed ($filename)) {
             print "Processing $name (in $language)...\n";
-            system ("echo \"[[html]]\">examples/$language/$name.wd");
-            system ("pygmentize -f html -O full $filename >>examples/$language/$name.wd");
+            system ("pygmentize -f bb $filename > tempfile.bb");
             exit (1) if $?;
-            system ("echo \"[[/html]]\">>examples/$language/$name.wd");
+            system ("bin/bb2wd tempfile.bb >examples/$language/$name.wd");
+            system ("rm tempfile.bb");
             print UPLOAD "cd examples/$language\n";
             print UPLOAD "    wdput zguide $extension{$language} $name \"$title in $language\"\n";
             print UPLOAD "    rm $name.wd\n";

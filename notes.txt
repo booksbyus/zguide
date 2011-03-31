@@ -1,3 +1,4 @@
+- clarify "Luckily there are non-blocking versions of these two sockets, called XREQ and XREP."
 - rename XREP/XREQ
 - remove zmsg, zlist, zhash
 - remove all from zhelpers that is provided by zapi
@@ -105,8 +106,14 @@ how to map names?
 - pub/sub socket on dynamic endpoints
 
 
++++ Pipelines
 
+- does PUSH block if there are no PULL sockets ready?
+- how do maintain a queue?
 
++++ File Transfer 
+
+example of file transfer
 
 +++ Generating Identities
 

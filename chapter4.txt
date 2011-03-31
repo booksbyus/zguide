@@ -444,7 +444,7 @@ To make the C examples easier to write and read, I've taken the hash and list co
 
 And here is the broker:
 
-[[code type="example" title="Majordomo Worker API" name="mdbroker"]]
+[[code type="example" title="Majordomo broker" name="mdbroker"]]
 [[/code]]
 
 This is by far the most complex example we've seen. It's almost 500 lines of code. To write this, and make it fully robust took two days. However this is still a short piece of code for a full service-oriented broker.
@@ -709,7 +709,7 @@ If you want to make Titanic //much faster and less reliable//, you can store req
 
 The Binary Star pattern puts two servers in a primary-backup high-availability pair. At any given time, one of these accepts connections from client applications (it is the "master") and one does not (it is the "slave"). Each server monitors the other. If the master disappears from the network, after a certain time the slave takes over as master.
 
-Binary Star pattern was developed by Pieter Hintjens and Martin Sustrik for the iMatix [http://www.openamq.org OpenAMQ server]. It is designed:
+Binary Star pattern was developed by Pieter Hintjens and Martin Sustrik for the iMatix [http://www.openamq.org OpenAMQ server]. We designed it: 
 
 * To provide a straight-forward high-availability solution.
 * To be simple enough to actually understand and use.
@@ -832,10 +832,13 @@ We don't attempt to cover:
 
 Here is the key terminology we use in Binary Star:
 
-: **Primary** : The primary server is the one that is normally 'master'.
-: **Backup** : The backup server is the one that is normally 'slave', it will become master if and when the primary server disappears from the network, and when client applications ask the backup server to connect.
-: **Master** : The master server is the one of a Binary Star pair that accepts client connections. There is always exactly one master server.
-: **Slave** : The slave server is the one that takes over if the master disappears. Note that when a Binary Star pair is running normally, the primary server is master, and the backup is slave. When a failover has happened, the roles are switched.
+* **Primary** - the primary server is the one that is normally 'master'.
+
+* **Backup** - the backup server is the one that is normally 'slave', it will become master if and when the primary server disappears from the network, and when client applications ask the backup server to connect.
+
+* **Master** - the master server is the one of a Binary Star pair that accepts client connections. There is always exactly one master server.
+
+* **Slave** - the slave server is the one that takes over if the master disappears. Note that when a Binary Star pair is running normally, the primary server is master, and the backup is slave. When a failover has happened, the roles are switched.
 
 To configure a Binary Star pair, you need to:
 
@@ -854,7 +857,7 @@ For client applications to work properly with a Binary Star pair, they must:
 # Recreate all of the state they require on a server.
 # Retransmit messages lost during a failover, if messages need to be reliable.
 
-It's not trivial work, and we'd almost always wrap this in an API that hides it from real end-user applications.
+It's not trivial work, and we'd usually wrap this in an API that hides it from real end-user applications.
 
 These are the main limitations of the Binary Star pattern:
 
@@ -879,7 +882,7 @@ A suitably paranoid network configuration would use two private cluster intercon
 
 ++++ Binary Star Implementation
 
-Without further ado, here is the Binary Star server:
+Without further ado, here is an implementation of the Binary Star server:
 
 [[code type="example" title="Binary Star server" name="bstarsrv"]]
 [[/code]]
@@ -936,6 +939,48 @@ This diagram shows the finite state machine. States in green accept client reque
 [[/code]]
 
 Note that the servers use PUB-SUB sockets for state exchange. No other socket combination will work here. PUSH and DEALER block if there is no peer ready to receive a message. PAIR does not reconnect if the peer disappears and comes back. ROUTER needs the address of the peer before it can send it a message.
+
+These are the main limitations of the Binary Star pattern:
+
+* A server process cannot be part of more than one Binary Star pair.
+* A primary server can have a single backup server, no more.
+* The backup server cannot do useful work while in slave mode.
+* The backup server must be capable of handling full application loads.
+* Failover configuration cannot be modified at runtime.
+* Client applications must do some work to benefit from failover.
+
+++++ Binary Star Class
+
+Binary Star is useful and generic enough to package up as a reusable class. The class handles state exchange, the finite state machine, and the poll loop. Here is the interface in C:
+
+[[code language="C"]]
+//  Create a new Binary Star instance, bind PUB and connect SUB
+bstar_t *
+    bstar_new (int primary, char *bind_to, char *connect_to);
+
+//  Destroy a Binary Star instance
+void
+    bstar_destroy (bstar_t **self_p);
+
+//  Listen on this endpoint for client votes
+void
+    bstar_listen (bstar_t *self, char *endpoint, int type);
+
+//  Wait for valid activity on client socket, return socket
+void *
+    bstar_wait (bstar_t *self);
+    
+[[/code]]
+
+And here is the class implementation:
+
+[[code type="example" title="Binary Star core class" name="bstar"]]
+[[/code]]
+
+Which gives us the following short main program for the server:
+
+[[code type="example" title="Binary Star server, using core class" name="bstarsrv2"]]
+[[/code]]
 
 +++ Brokerless Reliability (Freelance Pattern)
 

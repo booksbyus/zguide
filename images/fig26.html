@@ -2,24 +2,24 @@
 <pre class="textdiagram" id="fig26">
         +-----------+
         |           |
-        | Receiver  |
-        |           |
-        +-----------+
-        |  Socket   |
-        \-----+-----/
-              |  "My name's Lucy"
-              |
-              |
-              v  "Lucy! Nice to see you again..."
-        /-----------\
-        |  Socket   |
-        +-----------+
-        |           |
         |  Sender   |
         |           |
         +-----------+
+        |  Socket   |
+        \-----------/
+              ^  "Lucy! Nice to see you again..."
+              |
+              |
+              |  "My name's Lucy"
+        /-----+-----\
+        |  Socket   |
+        +-----------+
+        |           |
+        | Receiver  |
+        |           |
+        +-----------+
 
 
-       Figure 26 - Durable socket aka. Can't Escape
+        Figure 26 - Durable socket
 </pre>
 </html>
