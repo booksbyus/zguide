@@ -118,7 +118,7 @@ while (<>) {
         writeln ("[[cell]]");
         writeln ("$indent [#$anchor $header]");
         writeln ("[[/cell]]");
-        writeln ("[[cell style=\"align:right\"]]");
+        writeln ("[[cell style=\"text-align:right\"]]");
         writeln ("[#top ↑] [#header-$prev ←] [#header-$next →]");
         writeln ("[[/cell]]");
         writeln ("[[/row]]");
