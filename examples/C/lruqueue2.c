@@ -9,47 +9,56 @@
 
 #include "zapi.h"
 
-#define NBR_CLIENTS 10
-#define NBR_WORKERS 3
+#define NBR_CLIENTS 1
+#define NBR_WORKERS 1
 
-#define LRU_READY   0x01        //  Signals worker is ready
+#define LRU_READY   "\001"      //  Signals worker is ready
 
 //  Basic request-reply client using REQ socket
 //  Client thinks of messages as strings
 //
 static void *
-client_task (void *arg)
+client_task (void *arg_ptr)
 {
-    zthread_t *arg= (zthread_t *) arg_ptr;
-    void *client = zctx_socket_new (arg->ctx, ZMQ_REQ);
+    zthread_t *args = (zthread_t *) arg_ptr;
+    void *client = zctx_socket_new (args->ctx, ZMQ_REQ);
     zmq_connect (client, "ipc://frontend.ipc");
 
-    //  Send request, get reply
-    zstr_send (client, "HELLO");
-    char *reply = zstr_recv (client);
-    printf ("Client: %s\n", reply);
-    free (reply);
-
+    while (1) {
+        //  Send request, get reply
+        zstr_send (client, "HELLO");
+        char *reply = zstr_recv (client);
+        if (reply) {
+            printf ("Client: %s\n", reply);
+            free (reply);
+        }
+        else
+            break;              //  Interrupted
+        sleep (1);
+    }
     return NULL;
 }
 
 //  Echo worker using REQ socket to do LRU routing
 //
 static void *
-worker_task (void *arg)
+worker_task (void *arg_ptr)
 {
-    zthread_t *arg= (zthread_t *) arg_ptr;
-    void *worker = zctx_socket_new (arg->ctx, ZMQ_REQ);
+    zthread_t *args = (zthread_t *) arg_ptr;
+    void *worker = zctx_socket_new (args->ctx, ZMQ_REQ);
     zmq_connect (worker, "ipc://backend.ipc");
 
     //  Tell broker we're ready for work
     zframe_t *frame = zframe_new (LRU_READY, 1);
-    zframe_send (&frame worker);
+    zframe_send (&frame, worker, 0);
 
     //  Process messages as they arrive
     while (1) {
-        zmsg_t *zmsg = zmsg_recv (worker);
-        zmsg_send (&msg, worker);
+        zmsg_t *msg = zmsg_recv (worker);
+        if (msg)
+            zmsg_send (&msg, worker);
+        else
+            break;              //  Interrupted
     }
     return NULL;
 }
@@ -61,50 +70,51 @@ typedef struct {
 } lruqueue_t;
 
 
-//  Handle input from worker, on backend
-int s_handle_backend (zloop_t *loop, void *socket, void *arg)
-{
-    lruqueue_t *self = (lruqueue_t *) arg;
-
-    //  Use worker address for LRU routing
-    zmsg_t *msg = zmsg_recv (self->backend);
-    zframe_t *frame = zmsg_pop (msg);
-    zlist_append (self->workers, frame);
-    //  Enable reader on frontend if we went from 0 to 1 workers
-    if (zlist_size (self->workers) == 1)
-        zloop_reader (reactor, self->frontend, s_handle_frontend, self);
-
-    //  Forward message to client if it's not a READY
-    if (memcmp (zframe_data (frame), "READY", 5))
-        zmsg_send (&msg, self->frontend);
-    else
-        zmsg_destroy (&msg);
-
-    return 0;
-}
-
 //  Handle input from client, on frontend
 int s_handle_frontend (zloop_t *loop, void *socket, void *arg)
 {
-    - input on frontend
-        - pop next worker and send request to it
-        - disable frontend reader if 1->0
-            //  Now get next client request, route to next worker
-            zmsg_t *zmsg = zmsg_recv (frontend);
-            zmsg_wrap (msg, worker_queue [0], "");
-            zmsg_send (&msg, backend);
+    //  Get client request, route to first available worker
+    lruqueue_t *self = (lruqueue_t *) arg;
+    zmsg_t *msg = zmsg_recv (self->frontend);
+    if (msg) {
+        zframe_t *frame = (zframe_t *) zlist_pop (self->workers);
+        zmsg_pushmem (msg, "", 0);
+        zmsg_push (msg, frame);
+        zmsg_send (&msg, self->backend);
 
-            //  Dequeue and drop the next worker address
-            free (worker_queue [0]);
-            DEQUEUE (worker_queue);
-            available_workers--;
+        //  Cancel reader on frontend if we went from 1 to 0 workers
+        if (zlist_size (self->workers) == 0)
+            zloop_cancel (loop, self->frontend);
+    }
     return 0;
 }
 
+//  Handle input from worker, on backend
+int s_handle_backend (zloop_t *loop, void *socket, void *arg)
+{
+    //  Use worker address for LRU routing
+    lruqueue_t *self = (lruqueue_t *) arg;
+    zmsg_t *msg = zmsg_recv (self->backend);
+    if (msg) {
+        zframe_t *frame = zmsg_pop (msg);
+        zlist_append (self->workers, frame);
+
+        //  Enable reader on frontend if we went from 0 to 1 workers
+        if (zlist_size (self->workers) == 1)
+            zloop_reader (loop, self->frontend, s_handle_frontend, self);
+
+        //  Forward message to client if it's not a READY
+        if (memcmp (zframe_data (frame), LRU_READY, 1) == 0)
+            zmsg_destroy (&msg);
+        else
+            zmsg_send (&msg, self->frontend);
+    }
+    return 0;
+}
 
 int main (void)
 {
-    zctx_t ctx = zctx_new ();
+    zctx_t *ctx = zctx_new ();
     lruqueue_t *self = (lruqueue_t *) zmalloc (sizeof (lruqueue_t));
     self->frontend = zctx_socket_new (ctx, ZMQ_ROUTER);
     self->backend  = zctx_socket_new (ctx, ZMQ_ROUTER);
@@ -112,13 +122,13 @@ int main (void)
     zmq_bind (self->backend, "ipc://backend.ipc");
 
     int client_nbr;
-    for (client_nbr = 0; client_nbr < NBR_CLIENTS; client_nbr++)
+    for (client_nbr = 0; client_nbr < NBR_CLIENTS; client_nbr++) {
         void *pipe = zctx_thread_new (ctx, client_task, NULL);
-
+    }
     int worker_nbr;
-    for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++)
+    for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++) {
         void *pipe = zctx_thread_new (ctx, worker_task, NULL);
-
+    }
     //  List of available workers
     self->workers = zlist_new ();
 
@@ -128,10 +138,11 @@ int main (void)
     zloop_start (reactor);
 
     //  When we're done, clean up properly
-    zframe_t *frame = zmsg_pop (msg);
     zlist_destroy (&self->workers);
     zloop_destroy (&reactor);
+    puts ("1");
     zctx_destroy (&ctx);
+    puts ("2");
     free (self);
     return 0;
 }
