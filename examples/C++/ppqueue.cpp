@@ -1,6 +1,8 @@
 //
 //  Paranoid Pirate queue
 //
+//     Andreas Hoelzlwimmer <andreas.hoelzlwimmer@fh-hagenberg.at>
+//
 #include "zmsg.hpp"
 
 #include <stdint.h>
