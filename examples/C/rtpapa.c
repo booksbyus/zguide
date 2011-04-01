@@ -1,5 +1,5 @@
 //
-//  Custom routing Router to Papa (XREP to REP)
+//  Custom routing Router to Papa (ROUTER to REP)
 //
 #include "zhelpers.h"
 
@@ -9,7 +9,7 @@ int main (void)
 {
     void *context = zmq_init (1);
 
-    void *client = zmq_socket (context, ZMQ_XREP);
+    void *client = zmq_socket (context, ZMQ_ROUTER);
     zmq_bind (client, "ipc://routing.ipc");
 
     void *worker = zmq_socket (context, ZMQ_REP);
@@ -34,7 +34,7 @@ int main (void)
     //  We don't play with envelopes in the worker
     s_send (worker, "This is the reply");
 
-    //  Now dump what we got off the XREP socket...
+    //  Now dump what we got off the ROUTER socket...
     s_dump (client);
 
     zmq_close (client);

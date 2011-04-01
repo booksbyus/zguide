@@ -11,7 +11,7 @@ static void *
 client_task (void *args)
 {
     void *context = zmq_init (1);
-    void *client = zmq_socket (context, ZMQ_XREQ);
+    void *client = zmq_socket (context, ZMQ_DEALER);
     zmq_setsockopt (client, ZMQ_IDENTITY, "C", 1);
     zmq_connect (client, "tcp://localhost:5555");
     
@@ -54,7 +54,7 @@ static void *
 worker_task (void *args)
 {
     void *context = zmq_init (1);
-    void *worker = zmq_socket (context, ZMQ_XREQ);
+    void *worker = zmq_socket (context, ZMQ_DEALER);
     zmq_setsockopt (worker, ZMQ_IDENTITY, "W", 1);
     zmq_connect (worker, "tcp://localhost:5556");
 
@@ -72,8 +72,8 @@ broker_task (void *args)
 {
     //  Prepare our context and sockets
     void *context = zmq_init (1);
-    void *frontend = zmq_socket (context, ZMQ_XREP);
-    void *backend  = zmq_socket (context, ZMQ_XREP);
+    void *frontend = zmq_socket (context, ZMQ_ROUTER);
+    void *backend  = zmq_socket (context, ZMQ_ROUTER);
     zmq_bind (frontend, "tcp://*:5555");
     zmq_bind (backend,  "tcp://*:5556");
 
@@ -105,12 +105,12 @@ broker_task (void *args)
 
 int main (void)
 {
-    s_version_assert (2, 1);
-
     pthread_t client;
     pthread_create (&client, NULL, client_task, NULL);
+
     pthread_t worker;
     pthread_create (&worker, NULL, worker_task, NULL);
+
     pthread_t broker;
     pthread_create (&broker, NULL, broker_task, NULL);
     pthread_join (client, NULL);

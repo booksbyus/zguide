@@ -15,7 +15,7 @@ static char identity [10];
 
 static void *
 s_worker_socket (void *context) {
-    void *worker = zmq_socket (context, ZMQ_XREQ);
+    void *worker = zmq_socket (context, ZMQ_DEALER);
 
     //  Set random identity to make tracing easier
     sprintf (identity, "%04X-%04X", randof (0x10000), randof (0x10000));
@@ -35,7 +35,6 @@ s_worker_socket (void *context) {
 
 int main (void)
 {
-    s_version_assert (2, 1);
     srandom ((unsigned) time (NULL));
 
     void *context = zmq_init (1);

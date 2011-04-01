@@ -1,6 +1,6 @@
 //
 //  Freelance server - Model 3
-//  Uses an ROUTER/XREP socket but just one thread
+//  Uses an ROUTER/ROUTER socket but just one thread
 //
 #include "zmsg.h"
 
@@ -14,7 +14,7 @@ int main (int argc, char *argv [])
     //  Prepare server socket with predictable identity
     char *bind_endpoint = "tcp://*:5555";
     char *connect_endpoint = "tcp://localhost:5555";
-    void *server = zmq_socket (context, ZMQ_XREP);
+    void *server = zmq_socket (context, ZMQ_ROUTER);
     zmq_setsockopt (server, 
         ZMQ_IDENTITY, connect_endpoint, strlen (connect_endpoint));
     zmq_bind (server, bind_endpoint);

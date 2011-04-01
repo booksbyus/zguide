@@ -91,7 +91,6 @@ int main (int argc, char *argv [])
 {
     int verbose = (argc > 1 && streq (argv [1], "-v"));
 
-    s_version_assert (2, 1);
     s_catch_signals ();
     broker_t *self = s_broker_new (verbose);
     s_broker_bind (self, "tcp://*:5555");
@@ -157,7 +156,7 @@ s_broker_new (int verbose)
 
     //  Initialize broker state
     self->context = zmq_init (1);
-    self->socket = zmq_socket (self->context, ZMQ_XREP);
+    self->socket = zmq_socket (self->context, ZMQ_ROUTER);
     self->verbose = verbose;
     self->services = zhash_new ();
     self->workers = zhash_new ();

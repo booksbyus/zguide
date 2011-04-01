@@ -166,7 +166,7 @@ server_new (void *context, char *address, char *service)
     char endpoint [256];
     printf ("I: connecting to %s:%s...\n", address, service);
     snprintf (endpoint, 256, "%s:%d", address, atoi (service));
-    self->snapshot = zmq_socket (context, ZMQ_XREQ);
+    self->snapshot = zmq_socket (context, ZMQ_DEALER);
     int rc = zmq_connect (self->snapshot, endpoint);
     assert (rc == 0);
 

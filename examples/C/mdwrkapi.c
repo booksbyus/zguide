@@ -88,7 +88,7 @@ void s_mdwrk_connect_to_broker (mdwrk_t *self)
 {
     if (self->worker)
         zmq_close (self->worker);
-    self->worker = zmq_socket (self->context, ZMQ_XREQ);
+    self->worker = zmq_socket (self->context, ZMQ_DEALER);
     int linger = 0;
     zmq_setsockopt (self->worker, ZMQ_LINGER, &linger, sizeof (linger));
     zmq_connect (self->worker, self->broker);
@@ -112,7 +112,6 @@ mdwrk_new (char *broker,char *service, int verbose)
 {
     assert (broker);
     assert (service);
-    s_version_assert (2, 1);
 
     mdwrk_t *self = (mdwrk_t *) calloc (1, sizeof (mdwrk_t));
     self->broker = strdup (broker);

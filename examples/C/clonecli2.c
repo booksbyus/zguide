@@ -13,7 +13,7 @@ int main (void)
     zmq_setsockopt (subscriber, ZMQ_SUBSCRIBE, "", 0);
     zmq_connect (subscriber, "tcp://localhost:5556");
 
-    void *snapshot = zmq_socket (context, ZMQ_XREQ);
+    void *snapshot = zmq_socket (context, ZMQ_DEALER);
     zmq_connect (snapshot, "tcp://localhost:5557");
 
     s_catch_signals ();

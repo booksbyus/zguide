@@ -35,11 +35,11 @@ int main (void)
         s_send (client, request);
 
         int expect_reply = 1;
-        while (expect_reply) {
+        while (expect_reply && !s_interrupted) {
             //  Poll socket for a reply, with timeout
             zmq_pollitem_t items [] = { { client, 0, ZMQ_POLLIN, 0 } };
             zmq_poll (items, 1, REQUEST_TIMEOUT * 1000);
-            
+
             //  If we got a reply, process it
             if (items [0].revents & ZMQ_POLLIN) {
                 //  We got a reply from the server, must match sequence
@@ -50,7 +50,7 @@ int main (void)
                     sleep (1);  //  One request per second
                 }
                 else {
-                    printf ("E: malformed reply from server: %s\n", 
+                    printf ("E: malformed reply from server: %s\n",
                         reply);
                 }
                 free (reply);
@@ -67,7 +67,6 @@ int main (void)
             }
         }
     }
-    puts ("INTERRUIPTED");
     zmq_close (client);
     zmq_term (context);
     return 0;

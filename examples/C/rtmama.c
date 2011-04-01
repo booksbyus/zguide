@@ -1,5 +1,5 @@
 //
-//  Custom routing Router to Mama (XREP to REQ)
+//  Custom routing Router to Mama (ROUTER to REQ)
 //
 //  While this example runs in a single process, that is just to make
 //  it easier to start and stop the example. Each thread has its own
@@ -44,10 +44,8 @@ worker_task (void *args)
 
 int main (void)
 {
-    s_version_assert (2, 1);
     void *context = zmq_init (1);
-
-    void *client = zmq_socket (context, ZMQ_XREP);
+    void *client = zmq_socket (context, ZMQ_ROUTER);
     zmq_bind (client, "ipc://routing.ipc");
     srandom ((unsigned) time (NULL));
 

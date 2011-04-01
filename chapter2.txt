@@ -269,11 +269,11 @@ These are the socket combinations that are valid for a connect-bind pair (either
 
 * PUB and SUB
 * REQ and REP
-* REQ and XREP
-* XREQ and REP
-* XREQ and XREP
-* XREQ and XREQ
-* XREP and XREP
+* REQ and ROUTER
+* DEALER and REP
+* DEALER and ROUTER
+* DEALER and DEALER
+* ROUTER and ROUTER
 * PUSH and PULL
 * PAIR and PAIR
 
@@ -534,7 +534,7 @@ Any long-running application has to manage memory correctly, or eventually it'll
 $ cd zeromq2
 $ export CPPFLAGS=-DZMQ_MAKE_VALGRIND_HAPPY
 $ ./configure
-$ make clean; make 
+$ make clean; make
 $ sudo make install
 [[/code]]
 
@@ -790,9 +790,11 @@ When you use REQ to talk to REP you get a strictly synchronous request-reply dia
 
 But our broker has to be non-blocking. Obviously we can use zmq_poll[3] to wait for activity on either socket, but we can't use REP and REQ.
 
-Luckily there are non-blocking versions of these two sockets, called XREQ and XREP. These "extended request/reply" sockets let you extend request-reply across intermediate nodes, such as our message queuing broker.
+Luckily there are two sockets called DEALER and ROUTER that let you do non-blocking request-response. These sockets used to be called XREQ and XREP, and you may see these names in old code. The old names suggested that XREQ was an "extended REQ" and XREP was an "extended REP" but that's inaccurate. You'll see in Chapter Three how DEALER and ROUTER sockets let you build all kinds of asynchronous request-reply flows.
 
-When we extend request-reply, REQ talks to XREP and XREQ talks to REP. In between the XREQ and XREP we have to have code (like our broker) that pulls messages off the one socket and shoves them onto the other:
+Now, we're just going to see how DEALER and ROUTER let us extend REQ-REP across a device, that is, our little broker.
+
+In this simple stretched request-reply pattern, REQ talks to ROUTER and DEALER talks to REP. In between the DEALER and ROUTER we have to have code (like our broker) that pulls messages off the one socket and shoves them onto the other:
 
 [[code type="textdiagram"]]
   +---------+   +---------+   +---------+
@@ -804,11 +806,11 @@ When we extend request-reply, REQ talks to XREP and XREQ talks to REP. In betwee
                      |
                      |
                /-----+-----\
-               |   XREP    |
+               |  ROUTER   |
                +-----------+
                |   code    |
                +-----------+
-               |   XREQ    |
+               |  DEALER   |
                \-----+-----/
                      |
                      |
@@ -820,7 +822,7 @@ When we extend request-reply, REQ talks to XREP and XREQ talks to REP. In betwee
   +---------+   +---------+   +---------+
 
 
-    Figure # - Extending request-reply
+    Figure # - Extended request-reply
 [[/code]]
 
 The request-reply broker binds to two endpoints, one for clients to connect to (the frontend socket) and one for services to connect to (the backend). To test this broker, you will want to change your services so they connect to the backend socket. Here are a client and service that show what I mean:
@@ -860,13 +862,13 @@ Using a request-reply broker makes your client-server architectures easier to sc
                      v
                    bind
                /-----------\
-               |   XREP    |
+               |  ROUTER   |
                +-----------+
                |           |
                |   Broker  |
                |           |
                +-----------+
-               |   XREQ    |
+               |  DEALER   |
                \-----------/
                    bind
                      |
@@ -912,7 +914,7 @@ Which if you start a QUEUE device is exactly like plugging the main body of the 
 
 The built-in devices do proper error handling, whereas the examples we have shown don't. Since you can configure the sockets as you need to, before starting the device, it's worth using the built-in devices when you can.
 
-If you're like most 0MQ users, at this stage your mind is starting to think, "//what kind of evil stuff can I do if I plug random socket types into devices?//"  The short answer is: don't do it. You can mix socket types but the results are going to be weird. So stick to using XREP/XREQ for queue devices, SUB/PUB for forwarders and PULL/PUSH for streamers.
+If you're like most 0MQ users, at this stage your mind is starting to think, "//what kind of evil stuff can I do if I plug random socket types into devices?//"  The short answer is: don't do it. You can mix socket types but the results are going to be weird. So stick to using ROUTER/DEALER for queue devices, SUB/PUB for forwarders and PULL/PUSH for streamers.
 
 When you start to need other combinations, it's time to write your own devices.
 
@@ -961,13 +963,13 @@ All the code should be recognizable to you by now. How it works:
 
 * The server starts a set of worker threads. Each worker thread creates a REP socket and then processes requests on this socket. Worker threads are just like single-threaded servers. The only differences are the transport ({{inproc}} instead of {{tcp}}), and the bind-connect direction.
 
-* The server creates an XREP (extended reply) socket to talk to clients and binds this to its external interface (over {{tcp}}).
+* The server creates a ROUTER socket to talk to clients and binds this to its external interface (over {{tcp}}).
 
-* The server creates an XREQ (extended request) socket to talk to the workers and binds this to its internal interface (over {{inproc}}).
+* The server creates a DEALER socket to talk to the workers and binds this to its internal interface (over {{inproc}}).
 
 * The server starts a QUEUE device that connects the two sockets. The QUEUE device keeps a single queue for incoming requests, and distributes those out to workers. It also routes replies back to their origin.
 
-Here the 'work' is just a one-second pause. We could do anything in the workers, including talking to other nodes. This is what the MT server looks like in terms of ØMQ sockets and nodes. Note how the request-reply chain is {{REQ-XREP-queue-XREQ-REP}}:
+Here the 'work' is just a one-second pause. We could do anything in the workers, including talking to other nodes. This is what the MT server looks like in terms of ØMQ sockets and nodes. Note how the request-reply chain is {{REQ-ROUTER-queue-DEALER-REP}}:
 
 [[code type="textdiagram"]]
                  +------------+
@@ -984,7 +986,7 @@ Here the 'work' is just a one-second pause. We could do anything in the workers,
   /------------------|--=-|------------------\
   |                  v    |                  :
   |              /--------+---\              |
-  |              |    XREP    |              |
+  |              |   ROUTER   |              |
   |              +------------+              |
   |              |            |              |
   |              |   Server   |              |
@@ -995,7 +997,7 @@ Here the 'work' is just a one-second pause. We could do anything in the workers,
   |              |   device   |              |
   |              |            |              |
   |              +------------+              |
-  |              |    XREQ    |              |
+  |              |   DEALER   |              |
   |              \------------/              |
   |                    ^                     |
   |                    |                     |
@@ -1077,9 +1079,9 @@ This is the first time we've shown an example using PAIR sockets. Why use PAIR? 
 
 * You can use PUSH for the sender and PULL for the receiver. This looks simple and will work, but remember that PUSH will load-balance messages to all available receivers. If you by accident start two receivers (e.g. you already have one running and you start a second), you'll "lose" half of your signals. PAIR has the advantage of refusing more than one connection, the pair is //exclusive//.
 
-* You can use XREQ for the sender and XREP for the receiver. XREP however wraps your message in an "envelope", meaning your zero-size signal turns into a multipart message. If you don't care about the data, and treat anything as a valid signal, and if you don't read more than once from the socket, that won't matter. If however you decide to send real data, you will suddenly find XREP providing you with "wrong" messages. XREQ also load-balances, giving the same risk as PUSH.
+* You can use DEALER for the sender and ROUTER for the receiver. ROUTER however wraps your message in an "envelope", meaning your zero-size signal turns into a multipart message. If you don't care about the data, and treat anything as a valid signal, and if you don't read more than once from the socket, that won't matter. If however you decide to send real data, you will suddenly find ROUTER providing you with "wrong" messages. DEALER also load-balances, giving the same risk as PUSH.
 
-* You can use PUB for the sender and SUB for the receiver. This will correctly deliver you messages exactly as you sent them and PUB does not load-balance as PUSH or XREQ do. However you need to configure the subscriber with an empty subscription, which is annoying. Worse, the reliability of the PUB-SUB link is timing dependent and messages can get lost if the SUB socket is connecting while the PUB socket is sending its message.
+* You can use PUB for the sender and SUB for the receiver. This will correctly deliver you messages exactly as you sent them and PUB does not load-balance as PUSH or DEALER do. However you need to configure the subscriber with an empty subscription, which is annoying. Worse, the reliability of the PUB-SUB link is timing dependent and messages can get lost if the SUB socket is connecting while the PUB socket is sending its message.
 
 For these reasons, PAIR makes the best choice for coordination between pairs of threads.
 
@@ -1315,7 +1317,7 @@ Some comments on setting a socket identity:
 
 * Do not use random identities in applications that create lots of sockets. What this will do is cause lots and lots of durable sockets to pile up, eventually crashing nodes.
 
-* If you need to know the identity of the //peer// you got a message from, only the XREP socket does this for you automatically. For any other socket type you must send the address explicitly, as a message part.
+* If you need to know the identity of the //peer// you got a message from, only the ROUTER socket does this for you automatically. For any other socket type you must send the address explicitly, as a message part.
 
 See zmq_setsockopt[3] for a summary of the ZMQ_IDENTITY socket option. Note that the zmq_getsockopt[3] method gives you the identity of the socket you are working with, //not// any peer it might be connected to.
 
@@ -1485,7 +1487,7 @@ Some notes on durable subscribers:
 
 Some notes on using the HWM option:
 
-* This affects both the transmit and receive buffers of a single socket. Some sockets (PUB, PUSH) only have transmit buffers. Some (SUB, PULL, REQ, REP) only have receive buffers. Some (XREQ, XREP, PAIR) have both transmit and receive buffers.
+* This affects both the transmit and receive buffers of a single socket. Some sockets (PUB, PUSH) only have transmit buffers. Some (SUB, PULL, REQ, REP) only have receive buffers. Some (DEALER, ROUTER, PAIR) have both transmit and receive buffers.
 
 * When your socket reaches its high-water mark, it will either block or drop data depending on the socket type. PUB sockets will drop data if they reach their high-water mark, while other socket types will block.
 

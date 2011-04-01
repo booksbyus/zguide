@@ -64,7 +64,6 @@ mdcli_t *
 mdcli_new (char *broker, int verbose)
 {
     assert (broker);
-    s_version_assert (2, 1);
 
     mdcli_t *self = (mdcli_t *) calloc (1, sizeof (mdcli_t));
     self->broker = strdup (broker);

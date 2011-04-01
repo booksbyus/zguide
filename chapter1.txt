@@ -793,7 +793,7 @@ As you start to program with 0MQ you will come across one problem more than once
         +-----------------+        +-----------------+        +-----------------+
         |                 |        | Check that the  |        | If you're using |
         |  Are you using  |        | reply address   |        | identities make |
-        |  XREP sockets?  +------->| is valid. 0MQ   +------->| sure to set them|
+        | ROUTER sockets? +------->| is valid. 0MQ   +------->| sure to set them|
         |                 | Yes    | drops messages  |        | before not after|
         |             {o} |        | it can't route. |        | you connect.    |
         +--------+--------+        +-----------------+        +--------+--------+

@@ -1,5 +1,5 @@
 //
-//  Asynchronous client-to-server (XREQ to XREP)
+//  Asynchronous client-to-server (DEALER to ROUTER)
 //
 //  While this example runs in a single process, that is just to make
 //  it easier to start and stop the example. Each task has its own
@@ -17,7 +17,7 @@ static void *
 client_task (void *args)
 {
     void *context = zmq_init (1);
-    void *client = zmq_socket (context, ZMQ_XREQ);
+    void *client = zmq_socket (context, ZMQ_DEALER);
 
     //  Generate printable identity for the client
     char identity [5];
@@ -62,11 +62,11 @@ void *server_task (void *args)
     void *context = zmq_init (1);
 
     //  Frontend socket talks to clients over TCP
-    void *frontend = zmq_socket (context, ZMQ_XREP);
+    void *frontend = zmq_socket (context, ZMQ_ROUTER);
     zmq_bind (frontend, "tcp://*:5570");
 
     //  Backend socket talks to workers over inproc
-    void *backend = zmq_socket (context, ZMQ_XREQ);
+    void *backend = zmq_socket (context, ZMQ_DEALER);
     zmq_bind (backend, "inproc://backend");
 
     //  Launch pool of worker threads, precise number is not critical
@@ -112,11 +112,11 @@ void *server_task (void *args)
 static void *
 server_worker (void *context)
 {
-    void *worker = zmq_socket (context, ZMQ_XREQ);
+    void *worker = zmq_socket (context, ZMQ_DEALER);
     zmq_connect (worker, "inproc://backend");
 
     while (1) {
-        //  The XREQ socket gives us the address envelope and message
+        //  The DEALER socket gives us the address envelope and message
         zmsg_t *msg = zmsg_recv (worker);
         assert (zmsg_parts (msg) == 2);
 
@@ -140,8 +140,6 @@ server_worker (void *context)
 //
 int main (void)
 {
-    s_version_assert (2, 1);
-
     pthread_t client_thread;
     pthread_create (&client_thread, NULL, client_task, NULL);
     pthread_create (&client_thread, NULL, client_task, NULL);

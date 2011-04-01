@@ -80,7 +80,6 @@ int main (int argc, char *argv [])
     //  First argument is this broker's name
     //  Other arguments are our peers' names
     //
-    s_version_assert (2, 1);
     if (argc < 2) {
         printf ("syntax: peering2 me {you}...\n");
         exit (EXIT_FAILURE);
@@ -94,14 +93,14 @@ int main (int argc, char *argv [])
     char endpoint [256];
 
     //  Bind cloud frontend to endpoint
-    void *cloudfe = zmq_socket (context, ZMQ_XREP);
+    void *cloudfe = zmq_socket (context, ZMQ_ROUTER);
     snprintf (endpoint, 255, "ipc://%s-cloud.ipc", self);
     zmq_setsockopt (cloudfe, ZMQ_IDENTITY, self, strlen (self));
     int rc = zmq_bind (cloudfe, endpoint);
     assert (rc == 0);
 
     //  Connect cloud backend to all peers
-    void *cloudbe = zmq_socket (context, ZMQ_XREP);
+    void *cloudbe = zmq_socket (context, ZMQ_ROUTER);
     zmq_setsockopt (cloudbe, ZMQ_IDENTITY, self, strlen (self));
 
     int argn;
@@ -114,12 +113,12 @@ int main (int argc, char *argv [])
     }
 
     //  Prepare local frontend and backend
-    void *localfe = zmq_socket (context, ZMQ_XREP);
+    void *localfe = zmq_socket (context, ZMQ_ROUTER);
     snprintf (endpoint, 255, "ipc://%s-localfe.ipc", self);
     rc = zmq_bind (localfe, endpoint);
     assert (rc == 0);
 
-    void *localbe = zmq_socket (context, ZMQ_XREP);
+    void *localbe = zmq_socket (context, ZMQ_ROUTER);
     snprintf (endpoint, 255, "ipc://%s-localbe.ipc", self);
     rc = zmq_bind (localbe, endpoint);
     assert (rc == 0);

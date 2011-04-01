@@ -424,10 +424,10 @@ kvmsg_test (int verbose)
 
     //  Prepare our context and sockets
     void *context = zmq_init (1);
-    void *output = zmq_socket (context, ZMQ_XREQ);
+    void *output = zmq_socket (context, ZMQ_DEALER);
     int rc = zmq_bind (output, "ipc://kvmsg_selftest.ipc");
     assert (rc == 0);
-    void *input = zmq_socket (context, ZMQ_XREQ);
+    void *input = zmq_socket (context, ZMQ_DEALER);
     rc = zmq_connect (input, "ipc://kvmsg_selftest.ipc");
     assert (rc == 0);
 

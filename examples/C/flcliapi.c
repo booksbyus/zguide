@@ -207,7 +207,7 @@ agent_new (void *context, char *endpoint)
     self->servers = zhash_new ();
     self->actives = zlist_new ();
     self->control = zmq_socket (self->context, ZMQ_PAIR);
-    self->router  = zmq_socket (self->context, ZMQ_XREP);
+    self->router  = zmq_socket (self->context, ZMQ_ROUTER);
     zmq_connect (self->control, endpoint);
     return self;
 }

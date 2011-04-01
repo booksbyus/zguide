@@ -36,7 +36,7 @@ typedef struct {
 //  Returns TRUE if there was an exception
 
 static Bool
-s_state_machine (bstar_t *fsm) 
+s_state_machine (bstar_t *fsm)
 {
     Bool exception = FALSE;
     //  Primary server is waiting for peer to connect
@@ -100,7 +100,7 @@ s_state_machine (bstar_t *fsm)
             //  Peer becomes master if timeout has passed
             //  It's the client request that triggers the failover
             assert (fsm->peer_expiry > 0);
-            if (s_clock () > fsm->peer_expiry) {
+            if (s_clock () >= fsm->peer_expiry) {
                 //  If peer is dead, switch to the active state
                 printf ("I: failover successful, ready as master\n");
                 fsm->state = STATE_ACTIVE;
@@ -148,10 +148,10 @@ int main (int argc, char *argv [])
     }
     //  Set timer for next outgoing state message
     int64_t send_state_at = s_clock () + HEARTBEAT;
-        
+
     while (!s_interrupted) {
-        zmq_pollitem_t items [] = { 
-            { frontend, 0, ZMQ_POLLIN, 0 }, 
+        zmq_pollitem_t items [] = {
+            { frontend, 0, ZMQ_POLLIN, 0 },
             { statesub, 0, ZMQ_POLLIN, 0 }
         };
         int time_left = (int) ((send_state_at - s_clock ()));

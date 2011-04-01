@@ -1,29 +1,29 @@
-/*  =========================================================================
-    bstar - Binary Star server core
+/*  =====================================================================
+    bstar - Binary Star reactor
 
-    -------------------------------------------------------------------------
+    ---------------------------------------------------------------------
     Copyright (c) 1991-2011 iMatix Corporation <www.imatix.com>
     Copyright other contributors as noted in the AUTHORS file.
 
     This file is part of the ZeroMQ Guide: http://zguide.zeromq.org
 
-    This is free software; you can redistribute it and/or modify it under the
-    terms of the GNU Lesser General Public License as published by the Free
-    Software Foundation; either version 3 of the License, or (at your option)
-    any later version.
+    This is free software; you can redistribute it and/or modify it under
+    the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation; either version 3 of the License, or (at
+    your option) any later version.
 
     This software is distributed in the hope that it will be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABIL-
-    ITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
-    Public License for more details.
+    WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+    Lesser General Public License for more details.
 
-    You should have received a copy of the GNU Lesser General Public License
-    along with this program. If not, see <http://www.gnu.org/licenses/>.
-    =========================================================================
+    You should have received a copy of the GNU Lesser General Public
+    License along with this program. If not, see
+    <http://www.gnu.org/licenses/>.
+    =====================================================================
 */
 
 #include "bstar.h"
-#include "zlist.h"
 
 //  States we can be in at any point in time
 typedef enum {
@@ -50,100 +50,20 @@ typedef enum {
 //  Structure of our class
 
 struct _bstar_t {
-    void *context;              //  0MQ context
+    zctx_t *ctx;                //  Our private context
+    zloop_t *loop;              //  Reactor loop
     void *statepub;             //  State publisher
     void *statesub;             //  State subscriber
-    zlist_t *frontends;         //  List of frontends
     state_t state;              //  Current state
     event_t event;              //  Current event
     int64_t peer_expiry;        //  When peer is considered 'dead'
-    int64_t send_state;         //  When we send our state
+    zloop_fn *voter_handler;    //  Voting socket handler
+    void *voter_arg;            //  Arguments for handler
 };
 
 
-//  --------------------------------------------------------------------------
-//  Constructor; if size is >0, allocates frame with that size, and if data
-//  is not null, copies data into frame.
-
-bstar_t *
-bstar_new (int primary, char *bind_to, char *connect_to)
-{
-    bstar_t
-        *self;
-
-    self = (bstar_t *) calloc (1, sizeof (bstar_t));
-
-    //  Initialize the Binary Star
-    self->state = primary? STATE_PRIMARY: STATE_BACKUP;
-    self->frontends = zlist_new ();
-    self->send_state = s_clock () + BSTAR_HEARTBEAT;
-    s_catch_signals ();
-
-    //  We'll manage our own 0MQ context and sockets
-    self->context = zmq_init (1);
-
-    //  Create publisher for state going to peer
-    self->statepub = zmq_socket (self->context, ZMQ_PUB);
-    int rc = zmq_bind (self->statepub, bind_to);
-    assert (rc == 0);
-
-    //  Create subscriber for state coming from peer
-    self->statesub = zmq_socket (self->context, ZMQ_SUB);
-    zmq_setsockopt (self->statesub, ZMQ_SUBSCRIBE, "", 0);
-    rc = zmq_connect (self->statesub, connect_to);
-    assert (rc == 0);
-
-    return self;
-}
-
-
-//  --------------------------------------------------------------------------
-//  Destructor
-
-void
-bstar_destroy (bstar_t **self_p)
-{
-    assert (self_p);
-    if (*self_p) {
-        bstar_t *self = *self_p;
-
-        //  Shutdown sockets and context
-        int zero = 0;
-        zmq_setsockopt (self->statepub, ZMQ_LINGER, &zero, sizeof (zero));
-        zmq_close (self->statepub);
-
-        zmq_setsockopt (self->statesub, ZMQ_LINGER, &zero, sizeof (zero));
-        zmq_close (self->statesub);
-
-        //  Close all frontends, no lingering
-        while (zlist_size (self->frontends)) {
-            void *frontend = zlist_pop (self->frontends);
-            zmq_setsockopt (frontend, ZMQ_LINGER, &zero, sizeof (zero));
-            zmq_close (frontend);
-        }
-        zlist_destroy (&self->frontends);
-        zmq_term (self->context);
-        free (self);
-        *self_p = NULL;
-    }
-}
-
-
-//  --------------------------------------------------------------------------
-//  Listen on this endpoint for client votes
-
-void
-bstar_listen (bstar_t *self, char *endpoint, int type)
-{
-    void *frontend = zmq_socket (self->context, type);
-    int rc = zmq_bind (frontend, endpoint);
-    assert (rc == 0);
-    zlist_append (self->frontends, frontend);
-}
-
-
-//  --------------------------------------------------------------------------
-//  Execute finite state machine (apply event to state)
+//  ---------------------------------------------------------------------
+//  Binary Star finite state machine (applies event to state)
 //  Returns -1 if there was an exception, 0 if event was valid.
 
 static int
@@ -211,7 +131,7 @@ s_execute_fsm (bstar_t *self)
             //  Peer becomes master if timeout has passed
             //  It's the client request that triggers the failover
             assert (self->peer_expiry > 0);
-            if (s_clock () > self->peer_expiry) {
+            if (zclock_time () >= self->peer_expiry) {
                 //  If peer is dead, switch to the active state
                 printf ("I: failover successful, ready as master\n");
                 self->state = STATE_ACTIVE;
@@ -225,64 +145,128 @@ s_execute_fsm (bstar_t *self)
 }
 
 
-//  --------------------------------------------------------------------------
-//  Wait for valid activity on client socket, return socket
+//  ---------------------------------------------------------------------
+//  Reactor event handlers...
 
-void *
-bstar_wait (bstar_t *self)
+//  Publish our state to peer
+int s_send_state (zloop_t *loop, void *socket, void *arg)
 {
-    //  Build poll set
-    int poll_size = zlist_size (self->frontends) + 1;
-    zmq_pollitem_t *poll_set
-        = calloc (1, poll_size * sizeof (zmq_pollitem_t));
-    poll_set [0].socket = self->statesub;
-    poll_set [0].events = ZMQ_POLLIN;
-    uint index = 0;
-    void *frontend = zlist_first (self->frontends);
-    while (frontend) {
-        index++;
-        poll_set [index].socket = frontend;
-        poll_set [index].events = ZMQ_POLLIN;
-        frontend = zlist_next (self->frontends);
-    }
+    bstar_t *self = (bstar_t *) arg;
+    zstr_sendf (self->statepub, "%d", self->state);
+    return 0;
+}
 
-    //  Handle socket activity until we get a valid client request
-    frontend = NULL;
-    while (!s_interrupted && !frontend) {
-        int time_left = (int) ((self->send_state - s_clock ()));
-        if (time_left < 0)
-            time_left = 0;
-        int rc = zmq_poll (poll_set, poll_size, time_left * 1000);
-        if (rc == -1)
-            break;              //  Context has been shut down
+//  Receive state from peer, execute finite state machine
+int s_recv_state (zloop_t *loop, void *socket, void *arg)
+{
+    bstar_t *self = (bstar_t *) arg;
+    char *state = zstr_recv (socket);
+    self->event = atoi (state);
+    self->peer_expiry = zclock_time () + 2 * BSTAR_HEARTBEAT;
+    free (state);
+    return s_execute_fsm (self);
+}
 
-        if (poll_set [0].revents & ZMQ_POLLIN) {
-            //  Have state from our peer, execute as event
-            char *state = s_recv (self->statesub);
-            self->event = atoi (state);
-            free (state);
-            if (s_execute_fsm (self))
-                break;          //  Error, so exit
-            self->peer_expiry = s_clock () + 2 * BSTAR_HEARTBEAT;
-        }
-        for (index = 1; index < poll_size; index++) {
-            if (poll_set [index].revents & ZMQ_POLLIN) {
-                //  Have a client request
-                self->event = CLIENT_REQUEST;
-                if (s_execute_fsm (self) == 0) {
-                    frontend = poll_set [index].socket;
-                    break;
-                }
-            }
-        }
-        //  If we timed-out, send state to peer
-        if (s_clock () >= self->send_state) {
-            char state [2];
-            sprintf (state, "%d", self->state);
-            s_send (self->statepub, state);
-            self->send_state = s_clock () + BSTAR_HEARTBEAT;
-        }
+//  Receive state from peer, execute finite state machine
+int s_voter_ready (zloop_t *loop, void *socket, void *arg)
+{
+    bstar_t *self = (bstar_t *) arg;
+    self->event = CLIENT_REQUEST;
+    //  If server can accept input now, call appl handler
+    if (s_execute_fsm (self) == 0)
+        (self->voter_handler) (self->loop, socket, self->voter_arg);
+    return 0;
+}
+
+
+//  ---------------------------------------------------------------------
+//  Constructor
+
+bstar_t *
+bstar_new (int primary, char *local, char *remote)
+{
+    bstar_t
+        *self;
+
+    self = (bstar_t *) zmalloc (sizeof (bstar_t));
+
+    //  Initialize the Binary Star
+    self->ctx = zctx_new ();
+    self->loop = zloop_new ();
+    self->state = primary? STATE_PRIMARY: STATE_BACKUP;
+
+    //  Create publisher for state going to peer
+    self->statepub = zctx_socket_new (self->ctx, ZMQ_PUB);
+    int rc = zmq_bind (self->statepub, local);
+    assert (rc == 0);
+
+    //  Create subscriber for state coming from peer
+    self->statesub = zctx_socket_new (self->ctx, ZMQ_SUB);
+    zmq_setsockopt (self->statesub, ZMQ_SUBSCRIBE, "", 0);
+    rc = zmq_connect (self->statesub, remote);
+    assert (rc == 0);
+
+    //  Set-up basic reactor events
+    zloop_timer (self->loop, BSTAR_HEARTBEAT, 0, s_send_state, self);
+    zloop_reader (self->loop, self->statesub, s_recv_state, self);
+    return self;
+}
+
+
+//  ---------------------------------------------------------------------
+//  Destructor
+
+void
+bstar_destroy (bstar_t **self_p)
+{
+    assert (self_p);
+    if (*self_p) {
+        bstar_t *self = *self_p;
+        zloop_destroy (&self->loop);
+        zctx_destroy (&self->ctx);
+        free (self);
+        *self_p = NULL;
     }
-    free (poll_set);
-    return frontend;
+}
+
+
+//  ---------------------------------------------------------------------
+//  Return underlying zloop reactor, for timer and reader
+//  registration and cancelation.
+
+zloop_t *
+bstar_zloop (bstar_t *self)
+{
+    return self->loop;
+}
+
+
+//  ---------------------------------------------------------------------
+//  Create socket, bind to local endpoint, and register as reader for
+//  voting. The socket will only be available if the Binary Star state
+//  machine allows it. Input on the socket will act as a "vote" in the
+//  Binary Star scheme.  We require exactly one voter per bstar instance.
+
+int
+bstar_voter (bstar_t *self, char *endpoint, int type, zloop_fn handler,
+             void *arg)
+{
+    //  Hold actual handler+arg so we can call this later
+    void *socket = zctx_socket_new (self->ctx, type);
+    zmq_bind (socket, endpoint);
+    assert (!self->voter_handler);
+    self->voter_handler = handler;
+    self->voter_arg = arg;
+    return zloop_reader (self->loop, socket, s_voter_ready, self);
+}
+
+
+//  ---------------------------------------------------------------------
+//  Start the reactor, ends if a callback function returns -1, or the
+//  process received SIGINT or SIGTERM.
+int
+bstar_start (bstar_t *self)
+{
+    assert (self->voter_handler);
+    return zloop_start (self->loop);
 }

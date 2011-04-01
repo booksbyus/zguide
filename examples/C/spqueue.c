@@ -12,12 +12,10 @@
 
 int main (void)
 {
-    s_version_assert (2, 1);
-
     //  Prepare our context and sockets
     void *context = zmq_init (1);
-    void *frontend = zmq_socket (context, ZMQ_XREP);
-    void *backend  = zmq_socket (context, ZMQ_XREP);
+    void *frontend = zmq_socket (context, ZMQ_ROUTER);
+    void *backend  = zmq_socket (context, ZMQ_ROUTER);
     zmq_bind (frontend, "tcp://*:5555");    //  For clients
     zmq_bind (backend,  "tcp://*:5556");    //  For workers
 

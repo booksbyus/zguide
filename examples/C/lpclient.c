@@ -26,7 +26,6 @@ s_client_socket (void *context)
 
 int main (void)
 {
-    s_version_assert (2, 1);
     void *context = zmq_init (1);
     void *client = s_client_socket (context);
 

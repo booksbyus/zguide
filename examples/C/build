@@ -10,7 +10,7 @@ if [ /$1/ = /all/ ]; then
     echo "Building C examples..."
     for MAIN in `egrep -l main *.c`; do
         echo "$MAIN"
-        ./c -l -lzmq -q $MAIN
+        ./c -l -lzmq -lzapi -q $MAIN
     done
 elif [ /$1/ = /clean/ ]; then
     echo "Cleaning C examples directory..."
@@ -20,7 +20,7 @@ elif [ /$1/ = /clean/ ]; then
     done
 elif [ -f $1.c ]; then
     echo "$1"
-    ./c -l -lzmq -q $1
+    ./c -l -lzmq -lzapi -q $1
 else
     echo "syntax: build all | clean"
 fi

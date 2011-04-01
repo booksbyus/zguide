@@ -1,5 +1,5 @@
 //
-//  Custom routing Router to Dealer (XREP to XREQ)
+//  Custom routing Router to Dealer (ROUTER to DEALER)
 //
 //  While this example runs in a single process, that is just to make
 //  it easier to start and stop the example. Each thread has its own
@@ -14,7 +14,7 @@ static void *
 worker_task_a (void *args)
 {
     void *context = zmq_init (1);
-    void *worker = zmq_socket (context, ZMQ_XREQ);
+    void *worker = zmq_socket (context, ZMQ_DEALER);
     zmq_setsockopt (worker, ZMQ_IDENTITY, "A", 1);
     zmq_connect (worker, "ipc://routing.ipc");
 
@@ -39,7 +39,7 @@ static void *
 worker_task_b (void *args)
 {
     void *context = zmq_init (1);
-    void *worker = zmq_socket (context, ZMQ_XREQ);
+    void *worker = zmq_socket (context, ZMQ_DEALER);
     zmq_setsockopt (worker, ZMQ_IDENTITY, "B", 1);
     zmq_connect (worker, "ipc://routing.ipc");
 
@@ -62,10 +62,8 @@ worker_task_b (void *args)
 
 int main (void)
 {
-    s_version_assert (2, 1);
     void *context = zmq_init (1);
-
-    void *client = zmq_socket (context, ZMQ_XREP);
+    void *client = zmq_socket (context, ZMQ_ROUTER);
     zmq_bind (client, "ipc://routing.ipc");
 
     pthread_t worker;

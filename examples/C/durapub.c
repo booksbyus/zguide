@@ -5,7 +5,6 @@
 
 int main (void) 
 {
-    s_version_assert (2, 1);
     void *context = zmq_init (1);
 
     //  Subscriber tells us when it's ready here

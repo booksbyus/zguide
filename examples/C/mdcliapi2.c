@@ -47,7 +47,7 @@ void s_mdcli_connect_to_broker (mdcli_t *self)
 {
     if (self->client)
         zmq_close (self->client);
-    self->client = zmq_socket (self->context, ZMQ_XREQ);
+    self->client = zmq_socket (self->context, ZMQ_DEALER);
     int linger = 0;
     zmq_setsockopt (self->client, ZMQ_LINGER, &linger, sizeof (linger));
     zmq_connect (self->client, self->broker);
@@ -63,7 +63,6 @@ mdcli_t *
 mdcli_new (char *broker, int verbose)
 {
     assert (broker);
-    s_version_assert (2, 1);
 
     mdcli_t *self = (mdcli_t *) calloc (1, sizeof (mdcli_t));
     self->broker = strdup (broker);

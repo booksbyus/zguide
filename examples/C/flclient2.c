@@ -83,7 +83,7 @@ flclient_new (void)
 
     self = (flclient_t *) calloc (1, sizeof (flclient_t));
     self->context = zmq_init (1);
-    self->socket = zmq_socket (self->context, ZMQ_XREQ);
+    self->socket = zmq_socket (self->context, ZMQ_DEALER);
     return self;
 }
 

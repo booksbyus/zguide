@@ -9,11 +9,11 @@ int main (void)
     void *context = zmq_init (1);
 
     //  Socket facing clients
-    void *frontend = zmq_socket (context, ZMQ_XREP);
+    void *frontend = zmq_socket (context, ZMQ_ROUTER);
     zmq_bind (frontend, "tcp://*:5559");
 
     //  Socket facing services
-    void *backend = zmq_socket (context, ZMQ_XREQ);
+    void *backend = zmq_socket (context, ZMQ_DEALER);
     zmq_bind (backend, "tcp://*:5560");
 
     //  Start built-in device

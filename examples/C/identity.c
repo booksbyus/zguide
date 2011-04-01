@@ -9,20 +9,20 @@ int main (void)
 {
     void *context = zmq_init (1);
 
-    void *sink = zmq_socket (context, ZMQ_XREP);
+    void *sink = zmq_socket (context, ZMQ_ROUTER);
     zmq_bind (sink, "inproc://example");
 
     //  First allow 0MQ to set the identity
     void *anonymous = zmq_socket (context, ZMQ_REQ);
     zmq_connect (anonymous, "inproc://example");
-    s_send (anonymous, "XREP uses a generated UUID");
+    s_send (anonymous, "ROUTER uses a generated UUID");
     s_dump (sink);
 
     //  Then set the identity ourself
     void *identified = zmq_socket (context, ZMQ_REQ);
     zmq_setsockopt (identified, ZMQ_IDENTITY, "Hello", 5);
     zmq_connect (identified, "inproc://example");
-    s_send (identified, "XREP socket uses REQ's socket identity");
+    s_send (identified, "ROUTER socket uses REQ's socket identity");
     s_dump (sink);
 
     zmq_close (sink);

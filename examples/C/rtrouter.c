@@ -1,5 +1,5 @@
 //
-//  Cross-connected XREP sockets addressing each other
+//  Cross-connected ROUTER sockets addressing each other
 //
 #include "zhelpers.h"
 
@@ -7,11 +7,11 @@ int main (void)
 {
     void *context = zmq_init (1);
 
-    void *worker = zmq_socket (context, ZMQ_XREP);
+    void *worker = zmq_socket (context, ZMQ_ROUTER);
     zmq_setsockopt (worker, ZMQ_IDENTITY, "WORKER", 6);
     zmq_bind (worker, "ipc://rtrouter.ipc");
 
-    void *server = zmq_socket (context, ZMQ_XREP);
+    void *server = zmq_socket (context, ZMQ_ROUTER);
     zmq_setsockopt (server, ZMQ_IDENTITY, "SERVER", 6);
     zmq_connect (server, "ipc://rtrouter.ipc");
 

@@ -129,7 +129,7 @@ E: server seems to be offline, abandoning
 
 The client sequences each message, and checks that replies come back exactly in order: that no requests or replies are lost, and no replies come back more than once, or out of order. Run the test a few times until you're convinced this mechanism actually works. You don't need sequence numbers in reality, they just help us trust our design.
 
-The client uses a REQ socket, and does the brute-force close/reopen because REQ sockets impose a strict send/receive cycle. You might be tempted to use a DEALER (XREQ) instead, but it would not be a good decision. First, it would mean emulating the secret sauce that REQ does with envelopes (if you've forgotten what that is, it's a good sign you don't want to have to do it). Second, it would mean potentially getting back replies that you didn't expect.
+The client uses a REQ socket, and does the brute-force close/reopen because REQ sockets impose a strict send/receive cycle. You might be tempted to use a DEALER instead, but it would not be a good decision. First, it would mean emulating the secret sauce that REQ does with envelopes (if you've forgotten what that is, it's a good sign you don't want to have to do it). Second, it would mean potentially getting back replies that you didn't expect.
 
 Handling failures only at the client works when we have a set of clients talking to a single server. It can handle a server crash, but only if recovery means restarting that same server. If there's a permanent error - e.g. a dead power supply on the server hardware - this approach won't work. Since the application code in servers is usually the biggest source of failures in any architecture, depending on a single server is not a great idea.
 
@@ -208,7 +208,7 @@ The Simple Pirate Queue pattern works pretty well, especially since it's just a 
 
 We'll fix these in a properly pedantic Paranoid Pirate Pattern.
 
-We previously used a REQ socket for the worker. For the Paranoid Pirate worker we'll switch to a DEALER (XREQ) socket. This has the advantage of letting us send and receive messages at any time, rather than the lock-step send/receive that REQ imposes. The downside of DEALER is that we have to do our own envelope management. If you don't know what I mean, please re-read Chapter Three.
+We previously used a REQ socket for the worker. For the Paranoid Pirate worker we'll switch to a DEALER socket. This has the advantage of letting us send and receive messages at any time, rather than the lock-step send/receive that REQ imposes. The downside of DEALER is that we have to do our own envelope management. If you don't know what I mean, please re-read Chapter Three.
 
 [[code type="textdiagram"]]
 
@@ -480,7 +480,7 @@ Asynchronous round-trip test...
  173010 calls/second
 [[/code]]
 
-Note that the client thread does a small pause before starting. This is to get around one of the 'features' of the ROUTER (XREP) socket: if you send a message with the address of a peer that's not yet connected, the message gets discarded. In this example we don't use the LRU mechanism, so without the sleep, if the worker thread is too slow to connect, it'll lose messages, making a mess of our test.
+Note that the client thread does a small pause before starting. This is to get around one of the 'features' of the ROUTER socket: if you send a message with the address of a peer that's not yet connected, the message gets discarded. In this example we don't use the LRU mechanism, so without the sleep, if the worker thread is too slow to connect, it'll lose messages, making a mess of our test.
 
 As we see, round-tripping in the simplest case is 20 times slower than "shove it down the pipe as fast as it'll go" asynchronous approach. Let's see if we can apply this to Majordomo.
 
@@ -709,7 +709,7 @@ If you want to make Titanic //much faster and less reliable//, you can store req
 
 The Binary Star pattern puts two servers in a primary-backup high-availability pair. At any given time, one of these accepts connections from client applications (it is the "master") and one does not (it is the "slave"). Each server monitors the other. If the master disappears from the network, after a certain time the slave takes over as master.
 
-Binary Star pattern was developed by Pieter Hintjens and Martin Sustrik for the iMatix [http://www.openamq.org OpenAMQ server]. We designed it: 
+Binary Star pattern was developed by Pieter Hintjens and Martin Sustrik for the iMatix [http://www.openamq.org OpenAMQ server]. We designed it:
 
 * To provide a straight-forward high-availability solution.
 * To be simple enough to actually understand and use.
@@ -723,7 +723,7 @@ Binary Star pattern was developed by Pieter Hintjens and Martin Sustrik for the 
     |  "master"  |               |   "slave"  |
     |            |               |            |
     +------------+               +------------+
-          ^                                  
+          ^
           |
           |
           |
@@ -767,7 +767,7 @@ Having said this, the Binary Star pattern will fail back to the primary server i
     |  "slave"   |               |  "master"  |
     |            |               |            |
     +------------+               +------------+
-                                        ^   
+                                        ^
                                         |
           +-----------------------------+
           |
@@ -931,7 +931,7 @@ This diagram shows the finite state machine. States in green accept client reque
           |             |         |           +------/        |        |
           |             \---------+  Passive  +---------------/        |
           \---------------------->|           |<-----------------------/
-                                  | {o} cF9B  |                            
+                                  | {o} cF9B  |
                                   +-----------+
 
 
@@ -949,27 +949,34 @@ These are the main limitations of the Binary Star pattern:
 * Failover configuration cannot be modified at runtime.
 * Client applications must do some work to benefit from failover.
 
-++++ Binary Star Class
+++++ Binary Star Reactor
 
-Binary Star is useful and generic enough to package up as a reusable class. The class handles state exchange, the finite state machine, and the poll loop. Here is the interface in C:
+Binary Star is useful and generic enough to package up as a reusable reactor class. In C we wrap the libzapi {{zloop}} class, though your milage may vary in other languages. Here is the {{bstar}} interface in C:
 
 [[code language="C"]]
-//  Create a new Binary Star instance, bind PUB and connect SUB
+//  Create a new Binary Star instance, using local (bind) and
+//  remote (connect) endpoints to set-up the server peering.
 bstar_t *
-    bstar_new (int primary, char *bind_to, char *connect_to);
+    bstar_new (int primary, char *local, char *remote);
 
 //  Destroy a Binary Star instance
 void
     bstar_destroy (bstar_t **self_p);
 
-//  Listen on this endpoint for client votes
-void
-    bstar_listen (bstar_t *self, char *endpoint, int type);
+//  Return underlying zloop reactor, for timer and reader
+//  registration and cancelation.
+zloop_t *
+    bstar_zloop (bstar_t *self);
 
-//  Wait for valid activity on client socket, return socket
-void *
-    bstar_wait (bstar_t *self);
-    
+//  Register voting reader
+int
+    bstar_voter (bstar_t *self, char *endpoint, int type,
+                 zloop_fn handler, void *arg);
+
+//  Start the reactor, ends if a callback function returns -1, or the
+//  process received SIGINT or SIGTERM.
+int
+    bstar_start (bstar_t *self);
 [[/code]]
 
 And here is the class implementation:
@@ -1028,9 +1035,9 @@ In this architecture a large set of clients connect to a small set of servers di
 
 * Clients could use REQ sockets and the Lazy Pirate pattern. Easy, but would need some additional intelligence to not stupidly reconnect to dead servers over and over.
 
-* Clients could use DEALER (XREQ) sockets and blast out requests (which will be load balanced to all connected servers) until they get a reply. Brutal, but not elegant.
+* Clients could use DEALER sockets and blast out requests (which will be load balanced to all connected servers) until they get a reply. Brutal, but not elegant.
 
-* Clients could use ROUTER (XREP) sockets so they can address specific servers. But how does the client know the identity of the server sockets? Either the server has to ping the client first (complex), or the each server has to use a hard-coded, fixed identity known to the client (nasty).
+* Clients could use ROUTER sockets so they can address specific servers. But how does the client know the identity of the server sockets? Either the server has to ping the client first (complex), or the each server has to use a hard-coded, fixed identity known to the client (nasty).
 
 ++++ Model One - Simple Retry and Failover
 
@@ -1058,7 +1065,7 @@ However this design won't work well in a real application. If we're connecting m
 Let's switch our client to using a DEALER socket. Our goal here is to make sure we get a reply back within the shortest possible time, no matter whether the primary server is down or not. Our client takes this approach:
 
 * We set things up, connecting to all servers.
-* When we have a request, we blast it out as many times as we have servers. 
+* When we have a request, we blast it out as many times as we have servers.
 * We wait for the first reply, and take that.
 * We ignore any other replies.
 
@@ -1100,7 +1107,7 @@ So pros and cons of our shotgun approach:
 
 The shotgun approach seems too good to be true. Let's be scientific and work through all the alternatives. We're going to explore the complex/nasty option, even if it's only to finally realize that we preferred brutal. Ah, the story of my life.
 
-We can solve the main problems of the client by switching to a ROUTER (XREP) socket. That lets us send requests to specific servers, avoid servers we know are dead, and in general be as smart as we want to make it. We can also solve the main problem of the server (single threadedness) by switching to a ROUTER socket.
+We can solve the main problems of the client by switching to a ROUTER socket. That lets us send requests to specific servers, avoid servers we know are dead, and in general be as smart as we want to make it. We can also solve the main problem of the server (single threadedness) by switching to a ROUTER socket.
 
 But doing ROUTER-to-ROUTER between two transient sockets is not possible. Both sides generate an identity (at their own end of the conversation) only when they receive a first message, and thus neither can talk to the other until it has first received a message. The only way out of this conundrum is to cheat, and use hard-coded identities in one direction. The proper way to cheat, in a client server case, is that the client 'knows' the identity of the server. Vice-versa would be insane, on top of complex and nasty. Great attributes for a genocidal dictator, terrible ones for software.
 

@@ -24,15 +24,14 @@ worker_routine (void *context) {
 
 int main (void)
 {
-    s_version_assert (2, 1);
     void *context = zmq_init (1);
 
     //  Socket to talk to clients
-    void *clients = zmq_socket (context, ZMQ_XREP);
+    void *clients = zmq_socket (context, ZMQ_ROUTER);
     zmq_bind (clients, "tcp://*:5555");
 
     //  Socket to talk to workers
-    void *workers = zmq_socket (context, ZMQ_XREQ);
+    void *workers = zmq_socket (context, ZMQ_DEALER);
     zmq_bind (workers, "inproc://workers");
 
     //  Launch pool of worker threads
