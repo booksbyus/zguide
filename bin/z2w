@@ -133,7 +133,7 @@ while (<>) {
         $filename = "listings/$language/$name.$extension{$language}";
         mkdir ("listings") unless -d "listings";
         mkdir ("listings/$language") unless -d "listings/$language";
-        
+
         die "Can't create $filename: $!"
             unless open (LISTING, ">$filename");
         while (<>) {
@@ -231,8 +231,8 @@ die "Can't create scoreboard.wd: $!"
     unless open (SCOREBOARD, ">scoreboard.wd");
 print (SCOREBOARD "||||||~ Translations ($examples in total)||\n");
 foreach $language (@languages) {
-    printf (SCOREBOARD "|| [/$extension{$language}:_start %s] || %3d || %3d%% ||\n", 
-        $language, $translations {$language}, 
+    printf (SCOREBOARD "|| [/$extension{$language}:_start %s] || %3d || %3d%% ||\n",
+        $language, $translations {$language},
         ($translations {$language} * 100) / $examples);
 }
 close (SCOREBOARD);
@@ -266,7 +266,7 @@ sub process_one_language {
             writeln ("[[include $extension{$language}:$name]]");
         }
         elsif ($inline == 2) {
-            writeln ("[[collapsible show=\"$title in $language\" hide=\"$title in $language\"]]");
+            writeln ("[[collapsible show=\"$name: $title in $language\" hide=\"$name: $title in $language\"]]");
             writeln ("[[include $extension{$language}:$name]]");
             writeln ("[[/collapsible]]");
         }
