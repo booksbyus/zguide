@@ -9,8 +9,8 @@
 
 #include "zapi.h"
 
-#define NBR_CLIENTS 1
-#define NBR_WORKERS 1
+#define NBR_CLIENTS 10
+#define NBR_WORKERS 3
 
 #define LRU_READY   "\001"      //  Signals worker is ready
 
@@ -31,10 +31,10 @@ client_task (void *arg_ptr)
         if (reply) {
             printf ("Client: %s\n", reply);
             free (reply);
+            sleep (1);
         }
         else
             break;              //  Interrupted
-        sleep (1);
     }
     return NULL;
 }
@@ -96,14 +96,17 @@ int s_handle_backend (zloop_t *loop, void *socket, void *arg)
     lruqueue_t *self = (lruqueue_t *) arg;
     zmsg_t *msg = zmsg_recv (self->backend);
     if (msg) {
-        zframe_t *frame = zmsg_pop (msg);
-        zlist_append (self->workers, frame);
+        zframe_t *address = zmsg_pop (msg);
+        zlist_append (self->workers, address);
+        zframe_t *empty = zmsg_pop (msg);
+        zframe_destroy (&empty);
 
         //  Enable reader on frontend if we went from 0 to 1 workers
         if (zlist_size (self->workers) == 1)
             zloop_reader (loop, self->frontend, s_handle_frontend, self);
 
         //  Forward message to client if it's not a READY
+        zframe_t *frame = zmsg_first (msg);
         if (memcmp (zframe_data (frame), LRU_READY, 1) == 0)
             zmsg_destroy (&msg);
         else
@@ -122,13 +125,13 @@ int main (void)
     zmq_bind (self->backend, "ipc://backend.ipc");
 
     int client_nbr;
-    for (client_nbr = 0; client_nbr < NBR_CLIENTS; client_nbr++) {
-        void *pipe = zctx_thread_new (ctx, client_task, NULL);
-    }
+    for (client_nbr = 0; client_nbr < NBR_CLIENTS; client_nbr++)
+        zctx_thread_new (ctx, client_task, NULL);
+
     int worker_nbr;
-    for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++) {
-        void *pipe = zctx_thread_new (ctx, worker_task, NULL);
-    }
+    for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++)
+        zctx_thread_new (ctx, worker_task, NULL);
+
     //  List of available workers
     self->workers = zlist_new ();
 
@@ -138,11 +141,13 @@ int main (void)
     zloop_start (reactor);
 
     //  When we're done, clean up properly
+    while (zlist_size (self->workers)) {
+        zframe_t *frame = (zframe_t *) zlist_pop (self->workers);
+        zframe_destroy (&frame);
+    }
     zlist_destroy (&self->workers);
     zloop_destroy (&reactor);
-    puts ("1");
     zctx_destroy (&ctx);
-    puts ("2");
     free (self);
     return 0;
 }

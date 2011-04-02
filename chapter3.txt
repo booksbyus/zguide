@@ -647,7 +647,7 @@ Now let's look at the LRU algorithm. It requires that both clients and workers u
 
 You should now see that you can reuse and extend the LRU algorithm with variations based on the information the worker provides in its initial "ready" message. For example, workers might start up and do a performance self-test, then tell the broker how fast they are. The broker can then choose the fastest available worker rather than LRU or round-robin.
 
-+++ A Higher-Level API
++++ A High-Level API
 
 Reading and writing multipart messages using the native 0MQ API is like eating a bowl of hot noodle soup, with fried chicken and extra vegetables, using a toothpick. Look at the core of the worker thread from our LRU queue broker:
 
@@ -672,7 +672,7 @@ Reading and writing multipart messages using the native 0MQ API is like eating a
     }
 [[/code]]
 
-That code isn't even reusable, because it can only handle one envelope. And this code already does some wrapping around the 0MQ API. If we used the raw API carefully this is what we'd have to write:
+That code isn't even reusable, because it can only handle one envelope. And this code already does some wrapping around the 0MQ API. If we used the libzmq API directly this is what we'd have to write:
 
 [[code language="C"]]
     while (1) {
@@ -709,23 +709,17 @@ That code isn't even reusable, because it can only handle one envelope. And this
     }
 [[/code]]
 
-What we want is an API that lets us receive and send an entire message in one shot, including all envelopes. One that lets us do what we want with the absolute least lines of code. The 0MQ API itself doesn't aim to do this, but nothing prevents us making layers on top, and part of learning to use 0MQ intelligently is to do exactly that.
+What we want is an API that lets us receive and send an entire message in one shot, including all envelopes. One that lets us do what we want with the absolute least lines of code. The 0MQ core API itself doesn't aim to do this, but nothing prevents us making layers on top, and part of learning to use 0MQ intelligently is to do exactly that.
 
-The best way to design an API is to sketch what the API should look like in real code. Here's how I'd like that worker code to look:
+Making a good message API is fairly difficult, especially if we want to avoid copying data around too much. We have a problem of terminology: 0MQ uses "message" to describe both multipart messages, and individual parts of a message. We have a problem of semantics: sometimes it's natural to see message content as printable string data, sometimes as binary blobs.
 
-- binary, better for 0MQ
-- string, frame, multipart
-- reactor
-- socket management
-- threads
-- clock
-
+So one solution is to use three concepts: //string// (already the basis for s_send and s_recv), //frame// (a message part), and //message// (a list of one or more frames). Here is the worker code, rewritten onto an API using these concepts:
 
 [[code language="C"]]
 while (1) {
     zmsg_t *zmsg = zmsg_recv (worker);
-    printf ("Worker: %s\n", zmsg_body (zmsg));
-    zmsg_body_set (zmsg, "OK");
+    zframe_print ("Worker: ", zmsg_last (zmsg));
+    zframe_patch (zmsg_last (zmsg), "OK", 2);
     zmsg_send (&zmsg, worker);
 }
 [[/code]]
@@ -738,6 +732,21 @@ Replacing 22 lines of code with 4 is a good deal, especially since the results a
 * Message parts (addresses and data) are always printable strings.
 
 That last one is tricky because 0MQ uses a binary zero at the start of generated identities. It is painful in C to pass length-specified blobs in and out of APIs. So, our message class encodes and decodes 0MQ identities to make them usable internally as C strings. This is not a high-performance design but it is simple and safe. In other languages you'll be able to make an API that handles binary message parts without such hacks.
+
+
+
+Let's make a wishlist of things we would like in a higher-level API:
+
+* //Better abstractions for messages.// In some cases, it's natural to send and receive strings. In other cases, multipart messages. Breaking this down, we get strings, frames, and multipart messages.
+
+* //Automatic handling of sockets.// I find it really annoying to have to close sockets manually, and often, to have to explicitly define the linger timeout. It'd be great to have a way to close sockets automatically when I close the context.
+
+* //Portable thread management.// Every non-trivial 0MQ application uses threads, but POSIX threads aren't portable. So a decent high-level API should hide this under a portable layer.
+
+* //Portable clocks.// Even getting the time to a millisecond resolution, or sleeping for some milliseconds, is not portable. Again, realistic 0MQ applications need clocks, so our API should provide them.
+
+* //A reactor to replace zmq_poll.// The poll loop is simple but clumsy. Writing a lot of these, we end up doing the same work over and over: calculating timers, and calling code when sockets are ready. A simple reactor with socket readers, and timers, would save a lot of repeated work.
+
 
 The result is a C source creatively called {{zmsg.h}}, which you can [https://github.com/imatix/zguide/blob/master/examples/C/zmsg.h read at leisure].
 
