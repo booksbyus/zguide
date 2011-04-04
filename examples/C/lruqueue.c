@@ -7,6 +7,7 @@
 //  context and conceptually acts as a separate process.
 //
 #include "zhelpers.h"
+#include <pthread.h>
 
 #define NBR_CLIENTS 10
 #define NBR_WORKERS 3
@@ -104,17 +105,11 @@ int main (void)
     char *worker_queue [10];
 
     while (1) {
-        //  Initialize poll set
         zmq_pollitem_t items [] = {
-            //  Always poll for worker activity on backend
             { backend,  0, ZMQ_POLLIN, 0 },
-            //  Poll front-end only if we have available workers
             { frontend, 0, ZMQ_POLLIN, 0 }
         };
-        if (available_workers)
-            zmq_poll (items, 2, -1);
-        else
-            zmq_poll (items, 1, -1);
+        zmq_poll (items, available_workers? 2: 1, -1);
 
         //  Handle worker activity on backend
         if (items [0].revents & ZMQ_POLLIN) {
@@ -132,7 +127,7 @@ int main (void)
             char *client_addr = s_recv (backend);
 
             //  If client reply, send rest back to frontend
-            if (strneq (client_addr, "READY")) {
+            if (strcmp (client_addr, "READY") != 0) {
                 empty = s_recv (backend);
                 assert (empty [0] == 0);
                 free (empty);

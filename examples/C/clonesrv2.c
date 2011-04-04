@@ -37,14 +37,14 @@ state_manager (void *context)
 {
     zhash_t *kvmap = zhash_new ();
 
-    void *updates = zmq_socket (context, ZMQ_PAIR);
+    void *updates = zctx_socket_new (ctx, ZMQ_PAIR);
     uint64_t hwm = 1;
     zmq_setsockopt (updates, ZMQ_HWM, &hwm, sizeof (hwm));
     int rc = zmq_connect (updates, "inproc://updates");
     assert (rc == 0);
-    s_send (updates, "OK");
+    zstr_send (updates, "OK");
 
-    void *snapshot = zmq_socket (context, ZMQ_ROUTER);
+    void *snapshot = zctx_socket_new (ctx, ZMQ_ROUTER);
     rc = zmq_bind (snapshot, "tcp://*:5557");
     assert (rc == 0);
     
@@ -53,7 +53,7 @@ state_manager (void *context)
         { snapshot, 0, ZMQ_POLLIN, 0 } 
     };
     int64_t sequence = 0;       //  Current snapshot version number
-    while (!s_interrupted) {
+    while (!zctx_interrupted) {
         int rc = zmq_poll (items, 2, -1);
         if (rc == -1 && errno == ETERM)
             break;              //  Context has been shut down
@@ -98,8 +98,8 @@ state_manager (void *context)
         }
     }
     zhash_destroy (&kvmap);
-    zmq_close (updates);
-    zmq_close (snapshot);
+    zctx_socket_destroy (ctx, updates);
+    zctx_socket_destroy (ctx, snapshot);
     return NULL;
 }
 
@@ -107,18 +107,17 @@ state_manager (void *context)
 int main (void) 
 {
     //  Prepare our context and sockets
-    void *context = zmq_init (1);
-    void *publisher = zmq_socket (context, ZMQ_PUB);
+    zctx_t *ctx = zctx_new ();
+    void *publisher = zctx_socket_new (ctx, ZMQ_PUB);
     int rc = zmq_bind (publisher, "tcp://*:5556");
     assert (rc == 0);
     
-    void *updates = zmq_socket (context, ZMQ_PAIR);
+    void *updates = zctx_socket_new (ctx, ZMQ_PAIR);
     uint64_t hwm = 1;
     zmq_setsockopt (updates, ZMQ_HWM, &hwm, sizeof (hwm));
     rc = zmq_bind (updates, "inproc://updates");
     assert (rc == 0);
 
-    s_catch_signals ();
     int64_t sequence = 0;
     srandom ((unsigned) time (NULL));
 
@@ -126,9 +125,9 @@ int main (void)
     pthread_t thread;
     pthread_create (&thread, NULL, state_manager, context);
     pthread_detach (thread);
-    free (s_recv (updates));
+    free (zstr_recv (updates));
     
-    while (!s_interrupted) {
+    while (!zctx_interrupted) {
         //  Distribute as key-value message
         kvmsg_t *kvmsg = kvmsg_new (++sequence);
         kvmsg_fmt_key  (kvmsg, "%d", randof (10000));
@@ -138,8 +137,8 @@ int main (void)
         kvmsg_destroy (&kvmsg);
     }
     printf (" Interrupted\n%" PRId64 " messages out\n", sequence);
-    zmq_close (publisher);
-    zmq_close (updates);
-    zmq_term (context);
+    zctx_socket_destroy (ctx, publisher);
+    zctx_socket_destroy (ctx, updates);
+    zctx_destroy (zmq_term (context)ctx);
     return 0;
 }

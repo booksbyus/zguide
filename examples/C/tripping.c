@@ -5,56 +5,53 @@
 //  it easier to start and stop the example. Each thread has its own
 //  context and conceptually acts as a separate process.
 //
-#include "zmsg.h"
+#include "zapi.h"
 
 static void *
 client_task (void *args)
 {
-    void *context = zmq_init (1);
-    void *client = zmq_socket (context, ZMQ_DEALER);
+    zctx_t *ctx = zctx_new ();
+    void *client = zctx_socket_new (ctx, ZMQ_DEALER);
     zmq_setsockopt (client, ZMQ_IDENTITY, "C", 1);
     zmq_connect (client, "tcp://localhost:5555");
-    
+
     printf ("Setting up test...\n");
-    s_sleep (100);
-    
+    zclock_sleep (100);
+
     int requests;
     int64_t start;
-    
+
     printf ("Synchronous round-trip test...\n");
-    start = s_clock ();
+    start = zclock_time ();
     for (requests = 0; requests < 10000; requests++) {
-        zmsg_t *msg = zmsg_new ("HELLO");
-        zmsg_send (&msg, client);
-        msg = zmsg_recv (client);
-        zmsg_destroy (&msg);
+        zstr_send (client, "hello");
+        char *reply = zstr_recv (client);
+        free (reply);
     }
     printf (" %d calls/second\n",
-        (1000 * 10000) / (int) (s_clock () - start));
+        (1000 * 10000) / (int) (zclock_time () - start));
 
     printf ("Asynchronous round-trip test...\n");
-    start = s_clock ();
+    start = zclock_time ();
+    for (requests = 0; requests < 100000; requests++)
+        zstr_send (client, "hello");
     for (requests = 0; requests < 100000; requests++) {
-        zmsg_t *msg = zmsg_new ("HELLO");
-        zmsg_send (&msg, client);
-    }
-    for (requests = 0; requests < 100000; requests++) {
-        zmsg_t *msg = zmsg_recv (client);
-        zmsg_destroy (&msg);
+        char *reply = zstr_recv (client);
+        free (reply);
     }
     printf (" %d calls/second\n",
-        (1000 * 100000) / (int) (s_clock () - start));
+        (1000 * 100000) / (int) (zclock_time () - start));
 
-    zmq_close (client);
-    zmq_term (context);
+    zctx_destroy (&ctx);
+    zstr_send (((zthread_t *) args)->pipe, "done");
     return NULL;
 }
 
 static void *
 worker_task (void *args)
 {
-    void *context = zmq_init (1);
-    void *worker = zmq_socket (context, ZMQ_DEALER);
+    zctx_t *ctx = zctx_new ();
+    void *worker = zctx_socket_new (ctx, ZMQ_DEALER);
     zmq_setsockopt (worker, ZMQ_IDENTITY, "W", 1);
     zmq_connect (worker, "tcp://localhost:5556");
 
@@ -62,8 +59,7 @@ worker_task (void *args)
         zmsg_t *msg = zmsg_recv (worker);
         zmsg_send (&msg, worker);
     }
-    zmq_close (worker);
-    zmq_term (context);
+    zctx_destroy (&ctx);
     return NULL;
 }
 
@@ -71,9 +67,9 @@ static void *
 broker_task (void *args)
 {
     //  Prepare our context and sockets
-    void *context = zmq_init (1);
-    void *frontend = zmq_socket (context, ZMQ_ROUTER);
-    void *backend  = zmq_socket (context, ZMQ_ROUTER);
+    zctx_t *ctx = zctx_new ();
+    void *frontend = zctx_socket_new (ctx, ZMQ_ROUTER);
+    void *backend = zctx_socket_new (ctx, ZMQ_ROUTER);
     zmq_bind (frontend, "tcp://*:5555");
     zmq_bind (backend,  "tcp://*:5556");
 
@@ -83,36 +79,40 @@ broker_task (void *args)
         { backend,  0, ZMQ_POLLIN, 0 }
     };
     while (1) {
-        zmq_poll (items, 2, -1);
+        int rc = zmq_poll (items, 2, -1);
+        if (rc == -1)
+            break;              //  Interrupted
         if (items [0].revents & ZMQ_POLLIN) {
             zmsg_t *msg = zmsg_recv (frontend);
-            free (zmsg_pop (msg));
-            zmsg_push (msg, "W");
+            zframe_t *address = zmsg_pop (msg);
+            zframe_destroy (&address);
+            zmsg_pushstr (msg, "W");
             zmsg_send (&msg, backend);
         }
         if (items [1].revents & ZMQ_POLLIN) {
             zmsg_t *msg = zmsg_recv (backend);
-            free (zmsg_pop (msg));
-            zmsg_push (msg, "C");
+            zframe_t *address = zmsg_pop (msg);
+            zframe_destroy (&address);
+            zmsg_pushstr (msg, "C");
             zmsg_send (&msg, frontend);
         }
     }
-    zmq_close (frontend);
-    zmq_close (backend);
-    zmq_term (context);
+    zctx_destroy (&ctx);
     return NULL;
 }
 
 int main (void)
 {
-    pthread_t client;
-    pthread_create (&client, NULL, client_task, NULL);
+    //  Create threads
+    zctx_t *ctx = zctx_new ();
+    void *client = zctx_thread_new (ctx, client_task, NULL);
+    void *worker = zctx_thread_new (ctx, worker_task, NULL);
+    void *broker = zctx_thread_new (ctx, broker_task, NULL);
 
-    pthread_t worker;
-    pthread_create (&worker, NULL, worker_task, NULL);
+    //  Wait for signal on client pipe
+    char *signal = zstr_recv (client);
+    free (signal);
 
-    pthread_t broker;
-    pthread_create (&broker, NULL, broker_task, NULL);
-    pthread_join (client, NULL);
+    zctx_destroy (&ctx);
     return 0;
 }

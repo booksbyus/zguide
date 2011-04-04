@@ -15,7 +15,7 @@ int main (void)
     clone_connect (clone, "tcp://localhost", "5561");
 
     //  Set random tuples into the distributed hash
-    while (!s_interrupted) {
+    while (!zctx_interrupted) {
         //  Set random value, check it was stored
         char key [10];
         char value [10];

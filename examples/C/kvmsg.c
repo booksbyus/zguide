@@ -423,11 +423,11 @@ kvmsg_test (int verbose)
     printf (" * kvmsg: ");
 
     //  Prepare our context and sockets
-    void *context = zmq_init (1);
-    void *output = zmq_socket (context, ZMQ_DEALER);
+    zctx_t *ctx = zctx_new ();
+    void *output = zctx_socket_new (ctx, ZMQ_DEALER);
     int rc = zmq_bind (output, "ipc://kvmsg_selftest.ipc");
     assert (rc == 0);
-    void *input = zmq_socket (context, ZMQ_DEALER);
+    void *input = zctx_socket_new (ctx, ZMQ_DEALER);
     rc = zmq_connect (input, "ipc://kvmsg_selftest.ipc");
     assert (rc == 0);
 
@@ -452,9 +452,9 @@ kvmsg_test (int verbose)
     //  Should destroy all messages stored in map
     zhash_destroy (&kvmap);
 
-    zmq_close (input);
-    zmq_close (output);
-    zmq_term (context);
+    zctx_socket_destroy (ctx, input);
+    zctx_socket_destroy (ctx, output);
+    zctx_destroy (zmq_term (context)ctx);
 
     printf ("OK\n");
     return 0;

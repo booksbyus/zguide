@@ -149,7 +149,7 @@ s_execute_fsm (bstar_t *self)
 //  Reactor event handlers...
 
 //  Publish our state to peer
-int s_send_state (zloop_t *loop, void *socket, void *arg)
+int zstr_send_state (zloop_t *loop, void *socket, void *arg)
 {
     bstar_t *self = (bstar_t *) arg;
     zstr_sendf (self->statepub, "%d", self->state);
@@ -157,7 +157,7 @@ int s_send_state (zloop_t *loop, void *socket, void *arg)
 }
 
 //  Receive state from peer, execute finite state machine
-int s_recv_state (zloop_t *loop, void *socket, void *arg)
+int zstr_recv_state (zloop_t *loop, void *socket, void *arg)
 {
     bstar_t *self = (bstar_t *) arg;
     char *state = zstr_recv (socket);
@@ -207,8 +207,8 @@ bstar_new (int primary, char *local, char *remote)
     assert (rc == 0);
 
     //  Set-up basic reactor events
-    zloop_timer (self->loop, BSTAR_HEARTBEAT, 0, s_send_state, self);
-    zloop_reader (self->loop, self->statesub, s_recv_state, self);
+    zloop_timer (self->loop, BSTAR_HEARTBEAT, 0, zstr_send_state, self);
+    zloop_reader (self->loop, self->statesub, zstr_recv_state, self);
     return self;
 }
 

@@ -10,17 +10,17 @@
     This file is part of the ZeroMQ Guide: http://zguide.zeromq.org
 
     This is free software; you can redistribute it and/or modify it under
-    the terms of the GNU Lesser General Public License as published by 
-    the Free Software Foundation; either version 3 of the License, or (at 
+    the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation; either version 3 of the License, or (at
     your option) any later version.
 
     This software is distributed in the hope that it will be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of 
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+    WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
     Lesser General Public License for more details.
 
-    You should have received a copy of the GNU Lesser General Public 
-    License along with this program. If not, see 
+    You should have received a copy of the GNU Lesser General Public
+    License along with this program. If not, see
     <http://www.gnu.org/licenses/>.
     =====================================================================
 */
@@ -32,7 +32,6 @@
 
 #include <zmq.h>
 
-#include <pthread.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -42,36 +41,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <assert.h>
-#include <inttypes.h>
 #include <signal.h>
-
-//- Data types --------------------------------------------------------------
-
-typedef          int    Bool;           //  Boolean TRUE/FALSE value
-typedef unsigned char   byte;           //  Single unsigned byte = 8 bits
-typedef unsigned short  dbyte;          //  Double byte = 16 bits
-typedef unsigned int    qbyte;          //  Quad byte = 32 bits
-
-//- Inevitable macros -------------------------------------------------------
-
-#define streq(s1,s2)    (!strcmp ((s1), (s2)))
-#define strneq(s1,s2)   (strcmp ((s1), (s2)))
-//  Provide random number from 0..(num-1)
-#define randof(num)     (int) ((float) (num) * random () / (RAND_MAX + 1.0))
-#if (!defined (TRUE))
-#    define TRUE        1               //  ANSI standard
-#    define FALSE       0
-#endif
-
-//  Bring Windows MSVC up to C99 scratch
-#if (defined (__WINDOWS__))
-    typedef unsigned long ulong;
-    typedef unsigned int  uint;
-    typedef __int64 int64_t;
-#elif (defined (__APPLE__))
-    typedef unsigned long ulong;
-    typedef unsigned int  uint;
-#endif
 
 //  Provide random number from 0..(num-1)
 #define randof(num)  (int) ((float) (num) * random () / (RAND_MAX + 1.0))
@@ -168,31 +138,6 @@ s_set_id (void *socket)
 }
 
 
-//  Report 0MQ version number
-//
-static void
-s_version (void)
-{
-    int major, minor, patch;
-    zmq_version (&major, &minor, &patch);
-    printf ("Current 0MQ version is %d.%d.%d\n", major, minor, patch);
-}
-
-//  Require at least some specified version
-static void
-s_version_assert (int want_major, int want_minor)
-{
-    int major, minor, patch;
-    zmq_version (&major, &minor, &patch);
-    if (major < want_major
-    || (major == want_major && minor < want_minor)) {
-        printf ("Current 0MQ version is %d.%d\n", major, minor);
-        printf ("Application needs at least %d.%d - cannot continue\n",
-            want_major, want_minor);
-        exit (EXIT_FAILURE);
-    }
-}
-
 //  Sleep for a number of milliseconds
 static void
 s_sleep (int msecs)
@@ -241,30 +186,5 @@ s_console (const char *format, ...)
     va_end (argptr);
     printf ("\n");
 }
-
-
-//  ---------------------------------------------------------------------
-//  Signal handling
-//
-//  Call s_catch_signals() in your application at startup, and then exit 
-//  your main loop if s_interrupted is ever 1. Works especially well with 
-//  zmq_poll.
-
-static int s_interrupted = 0;
-static void s_signal_handler (int signal_value)
-{
-    s_interrupted = 1;
-}
-
-static void s_catch_signals (void)
-{
-    struct sigaction action;
-    action.sa_handler = s_signal_handler;
-    action.sa_flags = 0;
-    sigemptyset (&action.sa_mask);
-    sigaction (SIGINT, &action, NULL);
-    sigaction (SIGTERM, &action, NULL);
-}
-
 
 #endif  //  __ZHELPERS_H_INCLUDED__

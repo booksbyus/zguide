@@ -1,7 +1,7 @@
 //
 //  Binary Star server
 //
-#include "zmsg.h"
+#include "zapi.h"
 
 //  We send state information every this often
 //  If peer doesn't respond in two heartbeats, it is 'dead'
@@ -100,7 +100,7 @@ s_state_machine (bstar_t *fsm)
             //  Peer becomes master if timeout has passed
             //  It's the client request that triggers the failover
             assert (fsm->peer_expiry > 0);
-            if (s_clock () >= fsm->peer_expiry) {
+            if (zclock_time () >= fsm->peer_expiry) {
                 //  If peer is dead, switch to the active state
                 printf ("I: failover successful, ready as master\n");
                 fsm->state = STATE_ACTIVE;
@@ -119,13 +119,12 @@ int main (int argc, char *argv [])
     //  Arguments can be either of:
     //      -p  primary server, at tcp://localhost:5001
     //      -b  backup server, at tcp://localhost:5002
-    void *context = zmq_init (1);
-    void *statepub = zmq_socket (context, ZMQ_PUB);
-    void *statesub = zmq_socket (context, ZMQ_SUB);
+    zctx_t *ctx = zctx_new ();
+    void *statepub = zctx_socket_new (ctx, ZMQ_PUB);
+    void *statesub = zctx_socket_new (ctx, ZMQ_SUB);
     zmq_setsockopt (statesub, ZMQ_SUBSCRIBE, "", 0);
-    void *frontend = zmq_socket (context, ZMQ_ROUTER);
+    void *frontend = zctx_socket_new (ctx, ZMQ_ROUTER);
     bstar_t fsm = { 0 };
-    s_catch_signals ();
 
     if (argc == 2 && streq (argv [1], "-p")) {
         printf ("I: Primary master, waiting for backup (slave)\n");
@@ -144,17 +143,18 @@ int main (int argc, char *argv [])
     }
     else {
         printf ("Usage: bstarsrv { -p | -b }\n");
+        zctx_destroy (&ctx);
         exit (0);
     }
     //  Set timer for next outgoing state message
-    int64_t send_state_at = s_clock () + HEARTBEAT;
+    int64_t send_state_at = zclock_time () + HEARTBEAT;
 
-    while (!s_interrupted) {
+    while (!zctx_interrupted) {
         zmq_pollitem_t items [] = {
             { frontend, 0, ZMQ_POLLIN, 0 },
             { statesub, 0, ZMQ_POLLIN, 0 }
         };
-        int time_left = (int) ((send_state_at - s_clock ()));
+        int time_left = (int) ((send_state_at - zclock_time ()));
         if (time_left < 0)
             time_left = 0;
         int rc = zmq_poll (items, 2, time_left * 1000);
@@ -173,28 +173,25 @@ int main (int argc, char *argv [])
         }
         if (items [1].revents & ZMQ_POLLIN) {
             //  Have state from our peer, execute as event
-            char *message = s_recv (statesub);
+            char *message = zstr_recv (statesub);
             fsm.event = atoi (message);
             free (message);
             if (s_state_machine (&fsm))
                 break;          //  Error, so exit
-            fsm.peer_expiry = s_clock () + 2 * HEARTBEAT;
+            fsm.peer_expiry = zclock_time () + 2 * HEARTBEAT;
         }
         //  If we timed-out, send state to peer
-        if (s_clock () >= send_state_at) {
+        if (zclock_time () >= send_state_at) {
             char message [2];
             sprintf (message, "%d", fsm.state);
-            s_send (statepub, message);
-            send_state_at = s_clock () + HEARTBEAT;
+            zstr_send (statepub, message);
+            send_state_at = zclock_time () + HEARTBEAT;
         }
     }
-    if (s_interrupted)
+    if (zctx_interrupted)
         printf ("W: interrupted\n");
 
     //  Shutdown sockets and context
-    zmq_close (statepub);
-    zmq_close (statesub);
-    zmq_close (frontend);
-    zmq_term (context);
+    zctx_destroy (&ctx);
     return 0;
 }

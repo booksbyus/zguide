@@ -179,9 +179,9 @@ The result is {{zhelpers.h}}, which lets us write sweeter and shorter 0MQ applic
 
 +++ Version Reporting
 
-0MQ does come in several versions and quite often, if you hit a problem, it'll be something that's been fixed in a later version. So it's a useful trick to know //exactly// what version of 0MQ you're actually linking with. Here is a tiny program that does that, using a function from {{zhelpers.h}}:
+0MQ does come in several versions and quite often, if you hit a problem, it'll be something that's been fixed in a later version. So it's a useful trick to know //exactly// what version of 0MQ you're actually linking with. Here is a tiny program that does that:
 
-[[code type="example" title="0MQ version reporting" name="zversion"]]
+[[code type="example" title="0MQ version reporting" name="version"]]
 [[/code]]
 
 +++ Getting the Message Out

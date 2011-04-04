@@ -13,31 +13,31 @@
 
 static void *
 subscriber (void *args) {
-    void *context = zmq_init (1);
+    zctx_t *ctx = zctx_new ();
 
     //  Subscribe to everything
-    void *subscriber = zmq_socket (context, ZMQ_SUB);
+    void *subscriber = zctx_socket_new (ctx, ZMQ_SUB);
     zmq_connect (subscriber, "tcp://localhost:5556");
     zmq_setsockopt (subscriber, ZMQ_SUBSCRIBE, "", 0);
 
     //  Get and process messages
     while (1) {
-        char *string = s_recv (subscriber);
+        char *string = zstr_recv (subscriber);
         int64_t clock;
         int terms = sscanf (string, "%" PRId64, &clock);
         assert (terms == 1);
         free (string);
 
         //  Suicide snail logic
-        if (s_clock () - clock > MAX_ALLOWED_DELAY) {
+        if (zclock_time () - clock > MAX_ALLOWED_DELAY) {
             fprintf (stderr, "E: subscriber cannot keep up, aborting\n");
             break;
         }
         //  Work for 1 msec plus some random additional time
-        s_sleep (1 + randof (2));
+        zclock_sleep (1 + randof (2));
     }
-    zmq_close (subscriber);
-    zmq_term (context);
+    zctx_socket_destroy (ctx, subscriber);
+    zctx_destroy (zmq_term (context)ctx);
     return NULL;
 }
 
@@ -48,21 +48,21 @@ subscriber (void *args) {
 
 static void *
 publisher (void *args) {
-    void *context = zmq_init (1);
+    zctx_t *ctx = zctx_new ();
 
     //  Prepare publisher
-    void *publisher = zmq_socket (context, ZMQ_PUB);
+    void *publisher = zctx_socket_new (ctx, ZMQ_PUB);
     zmq_bind (publisher, "tcp://*:5556");
 
     while (1) {
         //  Send current clock (msecs) to subscribers
         char string [20];
-        sprintf (string, "%" PRId64, s_clock ());
-        s_send (publisher, string);
-        s_sleep (1);            //  1msec wait
+        sprintf (string, "%" PRId64, zclock_time ());
+        zstr_send (publisher, string);
+        zclock_sleep (1);            //  1msec wait
     }
-    zmq_close (publisher);
-    zmq_term (context);
+    zctx_socket_destroy (ctx, publisher);
+    zctx_destroy (zmq_term (context)ctx);
     return NULL;
 }
 

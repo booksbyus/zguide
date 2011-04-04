@@ -11,13 +11,16 @@ int main (int argc, char *argv [])
     mdcli_t *session = mdcli_new ("tcp://localhost:5555", verbose);
 
     //  This is the service we want to look up
-    zmsg_t *request = zmsg_new ("echo");
+    zmsg_t *request = zmsg_new ();
+    zmsg_addstr (request, "echo");
 
     //  This is the service we send our request to
     zmsg_t *reply = mdcli_send (session, "mmi.service", &request);
 
     if (reply) {
-        printf ("Lookup echo service: %s\n", zmsg_body (reply));
+        char *reply_code = zframe_strdup (zmsg_first (reply));
+        printf ("Lookup echo service: %s\n", reply_code);
+        free (reply_code);
         zmsg_destroy (&reply);
     }
     else

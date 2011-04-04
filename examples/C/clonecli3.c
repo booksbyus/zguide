@@ -8,25 +8,24 @@
 int main (void) 
 {
     //  Prepare our context and subscriber
-    void *context = zmq_init (1);
-    void *subscriber = zmq_socket (context, ZMQ_SUB);
+    zctx_t *ctx = zctx_new ();
+    void *subscriber = zctx_socket_new (ctx, ZMQ_SUB);
     zmq_setsockopt (subscriber, ZMQ_SUBSCRIBE, "", 0);
     zmq_connect (subscriber, "tcp://localhost:5556");
 
-    void *snapshot = zmq_socket (context, ZMQ_DEALER);
+    void *snapshot = zctx_socket_new (ctx, ZMQ_DEALER);
     zmq_connect (snapshot, "tcp://localhost:5557");
 
-    void *updates = zmq_socket (context, ZMQ_PUSH);
+    void *updates = zctx_socket_new (ctx, ZMQ_PUSH);
     zmq_connect (updates, "tcp://localhost:5558");
 
-    s_catch_signals ();
     zhash_t *kvmap = zhash_new ();
     srandom ((unsigned) time (NULL));
 
     //  Get state snapshot
     int64_t sequence = 0;
-    s_send (snapshot, "I can haz state?");
-    while (!s_interrupted) {
+    zstr_send (snapshot, "I can haz state?");
+    while (!zctx_interrupted) {
         kvmsg_t *kvmsg = kvmsg_recv (snapshot);
         if (!kvmsg)
             break;          //  Interrupted
@@ -38,14 +37,12 @@ int main (void)
         kvmsg_store (&kvmsg, kvmap);
     }
     printf ("I: received snapshot=%" PRId64 "\n", sequence);
-    int zero = 0;
-    zmq_setsockopt (snapshot, ZMQ_LINGER, &zero, sizeof (zero));
-    zmq_close (snapshot);
+    zctx_socket_destroy (ctx, snapshot);
 
-    int64_t alarm = s_clock () + 1000;
-    while (!s_interrupted) {
+    int64_t alarm = zclock_time () + 1000;
+    while (!zctx_interrupted) {
         zmq_pollitem_t items [] = { { subscriber, 0, ZMQ_POLLIN, 0 } };
-        int tickless = (int) ((alarm - s_clock ()));
+        int tickless = (int) ((alarm - zclock_time ()));
         if (tickless < 0)
             tickless = 0;
         int rc = zmq_poll (items, 1, tickless * 1000);
@@ -67,21 +64,21 @@ int main (void)
                 kvmsg_destroy (&kvmsg);
         }
         //  If we timed-out, generate a random kvmsg
-        if (s_clock () >= alarm) {
+        if (zclock_time () >= alarm) {
             kvmsg_t *kvmsg = kvmsg_new (0);
             kvmsg_fmt_key  (kvmsg, "%d", randof (10000));
             kvmsg_fmt_body (kvmsg, "%d", randof (1000000));
             kvmsg_send (kvmsg, updates);
             kvmsg_destroy (&kvmsg);
-            alarm = s_clock () + 1000;
+            alarm = zclock_time () + 1000;
         }
     }
     zhash_destroy (&kvmap);
 
     printf (" Interrupted\n%" PRId64 " messages in\n", sequence);
     zmq_setsockopt (updates, ZMQ_LINGER, &zero, sizeof (zero));
-    zmq_close (updates);
-    zmq_close (subscriber);
-    zmq_term (context);
+    zctx_socket_destroy (ctx, updates);
+    zctx_socket_destroy (ctx, subscriber);
+    zctx_destroy (zmq_term (context)ctx);
     return 0;
 }

@@ -2,6 +2,7 @@
 //  Multithreaded Hello World server
 //
 #include "zhelpers.h"
+#include <pthread.h>
 
 static void *
 worker_routine (void *context) {

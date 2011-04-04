@@ -2,6 +2,7 @@
 //  Multithreaded relay
 //
 #include "zhelpers.h"
+#include <pthread.h>
 
 static void *
 step1 (void *context) {

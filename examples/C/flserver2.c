@@ -2,7 +2,7 @@
 //  Freelance server - Model 2
 //  Does some work, replies OK, with message sequencing
 //
-#include "zmsg.h"
+#include "zapi.h"
 
 int main (int argc, char *argv [])
 {
@@ -10,26 +10,29 @@ int main (int argc, char *argv [])
         printf ("I: syntax: %s <endpoint>\n", argv [0]);
         exit (EXIT_SUCCESS);
     }
-    void *context = zmq_init (1);
-    s_catch_signals ();
-
-    void *server = zmq_socket (context, ZMQ_REP);
+    zctx_t *ctx = zctx_new ();
+    void *server = zctx_socket_new (ctx, ZMQ_REP);
     zmq_bind (server, argv [1]);
+
     printf ("I: service is ready at %s\n", argv [1]);
-    while (!s_interrupted) {
-        zmsg_t *msg = zmsg_recv (server);
-        if (!msg) 
+    while (TRUE) {
+        zmsg_t *request = zmsg_recv (server);
+        if (!request)
             break;          //  Interrupted
         //  Fail nastily if run against wrong client
-        assert (zmsg_parts (msg) == 2);
-        
-        zmsg_body_set (msg, "OK");
-        zmsg_send (&msg, server);
+        assert (zmsg_size (request) == 2);
+
+        zframe_t *address = zmsg_pop (request);
+        zmsg_destroy (&request);
+
+        zmsg_t *reply = zmsg_new ();
+        zmsg_add (reply, address);
+        zmsg_addstr (reply, "OK");
+        zmsg_send (&reply, server);
     }
-    if (s_interrupted)
+    if (zctx_interrupted)
         printf ("W: interrupted\n");
 
-    zmq_close (server);
-    zmq_term (context);
+    zctx_destroy (&ctx);
     return 0;
 }

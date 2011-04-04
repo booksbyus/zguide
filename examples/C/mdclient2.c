@@ -12,7 +12,8 @@ int main (int argc, char *argv [])
 
     int count;
     for (count = 0; count < 100000; count++) {
-        zmsg_t *request = zmsg_new ("Hello world");
+        zmsg_t *request = zmsg_new ();
+        zmsg_pushstr (request, "Hello world");
         mdcli_send (session, "echo", &request);
     }
     for (count = 0; count < 100000; count++) {

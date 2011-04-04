@@ -2,7 +2,7 @@
 //  Broker peering simulation (part 1)
 //  Prototypes the state flow
 //
-#include "zmsg.h"
+#include "zapi.h"
 
 int main (int argc, char *argv [])
 {
@@ -18,17 +18,17 @@ int main (int argc, char *argv [])
     srandom ((unsigned) time (NULL));
 
     //  Prepare our context and sockets
-    void *context = zmq_init (1);
-    char endpoint [256];
+    zctx_t *ctx = zctx_new ();
 
     //  Bind statebe to endpoint
-    void *statebe = zmq_socket (context, ZMQ_PUB);
+    void *statebe = zctx_socket_new (ctx, ZMQ_PUB);
+    char endpoint [256];
     snprintf (endpoint, 255, "ipc://%s-state.ipc", self);
     int rc = zmq_bind (statebe, endpoint);
     assert (rc == 0);
 
     //  Connect statefe to all peers
-    void *statefe = zmq_socket (context, ZMQ_SUB);
+    void *statefe = zctx_socket_new (ctx, ZMQ_SUB);
     zmq_setsockopt (statefe, ZMQ_SUBSCRIBE, "", 0);
 
     int argn;
@@ -49,26 +49,23 @@ int main (int argc, char *argv [])
         };
         //  Poll for activity, or 1 second timeout
         rc = zmq_poll (items, 1, 1000000);
-        assert (rc >= 0);
+        if (rc == -1)
+            break;              //  Interrupted
 
         //  Handle incoming status message
         if (items [0].revents & ZMQ_POLLIN) {
-            zmsg_t *zmsg = zmsg_recv (statefe);
-            printf ("%s - %s workers free\n",
-                zmsg_address (zmsg), zmsg_body (zmsg));
-            zmsg_destroy (&zmsg);
+            char *peer_name = zstr_recv (statefe);
+            char *available = zstr_recv (statefe);
+            printf ("%s - %s workers free\n", peer_name, available);
+            free (peer_name);
+            free (available);
         }
         else {
             //  Send random value for worker availability
-            zmsg_t *zmsg = zmsg_new (NULL);
-            zmsg_body_fmt (zmsg, "%d", randof (10));
-            //  We stick our own address onto the envelope
-            zmsg_wrap (zmsg, self, NULL);
-            zmsg_send (&zmsg, statebe);
+            zstr_sendm (statebe, self);
+            zstr_sendf (statebe, "%d", randof (10));
         }
     }
-    //  We never get here but clean up anyhow
-    zmq_close (statefe);
-    zmq_term (context);
+    zctx_destroy (&ctx);
     return EXIT_SUCCESS;
 }

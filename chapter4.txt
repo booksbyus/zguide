@@ -255,10 +255,7 @@ We're still using the Lazy Pirate client. Here is the Paranoid Pirate queue devi
 [[code type="example" title="Paranoid Pirate queue" name="ppqueue"]]
 [[/code]]
 
-Some comments about this example:
-
-* In C, it's quite horrid to manage any kind of data structure. The queue really needs two data structures: a least-recently used list of servers, and a hash of the same set of servers. The C code is not optimized, and won't scale as such. A proper version would use hash and list containers such as the [http://zfl.zeromq.org ZFL project] provides.
-* The queue extends the LRU pattern with heartbeating of workers. It's simple once it works, but quite difficult to invent. I'll explain more about heartbeating in a second.
+The queue extends the LRU pattern with heartbeating of workers. It's simple once it works, but quite difficult to invent. I'll explain more about heartbeating in a second.
 
 Here is the Paranoid Pirate worker:
 
@@ -268,7 +265,9 @@ Here is the Paranoid Pirate worker:
 Some comments about this example:
 
 * The code includes simulation of failures, as before. This makes it (a) very hard to debug, and (b) dangerous to reuse. When you want to debug this, disable the failure simulation.
+
 * As for the Paranoid Pirate queue, the heartbeating is quite tricky to get right. See below for a discussion about this.
+
 * The worker uses a reconnect strategy similar to the one we designed for the Lazy Pirate client. With two major differences: (a) it does an exponential back-off, and (b) it never abandons.
 
 Try the client, queue, and workers, e.g. using a script like this:
@@ -480,7 +479,7 @@ Asynchronous round-trip test...
  173010 calls/second
 [[/code]]
 
-Note that the client thread does a small pause before starting. This is to get around one of the 'features' of the ROUTER socket: if you send a message with the address of a peer that's not yet connected, the message gets discarded. In this example we don't use the LRU mechanism, so without the sleep, if the worker thread is too slow to connect, it'll lose messages, making a mess of our test.
+Note that the client thread does a small pause before starting. This is to get around one of the 'features' of the router socket: if you send a message with the address of a peer that's not yet connected, the message gets discarded. In this example we don't use the LRU mechanism, so without the sleep, if the worker thread is too slow to connect, it'll lose messages, making a mess of our test.
 
 As we see, round-tripping in the simplest case is 20 times slower than "shove it down the pipe as fast as it'll go" asynchronous approach. Let's see if we can apply this to Majordomo.
 
@@ -681,6 +680,8 @@ Here's the Titanic implementation. This server handles the three services using 
 
 [[code type="example" title="Titanic client example" name="titanic"]]
 [[/code]]
+
+To test this, start {{mdbroker}} and {{titanic}}, then run {{ticlient}}. Now start {{mdworker}} arbitrarily, and you should see the client getting a response and exiting happily.
 
 Some notes about this code:
 
@@ -1051,6 +1052,14 @@ Then start the client, specifying one or more connect endpoints as arguments:
 [[code type="example" title="Freelance client, Model One" name="flclient1"]]
 [[/code]]
 
+For example:
+
+[[code]]
+flserver1 tcp://*:5555 &
+flserver1 tcp://*:5556 &
+flclient1 tcp://localhost:5555 tcp://localhost:5556
+[[/code]]
+
 While the basic approach is Lazy Pirate, the client aims to just get one successful reply. It has two techniques, depending on whether you are running a single server, or multiple servers:
 
 * With a single server, the client will retry several times, exactly as for Lazy Pirate.
@@ -1075,7 +1084,7 @@ What's more annoying for the client is that we'll get multiple replies back, but
 
 So, we have to number requests, and ignore any replies that don't match the request number. Our Model One server will work, since it's an echo server, but coincidence is not a great basis for understanding. So we'll make a Model Two server that chews up the message, returns a correctly-numbered reply with the content "OK". We'll use messages consisting of two parts, a sequence number and a body.
 
-Start the server once or more:
+Start the server once or more, specifying a bind endpoint each time:
 
 [[code type="example" title="Freelance server, Model Two" name="flserver2"]]
 [[/code]]
@@ -1126,6 +1135,8 @@ This brings us to the realm of protocols again, so here's a short spec that defi
 * http://rfc.zeromq.org/spec:10
 
 It is short and sweet to implement as a server. Here's our echo server, Model Three, now speaking FLP:
+
+xxx
 
 Model Three of the server is just slightly different:
 

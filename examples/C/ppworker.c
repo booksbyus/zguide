@@ -1,116 +1,121 @@
 //
 //  Paranoid Pirate worker
 //
-#include "zmsg.h"
+#include "zapi.h"
 
 #define HEARTBEAT_LIVENESS  3       //  3-5 is reasonable
 #define HEARTBEAT_INTERVAL  1000    //  msecs
 #define INTERVAL_INIT       1000    //  Initial reconnect
 #define INTERVAL_MAX       32000    //  After exponential backoff
 
+//  Paranoid Pirate Protocol constants
+#define PPP_READY       "\001"      //  Signals worker is ready
+#define PPP_HEARTBEAT   "\002"      //  Signals worker heartbeat
+
 //  Helper function that returns a new configured socket
-//  connected to the Hello World server
-//
-static char identity [10];
+//  connected to the Paranoid Pirate queue
 
 static void *
-s_worker_socket (void *context) {
-    void *worker = zmq_socket (context, ZMQ_DEALER);
-
-    //  Set random identity to make tracing easier
-    sprintf (identity, "%04X-%04X", randof (0x10000), randof (0x10000));
-    zmq_setsockopt (worker, ZMQ_IDENTITY, identity, strlen (identity));
+s_worker_socket (zctx_t *ctx) {
+    void *worker = zctx_socket_new (ctx, ZMQ_DEALER);
     zmq_connect (worker, "tcp://localhost:5556");
 
-    //  Configure socket to not wait at close time
-    int linger = 0;
-    zmq_setsockopt (worker, ZMQ_LINGER, &linger, sizeof (linger));
-
     //  Tell queue we're ready for work
-    printf ("I: (%s) worker ready\n", identity);
-    s_send (worker, "READY");
+    printf ("I: worker ready\n");
+    zframe_t *frame = zframe_new (PPP_READY, 1);
+    zframe_send (&frame, worker, 0);
 
     return worker;
 }
 
 int main (void)
 {
-    srandom ((unsigned) time (NULL));
-
-    void *context = zmq_init (1);
-    void *worker = s_worker_socket (context);
+    zctx_t *ctx = zctx_new ();
+    void *worker = s_worker_socket (ctx);
 
     //  If liveness hits zero, queue is considered disconnected
     size_t liveness = HEARTBEAT_LIVENESS;
     size_t interval = INTERVAL_INIT;
 
     //  Send out heartbeats at regular intervals
-    uint64_t heartbeat_at = s_clock () + HEARTBEAT_INTERVAL;
+    uint64_t heartbeat_at = zclock_time () + HEARTBEAT_INTERVAL;
 
+    srandom ((unsigned) time (NULL));
     int cycles = 0;
     while (1) {
         zmq_pollitem_t items [] = { { worker,  0, ZMQ_POLLIN, 0 } };
-        zmq_poll (items, 1, HEARTBEAT_INTERVAL * 1000);
+        int rc = zmq_poll (items, 1, HEARTBEAT_INTERVAL * 1000);
+        if (rc == -1)
+            break;              //  Interrupted
 
         if (items [0].revents & ZMQ_POLLIN) {
             //  Get message
             //  - 3-part envelope + content -> request
-            //  - 1-part "HEARTBEAT" -> heartbeat
+            //  - 1-part HEARTBEAT -> heartbeat
             zmsg_t *msg = zmsg_recv (worker);
+            if (!msg)
+                break;          //  Interrupted
 
-            if (zmsg_parts (msg) == 3) {
+            if (zmsg_size (msg) == 3) {
                 //  Simulate various problems, after a few cycles
                 cycles++;
                 if (cycles > 3 && randof (5) == 0) {
-                    printf ("I: (%s) simulating a crash\n", identity);
+                    printf ("I: simulating a crash\n");
                     zmsg_destroy (&msg);
                     break;
                 }
                 else
                 if (cycles > 3 && randof (5) == 0) {
-                    printf ("I: (%s) simulating CPU overload\n", 
-                        identity);
-                    sleep (5);
+                    printf ("I: simulating CPU overload\n");
+                    sleep (3);
+                    if (zctx_interrupted)
+                        break;
                 }
-                printf ("I: (%s) normal reply - %s\n",
-                    identity, zmsg_body (msg));
+                printf ("I: normal reply\n");
                 zmsg_send (&msg, worker);
                 liveness = HEARTBEAT_LIVENESS;
                 sleep (1);              //  Do some heavy work
+                if (zctx_interrupted)
+                    break;
             }
             else
-            if (zmsg_parts (msg) == 1
-            &&  streq (zmsg_body (msg), "HEARTBEAT"))
-                liveness = HEARTBEAT_LIVENESS;
+            if (zmsg_size (msg) == 1) {
+                zframe_t *frame = zmsg_first (msg);
+                if (memcmp (zframe_data (frame), PPP_HEARTBEAT, 1) == 0)
+                    liveness = HEARTBEAT_LIVENESS;
+                else {
+                    printf ("E: invalid message\n");
+                    zmsg_dump (msg);
+                }
+                zmsg_destroy (&msg);
+            }
             else {
-                printf ("E: (%s) invalid message\n", identity);
+                printf ("E: invalid message\n");
                 zmsg_dump (msg);
             }
             interval = INTERVAL_INIT;
         }
         else
         if (--liveness == 0) {
-            printf ("W: (%s) heartbeat failure, can't reach queue\n",
-                identity);
-            printf ("W: (%s) reconnecting in %zd msec...\n",
-                identity, interval);
-            s_sleep (interval);
+            printf ("W: heartbeat failure, can't reach queue\n");
+            printf ("W: reconnecting in %zd msec...\n", interval);
+            zclock_sleep (interval);
 
             if (interval < INTERVAL_MAX)
                 interval *= 2;
-            zmq_close (worker);
-            worker = s_worker_socket (context);
+            zctx_socket_destroy (ctx, worker);
+            worker = s_worker_socket (ctx);
             liveness = HEARTBEAT_LIVENESS;
         }
 
         //  Send heartbeat to queue if it's time
-        if (s_clock () > heartbeat_at) {
-            heartbeat_at = s_clock () + HEARTBEAT_INTERVAL;
-            printf ("I: (%s) worker heartbeat\n", identity);
-            s_send (worker, "HEARTBEAT");
+        if (zclock_time () > heartbeat_at) {
+            heartbeat_at = zclock_time () + HEARTBEAT_INTERVAL;
+            printf ("I: worker heartbeat\n");
+            zframe_t *frame = zframe_new (PPP_HEARTBEAT, 1);
+            zframe_send (&frame, worker, 0);
         }
     }
-    zmq_close (worker);
-    zmq_term (context);
+    zctx_destroy (&ctx);
     return 0;
 }

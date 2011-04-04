@@ -969,6 +969,8 @@ All the code should be recognizable to you by now. How it works:
 
 * The server starts a QUEUE device that connects the two sockets. The QUEUE device keeps a single queue for incoming requests, and distributes those out to workers. It also routes replies back to their origin.
 
+Note that creating threads is not portable in most programming languages. The POSIX library is {{pthreads}}, but on Windows you have to use a different API. We'll see in Chapter Three how to wrap this in a portable API.
+
 Here the 'work' is just a one-second pause. We could do anything in the workers, including talking to other nodes. This is what the MT server looks like in terms of ØMQ sockets and nodes. Note how the request-reply chain is {{REQ-ROUTER-queue-DEALER-REP}}:
 
 [[code type="textdiagram"]]

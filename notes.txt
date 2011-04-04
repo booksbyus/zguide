@@ -3,10 +3,59 @@ Changes to examples
     - renamed XREP to ROUTER
     - renamed XREQ to DEALER
     - removed zmsg, zlist, zhash
+    - renamed zversion.c to version.c
+    - stripped down zhelpers.c:
+        - removed s_version (moved into version.c)
+        - removed s_version_assert
+        - removed s_catch_signals
+    - new example lruqueue3 shows how to use reactor
+    - ported examples to libzapi:
+        - lruqueue2, using reactor instead of poll loop
+        - asyncsrv, threads and zmsg
+        - peering1, note loop exit if poll returns -1
+        - peering2
+        - peering3
+        - lpclient, just basics
+        - spqueue, same core as lruqueue2
+        - spworker, overload is 3 seconds
+        - ppqueue, binary commands
+        - ppworker, use automatic identities
+        - mdcliapi, mdclient
+        - mdwrkapi, mdworker
+        - mdbroker
+        - mdcliapi2, mdclient2
+        - tripping
+        - mmiecho
+        - ticlient
+        - titanic
+        - bstarsrv
+        - bstarcli
+        - bstar, bstarsrv2 are new files
+        - flclient1, flserver1
+        - flclient2, flserver2
+        -
+
+    - PPP (http://rfc.zeromq.org/spec:6) changed to use binary commands
+        - READY is 0x01
+        - HEARTBEAT is 0x02
+    - note all libzapi apps exit if Ctrl-C used
+
+s/zmsg.h/zapi.h/
+s/void \*context = zmq_init \(1\)/zctx_t *ctx = zctx_new ()/
+s/zmq_socket \(context,/zctx_socket_new (ctx,/
+s/zmq_close \(/zctx_socket_destroy (ctx, /
+s/zmq_term \(context\)/zctx_destroy (&ctx)/
+s/zmsg_push/zmsg_pushstr/
+s/zmsg_parts/zmsg_size/
+s/s_sleep/zclock_sleep/
+s/s_clock/zclock_time/
+s/s_console/zclock_log/
+s/s_interrupted/zctx_interrupted/
+s/s_recv/zstr_recv/
+s/s_send/zstr_send/
+
 
 - remove all from zhelpers that is provided by zapi
-- strcmp -> streq
-- remove s_version_assert calls
 
 
 Notes for The Guide

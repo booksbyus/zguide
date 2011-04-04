@@ -3,7 +3,7 @@
 //
 #include "zhelpers.h"
 
-int main (void) 
+int main (void)
 {
     void *context = zmq_init (1);
 
@@ -30,7 +30,7 @@ int main (void)
     int update_nbr = 0;
     while (1) {
         char *string = s_recv (subscriber);
-        if (streq (string, "END")) {
+        if (strcmp (string, "END") == 0) {
             free (string);
             break;
         }

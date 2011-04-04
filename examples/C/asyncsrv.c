@@ -5,7 +5,7 @@
 //  it easier to start and stop the example. Each task has its own
 //  context and conceptually acts as a separate process.
 
-#include "zmsg.h"
+#include "zapi.h"
 
 //  ---------------------------------------------------------------------
 //  This is our client task
@@ -16,12 +16,12 @@
 static void *
 client_task (void *args)
 {
-    void *context = zmq_init (1);
-    void *client = zmq_socket (context, ZMQ_DEALER);
+    zctx_t *ctx = zctx_new ();
+    void *client = zctx_socket_new (ctx, ZMQ_DEALER);
 
-    //  Generate printable identity for the client
-    char identity [5];
-    sprintf (identity, "%04X", randof (0x10000));
+    //  Set random identity to make tracing easier
+    char identity [10];
+    sprintf (identity, "%04X-%04X", randof (0x10000), randof (0x10000));
     zmq_setsockopt (client, ZMQ_IDENTITY, identity, strlen (identity));
     zmq_connect (client, "tcp://localhost:5570");
 
@@ -33,18 +33,14 @@ client_task (void *args)
         for (centitick = 0; centitick < 100; centitick++) {
             zmq_poll (items, 1, 10000);
             if (items [0].revents & ZMQ_POLLIN) {
-                zmsg_t *zmsg = zmsg_recv (client);
-                printf ("%s: %s\n", identity, zmsg_body (zmsg));
-                zmsg_destroy (&zmsg);
+                zmsg_t *msg = zmsg_recv (client);
+                zframe_print (zmsg_last (msg), identity);
+                zmsg_destroy (&msg);
             }
         }
-        zmsg_t *zmsg = zmsg_new (NULL);
-        zmsg_body_fmt (zmsg, "request #%d", ++request_nbr);
-        zmsg_send (&zmsg, client);
+        zstr_sendf (client, "request #%d", ++request_nbr);
     }
-    //  Clean up and end task properly
-    zmq_close (client);
-    zmq_term (context);
+    zctx_destroy (&ctx);
     return NULL;
 }
 
@@ -59,22 +55,21 @@ static void *server_worker (void *socket);
 
 void *server_task (void *args)
 {
-    void *context = zmq_init (1);
+    zctx_t *ctx = zctx_new ();
 
     //  Frontend socket talks to clients over TCP
-    void *frontend = zmq_socket (context, ZMQ_ROUTER);
+    void *frontend = zctx_socket_new (ctx, ZMQ_ROUTER);
     zmq_bind (frontend, "tcp://*:5570");
 
     //  Backend socket talks to workers over inproc
-    void *backend = zmq_socket (context, ZMQ_DEALER);
+    void *backend = zctx_socket_new (ctx, ZMQ_DEALER);
     zmq_bind (backend, "inproc://backend");
 
     //  Launch pool of worker threads, precise number is not critical
     int thread_nbr;
-    for (thread_nbr = 0; thread_nbr < 5; thread_nbr++) {
-        pthread_t worker_thread;
-        pthread_create (&worker_thread, NULL, server_worker, context);
-    }
+    for (thread_nbr = 0; thread_nbr < 5; thread_nbr++)
+        zctx_thread_new (ctx, server_worker, NULL);
+
     //  Connect backend to frontend via a queue device
     //  We could do this:
     //      zmq_device (ZMQ_QUEUE, frontend, backend);
@@ -100,9 +95,7 @@ void *server_task (void *args)
             zmsg_send (&msg, frontend);
         }
     }
-    zmq_close (frontend);
-    zmq_close (backend);
-    zmq_term (context);
+    zctx_destroy (&ctx);
     return NULL;
 }
 
@@ -110,27 +103,31 @@ void *server_task (void *args)
 //  times, with random delays between replies.
 //
 static void *
-server_worker (void *context)
+server_worker (void *arg_ptr)
 {
-    void *worker = zmq_socket (context, ZMQ_DEALER);
+    zthread_t *args = (zthread_t *) arg_ptr;
+    void *worker = zctx_socket_new (args->ctx, ZMQ_DEALER);
     zmq_connect (worker, "inproc://backend");
 
     while (1) {
         //  The DEALER socket gives us the address envelope and message
         zmsg_t *msg = zmsg_recv (worker);
-        assert (zmsg_parts (msg) == 2);
+        zframe_t *address = zmsg_pop (msg);
+        zframe_t *content = zmsg_pop (msg);
+        assert (content);
+        zmsg_destroy (&msg);
 
         //  Send 0..4 replies back
         int reply, replies = randof (5);
         for (reply = 0; reply < replies; reply++) {
             //  Sleep for some fraction of a second
-            s_sleep (randof (1000) + 1);
-            zmsg_t *dup = zmsg_dup (msg);
-            zmsg_send (&dup, worker);
+            zclock_sleep (randof (1000) + 1);
+            zframe_send (&address, worker, ZFRAME_REUSE + ZFRAME_MORE);
+            zframe_send (&content, worker, ZFRAME_REUSE);
         }
-        zmsg_destroy (&msg);
+        zframe_destroy (&address);
+        zframe_destroy (&content);
     }
-    zmq_close (worker);
     return NULL;
 }
 
@@ -140,13 +137,13 @@ server_worker (void *context)
 //
 int main (void)
 {
-    pthread_t client_thread;
-    pthread_create (&client_thread, NULL, client_task, NULL);
-    pthread_create (&client_thread, NULL, client_task, NULL);
-    pthread_create (&client_thread, NULL, client_task, NULL);
-
-    pthread_t server_thread;
-    pthread_create (&server_thread, NULL, server_task, NULL);
-    pthread_join (server_thread, NULL);
+    zctx_t *ctx = zctx_new ();
+    zctx_thread_new (ctx, client_task, NULL);
+    zctx_thread_new (ctx, client_task, NULL);
+    zctx_thread_new (ctx, client_task, NULL);
+    zctx_thread_new (ctx, server_task, NULL);
+    //  Run for 5 seconds then quit
+    zclock_sleep (5 * 1000);
+    zctx_destroy (&ctx);
     return 0;
 }

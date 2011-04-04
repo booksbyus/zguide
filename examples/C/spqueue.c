@@ -3,25 +3,21 @@
 //  This is identical to the LRU pattern, with no reliability mechanisms
 //  at all. It depends on the client for recovery. Runs forever.
 //
-#include "zmsg.h"
+#include "zapi.h"
 
-#define MAX_WORKERS 100
-
-//  Dequeue operation for queue implemented as array of anything
-#define DEQUEUE(q) memmove (&(q)[0], &(q)[1], sizeof (q) - sizeof (q [0]))
+#define LRU_READY   "\001"      //  Signals worker is ready
 
 int main (void)
 {
     //  Prepare our context and sockets
-    void *context = zmq_init (1);
-    void *frontend = zmq_socket (context, ZMQ_ROUTER);
-    void *backend  = zmq_socket (context, ZMQ_ROUTER);
+    zctx_t *ctx = zctx_new ();
+    void *frontend = zctx_socket_new (ctx, ZMQ_ROUTER);
+    void *backend = zctx_socket_new (ctx, ZMQ_ROUTER);
     zmq_bind (frontend, "tcp://*:5555");    //  For clients
     zmq_bind (backend,  "tcp://*:5556");    //  For workers
 
     //  Queue of available workers
-    int available_workers = 0;
-    char *worker_queue [MAX_WORKERS];
+    zlist_t *workers = zlist_new ();
 
     while (1) {
         zmq_pollitem_t items [] = {
@@ -29,37 +25,41 @@ int main (void)
             { frontend, 0, ZMQ_POLLIN, 0 }
         };
         //  Poll frontend only if we have available workers
-        if (available_workers)
-            zmq_poll (items, 2, -1);
-        else
-            zmq_poll (items, 1, -1);
+        int rc = zmq_poll (items, zlist_size (workers)? 2: 1, -1);
+        if (rc == -1)
+            break;              //  Interrupted
 
         //  Handle worker activity on backend
         if (items [0].revents & ZMQ_POLLIN) {
-            zmsg_t *zmsg = zmsg_recv (backend);
             //  Use worker address for LRU routing
-            assert (available_workers < MAX_WORKERS);
-            worker_queue [available_workers++] = zmsg_unwrap (zmsg);
+            zmsg_t *msg = zmsg_recv (backend);
+            if (!msg)
+                break;          //  Interrupted
+            zframe_t *address = zmsg_unwrap (msg);
+            zlist_append (workers, address);
 
-            //  Return reply to client if it's not a READY
-            if (streq (zmsg_address (zmsg), "READY"))
-                zmsg_destroy (&zmsg);
+            //  Forward message to client if it's not a READY
+            zframe_t *frame = zmsg_first (msg);
+            if (memcmp (zframe_data (frame), LRU_READY, 1) == 0)
+                zmsg_destroy (&msg);
             else
-                zmsg_send (&zmsg, frontend);
+                zmsg_send (&msg, frontend);
         }
         if (items [1].revents & ZMQ_POLLIN) {
-            //  Now get next client request, route to next worker
-            zmsg_t *zmsg = zmsg_recv (frontend);
-            //  REQ socket in worker needs an envelope delimiter
-            zmsg_wrap (zmsg, worker_queue [0], "");
-            zmsg_send (&zmsg, backend);
-
-            //  Dequeue and drop the next worker address
-            free (worker_queue [0]);
-            DEQUEUE (worker_queue);
-            available_workers--;
+            //  Get client request, route to first available worker
+            zmsg_t *msg = zmsg_recv (frontend);
+            if (msg) {
+                zmsg_wrap (msg, (zframe_t *) zlist_pop (workers));
+                zmsg_send (&msg, backend);
+            }
         }
     }
-    //  We never exit the main loop
+    //  When we're done, clean up properly
+    while (zlist_size (workers)) {
+        zframe_t *frame = (zframe_t *) zlist_pop (workers);
+        zframe_destroy (&frame);
+    }
+    zlist_destroy (&workers);
+    zctx_destroy (&ctx);
     return 0;
 }

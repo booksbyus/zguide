@@ -17,7 +17,7 @@ static char *
 s_generate_uuid (void)
 {
     char hex_char [] = "0123456789ABCDEF";
-    char *uuidstr = calloc (1, sizeof (uuid_t) * 2 + 1);
+    char *uuidstr = zmalloc (sizeof (uuid_t) * 2 + 1);
     uuid_t uuid;
     uuid_generate (uuid);
     int byte_nbr;
@@ -53,17 +53,13 @@ s_reply_filename (char *uuid) {
 //  Titanic request service
 
 static void *
-titanic_request (void *context)
+titanic_request (void *args)
 {
-    //  We send new requests through to inproc://queue
-    void *queue = zmq_socket (context, ZMQ_PAIR);
-    zmq_connect (queue, "inproc://queue");
-
     mdwrk_t *worker = mdwrk_new (
         "tcp://localhost:5555", "titanic.request", 0);
     zmsg_t *reply = NULL;
 
-    while (1) {
+    while (TRUE) {
         //  Get next request from broker
         zmsg_t *request = mdwrk_recv (worker, &reply);
         if (!request)
@@ -77,17 +73,20 @@ titanic_request (void *context)
         char *filename = s_request_filename (uuid);
         FILE *file = fopen (filename, "w");
         assert (file);
-        zmsg_save (&request, file);
+        zmsg_save (request, file);
         fclose (file);
         free (filename);
+        zmsg_destroy (&request);
 
         //  Send UUID through to message queue
-        reply = zmsg_new (uuid);
-        zmsg_send (&reply, queue);
+        reply = zmsg_new ();
+        zmsg_addstr (reply, uuid);
+        zmsg_send (&reply, ((zthread_t *) args)->pipe);
 
         //  Now send UUID back to client
-        reply = zmsg_new (uuid);
-        zmsg_push (reply, "200 OK");
+        reply = zmsg_new ();
+        zmsg_addstr (reply, "200");
+        zmsg_addstr (reply, uuid);
         free (uuid);
     }
     mdwrk_destroy (&worker);
@@ -105,29 +104,32 @@ titanic_reply (void *context)
         "tcp://localhost:5555", "titanic.reply", 0);
     zmsg_t *reply = NULL;
 
-    while (1) {
+    while (TRUE) {
         zmsg_t *request = mdwrk_recv (worker, &reply);
         if (!request)
             break;      //  Interrupted, exit
 
-        char *filename = s_reply_filename (zmsg_body (request));
-        if (file_exists (filename)) {
-            FILE *file = fopen (filename, "r");
+        char *uuid = zmsg_popstr (request);
+        char *req_filename = s_request_filename (uuid);
+        char *rep_filename = s_reply_filename (uuid);
+        if (file_exists (rep_filename)) {
+            FILE *file = fopen (rep_filename, "r");
             assert (file);
             reply = zmsg_load (file);
-            zmsg_push (reply, "200 OK");
+            zmsg_pushstr (reply, "200");
             fclose (file);
         }
         else {
-            char *filename = s_request_filename (zmsg_body (request));
-            if (file_exists (filename))
-                reply = zmsg_new ("300 PENDING");
+            reply = zmsg_new ();
+            if (file_exists (req_filename))
+                zmsg_pushstr (reply, "300"); //Pending
             else
-                reply = zmsg_new ("400 UNKNOWN");
-            free (filename);
+                zmsg_pushstr (reply, "400"); //Unknown
         }
         zmsg_destroy (&request);
-        free (filename);
+        free (uuid);
+        free (req_filename);
+        free (rep_filename);
     }
     mdwrk_destroy (&worker);
     return 0;
@@ -144,22 +146,23 @@ titanic_close (void *context)
         "tcp://localhost:5555", "titanic.close", 0);
     zmsg_t *reply = NULL;
 
-    while (1) {
+    while (TRUE) {
         zmsg_t *request = mdwrk_recv (worker, &reply);
         if (!request)
             break;      //  Interrupted, exit
 
-        char *filename;
-        filename = s_request_filename (zmsg_body (request));
-        file_delete (filename);
-        free (filename);
-
-        filename = s_reply_filename (zmsg_body (request));
-        file_delete (filename);
-        free (filename);
+        char *uuid = zmsg_popstr (request);
+        char *req_filename = s_request_filename (uuid);
+        char *rep_filename = s_reply_filename (uuid);
+        file_delete (req_filename);
+        file_delete (rep_filename);
+        free (uuid);
+        free (req_filename);
+        free (rep_filename);
 
         zmsg_destroy (&request);
-        reply = zmsg_new ("200 OK");
+        reply = zmsg_new ();
+        zmsg_addstr (reply, "200");
     }
     mdwrk_destroy (&worker);
     return 0;
@@ -180,22 +183,25 @@ s_service_success (mdcli_t *client, char *uuid)
         return 1;
 
     zmsg_t *request = zmsg_load (file);
-    char *service = zmsg_pop (request);
     fclose (file);
+    zframe_t *service = zmsg_pop (request);
+    char *service_name = zframe_strdup (service);
 
     //  Use MMI protocol to check if service is available
-    zmsg_t *mmi_request = zmsg_new (service);
+    zmsg_t *mmi_request = zmsg_new ();
+    zmsg_add (mmi_request, service);
     zmsg_t *mmi_reply = mdcli_send (client, "mmi.service", &mmi_request);
-    int service_ok = (mmi_reply && atoi (zmsg_body (mmi_reply)) == 200);
+    int service_ok = (mmi_reply
+        && zframe_streq (zmsg_first (mmi_reply), "200"));
     zmsg_destroy (&mmi_reply);
 
     if (service_ok) {
-        zmsg_t *reply = mdcli_send (client, service, &request);
+        zmsg_t *reply = mdcli_send (client, service_name, &request);
         if (reply) {
             filename = s_reply_filename (uuid);
             FILE *file = fopen (filename, "w");
             assert (file);
-            zmsg_save (&reply, file);
+            zmsg_save (reply, file);
             fclose (file);
             free (filename);
             return 1;
@@ -205,7 +211,7 @@ s_service_success (mdcli_t *client, char *uuid)
     else
         zmsg_destroy (&request);
 
-    free (service);
+    free (service_name);
     return 0;
 }
 
@@ -213,37 +219,37 @@ s_service_success (mdcli_t *client, char *uuid)
 int main (int argc, char *argv [])
 {
     int verbose = (argc > 1 && streq (argv [1], "-v"));
-    void *context = zmq_init (1);
-
-    //  We expect new requests through on inproc://queue
-    //  This is to avoid multiple writers on the queue file
-    void *queue = zmq_socket (context, ZMQ_PAIR);
-    zmq_bind (queue, "inproc://queue");
+    zctx_t *ctx = zctx_new ();
 
     //  Create MDP client session with short timeout
     mdcli_t *client = mdcli_new ("tcp://localhost:5555", verbose);
     mdcli_set_timeout (client, 1000);  //  1 sec
     mdcli_set_retries (client, 1);     //  only 1 retry
 
-    pthread_t thread;
-    pthread_create (&thread, NULL, titanic_request, context);
-    pthread_create (&thread, NULL, titanic_reply, NULL);
-    pthread_create (&thread, NULL, titanic_close, NULL);
+    void *request_pipe = zctx_thread_new (ctx, titanic_request, NULL);
+    zctx_thread_new (ctx, titanic_reply, NULL);
+    zctx_thread_new (ctx, titanic_close, NULL);
 
     //  Main dispatcher loop
-    while (!s_interrupted) {
+    while (TRUE) {
         //  We'll dispatch once per second, if there's no activity
-        zmq_pollitem_t items [] = { { queue, 0, ZMQ_POLLIN, 0 } };
-        zmq_poll (items, 1, 1000 * 1000);
+        zmq_pollitem_t items [] = { { request_pipe, 0, ZMQ_POLLIN, 0 } };
+        int rc = zmq_poll (items, 1, 1000 * 1000);
+        if (rc == -1)
+            break;              //  Interrupted
         if (items [0].revents & ZMQ_POLLIN) {
             //  Ensure message directory exists
             file_mkdir (TITANIC_DIR);
 
             //  Append UUID to queue, prefixed with '-' for pending
-            zmsg_t *msg = zmsg_recv (queue);
+            zmsg_t *msg = zmsg_recv (request_pipe);
+            if (!msg)
+                break;          //  Interrupted
             FILE *file = fopen (TITANIC_DIR "/queue", "a");
-            fprintf (file, "-%s\n", zmsg_body (msg));
+            char *uuid = zmsg_popstr (msg);
+            fprintf (file, "-%s\n", uuid);
             fclose (file);
+            free (uuid);
             zmsg_destroy (&msg);
         }
         //  Brute-force dispatcher
@@ -265,7 +271,7 @@ int main (int argc, char *argv [])
             //  Skip end of line, LF or CRLF
             if (fgetc (file) == '\r')
                 fgetc (file);
-            if (s_interrupted)
+            if (zctx_interrupted)
                 break;
         }
         if (file)

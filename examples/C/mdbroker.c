@@ -2,9 +2,7 @@
 //  Majordomo Protocol broker
 //  A minimal implementation of http://rfc.zeromq.org/spec:7 and spec:8
 //
-#include "zmsg.h"
-#include "zlist.h"
-#include "zhash.h"
+#include "zapi.h"
 #include "mdp.h"
 
 //  We'd normally pull these from config data
@@ -15,7 +13,7 @@
 
 //  This defines a single broker
 typedef struct {
-    void *context;              //  0MQ context
+    zctx_t *ctx;                //  Our context
     void *socket;               //  Socket for clients & workers
     int verbose;                //  Print activity to stdout
     char *endpoint;             //  Broker binds to this endpoint
@@ -35,7 +33,8 @@ typedef struct {
 
 //  This defines one worker, idle or active
 typedef struct {
-    char *identity;             //  Address of worker
+    char *identity;             //  Identity of worker
+    zframe_t *address;          //  Address frame to route to
     service_t *service;         //  Owning service, if known
     int64_t expiry;             //  Expires at unless heartbeat
 } worker_t;
@@ -54,34 +53,32 @@ static void
 
 //  Service functions
 static service_t *
-    s_service_require (broker_t *self, char *name);
+    s_service_require (broker_t *self, zframe_t *service_frame);
 static void
     s_service_destroy (void *argument);
 static void
     s_service_dispatch (broker_t *self, service_t *service, zmsg_t *msg);
 static void
-    s_service_internal (broker_t *self, char *service_name, zmsg_t *msg);
+    s_service_internal (broker_t *self, zframe_t *service_frame, zmsg_t *msg);
 
 //  Worker functions
 static worker_t *
-    s_worker_require (broker_t *self, char *identity);
+    s_worker_require (broker_t *self, zframe_t *address);
 static void
     s_worker_delete (broker_t *self, worker_t *worker, int disconnect);
 static void
     s_worker_destroy (void *argument);
 static void
-    s_worker_process (broker_t *self, char *sender, zmsg_t *msg);
+    s_worker_process (broker_t *self, zframe_t *sender, zmsg_t *msg);
 static void
     s_worker_send (broker_t *self, worker_t *worker, char *command,
                    char *option, zmsg_t *msg);
 static void
     s_worker_waiting (broker_t *self, worker_t *worker);
-static int
-    s_worker_expired (worker_t *worker);
 
 //  Client functions
 static void
-    s_client_process (broker_t *self, char *sender, zmsg_t *msg);
+    s_client_process (broker_t *self, zframe_t *sender, zmsg_t *msg);
 
 
 //  ---------------------------------------------------------------------
@@ -91,54 +88,57 @@ int main (int argc, char *argv [])
 {
     int verbose = (argc > 1 && streq (argv [1], "-v"));
 
-    s_catch_signals ();
     broker_t *self = s_broker_new (verbose);
     s_broker_bind (self, "tcp://*:5555");
 
     //  Get and process messages forever or until interrupted
-    while (!s_interrupted) {
-        zmq_pollitem_t items [] = { 
+    while (TRUE) {
+        zmq_pollitem_t items [] = {
             { self->socket,  0, ZMQ_POLLIN, 0 } };
-        zmq_poll (items, 1, HEARTBEAT_INTERVAL * 1000);
+        int rc = zmq_poll (items, 1, HEARTBEAT_INTERVAL * 1000);
+        if (rc == -1)
+            break;              //  Interrupted
 
         //  Process next input message, if any
         if (items [0].revents & ZMQ_POLLIN) {
             zmsg_t *msg = zmsg_recv (self->socket);
+            if (!msg)
+                break;          //  Interrupted
             if (self->verbose) {
-                s_console ("I: received message:");
+                zclock_log ("I: received message:");
                 zmsg_dump (msg);
             }
-            char *sender = zmsg_pop (msg);
-            char *empty  = zmsg_pop (msg);
-            char *header = zmsg_pop (msg);
+            zframe_t *sender = zmsg_pop (msg);
+            zframe_t *empty  = zmsg_pop (msg);
+            zframe_t *header = zmsg_pop (msg);
 
-            if (streq (header, MDPC_CLIENT))
+            if (zframe_streq (header, MDPC_CLIENT))
                 s_client_process (self, sender, msg);
             else
-            if (streq (header, MDPW_WORKER))
+            if (zframe_streq (header, MDPW_WORKER))
                 s_worker_process (self, sender, msg);
             else {
-                s_console ("E: invalid message:");
+                zclock_log ("E: invalid message:");
                 zmsg_dump (msg);
                 zmsg_destroy (&msg);
             }
-            free (sender);
-            free (empty);
-            free (header);
+            zframe_destroy (&sender);
+            zframe_destroy (&empty);
+            zframe_destroy (&header);
         }
         //  Disconnect and delete any expired workers
         //  Send heartbeats to idle workers if needed
-        if (s_clock () > self->heartbeat_at) {
+        if (zclock_time () > self->heartbeat_at) {
             s_broker_purge_workers (self);
-            worker_t *worker = zlist_first (self->waiting);
+            worker_t *worker = (worker_t *) zlist_first (self->waiting);
             while (worker) {
                 s_worker_send (self, worker, MDPW_HEARTBEAT, NULL, NULL);
-                worker = zlist_next (self->waiting);
+                worker = (worker_t *) zlist_next (self->waiting);
             }
-            self->heartbeat_at = s_clock () + HEARTBEAT_INTERVAL;
+            self->heartbeat_at = zclock_time () + HEARTBEAT_INTERVAL;
         }
     }
-    if (s_interrupted)
+    if (zctx_interrupted)
         printf ("W: interrupt received, shutting down...\n");
 
     s_broker_destroy (&self);
@@ -152,16 +152,16 @@ int main (int argc, char *argv [])
 static broker_t *
 s_broker_new (int verbose)
 {
-    broker_t *self = (broker_t *) calloc (1, sizeof (broker_t));
+    broker_t *self = (broker_t *) zmalloc (sizeof (broker_t));
 
     //  Initialize broker state
-    self->context = zmq_init (1);
-    self->socket = zmq_socket (self->context, ZMQ_ROUTER);
+    self->ctx = zctx_new ();
+    self->socket = zctx_socket_new (self->ctx, ZMQ_ROUTER);
     self->verbose = verbose;
     self->services = zhash_new ();
     self->workers = zhash_new ();
     self->waiting = zlist_new ();
-    self->heartbeat_at = s_clock () + HEARTBEAT_INTERVAL;
+    self->heartbeat_at = zclock_time () + HEARTBEAT_INTERVAL;
     return self;
 }
 
@@ -174,8 +174,7 @@ s_broker_destroy (broker_t **self_p)
     assert (self_p);
     if (*self_p) {
         broker_t *self = *self_p;
-        zmq_close (self->socket);
-        zmq_term (self->context);
+        zctx_destroy (&self->ctx);
         zhash_destroy (&self->services);
         zhash_destroy (&self->workers);
         zlist_destroy (&self->waiting);
@@ -192,7 +191,7 @@ void
 s_broker_bind (broker_t *self, char *endpoint)
 {
     zmq_bind (self->socket, endpoint);
-    s_console ("I: MDP broker/0.1.1 is active at %s", endpoint);
+    zclock_log ("I: MDP broker/0.1.1 is active at %s", endpoint);
 }
 
 //  ---------------------------------------------------------------------
@@ -202,16 +201,16 @@ s_broker_bind (broker_t *self, char *endpoint)
 static void
 s_broker_purge_workers (broker_t *self)
 {
-    worker_t *worker = zlist_first (self->waiting);
+    worker_t *worker = (worker_t *) zlist_first (self->waiting);
     while (worker) {
-        if (!s_worker_expired (worker))
+        if (zclock_time () < worker->expiry)
             break;              //  Worker is alive, we're done here
         if (self->verbose)
-            s_console ("I: deleting expired worker: %s", 
+            zclock_log ("I: deleting expired worker: %s",
                 worker->identity);
 
         s_worker_delete (self, worker, 0);
-        worker = zlist_first (self->waiting);
+        worker = (worker_t *) zlist_first (self->waiting);
     }
 }
 
@@ -219,21 +218,26 @@ s_broker_purge_workers (broker_t *self)
 //  Locate or create new service entry
 
 static service_t *
-s_service_require (broker_t *self, char *name)
+s_service_require (broker_t *self, zframe_t *service_frame)
 {
-    assert (name);
-    service_t *service = 
+    assert (service_frame);
+    char *name = zframe_strdup (service_frame);
+
+    service_t *service =
         (service_t *) zhash_lookup (self->services, name);
     if (service == NULL) {
-        service = (service_t *) calloc (1, sizeof (service_t));
-        service->name = strdup (name);
+        service = (service_t *) zmalloc (sizeof (service_t));
+        service->name = name;
         service->requests = zlist_new ();
         service->waiting = zlist_new ();
         zhash_insert (self->services, name, service);
         zhash_freefn (self->services, name, s_service_destroy);
         if (self->verbose)
-            s_console ("I: received message:");
+            zclock_log ("I: received message:");
     }
+    else
+        free (name);
+
     return service;
 }
 
@@ -282,25 +286,27 @@ s_service_dispatch (broker_t *self, service_t *service, zmsg_t *msg)
 //  Handle internal service according to 8/MMI specification
 
 static void
-s_service_internal (broker_t *self, char *service_name, zmsg_t *msg)
+s_service_internal (broker_t *self, zframe_t *service_frame, zmsg_t *msg)
 {
-    if (streq (service_name, "mmi.service")) {
-        service_t *service = 
-            (service_t *) zhash_lookup (self->services, zmsg_body (msg));
-        if (service && service->workers)
-            zmsg_body_set (msg, "200");
-        else
-            zmsg_body_set (msg, "404");
+    char *return_code;
+    if (zframe_streq (service_frame, "mmi.service")) {
+        char *name = zframe_strdup (zmsg_last (msg));
+        service_t *service =
+            (service_t *) zhash_lookup (self->services, name);
+        return_code = service && service->workers? "200": "404";
+        free (name);
     }
     else
-        zmsg_body_set (msg, "501");
+        return_code = "501";
+
+    zframe_reset (zmsg_last (msg), return_code, strlen (return_code));
 
     //  Remove & save client return envelope and insert the
     //  protocol header and service name, then rewrap envelope.
-    char *client = zmsg_unwrap (msg);
-    zmsg_wrap (msg, MDPC_CLIENT, service_name);
-    zmsg_wrap (msg, client, "");
-    free (client);
+    zframe_t *client = zmsg_unwrap (msg);
+    zmsg_push (msg, zframe_dup (service_frame));
+    zmsg_pushstr (msg, MDPC_CLIENT);
+    zmsg_wrap (msg, client);
     zmsg_send (&msg, self->socket);
 }
 
@@ -308,21 +314,26 @@ s_service_internal (broker_t *self, char *service_name, zmsg_t *msg)
 //  Creates worker if necessary
 
 static worker_t *
-s_worker_require (broker_t *self, char *identity)
+s_worker_require (broker_t *self, zframe_t *address)
 {
-    assert (identity);
+    assert (address);
 
     //  self->workers is keyed off worker identity
-    worker_t *worker = 
+    char *identity = zframe_strhex (address);
+    worker_t *worker =
         (worker_t *) zhash_lookup (self->workers, identity);
+
     if (worker == NULL) {
-        worker = (worker_t *) calloc (1, sizeof (worker_t));
-        worker->identity = strdup (identity);
+        worker = (worker_t *) zmalloc (sizeof (worker_t));
+        worker->identity = identity;
+        worker->address = zframe_dup (address);
         zhash_insert (self->workers, identity, worker);
         zhash_freefn (self->workers, identity, s_worker_destroy);
         if (self->verbose)
-            s_console ("I: registering new worker: %s", identity);
+            zclock_log ("I: registering new worker: %s", identity);
     }
+    else
+        free (identity);
     return worker;
 }
 
@@ -353,8 +364,8 @@ static void
 s_worker_destroy (void *argument)
 {
     worker_t *worker = (worker_t *) argument;
-    if (worker->identity)
-        free (worker->identity);
+    zframe_destroy (&worker->address);
+    free (worker->identity);
     free (worker);
 }
 
@@ -362,39 +373,41 @@ s_worker_destroy (void *argument)
 //  Process message sent to us by a worker
 
 static void
-s_worker_process (broker_t *self, char *sender, zmsg_t *msg)
+s_worker_process (broker_t *self, zframe_t *sender, zmsg_t *msg)
 {
-    assert (zmsg_parts (msg) >= 1);     //  At least, command
+    assert (zmsg_size (msg) >= 1);     //  At least, command
 
-    char *command = zmsg_pop (msg);
-    int worker_ready = (zhash_lookup (self->workers, sender) != NULL);
+    zframe_t *command = zmsg_pop (msg);
+    char *identity = zframe_strhex (sender);
+    int worker_ready = (zhash_lookup (self->workers, identity) != NULL);
+    free (identity);
     worker_t *worker = s_worker_require (self, sender);
 
-    if (streq (command, MDPW_READY)) {
+    if (zframe_streq (command, MDPW_READY)) {
         if (worker_ready)               //  Not first command in session
             s_worker_delete (self, worker, 1);
         else
-        if (strlen (sender) >= 4  //  Reserved service name
-        &&  memcmp (sender, "mmi.", 4) == 0)
+        if (zframe_size (sender) >= 4  //  Reserved service name
+        &&  memcmp (zframe_data (sender), "mmi.", 4) == 0)
             s_worker_delete (self, worker, 1);
         else {
             //  Attach worker to service and mark as idle
-            char *service_name = zmsg_pop (msg);
-            worker->service = s_service_require (self, service_name);
+            zframe_t *service_frame = zmsg_pop (msg);
+            worker->service = s_service_require (self, service_frame);
             worker->service->workers++;
             s_worker_waiting (self, worker);
-            free (service_name);
+            zframe_destroy (&service_frame);
         }
     }
     else
-    if (streq (command, MDPW_REPLY)) {
+    if (zframe_streq (command, MDPW_REPLY)) {
         if (worker_ready) {
             //  Remove & save client return envelope and insert the
             //  protocol header and service name, then rewrap envelope.
-            char *client = zmsg_unwrap (msg);
-            zmsg_wrap (msg, MDPC_CLIENT, worker->service->name);
-            zmsg_wrap (msg, client, "");
-            free (client);
+            zframe_t *client = zmsg_unwrap (msg);
+            zmsg_pushstr (msg, worker->service->name);
+            zmsg_pushstr (msg, MDPC_CLIENT);
+            zmsg_wrap (msg, client);
             zmsg_send (&msg, self->socket);
             s_worker_waiting (self, worker);
         }
@@ -402,17 +415,17 @@ s_worker_process (broker_t *self, char *sender, zmsg_t *msg)
             s_worker_delete (self, worker, 1);
     }
     else
-    if (streq (command, MDPW_HEARTBEAT)) {
+    if (zframe_streq (command, MDPW_HEARTBEAT)) {
         if (worker_ready)
-            worker->expiry = s_clock () + HEARTBEAT_EXPIRY;
+            worker->expiry = zclock_time () + HEARTBEAT_EXPIRY;
         else
             s_worker_delete (self, worker, 1);
     }
     else
-    if (streq (command, MDPW_DISCONNECT))
+    if (zframe_streq (command, MDPW_DISCONNECT))
         s_worker_delete (self, worker, 0);
     else {
-        s_console ("E: invalid input message (%d)", (int) *command);
+        zclock_log ("E: invalid input message");
         zmsg_dump (msg);
     }
     free (command);
@@ -421,26 +434,26 @@ s_worker_process (broker_t *self, char *sender, zmsg_t *msg)
 
 //  ---------------------------------------------------------------------
 //  Send message to worker
-//  If pointer to message is provided, sends that message. Does not 
+//  If pointer to message is provided, sends that message. Does not
 //  destroy the message, this is the caller's job.
 
 static void
-s_worker_send (
-    broker_t *self, worker_t *worker,
-    char *command, char *option, zmsg_t *msg)
+s_worker_send (broker_t *self, worker_t *worker, char *command,
+               char *option, zmsg_t *msg)
 {
-    msg = msg? zmsg_dup (msg): zmsg_new (NULL);
+    msg = msg? zmsg_dup (msg): zmsg_new ();
 
     //  Stack protocol envelope to start of message
-    if (option)                 //  Optional frame after command
-        zmsg_push (msg, option);
-    zmsg_push (msg, command);
-    zmsg_push (msg, MDPW_WORKER);
+    if (option)
+        zmsg_pushstr (msg, option);
+    zmsg_pushstr (msg, command);
+    zmsg_pushstr (msg, MDPW_WORKER);
+
     //  Stack routing envelope to start of message
-    zmsg_wrap (msg, worker->identity, "");
+    zmsg_wrap (msg, zframe_dup (worker->address));
 
     if (self->verbose) {
-        s_console ("I: sending %s to worker",
+        zclock_log ("I: sending %s to worker",
             mdps_commands [(int) *command]);
         zmsg_dump (msg);
     }
@@ -456,35 +469,27 @@ s_worker_waiting (broker_t *self, worker_t *worker)
     //  Queue to broker and service waiting lists
     zlist_append (self->waiting, worker);
     zlist_append (worker->service->waiting, worker);
-    worker->expiry = s_clock () + HEARTBEAT_EXPIRY;
+    worker->expiry = zclock_time () + HEARTBEAT_EXPIRY;
     s_service_dispatch (self, worker->service, NULL);
-}
-
-//  ---------------------------------------------------------------------
-//  Return 1 if worker has expired and must be deleted
-
-static int
-s_worker_expired (worker_t *worker)
-{
-    return worker->expiry < s_clock ();
 }
 
 //  ---------------------------------------------------------------------
 //  Process a request coming from a client
 
 static void
-s_client_process (broker_t *self, char *sender, zmsg_t *msg)
+s_client_process (broker_t *self, zframe_t *sender, zmsg_t *msg)
 {
-    assert (zmsg_parts (msg) >= 2);     //  Service name + body
+    assert (zmsg_size (msg) >= 2);     //  Service name + body
 
-    char *service_name = zmsg_pop (msg);
-    service_t *service = s_service_require (self, service_name);
+    zframe_t *service_frame = zmsg_pop (msg);
+    service_t *service = s_service_require (self, service_frame);
+
     //  Set reply return address to client sender
-    zmsg_wrap (msg, sender, "");
-    if (strlen (service_name) >= 4
-    &&  memcmp (service_name, "mmi.", 4) == 0)
-        s_service_internal (self, service_name, msg);
+    zmsg_wrap (msg, zframe_dup (sender));
+    if (zframe_size (service_frame) >= 4
+    &&  memcmp (zframe_data (service_frame), "mmi.", 4) == 0)
+        s_service_internal (self, service_frame, msg);
     else
         s_service_dispatch (self, service, msg);
-    free (service_name);
+    zframe_destroy (&service_frame);
 }

@@ -1,123 +1,107 @@
 //
 //  Paranoid Pirate queue
 //
-#include "zmsg.h"
+#include "zapi.h"
 
-#define MAX_WORKERS         100
 #define HEARTBEAT_LIVENESS  3       //  3-5 is reasonable
 #define HEARTBEAT_INTERVAL  1000    //  msecs
 
-//  This defines one active worker in our worker queue
+//  Paranoid Pirate Protocol constants
+#define PPP_READY       "\001"      //  Signals worker is ready
+#define PPP_HEARTBEAT   "\002"      //  Signals worker heartbeat
+
+
+//  This defines one active worker in our worker list
 
 typedef struct {
-    char *identity;             //  Address of worker
+    zframe_t *address;          //  Address of worker
+    char *identity;             //  Printable identity
     int64_t expiry;             //  Expires at this time
 } worker_t;
 
-typedef struct {
-    size_t size;                //  Number of workers
-    worker_t workers [MAX_WORKERS];
-} queue_t;
-
-//  Dequeue operation for queue implemented as array of anything
-#define DEQUEUE(queue, index) memmove (      \
-    &(queue) [index], &(queue) [index + 1],  \
-    (sizeof (queue) / sizeof (*queue) - index) * sizeof (queue [0]))
-
-//  Insert worker at end of queue, reset expiry
-//  Worker must not already be in queue
-static void
-s_worker_append (queue_t *queue, char *identity)
+//  Construct new worker
+static worker_t *
+s_worker_new (zframe_t *address)
 {
-    int index;
-    for (index = 0; index < queue->size; index++)
-        if (streq (queue->workers [index].identity, identity))
-            break;
+    worker_t *self = (worker_t *) zmalloc (sizeof (worker_t));
+    self->address = address;
+    self->identity = zframe_string (address);
+    self->expiry = zclock_time () + HEARTBEAT_INTERVAL * HEARTBEAT_LIVENESS;
+    return self;
+}
 
-    if (index < queue->size)
-        printf ("E: duplicate worker identity %s", identity);
-    else {
-        assert (queue->size < MAX_WORKERS);
-        queue->workers [queue->size].identity = identity;
-        queue->workers [queue->size].expiry = s_clock ()
-            + HEARTBEAT_INTERVAL * HEARTBEAT_LIVENESS;
-        queue->size++;
+//  Destroy specified worker object, including identity frame.
+static void
+s_worker_destroy (worker_t **self_p)
+{
+    assert (self_p);
+    if (*self_p) {
+        worker_t *self = *self_p;
+        zframe_destroy (&self->address);
+        free (self->identity);
+        free (self);
+        *self_p = NULL;
     }
 }
 
-//  Remove worker from queue, if present
+//  Worker is ready, remove if on list and move to end
 static void
-s_worker_delete (queue_t *queue, char *identity)
+s_worker_ready (worker_t *self, zlist_t *workers)
 {
-    int index;
-    for (index = 0; index < queue->size; index++)
-        if (streq (queue->workers [index].identity, identity))
+    worker_t *worker = (worker_t *) zlist_first (workers);
+    while (worker) {
+        if (streq (self->identity, worker->identity)) {
+            zlist_remove (workers, worker);
+            s_worker_destroy (&worker);
             break;
-
-    if (index < queue->size) {
-        free (queue->workers [index].identity);
-        DEQUEUE (queue->workers, index);
-        queue->size--;
-    }
-}
-
-//  Reset worker expiry, worker must be present
-static void
-s_worker_refresh (queue_t *queue, char *identity)
-{
-    int index;
-    for (index = 0; index < queue->size; index++)
-        if (streq (queue->workers [index].identity, identity))
-            break;
-
-    if (index < queue->size)
-        queue->workers [index].expiry = s_clock ()
-            + HEARTBEAT_INTERVAL * HEARTBEAT_LIVENESS;
-    else
-        printf ("E: worker %s not ready\n", identity);
-}
-
-//  Pop next available worker off queue, return identity
-static char *
-s_worker_dequeue (queue_t *queue)
-{
-    assert (queue->size);
-    char *identity = queue->workers [0].identity;
-    DEQUEUE (queue->workers, 0);
-    queue->size--;
-    return identity;
-}
-
-//  Look for & kill expired workers
-static void
-s_queue_purge (queue_t *queue)
-{
-    //  Work backwards from oldest so we don't do useless work
-    int index;
-    for (index = queue->size - 1; index >= 0; index--) {
-        if (s_clock () > queue->workers [index].expiry) {
-            free (queue->workers [index].identity);
-            DEQUEUE (queue->workers, index);
-            queue->size--;
-            index--;
         }
+        worker = (worker_t *) zlist_next (workers);
+    }
+    zlist_append (workers, self);
+}
+
+//  Return next available worker address
+static zframe_t *
+s_workers_next (zlist_t *workers)
+{
+    worker_t *worker = zlist_pop (workers);
+    assert (worker);
+    zframe_t *frame = worker->address;
+    worker->address = NULL;
+    s_worker_destroy (&worker);
+    return frame;
+}
+
+//  Look for & kill expired workers. Workers are oldest to most recent,
+//  so we stop at the first alive worker.
+static void
+s_workers_purge (zlist_t *workers)
+{
+    worker_t *worker = (worker_t *) zlist_first (workers);
+    while (worker) {
+        if (zclock_time () < worker->expiry)
+            break;              //  Worker is alive, we're done here
+
+        zlist_remove (workers, worker);
+        s_worker_destroy (&worker);
+        worker = (worker_t *) zlist_first (workers);
     }
 }
+
 
 int main (void)
 {
-    //  Prepare our context and sockets
-    void *context = zmq_init (1);
-    void *frontend = zmq_socket (context, ZMQ_ROUTER);
-    void *backend  = zmq_socket (context, ZMQ_ROUTER);
+    zctx_t *ctx = zctx_new ();
+    void *frontend = zctx_socket_new (ctx, ZMQ_ROUTER);
+    void *backend  = zctx_socket_new (ctx, ZMQ_ROUTER);
     zmq_bind (frontend, "tcp://*:5555");    //  For clients
     zmq_bind (backend,  "tcp://*:5556");    //  For workers
 
-    //  Queue of available workers
-    queue_t *queue = (queue_t *) calloc (1, sizeof (queue_t));
+    //  List of available workers
+    zlist_t *workers = zlist_new ();
 
     //  Send out heartbeats at regular intervals
-    uint64_t heartbeat_at = s_clock () + HEARTBEAT_INTERVAL;
+    uint64_t heartbeat_at = zclock_time () + HEARTBEAT_INTERVAL;
 
     while (1) {
         zmq_pollitem_t items [] = {
@@ -125,64 +109,66 @@ int main (void)
             { frontend, 0, ZMQ_POLLIN, 0 }
         };
         //  Poll frontend only if we have available workers
-        if (queue->size)
-            zmq_poll (items, 2, HEARTBEAT_INTERVAL * 1000);
-        else
-            zmq_poll (items, 1, HEARTBEAT_INTERVAL * 1000);
+        int rc = zmq_poll (items, zlist_size (workers)? 2: 1,
+            HEARTBEAT_INTERVAL * 1000);
+        if (rc == -1)
+            break;              //  Interrupted
 
         //  Handle worker activity on backend
         if (items [0].revents & ZMQ_POLLIN) {
+            //  Use worker address for LRU routing
             zmsg_t *msg = zmsg_recv (backend);
-            char *identity = zmsg_unwrap (msg);
+            if (!msg)
+                break;          //  Interrupted
 
-            //  Return reply to client if it's not a control message
-            if (zmsg_parts (msg) == 1) {
-                if (streq (zmsg_address (msg), "READY")) {
-                    s_worker_delete (queue, identity);
-                    s_worker_append (queue, identity);
-                }
-                else
-                if (streq (zmsg_address (msg), "HEARTBEAT"))
-                    s_worker_refresh (queue, identity);
-                else {
-                    printf ("E: invalid message from %s\n", identity);
+            //  Any sign of life from worker means it's ready
+            zframe_t *address = zmsg_unwrap (msg);
+            worker_t *worker = s_worker_new (address);
+            s_worker_ready (worker, workers);
+
+            //  Validate control message, or return reply to client
+            if (zmsg_size (msg) == 1) {
+                zframe_t *frame = zmsg_first (msg);
+                if (memcmp (zframe_data (frame), PPP_READY, 1)
+                &&  memcmp (zframe_data (frame), PPP_HEARTBEAT, 1)) {
+                    printf ("E: invalid message from worker");
                     zmsg_dump (msg);
-                    free (identity);
                 }
                 zmsg_destroy (&msg);
             }
-            else {
+            else
                 zmsg_send (&msg, frontend);
-                s_worker_append (queue, identity);
-            }
         }
         if (items [1].revents & ZMQ_POLLIN) {
             //  Now get next client request, route to next worker
             zmsg_t *msg = zmsg_recv (frontend);
-            char *identity = s_worker_dequeue (queue);
-            zmsg_push (msg, identity);
+            if (!msg)
+                break;          //  Interrupted
+            zmsg_push (msg, s_workers_next (workers));
             zmsg_send (&msg, backend);
-            free (identity);
         }
 
         //  Send heartbeats to idle workers if it's time
-        if (s_clock () > heartbeat_at) {
-            int index;
-            for (index = 0; index < queue->size; index++) {
-                zmsg_t *msg = zmsg_new ("HEARTBEAT");
-                zmsg_wrap (msg, queue->workers [index].identity, NULL);
-                zmsg_send (&msg, backend);
+        if (zclock_time () >= heartbeat_at) {
+            worker_t *worker = (worker_t *) zlist_first (workers);
+            while (worker) {
+                zframe_send (&worker->address, backend,
+                             ZFRAME_REUSE + ZFRAME_MORE);
+                zframe_t *frame = zframe_new (PPP_HEARTBEAT, 1);
+                zframe_send (&frame, backend, 0);
+                worker = (worker_t *) zlist_next (workers);
             }
-            heartbeat_at = s_clock () + HEARTBEAT_INTERVAL;
+            heartbeat_at = zclock_time () + HEARTBEAT_INTERVAL;
         }
-        s_queue_purge (queue);
+        s_workers_purge (workers);
     }
-    //  We never exit the main loop
-    //  But pretend to do the right shutdown anyhow
-    while (queue->size)
-        free (s_worker_dequeue (queue));
-    free (queue);
-    zmq_close (frontend);
-    zmq_close (backend);
+
+    //  When we're done, clean up properly
+    while (zlist_size (workers)) {
+        worker_t *worker = (worker_t *) zlist_pop (workers);
+        s_worker_destroy (&worker);
+    }
+    zlist_destroy (&workers);
+    zctx_destroy (&ctx);
     return 0;
 }

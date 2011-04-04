@@ -6,13 +6,11 @@
 //  it easier to start and stop the example. Each thread has its own
 //  context and conceptually acts as a separate process.
 //
-#include "zmsg.h"
+#include "zapi.h"
 
 #define NBR_CLIENTS 10
 #define NBR_WORKERS 5
-
-//  Dequeue operation for queue implemented as array of anything
-#define DEQUEUE(q) memmove (&(q)[0], &(q)[1], sizeof (q) - sizeof (q [0]))
+#define LRU_READY   "\001"      //  Signals worker is ready
 
 //  Our own name; in practice this'd be configured per node
 static char *self;
@@ -24,54 +22,51 @@ static char *self;
 static void *
 client_task (void *args)
 {
-    void *context = zmq_init (1);
-
-    void *client = zmq_socket (context, ZMQ_REQ);
+    zctx_t *ctx = zctx_new ();
+    void *client = zctx_socket_new (ctx, ZMQ_REQ);
     char endpoint [256];
     snprintf (endpoint, 255, "ipc://%s-localfe.ipc", self);
     int rc = zmq_connect (client, endpoint);
     assert (rc == 0);
 
-    void *monitor = zmq_socket (context, ZMQ_PUSH);
+    void *monitor = zctx_socket_new (ctx, ZMQ_PUSH);
     snprintf (endpoint, 255, "ipc://%s-monitor.ipc", self);
     rc = zmq_connect (monitor, endpoint);
     assert (rc == 0);
 
     while (1) {
         sleep (randof (5));
-
         int burst = randof (15);
         while (burst--) {
-            //  Send request with random hex ID
             char task_id [5];
             sprintf (task_id, "%04X", randof (0x10000));
-            zmsg_t *zmsg = zmsg_new (task_id);
-            zmsg_send (&zmsg, client);
+
+            //  Send request with random hex ID
+            zstr_send (client, task_id);
 
             //  Wait max ten seconds for a reply, then complain
             zmq_pollitem_t pollset [1] = { { client, 0, ZMQ_POLLIN, 0 } };
             rc = zmq_poll (pollset, 1, 10 * 1000000);
-            assert (rc >= 0);
+            if (rc == -1)
+                break;          //  Interrupted
 
             if (pollset [0].revents & ZMQ_POLLIN) {
-                zmsg_t *zmsg = zmsg_recv (client);
+                char *reply = zstr_recv (client);
+                if (!reply)
+                    break;              //  Interrupted
                 //  Worker is supposed to answer us with our task id
-                assert (streq (zmsg_body (zmsg), task_id));
-                zmsg_destroy (&zmsg);
+                puts (reply);
+                assert (streq (reply, task_id));
+                free (reply);
             }
             else {
-                zmsg_t *zmsg = zmsg_new (NULL);
-                zmsg_body_fmt (zmsg,
+                zstr_sendf (monitor,
                     "E: CLIENT EXIT - lost task %s", task_id);
-                zmsg_send (&zmsg, monitor);
                 return NULL;
             }
         }
     }
-    //  We never get here but if we did, this is how we'd exit cleanly
-    zmq_close (client);
-    zmq_close (monitor);
-    zmq_term (context);
+    zctx_destroy (&ctx);
     return NULL;
 }
 
@@ -80,27 +75,24 @@ client_task (void *args)
 static void *
 worker_task (void *args)
 {
-    void *context = zmq_init (1);
-
-    void *worker = zmq_socket (context, ZMQ_REQ);
+    zctx_t *ctx = zctx_new ();
+    void *worker = zctx_socket_new (ctx, ZMQ_REQ);
     char endpoint [256];
     snprintf (endpoint, 255, "ipc://%s-localbe.ipc", self);
     int rc = zmq_connect (worker, endpoint);
     assert (rc == 0);
 
-    //  Tell broker we're ready for work
-    zmsg_t *zmsg = zmsg_new ("READY");
-    zmsg_send (&zmsg, worker);
+      //  Tell broker we're ready for work
+    zframe_t *frame = zframe_new (LRU_READY, 1);
+    zframe_send (&frame, worker, 0);
 
     while (1) {
         //  Workers are busy for 0/1/2 seconds
-        zmsg = zmsg_recv (worker);
+        zmsg_t *msg = zmsg_recv (worker);
         sleep (randof (2));
-        zmsg_send (&zmsg, worker);
+        zmsg_send (&msg, worker);
     }
-    //  We never get here but if we did, this is how we'd exit cleanly
-    zmq_close (worker);
-    zmq_term (context);
+    zctx_destroy (&ctx);
     return NULL;
 }
 
@@ -118,24 +110,24 @@ int main (int argc, char *argv [])
     srandom ((unsigned) time (NULL));
 
     //  Prepare our context and sockets
-    void *context = zmq_init (1);
+    zctx_t *ctx = zctx_new ();
     char endpoint [256];
 
     //  Bind cloud frontend to endpoint
-    void *cloudfe = zmq_socket (context, ZMQ_ROUTER);
+    void *cloudfe = zctx_socket_new (ctx, ZMQ_ROUTER);
     snprintf (endpoint, 255, "ipc://%s-cloud.ipc", self);
     zmq_setsockopt (cloudfe, ZMQ_IDENTITY, self, strlen (self));
     int rc = zmq_bind (cloudfe, endpoint);
     assert (rc == 0);
 
     //  Bind state backend / publisher to endpoint
-    void *statebe = zmq_socket (context, ZMQ_PUB);
+    void *statebe = zctx_socket_new (ctx, ZMQ_PUB);
     snprintf (endpoint, 255, "ipc://%s-state.ipc", self);
     rc = zmq_bind (statebe, endpoint);
     assert (rc == 0);
 
     //  Connect cloud backend to all peers
-    void *cloudbe = zmq_socket (context, ZMQ_ROUTER);
+    void *cloudbe = zctx_socket_new (ctx, ZMQ_ROUTER);
     zmq_setsockopt (cloudbe, ZMQ_IDENTITY, self, strlen (self));
 
     int argn;
@@ -148,7 +140,7 @@ int main (int argc, char *argv [])
     }
 
     //  Connect statefe to all peers
-    void *statefe = zmq_socket (context, ZMQ_SUB);
+    void *statefe = zctx_socket_new (ctx, ZMQ_SUB);
     zmq_setsockopt (statefe, ZMQ_SUBSCRIBE, "", 0);
 
     for (argn = 2; argn < argc; argn++) {
@@ -159,34 +151,31 @@ int main (int argc, char *argv [])
         assert (rc == 0);
     }
     //  Prepare local frontend and backend
-    void *localfe = zmq_socket (context, ZMQ_ROUTER);
+    void *localfe = zctx_socket_new (ctx, ZMQ_ROUTER);
     snprintf (endpoint, 255, "ipc://%s-localfe.ipc", self);
     rc = zmq_bind (localfe, endpoint);
     assert (rc == 0);
 
-    void *localbe = zmq_socket (context, ZMQ_ROUTER);
+    void *localbe = zctx_socket_new (ctx, ZMQ_ROUTER);
     snprintf (endpoint, 255, "ipc://%s-localbe.ipc", self);
     rc = zmq_bind (localbe, endpoint);
     assert (rc == 0);
 
     //  Prepare monitor socket
-    void *monitor = zmq_socket (context, ZMQ_PULL);
+    void *monitor = zctx_socket_new (ctx, ZMQ_PULL);
     snprintf (endpoint, 255, "ipc://%s-monitor.ipc", self);
     rc = zmq_bind (monitor, endpoint);
     assert (rc == 0);
 
     //  Start local workers
     int worker_nbr;
-    for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++) {
-        pthread_t worker;
-        pthread_create (&worker, NULL, worker_task, NULL);
-    }
+    for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++)
+        zctx_thread_new (ctx, worker_task, NULL);
+
     //  Start local clients
     int client_nbr;
-    for (client_nbr = 0; client_nbr < NBR_CLIENTS; client_nbr++) {
-        pthread_t client;
-        pthread_create (&client, NULL, client_task, NULL);
-    }
+    for (client_nbr = 0; client_nbr < NBR_CLIENTS; client_nbr++)
+        zctx_thread_new (ctx, client_task, NULL);
 
     //  Interesting part
     //  -------------------------------------------------------------
@@ -200,7 +189,7 @@ int main (int argc, char *argv [])
     //  Queue of available workers
     int local_capacity = 0;
     int cloud_capacity = 0;
-    char *worker_queue [10];
+    zlist_t *workers = zlist_new ();
 
     while (1) {
         zmq_pollitem_t primary [] = {
@@ -211,49 +200,61 @@ int main (int argc, char *argv [])
         };
         //  If we have no workers anyhow, wait indefinitely
         rc = zmq_poll (primary, 4, local_capacity? 1000000: -1);
-        assert (rc >= 0);
+        if (rc == -1)
+            break;              //  Interrupted
 
         //  Track if capacity changes during this iteration
         int previous = local_capacity;
 
         //  Handle reply from local worker
-        zmsg_t *zmsg = NULL;
+        zmsg_t *msg = NULL;
 
         if (primary [0].revents & ZMQ_POLLIN) {
-            assert (local_capacity < NBR_WORKERS);
-            //  Use worker address for LRU routing
-            zmsg = zmsg_recv (localbe);
-            worker_queue [local_capacity++] = zmsg_unwrap (zmsg);
-            if (streq (zmsg_address (zmsg), "READY"))
-                zmsg_destroy (&zmsg);   //  Don't route it
+            msg = zmsg_recv (localbe);
+            if (!msg)
+                break;          //  Interrupted
+            zframe_t *address = zmsg_unwrap (msg);
+            zlist_append (workers, address);
+            local_capacity++;
+
+            //  If it's READY, don't route the message any further
+            zframe_t *frame = zmsg_first (msg);
+            if (memcmp (zframe_data (frame), LRU_READY, 1) == 0)
+                zmsg_destroy (&msg);
         }
         //  Or handle reply from peer broker
         else
         if (primary [1].revents & ZMQ_POLLIN) {
-            zmsg = zmsg_recv (cloudbe);
+            msg = zmsg_recv (cloudbe);
+            if (!msg)
+                break;          //  Interrupted
             //  We don't use peer broker address for anything
-            free (zmsg_unwrap (zmsg));
+            zframe_t *address = zmsg_unwrap (msg);
+            zframe_destroy (&address);
         }
         //  Route reply to cloud if it's addressed to a broker
-        for (argn = 2; zmsg && argn < argc; argn++) {
-            if (streq (zmsg_address (zmsg), argv [argn]))
-                zmsg_send (&zmsg, cloudfe);
+        for (argn = 2; msg && argn < argc; argn++) {
+            char *data = zframe_data (zmsg_first (msg));
+            size_t size = zframe_size (zmsg_first (msg));
+            if (size == strlen (argv [argn])
+            &&  memcmp (data, argv [argn], size) == 0)
+                zmsg_send (&msg, cloudfe);
         }
         //  Route reply to client if we still need to
-        if (zmsg)
-            zmsg_send (&zmsg, localfe);
+        if (msg)
+            zmsg_send (&msg, localfe);
 
         //  Handle capacity updates
         if (primary [2].revents & ZMQ_POLLIN) {
-            zmsg = zmsg_recv (statefe);
-            cloud_capacity = atoi (zmsg_body (zmsg));
-            zmsg_destroy (&zmsg);
+            char *status = zstr_recv (statefe);
+            cloud_capacity = atoi (status);
+            free (status);
         }
         //  Handle monitor message
         if (primary [3].revents & ZMQ_POLLIN) {
-            zmsg_t *zmsg = zmsg_recv (monitor);
-            printf ("%s\n", zmsg_body (zmsg));
-            zmsg_destroy (&zmsg);
+            char *status = zstr_recv (monitor);
+            printf ("%s\n", status);
+            free (status);
         }
 
         //  Now route as many clients requests as we can handle
@@ -273,45 +274,39 @@ int main (int argc, char *argv [])
             assert (rc >= 0);
 
             if (secondary [0].revents & ZMQ_POLLIN)
-                zmsg = zmsg_recv (localfe);
+                msg = zmsg_recv (localfe);
             else
             if (secondary [1].revents & ZMQ_POLLIN)
-                zmsg = zmsg_recv (cloudfe);
+                msg = zmsg_recv (cloudfe);
             else
                 break;      //  No work, go back to primary
 
             if (local_capacity) {
-                zmsg_wrap (zmsg, worker_queue [0], "");
-                zmsg_send (&zmsg, localbe);
-
-                //  Dequeue and drop the next worker address
-                free (worker_queue [0]);
-                DEQUEUE (worker_queue);
+                zframe_t *frame = (zframe_t *) zlist_pop (workers);
+                zmsg_wrap (msg, frame);
+                zmsg_send (&msg, localbe);
                 local_capacity--;
             }
             else {
                 //  Route to random broker peer
-                printf ("I: route request %s to cloud...\n",
-                    zmsg_body (zmsg));
                 int random_peer = randof (argc - 2) + 2;
-                zmsg_wrap (zmsg, argv [random_peer], NULL);
-                zmsg_send (&zmsg, cloudbe);
+                zmsg_pushmem (msg, argv [random_peer], strlen (argv [random_peer]));
+                zmsg_send (&msg, cloudbe);
             }
         }
         if (local_capacity != previous) {
-            //  Broadcast new capacity
-            zmsg_t *zmsg = zmsg_new (NULL);
-            zmsg_body_fmt (zmsg, "%d", local_capacity);
             //  We stick our own address onto the envelope
-            zmsg_wrap (zmsg, self, NULL);
-            zmsg_send (&zmsg, statebe);
+            zstr_sendm (statebe, self);
+            //  Broadcast new capacity
+            zstr_sendf (statebe, "%d", local_capacity);
         }
     }
-    //  We never get here but clean up anyhow
-    zmq_close (localbe);
-    zmq_close (cloudbe);
-    zmq_close (statefe);
-    zmq_close (monitor);
-    zmq_term (context);
+    //  When we're done, clean up properly
+    while (zlist_size (workers)) {
+        zframe_t *frame = (zframe_t *) zlist_pop (workers);
+        zframe_destroy (&frame);
+    }
+    zlist_destroy (&workers);
+    zctx_destroy (&ctx);
     return EXIT_SUCCESS;
 }

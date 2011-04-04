@@ -32,20 +32,19 @@ send_one_kvmsg (char *key, void *data, void *args)
 int main (void)
 {
     //  Prepare our context and sockets
-    void *context = zmq_init (1);
-    void *publisher = zmq_socket (context, ZMQ_PUB);
+    zctx_t *ctx = zctx_new ();
+    void *publisher = zctx_socket_new (ctx, ZMQ_PUB);
     int rc = zmq_bind (publisher, "tcp://*:5556");
     assert (rc == 0);
 
-    void *snapshot = zmq_socket (context, ZMQ_ROUTER);
+    void *snapshot = zctx_socket_new (ctx, ZMQ_ROUTER);
     rc = zmq_bind (snapshot, "tcp://*:5557");
     assert (rc == 0);
 
-    void *collector = zmq_socket (context, ZMQ_PULL);
+    void *collector = zctx_socket_new (ctx, ZMQ_PULL);
     rc = zmq_bind (collector, "tcp://*:5558");
     assert (rc == 0);
 
-    s_catch_signals ();
     int64_t sequence = 0;
     zhash_t *kvmap = zhash_new ();
 
@@ -53,7 +52,7 @@ int main (void)
         { collector, 0, ZMQ_POLLIN, 0 },
         { snapshot, 0, ZMQ_POLLIN, 0 }
     };
-    while (!s_interrupted) {
+    while (!zctx_interrupted) {
         int rc = zmq_poll (items, 2, 1000 * 1000);
 
         //  Apply state update sent from client
@@ -99,10 +98,10 @@ int main (void)
     }
     printf (" Interrupted\n%" PRId64 " messages handled\n", sequence);
     zhash_destroy (&kvmap);
-    zmq_close (publisher);
-    zmq_close (collector);
-    zmq_close (snapshot);
-    zmq_term (context);
+    zctx_socket_destroy (ctx, publisher);
+    zctx_socket_destroy (ctx, collector);
+    zctx_socket_destroy (ctx, snapshot);
+    zctx_destroy (zmq_term (context)ctx);
 
     return 0;
 }

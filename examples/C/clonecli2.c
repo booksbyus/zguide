@@ -8,21 +8,20 @@
 int main (void)
 {
     //  Prepare our context and subscriber
-    void *context = zmq_init (1);
-    void *subscriber = zmq_socket (context, ZMQ_SUB);
+    zctx_t *ctx = zctx_new ();
+    void *subscriber = zctx_socket_new (ctx, ZMQ_SUB);
     zmq_setsockopt (subscriber, ZMQ_SUBSCRIBE, "", 0);
     zmq_connect (subscriber, "tcp://localhost:5556");
 
-    void *snapshot = zmq_socket (context, ZMQ_DEALER);
+    void *snapshot = zctx_socket_new (ctx, ZMQ_DEALER);
     zmq_connect (snapshot, "tcp://localhost:5557");
 
-    s_catch_signals ();
     zhash_t *kvmap = zhash_new ();
 
     //  Get state snapshot
     int64_t sequence = 0;
-    s_send (snapshot, "I can haz state?");
-    while (!s_interrupted) {
+    zstr_send (snapshot, "I can haz state?");
+    while (!zctx_interrupted) {
         kvmsg_t *kvmsg = kvmsg_recv (snapshot);
         if (!kvmsg)
             break;          //  Interrupted
@@ -35,12 +34,10 @@ int main (void)
     }
     printf ("Received snapshot=%" PRId64 "\n", sequence);
     
-    int zero = 0;
-    zmq_setsockopt (snapshot, ZMQ_LINGER, &zero, sizeof (zero));
-    zmq_close (snapshot);
+    zctx_socket_destroy (ctx, snapshot);
     
     //  Now apply pending updates, discard out-of-sequence messages
-    while (!s_interrupted) {
+    while (!zctx_interrupted) {
         kvmsg_t *kvmsg = kvmsg_recv (subscriber);
         if (!kvmsg)
             break;          //  Interrupted
@@ -52,7 +49,7 @@ int main (void)
             kvmsg_destroy (&kvmsg);
     }
     zhash_destroy (&kvmap);
-    zmq_close (subscriber);
-    zmq_term (context);
+    zctx_socket_destroy (ctx, subscriber);
+    zctx_destroy (zmq_term (context)ctx);
     return 0;
 }

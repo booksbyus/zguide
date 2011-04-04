@@ -6,6 +6,7 @@
 //  context and conceptually acts as a separate process.
 //
 #include "zhelpers.h"
+#include <pthread.h>
 
 #define NBR_WORKERS 10
 
@@ -26,7 +27,7 @@ worker_task (void *args)
 
         //  Get workload from router, until finished
         char *workload = s_recv (worker);
-        int finished = (streq (workload, "END"));
+        int finished = (strcmp (workload, "END") == 0);
         free (workload);
         if (finished) {
             printf ("Processed: %d tasks\n", total);

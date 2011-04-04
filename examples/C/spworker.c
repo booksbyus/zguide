@@ -3,47 +3,50 @@
 //  Connects REQ socket to tcp://*:5556
 //  Implements worker part of LRU queueing
 //
-#include "zmsg.h"
+#include "zapi.h"
+#define LRU_READY   "\001"      //  Signals worker is ready
 
 int main (void)
 {
-    srandom ((unsigned) time (NULL));
-
-    void *context = zmq_init (1);
-    void *worker = zmq_socket (context, ZMQ_REQ);
+    zctx_t *ctx = zctx_new ();
+    void *worker = zctx_socket_new (ctx, ZMQ_REQ);
 
     //  Set random identity to make tracing easier
+    srandom ((unsigned) time (NULL));
     char identity [10];
     sprintf (identity, "%04X-%04X", randof (0x10000), randof (0x10000));
     zmq_setsockopt (worker, ZMQ_IDENTITY, identity, strlen (identity));
     zmq_connect (worker, "tcp://localhost:5556");
 
-    //  Tell queue we're ready for work
+    //  Tell broker we're ready for work
     printf ("I: (%s) worker ready\n", identity);
-    s_send (worker, "READY");
+    zframe_t *frame = zframe_new (LRU_READY, 1);
+    zframe_send (&frame, worker, 0);
 
     int cycles = 0;
     while (1) {
-        zmsg_t *zmsg = zmsg_recv (worker);
+        zmsg_t *msg = zmsg_recv (worker);
+        if (!msg)
+            break;              //  Interrupted
 
         //  Simulate various problems, after a few cycles
         cycles++;
         if (cycles > 3 && randof (5) == 0) {
             printf ("I: (%s) simulating a crash\n", identity);
-            zmsg_destroy (&zmsg);
+            zmsg_destroy (&msg);
             break;
         }
         else
         if (cycles > 3 && randof (5) == 0) {
             printf ("I: (%s) simulating CPU overload\n", identity);
-            sleep (5);
+            sleep (3);
+            if (zctx_interrupted)
+                break;
         }
-        printf ("I: (%s) normal reply - %s\n", 
-                identity, zmsg_body (zmsg));
+        printf ("I: (%s) normal reply\n", identity);
         sleep (1);              //  Do some heavy work
-        zmsg_send (&zmsg, worker);
+        zmsg_send (&msg, worker);
     }
-    zmq_close (worker);
-    zmq_term (context);
+    zctx_destroy (&ctx);
     return 0;
 }

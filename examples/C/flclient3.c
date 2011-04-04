@@ -17,9 +17,10 @@ int main (void)
 
     //  Send a bunch of name resolution 'requests', measure time
     int requests = 10000;
-    uint64_t start = s_clock ();
+    uint64_t start = zclock_time ();
     while (requests--) {
-        zmsg_t *request = zmsg_new ("random name");
+        zmsg_t *request = zmsg_new ();
+        zmsg_addstr (request, "random name");
         zmsg_t *reply = flcliapi_request (client, &request);
         if (!reply) {
             printf ("E: name service not available, aborting\n");
@@ -27,8 +28,9 @@ int main (void)
         }
         zmsg_destroy (&reply);
     }
-    printf ("Average round trip cost: %d usec\n", 
-        (int) (s_clock () - start) / 10);
+    printf ("Average round trip cost: %d usec\n",
+        (int) (zclock_time () - start) / 10);
+
     flcliapi_destroy (&client);
     return 0;
 }
