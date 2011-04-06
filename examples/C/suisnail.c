@@ -1,7 +1,7 @@
 //
 //  Suicidal Snail
 //
-#include "zhelpers.h"
+#include "zapi.h"
 
 //  ---------------------------------------------------------------------
 //  This is our subscriber
@@ -36,8 +36,9 @@ subscriber (void *args) {
         //  Work for 1 msec plus some random additional time
         zclock_sleep (1 + randof (2));
     }
-    zctx_socket_destroy (ctx, subscriber);
-    zctx_destroy (zmq_term (context)ctx);
+    zctx_destroy (&ctx);
+    puts ("THERE");
+    zstr_send (((zthread_t *) args)->pipe, "gone and died");
     return NULL;
 }
 
@@ -59,25 +60,33 @@ publisher (void *args) {
         char string [20];
         sprintf (string, "%" PRId64, zclock_time ());
         zstr_send (publisher, string);
+        char *signal = zstr_recv_nowait (((zthread_t *) args)->pipe);
+        if (signal) {
+    puts ("WOWEE");
+            free (signal);
+            break;
+        }
         zclock_sleep (1);            //  1msec wait
     }
-    zctx_socket_destroy (ctx, publisher);
-    zctx_destroy (zmq_term (context)ctx);
+    puts ("ZOWEE");
+    zctx_destroy (&ctx);
     return NULL;
 }
 
 
 //  This main thread simply starts a client, and a server, and then
-//  waits for the client to croak.
+//  waits for the client to signal it's died.
 //
 int main (void)
 {
-    pthread_t server_thread;
-    pthread_create (&server_thread, NULL, publisher, NULL);
-
-    pthread_t client_thread;
-    pthread_create (&client_thread, NULL, subscriber, NULL);
-    pthread_join (client_thread, NULL);
-
+    zctx_t *ctx = zctx_new ();
+    void *pubpipe = zctx_thread_new (ctx, publisher, NULL);
+    void *subpipe = zctx_thread_new (ctx, subscriber, NULL);
+    free (zstr_recv (subpipe));
+    puts ("HERE");
+    zstr_send (pubpipe, "break");
+    zclock_sleep (100);
+    zctx_destroy (&ctx);
+    puts ("WHERE?");
     return 0;
 }

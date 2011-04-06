@@ -21,7 +21,6 @@ int main (int argc, char *argv [])
 
     while (!zctx_interrupted) {
         zmsg_t *request = zmsg_recv (server);
-        zmsg_t *reply = NULL;
         if (verbose && request)
             zmsg_dump (request);
         if (!request)
@@ -30,22 +29,20 @@ int main (int argc, char *argv [])
         //  Frame 0: identity of client
         //  Frame 1: PING, or client control frame
         //  Frame 2: request body
-        char *address = zmsg_pop (request);
-        if (zmsg_parts (request) == 1
-        && streq (zmsg_body (request), "PING"))
-            reply = zmsg_new ("PONG");
-        else
-        if (zmsg_parts (request) > 1) {
-            reply = request;
-            request = NULL;
-            zmsg_body_set (reply, "OK");
+        zframe_t *address = zmsg_pop (request);
+        zframe_t *control = zmsg_pop (request);
+        zmsg_t *reply = zmsg_new ();
+        if (zframe_streq (control, "PONG"))
+            zmsg_addstr (reply, "PONG");
+        else {
+            zmsg_add (reply, control);
+            zmsg_addstr (reply, "OK");
         }
         zmsg_destroy (&request);
-        zmsg_pushstr (reply, address);
+        zmsg_push (reply, address);
         if (verbose && reply)
             zmsg_dump (reply);
         zmsg_send (&reply, server);
-        free (address);
     }
     if (zctx_interrupted)
         printf ("W: interrupted\n");
