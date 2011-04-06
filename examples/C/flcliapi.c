@@ -156,8 +156,8 @@ server_ping (char *key, void *server, void *socket)
     server_t *self = (server_t *) server;
     if (zclock_time () >= self->ping_at) {
         zmsg_t *ping = zmsg_new ();
-        zmsg_addstr (ping, "PING");
         zmsg_addstr (ping, self->endpoint);
+        zmsg_addstr (ping, "PING");
         zmsg_send (&ping, socket);
         self->ping_at = zclock_time () + PING_INTERVAL;
     }
@@ -193,7 +193,7 @@ typedef struct {
 agent_t *
 agent_new (void *args)
 {
-    agent_t *self = (agent_t *) calloc (1, sizeof (agent_t));
+    agent_t *self = (agent_t *) zmalloc (sizeof (agent_t));
     self->ctx = ((zthread_t *) args)->ctx;
     self->pipe = ((zthread_t *) args)->pipe;
     self->router = zctx_socket_new (self->ctx, ZMQ_ROUTER);

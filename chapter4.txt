@@ -1134,9 +1134,7 @@ This brings us to the realm of protocols again, so here's a short spec that defi
 
 * http://rfc.zeromq.org/spec:10
 
-It is short and sweet to implement as a server. Here's our echo server, Model Three, now speaking FLP:
-
-xxx
+It is short and sweet to implement as a server. Here's our echo server, Model Three, now speaking FLP.
 
 Model Three of the server is just slightly different:
 

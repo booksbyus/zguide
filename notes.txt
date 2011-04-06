@@ -33,7 +33,7 @@ Changes to examples
         - bstar, bstarsrv2 are new files
         - flclient1, flserver1
         - flclient2, flserver2
-        -
+        - flclient3, flserver3, flcliapi
 
     - PPP (http://rfc.zeromq.org/spec:6) changed to use binary commands
         - READY is 0x01
@@ -87,7 +87,7 @@ http://lists.zeromq.org/pipermail/zeromq-dev/2011-March/010186.html
     int socket_type;
     size_t type_size = sizeof (socket_type);
     zmq_getsockopt (socket, ZMQ_TYPE, &socket_type, &type_size);
-    if (socket_type == ZMQ_XREP) {
+    if (socket_type == ZMQ_ROUTER) {
         zmq_msg_t mesg;
         zmq_msg_init (&mesg);
         zmq_recv (socket, &mesg, 0);

@@ -16,7 +16,7 @@ int main (void)
     flcliapi_connect (client, "tcp://localhost:5557");
 
     //  Send a bunch of name resolution 'requests', measure time
-    int requests = 10000;
+    int requests = 1000;
     uint64_t start = zclock_time ();
     while (requests--) {
         zmsg_t *request = zmsg_new ();
@@ -31,6 +31,8 @@ int main (void)
     printf ("Average round trip cost: %d usec\n",
         (int) (zclock_time () - start) / 10);
 
+puts ("flclient 1");
     flcliapi_destroy (&client);
+puts ("flclient 2");
     return 0;
 }
