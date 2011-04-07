@@ -17,13 +17,13 @@ static void *
 client_task (void *args)
 {
     zctx_t *ctx = zctx_new ();
-    void *client = zctx_socket_new (ctx, ZMQ_DEALER);
+    void *client = zsocket_new (ctx, ZMQ_DEALER);
 
     //  Set random identity to make tracing easier
     char identity [10];
     sprintf (identity, "%04X-%04X", randof (0x10000), randof (0x10000));
-    zmq_setsockopt (client, ZMQ_IDENTITY, identity, strlen (identity));
-    zmq_connect (client, "tcp://localhost:5570");
+    zsockopt_set_identity (client, identity);
+    zsocket_connect (client, "tcp://localhost:5570");
 
     zmq_pollitem_t items [] = { { client, 0, ZMQ_POLLIN, 0 } };
     int request_nbr = 0;
@@ -51,24 +51,24 @@ client_task (void *args)
 //  one request at a time but one client can talk to multiple workers at
 //  once.
 
-static void *server_worker (void *socket);
+static void server_worker (void *args, zctx_t *ctx, void *pipe);
 
 void *server_task (void *args)
 {
     zctx_t *ctx = zctx_new ();
 
     //  Frontend socket talks to clients over TCP
-    void *frontend = zctx_socket_new (ctx, ZMQ_ROUTER);
-    zmq_bind (frontend, "tcp://*:5570");
+    void *frontend = zsocket_new (ctx, ZMQ_ROUTER);
+    zsocket_bind (frontend, "tcp://*:5570");
 
     //  Backend socket talks to workers over inproc
-    void *backend = zctx_socket_new (ctx, ZMQ_DEALER);
-    zmq_bind (backend, "inproc://backend");
+    void *backend = zsocket_new (ctx, ZMQ_DEALER);
+    zsocket_bind (backend, "inproc://backend");
 
     //  Launch pool of worker threads, precise number is not critical
     int thread_nbr;
     for (thread_nbr = 0; thread_nbr < 5; thread_nbr++)
-        zctx_thread_new (ctx, server_worker, NULL);
+        zthread_fork (ctx, server_worker, NULL);
 
     //  Connect backend to frontend via a queue device
     //  We could do this:
@@ -102,12 +102,11 @@ void *server_task (void *args)
 //  Accept a request and reply with the same text a random number of
 //  times, with random delays between replies.
 //
-static void *
-server_worker (void *arg_ptr)
+static void
+server_worker (void *args, zctx_t *ctx, void *pipe)
 {
-    zthread_t *args = (zthread_t *) arg_ptr;
-    void *worker = zctx_socket_new (args->ctx, ZMQ_DEALER);
-    zmq_connect (worker, "inproc://backend");
+    void *worker = zsocket_new (ctx, ZMQ_DEALER);
+    zsocket_connect (worker, "inproc://backend");
 
     while (1) {
         //  The DEALER socket gives us the address envelope and message
@@ -128,7 +127,6 @@ server_worker (void *arg_ptr)
         zframe_destroy (&address);
         zframe_destroy (&content);
     }
-    return NULL;
 }
 
 
@@ -138,10 +136,11 @@ server_worker (void *arg_ptr)
 int main (void)
 {
     zctx_t *ctx = zctx_new ();
-    zctx_thread_new (ctx, client_task, NULL);
-    zctx_thread_new (ctx, client_task, NULL);
-    zctx_thread_new (ctx, client_task, NULL);
-    zctx_thread_new (ctx, server_task, NULL);
+    zthread_new (ctx, client_task, NULL);
+    zthread_new (ctx, client_task, NULL);
+    zthread_new (ctx, client_task, NULL);
+    zthread_new (ctx, server_task, NULL);
+
     //  Run for 5 seconds then quit
     zclock_sleep (5 * 1000);
     zctx_destroy (&ctx);

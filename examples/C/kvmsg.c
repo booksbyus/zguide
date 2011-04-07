@@ -29,7 +29,7 @@
 //  Keys are short strings
 #define KVMSG_KEY_MAX   255
 
-//  Message is formatted on wire as three frames:
+//  Message is formatted on wire as 4 frames:
 //  frame 0: key (0MQ string)
 //  frame 1: sequence (8 bytes, network order)
 //  frame 2: uuid (16 bytes)
@@ -60,7 +60,7 @@ kvmsg_new (int64_t sequence)
     kvmsg_t
         *self;
 
-    self = (kvmsg_t *) calloc (1, sizeof (kvmsg_t));
+    self = (kvmsg_t *) zmalloc (sizeof (kvmsg_t));
 
     //  Create empty message frames
     int frame_nbr;
@@ -424,10 +424,10 @@ kvmsg_test (int verbose)
 
     //  Prepare our context and sockets
     zctx_t *ctx = zctx_new ();
-    void *output = zctx_socket_new (ctx, ZMQ_DEALER);
+    void *output = zsocket_new (ctx, ZMQ_DEALER);
     int rc = zmq_bind (output, "ipc://kvmsg_selftest.ipc");
     assert (rc == 0);
-    void *input = zctx_socket_new (ctx, ZMQ_DEALER);
+    void *input = zsocket_new (ctx, ZMQ_DEALER);
     rc = zmq_connect (input, "ipc://kvmsg_selftest.ipc");
     assert (rc == 0);
 
@@ -449,12 +449,9 @@ kvmsg_test (int verbose)
     assert (strcmp (kvmsg_key (kvmsg), "key") == 0);
     kvmsg_store (&kvmsg, kvmap);
 
-    //  Should destroy all messages stored in map
+    //  Shutdown and destroy all objects
     zhash_destroy (&kvmap);
-
-    zctx_socket_destroy (ctx, input);
-    zctx_socket_destroy (ctx, output);
-    zctx_destroy (zmq_term (context)ctx);
+    zctx_destroy (&ctx);
 
     printf ("OK\n");
     return 0;

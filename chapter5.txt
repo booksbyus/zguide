@@ -8,8 +8,6 @@ We'll cover:
 * How to handle too-slow subscribers (the //Suicidal Snail// pattern).
 * How to design high-speed subscribers (the //Black Box// pattern).
 * How to build a shared key-value cache (the //Clone// pattern).
-* How to do atomic group multicast (the //Platoon// pattern).
-* How to do secure publish-subscribe (the //Need to Know// pattern).
 
 +++ Slow Subscriber Detection (Suicidal Snail Pattern)
 
@@ -242,8 +240,11 @@ And here is the client:
 Some notes about this code:
 
 * All the hard work is done in the **kvmsg** class. This class works with key-value message objects, which are multipart 0MQ messages structured as four frames: a key (a 0MQ string), a sequence number (64-bit value, in network byte order), a binary UUID, and a binary body (holds everything else).
+
 * The server generates messages with a randomized 4-digit key, which lets us simulate a large but not enormous hash table (10K entries).
+
 * The server does a 200 millisecond pause after binding its socket. This is to prevent "slow joiner syndrome" where the subscriber loses messages as it connects to the server's socket. We'll remove that in later models.
+
 * We'll use the terms 'publisher' and 'subscriber' in the code to refer to sockets. This will help later when we have multiple sockets doing different things.
 
 Here is the kvmsg class:
@@ -291,8 +292,11 @@ To make this work, we have to solve the timing problem. Getting a state snapshot
 So we will do the synchronization in the client, as follows:
 
 * The client first subscribes to updates and then makes a state request. This guarantees that the state is going to be newer than the oldest update it has.
+
 * The client waits for the server to reply with state, and meanwhile queues all updates. It does this simply by not reading them: 0MQ keeps them queued on the socket queue, since we don't set a HWM.
+
 * When the client receives its state update, it begins once again to read updates. However it discards any updates that are older than the state update. So if the state update includes updates up to 200, the client will discard updates up to 201.
+
 * The client then applies updates to its own state snapshot.
 
 It's a simple model that exploits 0MQ's own internal queues. Here's the server:
@@ -308,9 +312,13 @@ And here is the client:
 Some notes about this code:
 
 * The server uses two threads, for simpler design. One thread produces random updates, and the second thread handles state. The two communicate across PAIR sockets. You might like to use SUB sockets but you'd hit the "slow joiner" problem where the subscriber would randomly miss some messages while connecting. PAIR sockets let us explicitly synchronize the two threads.
+
 * We set a HWM on the updates socket pair, since hash table insertions are relatively slow. Without this, the server runs out of memory. On {{inproc}} connections, the real HWM is the sum of the HWM of //both// sockets, so we set the HWM on each socket.
+
 * The client is really simple. In C, under 60 lines of code. A lot of the heavy lifting is done in the kvmsg class, but still, the basic Clone pattern is easier to implement than it seemed at first.
+
 * We don't use anything fancy for serializing the state. The hash table holds a set of kvmsg objects, and the server sends these, as a batch of messages, to the client requesting state. If multiple clients request state at once, each will get a different snapshot.
+
 * We assume that the client has exactly one server to talk to. The server **must** be running; we do not try to solve the question of what happens if the server crashes.
 
 Right now, these two programs don't do anything real, but they correctly synchronize state. It's a neat example of how to mix different patterns: PAIR-over-inproc, PUB-SUB, and ROUTER-DEALER.
@@ -320,6 +328,7 @@ Right now, these two programs don't do anything real, but they correctly synchro
 In our second model, changes to the key-value cache came from the server itself. This is a centralized model, useful for example if we have a central configuration file we want to distribute, with local caching on each node. A more interesting model takes updates from clients, not the server. The server thus becomes a stateless broker. This gives us some benefits:
 
 * We're less worried about the reliability of the server. If it crashes, we can start a new instance, and feed it new values.
+
 * We can use the key-value cache to share knowledge between dynamic peers.
 
 Updates from clients go via a PUSH-PULL socket flow from client to server:
@@ -355,7 +364,7 @@ Updates from clients go via a PUSH-PULL socket flow from client to server:
               Figure # - Republishing Updates
 [[/code]]
 
-Why don't we allow clients to publish updates directly to other clients? While this would reduce latency, it makes it impossible to sequence messages. Updates **must** pass through the server to make sense to other clients. There's a more subtle second reason. In many applications it's important that updates have a single order, across many clients. Forcing all updates through the server ensures that they have the same order when they finally get to clients.
+Why don't we allow clients to publish updates directly to other clients? While this would reduce latency, it makes it impossible to assign ascending unique sequence numbers to messages. The server can do this. There's a more subtle second reason. In many applications it's important that updates have a single order, across many clients. Forcing all updates through the server ensures that they have the same order when they finally get to clients.
 
 With unique sequencing, clients can detect the nastier failures - network congestion and queue overflow. If a client discovers that its incoming message stream has a hole, it can take action. It seems sensible that the client contact the server and ask for the missing messages, but in practice that isn't useful. If there are holes, they're caused by network stress, and adding more stress to the network will make things worse. All the client can really do is warn its users "Unable to continue", and stop, and not restart until someone has manually checked the cause of the problem.
 
@@ -372,6 +381,7 @@ And here is the client:
 Some notes about this code:
 
 * The server has collapsed to one thread, which collects updates from clients and redistributes them. It manages a PULL socket for incoming updates, a ROUTER socket for state requests, and a PUB socket for outgoing updates.
+
 * The client uses a simple tickless timer to send a random update to the server once a second. In reality, updates would be driven by application code.
 
 ++++ Clone Server Reliability
@@ -455,7 +465,7 @@ So here is our high-availability server pair, using the Binary Star pattern:
 
 As a first step to building this, we need to refactor the client as a reusable class. This will make it reusable both in applications, and in servers (which have to act as clients when they are in the backup/slave role).
 
-My usual design approach is to first design an API that feels right, then to implement that. So, we start by taking the clone client, and rewriting it to sit on top of some imaginary class API called **clone**. Turning random code into an API means defining a reasonably stable and abstract contract with applications. For example, in Model Three, the client opened three separate sockets to the server, using endpoints that were hard-coded in the source. We could make an API with three methods, like this:
+My usual design approach is to first design an API that feels right, then to implement that. So, we start by taking the clone client, and rewriting it to sit on top of some presumed class API called **clone**. Turning random code into an API means defining a reasonably stable and abstract contract with applications. For example, in Model Three, the client opened three separate sockets to the server, using endpoints that were hard-coded in the source. We could make an API with three methods, like this:
 
 [[code language="C"]]
     //  Specify endpoints for each socket we need
@@ -469,9 +479,7 @@ My usual design approach is to first design an API that feels right, then to imp
     clone_updates   (clone, "tcp://localhost:5568");
 [[/code]]
 
-But this is both verbose and fragile. It's not a good idea to expose the internals of a design to applications. Today, we use three sockets. Tomorrow, two, or four. Do we really want to go and change every application that uses the clone class?
-
-So we make a small abstraction, like this:
+But this is both verbose and fragile. It's not a good idea to expose the internals of a design to applications. Today, we use three sockets. Tomorrow, two, or four. Do we really want to go and change every application that uses the clone class? So to hide these sausage factory details, we make a small abstraction, like this:
 
 [[code language="C"]]
     //  Specify primary and backup servers
@@ -490,9 +498,27 @@ So here is Model Four of the clone client, which has now become just a thin shel
 [[code type="example" title="Clone client, Model Four" name="clonecli4"]]
 [[/code]]
 
-To implement the clone class we'll take the same rough design as the flcliapi class from Chapter Four. Like the Freelance client, we have to manage a pool of servers (two, it's a small pool). So we implement our API as a class consisting of an //asynchronous agent// thread that talks to the servers, plus a synchronous frontend API that talks to our applications. The frontend is in our application thread, and talks to the agent thread over an inproc socket.
+The clone class has the same structure as the flcliapi class from Chapter Four. It consists of two parts:
 
-This is an advanced architecture for asynchronous APIs, and usually takes weeks to build and get properly working. Months to make it really good. As usual, 0MQ lets us produce working, highly efficient code almost as fast as we can design it.
+* An asynchronous clone agent that runs in a background thread. The agent handles all network I/O, talking to servers in realtime, no matter what the application is doing.
+
+* A synchronous 'clone' class which runs in the caller's thread. When you create a clone object, that automatically launches an agent thread, and when you destroy a clone object, it kills the agent thread.
+
+The frontend class talks to the agent class over an {{inproc}} 'pipe' socket. In C, the libzapi thread layer creates this pipe automatically for us as it starts an "attached thread". This is a natural pattern for multithreading over 0MQ.
+
+Without 0MQ, this kind of asynchronous class design would be weeks of really hard work. Here is the clone class implementation:
+
+[[code type="example" title="Clone class" name="clone"]]
+[[/code]]
+
+We can test our fourth generation Clone client against a single server by running clonesrv3, since we're using a more-or-less compatible protocol:
+
+[[code]]
+clonesrv3 &
+clonecli4
+[[/code]]
+
+If we kill the server, the client will complain it's not received any 'hugz' (impertinently stealing an idea from Alexis Richardson, the Clone protocol, which we're slowly coming to, will be the world's first LOL-compatible protocol).
 
 
 

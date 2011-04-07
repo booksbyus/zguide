@@ -11,8 +11,8 @@ int main (void)
     clone_t *clone = clone_new ();
 
     //  Specify primary and backup servers
-    clone_connect (clone, "tcp://localhost", "5551");
-    clone_connect (clone, "tcp://localhost", "5561");
+    clone_connect (clone, "tcp://localhost", "5556");
+    clone_connect (clone, "tcp://localhost", "5566");
 
     //  Set random tuples into the distributed hash
     while (!zctx_interrupted) {

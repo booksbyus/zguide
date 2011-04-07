@@ -12,9 +12,8 @@ static zmsg_t *
 s_try_request (zctx_t *ctx, char *endpoint, zmsg_t *request)
 {
     printf ("I: trying echo service at %s...\n", endpoint);
-    void *client = zctx_socket_new (ctx, ZMQ_REQ);
-    int rc = zmq_connect (client, endpoint);
-    assert (rc == 0);
+    void *client = zsocket_new (ctx, ZMQ_REQ);
+    zsocket_connect (client, endpoint);
 
     //  Send request, wait safely for reply
     zmsg_t *msg = zmsg_dup (request);
@@ -26,7 +25,7 @@ s_try_request (zctx_t *ctx, char *endpoint, zmsg_t *request)
         reply = zmsg_recv (client);
 
     //  Close socket in any case, we're done with it now
-    zctx_socket_destroy (ctx, client);
+    zsocket_destroy (ctx, client);
     return reply;
 }
 

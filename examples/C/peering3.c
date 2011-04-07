@@ -23,16 +23,10 @@ static void *
 client_task (void *args)
 {
     zctx_t *ctx = zctx_new ();
-    void *client = zctx_socket_new (ctx, ZMQ_REQ);
-    char endpoint [256];
-    snprintf (endpoint, 255, "ipc://%s-localfe.ipc", self);
-    int rc = zmq_connect (client, endpoint);
-    assert (rc == 0);
-
-    void *monitor = zctx_socket_new (ctx, ZMQ_PUSH);
-    snprintf (endpoint, 255, "ipc://%s-monitor.ipc", self);
-    rc = zmq_connect (monitor, endpoint);
-    assert (rc == 0);
+    void *client = zsocket_new (ctx, ZMQ_REQ);
+    zsocket_connect (client, "ipc://%s-localfe.ipc", self);
+    void *monitor = zsocket_new (ctx, ZMQ_PUSH);
+    zsocket_connect (monitor, "ipc://%s-monitor.ipc", self);
 
     while (1) {
         sleep (randof (5));
@@ -46,7 +40,7 @@ client_task (void *args)
 
             //  Wait max ten seconds for a reply, then complain
             zmq_pollitem_t pollset [1] = { { client, 0, ZMQ_POLLIN, 0 } };
-            rc = zmq_poll (pollset, 1, 10 * 1000000);
+            int rc = zmq_poll (pollset, 1, 10 * 1000000);
             if (rc == -1)
                 break;          //  Interrupted
 
@@ -76,11 +70,8 @@ static void *
 worker_task (void *args)
 {
     zctx_t *ctx = zctx_new ();
-    void *worker = zctx_socket_new (ctx, ZMQ_REQ);
-    char endpoint [256];
-    snprintf (endpoint, 255, "ipc://%s-localbe.ipc", self);
-    int rc = zmq_connect (worker, endpoint);
-    assert (rc == 0);
+    void *worker = zsocket_new (ctx, ZMQ_REQ);
+    zsocket_connect (worker, "ipc://%s-localbe.ipc", self);
 
       //  Tell broker we're ready for work
     zframe_t *frame = zframe_new (LRU_READY, 1);
@@ -114,68 +105,51 @@ int main (int argc, char *argv [])
     char endpoint [256];
 
     //  Bind cloud frontend to endpoint
-    void *cloudfe = zctx_socket_new (ctx, ZMQ_ROUTER);
-    snprintf (endpoint, 255, "ipc://%s-cloud.ipc", self);
-    zmq_setsockopt (cloudfe, ZMQ_IDENTITY, self, strlen (self));
-    int rc = zmq_bind (cloudfe, endpoint);
-    assert (rc == 0);
+    void *cloudfe = zsocket_new (ctx, ZMQ_ROUTER);
+    zsockopt_set_identity (cloudfe, self);
+    zsocket_bind (cloudfe, "ipc://%s-cloud.ipc", self);
 
     //  Bind state backend / publisher to endpoint
-    void *statebe = zctx_socket_new (ctx, ZMQ_PUB);
-    snprintf (endpoint, 255, "ipc://%s-state.ipc", self);
-    rc = zmq_bind (statebe, endpoint);
-    assert (rc == 0);
+    void *statebe = zsocket_new (ctx, ZMQ_PUB);
+    zsocket_bind (statebe, "ipc://%s-state.ipc", self);
 
     //  Connect cloud backend to all peers
-    void *cloudbe = zctx_socket_new (ctx, ZMQ_ROUTER);
-    zmq_setsockopt (cloudbe, ZMQ_IDENTITY, self, strlen (self));
-
+    void *cloudbe = zsocket_new (ctx, ZMQ_ROUTER);
+    zsockopt_set_identity (cloudbe, self);
     int argn;
     for (argn = 2; argn < argc; argn++) {
         char *peer = argv [argn];
         printf ("I: connecting to cloud frontend at '%s'\n", peer);
-        snprintf (endpoint, 255, "ipc://%s-cloud.ipc", peer);
-        rc = zmq_connect (cloudbe, endpoint);
-        assert (rc == 0);
+        zsocket_connect (cloudbe, "ipc://%s-cloud.ipc", peer);
     }
 
     //  Connect statefe to all peers
-    void *statefe = zctx_socket_new (ctx, ZMQ_SUB);
-    zmq_setsockopt (statefe, ZMQ_SUBSCRIBE, "", 0);
-
+    void *statefe = zsocket_new (ctx, ZMQ_SUB);
     for (argn = 2; argn < argc; argn++) {
         char *peer = argv [argn];
         printf ("I: connecting to state backend at '%s'\n", peer);
-        snprintf (endpoint, 255, "ipc://%s-state.ipc", peer);
-        rc = zmq_connect (statefe, endpoint);
-        assert (rc == 0);
+        zsocket_connect (statefe, "ipc://%s-state.ipc", peer);
     }
     //  Prepare local frontend and backend
-    void *localfe = zctx_socket_new (ctx, ZMQ_ROUTER);
-    snprintf (endpoint, 255, "ipc://%s-localfe.ipc", self);
-    rc = zmq_bind (localfe, endpoint);
-    assert (rc == 0);
+    void *localfe = zsocket_new (ctx, ZMQ_ROUTER);
+    zsocket_bind (localfe, "ipc://%s-localfe.ipc", self);
 
-    void *localbe = zctx_socket_new (ctx, ZMQ_ROUTER);
-    snprintf (endpoint, 255, "ipc://%s-localbe.ipc", self);
-    rc = zmq_bind (localbe, endpoint);
-    assert (rc == 0);
+    void *localbe = zsocket_new (ctx, ZMQ_ROUTER);
+    zsocket_bind (localbe, "ipc://%s-localbe.ipc", self);
 
     //  Prepare monitor socket
-    void *monitor = zctx_socket_new (ctx, ZMQ_PULL);
-    snprintf (endpoint, 255, "ipc://%s-monitor.ipc", self);
-    rc = zmq_bind (monitor, endpoint);
-    assert (rc == 0);
+    void *monitor = zsocket_new (ctx, ZMQ_PULL);
+    zsocket_bind (monitor, "ipc://%s-monitor.ipc", self);
 
     //  Start local workers
     int worker_nbr;
     for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++)
-        zctx_thread_new (ctx, worker_task, NULL);
+        zthread_new (ctx, worker_task, NULL);
 
     //  Start local clients
     int client_nbr;
     for (client_nbr = 0; client_nbr < NBR_CLIENTS; client_nbr++)
-        zctx_thread_new (ctx, client_task, NULL);
+        zthread_new (ctx, client_task, NULL);
 
     //  Interesting part
     //  -------------------------------------------------------------
@@ -199,7 +173,7 @@ int main (int argc, char *argv [])
             { monitor, 0, ZMQ_POLLIN, 0 }
         };
         //  If we have no workers anyhow, wait indefinitely
-        rc = zmq_poll (primary, 4, local_capacity? 1000000: -1);
+        int rc = zmq_poll (primary, 4, local_capacity? 1000000: -1);
         if (rc == -1)
             break;              //  Interrupted
 

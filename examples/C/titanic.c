@@ -52,8 +52,8 @@ s_reply_filename (char *uuid) {
 //  ---------------------------------------------------------------------
 //  Titanic request service
 
-static void *
-titanic_request (void *args)
+static void
+titanic_request (void *args, zctx_t *ctx, void *pipe)
 {
     mdwrk_t *worker = mdwrk_new (
         "tcp://localhost:5555", "titanic.request", 0);
@@ -81,7 +81,7 @@ titanic_request (void *args)
         //  Send UUID through to message queue
         reply = zmsg_new ();
         zmsg_addstr (reply, uuid);
-        zmsg_send (&reply, ((zthread_t *) args)->pipe);
+        zmsg_send (&reply, pipe);
 
         //  Now send UUID back to client
         reply = zmsg_new ();
@@ -90,7 +90,6 @@ titanic_request (void *args)
         free (uuid);
     }
     mdwrk_destroy (&worker);
-    return 0;
 }
 
 
@@ -226,9 +225,9 @@ int main (int argc, char *argv [])
     mdcli_set_timeout (client, 1000);  //  1 sec
     mdcli_set_retries (client, 1);     //  only 1 retry
 
-    void *request_pipe = zctx_thread_new (ctx, titanic_request, NULL);
-    zctx_thread_new (ctx, titanic_reply, NULL);
-    zctx_thread_new (ctx, titanic_close, NULL);
+    void *request_pipe = zthread_fork (ctx, titanic_request, NULL);
+    zthread_new (ctx, titanic_reply, NULL);
+    zthread_new (ctx, titanic_close, NULL);
 
     //  Main dispatcher loop
     while (TRUE) {

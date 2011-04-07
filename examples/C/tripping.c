@@ -2,18 +2,17 @@
 //  Round-trip demonstrator
 //
 //  While this example runs in a single process, that is just to make
-//  it easier to start and stop the example. Each thread has its own
-//  context and conceptually acts as a separate process.
+//  it easier to start and stop the example. Client thread signals to
+//  main when it's ready.
 //
 #include "zapi.h"
 
-static void *
-client_task (void *args)
+static void
+client_task (void *args, zctx_t *ctx, void *pipe)
 {
-    zctx_t *ctx = zctx_new ();
-    void *client = zctx_socket_new (ctx, ZMQ_DEALER);
+    void *client = zsocket_new (ctx, ZMQ_DEALER);
     zmq_setsockopt (client, ZMQ_IDENTITY, "C", 1);
-    zmq_connect (client, "tcp://localhost:5555");
+    zsocket_connect (client, "tcp://localhost:5555");
 
     printf ("Setting up test...\n");
     zclock_sleep (100);
@@ -42,18 +41,16 @@ client_task (void *args)
     printf (" %d calls/second\n",
         (1000 * 100000) / (int) (zclock_time () - start));
 
-    zctx_destroy (&ctx);
-    zstr_send (((zthread_t *) args)->pipe, "done");
-    return NULL;
+    zstr_send (pipe, "done");
 }
 
 static void *
 worker_task (void *args)
 {
     zctx_t *ctx = zctx_new ();
-    void *worker = zctx_socket_new (ctx, ZMQ_DEALER);
+    void *worker = zsocket_new (ctx, ZMQ_DEALER);
     zmq_setsockopt (worker, ZMQ_IDENTITY, "W", 1);
-    zmq_connect (worker, "tcp://localhost:5556");
+    zsocket_connect (worker, "tcp://localhost:5556");
 
     while (1) {
         zmsg_t *msg = zmsg_recv (worker);
@@ -68,10 +65,10 @@ broker_task (void *args)
 {
     //  Prepare our context and sockets
     zctx_t *ctx = zctx_new ();
-    void *frontend = zctx_socket_new (ctx, ZMQ_ROUTER);
-    void *backend = zctx_socket_new (ctx, ZMQ_ROUTER);
-    zmq_bind (frontend, "tcp://*:5555");
-    zmq_bind (backend,  "tcp://*:5556");
+    void *frontend = zsocket_new (ctx, ZMQ_ROUTER);
+    void *backend = zsocket_new (ctx, ZMQ_ROUTER);
+    zsocket_bind (frontend, "tcp://*:5555");
+    zsocket_bind (backend,  "tcp://*:5556");
 
     //  Initialize poll set
     zmq_pollitem_t items [] = {
@@ -105,9 +102,9 @@ int main (void)
 {
     //  Create threads
     zctx_t *ctx = zctx_new ();
-    void *client = zctx_thread_new (ctx, client_task, NULL);
-    void *worker = zctx_thread_new (ctx, worker_task, NULL);
-    void *broker = zctx_thread_new (ctx, broker_task, NULL);
+    void *client = zthread_fork (ctx, client_task, NULL);
+    zthread_new (ctx, worker_task, NULL);
+    zthread_new (ctx, broker_task, NULL);
 
     //  Wait for signal on client pipe
     char *signal = zstr_recv (client);

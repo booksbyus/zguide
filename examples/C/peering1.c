@@ -19,25 +19,16 @@ int main (int argc, char *argv [])
 
     //  Prepare our context and sockets
     zctx_t *ctx = zctx_new ();
-
-    //  Bind statebe to endpoint
-    void *statebe = zctx_socket_new (ctx, ZMQ_PUB);
-    char endpoint [256];
-    snprintf (endpoint, 255, "ipc://%s-state.ipc", self);
-    int rc = zmq_bind (statebe, endpoint);
-    assert (rc == 0);
+    void *statebe = zsocket_new (ctx, ZMQ_PUB);
+    zsocket_bind (statebe, "ipc://%s-state.ipc", self);
 
     //  Connect statefe to all peers
-    void *statefe = zctx_socket_new (ctx, ZMQ_SUB);
-    zmq_setsockopt (statefe, ZMQ_SUBSCRIBE, "", 0);
-
+    void *statefe = zsocket_new (ctx, ZMQ_SUB);
     int argn;
     for (argn = 2; argn < argc; argn++) {
         char *peer = argv [argn];
         printf ("I: connecting to state backend at '%s'\n", peer);
-        snprintf (endpoint, 255, "ipc://%s-state.ipc", peer);
-        rc = zmq_connect (statefe, endpoint);
-        assert (rc == 0);
+        zsocket_connect (statefe, "ipc://%s-state.ipc", peer);
     }
     //  Send out status messages to peers, and collect from peers
     //  The zmq_poll timeout defines our own heartbeating
@@ -48,7 +39,7 @@ int main (int argc, char *argv [])
             { statefe, 0, ZMQ_POLLIN, 0 }
         };
         //  Poll for activity, or 1 second timeout
-        rc = zmq_poll (items, 1, 1000000);
+        int rc = zmq_poll (items, 1, 1000000);
         if (rc == -1)
             break;              //  Interrupted
 

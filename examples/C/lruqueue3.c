@@ -18,8 +18,8 @@ static void *
 client_task (void *args)
 {
     zctx_t *ctx = zctx_new ();
-    void *client = zctx_socket_new (ctx, ZMQ_REQ);
-    zmq_connect (client, "ipc://frontend.ipc");
+    void *client = zsocket_new (ctx, ZMQ_REQ);
+    zsocket_connect (client, "ipc://frontend.ipc");
 
     //  Send request, get reply
     while (1) {
@@ -41,8 +41,8 @@ static void *
 worker_task (void *arg_ptr)
 {
     zctx_t *ctx = zctx_new ();
-    void *worker = zctx_socket_new (ctx, ZMQ_REQ);
-    zmq_connect (worker, "ipc://backend.ipc");
+    void *worker = zsocket_new (ctx, ZMQ_REQ);
+    zsocket_connect (worker, "ipc://backend.ipc");
 
     //  Tell broker we're ready for work
     zframe_t *frame = zframe_new (LRU_READY, 1);
@@ -113,17 +113,17 @@ int main (void)
 {
     zctx_t *ctx = zctx_new ();
     lruqueue_t *self = (lruqueue_t *) zmalloc (sizeof (lruqueue_t));
-    self->frontend = zctx_socket_new (ctx, ZMQ_ROUTER);
-    self->backend = zctx_socket_new (ctx, ZMQ_ROUTER);
-    zmq_bind (self->frontend, "ipc://frontend.ipc");
-    zmq_bind (self->backend, "ipc://backend.ipc");
+    self->frontend = zsocket_new (ctx, ZMQ_ROUTER);
+    self->backend = zsocket_new (ctx, ZMQ_ROUTER);
+    zsocket_bind (self->frontend, "ipc://frontend.ipc");
+    zsocket_bind (self->backend, "ipc://backend.ipc");
 
     int client_nbr;
     for (client_nbr = 0; client_nbr < NBR_CLIENTS; client_nbr++)
-        zctx_thread_new (ctx, client_task, NULL);
+        zthread_new (ctx, client_task, NULL);
     int worker_nbr;
     for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++)
-        zctx_thread_new (ctx, worker_task, NULL);
+        zthread_new (ctx, worker_task, NULL);
 
     //  Queue of available workers
     self->workers = zlist_new ();

@@ -87,8 +87,8 @@ s_mdwrk_send_to_broker (mdwrk_t *self, char *command, char *option,
 void s_mdwrk_connect_to_broker (mdwrk_t *self)
 {
     if (self->worker)
-        zctx_socket_destroy (self->ctx, self->worker);
-    self->worker = zctx_socket_new (self->ctx, ZMQ_DEALER);
+        zsocket_destroy (self->ctx, self->worker);
+    self->worker = zsocket_new (self->ctx, ZMQ_DEALER);
     zmq_connect (self->worker, self->broker);
     if (self->verbose)
         zclock_log ("I: connecting to broker at %s...", self->broker);

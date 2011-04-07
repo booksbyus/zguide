@@ -46,8 +46,8 @@ struct _mdcli_t {
 void s_mdcli_connect_to_broker (mdcli_t *self)
 {
     if (self->client)
-        zctx_socket_destroy (self->ctx, self->client);
-    self->client = zctx_socket_new (self->ctx, ZMQ_DEALER);
+        zsocket_destroy (self->ctx, self->client);
+    self->client = zsocket_new (self->ctx, ZMQ_DEALER);
     zmq_connect (self->client, self->broker);
     if (self->verbose)
         zclock_log ("I: connecting to broker at %s...", self->broker);

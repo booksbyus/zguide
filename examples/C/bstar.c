@@ -167,12 +167,12 @@ int zstr_recv_state (zloop_t *loop, void *socket, void *arg)
     return s_execute_fsm (self);
 }
 
-//  Receive state from peer, execute finite state machine
+//  Application wants to speak to us, see if it's possible
 int s_voter_ready (zloop_t *loop, void *socket, void *arg)
 {
     bstar_t *self = (bstar_t *) arg;
-    self->event = CLIENT_REQUEST;
     //  If server can accept input now, call appl handler
+    self->event = CLIENT_REQUEST;
     if (s_execute_fsm (self) == 0)
         (self->voter_handler) (self->loop, socket, self->voter_arg);
     return 0;
@@ -196,15 +196,12 @@ bstar_new (int primary, char *local, char *remote)
     self->state = primary? STATE_PRIMARY: STATE_BACKUP;
 
     //  Create publisher for state going to peer
-    self->statepub = zctx_socket_new (self->ctx, ZMQ_PUB);
-    int rc = zmq_bind (self->statepub, local);
-    assert (rc == 0);
+    self->statepub = zsocket_new (self->ctx, ZMQ_PUB);
+    zsocket_bind (self->statepub, local);
 
     //  Create subscriber for state coming from peer
-    self->statesub = zctx_socket_new (self->ctx, ZMQ_SUB);
-    zmq_setsockopt (self->statesub, ZMQ_SUBSCRIBE, "", 0);
-    rc = zmq_connect (self->statesub, remote);
-    assert (rc == 0);
+    self->statesub = zsocket_new (self->ctx, ZMQ_SUB);
+    zsocket_connect (self->statesub, remote);
 
     //  Set-up basic reactor events
     zloop_timer (self->loop, BSTAR_HEARTBEAT, 0, zstr_send_state, self);
@@ -231,8 +228,8 @@ bstar_destroy (bstar_t **self_p)
 
 
 //  ---------------------------------------------------------------------
-//  Return underlying zloop reactor, for timer and reader
-//  registration and cancelation.
+//  Return underlying zloop reactor, lets you add additional timers and
+//  readers.
 
 zloop_t *
 bstar_zloop (bstar_t *self)
@@ -252,8 +249,8 @@ bstar_voter (bstar_t *self, char *endpoint, int type, zloop_fn handler,
              void *arg)
 {
     //  Hold actual handler+arg so we can call this later
-    void *socket = zctx_socket_new (self->ctx, type);
-    zmq_bind (socket, endpoint);
+    void *socket = zsocket_new (self->ctx, type);
+    zsocket_bind (socket, endpoint);
     assert (!self->voter_handler);
     self->voter_handler = handler;
     self->voter_arg = arg;

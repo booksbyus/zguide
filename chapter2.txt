@@ -936,15 +936,15 @@ Some widely used metaphors, despite being the basis for billion-dollar industrie
 
 You should follow some rules to write happy multithreaded code with 0MQ:
 
-* You MUST NOT access the same data from multiple threads. Using classic MT techniques like mutexes are an anti-pattern in 0MQ applications.
+* You MUST NOT access the same data from multiple threads. Using classic MT techniques like mutexes are an anti-pattern in 0MQ applications. The only exception to this is a 0MQ context object, which is threadsafe.
 
-* You MUST create a 'context' object for your process, and pass that to all threads, if you want to use {{inproc}} sockets between threads. The context holds 0MQ's state and acts as the transport for {{inproc}} socket connections.
+* You MUST create a 0MQ context for your process, and pass that to all threads that you want to connect via {{inproc}} sockets.
 
 * You MAY treat threads as separate tasks, with their own context, but these threads cannot communicate over {{inproc}}. However they will be easier to break into standalone processes afterwards.
 
-* You SHOULD NOT share sockets between threads, period. 0MQ sockets are not threadsafe. Technically it's possible to do this, but it demands semaphores, locks, or mutexes. This will make your application slow and fragile. The only place where it's remotely sane to share sockets between threads are in language bindings that need to do magic like garbage collection on sockets.
+* You MUST NOT share 0MQ sockets between threads. 0MQ sockets are not threadsafe. Technically it's possible to do this, but it demands semaphores, locks, or mutexes. This will make your application slow and fragile. The only place where it's remotely sane to share sockets between threads are in language bindings that need to do magic like garbage collection on sockets.
 
-If you need to start more than one device in an application, for example, you will want to run each in their own thread. It is easy to make the error of creating the device sockets in one thread, and then passing the sockets to the device in another thread. This may appear to work but will fail randomly. Remember: //Do not use sockets except in the thread that created them.//
+If you need to start more than one device in an application, for example, you will want to run each in their own thread. It is easy to make the error of creating the device sockets in one thread, and then passing the sockets to the device in another thread. This may appear to work but will fail randomly. Remember: //Do not use or close sockets except in the thread that created them.//
 
 If you follow these rules, you can quite easily split threads into separate processes, when you need to. Application logic can sit in threads, processes, boxes: whatever your scale needs.
 

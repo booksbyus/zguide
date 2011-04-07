@@ -13,9 +13,9 @@ int main (void)
 {
     zctx_t *ctx = zctx_new ();
     printf ("I: connecting to server...\n");
-    void *client = zctx_socket_new (ctx, ZMQ_REQ);
+    void *client = zsocket_new (ctx, ZMQ_REQ);
     assert (client);
-    zmq_connect (client, SERVER_ENDPOINT);
+    zsocket_connect (client, SERVER_ENDPOINT);
 
     int sequence = 0;
     int retries_left = REQUEST_RETRIES;
@@ -58,10 +58,10 @@ int main (void)
             else {
                 printf ("W: no response from server, retrying...\n");
                 //  Old socket is confused; close it and open a new one
-                zctx_socket_destroy (ctx, client);
+                zsocket_destroy (ctx, client);
                 printf ("I: reconnecting to server...\n");
-                client = zctx_socket_new (ctx, ZMQ_REQ);
-                zmq_connect (client, SERVER_ENDPOINT);
+                client = zsocket_new (ctx, ZMQ_REQ);
+                zsocket_connect (client, SERVER_ENDPOINT);
                 //  Send request again, on new socket
                 zstr_send (client, request);
             }

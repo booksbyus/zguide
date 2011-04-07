@@ -88,7 +88,7 @@ flclient_new (void)
 
     self = (flclient_t *) zmalloc (sizeof (flclient_t));
     self->ctx = zctx_new ();
-    self->socket = zctx_socket_new (self->ctx, ZMQ_DEALER);
+    self->socket = zsocket_new (self->ctx, ZMQ_DEALER);
     return self;
 }
 
@@ -114,8 +114,7 @@ void
 flclient_connect (flclient_t *self, char *endpoint)
 {
     assert (self);
-    int rc = zmq_connect (self->socket, endpoint);
-    assert (rc == 0);
+    zsocket_connect (self->socket, endpoint);
     self->servers++;
 }
 
