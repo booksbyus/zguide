@@ -39,6 +39,8 @@
 #include <pthread.h>
 #include <stdlib.h>        // random()  RAND_MAX
 #include <stdio.h>
+#include <stdarg.h>
+#include <signal.h>
 
 //  Bring Windows MSVC up to C99 scratch
 #if (defined (__WINDOWS__))
@@ -194,6 +196,46 @@ s_sleep (int msecs)
     t.tv_nsec = (msecs % 1000) * 1000000;
     nanosleep (&t, NULL);
 #endif
+}
+
+static void
+s_console (const char *format, ...)
+{
+    time_t curtime = time (NULL);
+    struct tm *loctime = localtime (&curtime);
+    char *formatted = new char (20);
+    strftime (formatted, 20, "%y-%m-%d %H:%M:%S ", loctime);
+    printf ("%s", formatted);
+    free (formatted);
+
+    va_list argptr;
+    va_start (argptr, format);
+    vprintf (format, argptr);
+    va_end (argptr);
+    printf ("\n");
+}
+
+//  ---------------------------------------------------------------------
+//  Signal handling
+//
+//  Call s_catch_signals() in your application at startup, and then exit
+//  your main loop if s_interrupted is ever 1. Works especially well with
+//  zmq_poll.
+
+static int s_interrupted = 0;
+static void s_signal_handler (int signal_value)
+{
+    s_interrupted = 1;
+}
+
+static void s_catch_signals ()
+{
+    struct sigaction action;
+    action.sa_handler = s_signal_handler;
+    action.sa_flags = 0;
+    sigemptyset (&action.sa_mask);
+    sigaction (SIGINT, &action, NULL);
+    sigaction (SIGTERM, &action, NULL);
 }
 
 #endif

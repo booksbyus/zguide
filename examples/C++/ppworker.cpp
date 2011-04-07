@@ -1,6 +1,9 @@
 //
 //  Paranoid Pirate worker
 //
+//
+//     Andreas Hoelzlwimmer <andreas.hoelzlwimmer@fh-hagenberg.at>
+//
 #include "zmsg.hpp"
 
 #include <iomanip>

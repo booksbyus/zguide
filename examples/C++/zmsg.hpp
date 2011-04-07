@@ -1,5 +1,5 @@
 /*  =========================================================================
-    zmsg.class
+    zmsg.hpp
 
     Multipart message class for example applications.
 
@@ -40,22 +40,35 @@
 
 class zmsg {
 public:
-   typedef std::basic_string<unsigned char> ustring;
+    typedef std::basic_string<unsigned char> ustring;
 
-   zmsg() {
-
-   }
+    zmsg() {
+    }
 
    //  --------------------------------------------------------------------------
    //  Constructor, sets initial body
    zmsg(char const *body) {
-      body_set(body);
+       body_set(body);
+   }
+
+   //  -------------------------------------------------------------------------
+   //  Constructor, sets initial body and sends message to socket
+   zmsg(char const *body, zmq::socket_t &socket) {
+       body_set(body);
+       send(socket);
    }
 
    //  --------------------------------------------------------------------------
    //  Constructor, calls first receive automatically
    zmsg(zmq::socket_t &socket) {
-      recv(socket);
+       recv(socket);
+   }
+
+   //  --------------------------------------------------------------------------
+   //  Copy Constructor, equivalent to zmsg_dup
+   zmsg(zmsg &msg) {
+       m_part_data.resize(msg.m_part_data.size());
+       std::copy(msg.m_part_data.begin(), msg.m_part_data.end(), m_part_data.begin());
    }
 
    virtual ~zmsg() {
@@ -65,13 +78,13 @@ public:
    //  --------------------------------------------------------------------------
    //  Erases all messages
    void clear() {
-      m_part_data.clear();
+       m_part_data.clear();
    }
 
    void set_part(size_t part_nbr, unsigned char *data) {
-      if (part_nbr < m_part_data.size() && part_nbr >= 0) {
-         m_part_data[part_nbr] = data;
-      }
+       if (part_nbr < m_part_data.size() && part_nbr >= 0) {
+           m_part_data[part_nbr] = data;
+       }
    }
 
    bool recv(zmq::socket_t & socket) {
@@ -268,7 +281,7 @@ public:
    }
 
    void dump() {
-      fprintf (stderr, "--------------------------------------\n");
+      std::cerr << "--------------------------------------" << std::endl;
       for (unsigned int part_nbr = 0; part_nbr < m_part_data.size(); part_nbr++) {
           ustring data = m_part_data [part_nbr];
 
@@ -278,12 +291,12 @@ public:
               if (data [char_nbr] < 32 || data [char_nbr] > 127)
                   is_text = 0;
 
-          std::cerr << std::setw(3) << std::setfill('0') << "[" << (int) data.size() << "] ";
+          std::cerr << "[" << std::setw(3) << std::setfill('0') << (int) data.size() << "] ";
           for (unsigned int char_nbr = 0; char_nbr < data.size(); char_nbr++) {
               if (is_text) {
                   std::cerr << (char) data [char_nbr];
               } else {
-                  std::cerr << std::setw(2) << std::setfill('0') << (unsigned char) data [char_nbr];
+                  std::cerr << std::hex << std::setw(2) << std::setfill('0') << (short int) data [char_nbr];
               }
           }
           std::cerr << std::endl;
@@ -371,7 +384,7 @@ public:
    }
 
 private:
-   std::vector<std::basic_string<unsigned char> > m_part_data;
+   std::vector<ustring> m_part_data;
 };
 
 #endif /* ZMSG_H_ */
