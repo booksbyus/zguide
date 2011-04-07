@@ -39,21 +39,3 @@ public class durapub2 {
   }
 
 }
-
-ribers
-    publisher.setHWM(1);
-
-    // Specify swap space in bytes, this covers all subscribers
-    publisher.setSwap(25000000);
-
-    // Wait for synchronization request
-    sync.recv(0);
-
-    // Now broadcast exactly 10 updates with pause
-    for (int i = 0; i < 10; i++) {
-      String msg = String.format("Update %d", i);
-      publisher.send(msg.getBytes(), 0);
-      Thread.sleep(1000);
-    }
-    publisher.send("END".getBytes(), 0);
-    Thread.sleep(1000); // Give 0MQ/2.0.x time to flush outpu
