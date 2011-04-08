@@ -9,14 +9,14 @@
 int main (void)
 {
     zctx_t *ctx = zctx_new ();
-    void *worker = zctx_socket_new (ctx, ZMQ_REQ);
+    void *worker = zsocket_new (ctx, ZMQ_REQ);
 
     //  Set random identity to make tracing easier
     srandom ((unsigned) time (NULL));
     char identity [10];
     sprintf (identity, "%04X-%04X", randof (0x10000), randof (0x10000));
     zmq_setsockopt (worker, ZMQ_IDENTITY, identity, strlen (identity));
-    zmq_connect (worker, "tcp://localhost:5556");
+    zsocket_connect (worker, "tcp://localhost:5556");
 
     //  Tell broker we're ready for work
     printf ("I: (%s) worker ready\n", identity);

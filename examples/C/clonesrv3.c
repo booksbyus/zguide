@@ -5,43 +5,28 @@
 //  Lets us build this source without creating a library
 #include "kvmsg.c"
 
+static int s_send_kvmsg (char *key, void *data, void *args);
+
 //  Routing information for a KV snapshot
 typedef struct {
     void *socket;           //  ROUTER socket to send to
-    zmq_msg_t *identity;    //  Identity of peer who requested state
+    zframe_t *identity;     //  Identity of peer who requested state
 } kvroute_t;
 
-//  Send one state snapshot key-value pair to a socket
-//  Hash item data is our kvmsg object, ready to send
-int
-send_one_kvmsg (char *key, void *data, void *args)
-{
-    kvroute_t *kvroute = (kvroute_t *) args;
-    //  Send identity of recipient first
-    zmq_msg_t copy;
-    zmq_msg_init (&copy);
-    zmq_msg_copy (&copy, kvroute->identity);
-    zmq_send (kvroute->socket, &copy, ZMQ_SNDMORE);
-    zmq_msg_close (&copy);
-
-    kvmsg_t *kvmsg = (kvmsg_t *) data;
-    kvmsg_send (kvmsg, kvroute->socket);
-    return 0;
-}
 
 int main (void)
 {
     //  Prepare our context and sockets
     zctx_t *ctx = zctx_new ();
-    void *publisher = zctx_socket_new (ctx, ZMQ_PUB);
+    void *publisher = zsocket_new (ctx, ZMQ_PUB);
     int rc = zmq_bind (publisher, "tcp://*:5556");
     assert (rc == 0);
 
-    void *snapshot = zctx_socket_new (ctx, ZMQ_ROUTER);
+    void *snapshot = zsocket_new (ctx, ZMQ_ROUTER);
     rc = zmq_bind (snapshot, "tcp://*:5557");
     assert (rc == 0);
 
-    void *collector = zctx_socket_new (ctx, ZMQ_PULL);
+    void *collector = zsocket_new (ctx, ZMQ_PULL);
     rc = zmq_bind (collector, "tcp://*:5558");
     assert (rc == 0);
 
@@ -63,32 +48,31 @@ int main (void)
             kvmsg_set_sequence (kvmsg, ++sequence);
             kvmsg_send (kvmsg, publisher);
             kvmsg_store (&kvmsg, kvmap);
-            printf ("I: publishing update %" PRId64 "\n", sequence);
+            printf ("I: publishing update %5" PRId64 "\n", sequence);
         }
         //  Execute state snapshot request
         if (items [1].revents & ZMQ_POLLIN) {
-            zmq_msg_t identity;
-            zmq_msg_init (&identity);
-            if (zmq_recv (snapshot, &identity, 0))
+            zframe_t *identity = zframe_recv (snapshot);
+            if (!identity)
                 break;          //  Interrupted
 
-            //  Get and discard second frame of message
-            zmq_msg_t icanhaz;
-            zmq_msg_init (&icanhaz);
-            if (zmq_recv (snapshot, &icanhaz, 0))
-                break;          //  Interrupted
-            zmq_msg_close (&icanhaz);
-
+            //  Request is in second frame of message
+            zframe_t *request = zframe_recv (snapshot);
+            if (zframe_streq (request, "ICANHAZ?"))
+                zframe_destroy (&request);
+            else {
+                printf ("E: bad request, aborting\n");
+                break;
+            }
             //  Send state snapshot to client
-            kvroute_t routing = { snapshot, &identity };
+            kvroute_t routing = { snapshot, identity };
 
             //  For each entry in kvmap, send kvmsg to client
-            zhash_foreach (kvmap, send_one_kvmsg, &routing);
+            zhash_foreach (kvmap, s_send_kvmsg, &routing);
 
             //  Now send END message with sequence number
             printf ("I: sending shapshot=%" PRId64 "\n", sequence);
-            zmq_send (snapshot, &identity, ZMQ_SNDMORE);
-            zmq_msg_close (&identity);
+            zframe_send (&identity, snapshot, ZFRAME_MORE);
             kvmsg_t *kvmsg = kvmsg_new (sequence);
             kvmsg_set_key  (kvmsg, "KTHXBAI");
             kvmsg_set_body (kvmsg, (byte *) "", 0);
@@ -98,10 +82,21 @@ int main (void)
     }
     printf (" Interrupted\n%" PRId64 " messages handled\n", sequence);
     zhash_destroy (&kvmap);
-    zctx_socket_destroy (ctx, publisher);
-    zctx_socket_destroy (ctx, collector);
-    zctx_socket_destroy (ctx, snapshot);
-    zctx_destroy (zmq_term (context)ctx);
+    zctx_destroy (&ctx);
 
+    return 0;
+}
+
+//  Send one state snapshot key-value pair to a socket
+//  Hash item data is our kvmsg object, ready to send
+static int
+s_send_kvmsg (char *key, void *data, void *args)
+{
+    kvroute_t *kvroute = (kvroute_t *) args;
+    //  Send identity of recipient first
+    zframe_send (&kvroute->identity,
+        kvroute->socket, ZFRAME_MORE + ZFRAME_REUSE);
+    kvmsg_t *kvmsg = (kvmsg_t *) data;
+    kvmsg_send (kvmsg, kvroute->socket);
     return 0;
 }

@@ -9,9 +9,8 @@ int main (void)
 {
     //  Prepare our context and updates socket
     zctx_t *ctx = zctx_new ();
-    void *updates = zctx_socket_new (ctx, ZMQ_SUB);
-    zmq_setsockopt (updates, ZMQ_SUBSCRIBE, "", 0);
-    zmq_connect (updates, "tcp://localhost:5556");
+    void *updates = zsocket_new (ctx, ZMQ_SUB);
+    zsocket_connect (updates, "tcp://localhost:5556");
 
     zhash_t *kvmap = zhash_new ();
     int64_t sequence = 0;
@@ -25,7 +24,6 @@ int main (void)
     }
     printf (" Interrupted\n%" PRId64 " messages in\n", sequence);
     zhash_destroy (&kvmap);
-    zctx_socket_destroy (ctx, updates);
-    zctx_destroy (zmq_term (context)ctx);
+    zctx_destroy (&ctx);
     return 0;
 }

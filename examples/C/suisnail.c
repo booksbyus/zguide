@@ -11,14 +11,12 @@
 
 #define MAX_ALLOWED_DELAY   1000    //  msecs
 
-static void *
-subscriber (void *args) {
-    zctx_t *ctx = zctx_new ();
-
+static void
+subscriber (void *args, zctx_t *ctx, void *pipe)
+{
     //  Subscribe to everything
-    void *subscriber = zctx_socket_new (ctx, ZMQ_SUB);
-    zmq_connect (subscriber, "tcp://localhost:5556");
-    zmq_setsockopt (subscriber, ZMQ_SUBSCRIBE, "", 0);
+    void *subscriber = zsocket_new (ctx, ZMQ_SUB);
+    zsocket_connect (subscriber, "tcp://localhost:5556");
 
     //  Get and process messages
     while (1) {
@@ -36,9 +34,7 @@ subscriber (void *args) {
         //  Work for 1 msec plus some random additional time
         zclock_sleep (1 + randof (2));
     }
-    zctx_destroy (&ctx);
-    zstr_send (((zthread_t *) args)->pipe, "gone and died");
-    return NULL;
+    zstr_send (pipe, "gone and died");
 }
 
 
@@ -46,28 +42,25 @@ subscriber (void *args) {
 //  This is our server task
 //  It publishes a time-stamped message to its pub socket every 1ms.
 
-static void *
-publisher (void *args) {
-    zctx_t *ctx = zctx_new ();
-
+static void
+publisher (void *args, zctx_t *ctx, void *pipe)
+{
     //  Prepare publisher
-    void *publisher = zctx_socket_new (ctx, ZMQ_PUB);
-    zmq_bind (publisher, "tcp://*:5556");
+    void *publisher = zsocket_new (ctx, ZMQ_PUB);
+    zsocket_bind (publisher, "tcp://*:5556");
 
     while (1) {
         //  Send current clock (msecs) to subscribers
         char string [20];
         sprintf (string, "%" PRId64, zclock_time ());
         zstr_send (publisher, string);
-        char *signal = zstr_recv_nowait (((zthread_t *) args)->pipe);
+        char *signal = zstr_recv_nowait (pipe);
         if (signal) {
             free (signal);
             break;
         }
         zclock_sleep (1);            //  1msec wait
     }
-    zctx_destroy (&ctx);
-    return NULL;
 }
 
 
@@ -77,8 +70,8 @@ publisher (void *args) {
 int main (void)
 {
     zctx_t *ctx = zctx_new ();
-    void *pubpipe = zctx_thread_new (ctx, publisher, NULL);
-    void *subpipe = zctx_thread_new (ctx, subscriber, NULL);
+    void *pubpipe = zthread_fork (ctx, publisher, NULL);
+    void *subpipe = zthread_fork (ctx, subscriber, NULL);
     free (zstr_recv (subpipe));
     zstr_send (pubpipe, "break");
     zclock_sleep (100);

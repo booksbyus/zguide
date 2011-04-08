@@ -120,25 +120,24 @@ int main (int argc, char *argv [])
     //      -p  primary server, at tcp://localhost:5001
     //      -b  backup server, at tcp://localhost:5002
     zctx_t *ctx = zctx_new ();
-    void *statepub = zctx_socket_new (ctx, ZMQ_PUB);
-    void *statesub = zctx_socket_new (ctx, ZMQ_SUB);
-    zmq_setsockopt (statesub, ZMQ_SUBSCRIBE, "", 0);
-    void *frontend = zctx_socket_new (ctx, ZMQ_ROUTER);
+    void *statepub = zsocket_new (ctx, ZMQ_PUB);
+    void *statesub = zsocket_new (ctx, ZMQ_SUB);
+    void *frontend = zsocket_new (ctx, ZMQ_ROUTER);
     bstar_t fsm = { 0 };
 
     if (argc == 2 && streq (argv [1], "-p")) {
         printf ("I: Primary master, waiting for backup (slave)\n");
-        zmq_bind (frontend, "tcp://*:5001");
-        zmq_bind (statepub, "tcp://*:5003");
-        zmq_connect (statesub, "tcp://localhost:5004");
+        zsocket_bind (frontend, "tcp://*:5001");
+        zsocket_bind (statepub, "tcp://*:5003");
+        zsocket_connect (statesub, "tcp://localhost:5004");
         fsm.state = STATE_PRIMARY;
     }
     else
     if (argc == 2 && streq (argv [1], "-b")) {
         printf ("I: Backup slave, waiting for primary (master)\n");
-        zmq_bind (frontend, "tcp://*:5002");
-        zmq_bind (statepub, "tcp://*:5004");
-        zmq_connect (statesub, "tcp://localhost:5003");
+        zsocket_bind (frontend, "tcp://*:5002");
+        zsocket_bind (statepub, "tcp://*:5004");
+        zsocket_connect (statesub, "tcp://localhost:5003");
         fsm.state = STATE_BACKUP;
     }
     else {

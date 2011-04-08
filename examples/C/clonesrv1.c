@@ -5,11 +5,11 @@
 //  Lets us build this source without creating a library
 #include "kvmsg.c"
 
-int main (void) 
+int main (void)
 {
     //  Prepare our context and publisher socket
     zctx_t *ctx = zctx_new ();
-    void *publisher = zctx_socket_new (ctx, ZMQ_PUB);
+    void *publisher = zsocket_new (ctx, ZMQ_PUB);
     zmq_bind (publisher, "tcp://*:5556");
     zclock_sleep (200);
 
@@ -27,7 +27,6 @@ int main (void)
     }
     printf (" Interrupted\n%" PRId64 " messages out\n", sequence);
     zhash_destroy (&kvmap);
-    zctx_socket_destroy (ctx, publisher);
-    zctx_destroy (zmq_term (context)ctx);
+    zctx_destroy (&ctx);
     return 0;
 }

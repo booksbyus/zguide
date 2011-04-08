@@ -11,10 +11,10 @@ int main (void)
 {
     //  Prepare our context and sockets
     zctx_t *ctx = zctx_new ();
-    void *frontend = zctx_socket_new (ctx, ZMQ_ROUTER);
-    void *backend = zctx_socket_new (ctx, ZMQ_ROUTER);
-    zmq_bind (frontend, "tcp://*:5555");    //  For clients
-    zmq_bind (backend,  "tcp://*:5556");    //  For workers
+    void *frontend = zsocket_new (ctx, ZMQ_ROUTER);
+    void *backend = zsocket_new (ctx, ZMQ_ROUTER);
+    zsocket_bind (frontend, "tcp://*:5555");    //  For clients
+    zsocket_bind (backend,  "tcp://*:5556");    //  For workers
 
     //  Queue of available workers
     zlist_t *workers = zlist_new ();

@@ -156,7 +156,7 @@ s_broker_new (int verbose)
 
     //  Initialize broker state
     self->ctx = zctx_new ();
-    self->socket = zctx_socket_new (self->ctx, ZMQ_ROUTER);
+    self->socket = zsocket_new (self->ctx, ZMQ_ROUTER);
     self->verbose = verbose;
     self->services = zhash_new ();
     self->workers = zhash_new ();
@@ -190,7 +190,7 @@ s_broker_destroy (broker_t **self_p)
 void
 s_broker_bind (broker_t *self, char *endpoint)
 {
-    zmq_bind (self->socket, endpoint);
+    zsocket_bind (self->socket, endpoint);
     zclock_log ("I: MDP broker/0.1.1 is active at %s", endpoint);
 }
 

@@ -13,10 +13,10 @@ int main (int argc, char *argv [])
     //  Prepare server socket with predictable identity
     char *bind_endpoint = "tcp://*:5555";
     char *connect_endpoint = "tcp://localhost:5555";
-    void *server = zctx_socket_new (ctx, ZMQ_ROUTER);
+    void *server = zsocket_new (ctx, ZMQ_ROUTER);
     zmq_setsockopt (server,
         ZMQ_IDENTITY, connect_endpoint, strlen (connect_endpoint));
-    zmq_bind (server, bind_endpoint);
+    zsocket_bind (server, bind_endpoint);
     printf ("I: service is ready at %s\n", bind_endpoint);
 
     while (!zctx_interrupted) {

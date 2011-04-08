@@ -42,10 +42,12 @@
 
 struct _flcliapi_t {
     zctx_t *ctx;        //  Our context wrapper
-    void *pipe;         //  Inproc socket talking to flcliapi task
+    void *pipe;         //  Pipe through to flcliapi agent
 };
 
-static void *flcliapi_agent (void *context);
+//  This is the thread that handles our real flcliapi class
+static void flcliapi_agent (void *args, zctx_t *ctx, void *pipe);
+
 
 //  ---------------------------------------------------------------------
 //  Constructor
@@ -58,7 +60,7 @@ flcliapi_new (void)
 
     self = (flcliapi_t *) zmalloc (sizeof (flcliapi_t));
     self->ctx = zctx_new ();
-    self->pipe = zctx_thread_new (self->ctx, flcliapi_agent, NULL);
+    self->pipe = zthread_fork (self->ctx, flcliapi_agent, NULL);
     return self;
 }
 
@@ -79,6 +81,7 @@ flcliapi_destroy (flcliapi_t **self_p)
 
 //  ---------------------------------------------------------------------
 //  Connect to new server endpoint
+//  Sends [CONNECT][endpoint] to the agent
 
 void
 flcliapi_connect (flcliapi_t *self, char *endpoint)
@@ -191,12 +194,12 @@ typedef struct {
 } agent_t;
 
 agent_t *
-agent_new (void *args)
+agent_new (zctx_t *ctx, void *pipe)
 {
     agent_t *self = (agent_t *) zmalloc (sizeof (agent_t));
-    self->ctx = ((zthread_t *) args)->ctx;
-    self->pipe = ((zthread_t *) args)->pipe;
-    self->router = zctx_socket_new (self->ctx, ZMQ_ROUTER);
+    self->ctx = ctx;
+    self->pipe = pipe;
+    self->router = zsocket_new (self->ctx, ZMQ_ROUTER);
     self->servers = zhash_new ();
     self->actives = zlist_new ();
     return self;
@@ -296,10 +299,11 @@ agent_router_message (agent_t *self)
 //  Asynchronous agent manages server pool and handles request/reply
 //  dialog when the application asks for it.
 
-static void *
-flcliapi_agent (void *args)
+static void
+flcliapi_agent (void *args, zctx_t *ctx, void *pipe)
 {
-    agent_t *self = agent_new (args);
+    agent_t *self = agent_new (ctx, pipe);
+
     zmq_pollitem_t items [] = {
         { self->pipe, 0, ZMQ_POLLIN, 0 },
         { self->router, 0, ZMQ_POLLIN, 0 }
@@ -352,5 +356,4 @@ flcliapi_agent (void *args)
         zhash_foreach (self->servers, server_ping, self->router);
     }
     agent_destroy (&self);
-    return NULL;
 }

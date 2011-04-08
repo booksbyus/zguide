@@ -11,8 +11,8 @@ int main (int argc, char *argv [])
         exit (EXIT_SUCCESS);
     }
     zctx_t *ctx = zctx_new ();
-    void *server = zctx_socket_new (ctx, ZMQ_REP);
-    zmq_bind (server, argv [1]);
+    void *server = zsocket_new (ctx, ZMQ_REP);
+    zsocket_bind (server, argv [1]);
 
     printf ("I: service is ready at %s\n", argv [1]);
     while (TRUE) {

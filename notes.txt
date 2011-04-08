@@ -34,6 +34,10 @@ Changes to examples
         - flclient1, flserver1
         - flclient2, flserver2
         - flclient3, flserver3, flcliapi
+        - clonecli1, clonesrv1, kvmsg
+        - clonecli2, clonesrv2
+        - clonecli3, clonesrv3
+        - clonecli4, clonesrv4, clone are new files
 
     - PPP (http://rfc.zeromq.org/spec:6) changed to use binary commands
         - READY is 0x01
@@ -44,7 +48,7 @@ s/zmsg.h/zapi.h/
 s/void \*context = zmq_init \(1\)/zctx_t *ctx = zctx_new ()/
 s/zmq_socket \(context,/zctx_socket_new (ctx,/
 s/zmq_close \(/zctx_socket_destroy (ctx, /
-s/zmq_term \(context\)/zctx_destroy (&ctx)/
+s/zmq_term \(context\)/zctx_destroy (\&ctx)/
 s/zmsg_push/zmsg_pushstr/
 s/zmsg_parts/zmsg_size/
 s/s_sleep/zclock_sleep/
@@ -53,6 +57,35 @@ s/s_console/zclock_log/
 s/s_interrupted/zctx_interrupted/
 s/s_recv/zstr_recv/
 s/s_send/zstr_send/
+
+Clone protocol
+
+    flows:
+        C:DEALER -> snapshot S:ROUTER at address:port
+        C:SUB    -> publisher S:PUB at address:port+1
+        C:PUB    -> collector S:SUB at address:port+2
+
+    message format:
+        zstr_send (server->snapshot, "ICANHAZ?")
+        0 or more key-value messages:
+            [key][sequence=unused][uuid][value]
+            //  frame 0: key (0MQ string)
+            //  frame 1: sequence (8 bytes, network order)
+            //  frame 2: uuid (16 bytes)
+            //  frame 3: body (blob)
+        [KTHXBAI][snapshot sequence][][]
+
+    update from publisher
+        [key][sequence][uuid][value]
+        -> applied if sequence > snapshot sequence
+        [HUGZ][0][][]
+        -> heartbeat once per second
+
+    update to collector
+        [key][sequence=0][uuid][value]
+
+
+
 
 
 - remove all from zhelpers that is provided by zapi

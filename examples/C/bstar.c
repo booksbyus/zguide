@@ -57,8 +57,10 @@ struct _bstar_t {
     state_t state;              //  Current state
     event_t event;              //  Current event
     int64_t peer_expiry;        //  When peer is considered 'dead'
-    zloop_fn *voter_handler;    //  Voting socket handler
-    void *voter_arg;            //  Arguments for handler
+    zloop_fn *voter_fn;         //  Voting socket handler
+    void *voter_arg;            //  Arguments for voting handler
+    zloop_fn *failover_fn;      //  Failover event handler
+    void *failover_arg;         //  Arguments for failover handler
 };
 
 
@@ -135,6 +137,9 @@ s_execute_fsm (bstar_t *self)
                 //  If peer is dead, switch to the active state
                 printf ("I: failover successful, ready as master\n");
                 self->state = STATE_ACTIVE;
+                if (self->failover_fn)
+                    (self->failover_fn) (self->loop,
+                                         NULL, self->failover_arg);
             }
             else
                 //  If peer is alive, reject connections
@@ -167,14 +172,14 @@ int zstr_recv_state (zloop_t *loop, void *socket, void *arg)
     return s_execute_fsm (self);
 }
 
-//  Receive state from peer, execute finite state machine
+//  Application wants to speak to us, see if it's possible
 int s_voter_ready (zloop_t *loop, void *socket, void *arg)
 {
     bstar_t *self = (bstar_t *) arg;
-    self->event = CLIENT_REQUEST;
     //  If server can accept input now, call appl handler
+    self->event = CLIENT_REQUEST;
     if (s_execute_fsm (self) == 0)
-        (self->voter_handler) (self->loop, socket, self->voter_arg);
+        (self->voter_fn) (self->loop, socket, self->voter_arg);
     return 0;
 }
 
@@ -196,15 +201,12 @@ bstar_new (int primary, char *local, char *remote)
     self->state = primary? STATE_PRIMARY: STATE_BACKUP;
 
     //  Create publisher for state going to peer
-    self->statepub = zctx_socket_new (self->ctx, ZMQ_PUB);
-    int rc = zmq_bind (self->statepub, local);
-    assert (rc == 0);
+    self->statepub = zsocket_new (self->ctx, ZMQ_PUB);
+    zsocket_bind (self->statepub, local);
 
     //  Create subscriber for state coming from peer
-    self->statesub = zctx_socket_new (self->ctx, ZMQ_SUB);
-    zmq_setsockopt (self->statesub, ZMQ_SUBSCRIBE, "", 0);
-    rc = zmq_connect (self->statesub, remote);
-    assert (rc == 0);
+    self->statesub = zsocket_new (self->ctx, ZMQ_SUB);
+    zsocket_connect (self->statesub, remote);
 
     //  Set-up basic reactor events
     zloop_timer (self->loop, BSTAR_HEARTBEAT, 0, zstr_send_state, self);
@@ -231,8 +233,8 @@ bstar_destroy (bstar_t **self_p)
 
 
 //  ---------------------------------------------------------------------
-//  Return underlying zloop reactor, for timer and reader
-//  registration and cancelation.
+//  Return underlying zloop reactor, lets you add additional timers and
+//  readers.
 
 zloop_t *
 bstar_zloop (bstar_t *self)
@@ -252,12 +254,23 @@ bstar_voter (bstar_t *self, char *endpoint, int type, zloop_fn handler,
              void *arg)
 {
     //  Hold actual handler+arg so we can call this later
-    void *socket = zctx_socket_new (self->ctx, type);
-    zmq_bind (socket, endpoint);
-    assert (!self->voter_handler);
-    self->voter_handler = handler;
+    void *socket = zsocket_new (self->ctx, type);
+    zsocket_bind (socket, endpoint);
+    assert (!self->voter_fn);
+    self->voter_fn = handler;
     self->voter_arg = arg;
     return zloop_reader (self->loop, socket, s_voter_ready, self);
+}
+
+//  ---------------------------------------------------------------------
+//  Register failover handler
+
+void
+bstar_failover (bstar_t *self, zloop_fn handler, void *arg)
+{
+    assert (!self->failover_fn);
+    self->failover_fn = handler;
+    self->failover_arg = arg;
 }
 
 
@@ -267,6 +280,6 @@ bstar_voter (bstar_t *self, char *endpoint, int type, zloop_fn handler,
 int
 bstar_start (bstar_t *self)
 {
-    assert (self->voter_handler);
+    assert (self->voter_fn);
     return zloop_start (self->loop);
 }

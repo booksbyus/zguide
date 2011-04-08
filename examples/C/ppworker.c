@@ -17,8 +17,8 @@
 
 static void *
 s_worker_socket (zctx_t *ctx) {
-    void *worker = zctx_socket_new (ctx, ZMQ_DEALER);
-    zmq_connect (worker, "tcp://localhost:5556");
+    void *worker = zsocket_new (ctx, ZMQ_DEALER);
+    zsocket_connect (worker, "tcp://localhost:5556");
 
     //  Tell queue we're ready for work
     printf ("I: worker ready\n");
@@ -103,7 +103,7 @@ int main (void)
 
             if (interval < INTERVAL_MAX)
                 interval *= 2;
-            zctx_socket_destroy (ctx, worker);
+            zsocket_destroy (ctx, worker);
             worker = s_worker_socket (ctx);
             liveness = HEARTBEAT_LIVENESS;
         }

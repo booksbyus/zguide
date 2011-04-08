@@ -27,12 +27,11 @@
 
 //  If no server replies within this time, abandon request
 #define GLOBAL_TIMEOUT  4000    //  msecs
-
 //  Server considered dead if silent for this long
 #define SERVER_TTL      2000    //  msecs
-
 //  Number of servers we will talk to
 #define SERVER_MAX      2
+
 
 //  =====================================================================
 //  Synchronous part, works in our application thread
@@ -41,11 +40,13 @@
 //  Structure of our class
 
 struct _clone_t {
-    void *context;      //  Our 0MQ context
-    void *control;      //  Inproc socket talking to clone task
+    zctx_t *ctx;        //  Our context wrapper
+    void *pipe;         //  Pipe through to clone agent
 };
 
-static void *clone_agent (void *context);
+//  This is the thread that handles our real clone class
+static void clone_agent (void *args, zctx_t *ctx, void *pipe);
+
 
 //  ---------------------------------------------------------------------
 //  Constructor
@@ -56,17 +57,9 @@ clone_new (void)
     clone_t
         *self;
 
-    s_catch_signals ();
-    self = (clone_t *) malloc (sizeof (clone_t));
-    self->context = zmq_init (1);
-    self->control = zmq_socket (self->context, ZMQ_PAIR);
-    int rc = zmq_bind (self->control, "inproc://clone");
-    assert (rc == 0);
-
-    pthread_t thread;
-    pthread_create (&thread, NULL, clone_agent, self->context);
-    pthread_detach (thread);
-
+    self = (clone_t *) zmalloc (sizeof (clone_t));
+    self->ctx = zctx_new ();
+    self->pipe = zthread_fork (self->ctx, clone_agent, NULL);
     return self;
 }
 
@@ -79,11 +72,7 @@ clone_destroy (clone_t **self_p)
     assert (self_p);
     if (*self_p) {
         clone_t *self = *self_p;
-        int zero = 0;
-        zmq_setsockopt (self->control,
-            ZMQ_LINGER, &zero, sizeof (zero));
-        zmq_close (self->control);
-        zmq_term (self->context);
+        zctx_destroy (&self->ctx);
         free (self);
         *self_p = NULL;
     }
@@ -91,18 +80,17 @@ clone_destroy (clone_t **self_p)
 
 //  ---------------------------------------------------------------------
 //  Connect to new server endpoint
-//  Sends [CONNECT][address][service] to the agent
+//  Sends [CONNECT][endpoint][service] to the agent
 
 void
 clone_connect (clone_t *self, char *address, char *service)
 {
     assert (self);
-    assert (address);
-    assert (service);
-    zmsg_t *msg = zmsg_new (service);
-    zmsg_push (msg, address);
-    zmsg_push (msg, "CONNECT");
-    zmsg_send (&msg, self->control);
+    zmsg_t *msg = zmsg_new ();
+    zmsg_addstr (msg, "CONNECT");
+    zmsg_addstr (msg, address);
+    zmsg_addstr (msg, service);
+    zmsg_send (&msg, self->pipe);
 }
 
 //  ---------------------------------------------------------------------
@@ -113,12 +101,11 @@ void
 clone_set (clone_t *self, char *key, char *value)
 {
     assert (self);
-    assert (key);
-    assert (value);
-    zmsg_t *msg = zmsg_new (value);
-    zmsg_push (msg, key);
-    zmsg_push (msg, "SET");
-    zmsg_send (&msg, self->control);
+    zmsg_t *msg = zmsg_new ();
+    zmsg_addstr (msg, "SET");
+    zmsg_addstr (msg, key);
+    zmsg_addstr (msg, value);
+    zmsg_send (&msg, self->pipe);
 }
 
 //  ---------------------------------------------------------------------
@@ -131,13 +118,14 @@ clone_get (clone_t *self, char *key)
 {
     assert (self);
     assert (key);
-    zmsg_t *msg = zmsg_new (key);
-    zmsg_push (msg, "GET");
-    zmsg_send (&msg, self->control);
+    zmsg_t *msg = zmsg_new ();
+    zmsg_addstr (msg, "GET");
+    zmsg_addstr (msg, key);
+    zmsg_send (&msg, self->pipe);
 
-    zmsg_t *reply = zmsg_recv (self->control);
+    zmsg_t *reply = zmsg_recv (self->pipe);
     if (reply) {
-        char *value = zmsg_pop (reply);
+        char *value = zmsg_popstr (reply);
         zmsg_destroy (&reply);
         return value;
     }
@@ -158,50 +146,29 @@ typedef struct {
     int64_t expires;            //  Expires at this time
 } server_t;
 
-server_t *
-server_new (void *context, char *address, char *service)
+static server_t *
+server_new (zctx_t *ctx, char *address, int port)
 {
     server_t *self = (server_t *) malloc (sizeof (server_t));
 
-    char endpoint [256];
-    printf ("I: connecting to %s:%s...\n", address, service);
-    snprintf (endpoint, 256, "%s:%d", address, atoi (service));
-    self->snapshot = zmq_socket (context, ZMQ_DEALER);
-    int rc = zmq_connect (self->snapshot, endpoint);
-    assert (rc == 0);
+    printf ("I: connecting to %s:%d...\n", address, port);
+    self->snapshot = zsocket_new (ctx, ZMQ_DEALER);
+    zsocket_connect (self->snapshot, "%s:%d", address, port);
+    self->subscriber = zsocket_new (ctx, ZMQ_SUB);
+    zsocket_connect (self->subscriber, "%s:%d", address, port + 1);
+    self->publisher = zsocket_new (ctx, ZMQ_PUB);
+    zsocket_connect (self->publisher, "%s:%d", address, port + 2);
 
-    snprintf (endpoint, 256, "%s:%d", address, atoi (service) + 1);
-    self->subscriber = zmq_socket (context, ZMQ_SUB);
-    zmq_setsockopt (self->subscriber, ZMQ_SUBSCRIBE, "", 0);
-    rc = zmq_connect (self->subscriber, endpoint);
-    assert (rc == 0);
-
-    snprintf (endpoint, 256, "%s:%d", address, atoi (service) + 2);
-    self->publisher = zmq_socket (context, ZMQ_PUB);
-    rc = zmq_connect (self->publisher, endpoint);
-    assert (rc == 0);
-
-    self->expires = s_clock () + SERVER_TTL;
+    self->expires = zclock_time () + SERVER_TTL;
     return self;
 }
 
-void
+static void
 server_destroy (server_t **self_p)
 {
     assert (self_p);
     if (*self_p) {
         server_t *self = *self_p;
-        int zero = 0;
-        //  This machinery will be eliminated with libzap...
-        zmq_setsockopt (self->snapshot,
-            ZMQ_LINGER, &zero, sizeof (zero));
-        zmq_setsockopt (self->publisher,
-            ZMQ_LINGER, &zero, sizeof (zero));
-        zmq_setsockopt (self->subscriber,
-            ZMQ_LINGER, &zero, sizeof (zero));
-        zmq_close (self->snapshot);
-        zmq_close (self->publisher);
-        zmq_close (self->subscriber);
         free (self);
         *self_p = NULL;
     }
@@ -216,8 +183,8 @@ server_destroy (server_t **self_p)
 #define STATE_ACTIVE        2   //  Listening to subscriptions
 
 typedef struct {
-    void *context;              //  0MQ context
-    void *control;              //  Socket to talk to application
+    zctx_t *ctx;                //  Context wrapper
+    void *pipe;                 //  Pipe back to application
     zhash_t *kvmap;             //  Actual key/value table
     server_t *server [SERVER_MAX];
     uint nbr_servers;           //  0 to SERVER_MAX
@@ -226,32 +193,26 @@ typedef struct {
     int64_t sequence;           //  Last kvmsg processed
 } agent_t;
 
-agent_t *
-agent_new (void *context, char *endpoint)
+static agent_t *
+agent_new (zctx_t *ctx, void *pipe)
 {
-    agent_t *self = (agent_t *) calloc (1, sizeof (agent_t));
-    self->context = context;
-    self->control = zmq_socket (self->context, ZMQ_PAIR);
-    assert (self->control);
+    agent_t *self = (agent_t *) zmalloc (sizeof (agent_t));
+    self->ctx = ctx;
+    self->pipe = pipe;
     self->kvmap = zhash_new ();
     self->state = STATE_STARTUP;
-    int rc = zmq_connect (self->control, endpoint);
-    assert (rc == 0);
     return self;
 }
 
-void
+static void
 agent_destroy (agent_t **self_p)
 {
     assert (self_p);
     if (*self_p) {
         agent_t *self = *self_p;
-        int zero = 0;
-        zmq_setsockopt (self->control,
-            ZMQ_LINGER, &zero, sizeof (zero));
-        zmq_close (self->control);
-        server_destroy (&self->server [0]);
-        server_destroy (&self->server [1]);
+        int server_nbr;
+        for (server_nbr = 0; server_nbr < self->nbr_servers; server_nbr++)
+            server_destroy (&self->server [server_nbr]);
         zhash_destroy (&self->kvmap);
         free (self);
         *self_p = NULL;
@@ -259,20 +220,20 @@ agent_destroy (agent_t **self_p)
 }
 
 //  Returns -1 if thread was interrupted
-int
+static int
 agent_control_message (agent_t *self)
 {
-    zmsg_t *msg = zmsg_recv (self->control);
-    char *command = zmsg_pop (msg);
+    zmsg_t *msg = zmsg_recv (self->pipe);
+    char *command = zmsg_popstr (msg);
     if (command == NULL)
         return -1;
 
     if (streq (command, "CONNECT")) {
-        char *address = zmsg_pop (msg);
-        char *service = zmsg_pop (msg);
+        char *address = zmsg_popstr (msg);
+        char *service = zmsg_popstr (msg);
         if (self->nbr_servers < SERVER_MAX)
             self->server [self->nbr_servers++]
-                = server_new (self->context, address, service);
+                = server_new (self->ctx, address, atoi (service));
         else
             printf ("E: too many servers (max. %d)\n", SERVER_MAX);
         free (address);
@@ -280,10 +241,10 @@ agent_control_message (agent_t *self)
     }
     else
     if (streq (command, "SET")) {
-        char *key = zmsg_pop (msg);
+        char *key = zmsg_popstr (msg);
         //  We're doing string values for now, will switch to frames
         //  when we move this to libzapi.
-        char *value = zmsg_pop (msg);
+        char *value = zmsg_popstr (msg);
         zhash_update (self->kvmap, key, (byte *) value);
         zhash_freefn (self->kvmap, key, free);
 
@@ -299,12 +260,12 @@ agent_control_message (agent_t *self)
     }
     else
     if (streq (command, "GET")) {
-        char *key = zmsg_pop (msg);
+        char *key = zmsg_popstr (msg);
         char *value = zhash_lookup (self->kvmap, key);
         if (value)
-            s_send (self->control, value);
+            zstr_send (self->pipe, value);
         else
-            s_send (self->control, "");
+            zstr_send (self->pipe, "");
         free (key);
         free (value);
     }
@@ -318,23 +279,23 @@ agent_control_message (agent_t *self)
 //  Asynchronous agent manages server pool and handles request/reply
 //  dialog when the application asks for it.
 
-static void *
-clone_agent (void *context)
+static void
+clone_agent (void *args, zctx_t *ctx, void *pipe)
 {
-    agent_t *self = agent_new (context, "inproc://clone");
+    agent_t *self = agent_new (ctx, pipe);
 
-    while (!s_interrupted) {
+    while (!zctx_interrupted) {
         zmq_pollitem_t items [] = {
-            { self->control, 0, ZMQ_POLLIN, 0 },
-            { 0,             0, ZMQ_POLLIN, 0 }
+            { pipe, 0, ZMQ_POLLIN, 0 },
+            { 0,    0, ZMQ_POLLIN, 0 }
         };
         server_t *server = self->server [self->cur_server];
         switch (self->state) {
             case STATE_STARTUP:
                 if (self->nbr_servers > 0) {
                     self->state = STATE_PENDING;
-                    server->expires = s_clock () + SERVER_TTL;
-                    s_send (server->snapshot, "I can haz state?");
+                    server->expires = zclock_time () + SERVER_TTL;
+                    zstr_send (server->snapshot, "ICANHAZ?");
                     //  And fall-through to STATE_PENDING
                 }
                 else
@@ -349,7 +310,7 @@ clone_agent (void *context)
         //  ------------------------------------------------------------
         //  Poll loop
         int64_t expires = server? server->expires: 3600 * 1000;
-        int tickless = (int) (expires - s_clock ());
+        int tickless = (int) (expires - zclock_time ());
         if (tickless < 0)
             tickless = 0;
         int rc = zmq_poll (items, 2, tickless * 1000);
@@ -361,7 +322,7 @@ clone_agent (void *context)
                 break;          //  Interrupted
         }
         if (items [1].revents & ZMQ_POLLIN) {
-            server->expires = s_clock () + SERVER_TTL;
+            server->expires = zclock_time () + SERVER_TTL;
             kvmsg_t *kvmsg = kvmsg_recv (items [1].socket);
             if (!kvmsg)
                 break;          //  Interrupted
@@ -391,7 +352,7 @@ clone_agent (void *context)
                     kvmsg_destroy (&kvmsg);
             }
         }
-        if (s_clock () >= expires) {
+        if (zclock_time () >= expires) {
             if (self->state == STATE_PENDING
             ||  self->state == STATE_ACTIVE) {
                 //  Server has died, failover
@@ -402,5 +363,4 @@ clone_agent (void *context)
         }
     }
     agent_destroy (&self);
-    return NULL;
 }
