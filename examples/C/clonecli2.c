@@ -9,10 +9,10 @@ int main (void)
 {
     //  Prepare our context and subscriber
     zctx_t *ctx = zctx_new ();
-    void *subscriber = zsocket_new (ctx, ZMQ_SUB);
-    zsocket_connect (subscriber, "tcp://localhost:5556");
     void *snapshot = zsocket_new (ctx, ZMQ_DEALER);
-    zsocket_connect (snapshot, "tcp://localhost:5557");
+    zsocket_connect (snapshot, "tcp://localhost:5556");
+    void *subscriber = zsocket_new (ctx, ZMQ_SUB);
+    zsocket_connect (subscriber, "tcp://localhost:5557");
 
     zhash_t *kvmap = zhash_new ();
 

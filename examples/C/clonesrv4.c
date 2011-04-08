@@ -5,7 +5,6 @@
 
 //  Lets us build this source without creating a library
 #include "bstar.c"
-#include "clone.c"
 
 static int s_snapshotter (zloop_t *loop, void *socket, void *args);
 static int s_collector (zloop_t *loop, void *socket, void *args);
@@ -17,12 +16,12 @@ typedef struct {
     zctx_t *ctx;                //  Context wrapper
     zhash_t *kvmap;             //  Key-value store
     bstar_t *bstar;             //  Bstar reactor core
-    clone_t *clone;             //  Clone client class
     int64_t sequence;           //  How many updates we're at
-    char *port;                 //  Main port we're working on
-    char *peer;                 //  Main port of our peer
+    int port;                   //  Main port we're working on
+    int peer;                   //  Main port of our peer
     void *publisher;            //  Publishing updates and hugz
     void *collector;            //  Collecting updates from clients
+    void *subscriber;           //  Getting updates from peer
 } clonesrv_t;
 
 int main (int argc, char *argv [])
@@ -34,8 +33,8 @@ int main (int argc, char *argv [])
                                  "tcp://localhost:5004");
         bstar_voter (self->bstar, "tcp://*:5556", ZMQ_ROUTER,
                      s_snapshotter, self);
-        self->port = "5556";
-        self->peer = "5566";
+        self->port = 5556;
+        self->peer = 5566;
     }
     else
     if (argc == 2 && streq (argv [1], "-b")) {
@@ -44,8 +43,8 @@ int main (int argc, char *argv [])
                                  "tcp://localhost:5003");
         bstar_voter (self->bstar, "tcp://*:5566", ZMQ_ROUTER,
                      s_snapshotter, self);
-        self->port = "5566";
-        self->peer = "5556";
+        self->port = 5566;
+        self->peer = 5556;
     }
     else {
         printf ("Usage: clonesrv4 { -p | -b }\n");
@@ -54,14 +53,18 @@ int main (int argc, char *argv [])
     }
     self->kvmap = zhash_new ();
     self->ctx = zctx_new ();
+
+    //  Set up our clone server sockets
     self->publisher = zsocket_new (self->ctx, ZMQ_PUB);
     self->collector = zsocket_new (self->ctx, ZMQ_SUB);
-    zsocket_bind (self->publisher, "tcp://*:%d", atoi (self->port) + 1);
-    zsocket_bind (self->collector, "tcp://*:%d", atoi (self->port) + 2);
+    zsocket_bind (self->publisher, "tcp://*:%d", self->port + 1);
+    zsocket_bind (self->collector, "tcp://*:%d", self->port + 2);
 
-    //  Launch clone client against peer server
-    self->clone = clone_new ();
-    clone_connect (self->clone, "tcp://localhost", self->peer);
+    //  Set up our own clone client interface to peer
+    self->snapshot = zsocket_new (self->ctx, ZMQ_DEALER);
+    self->subscriber = zsocket_new (self->ctx, ZMQ_SUB);
+    zsocket_connect (self->snapshot, "tcp://localhost:%d", self->peer);
+    zsocket_connect (self->subscriber, "tcp://localhost:%d", self->peer + 1);
 
     //  Register failover handler
     bstar_failover (self->bstar, s_failover, self);
@@ -75,7 +78,6 @@ int main (int argc, char *argv [])
     bstar_start (self->bstar);
 
     //  Interrupted, so shut down
-    clone_destroy (&self->clone);
     bstar_destroy (&self->bstar);
     zhash_destroy (&self->kvmap);
     zctx_destroy (&self->ctx);
@@ -192,3 +194,15 @@ s_failover (zloop_t *loop, void *unused, void *args)
 
     return 0;
 }
+
+Bool
+bstar_master (bstar_t *self)
+        kvmsg_t *kvmsg = kvmsg_recv (subscriber);
+        if (!kvmsg)
+            break;          //  Interrupted
+        if (kvmsg_sequence (kvmsg) > sequence) {
+            sequence = kvmsg_sequence (kvmsg);
+            kvmsg_store (&kvmsg, kvmap);
+        }
+        else
+            kvmsg_destroy (&kvmsg);

@@ -9,12 +9,12 @@ int main (void)
 {
     //  Prepare our context and subscriber
     zctx_t *ctx = zctx_new ();
-    void *subscriber = zsocket_new (ctx, ZMQ_SUB);
-    zsocket_connect (subscriber, "tcp://localhost:5556");
     void *snapshot = zsocket_new (ctx, ZMQ_DEALER);
-    zsocket_connect (snapshot, "tcp://localhost:5557");
-    void *updates = zsocket_new (ctx, ZMQ_PUSH);
-    zsocket_connect (updates, "tcp://localhost:5558");
+    zsocket_connect (snapshot, "tcp://localhost:5556");
+    void *subscriber = zsocket_new (ctx, ZMQ_SUB);
+    zsocket_connect (subscriber, "tcp://localhost:5557");
+    void *publisher = zsocket_new (ctx, ZMQ_PUSH);
+    zsocket_connect (publisher, "tcp://localhost:5558");
 
     zhash_t *kvmap = zhash_new ();
     srandom ((unsigned) time (NULL));
@@ -64,7 +64,7 @@ int main (void)
             kvmsg_t *kvmsg = kvmsg_new (0);
             kvmsg_fmt_key  (kvmsg, "%d", randof (10000));
             kvmsg_fmt_body (kvmsg, "%d", randof (1000000));
-            kvmsg_send (kvmsg, updates);
+            kvmsg_send (kvmsg, publisher);
             kvmsg_destroy (&kvmsg);
             alarm = zclock_time () + 1000;
         }

@@ -277,9 +277,20 @@ bstar_failover (bstar_t *self, zloop_fn handler, void *arg)
 //  ---------------------------------------------------------------------
 //  Start the reactor, ends if a callback function returns -1, or the
 //  process received SIGINT or SIGTERM.
+
 int
 bstar_start (bstar_t *self)
 {
     assert (self->voter_fn);
     return zloop_start (self->loop);
+}
+
+//  ---------------------------------------------------------------------
+//  Returns TRUE if the current server is master in the pair,
+//  false if it is slave.
+
+Bool
+bstar_master (bstar_t *self)
+{
+    return self->state == STATE_ACTIVE;
 }

@@ -67,6 +67,11 @@ void
 int
     bstar_start (bstar_t *self);
 
+//  Returns TRUE if the current server is master in the pair,
+//  false if it is slave.
+Bool
+    bstar_master (bstar_t *self);
+
 #ifdef __cplusplus
 }
 #endif
