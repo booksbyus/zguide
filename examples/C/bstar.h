@@ -58,6 +58,10 @@ int
     bstar_voter (bstar_t *self, char *endpoint, int type,
                  zloop_fn handler, void *arg);
 
+//  Register failover handler
+void
+    bstar_failover (bstar_t *self, zloop_fn handler, void *arg);
+
 //  Start the reactor, ends if a callback function returns -1, or the
 //  process received SIGINT or SIGTERM.
 int

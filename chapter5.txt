@@ -404,15 +404,15 @@ The backup server can then act as a client, and keep its state synchronized by r
 
 So, Model Four introduces these changes over Model Three:
 
-* We use a pub-sub flow instead of a push-pull flow for client updates (to the servers). The reasons: push sockets will block if there is no recipient, and they round-robin, so we need to open two of them. We'll bind the servers' SUB sockets and connect the clients' PUB sockets to them. This takes care of fanning out from one client to two servers.
+* We use a pub-sub flow instead of a push-pull flow for client updates (to the servers). The reasons: push sockets will block if there is no recipient, and they round-robin, so we'd need to open two of them. We'll bind the servers' SUB sockets and connect the clients' PUB sockets to them. This takes care of fanning out from one client to two servers.
 
 * We add heartbeats to server updates (to clients), so that a client can detect when the primary server has died. It can then switch over to the backup server.
 
-* We connect the two servers using the Binary Star class. Binary Star relies on the clients to 'vote' by making an explicit request to the server they consider "master". We can't use client updates for voting, since both servers accept these at all times.
+* We connect the two servers using the Binary Star {{bstar}} reactor class. Binary Star relies on the clients to 'vote' by making an explicit request to the server they consider "master". We'll use snapshot requests for this.
 
 * We make all update messages uniquely identifiable by adding a UUID field. The client generates this, and the server propagates it back on re-published updates.
 
-* The backup server keeps a "pending list" of updates that it has received from clients, but not yet from the primary server. The list is ordered from oldest to newest, so that it's fast to remove updates off the head.
+* The backup server keeps a "pending list" of updates that it has received from clients, but not yet from the primary server. The list is ordered from oldest to newest, so that it is easy to remove updates off the head.
 
 Failover happens as follows:
 
@@ -463,7 +463,7 @@ So here is our high-availability server pair, using the Binary Star pattern:
                Figure # - High-availability Clone Server Pair
 [[/code]]
 
-As a first step to building this, we need to refactor the client as a reusable class. This will make it reusable both in applications, and in servers (which have to act as clients when they are in the backup/slave role).
+As a first step to building this, we're going to refactor the client as a reusable class. This is partly for fun (writing asynchronous classes with 0MQ is like an exercise in elegance), but mainly because we want Clone to be really easy to plug-in to random applications. When we start to handle failover in clients, it does get a little complex (imagine mixing a Freelance client with a Clone client). So, reusability ahoy!
 
 My usual design approach is to first design an API that feels right, then to implement that. So, we start by taking the clone client, and rewriting it to sit on top of some presumed class API called **clone**. Turning random code into an API means defining a reasonably stable and abstract contract with applications. For example, in Model Three, the client opened three separate sockets to the server, using endpoints that were hard-coded in the source. We could make an API with three methods, like this:
 
@@ -493,11 +493,6 @@ Which has the advantage of simplicity (one server sits at one endpoint) but has 
 * The server updates publisher (PUB) is at port P + 1.
 * The server updates subscriber (SUB) is at port P + 2.
 
-So here is Model Four of the clone client, which has now become just a thin shell using the clone class:
-
-[[code type="example" title="Clone client, Model Four" name="clonecli4"]]
-[[/code]]
-
 The clone class has the same structure as the flcliapi class from Chapter Four. It consists of two parts:
 
 * An asynchronous clone agent that runs in a background thread. The agent handles all network I/O, talking to servers in realtime, no matter what the application is doing.
@@ -506,7 +501,27 @@ The clone class has the same structure as the flcliapi class from Chapter Four. 
 
 The frontend class talks to the agent class over an {{inproc}} 'pipe' socket. In C, the libzapi thread layer creates this pipe automatically for us as it starts an "attached thread". This is a natural pattern for multithreading over 0MQ.
 
-Without 0MQ, this kind of asynchronous class design would be weeks of really hard work. Here is the clone class implementation:
+Without 0MQ, this kind of asynchronous class design would be weeks of really hard work. With 0MQ, it was a day or two of work. The results are kind of complex, given the simplicity of the Clone protocol it's actually running. There are some reasons for this. We could turn this into a reactor, but that'd make it harder to use in applications. So the API looks a bit like a key-value table that magically talks to some servers:
+
+[[code language="C"]]
+clone_t *
+    clone_new (void);
+void
+    clone_destroy (clone_t **self_p);
+void
+    clone_connect (clone_t *self, char *address, char *service);
+void
+    clone_set (clone_t *self, char *key, char *value);
+char *
+    clone_get (clone_t *self, char *key);
+[[/code]]
+
+So here is Model Four of the clone client, which has now become just a thin shell using the clone class:
+
+[[code type="example" title="Clone client, Model Four" name="clonecli4"]]
+[[/code]]
+
+And here is the actual clone class implementation:
 
 [[code type="example" title="Clone class" name="clone"]]
 [[/code]]
@@ -518,8 +533,7 @@ clonesrv3 &
 clonecli4
 [[/code]]
 
-If we kill the server, the client will complain it's not received any 'hugz' (impertinently stealing an idea from Alexis Richardson, the Clone protocol, which we're slowly coming to, will be the world's first LOL-compatible protocol).
-
+If we kill the server, the client will complain it's not received any 'hugz' (impertinently stealing an idea from the eminent Alexis Richardson, the Clone protocol, which we're slowly coming to, will be the world's first furry protocol).
 
 
 .end
@@ -528,17 +542,7 @@ If we kill the server, the client will complain it's not received any 'hugz' (im
 
 ++++ Clone Protocol Specification
 
-++++ Clone API
-
-We don't need a lot of code to make a Clone client, but it's still subtle enough to be profitably hidden in a small API.
-
-While the code we need to implement Clone is short, it's subtle. You'd not want to implement this directly in your applications. The server is fine, this can be a generic process that doesn't include any application code. For the client, let's make an event-driven API.
-
-
-Clone is complex enough in practice that you don't want to implement it directly in your applications. Instead, it makes a good basis for an application server framework, which talks to applications via the key-value table.
-
-- event driven on changes?
-- wrap as API cloneapi.h
+++++ Ephemeral Values (TTL)
 
 ++++ Synchronized Clients
 

@@ -146,7 +146,7 @@ typedef struct {
     int64_t expires;            //  Expires at this time
 } server_t;
 
-server_t *
+static server_t *
 server_new (zctx_t *ctx, char *address, int port)
 {
     server_t *self = (server_t *) malloc (sizeof (server_t));
@@ -163,7 +163,7 @@ server_new (zctx_t *ctx, char *address, int port)
     return self;
 }
 
-void
+static void
 server_destroy (server_t **self_p)
 {
     assert (self_p);
@@ -193,7 +193,7 @@ typedef struct {
     int64_t sequence;           //  Last kvmsg processed
 } agent_t;
 
-agent_t *
+static agent_t *
 agent_new (zctx_t *ctx, void *pipe)
 {
     agent_t *self = (agent_t *) zmalloc (sizeof (agent_t));
@@ -204,7 +204,7 @@ agent_new (zctx_t *ctx, void *pipe)
     return self;
 }
 
-void
+static void
 agent_destroy (agent_t **self_p)
 {
     assert (self_p);
@@ -220,7 +220,7 @@ agent_destroy (agent_t **self_p)
 }
 
 //  Returns -1 if thread was interrupted
-int
+static int
 agent_control_message (agent_t *self)
 {
     zmsg_t *msg = zmsg_recv (self->pipe);

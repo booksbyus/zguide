@@ -62,8 +62,8 @@ Clone protocol
 
     flows:
         C:DEALER -> snapshot S:ROUTER at address:port
-        C:SUB -> publisher S:PUB at address:port+1
-        C:PUB -> collector S:SUB at address:port+2
+        C:SUB    -> publisher S:PUB at address:port+1
+        C:PUB    -> collector S:SUB at address:port+2
 
     message format:
         zstr_send (server->snapshot, "ICANHAZ?")

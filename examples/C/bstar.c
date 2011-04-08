@@ -57,8 +57,10 @@ struct _bstar_t {
     state_t state;              //  Current state
     event_t event;              //  Current event
     int64_t peer_expiry;        //  When peer is considered 'dead'
-    zloop_fn *voter_handler;    //  Voting socket handler
-    void *voter_arg;            //  Arguments for handler
+    zloop_fn *voter_fn;         //  Voting socket handler
+    void *voter_arg;            //  Arguments for voting handler
+    zloop_fn *failover_fn;      //  Failover event handler
+    void *failover_arg;         //  Arguments for failover handler
 };
 
 
@@ -135,6 +137,9 @@ s_execute_fsm (bstar_t *self)
                 //  If peer is dead, switch to the active state
                 printf ("I: failover successful, ready as master\n");
                 self->state = STATE_ACTIVE;
+                if (self->failover_fn)
+                    (self->failover_fn) (self->loop,
+                                         NULL, self->failover_arg);
             }
             else
                 //  If peer is alive, reject connections
@@ -174,7 +179,7 @@ int s_voter_ready (zloop_t *loop, void *socket, void *arg)
     //  If server can accept input now, call appl handler
     self->event = CLIENT_REQUEST;
     if (s_execute_fsm (self) == 0)
-        (self->voter_handler) (self->loop, socket, self->voter_arg);
+        (self->voter_fn) (self->loop, socket, self->voter_arg);
     return 0;
 }
 
@@ -251,10 +256,21 @@ bstar_voter (bstar_t *self, char *endpoint, int type, zloop_fn handler,
     //  Hold actual handler+arg so we can call this later
     void *socket = zsocket_new (self->ctx, type);
     zsocket_bind (socket, endpoint);
-    assert (!self->voter_handler);
-    self->voter_handler = handler;
+    assert (!self->voter_fn);
+    self->voter_fn = handler;
     self->voter_arg = arg;
     return zloop_reader (self->loop, socket, s_voter_ready, self);
+}
+
+//  ---------------------------------------------------------------------
+//  Register failover handler
+
+void
+bstar_failover (bstar_t *self, zloop_fn handler, void *arg)
+{
+    assert (!self->failover_fn);
+    self->failover_fn = handler;
+    self->failover_arg = arg;
 }
 
 
@@ -264,6 +280,6 @@ bstar_voter (bstar_t *self, char *endpoint, int type, zloop_fn handler,
 int
 bstar_start (bstar_t *self)
 {
-    assert (self->voter_handler);
+    assert (self->voter_fn);
     return zloop_start (self->loop);
 }
