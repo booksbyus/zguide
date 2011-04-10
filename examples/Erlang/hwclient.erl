@@ -8,7 +8,9 @@ run() ->
 	{ok,Socket} = erlzmq:socket(Context,req),
 	ok = erlzmq:connect(Socket,"tcp://localhost:5555"),
 
-	loop(Socket,1).
+	loop(Socket,1),
+	ok = erlzmq:close(Socket),
+	ok = erlzmq:term(Context).
 
 % Do 10 requests
 loop(_,N) when N > 10 ->
