@@ -95,7 +95,7 @@ int main (int argc, char *argv [])
     while (TRUE) {
         zmq_pollitem_t items [] = {
             { self->socket,  0, ZMQ_POLLIN, 0 } };
-        int rc = zmq_poll (items, 1, HEARTBEAT_INTERVAL * 1000);
+        int rc = zmq_poll (items, 1, HEARTBEAT_INTERVAL * ZMQ_POLL_MSEC);
         if (rc == -1)
             break;              //  Interrupted
 

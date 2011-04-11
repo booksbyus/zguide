@@ -5,7 +5,7 @@
 //  Lets us build this source without creating a library
 #include "kvmsg.c"
 
-static int s_send_kvmsg (char *key, void *data, void *args);
+static int s_send_single (char *key, void *data, void *args);
 
 //  Routing information for a KV snapshot
 typedef struct {
@@ -48,7 +48,7 @@ int main (void)
             kvmsg_set_sequence (kvmsg, ++sequence);
             kvmsg_send (kvmsg, publisher);
             kvmsg_store (&kvmsg, kvmap);
-            printf ("I: publishing update %5" PRId64 "\n", sequence);
+            printf ("I: publishing update %5d\n", (int) sequence);
         }
         //  Execute state snapshot request
         if (items [1].revents & ZMQ_POLLIN) {
@@ -68,10 +68,10 @@ int main (void)
             kvroute_t routing = { snapshot, identity };
 
             //  For each entry in kvmap, send kvmsg to client
-            zhash_foreach (kvmap, s_send_kvmsg, &routing);
+            zhash_foreach (kvmap, s_send_single, &routing);
 
             //  Now send END message with sequence number
-            printf ("I: sending shapshot=%" PRId64 "\n", sequence);
+            printf ("I: sending shapshot=%d\n", (int) sequence);
             zframe_send (&identity, snapshot, ZFRAME_MORE);
             kvmsg_t *kvmsg = kvmsg_new (sequence);
             kvmsg_set_key  (kvmsg, "KTHXBAI");
@@ -80,7 +80,7 @@ int main (void)
             kvmsg_destroy (&kvmsg);
         }
     }
-    printf (" Interrupted\n%" PRId64 " messages handled\n", sequence);
+    printf (" Interrupted\n%d messages handled\n", (int) sequence);
     zhash_destroy (&kvmap);
     zctx_destroy (&ctx);
 
@@ -90,7 +90,7 @@ int main (void)
 //  Send one state snapshot key-value pair to a socket
 //  Hash item data is our kvmsg object, ready to send
 static int
-s_send_kvmsg (char *key, void *data, void *args)
+s_send_single (char *key, void *data, void *args)
 {
     kvroute_t *kvroute = (kvroute_t *) args;
     //  Send identity of recipient first

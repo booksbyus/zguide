@@ -31,7 +31,7 @@ client_task (void *args)
         //  Tick once per second, pulling in arriving messages
         int centitick;
         for (centitick = 0; centitick < 100; centitick++) {
-            zmq_poll (items, 1, 10000);
+            zmq_poll (items, 1, 10 * ZMQ_POLL_MSEC);
             if (items [0].revents & ZMQ_POLLIN) {
                 zmsg_t *msg = zmsg_recv (client);
                 zframe_print (zmsg_last (msg), identity);

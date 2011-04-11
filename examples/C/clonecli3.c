@@ -22,7 +22,7 @@ int main (void)
     //  Get state snapshot
     int64_t sequence = 0;
     zstr_send (snapshot, "ICANHAZ?");
-    while (!zctx_interrupted) {
+    while (TRUE) {
         kvmsg_t *kvmsg = kvmsg_recv (snapshot);
         if (!kvmsg)
             break;          //  Interrupted
@@ -33,10 +33,10 @@ int main (void)
         }
         kvmsg_store (&kvmsg, kvmap);
     }
-    printf ("I: received snapshot=%" PRId64 "\n", sequence);
+    printf ("I: received snapshot=%d\n", (int) sequence);
 
     int64_t alarm = zclock_time () + 1000;
-    while (!zctx_interrupted) {
+    while (TRUE) {
         zmq_pollitem_t items [] = { { subscriber, 0, ZMQ_POLLIN, 0 } };
         int tickless = (int) ((alarm - zclock_time ()));
         if (tickless < 0)
@@ -54,7 +54,7 @@ int main (void)
             if (kvmsg_sequence (kvmsg) > sequence) {
                 sequence = kvmsg_sequence (kvmsg);
                 kvmsg_store (&kvmsg, kvmap);
-                printf ("I: received update=%" PRId64 "\n", sequence);
+                printf ("I: received update=%d\n", (int) sequence);
             }
             else
                 kvmsg_destroy (&kvmsg);
@@ -69,7 +69,7 @@ int main (void)
             alarm = zclock_time () + 1000;
         }
     }
-    printf (" Interrupted\n%" PRId64 " messages in\n", sequence);
+    printf (" Interrupted\n%d messages in\n", (int) sequence);
     zhash_destroy (&kvmap);
     zctx_destroy (&ctx);
     return 0;

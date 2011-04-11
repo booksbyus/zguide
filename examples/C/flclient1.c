@@ -19,7 +19,7 @@ s_try_request (zctx_t *ctx, char *endpoint, zmsg_t *request)
     zmsg_t *msg = zmsg_dup (request);
     zmsg_send (&msg, client);
     zmq_pollitem_t items [] = { { client, 0, ZMQ_POLLIN, 0 } };
-    zmq_poll (items, 1, REQUEST_TIMEOUT * 1000);
+    zmq_poll (items, 1, REQUEST_TIMEOUT * ZMQ_POLL_MSEC);
     zmsg_t *reply = NULL;
     if (items [0].revents & ZMQ_POLLIN)
         reply = zmsg_recv (client);

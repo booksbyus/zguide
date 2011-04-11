@@ -321,16 +321,13 @@ kvmsg_recv (void *socket)
             zmq_msg_close (&self->frame [frame_nbr]);
         zmq_msg_init (&self->frame [frame_nbr]);
         self->present [frame_nbr] = 1;
-        if (zmq_recv (socket, &self->frame [frame_nbr], 0)) {
+        if (zmq_recvmsg (socket, &self->frame [frame_nbr], 0) == -1) {
             kvmsg_destroy (&self);
             break;
         }
         //  Verify multipart framing
-        int64_t more;
-        size_t more_size = sizeof (more);
-        zmq_getsockopt (socket, ZMQ_RCVMORE, &more, &more_size);
-        int expected = (frame_nbr < KVMSG_FRAMES - 1)? 1: 0;
-        if (more != expected) {
+        int rcvmore = (frame_nbr < KVMSG_FRAMES - 1)? 1: 0;
+        if (zsockopt_rcvmore (socket) != rcvmore) {
             kvmsg_destroy (&self);
             break;
         }
@@ -354,7 +351,7 @@ kvmsg_send (kvmsg_t *self, void *socket)
         zmq_msg_init (&copy);
         if (self->present [frame_nbr])
             zmq_msg_copy (&copy, &self->frame [frame_nbr]);
-        zmq_send (socket, &copy,
+        zmq_sendmsg (socket, &copy,
             (frame_nbr < KVMSG_FRAMES - 1)? ZMQ_SNDMORE: 0);
         zmq_msg_close (&copy);
     }

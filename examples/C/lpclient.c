@@ -29,7 +29,7 @@ int main (void)
         while (expect_reply) {
             //  Poll socket for a reply, with timeout
             zmq_pollitem_t items [] = { { client, 0, ZMQ_POLLIN, 0 } };
-            int rc = zmq_poll (items, 1, REQUEST_TIMEOUT * 1000);
+            int rc = zmq_poll (items, 1, REQUEST_TIMEOUT * ZMQ_POLL_MSEC);
             if (rc == -1)
                 break;          //  Interrupted
 

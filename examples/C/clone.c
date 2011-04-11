@@ -140,10 +140,12 @@ clone_get (clone_t *self, char *key)
 //  Simple class for one server we talk to
 
 typedef struct {
+    char *address;              //  Server address
+    int port;                   //  Server port
     void *snapshot;             //  Snapshot socket
     void *subscriber;           //  Outgoing updates
     void *publisher;            //  Incoming updates
-    int64_t expires;            //  Expires at this time
+    uint64_t expiry;            //  When server expires
 } server_t;
 
 static server_t *
@@ -151,15 +153,16 @@ server_new (zctx_t *ctx, char *address, int port)
 {
     server_t *self = (server_t *) malloc (sizeof (server_t));
 
-    printf ("I: connecting to %s:%d...\n", address, port);
+    printf ("I: adding server %s:%d...\n", address, port);
+    self->address = strdup (address);
+    self->port = port;
+
     self->snapshot = zsocket_new (ctx, ZMQ_DEALER);
     zsocket_connect (self->snapshot, "%s:%d", address, port);
     self->subscriber = zsocket_new (ctx, ZMQ_SUB);
     zsocket_connect (self->subscriber, "%s:%d", address, port + 1);
     self->publisher = zsocket_new (ctx, ZMQ_PUB);
     zsocket_connect (self->publisher, "%s:%d", address, port + 2);
-
-    self->expires = zclock_time () + SERVER_TTL;
     return self;
 }
 
@@ -169,6 +172,7 @@ server_destroy (server_t **self_p)
     assert (self_p);
     if (*self_p) {
         server_t *self = *self_p;
+        free (self->address);
         free (self);
         *self_p = NULL;
     }
@@ -178,9 +182,10 @@ server_destroy (server_t **self_p)
 //  Our agent class
 
 //  States we can be in
-#define STATE_STARTUP       0   //  Not sent anything to a server
-#define STATE_PENDING       1   //  Getting state from server
-#define STATE_ACTIVE        2   //  Listening to subscriptions
+#define STATE_INITIAL       0   //  Before asking server for state
+#define STATE_WAITING       1   //  Waiting for state from server
+#define STATE_SYNCING       2   //  Getting state from server
+#define STATE_ACTIVE        3   //  Getting new updates from server
 
 typedef struct {
     zctx_t *ctx;                //  Context wrapper
@@ -200,7 +205,7 @@ agent_new (zctx_t *ctx, void *pipe)
     self->ctx = ctx;
     self->pipe = pipe;
     self->kvmap = zhash_new ();
-    self->state = STATE_STARTUP;
+    self->state = STATE_INITIAL;
     return self;
 }
 
@@ -284,59 +289,88 @@ clone_agent (void *args, zctx_t *ctx, void *pipe)
 {
     agent_t *self = agent_new (ctx, pipe);
 
-    while (!zctx_interrupted) {
-        zmq_pollitem_t items [] = {
+    while (TRUE) {
+        zmq_pollitem_t poll_set [] = {
             { pipe, 0, ZMQ_POLLIN, 0 },
             { 0,    0, ZMQ_POLLIN, 0 }
         };
+        int poll_timer = -1;
+        int poll_size = 2;
         server_t *server = self->server [self->cur_server];
         switch (self->state) {
-            case STATE_STARTUP:
+            case STATE_INITIAL:
+                puts ("INITIAL");
+                //  In this state we ask the server for a snapshot,
+                //  if we have a server to talk to...
                 if (self->nbr_servers > 0) {
-                    self->state = STATE_PENDING;
-                    server->expires = zclock_time () + SERVER_TTL;
+                    printf ("I: waiting for server at %s:%d...\n",
+                        server->address, server->port);
                     zstr_send (server->snapshot, "ICANHAZ?");
-                    //  And fall-through to STATE_PENDING
+                    self->state = STATE_WAITING;
+                    poll_set [1].socket = server->snapshot;
                 }
                 else
-                    break;
-            case STATE_PENDING:
-                items [1].socket = server->snapshot;
+                    poll_size = 1;
+                break;
+            case STATE_WAITING:
+                puts ("WAITING");
+                //  In this state we read from snapshot and we can
+                //  wait forever for an answer, it's not a failure.
+                poll_set [1].socket = server->snapshot;
+                break;
+            case STATE_SYNCING:
+                puts ("SYNCING");
+                //  In this state we read from snapshot and we expect
+                //  the server to respond, else we fail over.
+                poll_set [1].socket = server->snapshot;
+                poll_timer = (server->expiry - zclock_time ())
+                           * ZMQ_POLL_MSEC;
+                if (poll_timer < 0)
+                    poll_timer = 0;
                 break;
             case STATE_ACTIVE:
-                items [1].socket = server->subscriber;
+                puts ("ACTIVE");
+                //  In this state we read from subscriber and we expect
+                //  the server to give hugz, else we fail over.
+                poll_set [1].socket = server->subscriber;
+                poll_timer = (server->expiry - zclock_time ())
+                           * ZMQ_POLL_MSEC;
+                if (poll_timer < 0)
+                    poll_timer = 0;
                 break;
         }
         //  ------------------------------------------------------------
         //  Poll loop
-        int64_t expires = server? server->expires: 3600 * 1000;
-        int tickless = (int) (expires - zclock_time ());
-        if (tickless < 0)
-            tickless = 0;
-        int rc = zmq_poll (items, 2, tickless * 1000);
+        int rc = zmq_poll (poll_set, poll_size, poll_timer);
         if (rc == -1)
             break;              //  Context has been shut down
 
-        if (items [0].revents & ZMQ_POLLIN) {
+        if (poll_set [0].revents & ZMQ_POLLIN) {
             if (agent_control_message (self))
                 break;          //  Interrupted
         }
-        if (items [1].revents & ZMQ_POLLIN) {
-            server->expires = zclock_time () + SERVER_TTL;
-            kvmsg_t *kvmsg = kvmsg_recv (items [1].socket);
+        else
+        if (poll_set [1].revents & ZMQ_POLLIN) {
+            kvmsg_t *kvmsg = kvmsg_recv (poll_set [1].socket);
             if (!kvmsg)
                 break;          //  Interrupted
 
-            if (self->state == STATE_PENDING) {
+            //  Anything from server resets its expiry time
+            server->expiry = zclock_time () + SERVER_TTL;
+            if (self->state == STATE_WAITING
+            ||  self->state == STATE_SYNCING) {
                 //  Store in snapshot until we're finished
-                if (strneq (kvmsg_key (kvmsg), "KTHXBAI"))
-                    kvmsg_store (&kvmsg, self->kvmap);
-                else {
+                if (streq (kvmsg_key (kvmsg), "KTHXBAI")) {
+                    printf ("I: received from %s:%d snapshot=%d\n",
+                        server->address, server->port,
+                        (int) self->sequence);
                     self->sequence = kvmsg_sequence (kvmsg);
-                    printf ("I: received snapshot=%" PRId64 "\n",
-                        self->sequence);
                     kvmsg_destroy (&kvmsg);
                     self->state = STATE_ACTIVE;
+                }
+                else {
+                    kvmsg_store (&kvmsg, self->kvmap);
+                    self->state = STATE_SYNCING;
                 }
             }
             else
@@ -345,21 +379,20 @@ clone_agent (void *args, zctx_t *ctx, void *pipe)
                 if (kvmsg_sequence (kvmsg) > self->sequence) {
                     self->sequence = kvmsg_sequence (kvmsg);
                     kvmsg_store (&kvmsg, self->kvmap);
-                    printf ("I: received update=%" PRId64 "\n",
-                        self->sequence);
+                    printf ("I: received from %s:%d update=%d\n",
+                        server->address, server->port,
+                        (int) self->sequence);
                 }
                 else
                     kvmsg_destroy (&kvmsg);
             }
         }
-        if (zclock_time () >= expires) {
-            if (self->state == STATE_PENDING
-            ||  self->state == STATE_ACTIVE) {
-                //  Server has died, failover
-                printf ("I: server didn't give hugz, fail-over...\n");
-                self->cur_server = ++self->cur_server % self->nbr_servers;
-                self->state = STATE_STARTUP;
-            }
+        else {
+            //  Server has died, failover to next
+            printf ("I: server at %s:%d didn't give hugz\n",
+                    server->address, server->port);
+            self->cur_server = (self->cur_server + 1) % self->nbr_servers;
+            self->state = STATE_INITIAL;
         }
     }
     agent_destroy (&self);

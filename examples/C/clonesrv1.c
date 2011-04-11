@@ -25,7 +25,7 @@ int main (void)
         kvmsg_send (kvmsg, publisher);
         kvmsg_store (&kvmsg, kvmap);
     }
-    printf (" Interrupted\n%" PRId64 " messages out\n", sequence);
+    printf (" Interrupted\n%d messages out\n", (int) sequence);
     zhash_destroy (&kvmap);
     zctx_destroy (&ctx);
     return 0;

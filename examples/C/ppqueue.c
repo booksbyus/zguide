@@ -110,7 +110,7 @@ int main (void)
         };
         //  Poll frontend only if we have available workers
         int rc = zmq_poll (items, zlist_size (workers)? 2: 1,
-            HEARTBEAT_INTERVAL * 1000);
+            HEARTBEAT_INTERVAL * ZMQ_POLL_MSEC);
         if (rc == -1)
             break;              //  Interrupted
 

@@ -19,7 +19,7 @@ int main (void)
     //  Get state snapshot
     int64_t sequence = 0;
     zstr_send (snapshot, "ICANHAZ?");
-    while (!zctx_interrupted) {
+    while (TRUE) {
         kvmsg_t *kvmsg = kvmsg_recv (snapshot);
         if (!kvmsg)
             break;          //  Interrupted
@@ -30,10 +30,10 @@ int main (void)
         }
         kvmsg_store (&kvmsg, kvmap);
     }
-    printf ("Received snapshot=%" PRId64 "\n", sequence);
+    printf ("Received snapshot=%d\n", (int) sequence);
 
     //  Now apply pending updates, discard out-of-sequence messages
-    while (!zctx_interrupted) {
+    while (TRUE) {
         kvmsg_t *kvmsg = kvmsg_recv (subscriber);
         if (!kvmsg)
             break;          //  Interrupted

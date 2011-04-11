@@ -39,7 +39,7 @@ int main (int argc, char *argv [])
             { statefe, 0, ZMQ_POLLIN, 0 }
         };
         //  Poll for activity, or 1 second timeout
-        int rc = zmq_poll (items, 1, 1000000);
+        int rc = zmq_poll (items, 1, 1000 * ZMQ_POLL_MSEC);
         if (rc == -1)
             break;              //  Interrupted
 

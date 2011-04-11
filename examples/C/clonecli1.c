@@ -15,14 +15,14 @@ int main (void)
     zhash_t *kvmap = zhash_new ();
     int64_t sequence = 0;
 
-    while (!zctx_interrupted) {
+    while (TRUE) {
         kvmsg_t *kvmsg = kvmsg_recv (updates);
         if (!kvmsg)
             break;          //  Interrupted
         kvmsg_store (&kvmsg, kvmap);
         sequence++;
     }
-    printf (" Interrupted\n%" PRId64 " messages in\n", sequence);
+    printf (" Interrupted\n%d messages in\n", (int) sequence);
     zhash_destroy (&kvmap);
     zctx_destroy (&ctx);
     return 0;

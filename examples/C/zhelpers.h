@@ -43,8 +43,29 @@
 #include <assert.h>
 #include <signal.h>
 
+//  Version checking, and patch up missing constants to match 2.1
+#if ZMQ_VERSION_MAJOR == 2
+#   if ZMQ_VERSION_MINOR == 0
+#       error "Please upgrade to ZeroMQ/2.1 stable for these examples"
+#   endif
+#elif ZMQ_VERSION_MAJOR == 3
+#   error "Please stick with ZeroMQ/2.1 stable for these examples"
+#endif
+#ifndef ZMQ_ROUTER
+#   define ZMQ_ROUTER ZMQ_XREP
+#endif
+#ifndef ZMQ_DEALER
+#   define ZMQ_DEALER ZMQ_XREQ
+#endif
+
+
 //  Provide random number from 0..(num-1)
-#define randof(num)  (int) ((float) (num) * random () / (RAND_MAX + 1.0))
+#if (defined (__WINDOWS__))
+#   define randof(num)  (int) ((float) (num) * rand () / (RAND_MAX + 1.0))
+#else
+#   define randof(num)  (int) ((float) (num) * random () / (RAND_MAX + 1.0))
+#endif
+
 
 //  Receive 0MQ string from socket and convert into C string
 //  Caller must free returned string. Returns NULL if the context

@@ -133,7 +133,8 @@ int main (int argc, char *argv [])
             { cloudbe, 0, ZMQ_POLLIN, 0 }
         };
         //  If we have no workers anyhow, wait indefinitely
-        int rc = zmq_poll (backends, 2, capacity? 1000000: -1);
+        int rc = zmq_poll (backends, 2,
+            capacity? 1000 * ZMQ_POLL_MSEC: -1);
         if (rc == -1)
             break;              //  Interrupted
 
@@ -164,7 +165,7 @@ int main (int argc, char *argv [])
         }
         //  Route reply to cloud if it's addressed to a broker
         for (argn = 2; msg && argn < argc; argn++) {
-            char *data = zframe_data (zmsg_first (msg));
+            char *data = (char *) zframe_data (zmsg_first (msg));
             size_t size = zframe_size (zmsg_first (msg));
             if (size == strlen (argv [argn])
             &&  memcmp (data, argv [argn], size) == 0)

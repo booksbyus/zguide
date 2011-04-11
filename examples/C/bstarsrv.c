@@ -156,7 +156,7 @@ int main (int argc, char *argv [])
         int time_left = (int) ((send_state_at - zclock_time ()));
         if (time_left < 0)
             time_left = 0;
-        int rc = zmq_poll (items, 2, time_left * 1000);
+        int rc = zmq_poll (items, 2, time_left * ZMQ_POLL_MSEC);
         if (rc == -1)
             break;              //  Context has been shut down
 

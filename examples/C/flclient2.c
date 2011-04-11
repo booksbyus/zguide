@@ -147,7 +147,7 @@ flclient_request (flclient_t *self, zmsg_t **request_p)
     uint64_t endtime = zclock_time () + GLOBAL_TIMEOUT;
     while (zclock_time () < endtime) {
         zmq_pollitem_t items [] = { { self->socket, 0, ZMQ_POLLIN, 0 } };
-        zmq_poll (items, 1, (endtime - zclock_time ()) * 1000);
+        zmq_poll (items, 1, (endtime - zclock_time ()) * ZMQ_POLL_MSEC);
         if (items [0].revents & ZMQ_POLLIN) {
             //  Reply is [empty][sequence][OK]
             reply = zmsg_recv (self->socket);

@@ -393,7 +393,9 @@ As you play with model three, you'll stop and restart the server. It might look 
 Let's list the failures we want to be able to handle:
 
 * Clone server process crashes and is automatically or manually restarted. The process loses its state and has to get it back from somewhere.
+
 * Clone server machine dies and is off-line for a significant time. Clients have to switch to an alternate server somewhere.
+
 * Clone server process or machine gets disconnected from the network, e.g. a switch dies. It may come back at some point, but in the meantime clients need an alternate server.
 
 Our first step is to add a second server. We can use the Binary Star pattern from Chapter four to organize these into primary and backup.
@@ -413,6 +415,61 @@ So, Model Four introduces these changes over Model Three:
 * We make all update messages uniquely identifiable by adding a UUID field. The client generates this, and the server propagates it back on re-published updates.
 
 * The backup server keeps a "pending list" of updates that it has received from clients, but not yet from the primary server. The list is ordered from oldest to newest, so that it is easy to remove updates off the head.
+
+Voting is kind of delicate. If clients randomly try both servers, this will break the Binary Star three-way voting model, and trigger split-brain, if the network between the servers has a glitch. It's a rare error case but there's no point aiming for resilience if we don't handle obvious errors.
+
+So, clients must work as follows:
+
+* After opening and connecting their sockets, they wait for their first server to respond with a state snapshot. Until that happens, they stubbornly stay where they are.
+
+* When that server responds, the client treats it as active, and works with it until or unless it disappears.
+
+* When the current server disappears, the client then moves onto the next server, and continues like this, wrapping back around to the first server afterwards.
+
+We can draw this as a finite state machine, with events in caps, and where the client switches between reading its snapshot socket (in the Waiting and Syncing states), and its subscriber socket (in the Active state):
+
+[[code type="textdiagram"]]
+
+    +-----------+
+    |           |<----------------------\
+    |  Initial  |<-------------------\  |
+    |           |                    |  |
+    +-----+-----+                    |  |
+   Request|snapshot                  |  |
+          |                          |  |
+          |   /----------------\     |  |
+          |   |                |     |  |
+          v   v                |     |  |
+    +-----------+              |     |  |
+    |           |              |     |  |
+    |  Waiting  +-SILENCE------/     |  |
+    |           |                    |  |
+    +-----+-----+                    |  |
+        INPUT                        |  |
+     Store|snapshot                  |  |
+          |   /----------------\     |  |
+          |   |                |     |  |
+          v   v                |     |  |
+    +-----------+              |     |  |
+    |           +-INPUT--------/     |  |
+    |  Syncing  | Store snapshot     |  |
+    |           |                    |  |
+    |           +-SILENCE------------/  |
+    +-----+-----+ Failover to next      |
+       KTHXBAI                          |
+          |   /----------------\        |
+          |   |                |        |
+          v   v                |        |
+    +-----------+              |        |
+    |           +-INPUT--------/        |
+    |  Active   | Store update          |
+    |           |                       |
+    |           +-SILENCE---------------/
+    +-----------+ Failover to next
+
+
+        Figure # - Clone client FSM
+[[/code]]
 
 Failover happens as follows:
 
@@ -463,7 +520,7 @@ So here is our high-availability server pair, using the Binary Star pattern:
                Figure # - High-availability Clone Server Pair
 [[/code]]
 
-As a first step to building this, we're going to refactor the client as a reusable class. This is partly for fun (writing asynchronous classes with 0MQ is like an exercise in elegance), but mainly because we want Clone to be really easy to plug-in to random applications. When we start to handle failover in clients, it does get a little complex (imagine mixing a Freelance client with a Clone client). So, reusability ahoy!
+As a first step to building this, we're going to refactor the client as a reusable class. This is partly for fun (writing asynchronous classes with 0MQ is like an exercise in elegance), but mainly because we want Clone to be really easy to plug-in to random applications. Since resilience depends on clients behaving correctly, it's much easier to guarantee this when there's a reusable client API. When we start to handle failover in clients, it does get a little complex (imagine mixing a Freelance client with a Clone client). So, reusability ahoy!
 
 My usual design approach is to first design an API that feels right, then to implement that. So, we start by taking the clone client, and rewriting it to sit on top of some presumed class API called **clone**. Turning random code into an API means defining a reasonably stable and abstract contract with applications. For example, in Model Three, the client opened three separate sockets to the server, using endpoints that were hard-coded in the source. We could make an API with three methods, like this:
 
@@ -504,16 +561,11 @@ The frontend class talks to the agent class over an {{inproc}} 'pipe' socket. In
 Without 0MQ, this kind of asynchronous class design would be weeks of really hard work. With 0MQ, it was a day or two of work. The results are kind of complex, given the simplicity of the Clone protocol it's actually running. There are some reasons for this. We could turn this into a reactor, but that'd make it harder to use in applications. So the API looks a bit like a key-value table that magically talks to some servers:
 
 [[code language="C"]]
-clone_t *
-    clone_new (void);
-void
-    clone_destroy (clone_t **self_p);
-void
-    clone_connect (clone_t *self, char *address, char *service);
-void
-    clone_set (clone_t *self, char *key, char *value);
-char *
-    clone_get (clone_t *self, char *key);
+clone_t *clone_new (void);
+void clone_destroy (clone_t **self_p);
+void clone_connect (clone_t *self, char *address, char *service);
+void clone_set (clone_t *self, char *key, char *value);
+char *clone_get (clone_t *self, char *key);
 [[/code]]
 
 So here is Model Four of the clone client, which has now become just a thin shell using the clone class:

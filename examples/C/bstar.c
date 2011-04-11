@@ -59,8 +59,10 @@ struct _bstar_t {
     int64_t peer_expiry;        //  When peer is considered 'dead'
     zloop_fn *voter_fn;         //  Voting socket handler
     void *voter_arg;            //  Arguments for voting handler
-    zloop_fn *failover_fn;      //  Failover event handler
-    void *failover_arg;         //  Arguments for failover handler
+    zloop_fn *master_fn;        //  Call when become master
+    void *master_arg;           //  Arguments for handler
+    zloop_fn *slave_fn;         //  Call when become slave
+    void *slave_arg;            //  Arguments for handler
 };
 
 
@@ -83,6 +85,8 @@ s_execute_fsm (bstar_t *self)
         if (self->event == PEER_ACTIVE) {
             printf ("I: connected to backup (master), ready as slave\n");
             self->state = STATE_PASSIVE;
+            if (self->slave_fn)
+                (self->slave_fn) (self->loop, NULL, self->slave_arg);
         }
     }
     else
@@ -92,14 +96,19 @@ s_execute_fsm (bstar_t *self)
         if (self->event == PEER_ACTIVE) {
             printf ("I: connected to primary (master), ready as slave\n");
             self->state = STATE_PASSIVE;
+            if (self->slave_fn)
+                (self->slave_fn) (self->loop, NULL, self->slave_arg);
         }
         else
-        if (self->event == CLIENT_REQUEST)
+        if (self->event == CLIENT_REQUEST) {
             rc = -1;
+            puts ("NOT VALID IN STATE BACKUP");
+        }
     }
     else
     //  Server is active
     //  Accepts CLIENT_REQUEST events in this state
+    //  The only way out of ACTIVE is death
     if (self->state == STATE_ACTIVE) {
         if (self->event == PEER_ACTIVE) {
             //  Two masters would mean split-brain
@@ -137,14 +146,16 @@ s_execute_fsm (bstar_t *self)
                 //  If peer is dead, switch to the active state
                 printf ("I: failover successful, ready as master\n");
                 self->state = STATE_ACTIVE;
-                if (self->failover_fn)
-                    (self->failover_fn) (self->loop,
-                                         NULL, self->failover_arg);
             }
-            else
+            else {
                 //  If peer is alive, reject connections
+                puts ("NOT VALID WHEN PEER IS ALIVE");
                 rc = -1;
+            }
         }
+        //  Call state change handler if necessary
+        if (self->state == STATE_ACTIVE && self->master_fn)
+            (self->master_fn) (self->loop, NULL, self->master_arg);
     }
     return rc;
 }
@@ -176,10 +187,18 @@ int zstr_recv_state (zloop_t *loop, void *socket, void *arg)
 int s_voter_ready (zloop_t *loop, void *socket, void *arg)
 {
     bstar_t *self = (bstar_t *) arg;
+puts ("REQUEST FROM VOTER");
     //  If server can accept input now, call appl handler
     self->event = CLIENT_REQUEST;
     if (s_execute_fsm (self) == 0)
         (self->voter_fn) (self->loop, socket, self->voter_arg);
+    else {
+        puts ("REJECTED...");
+        //  Destroy waiting message, no-one to read it
+        zmsg_t *msg = zmsg_recv (socket);
+        zmsg_dump (msg);
+        zmsg_destroy (&msg);
+    }
     return 0;
 }
 
@@ -263,14 +282,22 @@ bstar_voter (bstar_t *self, char *endpoint, int type, zloop_fn handler,
 }
 
 //  ---------------------------------------------------------------------
-//  Register failover handler
+//  Register state change handlers
 
 void
-bstar_failover (bstar_t *self, zloop_fn handler, void *arg)
+bstar_new_master (bstar_t *self, zloop_fn handler, void *arg)
 {
-    assert (!self->failover_fn);
-    self->failover_fn = handler;
-    self->failover_arg = arg;
+    assert (!self->master_fn);
+    self->master_fn = handler;
+    self->master_arg = arg;
+}
+
+void
+bstar_new_slave (bstar_t *self, zloop_fn handler, void *arg)
+{
+    assert (!self->slave_fn);
+    self->slave_fn = handler;
+    self->slave_arg = arg;
 }
 
 
@@ -283,14 +310,4 @@ bstar_start (bstar_t *self)
 {
     assert (self->voter_fn);
     return zloop_start (self->loop);
-}
-
-//  ---------------------------------------------------------------------
-//  Returns TRUE if the current server is master in the pair,
-//  false if it is slave.
-
-Bool
-bstar_master (bstar_t *self)
-{
-    return self->state == STATE_ACTIVE;
 }
