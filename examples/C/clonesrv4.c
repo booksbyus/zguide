@@ -32,11 +32,12 @@ typedef struct {
     Bool slave;                 //  TRUE if we're slave
 } clonesrv_t;
 
+
 int main (int argc, char *argv [])
 {
     clonesrv_t *self = (clonesrv_t *) zmalloc (sizeof (clonesrv_t));
     if (argc == 2 && streq (argv [1], "-p")) {
-        printf ("I: Primary master, waiting for backup (slave)\n");
+        zclock_log ("I: primary master, waiting for backup (slave)");
         self->bstar = bstar_new (BSTAR_PRIMARY, "tcp://*:5003",
                                  "tcp://localhost:5004");
         bstar_voter (self->bstar, "tcp://*:5556", ZMQ_ROUTER,
@@ -47,7 +48,7 @@ int main (int argc, char *argv [])
     }
     else
     if (argc == 2 && streq (argv [1], "-b")) {
-        printf ("I: Backup slave, waiting for primary (master)\n");
+        zclock_log ("I: backup slave, waiting for primary (master)");
         self->bstar = bstar_new (BSTAR_BACKUP, "tcp://*:5004",
                                  "tcp://localhost:5003");
         bstar_voter (self->bstar, "tcp://*:5566", ZMQ_ROUTER,
@@ -67,6 +68,7 @@ int main (int argc, char *argv [])
 
     self->ctx = zctx_new ();
     self->pending = zlist_new ();
+    bstar_set_verbose (self->bstar, FALSE);
 
     //  Set up our clone server sockets
     self->publisher = zsocket_new (self->ctx, ZMQ_PUB);
@@ -121,25 +123,27 @@ s_send_snapshot (zloop_t *loop, void *socket, void *args)
     clonesrv_t *self = (clonesrv_t *) args;
 
     zframe_t *identity = zframe_recv (socket);
-zframe_print (identity, "VOTER:");
     zframe_t *request = zframe_recv (socket);
-    assert (zframe_streq (request, "ICANHAZ?"));
-    zframe_destroy (&request);
+    if (identity && request) {
+        assert (zframe_streq (request, "ICANHAZ?"));
+        zframe_destroy (&request);
 
-    //  Send state socket to client
-    kvroute_t routing = { socket, identity };
-    zhash_foreach (self->kvmap, s_send_single, &routing);
+        //  Send state socket to client
+        kvroute_t routing = { socket, identity };
+        zhash_foreach (self->kvmap, s_send_single, &routing);
 
-    //  Now send END message with sequence number
-    printf ("I: sending shapshot=%d\n", (int) self->sequence);
-    zframe_send (&identity, socket, ZFRAME_MORE);
-    kvmsg_t *kvmsg = kvmsg_new (self->sequence);
-    kvmsg_set_key  (kvmsg, "KTHXBAI");
-    kvmsg_set_body (kvmsg, (byte *) "", 0);
-    kvmsg_send     (kvmsg, socket);
-    kvmsg_destroy (&kvmsg);
+        //  Now send END message with sequence number
+        zclock_log ("I: sending shapshot=%d", (int) self->sequence);
+        zframe_send (&identity, socket, ZFRAME_MORE);
+        kvmsg_t *kvmsg = kvmsg_new (self->sequence);
+        kvmsg_set_key  (kvmsg, "KTHXBAI");
+        kvmsg_set_body (kvmsg, (byte *) "", 0);
+        kvmsg_send     (kvmsg, socket);
+        kvmsg_destroy (&kvmsg);
+    }
     return 0;
 }
+
 
 //  Send one state snapshot key-value pair to a socket
 //  Hash item data is our kvmsg object, ready to send
@@ -161,25 +165,50 @@ s_send_single (char *key, void *data, void *args)
 //  If we're master, we apply these to the kvmap
 //  If we're slave, or unsure, we queue them on our pending list
 
+static int s_was_pending (clonesrv_t *self, kvmsg_t *kvmsg);
+
 static int
 s_collector (zloop_t *loop, void *socket, void *args)
 {
     clonesrv_t *self = (clonesrv_t *) args;
 
-puts ("COLLECT UPDATE");
     kvmsg_t *kvmsg = kvmsg_recv (socket);
-    if (self->master) {
-        kvmsg_set_sequence (kvmsg, ++self->sequence);
-        kvmsg_send (kvmsg, self->publisher);
-        kvmsg_store (&kvmsg, self->kvmap);
-        printf ("I: publishing update %5d\n", (int) self->sequence);
+    if (kvmsg) {
+        if (self->master) {
+            kvmsg_set_sequence (kvmsg, ++self->sequence);
+            kvmsg_send (kvmsg, self->publisher);
+            kvmsg_store (&kvmsg, self->kvmap);
+            zclock_log ("I: publishing update=%d", (int) self->sequence);
+        }
+        else {
+            //  If we already got message from master, drop it
+            if (s_was_pending (self, kvmsg))
+                kvmsg_destroy (&kvmsg);
+            else
+                //  Else hold on pending list
+                zlist_append (self->pending, kvmsg);
+        }
     }
-    else
-        zlist_append (self->pending, kvmsg);
-
     return 0;
 }
 
+//  If message was already on pending list, remove it and
+//  return TRUE, else return FALSE.
+
+static int
+s_was_pending (clonesrv_t *self, kvmsg_t *kvmsg)
+{
+    kvmsg_t *held = (kvmsg_t *) zlist_first (self->pending);
+    while (held) {
+        if (memcmp (kvmsg_uuid (kvmsg),
+                    kvmsg_uuid (held), sizeof (uuid_t)) == 0) {
+            zlist_remove (self->pending, held);
+            return TRUE;
+        }
+        held = (kvmsg_t *) zlist_next (self->pending);
+    }
+    return FALSE;
+}
 
 //  ---------------------------------------------------------------------
 //  Send hugz to anyone listening on the publisher socket
@@ -211,11 +240,18 @@ s_new_master (zloop_t *loop, void *unused, void *args)
 {
     clonesrv_t *self = (clonesrv_t *) args;
 
-    puts ("READY AS MASTER");
     self->master = TRUE;
     self->slave = FALSE;
     zloop_cancel (bstar_zloop (self->bstar), self->subscriber);
 
+    //  Apply pending list to own hash table
+    while (zlist_size (self->pending)) {
+        kvmsg_t *kvmsg = (kvmsg_t *) zlist_pop (self->pending);
+        kvmsg_set_sequence (kvmsg, ++self->sequence);
+        kvmsg_send (kvmsg, self->publisher);
+        kvmsg_store (&kvmsg, self->kvmap);
+        zclock_log ("I: publishing pending=%d", (int) self->sequence);
+    }
     return 0;
 }
 
@@ -227,11 +263,11 @@ s_new_slave (zloop_t *loop, void *unused, void *args)
 {
     clonesrv_t *self = (clonesrv_t *) args;
 
-    puts ("READY AS SLAVE");
     zhash_destroy (&self->kvmap);
-    self->slave = TRUE;
     self->master = FALSE;
-    zloop_reader (bstar_zloop (self->bstar), self->subscriber, s_subscriber, self);
+    self->slave = TRUE;
+    zloop_reader (bstar_zloop (self->bstar), self->subscriber,
+                  s_subscriber, self);
 
     return 0;
 }
@@ -244,13 +280,13 @@ static int
 s_subscriber (zloop_t *loop, void *socket, void *args)
 {
     clonesrv_t *self = (clonesrv_t *) args;
-
     //  Get state snapshot if necessary
     if (self->kvmap == NULL) {
         self->kvmap = zhash_new ();
         void *snapshot = zsocket_new (self->ctx, ZMQ_DEALER);
         zsocket_connect (snapshot, "tcp://localhost:%d", self->peer);
-printf ("Asking for snapshot from: tcp://localhost:%d\n", self->peer);
+        zclock_log ("I: asking for snapshot from: tcp://localhost:%d",
+                    self->peer);
         zstr_send (snapshot, "ICANHAZ?");
         while (TRUE) {
             kvmsg_t *kvmsg = kvmsg_recv (snapshot);
@@ -263,26 +299,29 @@ printf ("Asking for snapshot from: tcp://localhost:%d\n", self->peer);
             }
             kvmsg_store (&kvmsg, self->kvmap);
         }
-        printf ("I: received snapshot=%d\n", (int) self->sequence);
+        zclock_log ("I: received snapshot=%d", (int) self->sequence);
         zsocket_destroy (self->ctx, snapshot);
     }
     //  Find and remove update off pending list
     kvmsg_t *kvmsg = kvmsg_recv (socket);
+    if (!kvmsg)
+        return 0;
+
     if (strneq (kvmsg_key (kvmsg), "HUGZ")) {
-        kvmsg_t *held = (kvmsg_t *) zlist_first (self->pending);
-        while (held) {
-            if (memcmp (kvmsg_uuid (kvmsg), kvmsg_uuid (held),
-                sizeof (uuid_t)) == 0) {
-                zlist_remove (self->pending, held);
-                break;
-            }
+        if (!s_was_pending (self, kvmsg)) {
+            //  If master update came before client update, flip it
+            //  around, store master update (with sequence) on pending
+            //  list and use to clear client update when it comes later
+            zlist_append (self->pending, kvmsg_dup (kvmsg));
         }
-    }
-    //  If update is more recent than our kvmap, apply it
-    if (kvmsg_sequence (kvmsg) > self->sequence) {
-        self->sequence = kvmsg_sequence (kvmsg);
-        kvmsg_store (&kvmsg, self->kvmap);
-        printf ("I: received update=%d\n", (int) self->sequence);
+        //  If update is more recent than our kvmap, apply it
+        if (kvmsg_sequence (kvmsg) > self->sequence) {
+            self->sequence = kvmsg_sequence (kvmsg);
+            kvmsg_store (&kvmsg, self->kvmap);
+            zclock_log ("I: received update=%d", (int) self->sequence);
+        }
+        else
+            kvmsg_destroy (&kvmsg);
     }
     else
         kvmsg_destroy (&kvmsg);

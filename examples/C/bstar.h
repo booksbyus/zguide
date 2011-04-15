@@ -58,6 +58,9 @@ int bstar_voter (bstar_t *self, char *endpoint, int type,
 void bstar_new_master (bstar_t *self, zloop_fn handler, void *arg);
 void bstar_new_slave (bstar_t *self, zloop_fn handler, void *arg);
 
+//  Enable/disable verbose tracing
+void bstar_set_verbose (bstar_t *self, Bool verbose);
+
 //  Start the reactor, ends if a callback function returns -1, or the
 //  process received SIGINT or SIGTERM.
 int bstar_start (bstar_t *self);

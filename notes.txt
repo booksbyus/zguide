@@ -58,36 +58,6 @@ s/s_interrupted/zctx_interrupted/
 s/s_recv/zstr_recv/
 s/s_send/zstr_send/
 
-Clone protocol
-
-    flows:
-        C:DEALER -> snapshot S:ROUTER at address:port
-        C:SUB    -> publisher S:PUB at address:port+1
-        C:PUB    -> collector S:SUB at address:port+2
-
-    message format:
-        zstr_send (server->snapshot, "ICANHAZ?")
-        0 or more key-value messages:
-            [key][sequence=unused][uuid][value]
-            //  frame 0: key (0MQ string)
-            //  frame 1: sequence (8 bytes, network order)
-            //  frame 2: uuid (16 bytes)
-            //  frame 3: body (blob)
-        [KTHXBAI][snapshot sequence][][]
-
-    update from publisher
-        [key][sequence][uuid][value]
-        -> applied if sequence > snapshot sequence
-        [HUGZ][0][][]
-        -> heartbeat once per second
-
-    update to collector
-        [key][sequence=0][uuid][value]
-
-
-
-
-
 - remove all from zhelpers that is provided by zapi
 
 

@@ -223,7 +223,7 @@ mdwrk_recv (mdwrk_t *self, zmsg_t **reply_p)
             if (zframe_streq (command, MDPW_DISCONNECT))
                 s_mdwrk_connect_to_broker (self);
             else {
-                zclock_log ("E: invalid input message\n");
+                zclock_log ("E: invalid input message");
                 zmsg_dump (msg);
             }
             zframe_destroy (&command);

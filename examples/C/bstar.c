@@ -78,12 +78,14 @@ s_execute_fsm (bstar_t *self)
     //  Accepts CLIENT_REQUEST events in this state
     if (self->state == STATE_PRIMARY) {
         if (self->event == PEER_BACKUP) {
-            printf ("I: connected to backup (slave), ready as master\n");
+            zclock_log ("I: connected to backup (slave), ready as master");
             self->state = STATE_ACTIVE;
+            if (self->master_fn)
+                (self->master_fn) (self->loop, NULL, self->master_arg);
         }
         else
         if (self->event == PEER_ACTIVE) {
-            printf ("I: connected to backup (master), ready as slave\n");
+            zclock_log ("I: connected to backup (master), ready as slave");
             self->state = STATE_PASSIVE;
             if (self->slave_fn)
                 (self->slave_fn) (self->loop, NULL, self->slave_arg);
@@ -94,16 +96,14 @@ s_execute_fsm (bstar_t *self)
     //  Rejects CLIENT_REQUEST events in this state
     if (self->state == STATE_BACKUP) {
         if (self->event == PEER_ACTIVE) {
-            printf ("I: connected to primary (master), ready as slave\n");
+            zclock_log ("I: connected to primary (master), ready as slave");
             self->state = STATE_PASSIVE;
             if (self->slave_fn)
                 (self->slave_fn) (self->loop, NULL, self->slave_arg);
         }
         else
-        if (self->event == CLIENT_REQUEST) {
+        if (self->event == CLIENT_REQUEST)
             rc = -1;
-            puts ("NOT VALID IN STATE BACKUP");
-        }
     }
     else
     //  Server is active
@@ -112,7 +112,7 @@ s_execute_fsm (bstar_t *self)
     if (self->state == STATE_ACTIVE) {
         if (self->event == PEER_ACTIVE) {
             //  Two masters would mean split-brain
-            printf ("E: fatal error - dual masters, aborting\n");
+            zclock_log ("E: fatal error - dual masters, aborting");
             rc = -1;
         }
     }
@@ -122,19 +122,19 @@ s_execute_fsm (bstar_t *self)
     if (self->state == STATE_PASSIVE) {
         if (self->event == PEER_PRIMARY) {
             //  Peer is restarting - become active, peer will go passive
-            printf ("I: primary (slave) is restarting, ready as master\n");
+            zclock_log ("I: primary (slave) is restarting, ready as master");
             self->state = STATE_ACTIVE;
         }
         else
         if (self->event == PEER_BACKUP) {
             //  Peer is restarting - become active, peer will go passive
-            printf ("I: backup (slave) is restarting, ready as master\n");
+            zclock_log ("I: backup (slave) is restarting, ready as master");
             self->state = STATE_ACTIVE;
         }
         else
         if (self->event == PEER_PASSIVE) {
             //  Two passives would mean cluster would be non-responsive
-            printf ("E: fatal error - dual slaves, aborting\n");
+            zclock_log ("E: fatal error - dual slaves, aborting");
             rc = -1;
         }
         else
@@ -144,14 +144,12 @@ s_execute_fsm (bstar_t *self)
             assert (self->peer_expiry > 0);
             if (zclock_time () >= self->peer_expiry) {
                 //  If peer is dead, switch to the active state
-                printf ("I: failover successful, ready as master\n");
+                zclock_log ("I: failover successful, ready as master");
                 self->state = STATE_ACTIVE;
             }
-            else {
+            else
                 //  If peer is alive, reject connections
-                puts ("NOT VALID WHEN PEER IS ALIVE");
                 rc = -1;
-            }
         }
         //  Call state change handler if necessary
         if (self->state == STATE_ACTIVE && self->master_fn)
@@ -165,7 +163,7 @@ s_execute_fsm (bstar_t *self)
 //  Reactor event handlers...
 
 //  Publish our state to peer
-int zstr_send_state (zloop_t *loop, void *socket, void *arg)
+int s_send_state (zloop_t *loop, void *socket, void *arg)
 {
     bstar_t *self = (bstar_t *) arg;
     zstr_sendf (self->statepub, "%d", self->state);
@@ -173,13 +171,15 @@ int zstr_send_state (zloop_t *loop, void *socket, void *arg)
 }
 
 //  Receive state from peer, execute finite state machine
-int zstr_recv_state (zloop_t *loop, void *socket, void *arg)
+int s_recv_state (zloop_t *loop, void *socket, void *arg)
 {
     bstar_t *self = (bstar_t *) arg;
     char *state = zstr_recv (socket);
-    self->event = atoi (state);
-    self->peer_expiry = zclock_time () + 2 * BSTAR_HEARTBEAT;
-    free (state);
+    if (state) {
+        self->event = atoi (state);
+        self->peer_expiry = zclock_time () + 2 * BSTAR_HEARTBEAT;
+        free (state);
+    }
     return s_execute_fsm (self);
 }
 
@@ -187,16 +187,13 @@ int zstr_recv_state (zloop_t *loop, void *socket, void *arg)
 int s_voter_ready (zloop_t *loop, void *socket, void *arg)
 {
     bstar_t *self = (bstar_t *) arg;
-puts ("REQUEST FROM VOTER");
     //  If server can accept input now, call appl handler
     self->event = CLIENT_REQUEST;
     if (s_execute_fsm (self) == 0)
         (self->voter_fn) (self->loop, socket, self->voter_arg);
     else {
-        puts ("REJECTED...");
         //  Destroy waiting message, no-one to read it
         zmsg_t *msg = zmsg_recv (socket);
-        zmsg_dump (msg);
         zmsg_destroy (&msg);
     }
     return 0;
@@ -228,8 +225,8 @@ bstar_new (int primary, char *local, char *remote)
     zsocket_connect (self->statesub, remote);
 
     //  Set-up basic reactor events
-    zloop_timer (self->loop, BSTAR_HEARTBEAT, 0, zstr_send_state, self);
-    zloop_reader (self->loop, self->statesub, zstr_recv_state, self);
+    zloop_timer (self->loop, BSTAR_HEARTBEAT, 0, s_send_state, self);
+    zloop_reader (self->loop, self->statesub, s_recv_state, self);
     return self;
 }
 
@@ -298,6 +295,14 @@ bstar_new_slave (bstar_t *self, zloop_fn handler, void *arg)
     assert (!self->slave_fn);
     self->slave_fn = handler;
     self->slave_arg = arg;
+}
+
+
+//  ---------------------------------------------------------------------
+//  Enable/disable verbose tracing
+void bstar_set_verbose (bstar_t *self, Bool verbose)
+{
+    zloop_set_verbose (self->loop, verbose);
 }
 
 

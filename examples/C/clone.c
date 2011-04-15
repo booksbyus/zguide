@@ -28,7 +28,7 @@
 //  If no server replies within this time, abandon request
 #define GLOBAL_TIMEOUT  4000    //  msecs
 //  Server considered dead if silent for this long
-#define SERVER_TTL      2000    //  msecs
+#define SERVER_TTL      5000    //  msecs
 //  Number of servers we will talk to
 #define SERVER_MAX      2
 
@@ -40,8 +40,8 @@
 //  Structure of our class
 
 struct _clone_t {
-    zctx_t *ctx;        //  Our context wrapper
-    void *pipe;         //  Pipe through to clone agent
+    zctx_t *ctx;                //  Our context wrapper
+    void *pipe;                 //  Pipe through to clone agent
 };
 
 //  This is the thread that handles our real clone class
@@ -143,17 +143,17 @@ typedef struct {
     char *address;              //  Server address
     int port;                   //  Server port
     void *snapshot;             //  Snapshot socket
-    void *subscriber;           //  Outgoing updates
-    void *publisher;            //  Incoming updates
+    void *subscriber;           //  Incoming updates
     uint64_t expiry;            //  When server expires
+    uint requests;              //  How many snapshot requests made?
 } server_t;
 
 static server_t *
 server_new (zctx_t *ctx, char *address, int port)
 {
-    server_t *self = (server_t *) malloc (sizeof (server_t));
+    server_t *self = (server_t *) zmalloc (sizeof (server_t));
 
-    printf ("I: adding server %s:%d...\n", address, port);
+    zclock_log ("I: adding server %s:%d...", address, port);
     self->address = strdup (address);
     self->port = port;
 
@@ -161,8 +161,6 @@ server_new (zctx_t *ctx, char *address, int port)
     zsocket_connect (self->snapshot, "%s:%d", address, port);
     self->subscriber = zsocket_new (ctx, ZMQ_SUB);
     zsocket_connect (self->subscriber, "%s:%d", address, port + 1);
-    self->publisher = zsocket_new (ctx, ZMQ_PUB);
-    zsocket_connect (self->publisher, "%s:%d", address, port + 2);
     return self;
 }
 
@@ -183,9 +181,8 @@ server_destroy (server_t **self_p)
 
 //  States we can be in
 #define STATE_INITIAL       0   //  Before asking server for state
-#define STATE_WAITING       1   //  Waiting for state from server
-#define STATE_SYNCING       2   //  Getting state from server
-#define STATE_ACTIVE        3   //  Getting new updates from server
+#define STATE_SYNCING       1   //  Getting state from server
+#define STATE_ACTIVE        2   //  Getting new updates from server
 
 typedef struct {
     zctx_t *ctx;                //  Context wrapper
@@ -196,6 +193,7 @@ typedef struct {
     uint state;                 //  Current state
     uint cur_server;            //  If active, server 0 or 1
     int64_t sequence;           //  Last kvmsg processed
+    void *publisher;            //  Outgoing updates
 } agent_t;
 
 static agent_t *
@@ -206,6 +204,7 @@ agent_new (zctx_t *ctx, void *pipe)
     self->pipe = pipe;
     self->kvmap = zhash_new ();
     self->state = STATE_INITIAL;
+    self->publisher = zsocket_new (self->ctx, ZMQ_PUB);
     return self;
 }
 
@@ -236,11 +235,15 @@ agent_control_message (agent_t *self)
     if (streq (command, "CONNECT")) {
         char *address = zmsg_popstr (msg);
         char *service = zmsg_popstr (msg);
-        if (self->nbr_servers < SERVER_MAX)
+        if (self->nbr_servers < SERVER_MAX) {
             self->server [self->nbr_servers++]
                 = server_new (self->ctx, address, atoi (service));
+            //  We broadcast updates to all known servers
+            zsocket_connect (self->publisher, "%s:%d",
+                address, atoi (service) + 2);
+        }
         else
-            printf ("E: too many servers (max. %d)\n", SERVER_MAX);
+            zclock_log ("E: too many servers (max. %d)", SERVER_MAX);
         free (address);
         free (service);
     }
@@ -258,7 +261,7 @@ agent_control_message (agent_t *self)
         kvmsg_set_key  (kvmsg, key);
         kvmsg_set_uuid (kvmsg);
         kvmsg_fmt_body (kvmsg, "%s", value);
-        kvmsg_send (kvmsg, self->server [self->cur_server]->publisher);
+        kvmsg_send (kvmsg, self->publisher);
         kvmsg_destroy (&kvmsg);
 
         free (key);             //  Value is owned by hash table
@@ -299,45 +302,38 @@ clone_agent (void *args, zctx_t *ctx, void *pipe)
         server_t *server = self->server [self->cur_server];
         switch (self->state) {
             case STATE_INITIAL:
-                puts ("INITIAL");
                 //  In this state we ask the server for a snapshot,
                 //  if we have a server to talk to...
                 if (self->nbr_servers > 0) {
-                    printf ("I: waiting for server at %s:%d...\n",
+                    zclock_log ("I: waiting for server at %s:%d...",
                         server->address, server->port);
-                    zstr_send (server->snapshot, "ICANHAZ?");
-                    self->state = STATE_WAITING;
+                    if (server->requests < 2) {
+                        zstr_send (server->snapshot, "ICANHAZ?");
+                        server->requests++;
+                    }
+                    server->expiry = zclock_time () + SERVER_TTL;
+                    self->state = STATE_SYNCING;
                     poll_set [1].socket = server->snapshot;
                 }
                 else
                     poll_size = 1;
                 break;
-            case STATE_WAITING:
-                puts ("WAITING");
-                //  In this state we read from snapshot and we can
-                //  wait forever for an answer, it's not a failure.
-                poll_set [1].socket = server->snapshot;
-                break;
             case STATE_SYNCING:
-                puts ("SYNCING");
                 //  In this state we read from snapshot and we expect
                 //  the server to respond, else we fail over.
                 poll_set [1].socket = server->snapshot;
-                poll_timer = (server->expiry - zclock_time ())
-                           * ZMQ_POLL_MSEC;
-                if (poll_timer < 0)
-                    poll_timer = 0;
                 break;
             case STATE_ACTIVE:
-                puts ("ACTIVE");
                 //  In this state we read from subscriber and we expect
                 //  the server to give hugz, else we fail over.
                 poll_set [1].socket = server->subscriber;
-                poll_timer = (server->expiry - zclock_time ())
-                           * ZMQ_POLL_MSEC;
-                if (poll_timer < 0)
-                    poll_timer = 0;
                 break;
+        }
+        if (server) {
+            poll_timer = (server->expiry - zclock_time ())
+                       * ZMQ_POLL_MSEC;
+            if (poll_timer < 0)
+                poll_timer = 0;
         }
         //  ------------------------------------------------------------
         //  Poll loop
@@ -357,21 +353,19 @@ clone_agent (void *args, zctx_t *ctx, void *pipe)
 
             //  Anything from server resets its expiry time
             server->expiry = zclock_time () + SERVER_TTL;
-            if (self->state == STATE_WAITING
-            ||  self->state == STATE_SYNCING) {
+            if (self->state == STATE_SYNCING) {
                 //  Store in snapshot until we're finished
+                server->requests = 0;
                 if (streq (kvmsg_key (kvmsg), "KTHXBAI")) {
-                    printf ("I: received from %s:%d snapshot=%d\n",
+                    self->sequence = kvmsg_sequence (kvmsg);
+                    self->state = STATE_ACTIVE;
+                    zclock_log ("I: received from %s:%d snapshot=%d",
                         server->address, server->port,
                         (int) self->sequence);
-                    self->sequence = kvmsg_sequence (kvmsg);
                     kvmsg_destroy (&kvmsg);
-                    self->state = STATE_ACTIVE;
                 }
-                else {
+                else
                     kvmsg_store (&kvmsg, self->kvmap);
-                    self->state = STATE_SYNCING;
-                }
             }
             else
             if (self->state == STATE_ACTIVE) {
@@ -379,7 +373,7 @@ clone_agent (void *args, zctx_t *ctx, void *pipe)
                 if (kvmsg_sequence (kvmsg) > self->sequence) {
                     self->sequence = kvmsg_sequence (kvmsg);
                     kvmsg_store (&kvmsg, self->kvmap);
-                    printf ("I: received from %s:%d update=%d\n",
+                    zclock_log ("I: received from %s:%d update=%d",
                         server->address, server->port,
                         (int) self->sequence);
                 }
@@ -389,7 +383,7 @@ clone_agent (void *args, zctx_t *ctx, void *pipe)
         }
         else {
             //  Server has died, failover to next
-            printf ("I: server at %s:%d didn't give hugz\n",
+            zclock_log ("I: server at %s:%d didn't give hugz",
                     server->address, server->port);
             self->cur_server = (self->cur_server + 1) % self->nbr_servers;
             self->state = STATE_INITIAL;

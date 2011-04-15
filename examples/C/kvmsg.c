@@ -52,7 +52,7 @@ struct _kvmsg {
 
 
 //  ---------------------------------------------------------------------
-//  Constructor, sets sequence if provided
+//  Constructor, sets sequence as provided
 
 kvmsg_t *
 kvmsg_new (int64_t sequence)
@@ -101,6 +101,28 @@ kvmsg_destroy (kvmsg_t **self_p)
         kvmsg_free (*self_p);
         *self_p = NULL;
     }
+}
+
+
+//  ---------------------------------------------------------------------
+//  Create duplicate of kvmsg
+
+kvmsg_t *
+kvmsg_dup (kvmsg_t *self)
+{
+    kvmsg_t *kvmsg = kvmsg_new (0);
+    int frame_nbr;
+    for (frame_nbr = 0; frame_nbr < KVMSG_FRAMES; frame_nbr++) {
+        if (self->present [frame_nbr]) {
+            zmq_msg_t *src = &self->frame [frame_nbr];
+            zmq_msg_t *dst = &kvmsg->frame [frame_nbr];
+            zmq_msg_init_size (dst, zmq_msg_size (src));
+            memcpy (zmq_msg_data (dst),
+                    zmq_msg_data (src), zmq_msg_size (src));
+            kvmsg->present [frame_nbr] = 1;
+        }
+    }
+    return kvmsg;
 }
 
 
@@ -212,24 +234,6 @@ kvmsg_set_key (kvmsg_t *self, char *key)
 
 
 //  ---------------------------------------------------------------------
-//  Set message UUID to generated value
-
-void
-kvmsg_set_uuid (kvmsg_t *self)
-{
-    assert (self);
-    zmq_msg_t *msg = &self->frame [FRAME_UUID];
-    uuid_t uuid;
-    uuid_generate (uuid);
-    if (self->present [FRAME_UUID])
-        zmq_msg_close (msg);
-    zmq_msg_init_size (msg, sizeof (uuid));
-    memcpy (zmq_msg_data (msg), uuid, sizeof (uuid));
-    self->present [FRAME_UUID] = 1;
-}
-
-
-//  ---------------------------------------------------------------------
 //  Set message sequence number
 
 void
@@ -252,6 +256,24 @@ kvmsg_set_sequence (kvmsg_t *self, int64_t sequence)
     source [7] = (byte) ((sequence)       & 255);
 
     self->present [FRAME_SEQ] = 1;
+}
+
+
+//  ---------------------------------------------------------------------
+//  Set message UUID to generated value
+
+void
+kvmsg_set_uuid (kvmsg_t *self)
+{
+    assert (self);
+    zmq_msg_t *msg = &self->frame [FRAME_UUID];
+    uuid_t uuid;
+    uuid_generate (uuid);
+    if (self->present [FRAME_UUID])
+        zmq_msg_close (msg);
+    zmq_msg_init_size (msg, sizeof (uuid));
+    memcpy (zmq_msg_data (msg), uuid, sizeof (uuid));
+    self->present [FRAME_UUID] = 1;
 }
 
 
@@ -306,7 +328,7 @@ kvmsg_fmt_body (kvmsg_t *self, char *format, ...)
 
 
 //  ---------------------------------------------------------------------
-//  Reads KV message from socket, returns new kvmsg instance.
+//  Reads key-value message from socket, returns new kvmsg instance.
 
 kvmsg_t *
 kvmsg_recv (void *socket)
@@ -387,16 +409,15 @@ void
 kvmsg_dump (kvmsg_t *self)
 {
     if (self) {
-        fprintf (stderr, "--------------------------------------\n");
         if (!self) {
             fprintf (stderr, "NULL");
             return;
         }
         size_t size = kvmsg_size (self);
         byte  *body = kvmsg_body (self);
-        fprintf (stderr, "[%" PRId64 "]\n", kvmsg_sequence (self));
-        fprintf (stderr, "[%s]\n", kvmsg_key (self));
-        fprintf (stderr, "[%03zd] ", size);
+        fprintf (stderr, "[seq:%" PRId64 "]", kvmsg_sequence (self));
+        fprintf (stderr, "[key:%s]", kvmsg_key (self));
+        fprintf (stderr, "[size:%zd] ", size);
 
         int char_nbr;
         for (char_nbr = 0; char_nbr < size; char_nbr++)
