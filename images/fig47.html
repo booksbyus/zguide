@@ -5,7 +5,7 @@
           | Client  |   | Client  |   | Client  |
           |         |   |         |   |         |
           +---------+   +---------+   +---------+
-          |  XREQ   |   |  XREQ   |   |  XREQ   |
+          | DEALER  |   | DEALER  |   | DEALER  |
           \---------/   \---------/   \---------/
             connect       connect       connect
                |             |             |
@@ -16,13 +16,13 @@
       :                      v                      :
       :                    bind                     :
       :                /-----------\                :
-      :                |   XREP    |                :
+      :                |  ROUTER   |                :
       :                +-----------+                :
       :                |           |                :
       :                |  Server   |                :
       :                |           |                :
       :                +-----------+                :
-      :                |   XREQ    |                :
+      :                |  DEALER   |                :
       :                \-----------/                :
       :                    bind                     :
       :                      |                      :
@@ -31,7 +31,7 @@
       :        v             v             v        :
       :     connect       connect       connect     :
       :   /---------\   /---------\   /---------\   :
-      :   |  XREQ   |   |  XREQ   |   |  XREQ   |   :
+      :   | DEALER  |   | DEALER  |   | DEALER  |   :
       :   +---------+   +---------+   +---------+   :
       :   |         |   |         |   |         |   :
       :   | Worker  |   | Worker  |   | Worker  |   :
@@ -40,6 +40,6 @@
       :                                             :
       \---------------------------------------------/
 
-            Figure 47 - Detail of async server
+          Figure 47 - Detail of asynchronous server
 </pre>
 </html>

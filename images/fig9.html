@@ -100,15 +100,15 @@
         +-----------------+        +-----------------+        +-----------------+
         |                 |        | Check that the  |        | If you're using |
         |  Are you using  |        | reply address   |        | identities make |
-        |  XREP sockets?  +------->| is valid. ØMQ   +------->| sure to set them|
+        | ROUTER sockets? +------->| is valid. ØMQ   +------->| sure to set them|
         |                 | Yes    | drops messages  |        | before not after|
         |             {o} |        | it can't route. |        | you connect.    |
         +--------+--------+        +-----------------+        +--------+--------+
-                 | No                                                    
-                 |                                                       
-                 v                                                       
+                 | No
+                 |
+                 v
         +-----------------+        +--------------------+
-        |                 |        | You probably have  |     
+        |                 |        | You probably have  |
         | Are you losing  |        | a client running   |
         |   one message   +------->| in the background. |
         |    in two?      | Yes    | Kill it and start  |

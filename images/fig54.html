@@ -16,13 +16,13 @@
         |  bind   |  bind   | connect |
         +---------+---------+---------+
         | localfe | cloudfe | statefe |     Frontends
-        |  XREP   |  XREP   |   SUB   |     (incoming)
+        | ROUTER  | ROUTER  |   SUB   |     (incoming)
         +---------+---------+---------+
         |                             |
         |           Broker            |
         |                             |
         +---------+---------+---------+
-        |  XREP   |  XREP   |   PUB   |     Backends
+        | ROUTER  | ROUTER  |   PUB   |     Backends
         | localbe | cloudbe | statebe |     (outgoing)
         +---------+---------+---------+
         |  bind   | connect |  bind   |

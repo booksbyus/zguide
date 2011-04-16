@@ -3,28 +3,28 @@
     +--------+  +--------+  +--------+
     | Client |  | Client |  | Client |
     +--------+  +--------+  +--------+
-    |  REQ   |  |  REQ   |  |  REQ   |   MAMA
-    +---+----+  +---+----+  +---+----+    ^
-        |           |           |         |
-        +-----------+-----------+         |
-                    |                     |
-                +---+----+                v
-                |  XREP  |  Frontend    ROUTER
-                +--------+                :
-                | Device |  LRU queue     :
-                +--------+                :
-                |  XREP  |  Backend     ROUTER
-                +---+----+                ^
-                    |                     |
-        +-----------+-----------+         |
-        |           |           |         |
-    +---+----+  +---+----+  +---+----+    v
-    |  REQ   |  |  REQ   |  |  REQ   |   MAMA
+    |  REQ   |  |  REQ   |  |  REQ   |
+    +---+----+  +---+----+  +---+----+
+        |           |           |
+        +-----------+-----------+
+                    |
+                +---+----+
+                | ROUTER |  Frontend
+                +--------+
+                | Device |  LRU queue
+                +--------+
+                | ROUTER |  Backend
+                +---+----+
+                    |
+        +-----------+-----------+
+        |           |           |
+    +---+----+  +---+----+  +---+----+
+    |  REQ   |  |  REQ   |  |  REQ   |
     +--------+  +--------+  +--------+
     | Worker |  | Worker |  | Worker |
     +--------+  +--------+  +--------+
 
 
-    Figure 41 - Extended request-reply with LRU
+Figure 41 - Stretched request-reply with LRU
 </pre>
 </html>
