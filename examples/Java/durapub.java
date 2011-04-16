@@ -35,9 +35,3 @@ public class durapub {
   }
 
 }
- = context.socket(ZMQ.PULL);
-
-    sync.bind("tcp://*:5564");
-
-    // We send updates via this socket
-    publisher.bind("tcp://*:556
