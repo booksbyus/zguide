@@ -13,11 +13,13 @@
         zmq_msg_t payload;
         zmq_msg_init (&payload);
         zmq_recv (worker, &payload, 0);
+
         int char_nbr;
         printf ("Worker: ");
         for (char_nbr = 0; char_nbr < zmq_msg_size (&payload); char_nbr++)
             printf ("%c", *(char *) (zmq_msg_data (&payload) + char_nbr));
         printf ("\n");
+
         zmq_msg_init_size (&payload, 2);
         memcpy (zmq_msg_data (&payload), "OK", 2);
 

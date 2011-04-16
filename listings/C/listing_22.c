@@ -1,6 +1,6 @@
 while (1) {
     zmsg_t *zmsg = zmsg_recv (worker);
-    printf ("Worker: %s\n", zmsg_body (zmsg));
-    zmsg_body_set (zmsg, "OK");
+    zframe_print (zmsg_last (zmsg), "Worker: ");
+    zframe_reset (zmsg_last (zmsg), "OK", 2);
     zmsg_send (&zmsg, worker);
 }
