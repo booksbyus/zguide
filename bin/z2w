@@ -168,8 +168,9 @@ while (<>) {
             if ($missing) {
                 $actions = $actions." | " if $actions;
                 $actions = $actions."[/main:translate $missing]";
+                $actions = "[[size smaller]]".$actions."[[/size]]";
             }
-            writeln ("[[size smaller]]$actions[[/size]]");
+            writeln ($actions);
             $examples++;
         }
         #   Discard any real contents of code block
