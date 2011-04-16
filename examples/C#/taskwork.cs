@@ -21,7 +21,7 @@ class Program
 
         //  Socket to receive messages on
         Socket receiver = context.Socket(SocketType.PULL);
-        sender.Connect("tcp://localhost:5557");
+        receiver.Connect("tcp://localhost:5557");
 
         //  Socket to send messages on
         Socket sender = context.Socket(SocketType.PUSH);

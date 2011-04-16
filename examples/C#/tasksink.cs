@@ -19,7 +19,7 @@ namespace ZMQGuide {
             //  Prepare our context and socket
             using (Context context = new Context(1)) {
                 using (Socket receiver = context.Socket(SocketType.PULL)) {
-                    receiver.Connect("tcp://localhost:5558");
+                    receiver.Bind("tcp://*:5558");
                     //  Wait for start of batch
                     receiver.Recv();
                     Stopwatch stopwatch = new Stopwatch();
