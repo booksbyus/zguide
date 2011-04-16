@@ -183,7 +183,7 @@ mdwrk_recv (mdwrk_t *self, zmsg_t **reply_p)
     while (TRUE) {
         zmq_pollitem_t items [] = {
             { self->worker,  0, ZMQ_POLLIN, 0 } };
-        int rc = zmq_poll (items, 1, self->heartbeat * 1000);
+        int rc = zmq_poll (items, 1, self->heartbeat * ZMQ_POLL_MSEC);
         if (rc == -1)
             break;              //  Interrupted
 

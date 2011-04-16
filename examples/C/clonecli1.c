@@ -1,9 +1,9 @@
 //
-//  Clone client model 1
+//  Clone client Model One
 //
 
 //  Lets us build this source without creating a library
-#include "kvmsg.c"
+#include "kvsimple.c"
 
 int main (void)
 {

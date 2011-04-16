@@ -903,40 +903,40 @@ bstarcli
 
 You can then provoke failover by killing the primary server, and recovery by restarting the primary and killing the backup. Note how it's the client vote that triggers failover, and recovery.
 
-This diagram shows the finite state machine. States in green accept client requests, states in pink refuse them. Events are the peer state, so "Peer Active" means the other server has told us it's active. The "Client Vote" event is when the peer hasn't responded for two heartbeats, and we've receive a client request.
+This diagram shows the finite state machine. States in green accept client requests, states in pink refuse them. Events are the peer state, so "Peer Active" means the other server has told us it's active. "Client Request" means we've receive a client request. "Client Vote" means we've received a client request AND our peer is inactive for two heartbeats.
 
 [[code type="textdiagram"]]
 
-        Start                                                        Start
-          |                                                            |
-          v                                                            v
-    +-----------+                 +-----------+                  +-----------+
-    |           | Peer Backup     |           |                  |           |
-    |  Primary  +---------------->|  Active   |<--------------\  |  Backup   |
-    |           |       /-------->|           |<-----\        |  |           |
-    | {o} c9FB  |       |         | {o} c9FB  |      |        |  | {o} cF9B  |
-    +-----+-----+       |         +-----+-----+      |        |  +-----+-----+
-          |             |               |            |        |        |
-      Peer|Active       |           Peer|Active      |        |    Peer|Active
-          |             |               v            |        |        |
-          |             |         +-----------+      |        |        |
-          |             |         |           |      |        |        |
-          |         Peer|Backup   |  Error!   |  Peer|Primary |        |
-          |             |         |           |      |        |        |
-          |             |         | {o} cF00  |      |        |        |
-          |             |         +-----------+      |        |        |
-          |             |               ^            |        |        |
-          |             |           Peer|Passive     |  Client|Vote    |
-          |             |               |            |        |        |
-          |             |         +-----+-----+      |        |        |
-          |             |         |           +------/        |        |
-          |             \---------+  Passive  +---------------/        |
-          \---------------------->|           |<-----------------------/
-                                  | {o} cF9B  |
-                                  +-----------+
+      Start /-----------------------\   /----------\               Start
+        |   |Client Request         |   |    Client|Request          |
+        v   |                       v   v          |                 v
+  +---------+-+                 +-----------+      |           +-----------+
+  |           | Peer Backup     |           +------/           |           |
+  |  Primary  +---------------->|  Active   |<--------------\  |  Backup   |
+  |           |         /------>|           |<-----\        |  |           |
+  | {o} c9FB  |         |       | {o} c9FB  |      |        |  | {o} cF9B  |
+  +-----+-----+         |       +-----+-----+      |        |  +-----+-----+
+        |               |             |            |        |        |
+    Peer|Active         |         Peer|Active      |        |    Peer|Active
+        |               |             v            |        |        |
+        |               |       +-----------+      |        |        |
+        |               |       |           |      |        |        |
+        |           Peer|Backup |  Error!   |  Peer|Primary |        |
+        |               |       |           |      |        |        |
+        |               |       | {o} cF00  |      |        |        |
+        |               |       +-----------+      |        |        |
+        |               |             ^            |        |        |
+        |               |         Peer|Passive     |  Client|Vote    |
+        |               |             |            |        |        |
+        |               |       +-----+-----+      |        |        |
+        |               |       |           +------/        |        |
+        |               \-------+  Passive  +---------------/        |
+        \---------------------->|           |<-----------------------/
+                                | {o} cF9B  |
+                                +-----------+
 
 
-                  Figure # - Binary Star finite state machine
+                Figure # - Binary Star finite state machine
 [[/code]]
 
 Note that the servers use PUB-SUB sockets for state exchange. No other socket combination will work here. PUSH and DEALER block if there is no peer ready to receive a message. PAIR does not reconnect if the peer disappears and comes back. ROUTER needs the address of the peer before it can send it a message.

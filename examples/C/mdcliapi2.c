@@ -140,7 +140,7 @@ mdcli_recv (mdcli_t *self)
 
     //  Poll socket for a reply, with timeout
     zmq_pollitem_t items [] = { { self->client, 0, ZMQ_POLLIN, 0 } };
-    int rc = zmq_poll (items, 1, self->timeout * 1000);
+    int rc = zmq_poll (items, 1, self->timeout * ZMQ_POLL_MSEC);
     if (rc == -1)
         return NULL;            //  Interrupted
 

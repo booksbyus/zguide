@@ -1,13 +1,13 @@
 //
-//  Clone server model 3
+//  Clone server Model Three
 //
 
 //  Lets us build this source without creating a library
-#include "kvmsg.c"
+#include "kvsimple.c"
 
 static int s_send_single (char *key, void *data, void *args);
 
-//  Routing information for a KV snapshot
+//  Routing information for a key-value snapshot
 typedef struct {
     void *socket;           //  ROUTER socket to send to
     zframe_t *identity;     //  Identity of peer who requested state
@@ -18,17 +18,12 @@ int main (void)
 {
     //  Prepare our context and sockets
     zctx_t *ctx = zctx_new ();
-    void *publisher = zsocket_new (ctx, ZMQ_PUB);
-    int rc = zmq_bind (publisher, "tcp://*:5556");
-    assert (rc == 0);
-
     void *snapshot = zsocket_new (ctx, ZMQ_ROUTER);
-    rc = zmq_bind (snapshot, "tcp://*:5557");
-    assert (rc == 0);
-
+    zsocket_bind (snapshot, "tcp://*:5556");
+    void *publisher = zsocket_new (ctx, ZMQ_PUB);
+    zsocket_bind (publisher, "tcp://*:5557");
     void *collector = zsocket_new (ctx, ZMQ_PULL);
-    rc = zmq_bind (collector, "tcp://*:5558");
-    assert (rc == 0);
+    zsocket_bind (collector, "tcp://*:5558");
 
     int64_t sequence = 0;
     zhash_t *kvmap = zhash_new ();
@@ -38,7 +33,7 @@ int main (void)
         { snapshot, 0, ZMQ_POLLIN, 0 }
     };
     while (!zctx_interrupted) {
-        int rc = zmq_poll (items, 2, 1000 * 1000);
+        int rc = zmq_poll (items, 2, 1000 * ZMQ_POLL_MSEC);
 
         //  Apply state update sent from client
         if (items [0].revents & ZMQ_POLLIN) {
@@ -57,9 +52,9 @@ int main (void)
                 break;          //  Interrupted
 
             //  Request is in second frame of message
-            zframe_t *request = zframe_recv (snapshot);
-            if (zframe_streq (request, "ICANHAZ?"))
-                zframe_destroy (&request);
+            char *request = zstr_recv (snapshot);
+            if (streq (request, "ICANHAZ?"))
+                free (request);
             else {
                 printf ("E: bad request, aborting\n");
                 break;
@@ -76,7 +71,7 @@ int main (void)
             kvmsg_t *kvmsg = kvmsg_new (sequence);
             kvmsg_set_key  (kvmsg, "KTHXBAI");
             kvmsg_set_body (kvmsg, (byte *) "", 0);
-            kvmsg_send (kvmsg, snapshot);
+            kvmsg_send     (kvmsg, snapshot);
             kvmsg_destroy (&kvmsg);
         }
     }

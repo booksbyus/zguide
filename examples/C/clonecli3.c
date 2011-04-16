@@ -1,9 +1,9 @@
 //
-//  Clone client model 3
+//  Clone client Model Three
 //
 
 //  Lets us build this source without creating a library
-#include "kvmsg.c"
+#include "kvsimple.c"
 
 int main (void)
 {
@@ -28,20 +28,19 @@ int main (void)
             break;          //  Interrupted
         if (streq (kvmsg_key (kvmsg), "KTHXBAI")) {
             sequence = kvmsg_sequence (kvmsg);
+            printf ("I: received snapshot=%d\n", (int) sequence);
             kvmsg_destroy (&kvmsg);
             break;          //  Done
         }
         kvmsg_store (&kvmsg, kvmap);
     }
-    printf ("I: received snapshot=%d\n", (int) sequence);
-
     int64_t alarm = zclock_time () + 1000;
-    while (TRUE) {
+    while (!zctx_interrupted) {
         zmq_pollitem_t items [] = { { subscriber, 0, ZMQ_POLLIN, 0 } };
         int tickless = (int) ((alarm - zclock_time ()));
         if (tickless < 0)
             tickless = 0;
-        int rc = zmq_poll (items, 1, tickless * 1000);
+        int rc = zmq_poll (items, 1, tickless * ZMQ_POLL_MSEC);
         if (rc == -1)
             break;              //  Context has been shut down
 
@@ -64,7 +63,7 @@ int main (void)
             kvmsg_t *kvmsg = kvmsg_new (0);
             kvmsg_fmt_key  (kvmsg, "%d", randof (10000));
             kvmsg_fmt_body (kvmsg, "%d", randof (1000000));
-            kvmsg_send (kvmsg, publisher);
+            kvmsg_send     (kvmsg, publisher);
             kvmsg_destroy (&kvmsg);
             alarm = zclock_time () + 1000;
         }

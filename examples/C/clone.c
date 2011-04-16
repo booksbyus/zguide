@@ -79,6 +79,19 @@ clone_destroy (clone_t **self_p)
 }
 
 //  ---------------------------------------------------------------------
+//  Specify subtree for snapshot and updates, do before connect
+//  Sends [SUBTREE][subtree] to the agent
+
+void clone_subtree (clone_t *self, char *subtree)
+{
+    assert (self);
+    zmsg_t *msg = zmsg_new ();
+    zmsg_addstr (msg, "SUBTREE");
+    zmsg_addstr (msg, subtree);
+    zmsg_send (&msg, self->pipe);
+}
+
+//  ---------------------------------------------------------------------
 //  Connect to new server endpoint
 //  Sends [CONNECT][endpoint][service] to the agent
 
@@ -95,16 +108,20 @@ clone_connect (clone_t *self, char *address, char *service)
 
 //  ---------------------------------------------------------------------
 //  Set new value in distributed hash table
-//  Sends [SET][key][value] to the agent
+//  Sends [SET][key][value][ttl] to the agent
 
 void
-clone_set (clone_t *self, char *key, char *value)
+clone_set (clone_t *self, char *key, char *value, int ttl)
 {
+    char ttlstr [10];
+    sprintf (ttlstr, "%d", ttl);
+
     assert (self);
     zmsg_t *msg = zmsg_new ();
     zmsg_addstr (msg, "SET");
     zmsg_addstr (msg, key);
     zmsg_addstr (msg, value);
+    zmsg_addstr (msg, ttlstr);
     zmsg_send (&msg, self->pipe);
 }
 
@@ -149,7 +166,7 @@ typedef struct {
 } server_t;
 
 static server_t *
-server_new (zctx_t *ctx, char *address, int port)
+server_new (zctx_t *ctx, char *address, int port, char *subtree)
 {
     server_t *self = (server_t *) zmalloc (sizeof (server_t));
 
@@ -161,6 +178,7 @@ server_new (zctx_t *ctx, char *address, int port)
     zsocket_connect (self->snapshot, "%s:%d", address, port);
     self->subscriber = zsocket_new (ctx, ZMQ_SUB);
     zsocket_connect (self->subscriber, "%s:%d", address, port + 1);
+    zsockopt_set_subscribe (self->subscriber, subtree);
     return self;
 }
 
@@ -188,6 +206,7 @@ typedef struct {
     zctx_t *ctx;                //  Context wrapper
     void *pipe;                 //  Pipe back to application
     zhash_t *kvmap;             //  Actual key/value table
+    char *subtree;              //  Subtree specification, if any
     server_t *server [SERVER_MAX];
     uint nbr_servers;           //  0 to SERVER_MAX
     uint state;                 //  Current state
@@ -203,6 +222,7 @@ agent_new (zctx_t *ctx, void *pipe)
     self->ctx = ctx;
     self->pipe = pipe;
     self->kvmap = zhash_new ();
+    self->subtree = strdup ("");
     self->state = STATE_INITIAL;
     self->publisher = zsocket_new (self->ctx, ZMQ_PUB);
     return self;
@@ -218,6 +238,7 @@ agent_destroy (agent_t **self_p)
         for (server_nbr = 0; server_nbr < self->nbr_servers; server_nbr++)
             server_destroy (&self->server [server_nbr]);
         zhash_destroy (&self->kvmap);
+        free (self->subtree);
         free (self);
         *self_p = NULL;
     }
@@ -232,12 +253,17 @@ agent_control_message (agent_t *self)
     if (command == NULL)
         return -1;
 
+    if (streq (command, "SUBTREE")) {
+        free (self->subtree);
+        self->subtree = zmsg_popstr (msg);
+    }
+    else
     if (streq (command, "CONNECT")) {
         char *address = zmsg_popstr (msg);
         char *service = zmsg_popstr (msg);
         if (self->nbr_servers < SERVER_MAX) {
-            self->server [self->nbr_servers++]
-                = server_new (self->ctx, address, atoi (service));
+            self->server [self->nbr_servers++] = server_new (
+                self->ctx, address, atoi (service), self->subtree);
             //  We broadcast updates to all known servers
             zsocket_connect (self->publisher, "%s:%d",
                 address, atoi (service) + 2);
@@ -250,9 +276,8 @@ agent_control_message (agent_t *self)
     else
     if (streq (command, "SET")) {
         char *key = zmsg_popstr (msg);
-        //  We're doing string values for now, will switch to frames
-        //  when we move this to libzapi.
         char *value = zmsg_popstr (msg);
+        char *ttl = zmsg_popstr (msg);
         zhash_update (self->kvmap, key, (byte *) value);
         zhash_freefn (self->kvmap, key, free);
 
@@ -261,9 +286,11 @@ agent_control_message (agent_t *self)
         kvmsg_set_key  (kvmsg, key);
         kvmsg_set_uuid (kvmsg);
         kvmsg_fmt_body (kvmsg, "%s", value);
-        kvmsg_send (kvmsg, self->publisher);
+        kvmsg_set_prop (kvmsg, "ttl", ttl);
+        kvmsg_send     (kvmsg, self->publisher);
         kvmsg_destroy (&kvmsg);
-
+puts (key);
+        free (ttl);
         free (key);             //  Value is owned by hash table
     }
     else
@@ -308,7 +335,8 @@ clone_agent (void *args, zctx_t *ctx, void *pipe)
                     zclock_log ("I: waiting for server at %s:%d...",
                         server->address, server->port);
                     if (server->requests < 2) {
-                        zstr_send (server->snapshot, "ICANHAZ?");
+                        zstr_sendm (server->snapshot, "ICANHAZ?");
+                        zstr_send  (server->snapshot, self->subtree);
                         server->requests++;
                     }
                     server->expiry = zclock_time () + SERVER_TTL;

@@ -8,14 +8,14 @@
 #
 if [ /$1/ = /all/ ]; then
     echo "Building C++ examples..."
-    for MAIN in `egrep -l main *.cpp`; do
+    for MAIN in `egrep -l "main \(" *.cpp`; do
         echo "$MAIN"
         ./c -p -l -lzmq -q $MAIN
     done
 elif [ /$1/ = /clean/ ]; then
     echo "Cleaning C++ examples directory..."
     rm -f *.opp *.lst core
-    for MAIN in `egrep -l main *.cpp`; do
+    for MAIN in `egrep -l "main \(" *.cpp`; do
         rm -f `basename $MAIN .cpp`
     done
 elif [ -f $1.cpp ]; then

@@ -1,9 +1,9 @@
 //
-//  Clone client model 2
+//  Clone client Model Two
 //
 
 //  Lets us build this source without creating a library
-#include "kvmsg.c"
+#include "kvsimple.c"
 
 int main (void)
 {
@@ -25,15 +25,14 @@ int main (void)
             break;          //  Interrupted
         if (streq (kvmsg_key (kvmsg), "KTHXBAI")) {
             sequence = kvmsg_sequence (kvmsg);
+            printf ("Received snapshot=%d\n", (int) sequence);
             kvmsg_destroy (&kvmsg);
             break;          //  Done
         }
         kvmsg_store (&kvmsg, kvmap);
     }
-    printf ("Received snapshot=%d\n", (int) sequence);
-
     //  Now apply pending updates, discard out-of-sequence messages
-    while (TRUE) {
+    while (!zctx_interrupted) {
         kvmsg_t *kvmsg = kvmsg_recv (subscriber);
         if (!kvmsg)
             break;          //  Interrupted

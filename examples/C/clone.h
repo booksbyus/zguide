@@ -37,8 +37,9 @@ typedef struct _clone_t clone_t;
 
 clone_t *clone_new (void);
 void clone_destroy (clone_t **self_p);
+void clone_subtree (clone_t *self, char *subtree);
 void clone_connect (clone_t *self, char *address, char *service);
-void clone_set (clone_t *self, char *key, char *value);
+void clone_set (clone_t *self, char *key, char *value, int ttl);
 char *clone_get (clone_t *self, char *key);
 
 #ifdef __cplusplus

@@ -1,5 +1,5 @@
 /*  =====================================================================
-    kvmsg - key-value message class for example applications
+    kvsimple - simple key-value message class for example applications
 
     ---------------------------------------------------------------------
     Copyright (c) 1991-2011 iMatix Corporation <www.imatix.com>
@@ -23,8 +23,8 @@
     =====================================================================
 */
 
-#ifndef __KVMSG_H_INCLUDED__
-#define __KVMSG_H_INCLUDED__
+#ifndef __KVSIMPLE_H_INCLUDED__
+#define __KVSIMPLE_H_INCLUDED__
 
 #include "zapi.h"
 
@@ -41,9 +41,6 @@ kvmsg_t *
 //  Destructor
 void
     kvmsg_destroy (kvmsg_t **self_p);
-//  Create duplicate of kvmsg
-kvmsg_t *
-    kvmsg_dup (kvmsg_t *self);
 
 //  Reads key-value message from socket, returns new kvmsg instance.
 kvmsg_t *
@@ -58,9 +55,6 @@ char *
 //  Return sequence nbr from last read message, if any
 int64_t
     kvmsg_sequence (kvmsg_t *self);
-//  Return UUID from last read message, if any, else NULL
-byte *
-    kvmsg_uuid (kvmsg_t *self);
 //  Return body from last read message, if any, else NULL
 byte *
     kvmsg_body (kvmsg_t *self);
@@ -74,9 +68,6 @@ void
 //  Set message sequence number
 void
     kvmsg_set_sequence (kvmsg_t *self, int64_t sequence);
-//  Set message UUID to generated value
-void
-    kvmsg_set_uuid (kvmsg_t *self);
 //  Set message body
 void
     kvmsg_set_body (kvmsg_t *self, byte *body, size_t size);
@@ -86,14 +77,6 @@ void
 //  Set message body using printf format
 void
     kvmsg_fmt_body (kvmsg_t *self, char *format, ...);
-
-//  Get message property, if set, else ""
-char *
-    kvmsg_get_prop (kvmsg_t *self, char *name);
-//  Set message property
-//  Names cannot contain '='. Max length of value is 255 chars.
-void
-    kvmsg_set_prop (kvmsg_t *self, char *name, char *format, ...);
 
 //  Store entire kvmsg into hash map, if key/value are set
 //  Nullifies kvmsg reference, and destroys automatically when no longer

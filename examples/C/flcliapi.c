@@ -316,7 +316,8 @@ flcliapi_agent (void *args, zctx_t *ctx, void *pipe)
             tickless = self->expires;
         zhash_foreach (self->servers, server_tickless, &tickless);
 
-        int rc = zmq_poll (items, 2, (tickless - zclock_time ()) * 1000);
+        int rc = zmq_poll (items, 2,
+            (tickless - zclock_time ()) * ZMQ_POLL_MSEC);
         if (rc == -1)
             break;              //  Context has been shut down
 

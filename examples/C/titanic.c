@@ -233,7 +233,7 @@ int main (int argc, char *argv [])
     while (TRUE) {
         //  We'll dispatch once per second, if there's no activity
         zmq_pollitem_t items [] = { { request_pipe, 0, ZMQ_POLLIN, 0 } };
-        int rc = zmq_poll (items, 1, 1000 * 1000);
+        int rc = zmq_poll (items, 1, 1000 * ZMQ_POLL_MSEC);
         if (rc == -1)
             break;              //  Interrupted
         if (items [0].revents & ZMQ_POLLIN) {

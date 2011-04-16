@@ -239,7 +239,7 @@ And here is the client:
 
 Some notes about this code:
 
-* All the hard work is done in the **kvmsg** class. This class works with key-value message objects, which are multipart 0MQ messages structured as four frames: a key (a 0MQ string), a sequence number (64-bit value, in network byte order), a binary UUID, and a binary body (holds everything else).
+* All the hard work is done in a **kvmsg** class. This class works with key-value message objects, which are multipart 0MQ messages structured as three frames: a key (a 0MQ string), a sequence number (64-bit value, in network byte order), and a binary body (holds everything else).
 
 * The server generates messages with a randomized 4-digit key, which lets us simulate a large but not enormous hash table (10K entries).
 
@@ -247,10 +247,12 @@ Some notes about this code:
 
 * We'll use the terms 'publisher' and 'subscriber' in the code to refer to sockets. This will help later when we have multiple sockets doing different things.
 
-Here is the kvmsg class:
+Here is the kvmsg class, in the simplest form that works for now:
 
-[[code type="example" title="Key-value message class" name="kvmsg"]]
+[[code type="example" title="Key-value message class" name="kvsimple"]]
 [[/code]]
+
+We'll make a more sophisticated kvmsg class later, for using in real applications.
 
 Both the server and client maintain hash tables, but this first model only works properly if we start all clients before the server, and the clients never crash. That's not 'reliability'.
 
@@ -384,9 +386,60 @@ Some notes about this code:
 
 * The client uses a simple tickless timer to send a random update to the server once a second. In reality, updates would be driven by application code.
 
+++++ Clone Subtrees
+
+A realistic key-value cache will get large, and clients will usually be interested only in parts of the cache. Working with a subtree is fairly simple. The client has to tell the server the subtree when it makes a state request, and it has to specify the same subtree when it subscribes to updates.
+
+There are a couple of common syntaxes for trees. One is the "path hierarchy", and another is the "topic tree". These look like:
+
+* Path hierarchy: "/some/list/of/paths"
+* Topic tree: "some.list.of.topics"
+
+We'll use the path hierarchy, and extend our client and server so that a client can work with a single subtree. Working with multiple subtrees is not much more difficult, we won't do that here but it's a trivial extension.
+
+Here's the server, a small variation on Model Three:
+
+[[code type="example" title="Clone server, Model Four" name="clonesrv4"]]
+[[/code]]
+
+And here is the client:
+
+[[code type="example" title="Clone client, Model Four" name="clonecli4"]]
+[[/code]]
+
+++++ Ephemeral Values
+
+An ephemeral value is one that expires dynamically. If you think of Clone being used for a DNS-like service, then ephemeral values would let you do dynamic DNS. A node joins the network, publishes its address, and refreshes this regularly. If the node dies, its address eventually gets removed.
+
+The usual abstraction for ephemeral values is to attach them to a "session", and delete them when the session ends. In Clone, sessions would be defined by clients, and would end if the client died.
+
+The simpler alternative to using sessions is to define every ephemeral value with a "time to live" that tells the server when to expire the value. Clients then refresh values, and if they don't, the values expire.
+
+I'm going to implement that simpler model because we don't know yet that it's worth making a more complex one. The difference is really in performance. If clients have a handful of ephemeral values, it's fine to set a TTL on each one. If clients use masses of ephemeral values, it's more efficient to attach them to sessions, and expire them in bulk.
+
+First off, we need a way to encode the TTL in the key-value message. We could add a frame. The problem with using frames for properties is that each time we want to add a new property, we have to change the structure of our kvmsg class. It breaks compatibility. So let's add a 'properties' frame to the message, and code to let us get and put property values.
+
+Next, we need a way to say, "delete this value". Up to now servers and clients have always blindly inserted or updated new values into their hash table. We'll say that if the value is empty, that means "delete this key".
+
+Here's a more complete version of the kvmsg class, which implements a 'properties' frame (and adds a UUID frame, which we'll need later on). It also handles empty values by deleting the key from the hash, if necessary:
+
+[[code type="example" title="Key-value message class - full" name="kvmsg"]]
+[[/code]]
+
+The Model Five client is almost identical to Model Four. Diff is your friend. It uses the full kvmsg class instead of kvsimple, and sets a randomized 'ttl' property (measured in seconds) on each message:
+
+[[code language="C"]]
+kvmsg_set_prop (kvmsg, "ttl", "%d", randof (30));
+[[/code]]
+
+The Model Five server has totally changed. Instead of a poll loop, we're now using a reactor. This just makes it simpler to mix timers and socket events. Unfortunately in C the reactor style is more verbose. Your mileage will vary in other languages. But reactors seem to be a better way of building more complex 0MQ applications. Here's the server:
+
+[[code type="example" title="Clone server, Model Five" name="clonesrv5"]]
+[[/code]]
+
 ++++ Clone Server Reliability
 
-Clone models one to three are relatively simple. We're now going to get into unpleasantly complex territory here that has me getting up for another espresso. You should appreciate that making "reliable" messaging is complex enough that you always need to ask, "do we actually need this?" before jumping into it. If you can get away with unreliable, or "good enough" reliability, you can make a huge win in terms of cost and complexity. Sure, you may lose some data now and then. It is often a good trade-off. Having said, that, and since the espresso is really good, let's jump in!
+Clone models one to five are relatively simple. We're now going to get into unpleasantly complex territory here that has me getting up for another espresso. You should appreciate that making "reliable" messaging is complex enough that you always need to ask, "do we actually need this?" before jumping into it. If you can get away with unreliable, or "good enough" reliability, you can make a huge win in terms of cost and complexity. Sure, you may lose some data now and then. It is often a good trade-off. Having said, that, and since the espresso is really good, let's jump in!
 
 As you play with model three, you'll stop and restart the server. It might look like it recovers, but of course it's applying updates to an empty state, instead of the proper current state. Any new client joining the network will get just the latest updates, instead of all of them. So let's work out a design for making Clone work despite server failures.
 
@@ -398,13 +451,13 @@ Let's list the failures we want to be able to handle:
 
 * Clone server process or machine gets disconnected from the network, e.g. a switch dies. It may come back at some point, but in the meantime clients need an alternate server.
 
-Our first step is to add a second server. We can use the Binary Star pattern from Chapter four to organize these into primary and backup.
+Our first step is to add a second server. We can use the Binary Star pattern from Chapter four to organize these into primary and backup. Binary Star is a reactor, so it's useful that we already refactored the last server model into a reactor style.
 
 We need to ensure that updates are not lost if the primary server crashes. The simplest technique is to send them to both servers.
 
 The backup server can then act as a client, and keep its state synchronized by receiving updates as all clients do. It'll also get new updates from clients. It can't yet store these in its hash table, but it can hold onto them for a while.
 
-So, Model Four introduces these changes over Model Three:
+So, Model Six introduces these changes over Model Five:
 
 * We use a pub-sub flow instead of a push-pull flow for client updates (to the servers). The reasons: push sockets will block if there is no recipient, and they round-robin, so we'd need to open two of them. We'll bind the servers' SUB sockets and connect the clients' PUB sockets to them. This takes care of fanning out from one client to two servers.
 
@@ -511,7 +564,7 @@ So here is our high-availability server pair, using the Binary Star pattern:
 
 As a first step to building this, we're going to refactor the client as a reusable class. This is partly for fun (writing asynchronous classes with 0MQ is like an exercise in elegance), but mainly because we want Clone to be really easy to plug-in to random applications. Since resilience depends on clients behaving correctly, it's much easier to guarantee this when there's a reusable client API. When we start to handle fail-over in clients, it does get a little complex (imagine mixing a Freelance client with a Clone client). So, reusability ahoy!
 
-My usual design approach is to first design an API that feels right, then to implement that. So, we start by taking the clone client, and rewriting it to sit on top of some presumed class API called **clone**. Turning random code into an API means defining a reasonably stable and abstract contract with applications. For example, in Model Three, the client opened three separate sockets to the server, using endpoints that were hard-coded in the source. We could make an API with three methods, like this:
+My usual design approach is to first design an API that feels right, then to implement that. So, we start by taking the clone client, and rewriting it to sit on top of some presumed class API called **clone**. Turning random code into an API means defining a reasonably stable and abstract contract with applications. For example, in Model Five, the client opened three separate sockets to the server, using endpoints that were hard-coded in the source. We could make an API with three methods, like this:
 
 [[code language="C"]]
     //  Specify endpoints for each socket we need
@@ -557,9 +610,9 @@ void clone_set (clone_t *self, char *key, char *value);
 char *clone_get (clone_t *self, char *key);
 [[/code]]
 
-So here is Model Four of the clone client, which has now become just a thin shell using the clone class:
+So here is Model Six of the clone client, which has now become just a thin shell using the clone class:
 
-[[code type="example" title="Clone client, Model Four" name="clonecli4"]]
+[[code type="example" title="Clone client, Model Six" name="clonecli6"]]
 [[/code]]
 
 And here is the actual clone class implementation:
@@ -567,23 +620,14 @@ And here is the actual clone class implementation:
 [[code type="example" title="Clone class" name="clone"]]
 [[/code]]
 
-We can test our fourth generation Clone client against a single server by running clonesrv3, since we're using a more-or-less compatible protocol:
+Finally, here is the sixth and last model of the clone server:
 
-[[code]]
-clonesrv3 &
-clonecli4
+[[code type="example" title="Clone server, Model Six" name="clonesrv6"]]
 [[/code]]
 
-If we kill the server, the client will complain it's not received any 'hugz' (impertinently stealing an idea from the eminent Alexis Richardson, the Clone protocol, which we're slowly coming to, will be the world's first ever LOL-compliant open standard).
+This main program is only a few hundred lines of code, but it took some time to get working. To be accurate, building Model Six was a bitch, and took about a full week of "sweet god, this is just too complex for the Guide" hacking. We've assembled pretty much everything and the kitchen sink into this small application. We have failover, ephemeral values, subtrees, and so on. What surprised me was that the upfront design was pretty accurate. But the details of writing and debugging so many socket flows is something special. Here's how I made this work:
 
-Finally, here is the clone server, model 4:
-
-[[code type="example" title="Clone server, Model Four" name="clonesrv4"]]
-[[/code]]
-
-This main program is only a few hundred lines of code, but it took some time to get working. To be accurate, building Model Four was a bitch, and took about a full week of "sweet god, I suspect this is just too complex for the Guide" hacking. What surprised me was that the upfront design was pretty accurate. But the details of managing so many socket flows is something else. Here's how I made this work:
-
-* By using reactors (bstar, on top of zloop), which remove a lot of grunt-work from the code, and leave what remains simpler and more obvious. The whole server runs as one thread, so there's no inter-thread weirdness going on. Just pass a structure pointer ('self') around to all handlers, which can do their thing happily.
+* By using reactors (bstar, on top of zloop), which remove a lot of grunt-work from the code, and leave what remains simpler and more obvious. The whole server runs as one thread, so there's no inter-thread weirdness going on. Just pass a structure pointer ('self') around to all handlers, which can do their thing happily. One nice side-effect of using reactors is that code, being less tightly integrated into a poll loop, is much easier to reuse. Large chunks of Model Six are taken from Model Five.
 
 * By building it piece by piece, and getting each piece working **properly** before going onto the next one. Since there are four or five main socket flows, that meant quite a lot of debugging and testing. I debug just by printing stuff to the console (e.g. dumping messages). There's no sense in actually opening a debugger for this kind of work.
 
@@ -591,65 +635,17 @@ This main program is only a few hundred lines of code, but it took some time to 
 
 I'm sure the code still has flaws which kind readers will spend weekends debugging and fixing for me. I'm happy enough with this model to use it as the basis for real applications.
 
-To test the fourth model, start the primary server and backup server, and a set of clients, in any order. Then kill and restart one of the servers, randomly, and keep doing this. If my design and code is accurate, clients will continue to get the same stream of updates from whatever server is currently master.
-
-.end
-
-++++ Clone Subtrees
-
-- tree of values, path/path/path
-- client requests state with some prefix
-- only that part is sent out
-- client subscribes to that part too
-  - assumes efficient subscribers...
-- updates on that part only
-  - affects server and client, show changes
-
-++++ Ephemeral Values (TTL)
-
-- client sends update with TTL, resolution 1 second
-- server queues ephemeral values
-- expires ephemeral values per second, sends out DELETED update
-- DELETE = key with empty value...
+To test the sixth model, start the primary server and backup server, and a set of clients, in any order. Then kill and restart one of the servers, randomly, and keep doing this. If the design and code is accurate, clients will continue to get the same stream of updates from whatever server is currently master.
 
 ++++ Clone Protocol Specification
 
-Clone protocol
+After this much work to build reliable pub-sub, we want some guarantee that we can safely build applications to exploit the work. A good start is to write-up the protocol. This lets us make implementations in other languages and lets us improve the design on paper, rather than hands-deep in code.
 
-    flows:
-        C:DEALER -> snapshot S:ROUTER at address:port
-        C:SUB    -> publisher S:PUB at address:port+1
-        C:PUB    -> collector S:SUB at address:port+2
+Here, then, is the Clustered Hashmap Protocol, which "defines a cluster-wide key-value hashmap, and mechanisms for sharing this across a set of clients. CHP allows clients to work with subtrees of the hashmap, to update values, and to define ephemeral values."
 
-    message format:
-        zstr_send (server->snapshot, "ICANHAZ?")
-        0 or more key-value messages:
-            [key][sequence=unused][uuid][value]
-            //  frame 0: key (0MQ string)
-            //  frame 1: sequence (8 bytes, network order)
-            //  frame 2: uuid (16 bytes)
-            //  frame 3: body (blob)
-        [KTHXBAI][snapshot sequence][][]
+* http://rfc.zeromq.org/spec:12
 
-    update from publisher
-        [key][sequence][uuid][value]
-        -> applied if sequence > snapshot sequence
-        [HUGZ][0][][]
-        -> heartbeat once per second
-
-    update to collector
-        [key][sequence=0][uuid][value]
-
-    deleted value
-    - how many requests to make, max
-    - client state machine
-    - server failover mechanisms not described
-
-++++ Practical Clone Example
-
-- distributed name service
-- ephemeral names
-
+.end
 +++ Cluster-wide topic distribution
 
 - anyone can publish
@@ -657,8 +653,9 @@ Clone protocol
 - reliable
 - using 1 or two forwarders
 
-+++ Secure Publish-Subscribe (Pattern)
++++ Secure Publish-Subscribe (Tin Foil Hat Pattern)
 
+As in, getting secret messages.
 
 +++ Atomic Group Multicast (Platoon Pattern)
 

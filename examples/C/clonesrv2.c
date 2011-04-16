@@ -1,9 +1,9 @@
 //
-//  Clone server model 2
+//  Clone server Model Two
 //
 
 //  Lets us build this source without creating a library
-#include "kvmsg.c"
+#include "kvsimple.c"
 
 static int s_send_single (char *key, void *data, void *args);
 static void state_manager (void *args, zctx_t *ctx, void *pipe);
@@ -13,8 +13,7 @@ int main (void)
     //  Prepare our context and sockets
     zctx_t *ctx = zctx_new ();
     void *publisher = zsocket_new (ctx, ZMQ_PUB);
-    int rc = zmq_bind (publisher, "tcp://*:5556");
-    assert (rc == 0);
+    zsocket_bind (publisher, "tcp://*:5557");
 
     int64_t sequence = 0;
     srandom ((unsigned) time (NULL));
@@ -28,8 +27,8 @@ int main (void)
         kvmsg_t *kvmsg = kvmsg_new (++sequence);
         kvmsg_fmt_key  (kvmsg, "%d", randof (10000));
         kvmsg_fmt_body (kvmsg, "%d", randof (1000000));
-        kvmsg_send (kvmsg, publisher);
-        kvmsg_send (kvmsg, updates);
+        kvmsg_send     (kvmsg, publisher);
+        kvmsg_send     (kvmsg, updates);
         kvmsg_destroy (&kvmsg);
     }
     printf (" Interrupted\n%d messages out\n", (int) sequence);
@@ -37,7 +36,7 @@ int main (void)
     return 0;
 }
 
-//  Routing information for a KV snapshot
+//  Routing information for a key-value snapshot
 typedef struct {
     void *socket;           //  ROUTER socket to send to
     zframe_t *identity;     //  Identity of peer who requested state
@@ -67,8 +66,7 @@ state_manager (void *args, zctx_t *ctx, void *pipe)
 
     zstr_send (pipe, "READY");
     void *snapshot = zsocket_new (ctx, ZMQ_ROUTER);
-    int rc = zmq_bind (snapshot, "tcp://*:5557");
-    assert (rc == 0);
+    zsocket_bind (snapshot, "tcp://*:5556");
 
     zmq_pollitem_t items [] = {
         { pipe, 0, ZMQ_POLLIN, 0 },
@@ -95,9 +93,9 @@ state_manager (void *args, zctx_t *ctx, void *pipe)
                 break;          //  Interrupted
 
             //  Request is in second frame of message
-            zframe_t *request = zframe_recv (snapshot);
-            if (zframe_streq (request, "ICANHAZ?"))
-                zframe_destroy (&request);
+            char *request = zstr_recv (snapshot);
+            if (streq (request, "ICANHAZ?"))
+                free (request);
             else {
                 printf ("E: bad request, aborting\n");
                 break;
@@ -114,7 +112,7 @@ state_manager (void *args, zctx_t *ctx, void *pipe)
             kvmsg_t *kvmsg = kvmsg_new (sequence);
             kvmsg_set_key  (kvmsg, "KTHXBAI");
             kvmsg_set_body (kvmsg, (byte *) "", 0);
-            kvmsg_send (kvmsg, snapshot);
+            kvmsg_send     (kvmsg, snapshot);
             kvmsg_destroy (&kvmsg);
         }
     }

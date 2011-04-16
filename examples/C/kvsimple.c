@@ -1,5 +1,5 @@
 /*  =====================================================================
-    kvmsg - key-value message class for example applications
+    kvsimple - simple key-value message class for example applications
 
     ---------------------------------------------------------------------
     Copyright (c) 1991-2011 iMatix Corporation <www.imatix.com>
@@ -23,8 +23,7 @@
     =====================================================================
 */
 
-#include "kvmsg.h"
-#include <uuid/uuid.h>
+#include "kvsimple.h"
 #include "zlist.h"
 
 //  Keys are short strings
@@ -33,15 +32,11 @@
 //  Message is formatted on wire as 4 frames:
 //  frame 0: key (0MQ string)
 //  frame 1: sequence (8 bytes, network order)
-//  frame 2: uuid (blob, 16 bytes)
-//  frame 3: properties (0MQ string)
-//  frame 4: body (blob)
+//  frame 2: body (blob)
 #define FRAME_KEY       0
 #define FRAME_SEQ       1
-#define FRAME_UUID      2
-#define FRAME_PROPS     3
-#define FRAME_BODY      4
-#define KVMSG_FRAMES    5
+#define FRAME_BODY      2
+#define KVMSG_FRAMES    3
 
 //  Structure of our class
 struct _kvmsg {
@@ -51,53 +46,7 @@ struct _kvmsg {
     zmq_msg_t frame [KVMSG_FRAMES];
     //  Key, copied into safe C string
     char key [KVMSG_KEY_MAX + 1];
-    //  List of properties, as name=value strings
-    zlist_t *props;
-    size_t props_size;
 };
-
-
-//  Serialize list of properties to a message frame
-static void
-s_encode_props (kvmsg_t *self)
-{
-    zmq_msg_t *msg = &self->frame [FRAME_PROPS];
-    if (self->present [FRAME_PROPS])
-        zmq_msg_close (msg);
-
-    zmq_msg_init_size (msg, self->props_size);
-    char *prop = zlist_first (self->props);
-    char *dest = (char *) zmq_msg_data (msg);
-    while (prop) {
-        strcpy (dest, prop);
-        dest += strlen (prop);
-        *dest++ = '\n';
-        prop = zlist_next (self->props);
-    }
-    self->present [FRAME_PROPS] = 1;
-}
-
-//  Rebuild properties list from message frame
-static void
-s_decode_props (kvmsg_t *self)
-{
-    zmq_msg_t *msg = &self->frame [FRAME_PROPS];
-    self->props_size = 0;
-    while (zlist_size (self->props))
-        free (zlist_pop (self->props));
-
-    size_t remainder = zmq_msg_size (msg);
-    char *prop = (char *) zmq_msg_data (msg);
-    char *eoln = memchr (prop, '\n', remainder);
-    while (eoln) {
-        *eoln = 0;
-        zlist_append (self->props, strdup (prop));
-        self->props_size += strlen (prop) + 1;
-        remainder -= strlen (prop) + 1;
-        prop = eoln + 1;
-        eoln = memchr (prop, '\n', remainder);
-    }
-}
 
 
 //  ---------------------------------------------------------------------
@@ -110,7 +59,6 @@ kvmsg_new (int64_t sequence)
         *self;
 
     self = (kvmsg_t *) zmalloc (sizeof (kvmsg_t));
-    self->props = zlist_new ();
     kvmsg_set_sequence (self, sequence);
     return self;
 }
@@ -131,11 +79,6 @@ kvmsg_free (void *ptr)
             if (self->present [frame_nbr])
                 zmq_msg_close (&self->frame [frame_nbr]);
 
-        //  Destroy property list
-        while (zlist_size (self->props))
-            free (zlist_pop (self->props));
-        zlist_destroy (&self->props);
-
         //  Free object itself
         free (self);
     }
@@ -149,29 +92,6 @@ kvmsg_destroy (kvmsg_t **self_p)
         kvmsg_free (*self_p);
         *self_p = NULL;
     }
-}
-
-
-//  ---------------------------------------------------------------------
-//  Create duplicate of kvmsg
-
-kvmsg_t *
-kvmsg_dup (kvmsg_t *self)
-{
-    kvmsg_t *kvmsg = kvmsg_new (0);
-    int frame_nbr;
-    for (frame_nbr = 0; frame_nbr < KVMSG_FRAMES; frame_nbr++) {
-        if (self->present [frame_nbr]) {
-            zmq_msg_t *src = &self->frame [frame_nbr];
-            zmq_msg_t *dst = &kvmsg->frame [frame_nbr];
-            zmq_msg_init_size (dst, zmq_msg_size (src));
-            memcpy (zmq_msg_data (dst),
-                    zmq_msg_data (src), zmq_msg_size (src));
-            kvmsg->present [frame_nbr] = 1;
-        }
-    }
-    kvmsg->props = zlist_copy (self->props);
-    return kvmsg;
 }
 
 
@@ -202,8 +122,6 @@ kvmsg_recv (void *socket)
             break;
         }
     }
-    if (self)
-        s_decode_props (self);
     return self;
 }
 
@@ -217,7 +135,6 @@ kvmsg_send (kvmsg_t *self, void *socket)
     assert (self);
     assert (socket);
 
-    s_encode_props (self);
     int frame_nbr;
     for (frame_nbr = 0; frame_nbr < KVMSG_FRAMES; frame_nbr++) {
         zmq_msg_t copy;
@@ -276,21 +193,6 @@ kvmsg_sequence (kvmsg_t *self)
     }
     else
         return 0;
-}
-
-
-//  ---------------------------------------------------------------------
-//  Return UUID from last read message, if any, else NULL
-
-byte *
-kvmsg_uuid (kvmsg_t *self)
-{
-    assert (self);
-    if (self->present [FRAME_UUID]
-    &&  zmq_msg_size (&self->frame [FRAME_UUID]) == sizeof (uuid_t))
-        return (byte *) zmq_msg_data (&self->frame [FRAME_UUID]);
-    else
-        return NULL;
 }
 
 
@@ -365,24 +267,6 @@ kvmsg_set_sequence (kvmsg_t *self, int64_t sequence)
 
 
 //  ---------------------------------------------------------------------
-//  Set message UUID to generated value
-
-void
-kvmsg_set_uuid (kvmsg_t *self)
-{
-    assert (self);
-    zmq_msg_t *msg = &self->frame [FRAME_UUID];
-    uuid_t uuid;
-    uuid_generate (uuid);
-    if (self->present [FRAME_UUID])
-        zmq_msg_close (msg);
-    zmq_msg_init_size (msg, sizeof (uuid));
-    memcpy (zmq_msg_data (msg), uuid, sizeof (uuid));
-    self->present [FRAME_UUID] = 1;
-}
-
-
-//  ---------------------------------------------------------------------
 //  Set message body
 
 void
@@ -433,67 +317,9 @@ kvmsg_fmt_body (kvmsg_t *self, char *format, ...)
 
 
 //  ---------------------------------------------------------------------
-//  Get message property, if set, else ""
-
-char *
-kvmsg_get_prop (kvmsg_t *self, char *name)
-{
-    assert (strchr (name, '=') == NULL);
-    char *prop = zlist_first (self->props);
-    size_t namelen = strlen (name);
-    while (prop) {
-        if (strlen (prop) > namelen
-        &&  memcmp (prop, name, namelen) == 0
-        &&  prop [namelen] == '=')
-            return prop + namelen + 1;
-        prop = zlist_next (self->props);
-    }
-    return "";
-}
-
-
-//  ---------------------------------------------------------------------
-//  Set message property
-//  Names cannot contain '='. Max length of value is 255 chars.
-
-void
-kvmsg_set_prop (kvmsg_t *self, char *name, char *format, ...)
-{
-    assert (strchr (name, '=') == NULL);
-
-    char value [255 + 1];
-    va_list args;
-    assert (self);
-    va_start (args, format);
-    vsnprintf (value, 255, format, args);
-    va_end (args);
-
-    //  Allocate name=value string
-    char *prop = malloc (strlen (name) + strlen (value) + 2);
-
-    //  Remove existing property if any
-    sprintf (prop, "%s=", name);
-    char *existing = zlist_first (self->props);
-    while (existing) {
-        if (memcmp (prop, existing, strlen (prop)) == 0) {
-            self->props_size -= strlen (existing) + 1;
-            zlist_remove (self->props, existing);
-            free (existing);
-            break;
-        }
-        existing = zlist_next (self->props);
-    }
-    //  Add new name=value property string
-    strcat (prop, value);
-    zlist_append (self->props, prop);
-    self->props_size += strlen (prop) + 1;
-}
-
-
-//  ---------------------------------------------------------------------
-//  Store entire kvmsg into hash map, if key/value are set.
+//  Store entire kvmsg into hash map, if key/value are set
 //  Nullifies kvmsg reference, and destroys automatically when no longer
-//  needed. If value is empty, deletes any previous value from store.
+//  needed.
 
 void
 kvmsg_store (kvmsg_t **self_p, zhash_t *hash)
@@ -502,16 +328,11 @@ kvmsg_store (kvmsg_t **self_p, zhash_t *hash)
     if (*self_p) {
         kvmsg_t *self = *self_p;
         assert (self);
-        if (kvmsg_size (self)) {
-            if (self->present [FRAME_KEY]
-            &&  self->present [FRAME_BODY]) {
-                zhash_update (hash, kvmsg_key (self), self);
-                zhash_freefn (hash, kvmsg_key (self), kvmsg_free);
-            }
+        if (self->present [FRAME_KEY]
+        &&  self->present [FRAME_BODY]) {
+            zhash_update (hash, kvmsg_key (self), self);
+            zhash_freefn (hash, kvmsg_key (self), kvmsg_free);
         }
-        else
-            zhash_delete (hash, kvmsg_key (self));
-
         *self_p = NULL;
     }
 }
@@ -533,15 +354,6 @@ kvmsg_dump (kvmsg_t *self)
         fprintf (stderr, "[seq:%" PRId64 "]", kvmsg_sequence (self));
         fprintf (stderr, "[key:%s]", kvmsg_key (self));
         fprintf (stderr, "[size:%zd] ", size);
-        if (zlist_size (self->props)) {
-            fprintf (stderr, "[");
-            char *prop = zlist_first (self->props);
-            while (prop) {
-                fprintf (stderr, "%s;", prop);
-                prop = zlist_next (self->props);
-            }
-            fprintf (stderr, "]");
-        }
         int char_nbr;
         for (char_nbr = 0; char_nbr < size; char_nbr++)
             fprintf (stderr, "%02X", body [char_nbr]);
@@ -577,7 +389,6 @@ kvmsg_test (int verbose)
     //  Test send and receive of simple message
     kvmsg = kvmsg_new (1);
     kvmsg_set_key  (kvmsg, "key");
-    kvmsg_set_uuid (kvmsg);
     kvmsg_set_body (kvmsg, (byte *) "body", 4);
     if (verbose)
         kvmsg_dump (kvmsg);
@@ -589,27 +400,6 @@ kvmsg_test (int verbose)
         kvmsg_dump (kvmsg);
     assert (streq (kvmsg_key (kvmsg), "key"));
     kvmsg_store (&kvmsg, kvmap);
-
-    //  Test send and receive of message with properties
-    kvmsg = kvmsg_new (2);
-    kvmsg_set_prop (kvmsg, "prop1", "value1");
-    kvmsg_set_prop (kvmsg, "prop2", "value1");
-    kvmsg_set_prop (kvmsg, "prop2", "value2");
-    kvmsg_set_key  (kvmsg, "key");
-    kvmsg_set_uuid (kvmsg);
-    kvmsg_set_body (kvmsg, (byte *) "body", 4);
-    assert (streq (kvmsg_get_prop (kvmsg, "prop2"), "value2"));
-    if (verbose)
-        kvmsg_dump (kvmsg);
-    kvmsg_send (kvmsg, output);
-    kvmsg_destroy (&kvmsg);
-
-    kvmsg = kvmsg_recv (input);
-    if (verbose)
-        kvmsg_dump (kvmsg);
-    assert (streq (kvmsg_key (kvmsg), "key"));
-    assert (streq (kvmsg_get_prop (kvmsg, "prop2"), "value2"));
-    kvmsg_destroy (&kvmsg);
 
     //  Shutdown and destroy all objects
     zhash_destroy (&kvmap);

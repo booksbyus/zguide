@@ -1,9 +1,9 @@
 //
-//  Clone client Model Four
+//  Clone client Model Five
 //
 
 //  Lets us build this source without creating a library
-#include "kvsimple.c"
+#include "kvmsg.c"
 
 #define SUBTREE "/client/"
 
@@ -68,6 +68,7 @@ int main (void)
             kvmsg_t *kvmsg = kvmsg_new (0);
             kvmsg_fmt_key  (kvmsg, "%s%d", SUBTREE, randof (10000));
             kvmsg_fmt_body (kvmsg, "%d", randof (1000000));
+            kvmsg_set_prop (kvmsg, "ttl", "%d", randof (30));
             kvmsg_send     (kvmsg, publisher);
             kvmsg_destroy (&kvmsg);
             alarm = zclock_time () + 1000;

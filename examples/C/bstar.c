@@ -90,6 +90,13 @@ s_execute_fsm (bstar_t *self)
             if (self->slave_fn)
                 (self->slave_fn) (self->loop, NULL, self->slave_arg);
         }
+        else
+        if (self->event == CLIENT_REQUEST) {
+            zclock_log ("I: request from client, ready as master");
+            self->state = STATE_ACTIVE;
+            if (self->master_fn)
+                (self->master_fn) (self->loop, NULL, self->master_arg);
+        }
     }
     else
     //  Backup server is waiting for peer to connect
@@ -189,8 +196,10 @@ int s_voter_ready (zloop_t *loop, void *socket, void *arg)
     bstar_t *self = (bstar_t *) arg;
     //  If server can accept input now, call appl handler
     self->event = CLIENT_REQUEST;
-    if (s_execute_fsm (self) == 0)
+    if (s_execute_fsm (self) == 0) {
+        puts ("CLIENT REQUEST");
         (self->voter_fn) (self->loop, socket, self->voter_arg);
+    }
     else {
         //  Destroy waiting message, no-one to read it
         zmsg_t *msg = zmsg_recv (socket);
