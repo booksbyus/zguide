@@ -1176,7 +1176,7 @@ A more robust model could be:
 
 +++ Zero Copy
 
-We teased you in Chapter One, when you were still a 0MQ newbie, about zero-copy. If you survived this far, you are probabably ready to use zero-copy. However, remember that there are many roads to Hell, and premature optimization is not the most enjoyable nor profitable one, by far. In English, trying to do zero-copy properly while your architecture is not perfect is a waste of time and will make things worse, not better.
+We teased you in Chapter One, when you were still a 0MQ newbie, about zero-copy. If you survived this far, you are probably ready to use zero-copy. However, remember that there are many roads to Hell, and premature optimization is not the most enjoyable nor profitable one, by far. In English, trying to do zero-copy properly while your architecture is not perfect is a waste of time and will make things worse, not better.
 
 0MQ's message API lets you can send and receive messages directly from and to application buffers without copying data. Given that 0MQ sends messages in the background, zero-copy needs some extra sauce.
 

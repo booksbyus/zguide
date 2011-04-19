@@ -43,7 +43,17 @@ It sounds ridiculously simple. And maybe it is. That's kind of the whole point.
 
 +++ Some Assumptions
 
-We assume you are using the latest release of 0MQ, or even the current git master. We assume you are using a Linux box or something similar. We assume you can read C code, more or less, that's the default language for the examples. We assume that when we write constants like PUSH or SUBSCRIBE you can imagine they are really called ZMQ_PUSH or ZMQ_SUBSCRIBE if the programming language needs it.
+We assume you are using the latest stable release of 0MQ. We assume you are using a Linux box or something similar. We assume you can read C code, more or less, that's the default language for the examples. We assume that when we write constants like PUSH or SUBSCRIBE you can imagine they are really called ZMQ_PUSH or ZMQ_SUBSCRIBE if the programming language needs it.
+
++++ Getting the Examples
+
+The Guide examples live in the Guide's [https://github.com/imatix/zguide git repository]. The simplest way to get all the examples is to clone this repository:
+
+[[code]]
+git clone git://github.com/imatix/zguide.git
+[[/code]]
+
+And then browse the examples subdirectory. You'll find examples by language. If there are examples missing in a language you use, you're encouraged to [http://zguide.zeromq.org/main:translate submit a translation]. This is how the Guide became so useful, thanks to the work of many people.
 
 +++ Ask and Ye Shall Receive
 
@@ -262,6 +272,8 @@ Some points about the publish-subscribe pattern:
 * If a publisher has no connected subscribers, then it will simply drop all messages.
 
 * If you're using TCP, and a subscriber is slow, messages will queue up on the publisher. We'll look at how to protect publishers against this, using the "high-water mark" later.
+
+* In the current versions of 0MQ, filtering happens at the subscriber side, not the publisher side. This means, over TCP, that a publisher will send all messages to all subscribers, which will then drop messages they don't want.
 
 This is how long it takes to receive and filter 10M messages on my box, which is an Intel 4 core Q8300, fast but nothing special:
 
