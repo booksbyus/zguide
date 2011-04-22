@@ -1,4 +1,8 @@
+%% 
 %% Task sink
+%% Binds to tcp://*:5558 and tcp://*:5559. Receives results from workers and send kill signal when job finished
+%% Mikhail Kulemin <mihkulemin@gmail.com>
+%%
 
 -module(tasksink2).
 -export([run/0]).

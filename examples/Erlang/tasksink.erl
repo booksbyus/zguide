@@ -1,4 +1,8 @@
+%% 
 %% Task sink
+%% Binds to tcp://*:5558 and receives results from workers
+%% Mikhail Kulemin <mihkulemin@gmail.com>
+%%
 
 -module(tasksink).
 -export([run/0]).

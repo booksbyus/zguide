@@ -1,4 +1,9 @@
-% Task worker
+%%
+%% Task worker
+%% Connects to ventilator on tcp://localhost:5557 and sink on tcp://localhost:5558
+%% Receives task and push result to sink
+%% Mikhail Kulemin <mihkulemin@gmail.com>
+%%
 
 -module(taskwork).
 -export([run/0]).

@@ -1,4 +1,9 @@
-% Task worker
+%%
+%% Task worker
+%% Connects to ventilator on tcp://localhost:5557, sink on tcp://localhost:5558 and subscribe to tcp://localhost:5559
+%% Receives task and push result to sink. Terminate when receives <<"KILL">> message from sink
+%% Mikhail Kulemin <mihkulemin@gmail.com>
+%%
 
 -module(taskwork2).
 -export([run/0]).

@@ -1,4 +1,8 @@
+%%
 %% "Hello world" client example.
+%% Connects to tcp://localhost:5555, sent <<"Hello">> and receives reply from server
+%% Mikhail Kulemin <mihkulemin@gmail.com>
+%%
 -module(hwclient).
 -export([run/0]).
 

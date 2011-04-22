@@ -1,4 +1,9 @@
+%%
 %% Task ventilator
+%% Binds to tcp://localhost:5557 and sends tasks to workers
+%% Mikhail Kulemin <mihkulemin@gmail.com>
+%% 
+
 -module(taskvent).
 -export([run/0]).
 
