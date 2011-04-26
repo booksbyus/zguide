@@ -736,14 +736,14 @@ Replacing 22 lines of code with four is a good deal, especially since the result
 
 * //Proper handling of Ctrl-C.// We already saw how to catch an interrupt. It would be useful if this happened in all applications.
 
-Turning this wishlist into reality gives us [http://zero.mq/c libzapi], a high-level C API for 0MQ. This high-level binding in fact developed out of earlier versions of the Guide. It combines nicer semantics for working with 0MQ with some portability layers, and (importantly for C but less for other languages) containers like hashes and lists.
+Turning this wishlist into reality gives us [http://zero.mq/c czmq], a high-level C API for 0MQ. This high-level binding in fact developed out of earlier versions of the Guide. It combines nicer semantics for working with 0MQ with some portability layers, and (importantly for C but less for other languages) containers like hashes and lists.
 
-Here is the LRU queue broker rewritten to use libzapi:
+Here is the LRU queue broker rewritten to use czmq:
 
-[[code type="example" title="LRU queue broker using libzapi" name="lruqueue2"]]
+[[code type="example" title="LRU queue broker using czmq" name="lruqueue2"]]
 [[/code]]
 
-One thing libzapi provides is clean interrupt handling. This means that Ctrl-C will cause any blocking 0MQ call to exit with a return code -1 and errno set to EINTR. The libzapi message recv methods return NULL in such case. So, you can cleanly exit a loop like this:
+One thing czmq provides is clean interrupt handling. This means that Ctrl-C will cause any blocking 0MQ call to exit with a return code -1 and errno set to EINTR. The czmq message recv methods return NULL in such case. So, you can cleanly exit a loop like this:
 
 [[code language="C"]]
     while (1) {
@@ -765,7 +765,7 @@ Or, if you're doing zmq_poll, test on the return code:
         break;              //  Interrupted
 [[/code]]
 
-The previous example still uses zmq_poll[3]. So how about reactors? The libzapi {{zloop}} reactor is simple but functional. It lets you:
+The previous example still uses zmq_poll[3]. So how about reactors? The czmq {{zloop}} reactor is simple but functional. It lets you:
 
 * Set a reader on any socket, i.e. code that is called whenever the socket has input.
 * Cancel a reader on a socket.

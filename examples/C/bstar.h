@@ -26,7 +26,7 @@
 #ifndef __BSTAR_H_INCLUDED__
 #define __BSTAR_H_INCLUDED__
 
-#include "zapi.h"
+#include "czmq.h"
 
 //  Arguments for constructor
 #define BSTAR_PRIMARY   1

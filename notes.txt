@@ -1,6 +1,11 @@
 
 Notes for The Guide
 
+- pubsub ordering
+    - N-to-N ordering guarantees
+    - single-stream using a broker
+
+
 - collection of patterns
     Least Recently Used
     Asynchronous Client-Server

@@ -29,7 +29,7 @@
 #ifndef __MDWRKAPI_H_INCLUDED__
 #define __MDWRKAPI_H_INCLUDED__
 
-#include "zapi.h"
+#include "czmq.h"
 #include "mdp.h"
 
 #ifdef __cplusplus

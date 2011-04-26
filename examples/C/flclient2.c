@@ -2,7 +2,7 @@
 //  Freelance client - Model 2
 //  Uses DEALER socket to blast one or more services
 //
-#include "zapi.h"
+#include "czmq.h"
 
 //  If not a single service replies within this time, give up
 #define GLOBAL_TIMEOUT 2500

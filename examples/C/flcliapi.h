@@ -27,7 +27,7 @@
 #ifndef __FLCLIAPI_INCLUDED__
 #define __FLCLIAPI_INCLUDED__
 
-#include "zapi.h"
+#include "czmq.h"
 
 //  We design our client API as a class
 

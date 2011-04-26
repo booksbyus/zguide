@@ -1,7 +1,7 @@
 //
 //  Binary Star client
 //
-#include "zapi.h"
+#include "czmq.h"
 
 #define REQUEST_TIMEOUT     1000    //  msecs
 #define SETTLE_DELAY        2000    //  Before failing over

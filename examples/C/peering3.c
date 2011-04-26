@@ -6,7 +6,7 @@
 //  it easier to start and stop the example. Each thread has its own
 //  context and conceptually acts as a separate process.
 //
-#include "zapi.h"
+#include "czmq.h"
 
 #define NBR_CLIENTS 10
 #define NBR_WORKERS 5

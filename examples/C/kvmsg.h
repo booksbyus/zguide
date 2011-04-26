@@ -26,7 +26,7 @@
 #ifndef __KVMSG_H_INCLUDED__
 #define __KVMSG_H_INCLUDED__
 
-#include "zapi.h"
+#include "czmq.h"
 
 //  Opaque class structure
 typedef struct _kvmsg kvmsg_t;

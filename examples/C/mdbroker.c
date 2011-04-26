@@ -2,7 +2,7 @@
 //  Majordomo Protocol broker
 //  A minimal implementation of http://rfc.zeromq.org/spec:7 and spec:8
 //
-#include "zapi.h"
+#include "czmq.h"
 #include "mdp.h"
 
 //  We'd normally pull these from config data

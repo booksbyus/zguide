@@ -2,7 +2,7 @@
 //  Freelance server - Model 3
 //  Uses an ROUTER/ROUTER socket but just one thread
 //
-#include "zapi.h"
+#include "czmq.h"
 
 int main (int argc, char *argv [])
 {

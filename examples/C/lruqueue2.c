@@ -1,12 +1,12 @@
 //
 //  Least-recently used (LRU) queue device
-//  Demonstrates use of the libzapi API
+//  Demonstrates use of the libczmq API
 //
 //  While this example runs in a single process, that is just to make
 //  it easier to start and stop the example. Each thread has its own
 //  context and conceptually acts as a separate process.
 //
-#include "zapi.h"
+#include "czmq.h"
 
 #define NBR_CLIENTS 10
 #define NBR_WORKERS 3

@@ -952,7 +952,7 @@ These are the main limitations of the Binary Star pattern:
 
 ++++ Binary Star Reactor
 
-Binary Star is useful and generic enough to package up as a reusable reactor class. In C we wrap the libzapi {{zloop}} class, though your milage may vary in other languages. Here is the {{bstar}} interface in C:
+Binary Star is useful and generic enough to package up as a reusable reactor class. In C we wrap the czmq {{zloop}} class, though your milage may vary in other languages. Here is the {{bstar}} interface in C:
 
 [[code language="C"]]
 //  Create a new Binary Star instance, using local (bind) and

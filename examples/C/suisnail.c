@@ -1,7 +1,7 @@
 //
 //  Suicidal Snail
 //
-#include "zapi.h"
+#include "czmq.h"
 
 //  ---------------------------------------------------------------------
 //  This is our subscriber

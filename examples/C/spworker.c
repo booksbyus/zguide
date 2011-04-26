@@ -3,7 +3,7 @@
 //  Connects REQ socket to tcp://*:5556
 //  Implements worker part of LRU queueing
 //
-#include "zapi.h"
+#include "czmq.h"
 #define LRU_READY   "\001"      //  Signals worker is ready
 
 int main (void)

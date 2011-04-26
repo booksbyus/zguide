@@ -2,7 +2,7 @@
 //  Freelance server - Model 1
 //  Trivial echo service
 //
-#include "zapi.h"
+#include "czmq.h"
 
 int main (int argc, char *argv [])
 {

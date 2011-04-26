@@ -2,7 +2,7 @@
 //  Broker peering simulation (part 1)
 //  Prototypes the state flow
 //
-#include "zapi.h"
+#include "czmq.h"
 
 int main (int argc, char *argv [])
 {

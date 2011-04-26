@@ -5,7 +5,7 @@
 //  it easier to start and stop the example. Client thread signals to
 //  main when it's ready.
 //
-#include "zapi.h"
+#include "czmq.h"
 
 static void
 client_task (void *args, zctx_t *ctx, void *pipe)

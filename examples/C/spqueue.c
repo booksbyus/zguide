@@ -3,7 +3,7 @@
 //  This is identical to the LRU pattern, with no reliability mechanisms
 //  at all. It depends on the client for recovery. Runs forever.
 //
-#include "zapi.h"
+#include "czmq.h"
 
 #define LRU_READY   "\001"      //  Signals worker is ready
 

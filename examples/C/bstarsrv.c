@@ -1,7 +1,7 @@
 //
 //  Binary Star server
 //
-#include "zapi.h"
+#include "czmq.h"
 
 //  We send state information every this often
 //  If peer doesn't respond in two heartbeats, it is 'dead'
