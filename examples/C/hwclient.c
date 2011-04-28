@@ -21,7 +21,7 @@ int main (void)
     for (request_nbr = 0; request_nbr != 10; request_nbr++) {
         zmq_msg_t request;
         zmq_msg_init_size (&request, 5);
-        memcmp (zmq_msg_data (&request), "Hello", 5);
+        memcpy (zmq_msg_data (&request), "Hello", 5);
         printf ("Sending Hello %d...\n", request_nbr);
         zmq_send (requester, &request, 0);
         zmq_msg_close (&request);
