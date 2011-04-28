@@ -118,7 +118,7 @@ class MDCli {
 			 //  Poll socket for a reply, with timeout
 			$poll = new ZMQPoll();
 			$poll->add($this->client, ZMQ::POLL_IN);
-			$events = $poll->poll($read, $write, $this->timeout * 1000);
+			$events = $poll->poll($read, $write, $this->timeout * ZMQ_POLL_MSEC);
 			
 			//  If we got a reply, process it
 			if($events) {
