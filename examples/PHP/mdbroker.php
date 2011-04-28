@@ -166,9 +166,10 @@ class Mdbroker {
         //  Remove & save client return envelope and insert the
         //  protocol header and service name, then rewrap envelope        
         $client = $msg->unwrap();
+        $msg->push($frame);
         $msg->push(MDPC_CLIENT);
         $msg->wrap($client, "");
-        $msg->set_socket($this->socket);
+        $msg->set_socket($this->socket)->send();
     }
     
     /**
@@ -291,7 +292,7 @@ class Mdbroker {
         
         //  Set reply return address to client sender
         $msg->wrap($sender, "");
-        if($msg->parts() >= 4 && substr($service_frame, 0, 4) == 'mmi.') {
+        if(substr($service_frame, 0, 4) == 'mmi.') {
             $this->service_internal($service_frame, $msg);
         } else {
             $this->service_dispatch($service, $msg);
