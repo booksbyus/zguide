@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-int main (void) 
+int main (void)
 {
     void *context = zmq_init (1);
 
@@ -20,7 +20,8 @@ int main (void)
     int request_nbr;
     for (request_nbr = 0; request_nbr != 10; request_nbr++) {
         zmq_msg_t request;
-        zmq_msg_init_data (&request, "Hello", 5, NULL, NULL);
+        zmq_msg_init_size (&request, 5);
+        memcmp (zmq_msg_data (&request), "Hello", 5);
         printf ("Sending Hello %d...\n", request_nbr);
         zmq_send (requester, &request, 0);
         zmq_msg_close (&request);

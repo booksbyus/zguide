@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <string.h>
 
-int main (void) 
+int main (void)
 {
     void *context = zmq_init (1);
 
@@ -29,7 +29,8 @@ int main (void)
 
         //  Send reply back to client
         zmq_msg_t reply;
-        zmq_msg_init_data (&reply, "World", 5, NULL, NULL);
+        zmq_msg_init_size (&request, 5);
+        memcmp (zmq_msg_data (&request), "World", 5);
         zmq_send (responder, &reply, 0);
         zmq_msg_close (&reply);
     }
