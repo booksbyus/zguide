@@ -30,6 +30,8 @@
    @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
 */
 
+define("ZMQ_POLL_MSEC", 1000);
+
 class Zmsg {
 	const NOCLEAR = 2;
 	
@@ -140,6 +142,24 @@ class Zmsg {
 	 */
 	public function parts() {
 		return count($this->_parts);
+	}
+	
+    /**
+     * Return the last part of the message
+     *
+     * @return string
+     */
+	public function last() {
+	    return $this->_parts[count($this->_parts)-1];
+	}
+	
+	/**
+	 * Set the last part of the message
+	 *
+	 * @param string $set 
+	 */
+	public function set_last($set) {
+	    $this->_parts[count($this->_parts)-1] = $set;
 	}
 	
 	/**
