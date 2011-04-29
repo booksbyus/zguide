@@ -29,8 +29,8 @@ int main (void)
 
         //  Send reply back to client
         zmq_msg_t reply;
-        zmq_msg_init_size (&request, 5);
-        memcpy (zmq_msg_data (&request), "World", 5);
+        zmq_msg_init_size (&reply, 5);
+        memcpy (zmq_msg_data (&reply), "World", 5);
         zmq_send (responder, &reply, 0);
         zmq_msg_close (&reply);
     }
