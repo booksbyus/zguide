@@ -22,9 +22,10 @@ function client_task() {
 	
 	echo "Synchronous round-trip test...", PHP_EOL;
 	$start = microtime(true);
+	$text = "HELLO";
 	for($requests = 0; $requests < 10000; $requests++) {
-		$client->send("HELLO");
-		$msg = $client->recv();
+		$client->send($text);
+	    $msg = $client->recv();
 	}
 	printf (" %d calls/second%s",
 		(1000 * 10000) / (int) ((microtime(true) - $start) * 1000), 
@@ -33,7 +34,7 @@ function client_task() {
 	echo "Asynchronous round-trip test...", PHP_EOL;
 	$start = microtime(true);
 	for($requests = 0; $requests < 100000; $requests++) {
-		$client->send("HELLO");
+		$client->send($text);
 	}
 	
 	for($requests = 0; $requests < 100000; $requests++) {
@@ -51,7 +52,6 @@ function worker_task() {
 	$worker = new ZMQSocket($context, ZMQ::SOCKET_XREQ);
 	$worker->setSockOpt(ZMQ::SOCKOPT_IDENTITY, "W");
 	$worker->connect("tcp://localhost:5556");
-	
 	while(true) {
 		$zmsg = new Zmsg($worker);
 		$zmsg->recv();
@@ -72,7 +72,6 @@ function broker_task() {
 	$poll->add($frontend, ZMQ::POLL_IN);
 	$poll->add($backend, ZMQ::POLL_IN);
 	$read = $write = array();
-	
 	while(true) {
 		$events = $poll->poll($read, $write);
 		foreach($read as $socket) {
@@ -94,12 +93,14 @@ function broker_task() {
 $wpid = pcntl_fork();
 if($wpid == 0) {
 	worker_task();
+	exit;
 }
 $bpid = pcntl_fork();
 if($bpid == 0) {
 	broker_task();
+	exit;
 }
-
+sleep(1);
 client_task();
 posix_kill($wpid, SIGKILL);
 posix_kill($bpid, SIGKILL);
