@@ -150,7 +150,7 @@ class Zmsg {
      * @return string
      */
 	public function last() {
-	    return $this->_parts[count($this->_parts)-1];
+		return $this->_parts[count($this->_parts)-1];
 	}
 	
 	/**
@@ -159,7 +159,7 @@ class Zmsg {
 	 * @param string $set 
 	 */
 	public function set_last($set) {
-	    $this->_parts[count($this->_parts)-1] = $set;
+		$this->_parts[count($this->_parts)-1] = $set;
 	}
 	
 	/**
@@ -333,8 +333,54 @@ class Zmsg {
 		$part = $zmsgi->pop();
 		$result &= assert ($part == "World");
 		$result &= assert($zmsgi->parts() == 0);
-	
+
+		// Test load and save
+		$zmsg = new Zmsg();
+		$zmsg->body_set("Hello");
+		$zmsg->wrap("address1", "");
+		$zmsg->wrap("address2");
+		$result &= assert($zmsg->parts() == 4);
+		$fh = fopen(sys_get_temp_dir() . "/zmsgtest.zmsg", 'w');
+		$zmsg->save($fh);
+		fclose($fh);
+		$fh = fopen(sys_get_temp_dir() . "/zmsgtest.zmsg", 'r');
+		$zmsg2 = new Zmsg();
+		$zmsg2->load($fh);
+		assert($zmsg2->last() == $zmsg->last());
+		fclose($fh);
+		$result &= assert($zmsg2->parts() == 4);
 		echo ($result ? "OK" : "FAIL"), PHP_EOL;
+		
 		return $result;
+	}
+	
+	/**
+	 * Save a msg to a file
+	 *
+	 * @param filehandle $fh 
+	 * @return this
+	 */
+	public function save($fh) {
+		foreach($this->_parts as $part) {
+			fwrite($fh, chr(strlen($part)));
+			if(strlen($part) > 0) {
+				fwrite($fh, $part);
+			}
+		}
+		return $this;
+	}
+	
+	/**
+	 * Load a message saved with the save function
+	 *
+	 * @param filehandle $fh 
+	 * @return this
+	 */
+	public function load($fh) {
+		while(!feof($fh) && $size = fread($fh, 1)) {
+			$this->_parts[] = ord($size) > 0 ? fread($fh, ord($size)) : ''; 
+		}
+	    
+		return $this;
 	}
 }

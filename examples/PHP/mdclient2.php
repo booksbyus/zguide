@@ -5,7 +5,7 @@
  * 
  * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
  */
-include "mdcliapi2.php";
+include_once "mdcliapi2.php";
 
 $verbose = $_SERVER['argc'] > 1 && $_SERVER['argv'][1] == '-v';
 $session = new MDCli("tcp://localhost:5555", $verbose);
