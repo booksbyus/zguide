@@ -6,7 +6,7 @@
  * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
  */
 
-include "mdwrkapi.php";
+include_once "mdwrkapi.php";
 
 $verbose = $_SERVER['argc'] > 1 && $_SERVER['argv'][1] == "-v";
 

@@ -28,8 +28,8 @@
  * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
  */
 
-include "zmsg.php";
-include "mdp.php";
+include_once "zmsg.php";
+include_once "mdp.php";
 
 //  Reliability parameters
 define("HEARTBEAT_LIVENESS", 3); //  3-5 is reasonable
