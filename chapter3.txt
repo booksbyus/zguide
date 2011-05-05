@@ -115,7 +115,7 @@ This is what it looks like for transient sockets:
               |  "My identity is empty"
               v
         /-----------\       +---------+
-        |   ROUTER    |       |  UUID   |     ROUTER invents UUID to
+        |  ROUTER   |       |  UUID   |     ROUTER invents UUID to
         +-----------+       +-+-------+     use as reply address
         |           |       | |
         |  Service  |       +-+-------+
@@ -140,7 +140,7 @@ This is what it looks like for durable sockets:
               |  "Hi, my name is Lucy"
               v
         /-----------\       +---------+
-        |   ROUTER    |       | 'Lucy'  |     ROUTER uses identity of
+        |  ROUTER   |       | 'Lucy'  |     ROUTER uses identity of
         +-----------+       +-+-------+     client as reply address
         |           |       | |
         |  Service  |       +-+-------+

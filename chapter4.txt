@@ -678,7 +678,7 @@ Of course this can and in practice would be wrapped up in some kind of framework
 
 Here's the Titanic implementation. This server handles the three services using three threads, as proposed. It does full persistence to disk using the most brute-force approach possible: one file per message. It's so simple it's scary, the only complex part is that it keeps a separate 'queue' of all requests to avoid reading the directory over and over:
 
-[[code type="example" title="Titanic client example" name="titanic"]]
+[[code type="example" title="Titanic broker example" name="titanic"]]
 [[/code]]
 
 To test this, start {{mdbroker}} and {{titanic}}, then run {{ticlient}}. Now start {{mdworker}} arbitrarily, and you should see the client getting a response and exiting happily.

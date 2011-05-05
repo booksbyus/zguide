@@ -60,7 +60,8 @@ titanic_request (void *args, zctx_t *ctx, void *pipe)
     zmsg_t *reply = NULL;
 
     while (TRUE) {
-        //  Get next request from broker
+        //  Send reply if it's not null
+        //  And then get next request from broker
         zmsg_t *request = mdwrk_recv (worker, &reply);
         if (!request)
             break;      //  Interrupted, exit
@@ -84,6 +85,7 @@ titanic_request (void *args, zctx_t *ctx, void *pipe)
         zmsg_send (&reply, pipe);
 
         //  Now send UUID back to client
+        //  Done by the mdwrk_recv() at the top of the loop
         reply = zmsg_new ();
         zmsg_addstr (reply, "200");
         zmsg_addstr (reply, uuid);
