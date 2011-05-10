@@ -3,7 +3,7 @@
 -- Binds REP socket to tcp://*:5555
 -- Sends "Hello" to server, expects "World" back
 -- 
--- Transliterated to Haskell by Gergo Erdi <gergo@erdi.hu>
+-- Translated to Haskell by ERDI Gergo http://gergo.erdi.hu/
 
 module Main where
 

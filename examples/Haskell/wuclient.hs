@@ -3,7 +3,7 @@
 -- Binds SUB socket to tcp://localhost:5556
 -- Collects weather updates and finds avg temp in zipcode
 -- 
--- Transliterated to Haskell by Gergo Erdi <gergo@erdi.hu>
+-- Translated to Haskell by ERDI Gergo http://gergo.erdi.hu/
 
 module Main where
 

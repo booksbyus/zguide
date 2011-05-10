@@ -3,7 +3,7 @@
 -- Binds PUB socket to tcp://*:5556
 -- Publishes random weather updates
 -- 
--- Transliterated to Haskell by Gergo Erdi <gergo@erdi.hu>
+-- Translated to Haskell by ERDI Gergo http://gergo.erdi.hu/
 
 module Main where
 
