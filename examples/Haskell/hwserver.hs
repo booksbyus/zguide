@@ -10,7 +10,7 @@ module Main where
 import System.ZMQ
 import Control.Monad (forever)
 import Data.ByteString.Char8 (pack, unpack)
-import System.Posix (sleep)
+import Control.Concurrent (threadDelay)
 
 main = withContext 1 $ \context -> do  
   putStrLn "Starting Hello World server"
@@ -22,7 +22,7 @@ main = withContext 1 $ \context -> do
       message <- receive socket []
       putStrLn $ unwords ["Received request:", unpack message]    
     
-      -- Simulate doing some 'work'
-      sleep 5
+      -- Simulate doing some 'work' for 1 second
+      threadDelay (1 * 1000 * 1000)
 
       send socket (pack "World") []
