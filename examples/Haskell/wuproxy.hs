@@ -23,9 +23,10 @@ main = withContext 1 $ \context -> do
       -- Subscribe on everything
       
       -- Shunt messages out to our own subscribers
-      forever $ do
-        fix $ \loop -> do
-          message <- receive frontend []
-          more <- moreToReceive frontend
-          send backend message [SndMore | more]
-          when more loop
+      forever $ proxy frontend backend
+
+proxy from to = fix $ \loop -> do
+  message <- receive from []
+  more <- moreToReceive from
+  send to message [SndMore | more]
+  when more loop
