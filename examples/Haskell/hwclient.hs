@@ -1,6 +1,6 @@
 -- |
 -- Hello World client in Haskell
--- Binds REP socket to tcp://*:5555
+-- Binds REQ socket to tcp://localhost:5555
 -- Sends "Hello" to server, expects "World" back
 -- 
 -- Translated to Haskell by ERDI Gergo http://gergo.erdi.hu/
