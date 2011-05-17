@@ -43,7 +43,7 @@ srand();
 my $total_msec = 0;     # Total expected cost in msecs
 for (1 .. 100) {
     # Random workload from 1 to 100msecs
-    my $workload = within(100) + 1;
+    my $workload = within(100);
     $total_msec += $workload;
     $sender->send($workload);
 }
