@@ -3,7 +3,7 @@
 #   Converts a pygment bb output file to Wikidot markup
 #   Used to create syntax-colored listings without HTML
 #
-$/ = undef; 
+$/ = undef;
 $_ = <>;
 
 #   [/i][/color] often comes at start of next line for some reason
@@ -14,12 +14,13 @@ s/\n\[\/color\]/[\/color]\n/mg;
 s/\/(\/+)/\@\@\/$1\@\@/mg;
 s/\*(\*+)/\@\@*$1\@\@/mg;
 s/\-(\-+)/\@\@\-$1\@\@/mg;
+s/\_(\_+)/\@\@\_$1\@\@/mg;
 s/>>/\@\@>>\@\@/mg;
 s/<</\@\@<<\@\@/mg;
 
-#   Replace spaces with Unicode non-breaking space
-s/ / /mg;
-s/\t/    /mg;
+#   Replace spaces with non-breaking space sequence
+s/\t/    /mg;
+s/([ ]+)/{{\@\@$1\@\@}}/mg;
 
 #   Replace [color] on multiple lines
 s/\[color=#(......)\]/[[span style="color:#$1"]]/mg;
