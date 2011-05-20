@@ -4,7 +4,7 @@ import org.zeromq.ZMQ.Socket;
 
 /**
  * Synchronized subscriber.
- * 
+ *
  * Christophe Huntzinger <chuntzin_at_wanadoo.fr>
  *
  */
@@ -19,7 +19,7 @@ public class SyncSub{
 
 		//  Second, synchronize with publisher
 		Socket syncclient = context.socket(ZMQ.REQ);
-		subscriber.connect("tcp://localhost:5562");
+		syncclient.connect("tcp://localhost:5562");
 
 		//  - send a synchronization request
 		syncclient.send("".getBytes(), 0);
