@@ -36,14 +36,11 @@ say 'Sending tasks to workers...';
 # The first message is "0" and signals start of batch
 $sender->send('0');
 
-# Initialize random number generator
-srand();
-
 # Send 100 tasks
 my $total_msec = 0;     # Total expected cost in msecs
 for (1 .. 100) {
     # Random workload from 1 to 100msecs
-    my $workload = within(100) + 1;
+    my $workload = within(100);
     $total_msec += $workload;
     $sender->send($workload);
 }
