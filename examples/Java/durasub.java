@@ -30,14 +30,4 @@ public class durasub {
       System.out.println(msg);
     }
   }
-
 }
-socket
-    ZMQ.Socket subscriber = context.socket(ZMQ.SUB);
-
-    // Synchronize with the publisher
-    ZMQ.Socket sync = context.socket(ZMQ.PUSH);
-
-    subscriber.subscribe("".getBytes());
-    subscriber.connect("tcp://localhost:5565");
-    sync.connect("tcp://lo
