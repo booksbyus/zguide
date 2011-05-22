@@ -21,7 +21,7 @@ use Digest::SHA1 qw(sha1_hex);
 
 @languages = ('Ada', 'Basic', 'C', 'C++', 'C#', 'CL', 'Erlang', 'Go',
               'Haskell', 'Java', 'Lua', 'Node.js', 'Objective-C',
-              'ooc', 'Perl', 'PHP', 'Python', 'Ruby');
+              'ooc', 'Perl', 'PHP', 'Python', 'Ruby', 'Scala');
 %extension = ('Ada' => 'ada',
               'Basic' => 'bas',
               'C' => 'c',
@@ -40,7 +40,8 @@ use Digest::SHA1 qw(sha1_hex);
               'PHP' => 'php',
               'Python' => 'py',
               'Racket' => 'rkt',
-              'Ruby' => 'rb' );
+              'Ruby' => 'rb',
+              'Scala' => 'scala' );
 
 $source = $ENV {'Z2W_LANG'} || "C";
 printf "Generating $source version of Guide...\n";
