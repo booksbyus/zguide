@@ -1,6 +1,7 @@
 import org.zeromq.ZMQ;
 
-public class Version
+// Lower case to match guide file naming convention
+public class version
 {
 
   public static void main ( final String[] args )
