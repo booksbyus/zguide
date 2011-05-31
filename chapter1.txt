@@ -57,6 +57,8 @@ git clone git://github.com/imatix/zguide.git
 
 And then browse the examples subdirectory. You'll find examples by language. If there are examples missing in a language you use, you're encouraged to [http://zguide.zeromq.org/main:translate submit a translation]. This is how the Guide became so useful, thanks to the work of many people.
 
+All examples are licensed under MIT/X11, unless otherwise specified in the source code.
+
 +++ Ask and Ye Shall Receive
 
 So let's start with some code. We start of course with a Hello World example. We'll make a client and a server. The client sends "Hello" to the server, which replies with "World". Here's the server in C, which opens a 0MQ socket on port 5555, reads requests on it, and replies with "World" to each request:
