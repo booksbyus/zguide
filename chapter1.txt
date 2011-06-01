@@ -5,7 +5,7 @@
 .set LIST=http://lists.zeromq.org/mailman/listinfo/zeromq-dev
 
 .output chapter1.wd
-**By Pieter Hintjens <ph@imatix.com>, CEO iMatix Corporation.** 
+**By Pieter Hintjens <ph@imatix.com>, CEO iMatix Corporation.**
 
 With thanks to Bill Desmarais, Brian Dorsey, CAF, Daniel Lin, Eric Desgranges, Gonzalo Diethelm, Guido Goldstein, Hunter Ford, Kamil Shakirov, Martin Sustrik, Mike Castleman, Naveen Chawla, Nicola Peduzzi, Oliver Smith, Olivier Chamoux, Peter Alexander, Pierre Rouleau, Randy Dryburgh, John Unwin, Alex Thomas, Mihail Minkov, Jeremy Avnet, Michael Compton, Kamil Kisiel, Mark Kharitonov, Guillaume Aubert, Ian Barber, Mike Sheridan, Faruk Akgul, Oleg Sidorov, Lev Givon, Allister MacLeod, Alexander D'Archangel, Andreas Hoelzlwimmer, Han Holl, Robert G. Jakabosky, Felipe Cruz, Marcus McCurdy, Mikhail Kulemin, and Zed Shaw for their contributions, and to Stathis Sideris for [http://www.ditaa.org Ditaa].
 
@@ -543,9 +543,11 @@ If you're using the fork() system call, each process needs its own context. If y
 
 +++ Making a Clean Exit
 
-Classy programmers share the same motto as classy hit men: always clean up after yourself. When you use 0MQ in a language like Python, stuff gets automatically freed for you. But when using C you must carefully free objects when you're finished with them, or you get memory leaks, unstable applications, and generally bad karma.
+Classy programmers share the same motto as classy hit men: always clean-up when you finish the job. When you use 0MQ in a language like Python, stuff gets automatically freed for you. But when using C you have to carefully free objects when you're finished with them, or you get memory leaks, unstable applications, and generally bad karma.
 
-The 0MQ objects we need to worry about are messages, sockets, and contexts. Luckily it's quite simple:
+Memory leaks is one thing, but 0MQ is quite finicky about how you exit an application. The reasons are technical and painful but the upshot is that if you leave any sockets open, the zmq_term[3] function will hang forever. And even if you close all sockets, zmq_term[3] will by default wait forever if there are pending connects or sends. Unless you set the LINGER to zero on those sockets before closing them.
+
+The 0MQ objects we need to worry about are messages, sockets, and contexts. Luckily it's quite simple, at least in simple programs:
 
 * Always close a message the moment you are done with it, using zmq_msg_close[3].
 
@@ -553,7 +555,13 @@ The 0MQ objects we need to worry about are messages, sockets, and contexts. Luck
 
 * When you exit the program, close your sockets and then call zmq_term[3]. This destroys the context.
 
-Calling zmq_term[3] while you have open sockets will cause 0MQ to hang forever. It's a bug that's caused some controversey but hopefully will be fixed. Just be sure to close all your sockets before calling zmq_term.
+If you're doing multithreaded work, it gets rather more complex than this. We'll get to multithreading in the next chapter, but because some of you will, despite warnings, will try to run before you can safely walk, below is the quick and dirty guide to making a clean exit in a //multithreaded// 0MQ application.
+
+[[collapsible show="Yes, hurt my brain" hide="Enough, enough"]]
+First, do not try to use the same socket from multiple threads. No, don't explain why you think this would be excellent fun, just please don't do it. Next, relingerfy and close all sockets, and terminate the context in the main thread. Lastly, this'll cause any blocking receives or polls or sends in attached threads (i.e. which share the same context) to return with an error. Catch that, and then relingerize and close sockets in //that// thread, and exit. Do not terminate the same context twice. The zmq_term in the main thread will block until all sockets it knows about are safely closed.
+
+Voila! It's complex and painful enough that any language binding author worth his or her salt will do this automatically and make the socket closing dance unnecessary.
+[[/collapsible]]
 
 +++ Why We Needed 0MQ
 
