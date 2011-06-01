@@ -18,9 +18,9 @@ s/\_(\_+)/\@\@\_$1\@\@/mg;
 s/>>/\@\@>>\@\@/mg;
 s/<</\@\@<<\@\@/mg;
 
-#   Replace spaces with non-breaking space sequence
+#   Replace 2 or more spaces with non-breaking space sequence
 s/\t/    /mg;
-s/([ ]+)/{{\@\@$1\@\@}}/mg;
+s/( [ ]+)/{{\@\@$1\@\@}}/mg;
 
 #   Replace [color] on multiple lines
 s/\[color=#(......)\]/[[span style="color:#$1"]]/mg;
