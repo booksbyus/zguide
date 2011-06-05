@@ -63,8 +63,26 @@ upload lua chapter4 "Chapter Four"
 upload lua chapter5 "Chapter Five"
 upload lua all "ØMQ - The Guide - Lua"
 
+export Z2W_LANG=RAW
+echo "[[include raw:chapter1]]"  > all.wd
+echo "[[include raw:chapter2]]" >> all.wd
+echo "[[include raw:chapter3]]" >> all.wd
+echo "[[include raw:chapter4]]" >> all.wd
+echo "[[include raw:chapter5]]" >> all.wd
+bin/z2w chapter*.txt
+upload raw chapter1 "Chapter One"
+upload raw chapter2 "Chapter Two"
+upload raw chapter3 "Chapter Three"
+upload raw chapter4 "Chapter Four"
+upload raw chapter5 "Chapter Five"
+upload raw all "ØMQ - The Guide"
+
+sh ./upload.sh
 rm *.wd wdtemp.txt upload.sh
 
-git add images/ .signatures .cache_* bin/
-git commit -m "Published Guide"
+git add images/ .signatures .cache_*
+git status
+echo -n "Enter commit message, or Ctrl-C: "
+read MESSAGE
+git commit -m "$MESSAGE"
 git push origin master

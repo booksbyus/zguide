@@ -1,0 +1,20 @@
+#! /bin/sh
+#
+#   Generates pretty PDF from raw:all
+#   Requires wkhtmltopdf static install
+#
+/usr/local/bin/wkhtmltopdf \
+    --header-left "ØMQ - The Guide" \
+    --header-right "By Pieter Hintjens, CEO iMatix" \
+    --footer-left "cc-by-sa" \
+    --footer-center "- [page] -" \
+    --footer-right "Printed [date]" \
+    --footer-font-size 10 \
+    --footer-spacing 10 \
+    --header-font-size 10 \
+    --header-spacing 10 \
+    --margin-top 20 \
+    --margin-bottom 20 \
+    --margin-left 20 \
+    --margin-right 20 \
+    http://zguide.zeromq.org/raw:all zguide.pdf
