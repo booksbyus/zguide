@@ -15,22 +15,22 @@ poller = ZMQ::Poller.new
 poller.register(frontend, ZMQ::POLLIN)
 poller.register(backend, ZMQ::POLLIN)
 
-while true
+loop do
   poller.poll(:blocking)
   poller.readables.each do |socket|
     if socket === frontend
-      while true
+      loop do
         message = socket.recv_string
         more = socket.more_parts?
         backend.send_string(message, more ? ZMQ::SNDMORE : 0)
-        break if !more
+        break unless more
       end
     elsif socket === backend
-      while true
+      loop do
         message = socket.recv_string
         more = socket.more_parts?
         frontend.send_string(message, more ? ZMQ::SNDMORE : 0)
-        break if !more
+        break unless more
       end
     end
   end
