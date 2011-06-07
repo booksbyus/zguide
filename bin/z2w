@@ -46,6 +46,12 @@ use Digest::SHA1 qw(sha1_hex);
 $source = $ENV {'Z2W_LANG'} || "C";
 printf "Generating $source version of Guide...\n";
 
+#   Inline action options
+$inline_action = 0;
+$inline_source = 1;
+$inline_collapsed = 2;
+$inline_listing = 3;
+
 #   Ensure all languages have an examples directory
 foreach (@languages) {
     $translations {$_} = 0;
@@ -142,7 +148,7 @@ while (<>) {
             last if /\[\[\/code\]\]/;
             print LISTING $_;
         }
-        process_one_language ("listings", $name, $language, $title, 1);
+        process_one_language ("listings", $name, $language, $title, $inline_listing);
     }
     #  Process named codeblock
     elsif (/\[\[code\s+type=\"example\"\s+title=\"([^"]+)\"\s+name=\"([^"]+)\"(\s+language=\"([^"]+)\")?\]\]/) {
@@ -150,19 +156,24 @@ while (<>) {
         $name = $2;
         $language = $4;
         if ($language) {
-            process_one_language ("examples", $name, $language, $title, 1);
+            process_one_language ("examples", $name, $language, $title, $inline_source);
+        }
+        elsif ($source eq "RAW") {
+            process_one_language ("examples", $name, "C", $title, $inline_source);
         }
         else {
             $actions = "";
             $missing = "";
             #   Show primary language example inline
-            if (process_one_language ("examples", $name, $source, $title, 2)) {
+            if (process_one_language ("examples",
+                $name, $source, $title, $inline_collapsed)) {
                 $translations {$source} += 1;
             }
             #   Show other languages as new tabs
             foreach $language (@languages) {
                 if ($language ne $source) {
-                    if (process_one_language ("examples", $name, $language, $title, 0)) {
+                    if (process_one_language ("examples",
+                        $name, $language, $title, $inline_action)) {
                         $translations {$language} += 1;
                     }
                 }
@@ -230,15 +241,17 @@ while (<>) {
         writeln ($_);
     }
 }
-die "Can't create scoreboard.wd: $!"
-    unless open (SCOREBOARD, ">scoreboard.wd");
-print (SCOREBOARD "||||||~ Translations ($examples in total)||\n");
-foreach $language (@languages) {
-    printf (SCOREBOARD "|| [/$extension{$language}:_start %s] || %3d || %3d%% ||\n",
-        $language, $translations {$language},
-        ($translations {$language} * 100) / $examples);
+if ($source ne "RAW") {
+    die "Can't create scoreboard.wd: $!"
+        unless open (SCOREBOARD, ">scoreboard.wd");
+    print (SCOREBOARD "||||||~ Translations ($examples in total)||\n");
+    foreach $language (@languages) {
+        printf (SCOREBOARD "|| [/$extension{$language}:_start %s] || %3d || %3d%% ||\n",
+            $language, $translations {$language},
+            ($translations {$language} * 100) / $examples);
+    }
+    close (SCOREBOARD);
 }
-close (SCOREBOARD);
 close (OUTPUT);
 close (UPLOAD);
 
@@ -258,20 +271,27 @@ sub writeln {
 
 sub process_one_language {
     local ($directory, $name, $language, $title, $inline) = @_;
+    local $ext = $extension{$language};
 
-    $filename = "$directory/$language/$name.$extension{$language}";
+    $filename = "$directory/$language/$name.$ext";
     if (-f $filename) {
-        if ($inline == 0) {
-            $actions = $actions." | " if $actions;
-            $actions = $actions."[*/$extension{$language}:$name $language]";
+        if ($inline == $inline_source) {
+            writeln ("[[include $ext:$name]]");
+            writeln ("[[>]]");
+            writeln ("//$name.$ext: $title//");
+            writeln ("[[/>]]");
         }
-        elsif ($inline == 1) {
-            writeln ("[[include $extension{$language}:$name]]");
-        }
-        elsif ($inline == 2) {
+        elsif ($inline == $inline_collapsed) {
             writeln ("[[collapsible show=\"$name: $title in $language\" hide=\"$name: $title in $language\"]]");
-            writeln ("[[include $extension{$language}:$name]]");
+            writeln ("[[include $ext:$name]]");
             writeln ("[[/collapsible]]");
+        }
+        elsif ($inline == $inline_action) {
+            $actions = $actions." | " if $actions;
+            $actions = $actions."[*/$ext:$name $language]";
+        }
+        elsif ($inline == $inline_listing) {
+            writeln ("[[include $ext:$name]]");
         }
         if (signature_changed ($filename)) {
             print "Processing $name (in $language)...\n";
@@ -280,7 +300,7 @@ sub process_one_language {
             system ("bin/bb2wd tempfile.bb >examples/$language/$name.wd");
             system ("rm tempfile.bb");
             print UPLOAD "cd examples/$language\n";
-            print UPLOAD "    wdput zguide $extension{$language} $name \"$title in $language\"\n";
+            print UPLOAD "    wdput zguide $ext $name \"$title in $language\"\n";
             print UPLOAD "    rm $name.wd\n";
             print UPLOAD "cd ../..\n";
             signature_update ($filename);

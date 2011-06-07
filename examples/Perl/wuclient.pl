@@ -30,7 +30,8 @@ $subscriber->setsockopt(ZMQ_SUBSCRIBE, $filter);
 
 # Process 100 updates
 my $total_temp = 0;
-for (1 .. 100) {
+my $update_count = 100;
+for (1 .. $update_count) {
     my $string = $subscriber->recv->data;
     my ($zipcode, $temperature, $relhumidity) = split(/ /, $string);
     $total_temp += $temperature;

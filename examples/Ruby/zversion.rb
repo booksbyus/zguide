@@ -4,4 +4,4 @@
 require 'rubygems'
 require 'ffi-rzmq'
 
-ZMQ.version
+puts ZMQ.version

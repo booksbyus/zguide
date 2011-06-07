@@ -1198,7 +1198,7 @@ On writing, 0MQ's multipart messages work nicely together with zero-copy. In tra
 
 +++ Transient vs. Durable Sockets
 
-The concept of a durable socket is one more of those surprisingly obvious 0MQ inventions that when you see, you wonder why no-one ever thought of it before. In classic networking, sockets are API objects, and their lifespan is never longer than the code that uses them. But if you look at a socket you see that it collects a bunch of resources - network buffers - and at some stage, a 0MQ user asked, "isn't there some way these could hang around if my program crashes, so I can get them back?"
+In classic networking, sockets are API objects, and their lifespan is never longer than the code that uses them. But if you look at a socket you see that it collects a bunch of resources - network buffers - and at some stage, a 0MQ user asked, "isn't there some way these could hang around if my program crashes, so I can get them back?"
 
 This turns out to be very useful. It's not foolproof, but it gives 0MQ a kind of "better than a kick in the nuts" reliability, particularly useful for pub-sub cases. We'll look at that shortly.
 
@@ -1243,7 +1243,7 @@ Here is the general model of two sockets happily chatting about the weather, and
 Figure # - Sender boring the pants off receiver
 [[/code]]
 
-What durable sockets give you is the promise that the 0MQ //transmit buffer// is kept alive as long as the sender exists. If the receiver crashes, it will lose its receive buffer, and the network will lose its I/O buffers, but the sender can continue to push data into its transmit buffer and the receiver can then pick this up.
+If a //receiver// (SUB, PULL, REQ) side of a socket sets an identity, then the //sending// (PUB, PUSH, PULL) side will buffer messages when they aren't connected up to the HWM. The sending side does not need to set an identity for this to work.
 
 Note that 0MQ's transmit and receive buffers are invisible and automatic, just like TCP's buffers are.
 
@@ -1311,19 +1311,19 @@ Some comments on setting a socket identity:
 
 * If you want to set an identity you must do it //before// connecting or binding the socket.
 
+* It's the receiver that sets an identity: it's kind of like a session cookie in an HTTP web application, except the client/sender is picking the cookie it will use.
+
 * Identities are binary strings: identities starting with a zero byte are reserved for 0MQ use.
 
 * Do not use the same identity for more than one socket. Any socket trying to connect using an identity already taken by another socket will just be disconnected.
-
-* Do not modify the identity of a socket after binding, or if you restart a peer, this will cause an assertion failure in sockets connected to it. Yes, that's also a bug and yes, it'll also be fixed.
 
 * Do not use random identities in applications that create lots of sockets. What this will do is cause lots and lots of durable sockets to pile up, eventually crashing nodes.
 
 * If you need to know the identity of the //peer// you got a message from, only the ROUTER socket does this for you automatically. For any other socket type you must send the address explicitly, as a message part.
 
-See zmq_setsockopt[3] for a summary of the ZMQ_IDENTITY socket option. Note that the zmq_getsockopt[3] method gives you the identity of the socket you are working with, //not// any peer it might be connected to.
+* Having said all this, using durable sockets is often a bad idea. It makes senders accumulate entropy, which makes architectures fragile. If we were making 0MQ again we'd probably not implement explicit identities at all.
 
-About these assertion failures, 0MQ shouldn't assert when it's misused, only when it thinks it's actually hitting an internal bug. Code should be full of assertions that //never// fail. There are ongoing discussions about how these situations should be handled. As a general rule, if you get assertions while using 0MQ, report them to the zeromq-dev list.
+See zmq_setsockopt[3] for a summary of the ZMQ_IDENTITY socket option. Note that the zmq_getsockopt[3] method gives you the identity of the socket you are working with, //not// any peer it might be connected to.
 
 +++ Pub-sub Message Envelopes
 
