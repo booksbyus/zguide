@@ -20,7 +20,6 @@ server.bind(endpoint)
 print "I: Echo service is ready at %s" % endpoint
 while True:
 	msg = server.recv_multipart()
-	print msg
 	if not msg:
 		break  # Interrupted
 	server.send_multipart(msg)
