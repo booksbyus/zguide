@@ -80,6 +80,9 @@ upload raw all "ØMQ - The Guide"
 sh ./upload.sh
 rm *.wd wdtemp.txt upload.sh
 
+bin/mkpdf
+wdattach zguide main:_start zguide.pdf
+
 git add images/ .signatures .cache_*
 git status
 echo -n "Enter commit message, or Ctrl-C: "
