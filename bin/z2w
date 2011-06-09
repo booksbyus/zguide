@@ -44,7 +44,8 @@ use Digest::SHA1 qw(sha1_hex);
               'Scala' => 'scala' );
 
 $source = $ENV {'Z2W_LANG'} || "C";
-printf "Generating $source version of Guide...\n";
+$format = $ENV {'Z2W_FORM'} || "online";
+printf "Generating $source/$format version of Guide...\n";
 
 #   Inline action options
 $inline_action = 0;
@@ -158,8 +159,8 @@ while (<>) {
         if ($language) {
             process_one_language ("examples", $name, $language, $title, $inline_source);
         }
-        elsif ($source eq "RAW") {
-            process_one_language ("examples", $name, "C", $title, $inline_source);
+        elsif ($format eq "pdf") {
+            process_one_language ("examples", $name, $source, $title, $inline_source);
         }
         else {
             $actions = "";
@@ -241,7 +242,7 @@ while (<>) {
         writeln ($_);
     }
 }
-if ($source ne "RAW") {
+if ($format eq "online") {
     die "Can't create scoreboard.wd: $!"
         unless open (SCOREBOARD, ">scoreboard.wd");
     print (SCOREBOARD "||||||~ Translations ($examples in total)||\n");
@@ -308,8 +309,16 @@ sub process_one_language {
         return 1;       #   File exists
     }
     else {
-        $missing = "$missing | " if $missing;
-        $missing = "$missing$language";
+        if ($inline == $inline_source) {
+            writeln ("[[include c:$name]]");
+            writeln ("[[>]]");
+            writeln ("//$name.c: $title//");
+            writeln ("[[/>]]");
+        }
+        else {
+            $missing = "$missing | " if $missing;
+            $missing = "$missing$language";
+        }
         return 0;
     }
 }

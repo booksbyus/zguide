@@ -19,73 +19,68 @@ function upload {
     fi
 }
 
-export Z2W_LANG=C
-echo "[[include page:chapter1]]"  > all.wd
-echo "[[include page:chapter2]]" >> all.wd
-echo "[[include page:chapter3]]" >> all.wd
-echo "[[include page:chapter4]]" >> all.wd
-echo "[[include page:chapter5]]" >> all.wd
-bin/z2w chapter*.txt
-upload page chapter1 "Chapter One"
-upload page chapter2 "Chapter Two"
-upload page chapter3 "Chapter Three"
-upload page chapter4 "Chapter Four"
-upload page chapter5 "Chapter Five"
-upload page all "ØMQ - The Guide"
+function mkone {
+    export Z2W_LANG=$1
+    export Z2W_FORM=$2
+    echo "[[include $3:chapter1]]"  > all.wd
+    echo "[[include $3:chapter2]]" >> all.wd
+    echo "[[include $3:chapter3]]" >> all.wd
+    echo "[[include $3:chapter4]]" >> all.wd
+    echo "[[include $3:chapter5]]" >> all.wd
+    bin/z2w chapter*.txt
+    upload $3 chapter1 "Chapter One"
+    upload $3 chapter2 "Chapter Two"
+    upload $3 chapter3 "Chapter Three"
+    upload $3 chapter4 "Chapter Four"
+    upload $3 chapter5 "Chapter Five"
+    upload $3 all "ØMQ - The Guide"
+    sh ./upload.sh
+    rm upload.sh
+}
+
+function mkpdf {
+    language=$1
+    langcode=`echo $language|tr A-Z a-z`
+
+    echo "Generating zguide-$langcode.pdf..."
+    /usr/local/bin/wkhtmltopdf \
+        --header-left "ØMQ - The Guide" \
+        --header-center "Examples in $language" \
+        --header-right "By Pieter Hintjens, CEO iMatix" \
+        --footer-left "cc-by-sa" \
+        --footer-center "- [page] -" \
+        --footer-right "Printed [date]" \
+        --footer-font-size 10 \
+        --footer-spacing 10 \
+        --header-font-size 10 \
+        --header-spacing 10 \
+        --margin-top 20 \
+        --margin-bottom 20 \
+        --margin-left 20 \
+        --margin-right 20 \
+        http://zguide.zeromq.org/pdf-$langcode:all zguide-$langcode.pdf
+
+    wdattach zguide main:_start zguide-$langcode.pdf
+}
+
+mkone C online page
+mkone PHP online php
+mkone Lua online lua
 upload main scoreboard "Language scoreboard"
-sh ./upload.sh
 
-export Z2W_LANG=PHP
-echo "[[include php:chapter1]]"  > all.wd
-echo "[[include php:chapter2]]" >> all.wd
-echo "[[include php:chapter3]]" >> all.wd
-echo "[[include php:chapter4]]" >> all.wd
-echo "[[include php:chapter5]]" >> all.wd
-bin/z2w chapter*.txt
-upload php chapter1 "Chapter One"
-upload php chapter2 "Chapter Two"
-upload php chapter3 "Chapter Three"
-upload php chapter4 "Chapter Four"
-upload php chapter5 "Chapter Five"
-upload php all "ØMQ - The Guide - PHP"
+mkone C pdf pdf-c
+mkone PHP pdf pdf-php
+mkone Lua pdf pdf-lua
 
-export Z2W_LANG=Lua
-echo "[[include lua:chapter1]]"  > all.wd
-echo "[[include lua:chapter2]]" >> all.wd
-echo "[[include lua:chapter3]]" >> all.wd
-echo "[[include lua:chapter4]]" >> all.wd
-echo "[[include lua:chapter5]]" >> all.wd
-bin/z2w chapter*.txt
-upload lua chapter1 "Chapter One"
-upload lua chapter2 "Chapter Two"
-upload lua chapter3 "Chapter Three"
-upload lua chapter4 "Chapter Four"
-upload lua chapter5 "Chapter Five"
-upload lua all "ØMQ - The Guide - Lua"
+mkpdf C
+mkpdf Lua
+mkpdf PHP
 
-export Z2W_LANG=RAW
-echo "[[include raw:chapter1]]"  > all.wd
-echo "[[include raw:chapter2]]" >> all.wd
-echo "[[include raw:chapter3]]" >> all.wd
-echo "[[include raw:chapter4]]" >> all.wd
-echo "[[include raw:chapter5]]" >> all.wd
-bin/z2w chapter*.txt
-upload raw chapter1 "Chapter One"
-upload raw chapter2 "Chapter Two"
-upload raw chapter3 "Chapter Three"
-upload raw chapter4 "Chapter Four"
-upload raw chapter5 "Chapter Five"
-upload raw all "ØMQ - The Guide"
-
-sh ./upload.sh
 rm *.wd wdtemp.txt upload.sh
-
-bin/mkpdf
-wdattach zguide main:_start zguide.pdf
 
 git add images/ .signatures .cache_*
 git status
 echo -n "Enter commit message, or Ctrl-C: "
 read MESSAGE
-git commit -m "$MESSAGE"
+git commit -a -m "$MESSAGE"
 git push origin master
