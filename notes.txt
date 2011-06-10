@@ -1,6 +1,39 @@
 
 Notes for The Guide
 
+++ Heartbeating
+
+You'll often hit the problem of knowing whether a peer is alive or not. This is not specifically a 0MQ issue. TCP has a long timeout (30 minutes or so) that means that it's impossible sometimes to know whether a peer has died, been disconnected, or gone on a long weekend to Prague with a case of vodka and two redheads.
+
+Heartbeating seems simple at first but isn't. There are quite a few gotchas, but happily I've already made all the mistakes, so hopefully you don't need to.
+
+Let's start with the use cases, i.e. the reasons //why// you might want to do heartbeating in applications:
+
+* You want to know that peers have died and gone away, so you can clean up resources and keep your applications free of entropy build-up, or as we say in the trade, "why the heck does my process keep consuming more and more memory until the machine crashes?" This affects specific types of 0MQ applications, primarily ROUTER-based brokers that track the identities of clients and servers.
+
+* You want to know the difference between the ominous and golden varieties of silence. When my wife doesn't call me, that's good silence. But when I can't reach her, that's bad silence.
+
+* You want to keep the underlying TCP connections alive. Literally, some networks get bored and disconnect if there's no activity for too long. When you use heartbeating to keep a connection alive, this is more often called "keep-alive".
+
+Roughly, there are two types of heartbeating. There's one-way, and round-trip. You would use one-way heartbeating in a PUB-SUB or PUSH-PULL pattern, to tell downstream nodes that the upstream node is still alive and kicking. It's easy in PUB-SUB, simply send out an empty "ping" message every few seconds if there's no other data being published. It's harder with PUSH-PULL since the PUSH socket needs to know how many PULL sockets there are. A typical workaround is to create a separate PUB-SUB flow just for heartbeating.
+
+Round-trip heartbeating consists of PING-PONG messages (i.e. a PING from one peer, and a PONG back in reply). PING-PONGs can be asynchronous, of course. Why bother with a PONG reply message? Well, the first thing you'll notice when you do naive heartbeating is that when a peer really does stop, and then restarts, it can find itself receiving a whole mass of PINGs from other peers. This is at least annoying, and sometimes worse.
+
+0MQ will in most cases queue PINGs and deliver them when the (or a) peer reconnects. So you should not send more than one or two PINGs without getting something back from the other peer.
+
+
+
+
+
+- one way
+- bidirectional
+
+
+
+
+
+
+
 - pubsub ordering
     - N-to-N ordering guarantees
     - single-stream using a broker

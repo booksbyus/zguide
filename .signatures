@@ -173,7 +173,7 @@ c48495456b4bde2169569f37c8e5d9e28c5c5dc5 images/fig40.html
 a0325006d0a5013b9771ff85f2895d0d051fcab6 examples/Scala/hwclient.scala
 1131219e4a1347ec27a59f526b8eb0c283cb954a examples/Perl/syncpub.pl
 e87190cc269079528b7bfb14d8cbef18383a83dc examples/Scala/wuclient.scala
-319623a5359e7174d615d435ce0a704defd39f5a examples/Ruby/rrclient.rb
+20ff45bbad97b68caf1924b5d99b1ef28c23ecbb examples/Ruby/rrclient.rb
 9a194dc680787428e8043a16b929fde86e879d05 examples/Python/rrserver.py
 58b1e3aacc85a202eb008ff192612f7308799bd9 examples/C/clonecli1.c
 defd29a9ba0c968f3671c1ae53597ffd58ea99b8 examples/PHP/mdwrkapi.php
@@ -184,6 +184,7 @@ defd29a9ba0c968f3671c1ae53597ffd58ea99b8 examples/PHP/mdwrkapi.php
 97172663ee4af7c63ce0e7e662874125c4e99b62 examples/CL/wuproxy.lisp
 d0faeed8a38d6e0b4e8ca9a2e67f78df107121b0 examples/Ruby/tasksink.rb
 54f35b1d574ba1ac70c096ddeed406878285f978 examples/PHP/rrbroker.php
+790b989b4f195d1f808dca76b0c9a38a0c0b471c examples/Python/ppworker.py
 e473b81d53a73dfe9134da52fbefda22fef4d808 examples/Python/wuclient.py
 89aea274102eb72813c546ebb804e24a04535db7 images/fig28.html
 4edff865ba0b0249c9c8c708f839eed034250a1a images/fig70.html
@@ -210,7 +211,7 @@ af15f6474b9fc0f19d1de77b9631a65e9e92a454 examples/Python/rtrouter.py
 3e60aa58db932c74f2cdbdb73386aef430c935ec examples/Java/taskwork2.java
 32c1da80334b7082e5bd6637fff90c3ce3a49f2f examples/Lua/flserver2.lua
 523b04afa57f1f753268c1d2b1fdbf494b692817 examples/C#/rtdealer.cs
-65dfdd5e806b2af4248870ed429dd75d5bc8b213 examples/Ruby/rrbroker.rb
+823f0a2ef73dd0bbc3bbe3934e215272922ff412 examples/Ruby/rrbroker.rb
 7c3acaaabef50815defd6b52784a4c8c3864ae02 examples/Scala/rtdealer.scala
 64ac189aa449e6e0359b9a88ea68759ae9e70fdf examples/PHP/titanic.php
 aaf17e2c4c48aad2fbfd8d79030c2f4bdfba0a6e images/fig36.html
@@ -266,6 +267,7 @@ f8c7a21c03e4aa54f867d98edea44822d6a78f08 examples/C++/ppworker.cpp
 8f8986abfc39b91a8e2c5d020560cd2890d4c759 examples/CL/wuserver.lisp
 0952b20a3476a54dbe806ffc7cdcf5a1cb4de82b examples/Node.js/wuserver.js
 c474de86d4ff53588c03ae943cca6f472605ce69 examples/C/mdworker.c
+af40fa855dd2897c3640c00d180db17918389a2a examples/Python/lpclient.py
 30a3cadccd882c3b8839b5b37c7fcd1381dafe33 examples/Erlang/tasksink.erl
 d8f162c8b213f6eb6a89c1c18b4e5bcc66be170a examples/PHP/spqueue.php
 c3bd221ddb1a4dc200443cc13a8b8183f7bf9449 examples/C#/rrbroker.cs
@@ -295,6 +297,7 @@ afa1150ef208862a76bd9900c8e3015cbbf5d5d0 examples/Java/hwclient.java
 8c503896c494994aa92badc2bec13c8b0cc465a4 examples/C++/taskwork.cpp
 d4cbbc26489b51a0aa885a1427e1bdeb5fe297de examples/C/psenvsub.c
 cb990ae7c17f286112b5bf854fdff34bd1928f1b examples/Scala/lruqueue.scala
+8e6bb9d15302ee5d2516fdceede4f8340f755466 examples/Python/flserver1.py
 f2be4a81d8295894909a804e72eee08763c1510a examples/C#/hwclient.cs
 c5e5ee4b84a0e71980505ba939f3174d84c68468 examples/C/flclient3.c
 c83260d23a963f64cb93c4819d9328dbbee0d6ae examples/PHP/hwclient.php
@@ -324,7 +327,7 @@ d8cad471ed4388c7f7e26cbc33c81a39108af4ea examples/Erlang/wuserver.erl
 27aae57a7e22a163d084b96fdb921f015cca510a examples/C/hwclient.c
 5bb675a6bd01e261d362f0af4ccdec8115594c40 examples/Perl/mtrelay.pl
 a5113cd9291f21687246d8841b7636c780c5aede examples/Haskell/taskvent.hs
-fa4a55d4ce08b804429874d5e98bb7deb0ea3eba examples/C/lruqueue3.c
+f0791f020e62f7846a7d83c4d4ac16bea78bc20a examples/C/lruqueue3.c
 d0bb7a8226cc30f4365118c539c96f8584eb3fba images/fig49.html
 75c832d26a5800de5b034fae064922a1ce2b507f examples/Perl/rrbroker.pl
 8aac7abde5a0321d0b95f0b7ea63b359d18d74b3 examples/CL/rtpapa.lisp
@@ -376,14 +379,16 @@ dbfe698065615c709df22f3dbafe20d92c10df21 examples/C++/wuproxy.cpp
 5b1deb0c265639e66c0460b33cfdde651529bdda examples/Scala/asyncsrv.scala
 3d4902440450deb9e6fe770a5d180cdebd1d75aa examples/C++/taskwork2.cpp
 067532d87f52f2b7a1a3d40fcc6463c2d35c4cf9 images/fig11.html
+b57b3e657823ef890df9b880b2803058cf8f0ee5 examples/Python/flclient1.py
 8216f6f8047f8dfb1b32fdf6e3b9e8782f4e1268 examples/Lua/mmiecho.lua
 7ecaaefd7caf2f7f44c5cad1b2c39d18032d1d34 examples/C/msreader.c
-1c0f5b13e002d009822509b2eed1c94451d7c505 examples/C/titanic.c
+164c8bb5fa06108eb0abdeff3ec1e3701e78e277 examples/C/titanic.c
 edbe9e14ecda0bdac7b3073ac9622aac722cab02 examples/CL/durapub2.lisp
 bf56968881b9abda8b6260338da07501f03d9d39 images/fig15.html
 6e380b8ab0c1328367eebb09ca8898061300ea0c examples/Scala/taskvent.scala
 d4c19277f6e8d43d79c7408396bd6aa56823189c examples/Lua/mtrelay.lua
 907e6d77223a98fdfcd86dd9894e98ff0cd2b63a listings/C/listing_16.c
+f991463bec647186d7d04b96f1d4edba048d6a18 examples/Python/spworker.py
 8dc12c98aa657c31c18a48def833c06237e42997 images/fig6.html
 b34a4a3f2cda586d0f0fa732f148cbdac9dbe6ad examples/C/wuproxy.c
 4d7974b0fb4aa03f0cd644233fbc1a6879ec4dab listings/C/listing_11.c
@@ -423,7 +428,7 @@ efd06bd3efcd72816bb803cc4a7e0ec99c5b0fab examples/Lua/psenvpub.lua
 a61d6d8b8bc62dc8c925eda85c892fcd2d83fd3a images/fig3.html
 eed0719e9abdd3903c9d60f7e4f283d1babec888 examples/CL/mtrelay.lisp
 5336abfa06d77f8d3c62c7959c0c39661612d3fc examples/Java/msreader.java
-028c88f085e75157acca0823dbae12134b037504 examples/Perl/wuclient.pl
+567bd4b67dae06f35eb25a923fc6aa1bc79b1cb8 examples/Perl/wuclient.pl
 f764702b476b3a6626d0ab26fafdb1f0426fe9fe examples/Haskell/hwclient.hs
 b431b5dfdb526d0233b143a76b5593a0e9ab3781 examples/C++/hwclient.cpp
 0a0b937c67bf19be43bd5b133af5ef422218f93d examples/Erlang/taskwork2.erl
@@ -435,6 +440,7 @@ a3929f070e5cff7d377d0f9ab300161f94915f1d examples/C#/lruqueue.cs
 a8fc9dbfdfa605ea7733336ae6e992b37d7e7f9b images/fig68.html
 f9a869ed45e3f262456dfb67071937ba8059beec examples/Lua/asyncsrv.lua
 a549bfefda37eb24bec206266654fa07b59c47f3 listings/C/listing_1.c
+66d92cce90bba1125ed00e50586ec48407e61a0a examples/Python/spqueue.py
 81c74743b3f7dc51392275f9d90b6c300a9e1985 examples/PHP/psenvpub.php
 932ec964f0ad265493264c4ed09114c094d4115a examples/Lua/durasub.lua
 76757f1ea4c6d00304b1c3862bbce137923ce313 examples/C++/hwserver.cpp
@@ -468,6 +474,7 @@ b9a057bc0ea5b1d8a5a2256521fbcc24b2664739 examples/C#/tasksink2.cs
 828288391b28eb1619e2217d858e2d3066f2391a examples/Lua/spqueue.lua
 d93982df77f9ea218c25fa00766c8e6a811b4491 examples/C/taskwork2.c
 8402cbc3327f27e17394322a7fc546ae7d503326 examples/C/lruqueue.c
+fc6236a728c1ccfeb4d6fb7b3cb22115041eefb5 examples/Python/ppqueue.py
 fa80bc6be2523c8635d2496411dbee9e1817bb84 examples/Lua/lruqueue.lua
 2520d1cabf0172062f0c4b6a87145e6b5b399e44 examples/Lua/flserver1.lua
 dab6b84c5feee87a09ace593567e148b3141eccd examples/Lua/wuserver.lua
@@ -515,6 +522,7 @@ e7a0943644a77b70c4297cfc83f6b4f2a00a032a examples/Perl/rrclient.pl
 04ec3cbdc742b244508905d2230d7024beefadc8 examples/C++/syncsub.cpp
 87d0a08a70e13cac09f877943e31c0f57c687621 examples/Scala/msreader.scala
 abe028cf71afd5078a7791c91c94ec96ee30f915 images/fig21.html
+132d7e305c5e8c8b97ce8ef09887d04e877a0358 examples/Python/lpserver.py
 3421d2083eb04073c212c08443fcaeb7d0ff4a3c listings/C/listing_17.c
 b9b0b18d78775314a1c8b1e5025bf5831365d97e images/fig13.html
 443ffeacc2f7f0d6b0a05cc7c2a3283fee3d827a examples/Haskell/wuclient.hs
@@ -550,4 +558,4 @@ e1cfc12cf9612badcc8760dd64829f304a162152 examples/C#/syncsub.cs
 35dc7cec8f0525359988536a7150d9ab4a6b1a08 images/fig63.html
 e4cff1b9e0abe58536e9466db85a54fafb4eb394 examples/Lua/rtpapa.lua
 f5d445cd4de57cbcbc4e48f6595dbafcfb01dff3 examples/C#/durapub2.cs
-807a2ff8794f1aa5447b518770dcfda3b8646b2d examples/Ruby/rrserver.rb
+4bba3bd319a85a5261f8d38be5225dde35b091e2 examples/Ruby/rrserver.rb
