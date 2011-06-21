@@ -14,20 +14,20 @@ func main() {
 	context := zmq.Context()
 	defer context.Close()
 
-    //  Connect our subscriber socket
-    subscriber := context.Socket(zmq.SUB)
+	//  Connect our subscriber socket
+	subscriber := context.Socket(zmq.SUB)
 	defer subscriber.Close()
-    subscriber.SetSockOptString(zmq.IDENTITY, "Hello")
+	subscriber.SetSockOptString(zmq.IDENTITY, "Hello")
 	subscriber.SetSockOptString(zmq.SUBSCRIBE, "")
 	subscriber.Connect("tcp://localhost:5565")
 
-    //  Synchronize with publisher
-    sync := context.Socket(zmq.PUSH)
+	//  Synchronize with publisher
+	sync := context.Socket(zmq.PUSH)
 	defer sync.Close()
 	sync.Connect("tcp://localhost:5564")
 	sync.Send([]byte{}, 0)
 
-    //  Get updates, expect random Ctrl-C death
+	//  Get updates, expect random Ctrl-C death
 	for {
 		data, _ := subscriber.Recv(0)
 		str := string(data)
@@ -35,5 +35,5 @@ func main() {
 		if str == "END" {
 			break
 		}
-    }
+	}
 }
