@@ -135,7 +135,7 @@ class MDCli {
 			return $msg; //  Success
 		} else {
 			echo "W: permanent error, abandoning request", PHP_EOL;
-			break;	//  Give up
+			return;	//  Give up
 		}
 	}
 }
