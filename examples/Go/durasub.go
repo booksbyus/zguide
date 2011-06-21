@@ -7,22 +7,22 @@
 package main
 
 import (
-	"zmq"
+	zmq "github.com/alecthomas/gozmq"
 )
 
 func main() {
-	context := zmq.Context()
+	context, _ := zmq.NewContext()
 	defer context.Close()
 
 	//  Connect our subscriber socket
-	subscriber := context.Socket(zmq.SUB)
+	subscriber, _ := context.NewSocket(zmq.SUB)
 	defer subscriber.Close()
 	subscriber.SetSockOptString(zmq.IDENTITY, "Hello")
 	subscriber.SetSockOptString(zmq.SUBSCRIBE, "")
 	subscriber.Connect("tcp://localhost:5565")
 
 	//  Synchronize with publisher
-	sync := context.Socket(zmq.PUSH)
+	sync, _ := context.NewSocket(zmq.PUSH)
 	defer sync.Close()
 	sync.Connect("tcp://localhost:5564")
 	sync.Send([]byte{}, 0)
