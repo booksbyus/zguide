@@ -19,14 +19,15 @@
       (zmq:bind sync "tcp://*:5564")
       ;; We send updates via this socket
       (zmq:with-socket (publisher context zmq:pub)
-        (zmq:bind publisher "tcp://*:5565")
-
         ;; Prevent publisher overflow from slow subscribers
         (zmq:setsockopt publisher zmq:hwm 1)
 
         ;; Specify swap space in bytes, this covers all subscribers
         (zmq:setsockopt publisher zmq:swap 25000000)
 
+        ;; Create an endpoint for accepting connections
+        (zmq:bind publisher "tcp://*:5565")
+        
         ;; Wait for synchronization request
         (recv-text sync)
 
