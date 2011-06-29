@@ -15,14 +15,14 @@ object durapub2 {
 		// Subscriber tells us when it's ready
 		sync.bind("tcp://*:5564")
 
-		// We send updates via this socket
-		publisher.bind("tcp://*:5565")
-
 		// Prevent publisher overflow from slow subscribers
 		publisher.setHWM(1)
 
 		// Specify swap space in bytes, this covers all subscribers
 		publisher.setSwap(25000000)
+
+		// Create an endpoint for accepting connections
+		publisher.bind("tcp://*:5565")
 
 		// Wait for synchronization request
 		sync.recv(0)
