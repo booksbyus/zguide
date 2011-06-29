@@ -21,7 +21,7 @@ int main (void)
     //  Specify swap space in bytes, this covers all subscribers
     uint64_t swap = 25000000;
     zmq_setsockopt (publisher, ZMQ_SWAP, &swap, sizeof (swap));
-    
+
     // Create an endpoint for accepting connections
     zmq_bind (publisher, "tcp://*:5565");
 
