@@ -21,13 +21,15 @@ $sync->bind('tcp://*:5564');
 
 # We send updates via this socket
 my $publisher = $context->socket(ZMQ_PUB);
-$publisher->bind('tcp://*:5565');
 
 # Prevent publisher overflow from slow subscribers
 $publisher->setsockopt(ZMQ_HWM, 1);
 
 # Specify swap space in bytes, this covers all subscribers
 $publisher->setsockopt(ZMQ_SWAP, 25_000_000);
+
+# Create an endpoint for accepting connections
+$publisher->bind('tcp://*:5565');
 
 # Wait for synchronization request
 $sync->recv();
