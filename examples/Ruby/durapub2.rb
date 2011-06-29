@@ -16,9 +16,9 @@ publisher = context.socket(ZMQ::PUB)
 publisher.setsockopt(ZMQ::HWM, 1)
 
 # Specify swap space in bytes, this covers all subscribers
-publisher.setsockopt(ZMQ::SWAP, 25000000)
+publisher.setsockopt(ZMQ::SWAP, 25_000_000)
 
-# Accept connections on socket
+# Create an endpoint for accepting connections
 publisher.bind("tcp://127.0.0.1:5565")
 
 # Wait for synchronization request
