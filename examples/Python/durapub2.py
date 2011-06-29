@@ -13,13 +13,15 @@ sync.bind("tcp://*:5564")
 
 # We send updates via this socket
 publisher = context.socket(zmq.PUB)
-publisher.bind("tcp://*:5565")
 
 # Prevent publisher overflow from slow subscribers
 publisher.setsockopt(zmq.HWM, 1)
 
 # Specify the swap space in bytes, this covers all subscribers
 publisher.setsockopt(zmq.SWAP, 25000000)
+
+# Create an endpoint for accepting connections
+publisher.bind("tcp://*:5565")
 
 # Wait for synchronization request
 sync_request = sync.recv()
