@@ -15,18 +15,20 @@ namespace ZMQGuide {
         static void Main(string[] args) {
             using (Context context = new Context(1)) {
                 using (Socket sync = context.Socket(SocketType.PULL),
+                    //  We send updates via this socket
                     publisher = context.Socket(SocketType.PUB)) {
-
+                    
                     //  Subscriber tells us when it's ready here
                     sync.Bind("tcp://*:5564");
                     
-                    //  We send updates via this socket
-                    publisher.Bind("tcp://*:5565");
-
                     //  Prevent publisher overflow from slow subscribers
                     publisher.HWM = 1;
+                    
                     //  Specify swap space in bytes, this covers all subscribers
                     publisher.Swap = 25000000;
+                    
+                    // Create an endpoint for accepting connections
+                    publisher.Bind("tcp://*:5565");
                     
                     //  Wait for synchronization request
                     sync.Recv();
