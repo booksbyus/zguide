@@ -141,6 +141,7 @@ class MDWrk {
      * Send reply, if any, to broker and wait for next request.
 	 *
 	 * @param Zmsg $reply 
+	 * @return Zmsg Returns if there is a request to process
      */
     public function recv($reply = null) {
         //  Format and send the reply if we were provided one
@@ -189,7 +190,7 @@ class MDWrk {
                     echo "E: invalid input message", PHP_EOL;
                     echo $zmsg->__toString();
                 }
-            } else if(--$this->liveness == 0) {
+            } else if(--$this->liveness == 0) { // poll ended on timeout, $event being false
                 if($this->verbose) {
                     echo "W: disconnected from broker - retrying...", PHP_EOL;
                 }
