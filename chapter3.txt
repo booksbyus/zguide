@@ -196,12 +196,11 @@ These are the ways we can know the address to send a message to, and you'll see 
 
 * Peers can have prior knowledge of each others' identities, e.g. via configuration files or some other magic.
 
-There are four custom routing patterns, one for each of the socket types we can connect to a router:
+There are at least three routing patterns, one for each of the socket types we can easily connect to a router:
 
 * Router-to-dealer.
 * Router-to-mama (REQ).
 * Router-to-papa (REP).
-* Router-to-router.
 
 In each of these cases we have total control over how we route messages, but the different patterns cover different use-cases and message flows. Let's break it down over the next sections with examples of different routing algorithms.
 
@@ -652,61 +651,61 @@ You should now see that you can reuse and extend the LRU algorithm with variatio
 Reading and writing multipart messages using the native 0MQ API is like eating a bowl of hot noodle soup, with fried chicken and extra vegetables, using a toothpick. Look at the core of the worker thread from our LRU queue broker:
 
 [[code language="C"]]
-    while (1) {
-        //  Read and save all frames until we get an empty frame
-        //  In this example there is only 1 but it could be more
-        char *address = s_recv (worker);
-        char *empty = s_recv (worker);
-        assert (*empty == 0);
-        free (empty);
+while (1) {
+    //  Read and save all frames until we get an empty frame
+    //  In this example there is only 1 but it could be more
+    char *address = s_recv (worker);
+    char *empty = s_recv (worker);
+    assert (*empty == 0);
+    free (empty);
 
-        //  Get request, send reply
-        char *request = s_recv (worker);
-        printf ("Worker: %s\n", request);
-        free (request);
+    //  Get request, send reply
+    char *request = s_recv (worker);
+    printf ("Worker: %s\n", request);
+    free (request);
 
-        s_sendmore (worker, address);
-        s_sendmore (worker, "");
-        s_send     (worker, "OK");
-        free (address);
-    }
+    s_sendmore (worker, address);
+    s_sendmore (worker, "");
+    s_send     (worker, "OK");
+    free (address);
+}
 [[/code]]
 
 That code isn't even reusable, because it can only handle one envelope. And this code already does some wrapping around the 0MQ API. If we used the libzmq API directly this is what we'd have to write:
 
 [[code language="C"]]
-    while (1) {
-        //  Read and save all frames until we get an empty frame
-        //  In this example there is only 1 but it could be more
-        zmq_msg_t address;
-        zmq_msg_init (&address);
-        zmq_recv (worker, &address, 0);
+while (1) {
+    //  Read and save all frames until we get an empty frame
+    //  In this example there is only 1 but it could be more
+    zmq_msg_t address;
+    zmq_msg_init (&address);
+    zmq_recv (worker, &address, 0);
 
-        zmq_msg_t empty;
-        zmq_msg_init (&empty);
-        zmq_recv (worker, &empty, 0);
+    zmq_msg_t empty;
+    zmq_msg_init (&empty);
+    zmq_recv (worker, &empty, 0);
 
-        //  Get request, send reply
-        zmq_msg_t payload;
-        zmq_msg_init (&payload);
-        zmq_recv (worker, &payload, 0);
+    //  Get request, send reply
+    zmq_msg_t payload;
+    zmq_msg_init (&payload);
+    zmq_recv (worker, &payload, 0);
 
-        int char_nbr;
-        printf ("Worker: ");
-        for (char_nbr = 0; char_nbr < zmq_msg_size (&payload); char_nbr++)
-            printf ("%c", *(char *) (zmq_msg_data (&payload) + char_nbr));
-        printf ("\n");
+    int char_nbr;
+    printf ("Worker: ");
+    for (char_nbr = 0; char_nbr < zmq_msg_size (&payload); char_nbr++)
+        printf ("%c", *(char *) (zmq_msg_data (&payload) + char_nbr));
+    printf ("\n");
 
-        zmq_msg_init_size (&payload, 2);
-        memcpy (zmq_msg_data (&payload), "OK", 2);
+    zmq_msg_init_size (&payload, 2);
+    memcpy (zmq_msg_data (&payload), "OK", 2);
 
-        zmq_send (worker, &address, ZMQ_SNDMORE);
-        zmq_close (&address);
-        zmq_send (worker, &empty, ZMQ_SNDMORE);
-        zmq_close (&empty);
-        zmq_send (worker, &payload, 0);
-        zmq_close (&payload);
-    }
+    zmq_send (worker, &address, ZMQ_SNDMORE);
+    zmq_close (&address);
+    zmq_send (worker, &empty, ZMQ_SNDMORE);
+    zmq_close (&empty);
+    zmq_send (worker, &payload, 0);
+    zmq_close (&payload);
+}
 [[/code]]
 
 What we want is an API that lets us receive and send an entire message in one shot, including all envelopes. One that lets us do what we want with the absolute least lines of code. The 0MQ core API itself doesn't aim to do this, but nothing prevents us making layers on top, and part of learning to use 0MQ intelligently is to do exactly that.
@@ -746,23 +745,23 @@ Here is the LRU queue broker rewritten to use czmq:
 One thing czmq provides is clean interrupt handling. This means that Ctrl-C will cause any blocking 0MQ call to exit with a return code -1 and errno set to EINTR. The czmq message recv methods return NULL in such case. So, you can cleanly exit a loop like this:
 
 [[code language="C"]]
-    while (1) {
-        zstr_send (client, "HELLO");
-        char *reply = zstr_recv (client);
-        if (!reply)
-            break;              //  Interrupted
-        printf ("Client: %s\n", reply);
-        free (reply);
-        sleep (1);
-    }
+while (1) {
+    zstr_send (client, "HELLO");
+    char *reply = zstr_recv (client);
+    if (!reply)
+        break;              //  Interrupted
+    printf ("Client: %s\n", reply);
+    free (reply);
+    sleep (1);
+}
 [[/code]]
 
 Or, if you're doing zmq_poll, test on the return code:
 
 [[code language="C"]]
-    int rc = zmq_poll (items, zlist_size (workers)? 2: 1, -1);
-    if (rc == -1)
-        break;              //  Interrupted
+int rc = zmq_poll (items, zlist_size (workers)? 2: 1, -1);
+if (rc == -1)
+    break;              //  Interrupted
 [[/code]]
 
 The previous example still uses zmq_poll[3]. So how about reactors? The czmq {{zloop}} reactor is simple but functional. It lets you:
@@ -776,10 +775,10 @@ The previous example still uses zmq_poll[3]. So how about reactors? The czmq {{z
 When we use a reactor pattern, our code turns inside out. The main logic looks like this:
 
 [[code language="C"]]
-    zloop_t *reactor = zloop_new ();
-    zloop_reader (reactor, self->backend, s_handle_backend, self);
-    zloop_start (reactor);
-    zloop_destroy (&reactor);
+zloop_t *reactor = zloop_new ();
+zloop_reader (reactor, self->backend, s_handle_backend, self);
+zloop_start (reactor);
+zloop_destroy (&reactor);
 [[/code]]
 
 While the actual handling of messages sits inside dedicated functions or methods. You may not like the style, it's a matter of taste. What it does help with is mixing timers and socket activity. In the rest of this text we'll use zmq_poll[3] in simpler cases, and {{zloop}} in more complex examples.
@@ -915,71 +914,6 @@ To properly manage client state in a stateful asynchronous server you must:
 * Store state using the client identity as key. This works for both durable and transient sockets.
 
 * Detect a stopped heartbeat. If there's no request from a client within, say, two seconds, the server can detect this and destroy any state it's holding for that client.
-
-+++ Router-to-Router (N-to-N) Routing
-
-We've seen ROUTER/router sockets talking to dealers, mamas, and papas. The last case is routers talking to routers. One use-case for this is a web farm that has redundant HTTP front-ends talking to an array of asynchronous back-end workers. Each worker accepts requests from any of the front-end HTTP servers, and processes them asynchronously, sending asynchronous replies back. A fully asynchronous worker has some internal concurrency but we don't really care about that here. What interests us is how N workers can talk to N front-ends.
-
-[[code type="textdiagram"]]
-   +-----------+     +-----------+
-   |           |     |           |
-   |   HTTP    |     |    HTTP   |
-   | Front-end |     | Front-end |
-   |           |     |           |
-   +-----------+     +-----------+
-   |  ROUTER   |     |  ROUTER   |
-   \-----------/     \-----------/
-      connect           connect
-         ^                 ^
-         |                 |
-         +--------+--------+
-                  |
-                  |
-         +--------+--------+
-         |                 |
-         v                 v
-       bind              bind
-   /-----------\     /-----------\
-   |  ROUTER   |     |  ROUTER   |
-   +-----------+     +-----------+
-   |           |     |           |
-   |  Worker   |     |  Worker   |
-   |           |     |           |
-   +-----------+     +-----------+
-
-
-      Figure # - N-to-N routing
-[[/code]]
-
-Here's a simplified example with a single front-end and a single worker, cross connected and routing to each other. We just send a message each way, and dump the message envelopes:
-
-[[code type="example" title="Cross-connected routers" name="rtrouter"]]
-[[/code]]
-
-The program produces this output:
-
-[[code]]
-----------------------------------------
-[008] SERVER
-[000]
-[014] send to worker
-----------------------------------------
-[006] WORKER
-[000]
-[014] send to server
-[[/code]]
-
-Some comments on this code:
-
-* We need to give the two sockets time to connect and exchange identities. If we don't, then they will discard the messages you try to send to them, not recognizing the address. Try commenting out the sleep(1), and then trying again.
-
-* We can set and use identities on both bound and connected sockets, as this example shows.
-
-Although the router-to-router pattern looks ideal for asynchronous N-to-N routing, it has some pitfalls. First, any design with N-to-N connections will not scale beyond a small number of clients and servers. You should really create a device in the middle that turns it into two 1-to-N patterns. This gives you a structure like the LRU queue broker, though you would use DEALER at the front-end and worker sides to get streaming.
-
-Second, it may become confusing if you try to put two ROUTER sockets at the same logical level. One must bind, one must connect, and request-reply is inherently asymmetric. However, the next point takes care of this.
-
-Third, one side of the connection has to know the identity of the other, //up front//. You cannot do router-to-router flows between two transient sockets. In practice this means you need a name service, configuration data, or some other magic to define and share the identities of one of the peers. It's convenient therefore to treat the more static side of the flow as 'server', and give it a fixed, known identity, and then treat the dynamic side as 'client'. The client will have to connect to the server, then send it a message using the server's known identity as address, and then the server can respond to the client.
 
 +++ Worked Example: Inter-Broker Routing
 

@@ -3,32 +3,44 @@ Notes for The Guide
 
 ++ Heartbeating
 
-You'll often hit the problem of knowing whether a peer is alive or not. This is not specifically a 0MQ issue. TCP has a long timeout (30 minutes or so) that means that it's impossible sometimes to know whether a peer has died, been disconnected, or gone on a long weekend to Prague with a case of vodka and two redheads.
+You'll often hit the problem of knowing whether a peer is alive or not. This is not specifically a 0MQ issue. TCP has a long timeout (30 minutes or so) that means that it's impossible sometimes to know whether a peer has died, been disconnected, or gone on a long weekend to Prague with a case of vodka, a redhead, and a large expense account.
 
-Heartbeating seems simple at first but isn't. There are quite a few gotchas, but happily I've already made all the mistakes, so hopefully you don't need to.
+Heartbeating is not trivial and worth getting right, since it can make the difference between a working, and failing architecture. So using our standard approach, let's start with the simplest possible heartbeat design, and develop better and better designs until we have one with no visible faults.
 
-Let's start with the use cases, i.e. the reasons //why// you might want to do heartbeating in applications:
++++ Model one - the Shruggery Pattern
 
-* You want to know that peers have died and gone away, so you can clean up resources and keep your applications free of entropy build-up, or as we say in the trade, "why the heck does my process keep consuming more and more memory until the machine crashes?" This affects specific types of 0MQ applications, primarily ROUTER-based brokers that track the identities of clients and servers.
+Shruggery is the simplest possible design: no heartbeating at all. This is the starting point for all 0MQ applications, of course. For PUSH-PULL sockets, this is the only model that works. For other socket types, this has at least the following problems:
 
-* You want to know the difference between the ominous and golden varieties of silence. When my wife doesn't call me, that's good silence. But when I can't reach her, that's bad silence.
+* If you have ROUTER-based broker devices that manage some resources attached to the identities of peers, as peers disconnect and reconnect, the devices will accumulate entropy and eventually run out of resources.
 
-* You want to keep the underlying TCP connections alive. Literally, some networks get bored and disconnect if there's no activity for too long. When you use heartbeating to keep a connection alive, this is more often called "keep-alive".
+* If you have SUB or DEALER-based data recipients, you can't tell the difference between good silence (there's no data) and bad silence (the other end died).
 
-Roughly, there are two types of heartbeating. There's one-way, and round-trip. You would use one-way heartbeating in a PUB-SUB or PUSH-PULL pattern, to tell downstream nodes that the upstream node is still alive and kicking. It's easy in PUB-SUB, simply send out an empty "ping" message every few seconds if there's no other data being published. It's harder with PUSH-PULL since the PUSH socket needs to know how many PULL sockets there are. A typical workaround is to create a separate PUB-SUB flow just for heartbeating.
+* If you have a TCP connection that stays silent for a long while, it will, in some networks, die. Sending something (technically, a "keep-alive" more than a heartbeat), will keep the network alive.
 
-Round-trip heartbeating consists of PING-PONG messages (i.e. a PING from one peer, and a PONG back in reply). PING-PONGs can be asynchronous, of course. Why bother with a PONG reply message? Well, the first thing you'll notice when you do naive heartbeating is that when a peer really does stop, and then restarts, it can find itself receiving a whole mass of PINGs from other peers. This is at least annoying, and sometimes worse.
++++ Model two - the Heartbeat Pattern
 
-0MQ will in most cases queue PINGs and deliver them when the (or a) peer reconnects. So you should not send more than one or two PINGs without getting something back from the other peer.
+So, we create the Heartbeat pattern by sending a "heartbeat" message from each node to its peers, every second or so. When one node hears nothing from another, within some timeout (several seconds, typically), it will treat that peer as dead.
 
+For PUB-SUB, this is the only model that works. SUB sockets cannot talk back to PUB sockets, but PUB sockets can happily send "I'm alive" messages to their subscribers.
 
+As an optimization to model 2, the sender can start heartbeating only when there is no data to send. The recipient should then treat ANY incoming data as a sign of life. This might be a little inaccurate, since receiving data does not actually mean the sender is (still) alive. Light from a dying sun, and all that.
 
+So, problems with this design:
 
+* It can be inaccurate when large amounts of data are sent, since heartbeats will be delayed behind that data. If heartbeats are delayed, you can get false timeouts and disconnections due to network congestion.
 
-- one way
-- bidirectional
+* While the PUB-SUB pattern will drop messages for disappeared recipients, ROUTER and DEALER sockets will queue them. So, if you send heartbeats to a dead peer, and it comes back, it'll get all the heartbeats you sent. Which can be thousands. Whoa, whoa!
 
+* It assumes that heartbeat timeouts are the same across the whole network. But that won't be accurate. Some peers will want very aggressive heartbeating, to detect faults rapidly, some will want very relaxed heartbeating, to leave sleeping networks lie, and save power.
 
++++ Model three - the Belts and Braces pattern
+
+Belts and Braces consists of a ping-pong dialog. One peer sends a ping command to the other, which replies with a pong command. Neither command has any payload. Pings and pongs are not correlated. Since the roles of "client" and "server" are sometimes arbitrary, we specify that either peer can in fact send a ping and expect a pong in response. However, since the timeouts depend on network topologies known best to dynamic clients, it is usually the client which pings the server.
+
+This works for all ROUTER-based brokers. Two optimizations make this work even better:
+
+* Treat any incoming data as a pong.
+* Only send a ping when not otherwise sending data.
 
 
 
