@@ -31,7 +31,12 @@ class Mdbroker {
     
     //  Heartbeat management
     private $heartbeat_at;  //  When to send HEARTBEAT
-    
+
+    /**
+     * Constructor
+     *
+     * @param boolean $verbose 
+     */
     public function __construct($verbose = false) {
         $this->ctx = new ZMQContext();
         $this->socket = new ZMQSocket($this->ctx, ZMQ::SOCKET_XREP);
@@ -42,6 +47,8 @@ class Mdbroker {
     /**
      * Bind broker to endpoint, can call this multiple time
      * We use a single socket for both clients and workers.
+     *
+     * @param string $endpoint 
      */
     public function bind($endpoint) {
         $this->socket->bind($endpoint);
@@ -115,6 +122,9 @@ class Mdbroker {
     
     /**
      * Locate or create new service entry
+     *
+     * @param string $name
+     * @return stdClass 
      */
     public function service_require($name) {
         $service = isset($this->services[$name]) ? $this->services[$name] : NULL;
@@ -131,6 +141,9 @@ class Mdbroker {
     
     /**
      * Dispatch requests to waiting workers as possible
+     *
+     * @param type $service
+     * @param type $msg 
      */
     public function service_dispatch($service, $msg) {
         if($msg) {
@@ -150,7 +163,7 @@ class Mdbroker {
      * Handle internal service according to 8/MMI specification
      *
      * @param string $frame 
-     * @param string $msg 
+     * @param Zmsg $msg 
      */
     public function service_internal($frame, $msg) {
         if($frame == "mmi.service") {
@@ -174,6 +187,9 @@ class Mdbroker {
     
     /**
      * Creates worker if necessary
+     *
+     * @param string $address
+     * @return stdClass 
      */
     public function worker_require($address) {
         $worker = isset($this->workers[$address]) ? $this->workers[$address] : NULL;
@@ -188,7 +204,13 @@ class Mdbroker {
         }
         return $worker;
     }
-    
+
+    /**
+     * Remove a worker
+     *
+     * @param stdClass $worker
+     * @param boolean $disconnect 
+     */
     public function worker_delete($worker, $disconnect = false) {
         if($disconnect) {
             $this->worker_send($worker, MDPW_DISCONNECT, NULL, NULL);
@@ -204,6 +226,9 @@ class Mdbroker {
     
     /**
      * Process message sent to us by a worker
+     *
+     * @param string $sender
+     * @param Zmsg $msg 
      */
     public function worker_process($sender, $msg) {
         $command = $msg->pop();
@@ -250,6 +275,11 @@ class Mdbroker {
     
     /**
      * Send message to worker
+     *
+     * @param stdClass $worker
+     * @param string $command
+     * @param mixed $option
+     * @param Zmsg $msg 
      */
     public function worker_send($worker, $command, $option, $msg) {
         $msg = $msg ? $msg : new Zmsg();
@@ -274,6 +304,8 @@ class Mdbroker {
     
     /**
      * This worker is now waiting for work
+     *
+     * @param stdClass $worker 
      */
     public function worker_waiting($worker) {
         //  Queue to broker and service waiting lists
@@ -285,6 +317,9 @@ class Mdbroker {
     
     /**
      * Process a request coming from a client
+     *
+     * @param string $sender
+     * @param Zmsg $msg 
      */
     public function client_process($sender, $msg) {
         $service_frame = $msg->pop();
