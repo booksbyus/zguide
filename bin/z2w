@@ -20,7 +20,7 @@ require 'sflcvdp.pl';                   #   SFL date picture formatting
 use Digest::SHA1 qw(sha1_hex);
 
 @languages = ('Ada', 'Basic', 'C', 'C++', 'C#', 'CL', 'Erlang', 'Go',
-              'Haskell', 'Java', 'Lua', 'Node.js', 'Objective-C',
+              'Haskell', 'Haxe', 'Java', 'Lua', 'Node.js', 'Objective-C',
               'ooc', 'Perl', 'PHP', 'Python', 'Ruby', 'Scala');
 %extension = ('Ada' => 'ada',
               'Basic' => 'bas',
@@ -31,6 +31,7 @@ use Digest::SHA1 qw(sha1_hex);
               'Erlang' => 'erl',
               'Go' => 'go',
               'Haskell' => 'hs',
+              'Haxe' => 'hx',
               'Java' => 'java',
               'Lua' => 'lua',
               'Node.js' => 'js',
