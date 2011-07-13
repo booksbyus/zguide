@@ -16,7 +16,6 @@ int main () {
 
     //  We send updates via this socket
     zmq::socket_t publisher (context, ZMQ_PUB);
-    publisher.bind("tcp://*:5565");
 
     //  Prevent publisher overflow from slow subscribers
     uint64_t hwm = 1;
@@ -25,6 +24,7 @@ int main () {
     //  Specify swap space in bytes, this covers all subscribers
     uint64_t swap = 25000000;
     publisher.setsockopt( ZMQ_SWAP, &swap, sizeof (swap));
+    publisher.bind("tcp://*:5565");
 
     //  Wait for synchronization request
     s_recv (sync);

@@ -13,7 +13,6 @@ int main (void)
 
     //  We send updates via this socket
     void *publisher = zmq_socket (context, ZMQ_PUB);
-    zmq_bind (publisher, "tcp://*:5565");
 
     //  Prevent publisher overflow from slow subscribers
     uint64_t hwm = 1;
@@ -22,6 +21,7 @@ int main (void)
     //  Specify swap space in bytes, this covers all subscribers
     uint64_t swap = 25000000;
     zmq_setsockopt (publisher, ZMQ_SWAP, &swap, sizeof (swap));
+    zmq_bind (publisher, "tcp://*:5565");
 
     //  Wait for synchronization request
     char *string = s_recv (sync);
