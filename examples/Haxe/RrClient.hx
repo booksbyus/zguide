@@ -4,6 +4,7 @@ import neko.Lib;
 import haxe.io.Bytes;
 import org.zeromq.ZMQ;
 import org.zeromq.ZMQContext;
+import org.zeromq.ZMQSocket;
 
 /**
  * Hello World Client
