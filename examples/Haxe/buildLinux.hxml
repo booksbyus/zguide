@@ -1,0 +1,27 @@
+# Haxe build file
+# Build CPP guide target for Linux 32bit
+-cp .
+-cpp out-cpp/Linux
+-lib hxzmq
+-debug
+-D HXCPP_MULTI_THREADED
+--remap neko:cpp
+-main org.zeromq.guide.Run
+
+--next
+# Build neko guide target for Linux 32bit
+-cp .
+-neko out-neko/Linux/run-debug.n
+-lib hxzmq
+-debug
+-main org.zeromq.guide.Run
+
+# Build PHP guide target
+--next
+-cp .
+-php out-php/Linux
+-lib hxzmq
+-debug
+--remap neko:php
+-main org.zeromq.guide.Run
+
