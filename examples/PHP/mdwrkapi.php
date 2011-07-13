@@ -164,9 +164,9 @@ class MDWrk {
                     //  up to a null part, but for now, just save one...
                     $this->reply_to = $zmsg->unwrap();
                     return $zmsg;//  We have a request to process
-                } else if($command = MDPW_HEARTBEAT) {
+                } else if($command == MDPW_HEARTBEAT) {
                     // Do nothing for heartbeats
-                } else if($commad == MDPW_DISCONNECT) {
+                } else if($command == MDPW_DISCONNECT) {
                     $this->connect_to_broker();
                 } else {
                     echo "E: invalid input message", PHP_EOL;
