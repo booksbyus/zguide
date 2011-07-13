@@ -591,7 +591,7 @@ Some things to know about multipart messages:
 
 * When you send a multipart message, the first part (and all following parts) are only sent when you send the final part.
 
-* If you are using zmq_poll[3], when you receive the first part of a message, all the rest have also arrived.
+* If you are using zmq_poll[3], when you receive the first part of a message, all the rest has also arrived.
 
 * You will receive all parts of a message, or none at all.
 
