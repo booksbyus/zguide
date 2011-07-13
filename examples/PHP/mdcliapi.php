@@ -90,7 +90,7 @@ class MDCli {
 	}
 	
 	/**
-	 * end request to broker and get reply by hook or crook
+	 * Send request to broker and get reply by hook or crook
 	 * Takes ownership of request message and destroys it when sent.
 	 * Returns the reply message or NULL if there was no reply.
 	 *

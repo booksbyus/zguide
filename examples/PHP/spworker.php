@@ -24,6 +24,7 @@ $cycles = 0;
 while(true) {
 	$zmsg = new Zmsg($worker);
 	$zmsg->recv();
+	$cycles++;
 	
 	//  Simulate various problems, after a few cycles
 	if($cycles > 3 && rand(0, 3) == 0) {
