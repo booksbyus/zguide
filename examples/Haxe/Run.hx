@@ -6,14 +6,6 @@ import neko.io.Process;
 import neko.Lib;
 import neko.Sys;
 
-import org.zeromq.guide.HelloWorldClient;
-import org.zeromq.guide.HelloWorldServer;
-import org.zeromq.guide.WUClient;
-import org.zeromq.guide.WUServer;
-import org.zeromq.guide.TaskVent;
-import org.zeromq.guide.TaskWork;
-import org.zeromq.guide.TaskSink;
-import org.zeromq.guide.Interrupt;
 
 /**
  * Main class that allows any of the implemented Haxe guide programs to run
@@ -56,17 +48,19 @@ class Run
 			Lib.println("17. RrBroker");
 			Lib.println("18. RrServer");
 			Lib.println("");
-			Lib.println("19. MTRelay");
+			Lib.println("19. MsgQueue");
+			Lib.println("");			
+			Lib.println("20. MTRelay");
             Lib.println("");
-            Lib.println("20. SyncPub");
-            Lib.println("21. SyncSub");
+            Lib.println("21. SyncPub");
+            Lib.println("22. SyncSub");
             Lib.println("");
-            Lib.println("22. PSEnvPub");
-            Lib.println("23. PSEnvSub");
+            Lib.println("23. PSEnvPub");
+            Lib.println("24. PSEnvSub");
             Lib.println("");
-            Lib.println("24. DuraPub");
-            Lib.println("25. DuraSub");
-            Lib.println("26. DuraPub2");
+            Lib.println("25. DuraPub");
+            Lib.println("26. DuraSub");
+            Lib.println("27. DuraPub2");
 			
 			do {
 				Lib.print("Type number followed by Enter key, or q to quit: ");
@@ -112,21 +106,23 @@ class Run
                 RrBroker.main();
             case 18:
                 RrServer.main();
-            case 19:
-                MTRelay.main();
+			case 19:
+				MsgQueue.main();
             case 20:
-                SyncPub.main();
+                MTRelay.main();
             case 21:
-                SyncSub.main();
+                SyncPub.main();
             case 22:
-                PSEnvPub.main();
+                SyncSub.main();
             case 23:
-                PSEnvSub.main();
+                PSEnvPub.main();
             case 24:
-                DuraPub.main();
+                PSEnvSub.main();
             case 25:
-                DuraSub.main();
+                DuraPub.main();
             case 26:
+                DuraSub.main();
+            case 27:
                 DuraPub2.main();
 			default:
 			Lib.println ("Unknown program number ... exiting");

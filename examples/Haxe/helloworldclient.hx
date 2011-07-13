@@ -35,7 +35,6 @@ class HelloWorldClient
 			var msg:Bytes = socket.recvMsg();
 			
 			trace ("Received reply " + i + ": [" + msg.toString() + "]");
-			
 		}
 		
 		// Shut down socket and context
