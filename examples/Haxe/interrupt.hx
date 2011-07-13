@@ -6,6 +6,7 @@ import neko.Lib;
 import org.zeromq.ZMQ;
 import org.zeromq.ZMQContext;
 import org.zeromq.ZMQSocket;
+import org.zeromq.ZMQException;
 
 /**
  * Signal Handling
