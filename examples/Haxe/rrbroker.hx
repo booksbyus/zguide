@@ -6,6 +6,7 @@ import org.zeromq.ZMQ;
 import org.zeromq.ZMQContext;
 import org.zeromq.ZMQPoller;
 import org.zeromq.ZMQSocket;
+import org.zeromq.ZMQException;
 
 /**
  * Simple request-reply broker
