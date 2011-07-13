@@ -8,26 +8,26 @@ import org.zeromq.ZMQ;
  */
 
 public class durasub {
+    public static void main(String[] args) {
+        ZMQ.Context context = ZMQ.context(1);
 
-  public static void main(String[] args) {
-    ZMQ.Context context = ZMQ.context(1);
+        // Connect our subscriber socket
+        ZMQ.Socket subscriber = context.socket(ZMQ.SUB);
+        subscriber.setIdentity("hello".getBytes());
 
-    // Connect our subscriber socket
-    ZMQ.Socket subscriber = context.socket(ZMQ.SUB);
+        // Synchronize with the publisher
+        ZMQ.Socket sync = context.socket(ZMQ.PUSH);
 
-    // Synchronize with the publisher
-    ZMQ.Socket sync = context.socket(ZMQ.PUSH);
+        subscriber.subscribe("".getBytes());
+        subscriber.connect("tcp://localhost:5565");
+        sync.connect("tcp://localhost:5564");
+        sync.send("".getBytes(), 0);
 
-    subscriber.subscribe("".getBytes());
-    subscriber.connect("tcp://localhost:5565");
-    sync.connect("tcp://localhost:5564");
-    sync.send("".getBytes(), 0);
-
-    // Get updates, expect random Ctrl-C death
-    String msg = "";
-    while (!msg.equalsIgnoreCase("END")) {
-      msg = new String(subscriber.recv(0));
-      System.out.println(msg);
+        // Get updates, expect random Ctrl-C death
+        String msg = "";
+        while (!msg.equalsIgnoreCase("END")) {
+            msg = new String(subscriber.recv(0));
+            System.out.println(msg);
+        }
     }
-  }
 }

@@ -9,20 +9,20 @@ package main
 import (
 	"fmt"
 	"time"
-	"zmq"
+	zmq "github.com/alecthomas/gozmq"
 )
 
 func main() {
-	context := zmq.Context()
+	context, _ := zmq.NewContext()
 	defer context.Close()
 
 	//  Subscriber tells us when it's ready here
-	sync := context.Socket(zmq.PULL)
+	sync, _ := context.NewSocket(zmq.PULL)
 	defer sync.Close()
 	sync.Bind("tcp://*:5564")
 
 	//  We send updates via this socket
-	publisher := context.Socket(zmq.PUB)
+	publisher, _ := context.NewSocket(zmq.PUB)
 	defer publisher.Close()
 	publisher.Bind("tcp://*:5565")
 

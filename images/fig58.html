@@ -16,8 +16,9 @@
                     /-----------\
                     |  ROUTER   |
                     +-----------+
-                    |    LRU    |
                     |   Queue   |
+                    +-----------+
+                    | Heartbeat |
                     +-----------+
                     |  ROUTER   |
                     \-----------/
@@ -27,13 +28,14 @@
           |               |               |
           v               v               v
     /-----------\   /-----------\   /-----------\
-    |    REQ    |   |    REQ    |   |    REQ    |
+    |  DEALER   |   |  DEALER   |   |  DEALER   |
     +-----------+   +-----------+   +-----------+
-    |    LRU    |   |    LRU    |   |    LRU    |
+    | Heartbeat |   | Heartbeat |   | Heartbeat |
+    +-----------+   +-----------+   +-----------+
     |   Worker  |   |   Worker  |   |   Worker  |
     +-----------+   +-----------+   +-----------+
 
 
-           Figure 58 - Simple Pirate Pattern
+         Figure 58 - Paranoid Pirate Pattern
 </pre>
 </html>

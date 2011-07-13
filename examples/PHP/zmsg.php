@@ -33,7 +33,6 @@
 define("ZMQ_POLL_MSEC", 1000);
 
 class Zmsg {
-	const NOCLEAR = 2;
 	
 	/**
 	 * Store the parts of the message
@@ -116,9 +115,10 @@ class Zmsg {
 	 * Send message to socket. Destroys message after sending.
 	 *
 	 * @throws Exception if no socket present
+	 * @param boolean $clear
 	 * @return Zmsg
 	 */
-	public function send($options = 0) {
+	public function send($clear = true) {
 		if(!isset($this->_socket)) {
 			throw new Exception("No socket supplied");
 		}
@@ -128,7 +128,7 @@ class Zmsg {
 			$mode = $i++ == $count ? null : ZMQ::MODE_SNDMORE;
 			$this->_socket->send($part, $mode);
 		}
-		if(!($options & self::NOCLEAR)) {
+		if($clear) {
 			unset($this->_parts);
 			$this->_parts = array();
 		}

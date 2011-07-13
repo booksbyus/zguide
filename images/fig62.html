@@ -4,12 +4,12 @@
     +------------+               +------------+
     |            |               |            |
     |  Primary   |<------------->|   Backup   |
-    |  "master"  |               |   "slave"  |
+    |  "slave"   |               |  "master"  |
     |            |               |            |
     +------------+               +------------+
-          ^
-          |
-          |
+                                        ^
+                                        |
+          +-----------------------------+
           |
     +-----+------+
     |            |
@@ -18,6 +18,6 @@
     +------------+
 
 
-Figure 62 - High-availability pair, normal operation
+Figure 62 - High-availability pair, during failover
 </pre>
 </html>

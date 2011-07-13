@@ -462,7 +462,7 @@ Notes on this code:
 
 +++ Asynchronous Majordomo Pattern
 
-The way we implemented Majordomo, above, is simple and stupid. The client is just the original Simple Pirate, wrapped up in a sexy API. When I fire up a client, broker, and worker on a test box, it can process 100,000 requests in about 14 seconds. That is partly due to the code, which cheerfully copies message frames around as if CPU cycles were free. But the real problem is that we're 'round-tripping'. 0MQ disables [http://en.wikipedia.org/wiki/Nagle's_algorithm], but round-tripping is still slow.
+The way we implemented Majordomo, above, is simple and stupid. The client is just the original Simple Pirate, wrapped up in a sexy API. When I fire up a client, broker, and worker on a test box, it can process 100,000 requests in about 14 seconds. That is partly due to the code, which cheerfully copies message frames around as if CPU cycles were free. But the real problem is that we're 'round-tripping'. 0MQ disables [http://en.wikipedia.org/wiki/Nagles_algorithm Nagle's algorithm], but round-tripping is still slow.
 
 Theory is great in theory, but in practice, practice is better. Let's measure the cost of round-tripping with a simple test program. This sends a bunch of messages, first waiting for a reply to each message, and second as a batch, reading all the replies back as a batch. Both approaches do the same work, but they give very different results. We mockup a client, broker, and worker:
 

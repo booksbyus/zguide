@@ -1,45 +1,45 @@
 <html>
 <pre class="textdiagram" id="fig54">
 
-      +---------+ +---------+ +---------+
-      | Client  | | Broker  | | Broker  |
-      |         | | cloudbe | | statebe |
-      +---------+ +---------+ +---------+
-      | connect | | connect | |  bind   |
-      +---------+ +---------+ +---------+
-        request     request      state
-           |           |           |
-           +-+         |         +-+
-             |         |         |
-             v         v         v
+                              +---------+
+                              | Broker  |
+                              | statebe |
+                              +---------+
+                              |  bind   |
+                              +---------+
+                                 state
+                                   |
+                                 +-+
+                                 |
+                                 v
         +---------+---------+---------+
-        |  bind   |  bind   | connect |
+        |         |         | connect |
         +---------+---------+---------+
-        | localfe | cloudfe | statefe |     Frontends
-        | ROUTER  | ROUTER  |   SUB   |     (incoming)
+        |         |         | statefe |
+        |         |         |   SUB   |
         +---------+---------+---------+
         |                             |
         |           Broker            |
         |                             |
         +---------+---------+---------+
-        | ROUTER  | ROUTER  |   PUB   |     Backends
-        | localbe | cloudbe | statebe |     (outgoing)
+        |         |         |   PUB   |
+        |         |         | statebe |
         +---------+---------+---------+
-        |  bind   | connect |  bind   |
+        |         |         |  bind   |
         +---------+---------+---------+
-          request   request    state
-             |         |         |
-           +-+         |         +-+
-           |           |           |
-           v           v           v
-      +---------+ +---------+ +---------+
-      | connect | |  bind   | | connect |
-      +---------+ +---------+ +---------+
-      | Worker  | | Broker  | | Broker  |
-      |         | | cloudfe | | statefe |
-      +---------+ +---------+ +---------+
+                               state
+                                 |
+                                 +-+
+                                   |
+                                   v
+                              +---------+
+                              | connect |
+                              +---------+
+                              | statefe |
+                              | Broker  |
+                              +---------+
 
 
-      Figure 54 - Broker socket arrangement
+          Figure 54 - The state flow
 </pre>
 </html>

@@ -56,7 +56,14 @@ class MDWrk {
     
     //  Return address, if any
     private $reply_to;
-    
+
+	/**
+	 * Constructor
+	 *
+	 * @param string $broker
+	 * @param string $service
+	 * @param boolean $verbose 
+	 */
     public function __construct($broker, $service, $verbose = false) {
         $this->ctx = new ZMQContext();
         $this->broker = $broker;
@@ -69,9 +76,13 @@ class MDWrk {
     }
     
     /**
-     * Send message to broker
+	 * Send message to broker
      * If no msg is provided, creates one internally
-     */
+	 *
+	 * @param string $command
+	 * @param string $option
+	 * @param Zmsg $msg 
+	 */
     public function send_to_broker($command, $option, $msg = null) {
         $msg = $msg ? $msg : new Zmsg();
         
@@ -109,14 +120,18 @@ class MDWrk {
     }
     
     /**
-     * Set heartbeat delay
-     */
+	 * Set heartbeat delay
+	 *
+	 * @param int $heartbeat 
+	 */
     public function set_heartbeat($heartbeat) {
         $this->heartbeat = $heartbeat;
     }
     
     /**
      * Set reconnect delay
+	 *
+	 * @param int $reconnect 
      */
     public function set_reconnect($reconnect) {
         $this->reconnect = $reconnect;
@@ -124,6 +139,9 @@ class MDWrk {
     
     /**
      * Send reply, if any, to broker and wait for next request.
+	 *
+	 * @param Zmsg $reply 
+	 * @return Zmsg Returns if there is a request to process
      */
     public function recv($reply = null) {
         //  Format and send the reply if we were provided one
@@ -164,15 +182,15 @@ class MDWrk {
                     //  up to a null part, but for now, just save one...
                     $this->reply_to = $zmsg->unwrap();
                     return $zmsg;//  We have a request to process
-                } else if($command = MDPW_HEARTBEAT) {
+                } else if($command == MDPW_HEARTBEAT) {
                     // Do nothing for heartbeats
-                } else if($commad == MDPW_DISCONNECT) {
+                } else if($command == MDPW_DISCONNECT) {
                     $this->connect_to_broker();
                 } else {
                     echo "E: invalid input message", PHP_EOL;
                     echo $zmsg->__toString();
                 }
-            } else if(--$this->liveness == 0) {
+            } else if(--$this->liveness == 0) { // poll ended on timeout, $event being false
                 if($this->verbose) {
                     echo "W: disconnected from broker - retrying...", PHP_EOL;
                 }

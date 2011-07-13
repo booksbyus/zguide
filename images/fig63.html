@@ -1,23 +1,35 @@
 <html>
 <pre class="textdiagram" id="fig63">
 
-    +------------+               +------------+
-    |            |               |            |
-    |  Primary   |<------------->|   Backup   |
-    |  "slave"   |               |  "master"  |
-    |            |               |            |
-    +------------+               +------------+
-                                        ^
-                                        |
-          +-----------------------------+
-          |
-    +-----+------+
-    |            |
-    |   Client   |
-    |            |
-    +------------+
+      Start /-----------------------\   /----------\               Start
+        |   |Client Request         |   |    Client|Request          |
+        v   |                       v   v          |                 v
+  +---------+-+                 +-----------+      |           +-----------+
+  |           | Peer Backup     |           +------/           |           |
+  |  Primary  +---------------->|  Active   |<--------------\  |  Backup   |
+  |           |         /------>|           |<-----\        |  |           |
+  | {o} c9FB  |         |       | {o} c9FB  |      |        |  | {o} cF9B  |
+  +-----+-----+         |       +-----+-----+      |        |  +-----+-----+
+        |               |             |            |        |        |
+    Peer|Active         |         Peer|Active      |        |    Peer|Active
+        |               |             v            |        |        |
+        |               |       +-----------+      |        |        |
+        |               |       |           |      |        |        |
+        |           Peer|Backup |  Error!   |  Peer|Primary |        |
+        |               |       |           |      |        |        |
+        |               |       | {o} cF00  |      |        |        |
+        |               |       +-----------+      |        |        |
+        |               |             ^            |        |        |
+        |               |         Peer|Passive     |  Client|Vote    |
+        |               |             |            |        |        |
+        |               |       +-----+-----+      |        |        |
+        |               |       |           +------/        |        |
+        |               \-------+  Passive  +---------------/        |
+        \---------------------->|           |<-----------------------/
+                                | {o} cF9B  |
+                                +-----------+
 
 
-Figure 63 - High-availability pair, during failover
+                Figure 63 - Binary Star finite state machine
 </pre>
 </html>
