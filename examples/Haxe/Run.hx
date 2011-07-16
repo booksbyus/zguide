@@ -35,14 +35,14 @@ class Run
 			Lib.println("6. TaskWork");
 			Lib.println("7. TaskSink");
 			Lib.println("");
-			Lib.println("11. Interrupt (** Doesn't work on Windows!)");
+			Lib.println("11. Interrupt");
 			Lib.println("");
-			Lib.println("12. MTServer (use with 1. HelloWorldClient)");
+			Lib.println("12. MTServer");
 			Lib.println("");
-			Lib.println("13. TaskWork2 (use with 5. TaskVent and 14. TaskSink2)");
-            Lib.println("14. TaskSink2 (use with 5. TaskVent and 13. TaskWork2)");
+			Lib.println("13. TaskWork2");
+            Lib.println("14. TaskSink2");
 			Lib.println("");
-			Lib.println("15. WUProxy (use with 4. WUServer)");
+			Lib.println("15. WUProxy");
 			Lib.println("");
 			Lib.println("16. RrClient");
 			Lib.println("17. RrBroker");
@@ -61,6 +61,18 @@ class Run
             Lib.println("25. DuraPub");
             Lib.println("26. DuraSub");
             Lib.println("27. DuraPub2");
+			Lib.println("");
+			Lib.println("28. Identity");
+			Lib.println("");
+			Lib.println("29. RTDealer");
+			Lib.println("");
+			Lib.println("30. RTMama");
+			Lib.println("");
+			Lib.println("31. RTPapa");
+			Lib.println("");
+			Lib.println("32. LRUQueue");
+			Lib.println("");
+			
 			
 			do {
 				Lib.print("Type number followed by Enter key, or q to quit: ");
@@ -124,6 +136,16 @@ class Run
                 DuraSub.main();
             case 27:
                 DuraPub2.main();
+			case 28:
+				Identity.main();
+			case 29:
+				RTDealer.main();
+			case 30:
+				RTMama.main();
+			case 31:
+				RTPapa.main();
+			case 32:
+				LRUQueue.main();
 			default:
 			Lib.println ("Unknown program number ... exiting");
 		}
