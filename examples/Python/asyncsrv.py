@@ -27,7 +27,7 @@ class ClientTask(threading.Thread):
                 if socket in sockets:
                     if sockets[socket] == zmq.POLLIN:
                         msg = socket.recv()
-                        print '%s: %s\n' % (identity, msg)
+                        print 'Client %s received: %s\n' % (identity, msg)
                         del msg
             reqs = reqs + 1
             print 'Req #%d sent..' % (reqs)
@@ -64,11 +64,15 @@ class ServerTask(threading.Thread):
             if frontend in sockets:
                 if sockets[frontend] == zmq.POLLIN:
                     msg = frontend.recv()
-                    print 'Server received %s' % (msg)
+                    print 'Server received %s\n' % (msg)
                     backend.send(msg)
             if backend in sockets:
                 if sockets[backend] == zmq.POLLIN:
+                    _id = backend.recv()
                     msg = backend.recv()
+
+                    print 'Sending to frontend %s id %s\n' % (msg, _id)
+                    frontend.send(_id, zmq.SNDMORE)
                     frontend.send(msg)
 
         frontend.close()
@@ -86,12 +90,15 @@ class ServerWorker(threading.Thread):
         worker.connect('inproc://backend')
         print 'Worker started'
         while True:
+            _id = worker.recv()
             msg = worker.recv()
-            print 'Worker received %s' % (msg)
+            print 'Worker received %s from %s' % (msg, _id)
             replies = choice(xrange(5))
             for i in xrange(replies):
                 time.sleep(1/choice(range(1,10)))
+                worker.send(_id, zmq.SNDMORE)
                 worker.send(msg)
+
             del msg
 
         worker.close()
