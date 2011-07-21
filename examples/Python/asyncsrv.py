@@ -63,14 +63,15 @@ class ServerTask(threading.Thread):
             sockets = dict(poll.poll())
             if frontend in sockets:
                 if sockets[frontend] == zmq.POLLIN:
+                    _id = frontend.recv()
                     msg = frontend.recv()
-                    print 'Server received %s\n' % (msg)
+                    print 'Server received %s id %s\n' % (msg, _id)
+                    backend.send(_id, zmq.SNDMORE)
                     backend.send(msg)
             if backend in sockets:
                 if sockets[backend] == zmq.POLLIN:
                     _id = backend.recv()
                     msg = backend.recv()
-
                     print 'Sending to frontend %s id %s\n' % (msg, _id)
                     frontend.send(_id, zmq.SNDMORE)
                     frontend.send(msg)
