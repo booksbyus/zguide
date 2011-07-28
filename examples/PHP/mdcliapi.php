@@ -136,7 +136,7 @@ class MDCli {
 				assert($reply_service == $service);
 				
 				return $request; //  Success
-			} else if(--$retries_left) {
+			} else if($retries_left--) {
 				if($this->verbose) {
 					echo "W: no reply, reconnecting...", PHP_EOL;
 				}
