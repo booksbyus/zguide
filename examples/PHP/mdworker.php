@@ -15,8 +15,5 @@ $mdwrk = new Mdwrk("tcp://localhost:5555", "echo", $verbose);
 $reply = NULL;
 while(true) {
     $request = $mdwrk->recv($reply);
-    if($request == NULL) {
-        break;              //  Worker was interrupted
-    }
     $reply = $request;      //  Echo is complex... :-)
 }

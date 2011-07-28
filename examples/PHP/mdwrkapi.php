@@ -204,7 +204,5 @@ class MDWrk {
                 $this->heartbeat_at = microtime(true) + ($this->heartbeat/1000);
             }
         }
-        
-        echo "W: interrupt received, killing worker...", PHP_EOL;
     }
 }
