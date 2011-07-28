@@ -84,7 +84,7 @@ class Mdbroker {
                 
                 if($header == MDPC_CLIENT) {
                     $this->client_process($sender, $zmsg);
-                } else if($header = MDPW_WORKER) {
+                } else if($header == MDPW_WORKER) {
                     $this->worker_process($sender, $zmsg);
                 } else {
                     echo "E: invalid message", PHP_EOL, $zmsg->__toString();
