@@ -17,12 +17,16 @@ public class taskvent {
 		ZMQ.Socket sender = context.socket(ZMQ.PUSH);
 		sender.bind("tcp://*:5557");
 
+		//  Socket to send messages on
+		ZMQ.Socket sink = context.socket(ZMQ.PUSH);
+		sink.connect("tcp://localhost:5558");
+
 		System.out.println("Press Enter when the workers are ready: ");
 		System.in.read();
 		System.out.println("Sending tasks to workers...\n");
 
 		//  The first message is "0" and signals start of batch
-		sender.send("0\u0000".getBytes(), 0);
+		sink.send("0\u0000".getBytes(), 0);
 
 		//  Initialize random number generator
 		Random srandom = new Random(System.currentTimeMillis());
@@ -41,6 +45,9 @@ public class taskvent {
 		}
 		System.out.println("Total expected cost: " + total_msec + " msec");
 
+		sink.close();
+		sender.close();
+		context.term();
 		Thread.sleep(1000);              //  Give 0MQ time to deliver
 	}
 }
