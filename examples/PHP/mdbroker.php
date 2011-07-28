@@ -217,19 +217,20 @@ class Mdbroker {
         }
         
         if(isset($worker->service)) {
-            $service_waitlist_index = array_search($worker, $worker->service->waiting);
-            if ($service_waitlist_index !== false) {
-                unset($worker->service->waiting[$service_waitlist_index]);
-            }
+            worker_remove_from_array($worker, $worker->service->waiting);
             $worker->service->workers--;
         }
-        $waitlist_index = array_search($worker, $this->waiting);
-        if ($waitlist_index !== false) {
-            unset($this->waiting[$waitlist_index]);
-        }
+        worker_remove_from_array($worker, $this->waiting);
         unset($this->workers[$worker->identity]);
     }
-    
+
+    private function worker_remove_from_array($worker, &$array) {
+        $index = array_search($worker, $array);
+        if ($index !== false) {
+            unset($array[$index]);
+        }
+    }
+
     /**
      * Process message sent to us by a worker
      *
