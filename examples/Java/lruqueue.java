@@ -81,7 +81,7 @@ class WorkerThread extends Thread
 	}
 }
 
-public class LRUQueue {
+public class lruqueue {
 
 	public static void main(String[] args) {
 		Context context = ZMQ.context(1);
