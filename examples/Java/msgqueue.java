@@ -9,7 +9,7 @@ import org.zeromq.ZMQQueue;
  * 
  * Christophe Huntzinger <chuntz@laposte.net>
  */
-public class MsgQueue{
+public class msgqueue{
 
 	public static void main (String[] args) {
 		//  Prepare our context and sockets

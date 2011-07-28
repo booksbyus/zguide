@@ -5,7 +5,7 @@
 //
 import org.zeromq.ZMQ;
 
-public class MultiThreadedRelay{
+public class mtrelay{
     public static void main(String[] args) {
         final ZMQ.Context context = ZMQ.context(1);
 
