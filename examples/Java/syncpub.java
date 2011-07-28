@@ -8,7 +8,7 @@ import org.zeromq.ZMQ.Socket;
  * 
  * Christophe Huntzinger <chuntzin_at_wanadoo.fr>
  */
-public class SyncPub{
+public class syncpub{
 	/**
 	 * We wait for 10 subscribers
 	 */

@@ -8,7 +8,7 @@ import org.zeromq.ZMQ.Socket;
  * Christophe Huntzinger <chuntzin_at_wanadoo.fr>
  *
  */
-public class SyncSub{
+public class syncsub{
 	public static void main (String[] args) {
 		Context context = ZMQ.context(1);
 

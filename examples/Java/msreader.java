@@ -21,11 +21,6 @@ public class msreader {
 		subscriber.connect("tcp://localhost:5556");
 		subscriber.subscribe("10001 ".getBytes());
 
-		//  Initialize poll set
-		ZMQ.Poller items = context.poller(2);
-		items.register(receiver, 0);
-		items.register(subscriber, 0);
-
 		//  Process messages from both sockets
 		//  We prioritize traffic from the task ventilator
 		while (true) {

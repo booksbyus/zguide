@@ -9,7 +9,7 @@ import org.zeromq.ZMQ.Socket;
  * 
  * Christophe Huntzinger <chuntzin_at_wanadoo.fr>
  */
-public class RrClient{
+public class rrclient{
 	public static void main (String[] args) {
 		Context context = ZMQ.context(1);
 

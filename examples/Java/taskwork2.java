@@ -22,8 +22,8 @@ public class taskwork2 {
 		controller.subscribe("".getBytes());
 
 		ZMQ.Poller items = context.poller(2);
-		items.register(receiver, 0);
-		items.register(controller, 0);
+		items.register(receiver, ZMQ.Poller.POLLIN);
+		items.register(controller, ZMQ.Poller.POLLIN);
 
 		while (true) {
 			if (items.pollin(0)) {

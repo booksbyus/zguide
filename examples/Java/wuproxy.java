@@ -8,7 +8,7 @@ import org.zeromq.ZMQ.Socket;
  * 
  * Christophe Huntzinger <chuntz@laposte.net>
  */
-public class WuProxy{
+public class wuproxy{
 
 	public static void main (String[] args) {
 		//  Prepare our context and sockets

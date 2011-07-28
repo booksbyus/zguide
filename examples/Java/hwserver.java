@@ -7,7 +7,7 @@
 //
 import org.zeromq.ZMQ;
 
-public class HelloWorldServer {
+public class hwserver {
     public static void main(String[] args) {
         //  Prepare our context and socket
         ZMQ.Context context = ZMQ.context(1);

@@ -24,12 +24,3 @@ public class psenvpub {
 
   }
 }
-e our context and publisher
-    ZMQ.Context context = ZMQ.context(1);
-    ZMQ.Socket publisher = context.socket(ZMQ.PUB);
-
-    publisher.bind("tcp://*:5563");
-    while (true) {
-      // Write two messages, each with an envelope and content
-      publisher.send("A".getBytes(), ZMQ.SNDMORE);
-      publisher.send("We do
