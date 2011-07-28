@@ -219,8 +219,10 @@ class Mdbroker {
         if(isset($worker->service)) {
             $worker->service->workers--;
         }
-        
-        unset($this->waiting[array_search($worker, $this->waiting)]);
+        $waitlist_index = array_search($worker, $this->waiting);
+        if ($waitlist_index !== false) {
+            unset($this->waiting[$waitlist_index]);
+        }
         unset($this->workers[$worker->identity]);
     }
     
