@@ -129,8 +129,7 @@ public:
    }
 
    //  ---------------------------------------------------------------------
-   //  Delete any idle workers that haven't pinged us in a while. Workers
-   //  are oldest to most recent, so we stop at the first alive worker.
+   //  Delete any idle workers that haven't pinged us in a while.
 
    void
    purge_workers ()
@@ -138,7 +137,7 @@ public:
        worker * wrk = m_waiting.size()>0 ? m_waiting.front() : 0;
        while (wrk) {
            if (!wrk->expired ()) {
-               break;              //  Worker is alive, we're done here
+               continue;              //  Worker is alive, we're done here
            }
            if (m_verbose) {
                s_console ("I: deleting expired worker: %s",

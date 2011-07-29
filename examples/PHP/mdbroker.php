@@ -104,13 +104,12 @@ class Mdbroker {
     }
     
     /**
-     * Delete any idle workers that haven't pinged us in a while. Workers
-     *are oldest to most recent, so we stop at the first alive worker.
+     * Delete any idle workers that haven't pinged us in a while.
      */
     public function purge_workers() {
         foreach($this->waiting as $id => $worker) {
             if(microtime(true) < $worker->expiry) {
-                break; //  Worker is alive, we're done here
+                continue; //  Worker is alive, we're done here
             }
             if($this->verbose) {
                 printf("I: deleting expired worker: %s %s",
