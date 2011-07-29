@@ -514,13 +514,27 @@ Here is how we handle a signal in various languages:
 [[code type="example" title="Handling Ctrl-C cleanly" name="interrupt"]]
 [[/code]]
 
-Note that the zhelpers.h provides s_catch_signals() and s_interrupted. To use these correctly:
+The zhelpers.h file provides s_catch_signals(), which traps Ctrl-C (SIGINT) and SIGTERM. When either of these signals arrive, the s_catch_signals() handler sets the global variable s_interrupted. Your application will not die automatically, you have to now explicitly check for an interrupt, and handle it properly. Here's how:
 
-* Call s_catch_signals() at the start of your main code.
-* Check s_interrupted after every blocking receive, or zmq_poll[3] call.
-* Shutdown as normal if s_interrupted is set.
+* Call s_catch_signals() at the start of your main code. This sets-up the signal handling.
+* If your code is blocking in zmq_recv[3], zmq_poll[3], or zmq_send[3], when a signal arrives, the call will return with EINTR.
+* Wrappers like s_recv() return NULL if they are interrupted.
+* So, your application checks for an EINTR return code, a NULL return, and/or s_interrupted.
 
-If you do not check s_interrupted then your application will become immune to Ctrl-C and SIGTERM, which may be useful but is usually not.
+Here is a typical code fragment:
+
+[[code]]
+s_catch_signals ();
+client = zmq_socket (...);
+while (!s_interrupted) {
+    char *message = s_recv (client);
+    if (!message)
+        break;          //  Ctrl-C used
+}
+zmq_close (client);
+[[/code]]
+
+If you call s_catch_signals() and don't test for interrupts, the your application will become immune to Ctrl-C and SIGTERM, which may be useful, but is usually not.
 
 +++ Detecting Memory Leaks
 
