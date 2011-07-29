@@ -25,16 +25,20 @@ public class taskwork {
 		//  Process tasks forever
 		while (true) {
 			String string = new String(receiver.recv(0)).trim();
-			long nsec = Long.parseLong(string) * 1000000;
+			long msec = Long.parseLong(string);
 			//  Simple progress indicator for the viewer
 			System.out.flush();
 			System.out.print(string + '.');
 
 			//  Do the work
-			Thread.sleep(nsec);
+			Thread.sleep(msec);
 
 			//  Send results to sink
 			sender.send("".getBytes(), 0);
 		}
+		// If the code was reachable, this is how you could close the sockets and the context.
+		//sender.close();
+		//receiver.close();
+		//context.term();
 	}
 }
