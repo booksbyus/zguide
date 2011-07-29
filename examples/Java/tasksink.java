@@ -38,5 +38,7 @@ public class tasksink {
 		long tend = System.currentTimeMillis(), tdiff;
 
 		System.out.println("Total elapsed time: " + (tend - tstart) + " msec");
+		receiver.close();
+		context.term();
 	}
 }
