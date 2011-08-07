@@ -9,7 +9,7 @@ open fszmq
 #load "zhelpers.fs"
 
 let main () = 
-  //  Prepare our context and socket
+  // Prepare our context and socket
   use context  = new Context(1)
   use receiver = context |> Context.pull
   Socket.bind receiver "tcp://*:5558"
