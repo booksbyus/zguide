@@ -4,7 +4,6 @@ import haxe.io.Bytes;
 import neko.Lib;
 import neko.Sys;
 #if (neko || cpp)
-import neko.Random;
 import neko.vm.Thread;
 #end
 import org.zeromq.ZFrame;
@@ -50,12 +49,7 @@ class RTMama
 			total++;
 			
 			// Do some random work
-#if !php			
-			var rnd = new Random();
-			Sys.sleep((rnd.int(1000) + 1) / 1000.0);
-#else
-			Sys.sleep((untyped __php__('rand(0, 1000)') + 1) / 1000);
-#end
+			Sys.sleep((ZHelpers.randof(1000) + 1) / 1000.0);
 		}
 		context.destroy();
 	}

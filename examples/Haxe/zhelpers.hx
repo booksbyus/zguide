@@ -57,18 +57,24 @@ class ZHelpers
 
 		var randNumber1, randNumber2:Int;
 		
-#if php
-		randNumber1 = untyped __php__('rand(0, 0x10000)');
-		randNumber2 = untyped __php__('rand(0, 0x10000)');
-#else		
-		var rnd = new Random();
-		randNumber1 = rnd.int(0x10000);
-		randNumber2 = rnd.int(0x10000);
-#end
+		randNumber1 = randof(0x10000); 
+		randNumber2 = randof(0x10000); 
 		
 		var _id = StringTools.hex(randNumber1, 4) + "-" + StringTools.hex(randNumber2, 4);
 		socket.setsockopt(ZMQ_IDENTITY, Bytes.ofString(_id));
 		return _id;
 	}
 	
+	/**
+	 * Returns random integer between 0 and max
+	 * @param	max
+	 * @return
+	 */
+	public static function randof(max:Int):Int {
+#if php
+		return untyped __php__('mt_rand(0, $max)');
+#else
+		return new Random().int(max+1);
+#end		
+	}
 }

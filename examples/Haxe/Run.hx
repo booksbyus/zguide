@@ -65,12 +65,16 @@ class Run
 			Lib.println("28. Identity");
 			Lib.println("");
 			Lib.println("29. RTDealer");
-			Lib.println("");
 			Lib.println("30. RTMama");
-			Lib.println("");
 			Lib.println("31. RTPapa");
-			Lib.println("");
 			Lib.println("32. LRUQueue");
+			Lib.println("33. LRUQueue2");
+			Lib.println("34. LRUQueue3");
+			Lib.println("35. ASyncSrv");
+			Lib.println("");
+			Lib.println("36. Peering1");
+			Lib.println("37. Peering2");
+			Lib.println("38. Peering3");
 			Lib.println("");
 			
 			
@@ -146,6 +150,18 @@ class Run
 				RTPapa.main();
 			case 32:
 				LRUQueue.main();
+			case 33:
+				LRUQueue2.main();
+			case 34:
+				LRUQueue3.main();
+			case 35:
+				ASyncSrv.main();
+			case 36:
+				Peering1.main();
+			case 37:
+				Peering2.main();
+			case 38:
+				Peering3.main();
 			default:
 			Lib.println ("Unknown program number ... exiting");
 		}
