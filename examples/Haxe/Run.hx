@@ -76,7 +76,16 @@ class Run
 			Lib.println("37. Peering2");
 			Lib.println("38. Peering3");
 			Lib.println("");
-			
+			Lib.println("39. LPClient");
+			Lib.println("40. LPServer");
+			Lib.println("41. SPQueue");
+			Lib.println("42. SPWorker");
+			Lib.println("43. PPQueue");
+			Lib.println("44. PPWorker");
+			Lib.println("");
+			Lib.println("45. MDClient");
+			Lib.println("46. MDWorker");
+			Lib.println("47. MDBroker");
 			
 			do {
 				Lib.print("Type number followed by Enter key, or q to quit: ");
@@ -162,6 +171,24 @@ class Run
 				Peering2.main();
 			case 38:
 				Peering3.main();
+			case 39:
+				LPClient.main();
+			case 40:
+				LPServer.main();
+			case 41:
+				SPQueue.main();
+			case 42:
+				SPWorker.main();
+			case 43:
+				PPQueue.main();
+			case 44:
+				PPWorker.main();
+			case 45:
+				MDClient.main();
+			case 46:
+				MDWorker.main();
+			case 47:
+				MDBroker.main();
 			default:
 			Lib.println ("Unknown program number ... exiting");
 		}
