@@ -82,22 +82,17 @@ class Peering3
 					trace (Stack.toString(Stack.exceptionStack()));
 					return;		// quit
 				}
-				try {
-					if (poller.pollin(1)) {
-						var reply = ZFrame.recvFrame(client);
-						if (reply == null)
-							break;
-						// Worker is supposed to answer us with our task id
-						if (!reply.streq(taskID)) {
-							Lib.println("E: Returned task ID:" + reply.toString() + " does not match requested taskID:" + taskID);
-							break;
-						}
-					} else {
-						ZMsg.newStringMsg("E: CLIENT EXIT - lost task " + taskID).send(monitor);
+				if (poller.pollin(1)) {
+					var reply = ZFrame.recvFrame(client);
+					if (reply == null)
+						break;
+					// Worker is supposed to answer us with our task id
+					if (!reply.streq(taskID)) {
+						Lib.println("E: Returned task ID:" + reply.toString() + " does not match requested taskID:" + taskID);
+						break;
 					}
-				} catch (e:ZMQException) {
-					trace("ZMQException #:" + ZMQ.errNoToErrorType(e.errNo) + ", str:" + e.str());
-					trace (Stack.toString(Stack.exceptionStack()));				
+				} else {
+					ZMsg.newStringMsg("E: CLIENT EXIT - lost task " + taskID).send(monitor);
 				}
 			}
 		}
