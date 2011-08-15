@@ -15,6 +15,7 @@ let main () =
   // socket to talk to server
   printfn "Collecting updates from weather server..."
   use subscriber = context |> Context.sub
+  // direct connection to server, for proxy use 'tcp://localhost:8100'
   Socket.connect subscriber "tcp://localhost:5556"
 
   // subscribe to zipcode, default is NYC, 10001
@@ -27,7 +28,7 @@ let main () =
   // process 100 updates
   let update_nbr = ref 0
   let total_temp = ref 0
-  while !update_nbr < 10 do
+  while !update_nbr < 100 do
     let update = s_recv subscriber
     let zipcode, temperature, relhumidity =
       let update' = update.Split()
@@ -35,7 +36,7 @@ let main () =
     total_temp := !total_temp + temperature
     incr update_nbr
   
-  printfn "Average temperature for zipcode '%s' was %dF"
+  printfn "\nAverage temperature for zipcode '%s' was %dF"
           filter 
           (!total_temp / !update_nbr)
 
