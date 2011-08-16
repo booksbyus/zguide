@@ -15,7 +15,6 @@ let main () =
   // socket to talk to server
   printfn "Collecting updates from weather server..."
   use subscriber = context |> Context.sub
-  // direct connection to server, for proxy use 'tcp://localhost:8100'
   Socket.connect subscriber "tcp://localhost:5556"
 
   // subscribe to zipcode, default is NYC, 10001

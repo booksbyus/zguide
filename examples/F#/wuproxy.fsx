@@ -23,12 +23,19 @@ let main () =
   // subscribe on everything
   subscribe frontend [""B]
 
-  // hunt messages out to our own subscribers
+  // shunt messages out to our own subscribers
   while true do
-    // process all parts of the message
-    let message = frontend |> recvAll
-    fflush(); printf "."
-    sendAll backend message
+    let more = ref true
+    while !more do
+      // process all parts of the message
+      let message = frontend |> recv
+      more := frontend |> recvMore
+      if !more then sendMore backend message |> ignore
+               else send     backend message
+    //NOTE: fs-zmq contains other idioms (eg: sendAll,recvAll,transfer)
+    //      which allow for more concise (and possibly more efficient)
+    //      implementations of the previous loop... 
+    //      but this example translates most directly to it's C cousin
 
   // we don't actually get here but if we did, we'd shut down neatly
   EXIT_SUCCESS
