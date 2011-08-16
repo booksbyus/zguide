@@ -19,16 +19,19 @@
 require 'sflcvdp.pl';                   #   SFL date picture formatting
 use Digest::SHA1 qw(sha1_hex);
 
-@languages = ('Ada', 'Basic', 'C', 'C++', 'C#', 'CL', 'Erlang', 'Go',
+@languages = ('Ada', 'Basic', 'C', 'C++', 'C#', 'CL', 'Erlang', 'F#', 'Go',
               'Haskell', 'Haxe', 'Java', 'Lua', 'Node.js', 'Objective-C',
               'ooc', 'Perl', 'PHP', 'Python', 'Ruby', 'Scala');
+
+#   File extensions for each language
 %extension = ('Ada' => 'ada',
               'Basic' => 'bas',
               'C' => 'c',
               'C++' => 'cpp',
               'C#' => 'cs',
               'CL' => 'lisp',
-              'Erlang' => 'erl',
+              'Erlang' => 'es',
+              'F#' => 'fsx',
               'Go' => 'go',
               'Haskell' => 'hs',
               'Haxe' => 'hx',
@@ -43,6 +46,10 @@ use Digest::SHA1 qw(sha1_hex);
               'Racket' => 'rkt',
               'Ruby' => 'rb',
               'Scala' => 'scala' );
+
+#   Specific Pygmentizer lexer for each language, if needed
+%lexer = ('Erlang' => 'erlang',
+          'F#' => 'ocaml' );
 
 $source = $ENV {'Z2W_LANG'} || "C";
 $format = $ENV {'Z2W_FORM'} || "online";
@@ -297,7 +304,9 @@ sub process_one_language {
         }
         if (signature_changed ($filename)) {
             print "Processing $name (in $language)...\n";
-            system ("pygmentize -f bb $filename > tempfile.bb");
+            $lexopt = $lexer {$language}? "-l $lexer{$language}": "";
+            print "pygmentize -f bb $lexopt $filename > tempfile.bb"; # xxx
+            system ("pygmentize -f bb $lexopt $filename > tempfile.bb");
             exit (1) if $?;
             system ("bin/bb2wd tempfile.bb >examples/$language/$name.wd");
             system ("rm tempfile.bb");
