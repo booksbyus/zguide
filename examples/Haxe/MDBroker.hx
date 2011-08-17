@@ -494,8 +494,8 @@ private class Broker {
 		
 		// Set reply return address to client sender
 		msg.wrap(sender.duplicate());
-		if ( sender.size() >= 4 // Reserved for service name
-				&& sender.toString().indexOf("mmi.") == 0)		
+		if ( serviceFrame.size() >= 4 // Reserved for service name
+				&& serviceFrame.toString().indexOf("mmi.") == 0)		
 			internalService(serviceFrame, msg);
 		else
 			dispatchService(service, msg);

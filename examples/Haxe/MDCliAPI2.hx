@@ -31,17 +31,14 @@ import org.zeromq.ZMQException;
 import MDP;
 
 /**
- * Majordomo Protocol Client API
+ * Majordomo Protocol Client API (async version)
  * Implements the MDP/Worker spec at http://rfc.zeromq.org/spec:7
  */
-class MDCliAPI 
+class MDCliAPI2 
 {
 
 	/** Request timeout (in msec) */
 	public var timeout:Int;
-	
-	/** Request #retries */
-	public var retries:Int;
 	
 	// Private instance fields 
 	
@@ -71,7 +68,6 @@ class MDCliAPI
 		this.broker = broker;
 		this.verbose = verbose;
 		this.timeout = 2500;		// msecs
-		this.retries = 3;			// before we abandon
 		if (logger != null) 
 			log = logger;
 		else
@@ -86,11 +82,11 @@ class MDCliAPI
 	public function connectToBroker() {
 		if (client != null) 
 			client.close();
-		client = ctx.createSocket(ZMQ_REQ);
+		client = ctx.createSocket(ZMQ_DEALER);
 		client.setsockopt(ZMQ_LINGER, 0);
 		client.connect(broker);
 		if (verbose)
-			log("I: client connecting to broker at " + broker + "...");
+			log("I: connecting to broker at " + broker + "...");
 	}
 	
 	/**
@@ -101,83 +97,76 @@ class MDCliAPI
 	}
 	
 	/**
-	 * Send request to broker and get reply by hook or crook.
+	 * Send request to broker
 	 * Takes ownership of request message and destroys it when sent.
-	 * Returns the reply message or NULL if there was no reply after #retries
 	 * @param	service
 	 * @param	request
 	 * @return
 	 */
-	public function send(service:String, request:ZMsg):ZMsg {
+	public function send(service:String, request:ZMsg) {
 		// Prefix request with MDP protocol frames
+		// Frame 0: empty (REQ socket emulation)
 		// Frame 1: "MDPCxy" (six bytes, MDP/Client)
 		// Frame 2: Service name (printable string)
 		request.push(ZFrame.newStringFrame(service));
 		request.push(ZFrame.newStringFrame(MDP.MDPC_CLIENT));
+		request.push(ZFrame.newStringFrame(""));
 		if (verbose) {
 			log("I: send request to '" + service + "' service:");
 			log(request.toString());
 		}
-		
-		var retries_left = retries;
-				
-		var poller = new ZMQPoller();
-
-		while (retries_left > 0 && !ZMQ.isInterrupted()) {
-			// We send a request, then we work to get a reply
-			var msg = request.duplicate();
-			msg.send(client);
-			
-			var expect_reply = true;
-			while (expect_reply) {
-				poller.registerSocket(client, ZMQ.ZMQ_POLLIN());
-				// Poll socket for a reply, with timeout
-				try {
-					var res = poller.poll(timeout * 1000);
-				} catch (e:ZMQException) {
-					trace("ZMQException #:" + e.errNo + ", str:" + e.str());
-					trace (Stack.toString(Stack.exceptionStack()));
-					ctx.destroy();
-					return null;
-				}
-				// If we got a reply, process it
-				if (poller.pollin(1)) {
-					// We got a reply from the server, must match sequence
-					var msg = ZMsg.recvMsg(client);
-					if (msg == null)
-						break;		// Interrupted
-					if (verbose)
-						log("I: received reply:" + msg.toString());
-					if (msg.size() < 3)
-						break;		// Don't try to handle errors
-					var header = msg.pop();
-					if (!header.streq(MDP.MDPC_CLIENT))
-						break;		// Assert
-					header.destroy();
-					
-					var reply_service = msg.pop();
-					if (!reply_service.streq(service))
-						break;		// Assert
-					reply_service.destroy();
-					request.destroy();
-					return msg;		// Success
-				} else if (--retries_left > 0) {
-					if (verbose)
-						log("W: no reply, reconnecting...");
-					// Reconnect , and resend message
-					connectToBroker();
-					msg = request.duplicate();
-					msg.send(client);
-				} else {
-					if (verbose)
-						log("E: permanent error, abandoning");
-					break;
-				}
-				poller.unregisterAllSockets();
-			}
-		}
-		return null;
-		
+		request.send(client);
 	}
 	
+	/**
+	 * Returns the reply message or NULL if there was no reply. Does not
+	 * attempt to recover from a broker failure, this is not possible
+	 * without storing all answered requests and re-sending them all...
+	 * @return
+	 */
+	public function recv():ZMsg {
+		var poller = new ZMQPoller();
+
+		poller.registerSocket(client, ZMQ.ZMQ_POLLIN());
+		// Poll socket for a reply, with timeout
+		try {
+			var res = poller.poll(timeout * 1000);
+		} catch (e:ZMQException) {
+			if (!ZMQ.isInterrupted()) { 
+				trace("ZMQException #:" + e.errNo + ", str:" + e.str());
+				trace (Stack.toString(Stack.exceptionStack()));
+			} else 
+				log("W: interrupt received, killing client...");
+			ctx.destroy();
+			return null;
+		}
+		// If we got a reply, process it
+		if (poller.pollin(1)) {
+			// We got a reply from the server, must match sequence
+			var msg = ZMsg.recvMsg(client);
+			if (msg == null)
+				return null;		// Interrupted
+			if (verbose)
+				log("I: received reply:" + msg.toString());
+			if (msg.size() < 3)
+				return null;		// Don't try to handle errors
+			var empty = msg.pop();		// Empty frame	
+			if (empty.size() != 0) {
+				return null;		// Assert
+			}
+			empty.destroy();	
+			var header = msg.pop();
+			if (!header.streq(MDP.MDPC_CLIENT)) {
+				return null;		// Assert
+			}
+			header.destroy();
+			var reply_service = msg.pop();
+			reply_service.destroy();
+			return msg;		// Success
+		} else {
+			if (verbose)
+				log("E: permanent error, abandoning");
+		}
+		return null;
+	}
 }

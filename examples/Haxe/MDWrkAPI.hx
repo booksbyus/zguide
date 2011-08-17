@@ -111,7 +111,7 @@ class MDWrkAPI
 		worker.setsockopt(ZMQ_LINGER, 0);
 		worker.connect(broker);
 		if (verbose)
-			log("I: connecting to broker at " + broker + "...");
+			log("I: worker connecting to broker at " + broker + "...");
 			
 		sendToBroker(MDP.MDPW_READY, service);
 		

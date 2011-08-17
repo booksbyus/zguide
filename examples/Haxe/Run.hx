@@ -86,6 +86,10 @@ class Run
 			Lib.println("45. MDClient");
 			Lib.println("46. MDWorker");
 			Lib.println("47. MDBroker");
+			Lib.println("48. MDClient2");
+			Lib.println("49. MMIEcho");
+			Lib.println("50. TIClient");
+			Lib.println("51. Titanic");
 			
 			do {
 				Lib.print("Type number followed by Enter key, or q to quit: ");
@@ -189,6 +193,14 @@ class Run
 				MDWorker.main();
 			case 47:
 				MDBroker.main();
+			case 48:
+				MDClient2.main();
+			case 49:
+				MMIEcho.main();
+			case 50:
+				TIClient.main();
+			case 51:
+				Titanic.main();
 			default:
 			Lib.println ("Unknown program number ... exiting");
 		}
