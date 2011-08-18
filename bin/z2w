@@ -305,7 +305,6 @@ sub process_one_language {
         if (signature_changed ($filename)) {
             print "Processing $name (in $language)...\n";
             $lexopt = $lexer {$language}? "-l $lexer{$language}": "";
-            print "pygmentize -f bb $lexopt $filename > tempfile.bb"; # xxx
             system ("pygmentize -f bb $lexopt $filename > tempfile.bb");
             exit (1) if $?;
             system ("bin/bb2wd tempfile.bb >examples/$language/$name.wd");
