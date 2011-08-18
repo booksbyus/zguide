@@ -97,8 +97,6 @@
 - In taskvent there's a sleep to wait on outgoing messages -- I believe this
   isn't needed anymore
 
-- Nice to have print statements for the steps in mtrelay.
-
 Erlang Bindings Wish List:
 
 - Validate specific options in setsockopt - e.g. should not support lists
