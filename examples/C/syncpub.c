@@ -6,7 +6,7 @@
 //  We wait for 10 subscribers
 #define SUBSCRIBERS_EXPECTED  10
 
-int main (void) 
+int main (void)
 {
     void *context = zmq_init (1);
 
@@ -19,6 +19,7 @@ int main (void)
     zmq_bind (syncservice, "tcp://*:5562");
 
     //  Get synchronization from subscribers
+    printf ("Waiting for subscribers\n");
     int subscribers = 0;
     while (subscribers < SUBSCRIBERS_EXPECTED) {
         //  - wait for synchronization request
@@ -29,6 +30,7 @@ int main (void)
         subscribers++;
     }
     //  Now broadcast exactly 1M updates followed by END
+    printf ("Broadcasting messages\n");
     int update_nbr;
     for (update_nbr = 0; update_nbr < 1000000; update_nbr++)
         s_send (publisher, "Rhubarb");

@@ -9,6 +9,7 @@ step1 (void *context) {
     //  Connect to step2 and tell it we're ready
     void *xmitter = zmq_socket (context, ZMQ_PAIR);
     zmq_connect (xmitter, "inproc://step2");
+    printf ("Step 1 ready, signaling step 2\n");
     s_send (xmitter, "READY");
     zmq_close (xmitter);
 
@@ -31,6 +32,7 @@ step2 (void *context) {
     //  Connect to step3 and tell it we're ready
     void *xmitter = zmq_socket (context, ZMQ_PAIR);
     zmq_connect (xmitter, "inproc://step3");
+    printf ("Step 2 ready, signaling step 3\n");
     s_send (xmitter, "READY");
     zmq_close (xmitter);
 

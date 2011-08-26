@@ -196,13 +196,13 @@ Here is the worker, which takes the Lazy Pirate server and adapts it for the LRU
 [[code type="example" title="Simple Pirate worker" name="spworker"]]
 [[/code]]
 
-To test this, start a handlful of workers, a client, and the queue, in any order. You'll see that the workers eventually all crash and burn, and the client retries and then gives up. The queue never stops, and you can restart workers and clients ad-nauseam. This model works with any number of clients and workers.
+To test this, start a handful of workers, a client, and the queue, in any order. You'll see that the workers eventually all crash and burn, and the client retries and then gives up. The queue never stops, and you can restart workers and clients ad-nauseam. This model works with any number of clients and workers.
 
 +++ Robust Reliable Queuing (Paranoid Pirate Pattern)
 
 The Simple Pirate Queue pattern works pretty well, especially since it's just a combination of two existing patterns, but it has some weaknesses:
 
-* It's not robust against a queue crash and restart. The client will recover, but the workers won't. While 0MQ will reconnect workers' sockets automatically, as far as the newly started queue is concerned, the workers haven't signalled "READY", so don't exist. To fix this we have to do heartbeating from queue to worker, so that the worker can detect when the queue has gone away.
+* It's not robust against a queue crash and restart. The client will recover, but the workers won't. While 0MQ will reconnect workers' sockets automatically, as far as the newly started queue is concerned, the workers haven't signaled "READY", so don't exist. To fix this we have to do heartbeating from queue to worker, so that the worker can detect when the queue has gone away.
 
 * The queue does not detect worker failure, so if a worker dies while idle, the queue can only remove it from its worker queue by first sending it a request. The client waits and retries for nothing. It's not a critical problem but it's not nice. To make this work properly we do heartbeating from worker to queue, so that the queue can detect a lost worker at any stage.
 
@@ -434,8 +434,12 @@ With an example test program that implements an 'echo' service:
 Notes on this code:
 
 * The APIs are single threaded. This means, for example, that the worker won't send heartbeats in the background. Happily, this is exactly what we want: if the worker application gets stuck, heartbeats will stop and the broker will stop sending requests to the worker.
-* The worker API doesn't do an exponential backoff, it's not worth the extra complexity.
+
+* The worker API doesn't do an exponential back-off, it's not worth the extra complexity.
+
 * The APIs don't do any error reporting. If something isn't as expected, they raise an assertion (or exception depending on the language). This is ideal for a reference implementation, so any protocol errors show immediately. For real applications the API should be robust against invalid messages.
+
+You might wonder why the worker API is manually closing its socket and opening a new one, when 0MQ will automatically reconnect a socket if the peer disappears and comes back. Look back at the Simple Pirate worker, and the Paranoid Pirate worker to understand. While 0MQ will automatically reconnect workers, if the broker dies and comes back up, this isn't sufficient to re-register the workers with the broker. There are at least two solutions I know of. The simplest, which we use here, is that the worker monitors the connection using heartbeats, and if it decides the broker is dead, closes its socket and starts afresh with a new socket. The alternative is for the broker to challenge unknown workers -- when it gets a heartbeat from the worker -- and ask them to re-register. That would require protocol support.
 
 Let's design the Majordomo broker. Its core structure is a set of queues, one per service. We will create these queues as workers appear (we could delete them as workers disappear but forget that for now, it gets complex). Additionally, we keep a queue of workers per service.
 

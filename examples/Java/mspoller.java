@@ -22,8 +22,8 @@ public class mspoller {
 
 		//  Initialize poll set
 		ZMQ.Poller items = context.poller(2);
-		items.register(receiver, 0);
-		items.register(subscriber, 0);
+		items.register(receiver, ZMQ.Poller.POLLIN);
+		items.register(subscriber, ZMQ.Poller.POLLIN);
 
 		//  Process messages from both sockets
 		while (true) {

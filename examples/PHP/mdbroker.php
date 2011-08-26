@@ -84,7 +84,7 @@ class Mdbroker {
                 
                 if($header == MDPC_CLIENT) {
                     $this->client_process($sender, $zmsg);
-                } else if($header = MDPW_WORKER) {
+                } else if($header == MDPW_WORKER) {
                     $this->worker_process($sender, $zmsg);
                 } else {
                     echo "E: invalid message", PHP_EOL, $zmsg->__toString();
@@ -104,13 +104,12 @@ class Mdbroker {
     }
     
     /**
-     * Delete any idle workers that haven't pinged us in a while. Workers
-     *are oldest to most recent, so we stop at the first alive worker.
+     * Delete any idle workers that haven't pinged us in a while.
      */
     public function purge_workers() {
         foreach($this->waiting as $id => $worker) {
             if(microtime(true) < $worker->expiry) {
-                break; //  Worker is alive, we're done here
+                continue; //  Worker is alive, we're done here
             }
             if($this->verbose) {
                 printf("I: deleting expired worker: %s %s",
@@ -217,13 +216,20 @@ class Mdbroker {
         }
         
         if(isset($worker->service)) {
+            worker_remove_from_array($worker, $worker->service->waiting);
             $worker->service->workers--;
         }
-        
-        unset($this->waiting[array_search($worker, $this->waiting)]);
+        worker_remove_from_array($worker, $this->waiting);
         unset($this->workers[$worker->identity]);
     }
-    
+
+    private function worker_remove_from_array($worker, &$array) {
+        $index = array_search($worker, $array);
+        if ($index !== false) {
+            unset($array[$index]);
+        }
+    }
+
     /**
      * Process message sent to us by a worker
      *
