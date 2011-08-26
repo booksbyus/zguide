@@ -35,14 +35,14 @@ class Run
 			Lib.println("6. TaskWork");
 			Lib.println("7. TaskSink");
 			Lib.println("");
-			Lib.println("11. Interrupt (** Doesn't work on Windows!)");
+			Lib.println("11. Interrupt");
 			Lib.println("");
-			Lib.println("12. MTServer (use with 1. HelloWorldClient)");
+			Lib.println("12. MTServer");
 			Lib.println("");
-			Lib.println("13. TaskWork2 (use with 5. TaskVent and 14. TaskSink2)");
-            Lib.println("14. TaskSink2 (use with 5. TaskVent and 13. TaskWork2)");
+			Lib.println("13. TaskWork2");
+            Lib.println("14. TaskSink2");
 			Lib.println("");
-			Lib.println("15. WUProxy (use with 4. WUServer)");
+			Lib.println("15. WUProxy");
 			Lib.println("");
 			Lib.println("16. RrClient");
 			Lib.println("17. RrBroker");
@@ -61,6 +61,40 @@ class Run
             Lib.println("25. DuraPub");
             Lib.println("26. DuraSub");
             Lib.println("27. DuraPub2");
+			Lib.println("");
+			Lib.println("28. Identity");
+			Lib.println("");
+			Lib.println("29. RTDealer");
+			Lib.println("30. RTMama");
+			Lib.println("31. RTPapa");
+			Lib.println("32. LRUQueue");
+			Lib.println("33. LRUQueue2");
+			Lib.println("34. LRUQueue3");
+			Lib.println("35. ASyncSrv");
+			Lib.println("");
+			Lib.println("36. Peering1");
+			Lib.println("37. Peering2");
+			Lib.println("38. Peering3");
+			Lib.println("");
+			Lib.println("39. LPClient");
+			Lib.println("40. LPServer");
+			Lib.println("41. SPQueue");
+			Lib.println("42. SPWorker");
+			Lib.println("43. PPQueue");
+			Lib.println("44. PPWorker");
+			Lib.println("");
+			Lib.println("45. MDClient");
+			Lib.println("46. MDWorker");
+			Lib.println("47. MDBroker");
+			Lib.println("48. Tripping");
+			Lib.println("49. MDClient2");
+			Lib.println("50. MMIEcho");
+			Lib.println("51. TIClient");
+			Lib.println("52. Titanic");
+			Lib.println("");
+			Lib.println("53. BStarSrv");
+			Lib.println("54. BStarCli");
+			Lib.println("55. BStarSrv2");
 			
 			do {
 				Lib.print("Type number followed by Enter key, or q to quit: ");
@@ -124,8 +158,64 @@ class Run
                 DuraSub.main();
             case 27:
                 DuraPub2.main();
+			case 28:
+				Identity.main();
+			case 29:
+				RTDealer.main();
+			case 30:
+				RTMama.main();
+			case 31:
+				RTPapa.main();
+			case 32:
+				LRUQueue.main();
+			case 33:
+				LRUQueue2.main();
+			case 34:
+				LRUQueue3.main();
+			case 35:
+				ASyncSrv.main();
+			case 36:
+				Peering1.main();
+			case 37:
+				Peering2.main();
+			case 38:
+				Peering3.main();
+			case 39:
+				LPClient.main();
+			case 40:
+				LPServer.main();
+			case 41:
+				SPQueue.main();
+			case 42:
+				SPWorker.main();
+			case 43:
+				PPQueue.main();
+			case 44:
+				PPWorker.main();
+			case 45:
+				MDClient.main();
+			case 46:
+				MDWorker.main();
+			case 47:
+				MDBroker.main();
+			case 48:
+				Tripping.main();
+			case 49:
+				MDClient2.main();
+			case 50:
+				MMIEcho.main();
+			case 51:
+				TIClient.main();
+			case 52:
+				Titanic.main();
+			case 53:
+				BStarSrv.main();
+			case 54:
+				BStarCli.main();
+			case 55:
+				BStarSrv2.main();
 			default:
-			Lib.println ("Unknown program number ... exiting");
+				Lib.println ("Unknown program number ... exiting");
 		}
 	}
 	
