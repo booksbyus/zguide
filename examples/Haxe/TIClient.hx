@@ -28,6 +28,9 @@ class TIClient
 
 	public static function main()
 	{
+		
+		Lib.println("** TIClient (see: http://zguide.zeromq.org/page:all#Disconnected-Reliability-Titanic-Pattern)");
+		
 		var argArr = Sys.args();
 		var verbose = (argArr.length > 1 && argArr[argArr.length - 1] == "-v");
 		

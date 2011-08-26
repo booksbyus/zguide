@@ -39,6 +39,8 @@ class Titanic
 	 * Main method
 	 */
 	public static function main() {
+		Lib.println("** Titanic (see: http://zguide.zeromq.org/page:all#Disconnected-Reliability-Titanic-Pattern)");
+
 		var argArr = Sys.args();
 		var verbose = (argArr.length > 1 && argArr[argArr.length - 1] == "-v");
 		var log = Lib.println;

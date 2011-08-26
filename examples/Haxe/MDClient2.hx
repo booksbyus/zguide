@@ -14,6 +14,8 @@ class MDClient2
 {
 
 	public static function main() {
+		Lib.println("** MDClient2 (see: http://zguide.zeromq.org/page:all#Asynchronous-Majordomo-Pattern)");
+		
 		var argArr = Sys.args();
 		var verbose = (argArr.length > 1 && argArr[argArr.length - 1] == "-v");
 		

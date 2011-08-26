@@ -11,6 +11,9 @@ class MMIEcho
 {
 
 	public static function main() {
+		
+		Lib.println("** MMIEcho (see: http://zguide.zeromq.org/page:all#Service-Discovery)");
+		
 		var argArr = Sys.args();
 		var verbose = (argArr.length > 1 && argArr[argArr.length - 1] == "-v");
 		

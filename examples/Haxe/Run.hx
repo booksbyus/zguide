@@ -86,10 +86,15 @@ class Run
 			Lib.println("45. MDClient");
 			Lib.println("46. MDWorker");
 			Lib.println("47. MDBroker");
-			Lib.println("48. MDClient2");
-			Lib.println("49. MMIEcho");
-			Lib.println("50. TIClient");
-			Lib.println("51. Titanic");
+			Lib.println("48. Tripping");
+			Lib.println("49. MDClient2");
+			Lib.println("50. MMIEcho");
+			Lib.println("51. TIClient");
+			Lib.println("52. Titanic");
+			Lib.println("");
+			Lib.println("53. BStarSrv");
+			Lib.println("54. BStarCli");
+			Lib.println("55. BStarSrv2");
 			
 			do {
 				Lib.print("Type number followed by Enter key, or q to quit: ");
@@ -194,15 +199,23 @@ class Run
 			case 47:
 				MDBroker.main();
 			case 48:
-				MDClient2.main();
+				Tripping.main();
 			case 49:
-				MMIEcho.main();
+				MDClient2.main();
 			case 50:
-				TIClient.main();
+				MMIEcho.main();
 			case 51:
+				TIClient.main();
+			case 52:
 				Titanic.main();
+			case 53:
+				BStarSrv.main();
+			case 54:
+				BStarCli.main();
+			case 55:
+				BStarSrv2.main();
 			default:
-			Lib.println ("Unknown program number ... exiting");
+				Lib.println ("Unknown program number ... exiting");
 		}
 	}
 	

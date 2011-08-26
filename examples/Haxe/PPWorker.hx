@@ -46,6 +46,8 @@ class PPWorker
 	}
 	
 	public static function main() {
+		Lib.println("** PPWorker (see: http://zguide.zeromq.org/page:all#Robust-Reliable-Queuing-Paranoid-Pirate-Pattern)");
+		
 		var ctx = new ZContext();
 		var worker = workerSocket(ctx);
 		

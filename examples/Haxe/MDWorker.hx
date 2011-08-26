@@ -13,7 +13,9 @@ class MDWorker
 {
 
 	public static function main() {
-		var argArr = Sys.args();
+		Lib.println("** MDWorker (see: http://zguide.zeromq.org/page:all#Service-Oriented-Reliable-Queuing-Majordomo-Pattern)");
+
+			var argArr = Sys.args();
 		var verbose = (argArr.length > 1 && argArr[argArr.length - 1] == "-v");
 		
 		var session = new MDWrkAPI("tcp://localhost:5555", "echo", verbose);
