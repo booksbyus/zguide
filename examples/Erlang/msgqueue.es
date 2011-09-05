@@ -15,7 +15,7 @@ main(_) ->
     {ok, Backend} = erlzmq:socket(Context, [dealer, {active, true}]),
     ok = erlzmq:bind(Backend, "tcp://*:5560"),
 
-    %% Stsart built-in device
+    %% Start built-in device
     erlzmq_device:queue(Frontend, Backend),
 
     %% We never get here...
