@@ -1,5 +1,9 @@
 # -*-org-*-
 
+To run an example provide the path to the `ERLZMQ` NIF wrapper and execute a `EXAMPLE` escript:
+
+    $ ERL_LIBS=/path/to/ERLZMQ ./EXAMPLE.es
+
 * Examples in Erlang
 
 |-------------+--------------------|
