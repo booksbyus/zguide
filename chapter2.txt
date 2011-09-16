@@ -514,9 +514,9 @@ Here is how we handle a signal in various languages:
 [[code type="example" title="Handling Ctrl-C cleanly" name="interrupt"]]
 [[/code]]
 
-The zhelpers.h file provides s_catch_signals(), which traps Ctrl-C (SIGINT) and SIGTERM. When either of these signals arrive, the s_catch_signals() handler sets the global variable s_interrupted. Your application will not die automatically, you have to now explicitly check for an interrupt, and handle it properly. Here's how:
+The program provides s_catch_signals(), which traps Ctrl-C (SIGINT) and SIGTERM. When either of these signals arrive, the s_catch_signals() handler sets the global variable s_interrupted. Your application will not die automatically, you have to now explicitly check for an interrupt, and handle it properly. Here's how:
 
-* Call s_catch_signals() at the start of your main code. This sets-up the signal handling.
+* Call s_catch_signals() (copy this from interrupt.c) at the start of your main code. This sets-up the signal handling.
 * If your code is blocking in zmq_recv[3], zmq_poll[3], or zmq_send[3], when a signal arrives, the call will return with EINTR.
 * Wrappers like s_recv() return NULL if they are interrupted.
 * So, your application checks for an EINTR return code, a NULL return, and/or s_interrupted.
