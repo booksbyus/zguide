@@ -12,12 +12,14 @@ if [ /$1/ = /all/ ]; then
 
     for MAIN in `ls *.go | sed 's/.go//g'`; do
         echo "$MAIN"
+        rm -f $MAIN
         if [ /$GOARCH/ = /amd64/ ]; then
           6g $MAIN.go && 6l -o $MAIN $MAIN.6 
         else
           8g $MAIN.go && 8l -o $MAIN $MAIN.8 
         fi
     done
+    rm -f *.6 *.8
 elif [ /$1/ = /clean/ ]; then
     echo "Cleaning C++ examples directory..."
     rm -f *.6
@@ -31,7 +33,7 @@ elif [ -f $1.cpp ]; then
     else
       8g $MAIN.go && 8l -o $MAIN $MAIN.8 
     fi
-    #rm -f $MAIN.6 $MAIN.8
+    rm -f $MAIN.6 $MAIN.8
 else
     echo "syntax: build all | clean"
 fi
