@@ -18,7 +18,7 @@ sync_request = sync.recv_string()
 
 # Now broadcast exactly 10 updates with pause
 10.times do |update_number|
-  message = sprintf("Update %d", index)
+  message = sprintf("Update %d", update_number)
   publisher.send_string(message)
   sleep(1)
 end
