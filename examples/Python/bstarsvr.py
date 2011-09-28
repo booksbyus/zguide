@@ -1,7 +1,11 @@
+# Binary Star Server
+#
+# Author: Dan Colish <dcolish@gmail.com>
+
 from argparse import ArgumentParser
 import time
 
-import zmq
+from zhelpers import zmq
 
 STATE_PRIMARY = 1
 STATE_BACKUP = 2
@@ -15,10 +19,6 @@ PEER_PASSIVE = 4
 CLIENT_REQUEST = 5
 
 HEARTBEAT = 1000
-
-pyzmq_version = tuple(map(int, zmq.pyzmq_version().split('.')))
-if pyzmq_version <= (2, 1, 7):
-    zmq.ROUTER = zmq.XREP
 
 
 class BStarState(object):
@@ -52,14 +52,15 @@ fsm_states = {
         PEER_BACKUP: ("I: backup (slave) is restarting, ready as master",
                       STATE_ACTIVE),
         PEER_PASSIVE: ("E: fatal error - dual slaves, aborting", False),
-        CLIENT_REQUEST: (CLIENT_REQUEST, True)
+        CLIENT_REQUEST: (CLIENT_REQUEST, True)  # Say true, check peer later
         }
     }
 
 
 def run_fsm(fsm):
     # There are some transitional states we do not want to handle
-    res = fsm_states[fsm.state].get(fsm.event)
+    state_dict = fsm_states.get(fsm.state, {})
+    res = state_dict.get(fsm.event)
     if res:
         msg, state = res
     else:
@@ -82,8 +83,10 @@ def main():
     parser.add_argument("-p", "--primary", action="store_true", default=False)
     parser.add_argument("-b", "--backup", action="store_true", default=False)
     args = parser.parse_args()
-    if args.primary and args.backup:
-        args.print_help()
+    # Both or none are given
+    if ((args.primary and args.backup) or
+        not (args.primary and args.backup)):
+        parser.print_help()
         exit(-1)
 
     ctx = zmq.Context()
@@ -119,11 +122,11 @@ def main():
             time_left = 0
         socks = dict(poller.poll(time_left))
         if socks.get(frontend) == zmq.POLLIN:
-            msg = frontend.recv()
+            msg = frontend.recv_multipart()
             fsm.state = CLIENT_REQUEST
             try:
                 run_fsm(fsm)
-                frontend.send(msg)
+                frontend.send_multipart(msg)
             except BStarException:
                 del msg
 
