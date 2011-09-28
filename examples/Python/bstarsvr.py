@@ -5,7 +5,7 @@
 from argparse import ArgumentParser
 import time
 
-import zmq
+from zhelpers import zmq
 
 STATE_PRIMARY = 1
 STATE_BACKUP = 2
@@ -83,8 +83,10 @@ def main():
     parser.add_argument("-p", "--primary", action="store_true", default=False)
     parser.add_argument("-b", "--backup", action="store_true", default=False)
     args = parser.parse_args()
-    if args.primary and args.backup:
-        args.print_help()
+    # Both or none are given
+    if ((args.primary and args.backup) or
+        not (args.primary and args.backup)):
+        parser.print_help()
         exit(-1)
 
     ctx = zmq.Context()
@@ -120,11 +122,11 @@ def main():
             time_left = 0
         socks = dict(poller.poll(time_left))
         if socks.get(frontend) == zmq.POLLIN:
-            msg = frontend.recv()
+            msg = frontend.recv_multipart()
             fsm.state = CLIENT_REQUEST
             try:
                 run_fsm(fsm)
-                frontend.send(msg)
+                frontend.send_multipart(msg)
             except BStarException:
                 del msg
 
