@@ -17,7 +17,7 @@ subscriber = context.socket(ZMQ::SUB)
 subscriber.connect("tcp://localhost:5556")
 
 # Subscribe to zipcode, default is NYC, 10001
-filter = ARGV.size > 0 ? argv[0] : "10001 "
+filter = ARGV.size > 0 ? ARGV[0] : "10001 "
 subscriber.setsockopt(ZMQ::SUBSCRIBE, filter)
 
 # Process 100 updates
