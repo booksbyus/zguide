@@ -1,27 +1,30 @@
-(ns storm_demo.wuclient
+(ns wuclient
   (:refer-clojure :exclude [send])
-  (:use [zilch.mq :as mq])
-  (:require [clojure.contrib.str-utils2 :as str])
+  (:use [zhelpers :as mq])
   (:import [java.util StringTokenizer]))
 
 ;
-; Weather update client in Clojure
+; Weather update client
+; Connects SUB socket to tcp://localhost:5556
+; Collects weather updates and finds avg temp in zipcode
+;
 ; Isaiah Peng <issaria@gmail.com>
 ;
 
-(defn main [zipcodes*]
+(defn -main [& args]
   (let [subscriber (-> 1 mq/context (mq/socket mq/sub))
-        filter "10001 "
-        total-temp (atom 0)
+        filter (or (first args) "10001 ")
+        args-temp (atom 0)
         nbr 100]
     (println "Collecting updates from weather server...")
-    (mq/connect subscriber "tcp://localhost:5556")
-    (mq/subscribe subscriber (.getBytes filter))
+    (mq/connect subscriber "ipc://weather")
+    (mq/subscribe subscriber filter)
     (doseq [i (range nbr)]
-      (let [string (-> subscriber (mq/recv 0) String. str/trim)
+      (let [string (mq/recv-str subscriber)
             sscanf (StringTokenizer. string " ")
             zipcode (Integer/parseInt (.nextToken sscanf))
             temperature (Integer/parseInt (.nextToken sscanf))
             relhumidity (Integer/parseInt (.nextToken sscanf))]
-        (swap! total-temp #(+ % temperature))))
+        (swap! total-temp #(+ % temperature))
+        (println (str "received: " string))))
     (println (str "Average temperature for zipcode '" filter "' was " (int (/ @total-temp nbr))))))
