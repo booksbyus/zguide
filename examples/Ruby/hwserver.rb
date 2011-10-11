@@ -16,7 +16,7 @@ while true do
   # Wait for next request from client
   request = socket.recv
 
-  puts "Recieved request. Data: #{request.inspect}"
+  puts "Received request. Data: #{request.inspect}"
 
   # Do some 'work'
   sleep 1

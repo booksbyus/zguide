@@ -10,8 +10,8 @@ require 'ffi-rzmq'
 context = ZMQ::Context.new
 
 # Connect to task ventilator
-reciever = context.socket(ZMQ::PULL)
-reciever.connect('tcp://localhost:5557')
+receiver = context.socket(ZMQ::PULL)
+receiver.connect('tcp://localhost:5557')
 
 # Connect to weather server
 subscriber = context.socket(ZMQ::SUB)
@@ -19,7 +19,7 @@ subscriber.connect('tcp://localhost:5556')
 subscriber.setsockopt(ZMQ::SUBSCRIBE, '10001')
 
 while true
-  if reciever_msg = reciever.recv_string(ZMQ::NOBLOCK) && !reciever_msg.empty?
+  if receiver_msg = receiver.recv_string(ZMQ::NOBLOCK) && !receiver_msg.empty?
     # process task
   end
 

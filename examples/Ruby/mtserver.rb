@@ -12,7 +12,7 @@ def worker_routine(context)
 
   loop do 
     string = receiver.recv_string
-    puts "Recieved request: [#{string}]"
+    puts "Received request: [#{string}]"
     # Do some 'work'
     sleep(1)
     # Send reply back to client
