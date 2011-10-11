@@ -13,5 +13,5 @@ socket.connect('tcp://localhost:5559')
   socket.send_string(string)
   puts "Sending string [#{string}]"
   message = socket.recv_string
-  puts "Recieved reply #{request}[#{message}]"
+  puts "Received reply #{request}[#{message}]"
 end

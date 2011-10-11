@@ -10,6 +10,6 @@ socket.connect('tcp://localhost:5560')
 
 loop do
   message = socket.recv_string
-  puts "Recieved request: #{message}"
+  puts "Received request: #{message}"
   socket.send_string('World')
 end
