@@ -1,25 +1,30 @@
-(ns storm_demo.syncpub
+(ns syncpub
   (:refer-clojure :exclude [send])
-  (:require [zilch.mq :as mq]))
+  (:require [zhelpers :as mq]))
 
 ;
 ; Synchronized publisher
 ;
 
-(defn main []
+(defn -main []
   (let [ctx (mq/context 1)
         publisher (mq/socket ctx mq/pub)
-        syncservice (mq/socket ctx mq/rep)]
+        syncservice (mq/socket ctx mq/rep)
+        subscribers-expected 10]
     (mq/bind publisher "tcp://*:5561")
     (mq/bind syncservice "tcp://*:5562")
+    ; Get synchronization from subscribers
     (println "Waiting for subscribers")
-    (doseq [i (range 10)]
+    (dotimes [i subscribers-expected]
+      ; - wait for synchronization request
       (mq/recv syncservice)
-      (mq/send syncservice (.getBytes "\u0000")))
+      ; - send synchronization reply
+      (mq/send syncservice "\u0000"))
+    ; Now broadcast exactly 1M updates followed by END
     (println "Broadicasting messages")
-    (doseq [i (range 1000000)]
-      (mq/send publisher (.getBytes "Rhubarb\u0000")))
-    (mq/send publisher (.getBytes "END\u0000"))
+    (dotimes [i 1000000]
+      (mq/send publisher "Rhubarb\u0000"))
+    (mq/send publisher "END\u0000")
     (.close publisher)
     (.close syncservice)
     (.term ctx)))

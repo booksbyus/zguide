@@ -1,7 +1,6 @@
-(ns storm_demo.rrserver
+(ns rrserver
   (:refer-clojure :exclude [send])
-  (:require [zilch.mq :as mq])
-  (:use [clojure.contrib.str-utils2 :only [trim]]))
+  (:require [zhelpers :as mq]))
 
 ;                                                 
 ; Hello World server                               
@@ -10,15 +9,16 @@
 ; Isaiah Peng <issaria@gmail.com>
 ;
 
-(defn main []
+(defn -main []
   (let [ctx (mq/context 1)
         responder (mq/socket ctx mq/rep)]
     (mq/connect responder "tcp://localhost:5560")
     (while true
-      (let [string (-> responder mq/recv String. trim)]
+      (let [string (mq/recv-str responder)]
         (println (format "Received request: [%s]." string))
+        ; Do some work
         (Thread/sleep 1)
-        (mq/send responder (.getBytes "World\u0000"))))
+        (mq/send responder "World\u0000")))
     ; We never get here but clean anyhow
     (.close responder)
     (.term ctx)))

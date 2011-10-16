@@ -1,22 +1,22 @@
-(ns examples.syncsub
+(ns syncsub
   (:refer-clojure :exclude [send])
-  (:require [zilch.mq :as mq])
-  (:use [clojure.contrib.str-utils2 :only [trim]]))
+  (:require [zhelpers :as mq]))
 
-(defn -main [& args]
+(defn -main []
   (let [ctx (mq/context 1)
         subscriber (mq/socket ctx mq/sub)
         syncclient (mq/socket ctx mq/req)
-        update-nbr (atom 0)]
+        update-nbr (atom 1)]
     (mq/connect subscriber "tcp://localhost:5561")
     (mq/connect syncclient "tcp://*:5562")
-    (mq/subscribe subscriber (.getBytes ""))
-    (mq/send syncclient (.getBytes ""))
+    (mq/subscribe subscriber "")
+    (mq/send syncclient "")
     (mq/recv subscriber)
-    (loop [string (-> subscriber mq/recv String. trim)]
+    (loop [string (mq/recv-str subscriber)]
       (if (not= "END" string)
-        (swap! update-nbr #(+ % 1))
-        (recur (-> subscriber mq/recv String. trim))))
+        (do
+          (swap! update-nbr inc)
+          (recur (mq/recv-str subscriber)))))
     (println (format "Received %d updates." @update-nbr))
     (.close subscriber)
     (.close syncclient)
