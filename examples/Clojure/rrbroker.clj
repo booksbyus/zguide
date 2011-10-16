@@ -3,9 +3,10 @@
   (:require [zhelpers :as mq])
   (:import [org.zeromq ZMQ$Poller]))
 
-;
-; Simple request-reply broker
-;
+;;
+;; Simple request-reply broker
+;; Isaiah Peng <issaria@gmail.com>
+;;
 
 (defn -main []
   (let [ctx (mq/context 1)
@@ -19,21 +20,21 @@
     (while (not (.isInterrupted (Thread/currentThread)))
       (.poll items 250000)
       (if (.pollin items 0)
-        (loop [#^String message (mq/recv-str frontend)
-               more (.hasReceiveMore frontend)]
-          (if more
-            (do
-              (mq/send-more backend message)
-              (recur (mq/recv-str frontend) (.hasReceiveMore frontend)))
-            (mq/send backend message))))
+        (loop [#^String message (mq/recv-str frontend)]
+          (let [more (.hasReceiveMore frontend)]
+            (if more
+              (do
+                (mq/send-more backend message)
+                (recur (mq/recv-str frontend)))
+              (mq/send backend message)))))
       (if (.pollin items 1)
-        (loop [#^String message (mq/recv-str backend)
-               more (.hasReceiveMore backend)]
-          (if more
-            (do
-              (mq/send-more frontend message)
-              (recur (mq/recv-str backend) (.hasReceiveMore backend)))
-            (mq/send frontend message)))))
+        (loop [#^String message (mq/recv-str backend)]
+          (let [more (.hasReceiveMore backend)]
+            (if more
+              (do
+                (mq/send-more frontend message)
+                (recur (mq/recv-str backend)))
+              (mq/send frontend message))))))
     (.close frontend)
     (.close backend)
     (.term ctx)))

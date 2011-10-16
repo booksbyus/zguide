@@ -3,13 +3,13 @@
   (:use [zhelpers :as mq])
   (:import [java.util StringTokenizer]))
 
-;
-; Weather update client
-; Connects SUB socket to tcp://localhost:5556
-; Collects weather updates and finds avg temp in zipcode
-;
-; Isaiah Peng <issaria@gmail.com>
-;
+;;
+;; Weather update client
+;; Connects SUB socket to tcp://localhost:5556
+;; Collects weather updates and finds avg temp in zipcode
+;;
+;; Isaiah Peng <issaria@gmail.com>
+;;
 
 (defn -main [& args]
   (let [subscriber (-> 1 mq/context (mq/socket mq/sub))
@@ -19,7 +19,7 @@
     (println "Collecting updates from weather server...")
     (mq/connect subscriber "ipc://weather")
     (mq/subscribe subscriber filter)
-    (doseq [i (range nbr)]
+    (dotimes [i nbr]
       (let [string (mq/recv-str subscriber)
             sscanf (StringTokenizer. string " ")
             zipcode (Integer/parseInt (.nextToken sscanf))

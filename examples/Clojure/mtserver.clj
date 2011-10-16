@@ -3,10 +3,10 @@
   (:require [zhelpers :as mq])
   (:import [org.zeromq ZMQ$Context ZMQQueue]))
 
-;
-; Multithreaded Hello World server
-; Isaiah Peng <issaria@gmail.com>
-;
+;;
+;; Multithreaded Hello World server
+;; Isaiah Peng <issaria@gmail.com>
+;;
 
 (defrecord Worker [^ZMQ$Context ctx]
   Runnable
@@ -26,11 +26,11 @@
         workers (mq/socket ctx mq/dealer)]
     (mq/bind clients "tcp://*:5555")
     (mq/bind workers "inproc://workers")
-    (doseq [i (range 5)]
+    (dotimes [i 5]
       (-> ctx Worker. Thread. .start))
     (let [queue (ZMQQueue. ctx clients workers)]
       (.run queue))
-    ; We never get here..
+    ;; We never get here..
     (.close clients)
     (.close workers)
     (.term ctx)))

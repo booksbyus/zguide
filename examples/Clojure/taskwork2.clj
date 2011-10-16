@@ -3,12 +3,12 @@
   (:require [zhelpers :as mq])
   (:import [org.zeromq ZMQ$Poller]))
 
-;
-; Task worker - design 2 in Clojure
-; Adds pub-sub flow to receive and respond to kill signal
-;
-; Isaiah Peng <issaria@gmail.com>
-; 
+;;
+;; Task worker - design 2
+;; Adds pub-sub flow to receive and respond to kill signal
+;;
+;; Isaiah Peng <issaria@gmail.com>
+;; 
 
 (defn -main []
   (let [ctx (mq/context 1)
@@ -23,21 +23,21 @@
     (mq/subscribe controller "")
     (.register items receiver ZMQ$Poller/POLLIN)
     (.register items controller ZMQ$Poller/POLLIN)
-    ; Any waiting controller commands acts as 'KILL'
+    ;; Any waiting controller commands acts as 'KILL'
     (while @continue ; Any better idea to break the loop?
       (.poll items)
       (if (.pollin items 0)
         (let [string (mq/recv-str receiver)
               nsec (Long/parseLong string)]
-          ; Do the work
+          ;; Do the work
           (Thread/sleep nsec)
-          ; Send results to sink
+          ;; Send results to sink
           (mq/send sender string)
-          ; Simple progress indicator for the viewer
+          ;; Simple progress indicator for the viewer
           (print ".")))
       (if (.pollin items 1)
         (reset! continue false)))
-    ; Finished
+    ;; Finished
     (.close receiver)
     (.close sender)
     (.close controller)

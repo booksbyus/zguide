@@ -1,10 +1,11 @@
 (ns durapub
   (:refer-clojure :exclude [send])
   (:require [zhelpers :as mq]))
-;
-; Publisher for durable subscriber
-; Isaiah Peng <issaria@gmail.com>
-;
+
+;;
+;; Publisher for durable subscriber
+;; Isaiah Peng <issaria@gmail.com>
+;;
 
 (defn -main []
   (let [ctx (mq/context 1)

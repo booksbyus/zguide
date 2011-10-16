@@ -3,13 +3,13 @@
   (:require [zhelpers :as mq])
   (:import [java.util Random]))
 
-;
-; Weather update server
-; Binds PUB socket to tcp://*:5556
-; Publishes random weather updates
-;
-; Isaiah Peng <issaria@gmail.com>
-;
+;;
+;; Weather update server
+;; Binds PUB socket to tcp://*:5556
+;; Publishes random weather updates
+;;
+;; Isaiah Peng <issaria@gmail.com>
+;;
 
 (defn -main []
   (let [publisher (-> 1 mq/context (mq/socket mq/pub))
@@ -21,6 +21,6 @@
               temperature (-> srandom (.nextInt 215) (- 79))
               relhumidity (-> srandom (.nextInt 50) (+ 11))
               update (format "%05d %d %d\u0000" zipcode temperature relhumidity)]
-        ; Send message to all subscribers
+        ;; Send message to all subscribers
         (mq/send publisher update))
       )))

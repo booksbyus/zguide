@@ -2,10 +2,10 @@
   (:refer-clojure :exclude [send])
   (:require [zhelpers :as mq]))
 
-;
-; Durable subscriber
-; Isaiah Peng <issaria@gmail.com>
-;
+;;
+;; Durable subscriber
+;; Isaiah Peng <issaria@gmail.com>
+;;
 
 (defn -main []
   (let [ctx (mq/context 1)

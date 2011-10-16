@@ -2,6 +2,12 @@
   (:refer-clojure :exclude [send])
   (:require [zhelpers :as mq]))
 
+;;
+;; Synchronized subscriber
+;;
+;; Isaiah Peng <issaria@gmail.com>
+;;
+
 (defn -main []
   (let [ctx (mq/context 1)
         subscriber (mq/socket ctx mq/sub)

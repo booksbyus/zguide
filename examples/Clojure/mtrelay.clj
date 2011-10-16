@@ -3,10 +3,10 @@
   (:require [zhelpers :as mq])
   (:import [org.zeromq ZMQ$Context]))
 
-;
-; Multithreaded relay in Clojure
-; Isaiah Peng <issaria@gmail.com>
-;
+;;
+;; Multithreaded relay in Clojure
+;; Isaiah Peng <issaria@gmail.com>
+;;
 
 (defrecord Step1 [^ZMQ$Context ctx]
   Runnable
@@ -24,7 +24,7 @@
           xmitter (mq/socket ctx mq/pair)]
       (mq/bind receiver "inproc://step2")
       (-> ctx Step1. Thread. .start)
-      ; Wait for signal and pass it on
+      ;; Wait for signal and pass it on
       (mq/recv-str receiver)
       (mq/connect xmitter "inproc://step3")
       (println "Step 2 is ready, signaling step 3")

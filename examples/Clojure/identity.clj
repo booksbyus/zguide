@@ -2,12 +2,12 @@
   (:refer-clojure :exclude [send])
   (:require [zhelpers :as mq]))
 
-;                                                                   
-; Demonstrate identities as used by the request-reply pattern. Run this
-; program by itself. Note that the utility functions s_ are provided by
-; zhelpers.h. It gets boring for everyone to keep repeating this code.
-; Isaiah Peng <issaria@gmail.com>
-;
+;;                                                                   
+;; Demonstrate identities as used by the request-reply pattern. Run this
+;; program by itself. Note that the utility functions s_ are provided by
+;; zhelpers.h. It gets boring for everyone to keep repeating this code.
+;; Isaiah Peng <issaria@gmail.com>
+;;
 
 (defn -main []
   (let [ctx (mq/context 1)

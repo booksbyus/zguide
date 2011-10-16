@@ -1,3 +1,6 @@
+;; The file is adapted from zilch, with some other useful helper methods.
+;; https://github.com/dysinger/zilch
+;;
 (ns zhelpers
   (:refer-clojure :exclude [send])
   (:import [org.zeromq ZMQ ZMQ$Context ZMQ$Socket ZMQQueue])
@@ -84,10 +87,11 @@
 
 (defn recv-all
   [#^ZMQ$Socket socket flags]
-  (loop [msg (recv socket flags) acc '[]]
-    (if (.hasReceiveMore socket)
-      (recur (recv socket flags) (conj acc msg))
-      (conj acc msg))))
+  (loop [acc '[]]
+    (let [msg (recv socket flags)]
+      (if (.hasReceiveMore socket)
+        (recur (conj acc msg))
+        (conj acc msg)))))
 
 (defn recv-str [#^ZMQ$Socket socket]
   (-> socket recv String. trim))

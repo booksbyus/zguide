@@ -1,18 +1,17 @@
-(ns examples.rtdealer
+(ns rtdealer
   (:refer-clojure :exclude [send])
-  (:require [zilch.mq :as mq])
-  (:use [clojure.contrib.str-utils2 :only [trim]])
+  (:require [zhelpers :as mq])
   (:import [java.util Random]))
 
-;
-; Custom routing Router to Dealer (ROUTER to DEALER)
-;
-; While this example runs in a single process, that is just to make
-; it easier to start and stop the example. Each thread has its own
-; context and conceptually acts as a separate process.
-;
-; Isaiah Peng <issaria@gmail.com>
-;
+;;
+;; Custom routing Router to Dealer (ROUTER to DEALER)
+;;
+;; While this example runs in a single process, that is just to make
+;; it easier to start and stop the example. Each thread has its own
+;; context and conceptually acts as a separate process.
+;;
+;; Isaiah Peng <issaria@gmail.com>
+;;
 
 (defrecord Worker [name]
   Runnable
@@ -21,29 +20,33 @@
           worker (mq/socket ctx mq/dealer)]
       (mq/identify worker name)
       (mq/connect worker "ipc://routing.ipc")
-      (loop [request (-> worker mq/recv String. trim) total 0]
-        (if (= "END" request)
-          (println (str name (format " received: %d" total)))
-          (recur (-> worker mq/recv String. trim) (+ total 1)))))))
+      (loop [total 0]
+        (let [request (mq/recv-str worker)]
+          (if (= "END" request)
+            (println (format "%s received: %d" name total))
+            (recur (inc total))))))))
 
-(defn -main [& args]
+(defn -main []
   (let [ctx (mq/context 1)
         client (mq/socket ctx mq/xrep)
         srandom (Random. (System/currentTimeMillis))]
     (mq/bind client "ipc://routing.ipc")
     (-> "A" Worker. Thread. .start)
     (-> "B" Worker. Thread. .start)
-    ; Wait for threads to connect, since otherwise the messages
-    ; we send won't be routable.
+    ;; Wait for threads to connect, since otherwise the messages
+    ;; we send won't be routable.
     (Thread/sleep 1000)
-    (doseq [i (range 10)]
-      (if (= 0 (mod (.nextInt srandom) 3))
-        (mq/send client "B" mq/sndmore)
-        (mq/send client "A" mq/sndmore))
+    ;; Send 10 tasks scattered to A twice as often as B
+    (dotimes [i 10]
+      ;; Send two message parts, first the address...
+      (if (= 0 (.nextInt srandom 3))
+        (mq/send-more client "B")
+        (mq/send-more client "A"))
+      ;; And then the workload
       (mq/send client "This is the workload"))
-    (mq/send client "A" mq/sndmore)
+    (mq/send-more client "A")
     (mq/send client "END")
-    (mq/send client "B" mq/sndmore)
+    (mq/send-more client "B")
     (mq/send client "END")
     (.close client)
     (.term ctx)))
