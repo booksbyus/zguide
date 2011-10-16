@@ -1,6 +1,6 @@
-(ns examples.identity
+(ns identity
   (:refer-clojure :exclude [send])
-  (:require [zilch.mq :as mq]))
+  (:require [zhelpers :as mq]))
 
 ;                                                                   
 ; Demonstrate identities as used by the request-reply pattern. Run this
