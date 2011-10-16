@@ -1,6 +1,6 @@
-(ns examples.durapub
+(ns durapub
   (:refer-clojure :exclude [send])
-  (:require [zilch.mq :as mq]))
+  (:require [zhelpers :as mq]))
 ;
 ; Publisher for durable subscriber
 ; Isaiah Peng <issaria@gmail.com>
@@ -14,9 +14,9 @@
     (mq/bind sync "tcp://*:5564")
     (mq/recv sync)
     (doseq [i (range 10)]
-      (mq/send publisher (-> "Update %d\u0000" (format i) .getBytes) 0)
+      (mq/send publisher (format "Update %d\u0000" i))
       (Thread/sleep 1000))
-    (mq/send publisher (.getBytes "END\u0000"))
+    (mq/send publisher "END\u0000")
     (.close publisher)
     (.close sync)
     (.term ctx)))

@@ -14,10 +14,10 @@
         sync (mq/socket ctx mq/push)]
     (mq/connect subscriber "tcp://localhost:5565")
     (mq/connect sync "tcp://localhost:5564")
-    (.setIdentity subscriber (.getBytes "hello"))
-    (mq/subscribe subscriber (.getBytes ""))
-    (mq/send sync (.getBytes "\u0000"))
-    (loop [msg (-> subscriber mq/recv String. trim)]
+    (.setIdentity subscriber "hello")
+    (mq/subscribe subscriber "")
+    (mq/send sync "\u0000")
+    (loop [msg (mq/recv-str subscriber)]
       (println msg)
       (if (not= "END" msg) 
-        (recur (-> subscriber mq/recv String. trim))))))
+        (recur (mq/recv-str subscriber))))))

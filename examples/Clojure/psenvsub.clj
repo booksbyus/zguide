@@ -1,7 +1,6 @@
-(ns examples.psenvsub
+(ns psenvsub
   (:refer-clojure :exclude [send])
-  (:require [zilch.mq :as mq])
-  (:use [clojure.contrib.str-utils2 :only [trim]]))
+  (:require [zhelpers :as mq]))
 
 ;
 ; Pubsub envelope subscriber
@@ -12,10 +11,10 @@
   (let [ctx (mq/context 1)
         subscriber (mq/socket ctx mq/sub)]
     (mq/connect subscriber "tcp://localhost:5563")
-    (mq/subscribe subscriber (.getBytes "B"))
+    (mq/subscribe subscriber "B")
     (while true
       (let [; Read envelope with address
-            address (-> subscriber mq/recv String. trim)
+            address (mq/recv-str subscriber)
             ; Read message contents
-            contents (-> subscriber mq/recv String. trim)]
+            contents (mq/recv-str subscriber)]
        (println (format "%s : %s" address contents))))))

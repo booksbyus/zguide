@@ -1,6 +1,6 @@
 (ns zhelpers
   (:refer-clojure :exclude [send])
-  (:import [org.zeromq ZMQ ZMQ$Context ZMQ$Socket])
+  (:import [org.zeromq ZMQ ZMQ$Context ZMQ$Socket ZMQQueue])
   (:import [java.util Random])
   (:use [clojure.contrib.str-utils2 :only [trim]]))
 
@@ -30,6 +30,10 @@
 (defn socket
   [#^ZMQ$Context context type]
   (.socket context type))
+
+(defn queue
+  [#^ZMQ$Context context #^ZMQ$Socket frontend #^ZMQ$Socket backend]
+  (ZMQQueue. context frontend backend))
 
 (defn bind
   [#^ZMQ$Socket socket url]
