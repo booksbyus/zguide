@@ -1,7 +1,6 @@
-(ns examples.durasub
+(ns durasub
   (:refer-clojure :exclude [send])
-  (:require [zilch.mq :as mq])
-  (:use [clojure.contrib.str-utils2 :only [trim]]))
+  (:require [zhelpers :as mq]))
 
 ;
 ; Durable subscriber
@@ -12,12 +11,15 @@
   (let [ctx (mq/context 1)
         subscriber (mq/socket ctx mq/sub)
         sync (mq/socket ctx mq/push)]
+    (mq/identify subscriber "Hello")
     (mq/connect subscriber "tcp://localhost:5565")
     (mq/connect sync "tcp://localhost:5564")
-    (.setIdentity subscriber "hello")
     (mq/subscribe subscriber "")
     (mq/send sync "\u0000")
     (loop [msg (mq/recv-str subscriber)]
       (println msg)
       (if (not= "END" msg) 
-        (recur (mq/recv-str subscriber))))))
+        (recur (mq/recv-str subscriber))))
+    (.close subscriber)
+    (.close sync)
+    (.term ctx)))

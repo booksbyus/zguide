@@ -13,10 +13,12 @@
     (mq/bind publisher "tcp://*:5565")
     (mq/bind sync "tcp://*:5564")
     (mq/recv sync)
-    (doseq [i (range 10)]
+    (dotimes [i 10]
       (mq/send publisher (format "Update %d\u0000" i))
       (Thread/sleep 1000))
     (mq/send publisher "END\u0000")
+    ; Give 0MQ to flush out
+    (Thread/sleep 10000)
     (.close publisher)
     (.close sync)
     (.term ctx)))
