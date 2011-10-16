@@ -109,6 +109,7 @@ dbea6f88e76f7b5406b5b616e427a7c844ecc160 listings/C/listing_31.c
 6f356d1d98158e5ded441b702cca208aca02f052 examples/Haxe/wuclient.hx
 7d9e1d1db12f26c39c0a682007150070ac825f4e examples/C/tasksink2.c
 af5e1947bc6d29845430fafc53c3b06b419331d9 images/fig30.html
+3ccfe79cf5c8040097f9bf2c91be166a24bcb13f examples/Ruby/psenvpub.rb
 77ecd4af1056bf7ab3f5b5a2b370716b270f63d3 examples/Scala/rtpapa.scala
 8a29982ee392cc2630ce392b0a8133c02871ea20 examples/C#/mtserver.cs
 220d8130c8c64e8870049cd9c75c6c009e08aba0 examples/F#/durapub.fsx
@@ -125,8 +126,8 @@ b0a76cab9bb6ecf75f2d3c0ef8ff155a12cfb8fd listings/C/listing_33.c
 d89583bf0ecc6284bea5eb764b875be3bc38836e examples/Haxe/peering1.hx
 bd5a9b52396cdd3bd259cc235cf325bb8668ef95 examples/Node.js/taskvent.js
 99f29db9c7dd95aad3475f6197cdda293d0b31f0 examples/Java/durapub.java
-1ba13ef5d50279d39bac2d12559b4bf6457f41a2 examples/C++/mdworker.cpp
 0ab2e0a55c524d0fd87f564602b12cbb82d5d7f6 examples/C#/tasksink.cs
+1ba13ef5d50279d39bac2d12559b4bf6457f41a2 examples/C++/mdworker.cpp
 2691513bb53d9076b9e7420faec7ffd2a33708ae examples/Python/taskwork.py
 577ec12cfbad63330d13efd11ad9a99c5d265c51 examples/Scala/rtrouter.scala
 98b9facf6136c40784e00a685eb14d317e7f4c7e listings/C/listing_3.c
@@ -174,12 +175,13 @@ e0b854da88ccec97be348d99c59d8fac8ff184ed examples/C/flserver2.c
 d8582e3fb3e2f71c88c178f7de1637eeb9fb6f39 examples/F#/mspoller.fsx
 48675725c041d9fb7321cea27209bd35f166d7fa examples/Go/wuserver.go
 8bbf0c0d7521069375355cfea12db1af4f9a4684 examples/Java/wuclient.java
+8aa0ee8cdceada1858674ac5f7766ccd1391e0c1 examples/Ruby/psenvsub.rb
 b40b2e6f522a22bde19dbbdad5a755d731e017d7 images/fig14.html
 1c73d2833ca6209e4b88c3416b40b4ef3aea73e4 listings/C/listing_28.c
 2adc3d160708690759ef393cde9094d6249212c1 examples/C++/wuserver.cpp
 4b7c444789cb4d87d9f5e7fe095c447ae6be27e4 examples/Scala/peering2.scala
 c4c3f4779e818d038c9f406ceab2acb1c9126d4f examples/C/mmiecho.c
-0227350892ac2bd1137b65536c8caf120e0907e0 examples/Ruby/mspoller.rb
+75fda894f1d426670c2d65bf32e1adcb3503a8a2 examples/Ruby/mspoller.rb
 1658cecacf8284cef0eefd2e02195753f3625da6 examples/Python/syncpub.py
 72cfd3c4484ad32cac196752ec710353fd643521 examples/Python/asyncsrv.py
 a3c78d15e03ff754a35ad2d4d9c5129bd6e0781b examples/Erlang/syncsub.es
@@ -218,7 +220,7 @@ c48495456b4bde2169569f37c8e5d9e28c5c5dc5 images/fig40.html
 a0325006d0a5013b9771ff85f2895d0d051fcab6 examples/Scala/hwclient.scala
 1131219e4a1347ec27a59f526b8eb0c283cb954a examples/Perl/syncpub.pl
 e87190cc269079528b7bfb14d8cbef18383a83dc examples/Scala/wuclient.scala
-20ff45bbad97b68caf1924b5d99b1ef28c23ecbb examples/Ruby/rrclient.rb
+d6710d30e2de895e1c3305274adb07d1b3ffae3b examples/Ruby/rrclient.rb
 9a194dc680787428e8043a16b929fde86e879d05 examples/Python/rrserver.py
 58b1e3aacc85a202eb008ff192612f7308799bd9 examples/C/clonecli1.c
 78b7a2ba224ee50ee6cc6da159500ccf9d120cf2 examples/PHP/mdwrkapi.php
@@ -504,7 +506,7 @@ df97063962a331611e7bff52dd06a6a455f38bc4 examples/CL/lruqueue.lisp
 f914109feb515bf851c5801b26fee45da3db63ad examples/Ruby/wuproxy.rb
 c67aa855bfd70117f0ec9b2fe4d3c5f0eb8edec6 examples/C++/durasub.cpp
 bfa6b90426ddd729f836e1e967726f491a509f24 listings/C/listing_24.c
-510bb9203ad33c63416c60e1c444223a44e58ae2 examples/Ruby/mtserver.rb
+8371ed54de8ce606f0176563a19553e652e745d7 examples/Ruby/mtserver.rb
 1fa3f7183cb34148d1836d4ed6f411f2f535aebc examples/Ruby/taskwork.rb
 bf9e7de0225766700e49a98b91603f2b18bde6e2 examples/C#/wuclient.cs
 1401e2a25a01cdc3ef91273dbe3adcf2a6dc1b56 images/fig20.html
@@ -523,9 +525,9 @@ e1389503d088f80b2780b4ac71cb2f618110d279 examples/Erlang/taskvent.es
 5afc4446a7798cee11dce71b26c5cef0b8c5b162 examples/PHP/spworker.php
 bfb9fe4c39e6d664704202a1af6236b96069f3ac examples/PHP/mdworker.php
 b6a99b3f201db11d19790372f661d267888c5b8d listings/C/listing_4.c
-b5f3a16e332f7df18250afcb90e5fdedf67e45be examples/Ruby/msreader.rb
+8696eaac7b72a33019c7969dc346fdca16a1d9d9 examples/Ruby/msreader.rb
 62f0018be9dff9f0fe31a5c7709a7c195294c451 examples/CL/wuclient.lisp
-4762e22bd42b0464701084fde35cd5f8e144e949 examples/Java/wuproxy.java
+38372c9432dc9f39d167c3c6dcc36ea9235c25a8 examples/Java/wuproxy.java
 efd06bd3efcd72816bb803cc4a7e0ec99c5b0fab examples/Lua/psenvpub.lua
 88b5a0ffa8368ee2392782c776eef6836515ad96 examples/C/flserver1.c
 e91f6c2bf4df3a02a181492152146196c435554d examples/Haxe/durapub.hx
@@ -694,4 +696,4 @@ e1cfc12cf9612badcc8760dd64829f304a162152 examples/C#/syncsub.cs
 8e4cb7774ba1741b099f520db3377fc7a7887807 images/fig63.html
 e4cff1b9e0abe58536e9466db85a54fafb4eb394 examples/Lua/rtpapa.lua
 3ff6bc64724185030040b087eebe7f472f2a5d14 examples/C#/durapub2.cs
-4bba3bd319a85a5261f8d38be5225dde35b091e2 examples/Ruby/rrserver.rb
+853666beea7a9e35b89d2b2d062b4bd1b1de9300 examples/Ruby/rrserver.rb
