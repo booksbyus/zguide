@@ -1,7 +1,8 @@
 (ns zhelpers
   (:refer-clojure :exclude [send])
   (:import [org.zeromq ZMQ ZMQ$Context ZMQ$Socket ZMQQueue])
-  (:import [java.util Random])
+  (:import (java.util Random)
+           (java.nio ByteBuffer))
   (:use [clojure.contrib.str-utils2 :only [trim]]))
 
 (defn context [threads]
@@ -97,7 +98,7 @@
   (doseq [msg (recv-all socket 0)]
     (print (format "[%03d] " (count msg)))
     (if (and (= 17 (count msg)) (= 0 (first msg)))
-      (println (format "UUID %s" (-> msg String. trim)))
+      (println (format "UUID %s" (-> msg ByteBuffer/wrap .getLong)))
       (println (-> msg String. trim)))))
 
 (defn set-id
