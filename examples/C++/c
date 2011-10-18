@@ -466,7 +466,7 @@ for i in $*; do
     #   If okay, link if required
     if [ "$LINKUP" = "yes" ]; then
         TRACE="Linking $FILENAME"
-        COMMAND="$CCNAME $CCOPTS $FILENAME.$OBJEXT -o $FILENAME"
+        COMMAND="$CCNAME $FILENAME.$OBJEXT $CCOPTS -o $FILENAME"
 
         case "$LINKTYPE" in
             gnu)
