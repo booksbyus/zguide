@@ -665,7 +665,7 @@ Specifically:
 
 * Components can come and go dynamically and 0MQ will automatically reconnect. This means you can start components in any order. You can create "service-oriented architectures" (SOAs) where services can join and leave the network at any time.
 
-* It queues messages automatically when needed. It does this intelligently, pushing messages to as close as possible to the receiver before queuing them.
+* It queues messages automatically when needed. It does this intelligently, pushing messages as close as possible to the receiver before queuing them.
 
 * It has ways of dealing with over-full queues (called "high water mark"). When a queue is full, 0MQ automatically blocks senders, or throws away messages, depending on the kind of messaging you are doing (the so-called "pattern").
 
