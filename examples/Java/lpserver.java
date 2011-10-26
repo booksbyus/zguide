@@ -12,36 +12,37 @@ import java.util.Random;
 
 public class lpserver {
     public static void main(String[] args) {
-        //  Prepare our context and socket
+        // Prepare our context and socket
         ZMQ.Context context = ZMQ.context(1);
         ZMQ.Socket server = context.socket(ZMQ.REP);
-        server.bind ("tcp://*:5555");
+        server.bind("tcp://*:5555");
 
         Random rand = new Random();
         int cycles = 0;
         while (true) {
-            byte[] request  = server.recv (0);
+            byte[] request = server.recv(0);
             cycles++;
 
             try {
-                //  Simulate various problems, after a few cycles
-                if (cycles > 3 && rand.nextInt (4) == 0) {
-                    System.out.println ("I: simulating a crash");
+                // Simulate various problems, after a few cycles
+                if (cycles > 3 && rand.nextInt(4) == 0) {
+                    System.out.println("I: simulating a crash");
                     break;
-                } else if (cycles > 3 && rand.nextInt (4) == 0) {
-                    System.out.println ("I: simulating CPU overload");
-                    Thread.sleep (2000);
+                } else if (cycles > 3 && rand.nextInt(4) == 0) {
+                    System.out.println("I: simulating CPU overload");
+                    Thread.sleep(2000);
                 }
-        
-                System.out.printf ("I: normal request (%s)\n", new String(request).trim());
-                //  Do some 'work'
-                Thread.sleep (1000);
-            } catch(InterruptedException e) {
+
+                System.out.printf("I: normal request (%s)\n", new String(
+                        request).trim());
+                // Do some 'work'
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
                 e.printStackTrace();
             }
             server.send(request, 0);
         }
-        //cleanup
+        // cleanup
         server.close();
         context.term();
     }
