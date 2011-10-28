@@ -11,7 +11,7 @@ import zhelpers
 
 context = zmq.Context()
 
-sink = context.socket(zmq.XREP)
+sink = context.socket(zmq.ROUTER)
 sink.bind("inproc://example")
 
 # First allow 0MQ to set the identity
