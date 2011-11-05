@@ -31,8 +31,6 @@ int main (void)
     printf ("Average round trip cost: %d usec\n",
         (int) (zclock_time () - start) / 10);
 
-puts ("flclient 1");
     flcliapi_destroy (&client);
-puts ("flclient 2");
     return 0;
 }

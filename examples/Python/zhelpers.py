@@ -7,6 +7,10 @@ from random import randint
 
 import zmq
 
+pyzmq_version = tuple(map(int, zmq.pyzmq_version().split('.')))
+if pyzmq_version <= (2, 1, 7):
+    zmq.ROUTER = zmq.XREP
+
 
 # Receives all message parts from socket, prints neatly
 def dump(zsocket):

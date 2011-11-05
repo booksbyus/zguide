@@ -7,11 +7,11 @@
 .output chapter1.wd
 **By Pieter Hintjens <ph@imatix.com>, CEO iMatix Corporation.**
 
-With thanks to Bill Desmarais, Brian Dorsey, CAF, Daniel Lin, Eric Desgranges, Gonzalo Diethelm, Guido Goldstein, Hunter Ford, Kamil Shakirov, Martin Sustrik, Mike Castleman, Naveen Chawla, Nicola Peduzzi, Oliver Smith, Olivier Chamoux, Peter Alexander, Pierre Rouleau, Randy Dryburgh, John Unwin, Alex Thomas, Mihail Minkov, Jeremy Avnet, Michael Compton, Kamil Kisiel, Mark Kharitonov, Guillaume Aubert, Ian Barber, Mike Sheridan, Faruk Akgul, Oleg Sidorov, Lev Givon, Allister MacLeod, Alexander D'Archangel, Andreas Hoelzlwimmer, Han Holl, Robert G. Jakabosky, Felipe Cruz, Marcus McCurdy, Mikhail Kulemin, Dr. Gergő Érdi, Pavel Zhukov, Alexander Else, Giovanni Ruggiero, Rick "Technoweenie", Daniel Lundin, Dave Hoover, Simon Jefford, Benjamin Peterson, Justin Case, Devon Weller, Richard Smith, Alexander Morland, Wadim Grasza, Michael Jakl, and Zed Shaw for their contributions, and to Stathis Sideris for [http://www.ditaa.org Ditaa].
+With thanks to Bill Desmarais, Brian Dorsey, CAF, Daniel Lin, Eric Desgranges, Gonzalo Diethelm, Guido Goldstein, Hunter Ford, Kamil Shakirov, Martin Sustrik, Mike Castleman, Naveen Chawla, Nicola Peduzzi, Oliver Smith, Olivier Chamoux, Peter Alexander, Pierre Rouleau, Randy Dryburgh, John Unwin, Alex Thomas, Mihail Minkov, Jeremy Avnet, Michael Compton, Kamil Kisiel, Mark Kharitonov, Guillaume Aubert, Ian Barber, Mike Sheridan, Faruk Akgul, Oleg Sidorov, Lev Givon, Allister MacLeod, Alexander D'Archangel, Andreas Hoelzlwimmer, Han Holl, Robert G. Jakabosky, Felipe Cruz, Marcus McCurdy, Mikhail Kulemin, Dr. Gergő Érdi, Pavel Zhukov, Alexander Else, Giovanni Ruggiero, Rick "Technoweenie", Daniel Lundin, Dave Hoover, Simon Jefford, Benjamin Peterson, Justin Case, Devon Weller, Richard Smith, Alexander Morland, Wadim Grasza, Michael Jakl, Uwe Dauernheim, Sebastian Nowicki, Simone Deponti, Aaron Raddon, Dan Colish, Markus Schirp, Benoit Larroque, Jonathan Palardy, Isaiah Peng, Arkadiusz Orzechowski, and Zed Shaw for their contributions, and to Stathis Sideris for [http://www.ditaa.org Ditaa].
 
 Please use the [$(GIT)/issues issue tracker] for all comments and errata. This version covers the latest stable release of 0MQ and was published on &date("ddd d mmmm, yyyy").
 
-The Guide is mainly [/page:all in C], but also in [/php:all PHP] and [/lua:all Lua].
+The Guide is mainly [/page:all in C], but also in [/php:all PHP], [/lua:all Lua], and [/hx:all Haxe].
 
 ++ Chapter One - Basic Stuff
 
@@ -445,7 +445,7 @@ void* pub_worker(void* arg){
 
     zmq_msg_init_data(&topic_msg, topic_str, strlen(topic_str) , NULL, NULL);
 
-    fprintf(stdout,"WORKER: ready to recieve messages\n");
+    fprintf(stdout,"WORKER: ready to receive messages\n");
     //  NOTE: do NOT reuse this example code, It's broken.
     //  e.g. topic_msg will be invalid the second time through
     while (1){
@@ -457,7 +457,7 @@ void* pub_worker(void* arg){
     zmq_send(pubskt, &cmd_msg, ZMQ_SNDMORE);
     zmq_msg_close(&cmd_msg);
 
-    fprintf(stdout, "recieved cmd %u\n", cmd);
+    fprintf(stdout, "received cmd %u\n", cmd);
 
     zmq_msg_init(&nb_msg);
     zmq_recv(qskt, &nb_msg, 0);
@@ -465,7 +465,7 @@ void* pub_worker(void* arg){
     zmq_send(pubskt, &nb_msg, 0);
     zmq_msg_close(&nb_msg);
 
-    fprintf(stdout, "recieved nb %u\n", nb);
+    fprintf(stdout, "received nb %u\n", nb);
 
     zmq_msg_init_size(&resp_msg, sizeof(uint8_t));
     memset(zmq_msg_data(&resp_msg), 0, sizeof(uint8_t));
@@ -665,7 +665,7 @@ Specifically:
 
 * Components can come and go dynamically and 0MQ will automatically reconnect. This means you can start components in any order. You can create "service-oriented architectures" (SOAs) where services can join and leave the network at any time.
 
-* It queues messages automatically when needed. It does this intelligently, pushing messages to as close as possible to the receiver before queuing them.
+* It queues messages automatically when needed. It does this intelligently, pushing messages as close as possible to the receiver before queuing them.
 
 * It has ways of dealing with over-full queues (called "high water mark"). When a queue is full, 0MQ automatically blocks senders, or throws away messages, depending on the kind of messaging you are doing (the so-called "pattern").
 

@@ -10,7 +10,7 @@ include_once "mdp.php";
 //  We'd normally pull these from config data
 define("HEARTBEAT_LIVENESS", 3);    //  3-5 is reasonable
 define("HEARTBEAT_INTERVAL", 2500); //  msecs
-define("HEARTBEAT_EXPIRY", HEARTBEAT_INTERVAL * HEARTBEAT_LIVENESS); 
+define("HEARTBEAT_EXPIRY", HEARTBEAT_INTERVAL * HEARTBEAT_LIVENESS);
 
 /* Main broker work happens here */
 $verbose = $_SERVER['argc'] > 1 && $_SERVER['argv'][1] == '-v';
@@ -22,20 +22,20 @@ class Mdbroker {
     private $ctx;               //  Our context
     private $socket;            //  Socket for clients & workers
     private $endpoint;          //  Broker binds to this endpoint
-    
+
     private $services = array();          //  Hash of known services
     private $workers = array();           //  Hash of known workers
     private $waiting = array();           //  List of waiting workers
-    
+
     private $verbose = false;   //  Print activity to stdout
-    
+
     //  Heartbeat management
     private $heartbeat_at;  //  When to send HEARTBEAT
 
     /**
      * Constructor
      *
-     * @param boolean $verbose 
+     * @param boolean $verbose
      */
     public function __construct($verbose = false) {
         $this->ctx = new ZMQContext();
@@ -43,12 +43,12 @@ class Mdbroker {
         $this->verbose = $verbose;
         $this->heartbeat_at = microtime(true) + (HEARTBEAT_INTERVAL/1000);
     }
-    
+
     /**
      * Bind broker to endpoint, can call this multiple time
      * We use a single socket for both clients and workers.
      *
-     * @param string $endpoint 
+     * @param string $endpoint
      */
     public function bind($endpoint) {
         $this->socket->bind($endpoint);
@@ -56,20 +56,20 @@ class Mdbroker {
             printf("I: MDP broker/0.1.1 is active at %s %s", $endpoint, PHP_EOL);
         }
     }
-    
+
     /**
      * This is the main listen and process loop
      */
     public function listen() {
         $read = $write = array();
-        
+
         //  Get and process messages forever or until interrupted
         while(true) {
             $poll = new ZMQPoll();
             $poll->add($this->socket, ZMQ::POLL_IN);
-            
+
             $events = $poll->poll($read, $write, HEARTBEAT_INTERVAL * ZMQ_POLL_MSEC);
-            
+
             //  Process next input message, if any
             if($events) {
                 $zmsg = new Zmsg($this->socket);
@@ -77,11 +77,11 @@ class Mdbroker {
                 if($this->verbose) {
                     echo "I: received message:", PHP_EOL, $zmsg->__toString();
                 }
-                
+
                 $sender = $zmsg->pop();
                 $empty = $zmsg->pop();
                 $header = $zmsg->pop();
-                
+
                 if($header == MDPC_CLIENT) {
                     $this->client_process($sender, $zmsg);
                 } else if($header == MDPW_WORKER) {
@@ -90,7 +90,7 @@ class Mdbroker {
                     echo "E: invalid message", PHP_EOL, $zmsg->__toString();
                 }
             }
-            
+
             //  Disconnect and delete any expired workers
             //  Send heartbeats to idle workers if needed
             if(microtime(true) > $this->heartbeat_at) {
@@ -102,14 +102,15 @@ class Mdbroker {
             }
         }
     }
-    
+
     /**
      * Delete any idle workers that haven't pinged us in a while.
+     * We know that workers are ordered from oldest to most recent.
      */
     public function purge_workers() {
         foreach($this->waiting as $id => $worker) {
             if(microtime(true) < $worker->expiry) {
-                continue; //  Worker is alive, we're done here
+                break;      //  Worker is alive, we're done here
             }
             if($this->verbose) {
                 printf("I: deleting expired worker: %s %s",
@@ -118,12 +119,12 @@ class Mdbroker {
             $this->worker_delete($worker);
         }
     }
-    
+
     /**
      * Locate or create new service entry
      *
      * @param string $name
-     * @return stdClass 
+     * @return stdClass
      */
     public function service_require($name) {
         $service = isset($this->services[$name]) ? $this->services[$name] : NULL;
@@ -133,36 +134,36 @@ class Mdbroker {
             $service->requests = array();
             $service->waiting = array();
             $this->services[$name] = $service;
-        } 
-        
+        }
+
         return $service;
     }
-    
+
     /**
      * Dispatch requests to waiting workers as possible
      *
      * @param type $service
-     * @param type $msg 
+     * @param type $msg
      */
     public function service_dispatch($service, $msg) {
         if($msg) {
             $service->requests[] = $msg;
         }
-        
+
         $this->purge_workers();
-        
+
         while(count($service->waiting) && count($service->requests)) {
             $worker = array_shift($service->waiting);
             $msg = array_shift($service->requests);
             $this->worker_send($worker, MDPW_REQUEST, NULL, $msg);
         }
     }
-    
+
     /**
      * Handle internal service according to 8/MMI specification
      *
-     * @param string $frame 
-     * @param Zmsg $msg 
+     * @param string $frame
+     * @param Zmsg $msg
      */
     public function service_internal($frame, $msg) {
         if($frame == "mmi.service") {
@@ -176,19 +177,19 @@ class Mdbroker {
         $msg->set_last($return_code);
 
         //  Remove & save client return envelope and insert the
-        //  protocol header and service name, then rewrap envelope        
+        //  protocol header and service name, then rewrap envelope
         $client = $msg->unwrap();
         $msg->push($frame);
         $msg->push(MDPC_CLIENT);
         $msg->wrap($client, "");
         $msg->set_socket($this->socket)->send();
     }
-    
+
     /**
      * Creates worker if necessary
      *
      * @param string $address
-     * @return stdClass 
+     * @return stdClass
      */
     public function worker_require($address) {
         $worker = isset($this->workers[$address]) ? $this->workers[$address] : NULL;
@@ -208,13 +209,13 @@ class Mdbroker {
      * Remove a worker
      *
      * @param stdClass $worker
-     * @param boolean $disconnect 
+     * @param boolean $disconnect
      */
     public function worker_delete($worker, $disconnect = false) {
         if($disconnect) {
             $this->worker_send($worker, MDPW_DISCONNECT, NULL, NULL);
         }
-        
+
         if(isset($worker->service)) {
             worker_remove_from_array($worker, $worker->service->waiting);
             $worker->service->workers--;
@@ -234,7 +235,7 @@ class Mdbroker {
      * Process message sent to us by a worker
      *
      * @param string $sender
-     * @param Zmsg $msg 
+     * @param Zmsg $msg
      */
     public function worker_process($sender, $msg) {
         $command = $msg->pop();
@@ -278,14 +279,14 @@ class Mdbroker {
             echo "E: invalid input message", PHP_EOL, $msg->__toString();
         }
     }
-    
+
     /**
      * Send message to worker
      *
      * @param stdClass $worker
      * @param string $command
      * @param mixed $option
-     * @param Zmsg $msg 
+     * @param Zmsg $msg
      */
     public function worker_send($worker, $command, $option, $msg) {
         $msg = $msg ? $msg : new Zmsg();
@@ -295,23 +296,23 @@ class Mdbroker {
         }
         $msg->push($command);
         $msg->push(MDPW_WORKER);
-        
+
         //  Stack routing envelope to start of message
         $msg->wrap($worker->address, "");
-        
+
         if($this->verbose) {
             printf("I: sending %s to worker %s",
                $command, PHP_EOL);
             echo $msg->__toString();
         }
-        
+
         $msg->set_socket($this->socket)->send();
     }
-    
+
     /**
      * This worker is now waiting for work
      *
-     * @param stdClass $worker 
+     * @param stdClass $worker
      */
     public function worker_waiting($worker) {
         //  Queue to broker and service waiting lists
@@ -320,17 +321,17 @@ class Mdbroker {
         $worker->expiry = microtime(true) + (HEARTBEAT_EXPIRY/1000);
         $this->service_dispatch($worker->service, NULL);
     }
-    
+
     /**
      * Process a request coming from a client
      *
      * @param string $sender
-     * @param Zmsg $msg 
+     * @param Zmsg $msg
      */
     public function client_process($sender, $msg) {
         $service_frame = $msg->pop();
         $service = $this->service_require($service_frame);
-        
+
         //  Set reply return address to client sender
         $msg->wrap($sender, "");
         if(substr($service_frame, 0, 4) == 'mmi.') {

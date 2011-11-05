@@ -196,6 +196,7 @@ s_broker_bind (broker_t *self, char *endpoint)
 
 //  ---------------------------------------------------------------------
 //  Delete any idle workers that haven't pinged us in a while.
+//  We know that workers are ordered from oldest to most recent.
 
 static void
 s_broker_purge_workers (broker_t *self)
@@ -203,7 +204,7 @@ s_broker_purge_workers (broker_t *self)
     worker_t *worker = (worker_t *) zlist_first (self->waiting);
     while (worker) {
         if (zclock_time () < worker->expiry)
-            continue;              //  Worker is alive, we're done here
+            break;                  //  Worker is alive, we're done here
         if (self->verbose)
             zclock_log ("I: deleting expired worker: %s",
                 worker->identity);

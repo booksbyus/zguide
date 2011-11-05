@@ -19,9 +19,9 @@
 require 'sflcvdp.pl';                   #   SFL date picture formatting
 use Digest::SHA1 qw(sha1_hex);
 
-@languages = ('Ada', 'Basic', 'C', 'C++', 'C#', 'CL', 'Erlang', 'F#', 'Go',
-              'Haskell', 'Haxe', 'Java', 'Lua', 'Node.js', 'Objective-C',
-              'ooc', 'Perl', 'PHP', 'Python', 'Ruby', 'Scala');
+@languages = ('Ada', 'Basic', 'C', 'C++', 'C#', 'Clojure', 'CL', 'Erlang',
+              'F#', 'Go', 'Haskell', 'Haxe', 'Java', 'Lua', 'Node.js',
+              'Objective-C', 'ooc', 'Perl', 'PHP', 'Python', 'Ruby', 'Scala');
 
 #   File extensions for each language
 %extension = ('Ada' => 'ada',
@@ -30,6 +30,7 @@ use Digest::SHA1 qw(sha1_hex);
               'C++' => 'cpp',
               'C#' => 'cs',
               'CL' => 'lisp',
+              'Clojure' => 'clj',
               'Erlang' => 'es',
               'F#' => 'fsx',
               'Go' => 'go',
