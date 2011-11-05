@@ -40,7 +40,7 @@ function mkone {
 
 function mkpdf {
     echo "Generating zguide-$1.pdf..."
-    /usr/local/bin/wkhtmltopdf \
+    wkhtmltopdf \
         --header-left "ØMQ - The Guide" \
         --header-center "Examples in $1" \
         --header-right "By Pieter Hintjens, CEO iMatix" \

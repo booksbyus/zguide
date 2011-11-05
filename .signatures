@@ -43,6 +43,7 @@ cb81a115942193da451eb168dfd68be507e31186 images/fig26.html
 d363b4fd752513f77cef05b4f7314940f6a90308 examples/Haxe/peering2.hx
 4f8b06a22f5be4aad20dfa8767256020db6f8440 examples/Clojure/durapub2.clj
 ebcc52bca0036d5fe5cd5012ded9185e79aa6f4a images/fig24.html
+5a720dc15997ccd2c09c4b7b4d9029bf00734962 examples/Java/lpserver.java
 501eb2114abc8d3c680b65e47868cd12804e1951 examples/Haxe/syncsub.hx
 359dc5780d7725178ba80e168cfbc8034bf6d195 listings/C/listing_20.c
 fd37e0d2f22479b80b852c7af7c6040c74458676 examples/Lua/rtmama.lua
@@ -88,6 +89,7 @@ b02005487696f2e75f5fe6ebc2a9d6f34d425425 examples/Erlang/hwclient.es
 cbd7f62ab99feec7b92a95d14c2e721055762fe1 examples/C#/lruqueue2.cs
 c283682b3f4822484ca9aaa9e54d59a1e86eff63 examples/PHP/peering1.php
 68973013b3d91e96ddeca3a07dbed765257f906a examples/C++/mtserver.cpp
+0e083c29d63f5ab71f8590f1bef30c077111c1ba examples/Java/lpclient.java
 a96630e22c998ff7f8a26c8954ec7bff3839afbe examples/C/durapub2.c
 4e286247323153606a4408befc5fe14a88ccfa53 examples/PHP/rtpapa.php
 90239ee4bc59d992256c618dda028c16f55ebfd2 examples/Erlang/mspoller.es
@@ -123,8 +125,8 @@ af5e1947bc6d29845430fafc53c3b06b419331d9 images/fig30.html
 cfa2f410710caa1fdd82a23898926af510e8699d examples/Python/msgqueue.py
 ba8d27b273195e7358fdf00af46e77bee5ba7363 examples/C/bstar.c
 11198bf88393d418ca9c9deae336d2245d0453b7 examples/Lua/durapub2.lua
-b0a76cab9bb6ecf75f2d3c0ef8ff155a12cfb8fd listings/C/listing_33.c
 19ff0278b96024e102ded3090801221e6bd92e11 examples/C/mdwrkapi.c
+b0a76cab9bb6ecf75f2d3c0ef8ff155a12cfb8fd listings/C/listing_33.c
 02a04e030422622a26fac6a7140b56990c28ce13 examples/Python/msreader.py
 4d181e8175e0475a276f150d7b2214571c194464 examples/C/bstarsrv2.c
 22f291114364c654f89823775c995084b72c152c examples/Haxe/durapub2.hx
@@ -507,9 +509,9 @@ ce1b0ff8570cfaccf4da8d1616efa7a9832691c0 examples/Erlang/tasksink2.es
 bf56968881b9abda8b6260338da07501f03d9d39 images/fig15.html
 438ec0ed27783df702f444735ea12151b89dca8a examples/Ruby/syncpub.rb
 6e380b8ab0c1328367eebb09ca8898061300ea0c examples/Scala/taskvent.scala
-32a78647a9df1d1910bd26a01ef97ac2d8cf8d0b examples/Ruby/mtrelay.rb
 d4c19277f6e8d43d79c7408396bd6aa56823189c examples/Lua/mtrelay.lua
 907e6d77223a98fdfcd86dd9894e98ff0cd2b63a listings/C/listing_16.c
+32a78647a9df1d1910bd26a01ef97ac2d8cf8d0b examples/Ruby/mtrelay.rb
 2cfd1940a2c8a586d9e0fc6ff92d13e8be566045 examples/F#/wuproxy.fsx
 b34a4a3f2cda586d0f0fa732f148cbdac9dbe6ad examples/C/wuproxy.c
 8dc12c98aa657c31c18a48def833c06237e42997 images/fig6.html
