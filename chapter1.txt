@@ -91,7 +91,7 @@ So let's start with some code. We start of course with a Hello World example. We
      Figure # - Request-Reply
 [[/code]]
 
-The REQ-REP socket pair is lockstep. The client does zmq_send[3] and then zmq_recv[3], in a loop (or once if that's all it needs). Doing any other sequence (e.g. sending two messages in a row) will cause an error. Similarly the service does zmq_recv[3] and then zmq_send[3] in that order, and as often as it needs to.
+The REQ-REP socket pair is lockstep. The client does zmq_send[3] and then zmq_recv[3], in a loop (or once if that's all it needs). Doing any other sequence (e.g. sending two messages in a row) will result in a return code of -1 from the send or recv call. Similarly the service does zmq_recv[3] and then zmq_send[3] in that order, and as often as it needs to.
 
 0MQ uses C as its reference language and this is the main language we'll use for examples. If you're reading this on-line, the link below the example takes you to translations into other programming languages. Let's compare the same server in C++:
 
