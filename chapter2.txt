@@ -1491,7 +1491,7 @@ We can put this together to make a cynical publisher that is immune to slow, blo
 
 In practice, setting the HWM to 1 and shoving everything to disk will make a pub-sub system very slow. Here is a more reasonable 'best practice' for publishers that have to deal with unknown subscribers:
 
-* **Always set a HWM on the PUB socket**, based on the expected maximum number of subscribers, the amount of memory you are willing to dedicated to queuing, and the average size of a message. For example if you expect up to 5,000 subscribers, and have 1GB of memory to play with, and messages of ~200 bytes, then a safe HWM would be (1,000,000,000 / 200 / 5,000) = 1,000.
+* **Always set a HWM on the PUB socket**, based on the expected maximum number of subscribers, the amount of memory you are willing to dedicate to queuing, and the average size of a message. For example if you expect up to 5,000 subscribers, and have 1GB of memory to play with, and messages of ~200 bytes, then a safe HWM would be (1,000,000,000 / 200 / 5,000) = 1,000.
 
 * If you don't want slow or crashing subscribers to lose data, set a SWAP that's large enough to handle the peaks, based on the number of subscribers, peak message rate, average size of messages, and time you want to cover. For example with 5,000 subscribers and messages of ~200 bytes coming in at 100,000 per second, you will need up to 100MB of disk space per second. To cover an outage of up to 1 minute, therefore, you'd need 6GB of disk space, and it would have to be fast, but that's a different story.
 
