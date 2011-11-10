@@ -11,6 +11,7 @@ let srandom () = System.Random(System.DateTime.Now.Millisecond)
 let encode (s:string) = System.Text.Encoding.ASCII.GetBytes(s)
 let decode = System.Text.Encoding.ASCII.GetString
 let s_send socket s = s |> encode |> send socket
+let s_sendmore socket s = s |> encode |> sendMore socket |> ignore
 let s_recv socket = socket |> recv |> decode
 
 let scanln = System.Console.ReadLine
