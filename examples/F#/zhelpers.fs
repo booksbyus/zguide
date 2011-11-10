@@ -22,3 +22,18 @@ let s_clock_start = System.Diagnostics.Stopwatch.StartNew
 let s_clock_stop (sw:System.Diagnostics.Stopwatch) = 
   sw.Stop()
   sw.ElapsedMilliseconds
+
+let s_dump socket =
+  
+  let (|IsChar|IsByte|) = function
+    | b when b < 32uy || b > 127uy  -> IsByte(b)
+    | c (* is an ASCII character *) -> IsChar(char c)
+    
+  let dumpFrame frame =
+    frame 
+    |> Array.iter (function IsChar c -> printf "%c"   c
+                          | IsByte b -> printf "%02X" b)
+    printfn ""
+
+  printfn "----------------------------------------"
+  socket |> recvAll |> Array.iter dumpFrame
