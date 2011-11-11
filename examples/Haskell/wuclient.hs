@@ -1,13 +1,33 @@
-No-one has translated the wuclient example into Haskell yet.  Be the first to create
-wuclient in Haskell and get one free Internet!  If you're the author of the Haskell
-binding, this is a great way to get people to use 0MQ in Haskell.
+-- |
+-- Weather broadcast server in Haskell
+-- Binds SUB socket to tcp://localhost:5556
+-- Collects weather updates and finds avg temp in zipcode
+-- 
+-- Translated to Haskell by ERDI Gergo http://gergo.erdi.hu/
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+module Main where
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+import System.ZMQ
+import Control.Monad (replicateM)
+import Data.ByteString.Char8 (unpack)
+import System.Environment (getArgs)
+import Data.String.Utils (splitWs)
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+main = do    
+  args <- getArgs
+  let zipcode = case args of
+        [zipcode] -> zipcode
+        _ -> "10001"
+      
+  withContext 1 $ \context -> do    
+    withSocket context Sub $ \subscriber -> do
+      connect subscriber "tcp://localhost:5556"
+      subscribe subscriber zipcode
+            
+      temperatures <- replicateM 5 $ do
+        update <- receive subscriber []
+        let [zipcode, temperature, humidity] = map read $ splitWs $ unpack update
+        return temperature
+      
+      let avgTemp = fromIntegral (sum temperatures) / fromIntegral (length temperatures)
+      putStrLn $ unwords ["Average temperature for zipcode", zipcode, "was", show avgTemp]

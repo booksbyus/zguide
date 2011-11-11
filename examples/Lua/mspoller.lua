@@ -1,13 +1,43 @@
-No-one has translated the mspoller example into Lua yet.  Be the first to create
-mspoller in Lua and get one free Internet!  If you're the author of the Lua
-binding, this is a great way to get people to use 0MQ in Lua.
+--
+--  Reading from multiple sockets
+--  This version uses :poll()
+--
+--  Author: Robert G. Jakabosky <bobby@sharedrealm.com>
+--
+require"zmq"
+require"zmq.poller"
+require"zhelpers"
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+local context = zmq.init(1)
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+--  Connect to task ventilator
+local receiver = context:socket(zmq.PULL)
+receiver:connect("tcp://localhost:5557")
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+--  Connect to weather server
+local subscriber = context:socket(zmq.SUB)
+subscriber:connect("tcp://localhost:5556")
+subscriber:setopt(zmq.SUBSCRIBE, "10001 ", 6)
+
+local poller = zmq.poller(2)
+
+poller:add(receiver, zmq.POLLIN, function()
+    local msg = receiver:recv()
+    --  Process task
+end)
+
+poller:add(subscriber, zmq.POLLIN, function()
+    local msg = subscriber:recv()
+    --  Process weather update
+end)
+
+--  Process messages from both sockets
+-- start poller's event loop
+poller:start()
+
+--  We never get here
+receiver:close()
+subscriber:close()
+context:term()
+
+

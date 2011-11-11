@@ -1,13 +1,34 @@
-No-one has translated the identity example into Lua yet.  Be the first to create
-identity in Lua and get one free Internet!  If you're the author of the Lua
-binding, this is a great way to get people to use 0MQ in Lua.
+--
+--  Demonstrate identities as used by the request-reply pattern.  Run this
+--  program by itself.  Note that the utility functions s_ are provided by
+--  zhelpers.h.  It gets boring for everyone to keep repeating this code.
+--
+--  Author: Robert G. Jakabosky <bobby@sharedrealm.com>
+--
+require"zmq"
+require"zhelpers"
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+local context = zmq.init(1)
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+local sink = context:socket(zmq.XREP)
+sink:bind("inproc://example")
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+--  First allow 0MQ to set the identity
+local anonymous = context:socket(zmq.REQ)
+anonymous:connect("inproc://example")
+anonymous:send("XREP uses a generated UUID")
+s_dump(sink)
+
+--  Then set the identity ourself
+local identified = context:socket(zmq.REQ)
+identified:setopt(zmq.IDENTITY, "Hello")
+identified:connect("inproc://example")
+identified:send("XREP socket uses REQ's socket identity")
+s_dump(sink)
+
+sink:close()
+anonymous:close()
+identified:close()
+context:term()
+
+

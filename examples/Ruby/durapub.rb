@@ -1,13 +1,30 @@
-No-one has translated the durapub example into Ruby yet.  Be the first to create
-durapub in Ruby and get one free Internet!  If you're the author of the Ruby
-binding, this is a great way to get people to use 0MQ in Ruby.
+# Publisher for durable subscriber
+# Justin Case <justin@playelite.com>
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+require 'ffi-rzmq'
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+context = ZMQ::Context.new
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+# Subscriber tells us when it's ready here
+sync = context.socket(ZMQ::PULL)
+sync.bind("tcp://127.0.0.1:5564")
+
+# We send updates via this socket
+publisher = context.socket(ZMQ::PUB)
+publisher.bind("tcp://127.0.0.1:5565")
+
+# Wait for synchronization request
+sync_request = sync.recv_string()
+
+# Now broadcast exactly 10 updates with pause
+10.times do |update_number|
+  message = sprintf("Update %d", update_number)
+  publisher.send_string(message)
+  sleep(1)
+end
+  
+publisher.send_string("END")
+
+sync.close
+publisher.close
+context.terminate

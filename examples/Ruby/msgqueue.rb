@@ -1,13 +1,20 @@
-No-one has translated the msgqueue example into Ruby yet.  Be the first to create
-msgqueue in Ruby and get one free Internet!  If you're the author of the Ruby
-binding, this is a great way to get people to use 0MQ in Ruby.
+#
+# Simple message queuing broke
+# Same as request-reply broker but using QUEUE device
+#
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+require 'rubygems'
+require 'ffi-rzmq'
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+context = ZMQ::Context.new
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+# Socket facing clients
+frontend = context.socket(ZMQ::XREP)
+frontend.bind('tcp://*:5559')
+
+# Socket facing services
+backend = context.socket(ZMQ::XREQ)
+backend.bind('tcp://*:5560')
+
+# Start built-in device
+poller = ZMQ::Device.new(ZMQ::QUEUE,frontend,backend)

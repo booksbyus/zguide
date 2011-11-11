@@ -1,13 +1,33 @@
-No-one has translated the hwclient example into Go yet.  Be the first to create
-hwclient in Go and get one free Internet!  If you're the author of the Go
-binding, this is a great way to get people to use 0MQ in Go.
+//
+// Hello World Zeromq Client
+//
+// Author: Aaron Raddon   github.com/araddon
+// Requires: http://github.com/alecthomas/gozmq
+//
+package main
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+import (
+  "fmt"
+  zmq "github.com/alecthomas/gozmq"
+)
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
-
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+func main() {
+  context, _ := zmq.NewContext()
+  socket, _ := context.NewSocket(zmq.REQ)
+  defer context.Close()
+  defer socket.Close()
+  
+  fmt.Printf("Connecting to hello world server...")
+  socket.Connect("tcp://localhost:5555")
+  
+  for i := 0; i < 10; i++ {
+    // send hello
+    msg := fmt.Sprintf("Hello %d", i)
+    socket.Send([]byte(msg), 0)
+    println("Sending ", msg)
+    
+    // Wait for reply:
+    reply, _ := socket.Recv(0)
+    println("Received ", string(reply))
+  }
+}

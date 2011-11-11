@@ -2,11 +2,11 @@
     Multithreaded Hello World server in C
 */
 
-#include <assert.h>
 #include <pthread.h>
 #include <unistd.h>
-#include <string.h>
-#include <stdio.h>
+#include <cassert>
+#include <string>
+#include <iostream>
 #include <zmq.hpp>
 
 void *worker_routine (void *arg)
@@ -20,8 +20,7 @@ void *worker_routine (void *arg)
         //  Wait for next request from client
         zmq::message_t request;
         socket.recv (&request);
-        printf ("Received request: [%s]\n",
-            (char *) request.data ());
+        std::cout << "Received request: [" << (char*) request.data() << "]" << std::endl;
 
         //  Do some 'work'
         sleep (1);

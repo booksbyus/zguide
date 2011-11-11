@@ -5,7 +5,8 @@
 //
 #include "zhelpers.h"
 
-int main () {
+int main (void)
+{
     //  Prepare our context and publisher
     void *context = zmq_init (1);
     void *publisher = zmq_socket (context, ZMQ_PUB);
@@ -17,9 +18,9 @@ int main () {
     while (1) {
         //  Get values that will fool the boss
         int zipcode, temperature, relhumidity;
-        zipcode     = within (100000);
-        temperature = within (215) - 80;
-        relhumidity = within (50) + 10;
+        zipcode     = randof (100000);
+        temperature = randof (215) - 80;
+        relhumidity = randof (50) + 10;
 
         //  Send message to all subscribers
         char update [20];

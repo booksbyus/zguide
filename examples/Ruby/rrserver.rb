@@ -8,8 +8,8 @@ context = ZMQ::Context.new
 socket = context.socket(ZMQ::REP)
 socket.connect('tcp://localhost:5560')
 
-while true
+loop do
   message = socket.recv_string
-  puts "Recieved request: #{message}"
+  puts "Received request: #{message}"
   socket.send_string('World')
 end

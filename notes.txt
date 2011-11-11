@@ -1,31 +1,95 @@
+
 Notes for The Guide
 
-- chapter 4
-  - heartbeating & presence detection
-  - reliable request-reply
-  -
+++ Heartbeating
 
-- how to make a TCP-to-0MQ bridge, with examples (email)
-- pseudo-recursive job queues
-    - zqueue class
-    - http://www.leif.org/as400/other/pseudor.htm
+You'll often hit the problem of knowing whether a peer is alive or not. This is not specifically a 0MQ issue. TCP has a long timeout (30 minutes or so) that means that it's impossible sometimes to know whether a peer has died, been disconnected, or gone on a long weekend to Prague with a case of vodka, a redhead, and a large expense account.
+
+Heartbeating is not trivial and worth getting right, since it can make the difference between a working, and failing architecture. So using our standard approach, let's start with the simplest possible heartbeat design, and develop better and better designs until we have one with no visible faults.
+
++++ Model one - the Shruggery Pattern
+
+Shruggery is the simplest possible design: no heartbeating at all. This is the starting point for all 0MQ applications, of course. For PUSH-PULL sockets, this is the only model that works. For other socket types, this has at least the following problems:
+
+* If you have ROUTER-based broker devices that manage some resources attached to the identities of peers, as peers disconnect and reconnect, the devices will accumulate entropy and eventually run out of resources.
+
+* If you have SUB or DEALER-based data recipients, you can't tell the difference between good silence (there's no data) and bad silence (the other end died).
+
+* If you have a TCP connection that stays silent for a long while, it will, in some networks, die. Sending something (technically, a "keep-alive" more than a heartbeat), will keep the network alive.
+
++++ Model two - the Heartbeat Pattern
+
+So, we create the Heartbeat pattern by sending a "heartbeat" message from each node to its peers, every second or so. When one node hears nothing from another, within some timeout (several seconds, typically), it will treat that peer as dead.
+
+For PUB-SUB, this is the only model that works. SUB sockets cannot talk back to PUB sockets, but PUB sockets can happily send "I'm alive" messages to their subscribers.
+
+As an optimization to model 2, the sender can start heartbeating only when there is no data to send. The recipient should then treat ANY incoming data as a sign of life. This might be a little inaccurate, since receiving data does not actually mean the sender is (still) alive. Light from a dying sun, and all that.
+
+So, problems with this design:
+
+* It can be inaccurate when large amounts of data are sent, since heartbeats will be delayed behind that data. If heartbeats are delayed, you can get false timeouts and disconnections due to network congestion.
+
+* While the PUB-SUB pattern will drop messages for disappeared recipients, ROUTER and DEALER sockets will queue them. So, if you send heartbeats to a dead peer, and it comes back, it'll get all the heartbeats you sent. Which can be thousands. Whoa, whoa!
+
+* It assumes that heartbeat timeouts are the same across the whole network. But that won't be accurate. Some peers will want very aggressive heartbeating, to detect faults rapidly, some will want very relaxed heartbeating, to leave sleeping networks lie, and save power.
+
++++ Model three - the Belts and Braces pattern
+
+Belts and Braces consists of a ping-pong dialog. One peer sends a ping command to the other, which replies with a pong command. Neither command has any payload. Pings and pongs are not correlated. Since the roles of "client" and "server" are sometimes arbitrary, we specify that either peer can in fact send a ping and expect a pong in response. However, since the timeouts depend on network topologies known best to dynamic clients, it is usually the client which pings the server.
+
+This works for all ROUTER-based brokers. Two optimizations make this work even better:
+
+* Treat any incoming data as a pong.
+* Only send a ping when not otherwise sending data.
 
 
-- worked example
-- single point of failure
-- presence detection
+
+
+
+- pubsub ordering
+    - N-to-N ordering guarantees
+    - single-stream using a broker
+
+
+- collection of patterns
+    Least Recently Used
+    Asynchronous Client-Server
+    Suicidal Snail
+    Lazy Pirate
+    Simple Pirate
+    Paranoid Pirate
+    Clone
+
+- how to make an error logging console
+
+- how to make a TCP-to-0MQ bridge, with examples
+http://lists.zeromq.org/pipermail/zeromq-dev/2011-March/010186.html
+- FD_EVENT integration
+
 
 - router trees
  (federation)
 
+- cross-over router
+    - send to, send from
+    - flips addresses, gives you reply model
 
+    //  If socket is a ROUTER, get identity first
+    int socket_type;
+    size_t type_size = sizeof (socket_type);
+    zmq_getsockopt (socket, ZMQ_TYPE, &socket_type, &type_size);
+    if (socket_type == ZMQ_ROUTER) {
+        zmq_msg_t mesg;
+        zmq_msg_init (&mesg);
+        zmq_recv (socket, &mesg, 0);
+    }
 
-- example of monitoring bus
-    - cluster broker, send out state
-    - capture via some visual tool...?
-- monitoring and logging
+- explain why callbacks are a pita
+    - what thread do they run in?
+    - how do you connect them to main app thread
+    - how do you wait, do you sleep, call something, etc.?
 
-
+- integrating 0MQ into TCP loops: http://lists.zeromq.org/pipermail/zeromq-dev/2011-March/010186.html
 
 Then we can use this to start building some reusable pieces:
 
@@ -36,7 +100,6 @@ Then we can use this to start building some reusable pieces:
 - stateful publish-subscribe
 - reliable request-reply
 - logging device
-- reactor (Matt Weinstein's)
 
 
 +++ Presence Detection
@@ -48,12 +111,6 @@ Then we can use this to start building some reusable pieces:
 - purging old identities from routing tables
 - example of eight robots and console
 - robots come and go...
-
-
-+++ A Service-Oriented Queue Device
-
-- how to route to workers based on service names
-- kind of like custom pubsub but with answers going back to clients
 
 
 +++ A ZeroMQ Name Service
@@ -73,28 +130,16 @@ how to map names?
     -> resolve host...
 
 
++++ Pipelines
 
-+++ Custom pub/sub
+- does PUSH block if there are no PULL sockets ready?
+- how do maintain a queue?
 
-- req/rep socket for subscriptions
-- timeout for resubscriptions
-- pub/sub socket on dynamic endpoints
++++ File Transfer
 
-
-
-
+example of file transfer
 
 +++ Generating Identities
-
--> need zfl here
-
-- generic LRU device
-    - accept input from REQs
-    - load balance to bunch of mamas
-
-lrudevice.c
-    - imitates a queue device except...
-
 
 
 +++ Setting Queue Limits
@@ -129,17 +174,6 @@ persistent logfiles
 replay via subscribe socket
 
 
-+++ Stateful Publish-Subscribe
-
-We'll look at the common question of getting a consistent state across a set of subscribers that come and go at any time.  We will build a simple distributed cache:
-
-* We have a set of peers that each hold a copy of the cache
-* Any peer can update its copy of the cache at any time
-* Updates are published to all other peers
-* A peer can join the network at any time, and get the cache state
-
-I'll leave the design for later.  We'll need a forwarder to act as stable location in the network.  Should be fun!
-
 +++ Failover and Recovery
 
 We'll look at how to handle crashes in a distributed architecture.  For each pattern there is an ideal architecture, and we'll explore each of these with worked examples.
@@ -152,25 +186,24 @@ We'll look at how to secure pubsub data against snooping.  The actual technique 
 
 We'll now look at how the pgm: and epgm: protocols work.  With pgm:, the network switch basically acts as a hardware FORWARDER device.
 
+++++ Customized Publish-Subscribe
+
+- use identity to route message explicitly to A or B
+- not using PUBSUB at all but XREP/????
+    - limitations: no multicast, only TCP
+    - how to scale with devices...
+
+When a client activates, it chooses a random port that is not in use and creates a SUB socket listening for all traffic on it. The client then sends a message via REQ to the publisher containing the port that it is listening on. The publisher receives this message, acknowledges it, and creates a new pub socket specific to that client. All published events specific to this client go out that socket.
+
+When the client deactivates, it sends a message to the publisher with the port to deactivate and close.
+
+You end up creating a lot more PUB sockets on your server end and doing all of the filtering at the server. This sounds acceptable to you.
+
+I didn't need to do this to avoid network bandwidth bottlenecks; I created this to enforce some security and entitlements.
+
 +++ A Clock Device
 
 We'll look at various ways of building a timer into a network.   A clock device sends out a signal (a message) at more or less precise intervals so that other nodes can use these signals for internal timing.
-
-+++ A Logging Device
-
-We'll look at a device that acts as a remote logger.
-
-+++ Building Bridges
-
-zmq_poll(3) lets you mix ZMQ sockets and native system sockets, which is very useful if you have to resort to actual TCP for something, e.g. bridging an existing TCP protocol with 0MQ.  We'll build a couple of bridges.
-
-+++ Writing a Reactor
-
-In this section we'll build a simple reactor framework that turns the zmq_poll(3) function inside out into an event-driven framework.
-
-+++ Exotic Devices
-
-Now we'll use the reactor to build some exotic devices.  It should be much easier and readable than using zmq_poll.
 
 +++ Serializing Data
 
@@ -229,26 +262,11 @@ XREQ is like PUSH+PULL, XREP is like PUSH+PULL+routing
 --]
 
 
-* Tutorial: chat client/server
-
-* How to handle a REQ/REP socket without it blocking forever
-
-* Related question: how to stop a single thread blocked on recv()
-
-* How to write services in C
-    - memory leak checking
-    - security
-    - etc.
-    - ZPL config, zfl, etc.
-
 * How do we tunnel 0MQ connections over 0MQ connections?
     - e.g. to get 3-4 ports into DMZ via one single port
     - two devices, one reads, one writes
     - over other protocols: HTTP, SSH, etc...?
     - acts as split device, ...
-
-* Cross-language string sending tutorial
-
 
 I highly recommend that you try out the simpler topology and *verifying* that 0mq cannot keep up with your message rates when publishing all data to all clients. With smart topics the client can reject the data *very* fast. A 1 GB or 10 Gb switched network can also move quite a bit of data without a lot of blocking behavior in the hardware too. You may be able to save yourself a lot of unnecessary work, so just try it.
 
@@ -282,71 +300,21 @@ High performance multiple i/o threads
 
 +++ What's Missing from 0MQ
 
-* Multicast
-- unbreak PGM
-- make PGM work on Windows
-- exclusive pair reconnect is broken
-- location lookup
-- abstracted interfaces
-- other IPC mechanisms, e.g. shared memory
-- IPC on OpenVMS, Windows
-- upstreaming of subscriptions/unsubs
-- timeouts for receiver missing?
-- persistence & reliability
-Change proposals
-- defaults for identity are to crash the publisher
---]
-
 
 
 - handling crashing peers
-
 - non-blocking send/recv
     EAGAIN
-
 - reliable pub
     - pub connects to all subs
     - subs send request to pub
-
 - reliable messaging over xreq / xrep
 - how to do timer events
-
-
 - there is no way to disconnect; second connection creates two
     - need to destroy the socket
-
-- list known encoding libraries with pros / cons of each
-- list each OS
-
-For External Use Only!
-More Connections Than Oprah!
-Save The Fail Whale!
-DEVOPS_BORAT say "Why Not?"
-Now With More Vitamins!
-Sufficiently Advanced Tech
-High Lifestyle, Low Carbon
-Must Has Cat to Enter
-
-
 - how to send multipart job and execute / cancel
 
 
-
-* Client-server data distribution (like custom pubsub), with some restrictions.
-
-
-Either of the two client socket types send requests and replies as a multipart message with two parts.  The first part is a unique UUID, that identifies the client.  The second is the actual message blob.  The ZMQ_XREP socket uses the identity to know what ØMQ connection to send the message to.
-
-What this means... take deep breath... is that you can use ZMQ_XREQ and ZMQ_XREP to build servers that do authentication and arbitrary routing.  Don't like the existing topic pubsub?  You can build your own.  Here's how to build an authenticated pubsub server:
-
-* Client creates ZMQ_XREQ sends its authentication credentials and subscription pattern as a request.
-* Service reads credentials, authenticates them, and if they are OK, stores the client identity in a table of "authorized identities".  This is in effect treating an identity as an abstracted connection.
-* Service builds routing tables using subscription pattern, so that any new message can be routed to a set of identities.
-* Service does separate zmq_send() to its ZMQ_XREP socket for each matching subscriber, each time specifying the correct identity.
-* Service maintains its table of identities periodically to remove old identities.
-* Client periodically resends its credentials ("keep-alive"), which server handles by reading on the socket.
-
-It is not trivial, and should maybe sit in the "Advanced Concepts" section, but this use case is one that so many new users ask about that it's good to know at least that ØMQ handles it.
 
 
 Here is, I think, how to build an authenticated pubsub service using ØMQ.  The design handles authentication, arbitrary routing criteria, and flushing of dead client connections.
@@ -361,16 +329,15 @@ The server has two main data structures:
 * A connection table that stores authenticated identities and timestamps.  Each identity corresponds to a client connection.
 * A routing table that maps message keys (e.g. topic value) to identities.  There are techniques for doing [http://www.zeromq.org/whitepapers:message-matching high speed message matching].
 
-The client has a single thread that polls on its ZMQ_XREQ socket.  At regular time intervals it (re)sends its authentication and subscription message.  This acts as a keep-alive.
 
-The server has a two threads, one that polls on its ZMQ_XREP socket and one that receives outgoing messages and passes them to the polling thread via inproc sockets.  The polling thread processes any incoming client requests and updates its data structures.  It processes any outgoing messages by looking up the message key in its routing table and then sending the message (one to one) to all matching identities.  As it does this it deletes any expired identities.
 
-That's it.  Sorry if I got some things wrong here, it's theory and not based on running code.
+0MQ Quickstarter
 
-- setsockopt validation
- - identities don't start with zero byte
- - integer values are not negative
-
-- fixes to documentation
- - REP sockets can't drop data on HWM because they are lock-step
- - HWM says n/a for PULL and for SUB, which is wrong
+- building & installing
+- performance for language
+- basic examples
+- socket types
+- transports
+- main patterns
+- problem solving
+-> translated into different programming languages

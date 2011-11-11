@@ -1,13 +1,49 @@
-No-one has translated the taskwork2 example into Ruby yet.  Be the first to create
-taskwork2 in Ruby and get one free Internet!  If you're the author of the Ruby
-binding, this is a great way to get people to use 0MQ in Ruby.
+#
+#   Task worker - design 2
+#   Adds pub-sub flow to receive and respond to kill signal
+#
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+require 'rubygems'
+require 'ffi-rzmq'
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+context = ZMQ::Context.new(1)
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+# Socket to receive messages on
+receiver = context.socket(ZMQ::PULL)
+receiver.connect("tcp://localhost:5557")
+
+# Socket to send messages to
+sender = context.socket(ZMQ::PUSH)
+sender.connect("tcp://localhost:5558")
+
+# Socket for control input
+controller = context.socket(ZMQ::SUB)
+controller.connect("tcp://localhost:5559")
+controller.setsockopt(ZMQ::SUBSCRIBE,"")
+
+# Process messages from receiver and controller
+poller = ZMQ::Poller.new()
+poller.register(receiver,ZMQ::POLLIN)
+poller.register(controller,ZMQ::POLLIN)
+
+# Process tasks forever
+while true
+  items = poller.poll()
+  poller.readables.each do |item| 
+   if item === receiver
+    msec = receiver.recv_string
+ 
+    # Simple progress indicator for the viewer
+    $stdout << "#{msec}."
+    $stdout.flush
+
+    # Do the work
+    sleep(msec.to_f / 1000)
+
+    # Send results to sink
+    sender.send_string("")
+   end
+
+   exit if item === controller
+  end
+end

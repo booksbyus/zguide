@@ -1,0 +1,131 @@
+<html>
+<pre class="textdiagram" id="fig9">
+        +-----------------+
+        |                 |
+        | I'm not getting |
+        |     my data!    |
+        |             {o} |
+        +--------+--------+
+                 |
+                 |
+                 v
+        +-----------------+        +-----------------+        +------------------+
+        |                 |        |                 |        | Use the          |
+        | Are you losing  |        |  Do you set a   |        | zmq_setsockopt   |
+        |  messages in a  +------->|  subscription   +------->| ZMQ_SUBSCRIBE    |
+        |   SUB socket?   | Yes    |  for messages?  | No     | ("") option      |
+        |             {o} |        |             {o} |        |                  |
+        +--------+--------+        +--------+--------+        +------------------+
+                 | No                       | Yes
+                 |                          |
+                 |                          v
+                 |                 +-----------------+        +------------------+
+                 |                 |                 |        | Start all SUB    |
+                 |                 |  Do you start   |        | sockets first,   |
+                 |                 |  the SUB socket +------->| then the PUB     |
+                 |                 |  after the PUB? | No     | sockets to avoid |
+                 |                 |             {o} |        | loss             |
+                 |                 +--------+--------+        +------------------+
+                 |                          | Yes
+                 |                          |
+                 |                          v
+                 |              +-------------------------+
+                 |              |  See explanation of the |
+                 |              | "slow joiner" syndrome  |
+                 |              |  syndrome in this text. |
+                 |              +-------------------------+
+                 |
+                 |
+                 v
+        +-----------------+        +--------------------+
+        |                 |        | With REQ, send and |
+        |  Are you using  |        | recv in a loop and |
+        |   REQ and REP   +------->| check the return   |
+        |     sockets?    | Yes    | codes. With REP    |
+        |             {o} |        | it's recv + send.  |
+        +--------+--------+        +--------------------+
+                 | No
+                 |
+                 v
+        +-----------------+        +---------------------+        +-----------------+
+        |                 |        | The 1st PULL socket |        | You may need to |
+        |  Are you using  |        | to connect can grab |        | do extra work to|
+        |  PUSH sockets?  +------->| 1000's of messages  +------->| synchronize your|
+        |                 | Yes    | before the others   |        | sockets before  |
+        |             {o} |        | get there.          |        | sending tasks.  |
+        +--------+--------+        +---------------------+        +-----------------+
+                 | No
+                 |
+                 v
+        +-----------------+        +-----------------+
+        |                 |        |                 |
+        |  Do you check   |        | Check every ØMQ |
+        | return codes on +------->| method call. In |
+        |  all methods?   | No     | C, use asserts. |
+        |             {o} |        |                 |
+        +--------+--------+        +-----------------+
+                 | Yes
+                 |
+                 v
+        +-----------------+        +-----------------+        +------------------+
+        |                 |        |                 |        |                  |
+        | Are you using   |        |   Do you pass   |        | Create a socket  |
+        | threads in your +------->| sockets between +------->| in the thread    |
+        |  app already?   | Yes    |    threads?     | Yes    | where you use it |
+        |             {o} |        |             {o} |        |                  |
+        +--------+--------+        +--------+--------+        +------------------+
+                 | No                       | No
+                 +--------------------------+
+                 |
+                 v
+        +-----------------+        +-----------------+        +------------------+
+        |                 |        |                 |        |                  |
+        |  Are you using  |        | Are you calling |        | Call zmq_init    |
+        |   the inproc    +------->|  zmq_init more  +------->| exactly once in  |
+        |   transport?    | Yes    |    than once?   | Yes    | every process.   |
+        |             {o} |        |             {o} |        |                  |
+        +--------+--------+        +--------+--------+        +------------------+
+                 | No                       | No
+                 |                          |
+                 |                          v
+                 |                 +-----------------+
+                 |                 |                 |
+                 |                 | Check that you  |
+                 |                 | bind before you |
+                 |                 | connect.        |
+                 |                 |                 |
+                 |                 +-----------------+
+                 |
+                 v
+        +-----------------+        +-----------------+        +-----------------+
+        |                 |        | Check that the  |        | If you're using |
+        |  Are you using  |        | reply address   |        | identities make |
+        | ROUTER sockets? +------->| is valid. ØMQ   +------->| sure to set them|
+        |                 | Yes    | drops messages  |        | before not after|
+        |             {o} |        | it can't route. |        | you connect.    |
+        +--------+--------+        +-----------------+        +--------+--------+
+                 | No
+                 |
+                 v
+        +-----------------+        +--------------------+
+        |                 |        | You probably have  |
+        | Are you losing  |        | a client running   |
+        |   one message   +------->| in the background. |
+        |    in two?      | Yes    | Kill it and start  |
+        |             {o} |        | again.             |
+        +--------+--------+        +--------------------+
+                 | No
+                 |
+                 v
+        +-----------------+
+        |                 |
+        | Make a minimal  |
+        | test case, ask  |
+        | on zeromq IRC.  |
+        |                 |
+        +-----------------+
+
+
+                 Figure 9 - Missing Message Problem Solver
+</pre>
+</html>

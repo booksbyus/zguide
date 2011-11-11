@@ -1,13 +1,34 @@
-No-one has translated the durasub example into Perl yet.  Be the first to create
-durasub in Perl and get one free Internet!  If you're the author of the Perl
-binding, this is a great way to get people to use 0MQ in Perl.
+#!/usr/bin/perl
+=pod
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+Durable subscriber
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+=cut
+
+use strict;
+use warnings;
+use 5.10.0;
+
+use ZeroMQ qw/:all/;
+
+my $context = ZeroMQ::Context->new();
+
+# Connect our subscriber socket
+my $subscriber = $context->socket(ZMQ_SUB);
+$subscriber->setsockopt(ZMQ_IDENTITY, 'Hello');
+$subscriber->setsockopt(ZMQ_SUBSCRIBE, '');
+$subscriber->connect('tcp://localhost:5565');
+
+# Synchronize with publisher
+my $sync = $context->socket(ZMQ_PUSH);
+$sync->connect('tcp://localhost:5564');
+$sync->send('');
+
+# Get updates, expect random Ctrl-C death
+while (1) {
+    my $string = $subscriber->recv()->data;
+    say $string;
+    last if $string eq 'END';
+}

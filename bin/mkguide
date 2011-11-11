@@ -1,0 +1,86 @@
+#! /bin/bash
+#
+#   Generates and uploads the Guide in main languages
+#
+function upload {
+    if [ -f .cache_$1 ]; then
+        OLD=`egrep $2.wd .cache_$1 | cut -f1 -d" "`
+    else
+        OLD=""
+    fi
+    NEW=`sha1sum $2.wd | cut -f1 -d" "`
+    if [ "$NEW" != "$OLD" ]; then
+        wdput zguide $1 $2 "$3"
+        if [ -f .cache_$1 ]; then
+            egrep -v $2.wd .cache_$1 > x
+            mv x .cache_$1
+        fi
+        sha1sum $2.wd >> .cache_$1
+    fi
+}
+
+function mkone {
+    export Z2W_LANG=$1
+    export Z2W_FORM=$2
+    echo "[[include $3:chapter1]]"  > all.wd
+    echo "[[include $3:chapter2]]" >> all.wd
+    echo "[[include $3:chapter3]]" >> all.wd
+    echo "[[include $3:chapter4]]" >> all.wd
+    echo "[[include $3:chapter5]]" >> all.wd
+    bin/z2w chapter*.txt
+    upload $3 chapter1 "Chapter One"
+    upload $3 chapter2 "Chapter Two"
+    upload $3 chapter3 "Chapter Three"
+    upload $3 chapter4 "Chapter Four"
+    upload $3 chapter5 "Chapter Five"
+    upload $3 all "ØMQ - The Guide"
+    sh ./upload.sh
+    rm upload.sh
+}
+
+function mkpdf {
+    echo "Generating zguide-$1.pdf..."
+    wkhtmltopdf \
+        --header-left "ØMQ - The Guide" \
+        --header-center "Examples in $1" \
+        --header-right "By Pieter Hintjens, CEO iMatix" \
+        --footer-left "cc-by-sa" \
+        --footer-center "- [page] -" \
+        --footer-right "Printed [date]" \
+        --footer-font-size 10 \
+        --footer-spacing 10 \
+        --header-font-size 10 \
+        --header-spacing 10 \
+        --margin-top 20 \
+        --margin-bottom 20 \
+        --margin-left 20 \
+        --margin-right 20 \
+        http://zguide.zeromq.org/pdf-$2:all zguide-$2.pdf
+
+    wdattach zguide main:_start zguide-$2.pdf
+}
+
+mkone C    online page
+mkone Haxe online hx
+mkone Lua  online lua
+mkone PHP  online php
+upload main scoreboard "Language scoreboard"
+
+mkone C    pdf pdf-c
+mkone Haxe pdf pdf-hx
+mkone Lua  pdf pdf-lua
+mkone PHP  pdf pdf-php
+
+mkpdf C    c
+mkpdf Haxe hx
+mkpdf Lua  lua
+mkpdf PHP  php
+
+rm *.wd wdtemp.txt upload.sh
+
+git add images/ .signatures .cache_*
+git status
+echo -n "Enter commit message, or Ctrl-C: "
+read MESSAGE
+git commit -a -m "$MESSAGE"
+git push origin master

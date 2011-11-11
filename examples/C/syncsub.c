@@ -3,7 +3,7 @@
 //
 #include "zhelpers.h"
 
-int main (int argc, char *argv[])
+int main (void)
 {
     void *context = zmq_init (1);
 
@@ -11,6 +11,9 @@ int main (int argc, char *argv[])
     void *subscriber = zmq_socket (context, ZMQ_SUB);
     zmq_connect (subscriber, "tcp://localhost:5561");
     zmq_setsockopt (subscriber, ZMQ_SUBSCRIBE, "", 0);
+
+    //  0MQ is so fast, we need to wait a while...
+    sleep (1);
 
     //  Second, synchronize with publisher
     void *syncclient = zmq_socket (context, ZMQ_REQ);

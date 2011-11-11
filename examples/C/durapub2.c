@@ -3,7 +3,8 @@
 //
 #include "zhelpers.h"
 
-int main () {
+int main (void) 
+{
     void *context = zmq_init (1);
 
     //  Subscriber tells us when it's ready here
@@ -12,7 +13,6 @@ int main () {
 
     //  We send updates via this socket
     void *publisher = zmq_socket (context, ZMQ_PUB);
-    zmq_bind (publisher, "tcp://*:5565");
 
     //  Prevent publisher overflow from slow subscribers
     uint64_t hwm = 1;
@@ -21,6 +21,7 @@ int main () {
     //  Specify swap space in bytes, this covers all subscribers
     uint64_t swap = 25000000;
     zmq_setsockopt (publisher, ZMQ_SWAP, &swap, sizeof (swap));
+    zmq_bind (publisher, "tcp://*:5565");
 
     //  Wait for synchronization request
     char *string = s_recv (sync);
@@ -35,8 +36,6 @@ int main () {
         sleep (1);
     }
     s_send (publisher, "END");
-
-    sleep (1);              //  Give 0MQ/2.0.x time to flush output
 
     zmq_close (sync);
     zmq_close (publisher);

@@ -1,13 +1,38 @@
-No-one has translated the wuproxy example into Perl yet.  Be the first to create
-wuproxy in Perl and get one free Internet!  If you're the author of the Perl
-binding, this is a great way to get people to use 0MQ in Perl.
+#!/usr/bin/perl
+=pod
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+Weather proxy device
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+=cut
+
+use strict;
+use warnings;
+use 5.10.0;
+
+use ZeroMQ qw/:all/;
+
+my $context = ZeroMQ::Context->new();
+
+# This is where the weather server sits
+my $frontend = $context->socket(ZMQ_SUB);
+$frontend->connect('tcp://192.168.55.210:5556');
+
+# This is our public endpoint for subscribers
+my $backend = $context->socket(ZMQ_PUB);
+$backend->bind('tcp://10.1.1.0:8100');
+
+# Subscribe on everything
+$frontend->setsockopt(ZMQ_SUBSCRIBE, '');
+
+# Shunt messages out to our own subscribers
+while (1) {
+    while (1) {
+        # Process all parts of the message
+        my $message = $frontend->recv();
+        my $more = $frontend->getsockopt(ZMQ_RCVMORE);
+        $backend->send($message, $more ? ZMQ_SNDMORE : 0);
+        last unless $more;
+    }
+}

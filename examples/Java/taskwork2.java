@@ -1,13 +1,60 @@
-No-one has translated the taskwork2 example into Java yet.  Be the first to create
-taskwork2 in Java and get one free Internet!  If you're the author of the Java
-binding, this is a great way to get people to use 0MQ in Java.
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+import org.zeromq.ZMQ;
+import org.zeromq.ZMQ.Socket;
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+/**
+ *
+ * @author Marcus McCurdy <marcus.mccurdy@gmail.com>
+ */
+public class taskwork2 {
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+	public static void main(String[] args) throws InterruptedException {
+		ZMQ.Context context = ZMQ.context(1);
+
+		ZMQ.Socket receiver = context.socket(ZMQ.PULL);
+		receiver.connect("tcp://localhost:5557");
+
+		ZMQ.Socket sender = context.socket(ZMQ.PUSH);
+		sender.connect("tcp://localhost:5558");
+
+		ZMQ.Socket controller = context.socket(ZMQ.SUB);
+		controller.connect("tcp://localhost:5559");
+		controller.subscribe("".getBytes());
+
+		ZMQ.Poller items = context.poller(2);
+		items.register(receiver, ZMQ.Poller.POLLIN);
+		items.register(controller, ZMQ.Poller.POLLIN);
+
+		while (true) {
+			if (items.pollin(0)) {
+				byte[] message = receiver.recv(0);
+				
+				String string = new String(message).trim();
+				long nsec = Long.parseLong(string) * 1000000;
+				
+				//  Simple progress indicator for the viewer
+				System.out.flush();
+				System.out.print(string + '.');
+
+				//  Do the work
+				Thread.sleep(nsec);
+
+				//  Send results to sink
+				sender.send("".getBytes(), 0);
+
+				// Simple progres indicator for the viewer
+				System.out.println(".");
+			}
+			if (items.pollin(1)) {
+				break; // Exit loop
+			}
+
+			// Finished
+			receiver.close();
+			sender.close();
+			controller.close();
+			context.term();
+			System.exit(0);
+		}
+	}
+}

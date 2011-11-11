@@ -1,13 +1,26 @@
-No-one has translated the durasub example into Ruby yet.  Be the first to create
-durasub in Ruby and get one free Internet!  If you're the author of the Ruby
-binding, this is a great way to get people to use 0MQ in Ruby.
+# Durable subscriber
+# Justin Case <justin@playelite.com>
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+require 'ffi-rzmq'
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+context = ZMQ::Context.new
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+# Connect our subscriber socket
+subscriber = context.socket(ZMQ::SUB)
+subscriber.setsockopt(ZMQ::IDENTITY, "Hello")
+subscriber.setsockopt(ZMQ::SUBSCRIBE, "")
+subscriber.connect("tcp://127.0.0.1:5565")
+
+# # Synchronize with publisher
+sync = context.socket(ZMQ::PUSH)
+sync.connect("tcp://127.0.0.1:5564")
+sync.send_string("")
+
+# Get updates, exit when told to do so
+loop do
+  message = subscriber.recv_string
+  puts message
+  if message == "END"
+    break
+  end
+end

@@ -1,13 +1,36 @@
-No-one has translated the syncsub example into Ruby yet.  Be the first to create
-syncsub in Ruby and get one free Internet!  If you're the author of the Ruby
-binding, this is a great way to get people to use 0MQ in Ruby.
+#
+# Synchronized subscriber
+#
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+require 'rubygems'
+require 'ffi-rzmq'
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+context = ZMQ::Context.new
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+# First, connect our subscriber socket
+subscriber = context.socket(ZMQ::SUB)
+subscriber.connect("tcp://localhost:5561")
+subscriber.setsockopt(ZMQ::SUBSCRIBE,"")
+
+# 0MQ is so fast, we need to wait a while...
+sleep(1)
+
+# Second, synchronize with publisher
+synclient = context.socket(ZMQ::REQ)
+synclient.connect("tcp://localhost:5562")
+
+# - send a synchronization request
+synclient.send_string("")
+
+# - wait for synchronization reply
+synclient.recv_string
+
+# Third, get our updates and report how many we got
+update_nbr=0
+loop do 
+  string = subscriber.recv_string
+  break if string == "END"
+  update_nbr+=1
+end
+
+puts "Received #{update_nbr} updates"

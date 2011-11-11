@@ -36,8 +36,7 @@ void *step2 (void *arg) {
     pthread_create (&thread, NULL, step1, context);
 
     //  Wait for signal
-    std::string *string = s_recv (receiver);
-    delete (string);
+    s_recv (receiver);
 
     //  Signal downstream to step 3
     zmq::socket_t sender (*context, ZMQ_PAIR);
@@ -61,8 +60,7 @@ int main () {
     pthread_create (&thread, NULL, step2, &context);
 
     //  Wait for signal
-    std::string *string = s_recv (receiver);
-    delete (string);
+    s_recv (receiver);
     
     std::cout << "Test successful!" << std::endl;
 

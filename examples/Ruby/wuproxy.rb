@@ -1,13 +1,29 @@
-No-one has translated the wuproxy example into Ruby yet.  Be the first to create
-wuproxy in Ruby and get one free Internet!  If you're the author of the Ruby
-binding, this is a great way to get people to use 0MQ in Ruby.
+# 
+# Weather proxy device
+#
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+require "rubygems"
+require 'ffi-rzmq'
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+context = ZMQ::Context.new(1)
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+# This is where the weather server sits
+frontend  = context.socket(ZMQ::SUB)
+frontend.connect("tcp://192.168.55.210:5556")
+
+# This is our public endpoint for subscribers
+backend = context.socket(ZMQ::PUB) 
+backend.bind("tcp://10.1.1.0:8100")
+# Subscribe on everything
+frontend.setsockopt(ZMQ::SUBSCRIBE,"")
+
+loop do 
+  loop do
+    # Process all parts of the message
+    message = ZMQ::Message.new
+    frontend.recv(message)
+    more=frontend.getsockopt(ZMQ::RCVMORE)
+    backend.send(message, more ? ZMQ::SNDMORE : 0 )
+    break unless more # Last message part
+  end
+end

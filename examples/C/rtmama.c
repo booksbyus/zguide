@@ -1,12 +1,19 @@
 //
-//  Custom routing Router to Mama (XREP to REQ)
+//  Custom routing Router to Mama (ROUTER to REQ)
+//
+//  While this example runs in a single process, that is just to make
+//  it easier to start and stop the example. Each thread has its own
+//  context and conceptually acts as a separate process.
 //
 #include "zhelpers.h"
+#include <pthread.h>
 
 #define NBR_WORKERS 10
 
 static void *
-worker_thread (void *context) {
+worker_task (void *args)
+{
+    void *context = zmq_init (1);
     void *worker = zmq_socket (context, ZMQ_REQ);
 
     //  We use a string identity for ease here
@@ -29,24 +36,24 @@ worker_thread (void *context) {
         total++;
 
         //  Do some random work
-        struct timespec t;
-        t.tv_sec = 0;
-        t.tv_nsec = within (100000000) + 1;
-        nanosleep (&t, NULL);
+        s_sleep (randof (1000) + 1);
     }
-    return (NULL);
+    zmq_close (worker);
+    zmq_term (context);
+    return NULL;
 }
 
-int main () {
+int main (void)
+{
     void *context = zmq_init (1);
-    void *client = zmq_socket (context, ZMQ_XREP);
+    void *client = zmq_socket (context, ZMQ_ROUTER);
     zmq_bind (client, "ipc://routing.ipc");
     srandom ((unsigned) time (NULL));
 
     int worker_nbr;
     for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++) {
         pthread_t worker;
-        pthread_create (&worker, NULL, worker_thread, context);
+        pthread_create (&worker, NULL, worker_task, NULL);
     }
     int task_nbr;
     for (task_nbr = 0; task_nbr < NBR_WORKERS * 10; task_nbr++) {
@@ -75,7 +82,6 @@ int main () {
         s_send (client, "END");
         free (address);
     }
-    sleep (1);              //  Give 0MQ/2.0.x time to flush output
     zmq_close (client);
     zmq_term (context);
     return 0;

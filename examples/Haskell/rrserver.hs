@@ -1,13 +1,28 @@
-No-one has translated the rrserver example into Haskell yet.  Be the first to create
-rrserver in Haskell and get one free Internet!  If you're the author of the Haskell
-binding, this is a great way to get people to use 0MQ in Haskell.
+-- |
+-- Hello World server in Haskell
+-- Binds REP socket to tcp://*:5560
+-- Expects "Hello" from client, replies with "World"
+-- 
+-- Translated to Haskell by ERDI Gergo http://gergo.erdi.hu/
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+module Main where
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+import System.ZMQ
+import Control.Monad (forever)
+import Data.ByteString.Char8 (pack, unpack)
+import Control.Concurrent (threadDelay)
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+main = withContext 1 $ \context -> do  
+  withSocket context Rep $ \responder -> do
+    connect responder "tcp://localhost:5560"
+  
+    forever $ do
+      message <- receive responder []
+      putStrLn $ unwords ["Received request:", unpack message]    
+    
+      -- Simulate doing some 'work' for 1 second
+      threadDelay (1 * 1000 * 1000)
+
+      send responder reply []
+      
+  where reply = pack "World"

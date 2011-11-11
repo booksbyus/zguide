@@ -3,12 +3,12 @@
 //
 #include "zhelpers.h"
 
-int main (int argc, char *argv[])
+int main (void) 
 {
     //  Prepare our context and sockets
     void *context = zmq_init (1);
-    void *frontend = zmq_socket (context, ZMQ_XREP);
-    void *backend  = zmq_socket (context, ZMQ_XREQ);
+    void *frontend = zmq_socket (context, ZMQ_ROUTER);
+    void *backend  = zmq_socket (context, ZMQ_DEALER);
     zmq_bind (frontend, "tcp://*:5559");
     zmq_bind (backend,  "tcp://*:5560");
 

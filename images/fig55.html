@@ -1,0 +1,45 @@
+<html>
+<pre class="textdiagram" id="fig55">
+
+      +---------+ +---------+
+      | Client  | | Broker  |
+      |         | | cloudbe |
+      +---------+ +---------+
+      | connect | | connect |
+      +---------+ +---------+
+        request     request
+           |           |
+           +-+         |
+             |         |
+             v         v
+        +---------+---------+---------+
+        |  bind   |  bind   |         |
+        +---------+---------+---------+
+        | localfe | cloudfe |         |
+        | ROUTER  | ROUTER  |         |
+        +---------+---------+---------+
+        |                             |
+        |           Broker            |
+        |                             |
+        +---------+---------+---------+
+        | ROUTER  | ROUTER  |         |
+        | localbe | cloudbe |         |
+        +---------+---------+---------+
+        |  bind   | connect |         |
+        +---------+---------+---------+
+          request   request
+             |         |
+           +-+         |
+           |           |
+           v           v
+      +---------+ +---------+
+      | connect | |  bind   |
+      +---------+ +---------+
+      |         | | cloudfe |
+      | Worker  | | Broker  |
+      +---------+ +---------+
+
+
+       Figure 55 - The flow of tasks
+</pre>
+</html>

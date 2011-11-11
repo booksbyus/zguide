@@ -1,0 +1,25 @@
+#! /bin/bash
+#
+#   Creates _template pages in each language category
+
+echo "[[module CSS]]" > _template.wd
+echo ".foldedtoc #toc #toc-action-bar { display: none }">> _template.wd
+echo ".foldedtoc #toc .title { display: none; border: 0px solid black; }">> _template.wd
+echo ".foldedtoc #toc { border: 0px solid black; margin: 0 0 0 -0,9em; }">> _template.wd
+echo ".foldedtoc .collapsible-block-link { text-decoration:none }">> _template.wd
+echo "[[/module]]">> _template.wd
+echo "[[include include:print-css]]">> _template.wd
+echo "[[# top]]">> _template.wd
+echo "[[div class=\"foldedtoc\" style=\"border:1px black dashed;float:left;margin:10px\"]]">> _template.wd
+echo "[[collapsible show=\"Table of Contents\" hide=\"Table of Contents\"]]">> _template.wd
+echo "[[toc]]">> _template.wd
+echo "[[/collapsible]]">> _template.wd
+echo "[[/div]]">> _template.wd
+echo "~~~~">> _template.wd
+echo "%%content%%">> _template.wd
+
+wdput zguide page _template "C Guide Template"
+wdput zguide lua  _template "Lua Guide Template"
+wdput zguide hx   _template "Haxe Guide Template"
+wdput zguide php  _template "PHP Guide Template"
+rm _template.wd

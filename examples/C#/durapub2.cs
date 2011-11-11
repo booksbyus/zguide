@@ -20,14 +20,15 @@ namespace ZMQGuide {
                     //  Subscriber tells us when it's ready here
                     sync.Bind("tcp://*:5564");
                     
-                    //  We send updates via this socket
-                    publisher.Bind("tcp://*:5565");
-
                     //  Prevent publisher overflow from slow subscribers
                     publisher.HWM = 1;
+
                     //  Specify swap space in bytes, this covers all subscribers
                     publisher.Swap = 25000000;
                     
+                    //  We send updates via this socket
+                    publisher.Bind("tcp://*:5565");
+
                     //  Wait for synchronization request
                     sync.Recv();
                     

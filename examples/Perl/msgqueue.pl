@@ -1,13 +1,33 @@
-No-one has translated the msgqueue example into Perl yet.  Be the first to create
-msgqueue in Perl and get one free Internet!  If you're the author of the Perl
-binding, this is a great way to get people to use 0MQ in Perl.
+#!/usr/bin/perl
+=pod
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+Simple message queuing broker
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+Same as request-reply broker but using QUEUE device
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
+
+=cut
+
+use strict;
+use warnings;
+use 5.10.0;
+
+use ZeroMQ qw/:all/;
+use ZeroMQ::Raw qw/zmq_device/;
+
+my $context = ZeroMQ::Context->new();
+
+# Socket facing clients
+my $frontend = $context->socket(ZMQ_XREP);
+$frontend->bind('tcp://*:5559');
+
+# Socket facing services
+my $backend = $context->socket(ZMQ_XREQ);
+$backend->bind('tcp://*:5560');
+
+# Start built-in device
+# Having to send raw sockets here is an infelicity in ZeroMQ 0.09
+zmq_device(ZMQ_QUEUE, $frontend->socket, $backend->socket);
+
+# We never get here...

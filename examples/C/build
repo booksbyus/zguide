@@ -3,22 +3,24 @@
 #   Examples build helper
 #   Syntax: build all | clean
 #
+#   This controls whether we get debug or release builds
+test -z "$BOOM_MODEL" && BOOM_MODEL=debug
+
 if [ /$1/ = /all/ ]; then
     echo "Building C examples..."
-    for MAIN in `egrep -l main *.c`; do
+    for MAIN in `egrep -l "main \(" *.c`; do
         echo "$MAIN"
-        ./c -l -lzmq -q $MAIN
+        ./c -l -lzmq -lczmq -q $MAIN
     done
 elif [ /$1/ = /clean/ ]; then
     echo "Cleaning C examples directory..."
     rm -f *.o *.lst core
-    for MAIN in `egrep -l main *.c`; do
+    for MAIN in `egrep -l "main \(" *.c`; do
         rm -f `basename $MAIN .c`
     done
 elif [ -f $1.c ]; then
     echo "$1"
-    ./c -l -lzmq -q $1
+    ./c -l -lzmq -lczmq -q $1
 else
     echo "syntax: build all | clean"
 fi
-

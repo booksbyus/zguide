@@ -3,7 +3,7 @@
 //
 #include "zhelpers.h"
 
-int main (int argc, char *argv[])
+int main (void)
 {
     void *context = zmq_init (1);
 
@@ -18,7 +18,7 @@ int main (int argc, char *argv[])
     zmq_connect (sync, "tcp://localhost:5564");
     s_send (sync, "");
 
-    //  Get updates, expect random Ctrl-C death
+    //  Get updates, exit when told to do so
     while (1) {
         char *string = s_recv (subscriber);
         printf ("%s\n", string);
@@ -28,6 +28,7 @@ int main (int argc, char *argv[])
         }
         free (string);
     }
+    zmq_close (sync);
     zmq_close (subscriber);
     zmq_term (context);
     return 0;

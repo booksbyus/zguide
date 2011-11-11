@@ -1,13 +1,49 @@
-No-one has translated the wuclient example into Go yet.  Be the first to create
-wuclient in Go and get one free Internet!  If you're the author of the Go
-binding, this is a great way to get people to use 0MQ in Go.
+/*
+ *  Weather proxy listens to weather server which is constantly
+ *  emitting weather data
+ *  Binds SUB socket to tcp://*:5556
+*/
+package main
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
-
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
-
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+import (
+  "fmt"
+  "os"
+  "strings"
+  "strconv"
+  zmq "github.com/alecthomas/gozmq"
+)
+func main() {
+  context, _ := zmq.NewContext()
+  socket, _ := context.NewSocket(zmq.SUB)
+  defer context.Close()
+  defer socket.Close()
+  
+  var temps []string
+  var err os.Error
+  var temp int
+  total_temp := 0
+  filter := "59937"
+  
+  // find zipcode
+  if len(os.Args) > 1 {  // ./wuclient 85678
+    filter = string(os.Args[1])
+  }
+  
+  //  Subscribe to just one zipcode (whitefish MT 59937) 
+  fmt.Printf("Collecting updates from weather server for %s…\n", filter)
+  socket.SetSockOptString(zmq.SUBSCRIBE, filter)
+  socket.Connect("tcp://localhost:5556")
+  
+  for i := 0; i < 101; i++ {
+    // found temperature point
+    datapt, _ := socket.Recv(0)
+    temps = strings.Split(string(datapt)," ")
+    temp, err = strconv.Atoi(temps[1])
+    if err == nil { 
+      // Invalid string 
+      total_temp += temp
+    }
+  }
+  
+  fmt.Printf("Average temperature for zipcode %s was %dF \n\n", filter, total_temp / 100)
+}

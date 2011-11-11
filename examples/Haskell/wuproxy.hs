@@ -1,13 +1,32 @@
-No-one has translated the wuproxy example into Haskell yet.  Be the first to create
-wuproxy in Haskell and get one free Internet!  If you're the author of the Haskell
-binding, this is a great way to get people to use 0MQ in Haskell.
+-- |
+-- Weather proxy device in Haskell
+-- 
+-- Translated to Haskell by ERDI Gergo http://gergo.erdi.hu/
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+module Main where
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+import System.ZMQ
+import Control.Monad (forever, when)
+import Data.ByteString.Char8 (pack)
+import System.Random (randomRIO)
+import Data.Function (fix)
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+main = withContext 1 $ \context -> do  
+  -- This is where the weather server sits
+  withSocket context Sub $ \frontend -> do
+    connect frontend "tcp://192.168.55.210:5556"
+    subscribe frontend ""
+    
+    -- This is our public endpoint for subscribers
+    withSocket context Pub $ \backend -> do
+      bind backend "tcp://10.1.1.0:8100"
+      -- Subscribe on everything
+      
+      -- Shunt messages out to our own subscribers
+      forever $ proxy frontend backend
+
+proxy from to = fix $ \loop -> do
+  message <- receive from []
+  more <- moreToReceive from
+  send to message [SndMore | more]
+  when more loop

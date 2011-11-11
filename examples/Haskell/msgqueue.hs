@@ -1,13 +1,21 @@
-No-one has translated the msgqueue example into Haskell yet.  Be the first to create
-msgqueue in Haskell and get one free Internet!  If you're the author of the Haskell
-binding, this is a great way to get people to use 0MQ in Haskell.
+-- |
+-- Simple message queuing broker in Haskell
+-- Same as request-reply broker but using QUEUE device
+-- 
+-- Translated to Haskell by ERDI Gergo http://gergo.erdi.hu/
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+module Main where
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+import System.ZMQ
+import Control.Monad (forever, when)
+import Data.Function (fix)
+import Data.ByteString.Char8 (pack, unpack)
+import Control.Concurrent (threadDelay)
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+main = withContext 1 $ \context -> do  
+  withSocket context Xrep $ \frontend -> do
+    withSocket context Xreq $ \backend -> do
+      
+      bind frontend "tcp://*:5559"
+      bind backend "tcp://*:5560"      
+      device Queue frontend backend

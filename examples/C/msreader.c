@@ -4,7 +4,7 @@
 //
 #include "zhelpers.h"
 
-int main (int argc, char *argv[])
+int main (void) 
 {
     //  Prepare our context and sockets
     void *context = zmq_init (1);
@@ -41,10 +41,7 @@ int main (int argc, char *argv[])
             zmq_msg_close (&update);
         }
         //  No activity, so sleep for 1 msec
-        struct timespec t;
-        t.tv_sec = 0;
-        t.tv_nsec = 1000000;
-        nanosleep (&t, NULL);
+        s_sleep (1);
     }
     //  We never get here but clean up anyhow
     zmq_close (receiver);

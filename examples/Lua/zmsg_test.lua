@@ -1,13 +1,124 @@
-No-one has translated the zmsg_test example into Lua yet.  Be the first to create
-zmsg_test in Lua and get one free Internet!  If you're the author of the Lua
-binding, this is a great way to get people to use 0MQ in Lua.
+--
+--  Ported zmsg object tests from zmsg.h
+--
+--  Author: Robert G. Jakabosky <bobby@sharedrealm.com>
+--
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+local zmsg = require"zmsg"
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+local tmpfile = io.tmpfile
+local stderr = io.stderr
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+local function test_msg_save_load(msg, verbose)
+    -- create temp. file.
+    local file = tmpfile()
+    -- print all test messages.
+    if verbose then
+        fprintf(stderr, "Dump test messages:\n")
+        msg:dump()
+    end
+    -- save all messages
+    msg:save(file)
+    local write_len = file:seek()
+    -- load all messages
+    file:seek('set', 0)
+    local msg2 = zmsg.load(file)
+    if verbose then
+        fprintf(stderr, "Load test messages from temp. file:\n")
+        msg2:dump()
+    end
+    local read_len = file:seek()
+    assert(write_len == read_len, "Different number of bytes written vs. read.")
+    assert(msg == msg2, "Save/Load corrupted message.")
+    file:close()
+end
+
+local msg
+local part
+local address
+local msgs = {}
+
+local verbose = (arg[1] == '-v')
+
+printf(" * zmsg: ")
+
+--  Prepare our context and sockets
+local context = zmq.init(1)
+local output = context:socket(zmq.XREQ)
+assert(output:bind("ipc://zmsg_selftest.ipc"))
+local input = context:socket(zmq.XREP)
+assert(input:connect("ipc://zmsg_selftest.ipc"))
+
+--  Test send and receive of single-part message
+msg = zmsg.new("Hello")
+assert(msg:body() == "Hello")
+msgs[#msgs + 1] = msg:dup()
+msg:send(output)
+
+msg = zmsg.recv(input)
+msgs[#msgs + 1] = msg:dup()
+assert(msg:parts() == 2)
+if verbose then
+    msg:dump()
+end
+assert(msg:body() == "Hello")
+
+--  Test send and receive of multi-part message
+msg = zmsg.new("Hello")
+msg:wrap("address1", "")
+msg:wrap("address2")
+assert(msg:parts() == 4)
+msgs[#msgs + 1] = msg:dup()
+msg:send(output)
+
+msg = zmsg.recv(input)
+msgs[#msgs + 1] = msg:dup()
+if verbose then
+    msg:dump()
+end
+assert(msg:parts() == 5)
+address = msg:address()
+assert(#address == 33)
+address = msg:unwrap()
+assert(msg:address() == "address2")
+msg:body_fmt("%s%s", 'W', "orld")
+msg:send(output)
+
+msg = zmsg.recv(input)
+msgs[#msgs + 1] = msg:dup()
+address = msg:unwrap()
+assert(msg:parts() == 4)
+assert(msg:body() == "World")
+local part = msg:unwrap()
+assert(part == "address2")
+
+--  Pull off address 1, check that empty part was dropped
+part = msg:unwrap()
+assert(part == "address1")
+assert(msg:parts() == 1)
+
+--  Check that message body was correctly modified
+part = msg:pop()
+assert(part == "World")
+assert(msg:parts() == 0)
+
+--  Check append method
+msg:append("Hello")
+msg:append("World!")
+assert(msg:parts() == 2)
+assert(msg:body() == "World!")
+
+printf("OK\n")
+
+printf(" * zmsg save/load: ")
+
+for i=1,#msgs do
+    test_msg_save_load(msgs[i], verbose)
+end
+
+printf("OK\n")
+
+input:close()
+output:close()
+context:term()
+

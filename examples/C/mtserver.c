@@ -2,6 +2,7 @@
 //  Multithreaded Hello World server
 //
 #include "zhelpers.h"
+#include <pthread.h>
 
 static void *
 worker_routine (void *context) {
@@ -18,24 +19,25 @@ worker_routine (void *context) {
         //  Send reply back to client
         s_send (receiver, "World");
     }
-    return (NULL);
+    zmq_close (receiver);
+    return NULL;
 }
 
-int main () {
-    //  Prepare our context and sockets
+int main (void)
+{
     void *context = zmq_init (1);
 
     //  Socket to talk to clients
-    void *clients = zmq_socket (context, ZMQ_XREP);
+    void *clients = zmq_socket (context, ZMQ_ROUTER);
     zmq_bind (clients, "tcp://*:5555");
 
     //  Socket to talk to workers
-    void *workers = zmq_socket (context, ZMQ_XREQ);
+    void *workers = zmq_socket (context, ZMQ_DEALER);
     zmq_bind (workers, "inproc://workers");
 
     //  Launch pool of worker threads
     int thread_nbr;
-    for (thread_nbr = 0; thread_nbr != 5; thread_nbr++) {
+    for (thread_nbr = 0; thread_nbr < 5; thread_nbr++) {
         pthread_t worker;
         pthread_create (&worker, NULL, worker_routine, context);
     }

@@ -1,13 +1,22 @@
-No-one has translated the rrclient example into Haskell yet.  Be the first to create
-rrclient in Haskell and get one free Internet!  If you're the author of the Haskell
-binding, this is a great way to get people to use 0MQ in Haskell.
+-- |
+-- Hello World client in Haskell
+-- Binds REQ socket to tcp://localhost:5559
+-- Sends "Hello" to server, expects "World" back
+-- 
+-- Translated to Haskell by ERDI Gergo http://gergo.erdi.hu/
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+module Main where
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+import System.ZMQ
+import Control.Monad (forM_)
+import Data.ByteString.Char8 (pack, unpack)
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+main = withContext 1 $ \context -> do  
+  withSocket context Req $ \requester -> do
+    connect requester "tcp://localhost:5559"
+    forM_ [1..10] $ \i -> do
+      send requester request []    
+      reply <- receive requester []
+      putStrLn $ unwords ["Received reply", show i, unpack reply]
+
+  where request = pack "Hello"

@@ -21,11 +21,11 @@ class Program
 
         //  Socket to receive messages on
         Socket receiver = context.Socket(SocketType.PULL);
-        sender.Connect("tcp://localhost:5557");
+        receiver.Connect("tcp://localhost:5557");
 
         //  Socket to send messages on
         Socket sender = context.Socket(SocketType.PUSH);
-        sender.Connect("tcp://localhost:5557");
+        sender.Connect("tcp://localhost:5558");
 
         //  Process tasks forever
         while (true) {

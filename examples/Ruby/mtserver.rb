@@ -1,13 +1,42 @@
-No-one has translated the mtserver example into Ruby yet.  Be the first to create
-mtserver in Ruby and get one free Internet!  If you're the author of the Ruby
-binding, this is a great way to get people to use 0MQ in Ruby.
+#
+# Multithreaded Hello World server
+#
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+require 'rubygems'
+require 'ffi-rzmq'
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+def worker_routine(context)
+  # Socket to talk to dispatcher
+  receiver = context.socket(ZMQ::REP)
+  receiver.connect("inproc://workers")
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+  loop do 
+    string = receiver.recv_string
+    puts "Received request: [#{string}]"
+    # Do some 'work'
+    sleep(1)
+    # Send reply back to client
+    receiver.send_string("world")
+  end
+end
+
+
+context = ZMQ::Context.new
+
+puts "Starting Hello World server..."
+
+# socket to listen for clients
+clients = context.socket(ZMQ::ROUTER)
+clients.bind("tcp://*:5555")
+
+# socket to talk to workers
+workers = context.socket(ZMQ::DEALER)
+workers.bind("inproc://workers")
+
+# Launch pool of worker threads
+5.times do 
+  Thread.new{worker_routine(context)}
+end
+
+# Connect work threads to client threads via a queue
+ZMQ::Device.new(ZMQ::QUEUE,clients,workers)

@@ -1,13 +1,26 @@
-No-one has translated the wuserver example into Haskell yet.  Be the first to create
-wuserver in Haskell and get one free Internet!  If you're the author of the Haskell
-binding, this is a great way to get people to use 0MQ in Haskell.
+-- |
+-- Weather broadcast server in Haskell
+-- Binds PUB socket to tcp://*:5556
+-- Publishes random weather updates
+-- 
+-- Translated to Haskell by ERDI Gergo http://gergo.erdi.hu/
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+module Main where
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+import System.ZMQ
+import Control.Monad (forever)
+import Data.ByteString.Char8 (pack)
+import System.Random (randomRIO)
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+main = withContext 1 $ \context -> do  
+  withSocket context Pub $ \publisher -> do
+    bind publisher "tcp://*:5556"
+    bind publisher "ipc://weather.ipc"
+  
+    forever $ do
+      zipcode <- randomRIO (10000, 99999) :: IO Int
+      temperature <- randomRIO (-10, 30) :: IO Int
+      humidity <- randomRIO (10, 60) :: IO Int
+      
+      let update = pack $ unwords [show zipcode, show temperature, show humidity]
+      send publisher update []

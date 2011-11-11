@@ -1,13 +1,41 @@
-No-one has translated the durapub2 example into Lua yet.  Be the first to create
-durapub2 in Lua and get one free Internet!  If you're the author of the Lua
-binding, this is a great way to get people to use 0MQ in Lua.
+--
+--  Publisher for durable subscriber
+--
+--  Author: Robert G. Jakabosky <bobby@sharedrealm.com>
+--
+require"zmq"
+require"zhelpers"
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+s_version_assert(2, 1)
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+local context = zmq.init(1)
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+--  Subscriber tells us when it's ready here
+local sync = context:socket(zmq.PULL)
+sync:bind("tcp://*:5564")
+
+--  We send updates via this socket
+local publisher = context:socket(zmq.PUB)
+
+--  Prevent publisher overflow from slow subscribers
+publisher:setopt(zmq.HWM, 1)
+
+--  Specify swap space in bytes, this covers all subscribers
+publisher:setopt(zmq.SWAP, 25000000)
+publisher:bind("tcp://*:5565")
+
+--  Wait for synchronization request
+local message = sync:recv()
+
+--  Now broadcast exactly 10 updates with pause
+for n=0,9 do
+    local message = string.format("Update %d", n)
+    publisher:send(message)
+    s_sleep (1000)
+end
+publisher:send("END")
+
+sync:close()
+publisher:close()
+context:term()
+

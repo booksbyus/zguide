@@ -1,13 +1,59 @@
-No-one has translated the syncpub example into Java yet.  Be the first to create
-syncpub in Java and get one free Internet!  If you're the author of the Java
-binding, this is a great way to get people to use 0MQ in Java.
+import org.zeromq.ZMQ;
+import org.zeromq.ZMQ.Context;
+import org.zeromq.ZMQ.Socket;
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+/**
+ * Synchronized publisher.
+ * 
+ * Christophe Huntzinger <chuntzin_at_wanadoo.fr>
+ */
+public class syncpub{
+	/**
+	 * We wait for 10 subscribers
+	 */
+	protected static int SUBSCRIBERS_EXPECTED = 10;
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+	public static void main (String[] args) {
+		Context context = ZMQ.context(1);
+
+		//  Socket to talk to clients
+		Socket publisher = context.socket(ZMQ.PUB);
+		publisher.bind("tcp://*:5561");
+
+		//  Socket to receive signals
+		Socket syncservice = context.socket(ZMQ.REP);
+		syncservice.bind("tcp://*:5562");
+
+		//  Get synchronization from subscribers
+		int subscribers = 0;
+		while (subscribers < SUBSCRIBERS_EXPECTED) {
+			//  - wait for synchronization request
+			byte[] value = syncservice.recv(0);
+
+			//  - send synchronization reply
+			syncservice.send("".getBytes(), 0);
+			subscribers++;
+		}
+		//  Now broadcast exactly 1M updates followed by END
+		int update_nbr;
+		for (update_nbr = 0; update_nbr < 1000000; update_nbr++){
+			publisher.send("Rhubarb".getBytes(), 0);
+		}
+
+		publisher.send("END".getBytes(), 0);
+
+		//  Give 0MQ/2.0.x time to flush output
+
+		try {
+			Thread.sleep (1);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}         
+
+		// clean up
+		publisher.close();
+		syncservice.close();
+		context.term();
+	}
+}

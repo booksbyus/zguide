@@ -4,7 +4,7 @@
 //
 #include "zhelpers.h"
 
-int main (int argc, char *argv[])
+int main (void) 
 {
     void *context = zmq_init (1);
 
@@ -34,15 +34,8 @@ int main (int argc, char *argv[])
             zmq_msg_init (&message);
             zmq_recv (receiver, &message, 0);
 
-            //  Process task
-            int workload;           //  Workload in msecs
-            struct timespec t;
-            sscanf ((char *) zmq_msg_data (&message), "%d", &workload);
-            t.tv_sec = 0;
-            t.tv_nsec = workload * 1000000;
-
             //  Do the work
-            nanosleep (&t, NULL);
+            s_sleep (atoi ((char *) zmq_msg_data (&message)));
 
             //  Send results to sink
             zmq_msg_init (&message);

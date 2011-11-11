@@ -1,3 +1,139 @@
-Examples in Erlang
-See LICENSE in examples directory
+# -*-org-*-
 
+To run an example provide the path to the `ERLZMQ` NIF wrapper and execute a `EXAMPLE` escript:
+
+    $ ERL_LIBS=/path/to/ERLZMQ ./EXAMPLE.es
+
+* Examples in Erlang
+
+|-------------+--------------------|
+| Example     | 0MQ 2.1.7          |
+|-------------+--------------------|
+| asyncsrv    | yes                |
+| durapub     | yes                |
+| durapub2    | yes                |
+| durasub     | yes                |
+| hwclient    | yes                |
+| hwserver    | yes                |
+| identity    | yes                |
+| interrupt   | yes (Erlang equiv) |
+| lruqueue    | yes                |
+| msgqueue    | yes                |
+| mspoller    | yes                |
+| msreader    | yes                |
+| mtrelay     | yes                |
+| mtserver    | yes                |
+| psenvpub    | yes                |
+| psenvsub    | yes                |
+| rrbroker    | yes                |
+| rrclient    | yes                |
+| rrserver    | yes                |
+| rtdealer    | yes                |
+| rtmama      | yes                |
+| rtpapa      | yes                |
+| syncpub     | yes                |
+| syncsub     | yes                |
+| tasksink    | yes                |
+| tasksink2   | yes                |
+| taskvent    | yes                |
+| taskwork    | yes                |
+| taskwork2   | yes                |
+| version     | yes                |
+| wuclient    | yes                |
+| wuproxy     | yes                |
+| wuserver    | yes                |
+| bstar       |                    |
+| bstarcli    |                    |
+| bstarsrv2   |                    |
+| bstarsrv    |                    |
+| clone       |                    |
+| clonecli1   |                    |
+| clonecli2   |                    |
+| clonecli3   |                    |
+| clonecli4   |                    |
+| clonecli5   |                    |
+| clonecli6   |                    |
+| clonesrv1   |                    |
+| clonesrv2   |                    |
+| clonesrv3   |                    |
+| clonesrv4   |                    |
+| clonesrv5   |                    |
+| clonesrv6   |                    |
+| flcliapi    |                    |
+| flclient1   |                    |
+| flclient2   |                    |
+| flclient3   |                    |
+| flserver1   |                    |
+| flserver2   |                    |
+| flserver3   |                    |
+| kvmsg       |                    |
+| kvsimple    |                    |
+| lpclient    |                    |
+| lpserver    |                    |
+| lruqueue2   |                    |
+| lruqueue3   |                    |
+| mdbroker    |                    |
+| mdcliapi2   |                    |
+| mdcliapi    |                    |
+| mdclient2   |                    |
+| mdclient    |                    |
+| mdworker    |                    |
+| mdwrkapi    |                    |
+| mmiecho     |                    |
+| peering1    |                    |
+| peering2    |                    |
+| peering3    |                    |
+| ppqueue     |                    |
+| ppworker    |                    |
+| rtrouter    |                    |
+| spqueue     |                    |
+| spworker    |                    |
+| suisnail    |                    |
+| ticlient    |                    |
+| titanic     |                    |
+| tripping    |                    |
+| tstkvmsg    |                    |
+| tstkvsimple |                    |
+|-------------+--------------------|
+
+* Questions for List
+
+- In taskvent there's a sleep to wait on outgoing messages -- I believe this
+  isn't needed anymore
+
+- Nice to have print statements for the steps in mtrelay.
+
+Erlang Bindings Wish List:
+
+- Validate specific options in setsockopt - e.g. should not support lists
+  passed to subscribe (currently using implicit conversion).
+
+* Issues
+
+- durabpub + durasub
+
+  If the publisher finishes sending its 10 messages after the subscriber has
+  gone offline, when the subscriber comes back, it never gets the messages (and
+  the pub never exits).
+
+  To recreate:
+
+  1. Start pub
+  2. Start sub - wait to read a few messags
+  3. Kill sub and wait until the pub sends all its messages (e.g. at most 10
+     seconds)
+  4. Restart the sub
+
+  The sub will not get any messages. The pub won't exit.
+
+- lruqueue
+
+  Message part ordering will sometimes get messed up, resulting in badmatches.
+  To recreate, try the example several times.
+
+- asyncsrv
+
+  Tried to implement the client task check phase using a timeout with
+  erlzmq:recv/3. I'm not sure how this is supposed to work - confused by
+  the Ref returned in the timeout error. What is this for? Ignoring it is
+  no good -- I believe it puts the lib in a funky state.

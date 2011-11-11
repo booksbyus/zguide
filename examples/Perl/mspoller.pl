@@ -1,13 +1,53 @@
-No-one has translated the mspoller example into Perl yet.  Be the first to create
-mspoller in Perl and get one free Internet!  If you're the author of the Perl
-binding, this is a great way to get people to use 0MQ in Perl.
+#!/usr/bin/perl
+=pod
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+Reading from multiple sockets
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+This version uses zmq_poll()
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
+
+=cut
+
+use strict;
+use warnings;
+use 5.10.0;
+
+use ZeroMQ qw/:all/;
+
+my $context = ZeroMQ::Context->new();
+
+# Connect to task ventilator
+my $receiver = $context->socket(ZMQ_PULL);
+$receiver->connect('tcp://localhost:5557');
+
+# Connect to weather server
+my $subscriber = $context->socket(ZMQ_SUB);
+$subscriber->connect('tcp://localhost:5556');
+$subscriber->setsockopt(ZMQ_SUBSCRIBE, '10001 ');
+
+# Initialize poll set
+my $poller = ZeroMQ::Poller->new(
+    {
+        name    => 'receiver',
+        socket  => $receiver,
+        events  => ZMQ_POLLIN,
+    }, {
+        name    => 'subscriber',
+        socket  => $subscriber,
+        events  => ZMQ_POLLIN,
+    },
+);
+# Process messages from both sockets
+while (1) {
+    $poller->poll();
+    if ($poller->has_event('receiver')) {
+        my $message = $receiver->recv();
+        # Process task
+    }
+    if ($poller->has_event('subscriber')) {
+        my $message = $subscriber->recv();
+        # Process weather update
+    }
+}
+# We never get here

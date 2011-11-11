@@ -1,13 +1,36 @@
-No-one has translated the mtserver example into Haskell yet.  Be the first to create
-mtserver in Haskell and get one free Internet!  If you're the author of the Haskell
-binding, this is a great way to get people to use 0MQ in Haskell.
+-- |
+-- Multithreaded Hello World server in Haskell
+-- 
+-- Translated to Haskell by ERDI Gergo http://gergo.erdi.hu/
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+module Main where
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+import System.ZMQ
+import Control.Monad (forever, replicateM_)
+import Data.ByteString.Char8 (pack, unpack)
+import Control.Concurrent (threadDelay, forkIO)
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+worker context = do
+  withSocket context Rep $ \receiver -> do
+    connect receiver "inproc://workers"
+    forever $ do
+      message <- receive receiver []
+      putStrLn $ unwords ["Received request:", unpack message]    
+      -- Simulate doing some 'work' for 1 second
+      threadDelay (1 * 1000 * 1000)  
+      send receiver reply []
+  where reply = pack "World"
+
+main = withContext 1 $ \context -> do  
+  -- Socket to talk to clients
+  withSocket context Xrep $ \clients -> do
+    bind clients "tcp://*:5555"
+    
+    -- Socket to talk to workers
+    withSocket context Xreq $ \workers -> do
+      bind workers "inproc://workers"
+      
+      replicateM_ 5 $ forkIO (worker context)
+        
+      -- Connect work threads to client threads via a queue
+      device Queue clients workers

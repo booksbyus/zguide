@@ -1,13 +1,34 @@
-No-one has translated the tasksink example into Haskell yet.  Be the first to create
-tasksink in Haskell and get one free Internet!  If you're the author of the Haskell
-binding, this is a great way to get people to use 0MQ in Haskell.
+-- |
+-- Task sink
+-- Binds PULL socket to tcp://localhost:5558
+-- Collects results from workers via that socket
+-- 
+-- Translated to Haskell by ERDI Gergo http://gergo.erdi.hu/
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+module Main where
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+import System.ZMQ
+import Control.Monad (forM_)
+import System.Random (randomRIO)
+import System.IO (hSetBuffering, stdout, BufferMode(..))
+import Data.Time.Clock
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+main = withContext 1 $ \context -> do  
+  withSocket context Pull $ \receiver -> do
+    bind receiver "tcp://*:5558"
+    -- Wait for start of batch
+    _ <- receive receiver []
+    
+    -- Start our clock now
+    startTime <- getCurrentTime
+                    
+    -- Process 100 confirmations
+    hSetBuffering stdout NoBuffering
+    forM_ [1..100] $ \i -> do
+      _ <- receive receiver []
+      putStr $ if i `mod` 10 == 0 then ":" else "."
+      
+    endTime <- getCurrentTime
+    let elapsedTime = diffUTCTime endTime startTime
+        elapsedMsec = elapsedTime * 1000
+    putStrLn $ unwords ["Total elapsed time:", show elapsedMsec, "msecs"]

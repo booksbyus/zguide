@@ -2,8 +2,7 @@
 //  Broker peering simulation (part 1)
 //  Prototypes the state flow
 //
-#include "zhelpers.h"
-#include "zmsg.c"
+#include "czmq.h"
 
 int main (int argc, char *argv [])
 {
@@ -19,26 +18,17 @@ int main (int argc, char *argv [])
     srandom ((unsigned) time (NULL));
 
     //  Prepare our context and sockets
-    void *context = zmq_init (1);
-    char endpoint [256];
-
-    //  Bind statebe to endpoint
-    void *statebe = zmq_socket (context, ZMQ_PUB);
-    snprintf (endpoint, 255, "ipc://%s-state.ipc", self);
-    int rc = zmq_bind (statebe, endpoint);
-    assert (rc == 0);
+    zctx_t *ctx = zctx_new ();
+    void *statebe = zsocket_new (ctx, ZMQ_PUB);
+    zsocket_bind (statebe, "ipc://%s-state.ipc", self);
 
     //  Connect statefe to all peers
-    void *statefe = zmq_socket (context, ZMQ_SUB);
-    zmq_setsockopt (statefe, ZMQ_SUBSCRIBE, "", 0);
-
+    void *statefe = zsocket_new (ctx, ZMQ_SUB);
     int argn;
     for (argn = 2; argn < argc; argn++) {
         char *peer = argv [argn];
         printf ("I: connecting to state backend at '%s'\n", peer);
-        snprintf (endpoint, 255, "ipc://%s-state.ipc", peer);
-        rc = zmq_connect (statefe, endpoint);
-        assert (rc == 0);
+        zsocket_connect (statefe, "ipc://%s-state.ipc", peer);
     }
     //  Send out status messages to peers, and collect from peers
     //  The zmq_poll timeout defines our own heartbeating
@@ -49,27 +39,24 @@ int main (int argc, char *argv [])
             { statefe, 0, ZMQ_POLLIN, 0 }
         };
         //  Poll for activity, or 1 second timeout
-        rc = zmq_poll (items, 1, 1000000);
-        assert (rc >= 0);
+        int rc = zmq_poll (items, 1, 1000 * ZMQ_POLL_MSEC);
+        if (rc == -1)
+            break;              //  Interrupted
 
         //  Handle incoming status message
         if (items [0].revents & ZMQ_POLLIN) {
-            zmsg_t *zmsg = zmsg_recv (statefe);
-            printf ("%s - %s workers free\n",
-                zmsg_address (zmsg), zmsg_body (zmsg));
-            zmsg_destroy (&zmsg);
+            char *peer_name = zstr_recv (statefe);
+            char *available = zstr_recv (statefe);
+            printf ("%s - %s workers free\n", peer_name, available);
+            free (peer_name);
+            free (available);
         }
         else {
             //  Send random value for worker availability
-            zmsg_t *zmsg = zmsg_new ();
-            zmsg_body_fmt (zmsg, "%d", within (10));
-            //  We stick our own address onto the envelope
-            zmsg_wrap (zmsg, self, NULL);
-            zmsg_send (&zmsg, statebe);
+            zstr_sendm (statebe, self);
+            zstr_sendf (statebe, "%d", randof (10));
         }
     }
-    //  We never get here but clean up anyhow
-    zmq_close (statefe);
-    zmq_term (context);
+    zctx_destroy (&ctx);
     return EXIT_SUCCESS;
 }

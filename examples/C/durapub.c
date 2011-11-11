@@ -3,7 +3,8 @@
 //
 #include "zhelpers.h"
 
-int main () {
+int main (void) 
+{
     void *context = zmq_init (1);
 
     //  Subscriber tells us when it's ready here
@@ -27,8 +28,6 @@ int main () {
         sleep (1);
     }
     s_send (publisher, "END");
-
-    sleep (1);              //  Give 0MQ/2.0.x time to flush output
 
     zmq_close (sync);
     zmq_close (publisher);

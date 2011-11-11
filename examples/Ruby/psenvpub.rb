@@ -1,13 +1,15 @@
-No-one has translated the psenvpub example into Ruby yet.  Be the first to create
-psenvpub in Ruby and get one free Internet!  If you're the author of the Ruby
-binding, this is a great way to get people to use 0MQ in Ruby.
+#! /usr/bin/env ruby
+require 'zmq'
+context = ZMQ::Context.new
+publisher = context.socket ZMQ::PUB
+publisher.bind "tcp://*:5563"
+while true
+  publisher.send 'A',ZMQ::SNDMORE
+  publisher.send "We don't want to see this."
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+  publisher.send 'B',ZMQ::SNDMORE
+  publisher.send "We would like to see this."
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
-
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+  sleep 1
+end
+publisher.close

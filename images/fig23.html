@@ -1,0 +1,28 @@
+<html>
+<pre class="textdiagram" id="fig23">
+            +----------------+
+            |                |
+            |   Publisher    |
+            |                |
+            +--------+-------+
+            |  PUB   |  REP  |
+            \---+----+-----+-/
+                |      ^   |
+                |      |   |
+                |     (1)  |
+               [3]     |   |
+                |      |  (2)
+                |      |   |
+                v      |   v
+            /--------+-+-----\
+            |  SUB   |  REQ  |
+            +--------+-------+
+            |                |
+            |   Subscriber   |
+            |                |
+            +----------------+
+
+
+  Figure 23 - Pub-Sub Synchronization
+</pre>
+</html>

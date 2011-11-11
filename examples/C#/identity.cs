@@ -1,13 +1,36 @@
-No-one has translated the identity example into C# yet.  Be the first to create
-identity in C# and get one free Internet!  If you're the author of the C#
-binding, this is a great way to get people to use 0MQ in C#.
+﻿//
+//  Demonstrate identities as used by the request-reply pattern.
+//
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+//  Author:     Michael Compton
+//  Email:      michael.compton@littleedge.co.uk
+using System;
+using System.Collections.Generic;
+using System.Text;
+using ZMQ;
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+namespace identity {
+    class Program {
+        static void Main(string[] args) {
+            using (Context ctx = new Context()) {
+                using (Socket sink = ctx.Socket(SocketType.XREP),
+                    anonymous = ctx.Socket(SocketType.REQ),
+                    identified = ctx.Socket(SocketType.REQ)) {
 
-Subscribe to the email list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+                    sink.Bind("inproc://example");
+
+                    //  First allow 0MQ to set the identity
+                    anonymous.Connect("inproc://example");
+                    anonymous.Send("XREP uses a generated UUID", Encoding.Unicode);
+                    ZHelpers.Dump(sink, Encoding.Unicode);
+
+                    //  Then set the identity ourself
+                    identified.StringToIdentity("Hello", Encoding.Unicode);
+                    identified.Connect("inproc://example");
+                    identified.Send("XREP socket uses REQ's socket identity", Encoding.Unicode);
+                    ZHelpers.Dump(sink, Encoding.Unicode);
+                }
+            }
+        }
+    }
+}

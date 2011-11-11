@@ -15,7 +15,7 @@ $responder->bind("tcp://*:5555");
 while(true) {
 	//  Wait for next request from client
 	$request = $responder->recv();
-    printf ("Received request: [%s]\n", $request);
+	printf ("Received request: [%s]\n", $request);
 
 	//  Do some 'work'
 	sleep (1);

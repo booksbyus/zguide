@@ -1,13 +1,43 @@
-No-one has translated the wuserver example into Perl yet.  Be the first to create
-wuserver in Perl and get one free Internet!  If you're the author of the Perl
-binding, this is a great way to get people to use 0MQ in Perl.
+#!/usr/bin/perl
+=pod
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+Weather update server
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+Binds PUB socket to tcp://*:5556
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+Publishes random weather updates
+
+Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
+
+=cut
+
+use strict;
+use warnings;
+use 5.10.0;
+
+use ZeroMQ qw/:all/;
+
+sub within {
+    my ($upper) = @_;
+
+    return int(rand($upper)) + 1;
+}
+
+# Prepare our context and publisher
+my $context = ZeroMQ::Context->new();
+my $publisher = $context->socket(ZMQ_PUB);
+$publisher->bind('tcp://*:5556');
+$publisher->bind('ipc://weather.ipc');
+
+# Initialize random number generator
+srand();
+while (1) {
+    # Get values that will fool the boss
+    my $zipcode     = within(100_000);
+    my $temperature = within(215) - 80;
+    my $relhumidity = within(50) + 10;
+
+    # Send message to all subscribers
+    my $update = sprintf('%05d %d %d', $zipcode, $temperature, $relhumidity);
+    $publisher->send($update);
+}

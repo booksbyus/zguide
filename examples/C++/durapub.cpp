@@ -17,8 +17,7 @@ int main () {
     publisher.bind("tcp://*:5565");
 
     //  Wait for synchronization request
-    std::string *string = s_recv (sync);
-    delete(string);
+    s_recv (sync);
 
     //  Now broadcast exactly 10 updates with pause
     int update_nbr;

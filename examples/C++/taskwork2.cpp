@@ -39,16 +39,12 @@ int main (int argc, char *argv[])
 
             //  Process task
             int workload;           //  Workload in msecs
-            struct timespec t;
             
             std::istringstream iss(static_cast<char*>(message.data()));
             iss >> workload;
 
-            t.tv_sec = 0;
-            t.tv_nsec = workload * 1000000;
-
             //  Do the work
-            nanosleep (&t, NULL);
+            s_sleep(workload);
 
             //  Send results to sink
             message.rebuild();

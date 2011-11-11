@@ -18,10 +18,9 @@ int main (int argc, char *argv[])
 	while(1)
 	{
 		//  Wait for next request from client
-		std::string *string = s_recv (responder);
+		std::string string = s_recv (responder);
 		
-		std::cout << "Received request: " << *string << std::endl;
-		delete(string);
+		std::cout << "Received request: " << string << std::endl;
 		
 		// Do some 'work'
         sleep (1);

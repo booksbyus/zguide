@@ -1,12 +1,12 @@
 .output chapter3.wd
-++ Chapter Three - Advanced Request-Reply
+++ Chapter Three - Advanced Request-Reply Patterns
 
-In Chapter Two we worked through the basics of using 0MQ by developing a series of small applications, each time exploring new aspects of 0MQ.  We'll continue this approach in this chapter, as we explore advanced aspects of 0MQ's request-reply pattern.
+In Chapter Two we worked through the basics of using 0MQ by developing a series of small applications, each time exploring new aspects of 0MQ. We'll continue this approach in this chapter, as we explore advanced patterns built on top of 0MQ's core request-reply pattern.
 
 We'll cover:
 
 * How to create and use message envelopes for request-reply.
-* How to use the REQ, REP, XREQ, and XREP sockets.
+* How to use the REQ, REP, DEALER, and ROUTER sockets.
 * How to set manual reply addresses using identities.
 * How to do custom random scatter routing.
 * How to do custom least-recently used routing.
@@ -19,30 +19,30 @@ We'll cover:
 
 +++ Request-Reply Envelopes
 
-In the request-reply pattern, the envelope holds the return address for replies.  It is how a 0MQ network with no state can create round-trip request-reply dialogs.
+In the request-reply pattern, the envelope holds the return address for replies. It is how a 0MQ network with no state can create round-trip request-reply dialogs.
 
-You don't in fact need to understand how request-reply envelopes work to use them for common cases.  When you use REQ and REP, your sockets build and use envelopes automatically.  When you write a device, and we covered this in the last chapter, you just need to read and write all the parts of a message.  0MQ implements envelopes using multipart data, so if you copy multipart data safely, you implicitly copy envelopes too.
+You don't in fact need to understand how request-reply envelopes work to use them for common cases. When you use REQ and REP, your sockets build and use envelopes automatically. When you write a device, and we covered this in the last chapter, you just need to read and write all the parts of a message. 0MQ implements envelopes using multipart data, so if you copy multipart data safely, you implicitly copy envelopes too.
 
-However, getting under the hood and playing with request-reply envelopes is necessary for advanced request-reply work.  It's time to explain how XREP works, in terms of envelopes:
+However, getting under the hood and playing with request-reply envelopes is necessary for advanced request-reply work. It's time to explain how ROUTER works, in terms of envelopes:
 
-* When you receive a message from an XREP socket, it shoves a brown paper envelope around the message and scribbles on with indelible ink, "This came from Lucy".  Then it gives that to you.  That is, the XREP socket gives you what came off the wire, wrapped up in an envelope with the reply address on it.
+* When you receive a message from a ROUTER socket, it shoves a brown paper envelope around the message and scribbles on with indelible ink, "This came from Lucy". Then it gives that to you. That is, the ROUTER socket gives you what came off the wire, wrapped up in an envelope with the reply address on it.
 
-* when you send a message to an XREP socket, it rips off that brown paper envelope, tries to read its own handwriting, and if it knows who "Lucy" is, sends the contents back to Lucy.  That is the reverse process of receiving a message.
+* when you send a message to a ROUTER socket, it rips off that brown paper envelope, tries to read its own handwriting, and if it knows who "Lucy" is, sends the contents back to Lucy. That is the reverse process of receiving a message.
 
-If you leave the brown envelope alone, and then pass that message to another XREP socket (e.g. by sending to an XREQ connected to an XREP), the second XREP socket will in turn stick another brown envelope on it, and scribble the name of that XREQ on it.
+If you leave the brown envelope alone, and then pass that message to another ROUTER socket (e.g. by sending to a DEALER connected to a ROUTER), the second ROUTER socket will in turn stick another brown envelope on it, and scribble the name of that DEALER on it.
 
-The whole point of this is that each XREP knows how to send replies back to the right place.  All you need to do, in your application, is respect the brown envelopes.  Now the REP socket makes sense.  It carefully slices open the brown envelopes, one by one, keeps them safely aside, and gives you (the application code that owns the REP socket) the original message.  When you send the reply, it re-wraps the reply in the brown paper envelopes, so it can hand the resulting brown package back to the XREP sockets down the chain.
+The whole point of this is that each ROUTER knows how to send replies back to the right place. All you need to do, in your application, is respect the brown envelopes. Now the REP socket makes sense. It carefully slices open the brown envelopes, one by one, keeps them safely aside, and gives you (the application code that owns the REP socket) the original message. When you send the reply, it re-wraps the reply in the brown paper envelopes, so it can hand the resulting brown package back to the ROUTER sockets down the chain.
 
-Which lets you insert XREP-XREQ devices into a request-reply pattern like this:
+Which lets you insert ROUTER-DEALER devices into a request-reply pattern like this:
 
 [[code]]
 [REQ] <--> [REP]
-[REQ] <--> [XREP--XREQ] <--> [REP]
-[REQ] <--> [XREP--XREQ] <--> [XREP--XREQ] <--> [REP]
+[REQ] <--> [ROUTER--DEALER] <--> [REP]
+[REQ] <--> [ROUTER--DEALER] <--> [ROUTER--DEALER] <--> [REP]
 ...etc.
 [[/code]]
 
-If you connect a REQ socket to an XREP socket, and send one request message, this is what you get when you receive from the XREP socket:
+If you connect a REQ socket to a ROUTER socket, and send one request message, this is what you get when you receive from the ROUTER socket:
 
 [[code type="textdiagram"]]
             +---------------+
@@ -61,9 +61,9 @@ Breaking this down:
 
 * The data in frame 3 is what the sending application sends to the REQ socket.
 
-* The empty message part in frame 2 is prepended by the REQ socket when it sends the message to the XREP socket.
+* The empty message part in frame 2 is prepended by the REQ socket when it sends the message to the ROUTER socket.
 
-* The reply address in frame 1 is prepended by the XREP before it passes the message to the receiving application.
+* The reply address in frame 1 is prepended by the ROUTER before it passes the message to the receiving application.
 
 Now if we extend this with a chain of devices, we get envelope on envelope, with the newest envelope always stuck at the beginning of the stack:
 
@@ -72,11 +72,11 @@ Now if we extend this with a chain of devices, we get envelope on envelope, with
        (Next envelope will go here)
 
             +---------------+
-  Frame 1   | Reply address |   <----- Envelope (XREP)
+  Frame 1   | Reply address |   <----- Envelope (ROUTER)
             +---------------+
-  Frame 2   | Reply address |   <----- Envelope (XREP)
+  Frame 2   | Reply address |   <----- Envelope (ROUTER)
             +---------------+
-  Frame 3   | Reply address |   <----- Envelope (XREP)
+  Frame 3   | Reply address |   <----- Envelope (ROUTER)
             +---+-----------+
   Frame 4   |   |   <------ Empty message part (REQ)
             +---+-------------------------------------+
@@ -89,17 +89,17 @@ Now if we extend this with a chain of devices, we get envelope on envelope, with
 
 Here now is a more detailed explanation of the four socket types we use for request-reply patterns:
 
-* XREQ just load-balances the messages you send to all connected peers, and fair-queues the messages it receives.  It is exactly like a PUSH and PULL socket combined.
+* DEALER just load-balances (deals out) the messages you send to all connected peers, and fair-queues (deals in) the messages it receives. It is exactly like a PUSH and PULL socket combined.
 
-* REQ prepends an empty message part to every message you send, and removes the empty message part from each message you receive.  It then works like XREQ (and in fact is built on XREQ) except it also imposes a strict send / receive cycle.
+* REQ prepends an empty message part to every message you send, and removes the empty message part from each message you receive. It then works like DEALER (and in fact is built on DEALER) except it also imposes a strict send / receive cycle.
 
-* XREP prepends an envelope with reply address to each message it receives, before passing it to the application.  It also chops off the envelope (the first message part) from each message it sends, and uses that reply address to decide which peer the message should go to.
+* ROUTER prepends an envelope with reply address to each message it receives, before passing it to the application. It also chops off the envelope (the first message part) from each message it sends, and uses that reply address to decide which peer the message should go to.
 
-* REP stores all the message parts up to the first empty message part, when you receive a message and it passes the rest (the data) to your application.  When you send a reply, REP prepends the saved envelopes to the message and sends it back using the same semantics as XREP (and in fact REP is built on top of XREP), but matching REQ, imposes a strict receive / send cycle.
+* REP stores all the message parts up to the first empty message part, when you receive a message and it passes the rest (the data) to your application. When you send a reply, REP prepends the saved envelopes to the message and sends it back using the same semantics as ROUTER (and in fact REP is built on top of ROUTER), but matching REQ, imposes a strict receive / send cycle.
 
-REP requires that the envelopes end with an empty message part.  If you're not using REQ at the other end of the chain then you must add the empty message part yourself.
+REP requires that the envelopes end with an empty message part. If you're not using REQ at the other end of the chain then you must add the empty message part yourself.
 
-So the obvious question about XREP is, where does it get the reply addresses from? And the obvious answer is, it uses the socket's identity.  As we already learned, a socket can be transient in which case the //other// socket (XREP in this case) generates an identity that it can associate with the socket.  Or, the socket can be durable in which case it explicitly tells the other socket (XREP, again) its identity and XREP can use that rather than generating a temporary label.
+So the obvious question about ROUTER is, where does it get the reply addresses from? And the obvious answer is, it uses the socket's identity. As we already learned, a socket can be transient in which case the //other// socket (ROUTER in this case) generates an identity that it can associate with the socket. Or, the socket can be durable in which case it explicitly tells the other socket (ROUTER, again) its identity and ROUTER can use that rather than generating a temporary label.
 
 This is what it looks like for transient sockets:
 
@@ -115,7 +115,7 @@ This is what it looks like for transient sockets:
               |  "My identity is empty"
               v
         /-----------\       +---------+
-        |   XREP    |       |  UUID   |     XREP invents UUID to
+        |  ROUTER   |       |  UUID   |     ROUTER invents UUID to
         +-----------+       +-+-------+     use as reply address
         |           |       | |
         |  Service  |       +-+-------+
@@ -123,7 +123,7 @@ This is what it looks like for transient sockets:
         +-----------+       +---------+
 
 
-          Figure # - XREP invents a UUID for transient sockets
+          Figure # - ROUTER invents a UUID for transient sockets
 [[/code]]
 
 This is what it looks like for durable sockets:
@@ -140,7 +140,7 @@ This is what it looks like for durable sockets:
               |  "Hi, my name is Lucy"
               v
         /-----------\       +---------+
-        |   XREP    |       | 'Lucy'  |     XREP uses identity of
+        |  ROUTER   |       | 'Lucy'  |     ROUTER uses identity of
         +-----------+       +-+-------+     client as reply address
         |           |       | |
         |  Service  |       +-+-------+
@@ -148,12 +148,12 @@ This is what it looks like for durable sockets:
         +-----------+       +---------+
 
 
-           Figure # - XREP uses identity if it knows it
+           Figure # - ROUTER uses identity if it knows it
 [[/code]]
 
-Let's observe the above two cases in practice.  This program dumps the contents of the message parts that an XREP socket receives from two REP sockets, one not using identities, and one using an identity 'Hello':
+Let's observe the above two cases in practice. This program dumps the contents of the message parts that a ROUTER socket receives from two REP sockets, one not using identities, and one using an identity 'Hello':
 
-[[code type="C" title="Identity check" name="identity"]]
+[[code type="example" title="Identity check" name="identity"]]
 [[/code]]
 
 Here is what the dump function prints:
@@ -162,82 +162,75 @@ Here is what the dump function prints:
 ----------------------------------------
 [017] 00314F043F46C441E28DD0AC54BE8DA727
 [000]
-[026] XREP uses a generated UUID
+[026] ROUTER uses a generated UUID
 ----------------------------------------
 [005] Hello
 [000]
-[038] XREP socket uses REQ's socket identity
+[038] ROUTER socket uses REQ's socket identity
 [[/code]]
 
 +++ Custom Request-Reply Routing
 
-We already saw that XREP uses the message envelope to decide which client to route a reply back to.  Now let me express that in another way: //XREP will route messages asynchronously to any peer connected to it, if you provide the correct routing address via a properly constructed envelope.//
+We already saw that ROUTER uses the message envelope to decide which client to route a reply back to. Now let me express that in another way: //ROUTER will route messages asynchronously to any peer connected to it, if you provide the correct routing address via a properly constructed envelope.//
 
-So XREP is really a fully controllable router.  Let's look at this magic in detail.  But first, let's fix the parsing pain we feel when we try to distinguish "REP", "REQ", "XREP", and "XREQ" from each other.  There should be a law against names that are so similar. :-)
+So ROUTER is really a fully controllable router. We'll dig into this magic in detail.
 
-For readability, and because we're going to go off-road into some rough and possibly illegal terrain now, let's rename these four socket types just for this section of the text:
+But first, and because we're going to go off-road into some rough and possibly illegal terrain now, let's look closer at REQ and REP. Few people know this, but despite their kindergarten approach to messaging, REQ and REP are actually colorful characters:
 
-* REQ is a **mama** socket, doesn't listen but always expects an answer.  Mamas are strictly synchronous and if you use them they are always the 'request' end of a chain.
-* REP is a **papa** socket, always answers, but never starts a conversation.  Papas are strictly synchronous and if you use them, they are always the 'reply' end of a chain.
-* XREQ is a **dealer** socket, shuffling messages to and fro.  Dealers can deal requests evenly to N papas (sending requests, waiting for replies) and/or one router (waiting for requests, and sending back replies).
-* XREP is a **router** socket, able to route messages to specific peers.  Routers can talk to N peers of any kind, but they're naturally most at ease with mama sockets.
+* REQ is a **mama** socket, doesn't listen but always expects an answer. Mamas are strictly synchronous and if you use them they are always the 'request' end of a chain.
+* REP is a **papa** socket, always answers, but never starts a conversation. Papas are strictly synchronous and if you use them, they are always the 'reply' end of a chain.
 
-The thing about Mama sockets is, as we all learned as kids, you can't speak until spoken to.  Mamas do not have simple open-mindedness of papas, nor the ambiguous "sure, whatever" shrugged-shoulder aloofness of a dealer.  So to speak to a mama socket, you have to get the mama socket to talk to you first.  The good part is mamas don't care if you reply now, or much later.  Just bring a good sob story and a bag of laundry.
+The thing about Mama sockets is, as we all learned as kids, you can't speak until spoken to. Mamas do not have simple open-mindedness of papas, nor the ambiguous "sure, whatever" shrugged-shoulder aloofness of a dealer. So to speak to a mama socket, you have to get the mama socket to talk to you first. The good part is mamas don't care if you reply now, or much later. Just bring a good sob story and a bag of laundry.
 
-Papa sockets on the other hand are strong and silent, and pedantic.  They do just one thing, which is to give you an answer to whatever you ask, perfectly framed and precise.  Don't expect a papa socket to be chatty, or to pass a message on to someone else, this is just not going to happen.
+Papa sockets on the other hand are strong and silent, and pedantic. They do just one thing, which is to give you an answer to whatever you ask, perfectly framed and precise. Don't expect a papa socket to be chatty, or to pass a message on to someone else, this is just not going to happen.
 
-Dealers are used to talking to papas, and treat a group of papas fairly by dealing each of them one card, round and round.  You cannot bribe a dealer to treat any papa specially, they are immune to all forms of persuasion.
-
-Routers are the diplomats of the 0MQ request-reply world, able to talk to all the other sockets.  If you ask a router to do pass a message to someone it doesn't know, it won't complain or say "no", it'll just drop the message discretely into the trash.  Whenever you need to talk to //specific// peers, you need a router.
-
-While we usually think of request-reply as a to-and-fro pattern, in fact it can be fully asynchronous, as long as we understand that any mamas or papas will be at the end of a chain, never in the middle of it, and always synchronous.  All we need to know is the address of the peer we want to talk to, and then we can then send it messages asynchronously, via a router.  The router is the one and only 0MQ socket type capable of being told "send this message to X" where X is the address of a connected peer.
+While we usually think of request-reply as a to-and-fro pattern, in fact it can be fully asynchronous, as long as we understand that any mamas or papas will be at the end of a chain, never in the middle of it, and always synchronous. All we need to know is the address of the peer we want to talk to, and then we can then send it messages asynchronously, via a router. The router is the one and only 0MQ socket type capable of being told "send this message to X" where X is the address of a connected peer.
 
 These are the ways we can know the address to send a message to, and you'll see most of these used in the examples of custom request-reply routing:
 
-* If it's an anonymous peer, i.e. did not set any identity, the router will generate a UUID and use that to refer to the connection when it delivers you an incoming request envelope.
+* If it's an transient socket, i.e. did not set any identity, the router will generate a UUID and use that to refer to the connection when it delivers you an incoming request envelope.
 
-* If it is a peer with explicit identity, the router will give that identity when it delivers you an incoming request envelope.
+* If it is a durable socket, the router will give the peer's identity when it delivers you an incoming request envelope.
 
 * Peers with explicit identities can send them via some other mechanism, e.g. via some other sockets.
 
 * Peers can have prior knowledge of each others' identities, e.g. via configuration files or some other magic.
 
-There are three custom routing patterns, one for each of the socket types we can connect to a router:
+There are at least three routing patterns, one for each of the socket types we can easily connect to a router:
 
-* Router-to-dealer, also called XREP-to-XREQ.
-* Router-to-mama, aka XREP-to-REQ.
-* Router-to-papa, aka XREP-to-REP.
-* Router-to-router, aka XREP-to-XREP.
+* Router-to-dealer.
+* Router-to-mama (REQ).
+* Router-to-papa (REP).
 
-In each of these cases we have total control over how we route messages, but the different patterns cover different use-cases and message flows.  Let's break it down over the next sections with examples of different routing algorithms.
+In each of these cases we have total control over how we route messages, but the different patterns cover different use-cases and message flows. Let's break it down over the next sections with examples of different routing algorithms.
 
 But first some warnings about custom routing:
 
-* This goes against a fairly solid 0MQ rule: //delegate peer addressing to the socket//.  The only reason we do it is because 0MQ lacks a wide range of routing algorithms.
+* This goes against a fairly solid 0MQ rule: //delegate peer addressing to the socket//. The only reason we do it is because 0MQ lacks a wide range of routing algorithms.
 
-* Future versions of 0MQ will probably do some of the routing we're going to build here.  That means the code we design now may break, or become redundant in the future.
+* Future versions of 0MQ will probably do some of the routing we're going to build here. That means the code we design now may break, or become redundant in the future.
 
-* While the built-in routing has certain guarantees of scalability, such as being friendly to devices, custom routing doesn't.  You will need to make your own devices.
+* While the built-in routing has certain guarantees of scalability, such as being friendly to devices, custom routing doesn't. You will need to make your own devices.
 
-So overall, custom routing is more expensive and more fragile than delegating this to 0MQ.  Only do it if you need it.  Having said that, let's jump in, the water's great!
+So overall, custom routing is more expensive and more fragile than delegating this to 0MQ. Only do it if you need it. Having said that, let's jump in, the water's great!
 
-+++ Random Scatter Routing
++++ Router-to-Dealer Routing
 
-The router-to-dealer pattern is the simplest.  You connect one router to many dealers, and then distribute messages to the dealers using any algorithm you like.  The dealers can be sinks (process the messages without any response), proxies (send the messages on to other nodes), or services (send back replies).
+The router-to-dealer pattern is the simplest. You connect one router to many dealers, and then distribute messages to the dealers using any algorithm you like. The dealers can be sinks (process the messages without any response), proxies (send the messages on to other nodes), or services (send back replies).
 
-If you expect the dealer to reply, there should only be one router talking to it.  Dealers have no idea how to reply to a specific peer, so if they have multiple peers, they will load-balance between them, which would be weird.  If the dealer is a sink, any number of routers can talk to it.
+If you expect the dealer to reply, there should only be one router talking to it. Dealers have no idea how to reply to a specific peer, so if they have multiple peers, they will load-balance between them, which would be weird. If the dealer is a sink, any number of routers can talk to it.
 
-What kind of routing can you do with a router-to-dealer pattern?  If the dealers talk back to the router, e.g. telling the router when they finished a task, you can use that knowledge to route depending on how fast a dealer is.  Since both router and dealer are asynchronous, it can get a little tricky.  You'd need to use zmq_poll[3] at least.
+What kind of routing can you do with a router-to-dealer pattern? If the dealers talk back to the router, e.g. telling the router when they finished a task, you can use that knowledge to route depending on how fast a dealer is. Since both router and dealer are asynchronous, it can get a little tricky. You'd need to use zmq_poll[3] at least.
 
-We'll make an example where the dealers don't talk back, they're pure sinks.  Our routing algorithm will be a weighted random scatter: we have two dealers and we send twice as many messages to one as to the other.
+We'll make an example where the dealers don't talk back, they're pure sinks. Our routing algorithm will be a weighted random scatter: we have two dealers and we send twice as many messages to one as to the other.
 
 [[code type="textdiagram"]]
           +-------------+
           |             |
-          |   Client    |   Send to "A" or "B"
+          |   Client    |  Send to "A" or "B"
           |             |
           +-------------+
-          |   ROUTER    |   OK, it's really XREP
+          |   ROUTER    |
           \------+------/
                  |
                  |
@@ -246,7 +239,7 @@ We'll make an example where the dealers don't talk back, they're pure sinks.  Ou
          |               |
          v               v
    /-----------\   /-----------\
-   |  DEALER   |   |  DEALER   |   Aka. XREQ
+   |  DEALER   |   |  DEALER   |
    |    "A"    |   |    "B"    |
    +-----------+   +-----------+
    |           |   |           |
@@ -255,17 +248,19 @@ We'll make an example where the dealers don't talk back, they're pure sinks.  Ou
    +-----------+   +-----------+
 
 
-Figure # - Router to dealer custom routing
+   Figure # - Router to dealer custom routing
 [[/code]]
 
 Here's code that shows how this works:
 
-[[code type="C" title="Router-to-dealer" name="rtdealer"]]
+[[code type="example" title="Router-to-dealer" name="rtdealer"]]
 [[/code]]
 
 Some comments on this code:
 
-* The router doesn't know when the dealers are ready, and it would be distracting for our example to add in the signaling to do that.  So the router just does a "sleep (1)" after starting the dealer threads.
+* The router doesn't know when the dealers are ready, and it would be distracting for our example to add in the signaling to do that. So the router just does a "sleep (1)" after starting the dealer threads. Without this sleep, the router will send out messages that can't be routed, and 0MQ will discard them.
+
+* Note that this behavior is specific to ROUTER sockets. PUB sockets will also discard messages if there are no subscribers, but all other socket types will queue sent messages until there's a peer to receive them.
 
 To route to a dealer, we create an envelope like this:
 
@@ -280,17 +275,17 @@ To route to a dealer, we create an envelope like this:
        Figure # - Routing envelope for dealer
 [[/code]]
 
-The router removes the first frame, routes the second frame, which the dealer gets as-is.  If the dealer was to reply, we'd get back a similar envelope in two parts.
+The router socket removes the first frame, and sends the second frame, which the dealer gets as-is. When the dealer sends a message to the router, it sends one frame. The router prepends the dealer's address and gives us back a similar envelope in two parts.
 
-Something to note: if you use an invalid address, the router discards the message silently.  There is not much else it can do usefully.  In normal cases this either means the peer has gone away, or that there is a programming error somewhere and you're using a bogus address.  0MQ may in future report dropped messages via a sys://log bus, and may distinguish these two different cases.  In any case you cannot ever assume a message will be routed successfully until and unless you get a reply of some sorts from the destination node.  We'll come to creating reliable patterns later on.
+Something to note: if you use an invalid address, the router discards the message silently. There is not much else it can do usefully. In normal cases this either means the peer has gone away, or that there is a programming error somewhere and you're using a bogus address. In any case you cannot ever assume a message will be routed successfully until and unless you get a reply of some sorts from the destination node. We'll come to creating reliable patterns later on.
 
-Dealers look a bit like PULL sockets here and in fact they work exactly as PUSH and PULL combined.  It's illegal to connect PULL or PUSH to a request-reply socket, and pointless, so don't do it.
+Dealers in fact they work exactly like PUSH and PULL combined. It's however illegal and pointless to connect PULL or PUSH to a request-reply socket.
 
-+++ Least-Recently Used Routing
++++ Least-Recently Used Routing (LRU Pattern)
 
-Like we said, Mamas don't listen to you, and if you try to speak out of turn they'll ignore you.  You have to wait for them to say something, //then// you can give a sarcastic answer.  This is very useful for routing because it means we can keep a bunch of mamas waiting for answers.  In effect, mamas tell us when they're ready.
+Like we said, mamas (REQ sockets, if you really insist on it) don't listen to you, and if you try to speak out of turn they'll ignore you. You have to wait for them to say something, //then// you can give a sarcastic answer. This is very useful for routing because it means we can keep a bunch of mamas waiting for answers. In effect, mamas tell us when they're ready.
 
-You can connect one router to many mamas, and distribute messages as you would to dealers.  Mamas will usually want to reply, but they will let you have the last word.  However it's one thing at a time:
+You can connect one router to many mamas, and distribute messages as you would to dealers. Mamas will usually want to reply, but they will let you have the last word. However it's one thing at a time:
 
 * Mama speaks to router
 * Router replies to mama
@@ -298,7 +293,7 @@ You can connect one router to many mamas, and distribute messages as you would t
 * Router replies to mama
 * etc.
 
-Like dealers, mamas can only talk to one router and since mamas always start by talking to the router, you should never connect one mama to more than one router unless you are doing sneaky stuff like multi-pathway redundant routing.  I'm not even going to explain that now, and hopefully the jargon is complex enough to stop you trying this until you need it.
+Like dealers, mamas can only talk to one router and since mamas always start by talking to the router, you should never connect one mama to more than one router unless you are doing sneaky stuff like multi-pathway redundant routing. I'm not even going to explain that now, and hopefully the jargon is complex enough to stop you trying this until you need it.
 
 [[code type="textdiagram"]]
           +-------------+
@@ -306,7 +301,7 @@ Like dealers, mamas can only talk to one router and since mamas always start by 
           |   Client    |   Send to "A" or "B"
           |             |
           +-------------+
-          |   ROUTER    |   OK, it's really XREP
+          |   ROUTER    |
           \-------------/
                  ^
                  |  (1) Mama says Hi
@@ -316,7 +311,7 @@ Like dealers, mamas can only talk to one router and since mamas always start by 
          |               |   (2) Router gives laundry
          v               v
    /-----------\   /-----------\
-   |   MAMA    |   |   MAMA    |   Aka. REQ
+   |    REQ    |   |    REQ    |
    |    "A"    |   |    "B"    |
    +-----------+   +-----------+
    |           |   |           |
@@ -325,17 +320,17 @@ Like dealers, mamas can only talk to one router and since mamas always start by 
    +-----------+   +-----------+
 
 
-Figure # - Router to mama custom routing
+   Figure # - Router to mama custom routing
 [[/code]]
 
-What kind of routing can you do with a router-to-mama pattern?  Probably the most obvious is "least-recently-used" (LRU), where we always route to the mama that's been waiting longest.  Here is an example that does LRU routing to a set of mamas:
+What kind of routing can you do with a router-to-mama pattern? Probably the most obvious is "least-recently-used" (LRU), where we always route to the mama that's been waiting longest. Here is an example that does LRU routing to a set of mamas:
 
-[[code type="C" title="Router-to-mama" name="rtmama"]]
+[[code type="example" title="Router-to-mama" name="rtmama"]]
 [[/code]]
 
-For this example the LRU doesn't need any particular data structures above what 0MQ gives us (message queues) because we don't need to synchronize the workers with anything.  A more realistic LRU algorithm would have to collect workers as they become ready, into a queue, and the use this queue when routing client requests.  We'll do this in a later example.
+For this example the LRU doesn't need any particular data structures above what 0MQ gives us (message queues) because we don't need to synchronize the workers with anything. A more realistic LRU algorithm would have to collect workers as they become ready, into a queue, and the use this queue when routing client requests. We'll do this in a later example.
 
-To prove that the LRU is working as expected, the mamas print the total tasks they each did.  Since the mamas do random work, and we're not load balancing, we expect each mama to do approximately the same amount but with random variation.  And that is indeed what we see:
+To prove that the LRU is working as expected, the mamas print the total tasks they each did. Since the mamas do random work, and we're not load balancing, we expect each mama to do approximately the same amount but with random variation. And that is indeed what we see:
 
 [[code]]
 Processed: 8 tasks
@@ -354,11 +349,11 @@ Some comments on this code
 
 * We don't need any settle time, since the mamas explicitly tell the router when they are ready.
 
-* We're generating our own identities here, as printable strings, using the zhelpers.h s_set_id function.  That's just to make our life a little simpler.  In a realistic application the mamas would be fully anonymous and then you'd call zmq_recv[3] and zmq_send[3] directly instead of the zhelpers s_recv() and s_send() functions, which can only handle strings.
+* We're generating our own identities here, as printable strings, using the zhelpers.h s_set_id function. That's just to make our life a little simpler. In a realistic application the mamas would be fully anonymous and then you'd call zmq_recv[3] and zmq_send[3] directly instead of the zhelpers s_recv() and s_send() functions, which can only handle strings.
 
-* Worse, we're using //random// identities.  Don't do this in real code, please.  Randomized durable sockets are not good in real life.
+* Worse, we're using //random// identities. Don't do this in real code, please. Randomized durable sockets are not good in real life, they exhaust and eventually kill nodes.
 
-* If you copy and paste example code without understanding it, you deserve what you get.  It's like watching Spiderman leap off the roof and then trying that yourself.
+* If you copy and paste example code without understanding it, you deserve what you get. It's like watching Spiderman leap off the roof and then trying that yourself.
 
 To route to a mama, we must create a mama-friendly envelope like this:
 
@@ -372,25 +367,25 @@ To route to a mama, we must create a mama-friendly envelope like this:
             +---------------------------------------+
 
 
-     Figure # - Routing envelope for mama aka REQ
+      Figure # - Routing envelope for mama (REQ)
 [[/code]]
 
 +++ Address-based Routing
 
-Papas are, if we care about them at all, only there to answer questions.  And to pay the bills, fix the car when mama drives it into the garage wall, put up shelves, and walk the dog when it's raining.  But apart from that, papas are only there to answer questions.
+Papas are, if we care about them at all, only there to answer questions. And to pay the bills, fix the car when mama drives it into the garage wall, put up shelves, and walk the dog when it's raining. But apart from that, papas are only there to answer questions.
 
-In a classic request-reply pattern a router wouldn't talk to a papa socket at all, but rather would get a dealer to do the job for it.  That's what dealers are for: to pass questions onto random papas and come back with their answers.  Routers are generally more comfortable talking to mamas.  OK, dear reader, you may stop the psychoanalysis.  These are analogies, not life stories.
+In a classic request-reply pattern a router wouldn't talk to a papa socket at all, but rather would get a dealer to do the job for it. That's what dealers are for: to pass questions onto random papas and come back with their answers. Routers are generally more comfortable talking to mamas. OK, dear reader, you may stop the psychoanalysis. These are analogies, not life stories.
 
-It's worth remembering with 0MQ that the classic patterns are the ones that work best, that the beaten path is there for a reason, and that when we go off-road we take the risk of falling off cliffs and getting eaten by zombies.  Having said that, let's plug a router into a papa and see what the heck emerges.
+It's worth remembering with 0MQ that the classic patterns are the ones that work best, that the beaten path is there for a reason, and that when we go off-road we take the risk of falling off cliffs and getting eaten by zombies. Having said that, let's plug a router into a papa and see what the heck emerges.
 
 The special thing about papas, all joking aside, is actually two things:
 
 * One, they are strictly lockstep request-reply.
 * Two, they accept an envelope stack of any size and will return that intact.
 
-In the normal request-reply pattern, papas are anonymous and replaceable (wow, these analogies //are// scary), but we're learning about custom routing.  So, in our use-case we have reason to send a request to papa A rather than papa B.  This is essential if you want to keep some kind of a conversation going between you, at one end of a large network, and a papa sitting somewhere far away.
+In the normal request-reply pattern, papas are anonymous and replaceable (wow, these analogies //are// scary), but we're learning about custom routing. So, in our use-case we have reason to send a request to papa A rather than papa B. This is essential if you want to keep some kind of a conversation going between you, at one end of a large network, and a papa sitting somewhere far away.
 
-A core philosophy of 0MQ is that the edges are smart and many, and the middle is vast and dumb.  This does mean the edges can address each other, and this also means we want to know how to reach a given papa.  Doing routing across multiple hops is something we'll look at later but for now we'll look just at the final step: a router talking to a specific papa:
+A core philosophy of 0MQ is that the edges are smart and many, and the middle is vast and dumb. This does mean the edges can address each other, and this also means we want to know how to reach a given papa. Doing routing across multiple hops is something we'll look at later but for now we'll look just at the final step: a router talking to a specific papa:
 
 [[code type="textdiagram"]]
           +-------------+
@@ -398,7 +393,7 @@ A core philosophy of 0MQ is that the edges are smart and many, and the middle is
           |   Client    |   Send to "A" or "B"
           |             |
           +-------------+
-          |   ROUTER    |   Yes, it's still XREP
+          |   ROUTER    |
           \-------------/
                  ^
                  |
@@ -408,7 +403,7 @@ A core philosophy of 0MQ is that the edges are smart and many, and the middle is
          |               |
          v               v
    /-----------\   /-----------\
-   |   PAPA    |   |   PAPA    |   REP, naturally
+   |    REP    |   |    REP    |
    |    "A"    |   |    "B"    |
    +-----------+   +-----------+
    |           |   |           |
@@ -422,7 +417,7 @@ A core philosophy of 0MQ is that the edges are smart and many, and the middle is
 
 This example shows a very specific chain of events:
 
-* The client has a message that it expects to route back (via another router) to some node.  The message has two addresses (a stack), an empty part, and a body.
+* The client has a message that it expects to route back (via another router) to some node. The message has two addresses (a stack), an empty part, and a body.
 * The client passes that to the router but specifies a papa address first.
 * The router removes the papa address, uses that to decide which papa to send the message to.
 * The papa receives the addresses, empty part, and body.
@@ -431,9 +426,9 @@ This example shows a very specific chain of events:
 * The papa recreates the envelope stack and sends that back with the worker's reply to the router.
 * The router prepends the papa's address and provides that to the client along with the rest of the address stack, empty part, and the body.
 
-It's complex but worth working through until you understand it.  Just remember a papa is garbage in, garbage out.
+It's complex but worth working through until you understand it. Just remember a papa is garbage in, garbage out.
 
-[[code type="C" title="Router-to-papa" name="rtpapa"]]
+[[code type="example" title="Router-to-papa" name="rtpapa"]]
 [[/code]]
 
 Run this program and it should show you this:
@@ -452,13 +447,13 @@ Run this program and it should show you this:
 
 Some comments on this code:
 
-* In reality we'd have the papa and router in separate nodes.  This example does it all in one thread because it makes the sequence of events really clear.
+* In reality we'd have the papa and router in separate nodes. This example does it all in one thread because it makes the sequence of events really clear.
 
-* zmq_connect[3] doesn't happen instantly.  When the papa socket connects to the router, that takes a certain time and happens in the background.  In a realistic application the router wouldn't even know the papa existed until there had been some previous dialog.  In our toy example we'll just {{sleep (1);}} to make sure the connection's done.  If you remove the sleep, the papa socket won't get the message. (Try it.)
+* zmq_connect[3] doesn't happen instantly. When the papa socket connects to the router, that takes a certain time and happens in the background. In a realistic application the router wouldn't even know the papa existed until there had been some previous dialog. In our toy example we'll just {{sleep (1);}} to make sure the connection's done. If you remove the sleep, the papa socket won't get the message. (Try it.)
 
-* We're routing using the papa's identity.  Just to convince yourself this really is happening, try sending to a wrong address, like "B".  The papa won't get the message.
+* We're routing using the papa's identity. Just to convince yourself this really is happening, try sending to a wrong address, like "B". The papa won't get the message.
 
-* The s_dump and other utility functions (in the C code) come from the zhelpers.h header file.  It becomes clear that we do the same work over and over on sockets, and there are interesting layers we can build on top of the 0MQ API.  We'll come back to this later when we make a real application rather than these toy examples.
+* The s_dump and other utility functions (in the C code) come from the zhelpers.h header file. It becomes clear that we do the same work over and over on sockets, and there are interesting layers we can build on top of the 0MQ API. We'll come back to this later when we make a real application rather than these toy examples.
 
 To route to a papa, we must create a papa-friendly envelope like this:
 
@@ -477,23 +472,23 @@ To route to a papa, we must create a papa-friendly envelope like this:
 
 +++ A Request-Reply Message Broker
 
-We'll recap the knowledge we have so far about doing weird stuff with 0MQ message envelopes, and build the core of a generic custom routing queue device that we can properly call a //message broker//.  Sorry for all the buzzwords.  What we'll make is a //queue device// that connects a bunch of //clients// to a bunch of //workers//, and lets you use //any routing algorithm// you want.  What we'll do is //least-recently used//, since it's the most obvious use-case apart from load-balancing.
+We'll recap the knowledge we have so far about doing weird stuff with 0MQ message envelopes, and build the core of a generic custom routing queue device that we can properly call a //message broker//. Sorry for all the buzzwords. What we'll make is a //queue device// that connects a bunch of //clients// to a bunch of //workers//, and lets you use //any routing algorithm// you want. What we'll do is //least-recently used//, since it's the most obvious use-case apart from load-balancing.
 
-To start with, let's look back at the classic request-reply pattern and then see how it extends over a larger and larger service-oriented network.  The basic pattern is:
+To start with, let's look back at the classic request-reply pattern and then see how it extends over a larger and larger service-oriented network. The basic pattern is:
 
 [[code type="textdiagram"]]
             +--------+
             | Client |
             +--------+
-            |  Mama  |               REQ
-            +---+----+                ^
-                |                     |
-                |                     |
-    +-----------+-----------+         |
-    |           |           |         |
-    |           |           |         |
-+---+----+  +---+----+  +---+----+    v
-|  Papa  |  |  Papa  |  |  Papa  |   REP
+            |  REQ   |
+            +---+----+
+                |
+                |
+    +-----------+-----------+
+    |           |           |
+    |           |           |
++---+----+  +---+----+  +---+----+
+|  REP   |  |  REP   |  |  REP   |
 +--------+  +--------+  +--------+
 | Worker |  | Worker |  | Worker |
 +--------+  +--------+  +--------+
@@ -508,74 +503,74 @@ This extends to multiple papas, but if we want to handle multiple mamas as well 
 +--------+  +--------+  +--------+
 | Client |  | Client |  | Client |
 +--------+  +--------+  +--------+
-|  Mama  |  |  Mama  |  |  Mama  |   REQ
-+---+----+  +---+----+  +---+----+    ^
-    |           |           |         |
-    +-----------+-----------+         |
-                |                     |
-            +---+----+                v
-            | Router |               XREP
-            +--------+                :
-            | Device |                :
-            +--------+                :
-            | Dealer |               XREQ
-            +---+----+                ^
-                |                     |
-    +-----------+-----------+         |
-    |           |           |         |
-+---+----+  +---+----+  +---+----+    v
-|  Papa  |  |  Papa  |  |  Papa  |   REP
+|  REQ   |  |  REQ   |  |  REQ   |
++---+----+  +---+----+  +---+----+
+    |           |           |
+    +-----------+-----------+
+                |
+            +---+----+
+            | ROUTER |
+            +--------+
+            | Device |
+            +--------+
+            | DEALER |
+            +---+----+
+                |
+    +-----------+-----------+
+    |           |           |
++---+----+  +---+----+  +---+----+
+|  REP   |  |  REP   |  |  REP   |
 +--------+  +--------+  +--------+
 | Worker |  | Worker |  | Worker |
 +--------+  +--------+  +--------+
 
 
-Figure # - Extended request-reply
+Figure # - Stretched request-reply
 [[/code]]
 
-The key here is that the router stores the originating mama address in the request envelope, the dealer and papas don't touch that, and so the router knows which mama to send the reply back to.  Papas are anonymous and not addressed in this pattern, all papas are assumed to provide the same service.
+The key here is that the router stores the originating mama address in the request envelope, the dealer and papas don't touch that, and so the router knows which mama to send the reply back to. Papas are anonymous and not addressed in this pattern, all papas are assumed to provide the same service.
 
-In the above design, we're using the built-in load balancing routing that the dealer socket provides.  However we want for our broker to use a least-recently used (LRU) algorithm, so we take the router-mama pattern we learned, and apply that:
+In the above design, we're using the built-in load balancing routing that the dealer socket provides. However we want for our broker to use a least-recently used algorithm, so we take the router-mama pattern we learned, and apply that:
 
 [[code type="textdiagram"]]
     +--------+  +--------+  +--------+
     | Client |  | Client |  | Client |
     +--------+  +--------+  +--------+
-    |  Mama  |  |  Mama  |  |  Mama  |   REQ
-    +---+----+  +---+----+  +---+----+    ^
-        |           |           |         |
-        +-----------+-----------+         |
-                    |                     |
-                +---+----+                v
-                | Router |  Frontend     XREP
-                +--------+                :
-                | Device |  LRU queue     :
-                +--------+                :
-                | Router |  Backend      XREP
-                +---+----+                ^
-                    |                     |
-        +-----------+-----------+         |
-        |           |           |         |
-    +---+----+  +---+----+  +---+----+    v
-    |  Mama  |  |  Mama  |  |  Mama  |   REQ
+    |  REQ   |  |  REQ   |  |  REQ   |
+    +---+----+  +---+----+  +---+----+
+        |           |           |
+        +-----------+-----------+
+                    |
+                +---+----+
+                | ROUTER |  Frontend
+                +--------+
+                | Device |  LRU queue
+                +--------+
+                | ROUTER |  Backend
+                +---+----+
+                    |
+        +-----------+-----------+
+        |           |           |
+    +---+----+  +---+----+  +---+----+
+    |  REQ   |  |  REQ   |  |  REQ   |
     +--------+  +--------+  +--------+
     | Worker |  | Worker |  | Worker |
     +--------+  +--------+  +--------+
 
 
-  Figure # - Extended request-reply with LRU
+Figure # - Stretched request-reply with LRU
 [[/code]]
 
-Our broker - a router-to-router LRU queue - can't simply copy message parts blindly.  Here is the code, it's fairly complex but the core logic is reusable in any request-reply broker that wants to do LRU routing:
+Our broker - a router-to-router LRU queue - can't simply copy message parts blindly. Here is the code, it's fairly complex but the core logic is reusable in any request-reply broker that wants to do LRU routing:
 
-[[code type="C" title="LRU queue broker" name="lruqueue"]]
+[[code type="example" title="LRU queue broker" name="lruqueue"]]
 [[/code]]
 
-The difficult part of this program is (a) the envelopes that each socket reads and writes, and (b) the LRU algorithm.  We'll take these in turn, starting with the message envelope formats.
+The difficult part of this program is (a) the envelopes that each socket reads and writes, and (b) the LRU algorithm. We'll take these in turn, starting with the message envelope formats.
 
-First, recall that a mama socket always puts on an empty part (the envelope delimiter) on sending and removes this empty part on reception.  The reason for this isn't important, it's just part of the 'normal' request-reply pattern.  What we care about here is just keeping mama happy by doing precisely what she needs.  Second, the router always adds an envelope with the address of whomever the message came from.
+First, recall that a mama REQ socket always puts on an empty part (the envelope delimiter) on sending and removes this empty part on reception. The reason for this isn't important, it's just part of the 'normal' request-reply pattern. What we care about here is just keeping mama happy by doing precisely what she needs. Second, the router always adds an envelope with the address of whomever the message came from.
 
-We can now walk through a full request-reply chain from client to worker and back.  In the code we set the identity of client and worker sockets to make it easier to print the message frames if we want to.  Let's assume the client's identity is "CLIENT" and the worker's identity is "WORKER".  The client sends a single frame:
+We can now walk through a full request-reply chain from client to worker and back. In the code we set the identity of client and worker sockets to make it easier to print the message frames if we want to. Let's assume the client's identity is "CLIENT" and the worker's identity is "WORKER". The client sends a single frame:
 
 [[code type="textdiagram"]]
              +---+-------+
@@ -620,7 +615,7 @@ The broker sends this to the worker, prefixed by the address of the worker, take
           Figure # - Message sent to backend
 [[/code]]
 
-This complex envelope stack gets chewed up first by the backend router socket, which removes the first frame.  Then the mama socket in the worker removes the empty part, and provides the rest to the worker:
+This complex envelope stack gets chewed up first by the backend router socket, which removes the first frame. Then the mama socket in the worker removes the empty part, and provides the rest to the worker:
 
 [[code type="textdiagram"]]
              +---+--------+
@@ -635,244 +630,334 @@ This complex envelope stack gets chewed up first by the backend router socket, w
         Figure # - Message delivered to worker
 [[/code]]
 
-Which is exactly the same as what the queue received on its frontend router socket.  The worker has to save the envelope (which is all the parts up to and including the empty message part) and then it can do what's needed with the data part.
+Which is exactly the same as what the queue received on its frontend router socket. The worker has to save the envelope (which is all the parts up to and including the empty message part) and then it can do what's needed with the data part.
 
 On the return path the messages are the same as when they come in, i.e. the backend socket gives the queue a message in five parts, and the queue sends the frontend socket a message in three parts, and the client gets a message in one part.
 
-Now let's look at the LRU algorithm.  It requires that both clients and workers use mama sockets, and that workers correctly store and replay the envelope on messages they get.  The algorithm is:
+Now let's look at the LRU algorithm. It requires that both clients and workers use mama sockets, and that workers correctly store and replay the envelope on messages they get. The algorithm is:
 
 * Create a pollset which polls the backend always, and the frontend only if there are one or more workers available.
 
 * Poll for activity with infinite timeout.
 
-* If there is activity on the backend, we either have a "ready" message or a reply for a client.  In either case we store the worker address (the first part) on our LRU queue, and if the rest is a client reply we send it back to that client via the frontend.
+* If there is activity on the backend, we either have a "ready" message or a reply for a client. In either case we store the worker address (the first part) on our LRU queue, and if the rest is a client reply we send it back to that client via the frontend.
 
-* If there is activity on the frontend, we take the client request, pop the next worker (which is the least-recently used), and send the request to the backend.  This means sending the worker address, empty part, and then the three parts of the client request.
+* If there is activity on the frontend, we take the client request, pop the next worker (which is the least-recently used), and send the request to the backend. This means sending the worker address, empty part, and then the three parts of the client request.
 
-You should now see that you can reuse and extend the LRU algorithm with variations based on the information the worker provides in its initial "ready" message.  For example, workers might start up and do a performance self-test, then tell the broker how fast they are.  The broker can then choose the fastest available worker rather than LRU or round-robin.
+You should now see that you can reuse and extend the LRU algorithm with variations based on the information the worker provides in its initial "ready" message. For example, workers might start up and do a performance self-test, then tell the broker how fast they are. The broker can then choose the fastest available worker rather than LRU or round-robin.
 
-+++ A Multipart Message Class
++++ A High-Level API for 0MQ
 
-Reading and writing multipart messages rapidly gets tedious and error-prone.  Look at the core of the worker thread from our LRU queue broker:
+Reading and writing multipart messages using the native 0MQ API is like eating a bowl of hot noodle soup, with fried chicken and extra vegetables, using a toothpick. Look at the core of the worker thread from our LRU queue broker:
 
-[[code]]
-    while (1) {
-        //  Read and save all frames until we get an empty frame
-        //  In this example there is only 1 but it could be more
-        char *address = s_recv (worker);
-        char *empty = s_recv (worker);
-        assert (*empty == 0);
-        free (empty);
+[[code language="C"]]
+while (1) {
+    //  Read and save all frames until we get an empty frame
+    //  In this example there is only 1 but it could be more
+    char *address = s_recv (worker);
+    char *empty = s_recv (worker);
+    assert (*empty == 0);
+    free (empty);
 
-        //  Get request, send reply
-        char *request = s_recv (worker);
-        printf ("Worker: %s\n", request);
-        free (request);
+    //  Get request, send reply
+    char *request = s_recv (worker);
+    printf ("Worker: %s\n", request);
+    free (request);
 
-        s_sendmore (worker, address);
-        s_sendmore (worker, "");
-        s_send     (worker, "OK");
-        free (address);
-    }
+    s_sendmore (worker, address);
+    s_sendmore (worker, "");
+    s_send     (worker, "OK");
+    free (address);
+}
 [[/code]]
 
-That code isn't even reusable, because it can only handle one envelope.  And this code already does some wrapping around the 0MQ API.  If we used the raw API carefully this is what we'd have to write:
+That code isn't even reusable, because it can only handle one envelope. And this code already does some wrapping around the 0MQ API. If we used the libzmq API directly this is what we'd have to write:
 
-[[code]]
-    while (1) {
-        //  Read and save all frames until we get an empty frame
-        //  In this example there is only 1 but it could be more
-        zmq_msg_t address;
-        zmq_msg_init (&address);
-        zmq_recv (worker, &address, 0);
+[[code language="C"]]
+while (1) {
+    //  Read and save all frames until we get an empty frame
+    //  In this example there is only 1 but it could be more
+    zmq_msg_t address;
+    zmq_msg_init (&address);
+    zmq_recv (worker, &address, 0);
 
-        zmq_msg_t empty;
-        zmq_msg_init (&empty);
-        zmq_recv (worker, &empty, 0);
+    zmq_msg_t empty;
+    zmq_msg_init (&empty);
+    zmq_recv (worker, &empty, 0);
 
-        //  Get request, send reply
-        zmq_msg_t payload;
-        zmq_msg_init (&payload);
-        zmq_recv (worker, &payload, 0);
-        int char_nbr;
-        printf ("Worker: ");
-        for (char_nbr = 0; char_nbr < zmq_msg_size (&payload); char_nbr++)
-            printf ("%c", *(char *) (zmq_msg_data (&payload) + char_nbr));
-        printf ("\n");
-        zmq_msg_init_size (&payload, 2);
-        memcpy (zmq_msg_data (&payload), "OK", 2);
+    //  Get request, send reply
+    zmq_msg_t payload;
+    zmq_msg_init (&payload);
+    zmq_recv (worker, &payload, 0);
 
-        zmq_send (worker, &address, ZMQ_SNDMORE);
-        zmq_close (&address);
-        zmq_send (worker, &empty, ZMQ_SNDMORE);
-        zmq_close (&empty);
-        zmq_send (worker, &payload, 0);
-        zmq_close (&payload);
-    }
+    int char_nbr;
+    printf ("Worker: ");
+    for (char_nbr = 0; char_nbr < zmq_msg_size (&payload); char_nbr++)
+        printf ("%c", *(char *) (zmq_msg_data (&payload) + char_nbr));
+    printf ("\n");
+
+    zmq_msg_init_size (&payload, 2);
+    memcpy (zmq_msg_data (&payload), "OK", 2);
+
+    zmq_send (worker, &address, ZMQ_SNDMORE);
+    zmq_close (&address);
+    zmq_send (worker, &empty, ZMQ_SNDMORE);
+    zmq_close (&empty);
+    zmq_send (worker, &payload, 0);
+    zmq_close (&payload);
+}
 [[/code]]
 
-What we want is an API that lets us receive and send an entire message in one shot, including all envelopes.  One that lets us do what we want with the absolute least lines of code.  The 0MQ API itself doesn't aim to do this, but nothing prevents us making layers on top, and part of learning to use 0MQ intelligently is to do exactly that.
+What we want is an API that lets us receive and send an entire message in one shot, including all envelopes. One that lets us do what we want with the absolute least lines of code. The 0MQ core API itself doesn't aim to do this, but nothing prevents us making layers on top, and part of learning to use 0MQ intelligently is to do exactly that.
 
-The best way to design an API is to start by writing test code, i.e. see what the API would look like in real code.  Here's how I'd like that worker code to look:
+Making a good message API is fairly difficult, especially if we want to avoid copying data around too much. We have a problem of terminology: 0MQ uses "message" to describe both multipart messages, and individual parts of a message. We have a problem of semantics: sometimes it's natural to see message content as printable string data, sometimes as binary blobs.
 
-[[code]]
-    while (1) {
-        zmsg_t *zmsg = zmsg_recv (worker);
-        printf ("Worker: %s\n", zmsg_body (zmsg));
-        zmsg_body_set (zmsg, "OK");
-        zmsg_send (&zmsg, worker);
-    }
+So one solution is to use three concepts: //string// (already the basis for s_send and s_recv), //frame// (a message part), and //message// (a list of one or more frames). Here is the worker code, rewritten onto an API using these concepts:
+
+[[code language="C"]]
+while (1) {
+    zmsg_t *zmsg = zmsg_recv (worker);
+    zframe_print (zmsg_last (zmsg), "Worker: ");
+    zframe_reset (zmsg_last (zmsg), "OK", 2);
+    zmsg_send (&zmsg, worker);
+}
 [[/code]]
 
-Replacing 22 lines of code with 4 is a good deal, especially since the results are easy to read and understand.  I'll use every sneaky assumption in the book to make this API minimalistic:
+Replacing 22 lines of code with four is a good deal, especially since the results are easy to read and understand. We can continue this process for other aspects of working with 0MQ. Let's make a wishlist of things we would like in a higher-level API:
 
-* We don't care about zero-copy performance, so messages hold copies of data.
-* Receiving a message always calls the constructor so we don't need extra constructors.
-* Sending a message always calls the destructor, and sets the message reference to null.
-* Message parts (addresses and data) are always printable strings.
+* //Automatic handling of sockets.// I find it really annoying to have to close sockets manually, and to have to explicitly define the linger timeout in some but not all cases. It'd be great to have a way to close sockets automatically when I close the context.
 
-That last one is tricky because 0MQ uses a binary zero at the start of generated identities.  It is painful in C to pass length-specified blobs in and out of APIs.  So, our message class encodes and decodes 0MQ identities to make them usable internally as C strings.  This is not a high-performance design but it is simple and safe.  In other languages you'll be able to make an API that handles binary message parts without such hacks.
+* //Portable thread management.// Every non-trivial 0MQ application uses threads, but POSIX threads aren't portable. So a decent high-level API should hide this under a portable layer.
 
-So here's the class:
+* //Portable clocks.// Even getting the time to a millisecond resolution, or sleeping for some milliseconds, is not portable. Realistic 0MQ applications need portable clocks, so our API should provide them.
 
-[[code type="C" title="zmsg helper class" name="zmsg"]]
+* //A reactor to replace zmq_poll[3].// The poll loop is simple but clumsy. Writing a lot of these, we end up doing the same work over and over: calculating timers, and calling code when sockets are ready. A simple reactor with socket readers, and timers, would save a lot of repeated work.
+
+* //Proper handling of Ctrl-C.// We already saw how to catch an interrupt. It would be useful if this happened in all applications.
+
+Turning this wishlist into reality gives us [http://zero.mq/c czmq], a high-level C API for 0MQ. This high-level binding in fact developed out of earlier versions of the Guide. It combines nicer semantics for working with 0MQ with some portability layers, and (importantly for C but less for other languages) containers like hashes and lists.
+
+Here is the LRU queue broker rewritten to use czmq:
+
+[[code type="example" title="LRU queue broker using czmq" name="lruqueue2"]]
 [[/code]]
 
-Here is a test wrapper:
+One thing czmq provides is clean interrupt handling. This means that Ctrl-C will cause any blocking 0MQ call to exit with a return code -1 and errno set to EINTR. The czmq message recv methods return NULL in such case. So, you can cleanly exit a loop like this:
 
-[[code type="C" title="zmsg test wrapper" name="zmsg_test"]]
+[[code language="C"]]
+while (1) {
+    zstr_send (client, "HELLO");
+    char *reply = zstr_recv (client);
+    if (!reply)
+        break;              //  Interrupted
+    printf ("Client: %s\n", reply);
+    free (reply);
+    sleep (1);
+}
 [[/code]]
 
-Build and run the test wrapper, and it should print something like this, including a couple of message dumps that show 0MQ-generated socket identities:
+Or, if you're doing zmq_poll, test on the return code:
 
-[[code]]
-----------------------------------------
-[017] 20B60BC50DC16542C2A9AB7B01872F359D
-[005] Hello
-----------------------------------------
-[017] 20B60BC50DC16542C2A9AB7B01872F359D
-[008] address2
-[008] address1
-[000]
-[005] Hello
- * zmsg: OK
+[[code language="C"]]
+int rc = zmq_poll (items, zlist_size (workers)? 2: 1, -1);
+if (rc == -1)
+    break;              //  Interrupted
 [[/code]]
 
-And here is the LRU queue broker rewritten to use the zmsg class.  Compare the code that works with messages, you'll see it's much shorter and 'just works':
+The previous example still uses zmq_poll[3]. So how about reactors? The czmq {{zloop}} reactor is simple but functional. It lets you:
 
-[[code type="C" title="LRU queue broker using zmsg" name="lruqueue2"]]
+* Set a reader on any socket, i.e. code that is called whenever the socket has input.
+* Cancel a reader on a socket.
+* Set a timer that goes off once or multiple times at specific intervals.
+
+{{zloop}} of course uses zmq_poll[3] internally. It rebuilds its poll set each time you add or remove readers, and it calculates the poll timeout to match the next timer. Then, it calls the reader and timer handlers for each socket and timer that needs attention.
+
+When we use a reactor pattern, our code turns inside out. The main logic looks like this:
+
+[[code language="C"]]
+zloop_t *reactor = zloop_new ();
+zloop_reader (reactor, self->backend, s_handle_backend, self);
+zloop_start (reactor);
+zloop_destroy (&reactor);
 [[/code]]
 
-+++ Router-to-Router (N-to-N) Routing
+While the actual handling of messages sits inside dedicated functions or methods. You may not like the style, it's a matter of taste. What it does help with is mixing timers and socket activity. In the rest of this text we'll use zmq_poll[3] in simpler cases, and {{zloop}} in more complex examples.
 
-We've seen XREP/router sockets talking to dealers, mamas, and papas.  The last case is routers talking to routers.  One use-case for this is a web farm that has redundant HTTP front-ends talking to an array of asynchronous back-end workers.  Each worker accepts requests from any of the front-end HTTP servers, and processes them asynchronously, sending asynchronous replies back.  A fully asynchronous worker has some internal concurrency but we don't really care about that here.  What interests us is how N workers can talk to N front-ends.
+Here is the LRU queue broker rewritten once again, this time to use {{zloop}}:
+
+[[code type="example" title="LRU queue broker using zloop" name="lruqueue3"]]
+[[/code]]
+
+Getting applications to properly shut-down when you send them Ctrl-C can be tricky. If you use the zctx class it'll automatically set-up signal handling, but your code still has to cooperate. You must break any loop if zmq_poll returns -1 or if any of the recv methods (zstr_recv, zframe_recv, zmsg_recv) return NULL. If you have nested loops, it can be useful to make the outer ones conditional on {{!zctx_interrupted}}.
+
++++ Asynchronous Client-Server
+
+In the router-to-dealer example we saw a 1-to-N use case where one client talks asynchronously to multiple workers. We can turn this upside-down to get a very useful N-to-1 architecture where various clients talk to a single server, and do this asynchronously:
 
 [[code type="textdiagram"]]
-   +-----------+     +-----------+
-   |           |     |           |
-   |   HTTP    |     |    HTTP   |
-   | Front-end |     | Front-end |
-   |           |     |           |
-   +-----------+     +-----------+
-   |  Router   |     |  Router   |   XREP
-   \-----------/     \-----------/    ^
-      connect           connect       |
-         ^                 ^          |
-         |                 |          |
-         +--------+--------+          |
-                  |                   |
-                  |                   |
-         +--------+--------+          |
-         |                 |          |
-         v                 v          |
-       bind              bind         |
-   /-----------\     /-----------\    v
-   |  Router   |     |  Router   |   XREP
-   +-----------+     +-----------+
-   |           |     |           |
-   |  Worker   |     |  Worker   |
-   |           |     |           |
-   +-----------+     +-----------+
+     +-----------+   +-----------+
+     |           |   |           |
+     |  Client   |   |  Client   |
+     |           |   |           |
+     +-----------+   +-----------+
+     |  DEALER   |   |  DEALER   |
+     \-----------/   \-----------/
+           ^               ^
+           |               |
+           |               |
+           +-------+-------+
+                   |
+                   |
+                   v
+            /------+------\
+            |   ROUTER    |
+            +-------------+
+            |             |
+            |   Server    |
+            |             |
+            +-------------+
 
 
-      Figure # - N-to-N routing
+    Figure # - Asynchronous Client-Server
 [[/code]]
 
-Here's a simplified example with a single front-end and a single worker, cross connected and routing to each other.  We just send a message each way, and dump the message envelopes:
+Here's how it works:
 
-[[code type="C" title="Cross-connected routers" name="rtrouter"]]
+* Clients connect to the server and send requests.
+* For each request, the server sends 0 to N replies.
+* Clients can send multiple requests without waiting for a reply.
+* Servers can send multiple replies without waiting for new requests.
+
+Here's code that shows how this works:
+
+[[code type="example" title="Asynchronous client-server" name="asyncsrv"]]
 [[/code]]
 
-The program produces this output:
-
-[[code]]
-----------------------------------------
-[008] SERVER
-[000]
-[014] send to worker
-----------------------------------------
-[006] WORKER
-[000]
-[014] send to server
-[[/code]]
+Just run that example by itself. Like other multi-task examples, it runs in a single process but each task has its own context and conceptually acts as a separate process. You will see three clients (each with a random ID), printing out the replies they get from the server. Look carefully and you'll see each client task gets 0 or more replies per request.
 
 Some comments on this code:
 
-* We need to give the two sockets time to connect and exchange identities.  If we don't, then they will discard the messages you try to send to them, not recognizing the address.  Try commenting out the sleep(1), and then trying again.
+* The clients send a request once per second, and get zero or more replies back. To make this work using zmq_poll[3], we can't simply poll with a 1-second timeout, or we'd end up sending a new request only one second //after we received the last reply//. So we poll at a high frequency (100 times at 1/100th of a second per poll), which is approximately accurate. This means the server could use requests as a form of heartbeat, i.e. detecting when clients are present or disconnected.
 
-* We can set and use identities on both bound and connected sockets, as this example shows.
+* The server uses a pool of worker threads, each processing one request synchronously. It connects these to its frontend socket using an internal queue. To help debug this, the code implements its own queue device logic. In the C code, you can uncomment the zmsg_dump() calls to get debugging output.
 
-* 0MQ currently has [http://github.com/zeromq/zeromq2/issues/issue/82 a bug] when cross-connecting XREP sockets over {{inproc}}.  The binding socket does not use any identity you set, and always uses a generated UUID.
+The socket logic in the server is fairly wicked. This is the detailed architecture of the server:
 
-Although the router-to-router pattern looks ideal for asynchronous N-to-N routing, it has some pitfalls.  First, any design with N-to-N connections will not scale beyond a small number of clients and servers.  You should really create a device in the middle that turns it into two 1-to-N patterns.  This gives you a structure like the LRU queue broker, though you would use XREQ at the front-end and worker sides to get streaming.
+[[code type="textdiagram"]]
+          +---------+   +---------+   +---------+
+          |         |   |         |   |         |
+          | Client  |   | Client  |   | Client  |
+          |         |   |         |   |         |
+          +---------+   +---------+   +---------+
+          | DEALER  |   | DEALER  |   | DEALER  |
+          \---------/   \---------/   \---------/
+            connect       connect       connect
+               |             |             |
+               |             |             |
+               +-------------+-------------+
+                             |
+      /----------------------|----------------------\
+      :                      v                      :
+      :                    bind                     :
+      :                /-----------\                :
+      :                |  ROUTER   |                :
+      :                +-----------+                :
+      :                |           |                :
+      :                |  Server   |                :
+      :                |           |                :
+      :                +-----------+                :
+      :                |  DEALER   |                :
+      :                \-----------/                :
+      :                    bind                     :
+      :                      |                      :
+      :        +-------------+-------------+        :
+      :        |             |             |        :
+      :        v             v             v        :
+      :     connect       connect       connect     :
+      :   /---------\   /---------\   /---------\   :
+      :   | DEALER  |   | DEALER  |   | DEALER  |   :
+      :   +---------+   +---------+   +---------+   :
+      :   |         |   |         |   |         |   :
+      :   | Worker  |   | Worker  |   | Worker  |   :
+      :   |         |   |         |   |         |   :
+      :   +---------+   +---------+   +---------+   :
+      :                                             :
+      \---------------------------------------------/
 
-Second, it may become confusing if you try to put two XREP sockets at the same logical level.  One must bind, one must connect, and request-reply is inherently asymmetric.  However, the next point takes care of this.
+          Figure # - Detail of asynchronous server
+[[/code]]
 
-Third, one side of the connection must know the identity of the other.  You cannot do xrep-to-xrep flows between two anonymous sockets.  In practice this means you need a name service, configuration data, or some other magic to define and share the identities of one of the peers.  It's convenient therefore to treat the more static side of the flow as 'server', and give it a fixed, known identity, and then treat the dynamic side as 'client'.  The client will have to connect to the server, then send it a message using the server's known identity as address, and then the server can respond to the client.
+Note that we're doing a dealer-to-router dialog between client and server, but internally between the server main thread and workers we're doing dealer-to-dealer. If the workers were strictly synchronous, we'd use REP. But since we want to send multiple replies we need an async socket. We do //not// want to route replies, they always go to the single server thread that sent us the request.
+
+Let's think about the routing envelope. The client sends a simple message. The server thread receives a two-part message (real message prefixed by client identity). We have two possible designs for the server-to-worker interface:
+
+* Workers get unaddressed messages, and we manage the connections from server thread to worker threads explicitly using a router socket as backend. This would require that workers start by telling the server they exist, which can then route requests to workers and track which client is 'connected' to which worker. This is the LRU pattern we already covered.
+
+* Workers get addressed messages, and they return addressed replies. This requires that workers can properly decode and recode envelopes but it doesn't need any other mechanisms.
+
+The second design is much simpler, so that's what we use:
+
+[[code]]
+     client          server       frontend       worker
+   [ DEALER ]<---->[ ROUTER <----> DEALER <----> DEALER ]
+             1 part         2 parts       2 parts
+[[/code]]
+
+When you build servers that maintain stateful conversations with clients, you will run into a classic problem. If the server keeps some state per client, and clients keep coming and going, eventually it will run of resources. Even if the same clients keep connecting, if you're using transient sockets (no explicit identity), each connection will look like a new one.
+
+We cheat in the above example by keeping state only for a very short time (the time it takes a worker to process a request) and then throwing away the state. But that's not practical for many cases.
+
+To properly manage client state in a stateful asynchronous server you must:
+
+* Do heartbeating from client to server. In our example we send a request once per second, which can reliably be used as a heartbeat.
+
+* Store state using the client identity as key. This works for both durable and transient sockets.
+
+* Detect a stopped heartbeat. If there's no request from a client within, say, two seconds, the server can detect this and destroy any state it's holding for that client.
 
 +++ Worked Example: Inter-Broker Routing
 
-Let's take everything we've seen so far, and scale things up.  Our best client calls us urgently and asks for a design of a large cloud computing facility.  He has this vision of a cloud that spans many data centers, each a cluster of clients and workers, and that works together as a whole.
+Let's take everything we've seen so far, and scale things up. Our best client calls us urgently and asks for a design of a large cloud computing facility. He has this vision of a cloud that spans many data centers, each a cluster of clients and workers, and that works together as a whole.
 
-Because we're smart enough to know that practice always beats theory, we propose to make a working simulation using 0MQ.  Our client, eager to lock down the budget before his own boss changes his mind, and having read great things about 0MQ on Twitter, agrees.
+Because we're smart enough to know that practice always beats theory, we propose to make a working simulation using 0MQ. Our client, eager to lock down the budget before his own boss changes his mind, and having read great things about 0MQ on Twitter, agrees.
 
 ++++ Establishing the Details
 
-Several espressos later, we want to jump into writing code but a little voice tells us to get more details before making a sensational solution to entirely the wrong problem.  What kind of work is the cloud doing?, we ask.  The client explains:
+Several espressos later, we want to jump into writing code but a little voice tells us to get more details before making a sensational solution to entirely the wrong problem. What kind of work is the cloud doing?, we ask. The client explains:
 
-* Workers run on various kinds of hardware, but they are all able to handle any task.  There are several hundred workers per cluster, and as many as a dozen clusters in total.
+* Workers run on various kinds of hardware, but they are all able to handle any task. There are several hundred workers per cluster, and as many as a dozen clusters in total.
 
-* Clients create tasks for workers.  Each task is an independent unit of work and all the client wants is to find an available worker, and send it the task, as soon as possible.  There will be a lot of clients and they'll come and go arbitrarily.
+* Clients create tasks for workers. Each task is an independent unit of work and all the client wants is to find an available worker, and send it the task, as soon as possible. There will be a lot of clients and they'll come and go arbitrarily.
 
-* The real difficulty is to be able to add and remove clusters at any time.  A cluster can can leave or join the cloud instantly, bringing all its workers and clients with it.
+* The real difficulty is to be able to add and remove clusters at any time. A cluster can can leave or join the cloud instantly, bringing all its workers and clients with it.
 
 * If there are no workers in their own cluster, clients' tasks will go off to other available workers in the cloud.
 
-* Clients send out one task at a time, waiting for a reply.  If they don't get an answer within X seconds they'll just send out the task again. This ain't our concern, the client API does it already.
+* Clients send out one task at a time, waiting for a reply. If they don't get an answer within X seconds they'll just send out the task again. This ain't our concern, the client API does it already.
 
-* Workers process one task at a time, they are very simple beasts.  If they crash, they get restarted by whatever script started them.
+* Workers process one task at a time, they are very simple beasts. If they crash, they get restarted by whatever script started them.
 
 So we double check to make sure that we understood this correctly:
 
-* There will be some kind of super-duper network interconnect between clusters, right?  The client says, yes, of course, we're not idiots.
+* There will be some kind of super-duper network interconnect between clusters, right? The client says, yes, of course, we're not idiots.
 
-* What kind of volumes are we talking about, we ask?  The client replies, up to a thousand clients per cluster, each doing max. ten requests per second.  Requests are small, and replies are also small, no more than 1K bytes each.
+* What kind of volumes are we talking about, we ask? The client replies, up to a thousand clients per cluster, each doing max. ten requests per second. Requests are small, and replies are also small, no more than 1K bytes each.
 
 So we do a little calculation and see that this will work nicely over plain TCP. 2,500 clients x 10/second x 1,000 bytes x 2 directions = 50MB/sec or 400Mb/sec, not a problem for a 1Gb network.
 
-It's a straight-forward problem that requires no exotic hardware or protocols, just some clever routing algorithms and careful design.  We start by designing one cluster (one data center) and then we figure out how to connect clusters together.
+It's a straight-forward problem that requires no exotic hardware or protocols, just some clever routing algorithms and careful design. We start by designing one cluster (one data center) and then we figure out how to connect clusters together.
 
 ++++ Architecture of a Single Cluster
 
-Workers and clients are synchronous.  We want to use the least-recently used algorithm to route tasks to workers.  Workers are all identical, our facility has no notion of different services.  Workers are anonymous, clients never address them directly.  We make no attempt here to provide guaranteed delivery, retry, etc.
+Workers and clients are synchronous. We want to use the LRU pattern to route tasks to workers. Workers are all identical, our facility has no notion of different services. Workers are anonymous, clients never address them directly. We make no attempt here to provide guaranteed delivery, retry, etc.
 
-For reasons we already looked at, clients and workers won't speak to each other directly.  It makes it impossible to add or remove nodes dynamically.  So our basic model consists of the request-reply message broker we saw earlier:
+For reasons we already looked at, clients and workers won't speak to each other directly. It makes it impossible to add or remove nodes dynamically. So our basic model consists of the request-reply message broker we saw earlier:
 
 [[code type="textdiagram"]]
     +--------+  +--------+  +--------+
     | Client |  | Client |  | Client |
     +--------+  +--------+  +--------+
-    |  Mama  |  |  Mama  |  |  Mama  |  REQ
+    |  REQ   |  |  REQ   |  |  REQ   |
     +---+----+  +---+----+  +---+----+
         |           |           |
         +-----------+-----------+
@@ -880,11 +965,11 @@ For reasons we already looked at, clients and workers won't speak to each other 
     +--------------------------------+
     |               |                |
     |         +-----+------+         |
-    |         |   Router   |         |  XREP
+    |         |   ROUTER   |         |
     |         +------------+         |
     |         | LRU Queue  |         |
     |         +------------+         |
-    |         |   Router   |         |  XREP
+    |         |   ROUTER   |         |
     |         +-----+------+         |
     |               |         Broker :
     +--------------------------------+
@@ -893,7 +978,7 @@ For reasons we already looked at, clients and workers won't speak to each other 
         +-----------+-----------+
         |           |           |
     +---+----+  +---+----+  +---+----+
-    |  Mama  |  |  Mama  |  |  Mama  |  REQ
+    |  REQ   |  |  REQ   |  |  REQ   |
     +--------+  +--------+  +--------+
     | Worker |  | Worker |  | Worker |
     +--------+  +--------+  +--------+
@@ -904,7 +989,7 @@ For reasons we already looked at, clients and workers won't speak to each other 
 
 ++++ Scaling to Multiple Clusters
 
-Now we scale this out to more than one cluster.  Each cluster has a set of clients and workers, and a broker that joins these together:
+Now we scale this out to more than one cluster. Each cluster has a set of clients and workers, and a broker that joins these together:
 
 [[code type="textdiagram"]]
 
@@ -929,15 +1014,15 @@ Now we scale this out to more than one cluster.  Each cluster has a set of clien
              Figure # - Multiple clusters
 [[/code]]
 
-The question is: how do we get the clients of each cluster talking to the workers of the other cluster?  There are a few possibilities, each with pros and cons:
+The question is: how do we get the clients of each cluster talking to the workers of the other cluster? There are a few possibilities, each with pros and cons:
 
-* Clients could connect directly to both brokers.  The advantage is that we don't need to modify brokers or workers.  But clients get more complex, and become aware of the overall topology.  If we want to add, e.g. a third or forth cluster, all the clients are affected.  In effect we have to move routing and failover logic into the clients and that's not nice.
+* Clients could connect directly to both brokers. The advantage is that we don't need to modify brokers or workers. But clients get more complex, and become aware of the overall topology. If we want to add, e.g. a third or forth cluster, all the clients are affected. In effect we have to move routing and failover logic into the clients and that's not nice.
 
-* Workers might connect directly to both brokers.  But mama workers can't do that, they can only reply to one broker.  We might use papas but papas don't give us customizable broker-to-worker routing like LRU, only the built-in load balancing.  That's a fail, if we want to distribute work to idle workers: we precisely need LRU.  One solution would be to use router sockets for the worker nodes.  Let's label this "Idea #1".
+* Workers might connect directly to both brokers. But mama workers can't do that, they can only reply to one broker. We might use papas but papas don't give us customizable broker-to-worker routing like LRU, only the built-in load balancing. That's a fail, if we want to distribute work to idle workers: we precisely need LRU. One solution would be to use router sockets for the worker nodes. Let's label this "Idea #1".
 
-* Brokers could connect to each other.  This looks neatest because it creates the fewest additional connections.  We can't add clusters on the fly but that is probably out of scope.  Now clients and workers remain ignorant of the real network topology, and brokers tell each other when they have spare capacity.  Let's label this "Idea #2".
+* Brokers could connect to each other. This looks neatest because it creates the fewest additional connections. We can't add clusters on the fly but that is probably out of scope. Now clients and workers remain ignorant of the real network topology, and brokers tell each other when they have spare capacity. Let's label this "Idea #2".
 
-Let's explore Idea #1.  Workers connecting to both brokers and accepting jobs from either:
+Let's explore Idea #1. Workers connecting to both brokers and accepting jobs from either:
 
 [[code type="textdiagram"]]
 
@@ -946,7 +1031,7 @@ Let's explore Idea #1.  Workers connecting to both brokers and accepting jobs fr
                                    :
               |            |               |            |
               +------------+               +------------+
-              |   Router   |               |   Router   |
+              |   ROUTER   |               |   ROUTER   |
               +-----+------+               +-----+------+
                     |                            |
           +---------|-+--=--------+--------------+
@@ -955,7 +1040,7 @@ Let's explore Idea #1.  Workers connecting to both brokers and accepting jobs fr
         | :         | :         | :
         | :         | :         | :
     +---+-+--+  +---+-+--+  +---+-+--+
-    | Router |  | Router |  | Router |
+    | ROUTER |  | ROUTER |  | ROUTER |
     +--------+  +--------+  +--------+
     | Worker |  | Worker |  | Worker |
     +--------+  +--------+  +--------+
@@ -964,9 +1049,9 @@ Let's explore Idea #1.  Workers connecting to both brokers and accepting jobs fr
          Figure # - Idea 1 - cross-connected workers
 [[/code]]
 
-It looks feasible.  However it doesn't provide what we wanted, which was that clients get local workers if possible and remote workers only if it's better than waiting.  Also workers will signal "ready" to both brokers and can get two jobs at once, while other workers remain idle.  It seems this design fails because again we're putting routing logic at the edges.
+It looks feasible. However it doesn't provide what we wanted, which was that clients get local workers if possible and remote workers only if it's better than waiting. Also workers will signal "ready" to both brokers and can get two jobs at once, while other workers remain idle. It seems this design fails because again we're putting routing logic at the edges.
 
-So idea #2 then.  We interconnect the brokers and don't touch the clients or workers, which are mamas like we're used to:
+So idea #2 then. We interconnect the brokers and don't touch the clients or workers, which are mamas like we're used to:
 
 [[code type="textdiagram"]]
 
@@ -988,32 +1073,32 @@ So idea #2 then.  We interconnect the brokers and don't touch the clients or wor
     +---+  +---+  +---+     :     +---+  +---+  +---+
                             :
 
-     Figure # - Idea 2 - brokers talking to each other
+    Figure # - Idea 2 - brokers talking to each other
 [[/code]]
 
-This design is appealing because the problem is solved in one place, invisibly to the rest of the world.  Basically, brokers open secret channels to each other and whisper, like camel traders, "//hey, I've got some spare capacity, if you have too many clients give me a shout and we'll deal".//
+This design is appealing because the problem is solved in one place, invisibly to the rest of the world. Basically, brokers open secret channels to each other and whisper, like camel traders, "//hey, I've got some spare capacity, if you have too many clients give me a shout and we'll deal".//
 
-It is in effect just a more sophisticated routing algorithm: brokers become subcontractors for each other.  Other things to like about this design, even before we play with real code:
+It is in effect just a more sophisticated routing algorithm: brokers become subcontractors for each other. Other things to like about this design, even before we play with real code:
 
 * It treats the common case (clients and workers on the same cluster) as default and does extra work for the exceptional case (shuffling jobs between clusters).
 
-* It lets us use different message flows for the different types of work.  That means we can handle them differently, e.g. using different types of network connection.
+* It lets us use different message flows for the different types of work. That means we can handle them differently, e.g. using different types of network connection.
 
-* It feels like it would scale smoothly.  Interconnecting three, or more brokers doesn't get over-complex.  If we find this to be a problem, it's easy to solve by adding a super-broker.
+* It feels like it would scale smoothly. Interconnecting three, or more brokers doesn't get over-complex. If we find this to be a problem, it's easy to solve by adding a super-broker.
 
-We'll now make a worked example.  We'll pack an entire cluster into one process.  That is obviously not realistic but it makes it simple to simulate, and the simulation can accurately scale to real processes.  This is the beauty of 0MQ, you can design at the microlevel and scale that up to the macro level.  Thread become processes, become boxes and the patterns and logic remain the same.  Each of our 'cluster' processes contains client threads, worker threads, and a broker thread.
+We'll now make a worked example. We'll pack an entire cluster into one process. That is obviously not realistic but it makes it simple to simulate, and the simulation can accurately scale to real processes. This is the beauty of 0MQ, you can design at the microlevel and scale that up to the macro level. Thread become processes, become boxes and the patterns and logic remain the same. Each of our 'cluster' processes contains client threads, worker threads, and a broker thread.
 
 We know the basic model well by now:
 
-* The client (mama/REQ) threads create workloads and pass them to the broker (router/XREP).
-* The worker (mama/REQ) threads process workloads and return the results to the broker (router/XREP).
+* The mama client (REQ) threads create workloads and pass them to the broker (ROUTER).
+* The mama worker (REQ) threads process workloads and return the results to the broker (ROUTER).
 * The broker queues and distributes workloads using the LRU routing model.
 
 ++++ Federation vs. Peering
 
-There are several possible way to interconnecting brokers.  What we //want// is to be able to tell other brokers, "we have capacity", and then receive multiple tasks.  We also need to be able to tell other brokers "stop, we're full".  It doesn't need to be perfect: sometimes we may accept jobs we can't process immediately, then we'll do them as soon as possible.
+There are several possible way to interconnecting brokers. What we //want// is to be able to tell other brokers, "we have capacity", and then receive multiple tasks. We also need to be able to tell other brokers "stop, we're full". It doesn't need to be perfect: sometimes we may accept jobs we can't process immediately, then we'll do them as soon as possible.
 
-The simplest interconnect is //federation// in which brokers simulate clients and workers for each other.  We would do this by connecting our frontend to the other broker's backend socket.  Note that it is legal to both bind a socket to an endpoint and connect it to other endpoints.
+The simplest interconnect is //federation// in which brokers simulate clients and workers for each other. We would do this by connecting our frontend to the other broker's backend socket. Note that it is legal to both bind a socket to an endpoint and connect it to other endpoints.
 
 [[code type="textdiagram"]]
 
@@ -1038,31 +1123,31 @@ The simplest interconnect is //federation// in which brokers simulate clients an
    Figure # - Cross-connected brokers in federation model
 [[/code]]
 
-This would give us simple logic in both brokers and a reasonably good mechanism: when there are no clients, tell the other broker 'ready', and accept one job from it.  The problem is also that it is too simple for this problem.  A federated broker would be able to handle only one task at once.  If the broker emulates a lock-step client and worker, it is by definition also going to be lock-step and if it has lots of available workers they won't be used.  Our brokers need to be connected in a fully asynchronous fashion.
+This would give us simple logic in both brokers and a reasonably good mechanism: when there are no clients, tell the other broker 'ready', and accept one job from it. The problem is also that it is too simple for this problem. A federated broker would be able to handle only one task at once. If the broker emulates a lock-step client and worker, it is by definition also going to be lock-step and if it has lots of available workers they won't be used. Our brokers need to be connected in a fully asynchronous fashion.
 
-The federation model is perfect for other kinds of routing, especially server-oriented architectures (routing by service name and proximity rather than LRU or load-balancing or random scatter).  So don't dismiss it as useless, it's just not right for least-recently used and cluster load-balancing.
+The federation model is perfect for other kinds of routing, especially service-oriented architectures or SOAs (which route by service name and proximity rather than LRU or load-balancing or random scatter). So don't dismiss it as useless, it's just not right for least-recently used and cluster load-balancing.
 
-So instead of federation, let's look at a //peering// approach in which brokers are explicitly aware of each other and talk over privileged channels.  Let's break this down, assuming we want to interconnect N brokers.  Each broker has (N - 1) peers, and all brokers are using exactly the same code and logic.  There are two distinct flows of information between brokers:
+So instead of federation, let's look at a //peering// approach in which brokers are explicitly aware of each other and talk over privileged channels. Let's break this down, assuming we want to interconnect N brokers. Each broker has (N - 1) peers, and all brokers are using exactly the same code and logic. There are two distinct flows of information between brokers:
 
-* Each broker needs to tell its peers how many workers it has available at any time.  This can be fairly simple information, just a quantity that is updated regularly.  The obvious (and correct) socket pattern for this is publish-subscribe.  So every broker opens a PUB socket and publishes state information on that, and every broker also opens a SUB socket and connects that to the PUB socket of every other broker, to get state information from its peers.
+* Each broker needs to tell its peers how many workers it has available at any time. This can be fairly simple information, just a quantity that is updated regularly. The obvious (and correct) socket pattern for this is publish-subscribe. So every broker opens a PUB socket and publishes state information on that, and every broker also opens a SUB socket and connects that to the PUB socket of every other broker, to get state information from its peers.
 
-* Each broker needs a way to delegate tasks to a peer and get replies back, asynchronously.  We'll do this using router/router (XREP/XREP) sockets, no other combination works.  Each broker has two such sockets: one for tasks it receives, one for tasks it delegates.  If we didn't use two sockets it would be more work to know whether we were reading a request or a reply each time. That would mean adding more information to the message envelope.
+* Each broker needs a way to delegate tasks to a peer and get replies back, asynchronously. We'll do this using router/router (ROUTER/ROUTER) sockets, no other combination works. Each broker has two such sockets: one for tasks it receives, one for tasks it delegates. If we didn't use two sockets it would be more work to know whether we were reading a request or a reply each time. That would mean adding more information to the message envelope.
 
 And there is also the flow of information between a broker and its local clients and workers.
 
 ++++ The Naming Ceremony
 
-Three flows x two sockets for each flow = six sockets that we have to manage in the broker.    Choosing good names is vital to keeping a multi-socket juggling act reasonably coherent in our minds.  Sockets //do// something and what they do should form the basis for their names.  It's about being able to read the code several weeks later on a cold Monday morning before coffee, and not feeling pain.
+Three flows x two sockets for each flow = six sockets that we have to manage in the broker.  Choosing good names is vital to keeping a multi-socket juggling act reasonably coherent in our minds. Sockets //do// something and what they do should form the basis for their names. It's about being able to read the code several weeks later on a cold Monday morning before coffee, and not feeling pain.
 
-Let's do a shamanistic naming ceremony for the sockets.  The three flows are:
+Let's do a shamanistic naming ceremony for the sockets. The three flows are:
 
 * A //local// request-reply flow between the broker and its clients and workers.
 * A //cloud// request-reply flow between the broker and its peer brokers.
 * A //state// flow between the broker and its peer brokers.
 
-Finding meaningful names that are all the same length means our code will align beautifully.  It may seem irrelevant but such attention to such details turn ordinary code into something more like art.
+Finding meaningful names that are all the same length means our code will align beautifully. It may seem irrelevant but such attention to such details turn ordinary code into something more like art.
 
-For each flow the broker has two sockets that we can orthogonally call the "frontend" and "backend".  We've used these names quite often.  A frontend receives information or tasks.  A backend sends those out to other peers.  The conceptual flow is from front to back (with replies going in the opposite direction from back to front).
+For each flow the broker has two sockets that we can orthogonally call the "frontend" and "backend". We've used these names quite often. A frontend receives information or tasks. A backend sends those out to other peers. The conceptual flow is from front to back (with replies going in the opposite direction from back to front).
 
 So in all the code we write for this tutorial will use these socket names:
 
@@ -1070,9 +1155,9 @@ So in all the code we write for this tutorial will use these socket names:
 * //cloudfe// and //cloudbe// for the cloud flow.
 * //statefe// and //statebe// for the state flow.
 
-For our transport we'll use {{ipc}} for everything.  This has the advantage of working like {{tcp}} in terms of connectivity (i.e. it's a disconnected transport, unlike {{inproc}}), yet we don't need IP addresses or DNS names, which would be a pain here.  Instead, we will use {{ipc}} endpoints called //something//-{{local}}, //something//-{{cloud}}, and //something//-{{state}}, where //something// is the name of our simulated cluster.
+For our transport we'll use {{ipc}} for everything. This has the advantage of working like {{tcp}} in terms of connectivity (i.e. it's a disconnected transport, unlike {{inproc}}), yet we don't need IP addresses or DNS names, which would be a pain here. Instead, we will use {{ipc}} endpoints called //something//-{{local}}, //something//-{{cloud}}, and //something//-{{state}}, where //something// is the name of our simulated cluster.
 
-You may be thinking that this is a lot of work for some names.  Why not call them s1, s2, s3, s4, etc.?  The answer is that if your brain is not a perfect machine, you need a lot of help when reading code, and we'll see that these names do help.  It is a lot easier to remember "two directions, three flows" than "six different sockets".
+You may be thinking that this is a lot of work for some names. Why not call them s1, s2, s3, s4, etc.? The answer is that if your brain is not a perfect machine, you need a lot of help when reading code, and we'll see that these names do help. It is a lot easier to remember "three flows, two directions" than "six different sockets".
 
 Here is the broker socket arrangement, then:
 
@@ -1093,13 +1178,13 @@ Here is the broker socket arrangement, then:
         |  bind   |  bind   | connect |
         +---------+---------+---------+
         | localfe | cloudfe | statefe |     Frontends
-        |  XREP   |  XREP   |   SUB   |     (incoming)
+        | ROUTER  | ROUTER  |   SUB   |     (incoming)
         +---------+---------+---------+
         |                             |
         |           Broker            |
         |                             |
         +---------+---------+---------+
-        |  XREP   |  XREP   |   PUB   |     Backends
+        | ROUTER  | ROUTER  |   PUB   |     Backends
         | localbe | cloudbe | statebe |     (outgoing)
         +---------+---------+---------+
         |  bind   | connect |  bind   |
@@ -1120,11 +1205,11 @@ Here is the broker socket arrangement, then:
       Figure # - Broker socket arrangement
 [[/code]]
 
-Note that we connect the cloudbe in each broker to the cloudfe in every other broker, and likewise we connect the statefe in each broker to the statefe in every other broker.
+Note that we connect the cloudbe in each broker to the cloudfe in every other broker, and likewise we connect the statebe in each broker to the statefe in every other broker.
 
 ++++ Prototyping the State Flow
 
-Since each socket flow has its own little traps for the unwary, we will test them in real code one by one, rather than try to throw the whole lot into code in one go.  When we're happy with each flow, we can put them together into a full program.  We'll start with the state flow:
+Since each socket flow has its own little traps for the unwary, we will test them in real code one by one, rather than try to throw the whole lot into code in one go. When we're happy with each flow, we can put them together into a full program. We'll start with the state flow:
 
 [[code type="textdiagram"]]
 
@@ -1172,22 +1257,22 @@ Since each socket flow has its own little traps for the unwary, we will test the
 
 Here is how this works in code:
 
-[[code type="C" title="Prototype state flow" name="peering1"]]
+[[code type="example" title="Prototype state flow" name="peering1"]]
 [[/code]]
 
 Notes about this code:
 
-* Each broker has an identity that we use to construct {{ipc}} endpoint names.  A real broker would need to work with TCP and a more sophisticated configuration scheme.  We'll look at such schemes later in this book but for now, using generated {{ipc}} names lets us ignore the problem of where to get TCP/IP addresses or names from.
+* Each broker has an identity that we use to construct {{ipc}} endpoint names. A real broker would need to work with TCP and a more sophisticated configuration scheme. We'll look at such schemes later in this book but for now, using generated {{ipc}} names lets us ignore the problem of where to get TCP/IP addresses or names from.
 
-* We use a zmq_poll[3] loop as the core of the program.  This processes incoming messages and sends out state messages.  We send a state message //only// if we did not get any incoming messages //and// we waited for a second.  If we send out a state message each time we get one in, we'll get message storms.
+* We use a zmq_poll[3] loop as the core of the program. This processes incoming messages and sends out state messages. We send a state message //only// if we did not get any incoming messages //and// we waited for a second. If we send out a state message each time we get one in, we'll get message storms.
 
-* We use a two-part pubsub message consisting of sender address and data.  Note that we will need to know the address of the publisher in order to send it tasks, and the only way is to send this explicitly as a part of the message.
+* We use a two-part pubsub message consisting of sender address and data. Note that we will need to know the address of the publisher in order to send it tasks, and the only way is to send this explicitly as a part of the message.
 
 * We don't set identities on subscribers, because if we did then we'd get out of date state information when connecting to running brokers.
 
-* We don't set a HWM on the publisher, since subscribers are transient.  We might set a HWM of 1 but it's extra work for nothing here.
+* We don't set a HWM on the publisher, since subscribers are transient. We might set a HWM of 1 but it's extra work for nothing here.
 
-We can build this little program and run it three times to simulate three clusters.  Let's call them DC1, DC2, and DC3 (the names are arbitrary).  We run these three commands, each in a separate window:
+We can build this little program and run it three times to simulate three clusters. Let's call them DC1, DC2, and DC3 (the names are arbitrary). We run these three commands, each in a separate window:
 
 [[code]]
 peering1 DC1 DC2 DC3  #  Start DC1 and connect to DC2 and DC3
@@ -1195,15 +1280,15 @@ peering1 DC2 DC1 DC3  #  Start DC2 and connect to DC1 and DC3
 peering1 DC3 DC1 DC2  #  Start DC3 and connect to DC1 and DC2
 [[/code]]
 
-You'll see each cluster report the state of its peers, and after a few seconds they will all happily be printing random numbers once per second.  Try this and satisfy yourself that the three brokers all match up and synchronize to per-second state updates.
+You'll see each cluster report the state of its peers, and after a few seconds they will all happily be printing random numbers once per second. Try this and satisfy yourself that the three brokers all match up and synchronize to per-second state updates.
 
-In real life we'd not send out state messages at regular intervals but rather whenever we had a state change, i.e. whenever a worker becomes available or unavailable.  That may seem like a lot of traffic but state messages are small and we've established that the inter-cluster connections are super-fast.
+In real life we'd not send out state messages at regular intervals but rather whenever we had a state change, i.e. whenever a worker becomes available or unavailable. That may seem like a lot of traffic but state messages are small and we've established that the inter-cluster connections are super-fast.
 
-If we wanted to send state messages at precise intervals we'd create a child thread and open the statebe socket in that thread.  We'd then send irregular state updates to that child thread from our main thread, and allow the child thread to conflate them into regular outgoing messages.  This is more work than we need here.
+If we wanted to send state messages at precise intervals we'd create a child thread and open the statebe socket in that thread. We'd then send irregular state updates to that child thread from our main thread, and allow the child thread to conflate them into regular outgoing messages. This is more work than we need here.
 
 ++++ Prototyping the Local and Cloud Flows
 
-Let's now prototype at the flow of tasks via the local and cloud sockets.  This code pulls requests from clients and then distributes them to local workers and cloud peers on a random basis:
+Let's now prototype at the flow of tasks via the local and cloud sockets. This code pulls requests from clients and then distributes them to local workers and cloud peers on a random basis:
 
 [[code type="textdiagram"]]
 
@@ -1222,13 +1307,13 @@ Let's now prototype at the flow of tasks via the local and cloud sockets.  This 
         |  bind   |  bind   |         |
         +---------+---------+---------+
         | localfe | cloudfe |         |
-        |  XREP   |  XREP   |         |
+        | ROUTER  | ROUTER  |         |
         +---------+---------+---------+
         |                             |
         |           Broker            |
         |                             |
         +---------+---------+---------+
-        |  XREP   |  XREP   |         |
+        | ROUTER  | ROUTER  |         |
         | localbe | cloudbe |         |
         +---------+---------+---------+
         |  bind   | connect |         |
@@ -1251,25 +1336,25 @@ Let's now prototype at the flow of tasks via the local and cloud sockets.  This 
 
 Before we jump into the code, which is getting a little complex, let's sketch the core routing logic and break it down into a simple but robust design.
 
-We need two queues, one for requests from local clients and one for requests from cloud clients.  One option would be to pull messages off the local and cloud frontends, and pump these onto their respective queues.  But this is kind of pointless because 0MQ sockets //are// queues already.  So let's use the 0MQ socket buffers as queues.
+We need two queues, one for requests from local clients and one for requests from cloud clients. One option would be to pull messages off the local and cloud frontends, and pump these onto their respective queues. But this is kind of pointless because 0MQ sockets //are// queues already. So let's use the 0MQ socket buffers as queues.
 
-This was the technique we used in the LRU queue broker, and it worked nicely.  We only read from the two frontends when there is somewhere to send the requests.  We can always read from the backends, since they give us replies to route back.  As long as the backends aren't talking to us, there's no point in even looking at the frontends.
+This was the technique we used in the LRU queue broker, and it worked nicely. We only read from the two frontends when there is somewhere to send the requests. We can always read from the backends, since they give us replies to route back. As long as the backends aren't talking to us, there's no point in even looking at the frontends.
 
 So our main loop becomes:
 
-* Poll the backends for activity.  When we get a message, it may be "READY" from a worker or it may be a reply.  If it's a reply, route back via the local or cloud frontend.
+* Poll the backends for activity. When we get a message, it may be "READY" from a worker or it may be a reply. If it's a reply, route back via the local or cloud frontend.
 
 * If a worker replied, it became available, so we queue it and count it.
 
 * While there are workers available, take a request, if any, from either frontend and route to a local worker, or randomly, a cloud peer.
 
-Randomly sending tasks to a peer broker rather than a worker simulates work distribution across the cluster.  It's idiot but that is fine for this stage.
+Randomly sending tasks to a peer broker rather than a worker simulates work distribution across the cluster. It's idiot but that is fine for this stage.
 
-We use broker identities to route messages between brokers.  Each broker has a name, which we provide on the command line in this simple prototype.  As long as these names don't overlap with the 0MQ-generated UUIDs used for client nodes, we can figure out whether to route a reply back to a client or to a broker.
+We use broker identities to route messages between brokers. Each broker has a name, which we provide on the command line in this simple prototype. As long as these names don't overlap with the 0MQ-generated UUIDs used for client nodes, we can figure out whether to route a reply back to a client or to a broker.
 
-Here is how this works in code.  The interesting part starts around the comment "Interesting part".
+Here is how this works in code. The interesting part starts around the comment "Interesting part".
 
-[[code type="C" title="Prototype local and cloud flow" name="peering2"]]
+[[code type="example" title="Prototype local and cloud flow" name="peering2"]]
 [[/code]]
 
 Run this by, for instance, starting two instance of the broker in two windows:
@@ -1281,41 +1366,37 @@ peering2 you me
 
 Some comments on this code:
 
-* Using the zmsg class makes life much easier, and our code much shorter.  It's obviously a abstraction that works, and which should form part of your toolbox as a 0MQ programmer.
+* Using the zmsg class makes life much easier, and our code much shorter. It's obviously a abstraction that works, and which should form part of your toolbox as a 0MQ programmer.
 
-* Since we're not getting any state information from peers, we naively assume they are running.  The code prompts you to confirm when you've started all the brokers.  In the real case we'd not send anything to brokers who had not told us they exist.
+* Since we're not getting any state information from peers, we naively assume they are running. The code prompts you to confirm when you've started all the brokers. In the real case we'd not send anything to brokers who had not told us they exist.
 
-You can satisfy yourself that the code works by watching it run forever.  If there were any misrouted messages, clients would end up blocking, and the brokers would stop printing trace information.  You can prove that by killing either of the brokers.  The other broker tries to send requests to the cloud, and one by one its clients block, waiting for an answer.
+You can satisfy yourself that the code works by watching it run forever. If there were any misrouted messages, clients would end up blocking, and the brokers would stop printing trace information. You can prove that by killing either of the brokers. The other broker tries to send requests to the cloud, and one by one its clients block, waiting for an answer.
 
 ++++ Putting it All Together
 
-Let's put this together into a single package.  As before, we'll run an entire cluster as one process.  We're going to take the two previous examples and merge them into one properly working design that lets you simulate any number of clusters.
+Let's put this together into a single package. As before, we'll run an entire cluster as one process. We're going to take the two previous examples and merge them into one properly working design that lets you simulate any number of clusters.
 
-This code is the size of both previous prototypes together, at 270 LoC.  That's pretty good for a simulation of a cluster that includes clients and workers and cloud workload distribution.  Here is the code:
+This code is the size of both previous prototypes together, at 270 LoC. That's pretty good for a simulation of a cluster that includes clients and workers and cloud workload distribution. Here is the code:
 
-[[code type="C" title="Full cluster simulation" name="peering3"]]
+[[code type="example" title="Full cluster simulation" name="peering3"]]
 [[/code]]
 
-It's a non-trivial program and took about a day to get working.  These are the highlights:
+It's a non-trivial program and took about a day to get working. These are the highlights:
 
-* The client threads detect and report a failed request.  They do this by polling for a response and if none arrives after a while (10 seconds), printing an error message.
+* The client threads detect and report a failed request. They do this by polling for a response and if none arrives after a while (10 seconds), printing an error message.
 
-* Client threads don't print directly, but instead send a message to a 'monitor' socket (PUSH) that the main loop collects (PULL) and prints off.  This is the first case we've seen of using 0MQ sockets for monitoring and logging; this is a big use case we'll come back to later.
+* Client threads don't print directly, but instead send a message to a 'monitor' socket (PUSH) that the main loop collects (PULL) and prints off. This is the first case we've seen of using 0MQ sockets for monitoring and logging; this is a big use case we'll come back to later.
 
-* Clients simulate varying loads to get the cluster 100% at random moments, so that tasks are shifted over to the cloud.  The number of clients and workers, and delays in the client and worker threads control this.  Feel free to play with them to see if you can make a more realistic simulation.
+* Clients simulate varying loads to get the cluster 100% at random moments, so that tasks are shifted over to the cloud. The number of clients and workers, and delays in the client and worker threads control this. Feel free to play with them to see if you can make a more realistic simulation.
 
-* All {{inproc}} endpoints bind first, then connect.  This is required by the {{inproc}} transport.
-
-* The main loop uses two pollsets.  It could in fact use three: information, backends, and frontends.  As in the earlier prototype, there is no point in taking a frontend message if there is no backend capacity.
+* The main loop uses two pollsets. It could in fact use three: information, backends, and frontends. As in the earlier prototype, there is no point in taking a frontend message if there is no backend capacity.
 
 These are some of the problems that hit during development of this program:
 
-* Clients would freeze, due to requests or replies getting lost somewhere.  Recall that the 0MQ XREP/router socket drops messages it can't route.  The first tactic here was to modify the client thread to detect and report such problems.  Secondly, I put zmsg_dump() calls after every recv() and before every send() in the main loop, until it was clear what the problems were.
+* Clients would freeze, due to requests or replies getting lost somewhere. Recall that the 0MQ ROUTER/router socket drops messages it can't route. The first tactic here was to modify the client thread to detect and report such problems. Secondly, I put zmsg_dump() calls after every recv() and before every send() in the main loop, until it was clear what the problems were.
 
-* The main loop was mistakenly reading from more than one ready socket.  This caused the first message to be lost.  Fixed that by reading only from the first ready socket.
+* The main loop was mistakenly reading from more than one ready socket. This caused the first message to be lost. Fixed that by reading only from the first ready socket.
 
-* The zmsg class was not properly encoding UUIDs as C strings.  This caused UUIDs that contain 0 bytes to be corrupted.  Fixed by modifying zmsg to encode UUIDs as printable hex strings.
+* The zmsg class was not properly encoding UUIDs as C strings. This caused UUIDs that contain 0 bytes to be corrupted. Fixed by modifying zmsg to encode UUIDs as printable hex strings.
 
-This simulation does not detect disappearance of a cloud peer.  If you start several peers and stop one, and it was broadcasting capacity to the others, they will continue to send it work even if it's gone.  You can try this, and you will get clients that complain of lost requests.  The solution is twofold: first, only keep the capacity information for a short time so that if a peer does disappear, its capacity is quickly set to 'zero'.  Second, add reliability to the request-reply chain.  We'll look at both these in the next chapter.
-
-.end
+This simulation does not detect disappearance of a cloud peer. If you start several peers and stop one, and it was broadcasting capacity to the others, they will continue to send it work even if it's gone. You can try this, and you will get clients that complain of lost requests. The solution is twofold: first, only keep the capacity information for a short time so that if a peer does disappear, its capacity is quickly set to 'zero'. Second, add reliability to the request-reply chain. We'll look at reliability in the next chapter.

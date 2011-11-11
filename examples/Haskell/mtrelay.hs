@@ -1,13 +1,40 @@
-No-one has translated the mtrelay example into Haskell yet.  Be the first to create
-mtrelay in Haskell and get one free Internet!  If you're the author of the Haskell
-binding, this is a great way to get people to use 0MQ in Haskell.
+-- |
+-- Multithreaded relay in Haskell
+-- 
+-- Translated to Haskell by ERDI Gergo http://gergo.erdi.hu/
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+module Main where
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+import System.ZMQ
+import Data.ByteString.Char8 (pack, unpack)
+import Control.Concurrent (threadDelay, forkIO)
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+step1 context = do
+  -- Connect to step2 and tell it we're ready
+  withSocket context Pair $ \xmitter -> do
+    connect xmitter "inproc://step2"
+    send xmitter (pack "READY") []
+
+step2 context = do
+  withSocket context Pair $ \receiver -> do
+    -- Bind inproc socket before starting step1
+    bind receiver "inproc://step2"
+    forkIO $ step1 context
+    
+    -- Wait for signal and pass it on
+    msg <- receive receiver []
+    
+    -- Connect to step3 and tell it we're ready
+    withSocket context Pair $ \xmitter -> do
+      connect xmitter "inproc://step3"
+      send xmitter msg []
+      
+main = withContext 1 $ \context -> do  
+  -- Bind inproc socket before starting step2
+  withSocket context Pair $ \receiver -> do
+    bind receiver "inproc://step3"
+    forkIO $ step2 context
+    
+    -- Wait for signal
+    msg <- receive receiver []
+    putStrLn $ unwords ["Test successful!", unpack msg]

@@ -2,20 +2,29 @@
 //  Least-recently used (LRU) queue device
 //  Clients and workers are shown here in-process
 //
+//  While this example runs in a single process, that is just to make
+//  it easier to start and stop the example. Each thread has its own
+//  context and conceptually acts as a separate process.
+//
 #include "zhelpers.h"
+#include <pthread.h>
 
 #define NBR_CLIENTS 10
 #define NBR_WORKERS 3
 
-//  A simple dequeue operation for queue implemented as array
+//  Dequeue operation for queue implemented as array of anything
 #define DEQUEUE(q) memmove (&(q)[0], &(q)[1], sizeof (q) - sizeof (q [0]))
 
 //  Basic request-reply client using REQ socket
+//  Since s_send and s_recv can't handle 0MQ binary identities we
+//  set a printable text identity to allow routing.
 //
 static void *
-client_thread (void *context) {
+client_task (void *args)
+{
+    void *context = zmq_init (1);
     void *client = zmq_socket (context, ZMQ_REQ);
-    s_set_id (client);          //  Makes tracing easier
+    s_set_id (client);          //  Set a printable identity
     zmq_connect (client, "ipc://frontend.ipc");
 
     //  Send request, get reply
@@ -23,15 +32,21 @@ client_thread (void *context) {
     char *reply = s_recv (client);
     printf ("Client: %s\n", reply);
     free (reply);
+    zmq_close (client);
+    zmq_term (context);
     return NULL;
 }
 
 //  Worker using REQ socket to do LRU routing
+//  Since s_send and s_recv can't handle 0MQ binary identities we
+//  set a printable text identity to allow routing.
 //
 static void *
-worker_thread (void *context) {
+worker_task (void *args)
+{
+    void *context = zmq_init (1);
     void *worker = zmq_socket (context, ZMQ_REQ);
-    s_set_id (worker);          //  Makes tracing easier
+    s_set_id (worker);          //  Set a printable identity
     zmq_connect (worker, "ipc://backend.ipc");
 
     //  Tell broker we're ready for work
@@ -55,27 +70,29 @@ worker_thread (void *context) {
         s_send     (worker, "OK");
         free (address);
     }
+    zmq_close (worker);
+    zmq_term (context);
     return NULL;
 }
 
-int main (int argc, char *argv[])
+int main (void)
 {
     //  Prepare our context and sockets
     void *context = zmq_init (1);
-    void *frontend = zmq_socket (context, ZMQ_XREP);
-    void *backend  = zmq_socket (context, ZMQ_XREP);
+    void *frontend = zmq_socket (context, ZMQ_ROUTER);
+    void *backend  = zmq_socket (context, ZMQ_ROUTER);
     zmq_bind (frontend, "ipc://frontend.ipc");
     zmq_bind (backend,  "ipc://backend.ipc");
 
     int client_nbr;
     for (client_nbr = 0; client_nbr < NBR_CLIENTS; client_nbr++) {
         pthread_t client;
-        pthread_create (&client, NULL, client_thread, context);
+        pthread_create (&client, NULL, client_task, NULL);
     }
     int worker_nbr;
     for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++) {
         pthread_t worker;
-        pthread_create (&worker, NULL, worker_thread, context);
+        pthread_create (&worker, NULL, worker_task, NULL);
     }
     //  Logic of LRU loop
     //  - Poll backend always, frontend only if 1+ worker ready
@@ -88,17 +105,11 @@ int main (int argc, char *argv[])
     char *worker_queue [10];
 
     while (1) {
-        //  Initialize poll set
         zmq_pollitem_t items [] = {
-            //  Always poll for worker activity on backend
             { backend,  0, ZMQ_POLLIN, 0 },
-            //  Poll front-end only if we have available workers
             { frontend, 0, ZMQ_POLLIN, 0 }
         };
-        if (available_workers)
-            zmq_poll (items, 2, -1);
-        else
-            zmq_poll (items, 1, -1);
+        zmq_poll (items, available_workers? 2: 1, -1);
 
         //  Handle worker activity on backend
         if (items [0].revents & ZMQ_POLLIN) {
@@ -154,7 +165,6 @@ int main (int argc, char *argv[])
             available_workers--;
         }
     }
-    sleep (1);
     zmq_close (frontend);
     zmq_close (backend);
     zmq_term (context);

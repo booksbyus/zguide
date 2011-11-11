@@ -1,13 +1,51 @@
-No-one has translated the tasksink2 example into Lua yet.  Be the first to create
-tasksink2 in Lua and get one free Internet!  If you're the author of the Lua
-binding, this is a great way to get people to use 0MQ in Lua.
+--
+--  Task sink - design 2
+--  Adds pub-sub flow to send kill signal to workers
+--
+--  Author: Robert G. Jakabosky <bobby@sharedrealm.com>
+--
+require"zmq"
+require"zhelpers"
+local fmod = math.fmod
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+local context = zmq.init(1)
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+--  Socket to receive messages on
+local receiver = context:socket(zmq.PULL)
+receiver:bind("tcp://*:5558")
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+--  Socket for worker control
+local controller = context:socket(zmq.PUB)
+controller:bind("tcp://*:5559")
+
+--  Wait for start of batch
+local msg = receiver:recv()
+
+--  Start our clock now
+local start_time = s_clock ()
+
+--  Process 100 confirmations
+local task_nbr
+for task_nbr=0,99 do
+    local msg = receiver:recv()
+
+    if (fmod(task_nbr, 10) == 0) then
+        printf (":")
+    else
+        printf (".")
+    end
+    io.stdout:flush()
+end
+printf("Total elapsed time: %d msec\n", (s_clock () - start_time))
+
+--  Send kill signal to workers
+controller:send("KILL")
+
+--  Finished
+s_sleep (1000)              --  Give 0MQ time to deliver
+
+receiver:close()
+controller:close()
+context:term()
+
+

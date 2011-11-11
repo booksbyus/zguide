@@ -1,13 +1,33 @@
-No-one has translated the hwclient example into Perl yet.  Be the first to create
-hwclient in Perl and get one free Internet!  If you're the author of the Perl
-binding, this is a great way to get people to use 0MQ in Perl.
+#!/usr/bin/perl
+=pod
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+Hello World client
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+Connects REQ socket to tcp://localhost:5555
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+Sends "Hello" to server, expects "World" back
+
+Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
+
+=cut
+
+use strict;
+use warnings;
+use 5.10.0;
+
+use ZeroMQ qw/:all/;
+
+my $context = ZeroMQ::Context->new();
+
+# Socket to talk to server
+say 'Connecting to hello world server...';
+my $requester = $context->socket(ZMQ_REQ);
+$requester->connect('tcp://localhost:5555');
+
+for my $request_nbr (0..9) {
+    say "Sending request $request_nbr...";
+    $requester->send('Hello');
+
+    my $reply = $requester->recv();
+    say "Received reply $request_nbr: [". $reply->data .']';
+}

@@ -1,13 +1,41 @@
-No-one has translated the wuclient example into Perl yet.  Be the first to create
-wuclient in Perl and get one free Internet!  If you're the author of the Perl
-binding, this is a great way to get people to use 0MQ in Perl.
+#!/usr/bin/perl
+=pod
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+Weather update client
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+Connects SUB socket to tcp://localhost:5556
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+Collects weather updates and finds avg temp in zipcode
+
+Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
+
+=cut
+
+use strict;
+use warnings;
+use 5.10.0;
+
+use ZeroMQ qw/:all/;
+
+my $context = ZeroMQ::Context->new();
+
+# Socket to talk to server
+say 'Collecting updates from weather server...';
+my $subscriber = $context->socket(ZMQ_SUB);
+$subscriber->connect('tcp://localhost:5556');
+
+# Subscribe to zipcode, default is NYC, 10001
+my $filter = @ARGV ? $ARGV[0] : '10001 ';
+$subscriber->setsockopt(ZMQ_SUBSCRIBE, $filter);
+
+# Process 100 updates
+my $total_temp = 0;
+my $update_count = 100;
+for (1 .. $update_count) {
+    my $string = $subscriber->recv->data;
+    my ($zipcode, $temperature, $relhumidity) = split(/ /, $string);
+    $total_temp += $temperature;
+}
+
+say "Average temperature for zipcode '$filter' was ".
+    int($total_temp / $update_count);

@@ -1,13 +1,49 @@
-No-one has translated the msreader example into Perl yet.  Be the first to create
-msreader in Perl and get one free Internet!  If you're the author of the Perl
-binding, this is a great way to get people to use 0MQ in Perl.
+#!/usr/bin/perl
+=pod
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+Reading from multiple sockets
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+This version uses a simple recv loop
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
+
+=cut
+
+use strict;
+use warnings;
+use 5.10.0;
+
+use ZeroMQ qw/:all/;
+use Time::HiRes qw/nanosleep/;
+use English qw/-no_match_vars/;
+
+use constant NSECS_PER_MSEC => 1_000_000;
+
+# Prepare our context and sockets
+my $context = ZeroMQ::Context->new();
+
+# Connect to task ventilator
+my $receiver = $context->socket(ZMQ_PULL);
+$receiver->connect('tcp://localhost:5557');
+
+# Connect to weather server
+my $subscriber = $context->socket(ZMQ_SUB);
+$subscriber->connect('tcp://localhost:5556');
+$subscriber->setsockopt(ZMQ_SUBSCRIBE, '10001 ');
+
+# Process messages from both sockets
+# We prioritize traffic from the task ventilator
+while (1) {
+    # Process any waiting tasks
+    while (1) {
+        my $task = $receiver->recv(ZMQ_NOBLOCK);
+        last unless defined $task;
+    }
+    # Process any waiting weather updates
+    while (1) {
+        my $update = $subscriber->recv(ZMQ_NOBLOCK);
+        last unless defined $update;
+    }
+    # No activity, so sleep for 1 msec
+    nanosleep NSECS_PER_MSEC;
+}

@@ -1,13 +1,36 @@
-No-one has translated the taskwork example into Haskell yet.  Be the first to create
-taskwork in Haskell and get one free Internet!  If you're the author of the Haskell
-binding, this is a great way to get people to use 0MQ in Haskell.
+-- |
+-- Task worker
+-- Connects PULL socket to tcp://localhost:5557
+-- Collects workloads from ventilator via that socket
+-- Connects PUSH socket to tcp://localhost:5558
+-- Sends results to sink via that socket
+-- 
+-- Translated to Haskell by ERDI Gergo http://gergo.erdi.hu/
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+module Main where
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+import System.ZMQ
+import Control.Monad (forever)
+import Data.ByteString.Char8 (unpack, empty)
+import System.Random (randomRIO)
+import Control.Applicative ((<$>))
+import System.IO (hSetBuffering, stdout, BufferMode(..))
+import Control.Concurrent (threadDelay)
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+main = withContext 1 $ \context -> do  
+  withSocket context Pull $ \receiver -> do
+    connect receiver "tcp://localhost:5557"
+    withSocket context Push $ \sender -> do    
+      connect sender "tcp://localhost:5558"
+      
+      hSetBuffering stdout NoBuffering
+      forever $ do
+        message <- unpack <$> receive receiver []
+        -- Simple progress indicator for the viewer
+        putStr $ message ++ "."
+
+        -- Do the "work"
+        threadDelay (read message * 1000)
+       
+        -- Send results to sink
+        send sender empty []

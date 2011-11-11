@@ -1,13 +1,33 @@
-No-one has translated the durasub example into Lua yet.  Be the first to create
-durasub in Lua and get one free Internet!  If you're the author of the Lua
-binding, this is a great way to get people to use 0MQ in Lua.
+--
+--  Durable subscriber
+--
+--  Author: Robert G. Jakabosky <bobby@sharedrealm.com>
+--
+require"zmq"
+require"zhelpers"
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+local context = zmq.init(1)
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+--  Connect our subscriber socket
+local subscriber = context:socket(zmq.SUB)
+subscriber:setopt(zmq.IDENTITY, "Hello")
+subscriber:setopt(zmq.SUBSCRIBE, "")
+subscriber:connect("tcp://localhost:5565")
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+--  Synchronize with publisher
+local sync = context:socket(zmq.PUSH)
+sync:connect("tcp://localhost:5564")
+sync:send("")
+
+--  Get updates, expect random Ctrl-C death
+while true do
+    local msg = subscriber:recv()
+    printf("%s\n", msg)
+    if (msg == "END") then
+        break
+    end
+end
+subscriber:close()
+context:term()
+
+

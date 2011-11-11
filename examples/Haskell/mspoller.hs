@@ -1,13 +1,31 @@
-No-one has translated the mspoller example into Haskell yet.  Be the first to create
-mspoller in Haskell and get one free Internet!  If you're the author of the Haskell
-binding, this is a great way to get people to use 0MQ in Haskell.
+-- |
+-- Multiple socket poller in Haskell
+-- This version uses poll
+--
+-- Translated to Haskell by Sebastian Nowicki <sebnow@gmail.com>
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+module Main where
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+import Control.Monad (forever)
+import qualified Data.ByteString.Char8 as B
+import System.ZMQ
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+main = withContext 1 $ \context -> do
+    withSocket context Pull $ \receiver -> do
+        connect receiver "tcp://localhost:5557"
+        withSocket context Sub $ \subscriber -> do
+            connect subscriber "tcp://localhost:5556"
+            subscribe subscriber "10001"
+            forever $ do
+                putStrLn "Processing"
+                poll [S receiver In, S subscriber In] (-1) >>= mapM_ (\(S s _) -> handleSocket s)
+
+handleSocket :: Socket a -> IO ()
+handleSocket socket = do
+    msg <- receive socket []
+    processMessage msg
+    return ()
+
+processMessage :: (Monad m) => B.ByteString -> m ()
+processMessage _ = return ()
+

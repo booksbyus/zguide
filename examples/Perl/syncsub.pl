@@ -1,13 +1,43 @@
-No-one has translated the syncsub example into Perl yet.  Be the first to create
-syncsub in Perl and get one free Internet!  If you're the author of the Perl
-binding, this is a great way to get people to use 0MQ in Perl.
+#!/usr/bin/perl
+=pod
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+Synchronized subscriber
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+=cut
+
+use strict;
+use warnings;
+use 5.10.0;
+
+use ZeroMQ qw/:all/;
+
+my $context = ZeroMQ::Context->new();
+
+# First, connect our subscriber socket
+my $subscriber = $context->socket(ZMQ_SUB);
+$subscriber->connect('tcp://localhost:5561');
+$subscriber->setsockopt(ZMQ_SUBSCRIBE, '');
+
+# 0MQ is so fast, we need to wait a while...
+sleep (1);
+
+# Second, synchronize with publisher
+my $syncclient = $context->socket(ZMQ_REQ);
+$syncclient->connect('tcp://localhost:5562');
+
+# - send a synchronization request
+$syncclient->send('');
+
+# - wait for synchronization reply
+$syncclient->recv();
+
+# Third, get our updates and report how many we got
+my $update_nbr = 0;
+while (1) {
+    my $string = $subscriber->recv()->data;
+    last if $string eq 'END';
+    $update_nbr++;
+}
+say "Received $update_nbr updates";

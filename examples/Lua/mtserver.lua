@@ -1,13 +1,62 @@
-No-one has translated the mtserver example into Lua yet.  Be the first to create
-mtserver in Lua and get one free Internet!  If you're the author of the Lua
-binding, this is a great way to get people to use 0MQ in Lua.
+--
+--  Multithreaded Hello World server
+--
+--  Author: Robert G. Jakabosky <bobby@sharedrealm.com>
+--
+require"zmq"
+require"zmq.threads"
+require"zhelpers"
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+local worker_code = [[
+    local id = ...
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+    local zmq = require"zmq"
+    require"zhelpers"
+    local threads = require"zmq.threads"
+    local context = threads.get_parent_ctx()
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+    --  Socket to talk to dispatcher
+    local receiver = context:socket(zmq.REP)
+    assert(receiver:connect("inproc://workers"))
+
+    while true do
+        local msg = receiver:recv()
+        printf ("Received request: [%s]\n", msg)
+
+        --  Do some 'work'
+        s_sleep (1000)
+
+        --  Send reply back to client
+        receiver:send("World")
+    end
+    receiver:close()
+    return nil
+]]
+
+s_version_assert (2, 1)
+local context = zmq.init(1)
+
+--  Socket to talk to clients
+local clients = context:socket(zmq.XREP)
+clients:bind("tcp://*:5555")
+
+--  Socket to talk to workers
+local workers = context:socket(zmq.XREQ)
+workers:bind("inproc://workers")
+
+--  Launch pool of worker threads
+local worker_pool = {}
+for n=1,5 do
+    worker_pool[n] = zmq.threads.runstring(context, worker_code, n)
+    worker_pool[n]:start()
+end
+--  Connect work threads to client threads via a queue
+print("start queue device.")
+zmq.device(zmq.QUEUE, clients, workers)
+
+--  We never get here but clean up anyhow
+clients:close()
+workers:close()
+context:term()
+
+

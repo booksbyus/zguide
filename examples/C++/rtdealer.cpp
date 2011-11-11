@@ -18,9 +18,8 @@ void *worker_a (void *arg) {
     int total = 0;
     while (1) {
         //  We receive one part, with the workload
-        std::string *request = s_recv (worker);
-        int finished = (request->compare("END") == 0);
-        delete (request);
+        std::string request = s_recv (worker);
+        int finished = (request.compare("END") == 0);
         if (finished) {
             std::cout <<"A received: " << total << std::endl;
             break;
@@ -40,9 +39,8 @@ void *worker_b (void *arg) {
     int total = 0;
     while (1) {
         //  We receive one part, with the workload
-        std::string *request = s_recv (worker);
-        int finished = (request->compare("END") == 0);
-        delete (request);
+        std::string request = s_recv (worker);
+        int finished = (request.compare("END") == 0);
         if (finished) {
             std::cout <<"B received: " << total << std::endl;
             break;

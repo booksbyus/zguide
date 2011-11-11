@@ -1,13 +1,54 @@
-No-one has translated the taskwork2 example into Lua yet.  Be the first to create
-taskwork2 in Lua and get one free Internet!  If you're the author of the Lua
-binding, this is a great way to get people to use 0MQ in Lua.
+--
+--  Task worker - design 2
+--  Adds pub-sub flow to receive and respond to kill signal
+--
+--  Author: Robert G. Jakabosky <bobby@sharedrealm.com>
+--
+require"zmq"
+require"zmq.poller"
+require"zhelpers"
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+local context = zmq.init(1)
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+--  Socket to receive messages on
+local receiver = context:socket(zmq.PULL)
+receiver:connect("tcp://localhost:5557")
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+--  Socket to send messages to
+local sender = context:socket(zmq.PUSH)
+sender:connect("tcp://localhost:5558")
+
+--  Socket for control input
+local controller = context:socket(zmq.SUB)
+controller:connect("tcp://localhost:5559")
+controller:setopt(zmq.SUBSCRIBE, "", 0)
+
+--  Process messages from receiver and controller
+local poller = zmq.poller(2)
+poller:add(receiver, zmq.POLLIN, function()
+    local msg = receiver:recv()
+
+    --  Do the work
+    s_sleep(tonumber(msg))
+
+    --  Send results to sink
+    sender:send("")
+
+    --  Simple progress indicator for the viewer
+    io.write(".")
+    io.stdout:flush()
+end)
+poller:add(controller, zmq.POLLIN, function()
+    poller:stop() --  Exit loop
+end)
+
+-- start poller's event loop
+poller:start()
+
+--  Finished
+receiver:close()
+sender:close()
+controller:close()
+context:term()
+
+

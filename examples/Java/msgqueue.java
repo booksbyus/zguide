@@ -1,13 +1,35 @@
-No-one has translated the msgqueue example into Java yet.  Be the first to create
-msgqueue in Java and get one free Internet!  If you're the author of the Java
-binding, this is a great way to get people to use 0MQ in Java.
+import org.zeromq.ZMQ;
+import org.zeromq.ZMQ.Context;
+import org.zeromq.ZMQ.Socket;
+import org.zeromq.ZMQQueue;
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+/**
+ * Simple message queuing broker
+ * Same as request-reply broker but using QUEUE device.
+ * 
+ * Christophe Huntzinger <chuntz@laposte.net>
+ */
+public class msgqueue{
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+	public static void main (String[] args) {
+		//  Prepare our context and sockets
+		Context context = ZMQ.context(1);
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+		//  Socket facing clients
+		Socket frontend = context.socket(ZMQ.XREP);
+		frontend.bind("tcp://*:5559");
+
+		//  Socket facing services
+		Socket backend = context.socket(ZMQ.XREQ);
+		backend.bind("tcp://*:5560");
+
+		//  Start built-in device
+		ZMQQueue queue = new ZMQQueue(context, frontend, backend);
+		// have fun!
+		
+		//  We never get here but clean up anyhow
+		frontend.close();
+		backend.close();
+		context.term();
+	}
+}

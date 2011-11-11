@@ -10,8 +10,8 @@ require 'ffi-rzmq'
 context = ZMQ::Context.new
 
 # Connect to task ventilator
-reciever = context.socket(ZMQ::PULL)
-reciever.connect('tcp://localhost:5557')
+receiver = context.socket(ZMQ::PULL)
+receiver.connect('tcp://localhost:5557')
 
 # Connect to weather server
 subscriber = context.socket(ZMQ::SUB)
@@ -20,16 +20,16 @@ subscriber.setsockopt(ZMQ::SUBSCRIBE, '10001')
 
 # Initialize a poll set
 poller = ZMQ::Poller.new
-poller.register(reciever, ZMQ::POLLIN)
+poller.register(receiver, ZMQ::POLLIN)
 poller.register(subscriber, ZMQ::POLLIN)
 
 while true
   poller.poll(:blocking)
   poller.readables.each do |socket|
-    if socket === frontend
+    if socket === receiver
       message = socket.recv_string
       # process task
-    elsif socket === backend
+    elsif socket === subscriber
       message = socket.recv_string
       # process weather update
     end

@@ -17,11 +17,9 @@ int main (int argc, char *argv[])
 	for( int request = 0 ; request < 10 ; request++) {
 		
 		s_send (requester, "Hello");
-        std::string *string = s_recv (requester);
+        std::string string = s_recv (requester);
 		
 		std::cout << "Received reply " << request 
-				<< " [" << *string << "]" << std::endl;
-				
-		delete(string);
+				<< " [" << string << "]" << std::endl;
 	}
 }

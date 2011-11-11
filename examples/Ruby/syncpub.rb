@@ -1,13 +1,37 @@
-No-one has translated the syncpub example into Ruby yet.  Be the first to create
-syncpub in Ruby and get one free Internet!  If you're the author of the Ruby
-binding, this is a great way to get people to use 0MQ in Ruby.
+#
+# Synchronized publisher
+#
 
-To submit a new translation email it to zeromq-dev@lists.zeromq.org.  Please:
+require 'rubygems'
+require 'ffi-rzmq'
 
-* Stick to identical functionality and naming used in examples so that readers
-  can easily compare languages.
-* You MUST place your name as author in the examples so readers can contact you.
-* You MUST state in the email that you license your code under the MIT/X11
-  license.
+# We wait for 10 subscribers
+SUBSCRIBERS_EXPECTED = 10
 
-Subscribe to this list at http://lists.zeromq.org/mailman/listinfo/zeromq-dev.
+context = ZMQ::Context.new
+
+# Socket to talk to clients
+publisher = context.socket(ZMQ::PUB)
+publisher.bind("tcp://*:5561")
+
+# Socket to receive signals
+syncservice = context.socket(ZMQ::REP)
+syncservice.bind("tcp://*:5562")
+
+# Get synchronization from subscribers
+puts "Waiting for subscribers"
+subscribers = 0 
+begin 
+  # wait for synchronization request
+  syncservice.recv_string
+  # send synchronization reply
+  syncservice.send_string("")
+  subscribers+=1
+end while subscribers < SUBSCRIBERS_EXPECTED
+
+# Now broadcast exactly 1M updates followed by END
+1000000.times do
+  publisher.send_string("Rhubarb") 
+end
+
+publisher.send_string("END")

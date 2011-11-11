@@ -19,8 +19,7 @@ int main (int argc, char *argv[])
     controller.bind("tcp://*:5559");
 
     //  Wait for start of batch
-	std::string *string = s_recv (receiver);
-	delete (string);
+	s_recv (receiver);
 	
     //  Start our clock now
     struct timeval tstart;
@@ -29,8 +28,7 @@ int main (int argc, char *argv[])
     //  Process 100 confirmations
     int task_nbr;
     for (task_nbr = 0; task_nbr < 100; task_nbr++) {
-        std::string *string = s_recv (receiver);
-        delete (string);
+        s_recv (receiver);
 		
         if ((task_nbr / 10) * 10 == task_nbr)
             std::cout << ":" ;
