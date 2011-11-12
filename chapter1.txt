@@ -751,7 +751,7 @@ As you start to program with 0MQ you will come across one problem more than once
                  |              +-------------------------+
                  |              |  See explanation of the |
                  |              | "slow joiner" syndrome  |
-                 |              |  syndrome in this text. |
+                 |              |  in this text.          |
                  |              +-------------------------+
                  |
                  |
@@ -848,7 +848,7 @@ As you start to program with 0MQ you will come across one problem more than once
                  Figure # - Missing Message Problem Solver
 [[/code]]
 
-If you're using 0MQ in a context where failures are expensive, then you want plan properly. First, build prototypes that let you learn and test the different aspects of your design. Stress them until they break, so that you know exactly how strong your designs are. Second, invest in testing. This means building test frameworks, ensuring you have access to realistic setups with sufficient computer power, and getting time or help to actually test seriously. Ideally, one team writes the code, a second team tries to break it. Lastly, do get your organization to [http://www.imatix.com/contact contact iMatix] to discuss how we can help to make sure things work properly, and can be fixed rapidly if they break.
+If you're using 0MQ in a context where failures are expensive, then you want to plan properly. First, build prototypes that let you learn and test the different aspects of your design. Stress them until they break, so that you know exactly how strong your designs are. Second, invest in testing. This means building test frameworks, ensuring you have access to realistic setups with sufficient computer power, and getting time or help to actually test seriously. Ideally, one team writes the code, a second team tries to break it. Lastly, do get your organization to [http://www.imatix.com/contact contact iMatix] to discuss how we can help to make sure things work properly, and can be fixed rapidly if they break.
 
 In short: if you have not proven an architecture works in realistic conditions, it will most likely break at the worst possible moment.
 
