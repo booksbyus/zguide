@@ -277,9 +277,9 @@ To route to a dealer, we create an envelope like this:
 
 The router socket removes the first frame, and sends the second frame, which the dealer gets as-is. When the dealer sends a message to the router, it sends one frame. The router prepends the dealer's address and gives us back a similar envelope in two parts.
 
-Something to note: if you use an invalid address, the router discards the message silently. There is not much else it can do usefully. In normal cases this either means the peer has gone away, or that there is a programming error somewhere and you're using a bogus address. In any case you cannot ever assume a message will be routed successfully until and unless you get a reply of some sorts from the destination node. We'll come to creating reliable patterns later on.
+Something to note: if you use an invalid address, the router discards the message silently. There is not much else it can do usefully. In normal cases this either means the peer has gone away, or that there is a programming error somewhere and you're using a bogus address. In any case you cannot ever assume a message will be routed successfully until and unless you get a reply of some sort from the destination node. We'll come to creating reliable patterns later on.
 
-Dealers in fact they work exactly like PUSH and PULL combined. It's however illegal and pointless to connect PULL or PUSH to a request-reply socket.
+Dealers in fact work exactly like PUSH and PULL combined. It's however illegal and pointless to connect PULL or PUSH to a request-reply socket.
 
 +++ Least-Recently Used Routing (LRU Pattern)
 
@@ -742,7 +742,7 @@ Here is the LRU queue broker rewritten to use czmq:
 [[code type="example" title="LRU queue broker using czmq" name="lruqueue2"]]
 [[/code]]
 
-One thing czmq provides is clean interrupt handling. This means that Ctrl-C will cause any blocking 0MQ call to exit with a return code -1 and errno set to EINTR. The czmq message recv methods return NULL in such case. So, you can cleanly exit a loop like this:
+One thing czmq provides is clean interrupt handling. This means that Ctrl-C will cause any blocking 0MQ call to exit with a return code -1 and errno set to EINTR. The czmq message recv methods will return NULL in such cases. So, you can cleanly exit a loop like this:
 
 [[code language="C"]]
 while (1) {
@@ -903,7 +903,7 @@ The second design is much simpler, so that's what we use:
              1 part         2 parts       2 parts
 [[/code]]
 
-When you build servers that maintain stateful conversations with clients, you will run into a classic problem. If the server keeps some state per client, and clients keep coming and going, eventually it will run of resources. Even if the same clients keep connecting, if you're using transient sockets (no explicit identity), each connection will look like a new one.
+When you build servers that maintain stateful conversations with clients, you will run into a classic problem. If the server keeps some state per client, and clients keep coming and going, eventually it will run out of resources. Even if the same clients keep connecting, if you're using transient sockets (no explicit identity), each connection will look like a new one.
 
 We cheat in the above example by keeping state only for a very short time (the time it takes a worker to process a request) and then throwing away the state. But that's not practical for many cases.
 
@@ -923,13 +923,13 @@ Because we're smart enough to know that practice always beats theory, we propose
 
 ++++ Establishing the Details
 
-Several espressos later, we want to jump into writing code but a little voice tells us to get more details before making a sensational solution to entirely the wrong problem. What kind of work is the cloud doing?, we ask. The client explains:
+Several espressos later, we want to jump into writing code but a little voice tells us to get more details before making a sensational solution to entirely the wrong problem. "What kind of work is the cloud doing?", we ask. The client explains:
 
 * Workers run on various kinds of hardware, but they are all able to handle any task. There are several hundred workers per cluster, and as many as a dozen clusters in total.
 
 * Clients create tasks for workers. Each task is an independent unit of work and all the client wants is to find an available worker, and send it the task, as soon as possible. There will be a lot of clients and they'll come and go arbitrarily.
 
-* The real difficulty is to be able to add and remove clusters at any time. A cluster can can leave or join the cloud instantly, bringing all its workers and clients with it.
+* The real difficulty is to be able to add and remove clusters at any time. A cluster can leave or join the cloud instantly, bringing all its workers and clients with it.
 
 * If there are no workers in their own cluster, clients' tasks will go off to other available workers in the cloud.
 
@@ -939,9 +939,9 @@ Several espressos later, we want to jump into writing code but a little voice te
 
 So we double check to make sure that we understood this correctly:
 
-* There will be some kind of super-duper network interconnect between clusters, right? The client says, yes, of course, we're not idiots.
+* "There will be some kind of super-duper network interconnect between clusters, right?", we ask. The client says, "Yes, of course, we're not idiots."
 
-* What kind of volumes are we talking about, we ask? The client replies, up to a thousand clients per cluster, each doing max. ten requests per second. Requests are small, and replies are also small, no more than 1K bytes each.
+* "What kind of volumes are we talking about?", we ask. The client replies, "Up to a thousand clients per cluster, each doing max. ten requests per second. Requests are small, and replies are also small, no more than 1K bytes each."
 
 So we do a little calculation and see that this will work nicely over plain TCP. 2,500 clients x 10/second x 1,000 bytes x 2 directions = 50MB/sec or 400Mb/sec, not a problem for a 1Gb network.
 
@@ -1076,7 +1076,7 @@ So idea #2 then. We interconnect the brokers and don't touch the clients or work
     Figure # - Idea 2 - brokers talking to each other
 [[/code]]
 
-This design is appealing because the problem is solved in one place, invisibly to the rest of the world. Basically, brokers open secret channels to each other and whisper, like camel traders, "//hey, I've got some spare capacity, if you have too many clients give me a shout and we'll deal".//
+This design is appealing because the problem is solved in one place, invisible to the rest of the world. Basically, brokers open secret channels to each other and whisper, like camel traders, "//Hey, I've got some spare capacity, if you have too many clients give me a shout and we'll deal"//.
 
 It is in effect just a more sophisticated routing algorithm: brokers become subcontractors for each other. Other things to like about this design, even before we play with real code:
 
@@ -1086,7 +1086,7 @@ It is in effect just a more sophisticated routing algorithm: brokers become subc
 
 * It feels like it would scale smoothly. Interconnecting three, or more brokers doesn't get over-complex. If we find this to be a problem, it's easy to solve by adding a super-broker.
 
-We'll now make a worked example. We'll pack an entire cluster into one process. That is obviously not realistic but it makes it simple to simulate, and the simulation can accurately scale to real processes. This is the beauty of 0MQ, you can design at the microlevel and scale that up to the macro level. Thread become processes, become boxes and the patterns and logic remain the same. Each of our 'cluster' processes contains client threads, worker threads, and a broker thread.
+We'll now make a worked example. We'll pack an entire cluster into one process. That is obviously not realistic but it makes it simple to simulate, and the simulation can accurately scale to real processes. This is the beauty of 0MQ, you can design at the microlevel and scale that up to the macro level. Threads become processes, become boxes and the patterns and logic remain the same. Each of our 'cluster' processes contains client threads, worker threads, and a broker thread.
 
 We know the basic model well by now:
 
@@ -1096,7 +1096,7 @@ We know the basic model well by now:
 
 ++++ Federation vs. Peering
 
-There are several possible way to interconnecting brokers. What we //want// is to be able to tell other brokers, "we have capacity", and then receive multiple tasks. We also need to be able to tell other brokers "stop, we're full". It doesn't need to be perfect: sometimes we may accept jobs we can't process immediately, then we'll do them as soon as possible.
+There are several possible ways to interconnect brokers. What we //want// is to be able to tell other brokers, "we have capacity", and then receive multiple tasks. We also need to be able to tell other brokers "stop, we're full". It doesn't need to be perfect: sometimes we may accept jobs we can't process immediately, then we'll do them as soon as possible.
 
 The simplest interconnect is //federation// in which brokers simulate clients and workers for each other. We would do this by connecting our frontend to the other broker's backend socket. Note that it is legal to both bind a socket to an endpoint and connect it to other endpoints.
 
@@ -1348,7 +1348,7 @@ So our main loop becomes:
 
 * While there are workers available, take a request, if any, from either frontend and route to a local worker, or randomly, a cloud peer.
 
-Randomly sending tasks to a peer broker rather than a worker simulates work distribution across the cluster. It's idiot but that is fine for this stage.
+Randomly sending tasks to a peer broker rather than a worker simulates work distribution across the cluster. It's dumb but that is fine for this stage.
 
 We use broker identities to route messages between brokers. Each broker has a name, which we provide on the command line in this simple prototype. As long as these names don't overlap with the 0MQ-generated UUIDs used for client nodes, we can figure out whether to route a reply back to a client or to a broker.
 
@@ -1366,7 +1366,7 @@ peering2 you me
 
 Some comments on this code:
 
-* Using the zmsg class makes life much easier, and our code much shorter. It's obviously a abstraction that works, and which should form part of your toolbox as a 0MQ programmer.
+* Using the zmsg class makes life much easier, and our code much shorter. It's obviously an abstraction that works, and which should form part of your toolbox as a 0MQ programmer.
 
 * Since we're not getting any state information from peers, we naively assume they are running. The code prompts you to confirm when you've started all the brokers. In the real case we'd not send anything to brokers who had not told us they exist.
 
