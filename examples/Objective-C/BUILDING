@@ -1,0 +1,4 @@
+You can build all examples using ObjCExamples.xcodeproj.
+The build relies on directly including the files from
+the Objective-C port of ZeroMQ, objc-zmq.
+See <URL:http://www.zeromq.org/bindings:objc>.
