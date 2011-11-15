@@ -19,12 +19,14 @@ subscriber.connect('tcp://localhost:5556')
 subscriber.setsockopt(ZMQ::SUBSCRIBE, '10001')
 
 while true
-  if receiver_msg = receiver.recv_string(ZMQ::NOBLOCK) && !receiver_msg.empty?
+  if receiver.recv_string(receiver_msg = '',ZMQ::NOBLOCK) && !receiver_msg.empty?
     # process task
+    puts "receiver: #{receiver_msg}"
   end
 
-  if subscriber_msg = subscriber.recv_string(ZMQ::NOBLOCK) && !subscriber_msg.empty?
+  if subscriber.recv_string(subscriber_msg = '',ZMQ::NOBLOCK) && !subscriber_msg.empty?
     # process weather update
+    puts "weather: #{subscriber_msg}"
   end
 
   # No activity, so sleep for 1 msec

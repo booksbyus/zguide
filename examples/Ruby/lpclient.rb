@@ -3,13 +3,13 @@
 # Author: Han Holl <han.holl@pobox.com>
 
 require 'rubygems'
-require 'zmq'
+require 'ffi-rzmq'
 
 class LPClient
   def initialize(connect, retries = nil, timeout = nil)
     @connect = connect
     @retries = (retries || 3).to_i
-    @timeout = (timeout || 3).to_i
+    @timeout = (timeout || 10).to_i
     @ctx = ZMQ::Context.new(1)
     client_sock
     at_exit do

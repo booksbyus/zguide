@@ -23,7 +23,7 @@ puts "Waiting for subscribers"
 subscribers = 0 
 begin 
   # wait for synchronization request
-  syncservice.recv_string
+  syncservice.recv_string('')
   # send synchronization reply
   syncservice.send_string("")
   subscribers+=1

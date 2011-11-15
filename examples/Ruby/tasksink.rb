@@ -13,12 +13,12 @@ receiver = context.socket(ZMQ::PULL)
 receiver.bind("tcp://*:5558")
 
 # Wait for start of batch
-receiver.recv_string
+receiver.recv_string('')
 tstart = Time.now
 
 # Process 100 confirmations
 100.times do |task_nbr|
-  receiver.recv_string
+  receiver.recv_string('')
   $stdout << ((task_nbr % 10 == 0) ? ':' : '.')
   $stdout.flush
 end
