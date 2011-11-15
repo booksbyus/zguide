@@ -19,7 +19,7 @@ def step2(context)
   Thread.new{step1(context)}
 
   # Wait for signal and pass it on
-  receiver.recv_string
+  receiver.recv_string('')
 
   # Connect to step3 and tell it we're ready
   xmitter = context.socket(ZMQ::PAIR)
@@ -36,6 +36,6 @@ receiver.bind("inproc://step3")
 Thread.new{step2(context)}
 
 # Wait for signal
-receiver.recv_string
+receiver.recv_string('')
 
 puts "Test successful!"

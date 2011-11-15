@@ -2,7 +2,7 @@
 # this code is licenced under the MIT/X11 licence.
 
 require 'rubygems'
-require 'zmq'
+require 'ffi-rzmq'
 
 context = ZMQ::Context.new(1)
 
@@ -14,7 +14,7 @@ socket.bind("tcp://*:5555")
 
 while true do
   # Wait for next request from client
-  request = socket.recv
+  request = socket.recv_string ('')
 
   puts "Received request. Data: #{request.inspect}"
 
@@ -22,6 +22,6 @@ while true do
   sleep 1
 
   # Send reply back to client
-  socket.send("world")
+  socket.send_string("world")
 
 end

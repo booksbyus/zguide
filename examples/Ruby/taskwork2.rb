@@ -31,7 +31,7 @@ while true
   items = poller.poll()
   poller.readables.each do |item| 
    if item === receiver
-    msec = receiver.recv_string
+    receiver.recv_string(msec ='')
  
     # Simple progress indicator for the viewer
     $stdout << "#{msec}."

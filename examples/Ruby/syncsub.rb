@@ -23,12 +23,12 @@ synclient.connect("tcp://localhost:5562")
 synclient.send_string("")
 
 # - wait for synchronization reply
-synclient.recv_string
+synclient.recv_string('')
 
 # Third, get our updates and report how many we got
 update_nbr=0
 loop do 
-  string = subscriber.recv_string
+  subscriber.recv_string(string = '')
   break if string == "END"
   update_nbr+=1
 end

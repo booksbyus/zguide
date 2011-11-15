@@ -11,7 +11,7 @@ def worker_routine(context)
   receiver.connect("inproc://workers")
 
   loop do 
-    string = receiver.recv_string
+    receiver.recv_string(string = '')
     puts "Received request: [#{string}]"
     # Do some 'work'
     sleep(1)

@@ -21,8 +21,8 @@ sender.connect("tcp://localhost:5558")
 
 # Process tasks forever
 while true
-  msec = receiver.recv_string
-
+  
+  receiver.recv_string(msec = '')
   # Simple progress indicator for the viewer
   $stdout << "#{msec}."
   $stdout.flush

@@ -23,7 +23,10 @@ subscriber.setsockopt(ZMQ::SUBSCRIBE, filter)
 # Process 100 updates
 total_temp = 0
 1.upto(COUNT) do |update_nbr|
-  zipcode, temperature, relhumidity = subscriber.recv_string.split.map(&:to_i)
+  s = ''
+  subscriber.recv_string(s)#.split.map(&:to_i)
+  
+  zipcode, temperature, relhumidity = s.split.map(&:to_i)
   total_temp += temperature
 end
 

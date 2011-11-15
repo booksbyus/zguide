@@ -19,5 +19,6 @@ while true
   relhumidity = rand(50) + 10
 
   update = "%05d %d %d" % [zipcode, temperature, relhumidity]
+  puts update
   publisher.send_string(update)
 end

@@ -27,11 +27,15 @@ while true
   poller.poll(:blocking)
   poller.readables.each do |socket|
     if socket === receiver
-      message = socket.recv_string
+      socket.recv_string(message = '')
       # process task
+       puts "task: #{message}"
+      
     elsif socket === subscriber
-      message = socket.recv_string
+      socket.recv_string(message = '')
       # process weather update
+      puts "weather: #{message}"
+      
     end
   end
 end
