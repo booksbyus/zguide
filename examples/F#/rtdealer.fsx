@@ -27,7 +27,7 @@ let worker_task_a () =
       else loop (count + 1) 
   let total = loop 0
   fflush()
-  printfn "A received: %d" total
+  print' (sprintf "A received: %d" total)
 
 let worker_task_b () =
   use context = new Context(1)
@@ -42,8 +42,8 @@ let worker_task_b () =
       else loop (count + 1) 
   let total = loop 0
   fflush()
-  printfn "B received: %d" total
-
+  print' (sprintf "B received: %d" total)
+  
 let main () = 
   use context = new Context(1)
   use client  = route context
@@ -62,7 +62,7 @@ let main () =
   let rand = srandom()
   for task_nbr in 0 .. 9 do
     // send two message parts, first the address...
-    ( if rand.Next 3 > 0 
+    ( if rand.Next(0,3) > 0 
         then "A"B |~> client 
         else "B"B |~> client )
     // and then the workload
