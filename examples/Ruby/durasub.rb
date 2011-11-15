@@ -18,7 +18,7 @@ sync.send_string("")
 
 # Get updates, exit when told to do so
 loop do
-  message = subscriber.recv_string
+  subscriber.recv_string(message = '')
   puts message
   if message == "END"
     break

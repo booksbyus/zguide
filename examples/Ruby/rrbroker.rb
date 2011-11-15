@@ -20,14 +20,14 @@ loop do
   poller.readables.each do |socket|
     if socket === frontend
       loop do
-        message = socket.recv_string
+        socket.recv_string(message = '')
         more = socket.more_parts?
         backend.send_string(message, more ? ZMQ::SNDMORE : 0)
         break unless more
       end
     elsif socket === backend
       loop do
-        message = socket.recv_string
+        socket.recv_string(message = '')
         more = socket.more_parts?
         frontend.send_string(message, more ? ZMQ::SNDMORE : 0)
         break unless more

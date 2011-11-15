@@ -14,7 +14,7 @@ publisher = context.socket(ZMQ::PUB)
 publisher.bind("tcp://127.0.0.1:5565")
 
 # Wait for synchronization request
-sync_request = sync.recv_string()
+sync.recv_string(sync_request = '')
 
 # Now broadcast exactly 10 updates with pause
 10.times do |update_number|
