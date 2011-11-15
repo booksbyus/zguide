@@ -233,7 +233,7 @@ s_service_require (broker_t *self, zframe_t *service_frame)
         zhash_insert (self->services, name, service);
         zhash_freefn (self->services, name, s_service_destroy);
         if (self->verbose)
-            zclock_log ("I: received message:");
+            zclock_log ("I: added service: %s", name);
     }
     else
         free (name);
