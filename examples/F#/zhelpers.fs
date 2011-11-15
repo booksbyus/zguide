@@ -48,3 +48,14 @@ let s_setID socket =
                          (rnd.Next(0,0x10000))
                  |> encode
   (ZMQ.IDENTITY,identity) |> set socket
+
+let s_spawn fn = 
+  let t = System.Threading.Thread(System.Threading.ThreadStart fn)
+  t.Start()
+  t
+
+let s_spawnp fn p = 
+  let fn' = System.Threading.ParameterizedThreadStart fn
+  let t = System.Threading.Thread(fn')
+  t.Start(p)
+  t
