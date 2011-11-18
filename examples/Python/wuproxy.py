@@ -19,13 +19,10 @@ frontend.setsockopt(zmq.SUBSCRIBE, '')
 
 # Shunt messages out to our own subscribers
 while True:
-    while True:
-
-        # Process all parts of the message
-        message = frontend.recv()
-        more = frontend.getsockopt(zmq.RCVMORE)
-        if more:
-            backend.send(message, zmq.SNDMORE)
-        else:
-            backend.send(message)
-            break # Last message part
+    # Process all parts of the message
+    message = frontend.recv()
+    more = frontend.getsockopt(zmq.RCVMORE)
+    if more:
+        backend.send(message, zmq.SNDMORE)
+    else:
+        backend.send(message)  # last message part
