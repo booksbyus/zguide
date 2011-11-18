@@ -68,7 +68,7 @@ class Mdbroker {
             $poll = new ZMQPoll();
             $poll->add($this->socket, ZMQ::POLL_IN);
 
-            $events = $poll->poll($read, $write, HEARTBEAT_INTERVAL * ZMQ_POLL_MSEC);
+            $events = $poll->poll($read, $write, HEARTBEAT_INTERVAL);
 
             //  Process next input message, if any
             if($events) {

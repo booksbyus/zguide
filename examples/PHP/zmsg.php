@@ -30,8 +30,6 @@
    @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
 */
 
-define("ZMQ_POLL_MSEC", 1000);
-
 class Zmsg {
 	
 	/**

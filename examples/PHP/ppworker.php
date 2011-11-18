@@ -49,7 +49,7 @@ $poll->add($worker, ZMQ::POLL_IN);
 
 $cycles = 0;
 while(true) {
-	$events = $poll->poll($read, $write, HEARTBEAT_INTERVAL * 1000 * 1000);
+	$events = $poll->poll($read, $write, HEARTBEAT_INTERVAL * 1000);
 	
 	if($events) {
 		//  Get message
