@@ -34,7 +34,7 @@ let worker_task () =
     // get workload from router, until finished
     let workload = s_recv worker
     if  workload = "END"
-      then  print' (sprintf "(%s) Processed: %d tasks" workerID total)
+      then  printfn' "(%s) Processed: %d tasks" workerID total
       else  // do some random work
             sleep (rand.Next(0,1000) + 1)
             loop  (total + 1)

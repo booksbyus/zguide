@@ -27,7 +27,7 @@ let worker_task_a () =
       else loop (count + 1) 
   let total = loop 0
   fflush()
-  print' (sprintf "A received: %d" total)
+  printfn' "A received: %d" total
 
 let worker_task_b () =
   use context = new Context(1)
@@ -42,7 +42,7 @@ let worker_task_b () =
       else loop (count + 1) 
   let total = loop 0
   fflush()
-  print' (sprintf "B received: %d" total)
+  printfn' "B received: %d" total
   
 let main () = 
   use context = new Context(1)

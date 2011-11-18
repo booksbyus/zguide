@@ -32,7 +32,7 @@ let client_task () =
   // send request, get reply
   "HELLO"B |>> client
   let reply = s_recv client
-  print' (sprintf "Client: %s" reply)
+  printfn' "Client: %s" reply
 
 // worker using REQ socket to do LRU routing
 // since s_send and s_recv can't handle 0MQ binary identities
@@ -54,7 +54,7 @@ let worker_task () =
 
     // get request, send reply
     let request = s_recv worker
-    print' (sprintf "Worker: %s" request)
+    printfn' "Worker: %s" request
 
     worker <~| address <~| ""B <<| "OK"B
 

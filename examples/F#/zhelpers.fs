@@ -15,7 +15,8 @@ let s_send socket s = s |> encode |> send socket
 let s_sendmore socket s = s |> encode |> sendMore socket |> ignore
 let s_recv socket = socket |> recv |> decode
 
-let print' (s:string) = System.Console.WriteLine("{0}",s)
+let printfn' fmt = Printf.kprintf System.Console.WriteLine fmt
+
 let scanln = System.Console.ReadLine
 let fflush = System.Console.Out.Flush
 
@@ -26,21 +27,31 @@ let s_clock_stop (sw:System.Diagnostics.Stopwatch) =
   sw.Stop()
   sw.ElapsedMilliseconds
 
-let s_dump socket =
-  
-  let (|IsChar|IsByte|) = function
+let (|IsChar|IsByte|) = function
     | b when b < 32uy || b > 127uy  -> IsByte(b)
     | c (* is an ASCII character *) -> IsChar(char c)
     
-  let dumpFrame frame =
-    printf "[%03d] " (frame |> Array.length)
-    frame 
-    |> Array.iter (function IsChar c -> printf "%c"   c
-                          | IsByte b -> printf "%02X" b)
-    print' ""
+let dumpFrame prefix frame =
+  prefix |> Option.fold (fun _ p -> printf "%s" p) ()
+  printf "[%03d] " (frame |> Array.length)
+  let lim = max (frame |> Array.length) 70
+  frame.[ .. lim]
+  |> Array.iter (function IsChar c -> printf "%c"   c
+                        | IsByte b -> printf "%02X" b)
+  printfn' ""
 
-  print' "----------------------------------------"
-  socket |> recvAll |> Array.iter dumpFrame
+let dumpMsg msg =
+  printfn' "----------------------------------------"
+  match msg with
+  | null 
+  | [||] -> printfn' "<NULL>"
+  | msg' -> let lim = max msg'.Length 10
+            let dumpFrame' = dumpFrame None
+            msg'.[ .. lim] |> Array.iter dumpFrame'
+
+let s_dump socket =
+  printfn' "----------------------------------------"
+  socket |> recvAll |> dumpMsg
 
 let s_setID socket = 
   let identity = sprintf "%04X-%04X" 
