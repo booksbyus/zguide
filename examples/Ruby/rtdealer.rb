@@ -15,7 +15,7 @@ require 'ffi-rzmq'
 def task(name, context)
   worker = context.socket ZMQ::DEALER
   worker.setsockopt ZMQ::IDENTITY, name
-  worker.connect "tcp://127.0.0.1:9000"
+  worker.connect 'ipc://routing.ipc'
 
   total = 0
   loop do
@@ -28,7 +28,7 @@ end
 
 context = ZMQ::Context.new 1
 client = context.socket ZMQ::ROUTER
-client.bind "tcp://127.0.0.1:9000"
+client.bind 'ipc://routing.ipc'
 
 worker_1 = Thread.new { task 'A', context }
 worker_2 = Thread.new { task 'B', context }
