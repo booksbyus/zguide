@@ -23,7 +23,8 @@ def receive_string(socket)
   result
 end
 
-def worker_task(context)
+def worker_task
+  context = ZMQ::Context.new 1
   worker = context.socket ZMQ::REQ
   #  We use a string identity for ease here
   worker.setsockopt ZMQ::IDENTITY, sprintf("%04X-%04X", rand(10000), rand(10000))
@@ -49,7 +50,9 @@ context = ZMQ::Context.new 1
 client = context.socket ZMQ::ROUTER
 client.bind 'ipc://routing.ipc'
 
-threads = (1..WORKER_NUMBER).map { Thread.new { worker_task context }}
+workers = (1..WORKER_NUMBER).map do
+  Thread.new { worker_task }
+end
 
 (WORKER_NUMBER * 10).times do
   # LRU worker is next waitin in queue
@@ -73,4 +76,4 @@ WORKER_NUMBER.times do
   client.send_string 'END'
 end
 
-threads.each &:join
+workers.each &:join
