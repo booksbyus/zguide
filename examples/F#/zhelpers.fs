@@ -4,7 +4,8 @@ module zhelpers
 open fszmq
 open fszmq.Socket
 
-let [<Literal>] EXIT_SUCCESS = 0
+let [<Literal>] EXIT_SUCCESS =  0
+let [<Literal>] EXIT_FAILURE = -1
 
 let srandom ()  = System.Random(System.DateTime.Now.Millisecond)
 let private rnd = srandom() // for use by ``s_setID``
