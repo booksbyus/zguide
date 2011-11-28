@@ -71,10 +71,10 @@ int main (void)
 
     int client_nbr;
     for (client_nbr = 0; client_nbr < NBR_CLIENTS; client_nbr++)
-        zthread_new (ctx, client_task, NULL);
+        zthread_new (client_task, NULL);
     int worker_nbr;
     for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++)
-        zthread_new (ctx, worker_task, NULL);
+        zthread_new (worker_task, NULL);
 
     //  Logic of LRU loop
     //  - Poll backend always, frontend only if 1+ worker ready

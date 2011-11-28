@@ -6,9 +6,9 @@
 #include "kvmsg.c"
 
 //  zloop reactor handlers
-static int s_snapshots  (zloop_t *loop, void *socket, void *args);
-static int s_collector  (zloop_t *loop, void *socket, void *args);
-static int s_flush_ttl  (zloop_t *loop, void *socket, void *args);
+static int s_snapshots  (zloop_t *loop, zmq_pollitem_t *poller, void *args);
+static int s_collector  (zloop_t *loop, zmq_pollitem_t *poller, void *args);
+static int s_flush_ttl  (zloop_t *loop, zmq_pollitem_t *poller, void *args);
 
 //  Our server is defined by these properties
 typedef struct {
@@ -42,8 +42,10 @@ int main (void)
     zsocket_bind (self->collector, "tcp://*:%d", self->port + 2);
 
     //  Register our handlers with reactor
-    zloop_reader (self->loop, self->snapshot, s_snapshots, self);
-    zloop_reader (self->loop, self->collector, s_collector, self);
+    zmq_pollitem_t poller = { self->snapshot, 0, ZMQ_POLLIN };
+    zloop_poller (self->loop, &poller, s_snapshots, self);
+    poller.socket = self->collector;
+    zloop_poller (self->loop, &poller, s_collector, self);
     zloop_timer  (self->loop, 1000, 0, s_flush_ttl, self);
 
     //  Run reactor until process interrupted
@@ -70,34 +72,34 @@ typedef struct {
 } kvroute_t;
 
 static int
-s_snapshots (zloop_t *loop, void *snapshot, void *args)
+s_snapshots (zloop_t *loop, zmq_pollitem_t *poller, void *args)
 {
     clonesrv_t *self = (clonesrv_t *) args;
 
-    zframe_t *identity = zframe_recv (snapshot);
+    zframe_t *identity = zframe_recv (poller->socket);
     if (identity) {
         //  Request is in second frame of message
-        char *request = zstr_recv (snapshot);
+        char *request = zstr_recv (poller->socket);
         char *subtree = NULL;
         if (streq (request, "ICANHAZ?")) {
             free (request);
-            subtree = zstr_recv (snapshot);
+            subtree = zstr_recv (poller->socket);
         }
         else
             printf ("E: bad request, aborting\n");
 
         if (subtree) {
             //  Send state socket to client
-            kvroute_t routing = { snapshot, identity, subtree };
+            kvroute_t routing = { poller->socket, identity, subtree };
             zhash_foreach (self->kvmap, s_send_single, &routing);
 
             //  Now send END message with sequence number
             zclock_log ("I: sending shapshot=%d", (int) self->sequence);
-            zframe_send (&identity, snapshot, ZFRAME_MORE);
+            zframe_send (&identity, poller->socket, ZFRAME_MORE);
             kvmsg_t *kvmsg = kvmsg_new (self->sequence);
             kvmsg_set_key  (kvmsg, "KTHXBAI");
             kvmsg_set_body (kvmsg, (byte *) subtree, 0);
-            kvmsg_send     (kvmsg, snapshot);
+            kvmsg_send     (kvmsg, poller->socket);
             kvmsg_destroy (&kvmsg);
             free (subtree);
         }
@@ -129,11 +131,11 @@ s_send_single (char *key, void *data, void *args)
 //  Collect updates from clients
 
 static int
-s_collector (zloop_t *loop, void *collector, void *args)
+s_collector (zloop_t *loop, zmq_pollitem_t *poller, void *args)
 {
     clonesrv_t *self = (clonesrv_t *) args;
 
-    kvmsg_t *kvmsg = kvmsg_recv (collector);
+    kvmsg_t *kvmsg = kvmsg_recv (poller->socket);
     if (kvmsg) {
         kvmsg_set_sequence (kvmsg, ++self->sequence);
         kvmsg_send (kvmsg, self->publisher);
@@ -154,7 +156,7 @@ s_collector (zloop_t *loop, void *collector, void *args)
 static int s_flush_single (char *key, void *data, void *args);
 
 static int
-s_flush_ttl (zloop_t *loop, void *unused, void *args)
+s_flush_ttl (zloop_t *loop, zmq_pollitem_t *poller, void *args)
 {
     clonesrv_t *self = (clonesrv_t *) args;
     zhash_foreach (self->kvmap, s_flush_single, args);

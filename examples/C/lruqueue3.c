@@ -70,7 +70,7 @@ typedef struct {
 
 
 //  Handle input from client, on frontend
-int s_handle_frontend (zloop_t *loop, void *socket, void *arg)
+int s_handle_frontend (zloop_t *loop, zmq_pollitem_t *poller, void *arg)
 {
     lruqueue_t *self = (lruqueue_t *) arg;
     zmsg_t *msg = zmsg_recv (self->frontend);
@@ -80,13 +80,13 @@ int s_handle_frontend (zloop_t *loop, void *socket, void *arg)
 
         //  Cancel reader on frontend if we went from 1 to 0 workers
         if (zlist_size (self->workers) == 0)
-            zloop_cancel (loop, self->frontend);
+            zloop_poller_end (loop, self->frontend);
     }
     return 0;
 }
 
 //  Handle input from worker, on backend
-int s_handle_backend (zloop_t *loop, void *socket, void *arg)
+int s_handle_backend (zloop_t *loop, zmq_pollitem_t *poller, void *arg)
 {
     //  Use worker address for LRU routing
     lruqueue_t *self = (lruqueue_t *) arg;
@@ -97,7 +97,7 @@ int s_handle_backend (zloop_t *loop, void *socket, void *arg)
 
         //  Enable reader on frontend if we went from 0 to 1 workers
         if (zlist_size (self->workers) == 1)
-            zloop_reader (loop, self->frontend, s_handle_frontend, self);
+            zloop_poller (loop, self->frontend, s_handle_frontend, self);
 
         //  Forward message to client if it's not a READY
         zframe_t *frame = zmsg_first (msg);
@@ -120,18 +120,18 @@ int main (void)
 
     int client_nbr;
     for (client_nbr = 0; client_nbr < NBR_CLIENTS; client_nbr++)
-        zthread_new (ctx, client_task, NULL);
+        zthread_new (client_task, NULL);
     int worker_nbr;
     for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++)
-        zthread_new (ctx, worker_task, NULL);
+        zthread_new (worker_task, NULL);
 
     //  Queue of available workers
     self->workers = zlist_new ();
 
     //  Prepare reactor and fire it up
     zloop_t *reactor = zloop_new ();
-    zloop_reader (reactor, self->backend, s_handle_backend, self);
-    zloop_start (reactor);
+    zloop_poller (reactor, self->backend, s_handle_backend, self);
+    zloop_start  (reactor);
     zloop_destroy (&reactor);
 
     //  When we're done, clean up properly

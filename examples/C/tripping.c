@@ -103,8 +103,8 @@ int main (void)
     //  Create threads
     zctx_t *ctx = zctx_new ();
     void *client = zthread_fork (ctx, client_task, NULL);
-    zthread_new (ctx, worker_task, NULL);
-    zthread_new (ctx, broker_task, NULL);
+    zthread_new (worker_task, NULL);
+    zthread_new (broker_task, NULL);
 
     //  Wait for signal on client pipe
     char *signal = zstr_recv (client);

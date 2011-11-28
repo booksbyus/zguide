@@ -170,7 +170,7 @@ s_execute_fsm (bstar_t *self)
 //  Reactor event handlers...
 
 //  Publish our state to peer
-int s_send_state (zloop_t *loop, void *socket, void *arg)
+int s_send_state (zloop_t *loop, zmq_pollitem_t *poller, void *arg)
 {
     bstar_t *self = (bstar_t *) arg;
     zstr_sendf (self->statepub, "%d", self->state);
@@ -178,10 +178,10 @@ int s_send_state (zloop_t *loop, void *socket, void *arg)
 }
 
 //  Receive state from peer, execute finite state machine
-int s_recv_state (zloop_t *loop, void *socket, void *arg)
+int s_recv_state (zloop_t *loop, zmq_pollitem_t *poller, void *arg)
 {
     bstar_t *self = (bstar_t *) arg;
-    char *state = zstr_recv (socket);
+    char *state = zstr_recv (poller->socket);
     if (state) {
         self->event = atoi (state);
         self->peer_expiry = zclock_time () + 2 * BSTAR_HEARTBEAT;
@@ -191,18 +191,18 @@ int s_recv_state (zloop_t *loop, void *socket, void *arg)
 }
 
 //  Application wants to speak to us, see if it's possible
-int s_voter_ready (zloop_t *loop, void *socket, void *arg)
+int s_voter_ready (zloop_t *loop, zmq_pollitem_t *poller, void *arg)
 {
     bstar_t *self = (bstar_t *) arg;
     //  If server can accept input now, call appl handler
     self->event = CLIENT_REQUEST;
     if (s_execute_fsm (self) == 0) {
         puts ("CLIENT REQUEST");
-        (self->voter_fn) (self->loop, socket, self->voter_arg);
+        (self->voter_fn) (self->loop, poller->socket, self->voter_arg);
     }
     else {
         //  Destroy waiting message, no-one to read it
-        zmsg_t *msg = zmsg_recv (socket);
+        zmsg_t *msg = zmsg_recv (poller->socket);
         zmsg_destroy (&msg);
     }
     return 0;
@@ -235,7 +235,8 @@ bstar_new (int primary, char *local, char *remote)
 
     //  Set-up basic reactor events
     zloop_timer (self->loop, BSTAR_HEARTBEAT, 0, s_send_state, self);
-    zloop_reader (self->loop, self->statesub, s_recv_state, self);
+    zmq_pollitem_t poller = { self->statesub, 0, ZMQ_POLLIN };
+    zloop_poller (self->loop, &poller, s_recv_state, self);
     return self;
 }
 
@@ -284,7 +285,8 @@ bstar_voter (bstar_t *self, char *endpoint, int type, zloop_fn handler,
     assert (!self->voter_fn);
     self->voter_fn = handler;
     self->voter_arg = arg;
-    return zloop_reader (self->loop, socket, s_voter_ready, self);
+    zmq_pollitem_t poller = { socket, 0, ZMQ_POLLIN };
+    return zloop_poller (self->loop, &poller, s_voter_ready, self);
 }
 
 //  ---------------------------------------------------------------------
