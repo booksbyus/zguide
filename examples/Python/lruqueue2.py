@@ -31,7 +31,7 @@ def worker_thread(worker_url, context, i):
     try:
         while True:
             
-            [address, request] = socket.recv_multipart()
+            [address, empty, request] = socket.recv_multipart()
             
             print("%s: %s\n" %(identity, request))
                
@@ -166,7 +166,7 @@ def main():
                 available_workers -= 1
                 worker_id = workers_list.pop()
                 
-                backend.send_multipart([worker_id, "", client_addr, request])                
+                backend.send_multipart([worker_id, "", client_addr, "", request])
         
 
     #out of infinite loop: do some housekeeping
