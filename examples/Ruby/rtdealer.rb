@@ -12,39 +12,98 @@
 require 'rubygems'
 require 'ffi-rzmq'
 
-def task(name, context)
-  worker = context.socket ZMQ::DEALER
-  worker.setsockopt ZMQ::IDENTITY, name
-  worker.connect 'ipc://routing.ipc'
+module RTDealer
+  ENDPOINT = 'ipc://routing.ipc'
+  WORKER_ADDRESSES = %w(A B)
+  END_MESSAGE = 'END'
 
-  total = 0
-  loop do
-    data = ''
-    worker.recv_string data
-    p "#{name} received: #{total}" and break if data == 'END'
-    total += 1
-  end 
+  class Worker
+    def run
+      do_run
+    ensure
+      @socket.close
+    end
+
+    private
+
+    def initialize(context, address)
+      @address = address
+      @socket = context.socket ZMQ::DEALER
+      @socket.setsockopt ZMQ::IDENTITY, address
+      @socket.connect ENDPOINT
+      @total = 0
+      @workload = ''
+    end
+
+    def do_run
+      catch(:end) do
+        loop do
+          receive_workload
+          handle_workload
+        end
+      end
+      print_results
+    end
+
+    def receive_workload
+      @socket.recv_string @workload
+    end
+
+    def handle_workload
+      if @workload == END_MESSAGE
+        throw :end
+      else
+        @total += 1
+      end
+    end
+
+    def print_results
+      p "#{@address} received: #{@total}"
+    end
+  end
+
+  class Client
+    def run
+      send_workload
+      stop_workers
+    ensure
+      @socket.close
+    end
+
+    private
+
+    def initialize(context)
+      @socket = context.socket ZMQ::ROUTER
+      @socket.bind ENDPOINT
+    end
+
+    def send_workload
+      10.times do
+        address = rand(3) % 3 == 0 ? WORKER_ADDRESSES.first : WORKER_ADDRESSES.last
+        @socket.send_string address, ZMQ::SNDMORE
+        @socket.send_string "This is the workload"
+      end
+    end
+
+    def stop_workers
+      WORKER_ADDRESSES.each do |address|
+        @socket.send_string address, ZMQ::SNDMORE
+        @socket.send_string END_MESSAGE
+      end
+    end
+  end
 end
 
-context = ZMQ::Context.new 1
-client = context.socket ZMQ::ROUTER
-client.bind 'ipc://routing.ipc'
+if $0 == __FILE__
+  context = ZMQ::Context.new 1
+  client = RTDealer::Client.new context
+  workers = RTDealer::WORKER_ADDRESSES.map do |address|
+    Thread.new { RTDealer::Worker.new(context, address).run }
+  end
 
-worker_1 = Thread.new { task 'A', context }
-worker_2 = Thread.new { task 'B', context }
+  sleep 1
+  client.run
 
-sleep 1
-
-10.times do
-  address = rand(3) % 3 == 0 ? 'A' : 'B'
-  client.send_string address, ZMQ::SNDMORE
-  client.send_string "This is the workload"
+  workers.each &:join
+  context.terminate
 end
-
-%w(A B).each do |address|
-  client.send_string address, ZMQ::SNDMORE
-  client.send_string 'END'
-end
-
-worker_1.join
-worker_2.join
