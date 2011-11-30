@@ -4,6 +4,15 @@ module zhelpers
 open fszmq
 open fszmq.Socket
 
+[<RequireQualifiedAccess>]
+module Array = 
+  let    last (a:'r array) =  a.[a.Length - 1]
+  let tryLast (a:'r array) =  match a.Length with
+                              | n when n > 0  ->  Some a.[n - 1]
+                              | _             ->  None
+
+exception BadFraming 
+
 let [<Literal>] EXIT_SUCCESS =  0
 let [<Literal>] EXIT_FAILURE = -1
 
@@ -16,6 +25,7 @@ let s_send socket s = s |> encode |> send socket
 let s_sendmore socket s = s |> encode |> sendMore socket |> ignore
 let s_recv socket = socket |> recv |> decode
 
+let printf'  fmt = Printf.kprintf System.Console.Write     fmt
 let printfn' fmt = Printf.kprintf System.Console.WriteLine fmt
 
 let scanln = System.Console.ReadLine
@@ -33,12 +43,12 @@ let (|IsChar|IsByte|) = function
     | c (* is an ASCII character *) -> IsChar(char c)
     
 let dumpFrame prefix frame =
-  prefix |> Option.fold (fun _ p -> printf "%s" p) ()
-  printf "[%03d] " (frame |> Array.length)
-  let lim = max (frame |> Array.length) 70
-  frame.[ .. lim]
-  |> Array.iter (function IsChar c -> printf "%c"   c
-                        | IsByte b -> printf "%02X" b)
+  prefix |> Option.fold (fun _ p -> printf' "%s" p) ()
+  printf' "[%03d] " (frame |> Array.length)
+  let lim = min frame.Length 70
+  frame.[ .. (lim - 1)]
+  |> Array.iter (function IsChar c -> printf' "%c"   c
+                        | IsByte b -> printf' "%02X" b)
   printfn' ""
 
 let dumpMsg msg =
@@ -46,9 +56,9 @@ let dumpMsg msg =
   match msg with
   | null 
   | [||] -> printfn' "<NULL>"
-  | msg' -> let lim = max msg'.Length 10
+  | msg' -> let lim = min msg'.Length 10
             let dumpFrame' = dumpFrame None
-            msg'.[ .. lim] |> Array.iter dumpFrame'
+            msg'.[ .. (lim - 1)] |> Array.iter dumpFrame'
 
 let s_dump socket =
   printfn' "----------------------------------------"
@@ -61,13 +71,20 @@ let s_setID socket =
                  |> encode
   (ZMQ.IDENTITY,identity) |> set socket
 
-let s_spawn fn = 
+let t_spawn fn = 
   let t = System.Threading.Thread(System.Threading.ThreadStart fn)
   t.Start()
   t
 
-let s_spawnp fn p = 
+let t_spawnp fn p = 
   let fn' = System.Threading.ParameterizedThreadStart fn
   let t = System.Threading.Thread(fn')
   t.Start(p)
   t
+
+let assert' cond =
+  #if COMPILED
+    assert cond
+  #else
+    if not cond then failwith "assertion failed"
+  #endif
