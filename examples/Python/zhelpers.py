@@ -3,13 +3,17 @@
 Helper module for example applications. Mimics ZeroMQ Guide's zhelpers.h.
 """
 
+import binascii
+
 from random import randint
 
 import zmq
 
-pyzmq_version = tuple(map(int, zmq.pyzmq_version().split('.')))
-if pyzmq_version <= (2, 1, 7):
+# fix ROUTER/DEALER aliases, missing from pyzmq < 2.1.9
+if not hasattr(zmq, 'ROUTER'):
     zmq.ROUTER = zmq.XREP
+if not hasattr(zmq, 'DEALER'):
+    zmq.DEALER = zmq.XREQ
 
 
 # Receives all message parts from socket, prints neatly
@@ -17,10 +21,12 @@ def dump(zsocket):
     print "----------------------------------------"
     for part in zsocket.recv_multipart():
         print "[%03d]" % len(part),
-        if all(31 < ord(c) < 128 for c in part):
-            print part
-        else:
-            print "".join("%x" % ord(c) for c in part)
+        try:
+            # print only if ascii
+            print part.decode()
+        except:
+            # not ascii, print hex
+            print binascii.hexlify(part)
 
 
 # Set simple random printable identity on socket
