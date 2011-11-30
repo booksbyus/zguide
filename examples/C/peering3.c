@@ -49,8 +49,8 @@ client_task (void *args)
                 if (!reply)
                     break;              //  Interrupted
                 //  Worker is supposed to answer us with our task id
-                puts (reply);
                 assert (streq (reply, task_id));
+                zstr_sendf (monitor, "%s", reply);
                 free (reply);
             }
             else {
@@ -78,7 +78,7 @@ worker_task (void *args)
     zframe_send (&frame, worker, 0);
 
     while (1) {
-        //  Workers are busy for 0/1/2 seconds
+        //  Workers are busy for 0/1 seconds
         zmsg_t *msg = zmsg_recv (worker);
         sleep (randof (2));
         zmsg_send (&msg, worker);
