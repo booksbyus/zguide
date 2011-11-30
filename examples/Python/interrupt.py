@@ -14,6 +14,13 @@ context = zmq.Context()
 socket = context.socket(zmq.REP)
 socket.bind("tcp://*:5558")
 
+# SIGINT will normally raise a KeyboardInterrupt, just like any other Python call
+try:
+    socket.recv()
+except KeyboardInterrupt:
+    print "W: interrupt received, proceeding..."
+
+# or you can use a custom handler
 counter = 0
 signal.signal(signal.SIGINT, signal_handler)
 while True:
