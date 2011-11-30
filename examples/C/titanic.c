@@ -172,7 +172,7 @@ titanic_close (void *context)
 //  Attempt to process a single request, return 1 if successful
 
 static int
-s_service_success (mdcli_t *client, char *uuid)
+s_service_success (char *uuid)
 {
     //  Load request message, service will be first frame
     char *filename = s_request_filename (uuid);
@@ -188,6 +188,11 @@ s_service_success (mdcli_t *client, char *uuid)
     zframe_t *service = zmsg_pop (request);
     char *service_name = zframe_strdup (service);
 
+    //  Create MDP client session with short timeout
+    mdcli_t *client = mdcli_new ("tcp://localhost:5555", FALSE);
+    mdcli_set_timeout (client, 1000);  //  1 sec
+    mdcli_set_retries (client, 1);     //  only 1 retry
+    
     //  Use MMI protocol to check if service is available
     zmsg_t *mmi_request = zmsg_new ();
     zmsg_add (mmi_request, service);
@@ -212,6 +217,7 @@ s_service_success (mdcli_t *client, char *uuid)
     else
         zmsg_destroy (&request);
 
+    mdcli_destroy (&client);
     free (service_name);
     return 0;
 }
@@ -221,11 +227,6 @@ int main (int argc, char *argv [])
 {
     int verbose = (argc > 1 && streq (argv [1], "-v"));
     zctx_t *ctx = zctx_new ();
-
-    //  Create MDP client session with short timeout
-    mdcli_t *client = mdcli_new ("tcp://localhost:5555", verbose);
-    mdcli_set_timeout (client, 1000);  //  1 sec
-    mdcli_set_retries (client, 1);     //  only 1 retry
 
     void *request_pipe = zthread_fork (ctx, titanic_request, NULL);
     zthread_new (titanic_reply, NULL);
@@ -262,7 +263,7 @@ int main (int argc, char *argv [])
             if (entry [0] == '-') {
                 if (verbose)
                     printf ("I: processing request %s\n", entry + 1);
-                if (s_service_success (client, entry + 1)) {
+                if (s_service_success (entry + 1)) {
                     //  Mark queue entry as processed
                     fseek (file, -33, SEEK_CUR);
                     fwrite ("+", 1, 1, file);
@@ -278,6 +279,5 @@ int main (int argc, char *argv [])
         if (file)
             fclose (file);
     }
-    mdcli_destroy (&client);
     return 0;
 }

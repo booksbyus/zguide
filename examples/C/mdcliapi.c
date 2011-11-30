@@ -173,7 +173,7 @@ mdcli_send (mdcli_t *self, char *service, zmsg_t **request_p)
         if (--retries_left) {
             if (self->verbose)
                 zclock_log ("W: no reply, reconnecting...");
-            //  Reconnect, and resend message
+            //  Reconnect socket
             s_mdcli_connect_to_broker (self);
         }
         else {
