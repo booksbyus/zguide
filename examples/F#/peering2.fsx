@@ -66,6 +66,11 @@ let main args =
 
       let rand = srandom()
       let fePort,bePort = let port = int self in port + 1,port + 2
+      //NOTE: to run this example on Windows, we must use tcp... 
+      //      so when we do, assume inputs are port numbers, and we use 
+      //      them as the basis for additional (internal to the cluster)
+      //      port numbers on non-windows systems, we can use ipc (as per 
+      //      the guide) so in *that* case, inputs are alphanumeric IDs
       
       // prepare our context and sockets
       use ctx = new Context(1)
@@ -88,15 +93,15 @@ let main args =
       use localbe = ctx |> route
       bind localbe (sprintf "tcp://*:%i" bePort)
 
-      // get user to tell us when we can start…
+      // get user to tell us when we can start...
       printf' "Press Enter when all brokers are started: "
       scanln() |> ignore
 
       // start local workers
-      for _ in 1 .. NBR_WORKERS do (t_spawnp worker_task bePort) |> ignore
+      for _ in 1 .. NBR_WORKERS do ignore (t_spawnp worker_task bePort)
       
       // start local clients
-      for _ in 1 .. NBR_CLIENTS do (t_spawnp client_task fePort) |> ignore
+      for _ in 1 .. NBR_CLIENTS do ignore (t_spawnp client_task fePort)
 
       (*  Interesting part
           -------------------------------------------------------------
@@ -107,7 +112,8 @@ let main args =
       // queue of available workers
       let workers = Queue<byte array>()
 
-      let msg = ref Array.empty<_>
+      // holds values collected/generated during polling
+      let msg = ref Array.empty<_> 
       let reroutable = ref false
       
       let backends = 
@@ -138,28 +144,23 @@ let main args =
         if backends |> poll timeout && (!msg).Length > 0 then 
           let address = (!msg).[0] |> decode
           // route reply to cloud if it's addressed to a broker
-          if peers |> Array.exists (fun peer -> address = peer)
-            then  !msg |> sendAll cloudfe
-            else  // otherwise route reply to client
-                  !msg |> sendAll localfe
+          // otherwise route reply to client
+          !msg |> sendAll ( if peers |> Array.exists ((=) address)
+                              then cloudfe
+                              else localfe )
           
         // Now route as many clients requests as we can handle
         while workers.Count > 0 && frontends |> poll 0L do
           // if reroutable, send to cloud 20% of the time
           // here we'd normally use cloud status information
-          if !reroutable && peers.Length > 0 && rand.Next(0,5) = 0
-            then  // route to random broker peer
-                  let address = peers.[rand.Next peers.Length] |> encode
-                  !msg 
-                  |> Array.append [| address; Array.empty |]
-                  |> sendAll cloudbe
-            else  // route to local worker
-                  let address = workers.Dequeue()
-                  !msg 
-                  |> Array.append [| address; Array.empty |] 
-                  |> sendAll localbe
+          let address,backend = 
+            if !reroutable && peers.Length > 0 && rand.Next(0,5) = 0
+              then peers.[rand.Next peers.Length] |> encode , cloudbe
+              else workers.Dequeue()                        , localbe
+          !msg 
+          |> Array.append [| address; Array.empty |] 
+          |> sendAll backend
         // else ... No work, go back to backends
-
       EXIT_SUCCESS
   | _ -> 
       printfn "syntax: peering2 me {you}..."

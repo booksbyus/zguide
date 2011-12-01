@@ -81,10 +81,3 @@ let t_spawnp fn p =
   let t = System.Threading.Thread(fn')
   t.Start(p)
   t
-
-let assert' cond =
-  #if COMPILED
-    assert cond
-  #else
-    if not cond then failwith "assertion failed"
-  #endif
