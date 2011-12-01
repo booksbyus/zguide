@@ -83,7 +83,8 @@ int main (int argc, char *argv [])
     bstar_new_slave (self->bstar, s_new_slave, self);
 
     //  Register our other handlers with the bstar reactor
-    zloop_poller (bstar_zloop (self->bstar), self->collector, s_collector, self);
+    zmq_pollitem_t poller = { self->collector, 0, ZMQ_POLLIN };
+    zloop_poller (bstar_zloop (self->bstar), &poller, s_collector, self);
     zloop_timer  (bstar_zloop (self->bstar), 1000, 0, s_flush_ttl, self);
     zloop_timer  (bstar_zloop (self->bstar), 1000, 0, s_send_hugz, self);
 
@@ -238,7 +239,8 @@ static int
 s_flush_ttl (zloop_t *loop, zmq_pollitem_t *poller, void *args)
 {
     clonesrv_t *self = (clonesrv_t *) args;
-    zhash_foreach (self->kvmap, s_flush_single, args);
+    if (self->kvmap)
+        zhash_foreach (self->kvmap, s_flush_single, args);
     return 0;
 }
 
@@ -289,13 +291,14 @@ s_send_hugz (zloop_t *loop, zmq_pollitem_t *poller, void *args)
 //  and then starts to process state snapshot requests.
 
 static int
-s_new_master (zloop_t *loop, zmq_pollitem_t *poller, void *args)
+s_new_master (zloop_t *loop, zmq_pollitem_t *unused, void *args)
 {
     clonesrv_t *self = (clonesrv_t *) args;
 
     self->master = TRUE;
     self->slave = FALSE;
-    zloop_poller_end (bstar_zloop (self->bstar), self->subscriber);
+    zmq_pollitem_t poller = { self->subscriber, 0, ZMQ_POLLIN };
+    zloop_poller_end (bstar_zloop (self->bstar), &poller);
 
     //  Apply pending list to own hash table
     while (zlist_size (self->pending)) {
@@ -312,14 +315,15 @@ s_new_master (zloop_t *loop, zmq_pollitem_t *poller, void *args)
 //  We're becoming slave
 
 static int
-s_new_slave (zloop_t *loop, zmq_pollitem_t *poller, void *args)
+s_new_slave (zloop_t *loop, zmq_pollitem_t *unused, void *args)
 {
     clonesrv_t *self = (clonesrv_t *) args;
 
     zhash_destroy (&self->kvmap);
     self->master = FALSE;
     self->slave = TRUE;
-    zloop_poller (bstar_zloop (self->bstar), self->subscriber, s_subscriber, self);
+    zmq_pollitem_t poller = { self->subscriber, 0, ZMQ_POLLIN };
+    zloop_poller (bstar_zloop (self->bstar), &poller, s_subscriber, self);
 
     return 0;
 }

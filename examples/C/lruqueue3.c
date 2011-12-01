@@ -79,8 +79,10 @@ int s_handle_frontend (zloop_t *loop, zmq_pollitem_t *poller, void *arg)
         zmsg_send (&msg, self->backend);
 
         //  Cancel reader on frontend if we went from 1 to 0 workers
-        if (zlist_size (self->workers) == 0)
-            zloop_poller_end (loop, self->frontend);
+        if (zlist_size (self->workers) == 0) {
+            zmq_pollitem_t poller = { self->frontend, 0, ZMQ_POLLIN };
+            zloop_poller_end (loop, &poller);
+        }
     }
     return 0;
 }
@@ -96,9 +98,10 @@ int s_handle_backend (zloop_t *loop, zmq_pollitem_t *poller, void *arg)
         zlist_append (self->workers, address);
 
         //  Enable reader on frontend if we went from 0 to 1 workers
-        if (zlist_size (self->workers) == 1)
-            zloop_poller (loop, self->frontend, s_handle_frontend, self);
-
+        if (zlist_size (self->workers) == 1) {
+            zmq_pollitem_t poller = { self->frontend, 0, ZMQ_POLLIN };
+            zloop_poller (loop, &poller, s_handle_frontend, self);
+        }
         //  Forward message to client if it's not a READY
         zframe_t *frame = zmsg_first (msg);
         if (memcmp (zframe_data (frame), LRU_READY, 1) == 0)
@@ -130,7 +133,8 @@ int main (void)
 
     //  Prepare reactor and fire it up
     zloop_t *reactor = zloop_new ();
-    zloop_poller (reactor, self->backend, s_handle_backend, self);
+    zmq_pollitem_t poller = { self->backend, 0, ZMQ_POLLIN };
+    zloop_poller (reactor, &poller, s_handle_backend, self);
     zloop_start  (reactor);
     zloop_destroy (&reactor);
 
