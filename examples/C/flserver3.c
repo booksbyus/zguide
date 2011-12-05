@@ -32,7 +32,7 @@ int main (int argc, char *argv [])
         zframe_t *address = zmsg_pop (request);
         zframe_t *control = zmsg_pop (request);
         zmsg_t *reply = zmsg_new ();
-        if (zframe_streq (control, "PONG"))
+        if (zframe_streq (control, "PING"))
             zmsg_addstr (reply, "PONG");
         else {
             zmsg_add (reply, control);
