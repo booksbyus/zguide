@@ -34,11 +34,15 @@ def main():
             else:
                 print "W: no response from server, failing over"
                 sleep(SETTLE_DELAY / 1000)
+                poller.unregister(client)
                 client.close()
                 server_nbr = (server_nbr + 1) % 2
                 print "I: connecting to server at %s.." % server[server_nbr]
                 client = ctx.socket(zmq.REQ)
+                poller.register(client, zmq.POLLIN)
+                # reconnect and resend request
                 client.connect(server[server_nbr])
+                client.send("%s" % sequence)
 
 if __name__ == '__main__':
     main()
