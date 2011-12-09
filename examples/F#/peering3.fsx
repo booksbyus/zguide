@@ -21,7 +21,7 @@ open System.Collections.Generic
 let [<Literal>] NBR_CLIENTS = 10
 let [<Literal>] NBR_WORKERS =  5
 
-let LRU_READY = "\001"B // signals worker is ready
+let LRU_READY = [| 1uy |] // signals worker is ready
 
 let rand = srandom()
 
@@ -37,34 +37,36 @@ let client_task (o:obj) =
   use monitor = ctx |> push
   connect monitor (sprintf "tcp://localhost:%i" monitorPort) 
 
-  let shouldLoop = ref true
-  while !shouldLoop do
+  let pollset socket taskID = 
+    [Poll(ZMQ.POLLIN,socket,fun s -> 
+          let reply = recv s
+          // worker is supposed to answer us with our task ID
+          reply |> dumpFrame (Some "Client: ")
+          assert ((decode reply) = taskID))]
 
-    sleep ((rand.Next 5) * 1000)
-  
-    let burst = ref (rand.Next 15)
-    while !shouldLoop && !burst <> 0 do
-      decr burst
-      
-      let taskID = sprintf "%04X" (rand.Next 0x10000)
-
-      // send request with random hex ID
-      taskID |> encode |>> client
-
-      let items = 
-        [ Poll( ZMQ.POLLIN,client,fun _ ->
-                let reply = recv client
-                // worker is supposed to answer us with our task ID
-                reply |> dumpFrame (Some "Client: ")
-                assert (reply = encode taskID) ) ]
-      
-      // wait max ten seconds for a reply, then complain
-      if not (items |> poll 10000L) then
-        shouldLoop := false
-        (sprintf "E: CLIENT EXIT - lost task %s" taskID) 
-        |> encode 
-        |>> monitor
+  let rec burst = function
+    | n when n > 0 ->
+        let taskID = sprintf "%04X" (rand.Next 0x10000)
         
+        // send request with random hex ID
+        taskID |> encode |>> client
+
+        match (taskID |> pollset client) |> poll 100000L with
+        | true  -> burst (n - 1)
+        | _     -> false,taskID
+
+    | _ -> true,"<none>"
+
+  let rec loop () =
+    sleep ((rand.Next 5) * 1000)
+    match burst (rand.Next 15) with
+    | false,taskID  ->  (sprintf "E: CLIENT EXIT - lost task %s" taskID)
+                        |> encode
+                        |>> monitor
+    | _             ->  loop()
+
+  loop()
+
 // worker using REQ socket to do LRU routing
 let worker_task (o:obj) = 
   let backPort = o :?> int
@@ -89,6 +91,7 @@ let main args =
   | argc when argc > 1 ->
       let cloudPort,self = let n = args.[1] in (int n),(encode n)
       let peers = if argc > 2 then args.[2..] else [||]
+      let isPeer address = peers |> Array.exists ((=) address)
       let frontPort,backPort,statePort,monitorPort =  cloudPort + 1,
                                                       cloudPort + 2,
                                                       cloudPort + 3,
@@ -138,10 +141,6 @@ let main args =
       use monitor = ctx |> pull
       bind monitor (sprintf "tcp://*:%i" monitorPort)
 
-      // get user to tell us when we can start...
-      printf' "Press Enter when all brokers are started: "
-      scanln() |> ignore
-
       // start local workers
       for _ in 1 .. NBR_WORKERS do 
         ignore (t_spawnp worker_task backPort)
@@ -162,82 +161,80 @@ let main args =
       // queue of available workers
       let workers = Queue()
 
-      // holds values collected/generated during polling
-      let msg = ref Array.empty
-      let localCapacity = ref 0
-      let cloudCapacity = ref 0
+      let rec secondary localCapacity cloudCapacity =
 
-      let primary =
-        [ Poll( ZMQ.POLLIN,localbe,fun _ ->
-                // handle reply from local worker
-                let msg' = recvAll localbe
-                msg'.[0] |> workers.Enqueue
-                incr localCapacity
-                // if it's READY, don't route the message any further
-                msg := if msg'.[2] = LRU_READY then [||] else msg'.[2 ..] )
+        if localCapacity + cloudCapacity > 0 then
+      
+          let message = ref None
+          let fetchMessage socket = message := Some(recvAll socket)
+      
+          let pollset =
+            [ yield Poll( ZMQ.POLLIN,localfe,fetchMessage )
+              if workers.Count > 0 then 
+                yield Poll( ZMQ.POLLIN,cloudfe,fetchMessage )]
+      
+          if pollset |> poll 0L then
+            !message |> Option.iter (fun msg ->
+              let address,backend = 
+                match localCapacity with
+                | 0 ->  // route to random broker peer
+                        encode peers.[rand.Next peers.Length],cloudbe
+                | _ ->  // route to local worker
+                        workers.Dequeue(),localbe
+              msg 
+              |> Array.append [| address; Array.empty |]
+              |> sendAll backend)      
+            
+            secondary workers.Count cloudCapacity
 
-          Poll( ZMQ.POLLIN,cloudbe,fun _ ->
-                // handle reply from peer broker
-                let msg' = recvAll cloudbe
-                // we don't use peer broker address for anything
-                msg := msg'.[2 ..] )
+      let rec primary () =
+        let timeout       = if workers.Count = 0 then -1L else 100000L
+        let message       = ref None
+        let cloudCapacity = ref 0
 
-          Poll( ZMQ.POLLIN,statefe,fun _ ->
-                // handle capacity updates
-                cloudCapacity := statefe |> recv |> decode |> int )
+        let pollset =
+          [ Poll( ZMQ.POLLIN,localbe,fun _ ->
+                  // handle reply from local worker
+                  let msg = recvAll localbe
+                  msg.[0] |> workers.Enqueue
+                  // if it's READY, don't route the message any further
+                  message :=  if msg.[2] = LRU_READY 
+                                then None 
+                                else msg.[2 ..] |> Some )
 
-          Poll( ZMQ.POLLIN,monitor,fun _ ->
-                // handle monitor message
-                monitor |> recv |> decode |> (printfn' "%s") ) ]
+            Poll( ZMQ.POLLIN,cloudbe,fun _ ->
+                  // handle reply from peer broker
+                  let msg = recvAll cloudbe
+                  // we don't use peer broker address for anything
+                  message := Some(msg.[2 ..]) )
 
-      let secondary =
-        let fetch socket = msg := recvAll socket
-        [ Poll(ZMQ.POLLIN,localfe,fetch)
-          Poll(ZMQ.POLLIN,cloudfe,fetch) ]
+            Poll( ZMQ.POLLIN,statefe,fun _ ->
+                  // handle capacity updates
+                  cloudCapacity := (recv >> decode >> int) statefe )
 
-      while true do
-        let previous = !localCapacity
-        let timeout = if workers.Count = 0 then -1L else 100000L
+            Poll( ZMQ.POLLIN,monitor,fun _ ->
+                  // handle monitor message
+                  (recv >> decode >> (printfn' "%s")) monitor ) ]
         
-        if primary |> poll timeout && (!msg).Length > 0 then
-          let address = (!msg).[0] |> decode
-          // route reply to cloud if it's addressed to a broker
-          // otherwise route reply to client
-          !msg |> sendAll ( if peers |> Array.exists ((=) address)
-                              then cloudfe
-                              else localfe )
+        if pollset |> poll timeout then
+          !message |> Option.iter (fun msg ->
+            let address = decode msg.[0]
+            // route reply to cloud if it's addressed to a broker
+            // otherwise route reply to client
+            msg |> sendAll (if isPeer address then cloudfe else localfe))
         
         //  Now route as many clients requests as we can handle
-        //  - If we have local capacity we poll both localfe and cloudfe
-        //  - If we have cloud capacity only, we poll just localfe
-        //  - Route any request locally if we can, else to cloud
-        let shouldLoop = ref true
-        while !localCapacity + !cloudCapacity > 0 && !shouldLoop do
-          
-          shouldLoop := ( match !localCapacity with
-                          | 0 -> secondary.Head :: []
-                          | _ -> secondary )
-                        |> poll 0L
+        let previous = workers.Count
+        secondary previous !cloudCapacity
 
-          if !shouldLoop then
-            let address,backend = 
-              match !localCapacity with
-              | 0 ->  // route to random broker peer
-                      let random = rand.Next peers.Length 
-                      peers.[random] |> string |> encode, cloudbe
-              | _ ->  // route to local worker
-                      decr localCapacity
-                      workers.Dequeue(), localbe
-            !msg 
-            |> Array.append [| address; Array.empty |]
-            |> sendAll backend
-        // else ... No work, go back to backends
-
-        if !localCapacity <> previous then
+        if workers.Count <> previous then
                   // we stick our own address onto the envelope
           statebe <~| (string >> encode) cloudPort
                   // broadcast new capacity
-                  <<| (string >> encode) !localCapacity
+                  <<| (string >> encode) workers.Count
+
+        primary()
+      primary()
 
       EXIT_SUCCESS
   | _ -> 
