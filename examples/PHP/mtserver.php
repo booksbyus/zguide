@@ -44,4 +44,5 @@ $workers = new ZMQSocket($context, ZMQ::SOCKET_XREQ);
 $workers->bind("ipc://workers.ipc");
 
 //  Connect work threads to client threads via a queue
-$device = new ZMQDevice(ZMQ::DEVICE_QUEUE, $clients, $workers);
+$device = new ZMQDevice($clients, $workers);
+$device->run ();
