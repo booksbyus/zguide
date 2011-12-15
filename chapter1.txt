@@ -52,7 +52,7 @@ We assume you are using the latest stable release of 0MQ. We assume you are usin
 The Guide examples live in the Guide's [https://github.com/imatix/zguide git repository]. The simplest way to get all the examples is to clone this repository:
 
 [[code]]
-git clone git://github.com/imatix/zguide.git
+git clone --depth=1 git://github.com/imatix/zguide.git
 [[/code]]
 
 And then browse the examples subdirectory. You'll find examples by language. If there are examples missing in a language you use, you're encouraged to [http://zguide.zeromq.org/main:translate submit a translation]. This is how the Guide became so useful, thanks to the work of many people.
