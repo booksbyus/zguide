@@ -31,8 +31,8 @@ def worker_thread(worker_url, context, i):
     try:
         while True:
             
-            # python binding seems to eat empty frames
             address = socket.recv()
+            empty = socket.recv()
             request = socket.recv()
             
             print("%s: %s\n" %(identity, request))
@@ -174,6 +174,7 @@ def main():
                 backend.send(worker_id, zmq.SNDMORE)
                 backend.send("", zmq.SNDMORE)
                 backend.send(client_addr, zmq.SNDMORE)
+                backend.send("", zmq.SNDMORE)
                 backend.send(request)
                 
                 

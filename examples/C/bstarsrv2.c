@@ -6,10 +6,10 @@
 #include "bstar.c"
 
 //  Echo service
-int s_echo (zloop_t *loop, void *socket, void *arg)
+int s_echo (zloop_t *loop, zmq_pollitem_t *poller, void *arg)
 {
-    zmsg_t *msg = zmsg_recv (socket);
-    zmsg_send (&msg, socket);
+    zmsg_t *msg = zmsg_recv (poller->socket);
+    zmsg_send (&msg, poller->socket);
     return 0;
 }
 

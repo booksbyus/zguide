@@ -7,13 +7,13 @@
 #include "kvmsg.c"
 
 //  Bstar reactor handlers
-static int s_snapshots  (zloop_t *loop, void *socket, void *args);
-static int s_collector  (zloop_t *loop, void *socket, void *args);
-static int s_flush_ttl  (zloop_t *loop, void *socket, void *args);
-static int s_send_hugz  (zloop_t *loop, void *socket, void *args);
-static int s_new_master (zloop_t *loop, void *unused, void *args);
-static int s_new_slave  (zloop_t *loop, void *unused, void *args);
-static int s_subscriber (zloop_t *loop, void *socket, void *args);
+static int s_snapshots  (zloop_t *loop, zmq_pollitem_t *poller, void *args);
+static int s_collector  (zloop_t *loop, zmq_pollitem_t *poller, void *args);
+static int s_flush_ttl  (zloop_t *loop, zmq_pollitem_t *poller, void *args);
+static int s_send_hugz  (zloop_t *loop, zmq_pollitem_t *poller, void *args);
+static int s_new_master (zloop_t *loop, zmq_pollitem_t *poller, void *args);
+static int s_new_slave  (zloop_t *loop, zmq_pollitem_t *poller, void *args);
+static int s_subscriber (zloop_t *loop, zmq_pollitem_t *poller, void *args);
 
 //  Our server is defined by these properties
 typedef struct {
@@ -40,8 +40,7 @@ int main (int argc, char *argv [])
         zclock_log ("I: primary master, waiting for backup (slave)");
         self->bstar = bstar_new (BSTAR_PRIMARY, "tcp://*:5003",
                                  "tcp://localhost:5004");
-        bstar_voter (self->bstar, "tcp://*:5556", ZMQ_ROUTER,
-                     s_snapshots, self);
+        bstar_voter (self->bstar, "tcp://*:5556", ZMQ_ROUTER, s_snapshots, self);
         self->port = 5556;
         self->peer = 5566;
         self->primary = TRUE;
@@ -51,8 +50,7 @@ int main (int argc, char *argv [])
         zclock_log ("I: backup slave, waiting for primary (master)");
         self->bstar = bstar_new (BSTAR_BACKUP, "tcp://*:5004",
                                  "tcp://localhost:5003");
-        bstar_voter (self->bstar, "tcp://*:5566", ZMQ_ROUTER,
-                     s_snapshots, self);
+        bstar_voter (self->bstar, "tcp://*:5566", ZMQ_ROUTER, s_snapshots, self);
         self->port = 5566;
         self->peer = 5556;
         self->primary = FALSE;
@@ -85,7 +83,8 @@ int main (int argc, char *argv [])
     bstar_new_slave (self->bstar, s_new_slave, self);
 
     //  Register our other handlers with the bstar reactor
-    zloop_reader (bstar_zloop (self->bstar), self->collector, s_collector, self);
+    zmq_pollitem_t poller = { self->collector, 0, ZMQ_POLLIN };
+    zloop_poller (bstar_zloop (self->bstar), &poller, s_collector, self);
     zloop_timer  (bstar_zloop (self->bstar), 1000, 0, s_flush_ttl, self);
     zloop_timer  (bstar_zloop (self->bstar), 1000, 0, s_send_hugz, self);
 
@@ -120,34 +119,34 @@ typedef struct {
 } kvroute_t;
 
 static int
-s_snapshots (zloop_t *loop, void *snapshot, void *args)
+s_snapshots (zloop_t *loop, zmq_pollitem_t *poller, void *args)
 {
     clonesrv_t *self = (clonesrv_t *) args;
 
-    zframe_t *identity = zframe_recv (snapshot);
+    zframe_t *identity = zframe_recv (poller->socket);
     if (identity) {
         //  Request is in second frame of message
-        char *request = zstr_recv (snapshot);
+        char *request = zstr_recv (poller->socket);
         char *subtree = NULL;
         if (streq (request, "ICANHAZ?")) {
             free (request);
-            subtree = zstr_recv (snapshot);
+            subtree = zstr_recv (poller->socket);
         }
         else
             printf ("E: bad request, aborting\n");
 
         if (subtree) {
             //  Send state socket to client
-            kvroute_t routing = { snapshot, identity, subtree };
+            kvroute_t routing = { poller->socket, identity, subtree };
             zhash_foreach (self->kvmap, s_send_single, &routing);
 
             //  Now send END message with sequence number
             zclock_log ("I: sending shapshot=%d", (int) self->sequence);
-            zframe_send (&identity, snapshot, ZFRAME_MORE);
+            zframe_send (&identity, poller->socket, ZFRAME_MORE);
             kvmsg_t *kvmsg = kvmsg_new (self->sequence);
             kvmsg_set_key  (kvmsg, "KTHXBAI");
             kvmsg_set_body (kvmsg, (byte *) subtree, 0);
-            kvmsg_send     (kvmsg, snapshot);
+            kvmsg_send     (kvmsg, poller->socket);
             kvmsg_destroy (&kvmsg);
             free (subtree);
         }
@@ -183,11 +182,11 @@ s_send_single (char *key, void *data, void *args)
 static int s_was_pending (clonesrv_t *self, kvmsg_t *kvmsg);
 
 static int
-s_collector (zloop_t *loop, void *collector, void *args)
+s_collector (zloop_t *loop, zmq_pollitem_t *poller, void *args)
 {
     clonesrv_t *self = (clonesrv_t *) args;
 
-    kvmsg_t *kvmsg = kvmsg_recv (collector);
+    kvmsg_t *kvmsg = kvmsg_recv (poller->socket);
     kvmsg_dump (kvmsg);
     if (kvmsg) {
         if (self->master) {
@@ -237,10 +236,11 @@ s_was_pending (clonesrv_t *self, kvmsg_t *kvmsg)
 static int s_flush_single (char *key, void *data, void *args);
 
 static int
-s_flush_ttl (zloop_t *loop, void *unused, void *args)
+s_flush_ttl (zloop_t *loop, zmq_pollitem_t *poller, void *args)
 {
     clonesrv_t *self = (clonesrv_t *) args;
-    zhash_foreach (self->kvmap, s_flush_single, args);
+    if (self->kvmap)
+        zhash_foreach (self->kvmap, s_flush_single, args);
     return 0;
 }
 
@@ -269,7 +269,7 @@ s_flush_single (char *key, void *data, void *args)
 //  Send hugz to anyone listening on the publisher socket
 
 static int
-s_send_hugz (zloop_t *loop, void *unused, void *args)
+s_send_hugz (zloop_t *loop, zmq_pollitem_t *poller, void *args)
 {
     clonesrv_t *self = (clonesrv_t *) args;
 
@@ -291,13 +291,14 @@ s_send_hugz (zloop_t *loop, void *unused, void *args)
 //  and then starts to process state snapshot requests.
 
 static int
-s_new_master (zloop_t *loop, void *unused, void *args)
+s_new_master (zloop_t *loop, zmq_pollitem_t *unused, void *args)
 {
     clonesrv_t *self = (clonesrv_t *) args;
 
     self->master = TRUE;
     self->slave = FALSE;
-    zloop_cancel (bstar_zloop (self->bstar), self->subscriber);
+    zmq_pollitem_t poller = { self->subscriber, 0, ZMQ_POLLIN };
+    zloop_poller_end (bstar_zloop (self->bstar), &poller);
 
     //  Apply pending list to own hash table
     while (zlist_size (self->pending)) {
@@ -314,15 +315,15 @@ s_new_master (zloop_t *loop, void *unused, void *args)
 //  We're becoming slave
 
 static int
-s_new_slave (zloop_t *loop, void *unused, void *args)
+s_new_slave (zloop_t *loop, zmq_pollitem_t *unused, void *args)
 {
     clonesrv_t *self = (clonesrv_t *) args;
 
     zhash_destroy (&self->kvmap);
     self->master = FALSE;
     self->slave = TRUE;
-    zloop_reader (bstar_zloop (self->bstar), self->subscriber,
-                  s_subscriber, self);
+    zmq_pollitem_t poller = { self->subscriber, 0, ZMQ_POLLIN };
+    zloop_poller (bstar_zloop (self->bstar), &poller, s_subscriber, self);
 
     return 0;
 }
@@ -332,7 +333,7 @@ s_new_slave (zloop_t *loop, void *unused, void *args)
 //  We're always slave when we get these updates
 
 static int
-s_subscriber (zloop_t *loop, void *subscriber, void *args)
+s_subscriber (zloop_t *loop, zmq_pollitem_t *poller, void *args)
 {
     clonesrv_t *self = (clonesrv_t *) args;
     //  Get state snapshot if necessary
@@ -358,7 +359,7 @@ s_subscriber (zloop_t *loop, void *subscriber, void *args)
         zsocket_destroy (self->ctx, snapshot);
     }
     //  Find and remove update off pending list
-    kvmsg_t *kvmsg = kvmsg_recv (subscriber);
+    kvmsg_t *kvmsg = kvmsg_recv (poller->socket);
     if (!kvmsg)
         return 0;
 

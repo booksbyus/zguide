@@ -36,6 +36,7 @@ let main () =
     //      which allow for more concise (and possibly more efficient)
     //      implementations of the previous loop... 
     //      but this example translates most directly to it's C cousin
+    //      for a very concise alternative, see rrbroker.fsx
 
   // we don't actually get here but if we did, we'd shut down neatly
   EXIT_SUCCESS

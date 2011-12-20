@@ -49,8 +49,8 @@ client_task (void *args)
                 if (!reply)
                     break;              //  Interrupted
                 //  Worker is supposed to answer us with our task id
-                puts (reply);
                 assert (streq (reply, task_id));
+                zstr_sendf (monitor, "%s", reply);
                 free (reply);
             }
             else {
@@ -78,7 +78,7 @@ worker_task (void *args)
     zframe_send (&frame, worker, 0);
 
     while (1) {
-        //  Workers are busy for 0/1/2 seconds
+        //  Workers are busy for 0/1 seconds
         zmsg_t *msg = zmsg_recv (worker);
         sleep (randof (2));
         zmsg_send (&msg, worker);
@@ -144,12 +144,12 @@ int main (int argc, char *argv [])
     //  Start local workers
     int worker_nbr;
     for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++)
-        zthread_new (ctx, worker_task, NULL);
+        zthread_new (worker_task, NULL);
 
     //  Start local clients
     int client_nbr;
     for (client_nbr = 0; client_nbr < NBR_CLIENTS; client_nbr++)
-        zthread_new (ctx, client_task, NULL);
+        zthread_new (client_task, NULL);
 
     //  Interesting part
     //  -------------------------------------------------------------

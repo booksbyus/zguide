@@ -136,10 +136,10 @@ server_worker (void *args, zctx_t *ctx, void *pipe)
 int main (void)
 {
     zctx_t *ctx = zctx_new ();
-    zthread_new (ctx, client_task, NULL);
-    zthread_new (ctx, client_task, NULL);
-    zthread_new (ctx, client_task, NULL);
-    zthread_new (ctx, server_task, NULL);
+    zthread_new (client_task, NULL);
+    zthread_new (client_task, NULL);
+    zthread_new (client_task, NULL);
+    zthread_new (server_task, NULL);
 
     //  Run for 5 seconds then quit
     zclock_sleep (5 * 1000);

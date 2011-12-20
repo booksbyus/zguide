@@ -1,8 +1,7 @@
+# Report 0MQ version
 #
-#   Report 0MQ version
-#
+# Author: Lev Givon <lev(at)columbia(dot)edu>
 
 import zmq
 
-version = zmq.core.version.pyzmq_version()
-print "Current 0MQ version is", version
+print "Current 0MQ version is " + zmq.zmq_version()

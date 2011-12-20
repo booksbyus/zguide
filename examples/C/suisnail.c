@@ -21,6 +21,7 @@ subscriber (void *args, zctx_t *ctx, void *pipe)
     //  Get and process messages
     while (1) {
         char *string = zstr_recv (subscriber);
+        printf("%s\n", string);
         int64_t clock;
         int terms = sscanf (string, "%" PRId64, &clock);
         assert (terms == 1);
