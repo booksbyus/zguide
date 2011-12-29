@@ -1,6 +1,6 @@
 # encoding: utf-8
 #
-#   Custom routing Router to Papa (XREP to REP)
+#   Custom routing Router to Papa (ROUTER to REP)
 #
 #   Author: Jeremy Avnet (brainsik) <spork(dash)zmq(at)theory(dot)org>
 #
@@ -13,7 +13,7 @@ import zhelpers
 
 
 context = zmq.Context()
-client = context.socket(zmq.XREP)
+client = context.socket(zmq.ROUTER)
 client.bind("ipc://routing.ipc")
 
 worker = context.socket(zmq.REP)
@@ -36,5 +36,5 @@ zhelpers.dump(worker)
 # We don't play with envelopes in the worker
 worker.send("This is the reply")
 
-# Now dump what we got off the XREP socket...
+# Now dump what we got off the ROUTER socket...
 zhelpers.dump(client)

@@ -1,6 +1,6 @@
 <?php
 /*
- * Asynchronous client-to-server (XREQ to XREP)
+ * Asynchronous client-to-server (DEALER to ROUTER)
  * 
  * While this example runs in a single process, that is just to make
  * it easier to start and stop the example. Each task has its own
@@ -17,7 +17,7 @@ include "zmsg.php";
  */
 function client_task() {
 	$context = new ZMQContext();
-	$client = new ZMQSocket($context, ZMQ::SOCKET_XREQ);
+	$client = new ZMQSocket($context, ZMQ::SOCKET_DEALER);
 	
 	//  Generate printable identity for the client
 	$identity = sprintf ("%04X", rand(0, 0x10000));
@@ -65,11 +65,11 @@ function server_task() {
 	$context = new ZMQContext();
 	
 	//  Frontend socket talks to clients over TCP
-	$frontend = new ZMQSocket($context, ZMQ::SOCKET_XREP);
+	$frontend = new ZMQSocket($context, ZMQ::SOCKET_ROUTER);
 	$frontend->bind("tcp://*:5570");
 	
 	//  Backend socket talks to workers over ipc
-	$backend = new ZMQSocket($context, ZMQ::SOCKET_XREQ);
+	$backend = new ZMQSocket($context, ZMQ::SOCKET_DEALER);
 	$backend->bind("ipc://backend");
 	
 	//  Connect backend to frontend via a queue device
@@ -103,12 +103,12 @@ function server_task() {
 
 function server_worker() {
 	$context = new ZMQContext();
-	$worker = new ZMQSocket($context, ZMQ::SOCKET_XREQ);
+	$worker = new ZMQSocket($context, ZMQ::SOCKET_DEALER);
 	$worker->connect("ipc://backend");
 	$zmsg = new Zmsg($worker);
 	
 	while(true) {
-		//  The XREQ socket gives us the address envelope and message
+		//  The DEALER socket gives us the address envelope and message
 		$zmsg->recv();
 		assert($zmsg->parts() == 2);
 		

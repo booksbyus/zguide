@@ -21,7 +21,7 @@ PPP_HEARTBEAT = "\x02"  # Signals worker heartbeat
 def worker_socket(context, poller):
     """Helper function that returns a new configured socket
        connected to the Paranoid Pirate queue"""
-    worker = context.socket(zmq.XREQ) # DEALER
+    worker = context.socket(zmq.DEALER) # DEALER
     identity = "%04X-%04X" % (randint(0, 0x10000), randint(0, 0x10000))
     worker.setsockopt(zmq.IDENTITY, identity)
     poller.register(worker, zmq.POLLIN)

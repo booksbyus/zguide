@@ -1,5 +1,5 @@
 --
---  Custom routing Router to Mama (XREP to REQ)
+--  Custom routing Router to Mama (ROUTER to REQ)
 --
 --  While this example runs in a single process, that is just to make
 --  it easier to start and stop the example. Each thread has its own
@@ -53,7 +53,7 @@ local worker_task = pre_code .. [[
 s_version_assert (2, 1)
 local context = zmq.init(1)
 
-local client = context:socket(zmq.XREP)
+local client = context:socket(zmq.ROUTER)
 client:bind("ipc://routing.ipc")
 math.randomseed(os.time())
 

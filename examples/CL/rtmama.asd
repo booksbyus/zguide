@@ -1,6 +1,6 @@
 ;;; -*- Mode:Lisp; Syntax:ANSI-Common-Lisp; -*-
 ;;;
-;;;  Custom routing Router to Mama (XREP to REQ) in Common Lisp
+;;;  Custom routing Router to Mama (ROUTER to REQ) in Common Lisp
 ;;;
 ;;; Kamil Shakirov <kamils80@gmail.com>
 ;;;
@@ -12,7 +12,7 @@
 
 (defsystem rtmama
   :version "0.0.0"
-  :description "Custom routing Router to Mama (XREP to REQ) in Common Lisp."
+  :description "Custom routing Router to Mama (ROUTER to REQ) in Common Lisp."
   :maintainer "Kamil Shakirov <kamils80@gmail.com>"
   :author "Kamil Shakirov <kamils80@gmail.com>"
   :licence "MIT/X11"

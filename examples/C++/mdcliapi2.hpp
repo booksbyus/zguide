@@ -77,7 +77,7 @@ public:
        if (m_client) {
            delete m_client;
        }
-       m_client = new zmq::socket_t (*m_context, ZMQ_XREQ);
+       m_client = new zmq::socket_t (*m_context, ZMQ_DEALER);
        int linger = 0;
        m_client->setsockopt (ZMQ_LINGER, &linger, sizeof (linger));
        m_client->connect (m_broker.c_str());

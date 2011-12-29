@@ -307,13 +307,13 @@ public:
    test(int verbose)
    {
       zmq::context_t context(1);
-      zmq::socket_t output(context, ZMQ_XREQ);
+      zmq::socket_t output(context, ZMQ_DEALER);
       try {
          output.bind("ipc://zmsg_selftest.ipc");
       } catch (zmq::error_t error) {
          assert(error.num()!=0);
       }
-      zmq::socket_t input(context, ZMQ_XREP);
+      zmq::socket_t input(context, ZMQ_ROUTER);
       try {
          input.connect("ipc://zmsg_selftest.ipc");
       } catch (zmq::error_t error) {

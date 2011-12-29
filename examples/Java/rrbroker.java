@@ -14,8 +14,8 @@ public class rrbroker{
 		//  Prepare our context and sockets
 		Context context = ZMQ.context(1);
 
-		Socket frontend = context.socket(ZMQ.XREP);
-		Socket backend  = context.socket(ZMQ.XREQ);
+		Socket frontend = context.socket(ZMQ.ROUTER);
+		Socket backend  = context.socket(ZMQ.DEALER);
 		frontend.bind("tcp://*:5559");
 		backend.bind("tcp://*:5560");
 

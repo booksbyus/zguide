@@ -16,10 +16,10 @@
 (defun main ()
   (zmq:with-context (context 1)
     ;; Socket facing clients
-    (zmq:with-socket (frontend context zmq:xrep)
+    (zmq:with-socket (frontend context zmq:ROUTER)
       (zmq:bind frontend "tcp://*:5559")
       ;; Socket facing services
-      (zmq:with-socket (backend context zmq:xreq)
+      (zmq:with-socket (backend context zmq:DEALER)
         (zmq:bind backend  "tcp://*:5560")
 
         ;; Start built-in device

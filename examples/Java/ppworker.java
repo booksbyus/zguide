@@ -26,7 +26,7 @@ public class ppworker {
     private static final ZFrame heartbeatFrame = new ZFrame(PPP_HEARTBEAT);
 
     private static ZMQ.Socket connectWorker(ZContext context) {
-        ZMQ.Socket worker = context.createSocket(ZMQ.XREQ);
+        ZMQ.Socket worker = context.createSocket(ZMQ.DEALER);
         // Set random identity to make tracing easier
         Random rand = new Random();
         String id = String.format("%04x-%04x", rand.nextInt(0x10001),

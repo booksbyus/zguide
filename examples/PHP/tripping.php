@@ -13,7 +13,7 @@ include "zmsg.php";
 
 function client_task() {
 	$context = new ZMQContext();
-	$client = new ZMQSocket($context, ZMQ::SOCKET_XREQ);
+	$client = new ZMQSocket($context, ZMQ::SOCKET_DEALER);
 	$client->setSockOpt(ZMQ::SOCKOPT_IDENTITY, "C");
 	$client->connect("tcp://localhost:5555");
 	
@@ -49,7 +49,7 @@ function client_task() {
 
 function worker_task() {
 	$context = new ZMQContext();
-	$worker = new ZMQSocket($context, ZMQ::SOCKET_XREQ);
+	$worker = new ZMQSocket($context, ZMQ::SOCKET_DEALER);
 	$worker->setSockOpt(ZMQ::SOCKOPT_IDENTITY, "W");
 	$worker->connect("tcp://localhost:5556");
 	while(true) {
@@ -62,8 +62,8 @@ function worker_task() {
 function broker_task() {
 	//  Prepare our context and sockets
 	$context = new ZMQContext();
-	$frontend = new ZMQSocket($context, ZMQ::SOCKET_XREP);
-	$backend = new ZMQSocket($context, ZMQ::SOCKET_XREP);
+	$frontend = new ZMQSocket($context, ZMQ::SOCKET_ROUTER);
+	$backend = new ZMQSocket($context, ZMQ::SOCKET_ROUTER);
 	$frontend->bind("tcp://*:5555");
 	$backend->bind("tcp://*:5556");
 	

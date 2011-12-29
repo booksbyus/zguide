@@ -28,8 +28,8 @@ namespace ZMQGuide {
 
         static void Main(string[] args) {
             using (Context context = new Context(1)) {
-                using (Socket clients = context.Socket(SocketType.XREP),
-                workers = context.Socket(SocketType.XREQ)) {
+                using (Socket clients = context.Socket(SocketType.ROUTER),
+                workers = context.Socket(SocketType.DEALER)) {
                     //  Socket to talk to clients
                     clients.Bind("tcp://*:5555");
                     //  Socket to talk to workers

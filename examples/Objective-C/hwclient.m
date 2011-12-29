@@ -21,9 +21,9 @@ main (void)
 		return EXIT_FAILURE;
 	}
 
-	static const int kMaxRequest = 10;
+	static const int kMaDEALERuest = 10;
 	NSData *const request = [@"Hello" dataUsingEncoding:NSUTF8StringEncoding];
-	for (int request_nbr = 0; request_nbr < kMaxRequest; ++request_nbr) {
+	for (int request_nbr = 0; request_nbr < kMaDEALERuest; ++request_nbr) {
 		NSAutoreleasePool *localPool = [[NSAutoreleasePool alloc] init];
 
 		NSLog(@"Sending request %d.", request_nbr);

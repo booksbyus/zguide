@@ -19,7 +19,7 @@ local common_code = [[
 
 local client_task = common_code .. [[
     local context = zmq.init(1)
-    local client = context:socket(zmq.XREQ)
+    local client = context:socket(zmq.DEALER)
     client:setopt(zmq.IDENTITY, "C", 1)
     client:connect("tcp://localhost:5555")
 
@@ -59,7 +59,7 @@ local client_task = common_code .. [[
 
 local worker_task = common_code .. [[
     local context = zmq.init(1)
-    local worker = context:socket(zmq.XREQ)
+    local worker = context:socket(zmq.DEALER)
     worker:setopt(zmq.IDENTITY, "W", 1)
     worker:connect("tcp://localhost:5556")
 
@@ -74,8 +74,8 @@ local worker_task = common_code .. [[
 local broker_task = common_code .. [[
     --  Prepare our context and sockets
     local context = zmq.init(1)
-    local frontend = context:socket(zmq.XREP)
-    local backend  = context:socket(zmq.XREP)
+    local frontend = context:socket(zmq.ROUTER)
+    local backend  = context:socket(zmq.ROUTER)
     frontend:bind("tcp://*:5555")
     backend:bind("tcp://*:5556")
 

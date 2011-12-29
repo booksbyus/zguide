@@ -100,7 +100,7 @@ public:
    {
        //  Initialize broker state
        m_context = new zmq::context_t(1);
-       m_socket = new zmq::socket_t(*m_context, ZMQ_XREP);
+       m_socket = new zmq::socket_t(*m_context, ZMQ_ROUTER);
        m_verbose = verbose;
        m_heartbeat_at = s_clock () + HEARTBEAT_INTERVAL;
    }

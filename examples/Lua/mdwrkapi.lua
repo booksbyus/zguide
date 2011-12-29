@@ -59,7 +59,7 @@ local function s_mdwrk_connect_to_broker(self)
         self.poller:remove(self.worker)
         self.worker:close()
     end
-    self.worker = assert(self.context:socket(zmq.XREQ))
+    self.worker = assert(self.context:socket(zmq.DEALER))
     assert(self.worker:setopt(zmq.LINGER, 0))
     assert(self.worker:connect(self.broker))
     if self.verbose then

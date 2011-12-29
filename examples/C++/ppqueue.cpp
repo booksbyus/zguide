@@ -97,8 +97,8 @@ int main (void)
 
     //  Prepare our context and sockets
     zmq::context_t context(1);
-    zmq::socket_t frontend(context, ZMQ_XREP);
-    zmq::socket_t backend (context, ZMQ_XREP);
+    zmq::socket_t frontend(context, ZMQ_ROUTER);
+    zmq::socket_t backend (context, ZMQ_ROUTER);
     frontend.bind("tcp://*:5555");    //  For clients
     backend.bind ("tcp://*:5556");    //  For workers
 

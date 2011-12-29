@@ -1,6 +1,6 @@
 # encoding: utf-8
 #
-#   Custom routing Router to Mama (XREP to REQ)
+#   Custom routing Router to Mama (ROUTER to REQ)
 #
 #   Author: Jeremy Avnet (brainsik) <spork(dash)zmq(at)theory(dot)org>
 #
@@ -41,7 +41,7 @@ def worker_thread(context):
 
 
 context = zmq.Context()
-client = context.socket(zmq.XREP)
+client = context.socket(zmq.ROUTER)
 client.bind("ipc://routing.ipc")
 
 for _ in xrange(NBR_WORKERS):

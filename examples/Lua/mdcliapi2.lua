@@ -33,7 +33,7 @@ local function s_mdcli_connect_to_broker(self)
         self.poller:remove(self.client)
         self.client:close()
     end
-    self.client = assert(self.context:socket(zmq.XREQ))
+    self.client = assert(self.context:socket(zmq.DEALER))
     assert(self.client:setopt(zmq.LINGER, 0))
     assert(self.client:connect(self.broker))
     if self.verbose then

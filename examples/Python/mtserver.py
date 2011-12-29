@@ -39,11 +39,11 @@ def main():
     context = zmq.Context(1)
     
     # Socket to talk to clients
-    clients = context.socket(zmq.XREP)
+    clients = context.socket(zmq.ROUTER)
     clients.bind(url_client)
     
     # Socket to talk to workers
-    workers = context.socket(zmq.XREQ)
+    workers = context.socket(zmq.DEALER)
     workers.bind(url_worker)
     
     # Launch pool of worker threads

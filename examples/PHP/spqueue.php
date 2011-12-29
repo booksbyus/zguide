@@ -13,8 +13,8 @@ define("MAX_WORKERS", 100);
 
 //  Prepare our context and sockets
 $context  = new ZMQContext();
-$frontend = $context->getSocket(ZMQ::SOCKET_XREP);
-$backend = $context->getSocket(ZMQ::SOCKET_XREP);
+$frontend = $context->getSocket(ZMQ::SOCKET_ROUTER);
+$backend = $context->getSocket(ZMQ::SOCKET_ROUTER);
 $frontend->bind("tcp://*:5555");    //  For clients
 $backend->bind("tcp://*:5556");    //  For workers
 

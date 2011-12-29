@@ -10,20 +10,20 @@ require"zhelpers"
 
 local context = zmq.init(1)
 
-local sink = context:socket(zmq.XREP)
+local sink = context:socket(zmq.ROUTER)
 sink:bind("inproc://example")
 
 --  First allow 0MQ to set the identity
 local anonymous = context:socket(zmq.REQ)
 anonymous:connect("inproc://example")
-anonymous:send("XREP uses a generated UUID")
+anonymous:send("ROUTER uses a generated UUID")
 s_dump(sink)
 
 --  Then set the identity ourself
 local identified = context:socket(zmq.REQ)
 identified:setopt(zmq.IDENTITY, "Hello")
 identified:connect("inproc://example")
-identified:send("XREP socket uses REQ's socket identity")
+identified:send("ROUTER socket uses REQ's socket identity")
 s_dump(sink)
 
 sink:close()

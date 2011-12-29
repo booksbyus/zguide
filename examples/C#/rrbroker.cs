@@ -18,8 +18,8 @@ namespace ZMQGuide {
         public RRBroker() {
             //  Prepare our context and sockets
             context = new Context(1);
-            frontend = context.Socket(SocketType.XREP);
-            backend = context.Socket(SocketType.XREQ);
+            frontend = context.Socket(SocketType.ROUTER);
+            backend = context.Socket(SocketType.DEALER);
             frontend.Bind("tcp://*:5559");
             backend.Bind("tcp://*:5560");
         }

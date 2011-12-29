@@ -18,7 +18,7 @@ local INTERVAL_MAX        = 32000    --  After exponential backoff
 local identity
 
 local function s_worker_socket (context)
-    local worker = context:socket(zmq.XREQ)
+    local worker = context:socket(zmq.DEALER)
 
     --  Set random identity to make tracing easier
     identity = string.format("%04X-%04X", randof (0x10000), randof (0x10000))

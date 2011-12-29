@@ -69,8 +69,8 @@ namespace lruqueue {
             List<Thread> clients = new List<Thread>();
             //  Prepare our context and sockets
             using (Context ctx = new Context(1)) {
-                using (Socket frontend = ctx.Socket(SocketType.XREP),
-                    backend = ctx.Socket(SocketType.XREP)) {
+                using (Socket frontend = ctx.Socket(SocketType.ROUTER),
+                    backend = ctx.Socket(SocketType.ROUTER)) {
 
                     frontend.Bind("tcp://*:5555");
                     backend.Bind("tcp://*:5556");
