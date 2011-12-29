@@ -18,8 +18,8 @@ main = withContext 1 $ \context -> do
     bind publisher "ipc://weather.ipc"
   
     forever $ do
-      zipcode <- randomRIO (10000, 99999) :: IO Int
-      temperature <- randomRIO (-10, 30) :: IO Int
+      zipcode <- randomRIO (0, 100000) :: IO Int
+      temperature <- randomRIO (-80, 135) :: IO Int
       humidity <- randomRIO (10, 60) :: IO Int
       
       let update = pack $ unwords [show zipcode, show temperature, show humidity]
