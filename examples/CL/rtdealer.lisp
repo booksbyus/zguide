@@ -16,7 +16,7 @@
 (in-package :zguide.rtdealer)
 
 (defun worker-a (context)
-  (zmq:with-socket (worker context zmq:DEALER)
+  (zmq:with-socket (worker context zmq:dealer)
     (zmq:setsockopt worker zmq:identity "A")
     (zmq:connect worker "ipc://routing.ipc")
 
@@ -30,7 +30,7 @@
           (incf total))))))
 
 (defun worker-b (context)
-  (zmq:with-socket (worker context zmq:DEALER)
+  (zmq:with-socket (worker context zmq:dealer)
     (zmq:setsockopt worker zmq:identity "B")
     (zmq:connect worker "ipc://routing.ipc")
 
@@ -45,7 +45,7 @@
 
 (defun main ()
   (zmq:with-context (context 1)
-    (zmq:with-socket (client context zmq:ROUTER)
+    (zmq:with-socket (client context zmq:router)
       (zmq:bind client "ipc://routing.ipc")
 
       (bt:make-thread (lambda () (worker-a context))

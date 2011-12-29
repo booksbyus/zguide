@@ -14,11 +14,11 @@
 
 (defun main ()
   (zmq:with-context (context 1)
-    (zmq:with-socket (worker context zmq:ROUTER)
+    (zmq:with-socket (worker context zmq:router)
       (zmq:setsockopt worker zmq:identity "WORKER")
       (zmq:bind worker "ipc://rtrouter.ipc")
 
-      (zmq:with-socket (server context zmq:ROUTER)
+      (zmq:with-socket (server context zmq:router)
         (zmq:setsockopt server zmq:identity "SERVER")
         (zmq:connect server "ipc://rtrouter.ipc")
 

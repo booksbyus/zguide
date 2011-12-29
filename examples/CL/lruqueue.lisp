@@ -61,8 +61,8 @@
 (defun main ()
   ;; Prepare our context and sockets
   (zmq:with-context (context 1)
-    (zmq:with-socket (frontend context zmq:ROUTER)
-      (zmq:with-socket (backend context zmq:ROUTER)
+    (zmq:with-socket (frontend context zmq:router)
+      (zmq:with-socket (backend context zmq:router)
         (zmq:bind frontend "ipc://frontend.ipc")
         (zmq:bind backend "ipc://backend.ipc")
 

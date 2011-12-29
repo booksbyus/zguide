@@ -28,7 +28,7 @@
 
 (defn -main []
   (let [ctx (mq/context 1)
-        client (mq/socket ctx mq/ROUTER)
+        client (mq/socket ctx mq/dealer)
         srandom (Random. (System/currentTimeMillis))]
     (mq/bind client "ipc://routing.ipc")
     (-> "A" Worker. Thread. .start)

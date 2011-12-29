@@ -19,12 +19,12 @@
 
 (def sndmore ZMQ/SNDMORE)
 
-(def router ZMQ/ROUTER)
-(def dealer ZMQ/DEALER)
+(def router ZMQ/XREP)
+(def dealer ZMQ/XREQ)
 (def req ZMQ/REQ)
 (def rep ZMQ/REP)
-(def DEALER ZMQ/DEALER)
-(def ROUTER ZMQ/ROUTER)
+(def xreq ZMQ/XREQ)
+(def xrep ZMQ/XREP)
 (def pub ZMQ/PUB)
 (def sub ZMQ/SUB)
 (def pair ZMQ/PAIR)

@@ -17,7 +17,7 @@
 
 (defun main ()
   (zmq:with-context (context 1)
-    (zmq:with-socket (sink context zmq:ROUTER)
+    (zmq:with-socket (sink context zmq:router)
       (zmq:bind sink "inproc://example")
 
       ;; First allow 0MQ to set the identity

@@ -33,10 +33,10 @@
   ;; Prepare our context and socket
   (zmq:with-context (context 1)
     ;; Socket to talk to clients
-    (zmq:with-socket (clients context zmq:ROUTER)
+    (zmq:with-socket (clients context zmq:router)
       (zmq:bind clients "tcp://*:5555")
       ;; Socket to talk to workers
-      (zmq:with-socket (workers context zmq:DEALER)
+      (zmq:with-socket (workers context zmq:dealer)
         (zmq:bind workers "inproc://workers")
 
         ;; Launch pool of worker threads

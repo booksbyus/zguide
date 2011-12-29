@@ -37,7 +37,7 @@
 
 (defun main ()
   (zmq:with-context (context 1)
-    (zmq:with-socket (client context zmq:ROUTER)
+    (zmq:with-socket (client context zmq:router)
       (zmq:bind client "ipc://routing.ipc")
 
       (dotimes (i *number-workers*)
