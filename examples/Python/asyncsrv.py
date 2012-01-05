@@ -13,7 +13,7 @@ class ClientTask(threading.Thread):
     
     def run(self):
         context = zmq.Context()
-        socket = context.socket(zmq.XREQ)
+        socket = context.socket(zmq.DEALER)
         identity = 'worker-%d' % (choice([0,1,2,3,4,5,6,7,8,9]))
         socket.setsockopt(zmq.IDENTITY, identity )
         socket.connect('tcp://localhost:5570')
@@ -43,10 +43,10 @@ class ServerTask(threading.Thread):
     
     def run(self):
         context = zmq.Context()
-        frontend = context.socket(zmq.XREP)
+        frontend = context.socket(zmq.ROUTER)
         frontend.bind('tcp://*:5570')
         
-        backend = context.socket(zmq.XREQ)
+        backend = context.socket(zmq.DEALER)
         backend.bind('inproc://backend')
         
         workers = []
@@ -87,7 +87,7 @@ class ServerWorker(threading.Thread):
         self.context = context
     
     def run(self):
-        worker = self.context.socket(zmq.XREQ)
+        worker = self.context.socket(zmq.DEALER)
         worker.connect('inproc://backend')
         print 'Worker started'
         while True:

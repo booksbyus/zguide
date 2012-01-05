@@ -1,6 +1,6 @@
 --
 --  Freelance server - Model 3
---  Uses an ROUTER/XREP socket but just one thread
+--  Uses an ROUTER/ROUTER socket but just one thread
 --
 --  Author: Robert G. Jakabosky <bobby@sharedrealm.com>
 --
@@ -15,7 +15,7 @@ s_catch_signals ()
 --  Prepare server socket with predictable identity
 local bind_endpoint = "tcp://*:5555"
 local connect_endpoint = "tcp://localhost:5555"
-local server = context:socket(zmq.XREP)
+local server = context:socket(zmq.ROUTER)
 server:setopt(zmq.IDENTITY, connect_endpoint)
 server:bind(bind_endpoint)
 printf ("I: service is ready at %s\n", bind_endpoint)

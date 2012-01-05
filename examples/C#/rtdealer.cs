@@ -1,5 +1,5 @@
 ﻿//
-//  Custom routing Router to Dealer (XREP to XREQ)
+//  Custom routing Router to Dealer
 //
 //  While this example runs in a single process, that is just to make
 //  it easier to start and stop the example. Each thread has its own
@@ -22,7 +22,7 @@ namespace rtdealer {
         //
         static void WorkerTaskA() {
             using (Context ctx = new Context(1)) {
-                using (Socket worker = ctx.Socket(SocketType.XREQ)) {
+                using (Socket worker = ctx.Socket(SocketType.DEALER)) {
                     worker.StringToIdentity("A", Encoding.Unicode);
                     worker.Connect("tcp://localhost:5555");
                     int total = 0;
@@ -40,7 +40,7 @@ namespace rtdealer {
 
         static void WorkerTaskB() {
             using (Context ctx = new Context(1)) {
-                using (Socket worker = ctx.Socket(SocketType.XREQ)) {
+                using (Socket worker = ctx.Socket(SocketType.DEALER)) {
                     worker.StringToIdentity("B", Encoding.Unicode);
                     worker.Connect("tcp://localhost:5555");
                     int total = 0;
@@ -61,7 +61,7 @@ namespace rtdealer {
             List<Thread> workers = new List<Thread>(new Thread[] { 
                 new Thread(WorkerTaskA), new Thread(WorkerTaskB) });
             using (Context ctx = new Context(1)) {
-                using (Socket client = ctx.Socket(SocketType.XREP)) {
+                using (Socket client = ctx.Socket(SocketType.ROUTER)) {
                     client.Bind("tcp://*:5555");
                     foreach (Thread thread in workers) {
                         thread.Start();

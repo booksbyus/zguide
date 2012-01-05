@@ -1,5 +1,5 @@
 ﻿//
-//  Custom routing Router to Mama (XREP to REQ)
+//  Custom routing Router to Mama (ROUTER to REQ)
 //
 //  While this example runs in a single process, that is just to make
 //  it easier to start and stop the example. Each thread has its own
@@ -50,7 +50,7 @@ namespace rtmama {
             ZHelpers.VersionAssert(2, 1);
             List<Thread> workers = new List<Thread>(NBR_WORKERS);
             using (Context ctx = new Context(1)) {
-                using (Socket client = ctx.Socket(SocketType.XREP)) {
+                using (Socket client = ctx.Socket(SocketType.ROUTER)) {
                     client.Bind("tcp://*:5555");
                     for (int workerNbr = 0; workerNbr < NBR_WORKERS; workerNbr++) {
                         workers.Add(new Thread(WorkerTask));

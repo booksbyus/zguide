@@ -1,17 +1,17 @@
 <?php
 /*
- * Cross-connected XREP sockets addressing each other
+ * Cross-connected ROUTER sockets addressing each other
  * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
  */
 include "zhelpers.php";
 
 $context = new ZMQContext();
 
-$worker = new ZMQSocket($context, ZMQ::SOCKET_XREP);
+$worker = new ZMQSocket($context, ZMQ::SOCKET_ROUTER);
 $worker->setSockOpt(ZMQ::SOCKOPT_IDENTITY, "WORKER");
 $worker->bind("ipc://rtrouter.ipc");
 
-$server = new ZMQSocket($context, ZMQ::SOCKET_XREP);
+$server = new ZMQSocket($context, ZMQ::SOCKET_ROUTER);
 $server->setSockOpt(ZMQ::SOCKOPT_IDENTITY, "SERVER");
 $server->connect("ipc://rtrouter.ipc");
 

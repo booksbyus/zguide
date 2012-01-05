@@ -1,6 +1,6 @@
 <?php
 /*
- * Custom routing Router to Mama (XREP to REQ)
+ * Custom routing Router to Mama (ROUTER to REQ)
  * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>a
  */
 
@@ -37,7 +37,7 @@ for ($worker_nbr = 0; $worker_nbr < NBR_WORKERS; $worker_nbr++) {
 }
 
 $context = new ZMQContext();
-$client = $context->getSocket(ZMQ::SOCKET_XREP);
+$client = $context->getSocket(ZMQ::SOCKET_ROUTER);
 $client->bind("ipc://routing.ipc");
 
 for ($task_nbr = 0; $task_nbr < NBR_WORKERS * 10; $task_nbr++) {

@@ -9,18 +9,18 @@ include "zhelpers.php";
 
 $context = new ZMQContext();
 
-$sink = new ZMQSocket($context, ZMQ::SOCKET_XREP);
+$sink = new ZMQSocket($context, ZMQ::SOCKET_ROUTER);
 $sink->bind("inproc://example");
 
 //  First allow 0MQ to set the identity
 $anonymous = new ZMQSocket($context, ZMQ::SOCKET_REQ);
 $anonymous->connect("inproc://example");
-$anonymous->send("XREP uses a generated UUID");
+$anonymous->send("ROUTER uses a generated UUID");
 s_dump ($sink);
 
 //  Then set the identity ourself
 $identified = new ZMQSocket($context, ZMQ::SOCKET_REQ);
 $identified->setSockOpt(ZMQ::SOCKOPT_IDENTITY, "Hello");
 $identified->connect("inproc://example");
-$identified->send("XREP socket uses REQ's socket identity");
+$identified->send("ROUTER socket uses REQ's socket identity");
 s_dump ($sink);

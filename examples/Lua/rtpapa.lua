@@ -1,5 +1,5 @@
 --
---  Custom routing Router to Papa (XREP to REP)
+--  Custom routing Router to Papa (ROUTER to REP)
 --
 --  Author: Robert G. Jakabosky <bobby@sharedrealm.com>
 --
@@ -11,7 +11,7 @@ require"zhelpers"
 
 local context = zmq.init(1)
 
-local client = context:socket(zmq.XREP)
+local client = context:socket(zmq.ROUTER)
 client:bind("ipc://routing.ipc")
 
 local worker = context:socket(zmq.REP)
@@ -36,7 +36,7 @@ s_dump (worker)
 --  We don't play with envelopes in the worker
 worker:send("This is the reply")
 
---  Now dump what we got off the XREP socket...
+--  Now dump what we got off the ROUTER socket...
 s_dump (client)
 
 client:close()

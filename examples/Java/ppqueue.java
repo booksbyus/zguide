@@ -116,8 +116,8 @@ public class ppqueue {
     public static void main(String[] args) {
         // Prepare our context and sockets
         ZContext context = new ZContext();
-        ZMQ.Socket frontend = context.createSocket(ZMQ.XREP);
-        ZMQ.Socket backend = context.createSocket(ZMQ.XREP);
+        ZMQ.Socket frontend = context.createSocket(ZMQ.ROUTER);
+        ZMQ.Socket backend = context.createSocket(ZMQ.ROUTER);
         frontend.bind("tcp://*:5555"); // For clients
         backend.bind("tcp://*:5556"); // For workers
         WorkersPool workers = new WorkersPool();

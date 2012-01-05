@@ -17,7 +17,7 @@ class FLClient(object):
         self.servers = 0
         self.sequence = 0
         self.context = zmq.Context()
-        self.socket = self.context.socket(zmq.XREQ)   # DEALER
+        self.socket = self.context.socket(zmq.DEALER)   # DEALER
 
     def destroy(self):
         self.socket.setsockopt(zmq.LINGER, 0)  # Terminate early

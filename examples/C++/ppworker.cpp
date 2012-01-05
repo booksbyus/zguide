@@ -20,7 +20,7 @@ std::string identity;
 
 static zmq::socket_t *
 s_worker_socket (zmq::context_t &context) {
-    zmq::socket_t * worker = new zmq::socket_t(context, ZMQ_XREQ);
+    zmq::socket_t * worker = new zmq::socket_t(context, ZMQ_DEALER);
 
     //  Set random identity to make tracing easier
     identity = s_set_id(*worker);

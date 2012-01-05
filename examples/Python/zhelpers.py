@@ -11,9 +11,9 @@ import zmq
 
 # fix ROUTER/DEALER aliases, missing from pyzmq < 2.1.9
 if not hasattr(zmq, 'ROUTER'):
-    zmq.ROUTER = zmq.XREP
+    zmq.ROUTER = zmq.ROUTER
 if not hasattr(zmq, 'DEALER'):
-    zmq.DEALER = zmq.XREQ
+    zmq.DEALER = zmq.DEALER
 
 
 # Receives all message parts from socket, prints neatly

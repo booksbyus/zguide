@@ -4,7 +4,7 @@
   (:import [java.util Random]))
 
 ;;
-;; Custom routing Router to Dealer (ROUTER to DEALER)
+;; Custom routing Router to Dealer
 ;;
 ;; While this example runs in a single process, that is just to make
 ;; it easier to start and stop the example. Each thread has its own
@@ -28,7 +28,7 @@
 
 (defn -main []
   (let [ctx (mq/context 1)
-        client (mq/socket ctx mq/xrep)
+        client (mq/socket ctx mq/dealer)
         srandom (Random. (System/currentTimeMillis))]
     (mq/bind client "ipc://routing.ipc")
     (-> "A" Worker. Thread. .start)

@@ -44,9 +44,9 @@ printf(" * zmsg: ")
 
 --  Prepare our context and sockets
 local context = zmq.init(1)
-local output = context:socket(zmq.XREQ)
+local output = context:socket(zmq.DEALER)
 assert(output:bind("ipc://zmsg_selftest.ipc"))
-local input = context:socket(zmq.XREP)
+local input = context:socket(zmq.ROUTER)
 assert(input:connect("ipc://zmsg_selftest.ipc"))
 
 --  Test send and receive of single-part message

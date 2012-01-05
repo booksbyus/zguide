@@ -15,8 +15,8 @@ use ZeroMQ qw/:all/;
 
 # Prepare our context and sockets
 my $context = ZeroMQ::Context->new();
-my $frontend = $context->socket(ZMQ_XREP);
-my $backend  = $context->socket(ZMQ_XREQ);
+my $frontend = $context->socket(ZMQ_ROUTER);
+my $backend  = $context->socket(ZMQ_DEALER);
 $frontend->bind('tcp://*:5559');
 $backend->bind('tcp://*:5560');
 

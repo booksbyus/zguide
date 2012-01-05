@@ -1,5 +1,5 @@
 ﻿//
-//  Asynchronous client-to-server (XREQ to XREP)
+//  Asynchronous client-to-server (DEALER to ROUTER)
 //
 //  While this example runs in a single process, that is just to make
 //  it easier to start and stop the example. Each task has its own
@@ -24,7 +24,7 @@ namespace asyncsrv {
         //  run several client tasks in parallel, each with a different random ID.
         static void ClientTask() {
             using (Context ctx = new Context(1)) {
-                using (Socket client = ctx.Socket(SocketType.XREQ)) {
+                using (Socket client = ctx.Socket(SocketType.DEALER)) {
                     //  Generate printable identity for the client
                     ZHelpers.SetID(client, Encoding.Unicode);
                     string identity = client.IdentityToString(Encoding.Unicode);
@@ -58,8 +58,8 @@ namespace asyncsrv {
         static void ServerTask() {
             List<Thread> workers = new List<Thread>(5);
             using (Context ctx = new Context(1)) {
-                using (Socket frontend = ctx.Socket(SocketType.XREP),
-                    backend = ctx.Socket(SocketType.XREQ)) {
+                using (Socket frontend = ctx.Socket(SocketType.ROUTER),
+                    backend = ctx.Socket(SocketType.DEALER)) {
                     //  Frontend socket talks to clients over TCP
                     frontend.Bind("tcp://*:5570");
                     //  Backend socket talks to workers over inproc
@@ -101,10 +101,10 @@ namespace asyncsrv {
         //
         static void ServerWorker(object ctx) {
             Random rand = new Random(DateTime.Now.Millisecond);
-            using (Socket worker = ((Context)ctx).Socket(SocketType.XREQ)) {
+            using (Socket worker = ((Context)ctx).Socket(SocketType.DEALER)) {
                 worker.Connect("inproc://backend");
                 while (true) {
-                    //  The XREQ socket gives us the address envelope and message
+                    //  The DEALER socket gives us the address envelope and message
                     ZMessage zmsg = new ZMessage(worker);
                     //  Send 0..4 replies back
                     int replies = rand.Next(5);

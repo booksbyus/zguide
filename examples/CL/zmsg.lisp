@@ -206,10 +206,10 @@ Discards empty message part after address, if any."
 
   ;; Prepare our context and sockets
   (zmq:with-context (context 1)
-    (zmq:with-socket (output context zmq:xreq)
+    (zmq:with-socket (output context zmq:dealer)
       (zmq:bind output "ipc://zmsg_selftest.ipc")
 
-      (zmq:with-socket (input context zmq:xrep)
+      (zmq:with-socket (input context zmq:router)
         (zmq:connect input "ipc://zmsg_selftest.ipc")
 
         ;; Test send and receive of single-part message

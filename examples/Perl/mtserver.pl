@@ -36,11 +36,11 @@ sub worker_routine {
 my $context = ZeroMQ::Context->new();
 
 # Socket to talk to clients
-my $clients = $context->socket(ZMQ_XREP);
+my $clients = $context->socket(ZMQ_ROUTER);
 $clients->bind('tcp://*:5555');
 
 # Socket to talk to workers
-my $workers = $context->socket(ZMQ_XREQ);
+my $workers = $context->socket(ZMQ_DEALER);
 $workers->bind('inproc://workers');
 
 # Launch pool of worker threads

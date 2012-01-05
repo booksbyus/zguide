@@ -1,6 +1,6 @@
 ;;; -*- Mode:Lisp; Syntax:ANSI-Common-Lisp; -*-
 ;;;
-;;;  Custom routing Router to Mama (XREP to REQ) in Common Lisp
+;;;  Custom routing Router to Mama (ROUTER to REQ) in Common Lisp
 ;;;
 ;;; Kamil Shakirov <kamils80@gmail.com>
 ;;;
@@ -37,7 +37,7 @@
 
 (defun main ()
   (zmq:with-context (context 1)
-    (zmq:with-socket (client context zmq:xrep)
+    (zmq:with-socket (client context zmq:router)
       (zmq:bind client "ipc://routing.ipc")
 
       (dotimes (i *number-workers*)

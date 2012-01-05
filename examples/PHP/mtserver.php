@@ -36,11 +36,11 @@ for($thread_nbr = 0; $thread_nbr != 5; $thread_nbr++) {
 $context = new ZMQContext();
 
 //  Socket to talk to clients
-$clients = new ZMQSocket($context, ZMQ::SOCKET_XREP);
+$clients = new ZMQSocket($context, ZMQ::SOCKET_ROUTER);
 $clients->bind("tcp://*:5555");
 
 //  Socket to talk to workers
-$workers = new ZMQSocket($context, ZMQ::SOCKET_XREQ);
+$workers = new ZMQSocket($context, ZMQ::SOCKET_DEALER);
 $workers->bind("ipc://workers.ipc");
 
 //  Connect work threads to client threads via a queue

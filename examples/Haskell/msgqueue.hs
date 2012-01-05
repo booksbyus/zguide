@@ -13,8 +13,8 @@ import Data.ByteString.Char8 (pack, unpack)
 import Control.Concurrent (threadDelay)
 
 main = withContext 1 $ \context -> do  
-  withSocket context Xrep $ \frontend -> do
-    withSocket context Xreq $ \backend -> do
+  withSocket context Router $ \frontend -> do
+    withSocket context Dealer $ \backend -> do
       
       bind frontend "tcp://*:5559"
       bind backend "tcp://*:5560"      

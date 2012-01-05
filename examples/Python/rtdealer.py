@@ -1,6 +1,6 @@
 # encoding: utf-8
 #
-#   Custom routing Router to Dealer (XREP to XREQ)
+#   Custom routing Router to Dealer
 #
 #   Author: Jeremy Avnet (brainsik) <spork(dash)zmq(at)theory(dot)org>
 #
@@ -16,7 +16,7 @@ import zmq
 # run on different boxes...
 #
 def worker_a(context):
-    worker = context.socket(zmq.XREQ)
+    worker = context.socket(zmq.DEALER)
     worker.setsockopt(zmq.IDENTITY, 'A')
     worker.connect("ipc://routing.ipc")
 
@@ -32,7 +32,7 @@ def worker_a(context):
 
 
 def worker_b(context):
-    worker = context.socket(zmq.XREQ)
+    worker = context.socket(zmq.DEALER)
     worker.setsockopt(zmq.IDENTITY, 'B')
     worker.connect("ipc://routing.ipc")
 
@@ -48,7 +48,7 @@ def worker_b(context):
 
 
 context = zmq.Context()
-client = context.socket(zmq.XREP)
+client = context.socket(zmq.ROUTER)
 client.bind("ipc://routing.ipc")
 
 Thread(target=worker_a, args=(context,)).start()
