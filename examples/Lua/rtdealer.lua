@@ -1,5 +1,5 @@
 --
---  Custom routing Router to Dealer (XREP to XREQ)
+--  Custom routing Router to Dealer
 --
 --  While this example runs in a single process, that is just to make
 --  it easier to start and stop the example. Each thread has its own
@@ -23,7 +23,7 @@ local pre_code = [[
 --
 local worker_task_a = pre_code .. [[
     local context = zmq.init(1)
-    local worker = context:socket(zmq.XREQ)
+    local worker = context:socket(zmq.DEALER)
     worker:setopt(zmq.IDENTITY, "A")
     worker:connect("ipc://routing.ipc")
 
@@ -45,7 +45,7 @@ local worker_task_a = pre_code .. [[
 
 local worker_task_b = pre_code .. [[
     local context = zmq.init(1)
-    local worker = context:socket(zmq.XREQ)
+    local worker = context:socket(zmq.DEALER)
     worker:setopt(zmq.IDENTITY, "B")
     worker:connect("ipc://routing.ipc")
 
@@ -68,7 +68,7 @@ local worker_task_b = pre_code .. [[
 s_version_assert (2, 1)
 local context = zmq.init(1)
 
-local client = context:socket(zmq.XREP)
+local client = context:socket(zmq.ROUTER)
 client:bind("ipc://routing.ipc")
 
 local task_a = zmq.threads.runstring(context, worker_task_a)

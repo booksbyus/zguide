@@ -10,8 +10,8 @@
 
 (defn -main []
   (let [ctx (mq/context 1)
-        frontend (mq/socket ctx mq/xrep)
-        backend (mq/socket ctx mq/xreq)
+        frontend (mq/socket ctx mq/router)
+        backend (mq/socket ctx mq/dealer)
         items (.poller ctx 2)]
     (mq/bind frontend "tcp://*:5559")
     (mq/bind backend "tcp://*:5560")

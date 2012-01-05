@@ -1,6 +1,6 @@
 #! /usr/bin/env escript
 %%
-%% Custom routing Router to Dealer (ROUTER to DEALER)
+%% Custom routing Router to Dealer
 %%
 %% While this example runs in a single process, that is just to make
 %% it easier to start and stop the example. Each thread has its own

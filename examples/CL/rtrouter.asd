@@ -1,6 +1,6 @@
 ;;; -*- Mode:Lisp; Syntax:ANSI-Common-Lisp; -*-
 ;;;
-;;;  Cross-connected XREP sockets addressing each other in Common Lisp
+;;;  Cross-connected ROUTER sockets addressing each other in Common Lisp
 ;;;
 ;;; Kamil Shakirov <kamils80@gmail.com>
 ;;;
@@ -12,7 +12,7 @@
 
 (defsystem rtrouter
   :version "0.0.0"
-  :description "Cross-connected XREP sockets addressing each other in Common Lisp."
+  :description "Cross-connected ROUTER sockets addressing each other in Common Lisp."
   :maintainer "Kamil Shakirov <kamils80@gmail.com>"
   :author "Kamil Shakirov <kamils80@gmail.com>"
   :licence "MIT/X11"

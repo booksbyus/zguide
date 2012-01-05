@@ -39,7 +39,7 @@ class Mdbroker {
      */
     public function __construct($verbose = false) {
         $this->ctx = new ZMQContext();
-        $this->socket = new ZMQSocket($this->ctx, ZMQ::SOCKET_XREP);
+        $this->socket = new ZMQSocket($this->ctx, ZMQ::SOCKET_ROUTER);
         $this->verbose = $verbose;
         $this->heartbeat_at = microtime(true) + (HEARTBEAT_INTERVAL/1000);
     }

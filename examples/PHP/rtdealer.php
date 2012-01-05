@@ -1,6 +1,6 @@
 <?php 
 /*
- * Custom routing Router to Dealer (XREP to XREQ)
+ * Custom routing Router to Dealer
  * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
  */
 
@@ -9,7 +9,7 @@
 //  run on different boxes...
 function worker_a() {
 	$context = new ZMQContext();
-	$worker = $context->getSocket(ZMQ::SOCKET_XREQ);
+	$worker = $context->getSocket(ZMQ::SOCKET_DEALER);
 	$worker->setSockOpt(ZMQ::SOCKOPT_IDENTITY, "A");
 	$worker->connect("ipc://routing.ipc");
 
@@ -27,7 +27,7 @@ function worker_a() {
 
 function worker_b() {
 	$context = new ZMQContext();
-	$worker = $context->getSocket(ZMQ::SOCKET_XREQ);
+	$worker = $context->getSocket(ZMQ::SOCKET_DEALER);
 	$worker->setSockOpt(ZMQ::SOCKOPT_IDENTITY, "B");
 	$worker->connect("ipc://routing.ipc");
 	
@@ -49,7 +49,7 @@ $pid = pcntl_fork();
 if($pid == 0) { worker_b(); exit(); }
 
 $context = new ZMQContext();
-$client = new ZMQSocket($context, ZMQ::SOCKET_XREP);
+$client = new ZMQSocket($context, ZMQ::SOCKET_ROUTER);
 $client->bind("ipc://routing.ipc");
 
 //  Wait for threads to stabilize

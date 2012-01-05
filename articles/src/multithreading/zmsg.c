@@ -481,9 +481,9 @@ zmsg_test (int verbose)
 
     //  Prepare our context and sockets
     void *context = zmq_init (1);
-    void *output = zmq_socket (context, ZMQ_XREQ);
+    void *output = zmq_socket (context, ZMQ_DEALER);
     assert (zmq_bind (output, "ipc://zmsg_selftest.ipc") == 0);
-    void *input = zmq_socket (context, ZMQ_XREP);
+    void *input = zmq_socket (context, ZMQ_ROUTER);
     assert (zmq_connect (input, "ipc://zmsg_selftest.ipc") == 0);
 
     //  Test send and receive of single-part message

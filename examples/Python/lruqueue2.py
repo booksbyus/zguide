@@ -75,9 +75,9 @@ def main():
     
     # Prepare our context and sockets
     context = zmq.Context(1)
-    frontend = context.socket(zmq.XREP)
+    frontend = context.socket(zmq.ROUTER)
     frontend.bind(url_client)
-    backend = context.socket(zmq.XREP)
+    backend = context.socket(zmq.ROUTER)
     backend.bind(url_worker)
     
     

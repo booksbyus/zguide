@@ -1,5 +1,5 @@
 --
---  Asynchronous client-to-server (XREQ to XREP)
+--  Asynchronous client-to-server (DEALER to ROUTER)
 --
 --  While this example runs in a single process, that is just to make
 --  it easier to start and stop the example. Each task has its own
@@ -31,7 +31,7 @@ local client_task = [[
     math.randomseed(seed)
 
     local context = zmq.init(1)
-    local client = context:socket(zmq.XREQ)
+    local client = context:socket(zmq.DEALER)
 
     --  Generate printable identity for the client
     client:setopt(zmq.IDENTITY, identity)
@@ -79,11 +79,11 @@ local server_task = [[
     local context = zmq.init(1)
 
     --  Frontend socket talks to clients over TCP
-    local frontend = context:socket(zmq.XREP)
+    local frontend = context:socket(zmq.ROUTER)
     frontend:bind("tcp://*:5570")
 
     --  Backend socket talks to workers over inproc
-    local backend = context:socket(zmq.XREQ)
+    local backend = context:socket(zmq.DEALER)
     backend:bind("inproc://backend")
 
     --  Launch pool of worker threads, precise number is not critical
@@ -136,11 +136,11 @@ local server_worker = [[
     local threads = require"zmq.threads"
     local context = threads.get_parent_ctx()
 
-    local worker = context:socket(zmq.XREQ)
+    local worker = context:socket(zmq.DEALER)
     worker:connect("inproc://backend")
 
     while true do
-        --  The XREQ socket gives us the address envelope and message
+        --  The DEALER socket gives us the address envelope and message
         local msg = zmsg.recv (worker)
         assert (msg:parts() == 2)
 

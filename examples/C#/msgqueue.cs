@@ -14,8 +14,8 @@ namespace ZMQGuide {
     class Program {
         static void Main(string[] args) {
             using (Context context = new Context(1)) {
-                using (Socket frontend = context.Socket(SocketType.XREP),
-                backend = context.Socket(SocketType.XREQ)) {
+                using (Socket frontend = context.Socket(SocketType.ROUTER),
+                backend = context.Socket(SocketType.DEALER)) {
                     //  Socket facing clients
                     frontend.Bind("tcp://*:5559");
                     //  Socket facing services

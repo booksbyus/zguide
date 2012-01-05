@@ -37,11 +37,11 @@ begin
    ctx.Initialize (servers'Length + 1);
 
    --   Create a ZMQ_REP socket to receive requests and send replies
-   workers.Initialize (ctx, Sockets.XREQ);
+   workers.Initialize (ctx, Sockets.DEALER);
    workers.Bind ("inproc://workers");
 
    --   Bind to the TCP transport and port 5555 on the 'lo' interface
-   clients.Initialize (ctx, Sockets.XREP);
+   clients.Initialize (ctx, Sockets.ROUTER);
    clients.Bind ("tcp://lo:5555");
 
    for i in servers'Range loop

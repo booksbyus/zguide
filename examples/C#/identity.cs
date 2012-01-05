@@ -13,7 +13,7 @@ namespace identity {
     class Program {
         static void Main(string[] args) {
             using (Context ctx = new Context()) {
-                using (Socket sink = ctx.Socket(SocketType.XREP),
+                using (Socket sink = ctx.Socket(SocketType.ROUTER),
                     anonymous = ctx.Socket(SocketType.REQ),
                     identified = ctx.Socket(SocketType.REQ)) {
 
@@ -21,13 +21,13 @@ namespace identity {
 
                     //  First allow 0MQ to set the identity
                     anonymous.Connect("inproc://example");
-                    anonymous.Send("XREP uses a generated UUID", Encoding.Unicode);
+                    anonymous.Send("ROUTER uses a generated UUID", Encoding.Unicode);
                     ZHelpers.Dump(sink, Encoding.Unicode);
 
                     //  Then set the identity ourself
                     identified.StringToIdentity("Hello", Encoding.Unicode);
                     identified.Connect("inproc://example");
-                    identified.Send("XREP socket uses REQ's socket identity", Encoding.Unicode);
+                    identified.Send("ROUTER socket uses REQ's socket identity", Encoding.Unicode);
                     ZHelpers.Dump(sink, Encoding.Unicode);
                 }
             }

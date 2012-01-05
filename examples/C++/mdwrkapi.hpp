@@ -104,7 +104,7 @@ public:
         if (m_worker) {
             delete m_worker;
         }
-        m_worker = new zmq::socket_t (*m_context, ZMQ_XREQ);
+        m_worker = new zmq::socket_t (*m_context, ZMQ_DEALER);
         int linger = 0;
         m_worker->setsockopt (ZMQ_LINGER, &linger, sizeof (linger));
         m_worker->connect (m_broker.c_str());

@@ -9,11 +9,11 @@ require 'ffi-rzmq'
 context = ZMQ::Context.new
 
 # Socket facing clients
-frontend = context.socket(ZMQ::XREP)
+frontend = context.socket(ZMQ::ROUTER)
 frontend.bind('tcp://*:5559')
 
 # Socket facing services
-backend = context.socket(ZMQ::XREQ)
+backend = context.socket(ZMQ::DEALER)
 backend.bind('tcp://*:5560')
 
 # Start built-in device

@@ -75,13 +75,13 @@ printf ("I: preparing broker at %s... %s", $self, PHP_EOL);
 $context = new ZMQContext();
 
 //  Bind cloud frontend to endpoint
-$cloudfe = $context->getSocket(ZMQ::SOCKET_XREP);
+$cloudfe = $context->getSocket(ZMQ::SOCKET_ROUTER);
 $endpoint = sprintf("ipc://%s-cloud.ipc", $self);
 $cloudfe->setSockOpt(ZMQ::SOCKOPT_IDENTITY, $self);
 $cloudfe->bind($endpoint);
 
 //  Connect cloud backend to all peers
-$cloudbe = $context->getSocket(ZMQ::SOCKET_XREP);
+$cloudbe = $context->getSocket(ZMQ::SOCKET_ROUTER);
 $cloudbe->setSockOpt(ZMQ::SOCKOPT_IDENTITY, $self);
 
 for ($argn = 2; $argn < $_SERVER['argc']; $argn++) {
@@ -92,10 +92,10 @@ for ($argn = 2; $argn < $_SERVER['argc']; $argn++) {
 }
     
 //  Prepare local frontend and backend
-$localfe = new ZMQSocket($context, ZMQ::SOCKET_XREP);
+$localfe = new ZMQSocket($context, ZMQ::SOCKET_ROUTER);
 $endpoint = sprintf("ipc://%s-localfe.ipc", $self);
 $localfe->bind($endpoint);
-$localbe = new ZMQSocket($context, ZMQ::SOCKET_XREP);
+$localbe = new ZMQSocket($context, ZMQ::SOCKET_ROUTER);
 $endpoint = sprintf("ipc://%s-localbe.ipc", $self);
 $localbe->bind($endpoint);
 

@@ -1,4 +1,4 @@
-# Cross-connected XREP sockets addressing each other
+# Cross-connected ROUTER sockets addressing each other
 #
 # Author: Lev Givon <lev(at)columbia(dot)edu>
 
@@ -8,11 +8,11 @@ import zhelpers
 
 context = zmq.Context()
 
-worker = context.socket(zmq.XREP)
+worker = context.socket(zmq.ROUTER)
 worker.setsockopt(zmq.IDENTITY, "WORKER")
 worker.bind("ipc://rtrouter.ipc")
 
-server = context.socket(zmq.XREP)
+server = context.socket(zmq.ROUTER)
 server.setsockopt(zmq.IDENTITY, "SERVER")
 server.connect("ipc://rtrouter.ipc")
 

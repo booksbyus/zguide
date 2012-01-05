@@ -5,9 +5,9 @@ import Control.Monad (forever)
     
 main :: IO ()
 main = withContext 1 $ \context -> do
-    withSocket context XRep $ \frontend -> do
+    withSocket context Router $ \frontend -> do
         bind frontend "tcp://*:5559"
-        withSocket context XReq $ \backend -> do
+        withSocket context Dealer $ \backend -> do
             bind backend "tcp://*5560"
             forever $ loop_function frontend backend (-1)
 

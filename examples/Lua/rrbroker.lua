@@ -9,8 +9,8 @@ require"zhelpers"
 
 --  Prepare our context and sockets
 local context = zmq.init(1)
-local frontend = context:socket(zmq.XREP)
-local backend  = context:socket(zmq.XREQ)
+local frontend = context:socket(zmq.ROUTER)
+local backend  = context:socket(zmq.DEALER)
 frontend:bind("tcp://*:5559")
 backend:bind("tcp://*:5560")
 

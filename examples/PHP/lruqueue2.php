@@ -64,8 +64,8 @@ function main() {
 	}
 	
 	$context = new ZMQContext();
-	$frontend = new ZMQSocket($context, ZMQ::SOCKET_XREP);
-	$backend = new ZMQSocket($context, ZMQ::SOCKET_XREP);
+	$frontend = new ZMQSocket($context, ZMQ::SOCKET_ROUTER);
+	$backend = new ZMQSocket($context, ZMQ::SOCKET_ROUTER);
 	$frontend->bind("ipc://frontend.ipc");
 	$backend->bind("ipc://backend.ipc");
 	

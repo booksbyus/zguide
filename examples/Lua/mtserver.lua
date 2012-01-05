@@ -37,11 +37,11 @@ s_version_assert (2, 1)
 local context = zmq.init(1)
 
 --  Socket to talk to clients
-local clients = context:socket(zmq.XREP)
+local clients = context:socket(zmq.ROUTER)
 clients:bind("tcp://*:5555")
 
 --  Socket to talk to workers
-local workers = context:socket(zmq.XREQ)
+local workers = context:socket(zmq.DEALER)
 workers:bind("inproc://workers")
 
 --  Launch pool of worker threads

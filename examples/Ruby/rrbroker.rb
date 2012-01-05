@@ -5,8 +5,8 @@ require 'rubygems'
 require 'ffi-rzmq'
 
 context = ZMQ::Context.new
-frontend = context.socket(ZMQ::XREP)
-backend = context.socket(ZMQ::XREQ)
+frontend = context.socket(ZMQ::ROUTER)
+backend = context.socket(ZMQ::DEALER)
 
 frontend.bind('tcp://*:5559')
 backend.bind('tcp://*:5560')

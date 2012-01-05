@@ -1,5 +1,5 @@
 //
-//  Custom routing Router to Papa (XREP to REP)
+//  Custom routing Router to Papa (ROUTER to REP)
 //
 // Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
 
@@ -10,7 +10,7 @@
 int main () {
     zmq::context_t context(1);
 
-    zmq::socket_t client (context, ZMQ_XREP);
+    zmq::socket_t client (context, ZMQ_ROUTER);
    client.bind("ipc://routing.ipc");
 
     zmq::socket_t worker (context, ZMQ_REP);
@@ -34,7 +34,7 @@ int main () {
     //  We don't play with envelopes in the worker
     s_send (worker, "This is the reply");
 
-    //  Now dump what we got off the XREP socket...
+    //  Now dump what we got off the ROUTER socket...
     s_dump (client);
 
     return 0;

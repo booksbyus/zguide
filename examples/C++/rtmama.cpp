@@ -1,5 +1,5 @@
 //
-//  Custom routing Router to Mama (XREP to REQ)
+//  Custom routing Router to Mama (ROUTER to REQ)
 //
 // Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
 
@@ -40,7 +40,7 @@ worker_thread (void *arg) {
 
 int main () {
     zmq::context_t context(1);
-    zmq::socket_t client (context, ZMQ_XREP);
+    zmq::socket_t client (context, ZMQ_ROUTER);
     client.bind("ipc://routing.ipc");
 
     int worker_nbr;
