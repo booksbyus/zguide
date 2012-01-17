@@ -594,7 +594,7 @@ Which has the advantage of simplicity (one server sits at one endpoint) but has 
 
 The clone class has the same structure as the flcliapi class from Chapter Four. It consists of two parts:
 
-* An asynchronous clone agent that runs in a background thread. The agent handles all network I/O, talking to servers in realtime, no matter what the application is doing.
+* An asynchronous clone agent that runs in a background thread. The agent handles all network I/O, talking to servers in real-time, no matter what the application is doing.
 
 * A synchronous 'clone' class which runs in the caller's thread. When you create a clone object, that automatically launches an agent thread, and when you destroy a clone object, it kills the agent thread.
 
