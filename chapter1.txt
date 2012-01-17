@@ -202,7 +202,7 @@ The result is {{zhelpers.h}}, which lets us write sweeter and shorter 0MQ applic
 
 +++ Getting the Message Out
 
-The second classic pattern is one-way data distribution, in which a server pushes updates to a set of clients. Let's see an example that pushes out weather updates consisting of a zipcode, temperature, and relative humidity. We'll generate random values, just like the real weather stations do.
+The second classic pattern is one-way data distribution, in which a server pushes updates to a set of clients. Let's see an example that pushes out weather updates consisting of a zip code, temperature, and relative humidity. We'll generate random values, just like the real weather stations do.
 
 Here's the server. We'll use port 5556 for this application:
 
@@ -243,7 +243,7 @@ There's no start, and no end to this stream of updates, it's like a never ending
            Figure # - Publish-Subscribe
 [[/code]]
 
-Here is client application, which listens to the stream of updates and grabs anything to do with a specified zipcode, by default New York City because that's a great place to start any adventure:
+Here is client application, which listens to the stream of updates and grabs anything to do with a specified zip code, by default New York City because that's a great place to start any adventure:
 
 [[code type="example" title="Weather update client" name="wuclient"]]
 [[/code]]
@@ -269,7 +269,7 @@ In Chapter Two I'll explain how to synchronize a publisher and subscribers so th
 
 The alternative to synchronization is to simply assume that the published data stream is infinite and has no start, and no end. This is how we built our weather client example.
 
-So the client subscribes to its chosen zip-code and collects a thousand updates for that zip-code. That means about ten million updates from the server, if zip-codes are randomly distributed. You can start the client, and then the server, and the client will keep working. You can stop and restart the server as often as you like, and the client will keep working. When the client has collected its thousand updates, it calculates the average, prints it, and exits.
+So the client subscribes to its chosen zip code and collects a thousand updates for that zip code. That means about ten million updates from the server, if zip codes are randomly distributed. You can start the client, and then the server, and the client will keep working. You can stop and restart the server as often as you like, and the client will keep working. When the client has collected its thousand updates, it calculates the average, prints it, and exits.
 
 Some points about the publish-subscribe pattern:
 
