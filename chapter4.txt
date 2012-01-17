@@ -39,7 +39,7 @@ Let's take them one by one:
 
 * Publish-subscribe: if the client dies (having gotten some data), the server doesn't know about it. Pubsub doesn't send any information back from client to server. But the client can contact the server out-of-band, e.g. via request-reply, and ask, "please resend everything I missed". As for the server dying, that's out of scope for here. Subscribers can also self-verify that they're not running too slowly, and take action (e.g. warn the operator, and die) if they are.
 
-* Pipeline: if a worker dies (while working), the ventilator doesn't know about it. Pipelines, like pubsub, and the grinding gears of time, only work in one direction. But the downstream collector can detect that one task didn't get done, and send a message back to the ventilator saying, "hey, resend task 324!" If the ventilator or collector die, then whatever upstream client originally sent the work batch can get tired of waiting and resend the whole lot. It's not elegant but system code should really not die often enough to matter.
+* Pipeline: if a worker dies (while working), the ventilator doesn't know about it. Pipelines, like pubsub, and the grinding gears of time, only work in one direction. But the downstream collector can detect that one task didn't get done, and send a message back to the ventilator saying, "hey, resend task 324!" If the ventilator or collector dies, then whatever upstream client originally sent the work batch can get tired of waiting and resend the whole lot. It's not elegant but system code should really not die often enough to matter.
 
 In this chapter we'll focus on request-reply, and we'll cover reliable pub-sub and pipeline in the following chapters.
 
@@ -146,7 +146,7 @@ Our second approach takes Lazy Pirate pattern and extends it with a queue device
 
 In all these Pirate patterns, workers are stateless, or have some shared state we don't know about, e.g. a shared database. Having a queue device means workers can come and go without clients knowing anything about it. If one worker dies, another takes over. This is a nice simple topology with only one real weakness, namely the central queue itself, which can become a problem to manage, and a single point of failure.
 
-The basis for the queue device is the least-recently-used (LRU) routing queue from Chapter Three. What is the very //minimum// we need to do to handle dead or blocked workers? Turns out, its surprisingly little. We already have a retry mechanism in the client. So using the standard LRU queue will work pretty well. This fits with 0MQ's philosophy that we can extend a peer-to-peer pattern like request-reply by plugging naive devices in the middle:
+The basis for the queue device is the least-recently-used (LRU) routing queue from Chapter Three. What is the very //minimum// we need to do to handle dead or blocked workers? Turns out, it's surprisingly little. We already have a retry mechanism in the client. So using the standard LRU queue will work pretty well. This fits with 0MQ's philosophy that we can extend a peer-to-peer pattern like request-reply by plugging naive devices in the middle:
 
 [[code type="textdiagram"]]
 
@@ -577,7 +577,7 @@ And here are examples of a non-idempotent use cases:
 * Any service that has impact on downstream nodes, e.g. sends on information to other nodes. If that service gets the same request more than once, downstream nodes will get duplicate information.
 * Any service that modifies shared data in some non-idempotent way. E.g. a service that debits a bank account is definitely not idempotent.
 
-When our server applications are not idempotent, we have to think more carefully about when exactly they might crash. If an application dies when it's idle, or while it's processing a request, that's usually fine. We can use database transactions to make sure a debit and a credit are always done together, if at all. If the server dies while sending its reply, that's a problem, because as far as its concerned, it's done its work.
+When our server applications are not idempotent, we have to think more carefully about when exactly they might crash. If an application dies when it's idle, or while it's processing a request, that's usually fine. We can use database transactions to make sure a debit and a credit are always done together, if at all. If the server dies while sending its reply, that's a problem, because as far as it's concerned, it's done its work.
 
 if the network dies just as the reply is making its way back to the client, the same problem arises. The client will think the server died, will resend the request, and the server will do the same work twice. Which is not what we want.
 
@@ -595,7 +595,7 @@ Once you realize that Majordomo is a 'reliable' message broker, you might be tem
 
 * Rust brings a whole set of problems, from slow performance to additional pieces to have to manage, repair, and create 6am panics as they inevitably break at the start of daily operations. The beauty of the Pirate patterns in general is their simplicity. They won't crash. And if you're still worried about the hardware, you can move to a peer-to-peer pattern that has no broker at all. I'll explain later in this chapter.
 
-Having said this, however, there is one sane use case for rust-based reliability, which is an asynchronous deconnected network. It solves a major problem with Pirate, namely that a client has to wait for an answer in real time. If clients and workers are only sporadically connected (think of email as an analogy), we can't use a stateless network between clients and workers. We have to put state in the middle.
+Having said this, however, there is one sane use case for rust-based reliability, which is an asynchronous deconnected network. It solves a major problem with Pirate, namely that a client has to wait for an answer in real-time. If clients and workers are only sporadically connected (think of email as an analogy), we can't use a stateless network between clients and workers. We have to put state in the middle.
 
 So, here's the Titanic pattern, in which we write messages to disk to ensure they never get lost, no matter how sporadically clients and workers are connected. As we did for service discovery, we're going to layer Titanic on top of Majordomo rather than extend MDP. It's wonderfully lazy because it means we can implement our fire-and-forget reliability in a specialized worker, rather than in the broker. This is excellent for several reasons:
 
@@ -815,13 +815,13 @@ These are our requirements for a high-availability architecture:
 
 * Operators must be able to monitor both servers at all times.
 
-* It must be possible to connect the two servers using a high-speed dedicated network connection. That is, failover synchronization must be able to use a a specific IP route.
+* It must be possible to connect the two servers using a high-speed dedicated network connection. That is, failover synchronization must be able to use a specific IP route.
 
 We make these assumptions:
 
 * A single backup server provides enough insurance, we don't need multiple levels of backup.
 
-* The primary and backup server are equally capable of carrying the application load. We do not attempt to balance load across the servers.
+* The primary and backup servers are equally capable of carrying the application load. We do not attempt to balance load across the servers.
 
 * There is sufficient budget to cover a fully redundant backup server that does nothing almost all the time.
 
@@ -907,7 +907,7 @@ bstarcli
 
 You can then provoke failover by killing the primary server, and recovery by restarting the primary and killing the backup. Note how it's the client vote that triggers failover, and recovery.
 
-This diagram shows the finite state machine. States in green accept client requests, states in pink refuse them. Events are the peer state, so "Peer Active" means the other server has told us it's active. "Client Request" means we've receive a client request. "Client Vote" means we've received a client request AND our peer is inactive for two heartbeats.
+This diagram shows the finite state machine. States in green accept client requests, states in pink refuse them. Events are the peer state, so "Peer Active" means the other server has told us it's active. "Client Request" means we've received a client request. "Client Vote" means we've received a client request AND our peer is inactive for two heartbeats.
 
 [[code type="textdiagram"]]
 
@@ -956,7 +956,7 @@ These are the main limitations of the Binary Star pattern:
 
 ++++ Binary Star Reactor
 
-Binary Star is useful and generic enough to package up as a reusable reactor class. In C we wrap the czmq {{zloop}} class, though your milage may vary in other languages. Here is the {{bstar}} interface in C:
+Binary Star is useful and generic enough to package up as a reusable reactor class. In C we wrap the czmq {{zloop}} class, though your mileage may vary in other languages. Here is the {{bstar}} interface in C:
 
 [[code language="C"]]
 //  Create a new Binary Star instance, using local (bind) and
@@ -995,7 +995,7 @@ Which gives us the following short main program for the server:
 
 +++ Brokerless Reliability (Freelance Pattern)
 
-It might seem ironic to focus so much on broker-based reliability, when we often explain 0MQ as "brokerless messaging". However in messaging, as in real life, the middleman is both a burden and a benefit. In practice, most messaging architectures benefit from a mix of distributed and brokered messaging. You get the best results when you can decide freely what tradeoffs you want to make. This is why I can drive 10km to a wholesaler to buy five cases of wine for a party, but I can also walk 10 minutes to a corner store to buy one bottle for a dinner. Our highly context-sensitive relative valuations of time, energy, and cost are essential to the real world economy. And they are essential to an optimal message based architecture.
+It might seem ironic to focus so much on broker-based reliability, when we often explain 0MQ as "brokerless messaging". However in messaging, as in real life, the middleman is both a burden and a benefit. In practice, most messaging architectures benefit from a mix of distributed and brokered messaging. You get the best results when you can decide freely what tradeoffs you want to make. This is why I can drive 10km to a wholesaler to buy five cases of wine for a party, but I can also walk 10 minutes to a corner store to buy one bottle for a dinner. Our highly context-sensitive relative valuations of time, energy, and cost are essential to the real world economy. And they are essential to an optimal message-based architecture.
 
 Which is why 0MQ does not //impose// a broker-centric architecture, though it gives you the tools to build brokers, aka "devices", and we've built a dozen or so different ones so far, just for practice.
 

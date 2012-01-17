@@ -227,7 +227,7 @@ Where the HTTP request uses CR-LF as its simplest framing delimiter, and 0MQ use
 
 So you could write a HTTP-like protocol using 0MQ, using for example the request-reply socket pattern. But it would not be HTTP.
 
-There is however a good answer to the question, "how can I make profitable use of 0MQ when making my new XYZ server?"  You need to implement whatever protocol you want to speak in any case, but you can connect that protocol server (which can be extremely thin) to a 0MQ backend that does the real work. The beautiful part here is that you can then extend your backend with code in any language, running locally or remotely, as you wish. Zed Shaw's [http://www.mongrel2.org Mongrel2] web server is a great example of such an architecture.
+There is however a good answer to the question, "How can I make profitable use of 0MQ when making my new XYZ server?"  You need to implement whatever protocol you want to speak in any case, but you can connect that protocol server (which can be extremely thin) to a 0MQ backend that does the real work. The beautiful part here is that you can then extend your backend with code in any language, running locally or remotely, as you wish. Zed Shaw's [http://www.mongrel2.org Mongrel2] web server is a great example of such an architecture.
 
 +++ I/O Threads
 
