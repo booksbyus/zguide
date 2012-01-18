@@ -3,8 +3,8 @@
 // Sends batch of tasks to workers via that socket.
 
 var context = require('zmq')
-require('tty').setRawMode(true);
 process.stdin.resume();
+require('tty').setRawMode(true);
 
 // Socket to send messages on
 var sender = context.createSocket('push')
