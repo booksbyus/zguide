@@ -162,7 +162,7 @@ while (<>) {
     }
     #  Process named codeblock
     elsif (/\[\[code\s+type=\"example\"\s+title=\"([^"]+)\"\s+name=\"([^"]+)\"(\s+language=\"([^"]+)\")?\]\]/) {
-        $title = $1;
+        $title = zmq_symbol ($1); #  Some titles have '0MQ'
         $name = $2;
         $language = $4;
         if ($language) {
@@ -224,8 +224,7 @@ while (<>) {
             chop;
             last if /\[\[\/code\]\]/;
             s/#/$figure/;
-            s/0MQ/ØMQ/g;
-            s/0\\MQ/0MQ/g;
+            $_ = zmq_symbol ($_);
             print IMAGE "$_\n";
         }
         print IMAGE "</pre>\n";
@@ -414,8 +413,7 @@ sub expand_symbols {
 
     return unless ($_);                 #   Quit if input string is empty
 
-    s/0MQ/ØMQ/g;
-    s/0\\MQ/0MQ/g;
+    $_ = zmq_symbol ($_);
 
     for (;;) {
         #   Force expansion from end of string first, so things like
@@ -464,6 +462,19 @@ sub expand_symbols {
             last;
         }
     }
+    return $_;
+}
+
+
+#   Translate 0MQ into ØMQ and 0\MQ into 0MQ
+sub zmq_symbol {
+    local ($_) = @_;
+
+    return unless ($_);                 #   Quit if input string is empty
+
+    s/0MQ/ØMQ/g;
+    s/0\\MQ/0MQ/g;
+
     return $_;
 }
 
