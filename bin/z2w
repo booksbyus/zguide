@@ -470,11 +470,8 @@ sub expand_symbols {
 sub zmq_symbol {
     local ($_) = @_;
 
-    return unless ($_);                 #   Quit if input string is empty
-
     s/0MQ/ØMQ/g;
     s/0\\MQ/0MQ/g;
-
     return $_;
 }
 
