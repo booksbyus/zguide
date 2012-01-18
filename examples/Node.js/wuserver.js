@@ -2,7 +2,7 @@
 // Binds PUB socket to tcp://*:5556
 // Publishes random weather updates
 
-var context = require('zeromq')
+var context = require('zmq')
 var publisher = context.createSocket('pub')
 publisher.bindSync("tcp://*:5556")
 publisher.bindSync("ipc://weather.ipc")

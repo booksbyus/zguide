@@ -2,7 +2,7 @@
 // Binds PUSH socket to tcp://localhost:5557
 // Sends batch of tasks to workers via that socket.
 
-var context = require('zeromq')
+var context = require('zmq')
 require('tty').setRawMode(true);
 process.stdin.resume();
 

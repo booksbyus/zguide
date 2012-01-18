@@ -1,4 +1,4 @@
-var context = require('zeromq')
+var context = require('zmq')
 var subscriber = context.createSocket('sub')
 var client = context.createSocket('req')
 
