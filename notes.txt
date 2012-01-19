@@ -1,6 +1,10 @@
 
 Notes for The Guide
 
+Chapter 6 topics:
+
+ heartbeating, credit-based flow control, reliable pipelines, presence & discovery using UDP, bridging (like VTX), file transfer, security, serialization
+
 ++ Heartbeating
 
 You'll often hit the problem of knowing whether a peer is alive or not. This is not specifically a 0MQ issue. TCP has a long timeout (30 minutes or so) that means that it's impossible sometimes to know whether a peer has died, been disconnected, or gone on a long weekend to Prague with a case of vodka, a redhead, and a large expense account.
