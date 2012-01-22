@@ -1,0 +1,37 @@
+//
+//  Task sink
+//  Binds PULL socket to tcp://localhost:5558
+//  Collects results from workers via that socket
+//
+include "std/posix/time";
+open ZMQ;
+
+//  Prepare our context and socket
+var context = zmq_init 1;
+var receiver = context.mk_socket ZMQ_PULL;
+receiver.bind "tcp://*:5558";
+
+//  Wait for start of batch
+C_hack::ignore receiver.recv_string;
+
+//  Start our clock now
+var start_time = #Time::time;
+
+//  Process 100 confirmations
+for var task_nbr in 0 upto 99 do
+  C_hack::ignore receiver.recv_string;
+  if (task_nbr / 10) * 10 == task_nbr do
+    print ":";
+  else
+    print ".";
+  fflush (stdout);
+  done
+done
+//  Calculate and report duration of batch
+var now = #Time::time;
+println$ f"Total elapsed time: %d ms"
+  ((now  - start_time)*1000.0).int
+;
+
+receiver.close;
+context.term;

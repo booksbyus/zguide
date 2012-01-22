@@ -1,0 +1,41 @@
+//
+//  Task ventilator
+//  Binds PUSH socket to tcp://localhost:5557
+//  Sends batch of tasks to workers via that socket
+
+open ZMQ;
+
+var context = zmq_init 1;
+
+//  Socket to send messages on
+var sender = context.mk_socket ZMQ_PUSH;
+sender.bind "tcp://*:5557";
+
+//  Socket to send start of batch message on
+var sink = context.mk_socket ZMQ_PUSH;
+sink.connect "tcp://localhost:5558";
+
+print ("Press Enter when the workers are ready: "); fflush;
+C_hack::ignore (readln stdin);
+println "Sending tasks to workers...";
+
+//  The first message is "0" and signals start of batch
+sink.send_string "0";
+
+
+//  Send 100 tasks
+var total_msec = 0;     //  Total expected cost in msecs
+for var task_nbr in 0 upto 99 do
+  //  Random workload from 1 to 100msecs
+  var workload = #rand % 100 + 1;
+  total_msec += workload;
+  var s = f"%d" workload;
+  sender.send_string s;
+done
+println$ f"Total expected cost: %d msec" total_msec;
+Faio::sleep (sys_clock, 1.0);              //  Give 0MQ time to deliver
+
+sink.close;
+sender.close;
+context.term;
+
