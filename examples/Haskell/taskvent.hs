@@ -11,10 +11,11 @@ import System.ZMQ
 import Control.Monad (replicateM)
 import Data.ByteString.Char8 (pack)
 import System.Random (randomRIO)
-import Control.Applicative
+import Control.Applicative ((<$>))
 import System.IO (hFlush, stdout)
 import Control.Concurrent (threadDelay)
 
+main :: IO ()
 main = withContext 1 $ \context -> do  
   withSocket context Push $ \sender -> do
     bind sender "tcp://*:5557"
@@ -30,10 +31,10 @@ main = withContext 1 $ \context -> do
       send sink (pack "0") []
 
       -- Send 100 tasks, calculate total workload
-      workload <- sum <$> (replicateM 100 $ do
-        workload <- randomRIO (1, 100) :: IO Int
-        send sender (pack $ show workload) []
-        return workload)
+      workload <- sum <$> replicateM 100 (do
+          workload' <- randomRIO (1, 100) :: IO Int
+          send sender (pack $ show workload') []
+          return workload')
       
       putStrLn $ unwords ["Total expected cost:", show workload, "msecs"]
       -- Give 0MQ time to deliver
