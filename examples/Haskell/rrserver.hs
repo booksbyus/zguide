@@ -12,6 +12,7 @@ import Control.Monad (forever)
 import Data.ByteString.Char8 (pack, unpack)
 import Control.Concurrent (threadDelay)
 
+main :: IO ()
 main = withContext 1 $ \context -> do  
   withSocket context Rep $ \responder -> do
     connect responder "tcp://localhost:5560"

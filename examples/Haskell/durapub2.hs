@@ -15,7 +15,7 @@ main = withContext 1 $ \context -> do
             bind publisher "tcp://*:5565"
             receive sync []
             forM_ [1..10] $ \update_nbr -> do
-                let string = "Update " ++ (show update_nbr)
+                let string = "Update " ++ show update_nbr
                 send publisher (pack string) []
                 threadDelay $ 1 * 1000 * 1000
             send sync (pack "END") []
