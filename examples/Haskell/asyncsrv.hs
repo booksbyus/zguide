@@ -1,43 +1,48 @@
 module Main where
 
 import System.ZMQ
-import ZHelpers
-import Control.Concurrent (forkIO)
+import ZHelpers (setId)
+import Control.Concurrent (forkIO, threadDelay)
 import Data.ByteString.Char8 (pack, unpack)
-    
-client_task ctx = withSocket ctx XReq $ \client -> do
-    set_id client
+import Control.Monad (forever, forM_, when, replicateM_)
+import System.Random (newStdGen, randomR, StdGen)
+
+clientTask :: Context -> IO ()
+clientTask ctx = withSocket ctx XReq $ \client -> do
+    setId client
     connect client "tcp://localhost:5570"
-    forM_ [0..] $ \i -> do
+    forever $ do
         forM_ [0..5] $ \centitick -> do
-            [S client' status] <- poll [S client In] (1000)
-            if status == In then do
+            [S client' status] <- poll [S client In] 1000
+            when (status == In) $ do
                 msg <- receive client []
                 putStrLn "Client"
         putStrLn "Req Sent"
-        send client (pack "request")
+        send client (pack "request") []
         
-server_task ctx = withSocket ctx XRep $ \frontend -> do
+serverTask :: Context -> IO ()
+serverTask ctx = withSocket ctx XRep $ \frontend -> do
     bind frontend "tcp://*:5570"
     withSocket ctx XReq $ \backend -> do
         bind backend "inproc://backend"
-        forM_ [1..5] (forkIO $ server_worker ctx)
+        replicateM_ 5 (forkIO $ serverWorker ctx)
         [S frontend' res1, S backend' res2] <- poll [S frontend In, S backend In] (-1)
-        if (res1 != In) then return () else do
+        when (res1 == In) $ do
             _id <- receive frontend []
             msg <- receive frontend []
-            print "Sening"
+            print "Sending"
             send backend _id [SndMore]
             send backend msg []
                         
-        if (res2 != In) then return () else do
+        when (res2 /= In) $ do
             _id <- receive backend []
             msg <- receive backend []
-            print "Sening"
+            print "Sending"
             send frontend _id [SndMore]
             send frontend msg []
-            
-server_worker ctx = withSocket ctx XReq $ \worker -> do
+
+serverWorker :: Context -> IO ()
+serverWorker ctx = withSocket ctx XReq $ \worker -> do
     connect worker "inproc://backend"
     putStrLn "Worker Started"
     forever $ do
@@ -45,7 +50,7 @@ server_worker ctx = withSocket ctx XReq $ \worker -> do
         msg <- receive worker []
         putStrLn "Worker Received Data"
         gen <- newStdGen
-        (val, gen') <- randomR (0,5) gen
+        let (val, gen') = randomR (0,5) gen :: (Int, StdGen)
         forM_ [1..val] $ \i -> do
             threadDelay $ 1 * 1000 * 1000
             send worker _id [SndMore]
@@ -53,9 +58,9 @@ server_worker ctx = withSocket ctx XReq $ \worker -> do
 
 main :: IO ()
 main = withContext 1 $ \context -> do
-    forkIO (client_task context)
-    forkIO (client_task context)
-    forkIO (client_task context)
-    forkIO (server_task context)
+    forkIO (clientTask context)
+    forkIO (clientTask context)
+    forkIO (clientTask context)
+    forkIO (serverTask context)
     
     threadDelay $ 5 * 1000 * 1000

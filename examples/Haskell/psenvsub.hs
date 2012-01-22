@@ -12,7 +12,7 @@ main = withContext 1 $ \context -> do
         forever $ do
             addr <- receive subscriber []
             mre <- moreToReceive subscriber 
-            contents <- if mre then (fmap unpack $ receive subscriber [])
-                               else (return "")
-            putStrLn $ "[" ++ (show addr) ++ "] " ++ contents
+            contents <- if mre then fmap unpack $ receive subscriber []
+                               else return ""
+            putStrLn $ "[" ++ show addr ++ "] " ++ contents
                 

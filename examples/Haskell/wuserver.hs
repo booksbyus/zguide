@@ -12,6 +12,7 @@ import Control.Monad (forever)
 import Data.ByteString.Char8 (pack)
 import System.Random (randomRIO)
 
+main :: IO ()
 main = withContext 1 $ \context -> do  
   withSocket context Pub $ \publisher -> do
     bind publisher "tcp://*:5556"

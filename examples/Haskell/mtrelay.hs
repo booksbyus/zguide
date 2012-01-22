@@ -9,12 +9,14 @@ import System.ZMQ
 import Data.ByteString.Char8 (pack, unpack)
 import Control.Concurrent (threadDelay, forkIO)
 
+step1 :: Context -> IO ()
 step1 context = do
   -- Connect to step2 and tell it we're ready
   withSocket context Pair $ \xmitter -> do
     connect xmitter "inproc://step2"
     send xmitter (pack "READY") []
 
+step2 :: Context -> IO ()
 step2 context = do
   withSocket context Pair $ \receiver -> do
     -- Bind inproc socket before starting step1
@@ -29,6 +31,7 @@ step2 context = do
       connect xmitter "inproc://step3"
       send xmitter msg []
       
+main :: IO ()
 main = withContext 1 $ \context -> do  
   -- Bind inproc socket before starting step2
   withSocket context Pair $ \receiver -> do
