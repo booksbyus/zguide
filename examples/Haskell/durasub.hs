@@ -1,6 +1,8 @@
 module Main where
 
-import System.ZMQ
+import System.ZMQ 
+import Data.ByteString.Char8 (unpack, pack)
+import Control.Monad (unless)
 
 main :: IO ()
 main = withContext 1 $ \context -> do
@@ -10,10 +12,11 @@ main = withContext 1 $ \context -> do
         connect subscriber "tcp://localhost:5565"
         withSocket context Push $ \sync -> do
             connect sync "tcp://localhost:5564"
-            send sync ""
-            get_updates subscriber
-            
-get_updates sock = do
+            send sync (pack "") []
+            getUpdates subscriber
+    
+getUpdates :: Socket a -> IO ()        
+getUpdates sock = do
     msg <- fmap unpack $ receive sock []
     putStrLn msg
-    if msg == "END" then return () else get_updates sock
+    unless (msg == "END") (getUpdates sock)

@@ -1,12 +1,10 @@
 module Main where
 
 import System.ZMQ
-import ZHelpers
+import ZHelpers (dumpSock)
 
-import Control.Concurrent (forkIO, threadDelay)
-import Control.Concurrent.MVar
-import Data.ByteString.Char8 (pack, unpack)
-import Control.Monad (forM_)
+import Control.Concurrent (threadDelay)
+import Data.ByteString.Char8 (pack)
 
 main :: IO ()
 main = withContext 1 $ \context -> do
@@ -23,7 +21,7 @@ main = withContext 1 $ \context -> do
             send client (pack "address 1") [SndMore]
             send client (pack "") [SndMore]
             
-            dump_sock worker
+            dumpSock worker
             send worker (pack "This is the reply") []
             
-            dump_sock client
+            dumpSock client

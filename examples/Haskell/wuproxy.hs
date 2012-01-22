@@ -11,6 +11,7 @@ import Data.ByteString.Char8 (pack)
 import System.Random (randomRIO)
 import Data.Function (fix)
 
+main :: IO ()
 main = withContext 1 $ \context -> do  
   -- This is where the weather server sits
   withSocket context Sub $ \frontend -> do
@@ -25,6 +26,7 @@ main = withContext 1 $ \context -> do
       -- Shunt messages out to our own subscribers
       forever $ proxy frontend backend
 
+proxy :: Socket a -> Socket b -> IO ()
 proxy from to = fix $ \loop -> do
   message <- receive from []
   more <- moreToReceive from

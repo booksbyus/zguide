@@ -10,6 +10,7 @@ import Control.Monad (forever, replicateM_)
 import Data.ByteString.Char8 (pack, unpack)
 import Control.Concurrent (threadDelay, forkIO)
 
+worker :: Context -> IO ()
 worker context = do
   withSocket context Rep $ \receiver -> do
     connect receiver "inproc://workers"
@@ -21,6 +22,7 @@ worker context = do
       send receiver reply []
   where reply = pack "World"
 
+main :: IO ()
 main = withContext 1 $ \context -> do  
   -- Socket to talk to clients
   withSocket context XRep $ \clients -> do

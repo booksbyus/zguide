@@ -7,6 +7,7 @@ import System.IO (hSetBuffering, stdout, BufferMode(..))
 import Data.Time.Clock
 import Data.ByteString.Char8 (pack)
 
+main :: IO ()
 main = withContext 1 $ \context -> do  
   withSocket context Pull $ \receiver -> do
     bind receiver "tcp://*:5558"

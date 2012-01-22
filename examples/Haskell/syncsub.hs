@@ -15,9 +15,11 @@ main = withContext 1 $ \context -> do
             send syncclient (pack "") []
             receive syncclient []
             nbr <- counts 0 syncclient
-            putStrLn $ "Received " ++ (show nbr) ++ " updates"
-            
+            putStrLn $ "Received " ++ show nbr ++ " updates"
+
+counts :: Int -> Socket a -> IO Int
 counts val sock = do
     msg <- receive sock []
-    if (unpack msg == "END") then (return val) else
-        counts (val + 1) sock
+    if unpack msg == "END"
+        then return val 
+        else counts (val + 1) sock
