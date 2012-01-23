@@ -26,4 +26,8 @@ process sock_recv sock_to_send In = do
         then do
             send sock_to_send msg [SndMore]
             process sock_recv sock_to_send In
+<<<<<<< HEAD
         else send sock_to_send msg []
+=======
+        else send sock_to_send msg []
+>>>>>>> 6d63467a7e742e84c59d924d3e4f79a569a402c3
