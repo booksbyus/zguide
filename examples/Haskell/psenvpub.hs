@@ -3,10 +3,11 @@ module Main where
 import System.ZMQ
 import Data.ByteString.Char8 (pack)
 import Control.Concurrent (threadDelay)
+import Control.Monad (forever)
 
 main :: IO ()
-main = withContext 1 $ \context ->
-    withSocket context Pub $ \publisher ->
+main = withContext 1 $ \context -> do
+    withSocket context Pub $ \publisher -> do
         bind publisher "tcp://*:5563"
         forever $ do
             send publisher (pack "A") [SndMore]

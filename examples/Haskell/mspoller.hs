@@ -7,9 +7,10 @@
 module Main where
 
 import Control.Monad (forever)
-import qualified Data.ByteString.Char8 as B
+import Data.ByteString.Char8 (ByteString)
 import System.ZMQ
 
+main :: IO ()
 main = withContext 1 $ \context -> do
     withSocket context Pull $ \receiver -> do
         connect receiver "tcp://localhost:5557"
@@ -26,6 +27,6 @@ handleSocket socket = do
     processMessage msg
     return ()
 
-processMessage :: (Monad m) => B.ByteString -> m ()
+processMessage :: (Monad m) => ByteString -> m ()
 processMessage _ = return ()
 

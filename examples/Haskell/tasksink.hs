@@ -11,8 +11,9 @@ import System.ZMQ
 import Control.Monad (forM_)
 import System.Random (randomRIO)
 import System.IO (hSetBuffering, stdout, BufferMode(..))
-import Data.Time.Clock
+import Data.Time.Clock (getCurrentTime, diffUTCTime)
 
+main :: IO ()
 main = withContext 1 $ \context -> do  
   withSocket context Pull $ \receiver -> do
     bind receiver "tcp://*:5558"
