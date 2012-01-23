@@ -35,6 +35,7 @@ dac794b7bce99151477813151ed1a0f6d5dc8d15 examples/PHP/durapub2.php
 220d8130c8c64e8870049cd9c75c6c009e08aba0 examples/F#/lruqueue2.fsx
 9c270176ac4e587563b3d866882e534f996258be examples/C/clonesrv5.c
 27dd2f62135daf36e5699d9a693c36b5d5811d07 examples/PHP/lruqueue.php
+912dcd6d50b2de75fc73a2b9558c24264cb3e0f4 examples/Felix/msreader.flx
 f6097aefad82e399cfb61cbd6c5e4b751cf7fd0d examples/Lua/peering2.lua
 65702dc2c22353cbb745580e49a562620a8f3947 examples/PHP/mdbroker.php
 b0e55c0d613a902727434237a2b90769f64e8713 examples/Lua/psenvsub.lua
@@ -59,9 +60,9 @@ d737104b56d7f8ebf71728e4f3d1f9715ec7def0 examples/Java/mmiecho.java
 bcd0ea8d3974a2eb981f59b41453d15bc34cd7fe listings/C/listing_7.c
 e322da633bf946c7c82f3371c475cc27a6e541d7 examples/Erlang/hwclient.erl
 c32b5074719f1c1b4deb37156dd26aecf685e04e examples/Ruby/wuclient.rb
+10e52d011b9a1b74c74e9e9232f824c8aa48b8fa images/fig39.html
 4673abf6cf570446301669ad4bb63da084a8ed07 images/fig66.html
 444022e8df40bd25d257d2553555c005078adbe2 examples/C/mdbroker.c
-10e52d011b9a1b74c74e9e9232f824c8aa48b8fa images/fig39.html
 bb569b6a3b8bed96e858bbcb5f862153249b2110 images/fig52.html
 39c5c73d1a41d03fd7ddfadf642405bfa986c1fb examples/C#/mspoller.cs
 1a4ccac6b28ef00832c28092989b509df7f74c2e examples/Haskell/tasksink2.hs
@@ -125,8 +126,8 @@ e1c764a1d517ad7792a1c5441c364e2489c0438d examples/F#/durapub2.fsx
 fe6b8b7f623e895a8f253ea3e3e192d982b228dc examples/C#/wuserver.cs
 4fc68495559f6f14e89b297599616af9ab5aa7c5 examples/C++/syncpub.cpp
 15bd79a1281bc6b0246c044924301fb8002731f7 examples/C#/version.cs
-b1878c6c5ee140cf1c0c1232009d1773d964750d examples/Python/wuproxy.py
 0198a1a03c593167b4b45a4c26bc7aad92824dc7 examples/PHP/tasksink.php
+b1878c6c5ee140cf1c0c1232009d1773d964750d examples/Python/wuproxy.py
 0c02d45828043d88501cc51d77f73bd4df81c3d7 images/fig43.html
 5df24f1dde4fab995982f07ffac0bb73d3fcfc4d examples/CL/tasksink2.lisp
 dbea6f88e76f7b5406b5b616e427a7c844ecc160 listings/C/listing_31.c
@@ -172,7 +173,7 @@ e93d8d54afafb7a4a3c7229cd1541bc2ea4630be examples/Java/syncpub.java
 881853c067fd71d33a660564bc8c4c2eb5615507 examples/C/wuserver.c
 af11e39c163f8e53a4c76f4c7cbc85272e4ece67 examples/Scala/peering1.scala
 325a47f4e2d7512a975a33418fc4b0877b1757db examples/Erlang/lruqueue.es
-81a6df5831ee672de96c31830afcc4942ace5c41 examples/Felix/hwclient.flx
+da0678d5e95eb79bce037b5a942a21a7e5ad5e67 examples/Felix/hwclient.flx
 8636d39599e9e1c9c03e29b72e874314115d1a48 examples/Lua/ppworker.lua
 8dc30d63dc3bf9792aab68d299a322ee0966403d examples/F#/psenvsub.fsx
 168b0073dca2033ef7c787d25f3416c78f4959b6 examples/PHP/durasub.php
@@ -207,7 +208,7 @@ e0b854da88ccec97be348d99c59d8fac8ff184ed examples/C/flserver2.c
 4c8fcd353787669d1b9dd84447bce1cf5abab6c8 listings/C/listing_32.c
 18bd61de83270d56380966dbdc02095551bab537 listings/C/listing_27.c
 7bfb8809cd3f12d07d8ae8bac7b20669ebae696a examples/Haxe/mdclient.hx
-615484398dde9afd0fd5de06d2db139febd7db0e examples/Felix/wuclient.flx
+c2e5818c670b5999a3a1de96b1080932df2ec612 examples/Felix/wuclient.flx
 0b3370f2c404728ae07e4c958daa19228719b07b images/fig55.html
 d8582e3fb3e2f71c88c178f7de1637eeb9fb6f39 examples/F#/mspoller.fsx
 48675725c041d9fb7321cea27209bd35f166d7fa examples/Go/wuserver.go
@@ -231,7 +232,7 @@ ea56fbc127d8a3c9be3d4b85956a3429a75fe80f examples/C/clonesrv6.c
 7d252709ddcffc9f4c15122e9f7558f6dd9f9d99 examples/Perl/msreader.pl
 a00ef46913f0fe1ba0239a08897eac54734d33e9 examples/Lua/ppqueue.lua
 11cf76136f22bf5ae3ff1245e5f8296e369103b5 images/fig60.html
-55ef9613477a7ea70f75965d31db8f80a8fae52c examples/Felix/wuserver.flx
+7a3affdf030ad06bbf3e6f62c3060a95bc31cfe0 examples/Felix/wuserver.flx
 e8809df4c73d6d22ab8b3a1e4114ed142b75de9e examples/Haxe/bstar.hx
 637fe63633f131a096b97c958dcc6b21afef1fcb examples/Erlang/psenvsub.es
 f80625022736f7df4f74630cb90c117d89e864bd examples/PHP/mtrelay.php
@@ -402,6 +403,7 @@ c191d7edaf666ce0b1415a9cd97db91dc70433cd examples/C/bstarsrv.c
 6f7572b1cd057c59bd24d358345d41fed5685675 examples/C++/ppworker.cpp
 b11ab5cc2c891a767aaa44af0e2e84b20e495863 examples/Ruby/rtmama.rb
 2ad28109ca060ad17f62a38432f0639823960ac9 examples/CL/msreader.lisp
+475db08e2b2dd6088f0f0f9db273dad36b6c0f4d examples/Felix/taskwork.flx
 9e122b003b9c012678f041c530d1f97c190e1358 examples/Perl/mspoller.pl
 c589caafe8d257fc4958d8a85fd646c90fd0814d examples/Haxe/asyncsrv.hx
 db9643aac93bae57d7a76d2b8a3e381d7f07544c examples/Ruby/syncsub.rb
@@ -519,6 +521,7 @@ d23eb9b3d2ab660964c4e2a19de5e7803ea70306 images/fig37.html
 5e6cdb16402ca8b761d291544b0641006f754d03 examples/Lua/tripping.lua
 6f8b4e72b66c9a27409bd8c86db4b22eb805c064 examples/PHP/msreader.php
 61d087650dcd132516f5bc7ec67f645b655b4955 examples/C/bstarcli.c
+9806d055c7c4df58841399c365ed929c79a179a8 examples/Felix/taskvent.flx
 5e4d11be82cdea93f9dcf219dc80ac65589c4951 examples/Java/tasksink.java
 966fd89e463f52e05b95643c706b2721aa17a7e5 examples/Scala/lruqueue2.scala
 a21124d8ec2fc46a7db200c8f10a990f62a00252 images/fig61.html
@@ -738,6 +741,7 @@ a399f1919e7ac6071ba73f82b0918c500ae3fba5 examples/Node.js/syncsub.js
 b6b4ca69be9eae6975b4db0a6954cdcdf0119f1b examples/C/taskvent.c
 8ebdebda345981e274bc43a97614033c25fc0f0c examples/Ruby/wuserver.rb
 a32ab8cfc2b4d0dc740706f77a1d5f4da34ddb12 examples/Lua/msgqueue.lua
+6f500d37d0b8af5b8f70193b8963bb0e20d12ac1 examples/Felix/mspoller.flx
 60fb78f987930604d1945fc45070ba56b9f0bb02 examples/Python/clonesrv4.py
 ff97f4e496bb786658a602d19447336b35d4b597 images/fig72.html
 aacb97611cf7804bda44d1f4df631bb8d292134d examples/Python/tripping.py
@@ -765,6 +769,7 @@ dedc1460fc5f006f1e18306a1e6b120f24daa280 examples/Python/tasksink.py
 c5c9b901317e946e7a4c9ff26e9249135cbba34f examples/C/tasksink.c
 0c0a4d3e029e73c2f3f80a885b387d64e8724098 examples/C/spqueue.c
 2aa879f0d5975dffd214c8ad4da28c51fe25daea examples/Java/msgqueue.java
+ee774e13cae3a8b453436491047368021229c058 examples/Felix/tasksink.flx
 e7a0943644a77b70c4297cfc83f6b4f2a00a032a examples/Perl/rrclient.pl
 4a2044ee69dcbf6cef296abd384b9823ba6b90c9 examples/C/clonecli3.c
 006e8547c1355f8bdd665b99435b1aa891e2f107 listings/C/listing_8.c
