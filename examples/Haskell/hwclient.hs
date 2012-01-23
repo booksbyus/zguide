@@ -11,6 +11,7 @@ import System.ZMQ
 import Control.Monad (forM_)
 import Data.ByteString.Char8 (pack, unpack)
 
+main :: IO ()
 main = withContext 1 $ \context -> do  
   putStrLn "Connecting to Hello World server..."  
   withSocket context Req $ \socket -> do

@@ -13,6 +13,7 @@ import Data.ByteString.Char8 (unpack)
 import System.Environment (getArgs)
 import Data.String.Utils (splitWs)
 
+main :: IO ()
 main = do    
   args <- getArgs
   let zipcode = case args of

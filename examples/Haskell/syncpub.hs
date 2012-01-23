@@ -2,10 +2,10 @@ module Main where
 
 import System.ZMQ
 import Data.ByteString.Char8 (pack)
-import Control.Monad (forM_) 
+import Control.Monad (replicateM_) 
     
-subscribers_expected :: Int
-subscribers_expected = 2
+subscribersExpected :: Int
+subscribersExpected = 2
     
 main :: IO ()
 main = withContext 1 $ \context -> do
@@ -14,11 +14,11 @@ main = withContext 1 $ \context -> do
         withSocket context Rep $ \syncservice -> do
             bind syncservice "tcp://*:5562"
             getSubs 0 syncservice
-            forM_ [1..1000000] $ \_ -> send publisher (pack "Rhubarb") []
+            replicateM_ 1000000 $ send publisher (pack "Rhubarb") []
             send publisher (pack "END") []
             
-            
-getSubs num sock | num >= subscribers_expected = return ()
+getSubs :: Int -> Socket a -> IO ()        
+getSubs num sock | num >= subscribersExpected = return ()
                  | otherwise = do
                      msg <- receive sock []
                      send sock (pack "") []
