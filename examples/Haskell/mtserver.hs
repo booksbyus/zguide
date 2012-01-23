@@ -25,11 +25,11 @@ worker context = do
 main :: IO ()
 main = withContext 1 $ \context -> do  
   -- Socket to talk to clients
-  withSocket context Router $ \clients -> do
+  withSocket context XRep $ \clients -> do
     bind clients "tcp://*:5555"
     
     -- Socket to talk to workers
-    withSocket context Dealer $ \workers -> do
+    withSocket context XReq $ \workers -> do
       bind workers "inproc://workers"
       
       replicateM_ 5 $ forkIO (worker context)
