@@ -17,6 +17,8 @@ import Control.Applicative ((<$>))
 import System.IO (hSetBuffering, stdout, BufferMode(..))
 import Control.Concurrent (threadDelay)
 
+
+main :: IO ()
 main = withContext 1 $ \context -> do  
   withSocket context Pull $ \receiver -> do
     connect receiver "tcp://localhost:5557"
