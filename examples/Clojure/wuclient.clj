@@ -11,13 +11,15 @@
 ;; Isaiah Peng <issaria@gmail.com>
 ;;
 
+(def total-temp (atom 0))
+
 (defn -main [& args]
   (let [subscriber (-> 1 mq/context (mq/socket mq/sub))
         filter (or (first args) "10001 ")
         args-temp (atom 0)
         nbr 100]
-    (println "Collecting updates from weather server...")
-    (mq/connect subscriber "ipc://weather")
+    (println "Collecting updates from weather server for " filter)
+    (mq/connect subscriber "tcp://localhost:5556")
     (mq/subscribe subscriber filter)
     (dotimes [i nbr]
       (let [string (mq/recv-str subscriber)
