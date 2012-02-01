@@ -4,7 +4,7 @@
 import zmq
 
 #  We wait for 10 subscribers
-SUBSCRIBERS_EXPECTED = 2
+SUBSCRIBERS_EXPECTED = 10
 
 def main():
     context = zmq.Context()
