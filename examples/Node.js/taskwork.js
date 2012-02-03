@@ -4,7 +4,7 @@
 // Connects PUSH socket to tcp://localhost:5558
 // Sends results to sink via that socket
 
-var context  = require('zeromq')
+var context  = require('zmq')
   , receiver = context.createSocket('pull')
   , sender   = context.createSocket('push')
 
