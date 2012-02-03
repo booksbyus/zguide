@@ -231,6 +231,7 @@ bstar_new (int primary, char *local, char *remote)
 
     //  Create subscriber for state coming from peer
     self->statesub = zsocket_new (self->ctx, ZMQ_SUB);
+    zsockopt_set_subscribe (self->statesub, "");
     zsocket_connect (self->statesub, remote);
 
     //  Set-up basic reactor events

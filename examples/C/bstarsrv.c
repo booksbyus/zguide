@@ -122,6 +122,7 @@ int main (int argc, char *argv [])
     zctx_t *ctx = zctx_new ();
     void *statepub = zsocket_new (ctx, ZMQ_PUB);
     void *statesub = zsocket_new (ctx, ZMQ_SUB);
+    zsockopt_set_subscribe (statesub, "");
     void *frontend = zsocket_new (ctx, ZMQ_ROUTER);
     bstar_t fsm = { 0 };
 

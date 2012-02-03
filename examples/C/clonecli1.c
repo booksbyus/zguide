@@ -10,6 +10,7 @@ int main (void)
     //  Prepare our context and updates socket
     zctx_t *ctx = zctx_new ();
     void *updates = zsocket_new (ctx, ZMQ_SUB);
+    zsockopt_set_subscribe (updates, "");
     zsocket_connect (updates, "tcp://localhost:5556");
 
     zhash_t *kvmap = zhash_new ();

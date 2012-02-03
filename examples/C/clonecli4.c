@@ -14,6 +14,7 @@ int main (void)
     void *snapshot = zsocket_new (ctx, ZMQ_DEALER);
     zsocket_connect (snapshot, "tcp://localhost:5556");
     void *subscriber = zsocket_new (ctx, ZMQ_SUB);
+    zsockopt_set_subscribe (subscriber, "");
     zsocket_connect (subscriber, "tcp://localhost:5557");
     zsockopt_set_subscribe (subscriber, SUBTREE);
     void *publisher = zsocket_new (ctx, ZMQ_PUSH);
