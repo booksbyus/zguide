@@ -1,4 +1,4 @@
-var context = require('zeromq')
+var context = require('zmq')
 var publisher = context.createSocket('pub')
 
 publisher.bind('tcp://*:8688', function(err) {
