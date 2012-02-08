@@ -134,7 +134,7 @@ s_dump (zmq::socket_t & socket)
 
 //  Set simple random printable identity on socket
 //
-std::string
+inline std::string
 s_set_id (zmq::socket_t & socket)
 {
     std::stringstream ss;
