@@ -137,7 +137,7 @@ public:
        worker * wrk = m_waiting.size()>0 ? m_waiting.front() : 0;
        while (wrk) {
            if (!wrk->expired ()) {
-               continue;              //  Worker is alive, we're done here
+               break;              //  Worker is alive, we're done here
            }
            if (m_verbose) {
                s_console ("I: deleting expired worker: %s",
@@ -188,6 +188,12 @@ public:
            zmsg *msg = srv->m_requests.size() ? srv->m_requests.front() : 0;
            srv->m_requests.erase(srv->m_requests.begin());
            worker_send (wrk, (char*)MDPW_REQUEST, "", msg);
+       	   for(std::vector<worker*>::iterator it = m_waiting.begin(); it != m_waiting.end(); it++) {
+              if (*it == wrk) {
+                 it = m_waiting.erase(it)-1;
+              }
+           }
+
            delete msg;
        }
    }
