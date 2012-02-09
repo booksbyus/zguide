@@ -33,9 +33,9 @@ namespace ZMQGuide
                     requester.Connect("tcp://localhost:5555");
 
                     const string requestMessage = "Hello";
-                    const int numberOfRequests = 10;
+                    const int requestsToSend = 10;
 
-                    for (int requestNumber = 0; requestNumber < numberOfRequests; requestNumber++)
+                    for (int requestNumber = 0; requestNumber < requestsToSend; requestNumber++)
                     {
                         // Send request to server
                         Console.WriteLine("Sending request {0}...", requestNumber);

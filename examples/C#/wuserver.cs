@@ -4,33 +4,46 @@
 //  Publishes random weather updates
 //
 
-//  Author:     Michael Compton
-//  Email:      michael.compton@littleedge.co.uk
+//  Author:     Michael Compton, Tomas Roos
+//  Email:      michael.compton@littleedge.co.uk, ptomasroos@gmail.com
 
 using System;
 using System.Text;
 using ZMQ;
 
-namespace ZMQGuide {
-    class Program {
-        static void Main(string[] args) {
-            //  Prepare our context and publisher
-            using (Context context = new Context(1)) {
-                using (Socket publisher = context.Socket(SocketType.PUB)) {
-                    publisher.Bind("tcp://*:5556");
-                    
-                    //  Initialize random number generator
-                    Random rand = new Random(System.DateTime.Now.Millisecond);
-                    while (true) {
-                        //  Get values that will fool the boss
-                        int zipcode, temperature, relHumidity;
-                        zipcode = rand.Next(0, 100000);
-                        temperature = rand.Next(-80, 135);
-                        relHumidity = rand.Next(10, 60);
+namespace ZMQGuide 
+{
+    internal class Program 
+    {
+        public static void Main(string[] args)
+        {
+            var server = new WeatherUpdateServer();
+            server.Run();
+        }
+    }
 
-                        //  Send message to all subscribers
-                        string update = zipcode.ToString() + " " + temperature.ToString() +
-                            " " + relHumidity.ToString();
+    internal class WeatherUpdateServer
+    {
+        public void Run()
+        {
+            using (var context = new Context(1))
+            {
+                using (Socket publisher = context.Socket(SocketType.PUB))
+                {
+                    publisher.Bind("tcp://*:5556");
+
+                    var randomizer = new Random(System.DateTime.Now.Millisecond);
+
+                    while (true)
+                    {
+                        //  Get values that will fool the boss
+                        int zipcode = randomizer.Next(0, 100000);
+                        int temperature = randomizer.Next(-80, 135);
+                        int relativeHumidity = randomizer.Next(10, 60);
+
+                        string update = zipcode.ToString() + " " + temperature.ToString() + " " + relativeHumidity.ToString();
+                        
+                        //  Send message to 0..N subscribers via a pub socket
                         publisher.Send(update, Encoding.Unicode);
                     }
                 }
