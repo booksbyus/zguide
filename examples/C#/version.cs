@@ -8,9 +8,12 @@
 using System;
 using ZMQ;
 
-namespace ZMQGuide {
-    class Program {
-        static void Main(string[] args) {
+namespace ZMQGuide 
+{
+    internal class Program 
+    {
+        public static void Main(string[] args) 
+        {
             Console.WriteLine(ZHelpers.Version());
         }
     }
