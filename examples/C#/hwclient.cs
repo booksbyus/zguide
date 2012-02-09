@@ -4,29 +4,46 @@
 //  Sends "Hello" to server, expects "World" back
 //
 
-//  Author:     Michael Compton
-//  Email:      michael.compton@littleedge.co.uk
+//  Author:     Michael Compton, Tomas Roos
+//  Email:      michael.compton@littleedge.co.uk, ptomasroos@gmail.com
 
 using System;
 using System.Text;
 using ZMQ;
 
-namespace ZMQGuide {
-    class Program {
-        static void Main(string[] args) {
-            // ZMQ Context
-            using (Context context = new Context(1)) {
-                //  Socket to talk to server
-                using (Socket requester = context.Socket(SocketType.REQ)) {
+namespace ZMQGuide 
+{
+    internal class Program 
+    {
+        public static void Main(string[] args)
+        {
+            var client = new Client();
+            client.SendRequests();
+        }
+    }
+
+    internal class Client
+    {
+        public void SendRequests()
+        {
+            using (var context = new Context(1))
+            {
+                using (Socket requester = context.Socket(SocketType.REQ))
+                {
                     requester.Connect("tcp://localhost:5555");
 
-                    string request = "Hello";
-                    for (int requestNbr = 0; requestNbr < 10; requestNbr++) {
-                        Console.WriteLine("Sending request {0}...", requestNbr);
-                        requester.Send(request, Encoding.Unicode);
+                    const string requestMessage = "Hello";
+                    const int numberOfRequests = 10;
 
+                    for (int requestNumber = 0; requestNumber < numberOfRequests; requestNumber++)
+                    {
+                        // Send request to server
+                        Console.WriteLine("Sending request {0}...", requestNumber);
+                        requester.Send(requestMessage, Encoding.Unicode);
+
+                        // Waiting for response from server
                         string reply = requester.Recv(Encoding.Unicode);
-                        Console.WriteLine("Received reply {0}: {1}", requestNbr, reply);
+                        Console.WriteLine("Received reply {0}: {1}", requestNumber, reply);
                     }
                 }
             }
