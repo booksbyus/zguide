@@ -18,15 +18,6 @@ namespace ZMQGuide
     {
         public static void Main(string[] args)
         {
-            var server = new Server();
-            server.Run();
-        }
-    }
-
-    internal class Server
-    {
-        public void Run()
-        {
             using (var context = new Context(1))
             {
                 using (Socket replyer = context.Socket(SocketType.REP))
@@ -37,7 +28,6 @@ namespace ZMQGuide
 
                     while (true)
                     {
-                        // Wait for next request from client
                         string message = replyer.Recv(Encoding.Unicode);
                         Console.WriteLine("Received request: {0}", message);
 
@@ -48,7 +38,7 @@ namespace ZMQGuide
                         replyer.Send(replyMessage, Encoding.Unicode);
                     }
                 }
-            }            
+            }
         }
     }
 }

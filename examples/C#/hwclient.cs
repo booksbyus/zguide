@@ -17,15 +17,6 @@ namespace ZMQGuide
     {
         public static void Main(string[] args)
         {
-            var client = new Client();
-            client.SendRequests();
-        }
-    }
-
-    internal class Client
-    {
-        public void SendRequests()
-        {
             using (var context = new Context(1))
             {
                 using (Socket requester = context.Socket(SocketType.REQ))
@@ -37,11 +28,9 @@ namespace ZMQGuide
 
                     for (int requestNumber = 0; requestNumber < requestsToSend; requestNumber++)
                     {
-                        // Send request to server
                         Console.WriteLine("Sending request {0}...", requestNumber);
                         requester.Send(requestMessage, Encoding.Unicode);
 
-                        // Waiting for response from server
                         string reply = requester.Recv(Encoding.Unicode);
                         Console.WriteLine("Received reply {0}: {1}", requestNumber, reply);
                     }

@@ -17,22 +17,13 @@ namespace ZMQGuide
     {
         public static void Main(string[] args)
         {
-            var server = new WeatherUpdateServer();
-            server.Run();
-        }
-    }
-
-    internal class WeatherUpdateServer
-    {
-        public void Run()
-        {
             using (var context = new Context(1))
             {
                 using (Socket publisher = context.Socket(SocketType.PUB))
                 {
                     publisher.Bind("tcp://*:5556");
 
-                    var randomizer = new Random(System.DateTime.Now.Millisecond);
+                    var randomizer = new Random(DateTime.Now.Millisecond);
 
                     while (true)
                     {
@@ -42,7 +33,7 @@ namespace ZMQGuide
                         int relativeHumidity = randomizer.Next(10, 60);
 
                         string update = zipcode.ToString() + " " + temperature.ToString() + " " + relativeHumidity.ToString();
-                        
+
                         //  Send message to 0..N subscribers via a pub socket
                         publisher.Send(update, Encoding.Unicode);
                     }

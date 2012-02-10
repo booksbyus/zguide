@@ -18,16 +18,6 @@ namespace ZMQGuide
     {
         public static void Main(string[] args)
         {
-            var sink = new Sink();
-            sink.CollectResults();
-            Console.ReadKey();
-        }
-    }
-
-    internal class Sink
-    {
-        public void CollectResults()
-        {
             using (var context = new Context(1))
             {
                 using (Socket receiver = context.Socket(SocketType.PULL))
@@ -40,19 +30,18 @@ namespace ZMQGuide
                     var stopwatch = new Stopwatch();
                     stopwatch.Start();
 
-                    //  Process 100 confirmations
-                    for (int taskNumber = 0; taskNumber < 100; taskNumber++)
+                    const int tasksToConfirm = 100;
+                    for (int taskNumber = 0; taskNumber < tasksToConfirm; taskNumber++)
                     {
                         string message = receiver.Recv(Encoding.Unicode);
                         Console.WriteLine(taskNumber % 10 == 0 ? ":" : ".");
                     }
 
-                    //  Calculate and report duration of batch
                     stopwatch.Stop();
                     Console.WriteLine("Total elapsed time: {0}", stopwatch.ElapsedMilliseconds);
                 }
             }
-
+            Console.ReadKey();
         }
     }
 }

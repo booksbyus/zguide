@@ -24,15 +24,6 @@ namespace ZMQGuide
             if (args.Length > 0)
                 zipcode = args[1] + " ";
 
-            var client = new WeatherUpdateClient();
-            client.SubscribeToZipcode(zipcode);
-        }
-    }
-
-    internal class WeatherUpdateClient
-    {
-        public void SubscribeToZipcode(string zipcode)
-        {
             using (var context = new Context(1))
             {
                 using (Socket subscriber = context.Socket(SocketType.SUB))
@@ -42,7 +33,7 @@ namespace ZMQGuide
 
                     const int updatesToCollect = 100;
                     int totalTemperature = 0;
-                    
+
                     for (int updateNumber = 0; updateNumber < updatesToCollect; updateNumber++)
                     {
                         string update = subscriber.Recv(Encoding.Unicode);
@@ -52,7 +43,6 @@ namespace ZMQGuide
                     Console.WriteLine("Average temperature for zipcode {0} was {1}F", zipcode, totalTemperature / updatesToCollect);
                 }
             }
-
         }
     }
 }
