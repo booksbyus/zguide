@@ -51,9 +51,17 @@ namespace ZMQGuide
             bool hasMore = true;
             while (hasMore)
             {
+                // side effect warning!
+                // note! that this uses Recv mode that gets a byte[], the router c# implementation 
+                // doesnt work if you get a string message instead of the byte[] i would prefer the solution thats commented.
+                // but the router doesnt seem to be able to handle the response back to the client
+                //string message = source.Recv(Encoding.Unicode);
+                //hasMore = source.RcvMore;
+                //destination.Send(message, Encoding.Unicode, hasMore ? SendRecvOpt.SNDMORE : SendRecvOpt.NONE);
+
                 byte[] message = source.Recv();
                 hasMore = source.RcvMore;
-                destination.Send(message, hasMore ? SendRecvOpt.SNDMORE : 0);
+                destination.Send(message, hasMore ? SendRecvOpt.SNDMORE : SendRecvOpt.NONE);
             }
         }
     }

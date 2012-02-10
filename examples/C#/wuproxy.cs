@@ -31,9 +31,9 @@ namespace ZMQGuide
                         bool hasMore = true;
                         while (hasMore)
                         {
-                            byte[] message = frontend.Recv();
+                            string message = frontend.Recv(Encoding.Unicode);
                             hasMore = frontend.RcvMore;
-                            backend.Send(message, hasMore ? SendRecvOpt.SNDMORE : SendRecvOpt.NONE);
+                            backend.Send(message, Encoding.Unicode, hasMore ? SendRecvOpt.SNDMORE : SendRecvOpt.NONE);
                         }
                     }
                 }
