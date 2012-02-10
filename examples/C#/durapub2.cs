@@ -5,7 +5,6 @@
 //  Author:     Michael Compton
 //  Email:      michael.compton@littleedge.co.uk
 
-using System;
 using System.Text;
 using System.Threading;
 using ZMQ;
