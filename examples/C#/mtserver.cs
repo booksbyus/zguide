@@ -20,7 +20,7 @@ namespace ZMQGuide
                 using (Socket clients = context.Socket(SocketType.ROUTER), workers = context.Socket(SocketType.DEALER))
                 {
                     clients.Bind("tcp://*:5555");
-                    workers.Bind("inproc://workers");
+                    workers.Bind("inproc://workers"); // FYI, inproc requires that bind is performed before connect
 
                     var workerThreads = new Thread[5];
                     for (int threadId = 0; threadId < workerThreads.Length; threadId++)
