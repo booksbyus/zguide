@@ -69,8 +69,13 @@ class BinaryStar(object):
         self.statesub.on_recv(self.recv_state)
         
         # setup log formmater
-    
+
+    def update_peer_expiry(self):
+        """Update peer expiry time to be 2 heartbeats from now."""
+        self.peer_expiry = time.time() + 2e-3 * HEARTBEAT
+
     def start(self):
+        self.update_peer_expiry()
         self.heartbeat.start()
         return self.loop.start()
     
@@ -94,10 +99,16 @@ class BinaryStar(object):
                 if (self.slave_callback):
                     self.loop.add_callback(self.slave_callback)
             elif (self.event == CLIENT_REQUEST):
-                print ("I: request from client, ready as master")
-                self.state = STATE_ACTIVE
-                if (self.master_callback):
-                    self.loop.add_callback(self.master_callback)
+                if (time.time () >= self.peer_expiry):
+                    print ("I: request from client, ready as master")
+                    self.state = STATE_ACTIVE
+                    if (self.master_callback):
+                        self.loop.add_callback(self.master_callback)
+                else:
+                    # don't respond to clients yet - we don't know if
+                    # the backup is currently Active as a result of
+                    # a successful failover
+                    accept = False
         elif (self.state == STATE_BACKUP):
             # Backup server is waiting for peer to connect
             # Rejects CLIENT_REQUEST events in this state
@@ -160,7 +171,7 @@ class BinaryStar(object):
         state = msg[0]
         if state:
             self.event = int(state)
-            self.peer_expiry = time.time() + 2e-3 * HEARTBEAT
+            self.update_peer_expiry()
         self.execute_fsm()
 
     def voter_ready(self, msg):

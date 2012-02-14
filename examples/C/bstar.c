@@ -198,7 +198,7 @@ int s_voter_ready (zloop_t *loop, zmq_pollitem_t *poller, void *arg)
     self->event = CLIENT_REQUEST;
     if (s_execute_fsm (self) == 0) {
         puts ("CLIENT REQUEST");
-        (self->voter_fn) (self->loop, poller->socket, self->voter_arg);
+        (self->voter_fn) (self->loop, poller, self->voter_arg);
     }
     else {
         //  Destroy waiting message, no-one to read it
