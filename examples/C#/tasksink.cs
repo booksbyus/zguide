@@ -4,39 +4,44 @@
 //  Collects results from workers via that socket
 //
 
-//  Author:     Michael Compton
-//  Email:      michael.compton@littleedge.co.uk
+//  Author:     Michael Compton, Tomas Roos
+//  Email:      michael.compton@littleedge.co.uk, ptomasroos@gmail.com
 
 using System;
 using System.Text;
-using System.Threading;
 using System.Diagnostics;
 using ZMQ;
 
-namespace ZMQGuide {
-    class Program {
-        static void Main(string[] args) {
-            //  Prepare our context and socket
-            using (Context context = new Context(1)) {
-                using (Socket receiver = context.Socket(SocketType.PULL)) {
+namespace ZMQGuide 
+{
+    internal class Program 
+    {
+        public static void Main(string[] args)
+        {
+            using (var context = new Context(1))
+            {
+                using (Socket receiver = context.Socket(SocketType.PULL))
+                {
                     receiver.Bind("tcp://*:5558");
+
                     //  Wait for start of batch
                     receiver.Recv();
-                    Stopwatch stopwatch = new Stopwatch();
+
+                    var stopwatch = new Stopwatch();
                     stopwatch.Start();
-                    //  Process 100 confirmations
-                    for (int taskNbr = 0; taskNbr < 100; taskNbr++) {
+
+                    const int tasksToConfirm = 100;
+                    for (int taskNumber = 0; taskNumber < tasksToConfirm; taskNumber++)
+                    {
                         string message = receiver.Recv(Encoding.Unicode);
-                        if ((taskNbr / 10) * 10 == taskNbr)
-                            Console.WriteLine(":");
-                        else
-                            Console.WriteLine(".");
+                        Console.WriteLine(taskNumber % 10 == 0 ? ":" : ".");
                     }
-                    //  Calculate and report duration of batch
+
                     stopwatch.Stop();
                     Console.WriteLine("Total elapsed time: {0}", stopwatch.ElapsedMilliseconds);
                 }
             }
+            Console.ReadKey();
         }
     }
 }
