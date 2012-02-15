@@ -1,5 +1,3 @@
-//  Author:     Mike Sheridan
-//  Email:      mike@westforkconsulting.com
 //
 //  Task worker
 //  Connects PULL socket to tcp://localhost:5557
@@ -8,42 +6,42 @@
 //  Sends results to sink via that socket
 //
 
+//  Author:     Mike Sheridan, Tomas Roos
+//  Email:      mike@westforkconsulting.com, ptomasroos@gmail.com
+
 using System;
 using System.Text;
 using System.Threading;
 using ZMQ;
 
-class Program
+namespace ZMQGuide
 {
-    static int Main(string[] argv)
+    internal class Program
     {
-        Context context = new Context(1);
+        public static void Main(string[] args)
+        {
+            using (var context = new Context(1))
+            {
+                using (Socket receiver = context.Socket(SocketType.PULL), sender = context.Socket(SocketType.PUSH))
+                {
+                    receiver.Connect("tcp://localhost:5557");
+                    sender.Connect("tcp://localhost:5558");
 
-        //  Socket to receive messages on
-        Socket receiver = context.Socket(SocketType.PULL);
-        receiver.Connect("tcp://localhost:5557");
+                    while (true)
+                    {
+                        string task = receiver.Recv(Encoding.Unicode);
 
-        //  Socket to send messages on
-        Socket sender = context.Socket(SocketType.PUSH);
-        sender.Connect("tcp://localhost:5558");
+                        //  Simple progress indicator for the viewer;
+                        Console.WriteLine("{0}.", task);
 
-        //  Process tasks forever
-        while (true) {
-            string _string = receiver.Recv(Encoding.Unicode);
-            int t;
-            t = Convert.ToInt32(_string) * 1000;
-            //  Simple progress indicator for the viewer;
-            Console.WriteLine("{0}.", _string);
+                        int sleepTime = Convert.ToInt32(task);
+                        Thread.Sleep(sleepTime);
 
-            //  Do the work
-            Thread.Sleep(t);
-
-            sender.Send("", Encoding.Unicode);
+                        // Send 'result' to the sink
+                        sender.Send("", Encoding.Unicode);
+                    }
+                }
+            }
         }
-
-        receiver.Close();
-        sender.Close();
-        context.Terminate();
-        return 0;
     }
 }

@@ -2,37 +2,37 @@
 //  Publisher for durable subscriber
 //
 
-//  Author:     Michael Compton
-//  Email:      michael.compton@littleedge.co.uk
+//  Author:     Michael Compton, Tomas Roos
+//  Email:      michael.compton@littleedge.co.uk, ptomasroos@gmail.com
 
 using System;
 using System.Text;
 using System.Threading;
 using ZMQ;
 
-namespace ZMQGuide {
-    class Program {
-        static void Main(string[] args) {
-            using (Context context = new Context(1)) {
-                using (Socket sync = context.Socket(SocketType.PULL),
-                    publisher = context.Socket(SocketType.PUB)) {
-                    
-                    //  Subscriber tells us when it's ready here
-                    sync.Bind("tcp://*:5564");
-                    //  We send updates via this socket
+namespace ZMQGuide
+{
+    internal class Program
+    {
+        public static void Main(string[] args)
+        {
+            using (var context = new Context(1))
+            {
+                using (Socket publisher = context.Socket(SocketType.PUB), sync = context.Socket(SocketType.PULL))
+                {
                     publisher.Bind("tcp://*:5565");
-                    
+                    sync.Bind("tcp://*:5564");
+
                     //  Wait for synchronization request
                     sync.Recv();
-                    
-                    //  Now broadcast exactly 10 updates with pause
-                    for (int updateNbr = 0; updateNbr < 10; updateNbr++) {
-                        publisher.Send("Update " + updateNbr, Encoding.Unicode);
+
+                    for (int updateNumber = 0; updateNumber < 10; updateNumber++)
+                    {
+                        publisher.Send("Update " + updateNumber, Encoding.Unicode);
                         Thread.Sleep(1000);
                     }
+
                     publisher.Send("END", Encoding.Unicode);
-                    
-                    Thread.Sleep(1000);    //  Give 0MQ/2.0.x time to flush output
                 }
             }
         }
