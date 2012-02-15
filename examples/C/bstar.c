@@ -92,10 +92,19 @@ s_execute_fsm (bstar_t *self)
         }
         else
         if (self->event == CLIENT_REQUEST) {
-            zclock_log ("I: request from client, ready as master");
-            self->state = STATE_ACTIVE;
-            if (self->master_fn)
-                (self->master_fn) (self->loop, NULL, self->master_arg);
+            // Allow client requests to turn us into the master if we've
+            // waited sufficiently long to believe the backup is not
+            // currently acting as master (i.e., after a failover)
+            assert (self->peer_expiry > 0);
+            if (zclock_time () >= self->peer_expiry) {
+                zclock_log ("I: request from client, ready as master");
+                self->state = STATE_ACTIVE;
+                if (self->master_fn)
+                    (self->master_fn) (self->loop, NULL, self->master_arg);
+            } else
+                // Don't respond to clients yet - it's possible we're
+                // performing a failback and the backup is currently master
+                rc = -1;
         }
     }
     else
@@ -165,6 +174,11 @@ s_execute_fsm (bstar_t *self)
     return rc;
 }
 
+static void
+s_update_peer_expiry (bstar_t *self)
+{
+    self->peer_expiry = zclock_time () + 2 * BSTAR_HEARTBEAT;
+}
 
 //  ---------------------------------------------------------------------
 //  Reactor event handlers...
@@ -184,7 +198,7 @@ int s_recv_state (zloop_t *loop, zmq_pollitem_t *poller, void *arg)
     char *state = zstr_recv (poller->socket);
     if (state) {
         self->event = atoi (state);
-        self->peer_expiry = zclock_time () + 2 * BSTAR_HEARTBEAT;
+        s_update_peer_expiry (self);
         free (state);
     }
     return s_execute_fsm (self);
@@ -326,5 +340,6 @@ int
 bstar_start (bstar_t *self)
 {
     assert (self->voter_fn);
+    s_update_peer_expiry (self);
     return zloop_start (self->loop);
 }
