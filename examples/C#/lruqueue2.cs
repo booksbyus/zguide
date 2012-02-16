@@ -88,7 +88,6 @@ namespace ZMQGuide
                     //  Handle worker activity on backend
                     backend.PollInHandler += (socket, revents) =>
                                                  {
-                                                     ZmqMessage
                                                      var zmsg = new ZMessage(socket);
                                                      //  Use worker address for LRU routing
                                                      workerQueue.Enqueue(zmsg.Unwrap());
