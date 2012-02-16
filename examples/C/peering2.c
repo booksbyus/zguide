@@ -90,7 +90,7 @@ int main (int argc, char *argv [])
 
     //  Connect cloud backend to all peers
     void *cloudbe = zsocket_new (ctx, ZMQ_ROUTER);
-    zsockopt_set_identity (cloudfe, self);
+    zsockopt_set_identity (cloudbe, self);
     int argn;
     for (argn = 2; argn < argc; argn++) {
         char *peer = argv [argn];
