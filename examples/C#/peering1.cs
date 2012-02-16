@@ -1,5 +1,5 @@
 //
-//  Broker peering simulation (part 1) in Python
+//  Broker peering simulation (part 1) in C#
 //  Prototypes the state flow
 //  Note! ipc doesnt work on windows and therefore type peering1 8001 8002 8003
 
@@ -7,8 +7,6 @@
 //  Email:      ptomasroos@gmail.com
 
 using System;
-using System.Linq;
-using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using ZMQ;
