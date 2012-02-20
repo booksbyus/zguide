@@ -32,9 +32,9 @@ int main (int argc, char *argv[])
 
         receiver.recv(&message);
         if ((task_nbr / 10) * 10 == task_nbr)
-            std::cout << ":";
+            std::cout << ":" << std::flush;
         else
-            std::cout << ".";
+            std::cout << "." << std::flush;
     }
     //  Calculate and report duration of batch
     struct timeval tend, tdiff;
