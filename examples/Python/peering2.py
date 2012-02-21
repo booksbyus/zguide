@@ -9,9 +9,6 @@
 #   Author : Min RK
 #   Contact: benjaminrk(at)gmail(dot)com
 #
-
-
-import os
 import random
 import sys
 import threading
@@ -19,8 +16,10 @@ import time
 
 import zmq
 
+
 NBR_CLIENTS = 10
 NBR_WORKERS = 3
+
 
 def client_task(name, i):
     """Request-reply client using REQ socket"""
@@ -38,16 +37,17 @@ def client_task(name, i):
         print "Client-%s: %s\n" % (i, reply),
         time.sleep(1)
 
+
 def worker_task(name, i):
     """Worker using REQ socket to do LRU routing"""
     ctx = zmq.Context()
     worker = ctx.socket(zmq.REQ)
     worker.identity = "Worker-%s-%s" % (name, i)
     worker.connect("ipc://%s-localbe.ipc" % name)
-    
+
     # Tell broker we're ready for work
     worker.send("READY")
-    
+
     # Process messages as they arrive
     while True:
         try:
@@ -59,14 +59,12 @@ def worker_task(name, i):
         msg[-1] = "OK"
         worker.send_multipart(msg)
 
-def main(argv):
-    
-    myself = argv[1]
+def main(myself, peers):
     print "I: preparing broker at %s..." % myself
 
     # Prepare our context and sockets
     ctx = zmq.Context()
-    
+
     # Bind cloud frontend to endpoint
     cloudfe = ctx.socket(zmq.ROUTER)
     cloudfe.setsockopt(zmq.IDENTITY, myself)
@@ -75,7 +73,6 @@ def main(argv):
     # Connect cloud backend to all peers
     cloudbe = ctx.socket(zmq.ROUTER)
     cloudbe.setsockopt(zmq.IDENTITY, myself)
-    peers = argv[2:]
     for peer in peers:
         print "I: connecting to cloud frontend at", peer
         cloudbe.connect("ipc://%s-cloud.ipc" % peer)
@@ -94,7 +91,7 @@ def main(argv):
         thread = threading.Thread(target=worker_task, args=(myself, i))
         thread.daemon = True
         thread.start()
-    
+
     for i in range(NBR_CLIENTS):
         thread_c = threading.Thread(target=client_task, args=(myself, i))
         thread_c.daemon = True
@@ -105,41 +102,41 @@ def main(argv):
     # Request-reply flow
     # - Poll backends and process local/cloud replies
     # - While worker available, route localfe to local or cloud
-    
+
     workers = []
-    
+
     # setup pollers
     pollerbe = zmq.Poller()
     pollerbe.register(localbe, zmq.POLLIN)
     pollerbe.register(cloudbe, zmq.POLLIN)
-    
+
     pollerfe = zmq.Poller()
     pollerfe.register(localfe, zmq.POLLIN)
     pollerfe.register(cloudfe, zmq.POLLIN)
-    
+
     while True:
         # If we have no workers anyhow, wait indefinitely
         try:
             events = dict(pollerbe.poll(1000 if workers else None))
         except zmq.ZMQError:
-            break # interrupted
-        
+            break  # interrupted
+
         # Handle reply from local worker
         msg = None
         if localbe in events:
             msg = localbe.recv_multipart()
-            (address,empty), msg = msg[:2], msg[2:]
+            (address, empty), msg = msg[:2], msg[2:]
             workers.append(address)
-            
+
             # If it's READY, don't route the message any further
             if msg[-1] == 'READY':
                 msg = None
         elif cloudbe in events:
             msg = cloudbe.recv_multipart()
-            (address,empty), msg = msg[:2], msg[2:]
-            
+            (address, empty), msg = msg[:2], msg[2:]
+
             # We don't use peer broker address for anything
-        
+
         if msg is not None:
             address = msg[0]
             if address in peers:
@@ -161,23 +158,21 @@ def main(argv):
                 msg = localfe.recv_multipart()
                 reroutable = True
             else:
-                break      # No work, go back to backends
+                break  # No work, go back to backends
 
             # If reroutable, send to cloud 20% of the time
             # Here we'd normally use cloud status information
-            if (reroutable and peers and random.randint(0,4) == 0):
+            if reroutable and peers and random.randint(0, 4) == 0:
                 # Route to random broker peer
-                msg = [random.choice(peers),''] + msg
+                msg = [random.choice(peers), ''] + msg
                 cloudbe.send_multipart(msg)
             else:
-                msg = [workers.pop(0),''] + msg
+                msg = [workers.pop(0), ''] + msg
                 localbe.send_multipart(msg)
 
 if __name__ == '__main__':
-
-    if len(sys.argv) < 2:
+    if len(sys.argv) >= 2:
+        main(myself=sys.argv[1], peers=sys.argv[2:])
+    else:
         print "Usage: peering2.py <me> [<peer_1> [... <peer_N>]]"
-        raise SystemExit(1)
-
-    main(sys.argv)
-
+        sys.exit(1)
