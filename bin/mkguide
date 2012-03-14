@@ -60,21 +60,24 @@ function mkpdf {
     wdattach zguide main:_start zguide-$2.pdf
 }
 
-mkone C    online page
-mkone Haxe online hx
-mkone Lua  online lua
-mkone PHP  online php
+mkone C      online page
+mkone Haxe   online hx
+mkone Lua    online lua
+mkone Python online py
+mkone PHP    online php
 upload main scoreboard "Language scoreboard"
 
-mkone C    pdf pdf-c
-mkone Haxe pdf pdf-hx
-mkone Lua  pdf pdf-lua
-mkone PHP  pdf pdf-php
+mkone C      pdf pdf-c
+mkone Haxe   pdf pdf-hx
+mkone Lua    pdf pdf-lua
+mkone Python pdf pdf-py
+mkone PHP    pdf pdf-php
 
-mkpdf C    c
-mkpdf Haxe hx
-mkpdf Lua  lua
-mkpdf PHP  php
+mkpdf C      c
+mkpdf Haxe   hx
+mkpdf Lua    lua
+mkpdf PHP    php
+mkpdf Python py
 
 rm *.wd wdtemp.txt upload.sh
 
