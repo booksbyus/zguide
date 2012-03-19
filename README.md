@@ -17,7 +17,13 @@ License
 
 The text of "ØMQ - The Guide" is copyright (c) 2010 Pieter Hintjens, and is licensed under the Creative Commons Attribution-Share Alike 3.0 License. The source code examples are licensed under MIT/X11 unless otherwise specified in the code. `z2w` is placed into the public domain.
 
-<A name="toc2-40" title="Thanks" />
+<A name="toc2-40" title="Contributions" />
+Contributions
+-------------
+
+All contributions to the Guide example source code is governed by the [C4 process](http://rfc.zeromq.org/spec:16).
+
+<A name="toc2-46" title="Thanks" />
 Thanks
 ------
 
