@@ -80,14 +80,10 @@ def run_fsm(fsm):
 
 def main():
     parser = ArgumentParser()
-    parser.add_argument("-p", "--primary", action="store_true", default=False)
-    parser.add_argument("-b", "--backup", action="store_true", default=False)
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("-p", "--primary", action="store_true", default=False)
+    group.add_argument("-b", "--backup", action="store_true", default=False)
     args = parser.parse_args()
-    # Both or none are given
-    if ((args.primary and args.backup) or
-        not (args.primary and args.backup)):
-        parser.print_help()
-        exit(-1)
 
     ctx = zmq.Context()
     statepub = ctx.socket(zmq.PUB)
