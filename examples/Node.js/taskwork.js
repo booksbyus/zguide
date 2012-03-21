@@ -4,9 +4,9 @@
 // Connects PUSH socket to tcp://localhost:5558
 // Sends results to sink via that socket
 
-var context  = require('zmq')
-  , receiver = context.createSocket('pull')
-  , sender   = context.createSocket('push')
+var zmq  = require('zmq')
+  , receiver = zmq.socket('pull')
+  , sender   = zmq.socket('push')
 
 receiver.on('message', function(buf) {
   var msec = parseInt(buf.toString())
