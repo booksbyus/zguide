@@ -7,17 +7,21 @@
 .output chapter1.wd
 **By Pieter Hintjens <ph@imatix.com>, CEO iMatix Corporation.**
 
-With thanks to Bill Desmarais, Brian Dorsey, Daniel Lin, Eric Desgranges, Gonzalo Diethelm, Guido Goldstein, Hunter Ford, Kamil Shakirov, Martin Sustrik, Mike Castleman, Naveen Chawla, Nicola Peduzzi, Oliver Smith, Olivier Chamoux, Peter Alexander, Pierre Rouleau, Randy Dryburgh, John Unwin, Alex Thomas, Mihail Minkov, Jeremy Avnet, Michael Compton, Kamil Kisiel, Mark Kharitonov, Guillaume Aubert, Ian Barber, Mike Sheridan, Faruk Akgul, Oleg Sidorov, Lev Givon, Allister MacLeod, Alexander D'Archangel, Andreas Hoelzlwimmer, Han Holl, Robert G. Jakabosky, Felipe Cruz, Marcus McCurdy, Mikhail Kulemin, Dr. Gergő Érdi, Pavel Zhukov, Alexander Else, Giovanni Ruggiero, Rick "Technoweenie", Daniel Lundin, Dave Hoover, Simon Jefford, Benjamin Peterson, Justin Case, Devon Weller, Richard Smith, Alexander Morland, Wadim Grasza, Michael Jakl, Uwe Dauernheim, Sebastian Nowicki, Simone Deponti, Aaron Raddon, Dan Colish, Markus Schirp, Benoit Larroque, Jonathan Palardy, Isaiah Peng, Arkadiusz Orzechowski, Umut Aydin, Matthew Horsfall, Jeremy W. Sherman, Eric Pugh, Tyler Sellon, John E. Vincent, Pavel Mitin, Min RK, Igor Wiedler, Olof Åkesson, Patrick Lucas, Heow Goodman, Senthil Palanisami, John Gallagher, Tomas Roos, Stephen McQuay, Erik Allik, Arnaud Cogoluègnes, Rob Gagnon, Dan Williams, Edward Smith, and Zed Shaw for their contributions, and to Stathis Sideris for [http://www.ditaa.org Ditaa].
+With thanks to Bill Desmarais, Brian Dorsey, Daniel Lin, Eric Desgranges, Gonzalo Diethelm, Guido Goldstein, Hunter Ford, Kamil Shakirov, Martin Sustrik, Mike Castleman, Naveen Chawla, Nicola Peduzzi, Oliver Smith, Olivier Chamoux, Peter Alexander, Pierre Rouleau, Randy Dryburgh, John Unwin, Alex Thomas, Mihail Minkov, Jeremy Avnet, Michael Compton, Kamil Kisiel, Mark Kharitonov, Guillaume Aubert, Ian Barber, Mike Sheridan, Faruk Akgul, Oleg Sidorov, Lev Givon, Allister MacLeod, Alexander D'Archangel, Andreas Hoelzlwimmer, Han Holl, Robert G. Jakabosky, Felipe Cruz, Marcus McCurdy, Mikhail Kulemin, Dr. Gergő Érdi, Pavel Zhukov, Alexander Else, Giovanni Ruggiero, Rick "Technoweenie", Daniel Lundin, Dave Hoover, Simon Jefford, Benjamin Peterson, Justin Case, Devon Weller, Richard Smith, Alexander Morland, Wadim Grasza, Michael Jakl, Uwe Dauernheim, Sebastian Nowicki, Simone Deponti, Aaron Raddon, Dan Colish, Markus Schirp, Benoit Larroque, Jonathan Palardy, Isaiah Peng, Arkadiusz Orzechowski, Umut Aydin, Matthew Horsfall, Jeremy W. Sherman, Eric Pugh, Tyler Sellon, John E. Vincent, Pavel Mitin, Min RK, Igor Wiedler, Olof Åkesson, Patrick Lucas, Heow Goodman, Senthil Palanisami, John Gallagher, Tomas Roos, Stephen McQuay, Erik Allik, Arnaud Cogoluègnes, Rob Gagnon, and Zed Shaw for their contributions, and to Stathis Sideris for [http://www.ditaa.org Ditaa].
 
-Please use the [$(GIT)/issues issue tracker] for all comments and errata. This version covers the latest stable release of 0MQ (2.1.x) and was published on &date("ddd d mmmm, yyyy"). If you are using 0MQ/3.1 some of the examples and explanations won't be accurate.
+Please use the [$(GIT)/issues issue tracker] for all comments and errata. This version covers the latest stable release of 0MQ (2.1.x) and was published on &date("ddd d mmmm, yyyy"). If you are using a later unstable version of 0MQ some of the examples and explanations won't match.
 
-The Guide is mainly [/page:all in C], but also in [/php:all PHP], [/py:all Python], [/lua:all Lua], and [/hx:all Haxe]. Nearly every example is also shown in C++, C#, CL, Erlang, F#, Felix, Haskell, Java, Objective-C, Ruby, Ada, Basic, Clojure, Go, Haxe, Node.js, ooc, Perl, and Scala.
+The Guide is mainly [/page:all in C], but also in [/php:all PHP], [/lua:all Lua], and [/hx:all Haxe].
 
-++ Chapter One - Basic Stuff
+++ 第一节 - 基础
 
-+++ Fixing the World
++++ 改变世界
+
 
 How to explain 0MQ? Some of us start by saying all the wonderful things it does. //It's sockets on steroids. It's like mailboxes with routing. It's fast!//  Others try to share their moment of enlightenment, that zap-pow-kaboom satori paradigm-shift moment when it all became obvious. //Things just become simpler. Complexity goes away. It opens the mind.//  Others try to explain by comparison. //It's smaller, simpler, but still looks familiar.//  Personally, I like to remember why we made 0MQ at all, because that's most likely where you, the reader, still are today.
+怎么解释0MQ? 我们中的一些人说它做了所有精彩的事情。它像一个带路由的邮件箱。它很快！
+使用0MQ，事情立刻变得简单了。复杂性消失了。它打开了我们的灵感。
+
 
 Programming is a science dressed up as art, because most of us don't understand the physics of software, and it's rarely if ever taught. The physics of software is not algorithms, data structures, languages and abstractions. These are just tools we make, use, throw away. The real physics of software is the physics of people.
 
@@ -39,15 +43,15 @@ Which brings us back to the science of programming. To fix the world, we needed 
 
 It sounds ridiculously simple. And maybe it is. That's kind of the whole point.
 
-+++ 0MQ in a Hundred Words
++++ 一百字的0MQ简介
 
 0MQ (ZeroMQ, 0\MQ, zmq) looks like an embeddable networking library but acts like a concurrency framework. It gives you sockets that carry whole messages across various transports like in-process, inter-process, TCP, and multicast. You can connect sockets N-to-N with patterns like fanout, pub-sub, task distribution, and request-reply. It's fast enough to be the fabric for clustered products. Its asynchronous I/O model gives you scalable multicore applications, built as asynchronous message-processing tasks. It has a score of language APIs and runs on most operating systems. 0MQ is from [http://www.imatix.com iMatix] and is LGPL open source.
 
-+++ Some Assumptions
++++ 一些假设
 
 We assume you are using the latest stable release of 0MQ. We assume you are using a Linux box or something similar. We assume you can read C code, more or less, that's the default language for the examples. We assume that when we write constants like PUSH or SUBSCRIBE you can imagine they are really called ZMQ_PUSH or ZMQ_SUBSCRIBE if the programming language needs it.
 
-+++ Getting the Examples
++++ 获取示例
 
 The Guide examples live in the Guide's [https://github.com/imatix/zguide git repository]. The simplest way to get all the examples is to clone this repository:
 
@@ -59,9 +63,9 @@ And then browse the examples subdirectory. You'll find examples by language. If 
 
 All examples are licensed under MIT/X11, unless otherwise specified in the source code.
 
-+++ Ask and Ye Shall Receive
++++ 请求便会得到
 
-So let's start with some code. We start of course with a Hello World example. We'll make a client and a server. The client sends "Hello" to the server, which replies with "World". Here's the server in C, which opens a 0MQ socket on port 5555, reads requests on it, and replies with "World" to each request:
+让我们从一些代码开始。我们从一个helloworld示例代码开始。我们要创建一个客户端和服务器。客户端发送hello给服务器，服务器则回复world。下面是一个C的服务器代码，先在5555端口打开了一个0MQ socket并读取请求，并且给每一个请求回复world：
 
 [[code type="example" title="Hello World server" name="hwserver" language="C"]]
 [[/code]]
@@ -91,9 +95,9 @@ So let's start with some code. We start of course with a Hello World example. We
      Figure # - Request-Reply
 [[/code]]
 
-The REQ-REP socket pair is lockstep. The client does zmq_send[3] and then zmq_recv[3], in a loop (or once if that's all it needs). Doing any other sequence (e.g. sending two messages in a row) will result in a return code of -1 from the send or recv call. Similarly the service does zmq_recv[3] and then zmq_send[3] in that order, and as often as it needs to.
+REQ-REP套接字对是同步的。客户端在一个循环中先调用zmq_send[3]，然后调用zmq_recv[3]（或者不在循环中也行）。不按照这个顺序会在send或者recv调用后得到-1的返回值（比如一行调用两次发送信息）。相应的，服务器也要先调用zmq_recv[3]再调用zmq_send[3]，多频繁都可以。
 
-0MQ uses C as its reference language and this is the main language we'll use for examples. If you're reading this on-line, the link below the example takes you to translations into other programming languages. Let's compare the same server in C++:
+0MQ使用C语言开发，这也是我们的示例主要使用的语言。如果你在读文本的在线版本，示例下面有其他语言的链接。让我们比较一下同样一个服务器的C++代码吧：
 
 [[code type="example" title="Hello World server" name="hwserver" language="C++"]]
 [[/code]]
@@ -140,7 +144,7 @@ If you kill the server (Ctrl-C) and restart it, the client won't recover properl
 
 There is a lot happening behind the scenes but what matters to us programmers is how short and sweet the code is, and how often it doesn't crash, even under heavy load. This is the request-reply pattern, probably the simplest way to use 0MQ. It maps to RPC and the classic client-server model.
 
-+++ A Minor Note on Strings
++++ 一个关注字符串的小小的建议
 
 0MQ doesn't know anything about the data you send except its size in bytes. That means you are responsible for formatting it safely so that applications can read it back. Doing this for objects and complex data types is a job for specialized libraries like Protocol Buffers. But even for strings you need to take care.
 
@@ -195,14 +199,14 @@ This makes a very handy helper function and in the spirit of making things we ca
 
 The result is {{zhelpers.h}}, which lets us write sweeter and shorter 0MQ applications in C. It is a fairly long source, and only fun for C developers, so [https://github.com/imatix/zguide/blob/master/examples/C/zhelpers.h read it at leisure].
 
-+++ Version Reporting
++++ 报告你使用的版本
 
 0MQ does come in several versions and quite often, if you hit a problem, it'll be something that's been fixed in a later version. So it's a useful trick to know //exactly// what version of 0MQ you're actually linking with. Here is a tiny program that does that:
 
 [[code type="example" title="0MQ version reporting" name="version"]]
 [[/code]]
 
-+++ Getting the Message Out
++++ 获取外部消息
 
 The second classic pattern is one-way data distribution, in which a server pushes updates to a set of clients. Let's see an example that pushes out weather updates consisting of a zip code, temperature, and relative humidity. We'll generate random values, just like the real weather stations do.
 
@@ -407,7 +411,7 @@ Let's look at some aspects of this code in more detail:
 
 The pipeline pattern also exhibits the "slow joiner" syndrome, leading to accusations that PUSH sockets don't load balance properly. If you are using PUSH and PULL, and one of your workers gets way more messages than the others, it's because that PULL socket has joined faster than the others, and grabs a lot of messages before the others manage to connect.
 
-+++ Programming with 0MQ
++++ 使用0MQ编程
 
 Having seen some examples, you're eager to start using 0MQ in some apps. Before you start that, take a deep breath, chillax, and reflect on some basic advice that will save you stress and confusion.
 
@@ -565,7 +569,7 @@ First, do not try to use the same socket from multiple threads. No, don't explai
 
 Voila! It's complex and painful enough that any language binding author worth his or her salt will do this automatically and make the socket closing dance unnecessary.
 
-+++ Why We Needed 0MQ
++++ 为什么我们需要0MQ
 
 Now that you've seen 0MQ in action, let's go back to the "why".
 
@@ -718,7 +722,7 @@ As the clients run, we take a look at the active processes using 'top', and we s
 
 Let's think for a second about what is happening here. The weather server has a single socket, and yet here we have it sending data to five clients in parallel. We could have thousands of concurrent clients. The server application doesn't see them, doesn't talk to them directly.
 
-+++ Missing Message Problem Solver
++++ 丢失信息问题的解决方法
 
 As you start to program with 0MQ you will come across one problem more than once: you lose messages that you expect to receive. Here is a basic problem solver that walks through the most common causes for this. Don't worry if some of the terminology is unfamiliar still, it'll become clearer in the next chapters.
 
@@ -746,10 +750,10 @@ As you start to program with 0MQ you will come across one problem more than once
                  |                 |                 |        | Start all SUB    |
                  |                 |  Do you start   |        | sockets first,   |
                  |                 |  the SUB socket +------->| then the PUB     |
-                 |                 |  after the PUB? | Yes    | sockets to avoid |
+                 |                 |  after the PUB? | No     | sockets to avoid |
                  |                 |             {o} |        | loss             |
                  |                 +--------+--------+        +------------------+
-                 |                          | No
+                 |                          | Yes
                  |                          |
                  |                          v
                  |              +-------------------------+
