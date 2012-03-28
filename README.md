@@ -12,7 +12,7 @@ A ØMQ socket is what you get when you take a normal TCP socket, inject it with 
 </center>
 
 <A name="toc2-34" title="License" />
-License
+授权
 -------
 
 The text of "ØMQ - The Guide" is copyright (c) 2010 Pieter Hintjens, and is licensed under the Creative Commons Attribution-Share Alike 3.0 License. The source code examples are licensed under MIT/X11 unless otherwise specified in the code. `z2w` is placed into the public domain.

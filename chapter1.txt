@@ -136,7 +136,7 @@ Now this looks too simple to be realistic, but a 0MQ socket is what you get when
     Figure # - A terrible accident...
 [[/code]]
 
-You could literally throw thousands of clients at this server, all at once, and it would continue to work happily and quickly. For fun, try starting the client and //then// starting the server, see how it all still works, then think for a second what this means.
+毫不夸张的说，你可以用上千个客户端连接这个服务器。所有的都可以立刻开始并且快速的工作。有趣的是，可以尝试启动客户端//然后//启动服务器，看看他们是如何一直保持工作的，然后想一想这意味着什么。
 
 Let me explain briefly what these two programs are actually doing. They create a 0MQ context to work with, and a socket. Don't worry what the words mean. You'll pick it up. The server binds its REP (reply) socket to port 5555. The server waits for a request, in a loop, and responds each time with a reply. The client sends a request and reads the reply back from the server.
 
