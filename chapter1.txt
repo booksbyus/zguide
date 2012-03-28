@@ -11,11 +11,11 @@ With thanks to Bill Desmarais, Brian Dorsey, Daniel Lin, Eric Desgranges, Gonzal
 
 Please use the [$(GIT)/issues issue tracker] for all comments and errata. This version covers the latest stable release of 0MQ (2.1.x) and was published on &date("ddd d mmmm, yyyy"). If you are using a later unstable version of 0MQ some of the examples and explanations won't match.
 
-The Guide is mainly [/page:all in C], but also in [/php:all PHP], [/lua:all Lua], and [/hx:all Haxe].
+这个向导主要使用 [/page:all C语言], 但也会使用 [/php:all PHP], [/lua:all Lua], 和 [/hx:all Haxe].
 
 ++ 第一节 - 基础
 
-+++ 改变世界
++++ 拯救世界
 
 
 How to explain 0MQ? Some of us start by saying all the wonderful things it does. //It's sockets on steroids. It's like mailboxes with routing. It's fast!//  Others try to share their moment of enlightenment, that zap-pow-kaboom satori paradigm-shift moment when it all became obvious. //Things just become simpler. Complexity goes away. It opens the mind.//  Others try to explain by comparison. //It's smaller, simpler, but still looks familiar.//  Personally, I like to remember why we made 0MQ at all, because that's most likely where you, the reader, still are today.
@@ -53,15 +53,15 @@ We assume you are using the latest stable release of 0MQ. We assume you are usin
 
 +++ 获取示例
 
-The Guide examples live in the Guide's [https://github.com/imatix/zguide git repository]. The simplest way to get all the examples is to clone this repository:
+本向导的示例代码放在 [https://github.com/imatix/zguide git repository]. 最简单的获取所有示例代码的方法就是克隆这个仓库:
 
 [[code]]
 git clone --depth=1 git://github.com/imatix/zguide.git
 [[/code]]
 
-And then browse the examples subdirectory. You'll find examples by language. If there are examples missing in a language you use, you're encouraged to [http://zguide.zeromq.org/main:translate submit a translation]. This is how the Guide became so useful, thanks to the work of many people.
+然后就可以查看名为examples的子目录。你可以按照语言查找示例。如果你使用的语言没有，欢迎访问[http://zguide.zeromq.org/main:translate 提交你翻译的代码]。这就是向导如何变得如此有用，感谢为大家而做的工作。
 
-All examples are licensed under MIT/X11, unless otherwise specified in the source code.
+除非在源码中特别指定，否则所有的示例代码都是MIT/X11授权的。
 
 +++ 请求便会得到
 
@@ -102,12 +102,12 @@ REQ-REP套接字对是同步的。客户端在一个循环中先调用zmq_send[3
 [[code type="example" title="Hello World server" name="hwserver" language="C++"]]
 [[/code]]
 
-You can see that the 0MQ API is similar in C and C++. In a language like PHP, we can hide even more and the code becomes even easier to read:
+你可以看到0MQ的API和C或者C++非常相似。在一些诸如PHP的语言中，我们可以更多的隐藏细节，代码也会变得非常易读：
 
 [[code type="example" title="Hello World server" name="hwserver" language="PHP"]]
 [[/code]]
 
-Here's the client code (click the link below the source to look at, or contribute a translation in your favorite programming language):
+这里有一段客户端代码 (点击源代码下面的链接查看, 或者贡献你转换的你喜欢的程序语言):
 
 [[code type="example" title="Hello World client" name="hwclient"]]
 [[/code]]
