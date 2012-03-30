@@ -201,6 +201,7 @@ s_service_success (char *uuid)
         && zframe_streq (zmsg_first (mmi_reply), "200"));
     zmsg_destroy (&mmi_reply);
 
+    int result = 0;
     if (service_ok) {
         zmsg_t *reply = mdcli_send (client, service_name, &request);
         if (reply) {
@@ -210,7 +211,7 @@ s_service_success (char *uuid)
             zmsg_save (reply, file);
             fclose (file);
             free (filename);
-            return 1;
+            result = 1;
         }
         zmsg_destroy (&reply);
     }
@@ -219,7 +220,7 @@ s_service_success (char *uuid)
 
     mdcli_destroy (&client);
     free (service_name);
-    return 0;
+    return result;
 }
 
 
