@@ -8,8 +8,8 @@ package main
 
 import (
 	"fmt"
-	"time"
 	zmq "github.com/alecthomas/gozmq"
+	"time"
 )
 
 func main() {
