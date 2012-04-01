@@ -9,7 +9,6 @@
 import org.zeromq.ZMQ
 import org.zeromq.ZMQQueue
 import org.zeromq.ZMQ.{Context,Socket}
-import ZHelpers._
 
 object mtserver {
   def main(args : Array[String]) {
@@ -40,7 +39,7 @@ object mtserver {
 
 						//  Send reply back to client (C string)
 						val reply = "World ".getBytes
-						reply(reply.length-1)=0 //Sets the last byte of the reply to 0
+						reply(reply.length-1) = 0 //Sets the last byte of the reply to 0
 						socket.send(reply, 0)
 					}
 				}
