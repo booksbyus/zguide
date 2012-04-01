@@ -1,7 +1,0 @@
-include $(GOROOT)/src/Make.inc
-
-TARG=durapub
-GOFILES=\
-	durapub.go
-
-include $(GOROOT)/src/Make.cmd
