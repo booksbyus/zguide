@@ -98,8 +98,8 @@ s_dump (zmq::socket_t & socket)
         socket.recv(&message);
 
         //  Dump the message as text or binary
-        std::string data(static_cast<char*>(message.data()));
         int size = message.size();
+        std::string data(static_cast<char*>(message.data()), size);
 
         bool is_text = true;
 
@@ -111,14 +111,14 @@ s_dump (zmq::socket_t & socket)
               is_text = false;
         }
 
-        std::cout << std::setfill('0') << std::setw(3) << "[" << size << "]";
+        std::cout << "[" << std::setfill('0') << std::setw(3) << size << "]";
 
         for (char_nbr = 0; char_nbr < size; char_nbr++) {
             if (is_text) {
                 std::cout << (char)data [char_nbr];
             } else {
                 std::cout << std::setfill('0') << std::setw(2)
-                   << std::hex << (unsigned char) data [char_nbr];
+                   << std::hex << (unsigned int) data [char_nbr];
             }
         }
         std::cout << std::endl;
