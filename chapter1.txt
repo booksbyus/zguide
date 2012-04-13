@@ -176,10 +176,15 @@ Then what goes onto the wire is:
 [[/code]]
 
 And if you read this from a C program, you will get something that looks like a string, and might by accident act like a string (if by luck the five bytes find themselves followed by an innocently lurking null), but isn't a proper string. Which means that your client and server don't agree on the string format, you will get weird results.
+如果你用C程序读取这个数据，你会得到一些可能看起来象字符串，并且可能是因为意外才像字符串（如果5个字节之后刚好有个null结尾字符存在），但它不是正确的字符串。这意味着你的客户端和服务器并不认同这种数据格式，你得到了异常的结果。
 
 When you receive string data from 0MQ, in C, you simply cannot trust that it's safely terminated. Every single time you read a string you should allocate a new buffer with space for an extra byte, copy the string, and terminate it properly with a null.
+当你使用C语言从0MQ接收字符串数据的时候，你不能认为它会安全的结束。每次你读取一个字符串你需要分配一个新的缓冲并且留出结尾字符的空间，拷贝字符串并且以null作为结尾。
 
 So let's establish the rule that **0MQ strings are length-specified, and are sent on the wire //without// a trailing null**. In the simplest case (and we'll do this in our examples) a 0MQ string maps neatly to a 0MQ message frame, which looks like the above figure, a length and some bytes.
+因此，让我们建立一个规则：
+**0MQ字符串是长度指定的，//没有//null结尾字符**。
+在最简单的情况下（在我们的例子中会这样做）0MQ字符串映射整齐10MQ消息帧，它看起来像上面的数字，长度和一些字节
 
 Here is what we need to do, in C, to receive a 0MQ string and deliver it to the application as a valid C string:
 
