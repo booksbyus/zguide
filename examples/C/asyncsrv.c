@@ -44,8 +44,8 @@ client_task (void *args)
     return NULL;
 }
 
-//  ---------------------------------------------------------------------
-//  This is our server task
+//  .split
+//  This is our server task.
 //  It uses the multithreaded server model to deal requests out to a pool
 //  of workers and route replies back to clients. One worker can handle
 //  one request at a time but one client can talk to multiple workers at
@@ -84,14 +84,10 @@ void *server_task (void *args)
         zmq_poll (items, 2, -1);
         if (items [0].revents & ZMQ_POLLIN) {
             zmsg_t *msg = zmsg_recv (frontend);
-            //puts ("Request from client:");
-            //zmsg_dump (msg);
             zmsg_send (&msg, backend);
         }
         if (items [1].revents & ZMQ_POLLIN) {
             zmsg_t *msg = zmsg_recv (backend);
-            //puts ("Reply from worker:");
-            //zmsg_dump (msg);
             zmsg_send (&msg, frontend);
         }
     }
@@ -99,9 +95,10 @@ void *server_task (void *args)
     return NULL;
 }
 
-//  Accept a request and reply with the same text a random number of
-//  times, with random delays between replies.
-//
+//  .split
+//  Each worker task works on one request at a time and sends a random number
+//  of replies back, with random delays between replies:
+
 static void
 server_worker (void *args, zctx_t *ctx, void *pipe)
 {
@@ -130,9 +127,9 @@ server_worker (void *args, zctx_t *ctx, void *pipe)
 }
 
 
-//  This main thread simply starts several clients, and a server, and then
+//  The main thread simply starts several clients, and a server, and then
 //  waits for the server to finish.
-//
+
 int main (void)
 {
     zctx_t *ctx = zctx_new ();

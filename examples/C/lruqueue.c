@@ -2,10 +2,6 @@
 //  Least-recently used (LRU) queue device
 //  Clients and workers are shown here in-process
 //
-//  While this example runs in a single process, that is just to make
-//  it easier to start and stop the example. Each thread has its own
-//  context and conceptually acts as a separate process.
-//
 #include "zhelpers.h"
 #include <pthread.h>
 
@@ -37,10 +33,14 @@ client_task (void *args)
     return NULL;
 }
 
-//  Worker using REQ socket to do LRU routing
+//  .split
+//  While this example runs in a single process, that is just to make
+//  it easier to start and stop the example. Each thread has its own
+//  context and conceptually acts as a separate process.
+//  This is the worker task, using a REQ socket to do LRU routing.
 //  Since s_send and s_recv can't handle 0MQ binary identities we
 //  set a printable text identity to allow routing.
-//
+
 static void *
 worker_task (void *args)
 {
@@ -75,6 +75,13 @@ worker_task (void *args)
     return NULL;
 }
 
+//  .split
+//  This is the main task. It starts the clients and workers, and then
+//  routes requests between the two layers. Workers signal READY when
+//  they start; after that we treat them as ready when they reply with
+//  a response back to a client. The LRU data structure is just a queue
+//  of next available workers.
+
 int main (void)
 {
     //  Prepare our context and sockets
@@ -94,11 +101,16 @@ int main (void)
         pthread_t worker;
         pthread_create (&worker, NULL, worker_task, NULL);
     }
-    //  Logic of LRU loop
-    //  - Poll backend always, frontend only if 1+ worker ready
-    //  - If worker replies, queue worker as ready and forward reply
-    //    to client if necessary
-    //  - If client requests, pop next worker and send request to it
+    //  .split
+    //  Here is the main loop for the least-recently-used queue. It has two
+    //  sockets; a frontend for clients and a backend for workers. It polls
+    //  the backend in all cases, and polls the frontend only when there are
+    //  one or more workers ready. This is a neat way to use 0MQ's own queues
+    //  to hold messages we're not ready to process yet. When we get a client
+    //  reply, we pop the next available worker, and send the request to it,
+    //  including the originating client address. When a worker replies, we
+    //  re-queue that worker, and we forward the reply to the origjnal client,
+    //  using the address envelope.
 
     //  Queue of available workers
     int available_workers = 0;
@@ -141,6 +153,9 @@ int main (void)
             }
             free (client_addr);
         }
+        //  .split
+        //  Here is how we handle a client request:
+
         if (items [1].revents & ZMQ_POLLIN) {
             //  Now get next client request, route to LRU worker
             //  Client request is [address][empty][request]

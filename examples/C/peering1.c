@@ -17,11 +17,12 @@ int main (int argc, char *argv [])
     printf ("I: preparing broker at %s...\n", self);
     srandom ((unsigned) time (NULL));
 
-    //  Prepare our context and sockets
     zctx_t *ctx = zctx_new ();
+    
+    //  Bind state backend to endpoint
     void *statebe = zsocket_new (ctx, ZMQ_PUB);
     zsocket_bind (statebe, "ipc://%s-state.ipc", self);
-
+    
     //  Connect statefe to all peers
     void *statefe = zsocket_new (ctx, ZMQ_SUB);
     zsockopt_set_subscribe (statefe, "");
@@ -44,7 +45,7 @@ int main (int argc, char *argv [])
         if (rc == -1)
             break;              //  Interrupted
 
-        //  Handle incoming status message
+        //  Handle incoming status messages
         if (items [0].revents & ZMQ_POLLIN) {
             char *peer_name = zstr_recv (statefe);
             char *available = zstr_recv (statefe);
@@ -53,7 +54,7 @@ int main (int argc, char *argv [])
             free (available);
         }
         else {
-            //  Send random value for worker availability
+            //  Send random values for worker availability
             zstr_sendm (statebe, self);
             zstr_sendf (statebe, "%d", randof (10));
         }

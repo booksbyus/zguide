@@ -3,7 +3,7 @@
 #   mkbook - convert ZeroMQ document to DocBook format
 #   - all images must already have been generated
 #
-#   Usage: bin/mkbook chapter*.txt
+#   Usage: bin/mkbook chapter*.txt; docbook2ps book.xml; ps2pdf book.ps
 #
 #   Creates Wikidot file as specified by .output and images in images/.
 #
@@ -13,11 +13,12 @@ require 'sflcvdp.pl';                   #   SFL date picture formatting
 use Digest::SHA1 qw(sha1_hex);
 
 #   Listings longer than this are truncated and turned into URLs
-$cutoff = 75;
+$cutoff = 64;
 
 @languages = ('C', 'C++', 'PHP', 'Python');
 %extension = ('C' => 'c', 'C++' => 'cpp', 'PHP' => 'php', 'Python' => 'py' );
 %lexer = ('C' => 'c' , 'C++' => 'c++', 'PHP' => 'php', 'Python' => 'python' );
+signatures_load ();
 
 #   Default language for all examples
 $source = "C";
@@ -91,6 +92,7 @@ while (<>) {
     #  Process named codeblock
     elsif (/\[\[code\s+type=\"example\"\s+title=\"([^"]+)\"\s+name=\"([^"]+)\"(\s+language=\"([^"]+)\")?\]\]/) {
         close_list ();
+        $title = $1;
         $name = $2;
         $language = $4 || "C";
         $lexer = $lexer {$language};
@@ -99,13 +101,58 @@ while (<>) {
         die "Can't open $filename: $!"
             unless open (EXAMPLE, $filename);
 
+        writeln ("<example id=\"$name-$ext\">");
+        writeln ("<title>$title ($name.$ext)</title>");
         writeln ("<programlisting language=\"$lexer\">");
+        $lines = 0;
+        $split = 0;
+        $blanks = 0;
+        $start = 0;
         while (<EXAMPLE>) {
             chop;
-            writesrc ($_);
+            if (/\/\/  \.split/) {
+                #   Long code example, split into separate pieces
+                writeln ("</programlisting>\n");
+                writeln ("</example>");
+                printf ("$filename: $lines lines ($start)\n") if $lines > $cutoff;
+                $text = "";
+                $start = $.;
+                while (<EXAMPLE>) {
+                    chop while /\s$/;
+                    last unless /\/\/  /;   #   End at any non-comment line
+                    $text .= "$' ";
+                }
+                $split++;
+                writeln ("<para>$text\n</para>\n");
+                writeln ("<example id=\"$name-$ext-$split\">");
+                writeln ("<title>$title ($name.$ext) - continued</title>");
+                writeln ("<programlisting language=\"$lexer\">");
+                $lines = 0;
+            }
+            elsif (/\/\/  \.skip/) {
+                writesrc ("...");
+                while (<EXAMPLE>) {
+                    chop while /\s$/;
+                    last if /\/\/  \.until/;
+                }
+            }
+            else {
+                #   Don't output trailing blank lines
+                if (/^$/) {
+                    $blanks++;
+                }
+                else {
+                    print OUTPUT "\n" x $blanks;
+                    $blanks = 0;
+                    writesrc ($_);
+                }
+                $lines++;
+            }
         }
         close (EXAMPLE);
         writeln ("</programlisting>\n");
+        writeln ("</example>");
+        printf ("$filename: $lines lines ($start)\n") if $lines > $cutoff;
 
         #   Discard any real contents of code block
         while (<>) {
@@ -126,20 +173,39 @@ while (<>) {
     }
     elsif (/\[\[code type=\"textdiagram\"\s+title=\"([^"]+)\"\]\]/) {
         close_list ();
+        #   Create text file for diagram
         $title = $1;
         $figure = $figure + 1;
+        $filename = "images/fig$figure.txt";
+        die "Can't create $filename: $!"
+            unless open (IMAGE, ">$filename");
+        $longest = 0;
+        while (<>) {
+            chop;
+            last if /\[\[\/code\]\]/;
+            #   DitaaEps uses Ditaa 0.6b, which doesn't support {o}
+            s/\{o\}/   /g;
+            $longest = length ($_) if length ($_) > $longest;
+            print IMAGE "$_\n";
+        }
+        close (IMAGE);
+        $scale = 40 / $longest;
+        $scale = 1 if $scale > 1;
+
+        #   Convert diagram into image of required format
+        if (signature_changed ($filename)) {
+            print "Converting $filename to EPS image...\n";
+            system ("java -jar bin/DitaaEps/DitaaEps.jar -s $scale $filename images/fig$figure.eps");
+            signature_update ($filename);
+        }
         writeln ("<figure id=\"figure-$figure\">");
         writeln ("    <title>$title</title>");
         writeln ("    <mediaobject>");
         writeln ("        <imageobject>");
-        writeln ("            <imagedata fileref=\"images/fig$figure.png\" format=\"PNG\" />");
+        writeln ("            <imagedata fileref=\"images/fig$figure.eps\" format=\"EPS\"/>");
         writeln ("        </imageobject>");
         writeln ("    </mediaobject>");
         writeln ("</figure>\n");
-        while (<>) {
-            #   Discard figure; it must already have been produced
-            last if /\[\[\/code\]\]/;
-        }
     }
     elsif (/\[\[code/) {
         close_list ();
@@ -163,6 +229,8 @@ close_list ();
 close_blocks ();
 writeln ("</book>");
 close (OUTPUT);
+
+signatures_save ();
 exit (0);
 
 
@@ -230,6 +298,67 @@ sub close_list {
 }
 
 
+#   Load signatures hash tables
+sub signatures_load {
+    print "I: loading signatures... ";
+    undef %signatures;
+    local $count = 0;
+    if (open (SIGNATURES, ".signatures")) {
+        while (<SIGNATURES>) {
+            /([^\s]+)\s+([^\s]+)/;
+            $signatures {$2} = $1;
+            $count++;
+        }
+    }
+    print "$count loaded\n";
+}
+
+#   If file signature has changed, return 1, else 0
+sub signature_changed {
+    local ($filename) = @_;
+    $_ = `sha1sum $filename`;
+    if (/([^\s]+)\s+/) {
+        if ($signatures {$filename} eq $1) {
+            return 0;
+        }
+        else {
+            return 1;
+        }
+    }
+    else {
+        "E: can't sha1sum $filename\n";
+        return 0;
+    }
+}
+
+#   Save file signature into table
+sub signature_update {
+    local ($filename) = @_;
+    $_ = `sha1sum $filename`;
+    if (/([^\s]+)\s+/) {
+        $signatures {$filename} = $1;
+    }
+    else {
+        "E: can't sha1sum $filename\n";
+        return 0;
+    }
+}
+
+#   Save signatures table
+sub signatures_save {
+    print "I: saving signatures... ";
+    local $count = 0;
+    local $filename;
+    if (open (SIGNATURES, ">.signatures")) {
+        foreach $filename (keys %signatures) {
+            print SIGNATURES "$signatures{$filename} $filename\n";
+            $count++;
+        }
+    }
+    print "$count saved\n";
+}
+
+
 #-- Symbol expansion code, taken from htmlpp
 
 #   Recursively expand symbols like this (and in this order):
@@ -248,6 +377,7 @@ sub expand_symbols {
 
     return unless ($_);                 #   Quit if input string is empty
 
+    $_ = zmq_symbol ($_);
 
     for (;;) {
         #   Force expansion from end of string first, so things like
@@ -297,7 +427,7 @@ sub expand_symbols {
     s/\<([\w\.]+@[\w\.]+)\>/<email>$1<\/email>/g;
 
     #   Translate character styles
-    s/\/\/([^\/]+)\/\//<emphasis>$1<\/emphasis>/g;
+    s/([^:])\/\/([^\/]+)\/\//$1<emphasis>$2<\/emphasis>/g;
     s/\*\*([^*]+)\*\*/<emphasis role="bold">$1<\/emphasis>/g;
     s/\{\{([^{]+)\}\}/<literal>$1<\/literal>/g;
 
@@ -324,6 +454,16 @@ sub expand_symbols {
     s/ő/&ouml;/g;
     s/Ø/&Oslash;/g;
 
+    return $_;
+}
+
+
+#   Translate 0MQ into ØMQ and 0\MQ into 0MQ
+sub zmq_symbol {
+    local ($_) = @_;
+
+    s/0MQ/ØMQ/g;
+    s/0\\MQ/0MQ/g;
     return $_;
 }
 

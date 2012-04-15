@@ -33,7 +33,12 @@ int main (void)
             if (rc == -1)
                 break;          //  Interrupted
 
-            //  If we got a reply, process it
+            //  .split
+            //  Here we process a server reply and exit our loop if the
+            //  reply is valid. If we didn't a reply we close the client
+            //  socket and resend the request. We try a number of times
+            //  before finally abandoning:
+            
             if (items [0].revents & ZMQ_POLLIN) {
                 //  We got a reply from the server, must match sequence
                 char *reply = zstr_recv (client);

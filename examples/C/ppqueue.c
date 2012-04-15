@@ -10,8 +10,9 @@
 #define PPP_READY       "\001"      //  Signals worker is ready
 #define PPP_HEARTBEAT   "\002"      //  Signals worker heartbeat
 
-
-//  This defines one active worker in our worker list
+//  .split
+//  Here we define the worker class; a structure and a set of functions that
+//  as constructor, destructor, and methods on worker objects:
 
 typedef struct {
     zframe_t *address;          //  Address of worker
@@ -44,7 +45,9 @@ s_worker_destroy (worker_t **self_p)
     }
 }
 
-//  Worker is ready, remove if on list and move to end
+//  .split
+//  The ready method puts a worker to the end of the ready list:
+
 static void
 s_worker_ready (worker_t *self, zlist_t *workers)
 {
@@ -60,7 +63,9 @@ s_worker_ready (worker_t *self, zlist_t *workers)
     zlist_append (workers, self);
 }
 
-//  Return next available worker address
+//  .split
+//  The next method returns the next available worker address:
+
 static zframe_t *
 s_workers_next (zlist_t *workers)
 {
@@ -72,8 +77,10 @@ s_workers_next (zlist_t *workers)
     return frame;
 }
 
-//  Look for & kill expired workers. Workers are oldest to most recent,
-//  so we stop at the first alive worker.
+//  .split
+//  The purge method looks for and kills expired workers. We hold workers
+//  from oldest to most recent, so we stop at the first alive worker:
+
 static void
 s_workers_purge (zlist_t *workers)
 {
@@ -88,12 +95,15 @@ s_workers_purge (zlist_t *workers)
     }
 }
 
+//  .split
+//  The main task is an LRU queue with heartbeating on workers so we can
+//  detect crashed or blocked worker tasks:
 
 int main (void)
 {
     zctx_t *ctx = zctx_new ();
     void *frontend = zsocket_new (ctx, ZMQ_ROUTER);
-    void *backend  = zsocket_new (ctx, ZMQ_ROUTER);
+    void *backend = zsocket_new (ctx, ZMQ_ROUTER);
     zsocket_bind (frontend, "tcp://*:5555");    //  For clients
     zsocket_bind (backend,  "tcp://*:5556");    //  For workers
 
@@ -148,7 +158,11 @@ int main (void)
             zmsg_send (&msg, backend);
         }
 
-        //  Send heartbeats to idle workers if it's time
+        //  .split
+        //  We handle heartbeating after any socket activity. First we send
+        //  heartbeats to any idle workers if it's time. Then we purge any
+        //  dead workers:
+        
         if (zclock_time () >= heartbeat_at) {
             worker_t *worker = (worker_t *) zlist_first (workers);
             while (worker) {

@@ -1,11 +1,10 @@
 //
 //  Least-recently used (LRU) queue device
-//  Demonstrates use of the libczmq API and reactor style
+//  Demonstrates use of the CZMQ API and reactor style
 //
-//  While this example runs in a single process, that is just to make
-//  it easier to start and stop the example. Each thread has its own
-//  context and conceptually acts as a separate process.
-//
+//  The client and worker tasks are identical from the previous example.
+//  .skip
+
 #include "czmq.h"
 
 #define NBR_CLIENTS 10
@@ -38,7 +37,7 @@ client_task (void *args)
 //  Worker using REQ socket to do LRU routing
 //
 static void *
-worker_task (void *arg_ptr)
+worker_task (void *args)
 {
     zctx_t *ctx = zctx_new ();
     void *worker = zsocket_new (ctx, ZMQ_REQ);
@@ -61,6 +60,7 @@ worker_task (void *arg_ptr)
     return NULL;
 }
 
+//  .until
 //  Our LRU queue structure, passed to reactor handlers
 typedef struct {
     void *frontend;             //  Listen to clients
@@ -68,6 +68,11 @@ typedef struct {
     zlist_t *workers;           //  List of ready workers
 } lruqueue_t;
 
+
+//  .split
+//  In the reactor design, each time a message arrives on a socket, the
+//  reactor passes it to a handler function. We have two handlers; one
+//  for the frontend, one for the backend:
 
 //  Handle input from client, on frontend
 int s_handle_frontend (zloop_t *loop, zmq_pollitem_t *poller, void *arg)
@@ -111,6 +116,12 @@ int s_handle_backend (zloop_t *loop, zmq_pollitem_t *poller, void *arg)
     }
     return 0;
 }
+
+//  .split
+//  And the main task now sets-up child tasks, then starts its reactor.
+//  If you press Ctrl-C, the reactor exits and the main task shuts down.
+//  Since the reactor is a CZMQ class, this example may not translate
+//  into all languages equally well.
 
 int main (void)
 {

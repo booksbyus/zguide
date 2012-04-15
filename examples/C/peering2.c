@@ -2,17 +2,13 @@
 //  Broker peering simulation (part 2)
 //  Prototypes the request-reply flow
 //
-//  While this example runs in a single process, that is just to make
-//  it easier to start and stop the example. Each thread has its own
-//  context and conceptually acts as a separate process.
-//
 #include "czmq.h"
 
 #define NBR_CLIENTS 10
 #define NBR_WORKERS 3
 #define LRU_READY   "\001"      //  Signals worker is ready
 
-//  Our own name; in practice this'd be configured per node
+//  Our own name; in practice this would be configured per node
 static char *self;
 
 //  Request-reply client using REQ socket
@@ -65,6 +61,9 @@ worker_task (void *args)
     return NULL;
 }
 
+//  .split
+//  The main task begins by setting-up its frontend and backend sockets
+//  and then starting its client and worker tasks:
 
 int main (int argc, char *argv [])
 {
@@ -79,9 +78,7 @@ int main (int argc, char *argv [])
     printf ("I: preparing broker at %s...\n", self);
     srandom ((unsigned) time (NULL));
 
-    //  Prepare our context and sockets
     zctx_t *ctx = zctx_new ();
-    char endpoint [256];
 
     //  Bind cloud frontend to endpoint
     void *cloudfe = zsocket_new (ctx, ZMQ_ROUTER);
@@ -117,17 +114,17 @@ int main (int argc, char *argv [])
     for (client_nbr = 0; client_nbr < NBR_CLIENTS; client_nbr++)
         zthread_new (client_task, NULL);
 
-    //  Interesting part
-    //  -------------------------------------------------------------
-    //  Request-reply flow
-    //  - Poll backends and process local/cloud replies
-    //  - While worker available, route localfe to local or cloud
+    //  .split
+    //  Here we handle the request-reply flow. We're using the LRU approach
+    //  to poll workers at all times, and clients only when there are one or
+    //  more workers available.
 
-    //  Queue of available workers
+    //  Least recently used queue of available workers
     int capacity = 0;
     zlist_t *workers = zlist_new ();
 
     while (1) {
+        //  First, route any waiting replies from workers
         zmq_pollitem_t backends [] = {
             { localbe, 0, ZMQ_POLLIN, 0 },
             { cloudbe, 0, ZMQ_POLLIN, 0 }
@@ -175,8 +172,13 @@ int main (int argc, char *argv [])
         if (msg)
             zmsg_send (&msg, localfe);
 
-        //  Now route as many clients requests as we can handle
-        //
+        //  .split
+        //  Now we route as many client requests as we have worker capacity
+        //  for. We may reroute requests from our local frontend, but not from 
+        //  the cloud frontend. We reroute randomly now, just to test things
+        //  out. In the next version we'll do this properly by calculating
+        //  cloud capacity:
+
         while (capacity) {
             zmq_pollitem_t frontends [] = {
                 { localfe, 0, ZMQ_POLLIN, 0 },

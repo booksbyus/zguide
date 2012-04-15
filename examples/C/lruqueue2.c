@@ -1,10 +1,6 @@
 //
 //  Least-recently used (LRU) queue device
-//  Demonstrates use of the libczmq API
-//
-//  While this example runs in a single process, that is just to make
-//  it easier to start and stop the example. Each thread has its own
-//  context and conceptually acts as a separate process.
+//  Demonstrates use of the CZMQ API
 //
 #include "czmq.h"
 
@@ -61,6 +57,11 @@ worker_task (void *args)
     return NULL;
 }
 
+//  .split
+//  Now we come to the main task. This has the identical functionality to
+//  the previous lruqueue example but uses CZMQ to start child threads,
+//  to hold the list of workers, and to read and send messages:
+
 int main (void)
 {
     zctx_t *ctx = zctx_new ();
@@ -76,17 +77,10 @@ int main (void)
     for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++)
         zthread_new (worker_task, NULL);
 
-    //  Logic of LRU loop
-    //  - Poll backend always, frontend only if 1+ worker ready
-    //  - If worker replies, queue worker as ready and forward reply
-    //    to client if necessary
-    //  - If client requests, pop next worker and send request to it
-
     //  Queue of available workers
     zlist_t *workers = zlist_new ();
 
     while (1) {
-        //  Initialize poll set
         zmq_pollitem_t items [] = {
             { backend,  0, ZMQ_POLLIN, 0 },
             { frontend, 0, ZMQ_POLLIN, 0 }

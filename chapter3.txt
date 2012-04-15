@@ -44,17 +44,14 @@ Which lets you insert ROUTER-DEALER devices into a request-reply pattern like th
 
 If you connect a REQ socket to a ROUTER socket, and send one request message, this is what you get when you receive from the ROUTER socket:
 
-[[code type="textdiagram"]]
-            +---------------+
-  Frame 1   | Reply address |   <----- Envelope
-            +---+-----------+
-  Frame 2   |   |   <------ Empty message part
-            +---+-------------------------------------+
-  Frame 3   | Data                                    |
-            +-----------------------------------------+
-
-
-       Figure # - Single-hop request-reply envelope
+[[code type="textdiagram" title="Single-hop Request-reply Envelope"]]
+          +---------------+
+Frame 1   | Reply address |   <----- Envelope
+          +---+-----------+
+Frame 2   |   |   <------ Empty message part
+          +---+-------------------------------------+
+Frame 3   | Data                                    |
+          +-----------------------------------------+
 [[/code]]
 
 Breaking this down:
@@ -67,24 +64,20 @@ Breaking this down:
 
 Now if we extend this with a chain of devices, we get envelope on envelope, with the newest envelope always stuck at the beginning of the stack:
 
-[[code type="textdiagram"]]
+[[code type="textdiagram" title="Multihop Request-reply Envelope"]]
+     (Next envelope will go here)
 
-       (Next envelope will go here)
-
-            +---------------+
-  Frame 1   | Reply address |   <----- Envelope (ROUTER)
-            +---------------+
-  Frame 2   | Reply address |   <----- Envelope (ROUTER)
-            +---------------+
-  Frame 3   | Reply address |   <----- Envelope (ROUTER)
-            +---+-----------+
-  Frame 4   |   |   <------ Empty message part (REQ)
-            +---+-------------------------------------+
-  Frame 5   | Data                                    |
-            +-----------------------------------------+
-
-
-       Figure # - Multihop request-reply envelope
+          +---------------+
+Frame 1   | Reply address |   <----- Envelope (ROUTER)
+          +---------------+
+Frame 2   | Reply address |   <----- Envelope (ROUTER)
+          +---------------+
+Frame 3   | Reply address |   <----- Envelope (ROUTER)
+          +---+-----------+
+Frame 4   |   |   <------ Empty message part (REQ)
+          +---+-------------------------------------+
+Frame 5   | Data                                    |
+          +-----------------------------------------+
 [[/code]]
 
 Here now is a more detailed explanation of the four socket types we use for request-reply patterns:
@@ -103,52 +96,46 @@ So the obvious question about ROUTER is, where does it get the reply addresses f
 
 This is what it looks like for transient sockets:
 
-[[code type="textdiagram"]]
-        +-----------+
-        |           |
-        |   Client  |
-        |           |
-        +-----------+       +---------+
-        |    REQ    |       |  Data   |     Client sends this
-        \-----+-----/       +---------+
-              |
-              |  "My identity is empty"
-              v
-        /-----------\       +---------+
-        |  ROUTER   |       |  UUID   |     ROUTER invents UUID to
-        +-----------+       +-+-------+     use as reply address
-        |           |       | |
-        |  Service  |       +-+-------+
-        |           |       |  Data   |
-        +-----------+       +---------+
-
-
-          Figure # - ROUTER invents a UUID for transient sockets
+[[code type="textdiagram" title="ROUTER Invents a UUID for Transient Sockets"]]
+|   Client  |
+|           |
++-----------+
+|           |
++-----------+       +---------+
+|    REQ    |       |  Data   |     Client sends this
+\-----+-----/       +---------+
+      |
+      |  "My identity is empty"
+      v
+/-----------\       +---------+
+|  ROUTER   |       |  UUID   |     ROUTER invents UUID to
++-----------+       +-+-------+     use as reply address
+|           |       | |
+|  Service  |       +-+-------+
+|           |       |  Data   |
++-----------+       +---------+
 [[/code]]
 
 This is what it looks like for durable sockets:
 
-[[code type="textdiagram"]]
-        +-----------+
-        |           |       zmq_setsockopt (socket,
-        |   Client  |           ZMQ_IDENTITY, "Lucy", 4);
-        |           |
-        +-----------+       +---------+
-        |    REQ    |       |  Data   |     Client sends this
-        \-----+-----/       +---------+
-              |
-              |  "Hi, my name is Lucy"
-              v
-        /-----------\       +---------+
-        |  ROUTER   |       | 'Lucy'  |     ROUTER uses identity of
-        +-----------+       +-+-------+     client as reply address
-        |           |       | |
-        |  Service  |       +-+-------+
-        |           |       |  Data   |
-        +-----------+       +---------+
-
-
-           Figure # - ROUTER uses identity if it knows it
+[[code type="textdiagram" title="ROUTER uses Identity If It knows It"]]
++-----------+
+|           |       zmq_setsockopt (socket,
+|   Client  |           ZMQ_IDENTITY, "Lucy", 4);
+|           |
++-----------+       +---------+
+|    REQ    |       |  Data   |     Client sends this
+\-----+-----/       +---------+
+      |
+      |  "Hi, my name is Lucy"
+      v
+/-----------\       +---------+
+|  ROUTER   |       | 'Lucy'  |     ROUTER uses identity of
++-----------+       +-+-------+     client as reply address
+|           |       | |
+|  Service  |       +-+-------+
+|           |       |  Data   |
++-----------+       +---------+
 [[/code]]
 
 Let's observe the above two cases in practice. This program dumps the contents of the message parts that a ROUTER socket receives from two REP sockets, one not using identities, and one using an identity 'Hello':
@@ -224,31 +211,28 @@ What kind of routing can you do with a router-to-dealer pattern? If the dealers 
 
 We'll make an example where the dealers don't talk back, they're pure sinks. Our routing algorithm will be a weighted random scatter: we have two dealers and we send twice as many messages to one as to the other.
 
-[[code type="textdiagram"]]
-          +-------------+
-          |             |
-          |   Client    |  Send to "A" or "B"
-          |             |
-          +-------------+
-          |   ROUTER    |
-          \------+------/
-                 |
-                 |
-         +-------+-------+
-         |               |
-         |               |
-         v               v
-   /-----------\   /-----------\
-   |  DEALER   |   |  DEALER   |
-   |    "A"    |   |    "B"    |
-   +-----------+   +-----------+
-   |           |   |           |
-   |  Worker   |   |   Worker  |
-   |           |   |           |
-   +-----------+   +-----------+
-
-
-   Figure # - Router to dealer custom routing
+[[code type="textdiagram" title="Router-to-Dealer Custom Routing"]]
+       +-------------+
+       |             |
+       |   Client    |  Send to "A" or "B"
+       |             |
+       +-------------+
+       |   ROUTER    |
+       \------+------/
+              |
+              |
+      +-------+-------+
+      |               |
+      |               |
+      v               v
+/-----------\   /-----------\
+|  DEALER   |   |  DEALER   |
+|    "A"    |   |    "B"    |
++-----------+   +-----------+
+|           |   |           |
+|  Worker   |   |   Worker  |
+|           |   |           |
++-----------+   +-----------+
 [[/code]]
 
 Here's code that shows how this works:
@@ -264,15 +248,12 @@ Some comments on this code:
 
 To route to a dealer, we create an envelope like this:
 
-[[code type="textdiagram"]]
-            +-------------+
-  Frame 1   | Address     |
-            +-------------+-------------------------+
-  Frame 2   | Data                                  |
-            +---------------------------------------+
-
-
-       Figure # - Routing envelope for dealer
+[[code type="textdiagram" title="Routing Envelope for Dealer"]]
+          +-------------+
+Frame 1   | Address     |
+          +-------------+-------------------------+
+Frame 2   | Data                                  |
+          +---------------------------------------+
 [[/code]]
 
 The router socket removes the first frame, and sends the second frame, which the dealer gets as-is. When the dealer sends a message to the router, it sends one frame. The router prepends the dealer's address and gives us back a similar envelope in two parts.
@@ -295,32 +276,29 @@ You can connect one router to many mamas, and distribute messages as you would t
 
 Like dealers, mamas can only talk to one router and since mamas always start by talking to the router, you should never connect one mama to more than one router unless you are doing sneaky stuff like multi-pathway redundant routing. I'm not even going to explain that now, and hopefully the jargon is complex enough to stop you trying this until you need it.
 
-[[code type="textdiagram"]]
-          +-------------+
-          |             |
-          |   Client    |   Send to "A" or "B"
-          |             |
-          +-------------+
-          |   ROUTER    |
-          \-------------/
-                 ^
-                 |  (1) Mama says Hi
-                 |
-         +-------+-------+
-         |               |
-         |               |   (2) Router gives laundry
-         v               v
-   /-----------\   /-----------\
-   |    REQ    |   |    REQ    |
-   |    "A"    |   |    "B"    |
-   +-----------+   +-----------+
-   |           |   |           |
-   |  Worker   |   |   Worker  |
-   |           |   |           |
-   +-----------+   +-----------+
-
-
-   Figure # - Router to mama custom routing
+[[code type="textdiagram" title="Router to Mama Custom Routing"]]
+       +-------------+
+       |             |
+       |   Client    |   Send to "A" or "B"
+       |             |
+       +-------------+
+       |   ROUTER    |
+       \-------------/
+              ^
+              |  (1) Mama says Hi
+              |
+      +-------+-------+
+      |               |
+      |               |   (2) Router gives laundry
+      v               v
+/-----------\   /-----------\
+|    REQ    |   |    REQ    |
+|    "A"    |   |    "B"    |
++-----------+   +-----------+
+|           |   |           |
+|  Worker   |   |   Worker  |
+|           |   |           |
++-----------+   +-----------+
 [[/code]]
 
 What kind of routing can you do with a router-to-mama pattern? Probably the most obvious is "least-recently-used" (LRU), where we always route to the mama that's been waiting longest. Here is an example that does LRU routing to a set of mamas:
@@ -357,17 +335,14 @@ Some comments on this code
 
 To route to a mama, we must create a mama-friendly envelope like this:
 
-[[code type="textdiagram"]]
-            +-------------+
-  Frame 1   | Address     |
-            +---+---------+
-  Frame 2   |   |   <------ Empty message part
-            +---+-----------------------------------+
-  Frame 3   | Data                                  |
-            +---------------------------------------+
-
-
-      Figure # - Routing envelope for mama (REQ)
+[[code type="textdiagram" title="Routing Envelope for Mama (REQ)"]]
+          +-------------+
+Frame 1   | Address     |
+          +---+---------+
+Frame 2   |   |   <------ Empty message part
+          +---+-----------------------------------+
+Frame 3   | Data                                  |
+          +---------------------------------------+
 [[/code]]
 
 +++ Address-based Routing
@@ -387,32 +362,29 @@ In the normal request-reply pattern, papas are anonymous and replaceable (wow, t
 
 A core philosophy of 0MQ is that the edges are smart and many, and the middle is vast and dumb. This does mean the edges can address each other, and this also means we want to know how to reach a given papa. Doing routing across multiple hops is something we'll look at later but for now we'll look just at the final step: a router talking to a specific papa:
 
-[[code type="textdiagram"]]
-          +-------------+
-          |             |
-          |   Client    |   Send to "A" or "B"
-          |             |
-          +-------------+
-          |   ROUTER    |
-          \-------------/
-                 ^
-                 |
-                 |
-         +-------+-------+
-         |               |
-         |               |
-         v               v
-   /-----------\   /-----------\
-   |    REP    |   |    REP    |
-   |    "A"    |   |    "B"    |
-   +-----------+   +-----------+
-   |           |   |           |
-   |  Worker   |   |   Worker  |
-   |           |   |           |
-   +-----------+   +-----------+
-
-
-    Figure # - Router to papa custom routing
+[[code type="textdiagram" title="Router-to-Papa Custom Routing"]]
+       +-------------+
+       |             |
+       |   Client    |   Send to "A" or "B"
+       |             |
+       +-------------+
+       |   ROUTER    |
+       \-------------/
+              ^
+              |
+              |
+      +-------+-------+
+      |               |
+      |               |
+      v               v
+/-----------\   /-----------\
+|    REP    |   |    REP    |
+|    "A"    |   |    "B"    |
++-----------+   +-----------+
+|           |   |           |
+|  Worker   |   |   Worker  |
+|           |   |           |
++-----------+   +-----------+
 [[/code]]
 
 This example shows a very specific chain of events:
@@ -457,17 +429,14 @@ Some comments on this code:
 
 To route to a papa, we must create a papa-friendly envelope like this:
 
-[[code type="textdiagram"]]
-            +-------------+
-  Frame 1   | Address     |  <--- Zero or more of these
-            +---+---------+
-  Frame 2   |   |   <------ Exactly one empty message part
-            +---+-----------------------------------+
-  Frame 3   | Data                                  |
-            +---------------------------------------+
-
-
-       Figure # - Routing envelope for papa aka REP
+[[code type="textdiagram" title="Routing Envelope for Papa aka REP"]]
+          +-------------+
+Frame 1   | Address     |  <--- Zero or more of these
+          +---+---------+
+Frame 2   |   |   <------ Exactly one empty message part
+          +---+-----------------------------------+
+Frame 3   | Data                                  |
+          +---------------------------------------+
 [[/code]]
 
 +++ A Request-Reply Message Broker
@@ -476,7 +445,7 @@ We'll recap the knowledge we have so far about doing weird stuff with 0MQ messag
 
 To start with, let's look back at the classic request-reply pattern and then see how it extends over a larger and larger service-oriented network. The basic pattern is:
 
-[[code type="textdiagram"]]
+[[code type="textdiagram" title="Basic Request-reply"]]
             +--------+
             | Client |
             +--------+
@@ -492,14 +461,11 @@ To start with, let's look back at the classic request-reply pattern and then see
 +--------+  +--------+  +--------+
 | Worker |  | Worker |  | Worker |
 +--------+  +--------+  +--------+
-
-
-  Figure # - Basic request-reply
 [[/code]]
 
 This extends to multiple papas, but if we want to handle multiple mamas as well we need a device in the middle, which normally consists of a router and a dealer back to back, connected by a classic ZMQ_QUEUE device that just copies message parts between the two sockets as fast as it can:
 
-[[code type="textdiagram"]]
+[[code type="textdiagram" title="Stretched Request-reply"]]
 +--------+  +--------+  +--------+
 | Client |  | Client |  | Client |
 +--------+  +--------+  +--------+
@@ -523,42 +489,36 @@ This extends to multiple papas, but if we want to handle multiple mamas as well 
 +--------+  +--------+  +--------+
 | Worker |  | Worker |  | Worker |
 +--------+  +--------+  +--------+
-
-
-Figure # - Stretched request-reply
 [[/code]]
 
 The key here is that the router stores the originating mama address in the request envelope, the dealer and papas don't touch that, and so the router knows which mama to send the reply back to. Papas are anonymous and not addressed in this pattern, all papas are assumed to provide the same service.
 
 In the above design, we're using the built-in load balancing routing that the dealer socket provides. However we want for our broker to use a least-recently used algorithm, so we take the router-mama pattern we learned, and apply that:
 
-[[code type="textdiagram"]]
-    +--------+  +--------+  +--------+
-    | Client |  | Client |  | Client |
-    +--------+  +--------+  +--------+
-    |  REQ   |  |  REQ   |  |  REQ   |
-    +---+----+  +---+----+  +---+----+
-        |           |           |
-        +-----------+-----------+
-                    |
-                +---+----+
-                | ROUTER |  Frontend
-                +--------+
-                | Device |  LRU queue
-                +--------+
-                | ROUTER |  Backend
-                +---+----+
-                    |
-        +-----------+-----------+
-        |           |           |
-    +---+----+  +---+----+  +---+----+
-    |  REQ   |  |  REQ   |  |  REQ   |
-    +--------+  +--------+  +--------+
-    | Worker |  | Worker |  | Worker |
-    +--------+  +--------+  +--------+
-
-
-Figure # - Stretched request-reply with LRU
+[[code type="textdiagram" title="Stretched Request-reply with LRU"]]
++--------+  +--------+  +--------+
+| Client |  | Client |  | Client |
++--------+  +--------+  +--------+
+|  REQ   |  |  REQ   |  |  REQ   |
++---+----+  +---+----+  +---+----+
+    |           |           |
+    +-----------+-----------+
+                |
+            +---+----+
+            | ROUTER |  Frontend
+            +--------+
+            | Device |  LRU queue
+            +--------+
+            | ROUTER |  Backend
+            +---+----+
+                |
+    +-----------+-----------+
+    |           |           |
++---+----+  +---+----+  +---+----+
+|  REQ   |  |  REQ   |  |  REQ   |
++--------+  +--------+  +--------+
+| Worker |  | Worker |  | Worker |
++--------+  +--------+  +--------+
 [[/code]]
 
 Our broker - a router-to-router LRU queue - can't simply copy message parts blindly. Here is the code, it's fairly complex but the core logic is reusable in any request-reply broker that wants to do LRU routing:
@@ -572,62 +532,50 @@ First, recall that a mama REQ socket always puts on an empty part (the envelope 
 
 We can now walk through a full request-reply chain from client to worker and back. In the code we set the identity of client and worker sockets to make it easier to print the message frames if we want to. Let's assume the client's identity is "CLIENT" and the worker's identity is "WORKER". The client sends a single frame:
 
-[[code type="textdiagram"]]
-             +---+-------+
-   Frame 1   | 5 | HELLO |       Data part
-             +---+-------+
-
-
-    Figure # - Message that client sends
+[[code type="textdiagram" title="Message that Client Sends"]]
+          +---+-------+
+Frame 1   | 5 | HELLO |       Data part
+          +---+-------+
 [[/code]]
 
 What the queue gets, when reading off the router frontend socket is this:
 
-[[code type="textdiagram"]]
-             +---+--------+
-   Frame 1   | 6 | CLIENT |    Identity of client
-             +---+--------+
-   Frame 2   | 0 |               Empty message part
-             +---+-------+
-   Frame 3   | 5 | HELLO |       Data part
-             +---+-------+
-
-
-       Figure # - Message coming in on frontend
+[[code type="textdiagram" title="Message Coming in on Frontend"]]
+          +---+--------+
+Frame 1   | 6 | CLIENT |    Identity of client
+          +---+--------+
+Frame 2   | 0 |               Empty message part
+          +---+-------+
+Frame 3   | 5 | HELLO |       Data part
+          +---+-------+
 [[/code]]
 
 The broker sends this to the worker, prefixed by the address of the worker, taken from the LRU queue, plus an additional empty part to keep the mama at the other end happy:
 
-[[code type="textdiagram"]]
-             +---+--------+
-   Frame 1   | 6 | WORKER |     Identity of worker
-             +---+--------+
-   Frame 2   | 0 |               Empty message part
-             +---+--------+
-   Frame 3   | 6 | CLIENT |    Identity of client
-             +---+--------+
-   Frame 4   | 0 |               Empty message part
-             +---+-------+
-   Frame 5   | 5 | HELLO |       Data part
-             +---+-------+
-
-
-          Figure # - Message sent to backend
+[[code type="textdiagram" title="Message Sent to Backend"]]
+          +---+--------+
+Frame 1   | 6 | WORKER |     Identity of worker
+          +---+--------+
+Frame 2   | 0 |               Empty message part
+          +---+--------+
+Frame 3   | 6 | CLIENT |    Identity of client
+          +---+--------+
+Frame 4   | 0 |               Empty message part
+          +---+-------+
+Frame 5   | 5 | HELLO |       Data part
+          +---+-------+
 [[/code]]
 
 This complex envelope stack gets chewed up first by the backend router socket, which removes the first frame. Then the mama socket in the worker removes the empty part, and provides the rest to the worker:
 
-[[code type="textdiagram"]]
-             +---+--------+
-   Frame 1   | 6 | CLIENT |    Identity of client
-             +---+--------+
-   Frame 2   | 0 |               Empty message part
-             +---+-------+
-   Frame 3   | 5 | HELLO |       Data part
-             +---+-------+
-
-
-        Figure # - Message delivered to worker
+[[code type="textdiagram" title="Message Delivered to Worker"]]
+          +---+--------+
+Frame 1   | 6 | CLIENT |    Identity of client
+          +---+--------+
+Frame 2   | 0 |               Empty message part
+          +---+-------+
+Frame 3   | 5 | HELLO |       Data part
+          +---+-------+
 [[/code]]
 
 Which is exactly the same as what the queue received on its frontend router socket. The worker has to save the envelope (which is all the parts up to and including the empty message part) and then it can do what's needed with the data part.
@@ -735,14 +683,14 @@ Replacing 22 lines of code with four is a good deal, especially since the result
 
 * //Proper handling of Ctrl-C.// We already saw how to catch an interrupt. It would be useful if this happened in all applications.
 
-Turning this wishlist into reality gives us [http://zero.mq/c czmq], a high-level C API for 0MQ. This high-level binding in fact developed out of earlier versions of the Guide. It combines nicer semantics for working with 0MQ with some portability layers, and (importantly for C but less for other languages) containers like hashes and lists.
+Turning this wishlist into reality gives us [http://zero.mq/c CZMQ], a high-level C API for 0MQ. This high-level binding in fact developed out of earlier versions of the Guide. It combines nicer semantics for working with 0MQ with some portability layers, and (importantly for C but less for other languages) containers like hashes and lists.
 
-Here is the LRU queue broker rewritten to use czmq:
+Here is the LRU queue broker rewritten to use CZMQ:
 
-[[code type="example" title="LRU queue broker using czmq" name="lruqueue2"]]
+[[code type="example" title="LRU queue broker using CZMQ" name="lruqueue2"]]
 [[/code]]
 
-One thing czmq provides is clean interrupt handling. This means that Ctrl-C will cause any blocking 0MQ call to exit with a return code -1 and errno set to EINTR. The czmq message recv methods will return NULL in such cases. So, you can cleanly exit a loop like this:
+One thing CZMQ provides is clean interrupt handling. This means that Ctrl-C will cause any blocking 0MQ call to exit with a return code -1 and errno set to EINTR. The CZMQ message recv methods will return NULL in such cases. So, you can cleanly exit a loop like this:
 
 [[code language="C"]]
 while (1) {
@@ -764,7 +712,7 @@ if (rc == -1)
     break;              //  Interrupted
 [[/code]]
 
-The previous example still uses zmq_poll[3]. So how about reactors? The czmq {{zloop}} reactor is simple but functional. It lets you:
+The previous example still uses zmq_poll[3]. So how about reactors? The CZMQ {{zloop}} reactor is simple but functional. It lets you:
 
 * Set a reader on any socket, i.e. code that is called whenever the socket has input.
 * Cancel a reader on a socket.
@@ -794,31 +742,28 @@ Getting applications to properly shut-down when you send them Ctrl-C can be tric
 
 In the router-to-dealer example we saw a 1-to-N use case where one client talks asynchronously to multiple workers. We can turn this upside-down to get a very useful N-to-1 architecture where various clients talk to a single server, and do this asynchronously:
 
-[[code type="textdiagram"]]
-     +-----------+   +-----------+
-     |           |   |           |
-     |  Client   |   |  Client   |
-     |           |   |           |
-     +-----------+   +-----------+
-     |  DEALER   |   |  DEALER   |
-     \-----------/   \-----------/
-           ^               ^
-           |               |
-           |               |
-           +-------+-------+
-                   |
-                   |
-                   v
-            /------+------\
-            |   ROUTER    |
-            +-------------+
-            |             |
-            |   Server    |
-            |             |
-            +-------------+
-
-
-    Figure # - Asynchronous Client-Server
+[[code type="textdiagram" title="Asynchronous Client-Server"]]
++-----------+   +-----------+
+|           |   |           |
+|  Client   |   |  Client   |
+|           |   |           |
++-----------+   +-----------+
+|  DEALER   |   |  DEALER   |
+\-----------/   \-----------/
+      ^               ^
+      |               |
+      |               |
+      +-------+-------+
+              |
+              |
+              v
+       /------+------\
+       |   ROUTER    |
+       +-------------+
+       |             |
+       |   Server    |
+       |             |
+       +-------------+
 [[/code]]
 
 Here's how it works:
@@ -843,48 +788,46 @@ Some comments on this code:
 
 The socket logic in the server is fairly wicked. This is the detailed architecture of the server:
 
-[[code type="textdiagram"]]
-          +---------+   +---------+   +---------+
-          |         |   |         |   |         |
-          | Client  |   | Client  |   | Client  |
-          |         |   |         |   |         |
-          +---------+   +---------+   +---------+
-          | DEALER  |   | DEALER  |   | DEALER  |
-          \---------/   \---------/   \---------/
-            connect       connect       connect
-               |             |             |
-               |             |             |
-               +-------------+-------------+
-                             |
-      /----------------------|----------------------\
-      :                      v                      :
-      :                    bind                     :
-      :                /-----------\                :
-      :                |  ROUTER   |                :
-      :                +-----------+                :
-      :                |           |                :
-      :                |  Server   |                :
-      :                |           |                :
-      :                +-----------+                :
-      :                |  DEALER   |                :
-      :                \-----------/                :
-      :                    bind                     :
-      :                      |                      :
-      :        +-------------+-------------+        :
-      :        |             |             |        :
-      :        v             v             v        :
-      :     connect       connect       connect     :
-      :   /---------\   /---------\   /---------\   :
-      :   | DEALER  |   | DEALER  |   | DEALER  |   :
-      :   +---------+   +---------+   +---------+   :
-      :   |         |   |         |   |         |   :
-      :   | Worker  |   | Worker  |   | Worker  |   :
-      :   |         |   |         |   |         |   :
-      :   +---------+   +---------+   +---------+   :
-      :                                             :
-      \---------------------------------------------/
-
-          Figure # - Detail of asynchronous server
+[[code type="textdiagram" title="Detail of Asynchronous Server"]]
+    +---------+   +---------+   +---------+
+    |         |   |         |   |         |
+    | Client  |   | Client  |   | Client  |
+    |         |   |         |   |         |
+    +---------+   +---------+   +---------+
+    | DEALER  |   | DEALER  |   | DEALER  |
+    \---------/   \---------/   \---------/
+      connect       connect       connect
+         |             |             |
+         |             |             |
+         +-------------+-------------+
+                       |
+/----------------------|----------------------\
+:                      v                      :
+:                    bind                     :
+:                /-----------\                :
+:                |  ROUTER   |                :
+:                +-----------+                :
+:                |           |                :
+:                |  Server   |                :
+:                |           |                :
+:                +-----------+                :
+:                |  DEALER   |                :
+:                \-----------/                :
+:                    bind                     :
+:                      |                      :
+:        +-------------+-------------+        :
+:        |             |             |        :
+:        v             v             v        :
+:     connect       connect       connect     :
+:   /---------\   /---------\   /---------\   :
+:   | DEALER  |   | DEALER  |   | DEALER  |   :
+:   +---------+   +---------+   +---------+   :
+:   |         |   |         |   |         |   :
+:   | Worker  |   | Worker  |   | Worker  |   :
+:   |         |   |         |   |         |   :
+:   +---------+   +---------+   +---------+   :
+:                                             :
+\---------------------------------------------/
 [[/code]]
 
 Note that we're doing a dealer-to-router dialog between client and server, but internally between the server main thread and workers we're doing dealer-to-dealer. If the workers were strictly synchronous, we'd use REP. But since we want to send multiple replies we need an async socket. We do //not// want to route replies, they always go to the single server thread that sent us the request.
@@ -953,65 +896,59 @@ Workers and clients are synchronous. We want to use the LRU pattern to route tas
 
 For reasons we already looked at, clients and workers won't speak to each other directly. It makes it impossible to add or remove nodes dynamically. So our basic model consists of the request-reply message broker we saw earlier:
 
-[[code type="textdiagram"]]
-    +--------+  +--------+  +--------+
-    | Client |  | Client |  | Client |
-    +--------+  +--------+  +--------+
-    |  REQ   |  |  REQ   |  |  REQ   |
-    +---+----+  +---+----+  +---+----+
-        |           |           |
-        +-----------+-----------+
-                    |
-    +--------------------------------+
-    |               |                |
-    |         +-----+------+         |
-    |         |   ROUTER   |         |
-    |         +------------+         |
-    |         | LRU Queue  |         |
-    |         +------------+         |
-    |         |   ROUTER   |         |
-    |         +-----+------+         |
-    |               |         Broker :
-    +--------------------------------+
-                    |
-                    |
-        +-----------+-----------+
-        |           |           |
-    +---+----+  +---+----+  +---+----+
-    |  REQ   |  |  REQ   |  |  REQ   |
-    +--------+  +--------+  +--------+
-    | Worker |  | Worker |  | Worker |
-    +--------+  +--------+  +--------+
-
-
-     Figure # - Cluster architecture
+[[code type="textdiagram" title="Cluster Architecture"]]
++--------+  +--------+  +--------+
+| Client |  | Client |  | Client |
++--------+  +--------+  +--------+
+|  REQ   |  |  REQ   |  |  REQ   |
++---+----+  +---+----+  +---+----+
+    |           |           |
+    +-----------+-----------+
+                |
++--------------------------------+
+|               |                |
+|         +-----+------+         |
+|         |   ROUTER   |         |
+|         +------------+         |
+|         | LRU Queue  |         |
+|         +------------+         |
+|         |   ROUTER   |         |
+|         +-----+------+         |
+|               |         Broker :
++--------------------------------+
+                |
+                |
+    +-----------+-----------+
+    |           |           |
++---+----+  +---+----+  +---+----+
+|  REQ   |  |  REQ   |  |  REQ   |
++--------+  +--------+  +--------+
+| Worker |  | Worker |  | Worker |
++--------+  +--------+  +--------+
 [[/code]]
 
 ++++ Scaling to Multiple Clusters
 
 Now we scale this out to more than one cluster. Each cluster has a set of clients and workers, and a broker that joins these together:
 
-[[code type="textdiagram"]]
-
-         Cluster 1          :          Cluster 2
-                            :
-                            :
-    +---+  +---+  +---+     :     +---+  +---+  +---+
-    | C |  | C |  | C |     :     | C |  | C |  | C |
-    +-+-+  +-+-+  +-+-+     :     +-+-+  +-+-+  +-+-+
-      |      |      |       :       |      |      |
-      |      |      |       :       |      |      |
-    +-+------+------+-+     :     +-+------+------+-+
-    |     Broker      |     :     |     Broker      |
-    +-+------+------+-+     :     +-+------+------+-+
-      |      |      |       :       |      |      |
-      |      |      |       :       |      |      |
-    +-+-+  +-+-+  +-+-+     :     +-+-+  +-+-+  +-+-+
-    | W |  | W |  | W |     :     | W |  | W |  | W |
-    +---+  +---+  +---+     :     +---+  +---+  +---+
-                            :
-
-             Figure # - Multiple clusters
+[[code type="textdiagram" title="Multiple Clusters"]]
+     Cluster 1          :          Cluster 2
+                        :
+                        :
++---+  +---+  +---+     :     +---+  +---+  +---+
+| C |  | C |  | C |     :     | C |  | C |  | C |
++-+-+  +-+-+  +-+-+     :     +-+-+  +-+-+  +-+-+
+  |      |      |       :       |      |      |
+  |      |      |       :       |      |      |
++-+------+------+-+     :     +-+------+------+-+
+|     Broker      |     :     |     Broker      |
++-+------+------+-+     :     +-+------+------+-+
+  |      |      |       :       |      |      |
+  |      |      |       :       |      |      |
++-+-+  +-+-+  +-+-+     :     +-+-+  +-+-+  +-+-+
+| W |  | W |  | W |     :     | W |  | W |  | W |
++---+  +---+  +---+     :     +---+  +---+  +---+
+                        :
 [[/code]]
 
 The question is: how do we get the clients of each cluster talking to the workers of the other cluster? There are a few possibilities, each with pros and cons:
@@ -1024,56 +961,49 @@ The question is: how do we get the clients of each cluster talking to the worker
 
 Let's explore Idea #1. Workers connecting to both brokers and accepting jobs from either:
 
-[[code type="textdiagram"]]
-
-                Cluster 1          :         Cluster 2
-                                   :
-                                   :
-              |            |               |            |
-              +------------+               +------------+
-              |   ROUTER   |               |   ROUTER   |
-              +-----+------+               +-----+------+
-                    |                            |
-          +---------|-+--=--------+--------------+
-          :         | :           :
-        +-----------+-----------+ :
-        | :         | :         | :
-        | :         | :         | :
-    +---+-+--+  +---+-+--+  +---+-+--+
-    | ROUTER |  | ROUTER |  | ROUTER |
-    +--------+  +--------+  +--------+
-    | Worker |  | Worker |  | Worker |
-    +--------+  +--------+  +--------+
-
-
-         Figure # - Idea 1 - cross-connected workers
+[[code type="textdiagram" title="Idea 1 - Cross-connected Workers"]]
+            Cluster 1          :         Cluster 2
+                               :
+                               :
+          |            |               |            |
+          +------------+               +------------+
+          |   ROUTER   |               |   ROUTER   |
+          +-----+------+               +-----+------+
+                |                            |
+      +---------|-+--=--------+--------------+
+      :         | :           :
+    +-----------+-----------+ :
+    | :         | :         | :
+    | :         | :         | :
++---+-+--+  +---+-+--+  +---+-+--+
+| ROUTER |  | ROUTER |  | ROUTER |
++--------+  +--------+  +--------+
+| Worker |  | Worker |  | Worker |
++--------+  +--------+  +--------+
 [[/code]]
 
 It looks feasible. However it doesn't provide what we wanted, which was that clients get local workers if possible and remote workers only if it's better than waiting. Also workers will signal "ready" to both brokers and can get two jobs at once, while other workers remain idle. It seems this design fails because again we're putting routing logic at the edges.
 
 So idea #2 then. We interconnect the brokers and don't touch the clients or workers, which are mamas like we're used to:
 
-[[code type="textdiagram"]]
-
-         Cluster 1          :          Cluster 2
-                            :
-                            :
-    +---+  +---+  +---+     :     +---+  +---+  +---+
-    | C |  | C |  | C |     :     | C |  | C |  | C |
-    +-+-+  +-+-+  +-+-+     :     +-+-+  +-+-+  +-+-+
-      |      |      |       :       |      |      |
-      |      |      |       :       |      |      |
-    +-+------+------+-+     :     +-+------+------+-+
-    |     Broker      |<--------->|     Broker      |
-    +-+------+------+-+     :     +-+------+------+-+
-      |      |      |       :       |      |      |
-      |      |      |       :       |      |      |
-    +-+-+  +-+-+  +-+-+     :     +-+-+  +-+-+  +-+-+
-    | W |  | W |  | W |     :     | W |  | W |  | W |
-    +---+  +---+  +---+     :     +---+  +---+  +---+
-                            :
-
-    Figure # - Idea 2 - brokers talking to each other
+[[code type="textdiagram" title="Idea 2 - Brokers Talking to Each Other"]]
+     Cluster 1          :          Cluster 2
+                        :
+                        :
++---+  +---+  +---+     :     +---+  +---+  +---+
+| C |  | C |  | C |     :     | C |  | C |  | C |
++-+-+  +-+-+  +-+-+     :     +-+-+  +-+-+  +-+-+
+  |      |      |       :       |      |      |
+  |      |      |       :       |      |      |
++-+------+------+-+     :     +-+------+------+-+
+|     Broker      |<--------->|     Broker      |
++-+------+------+-+     :     +-+------+------+-+
+  |      |      |       :       |      |      |
+  |      |      |       :       |      |      |
++-+-+  +-+-+  +-+-+     :     +-+-+  +-+-+  +-+-+
+| W |  | W |  | W |     :     | W |  | W |  | W |
++---+  +---+  +---+     :     +---+  +---+  +---+
+                        :
 [[/code]]
 
 This design is appealing because the problem is solved in one place, invisible to the rest of the world. Basically, brokers open secret channels to each other and whisper, like camel traders, "//Hey, I've got some spare capacity, if you have too many clients give me a shout and we'll deal"//.
@@ -1100,27 +1030,24 @@ There are several possible ways to interconnect brokers. What we //want// is to 
 
 The simplest interconnect is //federation// in which brokers simulate clients and workers for each other. We would do this by connecting our frontend to the other broker's backend socket. Note that it is legal to both bind a socket to an endpoint and connect it to other endpoints.
 
-[[code type="textdiagram"]]
-
-         Cluster 1          :          Cluster 2
-                            :
-                            :
-    +---+  +---+            :             +---+  +---+
-    | C |  | C |            :             | C |  | C |
-    +-+-+  +-+-+    +----+  :  +-----+    +-+-+  +-+-+
-      |      |      |    |  :  |     |      |      |
-      |      |      |    |  :  |     |      |      |
-    +-+------+------+-+  |  :  |   +-+------+------+-+
-    |     Broker      |  |  :  |   |     Broker      |
-    +-+------+--------+  |  :  |   +--------+------+-+
-      |      |      ^    |  :  |     ^      |      |
-      |      |      |    |  :  |     |      |      |
-    +-+-+  +-+-+    |    +-----------+    +-+-+  +-+-+
-    | W |  | W |    |       :  |          | W |  | W |
-    +---+  +---+    +----------+          +---+  +---+
-                            :
-
-   Figure # - Cross-connected brokers in federation model
+[[code type="textdiagram" title="Cross-connected Brokers in Federation Model"]]
+     Cluster 1          :          Cluster 2
+                        :
+                        :
++---+  +---+            :             +---+  +---+
+| C |  | C |            :             | C |  | C |
++-+-+  +-+-+    +----+  :  +-----+    +-+-+  +-+-+
+  |      |      |    |  :  |     |      |      |
+  |      |      |    |  :  |     |      |      |
++-+------+------+-+  |  :  |   +-+------+------+-+
+|     Broker      |  |  :  |   |     Broker      |
++-+------+--------+  |  :  |   +--------+------+-+
+  |      |      ^    |  :  |     ^      |      |
+  |      |      |    |  :  |     |      |      |
++-+-+  +-+-+    |    +-----------+    +-+-+  +-+-+
+| W |  | W |    |       :  |          | W |  | W |
++---+  +---+    +----------+          +---+  +---+
+                        :
 [[/code]]
 
 This would give us simple logic in both brokers and a reasonably good mechanism: when there are no clients, tell the other broker 'ready', and accept one job from it. The problem is also that it is too simple for this problem. A federated broker would be able to handle only one task at once. If the broker emulates a lock-step client and worker, it is by definition also going to be lock-step and if it has lots of available workers they won't be used. Our brokers need to be connected in a fully asynchronous fashion.
@@ -1161,48 +1088,44 @@ You may be thinking that this is a lot of work for some names. Why not call them
 
 Here is the broker socket arrangement, then:
 
-[[code type="textdiagram"]]
-
-      +---------+ +---------+ +---------+
-      | Client  | | Broker  | | Broker  |
-      |         | | cloudbe | | statebe |
-      +---------+ +---------+ +---------+
-      | connect | | connect | |  bind   |
-      +---------+ +---------+ +---------+
-        request     request      state
-           |           |           |
-           +-+         |         +-+
-             |         |         |
-             v         v         v
-        +---------+---------+---------+
-        |  bind   |  bind   | connect |
-        +---------+---------+---------+
-        | localfe | cloudfe | statefe |     Frontends
-        | ROUTER  | ROUTER  |   SUB   |     (incoming)
-        +---------+---------+---------+
-        |                             |
-        |           Broker            |
-        |                             |
-        +---------+---------+---------+
-        | ROUTER  | ROUTER  |   PUB   |     Backends
-        | localbe | cloudbe | statebe |     (outgoing)
-        +---------+---------+---------+
-        |  bind   | connect |  bind   |
-        +---------+---------+---------+
-          request   request    state
-             |         |         |
-           +-+         |         +-+
-           |           |           |
-           v           v           v
-      +---------+ +---------+ +---------+
-      | connect | |  bind   | | connect |
-      +---------+ +---------+ +---------+
-      | Worker  | | Broker  | | Broker  |
-      |         | | cloudfe | | statefe |
-      +---------+ +---------+ +---------+
-
-
-      Figure # - Broker socket arrangement
+[[code type="textdiagram" title="Broker Socket Arrangement"]]
++---------+ +---------+ +---------+
+| Client  | | Broker  | | Broker  |
+|         | | cloudbe | | statebe |
++---------+ +---------+ +---------+
+| connect | | connect | |  bind   |
++---------+ +---------+ +---------+
+  request     request      state
+     |           |           |
+     +-+         |         +-+
+       |         |         |
+       v         v         v
+  +---------+---------+---------+
+  |  bind   |  bind   | connect |
+  +---------+---------+---------+
+  | localfe | cloudfe | statefe |     Frontends
+  | ROUTER  | ROUTER  |   SUB   |     (incoming)
+  +---------+---------+---------+
+  |                             |
+  |           Broker            |
+  |                             |
+  +---------+---------+---------+
+  | ROUTER  | ROUTER  |   PUB   |     Backends
+  | localbe | cloudbe | statebe |     (outgoing)
+  +---------+---------+---------+
+  |  bind   | connect |  bind   |
+  +---------+---------+---------+
+    request   request    state
+       |         |         |
+     +-+         |         +-+
+     |           |           |
+     v           v           v
++---------+ +---------+ +---------+
+| connect | |  bind   | | connect |
++---------+ +---------+ +---------+
+| Worker  | | Broker  | | Broker  |
+|         | | cloudfe | | statefe |
++---------+ +---------+ +---------+
 [[/code]]
 
 Note that we connect the cloudbe in each broker to the cloudfe in every other broker, and likewise we connect the statebe in each broker to the statefe in every other broker.
@@ -1211,48 +1134,44 @@ Note that we connect the cloudbe in each broker to the cloudfe in every other br
 
 Since each socket flow has its own little traps for the unwary, we will test them in real code one by one, rather than try to throw the whole lot into code in one go. When we're happy with each flow, we can put them together into a full program. We'll start with the state flow:
 
-[[code type="textdiagram"]]
-
-                              +---------+
-                              | Broker  |
-                              | statebe |
-                              +---------+
-                              |  bind   |
-                              +---------+
-                                 state
-                                   |
-                                 +-+
-                                 |
-                                 v
-        +---------+---------+---------+
-        |         |         | connect |
-        +---------+---------+---------+
-        |         |         | statefe |
-        |         |         |   SUB   |
-        +---------+---------+---------+
-        |                             |
-        |           Broker            |
-        |                             |
-        +---------+---------+---------+
-        |         |         |   PUB   |
-        |         |         | statebe |
-        +---------+---------+---------+
-        |         |         |  bind   |
-        +---------+---------+---------+
-                               state
-                                 |
-                                 +-+
-                                   |
-                                   v
-                              +---------+
-                              | connect |
-                              +---------+
-                              | statefe |
-                              | Broker  |
-                              +---------+
-
-
-          Figure # - The state flow
+[[code type="textdiagram" title="The State Flow"]]
+                      +---------+
+                      | Broker  |
+                      | statebe |
+                      +---------+
+                      |  bind   |
+                      +---------+
+                         state
+                           |
+                         +-+
+                         |
+                         v
++---------+---------+---------+
+|         |         | connect |
++---------+---------+---------+
+|         |         | statefe |
+|         |         |   SUB   |
++---------+---------+---------+
+|                             |
+|           Broker            |
+|                             |
++---------+---------+---------+
+|         |         |   PUB   |
+|         |         | statebe |
++---------+---------+---------+
+|         |         |  bind   |
++---------+---------+---------+
+                       state
+                         |
+                         +-+
+                           |
+                           v
+                      +---------+
+                      | connect |
+                      +---------+
+                      | statefe |
+                      | Broker  |
+                      +---------+
 [[/code]]
 
 Here is how this works in code:
@@ -1290,48 +1209,44 @@ If we wanted to send state messages at precise intervals we'd create a child thr
 
 Let's now prototype at the flow of tasks via the local and cloud sockets. This code pulls requests from clients and then distributes them to local workers and cloud peers on a random basis:
 
-[[code type="textdiagram"]]
-
-      +---------+ +---------+
-      | Client  | | Broker  |
-      |         | | cloudbe |
-      +---------+ +---------+
-      | connect | | connect |
-      +---------+ +---------+
-        request     request
-           |           |
-           +-+         |
-             |         |
-             v         v
-        +---------+---------+---------+
-        |  bind   |  bind   |         |
-        +---------+---------+---------+
-        | localfe | cloudfe |         |
-        | ROUTER  | ROUTER  |         |
-        +---------+---------+---------+
-        |                             |
-        |           Broker            |
-        |                             |
-        +---------+---------+---------+
-        | ROUTER  | ROUTER  |         |
-        | localbe | cloudbe |         |
-        +---------+---------+---------+
-        |  bind   | connect |         |
-        +---------+---------+---------+
-          request   request
-             |         |
-           +-+         |
-           |           |
-           v           v
-      +---------+ +---------+
-      | connect | |  bind   |
-      +---------+ +---------+
-      |         | | cloudfe |
-      | Worker  | | Broker  |
-      +---------+ +---------+
-
-
-       Figure # - The flow of tasks
+[[code type="textdiagram" title="The Flow of Tasks"]]
++---------+ +---------+
+| Client  | | Broker  |
+|         | | cloudbe |
++---------+ +---------+
+| connect | | connect |
++---------+ +---------+
+  request     request
+     |           |
+     +-+         |
+       |         |
+       v         v
+  +---------+---------+---------+
+  |  bind   |  bind   |         |
+  +---------+---------+---------+
+  | localfe | cloudfe |         |
+  | ROUTER  | ROUTER  |         |
+  +---------+---------+---------+
+  |                             |
+  |           Broker            |
+  |                             |
+  +---------+---------+---------+
+  | ROUTER  | ROUTER  |         |
+  | localbe | cloudbe |         |
+  +---------+---------+---------+
+  |  bind   | connect |         |
+  +---------+---------+---------+
+    request   request
+       |         |
+     +-+         |
+     |           |
+     v           v
++---------+ +---------+
+| connect | |  bind   |
++---------+ +---------+
+|         | | cloudfe |
+| Worker  | | Broker  |
++---------+ +---------+
 [[/code]]
 
 Before we jump into the code, which is getting a little complex, let's sketch the core routing logic and break it down into a simple but robust design.

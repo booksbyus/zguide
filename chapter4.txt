@@ -67,29 +67,26 @@ We can get very simple reliable request-reply with only some changes in the clie
 * Resend a request several times, it no reply arrived within a timeout period.
 * Abandon the transaction if after several requests, there is still no reply.
 
-[[code type="textdiagram"]]
-    +-----------+   +-----------+   +-----------+
-    |  Client   |   |  Client   |   |  Client   |
-    +-----------+   +-----------+   +-----------+
-    |   Retry   |   |   Retry   |   |   Retry   |
-    +-----------+   +-----------+   +-----------+
-    |    REQ    |   |    REQ    |   |    REQ    |
-    \-----------/   \-----------/   \-----------/
-          ^               ^               ^
-          |               |               |
-          \---------------+---------------/
-                          |
-                          v
-                   /-------------\
-                   |     REP     |
-                   +-------------+
-                   |             |
-                   |    Server   |
-                   |             |
-                   +-------------+
-
-
-          Figure # - Lazy Pirate pattern
+[[code type="textdiagram" title="The Lazy Pirate Pattern"]]
++-----------+   +-----------+   +-----------+
+|  Client   |   |  Client   |   |  Client   |
++-----------+   +-----------+   +-----------+
+|   Retry   |   |   Retry   |   |   Retry   |
++-----------+   +-----------+   +-----------+
+|    REQ    |   |    REQ    |   |    REQ    |
+\-----------/   \-----------/   \-----------/
+      ^               ^               ^
+      |               |               |
+      \---------------+---------------/
+                      |
+                      v
+               /-------------\
+               |     REP     |
+               +-------------+
+               |             |
+               |    Server   |
+               |             |
+               +-------------+
 [[/code]]
 
 If you try to use a REQ socket in anything than a strict send-recv fashion, you'll get an error (technically, the REQ socket implements a small finite-state machine to enforce the send-recv ping-pong, and so the error code is called "EFSM"). This is slightly annoying when we want to use REQ in a pirate pattern, because we may send several requests before getting a reply. The pretty good brute-force solution is to close and reopen the REQ socket after an error:
@@ -148,42 +145,38 @@ In all these Pirate patterns, workers are stateless, or have some shared state w
 
 The basis for the queue device is the least-recently-used (LRU) routing queue from Chapter Three. What is the very //minimum// we need to do to handle dead or blocked workers? Turns out, it's surprisingly little. We already have a retry mechanism in the client. So using the standard LRU queue will work pretty well. This fits with 0MQ's philosophy that we can extend a peer-to-peer pattern like request-reply by plugging naive devices in the middle:
 
-[[code type="textdiagram"]]
-
-    +-----------+   +-----------+   +-----------+
-    |  Client   |   |  Client   |   |  Client   |
-    +-----------+   +-----------+   +-----------+
-    |   Retry   |   |   Retry   |   |   Retry   |
-    +-----------+   +-----------+   +-----------+
-    |    REQ    |   |    REQ    |   |    REQ    |
-    \-----------/   \-----------/   \-----------/
-          ^               ^               ^
-          |               |               |
-          \---------------+---------------/
-                          |
-                          v
-                    /-----------\
-                    |  ROUTER   |
-                    +-----------+
-                    |    LRU    |
-                    |   Queue   |
-                    +-----------+
-                    |  ROUTER   |
-                    \-----------/
-                          ^
-                          |
-          /---------------+---------------\
-          |               |               |
-          v               v               v
-    /-----------\   /-----------\   /-----------\
-    |    REQ    |   |    REQ    |   |    REQ    |
-    +-----------+   +-----------+   +-----------+
-    |    LRU    |   |    LRU    |   |    LRU    |
-    |   Worker  |   |   Worker  |   |   Worker  |
-    +-----------+   +-----------+   +-----------+
-
-
-           Figure # - Simple Pirate Pattern
+[[code type="textdiagram" title="The Simple Pirate Pattern"]]
++-----------+   +-----------+   +-----------+
+|  Client   |   |  Client   |   |  Client   |
++-----------+   +-----------+   +-----------+
+|   Retry   |   |   Retry   |   |   Retry   |
++-----------+   +-----------+   +-----------+
+|    REQ    |   |    REQ    |   |    REQ    |
+\-----------/   \-----------/   \-----------/
+      ^               ^               ^
+      |               |               |
+      \---------------+---------------/
+                      |
+                      v
+                /-----------\
+                |  ROUTER   |
+                +-----------+
+                |    LRU    |
+                |   Queue   |
+                +-----------+
+                |  ROUTER   |
+                \-----------/
+                      ^
+                      |
+      /---------------+---------------\
+      |               |               |
+      v               v               v
+/-----------\   /-----------\   /-----------\
+|    REQ    |   |    REQ    |   |    REQ    |
++-----------+   +-----------+   +-----------+
+|    LRU    |   |    LRU    |   |    LRU    |
+|   Worker  |   |   Worker  |   |   Worker  |
++-----------+   +-----------+   +-----------+
 [[/code]]
 
 We don't need a special client, we're still using the Lazy Pirate client. Here is the queue, which is exactly a LRU queue, no more or less:
@@ -210,44 +203,40 @@ We'll fix these in a properly pedantic Paranoid Pirate Pattern.
 
 We previously used a REQ socket for the worker. For the Paranoid Pirate worker we'll switch to a DEALER socket. This has the advantage of letting us send and receive messages at any time, rather than the lock-step send/receive that REQ imposes. The downside of DEALER is that we have to do our own envelope management. If you don't know what I mean, please re-read Chapter Three.
 
-[[code type="textdiagram"]]
-
-    +-----------+   +-----------+   +-----------+
-    |  Client   |   |  Client   |   |  Client   |
-    +-----------+   +-----------+   +-----------+
-    |   Retry   |   |   Retry   |   |   Retry   |
-    +-----------+   +-----------+   +-----------+
-    |    REQ    |   |    REQ    |   |    REQ    |
-    \-----------/   \-----------/   \-----------/
-          ^               ^               ^
-          |               |               |
-          \---------------+---------------/
-                          |
-                          v
-                    /-----------\
-                    |  ROUTER   |
-                    +-----------+
-                    |   Queue   |
-                    +-----------+
-                    | Heartbeat |
-                    +-----------+
-                    |  ROUTER   |
-                    \-----------/
-                          ^
-                          |
-          /---------------+---------------\
-          |               |               |
-          v               v               v
-    /-----------\   /-----------\   /-----------\
-    |  DEALER   |   |  DEALER   |   |  DEALER   |
-    +-----------+   +-----------+   +-----------+
-    | Heartbeat |   | Heartbeat |   | Heartbeat |
-    +-----------+   +-----------+   +-----------+
-    |   Worker  |   |   Worker  |   |   Worker  |
-    +-----------+   +-----------+   +-----------+
-
-
-         Figure # - Paranoid Pirate Pattern
+[[code type="textdiagram" title="The Paranoid Pirate Pattern"]]
++-----------+   +-----------+   +-----------+
+|  Client   |   |  Client   |   |  Client   |
++-----------+   +-----------+   +-----------+
+|   Retry   |   |   Retry   |   |   Retry   |
++-----------+   +-----------+   +-----------+
+|    REQ    |   |    REQ    |   |    REQ    |
+\-----------/   \-----------/   \-----------/
+      ^               ^               ^
+      |               |               |
+      \---------------+---------------/
+                      |
+                      v
+                /-----------\
+                |  ROUTER   |
+                +-----------+
+                |   Queue   |
+                +-----------+
+                | Heartbeat |
+                +-----------+
+                |  ROUTER   |
+                \-----------/
+                      ^
+                      |
+      /---------------+---------------\
+      |               |               |
+      v               v               v
+/-----------\   /-----------\   /-----------\
+|  DEALER   |   |  DEALER   |   |  DEALER   |
++-----------+   +-----------+   +-----------+
+| Heartbeat |   | Heartbeat |   | Heartbeat |
++-----------+   +-----------+   +-----------+
+|   Worker  |   |   Worker  |   |   Worker  |
++-----------+   +-----------+   +-----------+
 [[/code]]
 
 We're still using the Lazy Pirate client. Here is the Paranoid Pirate queue device:
@@ -255,7 +244,7 @@ We're still using the Lazy Pirate client. Here is the Paranoid Pirate queue devi
 [[code type="example" title="Paranoid Pirate queue" name="ppqueue"]]
 [[/code]]
 
-The queue extends the LRU pattern with heartbeating of workers. It's simple once it works, but quite difficult to invent. I'll explain more about heartbeating in a second.
+The queue extends the LRU pattern with heartbeating of workers. Heartbeating is simple once it works, but quite difficult to invent. I'll explain more about that in a second.
 
 Here is the Paranoid Pirate worker:
 
@@ -266,7 +255,7 @@ Some comments about this example:
 
 * The code includes simulation of failures, as before. This makes it (a) very hard to debug, and (b) dangerous to reuse. When you want to debug this, disable the failure simulation.
 
-* As for the Paranoid Pirate queue, the heartbeating is quite tricky to get right. See below for a discussion about this.
+* As for the Paranoid Pirate queue, the heartbeating is quite tricky to get right. See below for a discussion about heartbeating.
 
 * The worker uses a reconnect strategy similar to the one we designed for the Lazy Pirate client. With two major differences: (a) it does an exponential back-off, and (b) it never abandons.
 
@@ -355,38 +344,34 @@ The Majordomo Protocol (MDP) extends and improves PPP in one interesting way apa
 
 Adding service names is a small but significant change that turns our Paranoid Pirate queue into a service-oriented broker:
 
-[[code type="textdiagram"]]
-
-    +-----------+   +-----------+   +-----------+
-    |           |   |           |   |           |
-    |  Client   |   |  Client   |   |  Client   |
-    |           |   |           |   |           |
-    \-----------/   \-----------/   \-----------/
-          ^               ^               ^
-          |               |               |
-          \---------------+---------------/
-   "Give me coffee"       |         "Give me tea"
-                          v
-                    /-----------\
-                    |           |
-                    |  Broker   |
-                    |           |
-                    \-----------/
-                          ^
-                          |
-          /---------------+---------------\
-          |               |               |
-          v               v               v
-    /-----------\   /-----------\   /-----------\
-    |  "Water"  |   |   "Tea"   |   | "Coffee"  |
-    +-----------+   +-----------+   +-----------+
-    |           |   |           |   |           |
-    |  Worker   |   |  Worker   |   |  Worker   |
-    |           |   |           |   |           |
-    +-----------+   +-----------+   +-----------+
-
-
-            Figure # - Majordomo Pattern
+[[code type="textdiagram" title="The Majordomo Pattern"]]
++-----------+   +-----------+   +-----------+
+|           |   |           |   |           |
+|  Client   |   |  Client   |   |  Client   |
+|           |   |           |   |           |
+\-----------/   \-----------/   \-----------/
+      ^               ^               ^
+      |               |               |
+      \---------------+---------------/
+"Give me coffee"      |         "Give me tea"
+                      v
+                /-----------\
+                |           |
+                |  Broker   |
+                |           |
+                \-----------/
+                      ^
+                      |
+      /---------------+---------------\
+      |               |               |
+      v               v               v
+/-----------\   /-----------\   /-----------\
+|  "Water"  |   |   "Tea"   |   | "Coffee"  |
++-----------+   +-----------+   +-----------+
+|           |   |           |   |           |
+|  Worker   |   |  Worker   |   |  Worker   |
+|           |   |           |   |           |
++-----------+   +-----------+   +-----------+
 [[/code]]
 
 To implement Majordomo we need to write a framework for clients and workers. It's really not sane to ask every application developer to read the spec and make it work, when they could be using a simpler API built and tested just once.
@@ -589,7 +574,7 @@ We use the fairly standard solution of detecting and rejecting duplicate request
 
 +++ Disconnected Reliability (Titanic Pattern)
 
-Once you realize that Majordomo is a 'reliable' message broker, you might be tempted to add some spinning rust[[footnote]]I.e. ferrous-based hard disk platters.[[/footnote]]. After all, this works for all the enterprise messaging systems. It's such a tempting idea that it's a little sad to have to be negative. But that's one of my specialties. So, some reasons you don't want rust-based brokers sitting in the center of your architecture are:
+Once you realize that Majordomo is a 'reliable' message broker, you might be tempted to add some spinning rust (that is, ferrous-based hard disk platters). After all, this works for all the enterprise messaging systems. It's such a tempting idea that it's a little sad to have to be negative. But brutal cynicism is one of my specialties. So, some reasons you don't want rust-based brokers sitting in the center of your architecture are:
 
 * As you've seen, the Lazy Pirate client performs surprisingly well. It works across a whole range of architectures, from direct client-to-server to distributed queue devices. It does tend to assume that workers are stateless and idempotent. But we can work around that limitation without resorting to rust.
 
@@ -607,39 +592,35 @@ The only downside is that there's an extra network hop between broker and hard d
 
 There are many ways to make a persistent request-reply architecture. We'll aim for simple and painless. The simplest design I could come up with, after playing with this for a few hours, is Titanic as a "proxy service". That is, it doesn't affect workers at all. If a client wants a reply immediately, it talks directly to a service and hopes the service is available. If a client is happy to wait a while, it talks to Titanic instead and asks, "hey, buddy, would you take care of this for me while I go buy my groceries?"
 
-[[code type="textdiagram"]]
-
-    +-----------+   +-----------+   +-----------+
-    |           |   |           |   |           |
-    |  Client   |   |  Client   |   |  Client   |
-    |           |   |           |   |           |
-    \-----------/   \-----------/   \-----------/
-          ^               ^               ^
-          |               |               |
-          \---------------+---------------/
-   "Titanic,              |         "Titanic,
-    give me coffee"       |          give me tea"
-                          v                            Disk
-                    /-----------\     +---------+     +-------+
-                    |           |     |         |     |       |
-                    |  Broker   |<--->| Titanic |<--->|  {s}  |
-                    |           |     |         |     |       |
-                    \-----------/     +---------+     +-------+
-                          ^
-                          |
-          /---------------+---------------\
-          |               |               |
-          v               v               v
-    /-----------\   /-----------\   /-----------\
-    |  "Water"  |   |   "Tea"   |   | "Coffee"  |
-    +-----------+   +-----------+   +-----------+
-    |           |   |           |   |           |
-    |  Worker   |   |  Worker   |   |  Worker   |
-    |           |   |           |   |           |
-    +-----------+   +-----------+   +-----------+
-
-
-             Figure # - Titanic Pattern
+[[code type="textdiagram" title="The Titanic Pattern"]]
++-----------+   +-----------+   +-----------+
+|           |   |           |   |           |
+|  Client   |   |  Client   |   |  Client   |
+|           |   |           |   |           |
+\-----------/   \-----------/   \-----------/
+      ^               ^               ^
+      |               |               |
+      \---------------+---------------/
+Titanic,              |         "Titanic,
+give me coffee"       |          give me tea"
+                      v                            Disk
+                /-----------\     +---------+     +-------+
+                |           |     |         |     |       |
+                |  Broker   |<--->| Titanic |<--->|  {s}  |
+                |           |     |         |     |       |
+                \-----------/     +---------+     +-------+
+                      ^
+                      |
+      /---------------+---------------\
+      |               |               |
+      v               v               v
+/-----------\   /-----------\   /-----------\
+|  "Water"  |   |   "Tea"   |   | "Coffee"  |
++-----------+   +-----------+   +-----------+
+|           |   |           |   |           |
+|  Worker   |   |  Worker   |   |  Worker   |
+|           |   |           |   |           |
++-----------+   +-----------+   +-----------+
 [[/code]]
 
 Titanic is thus both a worker, and a client. The dialog between client and Titanic goes along these lines:
@@ -720,26 +701,22 @@ Binary Star pattern was developed by Pieter Hintjens and Martin Sustrik for the 
 * To be simple enough to actually understand and use.
 * To failover reliably when needed, and only when needed.
 
-[[code type="textdiagram"]]
-
-    +------------+               +------------+
-    |            |               |            |
-    |  Primary   |<------------->|   Backup   |
-    |  "master"  |               |   "slave"  |
-    |            |               |            |
-    +------------+               +------------+
-          ^
-          |
-          |
-          |
-    +-----+------+
-    |            |
-    |   Client   |
-    |            |
-    +------------+
-
-
-Figure # - High-availability pair, normal operation
+[[code type="textdiagram" title="High-availability Pair, Normal Operation"]]
++------------+               +------------+
+|            |               |            |
+|  Primary   |<------------->|   Backup   |
+|  "master"  |               |   "slave"  |
+|            |               |            |
++------------+               +------------+
+      ^
+      |
+      |
+      |
++-----+------+
+|            |
+|   Client   |
+|            |
++------------+
 [[/code]]
 
 Assuming we have a Binary Star pair running, here are the different scenarios that will result in failover happening:
@@ -764,26 +741,22 @@ Recovery (to using the primary server as master) is a manual operation. Painful 
 
 Having said this, the Binary Star pattern will fail back to the primary server if this is running (again) and the backup server fails. In fact this is how we provoke recovery.
 
-[[code type="textdiagram"]]
-
-    +------------+               +------------+
-    |            |               |            |
-    |  Primary   |<------------->|   Backup   |
-    |  "slave"   |               |  "master"  |
-    |            |               |            |
-    +------------+               +------------+
-                                        ^
-                                        |
-          +-----------------------------+
-          |
-    +-----+------+
-    |            |
-    |   Client   |
-    |            |
-    +------------+
-
-
-Figure # - High-availability pair, during failover
+[[code type="textdiagram" title="High-availability Pair During Failover"]]
++------------+               +------------+
+|            |               |            |
+|  Primary   |<------------->|   Backup   |
+|  "slave"   |               |  "master"  |
+|            |               |            |
++------------+               +------------+
+                                    ^
+                                    |
+      +-----------------------------+
+      |
++-----+------+
+|            |
+|   Client   |
+|            |
++------------+
 [[/code]]
 
 The shutdown process for a Binary Star pair is to either:
@@ -909,38 +882,34 @@ You can then provoke failover by killing the primary server, and recovery by res
 
 This diagram shows the finite state machine. States in green accept client requests, states in pink refuse them. Events are the peer state, so "Peer Active" means the other server has told us it's active. "Client Request" means we've received a client request. "Client Vote" means we've received a client request AND our peer is inactive for two heartbeats.
 
-[[code type="textdiagram"]]
-
-      Start /-----------------------\   /----------\               Start
-        |   |Client Request         |   |    Client|Request          |
-        v   |                       v   v          |                 v
-  +---------+-+                 +-----------+      |           +-----------+
-  |           | Peer Backup     |           +------/           |           |
-  |  Primary  +---------------->|  Active   |<--------------\  |  Backup   |
-  |           |         /------>|           |<-----\        |  |           |
-  | {o} c9FB  |         |       | {o} c9FB  |      |        |  | {o} cF9B  |
-  +-----+-----+         |       +-----+-----+      |        |  +-----+-----+
-        |               |             |            |        |        |
-    Peer|Active         |         Peer|Active      |        |    Peer|Active
-        |               |             v            |        |        |
-        |               |       +-----------+      |        |        |
-        |               |       |           |      |        |        |
-        |           Peer|Backup |  Error!   |  Peer|Primary |        |
-        |               |       |           |      |        |        |
-        |               |       | {o} cF00  |      |        |        |
-        |               |       +-----------+      |        |        |
-        |               |             ^            |        |        |
-        |               |         Peer|Passive     |  Client|Vote    |
-        |               |             |            |        |        |
-        |               |       +-----+-----+      |        |        |
-        |               |       |           +------/        |        |
-        |               \-------+  Passive  +---------------/        |
-        \---------------------->|           |<-----------------------/
-                                | {o} cF9B  |
-                                +-----------+
-
-
-                Figure # - Binary Star finite state machine
+[[code type="textdiagram" title="Binary Star Finite State Machine"]]
+    Start /-----------------------\   /----------\               Start
+      |   |Client Request         |   |    Client|Request          |
+      v   |                       v   v          |                 v
++---------+-+                 +-----------+      |           +-----------+
+|           | Peer Backup     |           +------/           |           |
+|  Primary  +---------------->|  Active   |<--------------\  |  Backup   |
+|           |         /------>|           |<-----\        |  |           |
+| {o} c9FB  |         |       | {o} c9FB  |      |        |  | {o} cF9B  |
++-----+-----+         |       +-----+-----+      |        |  +-----+-----+
+      |               |             |            |        |        |
+  Peer|Active         |         Peer|Active      |        |    Peer|Active
+      |               |             v            |        |        |
+      |               |       +-----------+      |        |        |
+      |               |       |           |      |        |        |
+      |           Peer|Backup |  Error!   |  Peer|Primary |        |
+      |               |       |           |      |        |        |
+      |               |       | {o} cF00  |      |        |        |
+      |               |       +-----------+      |        |        |
+      |               |             ^            |        |        |
+      |               |         Peer|Passive     |  Client|Vote    |
+      |               |             |            |        |        |
+      |               |       +-----+-----+      |        |        |
+      |               |       |           +------/        |        |
+      |               \-------+  Passive  +---------------/        |
+      \---------------------->|           |<-----------------------/
+                              | {o} cF9B  |
+                              +-----------+
 [[/code]]
 
 Note that the servers use PUB-SUB sockets for state exchange. No other socket combination will work here. PUSH and DEALER block if there is no peer ready to receive a message. PAIR does not reconnect if the peer disappears and comes back. ROUTER needs the address of the peer before it can send it a message.
@@ -956,7 +925,7 @@ These are the main limitations of the Binary Star pattern:
 
 ++++ Binary Star Reactor
 
-Binary Star is useful and generic enough to package up as a reusable reactor class. In C we wrap the czmq {{zloop}} class, though your mileage may vary in other languages. Here is the {{bstar}} interface in C:
+Binary Star is useful and generic enough to package up as a reusable reactor class. In C we wrap the CZMQ {{zloop}} class, though your mileage may vary in other languages. Here is the {{bstar}} interface in C:
 
 [[code language="C"]]
 //  Create a new Binary Star instance, using local (bind) and
@@ -1011,28 +980,24 @@ Putting a name service behind a service-oriented Majordomo broker is clever from
 
 The types of failure we aim to handle are server crashes and restarts, server busy looping, server overload, and network issues. To get reliability, we'll create a pool of name servers so if one crashes or goes away, clients can connect to another, and so on. In practice, two would be enough. But for the example, we'll assume the pool can be any size:
 
-[[code type="textdiagram"]]
-
-    +-----------+   +-----------+   +-----------+
-    |           |   |           |   |           |
-    |  Client   |   |  Client   |   |  Client   |
-    |           |   |           |   |           |
-    \-----------/   \-----------/   \-----------/
-       connect         connect         connect
-          |               |               |
-          |               |               |
-          +---------------+---------------+
-          |               |               |
-          |               |               |
-        bind            bind            bind
-    /-----------\   /-----------\   /-----------\
-    |           |   |           |   |           |
-    |  Server   |   |  Server   |   |  Server   |
-    |           |   |           |   |           |
-    +-----------+   +-----------+   +-----------+
-
-
-          Figure # - The Freelance Pattern
+[[code type="textdiagram" title="The Freelance Pattern"]]
++-----------+   +-----------+   +-----------+
+|           |   |           |   |           |
+|  Client   |   |  Client   |   |  Client   |
+|           |   |           |   |           |
+\-----------/   \-----------/   \-----------/
+   connect         connect         connect
+      |               |               |
+      |               |               |
+      +---------------+---------------+
+      |               |               |
+      |               |               |
+    bind            bind            bind
+/-----------\   /-----------\   /-----------\
+|           |   |           |   |           |
+|  Server   |   |  Server   |   |  Server   |
+|           |   |           |   |           |
++-----------+   +-----------+   +-----------+
 [[/code]]
 
 In this architecture a large set of clients connect to a small set of servers directly. The servers bind to their respective addresses. It's fundamentally different from a broker-based approach like Majordomo, where workers connect to the broker. For clients, there are a couple of options:
