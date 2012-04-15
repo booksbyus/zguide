@@ -1,0 +1,11 @@
+          +---+--------+
+Frame 1   | 6 | WORKER |     Identity of worker
+          +---+--------+
+Frame 2   | 0 |               Empty message part
+          +---+--------+
+Frame 3   | 6 | CLIENT |    Identity of client
+          +---+--------+
+Frame 4   | 0 |               Empty message part
+          +---+-------+
+Frame 5   | 5 | HELLO |       Data part
+          +---+-------+

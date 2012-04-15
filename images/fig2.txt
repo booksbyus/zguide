@@ -1,0 +1,16 @@
++------------+        +------------+
+|            |        |            | Zap!
+| TCP socket +------->| 0MQ socket |
+|            | BOOM!  |     cC00   |  POW!!
++------------+        +------------+
+  ^    ^    ^
+  |    |    |
+  |    |    +---------+
+  |    |              |
+  |    +----------+   |
+ Illegal          |   |
+ radioisotopes    |   |
+ from secret      |   |
+ Soviet atomic    | Spandex
+ city             |
+              Cosmic rays
