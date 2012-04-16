@@ -4,7 +4,7 @@
 
 package require zmq
 
-zmq context context 1
+zmq context context
 
 # Subscriber tells us when it's ready here
 zmq socket sync context PULL

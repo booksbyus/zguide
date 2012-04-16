@@ -4,7 +4,7 @@
 
 package require zmq
 
-zmq context context 1
+zmq context context
 
 # Connect our subscriber socket
 zmq socket subscriber context SUB

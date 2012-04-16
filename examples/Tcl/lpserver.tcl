@@ -10,7 +10,7 @@ package require zmq
 
 expr {srand([pid])}
 
-zmq context context 1
+zmq context context
 zmq socket server context REP
 server bind "tcp://*:5555"
 

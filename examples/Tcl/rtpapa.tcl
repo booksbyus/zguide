@@ -7,7 +7,7 @@ package require zmq
 # We will do this all in one thread to emphasize the sequence
 # of events…
 
-zmq context context 1
+zmq context context
 
 zmq socket client context ROUTER
 client bind "ipc://routing.ipc"

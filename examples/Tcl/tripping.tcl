@@ -18,7 +18,7 @@ lassign $argv what
 
 switch -exact -- $what {
     client {
-	zmq context context 1
+	zmq context context
 	zmq socket client context DEALER
 	client setsockopt IDENTITY "C"
 	client connect "tcp://localhost:5555"
@@ -64,7 +64,7 @@ switch -exact -- $what {
 	puts "[expr {1000.0*10000/([clock milliseconds] - $start)}] calls/second"
     }
     worker {
-	zmq context context 1
+	zmq context context
 	zmq socket worker context DEALER
 	worker setsockopt IDENTITY "W"
 	worker connect "tcp://localhost:5556"
@@ -77,7 +77,7 @@ switch -exact -- $what {
 	context term
     }
     broker {
-	zmq context context 1
+	zmq context context
 	zmq socket frontend context ROUTER
 	zmq socket backend context ROUTER
 	frontend bind "tcp://*:5555"

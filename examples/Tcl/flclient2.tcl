@@ -21,7 +21,7 @@ oo::class create FLClient {
     variable ctx socket servers sequence
 
     constructor {} {
-	set ctx [zmq context mdcli_context_[::mdp::contextid] 1]
+	set ctx [zmq context mdcli_context_[::mdp::contextid]]
 	set socket [zmq socket mdcli_socket_[::mdp::socketid] $ctx DEALER]
 	set servers 0
 	set sequence 0

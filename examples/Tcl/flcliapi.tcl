@@ -43,7 +43,7 @@ oo::class create FLClient {
     variable ctx pipe pipe_address readable agent
 
     constructor {} {
-	set ctx [zmq context flcli_context_[::mdp::contextid] 1]
+	set ctx [zmq context flcli_context_[::mdp::contextid]]
 	set pipe [zmq socket flcli_pipe_[::mdp::socketid] $ctx PAIR]
 	set pipe_address "ipc://flclientpipe_[::mdp::socketid].ipc"
 	$pipe connect $pipe_address

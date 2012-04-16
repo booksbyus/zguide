@@ -41,7 +41,7 @@ proc s_reply_filename {uuid} {
 #  Titanic request service
 proc titanic_request {} {
 
-    zmq context context 1
+    zmq context context
     set pipe [zmq socket pipe context PAIR]
     pipe connect "ipc://titanicpipe.ipc"
 
@@ -187,7 +187,7 @@ switch -exact -- $what {
 
 	after 1000 ;# Wait for other parts to start
 
-	zmq context context 1
+	zmq context context
 	zmq socket request_pipe context PAIR
 	request_pipe bind "ipc://titanicpipe.ipc"
 	set queuefnm [file join $::TITANIC_DIR queue]

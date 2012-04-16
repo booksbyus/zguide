@@ -7,7 +7,7 @@ package require zmq
 set REQUEST_TIMEOUT     1000    ;#  msecs
 set SETTLE_DELAY        2000    ;#  Before failing over, msecs
 
-zmq context context 1
+zmq context context
 set server [list "tcp://localhost:5001" "tcp://localhost:5002"]
 set server_nbr 0
 

@@ -8,7 +8,7 @@
 
 package require zmq
 
-zmq context context 1
+zmq context context
 
 # Socket to receive messages on
 zmq socket receiver context PULL

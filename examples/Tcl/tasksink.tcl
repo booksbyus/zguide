@@ -7,7 +7,7 @@
 package require zmq
 
 # Prepare our context and socket
-zmq context context 1
+zmq context context
 zmq socket receiver context PULL
 receiver bind "tcp://*:5558"
 

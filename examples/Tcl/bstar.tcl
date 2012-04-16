@@ -56,7 +56,7 @@ oo::class create BStar {
     constructor {istate local remote iverbose} {
 	#  Initialize the Binary Star
 	set verbose $iverbose
-	set ctx [zmq context bstar_context_[::mdp::contextid] 1]
+	set ctx [zmq context bstar_context_[::mdp::contextid]]
 	set state $istate
 	set event NONE
 	set peer_expiry 0

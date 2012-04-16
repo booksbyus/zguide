@@ -31,7 +31,7 @@ proc s_worker_socket {ctx} {
     return $worker
 }
 
-set ctx [zmq context context 1]
+set ctx [zmq context context]
 set worker [s_worker_socket $ctx]
 
 #  If liveness hits zero, queue is considered disconnected

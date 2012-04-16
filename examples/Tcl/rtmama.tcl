@@ -19,7 +19,7 @@ expr {srand([pid])}
 
 switch -exact -- $what {
     worker {
-	zmq context context 1
+	zmq context context
 
 	zmq socket worker context REQ
 
@@ -49,7 +49,7 @@ switch -exact -- $what {
 	context term
     }
     main {
-	zmq context context 1
+	zmq context context
 
 	zmq socket client context ROUTER
 	client bind "ipc://routing.ipc"

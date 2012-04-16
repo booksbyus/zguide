@@ -6,7 +6,7 @@
 
 package require zmq
 
-zmq context context 1
+zmq context context
 
 # Socket to talk to clients
 zmq socket responder context REP
