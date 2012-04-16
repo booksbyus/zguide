@@ -12,7 +12,7 @@ oo::class create MDClient {
     variable context broker verbose timeout retries client
 
     constructor {ibroker {iverbose 0}} {
-	set context [zmq context mdcli_context_[::mdp::contextid] 1]
+	set context [zmq context mdcli_context_[::mdp::contextid]]
 	set broker $ibroker
 	set verbose $iverbose
 	set timeout 2500

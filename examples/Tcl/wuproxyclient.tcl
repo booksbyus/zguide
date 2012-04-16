@@ -7,7 +7,7 @@
 package require zmq
 
 # Socket to talk to server
-zmq context context 1
+zmq context context
 zmq socket subscriber context SUB
 subscriber connect "tcp://*:8100"
 

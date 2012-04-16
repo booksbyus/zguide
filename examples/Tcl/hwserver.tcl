@@ -1,6 +1,6 @@
 package require zmq
 
-zmq context context 1
+zmq context context
 zmq socket responder context REP
 responder bind "tcp://*:5555"
 

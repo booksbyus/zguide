@@ -22,7 +22,7 @@ switch -exact -- $what {
 
 	package require zmq
 
-	zmq context context 1
+	zmq context context
 
 	zmq socket client context REQ
 	set id [format "%04X-%04X" [expr {int(rand()*0x10000)}] [expr {int(rand()*0x10000)}]]
@@ -42,7 +42,7 @@ switch -exact -- $what {
 	# Since send and recv can't handle 0MQ binary identities we
 	# set a printable text identity to allow routing.
 
-	zmq context context 1
+	zmq context context
 
 	zmq socket worker context REQ
 	set id [format "%04X-%04X" [expr {int(rand()*0x10000)}] [expr {int(rand()*0x10000)}]]
@@ -71,7 +71,7 @@ switch -exact -- $what {
 	context term
     }
     main_sync {
-	zmq context context 1
+	zmq context context
 
 	zmq socket frontend context ROUTER
 	zmq socket backend context ROUTER
@@ -152,7 +152,7 @@ switch -exact -- $what {
 	context term
     }
     main_async {
-	zmq context context 1
+	zmq context context
 
 	zmq socket frontend context ROUTER
 	zmq socket backend context ROUTER

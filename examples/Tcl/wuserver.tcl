@@ -7,7 +7,7 @@
 package require zmq
 
 # Prepare our context and publisher
-zmq context context 1
+zmq context context
 zmq socket publisher context PUB
 publisher bind "tcp://*:5556"
 publisher bind "ipc://weather.ipc"

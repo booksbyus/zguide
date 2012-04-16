@@ -5,7 +5,7 @@
 package require zmq
 
 # Prepare our context and subscriber
-zmq context context 1
+zmq context context
 zmq socket subscriber context SUB
 subscriber connect "tcp://localhost:5563"
 subscriber setsockopt SUBSCRIBE "B"

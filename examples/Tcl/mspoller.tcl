@@ -6,7 +6,7 @@
 package require zmq
 
 # Prepare our context and sockets
-zmq context context 1
+zmq context context
 
 # Connect to task ventilator
 zmq socket receiver context PULL

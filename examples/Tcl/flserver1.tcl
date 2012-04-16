@@ -10,7 +10,7 @@ if {[llength $argv] != 1} {
     exit 1
 }
 
-zmq context context 1
+zmq context context
 zmq socket server context REP
 server bind [lindex $argv 0]
 

@@ -126,7 +126,7 @@ oo::class create BStar {
     }
 }
 
-zmq context context 1
+zmq context context
 zmq socket statepub context PUB
 zmq socket statesub context SUB
 statesub setsockopt SUBSCRIBE ""

@@ -1,6 +1,6 @@
 package require zmq
 
-zmq context context 1
+zmq context context
 zmq socket client context REQ
 client connect "tcp://*:5555"
 

@@ -54,7 +54,7 @@ proc s_workers_purge {workersnm} {
     set workers $nworkers
 }
 
-set ctx [zmq context context 1]
+set ctx [zmq context context]
 zmq socket frontend $ctx ROUTER
 zmq socket backend $ctx ROUTER
 frontend bind "tcp://*:5555" ;#  For clients

@@ -9,7 +9,7 @@ package require zmq
 set LRU_READY "READY" ;#  Signals worker is ready
 expr {srand([pid])}
 
-zmq context context 1
+zmq context context
 zmq socket worker context REQ
 
 #  Set random identity to make tracing easier

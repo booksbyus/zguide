@@ -4,7 +4,7 @@
 
 package require zmq
 
-zmq context context 1
+zmq context context
 
 #  We wait for 10 subscribers
 set SUBSCRIBERS_EXPECTED  10
