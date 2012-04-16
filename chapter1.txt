@@ -11,10 +11,13 @@ With thanks to Bill Desmarais, Brian Dorsey, Daniel Lin, Eric Desgranges, Gonzal
 
 Please use the [$(GIT)/issues issue tracker] for all comments and errata. This version covers the latest stable release of 0MQ (2.1.x) and was published on &date("ddd d mmmm, yyyy"). If you are using a later unstable version of 0MQ some of the examples and explanations won't match.
 
+The Guide is mainly [/page:all in C], but also in [/php:all PHP], [/py:all Python], [/lua:all Lua], and [/hx:all Haxe]. Nearly every example is also shown in C++, C#, CL, Erlang, F#, Felix, Haskell, Java, Objective-C, Ruby, Ada, Basic, Clojure, Go, Haxe, Node.js, ooc, Perl, and Scala.
 这个向导主要使用 [/page:all C语言], 但也会使用 [/php:all PHP], [/lua:all Lua], 和 [/hx:all Haxe].
 
+++ Chapter One - Basic Stuff
 ++ 第一节 - 基础
 
++++ Fixing the World
 +++ 拯救世界
 
 
@@ -43,28 +46,36 @@ Which brings us back to the science of programming. To fix the world, we needed 
 
 It sounds ridiculously simple. And maybe it is. That's kind of the whole point.
 
++++ 0MQ in a Hundred Words
 +++ 一百字的0MQ简介
 
 0MQ (ZeroMQ, 0\MQ, zmq) looks like an embeddable networking library but acts like a concurrency framework. It gives you sockets that carry whole messages across various transports like in-process, inter-process, TCP, and multicast. You can connect sockets N-to-N with patterns like fanout, pub-sub, task distribution, and request-reply. It's fast enough to be the fabric for clustered products. Its asynchronous I/O model gives you scalable multicore applications, built as asynchronous message-processing tasks. It has a score of language APIs and runs on most operating systems. 0MQ is from [http://www.imatix.com iMatix] and is LGPL open source.
 
++++ Some Assumptions
 +++ 一些假设
 
 We assume you are using the latest stable release of 0MQ. We assume you are using a Linux box or something similar. We assume you can read C code, more or less, that's the default language for the examples. We assume that when we write constants like PUSH or SUBSCRIBE you can imagine they are really called ZMQ_PUSH or ZMQ_SUBSCRIBE if the programming language needs it.
 
++++ Getting the Examples
 +++ 获取示例
 
+The Guide examples live in the Guide's [https://github.com/imatix/zguide git repository]. The simplest way to get all the examples is to clone this repository:
 本向导的示例代码放在 [https://github.com/imatix/zguide git repository]. 最简单的获取所有示例代码的方法就是克隆这个仓库:
 
 [[code]]
 git clone --depth=1 git://github.com/imatix/zguide.git
 [[/code]]
 
+And then browse the examples subdirectory. You'll find examples by language. If there are examples missing in a language you use, you're encouraged to [http://zguide.zeromq.org/main:translate submit a translation]. This is how the Guide became so useful, thanks to the work of many people.
 然后就可以查看名为examples的子目录。你可以按照语言查找示例。如果你使用的语言没有，欢迎访问[http://zguide.zeromq.org/main:translate 提交你翻译的代码]。这就是向导如何变得如此有用，感谢为大家而做的工作。
 
+All examples are licensed under MIT/X11, unless otherwise specified in the source code.
 除非在源码中特别指定，否则所有的示例代码都是MIT/X11授权的。
 
++++ Ask and Ye Shall Receive
 +++ 请求便会得到
 
+So let's start with some code. We start of course with a Hello World example. We'll make a client and a server. The client sends "Hello" to the server, which replies with "World". Here's the
 让我们从一些代码开始。我们从一个helloworld示例代码开始。我们要创建一个客户端和服务器。客户端发送hello给服务器，服务器则回复world。下面是一个C的服务器代码，先在5555端口打开了一个0MQ socket并读取请求，并且给每一个请求回复world：
 
 [[code type="example" title="Hello World server" name="hwserver" language="C"]]
@@ -95,18 +106,22 @@ git clone --depth=1 git://github.com/imatix/zguide.git
      Figure # - Request-Reply
 [[/code]]
 
+The REQ-REP socket pair is lockstep. The client does zmq_send[3] and then zmq_recv[3], in a loop (or once if that's all it needs). Doing any other sequence (e.g. sending two messages in a row) will result in a return code of -1 from the send or recv call. Similarly the service does zmq_recv[3] and then zmq_send[3] in that order, and as often as it needs to.
 REQ-REP套接字对是同步的。客户端在一个循环中先调用zmq_send[3]，然后调用zmq_recv[3]（或者不在循环中也行）。不按照这个顺序会在send或者recv调用后得到-1的返回值（比如一行调用两次发送信息）。相应的，服务器也要先调用zmq_recv[3]再调用zmq_send[3]，多频繁都可以。
 
+0MQ uses C as its reference language and this is the main language we'll use for examples. If you're reading this on-line, the link below the example takes you to translations into other programming languages. Let's compare the same server in C++:
 0MQ使用C语言开发，这也是我们的示例主要使用的语言。如果你在读文本的在线版本，示例下面有其他语言的链接。让我们比较一下同样一个服务器的C++代码吧：
 
 [[code type="example" title="Hello World server" name="hwserver" language="C++"]]
 [[/code]]
 
+You can see that the 0MQ API is similar in C and C++. In a language like PHP, we can hide even more and the code becomes even easier to read:
 你可以看到0MQ的API和C或者C++非常相似。在一些诸如PHP的语言中，我们可以更多的隐藏细节，代码也会变得非常易读：
 
 [[code type="example" title="Hello World server" name="hwserver" language="PHP"]]
 [[/code]]
 
+Here's the client code (click the link below the source to look at, or contribute a translation in your favorite programming language):
 这里有一段客户端代码 (点击源代码下面的链接查看, 或者贡献你转换的你喜欢的程序语言):
 
 [[code type="example" title="Hello World client" name="hwclient"]]
@@ -136,6 +151,7 @@ Now this looks too simple to be realistic, but a 0MQ socket is what you get when
     Figure # - A terrible accident...
 [[/code]]
 
+You could literally throw thousands of clients at this server, all at once, and it would continue to work happily and quickly. For fun, try starting the client and //then// starting the server, see how it all still works, then think for a second what this means.
 毫不夸张的说，你可以用上千个客户端连接这个服务器。所有的都可以立刻开始并且快速的工作。有趣的是，可以尝试启动客户端//然后//启动服务器，看看他们是如何一直保持工作的，然后想一想这意味着什么。
 
 Let me explain briefly what these two programs are actually doing. They create a 0MQ context to work with, and a socket. Don't worry what the words mean. You'll pick it up. The server binds its REP (reply) socket to port 5555. The server waits for a request, in a loop, and responds each time with a reply. The client sends a request and reads the reply back from the server.
@@ -144,12 +160,13 @@ If you kill the server (Ctrl-C) and restart it, the client won't recover properl
 
 There is a lot happening behind the scenes but what matters to us programmers is how short and sweet the code is, and how often it doesn't crash, even under heavy load. This is the request-reply pattern, probably the simplest way to use 0MQ. It maps to RPC and the classic client-server model.
 
++++ A Minor Note on Strings
 +++ 一个关注字符串的小小的建议
 
 0MQ doesn't know anything about the data you send except its size in bytes. That means you are responsible for formatting it safely so that applications can read it back. Doing this for objects and complex data types is a job for specialized libraries like Protocol Buffers. But even for strings you need to take care.
+除了数据的长度，0MQ完全不知道你发送的数据的任何信息。这意味着你要负责安全的格式化数据以便应用程序读取它。对对象和复杂数据类型做格式化是特殊库的工作就像协议缓冲，但是对于字符串还是要小心对待。
 
 In C and some other languages, strings are terminated with a null byte. We could send a string like "HELLO" with that extra null byte:
-除了数据的长度，0MQ完全不知道你发送的数据的任何信息。这意味着你要负责安全的格式化数据以便应用程序读取它。对对象和复杂数据类型做这件事就像在做一个特殊库的协议缓冲，但是对于字符串还是要小心对待
 在C和许多其他语言中，字符串是null结尾。我们发送字符串"Hello"的时候需要附加null字符作为结尾：
 
 [[code language="C"]]
@@ -176,17 +193,18 @@ Then what goes onto the wire is:
 [[/code]]
 
 And if you read this from a C program, you will get something that looks like a string, and might by accident act like a string (if by luck the five bytes find themselves followed by an innocently lurking null), but isn't a proper string. Which means that your client and server don't agree on the string format, you will get weird results.
-如果你用C程序读取这个数据，你会得到一些可能看起来象字符串，并且可能是因为意外才像字符串（如果5个字节之后刚好有个null结尾字符存在），但它不是正确的字符串。这意味着你的客户端和服务器并不认同这种数据格式，你得到了异常的结果。
+如果你用C程序读取这个数据，你会得到一些看起来象字符串，并且可能是因为意外才像字符串（比如5个字节之后刚好有个null结尾字符存在），但它不是正确的字符串。这意味着你的客户端和服务器并不认同这种数据格式，你得到了异常的结果。
 
 When you receive string data from 0MQ, in C, you simply cannot trust that it's safely terminated. Every single time you read a string you should allocate a new buffer with space for an extra byte, copy the string, and terminate it properly with a null.
 当你使用C语言从0MQ接收字符串数据的时候，你不能认为它会安全的结束。每次你读取一个字符串你需要分配一个新的缓冲并且留出结尾字符的空间，拷贝字符串并且以null作为结尾。
 
 So let's establish the rule that **0MQ strings are length-specified, and are sent on the wire //without// a trailing null**. In the simplest case (and we'll do this in our examples) a 0MQ string maps neatly to a 0MQ message frame, which looks like the above figure, a length and some bytes.
 因此，让我们建立一个规则：
-**0MQ字符串是长度指定的，//没有//null结尾字符**。
-在最简单的情况下（在我们的例子中会这样做）0MQ字符串映射整齐10MQ消息帧，它看起来像上面的数字，长度和一些字节
+**0MQ字符串是指定长度的，//没有//null结尾字符**。
+在最简单的情况下（在我们的例子中会这样做）0MQ字符串整齐映射0MQ消息帧，它看起来像上面的数字，一个长度和一些字节的数据
 
 Here is what we need to do, in C, to receive a 0MQ string and deliver it to the application as a valid C string:
+这里是在C语言中我们应该怎么做，接收一个0MQ字符串并象有效的C字符串一样交付给应用程序：
 
 [[code language="C"]]
 //  Receive 0MQ string from socket and convert into C string
@@ -205,26 +223,34 @@ s_recv (void *socket) {
 [[/code]]
 
 This makes a very handy helper function and in the spirit of making things we can reuse profitably, let's write a similar 's_send' function that sends strings in the correct 0MQ format, and package this into a header file we can reuse.
+本着可重用的精神在这里创建了一个非常有用的助手函数，让我们写个类似's_send“函数以正确的0MQ格式发送一些字符串，并且将其封装在一个头文件中以便我们重用。
 
 The result is {{zhelpers.h}}, which lets us write sweeter and shorter 0MQ applications in C. It is a fairly long source, and only fun for C developers, so [https://github.com/imatix/zguide/blob/master/examples/C/zhelpers.h read it at leisure].
+结果是{{zhelpers.h}，它可以让我们用C语言写出更优雅更短小的0MQ应用。这是一个相当长的源代码并且只有C开发者觉得它有趣，所以[https://github.com/imatix/zguide/blob/master/examples/C/zhelpers.h read it at leisure]。
 
++++ Version Reporting
 +++ 报告你使用的版本
 
 0MQ does come in several versions and quite often, if you hit a problem, it'll be something that's been fixed in a later version. So it's a useful trick to know //exactly// what version of 0MQ you're actually linking with. Here is a tiny program that does that:
+0MQ现在已经有很多的版本，如果你碰到一个问题，它很可能已经在后来的版本中修复了。所以//确切的//知道你实际在用的0MQ版本是一个非常有用的诀窍。这里有一个很小的问题：
 
 [[code type="example" title="0MQ version reporting" name="version"]]
 [[/code]]
 
++++ Getting the Message Out
 +++ 获取外部消息
 
 The second classic pattern is one-way data distribution, in which a server pushes updates to a set of clients. Let's see an example that pushes out weather updates consisting of a zip code, temperature, and relative humidity. We'll generate random values, just like the real weather stations do.
+第二个经典的样例是一体数据分发，一个服务器推送更新给一组客户端。让我们看一个示例，其推送由邮编、温度和相对湿度构成的天气更新信息。我们会产生随机数，让它看起来象真的气象站那样。
 
 Here's the server. We'll use port 5556 for this application:
+这个是服务器端，我们的应用程序使用5556端口：
 
 [[code type="example" title="Weather update server" name="wuserver"]]
 [[/code]]
 
 There's no start, and no end to this stream of updates, it's like a never ending broadcast.
+这组更新流中没有开始和结束，这看起来象那种从来不会结束的广播。
 
 [[code type="textdiagram"]]
                  +-------------+
@@ -259,44 +285,63 @@ There's no start, and no end to this stream of updates, it's like a never ending
 [[/code]]
 
 Here is client application, which listens to the stream of updates and grabs anything to do with a specified zip code, by default New York City because that's a great place to start any adventure:
+这里是一个客户端应用程序，它监听更新流并且在发现特定的邮编时工作，默认是纽约因为那里是开始任何冒险的伟大的地方：
 
 [[code type="example" title="Weather update client" name="wuclient"]]
 [[/code]]
 
 Note that when you use a SUB socket you **must** set a subscription using zmq_setsockopt[3] and SUBSCRIBE, as in this code. If you don't set any subscription, you won't get any messages. It's a common mistake for beginners. The subscriber can set many subscriptions, which are added together. That is, if a update matches ANY subscription, the subscriber receives it. The subscriber can also unsubscribe specific subscriptions. Subscriptions are length-specified blobs. See zmq_setsockopt[3] for how this works.
+注意当你使用一个SUB套接字的时候你 **必须** 象这个代码一样使用zmq_setsockopt[3]和SUBSCRIBE设置一个订阅。如果你没有设置任何订阅，你就不会得到任何信息。这是一个初学者常犯的操作。订阅者可以设置很多订阅，它们被加到一起。这就是，如果一个更新匹配了任何订阅，订阅者就可以收到它。订阅者可以解除指定的订阅。订阅是一些指定长度的块。可以参考zmq_setsockopt[3]看下是如何工作的。
 
 The PUB-SUB socket pair is asynchronous. The client does zmq_recv[3], in a loop (or once if that's all it needs). Trying to send a message to a SUB socket will cause an error. Similarly the service does zmq_send[3] as often as it needs to, but must not do zmq_recv[3] on a PUB socket.
+PUB-SUB套接字是异步的，客户端在循环中使用zmq_recv[3]（或者如果需要的话只调用一次也可以）。尝试给一个SUB套接字发送一个信息将会引发一个错误。类似的，服务器可根据需要频繁调用zmq_send[3]，但是一定不能在一个PUB套接字上使用zmq_recv[3]。
 
 In theory with 0MQ sockets, it does not matter which end connects, and which end binds. However with PUB-SUB sockets, if you bind the SUB socket and connect the PUB socket, the SUB socket may receive old messages, i.e. messages sent before the SUB started up. This is an artifact of the way bind/connect works. It's best to bind the PUB and connect the SUB, if you can.
+在0MQ套接字原理中，不用担心结束连接和结束绑定。使用PUB-SUB套接字的话，如果你绑定到SUB套接字并且连接到一个PUB套接字，SUB套接字就可以接收旧的信息，也就是信息在SUB启动之前发送出来。这是一个绑定连接工作的典型产物。如果你能的话最好是绑定PUB并连接到SUB。
 
 There is one more important thing to know about PUB-SUB sockets: you do not know precisely when a subscriber starts to get messages. Even if you start a subscriber, wait a while, and then start the publisher, **the subscriber will always miss the first messages that the publisher sends**. This is because as the subscriber connects to the publisher (something that takes a small but non-zero time), the publisher may already be sending messages out.
+这里有一个很重要关于PUB-SUB套接字需要知道的事情：你并不精确的知道一个订阅者什么时候开始接收信息。当你启动了一个订阅者，等一会，然后再启动发布者， **订阅者总会丢失发布者发送的第一条信息**。这是因为订阅者连接到发布者的时候（一些事情需要花费很短但并不是不需要时间），发布者可能已经把消息发送出去了。
 
 This "slow joiner" symptom hits enough people, often enough, that I'm going to explain it in detail. Remember that 0MQ does asynchronous I/O, i.e. in the background. Say you have two nodes doing this, in this order:
+很多的人碰到过“慢加入”的问题，或者说是相当的多，这里我会详细解析一下。记住0MQ是异步I/O，也就是后台工作。比如你有两个节点，是这样的顺序：
 
 * Subscriber connects to an endpoint and receives and counts messages.
 * Publisher binds to an endpoint and immediately sends 1,000 messages.
+* 订阅者连接到一个端点并且接收信息并且计数。
+* 发布者绑定到一个端点并且立刻发送1000条信息。
 
 Then the subscriber will most likely not receive anything. You'll blink, check that you set a correct filter, and try again, and the subscriber will still not receive anything.
+大多数的可能是订阅者将不会收到任何东西。你简直不能相信自己的眼睛，于是去检查过滤器是否正确并且重试，接着订阅者依然不能收到任何信息。
 
 Making a TCP connection involves to and fro handshaking that takes several milliseconds depending on your network and the number of hops between peers. In that time, 0MQ can send very many messages. For sake of argument assume it takes 5 msecs to establish a connection, and that same link can handle 1M messages per second. During the 5 msecs that the subscriber is connecting to the publisher, it takes the publisher only 1 msec to send out those 1K messages.
+建立一个TCP连接会忙着来回的握手，依赖于你的网络和两端之间的跳跃数，这需要花费很多毫秒的时间。在这个时间里，0MQ能够发送非常多的信息。假定创建一个连接需要花费5毫秒，并且同样的连接每秒可以处理1M信息。在5毫秒里订阅者正在连接发布者，向外发送1K信息只花费发布者1毫秒时间。
 
 In Chapter Two I'll explain how to synchronize a publisher and subscribers so that you don't start to publish data until the subscriber(s) really are connected and ready. There is a simple and stupid way to delay the publisher, which is to sleep. I'd never do this in a real application though, it is extremely fragile as well as inelegant and slow. Use sleeps to prove to yourself what's happening, and then wait for Chapter 2 to see how to do this right.
+在第二章我将会解释如何同步发布者和订阅者，这样你就不需要等到订阅者真的连接并且做好准备在开始发布数据了。这里有一个简单而且比较笨的办法拖延一下发布者，就是用sleep。虽然我从来没在真实的应用中这样做过，这是一个非常脆弱而且粗暴又慢的方法。你自己可以使用sleep来证明发生了什么，然后等着看第二章中正确的做法。
 
 The alternative to synchronization is to simply assume that the published data stream is infinite and has no start, and no end. This is how we built our weather client example.
+同步的假设是发布者的数据流是无限的并且没有开始没有结束。这也是我们如何构建我们的天气客户端示例的。
 
 So the client subscribes to its chosen zip code and collects a thousand updates for that zip code. That means about ten million updates from the server, if zip codes are randomly distributed. You can start the client, and then the server, and the client will keep working. You can stop and restart the server as often as you like, and the client will keep working. When the client has collected its thousand updates, it calculates the average, prints it, and exits.
+所以客户端订阅者选择邮编并且收集那个邮编下的上千个更新。如果邮编是随机分布的，那也意味着服务器发出的更新有上千万个。你可以启动客户端，然后再启动服务器，客户端依然可以继续工作。你可以按照你希望的频繁的停止或者重启服务器，客户端依然会持续工作。当客户端收集完它的一千个更新，它计算出平均值，打印并且退出。
 
 Some points about the publish-subscribe pattern:
+一些发布者-订阅者的典型特点：
 
 * A subscriber can in fact connect to more than one publisher, using one 'connect' call each time. Data will then arrive and be interleaved so that no single publisher drowns out the others.
+* 一个订阅者能够实际连接超过一个发布者，每次使用一个'connnect'调用。数据接着就会交替到达，一个发布者的数据不会淹没在其他发布者的数据里。
 
 * If a publisher has no connected subscribers, then it will simply drop all messages.
+* 如果一个发布者没有连接着的订阅者，那么它会简单的丢弃所有的数据。
 
 * If you're using TCP, and a subscriber is slow, messages will queue up on the publisher. We'll look at how to protect publishers against this, using the "high-water mark" later.
+* 如果你使用TCP，并且订阅者很慢，信息会在发布者处排队。我们在之后将会看到如何使用"high-water mark"保护发布者防范这种情况。
 
 * In the current versions of 0MQ, filtering happens at the subscriber side, not the publisher side. This means, over TCP, that a publisher will send all messages to all subscribers, which will then drop messages they don't want.
+* 当前版本的0MQ，过滤发生在订阅者端，而不是发布者端。这意味着，通过TCP，发布者将会发送所有的信息给所有的订阅者，订阅者负责丢弃其不需要的信息
 
 This is how long it takes to receive and filter 10M messages on my box, which is an Intel 4 core Q8300, fast but nothing special:
+这是在我的机器中接收和过滤10M消息需要花费多长时间，配置是Intel酷睿4Q8300，快却没什么特别的：
 
 [[code]]
 ph@ws200901:~/work/git/0MQGuide/examples/c$ time wuclient
