@@ -354,14 +354,20 @@ sys     0m2.290s
 [[/code]]
 
 +++ Divide and Conquer
++++ 分离并且征服
 
 As a final example (you are surely getting tired of juicy code and want to delve back into philological discussions about comparative abstractive norms), let's do a little supercomputing. Then coffee. Our supercomputing application is a fairly typical parallel processing model:
+作为最后一个例子（你肯定也看累了有趣的代码而想讨论下比较抽象的规范），让我们做一个小的超级计算机。然后去喝咖啡。我们的超级计算机的应用是一个相当典型的并行处理模型：
 
 * We have a ventilator that produces tasks that can be done in parallel.
 * We have a set of workers that process tasks.
 * We have a sink that collects results back from the worker processes.
+* 我们有一个通风器(ventilator)来处理可并行完成的任务。
+* 我们有一组工人(workers)来处理任务。
+* 我们有一个接收器(sink)收集工作处理的结果。
 
 In reality, workers run on superfast boxes, perhaps using GPUs (graphic processing units) to do the hard maths. Here is the ventilator. It generates 100 tasks, each is a message telling the worker to sleep for some number of milliseconds:
+实际上，工人运行在非常快的盒子上，也许会使用GPU（图形处理单元）来处理复杂的数学计算。这里有一个ventilator。它可以产生100个任务，每个都是一个消息来告诉工人睡上几毫秒。
 
 [[code type="example" title="Parallel task ventilator" name="taskvent"]]
 [[/code]]
@@ -409,19 +415,23 @@ In reality, workers run on superfast boxes, perhaps using GPUs (graphic processi
 
 
            Figure # - Parallel Pipeline
+           图表 # - 并行管道
 [[/code]]
 
 Here is the worker application. It receives a message, sleeps for that number of seconds, then signals that it's finished:
+这里是一个工人应用。它接受消息，睡几秒，然后标记它完成了：
 
 [[code type="example" title="Parallel task worker" name="taskwork"]]
 [[/code]]
 
 Here is the sink application. It collects the 100 tasks, then calculates how long the overall processing took, so we can confirm that the workers really were running in parallel, if there are more than one of them:
+这是一个接收器。它收集100个任务，然后计算全部处理完需要多少时间，所以如果超过他们中的一个我们就可以确认工人确实是在并行运行，
 
 [[code type="example" title="Parallel task sink" name="tasksink"]]
 [[/code]]
 
 The average cost of a batch is 5 seconds. When we start 1, 2, 4 workers we get results like this from the sink:
+一批的平均值是5秒。当我们启动1、2、4工人的时候我们从接收器得到类似下面的结果：
 
 [[code]]
 #   1 worker
@@ -433,14 +443,19 @@ Total elapsed time: 1018 msec
 [[/code]]
 
 Let's look at some aspects of this code in more detail:
+让我们从其他角度看下这个代码的更多细节：
 
 * The workers connect upstream to the ventilator, and downstream to the sink. This means you can add workers arbitrarily. If the workers bound to their endpoints, you would need (a) more endpoints and (b) to modify the ventilator and/or the sink each time you added a worker. We say that the ventilator and sink are 'stable' parts of our architecture and the workers are 'dynamic' parts of it.
+* 工人向上连接ventilator， 并且向下连接接收器。这意味着你可以随意的添加工人。如果工人绑定在他们的端点上，你需要更多的端点来修改ventilator或者sink每次你添加工人的时候。我们说ventilator和sink是我们架构中的“稳定”组件而工人则是“动态”组件
 
 * We have to synchronize the start of the batch with all workers being up and running. This is a fairly common gotcha in 0MQ and there is no easy solution. The 'connect' method takes a certain time. So when a set of workers connect to the ventilator, the first one to successfully connect will get a whole load of messages in that short time while the others are also connecting. If you don't synchronize the start of the batch somehow, the system won't run in parallel at all. Try removing the wait, and see.
+* 我们必须在启动一批工人开始运行的时候进行同步。这是一个在0MQ中非常普遍的常见方法并且没有简单的解决办法。'connect'方法需要花费一些时间。所以当一批工人连接到ventilator的时候，第一个成功连接的将会在其他人依然在进行连接的那个很短的时间里得到全部完整的消息。如果你没有以某种方式在批处理开始的时候进行同步，系统就不会并行运行。可以尝试移除掉wait试试。
 
 * The ventilator's PUSH socket distributes tasks to workers (assuming they are all connected //before// the batch starts going out) evenly. This is called //load-balancing// and it's something we'll look at again in more detail.
+* ventilator的PUSH套接字平均的分发任务给工人（假定在批处理开始 //之前// 他们全部都已经连接了）。这叫做 //负载均衡// 并且其中有写东西我们会在看看更多的细节。
 
 * The sink's PULL socket collects results from workers evenly. This is called //fair-queuing//:
+* 接收器的PULL套接字平衡的收集工人的结果。这叫做 //公平队列//:
 
 [[code type="textdiagram"]]
   +---------+   +---------+   +---------+
@@ -461,25 +476,35 @@ Let's look at some aspects of this code in more detail:
 
 
           Figure # - Fair queuing
+          图表 # - 公平队列
 [[/code]]
 
 The pipeline pattern also exhibits the "slow joiner" syndrome, leading to accusations that PUSH sockets don't load balance properly. If you are using PUSH and PULL, and one of your workers gets way more messages than the others, it's because that PULL socket has joined faster than the others, and grabs a lot of messages before the others manage to connect.
+管道模式经常表现出“慢加入”症状，主要的指责是PUSH套接字没有正确的负载均衡。如果你正在使用PUSH和PULL，并且你工人中的其中一个获取的信息比其他的工人多，这是因为PULL套接字已经比其他人更快的加入了，并且抓到了在其他人连接之前的信息。
 
++++ Programming with 0MQ
 +++ 使用0MQ编程
 
 Having seen some examples, you're eager to start using 0MQ in some apps. Before you start that, take a deep breath, chillax, and reflect on some basic advice that will save you stress and confusion.
+已经看了很多的例子，你一定很渴望在一些应用程序中开始使用0MQ了。在你开始之前，深呼吸一下，放松，并且反省一些最基础的建议将会减少你的压力和混乱。
 
 * Learn 0MQ step by step. It's just one simple API but it hides a world of possibilities. Take the possibilities slowly, master each one.
+* 一步一步的学习0MQ。这只是一个简单的API但是它隐藏了一个所有可能的世界。慢慢尝试，并精通每一个。
 
 * Write nice code. Ugly code hides problems and makes it hard for others to help you. You might get used to meaningless variable names, but people reading your code won't. Use names that are real words, that say something other than "I'm too careless to tell you what this variable is really for". Use consistent indentation, clean layout. Write nice code and your world will be more comfortable.
+* 写漂亮的代码。丑陋的代码隐藏问题并且使其他人帮助你变得困难。你可能经常用一些无意义的变量名，但是看你代码的人却会看不懂。使用可以表达某些真实含义的单词，而不是说“我忘记告诉你那个变量实际的含义了”。使用一致的缩进，整洁的布局。写漂亮的代码你的世界会变得更舒适。
 
 * Test what you make as you make it. When your program doesn't work, you should know what five lines are to blame. This is especially true when you do 0MQ magic, which just //won't// work the first times you try it.
+* 像你创建它一样测试你创建的东西。当你的程序不工作的时候，你应该知道是哪五行导致的问题。这在当你使用0MQ的时候更加正确，当你刚好在第一次尝试的时候却 //不工作// 。 
 
 * When you find that things don't work as expected, break your code into pieces, test each one, see which one is not working. 0MQ lets you make essentially modular code, use that to your advantage.
+* 当你发现不像你希望的那样工作的时候，中断你的代码，测试每一个，看哪一个不工作。0MQ让你创建本质上模块化的代码，用对你有益的方法去用它。
 
 * Make abstractions (classes, methods, whatever) as you need them. If you copy/paste a lot of code you're going to copy/paste errors too.
+* 像实际需要一样进行抽象。如果你复制/粘贴了一些代码，你也同时复制/粘贴了错误。
 
 To illustrate, here is a fragment of code someone asked me to help fix:
+举例来说，这里有个某人寻求我帮助修正的代码片段：
 
 [[code]]
 //  NOTE: do NOT reuse this example code!
@@ -540,6 +565,7 @@ void* pub_worker(void* arg){
 [[/code]]
 
 This is what I rewrote it to, as part of finding the bug:
+这是我如何来写找到bug的那段：
 
 [[code language="C"]]
 static void *
@@ -573,10 +599,13 @@ worker_thread (void *arg) {
 [[/code]]
 
 In the end, the problem was that the application was passing sockets between threads, which crashed weirdly. It became legal behavior in 0MQ/2.1, but remains dangerous and something we advise against doing.
+最后，问题是应用程序在两个线程间往来套接字，其古怪的崩溃了。这在0MQ/2.1变成了合法的行为，但是保留着危险我们不建议这么做。
 
++++ 0MQ/2.1
 +++ 0MQ/2.1
 
 History tells us that 0MQ/2.0 is when low-latency distributed messaging crawled out of the primeval mud, shook off a heavy coat of buzzwords and enterprise jargon, and reached its branches up to the sky, as if to cry, "no limits!". We've been using this stable branch since it spawned 0MQ/2.0.8 during the hot days of August, 2010.
+
 
 But times change, and what was cool in 2010 is no longer //a la mode// in 2011. The 0MQ developers and community have been frantically busy redefining messaging chic, and anyone who's anyone knows that 2.1 is the new stable.
 
@@ -623,6 +652,7 @@ First, do not try to use the same socket from multiple threads. No, don't explai
 
 Voila! It's complex and painful enough that any language binding author worth his or her salt will do this automatically and make the socket closing dance unnecessary.
 
++++ Why We Needed 0MQ
 +++ 为什么我们需要0MQ
 
 Now that you've seen 0MQ in action, let's go back to the "why".
@@ -750,6 +780,7 @@ Specifically:
 Actually 0MQ does rather more than this. It has a subversive effect on how you develop network-capable applications. Superficially it's just a socket API on which you do zmq_recv[3] and zmq_send[3]. But message processing rapidly becomes the central loop, and your application soon breaks down into a set of message processing tasks. It is elegant and natural. And it scales: each of these tasks maps to a node, and the nodes talk to each other across arbitrary transports. Two nodes in one process (node is a thread), two nodes on one box (node is a process), two boxes on one network (node is a box). With no application code changes.
 
 +++ Socket Scalability
++++ 可伸缩套接字
 
 Let's see 0MQ's scalability in action. Here is a shell script that starts the weather server and then a bunch of clients in parallel:
 
@@ -776,6 +807,7 @@ As the clients run, we take a look at the active processes using 'top', and we s
 
 Let's think for a second about what is happening here. The weather server has a single socket, and yet here we have it sending data to five clients in parallel. We could have thousands of concurrent clients. The server application doesn't see them, doesn't talk to them directly.
 
++++ Missing Message Problem Solver
 +++ 丢失信息问题的解决方法
 
 As you start to program with 0MQ you will come across one problem more than once: you lose messages that you expect to receive. Here is a basic problem solver that walks through the most common causes for this. Don't worry if some of the terminology is unfamiliar still, it'll become clearer in the next chapters.
