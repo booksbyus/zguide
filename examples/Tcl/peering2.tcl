@@ -22,7 +22,7 @@ switch -exact -- $what {
     client {
 	# Request-reply client using REQ socket
 	#
-	zmq context context 1
+	zmq context context
 	zmq socket client context REQ
 	client connect "ipc://$self-localfe.ipc"
 
@@ -40,7 +40,7 @@ switch -exact -- $what {
     worker {
 	# Worker using REQ socket to do LRU routing
 	#
-	zmq context context 1
+	zmq context context
 	zmq socket worker context REQ
 	worker connect "ipc://$self-localbe.ipc"
 
@@ -62,7 +62,7 @@ switch -exact -- $what {
 	puts "I: preparing broker at $self..."
 
 	# Prepare our context and sockets
-	zmq context context 1
+	zmq context context
 
 	# Bind cloud frontend to endpoint
 	zmq socket cloudfe context ROUTER

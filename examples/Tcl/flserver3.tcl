@@ -14,7 +14,7 @@ set connect_endpoint [lindex $argv 0]
 set bind_endpoint [regsub {tcp\://[^\:]+} $connect_endpoint "tcp://*"]
 set verbose 0
 
-zmq context context 1
+zmq context context
 zmq socket server context ROUTER
 server setsockopt IDENTITY $connect_endpoint
 server bind $bind_endpoint

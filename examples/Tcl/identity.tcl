@@ -5,7 +5,7 @@
 
 package require zmq
 
-zmq context context 1
+zmq context context
 
 zmq socket sink context ROUTER
 sink bind "inproc://example"

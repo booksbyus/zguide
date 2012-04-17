@@ -6,7 +6,7 @@
 
 package require zmq
 
-zmq context context 1
+zmq context context
 
 zmq socket sender context PUSH
 sender bind "tcp://*:5557"

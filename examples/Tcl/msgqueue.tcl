@@ -5,7 +5,7 @@
 
 package require zmq
 
-zmq context context 1
+zmq context context
 
 #  Socket facing clients
 zmq socket frontend context ROUTER

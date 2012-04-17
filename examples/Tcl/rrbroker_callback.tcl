@@ -5,7 +5,7 @@
 package require zmq
 
 # Prepare our context and sockets
-zmq context context 1
+zmq context context
 zmq socket frontend context ROUTER
 zmq socket backend context DEALER
 frontend bind "tcp://*:5559"

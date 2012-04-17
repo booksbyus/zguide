@@ -23,7 +23,7 @@ switch -exact -- $what {
 	#  It connects to the publisher and subscribes to everything. It
 	#  sleeps for a short time between messages to simulate doing too
 	#  much work. If a message is more than 1 second late, it croaks.
-	zmq context context 1
+	zmq context context
 	zmq socket subpipe context PAIR
 	subpipe connect "ipc://subpipe.ipc"
 	#  Subscribe to everything
@@ -53,7 +53,7 @@ switch -exact -- $what {
     pub {
 	#  This is our server task
 	#  It publishes a time-stamped message to its pub socket every 1ms.
-	zmq context context 1
+	zmq context context
 	zmq socket pubpipe context PAIR
 	pubpipe connect "ipc://pubpipe.ipc"
 
@@ -77,7 +77,7 @@ switch -exact -- $what {
 	context term
     }
     driver {
-	zmq context context 1
+	zmq context context
 	zmq socket pubpipe context PAIR
 	pubpipe bind "ipc://pubpipe.ipc"
 	zmq socket subpipe context PAIR

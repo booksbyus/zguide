@@ -32,7 +32,7 @@ proc s_try_request {ctx endpoint request} {
     return $reply
 }
 
-zmq context context 1
+zmq context context
 
 set request {}
 set request [zmsg add $request "Hello World"]

@@ -18,7 +18,7 @@ puts "I: preparing broker at $self"
 expr {srand([pid])}
 
 # Prepare our context and sockets
-zmq context context 1
+zmq context context
 zmq socket statebe context PUB
 statebe bind "ipc://$self-state.ipc"
 

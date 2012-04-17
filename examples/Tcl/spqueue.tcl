@@ -9,7 +9,7 @@ package require zmq
 set LRU_READY "READY" ;#  Signals worker is ready
 
 #  Prepare our context and sockets
-zmq context context 1
+zmq context context
 zmq socket frontend context ROUTER
 zmq socket backend context ROUTER
 frontend bind "tcp://*:5555" ;#  For clients

@@ -4,7 +4,7 @@
 
 package require zmq
 
-zmq context context 1
+zmq context context
 
 # This is where the weather server sits
 zmq socket frontend context SUB

@@ -22,7 +22,7 @@ switch -exact -- $what {
 
 	package require zmq
 
-	zmq context context 1
+	zmq context context
 	zmq socket client context DEALER
 
 	# Set random identity to make tracing easier
@@ -62,7 +62,7 @@ switch -exact -- $what {
 
 	package require zmq
 
-	zmq context context 1
+	zmq context context
 	zmq socket worker context DEALER
 	worker connect "ipc://backend"
 
@@ -92,7 +92,7 @@ switch -exact -- $what {
 
 	package require zmq
 
-	zmq context context 1
+	zmq context context
 
 	# Frontend socket talks to clients over TCP
 	zmq socket frontend context ROUTER

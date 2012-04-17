@@ -10,7 +10,7 @@ set REQUEST_TIMEOUT     2500    ;#  msecs, (> 1000!)
 set REQUEST_RETRIES     3       ;#  Before we abandon
 set SERVER_ENDPOINT     "tcp://localhost:5555"
 
-zmq context context 1
+zmq context context
 puts "I: connecting to server..."
 zmq socket client context REQ
 client connect $SERVER_ENDPOINT
