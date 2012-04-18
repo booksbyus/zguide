@@ -55,6 +55,7 @@ It sounds ridiculously simple. And maybe it is. That's kind of the whole point.
 +++ 一些假设
 
 We assume you are using the latest stable release of 0MQ. We assume you are using a Linux box or something similar. We assume you can read C code, more or less, that's the default language for the examples. We assume that when we write constants like PUSH or SUBSCRIBE you can imagine they are really called ZMQ_PUSH or ZMQ_SUBSCRIBE if the programming language needs it.
+我们假设你使用的是最新的稳定版0MQ。我们假设你使用Linux盒子或类似（本文中所有的机器/电脑/设备统称为盒子）。我们假设你可以阅读C代码，它或多或少是示例中的默认语言。我们假设当我们写到一些诸如PUSH或者SUBSCRIBE这样的常量的时候你可以想象出如果 程序中需要的实际是ZMQ_PUSH或者ZMQ_SUBSCRIBE。
 
 +++ Getting the Examples
 +++ 获取示例
@@ -625,16 +626,22 @@ zmq_setsockopt (mysocket, ZMQ_LINGER, &zero, sizeof (zero));
 * In 2.0, 0MQ would ignore interrupted system calls, which meant that no libzmq call would ever return EINTR if a signal was received during its operation. This caused problems with loss of signals such as SIGINT (Ctrl-C handling), especially for language runtimes. In 2.1, any blocking call such as zmq_recv[3] will return EINTR if it is interrupted by a signal.
 
 +++ Getting the Context Right
++++ 正确的获取上下文
 
 0MQ applications always start by creating a //context//, and then using that for creating sockets. In C, it's the zmq_init[3] call. You should create and use exactly one context in your process. Technically, the context is the container for all sockets in a single process, and acts as the transport for {{inproc}} sockets, which are the fastest way to connect threads in one process. If at runtime a process has two contexts, these are like separate 0MQ instances. If that's explicitly what you want, OK, but otherwise remember:
+0MQ应用程序经常从创建一个 //context// 开始，接着就可以使用它来创建套接字。在C语言中，是调用zmq_init[3]。你可以在你的进程中创建和使用一个上下文(context)，技术上来说，上下文是一个进程中所有套接字的容器，并且像一个 {{进程内}} 的传输站，这是在一个进程内最快的连接到线程的方法。如果在运行时一个进程有两个上下文，他们就会像分开的0MQ示例。如果你完全明白自己要做什么那没问题，否则的话，需要记住：
 
 **Do one zmq_init[3] at the start of your main line code, and one zmq_term[3] at the end.**
+**在主代码开始处调用一次 zmq_init[3] ，并且在结束的时候调用一次 zmq_term[3] 。**
 
 If you're using the fork() system call, each process needs its own context. If you do zmq_init[3] in the main process before calling fork(), the child processes get their own contexts. In general you want to do the interesting stuff in the child processes, and just manage these from the parent process.
+如果你正在使用fork()系统调用，每个进程需要他们自己的上下文。如果你在主进程中fork()之前做了zmq_init[3]，子进程会获取他们自己的上下文。一般来说你希望在子进程中做些有趣的事情，并且父进程仅仅管理他们。
 
 +++ Making a Clean Exit
++++ 创造一个干净的退出
 
 Classy programmers share the same motto as classy hit men: always clean-up when you finish the job. When you use 0MQ in a language like Python, stuff gets automatically freed for you. But when using C you have to carefully free objects when you're finished with them, or you get memory leaks, unstable applications, and generally bad karma.
+上等的程序员会分享相同的座右铭激励人们：当你完成一个工作的时候永远做好清除。当你使用0MQ
 
 Memory leaks is one thing, but 0MQ is quite finicky about how you exit an application. The reasons are technical and painful but the upshot is that if you leave any sockets open, the zmq_term[3] function will hang forever. And even if you close all sockets, zmq_term[3] will by default wait forever if there are pending connects or sends. Unless you set the LINGER to zero on those sockets before closing them.
 
