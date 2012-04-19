@@ -1,6 +1,6 @@
 
 <A name="toc1-4" title="ØMQ - The Guide" />
-ØMQ - 指南
+ØMQ - 中文指南
 ===============
 
 作者：Pieter Hintjens <ph@imatix.com>, iMatix公司CEO.

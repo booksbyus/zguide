@@ -641,21 +641,28 @@ If you're using the fork() system call, each process needs its own context. If y
 +++ 创造一个干净的退出
 
 Classy programmers share the same motto as classy hit men: always clean-up when you finish the job. When you use 0MQ in a language like Python, stuff gets automatically freed for you. But when using C you have to carefully free objects when you're finished with them, or you get memory leaks, unstable applications, and generally bad karma.
-上等的程序员会分享相同的座右铭激励人们：当你完成一个工作的时候永远做好清除。当你使用0MQ
+上等的程序员会分享相同的座右铭激励人们：当你完成一个工作的时候永远做好清除。当你在Python这样的语言中使用0MQ的时候会自动释放。但是当你使用C语言的时候你必须在不需要他们的时候非常小心的释放对象，否则就会发生内存泄露，不标准的应用程序一般不会有好的运气。
 
 Memory leaks is one thing, but 0MQ is quite finicky about how you exit an application. The reasons are technical and painful but the upshot is that if you leave any sockets open, the zmq_term[3] function will hang forever. And even if you close all sockets, zmq_term[3] will by default wait forever if there are pending connects or sends. Unless you set the LINGER to zero on those sockets before closing them.
+内存泄露只是一个问题，0MQ实际上对退出要求非常严格。技术上的理由很不好解释但是如果你遗留了一个一直打开的套接字，如果它正在等待连接或者发送，那zmq_term[3]默认将会永远等待。除非你在关闭他们之前在那些套接字上设置LINGER为0。
 
 The 0MQ objects we need to worry about are messages, sockets, and contexts. Luckily it's quite simple, at least in simple programs:
+0MQ对象中我们需要担心的是messages, sockets, 和contexts。幸运的是他们十分简单，至少在简单的程序中是这样的：
 
 * Always close a message the moment you are done with it, using zmq_msg_close[3].
+* 总是在你完成的时候使用zmq_msg_close[3]关闭消息(message)。
 
 * If you are opening and closing a lot of sockets, that's probably a sign you need to redesign your application.
+* 如果你正在打开或者关闭一批套接字，那很可能意味着你需要重新设计你的应用程序。
 
 * When you exit the program, close your sockets and then call zmq_term[3]. This destroys the context.
+* 当你退出程序的时候，关闭你的套接字并且对他们调用zmq_term[3]。这会销毁上下文。
 
 If you're doing multithreaded work, it gets rather more complex than this. We'll get to multithreading in the next chapter, but because some of you will, despite warnings, will try to run before you can safely walk, below is the quick and dirty guide to making a clean exit in a //multithreaded// 0MQ application.
+如果你正在做多线程的工作，会有比这个更多的复杂性。我们将在下一章谈论多线程。TODO:但是因为你们的一些愿望，忽略警告，在能够安全的行走之前就想跑，在这个快速和不合适的指南下在一个0MQ //多线程// 应用程序中创建一个干净的退出。
 
 First, do not try to use the same socket from multiple threads. No, don't explain why you think this would be excellent fun, just please don't do it. Next, relingerfy and close all sockets, and terminate the context in the main thread. Lastly, this'll cause any blocking receives or polls or sends in attached threads (i.e. which share the same context) to return with an error. Catch that, and then relingerize and close sockets in //that// thread, and exit. Do not terminate the same context twice. The zmq_term in the main thread will block until all sockets it knows about are safely closed.
+首先，在多线程中不要尝试使用同一个套接字。不要解释为什么你认为这很好，只要别这么做就行了。然后，relingerfy并且关闭所有的套接字，并且在主线程中结束上下文。最后，在关联的线程中引发阻塞接收或者polls或者发送的情况应该附带错误信息返回（例如他们共享同一个上下文）。捕获它并且在 //那个// 线程中relingerize和关闭套接字。不要结束一个上下文两次。主线程中的zmq_term将会阻塞直到所有的套接字安全的关闭。
 
 Voila! It's complex and painful enough that any language binding author worth his or her salt will do this automatically and make the socket closing dance unnecessary.
 
@@ -663,34 +670,49 @@ Voila! It's complex and painful enough that any language binding author worth hi
 +++ 为什么我们需要0MQ
 
 Now that you've seen 0MQ in action, let's go back to the "why".
+现在已经看过了0MQ的行为，让我们回过头来看看“为什么”。
 
 Many applications these days consist of components that stretch across some kind of network, either a LAN or the Internet. So many application developers end up doing some kind of messaging. Some developers use message queuing products, but most of the time they do it themselves, using TCP or UDP. These protocols are not hard to use, but there is a great difference between sending a few bytes from A to B, and doing messaging in any kind of reliable way.
+许多的应用程序目前由组件组成，这些组件穿越不同的网络，LAN或者Internet。许多的开发者最终都是在做不同类型的报文。一些开发者使用消息队列产品，但是更多的时候他们使用TCP或者UDP自己做这个事情。那些协议不难使用，但是他们在从A到B发送一些字节的数据的时候有很大的不同，并且使用各种不同的可靠方法发送报文。
 
 Let's look at the typical problems we face when we start to connect pieces using raw TCP. Any reusable messaging layer would need to solve all or most these:
+让我们来看看当我们使用原始TCP开始一个连接时候要面对的典型问题。任何可重用的报文层都需要解决所有这写问题：
 
 * How do we handle I/O? Does our application block, or do we handle I/O in the background? This is a key design decision. Blocking I/O creates architectures that do not scale well. But background I/O can be very hard to do right.
+* 我们如何处理I/O？我们的应用程序可以阻塞，或者我们能在后台操作I/O吗？这是一个设计要点。阻塞的I/O建构不能很好的扩展。但是后台I/O又很难做好。
 
 * How do we handle dynamic components, i.e. pieces that go away temporarily? Do we formally split components into "clients" and "servers" and mandate that servers cannot disappear? What then if we want to connect servers to servers? Do we try to reconnect every few seconds?
+* 我们如何处理动态组件，例如一份临时数据？TODO:我们拆分组件到客户端和服务器并且要求服务器不能消失？那如果我们希望从一个服务器连接到另外一个服务器呢？我们每次要尝试重新连接？
 
 * How do we represent a message on the wire? How do we frame data so it's easy to write and read, safe from buffer overflows, efficient for small messages, yet adequate for the very largest videos of dancing cats wearing party hats?
+* TODO：我们如何在报文中展现信息？我们如何划分数据结构使其更容易读取和写入，即使缓冲溢出也安全，高效的小信息，还刚好可以胜任传输聚会上带帽子的猫在跳舞的巨大视频？
 
 * How do we handle messages that we can't deliver immediately? Particularly, if we're waiting for a component to come back on-line? Do we discard messages, put them into a database, or into a memory queue?
+* 我们如何处理那些我们不能立刻发布的信息？特别的，我们如何等待一个组件在线返回？我们是把这个消息放入数据库或者内存然后丢弃这个消息吗？
 
 * Where do we store message queues? What happens if the component reading from a queue is very slow, and causes our queues to build up? What's our strategy then?
+* 我们在哪里存储消息队列？如果组件从队列读取的非常慢会发生什么？我们建造队列的原因是什么？我们的策略是什么？
 
 * How do we handle lost messages? Do we wait for fresh data, request a resend, or do we build some kind of reliability layer that ensures messages cannot be lost? What if that layer itself crashes?
+* 我们如何处理丢失的信息？我们是在等待最新的数据，请求重发，或者我们创建了某种可靠层其可以确保信息不会丢失？那如果那层自己就崩溃了呢？
 
 * What if we need to use a different network transport. Say, multicast instead of TCP unicast? Or IPv6? Do we need to rewrite the applications, or is the transport abstracted in some layer?
+* 我们需要使用不同的网络进行传输什么。说多播代替了TCP单播？或者是IPv6？我们是否需要重写应用程序，或者传输被抽象在某些层次上？
 
 * How do we route messages? Can we send the same message to multiple peers? Can we send replies back to an original requester?
+* 我们如何路由信息？ 我们能够发送同样的信息给多个端吗？我们能够回复给一个老的请求者吗？
 
 * How do we write an API for another language? Do we re-implement a wire-level protocol or do we repackage a library? If the former, how can we guarantee efficient and stable stacks? If the latter, how can we guarantee interoperability?
+* 我们如何用其他语言写API？我们是要重新实现一个报文级协议或者我们重新包装一个库？如果是前者，我们如何保证高效和稳定的栈？如果是后者，我们如何保证可交互性？
 
 * How do we represent data so that it can be read between different architectures? Do we enforce a particular encoding for data types? How far is this the job of the messaging system rather than a higher layer?
+* 我们如何描述数据使其在在不同的架构之间读取？我们要强制使用特定编码的数据类型吗？消息系统的工作比更高层快多少？
 
 * How do we handle network errors? Do we wait and retry, ignore them silently, or abort?
+* 我们如何处理网络错误？等待并且重试，忽略，还是中止？
 
 Take a typical open source project like [http://hadoop.apache.org/zookeeper/ Hadoop Zookeeper] and read the C API code in [http://github.com/apache/zookeeper/blob/trunk/src/c/src/zookeeper.c src/c/src/zookeeper.c]. It's 3,200 lines of mystery and in there is an undocumented, client-server network communication protocol. I see it's efficient because it uses poll() instead of select(). But really, Zookeeper should be using a generic messaging layer and an explicitly documented wire level protocol. It is incredibly wasteful for teams to be building this particular wheel over and over.
+看看典型的开源项目比如 [http://hadoop.apache.org/zookeeper/ Hadoop Zookeeper] 和在 [http://github.com/apache/zookeeper/blob/trunk/src/c/src/zookeeper.c src/c/src/zookeeper.c] 阅读C的API代码。那里有3200行没有文档的迷一样的客户端服务器网络通讯协议。我认为他们很高效因为它使用了poll()代替select()。但是事实上，Zookeeper应该使用普遍的消息层和明确的有说明文档的报文级协议。重复造轮子对小组是难以置信的浪费。
 
 [[code type="textdiagram"]]
              +------------+
@@ -714,14 +736,19 @@ Take a typical open source project like [http://hadoop.apache.org/zookeeper/ Had
 [[/code]]
 
 But how to make a reusable messaging layer? Why, when so many projects need this technology, are people still doing it the hard way, by driving TCP sockets in their code, and solving the problems in that long list, over and over?
+但是如何建立一个可重用的消息层呢？为什么当如此多的项目需要这种技术，人们依然在用在代码中驱动TCP套接字这种最困难的方法，然后把正在解决的问题一遍又一边的列出一个个大长列表？
 
 It turns out that building reusable messaging systems is really difficult, which is why few FOSS projects ever tried, and why commercial messaging products are complex, expensive, inflexible, and brittle. In 2006 iMatix designed [http://www.amqp.org AMQP] which started to give FOSS developers perhaps the first reusable recipe for a messaging system. AMQP works better than many other designs [http://www.imatix.com/articles:whats-wrong-with-amqp but remains relatively complex, expensive, and brittle]. It takes weeks to learn to use, and months to create stable architectures that don't crash when things get hairy.
+结果是创建可重用消息系统实际上非常困难，这就是为什么几乎没有免费开源软件（FOSS）项目曾经尝试过，和为什么消息通讯产品非常复杂昂贵不可变更和脆弱。在2006年iMatix设计了 [http://www.amqp.org AMQP] 开始给FOSS开发者提供也许是第一个消息信息可重用的秘诀。AMQP比许多其他的设计工作的更好[http://www.imatix.com/articles:whats-wrong-with-amqp but remains relatively complex, expensive, and brittle]。它需要花费几个星期去学习如何使用，几个月后就可以建立出稳定的架构即使在情况变的不好应付的时候依然不会崩溃。
 
 Most messaging projects, like AMQP, that try to solve this long list of problems in a reusable way do so by inventing a new concept, the "broker", that does addressing, routing, and queuing. This results in a client-server protocol or a set of APIs on top of some undocumented protocol, that let applications speak to this broker. Brokers are an excellent thing in reducing the complexity of large networks. But adding broker-based messaging to a product like Zookeeper would make it worse, not better. It would mean adding an additional big box, and a new single point of failure. A broker rapidly becomes a bottleneck and a new risk to manage. If the software supports it, we can add a second, third, fourth broker and make some fail-over scheme. People do this. It creates more moving pieces, more complexity, more things to break.
+许多的消息项目，就像AMQP，都尝试在可重用的道路上解决这个长长的问题列表，他们发明了许多心的概念，比如“协商者”（broker），它做寻址/路由和排队的工作。这样的结果就是在一些没有文档的协议之上的客户端服务器协议或者一组API，让应用程序对这个broker说话。Ｂrokers在一个大的网络中是一个很好的东西它减轻了复杂性。这也意味着需要添加一些大的盒子，和一些新的单点故障。一个broker迅速的变成了瓶颈和一个新的需要管理的风险。如果软件支持它，我们可以添加第二个、第三个、第四个broker并建立一些故障切换方案。人们这样做了。它创建了许多可移动的点，更多的复杂性，更多的事情坏掉了。
 
 And a broker-centric set-up needs its own operations team. You literally need to watch the brokers day and night, and beat them with a stick when they start misbehaving. You need boxes, and you need backup boxes, and you need people to manage those boxes. It is only worth doing for large applications with many moving pieces, built by several teams of people, over several years.
+一个broker为中心的设置需要他们自己的操作组。你几乎需要整日整夜的看着brokers，当他们开始行为没谱的时候用棍子敲打他们。你需要盒子，并且你还需要备份的盒子，并且你还需要人们管理这些黑子。仅仅对于带有很多移动点的大型应用值得这样做，在许多年里建立其许多人的团队。
 
 So small to medium application developers are trapped. Either they avoid network programming, and make monolithic applications that do not scale. Or they jump into network programming and make brittle, complex applications that are hard to maintain. Or they bet on a messaging product, and end up with scalable applications that depend on expensive, easily broken technology. There has been no really good choice, which is maybe why messaging is largely stuck in the last century and stirs strong emotions. Negative ones for users, gleeful joy for those selling support and licenses.
+所以中小应用的开发者陷入了困境。于是他们回避网络编程，并且创建不能伸缩的独立程序。或者他们一头扎进网络程序中并且创造出脆弱、复杂而且难以维护的复杂应用。或者他们相信了某个报文产品，并且交出了依赖昂贵、易崩溃的技术的可伸缩应用。实际没有真正好的选择，这也许是为什么消息系统很大程度上依然停留在上个世纪的水平上并且激起了很大的不爽。这对用户是消极的，对那销售支持和许可证的来说则是高兴的。
 
 [[code type="textdiagram"]]
             +---+          |  +---+
