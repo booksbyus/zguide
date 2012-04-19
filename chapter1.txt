@@ -786,10 +786,13 @@ What we need is something that does the job of messaging but does it in such a s
 And this is 0MQ: an efficient, embeddable library that solves most of the problems an application needs to become nicely elastic across a network, without much cost.
 
 Specifically:
+特别需要注意的：
 
 * It handles I/O asynchronously, in background threads. These communicate with application threads using lock-free data structures, so 0MQ applications need no locks, semaphores, or other wait states.
+* 在后台线程中的IO是异步的。他们和应用线程的通讯使用无锁的数据结构，所以0MQ应用无需锁，信号或者等待状态之类的。
 
 * Components can come and go dynamically and 0MQ will automatically reconnect. This means you can start components in any order. You can create "service-oriented architectures" (SOAs) where services can join and leave the network at any time.
+* 
 
 * It queues messages automatically when needed. It does this intelligently, pushing messages as close as possible to the receiver before queuing them.
 
@@ -817,6 +820,7 @@ Actually 0MQ does rather more than this. It has a subversive effect on how you d
 +++ 可伸缩套接字
 
 Let's see 0MQ's scalability in action. Here is a shell script that starts the weather server and then a bunch of clients in parallel:
+让我们看看0ＭＱ的可伸缩性。这有一个启动天气服务的shell脚本，然后是一群并行的客户端
 
 [[code]]
 wuserver &
@@ -828,6 +832,7 @@ wuclient 56789 &
 [[/code]]
 
 As the clients run, we take a look at the active processes using 'top', and we see something like (on a 4-core box):
+当客户端运行的时候，我们使用top命令看看活跃的进程，我们会看到一些东西类似(用的是4核的盒子):
 
 [[code]]
   PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND
@@ -840,6 +845,7 @@ As the clients run, we take a look at the active processes using 'top', and we s
 [[/code]]
 
 Let's think for a second about what is happening here. The weather server has a single socket, and yet here we have it sending data to five clients in parallel. We could have thousands of concurrent clients. The server application doesn't see them, doesn't talk to them directly.
+让我们想一下关于这里发生了什么。天气服务器只有一个简单的套接字，然后我们使用他并行的给五个客户端发送数据。我们可以有上千并发的客户端。服务器应用不需要看到他们，不需要直接和他们对话。
 
 +++ Missing Message Problem Solver
 +++ 丢失信息问题的解决方法
@@ -849,90 +855,90 @@ As you start to program with 0MQ you will come across one problem more than once
 [[code type="textdiagram"]]
         +-----------------+
         |                 |
-        | I'm not getting |
-        |     my data!    |
+        | 我没有得到我的数据  |
+        |        ！        |
         |             {o} |
         +--------+--------+
                  |
                  |
                  v
         +-----------------+        +-----------------+        +------------------+
-        |                 |        |                 |        | Use the          |
-        | Are you losing  |        |  Do you set a   |        | zmq_setsockopt   |
-        |  messages in a  +------->|  subscription   +------->| ZMQ_SUBSCRIBE    |
-        |   SUB socket?   | Yes    |  for messages?  | No     | ("") option      |
+        |                 |        |                 |        | 使用              |
+        |  是在SUB套接字    |        |  给消息设置       |        | zmq_setsockopt   |
+        |  中丢失的信息？    +------->|  订阅者          +------->| ZMQ_SUBSCRIBE    |
+        |                 | 是     |  了吗?           | 否     | ("") 选项         |
         |             {o} |        |             {o} |        |                  |
         +--------+--------+        +--------+--------+        +------------------+
-                 | No                       | Yes
+                 | 否                       | 是
                  |                          |
                  |                          v
                  |                 +-----------------+        +------------------+
-                 |                 |                 |        | Start all SUB    |
-                 |                 |  Do you start   |        | sockets first,   |
-                 |                 |  the SUB socket +------->| then the PUB     |
-                 |                 |  after the PUB? | Yes    | sockets to avoid |
-                 |                 |             {o} |        | loss             |
+                 |                 |                 |        | 先启动所有的SUB    |
+                 |                 |  在PUB之后启动    |        | 套接字,           |
+                 |                 |      SUB?       +------->| 然后PUB套接字就    |
+                 |                 |                 | 是     | 可以避免丢失数据了   |
+                 |                 |             {o} |        |                  |
                  |                 +--------+--------+        +------------------+
-                 |                          | No
+                 |                          | 否
                  |                          |
                  |                          v
                  |              +-------------------------+
-                 |              |  See explanation of the |
-                 |              | "slow joiner" syndrome  |
-                 |              |  in this text.          |
+                 |              |  在本文中参看慢加入         |
+                 |              | "slow joiner" 症状的解释  |
+                 |              |                         |
                  |              +-------------------------+
                  |
                  |
                  v
         +-----------------+        +--------------------+
-        |                 |        | With REQ, send and |
-        |  Are you using  |        | recv in a loop and |
-        |   REQ and REP   +------->| check the return   |
-        |     sockets?    | Yes    | codes. With REP    |
-        |             {o} |        | it's recv + send.  |
+        |                 |        | REQ的话在循环中send  |
+        |  你使用的是       |        | 和recv，并且检查返回码|
+        |   REQ 和 REP     +------->|                   |
+        |     套接字?      | 是      | REP的话直接         |
+        |             {o} |        | recv + send.       |
         +--------+--------+        +--------------------+
-                 | No
+                 | 否
                  |
                  v
         +-----------------+        +---------------------+        +-----------------+
-        |                 |        | The 1st PULL socket |        | You may need to |
-        |  Are you using  |        | to connect can grab |        | do extra work to|
-        |  PUSH sockets?  +------->| 1000's of messages  +------->| synchronize your|
-        |                 | Yes    | before the others   |        | sockets before  |
-        |             {o} |        | get there.          |        | sending tasks.  |
+        |                 |        |                     |        |                 |
+        |  你在使用         |        | 第一个连接的PULL套接字 |        | 你需要在发送任务    |
+        |  PUSH 套接字?    +------->|  可以在其他连接到达前   +------->| 之前额外做些工作    |
+        |                 | 是     | 抓取1000个消息        |        | 来同步你的套接字    |
+        |             {o} |        |                     |        | sending tasks.  |
         +--------+--------+        +---------------------+        +-----------------+
-                 | No
+                 | 否
                  |
                  v
         +-----------------+        +-----------------+
         |                 |        |                 |
-        |  Do you check   |        | Check every 0MQ |
-        | return codes on +------->| method call. In |
-        |  all methods?   | No     | C, use asserts. |
+        |  所有的方法中      |        | 检查每一个0MQ方法 |
+        | 都检查返回码了吗？  +------->| 调用。在C语言中，  |
+        |                 | 否     | 使用asserts.     |
         |             {o} |        |                 |
         +--------+--------+        +-----------------+
-                 | Yes
+                 | 是
                  |
                  v
         +-----------------+        +-----------------+        +------------------+
         |                 |        |                 |        |                  |
-        | Are you using   |        |   Do you pass   |        | Create a socket  |
-        | threads in your +------->| sockets between +------->| in the thread    |
-        |  app already?   | Yes    |    threads?     | Yes    | where you use it |
+        | 你已经在你的程序中  |        |   你在线程之间    |        | 在线程中           |
+        | 使用线程了吗？     +------->| 传递套接字了吗？   +------->| 你需要使用的地方    |
+        |                 | 是     |                 | 是      | 创建套接字         |
         |             {o} |        |             {o} |        |                  |
         +--------+--------+        +--------+--------+        +------------------+
-                 | No                       | No
+                 | 否                       | 否
                  +--------------------------+
                  |
                  v
         +-----------------+        +-----------------+        +------------------+
         |                 |        |                 |        |                  |
-        |  Are you using  |        | Are you calling |        | Call zmq_init    |
-        |   the inproc    +------->|  zmq_init more  +------->| exactly once in  |
-        |   transport?    | Yes    |    than once?   | Yes    | every process.   |
+        |  Are you using  |        | 你调用了超过一次   |        | 每个进程只调用一次   |
+        |   the inproc    +------->|  zmq_init more  +------->| zmq_init         |
+        |   transport?    | Yes    |         ?       | 是     |                  |
         |             {o} |        |             {o} |        |                  |
         +--------+--------+        +--------+--------+        +------------------+
-                 | No                       | No
+                 | 否                       | 否
                  |                          |
                  |                          v
                  |                 +-----------------+
@@ -945,35 +951,35 @@ As you start to program with 0MQ you will come across one problem more than once
                  |
                  v
         +-----------------+        +-----------------+        +-----------------+
-        |                 |        | Check that the  |        | If you're using |
-        |  Are you using  |        | reply address   |        | identities make |
-        | ROUTER sockets? +------->| is valid. 0MQ   +------->| sure to set them|
-        |                 | Yes    | drops messages  |        | before not after|
-        |             {o} |        | it can't route. |        | you connect.    |
+        |                 |        | 检查回复地址      |        | If you're using |
+        |  你在使用         |        | 是否有效         |        | identities make |
+        | ROUTER套接字?    +------->| 0MQ会丢弃不能     +------->| sure to set them|
+        |                 | 是     | 路由的信息        |        | before not after|
+        |             {o} |        |                 |        | you connect.    |
         +--------+--------+        +-----------------+        +--------+--------+
                  | No
                  |
                  v
         +-----------------+        +--------------------+
-        |                 |        | You probably have  |
-        | Are you losing  |        | a client running   |
-        |   one message   +------->| in the background. |
-        |    in two?      | Yes    | Kill it and start  |
-        |             {o} |        | again.             |
+        |                 |        |                    |
+        | Are you losing  |        | 你可能有一个后台运行的  |
+        |   one message   +------->| 客户端。             |
+        |    in two?      | Yes    | 干掉它并再来一次试试.  |
+        |             {o} |        |                    |
         +--------+--------+        +--------------------+
-                 | No
+                 | 否
                  |
                  v
         +-----------------+
         |                 |
-        | Make a minimal  |
-        | test case, ask  |
-        | on zeromq IRC.  |
-        |                 |
+        | 创建一个最小的     |
+        | 测试用例, 在IRC中  |
+        | 询问zeromq       |
         +-----------------+
 
 
                  Figure # - Missing Message Problem Solver
+                 图表 # - 丢失信息问题的解决方法
 [[/code]]
 
 If you're using 0MQ in a context where failures are expensive, then you want to plan properly. First, build prototypes that let you learn and test the different aspects of your design. Stress them until they break, so that you know exactly how strong your designs are. Second, invest in testing. This means building test frameworks, ensuring you have access to realistic setups with sufficient computer power, and getting time or help to actually test seriously. Ideally, one team writes the code, a second team tries to break it. Lastly, do get your organization to [http://www.imatix.com/contact contact iMatix] to discuss how we can help to make sure things work properly, and can be fixed rapidly if they break.
