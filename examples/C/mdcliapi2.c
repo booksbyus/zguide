@@ -1,30 +1,7 @@
 /*  =====================================================================
-    mdcliapi2.c
-
-    Majordomo Protocol Client API (async version)
-    Implements the MDP/Worker spec at http://rfc.zeromq.org/spec:7.
-
-    ---------------------------------------------------------------------
-    Copyright (c) 1991-2011 iMatix Corporation <www.imatix.com>
-    Copyright other contributors as noted in the AUTHORS file.
-
-    This file is part of the ZeroMQ Guide: http://zguide.zeromq.org
-
-    This is free software; you can redistribute it and/or modify it under
-    the terms of the GNU Lesser General Public License as published by
-    the Free Software Foundation; either version 3 of the License, or (at
-    your option) any later version.
-
-    This software is distributed in the hope that it will be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-    Lesser General Public License for more details.
-
-    You should have received a copy of the GNU Lesser General Public
-    License along with this program. If not, see
-    <http://www.gnu.org/licenses/>.
-    =====================================================================
-*/
+ *  mdcliapi2.c - Majordomo Protocol Client API
+ *  Implements the MDP/Worker spec at http://rfc.zeromq.org/spec:7.
+ *  ===================================================================== */
 
 #include "mdcliapi2.h"
 
@@ -39,9 +16,10 @@ struct _mdcli_t {
     int timeout;                //  Request timeout
 };
 
-
 //  ---------------------------------------------------------------------
-//  Connect or reconnect to broker
+//  Connect or reconnect to broker. In this asynchronous class we use a
+//  DEALER socket instead of a REQ socket; this lets us send any number
+//  of requests without waiting for a reply.
 
 void s_mdcli_connect_to_broker (mdcli_t *self)
 {
@@ -54,6 +32,9 @@ void s_mdcli_connect_to_broker (mdcli_t *self)
 }
 
 
+//  The constructor and destructor are the same as in mdcliapi, except
+//  we don't do retries, so there's no retries property.
+//  .skip
 //  ---------------------------------------------------------------------
 //  Constructor
 
@@ -100,10 +81,12 @@ mdcli_set_timeout (mdcli_t *self, int timeout)
     self->timeout = timeout;
 }
 
-
-//  ---------------------------------------------------------------------
-//  Send request to broker
-//  Takes ownership of request message and destroys it when sent.
+//  .until
+//  .skip
+//  The send method now just sends one message, without waiting for a
+//  reply. Since we're using a DEALER socket we have to send an empty
+//  frame at the start, to create the same envelope that the REQ socket
+//  would normally make for us:
 
 int
 mdcli_send (mdcli_t *self, char *service, zmsg_t **request_p)
@@ -128,6 +111,8 @@ mdcli_send (mdcli_t *self, char *service, zmsg_t **request_p)
 }
 
 
+//  .skip
+//  The recv method takes BOOKMARK
 //  ---------------------------------------------------------------------
 //  Returns the reply message or NULL if there was no reply. Does not
 //  attempt to recover from a broker failure, this is not possible

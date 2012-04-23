@@ -6,7 +6,7 @@
 #include "mdcliapi.c"
 
 //  Calls a TSP service
-//  Returns reponse if successful (status code 200 OK), else NULL
+//  Returns response if successful (status code 200 OK), else NULL
 //
 static zmsg_t *
 s_service_call (mdcli_t *session, char *service, zmsg_t **request_p)
@@ -35,6 +35,9 @@ s_service_call (mdcli_t *session, char *service, zmsg_t **request_p)
     zmsg_destroy (&reply);
     return NULL;        //  Didn't succeed, don't care why not
 }
+
+//  .split
+//  The main task tests our service call by sending a 
 
 int main (int argc, char *argv [])
 {

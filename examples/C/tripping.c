@@ -2,7 +2,7 @@
 //  Round-trip demonstrator
 //
 //  While this example runs in a single process, that is just to make
-//  it easier to start and stop the example. Client thread signals to
+//  it easier to start and stop the example. The client task signals to
 //  main when it's ready.
 //
 #include "czmq.h"
@@ -11,9 +11,7 @@ static void
 client_task (void *args, zctx_t *ctx, void *pipe)
 {
     void *client = zsocket_new (ctx, ZMQ_DEALER);
-    zmq_setsockopt (client, ZMQ_IDENTITY, "C", 1);
     zsocket_connect (client, "tcp://localhost:5555");
-
     printf ("Setting up test...\n");
     zclock_sleep (100);
 
@@ -40,19 +38,21 @@ client_task (void *args, zctx_t *ctx, void *pipe)
     }
     printf (" %d calls/second\n",
         (1000 * 100000) / (int) (zclock_time () - start));
-
     zstr_send (pipe, "done");
 }
+
+//  .split
+//  Here is the worker task. All it does is receive a message, and
+//  bounce it back the way it came:
 
 static void *
 worker_task (void *args)
 {
     zctx_t *ctx = zctx_new ();
     void *worker = zsocket_new (ctx, ZMQ_DEALER);
-    zmq_setsockopt (worker, ZMQ_IDENTITY, "W", 1);
     zsocket_connect (worker, "tcp://localhost:5556");
-
-    while (1) {
+    
+    while (TRUE) {
         zmsg_t *msg = zmsg_recv (worker);
         zmsg_send (&msg, worker);
     }
@@ -60,43 +60,27 @@ worker_task (void *args)
     return NULL;
 }
 
+//  .split
+//  Here is the broker task. It uses the zmq_device function to switch
+//  messages between frontend and backend:
+
 static void *
 broker_task (void *args)
 {
     //  Prepare our context and sockets
     zctx_t *ctx = zctx_new ();
-    void *frontend = zsocket_new (ctx, ZMQ_ROUTER);
-    void *backend = zsocket_new (ctx, ZMQ_ROUTER);
+    void *frontend = zsocket_new (ctx, ZMQ_DEALER);
     zsocket_bind (frontend, "tcp://*:5555");
-    zsocket_bind (backend,  "tcp://*:5556");
-
-    //  Initialize poll set
-    zmq_pollitem_t items [] = {
-        { frontend, 0, ZMQ_POLLIN, 0 },
-        { backend,  0, ZMQ_POLLIN, 0 }
-    };
-    while (1) {
-        int rc = zmq_poll (items, 2, -1);
-        if (rc == -1)
-            break;              //  Interrupted
-        if (items [0].revents & ZMQ_POLLIN) {
-            zmsg_t *msg = zmsg_recv (frontend);
-            zframe_t *address = zmsg_pop (msg);
-            zframe_destroy (&address);
-            zmsg_pushstr (msg, "W");
-            zmsg_send (&msg, backend);
-        }
-        if (items [1].revents & ZMQ_POLLIN) {
-            zmsg_t *msg = zmsg_recv (backend);
-            zframe_t *address = zmsg_pop (msg);
-            zframe_destroy (&address);
-            zmsg_pushstr (msg, "C");
-            zmsg_send (&msg, frontend);
-        }
-    }
+    void *backend = zsocket_new (ctx, ZMQ_DEALER);
+    zsocket_bind (backend, "tcp://*:5556");
+    zmq_device (ZMQ_QUEUE, frontend, backend);
     zctx_destroy (&ctx);
     return NULL;
 }
+
+//  .split
+//  Finally, here's the main task, which starts the client, worker, and
+//  broker, and then runs until the client signals it to stop:
 
 int main (void)
 {

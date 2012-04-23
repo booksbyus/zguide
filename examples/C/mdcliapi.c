@@ -125,8 +125,7 @@ mdcli_send (mdcli_t *self, char *service, zmsg_t **request_p)
         zmsg_t *msg = zmsg_dup (request);
         zmsg_send (&msg, self->client);
 
-        zmq_pollitem_t items [] = {
-            { self->client, 0, ZMQ_POLLIN, 0 } };
+        zmq_pollitem_t items [] = { { self->client, 0, ZMQ_POLLIN, 0 } };
         if ((zmq_poll (items, 1, self->timeout * ZMQ_POLL_MSEC)) == -1)
             break;          //  Interrupted
 
