@@ -307,6 +307,7 @@ s_service_destroy (void *argument)
     free (service);
 }
 
+//  .split
 //  The dispatch method sends requests to waiting workers:
 
 static void

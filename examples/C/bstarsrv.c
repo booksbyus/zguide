@@ -1,11 +1,8 @@
 //
-//  Binary Star server
-//
-#include "czmq.h"
+//  Binary Star server proof-of-concept implementation. This server does no
+//  real work; it just demonstrates the Binary Star failover model.
 
-//  We send state information every this often
-//  If peer doesn't respond in two heartbeats, it is 'dead'
-#define HEARTBEAT 1000          //  In msecs
+#include "czmq.h"
 
 //  States we can be in at any point in time
 typedef enum {
@@ -31,16 +28,22 @@ typedef struct {
     int64_t peer_expiry;        //  When peer is considered 'dead'
 } bstar_t;
 
+//  We send state information every this often
+//  If peer doesn't respond in two heartbeats, it is 'dead'
+#define HEARTBEAT 1000          //  In msecs
 
-//  Execute finite state machine (apply event to state)
-//  Returns TRUE if there was an exception
+//  .split
+//  The heart of the Binary Star design is its finite-state machine (FSM).
+//  The FSM runs one event at a time. We apply an event to the current state,
+//  which checks if the event is accepted, and if so sets a new state:
 
 static Bool
 s_state_machine (bstar_t *fsm)
 {
     Bool exception = FALSE;
-    //  Primary server is waiting for peer to connect
-    //  Accepts CLIENT_REQUEST events in this state
+    
+    //  These are the PRIMARY and BACKUP states; we're waiting to become
+    //  ACTIVE or PASSIVE depending on events we get from our peer:
     if (fsm->state == STATE_PRIMARY) {
         if (fsm->event == PEER_BACKUP) {
             printf ("I: connected to backup (slave), ready as master\n");
@@ -51,22 +54,23 @@ s_state_machine (bstar_t *fsm)
             printf ("I: connected to backup (master), ready as slave\n");
             fsm->state = STATE_PASSIVE;
         }
+        //  Accept client connections
     }
     else
-    //  Backup server is waiting for peer to connect
-    //  Rejects CLIENT_REQUEST events in this state
     if (fsm->state == STATE_BACKUP) {
         if (fsm->event == PEER_ACTIVE) {
             printf ("I: connected to primary (master), ready as slave\n");
             fsm->state = STATE_PASSIVE;
         }
         else
+        //  Reject client connections when acting as backup
         if (fsm->event == CLIENT_REQUEST)
             exception = TRUE;
     }
     else
-    //  Server is active
-    //  Accepts CLIENT_REQUEST events in this state
+    //  .split
+    //  These are the ACTIVE and PASSIVE states:
+
     if (fsm->state == STATE_ACTIVE) {
         if (fsm->event == PEER_ACTIVE) {
             //  Two masters would mean split-brain
@@ -114,6 +118,12 @@ s_state_machine (bstar_t *fsm)
 }
 
 
+//  .split
+//  This is our main task. First we bind/connect our sockets with our
+//  peer and make sure we will get state messages correctly. We use
+//  three sockets; one to publish state, one to subscribe to state, and
+//  one for client requests/replies:
+
 int main (int argc, char *argv [])
 {
     //  Arguments can be either of:
@@ -146,9 +156,13 @@ int main (int argc, char *argv [])
         zctx_destroy (&ctx);
         exit (0);
     }
+    //  .split
+    //  We now process events on our two input sockets, and process these
+    //  events one at a time via our finite-state machine. Our "work" for
+    //  a client request is simply to echo it back:
+
     //  Set timer for next outgoing state message
     int64_t send_state_at = zclock_time () + HEARTBEAT;
-
     while (!zctx_interrupted) {
         zmq_pollitem_t items [] = {
             { frontend, 0, ZMQ_POLLIN, 0 },

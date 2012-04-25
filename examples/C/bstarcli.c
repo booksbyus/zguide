@@ -1,6 +1,7 @@
 //
-//  Binary Star client
-//
+//  Binary Star client proof-of-concept implementation. This client does no
+//  real work; it just demonstrates the Binary Star failover model.
+
 #include "czmq.h"
 
 #define REQUEST_TIMEOUT     1000    //  msecs
@@ -32,7 +33,13 @@ int main (void)
             if (rc == -1)
                 break;          //  Interrupted
 
-            //  If we got a reply, process it
+            //  .split
+            //  We use a Lazy Pirate strategy in the client. If there's no
+            //  reply within our timeout, we close the socket and try again.
+            //  In Binary Star, it's the client vote which decides which
+            //  server is primary; the client must therefore try to connect
+            //  to each server in turn:
+            
             if (items [0].revents & ZMQ_POLLIN) {
                 //  We got a reply from the server, must match sequence
                 char *reply = zstr_recv (client);
@@ -41,14 +48,13 @@ int main (void)
                     expect_reply = 0;
                     sleep (1);  //  One request per second
                 }
-                else {
-                    printf ("E: malformed reply from server: %s\n",
-                        reply);
-                }
+                else
+                    printf ("E: bad reply from server: %s\n", reply);
                 free (reply);
             }
             else {
                 printf ("W: no response from server, failing over\n");
+                
                 //  Old socket is confused; close it and open a new one
                 zsocket_destroy (ctx, client);
                 server_nbr = (server_nbr + 1) % 2;

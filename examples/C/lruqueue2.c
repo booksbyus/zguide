@@ -80,6 +80,10 @@ int main (void)
     //  Queue of available workers
     zlist_t *workers = zlist_new ();
 
+    //  .split
+    //  Here is the main loop for the LRU queue. It works the same way
+    //  as the previous example, but is a lot shorter because CZMQ gives
+    //  us an API that does more with fewer calls:
     while (1) {
         zmq_pollitem_t items [] = {
             { backend,  0, ZMQ_POLLIN, 0 },

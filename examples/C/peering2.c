@@ -11,8 +11,10 @@
 //  Our own name; in practice this would be configured per node
 static char *self;
 
-//  Request-reply client using REQ socket
-//
+//  .split
+//  The client task does a request-reply dialog using a standard
+//  synchronous REQ socket:
+
 static void *
 client_task (void *args)
 {
@@ -34,8 +36,10 @@ client_task (void *args)
     return NULL;
 }
 
-//  Worker using REQ socket to do LRU routing
-//
+//  .split
+//  The worker task plugs into the LRU routing dialog using a REQ
+//  socket:
+
 static void *
 worker_task (void *args)
 {

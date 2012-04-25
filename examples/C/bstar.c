@@ -21,11 +21,6 @@ typedef enum {
     CLIENT_REQUEST = 5          //  Client makes request
 } event_t;
 
-
-//  We send state information every this often
-//  If peer doesn't respond in two heartbeats, it is 'dead'
-#define BSTAR_HEARTBEAT     1000        //  In msecs
-
 //  Structure of our class
 
 struct _bstar_t {
@@ -44,6 +39,13 @@ struct _bstar_t {
     void *slave_arg;            //  Arguments for handler
 };
 
+//  The finite-state machine is the same as in the proof-of-concept server.
+//  To understand this reactor in detail, first read the CZMQ zloop class.
+//  .skip
+
+//  We send state information every this often
+//  If peer doesn't respond in two heartbeats, it is 'dead'
+#define BSTAR_HEARTBEAT     1000        //  In msecs
 
 //  ---------------------------------------------------------------------
 //  Binary Star finite state machine (applies event to state)
@@ -201,9 +203,11 @@ int s_voter_ready (zloop_t *loop, zmq_pollitem_t *poller, void *arg)
     return 0;
 }
 
-
-//  ---------------------------------------------------------------------
-//  Constructor
+//  .until
+//  .split
+//  This is the constructor for our bstar class. We have to tell it whether
+//  we're primary or backup server, and our local and remote endpoints to
+//  bind and connect to:
 
 bstar_t *
 bstar_new (int primary, char *local, char *remote)
@@ -235,8 +239,8 @@ bstar_new (int primary, char *local, char *remote)
 }
 
 
-//  ---------------------------------------------------------------------
-//  Destructor
+//  .split
+//  The destructor shuts down the bstar reactor:
 
 void
 bstar_destroy (bstar_t **self_p)
@@ -252,9 +256,9 @@ bstar_destroy (bstar_t **self_p)
 }
 
 
-//  ---------------------------------------------------------------------
-//  Return underlying zloop reactor, lets you add additional timers and
-//  readers.
+//  .split
+//  The zloop method returns the underlying zloop reactor, so we can add
+//  additional timers and readers:
 
 zloop_t *
 bstar_zloop (bstar_t *self)
@@ -263,11 +267,11 @@ bstar_zloop (bstar_t *self)
 }
 
 
-//  ---------------------------------------------------------------------
-//  Create socket, bind to local endpoint, and register as reader for
-//  voting. The socket will only be available if the Binary Star state
-//  machine allows it. Input on the socket will act as a "vote" in the
-//  Binary Star scheme.  We require exactly one voter per bstar instance.
+//  .split
+//  The voter method registers a client voter socket. Messages received
+//  on this socket provide the CLIENT_REQUEST events for the Binary Star
+//  FSM and are passed to the provided application handler. We require
+//  exactly one voter per bstar instance:
 
 int
 bstar_voter (bstar_t *self, char *endpoint, int type, zloop_fn handler,
@@ -283,8 +287,8 @@ bstar_voter (bstar_t *self, char *endpoint, int type, zloop_fn handler,
     return zloop_poller (self->loop, &poller, s_voter_ready, self);
 }
 
-//  ---------------------------------------------------------------------
-//  Register state change handlers
+//  .split
+//  Register handlers to be called each time there's a state change:
 
 void
 bstar_new_master (bstar_t *self, zloop_fn handler, void *arg)
@@ -302,18 +306,17 @@ bstar_new_slave (bstar_t *self, zloop_fn handler, void *arg)
     self->slave_arg = arg;
 }
 
+//  .split
+//  Enable/disable verbose tracing, for debugging:
 
-//  ---------------------------------------------------------------------
-//  Enable/disable verbose tracing
 void bstar_set_verbose (bstar_t *self, Bool verbose)
 {
     zloop_set_verbose (self->loop, verbose);
 }
 
-
-//  ---------------------------------------------------------------------
-//  Start the reactor, ends if a callback function returns -1, or the
-//  process received SIGINT or SIGTERM.
+//  .split
+//  Finally, start the configured reactor. It will end if any handler
+//  returns -1 to the reactor, or if the process receives SIGINT or SIGTERM:
 
 int
 bstar_start (bstar_t *self)

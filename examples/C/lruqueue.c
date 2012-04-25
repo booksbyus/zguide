@@ -109,7 +109,7 @@ int main (void)
     //  to hold messages we're not ready to process yet. When we get a client
     //  reply, we pop the next available worker, and send the request to it,
     //  including the originating client address. When a worker replies, we
-    //  re-queue that worker, and we forward the reply to the origjnal client,
+    //  re-queue that worker, and we forward the reply to the original client,
     //  using the address envelope.
 
     //  Queue of available workers
@@ -121,7 +121,10 @@ int main (void)
             { backend,  0, ZMQ_POLLIN, 0 },
             { frontend, 0, ZMQ_POLLIN, 0 }
         };
-        zmq_poll (items, available_workers? 2: 1, -1);
+        //  Poll frontend only if we have available workers
+        int rc = zmq_poll (items, zlist_size (workers)? 2: 1, -1);
+        if (rc == -1)
+            break;              //  Interrupted
 
         //  Handle worker activity on backend
         if (items [0].revents & ZMQ_POLLIN) {

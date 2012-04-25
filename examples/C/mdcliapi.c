@@ -125,8 +125,16 @@ mdcli_send (mdcli_t *self, char *service, zmsg_t **request_p)
         zmsg_t *msg = zmsg_dup (request);
         zmsg_send (&msg, self->client);
 
-        zmq_pollitem_t items [] = { { self->client, 0, ZMQ_POLLIN, 0 } };
-        if ((zmq_poll (items, 1, self->timeout * ZMQ_POLL_MSEC)) == -1)
+        zmq_pollitem_t items [] = {
+            { self->client, 0, ZMQ_POLLIN, 0 }
+        };
+        //  .split
+        //  On any blocking call, libzmq will return -1 if there was
+        //  an error; we could in theory check for different error codes
+        //  but in practice it's OK to assume it was EINTR (Ctrl-C):
+        
+        int rc = zmq_poll (items, 1, self->timeout * ZMQ_POLL_MSEC);
+        if (rc == -1)
             break;          //  Interrupted
 
         //  If we got a reply, process it
