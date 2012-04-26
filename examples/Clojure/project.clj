@@ -1,7 +1,6 @@
 (defproject zguide "1.0.0-SNAPSHOT"
   :source-path "../Clojure/"
   :description "0MQ zguide in Clojure"
-  :dependencies [[org.clojure/clojure "1.2.1"]
-                 [org.clojure/clojure-contrib "1.2.0"]
-                 [backtype/jzmq "2.1.0"]
+  :dependencies [[org.clojure/clojure "1.4.0"]
+                 [org.zmq/zmq "2.1.0"]
                  ])
