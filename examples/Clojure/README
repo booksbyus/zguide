@@ -18,7 +18,7 @@ $ sudo ldconfig (Debian)
 
 Put zmq.jar in maven repo
 $ cd /usr/local/share/java/
-$ mvn install:install-file -DgroupId=org.zmq -DartifactId=zmq -Dversion=1.0.0 -Dpackaging=jar -Dfile=zmq.jar
+$ mvn install:install-file -DgroupId=org.zmq -DartifactId=zmq -Dversion=2.1.0 -Dpackaging=jar -Dfile=zmq.jar
 
 Make sure zmq.jar is in classpath and libzmq.so is in LD_PATH
 $ export CLASSPATH=$CLASSPATH:.:/usr/local/share/java/zmq.jar
