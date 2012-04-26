@@ -5,8 +5,7 @@
   (:refer-clojure :exclude [send])
   (:import [org.zeromq ZMQ ZMQ$Context ZMQ$Socket ZMQQueue])
   (:import (java.util Random)
-           (java.nio ByteBuffer))
-  (:use [clojure.contrib.str-utils2 :only [trim]]))
+           (java.nio ByteBuffer)))
 
 (defn context [threads]
   (ZMQ/context threads))
@@ -94,7 +93,7 @@
         (conj acc msg)))))
 
 (defn recv-str [#^ZMQ$Socket socket]
-  (-> socket recv String. trim))
+  (-> socket recv String. .trim))
 
 (defn dump
   [#^ZMQ$Socket socket]
@@ -103,10 +102,10 @@
     (print (format "[%03d] " (count msg)))
     (if (and (= 17 (count msg)) (= 0 (first msg)))
       (println (format "UUID %s" (-> msg ByteBuffer/wrap .getLong)))
-      (println (-> msg String. trim)))))
+      (println (-> msg String. .trim)))))
 
 (defn set-id
-  ([#^ZMQ$Socket socket #^int n]
+  ([#^ZMQ$Socket socket #^long n]
     (let [rdn (Random. (System/currentTimeMillis))]
       (identify socket (str (.nextLong rdn) "-" (.nextLong rdn) n))))
   ([#^ZMQ$Socket socket]
