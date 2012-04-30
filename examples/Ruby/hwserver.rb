@@ -14,7 +14,8 @@ socket.bind("tcp://*:5555")
 
 while true do
   # Wait for next request from client
-  request = socket.recv_string ('')
+  request = ''
+  rc = socket.recv_string(request)
 
   puts "Received request. Data: #{request.inspect}"
 

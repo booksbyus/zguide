@@ -12,6 +12,8 @@ requester.connect("tcp://localhost:5555")
   puts "Sending request #{request_nbr}..."
   requester.send_string "Hello"
 
-  reply = requester.recv_string ''
+  reply = ''
+  rc = requester.recv_string(reply)
+  
   puts "Received reply #{request_nbr}: [#{reply}]"
 end
