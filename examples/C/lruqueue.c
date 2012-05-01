@@ -33,7 +33,7 @@ client_task (void *args)
     return NULL;
 }
 
-//  .split
+//  .split worker task
 //  While this example runs in a single process, that is just to make
 //  it easier to start and stop the example. Each thread has its own
 //  context and conceptually acts as a separate process.
@@ -75,7 +75,7 @@ worker_task (void *args)
     return NULL;
 }
 
-//  .split
+//  .split main task
 //  This is the main task. It starts the clients and workers, and then
 //  routes requests between the two layers. Workers signal READY when
 //  they start; after that we treat them as ready when they reply with
@@ -101,7 +101,7 @@ int main (void)
         pthread_t worker;
         pthread_create (&worker, NULL, worker_task, NULL);
     }
-    //  .split
+    //  .split main task body
     //  Here is the main loop for the least-recently-used queue. It has two
     //  sockets; a frontend for clients and a backend for workers. It polls
     //  the backend in all cases, and polls the frontend only when there are
@@ -156,7 +156,7 @@ int main (void)
             }
             free (client_addr);
         }
-        //  .split
+        //  .split handling a client request
         //  Here is how we handle a client request:
 
         if (items [1].revents & ZMQ_POLLIN) {

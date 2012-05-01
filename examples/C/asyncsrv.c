@@ -44,7 +44,7 @@ client_task (void *args)
     return NULL;
 }
 
-//  .split
+//  .split server task
 //  This is our server task.
 //  It uses the multithreaded server model to deal requests out to a pool
 //  of workers and route replies back to clients. One worker can handle
@@ -95,7 +95,7 @@ void *server_task (void *args)
     return NULL;
 }
 
-//  .split
+//  .split worker task
 //  Each worker task works on one request at a time and sends a random number
 //  of replies back, with random delays between replies:
 

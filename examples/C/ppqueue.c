@@ -10,7 +10,7 @@
 #define PPP_READY       "\001"      //  Signals worker is ready
 #define PPP_HEARTBEAT   "\002"      //  Signals worker heartbeat
 
-//  .split
+//  .split worker class structure
 //  Here we define the worker class; a structure and a set of functions that
 //  as constructor, destructor, and methods on worker objects:
 
@@ -45,7 +45,7 @@ s_worker_destroy (worker_t **self_p)
     }
 }
 
-//  .split
+//  .split worker ready method
 //  The ready method puts a worker to the end of the ready list:
 
 static void
@@ -63,7 +63,7 @@ s_worker_ready (worker_t *self, zlist_t *workers)
     zlist_append (workers, self);
 }
 
-//  .split
+//  .split get next available worker
 //  The next method returns the next available worker address:
 
 static zframe_t *
@@ -77,7 +77,7 @@ s_workers_next (zlist_t *workers)
     return frame;
 }
 
-//  .split
+//  .split purge expired workers
 //  The purge method looks for and kills expired workers. We hold workers
 //  from oldest to most recent, so we stop at the first alive worker:
 
@@ -95,7 +95,7 @@ s_workers_purge (zlist_t *workers)
     }
 }
 
-//  .split
+//  .split main task
 //  The main task is an LRU queue with heartbeating on workers so we can
 //  detect crashed or blocked worker tasks:
 
@@ -158,7 +158,7 @@ int main (void)
             zmsg_send (&msg, backend);
         }
 
-        //  .split
+        //  .split handle heartbeating
         //  We handle heartbeating after any socket activity. First we send
         //  heartbeats to any idle workers if it's time. Then we purge any
         //  dead workers:

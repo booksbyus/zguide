@@ -57,7 +57,7 @@ worker_task_b (void *args)
     return NULL;
 }
 
-//  .split
+//  .split main task
 //  After we've defined the two worker tasks, we have the main task.
 //  Recall that these three tasks could be in separate processes, even
 //  running on different boxes. It's just easier to start by writing

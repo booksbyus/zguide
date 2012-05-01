@@ -32,7 +32,7 @@ int main (int argc, char *argv [])
         printf ("I: connecting to state backend at '%s'\n", peer);
         zsocket_connect (statefe, "ipc://%s-state.ipc", peer);
     }
-    //  .split
+    //  .split main loop
     //  The main loop sends out status messages to peers, and collects
     //  status messages back from peers. The zmq_poll timeout defines
     //  our own heartbeat:

@@ -36,8 +36,8 @@ s_service_call (mdcli_t *session, char *service, zmsg_t **request_p)
     return NULL;        //  Didn't succeed, don't care why not
 }
 
-//  .split
-//  The main task tests our service call by sending a 
+//  .split main task
+//  The main task tests our service call by sending an echo request:
 
 int main (int argc, char *argv [])
 {

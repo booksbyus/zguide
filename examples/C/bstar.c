@@ -204,7 +204,7 @@ int s_voter_ready (zloop_t *loop, zmq_pollitem_t *poller, void *arg)
 }
 
 //  .until
-//  .split
+//  .split constructor
 //  This is the constructor for our bstar class. We have to tell it whether
 //  we're primary or backup server, and our local and remote endpoints to
 //  bind and connect to:
@@ -239,7 +239,7 @@ bstar_new (int primary, char *local, char *remote)
 }
 
 
-//  .split
+//  .split destructor
 //  The destructor shuts down the bstar reactor:
 
 void
@@ -256,7 +256,7 @@ bstar_destroy (bstar_t **self_p)
 }
 
 
-//  .split
+//  .split zloop method
 //  The zloop method returns the underlying zloop reactor, so we can add
 //  additional timers and readers:
 
@@ -267,7 +267,7 @@ bstar_zloop (bstar_t *self)
 }
 
 
-//  .split
+//  .split voter method
 //  The voter method registers a client voter socket. Messages received
 //  on this socket provide the CLIENT_REQUEST events for the Binary Star
 //  FSM and are passed to the provided application handler. We require
@@ -287,7 +287,7 @@ bstar_voter (bstar_t *self, char *endpoint, int type, zloop_fn handler,
     return zloop_poller (self->loop, &poller, s_voter_ready, self);
 }
 
-//  .split
+//  .split register state-change handlers
 //  Register handlers to be called each time there's a state change:
 
 void
@@ -306,7 +306,7 @@ bstar_new_slave (bstar_t *self, zloop_fn handler, void *arg)
     self->slave_arg = arg;
 }
 
-//  .split
+//  .split enable/disable tracing
 //  Enable/disable verbose tracing, for debugging:
 
 void bstar_set_verbose (bstar_t *self, Bool verbose)
@@ -314,7 +314,7 @@ void bstar_set_verbose (bstar_t *self, Bool verbose)
     zloop_set_verbose (self->loop, verbose);
 }
 
-//  .split
+//  .split start the reactor
 //  Finally, start the configured reactor. It will end if any handler
 //  returns -1 to the reactor, or if the process receives SIGINT or SIGTERM:
 

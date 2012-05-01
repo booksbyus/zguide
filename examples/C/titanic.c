@@ -49,7 +49,7 @@ s_reply_filename (char *uuid) {
 }
 
 
-//  .split
+//  .split Titanic request service
 //  The "titanic.request" task waits for requests to this service. It writes 
 //  each request to disk and returns a UUID to the client. The client picks
 //  up the reply asynchronously using the "titanic.reply" service:
@@ -97,7 +97,7 @@ titanic_request (void *args, zctx_t *ctx, void *pipe)
 }
 
 
-//  .split
+//  .split Titanic reply service
 //  The "titanic.reply" task checks if there's a reply for the specified
 //  request (by UUID), and returns a 200 OK, 300 Pending, or 400 Unknown
 //  accordingly:
@@ -141,7 +141,7 @@ titanic_reply (void *context)
 }
 
 
-//  .split
+//  .split Titanic close task
 //  The "titanic.close" task removes any waiting replies for the request
 //  (specified by UUID). It's idempotent, so safe to call more than once
 //  in a row:
@@ -176,7 +176,7 @@ titanic_close (void *context)
 }
 
 
-//  .split
+//  .split worker task
 //  This is the main thread for the Titanic worker. It starts three child
 //  threads; for the request, reply, and close services. It then dispatches
 //  requests to workers using a simple brute-force disk queue. It receives
@@ -244,7 +244,7 @@ int main (int argc, char *argv [])
     return 0;
 }
 
-//  .split
+//  .split try to call a service
 //  Here we first check if the requested MDP service is defined or not,
 //  using a MMI lookup to the Majordomo broker. If the service exists
 //  we send a request and wait for a reply using the conventional MDP

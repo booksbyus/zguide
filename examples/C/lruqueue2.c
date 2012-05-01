@@ -57,7 +57,7 @@ worker_task (void *args)
     return NULL;
 }
 
-//  .split
+//  .split main task
 //  Now we come to the main task. This has the identical functionality to
 //  the previous lruqueue example but uses CZMQ to start child threads,
 //  to hold the list of workers, and to read and send messages:
@@ -80,7 +80,7 @@ int main (void)
     //  Queue of available workers
     zlist_t *workers = zlist_new ();
 
-    //  .split
+    //  .split main LRU queue loop
     //  Here is the main loop for the LRU queue. It works the same way
     //  as the previous example, but is a lot shorter because CZMQ gives
     //  us an API that does more with fewer calls:

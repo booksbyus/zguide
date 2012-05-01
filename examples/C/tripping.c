@@ -41,7 +41,7 @@ client_task (void *args, zctx_t *ctx, void *pipe)
     zstr_send (pipe, "done");
 }
 
-//  .split
+//  .split worker task
 //  Here is the worker task. All it does is receive a message, and
 //  bounce it back the way it came:
 
@@ -60,7 +60,7 @@ worker_task (void *args)
     return NULL;
 }
 
-//  .split
+//  .split broker task
 //  Here is the broker task. It uses the zmq_device function to switch
 //  messages between frontend and backend:
 
@@ -78,7 +78,7 @@ broker_task (void *args)
     return NULL;
 }
 
-//  .split
+//  .split main task
 //  Finally, here's the main task, which starts the client, worker, and
 //  broker, and then runs until the client signals it to stop:
 

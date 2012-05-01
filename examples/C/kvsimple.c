@@ -1,6 +1,5 @@
 /*  =====================================================================
  *  kvsimple - simple key-value message class for example applications
- *  Implements the MDP/Worker spec at http://rfc.zeromq.org/spec:7.
  *  ===================================================================== */
 
 #include "kvsimple.h"
@@ -18,7 +17,9 @@
 #define FRAME_BODY      2
 #define KVMSG_FRAMES    3
 
-//  Structure of our class
+//  The kvmsg class holds a single key-value message consisting of a
+//  list of 0 or more frames:
+
 struct _kvmsg {
     //  Presence indicators for each frame
     int present [KVMSG_FRAMES];
@@ -29,9 +30,10 @@ struct _kvmsg {
 };
 
 
-//  ---------------------------------------------------------------------
-//  Constructor, sets sequence as provided
+//  .split constructor and destructor
+//  Here are the constructor and destructor for the class:
 
+//  Constructor, takes a sequence number for the new kvmsg instance:
 kvmsg_t *
 kvmsg_new (int64_t sequence)
 {
@@ -43,11 +45,7 @@ kvmsg_new (int64_t sequence)
     return self;
 }
 
-
-//  ---------------------------------------------------------------------
-//  Destructor
-
-//  Free shim, compatible with zhash_free_fn
+//  zhash_free_fn callback helper that does the low level destruction:
 void
 kvmsg_free (void *ptr)
 {
@@ -64,6 +62,7 @@ kvmsg_free (void *ptr)
     }
 }
 
+//  Destructor
 void
 kvmsg_destroy (kvmsg_t **self_p)
 {
@@ -75,8 +74,9 @@ kvmsg_destroy (kvmsg_t **self_p)
 }
 
 
-//  ---------------------------------------------------------------------
-//  Reads key-value message from socket, returns new kvmsg instance.
+//  .split recv method
+//  The recv method reads a key-value message from socket, and returns a new
+//  kvmsg instance:
 
 kvmsg_t *
 kvmsg_recv (void *socket)
@@ -106,8 +106,8 @@ kvmsg_recv (void *socket)
 }
 
 
-//  ---------------------------------------------------------------------
-//  Send key-value message to socket; any empty frames are sent as such.
+//  .split send method
+//  The send method sends a multi-frame key-value message to a socket:
 
 void
 kvmsg_send (kvmsg_t *self, void *socket)
@@ -128,8 +128,9 @@ kvmsg_send (kvmsg_t *self, void *socket)
 }
 
 
-//  ---------------------------------------------------------------------
-//  Return key from last read message, if any, else NULL
+//  .split key methods
+//  These methods let the caller get and set the message key, as a
+//  fixed string and as a printf formatted string:
 
 char *
 kvmsg_key (kvmsg_t *self)
@@ -150,9 +151,34 @@ kvmsg_key (kvmsg_t *self)
         return NULL;
 }
 
+void
+kvmsg_set_key (kvmsg_t *self, char *key)
+{
+    assert (self);
+    zmq_msg_t *msg = &self->frame [FRAME_KEY];
+    if (self->present [FRAME_KEY])
+        zmq_msg_close (msg);
+    zmq_msg_init_size (msg, strlen (key));
+    memcpy (zmq_msg_data (msg), key, strlen (key));
+    self->present [FRAME_KEY] = 1;
+}
 
-//  ---------------------------------------------------------------------
-//  Return sequence nbr from last read message, if any
+void
+kvmsg_fmt_key (kvmsg_t *self, char *format, ...)
+{
+    char value [KVMSG_KEY_MAX + 1];
+    va_list args;
+
+    assert (self);
+    va_start (args, format);
+    vsnprintf (value, KVMSG_KEY_MAX, format, args);
+    va_end (args);
+    kvmsg_set_key (self, value);
+}
+
+
+//  .split sequence methods
+//  These two methods let the caller get and set the message sequence number:
 
 int64_t
 kvmsg_sequence (kvmsg_t *self)
@@ -174,54 +200,6 @@ kvmsg_sequence (kvmsg_t *self)
     else
         return 0;
 }
-
-
-//  ---------------------------------------------------------------------
-//  Return body from last read message, if any, else NULL
-
-byte *
-kvmsg_body (kvmsg_t *self)
-{
-    assert (self);
-    if (self->present [FRAME_BODY])
-        return (byte *) zmq_msg_data (&self->frame [FRAME_BODY]);
-    else
-        return NULL;
-}
-
-
-//  ---------------------------------------------------------------------
-//  Return body size from last read message, if any, else zero
-
-size_t
-kvmsg_size (kvmsg_t *self)
-{
-    assert (self);
-    if (self->present [FRAME_BODY])
-        return zmq_msg_size (&self->frame [FRAME_BODY]);
-    else
-        return 0;
-}
-
-
-//  ---------------------------------------------------------------------
-//  Set message key as provided
-
-void
-kvmsg_set_key (kvmsg_t *self, char *key)
-{
-    assert (self);
-    zmq_msg_t *msg = &self->frame [FRAME_KEY];
-    if (self->present [FRAME_KEY])
-        zmq_msg_close (msg);
-    zmq_msg_init_size (msg, strlen (key));
-    memcpy (zmq_msg_data (msg), key, strlen (key));
-    self->present [FRAME_KEY] = 1;
-}
-
-
-//  ---------------------------------------------------------------------
-//  Set message sequence number
 
 void
 kvmsg_set_sequence (kvmsg_t *self, int64_t sequence)
@@ -245,9 +223,19 @@ kvmsg_set_sequence (kvmsg_t *self, int64_t sequence)
     self->present [FRAME_SEQ] = 1;
 }
 
+//  .split message body methods
+//  These methods let the caller get and set the message body, as a
+//  fixed string and as a printf formatted string:
 
-//  ---------------------------------------------------------------------
-//  Set message body
+byte *
+kvmsg_body (kvmsg_t *self)
+{
+    assert (self);
+    if (self->present [FRAME_BODY])
+        return (byte *) zmq_msg_data (&self->frame [FRAME_BODY]);
+    else
+        return NULL;
+}
 
 void
 kvmsg_set_body (kvmsg_t *self, byte *body, size_t size)
@@ -260,27 +248,6 @@ kvmsg_set_body (kvmsg_t *self, byte *body, size_t size)
     zmq_msg_init_size (msg, size);
     memcpy (zmq_msg_data (msg), body, size);
 }
-
-
-//  ---------------------------------------------------------------------
-//  Set message key using printf format
-
-void
-kvmsg_fmt_key (kvmsg_t *self, char *format, ...)
-{
-    char value [KVMSG_KEY_MAX + 1];
-    va_list args;
-
-    assert (self);
-    va_start (args, format);
-    vsnprintf (value, KVMSG_KEY_MAX, format, args);
-    va_end (args);
-    kvmsg_set_key (self, value);
-}
-
-
-//  ---------------------------------------------------------------------
-//  Set message body using printf format
 
 void
 kvmsg_fmt_body (kvmsg_t *self, char *format, ...)
@@ -296,10 +263,23 @@ kvmsg_fmt_body (kvmsg_t *self, char *format, ...)
 }
 
 
-//  ---------------------------------------------------------------------
-//  Store entire kvmsg into hash map, if key/value are set
-//  Nullifies kvmsg reference, and destroys automatically when no longer
-//  needed.
+//  .split size method
+//  The size method returns the body size of the last-read message, if any:
+
+size_t
+kvmsg_size (kvmsg_t *self)
+{
+    assert (self);
+    if (self->present [FRAME_BODY])
+        return zmq_msg_size (&self->frame [FRAME_BODY]);
+    else
+        return 0;
+}
+
+//  .split store method
+//  The store method stores the key-value message into a hash map, unless
+//  the key and value are both null. It nullifies the kvmsg reference so
+//  that the object is owned by the hash map, not the caller:
 
 void
 kvmsg_store (kvmsg_t **self_p, zhash_t *hash)
@@ -317,9 +297,9 @@ kvmsg_store (kvmsg_t **self_p, zhash_t *hash)
     }
 }
 
-
-//  ---------------------------------------------------------------------
-//  Dump message to stderr, for debugging and tracing
+//  .split dump method
+//  The dump method prints the key-value message to stderr,
+//  for debugging and tracing:
 
 void
 kvmsg_dump (kvmsg_t *self)
@@ -343,9 +323,9 @@ kvmsg_dump (kvmsg_t *self)
         fprintf (stderr, "NULL message\n");
 }
 
-
-//  ---------------------------------------------------------------------
-//  Runs self test of class
+//  .split test method
+//  It's good practice to have a self-test method that tests the class; this
+//  also shows how it's used in applications:
 
 int
 kvmsg_test (int verbose)

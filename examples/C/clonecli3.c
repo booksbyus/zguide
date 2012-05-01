@@ -20,7 +20,8 @@ int main (void)
     zhash_t *kvmap = zhash_new ();
     srandom ((unsigned) time (NULL));
 
-    //  Get state snapshot
+    //  .split getting a state snapshot
+    //  We first request a state snapshot:
     int64_t sequence = 0;
     zstr_send (snapshot, "ICANHAZ?");
     while (TRUE) {
@@ -35,6 +36,10 @@ int main (void)
         }
         kvmsg_store (&kvmsg, kvmap);
     }
+    //  .split processing state updates
+    //  Now we wait for updates from the server, and every so often, we
+    //  send a random key-value update to the server:
+    
     int64_t alarm = zclock_time () + 1000;
     while (!zctx_interrupted) {
         zmq_pollitem_t items [] = { { subscriber, 0, ZMQ_POLLIN, 0 } };

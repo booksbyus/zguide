@@ -12,7 +12,7 @@
 #define HEARTBEAT_INTERVAL  2500    //  msecs
 #define HEARTBEAT_EXPIRY    HEARTBEAT_INTERVAL * HEARTBEAT_LIVENESS
 
-//  .split
+//  .split broker class structure
 //  The broker class defines a single broker instance:
 
 typedef struct {
@@ -39,7 +39,7 @@ static void
 static void
     s_broker_purge (broker_t *self);
 
-//  .split
+//  .split service class structure
 //  The service class defines a single service instance:
 
 typedef struct {
@@ -57,7 +57,7 @@ static void
 static void
     s_service_dispatch (service_t *service, zmsg_t *msg);
 
-//  .split
+//  .split worker class structure
 //  The worker class defines a single worker, idle or active:
 
 typedef struct {
@@ -80,8 +80,7 @@ static void
 static void
     s_worker_waiting (worker_t *self);
 
-
-//  .split
+//  .split broker constructor and destructor
 //  Here are the constructor and destructor for the broker:
 
 static broker_t *
@@ -115,7 +114,7 @@ s_broker_destroy (broker_t **self_p)
     }
 }
 
-//  .split
+//  .split broker bind method
 //  The bind method binds the broker instance to an endpoint. We can call
 //  this multiple times. Note that MDP uses a single socket for both clients 
 //  and workers:
@@ -127,7 +126,7 @@ s_broker_bind (broker_t *self, char *endpoint)
     zclock_log ("I: MDP broker/0.2.0 is active at %s", endpoint);
 }
 
-//  .split
+//  .split broker worker_msg method
 //  The worker_msg method processes one READY, REPLY, HEARTBEAT or
 //  DISCONNECT message sent to the broker by a worker:
 
@@ -191,7 +190,7 @@ s_broker_worker_msg (broker_t *self, zframe_t *sender, zmsg_t *msg)
     zmsg_destroy (&msg);
 }
 
-//  .split
+//  .split broker client_msg method
 //  Process a request coming from a client. We implement MMI requests
 //  directly here (at present, we implement only the mmi.service request):
 
@@ -236,7 +235,7 @@ s_broker_client_msg (broker_t *self, zframe_t *sender, zmsg_t *msg)
     zframe_destroy (&service_frame);
 }
 
-//  .split
+//  .split broker purge method
 //  The purge method deletes any idle workers that haven't pinged us in a
 //  while. We hold workers from oldest to most recent, so we can stop
 //  scanning whenever we find a live worker. This means we'll mainly stop
@@ -259,7 +258,7 @@ s_broker_purge (broker_t *self)
     }
 }
 
-//  .split
+//  .split service methods
 //  Here is the implementation of the methods that work on a service:
 
 //  Lazy constructor that locates a service by name, or creates a new
@@ -307,7 +306,7 @@ s_service_destroy (void *argument)
     free (service);
 }
 
-//  .split
+//  .split service dispatch method
 //  The dispatch method sends requests to waiting workers:
 
 static void
@@ -327,7 +326,7 @@ s_service_dispatch (service_t *self, zmsg_t *msg)
     }
 }
 
-//  .split
+//  .split worker methods
 //  Here is the implementation of the methods that work on a worker:
 
 //  Lazy constructor that locates a worker by identity, or creates a new
@@ -388,7 +387,7 @@ s_worker_destroy (void *argument)
     free (self);
 }
 
-//  .split
+//  .split worker send method
 //  The send method formats and sends a command to a worker. The caller may
 //  also provide a command option, and a message payload:
 
@@ -427,7 +426,7 @@ s_worker_waiting (worker_t *self)
     s_service_dispatch (self->service, NULL);
 }
 
-//  .split
+//  .split main task
 //  Finally here is the main task. We create a new broker instance and
 //  then processes messages on the broker socket:
 

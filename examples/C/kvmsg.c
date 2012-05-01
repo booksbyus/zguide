@@ -1,6 +1,5 @@
 /*  =====================================================================
  *  kvmsg - key-value message class for example applications
- *  Implements the MDP/Worker spec at http://rfc.zeromq.org/spec:7.
  *  ===================================================================== */
 
 #include "kvmsg.h"
@@ -36,8 +35,10 @@ struct _kvmsg {
     size_t props_size;
 };
 
+//  .split property encoding
+//  These two helpers serialize a list of properties to and from a
+//  message frame:
 
-//  Serialize list of properties to a message frame
 static void
 s_encode_props (kvmsg_t *self)
 {
@@ -57,7 +58,6 @@ s_encode_props (kvmsg_t *self)
     self->present [FRAME_PROPS] = 1;
 }
 
-//  Rebuild properties list from message frame
 static void
 s_decode_props (kvmsg_t *self)
 {
@@ -79,10 +79,10 @@ s_decode_props (kvmsg_t *self)
     }
 }
 
+//  .split constructor and destructor
+//  Here are the constructor and destructor for the class:
 
-//  ---------------------------------------------------------------------
-//  Constructor, sets sequence as provided
-
+//  Constructor, takes a sequence number for the new kvmsg instance:
 kvmsg_t *
 kvmsg_new (int64_t sequence)
 {
@@ -95,11 +95,7 @@ kvmsg_new (int64_t sequence)
     return self;
 }
 
-
-//  ---------------------------------------------------------------------
-//  Destructor
-
-//  Free shim, compatible with zhash_free_fn
+//  zhash_free_fn callback helper that does the low level destruction:
 void
 kvmsg_free (void *ptr)
 {
@@ -121,6 +117,7 @@ kvmsg_free (void *ptr)
     }
 }
 
+//  Destructor
 void
 kvmsg_destroy (kvmsg_t **self_p)
 {
@@ -131,9 +128,70 @@ kvmsg_destroy (kvmsg_t **self_p)
     }
 }
 
+//  .split recv method
+//  The recv method reads a key-value message from socket, and returns a new
+//  kvmsg instance:
+
+kvmsg_t *
+kvmsg_recv (void *socket)
+{
+    //  This method is almost unchanged from kvsimple
+    //  .skip
+    assert (socket);
+    kvmsg_t *self = kvmsg_new (0);
+
+    //  Read all frames off the wire, reject if bogus
+    int frame_nbr;
+    for (frame_nbr = 0; frame_nbr < KVMSG_FRAMES; frame_nbr++) {
+        if (self->present [frame_nbr])
+            zmq_msg_close (&self->frame [frame_nbr]);
+        zmq_msg_init (&self->frame [frame_nbr]);
+        self->present [frame_nbr] = 1;
+        if (zmq_recvmsg (socket, &self->frame [frame_nbr], 0) == -1) {
+            kvmsg_destroy (&self);
+            break;
+        }
+        //  Verify multipart framing
+        int rcvmore = (frame_nbr < KVMSG_FRAMES - 1)? 1: 0;
+        if (zsockopt_rcvmore (socket) != rcvmore) {
+            kvmsg_destroy (&self);
+            break;
+        }
+    }
+    //  .until
+    if (self)
+        s_decode_props (self);
+    return self;
+}
+
 
 //  ---------------------------------------------------------------------
-//  Create duplicate of kvmsg
+//  Send key-value message to socket; any empty frames are sent as such.
+
+void
+kvmsg_send (kvmsg_t *self, void *socket)
+{
+    assert (self);
+    assert (socket);
+
+    s_encode_props (self);
+    //  The rest of the method is unchanged from kvsimple
+    //  .skip
+    int frame_nbr;
+    for (frame_nbr = 0; frame_nbr < KVMSG_FRAMES; frame_nbr++) {
+        zmq_msg_t copy;
+        zmq_msg_init (&copy);
+        if (self->present [frame_nbr])
+            zmq_msg_copy (&copy, &self->frame [frame_nbr]);
+        zmq_sendmsg (socket, &copy,
+            (frame_nbr < KVMSG_FRAMES - 1)? ZMQ_SNDMORE: 0);
+        zmq_msg_close (&copy);
+    }
+}
+//  .until
+
+//  .split dup method
+//  The dup method duplicates a kvmsg instance, returns the new instance:
 
 kvmsg_t *
 kvmsg_dup (kvmsg_t *self)
@@ -159,62 +217,8 @@ kvmsg_dup (kvmsg_t *self)
     return kvmsg;
 }
 
-
-//  ---------------------------------------------------------------------
-//  Reads key-value message from socket, returns new kvmsg instance.
-
-kvmsg_t *
-kvmsg_recv (void *socket)
-{
-    assert (socket);
-    kvmsg_t *self = kvmsg_new (0);
-
-    //  Read all frames off the wire, reject if bogus
-    int frame_nbr;
-    for (frame_nbr = 0; frame_nbr < KVMSG_FRAMES; frame_nbr++) {
-        if (self->present [frame_nbr])
-            zmq_msg_close (&self->frame [frame_nbr]);
-        zmq_msg_init (&self->frame [frame_nbr]);
-        self->present [frame_nbr] = 1;
-        if (zmq_recvmsg (socket, &self->frame [frame_nbr], 0) == -1) {
-            kvmsg_destroy (&self);
-            break;
-        }
-        //  Verify multipart framing
-        int rcvmore = (frame_nbr < KVMSG_FRAMES - 1)? 1: 0;
-        if (zsockopt_rcvmore (socket) != rcvmore) {
-            kvmsg_destroy (&self);
-            break;
-        }
-    }
-    if (self)
-        s_decode_props (self);
-    return self;
-}
-
-
-//  ---------------------------------------------------------------------
-//  Send key-value message to socket; any empty frames are sent as such.
-
-void
-kvmsg_send (kvmsg_t *self, void *socket)
-{
-    assert (self);
-    assert (socket);
-
-    s_encode_props (self);
-    int frame_nbr;
-    for (frame_nbr = 0; frame_nbr < KVMSG_FRAMES; frame_nbr++) {
-        zmq_msg_t copy;
-        zmq_msg_init (&copy);
-        if (self->present [frame_nbr])
-            zmq_msg_copy (&copy, &self->frame [frame_nbr]);
-        zmq_sendmsg (socket, &copy,
-            (frame_nbr < KVMSG_FRAMES - 1)? ZMQ_SNDMORE: 0);
-        zmq_msg_close (&copy);
-    }
-}
-
+//  The key, sequence, body, and size methods are the same as in kvsimple.
+//  .skip
 
 //  ---------------------------------------------------------------------
 //  Return key from last read message, if any, else NULL
@@ -236,6 +240,39 @@ kvmsg_key (kvmsg_t *self)
     }
     else
         return NULL;
+}
+
+
+//  ---------------------------------------------------------------------
+//  Set message key as provided
+
+void
+kvmsg_set_key (kvmsg_t *self, char *key)
+{
+    assert (self);
+    zmq_msg_t *msg = &self->frame [FRAME_KEY];
+    if (self->present [FRAME_KEY])
+        zmq_msg_close (msg);
+    zmq_msg_init_size (msg, strlen (key));
+    memcpy (zmq_msg_data (msg), key, strlen (key));
+    self->present [FRAME_KEY] = 1;
+}
+
+
+//  ---------------------------------------------------------------------
+//  Set message key using printf format
+
+void
+kvmsg_fmt_key (kvmsg_t *self, char *format, ...)
+{
+    char value [KVMSG_KEY_MAX + 1];
+    va_list args;
+
+    assert (self);
+    va_start (args, format);
+    vsnprintf (value, KVMSG_KEY_MAX, format, args);
+    va_end (args);
+    kvmsg_set_key (self, value);
 }
 
 
@@ -265,65 +302,6 @@ kvmsg_sequence (kvmsg_t *self)
 
 
 //  ---------------------------------------------------------------------
-//  Return UUID from last read message, if any, else NULL
-
-byte *
-kvmsg_uuid (kvmsg_t *self)
-{
-    assert (self);
-    if (self->present [FRAME_UUID]
-    &&  zmq_msg_size (&self->frame [FRAME_UUID]) == sizeof (uuid_t))
-        return (byte *) zmq_msg_data (&self->frame [FRAME_UUID]);
-    else
-        return NULL;
-}
-
-
-//  ---------------------------------------------------------------------
-//  Return body from last read message, if any, else NULL
-
-byte *
-kvmsg_body (kvmsg_t *self)
-{
-    assert (self);
-    if (self->present [FRAME_BODY])
-        return (byte *) zmq_msg_data (&self->frame [FRAME_BODY]);
-    else
-        return NULL;
-}
-
-
-//  ---------------------------------------------------------------------
-//  Return body size from last read message, if any, else zero
-
-size_t
-kvmsg_size (kvmsg_t *self)
-{
-    assert (self);
-    if (self->present [FRAME_BODY])
-        return zmq_msg_size (&self->frame [FRAME_BODY]);
-    else
-        return 0;
-}
-
-
-//  ---------------------------------------------------------------------
-//  Set message key as provided
-
-void
-kvmsg_set_key (kvmsg_t *self, char *key)
-{
-    assert (self);
-    zmq_msg_t *msg = &self->frame [FRAME_KEY];
-    if (self->present [FRAME_KEY])
-        zmq_msg_close (msg);
-    zmq_msg_init_size (msg, strlen (key));
-    memcpy (zmq_msg_data (msg), key, strlen (key));
-    self->present [FRAME_KEY] = 1;
-}
-
-
-//  ---------------------------------------------------------------------
 //  Set message sequence number
 
 void
@@ -348,22 +326,17 @@ kvmsg_set_sequence (kvmsg_t *self, int64_t sequence)
     self->present [FRAME_SEQ] = 1;
 }
 
-
 //  ---------------------------------------------------------------------
-//  Set message UUID to generated value
+//  Return body from last read message, if any, else NULL
 
-void
-kvmsg_set_uuid (kvmsg_t *self)
+byte *
+kvmsg_body (kvmsg_t *self)
 {
     assert (self);
-    zmq_msg_t *msg = &self->frame [FRAME_UUID];
-    uuid_t uuid;
-    uuid_generate (uuid);
-    if (self->present [FRAME_UUID])
-        zmq_msg_close (msg);
-    zmq_msg_init_size (msg, sizeof (uuid));
-    memcpy (zmq_msg_data (msg), uuid, sizeof (uuid));
-    self->present [FRAME_UUID] = 1;
+    if (self->present [FRAME_BODY])
+        return (byte *) zmq_msg_data (&self->frame [FRAME_BODY]);
+    else
+        return NULL;
 }
 
 
@@ -380,23 +353,6 @@ kvmsg_set_body (kvmsg_t *self, byte *body, size_t size)
     self->present [FRAME_BODY] = 1;
     zmq_msg_init_size (msg, size);
     memcpy (zmq_msg_data (msg), body, size);
-}
-
-
-//  ---------------------------------------------------------------------
-//  Set message key using printf format
-
-void
-kvmsg_fmt_key (kvmsg_t *self, char *format, ...)
-{
-    char value [KVMSG_KEY_MAX + 1];
-    va_list args;
-
-    assert (self);
-    va_start (args, format);
-    vsnprintf (value, KVMSG_KEY_MAX, format, args);
-    va_end (args);
-    kvmsg_set_key (self, value);
 }
 
 
@@ -418,8 +374,53 @@ kvmsg_fmt_body (kvmsg_t *self, char *format, ...)
 
 
 //  ---------------------------------------------------------------------
-//  Get message property, if set, else ""
+//  Return body size from last read message, if any, else zero
 
+size_t
+kvmsg_size (kvmsg_t *self)
+{
+    assert (self);
+    if (self->present [FRAME_BODY])
+        return zmq_msg_size (&self->frame [FRAME_BODY]);
+    else
+        return 0;
+}
+//  .until
+
+//  .split UUID methods
+//  These methods get/set the UUID for the key-value message:
+
+byte *
+kvmsg_uuid (kvmsg_t *self)
+{
+    assert (self);
+    if (self->present [FRAME_UUID]
+    &&  zmq_msg_size (&self->frame [FRAME_UUID]) == sizeof (uuid_t))
+        return (byte *) zmq_msg_data (&self->frame [FRAME_UUID]);
+    else
+        return NULL;
+}
+
+//  Sets the UUID to a random generated value
+void
+kvmsg_set_uuid (kvmsg_t *self)
+{
+    assert (self);
+    zmq_msg_t *msg = &self->frame [FRAME_UUID];
+    uuid_t uuid;
+    uuid_generate (uuid);
+    if (self->present [FRAME_UUID])
+        zmq_msg_close (msg);
+    zmq_msg_init_size (msg, sizeof (uuid));
+    memcpy (zmq_msg_data (msg), uuid, sizeof (uuid));
+    self->present [FRAME_UUID] = 1;
+}
+
+
+//  .split property methods
+//  These methods get/set a specified message property:
+
+//  Get message property, return "" if no such property is defined.
 char *
 kvmsg_get_prop (kvmsg_t *self, char *name)
 {
@@ -437,10 +438,8 @@ kvmsg_get_prop (kvmsg_t *self, char *name)
 }
 
 
-//  ---------------------------------------------------------------------
-//  Set message property
-//  Names cannot contain '='. Max length of value is 255 chars.
-
+//  Set message property. Property name cannot contain '='. Max length of
+//  value is 255 chars.
 void
 kvmsg_set_prop (kvmsg_t *self, char *name, char *format, ...)
 {
@@ -474,11 +473,10 @@ kvmsg_set_prop (kvmsg_t *self, char *name, char *format, ...)
     self->props_size += strlen (prop) + 1;
 }
 
-
-//  ---------------------------------------------------------------------
-//  Store entire kvmsg into hash map, if key/value are set.
-//  Nullifies kvmsg reference, and destroys automatically when no longer
-//  needed. If value is empty, deletes any previous value from store.
+//  .split store method
+//  The store method stores the key-value message into a hash map, unless
+//  the key and value are both null. It nullifies the kvmsg reference so
+//  that the object is owned by the hash map, not the caller:
 
 void
 kvmsg_store (kvmsg_t **self_p, zhash_t *hash)
@@ -501,13 +499,14 @@ kvmsg_store (kvmsg_t **self_p, zhash_t *hash)
     }
 }
 
-
-//  ---------------------------------------------------------------------
-//  Dump message to stderr, for debugging and tracing
+//  .split dump method
+//  The dump method extends the kvsimple implementation with support for
+//  message properties:
 
 void
 kvmsg_dump (kvmsg_t *self)
 {
+    //  .skip
     if (self) {
         if (!self) {
             fprintf (stderr, "NULL");
@@ -517,6 +516,7 @@ kvmsg_dump (kvmsg_t *self)
         byte  *body = kvmsg_body (self);
         fprintf (stderr, "[seq:%" PRId64 "]", kvmsg_sequence (self));
         fprintf (stderr, "[key:%s]", kvmsg_key (self));
+        //  .until
         fprintf (stderr, "[size:%zd] ", size);
         if (zlist_size (self->props)) {
             fprintf (stderr, "[");
@@ -527,6 +527,7 @@ kvmsg_dump (kvmsg_t *self)
             }
             fprintf (stderr, "]");
         }
+        //  .skip
         int char_nbr;
         for (char_nbr = 0; char_nbr < size; char_nbr++)
             fprintf (stderr, "%02X", body [char_nbr]);
@@ -535,14 +536,16 @@ kvmsg_dump (kvmsg_t *self)
     else
         fprintf (stderr, "NULL message\n");
 }
+//  .until
 
-
-//  ---------------------------------------------------------------------
-//  Runs self test of class
+//  .split test method
+//  The selftest method is the same as in kvsimple with added support
+//  for the uuid and property features of kvmsg:
 
 int
 kvmsg_test (int verbose)
 {
+    //  .skip
     kvmsg_t
         *kvmsg;
 
@@ -559,6 +562,7 @@ kvmsg_test (int verbose)
 
     zhash_t *kvmap = zhash_new ();
 
+    //  .until
     //  Test send and receive of simple message
     kvmsg = kvmsg_new (1);
     kvmsg_set_key  (kvmsg, "key");
@@ -595,7 +599,7 @@ kvmsg_test (int verbose)
     assert (streq (kvmsg_key (kvmsg), "key"));
     assert (streq (kvmsg_get_prop (kvmsg, "prop2"), "value2"));
     kvmsg_destroy (&kvmsg);
-
+    //  .skip
     //  Shutdown and destroy all objects
     zhash_destroy (&kvmap);
     zctx_destroy (&ctx);
@@ -603,3 +607,4 @@ kvmsg_test (int verbose)
     printf ("OK\n");
     return 0;
 }
+//  .until

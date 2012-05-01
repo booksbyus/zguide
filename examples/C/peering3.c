@@ -11,7 +11,7 @@
 //  Our own name; in practice this would be configured per node
 static char *self;
 
-//  .split
+//  .split client task
 //  This is the client task. It issues a burst of requests and then
 //  sleeps for a few seconds. This simulates sporadic activity; when
 //  a number of clients are active at once, the local workers should
@@ -63,7 +63,7 @@ client_task (void *args)
     return NULL;
 }
 
-//  .split
+//  .split worker task
 //  This is the worker task, which uses a REQ socket to plug into the LRU
 //  router. It's the same stub worker task you've seen in other examples:
 
@@ -92,7 +92,7 @@ worker_task (void *args)
     return NULL;
 }
 
-//  .split
+//  .split main task
 //  The main task begins by setting-up all its sockets. The local frontend
 //  talks to clients, and our local backend talks to workers. The cloud
 //  frontend talks to peer brokers as if they were clients, and the cloud
@@ -153,7 +153,7 @@ int main (int argc, char *argv [])
     void *monitor = zsocket_new (ctx, ZMQ_PULL);
     zsocket_bind (monitor, "ipc://%s-monitor.ipc", self);
 
-    //  .split
+    //  .split start child tasks
     //  After binding and connecting all our sockets, we start our child
     //  tasks - workers and clients:
 
@@ -171,7 +171,7 @@ int main (int argc, char *argv [])
     int cloud_capacity = 0;
     zlist_t *workers = zlist_new ();
 
-    //  .split
+    //  .split main loop
     //  The main loop has two parts. First we poll workers and our two service
     //  sockets (statefe and monitor), in any case. If we have no ready workers,
     //  there's no point in looking at incoming requests. These can remain on
@@ -231,7 +231,7 @@ int main (int argc, char *argv [])
         if (msg)
             zmsg_send (&msg, localfe);
 
-        //  .split
+        //  .split handle state messages
         //  If we have input messages on our statefe or monitor sockets we
         //  can process these immediately:
 
@@ -245,7 +245,7 @@ int main (int argc, char *argv [])
             printf ("%s\n", status);
             free (status);
         }
-        //  .split
+        //  .split route client requests
         //  Now route as many clients requests as we can handle. If we have
         //  local capacity we poll both localfe and cloudfe. If we have cloud
         //  capacity only, we poll just localfe. We route any request locally
@@ -283,7 +283,7 @@ int main (int argc, char *argv [])
                 zmsg_send (&msg, cloudbe);
             }
         }
-        //  .split
+        //  .split broadcast capacity
         //  We broadcast capacity messages to other peers; to reduce chatter
         //  we do this only if our capacity changed.
 

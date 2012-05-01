@@ -69,7 +69,7 @@ typedef struct {
 } lruqueue_t;
 
 
-//  .split
+//  .split reactor design
 //  In the reactor design, each time a message arrives on a socket, the
 //  reactor passes it to a handler function. We have two handlers; one
 //  for the frontend, one for the backend:
@@ -117,7 +117,7 @@ int s_handle_backend (zloop_t *loop, zmq_pollitem_t *poller, void *arg)
     return 0;
 }
 
-//  .split
+//  .split main task
 //  And the main task now sets-up child tasks, then starts its reactor.
 //  If you press Ctrl-C, the reactor exits and the main task shuts down.
 //  Since the reactor is a CZMQ class, this example may not translate

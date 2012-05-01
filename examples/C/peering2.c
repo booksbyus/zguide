@@ -11,7 +11,7 @@
 //  Our own name; in practice this would be configured per node
 static char *self;
 
-//  .split
+//  .split client task
 //  The client task does a request-reply dialog using a standard
 //  synchronous REQ socket:
 
@@ -36,7 +36,7 @@ client_task (void *args)
     return NULL;
 }
 
-//  .split
+//  .split worker task
 //  The worker task plugs into the LRU routing dialog using a REQ
 //  socket:
 
@@ -65,7 +65,7 @@ worker_task (void *args)
     return NULL;
 }
 
-//  .split
+//  .split main task
 //  The main task begins by setting-up its frontend and backend sockets
 //  and then starting its client and worker tasks:
 
@@ -118,7 +118,7 @@ int main (int argc, char *argv [])
     for (client_nbr = 0; client_nbr < NBR_CLIENTS; client_nbr++)
         zthread_new (client_task, NULL);
 
-    //  .split
+    //  .split request-reply handling
     //  Here we handle the request-reply flow. We're using the LRU approach
     //  to poll workers at all times, and clients only when there are one or
     //  more workers available.
@@ -176,7 +176,7 @@ int main (int argc, char *argv [])
         if (msg)
             zmsg_send (&msg, localfe);
 
-        //  .split
+        //  .split route client requests
         //  Now we route as many client requests as we have worker capacity
         //  for. We may reroute requests from our local frontend, but not from 
         //  the cloud frontend. We reroute randomly now, just to test things

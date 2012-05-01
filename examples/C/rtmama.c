@@ -39,7 +39,7 @@ worker_task (void *args)
     return NULL;
 }
 
-//  .split
+//  .split main task
 //  While this example runs in a single process, that is just to make
 //  it easier to start and stop the example. Each thread has its own
 //  context and conceptually acts as a separate process.

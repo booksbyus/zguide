@@ -32,7 +32,7 @@ typedef struct {
 //  If peer doesn't respond in two heartbeats, it is 'dead'
 #define HEARTBEAT 1000          //  In msecs
 
-//  .split
+//  .split Binary Star state machine
 //  The heart of the Binary Star design is its finite-state machine (FSM).
 //  The FSM runs one event at a time. We apply an event to the current state,
 //  which checks if the event is accepted, and if so sets a new state:
@@ -68,7 +68,7 @@ s_state_machine (bstar_t *fsm)
             exception = TRUE;
     }
     else
-    //  .split
+    //  .split active and passive states
     //  These are the ACTIVE and PASSIVE states:
 
     if (fsm->state == STATE_ACTIVE) {
@@ -118,7 +118,7 @@ s_state_machine (bstar_t *fsm)
 }
 
 
-//  .split
+//  .split main task
 //  This is our main task. First we bind/connect our sockets with our
 //  peer and make sure we will get state messages correctly. We use
 //  three sockets; one to publish state, one to subscribe to state, and
@@ -156,7 +156,7 @@ int main (int argc, char *argv [])
         zctx_destroy (&ctx);
         exit (0);
     }
-    //  .split
+    //  .split handling socket input
     //  We now process events on our two input sockets, and process these
     //  events one at a time via our finite-state machine. Our "work" for
     //  a client request is simply to echo it back:

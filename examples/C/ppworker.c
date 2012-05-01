@@ -28,7 +28,7 @@ s_worker_socket (zctx_t *ctx) {
     return worker;
 }
 
-//  .split
+//  .split main task
 //  We have a single task, which implements the worker side of the
 //  Paranoid Pirate Protocol (PPP). The interesting parts here are
 //  the heartbeating, which lets the worker detect if the queue has
@@ -62,7 +62,7 @@ int main (void)
             if (!msg)
                 break;          //  Interrupted
 
-            //  .split
+            //  .split simulating problems
             //  To test the robustness of the queue implementation we 
             //  simulate various typical problems, such as the worker
             //  crashing, or running very slowly. We do this after a few
@@ -90,7 +90,7 @@ int main (void)
                     break;
             }
             else
-            //  .split
+            //  .split handle heartbeats
             //  When we get a heartbeat message from the queue, it means the
             //  queue was (recently) alive, so reset our liveness indicator:
             if (zmsg_size (msg) == 1) {
@@ -110,7 +110,7 @@ int main (void)
             interval = INTERVAL_INIT;
         }
         else
-        //  .split
+        //  .split detecting a dead queue
         //  If the queue hasn't sent us heartbeats in a while, destroy the
         //  socket and reconnect. This is the simplest most brutal way of
         //  discarding any messages we might have sent in the meantime:

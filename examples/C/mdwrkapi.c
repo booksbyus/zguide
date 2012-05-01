@@ -8,7 +8,7 @@
 //  Reliability parameters
 #define HEARTBEAT_LIVENESS  3       //  3-5 is reasonable
 
-//  .split
+//  .split worker class structure
 //  This is the structure of a worker API instance. We use a pseudo-OO
 //  approach in a lot of the C examples, as well as the CZMQ binding:
 
@@ -33,7 +33,7 @@ struct _mdwrk_t {
 };
 
 
-//  .split
+//  .split utility functions
 //  We have two utility functions; to send a message to the broker and
 //  to (re-)connect to the broker:
 
@@ -84,7 +84,7 @@ void s_mdwrk_connect_to_broker (mdwrk_t *self)
 }
 
 
-//  .split
+//  .split constructor and destructor
 //  Here we have the constructor and destructor for our mdwrk class:
 
 //  ---------------------------------------------------------------------
@@ -127,7 +127,7 @@ mdwrk_destroy (mdwrk_t **self_p)
 }
 
 
-//  .split
+//  .split configure worker
 //  We provide two methods to configure the worker API. You can set the
 //  heartbeat interval and retries to match the expected network performance.
 
@@ -150,7 +150,7 @@ mdwrk_set_reconnect (mdwrk_t *self, int reconnect)
     self->reconnect = reconnect;
 }
 
-//  .split
+//  .split recv method
 //  This is the recv method; it's a little misnamed since it first sends
 //  any reply and then waits for a new request. If you have a better name
 //  for this, let me know:
@@ -207,7 +207,7 @@ mdwrk_recv (mdwrk_t *self, zmsg_t **reply_p)
                 //  up to a null part, but for now, just save one...
                 self->reply_to = zmsg_unwrap (msg);
                 zframe_destroy (&command);
-                //  .split
+                //  .split process message
                 //  Here is where we actually have a message to process; we
                 //  return it to the caller application:
                 return msg;     //  We have a request to process

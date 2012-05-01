@@ -33,7 +33,7 @@ int main (void)
             if (rc == -1)
                 break;          //  Interrupted
 
-            //  .split
+            //  .split main body of client
             //  We use a Lazy Pirate strategy in the client. If there's no
             //  reply within our timeout, we close the socket and try again.
             //  In Binary Star, it's the client vote which decides which
