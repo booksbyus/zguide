@@ -1,6 +1,5 @@
 /*  =====================================================================
  *  flcliapi - Freelance Pattern agent class
- *  Implements the MDP/Worker spec at http://rfc.zeromq.org/spec:7.
  *  ===================================================================== */
 
 #ifndef __FLCLIAPI_INCLUDED__

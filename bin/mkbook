@@ -13,7 +13,7 @@ require 'sflcvdp.pl';                   #   SFL date picture formatting
 use Digest::SHA1 qw(sha1_hex);
 
 #   Listings longer than this are truncated and turned into URLs
-$cutoff = 64;
+$cutoff = 60;
 
 @languages = ('C', 'C++', 'PHP', 'Python');
 %extension = ('C' => 'c', 'C++' => 'cpp', 'PHP' => 'php', 'Python' => 'py' );
@@ -110,13 +110,14 @@ while (<>) {
         $start = 0;
         while (<EXAMPLE>) {
             chop;
-            if (/\/\/  \.split/) {
+            if (/\/\/  \.split\s(.*)/) {
                 #   Long code example, split into separate pieces
                 writeln ("</programlisting>\n");
                 writeln ("</example>");
                 printf ("$filename: $lines lines ($start)\n") if $lines > $cutoff;
                 $text = "";
                 $start = $.;
+                $comment = $1;
                 while (<EXAMPLE>) {
                     chop while /\s$/;
                     last unless /\/\/  /;   #   End at any non-comment line
@@ -125,7 +126,7 @@ while (<>) {
                 $split++;
                 writeln ("<para>$text\n</para>\n");
                 writeln ("<example id=\"$name-$ext-$split\">");
-                writeln ("<title>$title ($name.$ext) - continued</title>");
+                writeln ("<title>$title ($name.$ext) - $1</title>");
                 writeln ("<programlisting language=\"$lexer\">");
                 $lines = 0;
             }

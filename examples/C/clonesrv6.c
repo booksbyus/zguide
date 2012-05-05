@@ -32,7 +32,6 @@ typedef struct {
     Bool slave;                 //  TRUE if we're slave
 } clonesrv_t;
 
-
 int main (int argc, char *argv [])
 {
     clonesrv_t *self = (clonesrv_t *) zmalloc (sizeof (clonesrv_t));
@@ -107,11 +106,8 @@ int main (int argc, char *argv [])
     return 0;
 }
 
-
-//  ---------------------------------------------------------------------
-//  Send snapshots to clients who ask for them
-
-static int s_send_single (char *key, void *data, void *args);
+//  We handle ICANHAZ? requests exactly as in the clonesrv5 example.
+//  .skip
 
 //  Routing information for a key-value snapshot
 typedef struct {
@@ -119,6 +115,23 @@ typedef struct {
     zframe_t *identity;     //  Identity of peer who requested state
     char *subtree;          //  Client subtree specification
 } kvroute_t;
+
+//  Send one state snapshot key-value pair to a socket
+//  Hash item data is our kvmsg object, ready to send
+static int
+s_send_single (char *key, void *data, void *args)
+{
+    kvroute_t *kvroute = (kvroute_t *) args;
+    kvmsg_t *kvmsg = (kvmsg_t *) data;
+    if (strlen (kvroute->subtree) <= strlen (kvmsg_key (kvmsg))
+    &&  memcmp (kvroute->subtree,
+                kvmsg_key (kvmsg), strlen (kvroute->subtree)) == 0) {
+        zframe_send (&kvroute->identity,    //  Choose recipient
+            kvroute->socket, ZFRAME_MORE + ZFRAME_REUSE);
+        kvmsg_send (kvmsg, kvroute->socket);
+    }
+    return 0;
+}
 
 static int
 s_snapshots (zloop_t *loop, zmq_pollitem_t *poller, void *args)
@@ -156,33 +169,29 @@ s_snapshots (zloop_t *loop, zmq_pollitem_t *poller, void *args)
     }
     return 0;
 }
-
-
-//  Send one state snapshot key-value pair to a socket
-//  Hash item data is our kvmsg object, ready to send
-static int
-s_send_single (char *key, void *data, void *args)
-{
-    kvroute_t *kvroute = (kvroute_t *) args;
-    kvmsg_t *kvmsg = (kvmsg_t *) data;
-    if (strlen (kvroute->subtree) <= strlen (kvmsg_key (kvmsg))
-    &&  memcmp (kvroute->subtree,
-                kvmsg_key (kvmsg), strlen (kvroute->subtree)) == 0) {
-        //  Send identity of recipient first
-        zframe_send (&kvroute->identity,
-            kvroute->socket, ZFRAME_MORE + ZFRAME_REUSE);
-        kvmsg_send (kvmsg, kvroute->socket);
-    }
-    return 0;
-}
-
+//  .until
 
 //  ---------------------------------------------------------------------
 //  Collect updates from clients
 //  If we're master, we apply these to the kvmap
 //  If we're slave, or unsure, we queue them on our pending list
 
-static int s_was_pending (clonesrv_t *self, kvmsg_t *kvmsg);
+//  If message was already on pending list, remove it and
+//  return TRUE, else return FALSE.
+static int
+s_was_pending (clonesrv_t *self, kvmsg_t *kvmsg)
+{
+    kvmsg_t *held = (kvmsg_t *) zlist_first (self->pending);
+    while (held) {
+        if (memcmp (kvmsg_uuid (kvmsg),
+                    kvmsg_uuid (held), sizeof (uuid_t)) == 0) {
+            zlist_remove (self->pending, held);
+            return TRUE;
+        }
+        held = (kvmsg_t *) zlist_next (self->pending);
+    }
+    return FALSE;
+}
 
 static int
 s_collector (zloop_t *loop, zmq_pollitem_t *poller, void *args)
@@ -190,7 +199,6 @@ s_collector (zloop_t *loop, zmq_pollitem_t *poller, void *args)
     clonesrv_t *self = (clonesrv_t *) args;
 
     kvmsg_t *kvmsg = kvmsg_recv (poller->socket);
-    kvmsg_dump (kvmsg);
     if (kvmsg) {
         if (self->master) {
             kvmsg_set_sequence (kvmsg, ++self->sequence);
@@ -214,39 +222,9 @@ s_collector (zloop_t *loop, zmq_pollitem_t *poller, void *args)
     return 0;
 }
 
-//  If message was already on pending list, remove it and
-//  return TRUE, else return FALSE.
-
-static int
-s_was_pending (clonesrv_t *self, kvmsg_t *kvmsg)
-{
-    kvmsg_t *held = (kvmsg_t *) zlist_first (self->pending);
-    while (held) {
-        if (memcmp (kvmsg_uuid (kvmsg),
-                    kvmsg_uuid (held), sizeof (uuid_t)) == 0) {
-            zlist_remove (self->pending, held);
-            return TRUE;
-        }
-        held = (kvmsg_t *) zlist_next (self->pending);
-    }
-    return FALSE;
-}
-
-
-//  ---------------------------------------------------------------------
-//  Purge ephemeral values that have expired
-
-static int s_flush_single (char *key, void *data, void *args);
-
-static int
-s_flush_ttl (zloop_t *loop, zmq_pollitem_t *poller, void *args)
-{
-    clonesrv_t *self = (clonesrv_t *) args;
-    if (self->kvmap)
-        zhash_foreach (self->kvmap, s_flush_single, args);
-    return 0;
-}
-
+//  We purge ephemeral values using exactly the same code as in
+//  the previous clonesrv5 example.
+//  .skip
 //  If key-value pair has expired, delete it and publish the
 //  fact to listening clients.
 static int
@@ -267,6 +245,15 @@ s_flush_single (char *key, void *data, void *args)
     return 0;
 }
 
+static int
+s_flush_ttl (zloop_t *loop, zmq_pollitem_t *poller, void *args)
+{
+    clonesrv_t *self = (clonesrv_t *) args;
+    if (self->kvmap)
+        zhash_foreach (self->kvmap, s_flush_single, args);
+    return 0;
+}
+//  .until
 
 //  ---------------------------------------------------------------------
 //  Send hugz to anyone listening on the publisher socket

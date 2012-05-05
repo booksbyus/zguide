@@ -191,10 +191,8 @@ int s_voter_ready (zloop_t *loop, zmq_pollitem_t *poller, void *arg)
     bstar_t *self = (bstar_t *) arg;
     //  If server can accept input now, call appl handler
     self->event = CLIENT_REQUEST;
-    if (s_execute_fsm (self) == 0) {
-        puts ("CLIENT REQUEST");
+    if (s_execute_fsm (self) == 0)
         (self->voter_fn) (self->loop, poller, self->voter_arg);
-    }
     else {
         //  Destroy waiting message, no-one to read it
         zmsg_t *msg = zmsg_recv (poller->socket);

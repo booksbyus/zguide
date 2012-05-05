@@ -1,6 +1,5 @@
 /*  =====================================================================
  *  kvsimple - simple key-value message class for example applications
- *  Implements the MDP/Worker spec at http://rfc.zeromq.org/spec:7.
  *  ===================================================================== */
         
 #ifndef __KVSIMPLE_H_INCLUDED__
