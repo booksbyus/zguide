@@ -203,10 +203,10 @@ s_console (const char *format, ...)
 {
     time_t curtime = time (NULL);
     struct tm *loctime = localtime (&curtime);
-    char *formatted = new char (20);
+    char *formatted = new char[20];
     strftime (formatted, 20, "%y-%m-%d %H:%M:%S ", loctime);
     printf ("%s", formatted);
-    free (formatted);
+    delete[] formatted;
 
     va_list argptr;
     va_start (argptr, format);
