@@ -1,7 +1,0 @@
-include $(GOROOT)/src/Make.inc
-
-TARG=durasub
-GOFILES=\
-	durasub.go
-
-include $(GOROOT)/src/Make.cmd

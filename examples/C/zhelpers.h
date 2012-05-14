@@ -32,10 +32,10 @@
 #   error "Please stick with ZeroMQ/2.1 stable for these examples"
 #endif
 #ifndef ZMQ_ROUTER
-#   define ZMQ_ROUTER ZMQ_XREP
+#   define ZMQ_ROUTER ZMQ_ROUTER
 #endif
 #ifndef ZMQ_DEALER
-#   define ZMQ_DEALER ZMQ_XREQ
+#   define ZMQ_DEALER ZMQ_DEALER
 #endif
 
 

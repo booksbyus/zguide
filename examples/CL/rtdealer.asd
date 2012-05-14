@@ -1,6 +1,6 @@
 ;;; -*- Mode:Lisp; Syntax:ANSI-Common-Lisp; -*-
 ;;;
-;;;  Custom routing Router to Dealer (XREP to XREQ) in Common Lisp
+;;;  Custom routing Router to Dealer in Common Lisp
 ;;;
 ;;; Kamil Shakirov <kamils80@gmail.com>
 ;;;
@@ -12,7 +12,7 @@
 
 (defsystem rtdealer
   :version "0.0.0"
-  :description "Custom routing Router to Dealer (XREP to XREQ) in Common Lisp."
+  :description "Custom routing Router to Dealer in Common Lisp."
   :maintainer "Kamil Shakirov <kamils80@gmail.com>"
   :author "Kamil Shakirov <kamils80@gmail.com>"
   :licence "MIT/X11"

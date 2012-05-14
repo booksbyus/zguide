@@ -287,10 +287,10 @@ class Zmsg {
 	public static function test() {
 		$result = true;
 		$context = new ZMQContext();
-		$output = new ZMQSocket($context, ZMQ::SOCKET_XREQ);
+		$output = new ZMQSocket($context, ZMQ::SOCKET_DEALER);
 		$output->bind("inproc://zmsg_selftest");
 		
-		$input = new ZMQSocket($context, ZMQ::SOCKET_XREP);
+		$input = new ZMQSocket($context, ZMQ::SOCKET_ROUTER);
 		$input->connect("inproc://zmsg_selftest");
 		
 		//  Test send and receive of single-part message

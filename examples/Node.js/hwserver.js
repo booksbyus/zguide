@@ -2,10 +2,10 @@
 // Binds REP socket to tcp://*:5555
 // Expects "Hello" from client, replies with "world"
 
-var context = require('zeromq')
+var zmq = require('zmq')
 
 // socket to talk to clients
-var responder = context.createSocket('rep')
+var responder = zmq.socket('rep')
 
 responder.on('message', function(request) {
   console.log("Received request: [", request.toString(), "]")

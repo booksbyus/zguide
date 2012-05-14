@@ -105,7 +105,7 @@ class MDWrk {
      * Connect or reconnect to broker
      */
     public function connect_to_broker() {
-        $this->worker = new ZMQSocket($this->ctx, ZMQ::SOCKET_XREQ);
+        $this->worker = new ZMQSocket($this->ctx, ZMQ::SOCKET_DEALER);
         $this->worker->connect($this->broker);
         if($this->verbose) {
             printf("I: connecting to broker at %s... %s", $this->broker, PHP_EOL);

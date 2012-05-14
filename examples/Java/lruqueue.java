@@ -87,8 +87,8 @@ public class lruqueue {
 		Context context = ZMQ.context(1);
 
 		//  Prepare our context and sockets
-		Socket frontend  = context.socket(ZMQ.XREP);
-		Socket backend  = context.socket(ZMQ.XREP);
+		Socket frontend  = context.socket(ZMQ.ROUTER);
+		Socket backend  = context.socket(ZMQ.ROUTER);
 		frontend.bind("ipc://frontend.ipc");
 		backend.bind("ipc://backend.ipc");
 

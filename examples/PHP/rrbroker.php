@@ -6,8 +6,8 @@
 
 //  Prepare our context and sockets
 $context = new ZMQContext();
-$frontend = new ZMQSocket($context, ZMQ::SOCKET_XREP);
-$backend = new ZMQSocket($context, ZMQ::SOCKET_XREQ);
+$frontend = new ZMQSocket($context, ZMQ::SOCKET_ROUTER);
+$backend = new ZMQSocket($context, ZMQ::SOCKET_DEALER);
 $frontend->bind("tcp://*:5559");
 $backend->bind("tcp://*:5560");
 

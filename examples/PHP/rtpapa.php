@@ -1,6 +1,6 @@
 <?php
 /*
- * Custom routing Router to Papa (XREP to REP)
+ * Custom routing Router to Papa (ROUTER to REP)
  * @author Ian Barber <ian(dot)barber(at)gmail(dot)com>a
  */
 include "zhelpers.php";
@@ -8,7 +8,7 @@ include "zhelpers.php";
 //  We will do this all in one thread to emphasize the sequence
 //  of events...
 $context = new ZMQContext();
-$client = new ZMQSocket($context, ZMQ::SOCKET_XREP);
+$client = new ZMQSocket($context, ZMQ::SOCKET_ROUTER);
 $client->bind("inproc://routing");
 
 $worker = new ZMQSocket($context, ZMQ::SOCKET_REP);
@@ -29,5 +29,5 @@ s_dump($worker);
 //  We don't play with envelopes in the worker
 $worker->send("This is the reply");
 
-//  Now dump what we got off the XREP socket...
+//  Now dump what we got off the ROUTER socket...
 s_dump($client);

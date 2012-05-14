@@ -1,5 +1,5 @@
 --
---  Cross-connected XREP sockets addressing each other
+--  Cross-connected ROUTER sockets addressing each other
 --
 --  Author: Robert G. Jakabosky <bobby@sharedrealm.com>
 --
@@ -8,11 +8,11 @@ require"zhelpers"
 
 local context = zmq.init(1)
 
-local worker = context:socket(zmq.XREP)
+local worker = context:socket(zmq.ROUTER)
 worker:setopt(zmq.IDENTITY, "WORKER")
 worker:bind("ipc://rtrouter.ipc")
 
-local server = context:socket(zmq.XREP)
+local server = context:socket(zmq.ROUTER)
 server:setopt(zmq.IDENTITY, "SERVER")
 server:connect("ipc://rtrouter.ipc")
 

@@ -33,7 +33,7 @@ s/\[i\]/[[span style="font-style:italic"]]/mg;
 s/\[\/i\]/[[\/span]]/mg;
 
 s/\[b\]/**/mg;
-s/\s*\[\/b\]/**/mg;
+s/(\s*)\[\/b\]/**$1/mg;
 
 #   Escape [ and ]
 s/\[(\[*)/\@\@[$1\@\@/mg;

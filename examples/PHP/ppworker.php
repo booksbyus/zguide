@@ -16,7 +16,7 @@ define("INTERVAL_MAX", 32000); //  After exponential backoff
  * connected to the Hello World server
  */
 function s_worker_socket($context) {
-	$worker = new ZMQSocket($context, ZMQ::SOCKET_XREQ);
+	$worker = new ZMQSocket($context, ZMQ::SOCKET_DEALER);
 	
 	//  Set random identity to make tracing easier
 	$identity = sprintf ("%04X-%04X", rand(0, 0x10000), rand(0, 0x10000));

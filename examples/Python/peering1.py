@@ -5,14 +5,14 @@
 #   Author : Piero Cornice
 #   Contact: root(at)pieroland(dot)net
 #
-
-import zmq
+import sys
 import time
 import random
 
-def main(args):
+import zmq
 
-    myself = args[1]
+
+def main(myself, others):
     print "Hello, I am", myself
 
     context = zmq.Context()
@@ -24,12 +24,11 @@ def main(args):
     statefe = context.socket(zmq.SUB)
     statefe.setsockopt(zmq.SUBSCRIBE, '')
 
-    bind_address = "ipc://" + myself + "-state.ipc"
+    bind_address = "ipc://%s-state.ipc" % myself
     statebe.bind(bind_address)
 
-    for i in range(len(args) - 2):
-        endpoint = "ipc://" + args[i + 2] + "-state.ipc"
-        statefe.connect(endpoint)
+    for other in others:
+        statefe.connect("ipc://%s-state.ipc" % other)
         time.sleep(1.0)
 
     poller = zmq.Poller()
@@ -49,16 +48,14 @@ def main(args):
         except KeyError:
             # Send our address and a random value
             # for worker availability
-            msg = []
-            msg.append(bind_address)
-            msg.append(str(random.randrange(1, 10)))
+            msg = [bind_address, str(random.randrange(1, 10))]
             statebe.send_multipart(msg)
 ##################################
 
 ######### Solution with select() #########
-#        (pollin, pollout, pollerr) = zmq.select([statefe], [], [], 1)
+#        pollin, pollout, pollerr = zmq.select([statefe], [], [], 1)
 #
-#        if len(pollin) > 0 and pollin[0] == statefe:
+#        if pollin and pollin[0] == statefe:
 #            # Handle incoming status message
 #            msg = statefe.recv_multipart()
 #            print 'Received:', msg
@@ -66,9 +63,7 @@ def main(args):
 #        else:
 #            # Send our address and a random value
 #            # for worker availability
-#            msg = []
-#            msg.append(bind_address)
-#            msg.append(str(random.randrange(1, 10)))
+#            msg = [bind_address, str(random.randrange(1, 10))]
 #            statebe.send_multipart(msg)
 ##################################
 
@@ -77,11 +72,8 @@ def main(args):
 
 
 if __name__ == '__main__':
-    import sys
-
-    if len(sys.argv) < 2:
+    if len(sys.argv) >= 2:
+        main(myself=sys.argv[1], others=sys.argv[2:])
+    else:
         print "Usage: peering.py <myself> <peer_1> ... <peer_N>"
-        raise SystemExit
-
-    main(sys.argv)
-
+        sys.exit(1)

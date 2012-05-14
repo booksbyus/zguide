@@ -12,8 +12,8 @@ LRU_READY = "\x01"
 
 context = zmq.Context(1)
 
-frontend = context.socket(zmq.XREP) # ROUTER
-backend = context.socket(zmq.XREP) # ROUTER
+frontend = context.socket(zmq.ROUTER) # ROUTER
+backend = context.socket(zmq.ROUTER) # ROUTER
 frontend.bind("tcp://*:5555") # For clients
 backend.bind("tcp://*:5556")  # For workers
 

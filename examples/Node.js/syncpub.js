@@ -1,6 +1,6 @@
-var context = require('zeromq')
-var publisher = context.createSocket('pub')
-var server = context.createSocket('rep')
+var zmq = require('zmq')
+var publisher = zmq.socket('pub')
+var server = zmq.socket('rep')
 var pending = 0
 
 server.on('message', function(request) {

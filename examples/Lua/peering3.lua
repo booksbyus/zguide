@@ -126,7 +126,7 @@ math.randomseed(os.time())
 local context = zmq.init(1)
 
 --  Bind cloud frontend to endpoint
-local cloudfe = context:socket(zmq.XREP)
+local cloudfe = context:socket(zmq.ROUTER)
 local endpoint = string.format("ipc://%s-cloud.ipc", self)
 cloudfe:setopt(zmq.IDENTITY, self)
 assert(cloudfe:bind(endpoint))
@@ -137,7 +137,7 @@ local endpoint = string.format("ipc://%s-state.ipc", self)
 assert(statebe:bind(endpoint))
 
 --  Connect cloud backend to all peers
-local cloudbe = context:socket(zmq.XREP)
+local cloudbe = context:socket(zmq.ROUTER)
 cloudbe:setopt(zmq.IDENTITY, self)
 
 for n=2,#arg do
@@ -161,11 +161,11 @@ for n=2,#arg do
     assert(statefe:connect(endpoint))
 end
 --  Prepare local frontend and backend
-local localfe = context:socket(zmq.XREP)
+local localfe = context:socket(zmq.ROUTER)
 local endpoint = string.format("ipc://%s-localfe.ipc", self)
 assert(localfe:bind(endpoint))
 
-local localbe = context:socket(zmq.XREP)
+local localbe = context:socket(zmq.ROUTER)
 local endpoint = string.format("ipc://%s-localbe.ipc", self)
 assert(localbe:bind(endpoint))
 

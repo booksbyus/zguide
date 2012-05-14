@@ -19,11 +19,11 @@ use ZeroMQ::Raw qw/zmq_device/;
 my $context = ZeroMQ::Context->new();
 
 # Socket facing clients
-my $frontend = $context->socket(ZMQ_XREP);
+my $frontend = $context->socket(ZMQ_ROUTER);
 $frontend->bind('tcp://*:5559');
 
 # Socket facing services
-my $backend = $context->socket(ZMQ_XREQ);
+my $backend = $context->socket(ZMQ_DEALER);
 $backend->bind('tcp://*:5560');
 
 # Start built-in device

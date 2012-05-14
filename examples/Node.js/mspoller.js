@@ -1,16 +1,18 @@
 // Reading from multiple sockets.
 // This version listens for emitted 'message' events.
 
-var context = require('zeromq')
+var zmq = require('zmq')
 
 // Connect to task ventilator
-var receiver = context.createSocket('pull')
+var receiver = zmq.socket('pull')
+
 receiver.on('message', function(msg) {
   console.log("From Task Ventilator:", msg.toString())
 })
 
 // Connect to weather server.
-var subscriber = context.createSocket('sub')
+var subscriber = zmq.socket('sub')
+
 subscriber.subscribe('10001')
 subscriber.on('message', function(msg) {
   console.log("Weather Update:", msg.toString())

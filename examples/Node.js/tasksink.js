@@ -2,8 +2,8 @@
 // Binds PULL socket to tcp://localhost:5558
 // Collects results from workers via that socket.
 
-var context  = require('zeromq')
-  , receiver = context.createSocket('pull')
+var zmq  = require('zmq')
+  , receiver = zmq.socket('pull')
 
 var started = false
   , i = 0

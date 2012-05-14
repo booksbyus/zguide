@@ -1,5 +1,5 @@
 /**
- * Custom routing Router to Dealer. (XREP to XREQ)
+ * Custom routing Router to Dealer.
  * Java version, based on the C version from
  * http://zguide.zeromq.org/chapter:all#toc45
  */
@@ -13,8 +13,8 @@ import java.util.Random;
 /**
  * Router-to-dealer custom routing demo.
  *
- * The router, in this case the main function, uses XREP.  The
- * dealers, in this case the two worker threads, use XREQ.
+ * The router, in this case the main function, uses ROUTER.  The
+ * dealers, in this case the two worker threads, use DEALER.
  */
 public class rtdealer {
     static final String URI = "ipc://routing.ipc";
@@ -32,7 +32,7 @@ public class rtdealer {
 
         public void run() {
             ZMQ.Context context = ZMQ.context(1);
-            ZMQ.Socket socket = context.socket(ZMQ.XREQ);
+            ZMQ.Socket socket = context.socket(ZMQ.DEALER);
             socket.setIdentity(name.getBytes());
             socket.connect(URI);
 
@@ -61,7 +61,7 @@ public class rtdealer {
     public static void main(String[] args)
     throws InterruptedException {
         ZMQ.Context context = ZMQ.context(1);
-        ZMQ.Socket socket = context.socket(ZMQ.XREP);
+        ZMQ.Socket socket = context.socket(ZMQ.ROUTER);
         socket.bind(URI);
 
         Thread workerA = new Thread(new Worker("A"));

@@ -82,8 +82,8 @@ class Queue_T implements Iterator{
 
 //  Prepare our context and sockets
 $context = new ZMQContext();
-$frontend = new ZMQSocket($context, ZMQ::SOCKET_XREP);
-$backend = new ZMQSocket($context, ZMQ::SOCKET_XREP);
+$frontend = new ZMQSocket($context, ZMQ::SOCKET_ROUTER);
+$backend = new ZMQSocket($context, ZMQ::SOCKET_ROUTER);
 $frontend->bind("tcp://*:5555");    //  For clients
 $backend->bind("tcp://*:5556");    //  For workers
 $read = $write = array();

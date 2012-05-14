@@ -82,8 +82,8 @@ s_version_assert (2, 1)
 
 --  Prepare our context and sockets
 local context = zmq.init(1)
-local frontend = context:socket(zmq.XREP)
-local backend  = context:socket(zmq.XREP)
+local frontend = context:socket(zmq.ROUTER)
+local backend  = context:socket(zmq.ROUTER)
 frontend:bind("ipc://frontend.ipc")
 backend:bind("ipc://backend.ipc")
 

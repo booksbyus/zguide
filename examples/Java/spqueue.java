@@ -19,8 +19,8 @@ public class spqueue {
     public static void main (String[] args) {
         //  Prepare our context and sockets
         ZMQ.Context context = ZMQ.context(1);
-        ZMQ.Socket frontend = context.socket(ZMQ.XREP);
-        ZMQ.Socket backend = context.socket(ZMQ.XREP);
+        ZMQ.Socket frontend = context.socket(ZMQ.ROUTER);
+        ZMQ.Socket backend = context.socket(ZMQ.ROUTER);
         frontend.bind("tcp://*:5555");    // For clients
         backend.bind("tcp://*:5556");     // For workers
 

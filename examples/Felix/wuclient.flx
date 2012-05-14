@@ -1,0 +1,54 @@
+//
+//  Weather update client
+//  Connects SUB socket to tcp://localhost:5556
+//  Collects weather updates and finds avg temp in zipcode
+//
+open ZMQ;
+
+fun parse_int(s:string,var i:int) = {
+  var acc = 0;
+  while s.[i] \in "0123456789" do
+    acc = acc * 10 + s.[i].ord - "0".char.ord;
+    ++i;
+  done
+  return i,acc;
+}
+
+fun parse_space(s:string, i:int)=> i+1;
+ 
+fun parse_weather(s:string) = {
+  var i = 0;
+  def i, val zipcode = parse_int (s,i);
+  i = parse_space(s,i);
+  def i, val temperature = parse_int (s,i);
+  i = parse_space(s,i);
+  def i, val relhumidity= parse_int (s,i);
+  return zipcode, temperature, relhumidity;
+}
+
+var context = zmq_init 1;
+
+//  Socket to talk to server
+println "Collecting updates from weather server...";
+var subscriber = context.mk_socket ZMQ_SUB;
+subscriber.connect "tcp://localhost:5556";
+
+//  Subscribe to zipcode 100
+filter := if System::argc > 1 then System::argv 1 else "1001" endif;
+subscriber.set_opt$ zmq_subscribe filter;
+
+//  Process 100 updates
+var total_temp = 0;
+for var update_nbr in 0 upto 99 do
+  s := subscriber.recv_string;
+  zipcode, temperature, relhumidity := parse_weather s;
+  total_temp += temperature;
+done
+println$ 
+  f"Average temperature for zipcode '%S' was %d C\n"$
+  filter, total_temp / update_nbr
+;
+
+subscriber.close;
+context.term;
+

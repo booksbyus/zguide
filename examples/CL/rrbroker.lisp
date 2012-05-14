@@ -15,8 +15,8 @@
 (defun main ()
   ;; Prepare our context and sockets
   (zmq:with-context (context 1)
-    (zmq:with-socket (frontend context zmq:xrep)
-      (zmq:with-socket (backend context zmq:xreq)
+    (zmq:with-socket (frontend context zmq:router)
+      (zmq:with-socket (backend context zmq:dealer)
         (zmq:bind frontend "tcp://*:5559")
         (zmq:bind backend  "tcp://*:5560")
 

@@ -146,12 +146,13 @@ class MajorDomoBroker(object):
         worker = self.require_worker(sender)
 
         if (MDP.W_READY == command):
+            assert len(msg) >= 1 # At least, a service name
+            service = msg.pop(0)
             # Not first command in session or Reserved service name
-            if (worker_ready or sender.startswith(self.INTERNAL_SERVICE_PREFIX)):
+            if (worker_ready or service.startswith(self.INTERNAL_SERVICE_PREFIX)):
                 self.delete_worker(worker, True)
             else:
                 # Attach worker to service and mark as idle
-                service = msg.pop(0)
                 worker.service = self.require_service(service)
                 self.worker_waiting(worker)
             

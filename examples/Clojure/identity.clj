@@ -11,7 +11,7 @@
 
 (defn -main []
   (let [ctx (mq/context 1)
-        sink (mq/socket ctx mq/xrep)
+        sink (mq/socket ctx mq/router)
         anonymous (mq/socket ctx mq/req)
         identified (mq/socket ctx mq/req)]
     (mq/bind sink "inproc://example")

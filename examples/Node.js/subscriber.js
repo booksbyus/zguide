@@ -1,5 +1,5 @@
-var context = require('zeromq')
-var subscriber = context.createSocket('sub')
+var zmq = require('zmq')
+var subscriber = zmq.socket('sub')
 
 subscriber.on("message", function(reply) {
   console.log('Received message: ', reply.toString());

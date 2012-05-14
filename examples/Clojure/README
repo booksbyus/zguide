@@ -4,6 +4,26 @@ See LICENSE in examples directory
 Get started
 ===========
 
+Install zeromq
+* brew install zeromq (OSX)
+* sudo apt-get install libzmq-dev (Debian)
+
+Install jzmq
+$ git clone https://github.com/zeromq/jzmq.git
+$ cd jzmq
+$ ./configure
+$ make
+$ sudo make install
+$ sudo ldconfig (Debian)
+
+Put zmq.jar in maven repo
+$ cd /usr/local/share/java/
+$ mvn install:install-file -DgroupId=org.zmq -DartifactId=zmq -Dversion=2.1.0 -Dpackaging=jar -Dfile=zmq.jar
+
+Make sure zmq.jar is in classpath and libzmq.so is in LD_PATH
+$ export CLASSPATH=$CLASSPATH:.:/usr/local/share/java/zmq.jar
+$ export LD_LIBRARY_PATH=/usr/local/lib
+
 Assume you have leiningen[lein] installed.
 
         $ lein deps

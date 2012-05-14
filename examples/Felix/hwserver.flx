@@ -1,0 +1,32 @@
+// Hello World server
+// Binds REP socket to tcp://*:5555
+// Expects "Hello" from client, replies with "World"
+
+open ZMQ;
+println "hwserver, Felix version";
+
+var context = zmq_init (1);
+
+// Socket to talk to clients
+var responder = context.mk_socket ZMQ_REP;
+responder.bind "tcp://*:5555";
+var request = #zmq_msg_t;
+var reply = #zmq_msg_t;
+
+while true do 
+  // Wait for next request from client
+  request.init_string "Hello";
+  responder.recv_msg request;
+  println$ "Received Hello=" + string(request);
+  request.close;
+
+  // Do some 'work'
+  Faio::sleep (sys_clock,1.0);
+
+  // Send reply back to client
+  reply.init_size 5.size;
+  memcpy (zmq_msg_data reply, c"World".address, 5.size);
+  responder.send_msg reply;
+  reply.close;
+done
+

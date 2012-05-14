@@ -26,9 +26,11 @@ int main (int argc, char *argv[])
     std::cout << "Sending tasks to workers...\n" << std::endl;
 
     //  The first message is "0" and signals start of batch
+    zmq::socket_t sink(context, ZMQ_PUSH);
+    sink.connect("tcp://localhost:5558");
     zmq::message_t message(2);
     memcpy(message.data(), "0", 1);
-    sender.send(message);
+    sink.send(message);
 
     //  Initialize random number generator
     srandom ((unsigned) time (NULL));

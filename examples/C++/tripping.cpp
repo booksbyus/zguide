@@ -13,7 +13,7 @@ static void *
 client_task (void *args)
 {
     zmq::context_t context (1);
-    zmq::socket_t client (context, ZMQ_XREQ);
+    zmq::socket_t client (context, ZMQ_DEALER);
     client.setsockopt (ZMQ_IDENTITY, "C", 1);
     client.connect ("tcp://localhost:5555");
 
@@ -50,7 +50,7 @@ static void *
 worker_task (void *args)
 {
     zmq::context_t context (1);
-    zmq::socket_t worker (context, ZMQ_XREQ);
+    zmq::socket_t worker (context, ZMQ_DEALER);
     worker.setsockopt (ZMQ_IDENTITY, "W", 1);
     worker.connect ("tcp://localhost:5556");
 
@@ -66,8 +66,8 @@ broker_task (void *args)
 {
     //  Prepare our context and sockets
     zmq::context_t context (1);
-    zmq::socket_t frontend (context, ZMQ_XREP);
-    zmq::socket_t backend  (context, ZMQ_XREP);
+    zmq::socket_t frontend (context, ZMQ_ROUTER);
+    zmq::socket_t backend  (context, ZMQ_ROUTER);
     frontend.bind ("tcp://*:5555");
     backend.bind  ("tcp://*:5556");
 

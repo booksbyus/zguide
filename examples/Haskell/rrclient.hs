@@ -11,6 +11,7 @@ import System.ZMQ
 import Control.Monad (forM_)
 import Data.ByteString.Char8 (pack, unpack)
 
+main :: IO ()
 main = withContext 1 $ \context -> do  
   withSocket context Req $ \requester -> do
     connect requester "tcp://localhost:5559"

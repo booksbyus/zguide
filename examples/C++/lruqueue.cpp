@@ -61,8 +61,8 @@ int main (int argc, char *argv[])
 
     //  Prepare our context and sockets
     zmq::context_t context(1);
-    zmq::socket_t frontend (context, ZMQ_XREP);
-    zmq::socket_t backend (context, ZMQ_XREP);
+    zmq::socket_t frontend (context, ZMQ_ROUTER);
+    zmq::socket_t backend (context, ZMQ_ROUTER);
     frontend.bind("ipc://frontend.ipc");
     backend.bind("ipc://backend.ipc");
 

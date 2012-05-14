@@ -62,7 +62,7 @@ class MDCli {
 		if($this->client) {
 			unset($this->client);
 		}
-		$this->client = new ZMQSocket($this->context, ZMQ::SOCKET_XREQ);
+		$this->client = new ZMQSocket($this->context, ZMQ::SOCKET_DEALER);
 		$this->client->setSockOpt(ZMQ::SOCKOPT_LINGER, 0);
 		$this->client->connect($this->broker);
 		if($this->verbose) {

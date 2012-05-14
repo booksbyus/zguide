@@ -31,7 +31,7 @@ function broker_new(verbose)
     --  Initialize broker state
     return setmetatable({
         context = context,
-        socket = context:socket(zmq.XREP),
+        socket = context:socket(zmq.ROUTER),
         verbose = verbose,
         services = {},
         workers = {},

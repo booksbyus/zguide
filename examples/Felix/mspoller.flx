@@ -1,0 +1,34 @@
+//
+//  Reading from multiple sockets
+//  This version uses zmq_poll()
+//
+open ZMQ;
+
+var context = zmq_init 1;
+
+//  Connect to task ventilator
+var receiver = context.mk_socket ZMQ_PULL;
+receiver.connect "tcp://localhost:5557";
+
+//  Connect to weather server
+var subscriber = context.mk_socket ZMQ_SUB;
+subscriber.connect "tcp://localhost:5556";
+subscriber.set_opt$ zmq_subscribe "101 ";
+
+//  Initialize poll set
+var items = varray(
+  zmq_poll_item (receiver, ZMQ_POLLIN),
+  zmq_poll_item (subscriber, ZMQ_POLLOUT))
+;
+
+//  Process messages from both sockets
+while true do 
+   C_hack::ignore$ poll (items, -1.0);
+   if (items.[0].revents \& ZMQ_POLLIN).short != 0s do
+     var s = receiver.recv_string;
+     //  Process task
+   done
+   if (items.[1].revents \& ZMQ_POLLIN).short != 0s do
+     s = subscriber.recv_string;
+   done
+done

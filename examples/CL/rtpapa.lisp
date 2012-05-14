@@ -1,6 +1,6 @@
 ;;; -*- Mode:Lisp; Syntax:ANSI-Common-Lisp; -*-
 ;;;
-;;;  Custom routing Router to Papa (XREP to REP) in Common Lisp
+;;;  Custom routing Router to Papa (ROUTER to REP) in Common Lisp
 ;;;
 ;;; Kamil Shakirov <kamils80@gmail.com>
 ;;;
@@ -15,7 +15,7 @@
 ;; We will do this all in one thread to emphasize the sequence of events...
 (defun main ()
   (zmq:with-context (context 1)
-    (zmq:with-socket (client context zmq:xrep)
+    (zmq:with-socket (client context zmq:ROUTER)
       (zmq:bind client "ipc://routing.ipc")
       (zmq:with-socket (worker context zmq:rep)
         (zmq:setsockopt worker zmq:identity "A")
@@ -38,7 +38,7 @@
         ;; We don't play with envelopes in the worker
         (send-text worker "This is the reply")
 
-        ;; Now dump what we got off the XREP socket...
+        ;; Now dump what we got off the ROUTER socket...
         (dump-socket client))))
 
   (cleanup))

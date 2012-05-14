@@ -1,6 +1,5 @@
 
 import org.zeromq.ZMQ;
-import org.zeromq.ZMQ.Socket;
 
 /**
  *
@@ -26,11 +25,14 @@ public class taskwork2 {
 		items.register(controller, ZMQ.Poller.POLLIN);
 
 		while (true) {
+			
+			items.poll();
+			
 			if (items.pollin(0)) {
 				byte[] message = receiver.recv(0);
 				
 				String string = new String(message).trim();
-				long nsec = Long.parseLong(string) * 1000000;
+				long nsec = Long.parseLong(string);
 				
 				//  Simple progress indicator for the viewer
 				System.out.flush();
@@ -49,12 +51,13 @@ public class taskwork2 {
 				break; // Exit loop
 			}
 
-			// Finished
-			receiver.close();
-			sender.close();
-			controller.close();
-			context.term();
-			System.exit(0);
 		}
+		
+		// Finished
+		receiver.close();
+		sender.close();
+		controller.close();
+		context.term();
+		System.exit(0);
 	}
 }

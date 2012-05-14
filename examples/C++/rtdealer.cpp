@@ -1,5 +1,5 @@
 //
-//  Custom routing Router to Dealer (XREP to XREQ)
+//  Custom routing Router to Dealer
 //
 // Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
 
@@ -11,7 +11,7 @@
 void *worker_a (void *arg) {
 	
 	zmq::context_t * context = (zmq::context_t *)arg;
-    zmq::socket_t worker (*context, ZMQ_XREQ);
+    zmq::socket_t worker (*context, ZMQ_DEALER);
     worker.setsockopt( ZMQ_IDENTITY, "A", 1);
     worker.connect("ipc://routing.ipc");
 
@@ -32,7 +32,7 @@ void *worker_a (void *arg) {
 void *worker_b (void *arg) {
 	
 	zmq::context_t * context = (zmq::context_t *)arg;
-    zmq::socket_t worker (*context, ZMQ_XREQ);
+    zmq::socket_t worker (*context, ZMQ_DEALER);
     worker.setsockopt( ZMQ_IDENTITY, "B", 1);
     worker.connect("ipc://routing.ipc");
 
@@ -54,7 +54,7 @@ int main () {
 
     zmq::context_t context(1);
 
-    zmq::socket_t client (context, ZMQ_XREP);
+    zmq::socket_t client (context, ZMQ_ROUTER);
     client.bind("ipc://routing.ipc");
 
     pthread_t worker;

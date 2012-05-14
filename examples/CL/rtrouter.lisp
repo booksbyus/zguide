@@ -1,6 +1,6 @@
 ;;; -*- Mode:Lisp; Syntax:ANSI-Common-Lisp; -*-
 ;;;
-;;;  Cross-connected XREP sockets addressing each other in Common Lisp
+;;;  Cross-connected ROUTER sockets addressing each other in Common Lisp
 ;;;
 ;;; Kamil Shakirov <kamils80@gmail.com>
 ;;;
@@ -14,11 +14,11 @@
 
 (defun main ()
   (zmq:with-context (context 1)
-    (zmq:with-socket (worker context zmq:xrep)
+    (zmq:with-socket (worker context zmq:router)
       (zmq:setsockopt worker zmq:identity "WORKER")
       (zmq:bind worker "ipc://rtrouter.ipc")
 
-      (zmq:with-socket (server context zmq:xrep)
+      (zmq:with-socket (server context zmq:router)
         (zmq:setsockopt server zmq:identity "SERVER")
         (zmq:connect server "ipc://rtrouter.ipc")
 

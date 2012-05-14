@@ -12,9 +12,10 @@ import Data.Function (fix)
 import Data.ByteString.Char8 (pack, unpack)
 import Control.Concurrent (threadDelay)
 
-main = withContext 1 $ \context -> do  
-  withSocket context Xrep $ \frontend -> do
-    withSocket context Xreq $ \backend -> do
+main :: IO ()
+main = withContext 1 $ \context -> do
+  withSocket context XRep $ \frontend -> do
+    withSocket context XReq $ \backend -> do
       
       bind frontend "tcp://*:5559"
       bind backend "tcp://*:5560"      

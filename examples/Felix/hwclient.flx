@@ -1,0 +1,32 @@
+// Hello World client
+// Connects REQ socket to tcp://localhost:5555
+// Sends "Hello" to server, expects "World" back
+
+open ZMQ;
+println "hwclient, Felix version";
+
+var context = zmq_init 1;
+
+    // Socket to talk to server
+    println "Connecting to hello world server";
+
+var requester = context.mk_socket ZMQ_REQ;
+
+requester.connect "tcp://localhost:5555";
+var request = #zmq_msg_t;
+var reply = #zmq_msg_t;
+
+for var request_nbr in 0 upto 9 do
+  request.init_size 5.size;
+  memcpy (zmq_msg_data request, c"Hello".address, 5.size);
+  print$ f"Sending Hello %d\n" request_nbr;
+  requester.send_msg request;
+  request.close;
+  reply.init_size 5.size;
+  requester.recv_msg reply;
+  println$ f"Received World %d=%S" (request_nbr, reply.string);
+  reply.close;
+done
+requester.close;
+context.term;
+

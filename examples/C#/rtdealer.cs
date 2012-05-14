@@ -1,13 +1,13 @@
 ﻿//
-//  Custom routing Router to Dealer (XREP to XREQ)
+//  Custom routing Router to Dealer
 //
 //  While this example runs in a single process, that is just to make
 //  it easier to start and stop the example. Each thread has its own
 //  context and conceptually acts as a separate process.
 //
 
-//  Author:     Michael Compton
-//  Email:      michael.compton@littleedge.co.uk
+//  Author:     Michael Compton, Tomas Roos
+//  Email:      michael.compton@littleedge.co.uk. ptomasroos@gmail.com
 
 using System;
 using System.Threading;
@@ -15,70 +15,35 @@ using System.Collections.Generic;
 using System.Text;
 using ZMQ;
 
-namespace rtdealer {
-    class Program {
+namespace ZMQGuide
+{
+    internal class Program
+    {
         //  We have two workers, here we copy the code, normally these would
         //  run on different boxes...
-        //
-        static void WorkerTaskA() {
-            using (Context ctx = new Context(1)) {
-                using (Socket worker = ctx.Socket(SocketType.XREQ)) {
-                    worker.StringToIdentity("A", Encoding.Unicode);
-                    worker.Connect("tcp://localhost:5555");
-                    int total = 0;
-                    while (true) {
-                        string request = worker.Recv(Encoding.Unicode);
-                        if(request.Equals("END")) {
-                            Console.WriteLine("A Received: {0}", total);
-                            break;
-                        }
-                        total++;
-                    }
-                }
-            }
-        }
-
-        static void WorkerTaskB() {
-            using (Context ctx = new Context(1)) {
-                using (Socket worker = ctx.Socket(SocketType.XREQ)) {
-                    worker.StringToIdentity("B", Encoding.Unicode);
-                    worker.Connect("tcp://localhost:5555");
-                    int total = 0;
-                    while (true) {
-                        string request = worker.Recv(Encoding.Unicode);
-                        if (request.Equals("END")) {
-                            Console.WriteLine("B Received: {0}", total);
-                            break;
-                        }
-                        total++;
-                    }
-                }
-            }
-        }
-
-        static void Main(string[] args) {
-            Random rand = new Random(DateTime.Now.Millisecond);
-            List<Thread> workers = new List<Thread>(new Thread[] { 
-                new Thread(WorkerTaskA), new Thread(WorkerTaskB) });
-            using (Context ctx = new Context(1)) {
-                using (Socket client = ctx.Socket(SocketType.XREP)) {
+        public static void Main(string[] args)
+        {
+            var randomizer = new Random(DateTime.Now.Millisecond);
+            var workers = new List<Thread>(new[] { new Thread(WorkerTaskA), new Thread(WorkerTaskB) });
+            
+            using (var context = new Context(1))
+            {
+                using (Socket client = context.Socket(SocketType.ROUTER))
+                {
                     client.Bind("tcp://*:5555");
-                    foreach (Thread thread in workers) {
+                    foreach (Thread thread in workers)
+                    {
                         thread.Start();
                     }
 
-                    //  Wait for threads to connect, since otherwise the messages
-                    //  we send won't be routable.
+                    //  Wait for threads to connect, since otherwise the messages we send won't be routable.
                     Thread.Sleep(1000);
 
-                    //  Send 10 tasks scattered to A twice as often as B
-                    for (int taskNbr = 0; taskNbr < 10; taskNbr++) {
+                    for (int taskNumber = 0; taskNumber < 10; taskNumber++)
+                    {
                         //  Send two message parts, first the address...
-                        if (rand.Next(3) > 0) {
-                            client.SendMore("A", Encoding.Unicode);
-                        } else {
-                            client.SendMore("B", Encoding.Unicode);
-                        }
+                        client.SendMore(randomizer.Next(3) > 0 ? "A" : "B", Encoding.Unicode);
+
                         //  And then the workload
                         client.Send("This is the workload", Encoding.Unicode);
                     }
@@ -88,7 +53,72 @@ namespace rtdealer {
 
                     client.SendMore("B", Encoding.Unicode);
                     client.Send("END", Encoding.Unicode);
-                    Console.ReadLine();
+                }
+            }
+
+            Console.ReadKey();
+        }
+
+        private static void WorkerTaskA()
+        {
+            using (var context = new Context(1))
+            {
+                using (Socket worker = context.Socket(SocketType.DEALER))
+                {
+                    worker.StringToIdentity("A", Encoding.Unicode);
+                    worker.Connect("tcp://localhost:5555");
+
+                    int total = 0;
+
+                    bool end = false;
+
+                    while (!end)
+                    {
+                        string request = worker.Recv(Encoding.Unicode);
+                        
+                        if (request.Equals("END"))
+                        {
+                            end = true;
+                        }
+                        else
+                        {
+                            total++;
+                        }
+                    }
+
+                    Console.WriteLine("A Received: {0}", total);
+                }
+            }
+        }
+
+        private static void WorkerTaskB()
+        {
+            using (var context = new Context(1))
+            {
+                using (Socket worker = context.Socket(SocketType.DEALER))
+                {
+                    worker.StringToIdentity("B", Encoding.Unicode);
+                    worker.Connect("tcp://localhost:5555");
+
+                    int total = 0;
+
+                    bool end = false;
+
+                    while (!end)
+                    {
+                        string request = worker.Recv(Encoding.Unicode);
+
+                        if (request.Equals("END"))
+                        {
+                            end = true;
+                        }
+                        else
+                        {
+                            total++;
+                        }
+                    }
+
+                    Console.WriteLine("B Received: {0}", total);
                 }
             }
         }

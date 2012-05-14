@@ -1,0 +1,36 @@
+//
+//  Reading from multiple sockets
+//  This version uses a simple recv loop
+//
+open ZMQ;
+
+//  Prepare our context and sockets
+var context = zmq_init 1;
+
+//  Connect to task ventilator
+var receiver = context.mk_socket ZMQ_PULL;
+receiver.connect "tcp://localhost:5557";
+
+//  Connect to weather server
+var subscriber = context.mk_socket ZMQ_SUB;
+subscriber.connect "tcp://localhost:5556";
+subscriber.set_opt$  zmq_subscribe "101 ";
+
+//  Process messages from both sockets
+//  We prioritize traffic from the task ventilator
+while true do
+  //  Process any waiting tasks
+  var task = receiver.recv_string_dontwait;
+  while task != "" do
+    //  process task
+    task = receiver.recv_string_dontwait;
+  done
+
+  //  Process any waiting weather updates
+  var update = subscriber.recv_string_dontwait;
+  while update != "" do
+    //  process update 
+    update = subscriber.recv_string_dontwait;
+  done
+  Faio::sleep (sys_clock,0.001); // 1 ms
+done

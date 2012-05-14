@@ -1,26 +1,28 @@
 ﻿//
-//  Custom routing Router to Papa (XREP to REP)
+//  Custom routing Router to Papa (ROUTER to REP)
 //
 
-//  Author:     Michael Compton
-//  Email:      michael.compton@littleedge.co.uk
+//  Author:     Michael Compton, Tomas Roos
+//  Email:      michael.compton@littleedge.co.uk, ptomasroos@gmail.com
 
-using System;
-using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using ZMQ;
 
-namespace rtpapa {
-    class Program {
+namespace ZMQGuide
+{
+    internal class Program
+    {
         //  We will do this all in one thread to emphasize the sequence
         //  of events...
-        static void Main(string[] args) {
-            using (Context ctx = new Context(1)) {
-                using (Socket client = ctx.Socket(SocketType.XREP),
-                    worker = ctx.Socket(SocketType.REP)) {
-
+        public static void Main(string[] args)
+        {
+            using (var context = new Context(1))
+            {
+                using (Socket client = context.Socket(SocketType.ROUTER), worker = context.Socket(SocketType.REP))
+                {
                     client.Bind("inproc://routing");
+
                     worker.StringToIdentity("A", Encoding.Unicode);
                     worker.Connect("inproc://routing");
 
@@ -42,7 +44,7 @@ namespace rtpapa {
                     //  We don't play with envelopes in the worker
                     worker.Send("This is the reply", Encoding.Unicode);
 
-                    //  Now dump what we got off the XREP socket...
+                    //  Now dump what we got off the ROUTER socket...
                     ZHelpers.Dump(client, Encoding.Unicode);
                 }
             }

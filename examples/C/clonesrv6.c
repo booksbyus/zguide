@@ -71,11 +71,13 @@ int main (int argc, char *argv [])
     //  Set up our clone server sockets
     self->publisher = zsocket_new (self->ctx, ZMQ_PUB);
     self->collector = zsocket_new (self->ctx, ZMQ_SUB);
+    zsockopt_set_subscribe (self->collector, "");
     zsocket_bind (self->publisher, "tcp://*:%d", self->port + 1);
     zsocket_bind (self->collector, "tcp://*:%d", self->port + 2);
 
     //  Set up our own clone client interface to peer
     self->subscriber = zsocket_new (self->ctx, ZMQ_SUB);
+    zsockopt_set_subscribe (self->subscriber, "");
     zsocket_connect (self->subscriber, "tcp://localhost:%d", self->peer + 1);
 
     //  Register state change handlers
@@ -150,6 +152,7 @@ s_snapshots (zloop_t *loop, zmq_pollitem_t *poller, void *args)
             kvmsg_destroy (&kvmsg);
             free (subtree);
         }
+        zframe_destroy(&identity);
     }
     return 0;
 }
@@ -343,7 +346,8 @@ s_subscriber (zloop_t *loop, zmq_pollitem_t *poller, void *args)
         zsocket_connect (snapshot, "tcp://localhost:%d", self->peer);
         zclock_log ("I: asking for snapshot from: tcp://localhost:%d",
                     self->peer);
-        zstr_send (snapshot, "ICANHAZ?");
+        zstr_sendm (snapshot, "ICANHAZ?");
+        zstr_send (snapshot, ""); // blank subtree to get all
         while (TRUE) {
             kvmsg_t *kvmsg = kvmsg_recv (snapshot);
             if (!kvmsg)

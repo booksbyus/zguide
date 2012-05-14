@@ -1,0 +1,23 @@
+//
+//  Weather update server
+//  Binds PUB socket to tcp://*:5556
+//  Publishes random weather updates
+//
+open ZMQ;
+
+//  Prepare our context and publisher
+var context = zmq_init 1;
+var publisher = context.mk_socket ZMQ_PUB;
+publisher.bind "tcp://*:5556";
+publisher.bind "ipc://weather.ipc";
+
+while true do
+  //  Get values that will fool the boss
+  zipcode     := #rand % 1000+1000;
+  temperature := #rand % 80 - 20; // Oztraila mate!
+  relhumidity := #rand % 50 + 10;
+
+                     //  Send message to all subscribers
+  update := f"%03d %d %d" (zipcode, temperature, relhumidity);
+  publisher.send_string update;
+done
