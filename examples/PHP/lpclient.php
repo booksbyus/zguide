@@ -40,7 +40,7 @@ while($retries_left) {
 		//  Poll socket for a reply, with timeout
 		$poll = new ZMQPoll();
 		$poll->add($client, ZMQ::POLL_IN);
-		$events = $poll->poll($read, $write, REQUEST_TIMEOUT * 1000);
+		$events = $poll->poll($read, $write, REQUEST_TIMEOUT);
 		
 		//  If we got a reply, process it
 		if($events > 0) {

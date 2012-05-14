@@ -32,7 +32,7 @@ function client_task() {
 	while(true) {
 		//  Tick once per second, pulling in arriving messages
 		for($centitick = 0; $centitick < 100; $centitick++) {
-			$events = $poll->poll($read, $write, 10000);
+			$events = $poll->poll($read, $write, 1000);
 			$zmsg = new Zmsg($client);
 			if($events) {
 				$zmsg->recv();
@@ -74,7 +74,7 @@ function server_task() {
 	
 	//  Connect backend to frontend via a queue device
 	//  We could do this:
-	//      $device = new ZMQDevice(ZMQ::DEVICE_QUEUE, $frontend, $backend);
+	//      $device = new ZMQDevice($frontend, $backend);
 	//  But doing it ourselves means we can debug this more easily
     
 	$read = $write = array();
