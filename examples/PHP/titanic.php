@@ -209,7 +209,7 @@ while(true) {
     //  We'll dispatch once per second, if there's no activity
     $poll = new ZMQPoll();
     $poll->add($request_pipe, ZMQ::POLL_IN);
-    $events = $poll->poll($read, $write, 1000 * ZMQ_POLL_MSEC);
+    $events = $poll->poll($read, $write, 1000);
     
     if($events) {
         //  Ensure message directory exists

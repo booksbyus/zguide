@@ -103,7 +103,7 @@ while(true) {
 		$poll->add($frontend, ZMQ::POLL_IN);
 	}
 	
-	$events = $poll->poll($read, $write, HEARTBEAT_INTERVAL * 1000 * 1000); // microseconds
+	$events = $poll->poll($read, $write, HEARTBEAT_INTERVAL * 1000 ); // milliseconds
 	
 	if($events > 0) {
 		foreach($read as $socket) {

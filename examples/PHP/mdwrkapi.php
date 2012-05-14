@@ -156,7 +156,7 @@ class MDWrk {
         while(true) {
             $poll = new ZMQPoll();
             $poll->add($this->worker, ZMQ::POLL_IN);
-            $events = $poll->poll($read, $write, $this->heartbeat * ZMQ_POLL_MSEC);
+            $events = $poll->poll($read, $write, $this->heartbeat);
 
             if($events) {
                 $zmsg = new Zmsg($this->worker);

@@ -8,7 +8,7 @@ $context = new ZMQContext(1);
 
 //  Subscriber tells us when it's ready here
 $sync = new ZMQSocket($context, ZMQ::SOCKET_PULL);
-$sync->bind("htcp://*:5564");
+$sync->bind("tcp://*:5564");
 
 //  We send updates via this socket
 $publisher = new ZMQSocket($context, ZMQ::SOCKET_PUB);
