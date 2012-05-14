@@ -32,7 +32,7 @@ function client_task() {
 	while(true) {
 		//  Tick once per second, pulling in arriving messages
 		for($centitick = 0; $centitick < 100; $centitick++) {
-			$events = $poll->poll($read, $write, 10000);
+			$events = $poll->poll($read, $write, 1000);
 			$zmsg = new Zmsg($client);
 			if($events) {
 				$zmsg->recv();
