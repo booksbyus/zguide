@@ -269,7 +269,7 @@ class Mdbroker {
             }
         } else if($command == MDPW_HEARTBEAT) {
             if($worker_ready) {
-                $worker->expiry = microtime(true) + HEARTBEAT_EXPIRY;
+                $worker->expiry = microtime(true) + (HEARTBEAT_EXPIRY/1000);
             } else {
                 $this->worker_delete($worker, true);
             }
