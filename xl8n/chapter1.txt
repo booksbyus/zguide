@@ -1,0 +1,999 @@
+.-  Instructions for z2w
+.set GIT=https://github.com/imatix/zguide
+.set BRANCH=master
+.set EMAIL=zeromq-dev@lists.zeromq.org
+.set LIST=http://lists.zeromq.org/mailman/listinfo/zeromq-dev
+
+.output chapter1.wd
+**By Pieter Hintjens <ph@imatix.com>, CEO iMatix Corporation.**
+
+With thanks to Bill Desmarais, Brian Dorsey, Daniel Lin, Eric Desgranges, Gonzalo Diethelm, Guido Goldstein, Hunter Ford, Kamil Shakirov, Martin Sustrik, Mike Castleman, Naveen Chawla, Nicola Peduzzi, Oliver Smith, Olivier Chamoux, Peter Alexander, Pierre Rouleau, Randy Dryburgh, John Unwin, Alex Thomas, Mihail Minkov, Jeremy Avnet, Michael Compton, Kamil Kisiel, Mark Kharitonov, Guillaume Aubert, Ian Barber, Mike Sheridan, Faruk Akgul, Oleg Sidorov, Lev Givon, Allister MacLeod, Alexander D'Archangel, Andreas Hoelzlwimmer, Han Holl, Robert G. Jakabosky, Felipe Cruz, Marcus McCurdy, Mikhail Kulemin, Dr. Gergő Érdi, Pavel Zhukov, Alexander Else, Giovanni Ruggiero, Rick "Technoweenie", Daniel Lundin, Dave Hoover, Simon Jefford, Benjamin Peterson, Justin Case, Devon Weller, Richard Smith, Alexander Morland, Wadim Grasza, Michael Jakl, Uwe Dauernheim, Sebastian Nowicki, Simone Deponti, Aaron Raddon, Dan Colish, Markus Schirp, Benoit Larroque, Jonathan Palardy, Isaiah Peng, Arkadiusz Orzechowski, Umut Aydin, Matthew Horsfall, Jeremy W. Sherman, Eric Pugh, Tyler Sellon, John E. Vincent, Pavel Mitin, Min RK, Igor Wiedler, Olof Åkesson, Patrick Lucas, Heow Goodman, Senthil Palanisami, John Gallagher, Tomas Roos, Stephen McQuay, Erik Allik, Arnaud Cogoluègnes, Rob Gagnon, Dan Williams, Edward Smith, James Tucker, Kristian Kristensen, Vadim Shalts, and Zed Shaw for their contributions, and to Stathis Sideris for [http://www.ditaa.org Ditaa].
+
+Please use the [$(GIT)/issues issue tracker] for all comments and errata. This version covers the latest stable release of 0MQ (2.1.x) and was published on &date("ddd d mmmm, yyyy"). If you are using 0MQ/3.1 some of the examples and explanations won't match.
+
+The Guide is mainly [/page:all in C], but also in [/php:all PHP], [/py:all Python], [/lua:all Lua], and [/hx:all Haxe]. Nearly every example is also shown in C++, C#, CL, Erlang, F#, Felix, Haskell, Java, Objective-C, Ruby, Ada, Basic, Clojure, Go, Haxe, Node.js, ooc, Perl, and Scala.
+这个向导主要使用 [/page:all C语言], 但也会使用 [/php:all PHP], [/lua:all Lua], 和 [/hx:all Haxe].
+
+++ Chapter One - Basic Stuff
+++ 第一节 - 基础
+
++++ Fixing the World
++++ 拯救世界
+
+
+How to explain 0MQ? Some of us start by saying all the wonderful things it does. //It's sockets on steroids. It's like mailboxes with routing. It's fast!//  Others try to share their moment of enlightenment, that zap-pow-kaboom satori paradigm-shift moment when it all became obvious. //Things just become simpler. Complexity goes away. It opens the mind.//  Others try to explain by comparison. //It's smaller, simpler, but still looks familiar.//  Personally, I like to remember why we made 0MQ at all, because that's most likely where you, the reader, still are today.
+怎么解释0MQ? 我们中的一些人说它做了所有精彩的事情。它像一个带路由的邮件箱。它很快！
+使用0MQ，事情立刻变得简单了。复杂性消失了。它打开了我们的灵感。
+
+
+Programming is a science dressed up as art, because most of us don't understand the physics of software, and it's rarely if ever taught. The physics of software is not algorithms, data structures, languages and abstractions. These are just tools we make, use, throw away. The real physics of software is the physics of people.
+
+Specifically, our limitations when it comes to complexity, and our desire to work together to solve large problems in pieces. This is the science of programming: make building blocks that people can understand and use //easily//, and people will work together to solve the very largest problems.
+
+We live in a connected world, and modern software has to navigate this world. So the building blocks for tomorrow's very largest solutions are connected and massively parallel. It's not enough for code to be "strong and silent" any more. Code has to talk to code. Code has to be chatty, sociable, well-connected. Code has to run like the human brain, trillions of individual neurons firing off messages to each other, a massively parallel network with no central control, no single point of failure, yet able to solve immensely difficult problems. And it's no accident that the future of code looks like the human brain, because the endpoints of every network are, at some level, human brains.
+
+If you've done any work with threads, protocols, or networks, you'll realize this is pretty much impossible. It's a dream. Even connecting a few programs across a few sockets is plain nasty, when you start to handle real life situations. Trillions? The cost would be unimaginable. Connecting computers is so difficult that software and services to do this is a multi-billion dollar business.
+
+So we live in a world where the wiring is years ahead of our ability to use it. We had a software crisis in the 1980s, when people like Fred Brooks believed [http://en.wikipedia.org/wiki/No_Silver_Bullet there was no "Silver Bullet"]. Free and open source software solved that crisis, enabling us to share knowledge efficiently. Today we face another software crisis, but it's one we don't talk about much. Only the largest, richest firms can afford to create connected applications. There is a cloud, but it's proprietary. Our data, our knowledge is disappearing from our personal computers into clouds that we cannot access, cannot compete with. Who owns our social networks? It is like the mainframe-PC revolution in reverse.
+
+We can leave the political philosophy for another book. The point is that while the Internet offers the potential of massively connected code, the reality is that this is out of reach for most of us, and so, large interesting problems (in health, education, economics, transport, and so on) remain unsolved because there is no way to connect the code, and thus no way to connect the brains that could work together to solve these problems.
+
+There have been many attempts to solve the challenge of connected software. There are thousands of IETF specifications, each solving part of the puzzle. For application developers, HTTP is perhaps the one solution to have been simple enough to work, but it arguably makes the problem worse, by encouraging developers and architects to think in terms of big servers and thin, stupid clients.
+
+So today people are still connecting applications using raw UDP and TCP, proprietary protocols, HTTP, WebSockets. It remains painful, slow, hard to scale, and essentially centralized. Distributed p2p architectures are mostly for play, not work. How many applications use Skype or Bittorrent to exchange data?
+
+Which brings us back to the science of programming. To fix the world, we needed to do two things. One, to solve the general problem of "how to connect any code to any code, anywhere". Two, to wrap that up in the simplest possible building blocks that people could understand and use //easily//.
+
+It sounds ridiculously simple. And maybe it is. That's kind of the whole point.
+
++++ 0MQ in a Hundred Words
++++ 一百字的0MQ简介
+
+0MQ (ZeroMQ, 0\MQ, zmq) looks like an embeddable networking library but acts like a concurrency framework. It gives you sockets that carry whole messages across various transports like in-process, inter-process, TCP, and multicast. You can connect sockets N-to-N with patterns like fanout, pub-sub, task distribution, and request-reply. It's fast enough to be the fabric for clustered products. Its asynchronous I/O model gives you scalable multicore applications, built as asynchronous message-processing tasks. It has a score of language APIs and runs on most operating systems. 0MQ is from [http://www.imatix.com iMatix] and is LGPL open source.
+
++++ Some Assumptions
++++ 一些假设
+
+We assume you are using the latest stable release of 0MQ. We assume you are using a Linux box or something similar. We assume you can read C code, more or less, that's the default language for the examples. We assume that when we write constants like PUSH or SUBSCRIBE you can imagine they are really called ZMQ_PUSH or ZMQ_SUBSCRIBE if the programming language needs it.
+我们假设你使用的是最新的稳定版0MQ。我们假设你使用Linux盒子或类似（本文中所有的机器/电脑/设备统称为盒子）。我们假设你可以阅读C代码，它或多或少是示例中的默认语言。我们假设当我们写到一些诸如PUSH或者SUBSCRIBE这样的常量的时候你可以想象出如果 程序中需要的实际是ZMQ_PUSH或者ZMQ_SUBSCRIBE。
+
++++ Getting the Examples
++++ 获取示例
+
+The Guide examples live in the Guide's [https://github.com/imatix/zguide git repository]. The simplest way to get all the examples is to clone this repository:
+本向导的示例代码放在 [https://github.com/imatix/zguide git repository]. 最简单的获取所有示例代码的方法就是克隆这个仓库:
+
+[[code]]
+git clone --depth=1 git://github.com/imatix/zguide.git
+[[/code]]
+
+And then browse the examples subdirectory. You'll find examples by language. If there are examples missing in a language you use, you're encouraged to [http://zguide.zeromq.org/main:translate submit a translation]. This is how the Guide became so useful, thanks to the work of many people.
+然后就可以查看名为examples的子目录。你可以按照语言查找示例。如果你使用的语言没有，欢迎访问[http://zguide.zeromq.org/main:translate 提交你翻译的代码]。这就是向导如何变得如此有用，感谢为大家而做的工作。
+
+All examples are licensed under MIT/X11, unless otherwise specified in the source code.
+除非在源码中特别指定，否则所有的示例代码都是MIT/X11授权的。
+
++++ Ask and Ye Shall Receive
++++ 请求便会得到
+
+So let's start with some code. We start of course with a Hello World example. We'll make a client and a server. The client sends "Hello" to the server, which replies with "World". Here's the server in C, which opens a 0MQ socket on port 5555, reads requests on it, and replies with "World" to each request:
+让我们从一些代码开始。我们从一个helloworld示例代码开始。我们要创建一个客户端和服务器。客户端发送hello给服务器，服务器则回复world。下面是一个C的服务器代码，先在5555端口打开了一个0MQ socket并读取请求，并且给每一个请求回复world：
+
+[[code type="example" title="Hello World server" name="hwserver" language="C"]]
+[[/code]]
+
+[[code type="textdiagram"]]
+          +------------+
+          |            |
+          |   Client   |
+          |            |
+          +------------+
+          |    REQ     |
+          \---+--------/
+              |    ^
+              |    |
+         "Hello"  "World"
+              |    |
+              v    |
+          /--------+---\
+          |    REP     |
+          +------------+
+          |            |
+          |   Server   |
+          |            |
+          +------------+
+
+
+     Figure # - Request-Reply
+[[/code]]
+
+The REQ-REP socket pair is lockstep. The client does zmq_send[3] and then zmq_recv[3], in a loop (or once if that's all it needs). Doing any other sequence (e.g. sending two messages in a row) will result in a return code of -1 from the send or recv call. Similarly the service does zmq_recv[3] and then zmq_send[3] in that order, and as often as it needs to.
+REQ-REP套接字对是同步的。客户端在一个循环中先调用zmq_send[3]，然后调用zmq_recv[3]（或者不在循环中也行）。不按照这个顺序会在send或者recv调用后得到-1的返回值（比如一行调用两次发送信息）。相应的，服务器也要先调用zmq_recv[3]再调用zmq_send[3]，多频繁都可以。
+
+0MQ uses C as its reference language and this is the main language we'll use for examples. If you're reading this on-line, the link below the example takes you to translations into other programming languages. Let's compare the same server in C++:
+0MQ使用C语言开发，这也是我们的示例主要使用的语言。如果你在读文本的在线版本，示例下面有其他语言的链接。让我们比较一下同样一个服务器的C++代码吧：
+
+[[code type="example" title="Hello World server" name="hwserver" language="C++"]]
+[[/code]]
+
+You can see that the 0MQ API is similar in C and C++. In a language like PHP, we can hide even more and the code becomes even easier to read:
+你可以看到0MQ的API和C或者C++非常相似。在一些诸如PHP的语言中，我们可以更多的隐藏细节，代码也会变得非常易读：
+
+[[code type="example" title="Hello World server" name="hwserver" language="PHP"]]
+[[/code]]
+
+Here's the client code (click the link below the source to look at, or contribute a translation in your favorite programming language):
+这里有一段客户端代码 (点击源代码下面的链接查看, 或者贡献你转换的你喜欢的程序语言):
+
+[[code type="example" title="Hello World client" name="hwclient"]]
+[[/code]]
+
+Now this looks too simple to be realistic, but a 0MQ socket is what you get when you take a normal TCP socket, inject it with a mix of radioactive isotopes stolen from a secret Soviet atomic research project, bombard it with 1950-era cosmic rays, and put it into the hands of a drug-addled comic book author with a badly-disguised fetish for bulging muscles clad in spandex. Yes, 0MQ sockets are the world-saving superheroes of the networking world.
+
+[[code type="textdiagram"]]
+ +------------+        +------------+
+ |            |        |            | Zap!
+ | TCP socket +------->| 0MQ socket |
+ |            | BOOM!  |     cC00   |  POW!!
+ +------------+        +------------+
+   ^    ^    ^
+   |    |    |
+   |    |    +---------+
+   |    |              |
+   |    +----------+   |
+  Illegal          |   |
+  radioisotopes    |   |
+  from secret      |   |
+  Soviet atomic    | Spandex
+  city             |
+               Cosmic rays
+
+
+    Figure # - A terrible accident...
+[[/code]]
+
+You could literally throw thousands of clients at this server, all at once, and it would continue to work happily and quickly. For fun, try starting the client and //then// starting the server, see how it all still works, then think for a second what this means.
+毫不夸张的说，你可以用上千个客户端连接这个服务器。所有的都可以立刻开始并且快速的工作。有趣的是，可以尝试启动客户端//然后//启动服务器，看看他们是如何一直保持工作的，然后想一想这意味着什么。
+
+Let me explain briefly what these two programs are actually doing. They create a 0MQ context to work with, and a socket. Don't worry what the words mean. You'll pick it up. The server binds its REP (reply) socket to port 5555. The server waits for a request, in a loop, and responds each time with a reply. The client sends a request and reads the reply back from the server.
+
+If you kill the server (Ctrl-C) and restart it, the client won't recover properly. Recovering from crashing processes isn't quite that easy. Making a reliable request-reply flow is complex enough that I won't cover it until Chapter Four.
+
+There is a lot happening behind the scenes but what matters to us programmers is how short and sweet the code is, and how often it doesn't crash, even under heavy load. This is the request-reply pattern, probably the simplest way to use 0MQ. It maps to RPC and the classic client-server model.
+
++++ A Minor Note on Strings
++++ 一个关注字符串的小小的建议
+
+0MQ doesn't know anything about the data you send except its size in bytes. That means you are responsible for formatting it safely so that applications can read it back. Doing this for objects and complex data types is a job for specialized libraries like Protocol Buffers. But even for strings you need to take care.
+除了数据的长度，0MQ完全不知道你发送的数据的任何信息。这意味着你要负责安全的格式化数据以便应用程序读取它。对对象和复杂数据类型做格式化是特殊库的工作就像协议缓冲，但是对于字符串还是要小心对待。
+
+In C and some other languages, strings are terminated with a null byte. We could send a string like "HELLO" with that extra null byte:
+在C和许多其他语言中，字符串是null结尾。我们发送字符串"Hello"的时候需要附加null字符作为结尾：
+
+[[code language="C"]]
+zmq_msg_init_data (&request, "Hello", 6, NULL, NULL);
+[[/code]]
+
+However if you send a string from another language it probably will not include that null byte. For example, when we send that same string in Python, we do this:
+然而，如果你从其他语言发送一个字符串可能会不带null结尾字符。例如，我们使用python发送字符串的时候，我们会：
+
+[[code language="Python"]]
+socket.send ("Hello")
+[[/code]]
+
+Then what goes onto the wire is:
+实际发送的是：
+
+[[code type="textdiagram"]]
++-----+    +-----+-----+-----+-----+-----+
+|  5  |    |  H  |  e  |  l  |  l  |  o  |
++-----+    +-----+-----+-----+-----+-----+
+
+
+          Figure # - A 0MQ string
+[[/code]]
+
+And if you read this from a C program, you will get something that looks like a string, and might by accident act like a string (if by luck the five bytes find themselves followed by an innocently lurking null), but isn't a proper string. Which means that your client and server don't agree on the string format, you will get weird results.
+如果你用C程序读取这个数据，你会得到一些看起来象字符串，并且可能是因为意外才像字符串（比如5个字节之后刚好有个null结尾字符存在），但它不是正确的字符串。这意味着你的客户端和服务器并不认同这种数据格式，你得到了异常的结果。
+
+When you receive string data from 0MQ, in C, you simply cannot trust that it's safely terminated. Every single time you read a string you should allocate a new buffer with space for an extra byte, copy the string, and terminate it properly with a null.
+当你使用C语言从0MQ接收字符串数据的时候，你不能认为它会安全的结束。每次你读取一个字符串你需要分配一个新的缓冲并且留出结尾字符的空间，拷贝字符串并且以null作为结尾。
+
+So let's establish the rule that **0MQ strings are length-specified, and are sent on the wire //without// a trailing null**. In the simplest case (and we'll do this in our examples) a 0MQ string maps neatly to a 0MQ message frame, which looks like the above figure, a length and some bytes.
+因此，让我们建立一个规则：
+**0MQ字符串是指定长度的，//没有//null结尾字符**。
+在最简单的情况下（在我们的例子中会这样做）0MQ字符串整齐映射0MQ消息帧，它看起来像上面的数字，一个长度和一些字节的数据
+
+Here is what we need to do, in C, to receive a 0MQ string and deliver it to the application as a valid C string:
+这里是在C语言中我们应该怎么做，接收一个0MQ字符串并象有效的C字符串一样交付给应用程序：
+
+[[code language="C"]]
+//  Receive 0MQ string from socket and convert into C string
+static char *
+s_recv (void *socket) {
+    zmq_msg_t message;
+    zmq_msg_init (&message);
+    zmq_recv (socket, &message, 0);
+    int size = zmq_msg_size (&message);
+    char *string = malloc (size + 1);
+    memcpy (string, zmq_msg_data (&message), size);
+    zmq_msg_close (&message);
+    string [size] = 0;
+    return (string);
+}
+[[/code]]
+
+This makes a very handy helper function and in the spirit of making things we can reuse profitably, let's write a similar 's_send' function that sends strings in the correct 0MQ format, and package this into a header file we can reuse.
+本着可重用的精神在这里创建了一个非常有用的助手函数，让我们写个类似's_send“函数以正确的0MQ格式发送一些字符串，并且将其封装在一个头文件中以便我们重用。
+
+The result is {{zhelpers.h}}, which lets us write sweeter and shorter 0MQ applications in C. It is a fairly long source, and only fun for C developers, so [https://github.com/imatix/zguide/blob/master/examples/C/zhelpers.h read it at leisure].
+结果是{{zhelpers.h}，它可以让我们用C语言写出更优雅更短小的0MQ应用。这是一个相当长的源代码并且只有C开发者觉得它有趣，所以[https://github.com/imatix/zguide/blob/master/examples/C/zhelpers.h read it at leisure]。
+
++++ Version Reporting
++++ 报告你使用的版本
+
+0MQ does come in several versions and quite often, if you hit a problem, it'll be something that's been fixed in a later version. So it's a useful trick to know //exactly// what version of 0MQ you're actually linking with. Here is a tiny program that does that:
+0MQ现在已经有很多的版本，如果你碰到一个问题，它很可能已经在后来的版本中修复了。所以//确切的//知道你实际在用的0MQ版本是一个非常有用的诀窍。这里有一个很小的问题：
+
+[[code type="example" title="0MQ version reporting" name="version"]]
+[[/code]]
+
++++ Getting the Message Out
++++ 获取外部消息
+
+The second classic pattern is one-way data distribution, in which a server pushes updates to a set of clients. Let's see an example that pushes out weather updates consisting of a zip code, temperature, and relative humidity. We'll generate random values, just like the real weather stations do.
+第二个经典的样例是一体数据分发，一个服务器推送更新给一组客户端。让我们看一个示例，其推送由邮编、温度和相对湿度构成的天气更新信息。我们会产生随机数，让它看起来象真的气象站那样。
+
+Here's the server. We'll use port 5556 for this application:
+这个是服务器端，我们的应用程序使用5556端口：
+
+[[code type="example" title="Weather update server" name="wuserver"]]
+[[/code]]
+
+There's no start, and no end to this stream of updates, it's like a never ending broadcast.
+这组更新流中没有开始和结束，这看起来象那种从来不会结束的广播。
+
+[[code type="textdiagram"]]
+                 +-------------+
+                 |             |
+                 |  Publisher  |
+                 |             |
+                 +-------------+
+                 |     PUB     |
+                 \-------------/
+                      bind
+                        |
+                        |
+                     updates
+                        |
+        +---------------+---------------+
+        |               |               |
+     updates         updates         updates
+        |               |               |
+        |               |               |
+        v               v               v
+     connect         connect         connect
+  /------------\  /------------\  /------------\
+  |    SUB     |  |    SUB     |  |    SUB     |
+  +------------+  +------------+  +------------+
+  |            |  |            |  |            |
+  | Subscriber |  | Subscriber |  | Subscriber |
+  |            |  |            |  |            |
+  +------------+  +------------+  +------------+
+
+
+           Figure # - Publish-Subscribe
+[[/code]]
+
+Here is client application, which listens to the stream of updates and grabs anything to do with a specified zip code, by default New York City because that's a great place to start any adventure:
+这里是一个客户端应用程序，它监听更新流并且在发现特定的邮编时工作，默认是纽约因为那里是开始任何冒险的伟大的地方：
+
+[[code type="example" title="Weather update client" name="wuclient"]]
+[[/code]]
+
+Note that when you use a SUB socket you **must** set a subscription using zmq_setsockopt[3] and SUBSCRIBE, as in this code. If you don't set any subscription, you won't get any messages. It's a common mistake for beginners. The subscriber can set many subscriptions, which are added together. That is, if a update matches ANY subscription, the subscriber receives it. The subscriber can also unsubscribe specific subscriptions. Subscriptions are length-specified blobs. See zmq_setsockopt[3] for how this works.
+注意当你使用一个SUB套接字的时候你 **必须** 象这个代码一样使用zmq_setsockopt[3]和SUBSCRIBE设置一个订阅。如果你没有设置任何订阅，你就不会得到任何信息。这是一个初学者常犯的操作。订阅者可以设置很多订阅，它们被加到一起。这就是，如果一个更新匹配了任何订阅，订阅者就可以收到它。订阅者可以解除指定的订阅。订阅是一些指定长度的块。可以参考zmq_setsockopt[3]看下是如何工作的。
+
+The PUB-SUB socket pair is asynchronous. The client does zmq_recv[3], in a loop (or once if that's all it needs). Trying to send a message to a SUB socket will cause an error. Similarly the service does zmq_send[3] as often as it needs to, but must not do zmq_recv[3] on a PUB socket.
+PUB-SUB套接字是异步的，客户端在循环中使用zmq_recv[3]（或者如果需要的话只调用一次也可以）。尝试给一个SUB套接字发送一个信息将会引发一个错误。类似的，服务器可根据需要频繁调用zmq_send[3]，但是一定不能在一个PUB套接字上使用zmq_recv[3]。
+
+In theory with 0MQ sockets, it does not matter which end connects, and which end binds. However with PUB-SUB sockets, if you bind the SUB socket and connect the PUB socket, the SUB socket may receive old messages, i.e. messages sent before the SUB started up. This is an artifact of the way bind/connect works. It's best to bind the PUB and connect the SUB, if you can.
+在0MQ套接字原理中，不用担心结束连接和结束绑定。使用PUB-SUB套接字的话，如果你绑定到SUB套接字并且连接到一个PUB套接字，SUB套接字就可以接收旧的信息，也就是信息在SUB启动之前发送出来。这是一个绑定连接工作的典型产物。如果你能的话最好是绑定PUB并连接到SUB。
+
+There is one more important thing to know about PUB-SUB sockets: you do not know precisely when a subscriber starts to get messages. Even if you start a subscriber, wait a while, and then start the publisher, **the subscriber will always miss the first messages that the publisher sends**. This is because as the subscriber connects to the publisher (something that takes a small but non-zero time), the publisher may already be sending messages out.
+这里有一个很重要关于PUB-SUB套接字需要知道的事情：你并不精确的知道一个订阅者什么时候开始接收信息。当你启动了一个订阅者，等一会，然后再启动发布者， **订阅者总会丢失发布者发送的第一条信息**。这是因为订阅者连接到发布者的时候（一些事情需要花费很短但并不是不需要时间），发布者可能已经把消息发送出去了。
+
+This "slow joiner" symptom hits enough people, often enough, that I'm going to explain it in detail. Remember that 0MQ does asynchronous I/O, i.e. in the background. Say you have two nodes doing this, in this order:
+很多的人碰到过“慢加入”的问题，或者说是相当的多，这里我会详细解析一下。记住0MQ是异步I/O，也就是后台工作。比如你有两个节点，是这样的顺序：
+
+* Subscriber connects to an endpoint and receives and counts messages.
+* Publisher binds to an endpoint and immediately sends 1,000 messages.
+* 订阅者连接到一个端点并且接收信息并且计数。
+* 发布者绑定到一个端点并且立刻发送1000条信息。
+
+Then the subscriber will most likely not receive anything. You'll blink, check that you set a correct filter, and try again, and the subscriber will still not receive anything.
+大多数的可能是订阅者将不会收到任何东西。你简直不能相信自己的眼睛，于是去检查过滤器是否正确并且重试，接着订阅者依然不能收到任何信息。
+
+Making a TCP connection involves to and fro handshaking that takes several milliseconds depending on your network and the number of hops between peers. In that time, 0MQ can send very many messages. For sake of argument assume it takes 5 msecs to establish a connection, and that same link can handle 1M messages per second. During the 5 msecs that the subscriber is connecting to the publisher, it takes the publisher only 1 msec to send out those 1K messages.
+建立一个TCP连接会忙着来回的握手，依赖于你的网络和两端之间的跳跃数，这需要花费很多毫秒的时间。在这个时间里，0MQ能够发送非常多的信息。假定创建一个连接需要花费5毫秒，并且同样的连接每秒可以处理1M信息。在5毫秒里订阅者正在连接发布者，向外发送1K信息只花费发布者1毫秒时间。
+
+In Chapter Two I'll explain how to synchronize a publisher and subscribers so that you don't start to publish data until the subscriber(s) really are connected and ready. There is a simple and stupid way to delay the publisher, which is to sleep. I'd never do this in a real application though, it is extremely fragile as well as inelegant and slow. Use sleeps to prove to yourself what's happening, and then wait for Chapter 2 to see how to do this right.
+在第二章我将会解释如何同步发布者和订阅者，这样你就不需要等到订阅者真的连接并且做好准备在开始发布数据了。这里有一个简单而且比较笨的办法拖延一下发布者，就是用sleep。虽然我从来没在真实的应用中这样做过，这是一个非常脆弱而且粗暴又慢的方法。你自己可以使用sleep来证明发生了什么，然后等着看第二章中正确的做法。
+
+The alternative to synchronization is to simply assume that the published data stream is infinite and has no start, and no end. This is how we built our weather client example.
+同步的假设是发布者的数据流是无限的并且没有开始没有结束。这也是我们如何构建我们的天气客户端示例的。
+
+So the client subscribes to its chosen zip code and collects a thousand updates for that zip code. That means about ten million updates from the server, if zip codes are randomly distributed. You can start the client, and then the server, and the client will keep working. You can stop and restart the server as often as you like, and the client will keep working. When the client has collected its thousand updates, it calculates the average, prints it, and exits.
+所以客户端订阅者选择邮编并且收集那个邮编下的上千个更新。如果邮编是随机分布的，那也意味着服务器发出的更新有上千万个。你可以启动客户端，然后再启动服务器，客户端依然可以继续工作。你可以按照你希望的频繁的停止或者重启服务器，客户端依然会持续工作。当客户端收集完它的一千个更新，它计算出平均值，打印并且退出。
+
+Some points about the publish-subscribe pattern:
+一些发布者-订阅者的典型特点：
+
+* A subscriber can in fact connect to more than one publisher, using one 'connect' call each time. Data will then arrive and be interleaved so that no single publisher drowns out the others.
+* 一个订阅者能够实际连接超过一个发布者，每次使用一个'connnect'调用。数据接着就会交替到达，一个发布者的数据不会淹没在其他发布者的数据里。
+
+* If a publisher has no connected subscribers, then it will simply drop all messages.
+* 如果一个发布者没有连接着的订阅者，那么它会简单的丢弃所有的数据。
+
+* If you're using TCP, and a subscriber is slow, messages will queue up on the publisher. We'll look at how to protect publishers against this, using the "high-water mark" later.
+* 如果你使用TCP，并且订阅者很慢，信息会在发布者处排队。我们在之后将会看到如何使用"high-water mark"保护发布者防范这种情况。
+
+* In the current versions of 0MQ, filtering happens at the subscriber side, not the publisher side. This means, over TCP, that a publisher will send all messages to all subscribers, which will then drop messages they don't want.
+* 当前版本的0MQ，过滤发生在订阅者端，而不是发布者端。这意味着，通过TCP，发布者将会发送所有的信息给所有的订阅者，订阅者负责丢弃其不需要的信息
+
+This is how long it takes to receive and filter 10M messages on my box, which is an Intel 4 core Q8300, fast but nothing special:
+这是在我的机器中接收和过滤10M消息需要花费多长时间，配置是Intel酷睿4Q8300，快却没什么特别的：
+
+[[code]]
+ph@ws200901:~/work/git/0MQGuide/examples/c$ time wuclient
+Collecting updates from weather server...
+Average temperature for zipcode '10001 ' was 18F
+
+real    0m5.939s
+user    0m1.590s
+sys     0m2.290s
+[[/code]]
+
++++ Divide and Conquer
++++ 分离并且征服
+
+As a final example (you are surely getting tired of juicy code and want to delve back into philological discussions about comparative abstractive norms), let's do a little supercomputing. Then coffee. Our supercomputing application is a fairly typical parallel processing model:
+作为最后一个例子（你肯定也看累了有趣的代码而想讨论下比较抽象的规范），让我们做一个小的超级计算机。然后去喝咖啡。我们的超级计算机的应用是一个相当典型的并行处理模型：
+
+* We have a ventilator that produces tasks that can be done in parallel.
+* We have a set of workers that process tasks.
+* We have a sink that collects results back from the worker processes.
+* 我们有一个通风器(ventilator)来处理可并行完成的任务。
+* 我们有一组工人(workers)来处理任务。
+* 我们有一个接收器(sink)收集工作处理的结果。
+
+In reality, workers run on superfast boxes, perhaps using GPUs (graphic processing units) to do the hard maths. Here is the ventilator. It generates 100 tasks, each is a message telling the worker to sleep for some number of milliseconds:
+实际上，工人运行在非常快的盒子上，也许会使用GPU（图形处理单元）来处理复杂的数学计算。这里有一个ventilator。它可以产生100个任务，每个都是一个消息来告诉工人睡上几毫秒。
+
+[[code type="example" title="Parallel task ventilator" name="taskvent"]]
+[[/code]]
+
+[[code type="textdiagram"]]
+                  +-------------+
+                  |             |
+                  |  Ventilator |
+                  |             |
+                  +-------------+
+                  |    PUSH     |
+                  \------+------/
+                         |
+                       tasks
+                         |
+         +---------------+---------------+
+         |               |               |
+       task            task             task
+         |               |               |
+         v               v               v
+   /------------\  /------------\  /------------\
+   |    PULL    |  |    PULL    |  |    PULL    |
+   +------------+  +------------+  +------------+
+   |            |  |            |  |            |
+   |   Worker   |  |   Worker   |  |   Worker   |
+   |            |  |            |  |            |
+   +------------+  +------------+  +------------+
+   |    PUSH    |  |    PUSH    |  |    PUSH    |
+   \-----+------/  \-----+------/  \-----+------/
+         |               |               |
+       result          result          result
+         |               |               |
+         +---------------+---------------+
+                         |
+                      results
+                         |
+                         v
+                  /-------------\
+                  |    PULL     |
+                  +-------------+
+                  |             |
+                  |    Sink     |
+                  |             |
+                  +-------------+
+
+
+           Figure # - Parallel Pipeline
+           图表 # - 并行管道
+[[/code]]
+
+Here is the worker application. It receives a message, sleeps for that number of seconds, then signals that it's finished:
+这里是一个工人应用。它接受消息，睡几秒，然后标记它完成了：
+
+[[code type="example" title="Parallel task worker" name="taskwork"]]
+[[/code]]
+
+Here is the sink application. It collects the 100 tasks, then calculates how long the overall processing took, so we can confirm that the workers really were running in parallel, if there are more than one of them:
+这是一个接收器。它收集100个任务，然后计算全部处理完需要多少时间，所以如果超过他们中的一个我们就可以确认工人确实是在并行运行，
+
+[[code type="example" title="Parallel task sink" name="tasksink"]]
+[[/code]]
+
+The average cost of a batch is 5 seconds. When we start 1, 2, 4 workers we get results like this from the sink:
+一批的平均值是5秒。当我们启动1、2、4工人的时候我们从接收器得到类似下面的结果：
+
+[[code]]
+#   1 worker
+Total elapsed time: 5034 msec
+#   2 workers
+Total elapsed time: 2421 msec
+#   4 workers
+Total elapsed time: 1018 msec
+[[/code]]
+
+Let's look at some aspects of this code in more detail:
+让我们从其他角度看下这个代码的更多细节：
+
+* The workers connect upstream to the ventilator, and downstream to the sink. This means you can add workers arbitrarily. If the workers bound to their endpoints, you would need (a) more endpoints and (b) to modify the ventilator and/or the sink each time you added a worker. We say that the ventilator and sink are 'stable' parts of our architecture and the workers are 'dynamic' parts of it.
+* 工人向上连接ventilator， 并且向下连接接收器。这意味着你可以随意的添加工人。如果工人绑定在他们的端点上，你需要更多的端点来修改ventilator或者sink每次你添加工人的时候。我们说ventilator和sink是我们架构中的“稳定”组件而工人则是“动态”组件
+
+* We have to synchronize the start of the batch with all workers being up and running. This is a fairly common gotcha in 0MQ and there is no easy solution. The 'connect' method takes a certain time. So when a set of workers connect to the ventilator, the first one to successfully connect will get a whole load of messages in that short time while the others are also connecting. If you don't synchronize the start of the batch somehow, the system won't run in parallel at all. Try removing the wait, and see.
+* 我们必须在启动一批工人开始运行的时候进行同步。这是一个在0MQ中非常普遍的常见方法并且没有简单的解决办法。'connect'方法需要花费一些时间。所以当一批工人连接到ventilator的时候，第一个成功连接的将会在其他人依然在进行连接的那个很短的时间里得到全部完整的消息。如果你没有以某种方式在批处理开始的时候进行同步，系统就不会并行运行。可以尝试移除掉wait试试。
+
+* The ventilator's PUSH socket distributes tasks to workers (assuming they are all connected //before// the batch starts going out) evenly. This is called //load-balancing// and it's something we'll look at again in more detail.
+* ventilator的PUSH套接字平均的分发任务给工人（假定在批处理开始 //之前// 他们全部都已经连接了）。这叫做 //负载均衡// 并且其中有写东西我们会在看看更多的细节。
+
+* The sink's PULL socket collects results from workers evenly. This is called //fair-queuing//:
+* 接收器的PULL套接字平衡的收集工人的结果。这叫做 //公平队列//:
+
+[[code type="textdiagram"]]
+  +---------+   +---------+   +---------+
+  |  PUSH   |   |  PUSH   |   |  PUSH   |
+  \----+----/   \----+----/   \----+----/
+       |             |             |
+   R1, R2, R3       R4           R5, R6
+       |             |             |
+       +-------------+-------------+
+                     |
+               fair-queuing
+           R1, R4, R5, R2, R6, R3
+                     |
+                     v
+              /-------------\
+              |     PULL    |
+              +-------------+
+
+
+          Figure # - Fair queuing
+          图表 # - 公平队列
+[[/code]]
+
+The pipeline pattern also exhibits the "slow joiner" syndrome, leading to accusations that PUSH sockets don't load balance properly. If you are using PUSH and PULL, and one of your workers gets way more messages than the others, it's because that PULL socket has joined faster than the others, and grabs a lot of messages before the others manage to connect.
+管道模式经常表现出“慢加入”症状，主要的指责是PUSH套接字没有正确的负载均衡。如果你正在使用PUSH和PULL，并且你工人中的其中一个获取的信息比其他的工人多，这是因为PULL套接字已经比其他人更快的加入了，并且抓到了在其他人连接之前的信息。
+
++++ Programming with 0MQ
++++ 使用0MQ编程
+
+Having seen some examples, you're eager to start using 0MQ in some apps. Before you start that, take a deep breath, chillax, and reflect on some basic advice that will save you stress and confusion.
+已经看了很多的例子，你一定很渴望在一些应用程序中开始使用0MQ了。在你开始之前，深呼吸一下，放松，并且反省一些最基础的建议将会减少你的压力和混乱。
+
+* Learn 0MQ step by step. It's just one simple API but it hides a world of possibilities. Take the possibilities slowly, master each one.
+* 一步一步的学习0MQ。这只是一个简单的API但是它隐藏了一个所有可能的世界。慢慢尝试，并精通每一个。
+
+* Write nice code. Ugly code hides problems and makes it hard for others to help you. You might get used to meaningless variable names, but people reading your code won't. Use names that are real words, that say something other than "I'm too careless to tell you what this variable is really for". Use consistent indentation, clean layout. Write nice code and your world will be more comfortable.
+* 写漂亮的代码。丑陋的代码隐藏问题并且使其他人帮助你变得困难。你可能经常用一些无意义的变量名，但是看你代码的人却会看不懂。使用可以表达某些真实含义的单词，而不是说“我忘记告诉你那个变量实际的含义了”。使用一致的缩进，整洁的布局。写漂亮的代码你的世界会变得更舒适。
+
+* Test what you make as you make it. When your program doesn't work, you should know what five lines are to blame. This is especially true when you do 0MQ magic, which just //won't// work the first times you try it.
+* 像你创建它一样测试你创建的东西。当你的程序不工作的时候，你应该知道是哪五行导致的问题。这在当你使用0MQ的时候更加正确，当你刚好在第一次尝试的时候却 //不工作// 。 
+
+* When you find that things don't work as expected, break your code into pieces, test each one, see which one is not working. 0MQ lets you make essentially modular code, use that to your advantage.
+* 当你发现不像你希望的那样工作的时候，中断你的代码，测试每一个，看哪一个不工作。0MQ让你创建本质上模块化的代码，用对你有益的方法去用它。
+
+* Make abstractions (classes, methods, whatever) as you need them. If you copy/paste a lot of code you're going to copy/paste errors too.
+* 像实际需要一样进行抽象。如果你复制/粘贴了一些代码，你也同时复制/粘贴了错误。
+
+To illustrate, here is a fragment of code someone asked me to help fix:
+举例来说，这里有个某人寻求我帮助修正的代码片段：
+
+[[code]]
+//  NOTE: do NOT reuse this example code!
+static char *topic_str = "msg.x|";
+
+void* pub_worker(void* arg){
+    void *ctx = arg;
+    assert(ctx);
+
+    void *qskt = zmq_socket(ctx, ZMQ_REP);
+    assert(qskt);
+
+    int rc = zmq_connect(qskt, "inproc://querys");
+    assert(rc == 0);
+
+    void *pubskt = zmq_socket(ctx, ZMQ_PUB);
+    assert(pubskt);
+
+    rc = zmq_bind(pubskt, "inproc://publish");
+    assert(rc == 0);
+
+    uint8_t cmd;
+    uint32_t nb;
+    zmq_msg_t topic_msg, cmd_msg, nb_msg, resp_msg;
+
+    zmq_msg_init_data(&topic_msg, topic_str, strlen(topic_str) , NULL, NULL);
+
+    fprintf(stdout,"WORKER: ready to receive messages\n");
+    //  NOTE: do NOT reuse this example code, It's broken.
+    //  e.g. topic_msg will be invalid the second time through
+    while (1){
+    zmq_send(pubskt, &topic_msg, ZMQ_SNDMORE);
+
+    zmq_msg_init(&cmd_msg);
+    zmq_recv(qskt, &cmd_msg, 0);
+    memcpy(&cmd, zmq_msg_data(&cmd_msg), sizeof(uint8_t));
+    zmq_send(pubskt, &cmd_msg, ZMQ_SNDMORE);
+    zmq_msg_close(&cmd_msg);
+
+    fprintf(stdout, "received cmd %u\n", cmd);
+
+    zmq_msg_init(&nb_msg);
+    zmq_recv(qskt, &nb_msg, 0);
+    memcpy(&nb, zmq_msg_data(&nb_msg), sizeof(uint32_t));
+    zmq_send(pubskt, &nb_msg, 0);
+    zmq_msg_close(&nb_msg);
+
+    fprintf(stdout, "received nb %u\n", nb);
+
+    zmq_msg_init_size(&resp_msg, sizeof(uint8_t));
+    memset(zmq_msg_data(&resp_msg), 0, sizeof(uint8_t));
+    zmq_send(qskt, &resp_msg, 0);
+    zmq_msg_close(&resp_msg);
+
+    }
+    return NULL;
+}
+[[/code]]
+
+This is what I rewrote it to, as part of finding the bug:
+这是我如何来写找到bug的那段：
+
+[[code language="C"]]
+static void *
+worker_thread (void *arg) {
+    void *context = arg;
+    void *worker = zmq_socket (context, ZMQ_REP);
+    assert (worker);
+    int rc;
+    rc = zmq_connect (worker, "ipc://worker");
+    assert (rc == 0);
+
+    void *broadcast = zmq_socket (context, ZMQ_PUB);
+    assert (broadcast);
+    rc = zmq_bind (broadcast, "ipc://publish");
+    assert (rc == 0);
+
+    while (1) {
+        char *part1 = s_recv (worker);
+        char *part2 = s_recv (worker);
+        printf ("Worker got [%s][%s]\n", part1, part2);
+        s_sendmore (broadcast, "msg");
+        s_sendmore (broadcast, part1);
+        s_send     (broadcast, part2);
+        free (part1);
+        free (part2);
+
+        s_send (worker, "OK");
+    }
+    return NULL;
+}
+[[/code]]
+
+In the end, the problem was that the application was passing sockets between threads, which crashed weirdly. It became legal behavior in 0MQ/2.1, but remains dangerous and something we advise against doing.
+最后，问题是应用程序在两个线程间往来套接字，其古怪的崩溃了。这在0MQ/2.1变成了合法的行为，但是保留着危险我们不建议这么做。
+
++++ 0MQ/2.1
++++ 0MQ/2.1
+
+History tells us that 0MQ/2.0 is when low-latency distributed messaging crawled out of the primeval mud, shook off a heavy coat of buzzwords and enterprise jargon, and reached its branches up to the sky, as if to cry, "no limits!". We've been using this stable branch since it spawned 0MQ/2.0.8 during the hot days of August, 2010.
+
+
+But times change, and what was cool in 2010 is no longer //a la mode// in 2011. The 0MQ developers and community have been frantically busy redefining messaging chic, and anyone who's anyone knows that 2.1 is the new stable.
+
+The Guide therefore assumes you're running 2.1.x. Let's look at the differences, as they affect your applications coming from the old 2.0:
+
+* In 2.0, zmq_close[3] and zmq_term[3] discarded any in-flight messages, so it was unsafe to close a socket and terminate right after sending messages. In 2.1, these calls are safe: zmq_term will flush anything that's waiting to be sent. In 2.0 examples we often added a sleep(1) to get around the problem. In 2.1, this isn't needed.
+
+* By contrast, in 2.0, it was safe to call zmq_term[3] even if there were open sockets. In 2.1, this is not safe, and it can cause zmq_term to block. So in 2.1 we //always close every socket//, before exiting. Furthermore, if you have any outgoing messages or connects waiting on a socket, 2.1 will by default wait forever trying to deliver these. You must //set the LINGER socket option// (e.g. to zero), on every socket which may still be busy, before calling zmq_term:
+
+[[code language="C"]]
+int zero = 0;
+zmq_setsockopt (mysocket, ZMQ_LINGER, &zero, sizeof (zero));
+[[/code]]
+
+* In 2.0, zmq_poll[3] would return arbitrarily early, so you could not use it as a timer. We would work around this with a loop checked how much time was left, and called zmq_poll again as needed. In 2.1, zmq_poll properly waits for the full timeout if there are no events.
+
+* In 2.0, 0MQ would ignore interrupted system calls, which meant that no libzmq call would ever return EINTR if a signal was received during its operation. This caused problems with loss of signals such as SIGINT (Ctrl-C handling), especially for language runtimes. In 2.1, any blocking call such as zmq_recv[3] will return EINTR if it is interrupted by a signal.
+
++++ Getting the Context Right
++++ 正确的获取上下文
+
+0MQ applications always start by creating a //context//, and then using that for creating sockets. In C, it's the zmq_init[3] call. You should create and use exactly one context in your process. Technically, the context is the container for all sockets in a single process, and acts as the transport for {{inproc}} sockets, which are the fastest way to connect threads in one process. If at runtime a process has two contexts, these are like separate 0MQ instances. If that's explicitly what you want, OK, but otherwise remember:
+0MQ应用程序经常从创建一个 //context// 开始，接着就可以使用它来创建套接字。在C语言中，是调用zmq_init[3]。你可以在你的进程中创建和使用一个上下文(context)，技术上来说，上下文是一个进程中所有套接字的容器，并且像一个 {{进程内}} 的传输站，这是在一个进程内最快的连接到线程的方法。如果在运行时一个进程有两个上下文，他们就会像分开的0MQ示例。如果你完全明白自己要做什么那没问题，否则的话，需要记住：
+
+**Do one zmq_init[3] at the start of your main line code, and one zmq_term[3] at the end.**
+**在主代码开始处调用一次 zmq_init[3] ，并且在结束的时候调用一次 zmq_term[3] 。**
+
+If you're using the fork() system call, each process needs its own context. If you do zmq_init[3] in the main process before calling fork(), the child processes get their own contexts. In general you want to do the interesting stuff in the child processes, and just manage these from the parent process.
+如果你正在使用fork()系统调用，每个进程需要他们自己的上下文。如果你在主进程中fork()之前做了zmq_init[3]，子进程会获取他们自己的上下文。一般来说你希望在子进程中做些有趣的事情，并且父进程仅仅管理他们。
+
++++ Making a Clean Exit
++++ 创造一个干净的退出
+
+Classy programmers share the same motto as classy hit men: always clean-up when you finish the job. When you use 0MQ in a language like Python, stuff gets automatically freed for you. But when using C you have to carefully free objects when you're finished with them, or you get memory leaks, unstable applications, and generally bad karma.
+上等的程序员会分享相同的座右铭激励人们：当你完成一个工作的时候永远做好清除。当你在Python这样的语言中使用0MQ的时候会自动释放。但是当你使用C语言的时候你必须在不需要他们的时候非常小心的释放对象，否则就会发生内存泄露，不标准的应用程序一般不会有好的运气。
+
+Memory leaks is one thing, but 0MQ is quite finicky about how you exit an application. The reasons are technical and painful but the upshot is that if you leave any sockets open, the zmq_term[3] function will hang forever. And even if you close all sockets, zmq_term[3] will by default wait forever if there are pending connects or sends. Unless you set the LINGER to zero on those sockets before closing them.
+内存泄露只是一个问题，0MQ实际上对退出要求非常严格。技术上的理由很不好解释但是如果你遗留了一个一直打开的套接字，如果它正在等待连接或者发送，那zmq_term[3]默认将会永远等待。除非你在关闭他们之前在那些套接字上设置LINGER为0。
+
+The 0MQ objects we need to worry about are messages, sockets, and contexts. Luckily it's quite simple, at least in simple programs:
+0MQ对象中我们需要担心的是messages, sockets, 和contexts。幸运的是他们十分简单，至少在简单的程序中是这样的：
+
+* Always close a message the moment you are done with it, using zmq_msg_close[3].
+* 总是在你完成的时候使用zmq_msg_close[3]关闭消息(message)。
+
+* If you are opening and closing a lot of sockets, that's probably a sign you need to redesign your application.
+* 如果你正在打开或者关闭一批套接字，那很可能意味着你需要重新设计你的应用程序。
+
+* When you exit the program, close your sockets and then call zmq_term[3]. This destroys the context.
+* 当你退出程序的时候，关闭你的套接字并且对他们调用zmq_term[3]。这会销毁上下文。
+
+If you're doing multithreaded work, it gets rather more complex than this. We'll get to multithreading in the next chapter, but because some of you will, despite warnings, will try to run before you can safely walk, below is the quick and dirty guide to making a clean exit in a //multithreaded// 0MQ application.
+如果你正在做多线程的工作，会有比这个更多的复杂性。我们将在下一章谈论多线程。TODO:但是因为你们的一些愿望，忽略警告，在能够安全的行走之前就想跑，在这个快速和不合适的指南下在一个0MQ //多线程// 应用程序中创建一个干净的退出。
+
+First, do not try to use the same socket from multiple threads. No, don't explain why you think this would be excellent fun, just please don't do it. Next, relingerfy and close all sockets, and terminate the context in the main thread. Lastly, this'll cause any blocking receives or polls or sends in attached threads (i.e. which share the same context) to return with an error. Catch that, and then relingerize and close sockets in //that// thread, and exit. Do not terminate the same context twice. The zmq_term in the main thread will block until all sockets it knows about are safely closed.
+首先，在多线程中不要尝试使用同一个套接字。不要解释为什么你认为这很好，只要别这么做就行了。然后，relingerfy并且关闭所有的套接字，并且在主线程中结束上下文。最后，在关联的线程中引发阻塞接收或者polls或者发送的情况应该附带错误信息返回（例如他们共享同一个上下文）。捕获它并且在 //那个// 线程中relingerize和关闭套接字。不要结束一个上下文两次。主线程中的zmq_term将会阻塞直到所有的套接字安全的关闭。
+
+Voila! It's complex and painful enough that any language binding author worth his or her salt will do this automatically and make the socket closing dance unnecessary.
+
++++ Why We Needed 0MQ
++++ 为什么我们需要0MQ
+
+Now that you've seen 0MQ in action, let's go back to the "why".
+现在已经看过了0MQ的行为，让我们回过头来看看“为什么”。
+
+Many applications these days consist of components that stretch across some kind of network, either a LAN or the Internet. So many application developers end up doing some kind of messaging. Some developers use message queuing products, but most of the time they do it themselves, using TCP or UDP. These protocols are not hard to use, but there is a great difference between sending a few bytes from A to B, and doing messaging in any kind of reliable way.
+许多的应用程序目前由组件组成，这些组件穿越不同的网络，LAN或者Internet。许多的开发者最终都是在做不同类型的报文。一些开发者使用消息队列产品，但是更多的时候他们使用TCP或者UDP自己做这个事情。那些协议不难使用，但是他们在从A到B发送一些字节的数据的时候有很大的不同，并且使用各种不同的可靠方法发送报文。
+
+Let's look at the typical problems we face when we start to connect pieces using raw TCP. Any reusable messaging layer would need to solve all or most these:
+让我们来看看当我们使用原始TCP开始一个连接时候要面对的典型问题。任何可重用的报文层都需要解决所有这写问题：
+
+* How do we handle I/O? Does our application block, or do we handle I/O in the background? This is a key design decision. Blocking I/O creates architectures that do not scale well. But background I/O can be very hard to do right.
+* 我们如何处理I/O？我们的应用程序可以阻塞，或者我们能在后台操作I/O吗？这是一个设计要点。阻塞的I/O建构不能很好的扩展。但是后台I/O又很难做好。
+
+* How do we handle dynamic components, i.e. pieces that go away temporarily? Do we formally split components into "clients" and "servers" and mandate that servers cannot disappear? What then if we want to connect servers to servers? Do we try to reconnect every few seconds?
+* 我们如何处理动态组件，例如一份临时数据？TODO:我们拆分组件到客户端和服务器并且要求服务器不能消失？那如果我们希望从一个服务器连接到另外一个服务器呢？我们每次要尝试重新连接？
+
+* How do we represent a message on the wire? How do we frame data so it's easy to write and read, safe from buffer overflows, efficient for small messages, yet adequate for the very largest videos of dancing cats wearing party hats?
+* TODO：我们如何在报文中展现信息？我们如何划分数据结构使其更容易读取和写入，即使缓冲溢出也安全，高效的小信息，还刚好可以胜任传输聚会上带帽子的猫在跳舞的巨大视频？
+
+* How do we handle messages that we can't deliver immediately? Particularly, if we're waiting for a component to come back on-line? Do we discard messages, put them into a database, or into a memory queue?
+* 我们如何处理那些我们不能立刻发布的信息？特别的，我们如何等待一个组件在线返回？我们是把这个消息放入数据库或者内存然后丢弃这个消息吗？
+
+* Where do we store message queues? What happens if the component reading from a queue is very slow, and causes our queues to build up? What's our strategy then?
+* 我们在哪里存储消息队列？如果组件从队列读取的非常慢会发生什么？我们建造队列的原因是什么？我们的策略是什么？
+
+* How do we handle lost messages? Do we wait for fresh data, request a resend, or do we build some kind of reliability layer that ensures messages cannot be lost? What if that layer itself crashes?
+* 我们如何处理丢失的信息？我们是在等待最新的数据，请求重发，或者我们创建了某种可靠层其可以确保信息不会丢失？那如果那层自己就崩溃了呢？
+
+* What if we need to use a different network transport. Say, multicast instead of TCP unicast? Or IPv6? Do we need to rewrite the applications, or is the transport abstracted in some layer?
+* 我们需要使用不同的网络进行传输什么。说多播代替了TCP单播？或者是IPv6？我们是否需要重写应用程序，或者传输被抽象在某些层次上？
+
+* How do we route messages? Can we send the same message to multiple peers? Can we send replies back to an original requester?
+* 我们如何路由信息？ 我们能够发送同样的信息给多个端吗？我们能够回复给一个老的请求者吗？
+
+* How do we write an API for another language? Do we re-implement a wire-level protocol or do we repackage a library? If the former, how can we guarantee efficient and stable stacks? If the latter, how can we guarantee interoperability?
+* 我们如何用其他语言写API？我们是要重新实现一个报文级协议或者我们重新包装一个库？如果是前者，我们如何保证高效和稳定的栈？如果是后者，我们如何保证可交互性？
+
+* How do we represent data so that it can be read between different architectures? Do we enforce a particular encoding for data types? How far is this the job of the messaging system rather than a higher layer?
+* 我们如何描述数据使其在在不同的架构之间读取？我们要强制使用特定编码的数据类型吗？消息系统的工作比更高层快多少？
+
+* How do we handle network errors? Do we wait and retry, ignore them silently, or abort?
+* 我们如何处理网络错误？等待并且重试，忽略，还是中止？
+
+Take a typical open source project like [http://hadoop.apache.org/zookeeper/ Hadoop Zookeeper] and read the C API code in [http://github.com/apache/zookeeper/blob/trunk/src/c/src/zookeeper.c src/c/src/zookeeper.c]. It's 3,200 lines of mystery and in there is an undocumented, client-server network communication protocol. I see it's efficient because it uses poll() instead of select(). But really, Zookeeper should be using a generic messaging layer and an explicitly documented wire level protocol. It is incredibly wasteful for teams to be building this particular wheel over and over.
+看看典型的开源项目比如 [http://hadoop.apache.org/zookeeper/ Hadoop Zookeeper] 和在 [http://github.com/apache/zookeeper/blob/trunk/src/c/src/zookeeper.c src/c/src/zookeeper.c] 阅读C的API代码。那里有3200行没有文档的迷一样的客户端服务器网络通讯协议。我认为他们很高效因为它使用了poll()代替select()。但是事实上，Zookeeper应该使用普遍的消息层和明确的有说明文档的报文级协议。重复造轮子对小组是难以置信的浪费。
+
+[[code type="textdiagram"]]
+             +------------+
+             |            |
+             |  Piece A   |
+             |            |
+             +------------+
+                   ^
+                   |
+                  TCP
+                   |
+                   v
+             +------------+
+             |            |
+             |  Piece B   |
+             |            |
+             +------------+
+
+
+  Figure # - Messaging as it starts
+[[/code]]
+
+But how to make a reusable messaging layer? Why, when so many projects need this technology, are people still doing it the hard way, by driving TCP sockets in their code, and solving the problems in that long list, over and over?
+但是如何建立一个可重用的消息层呢？为什么当如此多的项目需要这种技术，人们依然在用在代码中驱动TCP套接字这种最困难的方法，然后把正在解决的问题一遍又一边的列出一个个大长列表？
+
+It turns out that building reusable messaging systems is really difficult, which is why few FOSS projects ever tried, and why commercial messaging products are complex, expensive, inflexible, and brittle. In 2006 iMatix designed [http://www.amqp.org AMQP] which started to give FOSS developers perhaps the first reusable recipe for a messaging system. AMQP works better than many other designs [http://www.imatix.com/articles:whats-wrong-with-amqp but remains relatively complex, expensive, and brittle]. It takes weeks to learn to use, and months to create stable architectures that don't crash when things get hairy.
+结果是创建可重用消息系统实际上非常困难，这就是为什么几乎没有免费开源软件（FOSS）项目曾经尝试过，和为什么消息通讯产品非常复杂昂贵不可变更和脆弱。在2006年iMatix设计了 [http://www.amqp.org AMQP] 开始给FOSS开发者提供也许是第一个消息信息可重用的秘诀。AMQP比许多其他的设计工作的更好[http://www.imatix.com/articles:whats-wrong-with-amqp but remains relatively complex, expensive, and brittle]。它需要花费几个星期去学习如何使用，几个月后就可以建立出稳定的架构即使在情况变的不好应付的时候依然不会崩溃。
+
+Most messaging projects, like AMQP, that try to solve this long list of problems in a reusable way do so by inventing a new concept, the "broker", that does addressing, routing, and queuing. This results in a client-server protocol or a set of APIs on top of some undocumented protocol, that let applications speak to this broker. Brokers are an excellent thing in reducing the complexity of large networks. But adding broker-based messaging to a product like Zookeeper would make it worse, not better. It would mean adding an additional big box, and a new single point of failure. A broker rapidly becomes a bottleneck and a new risk to manage. If the software supports it, we can add a second, third, fourth broker and make some fail-over scheme. People do this. It creates more moving pieces, more complexity, more things to break.
+许多的消息项目，就像AMQP，都尝试在可重用的道路上解决这个长长的问题列表，他们发明了许多心的概念，比如“协商者”（broker），它做寻址/路由和排队的工作。这样的结果就是在一些没有文档的协议之上的客户端服务器协议或者一组API，让应用程序对这个broker说话。Ｂrokers在一个大的网络中是一个很好的东西它减轻了复杂性。这也意味着需要添加一些大的盒子，和一些新的单点故障。一个broker迅速的变成了瓶颈和一个新的需要管理的风险。如果软件支持它，我们可以添加第二个、第三个、第四个broker并建立一些故障切换方案。人们这样做了。它创建了许多可移动的点，更多的复杂性，更多的事情坏掉了。
+
+And a broker-centric set-up needs its own operations team. You literally need to watch the brokers day and night, and beat them with a stick when they start misbehaving. You need boxes, and you need backup boxes, and you need people to manage those boxes. It is only worth doing for large applications with many moving pieces, built by several teams of people, over several years.
+一个broker为中心的设置需要他们自己的操作组。你几乎需要整日整夜的看着brokers，当他们开始行为没谱的时候用棍子敲打他们。你需要盒子，并且你还需要备份的盒子，并且你还需要人们管理这些黑子。仅仅对于带有很多移动点的大型应用值得这样做，在许多年里建立其许多人的团队。
+
+So small to medium application developers are trapped. Either they avoid network programming, and make monolithic applications that do not scale. Or they jump into network programming and make brittle, complex applications that are hard to maintain. Or they bet on a messaging product, and end up with scalable applications that depend on expensive, easily broken technology. There has been no really good choice, which is maybe why messaging is largely stuck in the last century and stirs strong emotions. Negative ones for users, gleeful joy for those selling support and licenses.
+所以中小应用的开发者陷入了困境。于是他们回避网络编程，并且创建不能伸缩的独立程序。或者他们一头扎进网络程序中并且创造出脆弱、复杂而且难以维护的复杂应用。或者他们相信了某个报文产品，并且交出了依赖昂贵、易崩溃的技术的可伸缩应用。实际没有真正好的选择，这也许是为什么消息系统很大程度上依然停留在上个世纪的水平上并且激起了很大的不爽。这对用户是消极的，对那销售支持和许可证的来说则是高兴的。
+
+[[code type="textdiagram"]]
+            +---+          |  +---+
+    +---+   |   |   +---+  |  |   |
+    |   +-->|   |   |   |  |  |   |
+    |   |   +---+   |   |  |  +-+-+
+    +-+-+           +-+-+  |    |
+      |               |    |    |
+      |       +-----------------+
+      |       |       |    |
+      +-----------------------+
+              |       |    |  |
+      +-------|-------|----+--|------+
+      |       v       |       v      |
+    +-+-+   +---+     |     +---+    |
+    |   |   |   |   +-+-+   |   |    |
+    |   |   |   |   |   |   |   |    |
+    +---+   +---+   |   |   +---+    |
+              ^     +---+     ^      |
+              |       ^       |    +-+
+      +-------+-------+-------+    |
+      |       |       |            |
+      v     +-+-+     v     +---+  |
+    +---+   |   |   +---+   |   |  |
+    |   |   |   |<--+   |   |   |<-+
+    |   |   +---+   |   |   +-+-+
+    +---+           +---+
+
+
+   Figure # - Messaging as it becomes
+[[/code]]
+
+What we need is something that does the job of messaging but does it in such a simple and cheap way that it can work in any application, with close to zero cost. It should be a library that you just link with, without any other dependencies. No additional moving pieces, so no additional risk. It should run on any OS and work with any programming language.
+
+And this is 0MQ: an efficient, embeddable library that solves most of the problems an application needs to become nicely elastic across a network, without much cost.
+
+Specifically:
+特别需要注意的：
+
+* It handles I/O asynchronously, in background threads. These communicate with application threads using lock-free data structures, so 0MQ applications need no locks, semaphores, or other wait states.
+* 在后台线程中的IO是异步的。他们和应用线程的通讯使用无锁的数据结构，所以0MQ应用无需锁，信号或者等待状态之类的。
+
+* Components can come and go dynamically and 0MQ will automatically reconnect. This means you can start components in any order. You can create "service-oriented architectures" (SOAs) where services can join and leave the network at any time.
+* 
+
+* It queues messages automatically when needed. It does this intelligently, pushing messages as close as possible to the receiver before queuing them.
+
+* It has ways of dealing with over-full queues (called "high water mark"). When a queue is full, 0MQ automatically blocks senders, or throws away messages, depending on the kind of messaging you are doing (the so-called "pattern").
+
+* It lets your applications talk to each other over arbitrary transports: TCP, multicast, in-process, inter-process. You don't need to change your code to use a different transport.
+
+* It handles slow/blocked readers safely, using different strategies that depend on the messaging pattern.
+
+* It lets you route messages using a variety of patterns such as request-reply and publish-subscribe. These patterns are how you create the topology, the structure of your network.
+
+* It lets you place pattern-extending "devices" (small brokers) in the network when you need to reduce the complexity of interconnecting many pieces.
+
+* It delivers whole messages exactly as they were sent, using a simple framing on the wire. If you write a 10k message, you will receive a 10k message.
+
+* It does not impose any format on messages. They are blobs of zero to gigabytes large. When you want to represent data you choose some other product on top, such as Google's protocol buffers, XDR, and others.
+
+* It handles network errors intelligently. Sometimes it retries, sometimes it tells you an operation failed.
+
+* It reduces your carbon footprint. Doing more with less CPU means your boxes use less power, and you can keep your old boxes in use for longer. Al Gore would love 0MQ.
+
+Actually 0MQ does rather more than this. It has a subversive effect on how you develop network-capable applications. Superficially it's just a socket API on which you do zmq_recv[3] and zmq_send[3]. But message processing rapidly becomes the central loop, and your application soon breaks down into a set of message processing tasks. It is elegant and natural. And it scales: each of these tasks maps to a node, and the nodes talk to each other across arbitrary transports. Two nodes in one process (node is a thread), two nodes on one box (node is a process), two boxes on one network (node is a box). With no application code changes.
+
++++ Socket Scalability
++++ 可伸缩套接字
+
+Let's see 0MQ's scalability in action. Here is a shell script that starts the weather server and then a bunch of clients in parallel:
+让我们看看0ＭＱ的可伸缩性。这有一个启动天气服务的shell脚本，然后是一群并行的客户端
+
+[[code]]
+wuserver &
+wuclient 12345 &
+wuclient 23456 &
+wuclient 34567 &
+wuclient 45678 &
+wuclient 56789 &
+[[/code]]
+
+As the clients run, we take a look at the active processes using 'top', and we see something like (on a 4-core box):
+当客户端运行的时候，我们使用top命令看看活跃的进程，我们会看到一些东西类似(用的是4核的盒子):
+
+[[code]]
+  PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND
+ 7136 ph        20   0 1040m 959m 1156 R  157 12.0  16:25.47 wuserver
+ 7966 ph        20   0 98608 1804 1372 S   33  0.0   0:03.94 wuclient
+ 7963 ph        20   0 33116 1748 1372 S   14  0.0   0:00.76 wuclient
+ 7965 ph        20   0 33116 1784 1372 S    6  0.0   0:00.47 wuclient
+ 7964 ph        20   0 33116 1788 1372 S    5  0.0   0:00.25 wuclient
+ 7967 ph        20   0 33072 1740 1372 S    5  0.0   0:00.35 wuclient
+[[/code]]
+
+Let's think for a second about what is happening here. The weather server has a single socket, and yet here we have it sending data to five clients in parallel. We could have thousands of concurrent clients. The server application doesn't see them, doesn't talk to them directly.
+让我们想一下关于这里发生了什么。天气服务器只有一个简单的套接字，然后我们使用他并行的给五个客户端发送数据。我们可以有上千并发的客户端。服务器应用不需要看到他们，不需要直接和他们对话。
+
++++ Missing Message Problem Solver
++++ 丢失信息问题的解决方法
+
+As you start to program with 0MQ you will come across one problem more than once: you lose messages that you expect to receive. Here is a basic problem solver that walks through the most common causes for this. Don't worry if some of the terminology is unfamiliar still, it'll become clearer in the next chapters.
+
+[[code type="textdiagram"]]
+        +-----------------+
+        |                 |
+        | 我没有得到我的数据  |
+        |        ！        |
+        |             {o} |
+        +--------+--------+
+                 |
+                 |
+                 v
+        +-----------------+        +-----------------+        +------------------+
+        |                 |        |                 |        | 使用              |
+        |  是在SUB套接字    |        |  给消息设置       |        | zmq_setsockopt   |
+        |  中丢失的信息？    +------->|  订阅者          +------->| ZMQ_SUBSCRIBE    |
+        |                 | 是     |  了吗?           | 否     | ("") 选项         |
+        |             {o} |        |             {o} |        |                  |
+        +--------+--------+        +--------+--------+        +------------------+
+                 | 否                       | 是
+                 |                          |
+                 |                          v
+                 |                 +-----------------+        +------------------+
+                 |                 |                 |        | 先启动所有的SUB    |
+                 |                 |  在PUB之后启动    |        | 套接字,           |
+                 |                 |      SUB?       +------->| 然后PUB套接字就    |
+                 |                 |                 | 是     | 可以避免丢失数据了   |
+                 |                 |             {o} |        |                  |
+                 |                 +--------+--------+        +------------------+
+                 |                          | 否
+                 |                          |
+                 |                          v
+                 |              +-------------------------+
+                 |              |  在本文中参看慢加入         |
+                 |              | "slow joiner" 症状的解释  |
+                 |              |                         |
+                 |              +-------------------------+
+                 |
+                 |
+                 v
+        +-----------------+        +--------------------+
+        |                 |        | REQ的话在循环中send  |
+        |  你使用的是       |        | 和recv，并且检查返回码|
+        |   REQ 和 REP     +------->|                   |
+        |     套接字?      | 是      | REP的话直接         |
+        |             {o} |        | recv + send.       |
+        +--------+--------+        +--------------------+
+                 | 否
+                 |
+                 v
+        +-----------------+        +---------------------+        +-----------------+
+        |                 |        |                     |        |                 |
+        |  你在使用         |        | 第一个连接的PULL套接字 |        | 你需要在发送任务    |
+        |  PUSH 套接字?    +------->|  可以在其他连接到达前   +------->| 之前额外做些工作    |
+        |                 | 是     | 抓取1000个消息        |        | 来同步你的套接字    |
+        |             {o} |        |                     |        | sending tasks.  |
+        +--------+--------+        +---------------------+        +-----------------+
+                 | 否
+                 |
+                 v
+        +-----------------+        +-----------------+
+        |                 |        |                 |
+        |  所有的方法中      |        | 检查每一个0MQ方法 |
+        | 都检查返回码了吗？  +------->| 调用。在C语言中，  |
+        |                 | 否     | 使用asserts.     |
+        |             {o} |        |                 |
+        +--------+--------+        +-----------------+
+                 | 是
+                 |
+                 v
+        +-----------------+        +-----------------+        +------------------+
+        |                 |        |                 |        |                  |
+        | 你已经在你的程序中  |        |   你在线程之间    |        | 在线程中           |
+        | 使用线程了吗？     +------->| 传递套接字了吗？   +------->| 你需要使用的地方    |
+        |                 | 是     |                 | 是      | 创建套接字         |
+        |             {o} |        |             {o} |        |                  |
+        +--------+--------+        +--------+--------+        +------------------+
+                 | 否                       | 否
+                 +--------------------------+
+                 |
+                 v
+        +-----------------+        +-----------------+        +------------------+
+        |                 |        |                 |        |                  |
+        |  Are you using  |        | 你调用了超过一次   |        | 每个进程只调用一次   |
+        |   the inproc    +------->|  zmq_init more  +------->| zmq_init         |
+        |   transport?    | Yes    |         ?       | 是     |                  |
+        |             {o} |        |             {o} |        |                  |
+        +--------+--------+        +--------+--------+        +------------------+
+                 | 否                       | 否
+                 |                          |
+                 |                          v
+                 |                 +-----------------+
+                 |                 |                 |
+                 |                 | Check that you  |
+                 |                 | bind before you |
+                 |                 | connect.        |
+                 |                 |                 |
+                 |                 +-----------------+
+                 |
+                 v
+        +-----------------+        +-----------------+        +-----------------+
+        |                 |        | 检查回复地址      |        | If you're using |
+        |  你在使用         |        | 是否有效         |        | identities make |
+        | ROUTER套接字?    +------->| 0MQ会丢弃不能     +------->| sure to set them|
+        |                 | 是     | 路由的信息        |        | before not after|
+        |             {o} |        |                 |        | you connect.    |
+        +--------+--------+        +-----------------+        +--------+--------+
+                 | No
+                 |
+                 v
+        +-----------------+        +--------------------+
+        |                 |        |                    |
+        | Are you losing  |        | 你可能有一个后台运行的  |
+        |   one message   +------->| 客户端。             |
+        |    in two?      | Yes    | 干掉它并再来一次试试.  |
+        |             {o} |        |                    |
+        +--------+--------+        +--------------------+
+                 | 否
+                 |
+                 v
+        +-----------------+
+        |                 |
+        | 创建一个最小的     |
+        | 测试用例, 在IRC中  |
+        | 询问zeromq       |
+        +-----------------+
+
+
+                 Figure # - Missing Message Problem Solver
+                 图表 # - 丢失信息问题的解决方法
+[[/code]]
+
+If you're using 0MQ in a context where failures are expensive, then you want to plan properly. First, build prototypes that let you learn and test the different aspects of your design. Stress them until they break, so that you know exactly how strong your designs are. Second, invest in testing. This means building test frameworks, ensuring you have access to realistic setups with sufficient computer power, and getting time or help to actually test seriously. Ideally, one team writes the code, a second team tries to break it. Lastly, do get your organization to [http://www.imatix.com/contact contact iMatix] to discuss how we can help to make sure things work properly, and can be fixed rapidly if they break.
+
+In short: if you have not proven an architecture works in realistic conditions, it will most likely break at the worst possible moment.
+
++++ Warning - Unstable Paradigms!
+
+Traditional network programming is built on the general assumption that one socket talks to one connection, one peer. There are multicast protocols but they are exotic. When we assume "one socket = one connection", we scale our architectures in certain ways. We create threads of logic where each thread work with one socket, one peer. We place intelligence and state in these threads.
+
+In the 0MQ universe, sockets are clever multithreaded applications that manage a whole set of connections automagically for you. You can't see, work with, open, close, or attach state to these connections. Whether you use blocking send or receive, or poll, all you can talk to is the socket, not the connections it manages for you. The connections are private and invisible, and this is the key to 0MQ's scalability.
+
+Because your code, talking to a socket, can then handle any number of connections across whatever network protocols are around, without change. A messaging pattern sitting in 0MQ can scale more cheaply than a messaging pattern sitting in your application code.
+
+So the general assumption no longer applies. As you read the code examples, your brain will try to map them to what you know. You will read "socket" and think "ah, that represents a connection to another node". That is wrong. You will read "thread" and your brain will again think, "ah, a thread represents a connection to another node", and again your brain will be wrong.
+
+If you're reading this Guide for the first time, realize that until you actually write 0MQ code for a day or two (and maybe three or four days), you may feel confused, especially by how simple 0MQ makes things for you, and you may try to impose that general assumption on 0MQ, and it won't work. And then you will experience your moment of enlightenment and trust, that //zap-pow-kaboom// satori paradigm-shift moment when it all becomes clear.
