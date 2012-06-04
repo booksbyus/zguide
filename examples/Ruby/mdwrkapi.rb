@@ -1,6 +1,5 @@
 require './mdp.rb'
 require './mdcliapi2.rb'
-require 'awesome_print'
 
 class MajorDomoWorker
   HEARTBEAT_LIVENESS = 3 # 3-5 is reasonable
