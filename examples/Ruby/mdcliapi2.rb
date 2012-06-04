@@ -30,10 +30,7 @@ class MajorDomoClient
     # Frame 2: Service name (printable string)
     request = ['', MDP::C_CLIENT, service].concat(request)
 
-    last = request.pop
-    request.each { |req| @client.send_string req, ZMQ::SNDMORE }
-    @client.send_string last
-
+    @client.send_strings request
     nil
   end
 
