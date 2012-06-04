@@ -13,7 +13,4 @@ module MDP
   W_REPLY         =   "\003"
   W_HEARTBEAT     =   "\004"
   W_DISCONNECT    =   "\005"
-
-  commands = [nil, "READY", "REQUEST", "REPLY", "HEARTBEAT", "DISCONNECT"]
-  
 end
