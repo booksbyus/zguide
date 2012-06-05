@@ -1,3 +1,10 @@
+# Majordomo Protocol Worker API, Ruby version
+#
+# Implements the MDP/Worker spec at http:#rfc.zeromq.org/spec:7.
+#
+# Author: Tom van Leeuwen <tom@vleeuwen.eu>
+# Based on Python example by Min RK
+
 require './mdp.rb'
 require './mdcliapi2.rb'
 
