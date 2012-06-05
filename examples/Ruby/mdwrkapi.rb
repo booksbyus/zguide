@@ -5,8 +5,8 @@
 # Author: Tom van Leeuwen <tom@vleeuwen.eu>
 # Based on Python example by Min RK
 
+require 'ffi-rzmq'
 require './mdp.rb'
-require './mdcliapi2.rb'
 
 class MajorDomoWorker
   HEARTBEAT_LIVENESS = 3 # 3-5 is reasonable
