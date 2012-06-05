@@ -5,12 +5,12 @@
 
 require 'ffi-rzmq'
 require './mdp.rb'
-require 'awesome_print'
 
 class MajorDomoBroker
   HEARTBEAT_INTERVAL = 2500
   HEARTBEAT_LIVENESS = 3 # 3-5 is reasonable
   HEARTBEAT_EXPIRY = HEARTBEAT_INTERVAL * HEARTBEAT_LIVENESS
+  INTERNAL_SERVICE_PREFIX = 'mmi.'
 
   def initialize
     @context = ZMQ::Context.new
@@ -103,7 +103,26 @@ class MajorDomoBroker
     service = message.shift
     message.unshift '' # empty
     message.unshift address
-    dispatch require_service(service), message
+
+    if service.start_with?(INTERNAL_SERVICE_PREFIX)
+      service_internal service, message
+    else
+      dispatch require_service(service), message
+    end
+  end
+
+  def service_internal service, message
+    # Handle internal service according to 8/MMI specification
+
+    code = '501'
+    if service == 'mmi.service'
+      code = @services.key?(message.last) ? '200' : '404'
+    end
+
+    message.insert 2, [MDP::C_CLIENT, service]
+    message[-1] = code
+    message.flatten!
+    @socket.send_strings message
   end
 
   def process_worker address, message
@@ -126,10 +145,11 @@ class MajorDomoBroker
           delete_worker worker, true
         end
       when MDP::W_READY
-        if worker_exists
+        service = message.shift
+
+        if worker_exists or service.start_with?(INTERNAL_SERVICE_PREFIX)
           delete_worker worker, true # not first command in session
         else
-          service = message.shift
           worker.service = require_service service
           worker_waiting worker
         end
