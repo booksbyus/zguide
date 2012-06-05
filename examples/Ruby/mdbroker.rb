@@ -2,6 +2,7 @@
 # A minimal implementation of http:#rfc.zeromq.org/spec:7 and spec:8
 #
 # Author: Tom van Leeuwen <tom@vleeuwen.eu>
+# Based on Python example by Min RK
 
 require 'ffi-rzmq'
 require './mdp.rb'
