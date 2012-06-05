@@ -11,6 +11,8 @@ require './mdp.rb'
 class MajorDomoClient
   include MDP
 
+  attr_accessor :timeout
+
   def initialize broker
     @broker = broker
     @context = ZMQ::Context.new(1)
