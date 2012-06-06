@@ -64,7 +64,7 @@ Each of these has their trade-offs and often you'll mix them. We'll look at all 
 We can get very simple reliable request-reply with only some changes in the client. We call this the Lazy Pirate pattern. Rather than doing a blocking receive, we:
 
 * Poll the REQ socket and only receive from it when it's sure a reply has arrived.
-* Resend a request several times, it no reply arrived within a timeout period.
+* Resend a request several times, if no reply arrived within a timeout period.
 * Abandon the transaction if after several requests, there is still no reply.
 
 [[code type="textdiagram" title="The Lazy Pirate Pattern"]]
