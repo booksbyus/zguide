@@ -52,7 +52,7 @@ def titanic_request (pipe):
             os.mkdir(TITANIC_DIR)
 
         # Generate UUID and save message to disk
-        uuid = str(uuid4())
+        uuid = uuid4().hex
         filename = request_filename (uuid)
         with open(filename, 'w') as f:
             pickle.dump(request, f)
