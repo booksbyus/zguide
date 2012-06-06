@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func zmq_loop() error {
+func main() {
 	context, _ := zmq.NewContext()
 	defer context.Close()
 
@@ -23,7 +23,7 @@ func zmq_loop() error {
   //  Socket for worker control
 	controller, _ := context.NewSocket(zmq.PUB)
 	defer controller.Close()
-	receiver.Bind("tcp://*:5559")
+	controller.Bind("tcp://*:5559")
 
   //  Wait for start of batch
   msgbytes, _ := receiver.Recv(0)
@@ -46,10 +46,9 @@ func zmq_loop() error {
 	te := time.Now().UnixNano()
 	fmt.Printf("Total elapsed time: %d msec\n", (te-start_time)/1e6)
 
-  controller.Send([]byte("KILL"), 0)
-  return nil
-}
-
-func main() {
-  zmq_loop()
+  err := controller.Send([]byte("KILL"), 0)
+  if err != nil {
+    fmt.Println(err)
+  }
+  time.Sleep(1 * time.Second)
 }
