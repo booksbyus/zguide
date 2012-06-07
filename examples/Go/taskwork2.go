@@ -56,7 +56,7 @@ func main() {
       sender.Send([]byte(""), 0)
     case items[1].REvents & zmq.POLLIN != 0:
       fmt.Println("stopping")
-      break
+      return
     }
 	}
 }
