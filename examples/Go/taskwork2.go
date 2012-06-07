@@ -42,15 +42,21 @@ func main() {
 
 	//  Process tasks forever
 	for {
-		msgbytes, _ := receiver.Recv(0)
-		fmt.Printf("%s.\n", string(msgbytes))
+    zmq.Poll(items, -1)
+    switch {
+    case items[0].REvents & zmq.POLLIN != 0:
+      msgbytes, _ := receiver.Recv(0)
+      fmt.Printf("%s.", string(msgbytes))
 
-		//  Do the work
-		msec, _ := strconv.ParseInt(string(msgbytes), 10, 64)
-		time.Sleep(time.Duration(msec) * 1e6)
+      //  Do the work
+      msec, _ := strconv.ParseInt(string(msgbytes), 10, 64)
+      time.Sleep(time.Duration(msec) * 1e6)
 
-		//  Send results to sink
-		sender.Send([]byte(""), 0)
-
+      //  Send results to sink
+      sender.Send([]byte(""), 0)
+    case items[1].REvents & zmq.POLLIN != 0:
+      fmt.Println("stopping")
+      break
+    }
 	}
 }
