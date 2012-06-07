@@ -29,34 +29,34 @@ func main() {
 	defer sender.Close()
 	sender.Connect("tcp://localhost:5558")
 
-  //  Socket for control input
-  controller, _ := context.NewSocket(zmq.SUB)
-  defer controller.Close()
-  controller.Connect("tcp://localhost:5559")
-  controller.SetSockOptString(zmq.SUBSCRIBE, "")
+	//  Socket for control input
+	controller, _ := context.NewSocket(zmq.SUB)
+	defer controller.Close()
+	controller.Connect("tcp://localhost:5559")
+	controller.SetSockOptString(zmq.SUBSCRIBE, "")
 
-  items := zmq.PollItems{
-    zmq.PollItem{Socket: receiver, zmq.Events: zmq.POLLIN},
-    zmq.PollItem{Socket: controller, zmq.Events: zmq.POLLIN},
-  }
+	items := zmq.PollItems{
+		zmq.PollItem{Socket: receiver, zmq.Events: zmq.POLLIN},
+		zmq.PollItem{Socket: controller, zmq.Events: zmq.POLLIN},
+	}
 
 	//  Process tasks forever
 	for {
-    zmq.Poll(items, -1)
-    switch {
-    case items[0].REvents & zmq.POLLIN != 0:
-      msgbytes, _ := receiver.Recv(0)
-      fmt.Printf("%s.", string(msgbytes))
+		zmq.Poll(items, -1)
+		switch {
+		case items[0].REvents&zmq.POLLIN != 0:
+			msgbytes, _ := receiver.Recv(0)
+			fmt.Printf("%s.", string(msgbytes))
 
-      //  Do the work
-      msec, _ := strconv.ParseInt(string(msgbytes), 10, 64)
-      time.Sleep(time.Duration(msec) * 1e6)
+			//  Do the work
+			msec, _ := strconv.ParseInt(string(msgbytes), 10, 64)
+			time.Sleep(time.Duration(msec) * 1e6)
 
-      //  Send results to sink
-      sender.Send([]byte(""), 0)
-    case items[1].REvents & zmq.POLLIN != 0:
-      fmt.Println("stopping")
-      return
-    }
+			//  Send results to sink
+			sender.Send([]byte(""), 0)
+		case items[1].REvents&zmq.POLLIN != 0:
+			fmt.Println("stopping")
+			return
+		}
 	}
 }
