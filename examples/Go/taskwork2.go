@@ -28,6 +28,12 @@ func main() {
 	defer sender.Close()
 	sender.Connect("tcp://localhost:5558")
 
+  //  Socket for control input
+  controller, _ := context.NewSocket(zmq.SUB)
+  defer controller.Close()
+  controller.connect("tcp://localhost:5559")
+  controller.SetSockOptString(zmq.SUBSCRIBE, "")
+
 	//  Process tasks forever
 	for {
 		msgbytes, _ := receiver.Recv(0)
