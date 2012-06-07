@@ -26,7 +26,7 @@ We'll cover:
 
 +++ The Zen of Zero
 
-The Ø in 0MQ is all about tradeoffs. On the one hand this strange name lowers 0MQ's visibility on Google and Twitter. On the other hand it annoys the heck out of some Danish folk who write us things like "ØMG røtfl", and "//Ø is not a funny looking zero!//" and "//Rødgrød med Fløde!//", which is apparently an insult that means "may your neighbours be the direct descendents of Grendel!"  Seems like a fair trade.
+The Ø in 0MQ is all about tradeoffs. On the one hand this strange name lowers 0MQ's visibility on Google and Twitter. On the other hand it annoys the heck out of some Danish folk who write us things like "ØMG røtfl", and "//Ø is not a funny looking zero!//" and "//Rødgrød med Fløde!//", which is apparently an insult that means "may your neighbours be the direct descendants of Grendel!"  Seems like a fair trade.
 
 Originally the zero in 0MQ was meant as "zero broker" and (as close to) "zero latency" (as possible). In the meantime it has come to cover different goals: zero administration, zero cost, zero waste. More generally, "zero" refers to the culture of minimalism that permeates the project. We add power by removing complexity rather than exposing new functionality.
 
@@ -72,7 +72,7 @@ zmq_msg_close (&mouse);
 zmq_close (mousetrap);
 [[/code]]
 
-Note that sockets are always void pointers, and messages (which we'll come to very soon) are structures. So in C you pass sockets as-such, but you pass addresses of messages in all functions that work with messages, like zmq_send[3] and zmq_recv[3]. As a mnemonic, realize that "in 0MQ all ur sockets are belong to us", but messages are things you actually own in your code.
+Note that sockets are always void pointers, and messages (which we'll come to very soon) are structures. So in C you pass sockets as-such, but you pass addresses of messages in all functions that work with messages, like zmq_send[3] and zmq_recv[3]. As a mnemonic, realize that "in 0MQ all your sockets are belong to us", but messages are things you actually own in your code.
 
 Creating, destroying, and configuring sockets works as you'd expect for any object. But remember that 0MQ is an asynchronous, elastic fabric. This has some impact on how we plug sockets into the network topology, and how we use the sockets after that.
 
@@ -116,13 +116,13 @@ In most cases, which node acts as client, and which as server, is about network 
 
 What this means is that you should always think in terms of "servers" as stable parts of your topology, with more-or-less fixed endpoint addresses, and "clients" as dynamic parts that come and go. Then, design your application around this model. The chances that it will "just work" are much better like that.
 
-Sockets have types. The socket type defines the semantics of the socket, its policies for routing messages inwards and outwards, queueing, etc. You can connect certain types of socket together, e.g. a publisher socket and a subscriber socket. Sockets work together in "messaging patterns". We'll look at this in more detail later.
+Sockets have types. The socket type defines the semantics of the socket, its policies for routing messages inwards and outwards, queuing, etc. You can connect certain types of socket together, e.g. a publisher socket and a subscriber socket. Sockets work together in "messaging patterns". We'll look at this in more detail later.
 
 It's the ability to connect sockets in these different ways that gives 0MQ its basic power as a message queuing system. There are layers on top of this, such as devices and topic routing, which we'll get to later. But essentially, with 0MQ you define your network architecture by plugging pieces together like a child's construction toy.
 
 +++ Using Sockets to Carry Data
 
-To send and receive messages you use the zmq_send[3] and zmq_recv[3] methods. The names are conventional but 0MQ's I/O model is different enough from TCP's model that you will need time to get your head around it.
+To send and receive messages you use the zmq_send[3] and zmq_recv[3] methods. The names are conventional but 0MQ's I/O model is different enough from the TCP model that you will need time to get your head around it.
 
 [[code type="textdiagram" title="TCP sockets are 1 to 1"]]
 +------------+
@@ -227,7 +227,7 @@ We said that 0MQ does I/O in a background thread. One I/O thread (for all socket
 void *context = zmq_init (1);
 [[/code]]
 
-There is a major difference between a 0MQ application and a conventional networked application, which is that you don't create one socket per connection. One socket handles all incoming and outcoming connections for a particular point of work. E.g. when you publish to a thousand subscribers, it's via one socket. When you distribute work among twenty services, it's via one socket. When you collect data from a thousand web applications, it's via one socket.
+There is a major difference between a 0MQ application and a conventional networked application, which is that you don't create one socket per connection. One socket handles all incoming and outgoing connections for a particular point of work. E.g. when you publish to a thousand subscribers, it's via one socket. When you distribute work among twenty services, it's via one socket. When you collect data from a thousand web applications, it's via one socket.
 
 This has a fundamental impact on how you write applications. A traditional networked application has one process or one thread per remote connection, and that process or thread handles one socket. 0MQ lets you collapse this entire structure into a single thread, and then break it up as necessary for scaling.
 
@@ -287,7 +287,7 @@ In memory, 0MQ messages are zmq_msg_t structures (or classes depending on your l
 
 * To read a message you use zmq_msg_init[3] to create an empty message, and then you pass that to zmq_recv[3].
 
-* To write a message from new data, you use zmq_msg_init_size[3] to create a message and at the same time allocate a block of data of some size. You then fill that data using memcpy, and pass the message to zmq_send[3].
+* To write a message from new data, you use zmq_msg_init_size[3] to create a message and at the same time allocate a block of data of some size. You then fill that data using memcpy[3], and pass the message to zmq_send[3].
 
 * To release (not destroy) a message you call zmq_msg_close[3]. This drops a reference, and eventually 0MQ will destroy the message.
 
@@ -911,7 +911,7 @@ When you start to need other combinations, it's time to write your own devices.
 
 +++ Multithreading with 0MQ
 
-0MQ is perhaps the nicest way ever to write multithreaded (MT) applications. Whereas as 0MQ sockets require some readjustment if you are used to traditional sockets, 0MQ multithreading will take everything you know about writing MT applications, throw it into a heap in the garden, pour gasoline over it, and set it alite. It's a rare book that deserves burning, but most books on concurrent programming do.
+0MQ is perhaps the nicest way ever to write multithreaded (MT) applications. Whereas as 0MQ sockets require some readjustment if you are used to traditional sockets, 0MQ multithreading will take everything you know about writing MT applications, throw it into a heap in the garden, pour gasoline over it, and set it alight. It's a rare book that deserves burning, but most books on concurrent programming do.
 
 To make utterly perfect MT programs (and I mean that literally) **we don't need mutexes, locks, or any other form of inter-thread communication except messages sent across 0MQ sockets.**
 
