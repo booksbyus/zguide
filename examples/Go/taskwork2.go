@@ -32,7 +32,7 @@ func main() {
   //  Socket for control input
   controller, _ := context.NewSocket(zmq.SUB)
   defer controller.Close()
-  controller.connect("tcp://localhost:5559")
+  controller.Connect("tcp://localhost:5559")
   controller.SetSockOptString(zmq.SUBSCRIBE, "")
 
   items := make([]zmq.PollItem, 2)
