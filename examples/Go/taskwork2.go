@@ -35,11 +35,10 @@ func main() {
   controller.Connect("tcp://localhost:5559")
   controller.SetSockOptString(zmq.SUBSCRIBE, "")
 
-  items := make([]zmq.PollItem, 2)
-  items[0].SetSocket(receiver)
-  items[0].SetEvents(zmq.POLLIN)
-  items[1].SetSocket(controller)
-  items[1].SetEvents(zmq.POLLIN)
+  items := zmq.PollItems{
+    zmq.PollItem{Socket: receiver, zmq.Events: zmq.POLLIN},
+    zmq.PollItem{Socket: controller, zmq.Events: zmq.POLLIN},
+  }
 
 	//  Process tasks forever
 	for {
