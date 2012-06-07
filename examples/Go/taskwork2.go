@@ -3,6 +3,7 @@
 // Connects PULL socket to tcp://localhost:5557
 // Collects workloads from ventilator via that socket
 // Connects PUSH socket to tcp://localhost:5558
+// Connects SUB socket to tcp://localhost:5559
 // Sends results to sink via that socket 
 // 
 package main
