@@ -26,7 +26,7 @@ We'll cover:
 
 +++ The Zen of Zero
 
-The Ø in 0MQ is all about tradeoffs. On the one hand this strange name lowers 0MQ's visibility on Google and Twitter. On the other hand it annoys the heck out of some Danish folk who write us things like "ØMG røtfl", and "//Ø is not a funny looking zero!//" and "//Rødgrød med Fløde!//", which is apparently an insult that means "may your neighbours be the direct descendents of Grendel!"  Seems like a fair trade.
+The Ø in 0MQ is all about tradeoffs. On the one hand this strange name lowers 0MQ's visibility on Google and Twitter. On the other hand it annoys the heck out of some Danish folk who write us things like "ØMG røtfl", and "//Ø is not a funny looking zero!//" and "//Rødgrød med Fløde!//", which is apparently an insult that means "may your neighbours be the direct descendants of Grendel!"  Seems like a fair trade.
 
 Originally the zero in 0MQ was meant as "zero broker" and (as close to) "zero latency" (as possible). In the meantime it has come to cover different goals: zero administration, zero cost, zero waste. More generally, "zero" refers to the culture of minimalism that permeates the project. We add power by removing complexity rather than exposing new functionality.
 
@@ -72,7 +72,7 @@ zmq_msg_close (&mouse);
 zmq_close (mousetrap);
 [[/code]]
 
-Note that sockets are always void pointers, and messages (which we'll come to very soon) are structures. So in C you pass sockets as-such, but you pass addresses of messages in all functions that work with messages, like zmq_send[3] and zmq_recv[3]. As a mnemonic, realize that "in 0MQ all ur sockets are belong to us", but messages are things you actually own in your code.
+Note that sockets are always void pointers, and messages (which we'll come to very soon) are structures. So in C you pass sockets as-such, but you pass addresses of messages in all functions that work with messages, like zmq_send[3] and zmq_recv[3]. As a mnemonic, realize that "in 0MQ all your sockets are belong to us", but messages are things you actually own in your code.
 
 Creating, destroying, and configuring sockets works as you'd expect for any object. But remember that 0MQ is an asynchronous, elastic fabric. This has some impact on how we plug sockets into the network topology, and how we use the sockets after that.
 
@@ -116,37 +116,34 @@ In most cases, which node acts as client, and which as server, is about network 
 
 What this means is that you should always think in terms of "servers" as stable parts of your topology, with more-or-less fixed endpoint addresses, and "clients" as dynamic parts that come and go. Then, design your application around this model. The chances that it will "just work" are much better like that.
 
-Sockets have types. The socket type defines the semantics of the socket, its policies for routing messages inwards and outwards, queueing, etc. You can connect certain types of socket together, e.g. a publisher socket and a subscriber socket. Sockets work together in "messaging patterns". We'll look at this in more detail later.
+Sockets have types. The socket type defines the semantics of the socket, its policies for routing messages inwards and outwards, queuing, etc. You can connect certain types of socket together, e.g. a publisher socket and a subscriber socket. Sockets work together in "messaging patterns". We'll look at this in more detail later.
 
 It's the ability to connect sockets in these different ways that gives 0MQ its basic power as a message queuing system. There are layers on top of this, such as devices and topic routing, which we'll get to later. But essentially, with 0MQ you define your network architecture by plugging pieces together like a child's construction toy.
 
 +++ Using Sockets to Carry Data
 
-To send and receive messages you use the zmq_send[3] and zmq_recv[3] methods. The names are conventional but 0MQ's I/O model is different enough from TCP's model that you will need time to get your head around it.
+To send and receive messages you use the zmq_send[3] and zmq_recv[3] methods. The names are conventional but 0MQ's I/O model is different enough from the TCP model that you will need time to get your head around it.
 
-[[code type="textdiagram"]]
-             +------------+
-             |            |
-             |    Node    |
-             |            |
-             +------------+
-             |   Socket   |
-             \------------/
-                   ^
-                   |
-                1 to 1
-                   |
-                   v
-             /------------\
-             |   Socket   |
-             +------------+
-             |            |
-             |    Node    |
-             |            |
-             +------------+
-
-
-   Figure # - TCP sockets are 1 to 1
+[[code type="textdiagram" title="TCP sockets are 1 to 1"]]
++------------+
+|            |
+|    Node    |
+|            |
++------------+
+|   Socket   |
+\------------/
+      ^
+      |
+   1 to 1
+      |
+      v
+/------------\
+|   Socket   |
++------------+
+|            |
+|    Node    |
+|            |
++------------+
 [[/code]]
 
 Let's look at the main differences between TCP sockets and 0MQ sockets when it comes to carrying data:
@@ -159,30 +156,27 @@ Let's look at the main differences between TCP sockets and 0MQ sockets when it c
 
 * 0MQ sockets can send to many endpoints (creating a fan-out model), or receive from many endpoints (creating a fan-in model).
 
-[[code type="textdiagram"]]
-        +------------+           +------------+
-        |            |           |            |
-        |    Node    |           |    Node    |
-        |            |           |            |
-        +------------+           +------------+
-        |   Socket   |           |   Socket   |
-        \----+-+-----/           \------+-----/
-             | |                        :
-     1 to N  | +------------------------+
-     Fan out |                          |
-             +------------------------+ | N to 1
-             |                        | | Fan in
-             v                        v v
-        /------------\           /------------\
-        |   Socket   |           |   Socket   |
-        +------------+           +------------+
-        |            |           |            |
-        |    Node    |           |    Node    |
-        |            |           |            |
-        +------------+           +------------+
-
-
-           Figure # - 0MQ sockets are N to N
+[[code type="textdiagram" title="0MQ Sockets are N to N"]]
+   +------------+           +------------+
+   |            |           |            |
+   |    Node    |           |    Node    |
+   |            |           |            |
+   +------------+           +------------+
+   |   Socket   |           |   Socket   |
+   \----+-+-----/           \------+-----/
+        | |                        :
+1 to N  | +------------------------+
+Fan out |                          |
+        +------------------------+ | N to 1
+        |                        | | Fan in
+        v                        v v
+   /------------\           /------------\
+   |   Socket   |           |   Socket   |
+   +------------+           +------------+
+   |            |           |            |
+   |    Node    |           |    Node    |
+   |            |           |            |
+   +------------+           +------------+
 [[/code]]
 
 So writing a message to a socket may send the message to one or many other places at once, and conversely, one socket will collect messages from all connections sending messages to it. The zmq_recv[3] method uses a fair-queuing algorithm so each sender gets an even chance.
@@ -207,22 +201,18 @@ The implication is that if we use normal sockets to carry HTTP requests and resp
 
 Sadly the answer is "this is not how it works". 0MQ is not a neutral carrier, it imposes a framing on the transport protocols it uses. This framing is not compatible with existing protocols, which tend to use their own framing. For example, here is an HTTP request, and a 0MQ request, both over TCP/IP:
 
-[[code type="textdiagram"]]
-    +----------------+----+----+----+----+
-    | GET /index.html| 13 | 10 | 13 | 10 |
-    +----------------+----+----+----+----+
-
-           Figure # - HTTP request
+[[code type="textdiagram" title="HTTP On the Wire"]]
++----------------+----+----+----+----+
+| GET /index.html| 13 | 10 | 13 | 10 |
++----------------+----+----+----+----+
 [[/code]]
 
 Where the HTTP request uses CR-LF as its simplest framing delimiter, and 0MQ uses a length-specified frame:
 
-[[code type="textdiagram"]]
-    +---+---+---+---+---+---+
-    | 5 | H | E | L | L | O |
-    +---+---+---+---+---+---+
-
-      Figure # - 0MQ request
+[[code type="textdiagram" title="0MQ On the Wire"]]
++---+---+---+---+---+---+
+| 5 | H | E | L | L | O |
++---+---+---+---+---+---+
 [[/code]]
 
 So you could write a HTTP-like protocol using 0MQ, using for example the request-reply socket pattern. But it would not be HTTP.
@@ -237,7 +227,7 @@ We said that 0MQ does I/O in a background thread. One I/O thread (for all socket
 void *context = zmq_init (1);
 [[/code]]
 
-There is a major difference between a 0MQ application and a conventional networked application, which is that you don't create one socket per connection. One socket handles all incoming and outcoming connections for a particular point of work. E.g. when you publish to a thousand subscribers, it's via one socket. When you distribute work among twenty services, it's via one socket. When you collect data from a thousand web applications, it's via one socket.
+There is a major difference between a 0MQ application and a conventional networked application, which is that you don't create one socket per connection. One socket handles all incoming and outgoing connections for a particular point of work. E.g. when you publish to a thousand subscribers, it's via one socket. When you distribute work among twenty services, it's via one socket. When you collect data from a thousand web applications, it's via one socket.
 
 This has a fundamental impact on how you write applications. A traditional networked application has one process or one thread per remote connection, and that process or thread handles one socket. 0MQ lets you collapse this entire structure into a single thread, and then break it up as necessary for scaling.
 
@@ -297,7 +287,7 @@ In memory, 0MQ messages are zmq_msg_t structures (or classes depending on your l
 
 * To read a message you use zmq_msg_init[3] to create an empty message, and then you pass that to zmq_recv[3].
 
-* To write a message from new data, you use zmq_msg_init_size[3] to create a message and at the same time allocate a block of data of some size. You then fill that data using memcpy, and pass the message to zmq_send[3].
+* To write a message from new data, you use zmq_msg_init_size[3] to create a message and at the same time allocate a block of data of some size. You then fill that data using memcpy[3], and pass the message to zmq_send[3].
 
 * To release (not destroy) a message you call zmq_msg_close[3]. This drops a reference, and eventually 0MQ will destroy the message.
 
@@ -443,56 +433,53 @@ It doesn't take much new code in the sink:
     zmq_msg_close (&message);
 [[/code]]
 
-[[code type="textdiagram"]]
-                +-------------+
-                |             |
-                |  Ventilator |
-                |             |
-                +-------------+
-                |    PUSH     |
-                \------+------/
-                       |
-                     tasks
-                       |
-       +---------------+---------------+
-       |               |               |
-       |     /=--------|-----+=--------|-----+------\
-     task    |       task    |        task   |      :
-       |     |         |     |         |     |      |
-       v     v         v     v         v     v      |
-   /------+-----\  /------+-----\  /------+-----\   |
-   | PULL | SUB |  | PULL | SUB |  | PULL | SUB |   |
-   +------+-----+  +------+-----+  +------+-----+   |
-   |            |  |            |  |            |   |
-   |   Worker   |  |   Worker   |  |   Worker   |   |
-   |            |  |            |  |            |   |
-   +------------+  +------------+  +------------+   |
-   |    PUSH    |  |    PUSH    |  |    PUSH    |   |
-   \-----+------/  \-----+------/  \-----+------/   |
-         |               |               |          |
-       result          result          result       |
-         |               |               |          |
-         +---------------+---------------+          |
-                         |                          |
-                      results                       |
-                         |                          |
-                         v                          |
-                  /-------------\                   |
-                  |    PULL     |                   |
-                  +-------------+                   |
-                  |             |                   |
-                  |    Sink     |                   |
-                  |             |                   |
-                  +-------------+                   |
-                  |     PUB     |                   |
-                  \------+------/                   |
-                         |                          |
-                    KILL signal                     |
-                         |                          |
-                         \--------------------------/
-
-
-     Figure # - Parallel Pipeline with Kill signaling
+[[code type="textdiagram" title="Parallel Pipeline with Kill Signaling"]]
+             +-------------+
+             |             |
+             |  Ventilator |
+             |             |
+             +-------------+
+             |    PUSH     |
+             \------+------/
+                    |
+                  tasks
+                    |
+    +---------------+---------------+
+    |               |               |
+    |     /=--------|-----+=--------|-----+------\
+  task    |       task    |        task   |      :
+    |     |         |     |         |     |      |
+    v     v         v     v         v     v      |
+/------+-----\  /------+-----\  /------+-----\   |
+| PULL | SUB |  | PULL | SUB |  | PULL | SUB |   |
++------+-----+  +------+-----+  +------+-----+   |
+|            |  |            |  |            |   |
+|   Worker   |  |   Worker   |  |   Worker   |   |
+|            |  |            |  |            |   |
++------------+  +------------+  +------------+   |
+|    PUSH    |  |    PUSH    |  |    PUSH    |   |
+\-----+------/  \-----+------/  \-----+------/   |
+      |               |               |          |
+    result          result          result       |
+      |               |               |          |
+      +---------------+---------------+          |
+                      |                          |
+                   results                       |
+                      |                          |
+                      v                          |
+               /-------------\                   |
+               |    PULL     |                   |
+               +-------------+                   |
+               |             |                   |
+               |    Sink     |                   |
+               |             |                   |
+               +-------------+                   |
+               |     PUB     |                   |
+               \------+------/                   |
+                      |                          |
+                 KILL signal                     |
+                      |                          |
+                      \--------------------------/
 [[/code]]
 
 Here is the worker process, which manages two sockets (a PULL socket getting tasks, and a SUB socket getting control commands) using the zmq_poll[3] technique we saw earlier:
@@ -542,14 +529,23 @@ Any long-running application has to manage memory correctly, or eventually it'll
 
 * To install valgrind, e.g. on Ubuntu or Debian: {{sudo apt-get install valgrind}}.
 
-* By default, 0MQ will cause valgrind to complain a lot. To remove these warnings, rebuild 0MQ with the ZMQ_MAKE_VALGRIND_HAPPY macro, thus:
+* By default, 0MQ will cause valgrind to complain a lot. To remove these warnings, create a file {{valgrind.supp}} that contains this:
 
 [[code]]
-$ cd zeromq2
-$ export CPPFLAGS=-DZMQ_MAKE_VALGRIND_HAPPY
-$ ./configure
-$ make clean; make
-$ sudo make install
+{
+   <socketcall_sendto>
+   Memcheck:Param
+   socketcall.sendto(msg)
+   fun:send
+   ...
+}
+{
+   <socketcall_sendto>
+   Memcheck:Param
+   socketcall.send(msg)
+   fun:send
+   ...
+}
 [[/code]]
 
 * Fix your applications to exit cleanly after Ctrl-C. For any application that exits by itself, that's not needed, but for long-running applications (like devices), this is essential, otherwise valgrind will complain about all currently allocated memory.
@@ -559,7 +555,7 @@ $ sudo make install
 * Finally, run valgrind thus:
 
 [[code]]
-valgrind --tool=memcheck --leak-check=full someprog
+valgrind --tool=memcheck --leak-check=full --suppressions=valgrind.supp someprog
 [[/code]]
 
 And after fixing any errors it reported, you should get the pleasant message:
@@ -625,70 +621,64 @@ This pattern is extremely common in the real world and is why our societies and 
 
 A 0MQ network like any cannot grow beyond a certain size without needing intermediaries. In 0MQ, we call these "devices". When we use 0MQ we usually start building our applications as a set of nodes on a network with the nodes talking to each other, without intermediaries:
 
-[[code type="textdiagram"]]
-               +---------+
-               |         |
-               |  Node   |
-               |         |
-               +---------+
-               | Socket  |
-               \----+----/
-                    |
-                    |
-             +------+------+
-             |             |
-             |             |
-        /----+----\   /----+----\
-        | Socket  |   | Socket  |
-        +---------+   +---------+
-        |         |   |         |
-        |  Node   |   |  Node   |
-        |         |   |         |
-        +---------+   +---------+
-
-
-Figure # - Small scale 0MQ application
+[[code type="textdiagram" title="Small-scale 0MQ Application"]]
+       +---------+
+       |         |
+       |  Node   |
+       |         |
+       +---------+
+       | Socket  |
+       \----+----/
+            |
+            |
+     +------+------+
+     |             |
+     |             |
+/----+----\   /----+----\
+| Socket  |   | Socket  |
++---------+   +---------+
+|         |   |         |
+|  Node   |   |  Node   |
+|         |   |         |
++---------+   +---------+
 [[/code]]
 
 And then we extend the application across a wider network, placing devices in specific places and scaling up the number of nodes:
 
-[[code type="textdiagram"]]
-                  +---------+
-                  |         |
-                  |  Node   |
-                  |         |
-                  +---------+
-                  | Socket  |
-                  \----+----/
-                       |
-                       |
-         +-------------+-------------+
-         |             |             |
-         |             |             |
-    /----+----\   /----+----\   /----+----\
-    | Socket  |   | Socket  |   | Socket  |
-    +---------+   +---------+   +---------+
-    |         |   |         |   |         |
-    |  Node   |   |  Node   |   | Device  |
-    |         |   |         |   |         |
-    +---------+   +---------+   +---------+
-                                | Socket  |
-                                \----+----/
-                                     |
-                                     |
-                              +------+------+
-                              |             |
-                              |             |
-                         /----+----\   /----+----\
-                         | Socket  |   | Socket  |
-                         +---------+   +---------+
-                         |         |   |         |
-                         |  Node   |   |  Node   |
-                         |         |   |         |
-                         +---------+   +---------+
-
-
-       Figure # - Larger scale 0MQ application
+[[code type="textdiagram" title="Larger-scale 0MQ Application"]]
+              +---------+
+              |         |
+              |  Node   |
+              |         |
+              +---------+
+              | Socket  |
+              \----+----/
+                   |
+                   |
+     +-------------+-------------+
+     |             |             |
+     |             |             |
+/----+----\   /----+----\   /----+----\
+| Socket  |   | Socket  |   | Socket  |
++---------+   +---------+   +---------+
+|         |   |         |   |         |
+|  Node   |   |  Node   |   | Device  |
+|         |   |         |   |         |
++---------+   +---------+   +---------+
+                            | Socket  |
+                            \----+----/
+                                 |
+                                 |
+                          +------+------+
+                          |             |
+                          |             |
+                     /----+----\   /----+----\
+                     | Socket  |   | Socket  |
+                     +---------+   +---------+
+                     |         |   |         |
+                     |  Node   |   |  Node   |
+                     |         |   |         |
+                     +---------+   +---------+
 [[/code]]
 
 0MQ devices generally connect a set of 'frontend' sockets to a set of 'backend' sockets, though there are no strict design rules. They ideally run with no state, so that it becomes possible to stretch applications over as many intermediates as needed. You can run them as threads within a process, or as stand-alone processes. 0MQ provides some very basic devices but you will in practice develop your own.
@@ -708,51 +698,47 @@ We're going to write a simple proxy server that sits in between a publisher and 
 
 We call this a //proxy// because it acts as a subscriber to publishers, and acts as a publisher to subscribers. That means you can slot this device into an existing network without affecting it (of course the new subscribers need to know to speak to the proxy).
 
-[[code type="textdiagram"]]
-
-                   +-----------+
-                   |           |
-                   | Publisher |
-                   |           |
-                   +-----------+
-                   |    PUB    |
-                   \-----------/
-                       bind
-             tcp://192.168.55.210:5556
-                         |
-                         |
-        +----------------+----------------+
-        |                |                |
-        |                |                |
-     connect           connect            |
-  /------------\   /------------\       connect
-  |    SUB     |   |    SUB     |   /------------\
-  +------------+   +------------+   |    SUB     |
-  |            |   |            |   +------------+
-  | Subscriber |   | Subscriber |   |            |
-  |            |   |            |   | Forwarder  |
-  +------------+   +------------+   |            |
-                                    +------------+
-   Internal network                 |    PUB     |
-   ---------------------------------\------------/--------
-   External network                      bind
-                                  tcp://10.1.1.0:8100
-                                          |
-                                          |
-                                 +--------+--------+
-                                 |                 |
-                                 |                 |
-                              connect           connect
-                           /------------\    /------------\
-                           |    SUB     |    |    SUB     |
-                           +------------+    +------------+
-                           |            |    |            |
-                           | Subscriber |    | Subscriber |
-                           |            |    |            |
-                           +------------+    +------------+
-
-
-             Figure # - Forwarder proxy device
+[[code type="textdiagram" title="Forwarder Proxy Device"]]
+                 +-----------+
+                 |           |
+                 | Publisher |
+                 |           |
+                 +-----------+
+                 |    PUB    |
+                 \-----------/
+                     bind
+           tcp://192.168.55.210:5556
+                       |
+                       |
+      +----------------+----------------+
+      |                |                |
+      |                |                |
+   connect           connect            |
+/------------\   /------------\       connect
+|    SUB     |   |    SUB     |   /------------\
++------------+   +------------+   |    SUB     |
+|            |   |            |   +------------+
+| Subscriber |   | Subscriber |   |            |
+|            |   |            |   | Forwarder  |
++------------+   +------------+   |            |
+                                  +------------+
+ Internal network                 |    PUB     |
+ ---------------------------------\------------/--------
+ External network                      bind
+                                tcp://10.1.1.0:8100
+                                        |
+                                        |
+                               +--------+--------+
+                               |                 |
+                               |                 |
+                            connect           connect
+                         /------------\    /------------\
+                         |    SUB     |    |    SUB     |
+                         +------------+    +------------+
+                         |            |    |            |
+                         | Subscriber |    | Subscriber |
+                         |            |    |            |
+                         +------------+    +------------+
 [[/code]]
 
 Note that this application is multipart safe. It correctly detects multipart messages and sends them as it reads them. If we did not set the SNDMORE option on outgoing multipart data, the final recipient would get a corrupted message. You should always make your devices multipart safe so that there is no risk they will corrupt the data they switch.
@@ -765,33 +751,30 @@ In the Hello World client-server application we have one client that talks to on
 
 There are two ways to connect multiple clients to multiple servers. The brute-force way is to connect each client socket to multiple service endpoints. One client socket can connect to multiple service sockets, and requests are load-balanced among these services. Let's say you connect a client socket to three service endpoints, A, B, and C. The client makes requests R1, R2, R3, R4. R1 and R4 go to service A, R2 goes to B, and R3 goes to service C.
 
-[[code type="textdiagram"]]
-               +-----------+
-               |           |
-               |   Client  |
-               |           |
-               +-----------+
-               |    REQ    |
-               \-----+-----/
-                     |
-               R1, R2, R3, R4
-                     |
-       +-------------+-------------+
-       |             |             |
-    R1, R4           R2            R3
-       |             |             |
-       v             v             v
-  /---------\   /---------\   /---------\
-  |   REP   |   |   REP   |   |   REP   |
-  +---------+   +---------+   +---------+
-  |         |   |         |   |         |
-  | Service |   | Service |   | Service |
-  |    A    |   |    B    |   |    C    |
-  |         |   |         |   |         |
-  +---------+   +---------+   +---------+
-
-
-   Figure # - Load balancing of requests
+[[code type="textdiagram" title="Load-balancing of Requests"]]
+             +-----------+
+             |           |
+             |   Client  |
+             |           |
+             +-----------+
+             |    REQ    |
+             \-----+-----/
+                   |
+             R1, R2, R3, R4
+                   |
+     +-------------+-------------+
+     |             |             |
+  R1, R4           R2            R3
+     |             |             |
+     v             v             v
+/---------\   /---------\   /---------\
+|   REP   |   |   REP   |   |   REP   |
++---------+   +---------+   +---------+
+|         |   |         |   |         |
+| Service |   | Service |   | Service |
+|    A    |   |    B    |   |    C    |
+|         |   |         |   |         |
++---------+   +---------+   +---------+
 [[/code]]
 
 This design lets you add more clients cheaply. You can also add more services. Each client will load-balance its requests to the services. But each client has to know the service topology. If you have 100 clients and then you decide to add three more services, you need to reconfigure and restart 100 clients in order for the clients to know about the three new services.
@@ -810,33 +793,30 @@ Now, we're just going to see how DEALER and ROUTER let us extend REQ-REP across 
 
 In this simple stretched request-reply pattern, REQ talks to ROUTER and DEALER talks to REP. In between the DEALER and ROUTER we have to have code (like our broker) that pulls messages off the one socket and shoves them onto the other:
 
-[[code type="textdiagram"]]
-  +---------+   +---------+   +---------+
-  |   REQ   |   |   REQ   |   |   REQ   |
-  \----+----/   \----+----/   \----+----/
-       |             |             |
-       |             |             |
-       +-------------+-------------+
-                     |
-                     |
-               /-----+-----\
-               |  ROUTER   |
-               +-----------+
-               |   code    |
-               +-----------+
-               |  DEALER   |
-               \-----+-----/
-                     |
-                     |
-       +-------------+-------------+
-       |             |             |
-       |             |             |
-  /----+----\   /----+----\   /----+----\
-  |   REP   |   |   REP   |   |   REP   |
-  +---------+   +---------+   +---------+
-
-
-    Figure # - Extended request-reply
+[[code type="textdiagram" title="Extended Request-reply"]]
++---------+   +---------+   +---------+
+|   REQ   |   |   REQ   |   |   REQ   |
+\----+----/   \----+----/   \----+----/
+     |             |             |
+     |             |             |
+     +-------------+-------------+
+                   |
+                   |
+             /-----+-----\
+             |  ROUTER   |
+             +-----------+
+             |   code    |
+             +-----------+
+             |  DEALER   |
+             \-----+-----/
+                   |
+                   |
+     +-------------+-------------+
+     |             |             |
+     |             |             |
+/----+----\   /----+----\   /----+----\
+|   REP   |   |   REP   |   |   REP   |
++---------+   +---------+   +---------+
 [[/code]]
 
 The request-reply broker binds to two endpoints, one for clients to connect to (the frontend socket) and one for services to connect to (the backend). To test this broker, you will want to change your services so they connect to the backend socket. Here are a client and service that show what I mean:
@@ -856,55 +836,52 @@ And here is the broker. You will see that it's multipart safe:
 
 Using a request-reply broker makes your client-server architectures easier to scale since clients don't see services, and services don't see clients. The only stable node is the device in the middle:
 
-[[code type="textdiagram"]]
-  +---------+   +---------+   +---------+
-  |         |   |         |   |         |
-  | Client  |   | Client  |   | Client  |
-  |         |   |         |   |         |
-  +---------+   +---------+   +---------+
-  |   REQ   |   |   REQ   |   |   REQ   |
-  \---------/   \---------/   \---------/
-    connect       connect       connect
-       |             |             |
-       |             |             |
-    request       request       request
-       |             |             |
-       +-------------+-------------+
-                     |
-               fair-queuing
-                     |
-                     v
-                   bind
-               /-----------\
-               |  ROUTER   |
-               +-----------+
-               |           |
-               |   Broker  |
-               |           |
-               +-----------+
-               |  DEALER   |
-               \-----------/
-                   bind
-                     |
-              load balancing
-                     |
-       +-------------+-------------+
-       |             |             |
-    request       request       request
-       |             |             |
-       v             v             v
-    connect       connect       connect
-  /---------\   /---------\   /---------\
-  |   REP   |   |   REP   |   |   REP   |
-  +---------+   +---------+   +---------+
-  |         |   |         |   |         |
-  | Service |   | Service |   | Service |
-  |    A    |   |    B    |   |    C    |
-  |         |   |         |   |         |
-  +---------+   +---------+   +---------+
-
-
-      Figure # - Request-reply broker
+[[code type="textdiagram" title="Request-reply Broker"]]
++---------+   +---------+   +---------+
+|         |   |         |   |         |
+| Client  |   | Client  |   | Client  |
+|         |   |         |   |         |
++---------+   +---------+   +---------+
+|   REQ   |   |   REQ   |   |   REQ   |
+\---------/   \---------/   \---------/
+  connect       connect       connect
+     |             |             |
+     |             |             |
+  request       request       request
+     |             |             |
+     +-------------+-------------+
+                   |
+             fair-queuing
+                   |
+                   v
+                 bind
+             /-----------\
+             |  ROUTER   |
+             +-----------+
+             |           |
+             |   Broker  |
+             |           |
+             +-----------+
+             |  DEALER   |
+             \-----------/
+                 bind
+                   |
+            load balancing
+                   |
+     +-------------+-------------+
+     |             |             |
+  request       request       request
+     |             |             |
+     v             v             v
+  connect       connect       connect
+/---------\   /---------\   /---------\
+|   REP   |   |   REP   |   |   REP   |
++---------+   +---------+   +---------+
+|         |   |         |   |         |
+| Service |   | Service |   | Service |
+|    A    |   |    B    |   |    C    |
+|         |   |         |   |         |
++---------+   +---------+   +---------+
 [[/code]]
 
 ++++ Built-in Devices
@@ -934,7 +911,7 @@ When you start to need other combinations, it's time to write your own devices.
 
 +++ Multithreading with 0MQ
 
-0MQ is perhaps the nicest way ever to write multithreaded (MT) applications. Whereas as 0MQ sockets require some readjustment if you are used to traditional sockets, 0MQ multithreading will take everything you know about writing MT applications, throw it into a heap in the garden, pour gasoline over it, and set it alite. It's a rare book that deserves burning, but most books on concurrent programming do.
+0MQ is perhaps the nicest way ever to write multithreaded (MT) applications. Whereas as 0MQ sockets require some readjustment if you are used to traditional sockets, 0MQ multithreading will take everything you know about writing MT applications, throw it into a heap in the garden, pour gasoline over it, and set it alight. It's a rare book that deserves burning, but most books on concurrent programming do.
 
 To make utterly perfect MT programs (and I mean that literally) **we don't need mutexes, locks, or any other form of inter-thread communication except messages sent across 0MQ sockets.**
 
@@ -987,51 +964,48 @@ Note that creating threads is not portable in most programming languages. The PO
 
 Here the 'work' is just a one-second pause. We could do anything in the workers, including talking to other nodes. This is what the MT server looks like in terms of ØMQ sockets and nodes. Note how the request-reply chain is {{REQ-ROUTER-queue-DEALER-REP}}:
 
-[[code type="textdiagram"]]
-                 +------------+
-                 |            |
-                 |   Client   |
-                 |            |
-                 +------------+
-                 |    REQ     |
-                 \---+--------/
-                     |    ^
-                     |    |
-                "Hello"  "World"
-                     |    |
-  /------------------|--=-|------------------\
-  |                  v    |                  :
-  |              /--------+---\              |
-  |              |   ROUTER   |              |
-  |              +------------+              |
-  |              |            |              |
-  |              |   Server   |              |
-  |              |            |              |
-  |              +------------+              |
-  |              |            |              |
-  |              |   Queue    |              |
-  |              |   device   |              |
-  |              |            |              |
-  |              +------------+              |
-  |              |   DEALER   |              |
-  |              \------------/              |
-  |                    ^                     |
-  |                    |                     |
-  |        +-----------+-----------+         |
-  |        |           |           |         |
-  |        v           v           v         |
-  |    /--------\  /--------\  /--------\    |
-  |    |  REP   |  |  REP   |  |  REP   |    |
-  |    +--------+  +--------+  +--------+    |
-  |    |        |  |        |  |        |    |
-  |    | Worker |  | Worker |  | Worker |    |
-  |    |        |  |        |  |        |    |
-  |    +--------+  +--------+  +--------+    |
-  |                                          |
-  \------------------------------------------/
-
-
-        Figure # - Multithreaded server
+[[code type="textdiagram" title="Multithreaded Server"]]
+               +------------+
+               |            |
+               |   Client   |
+               |            |
+               +------------+
+               |    REQ     |
+               \---+--------/
+                   |    ^
+                   |    |
+              "Hello"  "World"
+                   |    |
+/------------------|--=-|------------------\
+|                  v    |                  :
+|              /--------+---\              |
+|              |   ROUTER   |              |
+|              +------------+              |
+|              |            |              |
+|              |   Server   |              |
+|              |            |              |
+|              +------------+              |
+|              |            |              |
+|              |   Queue    |              |
+|              |   device   |              |
+|              |            |              |
+|              +------------+              |
+|              |   DEALER   |              |
+|              \------------/              |
+|                    ^                     |
+|                    |                     |
+|        +-----------+-----------+         |
+|        |           |           |         |
+|        v           v           v         |
+|    /--------\  /--------\  /--------\    |
+|    |  REP   |  |  REP   |  |  REP   |    |
+|    +--------+  +--------+  +--------+    |
+|    |        |  |        |  |        |    |
+|    | Worker |  | Worker |  | Worker |    |
+|    |        |  |        |  |        |    |
+|    +--------+  +--------+  +--------+    |
+|                                          |
+\------------------------------------------/
 [[/code]]
 
 +++ Signaling between Threads
@@ -1040,42 +1014,40 @@ When you start making multithreaded applications with 0MQ, you'll hit the questi
 
 Here is a simple example showing three threads that signal each other when they are ready.
 
-[[code type="textdiagram"]]
-        +------------+
-        |            |
-        |   Step 1   |
-        |            |
-        +------------+
-        |    PAIR    |
-        \-----+------/
-              |
-              |
-            Ready!
-              |
-              v
-        /------------\
-        |    PAIR    |
-        +------------+
-        |            |
-        |   Step 2   |
-        |            |
-        +------------+
-        |    PAIR    |
-        \-----+------/
-              |
-              |
-            Ready!
-              |
-              v
-        /------------\
-        |    PAIR    |
-        +------------+
-        |            |
-        |   Step 3   |
-        |            |
-        +------------+
-
-  Figure # - The Relay Race
+[[code type="textdiagram" title="The Relay Race"]]
++------------+
+|            |
+|   Step 1   |
+|            |
++------------+
+|    PAIR    |
+\-----+------/
+      |
+      |
+    Ready!
+      |
+      v
+/------------\
+|    PAIR    |
++------------+
+|            |
+|   Step 2   |
+|            |
++------------+
+|    PAIR    |
+\-----+------/
+      |
+      |
+    Ready!
+      |
+      v
+/------------\
+|    PAIR    |
++------------+
+|            |
+|   Step 3   |
+|            |
++------------+
 [[/code]]
 
 In this example we use PAIR sockets over the {{inproc}} transport:
@@ -1120,31 +1092,28 @@ In this case we'll use a REQ-REP socket flow to synchronize subscribers and publ
 [[code type="example" title="Synchronized publisher" name="syncpub"]]
 [[/code]]
 
-[[code type="textdiagram"]]
-            +----------------+
-            |                |
-            |   Publisher    |
-            |                |
-            +--------+-------+
-            |  PUB   |  REP  |
-            \---+----+-----+-/
-                |      ^   |
-                |      |   |
-                |     (1)  |
-               [3]     |   |
-                |      |  (2)
-                |      |   |
-                v      |   v
-            /--------+-+-----\
-            |  SUB   |  REQ  |
-            +--------+-------+
-            |                |
-            |   Subscriber   |
-            |                |
-            +----------------+
-
-
-  Figure # - Pub-Sub Synchronization
+[[code type="textdiagram" title="Pub-Sub Synchronization"]]
++----------------+
+|                |
+|   Publisher    |
+|                |
++--------+-------+
+|  PUB   |  REP  |
+\---+----+-----+-/
+    |      ^   |
+    |      |   |
+    |     (1)  |
+   [3]     |   |
+    |      |  (2)
+    |      |   |
+    v      |   v
+/--------+-+-----\
+|  SUB   |  REQ  |
++--------+-------+
+|                |
+|   Subscriber   |
+|                |
++----------------+
 [[/code]]
 
 And here is the subscriber:
@@ -1218,43 +1187,40 @@ This turns out to be very useful. It's not foolproof, but it gives 0MQ a kind of
 
 Here is the general model of two sockets happily chatting about the weather, and who kissed who and where and when precisely, cause I heard something different, at the last staff party, not to mention did you see that new family up the road who do they think they are with that car and what's with the prices at the shops these days don't they know it's a crisis?
 
-[[code type="textdiagram"]]
-        +-----------+
-        |           |
-        |  Sender   |
-        |           |
-        +-----------+
-        |  Socket   |
-        \-----------/
-         +---------+
-         +---------+
-         +---------+    0MQ Transmit buffer
-         +---------+
-         +----+----+
-              |
-              |
-              v
-         +---------+
-         +---------+    Network I/O buffers
-         +----+----+
-              |
-              |
-              v
-         +---------+
-         +---------+
-         +---------+    0MQ Receive buffer
-         +---------+
-         +---------+
-        /-----------\
-        |  Socket   |
-        +-----------+
-        |           |
-        | Receiver  |
-        |           |
-        +-----------+
-
-
-Figure # - Sender boring the pants off receiver
+[[code type="textdiagram" title="Sender Boring the Pants off Receiver"]]
++-----------+
+|           |
+|  Sender   |
+|           |
++-----------+
+|  Socket   |
+\-----------/
+ +---------+
+ +---------+
+ +---------+    0MQ Transmit buffer
+ +---------+
+ +----+----+
+      |
+      |
+      v
+ +---------+
+ +---------+    Network I/O buffers
+ +----+----+
+      |
+      |
+      v
+ +---------+
+ +---------+
+ +---------+    0MQ Receive buffer
+ +---------+
+ +---------+
+/-----------\
+|  Socket   |
++-----------+
+|           |
+| Receiver  |
+|           |
++-----------+
 [[/code]]
 
 If a //receiver// (SUB, PULL, REQ) side of a socket sets an identity, then the //sending// (PUB, PUSH, PULL) side will buffer messages when they aren't connected up to the HWM. The sending side does not need to set an identity for this to work.
@@ -1265,54 +1231,48 @@ All the sockets we've used so far were transient. To turn a transient socket int
 
 Behind the scenes, and invisibly to you, when one socket connects to another, the two sockets exchange identities. Normally sockets don't tell their peers their identity, so peers invent random identities for each other:
 
-[[code type="textdiagram"]]
-        +-----------+
-        |           |
-        |  Sender   |
-        |           |
-        +-----------+
-        |  Socket   |
-        \-----------/
-              ^  "Fine, I'll call you Luv"
-              |
-              |
-              |  "Not telling you my name!"
-        /-----+-----\
-        |  Socket   |
-        +-----------+
-        |           |
-        | Receiver  |
-        |           |
-        +-----------+
-
-
-         Figure # - Transient socket
+[[code type="textdiagram" title="Transient Socket"]]
++-----------+
+|           |
+|  Sender   |
+|           |
++-----------+
+|  Socket   |
+\-----------/
+      ^  "Fine, I'll call you Luv"
+      |
+      |
+      |  "Not telling you my name!"
+/-----+-----\
+|  Socket   |
++-----------+
+|           |
+| Receiver  |
+|           |
++-----------+
 [[/code]]
 
 But a socket can also tell the other its identity, and then the next time the two meet, it'll be "so as I was saying what I heard was quite different but anyhow you know how it goes at the office, they're all tattletales I'd never say anything about anyone that wasn't true or at least based on a sure thing".
 
-[[code type="textdiagram"]]
-        +-----------+
-        |           |
-        |  Sender   |
-        |           |
-        +-----------+
-        |  Socket   |
-        \-----------/
-              ^  "Lucy! Nice to see you again..."
-              |
-              |
-              |  "My name's Lucy"
-        /-----+-----\
-        |  Socket   |
-        +-----------+
-        |           |
-        | Receiver  |
-        |           |
-        +-----------+
-
-
-        Figure # - Durable socket
+[[code type="textdiagram" title="Durable Socket"]]
++-----------+
+|           |
+|  Sender   |
+|           |
++-----------+
+|  Socket   |
+\-----------/
+      ^  "Lucy! Nice to see you again..."
+      |
+      |
+      |  "My name's Lucy"
+/-----+-----\
+|  Socket   |
++-----------+
+|           |
+| Receiver  |
+|           |
++-----------+
 [[/code]]
 
 Here's how you set the identity of a socket, to create a durable socket:
@@ -1349,15 +1309,12 @@ If you want to use pub-sub envelopes, you make them yourself. It's optional, and
 
 Here is what a publish-subscribe message with an envelope looks like:
 
-[[code type="textdiagram"]]
-            +-------------+
-  Frame 1   | Key         |     Subscription key
-            +-------------+
-  Frame 2   | Data        |     Actual message body
-            +-------------+
-
-
-    Figure # - Pub-sub envelope with separate key
+[[code type="textdiagram" title="Pub-sub Envelope with Separate Key"]]
+          +-------------+
+Frame 1   | Key         |     Subscription key
+          +-------------+
+Frame 2   | Data        |     Actual message body
+          +-------------+
 [[/code]]
 
 
@@ -1387,17 +1344,14 @@ This examples shows that the subscription filter rejects or accepts the entire m
 
 If you subscribe to multiple publishers and you want to know their identity so that you can send them data via another socket (and this is a fairly typical use-case), you create a three-part message:
 
-[[code type="textdiagram"]]
-            +-------------+
-  Frame 1   | Key         |     Subscription key
-            +-------------+
-  Frame 2   | Identity    |     Address of publisher
-            +-------------+
-  Frame 3   | Data        |     Actual message body
-            +-------------+
-
-
-    Figure # - Pub-sub envelope with sender address
+[[code type="textdiagram" title="Pub-sub Envelope with Sender Address"]]
+          +-------------+
+Frame 1   | Key         |     Subscription key
+          +-------------+
+Frame 2   | Identity    |     Address of publisher
+          +-------------+
+Frame 3   | Data        |     Actual message body
+          +-------------+
 [[/code]]
 
 +++ (Semi-)Durable Subscribers and High-Water Marks

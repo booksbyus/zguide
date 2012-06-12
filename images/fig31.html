@@ -1,24 +1,21 @@
 <html>
 <pre class="textdiagram" id="fig31">
-        +-----------+
-        |           |
-        |   Client  |
-        |           |
-        +-----------+       +---------+
-        |    REQ    |       |  Data   |     Client sends this
-        \-----+-----/       +---------+
-              |
-              |  "My identity is empty"
-              v
-        /-----------\       +---------+
-        |  ROUTER   |       |  UUID   |     ROUTER invents UUID to
-        +-----------+       +-+-------+     use as reply address
-        |           |       | |
-        |  Service  |       +-+-------+
-        |           |       |  Data   |
-        +-----------+       +---------+
-
-
-          Figure 31 - ROUTER invents a UUID for transient sockets
+|   Client  |
+|           |
++-----------+
+|           |
++-----------+       +---------+
+|    REQ    |       |  Data   |     Client sends this
+\-----+-----/       +---------+
+      |
+      |  "My identity is empty"
+      v
+/-----------\       +---------+
+|  ROUTER   |       |  UUID   |     ROUTER invents UUID to
++-----------+       +-+-------+     use as reply address
+|           |       | |
+|  Service  |       +-+-------+
+|           |       |  Data   |
++-----------+       +---------+
 </pre>
 </html>

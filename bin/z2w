@@ -2,7 +2,6 @@
 #   z2w - convert ZeroMQ document to Wikidot format
 #   - converts [[code type="textdiagram"]] via ditaa
 #   - converts zmq_something(3) into URL to http://api.zeromq.org
-#   Eventually meant to produce print-ready output via tex
 #
 #   Usage: z2w docfile
 #
@@ -11,6 +10,7 @@
 #   Dependencies (Ubuntu 10.10 packages):
 #       pygmentize
 #       imagemagick (mogrify tool)
+#       ditaa
 #
 #   By Pieter Hintjens, free for remixing without conditions.
 #   Images are stored in the github repository at
@@ -57,6 +57,8 @@ use Digest::SHA1 qw(sha1_hex);
 
 $source = $ENV {'Z2W_LANG'} || "C";
 $format = $ENV {'Z2W_FORM'} || "online";
+signatures_load ();
+
 printf "Generating $source/$format version of Guide...\n";
 
 #   Inline action options
@@ -85,7 +87,6 @@ die "Can't create wdtemp.txt: $!"
 die "Can't create upload.sh: $!"
     unless open (UPLOAD, ">upload.sh");
 
-signatures_load ();
 writeln ('[!-- Generated documentation file, do not edit --]');
 
 while (<>) {
@@ -214,8 +215,9 @@ while (<>) {
             last if /\[\[\/code\]\]/;
         }
     }
-    elsif ($_ eq "[[code type=\"textdiagram\"]]") {
-        #   Text diagram
+    elsif (/\[\[code type=\"textdiagram\"\s+title=\"([^"]+)\"\]\]/) {
+        #   Create HTML file for text diagram
+        $title = $1;
         $figure = $figure + 1;
         $filename = "images/fig$figure.html";
         die "Can't create $filename: $!"
@@ -226,15 +228,16 @@ while (<>) {
         while (<>) {
             chop;
             last if /\[\[\/code\]\]/;
-            s/#/$figure/;
             $_ = zmq_symbol ($_);
             print IMAGE "$_\n";
         }
         print IMAGE "</pre>\n";
         print IMAGE "</html>\n";
         close (IMAGE);
+
+        #   Convert diagram into image of required format
         if (signature_changed ($filename)) {
-            print "Processing $filename...\n";
+            print "Converting $filename to PNG image...\n";
             system ("java -jar bin/ditaa0_9.jar $filename -o -h -E output.html >/dev/null");
             #   Need to trim twice for reasons I don't care to explore
             system ("mogrify -trim images/fig$figure.png");
@@ -243,6 +246,7 @@ while (<>) {
             signature_update ($filename);
         }
         #   Link to resource in git, nice way to upload images
+        writeln ("**Figure $figure - $title**");
         writeln ("[[=image $symbols{GIT}/raw/$symbols{BRANCH}/images/fig$figure.png]]");
     }
     elsif (/\[\[code/) {
@@ -305,13 +309,15 @@ sub process_one_language {
         elsif ($inline == $inline_listing) {
             writeln ("[[include $ext:$name]]");
         }
-        if (signature_changed ($filename)) {
+        if (signature_changed ($filename) || $filename eq "lruqueue3") {
             print "Processing $name (in $language)...\n";
             $lexopt = $lexer {$language}? "-l $lexer{$language}": "";
-            system ("pygmentize -f bb $lexopt $filename > tempfile.bb");
+            system ("egrep -v \"\\.split|\\.skip|\\.until\" $filename > tempfile.$ext");
+            exit (1) if $name eq "lruqueue3";
+            system ("pygmentize -f bb $lexopt tempfile.$ext > tempfile.bb");
             exit (1) if $?;
             system ("bin/bb2wd tempfile.bb >examples/$language/$name.wd");
-            system ("rm tempfile.bb");
+            system ("rm tempfile.$ext tempfile.bb");
             print UPLOAD "cd examples/$language\n";
             print UPLOAD "    wdput zguide $ext $name \"$title in $language\"\n";
             print UPLOAD "    rm $name.wd\n";

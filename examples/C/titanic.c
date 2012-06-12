@@ -49,8 +49,10 @@ s_reply_filename (char *uuid) {
 }
 
 
-//  ---------------------------------------------------------------------
-//  Titanic request service
+//  .split Titanic request service
+//  The "titanic.request" task waits for requests to this service. It writes 
+//  each request to disk and returns a UUID to the client. The client picks
+//  up the reply asynchronously using the "titanic.reply" service:
 
 static void
 titanic_request (void *args, zctx_t *ctx, void *pipe)
@@ -95,8 +97,10 @@ titanic_request (void *args, zctx_t *ctx, void *pipe)
 }
 
 
-//  ---------------------------------------------------------------------
-//  Titanic reply service
+//  .split Titanic reply service
+//  The "titanic.reply" task checks if there's a reply for the specified
+//  request (by UUID), and returns a 200 OK, 300 Pending, or 400 Unknown
+//  accordingly:
 
 static void *
 titanic_reply (void *context)
@@ -137,8 +141,10 @@ titanic_reply (void *context)
 }
 
 
-//  ---------------------------------------------------------------------
-//  Titanic close service
+//  .split Titanic close task
+//  The "titanic.close" task removes any waiting replies for the request
+//  (specified by UUID). It's idempotent, so safe to call more than once
+//  in a row:
 
 static void *
 titanic_close (void *context)
@@ -169,60 +175,16 @@ titanic_close (void *context)
     return 0;
 }
 
-//  Attempt to process a single request, return 1 if successful
 
-static int
-s_service_success (char *uuid)
-{
-    //  Load request message, service will be first frame
-    char *filename = s_request_filename (uuid);
-    FILE *file = fopen (filename, "r");
-    free (filename);
+//  .split worker task
+//  This is the main thread for the Titanic worker. It starts three child
+//  threads; for the request, reply, and close services. It then dispatches
+//  requests to workers using a simple brute-force disk queue. It receives
+//  request UUIDs from the titanic.request service, saves these to a disk
+//  file, and then throws each request at MDP workers until it gets a
+//  response:
 
-    //  If the client already closed request, treat as successful
-    if (!file)
-        return 1;
-
-    zmsg_t *request = zmsg_load (NULL, file);
-    fclose (file);
-    zframe_t *service = zmsg_pop (request);
-    char *service_name = zframe_strdup (service);
-
-    //  Create MDP client session with short timeout
-    mdcli_t *client = mdcli_new ("tcp://localhost:5555", FALSE);
-    mdcli_set_timeout (client, 1000);  //  1 sec
-    mdcli_set_retries (client, 1);     //  only 1 retry
-    
-    //  Use MMI protocol to check if service is available
-    zmsg_t *mmi_request = zmsg_new ();
-    zmsg_add (mmi_request, service);
-    zmsg_t *mmi_reply = mdcli_send (client, "mmi.service", &mmi_request);
-    int service_ok = (mmi_reply
-        && zframe_streq (zmsg_first (mmi_reply), "200"));
-    zmsg_destroy (&mmi_reply);
-
-    int result = 0;
-    if (service_ok) {
-        zmsg_t *reply = mdcli_send (client, service_name, &request);
-        if (reply) {
-            filename = s_reply_filename (uuid);
-            FILE *file = fopen (filename, "w");
-            assert (file);
-            zmsg_save (reply, file);
-            fclose (file);
-            free (filename);
-            result = 1;
-        }
-        zmsg_destroy (&reply);
-    }
-    else
-        zmsg_destroy (&request);
-
-    mdcli_destroy (&client);
-    free (service_name);
-    return result;
-}
-
+static int s_service_success (char *uuid);
 
 int main (int argc, char *argv [])
 {
@@ -256,7 +218,6 @@ int main (int argc, char *argv [])
             zmsg_destroy (&msg);
         }
         //  Brute-force dispatcher
-        //
         char entry [] = "?.......:.......:.......:.......:";
         FILE *file = fopen (TITANIC_DIR "/queue", "r+");
         while (file && fread (entry, 33, 1, file) == 1) {
@@ -282,3 +243,62 @@ int main (int argc, char *argv [])
     }
     return 0;
 }
+
+//  .split try to call a service
+//  Here we first check if the requested MDP service is defined or not,
+//  using a MMI lookup to the Majordomo broker. If the service exists
+//  we send a request and wait for a reply using the conventional MDP
+//  client API. This is not meant to be fast, just very simple:
+
+static int
+s_service_success (char *uuid)
+{
+    //  Load request message, service will be first frame
+    char *filename = s_request_filename (uuid);
+    FILE *file = fopen (filename, "r");
+    free (filename);
+
+    //  If the client already closed request, treat as successful
+    if (!file)
+        return 1;
+
+    zmsg_t *request = zmsg_load (NULL, file);
+    fclose (file);
+    zframe_t *service = zmsg_pop (request);
+    char *service_name = zframe_strdup (service);
+
+    //  Create MDP client session with short timeout
+    mdcli_t *client = mdcli_new ("tcp://localhost:5555", FALSE);
+    mdcli_set_timeout (client, 1000);  //  1 sec
+    mdcli_set_retries (client, 1);     //  only 1 retry
+
+    //  Use MMI protocol to check if service is available
+    zmsg_t *mmi_request = zmsg_new ();
+    zmsg_add (mmi_request, service);
+    zmsg_t *mmi_reply = mdcli_send (client, "mmi.service", &mmi_request);
+    int service_ok = (mmi_reply
+        && zframe_streq (zmsg_first (mmi_reply), "200"));
+    zmsg_destroy (&mmi_reply);
+
+    int result = 0;
+    if (service_ok) {
+        zmsg_t *reply = mdcli_send (client, service_name, &request);
+        if (reply) {
+            filename = s_reply_filename (uuid);
+            FILE *file = fopen (filename, "w");
+            assert (file);
+            zmsg_save (reply, file);
+            fclose (file);
+            free (filename);
+            result = 1;
+        }
+        zmsg_destroy (&reply);
+    }
+    else
+        zmsg_destroy (&request);
+
+    mdcli_destroy (&client);
+    free (service_name);
+    return result;
+}
+

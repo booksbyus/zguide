@@ -1,35 +1,16 @@
 /*  =====================================================================
-    mdwrkapi.c
-
-    Majordomo Protocol Worker API
-    Implements the MDP/Worker spec at http://rfc.zeromq.org/spec:7.
-
-    ---------------------------------------------------------------------
-    Copyright (c) 1991-2011 iMatix Corporation <www.imatix.com>
-    Copyright other contributors as noted in the AUTHORS file.
-
-    This file is part of the ZeroMQ Guide: http://zguide.zeromq.org
-
-    This is free software; you can redistribute it and/or modify it under
-    the terms of the GNU Lesser General Public License as published by
-    the Free Software Foundation; either version 3 of the License, or (at
-    your option) any later version.
-
-    This software is distributed in the hope that it will be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-    Lesser General Public License for more details.
-
-    You should have received a copy of the GNU Lesser General Public
-    License along with this program. If not, see
-    <http://www.gnu.org/licenses/>.
-    =====================================================================
-*/
+ *  mdwrkapi.c - Majordomo Protocol Worker API
+ *  Implements the MDP/Worker spec at http://rfc.zeromq.org/spec:7.
+ *  ===================================================================== */
 
 #include "mdwrkapi.h"
 
 //  Reliability parameters
 #define HEARTBEAT_LIVENESS  3       //  3-5 is reasonable
+
+//  .split worker class structure
+//  This is the structure of a worker API instance. We use a pseudo-OO
+//  approach in a lot of the C examples, as well as the CZMQ binding:
 
 //  Structure of our class
 //  We access these properties only via class methods
@@ -47,13 +28,14 @@ struct _mdwrk_t {
     int heartbeat;              //  Heartbeat delay, msecs
     int reconnect;              //  Reconnect delay, msecs
 
-    //  Internal state
     int expect_reply;           //  Zero only at start
-
-    //  Return address, if any
-    zframe_t *reply_to;
+    zframe_t *reply_to;         //  Return address, if any
 };
 
+
+//  .split utility functions
+//  We have two utility functions; to send a message to the broker and
+//  to (re-)connect to the broker:
 
 //  ---------------------------------------------------------------------
 //  Send message to broker
@@ -102,6 +84,9 @@ void s_mdwrk_connect_to_broker (mdwrk_t *self)
 }
 
 
+//  .split constructor and destructor
+//  Here we have the constructor and destructor for our mdwrk class:
+
 //  ---------------------------------------------------------------------
 //  Constructor
 
@@ -142,6 +127,10 @@ mdwrk_destroy (mdwrk_t **self_p)
 }
 
 
+//  .split configure worker
+//  We provide two methods to configure the worker API. You can set the
+//  heartbeat interval and retries to match the expected network performance.
+
 //  ---------------------------------------------------------------------
 //  Set heartbeat delay
 
@@ -161,6 +150,10 @@ mdwrk_set_reconnect (mdwrk_t *self, int reconnect)
     self->reconnect = reconnect;
 }
 
+//  .split recv method
+//  This is the recv method; it's a little misnamed since it first sends
+//  any reply and then waits for a new request. If you have a better name
+//  for this, let me know:
 
 //  ---------------------------------------------------------------------
 //  Send reply, if any, to broker and wait for next request.
@@ -214,6 +207,9 @@ mdwrk_recv (mdwrk_t *self, zmsg_t **reply_p)
                 //  up to a null part, but for now, just save one...
                 self->reply_to = zmsg_unwrap (msg);
                 zframe_destroy (&command);
+                //  .split process message
+                //  Here is where we actually have a message to process; we
+                //  return it to the caller application:
                 return msg;     //  We have a request to process
             }
             else

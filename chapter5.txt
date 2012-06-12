@@ -60,44 +60,41 @@ The first thing we have to do is break our subscriber into a multithreaded desig
 
 So the subscriber looks something like a queue device. We could use various sockets to connect the subscriber and workers. If we assume one-way traffic, and workers that are all identical, we can use PUSH and PULL, and delegate all the routing work to 0MQ. This is the simplest and fastest approach:
 
-[[code type="textdiagram"]]
-
-                        +-----------+
-                        |           |
-                        | Publisher |
-                        |           |
-                        +-----------+
-                        |    PUB    |
-                        \-----+-----/
-                              |
-  +---------------------------|---------------------------+
-  :                           |                Fast box   :
-  :                           v                           :
-  :                     /-----------\                     :
-  :                     |    SUB    |                     :
-  :                     +-----------+                     :
-  :                     |           |                     :
-  :                     | Subscriber|                     :
-  :                     |           |                     :
-  :                     +-----------+                     :
-  :                     |   PUSH    |                     :
-  :                     \-----+-----/                     :
-  :                           |                           :
-  :                           |                           :
-  :           /---------------+---------------\           :
-  :           |               |               |           :
-  :           v               v               v           :
-  :     /-----------\   /-----------\   /-----------\     :
-  :     |   PULL    |   |   PULL    |   |   PULL    |     :
-  :     +-----------+   +-----------+   +-----------+     :
-  :     |           |   |           |   |           |     :
-  :     |  Worker   |   |  Worker   |   |  Worker   |     :
-  :     |           |   |           |   |           |     :
-  :     +-----------+   +-----------+   +-----------+     :
-  :                                                       :
-  +-------------------------------------------------------+
-
-           Figure # - Simple Black Box Pattern
+[[code type="textdiagram" title="The Simple Black Box Pattern"]]
+                    +-----------+
+                    |           |
+                    | Publisher |
+                    |           |
+                    +-----------+
+                    |    PUB    |
+                    \-----+-----/
+                          |
++-------------------------|-------------------------+
+:                         |                Fast box :
+:                         v                         :
+:                   /-----------\                   :
+:                   |    SUB    |                   :
+:                   +-----------+                   :
+:                   |           |                   :
+:                   | Subscriber|                   :
+:                   |           |                   :
+:                   +-----------+                   :
+:                   |   PUSH    |                   :
+:                   \-----+-----/                   :
+:                         |                         :
+:                         |                         :
+:         /---------------+---------------\         :
+:         |               |               |         :
+:         v               v               v         :
+:   /-----------\   /-----------\   /-----------\   :
+:   |   PULL    |   |   PULL    |   |   PULL    |   :
+:   +-----------+   +-----------+   +-----------+   :
+:   |           |   |           |   |           |   :
+:   |  Worker   |   |  Worker   |   |  Worker   |   :
+:   |           |   |           |   |           |   :
+:   +-----------+   +-----------+   +-----------+   :
+:                                                   :
++---------------------------------------------------+
 [[/code]]
 
 The subscriber talks to the publisher over TCP or PGM. The subscriber talks to its workers, which are all in the same process, over inproc.
@@ -108,8 +105,7 @@ The approach used by many high-performance products, which works here, is //shar
 
 So let's see how to shard into two streams:
 
-[[code type="textdiagram"]]
-
+[[code type="textdiagram" title="Mad Black Box Pattern"]]
                         +-----------+
                         |           |
                         | Publisher |
@@ -144,8 +140,6 @@ So let's see how to shard into two streams:
   :     +-----------+   +-----------+   +-----------+     :
   :                                                       :
   +-------------------------------------------------------+
-
-              Figure # - Mad Black Box Pattern
 [[/code]]
 
 With two streams, working at full speed, we would configure 0MQ as follows:
@@ -198,33 +192,29 @@ The key aspect of the Clone pattern is that clients talk back to servers, which 
 
 We'll develop Clone in stages, solving one problem at a time. First, let's look at how to distribute key-value updates from a server to a set of clients. We'll take our weather server from Chapter One and refactor it to send messages as key-value pairs. We'll modify our client to store these in a hash table:
 
-[[code type="textdiagram"]]
-
-                 +-------------+
-                 |             |
-                 |   Server    |
-                 |             |
-                 +-------------+
-                 |     PUB     |
-                 \-------------/
-                        |
-                        |
-                     updates
-                        |
-        +---------------+---------------+
-        |               |               |
-        |               |               |
-        v               v               v
-  /------------\  /------------\  /------------\
-  |    SUB     |  |    SUB     |  |    SUB     |
-  +------------+  +------------+  +------------+
-  |            |  |            |  |            |
-  |   Client   |  |   Client   |  |   Client   |
-  |            |  |            |  |            |
-  +------------+  +------------+  +------------+
-
-
-        Figure # - Simplest Clone Model
+[[code type="textdiagram" title="Simplest Clone Model"]]
+               +-------------+
+               |             |
+               |   Server    |
+               |             |
+               +-------------+
+               |     PUB     |
+               \------+------/
+                      |
+                      |
+                   updates
+                      |
+      +---------------+---------------+
+      |               |               |
+      |               |               |
+      v               v               v
+/------------\  /------------\  /------------\
+|    SUB     |  |    SUB     |  |    SUB     |
++------------+  +------------+  +------------+
+|            |  |            |  |            |
+|   Client   |  |   Client   |  |   Client   |
+|            |  |            |  |            |
++------------+  +------------+  +------------+
 [[/code]]
 
 This is the server:
@@ -260,33 +250,29 @@ Both the server and client maintain hash tables, but this first model only works
 
 In order to allow a late (or recovering) client to catch up with a server it has to get a snapshot of the server's state. Just as we've reduced "message" to mean "a sequenced key-value pair", we can reduce "state" to mean "a hash table". To get the server state, a client opens a REQ socket and asks for it explicitly:
 
-[[code type="textdiagram"]]
-
-                 +-----------------+
-                 |                 |
-                 |     Server      |
-                 |                 |
-                 +--------+--------+
-                 |   PUB  | ROUTER |
-                 \----+---+--------/
-                      |       ^
-                      |       | state request
-                   updates    +---------------\
-                      |                       |
-     /----------------+----------------\      |
-     |                |                |      |
-     |                |                |      |
-     v                v                v      |
-  /------+-----\   /------+-----\   /------+--+--\
-  | SUB  | REQ |   | SUB  | REQ |   | SUB  | REQ |
-  +------+-----+   +------+-----+   +------+-----+
-  |            |   |            |   |            |
-  |   Client   |   |   Client   |   |   Client   |
-  |            |   |            |   |            |
-  +------------+   +------------+   +------------+
-
-
-          Figure # - State Replication
+[[code type="textdiagram" title="State Replication"]]
+               +-----------------+
+               |                 |
+               |     Server      |
+               |                 |
+               +--------+--------+
+               |   PUB  | ROUTER |
+               \----+---+--------/
+                    |       ^
+                    |       | state request
+                 updates    +---------------\
+                    |                       |
+   /----------------+----------------\      |
+   |                |                |      |
+   |                |                |      |
+   v                v                v      |
+/------+-----\   /------+-----\   /------+--+--\
+| SUB  | REQ |   | SUB  | REQ |   | SUB  | REQ |
++------+-----+   +------+-----+   +------+-----+
+|            |   |            |   |            |
+|   Client   |   |   Client   |   |   Client   |
+|            |   |            |   |            |
++------------+   +------------+   +------------+
 [[/code]]
 
 To make this work, we have to solve the timing problem. Getting a state snapshot will take a certain time, possibly fairly long if the snapshot is large. We need to correctly apply updates to the snapshot. But the server won't know when to start sending us updates. One way would be to start subscribing, get a first update, and then ask for "state for update N". This would require the server storing one snapshot for each update, which isn't practical.
@@ -335,35 +321,31 @@ In our second model, changes to the key-value cache came from the server itself.
 
 Updates from clients go via a PUSH-PULL socket flow from client to server:
 
-[[code type="textdiagram"]]
-
-                 +--------------------------+
-                 |                          |
-                 |          Server          |
-                 |                          |
-                 +--------+--------+--------+
-                 |   PUB  | ROUTER |  PULL  |
-                 \----+---+--------+--------/
-                      |       ^        ^
-                      |       |        | state update
-                      |       |        \---------\
-                      |       | state request    |
-                   updates    \------------\     |
-                      |                    |     |
-          /-----------+-------------\      |     |
-          |                         |      |     |
-          |      ^     ^            |      |     |
-          v      |     |            v      |     |
-       /------+--+--+--+---\     /------+--+--+--+---\
-       | SUB  | REQ | PUSH |     | SUB  | REQ | PUSH |
-       +------+-----+------+     +------+-----+------+
-       |                   |     |                   |
-       |       Client      |     |       Client      |
-       |                   |     |                   |
-       +-------------------+     +-------------------+
-
-
-              Figure # - Republishing Updates
+[[code type="textdiagram" title="Republishing Updates"]]
+          +--------------------------+
+          |                          |
+          |          Server          |
+          |                          |
+          +--------+--------+--------+
+          |   PUB  | ROUTER |  PULL  |
+          \----+---+--------+--------/
+               |       ^        ^
+               |       |        | state update
+               |       |        \---------\
+               |       | state request    |
+            updates    \------------\     |
+               |                    |     |
+   /-----------+-------------\      |     |
+   |                         |      |     |
+   |      ^     ^            |      |     |
+   v      |     |            v      |     |
+/------+--+--+--+---\     /------+--+--+--+---\
+| SUB  | REQ | PUSH |     | SUB  | REQ | PUSH |
++------+-----+------+     +------+-----+------+
+|                   |     |                   |
+|       Client      |     |       Client      |
+|                   |     |                   |
++-------------------+     +-------------------+
 [[/code]]
 
 Why don't we allow clients to publish updates directly to other clients? While this would reduce latency, it makes it impossible to assign ascending unique sequence numbers to messages. The server can do this. There's a more subtle second reason. In many applications it's important that updates have a single order, across many clients. Forcing all updates through the server ensures that they have the same order when they finally get to clients.
@@ -382,9 +364,9 @@ And here is the client:
 
 Some notes about this code:
 
-* The server has collapsed to one thread, which collects updates from clients and redistributes them. It manages a PULL socket for incoming updates, a ROUTER socket for state requests, and a PUB socket for outgoing updates.
+* The server has collapsed to a single task. It manages a PULL socket for incoming updates, a ROUTER socket for state requests, and a PUB socket for outgoing updates.
 
-* The client uses a simple tickless timer to send a random update to the server once a second. In reality, updates would be driven by application code.
+* The client uses a simple tickless timer to send a random update to the server once a second. In a real implementation we would drive updates from application code.
 
 ++++ Clone Subtrees
 
@@ -439,7 +421,7 @@ The Model Five server has totally changed. Instead of a poll loop, we're now usi
 
 ++++ Clone Server Reliability
 
-Clone models one to five are relatively simple. We're now going to get into unpleasantly complex territory here that has me getting up for another espresso. You should appreciate that making "reliable" messaging is complex enough that you always need to ask, "do we actually need this?" before jumping into it. If you can get away with unreliable, or "good enough" reliability, you can make a huge win in terms of cost and complexity. Sure, you may lose some data now and then. It is often a good trade-off. Having said, that, and since the espresso is really good, let's jump in!
+Clone models one to five are relatively simple. We're now going to get into unpleasantly complex territory here that has me getting up for another espresso. You should appreciate that making "reliable" messaging is complex enough that you always need to ask, "do we actually need this?" before jumping into it. If you can get away with unreliable, or "good enough" reliability, you can make a huge win in terms of cost and complexity. Sure, you may lose some data now and then. It is often a good trade-off. Having said, that, and (sips) since the espresso is really good, let's jump in!
 
 As you play with model three, you'll stop and restart the server. It might look like it recovers, but of course it's applying updates to an empty state, instead of the proper current state. Any new client joining the network will get just the latest updates, instead of all of them. So let's work out a design for making Clone work despite server failures.
 
@@ -481,36 +463,32 @@ The client loops forever. It's quite likely during startup or fail-over that som
 
 We can draw the client finite state machine, with events in caps:
 
-[[code type="textdiagram"]]
-
-    +-----------+
-    |           |<----------------------\
-    |  Initial  |<-------------------\  |
-    |           |                    |  |
-    +-----+-----+                    |  |
-   Request|snapshot                  |  |
-          |   /----------------\     |  |
-          |   |                |     |  |
-          v   v                |     |  |
-    +-----------+              |     |  |
-    |           +-INPUT--------/     |  |
-    |  Syncing  | Store snapshot     |  |
-    |           |                    |  |
-    |           +-SILENCE------------/  |
-    +-----+-----+ Failover to next      |
-       KTHXBAI                          |
-          |   /----------------\        |
-          |   |                |        |
-          v   v                |        |
-    +-----------+              |        |
-    |           +-INPUT--------/        |
-    |  Active   | Store update          |
-    |           |                       |
-    |           +-SILENCE---------------/
-    +-----------+ Failover to next
-
-
-        Figure # - Clone client FSM
+[[code type="textdiagram" title="Clone Client Finite State Machine"]]
+ +-----------+
+ |           |<----------------------\
+ |  Initial  |<-------------------\  |
+ |           |                    |  |
+ +-----+-----+                    |  |
+Request|snapshot                  |  |
+       |   /----------------\     |  |
+       |   |                |     |  |
+       v   v                |     |  |
+ +-----------+              |     |  |
+ |           +-INPUT--------/     |  |
+ |  Syncing  | Store snapshot     |  |
+ |           |                    |  |
+ |           +-SILENCE------------/  |
+ +-----+-----+ Failover to next      |
+    KTHXBAI                          |
+       |   /----------------\        |
+       |   |                |        |
+       v   v                |        |
+ +-----------+              |        |
+ |           +-INPUT--------/        |
+ |  Active   | Store update          |
+ |           |                       |
+ |           +-SILENCE---------------/
+ +-----------+ Failover to next
 [[/code]]
 
 Fail-over happens as follows:
@@ -535,31 +513,27 @@ We make some assumptions:
 
 So here is our high-availability server pair, using the Binary Star pattern:
 
-[[code type="textdiagram"]]
-
-        +--------------------+                 +--------------------+
-        |                    |      Binary     |                    |
-        |       Primary      |<--------------->|       Backup       |
-        |                    |       Star      |                    |
-        +-----+--------+-----+                 +-----+--------+-----+
-        | PUB | ROUTER | SUB |                 | PUB | ROUTER | SUB |
-        \--+--+--------+-----/                 \-----+--------+-----/
-           |       ^      ^                                      ^
-           |       |      |                                      |
-           |       |      |                                      |
-           |       |      +--------------------------------------/
-           |       |      |
-           v       |      |
-        /-----+----+---+--+--\
-        | SUB |  REQ   | PUB |
-        +-----+--------+-----+
-        |                    |
-        |       Client       |
-        |                    |
-        +--------------------+
-
-
-               Figure # - High-availability Clone Server Pair
+[[code type="textdiagram" title="High-availability Clone Server Pair"]]
++--------------------+                 +--------------------+
+|                    |      Binary     |                    |
+|       Primary      |<--------------->|       Backup       |
+|                    |       Star      |                    |
++-----+--------+-----+                 +-----+--------+-----+
+| PUB | ROUTER | SUB |                 | PUB | ROUTER | SUB |
+\--+--+--------+-----/                 \-----+--------+-----/
+   |       ^      ^                                      ^
+   |       |      |                                      |
+   |       |      |                                      |
+   |       |      +--------------------------------------/
+   |       |      |
+   v       |      |
+/-----+----+---+--+--\
+| SUB |  REQ   | PUB |
++-----+--------+-----+
+|                    |
+|       Client       |
+|                    |
++--------------------+
 [[/code]]
 
 As a first step to building this, we're going to refactor the client as a reusable class. This is partly for fun (writing asynchronous classes with 0MQ is like an exercise in elegance), but mainly because we want Clone to be really easy to plug-in to random applications. Since resilience depends on clients behaving correctly, it's much easier to guarantee this when there's a reusable client API. When we start to handle fail-over in clients, it does get a little complex (imagine mixing a Freelance client with a Clone client). So, reusability ahoy!
@@ -598,7 +572,7 @@ The clone class has the same structure as the flcliapi class from Chapter Four. 
 
 * A synchronous 'clone' class which runs in the caller's thread. When you create a clone object, that automatically launches an agent thread, and when you destroy a clone object, it kills the agent thread.
 
-The frontend class talks to the agent class over an {{inproc}} 'pipe' socket. In C, the czmq thread layer creates this pipe automatically for us as it starts an "attached thread". This is a natural pattern for multithreading over 0MQ.
+The frontend class talks to the agent class over an {{inproc}} 'pipe' socket. In C, the CZMQ thread layer creates this pipe automatically for us as it starts an "attached thread". This is a natural pattern for multithreading over 0MQ.
 
 Without 0MQ, this kind of asynchronous class design would be weeks of really hard work. With 0MQ, it was a day or two of work. The results are kind of complex, given the simplicity of the Clone protocol it's actually running. There are some reasons for this. We could turn this into a reactor, but that'd make it harder to use in applications. So the API looks a bit like a key-value table that magically talks to some servers:
 
@@ -625,13 +599,13 @@ Finally, here is the sixth and last model of the clone server:
 [[code type="example" title="Clone server, Model Six" name="clonesrv6"]]
 [[/code]]
 
-This main program is only a few hundred lines of code, but it took some time to get working. To be accurate, building Model Six was a bitch, and took about a full week of "sweet god, this is just too complex for the Guide" hacking. We've assembled pretty much everything and the kitchen sink into this small application. We have failover, ephemeral values, subtrees, and so on. What surprised me was that the upfront design was pretty accurate. But the details of writing and debugging so many socket flows is something special. Here's how I made this work:
+This main program is only a few hundred lines of code, but it took some time to get working. To be accurate, building Model Six took about a full week of "sweet god, this is just too complex for the Guide" hacking. We've assembled pretty much everything and the kitchen sink into this small application. We have fail-over, ephemeral values, subtrees, and so on. What surprised me was that the upfront design was pretty accurate. But the details of writing and debugging so many socket flows is something special. Here's how I made this work:
 
 * By using reactors (bstar, on top of zloop), which remove a lot of grunt-work from the code, and leave what remains simpler and more obvious. The whole server runs as one thread, so there's no inter-thread weirdness going on. Just pass a structure pointer ('self') around to all handlers, which can do their thing happily. One nice side-effect of using reactors is that code, being less tightly integrated into a poll loop, is much easier to reuse. Large chunks of Model Six are taken from Model Five.
 
 * By building it piece by piece, and getting each piece working **properly** before going onto the next one. Since there are four or five main socket flows, that meant quite a lot of debugging and testing. I debug just by printing stuff to the console (e.g. dumping messages). There's no sense in actually opening a debugger for this kind of work.
 
-* By always testing under Valgrind, so that I'm sure there are no memory leaks. In C this is a major concern, you can't delegate to some garbage collector. Using proper and consistent abstractions like kvmsg and czmq helps enormously.
+* By always testing under Valgrind, so that I'm sure there are no memory leaks. In C this is a major concern, you can't delegate to some garbage collector. Using proper and consistent abstractions like kvmsg and CZMQ helps enormously.
 
 I'm sure the code still has flaws which kind readers will spend weekends debugging and fixing for me. I'm happy enough with this model to use it as the basis for real applications.
 

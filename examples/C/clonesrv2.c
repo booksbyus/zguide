@@ -56,9 +56,10 @@ s_send_single (char *key, void *data, void *args)
     return 0;
 }
 
-//  This thread maintains the state and handles requests from
-//  clients for snapshots.
-//
+//  .split state manager
+//  The state manager task maintains the state and handles requests from
+//  clients for snapshots:
+
 static void
 state_manager (void *args, zctx_t *ctx, void *pipe)
 {

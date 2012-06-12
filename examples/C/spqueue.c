@@ -9,7 +9,6 @@
 
 int main (void)
 {
-    //  Prepare our context and sockets
     zctx_t *ctx = zctx_new ();
     void *frontend = zsocket_new (ctx, ZMQ_ROUTER);
     void *backend = zsocket_new (ctx, ZMQ_ROUTER);
@@ -18,7 +17,9 @@ int main (void)
 
     //  Queue of available workers
     zlist_t *workers = zlist_new ();
-
+    
+    //  The body of this example is exactly the same as lruqueue2.
+    //  .skip
     while (1) {
         zmq_pollitem_t items [] = {
             { backend,  0, ZMQ_POLLIN, 0 },
@@ -62,4 +63,5 @@ int main (void)
     zlist_destroy (&workers);
     zctx_destroy (&ctx);
     return 0;
+    //  .until
 }

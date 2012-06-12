@@ -1,0 +1,17 @@
++-----------+
+|           |       zmq_setsockopt (socket,
+|   Client  |           ZMQ_IDENTITY, "Lucy", 4);
+|           |
++-----------+       +---------+
+|    REQ    |       |  Data   |     Client sends this
+\-----+-----/       +---------+
+      |
+      |  "Hi, my name is Lucy"
+      v
+/-----------\       +---------+
+|  ROUTER   |       | 'Lucy'  |     ROUTER uses identity of
++-----------+       +-+-------+     client as reply address
+|           |       | |
+|  Service  |       +-+-------+
+|           |       |  Data   |
++-----------+       +---------+

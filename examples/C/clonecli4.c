@@ -5,7 +5,10 @@
 //  Lets us build this source without creating a library
 #include "kvsimple.c"
 
+//  This client is identical to clonecli3 except for where we
+//  handles subtrees.
 #define SUBTREE "/client/"
+//  .skip
 
 int main (void)
 {
@@ -15,18 +18,22 @@ int main (void)
     zsocket_connect (snapshot, "tcp://localhost:5556");
     void *subscriber = zsocket_new (ctx, ZMQ_SUB);
     zsockopt_set_subscribe (subscriber, "");
+    //  .until
     zsocket_connect (subscriber, "tcp://localhost:5557");
     zsockopt_set_subscribe (subscriber, SUBTREE);
+    //  .skip
     void *publisher = zsocket_new (ctx, ZMQ_PUSH);
     zsocket_connect (publisher, "tcp://localhost:5558");
 
     zhash_t *kvmap = zhash_new ();
     srandom ((unsigned) time (NULL));
 
-    //  Get state snapshot
+    //  .until
+    //  We first request a state snapshot:
     int64_t sequence = 0;
     zstr_sendm (snapshot, "ICANHAZ?");
     zstr_send  (snapshot, SUBTREE);
+    //  .skip
     while (TRUE) {
         kvmsg_t *kvmsg = kvmsg_recv (snapshot);
         if (!kvmsg)
@@ -64,6 +71,7 @@ int main (void)
             else
                 kvmsg_destroy (&kvmsg);
         }
+        //  .until
         //  If we timed-out, generate a random kvmsg
         if (zclock_time () >= alarm) {
             kvmsg_t *kvmsg = kvmsg_new (0);
@@ -73,6 +81,7 @@ int main (void)
             kvmsg_destroy (&kvmsg);
             alarm = zclock_time () + 1000;
         }
+        //  .skip
     }
     printf (" Interrupted\n%d messages in\n", (int) sequence);
     zhash_destroy (&kvmap);

@@ -1,30 +1,7 @@
 /*  =====================================================================
-    mdcliapi.c
-
-    Majordomo Protocol Client API
-    Implements the MDP/Worker spec at http://rfc.zeromq.org/spec:7.
-
-    ---------------------------------------------------------------------
-    Copyright (c) 1991-2011 iMatix Corporation <www.imatix.com>
-    Copyright other contributors as noted in the AUTHORS file.
-
-    This file is part of the ZeroMQ Guide: http://zguide.zeromq.org
-
-    This is free software; you can redistribute it and/or modify it under
-    the terms of the GNU Lesser General Public License as published by
-    the Free Software Foundation; either version 3 of the License, or (at
-    your option) any later version.
-
-    This software is distributed in the hope that it will be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-    Lesser General Public License for more details.
-
-    You should have received a copy of the GNU Lesser General Public
-    License along with this program. If not, see
-    <http://www.gnu.org/licenses/>.
-    =====================================================================
-*/
+ *  mdcliapi.c - Majordomo Protocol Client API
+ *  Implements the MDP/Worker spec at http://rfc.zeromq.org/spec:7.
+ *  ===================================================================== */
 
 #include "mdcliapi.h"
 
@@ -54,6 +31,9 @@ void s_mdcli_connect_to_broker (mdcli_t *self)
         zclock_log ("I: connecting to broker at %s...", self->broker);
 }
 
+
+//  .split constructor and destructor
+//  Here we have the constructor and destructor for our mdcli class:
 
 //  ---------------------------------------------------------------------
 //  Constructor
@@ -92,6 +72,10 @@ mdcli_destroy (mdcli_t **self_p)
 }
 
 
+//  .split configure retry behavior
+//  These are the class methods. We can set the request timeout and number
+//  of retry attempts, before sending requests:
+
 //  ---------------------------------------------------------------------
 //  Set request timeout
 
@@ -114,10 +98,11 @@ mdcli_set_retries (mdcli_t *self, int retries)
 }
 
 
-//  ---------------------------------------------------------------------
-//  Send request to broker and get reply by hook or crook
-//  Takes ownership of request message and destroys it when sent.
-//  Returns the reply message or NULL if there was no reply.
+//  .split send request and wait for reply
+//  Here is the send method. It sends a request to the broker and gets a
+//  reply even if it has to retry several times. It takes ownership of the
+//  request message, and destroys it when sent. It returns the reply
+//  message, or NULL if there was no reply after multiple attempts:
 
 zmsg_t *
 mdcli_send (mdcli_t *self, char *service, zmsg_t **request_p)
@@ -135,15 +120,19 @@ mdcli_send (mdcli_t *self, char *service, zmsg_t **request_p)
         zclock_log ("I: send request to '%s' service:", service);
         zmsg_dump (request);
     }
-
     int retries_left = self->retries;
     while (retries_left && !zctx_interrupted) {
         zmsg_t *msg = zmsg_dup (request);
         zmsg_send (&msg, self->client);
 
-        //  Poll socket for a reply, with timeout
         zmq_pollitem_t items [] = {
-            { self->client, 0, ZMQ_POLLIN, 0 } };
+            { self->client, 0, ZMQ_POLLIN, 0 }
+        };
+        //  .split body of send 
+        //  On any blocking call, libzmq will return -1 if there was
+        //  an error; we could in theory check for different error codes
+        //  but in practice it's OK to assume it was EINTR (Ctrl-C):
+        
         int rc = zmq_poll (items, 1, self->timeout * ZMQ_POLL_MSEC);
         if (rc == -1)
             break;          //  Interrupted
@@ -155,7 +144,7 @@ mdcli_send (mdcli_t *self, char *service, zmsg_t **request_p)
                 zclock_log ("I: received reply:");
                 zmsg_dump (msg);
             }
-            //  Don't try to handle errors, just assert noisily
+            //  We would handle malformed replies better in real code
             assert (zmsg_size (msg) >= 3);
 
             zframe_t *header = zmsg_pop (msg);
@@ -173,7 +162,6 @@ mdcli_send (mdcli_t *self, char *service, zmsg_t **request_p)
         if (--retries_left) {
             if (self->verbose)
                 zclock_log ("W: no reply, reconnecting...");
-            //  Reconnect socket
             s_mdcli_connect_to_broker (self);
         }
         else {

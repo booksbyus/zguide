@@ -1,10 +1,6 @@
 //
 //  Custom routing Router to Dealer
 //
-//  While this example runs in a single process, that is just to make
-//  it easier to start and stop the example. Each thread has its own
-//  context and conceptually acts as a separate process.
-//
 #include "zhelpers.h"
 #include <pthread.h>
 
@@ -60,6 +56,14 @@ worker_task_b (void *args)
     zmq_term (context);
     return NULL;
 }
+
+//  .split main task
+//  After we've defined the two worker tasks, we have the main task.
+//  Recall that these three tasks could be in separate processes, even
+//  running on different boxes. It's just easier to start by writing
+//  these in a single program. The main task starts the two workers,
+//  then scatters tasks to the workers. It sends an END message to each
+//  worker to tell them to exit:
 
 int main (void)
 {

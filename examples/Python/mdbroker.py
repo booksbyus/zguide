@@ -226,7 +226,7 @@ class MajorDomoBroker(object):
         returncode = "501"
         if "mmi.service" == service:
             name = msg[-1]
-            returncode = "200" if name in self.services else "400"
+            returncode = "200" if name in self.services else "404"
         msg[-1] = returncode
 
         # insert the protocol header and service name after the routing envelope ([client, ''])

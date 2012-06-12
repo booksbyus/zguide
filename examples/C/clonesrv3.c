@@ -5,14 +5,25 @@
 //  Lets us build this source without creating a library
 #include "kvsimple.c"
 
-static int s_send_single (char *key, void *data, void *args);
-
 //  Routing information for a key-value snapshot
 typedef struct {
     void *socket;           //  ROUTER socket to send to
     zframe_t *identity;     //  Identity of peer who requested state
 } kvroute_t;
 
+//  Send one state snapshot key-value pair to a socket
+//  Hash item data is our kvmsg object, ready to send
+static int
+s_send_single (char *key, void *data, void *args)
+{
+    kvroute_t *kvroute = (kvroute_t *) args;
+    //  Send identity of recipient first
+    zframe_send (&kvroute->identity,
+        kvroute->socket, ZFRAME_MORE + ZFRAME_REUSE);
+    kvmsg_t *kvmsg = (kvmsg_t *) data;
+    kvmsg_send (kvmsg, kvroute->socket);
+    return 0;
+}
 
 int main (void)
 {
@@ -24,6 +35,10 @@ int main (void)
     zsocket_bind (publisher, "tcp://*:5557");
     void *collector = zsocket_new (ctx, ZMQ_PULL);
     zsocket_bind (collector, "tcp://*:5558");
+
+    //  .split body of main task
+    //  The body of the main task collects updates from clients and
+    //  publishes them back out to clients:
 
     int64_t sequence = 0;
     zhash_t *kvmap = zhash_new ();
@@ -79,19 +94,5 @@ int main (void)
     zhash_destroy (&kvmap);
     zctx_destroy (&ctx);
 
-    return 0;
-}
-
-//  Send one state snapshot key-value pair to a socket
-//  Hash item data is our kvmsg object, ready to send
-static int
-s_send_single (char *key, void *data, void *args)
-{
-    kvroute_t *kvroute = (kvroute_t *) args;
-    //  Send identity of recipient first
-    zframe_send (&kvroute->identity,
-        kvroute->socket, ZFRAME_MORE + ZFRAME_REUSE);
-    kvmsg_t *kvmsg = (kvmsg_t *) data;
-    kvmsg_send (kvmsg, kvroute->socket);
     return 0;
 }

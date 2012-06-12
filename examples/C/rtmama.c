@@ -1,10 +1,6 @@
 //
 //  Custom routing Router to Mama (ROUTER to REQ)
 //
-//  While this example runs in a single process, that is just to make
-//  it easier to start and stop the example. Each thread has its own
-//  context and conceptually acts as a separate process.
-//
 #include "zhelpers.h"
 #include <pthread.h>
 
@@ -42,6 +38,11 @@ worker_task (void *args)
     zmq_term (context);
     return NULL;
 }
+
+//  .split main task
+//  While this example runs in a single process, that is just to make
+//  it easier to start and stop the example. Each thread has its own
+//  context and conceptually acts as a separate process.
 
 int main (void)
 {

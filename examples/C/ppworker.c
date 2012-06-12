@@ -28,6 +28,12 @@ s_worker_socket (zctx_t *ctx) {
     return worker;
 }
 
+//  .split main task
+//  We have a single task, which implements the worker side of the
+//  Paranoid Pirate Protocol (PPP). The interesting parts here are
+//  the heartbeating, which lets the worker detect if the queue has
+//  died, and vice-versa:
+
 int main (void)
 {
     zctx_t *ctx = zctx_new ();
@@ -56,8 +62,13 @@ int main (void)
             if (!msg)
                 break;          //  Interrupted
 
+            //  .split simulating problems
+            //  To test the robustness of the queue implementation we 
+            //  simulate various typical problems, such as the worker
+            //  crashing, or running very slowly. We do this after a few
+            //  cycles so that the architecture can get up and running
+            //  first:
             if (zmsg_size (msg) == 3) {
-                //  Simulate various problems, after a few cycles
                 cycles++;
                 if (cycles > 3 && randof (5) == 0) {
                     printf ("I: simulating a crash\n");
@@ -79,6 +90,9 @@ int main (void)
                     break;
             }
             else
+            //  .split handle heartbeats
+            //  When we get a heartbeat message from the queue, it means the
+            //  queue was (recently) alive, so reset our liveness indicator:
             if (zmsg_size (msg) == 1) {
                 zframe_t *frame = zmsg_first (msg);
                 if (memcmp (zframe_data (frame), PPP_HEARTBEAT, 1) == 0)
@@ -96,6 +110,10 @@ int main (void)
             interval = INTERVAL_INIT;
         }
         else
+        //  .split detecting a dead queue
+        //  If the queue hasn't sent us heartbeats in a while, destroy the
+        //  socket and reconnect. This is the simplest most brutal way of
+        //  discarding any messages we might have sent in the meantime:
         if (--liveness == 0) {
             printf ("W: heartbeat failure, can't reach queue\n");
             printf ("W: reconnecting in %zd msec...\n", interval);

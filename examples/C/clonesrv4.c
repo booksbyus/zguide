@@ -5,8 +5,6 @@
 //  Lets us build this source without creating a library
 #include "kvsimple.c"
 
-static int s_send_single (char *key, void *data, void *args);
-
 //  Routing information for a key-value snapshot
 typedef struct {
     void *socket;           //  ROUTER socket to send to
@@ -14,6 +12,27 @@ typedef struct {
     char *subtree;          //  Client subtree specification
 } kvroute_t;
 
+//  Send one state snapshot key-value pair to a socket
+//  Hash item data is our kvmsg object, ready to send
+static int
+s_send_single (char *key, void *data, void *args)
+{
+    kvroute_t *kvroute = (kvroute_t *) args;
+    kvmsg_t *kvmsg = (kvmsg_t *) data;
+    if (strlen (kvroute->subtree) <= strlen (kvmsg_key (kvmsg))
+    &&  memcmp (kvroute->subtree,
+                kvmsg_key (kvmsg), strlen (kvroute->subtree)) == 0) {
+        //  Send identity of recipient first
+        zframe_send (&kvroute->identity,
+            kvroute->socket, ZFRAME_MORE + ZFRAME_REUSE);
+        kvmsg_send (kvmsg, kvroute->socket);
+    }
+    return 0;
+}
+
+//  The main task is identical to clonesrv3 except for where it
+//  handles subtrees.
+//  .skip
 
 int main (void)
 {
@@ -52,6 +71,7 @@ int main (void)
             if (!identity)
                 break;          //  Interrupted
 
+            //  .until
             //  Request is in second frame of message
             char *request = zstr_recv (snapshot);
             char *subtree = NULL;
@@ -59,16 +79,20 @@ int main (void)
                 free (request);
                 subtree = zstr_recv (snapshot);
             }
+            //  .skip
             else {
                 printf ("E: bad request, aborting\n");
                 break;
             }
+            //  .until
             //  Send state snapshot to client
             kvroute_t routing = { snapshot, identity, subtree };
+            //  .skip
 
             //  For each entry in kvmap, send kvmsg to client
             zhash_foreach (kvmap, s_send_single, &routing);
 
+            //  .until
             //  Now send END message with sequence number
             printf ("I: sending shapshot=%d\n", (int) sequence);
             zframe_send (&identity, snapshot, ZFRAME_MORE);
@@ -80,27 +104,10 @@ int main (void)
             free (subtree);
         }
     }
+    //  .skip
     printf (" Interrupted\n%d messages handled\n", (int) sequence);
     zhash_destroy (&kvmap);
     zctx_destroy (&ctx);
 
-    return 0;
-}
-
-//  Send one state snapshot key-value pair to a socket
-//  Hash item data is our kvmsg object, ready to send
-static int
-s_send_single (char *key, void *data, void *args)
-{
-    kvroute_t *kvroute = (kvroute_t *) args;
-    kvmsg_t *kvmsg = (kvmsg_t *) data;
-    if (strlen (kvroute->subtree) <= strlen (kvmsg_key (kvmsg))
-    &&  memcmp (kvroute->subtree,
-                kvmsg_key (kvmsg), strlen (kvroute->subtree)) == 0) {
-        //  Send identity of recipient first
-        zframe_send (&kvroute->identity,
-            kvroute->socket, ZFRAME_MORE + ZFRAME_REUSE);
-        kvmsg_send (kvmsg, kvroute->socket);
-    }
     return 0;
 }

@@ -1,0 +1,7 @@
+          +-------------+
+Frame 1   | Address     |  <--- Zero or more of these
+          +---+---------+
+Frame 2   |   |   <------ Exactly one empty message part
+          +---+-----------------------------------+
+Frame 3   | Data                                  |
+          +---------------------------------------+

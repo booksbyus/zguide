@@ -17,11 +17,12 @@ int main (int argc, char *argv [])
     printf ("I: preparing broker at %s...\n", self);
     srandom ((unsigned) time (NULL));
 
-    //  Prepare our context and sockets
     zctx_t *ctx = zctx_new ();
+    
+    //  Bind state backend to endpoint
     void *statebe = zsocket_new (ctx, ZMQ_PUB);
     zsocket_bind (statebe, "ipc://%s-state.ipc", self);
-
+    
     //  Connect statefe to all peers
     void *statefe = zsocket_new (ctx, ZMQ_SUB);
     zsockopt_set_subscribe (statefe, "");
@@ -31,20 +32,19 @@ int main (int argc, char *argv [])
         printf ("I: connecting to state backend at '%s'\n", peer);
         zsocket_connect (statefe, "ipc://%s-state.ipc", peer);
     }
-    //  Send out status messages to peers, and collect from peers
-    //  The zmq_poll timeout defines our own heartbeating
-    //
+    //  .split main loop
+    //  The main loop sends out status messages to peers, and collects
+    //  status messages back from peers. The zmq_poll timeout defines
+    //  our own heartbeat:
+
     while (1) {
-        //  Initialize poll set
-        zmq_pollitem_t items [] = {
-            { statefe, 0, ZMQ_POLLIN, 0 }
-        };
         //  Poll for activity, or 1 second timeout
+        zmq_pollitem_t items [] = { { statefe, 0, ZMQ_POLLIN, 0 } };
         int rc = zmq_poll (items, 1, 1000 * ZMQ_POLL_MSEC);
         if (rc == -1)
             break;              //  Interrupted
 
-        //  Handle incoming status message
+        //  Handle incoming status messages
         if (items [0].revents & ZMQ_POLLIN) {
             char *peer_name = zstr_recv (statefe);
             char *available = zstr_recv (statefe);
@@ -53,7 +53,7 @@ int main (int argc, char *argv [])
             free (available);
         }
         else {
-            //  Send random value for worker availability
+            //  Send random values for worker availability
             zstr_sendm (statebe, self);
             zstr_sendf (statebe, "%d", randof (10));
         }
