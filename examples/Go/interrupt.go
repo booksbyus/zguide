@@ -1,0 +1,46 @@
+//
+//  Shows how to handle Ctrl-C
+//
+package main
+
+import (
+  	"os/signal"
+	"os"
+	"fmt"
+	"time"
+	/*zmq "github.com/alecthomas/gozmq"*/
+)
+
+func listenForSignals(exit_channel chan bool) {
+	signal_channel := make(chan os.Signal)
+	signal.Notify(signal_channel)
+	for {
+		<- signal_channel
+		fmt.Println("stopping")
+		exit_channel <- true
+	}
+}
+
+func main() {
+	exit := make(chan bool)
+	exit_signal := false
+	go listenForSignals(exit)
+
+	for exit_signal == false {
+	  select {
+	  case exit_signal = <- exit:
+		fmt.Println("received exit signal")
+	  default:
+		fmt.Print(".")
+		time.Sleep(2 * 1e9)
+	  }
+	}
+
+	/*context := zmq.NewContext(1)*/
+	/*defer context.Close()*/
+
+	/*socket, _ := context.NewSocket(zmq.REP)*/
+	/*defer socket.Close()*/
+	/*socket.Bind("tcp://*:5555")*/
+	
+}
