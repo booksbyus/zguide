@@ -23,6 +23,7 @@ $tstart = microtime(true);
 $total_msec = 0;     //  Total calculated cost in msecs
 for ($task_nbr = 0; $task_nbr < 100; $task_nbr++) {
 	$string = $receiver->recv();
+    
 	if($task_nbr % 10 == 0) {
 		echo ":";
 	} else {
