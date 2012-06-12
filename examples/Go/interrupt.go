@@ -7,8 +7,8 @@ import (
   	"os/signal"
 	"os"
 	"fmt"
-	"time"
-	/*zmq "github.com/alecthomas/gozmq"*/
+	/*"time"*/
+	zmq "github.com/alecthomas/gozmq"
 )
 
 func listenForSignals(exit_channel chan bool) {
@@ -26,21 +26,21 @@ func main() {
 	exit_signal := false
 	go listenForSignals(exit)
 
+	context, _ := zmq.NewContext()
+	defer context.Close()
+
+	socket, _ := context.NewSocket(zmq.REP)
+	defer socket.Close()
+	socket.Bind("tcp://*:5555")
+
 	for exit_signal == false {
 	  select {
 	  case exit_signal = <- exit:
-		fmt.Println("received exit signal")
+		fmt.Println("W: interrupt received, killing server...")
 	  default:
-		fmt.Print(".")
-		time.Sleep(2 * 1e9)
+		msgbytes, _ := socket.Recv(0)
+		fmt.Printf("%s.\n", string(msgbytes))
 	  }
 	}
 
-	/*context := zmq.NewContext(1)*/
-	/*defer context.Close()*/
-
-	/*socket, _ := context.NewSocket(zmq.REP)*/
-	/*defer socket.Close()*/
-	/*socket.Bind("tcp://*:5555")*/
-	
 }
