@@ -120,6 +120,12 @@ while (<>) {
         elsif (/^\.prelude\s+(\w.*)/) {
             $prelude = $1;
         }
+        elsif (/^\.filter/) {
+            #   Not used, ignore
+        }
+        elsif (/^\.reset/) {
+            #   Not used, ignore
+        }
         else {
             print "Illegal directive $_ at line $.\n";
         }
@@ -225,20 +231,26 @@ while (<>) {
 
         print IMAGE "<html>\n";
         print IMAGE "<pre class=\"textdiagram\" id=\"fig$figure\">\n";
+        $longest = 0;
         while (<>) {
             chop;
             last if /\[\[\/code\]\]/;
             $_ = zmq_symbol ($_);
+            $longest = length ($_) if length ($_) > $longest;
             print IMAGE "$_\n";
         }
         print IMAGE "</pre>\n";
         print IMAGE "</html>\n";
         close (IMAGE);
 
+        #   Calculate scaling so image looks decent
+        $scale = 40 / $longest;
+        $scale = 1 if $scale > 1;
+
         #   Convert diagram into image of required format
         if (signature_changed ($filename)) {
             print "Converting $filename to PNG image...\n";
-            system ("java -jar bin/ditaa0_9.jar $filename -o -h -E output.html >/dev/null");
+            system ("java -jar bin/ditaa0_9.jar $filename -s $scale -o -h -E output.html >/dev/null");
             #   Need to trim twice for reasons I don't care to explore
             system ("mogrify -trim images/fig$figure.png");
             system ("mogrify -trim images/fig$figure.png");
@@ -410,7 +422,7 @@ sub signatures_save {
 #   $(xxx)                  - value of variable
 #   $(xxx?zzz)              - value of variable, or zzz if undefined
 #   %(text?zzz)             - value of environment variable, or zzz if undef
-#   &abc(text)              - intrinsic function with arguments
+#   !abc(text)              - intrinsic function with arguments
 #   zmq_zzz[n]              - link to 0MQ reference manual page
 #
 sub expand_symbols {
@@ -427,7 +439,7 @@ sub expand_symbols {
     for (;;) {
         #   Force expansion from end of string first, so things like
         #   $(xxx?$(yyy)) work properly.
-        if (/[\$%]\(/ || /\&([a-z_]+)\s*\(/i) {
+        if (/[\$%]\(/ || /\!([a-z_]+)\s*\(/i) {
             $before = $`;
             $match  = $&;
             $after  = expand_symbols ($');
@@ -449,8 +461,8 @@ sub expand_symbols {
         elsif (/\%\(([^\)]+)\?([^)\$]*)\)/) {
             $_ = $`.($ENV {$1}? $ENV {$1}: $2).$';
         }
-        #   &abc(text)
-        elsif (/\&([a-z_]+)\s*\(([^\)]*)\)/i) {
+        #   !abc(text)
+        elsif (/\!([a-z_]+)\s*\(([^\)]*)\)/i) {
             $funct = $1;
             $args = $2;
             $before = $`;
@@ -459,7 +471,7 @@ sub expand_symbols {
             $_ = eval ("&intrinsic_$funct ($args)");
             $_ = $before.$_.$after;
             if ($@) {                   #   Syntax error in Perl statement?
-                &error ("$function is not a valid intrinsic function")
+                &error ("$funct is not a valid intrinsic function")
                     unless $nofunc_mode;
                 last;
             }
