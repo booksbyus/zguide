@@ -1,7 +1,7 @@
-void *context = zmq_init (1);
-assert (context);
-void *socket = zmq_socket (context, ZMQ_REP);
-assert (socket);
-int rc;
-rc = zmq_bind (socket, "tcp://*:5555");
-assert (rc == 0);
+    void *control = zmq_socket (context, ZMQ_PUB);
+    zmq_bind (control, "tcp://*:5559");
+    ...
+    //  Send kill signal to workers
+    zmq_msg_init_data (&message, "KILL", 5);
+    zmq_send (control, &message, 0);
+    zmq_msg_close (&message);

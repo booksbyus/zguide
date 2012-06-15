@@ -1,7 +1,5 @@
-    void *control = zmq_socket (context, ZMQ_PUB);
-    zmq_bind (control, "tcp://*:5559");
-    ...
-    //  Send kill signal to workers
-    zmq_msg_init_data (&message, "KILL", 5);
-    zmq_send (control, &message, 0);
-    zmq_msg_close (&message);
+zmq_send (socket, &message, ZMQ_SNDMORE);
+...
+zmq_send (socket, &message, ZMQ_SNDMORE);
+...
+zmq_send (socket, &message, 0);
