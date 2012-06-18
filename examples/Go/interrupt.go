@@ -38,7 +38,10 @@ func main() {
 	  case exit_signal = <- exit:
 		fmt.Println("W: interrupt received, killing server...")
 	  default:
-		msgbytes, _ := socket.Recv(0)
+		msgbytes, err := socket.Recv(zmq.NOBLOCK)
+		if err != nil {
+		  fmt.Print(err)
+		}
 		fmt.Printf("%s.\n", string(msgbytes))
 	  }
 	}
