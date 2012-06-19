@@ -1,1 +1,2 @@
-    zmq_setsockopt (subscriber, ZMQ_IDENTITY, "Hello", 5);
+uint64_t hwm = 2;
+zmq_setsockopt (publisher, ZMQ_HWM, &hwm, sizeof (hwm));

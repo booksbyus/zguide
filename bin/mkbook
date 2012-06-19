@@ -12,6 +12,8 @@
 require 'sflcvdp.pl';                   #   SFL date picture formatting
 use Digest::SHA1 qw(sha1_hex);
 
+printf "Generating DocBook version of Guide...\n";
+
 #   Listings longer than this are truncated and turned into URLs
 $cutoff = 60;
 
@@ -23,7 +25,8 @@ signatures_load ();
 #   Default language for all examples
 $source = "C";
 
-printf "Generating DocBook version of Guide...\n";
+#   When filtering, we drop text that we don't want in the printed book
+$filter = 0;
 
 die "Can't create book.xml: $!"
     unless open (OUTPUT, ">book.xml");
@@ -57,6 +60,12 @@ while (<>) {
         elsif (/^\.prelude\s+(\w.*)/) {
             $prelude = $1;
         }
+        elsif (/^\.filter online/) {
+            $filter = 1;
+        }
+        elsif (/^\.reset/) {
+            $filter = 0;
+        }
         else {
             print "Illegal directive $_ at line $.\n";
         }
@@ -64,17 +73,17 @@ while (<>) {
     elsif (/^\+\+\s+Chapter\s+\w+\s+-\s+(.*)$/) {
         close_list ();
         start_block (1, "chapter");
-        writeln ("<title>$1</title>");
+        writeln (requote ("<title>$1</title>"));
     }
     elsif (/^\+\+\+\s+(.*)$/) {
         close_list ();
         start_block (2, "sect1");
-        writeln ("<title>$1</title>");
+        writeln (requote ("<title>$1</title>"));
     }
     elsif (/^\+\+\+\+\s+(.*)$/) {
         close_list ();
         start_block (3, "sect2");
-        writeln ("<title>$1</title>");
+        writeln (requote ("<title>$1</title>"));
     }
     #  Process unnamed code listing
     elsif (/\[\[code\s+language=\"(.+)\"\]\]/) {
@@ -124,7 +133,7 @@ while (<>) {
                     $text .= "$' ";
                 }
                 $split++;
-                writeln ("<para>$text\n</para>\n");
+                writeln (requote ("<para>$text\n</para>\n"));
                 writeln ("<example id=\"$name-$ext-$split\">");
                 writeln ("<title>$title ($name.$ext) - $1</title>");
                 writeln ("<programlisting language=\"$lexer\">");
@@ -190,6 +199,8 @@ while (<>) {
             print IMAGE "$_\n";
         }
         close (IMAGE);
+        
+        #   Calculate scaling so image looks decent
         $scale = 40 / $longest;
         $scale = 1 if $scale > 1;
 
@@ -214,16 +225,16 @@ while (<>) {
     }
     elsif (/^\* /) {
         require_list ("itemizedlist");
-        writeln ("  <listitem><para>$'</para></listitem>");
+        writeln (requote ("  <listitem><para>$'</para></listitem>"));
     }
     elsif (/^# /) {
         require_list ("orderedlist");
-        writeln ("  <listitem><para>$'</para></listitem>");
+        writeln (requote ("  <listitem><para>$'</para></listitem>"));
     }
     elsif ($_) {
         #   Normal text
         close_list ();
-        writeln ("<para>$_</para>\n");
+        writeln (requote ("<para>$_</para>\n")) unless $filter;
     }
 }
 close_list ();
@@ -233,7 +244,6 @@ close (OUTPUT);
 
 signatures_save ();
 exit (0);
-
 
 #   Open and close block elements
 
@@ -245,7 +255,7 @@ sub start_block {
         $cur_level--;
     }
     writeln ("<$name>");
-    $block [$   level] = $name;
+    $block [$level] = $name;
     $cur_level = $level;
 }
 
@@ -255,7 +265,6 @@ sub close_blocks {
         $cur_level--;
     }
 }
-
 
 #   Writes $_ to OUTPUT after expanding all symbols
 
@@ -277,6 +286,18 @@ sub writesrc {
     s/</&lt;/g;
     s/>/&gt;/g;
     print OUTPUT "$_\n";
+}
+
+#   Do smart curly quotes before we add any tags
+
+sub requote {
+    local ($_) = @_;
+    s/"([a-zA-ZØ0-9.\/\(])/&#8220;\1/g;
+    s/([a-zA-Z0-9!?.\/\)])"/\1&#8221;/g;
+    s/'([a-zA-Z0-9])/&#8216;\1/g;
+    s/'/&#8217;/g;
+    print "$_\n" if /"/;
+    return $_;
 }
 
 #   Manage lists
@@ -367,7 +388,7 @@ sub signatures_save {
 #   $(xxx)                  - value of variable
 #   $(xxx?zzz)              - value of variable, or zzz if undefined
 #   %(text?zzz)             - value of environment variable, or zzz if undef
-#   &abc(text)              - intrinsic function with arguments
+#   !abc(text)              - intrinsic function with arguments
 #
 sub expand_symbols {
     local ($_) = @_;
@@ -383,7 +404,7 @@ sub expand_symbols {
     for (;;) {
         #   Force expansion from end of string first, so things like
         #   $(xxx?$(yyy)) work properly.
-        if (/[\$%]\(/ || /\&([a-z_]+)\s*\(/i) {
+        if (/[\$%]\(/ || /\!([a-z_]+)\s*\(/i) {
             $before = $`;
             $match  = $&;
             $after  = expand_symbols ($');
@@ -405,8 +426,9 @@ sub expand_symbols {
         elsif (/\%\(([^\)]+)\?([^)\$]*)\)/) {
             $_ = $`.($ENV {$1}? $ENV {$1}: $2).$';
         }
-        #   &abc(text)
-        elsif (/\&([a-z_]+)\s*\(([^\)]*)\)/i) {
+        #   !abc(text)
+        elsif (/\!([a-z_]+)\s*\(([^\)]*)\)/i) {
+        print $_."\n";
             $funct = $1;
             $args = $2;
             $before = $`;
@@ -415,7 +437,7 @@ sub expand_symbols {
             $_ = eval ("&intrinsic_$funct ($args)");
             $_ = $before.$_.$after;
             if ($@) {                   #   Syntax error in Perl statement?
-                &error ("$function is not a valid intrinsic function")
+                &error ("$funct is not a valid intrinsic function")
                     unless $nofunc_mode;
                 last;
             }

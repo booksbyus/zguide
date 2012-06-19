@@ -5,13 +5,19 @@
 .set LIST=http://lists.zeromq.org/mailman/listinfo/zeromq-dev
 
 .output chapter1.wd
-**By Pieter Hintjens <ph@imatix.com>, CEO iMatix Corporation.**
+**By Pieter Hintjens**
 
-With thanks to Bill Desmarais, Brian Dorsey, Daniel Lin, Eric Desgranges, Gonzalo Diethelm, Guido Goldstein, Hunter Ford, Kamil Shakirov, Martin Sustrik, Mike Castleman, Naveen Chawla, Nicola Peduzzi, Oliver Smith, Olivier Chamoux, Peter Alexander, Pierre Rouleau, Randy Dryburgh, John Unwin, Alex Thomas, Mihail Minkov, Jeremy Avnet, Michael Compton, Kamil Kisiel, Mark Kharitonov, Guillaume Aubert, Ian Barber, Mike Sheridan, Faruk Akgul, Oleg Sidorov, Lev Givon, Allister MacLeod, Alexander D'Archangel, Andreas Hoelzlwimmer, Han Holl, Robert G. Jakabosky, Felipe Cruz, Marcus McCurdy, Mikhail Kulemin, Dr. Gergő Érdi, Pavel Zhukov, Alexander Else, Giovanni Ruggiero, Rick "Technoweenie", Daniel Lundin, Dave Hoover, Simon Jefford, Benjamin Peterson, Justin Case, Devon Weller, Richard Smith, Alexander Morland, Wadim Grasza, Michael Jakl, Uwe Dauernheim, Sebastian Nowicki, Simone Deponti, Aaron Raddon, Dan Colish, Markus Schirp, Benoit Larroque, Jonathan Palardy, Isaiah Peng, Arkadiusz Orzechowski, Umut Aydin, Matthew Horsfall, Jeremy W. Sherman, Eric Pugh, Tyler Sellon, John E. Vincent, Pavel Mitin, Min RK, Igor Wiedler, Olof Åkesson, Patrick Lucas, Heow Goodman, Senthil Palanisami, John Gallagher, Tomas Roos, Stephen McQuay, Erik Allik, Arnaud Cogoluègnes, Rob Gagnon, Dan Williams, Edward Smith, James Tucker, Kristian Kristensen, Vadim Shalts,Martin Trojer, Tom van Leeuwen, and Zed Shaw for their contributions, and to Stathis Sideris for [http://www.ditaa.org Ditaa].
+With thanks to the hundred or so people who contributed examples in two dozen programming languages, who helped with suggestions and fixes, and who kept pushing for more examples of how to connect your code.
 
-Please use the [$(GIT)/issues issue tracker] for all comments and errata. This version covers the latest stable release of 0MQ (2.1.x) and was published on &date("ddd d mmmm, yyyy"). If you are using 0MQ/3.1 some of the examples and explanations won't be accurate.
+.filter online
+Thanks to Bill Desmarais, Brian Dorsey, Daniel Lin, Eric Desgranges, Gonzalo Diethelm, Guido Goldstein, Hunter Ford, Kamil Shakirov, Martin Sustrik, Mike Castleman, Naveen Chawla, Nicola Peduzzi, Oliver Smith, Olivier Chamoux, Peter Alexander, Pierre Rouleau, Randy Dryburgh, John Unwin, Alex Thomas, Mihail Minkov, Jeremy Avnet, Michael Compton, Kamil Kisiel, Mark Kharitonov, Guillaume Aubert, Ian Barber, Mike Sheridan, Faruk Akgul, Oleg Sidorov, Lev Givon, Allister MacLeod, Alexander D'Archangel, Andreas Hoelzlwimmer, Han Holl, Robert G. Jakabosky, Felipe Cruz, Marcus McCurdy, Mikhail Kulemin, Dr. Gergő Érdi, Pavel Zhukov, Alexander Else, Giovanni Ruggiero, Rick "Technoweenie", Daniel Lundin, Dave Hoover, Simon Jefford, Benjamin Peterson, Justin Case, Devon Weller, Richard Smith, Alexander Morland, Wadim Grasza, Michael Jakl, Uwe Dauernheim, Sebastian Nowicki, Simone Deponti, Aaron Raddon, Dan Colish, Markus Schirp, Benoit Larroque, Jonathan Palardy, Isaiah Peng, Arkadiusz Orzechowski, Umut Aydin, Matthew Horsfall, Jeremy W. Sherman, Eric Pugh, Tyler Sellon, John E. Vincent, Pavel Mitin, Min RK, Igor Wiedler, Olof Åkesson, Patrick Lucas, Heow Goodman, Senthil Palanisami, John Gallagher, Tomas Roos, Stephen McQuay, Erik Allik, Arnaud Cogoluègnes, Rob Gagnon, Dan Williams, Edward Smith, James Tucker, Kristian Kristensen, Vadim Shalts, Martin Trojer, Tom van Leeuwen, Pandya Hiten, Harm Aarts, and Zed Shaw.
+
+Thanks to Stathis Sideris for [http://www.ditaa.org Ditaa], which I used for the diagrams.
+
+Please use the [$(GIT)/issues issue tracker] for all comments and errata. This version covers the latest stable release of 0MQ (2.2.x) and was published on $date("ddd d mmmm, yyyy"). If you are using 0MQ/3.1 some of the examples and explanations won't be accurate.
 
 The Guide is originally [/page:all in C], but also in [/php:all PHP], [/py:all Python], [/lua:all Lua], and [/hx:all Haxe]. We've also translated most of the examples into C++, C#, CL, Erlang, F#, Felix, Haskell, Java, Objective-C, Ruby, Ada, Basic, Clojure, Go, Haxe, Node.js, ooc, Perl, and Scala.
+.reset
 
 ++ Chapter One - Basic Stuff
 
@@ -496,28 +502,7 @@ worker_thread (void *arg) {
 }
 [[/code]]
 
-In the end, the problem was that the application was passing sockets between threads, which crashed weirdly. It became legal behavior in 0MQ/2.1, but remains dangerous and something we advise against doing.
-
-+++ 0MQ/2.1
-
-History tells us that 0MQ/2.0 is when low-latency distributed messaging crawled out of the primeval mud, shook off a heavy coat of buzzwords and enterprise jargon, and reached its branches up to the sky, as if to cry, "no limits!". We've been using this stable branch since it spawned 0MQ/2.0.8 during the hot days of August, 2010.
-
-But times change, and what was cool in 2010 is no longer //a la mode// in 2011. The 0MQ developers and community have been frantically busy redefining messaging chic, and anyone who's anyone knows that 2.1 is the new stable.
-
-The Guide therefore assumes you're running 2.1.x. Let's look at the differences, as they affect your applications coming from the old 2.0:
-
-* In 2.0, zmq_close[3] and zmq_term[3] discarded any in-flight messages, so it was unsafe to close a socket and terminate right after sending messages. In 2.1, these calls are safe: zmq_term will flush anything that's waiting to be sent. In 2.0 examples we often added a sleep(1) to get around the problem. In 2.1, this isn't needed.
-
-* By contrast, in 2.0, it was safe to call zmq_term[3] even if there were open sockets. In 2.1, this is not safe, and it can cause zmq_term to block. So in 2.1 we //always close every socket//, before exiting. Furthermore, if you have any outgoing messages or connects waiting on a socket, 2.1 will by default wait forever trying to deliver these. You must //set the LINGER socket option// (e.g. to zero), on every socket which may still be busy, before calling zmq_term:
-
-[[code language="C"]]
-int zero = 0;
-zmq_setsockopt (mysocket, ZMQ_LINGER, &zero, sizeof (zero));
-[[/code]]
-
-* In 2.0, zmq_poll[3] would return arbitrarily early, so you could not use it as a timer. We would work around this with a loop checked how much time was left, and called zmq_poll again as needed. In 2.1, zmq_poll properly waits for the full timeout if there are no events.
-
-* In 2.0, 0MQ would ignore interrupted system calls, which meant that no libzmq call would ever return EINTR if a signal was received during its operation. This caused problems with loss of signals such as SIGINT (Ctrl-C handling), especially for language runtimes. In 2.1, any blocking call such as zmq_recv[3] will return EINTR if it is interrupted by a signal.
+In the end, the problem was that the application was passing sockets between threads, which crashed weirdly. It became legal behavior in 0MQ/2.1, but remains dangerous unless you use a "full memory barrier", and it's something we advise against doing.
 
 +++ Getting the Context Right
 

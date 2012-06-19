@@ -69,8 +69,7 @@ typedef struct {
     char *subtree;          //  Client subtree specification
 } kvroute_t;
 
-//  Send one state snapshot key-value pair to a socket
-//  Hash item data is our kvmsg object, ready to send
+//  We call this function for each key-value pair in our hash table
 static int
 s_send_single (char *key, void *data, void *args)
 {
@@ -85,6 +84,11 @@ s_send_single (char *key, void *data, void *args)
     }
     return 0;
 }
+
+//  .split snapshot handler
+//  This is the reactor handler for the snapshot socket; it accepts
+//  just the ICANHAZ? request and replies with a state snapshot ending
+//  with a KTHXBAI message:
 
 static int
 s_snapshots (zloop_t *loop, zmq_pollitem_t *poller, void *args)

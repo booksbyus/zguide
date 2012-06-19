@@ -1,1 +1,1 @@
-zmq_setsockopt (socket, ZMQ_IDENTITY, "Lucy", 4);
+    zmq_setsockopt (subscriber, ZMQ_IDENTITY, "Hello", 5);

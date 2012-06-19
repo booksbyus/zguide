@@ -6,6 +6,9 @@
 #include "bstar.c"
 #include "kvmsg.c"
 
+//  .split definitions
+//  We define a set of reactor handlers and our server object structure:
+
 //  Bstar reactor handlers
 static int s_snapshots  (zloop_t *loop, zmq_pollitem_t *poller, void *args);
 static int s_collector  (zloop_t *loop, zmq_pollitem_t *poller, void *args);
@@ -31,6 +34,17 @@ typedef struct {
     Bool master;                //  TRUE if we're master
     Bool slave;                 //  TRUE if we're slave
 } clonesrv_t;
+
+//  .split main task setup
+//  The main task parses the command line to decide whether to start
+//  as primary or backup server. We're using the Binary Star pattern
+//  for reliability. This interconnects the two servers so they can
+//  agree on which is primary, and which is backup. To allow the two
+//  servers to run on the same box, we use different ports for primary
+//  and backup. Ports 5003/5004 are used to interconnect the servers.
+//  Ports 5556/5566 are used to receive voting events (snapshot requests
+//  in the clone pattern). Ports 5557/5567 are used by the publisher,
+//  and ports 5558/5568 by the collector:
 
 int main (int argc, char *argv [])
 {
@@ -79,6 +93,12 @@ int main (int argc, char *argv [])
     zsockopt_set_subscribe (self->subscriber, "");
     zsocket_connect (self->subscriber, "tcp://localhost:%d", self->peer + 1);
 
+    //  .split main task body
+    //  After we've set-up our sockets we register our binary star
+    //  event handlers, and then start the bstar reactor. This finishes
+    //  when the user presses Ctrl-C, or the process receives a SIGINT
+    //  interrupt:
+    
     //  Register state change handlers
     bstar_new_master (self->bstar, s_new_master, self);
     bstar_new_slave (self->bstar, s_new_slave, self);
@@ -171,13 +191,14 @@ s_snapshots (zloop_t *loop, zmq_pollitem_t *poller, void *args)
 }
 //  .until
 
-//  ---------------------------------------------------------------------
-//  Collect updates from clients
-//  If we're master, we apply these to the kvmap
-//  If we're slave, or unsure, we queue them on our pending list
+//  .split collect updates
+//  The collector is more complex than in the clonesrv5 example since how
+//  process updates depends on whether we're master or slave. The master
+//  applies them immediately to its kvmap, whereas the slave queues them
+//  as pending:
 
-//  If message was already on pending list, remove it and
-//  return TRUE, else return FALSE.
+//  If message was already on pending list, remove it and return TRUE,
+//  else return FALSE.
 static int
 s_was_pending (clonesrv_t *self, kvmsg_t *kvmsg)
 {
@@ -255,8 +276,10 @@ s_flush_ttl (zloop_t *loop, zmq_pollitem_t *poller, void *args)
 }
 //  .until
 
-//  ---------------------------------------------------------------------
-//  Send hugz to anyone listening on the publisher socket
+//  .split heartbeating
+//  We send a HUGZ message once a second to all subscribers so that they
+//  can detect if our server dies. They'll then switch over to the backup
+//  server, which will become master:
 
 static int
 s_send_hugz (zloop_t *loop, zmq_pollitem_t *poller, void *args)
@@ -272,13 +295,10 @@ s_send_hugz (zloop_t *loop, zmq_pollitem_t *poller, void *args)
     return 0;
 }
 
-
-//  ---------------------------------------------------------------------
-//  State change handlers
-//  We're becoming master
-//
-//  The backup server applies its pending list to its own hash table,
-//  and then starts to process state snapshot requests.
+//  .split handling state changes
+//  When we switch from slave to master, we apply our pending list so that
+//  our kvmap is up-to-date. When we switch to slave, we wipe our kvmap
+//  and grab a new snapshot from the master:
 
 static int
 s_new_master (zloop_t *loop, zmq_pollitem_t *unused, void *args)
@@ -287,6 +307,8 @@ s_new_master (zloop_t *loop, zmq_pollitem_t *unused, void *args)
 
     self->master = TRUE;
     self->slave = FALSE;
+    
+    //  Stop subscribing to updates
     zmq_pollitem_t poller = { self->subscriber, 0, ZMQ_POLLIN };
     zloop_poller_end (bstar_zloop (self->bstar), &poller);
 
@@ -301,9 +323,6 @@ s_new_master (zloop_t *loop, zmq_pollitem_t *unused, void *args)
     return 0;
 }
 
-//  ---------------------------------------------------------------------
-//  We're becoming slave
-
 static int
 s_new_slave (zloop_t *loop, zmq_pollitem_t *unused, void *args)
 {
@@ -312,15 +331,17 @@ s_new_slave (zloop_t *loop, zmq_pollitem_t *unused, void *args)
     zhash_destroy (&self->kvmap);
     self->master = FALSE;
     self->slave = TRUE;
+    
+    //  Start subscribing to updates
     zmq_pollitem_t poller = { self->subscriber, 0, ZMQ_POLLIN };
     zloop_poller (bstar_zloop (self->bstar), &poller, s_subscriber, self);
 
     return 0;
 }
 
-//  ---------------------------------------------------------------------
-//  Collect updates from peer (master)
-//  We're always slave when we get these updates
+//  .split subscriber handler
+//  When we get an update, we create a new kvmap if necessary, and then
+//  add our update to our kvmap. We're always slave in this case:
 
 static int
 s_subscriber (zloop_t *loop, zmq_pollitem_t *poller, void *args)
