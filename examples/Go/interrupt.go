@@ -1,49 +1,33 @@
-//
-//  Shows how to handle Ctrl-C
-//
 package main
 
 import (
-  	"os/signal"
-	"os"
 	"fmt"
-	/*"time"*/
 	zmq "github.com/alecthomas/gozmq"
+	"os"
+	"os/signal"
 )
 
-func listenForSignals(exit_channel chan bool) {
+func main() {
 	signal_channel := make(chan os.Signal)
 	signal.Notify(signal_channel)
-	for {
-		<- signal_channel
-		fmt.Println("stopping")
-		exit_channel <- true
-	}
-}
 
-func main() {
-	exit := make(chan bool)
-	exit_signal := false
-	go listenForSignals(exit)
+	go func() {
 
-	context, _ := zmq.NewContext()
-	defer context.Close()
+		context, _ := zmq.NewContext()
+		defer context.Close()
 
-	socket, _ := context.NewSocket(zmq.REP)
-	defer socket.Close()
-	socket.Bind("tcp://*:5555")
+		socket, _ := context.NewSocket(zmq.REP)
+		defer socket.Close()
+		socket.Bind("tcp://*:5555")
 
-	for exit_signal == false {
-	  select {
-	  case exit_signal = <- exit:
-		fmt.Println("W: interrupt received, killing server...")
-	  default:
-		msgbytes, err := socket.Recv(zmq.NOBLOCK)
+		msgbytes, err := socket.Recv(0)
 		if err != nil {
-		  fmt.Print(err)
+			fmt.Println(err)
 		}
 		fmt.Printf("%s.\n", string(msgbytes))
-	  }
-	}
+	}()
 
+	<-signal_channel
+	fmt.Println("exiting")
+	os.Exit(0)
 }
