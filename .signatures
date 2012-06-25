@@ -5,9 +5,9 @@ f1d28e268d8b81c35bd863997b077aec883deca9 examples/C/mtrelay.c
 293fdb7ec6feeadcf0d31dedbc3d857f872df4a3 examples/C++/mdbroker.cpp
 2b7d9e0bebc3b4d7435ce6832aa31757db86cf3a examples/Lua/rrbroker.lua
 b0b1027f750aeac97cfc8300b16d06c0393d1742 examples/Haskell/interrupt.hs
+174d1391cc48e181a848dc26e0e81780c8c1be1f examples/Tcl/mdworker.tcl
 15807412876d207a7b744b378ec0d830c05e8c92 examples/Tcl/msgqueue.tcl
 5524e44d2a41b186fe50d74aa5391a5851f0b604 images/fig64.html
-174d1391cc48e181a848dc26e0e81780c8c1be1f examples/Tcl/mdworker.tcl
 f7f812914a27f8e646bf2f3019a35535a3456dd6 images/fig17.html
 f38a17f3d6d7d26a9c62ef5866549841e1d8f90d examples/Scala/wuproxy.scala
 6beac20f4f09f44995533b3da6864b815a13a44f examples/C/interrupt.c
@@ -61,9 +61,9 @@ d363b4fd752513f77cef05b4f7314940f6a90308 examples/Haxe/peering2.hx
 2fd07614cf3d592062bb2da2b2fa525ec96005d3 examples/Lua/version.lua
 dd4e2212dcfe6b84667662c4ab9621198343b8ea images/fig24.html
 9821486c239a427fbbb618d95ee540efd7f41499 examples/Java/lpserver.java
+406040ea970080c628a023ebc3a2cc349eafd12b listings/C/listing_20.c
 501eb2114abc8d3c680b65e47868cd12804e1951 examples/Haxe/syncsub.hx
 846d5c3619c6abdbaec1b61c15412619bd758553 examples/Java/mdcliapi2.java
-406040ea970080c628a023ebc3a2cc349eafd12b listings/C/listing_20.c
 d8481c31426c5d10d2bae3b859f937b8c20b23af examples/Lua/rtmama.lua
 2f1891cc3d9202aa491ddb3240c2abd97d67f2d1 images/fig43.txt
 96dd9cabe6eb042c84d51ed8abff62ea7942dd10 examples/Ruby/durapub2.rb
@@ -141,6 +141,7 @@ dfe97e2297014f74a9941bbe0d28d6021de0eb51 examples/F#/syncpub.fsx
 81ca7b3c974d97c050af18a864a0f160aad94b28 examples/Haxe/rrclient.hx
 754d107f0a6d7e2e963ab253c55464f821deae76 images/fig47.html
 a82cf8ad385ceee6d9a63e6d884e0e78af1e7bea images/fig14.txt
+8b808dd64c5c5a92074f6211b420b4be73872b9b examples/Node.js/durapub.js
 f81257bbf9b68c0dea9564dab8a2e971f91c6449 images/fig58.txt
 6002771776c50e8c60cbb4a1255eaba19345639f examples/C#/msgqueue.cs
 ce11487c92b25457062d16cfa03aaee428dadc96 examples/Tcl/flclient1.tcl
@@ -782,6 +783,7 @@ b431b5dfdb526d0233b143a76b5593a0e9ab3781 examples/C++/hwclient.cpp
 030637f70515212ce10ce3ad52ba57874ee6dfef examples/CL/taskwork.lisp
 f5eaf0093cdb470615c1d1aeea124d13dee3122c examples/Perl/tasksink2.pl
 d6299840c827e157012969ef6b73e63ec89113c5 images/fig59.html
+52f8b39d267285733118cadc66be1b5d13e829e0 examples/Node.js/durapub2.js
 46552d7e7d69638db65dc7abda06610575521cae examples/Erlang/rtpapa.es
 0273a0b9a2b68e6d8a361f9d34de331637b80738 examples/C#/durapub.cs
 a7012404a8e4fc25405fa2462dca7778b27c4481 images/fig17.txt
@@ -891,6 +893,7 @@ e64246285bc0ca83c6b7dac42ea712399eebc173 images/fig56.txt
 014919f68d6ec5a501157ef55a2dc4b2fe1c4110 examples/Tcl/bstarcli.tcl
 82a0daf99427caf4acb30e8217c72e82cce8906d images/fig42.txt
 08e331390a51964ee1232291b99fe34ff3d41aeb examples/C++/mdclient2.cpp
+915ecd26bfe4ae5d4f778bcf0c5547fc262632b5 examples/Node.js/durasub.js
 f800d0fba27d579046470d7f59351d2a545c1ca7 examples/F#/wuserver.fsx
 2d0d39e83a4aedbb0a2636d1f1af339a13ff0b5d examples/Tcl/wuproxy.tcl
 80fa778b782013d5858483c6bbc60cac5ac02e2f examples/Tcl/mdclient2.tcl
