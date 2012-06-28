@@ -321,10 +321,10 @@ sub process_one_language {
         elsif ($inline == $inline_listing) {
             writeln ("[[include $ext:$name]]");
         }
-        if (signature_changed ($filename) || $filename eq "lruqueue3") {
+        if (signature_changed ($filename)) {
             print "Processing $name (in $language)...\n";
             $lexopt = $lexer {$language}? "-l $lexer{$language}": "";
-            system ("egrep -v \"\\.split|\\.skip|\\.until\" $filename > tempfile.$ext");
+            system ("egrep -v \" \\.split| \\.skip| \\.until\" $filename > tempfile.$ext");
             system ("pygmentize -f bb $lexopt tempfile.$ext > tempfile.bb");
             exit (1) if $?;
             system ("bin/bb2wd tempfile.bb >examples/$language/$name.wd");
