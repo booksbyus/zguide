@@ -98,7 +98,7 @@ int main (int argc, char *argv [])
     //  event handlers, and then start the bstar reactor. This finishes
     //  when the user presses Ctrl-C, or the process receives a SIGINT
     //  interrupt:
-    
+
     //  Register state change handlers
     bstar_new_master (self->bstar, s_new_master, self);
     bstar_new_slave (self->bstar, s_new_slave, self);
@@ -139,7 +139,7 @@ typedef struct {
 //  Send one state snapshot key-value pair to a socket
 //  Hash item data is our kvmsg object, ready to send
 static int
-s_send_single (char *key, void *data, void *args)
+s_send_single (const char *key, void *data, void *args)
 {
     kvroute_t *kvroute = (kvroute_t *) args;
     kvmsg_t *kvmsg = (kvmsg_t *) data;
@@ -249,7 +249,7 @@ s_collector (zloop_t *loop, zmq_pollitem_t *poller, void *args)
 //  If key-value pair has expired, delete it and publish the
 //  fact to listening clients.
 static int
-s_flush_single (char *key, void *data, void *args)
+s_flush_single (const char *key, void *data, void *args)
 {
     clonesrv_t *self = (clonesrv_t *) args;
 
@@ -307,7 +307,7 @@ s_new_master (zloop_t *loop, zmq_pollitem_t *unused, void *args)
 
     self->master = TRUE;
     self->slave = FALSE;
-    
+
     //  Stop subscribing to updates
     zmq_pollitem_t poller = { self->subscriber, 0, ZMQ_POLLIN };
     zloop_poller_end (bstar_zloop (self->bstar), &poller);
@@ -331,7 +331,7 @@ s_new_slave (zloop_t *loop, zmq_pollitem_t *unused, void *args)
     zhash_destroy (&self->kvmap);
     self->master = FALSE;
     self->slave = TRUE;
-    
+
     //  Start subscribing to updates
     zmq_pollitem_t poller = { self->subscriber, 0, ZMQ_POLLIN };
     zloop_poller (bstar_zloop (self->bstar), &poller, s_subscriber, self);
