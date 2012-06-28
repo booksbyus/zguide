@@ -143,7 +143,7 @@ server_destroy (server_t **self_p)
 }
 
 int
-server_ping (char *key, void *server, void *socket)
+server_ping (const char *key, void *server, void *socket)
 {
     server_t *self = (server_t *) server;
     if (zclock_time () >= self->ping_at) {
@@ -157,7 +157,7 @@ server_ping (char *key, void *server, void *socket)
 }
 
 int
-server_tickless (char *key, void *server, void *arg)
+server_tickless (const char *key, void *server, void *arg)
 {
     server_t *self = (server_t *) server;
     uint64_t *tickless = (uint64_t *) arg;
