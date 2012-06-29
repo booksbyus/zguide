@@ -22,9 +22,8 @@ int main () {
     //  Now broadcast exactly 10 updates with pause
     int update_nbr;
     for (update_nbr = 0; update_nbr < 10; update_nbr++) {
-       
         std::ostringstream oss;
-        oss << "Update "<< update_nbr ;
+        oss << "Update " << update_nbr;
         s_send (publisher, oss.str());
         sleep (1);
     }

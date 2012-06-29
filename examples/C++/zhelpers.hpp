@@ -34,6 +34,7 @@
 #include <sstream>
 
 #include <sys/time.h>
+#include <unistd.h>
 #include <time.h>
 #include <assert.h>
 #include <pthread.h>
