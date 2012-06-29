@@ -19,11 +19,11 @@ int main () {
 
     //  Prevent publisher overflow from slow subscribers
     uint64_t hwm = 1;
-    publisher.setsockopt( ZMQ_HWM, &hwm, sizeof (hwm));
+    publisher.setsockopt(ZMQ_HWM, &hwm, sizeof (hwm));
 
     //  Specify swap space in bytes, this covers all subscribers
     uint64_t swap = 25000000;
-    publisher.setsockopt( ZMQ_SWAP, &swap, sizeof (swap));
+    publisher.setsockopt(ZMQ_SWAP, &swap, sizeof (swap));
     publisher.bind("tcp://*:5565");
 
     //  Wait for synchronization request
@@ -32,9 +32,8 @@ int main () {
     //  Now broadcast exactly 10 updates with pause
     int update_nbr;
     for (update_nbr = 0; update_nbr < 10; update_nbr++) {
-       
         std::ostringstream oss;
-        oss << "Update "<< update_nbr ;
+        oss << "Update " << update_nbr;
         s_send (publisher, oss.str());
         sleep (1);
     }
