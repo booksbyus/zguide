@@ -122,7 +122,7 @@ int main (void)
             { frontend, 0, ZMQ_POLLIN, 0 }
         };
         //  Poll frontend only if we have available workers
-        int rc = zmq_poll (items, zlist_size (workers)? 2: 1, -1);
+        int rc = zmq_poll (items, available_workers ? 2 : 1, -1);
         if (rc == -1)
             break;              //  Interrupted
 
