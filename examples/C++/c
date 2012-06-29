@@ -177,6 +177,7 @@ if [ "$CCNAME" = "gcc" ]; then
     #
     elif [ "$UTYPE" = "Darwin" ]; then
         #  Use -start-group / -end-group for linking
+        STDLIBS="$STDLIBS -lstdc++"
         LINKTYPE="after"
     #
     #  Solaris-specific subsection
@@ -432,8 +433,11 @@ for i in $*; do
         fi
 
         TRACE="Compiling $FILENAME"
-        COMMAND="$CCPLUS -c $CCOPTS -I$INCDIR -o $FILENAME.$OBJEXT $FILENAME.cpp"
-
+        if [ "$USECPP" = "no" ]; then
+            COMMAND="$CCNAME -c $CCOPTS -I$INCDIR $FILENAME.c"
+        else
+            COMMAND="$CCPLUS -c $CCOPTS -I$INCDIR -o $FILENAME.opp $FILENAME.cpp"
+        fi
         if [ "$QUIET" = "no" ]; then
             if [ "$VERBOSE" = "no" ]; then
                 echo "$TRACE..."
@@ -466,8 +470,11 @@ for i in $*; do
     #   If okay, link if required
     if [ "$LINKUP" = "yes" ]; then
         TRACE="Linking $FILENAME"
-        COMMAND="$CCNAME $FILENAME.$OBJEXT $CCOPTS -o $FILENAME"
-
+        if [ "$USECPP" = "no" ]; then
+            COMMAND="$CCNAME $CCOPTS $FILENAME.o -o $FILENAME"
+        else
+            COMMAND="$CCPLUS $CCOPTS $FILENAME.opp -o $FILENAME"
+        fi
         case "$LINKTYPE" in
             gnu)
                 COMMAND="$COMMAND -Wl,--start-group $LIBLIST -Wl,--end-group -L. -L$LOCALLIBDIR -L$LIBDIR $STDLIBS"
