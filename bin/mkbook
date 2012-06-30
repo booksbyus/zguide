@@ -19,7 +19,7 @@ $cutoff = 60;
 
 @languages = ('C', 'C++', 'PHP', 'Python');
 %extension = ('C' => 'c', 'C++' => 'cpp', 'PHP' => 'php', 'Python' => 'py' );
-%lexer = ('C' => 'c' , 'C++' => 'c++', 'PHP' => 'php', 'Python' => 'python' );
+%lexer = ('C' => 'c' , 'C++' => 'cpp', 'PHP' => 'php', 'Python' => 'python' );
 signatures_load ();
 
 #   Default language for all examples
@@ -36,9 +36,19 @@ print OUTPUT "<!DOCTYPE book PUBLIC \"-//OASIS//DTD DocBook XML V4.5//EN\"\n";
 print OUTPUT "\"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd\">\n";
 print OUTPUT "<book>\n";
 print OUTPUT "<title>ZeroMQ - Connecting your Code</title>\n";
-print OUTPUT "<bookinfo>\n";
-print OUTPUT "  <isbn><!-- ISBN goes here --></isbn>\n";
-print OUTPUT "</bookinfo>\n";
+
+#   Include bookinfo if publisher directory exists
+if (open (BOOKINFO, "oreilly/current/bookinfo.xml")) {
+    while (<BOOKINFO>) {
+        print OUTPUT $_ unless /DOCTYPE/;
+    }
+}
+else {
+    print OUTPUT "<bookinfo>\n";
+    print OUTPUT "  <isbn><!-- ISBN goes here --></isbn>\n";
+    print OUTPUT "</bookinfo>\n";
+}
+
 start_block (1, "dedication");
 
 while (<>) {
