@@ -2,7 +2,7 @@ package require zmq
 
 zmq context context
 zmq socket client context REQ
-client connect "tcp://*:5555"
+client connect "tcp://localhost:5555"
 
 for {set i 0} {$i < 10} {incr i} {
     zmq message msg -data "Hello @ [clock format [clock seconds]]"
