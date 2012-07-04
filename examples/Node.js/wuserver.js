@@ -3,30 +3,28 @@
 // Publishes random weather updates
 
 var zmq = require('zmq')
-var publisher = zmq.socket('pub')
+  , publisher = zmq.socket('pub');
 
-publisher.bindSync("tcp://*:5556")
-publisher.bindSync("ipc://weather.ipc")
+publisher.bindSync("tcp://*:5556");
+publisher.bindSync("ipc://weather.ipc");
 
 function zeropad(num) {
-  while(num.length < 5) {
-    num = "0" + num
+  while (num.length < 5) {
+    num = "0" + num;
   }
-  return num
-}
+  return num;
+};
 
 function rand(upper, extra) {
-  var num = Math.abs(Math.round(Math.random() * upper))
-  return num + (extra || 0)
-}
+  var num = Math.abs(Math.round(Math.random() * upper));
+  return num + (extra || 0);
+};
 
-while(true) {
+while (true) {
   // Get values that will fool the boss
-  var zipcode = rand(100000)
-  var temperature = rand(215, -80)
-  var relhumidity = rand(50, 10)
-
-  var update = zeropad(zipcode.toString()) + ' ' + temperature + ' ' + relhumidity
-  publisher.send(update)
+  var zipcode     = rand(100000)
+    , temperature = rand(215, -80)
+    , relhumidity = rand(50, 10)
+    , update      = zeropad(zipcode.toString()) + ' ' + temperature + ' ' + relhumidity;
+  publisher.send(update);
 }
-
