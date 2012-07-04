@@ -6,11 +6,15 @@
 #   Note: may fail with g++/4.0.x, then
 #   build examples using 'g++ -o filename -lzmq filename.cpp'
 #
+ZMQOPTS='-lzmq'
+if pkg-config libzmq --exists; then
+  ZMQOPTS=$(pkg-config libzmq --cflags --libs)
+fi
 if [ /$1/ = /all/ ]; then
     echo "Building C++ examples..."
     for MAIN in `egrep -l "main \(" *.cpp`; do
         echo "$MAIN"
-        ./c -p -l -lzmq -q $MAIN
+        ./c -p -l $ZMQOPTS -q $MAIN
     done
 elif [ /$1/ = /clean/ ]; then
     echo "Cleaning C++ examples directory..."
@@ -20,7 +24,7 @@ elif [ /$1/ = /clean/ ]; then
     done
 elif [ -f $1.cpp ]; then
     echo "$1"
-    ./c -p -l -lzmq -q $1
+    ./c -p -l $ZMQOPTS -q $1
 else
     echo "syntax: build all | clean"
 fi
