@@ -183,7 +183,7 @@ Don't confuse this with //distributed hash tables//, which solve the wider probl
 
 * Let a client join the network at any time, and reliably get the current server state.
 * Let any client update the key-value cache (inserting new key-value pairs, updating existing ones, or deleting them).
-* Reliably propagates changes to all clients, and does this with minimum latency overhead.
+* Reliably propagate changes to all clients, and do this with minimum latency overhead.
 * Handle very large numbers of clients, e.g. tens of thousands or more.
 
 The key aspect of the Clone pattern is that clients talk back to servers, which is more than we do in a simple pub-sub dialog. This is why I use the terms 'server' and 'client' instead of 'publisher' and 'subscriber'. We'll use pub-sub as the core of Clone but it is a bit more than that.
