@@ -1223,7 +1223,7 @@ Here is the general model of two sockets happily chatting about the weather, and
 +-----------+
 [[/code]]
 
-If a //receiver// (SUB, PULL, REQ) side of a socket sets an identity, then the //sending// (PUB, PUSH, PULL) side will buffer messages when they aren't connected up to the HWM. The sending side does not need to set an identity for this to work.
+If a //receiver// (SUB, PULL, REP) side of a socket sets an identity, then the //sending// (PUB, PUSH, REQ) side will buffer messages when they aren't connected up to the HWM. The sending side does not need to set an identity for this to work.
 
 Note that 0MQ's transmit and receive buffers are invisible and automatic, just like TCP's buffers are.
 
