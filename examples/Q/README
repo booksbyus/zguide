@@ -1,0 +1,12 @@
+Examples in Q. Uses qzmq or https://github.com/jaeheum/qzmq.
+qzmq follows czmq rather than libzmq and examples here are translations from libzmq to czmq/qzmq.
+
+q version.q -q
+q identity.q -q
+
+q hwserver.q -q / in one terminal
+q hwclient.q -q / in another terminal
+q mtserver.q -q / is a multithreaded hwserver.q
+
+See LICENSE in examples directory.
+
