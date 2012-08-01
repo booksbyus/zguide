@@ -21,8 +21,8 @@ use Digest::SHA1 qw(sha1_hex);
 
 @languages = ('Ada', 'Basic', 'C', 'C++', 'C#', 'Clojure', 'CL', 'Erlang', 
               'F#', 'Felix', 'Go', 'Haskell', 'Haxe', 'Java', 'Lua', 'Node.js', 
-              'Objective-C', 'ooc', 'Perl', 'PHP', 'Python', 'Ruby', 'Scala', 
-              'Tcl');
+              'Objective-C', 'ooc', 'Perl', 'PHP', 'Python', 'Q', 'Racket', 
+              'Ruby', 'Scala', 'Tcl');
 
 #   File extensions for each language
 %extension = ('Ada' => 'ada',
@@ -46,6 +46,7 @@ use Digest::SHA1 qw(sha1_hex);
               'Perl' => 'pl',
               'PHP' => 'php',
               'Python' => 'py',
+              'Q' => 'q',
               'Racket' => 'rkt',
               'Ruby' => 'rb',
               'Scala' => 'scala',
