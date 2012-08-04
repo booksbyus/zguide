@@ -112,7 +112,8 @@ mdcli_send (mdcli_t *self, char *service, zmsg_t **request_p)
 
 
 //  .skip
-//  The recv method takes BOOKMARK
+//  The recv method waits for a reply message and returns that to the 
+//  caller.
 //  ---------------------------------------------------------------------
 //  Returns the reply message or NULL if there was no reply. Does not
 //  attempt to recover from a broker failure, this is not possible
