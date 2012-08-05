@@ -20,7 +20,8 @@ main = withContext 1 $ \context -> do
             send client (pack "address 2") [SndMore]
             send client (pack "address 1") [SndMore]
             send client (pack "") [SndMore]
-            
+            send client (pack "This is the workload") []
+
             dumpSock worker
             send worker (pack "This is the reply") []
             
