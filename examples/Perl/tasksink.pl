@@ -1,13 +1,14 @@
 #!/usr/bin/perl
 =pod
 
-Task ventilator
+Task sink
 
-Binds PUSH socket to tcp://localhost:5557
+Binds PULL socket to tcp://localhost:5558
 
-Sends batch of tasks to workers via that socket
+Collects results from workers via that socket
 
 Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
+Amend:  Sonia Hamilton <sonia@snowfrog.net>
 
 =cut
 
