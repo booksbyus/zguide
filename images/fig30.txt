@@ -1,13 +1,21 @@
-     (Next envelope will go here)
-
-          +---------------+
-Frame 1   | Reply address |   <----- Envelope (ROUTER)
-          +---------------+
-Frame 2   | Reply address |   <----- Envelope (ROUTER)
-          +---------------+
-Frame 3   | Reply address |   <----- Envelope (ROUTER)
-          +---+-----------+
-Frame 4   |   |   <------ Empty message part (REQ)
-          +---+-------------------------------------+
-Frame 5   | Data                                    |
-          +-----------------------------------------+
+       +-------------+
+       |             |
+       |   Client    |  Send to "A" or "B"
+       |             |
+       +-------------+
+       |   ROUTER    |
+       \------+------/
+              |
+              |
+      +-------+-------+
+      |               |
+      |               |
+      v               v
+/-----------\   /-----------\
+|  DEALER   |   |  DEALER   |
+|    "A"    |   |    "B"    |
++-----------+   +-----------+
+|           |   |           |
+|  Worker   |   |   Worker  |
+|           |   |           |
++-----------+   +-----------+

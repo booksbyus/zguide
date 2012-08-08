@@ -69,7 +69,7 @@ All examples are licensed under MIT/X11, unless otherwise specified in the sourc
 
 +++ Ask and Ye Shall Receive
 
-So let's start with some code. We start of course with a Hello World example!figref(). We'll make a client and a server. The client sends "Hello" to the server, which replies with "World"!figref(). Here's the server in C, which opens a 0MQ socket on port 5555, reads requests on it, and replies with "World" to each request:
+So let's start with some code. We start of course with a Hello World example. We'll make a client and a server. The client sends "Hello" to the server, which replies with "World"!figref(). Here's the server in C, which opens a 0MQ socket on port 5555, reads requests on it, and replies with "World" to each request:
 
 [[code type="example" title="Hello World server" name="hwserver" language="C"]]
 [[/code]]

@@ -306,7 +306,7 @@ sub requote {
     s/([a-zA-Z0-9!?.\/\)])"/\1&#8221;/g;
     s/'([a-zA-Z0-9])/&#8216;\1/g;
     s/'/&#8217;/g;
-    print "$_\n" if /"/;
+    #print "$_\n" if /"/;
     return $_;
 }
 
@@ -438,7 +438,6 @@ sub expand_symbols {
         }
         #   !abc(text)
         elsif (/\!([a-z_]+)\s*\(([^\)]*)\)/i) {
-        print $_."\n";
             $funct = $1;
             $args = $2;
             $before = $`;
