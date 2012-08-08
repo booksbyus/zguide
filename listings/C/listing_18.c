@@ -1,3 +1,9 @@
-//  Specify swap space in bytes
-uint64_t swap = 25000000;
-zmq_setsockopt (publisher, ZMQ_SWAP, &swap, sizeof (swap));
+while (1) {
+    zstr_send (client, "HELLO");
+    char *reply = zstr_recv (client);
+    if (!reply)
+        break;              //  Interrupted
+    printf ("Client: %s\n", reply);
+    free (reply);
+    sleep (1);
+}

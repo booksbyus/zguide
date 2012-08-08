@@ -530,6 +530,7 @@ sub valueof {
 
 #   INTRINSIC FUNCTIONS
 #
+#   figref()                   - Insert '(<xref linkend="figure-nnn"/>)'
 #   time()                     - Format current time as hh:mm:ss
 #   date()                     - Return current date value
 #   date("picture")            - Format current date using picture
@@ -553,6 +554,11 @@ sub valueof {
 #   lower("string")            - Convert string to lower case
 #   upper("string")            - Convert string to upper case
 #
+
+sub intrinsic_figref {
+    local $nextfig = $figure + 1;
+    return "(<xref linkend=\"figure-$nextfig\"/>)";
+}
 
 sub intrinsic_date {
     local ($picture, $value, $language) = @_;

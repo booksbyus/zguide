@@ -54,7 +54,10 @@ use Digest::SHA1 qw(sha1_hex);
 
 #   Specific Pygmentizer lexer for each language, if needed
 %lexer = ('Erlang' => 'erlang',
-          'F#' => 'ocaml' );
+          'F#' => 'ocaml',
+          'Q' => 'text',
+          'Racket' => 'text',
+          );
 
 $source = $ENV {'Z2W_LANG'} || "C";
 $format = $ENV {'Z2W_FORM'} || "online";
@@ -526,6 +529,7 @@ sub valueof {
 
 #   INTRINSIC FUNCTIONS
 #
+#   figref()                   - Replaced by empty string
 #   time()                     - Format current time as hh:mm:ss
 #   date()                     - Return current date value
 #   date("picture")            - Format current date using picture
@@ -549,6 +553,10 @@ sub valueof {
 #   lower("string")            - Convert string to lower case
 #   upper("string")            - Convert string to upper case
 #
+
+sub intrinsic_figref {
+    return "";
+}
 
 sub intrinsic_date {
     local ($picture, $value, $language) = @_;

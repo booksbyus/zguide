@@ -69,10 +69,11 @@ All examples are licensed under MIT/X11, unless otherwise specified in the sourc
 
 +++ Ask and Ye Shall Receive
 
-So let's start with some code. We start of course with a Hello World example. We'll make a client and a server. The client sends "Hello" to the server, which replies with "World". Here's the server in C, which opens a 0MQ socket on port 5555, reads requests on it, and replies with "World" to each request:
+So let's start with some code. We start of course with a Hello World example!figref(). We'll make a client and a server. The client sends "Hello" to the server, which replies with "World"!figref(). Here's the server in C, which opens a 0MQ socket on port 5555, reads requests on it, and replies with "World" to each request:
 
 [[code type="example" title="Hello World server" name="hwserver" language="C"]]
 [[/code]]
+ (<xref linkend="figure-1"/>)
 
 [[code type="textdiagram" title="Request-Reply"]]
  +------------+
@@ -113,7 +114,7 @@ Here's the client code (click the link below the source to look at, or contribut
 [[code type="example" title="Hello World client" name="hwclient"]]
 [[/code]]
 
-Now this looks too simple to be realistic, but a 0MQ socket is what you get when you take a normal TCP socket, inject it with a mix of radioactive isotopes stolen from a secret Soviet atomic research project, bombard it with 1950-era cosmic rays, and put it into the hands of a drug-addled comic book author with a badly-disguised fetish for bulging muscles clad in spandex. Yes, 0MQ sockets are the world-saving superheroes of the networking world.
+Now this looks too simple to be realistic, but a 0MQ socket is what you get when you take a normal TCP socket, inject it with a mix of radioactive isotopes stolen from a secret Soviet atomic research project, bombard it with 1950-era cosmic rays, and put it into the hands of a drug-addled comic book author with a badly-disguised fetish for bulging muscles clad in spandex!figref(). Yes, 0MQ sockets are the world-saving superheroes of the networking world.
 
 [[code type="textdiagram" title="A terrible accident..."]]
 +------------+        +------------+
@@ -158,7 +159,7 @@ However if you send a string from another language it probably will not include 
 socket.send ("Hello")
 [[/code]]
 
-Then what goes onto the wire is:
+Then what goes onto the wire is a length (one byte for shorter strings) and the string contents, as individual characters!figref().
 
 [[code type="textdiagram" title="A 0MQ string"]]
 +-----+    +-----+-----+-----+-----+-----+
@@ -210,7 +211,7 @@ Here's the server. We'll use port 5556 for this application:
 [[code type="example" title="Weather update server" name="wuserver"]]
 [[/code]]
 
-There's no start, and no end to this stream of updates, it's like a never ending broadcast.
+There's no start, and no end to this stream of updates, it's like a never ending broadcast!figref().
 
 [[code type="textdiagram" title="Publish-Subscribe"]]
                +-------------+
@@ -293,7 +294,7 @@ sys     0m2.290s
 
 +++ Divide and Conquer
 
-As a final example (you are surely getting tired of juicy code and want to delve back into philological discussions about comparative abstractive norms), let's do a little supercomputing. Then coffee. Our supercomputing application is a fairly typical parallel processing model:
+As a final example (you are surely getting tired of juicy code and want to delve back into philological discussions about comparative abstractive norms), let's do a little supercomputing. Then coffee. Our supercomputing application is a fairly typical parallel processing model!figref():
 
 * We have a ventilator that produces tasks that can be done in parallel.
 * We have a set of workers that process tasks.
@@ -375,7 +376,7 @@ Let's look at some aspects of this code in more detail:
 
 * The ventilator's PUSH socket distributes tasks to workers (assuming they are all connected //before// the batch starts going out) evenly. This is called //load-balancing// and it's something we'll look at again in more detail.
 
-* The sink's PULL socket collects results from workers evenly. This is called //fair-queuing//:
+* The sink's PULL socket collects results from workers evenly. This is called //fair-queuing//!figref().
 
 [[code type="textdiagram" title="Fair Queuing"]]
 +---------+   +---------+   +---------+
@@ -683,7 +684,7 @@ Let's think for a second about what is happening here. The weather server has a 
 
 +++ Missing Message Problem Solver
 
-As you start to program with 0MQ you will come across one problem more than once: you lose messages that you expect to receive. Here is a basic problem solver that walks through the most common causes for this. Don't worry if some of the terminology is unfamiliar still, it'll become clearer in the next chapters.
+As you start to program with 0MQ you will come across one problem more than once: you lose messages that you expect to receive. Here is a basic problem solver!figref() that walks through the most common causes for this. Don't worry if some of the terminology is unfamiliar still, it'll become clearer in the next chapters.
 
 [[code type="textdiagram" title="Missing Message Problem Solver"]]
 +-----------------+

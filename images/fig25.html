@@ -1,22 +1,11 @@
 <html>
 <pre class="textdiagram" id="fig25">
-+-----------+
-|           |
-|  Sender   |
-|           |
-+-----------+
-|  Socket   |
-\-----------/
-      ^  "Fine, I'll call you Luv"
-      |
-      |
-      |  "Not telling you my name!"
-/-----+-----\
-|  Socket   |
-+-----------+
-|           |
-| Receiver  |
-|           |
-+-----------+
+          +-------------+
+Frame 1   | Key         |     Subscription key
+          +-------------+
+Frame 2   | Identity    |     Address of publisher
+          +-------------+
+Frame 3   | Data        |     Actual message body
+          +-------------+
 </pre>
 </html>

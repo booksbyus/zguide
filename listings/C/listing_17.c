@@ -1,2 +1,6 @@
-uint64_t hwm = 2;
-zmq_setsockopt (publisher, ZMQ_HWM, &hwm, sizeof (hwm));
+while (1) {
+    zmsg_t *zmsg = zmsg_recv (worker);
+    zframe_print (zmsg_last (zmsg), "Worker: ");
+    zframe_reset (zmsg_last (zmsg), "OK", 2);
+    zmsg_send (&zmsg, worker);
+}
