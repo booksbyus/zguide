@@ -24,7 +24,7 @@ def main():
     subscriber.linger = 0
     subscriber.setsockopt(zmq.SUBSCRIBE, SUBTREE)
     subscriber.connect("tcp://localhost:5557")
-    publisher = ctx.socket(zmq.PUB)
+    publisher = ctx.socket(zmq.PUSH)
     publisher.linger = 0
     publisher.connect("tcp://localhost:5558")
 
