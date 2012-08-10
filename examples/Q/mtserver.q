@@ -11,8 +11,7 @@ worker_routine:{[args; ctx; pipe]
         zclock.sleep 1;
         //  Send reply back to client
         zstr.send[receiver; "World"]];
-    zsocket.destroy[ctx; receiver];
-    :0N}
+    zsocket.destroy[ctx; receiver]}
 
 ctx:zctx.new[]
 
