@@ -69,7 +69,7 @@ def run_fsm(fsm):
         raise BStarException(msg)
     elif msg == CLIENT_REQUEST:
         assert fsm.peer_expiry > 0
-        if int(time.time()) > fsm.peer_expiry:
+        if int(time.time() * 1000) > fsm.peer_expiry:
             fsm.state = STATE_ACTIVE
         else:
             raise BStarException()
@@ -119,7 +119,7 @@ def main():
         socks = dict(poller.poll(time_left))
         if socks.get(frontend) == zmq.POLLIN:
             msg = frontend.recv_multipart()
-            fsm.state = CLIENT_REQUEST
+            fsm.event = CLIENT_REQUEST
             try:
                 run_fsm(fsm)
                 frontend.send_multipart(msg)
@@ -132,12 +132,12 @@ def main():
             del msg
             try:
                 run_fsm(fsm)
-                fsm.peer_expiry = int(time.time() * 1000 + 2) * HEARTBEAT
+                fsm.peer_expiry = int(time.time() * 1000) + (2 * HEARTBEAT)
             except BStarException:
                 break
         if int(time.time() * 1000) >= send_state_at:
             statepub.send("%d" % fsm.state)
-            send_state_at = int(time.time() * 1000 + HEARTBEAT)
+            send_state_at = int(time.time() * 1000) + HEARTBEAT
 
 if __name__ == '__main__':
     main()
