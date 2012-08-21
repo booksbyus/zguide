@@ -679,7 +679,7 @@ As the clients run, we take a look at the active processes using 'top', and we s
  7967 ph        20   0 33072 1740 1372 S    5  0.0   0:00.35 wuclient
 [[/code]]
 
-Let's think for a second about what is happening here. The weather server has a single socket, and yet here we have it sending data to five clients in parallel. We could have thousands of concurrent clients. The server application doesn't see them, doesn't talk to them directly.
+Let's think for a second about what is happening here. The weather server has a single socket, and yet here we have it sending data to five clients in parallel. We could have thousands of concurrent clients. The server application doesn't see them, doesn't talk to them directly. So the 0MQ socket is acting like a little server, silently accepting client requests and shoving data out to them as fast as the network can handle it. And it's a multithreaded server, squeezing more juice out of your CPU.
 
 +++ Missing Message Problem Solver
 
