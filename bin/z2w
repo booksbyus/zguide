@@ -21,8 +21,8 @@ use Digest::SHA1 qw(sha1_hex);
 
 @languages = ('Ada', 'Basic', 'C', 'C++', 'C#', 'Clojure', 'CL', 'Erlang', 
               'F#', 'Felix', 'Go', 'Haskell', 'Haxe', 'Java', 'Lua', 'Node.js', 
-              'Objective-C', 'ooc', 'Perl', 'PHP', 'Python', 'Ruby', 'Scala', 
-              'Tcl');
+              'Objective-C', 'ooc', 'Perl', 'PHP', 'Python', 'Q', 'Racket', 
+              'Ruby', 'Scala', 'Tcl');
 
 #   File extensions for each language
 %extension = ('Ada' => 'ada',
@@ -46,6 +46,7 @@ use Digest::SHA1 qw(sha1_hex);
               'Perl' => 'pl',
               'PHP' => 'php',
               'Python' => 'py',
+              'Q' => 'q',
               'Racket' => 'rkt',
               'Ruby' => 'rb',
               'Scala' => 'scala',
@@ -53,7 +54,10 @@ use Digest::SHA1 qw(sha1_hex);
 
 #   Specific Pygmentizer lexer for each language, if needed
 %lexer = ('Erlang' => 'erlang',
-          'F#' => 'ocaml' );
+          'F#' => 'ocaml',
+          'Q' => 'text',
+          'Racket' => 'text',
+          );
 
 $source = $ENV {'Z2W_LANG'} || "C";
 $format = $ENV {'Z2W_FORM'} || "online";
@@ -244,7 +248,7 @@ while (<>) {
         close (IMAGE);
 
         #   Calculate scaling so image looks decent
-        $scale = 40 / $longest;
+        $scale = 60 / $longest;
         $scale = 1 if $scale > 1;
 
         #   Convert diagram into image of required format
@@ -321,10 +325,10 @@ sub process_one_language {
         elsif ($inline == $inline_listing) {
             writeln ("[[include $ext:$name]]");
         }
-        if (signature_changed ($filename) || $filename eq "lruqueue3") {
+        if (signature_changed ($filename)) {
             print "Processing $name (in $language)...\n";
             $lexopt = $lexer {$language}? "-l $lexer{$language}": "";
-            system ("egrep -v \"\\.split|\\.skip|\\.until\" $filename > tempfile.$ext");
+            system ("egrep -v \" \\.split| \\.skip| \\.until\" $filename > tempfile.$ext");
             system ("pygmentize -f bb $lexopt tempfile.$ext > tempfile.bb");
             exit (1) if $?;
             system ("bin/bb2wd tempfile.bb >examples/$language/$name.wd");
@@ -525,6 +529,7 @@ sub valueof {
 
 #   INTRINSIC FUNCTIONS
 #
+#   figref()                   - Replaced by empty string
 #   time()                     - Format current time as hh:mm:ss
 #   date()                     - Return current date value
 #   date("picture")            - Format current date using picture
@@ -548,6 +553,10 @@ sub valueof {
 #   lower("string")            - Convert string to lower case
 #   upper("string")            - Convert string to upper case
 #
+
+sub intrinsic_figref {
+    return "";
+}
 
 sub intrinsic_date {
     local ($picture, $value, $language) = @_;

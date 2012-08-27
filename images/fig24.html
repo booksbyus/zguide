@@ -1,37 +1,9 @@
 <html>
 <pre class="textdiagram" id="fig24">
-+-----------+
-|           |
-|  Sender   |
-|           |
-+-----------+
-|  Socket   |
-\-----------/
- +---------+
- +---------+
- +---------+    ØMQ Transmit buffer
- +---------+
- +----+----+
-      |
-      |
-      v
- +---------+
- +---------+    Network I/O buffers
- +----+----+
-      |
-      |
-      v
- +---------+
- +---------+
- +---------+    ØMQ Receive buffer
- +---------+
- +---------+
-/-----------\
-|  Socket   |
-+-----------+
-|           |
-| Receiver  |
-|           |
-+-----------+
+          +-------------+
+Frame 1   | Key         |     Subscription key
+          +-------------+
+Frame 2   | Data        |     Actual message body
+          +-------------+
 </pre>
 </html>

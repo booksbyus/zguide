@@ -19,9 +19,7 @@ We'll cover:
 * How to write multithreaded applications with 0MQ.
 * How to use 0MQ to signal between threads.
 * How to use 0MQ to coordinate a network of nodes.
-* How to create durable sockets using socket identities.
 * How to create and use message envelopes for publish-subscribe.
-* How to do make durable subscribers that can recover from crashes.
 * Using the high-water mark (HWM) to protect against memory overflows.
 
 +++ The Zen of Zero
@@ -154,7 +152,7 @@ Let's look at the main differences between TCP sockets and 0MQ sockets when it c
 
 * 0MQ sockets can, depending on the socket type, be connected to (or from, it's the same) many other sockets. Where TCP emulates a one-to-one phone call, 0MQ implements one-to-many (like a radio broadcast), many-to-many (like a post office), many-to-one (like a mail box), and even one-to-one.
 
-* 0MQ sockets can send to many endpoints (creating a fan-out model), or receive from many endpoints (creating a fan-in model).
+* 0MQ sockets can send to many endpoints (creating a fan-out model), or receive from many endpoints (creating a fan-in model)!figref().
 
 [[code type="textdiagram" title="0MQ Sockets are N to N"]]
    +------------+           +------------+
@@ -199,7 +197,7 @@ A common question that newcomers to 0MQ ask (it's one I asked myself) is somethi
 
 The implication is that if we use normal sockets to carry HTTP requests and responses, we should be able to use 0MQ sockets to do the same, only much faster and better.
 
-Sadly the answer is "this is not how it works". 0MQ is not a neutral carrier, it imposes a framing on the transport protocols it uses. This framing is not compatible with existing protocols, which tend to use their own framing. For example, here is an HTTP request, and a 0MQ request, both over TCP/IP:
+Sadly the answer is "this is not how it works". 0MQ is not a neutral carrier, it imposes a framing on the transport protocols it uses. This framing is not compatible with existing protocols, which tend to use their own framing. For example, compare an HTTP request!figref(), and a 0MQ request, both over TCP/IP.
 
 [[code type="textdiagram" title="HTTP On the Wire"]]
 +----------------+----+----+----+----+
@@ -207,7 +205,7 @@ Sadly the answer is "this is not how it works". 0MQ is not a neutral carrier, it
 +----------------+----+----+----+----+
 [[/code]]
 
-Where the HTTP request uses CR-LF as its simplest framing delimiter, and 0MQ uses a length-specified frame:
+Where the HTTP request uses CR-LF as its simplest framing delimiter, and 0MQ uses a length-specified frame!figref().
 
 [[code type="textdiagram" title="0MQ On the Wire"]]
 +---+---+---+---+---+---+
@@ -414,7 +412,7 @@ In the first version of this code I put the assert() call around the function. N
 
 Let's see how to shut down a process cleanly. We'll take the parallel pipeline example from the previous section. If we've started a whole lot of workers in the background, we now want to kill them when the batch is finished. Let's do this by sending a kill message to the workers. The best place to do this is the sink, since it really knows when the batch is done.
 
-How do we connect the sink to the workers? The PUSH/PULL sockets are one-way only. The standard 0MQ answer is: create a new socket flow for each type of problem you need to solve. We'll use a publish-subscribe model to send kill messages to the workers:
+How do we connect the sink to the workers? The PUSH/PULL sockets are one-way only. The standard 0MQ answer is: create a new socket flow for each type of problem you need to solve. We'll use a publish-subscribe model to send kill messages to the workers!figref():
 
 * The sink creates a PUB socket on a new endpoint.
 * Workers bind their input socket to this endpoint.
@@ -587,13 +585,13 @@ while (1) {
     zmq_msg_t message;
     zmq_msg_init (&message);
     zmq_recv (socket, &message, 0);
-    //  Process the message part
+    //  Process the message frame
     zmq_msg_close (&message);
     int64_t more;
     size_t more_size = sizeof (more);
     zmq_getsockopt (socket, ZMQ_RCVMORE, &more, &more_size);
     if (!more)
-        break;      //  Last message part
+        break;      //  Last message frame
 }
 [[/code]]
 
@@ -609,17 +607,17 @@ Some things to know about multipart messages:
 
 * You will receive all parts of a message whether or not you check the RCVMORE option.
 
-* On sending, 0MQ queues message parts in memory until the last is received, then sends them all.
+* On sending, 0MQ queues message frames in memory until the last is received, then sends them all.
 
 * There is no way to cancel a partially sent message, except by closing the socket.
 
 +++ Intermediates and Devices
 
-Any connected set hits a complexity curve as the number of set members increases. A small number of members can all know about each other but as the set gets larger, the cost to each member of knowing all other interesting members grows linearly, and the overall cost of connecting members grows factorially. The solution is to break sets into smaller ones, and use intermediates to connect the sets.
+Any connected set hits a complexity curve as the number of set members increases. A small number of members can all know about each other but as the set gets larger, the cost to each member of knowing all other interesting members grows linearly, and the overall cost of connecting members is factorial. The solution is to break sets into smaller ones, and use intermediates to connect the sets.
 
 This pattern is extremely common in the real world and is why our societies and economies are filled with intermediaries who have no other real function than to reduce the complexity and scaling costs of larger networks. Intermediaries are typically called wholesalers, distributors, managers, etc.
 
-A 0MQ network like any cannot grow beyond a certain size without needing intermediaries. In 0MQ, we call these "devices". When we use 0MQ we usually start building our applications as a set of nodes on a network with the nodes talking to each other, without intermediaries:
+A 0MQ network like any cannot grow beyond a certain size without needing intermediaries. In 0MQ, we call these "devices". When we use 0MQ we usually start building our applications as a set of nodes on a network with the nodes talking to each other, without intermediaries!figref().
 
 [[code type="textdiagram" title="Small-scale 0MQ Application"]]
        +---------+
@@ -643,7 +641,7 @@ A 0MQ network like any cannot grow beyond a certain size without needing interme
 +---------+   +---------+
 [[/code]]
 
-And then we extend the application across a wider network, placing devices in specific places and scaling up the number of nodes:
+And then we extend the application across a wider network, placing devices in specific places and scaling up the number of nodes!figref().
 
 [[code type="textdiagram" title="Larger-scale 0MQ Application"]]
               +---------+
@@ -696,7 +694,7 @@ We're going to write a simple proxy server that sits in between a publisher and 
 [[code type="example" title="Weather update proxy" name="wuproxy"]]
 [[/code]]
 
-We call this a //proxy// because it acts as a subscriber to publishers, and acts as a publisher to subscribers. That means you can slot this device into an existing network without affecting it (of course the new subscribers need to know to speak to the proxy).
+We call this a //proxy// because it acts as a subscriber to publishers, and acts as a publisher to subscribers!figref(). That means you can slot this device into an existing network without affecting it (of course the new subscribers need to know to speak to the proxy).
 
 [[code type="textdiagram" title="Forwarder Proxy Device"]]
                  +-----------+
@@ -749,7 +747,7 @@ Let's explore how to solve a problem of scale by writing a little message queuin
 
 In the Hello World client-server application we have one client that talks to one service. However in real cases we usually need to allow multiple services as well as multiple clients. This lets us scale up the power of the service (many threads or processes or boxes rather than just one). The only constraint is that services must be stateless, all state being in the request or in some shared storage such as a database.
 
-There are two ways to connect multiple clients to multiple servers. The brute-force way is to connect each client socket to multiple service endpoints. One client socket can connect to multiple service sockets, and requests are load-balanced among these services. Let's say you connect a client socket to three service endpoints, A, B, and C. The client makes requests R1, R2, R3, R4. R1 and R4 go to service A, R2 goes to B, and R3 goes to service C.
+There are two ways to connect multiple clients to multiple servers. The brute-force way is to connect each client socket to multiple service endpoints. One client socket can connect to multiple service sockets, and the REQ socket will then load-balance requests among these services. Let's say you connect a client socket to three service endpoints, A, B, and C. The client makes requests R1, R2, R3, R4. R1 and R4 go to service A, R2 goes to B, and R3 goes to service C!figref().
 
 [[code type="textdiagram" title="Load-balancing of Requests"]]
              +-----------+
@@ -791,7 +789,7 @@ Luckily there are two sockets called DEALER and ROUTER that let you do non-block
 
 Now, we're just going to see how DEALER and ROUTER let us extend REQ-REP across a device, that is, our little broker.
 
-In this simple stretched request-reply pattern, REQ talks to ROUTER and DEALER talks to REP. In between the DEALER and ROUTER we have to have code (like our broker) that pulls messages off the one socket and shoves them onto the other:
+In this simple stretched request-reply pattern, REQ talks to ROUTER and DEALER talks to REP. In between the DEALER and ROUTER we have to have code (like our broker) that pulls messages off the one socket and shoves them onto the other!figref().
 
 [[code type="textdiagram" title="Extended Request-reply"]]
 +---------+   +---------+   +---------+
@@ -834,7 +832,7 @@ And here is the broker. You will see that it's multipart safe:
 [[code type="example" title="Request-reply broker" name="rrbroker"]]
 [[/code]]
 
-Using a request-reply broker makes your client-server architectures easier to scale since clients don't see services, and services don't see clients. The only stable node is the device in the middle:
+Using a request-reply broker makes your client-server architectures easier to scale since clients don't see services, and services don't see clients. The only stable node is the device in the middle!figref().
 
 [[code type="textdiagram" title="Request-reply Broker"]]
 +---------+   +---------+   +---------+
@@ -962,7 +960,7 @@ All the code should be recognizable to you by now. How it works:
 
 Note that creating threads is not portable in most programming languages. The POSIX library is {{pthreads}}, but on Windows you have to use a different API. We'll see in Chapter Three how to wrap this in a portable API.
 
-Here the 'work' is just a one-second pause. We could do anything in the workers, including talking to other nodes. This is what the MT server looks like in terms of ØMQ sockets and nodes. Note how the request-reply chain is {{REQ-ROUTER-queue-DEALER-REP}}:
+Here the 'work' is just a one-second pause. We could do anything in the workers, including talking to other nodes. This is what the MT server looks like in terms of ØMQ sockets and nodes. Note how the request-reply chain is {{REQ-ROUTER-queue-DEALER-REP}}!figref().
 
 [[code type="textdiagram" title="Multithreaded Server"]]
                +------------+
@@ -1012,7 +1010,10 @@ Here the 'work' is just a one-second pause. We could do anything in the workers,
 
 When you start making multithreaded applications with 0MQ, you'll hit the question of how to coordinate your threads. Though you might be tempted to insert 'sleep' statements, or use multithreading techniques such as semaphores or mutexes, **the only mechanism that you should use are 0MQ messages**. Remember the story of The Drunkards and the Beer Bottle.
 
-Here is a simple example showing three threads that signal each other when they are ready.
+Let's make three threads that signal each other when they are ready!figref(). In this example we use PAIR sockets over the {{inproc}} transport:
+
+[[code type="example" title="Multithreaded relay" name="mtrelay"]]
+[[/code]]
 
 [[code type="textdiagram" title="The Relay Race"]]
 +------------+
@@ -1050,11 +1051,6 @@ Here is a simple example showing three threads that signal each other when they 
 +------------+
 [[/code]]
 
-In this example we use PAIR sockets over the {{inproc}} transport:
-
-[[code type="example" title="Multithreaded relay" name="mtrelay"]]
-[[/code]]
-
 This is a classic pattern for multithreading with 0MQ:
 
 # Two threads communicate over {{inproc}}, using a shared context.
@@ -1087,7 +1083,7 @@ This is how the application will work:
 
 * When the publisher has all subscribers connected, it starts to publish data.
 
-In this case we'll use a REQ-REP socket flow to synchronize subscribers and publisher. Here is the publisher:
+In this case we'll use a REQ-REP socket flow to synchronize subscribers and publisher!figref(). Here is the publisher:
 
 [[code type="example" title="Synchronized publisher" name="syncpub"]]
 [[/code]]
@@ -1177,127 +1173,7 @@ zmq_send (socket, &message, 0);
 
 There is no way to do zero-copy on receive: 0MQ delivers you a buffer that you can store as long as you wish but it will not write data directly into application buffers.
 
-On writing, 0MQ's multipart messages work nicely together with zero-copy. In traditional messaging you need to marshal different buffers together into one buffer that you can send. That means copying data. With 0MQ, you can send multiple buffers coming from different sources as individual message parts. We send each field as a length-delimited frame. To the application it looks like a series of send and recv calls. But internally the multiple parts get written to the network and read back with single system calls, so it's very efficient.
-
-+++ Transient vs. Durable Sockets
-
-In classic networking, sockets are API objects, and their lifespan is never longer than the code that uses them. But if you look at a socket you see that it collects a bunch of resources - network buffers - and at some stage, a 0MQ user asked, "isn't there some way these could hang around if my program crashes, so I can get them back?"
-
-This turns out to be very useful. It's not foolproof, but it gives 0MQ a kind of "better than a kick in the nuts" reliability, particularly useful for pub-sub cases. We'll look at that shortly.
-
-Here is the general model of two sockets happily chatting about the weather, and who kissed who and where and when precisely, cause I heard something different, at the last staff party, not to mention did you see that new family up the road who do they think they are with that car and what's with the prices at the shops these days don't they know it's a crisis?
-
-[[code type="textdiagram" title="Sender Boring the Pants off Receiver"]]
-+-----------+
-|           |
-|  Sender   |
-|           |
-+-----------+
-|  Socket   |
-\-----------/
- +---------+
- +---------+
- +---------+    0MQ Transmit buffer
- +---------+
- +----+----+
-      |
-      |
-      v
- +---------+
- +---------+    Network I/O buffers
- +----+----+
-      |
-      |
-      v
- +---------+
- +---------+
- +---------+    0MQ Receive buffer
- +---------+
- +---------+
-/-----------\
-|  Socket   |
-+-----------+
-|           |
-| Receiver  |
-|           |
-+-----------+
-[[/code]]
-
-If a //receiver// (SUB, PULL, REQ) side of a socket sets an identity, then the //sending// (PUB, PUSH, PULL) side will buffer messages when they aren't connected up to the HWM. The sending side does not need to set an identity for this to work.
-
-Note that 0MQ's transmit and receive buffers are invisible and automatic, just like TCP's buffers are.
-
-All the sockets we've used so far were transient. To turn a transient socket into a durable one you give it an explicit //identity//. All 0MQ sockets have identities but by default they are generated 'unique universal identifiers' (UUIDs) that the peer uses to recall who it's talking to.
-
-Behind the scenes, and invisibly to you, when one socket connects to another, the two sockets exchange identities. Normally sockets don't tell their peers their identity, so peers invent random identities for each other:
-
-[[code type="textdiagram" title="Transient Socket"]]
-+-----------+
-|           |
-|  Sender   |
-|           |
-+-----------+
-|  Socket   |
-\-----------/
-      ^  "Fine, I'll call you Luv"
-      |
-      |
-      |  "Not telling you my name!"
-/-----+-----\
-|  Socket   |
-+-----------+
-|           |
-| Receiver  |
-|           |
-+-----------+
-[[/code]]
-
-But a socket can also tell the other its identity, and then the next time the two meet, it'll be "so as I was saying what I heard was quite different but anyhow you know how it goes at the office, they're all tattletales I'd never say anything about anyone that wasn't true or at least based on a sure thing".
-
-[[code type="textdiagram" title="Durable Socket"]]
-+-----------+
-|           |
-|  Sender   |
-|           |
-+-----------+
-|  Socket   |
-\-----------/
-      ^  "Lucy! Nice to see you again..."
-      |
-      |
-      |  "My name's Lucy"
-/-----+-----\
-|  Socket   |
-+-----------+
-|           |
-| Receiver  |
-|           |
-+-----------+
-[[/code]]
-
-Here's how you set the identity of a socket, to create a durable socket:
-
-[[code language="C"]]
-zmq_setsockopt (socket, ZMQ_IDENTITY, "Lucy", 4);
-[[/code]]
-
-Some comments on setting a socket identity:
-
-* If you want to set an identity you must do it //before// connecting or binding the socket.
-
-* It's the receiver that sets an identity: it's kind of like a session cookie in an HTTP web application, except the client/sender is picking the cookie it will use.
-
-* Identities are binary strings: identities starting with a zero byte are reserved for 0MQ use.
-
-* Do not use the same identity for more than one socket. Any socket trying to connect using an identity already taken by another socket will just be disconnected.
-
-* Do not use random identities in applications that create lots of sockets. What this will do is cause lots and lots of durable sockets to pile up, eventually crashing nodes.
-
-* If you need to know the identity of the //peer// you got a message from, only the ROUTER socket does this for you automatically. For any other socket type you must send the address explicitly, as a message part.
-
-* Having said all this, using durable sockets is often a bad idea. It makes senders accumulate entropy, which makes architectures fragile. If we were making 0MQ again we'd probably not implement explicit identities at all.
-
-See zmq_setsockopt[3] for a summary of the ZMQ_IDENTITY socket option. Note that the zmq_getsockopt[3] method gives you the identity of the socket you are working with, //not// any peer it might be connected to.
+On writing, 0MQ's multipart messages work nicely together with zero-copy. In traditional messaging you need to marshal different buffers together into one buffer that you can send. That means copying data. With 0MQ, you can send multiple buffers coming from different sources as individual message frames. We send each field as a length-delimited frame. To the application it looks like a series of send and recv calls. But internally the multiple parts get written to the network and read back with single system calls, so it's very efficient.
 
 +++ Pub-sub Message Envelopes
 
@@ -1354,114 +1230,27 @@ Frame 3   | Data        |     Actual message body
           +-------------+
 [[/code]]
 
-+++ (Semi-)Durable Subscribers and High-Water Marks
++++ High Water Marks
 
-Identities work on all socket types. If you have a PUB and a SUB socket, and the subscriber gives the publisher its identity, the publisher holds onto data until it can deliver it to the subscriber.
+When you can send messages rapidly from process to process, you soon discover that memory is a precious resource, and one that's trivially filled up. A few seconds delay somewhere in a process can turn into a backlog that blows up a server, unless you understand the problem and take precautions.
 
-This is both wonderful and terrible at the same time. It's wonderful because it means updates can wait for you in the publisher's transmit buffer, until you connect and collect them. It's terrible because by default this will rapidly kill a publisher and lock up your system.
+The problem is this: if you have process A sending messages to process B, which suddenly gets very busy (garbage collection, CPU overload, whatever), then what happens to the messages that process A wants to send? Some will sit in B's network buffers. Some will sit on the Ethernet wire itself. Some will sit in A's network buffers. And the rest will accumulate in A's memory. If you don't take some precaution, A can easily run out of memory and crash. It is a consistent, classic problem with message brokers.
 
-**If you use durable subscriber sockets (i.e. if you set the identity on a SUB socket) you //must// also guard against queue explosion by using the //high-water mark// or HWM, on the publisher socket.** The publisher's HWM affects all subscribers, independently.
+What are the answers? One is to pass the problem upstream. A is getting the messages from somewhere else. So tell that process, "stop!" And so on. This is called "flow control". It sounds great, but what if you're sending out a Twitter feed? Do you tell the whole world to stop tweeting while B gets its act together?
 
-If you want to prove this, take the wuclient and wuserver from Chapter One, and add this line to the wuclient before it connects:
+Flow control works in some cases but in others, the transport layer can't tell the application layer "stop" any more than a subway system can tell a large business, "please keep your staff at work another half an hour, I'm too busy".
 
-[[code language="C"]]
-    zmq_setsockopt (subscriber, ZMQ_IDENTITY, "Hello", 5);
-[[/code]]
+The answer for messaging is to set limits on the size of buffers, and then when we reach those limits, take some sensible action. In most cases (not for a subway system, though), the answer is to throw away messages. In a few others, it's to wait.
 
-Build and run the two programs. It all looks normal. But keep an eye on the memory used by the publisher, and you'll see that as the subscriber finishes, the publisher memory grows and grows. If you restart the subscriber, the publisher queues stop growing. As soon as the subscriber goes away, they grow again. It'll rapidly overwhelm your system.
+0MQ uses the concept of "high water mark" or HWM to define the capacity of its internal pipes. Each connection out of a socket or into a socket has its own pipe, and HWM capacity.
 
-We'll first look at how to do this, and then at how to do it properly. Here are a publisher and subscriber that use the 'node coordination' technique from Chapter Two to synchronize. The publisher then sends ten messages, waiting a second between each one. That wait is for you to kill the subscriber using Ctrl-C, wait a few seconds, and restart it.
+In 0MQ/2.x the HWM was set to infinite by default. In 0MQ/3.x it's set to 1,000 by default, which is more sensible. If you're using 0MQ/2.x you should always set a HWM on your sockets, be it 1,000 to match 0MQ/3.x or another figure that takes into account your message sizes.
 
-Here's the publisher:
+The high water mark affects both the transmit and receive buffers of a single socket. Some sockets (PUB, PUSH) only have transmit buffers. Some (SUB, PULL, REQ, REP) only have receive buffers. Some (DEALER, ROUTER, PAIR) have both transmit and receive buffers.
 
-[[code type="example" title="Durable publisher" name="durapub"]]
-[[/code]]
+When your socket reaches its high-water mark, it will either block or drop data depending on the socket type. PUB sockets will drop data if they reach their high-water mark, while other socket types will block.
 
-And here's the subscriber:
-
-[[code type="example" title="Durable subscriber" name="durasub"]]
-[[/code]]
-
-To run this, start the publisher, then the subscriber, each in their own window. Allow the subscriber to collect one or two messages, then Ctrl-C it. Count to three, and restart it. What you will see is something like this:
-
-[[code]]
-$ durasub
-Update 0
-Update 1
-Update 2
-^C
-$ durasub
-Update 3
-Update 4
-Update 5
-Update 6
-Update 7
-^C
-$ durasub
-Update 8
-Update 9
-END
-[[/code]]
-
-Just to see the difference, comment out the line in the subscriber that sets the socket identity, and try again. You will see that it loses messages. Setting an identity turns a transient subscriber into a durable subscriber. You would in practice want to choose identities carefully, either taking them from configuration files, or generating UUIDs and storing them somewhere.
-
-When we set a high-water mark on the PUB socket, the publisher stores that many messages, but no more. Let's test this by setting the publisher HWM to 2 messages, before we start publishing to the socket:
-
-[[code language="C"]]
-uint64_t hwm = 2;
-zmq_setsockopt (publisher, ZMQ_HWM, &hwm, sizeof (hwm));
-[[/code]]
-
-Now running our test, killing and restarting the subscriber after a couple of seconds' pause will show something like this:
-
-[[code]]
-$ durasub
-Update 0
-Update 1
-^C
-$ durasub
-Update 2
-Update 3
-Update 7
-Update 8
-Update 9
-END
-[[/code]]
-
-Look carefully: we have two messages kept for us (2 and 3), then a gap of several messages, and then new updates again. The HWM causes 0MQ to drop messages it can't put onto the queue, something the 0MQ Reference Manual calls an "exceptional condition".
-
-In short, if you use subscriber identities, you must set the high-water mark on publisher sockets, or else you risk servers that run out of memory and crash. However, there is a way out. 0MQ provides something called a "swap", which is a disk file that holds messages we can't store to the queue. It is very simple to enable:
-
-[[code language="C"]]
-//  Specify swap space in bytes
-uint64_t swap = 25000000;
-zmq_setsockopt (publisher, ZMQ_SWAP, &swap, sizeof (swap));
-[[/code]]
-
-We can put this together to make a cynical publisher that is immune to slow, blocked, or absent subscribers while still offering durable subscriptions to those that need it:
-
-[[code type="example" title="Durable but cynical publisher" name="durapub2"]]
-[[/code]]
-
-In practice, setting the HWM to 1 and shoving everything to disk will make a pub-sub system very slow. Here is a more reasonable 'best practice' for publishers that have to deal with unknown subscribers:
-
-* **Always set a HWM on the PUB socket**, based on the expected maximum number of subscribers, the amount of memory you are willing to dedicate to queuing, and the average size of a message. For example if you expect up to 5,000 subscribers, and have 1GB of memory to play with, and messages of ~200 bytes, then a safe HWM would be (1,000,000,000 / 200 / 5,000) = 1,000.
-
-* If you don't want slow or crashing subscribers to lose data, set a SWAP that's large enough to handle the peaks, based on the number of subscribers, peak message rate, average size of messages, and time you want to cover. For example with 5,000 subscribers and messages of ~200 bytes coming in at 100,000 per second, you will need up to 100MB of disk space per second. To cover an outage of up to 1 minute, therefore, you'd need 6GB of disk space, and it would have to be fast, but that's a different story.
-
-Some notes on durable subscribers:
-
-* Depending on how the subscriber dies, and the frequency of updates, and the size of network buffers, and the transport protocol you are using, data may be lost. Durable subscribers will have //much better// reliability than transient ones, but they will not be perfect.
-
-* The SWAP file is not recoverable, so if a publisher dies and restarts, it will lose data that was in its transmit buffers, and that was in the network I/O buffers.
-
-Some notes on using the HWM option:
-
-* This affects both the transmit and receive buffers of a single socket. Some sockets (PUB, PUSH) only have transmit buffers. Some (SUB, PULL, REQ, REP) only have receive buffers. Some (DEALER, ROUTER, PAIR) have both transmit and receive buffers.
-
-* When your socket reaches its high-water mark, it will either block or drop data depending on the socket type. PUB sockets will drop data if they reach their high-water mark, while other socket types will block.
-
-* Over the {{inproc}} transport, the sender and receiver share the same buffers, so the real HWM is the sum of the HWM set by both sides. This means in effect that if one side does not set a HWM, there is no limit to the buffer size.
+Over the {{inproc}} transport, the sender and receiver share the same buffers, so the real HWM is the sum of the HWM set by both sides. This means in effect that if one side does not set a HWM, there is no limit to the buffer size.
 
 +++ A Bare Necessity
 

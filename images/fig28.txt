@@ -1,7 +1,17 @@
-          +-------------+
-Frame 1   | Key         |     Subscription key
-          +-------------+
-Frame 2   | Identity    |     Address of publisher
-          +-------------+
-Frame 3   | Data        |     Actual message body
-          +-------------+
+|   Client  |
+|           |
++-----------+
+|           |
++-----------+       +---------+
+|    REQ    |       |  Data   |     Client sends this
+\-----+-----/       +---------+
+      |
+      |  "My identity is empty"
+      v
+/-----------\       +---------+
+|  ROUTER   |       |  UUID   |     ROUTER invents UUID to
++-----------+       +-+-------+     use as reply address
+|           |       | |
+|  Service  |       +-+-------+
+|           |       |  Data   |
++-----------+       +---------+

@@ -7,7 +7,7 @@ import zmq
 
 context = zmq.Context()
 socket = context.socket(zmq.REP)
-socket.bind("tcp://localhost:5560")
+socket.connect("tcp://localhost:5560")
 
 while True:
     message = socket.recv()

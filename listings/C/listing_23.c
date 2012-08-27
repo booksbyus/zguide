@@ -1,3 +1,3 @@
-int rc = zmq_poll (items, zlist_size (workers)? 2: 1, -1);
-if (rc == -1)
-    break;              //  Interrupted
+mdwrk_t *mdwrk_new     (char *broker,char *service);
+void     mdwrk_destroy (mdwrk_t **self_p);
+zmsg_t  *mdwrk_recv    (mdwrk_t *self, zmsg_t *reply);

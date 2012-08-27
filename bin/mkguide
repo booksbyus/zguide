@@ -38,46 +38,12 @@ function mkone {
     rm upload.sh
 }
 
-function mkpdf {
-    echo "Generating zguide-$1.pdf..."
-    wkhtmltopdf \
-        --header-left "ØMQ - The Guide" \
-        --header-center "Examples in $1" \
-        --header-right "By Pieter Hintjens, CEO iMatix" \
-        --footer-left "cc-by-sa" \
-        --footer-center "- [page] -" \
-        --footer-right "Printed [date]" \
-        --footer-font-size 10 \
-        --footer-spacing 10 \
-        --header-font-size 10 \
-        --header-spacing 10 \
-        --margin-top 20 \
-        --margin-bottom 20 \
-        --margin-left 20 \
-        --margin-right 20 \
-        http://zguide.zeromq.org/pdf-$2:all zguide-$2.pdf
-
-    wdattach zguide main:_start zguide-$2.pdf
-}
-
 mkone C      online page
 mkone Haxe   online hx
 mkone Lua    online lua
 mkone Python online py
 mkone PHP    online php
 upload main scoreboard "Language scoreboard"
-
-mkone C      pdf pdf-c
-mkone Haxe   pdf pdf-hx
-mkone Lua    pdf pdf-lua
-mkone Python pdf pdf-py
-mkone PHP    pdf pdf-php
-
-mkpdf C      c
-mkpdf Haxe   hx
-mkpdf Lua    lua
-mkpdf PHP    php
-mkpdf Python py
 
 rm *.wd wdtemp.txt upload.sh
 

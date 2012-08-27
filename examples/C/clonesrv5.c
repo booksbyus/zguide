@@ -71,7 +71,7 @@ typedef struct {
 
 //  We call this function for each key-value pair in our hash table
 static int
-s_send_single (char *key, void *data, void *args)
+s_send_single (const char *key, void *data, void *args)
 {
     kvroute_t *kvroute = (kvroute_t *) args;
     kvmsg_t *kvmsg = (kvmsg_t *) data;
@@ -157,7 +157,7 @@ s_collector (zloop_t *loop, zmq_pollitem_t *poller, void *args)
 //  If key-value pair has expired, delete it and publish the
 //  fact to listening clients.
 static int
-s_flush_single (char *key, void *data, void *args)
+s_flush_single (const char *key, void *data, void *args)
 {
     clonesrv_t *self = (clonesrv_t *) args;
 

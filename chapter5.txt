@@ -58,7 +58,7 @@ And as we pump data into our subscribers, we notice two things:
 
 The first thing we have to do is break our subscriber into a multithreaded design so that we can do work with messages in one set of threads, while reading messages in another. Typically we don't want to process every message the same way. Rather, the subscriber will filter some messages, perhaps by prefix key. When a message matches some criteria, the subscriber will call a worker to deal with it. In 0MQ terms this means sending the message to a worker thread.
 
-So the subscriber looks something like a queue device. We could use various sockets to connect the subscriber and workers. If we assume one-way traffic, and workers that are all identical, we can use PUSH and PULL, and delegate all the routing work to 0MQ. This is the simplest and fastest approach:
+So the subscriber looks something like a queue device. We could use various sockets to connect the subscriber and workers. If we assume one-way traffic, and workers that are all identical, we can use PUSH and PULL, and delegate all the routing work to 0MQ!figref(). This is the simplest and fastest approach.
 
 [[code type="textdiagram" title="The Simple Black Box Pattern"]]
                     +-----------+
@@ -101,7 +101,7 @@ The subscriber talks to the publisher over TCP or PGM. The subscriber talks to i
 
 Now to break that ceiling. What happens is that the subscriber thread hits 100% of CPU, and since it is one thread, it cannot use more than one core. A single thread will always hit a ceiling, be it at 2M, 6M, or more messages per second. We want to split the work across multiple threads that can run in parallel.
 
-The approach used by many high-performance products, which works here, is //sharding//, meaning we split the work into parallel and independent streams. E.g. half of the topic keys are in one stream, half in another. We could use many streams, but performance won't scale unless we have free cores.
+The approach used by many high-performance products, which works here, is //sharding//, meaning we split the work into parallel and independent streams. E.g. half of the topic keys are in one stream, half in another!figref(). We could use many streams, but performance won't scale unless we have free cores.
 
 So let's see how to shard into two streams:
 
@@ -177,20 +177,20 @@ We've already solved some of these, such as the slow subscriber, which we handle
 
 The difficulty is that we have no idea what our target applications actually want to do with their data. Do they filter it, and process only a subset of messages? Do they log the data somewhere for later reuse? Do they distribute the data further to workers? There are dozens of plausible scenarios, and each will have its own ideas about what reliability means and how much it's worth in terms of effort and performance.
 
-So we'll build an abstraction that we can implement once, and then reuse for many applications. This abstraction is a **shared value-key cache**, which stores a set of blobs indexed by unique keys.
+So we'll build an abstraction that we can implement once, and then reuse for many applications. This abstraction is a **shared key-value cache**, which stores a set of blobs indexed by unique keys.
 
 Don't confuse this with //distributed hash tables//, which solve the wider problem of connecting peers in a distributed network, or with //distributed key-value tables//, which act like non-SQL databases. All we will build is a system that reliably clones some in-memory state from a server to a set of clients. We want to:
 
 * Let a client join the network at any time, and reliably get the current server state.
 * Let any client update the key-value cache (inserting new key-value pairs, updating existing ones, or deleting them).
-* Reliably propagates changes to all clients, and does this with minimum latency overhead.
+* Reliably propagate changes to all clients, and do this with minimum latency overhead.
 * Handle very large numbers of clients, e.g. tens of thousands or more.
 
 The key aspect of the Clone pattern is that clients talk back to servers, which is more than we do in a simple pub-sub dialog. This is why I use the terms 'server' and 'client' instead of 'publisher' and 'subscriber'. We'll use pub-sub as the core of Clone but it is a bit more than that.
 
 ++++ Distributing Key-Value Updates
 
-We'll develop Clone in stages, solving one problem at a time. First, let's look at how to distribute key-value updates from a server to a set of clients. We'll take our weather server from Chapter One and refactor it to send messages as key-value pairs. We'll modify our client to store these in a hash table:
+We'll develop Clone in stages, solving one problem at a time. First, let's look at how to distribute key-value updates from a server to a set of clients. We'll take our weather server from Chapter One and refactor it to send messages as key-value pairs!figref(). We'll modify our client to store these in a hash table.
 
 [[code type="textdiagram" title="Simplest Clone Model"]]
                +-------------+
@@ -248,7 +248,7 @@ Both the server and client maintain hash tables, but this first model only works
 
 ++++ Getting a Snapshot
 
-In order to allow a late (or recovering) client to catch up with a server it has to get a snapshot of the server's state. Just as we've reduced "message" to mean "a sequenced key-value pair", we can reduce "state" to mean "a hash table". To get the server state, a client opens a REQ socket and asks for it explicitly:
+In order to allow a late (or recovering) client to catch up with a server it has to get a snapshot of the server's state. Just as we've reduced "message" to mean "a sequenced key-value pair", we can reduce "state" to mean "a hash table". To get the server state, a client opens a REQ socket and asks for it explicitly!figref().
 
 [[code type="textdiagram" title="State Replication"]]
                +-----------------+
@@ -319,7 +319,7 @@ In our second model, changes to the key-value cache came from the server itself.
 
 * We can use the key-value cache to share knowledge between dynamic peers.
 
-Updates from clients go via a PUSH-PULL socket flow from client to server:
+Updates from clients go via a PUSH-PULL socket flow from client to server!figref().
 
 [[code type="textdiagram" title="Republishing Updates"]]
           +--------------------------+
@@ -459,9 +459,7 @@ It's useful to design the client logic as a finite state machine. The client cyc
 
 * When the client has gotten its snapshot, it waits for and processes updates. Again, if it doesn't hear anything from the server within some timeout, it fails over to the next server.
 
-The client loops forever. It's quite likely during startup or fail-over that some clients may be trying to talk to the primary server while others are trying to talk to the backup server. The Binary Star pattern handles this, hopefully accurately. (One of the joys of making designs like this is we cannot prove they are right, we can only prove them wrong. So it's like a guy falling off a tall building. So far, so good... so far, so good...)
-
-We can draw the client finite state machine, with events in caps:
+The client loops forever. It's quite likely during startup or fail-over that some clients may be trying to talk to the primary server while others are trying to talk to the backup server. The Binary Star state machine handles this!figref(), hopefully accurately. (One of the joys of making designs like this is we cannot prove they are right, we can only prove them wrong. So it's like a guy falling off a tall building. So far, so good... so far, so good...)
 
 [[code type="textdiagram" title="Clone Client Finite State Machine"]]
  +-----------+
@@ -511,7 +509,7 @@ We make some assumptions:
 
 * That multiple clients do not update the same hash keys, at the same time. Client updates will arrive at the two servers in a different order. So, the backup server may apply updates from its pending list in a different order than the primary server would or did. Updates from one client will always arrive in the same order on both servers, so that is safe.
 
-So here is our high-availability server pair, using the Binary Star pattern:
+So the architecture for our high-availability server pair using the Binary Star pattern has two servers and a set of clients that talk to both servers!figref().
 
 [[code type="textdiagram" title="High-availability Clone Server Pair"]]
 +--------------------+                 +--------------------+
