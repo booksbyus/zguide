@@ -163,7 +163,7 @@ if [ "$CCNAME" = "gcc" ]; then
     #  If your build is failing because of missing libraries then
     #  either you are missing development packages, or are on a non-standard/old
     #  system and should add a special case.
-    STDLIBS="-lpthread -lm"
+    STDLIBS="-lpthread -lm -luuid"
 
     #
     #  Linux-specific subsection

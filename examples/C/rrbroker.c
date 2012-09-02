@@ -6,7 +6,7 @@
 int main (void) 
 {
     //  Prepare our context and sockets
-    void *context = zmq_init (1);
+    void *context = zmq_ctx_new ();
     void *frontend = zmq_socket (context, ZMQ_ROUTER);
     void *backend  = zmq_socket (context, ZMQ_DEALER);
     zmq_bind (frontend, "tcp://*:5559");
@@ -27,10 +27,10 @@ int main (void)
             while (1) {
                 //  Process all parts of the message
                 zmq_msg_init (&message);
-                zmq_recv (frontend, &message, 0);
+                zmq_msg_recv (&message, frontend, 0);
                 size_t more_size = sizeof (more);
                 zmq_getsockopt (frontend, ZMQ_RCVMORE, &more, &more_size);
-                zmq_send (backend, &message, more? ZMQ_SNDMORE: 0);
+                zmq_msg_send (&message, backend, more? ZMQ_SNDMORE: 0);
                 zmq_msg_close (&message);
                 if (!more)
                     break;      //  Last message part
@@ -40,10 +40,10 @@ int main (void)
             while (1) {
                 //  Process all parts of the message
                 zmq_msg_init (&message);
-                zmq_recv (backend, &message, 0);
+                zmq_msg_recv (&message, backend, 0);
                 size_t more_size = sizeof (more);
                 zmq_getsockopt (backend, ZMQ_RCVMORE, &more, &more_size);
-                zmq_send (frontend, &message, more? ZMQ_SNDMORE: 0);
+                zmq_msg_send (&message, frontend, more? ZMQ_SNDMORE: 0);
                 zmq_msg_close (&message);
                 if (!more)
                     break;      //  Last message part
@@ -53,6 +53,6 @@ int main (void)
     //  We never get here but clean up anyhow
     zmq_close (frontend);
     zmq_close (backend);
-    zmq_term (context);
+    zmq_ctx_destroy (context);
     return 0;
 }

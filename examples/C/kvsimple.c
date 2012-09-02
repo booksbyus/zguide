@@ -91,7 +91,7 @@ kvmsg_recv (void *socket)
             zmq_msg_close (&self->frame [frame_nbr]);
         zmq_msg_init (&self->frame [frame_nbr]);
         self->present [frame_nbr] = 1;
-        if (zmq_recvmsg (socket, &self->frame [frame_nbr], 0) == -1) {
+        if (zmq_msg_recv (&self->frame [frame_nbr], socket, 0) == -1) {
             kvmsg_destroy (&self);
             break;
         }
@@ -121,7 +121,7 @@ kvmsg_send (kvmsg_t *self, void *socket)
         zmq_msg_init (&copy);
         if (self->present [frame_nbr])
             zmq_msg_copy (&copy, &self->frame [frame_nbr]);
-        zmq_sendmsg (socket, &copy,
+        zmq_msg_send (&copy, socket, 
             (frame_nbr < KVMSG_FRAMES - 1)? ZMQ_SNDMORE: 0);
         zmq_msg_close (&copy);
     }

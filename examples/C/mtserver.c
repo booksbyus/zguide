@@ -25,7 +25,7 @@ worker_routine (void *context) {
 
 int main (void)
 {
-    void *context = zmq_init (1);
+    void *context = zmq_ctx_new ();
 
     //  Socket to talk to clients
     void *clients = zmq_socket (context, ZMQ_ROUTER);
@@ -47,6 +47,6 @@ int main (void)
     //  We never get here but clean up anyhow
     zmq_close (clients);
     zmq_close (workers);
-    zmq_term (context);
+    zmq_ctx_destroy (context);
     return 0;
 }

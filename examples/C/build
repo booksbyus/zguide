@@ -6,15 +6,11 @@
 #   This controls whether we get debug or release builds
 test -z "$BOOM_MODEL" && BOOM_MODEL=debug
 
-ZMQOPTS='-lzmq -lczmq'
-if pkg-config libzmq libczmq --exists; then
-  ZMQOPTS=$(pkg-config libzmq libczmq --cflags --libs)
-fi
 if [ /$1/ = /all/ ]; then
     echo "Building C examples..."
     for MAIN in `egrep -l "main \(" *.c`; do
         echo "$MAIN"
-        ./c -l $ZMQOPTS -luuid -q $MAIN
+        ./c -l -q $MAIN
     done
 elif [ /$1/ = /clean/ ]; then
     echo "Cleaning C examples directory..."
@@ -24,7 +20,7 @@ elif [ /$1/ = /clean/ ]; then
     done
 elif [ -f $1.c ]; then
     echo "$1"
-    ./c -l $ZMQOPTS -luuid -q $1
+    ./c -l -q $1
 else
     echo "syntax: build all | clean"
 fi

@@ -10,7 +10,7 @@
 
 int main (void)
 {
-    void *context = zmq_init (1);
+    void *context = zmq_ctx_new ();
 
     //  Socket to talk to server
     printf ("Connecting to hello world server...\n");
@@ -23,16 +23,16 @@ int main (void)
         zmq_msg_init_size (&request, 5);
         memcpy (zmq_msg_data (&request), "Hello", 5);
         printf ("Sending Hello %d...\n", request_nbr);
-        zmq_send (requester, &request, 0);
+        zmq_msg_send (&request, requester, 0);
         zmq_msg_close (&request);
 
         zmq_msg_t reply;
         zmq_msg_init (&reply);
-        zmq_recv (requester, &reply, 0);
+        zmq_msg_recv (&reply, requester, 0);
         printf ("Received World %d\n", request_nbr);
         zmq_msg_close (&reply);
     }
     zmq_close (requester);
-    zmq_term (context);
+    zmq_ctx_destroy (context);
     return 0;
 }

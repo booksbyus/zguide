@@ -10,7 +10,7 @@
 static void *
 worker_task_a (void *args)
 {
-    void *context = zmq_init (1);
+    void *context = zmq_ctx_new ();
     void *worker = zmq_socket (context, ZMQ_DEALER);
     zmq_setsockopt (worker, ZMQ_IDENTITY, "A", 1);
     zmq_connect (worker, "ipc://routing.ipc");
@@ -28,14 +28,14 @@ worker_task_a (void *args)
         total++;
     }
     zmq_close (worker);
-    zmq_term (context);
+    zmq_ctx_destroy (context);
     return NULL;
 }
 
 static void *
 worker_task_b (void *args)
 {
-    void *context = zmq_init (1);
+    void *context = zmq_ctx_new ();
     void *worker = zmq_socket (context, ZMQ_DEALER);
     zmq_setsockopt (worker, ZMQ_IDENTITY, "B", 1);
     zmq_connect (worker, "ipc://routing.ipc");
@@ -53,7 +53,7 @@ worker_task_b (void *args)
         total++;
     }
     zmq_close (worker);
-    zmq_term (context);
+    zmq_ctx_destroy (context);
     return NULL;
 }
 
@@ -67,7 +67,7 @@ worker_task_b (void *args)
 
 int main (void)
 {
-    void *context = zmq_init (1);
+    void *context = zmq_ctx_new ();
     void *client = zmq_socket (context, ZMQ_ROUTER);
     zmq_bind (client, "ipc://routing.ipc");
 
@@ -99,6 +99,6 @@ int main (void)
     s_send     (client, "END");
 
     zmq_close (client);
-    zmq_term (context);
+    zmq_ctx_destroy (context);
     return 0;
 }

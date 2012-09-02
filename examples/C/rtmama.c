@@ -9,7 +9,7 @@
 static void *
 worker_task (void *args)
 {
-    void *context = zmq_init (1);
+    void *context = zmq_ctx_new ();
     void *worker = zmq_socket (context, ZMQ_REQ);
 
     //  We use a string identity for ease here
@@ -35,7 +35,7 @@ worker_task (void *args)
         s_sleep (randof (1000) + 1);
     }
     zmq_close (worker);
-    zmq_term (context);
+    zmq_ctx_destroy (context);
     return NULL;
 }
 
@@ -46,7 +46,7 @@ worker_task (void *args)
 
 int main (void)
 {
-    void *context = zmq_init (1);
+    void *context = zmq_ctx_new ();
     void *client = zmq_socket (context, ZMQ_ROUTER);
     zmq_bind (client, "ipc://routing.ipc");
     srandom ((unsigned) time (NULL));
@@ -84,6 +84,6 @@ int main (void)
         free (address);
     }
     zmq_close (client);
-    zmq_term (context);
+    zmq_ctx_destroy (context);
     return 0;
 }

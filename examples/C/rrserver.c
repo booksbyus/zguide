@@ -7,7 +7,7 @@
 
 int main (void) 
 {
-    void *context = zmq_init (1);
+    void *context = zmq_ctx_new ();
 
     //  Socket to talk to clients
     void *responder = zmq_socket (context, ZMQ_REP);
@@ -27,6 +27,6 @@ int main (void)
     }
     //  We never get here but clean up anyhow
     zmq_close (responder);
-    zmq_term (context);
+    zmq_ctx_destroy (context);
     return 0;
 }

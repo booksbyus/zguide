@@ -6,7 +6,7 @@
 
 int main (void) 
 {
-    void *context = zmq_init (1);
+    void *context = zmq_ctx_new ();
 
     //  Socket facing clients
     void *frontend = zmq_socket (context, ZMQ_ROUTER);
@@ -22,6 +22,6 @@ int main (void)
     //  We never get here...
     zmq_close (frontend);
     zmq_close (backend);
-    zmq_term (context);
+    zmq_ctx_destroy (context);
     return 0;
 }

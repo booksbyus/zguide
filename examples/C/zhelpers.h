@@ -22,22 +22,12 @@
 #include <unistd.h>
 #include <assert.h>
 #include <signal.h>
+#include <uuid/uuid.h>
 
 //  Version checking, and patch up missing constants to match 2.1
 #if ZMQ_VERSION_MAJOR == 2
-#   if ZMQ_VERSION_MINOR == 0
-#       error "Please upgrade to ZeroMQ/2.1 stable for these examples"
-#   endif
-#elif ZMQ_VERSION_MAJOR == 3
-#   error "Please stick with ZeroMQ/2.1 stable for these examples"
+#   error "Please upgrade to ZeroMQ/3.2 for these examples"
 #endif
-#ifndef ZMQ_ROUTER
-#   define ZMQ_ROUTER ZMQ_ROUTER
-#endif
-#ifndef ZMQ_DEALER
-#   define ZMQ_DEALER ZMQ_DEALER
-#endif
-
 
 //  Provide random number from 0..(num-1)
 #if (defined (__WINDOWS__))
@@ -54,9 +44,9 @@ static char *
 s_recv (void *socket) {
     zmq_msg_t message;
     zmq_msg_init (&message);
-    if (zmq_recv (socket, &message, 0))
-        return (NULL);
-    int size = zmq_msg_size (&message);
+    int size = zmq_msg_recv (&message, socket, 0);
+    if (size == -1)
+        return NULL;
     char *string = malloc (size + 1);
     memcpy (string, zmq_msg_data (&message), size);
     zmq_msg_close (&message);
@@ -71,7 +61,7 @@ s_send (void *socket, char *string) {
     zmq_msg_t message;
     zmq_msg_init_size (&message, strlen (string));
     memcpy (zmq_msg_data (&message), string, strlen (string));
-    rc = zmq_send (socket, &message, 0);
+    rc = zmq_msg_send (&message, socket, 0);
     zmq_msg_close (&message);
     return (rc);
 }
@@ -83,7 +73,7 @@ s_sendmore (void *socket, char *string) {
     zmq_msg_t message;
     zmq_msg_init_size (&message, strlen (string));
     memcpy (zmq_msg_data (&message), string, strlen (string));
-    rc = zmq_send (socket, &message, ZMQ_SNDMORE);
+    rc = zmq_msg_send (&message, socket, ZMQ_SNDMORE);
     zmq_msg_close (&message);
     return (rc);
 }
@@ -98,11 +88,10 @@ s_dump (void *socket)
         //  Process all parts of the message
         zmq_msg_t message;
         zmq_msg_init (&message);
-        zmq_recv (socket, &message, 0);
+        int size = zmq_msg_recv (&message, socket, 0);
 
         //  Dump the message as text or binary
         char *data = zmq_msg_data (&message);
-        int size = zmq_msg_size (&message);
         int is_text = 1;
         int char_nbr;
         for (char_nbr = 0; char_nbr < size; char_nbr++)

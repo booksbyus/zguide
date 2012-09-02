@@ -18,7 +18,7 @@
 static void *
 client_task (void *args)
 {
-    void *context = zmq_init (1);
+    void *context = zmq_ctx_new ();
     void *client = zmq_socket (context, ZMQ_REQ);
     s_set_id (client);          //  Set a printable identity
     zmq_connect (client, "ipc://frontend.ipc");
@@ -29,7 +29,7 @@ client_task (void *args)
     printf ("Client: %s\n", reply);
     free (reply);
     zmq_close (client);
-    zmq_term (context);
+    zmq_ctx_destroy (context);
     return NULL;
 }
 
@@ -44,7 +44,7 @@ client_task (void *args)
 static void *
 worker_task (void *args)
 {
-    void *context = zmq_init (1);
+    void *context = zmq_ctx_new ();
     void *worker = zmq_socket (context, ZMQ_REQ);
     s_set_id (worker);          //  Set a printable identity
     zmq_connect (worker, "ipc://backend.ipc");
@@ -71,7 +71,7 @@ worker_task (void *args)
         free (address);
     }
     zmq_close (worker);
-    zmq_term (context);
+    zmq_ctx_destroy (context);
     return NULL;
 }
 
@@ -85,7 +85,7 @@ worker_task (void *args)
 int main (void)
 {
     //  Prepare our context and sockets
-    void *context = zmq_init (1);
+    void *context = zmq_ctx_new ();
     void *frontend = zmq_socket (context, ZMQ_ROUTER);
     void *backend  = zmq_socket (context, ZMQ_ROUTER);
     zmq_bind (frontend, "ipc://frontend.ipc");
@@ -185,6 +185,6 @@ int main (void)
     }
     zmq_close (frontend);
     zmq_close (backend);
-    zmq_term (context);
+    zmq_ctx_destroy (context);
     return 0;
 }

@@ -5,7 +5,7 @@
 
 int main (void) 
 {
-    void *context = zmq_init (1);
+    void *context = zmq_ctx_new ();
 
     void *worker = zmq_socket (context, ZMQ_ROUTER);
     zmq_setsockopt (worker, ZMQ_IDENTITY, "WORKER", 6);
@@ -31,6 +31,6 @@ int main (void)
 
     zmq_close (worker);
     zmq_close (server);
-    zmq_term (context);
+    zmq_ctx_destroy (context);
     return 0;
 }

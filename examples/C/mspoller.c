@@ -6,7 +6,7 @@
 
 int main (void) 
 {
-    void *context = zmq_init (1);
+    void *context = zmq_ctx_new ();
 
     //  Connect to task ventilator
     void *receiver = zmq_socket (context, ZMQ_PULL);
@@ -28,13 +28,13 @@ int main (void)
         zmq_poll (items, 2, -1);
         if (items [0].revents & ZMQ_POLLIN) {
             zmq_msg_init (&message);
-            zmq_recv (receiver, &message, 0);
+            zmq_msg_recv (&message, receiver, 0);
             //  Process task
             zmq_msg_close (&message);
         }
         if (items [1].revents & ZMQ_POLLIN) {
             zmq_msg_init (&message);
-            zmq_recv (subscriber, &message, 0);
+            zmq_msg_recv (&message, subscriber, 0);
             //  Process weather update
             zmq_msg_close (&message);
         }
@@ -42,6 +42,6 @@ int main (void)
     //  We never get here
     zmq_close (receiver);
     zmq_close (subscriber);
-    zmq_term (context);
+    zmq_ctx_destroy (context);
     return 0;
 }
