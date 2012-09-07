@@ -1,3 +1,9 @@
-int rc = zmq_poll (items, zlist_size (workers)? 2: 1, -1);
-if (rc == -1)
-    break;              //  Interrupted
+while (1) {
+    zstr_send (client, "HELLO");
+    char *reply = zstr_recv (client);
+    if (!reply)
+        break;              //  Interrupted
+    printf ("Client: %s\n", reply);
+    free (reply);
+    sleep (1);
+}

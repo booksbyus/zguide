@@ -1,18 +1,7 @@
-while (1) {
-    //  Read and save all frames until we get an empty frame
-    //  In this example there is only 1 but it could be more
-    char *address = s_recv (worker);
-    char *empty = s_recv (worker);
-    assert (*empty == 0);
-    free (empty);
-
-    //  Get request, send reply
-    char *request = s_recv (worker);
-    printf ("Worker: %s\n", request);
-    free (request);
-
-    s_sendmore (worker, address);
-    s_sendmore (worker, "");
-    s_send     (worker, "OK");
-    free (address);
+void my_free (void *data, void *hint) {
+    free (data);
 }
+//  Send message from buffer, which we allocate and 0MQ will free for us
+zmq_msg_t message;
+zmq_msg_init_data (&message, buffer, 1000, my_free, NULL);
+zmq_msg_send (socket, &message, 0);

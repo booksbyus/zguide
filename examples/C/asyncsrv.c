@@ -70,27 +70,9 @@ void *server_task (void *args)
     for (thread_nbr = 0; thread_nbr < 5; thread_nbr++)
         zthread_fork (ctx, server_worker, NULL);
 
-    //  Connect backend to frontend via a queue device
-    //  We could do this:
-    //      zmq_device (ZMQ_QUEUE, frontend, backend);
-    //  But doing it ourselves means we can debug this more easily
+    //  Connect backend to frontend via a proxy
+    zmq_proxy (frontend, backend, NULL);
 
-    //  Switch messages between frontend and backend
-    while (1) {
-        zmq_pollitem_t items [] = {
-            { frontend, 0, ZMQ_POLLIN, 0 },
-            { backend,  0, ZMQ_POLLIN, 0 }
-        };
-        zmq_poll (items, 2, -1);
-        if (items [0].revents & ZMQ_POLLIN) {
-            zmsg_t *msg = zmsg_recv (frontend);
-            zmsg_send (&msg, backend);
-        }
-        if (items [1].revents & ZMQ_POLLIN) {
-            zmsg_t *msg = zmsg_recv (backend);
-            zmsg_send (&msg, frontend);
-        }
-    }
     zctx_destroy (&ctx);
     return NULL;
 }

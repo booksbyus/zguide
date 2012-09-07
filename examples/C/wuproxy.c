@@ -8,34 +8,16 @@ int main (void)
     void *context = zmq_ctx_new ();
 
     //  This is where the weather server sits
-    void *frontend = zmq_socket (context, ZMQ_SUB);
+    void *frontend = zmq_socket (context, ZMQ_XSUB);
     zmq_connect (frontend, "tcp://192.168.55.210:5556");
 
     //  This is our public endpoint for subscribers
-    void *backend = zmq_socket (context, ZMQ_PUB);
+    void *backend = zmq_socket (context, ZMQ_XPUB);
     zmq_bind (backend, "tcp://10.1.1.0:8100");
 
-    //  Subscribe on everything
-    zmq_setsockopt (frontend, ZMQ_SUBSCRIBE, "", 0);
-
-    //  Shunt messages out to our own subscribers
-    while (1) {
-        while (1) {
-            zmq_msg_t message;
-            int64_t more;
-
-            //  Process all parts of the message
-            zmq_msg_init (&message);
-            zmq_msg_recv (&message, frontend, 0);
-            size_t more_size = sizeof (more);
-            zmq_getsockopt (frontend, ZMQ_RCVMORE, &more, &more_size);
-            zmq_msg_send (&message, backend, more? ZMQ_SNDMORE: 0);
-            zmq_msg_close (&message);
-            if (!more)
-                break;      //  Last message part
-        }
-    }
-    //  We don't actually get here but if we did, we'd shut down neatly
+    //  Run the proxy until the user interrupts us
+    zmq_proxy (frontend, backend, NULL);
+    
     zmq_close (frontend);
     zmq_close (backend);
     zmq_ctx_destroy (context);

@@ -14,7 +14,7 @@ Thanks to Bill Desmarais, Brian Dorsey, Daniel Lin, Eric Desgranges, Gonzalo Die
 
 Thanks to Stathis Sideris for [http://www.ditaa.org Ditaa], which I used for the diagrams.
 
-Please use the [$(GIT)/issues issue tracker] for all comments and errata. This version covers the latest stable release of 0MQ (2.2.x) and was published on !date("ddd d mmmm, yyyy"). If you are using 0MQ/3.1 some of the examples and explanations won't be accurate.
+Please use the [$(GIT)/issues issue tracker] for all comments and errata. This version covers the latest stable release of 0MQ (3.2) and was published on !date("ddd d mmmm, yyyy"). If you are using older versions of 0MQ then some of the examples and explanations won't be accurate.
 
 The Guide is originally [/page:all in C], but also in [/php:all PHP], [/py:all Python], [/lua:all Lua], and [/hx:all Haxe]. We've also translated most of the examples into C++, C#, CL, Erlang, F#, Felix, Haskell, Java, Objective-C, Ruby, Ada, Basic, Clojure, Go, Haxe, Node.js, ooc, Perl, and Scala.
 .reset
@@ -37,11 +37,11 @@ So we live in a world where the wiring is years ahead of our ability to use it. 
 
 Brooks missed free and open source software, which solved that crisis, enabling us to share knowledge efficiently. Today we face another software crisis, but it's one we don't talk about much. Only the largest, richest firms can afford to create connected applications. There is a cloud, but it's proprietary. Our data, our knowledge is disappearing from our personal computers into clouds that we cannot access, cannot compete with. Who owns our social networks? It is like the mainframe-PC revolution in reverse.
 
-We can leave the political philosophy for another book. The point is that while the Internet offers the potential of massively connected code, the reality is that this is out of reach for most of us, and so, large interesting problems (in health, education, economics, transport, and so on) remain unsolved because there is no way to connect the code, and thus no way to connect the brains that could work together to solve these problems.
+We can leave the political philosophy [http://swsi.info for another book]. The point is that while the Internet offers the potential of massively connected code, the reality is that this is out of reach for most of us, and so, large interesting problems (in health, education, economics, transport, and so on) remain unsolved because there is no way to connect the code, and thus no way to connect the brains that could work together to solve these problems.
 
 There have been many attempts to solve the challenge of connected software. There are thousands of IETF specifications, each solving part of the puzzle. For application developers, HTTP is perhaps the one solution to have been simple enough to work, but it arguably makes the problem worse, by encouraging developers and architects to think in terms of big servers and thin, stupid clients.
 
-So today people are still connecting applications using raw UDP and TCP, proprietary protocols, HTTP, WebSockets. It remains painful, slow, hard to scale, and essentially centralized. Distributed P2P architectures are mostly for play, not work. How many applications use Skype or Bittorrent to exchange data?
+So today people are still connecting applications using raw UDP and TCP, proprietary protocols, HTTP, Websockets. It remains painful, slow, hard to scale, and essentially centralized. Distributed P2P architectures are mostly for play, not work. How many applications use Skype or Bittorrent to exchange data?
 
 Which brings us back to the science of programming. To fix the world, we needed to do two things. One, to solve the general problem of "how to connect any code to any code, anywhere". Two, to wrap that up in the simplest possible building blocks that people could understand and use //easily//.
 
@@ -49,11 +49,11 @@ It sounds ridiculously simple. And maybe it is. That's kind of the whole point.
 
 +++ 0MQ in a Hundred Words
 
-0MQ (ZeroMQ, 0\MQ, zmq) looks like an embeddable networking library but acts like a concurrency framework. It gives you sockets that carry whole messages across various transports like in-process, inter-process, TCP, and multicast. You can connect sockets N-to-N with patterns like fanout, pub-sub, task distribution, and request-reply. It's fast enough to be the fabric for clustered products. Its asynchronous I/O model gives you scalable multicore applications, built as asynchronous message-processing tasks. It has a score of language APIs and runs on most operating systems. 0MQ is from [http://www.imatix.com iMatix] and is LGPL open source.
+0MQ (ZeroMQ, 0\MQ, zmq) looks like an embeddable networking library but acts like a concurrency framework. It gives you sockets that carry atomic messages across various transports like in-process, inter-process, TCP, and multicast. You can connect sockets N-to-N with patterns like fanout, pub-sub, task distribution, and request-reply. It's fast enough to be the fabric for clustered products. Its asynchronous I/O model gives you scalable multicore applications, built as asynchronous message-processing tasks. It has a score of language APIs and runs on most operating systems. 0MQ is from [http://www.imatix.com iMatix] and is LGPLv3 open source.
 
 +++ Some Assumptions
 
-We assume you are using the latest stable release of 0MQ. We assume you are using a Linux box or something similar. We assume you can read C code, more or less, that's the default language for the examples. We assume that when we write constants like PUSH or SUBSCRIBE you can imagine they are really called ZMQ_PUSH or ZMQ_SUBSCRIBE if the programming language needs it.
+We assume you are using the latest 3.2 release of 0MQ. We assume you are using a Linux box or something similar. We assume you can read C code, more or less, that's the default language for the examples. We assume that when we write constants like PUSH or SUBSCRIBE you can imagine they are really called ZMQ_PUSH or ZMQ_SUBSCRIBE if the programming language needs it.
 
 +++ Getting the Examples
 
@@ -63,9 +63,7 @@ The Guide examples live in the Guide's [https://github.com/imatix/zguide git rep
 git clone --depth=1 git://github.com/imatix/zguide.git
 [[/code]]
 
-And then browse the examples subdirectory. You'll find examples by language. If there are examples missing in a language you use, you're encouraged to [http://zguide.zeromq.org/main:translate submit a translation]. This is how the Guide became so useful, thanks to the work of many people.
-
-All examples are licensed under MIT/X11, unless otherwise specified in the source code.
+And then browse the examples subdirectory. You'll find examples by language. If there are examples missing in a language you use, you're encouraged to [http://zguide.zeromq.org/main:translate submit a translation]. This is how the Guide became so useful, thanks to the work of many people. All examples are licensed under MIT/X11.
 
 +++ Ask and Ye Shall Receive
 
@@ -96,7 +94,7 @@ So let's start with some code. We start of course with a Hello World example. We
  +------------+
 [[/code]]
 
-The REQ-REP socket pair is lockstep. The client does zmq_send[3] and then zmq_recv[3], in a loop (or once if that's all it needs). Doing any other sequence (e.g. sending two messages in a row) will result in a return code of -1 from the send or recv call. Similarly the service does zmq_recv[3] and then zmq_send[3] in that order, and as often as it needs to.
+The REQ-REP socket pair is lockstep. The client does zmq_msg_send[3] and then zmq_msg_recv[3], in a loop (or once if that's all it needs). Doing any other sequence (e.g. sending two messages in a row) will result in a return code of -1 from the send or recv call. Similarly the service does zmq_msg_recv[3] and then zmq_msg_send[3] in that order, and as often as it needs to.
 
 0MQ uses C as its reference language and this is the main language we'll use for examples. If you're reading this on-line, the link below the example takes you to translations into other programming languages. Let's compare the same server in C++:
 
@@ -180,8 +178,9 @@ static char *
 s_recv (void *socket) {
     zmq_msg_t message;
     zmq_msg_init (&message);
-    zmq_recv (socket, &message, 0);
-    int size = zmq_msg_size (&message);
+    int size = zmq_msg_recv (&message, socket, 0);
+    if (size == -1)
+        return NULL;
     char *string = malloc (size + 1);
     memcpy (string, zmq_msg_data (&message), size);
     zmq_msg_close (&message);
@@ -248,9 +247,9 @@ Here is client application, which listens to the stream of updates and grabs any
 
 Note that when you use a SUB socket you **must** set a subscription using zmq_setsockopt[3] and SUBSCRIBE, as in this code. If you don't set any subscription, you won't get any messages. It's a common mistake for beginners. The subscriber can set many subscriptions, which are added together. That is, if a update matches ANY subscription, the subscriber receives it. The subscriber can also unsubscribe specific subscriptions. Subscriptions are length-specified blobs. See zmq_setsockopt[3] for how this works.
 
-The PUB-SUB socket pair is asynchronous. The client does zmq_recv[3], in a loop (or once if that's all it needs). Trying to send a message to a SUB socket will cause an error. Similarly the service does zmq_send[3] as often as it needs to, but must not do zmq_recv[3] on a PUB socket.
+The PUB-SUB socket pair is asynchronous. The client does zmq_msg_recv[3], in a loop (or once if that's all it needs). Trying to send a message to a SUB socket will cause an error. Similarly the service does zmq_msg_send[3] as often as it needs to, but must not do zmq_msg_recv[3] on a PUB socket.
 
-In theory with 0MQ sockets, it does not matter which end connects, and which end binds. However with PUB-SUB sockets, if you bind the SUB socket and connect the PUB socket, the SUB socket may receive old messages, i.e. messages sent before the SUB started up. This is an artifact of the way bind/connect works. It's best to bind the PUB and connect the SUB, if you can.
+In theory with 0MQ sockets, it does not matter which end connects, and which end binds. However in practice there are undocumented differences that I'll come to later. For now, bind the PUB and connect the SUB, unless your network design makes that impossible.
 
 There is one more important thing to know about PUB-SUB sockets: you do not know precisely when a subscriber starts to get messages. Even if you start a subscriber, wait a while, and then start the publisher, **the subscriber will always miss the first messages that the publisher sends**. This is because as the subscriber connects to the publisher (something that takes a small but non-zero time), the publisher may already be sending messages out.
 
@@ -271,7 +270,7 @@ So the client subscribes to its chosen zip code and collects a thousand updates 
 
 Some points about the publish-subscribe pattern:
 
-* A subscriber can in fact connect to more than one publisher, using one 'connect' call each time. Data will then arrive and be interleaved so that no single publisher drowns out the others.
+* A subscriber can connect to more than one publisher, using one 'connect' call each time. Data will then arrive and be interleaved ("fair-queued") so that no single publisher drowns out the others.
 
 * If a publisher has no connected subscribers, then it will simply drop all messages.
 
@@ -279,16 +278,16 @@ Some points about the publish-subscribe pattern:
 
 * In the current versions of 0MQ, filtering happens at the subscriber side, not the publisher side. This means, over TCP, that a publisher will send all messages to all subscribers, which will then drop messages they don't want.
 
-This is how long it takes to receive and filter 10M messages on my box, which is an Intel 4 core Q8300, fast but nothing special:
+This is how long it takes to receive and filter 10M messages on my laptop, which is an 2011-era Intel I7, fast but nothing special:
 
 [[code]]
-ph@ws200901:~/work/git/0MQGuide/examples/c$ time wuclient
+ph@nb201103:~/work/git/zguide/examples/c$ time wuclient
 Collecting updates from weather server...
-Average temperature for zipcode '10001 ' was 18F
+Average temperature for zipcode '10001 ' was 28F
 
-real    0m5.939s
-user    0m1.590s
-sys     0m2.290s
+real    0m4.470s
+user    0m0.000s
+sys     0m0.008s
 [[/code]]
 
 +++ Divide and Conquer
@@ -443,27 +442,27 @@ void* pub_worker(void* arg){
     //  NOTE: do NOT reuse this example code, It's broken.
     //  e.g. topic_msg will be invalid the second time through
     while (1){
-    zmq_send(pubskt, &topic_msg, ZMQ_SNDMORE);
+    zmq_msg_send(pubskt, &topic_msg, ZMQ_SNDMORE);
 
     zmq_msg_init(&cmd_msg);
-    zmq_recv(qskt, &cmd_msg, 0);
+    zmq_msg_recv(qskt, &cmd_msg, 0);
     memcpy(&cmd, zmq_msg_data(&cmd_msg), sizeof(uint8_t));
-    zmq_send(pubskt, &cmd_msg, ZMQ_SNDMORE);
+    zmq_msg_send(pubskt, &cmd_msg, ZMQ_SNDMORE);
     zmq_msg_close(&cmd_msg);
 
     fprintf(stdout, "received cmd %u\n", cmd);
 
     zmq_msg_init(&nb_msg);
-    zmq_recv(qskt, &nb_msg, 0);
+    zmq_msg_recv(qskt, &nb_msg, 0);
     memcpy(&nb, zmq_msg_data(&nb_msg), sizeof(uint32_t));
-    zmq_send(pubskt, &nb_msg, 0);
+    zmq_msg_send(pubskt, &nb_msg, 0);
     zmq_msg_close(&nb_msg);
 
     fprintf(stdout, "received nb %u\n", nb);
 
     zmq_msg_init_size(&resp_msg, sizeof(uint8_t));
     memset(zmq_msg_data(&resp_msg), 0, sizeof(uint8_t));
-    zmq_send(qskt, &resp_msg, 0);
+    zmq_msg_send(qskt, &resp_msg, 0);
     zmq_msg_close(&resp_msg);
 
     }
@@ -504,21 +503,21 @@ worker_thread (void *arg) {
 }
 [[/code]]
 
-In the end, the problem was that the application was passing sockets between threads, which crashed weirdly. It became legal behavior in 0MQ/2.1, but remains dangerous unless you use a "full memory barrier", and it's something we advise against doing.
+In the end, the problem was that the application was passing sockets between threads, which crashes weirdly. Sockets are not threadsafe. It became legal behavior to migrate sockets from one thread to another in 0MQ/2.1, but this remains dangerous unless you use a "full memory barrier". If you don't know what that means, don't attempt socket migration.
 
 +++ Getting the Context Right
 
-0MQ applications always start by creating a //context//, and then using that for creating sockets. In C, it's the zmq_init[3] call. You should create and use exactly one context in your process. Technically, the context is the container for all sockets in a single process, and acts as the transport for {{inproc}} sockets, which are the fastest way to connect threads in one process. If at runtime a process has two contexts, these are like separate 0MQ instances. If that's explicitly what you want, OK, but otherwise remember:
+0MQ applications always start by creating a //context//, and then using that for creating sockets. In C, it's the zmq_ctx_new[3] call. You should create and use exactly one context in your process. Technically, the context is the container for all sockets in a single process, and acts as the transport for {{inproc}} sockets, which are the fastest way to connect threads in one process. If at runtime a process has two contexts, these are like separate 0MQ instances. If that's explicitly what you want, OK, but otherwise remember:
 
-**Do one zmq_init[3] at the start of your main line code, and one zmq_term[3] at the end.**
+**Do one zmq_ctx_new[3] at the start of your main line code, and one zmq_ctx_destroy[3] at the end.**
 
-If you're using the fork() system call, each process needs its own context. If you do zmq_init[3] in the main process before calling fork(), the child processes get their own contexts. In general you want to do the interesting stuff in the child processes, and just manage these from the parent process.
+If you're using the fork() system call, each process needs its own context. If you do zmq_ctx_new[3] in the main process before calling fork(), the child processes get their own contexts. In general you want to do the interesting stuff in the child processes, and just manage these from the parent process.
 
 +++ Making a Clean Exit
 
 Classy programmers share the same motto as classy hit men: always clean-up when you finish the job. When you use 0MQ in a language like Python, stuff gets automatically freed for you. But when using C you have to carefully free objects when you're finished with them, or you get memory leaks, unstable applications, and generally bad karma.
 
-Memory leaks are one thing, but 0MQ is quite finicky about how you exit an application. The reasons are technical and painful but the upshot is that if you leave any sockets open, the zmq_term[3] function will hang forever. And even if you close all sockets, zmq_term[3] will by default wait forever if there are pending connects or sends. Unless you set the LINGER to zero on those sockets before closing them.
+Memory leaks are one thing, but 0MQ is quite finicky about how you exit an application. The reasons are technical and painful but the upshot is that if you leave any sockets open, the zmq_ctx_destroy[3] function will hang forever. And even if you close all sockets, zmq_ctx_destroy[3] will by default wait forever if there are pending connects or sends. Unless you set the LINGER to zero on those sockets before closing them.
 
 The 0MQ objects we need to worry about are messages, sockets, and contexts. Luckily it's quite simple, at least in simple programs:
 
@@ -526,11 +525,13 @@ The 0MQ objects we need to worry about are messages, sockets, and contexts. Luck
 
 * If you are opening and closing a lot of sockets, that's probably a sign you need to redesign your application.
 
-* When you exit the program, close your sockets and then call zmq_term[3]. This destroys the context.
+* When you exit the program, close your sockets and then call zmq_ctx_destroy[3]. This destroys the context.
 
 If you're doing multithreaded work, it gets rather more complex than this. We'll get to multithreading in the next chapter, but because some of you will, despite warnings, will try to run before you can safely walk, below is the quick and dirty guide to making a clean exit in a //multithreaded// 0MQ application.
 
-First, do not try to use the same socket from multiple threads. No, don't explain why you think this would be excellent fun, just please don't do it. Next, relingerfy and close all sockets, and terminate the context in the main thread. Lastly, this'll cause any blocking receives or polls or sends in attached threads (i.e. which share the same context) to return with an error. Catch that, and then relingerize and close sockets in //that// thread, and exit. Do not terminate the same context twice. The zmq_term in the main thread will block until all sockets it knows about are safely closed.
+First, do not try to use the same socket from multiple threads. No, don't explain why you think this would be excellent fun, just please don't do it. Next, you need to shut down each socket that has ongoing requests. The proper way is to set a low LINGER value (1 second), then close the socket. If your language binding doesn't do this for you automatically when you destroy a context, I'd suggest sending a patch.
+
+Finally, destroy the context. This will cause any blocking receives or polls or sends in attached threads (i.e. which share the same context) to return with an error. Catch that error, and then set linger on, and close sockets in //that// thread, and exit. Do not destroy the same context twice. The zmq_ctx_destroy in the main thread will block until all sockets it knows about are safely closed.
 
 Voila! It's complex and painful enough that any language binding author worth his or her salt will do this automatically and make the socket closing dance unnecessary.
 
@@ -564,7 +565,7 @@ Let's look at the typical problems we face when we start to connect pieces using
 
 * How do we handle network errors? Do we wait and retry, ignore them silently, or abort?
 
-Take a typical open source project like [http://hadoop.apache.org/zookeeper/ Hadoop Zookeeper] and read the C API code in [http://github.com/apache/zookeeper/blob/trunk/src/c/src/zookeeper.c src/c/src/zookeeper.c]. It's 3,200 lines of mystery and in there is an undocumented, client-server network communication protocol. I see it's efficient because it uses poll() instead of select(). But really, Zookeeper should be using a generic messaging layer and an explicitly documented wire level protocol. It is incredibly wasteful for teams to be building this particular wheel over and over.
+Take a typical open source project like [http://hadoop.apache.org/zookeeper/ Hadoop Zookeeper] and read the C API code in [http://github.com/apache/zookeeper/blob/trunk/src/c/src/zookeeper.c src/c/src/zookeeper.c]. As I write this, in 2010, the code is 3,200 lines of mystery and in there is an undocumented, client-server network communication protocol. I see it's efficient because it uses poll() instead of select(). But really, Zookeeper should be using a generic messaging layer and an explicitly documented wire level protocol. It is incredibly wasteful for teams to be building this particular wheel over and over.
 
 [[code type="textdiagram" title="Messaging as it Starts"]]
 +------------+
@@ -628,7 +629,7 @@ And this is 0MQ: an efficient, embeddable library that solves most of the proble
 
 Specifically:
 
-* It handles I/O asynchronously, in background threads. These communicate with application threads using lock-free data structures, so 0MQ applications need no locks, semaphores, or other wait states.
+* It handles I/O asynchronously, in background threads. These communicate with application threads using lock-free data structures, so concurrent 0MQ applications need no locks, semaphores, or other wait states.
 
 * Components can come and go dynamically and 0MQ will automatically reconnect. This means you can start components in any order. You can create "service-oriented architectures" (SOAs) where services can join and leave the network at any time.
 
@@ -642,7 +643,7 @@ Specifically:
 
 * It lets you route messages using a variety of patterns such as request-reply and publish-subscribe. These patterns are how you create the topology, the structure of your network.
 
-* It lets you place pattern-extending "devices" (small brokers) in the network when you need to reduce the complexity of interconnecting many pieces.
+* It lets you create proxies to queue, forward, or capture messages with a single call. Proxies can reduce the interconnection complexity of a network.
 
 * It delivers whole messages exactly as they were sent, using a simple framing on the wire. If you write a 10k message, you will receive a 10k message.
 
@@ -652,7 +653,7 @@ Specifically:
 
 * It reduces your carbon footprint. Doing more with less CPU means your boxes use less power, and you can keep your old boxes in use for longer. Al Gore would love 0MQ.
 
-Actually 0MQ does rather more than this. It has a subversive effect on how you develop network-capable applications. Superficially it's just a socket API on which you do zmq_recv[3] and zmq_send[3]. But message processing rapidly becomes the central loop, and your application soon breaks down into a set of message processing tasks. It is elegant and natural. And it scales: each of these tasks maps to a node, and the nodes talk to each other across arbitrary transports. Two nodes in one process (node is a thread), two nodes on one box (node is a process), two boxes on one network (node is a box). With no application code changes.
+Actually 0MQ does rather more than this. It has a subversive effect on how you develop network-capable applications. Superficially it's a socket-inspired API on which you do zmq_msg_recv[3] and zmq_msg_send[3]. But message processing rapidly becomes the central loop, and your application soon breaks down into a set of message processing tasks. It is elegant and natural. And it scales: each of these tasks maps to a node, and the nodes talk to each other across arbitrary transports. Two nodes in one process (node is a thread), two nodes on one box (node is a process), or two boxes on one network (node is a box) - it's all the same, with no application code changes.
 
 +++ Socket Scalability
 
@@ -740,9 +741,9 @@ As you start to program with 0MQ you will come across one problem more than once
          +--------------------------+
          |
          v                 +-----------------+        +------------------+
-+-----------------+        | Are you calling |        | Call zmq_init    |
-|  Are you using  |        |  zmq_init more  +------->| exactly once in  |
-|   the inproc    +------->|    than once?   | Yes    | every process.   |
++-----------------+        | Are you calling |        | Call zmq_ctx_new |
+|  Are you using  |        |   zmq_ctx_new   +------->| exactly once in  |
+|   the inproc    +------->| more than once? | Yes    | every process.   |
 |   transport?    | Yes    |             {o} |        |                  |
 |             {o} |        +--------+--------+        +------------------+
 +--------+--------+                 | No
@@ -780,11 +781,25 @@ If you're using 0MQ in a context where failures are expensive, then you want to 
 
 In short: if you have not proven an architecture works in realistic conditions, it will most likely break at the worst possible moment.
 
++++ Upgrading from 0MQ/2.2 to 0MQ/3.2
+
+In early 2012, 0MQ/3.2 became stable enough for live use and by the time you're reading this, it's what you really should be using. If you are still using 2.2, here's a quick summary of the changes, and how to migrate your code.
+
+The main change in 3.x is that PUB-SUB works properly, as in, the publisher only sends subscribers stuff they actually want. In 2.x, publishers send everything and the subscribers filter. Simple, but not ideal for performance on a TCP network.
+
+Most of the API is backwards compatible, except a few blockheaded changes that went into 3.0 with no real regard to the cost of breaking existing code. The syntax of zmq_send[3] and zmq_recv[3] changed, and ZMQ_NOBLOCK got rebaptised to ZMQ_DONTWAIT. So although I'd love to say, //"you just recompile your code with the latest libzmq and everything will work"//, that's not how it is. For what it's worth, we banned such API breakage afterwards.
+
+So the minimal change for C/C++ apps that use the low-level libzmq API is to replace all calls to zmq_send with zmq_msg_send, and zmq_recv with zmq_msg_recv. In other languages, your binding author may have done the work already. Note that these two functions now return -1 in case of error, and zero or more according to how many bytes were sent or received.
+
+Other parts of the libzmq API became more consistent. We deprecated zmq_init[3] and zmq_term[3], replacing them with zmq_ctx_new[3] and zmq_ctx_destroy[3]. We added zmq_ctx_set[3] to let you configure a context before starting to work with it.
+
+Finally, we added context monitoring via the zmq_ctx_set_monitor[3] call, which lets you track connections and disconnections, and other events on sockets.
+
 +++ Warning - Unstable Paradigms!
 
-Traditional network programming is built on the general assumption that one socket talks to one connection, one peer. There are multicast protocols but they are exotic. When we assume "one socket = one connection", we scale our architectures in certain ways. We create threads of logic where each thread work with one socket, one peer. We place intelligence and state in these threads.
+Traditional network programming is built on the general assumption that one socket talks to one connection, one peer. There are multicast protocols but these are exotic. When we assume "one socket = one connection", we scale our architectures in certain ways. We create threads of logic where each thread work with one socket, one peer. We place intelligence and state in these threads.
 
-In the 0MQ universe, sockets are clever multithreaded applications that manage a whole set of connections automagically for you. You can't see, work with, open, close, or attach state to these connections. Whether you use blocking send or receive, or poll, all you can talk to is the socket, not the connections it manages for you. The connections are private and invisible, and this is the key to 0MQ's scalability.
+In the 0MQ universe, sockets are doorways to fast little background communications engines that manage a whole set of connections automagically for you. You can't see, work with, open, close, or attach state to these connections. Whether you use blocking send or receive, or poll, all you can talk to is the socket, not the connections it manages for you. The connections are private and invisible, and this is the key to 0MQ's scalability.
 
 Because your code, talking to a socket, can then handle any number of connections across whatever network protocols are around, without change. A messaging pattern sitting in 0MQ can scale more cheaply than a messaging pattern sitting in your application code.
 

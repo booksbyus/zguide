@@ -61,7 +61,7 @@ worker_task (void *args)
 }
 
 //  .split broker task
-//  Here is the broker task. It uses the zmq_device function to switch
+//  Here is the broker task. It uses the zmq_proxy function to switch
 //  messages between frontend and backend:
 
 static void *
@@ -73,7 +73,7 @@ broker_task (void *args)
     zsocket_bind (frontend, "tcp://*:5555");
     void *backend = zsocket_new (ctx, ZMQ_DEALER);
     zsocket_bind (backend, "tcp://*:5556");
-    zmq_device (ZMQ_QUEUE, frontend, backend);
+    zmq_proxy (frontend, backend, NULL);
     zctx_destroy (&ctx);
     return NULL;
 }

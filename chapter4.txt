@@ -3,7 +3,7 @@
 
 In Chapter Three we looked at advanced use of 0MQ's request-reply pattern with worked examples. In this chapter we'll look at the general question of reliability and build a set of reliable messaging patterns on top of 0MQ's core request-reply pattern.
 
-In this chapter we focus heavily on user-space 'patterns', which are reusable models that help you design your 0MQ architecture:
+In this chapter we focus heavily on user-space request-reply 'patterns', reusable models that help you design your own 0MQ architectures:
 
 * The //Lazy Pirate// pattern: reliable request reply from the client side.
 * The //Simple Pirate// pattern: reliable request-reply using a LRU queue.
@@ -15,19 +15,25 @@ In this chapter we focus heavily on user-space 'patterns', which are reusable mo
 
 +++ What is "Reliability"?
 
-To understand what 'reliability' means, we have to look at its opposite, namely //failure//. If we can handle a certain set of failures, we are reliable with respect to those failures. No more, no less. So let's look at the possible causes of failure in a distributed 0MQ application, in roughly descending order of probability:
+Most people who speak of 'reliability' don't really know what they mean. We can only define reliability in terms of failure. That is, if we can handle a certain set of well-defined and understood failures, we are reliable with respect to those failures. No more, no less. So let's look at the possible causes of failure in a distributed 0MQ application, in roughly descending order of probability:
 
 * Application code is the worst offender. It can crash and exit, freeze and stop responding to input, run too slowly for its input, exhaust all memory, etc.
-* System code - like brokers we write using 0MQ - can die. System code should be more reliable than application code but can still crash and burn, and especially run out of memory if it tries to compensate for slow clients.
-* Message queues can overflow, typically in system code that has learned to deal brutally with slow clients. When a queue overflows, it starts to discard messages.
-* Networks can fail temporarily, causing intermittent message loss. Such errors are hidden to 0MQ applications since it automatically reconnects peers after a network-forced disconnection.
+
+* System code - like brokers we write using 0MQ - can die for the same reasons as application code. System code //should// be more reliable than application code but it can still crash and burn, and especially run out of memory if it tries to queue messages for slow clients.
+
+* Message queues can overflow, typically in system code that has learned to deal brutally with slow clients. When a queue overflows, it starts to discard messages. So we get "lost" messages.
+
+* Networks can fail (e.g. wifi gets switched off or goes out of range). 0MQ will automatically reconnect in such cases but in the meantime, messages may get lost.
+
 * Hardware can fail and take with it all the processes running on that box.
+
 * Networks can fail in exotic ways, e.g. some ports on a switch may die and those parts of the network become inaccessible.
+
 * Entire data centers can be struck by lightning, earthquakes, fire, or more mundane power or cooling failures.
 
 To make a software system fully reliable against //all// of these possible failures is an enormously difficult and expensive job and goes beyond the scope of this modest guide.
 
-Since the first five cases cover 99.9% of real world requirements outside large companies (according to a highly scientific study I just ran), that's what we'll look at. If you're a large company with money to spend on the last two cases, contact me immediately, there's a large hole behind my beach house waiting to be converted into a pool.
+Since the first five cases cover 99.9% of real world requirements outside large companies (according to a highly scientific study I just ran, which also told me that 78% of statistics are made up on the spot), that's what we'll look at. If you're a large company with money to spend on the last two cases, contact my company immediately! There's a large hole behind my beach house waiting to be converted into an executive pool.
 
 +++ Designing Reliability
 
@@ -41,15 +47,15 @@ Let's take them one by one:
 
 * Pipeline: if a worker dies (while working), the ventilator doesn't know about it. Pipelines, like pubsub, and the grinding gears of time, only work in one direction. But the downstream collector can detect that one task didn't get done, and send a message back to the ventilator saying, "hey, resend task 324!" If the ventilator or collector dies, then whatever upstream client originally sent the work batch can get tired of waiting and resend the whole lot. It's not elegant but system code should really not die often enough to matter.
 
-In this chapter we'll focus on request-reply, and we'll cover reliable pub-sub and pipeline in the following chapters.
+In this chapter we'll focus on just on request-reply, which is the low-hanging Durian fruit of reliable messaging. We'll cover reliable pub-sub and pipeline in later following chapters.
 
 The basic request-reply pattern (a REQ client socket doing a blocking send/recv to a REP server socket) scores low on handling the most common types of failure. If the server crashes while processing the request, the client just hangs forever. If the network loses the request or the reply, the client hangs forever.
 
-It is a lot better than TCP, thanks to 0MQ's ability to reconnect peers silently, to load-balance messages, and so on. But it's still not good enough for real work. The only use case where you can trust the basic request-reply pattern is between two threads in the same process where there's no network or separate server process to die.
+It is much better than TCP, thanks to 0MQ's ability to reconnect peers silently, to load-balance messages, and so on. But it's still not good enough for real work. The only case where you can really trust the basic request-reply pattern is between two threads in the same process where there's no network or separate server process to die.
 
-However, with a little extra work this humble pattern becomes a good basis for real work across a distributed network, and we get a set of reliable request-reply patterns I like to call the "Pirate" patterns. RRR!
+However, with a little extra work this humble pattern becomes a good basis for real work across a distributed network, and we get a set of reliable request-reply (RRR) patterns I like to call the "Pirate" patterns (you'll get the joke, eventually).
 
-There are, roughly, three ways to connect clients to servers, each needing a specific approach to reliability:
+There are in my experience, roughly three ways to connect clients to servers. Each needs a specific approach to reliability:
 
 * Multiple clients talking directly to a single server. Use case: single well-known server that clients need to talk to. Types of failure we aim to handle: server crashes and restarts, network disconnects.
 
@@ -126,7 +132,7 @@ E: server seems to be offline, abandoning
 
 The client sequences each message, and checks that replies come back exactly in order: that no requests or replies are lost, and no replies come back more than once, or out of order. Run the test a few times until you're convinced this mechanism actually works. You don't need sequence numbers in reality, they just help us trust our design.
 
-The client uses a REQ socket, and does the brute-force close/reopen because REQ sockets impose a strict send/receive cycle. You might be tempted to use a DEALER instead, but it would not be a good decision. First, it would mean emulating the secret sauce that REQ does with envelopes (if you've forgotten what that is, it's a good sign you don't want to have to do it). Second, it would mean potentially getting back replies that you didn't expect.
+The client uses a REQ socket, and does the brute-force close/reopen because REQ sockets impose that strict send/receive cycle. You might be tempted to use a DEALER instead, but it would not be a good decision. First, it would mean emulating the secret sauce that REQ does with envelopes (if you've forgotten what that is, it's a good sign you don't want to have to do it). Second, it would mean potentially getting back replies that you didn't expect.
 
 Handling failures only at the client works when we have a set of clients talking to a single server. It can handle a server crash, but only if recovery means restarting that same server. If there's a permanent error - e.g. a dead power supply on the server hardware - this approach won't work. Since the application code in servers is usually the biggest source of failures in any architecture, depending on a single server is not a great idea.
 
@@ -244,7 +250,7 @@ We're still using the Lazy Pirate client. Here is the Paranoid Pirate queue devi
 [[code type="example" title="Paranoid Pirate queue" name="ppqueue"]]
 [[/code]]
 
-The queue extends the LRU pattern with heartbeating of workers. Heartbeating is simple once it works, but quite difficult to invent. I'll explain more about that in a second.
+The queue extends the LRU pattern with heartbeating of workers. Heartbeating is one of those 'simple' things that can be subtle to get right. I'll explain more about that in a second.
 
 Here is the Paranoid Pirate worker:
 
@@ -254,8 +260,6 @@ Here is the Paranoid Pirate worker:
 Some comments about this example:
 
 * The code includes simulation of failures, as before. This makes it (a) very hard to debug, and (b) dangerous to reuse. When you want to debug this, disable the failure simulation.
-
-* As for the Paranoid Pirate queue, the heartbeating is quite tricky to get right. See below for a discussion about heartbeating.
 
 * The worker uses a reconnect strategy similar to the one we designed for the Lazy Pirate client. With two major differences: (a) it does an exponential back-off, and (b) it never abandons.
 
@@ -282,22 +286,25 @@ Some points to consider when understanding and implementing heartbeating:
 
 * First, get the heartbeating working, and only //then// add in the rest of the message flow. You should be able to prove the heartbeating works by starting peers in any order, stopping and restarting them, simulating freezes, and so on.
 
-* When your main loop is based on zmq_poll[3], use a secondary timer to trigger heartbeats. Do //not// use the poll loop for this, because it will either send too many heartbeats (overloading the network), or too few (causing peers to disconnect). The zhelpers package provides an s_clock() method that returns the current system clock in milliseconds. It's easy to use this to calculate when to send the next heartbeats. Thus, in C:
+* When your main loop is based on zmq_poll[3], use a secondary timer to trigger heartbeats. Do //not// use the poll loop for this, because you'll enter the loop every time you receive any message (fun, when you have two peers sending each other heartbeats) (think about it).
+
+Your language or binding should provide a method that returns the current system clock in milliseconds. It's easy to use this to calculate when to send the next heartbeats. Thus, in C:
 
 [[code language="C"]]
-    //  Send out heartbeats at regular intervals
-    uint64_t heartbeat_at = s_clock () + HEARTBEAT_INTERVAL;
-    while (1) {
-        ...
-        zmq_poll (items, 1, HEARTBEAT_INTERVAL * 1000);
-        ...
-        //  Do this unconditionally, whatever zmq_poll did
-        if (s_clock () > heartbeat_at) {
-            ... Send heartbeats to all peers that expect them
-            //  Set timer for next heartbeat
-            heartbeat_at = s_clock () + HEARTBEAT_INTERVAL;
-        }
+//  Send out heartbeats at regular intervals
+uint64_t heartbeat_at = zclock_time () + HEARTBEAT_INTERVAL;
+
+while (1) {
+    ...
+    int rc = zmq_poll (items, 1, HEARTBEAT_INTERVAL * ZMQ_POLL_MSEC);
+    ...
+    //  Send heartbeat to queue if it's time
+    if (zclock_time () > heartbeat_at) {
+        ... Send heartbeats to all peers that expect them
+        //  Set timer for next heartbeat
+        heartbeat_at = zclock_time () + HEARTBEAT_INTERVAL;
     }
+}
 [[/code]]
 
 * Your main poll loop should use the heartbeat interval as its timeout. Obviously, don't use infinity. Anything less will just waste cycles.
@@ -306,21 +313,22 @@ Some points to consider when understanding and implementing heartbeating:
 
 * In a real application, heartbeating must be configurable and usually negotiated with the peer. Some peers will want aggressive heartbeating, as low as 10 msecs. Other peers will be far away and want heartbeating as high as 30 seconds.
 
-* If you have different heartbeat intervals for different peers, your poll timeout should be the lowest of these.
+* If you have different heartbeat intervals for different peers, your poll timeout should be the lowest (shortest time) of these.
 
 * You might be tempted to open a separate socket dialog for heartbeats. This is superficially nice because you can separate different dialogs, e.g. the synchronous request-reply from the asynchronous heartbeating. However it's a bad idea for several reasons. First, if you're sending data you don't need to send heartbeats. Second, sockets may, due to network vagaries, become jammed. You need to know when your main data socket is silent because it's dead, rather than just not busy, so you need heartbeats on that socket. Lastly, two sockets is more complex than one.
 
-* We're not doing heartbeating from client to queue. We could, but it would add //significant// complexity for no real benefit.
+* We're not doing heartbeating from client to queue. It does make things more complex, but we do that in real applications so that clients can detect when brokers die, and do clever things like switch to alternate brokers.
 
 +++ Contracts and Protocols
 
-If you're paying attention you'll realize that Paranoid Pirate is not compatible with Simple Pirate, because of the heartbeats.
+If you're paying attention you'll realize that Paranoid Pirate is not interoperable with Simple Pirate, because of the heartbeats. But how do we define "interoperable"? To guarantee interoperability we need a kind of contract, an agreement that lets different teams, in different times and places, write code that is guaranteed to work together. We call this a "protocol".
 
-In fact what we have here is a protocol that needs writing down. It's fun to experiment without specifications, but that's not a sensible basis for real applications. What happens if we want to write a worker in another language? Do we have to read code to see how things work? What if we want to change the protocol for some reason? The protocol may be simple but it's not obvious, and if it's successful it'll become more complex.
+It's fun to experiment without specifications, but that's not a sensible basis for real applications. What happens if we want to write a worker in another language? Do we have to read code to see how things work? What if we want to change the protocol for some reason? The protocol may be simple but it's not obvious, and if it's successful it'll become more complex.
 
 Lack of contracts is a sure sign of a disposable application. So, let's write a contract for this protocol. How do we do that?
 
 * There's a wiki, at [http://rfc.zeromq.org rfc.zeromq.org], that we made especially as a home for public 0MQ contracts.
+
 * To create a new specification, register, and follow the instructions. It's straight-forward, though technical writing is not for everyone.
 
 It took me about fifteen minutes to draft the new [http://rfc.zeromq.org/spec:6 Pirate Pattern Protocol]. It's not a big specification but it does capture enough to act as the basis for arguments ("your queue isn't PPP compatible, please fix it!").
@@ -328,6 +336,7 @@ It took me about fifteen minutes to draft the new [http://rfc.zeromq.org/spec:6 
 Turning PPP into a real protocol would take more work:
 
 * There should be a protocol version number in the READY command so that it's possible to create new versions of PPP safely.
+
 * Right now, READY and HEARTBEAT are not entirely distinct from requests and replies. To make them distinct, we would want a message structure that includes a "message type" part.
 
 +++ Service-Oriented Reliable Queuing (Majordomo Pattern)
@@ -376,7 +385,7 @@ To implement Majordomo we need to write a framework for clients and workers. It'
 
 So, while our first contract (MDP itself) defines how the pieces of our distributed architecture talk to each other, our second contract defines how user applications talk to the technical framework we're going to design.
 
-Majordomo has two halves, a client side and a worker side. Since we'll write both client and worker applications, we will need two APIs. Here is a sketch for the client API, using a simple object-oriented approach. We write this in C, using the style of the [http://zfl.zeromq.org/page:read-the-manual ZFL library]:
+Majordomo has two halves, a client side and a worker side. Since we'll write both client and worker applications, we will need two APIs. Here is a sketch for the client API, using a simple object-oriented approach. We write this in C, using the style of the [http://czmq.zeromq.org/ CZMQ binding]:
 
 [[code language="C"]]
 mdcli_t *mdcli_new     (char *broker);
@@ -426,14 +435,12 @@ You might wonder why the worker API is manually closing its socket and opening a
 
 Let's design the Majordomo broker. Its core structure is a set of queues, one per service. We will create these queues as workers appear (we could delete them as workers disappear but forget that for now, it gets complex). Additionally, we keep a queue of workers per service.
 
-To make the C examples easier to write and read, I've taken the hash and list container classes from the [http://zfl.zeromq.org ZFL project], and renamed them as [[https://github.com/imatix/zguide/blob/master/examples/C/zlist.h zlist] and [https://github.com/imatix/zguide/blob/master/examples/C/zhash.h zhash], as we did with zmsg. In any modern language you can of course use built-in containers.
-
 And here is the broker:
 
 [[code type="example" title="Majordomo broker" name="mdbroker"]]
 [[/code]]
 
-This is by far the most complex example we've seen. It's almost 500 lines of code. To write this, and make it fully robust took two days. However this is still a short piece of code for a full service-oriented broker.
+This is by far the most complex example we've seen. It's almost 500 lines of code. To write this, and make it somewhat robust took two days. However this is still a short piece of code for a full service-oriented broker.
 
 Notes on this code:
 
@@ -446,6 +453,8 @@ Notes on this code:
 * A primary-fail-over or live-live broker reliability model is easy, since the broker essentially has no state except service presence. It's up to clients and workers to choose another broker if their first choice isn't up and running.
 
 * The examples use 5-second heartbeats, mainly to reduce the amount of output when you enable tracing. Realistic values would be lower for most LAN applications. However, any retry has to be slow enough to allow for a service to restart, say 10 seconds at least.
+
+* We later improved and extended the protocol and the Majordomo implementation, which now sits in its own Github project. If you want a properly usable Majordomo stack, use the github project.
 
 +++ Asynchronous Majordomo Pattern
 
@@ -522,7 +531,7 @@ user    0m0.730s
 sys     0m0.470s
 [[/code]]
 
-It isn't fully asynchronous since workers get their messages on a strict LRU basis. But it will scale better with more workers. On my fast test box, after eight or so workers it doesn't get any faster. Four cores only stretches so far. But we got a 4x improvement in throughput with just a few minutes' work. The broker is still unoptimized. It spends most of its time copying message frames around, instead of doing zero copy, which it could. But we're getting 25K reliable request/reply calls a second, with pretty low effort.
+It isn't fully asynchronous since workers get their messages on a strict LRU basis. But it will scale better with more workers. On my PC, after eight or so workers it doesn't get any faster. Four cores only stretches so far. But we got a 4x improvement in throughput with just a few minutes' work. The broker is still unoptimized. It spends most of its time copying message frames around, instead of doing zero copy, which it could. But we're getting 25K reliable request/reply calls a second, with pretty low effort.
 
 However the asynchronous Majordomo pattern isn't all roses. It has a fundamental weakness, namely that it cannot survive a broker crash without more work. If you look at the mdcliapi2 code you'll see it does not attempt to reconnect after a failure. A proper reconnect would require:
 
@@ -549,7 +558,7 @@ The broker checks the service name, and handles any service starting with "mmi."
 
 +++ Idempotent Services
 
-Idempotency is not something to take a pill for. What it means is that it's safe to repeat an operation. Checking the clock is idempotent. Lending ones credit card to ones wife is not. While many client-to-server use cases are idempotent, some are not. Examples of idempotent use cases include:
+Idempotency is not something you take a pill for. What it means is that it's safe to repeat an operation. Checking the clock is idempotent. Lending ones credit card to ones children is not. While many client-to-server use cases are idempotent, some are not. Examples of idempotent use cases include:
 
 * Stateless task distribution, i.e. a pipeline where the servers are stateless workers that compute a reply based purely on the state provided by a request. In such a case it's safe (though inefficient) to execute the same request many times.
 * A name service that translates logical addresses into endpoints to bind or connect to. In such a case it's safe to make the same lookup request many times.
@@ -1082,9 +1091,9 @@ So pros and cons of our shotgun approach:
 
 The shotgun approach seems too good to be true. Let's be scientific and work through all the alternatives. We're going to explore the complex/nasty option, even if it's only to finally realize that we preferred brutal. Ah, the story of my life.
 
-We can solve the main problems of the client by switching to a ROUTER socket. That lets us send requests to specific servers, avoid servers we know are dead, and in general be as smart as we want to make it. We can also solve the main problem of the server (single threadedness) by switching to a ROUTER socket.
+We can solve the main problems of the client by switching to a ROUTER socket. That lets us send requests to specific servers, avoid servers we know are dead, and in general be as smart as we want to make it. We can also solve the main problem of the server (single-threadedness) by switching to a ROUTER socket.
 
-But doing ROUTER-to-ROUTER between two anonymous sockets (which haven't set an identity) is not possible. Both sides generate an identity (for the other peer) only when they receive a first message, and thus neither can talk to the other until it has first received a message. The only way out of this conundrum is to cheat, and use hard-coded identities in one direction. The proper way to cheat, in a client server case, is that the client 'knows' the identity of the server. Vice-versa would be insane, on top of complex and nasty. Great attributes for a genocidal dictator, terrible ones for software.
+But doing ROUTER-to-ROUTER between two anonymous sockets (which haven't set an identity) is not possible. Both sides generate an identity (for the other peer) only when they receive a first message, and thus neither can talk to the other until it has first received a message. The only way out of this conundrum is to cheat, and use hard-coded identities in one direction. The proper way to cheat, in a client server case, is that the client 'knows' the identity of the server. Vice-versa would be insane, on top of complex and nasty. Insane, complex, and nasty are great attributes for a genocidal dictator, but terrible ones for software.
 
 Rather than invent yet another concept to manage, we'll use the connection endpoint as identity. This is a unique string both sides can agree on without more prior knowledge than they already have for the shotgun model. It's a sneaky and effective way to connect two ROUTER sockets.
 
@@ -1119,9 +1128,9 @@ And here, almost as complex and large as the Majordomo broker, is the client API
 
 This API implementation is fairly sophisticated and uses a couple of techniques that we've not seen before:
 
-**Asynchronous agent class**
+**Multithreaded API**
 
-The client API consists of two parts, a synchronous 'flcliapi' class that runs in the application thread, and an asynchronous 'agent' class that runs in the background. The flcliapi and agent classes talk to each other over an {{inproc}} socket. All 0MQ aspects (such as creating and terminating a context) are hidden in the API. The agent in effect acts like a mini-broker, talking to servers in the background, so that when we make a request, it can make a best effort to reach a server it believes is available.
+The client API consists of two parts, a synchronous 'flcliapi' class that runs in the application thread, and an asynchronous 'agent' class that runs as a background thread. Remember how 0MQ makes it easy to create multithreaded apps. The flcliapi and agent classes talk to each other with messages over an {{inproc}} socket. All 0MQ aspects (such as creating and destroying a context) are hidden in the API. The agent in effect acts like a mini-broker, talking to servers in the background, so that when we make a request, it can make a best effort to reach a server it believes is available.
 
 **Tickless poll timer**
 

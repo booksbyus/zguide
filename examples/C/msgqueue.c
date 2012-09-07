@@ -10,14 +10,16 @@ int main (void)
 
     //  Socket facing clients
     void *frontend = zmq_socket (context, ZMQ_ROUTER);
-    zmq_bind (frontend, "tcp://*:5559");
+    int rc = zmq_bind (frontend, "tcp://*:5559");
+    assert (rc == 0);
 
     //  Socket facing services
     void *backend = zmq_socket (context, ZMQ_DEALER);
-    zmq_bind (backend, "tcp://*:5560");
+    rc = zmq_bind (backend, "tcp://*:5560");
+    assert (rc == 0);
 
-    //  Start built-in device
-    zmq_device (ZMQ_QUEUE, frontend, backend);
+    //  Start the proxy
+    zmq_proxy (frontend, backend, NULL);
 
     //  We never get here...
     zmq_close (frontend);

@@ -1,13 +1,14 @@
 .output chapter5.wd
 ++ Chapter Five - Advanced Publish-Subscribe
 
-In Chapters Three and Four we looked at advanced use of 0MQ's request-reply pattern. If you managed to digest all that, congratulations. In this chapter we'll focus on publish-subscribe, and extend 0MQ's core pub-sub pattern with higher-level patterns for performance, reliability, state distribution, and security.
+In Chapters Three and Four we looked at advanced use of 0MQ's request-reply pattern. If you managed to digest all that, congratulations. In this chapter we'll focus on publish-subscribe, and extend 0MQ's core pub-sub pattern with higher-level patterns for performance, reliability, state distribution, and monitoring.
 
 We'll cover:
 
 * How to handle too-slow subscribers (the //Suicidal Snail// pattern).
 * How to design high-speed subscribers (the //Black Box// pattern).
 * How to build a shared key-value cache (the //Clone// pattern).
+* How to monitor a publish-subscribe network (the //Espresso// pattern).
 
 +++ Slow Subscriber Detection (Suicidal Snail Pattern)
 
@@ -229,7 +230,7 @@ And here is the client:
 
 Some notes about this code:
 
-* All the hard work is done in a **kvmsg** class. This class works with key-value message objects, which are multipart 0MQ messages structured as three frames: a key (a 0MQ string), a sequence number (64-bit value, in network byte order), and a binary body (holds everything else).
+* All the hard work is done in a **kvmsg** class. This class works with key-value message objects, which are multi-part 0MQ messages structured as three frames: a key (a 0MQ string), a sequence number (64-bit value, in network byte order), and a binary body (holds everything else).
 
 * The server generates messages with a randomized 4-digit key, which lets us simulate a large but not enormous hash table (10K entries).
 
@@ -539,23 +540,23 @@ As a first step to building this, we're going to refactor the client as a reusab
 My usual design approach is to first design an API that feels right, then to implement that. So, we start by taking the clone client, and rewriting it to sit on top of some presumed class API called **clone**. Turning random code into an API means defining a reasonably stable and abstract contract with applications. For example, in Model Five, the client opened three separate sockets to the server, using endpoints that were hard-coded in the source. We could make an API with three methods, like this:
 
 [[code language="C"]]
-    //  Specify endpoints for each socket we need
-    clone_subscribe (clone, "tcp://localhost:5556");
-    clone_snapshot  (clone, "tcp://localhost:5557");
-    clone_updates   (clone, "tcp://localhost:5558");
+//  Specify endpoints for each socket we need
+clone_subscribe (clone, "tcp://localhost:5556");
+clone_snapshot  (clone, "tcp://localhost:5557");
+clone_updates   (clone, "tcp://localhost:5558");
 
-    //  Times two, since we have two servers
-    clone_subscribe (clone, "tcp://localhost:5566");
-    clone_snapshot  (clone, "tcp://localhost:5567");
-    clone_updates   (clone, "tcp://localhost:5568");
+//  Times two, since we have two servers
+clone_subscribe (clone, "tcp://localhost:5566");
+clone_snapshot  (clone, "tcp://localhost:5567");
+clone_updates   (clone, "tcp://localhost:5568");
 [[/code]]
 
 But this is both verbose and fragile. It's not a good idea to expose the internals of a design to applications. Today, we use three sockets. Tomorrow, two, or four. Do we really want to go and change every application that uses the clone class? So to hide these sausage factory details, we make a small abstraction, like this:
 
 [[code language="C"]]
-    //  Specify primary and backup servers
-    clone_connect (clone, "tcp://localhost:5551");
-    clone_connect (clone, "tcp://localhost:5561");
+//  Specify primary and backup servers
+clone_connect (clone, "tcp://localhost:5551");
+clone_connect (clone, "tcp://localhost:5561");
 [[/code]]
 
 Which has the advantage of simplicity (one server sits at one endpoint) but has an impact on our internal design. We now need to somehow turn that single endpoint into three endpoints. One way would be to bake the knowledge "client and server talk over three consecutive ports" into our client-server protocol. Another way would be to get the two missing endpoints from the server. We'll take the simplest way, which is:
@@ -617,27 +618,9 @@ Here, then, is the Clustered Hashmap Protocol, which "//defines a cluster-wide k
 
 * http://rfc.zeromq.org/spec:12
 
-.end
-+++ Cluster-wide topic distribution
++++ The Espresso Pattern
 
-- anyone can publish
-- anyone can subscribe
-- reliable
-- using 1 or two forwarders
+I'll end this chapter with a fun little machine that exploits the zmq_proxy[3] method to show you what's happening on a pub-sub network. It's deceptively simple:
 
-+++ Secure Publish-Subscribe (Tin Foil Hat Pattern)
-
-As in, getting secret messages.
-
-+++ Atomic Group Multicast (Platoon Pattern)
-
-* N servers, where N is zero or more. In the degenerate case no servers are running. In the normal case, all servers are running.
-* The servers know about each other, through a fixed configuration. That is, we do not attempt to create a dynamic pool of servers that can come and go.
-* The clients know about all the servers, through a fixed configuration. Again, we do not attempt to allow clients to discover new servers.
-* The servers are all exact copies of each other, and at any time hold the same state.
-* The servers organize themselves into an ordered list, with a group "head" and a group "tail". Clients speak to the group head, and listen to the group tail.
-* When a server joins or rejoins the group, it always becomes the new tail.
-* If the group head crashes, the next server in the list, if any, becomes the new head.
-* If the group tail crashes, the previous server in the list, if any, becomes the new tail.
-* When any other server crashes, the previous server in the list links instead to the following server.
-
+[[code type="example" title="Espresso Machine" name="espresso"]]
+[[/code]]

@@ -57,25 +57,23 @@ s_recv (void *socket) {
 //  Convert C string to 0MQ string and send to socket
 static int
 s_send (void *socket, char *string) {
-    int rc;
     zmq_msg_t message;
     zmq_msg_init_size (&message, strlen (string));
     memcpy (zmq_msg_data (&message), string, strlen (string));
-    rc = zmq_msg_send (&message, socket, 0);
+    int size = zmq_msg_send (&message, socket, 0);
     zmq_msg_close (&message);
-    return (rc);
+    return (size);
 }
 
 //  Sends string as 0MQ string, as multipart non-terminal
 static int
 s_sendmore (void *socket, char *string) {
-    int rc;
     zmq_msg_t message;
     zmq_msg_init_size (&message, strlen (string));
     memcpy (zmq_msg_data (&message), string, strlen (string));
-    rc = zmq_msg_send (&message, socket, ZMQ_SNDMORE);
+    int size = zmq_msg_send (&message, socket, ZMQ_SNDMORE);
     zmq_msg_close (&message);
-    return (rc);
+    return (size);
 }
 
 //  Receives all message parts from socket, prints neatly

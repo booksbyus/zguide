@@ -13,7 +13,7 @@ zmq_connect (mousetrap, "tcp://192.168.55.221:5001");
 //  Wait for juicy mouse to arrive
 zmq_msg_t mouse;
 zmq_msg_init (&mouse);
-zmq_recv (mousetrap, &mouse, 0);
+zmq_msg_recv (&mouse, mousetrap, 0);
 //  Destroy the mouse
 zmq_msg_close (&mouse);
 

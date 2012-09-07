@@ -1,7 +1,3 @@
-          +---+--------+
-Frame 1   | 6 | CLIENT |    Identity of client
-          +---+--------+
-Frame 2   | 0 |               Empty message frame
           +---+-------+
-Frame 3   | 5 | HELLO |       Data frame
+Frame 1   | 5 | HELLO |       Data frame
           +---+-------+

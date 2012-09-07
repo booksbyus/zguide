@@ -54,9 +54,9 @@
          +--------------------------+
          |
          v                 +-----------------+        +------------------+
-+-----------------+        | Are you calling |        | Call zmq_init    |
-|  Are you using  |        |  zmq_init more  +------->| exactly once in  |
-|   the inproc    +------->|    than once?   | Yes    | every process.   |
++-----------------+        | Are you calling |        | Call zmq_ctx_new |
+|  Are you using  |        |   zmq_ctx_new   +------->| exactly once in  |
+|   the inproc    +------->| more than once? | Yes    | every process.   |
 |   transport?    | Yes    |             {o} |        |                  |
 |             {o} |        +--------+--------+        +------------------+
 +--------+--------+                 | No
