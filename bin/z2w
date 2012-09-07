@@ -94,7 +94,7 @@ die "Can't create upload.sh: $!"
 writeln ('[!-- Generated documentation file, do not edit --]');
 
 while (<>) {
-    chop;
+    chop while /\s$/;
     if (/^\./) {
         #   Process directive
         if (/^\.set\s+(\w+)=(.*)/) {
