@@ -1,0 +1,23 @@
+<class name = "mdp_worker" protocol = "MDPW01" numbering = "auto">
+    MDP/Worker
+    <message name = "ready">
+        Worker tells broker it is ready
+        <field name = "service" type = "string">Service name</field>
+    </message>
+    <message name = "request">
+        Client request to broker
+        <field name = "client" type = "envelope">Client address</field>
+        <field name = "body" type = "opaque">Request body</field>
+    </message>
+    <message name = "reply">
+        Worker returns reply to broker
+        <field name = "client" type = "envelope">Client address</field>
+        <field name = "body" type = "opaque">Request body</field>
+    </message>
+    <message name = "hearbeat">
+        Either peer tells the other it's still alive
+    </message>
+    <message name = "disconnect">
+        Either peer tells other the party is over
+    </message>
+</class>

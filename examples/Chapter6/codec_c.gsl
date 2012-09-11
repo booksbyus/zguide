@@ -1,0 +1,282 @@
+.output "$(class.name).h"
+/*  =========================================================================
+    $(class.name).h
+
+    Generated C99 codec header for $(class.name)
+    ========================================================================= */
+
+#ifndef __$(CLASS.NAME)_H_INCLUDED__
+#define __$(CLASS.NAME)_H_INCLUDED__
+
+#ifndef STRING_MAX
+#define STRING_MAX 255
+typedef char string_t [STRING_MAX + 1];
+#endif
+
+.for message
+
+//  $(NAME) - $(string.trim (.?''):left)
+#define $(CLASS.NAME)_$(MESSAGE.NAME)   $(item ())
+typedef struct {
+.   for field
+.       name = "$(name:c)"
+.       if type = "string"
+    string_t $(name);
+.       elsif type = "opaque"
+.           message.allocated = 1
+    zframe_t *$(name);           //  Single opaque frame
+.       elsif type = "envelope"
+.           message.allocated = 1
+    zlist_t *$(name);            //  List of address frames
+.       endif
+.   else
+    //  No fields in body
+.   endfor
+} $(class.name)_$(message.name)_t;
+.endfor
+
+typedef struct {
+    int
+        type;                   //  Message type
+    union {
+.for message
+        $(class.name)_$(message.name)_t
+            $(message.name);
+.endfor
+    } msg;
+} $(class.name)_t;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+$(class.name)_t *
+    $(class.name)_new (int type);
+void
+    $(class.name)_destroy ($(class.name)_t **self_p);
+$(class.name)_t *
+    $(class.name)_recv (void *socket);
+void
+    $(class.name)_send ($(class.name)_t **self_p, void *socket);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
+.output "$(class.name).c"
+/*  =========================================================================
+    $(class.name).c
+
+    Generated codec class for $(class.name)
+    =========================================================================
+*/
+
+#include <czmq.h>
+#include "$(class.name).h"
+
+//  --------------------------------------------------------------------------
+//  Constructor
+//  Creates an empty message with initialized containers
+//
+$(class.name)_t *
+$(class.name)_new (int type)
+{
+    $(class.name)_t *self = zmalloc (sizeof ($(class.name)_t));
+    self->type = type;
+.for message where defined (allocated)
+.   for field where type = "envelope"
+    if (self->type == $(CLASS.NAME)_$(MESSAGE.NAME))
+        self->msg.$(message.name).$(name) = zlist_new ();
+.   endfor
+.endfor
+    return self;
+}
+
+
+//  --------------------------------------------------------------------------
+//  Destructor
+//
+void
+$(class.name)_destroy ($(class.name)_t **self_p)
+{
+    assert (self_p);
+    if (*self_p) {
+        $(class.name)_t *self = *self_p;
+.for message where defined (allocated)
+        if (self->type == $(CLASS.NAME)_$(MESSAGE.NAME)) {
+.   for field
+.       if type = "opaque"
+            zframe_destroy (&self->msg.$(message.name).$(name));
+.       elsif type = "envelope"
+            //  Destroy address envelope
+            while (zlist_size (self->msg.$(message.name).$(name))) {
+                zframe_t *frame = (zframe_t *) zlist_pop (self->msg.$(message.name).$(name));
+                zframe_destroy (&frame);
+            }
+            zlist_destroy (&self->msg.$(message.name).$(name));
+.       endif
+.   endfor
+        }
+.endfor
+        free (self);
+        *self_p = NULL;
+    }
+}
+
+//  --------------------------------------------------------------------------
+//  Receive $(class.name) message from socket
+//  Blocks if socket is not ready for input. Returns NULL if 0MQ returned
+//  an error (typically ETERM) on reading.
+
+$(class.name)_t *
+$(class.name)_recv (void *socket)
+{
+    assert (socket);
+
+    //  Get the whole message, all its parts
+    zmsg_t *msg = zmsg_recv (socket);
+    if (!msg)
+        return NULL;
+
+    //  Don't try to handle errors, just assert noisily
+    assert (zmsg_size (msg) >= 3);
+
+    zframe_t *empty = zmsg_pop (msg);
+    assert (zframe_streq (empty, ""));
+    zframe_destroy (&empty);
+
+    zframe_t *header = zmsg_pop (msg);
+    assert (zframe_streq (header, "$(PROTOCOL)"));
+    zframe_destroy (&header);
+
+    
+    if (zframe_streq (command, MDPW_REQUEST)) {
+    
+
+    //  First frame is always empty, following the REQ socket format
+    zframe_t *empty = zframe_recv (socket);
+    if (!empty)
+        return NULL;
+
+    //  Second frame should be protocol frame
+    zframe_t *protocol = zframe_recv (socket);
+    if (!protocol) {
+        zframe_destroy (&empty);
+        return NULL;
+    }
+.   if numbering = "auto"
+    //  Next frame is message type number
+    char *string = zstr_recv (socket);
+    int type = atoi (string);
+    free (string);
+    
+.   endif
+    
+    
+    
+    
+    zmq_msg_t routing;
+    zmq_msg_t message;
+    zmq_msg_init (&message);
+    zmq_msg_init (&routing);
+    size_t nbr_parts = 0;
+
+    //  Recv all parts of message, if we get more than two
+    //  discard message as invalid...
+    while (1) {
+        zmq_msg_t cur_part;
+        zmq_msg_init (&cur_part);
+        if (zmq_recv (socket, &cur_part, 0)) {
+            if (errno != ETERM)
+                printf ("E: %s\\n", zmq_strerror (errno));
+            exit (1);
+        }
+        nbr_parts++;
+        if (nbr_parts == 1)
+            zmq_msg_move (&message, &cur_part);
+        else
+        if (nbr_parts == 2) {
+            zmq_msg_move (&routing, &message);
+            zmq_msg_move (&message, &cur_part);
+        }
+        else
+            zmq_msg_close (&cur_part);
+
+        int64_t more;
+        size_t more_size = sizeof (more);
+        zmq_getsockopt (socket, ZMQ_RCVMORE, &more, &more_size);
+        if (!more)
+            break;      //  Last message part
+    }
+    //  Real code won't assert on bad input but log an error
+    assert (nbr_parts == 1 || nbr_parts == 2);
+
+    size_t string_size;
+
+    byte *routing_ptr = zmq_msg_data (&routing);
+    byte *routing_max = routing_ptr + zmq_msg_size (&routing);
+    byte *message_ptr = zmq_msg_data (&message);
+    byte *message_max = message_ptr + zmq_msg_size (&message);
+
+    byte type;
+    GET_OCTET (type, message_ptr, message_max);
+    $(class.name)_t *self = $(class.name)_new (type);
+
+    //  Real code won't assert on bad input but log an error
+    assert (self->type > 0 && self->type < $(CLASS.NAME)_LIMIT);
+
+    switch (self->type) {
+.for class.message
+        case $(CLASS.NAME)_$(MESSAGE.NAME):
+.   for routing
+.       for field
+.           if type = "string"
+            GET_STRING (self->msg.$(message.name).$(field.name), routing_ptr, routing_max);
+.           elsif type = "number"
+            GET_NUMBER (self->msg.$(message.name).$(field.name), routing_ptr, routing_max);
+.           endif
+.       endfor
+.   endfor
+.   for field
+.       if type = "string"
+            GET_STRING (self->msg.$(message.name).$(field.name), message_ptr, message_max);
+.       elsif type = "number"
+            GET_NUMBER (self->msg.$(message.name).$(field.name), message_ptr, message_max);
+.       endif
+.   else
+            //  No fields in body
+.   endfor
+            break;
+
+.endfor
+    }
+    zmq_msg_close (&message);
+    return self;
+    underflow:
+        printf ("E: malformed method '%d'\\n", self->type);
+        s_dump (zmq_msg_data (&routing), zmq_msg_size (&routing));
+        s_dump (zmq_msg_data (&message), zmq_msg_size (&message));
+        $(class.name)_destroy (&self);
+        return (NULL);
+
+
+    
+    return NULL;
+}
+
+//  --------------------------------------------------------------------------
+//  Send $(class.name) message to socket
+//  Destroys message after sending
+
+void
+$(class.name)_send ($(class.name)_t **self_p, void *socket)
+{
+    assert (self_p);
+    assert (*self_p);
+    assert (socket);
+    $(class.name)_destroy (self_p);
+}
+
+
+.close

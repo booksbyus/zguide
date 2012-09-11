@@ -1,0 +1,38 @@
+.#  Trivial IDL generator (specs.gsl)
+.#
+.output "$(class.name).md"
+## The $(string.trim (class.?''):left) Protocol
+.for message
+.   frames = count (field) + 2
+.   if numbering = "auto"
+.       frames += 1
+.   endif
+.   for field where type = "envelope"
+.       frames += 1         #   Envelopes end in a null frame
+.   endfor
+
+A $(message.NAME) command consists of a multipart message of $(frames) frames, formatted on the wire as follows:
+
+* Frame 0: Empty frame
+* Frame 1: "$(protocol:)" ($(string.length (protocol)) bytes, representing the protocol)
+.   index = 2
+.   if numbering = "auto"
+* Frame $(index): 0x$(item ():%02x) (1 byte, representing $(message.NAME))
+.       index += 1
+.   endif
+.   for field
+* Frame $(index): $(field.?'') \
+.       if type = "string"
+(printable string)
+.       elsif type = "opaque"
+(opaque binary)
+.       elsif type = "envelope"
+(envelope stack)
+.           index += 1
+* Frame $(index): Empty (zero bytes, envelope delimiter)
+.       else
+.           echo "E: unknown field type: $(type)"
+.       endif
+.       index += 1
+.   endfor
+.endfor
