@@ -18,9 +18,8 @@ func main() {
 	subscriber.SetSockOptString(zmq.SUBSCRIBE, "B")
 
 	for {
-	  address, _ := subscriber.Recv(0)
+	  subscriber.Recv(0) // discart the envelope
 	  content, _ := subscriber.Recv(0)
-	  print(address)
-	  print(content)
+	  print(string(content) + "\n")
 	}
 }
