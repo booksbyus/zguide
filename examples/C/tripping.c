@@ -52,7 +52,7 @@ worker_task (void *args)
     void *worker = zsocket_new (ctx, ZMQ_DEALER);
     zsocket_connect (worker, "tcp://localhost:5556");
     
-    while (TRUE) {
+    while (true) {
         zmsg_t *msg = zmsg_recv (worker);
         zmsg_send (&msg, worker);
     }

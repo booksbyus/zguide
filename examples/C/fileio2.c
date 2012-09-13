@@ -72,17 +72,17 @@ server_thread (void *args, zctx_t *ctx, void *pipe)
         free (offset_str);
 
         //  Fourth frame is maximum chunk size
-        char *blksize_str = zstr_recv (router);
-        size_t blksize = atoi (blksize_str);
-        free (blksize_str);
+        char *chunksz_str = zstr_recv (router);
+        size_t chunksz = atoi (chunksz_str);
+        free (chunksz_str);
 
         //  Read chunk of data from file
         fseek (file, offset, SEEK_SET);
-        byte *data = malloc (blksize);
+        byte *data = malloc (chunksz);
         assert (data);
 
         //  Send resulting chunk to client
-        size_t size = fread (data, 1, blksize, file);
+        size_t size = fread (data, 1, chunksz, file);
         zframe_t *chunk = zframe_new_zero_copy (data, size, free_chunk, NULL);
         zframe_send (&identity, router, ZFRAME_MORE);
         zframe_send (&chunk, router, 0);

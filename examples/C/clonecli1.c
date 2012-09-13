@@ -16,7 +16,7 @@ int main (void)
     zhash_t *kvmap = zhash_new ();
     int64_t sequence = 0;
 
-    while (TRUE) {
+    while (true) {
         kvmsg_t *kvmsg = kvmsg_recv (updates);
         if (!kvmsg)
             break;          //  Interrupted

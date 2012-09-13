@@ -34,7 +34,7 @@ int main (void)
     zstr_sendm (snapshot, "ICANHAZ?");
     zstr_send  (snapshot, SUBTREE);
     //  .skip
-    while (TRUE) {
+    while (true) {
         kvmsg_t *kvmsg = kvmsg_recv (snapshot);
         if (!kvmsg)
             break;          //  Interrupted

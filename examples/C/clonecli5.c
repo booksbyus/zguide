@@ -27,7 +27,7 @@ int main (void)
     int64_t sequence = 0;
     zstr_sendm (snapshot, "ICANHAZ?");
     zstr_send  (snapshot, SUBTREE);
-    while (TRUE) {
+    while (true) {
         kvmsg_t *kvmsg = kvmsg_recv (snapshot);
         if (!kvmsg)
             break;          //  Interrupted

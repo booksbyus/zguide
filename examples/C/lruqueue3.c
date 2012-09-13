@@ -21,7 +21,7 @@ client_task (void *args)
     zsocket_connect (client, "ipc://frontend.ipc");
 
     //  Send request, get reply
-    while (1) {
+    while (true) {
         zstr_send (client, "HELLO");
         char *reply = zstr_recv (client);
         if (!reply)
@@ -48,7 +48,7 @@ worker_task (void *args)
     zframe_send (&frame, worker, 0);
 
     //  Process messages as they arrive
-    while (1) {
+    while (true) {
         zmsg_t *msg = zmsg_recv (worker);
         if (!msg)
             break;              //  Interrupted

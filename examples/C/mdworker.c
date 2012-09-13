@@ -13,7 +13,7 @@ int main (int argc, char *argv [])
         "tcp://localhost:5555", "echo", verbose);
 
     zmsg_t *reply = NULL;
-    while (1) {
+    while (true) {
         zmsg_t *request = mdwrk_recv (session, &reply);
         if (request == NULL)
             break;              //  Worker was interrupted

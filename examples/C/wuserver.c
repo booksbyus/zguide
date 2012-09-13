@@ -17,7 +17,7 @@ int main (void)
 
     //  Initialize random number generator
     srandom ((unsigned) time (NULL));
-    while (1) {
+    while (true) {
         //  Get values that will fool the boss
         int zipcode, temperature, relhumidity;
         zipcode     = randof (100000);

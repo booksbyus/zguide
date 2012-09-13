@@ -27,7 +27,7 @@ client_task (void *args)
 
     zmq_pollitem_t items [] = { { client, 0, ZMQ_POLLIN, 0 } };
     int request_nbr = 0;
-    while (1) {
+    while (true) {
         //  Tick once per second, pulling in arriving messages
         int centitick;
         for (centitick = 0; centitick < 100; centitick++) {
@@ -87,7 +87,7 @@ server_worker (void *args, zctx_t *ctx, void *pipe)
     void *worker = zsocket_new (ctx, ZMQ_DEALER);
     zsocket_connect (worker, "inproc://backend");
 
-    while (1) {
+    while (true) {
         //  The DEALER socket gives us the address envelope and message
         zmsg_t *msg = zmsg_recv (worker);
         zframe_t *address = zmsg_pop (msg);

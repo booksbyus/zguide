@@ -61,7 +61,7 @@ titanic_request (void *args, zctx_t *ctx, void *pipe)
         "tcp://localhost:5555", "titanic.request", 0);
     zmsg_t *reply = NULL;
 
-    while (TRUE) {
+    while (true) {
         //  Send reply if it's not null
         //  And then get next request from broker
         zmsg_t *request = mdwrk_recv (worker, &reply);
@@ -109,7 +109,7 @@ titanic_reply (void *context)
         "tcp://localhost:5555", "titanic.reply", 0);
     zmsg_t *reply = NULL;
 
-    while (TRUE) {
+    while (true) {
         zmsg_t *request = mdwrk_recv (worker, &reply);
         if (!request)
             break;      //  Interrupted, exit
@@ -153,7 +153,7 @@ titanic_close (void *context)
         "tcp://localhost:5555", "titanic.close", 0);
     zmsg_t *reply = NULL;
 
-    while (TRUE) {
+    while (true) {
         zmsg_t *request = mdwrk_recv (worker, &reply);
         if (!request)
             break;      //  Interrupted, exit
@@ -196,7 +196,7 @@ int main (int argc, char *argv [])
     zthread_new (titanic_close, NULL);
 
     //  Main dispatcher loop
-    while (TRUE) {
+    while (true) {
         //  We'll dispatch once per second, if there's no activity
         zmq_pollitem_t items [] = { { request_pipe, 0, ZMQ_POLLIN, 0 } };
         int rc = zmq_poll (items, 1, 1000 * ZMQ_POLL_MSEC);

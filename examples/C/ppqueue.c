@@ -113,7 +113,7 @@ int main (void)
     //  Send out heartbeats at regular intervals
     uint64_t heartbeat_at = zclock_time () + HEARTBEAT_INTERVAL;
 
-    while (1) {
+    while (true) {
         zmq_pollitem_t items [] = {
             { backend,  0, ZMQ_POLLIN, 0 },
             { frontend, 0, ZMQ_POLLIN, 0 }

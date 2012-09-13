@@ -1,68 +1,41 @@
 //
 //  Credit based flow control example
 //
-//  We start some clients that talk to a single server via a DEALER
-//  to ROUTER setup. Clients say hello to the server and then start
-//  to receive random data. The server sends as fast as it can, but
-//  only within credit window created by client.
-//
+
 #include "czmq.h"
 
-#define NBR_CLIENTS     10
+//  This is the size of our end-to-end pipeline, in bytes
+#define PIPELINE_SIZE   1024 * 1024
 
-//  The TRANSIT_TOTAL size defines the total data in transit,
-//  covering 0MQ send and recv queues, TCP send and recv buffers,
-//  and packets in flight on the network. The client starts by
-//  sending TRANSIT_TOTAL credit to the server, and thereafter
-//  sends TRANSIT_SLICE credit after receiving TRANSIT_SLICE bytes.
+//  We'll aim to keep the pipeline 50-75% full at all times
+#define CREDIT_SLICE    PIPELINE_SIZE / 4
 
-#define TRANSIT_TOTAL   1024 * 1024
-#define TRANSIT_SLICE   TRANSIT_TOTAL / 4
+//  Here we just want to prove that we never exceed the HWM,
+//  so we can send chunks of a fixed size
+#define CHUNK_SIZE      65536
+#define SERVER_HWM      PIPELINE_SIZE / CHUNK_SIZE
 
-//  We assert that the flow-control mechanism works by setting a
-//  HWM on the server send queue, and sequencing messages. If the
-//  queue hits HWM for any client, 0MQ will drop messages, as this
-//  is the exception strategy for ROUTER sockets. The client can
-//  detect this and abort.
-//
-//  Difficulty: 0MQ counts messages, not bytes. So HWM is not an
-//  accurate measure. To solve this we batch small messages, and
-//  fragment larger messages into blocks of FRAGMENT_SIZE octets.
-//
-//  For the example we simply generate FRAGMENT_SIZE messages.
-//  In a more cynical test we would batch and fragment on sending.
-//  But, once flow control works, we don't need the HWM at all.
+//  .split Client thread
+//  We start by sending the server enough credit to fill the whole
+//  pipeline. Then as we receive messages we top-up the credit in
+//  slices:
 
-#define FRAGMENT_SIZE   65536
-
-//  Knowing the TRANSIT_TOTAL and the FRAGMENT_SIZE, we can set the
-//  HWM to be (TRANSIT_TOTAL / FRAGMENT_SIZE).
-
-#define SERVER_HWM      TRANSIT_TOTAL / FRAGMENT_SIZE
-
-
-//  -------------------------------------------------------------------
-//  Client task
-
-static void *
-client_task (void *args)
+static void
+client_thread (void *args, zctx_t *ctx, void *pipe)
 {
-    zctx_t *ctx = zctx_new ();
     void *dealer = zsocket_new (ctx, ZMQ_DEALER);
     zsocket_connect (dealer, "tcp://127.0.0.1:10001");
 
-    //  Start by sending TRANSIT_TOTAL credit to server
-    zstr_sendf (dealer, "%ld", TRANSIT_TOTAL);
+    //  Start by asking the server to fill the pipeline
+    zstr_sendf (dealer, "%ld", PIPELINE_SIZE);
 
-    //  Now consume and verify incoming messages and refresh
-    //  credit asynchronously as needed
-    int expected_seq = 0;
-    int received = 0;
+    int expected_seq = 0;   //  Check we don't lose chunks
+    int uncredited = 0;     //  Data received but not credited yet
 
-    while (TRUE) {
+    while (true) {
         zmsg_t *msg = zmsg_recv (dealer);
         if (!msg)
-            break;
+            break;          //  Interrupted
 
         //  Message has two frames, sequence number and body
         char *sequence = zmsg_popstr (msg);
@@ -77,60 +50,53 @@ client_task (void *args)
         }
         expected_seq++;
 
-        //  Count received data, send top-up credit if needed
-        received += zframe_size (content);
-        if (received > TRANSIT_SLICE) {
-            received -= TRANSIT_SLICE;
-            zstr_sendf (dealer, "%ld", TRANSIT_SLICE);
+        //  Count uncredited data, send top-up credit if needed
+        uncredited += zframe_size (content);
+        if (uncredited > CREDIT_SLICE) {
+            uncredited -= CREDIT_SLICE;
+            zstr_sendf (dealer, "%ld", CREDIT_SLICE);
         }
         zframe_destroy (&content);
         zmsg_destroy (&msg);
 
-        //  Sleep for some random interval up to 100 msecs
+        //  Sleep for some random interval up to 10 msecs
         zclock_sleep (randof (10));
     }
-    zctx_destroy (&ctx);
-    return NULL;
 }
 
 
-//  -------------------------------------------------------------------
-//  Server task
+//  .split Server thread
+//  We track the credit per connected client:
 
-//  Clients are represented by this data structure
 typedef struct {
     zframe_t *identity;
     int credit;
     int sequence;
 } client_t;
 
-static void *
-server_task (void *args)
+static void
+server_thread (void *args, zctx_t *ctx, void *pipe)
 {
-    zctx_t *ctx = zctx_new ();
     void *router = zsocket_new (ctx, ZMQ_ROUTER);
-    zsocket_set_hwm (router, SERVER_HWM + 10);
+    zsocket_set_hwm (router, SERVER_HWM);
     zsocket_bind (router, "tcp://*:10001");
 
     //  We'll hold the clients on a simple list
     zlist_t *clients = zlist_new ();
 
     //  We're purely driven by input events
-    while (1) {
+    while (true) {
         zmsg_t *msg = zmsg_recv (router);
         if (!msg)
-            break;
+            break;          //  Interrupted
 
-        //  PROCESS CLIENT CREDITS
-        //  -------------------------------------------------------
-        //  Only message we accept from clients is a credit message
-
+        //  Only message from clients is credit
         zframe_t *client_frame = zmsg_pop (msg);
         char *credit_string = zmsg_popstr (msg);
         int credit = atoi (credit_string);
         free (credit_string);
 
-        //  Look for pre-existing client with this identity
+        //  Look for existing client with this identity
         client_t *client = (client_t *) zlist_first (clients);
         while (client) {
             if (zframe_eq (client->identity, client_frame))
@@ -150,47 +116,42 @@ server_task (void *args)
         client->credit += credit;
         zmsg_destroy (&msg);
 
-        //  DISPATCH TO CLIENTS
-        //  -------------------------------------------------------
         //  We now stream data to all clients with available credit
         //  until their credit is used up. We then wait for clients
         //  to send us new credit.
-
-        //  Process entire client list in turn
         client = (client_t *) zlist_first (clients);
         while (client) {
-            while (client->credit >= FRAGMENT_SIZE) {
-                int msgsize = FRAGMENT_SIZE + randof (1000) - randof (1000);
-
-                //  Send fragment of data to the client
-                zframe_t *content = zframe_new (NULL, msgsize);
+            while (client->credit >= CHUNK_SIZE) {
+                //  Send chunk of data to the client
+                zframe_t *content = zframe_new (NULL, CHUNK_SIZE);
                 zframe_send (&client->identity, router,
                              ZFRAME_MORE + ZFRAME_REUSE);
                 zstr_sendfm (router, "%d", client->sequence++);
                 zframe_send (&content, router, 0);
-
                 //  Discount credit
-                client->credit -= msgsize;
+                client->credit -= CHUNK_SIZE;
             }
             client = (client_t *) zlist_next (clients);
         }
     }
-    zctx_destroy (&ctx);
-    return NULL;
 }
+
+//  .split File main thread
+//  The main task starts the client and server threads; it's easier
+//  to test this as a single process with threads, than as multiple
+//  processes:
 
 int main (void)
 {
-    //  Create threads
     zctx_t *ctx = zctx_new ();
     printf ("I: starting server...\n");
-    zthread_new (server_task, NULL);
+    zthread_fork (ctx, server_thread, NULL);
+    printf ("I: starting clients...\n");
+    int clients = 10;
+    while (clients--)
+        zthread_fork (ctx, client_thread, NULL);
 
-    printf ("I: starting %d clients...\n", NBR_CLIENTS);
-    int client_nbr;
-    for (client_nbr = 0; client_nbr < NBR_CLIENTS; client_nbr++)
-        zthread_new (client_task, NULL);
-
+    //  Wait until the user presses Ctrl-C
     while (!zctx_interrupted)
         sleep (1);
 

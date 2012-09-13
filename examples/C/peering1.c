@@ -37,7 +37,7 @@ int main (int argc, char *argv [])
     //  status messages back from peers. The zmq_poll timeout defines
     //  our own heartbeat:
 
-    while (1) {
+    while (true) {
         //  Poll for activity, or 1 second timeout
         zmq_pollitem_t items [] = { { statefe, 0, ZMQ_POLLIN, 0 } };
         int rc = zmq_poll (items, 1, 1000 * ZMQ_POLL_MSEC);

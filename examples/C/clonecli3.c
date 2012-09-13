@@ -24,7 +24,7 @@ int main (void)
     //  We first request a state snapshot:
     int64_t sequence = 0;
     zstr_send (snapshot, "ICANHAZ?");
-    while (TRUE) {
+    while (true) {
         kvmsg_t *kvmsg = kvmsg_recv (snapshot);
         if (!kvmsg)
             break;          //  Interrupted

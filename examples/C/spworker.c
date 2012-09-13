@@ -24,7 +24,7 @@ int main (void)
     zframe_send (&frame, worker, 0);
 
     int cycles = 0;
-    while (1) {
+    while (true) {
         zmsg_t *msg = zmsg_recv (worker);
         if (!msg)
             break;              //  Interrupted

@@ -20,7 +20,7 @@ int main (void)
     zmq_connect (sender, "tcp://localhost:5558");
 
     //  Process tasks forever
-    while (1) {
+    while (true) {
         char *string = s_recv (receiver);
         //  Simple progress indicator for the viewer
         fflush (stdout);
