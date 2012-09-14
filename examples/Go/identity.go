@@ -10,6 +10,15 @@ import (
 	"fmt"
 )
 
+func dump(sink zmq.Socket) {
+	parts, err := sink.RecvMultipart(0)
+	if err != nil { fmt.Println(err) }
+	for _, msgdata := range parts{
+	  fmt.Printf("%T\n", msgdata)
+	  fmt.Println(msgdata)
+	}
+}
+
 func main() {
 	context, _ := zmq.NewContext()
 	defer context.Close()
@@ -27,12 +36,7 @@ func main() {
 	err = anonymous.Send([]byte("ROUTER uses a generated UUID"), 0)
 	if err != nil { fmt.Println(err) }
 
-	for {
-	  msgdata, err := sink.Recv(0)
-	  if err != nil { fmt.Println(err) }
-	  fmt.Println(msgdata)
-	  fmt.Println("%T", msgdata)
-	}
+	dump(sink)
 
 	//  Then set the identity ourself
 	identified, err := context.NewSocket(zmq.REQ)
@@ -42,5 +46,5 @@ func main() {
 	identified.Connect("inproc://example")
 	identified.Send([]byte("ROUTER socket uses REQ's socket identity"), zmq.NOBLOCK)
 
-	sink.Recv(0)
+	dump(sink)
 }
