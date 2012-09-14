@@ -31,6 +31,7 @@ func main() {
 	  msgdata, err := sink.Recv(0)
 	  if err != nil { fmt.Println(err) }
 	  fmt.Println(msgdata)
+	  fmt.Println("%T", msgdata)
 	}
 
 	//  Then set the identity ourself
