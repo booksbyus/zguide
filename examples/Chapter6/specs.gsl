@@ -3,33 +3,25 @@
 .output "$(class.name).md"
 ## The $(string.trim (class.?''):left) Protocol
 .for message
-.   frames = count (field) + 2
-.   if numbering = "auto"
-.       frames += 1
-.   endif
-.   for field where type = "envelope"
-.       frames += 1         #   Envelopes end in a null frame
+.   frames = count (class->header.field) + count (field)
+
+A $(message.NAME) command consists of a multi-part message of $(frames) frames:
+
+.   for class->header.field
+.       if name = "id"
+* Frame $(item ()): 0x$(message.id:%02x) (1 byte, representing $(message.NAME))
+.       else
+* Frame $(item ()): "$(value:)" ($(string.length ("$(value)")) bytes, $(field.:))
+.       endif
 .   endfor
-
-A $(message.NAME) command consists of a multipart message of $(frames) frames, formatted on the wire as follows:
-
-* Frame 0: Empty frame
-* Frame 1: "$(protocol:)" ($(string.length (protocol)) bytes, representing the protocol)
-.   index = 2
-.   if numbering = "auto"
-* Frame $(index): 0x$(item ():%02x) (1 byte, representing $(message.NAME))
-.       index += 1
-.   endif
+.   index = count (class->header.field) + 1
 .   for field
 * Frame $(index): $(field.?'') \
 .       if type = "string"
 (printable string)
-.       elsif type = "opaque"
+.       elsif type = "frame"
 (opaque binary)
-.       elsif type = "envelope"
-(envelope stack)
 .           index += 1
-* Frame $(index): Empty (zero bytes, envelope delimiter)
 .       else
 .           echo "E: unknown field type: $(type)"
 .       endif

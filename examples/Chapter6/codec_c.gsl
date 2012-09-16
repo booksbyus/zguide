@@ -3,61 +3,111 @@
     $(class.name).h
 
     Generated C99 codec header for $(class.name)
-    ========================================================================= */
+    =========================================================================
+*/
 
 #ifndef __$(CLASS.NAME)_H_INCLUDED__
 #define __$(CLASS.NAME)_H_INCLUDED__
 
-#ifndef STRING_MAX
-#define STRING_MAX 255
-typedef char string_t [STRING_MAX + 1];
-#endif
-
+/*  These are the $(class.name) messages
 .for message
+.   message.name = "$(message.name:c)"
 
-//  $(NAME) - $(string.trim (.?''):left)
-#define $(CLASS.NAME)_$(MESSAGE.NAME)   $(item ())
-typedef struct {
+    $(NAME) - $(string.trim (.?''):left)
 .   for field
-.       name = "$(name:c)"
-.       if type = "string"
-    string_t $(name);
-.       elsif type = "opaque"
-.           message.allocated = 1
-    zframe_t *$(name);           //  Single opaque frame
-.       elsif type = "envelope"
-.           message.allocated = 1
-    zlist_t *$(name);            //  List of address frames
-.       endif
-.   else
-    //  No fields in body
-.   endfor
-} $(class.name)_$(message.name)_t;
-.endfor
+.       field.name = "$(field.name:c)"
+.       for class.field as cfield where cfield.name = field.name
+.           if cfield.type <> field.type
+.               echo "E: field '$(name)' must have same type everywhere"
+.           endif
+.       else
+.           copy field to class
+.       endfor
+        $(name)       $(type) \
+.       if defined (size)
+[$(size)]
+.       else
 
-typedef struct {
-    int
-        type;                   //  Message type
-    union {
-.for message
-        $(class.name)_$(message.name)_t
-            $(message.name);
+.       endif
+.   endfor
 .endfor
-    } msg;
-} $(class.name)_t;
+*/
+
+.for message where defined (id)
+.   class.uses_ids = 1
+#define $(CLASS.NAME)_$(MESSAGE.NAME)   $(id)
+.endfor
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+//  Opaque class structure
+typedef struct _$(class.name)_t $(class.name)_t;
+
+//  Create a new $(class.name)
+.if class.uses_ids ?= 1
 $(class.name)_t *
-    $(class.name)_new (int type);
+    $(class.name)_new (int id);
+.else
+$(class.name)_t *
+    $(class.name)_new (void);
+.endif
+
+//  Destroy the $(class.name)
 void
     $(class.name)_destroy ($(class.name)_t **self_p);
+
+//  Receive and parse a $(class.name) from the socket
 $(class.name)_t *
     $(class.name)_recv (void *socket);
-void
+
+//  Send the $(class.name) to the socket, and destroy it
+int
     $(class.name)_send ($(class.name)_t **self_p, void *socket);
+
+//  Get/set the message address
+zframe_t *
+    $(class.name)_address ($(class.name)_t *self);
+void
+    $(class.name)_address_set ($(class.name)_t *self, zframe_t *address);
+
+.if class.uses_ids ?= 1
+//  Get the $(class.name) id
+int
+    $(class.name)_id ($(class.name)_t *self);
+    
+.endif
+.for class.field where !defined (value)
+.   if type = "octet"
+//  Get/set the $(name) field
+byte
+    $(class.name)_$(name) ($(class.name)_t *self);
+void
+    $(class.name)_$(name)_set ($(class.name)_t *self, byte $(name));
+.#
+.   elsif type = "string"
+//  Get/set the $(name) field
+char *
+    $(class.name)_$(name) ($(class.name)_t *self);
+void
+    $(class.name)_$(name)_set ($(class.name)_t *self, char *format, ...);
+.#
+.   elsif type = "frame"
+//  Get/set the $(name) field
+zframe_t *
+    $(class.name)_$(name) ($(class.name)_t *self);
+void
+    $(class.name)_$(name)_set ($(class.name)_t *self, zframe_t *frame);
+.#
+.   else
+.       echo "E: unknown type '$(type)' for field '$(name)'"
+.   endif
+
+.endfor
+//  Self test of this class
+int
+    $(class.name)_test (bool verbose);
 
 #ifdef __cplusplus
 }
@@ -68,215 +118,411 @@ void
 /*  =========================================================================
     $(class.name).c
 
-    Generated codec class for $(class.name)
+    Generated C99 codec implementation for $(class.name)
     =========================================================================
 */
 
 #include <czmq.h>
 #include "$(class.name).h"
 
-//  --------------------------------------------------------------------------
-//  Constructor
-//  Creates an empty message with initialized containers
-//
-$(class.name)_t *
-$(class.name)_new (int type)
-{
-    $(class.name)_t *self = zmalloc (sizeof ($(class.name)_t));
-    self->type = type;
-.for message where defined (allocated)
-.   for field where type = "envelope"
-    if (self->type == $(CLASS.NAME)_$(MESSAGE.NAME))
-        self->msg.$(message.name).$(name) = zlist_new ();
-.   endfor
+//  Structure of our class
+
+struct _$(class.name)_t {
+    int id;                     //  $(class.name) message ID
+    zframe_t *address;          //  Sender address if any
+.for class.field
+.   if type = "octet"
+    byte $(name);
+.   elsif type = "string"
+    char *$(name);
+.   elsif type = "frame"
+    zframe_t *$(name);
+.   endif
 .endfor
+};
+
+
+//  --------------------------------------------------------------------------
+//  Create a new $(class.name)
+
+$(class.name)_t *
+.if class.uses_ids ?= 1
+$(class.name)_new (int id)
+.else
+$(class.name)_new (void)
+.endif
+{
+    $(class.name)_t *self = ($(class.name)_t *) zmalloc (sizeof ($(class.name)_t));
+.if class.uses_ids ?= 1
+    self->id = id;
+.endif
     return self;
 }
 
 
 //  --------------------------------------------------------------------------
-//  Destructor
-//
+//  Destroy the $(class.name)
+
 void
 $(class.name)_destroy ($(class.name)_t **self_p)
 {
     assert (self_p);
     if (*self_p) {
         $(class.name)_t *self = *self_p;
-.for message where defined (allocated)
-        if (self->type == $(CLASS.NAME)_$(MESSAGE.NAME)) {
-.   for field
-.       if type = "opaque"
-            zframe_destroy (&self->msg.$(message.name).$(name));
-.       elsif type = "envelope"
-            //  Destroy address envelope
-            while (zlist_size (self->msg.$(message.name).$(name))) {
-                zframe_t *frame = (zframe_t *) zlist_pop (self->msg.$(message.name).$(name));
-                zframe_destroy (&frame);
-            }
-            zlist_destroy (&self->msg.$(message.name).$(name));
-.       endif
-.   endfor
-        }
+
+        //  Free class properties
+        zframe_destroy (&self->address);
+.for class.field
+.   if type = "string"
+        free (self->$(name));
+.   elsif type = "frame"
+        zframe_destroy (&self->$(name));
+.   endif
 .endfor
+        //  Free object itself
         free (self);
         *self_p = NULL;
     }
 }
 
+
 //  --------------------------------------------------------------------------
-//  Receive $(class.name) message from socket
-//  Blocks if socket is not ready for input. Returns NULL if 0MQ returned
-//  an error (typically ETERM) on reading.
+//  Receive and parse a $(class.name) from the socket. Returns new object or
+//  NULL if error. Will block if there's no message waiting.
 
 $(class.name)_t *
 $(class.name)_recv (void *socket)
 {
+    //  Read all frames off socket
     assert (socket);
-
-    //  Get the whole message, all its parts
     zmsg_t *msg = zmsg_recv (socket);
     if (!msg)
-        return NULL;
+        return NULL;            //  Interrupted
 
-    //  Don't try to handle errors, just assert noisily
-    assert (zmsg_size (msg) >= 3);
-
-    zframe_t *empty = zmsg_pop (msg);
-    assert (zframe_streq (empty, ""));
-    zframe_destroy (&empty);
-
-    zframe_t *header = zmsg_pop (msg);
-    assert (zframe_streq (header, "$(PROTOCOL)"));
-    zframe_destroy (&header);
-
+    //  Create and populate new $(class.name) instance
+.if class.uses_ids ?= 1
+    $(class.name)_t *self = $(class.name)_new (0);
+.else
+    $(class.name)_t *self = $(class.name)_new ();
+.endif
     
-    if (zframe_streq (command, MDPW_REQUEST)) {
-    
-
-    //  First frame is always empty, following the REQ socket format
-    zframe_t *empty = zframe_recv (socket);
-    if (!empty)
-        return NULL;
-
-    //  Second frame should be protocol frame
-    zframe_t *protocol = zframe_recv (socket);
-    if (!protocol) {
-        zframe_destroy (&empty);
-        return NULL;
+    //  If we're reading from a ROUTER socket, get address
+    if (zsockopt_type (socket) == ZMQ_ROUTER) {
+        self->address = zmsg_pop (msg);
+        if (!self->address)
+            goto empty;         //  Interrupted
     }
-.   if numbering = "auto"
-    //  Next frame is message type number
-    char *string = zstr_recv (socket);
-    int type = atoi (string);
-    free (string);
-    
-.   endif
-    
-    
-    
-    
-    zmq_msg_t routing;
-    zmq_msg_t message;
-    zmq_msg_init (&message);
-    zmq_msg_init (&routing);
-    size_t nbr_parts = 0;
-
-    //  Recv all parts of message, if we get more than two
-    //  discard message as invalid...
-    while (1) {
-        zmq_msg_t cur_part;
-        zmq_msg_init (&cur_part);
-        if (zmq_recv (socket, &cur_part, 0)) {
-            if (errno != ETERM)
-                printf ("E: %s\\n", zmq_strerror (errno));
-            exit (1);
-        }
-        nbr_parts++;
-        if (nbr_parts == 1)
-            zmq_msg_move (&message, &cur_part);
-        else
-        if (nbr_parts == 2) {
-            zmq_msg_move (&routing, &message);
-            zmq_msg_move (&message, &cur_part);
-        }
-        else
-            zmq_msg_close (&cur_part);
-
-        int64_t more;
-        size_t more_size = sizeof (more);
-        zmq_getsockopt (socket, ZMQ_RCVMORE, &more, &more_size);
-        if (!more)
-            break;      //  Last message part
-    }
-    //  Real code won't assert on bad input but log an error
-    assert (nbr_parts == 1 || nbr_parts == 2);
-
-    size_t string_size;
-
-    byte *routing_ptr = zmq_msg_data (&routing);
-    byte *routing_max = routing_ptr + zmq_msg_size (&routing);
-    byte *message_ptr = zmq_msg_data (&message);
-    byte *message_max = message_ptr + zmq_msg_size (&message);
-
-    byte type;
-    GET_OCTET (type, message_ptr, message_max);
-    $(class.name)_t *self = $(class.name)_new (type);
-
-    //  Real code won't assert on bad input but log an error
-    assert (self->type > 0 && self->type < $(CLASS.NAME)_LIMIT);
-
-    switch (self->type) {
-.for class.message
-        case $(CLASS.NAME)_$(MESSAGE.NAME):
-.   for routing
-.       for field
-.           if type = "string"
-            GET_STRING (self->msg.$(message.name).$(field.name), routing_ptr, routing_max);
-.           elsif type = "number"
-            GET_NUMBER (self->msg.$(message.name).$(field.name), routing_ptr, routing_max);
-.           endif
-.       endfor
-.   endfor
-.   for field
-.       if type = "string"
-            GET_STRING (self->msg.$(message.name).$(field.name), message_ptr, message_max);
-.       elsif type = "number"
-            GET_NUMBER (self->msg.$(message.name).$(field.name), message_ptr, message_max);
-.       endif
+    //  Read and check header
+.for class->header.field
+    zframe_t *$(name)_frame = zmsg_pop (msg);
+.   if defined (value)
+    if (!$(name)_frame || !zframe_streq ($(name)_frame, "$(value:)"))
+        goto malformed;
 .   else
-            //  No fields in body
-.   endfor
-            break;
+    if (!$(name)_frame)
+        goto malformed;
+.   endif
+.   if name = "id"
+    self->id = zframe_data (id_frame) [0];
+.   endif
+    zframe_destroy (&$(name)_frame);
 
 .endfor
+.if class.uses_ids ?= 1
+    //  Read and parse fields per-message
+    switch (self->id) {
+.for class.message
+        case $(CLASS.NAME)_$(MESSAGE.NAME):
+.   for field
+.       if type = "string"
+            self->$(name) = zmsg_popstr (msg);
+.       elsif type = "frame"
+            self->$(name) = zmsg_pop (msg);
+.       endif
+            if (!self->$(name))
+                goto malformed;
+.   endfor
+            break;
+            
+.endfor
+        default:
+            goto malformed;
     }
-    zmq_msg_close (&message);
+.else
+    //  All messages have the same structure
+.   for class->message.field
+.       if type = "string"
+    self->$(name) = zmsg_popstr (msg);
+.       elsif type = "frame"
+    self->$(name) = zmsg_pop (msg);
+.       endif
+    if (!self->$(name))
+        goto malformed;
+.   endfor
+
+.endif
+    //  Successful return
+    zmsg_destroy (&msg);
     return self;
-    underflow:
-        printf ("E: malformed method '%d'\\n", self->type);
-        s_dump (zmq_msg_data (&routing), zmq_msg_size (&routing));
-        s_dump (zmq_msg_data (&message), zmq_msg_size (&message));
+
+    //  Error returns
+    malformed:
+        printf ("E: malformed message '%d'\\n", self->id);
+    empty:
+        zmsg_destroy (&msg);
         $(class.name)_destroy (&self);
         return (NULL);
-
-
-    
-    return NULL;
 }
+
 
 //  --------------------------------------------------------------------------
-//  Send $(class.name) message to socket
-//  Destroys message after sending
+//  Send the $(class.name) to the socket, and destroy it
 
-void
+int
 $(class.name)_send ($(class.name)_t **self_p, void *socket)
 {
+    assert (socket);
     assert (self_p);
     assert (*self_p);
-    assert (socket);
+    $(class.name)_t *self = *self_p;
+
+    //  If we're sending to a ROUTER, we send the address first
+    zmsg_t *msg = zmsg_new ();
+    if (zsockopt_type (socket) == ZMQ_ROUTER) {
+        assert (self->address);
+        zmsg_add (msg, self->address);
+        self->address = NULL;       //  Owned by msg now
+    }
+    //  Send header fields
+.for class->header.field
+.   if defined (value)
+    zmsg_addstr (msg, "$(value:)");
+.   elsif type = "string"
+    zmsg_addstr (msg, self->$(name));
+.   elsif type = "octet"
+    zmsg_addmem (msg, &self->$(name), 1);
+.   endif
+.endfor
+
+.if class.uses_ids ?= 1
+    switch (self->id) {
+.for class.message
+        case $(CLASS.NAME)_$(MESSAGE.NAME):
+.   for field
+.       if type = "string"
+            zmsg_addstr (msg, self->$(name));
+.       elsif type = "frame"
+            zmsg_add (msg, self->$(name));
+            self->$(name) = NULL;
+.       endif
+.   endfor
+            break;
+.endfor
+    }
+.else
+    //  All messages have the same structure
+.   for class->message.field
+.       if type = "string"
+    zmsg_addstr (msg, self->$(name));
+.       elsif type = "frame"
+    zmsg_add (msg, self->$(name));
+    self->$(name) = NULL;
+.       endif
+.   endfor
+
+.endif
+    //  Send the message and destroy $(class.name) object
+    int rc = zmsg_send (&msg, socket);
     $(class.name)_destroy (self_p);
+    return rc;
 }
 
 
-.close
+//  --------------------------------------------------------------------------
+//  Get/set the message address
+
+zframe_t *
+$(class.name)_address ($(class.name)_t *self)
+{
+    assert (self);
+    return self->address;
+}
+
+void
+$(class.name)_address_set ($(class.name)_t *self, zframe_t *address)
+{
+    if (self->address)
+        zframe_destroy (&self->address);
+    self->address = zframe_dup (address);
+}
+
+
+.if class.uses_ids ?= 1
+//  --------------------------------------------------------------------------
+//  Get/set the $(class.name) id
+
+int
+$(class.name)_id ($(class.name)_t *self)
+{
+    assert (self);
+    return self->id;
+}
+
+
+.endif
+.for class.field where !defined (value)
+.   if type = "octet"
+//  --------------------------------------------------------------------------
+//  Get/set the $(name) field
+
+byte
+$(class.name)_$(name) ($(class.name)_t *self)
+{
+    assert (self);
+    return self->$(name);
+}
+
+void
+$(class.name)_$(name)_set ($(class.name)_t *self, byte $(name))
+{
+    assert (self);
+    self->$(name) = $(name);
+}
+
+.   elsif type = "string"
+//  --------------------------------------------------------------------------
+//  Get/set the $(name) field
+
+char *
+$(class.name)_$(name) ($(class.name)_t *self)
+{
+    assert (self);
+    return self->$(name);
+}
+
+void
+$(class.name)_$(name)_set ($(class.name)_t *self, char *format, ...)
+{
+    //  Format into newly allocated string
+    assert (self);
+    va_list argptr;
+    va_start (argptr, format);
+    free (self->$(name));
+    self->$(name) = (char *) malloc (255 + 1);
+    assert (self->$(name));
+    vsnprintf (self->$(name), 255, format, argptr);
+    va_end (argptr);
+}
+
+.   elsif type = "frame"
+//  --------------------------------------------------------------------------
+//  Get/set the $(name) field
+
+zframe_t *
+$(class.name)_$(name) ($(class.name)_t *self)
+{
+    assert (self);
+    return self->$(name);
+}
+
+//  Takes ownership of supplied frame
+void
+$(class.name)_$(name)_set ($(class.name)_t *self, zframe_t *frame)
+{
+    assert (self);
+    if (self->$(name))
+        zframe_destroy (&self->$(name));
+    self->$(name) = frame;
+}
+.   endif
+
+.endfor
+
+//  --------------------------------------------------------------------------
+//  Selftest
+
+int
+$(class.name)_test (bool verbose)
+{
+    printf (" * $(class.name): ");
+
+    //  Simple create/destroy test
+.if class.uses_ids ?= 1
+    $(class.name)_t *self = $(class.name)_new (0);
+.else
+    $(class.name)_t *self = $(class.name)_new ();
+.endif
+    assert (self);
+    $(class.name)_destroy (&self);
+
+    //  Create pair of sockets we can send through
+    zctx_t *ctx = zctx_new ();
+    assert (ctx);
+
+    void *output = zsocket_new (ctx, ZMQ_DEALER);
+    assert (output);
+    zsocket_bind (output, "inproc://selftest");
+    void *input = zsocket_new (ctx, ZMQ_ROUTER);
+    assert (input);
+    zsocket_connect (input, "inproc://selftest");
+
+    //  Encode/send/decode and verify each message type
+.if class.uses_ids ?= 1
+.   for class.message
+
+    self = $(class.name)_new ($(CLASS.NAME)_$(MESSAGE.NAME));
+.       for field where !defined (value)
+.           if type = "octet"
+    $(class.name)_$(name)_set (self, 123);
+.           elsif type = "string"
+    $(class.name)_$(name)_set (self, "Life is short but Now lasts for ever");
+.           elsif type = "frame"
+    $(class.name)_$(name)_set (self, zframe_new ("Captcha Diem", 12));
+.           endif
+.       endfor
+    $(class.name)_send (&self, output);
+
+    self = $(class.name)_recv (input);
+    assert (self);
+.       for field where !defined (value)
+.           if type = "octet"
+    assert ($(class.name)_$(name) (self) == 123);
+.           elsif type = "string"
+    assert (streq ($(class.name)_$(name) (self), "Life is short but Now lasts for ever"));
+.           elsif type = "frame"
+    assert (zframe_streq ($(class.name)_$(name) (self), "Captcha Diem"));
+.           endif
+.       endfor
+    $(class.name)_destroy (&self);
+.   endfor
+.else
+    self = $(class.name)_new ();
+.   for class->message.field
+.       if type = "octet"
+    $(class.name)_$(name)_set (self, 123);
+.       elsif type = "string"
+    $(class.name)_$(name)_set (self, "Life is short but Now lasts for ever");
+.       elsif type = "frame"
+    $(class.name)_$(name)_set (self, zframe_new ("Captcha Diem", 12));
+.       endif
+.   endfor
+    $(class.name)_send (&self, output);
+
+    self = $(class.name)_recv (input);
+    assert (self);
+.   for class->message.field
+.       if type = "octet"
+    assert ($(class.name)_$(name) (self) == 123);
+.       elsif type = "string"
+    assert (streq ($(class.name)_$(name) (self), "Life is short but Now lasts for ever"));
+.       elsif type = "frame"
+    assert (zframe_streq ($(class.name)_$(name) (self), "Captcha Diem"));
+.       endif
+.   endfor
+    $(class.name)_destroy (&self);
+.endif
+
+    zctx_destroy (&ctx);
+    printf ("OK\\n");
+    return 0;
+}

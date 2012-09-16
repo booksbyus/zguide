@@ -1,13 +1,17 @@
-<class name = "mdp_client" protocol = "MDPC01" numbering = "none">
+<class name = "mdp_client">
     MDP/Client
+    <header>
+        <field name = "empty" type = "string" value = "">Empty frame</field>
+        <field name = "protocol" type = "string" value = "MDPC01">Protocol identifier</field>
+    </header>
     <message name = "request">
         Client request to broker
         <field name = "service" type = "string">Service name</field>
-        <field name = "body" type = "opaque">Request body</field>
+        <field name = "body" type = "frame">Request body</field>
     </message>
     <message name = "reply">
         Response back to client
         <field name = "service" type = "string">Service name</field>
-        <field name = "body" type = "opaque">Response body</field>
+        <field name = "body" type = "frame">Response body</field>
     </message>
 </class>
