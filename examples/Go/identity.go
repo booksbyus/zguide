@@ -15,19 +15,17 @@ func dump(sink zmq.Socket) {
 	if err != nil { fmt.Println(err) }
 	for _, msgdata := range parts {
 	  is_text := true
-	  for char := range msgdata {
-		if char < 17 || char > 127 {
+	  fmt.Printf("[%03d] ", len(msgdata))
+	  for _, char := range msgdata {
+		if char < 32 || char > 127 {
 		  is_text = false
 		}
 	  }
 	  if is_text {
-		fmt.Printf("%U\n", msgdata)
-	  } else {
 		fmt.Printf("%s\n", msgdata)
+	  } else {
+		fmt.Printf("%X\n", msgdata)
 	  }
-	  /*fmt.Printf("%T\n", msgdata)*/
-	  /*fmt.Printf("%s\n", msgdata)*/
-	  /*fmt.Printf("%x\n", msgdata)*/
 	}
 }
 
