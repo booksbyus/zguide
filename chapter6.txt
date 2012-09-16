@@ -1,4 +1,1123 @@
 .output chapter6.wd
-++ Chapter Six - 
+++ Chapter Six - The Human Scale
 
-To write a winning poem, first learn the language.
+If you've survived the first five chapters, congratulations. It was hard for for me too. Happily the jokes and the code mostly write themselves, so we'll continue with our journey of exploring 0MQ. In this chapter I'm going to step back from the nuts and bolts of 0MQ's technical machinery, and look more at how to use 0MQ successfully in a larger project. Rather more personal opinion, rather less raw code.
+
++++ The Tale of Two Bridges
+
+Two old engineers were talking of their lives and boasting of their greatest projects. One of the engineers explained how he had designed one of the greatest bridges ever made.
+
+"We built it across a river gorge," he told his friend. "It was wide and deep. We spent two years studying the land, and choosing designs and materials. We hired the best engineers and designed the bridge, which took another five years. We contracted the largest engineering firms to build the structures, the towers, the tollbooths, and the roads that would connect the bridge to the main highways. Dozens died during the construction. Under the road level we had trains, and a special path for cyclists. That bridge represented years of my life."
+
+The second man reflected for a while, then spoke. "One evening me and a friend got drunk on vodka, and we threw a rope across a gorge," he said. "Just a rope, tied to two trees. There were two villages, one at each side. At first, people pulled packages across that rope with a pulley and string. Then someone pulled across a second rope, and built a foot walk. It was dangerous, but the kids loved it. A group of men then rebuilt that, made it solid, and women started to cross, everyday, with their produce. A market grew up on one side of the bridge, and slowly that became a large town, since there was a lot of space for houses. The rope bridge got replaced with a wooden bridge, to allow horses and carts to cross. Then the town built a real stone bridge, with metal beams. Later, they replaced the stone part with steel, and today there's a suspension bridge standing in that same spot."
+
+The first engineer was silent. "Funny thing," he said, "my bridge was demolished about ten years after we built it. Turns out it was built in the wrong place and no-one wanted to use it. Some guys had thrown a rope across the gorge, a few miles further downstream, and that's where everyone went."
+
++++ Code on the Human Scale
+
+To write a winning poem, first learn the language. To use 0MQ successfully at scale you have to learn two languages. The first is 0MQ itself. This takes even the best of us time. It's a truism that if you try to port an old architecture onto 0MQ, the results are going to be weird. 0MQ's language is subtle and profound and when you master it you will find yourself removing old complexity, not porting it.
+
+However the real challenge of using 0MQ is that old barriers fall away, and the size of the projects you can do increases hugely. Non-distributed code is often a single-person project. You can work in your corner, perhaps for years, like an author on a book. It's all about concentration. But distributed code is different. To quote my favorite author, it "has to talk to code, has to be chatty, sociable, well-connected".
+
+Writing distributed code is like playing live music: it's all about other people. Concentration is worthless if you can't listen. No-one enjoys listening to an amazingly proficient musician who's out of time with the rest of the group. A live jam is entrancing not because of the technical quality but because of the real-time creative energy.
+
+And so it goes with distributed code. Real-time creative energy is what wins, not pure technical quality, and certainly not technical quality combined with inability to work with others.
+
+All this is fine in theory. Here comes the hard part: working with other people is //plain hard//. We can expect a musician to be naturally social. But software developers? We're the very caricature of anti-social tunnel-visioned hermits. Other people are hard work. They're slow, they make mistakes, they ask too many questions, they don't respect our code, they make wrong assumptions, they argue.
+
+My response isn't very sympathetic. To succeed in the software industry as it turns into something more like a never-ending live jam, we have to learn to work successfully with others, to put away our natural insolence and attitude, and to learn to like and trust others.
+
+So this is what this chapter is mostly about. Writing code at scale by understanding ourselves much better. Of course these lessons apply to all large-scale applications. Using 0MQ we just hit the problem sooner than we'd expect.
+
++++ Psychology of Software Development
+
+Dirkjan Ochtman pointed me to [http://en.wikipedia.org/wiki/Software_architecture Wikipedia's definition of Software Architecture] as "//the set of structures needed to reason about the system, which comprise software elements, relations among them, and properties of both//". For me this is a good example of how miserably little we understand about what actually makes a successful large scale software architecture.
+
+One of the reasons software projects I lead, no matter how ambitious, tend to work is because I see the core problems in software architecture as are driven by human psychology, not technology. "Software is made of people", is how I like to put it. If this wasn't true in the past (or at least, not literally true... there was, I'm told, an era when software was made of ground-up mathematicians), it's certainly true today, and getting truer every day.
+
+There are many ways our psychology affects our work. I could point to the way teams seem to get stupider as they get larger, or have to work across larger distances. Does that mean the smaller the team, the more effective? How then does a large global community like 0MQ manage to work successfully?
+
+The 0MQ community wasn't accidental, it was a deliberate design, my contribution to the early days when the code came out of a cellar in Bratislava. The design was based on my pet science of "Social Architecture", which [http://en.wikipedia.org/wiki/Social_architecture Wikipedia defines] (what a coincidence!) as "//the process, and the product, of planning, designing, and growing an on-line community.//"
+
+One of the tenets of Social Architecture is that how we organize is more significant than who we are. The same group, organized differently, can produce entirely opposite results. If you're the architect of a larger 0MQ application, you're going to have to help others organize. Do this right, and your project can succeed. Do it wrong, and your project will fail.
+
+The two most important psychological elements are, in my experience, that we're really bad at understanding complexity, and that we are so good at working together to divide and conquer large problems. We're highly social apes, and kind of smart, but only in the right kind of crowd.
+
+So here is my short list of the Psychological Elements of Software Architecture:
+
+* **Stupidity**: our mental bandwidth is limited, so we're all stupid at some point. The architecture has to be simple to understand. This is the number one rule: simplicity beats functionality, every single time. If you can't understand an architecture on a cold gray Monday morning before coffee, it is too complex.
+
+* **Selfishness**: we act only out of self-interest, so the architecture must create space and opportunity for selfish acts that benefit the whole. Selfishness is often indirect and subtle. For example I'll spend hours helping someone else understand something because that could be worth days to me later.
+
+* **Laziness**: we make lots of assumptions, many of which are wrong. We are happiest when we can spend the least effort to get a result, to test an assumption quickly, so the architecture has to make this possible. Specifically, that means it must be simple.
+
+* **Jealousy**: we're jealous of others, which means we'll overcome our stupidity and laziness to prove others wrong, and beat them in competition. The architecture thus has to create space for public competition based on fair rules that anyone can understand.
+
+* **Reciprocity**: we'll pay extra in terms of hard work, even money, to punish cheats and enforce fair rules. The architecture should be heavily rule-based, telling people how to work together, but not what to work on.
+
+* **Pride**: we're intensely aware of our social status, and we'll work hard to avoid looking stupid or incompetent in public. The architecture has to make sure every piece we make has our name on it, so we'll have sleepless nights stressing about what others will say about our work.
+
+* **Greed**: we're ultimately economic animals (see selfishness), so the architecture has to give us economic incentive to invest in making it happen. Maybe it's polishing our reputation as experts, maybe it's literally making money from some skill or component. Think of architecture as a market place, not an engineering design.
+
+* **Conformity**: we're happiest to conform, out of fear and laziness, which can be good but is mostly a problem. The architecture should encourage diversity of thought and action. The only conformity that's needed is adherence to rules on remixing and ownership.
+
+* **Fear**: we're unwilling to take risks, especially if it makes us look stupid. Fear of failure is a major reason people conform and follow the group in mass stupidity. The architecture should make silent experimentation easy and cheap, giving people opportunity for success without punishing failure.
+
+These strategies work on large scale but also on small scale, within an organization or team.
+
++++ The Bad, the Ugly, and the Delicious
+
+Complexity is easy, it's simplicity that is hard. Whether our software is bad, ugly, or so delicious that it feels wrong to consume alone, doesn't depend so much on our individual skills as how we work together. That is, our processes.
+
+There are many aspects to getting product-building teams and organizations to think wisely. You need diversity, freedom, challenge, resources, and so on. I discuss these in detail in my book, [http://swsi.info Software and Silicon]. However, even if you have all the right ingredients, the default processes that skilled engineers and designers develop will result in complex, hard-to-use products.
+
+The classic errors are: to focus on ideas, not problems; to focus on the wrong problems; to misjudge the value of solving problems; to not use ones' own work; and in many other ways to misjudge the real market.
+
+I'll propose a process called "Simplicity Oriented Design", or SOD, which is as far as I can tell a reliable, repeatable way of developing simple and elegant products. This process organizes people into flexible supply chains that are able to navigate a problem landscape rapidly and cheaply. They do this by building, testing, and keeping or discarding minimal plausible solutions, called "patches". Living products consist of long series of patches, applied one atop the other. Yes, you may recognize the process by which we develop 0MQ.
+
+Let's first look at the more common and less joyful processes, TOD and COD.
+
+++++ Trash-Oriented Design
+
+The most popular design process in large businesses seems to be "Trash Oriented Design", or TOD. TOD feeds off the belief that all we need to make money are great ideas. It's tenacious nonsense but a powerful crutch for people who lack imagination. The theory goes that ideas are rare, so the trick is to capture them. It's like non-musicians being awed by a guitar player, not realizing that great talent is so cheap it literally plays on the streets for coins.
+
+The main output of TODs are expensive "ideations": concepts, design documents, and products that go straight into the trash can. It works as follows:
+
+* The Creative People come up with long lists of "we could do X and Y". I've seen endlessly detailed lists of everything amazing a product could do. Once the creative work of idea generation has happened, it's just a matter of execution, of course.
+
+* So the managers and their consultants pass their brilliant, world-shattering ideas to designers who acres of detailed, preciously refined design documents. The designers take the tens of ideas the managers came up with, and turn them into hundreds of amazing, world-changing designs.
+
+* These designs get given to engineers who scratch their heads and wonder who the heck came up with such stupid nonsense. They start to argue back but the designs come from up high, and really, it's not up to engineers to argue with creative people and expensive consultants.
+
+* So the engineers creep back to their cubicles, humiliated and threatened into building the gigantic but oh-so-elegant pile of junk. It is bone-breakingly hard work since the designs take no account of practical costs. Minor whims might take weeks of work to build. As the project gets delayed, the managers bully the engineers into giving up their evenings and weekends.
+
+* Eventually, something resembling a working product makes it out of the door. It's creaky and fragile, complex and ugly. The designers curse the engineers for their incompetence and pay more consultants to put lipstick onto the pig, and slowly the product starts to look a little nicer.
+
+* By this time, the managers have started to try to sell the product and they find, shockingly, that no-one wants it. Undaunted and courageously they build million-dollar web sites and ad campaigns to explain to the public why they absolutely need this product. They do deals with other businesses to force the product on the lazy, stupid and ungrateful market.
+
+* After twelve months of intense marketing, the product still isn't making profits. Worse, it suffers dramatic failures and gets branded in the press as a disaster. The company quietly shelves it, fires the consultants, buys a competing product from a small start-up and re-brands that as its own Version 2. Hundreds of millions of dollars end-up in the trash.
+
+* Meanwhile, another visionary manager, somewhere in the Organization, drinks a little too much tequila with some marketing people and has a Brilliant Idea.
+
+Trash-Oriented Design would be a caricature if it wasn't so common. Something like 19 out of 20 market-ready products built by large firms are failures (yes, 87% of statistics are made up on the spot). The remaining one in 20 probably only succeeds because the competitors are so bad and the marketing is so aggressive.
+
+The main lessons of TOD are quite straight-forward but hard to swallow. They are:
+
+* Ideas are cheap. No exceptions. There are no brilliant ideas. Anyone who tries to start a discussion with "oooh, we can do this too!" should be beaten down with all the passion one reserves for traveling evangelists. It is like sitting in a cafe at the foot of a mountain, drinking a hot chocolate and telling others, "//hey, I have a great idea, we can climb that mountain! And build a chalet on top! With two saunas! And a garden! Hey, and we can make it solar powered! Dude, that's awesome! What color should we paint it? Green! No, blue! OK, go and make it, I'll stay here and make spreadsheets and graphics!//"
+
+* The starting point for a good design process is to collect real problems that confront real people. The second step is to evaluate these problems with the basic question, "how much is it worth to solve this problem?" Having done that, we can collect that set of problems that are worth solving.
+
+* Good solutions to real problems will succeed as products. Their success will depend on how good and cheap the solution is, and how important the problem is (and sadly, how big the marketing budgets are). But their success will also depend on how much they demand in effort to use, in other words how simple they are.
+
+Hence after slaying the dragon of utter irrelevance, we attack the demon of complexity.
+
+++++ Complexity-Oriented Design
+
+Really good engineering teams and small firms can usually build decent products. But the vast majority of products still end up being too complex and less successful than they might be. This is because specialist teams, even the best, often stubbornly apply a process I call "Complexity-Oriented Design", or COD, which works as follows:
+
+* Management correctly identifies some interesting and difficult problem with economic value. In doing so they already leapfrog over any TOD team.
+
+* The team with enthusiasm start to build prototypes and core layers. These work as designed and thus encouraged, the team go off into intense design and architecture discussions, coming up with elegant schemas that look beautiful and solid.
+
+* Management comes back and challenges team with yet more difficult problems. We tend to equate value with cost, so the harder the problem, and more expensive to solve, the more the solution should be worth, in their minds.
+
+* The team, being engineers and thus loving to build stuff, build stuff. They build and build and build and end-up with massive, perfectly-designed complexity.
+
+* The products go to market, and the market scratches its head and asks, "seriously, is this the best you can do?" People do use the products, especially if they aren't spending their own money in climbing the learning curve.
+
+* Management gets positive feedback from its larger customers, who share the same idea that high cost (in training and use) means high value. and so continues to push the process.
+
+* Meanwhile somewhere across the world, a small team is solving the same problem using a better process, and a year later smashes the market to little pieces.
+
+COD is characterized by a team obsessively solving the wrong problems to the point of collective insanity. COD products tend to be large, ambitious, complex, and unpopular. Much open source software is the output of COD processes. It is insanely hard for engineers to **stop** extending a design to cover more potential problems. They argue, "what if someone wants to do X?" but never ask themselves, "what is the real value of solving X?"
+
+A good example of COD in practice is Bluetooth, a complex, over-designed set of protocols that users hate. It continues to exist only because in a massively-patented industry there are no real alternatives. Bluetooth is perfectly secure, which is close to pointless for a proximity protocol. At the same time it lacks a standard API for developers, meaning it's really costly to use Bluetooth in applications.
+
+On the #zeromq IRC channel, Wintre once wrote of how enraged he was many years ago when he "//found that XMMS 2 had a working plugin system but could not actually play music.//"
+
+COD is a form of large-scale "rabbit holing", in which designers and engineers cannot distance themselves from the technical details of their work. They add more and more features, utterly misreading the economics of their work.
+
+The main lessons of COD are also simple but hard for experts to swallow. They are:
+
+* Making stuff that you don't immediately have a need for is pointless. Doesn't matter how talented or brilliant you are, if you just sit down and make stuff people are not actually asking for, you are most likely wasting your time.
+
+* Problems are not equal. Some are simple, and some are complex. Ironically, solving the simpler problems often has more value to more people than solving the really hard ones. So if you allow engineers to just work on random things, they'll most focus on the most interesting but least worthwhile things.
+
+* Engineers and designers love to make stuff and decoration, and this inevitably leads to complexity. It is crucial to have a "stop mechanism", a way to set short, hard deadlines that force people to make smaller, simpler answers to just the most crucial problems.
+
+++++ Simplicity-Oriented Design
+
+Finally, we come to the rare but precious Simplicity-Oriented Design. This process starts with a realization: we do not know what we have to make until after we start making it. Coming up with ideas, or large-scale designs isn't just wasteful, it's a direct hindrance to designing the truly accurate solutions. The really juicy problems are hidden like far valleys, and any activity except active scouting creates a fog that hides those distant valleys. You need to keep mobile, pack light, and move fast.
+
+SOD works as follows:
+
+* We collect a set of interesting problems (by looking at how people use technology or other products) and we line these up from simple to complex, looking for and identifying patterns of use.
+
+* We take the simplest, most dramatic problem and we solve this with a minimal plausible solution, or "patch". Each patch solves exactly a genuine and agreed problem in a brutally minimal fashion.
+
+* We apply one measure of quality to patches, namely "can this be done any simpler while still solving the stated problem?" We can measure complexity in terms of concepts and models that the user has to learn or guess in order to use the patch. The fewer, the better. A perfect patch solves a problem with zero learning required by the user.
+
+* Our product development consists of a patch that solves the problem "we need a proof of concept" and then evolves in an unbroken line to a mature series of products, through hundreds or thousands of patches piled on top of each other.
+
+* We do not do //anything// that is not a patch. We enforce this rule with formal processes that demand that every activity or task is tied to a genuine and agreed problem, explicitly enunciated and documented.
+
+* We build our projects into a supply chain where each project can provide problems to its "suppliers" and receive patches in return. The supply chain creates the "stop mechanism" since when people are impatiently waiting for an answer, we necessarily cut our work short.
+
+* Individuals are free to work on any projects, and provide patches at any place they feel it's worthwhile. No individuals "own" any project, except to enforce the formal processes. A single project can have many variations, each a collection of different, competing patches.
+
+* Projects export formal and documented interfaces so that upstream (client) projects are unaware of change happening in supplier projects. Thus multiple supplier projects can compete for client projects, in effect creating a free and competitive market.
+
+* We tie our supply chain to real users and external clients and we drive the whole process by rapid cycles so that a problem received from outside users can be analyzed, evaluated, and solved with a patch in a few hours.
+
+* At every moment from the very first patch, our product is shippable. This is essential, because a large proportion of patches will be wrong (10-30%) and only by giving the product to users can we know which patches have become problems and themselves need solving.
+
+SOD is a form of "hill climbing algorithm", a reliable way of finding optimal solutions to the most significant problems in an unknown landscape. You don't need to be a genius to use SOD successfully, you just need to be able to see the difference between the fog of activity and the progress towards new real problems.
+
+A really good designer with a good team can use SOD to build world-class products, rapidly and accurately. To get the most out of SOD, the designer has to use the product continuously, from day 1, and develop his or her ability to smell out problems such as inconsistency, surprising behavior, and other forms of friction. We naturally overlook many annoyances but a good designer picks these up, and thinks about how to patch them. Design is about removing friction in the use of a product.
+
+In an open source setting, we do this work in public. There's no "let's open the code" moment (projects that do this are in my view missing the point of open source). The goal is to engage your users in your exploration, and to build community around the seed of the architecture. I'll come back to both these topics soon enough.
+
++++ Message Oriented Pattern for Elastic Design
+
+Now I'll introduce MOPED, which is a SOD pattern custom-designed for 0MQ architectures. It was either MOPED or BIKE, the Backronym-Induced Kinetic Effect. That's short for BICICLE, the Backronym-Inflated See if I Care Less Effect. In life, one learns to go with the least embarrassing choices.
+
+Speaking of embarrassments, just as 0MQ lets us aim for really massive architectures, it also, like any technology that removes friction, opens the door to truly massive blunders. If 0MQ is the ACME rocket-propelled shoe of distributed software development, a lot of us are like Wile E. Coyote, slamming full speed into the proverbial desert cliff.
+
+So MOPED is meant to save us from such mistakes. Partly it's about slowing down, partly it's about ensuring that when we move fast, we go - and this is essential, dear reader - in the //right direction//. It's my standard interview riddle: what's the rarest property of any software system, the absolute hardest thing to get right, the lack of which causes the slow or fast death of the vast majority of projects? The answer is not code quality, funding, performance, or even (though it's a close answer), popularity. The answer is "accuracy".
+
+If you've read the Guide observantly you'll have seen MOPED in action already. The development of Majordomo in Chapter 4 is a near-perfect case. But cute names are worth a thousand words.
+
+The goal of MOPED is to define a pattern, a process, by which we can take a rough use case for a new distributed application, and go from "hello world" to fully-working prototype in any language in under a week.
+
+Using MOPED, we grow, more than build, a working 0MQ architecture from the ground-up, with minimal risk of failure. By focusing on the contracts, rather than the implementations, we avoid the risk of premature optimization. By driving the design process through ultra-short test-based cycles, we can be more certain what we have works, before we add more.
+
+++++ Step 1: Internalize the Semantics
+
+To repeat myself: we have to learn 0MQ's language. The only way to learn a language is to use it. There's no way to avoid this investment, no tapes we can play while we sleep, no chips we can plug in to magically become smarter. Read the Guide, work through the code examples, understand what's going on, and (most importantly) write some examples yourself, and then //throw them away//.
+
+At a certain point you'll feel a clicking noise in your brain. Maybe you'll have a weird chili-induced dream where little 0MQ tasks run around trying to eat you alive. Maybe you'll just think "aaahh, so //that's// what it means!" If we did our work right, it should take 2-3 days. However long it takes, until we start thinking in terms of 0MQ sockets and patterns, we're not ready for step 2.
+
+++++ Step 2: Get a Rough Architecture
+
+Whiteboard time. Get a couple of colleagues and try to draw your architecture on a whiteboard. We want to draw boxes connected with arrows, showing the flow of work, data, results, etc. Since we live in a gravity well, it's best to draw the main arrows going down. Almost all architectures have a //direction//, and a certain symmetry, and what we want to do is capture that as simply and cleanly as we can.
+
+Ignore anything that's not central to the core problem. Ignore logging, error handling, recovery from failures, etc. What we leave out is as important as what we capture: we can always add, but it's very hard to remove. When we have a simple, clean drawing, we're ready for step 3.
+
+++++ Step 3: Decide on the Contracts
+
+Human scale depends on contracts, and the more explicit they are, the better things scale. We don't care //how// things happen, only the results. If I send an email, I don't care how it arrives at its destination, so long as the contract (it arrives within a few minutes, it's not modified, it doesn't get lost) is respected.
+
+And to build a large system that works well, we must focus on the contracts, before the implementations. It may sound obvious but all too often, people forget and ignore this, or are just too shy to impose themselves. I wish I could say 0MQ had done this properly but for years our public contracts were second-rate afterthoughts instead of primary in-your-face pieces of work.
+
+So what is a contract in a distributed system? There are, in my experience, two types of contract:
+
+* The APIs to client applications. Remember the Psychological Elements. The APIs need to be as absolutely //simple//, //consistent//, and //familiar// as possible. Yes, we can generate API documentation from code, but we must first design it, and designing an API is often hard. I'll explain how to make it easier.
+
+* The protocols that connect the pieces. It sounds like rocket science, but it's really just a simple trick, and one that 0MQ makes particularly easy. In fact they're so simple to write, and need so little bureaucracy that I call them "unprotocols". I'll explain how to write unprotocols in a minute.
+
+We don't actually //write// the contracts yet. That'll come later. For now it's sufficient to draw red squiggly lines across the architecture indicating where we intend to have contracts at all.
+
+We also want to write down any known technical requirements in terms of throughput, latency, reliability, etc. These are the criteria on which we will accept, or reject, any particular piece of work.
+
+++++ Step 4: Write a Minimal Test Case
+
+Imagine trying to write a HTTP client without a HTTP server to try it against. That would be insane, but it's what many teams do. "Let's spend months writing these pieces, and then try to make them work together during 'integration'. Oh, and about your vacation..." We want to be able to test code, as we write it, to weed-out the broken assumptions and inevitable errors we make. Do not go off and spend six months writing a test suite! Instead, make a minimal bare-bones application that uses our still-hypothetical API.
+
+If we design an API wearing the hat of the person who implements it, we'll start to think of performance, features, options, and so on. We'll make it more complex, more irregular, and more surprising than it should be. But, and here's the trick (it's a cheap one, was big in Japan), if we design an API while wearing the hat of the poor sucker who has to actually write apps that use it, we use all that laziness and fear to our advantage.
+
+Of course the test case will immediately fail since there's no API code. That's good. Now we can start our real work.
+
+++++ Step 5: Write a Minimal API
+
+Now we make a skeleton API that lets us build and run the test case so we can watch it fail gloriously. We're now in the Happy Loop of issue-driven development where we can start to solve tangible problems instead of adding features. Keep in mind, as you design the API, your standards for names, consistency, and behavior. Writing these down in prose often helps keep them sane.
+
+From here, every single change we make to the architecture and code is now proven by running the test case, watching it not work, making the change, and then watching it work.
+
+++++ Step 6: Write Minimal Protocols
+
+We write down the protocols, on a wiki or shared document, in such a way that we explain every command clearly without too much detail. Strip off any real functionality, because it'll create inertia that just makes it harder to move stuff around. We can always add weight. Don't spend effort defining formal message structures: pass the minimum around, in the simplest possible fashion, using 0MQ's multi-part framing.
+
+++++ Step 7: Implement an End-to-End Skeleton
+
+Our goal is to get the simplest test case working, without any avoidable functionality. Everything we can chop off the list of things to do, we chop. Ignore the groans from colleagues and bosses. I'll repeat this once again: we can //always// add functionality, that's relatively easy. But aim to keep the overall weight to a minimum.
+
+++++ Step 8: Solve One Problem at a Time
+
+Now we go through the whole cycle (extending the test case, fixing the API, updating the protocol, extending the code, as needed), taking problems one at a time and testing the solutions individually. It should take about 10-30 minutes for each cycle, with the occasional spike due to random confusion.
+
++++ Serializing your Data
+
+When we start to design a protocol, one of the first questions we face is how we encode data on the wire. There is, sadly, no universal answer. There are a half-dozen different ways to serialize data, each with pros and cons. We'll explore these with worked examples.
+
+However, there is a general lesson I've learned over a couple of decades of writing protocols small and large. I call this the "Cheap and Nasty" pattern: you can often split your work into two layers, and solve these separately, one using a "cheap" approach, the other using a "nasty" approach.
+
+++++ Cheap and Nasty
+
+The key insight to making Cheap and Nasty work is to realize that many protocols mix a low-volume chatty part for control, and a high-volume asynchronous part for data. For instance, HTTP has a chatty dialog to authenticate and get pages, and an asynchronous dialog to streaming data. FTP actually splits this over two ports; one port for control and one port for data.
+
+Protocol designers who don't separate control from data tend to make awful protocols, because the trade-offs in the two cases are almost totally opposite. What is perfect for control is terrible for data, and what's ideal for data just doesn't work for control. It's especially true when we want high-performance at the same time as extensibility and good error checking.
+
+Let's break this down using a classic client-server use-case. The client connects to the server, and authenticates. It then asks for some resource. The server chats back, then starts to send data back to the client. Eventually the client disconnects or the server finishes, and the conversation is over.
+
+Now, before starting to design these messages, stop and think, and let's compare the control dialog, and the data flow:
+
+* The control dialog lasts a short time and involve very few messages. The data flow could last for hours or days, and involve billions of messages.
+
+* The control dialog is where all the "normal" errors happen, e.g. not authenticated, not found, payment required, censored, etc. Any errors that happen during the data flow are exceptional (disk full, server crashed).
+
+* The control dialog is where things will change over time, as we add more options, parameters, and so on. The data flow should barely change over time since the semantics of a resource are fairly constant over time.
+
+* The control dialog is essentially a synchronous request/reply dialog. The data flow is essentially a 1-way asynchronous flow.
+
+These differences are critical. When we talk about performance, it applies //only// to data flows. It's pathological to design a one-time control dialog to be fast. When we talk about the cost of serialization, thus, this only applies to the data flow. The cost of encoding/decoding the control flow could be huge, and for many cases it would not change a thing. So, we encode control using "Cheap", and we encode data flows using "Nasty".
+
+Cheap is essentially synchronous, verbose, descriptive, and flexible. A Cheap message is full of rich information that can change for each application. Your goal as designer is to make this information easy to encode and to parse, trivial to extend for experimentation or growth, and highly robust against change both forwards and backwards. The Cheap part of a protocol looks like this:
+
+* It uses a simple self-describing structured encoding for data, be it XML, JSON, HTTP-style headers, or some other. Any encoding is fine so long as there are standard simple parsers for it in your target languages.
+
+* It uses a straight request-reply model where each request has a success/failure reply. This makes it trivial to write correct clients and servers for a Cheap dialog.
+
+* It doesn't try, even marginally, to be fast. Performance doesn't matter when you do something once or a few times per session.
+
+A Cheap parser is something you take off the shelf, and throw data at. It shouldn't crash, shouldn't leak memory, should be highly tolerant, and should be relatively simple to work with. That's it.
+
+Nasty however is essentially asynchronous, terse, silent, and inflexible. A Nasty message carries minimal information that practically never changes. Your goal as designer is to make this information ultrafast to parse, and possibly even impossible to extend and experiment with. The ideal Nasty pattern looks like this:
+
+* It uses a hand-optimized binary layout for data, where every bit is precisely crafted.
+
+* It uses a pure asynchronous model where one or both peers send data without acknowledgments (or if they do, they use sneaky asynchronous techniques like credit-based flow control).
+
+* It doesn't try, even marginally, to be friendly. Performance is all that matters when you are doing something several million times per second.
+
+A Nasty parser is something you write by hand, which writes or reads bits, bytes, words, and integers individually and precisely. It rejects anything it doesn't like, does no memory allocations at all, and never crashes.
+
+Cheap and Nasty isn't a universal pattern; not all protocols have this dichotomy. Also, how you use Cheap and Nasty will depend. In some cases, it can be two parts of a single protocol. In other cases it can be two protocols, one layered on top of the other.
+
+++++ 0MQ Framing
+
+The simplest and most widely used serialization format for 0MQ applications is 0MQ's own multi-part framing. For example, here is how the [http://rfc.zeromq.org/spec:7 Majordomo Protocol] defines a request:
+
+[[code]]
+Frame 0: Empty frame
+Frame 1: "MDPW01" (six bytes, representing MDP/Worker v0.1)
+Frame 2: 0x02 (one byte, representing REQUEST)
+Frame 3: Client address (envelope stack)
+Frame 4: Empty (zero bytes, envelope delimiter)
+Frames 5+: Request body (opaque binary)
+[[/code]]
+
+To read and write this in code is easy. But this is a classic example of a control flow (the whole of MDP is, really, since it's a chatty request-reply protocol). When we came to improve MDP for the second version, we had to change this framing. Excellent, we broke all existing implementations!
+
+Backwards compatibility is hard, but using 0MQ framing for control flows //does not help//. Here's how I should have designed this protocol if I'd followed by own advice (and I'll fix this in the next version). It's split into a Cheap part and a Nasty part, and uses the 0MQ framing to separate these:
+
+[[code]]
+Frame 0: "MDP/2.0" for protocol name and version
+Frame 1: command header
+Frame 2: command body
+[[/code]]
+
+Where we'd expect the parse the command header in the various intermediaries (client API, broker, and worker API), and pass the command body untouched from application to application.
+
+++++ Serialization Languages
+
+Serialization languages have their fashions. XML used to be big as in popular, then it got big as in over-engineered, and then it fell into the hands of "Enterprise Information Architects" and it's not been seen alive since. Today's XML is the epitome of "somewhere in that mess is small, elegant language trying to escape".
+
+Still XML, was way, way better than its predecessors which included such monsters as the Standard Generalized Markup Language (SGML), which in turn were a cool breeze compared to mind-torturing beasts like EDIFACT. So the history of serialization languages seems to be of gradually emerging sanity, hidden by waves of revolting EIAs doing their best to hold onto their jobs.
+
+JSON popped out of the JavaScript world as a quick-and-dirty "I'd rather resign than use XML here" way to throw data onto the wire and get it back again. JSON is just minimal XML expressed, sneakily, as JavaScript source code.
+
+Here's a simple example of using JSON in a Cheap protocol:
+
+[[code]]
+"protocol": {
+    "name": "MTL",
+    "version": 1
+},
+"virtual-host": "test-env"
+[[/code]]
+
+The same in XML would be (XML forces us to invent a single top-level entity):
+
+[[code]]
+<command>
+    <protocol name = "MTL" version = "1" />
+    <virtual-host>test-env</virtual-host>
+</command>
+[[/code]]
+
+And using plain-old HTTP-style headers:
+
+[[code]]
+Protocol: MTL/1.0
+Virtual-host: test-env
+[[/code]]
+
+These are all pretty equivalent so long as you don't go overboard with validating parsers, schemas and such "trust us, this is all for your own good" nonsense. A Cheap serialization language gives you space for experimentation for free ("ignore any elements/attributes/headers that you don't recognize"), and it's simple to write generic parsers that e.g. thunk a command into a hash table, or vice-versa.
+
+However it's not all roses. While modern languages have full support for JSON and XML, older languages do not. If you use XML or JSON, you create non-trivial dependencies. It's also somewhat of a pain to work with tree-structured data in a language like C.
+
+So you can drive your choice according to the languages you're aiming for. If your universe is a scripting language then go for JSON. If you are aiming to build protocols for wider system use, keep things simple for C developers and stick to HTTP-style headers.
+
+++++ Serialization Libraries
+
+The msgpack.org site says, "It's like JSON. but fast and small. MessagePack is an efficient binary serialization format. It lets you exchange data among multiple languages like JSON but it's faster and smaller. For example, small integers (like flags or error code) are encoded into a single byte, and typical short strings only require an extra byte in addition to the strings themselves."
+
+I'm going to make the perhaps unpopular claim that "fast and small" are features that solve non-problems. The only real problem that serialization libraries solve is, as far as I can tell, the need to document the message contracts and actually serialize data to and from the wire.
+
+Let's start with "fast and small". It's based on a two-part argument. First, that making your messages smaller, and that reducing CPU cost for encoding and decoding will make a significant different to your application's performance. Second, that this equally valid across-the-board to all messages.
+
+But most real applications tend to fall into one of two categories. Either the speed of serialization and size of encoding is marginal compared to other costs, such as database access or application code performance. Or, network performance really is critical, and then all significant costs occur in a few specific message types.
+
+Thus, aiming for "fast and small" across the board is a false optimization. You neither get the easy flexibility of Cheap for your infrequent control flows, nor do you get the brutal efficiency of Nasty for your high-volume data flows. Worse, the assumption that all messages are equal in some way can corrupt your protocol design. Cheap and Nasty isn't only about serialization strategies, it's also about synchronous vs. asynchronous, error handling, and the cost of change.
+
+My experience is that most performance problems in message-based applications can be solved by (a) improving the application itself and (b) hand-optimizing the high-volume data flows. And to hand-optimize your most critical data flows, you need to cheat, know and exploit facts about your data, which is something general-purpose serializers cannot do.
+
+Now to documentation: the need to write our contracts explicitly and formally, not in code. This is a valid problem to solve, indeed one of the main ones if we're to build a long-lasting large-scale message-based architecture.
+
+Here is how we describe a typical message using the MessagePack IDL:
+
+[[code]]
+message Person {
+  1: string surname
+  2: string firstname
+  3: optional string email
+}
+[[/code]]
+
+Now, the same message using the protobufs IDL:
+
+[[code]]
+message Person {
+  required string surname = 1;
+  required string firstname = 2;
+  optional string email = 3;
+}
+[[/code]]
+
+It works but in most practical cases, wins you little over a serialization language backed by decent specifications written by hand or produced mechanically (we'll come to this). The price you'll pay is an extra dependency, and quite probably, worse overall performance than if you used Cheap and Nasty.
+
+++++ Hand-written Binary Serialization
+
+As you'll gather from this book, my preferred language for systems programming is C (upgraded to C99, with a constructor/destructor API model and generic containers). There are two reasons I like this modernized C language: firstly, I'm too weak-minded to learn a big language like C++. Life just seems filled with more interesting things to understand. Secondly, I find that this specific level of manual control lets me produce better results.
+
+The point here isn't C vs. C++ but the value of manual control for high-end professional users. It's no accident that the best cars and cameras and espresso machines in the world have manual controls. That level of on-the-spot fine-tuning often makes the difference between world-class success, and second-best.
+
+When you are really, truly, concerned about the speed of serialization and/or the size of the result (often these contradict each other), you need hand-written binary serialization, in other words, let's hear it for Mr. Nasty!
+
+Your basic process for writing an efficient Nasty encoder/decoder (codec) is:
+
+* Build representative data sets and test applications that can stress-test your codec.
+* Write a first dumb version of the codec.
+* Test, measure, improve, and repeat until you run out of time and/or money.
+
+Here are some of the techniques we use to make our codecs better:
+
+* //Use a profiler.// There's simply no way to know what your code is doing until you've profiled it, for function counts and for CPU cost per function. Once you find your hot-spots, fix them.
+
+* //Eliminate memory allocations.// On a modern Linux kernel the heap is very fast, but it's still the bottleneck in most naive codecs. On older kernels the heap can be tragically slow. Use local variables (the stack) instead of the heap where you can.
+
+* //Test on different platforms and with different compilers and compiler options.// Apart from the heap, there are many other differences. You need to learn the main ones, and allow for these.
+
+* //Use state to compress better.// If you are concerned about codec performance, you are almost definitely sending the same kinds of data many times. There will be redundancy between instances of data. You can detect these, and use that to compress (e.g. a short value that means "same as last time").
+
+* //Know your data.// The best compression techniques (in terms of CPU cost for compactness) require knowing about the data. For example the techniques to compress a word list, a video, and a stream of stock market data are all different.
+
+* //Be ready to break the rules.// Do you really need to encode integers in big-endian network byte order? x86 and ARM account for almost all modern CPUs, yet use little-endian (ARM is actually bi-endian but Android, like Windows and iOS, is little-endian).
+
+++++ Code Generation
+
+Reading the previous two sections, you might have wondered, "could I write my own IDL generator that was better than a general-purpose one?" If this thought wandered into your mind, it probably left pretty soon after, chased by dark calculations about how much work that actually involved.
+
+What if I told you of a way to build custom IDL generators cheaply and quickly? A way to get perfectly documented contracts, code that is as evil and domain-specific as you need, and all you need to do is sign away your soul (//who ever really used that, amirite?//) right here...
+
+At iMatix, until a few years ago, we used code generation to build ever larger and more ambitious systems until we decided the technology (GSL) was too dangerous for common use, and we sealed the archive and locked it, with heavy chains, in a deep dungeon. Well, we actually posted it on github. If you want to try the examples that are coming up, grab [https://github.com/imatix/gsl the repository] and build yourself a {{gsl}} command.
+
+This section isn't really about GSL at all, but about a useful and little-known trick that's useful for ambitious architects who want to scale themselves, as well as their work. Once you learn the trick is, you can whip up your own code generators in a short time. The code generators most software engineers know about come with a single hard-coded model. For instance, "Ragel compiles executable finite state machines from regular languages", i.e. Ragel's model is a regular language. This certainly works for a good set of problems but it's far from universal. How do you describe an API in Ragel? Or a project makefile? Or even a finite-state machine like the one we used to design the Binary Star pattern in Chapter 4?
+
+All these would benefit from code generation, but there's no universal model. So the trick is to design your own models as you need them, then make code generators as cheap compilers for that model. You need some experience in how to make good models, and you need a technology that makes it cheap to build custom code generators. Scripting languages like Perl and Python are a good option. However we actually built GSL specifically for this, and that's what I prefer.
+
+Let's take simple example that ties into what we already know. We'll see more extensive examples later, because I really do believe that code generation is crucial knowledge. In Chapter 4, we developed the [http://rfc.zeromq.org/spec:7 Majordomo Protocol (MDP)], and wrote clients, brokers, and workers for that. Now could we generate those pieces mechanically, by building our own interface description language and code generators?
+
+When we write a GSL model, we can use //any// semantics we like. So for this exercise our model consists of "classes" that contain "messages" that contain "fields" of various types. It's deliberately familiar. Here is the MDP client protocol:
+
+[[code]]
+<class name = "mdp_client">
+    MDP/Client
+    <header>
+        <field name = "empty" type = "string" value = "">Empty frame</field>
+        <field name = "protocol" type = "string" value = "MDPC01">Protocol identifier</field>
+    </header>
+    <message name = "request">
+        Client request to broker
+        <field name = "service" type = "string">Service name</field>
+        <field name = "body" type = "frame">Request body</field>
+    </message>
+    <message name = "reply">
+        Response back to client
+        <field name = "service" type = "string">Service name</field>
+        <field name = "body" type = "frame">Response body</field>
+    </message>
+</class>
+[[/code]]
+
+And here is the MDP worker protocol:
+
+[[code]]
+<class name = "mdp_worker">
+    MDP/Worker
+    <header>
+        <field name = "empty" type = "string" value = "">Empty frame</field>
+        <field name = "protocol" type = "string" value = "MDPW01">Protocol identifier</field>
+        <field name = "id" type = "octet">Message identifier</field>
+    </header>
+    <message name = "ready" id = "1">
+        Worker tells broker it is ready
+        <field name = "service" type = "string">Service name</field>
+    </message>
+    <message name = "request" id = "2">
+        Client request to broker
+        <field name = "client" type = "frame">Client address</field>
+        <field name = "body" type = "frame">Request body</field>
+    </message>
+    <message name = "reply" id = "3">
+        Worker returns reply to broker
+        <field name = "client" type = "frame">Client address</field>
+        <field name = "body" type = "frame">Request body</field>
+    </message>
+    <message name = "hearbeat" id = "4">
+        Either peer tells the other it's still alive
+    </message>
+    <message name = "disconnect" id = "5">
+        Either peer tells other the party is over
+    </message>
+</class>
+[[/code]]
+
+GSL uses XML as its modeling language. XML has a poor reputation, having been dragged through too many enterprise sewers to smell sweet, but it has some strong positives, as long as you keep it simple. Any way to write a self-describing hierarchy of items and attributes would work.
+
+Now here is a short IDL generator written in GSL that turns our protocol models into documentation:
+
+[[code]]
+.#  Trivial IDL generator (specs.gsl)
+.#
+.output "$(class.name).md"
+## The $(string.trim (class.?''):left) Protocol
+.for message
+.   frames = count (class->header.field) + count (field)
+
+A $(message.NAME) command consists of a multi-part message of $(frames) frames:
+
+.   for class->header.field
+.       if name = "id"
+* Frame $(item ()): 0x$(message.id:%02x) (1 byte, representing $(message.NAME))
+.       else
+* Frame $(item ()): "$(value:)" ($(string.length ("$(value)")) bytes, $(field.:))
+.       endif
+.   endfor
+.   index = count (class->header.field) + 1
+.   for field
+* Frame $(index): $(field.?'') \
+.       if type = "string"
+(printable string)
+.       elsif type = "frame"
+(opaque binary)
+.           index += 1
+.       else
+.           echo "E: unknown field type: $(type)"
+.       endif
+.       index += 1
+.   endfor
+.endfor
+[[/code]]
+
+The XML models and this script are in the subdirectory examples/Chapter6. To do the code generation I give this command:
+
+[[code]]
+gsl -script:specs mdp_client.xml mdp_worker.xml
+[[/code]]
+
+Here is the Markdown text we get for the worker protocol:
+
+[[code]]
+## The MDP/Worker Protocol
+
+A READY command consists of a multi-part message of 4 frames:
+
+* Frame 1: "" (0 bytes, Empty frame)
+* Frame 2: "MDPW01" (6 bytes, Protocol identifier)
+* Frame 3: 0x01 (1 byte, representing READY)
+* Frame 4: Service name (printable string)
+
+A REQUEST command consists of a multi-part message of 5 frames:
+
+* Frame 1: "" (0 bytes, Empty frame)
+* Frame 2: "MDPW01" (6 bytes, Protocol identifier)
+* Frame 3: 0x02 (1 byte, representing REQUEST)
+* Frame 4: Client address (opaque binary)
+* Frame 6: Request body (opaque binary)
+
+A REPLY command consists of a multi-part message of 5 frames:
+
+* Frame 1: "" (0 bytes, Empty frame)
+* Frame 2: "MDPW01" (6 bytes, Protocol identifier)
+* Frame 3: 0x03 (1 byte, representing REPLY)
+* Frame 4: Client address (opaque binary)
+* Frame 6: Request body (opaque binary)
+
+A HEARBEAT command consists of a multi-part message of 3 frames:
+
+* Frame 1: "" (0 bytes, Empty frame)
+* Frame 2: "MDPW01" (6 bytes, Protocol identifier)
+* Frame 3: 0x04 (1 byte, representing HEARBEAT)
+
+A DISCONNECT command consists of a multi-part message of 3 frames:
+
+* Frame 1: "" (0 bytes, Empty frame)
+* Frame 2: "MDPW01" (6 bytes, Protocol identifier)
+* Frame 3: 0x05 (1 byte, representing DISCONNECT)
+[[/code]]
+
+Which as you can see is close to what I wrote by hand in the original spec. Now, if you have cloned the Guide repository and you are looking at the code in examples/Chapter6, you can generate the MDP client and worker codecs. We pass the same two models to a different code generator:
+
+[[code]]
+gsl -script:codec_c mdp_client.xml mdp_worker.xml
+[[/code]]
+
+Which gives us mdp_client and mdp_worker classes. Actually MDP is so simple that it's barely worth the effort of writing the code generator. The profit comes when we want to change the protocol (which we did for the standalone Majordomo project). You modify the protocol, run the command, and out pops more perfect code.
+
+The {{codec_c.gsl}} code generator is not short, but the resulting codecs are much better than the hand-written code I originally put together for Majordomo. For instance the hand-written code had no error checking, and would die if you passed it bogus messages.
+
+I'm now going to explain the pros and cons of GSL-powered model-oriented code generation. Power does not come for free and one of the greatest traps in our business is the ability to invent concepts out of thin air. GSL makes this particularly easy, so can be a particularly dangerous tool.
+
+//Do not invent concepts//. The job of a designer is to remove problems, not to add features.
+
+So, first, the advantages of model-oriented code generation:
+
+* You can create 'perfect' abstractions that map to your real world. So, our protocol model maps 100% to the 'real world' of Majordomo. This would be impossible without the freedom to tune and change the model in any way.
+* You can develop these perfect models quickly and cheaply.
+* You can generate //any// text output. From a single model you can create documentation, code in any language, test tools, literally any output you can think of.
+* You can generate (and I mean this literally) //perfect// output since it's cheap to improve your code generators to any level you want.
+* You get a single source that combines specifications and semantics.
+* You can leverage a small team to a massive size. At iMatix we produced the million-line OpenAMQ messaging product out of perhaps 85K lines of input models, including the code generation scripts themselves.
+
+Now the disadvantages:
+
+* You add tool dependencies to your project.
+* You may get carried away and create models for the pure joy of creating them.
+* You may alienate newcomers to your work, who will see "strange stuff".
+* You may give people a strong excuse to not invest in your project.
+
+Cynically, model-oriented abuse works great in environments where you want to produce huge amounts of perfect code that you can maintain with little effort, and which //no-one can ever take away from you.// Personally, I like to cross my rivers and move on. But if long-term job security is your thing, this is almost perfect.
+
+So if you do use GSL and want to create open communities around your work, here is my advice:
+
+* Use only where you would otherwise be writing tiresome code by hand.
+* Design natural models that are what people would expect to see.
+* Write the code by hand first so you know what to generate.
+* Do not overuse! Keep it simple! //Do not get too meta!!//
+* Introduce gradually into a project.
+* Put the generated code into your repositories.
+
+We're already using GSL in some projects around 0MQ, for example the high-level C binding, CZMQ, uses GSL to generate the socket options class (zsockopt). A 300-line code generator turns 78 lines of XML model into 1,500 lines of perfect but really boring code. That's a good win.
+
++++ Unprotocols
+
+When this man thinks of protocols, this man thinks of massive documents written by committees, over years. This man thinks of the IETF, W3C, ISO, Oasis, regulatory capture, FRAND patent license disputes, and soon after, this man thinks of retirement to a nice little farm in northern Bolivia up in the mountains where the only other needlessly stubborn beings are the goats chewing up the coffee plants.
+
+Now, I've nothing personal against committees. The useless folk need a place to sit out their lives with minimal risk of reproducing, after all, that only seems fair. But most committee protocols tend towards complexity, or trash. There are a few reasons modern protocols tend to be huge and clumsy. One is the amount of money at stake. More money means more people who want their particular prejudices and assumptions expressed in prose. But two is the lack of good abstractions on which to build. People have tried to build reusable protocol abstractions, like BEEP. Most did not stick, and those that did, like SOAP and XMPP, are on the complex side of things.
+
+It used to be, decades ago, when the Internet was a young modest thing, that protocols were short and sweet. They weren't even "standards", but "requests for comments", which is as modest as you can get.
+
+Now, 0MQ does appear to provide a living, successful protocol abstraction layer with its "we'll carry multi-part messages over random transports" way of working. Since 0MQ deals silently with framing, connections, and routing, it's surprisingly easy to write full protocol specs on top of 0MQ, and in Chapters four and five I showed how to do this.
+
+Somewhere around mid-2007, I kicked-off the Digital Standards Organization to define new simpler ways of producing little standards, protocols, specifications. In my defense, it was a quiet summer. At the time [http://www.digistan.org/spec:1 I wrote that] a new specification should take "//minutes to explain, hours to design, days to write, weeks to prove, months to become mature, and years to replace.//"
+
+In 2010 we started calling such little specifications "unprotocols", which some people might mistake for a dastardly plan for world domination by a shadowy international organization, but which really just means, "protocols without the goats". Here's the start of an unprotocol called FILEMQ that we'll come back to later in this chapter:
+
+[[code]]
+FILEMQ          = open-peering *use-peering [ close-peering ]
+
+open-peering    = C:OHAI *( S:ORYL C:YARLY ) ( S:OHAI-OK / error )
+
+use-peering     = C:ICANHAZ ( S:ICANHAZ-OK / error )
+                / C:NOM
+                / S:CHEEZBURGER
+                / C:HUGZ S:HUGZ-OK
+                / S:HUGZ C:HUGZ-OK
+
+close-peering   = C:KTHXBAI / S:KTHXBAI
+
+error           = S:SRSLY / S:RTFM / S:ROTFL / S:PWNED
+...
+[[/code]]
+
+I've actually used these keywords (OHAI, ROTLF) in commercial projects. They make developers giggly and happy. They confuse management. They're good in first drafts that you want to throw away later.
+
+Here are some key points about unprotocols:
+
+* As long as your process is open then you don't need a committee: just make clean minimal designs and make sure anyone is free to improve them.
+
+* If use an existing license then you don't have legal worries afterwards. I use GPLv3 for my public specifications; other options are cc-by-sa. For in-house work, standard copyright is perfect.
+
+* The formality is valuable. That is, learn to write [http://www.ietf.org/rfc/rfc2234.txt ABNF] and use this to fully document your messages.
+
+* Use a market-driven life-cycle process like [http://www.digistan.org/spec:1 Digistan's COSS] so that people place the right weight on your specs as they mature (or don't).
+
+The 0MQ community uses a [http://rfc.zeromq.org whole raft of unprotocols], yet there is zero organization around this: no legal committees, no standards development mailing lists, no email flame-wars over how to represent a version number, none of the friction that typifies a conventional standards process. Instead, just gradual careful improvements to our protocols, driven by market demand. It seems to be working.
+
++++ Transferring Files
+
+Let's take a break from ideology and get back to our first love and the reason for doing all of this: code.
+
+"How do I send a file?" is a common question on the 0MQ mailing lists. Not surprising, because file transfer is perhaps the oldest and most obvious type of messaging. Sending files around networks has lots of use-cases apart from annoying the copyright cartels. 0MQ is very good, out of the box, at sending events and tasks but less good at sending files.
+
+I've promised, for a year or two, to write a proper explanation. Here's a gratuitous piece of information to brighten your morning: the word "proper" comes from the archaic French "propre" which means "clean". The dark age English common folk, not being familiar with hot water and soap, changed the word to mean "foreign" or "upper-class", as in "that's proper food!" but later the word meant just "real", as in "that's a proper mess you've gotten us into!"
+
+So, file transfer. There are several reasons you can't just pick up a random file, blindfold it, and shove it whole into a message. The most obvious being that despite decades of determined growth in RAM sizes (and who among us old-timers doesn't fondly remember saving up for that 1,014-byte memory extension card?!), disk sizes obstinately remain much larger. Even if we could send a file with one instruction (say, using a system call like sendfile), we'd hit the problem that networks are not infinitely fast, nor perfectly reliable. After trying to upload a large file several times on a slow flaky network (WiFi, anyone?), you'll realize that a proper file transfer protocol needs a way to recover from failures. That is, a way to send only the part of a file that wasn't yet received.
+
+Finally, after all this, if you build a proper file server, you'll notice that simply sending massive amounts of data to lots of clients creates that situation we like to call, in the technical parlance, "//server went belly-up due to all available heap memory being eaten by a poorly-designed application//". A proper file transfer protocol needs to pay attention to memory use.
+
+We'll solve these problems properly, one by one, which should hopefully get us to a good and proper file transfer protocol running over 0MQ. First, let's generate a 1GB test file with random data (real power-of-two-giga-like-Von-Neumman-intended, not the fake silicon ones the memory industry likes to sell):
+
+[[code]]
+dd if=/dev/urandom of=testdata bs=1M count=1024
+[[/code]]
+
+This is large enough to be troublesome when we have lots of clients asking for the same file at once, and on many machines, 1GB is going to be too large to allocate in memory anyhow. As a base reference, let's measure how long it takes to copy this file from disk back to disk. This will tell us how much our file transfer protocol adds on top (including 'network' costs):
+
+[[code]]
+$ time cp testdata testdata2
+
+real    0m7.143s
+user    0m0.012s
+sys     0m1.188s
+[[/code]]
+
+The 4-figure precision is misleading; expect variations of 25% either way. This is just an "order of magnitude" measurement.
+
+Here's our first cut at the code, where the client asks for the test data and the server just sends it, without stopping for breath, as a series of messages, where each message holds one 'chunk':
+
+[[code type="example" title="File transfer test, model 1" name="fileio1"]]
+[[/code]]
+
+It's pretty simple but we already run into a problem: if we send too much data to the ROUTER socket, we can easily overflow it. The simple but stupid solution is to put an infinite high-water mark on the socket. It's stupid because we now have no protection against exhausting the server's memory. Yet without an infinite HWM we risk losing chunks of large files.
+
+Try this: set the HWM to 1,000 (in 0MQ/3.x this is the default) and then reduce the chunk size to 100K so we send 10K chunks in one go. Run the test, and you'll see it never finishes. As the zmq_socket[3] man page says with cheerful brutality, for the ROUTER socket: "//ZMQ_HWM option action: Drop//".
+
+We have to control the amount of data the server sends up-front. There's no point in it sending more than the network can handle. Let's try sending one chunk at a time. In this version of the protocol, the client will explicitly say,"give me chunk N", and the server will fetch that specific chunk from disk and send it.
+
+Here's the improved second model, where the client asks for one chunk at a time, and the server only sends one chunk for each request it gets from the client:
+
+[[code type="example" title="File transfer test, model 2" name="fileio2"]]
+[[/code]]
+
+It is much slower now, because of the to-and-fro chatting between client and server. We pay about 300 microseconds for each request-reply round-trips, on a local loop connection (client and server on the same box). It doesn't sound like much but it adds up quickly:
+
+[[code]]
+$ time ./fileio1
+4296 chunks received, 1073741824 bytes
+
+real    0m0.669s
+user    0m0.056s
+sys     0m1.048s
+
+$ time ./fileio2
+4295 chunks received, 1073741824 bytes
+
+real    0m2.389s
+user    0m0.312s
+sys     0m2.136s
+[[/code]]
+
+There are two valuable lessons here. First, while request-reply is easy, it's also too slow for high-volume data flows. Paying that 300 microseconds once would be fine. Paying it for every single chunk isn't acceptable, particularly on real networks with latencies of perhaps 1,000 times higher.
+
+The second point is something I've said before but will repeat: it's incredibly easy to experiment, measure, and improve our protocols over 0MQ. And when the cost of something comes way down, you can afford a lot more of it. Do learn to develop and prove your protocols in isolation: I've seen teams waste time trying to improve poorly-designed protocols that are too deeply embedded in applications to be easily testable or fixable.
+
+Our model 2 file transfer protocol isn't so bad, apart from performance:
+
+* It completely eliminates any risk of memory exhaustion. To prove that we set the high-water mark to 1 in both sender and receiver.
+* It lets the client choose the chunk size, which is useful because if there's any tuning of the chunk size to be done, for network conditions, for file types, or to reduce memory consumption further, it's the client that should be doing this.
+* It gives us fully restartable file transfers.
+* It allows the client to cancel the file transfer at any point in time.
+
+If we just didn't have to do a request for each chunk, it'd be a usable protocol. What we need is a way for the server to send multiple chunks, without waiting for the client to request or acknowledge each one. What are the options?
+
+* The server could send 10 chunks at once, then wait for a single acknowledgment. That's exactly like multiplying the chunk size by 10, so pointless. And yes, it's just as pointless for all values of 10.
+
+* The server could send chunks without any chatter from the client but with a slight delay between each send, so that it would send chunks only as fast as the network could handle them. This would require the server to know what's happening at the network layer, which sounds like hard work. It also breaks layering horribly. And what happens if the network is really fast but the client itself is slow? Where are chunks queued then?
+
+* The server could try to spy on the sending queue, i.e. see how full it is, and send only when the queue isn't full. Well, 0MQ doesn't allow that because it doesn't work, for the same reason as throttling doesn't work. The server and network may be more than fast enough, but the client may be a slow little device.
+
+* We could modify libzmq to take some other action on reaching HWM. Perhaps it could block? That would mean that a single slow client would block the whole server, so no thank you. Maybe it could return an error to the caller? Then the server could do something smart like... well, there isn't really anything it could do that's any better than dropping the message.
+
+None of these options would work. What we need is a way for the client to tell the server, asynchronously and in the background, that it's ready for more. Some kind of asynchronous flow control. If we do this right, data should flow without interruption from the server to the client, but only as long as the client is reading it. Let's review our three protocols. This was the first one:
+
+[[code]]
+C: fetch
+S: chunk 1
+S: chunk 2
+S: chunk 3
+....
+[[/code]]
+
+And the second introduced a request for each chunk:
+
+[[code]]
+C: fetch chunk 1
+S: send chunk 1
+C: fetch chunk 2
+S: send chunk 2
+C: fetch chunk 3
+S: send chunk 3
+C: fetch chunk 4
+....
+[[/code]]
+
+Now - waves hands mysteriously - here's a changed protocol that fixes the performance problem:
+
+[[code]]
+C: fetch chunk 1
+C: fetch chunk 2
+C: fetch chunk 3
+S: send chunk 1
+C: fetch chunk 4
+S: send chunk 2
+S: send chunk 3
+....
+[[/code]]
+
+It looks suspiciously similar. In fact it's identical except that we send multiple requests without waiting for a reply for each one. This is a technique called "pipelining" and it works because our DEALER and ROUTER sockets are fully asynchronous.
+
+Here's the third model of our file transfer test-bench, with pipelining. The client sends a number of requests ahead (the "credit") and then each time it processes an incoming chunk, it sends one more credit. The server will never send more chunks than the client has asked for:
+
+[[code type="example" title="File transfer test, model 3" name="fileio3"]]
+[[/code]]
+
+What we've achieved here, with a little magic, is to take control of the end-to-end pipeline including all network buffers and 0MQ queues at sender and receiver, and then ensure that pipeline is always filled with data while never growing beyond a predefined limit. More than that, the client decides exactly when to send "credit" to the sender. It could be when it receives a chunk, or when it has fully processed a chunk. And this happens asynchronously, with no significant performance cost.
+
+In the third model I chose a pipeline size of 10 messages (each message is a chunk). This will cost a maximum of 2.5MB memory per client. So with 1GB of memory we can handle at least 400 clients. We can try to calculate the ideal pipeline size. It takes about 0.7 seconds to send the 1GB file, which is about 160 microseconds for a chunk. A round trip is 300 microseconds, so the pipeline needs to be at least 3-5 to keep the server busy. In practice, I still got performance spikes with a pipeline of 5, probably because the credit messages sometimes get delayed by outgoing data. So at 10, it works consistently.
+
+[[code]]
+$ time ./fileio3
+4291 chunks received, 1072741824 bytes
+
+real    0m0.777s
+user    0m0.096s
+sys     0m1.120s
+[[/code]]
+
+Do measure rigorously. Your calculations may be good but the real world tends to have its own opinions.
+
+What we've made is clearly not yet a real file transfer protocol, but it proves the pattern and I think it is the simplest plausible design. For a real working protocol we'd want to add some or all of:
+
+* Authentication and access controls, even without encryption: the point isn't to protect sensitive data but to catch errors like sending test data to production servers.
+* A Cheap-style request including file path, optional compression, and other stuff we've learned is useful from HTTP (such as If-Modified-Since).
+* A Cheap-style response, at least for the first chunk, that provides meta data such as file size (so the client can pre-allocate and avoid unpleasant disk-full situations).
+* The ability to fetch a set of files in one go, otherwise the protocol becomes inefficient for large sets of small files.
+
+So far, our semantic has been "fetch"; that is, the recipient knows (somehow), that they need a specific file, so they ask for it. The knowledge of which files exist, and where they are is then passed out-of-band (e.g. in HTTP, by links in the HTML page).
+
+How about a "push" semantic? There are two plausible use-cases for this. First, if we adopt a centralized architecture with files on a main "server" (not something I'm advocating, but people do sometimes like this), then it's very useful to allow clients to upload files to the server. Second, it lets do a kind of pub-sub for files, where the client asks for all new files of some type; as the server gets these, it forwards them to the client.
+
+A fetch semantic is synchronous, while a push semantic is asynchronous. Asynchronous is less chatty, so faster. Also, you can do cute things like "//subscribe to this path//" so creating a publish-subscribe file transfer architecture. That is so obviously awesome that I shouldn't need to explain what problem it solves.
+
+But for the pedants, here is the problem that pub-sub file transfer solves: the fetch semantic needs an out-of-band route to tell clients what files exist. No matter how you do this, it ends up complex. Either clients have to poll, or you need a separate pub-sub channel to keep clients up to date, or you need user interaction.
+
+Thinking this through a little more, though, we can see that fetch is just a special case of publish-subscribe. So we can get the best of both worlds. Here is the general design:
+
+* Fetch this path
+* Here is credit (repeat)
+
+To make this work (and we will, my dear readers), we need to be a little more explicit about how we send credit to the server. The cute trick of treating a pipelined "fetch chunk" request as credit won't fly since the client doesn't know any longer what files actually exist, how large they are, anything. If the client says, "I'm good for 250,000 bytes of data", this should work equally for one file of 250K bytes, or 100 files of 2,500 bytes.
+
+And this gives us "credit-based flow control", which effectively removes the need for HWMs, and any risk of memory overflow.
+
++++ Heartbeating
+
+Just as a real protocol needs to solve the problem of flow control, it also needs to solve the problem of knowing whether a peer is alive or dead. This is not an issue specific to 0MQ. TCP has a long timeout (30 minutes or so), that means that it can be impossible to know whether a peer has died, been disconnected, or gone on a weekend to Prague with a case of vodka, a redhead, and a large expense account.
+
+Heartbeating is not easy to get right, and as with flow control it can make the difference between a working, and failing architecture. So using our standard approach, let's start with the simplest possible heartbeat design, and develop better and better designs until we have one with no visible faults.
+
+++++ Shrugging It Off
+
+A decent first iteration is to do no heartbeating at all and see what actually happens. Many if not most 0MQ applications do this. 0MQ encourages this by hiding peers in many cases. What problems does this approach cause?
+
+* When we use a ROUTER socket in an application that tracks peers, as peers disconnect and reconnect, the application will leak memory and get slower and slower.
+
+* When we use SUB or DEALER-based data recipients, we can't tell the difference between good silence (there's no data) and bad silence (the other end died). When a recipient knows the other side died, it can for example switch over to a backup route.
+
+* If we use a TCP connection that stays silent for a long while, it will, in some networks, just die. Sending something (technically, a "keep-alive" more than a heartbeat), will keep the network alive.
+
+++++ One-Way Heartbeats
+
+So, our first solution is to sending a "heartbeat" message from each node to its peers, every second or so. When one node hears nothing from another, within some timeout (several seconds, typically), it will treat that peer as dead. Sounds good, right? Sadly no. This works in some cases but has nasty edge cases in other cases.
+
+For PUB-SUB, this does work, and it's the only model you can use. SUB sockets cannot talk back to PUB sockets, but PUB sockets can happily send "I'm alive" messages to their subscribers.
+
+As an optimization, you can send heartbeats only when there is no real data to send. Furthermore, you can send heartbeats progressively slower and slower, if network activity is an issue (e.g. on mobile networks where activity drains the battery). As long as the recipient can detect a failure (sharp stop in activity), that's fine.
+
+Now the typical problems with this design:
+
+* It can be inaccurate when we send large amounts of data, since heartbeats will be delayed behind that data. If heartbeats are delayed, you can get false timeouts and disconnections due to network congestion. Thus, always treat //any// incoming data as a heartbeat, whether or not the sender optimizes out heartbeats.
+
+* While the PUB-SUB pattern will drop messages for disappeared recipients, PUSH and DEALER sockets will queue them. So, if you send heartbeats to a dead peer, and it comes back, it'll get all the heartbeats you sent. Which can be thousands. Whoa, whoa!
+
+* This design assumes that heartbeat timeouts are the same across the whole network. But that won't be accurate. Some peers will want very aggressive heart-beating, to detect faults rapidly. And some will want very relaxed heart-beating, to let sleeping networks lie, and save power.
+
+++++ Ping-Pong Heartbeats
+
+Our third design uses a ping-pong dialog. One peer sends a ping command to the other, which replies with a pong command. Neither command has any payload. Pings and pongs are not correlated. Since the roles of "client" and "server" are often arbitrary, we specify that either peer can in fact send a ping and expect a pong in response. However, since the timeouts depend on network topologies known best to dynamic clients, it is usually the client which pings the server.
+
+This works for all ROUTER-based brokers. The same optimizations we used in the second model make this work even better: treat any incoming data as a pong, and only send a ping when not otherwise sending data.
+
++++ State Machines
+
+State machines (of the finite kind) are interesting beasts and particularly useful when we start to make large-scale 0MQ architectures. Software engineers tend to treat state machines as virtual machines. That is, you take a regular language and compile that into a state machine, then execute the state machine.
+
+However it turns out that state machines are also valuable as models for designing protocol handlers, i.e. 0MQ clients and servers. 0MQ makes it rather easy to design protocols, but we've never defined a good pattern for writing those clients and servers properly.
+
+A protocol has at least two levels:
+
+* How we represent individual messages on the wire.
+* How messages flow between peers and their significance.
+
+We've seen in this chapter how to produce codecs that handle serialization. That's a good start. But if we leave the second job to developers, that gives them a lot of room to make errors. As we make more ambitious protocols (file transfer + heart-beating + credit + authentication), it becomes less and less sane to try to implement clients and servers by hand.
+
+Yes, people do this almost systematically. But the costs are high, and they're avoidable. I'll explain how to model protocols using state machines, and how to generate neat and solid code from those models.
+
+My experience with using state machines as a software construction tool dates to 1985 and my first real job making tools for application developers. In 1991 I turned that knowledge into a free software tool called Libero, which spat out executable state machines from a simple text model.
+
+The thing about Libero's model was that it was readable. That is, you described your program logic as named states, each accepting a set of events, each doing some real work. The resulting state machine hooked into your application code, driving it like a boss.
+
+Libero was charmingly good at its job, fluent in many languages, and quite popular given the esoteric nature of state machines. We used Libero in anger in dozens of large distributed applications, one of which was finally switched off in 2011. It worked so well that it's somewhat impressive this approach never hit the mainstream of software engineering.
+
+So in this section I'm going to explain Libero's model, and show how to use it to generate 0MQ clients and servers. We'll use GSL again but like I said, the principles are general and you can put together code generators using any scripting language.
+
++++ Large-scale File Transfer - FileMQ
+
+Let's put all these techniques together into a proper file distribution application that I'll call FileMQ. To start with we write down the protocol as an ABNF grammar. This is the overall protocol, which is a mix of Cheap and Nasty, and which follows the deadly-serious proposal for [http://unprotocols.org/blog:2 keywords for unprotocols]:
+
+[[code]]
+FILEMQ          = open-peering *use-peering [ close-peering ]
+
+open-peering    = C:OHAI *( S:ORYL C:YARLY ) ( S:OHAI-OK / error )
+
+use-peering     = C:ICANHAZ ( S:ICANHAZ-OK / error )
+                / C:NOM
+                / S:CHEEZBURGER
+                / C:HUGZ S:HUGZ-OK
+                / S:HUGZ C:HUGZ-OK
+
+close-peering   = C:KTHXBAI / S:KTHXBAI
+
+error           = S:SRSLY / S:RTFM / S:ROTFL / S:PWNED
+[[code]]
+
+Here are the messages to and from the server:
+
+[[code]]
+;   The client opens peering to the server and requests access to a
+;   specific channel
+OHAI            = %x01 protocol version nodeid channel
+protocol        = string        ; Must be "FILEMQ"
+string          = size *VCHAR
+size            = OCTET
+version         = %x01
+nodeid          = 16OCTET
+channel         = string
+
+;   The server challenges the client to authenticate itself using
+;   any of the SASL mechanisms the server handles
+ORYL            = %x02 mechanisms
+mechanisms      = size 1*mechanism
+mechanism       = string
+
+;   The client responds with authentication information
+YARLY           = %x03 mechanism payload
+payload         = FRAME         ; 0MQ frame
+
+;   The server grants the client access to the channel
+OHAI-OK         = %x04
+
+;   The client subscribes to a path in its current channel
+ICANHAZ         = %x05 path options
+path            = string        ; Full or partial path
+options         = dictionary
+dictionary      = size *key-value
+key-value       = string        ; Formatted as name=value
+
+;   The server confirms the subscription
+ICANHAZ-OK      = %x06 
+
+;   The client sends credit to the server
+NOM             = %x07 credit
+credit          = number
+number          = 8OCTET        ; 64-bit integer, network order
+
+;   The server sends a chunk of file data
+CHEEZBURGER     = %x08 headers chunk
+headers         = dictionary
+chunk           = FRAME
+
+;   Client or server sends a heartbeat, the other peer responds
+HUGZ            = %x09
+HUGZ-OK         = %x0A
+
+;   Client closes the peering
+KTHXBAI         = %x0B
+[[/code]]
+
+And here are the different ways the server can tell the client things went wrong:
+
+[[code]]
+S:SRSLY         = %x80 reason    ; Refused due to access rights
+S:RTFM          = %x81 reason    ; Client sent an invalid message
+S:ROTFL         = %x82 reason    ; Client is being silly
+S:PWNED         = %x83 reason    ; Server is overloaded
+[[/code]]
+
+I did have to add a FRAME keyword to express "this piece is a separate 0MQ frame".
+
++++ Patterns for Success
+
+In this article I'm presenting a series of patterns for success in software engineering. These patterns aim to capture the essence of what divides glorious success from tragic failure. They were described as "//religious maniacal dogma//" by a manager, and "//anything else would be fucking insane//" by a colleague, in a single day. For me, they are science, the results of decades of trial by error. Treat the Lazy Perfectionist and others as tools to use, sharpen, and throw away if something better comes along.
+
+++++ The Lazy Perfectionist
+
+//Never design anything that's not a precise minimal answer to a problem we can identify and have to solve.// -- Pieter Hintjens
+
+The Lazy Perfectionist spends his idle time observing others and identifying problems that are worth solving. He looks for agreement on those problems, always asking, "what is the //real// problem". Then he moves, precisely and minimally, to build, or get others to build, a usable answer to one problem. He uses, or gets others to use those solutions. And he repeats this until there are no problems left to solve, or time or money runs out.
+
+++++ The Benevolent Tyrant
+
+//The control of a large force is the same principle as the control of a few men: it is merely a question of dividing up their numbers.// -- Sun Tzu
+
+The Benevolent Tyrant divides large problems into smaller ones and throws them at groups to focus on. He brokers contracts between these groups, in the form of APIs and unprotocols. The Benevolent Tyrant constructs a supply chain that starts with problems, and results in usable solutions. He is ruthless about how the supply chain works, but does not tell people on what to work, nor how to do their work.
+
+++++ The Earth and Sky
+
+//The ideal team consists of two sides: one writing code, and one providing feedback.// -- Pieter Hintjens
+
+The Earth and Sky work together as a whole, in close proximity, but they communicate formally through an issue tracking. Sky seeks out problems, from others and from their own use of the product, and feeds these to Earth. Earth rapidly answers with testable solutions. Earth and Sky can work through dozens of issues in a day. Sky talks to other users, and Earth talks to other developers. Earth and Sky may be two people, or two small groups.
+
+++++ The Happy Failure
+
+//To succeed, first learn to fail rapidly, cheaply, and often.// -- Pieter Hintjens
+
+The Happy Failure embraces failure as the only real way to learn. He focuses on reducing the cost of failure, and documenting failures so that everyone can learn from them. He does not over-specify functionality, stays away from upfront documentation, does not use test-driven development. All of these make it harder, and more costly to fail.
+
+++++ The Open Door
+
+//The accuracy of knowledge comes from diversity.// -- Pieter Hintjens
+
+The Open Door accepts contributions from almost anyone. He does not argue quality or direction, instead allowing others to argue that and so get more engaged. He calculates that even a troll will bring more diverse opinion to the group. He lets the group form its opinion about what goes into stable code, and he enforces this opinion with help of a Benevolent Tyrant.
+
+++++ The Laughing Clown
+
+//Perfection precludes participation.// -- Pieter Hintjens
+
+The Laughing Clown, often acting as the Happy Failure, makes no claim to high competence. Instead his antics and bumbling attempts provoke others into rescuing him from his own tragedy. Somehow however, he always identifies the right problems to solve. People are so busy proving him wrong they don't realize they're doing valuable work.
+
+++++ The Mindful General
+
+//Make no plans. Set goals, develop strategies and tactics.// -- Pieter Hintjens
+
+The Mindful General operates in unknown territory, solving problems that are hidden until they are nearby. Thus he makes no plans, but seeks opportunities, then exploits them rapidly and accurately. He develops tactics and strategies in the field, and teaches these to his men so they can move independently, and together.
+
+++++ The Social Engineer
+
+//If you know the enemy and know yourself, you need not fear the result of a hundred battles.// -- Sun Tzu
+
+The Social Engineer reads the hearts and minds of those he works with and for. He asks, of everyone, "what makes this person angry, insecure, argumentative, calm, happy?" He studies their moods and disposition. With this knowledge he can encourage those who are useful, and discourage those who are not. The Social Engineer never acts on his own emotions.
+
+++++ The Constant Gardener
+
+//Do not repeat the tactics which gained you one victory, but let your methods be regulated by the infinite variety of circumstances.// -- Sun Tzu
+
+The Constant Gardener grows a process from a small seed, step by step as more people come into the project. He makes every change for a precise reason, with agreement from everyone. He never imposes a process from above but will let others come to consensus, then he will enforce that consensus. In this way everyone owns the process together and by owning it, they are attached to it.
+
+++++ The Rolling Stone
+
+//After crossing a river, you should get far away from it.// -- Sun Tzu
+
+The Rolling Stone accepts his own mortality and transience. He has no attachment to his past work. He accepts that all that we make is destined for the trash can, it is just a matter of time. With precise, minimal investments, he can move rapidly away from the past and stay focused on the present and near future. Above all he has no ego and no pride to be hurt by the actions of others.
+
+++++ The Pirate Gang
+
+//Code, like all knowledge, works best as collective -- not private -- property.// -- Pieter Hintjens
+
+The Pirate Gang organize freely around problems. They accept authority insofar as it provides goals and resources. The Pirate Gang own and share all they make: every work is fully remixable by others in the Pirate Gang. They move rapidly as new problems emerge, and are quick to abandon old solutions if they stop being relevant. No persons or groups can monopolize any part of the supply-chain.
+
+++++ The Flash Mob
+
+//Water shapes its course according to the nature of the ground over which it flows.// -- Sun Tzu
+
+The Flash Mob comes together in space and time as needed, then disperses as soon as they can. Physical closeness is essential for high-bandwidth communications. But over time it creates technical ghettos, where Earth gets separated from Sky. The Flash Mob tends to collect a lot of frequent flier miles.
+
+++++ The Canary Watcher
+
+//Pain is not, generally, a Good Sign.// -- Pieter Hintjens
+
+The Canary Watcher measures the quality of an organization by the their own pain level, and the observed pain levels of those he works with. He brings new participants into existing organizations so they can express the raw pain of the innocent. He may use alcohol to get others to verbalize their pain points. He asks others, and himself, "are you happy in this process, and if not, why not?" When an organization causes pain in himself or others, he treats that as a problem to be fixed. People should feel joy in their work.
+
+++++ The Hangman
+
+//Never interrupt others when they are making mistakes.// -- Pieter Hintjens
+
+The Hangman knows that we learn only by making mistakes, and he gives others copious rope with which to learn. He only pulls the rope gently, when it's time. A little tug to remind the other of their precarious position. Allowing others to learn by failure gives the good reason to stay, and the bad excuse to leave. The Hangman is endlessly patient, because there is no shortcut to the learning process.
+
+++++ The Historian
+
+//The public record may be tedious, but it's the only way to prevent collusion.// -- Pieter Hintjens
+
+The Historian forces discussion into the public view, to prevent collusion to own areas of work. The Pirate Gang depends on full and equal communications that do not depend on momentary presence. No-one really reads the archives, but the simply possibility stops most abuses. The Historian encourages the right tool for the job: email for transient discussions, IRC for chatter, wikis for knowledge, issue tracking for recording opportunities.
+
+++++ The Provocateur
+
+//When a man knows he is to be hanged in a fortnight, it concentrates his mind wonderfully.// -- Samuel Johnson
+
+The Provocateur creates deadlines, enemies, and the occasional impossibility. Teams work best when they don't have time for the crap. Deadlines bring people together and focus the collective mind. An external enemy can move a passive team into action. The Provocateur never takes the deadline too seriously. The product is //always// ready to ship. But he gently reminds the team of the stakes: fail, and we all look for other jobs.
+
+++++ The Mystic
+
+//When people argue or complain, just write them a Sun Tzu quotation// -- Mikko Koppanen
+
+The Mystic never argues directly. He knows that to argue with an emotional person only creates more emotion. Instead he side-steps the discussion. It's hard to be angry at a Chinese general, especially when he has been dead for 2,400 years. The Mystic will act as the Hangman when people insist on the right to get it wrong.
+
++++ Winning Organization
+
+There are a few ways people define //open source// or //free software//. One is by the license: "yes, we can see the code". Two, is by process: "yes, anyone can contribute". Three is by community: "yes, it's built by all of us". For me, only the last measure counts, and steps one and two are milestones. But they're not sufficient, as many failed projects show. I'll present fifteen measures that I've extracted from years of trying (and sometimes managing) to build self-steering, sustainable communities. You tell me if I'm on the right track here or not.
+
+* //Quality of mission.// You need a goal that's brilliant and insane and simple enough to get people out of bed in the morning. Your community has to attract the very best people and that demands something special. With 0MQ, we said we were going to make "the Fastest. Messaging. Ever.", which qualifies as brilliant and insane and simple. If we'd said, we're going to make "a smart transport layer that'll connect your cloud components cheaply and flexibly", people would have said, "ugh, what? why?"
+
+* //Freedom of access.// A strong community has to be physically and intellectually diverse. This is a basic lesson from smart crowd theory: too many people with the same mindset and background will make large, well-argued, and elegantly executed mistakes. You need the challenge that ignorance can bring. So removing barriers to entry lets you bring in more diversity. For 0MQ, when we switched to git, and github.com, that dramatically lowered the barrier to entry, and brought more people into the process.
+
+* //Well-written rules.// Conflict is inherent in the psychology of collaboration. To avoid destructive fights and arguments, you need clear rules about how to work together. This lets strangers trust each other, and the community to scale beyond people who already know each other. That brings us to our next point, strong authority. For 0MQ, the LGPL license and the git fork/merge model were our basic tools for turning natural competition into constructive collaboration.
+
+* //Strong neutral authority.// Rules are useless without enforcement. A community needs to know that someone will enforce the rules if necessary. And without bias, clearly. Again, this creates a trust model that can scale beyond a handful of friends. For 0MQ, the authority was and is those who invested most in the project, which brings us to the next point, ownership.
+
+* //Proportional ownership.// "You own what you make" is a powerful incentive for people to invest in a project. It's about more than owning the copyrights on some source code, it's about owning (morally, at least), the communities that in turn depend on what you make. When you create a project, and people use it, you are the boss of that project. For 0MQ, we made it easy for people to build projects (mainly language bindings in the first place) on top of 0MQ, and own those projects. Which brings us to the next point, infinite spaces.
+
+* //Infinite spaces.// A single large project with many owners does not scale as well as a collection of many small projects, each with one or two owners. Communities grow best when people can layer project upon project, without limit. This needs some careful thought about what is "official", what gets packaged with what, how visitors can navigate the chaotic result, and so on. For 0MQ, we started with two natural layers (core plus language bindings) and built more and more layers on that. Github.com (which has its flaws) makes this so easy.
+
+* //Strong identities.// At least in certain communities, we want to know who to talk to. That means real names and email addresses, not aliases. This goes along with ownership. Some communities seem to thrive on anonymity, and that's possibly a good way to resolve ego conflicts, and get wider participation, but for 0MQ we enforced the rule that contributors must use their real names, and this has seemed to work well.
+
+* //Volunteers, not employees.// From my work in volunteer organizations like the FFII, it's blindingly clear that skilled volunteers can produce more accurate answers, and faster, than equally skilled professionals. You need the right mix of desperation, brutality, frugality, time pressure, and independence to be really creative. Employees just don't sit in that space, and no management style can create it for them. 0MQ only became brilliantly brutal when the core team switched over from employees in an office to volunteers working around the globe.
+
+* //Measurements of success.// A large motivation for many contributors are the rewards that success brings. Happily they tend to underestimate the problems that can also bring. The best measure of success is "footfall", i.e. how many people are using a project, visit a web site, download the tarballs, etc. Luckily this is easy to do, and platforms like github make it easier. How many watchers does my repository have? How many issues? How many pull requests? And as I've already said, popularity translates into power. In the 0MQ community, your voice is precisely as loud as the number of people using the projects you "own".
+
+* //Tools and processes.// We work, in an online community, by taking information about the world and turning that into knowledge in some form (software source code, in our case). How efficiently we can do that depends on the tools and processes we use. 0MQ used to run on SVN, which is better than CVS. But switching to git really made a difference. Much better tools means a faster, more efficient community.
+
+* //Freedom to organize.// This is a no-brainer for anyone who actually works in a free community, but it's weird for businesses. Let the participants of a community identify the problems, allocate the resources, and monitor success. It's literally impossible for management to do this as accurately as participants. 0MQ can move faster and more accurately than any commercial product precisely because there is no top-down management.
+
+* //Transparency.// In my experience, secrecy enables incompetence, and transparency promotes competence. The more public the organisation's work, the better. This means a culture of on-list discussions, about everything relevant to the project, especially things like rules. It's kind of obvious for any free community but hard for businesses to do.
+
+* //Unstructures.// It's tempting to create structure to back a community. We think of copyrights and trademarks, and who owns them. We think of the infrastructure, who runs and pays for it. A classic answer is to create a dot-org, fund it, and use that to hold the rights and operate the boxes. A much better answer is, "everyone owns what they make" and be prepared to move to a new home as and when needed. For 0MQ, iMatix backs the infrastructure, but mostly it's in the cloud: wikidot.com, github.com, jira.com. We use Digistan's peer-to-peer framework for standards. Everyone owns the copyright on what they make. It works, without any tiresome organization building. Trust me, you don't want legal entities if you can avoid them.
+
+* //Scalable participation.// It has to be trivial to make a simple contribution, and really, really hard to make a profound contribution, and there should be a smooth curve between these points. You want no barriers at any point, but it must get harder and harder. This makes the community feel like a massive multiplayer game, where there's always someone better than you, and you just //have to// try to catch up. For 0MQ we never planned this curve, but it happened naturally. I've done other projects where the curve broke halfway, or was too steep, and that's pretty much fatal.
+
+* //Full remixability.// Finally, though this is almost the first thing, every work needs to be fully remixable. I've often argued that the GPL is an ultracapitalist tool because it enforces the strictest ownership model possible on collaborative works. If I invest in a GPL project, I know my competitors can't use that without also playing the same game as me. The LGPL is slightly weaker than the GPL but works almost as well. For 0MQ, we chose the LGPL rather than Apache/BSD/MIT because we knew that otherwise people would improve 0MQ, but not share their changes.
+
+Now, here's the fun thing. These measures were my guidelines when designing and streering the 0MQ community, starting back in 2008 or so. They didn't guarantee success, that came from the hard work of many people, such as Martin Sustrik. But they meant the hard work could produce something of value, not just one more perfectly made, and useless, piece of software.
+
+However, none of these measures apply exclusively to free/open source software. A software business could structure its development like this. Allow engineers to choose what they work on, compete, remix each others' work, fight for footfall, etc. Even the "no employees" rule can work in a company, simply pay a low salary and base the rest on results, in a competition model.

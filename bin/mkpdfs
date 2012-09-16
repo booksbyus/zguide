@@ -1,0 +1,24 @@
+#! /bin/bash
+#
+#   Generates and uploads the Guide in PDF format
+#
+SITE=zguide
+PAGE=main:_start
+BOOK=zguide
+
+function mkone {
+    export BOOK_LANG=$1
+    export BOOK_FORM=pdf
+    bin/mkbook chapter*.txt
+    docbook2ps book.xml
+    ps2pdf book.ps
+    mv book.pdf $BOOK-$2.pdf
+    echo "Uploading $BOOK-$2.pdf to $SITE:$PAGE..."
+    wdattach $SITE $PAGE $BOOK-$2.pdf
+}
+
+mkone C         c
+mkone Haxe      hx
+mkone Lua       lua
+mkone Python    py
+mkone PHP       php

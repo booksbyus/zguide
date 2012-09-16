@@ -125,10 +125,7 @@ while (<>) {
             $prelude = $1;
         }
         elsif (/^\.filter/) {
-            #   Not used, ignore
-        }
-        elsif (/^\.reset/) {
-            #   Not used, ignore
+            #   Not used in this process, ignore
         }
         else {
             print "Illegal directive $_ at line $.\n";
@@ -181,9 +178,6 @@ while (<>) {
         $language = $4;
         if ($language) {
             process_one_language ("examples", $name, $language, $title, $inline_source);
-        }
-        elsif ($format eq "pdf") {
-            process_one_language ("examples", $name, $source, $title, $inline_source);
         }
         else {
             $actions = "";
@@ -471,6 +465,7 @@ sub expand_symbols {
             $before = $`;
             $after = $';
             $args =~ s/\\/\\\\/g;
+            $args =~ s/#/"/g;
             $_ = eval ("&intrinsic_$funct ($args)");
             $_ = $before.$_.$after;
             if ($@) {                   #   Syntax error in Perl statement?
@@ -532,8 +527,8 @@ sub valueof {
 #   figref()                   - Replaced by empty string
 #   time()                     - Format current time as hh:mm:ss
 #   date()                     - Return current date value
-#   date("picture")            - Format current date using picture
-#   date("picture", date, lc)  - Format specified date using picture & language
+#   date(#picture#)            - Format current date using picture
+#   date(#picture#, date, lc)  - Format specified date using picture & language
 #   week_day([date])           - Get day of week, 0=Sunday to 6=Saturday
 #   year_week([date])          - Get week of year, 1 is first full week
 #   julian_date([date])        - Get Julian date for date
@@ -543,15 +538,15 @@ sub valueof {
 #   future_date(days[,date])   - Calculate a future date
 #   past_date(days[,date])     - Calculate a past date
 #   date_diff(date1[,date2])   - Calculate date1 - date2
-#   image_height("image.ext")  - Get image height (GIF, JPEG)
-#   image_width("image.ext")   - Get image width (GIF, JPEG)
-#   file_size("filename",arg)  - Get size of file: optional arg K or M
-#   file_date("filename")      - Get date of file
-#   file_time("filename")      - Get time of file as hh:mm:ss
-#   normalise("filename")      - Normalise filename to UNIX format
-#   system("command")          - Call a system utility
-#   lower("string")            - Convert string to lower case
-#   upper("string")            - Convert string to upper case
+#   image_height(#image.ext#)  - Get image height (GIF, JPEG)
+#   image_width(#image.ext#)   - Get image width (GIF, JPEG)
+#   file_size(#filename#,arg)  - Get size of file: optional arg K or M
+#   file_date(#filename#)      - Get date of file
+#   file_time(#filename#)      - Get time of file as hh:mm:ss
+#   normalise(#filename#)      - Normalise filename to UNIX format
+#   system(#command#)          - Call a system utility
+#   lower(#string#)            - Convert string to lower case
+#   upper(#string#)            - Convert string to upper case
 #
 
 sub intrinsic_figref {
