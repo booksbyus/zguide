@@ -28,6 +28,10 @@ void
 void
     $(class.name)_bind ($(class.name)_t *self, const char *endpoint);
 
+//  Execute the $(class.name) until interrupted
+void
+    $(class.name)_wait ($(class.name)_t *self);
+
 //  Self test of this class
 int
     $(class.name)_test (bool verbose);
@@ -108,6 +112,17 @@ $(class.name)_bind ($(class.name)_t *self, const char *endpoint)
     assert (endpoint);
     zstr_sendm (self->pipe, "BIND");
     zstr_send  (self->pipe, endpoint);
+}
+
+
+//  --------------------------------------------------------------------------
+//  Execute the $(class.name) until interrupted
+
+void
+$(class.name)_wait ($(class.name)_t *self)
+{
+    while (!zctx_interrupted)
+        sleep (1);
 }
 
 
@@ -492,3 +507,23 @@ $(class.name)_test (bool verbose)
     printf ("OK\\n");
     return 0;
 }
+.output "$(class.name).txt"
+.for class.state
+/-------------------\\
+| $(Name)           |
+\\-------------------/
+.   for event
+.       if !defined (next)
+.           event.next = state.name
+.       endif
+.       bar = last ()?? ''? '|'
+  |
+  +-------------+                    /-------------------\\
+  | $(name:)    |------------------->| $(Next)           |
+  +-------------+                    \\-------------------/
+.       for action
+  $(bar)           $(Name) $(message?'':)
+.       endfor
+.   endfor
+
+.endfor

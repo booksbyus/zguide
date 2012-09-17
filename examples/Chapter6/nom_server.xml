@@ -1,18 +1,17 @@
 <class name = "nom_server" script = "server_c">
     
 <state name = "start">
-    <event name = "OHAI" next = "have OHAI">
-        <action name = "check OHAI" />
+    <event name = "OHAI" next = "authenticated">
+        <action name = "check credentials" />
     </event>
 </state>
 
-<state name = "have OHAI">
+<state name = "authenticated">
     <event name = "ok" next = "ready">
         <action name = "send" message ="OHAI-OK" />
     </event>
-    <event name = "error">
+    <event name = "error" next = "start">
         <action name = "send" message = "WTF" />
-        <action name = "stop" />
     </event>
 </state>
 
@@ -28,7 +27,7 @@
     </event>
 </state>
 
-<action name = "check OHAI">
+<action name = "check credentials">
     char *body = zmsg_popstr (self->request);
     if (body && streq (body, "Joe"))
         self->next_event = ok_event;
@@ -38,6 +37,7 @@
 </action>
 
 <selftest>
+    <step send = "OHAI" body = "Sleepy" recv = "WTF" />
     <step send = "OHAI" body = "Joe" recv = "OHAI-OK" />
     <step send = "ICANHAZ" recv = "CHEEZBURGER" />
     <step send = "HUGZ" recv = "HUGZ-OK" />

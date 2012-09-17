@@ -27,6 +27,10 @@ void
 void
     nom_server_bind (nom_server_t *self, const char *endpoint);
 
+//  Execute the nom_server until interrupted
+void
+    nom_server_wait (nom_server_t *self);
+
 //  Self test of this class
 int
     nom_server_test (bool verbose);

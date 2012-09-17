@@ -71,13 +71,24 @@ nom_server_bind (nom_server_t *self, const char *endpoint)
 }
 
 
+//  --------------------------------------------------------------------------
+//  Execute the nom_server until interrupted
+
+void
+nom_server_wait (nom_server_t *self)
+{
+    while (!zctx_interrupted)
+        sleep (1);
+}
+
+
 //  ---------------------------------------------------------------------
 //  State machine constants
 
 typedef enum {
     stopped_state = 0,
     start_state = 1,
-    have_ohai_state = 2,
+    authenticated_state = 2,
     ready_state = 3
 } state_t;
 
@@ -89,24 +100,6 @@ typedef enum {
     hugz_event = 5,
     heartbeat_event = 6
 } event_t;
-
-//  Names for animation
-char *s_state_name [] = {
-    "stopped",
-    "start",
-    "have OHAI",
-    "ready"
-};
-
-char *s_event_name [] = {
-    "",
-    "OHAI",
-    "ok",
-    "error",
-    "ICANHAZ",
-    "HUGZ",
-    "heartbeat"
-};
 
 
 //  ---------------------------------------------------------------------
@@ -162,7 +155,7 @@ client_destroy (client_t **self_p)
 //  - execute actions for event in state
 //
 static void
-check_ohai_action (client_t *self) {
+check_credentials_action (client_t *self) {
     char *body = zmsg_popstr (self->request);
     if (body && streq (body, "Joe"))
         self->next_event = ok_event;
@@ -178,17 +171,15 @@ client_execute (client_t *self, int event)
     while (self->next_event) {
         self->event = self->next_event;
         self->next_event = 0;
-        printf ("State=%s, event=%s\n",
-            s_state_name [self->state], s_event_name [self->event]);
         switch (self->state) {
             case start_state:
                 if (self->event == ohai_event) {
-                check_ohai_action (self);
-                    self->state = have_ohai_state;
+                check_credentials_action (self);
+                    self->state = authenticated_state;
                 }
                 break;
                 
-            case have_ohai_state:
+            case authenticated_state:
                 if (self->event == ok_event) {
                     zmsg_addstr (self->reply, "OHAI-OK");
                     self->state = ready_state;
@@ -196,7 +187,7 @@ client_execute (client_t *self, int event)
                 else
                 if (self->event == error_event) {
                     zmsg_addstr (self->reply, "WTF");
-                    self->state = stopped_state;
+                    self->state = start_state;
                 }
                 break;
                 
@@ -219,8 +210,6 @@ client_execute (client_t *self, int event)
                 break;
         }
         if (zmsg_size (self->reply) > 1) {
-            puts ("Send command to client");
-            zmsg_dump (self->reply);
             zmsg_send (&self->reply, self->router);
             self->reply = zmsg_new ();
             zmsg_add (self->reply, zframe_dup (self->address));
@@ -337,9 +326,6 @@ agent_client_message (agent_t *self)
     if (!msg)
         return;         //  Interrupted; do nothing
 
-    puts ("Received command from client");
-    zmsg_dump (msg);
-
     //  Frame 0 is address client that sent message
     zframe_t *address = zmsg_pop (msg);
     char *hashkey = zframe_strhex (address);
@@ -426,6 +412,18 @@ nom_server_test (bool verbose)
     //  Run self-tests
     zmsg_t *msg;
     char *command;
+    msg = zmsg_new ();
+    zmsg_addstr (msg, "OHAI");
+    zmsg_addstr (msg, "Sleepy");
+    zmsg_send (&msg, dealer);
+    
+    msg = zmsg_recv (dealer);
+    assert (msg);
+    command = zmsg_popstr (msg);
+    assert (streq (command, "WTF"));
+    free (command);
+    zmsg_destroy (&msg);
+    
     msg = zmsg_new ();
     zmsg_addstr (msg, "OHAI");
     zmsg_addstr (msg, "Joe");
