@@ -1,9 +1,10 @@
 #  Run selftests and check memory
-echo "Rebuilding mdp..."
-gsl -q -script:codec_c mdp_client.xml
-gsl -q -script:codec_c mdp_worker.xml
-gcc -g -o mdp_selftest mdp_selftest.c mdp_client.c mdp_worker.c ${CFLAGS} ${LDFLAGS} -lczmq -lzmq
+echo "Generating sources..."
+gsl -q mdp_client.xml
+gsl -q mdp_worker.xml
+gsl -q -trace:1 nom_server.xml
+gcc -g -o ch6_selftest ch6_selftest.c mdp_client.c mdp_worker.c nom_server.c ${CFLAGS} ${LDFLAGS} -lczmq -lzmq
 if [ $? -eq 0 ]; then
     echo "Starting Valgrind memcheck..."
-    valgrind --tool=memcheck --leak-check=full --suppressions=valgrind.supp ./mdp_selftest
+    valgrind --quiet --tool=memcheck --leak-check=full --suppressions=valgrind.supp ./ch6_selftest
 fi

@@ -1,7 +1,7 @@
 /*  =========================================================================
     mdp_client.h
 
-    Generated C99 codec header for mdp_client
+    Generated codec header for mdp_client
     =========================================================================
 */
 

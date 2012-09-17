@@ -1,0 +1,46 @@
+<class name = "nom_server" script = "server_c">
+    
+<state name = "start">
+    <event name = "OHAI" next = "have OHAI">
+        <action name = "check OHAI" />
+    </event>
+</state>
+
+<state name = "have OHAI">
+    <event name = "ok" next = "ready">
+        <action name = "send" message ="OHAI-OK" />
+    </event>
+    <event name = "error">
+        <action name = "send" message = "WTF" />
+        <action name = "stop" />
+    </event>
+</state>
+
+<state name = "ready">
+    <event name = "ICANHAZ">
+        <action name = "send" message = "CHEEZBURGER" />
+    </event>
+    <event name = "HUGZ">
+        <action name = "send" message = "HUGZ-OK" />
+    </event>
+    <event name = "heartbeat">
+        <action name = "send" message = "HUGZ" />
+    </event>
+</state>
+
+<action name = "check OHAI">
+    char *body = zmsg_popstr (self->request);
+    if (body && streq (body, "Joe"))
+        self->next_event = ok_event;
+    else
+        self->next_event = error_event;
+    free (body);
+</action>
+
+<selftest>
+    <step send = "OHAI" body = "Joe" recv = "OHAI-OK" />
+    <step send = "ICANHAZ" recv = "CHEEZBURGER" />
+    <step send = "HUGZ" recv = "HUGZ-OK" />
+    <step recv = "HUGZ" />
+</selftest>
+</class>

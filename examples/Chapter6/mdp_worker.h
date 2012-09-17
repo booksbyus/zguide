@@ -1,7 +1,7 @@
 /*  =========================================================================
     mdp_worker.h
 
-    Generated C99 codec header for mdp_worker
+    Generated codec header for mdp_worker
     =========================================================================
 */
 

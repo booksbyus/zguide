@@ -1,4 +1,4 @@
-<class name = "mdp_client">
+<class name = "mdp_client" script = "codec_c">
     MDP/Client
     <header>
         <field name = "empty" type = "string" value = "">Empty frame</field>

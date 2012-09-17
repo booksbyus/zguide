@@ -1,7 +1,7 @@
 /*  =========================================================================
     mdp_worker.c
 
-    Generated C99 codec implementation for mdp_worker
+    Generated codec implementation for mdp_worker
     =========================================================================
 */
 

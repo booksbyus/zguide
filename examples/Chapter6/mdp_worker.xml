@@ -1,4 +1,4 @@
-<class name = "mdp_worker">
+<class name = "mdp_worker" script = "codec_c">
     MDP/Worker
     <header>
         <field name = "empty" type = "string" value = "">Empty frame</field>
