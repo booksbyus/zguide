@@ -18,13 +18,13 @@ int main (void)
         { backend,  0, ZMQ_POLLIN, 0 }
     };
     //  Switch messages between sockets
-    while (1) {
+    while (true) {
         zmq_msg_t message;
         int64_t more;           //  Multipart detection
 
         zmq_poll (items, 2, -1);
         if (items [0].revents & ZMQ_POLLIN) {
-            while (1) {
+            while (true) {
                 //  Process all parts of the message
                 zmq_msg_init (&message);
                 zmq_msg_recv (&message, frontend, 0);
@@ -37,7 +37,7 @@ int main (void)
             }
         }
         if (items [1].revents & ZMQ_POLLIN) {
-            while (1) {
+            while (true) {
                 //  Process all parts of the message
                 zmq_msg_init (&message);
                 zmq_msg_recv (&message, backend, 0);

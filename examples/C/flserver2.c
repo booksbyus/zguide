@@ -15,7 +15,7 @@ int main (int argc, char *argv [])
     zsocket_bind (server, argv [1]);
 
     printf ("I: service is ready at %s\n", argv [1]);
-    while (TRUE) {
+    while (true) {
         zmsg_t *request = zmsg_recv (server);
         if (!request)
             break;          //  Interrupted

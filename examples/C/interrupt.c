@@ -35,7 +35,7 @@ int main (void)
     zmq_bind (socket, "tcp://*:5555");
 
     s_catch_signals ();
-    while (1) {
+    while (true) {
         //  Blocking read will exit on a signal
         zmq_msg_t message;
         zmq_msg_init (&message);

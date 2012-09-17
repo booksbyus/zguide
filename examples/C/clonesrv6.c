@@ -356,7 +356,7 @@ s_subscriber (zloop_t *loop, zmq_pollitem_t *poller, void *args)
                     self->peer);
         zstr_sendm (snapshot, "ICANHAZ?");
         zstr_send (snapshot, ""); // blank subtree to get all
-        while (TRUE) {
+        while (true) {
             kvmsg_t *kvmsg = kvmsg_recv (snapshot);
             if (!kvmsg)
                 break;          //  Interrupted

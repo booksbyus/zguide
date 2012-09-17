@@ -1,0 +1,9 @@
+#  Run selftests and check memory
+echo "Rebuilding mdp..."
+gsl -q -script:codec_c mdp_client.xml
+gsl -q -script:codec_c mdp_worker.xml
+gcc -g -o mdp_selftest mdp_selftest.c mdp_client.c mdp_worker.c ${CFLAGS} ${LDFLAGS} -lczmq -lzmq
+if [ $? -eq 0 ]; then
+    echo "Starting Valgrind memcheck..."
+    valgrind --tool=memcheck --leak-check=full --suppressions=valgrind.supp ./mdp_selftest
+fi

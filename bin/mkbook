@@ -12,18 +12,53 @@
 require 'sflcvdp.pl';                   #   SFL date picture formatting
 use Digest::SHA1 qw(sha1_hex);
 
-printf "Generating DocBook version of Guide...\n";
+#   Language for the examples
+$source = $ENV {'BOOK_LANG'} || "C";
+#   Output format, book or pdf
+$format = $ENV {'BOOK_FORM'} || "book";
+
+printf "Generating $source/$format version of Guide...\n";
 
 #   Listings longer than this are truncated and turned into URLs
 $cutoff = 60;
 
-@languages = ('C', 'C++', 'PHP', 'Python');
-%extension = ('C' => 'c', 'C++' => 'cpp', 'PHP' => 'php', 'Python' => 'py' );
-%lexer = ('C' => 'c' , 'C++' => 'cpp', 'PHP' => 'php', 'Python' => 'python' );
-signatures_load ();
+#   Languages we support
+%lexer = ('C' => 'c' ,
+          'C++' => 'cpp',
+          'Haxe' => 'haxe',
+          'Lua' => 'lua',
+          'PHP' => 'php',
+          'Python' => 'python' );
+          
+#   File extensions - copied from z2w
+%extension = ('Ada' => 'ada',
+              'Basic' => 'bas',
+              'C' => 'c',
+              'C++' => 'cpp',
+              'C#' => 'cs',
+              'CL' => 'lisp',
+              'Clojure' => 'clj',
+              'Erlang' => 'es',
+              'F#' => 'fsx',
+              'Felix' => 'flx',
+              'Go' => 'go',
+              'Haskell' => 'hs',
+              'Haxe' => 'hx',
+              'Java' => 'java',
+              'Lua' => 'lua',
+              'Node.js' => 'js',
+              'Objective-C' => 'm',
+              'ooc' => 'ooc',
+              'Perl' => 'pl',
+              'PHP' => 'php',
+              'Python' => 'py',
+              'Q' => 'q',
+              'Racket' => 'rkt',
+              'Ruby' => 'rb',
+              'Scala' => 'scala',
+              'Tcl' => 'tcl' );
 
-#   Default language for all examples
-$source = "C";
+signatures_load ();
 
 #   When filtering, we drop text that we don't want in the printed book
 $filter = 0;
@@ -35,15 +70,16 @@ print OUTPUT "<?xml version=\"1.0\"?>\n";
 print OUTPUT "<!DOCTYPE book PUBLIC \"-//OASIS//DTD DocBook XML V4.5//EN\"\n";
 print OUTPUT "\"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd\">\n";
 print OUTPUT "<book>\n";
-print OUTPUT "<title>ZeroMQ - Connecting your Code</title>\n";
 
 #   Include bookinfo if publisher directory exists
-if (open (BOOKINFO, "oreilly/current/bookinfo.xml")) {
+if ($format eq "book" && open (BOOKINFO, "book/bookinfo.xml")) {
+    print OUTPUT "<title>ZeroMQ - Connecting your Code</title>\n";
     while (<BOOKINFO>) {
         print OUTPUT $_ unless /DOCTYPE/;
     }
 }
 else {
+    print OUTPUT "<title>The ZeroMQ Guide - for $source Developers</title>\n";
     print OUTPUT "<bookinfo>\n";
     print OUTPUT "  <isbn><!-- ISBN goes here --></isbn>\n";
     print OUTPUT "</bookinfo>\n";
@@ -52,7 +88,7 @@ else {
 start_block (1, "dedication");
 
 while (<>) {
-    chop;
+    chop while /\s$/;
     if (/^\./) {
         #   Process directive
         if (/^\.set\s+(\w+)=(.*)/) {
@@ -70,10 +106,10 @@ while (<>) {
         elsif (/^\.prelude\s+(\w.*)/) {
             $prelude = $1;
         }
-        elsif (/^\.filter online/) {
-            $filter = 1;
+        elsif (/^\.filter\s+(\w.*)/) {
+            $filter = ($1 eq $format);
         }
-        elsif (/^\.reset/) {
+        elsif (/^\.filter reset/) {
             $filter = 0;
         }
         else {
@@ -113,66 +149,73 @@ while (<>) {
         close_list ();
         $title = $1;
         $name = $2;
-        $language = $4 || "C";
+        $language = $4 || $source;
+
         $lexer = $lexer {$language};
         $ext = $extension {$language};
         $filename = "examples/$language/$name.$ext";
-        die "Can't open $filename: $!"
-            unless open (EXAMPLE, $filename);
 
         writeln ("<example id=\"$name-$ext\">");
         writeln ("<title>$title ($name.$ext)</title>");
         writeln ("<programlisting language=\"$lexer\">");
-        $lines = 0;
-        $split = 0;
-        $blanks = 0;
-        $start = 0;
-        while (<EXAMPLE>) {
-            chop;
-            if (/\/\/  \.split\s(.*)/) {
-                #   Long code example, split into separate pieces
-                writeln ("</programlisting>\n");
-                writeln ("</example>");
-                printf ("$filename: $lines lines ($start)\n") if $lines > $cutoff;
-                $text = "";
-                $start = $.;
-                $comment = $1;
-                while (<EXAMPLE>) {
-                    chop while /\s$/;
-                    last unless /\/\/  /;   #   End at any non-comment line
-                    $text .= "$' ";
+        
+        if (open (EXAMPLE, $filename)) {
+            $lines = 0;
+            $split = 0;
+            $blanks = 0;
+            $start = 0;
+            while (<EXAMPLE>) {
+                chop;
+                if (/\/\/  \.split\s(.*)/) {
+                    #   Long code example, split into separate pieces
+                    writeln ("</programlisting>\n");
+                    writeln ("</example>");
+                    printf ("$filename: $lines lines ($start)\n") if $lines > $cutoff;
+                    $text = "";
+                    $start = $.;
+                    $comment = $1;
+                    while (<EXAMPLE>) {
+                        chop while /\s$/;
+                        last unless /\/\/  /;   #   End at any non-comment line
+                        $text .= "$' ";
+                    }
+                    $split++;
+                    writeln (requote ("<para>$text\n</para>\n"));
+                    writeln ("<example id=\"$name-$ext-$split\">");
+                    writeln ("<title>$title ($name.$ext) - $1</title>");
+                    writeln ("<programlisting language=\"$lexer\">");
+                    $lines = 0;
                 }
-                $split++;
-                writeln (requote ("<para>$text\n</para>\n"));
-                writeln ("<example id=\"$name-$ext-$split\">");
-                writeln ("<title>$title ($name.$ext) - $1</title>");
-                writeln ("<programlisting language=\"$lexer\">");
-                $lines = 0;
-            }
-            elsif (/\/\/  \.skip/) {
-                writesrc ("...");
-                while (<EXAMPLE>) {
-                    chop while /\s$/;
-                    last if /\/\/  \.until/;
-                }
-            }
-            else {
-                #   Don't output trailing blank lines
-                if (/^$/) {
-                    $blanks++;
+                elsif (/\/\/  \.skip/) {
+                    writesrc ("...");
+                    while (<EXAMPLE>) {
+                        chop while /\s$/;
+                        last if /\/\/  \.until/;
+                    }
                 }
                 else {
-                    print OUTPUT "\n" x $blanks;
-                    $blanks = 0;
-                    writesrc ($_);
+                    #   Don't output trailing blank lines
+                    if (/^$/) {
+                        $blanks++;
+                    }
+                    else {
+                        print OUTPUT "\n" x $blanks;
+                        $blanks = 0;
+                        writesrc ($_);
+                    }
+                    $lines++;
                 }
-                $lines++;
             }
+            close (EXAMPLE);
+            printf ("$filename: $lines lines ($start)\n")
+                if $lines > $cutoff
+                && $format eq "book";
         }
-        close (EXAMPLE);
+        else {
+            writesrc ("(This example still needs translation into $source)");
+        }
         writeln ("</programlisting>\n");
         writeln ("</example>");
-        printf ("$filename: $lines lines ($start)\n") if $lines > $cutoff;
 
         #   Discard any real contents of code block
         while (<>) {
@@ -302,10 +345,10 @@ sub writesrc {
 
 sub requote {
     local ($_) = @_;
-    s/"([a-zA-ZØ0-9.\/\(])/&#8220;\1/g;
-    s/([a-zA-Z0-9!?.\/\)])"/\1&#8221;/g;
-    s/'([a-zA-Z0-9])/&#8216;\1/g;
-    s/'/&#8217;/g;
+#    s/"([a-zA-ZØ0-9.\/\(])/&#8220;\1/g;
+#    s/([a-zA-Z0-9!?.\/\)])"/\1&#8221;/g;
+#    s/ '([a-zA-Z0-9])/ &#8216;\1/g;
+#    s/'/&#8217;/g;
     #print "$_\n" if /"/;
     return $_;
 }
@@ -443,6 +486,7 @@ sub expand_symbols {
             $before = $`;
             $after = $';
             $args =~ s/\\/\\\\/g;
+            $args =~ s/#/"/g;
             $_ = eval ("&intrinsic_$funct ($args)");
             $_ = $before.$_.$after;
             if ($@) {                   #   Syntax error in Perl statement?
@@ -532,8 +576,8 @@ sub valueof {
 #   figref()                   - Insert '(<xref linkend="figure-nnn"/>)'
 #   time()                     - Format current time as hh:mm:ss
 #   date()                     - Return current date value
-#   date("picture")            - Format current date using picture
-#   date("picture", date, lc)  - Format specified date using picture & language
+#   date(#picture#)            - Format current date using picture
+#   date(#picture#, date, lc)  - Format specified date using picture & language
 #   week_day([date])           - Get day of week, 0=Sunday to 6=Saturday
 #   year_week([date])          - Get week of year, 1 is first full week
 #   julian_date([date])        - Get Julian date for date
@@ -543,15 +587,15 @@ sub valueof {
 #   future_date(days[,date])   - Calculate a future date
 #   past_date(days[,date])     - Calculate a past date
 #   date_diff(date1[,date2])   - Calculate date1 - date2
-#   image_height("image.ext")  - Get image height (GIF, JPEG)
-#   image_width("image.ext")   - Get image width (GIF, JPEG)
-#   file_size("filename",arg)  - Get size of file: optional arg K or M
-#   file_date("filename")      - Get date of file
-#   file_time("filename")      - Get time of file as hh:mm:ss
-#   normalise("filename")      - Normalise filename to UNIX format
-#   system("command")          - Call a system utility
-#   lower("string")            - Convert string to lower case
-#   upper("string")            - Convert string to upper case
+#   image_height(#image.ext#)  - Get image height (GIF, JPEG)
+#   image_width(#image.ext#)   - Get image width (GIF, JPEG)
+#   file_size(#filename#,arg)  - Get size of file: optional arg K or M
+#   file_date(#filename#)      - Get date of file
+#   file_time(#filename#)      - Get time of file as hh:mm:ss
+#   normalise(#filename#)      - Normalise filename to UNIX format
+#   system(#command#)          - Call a system utility
+#   lower(#string#)            - Convert string to lower case
+#   upper(#string#)            - Convert string to upper case
 #
 
 sub intrinsic_figref {

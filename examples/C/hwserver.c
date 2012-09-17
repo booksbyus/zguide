@@ -16,7 +16,7 @@ int main (void)
     void *responder = zmq_socket (context, ZMQ_REP);
     zmq_bind (responder, "tcp://*:5555");
 
-    while (1) {
+    while (true) {
         //  Wait for next request from client
         zmq_msg_t request;
         zmq_msg_init (&request);

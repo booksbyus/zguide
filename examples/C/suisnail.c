@@ -18,7 +18,7 @@ subscriber (void *args, zctx_t *ctx, void *pipe)
     zsocket_connect (subscriber, "tcp://localhost:5556");
 
     //  Get and process messages
-    while (1) {
+    while (true) {
         char *string = zstr_recv (subscriber);
         printf("%s\n", string);
         int64_t clock;
@@ -48,7 +48,7 @@ publisher (void *args, zctx_t *ctx, void *pipe)
     void *publisher = zsocket_new (ctx, ZMQ_PUB);
     zsocket_bind (publisher, "tcp://*:5556");
 
-    while (1) {
+    while (true) {
         //  Send current clock (msecs) to subscribers
         char string [20];
         sprintf (string, "%" PRId64, zclock_time ());

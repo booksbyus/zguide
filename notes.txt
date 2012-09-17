@@ -1,20 +1,18 @@
 Notes for The Guide
 
-- for language authors
-    - devices deprecated as concept
-    - wuproxy changed to use XSUB, XPUB, and zmq_proxy
-    - asyncsrv changed to use zmq_proxy instead of doing it manually
     
 Chapter 6 topics:
 
-- xsub, xpub sockets
-- heartbeating, credit-based flow control, reliable pipelines, presence & discovery using UDP, bridging (like VTX), file transfer, security, serialization
+- heartbeating, credit-based flow control, file transfer, serialization
+
+
+
+- reliable pipelines, presence & discovery using UDP, bridging (like VTX), security, 
 - contribution process
 - who owns 0MQ
 - forks and competitors - AMQP, Stomp, xs
 - web interfaces - NullMQ
 
--> devices are a confusing term, fix this
 
 
 Using network buffers - such as 0MQ's queues - has a disadvantage when you are sending data to many readers. Your writer will block when the buffer is full. To avoid this, you can use non-blocking writes, and poll for sockets that are 'ready for writing'. But here's an alternative that dispenses with high-water marks and blocking writes. It's called "credit-based flow control".
@@ -278,48 +276,6 @@ int main (void)
 
 
 
-++ Heartbeating
-
-You'll often hit the problem of knowing whether a peer is alive or not. This is not specifically a 0MQ issue. TCP has a long timeout (30 minutes or so) that means that it's impossible sometimes to know whether a peer has died, been disconnected, or gone on a long weekend to Prague with a case of vodka, a redhead, and a large expense account.
-
-Heartbeating is not trivial and worth getting right, since it can make the difference between a working, and failing architecture. So using our standard approach, let's start with the simplest possible heartbeat design, and develop better and better designs until we have one with no visible faults.
-
-+++ Model one - the Shruggery Pattern
-
-Shruggery is the simplest possible design: no heartbeating at all. This is the starting point for all 0MQ applications, of course. For PUSH-PULL sockets, this is the only model that works. For other socket types, this has at least the following problems:
-
-* If you have ROUTER-based broker devices that manage some resources attached to the identities of peers, as peers disconnect and reconnect, the devices will accumulate entropy and eventually run out of resources.
-
-* If you have SUB or DEALER-based data recipients, you can't tell the difference between good silence (there's no data) and bad silence (the other end died).
-
-* If you have a TCP connection that stays silent for a long while, it will, in some networks, die. Sending something (technically, a "keep-alive" more than a heartbeat), will keep the network alive.
-
-+++ Model two - the Heartbeat Pattern
-
-So, we create the Heartbeat pattern by sending a "heartbeat" message from each node to its peers, every second or so. When one node hears nothing from another, within some timeout (several seconds, typically), it will treat that peer as dead.
-
-For PUB-SUB, this is the only model that works. SUB sockets cannot talk back to PUB sockets, but PUB sockets can happily send "I'm alive" messages to their subscribers.
-
-As an optimization to model 2, the sender can start heartbeating only when there is no data to send. The recipient should then treat ANY incoming data as a sign of life. This might be a little inaccurate, since receiving data does not actually mean the sender is (still) alive. Light from a dying sun, and all that.
-
-So, problems with this design:
-
-* It can be inaccurate when large amounts of data are sent, since heartbeats will be delayed behind that data. If heartbeats are delayed, you can get false timeouts and disconnections due to network congestion.
-
-* While the PUB-SUB pattern will drop messages for disappeared recipients, ROUTER and DEALER sockets will queue them. So, if you send heartbeats to a dead peer, and it comes back, it'll get all the heartbeats you sent. Which can be thousands. Whoa, whoa!
-
-* It assumes that heartbeat timeouts are the same across the whole network. But that won't be accurate. Some peers will want very aggressive heartbeating, to detect faults rapidly, some will want very relaxed heartbeating, to leave sleeping networks lie, and save power.
-
-+++ Model three - the Belts and Braces pattern
-
-Belts and Braces consists of a ping-pong dialog. One peer sends a ping command to the other, which replies with a pong command. Neither command has any payload. Pings and pongs are not correlated. Since the roles of "client" and "server" are sometimes arbitrary, we specify that either peer can in fact send a ping and expect a pong in response. However, since the timeouts depend on network topologies known best to dynamic clients, it is usually the client which pings the server.
-
-This works for all ROUTER-based brokers. Two optimizations make this work even better:
-
-* Treat any incoming data as a pong.
-* Only send a ping when not otherwise sending data.
-
-
 
 
 
@@ -331,7 +287,6 @@ This works for all ROUTER-based brokers. Two optimizations make this work even b
 - collection of patterns
     Least Recently Used
     Asynchronous Client-Server
-    Suicidal Snail
     Lazy Pirate
     Simple Pirate
     Paranoid Pirate
