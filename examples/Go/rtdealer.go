@@ -11,6 +11,7 @@ import (
   zmq "github.com/alecthomas/gozmq"
   "time"
   "math/rand"
+  "fmt"
 )
 
 func workerTaskA() {
@@ -18,6 +19,20 @@ func workerTaskA() {
 	defer context.Close()
 
 	worker, _ := context.NewSocket(zmq.DEALER)
+	defer worker.Close()
+	worker.SetSockOptString(zmq.IDENTITY, "A")
+	worker.Connect("ipc://routing.ipc")
+
+	var total int
+	for {
+	  //  We receive one part, with the workload
+	  request, _ := worker.Recv(0)
+	  if(string(request) == "END") {
+		fmt.Printf("A received: %d\n", total)
+		break
+	  }
+	  total++
+	}
 }
 
 func workerTaskB() {
@@ -28,6 +43,7 @@ func main() {
 	defer context.Close()
 	client, _ := context.NewSocket(zmq.ROUTER)
 	defer client.Close()
+	client.Bind("ipc://routing.ipc")
 
 	go workerTaskA()
 	go workerTaskB()
@@ -37,6 +53,7 @@ func main() {
 	time.Sleep(time.Second)
 
 	//  Send 10 tasks scattered to A twice as often as B
+	rand.Seed(time.Now().Unix())
 	for i := 0; i < 10; i++ {
 		parts := make([][]byte, 0)
 		if rand.Intn(10) < 3 {
@@ -45,7 +62,8 @@ func main() {
 		  parts = append(parts, []byte("B"))
 		}
 		parts = append(parts, []byte("This is the workload"))
-		client.SendMultipart(parts, 0)
+		err := client.SendMultipart(parts, 0)
+		if err != nil { fmt.Println(err) }
 	}
 	client.SendMultipart([][]byte{[]byte("A"), []byte("END")}, 0)
 	client.SendMultipart([][]byte{[]byte("B"), []byte("END")}, 0)
