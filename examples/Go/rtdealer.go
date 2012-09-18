@@ -14,6 +14,10 @@ import (
 )
 
 func workerTaskA() {
+	context, _ := zmq.NewContext()
+	defer context.Close()
+
+	worker, _ := context.NewSocket(zmq.DEALER)
 }
 
 func workerTaskB() {
