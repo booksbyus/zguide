@@ -14,6 +14,27 @@ import (
   "fmt"
 )
 
+func workerTaskB() {
+	context, _ := zmq.NewContext()
+	defer context.Close()
+
+	worker, _ := context.NewSocket(zmq.DEALER)
+	defer worker.Close()
+	worker.SetSockOptString(zmq.IDENTITY, "B")
+	worker.Connect("ipc://routing.ipc")
+
+	var total int
+	for {
+	  //  We receive one part, with the workload
+	  request, _ := worker.Recv(0)
+	  if(string(request) == "END") {
+		fmt.Printf("B received: %d\n", total)
+		break
+	  }
+	  total++
+	}
+}
+
 func workerTaskA() {
 	context, _ := zmq.NewContext()
 	defer context.Close()
@@ -33,9 +54,6 @@ func workerTaskA() {
 	  }
 	  total++
 	}
-}
-
-func workerTaskB() {
 }
 
 func main() {
