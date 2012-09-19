@@ -8,10 +8,10 @@
 package main
 
 import (
-  zmq "github.com/alecthomas/gozmq"
-  "time"
-  "math/rand"
-  "fmt"
+	"fmt"
+	zmq "github.com/alecthomas/gozmq"
+	"math/rand"
+	"time"
 )
 
 func workerTaskB() {
@@ -25,13 +25,13 @@ func workerTaskB() {
 
 	var total int
 	for {
-	  //  We receive one part, with the workload
-	  request, _ := worker.Recv(0)
-	  if(string(request) == "END") {
-		fmt.Printf("B received: %d\n", total)
-		break
-	  }
-	  total++
+		//  We receive one part, with the workload
+		request, _ := worker.Recv(0)
+		if string(request) == "END" {
+			fmt.Printf("B received: %d\n", total)
+			break
+		}
+		total++
 	}
 }
 
@@ -46,13 +46,13 @@ func workerTaskA() {
 
 	var total int
 	for {
-	  //  We receive one part, with the workload
-	  request, _ := worker.Recv(0)
-	  if(string(request) == "END") {
-		fmt.Printf("A received: %d\n", total)
-		break
-	  }
-	  total++
+		//  We receive one part, with the workload
+		request, _ := worker.Recv(0)
+		if string(request) == "END" {
+			fmt.Printf("A received: %d\n", total)
+			break
+		}
+		total++
 	}
 }
 
@@ -75,13 +75,15 @@ func main() {
 	for i := 0; i < 10; i++ {
 		parts := make([][]byte, 0)
 		if rand.Intn(10) < 3 {
-		  parts = append(parts, []byte("A"))
+			parts = append(parts, []byte("A"))
 		} else {
-		  parts = append(parts, []byte("B"))
+			parts = append(parts, []byte("B"))
 		}
 		parts = append(parts, []byte("This is the workload"))
 		err := client.SendMultipart(parts, 0)
-		if err != nil { fmt.Println(err) }
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 	client.SendMultipart([][]byte{[]byte("A"), []byte("END")}, 0)
 	client.SendMultipart([][]byte{[]byte("B"), []byte("END")}, 0)
