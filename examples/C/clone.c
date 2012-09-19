@@ -298,7 +298,7 @@ clone_agent (void *args, zctx_t *ctx, void *pipe)
 {
     agent_t *self = agent_new (ctx, pipe);
 
-    while (TRUE) {
+    while (true) {
         zmq_pollitem_t poll_set [] = {
             { pipe, 0, ZMQ_POLLIN, 0 },
             { 0,    0, ZMQ_POLLIN, 0 }

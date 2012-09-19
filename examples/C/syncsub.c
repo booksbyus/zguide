@@ -28,7 +28,7 @@ int main (void)
 
     //  Third, get our updates and report how many we got
     int update_nbr = 0;
-    while (1) {
+    while (true) {
         char *string = s_recv (subscriber);
         if (strcmp (string, "END") == 0) {
             free (string);

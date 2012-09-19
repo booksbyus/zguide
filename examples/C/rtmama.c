@@ -17,7 +17,7 @@ worker_task (void *args)
     zmq_connect (worker, "ipc://routing.ipc");
 
     int total = 0;
-    while (1) {
+    while (true) {
         //  Tell the router we're ready for work
         s_send (worker, "ready");
 

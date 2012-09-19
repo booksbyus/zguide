@@ -20,7 +20,7 @@ int main (void)
 
     //  Process messages from both sockets
     //  We prioritize traffic from the task ventilator
-    while (1) {
+    while (true) {
         //  Process any waiting tasks
         int rc;
         for (rc = 0; !rc; ) {

@@ -13,7 +13,7 @@ int main (void)
     void *responder = zmq_socket (context, ZMQ_REP);
     zmq_connect (responder, "tcp://localhost:5560");
 
-    while (1) {
+    while (true) {
         //  Wait for next request from client
         char *string = s_recv (responder);
         printf ("Received request: [%s]\n", string);

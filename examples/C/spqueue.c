@@ -20,7 +20,7 @@ int main (void)
     
     //  The body of this example is exactly the same as lruqueue2.
     //  .skip
-    while (1) {
+    while (true) {
         zmq_pollitem_t items [] = {
             { backend,  0, ZMQ_POLLIN, 0 },
             { frontend, 0, ZMQ_POLLIN, 0 }

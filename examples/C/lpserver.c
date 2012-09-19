@@ -16,7 +16,7 @@ int main (void)
     zmq_bind (server, "tcp://*:5555");
 
     int cycles = 0;
-    while (1) {
+    while (true) {
         char *request = s_recv (server);
         cycles++;
 

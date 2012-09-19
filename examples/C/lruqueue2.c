@@ -18,7 +18,7 @@ client_task (void *args)
     zsocket_connect (client, "ipc://frontend.ipc");
 
     //  Send request, get reply
-    while (1) {
+    while (true) {
         zstr_send (client, "HELLO");
         char *reply = zstr_recv (client);
         if (!reply)
@@ -45,7 +45,7 @@ worker_task (void *args)
     zframe_send (&frame, worker, 0);
 
     //  Process messages as they arrive
-    while (1) {
+    while (true) {
         zmsg_t *msg = zmsg_recv (worker);
         if (!msg)
             break;              //  Interrupted
@@ -84,7 +84,7 @@ int main (void)
     //  Here is the main loop for the LRU queue. It works the same way
     //  as the previous example, but is a lot shorter because CZMQ gives
     //  us an API that does more with fewer calls:
-    while (1) {
+    while (true) {
         zmq_pollitem_t items [] = {
             { backend,  0, ZMQ_POLLIN, 0 },
             { frontend, 0, ZMQ_POLLIN, 0 }

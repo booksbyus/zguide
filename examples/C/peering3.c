@@ -27,7 +27,7 @@ client_task (void *args)
     void *monitor = zsocket_new (ctx, ZMQ_PUSH);
     zsocket_connect (monitor, "ipc://%s-monitor.ipc", self);
 
-    while (1) {
+    while (true) {
         sleep (randof (5));
         int burst = randof (15);
         while (burst--) {
@@ -79,7 +79,7 @@ worker_task (void *args)
     zframe_send (&frame, worker, 0);
 
     //  Process messages as they arrive
-    while (1) {
+    while (true) {
         zmsg_t *msg = zmsg_recv (worker);
         if (!msg)
             break;              //  Interrupted
@@ -177,7 +177,7 @@ int main (int argc, char *argv [])
     //  there's no point in looking at incoming requests. These can remain on
     //  their internal 0MQ queues:
 
-    while (1) {
+    while (true) {
         zmq_pollitem_t primary [] = {
             { localbe, 0, ZMQ_POLLIN, 0 },
             { cloudbe, 0, ZMQ_POLLIN, 0 },

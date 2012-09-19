@@ -22,7 +22,7 @@ client_task (void *args)
     void *client = zsocket_new (ctx, ZMQ_REQ);
     zsocket_connect (client, "ipc://%s-localfe.ipc", self);
 
-    while (1) {
+    while (true) {
         //  Send request, get reply
         zstr_send (client, "HELLO");
         char *reply = zstr_recv (client);
@@ -52,7 +52,7 @@ worker_task (void *args)
     zframe_send (&frame, worker, 0);
 
     //  Process messages as they arrive
-    while (1) {
+    while (true) {
         zmsg_t *msg = zmsg_recv (worker);
         if (!msg)
             break;              //  Interrupted
@@ -127,7 +127,7 @@ int main (int argc, char *argv [])
     int capacity = 0;
     zlist_t *workers = zlist_new ();
 
-    while (1) {
+    while (true) {
         //  First, route any waiting replies from workers
         zmq_pollitem_t backends [] = {
             { localbe, 0, ZMQ_POLLIN, 0 },

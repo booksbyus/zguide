@@ -438,7 +438,7 @@ int main (int argc, char *argv [])
     s_broker_bind (self, "tcp://*:5555");
 
     //  Get and process messages forever or until interrupted
-    while (TRUE) {
+    while (true) {
         zmq_pollitem_t items [] = {
             { self->socket,  0, ZMQ_POLLIN, 0 } };
         int rc = zmq_poll (items, 1, HEARTBEAT_INTERVAL * ZMQ_POLL_MSEC);

@@ -173,7 +173,7 @@ mdwrk_recv (mdwrk_t *self, zmsg_t **reply_p)
     }
     self->expect_reply = 1;
 
-    while (TRUE) {
+    while (true) {
         zmq_pollitem_t items [] = {
             { self->worker,  0, ZMQ_POLLIN, 0 } };
         int rc = zmq_poll (items, 1, self->heartbeat * ZMQ_POLL_MSEC);

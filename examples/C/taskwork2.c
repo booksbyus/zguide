@@ -27,7 +27,7 @@ int main (void)
         { controller, 0, ZMQ_POLLIN, 0 }
     };
     //  Process messages from both sockets
-    while (1) {
+    while (true) {
         zmq_msg_t message;
         zmq_poll (items, 2, -1);
         if (items [0].revents & ZMQ_POLLIN) {

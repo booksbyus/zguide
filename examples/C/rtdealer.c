@@ -16,7 +16,7 @@ worker_task_a (void *args)
     zmq_connect (worker, "ipc://routing.ipc");
 
     int total = 0;
-    while (1) {
+    while (true) {
         //  We receive one part, with the workload
         char *request = s_recv (worker);
         int finished = (strcmp (request, "END") == 0);
@@ -41,7 +41,7 @@ worker_task_b (void *args)
     zmq_connect (worker, "ipc://routing.ipc");
 
     int total = 0;
-    while (1) {
+    while (true) {
         //  We receive one part, with the workload
         char *request = s_recv (worker);
         int finished = (strcmp (request, "END") == 0);
