@@ -9,7 +9,7 @@
 #include "nom_server.h"
 
 //  This API works in two halves so that the main server engine can run
-//  in the background. One half is an front-end object the caller creates
+//  in the background. One half is a front-end object the caller creates
 //  and works with; the other half is a back-end "agent" that runs in a
 //  background thread. The front-end talks to the back-end over an inproc
 //  pipe socket.
@@ -101,6 +101,24 @@ typedef enum {
     heartbeat_event = 6
 } event_t;
 
+//  Names for animation
+char *s_state_name [] = {
+    "stopped",
+    "start",
+    "authenticated",
+    "ready"
+};
+
+char *s_event_name [] = {
+    "",
+    "OHAI",
+    "ok",
+    "error",
+    "ICANHAZ",
+    "HUGZ",
+    "heartbeat"
+};
+
 
 //  ---------------------------------------------------------------------
 //  Simple class for one client we talk to
@@ -151,9 +169,6 @@ client_destroy (client_t **self_p)
     }
 }
 
-//  Execute state machine as long as we have events
-//  - execute actions for event in state
-//
 static void
 check_credentials_action (client_t *self) {
     char *body = zmsg_popstr (self->request);
@@ -164,6 +179,8 @@ check_credentials_action (client_t *self) {
     free (body);
 }
 
+//  Execute state machine as long as we have events
+
 static void
 client_execute (client_t *self, int event)
 {
@@ -171,6 +188,8 @@ client_execute (client_t *self, int event)
     while (self->next_event) {
         self->event = self->next_event;
         self->next_event = 0;
+        printf ("State=%s, event=%s\n",
+            s_state_name [self->state], s_event_name [self->event]);
         switch (self->state) {
             case start_state:
                 if (self->event == ohai_event) {
@@ -210,6 +229,8 @@ client_execute (client_t *self, int event)
                 break;
         }
         if (zmsg_size (self->reply) > 1) {
+            puts ("Send message to client");
+            zmsg_dump (self->reply);
             zmsg_send (&self->reply, self->router);
             self->reply = zmsg_new ();
             zmsg_add (self->reply, zframe_dup (self->address));
@@ -223,11 +244,8 @@ client_set_request (client_t *self, zmsg_t *request)
     if (self->request)
         zmsg_destroy (&self->request);
     self->request = request;
-}
 
-static void
-client_refresh (client_t *self)
-{
+    //  Any input from client counts as activity
     self->heartbeat_at = zclock_time () + self->heartbeat;
     self->expires = zclock_time () + self->heartbeat * 3;
 }
@@ -302,8 +320,8 @@ static void
 agent_control_message (agent_t *self)
 {
     zmsg_t *msg = zmsg_recv (self->pipe);
-    char *command = zmsg_popstr (msg);
-    if (streq (command, "BIND")) {
+    char *method = zmsg_popstr (msg);
+    if (streq (method, "BIND")) {
         char *endpoint = zmsg_popstr (msg);
         assert (endpoint);
         int rc = zmq_bind (self->router, endpoint);
@@ -311,11 +329,11 @@ agent_control_message (agent_t *self)
         free (endpoint);
     }
     else
-    if (streq (command, "STOP")) {
+    if (streq (method, "STOP")) {
         zstr_send (self->pipe, "OK");
         self->stopped = true;
     }
-    free (command);
+    free (method);
     zmsg_destroy (&msg);
 }
 
@@ -325,6 +343,9 @@ agent_client_message (agent_t *self)
     zmsg_t *msg = zmsg_recv (self->router);
     if (!msg)
         return;         //  Interrupted; do nothing
+
+    puts ("Received message from client");
+    zmsg_dump (msg);
 
     //  Frame 0 is address client that sent message
     zframe_t *address = zmsg_pop (msg);
@@ -339,7 +360,7 @@ agent_client_message (agent_t *self)
         free (hashkey);
         zframe_destroy (&address);
     }
-    //  Frame 1 is command type
+    //  Frame 1 is the command
     char *command = zmsg_popstr (msg);
     client_set_request (client, msg);
     if (command) {
@@ -353,7 +374,6 @@ agent_client_message (agent_t *self)
             client_execute (client, hugz_event);
         free (command);
     }
-    client_refresh (client);
 }
 
 //  Finally here's the agent task itself, which polls its two sockets

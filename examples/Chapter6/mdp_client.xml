@@ -1,3 +1,13 @@
+<!--
+    Message formats for MDP/Client protocol 0.1
+
+    To generate code from this:
+    gsl mdp_client.xml
+
+    To understand the code generator
+    vim codec_c.gsl
+    -->
+
 <class name = "mdp_client" script = "codec_c">
     MDP/Client
     <header>

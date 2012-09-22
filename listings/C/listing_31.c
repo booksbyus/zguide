@@ -1,9 +1,12 @@
-    //  Specify endpoints for each socket we need
-    clone_subscribe (clone, "tcp://localhost:5556");
-    clone_snapshot  (clone, "tcp://localhost:5557");
-    clone_updates   (clone, "tcp://localhost:5558");
+#include "czmq.h"
+#include "nom_server.h"
 
-    //  Times two, since we have two servers
-    clone_subscribe (clone, "tcp://localhost:5566");
-    clone_snapshot  (clone, "tcp://localhost:5567");
-    clone_updates   (clone, "tcp://localhost:5568");
+int main (int argc, char *argv [])
+{
+    printf ("Starting NOM protocol server on port 6000...\n");
+    nom_server_t *server = nom_server_new ();
+    nom_server_bind (server, "tcp://*:6000");
+    nom_server_wait (server);
+    nom_server_destroy (&server);
+    return 0;
+}

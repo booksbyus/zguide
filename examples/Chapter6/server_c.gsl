@@ -1,3 +1,15 @@
+.#  server_c.gsl
+.#
+.#  Generates a server engine for a specified protocol.
+.#
+.#  This is a stripped-down server generator that you can expand for your
+.#  own protocol designs. Look at nom_server.xml for an example of a server
+.#  state machine models.
+.#
+.#  This codec generates C; it should be fairly simple to change it to
+.#  produce other languages.
+.#
+.echo "Generating $(class.name).h..."
 .output "$(class.name).h"
 /*  =========================================================================
     $(class.name).h
@@ -41,6 +53,7 @@ int
 #endif
 
 #endif
+.echo "Generating $(class.name).c..."
 .output "$(class.name).c"
 /*  =========================================================================
     $(class.name).c
@@ -53,7 +66,7 @@ int
 #include "$(class.name).h"
 
 //  This API works in two halves so that the main server engine can run
-//  in the background. One half is an front-end object the caller creates
+//  in the background. One half is a front-end object the caller creates
 //  and works with; the other half is a back-end "agent" that runs in a
 //  background thread. The front-end talks to the back-end over an inproc
 //  pipe socket.
@@ -137,7 +150,7 @@ typedef enum {
 .       for class.event as cevent where cevent.name = event.name
 .       else
 .           if "$(name:)" = "$(NAME)"
-.               event.command = 1
+.               event.external = 1
 .           endif
 .           copy event to class
 .       endfor
@@ -220,9 +233,6 @@ client_destroy (client_t **self_p)
     }
 }
 
-//  Execute state machine as long as we have events
-//  - execute actions for event in state
-//
 .for class.action
 static void
 $(name:c)_action (client_t *self) {
@@ -230,6 +240,8 @@ $(string.trim (.):)
 }
 
 .endfor
+//  Execute state machine as long as we have events
+
 static void
 client_execute (client_t *self, int event)
 {
@@ -272,7 +284,7 @@ client_execute (client_t *self, int event)
         }
         if (zmsg_size (self->reply) > 1) {
 .if switches.trace ?= 1
-            puts ("Send command to client");
+            puts ("Send message to client");
             zmsg_dump (self->reply);
 .endif
             zmsg_send (&self->reply, self->router);
@@ -288,11 +300,8 @@ client_set_request (client_t *self, zmsg_t *request)
     if (self->request)
         zmsg_destroy (&self->request);
     self->request = request;
-}
 
-static void
-client_refresh (client_t *self)
-{
+    //  Any input from client counts as activity
     self->heartbeat_at = zclock_time () + self->heartbeat;
     self->expires = zclock_time () + self->heartbeat * 3;
 }
@@ -367,8 +376,8 @@ static void
 agent_control_message (agent_t *self)
 {
     zmsg_t *msg = zmsg_recv (self->pipe);
-    char *command = zmsg_popstr (msg);
-    if (streq (command, "BIND")) {
+    char *method = zmsg_popstr (msg);
+    if (streq (method, "BIND")) {
         char *endpoint = zmsg_popstr (msg);
         assert (endpoint);
         int rc = zmq_bind (self->router, endpoint);
@@ -376,11 +385,11 @@ agent_control_message (agent_t *self)
         free (endpoint);
     }
     else
-    if (streq (command, "STOP")) {
+    if (streq (method, "STOP")) {
         zstr_send (self->pipe, "OK");
         self->stopped = true;
     }
-    free (command);
+    free (method);
     zmsg_destroy (&msg);
 }
 
@@ -392,7 +401,7 @@ agent_client_message (agent_t *self)
         return;         //  Interrupted; do nothing
 
 .if switches.trace ?= 1
-    puts ("Received command from client");
+    puts ("Received message from client");
     zmsg_dump (msg);
 
 .endif
@@ -409,11 +418,11 @@ agent_client_message (agent_t *self)
         free (hashkey);
         zframe_destroy (&address);
     }
-    //  Frame 1 is command type
+    //  Frame 1 is the command
     char *command = zmsg_popstr (msg);
     client_set_request (client, msg);
     if (command) {
-.   for class.event where command ?= 1
+.   for class.event where external ?= 1
 .   if index () > 1
         else
 .   endif
@@ -422,7 +431,6 @@ agent_client_message (agent_t *self)
 .   endfor
         free (command);
     }
-    client_refresh (client);
 }
 
 //  Finally here's the agent task itself, which polls its two sockets
@@ -507,6 +515,7 @@ $(class.name)_test (bool verbose)
     printf ("OK\\n");
     return 0;
 }
+.echo "Generating $(class.name).txt..."
 .output "$(class.name).txt"
 .for class.state
 /-------------------\\

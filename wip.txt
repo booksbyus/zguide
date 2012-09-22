@@ -1,5 +1,11 @@
-Chapter 6
+Chapter 7
 
+- generate bindings in
+    Python
+    C#
+    Java
+    Ruby
+- using GSL :-)
 
 
 On Thu, Mar 10, 2011 at 7:09 PM, Michael Andersen <michael@ibab.dk> wrote:
@@ -59,5 +65,4 @@ The Harmony pattern takes pipeline and makes it robust against the only failure 
 - call ventilator the 'client'
 - if task missing, resend
 - if end of batch missing, resend from last response
-
 

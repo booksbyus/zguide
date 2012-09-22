@@ -221,6 +221,12 @@ mdp_worker_id (mdp_worker_t *self)
     return self->id;
 }
 
+void
+mdp_worker_id_set (mdp_worker_t *self, int id)
+{
+    self->id = id;
+}
+
 
 //  --------------------------------------------------------------------------
 //  Get/set the service field

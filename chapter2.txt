@@ -120,7 +120,7 @@ It's the ability to connect sockets in these different ways that gives 0MQ its b
 
 +++ Using Sockets to Carry Data
 
-To send and receive messages you use the zmq_msg_send[3] and zmq_msg_recv[3] methods. The names are conventional but 0MQ's I/O model is different enough from the TCP model that you will need time to get your head around it.
+To send and receive messages you use the zmq_msg_send[3] and zmq_msg_recv[3] methods. The names are conventional but 0MQ's I/O model is different enough from the TCP model!figref() that you will need time to get your head around it.
 
 [[code type="textdiagram" title="TCP sockets are 1 to 1"]]
 +------------+

@@ -1,3 +1,16 @@
+<!--
+    State machine for the NOM server
+
+    To generate code from this:
+    gsl -trace:1 nom_server.xml
+
+    To understand the code generator
+    vim server_c.gsl
+    
+    To use the generated code:
+    gcc -g -o nomd nomd.c nom_server.c -lczmq -lzmq
+    -->
+
 <class name = "nom_server" script = "server_c">
     
 <state name = "start">
