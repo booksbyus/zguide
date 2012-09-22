@@ -295,9 +295,6 @@ sub writeln {
 
 sub writesrc {
     local ($_) = @_;
-    s/&/&amp;/g;
-    s/</&lt;/g;
-    s/>/&gt;/g;
     print OUTPUT "$_\n" unless $EOD;
 }
 

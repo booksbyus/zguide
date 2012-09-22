@@ -53,7 +53,7 @@ Architecture is the art and science of making large artificial structures for hu
 
 The core problems in software architecture are driven by human psychology, not technology. There are many ways our psychology affects our work. I could point to the way teams seem to get stupider as they get larger, or have to work across larger distances. Does that mean the smaller the team, the more effective? How then does a large global community like 0MQ manage to work successfully?
 
-The 0MQ community wasn't accidental, it was a deliberate design, my contribution to the early days when the code came out of a cellar in Bratislava. The design was based on my pet science of "Social Architecture", which [http://en.wikipedia.org/wiki/Social_architecture Wikipedia defines] (what a coincidence!) as "//the process, and the product, of planning, designing, and growing an on-line community.//" I'll come back to this at the end of this Chapter.
+The 0MQ community wasn't accidental, it was a deliberate design, my contribution to the early days when the code came out of a cellar in Bratislava. The design was based on my pet science of "Social Architecture", which [http://en.wikipedia.org/wiki/Social_architecture Wikipedia defines] (what a coincidence!) as "//the process, and the product, of planning, designing, and growing an on-line community.//"
 
 One of the tenets of Social Architecture is that //how we organize// is more significant than //who we are//. The same group, organized differently, can produce entirely opposite results. We are like peers in a 0MQ network, and our communication patterns have dramatic impact on our performance. Ordinary people, well connected, can far outperform a team of experts working in the wrong patterns. If you're the architect of a larger 0MQ application, you're going to have to help others find the right patterns for working together. Do this right, and your project can succeed. Do it wrong, and your project will fail.
 
@@ -263,13 +263,13 @@ Now we go through the whole cycle (extending the test case, fixing the API, upda
 
 +++ Serializing your Data
 
-When we start to design a protocol, one of the first questions we face is how we encode data on the wire. There is, sadly, no universal answer. There are a half-dozen different ways to serialize data, each with pros and cons. We'll explore these with worked examples.
+When we start to design a protocol, one of the first questions we face is how we encode data on the wire. There is, sadly, no universal answer. There are a half-dozen different ways to serialize data, each with pros and cons. We'll explore these.
 
 However, there is a general lesson I've learned over a couple of decades of writing protocols small and large. I call this the "Cheap and Nasty" pattern: you can often split your work into two layers, and solve these separately, one using a "cheap" approach, the other using a "nasty" approach.
 
 ++++ Cheap and Nasty
 
-The key insight to making Cheap and Nasty work is to realize that many protocols mix a low-volume chatty part for control, and a high-volume asynchronous part for data. For instance, HTTP has a chatty dialog to authenticate and get pages, and an asynchronous dialog to streaming data. FTP actually splits this over two ports; one port for control and one port for data.
+The key insight to making Cheap and Nasty work is to realize that many protocols mix a low-volume chatty part for control, and a high-volume asynchronous part for data. For instance, HTTP has a chatty dialog to authenticate and get pages, and an asynchronous dialog to stream data. FTP actually splits this over two ports; one port for control and one port for data.
 
 Protocol designers who don't separate control from data tend to make awful protocols, because the trade-offs in the two cases are almost totally opposite. What is perfect for control is terrible for data, and what's ideal for data just doesn't work for control. It's especially true when we want high-performance at the same time as extensibility and good error checking.
 
@@ -414,7 +414,7 @@ It works but in most practical cases, wins you little over a serialization langu
 
 ++++ Hand-written Binary Serialization
 
-As you'll gather from this book, my preferred language for systems programming is C (upgraded to C99, with a constructor/destructor API model and generic containers). There are two reasons I like this modernized C language: firstly, I'm too weak-minded to learn a big language like C++. Life just seems filled with more interesting things to understand. Secondly, I find that this specific level of manual control lets me produce better results.
+As you'll gather from this book, my preferred language for systems programming is C (upgraded to C99, with a constructor/destructor API model and generic containers). There are two reasons I like this modernized C language: firstly, I'm too weak-minded to learn a big language like C++. Life just seems filled with more interesting things to understand. Secondly, I find that this specific level of manual control lets me produce better results, and faster.
 
 The point here isn't C vs. C++ but the value of manual control for high-end professional users. It's no accident that the best cars and cameras and espresso machines in the world have manual controls. That level of on-the-spot fine-tuning often makes the difference between world-class success, and second-best.
 
@@ -446,7 +446,7 @@ Reading the previous two sections, you might have wondered, "could I write my ow
 
 What if I told you of a way to build custom IDL generators cheaply and quickly? A way to get perfectly documented contracts, code that is as evil and domain-specific as you need, and all you need to do is sign away your soul (//who ever really used that, amirite?//) right here...
 
-At iMatix, until a few years ago, we used code generation to build ever larger and more ambitious systems until we decided the technology (GSL) was too dangerous for common use, and we sealed the archive and locked it, with heavy chains, in a deep dungeon. Well, we actually posted it on github. If you want to try the examples that are coming up, grab [https://github.com/imatix/gsl the repository] and build yourself a {{gsl}} command. Typing "make" in the src subdirectory should do it.
+At iMatix, until a few years ago, we used code generation to build ever larger and more ambitious systems until we decided the technology (GSL) was too dangerous for common use, and we sealed the archive and locked it, with heavy chains, in a deep dungeon. Well, we actually posted it on github. If you want to try the examples that are coming up, grab [https://github.com/imatix/gsl the repository] and build yourself a {{gsl}} command. Typing "make" in the src subdirectory should do it (and if you're that guy who loves Windows, I'm sure you'll send a patch with project files).
 
 This section isn't really about GSL at all, but about a useful and little-known trick that's useful for ambitious architects who want to scale themselves, as well as their work. Once you learn the trick is, you can whip up your own code generators in a short time. The code generators most software engineers know about come with a single hard-coded model. For instance, Ragel //"compiles executable finite state machines from regular languages"//, i.e. Ragel's model is a regular language. This certainly works for a good set of problems but it's far from universal. How do you describe an API in Ragel? Or a project makefile? Or even a finite-state machine like the one we used to design the Binary Star pattern in Chapter 4?
 
