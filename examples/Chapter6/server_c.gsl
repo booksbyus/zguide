@@ -166,14 +166,16 @@ typedef enum {
 
 .if switches.trace ?= 1
 //  Names for animation
-char *s_state_name [] = {
+static char *
+s_state_name [] = {
     "stopped",
 .for class.state
     "$(name:)"$(last ()??"" ?",")
 .endfor
 };
 
-char *s_event_name [] = {
+static char *
+s_event_name [] = {
     "",
 .for class.event
     "$(name:)"$(last ()??"" ?",")

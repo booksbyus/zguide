@@ -199,67 +199,137 @@ Now I'll introduce MOPED, which is a SOD pattern custom-designed for 0MQ archite
 
 Speaking of embarrassments, just as 0MQ lets us aim for really massive architectures, it also, like any technology that removes friction, opens the door to truly massive blunders. If 0MQ is the ACME rocket-propelled shoe of distributed software development, a lot of us are like Wile E. Coyote, slamming full speed into the proverbial desert cliff.
 
-So MOPED is meant to save us from such mistakes. Partly it's about slowing down, partly it's about ensuring that when we move fast, we go - and this is essential, dear reader - in the //right direction//. It's my standard interview riddle: what's the rarest property of any software system, the absolute hardest thing to get right, the lack of which causes the slow or fast death of the vast majority of projects? The answer is not code quality, funding, performance, or even (though it's a close answer), popularity. The answer is "accuracy".
+So MOPED is meant to save us from such mistakes. Partly it's about slowing down, partly it's about ensuring that when you move fast, you go - and this is essential, dear reader - in the //right direction//. It's my standard interview riddle: what's the rarest property of any software system, the absolute hardest thing to get right, the lack of which causes the slow or fast death of the vast majority of projects? The answer is not code quality, funding, performance, or even (though it's a close answer), popularity. The answer is "accuracy".
 
 If you've read the Guide observantly you'll have seen MOPED in action already. The development of Majordomo in Chapter 4 is a near-perfect case. But cute names are worth a thousand words.
 
 The goal of MOPED is to define a process, a pattern by which we can take a rough use case for a new distributed application, and go from "hello world" to fully-working prototype in any language in under a week.
 
-Using MOPED, we grow, more than build, a working 0MQ architecture from the ground-up, with minimal risk of failure. By focusing on the contracts, rather than the implementations, we avoid the risk of premature optimization. By driving the design process through ultra-short test-based cycles, we can be more certain what we have works, before we add more.
+Using MOPED, you grow, more than build, a working 0MQ architecture from the ground-up, with minimal risk of failure. By focusing on the contracts, rather than the implementations, you avoid the risk of premature optimization. By driving the design process through ultra-short test-based cycles, you can be more certain what you have works, before you add more.
+
+We can turn this into five real steps:
+
+* Step 1: internalize the 0MQ semantics.
+* Step 2: draw a rough architecture.
+* Step 3: decide on the contracts.
+* Step 4: make a minimal end-to-end solution.
+* Step 5: solve one problem and repeat.
 
 ++++ Step 1: Internalize the Semantics
 
-To repeat myself: we have to learn 0MQ's language. The only way to learn a language is to use it. There's no way to avoid this investment, no tapes we can play while we sleep, no chips we can plug in to magically become smarter. Read the Guide, work through the code examples, understand what's going on, and (most importantly) write some examples yourself, and then //throw them away//.
+To repeat myself: you must learn 0MQ's language. The only way to learn a language is to use it. There's no way to avoid this investment, no tapes you can play while you sleep, no chips you can plug in to magically become smarter. Read the Guide, work through the code examples, understand what's going on, and (most importantly) write some examples yourself, and then //throw them away//.
 
-At a certain point you'll feel a clicking noise in your brain. Maybe you'll have a weird chili-induced dream where little 0MQ tasks run around trying to eat you alive. Maybe you'll just think "aaahh, so //that's// what it means!" If we did our work right, it should take 2-3 days. However long it takes, until we start thinking in terms of 0MQ sockets and patterns, we're not ready for step 2.
+At a certain point you'll feel a clicking noise in your brain. Maybe you'll have a weird chili-induced dream where little 0MQ tasks run around trying to eat you alive. Maybe you'll just think "aaahh, so //that's// what it means!" If we did our work right, it should take 2-3 days. However long it takes, until you start thinking in terms of 0MQ sockets and patterns, you're not ready for step 2.
 
-++++ Step 2: Get a Rough Architecture
+++++ Step 2: Draw a Rough Architecture
 
-Whiteboard time. Get a couple of colleagues and try to draw your architecture on a whiteboard. We want to draw boxes connected with arrows, showing the flow of work, data, results, etc. Since we live in a gravity well, it's best to draw the main arrows going down. Almost all architectures have a //direction//, and a certain symmetry, and what we want to do is capture that as simply and cleanly as we can.
+Whiteboard time. Get a couple of colleagues and try to draw your architecture on a whiteboard. you want to draw boxes connected with arrows, showing the flow of work, data, results, etc. Since we live in a gravity well, it's best to draw the main arrows going down. Almost all architectures have a //direction//, and a certain symmetry, and what you want to do is capture that as simply and cleanly as you can.
 
-Ignore anything that's not central to the core problem. Ignore logging, error handling, recovery from failures, etc. What we leave out is as important as what we capture: we can always add, but it's very hard to remove. When we have a simple, clean drawing, we're ready for step 3.
+Ignore anything that's not central to the core problem. Ignore logging, error handling, recovery from failures, etc. What you leave out is as important as what you capture: you can always add, but it's very hard to remove. When you have a simple, clean drawing, you're ready for step 3.
 
 ++++ Step 3: Decide on the Contracts
 
-Human scale depends on contracts, and the more explicit they are, the better things scale. We don't care //how// things happen, only the results. If I send an email, I don't care how it arrives at its destination, so long as the contract (it arrives within a few minutes, it's not modified, it doesn't get lost) is respected.
+Human scale depends on contracts, and the more explicit they are, the better things scale. You don't care //how// things happen, only the results. If I send an email, I don't care how it arrives at its destination, so long as the contract (it arrives within a few minutes, it's not modified, it doesn't get lost) is respected.
 
-And to build a large system that works well, we must focus on the contracts, before the implementations. It may sound obvious but all too often, people forget and ignore this, or are just too shy to impose themselves. I wish I could say 0MQ had done this properly but for years our public contracts were second-rate afterthoughts instead of primary in-your-face pieces of work.
+And to build a large system that works well, you must focus on the contracts, before the implementations. It may sound obvious but all too often, people forget and ignore this, or are just too shy to impose themselves. I wish I could say 0MQ had done this properly but for years our public contracts were second-rate afterthoughts instead of primary in-your-face pieces of work.
 
 So what is a contract in a distributed system? There are, in my experience, two types of contract:
 
-* The APIs to client applications. Remember the Psychological Elements. The APIs need to be as absolutely //simple//, //consistent//, and //familiar// as possible. Yes, we can generate API documentation from code, but we must first design it, and designing an API is often hard.
+* The APIs to client applications. Remember the Psychological Elements. The APIs need to be as absolutely //simple//, //consistent//, and //familiar// as possible. Yes, you can generate API documentation from code, but you must first design it, and designing an API is often hard.
 
 * The protocols that connect the pieces. It sounds like rocket science, but it's really just a simple trick, and one that 0MQ makes particularly easy. In fact they're so simple to write, and need so little bureaucracy that I call them "unprotocols".
 
-We don't actually //write// the contracts yet. That'll come later. For now it's sufficient to draw red squiggly lines across the architecture indicating where we intend to have contracts at all.
+You write minimal contracts that are mostly just place markers. Most messages and most API methods will be missing, or empty. You also want to write down any known technical requirements in terms of throughput, latency, reliability, etc. These are the criteria on which you will accept, or reject, any particular piece of work.
 
-We also want to write down any known technical requirements in terms of throughput, latency, reliability, etc. These are the criteria on which we will accept, or reject, any particular piece of work.
+++++ Step 4: Write a Minimal End-to-End Solution
 
-++++ Step 4: Write a Minimal Test Case
+The goal is to test out the overall architecture as rapidly as possible. Make skeleton applications that call the APIs, and skeleton stacks that implement both sides of every protocol. You want to get a working end-to-end "hello world" as soon as you can. You want to be able to test code, as you write it, to weed-out the broken assumptions and inevitable errors you make. Do not go off and spend six months writing a test suite! Instead, make a minimal bare-bones application that uses our still-hypothetical API.
 
-Imagine trying to write a HTTP client without a HTTP server to try it against. That would be insane, but it's what many teams do. "Let's spend months writing these pieces, and then try to make them work together during 'integration'. Oh, and about your vacation..." We want to be able to test code, as we write it, to weed-out the broken assumptions and inevitable errors we make. Do not go off and spend six months writing a test suite! Instead, make a minimal bare-bones application that uses our still-hypothetical API.
+If you design an API wearing the hat of the person who implements it, you'll start to think of performance, features, options, and so on. You'll make it more complex, more irregular, and more surprising than it should be. But, and here's the trick (it's a cheap one, was big in Japan), if you design an API while wearing the hat of the poor sucker who has to actually write apps that use it, you use all that laziness and fear to our advantage.
 
-If we design an API wearing the hat of the person who implements it, we'll start to think of performance, features, options, and so on. We'll make it more complex, more irregular, and more surprising than it should be. But, and here's the trick (it's a cheap one, was big in Japan), if we design an API while wearing the hat of the poor sucker who has to actually write apps that use it, we use all that laziness and fear to our advantage.
+Write down the protocols, on a wiki or shared document, in such a way that you can explain every command clearly without too much detail. Strip off any real functionality, because it'll create inertia that just makes it harder to move stuff around. You can always add weight. Don't spend effort defining formal message structures: pass the minimum around, in the simplest possible fashion, using 0MQ's multi-part framing.
 
-Of course the test case will immediately fail since there's no API code. That's good. Now we can start our real work.
+Our goal is to get the simplest test case working, without any avoidable functionality. Everything you can chop off the list of things to do, you chop. Ignore the groans from colleagues and bosses. I'll repeat this once again: you can //always// add functionality, that's relatively easy. But aim to keep the overall weight to a minimum.
 
-++++ Step 5: Write a Minimal API
+++++ Step 5: Solve One Problem and Repeat
 
-Now we make a skeleton API that lets us build and run the test case so we can watch it fail gloriously. We're now in the Happy Loop of issue-driven development where we can start to solve tangible problems instead of adding features. Keep in mind, as you design the API, your standards for names, consistency, and behavior. Writing these down in prose often helps keep them sane.
+You're now in the Happy Loop of issue-driven development where you can start to solve tangible problems instead of adding features. Write issues that state a clear problem, and propose a solution. Keep in mind, as you design the API, your standards for names, consistency, and behavior. Writing these down in prose often helps keep them sane.
 
-From here, every single change we make to the architecture and code is now proven by running the test case, watching it not work, making the change, and then watching it work.
+From here, every single change you make to the architecture and code is now proven by running the test case, watching it not work, making the change, and then watching it work.
 
-++++ Step 6: Write Minimal Protocols
+Now you go through the whole cycle (extending the test case, fixing the API, updating the protocol, extending the code, as needed), taking problems one at a time and testing the solutions individually. It should take about 10-30 minutes for each cycle, with the occasional spike due to random confusion.
 
-We write down the protocols, on a wiki or shared document, in such a way that we explain every command clearly without too much detail. Strip off any real functionality, because it'll create inertia that just makes it harder to move stuff around. We can always add weight. Don't spend effort defining formal message structures: pass the minimum around, in the simplest possible fashion, using 0MQ's multi-part framing.
++++ Unprotocols
 
-++++ Step 7: Implement an End-to-End Skeleton
+++++ Why Unprotocols?
 
-Our goal is to get the simplest test case working, without any avoidable functionality. Everything we can chop off the list of things to do, we chop. Ignore the groans from colleagues and bosses. I'll repeat this once again: we can //always// add functionality, that's relatively easy. But aim to keep the overall weight to a minimum.
+When this man thinks of protocols, this man thinks of massive documents written by committees, over years. This man thinks of the IETF, W3C, ISO, Oasis, regulatory capture, FRAND patent license disputes, and soon after, this man thinks of retirement to a nice little farm in northern Bolivia up in the mountains where the only other needlessly stubborn beings are the goats chewing up the coffee plants.
 
-++++ Step 8: Solve One Problem at a Time
+Now, I've nothing personal against committees. The useless folk need a place to sit out their lives with minimal risk of reproducing, after all, that only seems fair. But most committee protocols tend towards complexity (the ones that work), or trash (the ones we don't talk about). There's a few reasons for this. One is the amount of money at stake. More money means more people who want their particular prejudices and assumptions expressed in prose. But two is the lack of good abstractions on which to build. People have tried to build reusable protocol abstractions, like BEEP. Most did not stick, and those that did, like SOAP and XMPP, are on the complex side of things.
 
-Now we go through the whole cycle (extending the test case, fixing the API, updating the protocol, extending the code, as needed), taking problems one at a time and testing the solutions individually. It should take about 10-30 minutes for each cycle, with the occasional spike due to random confusion.
+It used to be, decades ago, when the Internet was a young modest thing, that protocols were short and sweet. They weren't even "standards", but "requests for comments", which is as modest as you can get. It's been one of my goals since we started iMatix in 1995 to find a way for ordinary people like me to write small, accurate protocols without the overhead of the committees.
+
+Now, 0MQ does appear to provide a living, successful protocol abstraction layer with its "we'll carry multi-part messages over random transports" way of working. Since 0MQ deals silently with framing, connections, and routing, it's surprisingly easy to write full protocol specs on top of 0MQ, and in Chapters four and five I showed how to do this.
+
+Somewhere around mid-2007, I kicked-off the Digital Standards Organization to define new simpler ways of producing little standards, protocols, specifications. In my defense, it was a quiet summer. At the time [http://www.digistan.org/spec:1 I wrote that] a new specification should take "//minutes to explain, hours to design, days to write, weeks to prove, months to become mature, and years to replace.//"
+
+In 2010 we started calling such little specifications "unprotocols", which some people might mistake for a dastardly plan for world domination by a shadowy international organization, but which really just means, "protocols without the goats".
+
+++++ How to Write Unprotocols
+
+Here's an unprotocol called NOM that we'll come back to later in this chapter:
+
+[[code]]
+nom-protocol    = open-peering *use-peering
+
+open-peering    = C:OHAI ( S:OHAI-OK / S:WTF )
+
+use-peering     = C:ICANHAZ
+                / S:CHEEZBURGER
+                / C:HUGZ S:HUGZ-OK
+                / S:HUGZ C:HUGZ-OK
+[[/code]]
+
+I've actually used these keywords (OHAI, WTF) in commercial projects. They make developers giggly and happy. They confuse management. They're good in first drafts that you want to throw away later.
+
+When you start to write unprotocols, stick to a consistent structure so that your readers know what to expect. Here is the structure I use:
+
+* Cover section: with a 1-line summary, URL to the spec, formal name, version, who to blame.
+* License for the text: absolutely needed for public specifications.
+* The change process: i.e. how I as a reader fix problems in the specification?
+* Use of language: MUST, MAY, SHOULD, etc. with a reference to RFC 2119.
+* Maturity indicator: is this a experimental, draft, stable, legacy, retired?
+* Goals of the protocol: what problems is it trying to solve?
+* Formal grammar: prevents arguments due to different interpretation of the text.
+* Technical explanation: semantics of each message, error handling, etc.
+* Security discussion: explicitly, how secure the protocol is.
+* References: to other documents, protocols, etc.
+
+Writing clear, expressive text is hard. Do avoid trying to describe implementations of the protocol. Remember that you're writing a contract. You describe in clear language the obligations and expectations of each party, the level of obligation, and the penalties for breaking the rules. You do not try to define //how// each party honors its part of the deal.
+
+If you need reference material to start with, read the http://rfc.zeromq.org site, which has a bunch of unprotocols that you can copy/paste from.
+
+Here are some key points about unprotocols:
+
+* As long as your process is open then you don't need a committee: just make clean minimal designs and make sure anyone is free to improve them.
+
+* If use an existing license then you don't have legal worries afterwards. I use GPLv3 for my public specifications and advise you to do the same. For in-house work, standard copyright is perfect.
+
+* The formality is valuable. That is, learn to write [http://www.ietf.org/rfc/rfc2234.txt ABNF] and use this to fully document your messages.
+
+* Use a market-driven life-cycle process like [http://www.digistan.org/spec:1 Digistan's COSS] so that people place the right weight on your specs as they mature (or don't).
+
+++++ Why use the GPLv3 for Public Specifications?
+
+The license you choose is particularly crucial for public specifications. Traditionally, protocols are published under custom licenses, where the authors own the text and derived works are forbidden. This sounds great (after all, who wants to see a protocol forked?) but it's in fact highly risky. A protocol committee is vulnerable to capture, and if the protocol is important and valuable, the incentive for capture grows.
+
+Once captured, like some wild animals, an important protocol will often die. The real problem is there's no way to //free// a captive protocol published under a conventional license. The word "free" isn't just an adjective to describe speech or air, it's also a verb, and the right to fork a work, //against the wishes of the owner//, is essential to avoiding capture.
+
+Let me explain this in shorter words. Imagine iMatix writes a protocol today, that's really amazing and popular. We publish the spec and many people implement it. Those implementations are fast and awesome, and free as in beer. And they start to threaten an existing business. Their expensive commercial product is slower and can't compete. So one day they come to our iMatix office in Maetang-Dong, South Korea, and offer to buy our firm. Since we're spending vast amounts on sushi and beer and GFEs, we accept gratefully. With evil laughter the new owners of the protocol stop improving the public version, and close the specification and add patented extensions. Their new products support this, and they take over the whole market.
+
+When you contribute to an open source project, you really want to know your hard work won't used against you by a closed-source competitor. Which is why the GPL beats the "more permissive" BSD/MIT/X11 licenses. These license give permission to cheat. This applies just as much to protocols as to source code.
+
+When you implement a GPLv3 specification, your applications are of course yours, and licensed any way you like. But you can be sure and certain of two things. One, that specification will //ever// be embraced and extended into proprietary forms. Any derived forms of the specification must also be GPLv3. Two, no-one who ever implements or uses the protocol will ever launch a patent attack on anything it covers.
 
 +++ Serializing your Data
 
@@ -683,81 +753,9 @@ So if you do use GSL and want to create open communities around your work, here 
 
 We're already using GSL in some projects around 0MQ, for example the high-level C binding, CZMQ, uses GSL to generate the socket options class (zsockopt). A 300-line code generator turns 78 lines of XML model into 1,500 lines of perfect but really boring code. That's a good win.
 
-+++ Unprotocols
-
-++++ Why Unprotocols?
-
-When this man thinks of protocols, this man thinks of massive documents written by committees, over years. This man thinks of the IETF, W3C, ISO, Oasis, regulatory capture, FRAND patent license disputes, and soon after, this man thinks of retirement to a nice little farm in northern Bolivia up in the mountains where the only other needlessly stubborn beings are the goats chewing up the coffee plants.
-
-Now, I've nothing personal against committees. The useless folk need a place to sit out their lives with minimal risk of reproducing, after all, that only seems fair. But most committee protocols tend towards complexity, or trash. There are a few reasons modern protocols tend to be huge and clumsy. One is the amount of money at stake. More money means more people who want their particular prejudices and assumptions expressed in prose. But two is the lack of good abstractions on which to build. People have tried to build reusable protocol abstractions, like BEEP. Most did not stick, and those that did, like SOAP and XMPP, are on the complex side of things.
-
-It used to be, decades ago, when the Internet was a young modest thing, that protocols were short and sweet. They weren't even "standards", but "requests for comments", which is as modest as you can get.
-
-Now, 0MQ does appear to provide a living, successful protocol abstraction layer with its "we'll carry multi-part messages over random transports" way of working. Since 0MQ deals silently with framing, connections, and routing, it's surprisingly easy to write full protocol specs on top of 0MQ, and in Chapters four and five I showed how to do this.
-
-Somewhere around mid-2007, I kicked-off the Digital Standards Organization to define new simpler ways of producing little standards, protocols, specifications. In my defense, it was a quiet summer. At the time [http://www.digistan.org/spec:1 I wrote that] a new specification should take "//minutes to explain, hours to design, days to write, weeks to prove, months to become mature, and years to replace.//"
-
-In 2010 we started calling such little specifications "unprotocols", which some people might mistake for a dastardly plan for world domination by a shadowy international organization, but which really just means, "protocols without the goats".
-
-++++ How to Write Unprotocols
-
-Here's an unprotocol called NOM that we'll come back to later in this chapter:
-
-[[code]]
-nom-protocol    = open-peering *use-peering
-
-open-peering    = C:OHAI ( S:OHAI-OK / S:WTF )
-
-use-peering     = C:ICANHAZ
-                / S:CHEEZBURGER
-                / C:HUGZ S:HUGZ-OK
-                / S:HUGZ C:HUGZ-OK
-[[/code]]
-
-I've actually used these keywords (OHAI, WTF) in commercial projects. They make developers giggly and happy. They confuse management. They're good in first drafts that you want to throw away later.
-
-When you start to write unprotocols, stick to a consistent structure so that your readers know what to expect. Here is the structure I use:
-
-* Cover section: with a 1-line summary, URL to the spec, formal name, version, who to blame.
-* License for the text: absolutely needed for public specifications.
-* The change process: i.e. how I as a reader fix problems in the specification?
-* Use of language: MUST, MAY, SHOULD, etc. with a reference to RFC 2119.
-* Maturity indicator: is this a experimental, draft, stable, legacy, retired?
-* Goals of the protocol: what problems is it trying to solve?
-* Formal grammar: prevents arguments due to different interpretation of the text.
-* Technical explanation: semantics of each message, error handling, etc.
-* Security discussion: explicitly, how secure the protocol is.
-* References: to other documents, protocols, etc.
-
-Writing clear, expressive text is hard. Do avoid trying to describe implementations of the protocol. Remember that you're writing a contract. You describe in clear language the obligations and expectations of each party, the level of obligation, and the penalties for breaking the rules. You do not try to define //how// each party honors its part of the deal.
-
-If you need reference material to start with, read the http://rfc.zeromq.org site, which has a bunch of unprotocols that you can copy/paste from.
-
-Here are some key points about unprotocols:
-
-* As long as your process is open then you don't need a committee: just make clean minimal designs and make sure anyone is free to improve them.
-
-* If use an existing license then you don't have legal worries afterwards. I use GPLv3 for my public specifications and advise you to do the same. For in-house work, standard copyright is perfect.
-
-* The formality is valuable. That is, learn to write [http://www.ietf.org/rfc/rfc2234.txt ABNF] and use this to fully document your messages.
-
-* Use a market-driven life-cycle process like [http://www.digistan.org/spec:1 Digistan's COSS] so that people place the right weight on your specs as they mature (or don't).
-
-++++ Why use the GPLv3 for Public Specifications?
-
-The license you choose is particularly crucial for public specifications. Traditionally, protocols are published under custom licenses, where the authors own the text and derived works are forbidden. This sounds great (after all, who wants to see a protocol forked?) but it's in fact highly risky. A protocol committee is vulnerable to capture, and if the protocol is important and valuable, the incentive for capture grows.
-
-Once captured, like some wild animals, an important protocol will often die. The real problem is there's no way to //free// a captive protocol published under a conventional license. The word "free" isn't just an adjective to describe speech or air, it's also a verb, and the right to fork a work, //against the wishes of the owner//, is essential to avoiding capture.
-
-Let me explain this in shorter words. Imagine iMatix writes a protocol today, that's really amazing and popular. We publish the spec and many people implement it. Those implementations are fast and awesome, and free as in beer. And they start to threaten an existing business. Their expensive commercial product is slower and can't compete. So one day they come to our iMatix office in Maetang-Dong, South Korea, and offer to buy our firm. Since we're spending vast amounts on sushi and beer and GFEs, we accept gratefully. With evil laughter the new owners of the protocol stop improving the public version, and close the specification and add patented extensions. Their new products support this, and they take over the whole market.
-
-When you contribute to an open source project, you really want to know your hard work won't used against you by a closed-source competitor. Which is why the GPL beats the "more permissive" BSD/MIT/X11 licenses. These license give permission to cheat. This applies just as much to protocols as to source code.
-
-When you implement a GPLv3 specification, your applications are of course yours, and licensed any way you like. But you can be sure and certain of two things. One, that specification will //ever// be embraced and extended into proprietary forms. Any derived forms of the specification must also be GPLv3. Two, no-one who ever implements or uses the protocol will ever launch a patent attack on anything it covers.
-
 +++ Transferring Files
 
-Let's take a break from ideology and get back to our first love and the reason for doing all of this: code.
+Let's take a break from the lecturing and get back to our first love and the reason for doing all of this: code.
 
 "How do I send a file?" is a common question on the 0MQ mailing lists. Not surprising, because file transfer is perhaps the oldest and most obvious type of messaging. Sending files around networks has lots of use-cases apart from annoying the copyright cartels. 0MQ is very good, out of the box, at sending events and tasks but less good at sending files.
 
@@ -1353,7 +1351,7 @@ use-peering     = C:ICANHAZ ( S:ICANHAZ-OK / error )
 close-peering   = C:KTHXBAI / S:KTHXBAI
 
 error           = S:SRSLY / S:RTFM
-[[code]]
+[[/code]]
 
 Here are the messages to and from the server:
 
@@ -1429,9 +1427,23 @@ classes
         - 
     - refresh list of files in a path
     
+- idempotent subscriptions
+- useful for reconnecting / recovery
+
+- detect and recover from peer disconnection
+    - client strategy
+    - server strategy
+- path virtualization
+    - strategy from HTTP/FTP servers
+    - local root and then same path at both sides
     
 
 ++++ IANA requests
+
+http://www.iana.org/form/ports-services
+    - document your protocol
+    - answer the questions
+    - wait... :-) it's free and for life
 
 ++++ Message Passing Classes
 
@@ -1452,4 +1464,14 @@ classes
 - 
 ++++ Abstractions or Not
 
-
+- configuration strategies
+    - config file
+        - default
+        - custom
+    - programmatically
+    - command line
+    
+- log file strategies
+    - rotation/cycling
+    - naming by date
+    

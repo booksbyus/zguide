@@ -1,0 +1,537 @@
+.output chapter6.wd
++++ Chapter Seven - The 0MQ Community
+
+There are, it has been said, two ways to make really large-scale software. Option One is to throw massive amounts of money and problems at empires of smart people, and hope that what emerges is not yet another career killer. If you're very lucky, and are building on lots of experience, and have kept your teams solid, and are not aiming for technical brilliance, and are furthermore incredibly lucky, it works.
+
+But gambling with hundreds of millions of others' money isn't for everyone. For the rest of us who want to build large-scale software, there's Option Two, which is open source, and more specifically, //free software//. You may be asking how the choice of software license is relevant to the scale of the software you build. It's the right question.
+
+The brilliant and visionary Eben Moglen once said, roughly, that a free software license is the contract on which a community builds. When I heard this, about ten years ago, the idea came to me, //can we deliberately grow free software communities//?
+
+Ten years later, the answer is "yes", and there is almost a science to it. I say "almost" because we don't have much evidence of people doing this deliberately with a documented, reproducible process. It is what I'm trying to do with [http://softwareandsilicon.com/chapter:2#toc5 Social Architecture]. ZeroMQ was my pilot experiment, after Wikidot, after Digistan and the FFII. There were... a lot of pilot projects. Anyhow, it seems clear that any explanation of how to build software at scale must discuss how to build free software communities.
+
++++ The Game
+
+Software is my business: I code to eat, and to feed my kids and to make sure my wife doesn't leave me for someone nicer and better looking. Of course I //love// coding and that sensation of sculpting perfect functionality out of the raw mass of possibility. But the world doesn't care how passionately we feel. We wrest our living from a market that is largely uninterested, and often hostile when it does notice. This is the Game, and the full strategy of how to win it is for a full book.
+
+What I will say here is that you have to identify and destroy your competitors, that you have to develop active strategies, learn rapidly, move quickly, and in general appreciate the Game as a constant competition in which every participant is an ally, an enemy, or the ground over which you are fighting. How seriously you take the Game is up to you, of course.
+
++++ The Contract
+
+When I write my best-selling book, "How to Make Big $$$ From Open Source", the first sentence will be "Use the GPL."
+
+Here is a true story, it happened to the eldest brother-in-law of the cousin of a friend of mine's colleague at work. His name was, and still is, Patrick.
+
+Patrick was a computer scientist, with a PhD in advanced network topologies. He spent two years and his savings building a new product, and choose the BSD license because he believed that would get him more adoption. He worked in his attic, at great personal cost, and proudly published his work. People applauded, for it was truly fantastic, and his mailing lists were soon abuzz with activity and patches and happy chatter. Many companies told him how they were saving millions using his work. Some of them even paid him for consultancy and training. He got invited to speak at conferences. He started a small business, hired a friend to work with him, and dreamed of making it big.
+
+Then one day, someone pointed him to a new project, GPL licensed, which had forked his work and was improving on it. He was irritated and upset, and asked how people -- fellow open sourcers, no less! -- would so shamelessly steal his code. There were long arguments on the list about whether it was even legal to relicense their BSD code as GPL code. Turned out, it was. He tried to ignore the new project but then he soon realized that new patches coming from that project //couldn't even be merged back// into his work!
+
+Worse, the GPL project got popular and some of his core contributors made first small, and then larger patches to it. Again, he couldn't use those changes, and he felt abandoned. Patrick went into a depression, his girlfriend left him for an international currency dealer called, weirdly, Patrice, and he stopped all work on the project. He felt betrayed, and utterly miserable. Finally he took a job as an architect for a cloud company, and by the age of forty, he had stopped programming even for fun.
+
+Poor Patrick, I almost felt sorry for him. Then I asked him, "why didn't you choose the GPL?" "Because it's a restrictive viral license", he replied. I told him, you may have a PhD, and you may be the eldest brother-in-law of the cousin of a friend of my colleague, but you are an idiot and Monique was smart to leave you. You published your work saying, "please steal my code as long as you keep this 'please steal my code' statement in the resulting work", and when people did exactly that, you got upset. Worse, you were a hypocrite because when they did it in secret, you were happy, but when they did it openly, you got upset.
+
+Seeing your hard work captured by a smarter team and then used against you is enormously painful, so why even make that possible? Every proprietary project that uses BSD code is capturing it. A public GPL fork is perhaps more humiliating, but it's totally, utterly self-inflicted.
+
+BSD says "eat me". It was designed specifically by a university (Berkeley) with no profit motive, to leak work and effort. It is a way to push subsidized technology at below its cost price, a dumping of under-priced code in the hope that it will break the market for others. BSD is an //excellent// tool in the Game, but only if you're a large well-funded institution that can afford to use Option One.
+
+For the rest of us, small businesses who aim our investments like precious bullets, leaking work and effort is unacceptable. We cannot afford to subsidize our market. We cannot afford battles with those we should naturally be allies with. We cannot afford to make fundamental business errors because in the end, that means we have to fire people.
+
+It comes down to behavioral economics and game theory. //The license we choose modifies the economics of those who use our work//. In the Game there are allies, enemies, and lunch. BSD makes most people see us as lunch. Closed source makes most people see us as enemies (do you //like// paying people for software?) GPL, however, makes most people, with the exception of the Patricks of the world, our allies. Any fork of 0MQ is license compatible with 0MQ, to the point where we //encourage// forks as a valuable tool for experimentation.
+
++++ The Process
+
+If you've accepted my thesis up to now, great! Now, I'll explain the rough process by which we actually build an open source community, and the process by which we built the 0MQ community.
+
+You recall the [http://unprotocols.org/blog:19 simplicity-oriented design process], where I claimed that we build successfully accurate software by successfully exploring the problem landscape, rather than by sheer intellectual effort. Keep this in mind. Now, see your community as a group exploring that landscape and sharing the results of their work.
+
+Your goal as leader of a community is to motivate people to get out there and explore; to ensure they can do so safely and without disturbing others; to reward them when they make successful discoveries; and to ensure they share their knowledge with everyone else.
+
+It is an iterative process. You make a small product, at your own cost, but in public view. You then build a small community around that product. If you have a small but real hit, the community then helps design and build the next version, and grows larger. And then that community builds the next version, and so on. It's evident that the more control you try to assert over the material results, the less people will want to participate.
+
++++ Crazy, Beautiful, and Easy
+
+You need a goal that's crazy and simple enough to get people out of bed in the morning. Your community has to attract the very best people and that demands something special. With 0MQ, we said we were going to make "the Fastest. Messaging. Ever.", which qualifies as a good motivator. If we'd said, we're going to make "a smart transport layer that'll connect your moving pieces cheaply and flexibly across your enterprise", we'd have failed.
+
+Then your work must be beautiful, immediately useful and attractive. Your contributors are users who want to explore just a little beyond where they are now. Make it simple, elegant, brutally clean. [http://unprotocols.org/blog:19 SOD it], and I mean that. The experience when people run or use your work should be an emotional one. They should //feel// something, and if you accurately solved even just one big problem that until then they didn't quite realize they faced, you'll have a small part of their soul.
+
+And then, easy to understand, use, and join. Too many projects have barriers to access: put yourself in the other person's mind and see all the reasons they come to your site, thinking "Uhm, interesting project, but..." and then leave. You want them to stay, try it, just once. Use github and put the issue tracker right there.
+
+If you do these things well, your community will be smart but more importantly, will be intellectually and geographically diverse. This is really important. A group of like-minded experts cannot explore the problem landscape well. They tend to make big mistakes. Diversity beats education any time.
+
++++ Stranger, meet Stranger
+
+How much up-front agreement do two people need to work together on something? In most organizations, a lot. But you can bring this cost down to zero, and then people can collaborate without having ever met, done a phone conference, meeting, or business trip to discuss Roles and Responsibilities.
+
+You need well-written rules that are designed by cynical people like me to force strangers into mutually beneficial collaboration instead of conflict. The GPL is a good start. Github and its fork/merge strategy is a good follow-up. And then you want something like our [http://rfc.zeromq.org/spec:16 C4 rulebook] to control how work actually happens.
+
+C4 (which I now use for every new open source project) has detailed (and tested) answers to a lot of common mistakes people make. For example, the sin of working off-line in a corner with others "because it's faster". Transparency is essential to get trust, which is essential to get scale. By forcing every single change through a single transparent process, you build real trust in the results.
+
+Another cardinal sin that many open source developers make is to place themselves above others. "I founded this project thus my intellect is superior to that of others". It's not just immodest and rude, and usually inaccurate, it's also poor business. The rules must apply equally to everyone, without distinction. You are part of the community. Your job, as founder of a project, is not to impose your vision of the product over others, but to make sure the rules are good, honest, and //enforced//.
+
++++ Infinite Property
+
+One of the saddest myths of the knowledge business is that ideas are a sensible form of property. It's medieval nonsense that should have been junked along with slavery, but sadly it's still making too many powerful people too much money.
+
+Ideas are cheap. What does work sensibly as property is the hard work we do in building a market. "You eat what you kill" is the right model for encouraging people to work hard. Whether it's moral authority over a project, money from consulting, or the sale of a trademark to some large, rich firm: if you make it, you own it. But what you really own is "footfall", participants in your project, which ultimately defines your power in the Game.
+
+To do this requires infinite free space. Thankfully, github solved this problem for us, for which I will die a grateful person (there are many reasons to be grateful in life, but this is one of them).
+
+You cannot scale a single project with many owners like you can scale a collection of many small projects, each with fewer owners. When we embrace forks, a person can become an "owner" with a single click. Now they just have to convince others to join, by demonstrating their unique value.
+
+So in 0MQ we aimed to make it easy to write bindings on top of the core library, and we stopped trying to make those bindings ourselves. This created space for others to make those, become their owners, get that credit.
+
+
+
++++ Git Branches Considered Harmful
+
+
+One of git's great features is how easy it makes branches. Almost all git projects use branches, and the selection of the "best" branching strategy is like a rite of passage for an open source project. Vincent Driessen's git-flow is maybe the best known. It has 'base' branches (master, develop), 'feature' branches, 'release' branches, 'hotfix' branches, and 'support' branches. Many teams have adopted git-flow, which even has git extensions to support it. However, in this section I'll argue that public git branches are harmful, based on experience and evidence, and propose a branch-free approach, based on forks.
+
+++++ Background
+
+Let me start with my credentials. My first open source project was [http://legacy.imatix.com/html/libero/ Libero] from 1991. I wrote [http://en.wikipedia.org/wiki/Xitami Xitami], a popular open source web server, and killed that in 2001. I wrote most of [http://www.openamq.org OpenAMQ], the first AMQP implementation. I founded and steered the ZeroMQ community and have maintained its stable releases for years. If there is one thing I know really well, it's how to build excellent software.
+
+Git is a revolution, especially when combined with github. In the last year or two, the github/git combination has become a key tool for organizing teams, and building processes like [http://rfc.zeromq.org/spec:16 C4] and [http://unprotocols.org/blog:23 PC3] that are (as far as I know) the first reusable contracts of their kind.
+
+Here is a section of PC3 that will shock some people:
+
+> * The project SHALL have one branch ("master") that always holds the latest in-progress version and SHOULD always build.
+> * The project SHALL NOT use topic branches for any reason. Personal forks MAY use topic branches.
+> * To make a stable release someone SHALL fork the repository by copying it and thus become maintainer of this repository.
+
+To be clear, it's //public branches in shared repositories// that I'm talking about. Using branches for private work, e.g. to work on different issues, appears to work just fine.
+
+The PC3 text is not accidental. This section came from trial-and-error, mainly in the ZeroMQ community. Originally, when Martin Sustrik and I (the pragmatic core developers) started using forks instead of branches for ZeroMQ's stable versions, many people reacted with shock and horror. Today, people have less emotional response. Tomorrow, I think it'll be clear that branches were, in fact, an entirely wrong approach inherited from the days of Subversion and monolithic repositories.
+
+More profoundly, the branches vs. forks argument is really a wider design vs. evolve argument about how to make software optimally (both PC3 and C4 fully embrace the "evolve" approach). I'll address that wider argument in the next section.
+
+To make my argument here, I'll look at a number of criteria, and compare branches and forks in each one.
+
+++++ Complexity
+
+The simpler, the better.
+
+There is no inherent reason branches are more complex than forks. However, git-flow uses five //types// of branch, whereas PC3 uses two types of fork (development, and stable) and one branch (master). Circumstantial evidence is that branches lead to more complexity than forks. For naive users, it is definitely easier to learn to work with many repositories and no branches.
+
+++++ Learning Curve
+
+The smoother the learning curve, the better.
+
+Evidence definitely shows that learning to use git branches is complex. For some people this is OK. For most developers, every cycle spent learning git is a cycle lost on more productive things. I've been told several times, by different people, that I do not like branches because I "never properly learned git". That is fair but it is a criticism of the tool, not the human.
+
+++++ Cost of Failure
+
+The lower the cost of failure, the better.
+
+Branches demand more perfection from developers since mistakes potentially affect others. This raises the cost of failure. Forks make failure extremely cheap since nothing that happens in a fork can affect others not using that fork.
+
+++++ Upfront Coordination
+
+The less need for upfront coordination, the better.
+
+You can do a hostile fork. You cannot do a hostile branch. Branches depend on upfront coordination, which is expensive and fragile. One person can veto the desires of a whole group. In the ZeroMQ community for example we were unable to agree on a git branching model for a year. We solved that by using forking instead. The problem went away.
+
+++++ Scalability
+
+The more you can scale a project, the better.
+
+The strong assumption in all branch strategies is that the repository //is// the project. But there is a limit to how many people you can get in agreement to work together in one repository. As I explained, the cost of upfront coordination can become fatal. A more realistic project scales by allowing anyone to start their own repositories, and ensuring these can work together. A project like ZeroMQ has dozens of repositories. Forking looks more scalable than branching.
+
+++++ Surprise and Expectations
+
+The less surprising, the better.
+
+People expect branches and find forks to be uncommon and thus confusing. This is the one aspect where branches win. However, it's also a reason for sticking to FORTRAN and COBOL. We do not refuse innovation just because it's surprising.
+
+++++ Economics of Participation
+
+The more tangible the rewards, the better.
+
+A fully free process like PC3/C4 lets people organize around problems. Most organizations are not ready for such a radical management approach. But even a top-down approach needs people to feel rewarded for their work. Branches don't act like "product" but like "discrete variations of product". People have less interest in contributing to a discrete variation. Whereas everyone wants their name on a successful product. So the economics of branches are worse than the economics of forks.
+
+++++ Robustness in Conflict
+
+The more a model can survive conflict, the better.
+
+Like it or not, people fight over ego, status, belief. If your organizational model depends on agreement, you won't survive the first real fight. Branches do not survive real arguments and fights. Whereas forks can be hostile, and still benefit all parties. And this is indeed how free software works. Score one for forks, zero for braches.
+
+++++ Guarantees of Isolation
+
+The stronger the isolation between production code and experiment, the better.
+
+People make mistakes. I've seen experimental code pushed to mainline production by error. I've seen people make bad panic changes under stress. But the real fault is in allowing two entirely separate generations of product to exist in the same protected space. If you can push to random-branch-x you can push to master. Branches do not guarantee isolation of production critical code. Forks do.
+
+++++ Visibility
+
+The more visible our work, the better.
+
+Forks have watchers, issues, a README, a wiki. Branches have none of these. People try forks, build them, break them, patch them. Forks sit there until someone remembers to work on them. Forks have downloads and tarballs. Branches do not. When we look for self-organization, the more visible and declarative the problems, the faster and more accurately we can work.
+
+++++ Conclusions
+
+Git branches are, in my experience and in shared repositories, harmful. It is better to work with a branch-free process that uses forks for stabilization. This comes from some years of trial and error on a wide range of projects. We have systematically found forks to be cheaper and safer and easier than branches. Branch-free processes like C4 and PC3 are real, and they work, in anger, both on closed source and open source projects. The only downside of a branch-free process seems to be that it shocks people with previous git experience. This is a passing effect, in our experience.
+
++++ The Myth of Intelligent Design
+
+The dominant theory of design is that you take smart, creative people and money, and produce amazing products. The smarter the people, the better the results. I'm going to claim that theory is bogus and based on a quasi-religious model of the "inventor" and "invention" as a function of individual minds. As an alternative I'll present the Theory of Heuristic Innovation, which states roughly that we do not invent solutions, we discover them, and that discovery process can be highly automated.
+
+++++ Why Discuss This?
+
+Presenting ZeroMQ at Mix-IT in Lyon a couple of weeks ago, I was asked several times for the "roadmap". My answer was, roadmaps are bad for several reasons. First, they make promises we can rarely keep, which causes problems for our users. Second, they claim territory and make it harder for others to participate. Lastly, they preempt the thinking process of the community. The audience didn't really like my answer. So un-French. Software engineers don't like the notion that powerful, effective solutions can come into existence without an intelligent designer actively thinking things through. And yet no-one in that room would question evolution. A strange irony, and one I want to explore further.
+
+++++ The Theory of Individual Creativity
+
+In the dominant theory, brilliant individuals reflect on large problem sets and then carefully and precisely create a solution. Sometimes they will have "eureka" moments where they "get" brilliantly simple answers to whole large problem sets. The inventor, and the process of invention are rare, precious, and can command a monopoly. History is full of such individuals.
+
+Looking closer, however, the facts don't match. History doesn't show lone inventors. It shows lucky people who steal or claim ownership of ideas that are being worked on by many. It shows brilliant people striking lucky once, and then spending decades on fruitless and pointless quests. The best known large-scale inventors like Thomas Edison were in fact just very good at systematic broad research done by large teams. It's like claiming that Steve Jobs invented every device made by Apple. It is a nice myth, good for marketing, but utterly incorrect.
+
+Recent document history shows this very well. The Internet is surely one of the most innovative and fast-moving areas of technology. It has no inventor. Instead it has a large economy of people who have carefully and progressively solved a long series of immediate problems, documented their answers, and made those available to all. The innovative nature of the Internet comes not from a collection of Einsteins. It comes from RFCs anyone can use and improve. It comes from open source software anyone can use and improve. It comes from sharing, scale of community, and the continuous accretion of good solutions and disposal of bad ones.
+
+++++ The Theory of Heuristic Innovation
+
+Here is the Theory of Heuristic Innovation (v0.1):
+
+# There is an infinite problem/solution terrain.
+# This terrain changes over time according to external conditions.
+# We can only accurately perceive problems we are close to.
+# We can rank the cost/benefit economics of problems using a market for solutions.
+# There is one optimal solution to any solvable problem.
+# We can approach this optimal solution heuristically, and mechanically.
+# Our intelligence can make this process faster and more accurate but does not replace it.
+
+It's an approximation. Feel free to send me patches.
+
+++++ What does This Mean?
+
+First, and most broadly, it means that we do not invent solutions, but we discover them. Given a well-defined problem, there is exactly one optimal solution, and our work as software engineers is to climb the solution terrain until we find it. There may be local peaks. We may have to back-track. We make mistakes. But if we have a good process for climbing that terrain and we apply that process mechanically, we will eventually find the optimum.
+
+Second, this means that individual talent is helpful only in the speed with which we move. Intelligence moves us faster but does not make any fundamental difference in the outcome. The process is much more significant than talent. Which is why so many talented engineers produce trashware, and why teams working in the same space systematically seem to discover the same solutions.
+
+Thirdly, it means that old solutions to old problems can become obsolete as the terrain shifts. Technological and environmental changes are the main factors here.
+
+Finally, it means that our primary goal in producing software should be to define the best possible process, and then learn to apply it mechanically and systematically.
+
+As a correlation, we can bootstrap this by applying any given process to the process itself.
+
+++++ Elements of a Mechanical Process
+
+We need several elements:
+
+* A starting point in the problem/solution terrain.
+* A way to collect and measure problems in the near space around us.
+* A way to experiment with solutions cheaply and rapidly.
+* A way to measure these experiments against our problems.
+* A way to discard the failures and propagate the successes.
+* A way to isolate layers so we can review and re-solve old problems.
+
+Let's apply the mechanical process to software design and see what we get. This will sound repetitive to readers of my blog.
+
+* Starting point: identify a single interesting problem and make a minimal, plausible prototype. Time taken: 3-5 days maximum.
+
+* Collecting and measuring problems: publish your prototype on github.com and ask people to play with it. Use it **yourself** and collect problems with it. Write these down as issues.
+
+* Experimenting with solutions: pick out the most critical ones and figure out "good enough" solutions to these. Make patches and merge them.
+
+* Measuring solutions against problems: try the results. You should always have executable, usable product that can be shipped if needed (even as a prototype).
+
+* Discarding failures and propagating successes: if you don't like the solutions, revert the patches. If you like them, close the issue. Use the LGPL to ensure your successes get the widest trade with other projects.
+
+* Isolating layers: use ZeroMQ to isolate layers so that you can throw away old pieces and start again without bringing your whole product into question.
+
+++++ Conclusions
+
+Talent lets you move faster, and process gets you to the right //place//. The ideal process seems to be one based on highly incremental small steps, each step solving one identifiable problem with a "good enough" solution. Over time, the collection of small accurate solutions to real problems, and removal of mistakes, will give you a highly valuable product that people will love.
+
+
++++ How to Recognize and Prevent Burnout
+
+Any organisation or community that relies on pro-bono efforts from its members runs the risk of burnout. In this article I'll explain what causes burnout, how to recognise it, how to prevent it, and (if it happens) how to treat it. Disclaimer: I'm not a psychiatrist and this article is based on my own experiences of working in pro-bono contexts for the last 20 years, including free software projects, and NGOs such as the [http://www.ffii.org FFII].
+
+++++ Causes
+
+In a pro-bono context we're expected to work without economic incentive. That is, we sacrifice family life, professional advancement, free time, and health in order to accomplish some goal we have decided to invest in. In any project, we need some kind of reward to make it worth continuing each day. In most pro-bono projects the rewards are emotional, not economical. Mostly, we do things because people say, "hey, great!" This is a powerful motivator.
+
+However, we are economic beings and sooner or later, if a project costs us a great deal and does not bring economic rewards of some kind (money, fame, a new job,...) we start to suffer. So burnout is when we spend too much time on a particular project, with too little economic reward. Our minds simply get disgusted, and say, "enough is enough!" and refuse to go any further. If we try to force ourselves, we get sick.
+
+People are very good at manipulating each other, and themselves, and this is often part of the process that leads to burnout. We tell ourselves that it's for a good cause, that the other guy is doing ok, so we should be able to as well.
+
+++++ Symptoms
+
+When I got burnt-out on some open source projects, I remember clearly how I felt. I simply stopped working on it, refused to answer any more emails, and told people to forget about it. You can tell when someone's burned-out. They go offline, and everyone starts saying, "he's acting strange... depressed, or tired..."
+
+Diagnosis is simple. Has someone worked a lot on a project that was not paying back in any way? Did he make exceptional sacrifices? Did he lose or abandon his job or studies to do the project? If you're answering "yes", it's burnout.
+
+++++ Prevention
+
+There are some simple rules to reduce the risk burnout to a low level:
+
+* Never work alone on projects. This is probably the main factor: the concentration of responsibility on one person who does not set their own limits.
+
+* People need day jobs. This is hard but necessary. Getting money from somewhere else makes it much easier to sustain a sacrificial project.
+
+* Set limits. Don't do a tough project for more than a year or two years. Find someone else to take over before it's too late for you.
+
+* Education. When we explain to people what burnout is, they recognise it faster and can take action before it happens. Action means telling people, "I need help and/or financial support".
+
+* Help improve the organisation. Using inefficient tools makes the cost of a project higher. Making yourself irreplacable almost guarantees burnout. Ensure the organisation has a stable, documented framework so people can switch in and out of projects easier.
+
+++++ Cure
+
+The simplest cure for an ongoing case of burnout is to be paid for your work. This is hard in an open source setting but it's possible. If someone working pro-bono on your project is burnt-out, finding them budget can cure them. If budget is impossible, then the only cure is to stop working on the project.
+
+
++++ Game Strategies
+
+A series of patterns for success in software engineering. These patterns aim to capture the essence of what divides glorious success from tragic failure. They were described as "//religious maniacal dogma//" by a manager, and "//anything else would be fucking insane//" by a colleague, in a single day. For me, they are science, the results of decades of trial by error. Treat the Lazy Perfectionist and others as tools to use, sharpen, and throw away if something better comes along.
+
+++++ The Lazy Perfectionist
+
+//Never design anything that's not a precise minimal answer to a problem we can identify and have to solve.// -- Pieter Hintjens
+
+The Lazy Perfectionist spends his idle time observing others and identifying problems that are worth solving. He looks for agreement on those problems, always asking, "what is the //real// problem". Then he moves, precisely and minimally, to build, or get others to build, a usable answer to one problem. He uses, or gets others to use those solutions. And he repeats this until there are no problems left to solve, or time or money runs out.
+
+++++ The Benevolent Tyrant
+
+//The control of a large force is the same principle as the control of a few men: it is merely a question of dividing up their numbers.// -- Sun Tzu
+
+The Benevolent Tyrant divides large problems into smaller ones and throws them at groups to focus on. He brokers contracts between these groups, in the form of APIs and unprotocols. The Benevolent Tyrant constructs a supply chain that starts with problems, and results in usable solutions. He is ruthless about how the supply chain works, but does not tell people on what to work, nor how to do their work.
+
+++++ The Earth and Sky
+
+//The ideal team consists of two sides: one writing code, and one providing feedback.// -- Pieter Hintjens
+
+The Earth and Sky work together as a whole, in close proximity, but they communicate formally through an issue tracking. Sky seeks out problems, from others and from their own use of the product, and feeds these to Earth. Earth rapidly answers with testable solutions. Earth and Sky can work through dozens of issues in a day. Sky talks to other users, and Earth talks to other developers. Earth and Sky may be two people, or two small groups.
+
+++++ The Happy Failure
+
+//To succeed you must learn to fail rapidly, cheaply, and often.// -- Pieter Hintjens
+
+The Happy Failure embraces failure as the only real way to learn. He focuses on reducing the cost of failure, and documenting failures so that everyone can learn from them. He does not over-specify functionality, stays away from upfront documentation, does not use test-driven development. All of these make it harder, and more costly to fail.
+
+++++ The Open Door
+
+//The accuracy of knowledge comes from diversity.// -- Pieter Hintjens
+
+The Open Door accepts contributions from almost anyone. He does not argue quality or direction, instead allowing others to argue that and so get more engaged. He calculates that even a troll will bring more diverse opinion to the group. He lets the group form its opinion about what goes into stable code, and he enforces this opinion with help of a Benevolent Tyrant.
+
+++++ The Laughing Clown
+
+//Perfection precludes participation.// -- Pieter Hintjens
+
+The Laughing Clown, often acting as the Happy Failure, makes no claim to high competence. Instead his antics and bumbling attempts provoke others into rescuing him from his own tragedy. Somehow however, he always identifies the right problems to solve. People are so busy proving him wrong they don't realize they're doing valuable work.
+
+++++ The Mindful General
+
+//Make no plans. Set goals, develop strategies and tactics.// -- Pieter Hintjens
+
+The Mindful General operates in unknown territory, solving problems that are hidden until they are nearby. Thus he makes no plans, but seeks opportunities, then exploits them rapidly and accurately. He develops tactics and strategies in the field, and teaches these to his men so they can move independently, and together.
+
+++++ The Social Engineer
+
+//If you know the enemy and know yourself, you need not fear the result of a hundred battles.// -- Sun Tzu
+
+The Social Engineer reads the hearts and minds of those he works with and for. He asks, of everyone, "what makes this person angry, insecure, argumentative, calm, happy?" He studies their moods and disposition. With this knowledge he can encourage those who are useful, and discourage those who are not. The Social Engineer never acts on his own emotions.
+
+++++ The Constant Gardener
+
+//Do not repeat the tactics which gained you one victory, but let your methods be regulated by the infinite variety of circumstances.// -- Sun Tzu
+
+The Constant Gardener grows a process from a small seed, step by step as more people come into the project. He makes every change for a precise reason, with agreement from everyone. He never imposes a process from above but will let others come to consensus, then he will enforce that consensus. In this way everyone owns the process together and by owning it, they are attached to it.
+
+++++ The Rolling Stone
+
+//After crossing a river, you should get far away from it.// -- Sun Tzu
+
+The Rolling Stone accepts his own mortality and transience. He has no attachment to his past work. He accepts that all that we make is destined for the trash can, it is just a matter of time. With precise, minimal investments, he can move rapidly away from the past and stay focused on the present and near future. Above all he has no ego and no pride to be hurt by the actions of others.
+
+++++ The Pirate Gang
+
+//Code, like all knowledge, works best as collective -- not private -- property.// -- Pieter Hintjens
+
+The Pirate Gang organize freely around problems. They accept authority insofar as it provides goals and resources. The Pirate Gang own and share all they make: every work is fully remixable by others in the Pirate Gang. They move rapidly as new problems emerge, and are quick to abandon old solutions if they stop being relevant. No persons or groups can monopolize any part of the supply-chain.
+
+++++ The Flash Mob
+
+//Water shapes its course according to the nature of the ground over which it flows.// -- Sun Tzu
+
+The Flash Mob comes together in space and time as needed, then disperses as soon as they can. Physical closeness is essential for high-bandwidth communications. But over time it creates technical ghettos, where Earth gets separated from Sky. The Flash Mob tends to collect a lot of frequent flier miles.
+
+++++ The Canary Watcher
+
+//Pain is not, generally, a Good Sign.// -- Pieter Hintjens
+
+The Canary Watcher measures the quality of an organization by the their own pain level, and the observed pain levels of those he works with. He brings new participants into existing organizations so they can express the raw pain of the innocent. He may use alcohol to get others to verbalize their pain points. He asks others, and himself, "are you happy in this process, and if not, why not?" When an organization causes pain in himself or others, he treats that as a problem to be fixed. People should feel joy in their work.
+
+++++ The Hangman
+
+//Never interrupt others when they are making mistakes.// -- Pieter Hintjens
+
+The Hangman knows that we learn only by making mistakes, and he gives others copious rope with which to learn. He only pulls the rope gently, when it's time. A little tug to remind the other of their precarious position. Allowing others to learn by failure gives the good reason to stay, and the bad excuse to leave. The Hangman is endlessly patient, because there is no shortcut to the learning process.
+
+++++ The Historian
+
+//The public record may be tedious, but it's the only way to prevent collusion.// -- Pieter Hintjens
+
+The Historian forces discussion into the public view, to prevent collusion to own areas of work. The Pirate Gang depends on full and equal communications that do not depend on momentary presence. No-one really reads the archives, but the simply possibility stops most abuses. The Historian encourages the right tool for the job: email for transient discussions, IRC for chatter, wikis for knowledge, issue tracking for recording opportunities.
+
+++++ The Provocateur
+
+//When a man knows he is to be hanged in a fortnight, it concentrates his mind wonderfully.// -- Samuel Johnson
+
+The Provocateur creates deadlines, enemies, and the occasional impossibility. Teams work best when they don't have time for the crap. Deadlines bring people together and focus the collective mind. An external enemy can move a passive team into action. The Provocateur never takes the deadline too seriously. The product is //always// ready to ship. But he gently reminds the team of the stakes: fail, and we all look for other jobs.
+
+++++ The Mystic
+
+//When people argue or complain, just write them a Sun Tzu quotation// -- Mikko Koppanen
+
+The Mystic never argues directly. He knows that to argue with an emotional person only creates more emotion. Instead he side-steps the discussion. It's hard to be angry at a Chinese general, especially when he has been dead for 2,400 years. The Mystic will act as the Hangman when people insist on the right to get it wrong.
+
++++ C4
+
+And finally...
+
+The Collective Code Construction Contract (C4) is an evolution of the github.com [http://help.github.com/send-pull-requests/ Fork + Pull Model], aimed at providing an optimal collaboration model for commercial software projects. C4 is derived from the ZeroMQ contribution policy of early 2012.
+
+++++ Language
+
+The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and "OPTIONAL" in this document are to be interpreted as described in RFC 2119[((bibcite rfc2119))].
+
+++++ Goals
+
+C4 is meant to provide a reusable optimal collaboration model for open source software projects. It has these specific goals:
+
+* To maximize the scale of the community around a project, by reducing the friction for new Contributors and creating a scaled participation model with strong positive feedbacks;
+
+* To relieve dependencies on key individuals by separating different skill sets so that there is a larger pool of competence in any required domain;
+
+* To allow the project to develop faster and more accurately, by increasing the diversity of the decision making process;
+
+* To support the natural life-cycle of project versions from experimental through to stable, by allowing safe experimentation, rapid failure, and isolation of stable code;
+
+* To reduce the internal complexity of project repositories, thus making it easier for Contributors to participate and reducing the scope for error;
+
+* To enforce collective ownership of the project, which increases economic incentive to Contributors and reduces the risk of hijack by hostile entities.
+
+++++ Design
+
++++++ Preliminaries
+
+* The project SHALL use the git distributed revision control system.
+
+* The project SHALL be hosted on github.com or equivalent, herein called the "Platform".
+
+* The project SHALL use the Platform issue tracker.
+
+* The project SHOULD have clearly documented guidelines for code style.
+
+* A "Contributor" is a person who wishes to provide a patch, being a set of commits that solve some clearly identified problem.
+
+* A "Maintainer" is a person who merge patches to the project. Maintainers are not developers; their job is to enforce process.
+
+* Contributors SHALL NOT have commit access to the repository unless they are also Maintainers.
+
+* Maintainers SHALL have commit access to the repository.
+
+* Everyone, without distinction or discrimination, SHALL have an equal right to become a Contributor under the terms of this contract.
+
++++++ Licensing and Ownership
+
+* The project SHALL use the GPLv3 or a variant thereof (LGPL, AGPL).
+
+* All contributions to the project source code ("patches") SHALL use the same license as the project.
+
+* All patches are owned by their authors. There SHALL NOT be any copyright assignment process.
+
+* The project SHALL be owned collectively by all its Contributors.
+
+* Each Contributor SHALL be responsible for identifying themselves in the project Contributor list.
+
++++++ Patch Requirements
+
+* Maintainers and Contributors MUST have a Platform account and SHOULD use their real names or a well-known alias.
+
+* A patch SHOULD be a minimal and accurate answer to exactly one identified and agreed problem.
+
+* A patch MUST adhere to the code style guidelines of the project if these are defined.
+
+* A patch MUST adhere to the "Evolution of Public Contracts" guidelines defined below.
+
+* A patch SHALL NOT include non-trivial code from other projects unless the Contributor is the original author of that code.
+
+* A patch MUST compile cleanly on at least the most important target Platforms.
+
+* A "Correct Patch" is one that satisfies the above requirements.
+
++++++ Development Process
+
+* Change on the project SHALL be governed by the pattern of accurately identifying problems and applying minimal, accurate solutions to these problems.
+
+* To initiate changes, a user SHALL log an issue on the project Platform issue tracker.
+
+* The user SHOULD write the issue by describing the problem they face or observe.
+
+* The user SHOULD seek consensus on the accuracy of their observation, and the value of solving the problem.
+
+* Users SHALL NOT log feature requests, ideas, suggestions, or any solutions to problems that are not explicitly documented and provable.
+
+* Thus, the release history of the project SHALL be a list of meaningful issues logged and solved.
+
+* To work on an issue, a Contributor SHALL fork the project repository and then work on their forked repository.
+
+* To submit a patch, a Contributor SHALL create a Platform pull request back to the project.
+
+* A Contributor SHALL NOT commit changes directly to the project.
+
+* To discuss a patch, people MAY comment on the Platform pull request, on the commit, or elsewhere.
+
+* To accept or reject a patch, a Maintainer SHALL use the Platform interface to merge the patch.
+
+* Maintainers SHALL NOT accept their own patches.
+
+>>> The intention is that maintainers learn to delegate and pull others into their work; this creates teams and reduces burnout; in practice this also works quite well. More subtly, having a control for every patch makes it much more satisfying, and keeps us more focussed.
+
+* Maintainers SHALL NOT make value judgments on correct patches.
+
+* Maintainers SHALL merge correct patches rapidly.
+
+* Maintainers SHOULD ask for improvements to incorrect patches and SHOULD reject incorrect patches if the Contributor does not respond constructively.
+
+* Any Contributor who has value judgments on a correct patch SHOULD express these via their own patches.
+
+* Maintainers MAY commit changes to non-source documentation directly to the project.
+
++++++ Creating Stable Releases
+
+* The project SHALL have one branch ("master") that always holds the latest in-progress version and SHOULD always build.
+
+* The project SHALL NOT use topic branches for any reason. Personal forks MAY use topic branches.
+
+* To make a stable release someone SHALL fork the repository by copying it and thus become maintainer of this repository.
+
+* Forking a project for stabilization MAY be done unilaterally and without agreement of project maintainers.
+
+* Maintainers of the stabilization project SHALL maintain it through pull requests which MAY cherry-pick patches from the forked project.
+
+* A patch to a repository declared "stable" SHALL be accompanied by a reproducible test case.
+
+* A stabilization repository SHOULD progress through these phases: "unstable", "candidate", "stable", and then "legacy". That is, the default behavior of stabilization repositories is to die.
+
++++++ Evolution of Public Contracts
+
+* All Public Contracts (APIs or protocols) SHOULD be documented.
+
+* All Public Contracts SHALL use Semantic Versioning[((bibcite semver))].
+
+* All Public Contracts SHOULD have space for extensibility and experimentation.
+
+* A patch that modifies a Public Contract SHOULD not break existing applications unless there is prior consensus on the value of doing this.
+
+* A patch that introduces new features to a Public Contract SHOULD do so using new names.
+
+* Old names SHOULD be deprecated in a systematic fashion by marking new names as "experimental" until they are stable, then marking the old names as "deprecated".
+
+* When sufficient time has passed, old deprecated names SHOULD be marked "legacy" and eventually removed.
+
+* Old names SHALL NOT be reused by new features.
+
+* When old names are removed, their implementations MUST provoke an exception (assertion) if used by applications.
+
