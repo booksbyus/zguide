@@ -1,5 +1,29 @@
 Notes for The Guide
 
+Last Value Cache device
+    - XPUB to detect subscriber changes
+    - cache of last messages... per subscription
+    - detect dead publishers and turn these into EOS
+    
+    
+==1742== Syscall param write(buf) points to uninitialised byte(s)
+==1742==    at 0x5372100: __write_nocancel (syscall-template.S:82)
+==1742==    by 0x5306312: _IO_file_write@@GLIBC_2.2.5 (fileops.c:1289)
+==1742==    by 0x53061D9: new_do_write (fileops.c:543)
+==1742==    by 0x5307944: _IO_do_write@@GLIBC_2.2.5 (fileops.c:516)
+==1742==    by 0x5306E6F: _IO_file_close_it@@GLIBC_2.2.5 (fileops.c:170)
+==1742==    by 0x52FB2CF: fclose@@GLIBC_2.2.5 (iofclose.c:62)
+==1742==    by 0x4060FF: fmq_file_test (fmq_file.c:342)
+==1742==    by 0x4021E6: main (fmq_selftest.c:38)
+==1742==  Address 0x4027000 is not stack'd, malloc'd or (recently) free'd
+
+    FILE *handle = fopen ("testdata", "w");
+    zmq_msg_t msg;
+    zmq_msg_init_size (&msg, 100);
+    size_t items = fwrite (zmq_msg_data (&msg), 1, 100, handle);
+    fclose (handle);
+    zmq_msg_close (&msg);
+
     
 Chapter 6 topics:
 

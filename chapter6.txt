@@ -1287,13 +1287,11 @@ The SASL [http://tools.ietf.org/html/rfc4422 RFC] goes into detail about other f
 
 Unless you're a security geek, all you should care about is the impact on the protocol, which is as simple as I've explained here.
 
-.end
-
 +++ Large-scale File Publishing
 
-++++ Why make FileMQ?
+Let's put all these techniques together into a file distribution system that I'll call FileMQ. This is going to be a real product, living on [https://github.com/hintjens/filemq github.com]. What we'll make here is a first version of FileMQ, as a training tool. If the concept works, the real thing may eventually get its own Guide.
 
-Let's put all these techniques together into a file distribution system that I'll call FileMQ. This is going to be a real product, living on [https://github.com/hintjens/filemq github.com]. What we'll make here is a first version of FileMQ, as a training tool. If the concept works, the real thing will eventually get its own Guide.
+++++ Why make FileMQ?
 
 Why make a file distribution system? I already explained how to send large files over 0MQ, and it's really quite simple. But if you want to make messaging accessible to a million times more people than can use 0MQ, you need another kind of API. An API that my five-year old son can understand. An API that is universal, requires no programming, and works with just about every single application.
 
@@ -1357,13 +1355,12 @@ Here are the messages to and from the server:
 
 [[code]]
 ;   The client opens peering to the server
-OHAI            = %x01 protocol version identity channel
+OHAI            = %x01 protocol version identity
 protocol        = string        ; Must be "FILEMQ"
 string          = size *VCHAR
 size            = OCTET
 version         = %x01
 identity        = 16OCTET
-channel         = string
 
 ;   The server challenges the client using the SASL model
 ORLY            = %x02 mechanisms challenge
@@ -1375,10 +1372,10 @@ challenge       = *OCTET        ; 0MQ frame
 YARLY           = %x03 mechanism response
 response        = *OCTET        ; 0MQ frame
 
-;   The server grants the client access to the channel
+;   The server grants the client access
 OHAI-OK         = %x04
 
-;   The client subscribes to a path in its current channel
+;   The client subscribes to a path
 ICANHAZ         = %x05 path options
 path            = string        ; Full or partial path
 options         = dictionary
@@ -1392,11 +1389,15 @@ ICANHAZ-OK      = %x06
 NOM             = %x07 credit
 credit          = number
 number          = 8OCTET        ; 64-bit integer, network order
-receipts        = size 1*receipt
-receipt         = string        ; Confirms a file received
+sequence        = number
 
 ;   The server sends a chunk of file data
-CHEEZBURGER     = %x08 headers chunk
+CHEEZBURGER     = %x08 sequence operation filename
+                  offset headers chunk
+sequence        = number
+operation       = OCTET
+filename        = string
+offset          = number
 headers         = dictionary
 chunk           = FRAME
 
@@ -1411,67 +1412,179 @@ KTHXBAI         = %x0B
 And here are the different ways the server can tell the client things went wrong:
 
 [[code]]
+;   Server error replies
 S:SRSLY         = %x80 reason    ; Refused due to access rights
 S:RTFM          = %x81 reason    ; Client sent an invalid command
 [[/code]]
 
-The FILEMQ/1.0 protocol is fully specified on the [http://rfc.zeromq.org/spec:xx 0MQ unprotocols website].
+The FILEMQ/1.0 protocol is specified on the [http://rfc.zeromq.org/spec:19 0MQ unprotocols website].
 
-classes
+++++ Building and Trying FileMQ
 
-    fmq_dir
+The FileMQ stack is [https://github.com/hintjens/filemq on github]. It works like a classic C/C++ project:
 
-    - only send new & changed files, not deletions
-    - we monitor a list of directories
-        - get listing, hash it, check last value
-        - 
-    - refresh list of files in a path
-    
-- idempotent subscriptions
-- useful for reconnecting / recovery
+[[code]]
+git clone git://github.com/hintjens/filemq.git
+cd filemq
+./autogen.sh
+./configure
+make check
+[[/code]]
 
-- detect and recover from peer disconnection
-    - client strategy
-    - server strategy
-- path virtualization
-    - strategy from HTTP/FTP servers
-    - local root and then same path at both sides
-    
+You want to be using the latest CZMQ master for this. Now try running the {{filemq}} service:
 
-++++ IANA requests
+[[code]]
+cd src
+./filemq
+[[/code]]
 
-http://www.iana.org/form/ports-services
-    - document your protocol
-    - answer the questions
-    - wait... :-) it's free and for life
+And open two file navigator windows, one into {{src/fmqroot/send}} and one into {{src/fmqroot/recv}}. Drop files into the send folder and you'll see them arrive in the recv folder. The server checks once per second for new files. Delete files in the send folder, and they're deleted in the recv folder similarly.
 
-++++ Message Passing Classes
+This isn't a full replication protocol though the delete function suggests that it might become one.
 
-- we have it, describe
+++++ Internal Architecture
 
-++++ Server Implementation
+To build FileMQ I used a lot of code generation, possibly too much. However the code generators are all reusable in other stacks. They are an evolution of the set we saw earlier:
 
-- write dialog, make & test
-- file management code from old sfl
+* codec_c.gsl - generates a message codec for a given protocol.
+* server_c.gsl - generates a server class for a protocol and state machine.
+* client_c.gsl - generates a client class for a protocol and state machine.
 
-++++ Client Implementation
+The best way to learn to use GSL code generation is to translate these into a language of your choice and make your own demo protocols and stacks. You'll find it fairly easy. FileMQ itself doesn't try to support multiple languages. It could but it'd make things needlessly complex.
 
-- write dialog, make & test
+The FileMQ architecture actually slices into two layers. There's a generic set of classes to handle chunks, directories, files, patches, SASL security, and configuration files. Then, there's the generated stack: messages, client, and server. If I was creating a new project I'd fork the whole FileMQ project, and go and modify the three models:
 
-++++ Main Application
+* fmq_msg.xml - which defines the message formats
+* fmq_client.xml - which defines the client state machine, API, and implementation.
+* fmq_server.xml - which does the same for the server.
 
-- configuration file parsing from old zfl
-- 
-++++ Abstractions or Not
+You'd want to rename things, to avoid confusion. Why didn't I make the reusable classes into a separate library? The answer is two-fold. First, no-one actually needs this (yet). Second, it'd make things more complex for you as you build and play with FileMQ. It's never worth adding complexity to solve a theoretical problem.
 
-- configuration strategies
-    - config file
-        - default
-        - custom
-    - programmatically
-    - command line
-    
-- log file strategies
-    - rotation/cycling
-    - naming by date
-    
+Although I wrote FileMQ in C, it's easy to map to other languages. It is quite amazing how nice C becomes when you add CZMQ's generic zlist and zhash containers, and class style. Let me go through the classes quickly:
+
+* fmq_sasl: encodes and decodes a SASL challenge. I only implemented the PLAIN mechanism, which is enough to prove the concept.
+
+* fmq_chunk: works with variable sized blobs. Not as efficient as 0MQ's messages but they do less weirdness and so are easier to understand. The chunk class has methods to read and write chunks from disk.
+
+* fmq_file: works with files, which may or may not exist on disk. Gives you information about a file (like size), lets you read and write to files, remove files, check if a file exists, and check if a file is "stable" (more on that later).
+
+* fmq_dir: works with directories, reading them from disk and comparing two directories to see what changed. When there are changes, returns a list of "patches".
+
+* fmq_patch: works with one patch, which really just says "create this file" or "delete this file" (referring to a fmq_file item each time).
+
+* fmq_config: works with configuration data. I'll come back to client and server configuration later.
+
+Every class has a test method, and the main development cycle is "edit, test". These are mostly simple self tests but they make the difference between code I can trust. and code I know will still break. It's a safe bet that any code that isn't covered by a test case will have undiscovered errors. I'm not a fan of external test harnesses. But internal test code that you write as you write your functionality... that's like the handle on a knife.
+
+You should, really, be able to read the source code and rapidly understand what these classes are doing. If you can't read the code happily, tell me. If you want to port the FileMQ implementation into other languages, start by forking the whole repository and later we'll see if it's possible to do this in one overall repo.
+
+++++ Public API
+
+The public API consists of two classes (as we sketched earlier):
+
+* fmq_client: provides the client API, with methods to connect to a server, configure the client, and subscribe to paths.
+
+* fmq_server: provides the server API, with methods to bind to a port, configure the server, and publish a path.
+
+If I was a keen young developer eager to use FileMQ in another language, I'd probably spend a happy weekend writing a binding for this public API, then stick it in a subdirectory of the filemq project called, say, "bindings/", and make a pull request.
+
+The actual API methods come from the state machine description, like this (for the server):
+
+[[code]]
+<method name = "bind">
+<argument name = "endpoint" type = "string" />
+zmq_bind (self->router, endpoint);
+</method>
+
+<method name = "publish">
+<argument name = "location" type = "string" />
+<argument name = "alias" type = "string" />
+mount_t *mount = mount_new (location, alias);
+zlist_append (self->mounts, mount);
+</method>
+[[/code]]
+
+++++ Design Notes
+
+The hardest part of making FileMQ wasn't the protocol part, but maintaining accurate state internally. An FTP or HTTP server is essentially stateless. But a publish/subscribe server //has// to maintain subscriptions, at least.
+
+So I'll go through some of the design aspects:
+
+* The server and client use virtual paths, much like an HTTP or FTP server. You define the "root" to be, e.g. ./fmqroot/recv, and then file names are relative to that root. Sending physical file names across the network is not a good idea.
+
+* The client detects if the server has died by the lack of heartbeats (HUGZ) coming from the server. It then restarts its dialog by sending an OHAI. There's no timeout on the OHAI since the 0MQ DEALER socket will queue an outgoing message indefinitely.
+
+* The server detects if a client has died by its lack of response (HUGZ-OK) to a heartbeat. In that case it deletes all state for the client including its subscriptions.
+
+* The client API holds subscriptions in memory and replays them when it has connected successfully. This means the called can subscribe at any time (and doesn't care when connections and authentication actually happen).
+
+* The server allows multiple "mount points", i.e. real directories in different places that are presented to clients as a single tree they can subscribe against.
+
+* There are some timing issues: if the server is creating its mount points, while clients are connected and subscribing, the subscriptions won't attach to the right mount points. So, we bind the server port as last thing.
+
+++++ Reliabilty
+
+As it stands, FileMQ implements the classic 0MQ publish-subscribe pattern. That is, clients receive a stream of updates but with no guarantees about overall consistency. To make FileMQ reliable we'd have to add some functionality:
+
+* A way for clients to request all patches since a certain time (possibly, all patches).
+* A way for the server to store patches and subscriptions persistently.
+
+++++ Configuration
+
+I've written many servers, like the Xitami web server that was popular in the late 90's, and the OpenAMQ messaging server. Getting configuration easy and obvious was a large part of making these servers fun to use.
+
+We typically aim to solve a number of problems:
+
+* Ship default configuration files with the product.
+* Allow users to add custom configuration files that are never overwritten.
+* Allow users to configure from the command-line.
+
+And then layer these one on the other, so command-line settings override custom settings, which override default settings. It can be a lot of work to do this right. For FileMQ I've taken a somewhat simpler tack: all configuration is done from the API.
+
+So this is how we start and configure the server, for example:
+
+[[code language="C"]]
+server = fmq_server_new ();
+fmq_server_configure (server, "server_test.cfg");
+fmq_server_publish (server, "./fmqroot/send", "/");
+fmq_server_publish (server, "./fmqroot/logs", "/logs");
+fmq_server_bind (server, "tcp://*:6000");
+[[/code]]
+
+We do use a specific format for the config files, which is [ZPL http://rfc.zeromq.org/spec:4], a minimalist syntax that we started using for 0MQ "devices" a few years ago, but which works well for any server:
+
+[[code]]
+#   Configure server for plain access
+#
+server
+    monitor = 1             #   Check mount points
+    heartbeat = 1           #   Heartbeat to clients
+
+publish
+    location = ./fmqroot/logs
+    virtual = /logs
+
+security
+    echo = I: use guest/guest to login to server
+    #   These are SASL mechanisms we accept
+    anonymous = 0
+    plain = 1
+        account
+            login = guest
+            password = guest
+            group = guest
+        account
+            login = super
+            password = secret
+            group = admin
+[[/code]]
+
+One cute thing (which seems useful) the generated server code does is to parse this config file (when you use the fmq_server_configure() method) and execute any section that matches an API method. Thus the 'publish' section works as a fmq_server_publish() method.
+
++++ File Stability
+
+It is quite common to poll a directory for changes and then do something 'interesting' with new files. But as one process is writing to a file, other processes have no idea when the file has been fully written. One solution is to add a second "indicator" file which we create after creating the first file. This is intrusive, however.
+
+There is a neater way, which is to detect when a file is "stable", i.e. no-one is writing to it any longer. FileMQ does this by checking the modification time of the file. If it's more than a second old, then the file is considered stable, at least stable enough to be shipped off to clients. If a process comes along after five minutes and appends to the file, it'll be shipped off again.
+
+For this to work, and this is a requirement for any application hoping to use FileMQ successfully, do not buffer more than a second's worth of data in memory before writing. If you use very large block sizes, the file may look stable when it's not.

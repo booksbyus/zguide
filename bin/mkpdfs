@@ -10,11 +10,21 @@ function mkone {
     export BOOK_LANG=$1
     export BOOK_FORM=pdf
     bin/mkbook chapter*.txt
+
+    #  Produce and upload PDF
     docbook2ps book.xml
     ps2pdf book.ps
     mv book.pdf $BOOK-$2.pdf
     echo "Uploading $BOOK-$2.pdf to $SITE:$PAGE..."
     wdattach $SITE $PAGE $BOOK-$2.pdf
+
+    # Produce and upload EPUB
+    sed -e "s/\.eps/\.png/g" \
+        -e "s/format=\"EPS\"/format=\"PNG\"/g" < book.xml > ebook.xml
+    dbtoepub ebook.xml
+    mv ebook.epub $BOOK-$2.epub
+    echo "Uploading $BOOK-$2.epub to $SITE:$PAGE..."
+    wdattach $SITE $PAGE $BOOK-$2.epub
 }
 
 mkone C         c
