@@ -4,6 +4,7 @@
 //
 // Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
 
+
 #include "zhelpers.hpp"
 
 
@@ -29,7 +30,7 @@ int main (int argc, char *argv[])
         bool rc;
         do {
         	zmq::message_t task;
-            if ((rc = receiver.recv(&task, ZMQ_NOBLOCK)) == true) {
+            if ((rc = receiver.recv(&task, ZMQ_DONTWAIT)) == true) {
                 //  process task
             }
         } while(rc == true);
@@ -37,7 +38,7 @@ int main (int argc, char *argv[])
         //  Process any waiting weather updates
         do {
             zmq::message_t update;
-            if ((rc = subscriber.recv(&update, ZMQ_NOBLOCK)) == true) {
+            if ((rc = subscriber.recv(&update, ZMQ_DONTWAIT)) == true) {
                 //  process weather update
 
             }
