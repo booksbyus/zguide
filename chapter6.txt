@@ -1588,5 +1588,3 @@ It is quite common to poll a directory for changes and then do something 'intere
 There is a neater way, which is to detect when a file is "stable", i.e. no-one is writing to it any longer. FileMQ does this by checking the modification time of the file. If it's more than a second old, then the file is considered stable, at least stable enough to be shipped off to clients. If a process comes along after five minutes and appends to the file, it'll be shipped off again.
 
 For this to work, and this is a requirement for any application hoping to use FileMQ successfully, do not buffer more than a second's worth of data in memory before writing. If you use very large block sizes, the file may look stable when it's not.
-
-.end

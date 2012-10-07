@@ -3,17 +3,26 @@
 
 People sometimes ask what's special about 0MQ. My standard answer is, it's true that 0MQ is arguably the best answer we have to the vexing question of "how do we make the distributed software that the 21st century demands?" but more than that, 0MQ is special because of its community. This is ultimately what separates the wolves from the sheep.
 
-There are three main open source patterns. One, the large firm dumping code to break the market for others. This is the Apache Foundation model. Two, tiny teams building their dream. This is the Crossroads.io model (note to historians, this was a fork of 0MQ). Three, aggressive and diverse communities that swarm over a problem landscape. This is the 0MQ model.
+There are three main open source patterns. One, the large firm dumping code to break the market for others. This is the Apache Foundation model. Two, tiny teams or small firms building their dream. This is the most common open source model, and it can be very successful commercially. Three, aggressive and diverse communities that swarm over a problem landscape. This is the Linux model, and the one we aspire to with 0MQ.
 
 It's hard to over-emphasize the power and persistence of a working open source community. There really does not seem to be a better way of making software for the long term. Not only does the community choose the best problems to solve, it solves them minimally, carefully, and it then looks after these answers for years, decades, until they're no longer relevant, and then it quietly puts them away.
 
-To really benefit from 0MQ, you need to understand the community. At some stage you'll want to submit a patch, an issue, an addon. You might want to ask someone for help. You will probably want to bet a part of your business on 0MQ, and when I tell you that the community is much, much more important than the company which backs the product, even though I'm CEO of that company, this should be significant.
+To really benefit from 0MQ, you need to understand the community. At some stage you'll want to submit a patch, an issue, an add-on. You might want to ask someone for help. You will probably want to bet a part of your business on 0MQ, and when I tell you that the community is much, much more important than the company which backs the product, even though I'm CEO of that company, this should be significant.
 
-In this chapter I'm going to look at our community from several angles, and conclude by explaining in detail our contract for collaboration, which [http://rfc.zeromq.org/spec:16 we call "C4"]. You should find the discussion useful for your own work. We've adapted the 0MQ C4 process for closed source projects, with good success.
+In this chapter I'm going to look at our community from several angles, and conclude by explaining in detail our contract for collaboration, which [http://rfc.zeromq.org/spec:16 we call "C4"]. You should find the discussion useful for your own work. We've also adapted the 0MQ C4 process for closed source projects, with good success.
 
 We'll cover:
 
-* How to make really large-scale software.
+* The rough structure of 0MQ as a set of projects
+* Why we use the LGPL and not the BSD license
+* How we designed and grew the 0MQ community
+* The business that backs 0MQ
+* Who owns the 0MQ source code
+* How to make and submit a patch to 0MQ
+* Who has special rights to make commits to 0MQ
+* How we guarantee compatibility with old code
+* Why we don't use public git branches
+* Who decides on the 0MQ road-map?
 
 +++ Architecture of the 0MQ Community
 
@@ -21,7 +30,7 @@ You know that 0MQ is an LGPL-licensed project. In fact it's a collection of proj
 
 * At the core, libzmq is the 0MQ core library. It's written in C++, with a low-level C API. The code is nasty, mainly because it's highly optimized but also because it's written in C++, a language that lends itself to subtle and deep nastiness. Martin Sustrik wrote the bulk of this code originally, today it has dozens of people who maintain different parts of it. Sustrik, incidentally, has said he'd use C if he did this again, and has started a rewrite in C called "nano".
 
-* Around libzmq there are about 50 "bindings". These are individual projects that create higher-level APIs for 0MQ, or at least map the low-level API into other languages. The bindings vary in quality from experimental to utterly awesome. By far the most awesome binding is PyZMQ, which is also the first (if I recall correctly) community projects on top of 0MQ. If you are a binding author, you should really study PyZMQ and aspire to making your code as awesome. PyZMQ was the model for many parts of our process too.
+* Around libzmq there are about 50 "bindings". These are individual projects that create higher-level APIs for 0MQ, or at least map the low-level API into other languages. The bindings vary in quality from experimental to utterly awesome. By far the most awesome binding is [https://github.com/zeromq/pyzmq PyZMQ], which is also the first (if I recall correctly) community projects on top of 0MQ. If you are a binding author, you should really study PyZMQ and aspire to making your code as awesome. PyZMQ was the model for many parts of our process too.
 
 * A lot of languages have multiple bindings (Erlang, Ruby, C#, at least) written by different people over time, or taking different approaches. We don't regulate these in any way. There are no "official" bindings. You vote by using one or the other, contributing to it, or ignoring it.
 
@@ -29,7 +38,7 @@ You know that 0MQ is an LGPL-licensed project. In fact it's a collection of proj
 
 * On top of the bindings are a lot of projects that use 0MQ or build on it. See the "Labs" page on the wiki for a long list of projects and proto-projects that use 0MQ in some way. There are frameworks, web servers like Mongrel2, brokers like Majordomo, and enterprise open source tools like Storm.
 
-Libzmq, most of the bindings, and some of the outer projects sit in the [https://github.com/organization/zeromq 0MQ community "organization"] on GitHub. This organization is "run" by a group consisting of the most senior binding authors. There's very little to run since it's almost all self-managing and there's zero conflict these days.
+Libzmq, most of the bindings, and some of the outer projects sit in the [https://github.com/organizations/zeromq 0MQ community "organization"] on GitHub. This organization is "run" by a group consisting of the most senior binding authors. There's very little to run since it's almost all self-managing and there's zero conflict these days.
 
 iMatix, my firm, plays a specific role in the community. We own the trademarks and enforce them discretely, to make sure that if you download a package calling itself "ZeroMQ", you can trust what you are getting. People have on occasion tried to hijack the name, believing that "free software" means there is no property at stake, or no-one willing to defend it. One thing you'll understand from this chapter is how seriously we take the process behind our software (and I mean "us" as a community, not a company). iMatix backs the community by enforcing that process on anything calling itself "ZeroMQ" or "0MQ". We also put money and time into the software and packaging for reasons I'll explain later.
 
@@ -151,7 +160,7 @@ It's easy to use C4: just host your project on GitHub, get one other person to j
 
 > C4 is meant to provide a reusable optimal collaboration model for open source software projects.
 
-The short term reason for writing C4 was to end argument over the libzmq contribution process. The dissenters went off and created crossroads.io. The 0MQ community blossomed, smoothly and easily, as I'd predicted. Most people were surprised, but gratified. There's been no real criticisms of C4 except its branching policy, which I'll come to later since it deserves its own discussion.
+The short term reason for writing C4 was to end argument over the libzmq contribution process. The dissenters went off elsewhere. [https://github.com/zeromq/libzmq/graphs/contributors The 0MQ community blossomed], smoothly and easily, as I'd predicted. Most people were surprised, but gratified. There's been no real criticisms of C4 except its branching policy, which I'll come to later since it deserves its own discussion.
 
 There's a reason I'm bringing up history here: as founder of a community, you are asking people to invest in your property, trademark, branding. In return, and this is what we do with 0MQ, you can use that branding to set a bar for quality. When you download a product labeled as "0MQ", you know that it's been produced to certain standards. It's a basic rule of quality: write down your process, otherwise you cannot improve it. Our processes aren't perfect, they can't ever be. But any flaw can be fixed, and tested.
 
@@ -443,7 +452,7 @@ People have gotten used to the "multiple repositories" approach in ZeroMQ and we
 
 More profoundly, I think the the branches vs. forks argument is really a wider design vs. evolve argument about how to make software optimally. I'll address that wider argument in the next section. For now, let's try to be scientific about our irrational hate of branches. I'll look at a number of criteria, and compare branches and forks in each one.
 
-++++ Complexity
+++++ Simplicity vs. Complexity
 
 //The simpler, the better.//
 
@@ -579,11 +588,11 @@ There is a simple cure for burnout which works in at least some cases: get paid 
 
 +++ Patterns for The Game
 
-I'll end this code-free chapter a series of patterns for success in software engineering. They aim to capture the essence of what divides glorious success from tragic failure. They were described as "//religious maniacal dogma//" by a manager, and "//anything else would be effing insane//" by a colleague, in a single day. For me, they are science. But treat the Lazy Perfectionist and others as tools to use, sharpen, and throw away if something better comes along.
+I'll end this code-free chapter a series of patterns for success in software engineering. They aim to capture the essence of what divides glorious success from tragic failure. They were described as "//religious maniacal dogma//" by a manager, and "//anything else would be effing insane//" by a colleague, in a single day. For me, they are science. But treat the Lazy Perfectionist and others as tools to use, sharpen, and throw away if something better comes along. 
 
 ++++ The Lazy Perfectionist
 
-//Never design anything that's not a precise minimal answer to a problem we can identify and have to solve.// -- Pieter Hintjens
+//Never design anything that's not a precise minimal answer to a problem we can identify and have to solve.//
 
 The Lazy Perfectionist spends his idle time observing others and identifying problems that are worth solving. He looks for agreement on those problems, always asking, "what is the //real// problem". Then he moves, precisely and minimally, to build, or get others to build, a usable answer to one problem. He uses, or gets others to use those solutions. And he repeats this until there are no problems left to solve, or time or money runs out.
 
@@ -595,31 +604,31 @@ The Benevolent Tyrant divides large problems into smaller ones and throws them a
 
 ++++ The Earth and Sky
 
-//The ideal team consists of two sides: one writing code, and one providing feedback.// -- Pieter Hintjens
+//The ideal team consists of two sides: one writing code, and one providing feedback.//
 
 The Earth and Sky work together as a whole, in close proximity, but they communicate formally through an issue tracking. Sky seeks out problems, from others and from their own use of the product, and feeds these to Earth. Earth rapidly answers with testable solutions. Earth and Sky can work through dozens of issues in a day. Sky talks to other users, and Earth talks to other developers. Earth and Sky may be two people, or two small groups.
 
 ++++ The Happy Failure
 
-//To succeed you must learn to fail rapidly, cheaply, and often.// -- Pieter Hintjens
+//To succeed you must learn to fail rapidly, cheaply, and often.//
 
 The Happy Failure embraces failure as the only real way to learn. He focuses on reducing the cost of failure, and documenting failures so that everyone can learn from them. He does not over-specify functionality, stays away from upfront documentation, does not use test-driven development. All of these make it harder, and more costly to fail.
 
 ++++ The Open Door
 
-//The accuracy of knowledge comes from diversity.// -- Pieter Hintjens
+//The accuracy of knowledge comes from diversity.//
 
 The Open Door accepts contributions from almost anyone. He does not argue quality or direction, instead allowing others to argue that and so get more engaged. He calculates that even a troll will bring more diverse opinion to the group. He lets the group form its opinion about what goes into stable code, and he enforces this opinion with help of a Benevolent Tyrant.
 
 ++++ The Laughing Clown
 
-//Perfection precludes participation.// -- Pieter Hintjens
+//Perfection precludes participation.//
 
 The Laughing Clown, often acting as the Happy Failure, makes no claim to high competence. Instead his antics and bumbling attempts provoke others into rescuing him from his own tragedy. Somehow however, he always identifies the right problems to solve. People are so busy proving him wrong they don't realize they're doing valuable work.
 
 ++++ The Mindful General
 
-//Make no plans. Set goals, develop strategies and tactics.// -- Pieter Hintjens
+//Make no plans. Set goals, develop strategies and tactics.//
 
 The Mindful General operates in unknown territory, solving problems that are hidden until they are nearby. Thus he makes no plans, but seeks opportunities, then exploits them rapidly and accurately. He develops tactics and strategies in the field, and teaches these to his men so they can move independently, and together.
 
@@ -643,7 +652,7 @@ The Rolling Stone accepts his own mortality and transience. He has no attachment
 
 ++++ The Pirate Gang
 
-//Code, like all knowledge, works best as collective -- not private -- property.// -- Pieter Hintjens
+//Code, like all knowledge, works best as collective -- not private -- property.//
 
 The Pirate Gang organizes freely around problems. It accepts authority insofar as authority provides goals and resources. The Pirate Gang owns and shares all it makes: every work is fully remixable by others in the Pirate Gang. The gang moves rapidly as new problems emerge, and is quick to abandon old solutions if those stop being relevant. No persons or groups can monopolize any part of the supply chain.
 
@@ -655,19 +664,19 @@ The Flash Mob comes together in space and time as needed, then disperses as soon
 
 ++++ The Canary Watcher
 
-//Pain is not, generally, a Good Sign.// -- Pieter Hintjens
+//Pain is not, generally, a Good Sign.//
 
 The Canary Watcher measures the quality of an organization by the their own pain level, and the observed pain levels of those he works with. He brings new participants into existing organizations so they can express the raw pain of the innocent. He may use alcohol to get others to verbalize their pain points. He asks others, and himself, "are you happy in this process, and if not, why not?" When an organization causes pain in himself or others, he treats that as a problem to be fixed. People should feel joy in their work.
 
 ++++ The Hangman
 
-//Never interrupt others when they are making mistakes.// -- Pieter Hintjens
+//Never interrupt others when they are making mistakes.//
 
 The Hangman knows that we learn only by making mistakes, and he gives others copious rope with which to learn. He only pulls the rope gently, when it's time. A little tug to remind the other of their precarious position. Allowing others to learn by failure gives the good reason to stay, and the bad excuse to leave. The Hangman is endlessly patient, because there is no shortcut to the learning process.
 
 ++++ The Historian
 
-//Keeping the public record may be tedious, but it's the only way to prevent collusion.// -- Pieter Hintjens
+//Keeping the public record may be tedious, but it's the only way to prevent collusion.//
 
 The Historian forces discussion into the public view, to prevent collusion to own areas of work. The Pirate Gang depends on full and equal communications that do not depend on momentary presence. No-one really reads the archives, but the simply possibility stops most abuses. The Historian encourages the right tool for the job: email for transient discussions, IRC for chatter, wikis for knowledge, issue tracking for recording opportunities.
 
@@ -681,6 +690,6 @@ The Provocateur creates deadlines, enemies, and the occasional impossibility. Te
 
 //When people argue or complain, just write them a Sun Tzu quotation// -- Mikko Koppanen
 
-The Mystic never argues directly. He knows that to argue with an emotional person only creates more emotion. Instead he side-steps the discussion. It's hard to be angry at a Chinese general, especially when he has been dead for 2,400 years. The Mystic will act as the Hangman when people insist on the right to get it wrong.
+The Mystic never argues directly. He knows that to argue with an emotional person only creates more emotion. Instead he side-steps the discussion. It's hard to be angry at a Chinese general, especially when he has been dead for 2,400 years. The Mystic plays Hangman when people insist on the right to get it wrong.
 
 .end
