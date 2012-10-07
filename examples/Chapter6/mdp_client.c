@@ -1,7 +1,7 @@
 /*  =========================================================================
     mdp_client.c
 
-    Generated C99 codec implementation for mdp_client
+    Generated codec implementation for mdp_client
     =========================================================================
 */
 

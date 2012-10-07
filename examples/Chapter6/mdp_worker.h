@@ -1,7 +1,7 @@
 /*  =========================================================================
     mdp_worker.h
 
-    Generated C99 codec header for mdp_worker
+    Generated codec header for mdp_worker
     =========================================================================
 */
 
@@ -61,9 +61,11 @@ zframe_t *
 void
     mdp_worker_address_set (mdp_worker_t *self, zframe_t *address);
 
-//  Get the mdp_worker id
+//  Get/set the mdp_worker id
 int
     mdp_worker_id (mdp_worker_t *self);
+void
+    mdp_worker_id_set (mdp_worker_t *self, int id);
     
 //  Get/set the service field
 char *

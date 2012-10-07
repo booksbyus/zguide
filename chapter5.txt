@@ -8,6 +8,8 @@ We'll cover:
 * How to handle too-slow subscribers (the //Suicidal Snail// pattern).
 * How to design high-speed subscribers (the //Black Box// pattern).
 * How to build a shared key-value cache (the //Clone// pattern).
+* How to use reactors to simplify complex servers.
+* How to use the Binary Star pattern to add failover to a server.
 * How to monitor a publish-subscribe network (the //Espresso// pattern).
 
 +++ Slow Subscriber Detection (Suicidal Snail Pattern)

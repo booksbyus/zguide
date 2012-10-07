@@ -212,10 +212,10 @@ while (<>) {
     }
     #  Process plain code block
     elsif (/\[\[code\]\]/) {
-        writeln ($_);
+        writesrc ($_);
         while (<>) {
             chop;
-            writeln ($_);
+            writesrc ($_);
             last if /\[\[\/code\]\]/;
         }
     }
@@ -290,6 +290,11 @@ exit (0);
 sub writeln {
     local ($_) = @_;
     $_ = expand_symbols ($_);
+    print OUTPUT "$_\n" unless $EOD;
+}
+
+sub writesrc {
+    local ($_) = @_;
     print OUTPUT "$_\n" unless $EOD;
 }
 

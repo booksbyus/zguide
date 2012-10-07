@@ -27,12 +27,14 @@ function mkone {
     echo "[[include $3:chapter3]]" >> all.wd
     echo "[[include $3:chapter4]]" >> all.wd
     echo "[[include $3:chapter5]]" >> all.wd
+    echo "[[include $3:chapter6]]" >> all.wd
     bin/z2w chapter*.txt
     upload $3 chapter1 "Chapter One"
     upload $3 chapter2 "Chapter Two"
     upload $3 chapter3 "Chapter Three"
     upload $3 chapter4 "Chapter Four"
     upload $3 chapter5 "Chapter Five"
+    upload $3 chapter6 "Chapter Six"
     upload $3 all "ØMQ - The Guide"
     sh ./upload.sh
     rm upload.sh

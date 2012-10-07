@@ -1,8 +1,20 @@
+.#  codec_c.gsl
+.#
+.#  Generates a codec for simple frame-based protocols like Majordomo.
+.#  This is a stripped-down codec generator that you can expand for your
+.#  own protocol designs. Look at mdp_client.xml and mdp_worker.xml for
+.#  examples of protocol models. You might want to extend the range of 
+.#  types, for example.
+.#
+.#  This codec generates C; it should be fairly simple to change it to
+.#  produce other languages.
+.#
+.echo "Generating $(class.name).h..."
 .output "$(class.name).h"
 /*  =========================================================================
     $(class.name).h
 
-    Generated C99 codec header for $(class.name)
+    Generated codec header for $(class.name)
     =========================================================================
 */
 
@@ -73,9 +85,11 @@ void
     $(class.name)_address_set ($(class.name)_t *self, zframe_t *address);
 
 .if class.uses_ids ?= 1
-//  Get the $(class.name) id
+//  Get/set the $(class.name) id
 int
     $(class.name)_id ($(class.name)_t *self);
+void
+    $(class.name)_id_set ($(class.name)_t *self, int id);
     
 .endif
 .for class.field where !defined (value)
@@ -114,11 +128,12 @@ int
 #endif
 
 #endif
+.echo "Generating $(class.name).c..."
 .output "$(class.name).c"
 /*  =========================================================================
     $(class.name).c
 
-    Generated C99 codec implementation for $(class.name)
+    Generated codec implementation for $(class.name)
     =========================================================================
 */
 
@@ -366,6 +381,12 @@ $(class.name)_id ($(class.name)_t *self)
 {
     assert (self);
     return self->id;
+}
+
+void
+$(class.name)_id_set ($(class.name)_t *self, int id)
+{
+    self->id = id;
 }
 
 

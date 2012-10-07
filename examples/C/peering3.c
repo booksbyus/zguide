@@ -236,8 +236,10 @@ int main (int argc, char *argv [])
         //  can process these immediately:
 
         if (primary [2].revents & ZMQ_POLLIN) {
+            char *peer = zstr_recv (statefe);
             char *status = zstr_recv (statefe);
             cloud_capacity = atoi (status);
+            free (peer);
             free (status);
         }
         if (primary [3].revents & ZMQ_POLLIN) {

@@ -1,4 +1,14 @@
-<class name = "mdp_worker">
+<!--
+    Message formats for MDP/Worker protocol 0.1
+
+    To generate code from this:
+    gsl mdp_worker.xml
+
+    To understand the code generator
+    vim codec_c.gsl
+    -->
+
+<class name = "mdp_worker" script = "codec_c">
     MDP/Worker
     <header>
         <field name = "empty" type = "string" value = "">Empty frame</field>

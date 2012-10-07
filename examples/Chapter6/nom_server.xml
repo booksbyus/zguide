@@ -1,0 +1,59 @@
+<!--
+    State machine for the NOM server
+
+    To generate code from this:
+    gsl -trace:1 nom_server.xml
+
+    To understand the code generator
+    vim server_c.gsl
+    
+    To use the generated code:
+    gcc -g -o nomd nomd.c nom_server.c -lczmq -lzmq
+    -->
+
+<class name = "nom_server" script = "server_c">
+    
+<state name = "start">
+    <event name = "OHAI" next = "authenticated">
+        <action name = "check credentials" />
+    </event>
+</state>
+
+<state name = "authenticated">
+    <event name = "ok" next = "ready">
+        <action name = "send" message ="OHAI-OK" />
+    </event>
+    <event name = "error" next = "start">
+        <action name = "send" message = "WTF" />
+    </event>
+</state>
+
+<state name = "ready">
+    <event name = "ICANHAZ">
+        <action name = "send" message = "CHEEZBURGER" />
+    </event>
+    <event name = "HUGZ">
+        <action name = "send" message = "HUGZ-OK" />
+    </event>
+    <event name = "heartbeat">
+        <action name = "send" message = "HUGZ" />
+    </event>
+</state>
+
+<action name = "check credentials">
+    char *body = zmsg_popstr (self->request);
+    if (body && streq (body, "Joe"))
+        self->next_event = ok_event;
+    else
+        self->next_event = error_event;
+    free (body);
+</action>
+
+<selftest>
+    <step send = "OHAI" body = "Sleepy" recv = "WTF" />
+    <step send = "OHAI" body = "Joe" recv = "OHAI-OK" />
+    <step send = "ICANHAZ" recv = "CHEEZBURGER" />
+    <step send = "HUGZ" recv = "HUGZ-OK" />
+    <step recv = "HUGZ" />
+</selftest>
+</class>

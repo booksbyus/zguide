@@ -1,7 +1,7 @@
 /*  =========================================================================
     mdp_worker.c
 
-    Generated C99 codec implementation for mdp_worker
+    Generated codec implementation for mdp_worker
     =========================================================================
 */
 
@@ -219,6 +219,12 @@ mdp_worker_id (mdp_worker_t *self)
 {
     assert (self);
     return self->id;
+}
+
+void
+mdp_worker_id_set (mdp_worker_t *self, int id)
+{
+    self->id = id;
 }
 
 

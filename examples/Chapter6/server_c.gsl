@@ -1,0 +1,540 @@
+.#  server_c.gsl
+.#
+.#  Generates a server engine for a specified protocol.
+.#
+.#  This is a stripped-down server generator that you can expand for your
+.#  own protocol designs. Look at nom_server.xml for an example of a server
+.#  state machine models.
+.#
+.#  This codec generates C; it should be fairly simple to change it to
+.#  produce other languages.
+.#
+.echo "Generating $(class.name).h..."
+.output "$(class.name).h"
+/*  =========================================================================
+    $(class.name).h
+
+    Generated header for $(class.name) protocol server
+    =========================================================================
+*/
+
+#ifndef __$(CLASS.NAME)_H_INCLUDED__
+#define __$(CLASS.NAME)_H_INCLUDED__
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+//  Opaque class structure
+typedef struct _$(class.name)_t $(class.name)_t;
+
+//  Create a new $(class.name)
+$(class.name)_t *
+    $(class.name)_new (void);
+
+//  Destroy the $(class.name)
+void
+    $(class.name)_destroy ($(class.name)_t **self_p);
+
+//  Bind the $(class.name) to an endpoint
+void
+    $(class.name)_bind ($(class.name)_t *self, const char *endpoint);
+
+//  Execute the $(class.name) until interrupted
+void
+    $(class.name)_wait ($(class.name)_t *self);
+
+//  Self test of this class
+int
+    $(class.name)_test (bool verbose);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
+.echo "Generating $(class.name).c..."
+.output "$(class.name).c"
+/*  =========================================================================
+    $(class.name).c
+
+    Generated class for $(class.name) protocol server
+    =========================================================================
+*/
+
+#include <czmq.h>
+#include "$(class.name).h"
+
+//  This API works in two halves so that the main server engine can run
+//  in the background. One half is a front-end object the caller creates
+//  and works with; the other half is a back-end "agent" that runs in a
+//  background thread. The front-end talks to the back-end over an inproc
+//  pipe socket.
+
+//  ---------------------------------------------------------------------
+//  Structure of our front-end class
+
+struct _$(class.name)_t {
+    zctx_t *ctx;        //  CZMQ context
+    void *pipe;         //  Pipe through to agent
+};
+
+//  This is the thread that handles our real server class
+static void
+    server_agent (void *args, zctx_t *ctx, void *pipe);
+    
+//  --------------------------------------------------------------------------
+//  Create a new $(class.name)
+
+$(class.name)_t *
+$(class.name)_new (void)
+{
+    $(class.name)_t *self = ($(class.name)_t *) zmalloc (sizeof ($(class.name)_t));
+    self->ctx = zctx_new ();
+    self->pipe = zthread_fork (self->ctx, server_agent, NULL);
+    return self;
+}
+
+
+//  --------------------------------------------------------------------------
+//  Destroy the $(class.name)
+
+void
+$(class.name)_destroy ($(class.name)_t **self_p)
+{
+    assert (self_p);
+    if (*self_p) {
+        $(class.name)_t *self = *self_p;
+        zstr_send (self->pipe, "STOP");
+        char *string = zstr_recv (self->pipe);
+        free (string);
+        zctx_destroy (&self->ctx);
+        free (self);
+        *self_p = NULL;
+    }
+}
+
+
+//  --------------------------------------------------------------------------
+//  Bind the $(class.name) to an endpoint
+
+void
+$(class.name)_bind ($(class.name)_t *self, const char *endpoint)
+{
+    assert (self);
+    assert (endpoint);
+    zstr_sendm (self->pipe, "BIND");
+    zstr_send  (self->pipe, endpoint);
+}
+
+
+//  --------------------------------------------------------------------------
+//  Execute the $(class.name) until interrupted
+
+void
+$(class.name)_wait ($(class.name)_t *self)
+{
+    while (!zctx_interrupted)
+        sleep (1);
+}
+
+
+//  ---------------------------------------------------------------------
+//  State machine constants
+
+typedef enum {
+    stopped_state = 0,
+.for class.state
+    $(name:c)_state = $(index ())$(last ()??"" ?",")
+.   for event
+.       for class.event as cevent where cevent.name = event.name
+.       else
+.           if "$(name:)" = "$(NAME)"
+.               event.external = 1
+.           endif
+.           copy event to class
+.       endfor
+.   endfor
+.endfor
+} state_t;
+
+typedef enum {
+.for class.event
+    $(name:c)_event = $(index ())$(last ()??"" ?",")
+.endfor
+} event_t;
+
+.if switches.trace ?= 1
+//  Names for animation
+static char *
+s_state_name [] = {
+    "stopped",
+.for class.state
+    "$(name:)"$(last ()??"" ?",")
+.endfor
+};
+
+static char *
+s_event_name [] = {
+    "",
+.for class.event
+    "$(name:)"$(last ()??"" ?",")
+.endfor
+};
+
+.endif
+
+//  ---------------------------------------------------------------------
+//  Simple class for one client we talk to
+
+typedef struct {
+    //  Properties accessible to state machine actions
+    int64_t heartbeat;          //  Heartbeat interval
+    event_t next_event;         //  Next event
+    
+    //  Properties you should NOT touch
+    void *router;               //  Socket to client
+    int64_t heartbeat_at;       //  Next heartbeat at this time
+    int64_t expires;            //  Expires at this time
+    state_t state;              //  Current state
+    event_t event;              //  Current event
+    char *hashkey;              //  Key into clients hash
+    zframe_t *address;          //  Address frame
+    zmsg_t *request;            //  Last received request
+    zmsg_t *reply;              //  Reply to send out, if any
+} client_t;
+
+static client_t *
+client_new (void *router, char *hashkey, zframe_t *address)
+{
+    client_t *self = (client_t *) zmalloc (sizeof (client_t));
+    self->heartbeat = 1000;
+    self->router = router;
+    self->hashkey = hashkey;
+    self->address = address;
+.for class.state where item () = 1
+    self->state = $(name:c)_state;
+.endfor
+    self->reply = zmsg_new ();
+    zmsg_add (self->reply, zframe_dup (self->address));
+    return self;
+}
+
+static void
+client_destroy (client_t **self_p)
+{
+    assert (self_p);
+    if (*self_p) {
+        client_t *self = *self_p;
+        zframe_destroy (&self->address);
+        zmsg_destroy (&self->request);
+        zmsg_destroy (&self->reply);
+        free (self->hashkey);
+        free (self);
+        *self_p = NULL;
+    }
+}
+
+.for class.action
+static void
+$(name:c)_action (client_t *self) {
+$(string.trim (.):)
+}
+
+.endfor
+//  Execute state machine as long as we have events
+
+static void
+client_execute (client_t *self, int event)
+{
+    self->next_event = event;
+    while (self->next_event) {
+        self->event = self->next_event;
+        self->next_event = 0;
+.if switches.trace ?= 1
+        printf ("State=%s, event=%s\\n",
+            s_state_name [self->state], s_event_name [self->event]);
+.endif
+        switch (self->state) {
+.for class.state
+            case $(name:c)_state:
+.   for event
+.       if index () > 1
+                else
+.       endif
+                if (self->event == $(name:c)_event) {
+.       for action
+.           if name = "send"
+                    zmsg_addstr (self->reply, "$(message:)");
+.           elsif name = "stop"
+                    self->state = stopped_state;
+.           else
+                $(name:c)_action (self);
+.           endif
+.       endfor
+.       if defined (event.next)
+                    self->state = $(next:c)_state;
+.       endif
+                }
+.   endfor
+                break;
+                
+.endfor
+            case stopped_state:
+                //  Discard all events silently
+                break;
+        }
+        if (zmsg_size (self->reply) > 1) {
+.if switches.trace ?= 1
+            puts ("Send message to client");
+            zmsg_dump (self->reply);
+.endif
+            zmsg_send (&self->reply, self->router);
+            self->reply = zmsg_new ();
+            zmsg_add (self->reply, zframe_dup (self->address));
+        }
+    }
+}
+
+static void
+client_set_request (client_t *self, zmsg_t *request)
+{
+    if (self->request)
+        zmsg_destroy (&self->request);
+    self->request = request;
+
+    //  Any input from client counts as activity
+    self->heartbeat_at = zclock_time () + self->heartbeat;
+    self->expires = zclock_time () + self->heartbeat * 3;
+}
+
+//  Client hash function that checks if client is alive
+static int
+client_ping (const char *key, void *client, void *socket)
+{
+    client_t *self = (client_t *) client;
+    if (zclock_time () >= self->heartbeat_at) {
+        client_execute (self, heartbeat_event);
+        self->heartbeat_at = zclock_time () + self->heartbeat;
+    }
+    return 0;
+}
+
+//  Client hash function that calculates tickless timer
+static int
+client_tickless (const char *key, void *client, void *arg)
+{
+    client_t *self = (client_t *) client;
+    uint64_t *tickless = (uint64_t *) arg;
+    if (*tickless > self->heartbeat_at)
+        *tickless = self->heartbeat_at;
+    return 0;
+}
+
+//  Callback when we remove client from 'clients' hash table
+static void
+client_free (void *argument)
+{
+    client_t *client = (client_t *) argument;
+    client_destroy (&client);
+}
+
+
+//  ---------------------------------------------------------------------
+//  Context for the server agent
+
+typedef struct {
+    zctx_t *ctx;                //  Own CZMQ context
+    void *pipe;                 //  Socket to back to caller
+    void *router;               //  Socket to talk to clients
+    zhash_t *clients;           //  Clients we've connected to
+    bool stopped;               //  Has agent stopped?
+} agent_t;
+
+static agent_t *
+agent_new (zctx_t *ctx, void *pipe)
+{
+    agent_t *self = (agent_t *) zmalloc (sizeof (agent_t));
+    self->ctx = ctx;
+    self->pipe = pipe;
+    self->router = zsocket_new (self->ctx, ZMQ_ROUTER);
+    self->clients = zhash_new ();
+    return self;
+}
+
+static void
+agent_destroy (agent_t **self_p)
+{
+    assert (self_p);
+    if (*self_p) {
+        agent_t *self = *self_p;
+        zhash_destroy (&self->clients);
+        free (self);
+        *self_p = NULL;
+    }
+}
+
+static void
+agent_control_message (agent_t *self)
+{
+    zmsg_t *msg = zmsg_recv (self->pipe);
+    char *method = zmsg_popstr (msg);
+    if (streq (method, "BIND")) {
+        char *endpoint = zmsg_popstr (msg);
+        assert (endpoint);
+        int rc = zmq_bind (self->router, endpoint);
+        assert (rc == 0);
+        free (endpoint);
+    }
+    else
+    if (streq (method, "STOP")) {
+        zstr_send (self->pipe, "OK");
+        self->stopped = true;
+    }
+    free (method);
+    zmsg_destroy (&msg);
+}
+
+static void
+agent_client_message (agent_t *self)
+{
+    zmsg_t *msg = zmsg_recv (self->router);
+    if (!msg)
+        return;         //  Interrupted; do nothing
+
+.if switches.trace ?= 1
+    puts ("Received message from client");
+    zmsg_dump (msg);
+
+.endif
+    //  Frame 0 is address client that sent message
+    zframe_t *address = zmsg_pop (msg);
+    char *hashkey = zframe_strhex (address);
+    client_t *client = zhash_lookup (self->clients, hashkey);
+    if (client == NULL) {
+        client = client_new (self->router, hashkey, address);
+        zhash_insert (self->clients, hashkey, client);
+        zhash_freefn (self->clients, hashkey, client_free);
+    }
+    else {
+        free (hashkey);
+        zframe_destroy (&address);
+    }
+    //  Frame 1 is the command
+    char *command = zmsg_popstr (msg);
+    client_set_request (client, msg);
+    if (command) {
+.   for class.event where external ?= 1
+.   if index () > 1
+        else
+.   endif
+        if (streq (command, "$(NAME)"))
+            client_execute (client, $(name:c)_event);
+.   endfor
+        free (command);
+    }
+}
+
+//  Finally here's the agent task itself, which polls its two sockets
+//  and processes incoming messages:
+
+static void
+server_agent (void *args, zctx_t *ctx, void *pipe)
+{
+    agent_t *self = agent_new (ctx, pipe);
+    zmq_pollitem_t items [] = {
+        { self->pipe, 0, ZMQ_POLLIN, 0 },
+        { self->router, 0, ZMQ_POLLIN, 0 }
+    };
+    while (!self->stopped) {
+        //  Calculate tickless timer, up to 1 hour
+        uint64_t tickless = zclock_time () + 1000 * 3600;
+        zhash_foreach (self->clients, client_tickless, &tickless);
+
+        //  Poll until at most next timer event
+        int rc = zmq_poll (items, 2,
+            (tickless - zclock_time ()) * ZMQ_POLL_MSEC);
+        if (rc == -1)
+            break;              //  Context has been shut down
+
+        //  Process incoming message from either socket
+        if (items [0].revents & ZMQ_POLLIN)
+            agent_control_message (self);
+
+        if (items [1].revents & ZMQ_POLLIN)
+            agent_client_message (self);
+
+        //  Send heartbeats to idle clients as needed
+        zhash_foreach (self->clients, client_ping, self->router);
+    }
+    agent_destroy (&self);
+}
+
+
+//  --------------------------------------------------------------------------
+//  Selftest
+
+int
+$(class.name)_test (bool verbose)
+{
+    printf (" * $(class.name): \\n");
+
+    $(class.name)_t *self = $(class.name)_new ();
+    assert (self);
+    $(class.name)_bind (self, "tcp://*:6000");
+    
+    zctx_t *ctx = zctx_new ();
+    void *dealer = zsocket_new (ctx, ZMQ_DEALER);
+    zsocket_set_rcvtimeo (dealer, 2000);
+    zsocket_connect (dealer, "tcp://localhost:6000");
+
+    //  Run self-tests
+    zmsg_t *msg;
+    char *command;
+.for class->selftest.step
+.   if defined (send)
+    msg = zmsg_new ();
+    zmsg_addstr (msg, "$(send:)");
+.       if defined (body)
+    zmsg_addstr (msg, "$(body:)");
+.       endif
+    zmsg_send (&msg, dealer);
+    
+.   endif
+.   if defined (recv)
+    msg = zmsg_recv (dealer);
+    assert (msg);
+    command = zmsg_popstr (msg);
+    assert (streq (command, "$(recv:)"));
+    free (command);
+    zmsg_destroy (&msg);
+    
+.   endif
+.endfor
+    zctx_destroy (&ctx);
+    $(class.name)_destroy (&self);
+
+    printf ("OK\\n");
+    return 0;
+}
+.echo "Generating $(class.name).txt..."
+.output "$(class.name).txt"
+.for class.state
+/-------------------\\
+| $(Name)           |
+\\-------------------/
+.   for event
+.       if !defined (next)
+.           event.next = state.name
+.       endif
+.       bar = last ()?? ''? '|'
+  |
+  +-------------+                    /-------------------\\
+  | $(name:)    |------------------->| $(Next)           |
+  +-------------+                    \\-------------------/
+.       for action
+  $(bar)           $(Name) $(message?'':)
+.       endfor
+.   endfor
+
+.endfor
