@@ -23,13 +23,12 @@ func randomString() string {
 	return strings.Join(target, "")
 }
 
-func workerTask(randomId string) {
+func workerTask() {
 	context, _ := zmq.NewContext()
 	defer context.Close()
 
 	worker, _ := context.NewSocket(zmq.REQ)
-	/*worker.SetSockOptString(zmq.IDENTITY, randomString())*/
-	worker.SetSockOptString(zmq.IDENTITY, randomId)
+	worker.SetSockOptString(zmq.IDENTITY, randomString())
 
 	worker.Connect("ipc://routing.ipc")
 	defer worker.Close()
@@ -68,7 +67,7 @@ func main() {
 	rand.Seed(time.Now().Unix())
 
 	for i := 0; i < NBR_WORKERS; i++ {
-		go workerTask(randomString())
+		go workerTask()
 	}
 
 	for i := 0; i < NBR_WORKERS*10; i++ {
