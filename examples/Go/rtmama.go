@@ -42,11 +42,12 @@ func workerTask(randomId string) {
 	if string(data) == "END" {
 	  id, _ := worker.GetSockOptString(zmq.IDENTITY)
 	  fmt.Printf("Processed: %2d tasks (%s)\n", total, id)
+	  break
 	}
 	total += 1
 
-	/*msec := rand.Intn(1000)*/
-	/*time.Sleep(time.Duration(msec) * time.Millisecond)*/
+	msec := rand.Intn(1000)
+	time.Sleep(time.Duration(msec) * time.Millisecond)
   }
 }
 
