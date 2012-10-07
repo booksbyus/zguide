@@ -45,8 +45,8 @@ func workerTask(randomId string) {
 	}
 	total += 1
 
-	msec := rand.Intn(1000)
-	time.Sleep(time.Duration(msec) * time.Millisecond)
+	/*msec := rand.Intn(1000)*/
+	/*time.Sleep(time.Duration(msec) * time.Millisecond)*/
   }
 }
 
