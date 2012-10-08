@@ -276,6 +276,10 @@ while (<>) {
         close_list ();
         print "E: unparsed code block: $_\n";
     }
+    elsif (/^> /) {
+        require_list ("blockquote");
+        writeln (requote ("  <para>$'</para>"));
+    }
     elsif (/^\* /) {
         require_list ("itemizedlist");
         writeln (requote ("  <listitem><para>$'</para></listitem>"));
