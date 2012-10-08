@@ -446,29 +446,29 @@ make
 Since the libzmq code is neat and well-organized it was quite easy to find the main files to change (xpub.cpp and xpub.hpp). Each socket type has its own source file and class. They inherit from socket_base.cpp, which has this hook for socket-specific options:
 
 [[code]]
-    //  First, check whether specific socket type overloads the option.
-    int rc = xsetsockopt (option_, optval_, optvallen_);
-    if (rc == 0 || errno != EINVAL)
-        return rc;
+//  First, check whether specific socket type overloads the option.
+int rc = xsetsockopt (option_, optval_, optvallen_);
+if (rc == 0 || errno != EINVAL)
+    return rc;
 
-    //  If the socket type doesn't support the option, pass it to
-    //  the generic option parser.
-    return options.setsockopt (option_, optval_, optvallen_);
+//  If the socket type doesn't support the option, pass it to
+//  the generic option parser.
+return options.setsockopt (option_, optval_, optvallen_);
 [[/code]]
 
 Then I check where the XPUB socket filters out duplicate subscriptions, in its xread_activated method:
 
 [[code]]
-            bool unique;
-            if (*data == 0)
-                unique = subscriptions.rm (data + 1, size - 1, pipe_);
-            else
-                unique = subscriptions.add (data + 1, size - 1, pipe_);
+bool unique;
+if (*data == 0)
+    unique = subscriptions.rm (data + 1, size - 1, pipe_);
+else
+    unique = subscriptions.add (data + 1, size - 1, pipe_);
 
-            //  If the subscription is not a duplicate store it so that it can be
-            //  passed to used on next recv call.
-            if (unique && options.type != ZMQ_PUB)
-                pending.push_back (blob_t (data, size));
+//  If the subscription is not a duplicate store it so that it can be
+//  passed to used on next recv call.
+if (unique && options.type != ZMQ_PUB)
+    pending.push_back (blob_t (data, size));
 [[/code]]
 
 At this stage I'm not too concerned with the details of how subscriptions.rm and .add work. The code seems obvious except that "subscription" also includes unsubscription, which confused me for a few seconds. If there's anything else weird in the rm and add methods, that's a separate issue to fix later. Time to make an issue for this change. I head over to the zeromq.jira.com site, log in, and create a new entry.
@@ -485,21 +485,21 @@ Naming time. The API sits in include/zmq.h, so this is where I added the option 
 So, time to add a private property to the xpub class definition in xpub.hpp:
 
 [[code]]
-        // If true, send all subscription messages upstream, not just
-        // unique ones
-        bool verbose;
+// If true, send all subscription messages upstream, not just
+// unique ones
+bool verbose;
 [[/code]]
 
 And then lift some code from router.cpp to implement the xsetsockopt method. Finally, change the xread_activated method to use this new option, and while at it, make that test on socket type more explicit too:
 
 [[code]]
-            //  If the subscription is not a duplicate store it so that it can be
-            //  passed to used on next recv call.
-            if (options.type == ZMQ_XPUB && (unique || verbose))
-                pending.push_back (blob_t (data, size));
+//  If the subscription is not a duplicate store it so that it can be
+//  passed to used on next recv call.
+if (options.type == ZMQ_XPUB && (unique || verbose))
+    pending.push_back (blob_t (data, size));
 [[/code]]
 
-The thing builds nicely first time. Which makes me a little suspicious, but being lazy and jetlagged I don't make a test case to actually try out the change. The process doesn't demand that, even if usually I'd do it just to catch that inevitable 10% of mistakes we all make. I do however document this new option on the doc/zmq_setsockopt.txt man page. In the worst case I added a patch that wasn't really useful. But I certainly didn't break anything.
+The thing builds nicely first time. Which makes me a little suspicious, but being lazy and jetlagged I don't immediately make a test case to actually try out the change. The process doesn't demand that, even if usually I'd do it just to catch that inevitable 10% of mistakes we all make. I do however document this new option on the doc/zmq_setsockopt.txt man page. In the worst case I added a patch that wasn't really useful. But I certainly didn't break anything.
 
 I don't implement a matching zmq_getsockopt, since "minimal" means what it says. There's no obvious use case for getting the value of an option that you presumably just set, in code. Symmetry isn't a valid reason to double the size of a patch. I did have to document the new option since the process says, "All Public Contracts SHOULD be documented."
 
@@ -522,38 +522,38 @@ After Ian merges the pull request, I re-synchronize my fork with the upstream li
 git remote add upstream git://github.com/zeromq/libzmq.git
 [[/code]]
 
-And then I pull the upstream master and check the git log:
+And then I pull changes back from the upstream master and check the git log to double-check:
 
 [[code]]
 git pull --rebase upstream master
 git log
 [[/code]]
 
-And that is pretty much it, in terms of how much git I need to learn and use. Six git commands and some clicking on web pages. Most importantly to me as a naturally lazy, stupid, and easily confused developer, I don't have to learn git's internal models, and never have to do anything involving those infernal engines of structural complexity we call "git branches".
+And that is pretty much it, in terms of how much git one needs to learn and use to contribute patches to libzmq. Six git commands and some clicking on web pages. Most importantly to me as a naturally lazy, stupid, and easily confused developer, I don't have to learn git's internal models, and never have to do anything involving those infernal engines of structural complexity we call "git branches". Next up, the attempted assassination of git branches. Let's live angerously!
 
 +++ Git Branches Considered Harmful
 
-One of git's most popular features is how easy it makes branches. Almost all projects that use git use branches, and the selection of the "best" branching strategy is like a rite of passage for an open source project. Vincent Driessen's [http://nvie.com/posts/a-successful-git-branching-model/ git-flow] is maybe the best known. It has 'base' branches (master, develop), 'feature' branches, 'release' branches, 'hotfix' branches, and 'support' branches. Many teams have adopted git-flow, which even has git extensions to support it. However, in this section I'll argue that public git branches are harmful, based on experience and evidence, and explain the branch-free approach, based on forks, that we use in C4.
+One of git's most popular features is how easy it makes branches. Almost all projects that use git use branches, and the selection of the "best" branching strategy is like a rite of passage for an open source project. Vincent Driessen's [http://nvie.com/posts/a-successful-git-branching-model/ git-flow] is maybe the best known. It has 'base' branches (master, develop), 'feature' branches, 'release' branches, 'hotfix' branches, and 'support' branches. Many teams have adopted git-flow, which even has git extensions to support it. I'm a great believer in popular wisdom, but sometimes you have to recognize mass dellusion for what it is.
 
 Here is a section of C4 that might have shocked you when you first read it:
 
 > The project SHALL NOT use topic branches for any reason. Personal forks MAY use topic branches.
 
-To be clear, it's //public branches in shared repositories// that I'm talking about. Using branches for private work, e.g. to work on different issues, appears to work just fine, though it's more complexity than I personally enjoy. To channel Stallman again: //your freedom to create complexity ends one inch from our shared workspace.//
+To be clear, it's //public branches in shared repositories// that I'm talking about. Using branches for private work, e.g. to work on different issues, appears to work well enough, though it's more complexity than I personally enjoy. To channel Stallman again: //your freedom to create complexity ends one inch from our shared workspace.//
 
-Like the rest of C4, the rules on branches are not accidental. They came from the 0MQ community, when Martin Sustrik and I started producing stable releases. We both love and appreciate simplicity (some people seem to have a remarkable tolerance for complexity). We chatted for a while... I asked him, "I'm going to start making a stable release, would it be OK for me to make a branch in the git you're working in?" Martin didn't like the idea. "OK, if I fork the repository, I can move patches from your repo to that one". That felt much better to both of us.
+Like the rest of C4, the rules on branches are not accidental. They came from our experience making 0MQ, starting when Martin Sustrik and I rethought how to make stable releases. We both love and appreciate simplicity (some people seem to have a remarkable tolerance for complexity). We chatted for a while... I asked him, "I'm going to start making a stable release, would it be OK for me to make a branch in the git you're working in?" Martin didn't like the idea. "OK, if I fork the repository, I can move patches from your repo to that one". That felt much better to both of us.
 
-The response from many in the 0MQ community was shock and horror. Still, this seemed simple, and indeed it worked very nicely. The best part was that we each worked as we wanted to. Whereas before, the 0MQ repository had felt horribly complex (and it wasn't even anything like git-flow), this felt simple. And it worked. The only downside was that we lost a single unified history. Now, perhaps historians will feel robbed, but I honestly can't see that the historical minutiae of who changed what, when, including every branch and experiment, are worth any significant pain or friction.
+The response from many in the 0MQ community was shock and horror. People felt we were being lazy and making contributors work harder to find the "right" repository. Still, this seemed simple, and indeed it worked smoothly. The best part was that we each worked as we wanted to. Whereas before, the 0MQ repository had felt horribly complex (and it wasn't even anything like git-flow), this felt simple. And it worked. The only downside was that we lost a single unified history. Now, perhaps historians will feel robbed, but I honestly can't see that the historical minutiae of who changed what, when, including every branch and experiment, are worth any significant pain or friction.
 
 People have gotten used to the "multiple repositories" approach in ZeroMQ and we've started using that in other projects quite successfully. My own opinion is that history will judge git branches and patterns like git-flow as a complex solution to imaginary problems inherited from the days of Subversion and monolithic repositories.
 
-More profoundly, I think the the branches vs. forks argument is really a wider design vs. evolve argument about how to make software optimally. I'll address that wider argument in the next section. For now, let's try to be scientific about our irrational hate of branches. I'll look at a number of criteria, and compare branches and forks in each one.
+More profoundly, and perhaps this is why the majority seems to be "wrong": I think the the branches vs. forks argument is really a deeper design vs. evolve argument about how to make software optimally. I'll address that deeper argument in the next section. For now, I'll try to be scientific about my irrational hate of branches, by looking at a number of criteria, and compare branches and forks in each one.
 
 ++++ Simplicity vs. Complexity
 
 //The simpler, the better.//
 
-There is no inherent reason branches are more complex than forks. However, git-flow uses //five types// of branch, whereas C4 uses two types of fork (development, and stable) and one branch (master). Circumstantial evidence is thus that branches lead to more complexity than forks. For new users, it is definitely, and we've measured this in practice, easier to learn to work with many repositories and no branches.
+There is no inherent reason branches are more complex than forks. However, git-flow uses //five types// of branch, whereas C4 uses two types of fork (development, and stable) and one branch (master). Circumstantial evidence is thus that branches lead to more complexity than forks. For new users, it is definitely, and we've measured this in practice, easier to learn to work with many repositories and no branches except master.
 
 ++++ Change Latency
 
@@ -589,7 +589,7 @@ The strong assumption in all branch strategies is that the repository //is// the
 
 //The less surprising, the better.//
 
-People expect branches and find forks to be uncommon and thus confusing. This is the one aspect where branches win. However, sometimes better ways of working just are surprising at first.
+People expect branches and find forks to be uncommon and thus confusing. This is the one aspect where branches win. If you use branches, a single patch will have the same commit hash tag, whereas across forks the patch will have different hash tags. That makes it harder to track patches as they cross forks, true. But seriously, //having to track hexadecimal hash tags is not a feature//. It's a bug. Sometimes better ways of working just are surprising at first.
 
 ++++ Economics of Participation
 

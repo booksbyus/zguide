@@ -622,7 +622,60 @@ Here, then, is the Clustered Hashmap Protocol, which "//defines a cluster-wide k
 
 +++ The Espresso Pattern
 
-I'll end this chapter with a fun little machine that exploits the zmq_proxy[3] method to show you what's happening on a pub-sub network. It's deceptively simple:
+here is a fun little machine that exploits the zmq_proxy[3] method to show you what's happening on a pub-sub network. It's deceptively simple:
 
 [[code type="example" title="Espresso Machine" name="espresso"]]
 [[/code]]
+
++++ Last Value Caching
+
+If you've used commercial publish-subscribe systems you may be used to some features that are missing in the fast and cheerful 0MQ pub-sub model. One of these is "last value caching". The problem this solves is how a new subscriber catches up when it joins the network. The theory is that publishers get notified when a new subscriber joins and subscribes to some specific topics. The publisher can then re-broadcast the last message for those topics.
+
+First I'll explain why 0MQ does not do this, and then I'll show how to do it anyhow.
+
+We don't do it because in large pub-sub systems the volumes of data make it pretty much impossible. To make really large-scale pub-sub networks you need a protocol like PGM that exploits the Ethernet switch's ability to multicast data to thousands of subscribers. Trying to do a TCP unicast from the publisher to each of thousands of subscribers just doesn't scale. You get weird spikes, unfair distribution (some subscribers getting the message before others), network congestion, and general unhappiness.
+
+PGM is a one-way protocol: the publisher sends a message to a multicast address at the switch, which then rebroadcasts that to all interested subscribers. The publisher never sees when subscribers join or leave: this all happens in the switch, which we don't really want to start reprogramming.
+
+OK, but in a lower-volume network, with a few dozen subscribers, and a limited number of topics, how do we make a LVC using 0MQ? The answer is to create a proxy that sits between the publisher and subscribers; an analog for the switch, but one we can program ourselves.
+
+I'll start by making a publisher and subscriber that highlight the worst case scenario. This publisher is pathological. It starts by immediately sending messages to each of a thousand topics, and then it sends one update a second to a random topic. A subscriber connects, and subscribes to a topic. Without LVC, a subscriber would have to wait an average of 500 seconds to get any data. To add some drama, there's an escaped convict called Roth threatening to rip the head off Roger the toy bunny if we can't fix that 8.3 minutes' delay.
+
+Here's the publisher code. Note that it has the command line option to connect to some address, but otherwise binds to an endpoint. We'll use this later to connect to our last value cache:
+
+[[code type="example" title="Pathologic Publisher" name="pathopub"]]
+[[/code]]
+
+And here's the subscriber:
+
+[[code type="example" title="Pathologic Subscriber" name="pathosub"]]
+[[/code]]
+
+Try building and running these: first the subscriber, then the publisher. You'll see the subscriber reports getting "Save Roger" as you'd expect:
+
+[[code]]
+./pathosub &
+./pathopub
+[[/code]]
+
+It's when you run a second subscriber that you understand Roger's predicament. You have to leave it an awful long time before it reports getting any data. So, here's our last value cache. As I promised, it's a proxy that binds to two sockets and then handles messages on both them:
+
+[[code type="example" title="Last Value Caching Proxy" name="lvcache"]]
+[[/code]]
+
+Now, run the proxy, then the publisher:
+
+[[code]]
+./lvcache &
+./pathopub tcp://localhost:5557
+[[/code]]
+
+And now run as many instances of the subscriber as you want to try, each time connecting to the proxy on port 5558:
+
+[[code]]
+./pathosub tcp://localhost:5558
+[[/code]]
+
+Each subscriber happily reports "Save Roger", and Roth the Escaped Convict slinks back to his cell for dinner and a nice cup of tea with two teaspoons of sugar and a dash of milk, which is all he really wanted anyhow, thank you.
+
+One note: the XPUB socket by default does not report duplicate subscriptions. Our example sneakily gets around this by using random topics so the chance of it not working with two subscribers is one in a million. In real life you'll want to use the ZMQ_XPUB_VERBOSE option that we implement in Chapter 7 as an exercise:
