@@ -69,5 +69,6 @@ int main (void)
         }
     }
     zctx_destroy (&context);
+    zhash_destroy (&cache);
     return 0;
 }

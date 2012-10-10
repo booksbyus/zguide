@@ -1,10 +1,4 @@
 Notes for The Guide
-
-Last Value Cache device
-    - XPUB to detect subscriber changes
-    - cache of last messages... per subscription
-    - detect dead publishers and turn these into EOS
-    
     
 ==1742== Syscall param write(buf) points to uninitialised byte(s)
 ==1742==    at 0x5372100: __write_nocancel (syscall-template.S:82)
@@ -24,30 +18,27 @@ Last Value Cache device
     fclose (handle);
     zmq_msg_close (&msg);
 
++++ Bridging
+
+- why and how
+- semantic compatibility
+- example 0MQ to HTTP
+- using zxxx library?
+
++++ Decentralised Logging System
+
+- pubsub log events
+- filter levels
+- capture in log files or memory
+- dynamic graphing
+- log file cycling
+
++++ Timer Service
+
+- ticks, 1/10, 1/100, etc.
+
++++ Disconnected Security
     
-Chapter 6 topics:
-
-- heartbeating, credit-based flow control, file transfer, serialization
-- version negotiation
-
-Chapter 7 topics:
-
-- how to build a community
-- how to contribute to 0MQ, C4 process in some detail
-
-Chapter 8 topics:
-
-- UDP discovery
-- bridging 0MQ to other protocols
-- web interfaces (including NullMQ)
-- in/out process logging
-    - timestamp
-    - filter I/W/E
-    - capture in log file
-    - cycle log files
-- timer service (subscribe to timer events)
-- disconnected security (for pub/sub)
-
 Chapter 9 topics
 
 - the wire level protocol
@@ -58,10 +49,8 @@ Chapter 9 topics
     C#
     Java
     Ruby
-- using GSL :-)
 
 
-Chapter 5 additional topics
 
 ++++ Reliable Pipeline (Harmony Pattern)
 
