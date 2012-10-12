@@ -20,6 +20,6 @@ int main (int argc, char *argv[])
     zmq_bind (backend, "tcp://*:5560");
 
     //  Start built-in device
-    zmq::device (ZMQ_QUEUE, frontend, backend);
+    zmq_device (ZMQ_QUEUE, frontend, backend);
     return 0;
 }
