@@ -101,7 +101,7 @@ The main output of TODs are expensive "ideations": concepts, design documents, a
 
 * The Creative People come up with long lists of "we could do X and Y". I've seen endlessly detailed lists of everything amazing a product could do. Once the creative work of idea generation has happened, it's just a matter of execution, of course.
 
-* So the managers and their consultants pass their brilliant, world-shattering ideas to designers who acres of detailed, preciously refined design documents. The designers take the tens of ideas the managers came up with, and turn them into hundreds of amazing, world-changing designs.
+* So the managers and their consultants pass their brilliant, world-shattering ideas to designers who create acres of detailed, preciously refined design documents. The designers take the tens of ideas the managers came up with, and turn them into hundreds of amazing, world-changing designs.
 
 * These designs get given to engineers who scratch their heads and wonder who the heck came up with such stupid nonsense. They start to argue back but the designs come from up high, and really, it's not up to engineers to argue with creative people and expensive consultants.
 
@@ -1431,16 +1431,16 @@ cd filemq
 make check
 [[/code]]
 
-You want to be using the latest CZMQ master for this. Now try running the {{filemq}} service:
+You want to be using the latest CZMQ master for this. Now try running the {{track}} command, which is a simple tool that uses FileMQ to track changes in one directory in another:
 
 [[code]]
 cd src
-./filemq
+./track ./fmqroot/send ./fmqroot/recv
 [[/code]]
 
 And open two file navigator windows, one into {{src/fmqroot/send}} and one into {{src/fmqroot/recv}}. Drop files into the send folder and you'll see them arrive in the recv folder. The server checks once per second for new files. Delete files in the send folder, and they're deleted in the recv folder similarly.
 
-This isn't a full replication protocol though the delete function suggests that it might become one.
+I use track for things like updating my MP3 player mounted as a USB drive. As I add or remove files in my laptop's Music folder, the same changes happen on the MP3 player. FILEMQ isn't a full replication protocol it might become one.
 
 ++++ Internal Architecture
 
@@ -1502,6 +1502,12 @@ zmq_bind (self->router, endpoint);
 mount_t *mount = mount_new (location, alias);
 zlist_append (self->mounts, mount);
 </method>
+
+<method name = "set anonymous">
+<argument name = "access" type = "number" />
+//  Enable anonymous access without a config file
+fmq_config_path_set (self->config, "security/anonymous", access? "1" :"0");
+</method>
 [[/code]]
 
 ++++ Design Notes
@@ -1510,17 +1516,17 @@ The hardest part of making FileMQ wasn't the protocol part, but maintaining accu
 
 So I'll go through some of the design aspects:
 
-* The server and client use virtual paths, much like an HTTP or FTP server. You define the "root" to be, e.g. ./fmqroot/recv, and then file names are relative to that root. Sending physical file names across the network is not a good idea.
-
 * The client detects if the server has died by the lack of heartbeats (HUGZ) coming from the server. It then restarts its dialog by sending an OHAI. There's no timeout on the OHAI since the 0MQ DEALER socket will queue an outgoing message indefinitely.
 
 * The server detects if a client has died by its lack of response (HUGZ-OK) to a heartbeat. In that case it deletes all state for the client including its subscriptions.
 
 * The client API holds subscriptions in memory and replays them when it has connected successfully. This means the called can subscribe at any time (and doesn't care when connections and authentication actually happen).
 
-* The server allows multiple "mount points", i.e. real directories in different places that are presented to clients as a single tree they can subscribe against.
+* The server and client use virtual paths, much like an HTTP or FTP server. You publish one or more "mount points" each corresponding to a directory on the server. Each of these maps to some virtual path, for instance "/" if you have only one mount point. Clients then subscribe to virtual paths, and files arrive in an inbox directory. We don't send physical file names across the network.
 
 * There are some timing issues: if the server is creating its mount points, while clients are connected and subscribing, the subscriptions won't attach to the right mount points. So, we bind the server port as last thing.
+
+* Clients can reconnect at any point; if the client sends OHAI, that signals the end of any previous conversation and the start of a new one. I might one day make subscriptions durable so that they survive a disconnection. The client stack, after reconnecting, replays any subscriptions the caller application already made.
 
 ++++ Reliabilty
 
@@ -1588,3 +1594,48 @@ It is quite common to poll a directory for changes and then do something 'intere
 There is a neater way, which is to detect when a file is "stable", i.e. no-one is writing to it any longer. FileMQ does this by checking the modification time of the file. If it's more than a second old, then the file is considered stable, at least stable enough to be shipped off to clients. If a process comes along after five minutes and appends to the file, it'll be shipped off again.
 
 For this to work, and this is a requirement for any application hoping to use FileMQ successfully, do not buffer more than a second's worth of data in memory before writing. If you use very large block sizes, the file may look stable when it's not.
+
++++ Test Use Case
+
+To properly test something like FileMQ we need a test case that plays with live data. One of my ongoing chores is to manage the MP3 tracks on my music player, which is a Sansa Clip reflashed with Rock Box (highly recommended). As I download tracks into my Music folder I want to copy these to my player, and as I find tracks that annoy me, I delete them in the Music folder and want those gone from my player too.
+
+This is kind of over-kill for a powerful file distribution protocol. I could write this using a bash or Perl script but to be honest the hardest work in FileMQ was the directory comparison code, and I want to benefit from that. So I put together a simple tool called "track" which calls the FileMQ API. From the command line this runs with two arguments; the sending and the receiving directories:
+
+[[code]]
+./track /home/ph/Music /media/3230-6364/MUSIC
+[[/code]]
+
+The code is a neat example of how to use the FileMQ API to do local file distribution. Here is the full program, minus the license text (it's MIT/X11 licensed):
+
+[[code language="C"]]
+#include "czmq.h"
+#include "../include/fmq.h"
+
+int main (int argc, char *argv [])
+{
+    if (argc < 3) {
+        puts ("usage: track original-directory tracking-directory");
+        return 0;
+    }
+    fmq_server_t *server = fmq_server_new ();
+    fmq_server_configure (server, "anonymous.cfg");
+    fmq_server_publish (server, argv [1], "/");
+    fmq_server_set_anonymous (server, true);
+    fmq_server_bind (server, "tcp://*:6000");
+
+    fmq_client_t *client = fmq_client_new ();
+    fmq_client_connect   (client, "tcp://localhost:6000");
+    fmq_client_set_inbox (client, argv [2]);
+    fmq_client_subscribe (client, "/");
+
+    while (!zctx_interrupted)
+        sleep (1);
+    puts ("interrupted");
+
+    fmq_server_destroy (&server);
+    fmq_client_destroy (&client);
+    return 0;
+}
+[[/code]]
+
+Note how we work with physical paths in this tool. The server publishes the physical path "/home/ph/Music" and maps this to the virtual path "/". The client subscribes to "/" and receives all files in "/media/3230-6364/MUSIC". I could use any structure within the server directory, and it would be copied faithfully to the client's inbox.

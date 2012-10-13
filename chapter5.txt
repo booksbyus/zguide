@@ -251,31 +251,31 @@ Both the server and client maintain hash tables, but this first model only works
 
 ++++ Getting a Snapshot
 
-In order to allow a late (or recovering) client to catch up with a server it has to get a snapshot of the server's state. Just as we've reduced "message" to mean "a sequenced key-value pair", we can reduce "state" to mean "a hash table". To get the server state, a client opens a REQ socket and asks for it explicitly!figref().
+In order to allow a late (or recovering) client to catch up with a server it has to get a snapshot of the server's state. Just as we've reduced "message" to mean "a sequenced key-value pair", we can reduce "state" to mean "a hash table". To get the server state, a client opens a DEALER socket and asks for it explicitly!figref().
 
 [[code type="textdiagram" title="State Replication"]]
-               +-----------------+
-               |                 |
-               |     Server      |
-               |                 |
-               +--------+--------+
-               |   PUB  | ROUTER |
-               \----+---+--------/
-                    |       ^
-                    |       | state request
-                 updates    +---------------\
-                    |                       |
-   /----------------+----------------\      |
-   |                |                |      |
-   |                |                |      |
-   v                v                v      |
-/------+-----\   /------+-----\   /------+--+--\
-| SUB  | REQ |   | SUB  | REQ |   | SUB  | REQ |
-+------+-----+   +------+-----+   +------+-----+
-|            |   |            |   |            |
-|   Client   |   |   Client   |   |   Client   |
-|            |   |            |   |            |
-+------------+   +------------+   +------------+
+                  +-----------------+
+                  |                 |
+                  |     Server      |
+                  |                 |
+                  +--------+--------+
+                  |   PUB  | ROUTER |
+                  \----+---+--------/
+                       |       ^
+                       |       | state request
+                    updates    +-------------------\
+                       |                           |
+    /------------------+-------------------\       |
+    |                  |                   |       |
+    |                  |                   |       |
+    v                  v                   v       |
+/------+--------\   /------+--------\   /------+---+----\
+| SUB  | DEALER |   | SUB  | DEALER |   | SUB  | DEALER |
++------+--------+   +------+--------+   +------+--------+
+|               |   |               |   |               |
+|    Client     |   |    Client     |   |    Client     |
+|               |   |               |   |               |
++---------------+   +---------------+   +---------------+
 [[/code]]
 
 To make this work, we have to solve the timing problem. Getting a state snapshot will take a certain time, possibly fairly long if the snapshot is large. We need to correctly apply updates to the snapshot. But the server won't know when to start sending us updates. One way would be to start subscribing, get a first update, and then ask for "state for update N". This would require the server storing one snapshot for each update, which isn't practical.
@@ -325,30 +325,30 @@ In our second model, changes to the key-value cache came from the server itself.
 Updates from clients go via a PUSH-PULL socket flow from client to server!figref().
 
 [[code type="textdiagram" title="Republishing Updates"]]
-          +--------------------------+
-          |                          |
-          |          Server          |
-          |                          |
-          +--------+--------+--------+
-          |   PUB  | ROUTER |  PULL  |
-          \----+---+--------+--------/
-               |       ^        ^
-               |       |        | state update
-               |       |        \---------\
-               |       | state request    |
-            updates    \------------\     |
-               |                    |     |
-   /-----------+-------------\      |     |
-   |                         |      |     |
-   |      ^     ^            |      |     |
-   v      |     |            v      |     |
-/------+--+--+--+---\     /------+--+--+--+---\
-| SUB  | REQ | PUSH |     | SUB  | REQ | PUSH |
-+------+-----+------+     +------+-----+------+
-|                   |     |                   |
-|       Client      |     |       Client      |
-|                   |     |                   |
-+-------------------+     +-------------------+
+             +--------------------------+
+             |                          |
+             |          Server          |
+             |                          |
+             +--------+--------+--------+
+             |   PUB  | ROUTER |  PULL  |
+             \----+---+--------+--------/
+                  |       ^        ^
+                  |       |        | state update
+                  |       |        \------------\
+                  |       | state request       |
+               updates    \-------------\       |
+                  |                     |       |
+   .--------------+-------------\       |       |
+   |                            |       |       |
+   |       ^       ^            |       |       |
+   v       |       |            v       |       |
+/------+---+----+--+---\     /------+---+----+--+---\
+| SUB  | DEALER | PUSH |     | SUB  | DEALER | PUSH |
++------+--------+------+     +------+--------+------+
+|                      |     |                      |
+|        Client        |     |        Client        |
+|                      |     |                      |
++----------------------+     +----------------------+
 [[/code]]
 
 Why don't we allow clients to publish updates directly to other clients? While this would reduce latency, it makes it impossible to assign ascending unique sequence numbers to messages. The server can do this. There's a more subtle second reason. In many applications it's important that updates have a single order, across many clients. Forcing all updates through the server ensures that they have the same order when they finally get to clients.
@@ -529,7 +529,7 @@ So the architecture for our high-availability server pair using the Binary Star 
    |       |      |
    v       |      |
 /-----+----+---+--+--\
-| SUB |  REQ   | PUB |
+| SUB | DEALER | PUB |
 +-----+--------+-----+
 |                    |
 |       Client       |
