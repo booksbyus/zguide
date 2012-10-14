@@ -17,7 +17,7 @@ This is what we'll attempt in this chapter: to build a framework for distributed
 
 We'll cover:
 
-* Building a basic framework for distributed computing, using UDP and 0MQ.
+* Building a basic framework for distributed computing.
 
 +++ Design for The Real World
 
@@ -231,14 +231,36 @@ The simplest answer to these issues is to push the UDP code into a separate libr
 [[code type="example" title="UDP discovery, model 2" name="udpping2"]]
 [[/code]]
 
-The library, udplib, hides a lot of the unpleasant code (which will become nastier and nastier as we make this work on more systems):
-
-[[code type="example" title="UDP library" name="udplib"]]
-[[/code]]
+The library, udplib, hides a lot of the unpleasant code (which will become nastier and nastier as we make this work on more systems). I'm not going to print that code here. You can read it in the repository. It does provide a neat little "udp" class that wraps up the work we need to do.
 
 Now, there are more problems sizing us up and wondering if they can make lunch out of us. First, IPv4 versus IPv6 and multicast vs. broadcast. In IPv6, broadcast doesn't exist at all; one uses multicast. From my experience with WiFi, IPv4 multicast and broadcast work identically except that multicast breaks in some situations where broadcast works fine. Some access points do not forward multicast packets. When you have a device (e.g. a tablet) that acts as a mobile AP, then it's possible it won't get multicast packets. Meaning, it won't see other peers on the network.
 
 The simplest plausible solution is simply to ignore IPv6 for now, and use broadcast. A perhaps smarter solution would be to use multicast, and deal with asymmetric beacons if they happen.
 
 We'll stick with stupid and simple for now. There's always time to make it more complex.
+
+++++ Abstraction, Presence and Topology
+
+So we can discover nodes on the WiFi network, as long as they're sending out beacons as we expect. If I was a wizz Android developer with a free weekend I'd immediately (as in, it would take me two days) port this code to my phone and get it sending beacons to my PC. But sometimes lazy is more profitable. I //like// my Linux laptop.
+
+Hence my next challenge: how to simulate multiple nodes on a single physical device. In any case this seems like a Good Thing. It's naive to think one device represents one node. At the very least it makes it horribly painful to test large numbers of nodes. Do you have a hundred tablets lying around? And do you have any idea how long it takes to reinstall a new version on 100 devices? Exactly.
+
+On a sane operating system, you can bind one socket to one port. UDP and TCP both return an error if you try to bind two different sockets to the same port. This is as it should be. The semantics of two readers on one socket would be weird to say the least. Odd/even bytes? You get all the 1s, I get all the 0's?
+
+
+
+
+
+
+
+- multiple nodes on one device
+- simulation and testing
+    - supernodes
+- protocol identification
+- versioning
+    - frame header
+- node addressing -> UUID
+    - frame body
+- can't use UDP for any work, need to bootstrap into 0MQ
+    - handshaked discovery
 

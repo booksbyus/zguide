@@ -1,17 +1,5 @@
 .end
 
-++++ Presence and Topology
-
-- simulation and testing
-    - supernodes
-- protocol identification
-- versioning
-    - frame header
-- node addressing -> UUID
-    - frame body
-- can't use UDP for any work, need to bootstrap into 0MQ
-    - handshaked discovery
-
 
 
 Notes for The Guide

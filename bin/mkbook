@@ -116,10 +116,21 @@ while (<>) {
             print "Illegal directive $_ at line $.\n";
         }
     }
+    elsif (/^\+\+\s+Preface/) {
+        close_list ();
+        start_block (1, "preface");
+        writeln (requote ("<title>Preface</title>"));
+    }
     elsif (/^\+\+\s+Chapter\s+\w+\s+-\s+(.*)$/) {
         close_list ();
         start_block (1, "chapter");
         writeln (requote ("<title>$1</title>"));
+    }
+    elsif (/^\+\+\s+Postface/) {
+        close_list ();
+        #   Don't have a Postface item, so make this a chapter
+        start_block (1, "chapter");
+        writeln (requote ("<title>Postface</title>"));
     }
     elsif (/^\+\+\+\s+(.*)$/) {
         close_list ();
@@ -349,6 +360,7 @@ sub writesrc {
 
 sub requote {
     local ($_) = @_;
+#    don't have a solid algorithm, so am sticking with straight quotes
 #    s/"([a-zA-ZØ0-9.\/\(])/&#8220;\1/g;
 #    s/([a-zA-Z0-9!?.\/\)])"/\1&#8221;/g;
 #    s/ '([a-zA-Z0-9])/ &#8216;\1/g;
@@ -524,6 +536,9 @@ sub expand_symbols {
     #   Translate 0MQ into ØMQ unless escaped
     s/0MQ/ØMQ/g;
     s/0\\MQ/0MQ/g;
+
+    #   Fix ampersands
+    s/&/&amp;/g;
 
     #   Translate accented characters, presumably there's a module
     #   that will do this properly...
