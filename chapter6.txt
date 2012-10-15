@@ -277,22 +277,7 @@ In 2010 we started calling such little specifications "unprotocols", which some 
 
 ++++ How to Write Unprotocols
 
-Here's an unprotocol called NOM that we'll come back to later in this chapter:
-
-[[code]]
-nom-protocol    = open-peering *use-peering
-
-open-peering    = C:OHAI ( S:OHAI-OK / S:WTF )
-
-use-peering     = C:ICANHAZ
-                / S:CHEEZBURGER
-                / C:HUGZ S:HUGZ-OK
-                / S:HUGZ C:HUGZ-OK
-[[/code]]
-
-I've actually used these keywords (OHAI, WTF) in commercial projects. They make developers giggly and happy. They confuse management. They're good in first drafts that you want to throw away later.
-
-When you start to write unprotocols, stick to a consistent structure so that your readers know what to expect. Here is the structure I use:
+When you start to write an unprotocol specification document, stick to a consistent structure so that your readers know what to expect. Here is the structure I use:
 
 * Cover section: with a 1-line summary, URL to the spec, formal name, version, who to blame.
 * License for the text: absolutely needed for public specifications.
@@ -315,7 +300,7 @@ Here are some key points about unprotocols:
 
 * If use an existing license then you don't have legal worries afterwards. I use GPLv3 for my public specifications and advise you to do the same. For in-house work, standard copyright is perfect.
 
-* The formality is valuable. That is, learn to write [http://www.ietf.org/rfc/rfc2234.txt ABNF] and use this to fully document your messages.
+* The formality is valuable. That is, learn to write a formal grammar such as ABNF (Augmented Backus-Naur Form) and use this to fully document your messages.
 
 * Use a market-driven life-cycle process like [http://www.digistan.org/spec:1 Digistan's COSS] so that people place the right weight on your specs as they mature (or don't).
 
@@ -330,6 +315,31 @@ Let me explain this in shorter words. Imagine iMatix writes a protocol today, th
 When you contribute to an open source project, you really want to know your hard work won't used against you by a closed-source competitor. Which is why the GPL beats the "more permissive" BSD/MIT/X11 licenses. These license give permission to cheat. This applies just as much to protocols as to source code.
 
 When you implement a GPLv3 specification, your applications are of course yours, and licensed any way you like. But you can be sure and certain of two things. One, that specification will //ever// be embraced and extended into proprietary forms. Any derived forms of the specification must also be GPLv3. Two, no-one who ever implements or uses the protocol will ever launch a patent attack on anything it covers.
+
+++++ Using ABNF
+
+My advice when writing protocol specs is to learn, and use a formal grammar. It's just less hassle than allowing others to interpret what you mean, and then recover from the inevitable false assumptions. The target of your grammar is other people, engineers, not compilers.
+
+My favorite grammar is ABNF, as defined by [http://www.ietf.org/rfc/rfc2234.txt RFC 2234], because it is probably the simplest and most widely used formal language for defining bidirectional communications protocols. Most IETF (Internet Engineering Task Force) specifications use ABNF, which is good company to be in.
+
+I'll give a 30-second crash course in writing ABNF. It may remind you of regular expressions. You write the grammar as rules. Each rule takes the form "name = elements". An element can be another rule (which you define below as another rule), or a pre-defined "terminal" like CRLF, OCTET, or a number. [http://www.ietf.org/rfc/rfc2234.txt The RFC] lists all the terminals. To define alternative elements, use "element / element". To define repetition, use "*" (read the RFC since it's not intuitive). To group elements, use parentheses.
+
+I'm not sure if this extension is proper, but I then prefix elements with "C:" and "S:" to indicate whether they come from the client or server.
+
+Here's a piece of ABNF for an unprotocol called NOM that we'll come back to later in this chapter:
+
+[[code]]
+nom-protocol    = open-peering *use-peering
+
+open-peering    = C:OHAI ( S:OHAI-OK / S:WTF )
+
+use-peering     = C:ICANHAZ
+                / S:CHEEZBURGER
+                / C:HUGZ S:HUGZ-OK
+                / S:HUGZ C:HUGZ-OK
+[[/code]]
+
+I've actually used these keywords (OHAI, WTF) in commercial projects. They make developers giggly and happy. They confuse management. They're good in first drafts that you want to throw away later.
 
 +++ Serializing your Data
 
@@ -1333,7 +1343,7 @@ If we wrap this C API in other languages, we can easily script FileMQ, embed it 
 
 ++++ Initial Design Cut - the Protocol
 
-To start with we write down the protocol as an ABNF grammar. The grammar starts with the flow of commands between the client and server. You should recognize these as a combination of the various techniques we've seen already:
+To start with we write down the protocol as an ABNF grammar. Our grammar starts with the flow of commands between the client and server. You should recognize these as a combination of the various techniques we've seen already:
 
 [[code]]
 filemq-protocol = open-peering *use-peering [ close-peering ]

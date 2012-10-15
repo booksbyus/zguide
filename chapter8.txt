@@ -239,28 +239,39 @@ The simplest plausible solution is simply to ignore IPv6 for now, and use broadc
 
 We'll stick with stupid and simple for now. There's always time to make it more complex.
 
-++++ Abstraction, Presence and Topology
+++++ Abstracting the Network
 
-So we can discover nodes on the WiFi network, as long as they're sending out beacons as we expect. If I was a wizz Android developer with a free weekend I'd immediately (as in, it would take me two days) port this code to my phone and get it sending beacons to my PC. But sometimes lazy is more profitable. I //like// my Linux laptop.
+So we can discover nodes on the WiFi network, as long as they're sending out beacons as we expect. So I try to test with two processes. But when I run udpping2 twice, the second instance complains "'Address already in use' on bind" and exits. Oh, right. UDP and TCP both return an error if you try to bind two different sockets to the same port. This is right. The semantics of two readers on one socket would be weird to say the least. Odd/even bytes? You get all the 1s, I get all the 0's?
 
-Hence my next challenge: how to simulate multiple nodes on a single physical device. In any case this seems like a Good Thing. It's naive to think one device represents one node. At the very least it makes it horribly painful to test large numbers of nodes. Do you have a hundred tablets lying around? And do you have any idea how long it takes to reinstall a new version on 100 devices? Exactly.
+But if there's one lesson I've learned after four hundred pages of learning to use 0MQ, it is that the faster our test cycles, the faster we can work. Right now, the UDP broadcast discovery assumes that one node equals one device. To do even a basic test I need a second PC, or to run {{udpping2}} on one of the phones I have lying around.
 
-On a sane operating system, you can bind one socket to one port. UDP and TCP both return an error if you try to bind two different sockets to the same port. This is as it should be. The semantics of two readers on one socket would be weird to say the least. Odd/even bytes? You get all the 1s, I get all the 0's?
+If I was a wizz Android developer with a free weekend I'd immediately (as in, it would take me two days) port this code to my phone and get it sending beacons to my PC. But sometimes lazy is more profitable. I //like// my Linux laptop. I like being able to start a dozen threads from one process, and have each thread acting like an independent node.
 
+It's not just about testing on two or three devices. A realistic simulation of a busy WiFi network needs dozens or hundreds of nodes. Do you have a hundred tablets lying around? And do you have any idea how long it takes to reinstall a new version on 100 devices? Actually, I do. It's about an hour.
 
+So here's my next challenge: how to support multiple nodes on a single physical device.
 
+Frankly, I've no idea how to do this and a quick Internet search doesn't help me. So let's work it out from first principles. I'm going to run N nodes on a device, and they are going to have to discover each other, and also discover a bunch of other nodes out there on the local network.
 
+If I have multiple nodes on one device, we clearly can't use the IP address and port number as node address. I need some logical node identifier. Arguably, the node identifier only has to be unique per device. But experience tells us that WiFi does things like //appear// and //disappear// while applications are running. Which does things like change IP address halfway through a session. For simplicity let's give every node a UUID, and say that nodes, represented by their UUIDs, can appear or reappear at certain IP address:port endpoints, and then disappear again.
 
+So I have N nodes, each a thread or process, on a device. And I have one //something// that listens to our beacon port and gets UDP messages, and from these keeps track of which nodes are alive and kicking. I don't like special cases though: no beacon service or separate process. That would be nasty to manage.
 
+From the application point of view, a node (the application) needs a way to talk to the outside world. Let's borrow a term from networking and call this an "interface". The interface represents us to the rest of the world and presents the rest of the world to us, as a set of other nodes, which we'll call "peers". It automatically does whatever discovery it has to. When we want to talk to a peer, we get the interface to do that for us. And when a peer talks to us, it's the interface that delivers us the message.
 
-- multiple nodes on one device
-- simulation and testing
-    - supernodes
-- protocol identification
-- versioning
-    - frame header
-- node addressing -> UUID
-    - frame body
-- can't use UDP for any work, need to bootstrap into 0MQ
-    - handshaked discovery
+This seems like a clean API design. How about the internals?
+
+* The interface has to be multithreaded, so that one thread can do I/O in the background, while the foreground API talks to the application. We used this design in the Clone and Freelance client APIs.
+
+* The interface background thread needs to either bind to the UDP beacon port, or find the interface that's grabbed it. Let's call the listening interface the "primary" interface.
+
+* All nodes can broadcast their beacons, whether or not they have bound to the UDP port. However, only the primary interface can receive beacons.
+
+* So, when the primary interface receives a UDP beacon it publishes this out to all other interfaces on the same box.
+
+* To recover from a dead primary interface, other interfaces regularly try to bind to the UDP beacon port, and become the primary interface.
+
+* Interfaces need to maintain connections between each other; either fully-interconnected, or at least to the primary interface. We'd do this using 0MQ and inproc:// or tcp:// transports.
+
+This is a kind of gossip model. A node will //eventually// discover about other nodes. If we build this correctly we should be able to simulate an arbitrarily-large network of nodes coming and going and accurately discovering each other.
 

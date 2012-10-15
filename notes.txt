@@ -1,3 +1,46 @@
+
+
+interface tries to grab port
+    also tcp port
+    else releases and waits randomly
+
+- one thread or process takes the port
+- others can detect that, then send to the port
+- or we can do inprocess discovery via inproc
+- or inter-process discovery via ipc
+- no separate service... painful and nasty
+- if you grab the port, you are supernode
+- if not, you find the supernode and talk via it
+- supernode does all network i/o to outside world
+- nodes can interconnect directly
+- supernode knows physical address for all nodes
+    - ipaddress:port:nodename
+- supernode can disappear at any time
+    - other nodes will randomly try to grab port
+
+
+
+
+
+
+
+
+Presence and Topology
+
+
+
+
+- multiple nodes on one device
+- simulation and testing
+    - supernodes
+- protocol identification
+- versioning
+    - frame header
+- node addressing -> UUID
+    - frame body
+- can't use UDP for any work, need to bootstrap into 0MQ
+    - handshaked discovery
+
 .end
 
 
