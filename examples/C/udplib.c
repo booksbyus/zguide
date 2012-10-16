@@ -40,7 +40,9 @@ s_handle_io_error (char *reason)
     ||  errno == EPROTO
     ||  errno == ENOPROTOOPT
     ||  errno == EHOSTDOWN
+#   ifdef ENONET // Linux-specific
     ||  errno == ENONET
+#   endif
     ||  errno == EHOSTUNREACH
     ||  errno == EOPNOTSUPP
     ||  errno == ENETUNREACH
