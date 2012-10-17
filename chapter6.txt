@@ -47,13 +47,13 @@ So this is what this chapter is really about: writing code at scale by understan
 
 +++ Psychology of Software Development
 
-Dirkjan Ochtman pointed me to [http://en.wikipedia.org/wiki/Software_architecture Wikipedia's definition of Software Architecture] as "//the set of structures needed to reason about the system, which comprise software elements, relations among them, and properties of both//". For me this vapid and circular jargon is a good example of how miserably little we understand about what actually makes a successful large scale software architecture.
+Dirkjan Ochtman pointed me to [http://en.wikipedia.org/wiki/Software_architecture Wikipedia's definition of Software Architecture] as "the set of structures needed to reason about the system, which comprise software elements, relations among them, and properties of both". For me this vapid and circular jargon is a good example of how miserably little we understand about what actually makes a successful large scale software architecture.
 
 Architecture is the art and science of making large artificial structures for human use. If there is one thing I've learned and applied successfully in 30 years of making larger and larger software systems it is this: software is about people. Large structures in themselves are meaningless. It's how they function for //human use// that matters. And in software, human use starts with the programmers who make the software itself.
 
 The core problems in software architecture are driven by human psychology, not technology. There are many ways our psychology affects our work. I could point to the way teams seem to get stupider as they get larger, or have to work across larger distances. Does that mean the smaller the team, the more effective? How then does a large global community like 0MQ manage to work successfully?
 
-The 0MQ community wasn't accidental, it was a deliberate design, my contribution to the early days when the code came out of a cellar in Bratislava. The design was based on my pet science of "Social Architecture", which [http://en.wikipedia.org/wiki/Social_architecture Wikipedia defines] (what a coincidence!) as "//the process, and the product, of planning, designing, and growing an on-line community.//"
+The 0MQ community wasn't accidental, it was a deliberate design, my contribution to the early days when the code came out of a cellar in Bratislava. The design was based on my pet science of "Social Architecture", which [http://en.wikipedia.org/wiki/Social_architecture Wikipedia defines] (what a coincidence!) as "the process, and the product, of planning, designing, and growing an on-line community."
 
 One of the tenets of Social Architecture is that //how we organize// is more significant than //who we are//. The same group, organized differently, can produce entirely opposite results. We are like peers in a 0MQ network, and our communication patterns have dramatic impact on our performance. Ordinary people, well connected, can far outperform a team of experts working in the wrong patterns. If you're the architect of a larger 0MQ application, you're going to have to help others find the right patterns for working together. Do this right, and your project can succeed. Do it wrong, and your project will fail.
 
@@ -119,7 +119,7 @@ Trash-Oriented Design would be a caricature if it wasn't so common. Something li
 
 The main lessons of TOD are quite straight-forward but hard to swallow. They are:
 
-* Ideas are cheap. No exceptions. There are no brilliant ideas. Anyone who tries to start a discussion with "oooh, we can do this too!" should be beaten down with all the passion one reserves for traveling evangelists. It is like sitting in a cafe at the foot of a mountain, drinking a hot chocolate and telling others, "//hey, I have a great idea, we can climb that mountain! And build a chalet on top! With two saunas! And a garden! Hey, and we can make it solar powered! Dude, that's awesome! What color should we paint it? Green! No, blue! OK, go and make it, I'll stay here and make spreadsheets and graphics!//"
+* Ideas are cheap. No exceptions. There are no brilliant ideas. Anyone who tries to start a discussion with "oooh, we can do this too!" should be beaten down with all the passion one reserves for traveling evangelists. It is like sitting in a cafe at the foot of a mountain, drinking a hot chocolate and telling others, "hey, I have a great idea, we can climb that mountain! And build a chalet on top! With two saunas! And a garden! Hey, and we can make it solar powered! Dude, that's awesome! What color should we paint it? Green! No, blue! OK, go and make it, I'll stay here and make spreadsheets and graphics!"
 
 * The starting point for a good design process is to collect real problems that confront real people. The second step is to evaluate these problems with the basic question, "how much is it worth to solve this problem?" Having done that, we can collect that set of problems that are worth solving.
 
@@ -149,7 +149,7 @@ COD is characterized by a team obsessively solving the wrong problems to the poi
 
 A good example of COD in practice is Bluetooth, a complex, over-designed set of protocols that users hate. It continues to exist only because in a massively-patented industry there are no real alternatives. Bluetooth is perfectly secure, which is close to pointless for a proximity protocol. At the same time it lacks a standard API for developers, meaning it's really costly to use Bluetooth in applications.
 
-On the #zeromq IRC channel, Wintre once wrote of how enraged he was many years ago when he "//found that XMMS 2 had a working plugin system but could not actually play music.//"
+On the #zeromq IRC channel, Wintre once wrote of how enraged he was many years ago when he "found that XMMS 2 had a working plugin system but could not actually play music."
 
 COD is a form of large-scale "rabbit holing", in which designers and engineers cannot distance themselves from the technical details of their work. They add more and more features, utterly misreading the economics of their work.
 
@@ -271,7 +271,7 @@ It used to be, decades ago, when the Internet was a young modest thing, that pro
 
 Now, 0MQ does appear to provide a living, successful protocol abstraction layer with its "we'll carry multi-part messages over random transports" way of working. Since 0MQ deals silently with framing, connections, and routing, it's surprisingly easy to write full protocol specs on top of 0MQ, and in Chapters four and five I showed how to do this.
 
-Somewhere around mid-2007, I kicked-off the Digital Standards Organization to define new simpler ways of producing little standards, protocols, specifications. In my defense, it was a quiet summer. At the time [http://www.digistan.org/spec:1 I wrote that] a new specification should take "//minutes to explain, hours to design, days to write, weeks to prove, months to become mature, and years to replace.//"
+Somewhere around mid-2007, I kicked-off the Digital Standards Organization to define new simpler ways of producing little standards, protocols, specifications. In my defense, it was a quiet summer. At the time [http://www.digistan.org/spec:1 I wrote that] a new specification should take "minutes to explain, hours to design, days to write, weeks to prove, months to become mature, and years to replace."
 
 In 2010 we started calling such little specifications "unprotocols", which some people might mistake for a dastardly plan for world domination by a shadowy international organization, but which really just means, "protocols without the goats".
 
@@ -456,7 +456,7 @@ So you can drive your choice according to the languages you're aiming for. If yo
 
 ++++ Serialization Libraries
 
-The msgpack.org site says, "//It's like JSON. but fast and small. MessagePack is an efficient binary serialization format. It lets you exchange data among multiple languages like JSON but it's faster and smaller. For example, small integers (like flags or error code) are encoded into a single byte, and typical short strings only require an extra byte in addition to the strings themselves.//"
+The msgpack.org site says, "It's like JSON. but fast and small. MessagePack is an efficient binary serialization format. It lets you exchange data among multiple languages like JSON but it's faster and smaller. For example, small integers (like flags or error code) are encoded into a single byte, and typical short strings only require an extra byte in addition to the strings themselves."
 
 I'm going to make the perhaps unpopular claim that "fast and small" are features that solve non-problems. The only real problem that serialization libraries solve is, as far as I can tell, the need to document the message contracts and actually serialize data to and from the wire.
 
@@ -528,7 +528,7 @@ What if I told you of a way to build custom IDL generators cheaply and quickly? 
 
 At iMatix, until a few years ago, we used code generation to build ever larger and more ambitious systems until we decided the technology (GSL) was too dangerous for common use, and we sealed the archive and locked it, with heavy chains, in a deep dungeon. Well, we actually posted it on github. If you want to try the examples that are coming up, grab [https://github.com/imatix/gsl the repository] and build yourself a {{gsl}} command. Typing "make" in the src subdirectory should do it (and if you're that guy who loves Windows, I'm sure you'll send a patch with project files).
 
-This section isn't really about GSL at all, but about a useful and little-known trick that's useful for ambitious architects who want to scale themselves, as well as their work. Once you learn the trick is, you can whip up your own code generators in a short time. The code generators most software engineers know about come with a single hard-coded model. For instance, Ragel //"compiles executable finite state machines from regular languages"//, i.e. Ragel's model is a regular language. This certainly works for a good set of problems but it's far from universal. How do you describe an API in Ragel? Or a project makefile? Or even a finite-state machine like the one we used to design the Binary Star pattern in Chapter 4?
+This section isn't really about GSL at all, but about a useful and little-known trick that's useful for ambitious architects who want to scale themselves, as well as their work. Once you learn the trick is, you can whip up your own code generators in a short time. The code generators most software engineers know about come with a single hard-coded model. For instance, Ragel "compiles executable finite state machines from regular languages", i.e. Ragel's model is a regular language. This certainly works for a good set of problems but it's far from universal. How do you describe an API in Ragel? Or a project makefile? Or even a finite-state machine like the one we used to design the Binary Star pattern in Chapter 4?
 
 All these would benefit from code generation, but there's no universal model. So the trick is to design your own models as you need them, then make code generators as cheap compilers for that model. You need some experience in how to make good models, and you need a technology that makes it cheap to build custom code generators. Scripting languages like Perl and Python are a good option. However we actually built GSL specifically for this, and that's what I prefer.
 
@@ -773,7 +773,7 @@ I've promised, for a year or two, to write a proper explanation. Here's a gratui
 
 So, file transfer. There are several reasons you can't just pick up a random file, blindfold it, and shove it whole into a message. The most obvious being that despite decades of determined growth in RAM sizes (and who among us old-timers doesn't fondly remember saving up for that 1,014-byte memory extension card?!), disk sizes obstinately remain much larger. Even if we could send a file with one instruction (say, using a system call like sendfile), we'd hit the reality that networks are not infinitely fast, nor perfectly reliable. After trying to upload a large file several times on a slow flaky network (WiFi, anyone?), you'll realize that a proper file transfer protocol needs a way to recover from failures. That is, a way to send only the part of a file that wasn't yet received.
 
-Finally, after all this, if you build a proper file server, you'll notice that simply sending massive amounts of data to lots of clients creates that situation we like to call, in the technical parlance, "//server went belly-up due to all available heap memory being eaten by a poorly-designed application//". A proper file transfer protocol needs to pay attention to memory use.
+Finally, after all this, if you build a proper file server, you'll notice that simply sending massive amounts of data to lots of clients creates that situation we like to call, in the technical parlance, "server went belly-up due to all available heap memory being eaten by a poorly-designed application". A proper file transfer protocol needs to pay attention to memory use.
 
 We'll solve these problems properly, one by one, which should hopefully get us to a good and proper file transfer protocol running over 0MQ. First, let's generate a 1GB test file with random data (real power-of-two-giga-like-Von-Neumman-intended, not the fake silicon ones the memory industry likes to sell):
 
@@ -800,7 +800,7 @@ Here's our first cut at the code, where the client asks for the test data and th
 
 It's pretty simple but we already run into a problem: if we send too much data to the ROUTER socket, we can easily overflow it. The simple but stupid solution is to put an infinite high-water mark on the socket. It's stupid because we now have no protection against exhausting the server's memory. Yet without an infinite HWM we risk losing chunks of large files.
 
-Try this: set the HWM to 1,000 (in 0MQ/3.x this is the default) and then reduce the chunk size to 100K so we send 10K chunks in one go. Run the test, and you'll see it never finishes. As the zmq_socket[3] man page says with cheerful brutality, for the ROUTER socket: "//ZMQ_HWM option action: Drop//".
+Try this: set the HWM to 1,000 (in 0MQ/3.x this is the default) and then reduce the chunk size to 100K so we send 10K chunks in one go. Run the test, and you'll see it never finishes. As the zmq_socket[3] man page says with cheerful brutality, for the ROUTER socket: "ZMQ_HWM option action: Drop".
 
 We have to control the amount of data the server sends up-front. There's no point in it sending more than the network can handle. Let's try sending one chunk at a time. In this version of the protocol, the client will explicitly say,"give me chunk N", and the server will fetch that specific chunk from disk and send it.
 
@@ -922,7 +922,7 @@ So far, our semantic has been "fetch"; that is, the recipient knows (somehow), t
 
 How about a "push" semantic? There are two plausible use-cases for this. First, if we adopt a centralized architecture with files on a main "server" (not something I'm advocating, but people do sometimes like this), then it's very useful to allow clients to upload files to the server. Second, it lets do a kind of pub-sub for files, where the client asks for all new files of some type; as the server gets these, it forwards them to the client.
 
-A fetch semantic is synchronous, while a push semantic is asynchronous. Asynchronous is less chatty, so faster. Also, you can do cute things like "//subscribe to this path//" so creating a publish-subscribe file transfer architecture. That is so obviously awesome that I shouldn't need to explain what problem it solves.
+A fetch semantic is synchronous, while a push semantic is asynchronous. Asynchronous is less chatty, so faster. Also, you can do cute things like "subscribe to this path" so creating a publish-subscribe file transfer architecture. That is so obviously awesome that I shouldn't need to explain what problem it solves.
 
 Still, here is the problem with the fetch semantic: that out-of-band route to tell clients what files exist. No matter how you do this, it ends up complex. Either clients have to poll, or you need a separate pub-sub channel to keep clients up to date, or you need user interaction.
 

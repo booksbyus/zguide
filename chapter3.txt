@@ -978,7 +978,7 @@ So idea #2 then. We interconnect the brokers and don't touch the clients or work
                         :
 [[/code]]
 
-This design is appealing because the problem is solved in one place, invisible to the rest of the world. Basically, brokers open secret channels to each other and whisper, like camel traders, "//Hey, I've got some spare capacity, if you have too many clients give me a shout and we'll deal"//.
+This design is appealing because the problem is solved in one place, invisible to the rest of the world. Basically, brokers open secret channels to each other and whisper, like camel traders, "Hey, I've got some spare capacity, if you have too many clients give me a shout and we'll deal".
 
 It is in effect just a more sophisticated routing algorithm: brokers become subcontractors for each other. Other things to like about this design, even before we play with real code:
 

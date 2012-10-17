@@ -216,7 +216,7 @@ Pinging peers...
 sendto: Network is unreachable
 [[/code]]
 
-Working on the basis of "//solve the problems currently aiming at your throat//", let's fix the most urgent issues in this first model. These issues are:
+Working on the basis of //solve the problems currently aiming at your throat//, let's fix the most urgent issues in this first model. These issues are:
 
 * Using the 255.255.255.255 broadcast address is a bit dubious. On the one hand, this broadcast address means precisely "send to all nodes on the local network, and don't forward". However, if you have several interfaces (wired Ethernet, WiFi) then broadcasts will go out on your default route only, and via just one interface. What we want to do is either send our broadcast on each interface's broadcast address, or find the WiFi interface and its broadcast address.
 
@@ -353,9 +353,11 @@ Sending UUIDs across the network is the bare minimum for a logical addressing sc
 Let's start with the beacon message format. We probably want a fixed protocol header that will never change in future versions, and a body that depends on the version. We need a name for the protocol, so (digs in pocket for some backronyms) perhaps "ZeroMQ Real-time Experience"!figref().
 
 [[code type="textdiagram" title="ZRE discovery message"]]
-+---+---+---+---------+  +------+----------+
-| Z | R | E | version |  | UUID | endpoint |
-+---+---+---+---------+  +------+----------+
++---+---+---+------+  +------+----------+
+| Z | R | E | %x01 |  | UUID | endpoint |
++---+---+---+------+  +------+----------+
+
+       Header                Body
 [[/code]]
 
 The version can be a 1-byte counter starting at 1. The UUID is 16 bytes, and the endpoint is a 2-byte port number, since UDP nicely tells us the sender's IP address for every message we receive. This gives us a 22-byte frame.
