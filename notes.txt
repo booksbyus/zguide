@@ -1,49 +1,23 @@
+I'm going to take the last UDP ping program and turn that into a ZRE hello world test. The goal is that when we detect a new peer we send "hello" to it, and it replies with "world". At the same time I'll begin refactoring the classes we made so they begin to look like a real library, which will eventually become {{libzre}}.
 
+- zre_udp
+- zre_interface
+- zre_hello
 
-interface tries to grab port
-    also tcp port
-    else releases and waits randomly
+++++ The Messaging Layer
 
-- one thread or process takes the port
-- others can detect that, then send to the port
-- or we can do inprocess discovery via inproc
-- or inter-process discovery via ipc
-- no separate service... painful and nasty
-- if you grab the port, you are supernode
-- if not, you find the supernode and talk via it
-- supernode does all network i/o to outside world
-- nodes can interconnect directly
-- supernode knows physical address for all nodes
-    - ipaddress:port:nodename
-- supernode can disappear at any time
-    - other nodes will randomly try to grab port
+So we've solved discovery, presence, connectivity, and simulation. Next on our list: security, unicast messaging, and multicast messaging.
 
+- SASL security
+    - taken from FILEMQ
+- one-to-one messaging by sending to node
+- one-to-many messaging by sending to group
+    - join group, leave group
+    - group management across all nodes
 
+++++ File Transfer
 
-
-
-
-
-
-Presence and Topology
-
-
-
-
-- multiple nodes on one device
-- simulation and testing
-    - supernodes
-- protocol identification
-- versioning
-    - frame header
-- node addressing -> UUID
-    - frame body
-- can't use UDP for any work, need to bootstrap into 0MQ
-    - handshaked discovery
-
-.end
-
-
+Take FILEMQ and plug into this framework.
 
 Notes for The Guide
     
