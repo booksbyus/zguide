@@ -265,7 +265,7 @@ while (<>) {
         close (IMAGE);
         
         #   Calculate scaling so image looks decent
-        $scale = 30 / $longest;
+        $scale = 40 / $longest;
         $scale = 1 if $scale > 1;
 
         #   Convert diagram into image of required format
@@ -278,7 +278,7 @@ while (<>) {
         writeln ("    <title>$title</title>");
         writeln ("    <mediaobject>");
         writeln ("        <imageobject>");
-        writeln ("            <imagedata fileref=\"images/fig$figure.eps\" format=\"EPS\"/>");
+        writeln ("            <imagedata fileref=\"images/fig$figure.eps\" format=\"EPS\" width=\"4.8in\"/>");
         writeln ("        </imageobject>");
         writeln ("    </mediaobject>");
         writeln ("</figure>\n");

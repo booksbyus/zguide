@@ -185,7 +185,7 @@ You might ask why this is useful. We don't know that the peers responding to ICM
 
 It isn't even hard to create ICMP_ECHO messages and send them. A few dozen lines of code, and we could use 0MQ multithreading to do this in parallel for addresses stretching out above and below our own IP address. Could be kind of fun.
 
-However, sadly, there's a fatal flaw in my idea of using ICMP_ECHO to discover devices. To open a raw IP socket requires root priviliges on a POSIX box. It stops rogue programs getting data meant for others. We can get the power to open raw sockets on Linux by giving sudo priviliges to our command (ping has the sticky bit set). On a mobile OS like Android, it requires root access, i.e. rooting the phone or tablet. That's out of the question for most people and so ICMP_ECHO is out of reach for most devices.
+However, sadly, there's a fatal flaw in my idea of using ICMP_ECHO to discover devices. To open a raw IP socket requires root privileges on a POSIX box. It stops rogue programs getting data meant for others. We can get the power to open raw sockets on Linux by giving sudo privileges to our command (ping has the sticky bit set). On a mobile OS like Android, it requires root access, i.e. rooting the phone or tablet. That's out of the question for most people and so ICMP_ECHO is out of reach for most devices.
 
 Expletive deleted! Let's try something in user space. The next step most people take is UDP multicast or broadcast.
 
@@ -209,7 +209,7 @@ Pinging peers...
 Found peer 192.168.1.2:9999
 [[/code]]
 
-If I switch off WiFi and try again, I get this:
+If I switch off all networking and try again, sending a message fails, as I'd expect:
 
 [[code]]
 Pinging peers...
@@ -231,7 +231,31 @@ The simplest answer to these issues is to push the UDP code into a separate libr
 [[code type="example" title="UDP discovery, model 2" name="udpping2"]]
 [[/code]]
 
-The library, udplib, hides a lot of the unpleasant code (which will become nastier and nastier as we make this work on more systems). I'm not going to print that code here. You can read it in the repository. It does provide a neat little "udp" class that wraps up the work we need to do.
+The library, udplib, hides a lot of the unpleasant code (which will become nastier we make this work on more systems). I'm not going to print that code here. You can read it in the repository. It does provide a neat little "udp_t" class that wraps up the work we need to do.
+
+What I will show is the udp class's API since we'll use this in later examples:
+
+[[code language="C"]]
+//  Constructor
+static udp_t *
+    udp_new (int port_nbr);
+
+//  Destructor
+static void
+    udp_destroy (udp_t **self_p);
+
+//  Returns UDP socket handle
+static int
+    udp_handle (udp_t *self);
+
+//  Send message using UDP broadcast
+static void
+    udp_send (udp_t *self, byte *buffer, size_t length);
+
+//  Receive message from UDP broadcast
+static ssize_t
+    udp_recv (udp_t *self, byte *buffer, size_t length);
+[[/code]]
 
 Now, there are more problems sizing us up and wondering if they can make lunch out of us. First, IPv4 versus IPv6 and multicast vs. broadcast. In IPv6, broadcast doesn't exist at all; one uses multicast. From my experience with WiFi, IPv4 multicast and broadcast work identically except that multicast breaks in some situations where broadcast works fine. Some access points do not forward multicast packets. When you have a device (e.g. a tablet) that acts as a mobile AP, then it's possible it won't get multicast packets. Meaning, it won't see other peers on the network.
 
@@ -239,39 +263,105 @@ The simplest plausible solution is simply to ignore IPv6 for now, and use broadc
 
 We'll stick with stupid and simple for now. There's always time to make it more complex.
 
-++++ Abstracting the Network
+++++ Multiple Nodes on One Device
 
 So we can discover nodes on the WiFi network, as long as they're sending out beacons as we expect. So I try to test with two processes. But when I run udpping2 twice, the second instance complains "'Address already in use' on bind" and exits. Oh, right. UDP and TCP both return an error if you try to bind two different sockets to the same port. This is right. The semantics of two readers on one socket would be weird to say the least. Odd/even bytes? You get all the 1s, I get all the 0's?
 
-But if there's one lesson I've learned after four hundred pages of learning to use 0MQ, it is that the faster our test cycles, the faster we can work. Right now, the UDP broadcast discovery assumes that one node equals one device. To do even a basic test I need a second PC, or to run {{udpping2}} on one of the phones I have lying around.
+However, a quick check of stackoverflow and some memory of a socket option called SO_REUSEADDR turns up gold. If I use that, I can bind several processes to the same UDP port, and they will all receive any message arriving on that port. It's almost as if the guys who designed this were reading my mind! (That's way more plausible than maybe I'm reinventing the wheel.)
 
-If I was a wizz Android developer with a free weekend I'd immediately (as in, it would take me two days) port this code to my phone and get it sending beacons to my PC. But sometimes lazy is more profitable. I //like// my Linux laptop. I like being able to start a dozen threads from one process, and have each thread acting like an independent node.
+Quick test, and SO_REUSADDR works as promised. This is great because the next thing I want to do is design an API and then start dozens or hundreds of nodes to see them discovering each other. It would be really cumbersome to have to test each node on a separate device. And when we get to testing how real traffic behaves on a large, flaky network, the two alternatives are simulation or temporary insanity.
 
-It's not just about testing on two or three devices. A realistic simulation of a busy WiFi network needs dozens or hundreds of nodes. Do you have a hundred tablets lying around? And do you have any idea how long it takes to reinstall a new version on 100 devices? Actually, I do. It's about an hour.
+And I speak from experience: we were, this summer, testing on dozens of devices at once. It takes about an hour to set-up a full test run, and you need a space shielded from WiFi interference if you want any kind of reproducibility (unless your test case is "prove that interference kills WiFi networks faster than Orval can kill a thirst".
 
-So here's my next challenge: how to support multiple nodes on a single physical device.
+If I was a wizz Android developer with a free weekend I'd immediately (as in, it would take me two days) port this code to my phone and get it sending beacons to my PC. But sometimes lazy is more profitable. I //like// my Linux laptop. I like being able to start a dozen threads from one process, and have each thread acting like an independent node. I like not having to work in a real Faraday cage when I can simulate one on my laptop.
 
-Frankly, I've no idea how to do this and a quick Internet search doesn't help me. So let's work it out from first principles. I'm going to run N nodes on a device, and they are going to have to discover each other, and also discover a bunch of other nodes out there on the local network.
+++++ Designing the API
 
-If I have multiple nodes on one device, we clearly can't use the IP address and port number as node address. I need some logical node identifier. Arguably, the node identifier only has to be unique per device. But experience tells us that WiFi does things like //appear// and //disappear// while applications are running. Which does things like change IP address halfway through a session. For simplicity let's give every node a UUID, and say that nodes, represented by their UUIDs, can appear or reappear at certain IP address:port endpoints, and then disappear again.
+I'm going to run N nodes on a device, and they are going to have to discover each other, and also discover a bunch of other nodes out there on the local network. I can use UDP for local discovery as well as remote discovery. It's arguably not as efficient as using, e.g., the 0MQ inproc:// transport, but has the great advantage that the exact same code will work in simulation and in real deployment.
 
-So I have N nodes, each a thread or process, on a device. And I have one //something// that listens to our beacon port and gets UDP messages, and from these keeps track of which nodes are alive and kicking. I don't like special cases though: no beacon service or separate process. That would be nasty to manage.
+If I have multiple nodes on one device, we clearly can't use the IP address and port number as node address. I need some logical node identifier. Arguably, the node identifier only has to be unique within the context of the device. My mind fills with complex stuff I could make, like supernodes that sit on real UDP ports and forward messages to internal nodes. I hit my head on the table until the idea of //inventing new concepts// leaves it.
 
-From the application point of view, a node (the application) needs a way to talk to the outside world. Let's borrow a term from networking and call this an "interface". The interface represents us to the rest of the world and presents the rest of the world to us, as a set of other nodes, which we'll call "peers". It automatically does whatever discovery it has to. When we want to talk to a peer, we get the interface to do that for us. And when a peer talks to us, it's the interface that delivers us the message.
+Experience tells us that WiFi does things like //appear// and //disappear// while applications are running. Which does interesting things like change IP address halfway through a session. For simplicity let's give every node a UUID, and say that nodes, represented by their UUIDs, can appear or reappear at certain IP address:port endpoints, and then disappear again. A UUID is 16 bytes. So if I have 100 nodes on a WiFi network that's (double it for other random stuff) 3,200 bytes a second of beacon data that the air has to carry just for discovery and presence. Seems acceptable.
+
+Back to concepts. We do need some names for our API. At the least we need a way to distinguish between the node object that is "us", and node objects that are our peers.  We'll be doing things like creating an "us" and then asking it how many peers it knows about and who they are. The term "peer" is clear enough.
+
+From the developer point of view, a node (the application) needs a way to talk to the outside world. Let's borrow a term from networking and call this an "interface". The interface represents us to the rest of the world and presents the rest of the world to us, as a set of other peers. It automatically does whatever discovery it has to. When we want to talk to a peer, we get the interface to do that for us. And when a peer talks to us, it's the interface that delivers us the message.
 
 This seems like a clean API design. How about the internals?
 
 * The interface has to be multithreaded, so that one thread can do I/O in the background, while the foreground API talks to the application. We used this design in the Clone and Freelance client APIs.
 
-* The interface background thread needs to either bind to the UDP beacon port, or find the interface that's grabbed it. Let's call the listening interface the "primary" interface.
+* The interface background thread does the discovery business; bind to the UDP port, send out UDP beacons, and receive beacons.
 
-* All nodes can broadcast their beacons, whether or not they have bound to the UDP port. However, only the primary interface can receive beacons.
+* We need to at least send UUIDs in the beacon message so that we can distinguish our own beacons from those of our peers.
 
-* So, when the primary interface receives a UDP beacon it publishes this out to all other interfaces on the same box.
+* We need to track peers that appear, and that disappear. For this I'll use a hash table that stores all known peers, and expire peers after some timeout.
 
-* To recover from a dead primary interface, other interfaces regularly try to bind to the UDP beacon port, and become the primary interface.
+* We need a way to report peers and events to the caller. Here we get into a juicy question. How does a background I/O thread tell a foreground API thread that stuff is happening? Callbacks maybe? Heck no. We'll use 0MQ messages, of course.
 
-* Interfaces need to maintain connections between each other; either fully-interconnected, or at least to the primary interface. We'd do this using 0MQ and inproc:// or tcp:// transports.
+The third iteration of the UDP ping program is even simpler and more beautiful than the second. The main body, in C, is just nine lines of code.
 
-This is a kind of gossip model. A node will //eventually// discover about other nodes. If we build this correctly we should be able to simulate an arbitrarily-large network of nodes coming and going and accurately discovering each other.
+[[code type="example" title="UDP discovery, model 3" name="udpping3"]]
+[[/code]]
 
+The interface code should be familiar if you've studied how we make multithreaded API classes:
+
+[[code type="example" title="UDP ping interface" name="interface"]]
+[[/code]]
+
+When I run this in two windows, it reports one peer joining the network. I kill that peer and a few seconds later it tells me the peer left:
+
+[[code]]
+--------------------------------------
+[006] JOINED
+[032] 418E98D4B7184844B7D5E0EE5691084C
+--------------------------------------
+[004] LEFT
+[032] 418E98D4B7184844B7D5E0EE5691084C
+[[/code]]
+
+What's nice about a 0MQ-message based API is that I can wrap this any way I like. For instance, turning it into callbacks if I really want those. I can also trace all activity on the API very easily.
+
+Some notes about tuning. On Ethernet, five seconds (the expiry time I used in this code) seems like a lot. On a badly stressed WiFi network you can get ping latencies of 30 seconds or more. If you use a too-aggressive value for the expiry, you'll disconnect nodes that are still there. On the other side, end user applications expect a certain liveliness. If it takes 30 seconds to report that a node has gone, users will get annoyed.
+
+A decent strategy is to detect and report disappeared nodes rapidly, but only delete them after a longer interval. Visually, a node would be green when it's alive, then gray for a while as it went out of reach, then finally disappear. We're not doing this now, but will do it in the real implementation of the as-yet-unnamed framework we're making.
+
+As we will also see later, we have to treat any input from a node, not just UDP beacons, as a sign of life. UDP may get squashed when there's a lot of TCP traffic. This is perhaps the main reason we're not using an existing UDP discovery library: we have to integrate this tightly with our 0MQ messaging for it to work.
+
+++++ More about UDP
+
+So we have discovery and presence working over UDP IPv4 broadcasts. It's not ideal, but it works for the local networks we have today. However we can't use UDP for real work, not without additional work to make it reliable. There's a joke about UDP but sometimes you get it, and sometimes you don't.
+
+We'll stick to TCP for all one-to-one messaging. There is one more use-case for UDP after discovery, which is multicast file distribution. I'll explain why and how, then shelve that for another day. The why is simple: what we call "social networks" is just augmented culture. We create culture by sharing, and this means more and more, sharing works that we make or remix. Photos, documents, contracts, tweets. The clouds of devices we're aiming towards do more of this, not less.
+
+Now, there are two principal patterns for sharing content. One is the "pubsub" pattern where one node sends out content to a set of other nodes, at the same time. Second is the "late joiner" pattern, where a node arrives somewhat later and wants to catch up to the conversation. We can deal with the late joiner using TCP unicast. But doing TCP unicast to a group of clients at the same time has some disadvantages. First, it can be slower than multicast. Second, it's unfair since some will get the content before others.
+
+Before you jump off to design a UDP multicast protocol, realize that it's not a simple calculation. When you send a multicast packet, the WiFi access point uses a low bit rate, to ensure that even the furthest devices will get it safely. Most normal APs don't do the obvious optimization, which is to measure the distance of the furthest device and use that bit rate. Instead they just use a fixed value. So if you have a few devices, close to the AP, multicast will be insanely slow. But if you have a roomful of devices which all want to get the next chapter of the textbook, multicast can be insanely effective.
+
+The curves cross around 6-12 devices depending on the network. You could in theory measure the curves in real-time and create an adaptive protocol. That would be cool but probably too hard for even the smartest of us.
+
+If you do sit down and sketch out a UDP multicast protocol, realize that you need a channel for recovery, to get lost packets. You'd probably want to do this over TCP, using 0MQ. For now, however, we'll assume all traffic goes over TCP.
+
+++++ Designing the Topology Layer
+
+Sending UUIDs across the network is the bare minimum for a logical addressing scheme. However we have a few more problems to solve before this will work in real use:
+
+* We need some protocol identification so that we can check for, and reject invalid packets.
+* We need some version information so that we can change this protocol over time.
+* We need to tell other nodes how to reach us via TCP, i.e. a 0MQ port they can talk to us on.
+
+Let's start with the beacon message format. We probably want a fixed protocol header that will never change in future versions, and a body that depends on the version. We need a name for the protocol, so (digs in pocket for some backronyms) perhaps "ZeroMQ Real-time Experience"!figref().
+
+[[code type="textdiagram" title="ZRE discovery message"]]
++---+---+---+---------+  +------+----------+
+| Z | R | E | version |  | UUID | endpoint |
++---+---+---+---------+  +------+----------+
+[[/code]]
+
+The version can be a 1-byte counter starting at 1. The UUID is 16 bytes, and the endpoint is a 2-byte port number, since UDP nicely tells us the sender's IP address for every message we receive. This gives us a 22-byte frame.
+
+What kind of socket do we want for the endpoint? This question comes up on the {{zeromq-dev}} mailing list from time to time: how to interconnect peers where there's no server or client. People often try to use ROUTER sockets. I usually tell them that's hard to work with, because ROUTER sockets need some kind of address bootstrapping; you can't send a message until you know the identity of the peer, which you only learn when you get a message from them. So usually the answer is a DEALER-ROUTER mix where each peer has two sockets; DEALER to receive messages and ROUTER to send them.
+
+However, we //do// have a way to bootstrap, since every node has its own UUID and this is compatible with ROUTER addressing. What we have to do is use the ZMQ_IDENTITY setting on our own ROUTER socket using our own UUID. So, let's try to use a single ROUTER for all input and all output and see if this works.
+
+(More coming soon... @hintjens on Twitter)

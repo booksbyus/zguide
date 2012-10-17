@@ -4,17 +4,37 @@
 //  Implemented as a proper wee class using the CZMQ style.
 //  Include directly into your application source code.
 
+typedef struct _udp_t udp_t;
+
+//  Constructor
+static udp_t *
+    udp_new (int port_nbr);
+
+//  Destructor
+static void
+    udp_destroy (udp_t **self_p);
+
+//  Returns UDP socket handle
+static int
+    udp_handle (udp_t *self);
+
+//  Send message using UDP broadcast
+static void
+    udp_send (udp_t *self, byte *buffer, size_t length);
+
+//  Receive message from UDP broadcast
+static ssize_t
+    udp_recv (udp_t *self, byte *buffer, size_t length);
+
 //  -----------------------------------------------------------------
 //  UDP instance
 
-typedef struct {
+struct _udp_t {
     int handle;                 //  Socket for send/recv
-    int port;                   //  UDP port we work on
-    //  Own address
-    struct sockaddr_in address;
-    //  Broadcast address
-    struct sockaddr_in broadcast;
-} udp_t;
+    int port_nbr;               //  UDP port number we work on
+    struct sockaddr_in address;     //  Own address
+    struct sockaddr_in broadcast;   //  Broadcast address
+};
 
 //  Handle error from I/O operation
 
@@ -64,10 +84,10 @@ s_handle_io_error (char *reason)
 //  Constructor
 
 static udp_t *
-udp_new (int port)
+udp_new (int port_nbr)
 {
     udp_t *self = (udp_t *) zmalloc (sizeof (udp_t));
-    self->port = port;
+    self->port_nbr = port_nbr;
 
     //  Create UDP socket
     self->handle = socket (AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -80,10 +100,15 @@ udp_new (int port)
                     SO_BROADCAST, &on, sizeof (on)) == -1)
         s_handle_io_error ("setsockopt (SO_BROADCAST)");
 
-    //  Bind UDP socket to local port so we can receive pings
+    //  Allow multiple processes to bind to socket; incoming
+    //  messages will come to each process
+    if (setsockopt (self->handle, SOL_SOCKET,
+                    SO_REUSEADDR, &on, sizeof (on)) == -1)
+        s_handle_io_error ("setsockopt (SO_REUSEADDR)");
+
     struct sockaddr_in sockaddr = { 0 };
     sockaddr.sin_family = AF_INET;
-    sockaddr.sin_port = htons (self->port);
+    sockaddr.sin_port = htons (self->port_nbr);
     sockaddr.sin_addr.s_addr = htonl (INADDR_ANY);
     if (bind (self->handle, &sockaddr, sizeof (sockaddr)) == -1)
         s_handle_io_error ("bind");
@@ -97,7 +122,7 @@ udp_new (int port)
             if (interface->ifa_addr->sa_family == AF_INET) {
                 self->address = *(struct sockaddr_in *) interface->ifa_addr;
                 self->broadcast = *(struct sockaddr_in *) interface->ifa_broadaddr;
-                self->broadcast.sin_port = htons (self->port);
+                self->broadcast.sin_port = htons (self->port_nbr);
             }
             interface = interface->ifa_next;
         }
@@ -140,12 +165,12 @@ udp_handle (udp_t *self)
 static void
 udp_send (udp_t *self, byte *buffer, size_t length)
 {
+    assert (self);
     inet_aton ("255.255.255.255", &self->broadcast.sin_addr);
     if (sendto (self->handle, buffer, length, 0,
                 &self->broadcast, sizeof (struct sockaddr_in)) == -1)
         s_handle_io_error ("sendto");
 }
-
 
 //  Receive message from UDP broadcast
 //  Returns size of received message, or -1
@@ -153,16 +178,14 @@ udp_send (udp_t *self, byte *buffer, size_t length)
 static ssize_t
 udp_recv (udp_t *self, byte *buffer, size_t length)
 {
+    assert (self);
+    
     struct sockaddr_in sockaddr;
     socklen_t si_len = sizeof (struct sockaddr_in);
-    
+
     ssize_t size = recvfrom (self->handle, buffer, length, 0, &sockaddr, &si_len);
     if (size == -1)
         s_handle_io_error ("recvfrom");
-    else
-    if (sockaddr.sin_addr.s_addr != self->address.sin_addr.s_addr)
-        printf ("Found peer %s:%d\n",
-            inet_ntoa (sockaddr.sin_addr), ntohs (sockaddr.sin_port));
 
-    return 0;
+    return size;
 }
