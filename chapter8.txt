@@ -193,7 +193,7 @@ Expletive deleted! Let's try something in user space. The next step most people 
 
 Multicast tends to be seen as more modern and "better" than broadcast. In IPv6, broadcast doesn't work at all: you have to always use broadcast. Nonetheless, all IPv4 local network discovery protocols end up using UDP broadcast anyhow. The reasons: broadcast and multicast end up working much the same, except broadcast is simpler and less risky. Multicast is seen by network admins as kind of dangerous, as it can leak over network segments.
 
-If you never used UDP, you'll discover it's quite a nice protocol. In some ways it reminds us of 0MQ, sending whole messages to peers using a two different patterns: one-to-one, and one-to-many. The main problems with UDP are that (a) the POSIX socket API was designed for universal flexibility not simplicity, (b) UDP messages are limited to 255 bytes, and (c) when you start to use UDP for real data, you find that a lot of messages get dropped, especially as infrastructure tends to favor TCP over UDP.
+If you never used UDP, you'll discover it's quite a nice protocol. In some ways it reminds us of 0MQ, sending whole messages to peers using a two different patterns: one-to-one, and one-to-many. The main problems with UDP are that (a) the POSIX socket API was designed for universal flexibility not simplicity, (b) UDP messages are limited for practical purposes to about 512 bytes, and (c) when you start to use UDP for real data, you find that a lot of messages get dropped, especially as infrastructure tends to favor TCP over UDP.
 
 Here is a minimal ping program that uses UDP instead of ICMP_ECHO:
 
@@ -226,14 +226,7 @@ Working on the basis of "//solve the problems currently aiming at your throat//"
 
 * The code needs to know its own IP address and ignore beacons that it sent out. Like finding the broadcast address, this requires inspecting the available interfaces.
 
-The simplest answer to these issues is to push the UDP code into a separate library that provided a clean API. Here is the refactored UDP ping program that calls this library:
-
-[[code type="example" title="UDP discovery, model 2" name="udpping2"]]
-[[/code]]
-
-The library, udplib, hides a lot of the unpleasant code (which will become nastier we make this work on more systems). I'm not going to print that code here. You can read it in the repository. It does provide a neat little "udp_t" class that wraps up the work we need to do.
-
-What I will show is the udp class's API since we'll use this in later examples:
+The simplest answer to these issues is to push the UDP code into a separate library that provided a clean API, like this:
 
 [[code language="C"]]
 //  Constructor
@@ -256,6 +249,13 @@ static void
 static ssize_t
     udp_recv (udp_t *self, byte *buffer, size_t length);
 [[/code]]
+
+Here is the refactored UDP ping program that calls this library, which is much cleaner and nicer:
+
+[[code type="example" title="UDP discovery, model 2" name="udpping2"]]
+[[/code]]
+
+The library, udplib, hides a lot of the unpleasant code (which will become uglier we make this work on more systems). I'm not going to print that code here. You can read it in the repository.
 
 Now, there are more problems sizing us up and wondering if they can make lunch out of us. First, IPv4 versus IPv6 and multicast vs. broadcast. In IPv6, broadcast doesn't exist at all; one uses multicast. From my experience with WiFi, IPv4 multicast and broadcast work identically except that multicast breaks in some situations where broadcast works fine. Some access points do not forward multicast packets. When you have a device (e.g. a tablet) that acts as a mobile AP, then it's possible it won't get multicast packets. Meaning, it won't see other peers on the network.
 
