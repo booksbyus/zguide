@@ -1,3 +1,24 @@
+I'm going to take the last UDP ping program and turn that into a ZRE hello world test. The goal is that when we detect a new peer we send "hello" to it, and it replies with "world". At the same time I'll begin refactoring the classes we made so they begin to look like a real library, which will eventually become {{libzre}}.
+
+- zre_udp
+- zre_interface
+- zre_hello
+
+++++ The Messaging Layer
+
+So we've solved discovery, presence, connectivity, and simulation. Next on our list: security, unicast messaging, and multicast messaging.
+
+- SASL security
+    - taken from FILEMQ
+- one-to-one messaging by sending to node
+- one-to-many messaging by sending to group
+    - join group, leave group
+    - group management across all nodes
+
+++++ File Transfer
+
+Take FILEMQ and plug into this framework.
+
 Notes for The Guide
     
 ==1742== Syscall param write(buf) points to uninitialised byte(s)

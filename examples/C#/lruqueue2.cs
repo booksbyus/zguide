@@ -27,11 +27,11 @@ namespace ZMQGuide
             {
                 using (var client = ctx.Socket(SocketType.REQ))
                 {
+                    ZHelpers.SetID(client, Encoding.Unicode);
+                    client.Connect("tcp://localhost:5555");
+
                     while (true)
                     {
-                        ZHelpers.SetID(client, Encoding.Unicode);
-                        client.Connect("tcp://localhost:5555");
-
                         //  Send request, get repl
                         client.Send("HELLO", Encoding.Unicode);
                         string reply = client.Recv(Encoding.Unicode);

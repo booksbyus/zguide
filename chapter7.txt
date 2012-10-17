@@ -53,7 +53,7 @@ But gambling with hundreds of millions of others' money isn't for everyone. For 
 
 The brilliant and visionary Eben Moglen once said, roughly, that a free software license is the contract on which a community builds. When I heard this, about ten years ago, the idea came to me, //can we deliberately grow free software communities//?
 
-Ten years later, the answer is "yes", and there is almost a science to it. I say "almost" because we don't yet have enough evidence of people doing this deliberately with a documented, reproducible process. It is what I'm trying to do with [http://softwareandsilicon.com/chapter:2#toc5 Social Architecture]. 0MQ came after Wikidot, after Digistan and after the FFII. Which came after a lot of less successful community projects like Xitami and Libero. My main takeaway from a long career of projects of every conceivable format is: if you want to build truly large-scale and long-lasting software, aim to build a free software community.
+Ten years later, the answer is "yes", and there is almost a science to it. I say "almost" because we don't yet have enough evidence of people doing this deliberately with a documented, reproducible process. It is what I'm trying to do with [http://softwareandsilicon.com/chapter:2#toc5 Social Architecture]. 0MQ came after Wikidot, after Digistan and after the Foundation for a Free Information Infrastructure (aka the FFII, an NGO that fights against software patents). Which came after a lot of less successful community projects like Xitami and Libero. My main takeaway from a long career of projects of every conceivable format is: if you want to build truly large-scale and long-lasting software, aim to build a free software community.
 
 ++++ The Game
 
@@ -71,7 +71,7 @@ Then one day, someone pointed him to a new project, GPL licensed, which had fork
 
 Worse, the GPL project got popular and some of his core contributors made first small, and then larger patches to it. Again, he couldn't use those changes, and he felt abandoned. Patrick went into a depression, his girlfriend left him for an international currency dealer called, weirdly, Patrice, and he stopped all work on the project. He felt betrayed, and utterly miserable. He fired his friend, who took it rather badly and told everyone that Patrick was a closet banjo player. Finally Patrick took a job as a project manager for a cloud company, and by the age of forty, he had stopped programming even for fun.
 
-Poor Patrick, I almost felt sorry for him. Then I asked him, "why didn't you choose the GPL?" "Because it's a restrictive viral license", he replied. I told him, you may have a PhD, and you may be the eldest brother-in-law of the cousin of a friend of my colleague, but you are an idiot and Monique was smart to leave you. You published your work saying, "please steal my code as long as you keep this 'please steal my code' statement in the resulting work", and when people did exactly that, you got upset. Worse, you were a hypocrite because when they did it in secret, you were happy, but when they did it openly, you got upset.
+Poor Patrick, I almost felt sorry for him. Then I asked him, "why didn't you choose the GPL?" "Because it's a restrictive viral license", he replied. I told him, you may have a PhD, and you may be the eldest brother-in-law of the cousin of a friend of my colleague, but you are an idiot and Monique was smart to leave you. You published your work saying, "please steal my code as long as you keep this 'please steal my code' statement in the resulting work", and when people did exactly that, you got upset. Worse, you were a hypocrite because when they did it in secret, you were happy, but when they did it openly, you felt betrayed.
 
 Seeing your hard work captured by a smarter team and then used against you is enormously painful, so why even make that possible? Every proprietary project that uses BSD code is capturing it. A public GPL fork is perhaps more humiliating, but it's fully self-inflicted.
 
@@ -97,7 +97,7 @@ You need a goal that's crazy and simple enough to get people out of bed in the m
 
 Then your work must be beautiful, immediately useful and attractive. Your contributors are users who want to explore just a little beyond where they are now. Make it simple, elegant, brutally clean. The experience when people run or use your work should be an emotional one. They should //feel// something, and if you accurately solved even just one big problem that until then they didn't quite realize they faced, you'll have a small part of their soul.
 
-And then, easy to understand, use, and join. Too many projects have barriers to access: put yourself in the other person's mind and see all the reasons they come to your site, thinking "//Uhm, interesting project, but...//" and then leave. You want them to stay, try it, just once. Use GitHub and put the issue tracker right there.
+And then, easy to understand, use, and join. Too many projects have barriers to access: put yourself in the other person's mind and see all the reasons they come to your site, thinking "Uhm, interesting project, but..." and then leave. You want them to stay, try it, just once. Use GitHub and put the issue tracker right there.
 
 If you do these things well, your community will be smart but more importantly, will be intellectually and geographically diverse. This is really important. A group of like-minded experts cannot explore the problem landscape well. They tend to make big mistakes. Diversity beats education any time.
 
@@ -153,7 +153,7 @@ By starting with the RFC 2119 language, the C4 text makes very clear its intenti
 
 I think C4 is the first time anyone has attempted to codify a community's rulebook as a formal and reusable protocol spec. Before, our rules were spread out over several wiki pages, and quite specific to libzmq in many ways. But experience teaches us that the more formal and accurate and reusable the rules, the easier it is for strangers to collaborate up-front. And less friction means a more scalable community. At the time of C4, we also had some disagreement in the libzmq over precisely what process we were using. Not everyone felt bound by the same rules. Let's just say some people felt they had a special status, which created friction with the rest of the community. So codification made things clear.
 
-It's easy to use C4: just host your project on GitHub, get one other person to join, and open the floor to pull requests. In your README, put a link to C4 and that's it. We've done this in quite a few projects and it does seem to work. I've been pleasantly surprised a few times just applying these rules to my own work, like CZMQ. We are none of us, as I'll explain later in this chaper, so amazing that we can work without others.
+It's easy to use C4: just host your project on GitHub, get one other person to join, and open the floor to pull requests. In your README, put a link to C4 and that's it. We've done this in quite a few projects and it does seem to work. I've been pleasantly surprised a few times just applying these rules to my own work, like CZMQ. We are none of us, as I'll explain later in this chapter, so amazing that we can work without others.
 
 ++++ Goals
 
@@ -161,9 +161,9 @@ It's easy to use C4: just host your project on GitHub, get one other person to j
 
 The short term reason for writing C4 was to end argument over the libzmq contribution process. The dissenters went off elsewhere. [https://github.com/zeromq/libzmq/graphs/contributors The 0MQ community blossomed], smoothly and easily, as I'd predicted. Most people were surprised, but gratified. There's been no real criticisms of C4 except its branching policy, which I'll come to later since it deserves its own discussion.
 
-There's a reason I'm bringing up history here: as founder of a community, you are asking people to invest in your property, trademark, branding. In return, and this is what we do with 0MQ, you can use that branding to set a bar for quality. When you download a product labeled as "0MQ", you know that it's been produced to certain standards. It's a basic rule of quality: write down your process, otherwise you cannot improve it. Our processes aren't perfect, they can't ever be. But any flaw can be fixed, and tested.
+There's a reason I'm bringing up history here: as founder of a community, you are asking people to invest in your property, trademark, branding. In return, and this is what we do with 0MQ, you can use that branding to set a bar for quality. When you download a product labeled as "0MQ", you know that it's been produced to certain standards. It's a basic rule of quality: write down your process, otherwise you cannot improve it. Our processes aren't perfect, they can't ever be. But any flaw in them can be fixed, and tested.
 
-Making C4 reusable is really important therefore. To learn more about the best possible process we need to get results from the widest range of projects.
+Making C4 reusable is therefore really important. To learn more about the best possible process we need to get results from the widest range of projects.
 
 > It has these specific goals:
 > To maximize the scale of the community around a project, by reducing the friction for new Contributors and creating a scaled participation model with strong positive feedbacks;
@@ -176,7 +176,7 @@ Perhaps the worst problem we faced in libzmq was dependence on people who could 
 
 > To allow the project to develop faster and more accurately, by increasing the diversity of the decision making process;
 
-This is theory, perhaps not fully proven yet, but the diversity of the community and number of people who can weigh into discussions, without fear of being criticized or dismissed, the faster and more accurately the software should develop, Speed is quite subjective here. Going very fast in the wrong direction is not just useless, it's actively damaging (and we suffered a lot of that in libzmq before we switched to C4).
+This is theory, not fully proven but not falsified. The diversity of the community and number of people who can weigh into discussions, without fear of being criticized or dismissed, the faster and more accurately the software should develop, Speed is quite subjective here. Going very fast in the wrong direction is not just useless, it's actively damaging (and we suffered a lot of that in libzmq before we switched to C4).
 
 > To support the natural life-cycle of project versions from experimental through to stable, by allowing safe experimentation, rapid failure, and isolation of stable code;
 
@@ -184,7 +184,7 @@ To be honest, this goal seems to be fading into irrelevance. It's quite an inter
 
 > To reduce the internal complexity of project repositories, thus making it easier for Contributors to participate and reducing the scope for error;
 
-Curious observation: people who thrive in complex situations like to create complexity because it keeps their value high. Git made branches easy and left us with the all too common syndrome of "//git is easy once you understand that a git branch is just a folded five-dimensional lepton space that has a detached history with no intervening cache//". Developers should not be made to feel stupid by their tools and I've seen too many top-class developers confused by repository structures to accept conventional wisdom on git branches. We'll come back to dispose of git branches shortly, dear reader.
+Curious observation: people who thrive in complex situations like to create complexity because it keeps their value high. It's the Cobra Effect (Google it). Git made branches easy and left us with the all too common syndrome of "git is easy once you understand that a git branch is just a folded five-dimensional lepton space that has a detached history with no intervening cache". Developers should not be made to feel stupid by their tools. I've too many top-class developers confused by repository structures, to accept conventional wisdom on git branches. We'll come back to dispose of git branches shortly, dear reader.
 
 > To enforce collective ownership of the project, which increases economic incentive to Contributors and reduces the risk of hijack by hostile entities.
 
@@ -228,15 +228,15 @@ I think this fight between individual expertise and collective intelligence play
 
 > The project SHALL use the GPLv3 or a variant thereof (LGPL, AGPL).
 
-I've already explained how full remixability creates better scale and why the GPL and its variants seems the optimal contract for remixable software.
+I've already explained how full remixability creates better scale and why the GPL and its variants seems the optimal contract for remixable software. If you're a large business aiming to dump code on the market, you won't want C4, but then you won't really care about community either.
 
 > All contributions to the project source code ("patches") SHALL use the same license as the project.
 
-This removes the need for any specific statement or contribution agreement. You fork the GPL code, you publish your remixed version on github, you or anyone else can then submit that as a patch to the original code. BSD doesn't allow this. Any work that contains BSD code may also contain unlicensed proprietary code so you need explicit action from the author of the code before you can remix it.
+This removes the need for any specific license or contribution agreement for patches. You fork the GPL code, you publish your remixed version on github, you or anyone else can then submit that as a patch to the original code. BSD doesn't allow this. Any work that contains BSD code may also contain unlicensed proprietary code so you need explicit action from the author of the code before you can remix it.
 
 > All patches are owned by their authors. There SHALL NOT be any copyright assignment process.
 
-Here we come to the key reason people trust their investments in 0MQ: it's logistically impossible to buy the copyrights so that someone can create a closed-source competitor to 0MQ. And the more people send patches, the harder it becomes. 0MQ isn't just free and open today, this specific rule means it will remain so forever.
+Here we come to the key reason people trust their investments in 0MQ: it's logistically impossible to buy the copyrights to create a closed-source competitor to 0MQ. iMatix can't do this either. And the more people send patches, the harder it becomes. 0MQ isn't just free and open today, this specific rule means it will remain so forever. Note that it's not the case in all GPL projects, many of which still ask for copyright transfer back to the maintainers.
 
 > The project SHALL be owned collectively by all its Contributors.
 
@@ -252,7 +252,7 @@ In this section we define the obligations of the contributor: specifically, what
 
 > Maintainers and Contributors MUST have a Platform account and SHOULD use their real names or a well-known alias.
 
-In the worst case scenario, where someone has submitted toxic code (patented, or owned by someone else), we need to be able to trace who and when, so we can remove the code. Asking for real names or a well-known alias is a theoretical strategy to reducing the risk of bogus patches. We don't know if this works because we never had the problem.
+In the worst case scenario, where someone has submitted toxic code (patented, or owned by someone else), we need to be able to trace who and when, so we can remove the code. Asking for real names or a well-known alias is a theoretical strategy to reducing the risk of bogus patches. We don't know if this actually works because we haven't had the problem yet.
 
 > A patch SHOULD be a minimal and accurate answer to exactly one identified and agreed problem.
 
@@ -264,9 +264,9 @@ This is just sanity: I've spent time cleaning up other peoples' patches because 
 
 > A patch MUST adhere to the "Evolution of Public Contracts" guidelines defined below.
 
-Ah, the pain, the pain. I'm not speaking of the time at age eight when I stepped on a plank with a 4-inch nail protruding from it. That was relatively OK. I'm speaking of 2010-2011 when we had multiple parallel releases of 0MQ, each with different //incompatible// APIs or wire protocols. It was an exercise in bad rules: "if you change the API or protocol, you SHALL create a new major version". Give me the nail through the foot, that hurt less.
+Ah, the pain, the pain. I'm not speaking of the time at age eight when I stepped on a plank with a 4-inch nail protruding from it. That was relatively OK. I'm speaking of 2010-2011 when we had multiple parallel releases of 0MQ, each with different //incompatible// APIs or wire protocols. It was an exercise in bad rules pointlessly enforced. The rule was "if you change the API or protocol, you SHALL create a new major version". Give me the nail through the foot, that hurt less.
 
-One of the big changes we made with C4 was simply to ban, outright, this kind of rampant changeism. Amazingly, it's not even hard. We just don't allow the breaking of existing public contracts, period, unless everyone agrees, in which case no period.
+One of the big changes we made with C4 was simply to ban, outright, this kind of sanctioned sabotage. Amazingly, it's not even hard. We just don't allow the breaking of existing public contracts, period, unless everyone agrees, in which case no period.
 
 > A patch SHALL NOT include non-trivial code from other projects unless the Contributor is the original author of that code.
 
@@ -298,7 +298,7 @@ This is meant to stop us going off-line and working in a ghetto, either by ourse
 
 > The user SHOULD seek consensus on the accuracy of their observation, and the value of solving the problem.
 
-And since many apparent problems are illusionary, by stating the problem explicitly we give others a chance to correct our logic.
+And since many apparent problems are illusionary, by stating the problem explicitly we give others a chance to correct our logic. "You're only using A and B a lot because function C is unreliable. Solution: make function C work properly."
 
 > Users SHALL NOT log feature requests, ideas, suggestions, or any solutions to problems that are not explicitly documented and provable.
 
@@ -322,7 +322,7 @@ Anyone who submits a patch is a contributor, and all contributors follow the sam
 
 > To discuss a patch, people MAY comment on the Platform pull request, on the commit, or elsewhere.
 
-Randomly distributed discussions may be confusing if you're walking up for the first time, but GitHub solves this for all current participants by sending emails to those who need to follow what's going on. We had the same experience and the same solution in Wikidot, and it works. So there's no evidence that discussing in different places has any negative effect, or that centralizing on the mailing list is positive.
+Randomly distributed discussions may be confusing if you're walking up for the first time, but GitHub solves this for all current participants by sending emails to those who need to follow what's going on. We had the same experience and the same solution in Wikidot, and it works. There's no evidence that discussing in different places has any negative effect.
 
 > To accept or reject a patch, a Maintainer SHALL use the Platform interface.
 
@@ -334,7 +334,7 @@ There was a rule we defined in the FFII years ago to stop people burning out: no
 
 > Maintainers SHALL NOT make value judgments on correct patches.
 
-We already said this but it's worth repeating: the role of Maintainer is not to judge a patch's substance, only its technical quality. The substantive worth of a patch only emerges over time: people use it, and like it, or they do not. And if no-one is using a patch, eventually it'll be removed and no-one will complain.
+We already said this but it's worth repeating: the role of Maintainer is not to judge a patch's substance, only its technical quality. The substantive worth of a patch only emerges over time: people use it, and like it, or they do not. And if no-one is using a patch, eventually it'll annoy someone else who will remove it, and no-one will complain.
 
 > Maintainers SHALL merge correct patches rapidly.
 
@@ -342,11 +342,11 @@ There is a criteria I call "change latency" which is the round-trip time from id
 
 > Maintainers SHOULD ask for improvements to incorrect patches and SHOULD reject incorrect patches if the Contributor does not respond constructively.
 
-Initially I felt it was worth merging all patches no matter how poor. There's an element of trolling involved. Merging broken code to master might, I felt, pull in more contributors. But people were uncomfortable with this so we defined the "correct patch" rules, and the Maintainer's role in checking for quality. On the negative side I think we didn't take some interesting risks which could have paid off with more participants. On the positive side this has led to 0MQ master (as in all projects that use C4) being practically production quality, practically all the time.
+Initially I felt it was worth merging all patches no matter how poor. There's an element of trolling involved. Merging broken code to master might, I felt, pull in more contributors. But people were uncomfortable with this so we defined the "correct patch" rules, and the Maintainer's role in checking for quality. On the negative side I think we didn't take some interesting risks which could have paid off with more participants. On the positive side this has led to 0MQ master (and in all projects that use C4) being practically production quality, practically all the time.
 
 > Any Contributor who has value judgments on a correct patch SHOULD express these via their own patches.
 
-In essence, the goal here is to allow users to try patches rather than to spend time arguing pros and cons. As easy as it is to make a patch, it's as easy to revert it with another patch. You might think this would lead to "patch wars" but that hasn't happened. We've had a handful of cases in libzmq where patches by one contributor were killed by another person who felt the experimentation wasn't going in the right direction.
+In essence, the goal here is to allow users to try patches rather than to spend time arguing pros and cons. As easy as it is to make a patch, it's as easy to revert it with another patch. You might think this would lead to "patch wars" but that hasn't happened. We've had a handful of cases in libzmq where patches by one contributor were killed by another person who felt the experimentation wasn't going in the right direction. It is easier than seeking up-front consensus.
 
 > Maintainers MAY commit changes to non-source documentation directly to the project.
 
@@ -356,7 +356,7 @@ This exit allows maintainers who are making release notes to push those without 
 
 For a production system we want some guarantee of stability. In the past this meant taking unstable code and then over months hammering out the bugs and faults until it was safe to trust. iMatix's job, for years, has been to do this to libzmq, turning raw code into packages by allowing only bug fixes, and no new code, into a "stabilization branch". It's surprisingly not as thankless as it sounds.
 
-Now, since we went full speed with C4, we've found that git master of libzmq is mostly perfect, most of the time. However, people still want that guarantee. So a stable release today means two things. First, a snapshot of the master taken at a time when there were no new changes for a while, and no dramatic open bugs. Second, a way to fine-tune that snapshot to fix the critical issues remaining in it.
+Now, since we went full speed with C4, we've found that git master of libzmq is mostly perfect, most of the time. This frees our time to do more interesting things, such as building new open source layers on top of libzmq. However, people still want that guarantee: many users will simply not install except from an "official" release. So a stable release today means two things. First, a snapshot of the master taken at a time when there were no new changes for a while, and no dramatic open bugs. Second, a way to fine-tune that snapshot to fix the critical issues remaining in it.
 
 This is the process we explain in this section.
 
@@ -366,16 +366,16 @@ This is redundant since every patch always builds but it's worth restating. If t
 
 > The project SHALL NOT use topic branches for any reason. Personal forks MAY use topic branches.
 
-I'll come to branches soon. Tl;dr - they make the repository too complex and require upfront agreements, which are both Bad Stuff.
+I'll come to branches soon. In short (or "tl;dr", as they say on the webs) branches make the repository too complex and fragile, and require upfront agreement, all of which are expensive and avoidable.
 
 > To make a stable release someone SHALL fork the repository by copying it and thus become maintainer of this repository.
 > Forking a project for stabilization MAY be done unilaterally and without agreement of project maintainers.
 
-It's free software. No-one has a monopoly on it. If you think the maintainers aren't producing stable releases right, fork the repository and do it yourself. Forking isn't a failure, it's an essential tool for competition. You can't BTW do this with branches, which means a branch-based release policy gives the project maintainers a monopoly, which is bad because they'll become lazier and more arrogant than if real competition is chasing their heels.
+It's free software. No-one has a monopoly on it. If you think the maintainers aren't producing stable releases right, fork the repository and do it yourself. Forking isn't a failure, it's an essential tool for competition. You can't BTW do this with branches, which means a branch-based release policy gives the project maintainers a monopoly. And that's bad because they'll become lazier and more arrogant than if real competition is chasing their heels.
 
 > Maintainers of the stabilization project SHALL maintain it through pull requests which MAY cherry-pick patches from the forked project.
 
-Perhaps the C4 process should just say that stabilization projects have maintainers and contributors like any project. 
+Perhaps the C4 process should just say that stabilization projects have maintainers and contributors like any project. That's all this rule means.
 
 > A patch to a repository declared "stable" SHALL be accompanied by a reproducible test case.
 
@@ -393,11 +393,11 @@ We stopped breaking public contracts simply by banning the practice. Before then
 
 > All Public Contracts (APIs or protocols) SHOULD be documented.
 
-You'd think this was a given for professional software engineers but no, it's not. So, it's a rule. You want C4 certification for your project, you make sure your public contracts are documented. (Yes, I intend at some point to create a C4 certification process to act as a quality indicator for open source projects.)
+You'd think this was a given for professional software engineers but no, it's not. So, it's a rule. You want C4 certification for your project, you make sure your public contracts are documented. No "it's specified in the code" excuses. Code is not a contract. (Yes, I intend at some point to create a C4 certification process to act as a quality indicator for open source projects.)
 
 > All Public Contracts SHALL use Semantic Versioning.
 
-This rule is mainly here because people asked for it. I've no real love for it, since Semantic Versioning is what led to the so-called "why does 0MQ not speak to itself" debacle. I've never seen the problem that this solved. Something about runtime validation of library versions, or some-such.
+This rule is mainly here because people asked for it. I've no real love for it, since Semantic Versioning is what led to the so-called "why does 0MQ not speak to itself?!" debacle. I've never seen the problem that this solved. Something about runtime validation of library versions, or some-such.
 
 > All Public Contracts SHOULD have space for extensibility and experimentation.
 
@@ -409,11 +409,11 @@ Sometimes the patch is fixing a bad API that no-one is using. It's a freedom we 
 
 > A patch that introduces new features to a Public Contract SHOULD do so using new names.
 
-We had the experience in 0MQ once or twice of new features using old names (or worse, using names that were //still in use// elsewhere). 0MQ/3.0 had a "ROUTER" socket that was totally different from the ROUTER socket in 2.x. Dear lord, you should be face-palming, why? The reason: apparently, even smart people sometimes need regulation to stop them doing silly things.
+We had the experience in 0MQ once or twice of new features using old names (or worse, using names that were //still in use// elsewhere). 0MQ/3.0 had a newly introduced "ROUTER" socket that was totally different from the existing ROUTER socket in 2.x. Dear lord, you should be face-palming, why? The reason: apparently, even smart people sometimes need regulation to stop them doing silly things.
 
 > Old names SHOULD be deprecated in a systematic fashion by marking new names as "experimental" until they are stable, then marking the old names as "deprecated".
 
-This lifecycle notation has the great benefit of actually telling users what is going on, with a consistent direction. "Experimental" means "we have introduced this and intend to make it stable if it works". Not, "we have introduced this and will remove it at any time if we feel like it". One assumes that code which survives more than one patch cycle is meant to be there. "Deprecated" means "we have replaced this and intend to remove it".
+This life-cycle notation has the great benefit of actually telling users what is going on, with a consistent direction. "Experimental" means "we have introduced this and intend to make it stable if it works". Not, "we have introduced this and will remove it at any time if we feel like it". One assumes that code which survives more than one patch cycle is meant to be there. "Deprecated" means "we have replaced this and intend to remove it".
 
 > When sufficient time has passed, old deprecated names SHOULD be marked "legacy" and eventually removed.
 
@@ -421,7 +421,7 @@ Which in theory gives applications time to move onto stable new contracts but wi
 
 > Old names SHALL NOT be reused by new features.
 
-Ah, yes, the joy when 0MQ/3.x renamed the top-used API functions (zmq_send and zmq_recv) and then recycled the old names for new versions that were utterly incompatible (and which I suspect very few people actually use). You should be slapping yourself in confusion again, but sincerely, this is what happened and I was as guilty as anyone. After all, we did change the version number! Semantic Version FTW!! The only benefit of that experience was to get this rule.
+Ah, yes, the joy when 0MQ/3.x renamed the top-used API functions (zmq_send and zmq_recv) and then recycled the old names for new methods that were utterly incompatible (and which I suspect few people actually use). You should be slapping yourself in confusion again, but really, this is what happened and I was as guilty as anyone. After all, we did change the version number! Semantic Version FTW!! The only benefit of that experience was to get this rule.
 
 > When old names are removed, their implementations MUST provoke an exception (assertion) if used by applications.
 
@@ -433,7 +433,7 @@ C4 is not perfect, few things are. The process for changing it (Digistan's COSS)
 
 In [http://lists.zeromq.org/pipermail/zeromq-dev/2012-October/018838.html this email thread], Dan Goes asks how to make a publisher that knows when a new client subscribes, and sends out previous matching messages. It's a standard pub-sub technique called "last value caching". Now over a 1-way transport like pgm (where subscribers literally send no packets back to publishers) this can't be done. But over TCP, it can, if we use an XPUB socket and if that socket didn't cleverly filter out duplicate subscriptions to reduce upstream traffic.
 
-Though I'm not an expert contributor to libzmq, this seems a fun problem to solve. How hard could it be? I start by forking the libzmq repository to my own GitHub account, and then clone it to my laptop:
+Though I'm not an expert contributor to libzmq, this seems a fun problem to solve. How hard could it be? I start by forking the libzmq repository to my own GitHub account, and then clone it to my laptop, where I build it:
 
 [[code]]
 git clone git@github.com:hintjens/libzmq.git
@@ -499,7 +499,7 @@ if (options.type == ZMQ_XPUB && (unique || verbose))
     pending.push_back (blob_t (data, size));
 [[/code]]
 
-The thing builds nicely first time. Which makes me a little suspicious, but being lazy and jetlagged I don't immediately make a test case to actually try out the change. The process doesn't demand that, even if usually I'd do it just to catch that inevitable 10% of mistakes we all make. I do however document this new option on the doc/zmq_setsockopt.txt man page. In the worst case I added a patch that wasn't really useful. But I certainly didn't break anything.
+The thing builds nicely first time. Which makes me a little suspicious, but being lazy and jet-lagged I don't immediately make a test case to actually try out the change. The process doesn't demand that, even if usually I'd do it just to catch that inevitable 10% of mistakes we all make. I do however document this new option on the doc/zmq_setsockopt.txt man page. In the worst case I added a patch that wasn't really useful. But I certainly didn't break anything.
 
 I don't implement a matching zmq_getsockopt, since "minimal" means what it says. There's no obvious use case for getting the value of an option that you presumably just set, in code. Symmetry isn't a valid reason to double the size of a patch. I did have to document the new option since the process says, "All Public Contracts SHOULD be documented."
 
@@ -529,11 +529,11 @@ git pull --rebase upstream master
 git log
 [[/code]]
 
-And that is pretty much it, in terms of how much git one needs to learn and use to contribute patches to libzmq. Six git commands and some clicking on web pages. Most importantly to me as a naturally lazy, stupid, and easily confused developer, I don't have to learn git's internal models, and never have to do anything involving those infernal engines of structural complexity we call "git branches". Next up, the attempted assassination of git branches. Let's live angerously!
+And that is pretty much it, in terms of how much git one needs to learn and use to contribute patches to libzmq. Six git commands and some clicking on web pages. Most importantly to me as a naturally lazy, stupid, and easily confused developer, I don't have to learn git's internal models, and never have to do anything involving those infernal engines of structural complexity we call "git branches". Next up, the attempted assassination of git branches. Let's live dangerously!
 
 +++ Git Branches Considered Harmful
 
-One of git's most popular features is how easy it makes branches. Almost all projects that use git use branches, and the selection of the "best" branching strategy is like a rite of passage for an open source project. Vincent Driessen's [http://nvie.com/posts/a-successful-git-branching-model/ git-flow] is maybe the best known. It has 'base' branches (master, develop), 'feature' branches, 'release' branches, 'hotfix' branches, and 'support' branches. Many teams have adopted git-flow, which even has git extensions to support it. I'm a great believer in popular wisdom, but sometimes you have to recognize mass dellusion for what it is.
+One of git's most popular features is how easy it makes branches. Almost all projects that use git use branches, and the selection of the "best" branching strategy is like a rite of passage for an open source project. Vincent Driessen's [http://nvie.com/posts/a-successful-git-branching-model/ git-flow] is maybe the best known. It has 'base' branches (master, develop), 'feature' branches, 'release' branches, 'hotfix' branches, and 'support' branches. Many teams have adopted git-flow, which even has git extensions to support it. I'm a great believer in popular wisdom, but sometimes you have to recognize mass delusion for what it is.
 
 Here is a section of C4 that might have shocked you when you first read it:
 
@@ -571,7 +571,7 @@ Evidence definitely shows that learning to use git branches is complex. For some
 
 //The lower the cost of failure, the better.//
 
-Branches demand more perfection from developers since mistakes potentially affect others. This raises the cost of failure. Forks make failure extremely cheap since nothing that happens in a fork can affect others not using that fork.
+Branches demand more perfection from developers since mistakes potentially affect others. This raises the cost of failure. Forks make failure extremely cheap since literally nothing that happens in a fork can affect others not using that fork.
 
 ++++ Upfront Coordination
 
@@ -595,7 +595,7 @@ People expect branches and find forks to be uncommon and thus confusing. This is
 
 //The more tangible the rewards, the better.//
 
-People like to own their work, and get credit for it. This is much easier with forks than with branches. Forks create more competition, in a healthy way, while branches suppress competition and force people to collaborate and share credit. This sounds positive but in my experience it demotivates people. A branch isn't a product you can "own", whereas a fork can be.
+People like to own their work, and get credit for it. This is much easier with forks than with branches. Forks create more competition, in a healthy way, while branches suppress competition and force people to collaborate and share credit. This sounds positive but in my experience it de-motivates people. A branch isn't a product you can "own", whereas a fork can be.
 
 ++++ Robustness in Conflict
 
@@ -619,17 +619,19 @@ Forks have watchers, issues, a README, a wiki. Branches have none of these. Peop
 
 In this section I've listed a series of arguments, most of which came from fellow team members. Here's how it seems to break down: git veterans insist that branches are the way to work, whereas newcomers tend to feel intimidated when asked to navigate git branches. Git is not an easy tool to master. What we've discovered, accidentally, is that when you stop using branches //at all//, git becomes trivial to use. It literally comes down to six commands (clone, remote, commit, log, push, and pull). Furthermore, a branch-free process actually works, we've used it for a couple of years now, and no visible downside except surprise to the veterans, and growth of "single" projects over multiple repositories.
 
+If you can't use forks, perhaps because your firm doesn't trust github's private repositories, then you perhaps topic branches (one per issue) will work. You'll still suffer the costs of getting upfront consensus, low competitiveness, and risk of human error.
+
 +++ The Myth of Intelligent Design
 
-The dominant theory of design is that you take smart, creative people and money, and produce amazing products. The smarter the people, the better the results. I'm going to claim that theory is bogus, a myth based on a belief-based model of the "inventor" and "invention" as a function of individual minds. As an alternative I'll present the Theory of Heuristic Innovation, which states roughly that we do not invent solutions, we discover them, and that discovery process can be highly automated.
+The dominant theory of design is that you take smart, creative people and money, and produce amazing products. The smarter the people, the better the results. I'm going to claim that theory is bogus, a myth based on magical thinking that treats the "invention" as a product of individual "inventor" minds. As an alternative I'll present the Theory of Heuristic Innovation, which states roughly that we do not invent solutions, we discover them, and that discovery process can be highly automated.
 
-Presenting 0MQ at the Mix-IT conference in Lyon in early 2012, I was asked several times for the "roadmap". My answer was, roadmaps are bad for several reasons. First, they make promises we can rarely keep, which causes problems for our users. Second, they claim territory and make it harder for others to participate. Lastly, they preempt the thinking process of the community. The audience didn't really like my answer. So un-French. Software engineers don't like the notion that powerful, effective solutions can come into existence without an intelligent designer actively thinking things through. And yet no-one in that room would question evolution. A strange irony, and one I wanted to explore further as it underpins the direction the 0MQ community has taken over the last year or so.
+Presenting 0MQ at the Mix-IT conference in Lyon in early 2012, I was asked several times for the "road-map". My answer was, There is no road-map, and road-maps are bad for several reasons. First, they make promises we can rarely keep, which causes problems for our users. Second, they claim territory and make it harder for others to participate. Lastly, they preempt the thinking process of the community. The audience didn't really like my answer. So un-French. Software engineers don't like the notion that powerful, effective solutions can come into existence without an intelligent designer actively thinking things through. And yet no-one in that room would question evolution. A strange irony, and one I wanted to explore further as it underpins the direction the 0MQ community has taken over the last year or so.
 
-In the dominant theory, brilliant individuals reflect on large problem sets and then carefully and precisely create a solution. Sometimes they will have "eureka" moments where they "get" brilliantly simple answers to whole large problem sets. The inventor, and the process of invention are rare, precious, and can command a monopoly. History is full of such individuals.
+In the dominant theory, brilliant individuals reflect on large problem sets and then carefully and precisely create a solution. Sometimes they will have "eureka" moments where they "get" brilliantly simple answers to whole large problem sets. The inventor, and the process of invention are rare, precious, and can command a monopoly. History is full of such heroic individuals. We owe them our modern world.
 
 Looking closer, however, the facts don't match. History doesn't show lone inventors. It shows lucky people who steal or claim ownership of ideas that are being worked on by many. It shows brilliant people striking lucky once, and then spending decades on fruitless and pointless quests. The best known large-scale inventors like Thomas Edison were in fact just very good at systematic broad research done by large teams. It's like claiming that Steve Jobs invented every device made by Apple. It is a nice myth, good for marketing, but utterly useless as practical science.
 
-Recent history, much better documented and less easy to manipulate, shows this well. The Internet is surely one of the most innovative and fast-moving areas of technology. It has no inventor. Instead it has a massive economy of people who have carefully and progressively solved a long series of immediate problems, documented their answers, and made those available to all. The innovative nature of the Internet comes not from a small band of Einsteins. It comes from RFCs anyone can use and improve, made by hundreds and thousands of smart, but not uniquely smart, individuals. It comes from open source software anyone can use and improve. It comes from sharing, scale of community, and the continuous accretion of good solutions and disposal of bad ones.
+Recent history, much better documented and less easy to manipulate, shows this well. The Internet is surely one of the most innovative and fast-moving areas of technology, and one of the best documented. It has no inventor. Instead it has a massive economy of people who have carefully and progressively solved a long series of immediate problems, documented their answers, and made those available to all. The innovative nature of the Internet comes not from a small, select band of Einsteins. It comes from RFCs anyone can use and improve, made by hundreds and thousands of smart, but not uniquely smart, individuals. It comes from open source software anyone can use and improve. It comes from sharing, scale of community, and the continuous accretion of good solutions and disposal of bad ones.
 
 Here thus is my "Theory of Heuristic Innovation":
 
@@ -645,7 +647,7 @@ It's an approximation. Feel free to send me patches. There are a few takeaways f
 
 * //Individual creativity matters less than process.// Smarter people may work faster but they may work in the wrong direction. It's the collective vision of reality that keeps us honest and relevant.
 
-* //We don't need roadmaps if we have a good process.// Functionality will emerge and evolve over time as solutions compete for market share.
+* //We don't need road-maps if we have a good process.// Functionality will emerge and evolve over time as solutions compete for market share.
 
 * //We don't invent solutions, so much as discover them.// All sympathies to the creative soul. It's just an information processing machine that likes to polish its own ego and collect karma.
 
@@ -653,7 +655,9 @@ It's an approximation. Feel free to send me patches. There are a few takeaways f
 
 * //The size and diversity of the community is a key factor.// Larger, more diverse communities collect more relevant problems, and solve them more accurately, and do this faster, than a small expert group.
 
-People have pointed out that hill-climbing algorithms (what this is, essentially) have known limitations. One gets stuck on local peaks, mainly. But this is nonetheless how life itself works: collecting tiny incremental improvements over long periods of time. There is no intelligent designer. We reduce the risk of local peaks by spreading out widely across the landscape but it is somewhat moot. The limitations aren't optional. The theory says, //this is how innovation really works, so better embrace it and work with it, than try to work on the basis of belief//.
+People have pointed out that hill-climbing algorithms (what this is, essentially) have known limitations. One gets stuck on local peaks, mainly. But this is nonetheless how life itself works: collecting tiny incremental improvements over long periods of time. There is no intelligent designer. We reduce the risk of local peaks by spreading out widely across the landscape but it is somewhat moot. The limitations aren't optional, they are physical laws. The theory says, //this is how innovation really works, so better embrace it and work with it, than try to work on the basis of belief//.
+
+And in fact once you see all innovation as more or less successful hill-climbing, you realize why some teams and companies and products get stuck in a never-never land of diminishing prospects. They simply don't have the diversity and collective intelligence to find better hills to climb. When Nokia killed their open source projects, they cut their own throat.
 
 +++ Burnout
 
@@ -685,7 +689,7 @@ There is a simple cure for burnout which works in at least some cases: get paid 
 
 +++ Patterns for The Game
 
-I'll end this code-free chapter with a series of patterns for success in software engineering. They aim to capture the essence of what divides glorious success from tragic failure. They were described as "//religious maniacal dogma//" by a manager, and "//anything else would be effing insane//" by a colleague, in a single day. For me, they are science. But treat the Lazy Perfectionist and others as tools to use, sharpen, and throw away if something better comes along. 
+I'll end this code-free chapter with a series of patterns for success in software engineering. They aim to capture the essence of what divides glorious success from tragic failure. They were described as "religious maniacal dogma" by a manager, and "anything else would be effing insane" by a colleague, in a single day. For me, they are science. But treat the Lazy Perfectionist and others as tools to use, sharpen, and throw away if something better comes along.
 
 ++++ The Lazy Perfectionist
 
@@ -704,12 +708,6 @@ The Benevolent Tyrant divides large problems into smaller ones and throws them a
 //The ideal team consists of two sides: one writing code, and one providing feedback.//
 
 The Earth and Sky work together as a whole, in close proximity, but they communicate formally through an issue tracking. Sky seeks out problems, from others and from their own use of the product, and feeds these to Earth. Earth rapidly answers with testable solutions. Earth and Sky can work through dozens of issues in a day. Sky talks to other users, and Earth talks to other developers. Earth and Sky may be two people, or two small groups.
-
-++++ The Happy Failure
-
-//To succeed you must learn to fail rapidly, cheaply, and often.//
-
-The Happy Failure embraces failure as the only real way to learn. He focuses on reducing the cost of failure, and documenting failures so that everyone can learn from them. He does not over-specify functionality, stays away from upfront documentation, does not use test-driven development. All of these make it harder, and more costly to fail.
 
 ++++ The Open Door
 
@@ -788,5 +786,3 @@ The Provocateur creates deadlines, enemies, and the occasional impossibility. Te
 //When people argue or complain, just write them a Sun Tzu quotation// -- Mikko Koppanen
 
 The Mystic never argues directly. He knows that to argue with an emotional person only creates more emotion. Instead he side-steps the discussion. It's hard to be angry at a Chinese general, especially when he has been dead for 2,400 years. The Mystic plays Hangman when people insist on the right to get it wrong.
-
-.end

@@ -163,14 +163,14 @@ if [ "$CCNAME" = "gcc" ]; then
     #  If your build is failing because of missing libraries then
     #  either you are missing development packages, or are on a non-standard/old
     #  system and should add a special case.
-    STDLIBS="-lpthread -lm -luuid"
+    STDLIBS="-lpthread -lm"
 
     #
     #  Linux-specific subsection
     #
     if [ "$UTYPE" = "Linux" ]; then
         #  Use -start-group / -end-group for linking
-        STDLIBS="$STDLIBS -lrt -lcrypt"
+        STDLIBS="$STDLIBS -lrt -lcrypt -luuid"
         LINKTYPE="gnu"
     #
     #  Darwin-specific subsection

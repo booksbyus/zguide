@@ -19,6 +19,7 @@ echo "~~~~">> _template.wd
 echo "%%content%%">> _template.wd
 
 wdput zguide page _template "C Guide Template"
+wdput zguide py   _template "Python Guide Template"
 wdput zguide lua  _template "Lua Guide Template"
 wdput zguide hx   _template "Haxe Guide Template"
 wdput zguide php  _template "PHP Guide Template"

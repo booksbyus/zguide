@@ -47,13 +47,13 @@ So this is what this chapter is really about: writing code at scale by understan
 
 +++ Psychology of Software Development
 
-Dirkjan Ochtman pointed me to [http://en.wikipedia.org/wiki/Software_architecture Wikipedia's definition of Software Architecture] as "//the set of structures needed to reason about the system, which comprise software elements, relations among them, and properties of both//". For me this vapid and circular jargon is a good example of how miserably little we understand about what actually makes a successful large scale software architecture.
+Dirkjan Ochtman pointed me to [http://en.wikipedia.org/wiki/Software_architecture Wikipedia's definition of Software Architecture] as "the set of structures needed to reason about the system, which comprise software elements, relations among them, and properties of both". For me this vapid and circular jargon is a good example of how miserably little we understand about what actually makes a successful large scale software architecture.
 
 Architecture is the art and science of making large artificial structures for human use. If there is one thing I've learned and applied successfully in 30 years of making larger and larger software systems it is this: software is about people. Large structures in themselves are meaningless. It's how they function for //human use// that matters. And in software, human use starts with the programmers who make the software itself.
 
 The core problems in software architecture are driven by human psychology, not technology. There are many ways our psychology affects our work. I could point to the way teams seem to get stupider as they get larger, or have to work across larger distances. Does that mean the smaller the team, the more effective? How then does a large global community like 0MQ manage to work successfully?
 
-The 0MQ community wasn't accidental, it was a deliberate design, my contribution to the early days when the code came out of a cellar in Bratislava. The design was based on my pet science of "Social Architecture", which [http://en.wikipedia.org/wiki/Social_architecture Wikipedia defines] (what a coincidence!) as "//the process, and the product, of planning, designing, and growing an on-line community.//"
+The 0MQ community wasn't accidental, it was a deliberate design, my contribution to the early days when the code came out of a cellar in Bratislava. The design was based on my pet science of "Social Architecture", which [http://en.wikipedia.org/wiki/Social_architecture Wikipedia defines] (what a coincidence!) as "the process, and the product, of planning, designing, and growing an on-line community."
 
 One of the tenets of Social Architecture is that //how we organize// is more significant than //who we are//. The same group, organized differently, can produce entirely opposite results. We are like peers in a 0MQ network, and our communication patterns have dramatic impact on our performance. Ordinary people, well connected, can far outperform a team of experts working in the wrong patterns. If you're the architect of a larger 0MQ application, you're going to have to help others find the right patterns for working together. Do this right, and your project can succeed. Do it wrong, and your project will fail.
 
@@ -101,7 +101,7 @@ The main output of TODs are expensive "ideations": concepts, design documents, a
 
 * The Creative People come up with long lists of "we could do X and Y". I've seen endlessly detailed lists of everything amazing a product could do. Once the creative work of idea generation has happened, it's just a matter of execution, of course.
 
-* So the managers and their consultants pass their brilliant, world-shattering ideas to designers who acres of detailed, preciously refined design documents. The designers take the tens of ideas the managers came up with, and turn them into hundreds of amazing, world-changing designs.
+* So the managers and their consultants pass their brilliant, world-shattering ideas to designers who create acres of detailed, preciously refined design documents. The designers take the tens of ideas the managers came up with, and turn them into hundreds of amazing, world-changing designs.
 
 * These designs get given to engineers who scratch their heads and wonder who the heck came up with such stupid nonsense. They start to argue back but the designs come from up high, and really, it's not up to engineers to argue with creative people and expensive consultants.
 
@@ -119,7 +119,7 @@ Trash-Oriented Design would be a caricature if it wasn't so common. Something li
 
 The main lessons of TOD are quite straight-forward but hard to swallow. They are:
 
-* Ideas are cheap. No exceptions. There are no brilliant ideas. Anyone who tries to start a discussion with "oooh, we can do this too!" should be beaten down with all the passion one reserves for traveling evangelists. It is like sitting in a cafe at the foot of a mountain, drinking a hot chocolate and telling others, "//hey, I have a great idea, we can climb that mountain! And build a chalet on top! With two saunas! And a garden! Hey, and we can make it solar powered! Dude, that's awesome! What color should we paint it? Green! No, blue! OK, go and make it, I'll stay here and make spreadsheets and graphics!//"
+* Ideas are cheap. No exceptions. There are no brilliant ideas. Anyone who tries to start a discussion with "oooh, we can do this too!" should be beaten down with all the passion one reserves for traveling evangelists. It is like sitting in a cafe at the foot of a mountain, drinking a hot chocolate and telling others, "hey, I have a great idea, we can climb that mountain! And build a chalet on top! With two saunas! And a garden! Hey, and we can make it solar powered! Dude, that's awesome! What color should we paint it? Green! No, blue! OK, go and make it, I'll stay here and make spreadsheets and graphics!"
 
 * The starting point for a good design process is to collect real problems that confront real people. The second step is to evaluate these problems with the basic question, "how much is it worth to solve this problem?" Having done that, we can collect that set of problems that are worth solving.
 
@@ -149,7 +149,7 @@ COD is characterized by a team obsessively solving the wrong problems to the poi
 
 A good example of COD in practice is Bluetooth, a complex, over-designed set of protocols that users hate. It continues to exist only because in a massively-patented industry there are no real alternatives. Bluetooth is perfectly secure, which is close to pointless for a proximity protocol. At the same time it lacks a standard API for developers, meaning it's really costly to use Bluetooth in applications.
 
-On the #zeromq IRC channel, Wintre once wrote of how enraged he was many years ago when he "//found that XMMS 2 had a working plugin system but could not actually play music.//"
+On the #zeromq IRC channel, Wintre once wrote of how enraged he was many years ago when he "found that XMMS 2 had a working plugin system but could not actually play music."
 
 COD is a form of large-scale "rabbit holing", in which designers and engineers cannot distance themselves from the technical details of their work. They add more and more features, utterly misreading the economics of their work.
 
@@ -271,28 +271,13 @@ It used to be, decades ago, when the Internet was a young modest thing, that pro
 
 Now, 0MQ does appear to provide a living, successful protocol abstraction layer with its "we'll carry multi-part messages over random transports" way of working. Since 0MQ deals silently with framing, connections, and routing, it's surprisingly easy to write full protocol specs on top of 0MQ, and in Chapters four and five I showed how to do this.
 
-Somewhere around mid-2007, I kicked-off the Digital Standards Organization to define new simpler ways of producing little standards, protocols, specifications. In my defense, it was a quiet summer. At the time [http://www.digistan.org/spec:1 I wrote that] a new specification should take "//minutes to explain, hours to design, days to write, weeks to prove, months to become mature, and years to replace.//"
+Somewhere around mid-2007, I kicked-off the Digital Standards Organization to define new simpler ways of producing little standards, protocols, specifications. In my defense, it was a quiet summer. At the time [http://www.digistan.org/spec:1 I wrote that] a new specification should take "minutes to explain, hours to design, days to write, weeks to prove, months to become mature, and years to replace."
 
 In 2010 we started calling such little specifications "unprotocols", which some people might mistake for a dastardly plan for world domination by a shadowy international organization, but which really just means, "protocols without the goats".
 
 ++++ How to Write Unprotocols
 
-Here's an unprotocol called NOM that we'll come back to later in this chapter:
-
-[[code]]
-nom-protocol    = open-peering *use-peering
-
-open-peering    = C:OHAI ( S:OHAI-OK / S:WTF )
-
-use-peering     = C:ICANHAZ
-                / S:CHEEZBURGER
-                / C:HUGZ S:HUGZ-OK
-                / S:HUGZ C:HUGZ-OK
-[[/code]]
-
-I've actually used these keywords (OHAI, WTF) in commercial projects. They make developers giggly and happy. They confuse management. They're good in first drafts that you want to throw away later.
-
-When you start to write unprotocols, stick to a consistent structure so that your readers know what to expect. Here is the structure I use:
+When you start to write an unprotocol specification document, stick to a consistent structure so that your readers know what to expect. Here is the structure I use:
 
 * Cover section: with a 1-line summary, URL to the spec, formal name, version, who to blame.
 * License for the text: absolutely needed for public specifications.
@@ -315,7 +300,7 @@ Here are some key points about unprotocols:
 
 * If use an existing license then you don't have legal worries afterwards. I use GPLv3 for my public specifications and advise you to do the same. For in-house work, standard copyright is perfect.
 
-* The formality is valuable. That is, learn to write [http://www.ietf.org/rfc/rfc2234.txt ABNF] and use this to fully document your messages.
+* The formality is valuable. That is, learn to write a formal grammar such as ABNF (Augmented Backus-Naur Form) and use this to fully document your messages.
 
 * Use a market-driven life-cycle process like [http://www.digistan.org/spec:1 Digistan's COSS] so that people place the right weight on your specs as they mature (or don't).
 
@@ -330,6 +315,31 @@ Let me explain this in shorter words. Imagine iMatix writes a protocol today, th
 When you contribute to an open source project, you really want to know your hard work won't used against you by a closed-source competitor. Which is why the GPL beats the "more permissive" BSD/MIT/X11 licenses. These license give permission to cheat. This applies just as much to protocols as to source code.
 
 When you implement a GPLv3 specification, your applications are of course yours, and licensed any way you like. But you can be sure and certain of two things. One, that specification will //ever// be embraced and extended into proprietary forms. Any derived forms of the specification must also be GPLv3. Two, no-one who ever implements or uses the protocol will ever launch a patent attack on anything it covers.
+
+++++ Using ABNF
+
+My advice when writing protocol specs is to learn, and use a formal grammar. It's just less hassle than allowing others to interpret what you mean, and then recover from the inevitable false assumptions. The target of your grammar is other people, engineers, not compilers.
+
+My favorite grammar is ABNF, as defined by [http://www.ietf.org/rfc/rfc2234.txt RFC 2234], because it is probably the simplest and most widely used formal language for defining bidirectional communications protocols. Most IETF (Internet Engineering Task Force) specifications use ABNF, which is good company to be in.
+
+I'll give a 30-second crash course in writing ABNF. It may remind you of regular expressions. You write the grammar as rules. Each rule takes the form "name = elements". An element can be another rule (which you define below as another rule), or a pre-defined "terminal" like CRLF, OCTET, or a number. [http://www.ietf.org/rfc/rfc2234.txt The RFC] lists all the terminals. To define alternative elements, use "element / element". To define repetition, use "*" (read the RFC since it's not intuitive). To group elements, use parentheses.
+
+I'm not sure if this extension is proper, but I then prefix elements with "C:" and "S:" to indicate whether they come from the client or server.
+
+Here's a piece of ABNF for an unprotocol called NOM that we'll come back to later in this chapter:
+
+[[code]]
+nom-protocol    = open-peering *use-peering
+
+open-peering    = C:OHAI ( S:OHAI-OK / S:WTF )
+
+use-peering     = C:ICANHAZ
+                / S:CHEEZBURGER
+                / C:HUGZ S:HUGZ-OK
+                / S:HUGZ C:HUGZ-OK
+[[/code]]
+
+I've actually used these keywords (OHAI, WTF) in commercial projects. They make developers giggly and happy. They confuse management. They're good in first drafts that you want to throw away later.
 
 +++ Serializing your Data
 
@@ -446,7 +456,7 @@ So you can drive your choice according to the languages you're aiming for. If yo
 
 ++++ Serialization Libraries
 
-The msgpack.org site says, "//It's like JSON. but fast and small. MessagePack is an efficient binary serialization format. It lets you exchange data among multiple languages like JSON but it's faster and smaller. For example, small integers (like flags or error code) are encoded into a single byte, and typical short strings only require an extra byte in addition to the strings themselves.//"
+The msgpack.org site says, "It's like JSON. but fast and small. MessagePack is an efficient binary serialization format. It lets you exchange data among multiple languages like JSON but it's faster and smaller. For example, small integers (like flags or error code) are encoded into a single byte, and typical short strings only require an extra byte in addition to the strings themselves."
 
 I'm going to make the perhaps unpopular claim that "fast and small" are features that solve non-problems. The only real problem that serialization libraries solve is, as far as I can tell, the need to document the message contracts and actually serialize data to and from the wire.
 
@@ -518,7 +528,7 @@ What if I told you of a way to build custom IDL generators cheaply and quickly? 
 
 At iMatix, until a few years ago, we used code generation to build ever larger and more ambitious systems until we decided the technology (GSL) was too dangerous for common use, and we sealed the archive and locked it, with heavy chains, in a deep dungeon. Well, we actually posted it on github. If you want to try the examples that are coming up, grab [https://github.com/imatix/gsl the repository] and build yourself a {{gsl}} command. Typing "make" in the src subdirectory should do it (and if you're that guy who loves Windows, I'm sure you'll send a patch with project files).
 
-This section isn't really about GSL at all, but about a useful and little-known trick that's useful for ambitious architects who want to scale themselves, as well as their work. Once you learn the trick is, you can whip up your own code generators in a short time. The code generators most software engineers know about come with a single hard-coded model. For instance, Ragel //"compiles executable finite state machines from regular languages"//, i.e. Ragel's model is a regular language. This certainly works for a good set of problems but it's far from universal. How do you describe an API in Ragel? Or a project makefile? Or even a finite-state machine like the one we used to design the Binary Star pattern in Chapter 4?
+This section isn't really about GSL at all, but about a useful and little-known trick that's useful for ambitious architects who want to scale themselves, as well as their work. Once you learn the trick is, you can whip up your own code generators in a short time. The code generators most software engineers know about come with a single hard-coded model. For instance, Ragel "compiles executable finite state machines from regular languages", i.e. Ragel's model is a regular language. This certainly works for a good set of problems but it's far from universal. How do you describe an API in Ragel? Or a project makefile? Or even a finite-state machine like the one we used to design the Binary Star pattern in Chapter 4?
 
 All these would benefit from code generation, but there's no universal model. So the trick is to design your own models as you need them, then make code generators as cheap compilers for that model. You need some experience in how to make good models, and you need a technology that makes it cheap to build custom code generators. Scripting languages like Perl and Python are a good option. However we actually built GSL specifically for this, and that's what I prefer.
 
@@ -763,7 +773,7 @@ I've promised, for a year or two, to write a proper explanation. Here's a gratui
 
 So, file transfer. There are several reasons you can't just pick up a random file, blindfold it, and shove it whole into a message. The most obvious being that despite decades of determined growth in RAM sizes (and who among us old-timers doesn't fondly remember saving up for that 1,014-byte memory extension card?!), disk sizes obstinately remain much larger. Even if we could send a file with one instruction (say, using a system call like sendfile), we'd hit the reality that networks are not infinitely fast, nor perfectly reliable. After trying to upload a large file several times on a slow flaky network (WiFi, anyone?), you'll realize that a proper file transfer protocol needs a way to recover from failures. That is, a way to send only the part of a file that wasn't yet received.
 
-Finally, after all this, if you build a proper file server, you'll notice that simply sending massive amounts of data to lots of clients creates that situation we like to call, in the technical parlance, "//server went belly-up due to all available heap memory being eaten by a poorly-designed application//". A proper file transfer protocol needs to pay attention to memory use.
+Finally, after all this, if you build a proper file server, you'll notice that simply sending massive amounts of data to lots of clients creates that situation we like to call, in the technical parlance, "server went belly-up due to all available heap memory being eaten by a poorly-designed application". A proper file transfer protocol needs to pay attention to memory use.
 
 We'll solve these problems properly, one by one, which should hopefully get us to a good and proper file transfer protocol running over 0MQ. First, let's generate a 1GB test file with random data (real power-of-two-giga-like-Von-Neumman-intended, not the fake silicon ones the memory industry likes to sell):
 
@@ -790,7 +800,7 @@ Here's our first cut at the code, where the client asks for the test data and th
 
 It's pretty simple but we already run into a problem: if we send too much data to the ROUTER socket, we can easily overflow it. The simple but stupid solution is to put an infinite high-water mark on the socket. It's stupid because we now have no protection against exhausting the server's memory. Yet without an infinite HWM we risk losing chunks of large files.
 
-Try this: set the HWM to 1,000 (in 0MQ/3.x this is the default) and then reduce the chunk size to 100K so we send 10K chunks in one go. Run the test, and you'll see it never finishes. As the zmq_socket[3] man page says with cheerful brutality, for the ROUTER socket: "//ZMQ_HWM option action: Drop//".
+Try this: set the HWM to 1,000 (in 0MQ/3.x this is the default) and then reduce the chunk size to 100K so we send 10K chunks in one go. Run the test, and you'll see it never finishes. As the zmq_socket[3] man page says with cheerful brutality, for the ROUTER socket: "ZMQ_HWM option action: Drop".
 
 We have to control the amount of data the server sends up-front. There's no point in it sending more than the network can handle. Let's try sending one chunk at a time. In this version of the protocol, the client will explicitly say,"give me chunk N", and the server will fetch that specific chunk from disk and send it.
 
@@ -912,7 +922,7 @@ So far, our semantic has been "fetch"; that is, the recipient knows (somehow), t
 
 How about a "push" semantic? There are two plausible use-cases for this. First, if we adopt a centralized architecture with files on a main "server" (not something I'm advocating, but people do sometimes like this), then it's very useful to allow clients to upload files to the server. Second, it lets do a kind of pub-sub for files, where the client asks for all new files of some type; as the server gets these, it forwards them to the client.
 
-A fetch semantic is synchronous, while a push semantic is asynchronous. Asynchronous is less chatty, so faster. Also, you can do cute things like "//subscribe to this path//" so creating a publish-subscribe file transfer architecture. That is so obviously awesome that I shouldn't need to explain what problem it solves.
+A fetch semantic is synchronous, while a push semantic is asynchronous. Asynchronous is less chatty, so faster. Also, you can do cute things like "subscribe to this path" so creating a publish-subscribe file transfer architecture. That is so obviously awesome that I shouldn't need to explain what problem it solves.
 
 Still, here is the problem with the fetch semantic: that out-of-band route to tell clients what files exist. No matter how you do this, it ends up complex. Either clients have to poll, or you need a separate pub-sub channel to keep clients up to date, or you need user interaction.
 
@@ -1333,7 +1343,7 @@ If we wrap this C API in other languages, we can easily script FileMQ, embed it 
 
 ++++ Initial Design Cut - the Protocol
 
-To start with we write down the protocol as an ABNF grammar. The grammar starts with the flow of commands between the client and server. You should recognize these as a combination of the various techniques we've seen already:
+To start with we write down the protocol as an ABNF grammar. Our grammar starts with the flow of commands between the client and server. You should recognize these as a combination of the various techniques we've seen already:
 
 [[code]]
 filemq-protocol = open-peering *use-peering [ close-peering ]
@@ -1431,16 +1441,16 @@ cd filemq
 make check
 [[/code]]
 
-You want to be using the latest CZMQ master for this. Now try running the {{filemq}} service:
+You want to be using the latest CZMQ master for this. Now try running the {{track}} command, which is a simple tool that uses FileMQ to track changes in one directory in another:
 
 [[code]]
 cd src
-./filemq
+./track ./fmqroot/send ./fmqroot/recv
 [[/code]]
 
 And open two file navigator windows, one into {{src/fmqroot/send}} and one into {{src/fmqroot/recv}}. Drop files into the send folder and you'll see them arrive in the recv folder. The server checks once per second for new files. Delete files in the send folder, and they're deleted in the recv folder similarly.
 
-This isn't a full replication protocol though the delete function suggests that it might become one.
+I use track for things like updating my MP3 player mounted as a USB drive. As I add or remove files in my laptop's Music folder, the same changes happen on the MP3 player. FILEMQ isn't a full replication protocol it might become one.
 
 ++++ Internal Architecture
 
@@ -1502,6 +1512,12 @@ zmq_bind (self->router, endpoint);
 mount_t *mount = mount_new (location, alias);
 zlist_append (self->mounts, mount);
 </method>
+
+<method name = "set anonymous">
+<argument name = "access" type = "number" />
+//  Enable anonymous access without a config file
+fmq_config_path_set (self->config, "security/anonymous", access? "1" :"0");
+</method>
 [[/code]]
 
 ++++ Design Notes
@@ -1510,17 +1526,17 @@ The hardest part of making FileMQ wasn't the protocol part, but maintaining accu
 
 So I'll go through some of the design aspects:
 
-* The server and client use virtual paths, much like an HTTP or FTP server. You define the "root" to be, e.g. ./fmqroot/recv, and then file names are relative to that root. Sending physical file names across the network is not a good idea.
-
 * The client detects if the server has died by the lack of heartbeats (HUGZ) coming from the server. It then restarts its dialog by sending an OHAI. There's no timeout on the OHAI since the 0MQ DEALER socket will queue an outgoing message indefinitely.
 
 * The server detects if a client has died by its lack of response (HUGZ-OK) to a heartbeat. In that case it deletes all state for the client including its subscriptions.
 
 * The client API holds subscriptions in memory and replays them when it has connected successfully. This means the called can subscribe at any time (and doesn't care when connections and authentication actually happen).
 
-* The server allows multiple "mount points", i.e. real directories in different places that are presented to clients as a single tree they can subscribe against.
+* The server and client use virtual paths, much like an HTTP or FTP server. You publish one or more "mount points" each corresponding to a directory on the server. Each of these maps to some virtual path, for instance "/" if you have only one mount point. Clients then subscribe to virtual paths, and files arrive in an inbox directory. We don't send physical file names across the network.
 
 * There are some timing issues: if the server is creating its mount points, while clients are connected and subscribing, the subscriptions won't attach to the right mount points. So, we bind the server port as last thing.
+
+* Clients can reconnect at any point; if the client sends OHAI, that signals the end of any previous conversation and the start of a new one. I might one day make subscriptions durable so that they survive a disconnection. The client stack, after reconnecting, replays any subscriptions the caller application already made.
 
 ++++ Reliabilty
 
@@ -1588,3 +1604,48 @@ It is quite common to poll a directory for changes and then do something 'intere
 There is a neater way, which is to detect when a file is "stable", i.e. no-one is writing to it any longer. FileMQ does this by checking the modification time of the file. If it's more than a second old, then the file is considered stable, at least stable enough to be shipped off to clients. If a process comes along after five minutes and appends to the file, it'll be shipped off again.
 
 For this to work, and this is a requirement for any application hoping to use FileMQ successfully, do not buffer more than a second's worth of data in memory before writing. If you use very large block sizes, the file may look stable when it's not.
+
++++ Test Use Case
+
+To properly test something like FileMQ we need a test case that plays with live data. One of my ongoing chores is to manage the MP3 tracks on my music player, which is a Sansa Clip reflashed with Rock Box (highly recommended). As I download tracks into my Music folder I want to copy these to my player, and as I find tracks that annoy me, I delete them in the Music folder and want those gone from my player too.
+
+This is kind of over-kill for a powerful file distribution protocol. I could write this using a bash or Perl script but to be honest the hardest work in FileMQ was the directory comparison code, and I want to benefit from that. So I put together a simple tool called "track" which calls the FileMQ API. From the command line this runs with two arguments; the sending and the receiving directories:
+
+[[code]]
+./track /home/ph/Music /media/3230-6364/MUSIC
+[[/code]]
+
+The code is a neat example of how to use the FileMQ API to do local file distribution. Here is the full program, minus the license text (it's MIT/X11 licensed):
+
+[[code language="C"]]
+#include "czmq.h"
+#include "../include/fmq.h"
+
+int main (int argc, char *argv [])
+{
+    if (argc < 3) {
+        puts ("usage: track original-directory tracking-directory");
+        return 0;
+    }
+    fmq_server_t *server = fmq_server_new ();
+    fmq_server_configure (server, "anonymous.cfg");
+    fmq_server_publish (server, argv [1], "/");
+    fmq_server_set_anonymous (server, true);
+    fmq_server_bind (server, "tcp://*:6000");
+
+    fmq_client_t *client = fmq_client_new ();
+    fmq_client_connect   (client, "tcp://localhost:6000");
+    fmq_client_set_inbox (client, argv [2]);
+    fmq_client_subscribe (client, "/");
+
+    while (!zctx_interrupted)
+        sleep (1);
+    puts ("interrupted");
+
+    fmq_server_destroy (&server);
+    fmq_client_destroy (&client);
+    return 0;
+}
+[[/code]]
+
+Note how we work with physical paths in this tool. The server publishes the physical path "/home/ph/Music" and maps this to the virtual path "/". The client subscribes to "/" and receives all files in "/media/3230-6364/MUSIC". I could use any structure within the server directory, and it would be copied faithfully to the client's inbox.

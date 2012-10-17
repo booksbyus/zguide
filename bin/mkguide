@@ -22,14 +22,18 @@ function upload {
 function mkone {
     export Z2W_LANG=$1
     export Z2W_FORM=$2
-    echo "[[include $3:chapter1]]"  > all.wd
+    echo "[[include $3:preface]]"   > all.wd
+    echo "[[include $3:chapter1]]" >> all.wd
     echo "[[include $3:chapter2]]" >> all.wd
     echo "[[include $3:chapter3]]" >> all.wd
     echo "[[include $3:chapter4]]" >> all.wd
     echo "[[include $3:chapter5]]" >> all.wd
     echo "[[include $3:chapter6]]" >> all.wd
     echo "[[include $3:chapter7]]" >> all.wd
-    bin/z2w chapter*.txt
+    echo "[[include $3:chapter8]]" >> all.wd
+    echo "[[include $3:postface]]" >> all.wd
+    bin/z2w preface.txt chapter*.txt postface.txt
+    upload $3 preface  "Preface"
     upload $3 chapter1 "Chapter One"
     upload $3 chapter2 "Chapter Two"
     upload $3 chapter3 "Chapter Three"
@@ -37,6 +41,8 @@ function mkone {
     upload $3 chapter5 "Chapter Five"
     upload $3 chapter6 "Chapter Six"
     upload $3 chapter7 "Chapter Seven"
+    upload $3 chapter8 "Chapter Eight"
+    upload $3 postface "Postface"
     upload $3 all "ØMQ - The Guide"
     sh ./upload.sh
     rm upload.sh
