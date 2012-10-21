@@ -126,7 +126,7 @@ lovely children in Brussels, Belgium and travels extensively.</para></authorblur
 
 <para>Thanks to Stathis Sideris for <ulink url="http://www.ditaa.org">Ditaa</ulink>.</para>
 
-<para>Thanks finally to Allen Ding, Mikko Koppanen, and the folk in Dallas for your encouragement and support in 2012.</para>
+<para>And finally, thanks to Allen Ding, Mikko Koppanen, and y'all in Dallas for your support.</para>
 
 </sect1>
 </preface>
@@ -234,7 +234,7 @@ int main (void)
     <title>Request-Reply</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig1.eps" format="EPS"/>
+            <imagedata fileref="images/fig1.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -366,7 +366,7 @@ int main (void)
     <title>A terrible accident...</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig2.eps" format="EPS"/>
+            <imagedata fileref="images/fig2.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -402,7 +402,7 @@ socket.send ("Hello")
     <title>A &Oslash;MQ string</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig3.eps" format="EPS"/>
+            <imagedata fileref="images/fig3.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -514,7 +514,7 @@ int main (void)
     <title>Publish-Subscribe</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig4.eps" format="EPS"/>
+            <imagedata fileref="images/fig4.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -598,7 +598,7 @@ int main (int argc, char *argv [])
   <listitem><para>A subscriber can connect to more than one publisher, using one 'connect' call each time. Data will then arrive and be interleaved ("fair-queued") so that no single publisher drowns out the others.</para></listitem>
   <listitem><para>If a publisher has no connected subscribers, then it will simply drop all messages.</para></listitem>
   <listitem><para>If you're using TCP, and a subscriber is slow, messages will queue up on the publisher. We'll look at how to protect publishers against this, using the "high-water mark" later.</para></listitem>
-  <listitem><para>In the current versions of &Oslash;MQ, filtering happens at the subscriber side, not the publisher side. This means, over TCP, that a publisher will send all messages to all subscribers, which will then drop messages they don't want.</para></listitem>
+  <listitem><para>From &Oslash;MQ 3.x, filtering happens at the publisher side, when using a connected protocol (tcp:// or ipc://). Using the epgm:// protocol, filtering happens at the subscriber side. In &Oslash;MQ/2.x, all filtering happened at the subscriber side.</para></listitem>
 </itemizedlist>
 <para>This is how long it takes to receive and filter 10M messages on my laptop, which is an 2011-era Intel I7, fast but nothing special:</para>
 
@@ -682,7 +682,7 @@ int main (void)
     <title>Parallel Pipeline</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig5.eps" format="EPS"/>
+            <imagedata fileref="images/fig5.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -805,7 +805,7 @@ Total elapsed time: 1018 msec
     <title>Fair Queuing</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig6.eps" format="EPS"/>
+            <imagedata fileref="images/fig6.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -977,7 +977,7 @@ worker_thread (void *arg) {
     <title>Messaging as it Starts</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig7.eps" format="EPS"/>
+            <imagedata fileref="images/fig7.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -996,7 +996,7 @@ worker_thread (void *arg) {
     <title>Messaging as it Becomes</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig8.eps" format="EPS"/>
+            <imagedata fileref="images/fig8.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -1058,7 +1058,7 @@ wuclient 56789 &amp;
     <title>Missing Message Problem Solver</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig9.eps" format="EPS"/>
+            <imagedata fileref="images/fig9.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -1074,7 +1074,7 @@ wuclient 56789 &amp;
 
 <para>The main change in 3.x is that PUB-SUB works properly, as in, the publisher only sends subscribers stuff they actually want. In 2.x, publishers send everything and the subscribers filter. Simple, but not ideal for performance on a TCP network.</para>
 
-<para>Most of the API is backwards compatible, except a few blockheaded changes that went into 3.0 with no real regard to the cost of breaking existing code. The syntax of zmq_send[3] and zmq_recv[3] changed, and ZMQ_NOBLOCK got rebaptised to ZMQ_DONTWAIT. So although I'd love to say, <emphasis>"you just recompile your code with the latest libzmq and everything will work"</emphasis>, that's not how it is. For what it's worth, we banned such API breakage afterwards.</para>
+<para>Most of the API is backwards compatible, except a few blockheaded changes that went into 3.0 with no real regard to the cost of breaking existing code. The syntax of zmq_send[3] and zmq_recv[3] changed, and ZMQ_NOBLOCK got rebaptised to ZMQ_DONTWAIT. So although I'd love to say, "you just recompile your code with the latest libzmq and everything will work", that's not how it is. For what it's worth, we banned such API breakage afterwards.</para>
 
 <para>So the minimal change for C/C++ apps that use the low-level libzmq API is to replace all calls to zmq_send with zmq_msg_send, and zmq_recv with zmq_msg_recv. In other languages, your binding author may have done the work already. Note that these two functions now return -1 in case of error, and zero or more according to how many bytes were sent or received.</para>
 
@@ -1123,7 +1123,7 @@ wuclient 56789 &amp;
 </itemizedlist>
 <sect1>
 <title>The Zen of Zero</title>
-<para>The &Oslash; in &Oslash;MQ is all about tradeoffs. On the one hand this strange name lowers &Oslash;MQ's visibility on Google and Twitter. On the other hand it annoys the heck out of some Danish folk who write us things like "&Oslash;MG r&oslash;tfl", and "<emphasis>&Oslash; is not a funny looking zero!</emphasis>" and "<emphasis>R&oslash;dgr&oslash;d med Fl&oslash;de!</emphasis>", which is apparently an insult that means "may your neighbours be the direct descendants of Grendel!"  Seems like a fair trade.</para>
+<para>The &Oslash; in &Oslash;MQ is all about tradeoffs. On the one hand this strange name lowers &Oslash;MQ's visibility on Google and Twitter. On the other hand it annoys the heck out of some Danish folk who write us things like "&Oslash;MG r&oslash;tfl", and "&Oslash; is not a funny looking zero!" and "<emphasis>R&oslash;dgr&oslash;d med Fl&oslash;de!</emphasis>", which is apparently an insult that means "may your neighbours be the direct descendants of Grendel!"  Seems like a fair trade.</para>
 
 <para>Originally the zero in &Oslash;MQ was meant as "zero broker" and (as close to) "zero latency" (as possible). In the meantime it has come to cover different goals: zero administration, zero cost, zero waste. More generally, "zero" refers to the culture of minimalism that permeates the project. We add power by removing complexity rather than exposing new functionality.</para>
 
@@ -1221,7 +1221,7 @@ zmq_bind (socket, "ipc://myserver.ipc");
     <title>TCP sockets are 1 to 1</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig10.eps" format="EPS"/>
+            <imagedata fileref="images/fig10.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -1238,7 +1238,7 @@ zmq_bind (socket, "ipc://myserver.ipc");
     <title>&Oslash;MQ Sockets are N to N</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig11.eps" format="EPS"/>
+            <imagedata fileref="images/fig11.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -1261,7 +1261,7 @@ zmq_bind (socket, "ipc://myserver.ipc");
 </sect1>
 <sect1>
 <title>&Oslash;MQ is Not a Neutral Carrier</title>
-<para>A common question that newcomers to &Oslash;MQ ask (it's one I asked myself) is something like, "<emphasis>how do I write a XYZ server in &Oslash;MQ?</emphasis>"  For example, "how do I write an HTTP server in &Oslash;MQ?"</para>
+<para>A common question that newcomers to &Oslash;MQ ask (it's one I asked myself) is something like, "how do I write a XYZ server in &Oslash;MQ?" For example, "how do I write an HTTP server in &Oslash;MQ?"</para>
 
 <para>The implication is that if we use normal sockets to carry HTTP requests and responses, we should be able to use &Oslash;MQ sockets to do the same, only much faster and better.</para>
 
@@ -1271,7 +1271,7 @@ zmq_bind (socket, "ipc://myserver.ipc");
     <title>HTTP On the Wire</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig12.eps" format="EPS"/>
+            <imagedata fileref="images/fig12.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -1282,7 +1282,7 @@ zmq_bind (socket, "ipc://myserver.ipc");
     <title>&Oslash;MQ On the Wire</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig13.eps" format="EPS"/>
+            <imagedata fileref="images/fig13.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -1628,7 +1628,7 @@ if (rc != 0) {
     <title>Parallel Pipeline with Kill Signaling</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig14.eps" format="EPS"/>
+            <imagedata fileref="images/fig14.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -1950,7 +1950,7 @@ while (1) {
     <title>Small-scale Pub-Sub Network</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig15.eps" format="EPS"/>
+            <imagedata fileref="images/fig15.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -1965,7 +1965,7 @@ while (1) {
     <title>Pub-Sub Network with a Proxy</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig16.eps" format="EPS"/>
+            <imagedata fileref="images/fig16.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -1976,7 +1976,7 @@ while (1) {
     <title>Extended Publish-Subscribe</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig17.eps" format="EPS"/>
+            <imagedata fileref="images/fig17.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -1992,7 +1992,7 @@ while (1) {
     <title>Load-balancing of Requests</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig18.eps" format="EPS"/>
+            <imagedata fileref="images/fig18.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -2015,7 +2015,7 @@ while (1) {
     <title>Extended Request-reply</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig19.eps" format="EPS"/>
+            <imagedata fileref="images/fig19.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -2166,7 +2166,7 @@ int main (void)
     <title>Request-reply Broker</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig20.eps" format="EPS"/>
+            <imagedata fileref="images/fig20.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -2217,7 +2217,7 @@ int main (void)
 </programlisting>
 
 </example>
-<para>If you're like most &Oslash;MQ users, at this stage your mind is starting to think, "<emphasis>what kind of evil stuff can I do if I plug random socket types into the proxy?</emphasis>"  The short answer is: try it and work out what is happening. In practice you would usually stick to ROUTER/DEALER, XSUB/XPUB, or PULL/PUSH.</para>
+<para>If you're like most &Oslash;MQ users, at this stage your mind is starting to think, "what kind of evil stuff can I do if I plug random socket types into the proxy?"  The short answer is: try it and work out what is happening. In practice you would usually stick to ROUTER/DEALER, XSUB/XPUB, or PULL/PUSH.</para>
 
 </sect2>
 <sect2>
@@ -2261,7 +2261,7 @@ int main (void)
     <title>Pub-Sub Forwarder Proxy</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig21.eps" format="EPS"/>
+            <imagedata fileref="images/fig21.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -2278,7 +2278,7 @@ int main (void)
 
 <para>If you've spent years learning tricks to make your MT code work at all, let alone rapidly, with locks and semaphores and critical sections, you will be disgusted when you realize it was all for nothing. If there's one lesson we've learned from 30+ years of concurrent programming it is: <emphasis>just don't share state</emphasis>. It's like two drunkards trying to share a beer. It doesn't matter if they're good buddies. Sooner or later they're going to get into a fight. And the more drunkards you add to the table, the more they fight each other over the beer. The tragic majority of MT applications look like drunken bar fights.</para>
 
-<para>The list of weird problems that you need to fight as you write classic shared-state MT code would be hilarious if it didn't translate directly into stress and risk, as code that seems to work suddenly fails under pressure. Here is a list of "<emphasis>11 Likely Problems In Your Multithreaded Code</emphasis>" from a large firm with world-beating experience in buggy code: forgotten synchronization, incorrect granularity, read and write tearing, lock-free reordering, lock convoys, two-step dance, and priority inversion.</para>
+<para>The list of weird problems that you need to fight as you write classic shared-state MT code would be hilarious if it didn't translate directly into stress and risk, as code that seems to work suddenly fails under pressure. Here is a list of "11 Likely Problems In Your Multithreaded Code" from a large firm with world-beating experience in buggy code: forgotten synchronization, incorrect granularity, read and write tearing, lock-free reordering, lock convoys, two-step dance, and priority inversion.</para>
 
 <para>Yeah, we also counted seven, not eleven. That's not the point though. The point is, do you really want that code running the power grid or stock market to start getting two-step lock convoys at 3pm on a busy Thursday? Who cares what the terms actually mean. This is not what turned us on to programming, fighting ever more complex side-effects with ever more complex hacks.</para>
 
@@ -2378,7 +2378,7 @@ int main (void)
     <title>Multithreaded Server</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig22.eps" format="EPS"/>
+            <imagedata fileref="images/fig22.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -2460,7 +2460,7 @@ int main (void)
     <title>The Relay Race</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig23.eps" format="EPS"/>
+            <imagedata fileref="images/fig23.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -2553,7 +2553,7 @@ int main (void)
     <title>Pub-Sub Synchronization</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig24.eps" format="EPS"/>
+            <imagedata fileref="images/fig24.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -2685,7 +2685,7 @@ zmq_msg_send (socket, &amp;message, 0);
     <title>Pub-Sub Envelope with Separate Key</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig25.eps" format="EPS"/>
+            <imagedata fileref="images/fig25.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -2778,7 +2778,7 @@ int main (void)
     <title>Pub-Sub Envelope with Sender Address</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig26.eps" format="EPS"/>
+            <imagedata fileref="images/fig26.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -2866,7 +2866,7 @@ int main (void)
     <title>Single-hop Request-reply Envelope</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig27.eps" format="EPS"/>
+            <imagedata fileref="images/fig27.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -2884,7 +2884,7 @@ int main (void)
     <title>Multihop Request-reply Envelope</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig28.eps" format="EPS"/>
+            <imagedata fileref="images/fig28.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -2905,7 +2905,7 @@ int main (void)
     <title>ROUTER Invents a UUID</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig29.eps" format="EPS"/>
+            <imagedata fileref="images/fig29.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -2916,7 +2916,7 @@ int main (void)
     <title>ROUTER uses Identity If It knows It</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig30.eps" format="EPS"/>
+            <imagedata fileref="images/fig30.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -3017,7 +3017,7 @@ int main (void)
     <title>ROUTER-to-DEALER Custom Routing</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig31.eps" format="EPS"/>
+            <imagedata fileref="images/fig31.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -3147,7 +3147,7 @@ int main (void)
     <title>Routing Envelope for DEALER</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig32.eps" format="EPS"/>
+            <imagedata fileref="images/fig32.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -3178,7 +3178,7 @@ int main (void)
     <title>ROUTER to REQ Custom Routing</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig33.eps" format="EPS"/>
+            <imagedata fileref="images/fig33.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -3313,7 +3313,7 @@ Processed: 10 tasks
     <title>Routing Envelope for REQ</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig34.eps" format="EPS"/>
+            <imagedata fileref="images/fig34.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -3337,7 +3337,7 @@ Processed: 10 tasks
     <title>ROUTER-to-REP Custom Routing</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig35.eps" format="EPS"/>
+            <imagedata fileref="images/fig35.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -3433,7 +3433,7 @@ int main (void)
     <title>Routing Envelope for REP</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig36.eps" format="EPS"/>
+            <imagedata fileref="images/fig36.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -3449,7 +3449,7 @@ int main (void)
     <title>Basic Request-reply</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig37.eps" format="EPS"/>
+            <imagedata fileref="images/fig37.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -3460,7 +3460,7 @@ int main (void)
     <title>Stretched Request-reply</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig38.eps" format="EPS"/>
+            <imagedata fileref="images/fig38.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -3473,7 +3473,7 @@ int main (void)
     <title>Stretched Request-reply with LRU</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig39.eps" format="EPS"/>
+            <imagedata fileref="images/fig39.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -3693,7 +3693,7 @@ int main (void)
     <title>Message that Client Sends</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig40.eps" format="EPS"/>
+            <imagedata fileref="images/fig40.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -3704,7 +3704,7 @@ int main (void)
     <title>Message Coming in on Frontend</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig41.eps" format="EPS"/>
+            <imagedata fileref="images/fig41.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -3715,7 +3715,7 @@ int main (void)
     <title>Message Sent to Backend</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig42.eps" format="EPS"/>
+            <imagedata fileref="images/fig42.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -3726,7 +3726,7 @@ int main (void)
     <title>Message Delivered to Worker</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig43.eps" format="EPS"/>
+            <imagedata fileref="images/fig43.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -4153,7 +4153,7 @@ int main (void)
     <title>Asynchronous Client-Server</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig44.eps" format="EPS"/>
+            <imagedata fileref="images/fig44.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -4320,7 +4320,7 @@ int main (void)
     <title>Detail of Asynchronous Server</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig45.eps" format="EPS"/>
+            <imagedata fileref="images/fig45.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -4389,7 +4389,7 @@ int main (void)
     <title>Cluster Architecture</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig46.eps" format="EPS"/>
+            <imagedata fileref="images/fig46.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -4403,7 +4403,7 @@ int main (void)
     <title>Multiple Clusters</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig47.eps" format="EPS"/>
+            <imagedata fileref="images/fig47.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -4421,7 +4421,7 @@ int main (void)
     <title>Idea 1 - Cross-connected Workers</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig48.eps" format="EPS"/>
+            <imagedata fileref="images/fig48.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -4434,12 +4434,12 @@ int main (void)
     <title>Idea 2 - Brokers Talking to Each Other</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig49.eps" format="EPS"/>
+            <imagedata fileref="images/fig49.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
 
-<para>This design is appealing because the problem is solved in one place, invisible to the rest of the world. Basically, brokers open secret channels to each other and whisper, like camel traders, "<emphasis>Hey, I've got some spare capacity, if you have too many clients give me a shout and we'll deal"</emphasis>.</para>
+<para>This design is appealing because the problem is solved in one place, invisible to the rest of the world. Basically, brokers open secret channels to each other and whisper, like camel traders, "Hey, I've got some spare capacity, if you have too many clients give me a shout and we'll deal".</para>
 
 <para>It is in effect just a more sophisticated routing algorithm: brokers become subcontractors for each other. Other things to like about this design, even before we play with real code:</para>
 
@@ -4468,7 +4468,7 @@ int main (void)
     <title>Cross-connected Brokers in Federation Model</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig50.eps" format="EPS"/>
+            <imagedata fileref="images/fig50.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -4514,7 +4514,7 @@ int main (void)
     <title>Broker Socket Arrangement</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig51.eps" format="EPS"/>
+            <imagedata fileref="images/fig51.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -4530,7 +4530,7 @@ int main (void)
     <title>The State Flow</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig52.eps" format="EPS"/>
+            <imagedata fileref="images/fig52.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -4641,7 +4641,7 @@ peering1 DC3 DC1 DC2  #  Start DC3 and connect to DC1 and DC2
     <title>The Flow of Tasks</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig53.eps" format="EPS"/>
+            <imagedata fileref="images/fig53.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -5381,7 +5381,7 @@ int main (int argc, char *argv [])
     <title>The Lazy Pirate Pattern</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig54.eps" format="EPS"/>
+            <imagedata fileref="images/fig54.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -5573,7 +5573,7 @@ E: server seems to be offline, abandoning
     <title>The Simple Pirate Pattern</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig55.eps" format="EPS"/>
+            <imagedata fileref="images/fig55.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -5688,7 +5688,7 @@ int main (void)
     <title>The Paranoid Pirate Pattern</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig56.eps" format="EPS"/>
+            <imagedata fileref="images/fig56.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -6179,7 +6179,7 @@ while (1) {
     <title>The Majordomo Pattern</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig57.eps" format="EPS"/>
+            <imagedata fileref="images/fig57.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -7724,7 +7724,7 @@ int main (int argc, char *argv [])
     <title>The Titanic Pattern</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig58.eps" format="EPS"/>
+            <imagedata fileref="images/fig58.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -8240,7 +8240,7 @@ s_service_success (char *uuid)
     <title>High-availability Pair, Normal Operation</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig59.eps" format="EPS"/>
+            <imagedata fileref="images/fig59.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -8256,7 +8256,7 @@ s_service_success (char *uuid)
     <title>High-availability Pair During Failover</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig60.eps" format="EPS"/>
+            <imagedata fileref="images/fig60.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -8708,7 +8708,7 @@ bstarcli
     <title>Binary Star Finite State Machine</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig61.eps" format="EPS"/>
+            <imagedata fileref="images/fig61.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -9038,7 +9038,7 @@ int main (int argc, char *argv [])
     <title>The Freelance Pattern</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig62.eps" format="EPS"/>
+            <imagedata fileref="images/fig62.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -10160,7 +10160,7 @@ int main (void)
     <title>The Simple Black Box Pattern</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig63.eps" format="EPS"/>
+            <imagedata fileref="images/fig63.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -10177,7 +10177,7 @@ int main (void)
     <title>Mad Black Box Pattern</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig64.eps" format="EPS"/>
+            <imagedata fileref="images/fig64.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -10241,7 +10241,7 @@ int main (void)
     <title>Simplest Clone Model</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig65.eps" format="EPS"/>
+            <imagedata fileref="images/fig65.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -10776,7 +10776,7 @@ kvmsg_test (int verbose)
     <title>State Replication</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig66.eps" format="EPS"/>
+            <imagedata fileref="images/fig66.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -11009,7 +11009,7 @@ int main (void)
     <title>Republishing Updates</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig67.eps" format="EPS"/>
+            <imagedata fileref="images/fig67.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -12046,7 +12046,7 @@ s_flush_ttl (zloop_t *loop, zmq_pollitem_t *poller, void *args)
     <title>Clone Client Finite State Machine</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig68.eps" format="EPS"/>
+            <imagedata fileref="images/fig68.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -12076,7 +12076,7 @@ s_flush_ttl (zloop_t *loop, zmq_pollitem_t *poller, void *args)
     <title>High-availability Clone Server Pair</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig69.eps" format="EPS"/>
+            <imagedata fileref="images/fig69.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -12991,7 +12991,7 @@ s_subscriber (zloop_t *loop, zmq_pollitem_t *poller, void *args)
 <title>Clone Protocol Specification</title>
 <para>After this much work to build reliable pub-sub, we want some guarantee that we can safely build applications to exploit the work. A good start is to write-up the protocol. This lets us make implementations in other languages and lets us improve the design on paper, rather than hands-deep in code.</para>
 
-<para>Here, then, is the Clustered Hashmap Protocol, which "<emphasis>defines a cluster-wide key-value hashmap, and mechanisms for sharing this across a set of clients. CHP allows clients to work with subtrees of the hashmap, to update values, and to define ephemeral values.</emphasis>"</para>
+<para>Here, then, is the Clustered Hashmap Protocol, which "defines a cluster-wide key-value hashmap, and mechanisms for sharing this across a set of clients. CHP allows clients to work with subtrees of the hashmap, to update values, and to define ephemeral values."</para>
 
 <itemizedlist>
   <listitem><para>http://rfc.zeromq.org/spec:12</para></listitem>
@@ -13153,14 +13153,14 @@ int main (int argc, char *argv [])
     //  Send out all 1,000 topic messages
     int topic_nbr;
     for (topic_nbr = 0; topic_nbr &lt; 1000; topic_nbr++) {
-        zstr_sendfm (publisher, "%03d", topic_nbr);
+        zstr_sendfm (publisher, "%03d", topic_nbr, ZMQ_SNDMORE);
         zstr_send (publisher, "Save Roger");
     }
     //  Send one random update per second
     srandom ((unsigned) time (NULL));
     while (!zctx_interrupted) {
         sleep (1);
-        zstr_sendfm (publisher, "%03d", randof (1000));
+        zstr_sendfm (publisher, "%03d", randof (1000), ZMQ_SNDMORE);
         zstr_send (publisher, "Off with his head!");
     }
     zctx_destroy (&amp;context);
@@ -13376,13 +13376,13 @@ int main (void)
 </sect1>
 <sect1>
 <title>Psychology of Software Development</title>
-<para>Dirkjan Ochtman pointed me to <ulink url="http://en.wikipedia.org/wiki/Software_architecture">Wikipedia's definition of Software Architecture</ulink> as "<emphasis>the set of structures needed to reason about the system, which comprise software elements, relations among them, and properties of both</emphasis>". For me this vapid and circular jargon is a good example of how miserably little we understand about what actually makes a successful large scale software architecture.</para>
+<para>Dirkjan Ochtman pointed me to <ulink url="http://en.wikipedia.org/wiki/Software_architecture">Wikipedia's definition of Software Architecture</ulink> as "the set of structures needed to reason about the system, which comprise software elements, relations among them, and properties of both". For me this vapid and circular jargon is a good example of how miserably little we understand about what actually makes a successful large scale software architecture.</para>
 
 <para>Architecture is the art and science of making large artificial structures for human use. If there is one thing I've learned and applied successfully in 30 years of making larger and larger software systems it is this: software is about people. Large structures in themselves are meaningless. It's how they function for <emphasis>human use</emphasis> that matters. And in software, human use starts with the programmers who make the software itself.</para>
 
 <para>The core problems in software architecture are driven by human psychology, not technology. There are many ways our psychology affects our work. I could point to the way teams seem to get stupider as they get larger, or have to work across larger distances. Does that mean the smaller the team, the more effective? How then does a large global community like &Oslash;MQ manage to work successfully?</para>
 
-<para>The &Oslash;MQ community wasn't accidental, it was a deliberate design, my contribution to the early days when the code came out of a cellar in Bratislava. The design was based on my pet science of "Social Architecture", which <ulink url="http://en.wikipedia.org/wiki/Social_architecture">Wikipedia defines</ulink> (what a coincidence!) as "<emphasis>the process, and the product, of planning, designing, and growing an on-line community.</emphasis>"</para>
+<para>The &Oslash;MQ community wasn't accidental, it was a deliberate design, my contribution to the early days when the code came out of a cellar in Bratislava. The design was based on my pet science of "Social Architecture", which <ulink url="http://en.wikipedia.org/wiki/Social_architecture">Wikipedia defines</ulink> (what a coincidence!) as "the process, and the product, of planning, designing, and growing an on-line community."</para>
 
 <para>One of the tenets of Social Architecture is that <emphasis>how we organize</emphasis> is more significant than <emphasis>who we are</emphasis>. The same group, organized differently, can produce entirely opposite results. We are like peers in a &Oslash;MQ network, and our communication patterns have dramatic impact on our performance. Ordinary people, well connected, can far outperform a team of experts working in the wrong patterns. If you're the architect of a larger &Oslash;MQ application, you're going to have to help others find the right patterns for working together. Do this right, and your project can succeed. Do it wrong, and your project will fail.</para>
 
@@ -13437,7 +13437,7 @@ int main (void)
 <para>The main lessons of TOD are quite straight-forward but hard to swallow. They are:</para>
 
 <itemizedlist>
-  <listitem><para>Ideas are cheap. No exceptions. There are no brilliant ideas. Anyone who tries to start a discussion with "oooh, we can do this too!" should be beaten down with all the passion one reserves for traveling evangelists. It is like sitting in a cafe at the foot of a mountain, drinking a hot chocolate and telling others, "<emphasis>hey, I have a great idea, we can climb that mountain! And build a chalet on top! With two saunas! And a garden! Hey, and we can make it solar powered! Dude, that's awesome! What color should we paint it? Green! No, blue! OK, go and make it, I'll stay here and make spreadsheets and graphics!</emphasis>"</para></listitem>
+  <listitem><para>Ideas are cheap. No exceptions. There are no brilliant ideas. Anyone who tries to start a discussion with "oooh, we can do this too!" should be beaten down with all the passion one reserves for traveling evangelists. It is like sitting in a cafe at the foot of a mountain, drinking a hot chocolate and telling others, "hey, I have a great idea, we can climb that mountain! And build a chalet on top! With two saunas! And a garden! Hey, and we can make it solar powered! Dude, that's awesome! What color should we paint it? Green! No, blue! OK, go and make it, I'll stay here and make spreadsheets and graphics!"</para></listitem>
   <listitem><para>The starting point for a good design process is to collect real problems that confront real people. The second step is to evaluate these problems with the basic question, "how much is it worth to solve this problem?" Having done that, we can collect that set of problems that are worth solving.</para></listitem>
   <listitem><para>Good solutions to real problems will succeed as products. Their success will depend on how good and cheap the solution is, and how important the problem is (and sadly, how big the marketing budgets are). But their success will also depend on how much they demand in effort to use, in other words how simple they are.</para></listitem>
 </itemizedlist>
@@ -13461,7 +13461,7 @@ int main (void)
 
 <para>A good example of COD in practice is Bluetooth, a complex, over-designed set of protocols that users hate. It continues to exist only because in a massively-patented industry there are no real alternatives. Bluetooth is perfectly secure, which is close to pointless for a proximity protocol. At the same time it lacks a standard API for developers, meaning it's really costly to use Bluetooth in applications.</para>
 
-<para>On the #zeromq IRC channel, Wintre once wrote of how enraged he was many years ago when he "<emphasis>found that XMMS 2 had a working plugin system but could not actually play music.</emphasis>"</para>
+<para>On the #zeromq IRC channel, Wintre once wrote of how enraged he was many years ago when he "found that XMMS 2 had a working plugin system but could not actually play music."</para>
 
 <para>COD is a form of large-scale "rabbit holing", in which designers and engineers cannot distance themselves from the technical details of their work. They add more and more features, utterly misreading the economics of their work.</para>
 
@@ -13584,28 +13584,14 @@ int main (void)
 
 <para>Now, &Oslash;MQ does appear to provide a living, successful protocol abstraction layer with its "we'll carry multi-part messages over random transports" way of working. Since &Oslash;MQ deals silently with framing, connections, and routing, it's surprisingly easy to write full protocol specs on top of &Oslash;MQ, and in Chapters four and five I showed how to do this.</para>
 
-<para>Somewhere around mid-2007, I kicked-off the Digital Standards Organization to define new simpler ways of producing little standards, protocols, specifications. In my defense, it was a quiet summer. At the time <ulink url="http://www.digistan.org/spec:1">I wrote that</ulink> a new specification should take "<emphasis>minutes to explain, hours to design, days to write, weeks to prove, months to become mature, and years to replace.</emphasis>"</para>
+<para>Somewhere around mid-2007, I kicked-off the Digital Standards Organization to define new simpler ways of producing little standards, protocols, specifications. In my defense, it was a quiet summer. At the time <ulink url="http://www.digistan.org/spec:1">I wrote that</ulink> a new specification should take "minutes to explain, hours to design, days to write, weeks to prove, months to become mature, and years to replace."</para>
 
 <para>In 2010 we started calling such little specifications "unprotocols", which some people might mistake for a dastardly plan for world domination by a shadowy international organization, but which really just means, "protocols without the goats".</para>
 
 </sect2>
 <sect2>
 <title>How to Write Unprotocols</title>
-<para>Here's an unprotocol called NOM that we'll come back to later in this chapter:</para>
-
-<screen>nom-protocol    = open-peering *use-peering
-
-open-peering    = C:OHAI ( S:OHAI-OK / S:WTF )
-
-use-peering     = C:ICANHAZ
-                / S:CHEEZBURGER
-                / C:HUGZ S:HUGZ-OK
-                / S:HUGZ C:HUGZ-OK
-</screen>
-
-<para>I've actually used these keywords (OHAI, WTF) in commercial projects. They make developers giggly and happy. They confuse management. They're good in first drafts that you want to throw away later.</para>
-
-<para>When you start to write unprotocols, stick to a consistent structure so that your readers know what to expect. Here is the structure I use:</para>
+<para>When you start to write an unprotocol specification document, stick to a consistent structure so that your readers know what to expect. Here is the structure I use:</para>
 
 <itemizedlist>
   <listitem><para>Cover section: with a 1-line summary, URL to the spec, formal name, version, who to blame.</para></listitem>
@@ -13628,7 +13614,7 @@ use-peering     = C:ICANHAZ
 <itemizedlist>
   <listitem><para>As long as your process is open then you don't need a committee: just make clean minimal designs and make sure anyone is free to improve them.</para></listitem>
   <listitem><para>If use an existing license then you don't have legal worries afterwards. I use GPLv3 for my public specifications and advise you to do the same. For in-house work, standard copyright is perfect.</para></listitem>
-  <listitem><para>The formality is valuable. That is, learn to write <ulink url="http://www.ietf.org/rfc/rfc2234.txt">ABNF</ulink> and use this to fully document your messages.</para></listitem>
+  <listitem><para>The formality is valuable. That is, learn to write a formal grammar such as ABNF (Augmented Backus-Naur Form) and use this to fully document your messages.</para></listitem>
   <listitem><para>Use a market-driven life-cycle process like <ulink url="http://www.digistan.org/spec:1">Digistan's COSS</ulink> so that people place the right weight on your specs as they mature (or don't).</para></listitem>
 </itemizedlist>
 </sect2>
@@ -13643,6 +13629,31 @@ use-peering     = C:ICANHAZ
 <para>When you contribute to an open source project, you really want to know your hard work won't used against you by a closed-source competitor. Which is why the GPL beats the "more permissive" BSD/MIT/X11 licenses. These license give permission to cheat. This applies just as much to protocols as to source code.</para>
 
 <para>When you implement a GPLv3 specification, your applications are of course yours, and licensed any way you like. But you can be sure and certain of two things. One, that specification will <emphasis>ever</emphasis> be embraced and extended into proprietary forms. Any derived forms of the specification must also be GPLv3. Two, no-one who ever implements or uses the protocol will ever launch a patent attack on anything it covers.</para>
+
+</sect2>
+<sect2>
+<title>Using ABNF</title>
+<para>My advice when writing protocol specs is to learn, and use a formal grammar. It's just less hassle than allowing others to interpret what you mean, and then recover from the inevitable false assumptions. The target of your grammar is other people, engineers, not compilers.</para>
+
+<para>My favorite grammar is ABNF, as defined by <ulink url="http://www.ietf.org/rfc/rfc2234.txt">RFC 2234</ulink>, because it is probably the simplest and most widely used formal language for defining bidirectional communications protocols. Most IETF (Internet Engineering Task Force) specifications use ABNF, which is good company to be in.</para>
+
+<para>I'll give a 30-second crash course in writing ABNF. It may remind you of regular expressions. You write the grammar as rules. Each rule takes the form "name = elements". An element can be another rule (which you define below as another rule), or a pre-defined "terminal" like CRLF, OCTET, or a number. <ulink url="http://www.ietf.org/rfc/rfc2234.txt">The RFC</ulink> lists all the terminals. To define alternative elements, use "element / element". To define repetition, use "*" (read the RFC since it's not intuitive). To group elements, use parentheses.</para>
+
+<para>I'm not sure if this extension is proper, but I then prefix elements with "C:" and "S:" to indicate whether they come from the client or server.</para>
+
+<para>Here's a piece of ABNF for an unprotocol called NOM that we'll come back to later in this chapter:</para>
+
+<screen>nom-protocol    = open-peering *use-peering
+
+open-peering    = C:OHAI ( S:OHAI-OK / S:WTF )
+
+use-peering     = C:ICANHAZ
+                / S:CHEEZBURGER
+                / C:HUGZ S:HUGZ-OK
+                / S:HUGZ C:HUGZ-OK
+</screen>
+
+<para>I've actually used these keywords (OHAI, WTF) in commercial projects. They make developers giggly and happy. They confuse management. They're good in first drafts that you want to throw away later.</para>
 
 </sect2>
 </sect1>
@@ -13755,7 +13766,7 @@ Virtual-host: test-env
 </sect2>
 <sect2>
 <title>Serialization Libraries</title>
-<para>The msgpack.org site says, "<emphasis>It's like JSON. but fast and small. MessagePack is an efficient binary serialization format. It lets you exchange data among multiple languages like JSON but it's faster and smaller. For example, small integers (like flags or error code) are encoded into a single byte, and typical short strings only require an extra byte in addition to the strings themselves.</emphasis>"</para>
+<para>The msgpack.org site says, "It's like JSON. but fast and small. MessagePack is an efficient binary serialization format. It lets you exchange data among multiple languages like JSON but it's faster and smaller. For example, small integers (like flags or error code) are encoded into a single byte, and typical short strings only require an extra byte in addition to the strings themselves."</para>
 
 <para>I'm going to make the perhaps unpopular claim that "fast and small" are features that solve non-problems. The only real problem that serialization libraries solve is, as far as I can tell, the need to document the message contracts and actually serialize data to and from the wire.</para>
 
@@ -13824,7 +13835,7 @@ Virtual-host: test-env
 
 <para>At iMatix, until a few years ago, we used code generation to build ever larger and more ambitious systems until we decided the technology (GSL) was too dangerous for common use, and we sealed the archive and locked it, with heavy chains, in a deep dungeon. Well, we actually posted it on github. If you want to try the examples that are coming up, grab <ulink url="https://github.com/imatix/gsl">the repository</ulink> and build yourself a <literal>gsl</literal> command. Typing "make" in the src subdirectory should do it (and if you're that guy who loves Windows, I'm sure you'll send a patch with project files).</para>
 
-<para>This section isn't really about GSL at all, but about a useful and little-known trick that's useful for ambitious architects who want to scale themselves, as well as their work. Once you learn the trick is, you can whip up your own code generators in a short time. The code generators most software engineers know about come with a single hard-coded model. For instance, Ragel <emphasis>"compiles executable finite state machines from regular languages"</emphasis>, i.e. Ragel's model is a regular language. This certainly works for a good set of problems but it's far from universal. How do you describe an API in Ragel? Or a project makefile? Or even a finite-state machine like the one we used to design the Binary Star pattern in Chapter 4?</para>
+<para>This section isn't really about GSL at all, but about a useful and little-known trick that's useful for ambitious architects who want to scale themselves, as well as their work. Once you learn the trick is, you can whip up your own code generators in a short time. The code generators most software engineers know about come with a single hard-coded model. For instance, Ragel "compiles executable finite state machines from regular languages", i.e. Ragel's model is a regular language. This certainly works for a good set of problems but it's far from universal. How do you describe an API in Ragel? Or a project makefile? Or even a finite-state machine like the one we used to design the Binary Star pattern in Chapter 4?</para>
 
 <para>All these would benefit from code generation, but there's no universal model. So the trick is to design your own models as you need them, then make code generators as cheap compilers for that model. You need some experience in how to make good models, and you need a technology that makes it cheap to build custom code generators. Scripting languages like Perl and Python are a good option. However we actually built GSL specifically for this, and that's what I prefer.</para>
 
@@ -14066,7 +14077,7 @@ frames:
 
 <para>So, file transfer. There are several reasons you can't just pick up a random file, blindfold it, and shove it whole into a message. The most obvious being that despite decades of determined growth in RAM sizes (and who among us old-timers doesn't fondly remember saving up for that 1,014-byte memory extension card?!), disk sizes obstinately remain much larger. Even if we could send a file with one instruction (say, using a system call like sendfile), we'd hit the reality that networks are not infinitely fast, nor perfectly reliable. After trying to upload a large file several times on a slow flaky network (WiFi, anyone?), you'll realize that a proper file transfer protocol needs a way to recover from failures. That is, a way to send only the part of a file that wasn't yet received.</para>
 
-<para>Finally, after all this, if you build a proper file server, you'll notice that simply sending massive amounts of data to lots of clients creates that situation we like to call, in the technical parlance, "<emphasis>server went belly-up due to all available heap memory being eaten by a poorly-designed application</emphasis>". A proper file transfer protocol needs to pay attention to memory use.</para>
+<para>Finally, after all this, if you build a proper file server, you'll notice that simply sending massive amounts of data to lots of clients creates that situation we like to call, in the technical parlance, "server went belly-up due to all available heap memory being eaten by a poorly-designed application". A proper file transfer protocol needs to pay attention to memory use.</para>
 
 <para>We'll solve these problems properly, one by one, which should hopefully get us to a good and proper file transfer protocol running over &Oslash;MQ. First, let's generate a 1GB test file with random data (real power-of-two-giga-like-Von-Neumman-intended, not the fake silicon ones the memory industry likes to sell):</para>
 
@@ -14203,7 +14214,7 @@ int main (void)
 </example>
 <para>It's pretty simple but we already run into a problem: if we send too much data to the ROUTER socket, we can easily overflow it. The simple but stupid solution is to put an infinite high-water mark on the socket. It's stupid because we now have no protection against exhausting the server's memory. Yet without an infinite HWM we risk losing chunks of large files.</para>
 
-<para>Try this: set the HWM to 1,000 (in &Oslash;MQ/3.x this is the default) and then reduce the chunk size to 100K so we send 10K chunks in one go. Run the test, and you'll see it never finishes. As the zmq_socket[3] man page says with cheerful brutality, for the ROUTER socket: "<emphasis>ZMQ_HWM option action: Drop</emphasis>".</para>
+<para>Try this: set the HWM to 1,000 (in &Oslash;MQ/3.x this is the default) and then reduce the chunk size to 100K so we send 10K chunks in one go. Run the test, and you'll see it never finishes. As the zmq_socket[3] man page says with cheerful brutality, for the ROUTER socket: "ZMQ_HWM option action: Drop".</para>
 
 <para>We have to control the amount of data the server sends up-front. There's no point in it sending more than the network can handle. Let's try sending one chunk at a time. In this version of the protocol, the client will explicitly say,"give me chunk N", and the server will fetch that specific chunk from disk and send it.</para>
 
@@ -14472,7 +14483,7 @@ sys     0m1.120s
 
 <para>How about a "push" semantic? There are two plausible use-cases for this. First, if we adopt a centralized architecture with files on a main "server" (not something I'm advocating, but people do sometimes like this), then it's very useful to allow clients to upload files to the server. Second, it lets do a kind of pub-sub for files, where the client asks for all new files of some type; as the server gets these, it forwards them to the client.</para>
 
-<para>A fetch semantic is synchronous, while a push semantic is asynchronous. Asynchronous is less chatty, so faster. Also, you can do cute things like "<emphasis>subscribe to this path</emphasis>" so creating a publish-subscribe file transfer architecture. That is so obviously awesome that I shouldn't need to explain what problem it solves.</para>
+<para>A fetch semantic is synchronous, while a push semantic is asynchronous. Asynchronous is less chatty, so faster. Also, you can do cute things like "subscribe to this path" so creating a publish-subscribe file transfer architecture. That is so obviously awesome that I shouldn't need to explain what problem it solves.</para>
 
 <para>Still, here is the problem with the fetch semantic: that out-of-band route to tell clients what files exist. No matter how you do this, it ends up complex. Either clients have to poll, or you need a separate pub-sub channel to keep clients up to date, or you need user interaction.</para>
 
@@ -14573,7 +14584,7 @@ use-peering     = C:ICANHAZ
     <title>The 'Start' State</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig70.eps" format="EPS"/>
+            <imagedata fileref="images/fig70.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -14584,7 +14595,7 @@ use-peering     = C:ICANHAZ
     <title>The 'Authenticated' State</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig71.eps" format="EPS"/>
+            <imagedata fileref="images/fig71.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -14595,7 +14606,7 @@ use-peering     = C:ICANHAZ
     <title>The 'Ready' State</title>
     <mediaobject>
         <imageobject>
-            <imagedata fileref="images/fig72.eps" format="EPS"/>
+            <imagedata fileref="images/fig72.eps" format="EPS" width="4.8in"/>
         </imageobject>
     </mediaobject>
 </figure>
@@ -14879,7 +14890,7 @@ fmq_client_destroy (&amp;client);
 </sect2>
 <sect2>
 <title>Initial Design Cut - the Protocol</title>
-<para>To start with we write down the protocol as an ABNF grammar. The grammar starts with the flow of commands between the client and server. You should recognize these as a combination of the various techniques we've seen already:</para>
+<para>To start with we write down the protocol as an ABNF grammar. Our grammar starts with the flow of commands between the client and server. You should recognize these as a combination of the various techniques we've seen already:</para>
 
 <screen>filemq-protocol = open-peering *use-peering [ close-peering ]
 
@@ -15239,7 +15250,7 @@ int main (int argc, char *argv [])
 
 <para>The brilliant and visionary Eben Moglen once said, roughly, that a free software license is the contract on which a community builds. When I heard this, about ten years ago, the idea came to me, <emphasis>can we deliberately grow free software communities</emphasis>?</para>
 
-<para>Ten years later, the answer is "yes", and there is almost a science to it. I say "almost" because we don't yet have enough evidence of people doing this deliberately with a documented, reproducible process. It is what I'm trying to do with <ulink url="http://softwareandsilicon.com/chapter:2#toc5">Social Architecture</ulink>. &Oslash;MQ came after Wikidot, after Digistan and after the FFII. Which came after a lot of less successful community projects like Xitami and Libero. My main takeaway from a long career of projects of every conceivable format is: if you want to build truly large-scale and long-lasting software, aim to build a free software community.</para>
+<para>Ten years later, the answer is "yes", and there is almost a science to it. I say "almost" because we don't yet have enough evidence of people doing this deliberately with a documented, reproducible process. It is what I'm trying to do with <ulink url="http://softwareandsilicon.com/chapter:2#toc5">Social Architecture</ulink>. &Oslash;MQ came after Wikidot, after Digistan and after the Foundation for a Free Information Infrastructure (aka the FFII, an NGO that fights against software patents). Which came after a lot of less successful community projects like Xitami and Libero. My main takeaway from a long career of projects of every conceivable format is: if you want to build truly large-scale and long-lasting software, aim to build a free software community.</para>
 
 <sect2>
 <title>The Game</title>
@@ -15258,7 +15269,7 @@ int main (int argc, char *argv [])
 
 <para>Worse, the GPL project got popular and some of his core contributors made first small, and then larger patches to it. Again, he couldn't use those changes, and he felt abandoned. Patrick went into a depression, his girlfriend left him for an international currency dealer called, weirdly, Patrice, and he stopped all work on the project. He felt betrayed, and utterly miserable. He fired his friend, who took it rather badly and told everyone that Patrick was a closet banjo player. Finally Patrick took a job as a project manager for a cloud company, and by the age of forty, he had stopped programming even for fun.</para>
 
-<para>Poor Patrick, I almost felt sorry for him. Then I asked him, "why didn't you choose the GPL?" "Because it's a restrictive viral license", he replied. I told him, you may have a PhD, and you may be the eldest brother-in-law of the cousin of a friend of my colleague, but you are an idiot and Monique was smart to leave you. You published your work saying, "please steal my code as long as you keep this 'please steal my code' statement in the resulting work", and when people did exactly that, you got upset. Worse, you were a hypocrite because when they did it in secret, you were happy, but when they did it openly, you got upset.</para>
+<para>Poor Patrick, I almost felt sorry for him. Then I asked him, "why didn't you choose the GPL?" "Because it's a restrictive viral license", he replied. I told him, you may have a PhD, and you may be the eldest brother-in-law of the cousin of a friend of my colleague, but you are an idiot and Monique was smart to leave you. You published your work saying, "please steal my code as long as you keep this 'please steal my code' statement in the resulting work", and when people did exactly that, you got upset. Worse, you were a hypocrite because when they did it in secret, you were happy, but when they did it openly, you felt betrayed.</para>
 
 <para>Seeing your hard work captured by a smarter team and then used against you is enormously painful, so why even make that possible? Every proprietary project that uses BSD code is capturing it. A public GPL fork is perhaps more humiliating, but it's fully self-inflicted.</para>
 
@@ -15286,7 +15297,7 @@ int main (int argc, char *argv [])
 
 <para>Then your work must be beautiful, immediately useful and attractive. Your contributors are users who want to explore just a little beyond where they are now. Make it simple, elegant, brutally clean. The experience when people run or use your work should be an emotional one. They should <emphasis>feel</emphasis> something, and if you accurately solved even just one big problem that until then they didn't quite realize they faced, you'll have a small part of their soul.</para>
 
-<para>And then, easy to understand, use, and join. Too many projects have barriers to access: put yourself in the other person's mind and see all the reasons they come to your site, thinking "<emphasis>Uhm, interesting project, but...</emphasis>" and then leave. You want them to stay, try it, just once. Use GitHub and put the issue tracker right there.</para>
+<para>And then, easy to understand, use, and join. Too many projects have barriers to access: put yourself in the other person's mind and see all the reasons they come to your site, thinking "Uhm, interesting project, but..." and then leave. You want them to stay, try it, just once. Use GitHub and put the issue tracker right there.</para>
 
 <para>If you do these things well, your community will be smart but more importantly, will be intellectually and geographically diverse. This is really important. A group of like-minded experts cannot explore the problem landscape well. They tend to make big mistakes. Diversity beats education any time.</para>
 
@@ -15346,7 +15357,7 @@ int main (int argc, char *argv [])
 
 <para>I think C4 is the first time anyone has attempted to codify a community's rulebook as a formal and reusable protocol spec. Before, our rules were spread out over several wiki pages, and quite specific to libzmq in many ways. But experience teaches us that the more formal and accurate and reusable the rules, the easier it is for strangers to collaborate up-front. And less friction means a more scalable community. At the time of C4, we also had some disagreement in the libzmq over precisely what process we were using. Not everyone felt bound by the same rules. Let's just say some people felt they had a special status, which created friction with the rest of the community. So codification made things clear.</para>
 
-<para>It's easy to use C4: just host your project on GitHub, get one other person to join, and open the floor to pull requests. In your README, put a link to C4 and that's it. We've done this in quite a few projects and it does seem to work. I've been pleasantly surprised a few times just applying these rules to my own work, like CZMQ. We are none of us, as I'll explain later in this chaper, so amazing that we can work without others.</para>
+<para>It's easy to use C4: just host your project on GitHub, get one other person to join, and open the floor to pull requests. In your README, put a link to C4 and that's it. We've done this in quite a few projects and it does seem to work. I've been pleasantly surprised a few times just applying these rules to my own work, like CZMQ. We are none of us, as I'll explain later in this chapter, so amazing that we can work without others.</para>
 
 </sect2>
 <sect2>
@@ -15356,9 +15367,9 @@ int main (int argc, char *argv [])
 </blockquote>
 <para>The short term reason for writing C4 was to end argument over the libzmq contribution process. The dissenters went off elsewhere. <ulink url="https://github.com/zeromq/libzmq/graphs/contributors">The &Oslash;MQ community blossomed</ulink>, smoothly and easily, as I'd predicted. Most people were surprised, but gratified. There's been no real criticisms of C4 except its branching policy, which I'll come to later since it deserves its own discussion.</para>
 
-<para>There's a reason I'm bringing up history here: as founder of a community, you are asking people to invest in your property, trademark, branding. In return, and this is what we do with &Oslash;MQ, you can use that branding to set a bar for quality. When you download a product labeled as "&Oslash;MQ", you know that it's been produced to certain standards. It's a basic rule of quality: write down your process, otherwise you cannot improve it. Our processes aren't perfect, they can't ever be. But any flaw can be fixed, and tested.</para>
+<para>There's a reason I'm bringing up history here: as founder of a community, you are asking people to invest in your property, trademark, branding. In return, and this is what we do with &Oslash;MQ, you can use that branding to set a bar for quality. When you download a product labeled as "&Oslash;MQ", you know that it's been produced to certain standards. It's a basic rule of quality: write down your process, otherwise you cannot improve it. Our processes aren't perfect, they can't ever be. But any flaw in them can be fixed, and tested.</para>
 
-<para>Making C4 reusable is really important therefore. To learn more about the best possible process we need to get results from the widest range of projects.</para>
+<para>Making C4 reusable is therefore really important. To learn more about the best possible process we need to get results from the widest range of projects.</para>
 
 <blockquote>
   <para>It has these specific goals:</para>
@@ -15374,7 +15385,7 @@ int main (int argc, char *argv [])
 <blockquote>
   <para>To allow the project to develop faster and more accurately, by increasing the diversity of the decision making process;</para>
 </blockquote>
-<para>This is theory, perhaps not fully proven yet, but the diversity of the community and number of people who can weigh into discussions, without fear of being criticized or dismissed, the faster and more accurately the software should develop, Speed is quite subjective here. Going very fast in the wrong direction is not just useless, it's actively damaging (and we suffered a lot of that in libzmq before we switched to C4).</para>
+<para>This is theory, not fully proven but not falsified. The diversity of the community and number of people who can weigh into discussions, without fear of being criticized or dismissed, the faster and more accurately the software should develop, Speed is quite subjective here. Going very fast in the wrong direction is not just useless, it's actively damaging (and we suffered a lot of that in libzmq before we switched to C4).</para>
 
 <blockquote>
   <para>To support the natural life-cycle of project versions from experimental through to stable, by allowing safe experimentation, rapid failure, and isolation of stable code;</para>
@@ -15384,7 +15395,7 @@ int main (int argc, char *argv [])
 <blockquote>
   <para>To reduce the internal complexity of project repositories, thus making it easier for Contributors to participate and reducing the scope for error;</para>
 </blockquote>
-<para>Curious observation: people who thrive in complex situations like to create complexity because it keeps their value high. Git made branches easy and left us with the all too common syndrome of "<emphasis>git is easy once you understand that a git branch is just a folded five-dimensional lepton space that has a detached history with no intervening cache</emphasis>". Developers should not be made to feel stupid by their tools and I've seen too many top-class developers confused by repository structures to accept conventional wisdom on git branches. We'll come back to dispose of git branches shortly, dear reader.</para>
+<para>Curious observation: people who thrive in complex situations like to create complexity because it keeps their value high. It's the Cobra Effect (Google it). Git made branches easy and left us with the all too common syndrome of "git is easy once you understand that a git branch is just a folded five-dimensional lepton space that has a detached history with no intervening cache". Developers should not be made to feel stupid by their tools. I've too many top-class developers confused by repository structures, to accept conventional wisdom on git branches. We'll come back to dispose of git branches shortly, dear reader.</para>
 
 <blockquote>
   <para>To enforce collective ownership of the project, which increases economic incentive to Contributors and reduces the risk of hijack by hostile entities.</para>
@@ -15439,17 +15450,17 @@ int main (int argc, char *argv [])
 <blockquote>
   <para>The project SHALL use the GPLv3 or a variant thereof (LGPL, AGPL).</para>
 </blockquote>
-<para>I've already explained how full remixability creates better scale and why the GPL and its variants seems the optimal contract for remixable software.</para>
+<para>I've already explained how full remixability creates better scale and why the GPL and its variants seems the optimal contract for remixable software. If you're a large business aiming to dump code on the market, you won't want C4, but then you won't really care about community either.</para>
 
 <blockquote>
   <para>All contributions to the project source code ("patches") SHALL use the same license as the project.</para>
 </blockquote>
-<para>This removes the need for any specific statement or contribution agreement. You fork the GPL code, you publish your remixed version on github, you or anyone else can then submit that as a patch to the original code. BSD doesn't allow this. Any work that contains BSD code may also contain unlicensed proprietary code so you need explicit action from the author of the code before you can remix it.</para>
+<para>This removes the need for any specific license or contribution agreement for patches. You fork the GPL code, you publish your remixed version on github, you or anyone else can then submit that as a patch to the original code. BSD doesn't allow this. Any work that contains BSD code may also contain unlicensed proprietary code so you need explicit action from the author of the code before you can remix it.</para>
 
 <blockquote>
   <para>All patches are owned by their authors. There SHALL NOT be any copyright assignment process.</para>
 </blockquote>
-<para>Here we come to the key reason people trust their investments in &Oslash;MQ: it's logistically impossible to buy the copyrights so that someone can create a closed-source competitor to &Oslash;MQ. And the more people send patches, the harder it becomes. &Oslash;MQ isn't just free and open today, this specific rule means it will remain so forever.</para>
+<para>Here we come to the key reason people trust their investments in &Oslash;MQ: it's logistically impossible to buy the copyrights to create a closed-source competitor to &Oslash;MQ. iMatix can't do this either. And the more people send patches, the harder it becomes. &Oslash;MQ isn't just free and open today, this specific rule means it will remain so forever. Note that it's not the case in all GPL projects, many of which still ask for copyright transfer back to the maintainers.</para>
 
 <blockquote>
   <para>The project SHALL be owned collectively by all its Contributors.</para>
@@ -15469,7 +15480,7 @@ int main (int argc, char *argv [])
 <blockquote>
   <para>Maintainers and Contributors MUST have a Platform account and SHOULD use their real names or a well-known alias.</para>
 </blockquote>
-<para>In the worst case scenario, where someone has submitted toxic code (patented, or owned by someone else), we need to be able to trace who and when, so we can remove the code. Asking for real names or a well-known alias is a theoretical strategy to reducing the risk of bogus patches. We don't know if this works because we never had the problem.</para>
+<para>In the worst case scenario, where someone has submitted toxic code (patented, or owned by someone else), we need to be able to trace who and when, so we can remove the code. Asking for real names or a well-known alias is a theoretical strategy to reducing the risk of bogus patches. We don't know if this actually works because we haven't had the problem yet.</para>
 
 <blockquote>
   <para>A patch SHOULD be a minimal and accurate answer to exactly one identified and agreed problem.</para>
@@ -15484,9 +15495,9 @@ int main (int argc, char *argv [])
 <blockquote>
   <para>A patch MUST adhere to the "Evolution of Public Contracts" guidelines defined below.</para>
 </blockquote>
-<para>Ah, the pain, the pain. I'm not speaking of the time at age eight when I stepped on a plank with a 4-inch nail protruding from it. That was relatively OK. I'm speaking of 2010-2011 when we had multiple parallel releases of &Oslash;MQ, each with different <emphasis>incompatible</emphasis> APIs or wire protocols. It was an exercise in bad rules: "if you change the API or protocol, you SHALL create a new major version". Give me the nail through the foot, that hurt less.</para>
+<para>Ah, the pain, the pain. I'm not speaking of the time at age eight when I stepped on a plank with a 4-inch nail protruding from it. That was relatively OK. I'm speaking of 2010-2011 when we had multiple parallel releases of &Oslash;MQ, each with different <emphasis>incompatible</emphasis> APIs or wire protocols. It was an exercise in bad rules pointlessly enforced. The rule was "if you change the API or protocol, you SHALL create a new major version". Give me the nail through the foot, that hurt less.</para>
 
-<para>One of the big changes we made with C4 was simply to ban, outright, this kind of rampant changeism. Amazingly, it's not even hard. We just don't allow the breaking of existing public contracts, period, unless everyone agrees, in which case no period.</para>
+<para>One of the big changes we made with C4 was simply to ban, outright, this kind of sanctioned sabotage. Amazingly, it's not even hard. We just don't allow the breaking of existing public contracts, period, unless everyone agrees, in which case no period.</para>
 
 <blockquote>
   <para>A patch SHALL NOT include non-trivial code from other projects unless the Contributor is the original author of that code.</para>
@@ -15526,7 +15537,7 @@ int main (int argc, char *argv [])
 <blockquote>
   <para>The user SHOULD seek consensus on the accuracy of their observation, and the value of solving the problem.</para>
 </blockquote>
-<para>And since many apparent problems are illusionary, by stating the problem explicitly we give others a chance to correct our logic.</para>
+<para>And since many apparent problems are illusionary, by stating the problem explicitly we give others a chance to correct our logic. "You're only using A and B a lot because function C is unreliable. Solution: make function C work properly."</para>
 
 <blockquote>
   <para>Users SHALL NOT log feature requests, ideas, suggestions, or any solutions to problems that are not explicitly documented and provable.</para>
@@ -15556,7 +15567,7 @@ int main (int argc, char *argv [])
 <blockquote>
   <para>To discuss a patch, people MAY comment on the Platform pull request, on the commit, or elsewhere.</para>
 </blockquote>
-<para>Randomly distributed discussions may be confusing if you're walking up for the first time, but GitHub solves this for all current participants by sending emails to those who need to follow what's going on. We had the same experience and the same solution in Wikidot, and it works. So there's no evidence that discussing in different places has any negative effect, or that centralizing on the mailing list is positive.</para>
+<para>Randomly distributed discussions may be confusing if you're walking up for the first time, but GitHub solves this for all current participants by sending emails to those who need to follow what's going on. We had the same experience and the same solution in Wikidot, and it works. There's no evidence that discussing in different places has any negative effect.</para>
 
 <blockquote>
   <para>To accept or reject a patch, a Maintainer SHALL use the Platform interface.</para>
@@ -15571,7 +15582,7 @@ int main (int argc, char *argv [])
 <blockquote>
   <para>Maintainers SHALL NOT make value judgments on correct patches.</para>
 </blockquote>
-<para>We already said this but it's worth repeating: the role of Maintainer is not to judge a patch's substance, only its technical quality. The substantive worth of a patch only emerges over time: people use it, and like it, or they do not. And if no-one is using a patch, eventually it'll be removed and no-one will complain.</para>
+<para>We already said this but it's worth repeating: the role of Maintainer is not to judge a patch's substance, only its technical quality. The substantive worth of a patch only emerges over time: people use it, and like it, or they do not. And if no-one is using a patch, eventually it'll annoy someone else who will remove it, and no-one will complain.</para>
 
 <blockquote>
   <para>Maintainers SHALL merge correct patches rapidly.</para>
@@ -15581,12 +15592,12 @@ int main (int argc, char *argv [])
 <blockquote>
   <para>Maintainers SHOULD ask for improvements to incorrect patches and SHOULD reject incorrect patches if the Contributor does not respond constructively.</para>
 </blockquote>
-<para>Initially I felt it was worth merging all patches no matter how poor. There's an element of trolling involved. Merging broken code to master might, I felt, pull in more contributors. But people were uncomfortable with this so we defined the "correct patch" rules, and the Maintainer's role in checking for quality. On the negative side I think we didn't take some interesting risks which could have paid off with more participants. On the positive side this has led to &Oslash;MQ master (as in all projects that use C4) being practically production quality, practically all the time.</para>
+<para>Initially I felt it was worth merging all patches no matter how poor. There's an element of trolling involved. Merging broken code to master might, I felt, pull in more contributors. But people were uncomfortable with this so we defined the "correct patch" rules, and the Maintainer's role in checking for quality. On the negative side I think we didn't take some interesting risks which could have paid off with more participants. On the positive side this has led to &Oslash;MQ master (and in all projects that use C4) being practically production quality, practically all the time.</para>
 
 <blockquote>
   <para>Any Contributor who has value judgments on a correct patch SHOULD express these via their own patches.</para>
 </blockquote>
-<para>In essence, the goal here is to allow users to try patches rather than to spend time arguing pros and cons. As easy as it is to make a patch, it's as easy to revert it with another patch. You might think this would lead to "patch wars" but that hasn't happened. We've had a handful of cases in libzmq where patches by one contributor were killed by another person who felt the experimentation wasn't going in the right direction.</para>
+<para>In essence, the goal here is to allow users to try patches rather than to spend time arguing pros and cons. As easy as it is to make a patch, it's as easy to revert it with another patch. You might think this would lead to "patch wars" but that hasn't happened. We've had a handful of cases in libzmq where patches by one contributor were killed by another person who felt the experimentation wasn't going in the right direction. It is easier than seeking up-front consensus.</para>
 
 <blockquote>
   <para>Maintainers MAY commit changes to non-source documentation directly to the project.</para>
@@ -15598,7 +15609,7 @@ int main (int argc, char *argv [])
 <title>Creating Stable Releases</title>
 <para>For a production system we want some guarantee of stability. In the past this meant taking unstable code and then over months hammering out the bugs and faults until it was safe to trust. iMatix's job, for years, has been to do this to libzmq, turning raw code into packages by allowing only bug fixes, and no new code, into a "stabilization branch". It's surprisingly not as thankless as it sounds.</para>
 
-<para>Now, since we went full speed with C4, we've found that git master of libzmq is mostly perfect, most of the time. However, people still want that guarantee. So a stable release today means two things. First, a snapshot of the master taken at a time when there were no new changes for a while, and no dramatic open bugs. Second, a way to fine-tune that snapshot to fix the critical issues remaining in it.</para>
+<para>Now, since we went full speed with C4, we've found that git master of libzmq is mostly perfect, most of the time. This frees our time to do more interesting things, such as building new open source layers on top of libzmq. However, people still want that guarantee: many users will simply not install except from an "official" release. So a stable release today means two things. First, a snapshot of the master taken at a time when there were no new changes for a while, and no dramatic open bugs. Second, a way to fine-tune that snapshot to fix the critical issues remaining in it.</para>
 
 <para>This is the process we explain in this section.</para>
 
@@ -15610,18 +15621,18 @@ int main (int argc, char *argv [])
 <blockquote>
   <para>The project SHALL NOT use topic branches for any reason. Personal forks MAY use topic branches.</para>
 </blockquote>
-<para>I'll come to branches soon. Tl;dr - they make the repository too complex and require upfront agreements, which are both Bad Stuff.</para>
+<para>I'll come to branches soon. In short (or "tl;dr", as they say on the webs) branches make the repository too complex and fragile, and require upfront agreement, all of which are expensive and avoidable.</para>
 
 <blockquote>
   <para>To make a stable release someone SHALL fork the repository by copying it and thus become maintainer of this repository.</para>
   <para>Forking a project for stabilization MAY be done unilaterally and without agreement of project maintainers.</para>
 </blockquote>
-<para>It's free software. No-one has a monopoly on it. If you think the maintainers aren't producing stable releases right, fork the repository and do it yourself. Forking isn't a failure, it's an essential tool for competition. You can't BTW do this with branches, which means a branch-based release policy gives the project maintainers a monopoly, which is bad because they'll become lazier and more arrogant than if real competition is chasing their heels.</para>
+<para>It's free software. No-one has a monopoly on it. If you think the maintainers aren't producing stable releases right, fork the repository and do it yourself. Forking isn't a failure, it's an essential tool for competition. You can't BTW do this with branches, which means a branch-based release policy gives the project maintainers a monopoly. And that's bad because they'll become lazier and more arrogant than if real competition is chasing their heels.</para>
 
 <blockquote>
   <para>Maintainers of the stabilization project SHALL maintain it through pull requests which MAY cherry-pick patches from the forked project.</para>
 </blockquote>
-<para>Perhaps the C4 process should just say that stabilization projects have maintainers and contributors like any project.</para>
+<para>Perhaps the C4 process should just say that stabilization projects have maintainers and contributors like any project. That's all this rule means.</para>
 
 <blockquote>
   <para>A patch to a repository declared "stable" SHALL be accompanied by a reproducible test case.</para>
@@ -15643,12 +15654,12 @@ int main (int argc, char *argv [])
 <blockquote>
   <para>All Public Contracts (APIs or protocols) SHOULD be documented.</para>
 </blockquote>
-<para>You'd think this was a given for professional software engineers but no, it's not. So, it's a rule. You want C4 certification for your project, you make sure your public contracts are documented. (Yes, I intend at some point to create a C4 certification process to act as a quality indicator for open source projects.)</para>
+<para>You'd think this was a given for professional software engineers but no, it's not. So, it's a rule. You want C4 certification for your project, you make sure your public contracts are documented. No "it's specified in the code" excuses. Code is not a contract. (Yes, I intend at some point to create a C4 certification process to act as a quality indicator for open source projects.)</para>
 
 <blockquote>
   <para>All Public Contracts SHALL use Semantic Versioning.</para>
 </blockquote>
-<para>This rule is mainly here because people asked for it. I've no real love for it, since Semantic Versioning is what led to the so-called "why does &Oslash;MQ not speak to itself" debacle. I've never seen the problem that this solved. Something about runtime validation of library versions, or some-such.</para>
+<para>This rule is mainly here because people asked for it. I've no real love for it, since Semantic Versioning is what led to the so-called "why does &Oslash;MQ not speak to itself?!" debacle. I've never seen the problem that this solved. Something about runtime validation of library versions, or some-such.</para>
 
 <blockquote>
   <para>All Public Contracts SHOULD have space for extensibility and experimentation.</para>
@@ -15663,12 +15674,12 @@ int main (int argc, char *argv [])
 <blockquote>
   <para>A patch that introduces new features to a Public Contract SHOULD do so using new names.</para>
 </blockquote>
-<para>We had the experience in &Oslash;MQ once or twice of new features using old names (or worse, using names that were <emphasis>still in use</emphasis> elsewhere). &Oslash;MQ/3.0 had a "ROUTER" socket that was totally different from the ROUTER socket in 2.x. Dear lord, you should be face-palming, why? The reason: apparently, even smart people sometimes need regulation to stop them doing silly things.</para>
+<para>We had the experience in &Oslash;MQ once or twice of new features using old names (or worse, using names that were <emphasis>still in use</emphasis> elsewhere). &Oslash;MQ/3.0 had a newly introduced "ROUTER" socket that was totally different from the existing ROUTER socket in 2.x. Dear lord, you should be face-palming, why? The reason: apparently, even smart people sometimes need regulation to stop them doing silly things.</para>
 
 <blockquote>
   <para>Old names SHOULD be deprecated in a systematic fashion by marking new names as "experimental" until they are stable, then marking the old names as "deprecated".</para>
 </blockquote>
-<para>This lifecycle notation has the great benefit of actually telling users what is going on, with a consistent direction. "Experimental" means "we have introduced this and intend to make it stable if it works". Not, "we have introduced this and will remove it at any time if we feel like it". One assumes that code which survives more than one patch cycle is meant to be there. "Deprecated" means "we have replaced this and intend to remove it".</para>
+<para>This life-cycle notation has the great benefit of actually telling users what is going on, with a consistent direction. "Experimental" means "we have introduced this and intend to make it stable if it works". Not, "we have introduced this and will remove it at any time if we feel like it". One assumes that code which survives more than one patch cycle is meant to be there. "Deprecated" means "we have replaced this and intend to remove it".</para>
 
 <blockquote>
   <para>When sufficient time has passed, old deprecated names SHOULD be marked "legacy" and eventually removed.</para>
@@ -15678,7 +15689,7 @@ int main (int argc, char *argv [])
 <blockquote>
   <para>Old names SHALL NOT be reused by new features.</para>
 </blockquote>
-<para>Ah, yes, the joy when &Oslash;MQ/3.x renamed the top-used API functions (zmq_send and zmq_recv) and then recycled the old names for new versions that were utterly incompatible (and which I suspect very few people actually use). You should be slapping yourself in confusion again, but sincerely, this is what happened and I was as guilty as anyone. After all, we did change the version number! Semantic Version FTW!! The only benefit of that experience was to get this rule.</para>
+<para>Ah, yes, the joy when &Oslash;MQ/3.x renamed the top-used API functions (zmq_send and zmq_recv) and then recycled the old names for new methods that were utterly incompatible (and which I suspect few people actually use). You should be slapping yourself in confusion again, but really, this is what happened and I was as guilty as anyone. After all, we did change the version number! Semantic Version FTW!! The only benefit of that experience was to get this rule.</para>
 
 <blockquote>
   <para>When old names are removed, their implementations MUST provoke an exception (assertion) if used by applications.</para>
@@ -15693,7 +15704,7 @@ int main (int argc, char *argv [])
 <title>Worked Example</title>
 <para>In <ulink url="http://lists.zeromq.org/pipermail/zeromq-dev/2012-October/018838.html">this email thread</ulink>, Dan Goes asks how to make a publisher that knows when a new client subscribes, and sends out previous matching messages. It's a standard pub-sub technique called "last value caching". Now over a 1-way transport like pgm (where subscribers literally send no packets back to publishers) this can't be done. But over TCP, it can, if we use an XPUB socket and if that socket didn't cleverly filter out duplicate subscriptions to reduce upstream traffic.</para>
 
-<para>Though I'm not an expert contributor to libzmq, this seems a fun problem to solve. How hard could it be? I start by forking the libzmq repository to my own GitHub account, and then clone it to my laptop:</para>
+<para>Though I'm not an expert contributor to libzmq, this seems a fun problem to solve. How hard could it be? I start by forking the libzmq repository to my own GitHub account, and then clone it to my laptop, where I build it:</para>
 
 <screen>git clone git@github.com:hintjens/libzmq.git
 cd libzmq
@@ -15755,7 +15766,7 @@ if (options.type == ZMQ_XPUB &amp;&amp; (unique || verbose))
     pending.push_back (blob_t (data, size));
 </screen>
 
-<para>The thing builds nicely first time. Which makes me a little suspicious, but being lazy and jetlagged I don't immediately make a test case to actually try out the change. The process doesn't demand that, even if usually I'd do it just to catch that inevitable 10% of mistakes we all make. I do however document this new option on the doc/zmq_setsockopt.txt man page. In the worst case I added a patch that wasn't really useful. But I certainly didn't break anything.</para>
+<para>The thing builds nicely first time. Which makes me a little suspicious, but being lazy and jet-lagged I don't immediately make a test case to actually try out the change. The process doesn't demand that, even if usually I'd do it just to catch that inevitable 10% of mistakes we all make. I do however document this new option on the doc/zmq_setsockopt.txt man page. In the worst case I added a patch that wasn't really useful. But I certainly didn't break anything.</para>
 
 <para>I don't implement a matching zmq_getsockopt, since "minimal" means what it says. There's no obvious use case for getting the value of an option that you presumably just set, in code. Symmetry isn't a valid reason to double the size of a patch. I did have to document the new option since the process says, "All Public Contracts SHOULD be documented."</para>
 
@@ -15782,12 +15793,12 @@ git push origin master
 git log
 </screen>
 
-<para>And that is pretty much it, in terms of how much git one needs to learn and use to contribute patches to libzmq. Six git commands and some clicking on web pages. Most importantly to me as a naturally lazy, stupid, and easily confused developer, I don't have to learn git's internal models, and never have to do anything involving those infernal engines of structural complexity we call "git branches". Next up, the attempted assassination of git branches. Let's live angerously!</para>
+<para>And that is pretty much it, in terms of how much git one needs to learn and use to contribute patches to libzmq. Six git commands and some clicking on web pages. Most importantly to me as a naturally lazy, stupid, and easily confused developer, I don't have to learn git's internal models, and never have to do anything involving those infernal engines of structural complexity we call "git branches". Next up, the attempted assassination of git branches. Let's live dangerously!</para>
 
 </sect1>
 <sect1>
 <title>Git Branches Considered Harmful</title>
-<para>One of git's most popular features is how easy it makes branches. Almost all projects that use git use branches, and the selection of the "best" branching strategy is like a rite of passage for an open source project. Vincent Driessen's <ulink url="http://nvie.com/posts/a-successful-git-branching-model/">git-flow</ulink> is maybe the best known. It has 'base' branches (master, develop), 'feature' branches, 'release' branches, 'hotfix' branches, and 'support' branches. Many teams have adopted git-flow, which even has git extensions to support it. I'm a great believer in popular wisdom, but sometimes you have to recognize mass dellusion for what it is.</para>
+<para>One of git's most popular features is how easy it makes branches. Almost all projects that use git use branches, and the selection of the "best" branching strategy is like a rite of passage for an open source project. Vincent Driessen's <ulink url="http://nvie.com/posts/a-successful-git-branching-model/">git-flow</ulink> is maybe the best known. It has 'base' branches (master, develop), 'feature' branches, 'release' branches, 'hotfix' branches, and 'support' branches. Many teams have adopted git-flow, which even has git extensions to support it. I'm a great believer in popular wisdom, but sometimes you have to recognize mass delusion for what it is.</para>
 
 <para>Here is a section of C4 that might have shocked you when you first read it:</para>
 
@@ -15829,7 +15840,7 @@ git log
 <title>Cost of Failure</title>
 <para><emphasis>The lower the cost of failure, the better.</emphasis></para>
 
-<para>Branches demand more perfection from developers since mistakes potentially affect others. This raises the cost of failure. Forks make failure extremely cheap since nothing that happens in a fork can affect others not using that fork.</para>
+<para>Branches demand more perfection from developers since mistakes potentially affect others. This raises the cost of failure. Forks make failure extremely cheap since literally nothing that happens in a fork can affect others not using that fork.</para>
 
 </sect2>
 <sect2>
@@ -15857,7 +15868,7 @@ git log
 <title>Economics of Participation</title>
 <para><emphasis>The more tangible the rewards, the better.</emphasis></para>
 
-<para>People like to own their work, and get credit for it. This is much easier with forks than with branches. Forks create more competition, in a healthy way, while branches suppress competition and force people to collaborate and share credit. This sounds positive but in my experience it demotivates people. A branch isn't a product you can "own", whereas a fork can be.</para>
+<para>People like to own their work, and get credit for it. This is much easier with forks than with branches. Forks create more competition, in a healthy way, while branches suppress competition and force people to collaborate and share credit. This sounds positive but in my experience it de-motivates people. A branch isn't a product you can "own", whereas a fork can be.</para>
 
 </sect2>
 <sect2>
@@ -15885,19 +15896,21 @@ git log
 <title>Conclusions</title>
 <para>In this section I've listed a series of arguments, most of which came from fellow team members. Here's how it seems to break down: git veterans insist that branches are the way to work, whereas newcomers tend to feel intimidated when asked to navigate git branches. Git is not an easy tool to master. What we've discovered, accidentally, is that when you stop using branches <emphasis>at all</emphasis>, git becomes trivial to use. It literally comes down to six commands (clone, remote, commit, log, push, and pull). Furthermore, a branch-free process actually works, we've used it for a couple of years now, and no visible downside except surprise to the veterans, and growth of "single" projects over multiple repositories.</para>
 
+<para>If you can't use forks, perhaps because your firm doesn't trust github's private repositories, then you perhaps topic branches (one per issue) will work. You'll still suffer the costs of getting upfront consensus, low competitiveness, and risk of human error.</para>
+
 </sect2>
 </sect1>
 <sect1>
 <title>The Myth of Intelligent Design</title>
-<para>The dominant theory of design is that you take smart, creative people and money, and produce amazing products. The smarter the people, the better the results. I'm going to claim that theory is bogus, a myth based on a belief-based model of the "inventor" and "invention" as a function of individual minds. As an alternative I'll present the Theory of Heuristic Innovation, which states roughly that we do not invent solutions, we discover them, and that discovery process can be highly automated.</para>
+<para>The dominant theory of design is that you take smart, creative people and money, and produce amazing products. The smarter the people, the better the results. I'm going to claim that theory is bogus, a myth based on magical thinking that treats the "invention" as a product of individual "inventor" minds. As an alternative I'll present the Theory of Heuristic Innovation, which states roughly that we do not invent solutions, we discover them, and that discovery process can be highly automated.</para>
 
-<para>Presenting &Oslash;MQ at the Mix-IT conference in Lyon in early 2012, I was asked several times for the "roadmap". My answer was, roadmaps are bad for several reasons. First, they make promises we can rarely keep, which causes problems for our users. Second, they claim territory and make it harder for others to participate. Lastly, they preempt the thinking process of the community. The audience didn't really like my answer. So un-French. Software engineers don't like the notion that powerful, effective solutions can come into existence without an intelligent designer actively thinking things through. And yet no-one in that room would question evolution. A strange irony, and one I wanted to explore further as it underpins the direction the &Oslash;MQ community has taken over the last year or so.</para>
+<para>Presenting &Oslash;MQ at the Mix-IT conference in Lyon in early 2012, I was asked several times for the "road-map". My answer was, There is no road-map, and road-maps are bad for several reasons. First, they make promises we can rarely keep, which causes problems for our users. Second, they claim territory and make it harder for others to participate. Lastly, they preempt the thinking process of the community. The audience didn't really like my answer. So un-French. Software engineers don't like the notion that powerful, effective solutions can come into existence without an intelligent designer actively thinking things through. And yet no-one in that room would question evolution. A strange irony, and one I wanted to explore further as it underpins the direction the &Oslash;MQ community has taken over the last year or so.</para>
 
-<para>In the dominant theory, brilliant individuals reflect on large problem sets and then carefully and precisely create a solution. Sometimes they will have "eureka" moments where they "get" brilliantly simple answers to whole large problem sets. The inventor, and the process of invention are rare, precious, and can command a monopoly. History is full of such individuals.</para>
+<para>In the dominant theory, brilliant individuals reflect on large problem sets and then carefully and precisely create a solution. Sometimes they will have "eureka" moments where they "get" brilliantly simple answers to whole large problem sets. The inventor, and the process of invention are rare, precious, and can command a monopoly. History is full of such heroic individuals. We owe them our modern world.</para>
 
 <para>Looking closer, however, the facts don't match. History doesn't show lone inventors. It shows lucky people who steal or claim ownership of ideas that are being worked on by many. It shows brilliant people striking lucky once, and then spending decades on fruitless and pointless quests. The best known large-scale inventors like Thomas Edison were in fact just very good at systematic broad research done by large teams. It's like claiming that Steve Jobs invented every device made by Apple. It is a nice myth, good for marketing, but utterly useless as practical science.</para>
 
-<para>Recent history, much better documented and less easy to manipulate, shows this well. The Internet is surely one of the most innovative and fast-moving areas of technology. It has no inventor. Instead it has a massive economy of people who have carefully and progressively solved a long series of immediate problems, documented their answers, and made those available to all. The innovative nature of the Internet comes not from a small band of Einsteins. It comes from RFCs anyone can use and improve, made by hundreds and thousands of smart, but not uniquely smart, individuals. It comes from open source software anyone can use and improve. It comes from sharing, scale of community, and the continuous accretion of good solutions and disposal of bad ones.</para>
+<para>Recent history, much better documented and less easy to manipulate, shows this well. The Internet is surely one of the most innovative and fast-moving areas of technology, and one of the best documented. It has no inventor. Instead it has a massive economy of people who have carefully and progressively solved a long series of immediate problems, documented their answers, and made those available to all. The innovative nature of the Internet comes not from a small, select band of Einsteins. It comes from RFCs anyone can use and improve, made by hundreds and thousands of smart, but not uniquely smart, individuals. It comes from open source software anyone can use and improve. It comes from sharing, scale of community, and the continuous accretion of good solutions and disposal of bad ones.</para>
 
 <para>Here thus is my "Theory of Heuristic Innovation":</para>
 
@@ -15914,12 +15927,14 @@ git log
 
 <itemizedlist>
   <listitem><para><emphasis>Individual creativity matters less than process.</emphasis> Smarter people may work faster but they may work in the wrong direction. It's the collective vision of reality that keeps us honest and relevant.</para></listitem>
-  <listitem><para><emphasis>We don't need roadmaps if we have a good process.</emphasis> Functionality will emerge and evolve over time as solutions compete for market share.</para></listitem>
+  <listitem><para><emphasis>We don't need road-maps if we have a good process.</emphasis> Functionality will emerge and evolve over time as solutions compete for market share.</para></listitem>
   <listitem><para><emphasis>We don't invent solutions, so much as discover them.</emphasis> All sympathies to the creative soul. It's just an information processing machine that likes to polish its own ego and collect karma.</para></listitem>
   <listitem><para><emphasis>Intelligence is a social effect, though it feels personal.</emphasis> A person cut-off from others eventually stops thinking. We can neither collect problems nor measure solutions without other people.</para></listitem>
   <listitem><para><emphasis>The size and diversity of the community is a key factor.</emphasis> Larger, more diverse communities collect more relevant problems, and solve them more accurately, and do this faster, than a small expert group.</para></listitem>
 </itemizedlist>
-<para>People have pointed out that hill-climbing algorithms (what this is, essentially) have known limitations. One gets stuck on local peaks, mainly. But this is nonetheless how life itself works: collecting tiny incremental improvements over long periods of time. There is no intelligent designer. We reduce the risk of local peaks by spreading out widely across the landscape but it is somewhat moot. The limitations aren't optional. The theory says, <emphasis>this is how innovation really works, so better embrace it and work with it, than try to work on the basis of belief</emphasis>.</para>
+<para>People have pointed out that hill-climbing algorithms (what this is, essentially) have known limitations. One gets stuck on local peaks, mainly. But this is nonetheless how life itself works: collecting tiny incremental improvements over long periods of time. There is no intelligent designer. We reduce the risk of local peaks by spreading out widely across the landscape but it is somewhat moot. The limitations aren't optional, they are physical laws. The theory says, <emphasis>this is how innovation really works, so better embrace it and work with it, than try to work on the basis of belief</emphasis>.</para>
+
+<para>And in fact once you see all innovation as more or less successful hill-climbing, you realize why some teams and companies and products get stuck in a never-never land of diminishing prospects. They simply don't have the diversity and collective intelligence to find better hills to climb. When Nokia killed their open source projects, they cut their own throat.</para>
 
 </sect1>
 <sect1>
@@ -15952,7 +15967,7 @@ git log
 </sect1>
 <sect1>
 <title>Patterns for The Game</title>
-<para>I'll end this code-free chapter with a series of patterns for success in software engineering. They aim to capture the essence of what divides glorious success from tragic failure. They were described as "<emphasis>religious maniacal dogma</emphasis>" by a manager, and "<emphasis>anything else would be effing insane</emphasis>" by a colleague, in a single day. For me, they are science. But treat the Lazy Perfectionist and others as tools to use, sharpen, and throw away if something better comes along.</para>
+<para>I'll end this code-free chapter with a series of patterns for success in software engineering. They aim to capture the essence of what divides glorious success from tragic failure. They were described as "religious maniacal dogma" by a manager, and "anything else would be effing insane" by a colleague, in a single day. For me, they are science. But treat the Lazy Perfectionist and others as tools to use, sharpen, and throw away if something better comes along.</para>
 
 <sect2>
 <title>The Lazy Perfectionist</title>
@@ -15973,13 +15988,6 @@ git log
 <para><emphasis>The ideal team consists of two sides: one writing code, and one providing feedback.</emphasis></para>
 
 <para>The Earth and Sky work together as a whole, in close proximity, but they communicate formally through an issue tracking. Sky seeks out problems, from others and from their own use of the product, and feeds these to Earth. Earth rapidly answers with testable solutions. Earth and Sky can work through dozens of issues in a day. Sky talks to other users, and Earth talks to other developers. Earth and Sky may be two people, or two small groups.</para>
-
-</sect2>
-<sect2>
-<title>The Happy Failure</title>
-<para><emphasis>To succeed you must learn to fail rapidly, cheaply, and often.</emphasis></para>
-
-<para>The Happy Failure embraces failure as the only real way to learn. He focuses on reducing the cost of failure, and documenting failures so that everyone can learn from them. He does not over-specify functionality, stays away from upfront documentation, does not use test-driven development. All of these make it harder, and more costly to fail.</para>
 
 </sect2>
 <sect2>
@@ -16253,7 +16261,7 @@ PING 192.168.1.4 (192.168.1.4) 56(84) bytes of data.
 
 <para>It isn't even hard to create ICMP_ECHO messages and send them. A few dozen lines of code, and we could use &Oslash;MQ multithreading to do this in parallel for addresses stretching out above and below our own IP address. Could be kind of fun.</para>
 
-<para>However, sadly, there's a fatal flaw in my idea of using ICMP_ECHO to discover devices. To open a raw IP socket requires root priviliges on a POSIX box. It stops rogue programs getting data meant for others. We can get the power to open raw sockets on Linux by giving sudo priviliges to our command (ping has the sticky bit set). On a mobile OS like Android, it requires root access, i.e. rooting the phone or tablet. That's out of the question for most people and so ICMP_ECHO is out of reach for most devices.</para>
+<para>However, sadly, there's a fatal flaw in my idea of using ICMP_ECHO to discover devices. To open a raw IP socket requires root privileges on a POSIX box. It stops rogue programs getting data meant for others. We can get the power to open raw sockets on Linux by giving sudo privileges to our command (ping has the sticky bit set). On a mobile OS like Android, it requires root access, i.e. rooting the phone or tablet. That's out of the question for most people and so ICMP_ECHO is out of reach for most devices.</para>
 
 <para>Expletive deleted! Let's try something in user space. The next step most people take is UDP multicast or broadcast.</para>
 
@@ -16262,7 +16270,7 @@ PING 192.168.1.4 (192.168.1.4) 56(84) bytes of data.
 <title>Cooperative Discovery using UDP Broadcasts</title>
 <para>Multicast tends to be seen as more modern and "better" than broadcast. In IPv6, broadcast doesn't work at all: you have to always use broadcast. Nonetheless, all IPv4 local network discovery protocols end up using UDP broadcast anyhow. The reasons: broadcast and multicast end up working much the same, except broadcast is simpler and less risky. Multicast is seen by network admins as kind of dangerous, as it can leak over network segments.</para>
 
-<para>If you never used UDP, you'll discover it's quite a nice protocol. In some ways it reminds us of &Oslash;MQ, sending whole messages to peers using a two different patterns: one-to-one, and one-to-many. The main problems with UDP are that (a) the POSIX socket API was designed for universal flexibility not simplicity, (b) UDP messages are limited to 255 bytes, and (c) when you start to use UDP for real data, you find that a lot of messages get dropped, especially as infrastructure tends to favor TCP over UDP.</para>
+<para>If you never used UDP, you'll discover it's quite a nice protocol. In some ways it reminds us of &Oslash;MQ, sending whole messages to peers using a two different patterns: one-to-one, and one-to-many. The main problems with UDP are that (a) the POSIX socket API was designed for universal flexibility not simplicity, (b) UDP messages are limited for practical purposes to about 512 bytes, and (c) when you start to use UDP for real data, you find that a lot of messages get dropped, especially as infrastructure tends to favor TCP over UDP.</para>
 
 <para>Here is a minimal ping program that uses UDP instead of ICMP_ECHO:</para>
 
@@ -16271,7 +16279,7 @@ PING 192.168.1.4 (192.168.1.4) 56(84) bytes of data.
 <programlisting language="c">
 //
 //  UDP ping command
-//  Model 1
+//  Model 1, does UDP work inline
 //
 #include &lt;czmq.h&gt;
 #define PING_PORT_NUMBER 9999
@@ -16318,7 +16326,7 @@ int main (void)
 <example id="udpping1-c-1">
 <title>UDP discovery, model 1 (udpping1.c) - main ping loop</title>
 <programlisting language="c">
-    zmq_pollitem_t items [] = {{ NULL, fd, ZMQ_POLLIN, 0 }};
+    zmq_pollitem_t pollitems [] = {{ NULL, fd, ZMQ_POLLIN, 0 }};
     //  Send first ping right away
     uint64_t ping_at = zclock_time ();
     
@@ -16326,11 +16334,11 @@ int main (void)
         long timeout = (long) (ping_at - zclock_time ());
         if (timeout &lt; 0)
             timeout = 0;
-        if (zmq_poll (items, 1, timeout * ZMQ_POLL_MSEC) == -1)
+        if (zmq_poll (pollitems, 1, timeout * ZMQ_POLL_MSEC) == -1)
             break;              //  Interrupted
 
         //  Someone answered our ping
-        if (items [0].revents &amp; ZMQ_POLLIN) {
+        if (pollitems [0].revents &amp; ZMQ_POLLIN) {
             struct sockaddr_in si_that;
             socklen_t si_len;
             ssize_t size = recvfrom (fd, buffer, PING_MSG_SIZE, 0, &amp;si_that, &amp;si_len);
@@ -16365,13 +16373,13 @@ Pinging peers...
 Found peer 192.168.1.2:9999
 </screen>
 
-<para>If I switch off WiFi and try again, I get this:</para>
+<para>If I switch off all networking and try again, sending a message fails, as I'd expect:</para>
 
 <screen>Pinging peers...
 sendto: Network is unreachable
 </screen>
 
-<para>Working on the basis of "<emphasis>solve the problems currently aiming at your throat</emphasis>", let's fix the most urgent issues in this first model. These issues are:</para>
+<para>Working on the basis of <emphasis>solve the problems currently aiming at your throat</emphasis>, let's fix the most urgent issues in this first model. These issues are:</para>
 
 <itemizedlist>
   <listitem><para>Using the 255.255.255.255 broadcast address is a bit dubious. On the one hand, this broadcast address means precisely "send to all nodes on the local network, and don't forward". However, if you have several interfaces (wired Ethernet, WiFi) then broadcasts will go out on your default route only, and via just one interface. What we want to do is either send our broadcast on each interface's broadcast address, or find the WiFi interface and its broadcast address.</para></listitem>
@@ -16379,14 +16387,38 @@ sendto: Network is unreachable
   <listitem><para>There's no handling for errors except "abort", which is too brutal for transient problems like "your WiFi is switched off". The code should distinguish between soft errors (ignore and retry) and hard errors (assert).</para></listitem>
   <listitem><para>The code needs to know its own IP address and ignore beacons that it sent out. Like finding the broadcast address, this requires inspecting the available interfaces.</para></listitem>
 </itemizedlist>
-<para>The simplest answer to these issues is to push the UDP code into a separate library that provided a clean API. Here is the refactored UDP ping program that calls this library:</para>
+<para>The simplest answer to these issues is to push the UDP code into a separate library that provided a clean API, like this:</para>
+
+<programlisting language="c">
+//  Constructor
+static udp_t *
+    udp_new (int port_nbr);
+
+//  Destructor
+static void
+    udp_destroy (udp_t **self_p);
+
+//  Returns UDP socket handle
+static int
+    udp_handle (udp_t *self);
+
+//  Send message using UDP broadcast
+static void
+    udp_send (udp_t *self, byte *buffer, size_t length);
+
+//  Receive message from UDP broadcast
+static ssize_t
+    udp_recv (udp_t *self, byte *buffer, size_t length);
+</programlisting>
+
+<para>Here is the refactored UDP ping program that calls this library, which is much cleaner and nicer:</para>
 
 <example id="udpping2-c">
 <title>UDP discovery, model 2 (udpping2.c)</title>
 <programlisting language="c">
 //
 //  UDP ping command
-//  Model 2
+//  Model 2, uses separate UDP library
 //
 #include &lt;czmq.h&gt;
 #include "udplib.c"
@@ -16401,7 +16433,7 @@ int main (void)
     udp_t *udp = udp_new (PING_PORT_NUMBER);
     
     byte buffer [PING_MSG_SIZE];
-    zmq_pollitem_t items [] = {{ NULL, udp_handle (udp), ZMQ_POLLIN, 0 }};
+    zmq_pollitem_t pollitems [] = {{ NULL, udp_handle (udp), ZMQ_POLLIN, 0 }};
     
     //  Send first ping right away
     uint64_t ping_at = zclock_time ();
@@ -16410,11 +16442,11 @@ int main (void)
         long timeout = (long) (ping_at - zclock_time ());
         if (timeout &lt; 0)
             timeout = 0;
-        if (zmq_poll (items, 1, timeout * ZMQ_POLL_MSEC) == -1)
+        if (zmq_poll (pollitems, 1, timeout * ZMQ_POLL_MSEC) == -1)
             break;              //  Interrupted
 
         //  Someone answered our ping
-        if (items [0].revents &amp; ZMQ_POLLIN)
+        if (pollitems [0].revents &amp; ZMQ_POLLIN)
             udp_recv (udp, buffer, PING_MSG_SIZE);
         
         if (zclock_time () &gt;= ping_at) {
@@ -16431,7 +16463,7 @@ int main (void)
 </programlisting>
 
 </example>
-<para>The library, udplib, hides a lot of the unpleasant code (which will become nastier and nastier as we make this work on more systems). I'm not going to print that code here. You can read it in the repository. It does provide a neat little "udp" class that wraps up the work we need to do.</para>
+<para>The library, udplib, hides a lot of the unpleasant code (which will become uglier we make this work on more systems). I'm not going to print that code here. You can read it in the repository.</para>
 
 <para>Now, there are more problems sizing us up and wondering if they can make lunch out of us. First, IPv4 versus IPv6 and multicast vs. broadcast. In IPv6, broadcast doesn't exist at all; one uses multicast. From my experience with WiFi, IPv4 multicast and broadcast work identically except that multicast breaks in some situations where broadcast works fine. Some access points do not forward multicast packets. When you have a device (e.g. a tablet) that acts as a mobile AP, then it's possible it won't get multicast packets. Meaning, it won't see other peers on the network.</para>
 
@@ -16441,32 +16473,483 @@ int main (void)
 
 </sect2>
 <sect2>
-<title>Abstraction, Presence and Topology</title>
-<para>So we can discover nodes on the WiFi network, as long as they're sending out beacons as we expect. If I was a wizz Android developer with a free weekend I'd immediately (as in, it would take me two days) port this code to my phone and get it sending beacons to my PC. But sometimes lazy is more profitable. I <emphasis>like</emphasis> my Linux laptop.</para>
+<title>Multiple Nodes on One Device</title>
+<para>So we can discover nodes on the WiFi network, as long as they're sending out beacons as we expect. So I try to test with two processes. But when I run udpping2 twice, the second instance complains "'Address already in use' on bind" and exits. Oh, right. UDP and TCP both return an error if you try to bind two different sockets to the same port. This is right. The semantics of two readers on one socket would be weird to say the least. Odd/even bytes? You get all the 1s, I get all the 0's?</para>
 
-<para>Hence my next challenge: how to simulate multiple nodes on a single physical device. In any case this seems like a Good Thing. It's naive to think one device represents one node. At the very least it makes it horribly painful to test large numbers of nodes. Do you have a hundred tablets lying around? And do you have any idea how long it takes to reinstall a new version on 100 devices? Exactly.</para>
+<para>However, a quick check of stackoverflow and some memory of a socket option called SO_REUSEADDR turns up gold. If I use that, I can bind several processes to the same UDP port, and they will all receive any message arriving on that port. It's almost as if the guys who designed this were reading my mind! (That's way more plausible than maybe I'm reinventing the wheel.)</para>
 
-<para>On a sane operating system, you can bind one socket to one port. UDP and TCP both return an error if you try to bind two different sockets to the same port. This is as it should be. The semantics of two readers on one socket would be weird to say the least. Odd/even bytes? You get all the 1s, I get all the 0's?</para>
+<para>Quick test, and SO_REUSADDR works as promised. This is great because the next thing I want to do is design an API and then start dozens or hundreds of nodes to see them discovering each other. It would be really cumbersome to have to test each node on a separate device. And when we get to testing how real traffic behaves on a large, flaky network, the two alternatives are simulation or temporary insanity.</para>
 
-<para>- multiple nodes on one device</para>
+<para>And I speak from experience: we were, this summer, testing on dozens of devices at once. It takes about an hour to set-up a full test run, and you need a space shielded from WiFi interference if you want any kind of reproducibility (unless your test case is "prove that interference kills WiFi networks faster than Orval can kill a thirst".</para>
 
-<para>- simulation and testing</para>
+<para>If I was a wizz Android developer with a free weekend I'd immediately (as in, it would take me two days) port this code to my phone and get it sending beacons to my PC. But sometimes lazy is more profitable. I <emphasis>like</emphasis> my Linux laptop. I like being able to start a dozen threads from one process, and have each thread acting like an independent node. I like not having to work in a real Faraday cage when I can simulate one on my laptop.</para>
 
-<para>    - supernodes</para>
+</sect2>
+<sect2>
+<title>Designing the API</title>
+<para>I'm going to run N nodes on a device, and they are going to have to discover each other, and also discover a bunch of other nodes out there on the local network. I can use UDP for local discovery as well as remote discovery. It's arguably not as efficient as using, e.g., the &Oslash;MQ inproc:// transport, but has the great advantage that the exact same code will work in simulation and in real deployment.</para>
 
-<para>- protocol identification</para>
+<para>If I have multiple nodes on one device, we clearly can't use the IP address and port number as node address. I need some logical node identifier. Arguably, the node identifier only has to be unique within the context of the device. My mind fills with complex stuff I could make, like supernodes that sit on real UDP ports and forward messages to internal nodes. I hit my head on the table until the idea of <emphasis>inventing new concepts</emphasis> leaves it.</para>
 
-<para>- versioning</para>
+<para>Experience tells us that WiFi does things like <emphasis>appear</emphasis> and <emphasis>disappear</emphasis> while applications are running. Which does interesting things like change IP address halfway through a session. For simplicity let's give every node a UUID, and say that nodes, represented by their UUIDs, can appear or reappear at certain IP address:port endpoints, and then disappear again. A UUID is 16 bytes. So if I have 100 nodes on a WiFi network that's (double it for other random stuff) 3,200 bytes a second of beacon data that the air has to carry just for discovery and presence. Seems acceptable.</para>
 
-<para>    - frame header</para>
+<para>Back to concepts. We do need some names for our API. At the least we need a way to distinguish between the node object that is "us", and node objects that are our peers.  We'll be doing things like creating an "us" and then asking it how many peers it knows about and who they are. The term "peer" is clear enough.</para>
 
-<para>- node addressing -> UUID</para>
+<para>From the developer point of view, a node (the application) needs a way to talk to the outside world. Let's borrow a term from networking and call this an "interface". The interface represents us to the rest of the world and presents the rest of the world to us, as a set of other peers. It automatically does whatever discovery it has to. When we want to talk to a peer, we get the interface to do that for us. And when a peer talks to us, it's the interface that delivers us the message.</para>
 
-<para>    - frame body</para>
+<para>This seems like a clean API design. How about the internals?</para>
 
-<para>- can't use UDP for any work, need to bootstrap into &Oslash;MQ</para>
+<itemizedlist>
+  <listitem><para>The interface has to be multithreaded, so that one thread can do I/O in the background, while the foreground API talks to the application. We used this design in the Clone and Freelance client APIs.</para></listitem>
+  <listitem><para>The interface background thread does the discovery business; bind to the UDP port, send out UDP beacons, and receive beacons.</para></listitem>
+  <listitem><para>We need to at least send UUIDs in the beacon message so that we can distinguish our own beacons from those of our peers.</para></listitem>
+  <listitem><para>We need to track peers that appear, and that disappear. For this I'll use a hash table that stores all known peers, and expire peers after some timeout.</para></listitem>
+  <listitem><para>We need a way to report peers and events to the caller. Here we get into a juicy question. How does a background I/O thread tell a foreground API thread that stuff is happening? Callbacks maybe? Heck no. We'll use &Oslash;MQ messages, of course.</para></listitem>
+</itemizedlist>
+<para>The third iteration of the UDP ping program is even simpler and more beautiful than the second. The main body, in C, is just nine lines of code.</para>
 
-<para>    - handshaked discovery</para>
+<example id="udpping3-c">
+<title>UDP discovery, model 3 (udpping3.c)</title>
+<programlisting language="c">
+//
+//  UDP ping command
+//  Model 3, uses abstract network interface
+//
+#include &lt;czmq.h&gt;
+#include "interface.c"
+
+int main (void)
+{
+    interface_t *interface = interface_new ();
+    while (true) {
+        zmsg_t *msg = interface_recv (interface);
+        if (!msg)
+            break;              //  Interrupted
+        zmsg_dump (msg);
+    }
+    interface_destroy (&amp;interface);
+    return 0;
+}
+</programlisting>
+
+</example>
+<para>The interface code should be familiar if you've studied how we make multithreaded API classes:</para>
+
+<example id="interface-c">
+<title>UDP ping interface (interface.c)</title>
+<programlisting language="c">
+//  Interface class for Chapter 8
+//  This implements an "interface" to our network of nodes
+
+#include &lt;czmq.h&gt;
+#include &lt;uuid/uuid.h&gt;
+#include "udplib.c"
+
+
+//  =====================================================================
+//  Synchronous part, works in our application thread
+
+//  ---------------------------------------------------------------------
+//  Structure of our class
+
+typedef struct {
+    zctx_t *ctx;                //  Our context wrapper
+    void *pipe;                 //  Pipe through to agent
+} interface_t;
+
+//  This is the thread that handles our real interface class
+static void
+    interface_agent (void *args, zctx_t *ctx, void *pipe);
+</programlisting>
+
+</example>
+<para>Constructor and destructor for the interface class. Note that the class has barely any properties, it is just an excuse to start the background thread, and a wrapper around zmsg_recv(): 
+</para>
+
+<example id="interface-c-1">
+<title>UDP ping interface (interface.c) - constructor and destructor</title>
+<programlisting language="c">
+
+interface_t *
+interface_new (void)
+{
+    interface_t
+        *self;
+
+    self = (interface_t *) zmalloc (sizeof (interface_t));
+    self-&gt;ctx = zctx_new ();
+    self-&gt;pipe = zthread_fork (self-&gt;ctx, interface_agent, NULL);
+    return self;
+}
+
+void
+interface_destroy (interface_t **self_p)
+{
+    assert (self_p);
+    if (*self_p) {
+        interface_t *self = *self_p;
+        zctx_destroy (&amp;self-&gt;ctx);
+        free (self);
+        *self_p = NULL;
+    }
+}
+</programlisting>
+
+</example>
+<para>Here we wait for a message from the interface. This returns us a zmsg_t object, or NULL if interrupted: 
+</para>
+
+<example id="interface-c-2">
+<title>UDP ping interface (interface.c) - receive message</title>
+<programlisting language="c">
+
+static zmsg_t *
+interface_recv (interface_t *self)
+{
+    assert (self);
+    zmsg_t *msg = zmsg_recv (self-&gt;pipe);
+    return msg;
+}
+
+
+//  =====================================================================
+//  Asynchronous part, works in the background
+</programlisting>
+
+</example>
+<para>This structure defines each peer that we discover and track: 
+</para>
+
+<example id="interface-c-3">
+<title>UDP ping interface (interface.c) - peer class</title>
+<programlisting language="c">
+
+typedef struct {
+    uuid_t uuid;                //  Peer's UUID as binary blob
+    char *uuid_str;             //  UUID as printable string
+    uint64_t expires_at;
+} peer_t;
+
+#define PING_PORT_NUMBER 9999
+#define PING_INTERVAL    1000  //  Once per second
+#define PEER_EXPIRY      5000  //  Five seconds and it's gone
+
+//  Convert binary UUID to freshly allocated string
+
+static char *
+s_uuid_str (uuid_t uuid)
+{
+    char hex_char [] = "0123456789ABCDEF";
+    char *string = zmalloc (sizeof (uuid_t) * 2 + 1);
+    int byte_nbr;
+    for (byte_nbr = 0; byte_nbr &lt; sizeof (uuid_t); byte_nbr++) {
+        string [byte_nbr * 2 + 0] = hex_char [uuid [byte_nbr] &gt;&gt; 4];
+        string [byte_nbr * 2 + 1] = hex_char [uuid [byte_nbr] &amp; 15];
+    }
+    return string;
+}
+</programlisting>
+
+</example>
+<para>Constructor and destructor for the peer class: 
+</para>
+
+<example id="interface-c-4">
+<title>UDP ping interface (interface.c) - peer constructor and destructor</title>
+<programlisting language="c">
+
+static peer_t *
+peer_new (uuid_t uuid)
+{
+    peer_t *self = (peer_t *) zmalloc (sizeof (peer_t));
+    memcpy (self-&gt;uuid, uuid, sizeof (uuid_t));
+    self-&gt;uuid_str = s_uuid_str (self-&gt;uuid);
+    return self;
+}
+
+//  Destroy peer object
+
+static void
+peer_destroy (peer_t **self_p)
+{
+    assert (self_p);
+    if (*self_p) {
+        peer_t *self = *self_p;
+        free (self-&gt;uuid_str);
+        free (self);
+        *self_p = NULL;
+    }
+}
+</programlisting>
+
+</example>
+<para>These methods return the peer's UUID in binary format or as a printable string: 
+</para>
+
+<example id="interface-c-5">
+<title>UDP ping interface (interface.c) - peer methods</title>
+<programlisting language="c">
+
+static byte *
+peer_uuid (peer_t *self)
+{
+    assert (self);
+    return self-&gt;uuid;
+}
+
+static char *
+peer_uuid_str (peer_t *self)
+{
+    assert (self);
+    return self-&gt;uuid_str;
+}
+
+//  Just resets the peers expiry time; we call this method
+//  whenever we get any activity from a peer.
+
+static void
+peer_is_alive (peer_t *self)
+{
+    assert (self);
+    self-&gt;expires_at = zclock_time () + PEER_EXPIRY;
+}
+
+//  Peer hash calls this handler automatically whenever we delete
+//  peer from agent peers, or destroy that hash table.
+
+static void
+peer_freefn (void *argument)
+{
+    peer_t *peer = (peer_t *) argument;
+    peer_destroy (&amp;peer);
+}
+</programlisting>
+
+</example>
+<para>This structure holds the context for our agent, so we can pass that around cleanly to methods which need it: 
+</para>
+
+<example id="interface-c-6">
+<title>UDP ping interface (interface.c) - agent class</title>
+<programlisting language="c">
+
+typedef struct {
+    zctx_t *ctx;                //  CZMQ context
+    void *pipe;                 //  Pipe back to application
+    udp_t *udp;                 //  UDP object
+    uuid_t uuid;                //  Our UUID as binary blob
+    zhash_t *peers;             //  Hash of known peers, fast lookup
+} agent_t;
+</programlisting>
+
+</example>
+<para>Constructor and destructor for agent. Each interface has one agent object, which implements its background thread: 
+</para>
+
+<example id="interface-c-7">
+<title>UDP ping interface (interface.c) - agent constructor and destructor</title>
+<programlisting language="c">
+
+static agent_t *
+agent_new (zctx_t *ctx, void *pipe)
+{
+    agent_t *self = (agent_t *) zmalloc (sizeof (agent_t));
+    self-&gt;ctx = ctx;
+    self-&gt;pipe = pipe;
+    self-&gt;udp = udp_new (PING_PORT_NUMBER);
+    self-&gt;peers = zhash_new ();
+    uuid_generate (self-&gt;uuid);
+    return self;
+}
+
+static void
+agent_destroy (agent_t **self_p)
+{
+    assert (self_p);
+    if (*self_p) {
+        agent_t *self = *self_p;
+        zhash_destroy (&amp;self-&gt;peers);
+        udp_destroy (&amp;self-&gt;udp);
+        free (self);
+        *self_p = NULL;
+    }
+}
+...
+</programlisting>
+
+</example>
+<para>Handle beacon coming into UDP socket; this may be from other peers or an echo of our own broadcast beacon: 
+</para>
+
+<example id="interface-c-8">
+<title>UDP ping interface (interface.c) - handle beacon</title>
+<programlisting language="c">
+
+
+static int
+agent_handle_beacon (agent_t *self)
+{
+    uuid_t uuid;
+    ssize_t size = udp_recv (self-&gt;udp, uuid, sizeof (uuid_t));
+
+    //  If we got a UUID and it's not our own beacon, we have a peer
+    if (size == sizeof (uuid_t)
+    &amp;&amp;  memcmp (uuid, self-&gt;uuid, sizeof (uuid))) {
+        char *uuid_str = s_uuid_str (uuid);
+        
+        //  Find or create peer via its UUID string
+        peer_t *peer = (peer_t *) zhash_lookup (self-&gt;peers, uuid_str);
+        if (peer == NULL) {
+            peer = peer_new (uuid);
+            zhash_insert (self-&gt;peers, uuid_str, peer);
+            zhash_freefn (self-&gt;peers, uuid_str, peer_freefn);
+            
+            //  Report peer joined the network
+            zstr_sendm (self-&gt;pipe, "JOINED");
+            zstr_send (self-&gt;pipe, uuid_str);
+        }
+        //  Any activity from the peer means it's alive
+        peer_is_alive (peer);
+        free (uuid_str);
+    }
+    return 0;
+}
+</programlisting>
+
+</example>
+<para>This method checks one peer item for expiry; if the peer hasn't sent us anything by now, it's 'dead' and we can delete it: 
+</para>
+
+<example id="interface-c-9">
+<title>UDP ping interface (interface.c) - reap peers</title>
+<programlisting language="c">
+
+static int
+agent_reap_peer (const char *key, void *item, void *argument)
+{
+    agent_t *self = (agent_t *) argument;
+    peer_t *peer = (peer_t *) item;
+    if (zclock_time () &gt;= peer-&gt;expires_at) {
+        //  Report peer left the network
+        zstr_sendm (self-&gt;pipe, "LEFT");
+        zstr_send (self-&gt;pipe, peer_uuid_str (peer));
+        zhash_delete (self-&gt;peers, peer_uuid_str (peer));
+    }
+    return 0;
+}
+</programlisting>
+
+</example>
+<para>This is the main loop for the background agent. It uses zmq_poll to monitor the front-end pipe (commands from the API) and the back-end UDP handle (beacons): 
+</para>
+
+<example id="interface-c-10">
+<title>UDP ping interface (interface.c) - agent main loop</title>
+<programlisting language="c">
+
+static void
+interface_agent (void *args, zctx_t *ctx, void *pipe)
+{
+    //  Create agent instance to pass around
+    agent_t *self = agent_new (ctx, pipe);
+    
+    //  Send first beacon immediately
+    uint64_t ping_at = zclock_time ();
+    zmq_pollitem_t pollitems [] = {
+        { self-&gt;pipe, 0, ZMQ_POLLIN, 0 },
+        { 0, udp_handle (self-&gt;udp), ZMQ_POLLIN, 0 }
+    };
+    
+    while (!zctx_interrupted) {
+        long timeout = (long) (ping_at - zclock_time ());
+        if (timeout &lt; 0)
+            timeout = 0;
+        if (zmq_poll (pollitems, 2, timeout * ZMQ_POLL_MSEC) == -1)
+            break;              //  Interrupted
+
+        //  If we had activity on the pipe, go handle the control
+        //  message. Current code never sends control messages.
+        if (pollitems [0].revents &amp; ZMQ_POLLIN)
+            agent_control_message (self);
+
+        //  If we had input on the UDP socket, go process that
+        if (pollitems [1].revents &amp; ZMQ_POLLIN)
+            agent_handle_beacon (self);
+
+        //  If we passed the 1-second mark, broadcast our beacon
+        if (zclock_time () &gt;= ping_at) {
+            udp_send (self-&gt;udp, self-&gt;uuid, sizeof (uuid_t));
+            ping_at = zclock_time () + PING_INTERVAL;
+        }
+        //  Delete and report any expired peers
+        zhash_foreach (self-&gt;peers, agent_reap_peer, self);
+    }
+    agent_destroy (&amp;self);
+}
+</programlisting>
+
+</example>
+<para>When I run this in two windows, it reports one peer joining the network. I kill that peer and a few seconds later it tells me the peer left:</para>
+
+<screen>--------------------------------------
+[006] JOINED
+[032] 418E98D4B7184844B7D5E0EE5691084C
+--------------------------------------
+[004] LEFT
+[032] 418E98D4B7184844B7D5E0EE5691084C
+</screen>
+
+<para>What's nice about a &Oslash;MQ-message based API is that I can wrap this any way I like. For instance, turning it into callbacks if I really want those. I can also trace all activity on the API very easily.</para>
+
+<para>Some notes about tuning. On Ethernet, five seconds (the expiry time I used in this code) seems like a lot. On a badly stressed WiFi network you can get ping latencies of 30 seconds or more. If you use a too-aggressive value for the expiry, you'll disconnect nodes that are still there. On the other side, end user applications expect a certain liveliness. If it takes 30 seconds to report that a node has gone, users will get annoyed.</para>
+
+<para>A decent strategy is to detect and report disappeared nodes rapidly, but only delete them after a longer interval. Visually, a node would be green when it's alive, then gray for a while as it went out of reach, then finally disappear. We're not doing this now, but will do it in the real implementation of the as-yet-unnamed framework we're making.</para>
+
+<para>As we will also see later, we have to treat any input from a node, not just UDP beacons, as a sign of life. UDP may get squashed when there's a lot of TCP traffic. This is perhaps the main reason we're not using an existing UDP discovery library: we have to integrate this tightly with our &Oslash;MQ messaging for it to work.</para>
+
+</sect2>
+<sect2>
+<title>More about UDP</title>
+<para>So we have discovery and presence working over UDP IPv4 broadcasts. It's not ideal, but it works for the local networks we have today. However we can't use UDP for real work, not without additional work to make it reliable. There's a joke about UDP but sometimes you get it, and sometimes you don't.</para>
+
+<para>We'll stick to TCP for all one-to-one messaging. There is one more use-case for UDP after discovery, which is multicast file distribution. I'll explain why and how, then shelve that for another day. The why is simple: what we call "social networks" is just augmented culture. We create culture by sharing, and this means more and more, sharing works that we make or remix. Photos, documents, contracts, tweets. The clouds of devices we're aiming towards do more of this, not less.</para>
+
+<para>Now, there are two principal patterns for sharing content. One is the "pubsub" pattern where one node sends out content to a set of other nodes, at the same time. Second is the "late joiner" pattern, where a node arrives somewhat later and wants to catch up to the conversation. We can deal with the late joiner using TCP unicast. But doing TCP unicast to a group of clients at the same time has some disadvantages. First, it can be slower than multicast. Second, it's unfair since some will get the content before others.</para>
+
+<para>Before you jump off to design a UDP multicast protocol, realize that it's not a simple calculation. When you send a multicast packet, the WiFi access point uses a low bit rate, to ensure that even the furthest devices will get it safely. Most normal APs don't do the obvious optimization, which is to measure the distance of the furthest device and use that bit rate. Instead they just use a fixed value. So if you have a few devices, close to the AP, multicast will be insanely slow. But if you have a roomful of devices which all want to get the next chapter of the textbook, multicast can be insanely effective.</para>
+
+<para>The curves cross around 6-12 devices depending on the network. You could in theory measure the curves in real-time and create an adaptive protocol. That would be cool but probably too hard for even the smartest of us.</para>
+
+<para>If you do sit down and sketch out a UDP multicast protocol, realize that you need a channel for recovery, to get lost packets. You'd probably want to do this over TCP, using &Oslash;MQ. For now, however, we'll assume all traffic goes over TCP.</para>
+
+</sect2>
+<sect2>
+<title>Designing the Topology Layer</title>
+<para>Sending UUIDs across the network is the bare minimum for a logical addressing scheme. However we have a few more problems to solve before this will work in real use:</para>
+
+<itemizedlist>
+  <listitem><para>We need some protocol identification so that we can check for, and reject invalid packets.</para></listitem>
+  <listitem><para>We need some version information so that we can change this protocol over time.</para></listitem>
+  <listitem><para>We need to tell other nodes how to reach us via TCP, i.e. a &Oslash;MQ port they can talk to us on.</para></listitem>
+</itemizedlist>
+<para>Let's start with the beacon message format. We probably want a fixed protocol header that will never change in future versions, and a body that depends on the version. We need a name for the protocol, so (digs in pocket for some backronyms) perhaps "ZeroMQ Real-time Experience"(<xref linkend="figure-73"/>).</para>
+
+<figure id="figure-73">
+    <title>ZRE discovery message</title>
+    <mediaobject>
+        <imageobject>
+            <imagedata fileref="images/fig73.eps" format="EPS" width="4.8in"/>
+        </imageobject>
+    </mediaobject>
+</figure>
+
+<para>The version can be a 1-byte counter starting at 1. The UUID is 16 bytes, and the endpoint is a 2-byte port number, since UDP nicely tells us the sender's IP address for every message we receive. This gives us a 22-byte frame.</para>
+
+<para>What kind of socket do we want for the endpoint? This question comes up on the <literal>zeromq-dev</literal> mailing list from time to time: how to interconnect peers where there's no server or client. People often try to use ROUTER sockets. I usually tell them that's hard to work with, because ROUTER sockets need some kind of address bootstrapping; you can't send a message until you know the identity of the peer, which you only learn when you get a message from them. So usually the answer is a DEALER-ROUTER mix where each peer has two sockets; DEALER to receive messages and ROUTER to send them.</para>
+
+<para>However, we <emphasis>do</emphasis> have a way to bootstrap, since every node has its own UUID and this is compatible with ROUTER addressing. What we have to do is use the ZMQ_IDENTITY setting on our own ROUTER socket using our own UUID. So, let's try to use a single ROUTER for all input and all output and see if this works.</para>
+
+<para>(More coming soon... @hintjens on Twitter)</para>
 
 </sect2>
 </sect1>

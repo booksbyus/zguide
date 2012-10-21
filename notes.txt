@@ -1,15 +1,116 @@
-I'm going to take the last UDP ping program and turn that into a ZRE hello world test. The goal is that when we detect a new peer we send "hello" to it, and it replies with "world". At the same time I'll begin refactoring the classes we made so they begin to look like a real library, which will eventually become {{libzre}}.
+++++ 0MQ Socket Patterns
 
-- zre_udp
-- zre_interface
-- zre_hello
+Since 0MQ is designed to make distributed messaging easy, people often ask how to connect a set of peers to each other. Quite often the question comes to "why doesn't my ROUTER-to-ROUTER connection work?"
+
+- why router-to-router won't work
+    - dropping messages before connection
+    - hwm drop action
+    - unroutable drop action
+- how we know sender of message
+    - dealer isn't sufficient
+    - router gives us that
+    - setting identity before connect
+- how we send back to specific node
+    - cant use router
+    - one dealer per peer
+    - lookup dealer send to it
+    - whether connected or not, great
+- when do we destroy peer / socket
+    - not immediately but after some time out
+- draw the final scheme
+
+
+
+
+What kind of 0MQ socket do we want for the connection? This question comes up on the {{zeromq-dev}} mailing list from time to time: how to interconnect peers where there's no server or client. People often try to use ROUTER sockets. I usually tell them that's hard to work with, because ROUTER sockets need some kind of address bootstrapping; you can't send a message until you know the identity of the peer, which you only learn when you get a message from them. So usually the answer is a DEALER-ROUTER mix where each peer has two sockets; DEALER to receive messages and ROUTER to send them.
+
+However, we //do// have a way to bootstrap, since every node has its own UUID and this is compatible with ROUTER addressing. What we have to do is use the ZMQ_IDENTITY setting on our own ROUTER socket using our own UUID. So, let's try to use a single ROUTER for all input and all output and see if this works.
+
+-> allow alternative discovery mechanisms
+    - include endpoint in TCP beacon
+    - if UDP broadcasts are disturbed, late, or 1-way
+-> note cost of TCP beaconing
+    - 100 x 100 x 30 = 300,000 bytes/second
+    - will make a slow network dead
+    so... only beacon nodes that haven't shown us love in a while
+    tcp as more reliable fallback for UDP
+
+
+    - taken from FILEMQ        - what if router connects to router
+            - and router connects back to router
+            - double connection with same identity?
+        - hmm... not nice
+            - beacon over tcp needs to provide port
+            - otherwise we can't connect to it...
+                - only on UDP packet
+            - do we want to?
+                - no... don't...
+                - still, how to avoid two-redundant connection????
+                - what happens then? is it even a problem
+                    - make simple test case to find out
+            - better
+                - always bind using router socket
+                - always connect out using dealer socket
+                    - write on dealer socket
+                        - won't work... or need separate dealer per router
+                        - that's an idea
+                    - no router socket... one dealer in, one out per peer
+                    - means every message has to include sender address
+                        - doable but not if the address is long
+                        - too expensive
+        - whole treatise on peer to peer topologies
+            - how the fuck to make these...?
+            - can we send peer a handle to use on replies?
+
+        - i open dealer socket and bind to ephemeral port
+        - i broadcast my port, anyone can reach me
+        - protocol to establish identity of peer
+            - security
+            - handle for future work
+        - this can then happen over any connection/reconnection
+
+
+        so who connects to who?
+        well, the server binds and the client... right
+        this is why I say, don't do router to router
+        it does not work
+        there is no such thing as one pipe that is symetrical
+        cause one end has to bind and one connect
+        two pipes, at least... soprry folks
+
+
++++ Group Messaging
+
++++ File Transfer
+
++++ Event Synchronization
+
++++ Reliability
+
++++ Security
+
++++ Bridging
+
++++ Logging
+
++++ Simulation
+
+
+Pieter Hintjens ‏@hintjens
+Browser implementation of #zeromq patterns: https://github.com/progrium/nullmq  #nullmq
+Expand
+
+7m Pieter Hintjens ‏@hintjens
+Node.js implementation of #zeromq patterns: https://github.com/visionmedia/axon … #axon
+Expand
 
 ++++ The Messaging Layer
 
 So we've solved discovery, presence, connectivity, and simulation. Next on our list: security, unicast messaging, and multicast messaging.
 
 - SASL security
-    - taken from FILEMQ
+
+
 - one-to-one messaging by sending to node
 - one-to-many messaging by sending to group
     - join group, leave group

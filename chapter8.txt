@@ -13,7 +13,7 @@ These clouds of tiny machines talk to each other, all the time, over short-range
 
 Now, to make even a thin imitation of this come true today, we need to solve a set of technical problems (how do peers discover each other, how do they talk to existing networks like the Web, how do they protect the information they carry, how do we track and monitor them, to get some idea of what they're doing). Then we need to do what most engineers forget about: package this solution into a framework that is dead easy for ordinary developers to use.
 
-This is what we'll attempt in this chapter: to build a framework for distributed applications, as an API and an implementation. It's not a small challenge but I've claimed often that 0MQ makes such problems simple, so let's see if that's still true.
+This is what we'll attempt in this chapter: to build a framework for distributed applications, as an API, protocols, and implementations. It's not a small challenge but I've claimed often that 0MQ makes such problems simple, so let's see if that's still true.
 
 We'll cover:
 
@@ -29,17 +29,17 @@ Whether we're connecting a roomful of mobile devices over WiFi, or a cluster of 
 
 * //Connectivity// - how do we actually connect one node to another? Do we use local networking, wide-area networking, or do we use a central message broker to do the forwarding?
 
-* //Security// - how do we protect the confidentiality of information, and make sure people are who they claim to be? Do we use a centralised trust network, or do we use use some kind of distributed key management?
+* //Point-to-point messaging// - how do we send a message from one node to another? Do we send this to the node's network address, or do we use some indirect addressing via a centralized message broker?
 
-* //Unicast messaging// - how do we send a message from one node to another? Do we send this to the node's network address, or do we use some indirect addressing via a centralied message broker?
+* //Group messaging// - how do we send a message from one node to a group of others? Do we work via centralized message broker, or do we use a publish-subscribe model like 0MQ?
 
-* //Multicast messaging// - how do we send a message from one node to a group of others? Do we work via centralized message broker, or do we use a publish-subscribe model like 0MQ?
-
-* //File transfer// - how do we send files from one node to another? Do we centralised protocols like FTP or HTTP, or do we use decentralized protocols like FILEMQ?
+* //File transfer// - how do we send files from one node to another? Do we use server-centric protocols like FTP or HTTP, or do we use decentralized protocols like FILEMQ?
 
 * //Event synchronization// - how do we ensure that many nodes receive the same unique stream of events? Do we send events via single central point, or do we use a distributed eventually consistent model?
 
 * //Reliability// - how do we recover from network failures that cause messages to be dropped? Do we use a central message server with proper transactions, or do we allow nodes to recover from each other?
+
+* //Security// - how do we protect the confidentiality of information, and make sure people are who they claim to be? Do we use a centralised trust network, or do we use use some kind of distributed key management?
 
 * //Bridging// - how do we connect our networks across the Internet? Do we use the cloud as our central point for all messaging or do we create bridges that join groups to other groups?
 
@@ -115,7 +115,7 @@ WiFi is not Ethernet and although I believe future 0MQ applications will have a 
 
 The technological evolution of wireless networking is best described as "slow and joyless". Applications and frameworks that try to exploit decentralized wireless are absent or poor. But with 0MQ we proved that the inertia and decrepit incompetence of existing players was no reason for us to sit still. When we accurately understand problems, we can solve them. What we imagine, we can make real.
 
-+++ Promixity-based Networking
++++ Discovery
 
 One of the great things about short-range wireless is that it maps closely to the physical space, which maps closely to how we naturally organize. In fact the Internet is quite abstract and this confuses a lot of people who kind of "get" it but in fact don't really. With WiFi we have technical connectivity that is potentially super-tangible. You see what you get and you get what you see. Tangible means easy to understand and that means love from users instead of the typical frustration and hate.
 
@@ -281,7 +281,9 @@ I'm going to run N nodes on a device, and they are going to have to discover eac
 
 If I have multiple nodes on one device, we clearly can't use the IP address and port number as node address. I need some logical node identifier. Arguably, the node identifier only has to be unique within the context of the device. My mind fills with complex stuff I could make, like supernodes that sit on real UDP ports and forward messages to internal nodes. I hit my head on the table until the idea of //inventing new concepts// leaves it.
 
-Experience tells us that WiFi does things like //appear// and //disappear// while applications are running. Which does interesting things like change IP address halfway through a session. For simplicity let's give every node a UUID, and say that nodes, represented by their UUIDs, can appear or reappear at certain IP address:port endpoints, and then disappear again. A UUID is 16 bytes. So if I have 100 nodes on a WiFi network that's (double it for other random stuff) 3,200 bytes a second of beacon data that the air has to carry just for discovery and presence. Seems acceptable.
+Experience tells us that WiFi does things like disappear and reappear while applications are running. Users click on things. Which does interesting things like change the IP address halfway through a session. We cannot depend on IP addresses, nor on established connections (in the TCP fashion). We need some long-lasting addressing mechanism that survives interfaces and connections being torn down, and then recreated.
+
+Here's the simplest solution I can see: we give every node a UUID, and specify that nodes, represented by their UUIDs, can appear or reappear at certain IP address:port endpoints, and then disappear again. We'll deal with recovery from lost messages later. A UUID is 16 bytes. So if I have 100 nodes on a WiFi network that's (double it for other random stuff) 3,200 bytes a second of beacon data that the air has to carry just for discovery and presence. Seems acceptable.
 
 Back to concepts. We do need some names for our API. At the least we need a way to distinguish between the node object that is "us", and node objects that are our peers.  We'll be doing things like creating an "us" and then asking it how many peers it knows about and who they are. The term "peer" is clear enough.
 
@@ -299,7 +301,7 @@ This seems like a clean API design. How about the internals?
 
 * We need a way to report peers and events to the caller. Here we get into a juicy question. How does a background I/O thread tell a foreground API thread that stuff is happening? Callbacks maybe? Heck no. We'll use 0MQ messages, of course.
 
-The third iteration of the UDP ping program is even simpler and more beautiful than the second. The main body, in C, is just nine lines of code.
+The third iteration of the UDP ping program is even simpler and more beautiful than the second. The main body, in C, is just ten lines of code.
 
 [[code type="example" title="UDP discovery, model 3" name="udpping3"]]
 [[/code]]
@@ -330,7 +332,7 @@ As we will also see later, we have to treat any input from a node, not just UDP 
 
 ++++ More about UDP
 
-So we have discovery and presence working over UDP IPv4 broadcasts. It's not ideal, but it works for the local networks we have today. However we can't use UDP for real work, not without additional work to make it reliable. There's a joke about UDP but sometimes you get it, and sometimes you don't.
+So we have discovery and presence working over UDP IPv4 broadcasts. It's not ideal, but it works for the local networks we have today. However we can't use UDP for real work, not without additional work to make it reliable. There's a joke about UDP but sometimes you'll get it, and sometimes you won't.
 
 We'll stick to TCP for all one-to-one messaging. There is one more use-case for UDP after discovery, which is multicast file distribution. I'll explain why and how, then shelve that for another day. The why is simple: what we call "social networks" is just augmented culture. We create culture by sharing, and this means more and more, sharing works that we make or remix. Photos, documents, contracts, tweets. The clouds of devices we're aiming towards do more of this, not less.
 
@@ -342,28 +344,165 @@ The curves cross around 6-12 devices depending on the network. You could in theo
 
 If you do sit down and sketch out a UDP multicast protocol, realize that you need a channel for recovery, to get lost packets. You'd probably want to do this over TCP, using 0MQ. For now, however, we'll assume all traffic goes over TCP.
 
-++++ Designing the Topology Layer
++++ Spinning off a Library Project
 
-Sending UUIDs across the network is the bare minimum for a logical addressing scheme. However we have a few more problems to solve before this will work in real use:
+At this stage however, the code is growing larger than an example should be, so it's time to create a proper GitHub project. It's a rule: build your projects in public view, and tell people about them as you go, so your marketing and community building starts on day 1. I'll walk through what this involves. I explained in Chapter 7 about growing communities around projects. We need a few things:
+
+* A name.
+* A slogan.
+* A public github repository.
+* A README that links to the C4 process.
+* License files.
+* An issue tracker.
+* Two maintainers.
+* A first bootstrap version.
+
+The name and slogan first. The trademarks of the 21st century are domain names. So the first thing I do when spinning off a project is to look for a domain name that might work. Quite randomly, one of our old messaging products was called "Zyre" and I have the domain names for it. So, the "ZeroMQ Realtime Experience" project, which is a terribly forced construction but more or less accurate. We are aiming to create a framework for real time experiences (sharing games, photos, stories) over 0MQ.
+
+I'm somewhat shy about pushing new projects into the 0MQ community too aggressively, and normally would start a project in either my personal account or the iMatix organization. But we've learned that moving projects after they become popular is counter-productive. My predictions of a future filled with moving pieces are either valid, or wrong. If this chapter is valid, we might as well launch this as a 0MQ project from the start. If it's wrong, we can delete the repository later or let it sink to the bottom of a long list of forgotten starts.
+
+Start with the basics. The protocol (UDP and 0MQ/TCP) will be ZRE and the project will be ZyRE, with different capitalization to reduce confusion with the old project. I need a second maintainer, so invite my colleague Dong Min (the Korean guy behind JeroMQ, a pure-Java 0MQ stack) to join. He's been working on very similar ideas so is enthusiastic. We discuss this and we get the idea of building ZyRE on top of JeroMQ as well as on top of CZMQ and libzmq. This would make it a lot easier to run ZyRE on Android. It would also give us two fully separate implementations from the start, always a good thing for a protocol.
+
+So we take the FileMQ project I built in Chapter 6 as a template for a new GitHub project. The GNU autoconf tools are quite decent but have a painful syntax. It's easiest to copy existing project files, and modify them. The FileMQ project builds a library, has test tools, license files, man pages, and so on. It's not too large so it's a good starting point.
+
+I put together a README to summarize the goals of the project and point to C4. The issue tracker is enabled by default on new GitHub projects, so once we've pushed the UDP ping code as a first version, we're ready to go. However it's always good to recruit more maintainers, so I create an issue "Call for maintainers" that says:
+
+> If you'd like to help click that lovely green "Merge Pull Request" button, and get eternal karma, add a comment confirming that you've read and understand the C4 process at http://rfc.zeromq.org/spec:16.
+
++++ Point-to-point Messaging
+
+I'm going to take the last UDP ping program and build a point-to-point messaging layer on top of that. Our goal is that we can detect peers as they join and leave the network, that we can send messages to them, and that we can get replies. It is a non-trivial problem to solve and takes Min and me two days to get a "hello world" version working.
+
+We had to solve a number of issues:
+
+* What information to send in the UDP beacon, and how to format it.
+* What 0MQ socket types to use to interconnect nodes.
+* What 0MQ messages to send, and how to format them.
+* How to send a message to a specific node.
+* How to know the sender of any message so we could send a reply.
+* How to recover from lost UDP beacons.
+* How to avoid overloading the network with beacons.
+
+I'll explain these in enough detail that you understand why we made each choice we did, with some code fragments to illustrate. We tagged this code as [https://github.com/zeromq/zyre/zipball/v0.1.0 version 0.1.0] so you can look at the code: most of the hard work is done in zre_interface.c.
+
+++++ UDP Beacon Framing
+
+Sending UUIDs across the network is the bare minimum for a logical addressing scheme. However we have a few more aspects to get working before this will work in real use:
 
 * We need some protocol identification so that we can check for, and reject invalid packets.
 * We need some version information so that we can change this protocol over time.
 * We need to tell other nodes how to reach us via TCP, i.e. a 0MQ port they can talk to us on.
 
-Let's start with the beacon message format. We probably want a fixed protocol header that will never change in future versions, and a body that depends on the version. We need a name for the protocol, so (digs in pocket for some backronyms) perhaps "ZeroMQ Real-time Experience"!figref().
+Let's start with the beacon message format. We probably want a fixed protocol header that will never change in future versions, and a body that depends on the version!figref().
 
 [[code type="textdiagram" title="ZRE discovery message"]]
-+---+---+---+------+  +------+----------+
-| Z | R | E | %x01 |  | UUID | endpoint |
-+---+---+---+------+  +------+----------+
++---+---+---+------+  +------+------+
+| Z | R | E | %x01 |  | UUID | port |
++---+---+---+------+  +------+------+
 
-       Header                Body
+       Header               Body
 [[/code]]
 
-The version can be a 1-byte counter starting at 1. The UUID is 16 bytes, and the endpoint is a 2-byte port number, since UDP nicely tells us the sender's IP address for every message we receive. This gives us a 22-byte frame.
+The version can be a 1-byte counter starting at 1. The UUID is 16 bytes, and the port is a 2-byte port number, since UDP nicely tells us the sender's IP address for every message we receive. This gives us a 22-byte frame.
 
-What kind of socket do we want for the endpoint? This question comes up on the {{zeromq-dev}} mailing list from time to time: how to interconnect peers where there's no server or client. People often try to use ROUTER sockets. I usually tell them that's hard to work with, because ROUTER sockets need some kind of address bootstrapping; you can't send a message until you know the identity of the peer, which you only learn when you get a message from them. So usually the answer is a DEALER-ROUTER mix where each peer has two sockets; DEALER to receive messages and ROUTER to send them.
+The C language (and a few others like Erlang) make it simple to read and write binary structures. We define the beacon frame structure:
 
-However, we //do// have a way to bootstrap, since every node has its own UUID and this is compatible with ROUTER addressing. What we have to do is use the ZMQ_IDENTITY setting on our own ROUTER socket using our own UUID. So, let's try to use a single ROUTER for all input and all output and see if this works.
+[[code language="C"]]
+#define BEACON_PROTOCOL     "ZRE"
+#define BEACON_VERSION      0x01
 
-(More coming soon... @hintjens on Twitter)
+typedef struct {
+    byte protocol [3];
+    byte version;
+    uuid_t uuid;
+    uint16_t port;
+} beacon_t;
+[[/code]]
+
+Which makes sending and receiving beacons quite simple. Here is how we send a beacon, using the zre_udp class to do the non-portable network calls:
+
+[[code language="C"]]
+//  Beacon object
+beacon_t beacon;
+
+//  Format beacon fields
+beacon.protocol [0] = 'Z';
+beacon.protocol [1] = 'R';
+beacon.protocol [2] = 'E';
+beacon.version = BEACON_VERSION;
+memcpy (beacon.uuid, self->uuid, sizeof (uuid_t));
+beacon.port = htons (self->port);
+
+//  Broadcast the beacon to anyone who is listening
+zre_udp_send (self->udp, (byte *) &beacon, sizeof (beacon_t));
+[[/code]]
+
+When we receive a beacon we need to guard against bad data. We're not going to be paranoid against, for example, denial-of-service attacks. We just want to make sure we're not going to crash when a bad implementation of ZRE sends us erroneous frames.
+
+To validate a frame we check its size and header. If those are OK, we assume the body is usable. When we get a UUID that isn't ourselves (recall, we'll get our own UDP broadcasts back), we can treat this as a peer:
+
+[[code language="C"]]
+//  Get beacon frame from network
+beacon_t beacon;
+ssize_t size = zre_udp_recv (self->udp, (byte *) &beacon, sizeof (beacon_t));
+
+//  Basic validation on the frame
+if (size != sizeof (beacon_t)
+||  beacon.protocol [0] != 'Z'
+||  beacon.protocol [1] != 'R'
+||  beacon.protocol [2] != 'E'
+||  beacon.version != BEACON_VERSION)
+    return 0;               //  Ignore invalid beacons
+
+//  If we got a UUID and it's not our own beacon, we have a peer
+if (memcmp (beacon.uuid, self->uuid, sizeof (uuid_t))) {
+    char *identity = s_uuid_str (beacon.uuid);
+    zre_peer_t *peer = s_require_peer (
+        self, identity, zre_udp_from (self->udp), ntohs (beacon.port));
+    free (identity);
+}
+[[/code]]
+
+++++ Presence and Connectivity
+
+Getting a peer-to-peer network properly connected is tricky. Some things happen relatively slowly (like creating a TCP connection), while others (receiving a message) happen quickly. We can't block or sleep or wait, since we want a responsive overall system. So we have to allow everything to go at its own speed, asynchronously, and track each peer's state correctly.
+
+I'd like a proper state machine here but it'd be one abstraction too many for the first version. Here are the states a peer can be in:
+
+* New peer, with an endpoint we can connect to.
+* New peer, but without an endpoint (imagine we got a message from a peer we hadn't received a UDP beacon from yet).
+* Existing peer, connected.
+* Existing peer, not connected yet.
+* Peer hasn't shown any sign of life for a while.
+* Peer is apparently dead and gone.
+
+Which we can simplify down to new, existing, or dead peers, plus a 'connected' flag. We can then connect to a peer opportunistically, if we get endpoint information (IP address and port), and the peer is not 'connected'. This has to be invisible to the calling application.
+
+So here is the body of the s_require_peer function:
+
+[[code language="C"]]
+zre_peer_t *peer = (zre_peer_t *) zhash_lookup (self->peers, identity);
+if (peer == NULL) {
+    peer = zre_peer_new (self->ctx, identity, self->peers);
+    //  We can immediately start to send messages to peer
+    zstr_sendm (self->pipe, "JOINED");
+    zstr_send (self->pipe, identity);
+}
+//  Connect peer opportunistically
+if (!zre_peer_connected (peer) && address)
+    zre_peer_connect (peer, self->identity, address, port);
+
+//  Any activity from the peer means it's alive
+zre_peer_refresh (peer);
+return peer;
+[[/code]]
+
+This does three things:
+
+* If the peer is new to us it creates the peer object and tells the application there's a new peer.
+* If the peer is not connected, and we got endpoint data (the 'address'), it connects to the peer.
+* It resets the peer's expiration timer since any activity from the peer means it's alive.
+
+What this boils down to is that when the interface receives //any// message from an unknown peer, it creates the peer object but it only connects when it receives a message containing the peer's address and port.
+
+(More coming soon)

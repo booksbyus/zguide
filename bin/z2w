@@ -19,7 +19,7 @@
 require 'sflcvdp.pl';                   #   SFL date picture formatting
 use Digest::SHA1 qw(sha1_hex);
 
-@languages = ('Ada', 'Basic', 'C', 'C++', 'C#', 'Clojure', 'CL', 'Erlang', 
+@languages = ('Ada', 'Basic', 'C', 'C++', 'C#', 'Clojure', 'CL', 'Delphi', 'Erlang', 
               'F#', 'Felix', 'Go', 'Haskell', 'Haxe', 'Java', 'Lua', 'Node.js', 
               'Objective-C', 'ooc', 'Perl', 'PHP', 'Python', 'Q', 'Racket', 
               'Ruby', 'Scala', 'Tcl');
@@ -32,6 +32,7 @@ use Digest::SHA1 qw(sha1_hex);
               'C#' => 'cs',
               'CL' => 'lisp',
               'Clojure' => 'clj',
+              'Delphi' => 'dpr',
               'Erlang' => 'es',
               'F#' => 'fsx',
               'Felix' => 'flx',
@@ -57,6 +58,7 @@ use Digest::SHA1 qw(sha1_hex);
           'F#' => 'ocaml',
           'Q' => 'text',
           'Racket' => 'text',
+          'Delphi' => 'delphi'
           );
 
 $source = $ENV {'Z2W_LANG'} || "C";
