@@ -23,7 +23,7 @@ begin
   subscriber.connect( 'tcp://localhost:5561' );
   subscriber.Subscribe( '' );
 
-  //  0MQ is so fast, we need to wait a while…
+  //  0MQ is so fast, we need to wait a while
   sleep (1);
 
   //  Second, synchronize with publisher

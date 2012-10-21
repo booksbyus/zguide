@@ -34,7 +34,7 @@ namespace ZMQGuide
         {
             if (args.Length < 2)
             {
-                Console.WriteLine("Usage: peering2 <myself> <peer_1> … <peer_N>");
+                Console.WriteLine("Usage: peering2 <myself> <peer_1> ... <peer_N>");
                 return;
             }
 
