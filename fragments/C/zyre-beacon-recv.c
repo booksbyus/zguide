@@ -13,7 +13,7 @@ if (size != sizeof (beacon_t)
 //  If we got a UUID and it's not our own beacon, we have a peer
 if (memcmp (beacon.uuid, self->uuid, sizeof (uuid_t))) {
     char *identity = s_uuid_str (beacon.uuid);
-    zre_peer_t *peer = s_require_peer (
-        self, identity, zre_udp_from (self->udp), ntohs (beacon.port));
+    s_require_peer (self, identity,
+        zre_udp_from (self->udp), ntohs (beacon.port));
     free (identity);
 }

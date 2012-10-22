@@ -369,6 +369,8 @@ I put together a README to summarize the goals of the project and point to C4. T
 
 > If you'd like to help click that lovely green "Merge Pull Request" button, and get eternal karma, add a comment confirming that you've read and understand the C4 process at http://rfc.zeromq.org/spec:16.
 
+Finally, I change the issue tracker labels. GitHub by default offers the usual variety of issues but with C4 we don't use them. Instead we need just two labels ("Urgent", in red, and "Ready", in black).
+
 +++ Point-to-point Messaging
 
 I'm going to take the last UDP ping program and build a point-to-point messaging layer on top of that. Our goal is that we can detect peers as they join and leave the network, that we can send messages to them, and that we can get replies. It is a non-trivial problem to solve and takes Min and me two days to get a "hello world" version working.
@@ -457,51 +459,119 @@ if (size != sizeof (beacon_t)
 //  If we got a UUID and it's not our own beacon, we have a peer
 if (memcmp (beacon.uuid, self->uuid, sizeof (uuid_t))) {
     char *identity = s_uuid_str (beacon.uuid);
-    zre_peer_t *peer = s_require_peer (
-        self, identity, zre_udp_from (self->udp), ntohs (beacon.port));
+    s_require_peer (self, identity,
+        zre_udp_from (self->udp), ntohs (beacon.port));
     free (identity);
 }
 [[/code]]
 
-++++ Presence and Connectivity
+++++ True Peer Connectivity (Harmony Pattern)
 
-Getting a peer-to-peer network properly connected is tricky. Some things happen relatively slowly (like creating a TCP connection), while others (receiving a message) happen quickly. We can't block or sleep or wait, since we want a responsive overall system. So we have to allow everything to go at its own speed, asynchronously, and track each peer's state correctly.
+Since 0MQ is designed to make distributed messaging easy, people often ask how to interconnect a set of true peers (as compared to obvious clients and servers). It is a thorny question and 0MQ doesn't really provide a single clear answer.
 
-I'd like a proper state machine here but it'd be one abstraction too many for the first version. Here are the states a peer can be in:
+TCP, which is the most commonly-used transport in 0MQ, is not symmetric; one side must bind and one must connect and though 0MQ tries to be neutral about this, but it's not. When you connect, you create an outgoing message pipe. When you bind, you do not. When there is no pipe, you cannot write messages (0MQ will return EAGAIN).
 
-* New peer, with an endpoint we can connect to.
-* New peer, but without an endpoint (imagine we got a message from a peer we hadn't received a UDP beacon from yet).
-* Existing peer, connected.
-* Existing peer, not connected yet.
-* Peer hasn't shown any sign of life for a while.
-* Peer is apparently dead and gone.
+Developers who study 0MQ and then try to create N-to-N connections between sets of equal peers often try a ROUTER-to-ROUTER flow. It's obvious why: each peer needs to address a set of peers, which requires ROUTER. It usually ends with a plaintive email to the list.
 
-Which we can simplify down to new, existing, or dead peers, plus a 'connected' flag. We can then connect to a peer opportunistically, if we get endpoint information (IP address and port), and the peer is not 'connected'. This has to be invisible to the calling application.
+My conclusion is that ROUTER-to-ROUTER does not work. At least because one peer has to bind and one has to connect. But also because you simply can't tell when you are allowed to safely send a message to a peer. It's Catch-22: you can talk to a peer after it's talked to you. But the peer can't talk to you until you've talked to it. One side or the other will be losing messages and thus has to retry, which means the peers cannot be equal.
 
-So here is the body of the s_require_peer function:
+I'm going to explain the Harmony pattern, which solves this problem, and which we use in ZyRE.
 
-[[code type="fragment" name="zyre-require-peer"]]
-zre_peer_t *peer = (zre_peer_t *) zhash_lookup (self->peers, identity);
-if (peer == NULL) {
-    peer = zre_peer_new (self->ctx, identity, self->peers);
-    //  We can immediately start to send messages to peer
-    zstr_sendm (self->pipe, "JOINED");
-    zstr_send (self->pipe, identity);
-}
-//  Connect peer opportunistically
-if (!zre_peer_connected (peer) && address)
-    zre_peer_connect (peer, self->identity, address, port);
+We want a guarantee that when a peer "appears" on our network, we can talk to it safely, without 0MQ dropping messages. For this, we have to use a DEALER or PUSH socket which //connects out to the peer// so that even if the connection takes some non-zero time, 0MQ will properly queue outgoing messages.
 
-//  Any activity from the peer means it's alive
-zre_peer_refresh (peer);
-return peer;
-[[/code]]
+A DEALER socket cannot address multiple peers individually. But if we have one DEALER per peer, and we connect that DEALER to the peer, we can safely send messages to a peer as soon as we've connected to it.
 
-This does three things:
+Now, the next problem is to know who sent us a particular message. We need a reply address, that is the UUID of the node who sent any given message. DEALER can't do this unless we prefix every single message with that 16-byte UUID, which would be wasteful. ROUTER does, if we set the identity properly before connecting to the router.
 
-* If the peer is new to us it creates the peer object and tells the application there's a new peer.
-* If the peer is not connected, and we got endpoint data (the 'address'), it connects to the peer.
-* It resets the peer's expiration timer since any activity from the peer means it's alive.
+And so the Harmony pattern comes down to:
 
-What this boils down to is that when the interface receives //any// message from an unknown peer, it creates the peer object but it only connects when it receives a message containing the peer's address and port.
+* One ROUTER socket that we bind to a transient port, which we broadcast in our beacons.
+* One DEALER socket //per peer// that we connect to the peer's ROUTER socket.
+* Reading from our ROUTER socket.
+* Writing to the peer's DEALER socket.
+
+Next problem is that discovery isn't neatly synchronized. We can discover a peer //after// we start to receive messages from it. A message comes in on the ROUTER socket and has a nice UUID attached to it. But no physical IP address and port. We have to force discovery over TCP. To do this, our first command to any new peer we connect to is an OHAI command with our IP address and port. This ensure that the receiver connects back to us before trying to send us any command.
+
+Breaking this down into steps:
+
+* If we receive a UDP beacon we connect to the peer.
+* We read messages from our ROUTER socket, and each message comes with the UUID of the sender.
+* If it's an OHAI message we connect back to that peer if not already connected to it.
+* If it's any other message, we //must// already be connected to the peer (a good place for an assertion).
+* We send messages to each peer using a dedicated per-peer DEALER socket, which //must// be connected.
+* When we connect to a peer we also tell our application that the peer exists.
+* Every time we get a message from a peer, we treat that as a heartbeat (it's alive).
+
+If we were not using UDP but some other discovery mechanism, I'd still use the Harmony pattern for a true peer network: one ROUTER for input from all peers, and one DEALER per peer for output. Bind the ROUTER, connect the DEALER, and start each conversation with an OHAI equivalent that provides the return IP address and port. You would need some external mechanism to bootstrap each connection.
+
+++++ Detecting Disappearances
+
+Heartbeating sounds simple but it's not. UDP packets get dropped when there's a lot of TCP traffic, so if we depend on UDP beacons we'll get false disconnections. TCP traffic can be delayed for five, ten, 30 seconds if the network is really busy. So if we kill peers when they go quiet, we'll have false disconnections.
+
+Since UDP beacons aren't reliable, it's tempting to add in TCP beacons. After all, TCP will deliver them reliably. One little problem. Imagine you have 100 nodes on a network, and each node sends a TCP beacon once a second. Each beacon is 22 bytes not counting TCP's framing overhead. That is 100 * 99 * 22 bytes per second, or 217,000 bytes/second just for heartbeating. That's about 1-2% of a typical WiFi network's ideal capacity, which sounds OK. But when a network is stressed, or fighting other networks for airspace, that extra 200K a second will break what's left. UDP broadcasts are at least low cost.
+
+So what we do is switch to TCP heartbeats only when a specific peer hasn't sent us any UDP beacons in a while. And then, we send TCP heartbeats only to that one peer. If the peer continues to be silent, we conclude it's gone away. If the peer comes back, with a different IP address and/or port, we have to disconnect our DEALER socket and reconnect to the new port.
+
+This gives us a set of states for each peer, though at this stage the code doesn't use a formal state machine:
+
+* Peer visible thanks to UDP beacon (we connect using IP address and port from beacon)
+* Peer visible thanks to OHAI command (we connect using IP address and port from command)
+* Peer seems alive (we got a UDP beacon or command over TCP recently)
+* Peer seems quiet (no activity in some time, so we send a HUGZ command)
+* Peer has disappeared (no reply to our HUGZ commands, so we destroy peer)
+
+There's one remaining scenario we didn't address in the code at this stage. It's possible for a peer to change IP addresses and ports without actually triggering a disappearance event. For example if the user switches off WiFi and then switches it back on, then the the access point can assign the peer a new IP address. We'll need to handle a disappeared WiFi interface on our node by unbinding the ROUTER socket and rebinding it when we can. Since this is not central to the design now, I decide to log an issue on the GitHub tracker and leave it for a rainy day.
+
++++ Group Messaging
+
+Group messaging is a common and very useful pattern. The concept is simple: instead of talking to a single node, you talk to a "group" of nodes. The group is just a name, a string that you agree on in the application. It's precisely like using the publish-subscribe prefixes in PUB and SUB sockets. In fact the only reason I say "group messaging" and not "pub-sub" is to prevent confusion, since we're not going to use PUB/SUB sockets for this.
+
+Yes, PUB/SUB would work. But we've just done such a lot of work to solve the late joiner problem. Applications are inevitably going to wait for peers to arrive before sending messages to groups, so we have to build on the Harmony pattern rather than start again beside it.
+
+Let's look at the operations we want to do on groups:
+
+* We want to join and leave groups.
+* We want to know what other nodes are in any given group.
+* We want to send a message to (all nodes in) a group.
+
+Which look familiar to anyone who's used Internet Relay Chat, except we have no server. Every node will need to keep track of what groups represent. This information will not always be fully consistent across the network but it will be close enough to accurate.
+
+Our interface will track a set of groups (each an object). These are all the known groups with one or more member node, including ourselves. We'll track nodes as they leave and join groups. Since nodes can join the network at any time, we have to tell new peers what groups we're in. When a peer disappears, we'll remove it from all groups we know about. 
+
+This gives us some new protocol commands:
+
+* JOIN - we send this to all peers when we join a group.
+* LEAVE - we send this to all peers when we leave a group.
+* GROUPS - we send a list of our groups to a new peer.
+
+Lastly, let's add a way for peers to double-check the accuracy of their group data. The risk is that we miss one of the above messages. Though we are using Harmony to avoid message loss, it's worth being paranoid. For now, all we need is a way to detect such a failure. We'll deal with recovery later, if the problem actually happens.
+
+I'll use the UDP beacon for this. What we want is a rolling counter that simply tells how many join and leave operations there have been for a node. It starts at 0 and increments for each group we join or leave. We can use a minimal 1-byte value since that will catch all failures except the astronomically rare "we lost precisely 256 messages in a row" failure. We will put the same sequence number into the JOIN and LEAVE messages. And to try to provoke the problem, we'll test by joining/leaving several hundred groups, with a high-water mark set to 10 or so.
+
+
+
+
+
+
+
+
+
+
+
+
++++ File Transfer
+
++++ Event Synchronization
+
++++ Reliability
+
++++ Security
+
++++ Bridging
+
++++ Logging
+
++++ Simulation
+
+(More coming soon)
 
