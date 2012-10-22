@@ -1114,9 +1114,9 @@ The code generator is in examples/Chapter6/server_c.gsl. It is a fairly complete
 * A selftest method that runs the selftest steps listed in the XML file.
 * Documentation in the form of graphics (the pretty pictures).
 
-Here's a simple C main program that starts the generated NOM server:
+Here's a simple main program that starts the generated NOM server:
 
-[[code language="C"]]
+[[code type="fragment" name="nomserver"]]
 #include "czmq.h"
 #include "nom_server.h"
 
@@ -1133,7 +1133,7 @@ int main (int argc, char *argv [])
 
 The generated nom_server class is a fairly classic model. It accepts client messages on a ROUTER socket. The first frame on every request is the client's identity. The server manages a set of clients, each with state. As messages arrive, it feeds these as 'events' to the state machine. Here's the core of the state machine, as a mix of GSL commands and the C code we intend to generate:
 
-[[code language="C"]]
+[[code type="fragment" name="gsl-client-fsm"]]
 client_execute (client_t *self, int event)
 {
     self->next_event = event;
@@ -1174,7 +1174,7 @@ client_execute (client_t *self, int event)
 
 Each client is held as an object with various properties, including the variables we need to represent a state machine instance:
 
-[[code language="C"]]
+[[code type="fragment" name="fsm-instance"]]
 event_t next_event;         //  Next event
 state_t state;              //  Current state
 event_t event;              //  Current event
@@ -1321,7 +1321,7 @@ Here's the way I see the first design. FileMQ has to be distributed, so every no
 
 Thus, I'm going to build FileMQ as two pieces: a client, and a server. Then, I'll put these together in a main application (the "filemq" tool) that can act both as client and server. The two pieces will look quite similar to the nom_server, with the same kind of API:
 
-[[code language="C"]]
+[[code type="fragment" name="filemq-main"]]
 fmq_server_t *server = fmq_server_new ();
 fmq_server_bind (server, "tcp://*:6000");
 fmq_server_publish (server, "/home/ph/filemq/share", "/public");
@@ -1559,7 +1559,7 @@ And then layer these one on the other, so command-line settings override custom 
 
 So this is how we start and configure the server, for example:
 
-[[code language="C"]]
+[[code type="fragment" name="fmq-server-api"]]
 server = fmq_server_new ();
 fmq_server_configure (server, "server_test.cfg");
 fmq_server_publish (server, "./fmqroot/send", "/");
@@ -1617,7 +1617,7 @@ This is kind of over-kill for a powerful file distribution protocol. I could wri
 
 The code is a neat example of how to use the FileMQ API to do local file distribution. Here is the full program, minus the license text (it's MIT/X11 licensed):
 
-[[code language="C"]]
+[[code type="fragment" name="track"]]
 #include "czmq.h"
 #include "../include/fmq.h"
 

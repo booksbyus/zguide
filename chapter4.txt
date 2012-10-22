@@ -290,11 +290,11 @@ Some points to consider when understanding and implementing heartbeating:
 
 Your language or binding should provide a method that returns the current system clock in milliseconds. It's easy to use this to calculate when to send the next heartbeats. Thus, in C:
 
-[[code language="C"]]
+[[code type="fragment" name="heartbeats"]]
 //  Send out heartbeats at regular intervals
 uint64_t heartbeat_at = zclock_time () + HEARTBEAT_INTERVAL;
 
-while (1) {
+while (true) {
     ...
     int rc = zmq_poll (items, 1, HEARTBEAT_INTERVAL * ZMQ_POLL_MSEC);
     ...
@@ -385,9 +385,9 @@ To implement Majordomo we need to write a framework for clients and workers. It'
 
 So, while our first contract (MDP itself) defines how the pieces of our distributed architecture talk to each other, our second contract defines how user applications talk to the technical framework we're going to design.
 
-Majordomo has two halves, a client side and a worker side. Since we'll write both client and worker applications, we will need two APIs. Here is a sketch for the client API, using a simple object-oriented approach. We write this in C, using the style of the [http://czmq.zeromq.org/ CZMQ binding]:
+Majordomo has two halves, a client side and a worker side. Since we'll write both client and worker applications, we will need two APIs. Here is a sketch for the client API, using a simple object-oriented approach:
 
-[[code language="C"]]
+[[code type="fragment" name="mdclient"]]
 mdcli_t *mdcli_new     (char *broker);
 void     mdcli_destroy (mdcli_t **self_p);
 zmsg_t  *mdcli_send    (mdcli_t *self, char *service, zmsg_t **request_p);
@@ -395,7 +395,7 @@ zmsg_t  *mdcli_send    (mdcli_t *self, char *service, zmsg_t **request_p);
 
 That's it. We open a session to the broker, we send a request message and get a reply message back, and we eventually close the connection. Here's a sketch for the worker API:
 
-[[code language="C"]]
+[[code type="fragment" name="mdworker"]]
 mdwrk_t *mdwrk_new     (char *broker,char *service);
 void     mdwrk_destroy (mdwrk_t **self_p);
 zmsg_t  *mdwrk_recv    (mdwrk_t *self, zmsg_t *reply);
@@ -481,7 +481,7 @@ As we see, round-tripping in the simplest case is 20 times slower than "shove it
 
 First, we modify the client API to have separate send and recv methods:
 
-[[code language="C"]]
+[[code type="fragment" name="mdclient-async"]]
 mdcli_t *mdcli_new     (char *broker);
 void     mdcli_destroy (mdcli_t **self_p);
 int      mdcli_send    (mdcli_t *self, char *service, zmsg_t **request_p);
@@ -932,9 +932,9 @@ These are the main limitations of the Binary Star pattern:
 
 ++++ Binary Star Reactor
 
-Binary Star is useful and generic enough to package up as a reusable reactor class. The reactor then runs and calls our code whenever it has a message to process. This is much nicer than copying/pasting the Binary Star code into each server where we want that capability. In C we wrap the CZMQ {{zloop}} class, though your mileage may vary in other languages. Here is the {{bstar}} interface in C:
+Binary Star is useful and generic enough to package up as a reusable reactor class. The reactor then runs and calls our code whenever it has a message to process. This is much nicer than copying/pasting the Binary Star code into each server where we want that capability. In C we wrap the CZMQ {{zloop}} class, though your mileage may vary in other languages. Here is the {{bstar}} API:
 
-[[code language="C"]]
+[[code type="fragment" name="bstar"]]
 //  Create a new Binary Star instance, using local (bind) and
 //  remote (connect) endpoints to set-up the server peering.
 bstar_t *bstar_new (int primary, char *local, char *remote);

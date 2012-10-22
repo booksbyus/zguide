@@ -1,3 +1,4 @@
+
 ++++ 0MQ Socket Patterns
 
 Since 0MQ is designed to make distributed messaging easy, people often ask how to connect a set of peers to each other. Quite often the question comes to "why doesn't my ROUTER-to-ROUTER connection work?"
@@ -94,6 +95,9 @@ However, we //do// have a way to bootstrap, since every node has its own UUID an
 +++ Logging
 
 +++ Simulation
+
+(More coming soon)
+
 
 
 Pieter Hintjens ‏@hintjens

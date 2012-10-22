@@ -156,13 +156,43 @@ while (<>) {
         }
         writeln ("</programlisting>\n");
     }
+    #  Process named fragment codeblock
+    elsif (/\[\[code\s+type=\"fragment\"\s+name=\"([^"]+)\"/) {
+        close_list ();
+        
+        #   Skip code fragment from text
+        while (<>) {
+            last if /\[\[\/code\]\]/;
+        }
+        #   Look for translation in current source language, fall back on C if none
+        $name = $1;
+        $language = $source;
+        $filename = "fragments/$language/$name.".$extension{$language};
+        if (! -f $filename) {
+            $language = "C";
+            $filename = "fragments/$language/$name.".$extension{$language};
+        }
+        if (! -f $filename) {
+            print "Can't find $name fragment in any language ($filename)\n";
+            exit (0);
+        }
+        die "Can't create $filename: $!"
+            unless open (FRAGMENT, "$filename");
+
+        $lexer = $lexer {$language};
+        writeln ("<programlisting language=\"$lexer\">");
+        while (<FRAGMENT>) {
+            chop;
+            writesrc ($_);
+        }
+        writeln ("</programlisting>\n");
+    }
     #  Process named codeblock
     elsif (/\[\[code\s+type=\"example\"\s+title=\"([^"]+)\"\s+name=\"([^"]+)\"(\s+language=\"([^"]+)\")?\]\]/) {
         close_list ();
         $title = $1;
         $name = $2;
         $language = $4 || $source;
-
         $lexer = $lexer {$language};
         $ext = $extension {$language};
         $filename = "examples/$language/$name.$ext";
@@ -339,12 +369,16 @@ sub close_blocks {
 
 sub writeln {
     local ($_) = @_;
+    #   Do once, since expand_symbols is recursive
+    s/&/&amp;/g;
     $_ = expand_symbols ($_);
     print OUTPUT "$_\n";
 }
 
 sub writect {
     local ($_) = @_;
+    #   Do once, since expand_symbols is recursive
+    s/&/&amp;/g;
     $_ = expand_symbols ($_);
     print OUTPUT "$_";
 }
@@ -537,9 +571,6 @@ sub expand_symbols {
     #   Translate 0MQ into ØMQ unless escaped
     s/0MQ/ØMQ/g;
     s/0\\MQ/0MQ/g;
-
-    #   Fix ampersands
-    s/&/&amp;/g;
 
     #   Translate accented characters, presumably there's a module
     #   that will do this properly...

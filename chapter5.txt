@@ -413,7 +413,7 @@ Here's a more complete version of the kvmsg class, which implements a 'propertie
 
 The Model Five client is almost identical to Model Four. Diff is your friend. It uses the full kvmsg class instead of kvsimple, and sets a randomized 'ttl' property (measured in seconds) on each message:
 
-[[code language="C"]]
+[[code type="fragment" name="kvsetttl"]]
 kvmsg_set_prop (kvmsg, "ttl", "%d", randof (30));
 [[/code]]
 
@@ -541,7 +541,7 @@ As a first step to building this, we're going to refactor the client as a reusab
 
 My usual design approach is to first design an API that feels right, then to implement that. So, we start by taking the clone client, and rewriting it to sit on top of some presumed class API called **clone**. Turning random code into an API means defining a reasonably stable and abstract contract with applications. For example, in Model Five, the client opened three separate sockets to the server, using endpoints that were hard-coded in the source. We could make an API with three methods, like this:
 
-[[code language="C"]]
+[[code type="fragment" name="cloneapi1"]]
 //  Specify endpoints for each socket we need
 clone_subscribe (clone, "tcp://localhost:5556");
 clone_snapshot  (clone, "tcp://localhost:5557");
@@ -555,7 +555,7 @@ clone_updates   (clone, "tcp://localhost:5568");
 
 But this is both verbose and fragile. It's not a good idea to expose the internals of a design to applications. Today, we use three sockets. Tomorrow, two, or four. Do we really want to go and change every application that uses the clone class? So to hide these sausage factory details, we make a small abstraction, like this:
 
-[[code language="C"]]
+[[code type="fragment" name="cloneapi2"]]
 //  Specify primary and backup servers
 clone_connect (clone, "tcp://localhost:5551");
 clone_connect (clone, "tcp://localhost:5561");
@@ -577,7 +577,7 @@ The frontend class talks to the agent class over an {{inproc}} 'pipe' socket. In
 
 Without 0MQ, this kind of asynchronous class design would be weeks of really hard work. With 0MQ, it was a day or two of work. The results are kind of complex, given the simplicity of the Clone protocol it's actually running. There are some reasons for this. We could turn this into a reactor, but that'd make it harder to use in applications. So the API looks a bit like a key-value table that magically talks to some servers:
 
-[[code language="C"]]
+[[code type="fragment" name="cloneapi3"]]
 clone_t *clone_new (void);
 void clone_destroy (clone_t **self_p);
 void clone_connect (clone_t *self, char *address, char *service);

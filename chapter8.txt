@@ -228,7 +228,7 @@ Working on the basis of //solve the problems currently aiming at your throat//, 
 
 The simplest answer to these issues is to push the UDP code into a separate library that provided a clean API, like this:
 
-[[code language="C"]]
+[[code type="fragment" name="zyre-udp"]]
 //  Constructor
 static udp_t *
     udp_new (int port_nbr);
@@ -407,7 +407,7 @@ The version can be a 1-byte counter starting at 1. The UUID is 16 bytes, and the
 
 The C language (and a few others like Erlang) make it simple to read and write binary structures. We define the beacon frame structure:
 
-[[code language="C"]]
+[[code type="fragment" name="zyre-beacon"]]
 #define BEACON_PROTOCOL     "ZRE"
 #define BEACON_VERSION      0x01
 
@@ -421,7 +421,7 @@ typedef struct {
 
 Which makes sending and receiving beacons quite simple. Here is how we send a beacon, using the zre_udp class to do the non-portable network calls:
 
-[[code language="C"]]
+[[code type="fragment" name="zyre-beacon-send"]]
 //  Beacon object
 beacon_t beacon;
 
@@ -441,7 +441,7 @@ When we receive a beacon we need to guard against bad data. We're not going to b
 
 To validate a frame we check its size and header. If those are OK, we assume the body is usable. When we get a UUID that isn't ourselves (recall, we'll get our own UDP broadcasts back), we can treat this as a peer:
 
-[[code language="C"]]
+[[code type="fragment" name="zyre-beacon-recv"]]
 //  Get beacon frame from network
 beacon_t beacon;
 ssize_t size = zre_udp_recv (self->udp, (byte *) &beacon, sizeof (beacon_t));
@@ -480,7 +480,7 @@ Which we can simplify down to new, existing, or dead peers, plus a 'connected' f
 
 So here is the body of the s_require_peer function:
 
-[[code language="C"]]
+[[code type="fragment" name="zyre-require-peer"]]
 zre_peer_t *peer = (zre_peer_t *) zhash_lookup (self->peers, identity);
 if (peer == NULL) {
     peer = zre_peer_new (self->ctx, identity, self->peers);
@@ -505,4 +505,3 @@ This does three things:
 
 What this boils down to is that when the interface receives //any// message from an unknown peer, it creates the peer object but it only connects when it receives a message containing the peer's address and port.
 
-(More coming soon)

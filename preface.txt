@@ -12,12 +12,12 @@ To my children.
 .filter book
 Please use the [$(GIT)/issues issue tracker] for all comments and errata. This version covers the latest stable release of 0MQ (3.2) and was published on !date(#ddd d mmmm, yyyy#). If you are using older versions of 0MQ then some of the examples and explanations won't be accurate.
 
-The Guide is originally [/page:all in C], but also in [/php:all PHP], [/py:all Python], [/lua:all Lua], and [/hx:all Haxe]. We've also translated most of the examples into C++, C#, CL, Erlang, F#, Felix, Haskell, Java, Objective-C, Ruby, Ada, Basic, Clojure, Go, Haxe, Node.js, ooc, Perl, and Scala.
+The Guide is originally [/page:all in C], but also in [/php:all PHP], [/py:all Python], [/lua:all Lua], and [/hx:all Haxe]. We've also translated most of the examples into C++, C#, CL, Delphi, Erlang, F#, Felix, Haskell, Java, Objective-C, Ruby, Ada, Basic, Clojure, Go, Haxe, Node.js, ooc, Perl, and Scala.
 .filter reset
 
 ++ Preface
 
-In the summer of 2010, 0MQ was still a little-known niche library described by its rather terse man pages and a living but sparse wiki. Martin Sustrik and myself (Pieter Hintjens) were sitting in the bar of the Hotel Kyjev in Bratislava planning how to make 0MQ more widely popular. Martin had written most of the 0MQ code, and I'd put up the funding and organized the community. Over some Zlaty Bazants, we agreed that 0MQ needed a new, simpler web site, and a basic guide to new users.
+In the summer of 2010, 0MQ was still a little-known niche library described by its rather terse man pages and a living but sparse wiki. Martin Sustrik and myself (Pieter Hintjens) were sitting in the bar of the Hotel Kyjev in Bratislava plotting how to make 0MQ more widely popular. Martin had written most of the 0MQ code, and I'd put up the funding and organized the community. Over some Zlaty Bazants, we agreed that 0MQ needed a new, simpler web site, and a basic guide to new users.
 
 Martin collected some ideas for topics to explain. I'd never written a line of 0MQ code before this, so it became a live learning documentary. As I worked through simple examples to more complex ones I tried to answer many of the questions I'd seen on the mailing list. Since I've been building large-scale architectures for 30 years, there were a lot of problems I was keen to throw 0MQ at. Amazingly the results were mostly simple and elegant, even working in C. I felt a pure joy learning 0MQ and using it to solve real problems, which brought me back to programming after a few years' pause. And often, not knowing how it was "supposed" to be done, we improved 0MQ as we went along.
 

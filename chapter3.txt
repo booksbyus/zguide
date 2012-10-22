@@ -573,8 +573,8 @@ You should now see that you can reuse and extend the LRU algorithm with variatio
 
 Reading and writing multi-part messages using the native 0MQ API is, to be polite, a lot of work. Look at the core of the worker thread from our LRU queue broker:
 
-[[code language="C"]]
-while (1) {
+[[code type="fragment" name="lrureader"]]
+while (true) {
     //  Read and save all frames until we get an empty frame
     //  In this example there is only 1 but it could be more
     char *address = s_recv (worker);
@@ -596,8 +596,8 @@ while (1) {
 
 That code isn't even reusable, because it can only handle one envelope. And this code already does some wrapping around the 0MQ API. If we used the libzmq API directly this is what we'd have to write:
 
-[[code language="C"]]
-while (1) {
+[[code type="fragment" name="lowreader"]]
+while (true) {
     //  Read and save all frames until we get an empty frame
     //  In this example there is only 1 but it could be more
     zmq_msg_t address;
@@ -637,8 +637,8 @@ Making a good message API is fairly difficult, especially if we want to avoid co
 
 So one solution is to use three concepts: //string// (already the basis for s_send and s_recv), //frame// (a message frame), and //message// (a list of one or more frames). Here is the worker code, rewritten onto an API using these concepts:
 
-[[code language="C"]]
-while (1) {
+[[code type="fragment" name="highreader"]]
+while (true) {
     zmsg_t *zmsg = zmsg_recv (worker);
     zframe_print (zmsg_last (zmsg), "Worker: ");
     zframe_reset (zmsg_last (zmsg), "OK", 2);
@@ -646,7 +646,7 @@ while (1) {
 }
 [[/code]]
 
-Replacing 22 lines of code with four is a good deal, especially since the results are easy to read and understand. We can continue this process for other aspects of working with 0MQ. Let's make a wishlist of things we would like in a higher-level API:
+Cutting the amount of code we have to write is profitable, especially since the results are easy to read and understand. We can continue this process for other aspects of working with 0MQ. Let's make a wishlist of things we would like in a higher-level API:
 
 * //Automatic handling of sockets.// I find it really annoying to have to close sockets manually, and to have to explicitly define the linger timeout in some but not all cases. It'd be great to have a way to close sockets automatically when I close the context.
 
@@ -660,15 +660,15 @@ Replacing 22 lines of code with four is a good deal, especially since the result
 
 Turning this wishlist into reality gives us [http://zero.mq/c CZMQ], a high-level C API for 0MQ. This high-level binding in fact developed out of earlier versions of the Guide. It combines nicer semantics for working with 0MQ with some portability layers, and (importantly for C but less for other languages) containers like hashes and lists. CZMQ also uses an elegant object model that leads to frankly lovely code.
 
-Here is the LRU queue broker rewritten to use CZMQ:
+Here is the LRU queue broker rewritten to use a higher-level API (CZMQ for the C case):
 
-[[code type="example" title="LRU queue broker using CZMQ" name="lruqueue2"]]
+[[code type="example" title="LRU queue broker using high-level API" name="lruqueue2"]]
 [[/code]]
 
-One thing CZMQ provides is clean interrupt handling. This means that Ctrl-C will cause any blocking 0MQ call to exit with a return code -1 and errno set to EINTR. The CZMQ message recv methods will return NULL in such cases. So, you can cleanly exit a loop like this:
+One thing CZMQ provides is clean interrupt handling. This means that Ctrl-C will cause any blocking 0MQ call to exit with a return code -1 and errno set to EINTR. The high-level recv methods will return NULL in such cases. So, you can cleanly exit a loop like this:
 
-[[code language="C"]]
-while (1) {
+[[code type="fragment" name="interrupt"]]
+while (true) {
     zstr_send (client, "HELLO");
     char *reply = zstr_recv (client);
     if (!reply)
@@ -681,9 +681,8 @@ while (1) {
 
 Or, if you're doing zmq_poll, test on the return code:
 
-[[code language="C"]]
-int rc = zmq_poll (items, zlist_size (workers)? 2: 1, -1);
-if (rc == -1)
+[[code type="fragment" name="polling"]]
+if (zmq_poll (items, 2, 1000 * 1000) == -1)
     break;              //  Interrupted
 [[/code]]
 
@@ -698,7 +697,7 @@ The previous example still uses zmq_poll[3]. So how about reactors? The CZMQ {{z
 
 When we use a reactor pattern, our code turns inside out. The main logic looks like this:
 
-[[code language="C"]]
+[[code type="fragment" name="reactor"]]
 zloop_t *reactor = zloop_new ();
 zloop_reader (reactor, self->backend, s_handle_backend, self);
 zloop_start (reactor);
