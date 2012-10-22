@@ -7,7 +7,8 @@ Binds PUB socket to tcp://*:5556
 
 Publishes random weather updates
 
-Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
+Author: Daisuke Maki (lestrrat)
+Original Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
 
 =cut
 
@@ -15,7 +16,8 @@ use strict;
 use warnings;
 use 5.10.0;
 
-use ZeroMQ qw/:all/;
+use ZMQ::LibZMQ2;
+use ZMQ::Constants qw(ZMQ_PUB);
 
 sub within {
     my ($upper) = @_;
@@ -24,10 +26,10 @@ sub within {
 }
 
 # Prepare our context and publisher
-my $context = ZeroMQ::Context->new();
-my $publisher = $context->socket(ZMQ_PUB);
-$publisher->bind('tcp://*:5556');
-$publisher->bind('ipc://weather.ipc');
+my $context = zmq_init();
+my $publisher = zmq_socket($context, ZMQ_PUB);
+zmq_bind($publisher, 'tcp://*:5556');
+zmq_bind($publisher, 'ipc://weather.ipc');
 
 # Initialize random number generator
 srand();
@@ -39,5 +41,5 @@ while (1) {
 
     # Send message to all subscribers
     my $update = sprintf('%05d %d %d', $zipcode, $temperature, $relhumidity);
-    $publisher->send($update);
+    zmq_send($publisher, $update);
 }

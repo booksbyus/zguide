@@ -5,7 +5,8 @@ Task worker - design 2
 
 Adds pub-sub flow to receive and respond to kill signal
 
-Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
+Author: Daisuke Maki (lestrrat)
+Original Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
 
 =cut
 
@@ -15,58 +16,60 @@ use 5.10.0;
 
 use IO::Handle;
 
-use ZeroMQ qw/:all/;
+use ZMQ::LibZMQ2;
+use ZMQ::Constants qw(ZMQ_PULL ZMQ_PUSH ZMQ_SUB ZMQ_SUBSCRIBE ZMQ_POLLIN);
 use Time::HiRes qw/nanosleep/;
 
 use constant NSECS_PER_MSEC => 1_000_000;
 
-my $context = ZeroMQ::Context->new();
+my $context = zmq_init();
 
 # Socket to receive messages on
-my $receiver = $context->socket(ZMQ_PULL);
-$receiver->connect('tcp://localhost:5557');
+my $receiver = zmq_socket($context, ZMQ_PULL);
+zmq_connect($receiver, 'tcp://localhost:5557');
 
 # Socket to send messages to
-my $sender = $context->socket(ZMQ_PUSH);
-$sender->connect('tcp://localhost:5558');
+my $sender = zmq_socket($context, ZMQ_PUSH);
+zmq_connect($sender, 'tcp://localhost:5558');
 
 # Socket for control input
-my $controller = $context->socket(ZMQ_SUB);
-$controller->connect('tcp://localhost:5559');
-$controller->setsockopt(ZMQ_SUBSCRIBE, '');
+my $controller = zmq_socket($context, ZMQ_SUB);
+zmq_connect($controller, 'tcp://localhost:5559');
+zmq_setsockopt($controller, ZMQ_SUBSCRIBE, '');
 
 # Process messages from receiver and controller
-my $poller = ZeroMQ::Poller->new(
+my $loop = 1;
+my @poller = (
     {
-        name    => 'receiver',
         socket  => $receiver,
         events  => ZMQ_POLLIN,
+        callback => sub {
+            my $message = zmq_recv($receiver);
+
+            # Process task
+            my $workload = zmq_msg_data($message) * NSECS_PER_MSEC;
+
+            # Do the work
+            nanosleep $workload;
+
+            # Send results to sink
+            zmq_send($sender);
+
+            # Simple progress indicator for the viewer
+            STDOUT->printflush('.');
+        }
     }, {
-        name    => 'controller',
         socket  => $controller,
         events  => ZMQ_POLLIN,
+        callback => sub {
+            # Any waiting controller command acts as 'KILL'
+            $loop = 0;
+        }
     },
 );
 
 # Process messages from both sockets
-while (1) {
-    $poller->poll();
-    if ( $poller->has_event('receiver') ) {
-        my $message = $receiver->recv();
-
-        # Process task
-        my $workload = $message->data * NSECS_PER_MSEC;
-
-        # Do the work
-        nanosleep $workload;
-
-        # Send results to sink
-        $sender->send('');
-
-        # Simple progress indicator for the viewer
-        STDOUT->printflush('.');
-    }
-    # Any waiting controller command acts as 'KILL'
-    last if $poller->has_event('controller');
+while ($loop) {
+    zmq_poll(\@poller);
 }
 # Finished
