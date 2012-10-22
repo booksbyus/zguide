@@ -7,7 +7,8 @@ Connects REQ socket to tcp://localhost:5559
 
 Sends "Hello" to server, expects "World" back
 
-Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
+Author: Daisuke Maki (lestrrat)
+Original version Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
 
 =cut
 
@@ -15,16 +16,17 @@ use strict;
 use warnings;
 use 5.10.0;
 
-use ZeroMQ qw/:all/;
+use ZMQ::LibZMQ2;
+use ZMQ::Constants qw(ZMQ_REQ);
 
-my $context = ZeroMQ::Context->new();
+my $context = zmq_init();
 
 # Socket to talk to server
-my $requester = $context->socket(ZMQ_REQ);
-$requester->connect('tcp://localhost:5559');
+my $requester = zmq_socket($context, ZMQ_REQ);
+zmq_connect($requester, 'tcp://localhost:5559');
 
 for my $request_nbr (0 .. 9) {
-    $requester->send('Hello');
-    my $string = $requester->recv()->data;
+    zmq_send($requester, 'Hello');
+    my $string = zmq_msg_data(zmq_recv($requester));
     say "Received reply $request_nbr [$string]";
 }

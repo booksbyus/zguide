@@ -3,7 +3,8 @@
 
 Simple request-reply broker
 
-Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
+Author: Daisuke Maki (lestrrat)
+Original version Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
 
 =cut
 
@@ -11,47 +12,46 @@ use strict;
 use warnings;
 use 5.10.0;
 
-use ZeroMQ qw/:all/;
+use ZMQ::LibZMQ2;
+use ZMQ::Constants qw(ZMQ_ROUTER ZMQ_DEALER ZMQ_POLLIN ZMQ_RCVMORE ZMQ_SNDMORE);
 
 # Prepare our context and sockets
-my $context = ZeroMQ::Context->new();
-my $frontend = $context->socket(ZMQ_ROUTER);
-my $backend  = $context->socket(ZMQ_DEALER);
-$frontend->bind('tcp://*:5559');
-$backend->bind('tcp://*:5560');
+my $context = zmq_init();
+my $frontend = zmq_socket($context, ZMQ_ROUTER);
+my $backend  = zmq_socket($context, ZMQ_DEALER);
+zmq_bind($frontend, 'tcp://*:5559');
+zmq_bind($backend, 'tcp://*:5560');
 
 # Initialize poll set
-my $poller = ZeroMQ::Poller->new(
+my @poll = (
     {
-        name    => 'frontend',
         socket  => $frontend,
         events  => ZMQ_POLLIN,
+        callback => sub {
+            while (1) {
+                # Process all parts of the message
+                my $message = zmq_recv($frontend);
+                my $more = zmq_getsockopt($frontend, ZMQ_RCVMORE);
+                zmq_send($backend, $message, $more ? ZMQ_SNDMORE : 0);
+                last unless $more;
+            }
+        }
     }, {
-        name    => 'backend',
         socket  => $backend,
         events  => ZMQ_POLLIN,
+        callback => sub {
+            while (1) {
+                # Process all parts of the message
+                my $message = zmq_recv($backend);
+                my $more = zmq_getsockopt($backend, ZMQ_RCVMORE);
+                zmq_send($frontend, $message, $more ? ZMQ_SNDMORE : 0);
+                last unless $more;
+            }
+        }
     },
 );
 
 # Switch messages between sockets
 while (1) {
-    $poller->poll();
-    if ($poller->has_event('frontend')) {
-        while (1) {
-            # Process all parts of the message
-            my $message = $frontend->recv();
-            my $more = $frontend->getsockopt(ZMQ_RCVMORE);
-            $backend->send($message, $more ? ZMQ_SNDMORE : 0);
-            last unless $more;
-        }
-    }
-    if ($poller->has_event('backend')) {
-        while (1) {
-            # Process all parts of the message
-            my $message = $backend->recv();
-            my $more = $backend->getsockopt(ZMQ_RCVMORE);
-            $frontend->send($message, $more ? ZMQ_SNDMORE : 0);
-            last unless $more;
-        }
-    }
+    zmq_poll(\@poll);
 }
