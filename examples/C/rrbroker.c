@@ -20,7 +20,7 @@ int main (void)
     //  Switch messages between sockets
     while (true) {
         zmq_msg_t message;
-        int64_t more;           //  Multipart detection
+        int more;           //  Multipart detection
 
         zmq_poll (items, 2, -1);
         if (items [0].revents & ZMQ_POLLIN) {
