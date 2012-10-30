@@ -57,7 +57,7 @@ upload main scoreboard "Language scoreboard"
 
 rm *.wd wdtemp.txt upload.sh
 
-git add images/ .signatures .cache_*
+git add images/ fragments/ .signatures .cache_*
 git status
 echo -n "Enter commit message, or Ctrl-C: "
 read MESSAGE

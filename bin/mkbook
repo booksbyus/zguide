@@ -333,7 +333,7 @@ while (<>) {
     elsif ($_) {
         #   Normal text
         close_list ();
-        writeln (requote ("<para>$_</para>\n")) unless $filter;
+        writeln (requote ("<para>$_</para>\n"));
     }
 }
 close_list ();
@@ -372,7 +372,7 @@ sub writeln {
     #   Do once, since expand_symbols is recursive
     s/&/&amp;/g;
     $_ = expand_symbols ($_);
-    print OUTPUT "$_\n";
+    print OUTPUT "$_\n" unless $filter;
 }
 
 sub writect {
@@ -380,7 +380,7 @@ sub writect {
     #   Do once, since expand_symbols is recursive
     s/&/&amp;/g;
     $_ = expand_symbols ($_);
-    print OUTPUT "$_";
+    print OUTPUT "$_" unless $filter;
 }
 
 sub writesrc {
@@ -388,7 +388,7 @@ sub writesrc {
     s/&/&amp;/g;
     s/</&lt;/g;
     s/>/&gt;/g;
-    print OUTPUT "$_\n";
+    print OUTPUT "$_\n" unless $filter;
 }
 
 #   Do smart curly quotes before we add any tags

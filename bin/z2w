@@ -289,7 +289,7 @@ while (<>) {
     }
     else {
         #   Normal text
-        writeln ($_) unless $filter;
+        writeln ($_);
     }
 }
 if ($format eq "online") {
@@ -315,12 +315,12 @@ exit (0);
 sub writeln {
     local ($_) = @_;
     $_ = expand_symbols ($_);
-    print OUTPUT "$_\n" unless $EOD;
+    print OUTPUT "$_\n" unless $EOD or $filter;
 }
 
 sub writesrc {
     local ($_) = @_;
-    print OUTPUT "$_\n" unless $EOD;
+    print OUTPUT "$_\n" unless $EOD or $filter;
 }
 
 #   Process one example in one language
