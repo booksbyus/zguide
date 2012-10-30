@@ -7,13 +7,14 @@
 .output preface.wd
 **By Pieter Hintjens**
 
-To my children.
-
 .filter book
 Please use the [$(GIT)/issues issue tracker] for all comments and errata. This version covers the latest stable release of 0MQ (3.2) and was published on !date(#ddd d mmmm, yyyy#). If you are using older versions of 0MQ then some of the examples and explanations won't be accurate.
 
 The Guide is originally [/page:all in C], but also in [/php:all PHP], [/py:all Python], [/lua:all Lua], and [/hx:all Haxe]. We've also translated most of the examples into C++, C#, CL, Delphi, Erlang, F#, Felix, Haskell, Java, Objective-C, Ruby, Ada, Basic, Clojure, Go, Haxe, Node.js, ooc, Perl, and Scala.
 .filter reset
+
+.filter online
+For my children.
 
 ++ Preface
 
@@ -32,6 +33,7 @@ But the goal of the Guide was, from the start, a printed book. So it was excitin
 Of course as soon as O'Reilly announced a 0MQ book, other publishers started sending out emails to potential authors. You'll probably see a rash of 0MQ books coming out next year. That's good: our niche library has hit the mainstream and deserves its six inches of shelf space. My apologies to the other 0MQ authors: we've set the bar horribly high, and my advice is to make your books complimentary. Perhaps focus on a specific language, platform, or pattern.
 
 This is the magic and power of communities: be the first community in a space, stay healthy, and you own that space for ever.
+.filter reset
 
 +++ Audience
 

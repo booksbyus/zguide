@@ -65,6 +65,9 @@ $source = $ENV {'Z2W_LANG'} || "C";
 $format = $ENV {'Z2W_FORM'} || "online";
 signatures_load ();
 
+#   When filtering, we drop text that we don't want online
+$filter = 0;
+
 printf "Generating $source/$format version of Guide...\n";
 
 #   Inline action options
@@ -126,8 +129,11 @@ while (<>) {
         elsif (/^\.prelude\s+(\w.*)/) {
             $prelude = $1;
         }
-        elsif (/^\.filter/) {
-            #   Not used in this process, ignore
+        elsif (/^\.filter\s+(\w.*)/) {
+            $filter = ($1 eq "online");
+        }
+        elsif (/^\.filter reset/) {
+            $filter = 0;
         }
         else {
             print "Illegal directive $_ at line $.\n";

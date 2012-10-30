@@ -526,7 +526,7 @@ There's one remaining scenario we didn't address in the code at this stage. It's
 
 Group messaging is a common and very useful pattern. The concept is simple: instead of talking to a single node, you talk to a "group" of nodes. The group is just a name, a string that you agree on in the application. It's precisely like using the publish-subscribe prefixes in PUB and SUB sockets. In fact the only reason I say "group messaging" and not "pub-sub" is to prevent confusion, since we're not going to use PUB/SUB sockets for this.
 
-Yes, PUB/SUB would work. But we've just done such a lot of work to solve the late joiner problem. Applications are inevitably going to wait for peers to arrive before sending messages to groups, so we have to build on the Harmony pattern rather than start again beside it.
+PUB/SUB would almost work. But we've just done such a lot of work to solve the late joiner problem. Applications are inevitably going to wait for peers to arrive before sending messages to groups, so we have to build on the Harmony pattern rather than start again beside it.
 
 Let's look at the operations we want to do on groups:
 
@@ -536,42 +536,178 @@ Let's look at the operations we want to do on groups:
 
 Which look familiar to anyone who's used Internet Relay Chat, except we have no server. Every node will need to keep track of what groups represent. This information will not always be fully consistent across the network but it will be close enough to accurate.
 
-Our interface will track a set of groups (each an object). These are all the known groups with one or more member node, including ourselves. We'll track nodes as they leave and join groups. Since nodes can join the network at any time, we have to tell new peers what groups we're in. When a peer disappears, we'll remove it from all groups we know about. 
+Our interface will track a set of groups (each an object). These are all the known groups with one or more member node, excluding ourselves. We'll track nodes as they leave and join groups. Since nodes can join the network at any time, we have to tell new peers what groups we're in. When a peer disappears, we'll remove it from all groups we know about.
 
 This gives us some new protocol commands:
 
 * JOIN - we send this to all peers when we join a group.
 * LEAVE - we send this to all peers when we leave a group.
-* GROUPS - we send a list of our groups to a new peer.
 
-Lastly, let's add a way for peers to double-check the accuracy of their group data. The risk is that we miss one of the above messages. Though we are using Harmony to avoid message loss, it's worth being paranoid. For now, all we need is a way to detect such a failure. We'll deal with recovery later, if the problem actually happens.
+Plus, we add a 'groups' field to the first command we send (renamed from OHAI to HELLO at this point because I need a larger lexicon of command verbs).
 
-I'll use the UDP beacon for this. What we want is a rolling counter that simply tells how many join and leave operations there have been for a node. It starts at 0 and increments for each group we join or leave. We can use a minimal 1-byte value since that will catch all failures except the astronomically rare "we lost precisely 256 messages in a row" failure. We will put the same sequence number into the JOIN and LEAVE messages. And to try to provoke the problem, we'll test by joining/leaving several hundred groups, with a high-water mark set to 10 or so.
+Lastly, let's add a way for peers to double-check the accuracy of their group data. The risk is that we miss one of the above messages. Though we are using Harmony to avoid the typical message loss at startup, it's worth being paranoid. For now, all we need is a way to detect such a failure. We'll deal with recovery later, if the problem actually happens.
 
+I'll use the UDP beacon for this. What we want is a rolling counter that simply tells how many join and leave operations ("transitions") there have been for a node. It starts at 0 and increments for each group we join or leave. We can use a minimal 1-byte value since that will catch all failures except the astronomically rare "we lost precisely 256 messages in a row" failure (this is the one that hits during the first demo). We will also put the transitions counter into the JOIN, LEAVE, and HELLO commands. And to try to provoke the problem, we'll test by joining/leaving several hundred groups, with a high-water mark set to 10 or so.
 
+Time to choose verbs for the group messaging. We need a command that means "talk to one peer" and one that means "talk to many peers". After some attempts, my best choices are "WHISPER" and "SHOUT", and this is what the code uses. The SHOUT command needs to tell the user the group name, as well as the sender peer.
 
+Since groups are like publish-subscribe, you might be tempted to use this to broadcast the JOIN and LEAVE commands as well, perhaps by creating a "global" group that all nodes join. My advice is to keep groups purely as user-space concepts for two reasons. First, how do you join the global group if you need the global group to send out a JOIN command? Second, it creates special cases ('reserved names') which are messy.
 
+It's simpler just to broadcast JOIN and LEAVE to all peers, period.
 
+I'm not going to work through the implementation of group messaging in detail since it's fairly pedantic and not exciting. The data structures for group and peer management aren't optimal but they're workable. We need:
 
+* A list of groups for our interface, which we can send to new peers in a HELLO command;
+* A hash of groups for other peers, which we update with information from HELLO, JOIN, and LEAVE commands;
+* A hash of peers for each group, which we update with the same three commands.
 
+At this stage I'm starting to get pretty happy with the binary serialization (our codec generator from Chapter 6), which handles things like lists and hashes neatly.
 
+This version is tagged in the repository as v0.2.0 and you can [[https://github.com/zeromq/zyre/tags download the tarball] if you want to check what the code looked like at this stage.
 
++++ Testing and Simulation
 
+++++ On Assertions
 
+The proper use of assertions is one of the hallmarks of a professional programmer.
 
-+++ File Transfer
+Our confirmation bias as creators makes it hard to test our work properly. We tend to write tests to prove the code works, rather than trying to prove it doesn't. There are many reasons for this. We pretend to ourselves and others that we can be (could be) perfect, when in fact we consistently make mistakes. Bugs in code are seen as "bad", rather than "inevitable", so psychologically we want to see fewer of them, not uncover more of them. "He writes perfect code" is a compliment rather than a euphemism for "he never takes risks so his code is as boring as cold spaghetti".
 
-+++ Event Synchronization
+Some cultures teach us to aspire to perfection, and punish mistakes, in education and work, which makes this attitude worse. To accept that we're fallible, and then to learn how to turn that into profit rather than shame is one of the hardest intellectual exercises, in any profession. We leverage our fallibilities by working with others, and by challenging our own work sooner, not later.
 
-+++ Reliability
+One trick that makes it easier is to use assertions. Assertions are not a form of error handling. They are executable theories of fact. The code asserts, "at this point, such and such must be true" and if the assertion fails, the code kills itself.
 
-+++ Security
+The faster you can prove code incorrect, the faster and more accurately you can fix it. Believing that code works and proving that it behaves as expected is less science, and more magical thinking. It's far better to be able to say, "libzmq has five hundred assertions and despite all my efforts, not one of them fails".
 
-+++ Bridging
+So the ZyRE code base is scattered with assertions, and particularly a couple on the code that deals with the state of peers. This is the hardest aspect to get right: peers need to track each other and exchange state accurately, or things stop working. The algorithms depends on asynchronous messages flying around and I'm pretty sure the initial design has flaws. They always do.
 
-+++ Logging
+And as I test the original ZyRE code by starting and stopping instances of zre_ping by hand, every so often I get an assertion failure. Running by hand doesn't reproduce these often enough, so let's make a proper tester tool.
 
-+++ Simulation
+++++ On Up-front Testing
+
+Being able to fully test the real behavior of individual components in the laboratory can make a 10x or 100x difference to the cost of your project. That confirmation bias engineers have to their own work makes upfront testing incredibly profitable, and late-stage testing incredibly expensive.
+
+I'll tell you a short story about a project we worked on in the late 1990's. We provided the software, and other teams the hardware, for a factory automation project. Three or four teams brought their experts on-site, which was a remote factory (funny how the polluting factories are always in remote border country).
+
+One of these teams, a firm specializing in industrial automation, built ticket machines: kiosks, and software to run on them. Nothing unusual: swipe a badge, choose an option, receive a ticket. They assembled two of these kiosks, on-site, each week bringing some more bits and pieces. Ticket printers, monitor screens, special keypads from Israel. The stuff had to be resistant against dust since the kiosks sat outside. Nothing worked. The screens were unreadable in the sun. The ticket printers continually jammed and misprinted. The internals of the kiosk were just sat on wooden shelving. The kiosk software crashed regularly. It was comedic except that the project really, //really// had to work and so we spent weeks and then months on-site helping the other teams debug their bits and pieces until it worked.
+
+A year later, a second factory, and the same story. By this time the client was getting impatient. So when they came to the third and largest factory, a year later, we jumped up and said, "please let us make the kiosks and the software and everything".
+
+So we made a detailed design for the software and hardware and found suppliers for all the pieces. It took us three months to search the Internet for each component, and another two months to get them assembled into stainless-steel bricks each weighing about twenty kilos. These bricks were 60cm square and 20cm deep, with a large flat-screen panel behind unbreakable glass, and two connectors: one for power, one for Ethernet. You loaded up the paper bin with enough for six months, then screwed the brick into a housing, and it automatically booted, found its DNS server, loaded its Linux OS and then application software. It connected to the real server, and showed the main menu. You got access to the configuration screens by swiping a special badge and then entering a code.
+
+The software was portable so we could test that as we wrote it, and as we collected the pieces from our suppliers we kept one of each so we had a disassembled kiosk to play with. When we got our finished kiosks, they all worked immediately. We shipped them to the client, who plugged them into their housing, switched them on, and went to business. We spent a week or so on site, and in ten years, one kiosk broke (the screen died, and was replaced).
+
+Lesson is, test up-front so that when you plug the thing in, you know precisely how it's going to behave. If you haven't tested it up-front, you're going to be spending weeks and months in the field, ironing out problems that should never have been there.
+
+++++ The ZyRE Tester
+
+During manual testing I did hit an assertion rarely. It then disappeared. Since I don't believe in magic, that means the code is still wrong somewhere. So, next step is heavy-duty testing of the Zyre 0.2.0 code to try to break its assertions, and get a good idea of how it will behave in the field.
+
+We packaged the discovery and messaging functionality as an 'interface' object that the main program creates, works with, and then destroys. We don't use any global variables. This makes it easy to start large numbers of interfaces and simulate real activity, all within one process. And if there's one thing we've learned from writing lots of examples, it's that 0MQ's ability to orchestrate multiple threads in a single process is //much// easier to work with than multiple processes.
+
+The first version of the tester consists of a main thread which starts and stops a set of child threads, each running one interface, each with a ROUTER, DEALER, and UDP socket ('R', 'D', and 'U' in the diagram)!figref().
+
+[[code type="textdiagram" title="ZyRE Tester Tool"]]
+                        +----------+
+                        |   Main   |
+                        |  thread  |
+                        +-----+-----+
+                              |
+                              |
+      /---------------+-------+-------+---------------\
+      |               |               |               |
+      v               v               v               v
++-----------+   +-----------+   +-----------+   +-----------+
+|  Child    |   |  Child    |   |  Child    |   |  Child    |
+|  thread   |   |  thread   |   |  thread   |   |  thread   |
++-----+-----+   +-----+-----+   +-----+-----+   +-----+-----+
+      |               |               |               |
+      v               v               v               v
++-----------+   +-----------+   +-----------+   +-----------+
+| Interface |   | Interface |   | Interface |   | Interface |
++---+---+---+   +---+---+---+   +---+---+---+   +---+---+---+
+| R | D | U |   | R | D | U |   | R | D | U |   | R | D | U |
++---+---+---+   +---+---+---+   +---+---+---+   +---+---+---+
+[[/code]]
+
+The nice thing is that when I am connected to a WiFi access point, all ZyRE traffic (even between two interfaces in the same process) goes across the AP. This means I can fully stress test any WiFi infrastructure with just a couple of PCs running in a room. It's hard to emphasize how valuable this is: if we had built ZyRE as, say, a dedicated service for Android, we'd literally need dozens of Android tablets or phones to do any large-scale testing. Kiosks, and all that.
+
+The focus is now on breaking the current code, trying to prove it wrong. There's //no point// at this stage in testing how well it runs, how fast it is, how much memory it uses, or anything else. We'll work up to trying (and failing) to break each individual functionality but first, we try to break some of the core assertions I've put into the code.
+
+These are:
+
+* The first command that any node receives from a peer MUST be "HELLO". In other words, messages //cannot// be lost during the peer-to-peer connection process.
+
+* The state each node each node calculates for its peers matches the state each peer calculates for itself. In other words, again, no messages are lost in the network.
+
+* When my application sends a message to a peer, we have a connection to that peer. In other words, the application only "sees" a peer after we have established a 0MQ connection to it.
+
+With 0MQ, there are several cases we may lose messages. One is when the "late joiner" syndrome. Two is when we close sockets without sending everything. Three is when we overflow the high-water mark on a ROUTER or PUB socket. Four is when we use an unknown address with a ROUTER socket.
+
+Now, I //think// Harmony gets around all these potential cases. But we're also adding UDP to the mix. So the first version of the tester simulates an unstable and dynamic network, where nodes come and go randomly. It's here that things will break.
+
+Here is the main thread of the tester, which manages a pool of 100 threads, starting and stopping each one randomly. Every 750 msecs it either starts or stops one random thread. After a few minutes we have an average of 50 threads happily chatting to each other like Korean teenagers in Gangnam subway station:
+
+[[code type="fragment" name="zyre-tester-main"]]
+int main (int argc, char *argv [])
+{
+    //  Initialize context for talking to tasks
+    zctx_t *ctx = zctx_new ();
+    zctx_set_linger (ctx, 100);
+
+    //  Get number of interfaces to simulate, default 100
+    int max_interface = 100;
+    int nbr_interfaces = 0;
+    if (argc > 1)
+        max_interface = atoi (argv [1]);
+
+    //  We address interfaces as an array of pipes
+    void **pipes = zmalloc (sizeof (void *) * max_interface);
+
+    //  We will randomly start and stop interface threads
+    while (!zctx_interrupted) {
+        uint index = randof (max_interface);
+        //  Toggle interface thread
+        if (pipes [index]) {
+            zstr_send (pipes [index], "STOP");
+            zsocket_destroy (ctx, pipes [index]);
+            pipes [index] = NULL;
+            zclock_log ("I: Stopped interface (%d running)", --nbr_interfaces);
+        }
+        else {
+            pipes [index] = zthread_fork (ctx, interface_task, NULL);
+            zclock_log ("I: Started interface (%d running)", ++nbr_interfaces);
+        }
+        //  Sleep ~750 msecs randomly so we smooth out activity
+        zclock_sleep (randof (500) + 500);
+    }
+    zctx_destroy (&ctx);
+    return 0;
+}
+[[/code]]
+
+Note that we maintain a 'pipe' to each child thread (CZMQ creates the pipe automatically when we use the zthread_fork() method). It's via this pipe that we tell child threads to stop, when it's time for them to leave. The child threads do the following (I'm switching to pseudo-code for clarity):
+
+[[code]]
+create an interface
+while true:
+    poll on pipe to parent, and on interface
+    if parent sent us a message:
+        break
+    if interface sent us a message:
+        if message is ENTER:
+            send a WHISPER to the new peer
+        if message is EXIT:
+            send a WHISPER to the departed peer
+        if message is WHISPER:
+            send back a WHISPER 1/2 of the time
+        if message is SHOUT:
+            send back a WHISPER 1/3 of the time
+            send back a SHOUT 1/3 of the time
+    once per second:
+        join or leave one of 10 random groups
+destroy interface
+[[/code]]
 
 (More coming soon)
 

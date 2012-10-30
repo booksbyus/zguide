@@ -137,6 +137,7 @@ ce11487c92b25457062d16cfa03aaee428dadc96 examples/Tcl/flclient1.tcl
 09fc69810081e4297ae575b4d5eaf6c348005ed8 examples/Python/clonesrv1.py
 fb8ddd9a1c56d41622bc9205633cd616abbee46d examples/Python/clonecli4.py
 c138cc9c379c47edeb9c9f1c1c837554a2a96d3a examples/Clojure/identity.clj
+4d41db35287559858fe14d4f78c926b05de02d42 images/fig74.html
 15cb6e2889cd48e9137f43e9184b542a909ed3bc examples/C#/wuserver.cs
 4fc68495559f6f14e89b297599616af9ab5aa7c5 examples/C++/syncpub.cpp
 65a1354a1a7c65647c004421e409f50dd1d03f21 fragments/C/sendmore.c
@@ -376,6 +377,7 @@ c1639957dc773562a1be773d2e99cae9f3c2958f examples/Go/wuclient.go
 946313d5ee2fd52bdb68c9d680037b1e6c0f82e3 examples/Go/taskwork.go
 e903bdb70c52318aa47df262ee8853d41888dcfa examples/Clojure/rrclient.clj
 464edc2f30ed6be8ffb7e6dd6b3a580678419c52 examples/Ruby/rrbroker.rb
+d14cb8182ddfd1141314aa35ce0e2a123c05a9a9 fragments/C/zyre-tester-main.c
 c61b2f5e7e1f0f22b9f7b79c30911308a62ce1c6 examples/Scala/rtdealer.scala
 2534052213a76180af08f15940ead5098bd1a153 examples/PHP/titanic.php
 184649a1557b9586718d7ef315368c87ce124d1f examples/Haxe/hwclient.hx
@@ -396,7 +398,7 @@ ede61c56ca791dc200d8d2e3dc3ea3e93c88b8fb examples/Java/rtdealer.java
 f7665b3c745137d93f01bec00c1f3cd5ada9777e examples/Lua/wuproxy.lua
 9c1b0fccc7cc8b8c707ca81f2c37732642bb0e26 examples/Node.js/tasksink2.js
 29d5f504b41dcbbd1a6f83a7da7ee373afa9294e examples/C#/rrworker.cs
-da3fa1cdc26694bffcd6d87cb8f9f29e3cde0440 examples/C/rrbroker.c
+bb3922f88cdeeba164bc6ebebcf4cb9d0e33412e examples/C/rrbroker.c
 eff675b2624420578c70501cb4e122f860599978 examples/Python/clonesrv2.py
 71f104b3b6f9da917858444c75f87c186ad6fd58 examples/F#/taskwork2.fsx
 7c682b5ac16af1de897da51335add16f628dcf7c examples/Java/mdclient2.java
@@ -509,8 +511,8 @@ ecb71c5db9aa051d94a08c6ce4cec21f6be68da9 examples/Lua/taskwork.lua
 b297eb869c526383372c9bf010cd59524e5a71d2 examples/Java/hwclient.java
 811ffbe3bcc3e4dfad6727e5087c824bdb1a9029 images/fig46.html
 b0fa0ff2cfba09825719b1cc21a069c5bd313bf6 fragments/C/killsignal.c
-a4cb116c1b58963dc4d1d6298044b86303fb546a examples/Python/titanic.py
 657156a4307312bcac37e6709d71b41f43cdad36 images/fig25.html
+a4cb116c1b58963dc4d1d6298044b86303fb546a examples/Python/titanic.py
 2862cbff59b718df962a8d31cd5547825734f79f examples/Ruby/titanic.rb
 8c503896c494994aa92badc2bec13c8b0cc465a4 examples/C++/taskwork.cpp
 6b9781f4bb0b8acee20d7c48bfeef525cd0655e5 examples/C/psenvsub.c
@@ -587,7 +589,7 @@ bdbb101eb5f90914501411e4c64e2c6729a3f138 examples/Haskell/rrbroker.hs
 28b2c755a5286ba2f2aceb137b2dad3dca76155a examples/PHP/flserver2.php
 eee27cebfc3430bb721105e5d820b5820960f8b8 examples/Tcl/syncpub.tcl
 22231306ee0a96931796aeab7edbc7a2b66ccadd examples/C#/wuproxy.cs
-246db286feedecb8e527928bcc3a677ce9c27e3f fragments/C/recvmore.c
+06077a74d6c82d0a6cb29ede04ba6490b776cddd fragments/C/recvmore.c
 9aa1790c081e38ae2806d402da7c0ac8c38c1826 examples/C/mspoller.c
 54e9bb3554be2a9679b3151229c7b81941a9de55 examples/Python/bstarsrv.py
 51ff473e39ebfe618aa97b2200c9180efa785300 examples/C/clonesrv2.c
@@ -763,7 +765,7 @@ c24f22b4f59229bb300911482f9de4b8181bde5f images/fig68.html
 a549bfefda37eb24bec206266654fa07b59c47f3 listings/C/listing_1.c
 43475b500ea4450e690af0bc3c5c6e918991efc0 examples/Python/spqueue.py
 81c74743b3f7dc51392275f9d90b6c300a9e1985 examples/PHP/psenvpub.php
-8eed9ea7f4bd3aae9478c491b9b89a9104521ec9 fragments/C/mousetrap.c
+3a5c7d99d0620e92b4545c2b1d8ac942a4738c5b fragments/C/mousetrap.c
 855c1c483a7b292b18287fc9a6c01ecd078428eb examples/Haskell/psenvpub.hs
 76757f1ea4c6d00304b1c3862bbce137923ce313 examples/C++/hwserver.cpp
 7a040260a478b52bd82263338e9984294adfe4d2 examples/Clojure/msreader.clj

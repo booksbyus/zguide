@@ -272,9 +272,9 @@ One of the big changes we made with C4 was simply to ban, outright, this kind of
 
 This rule has two effects. The first is that it forces people to make minimal solutions, since they cannot simply import swathes of existing code. In the cases where I've seen this happen to projects, it's always bad unless the imported code is very cleanly separated. The second is that it avoids license arguments. You write the patch, you are allowed to publish it as LGPL, and we can merge it back in. But you find a 200-line code fragment on the web, and try to paste that, we'll refuse.
 
-> A patch MUST compile cleanly on at least the most important target Platforms.
+> A patch MUST compile cleanly on at least the most important target platforms.
 
-This is probably asking a lot since most contributors have only one platform to work on. Also, why is Platform capitalized? 
+This is probably asking a lot since most contributors have only one platform to work on.
 
 > A "Correct Patch" is one that satisfies the above requirements.
 
@@ -339,6 +339,14 @@ We already said this but it's worth repeating: the role of Maintainer is not to 
 > Maintainers SHALL merge correct patches rapidly.
 
 There is a criteria I call "change latency" which is the round-trip time from identifying a problem to testing a solution. The faster the better. If maintainers cannot respond to pull requests as rapidly as people expect, they're not doing their job (or they need more hands).
+
+> The Contributor MAY tag an issue as "Ready" after making a pull request for the issue.
+
+GitHub by default offers the usual variety of issues but with C4 we don't use them. Instead we need just two labels, "Urgent" and "Ready". A contributor who wants another user to test an issue can then label it as "Ready".
+
+> The user who created an issue SHOULD close the issue after checking the patch is successful.
+
+When one person opens an issue, and another works on it, it's best to allow the original person close the issue. That acts as a double-check that the issue was properly resolved.
 
 > Maintainers SHOULD ask for improvements to incorrect patches and SHOULD reject incorrect patches if the Contributor does not respond constructively.
 

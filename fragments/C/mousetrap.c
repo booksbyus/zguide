@@ -4,8 +4,8 @@ void *mousetrap;
 mousetrap = zmq_socket (context, ZMQ_PULL);
 
 //  Configure the socket
-int64_t jawsize = 10000;
-zmq_setsockopt (mousetrap, ZMQ_HWM, &jawsize, sizeof jawsize);
+int_t jawsize = 10000;
+zmq_setsockopt (mousetrap, ZMQ_RCVHWM, &jawsize, sizeof jawsize);
 
 //  Plug socket into mouse hole
 zmq_connect (mousetrap, "tcp://192.168.55.221:5001");
