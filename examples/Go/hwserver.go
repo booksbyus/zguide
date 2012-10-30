@@ -25,7 +25,7 @@ func main() {
 		println("Received ", string(msg))
 
 		// do some fake "work"
-		time.Sleep(1)
+		time.Sleep(time.Second)
 
 		// send reply back to client
 		reply := fmt.Sprintf("World")
