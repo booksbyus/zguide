@@ -289,7 +289,7 @@ while (<>) {
     }
     else {
         #   Normal text
-        writeln ($_);
+        writeln ($_) unless $filter;
     }
 }
 if ($format eq "online") {
