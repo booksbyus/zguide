@@ -1,5 +1,8 @@
 .output chapter1.wd
-++ Chapter One - Basic Stuff
+++ Chapter One - Basics
+////
+AO: I knew our production team wouldn't allow "stuff" to stay
+////
 
 +++ Fixing the World
 
@@ -15,6 +18,9 @@ If you've done any work with threads, protocols, or networks, you'll realize thi
 
 So we live in a world where the wiring is years ahead of our ability to use it. We had a software crisis in the 1980s, when leading software engineers like Fred Brooks believed [http://en.wikipedia.org/wiki/No_Silver_Bullet there was no "Silver Bullet"] to "promise even one order of magnitude of improvement in productivity, reliability, or simplicity".
 
+////
+AO: Your reference to the cloud may be distracting. What level of connectivity are you referring to? I know of SaaS, PaaS, IaaS, and Data as a Service. When it comes to writing distributing programs, IaaS and DaaS are orthogonal because the programming is not affected. SaaS can offer an API but it not really relevant here. PaaS could theoretically be used to write powerful distributed programs, but I don't believe any service has offered that.
+////
 Brooks missed free and open source software, which solved that crisis, enabling us to share knowledge efficiently. Today we face another software crisis, but it's one we don't talk about much. Only the largest, richest firms can afford to create connected applications. There is a cloud, but it's proprietary. Our data, our knowledge is disappearing from our personal computers into clouds that we cannot access, cannot compete with. Who owns our social networks? It is like the mainframe-PC revolution in reverse.
 
 We can leave the political philosophy [http://swsi.info for another book]. The point is that while the Internet offers the potential of massively connected code, the reality is that this is out of reach for most of us, and so, large interesting problems (in health, education, economics, transport, and so on) remain unsolved because there is no way to connect the code, and thus no way to connect the brains that could work together to solve these problems.
@@ -29,9 +35,13 @@ It sounds ridiculously simple. And maybe it is. That's kind of the whole point.
 
 +++ 0MQ in a Hundred Words
 
-0MQ (ZeroMQ, 0\MQ, zmq) looks like an embeddable networking library but acts like a concurrency framework. It gives you sockets that carry atomic messages across various transports like in-process, inter-process, TCP, and multicast. You can connect sockets N-to-N with patterns like fanout, pub-sub, task distribution, and request-reply. It's fast enough to be the fabric for clustered products. Its asynchronous I/O model gives you scalable multicore applications, built as asynchronous message-processing tasks. It has a score of language APIs and runs on most operating systems. 0MQ is from [http://www.imatix.com iMatix] and is LGPLv3 open source.
+0MQ (also seen as ZeroMQ, 0\MQ, zmq) looks like an embeddable networking library but acts like a concurrency framework. It gives you sockets that carry atomic messages across various transports like in-process, inter-process, TCP, and multicast. You can connect sockets N-to-N with patterns like fanout, pub-sub, task distribution, and request-reply. It's fast enough to be the fabric for clustered products. Its asynchronous I/O model gives you scalable multicore applications, built as asynchronous message-processing tasks. It has a score of language APIs and runs on most operating systems. 0MQ is from [http://www.imatix.com iMatix] and is LGPLv3 open source.
 
-+++ Some Assumptions
+////
+AO: The following two sections are typical preface material, and I recommend you move them there.
+////
+
++++ Audience for This Book
 
 We assume you are using the latest 3.2 release of 0MQ. We assume you are using a Linux box or something similar. We assume you can read C code, more or less, that's the default language for the examples. We assume that when we write constants like PUSH or SUBSCRIBE you can imagine they are really called ZMQ_PUSH or ZMQ_SUBSCRIBE if the programming language needs it.
 
@@ -74,9 +84,29 @@ So let's start with some code. We start of course with a Hello World example. We
  +------------+
 [[/code]]
 
-The REQ-REP socket pair is lockstep. The client does zmq_msg_send[3] and then zmq_msg_recv[3], in a loop (or once if that's all it needs). Doing any other sequence (e.g. sending two messages in a row) will result in a return code of -1 from the send or recv call. Similarly the service does zmq_msg_recv[3] and then zmq_msg_send[3] in that order, and as often as it needs to.
+////
+AO: Normally, we ask authors to put all references to parts of code in
+constant width in their paragraphs. That means awkward constructs
+like:
+
+ +zmq_msg_send[3]+
+
+And even send and recv should be in + for constant width.
+
+This is a lot of work. We might skip it for this book, but I wonder
+how much effort you think it would be to put in the + signs. I
+wouldn't ask the production editor to do it, because of the risk
+of errors.
+
+////
+
+The REQ-REP socket pair is in lockstep. The client does zmq_msg_send[3] and then zmq_msg_recv[3], in a loop (or once if that's all it needs). Doing any other sequence (e.g. sending two messages in a row) will result in a return code of -1 from the send or recv call. Similarly, the service does zmq_msg_recv[3] and then zmq_msg_send[3] in that order, and as often as it needs to.
 
 0MQ uses C as its reference language and this is the main language we'll use for examples. If you're reading this on-line, the link below the example takes you to translations into other programming languages. Let's compare the same server in C++:
+
+////
+AO: I don't understand your convention. Where is the code itself?
+////
 
 [[code type="example" title="Hello World server" name="hwserver" language="C++"]]
 [[/code]]
