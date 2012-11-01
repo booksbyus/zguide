@@ -160,9 +160,13 @@ while (<>) {
     elsif (/\[\[code\s+type=\"fragment\"\s+name=\"([^"]+)\"/) {
         close_list ();
         
-        #   Skip code fragment from text
+        #   Thunk fragment source code into C directory in any case
+        $name = $1;
+        die "Can't create fragments/C/$name.c: $!"
+            unless open (FRAGMENT, ">fragments/C/$name.c");
         while (<>) {
             last if /\[\[\/code\]\]/;
+            print FRAGMENT $_;
         }
         #   Look for translation in current source language, fall back on C if none
         $name = $1;

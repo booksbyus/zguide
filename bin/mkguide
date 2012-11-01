@@ -3,19 +3,21 @@
 #   Generates and uploads the Guide in main languages
 #
 function upload {
-    if [ -f .cache_$1 ]; then
-        OLD=`egrep $2.wd .cache_$1 | cut -f1 -d" "`
-    else
-        OLD=""
-    fi
-    NEW=`sha1sum $2.wd | cut -f1 -d" "`
-    if [ "$NEW" != "$OLD" ]; then
-        wdput zguide $1 $2 "$3"
+    if [ ! -z "$APISITE_USER" ];  then
         if [ -f .cache_$1 ]; then
-            egrep -v $2.wd .cache_$1 > x
-            mv x .cache_$1
+            OLD=`egrep $2.wd .cache_$1 | cut -f1 -d" "`
+        else
+            OLD=""
         fi
-        sha1sum $2.wd >> .cache_$1
+        NEW=`sha1sum $2.wd | cut -f1 -d" "`
+        if [ "$NEW" != "$OLD" ]; then
+            bin/wdput zguide $1 $2 "$3"
+            if [ -f .cache_$1 ]; then
+                egrep -v $2.wd .cache_$1 > x
+                mv x .cache_$1
+            fi
+            sha1sum $2.wd >> .cache_$1
+        fi
     fi
 }
 
@@ -56,10 +58,3 @@ mkone PHP    online php
 upload main scoreboard "Language scoreboard"
 
 rm *.wd wdtemp.txt upload.sh
-
-git add images/ fragments/ .signatures .cache_*
-git status
-echo -n "Enter commit message, or Ctrl-C: "
-read MESSAGE
-git commit -a -m "$MESSAGE"
-git push origin master
