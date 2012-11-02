@@ -1,3 +1,6 @@
+//
+//  Shows how to provoke EAGAIN when reaching HWM
+//
 #include <czmq.h>
 
 int main (void) {
@@ -13,11 +16,10 @@ int main (void) {
         printf ("Sending message %d\n", count);
         int rc = zstr_sendf (mailbox, "message %d", count);
         if (rc == -1) {
-            printf ("W: %s\n", strerror (errno));
+            printf ("%s\n", strerror (errno));
             break;
         }
     }
-    sleep (1);
     zctx_destroy (&ctx);
     return 0;
 }

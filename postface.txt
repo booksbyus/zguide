@@ -94,7 +94,7 @@ I like to write in a plain text format. It's fast and works well with source con
 
 At least in the first chapters, it was important to draw pictures to explain the flow of messages between peers. I found Ditaa, a lovely tool that chews up line-drawings and spits out elegant graphics. Having the graphics in the text, as text, makes it remarkably easy to work.
 
-By now you'll realize that the toolchain is highly customized, though it uses a lot of external tools. All are available on Ubuntu, which is a small mercy, and the whole toolchain is in the Guide repository in the bin subdirectory.
+By now you'll realize that the Guide toolchain is highly customized, though it uses a lot of external tools. All are available on Ubuntu, which is a mercy, and the whole toolchain is in the Guide repository in the bin subdirectory.
 
 Let's walk through the editing and publishing process. Here is how we produce the online version:
 
@@ -110,7 +110,7 @@ Which works as follows:
 * We extract the graphics and calls Ditaa on each one to produce image files, which it stores in the images subdirectory.
 * We extract inline listings (which are not translated) and stores these in the listings subdirectory.
 * We use pygmentize on each example and listing to create a marked-up page in Wikidot format.
-* We upload all changed files to the Guide website on Wikidot.
+* We upload all changed files to the Guide wiki using the Wikidot API.
 
 Doing this from scratch takes a while. So we store the SHA1 signatures of every image, listing, example, and text file, and only process and upload changes, and that makes it easy to publish a new version of the Guide when people make new contributions.
 
@@ -125,8 +125,9 @@ Which works as follows:
 * We use the mkbook script on all the input files to produce a DocBook output.
 * We push the DocBook format through docbook2ps and ps2pdf to create clean PDFs, in each language.
 * We push the DocBook format though db2epub to create Epub books, and in each language.
+* We upload the PDFs to the Guide wiki using the Wikidot API.
 
-It's important, when you create a community project, to lower the "change latency", i.e. the time it takes for people to see their work live. Or at least, to see that you've accepted their pull request. If that is more than a day or two, you've often lost your contributor.
+It's important, when you create a community project, to lower the "change latency", i.e. the time it takes for people to see their work live. Or at least, to see that you've accepted their pull request. If that is more than a day or two, you've often lost your contributor's interest.
 
 +++ Licensing
 

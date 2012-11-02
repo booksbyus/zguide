@@ -1,3 +1,126 @@
++++ Distributed Logging
+
+We need logging for more than diagnosing failures. If you've ever managed a real server (like a web server) you know how vital it is to have a capture of what is going on. There are a long list of reasons, not least:
+
+* To measure the performance of the system over time.
+* To see what kinds of work are done the most, to optimize performance.
+* To track errors and how often they occur.
+* To do post-mortems of failures.
+* To provide an audit trail in case of dispute.
+
+Let's scope this in terms of the problems we know we'll have to solve:
+
+* Since keeping logs can be expensive in terms of disk space and administration, it should be the decision of each node whether or not they want to act as a logging service.
+
+* Since we want to be able to opportunistically log a network ("why is this going so slowly, let me enable logging"), nodes should discover and connect to logging services as they appear.
+
+* Similarly, we need to be able to switch off logging at any time.
+
+* We need to be able to process log data mechanically, so log messages need a standard format.
+
+* We have to compress log data going over the network so that logging doesn't take up too much bandwidth.
+
+* We need to allow N to N logging, i.e. many nodes talking to many log services.
+
+- log use cases
+    - passive log & store, rotate files, etc.
+    - log into a database for analysis
+    - live meter, log and display
+
+- log service is an application
+    - cannot however use ZRE protocol
+    - would have to log itself, which is messy
+
+- 
+    
+
+- as a ZyRE application
+    - send to group
+    - collect from group
+    - but recursive...?
+- built-in to the protocol
+    - in hello
+- any other option?
+    - totally out of band?
+    - interoperability?
+        - yes
+    - as extension to basic protocol
+        - yes
+- protocol extension concept
+    - provide services
+    - as part of HELLO
+    - service semantics separately defined
+
+
+
+I'd be tempted to use ZyRE to log itself but that kind of cute recursion usually backfires. We can however use ZyRE to bootstrap the architecture.
+
+
+
+
+
+Breaking this down, let's start with discovery, connection, and disconnection. Once we've got this part done we'll look at the messages we send, and how to do that efficiently.
+
+
+
+
+First question is, should logging be part of the basic protocol, or built on top? Building it into the protocol is attractive because it's simple: just add a "log service" endpoint field to the HELLO message. That takes care of discovery. But it's a boundary violation. If we add one service to the protocol, why not more?
+
+
+I'd rather design the logging service at the application level.
+
+
+A very simple option would be to add an additional field to the HELLO message, to provide a logging port. If this is set, the sender is a logging service and we can talk to it. However this is a 'boundary violation'. When we start to tweak a protocol for special cases, we end up with a mess. It's cleaner to try to build our logging service on top of the ZRE protocol, not inside it.
+
+So for discovery, let's use an agreed group name, like "ZYRE-LOGGER". When a node joins this, it's telling other nodes "I'm a logging service, talk to me!"
+
+For connection, log traffic should use a separate 0MQ infrastructure to avoid touching the ZyRE traffic. I'd like to use a PUB/SUB flow where the logger binds a SUB socket as collector, and nodes connect a PUB socket to that. This will allow any number of loggers to coexist.
+
+- join group?
+- node property in hello?
+    ZYRE_LOG_COLLECTOR=xysts:xjxxj
+
+
+
+++++ Peer Properties
+
+- set at startup
+- provided in HELLO to other peers
+- access via peer API
+    - peer IP address if any
+    -
+
+
+
+- logging service
+- advertise on group
+- provide port to connect to
+- pub/sub to that port
+- formatted messages zre_log_msg.xml
+
+
+
+It will also be important to measure the performance of the overall network, e.g. by sampling traffic rates, latencies for request-reply exchanges, lost beacons, etc. As we move from simulated activity on one box to real activity on many boxes, the obvious answer is a 0MQ-based logging system. We'll come to this later in this chapter.
+
+
+
+
++++ File Transfer
+
+We now have a robust framework for creating groups of nodes, and letting them chat to each other. As a next step
+
+
++++ State Synchronization
+
+- peer property request/reply
+
++++ High-Level APIs
+
++++ Security
+
++++ Bridging
+
+(More coming soon)
 
 
 Pieter Hintjens ‏@hintjens
