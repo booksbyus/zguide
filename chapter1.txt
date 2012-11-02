@@ -308,7 +308,7 @@ As a final example (you are surely getting tired of juicy code and want to delve
 * A set of workers that process tasks
 * A sink that collects results back from the worker processes
 
-In reality, workers run on superfast boxes, perhaps using GPUs (graphic processing units) to do the hard maths. Here is the ventilator. It generates 100 tasks, each is a message telling the worker to sleep for some number of milliseconds:
+In reality, workers run on superfast boxes, perhaps using GPUs (graphic processing units) to do the hard math. Here is the ventilator. It generates 100 tasks, each is a message telling the worker to sleep for some number of milliseconds:
 
 [[code type="example" title="Parallel task ventilator" name="taskvent"]]
 [[/code]]
@@ -515,7 +515,11 @@ worker_thread (void *arg) {
 
 In the end, the problem was that the application was passing sockets between threads, which crashes weirdly. Sockets are not threadsafe. It became legal behavior to migrate sockets from one thread to another in 0MQ/2.1, but this remains dangerous unless you use a "full memory barrier". If you don't know what that means, don't attempt socket migration.
 
-+++ Getting the Context Right
+////
+AO: I put the following two sections under the previous one (sect2 under sect1).
+////
+
+++++ Getting the Context Right
 
 0MQ applications always start by creating a //context//, and then using that for creating sockets. In C, it's the zmq_ctx_new[3] call. You should create and use exactly one context in your process. Technically, the context is the container for all sockets in a single process, and acts as the transport for {{inproc}} sockets, which are the fastest way to connect threads in one process. If at runtime a process has two contexts, these are like separate 0MQ instances. If that's explicitly what you want, OK, but otherwise remember:
 
@@ -523,7 +527,7 @@ In the end, the problem was that the application was passing sockets between thr
 
 If you're using the fork() system call, each process needs its own context. If you do zmq_ctx_new[3] in the main process before calling fork(), the child processes get their own contexts. In general you want to do the interesting stuff in the child processes, and just manage these from the parent process.
 
-+++ Making a Clean Exit
+++++ Making a Clean Exit
 
 Classy programmers share the same motto as classy hit men: always clean-up when you finish the job. When you use 0MQ in a language like Python, stuff gets automatically freed for you. But when using C you have to carefully free objects when you're finished with them, or you get memory leaks, unstable applications, and generally bad karma.
 
@@ -536,6 +540,10 @@ The 0MQ objects we need to worry about are messages, sockets, and contexts. Luck
 * If you are opening and closing a lot of sockets, that's probably a sign you need to redesign your application.
 
 * When you exit the program, close your sockets and then call zmq_ctx_destroy[3]. This destroys the context.
+
+////
+AO: You don't deal with the complicated topic of exceptions, which may require clean-up in something like a "final" block. Worth mentioning? This is the same clean-up that a programmer has to learn to do for any resource.
+////
 
 If you're doing multithreaded work, it gets rather more complex than this. We'll get to multithreading in the next chapter, but because some of you will, despite warnings, will try to run before you can safely walk, below is the quick and dirty guide to making a clean exit in a //multithreaded// 0MQ application.
 
@@ -576,6 +584,10 @@ Let's look at the typical problems we face when we start to connect pieces using
 * How do we handle network errors? Do we wait and retry, ignore them silently, or abort?
 
 Take a typical open source project like [http://hadoop.apache.org/zookeeper/ Hadoop Zookeeper] and read the C API code in [http://github.com/apache/zookeeper/blob/trunk/src/c/src/zookeeper.c src/c/src/zookeeper.c]. As I write this, in 2010, the code is 3,200 lines of mystery and in there is an undocumented, client-server network communication protocol. I see it's efficient because it uses poll() instead of select(). But really, Zookeeper should be using a generic messaging layer and an explicitly documented wire level protocol. It is incredibly wasteful for teams to be building this particular wheel over and over.
+
+////
+AO: Remember to describe every diagram in the text and put an explicit reference to it in the text.
+////
 
 [[code type="textdiagram" title="Messaging as it Starts"]]
 +------------+
@@ -693,6 +705,9 @@ As the clients run, we take a look at the active processes using 'top', and we s
 Let's think for a second about what is happening here. The weather server has a single socket, and yet here we have it sending data to five clients in parallel. We could have thousands of concurrent clients. The server application doesn't see them, doesn't talk to them directly. So the 0MQ socket is acting like a little server, silently accepting client requests and shoving data out to them as fast as the network can handle it. And it's a multithreaded server, squeezing more juice out of your CPU.
 
 +++ Missing Message Problem Solver
+////
+AO: Your use of terms and concepts in the flowchart that the reader hasn't seen yet demonstrates that this section comes too early. It should be later in the boo, maybe even in an appendix if you can't find a convenient place for it. You can refer ahead to it here, though.
+////
 
 As you start to program with 0MQ you will come across one problem more than once: you lose messages that you expect to receive. Here is a basic problem solver!figref() that walks through the most common causes for this. Don't worry if some of the terminology is unfamiliar still, it'll become clearer in the next chapters.
 
@@ -771,7 +786,7 @@ As you start to program with 0MQ you will come across one problem more than once
 |             {o} | Yes    | drops messages  |        | before not after|
 +--------+--------+        | it can't route. |        | you connect.    |
          | No              +-----------------+        +-----------------+
-         v   
+         v
 +-----------------+        +--------------------+
 | Are you losing  |        | You probably have  |
 |   one message   +------->| a client running   |
@@ -787,6 +802,10 @@ As you start to program with 0MQ you will come across one problem more than once
 +-----------------+
 [[/code]]
 
+////
+AO: What does "one message in two" mean?
+////
+
 If you're using 0MQ in a context where failures are expensive, then you want to plan properly. First, build prototypes that let you learn and test the different aspects of your design. Stress them until they break, so that you know exactly how strong your designs are. Second, invest in testing. This means building test frameworks, ensuring you have access to realistic setups with sufficient computer power, and getting time or help to actually test seriously. Ideally, one team writes the code, a second team tries to break it. Lastly, do get your organization to [http://www.imatix.com/contact contact iMatix] to discuss how we can help to make sure things work properly, and can be fixed rapidly if they break.
 
 In short: if you have not proven an architecture works in realistic conditions, it will most likely break at the worst possible moment.
@@ -797,7 +816,11 @@ In early 2012, 0MQ/3.2 became stable enough for live use and by the time you're 
 
 The main change in 3.x is that PUB-SUB works properly, as in, the publisher only sends subscribers stuff they actually want. In 2.x, publishers send everything and the subscribers filter. Simple, but not ideal for performance on a TCP network.
 
-Most of the API is backwards compatible, except a few blockheaded changes that went into 3.0 with no real regard to the cost of breaking existing code. The syntax of zmq_send[3] and zmq_recv[3] changed, and ZMQ_NOBLOCK got rebaptised to ZMQ_DONTWAIT. So although I'd love to say, "you just recompile your code with the latest libzmq and everything will work", that's not how it is. For what it's worth, we banned such API breakage afterwards.
+////
+AO: I wouldn't call changes "blockheaded" unless you can promise that they'll be reversed soon. If they're not being reversed, they must have some purpose. You can, however, say that you regretted the lack of backward compatibility.
+////
+
+Most of the API is backwards compatible, except a few blockheaded changes that went into 3.0 with no real regard to the cost of breaking existing code. The syntax of zmq_send[3] and zmq_recv[3] changed, and ZMQ_NOBLOCK got rebaptized to ZMQ_DONTWAIT. So although I'd love to say, "you just recompile your code with the latest libzmq and everything will work", that's not how it is. For what it's worth, we banned such API breakage afterwards.
 
 So the minimal change for C/C++ apps that use the low-level libzmq API is to replace all calls to zmq_send with zmq_msg_send, and zmq_recv with zmq_msg_recv. In other languages, your binding author may have done the work already. Note that these two functions now return -1 in case of error, and zero or more according to how many bytes were sent or received.
 
