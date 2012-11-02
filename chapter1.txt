@@ -1,5 +1,5 @@
 .output chapter1.wd
-++ Chapter One - Basics
+++ Basics
 ////
 AO: I knew our production team wouldn't allow "stuff" to stay
 ////
@@ -100,13 +100,9 @@ of errors.
 
 ////
 
-The REQ-REP socket pair is in lockstep. The client does zmq_msg_send[3] and then zmq_msg_recv[3], in a loop (or once if that's all it needs). Doing any other sequence (e.g. sending two messages in a row) will result in a return code of -1 from the send or recv call. Similarly, the service does zmq_msg_recv[3] and then zmq_msg_send[3] in that order, and as often as it needs to.
+The REQ-REP socket pair is in lockstep. The client issues zmq_msg_send[3] and then zmq_msg_recv[3], in a loop (or once if that's all it needs). Doing any other sequence (e.g. sending two messages in a row) will result in a return code of -1 from the send or recv call. Similarly, the service issues zmq_msg_recv[3] and then zmq_msg_send[3] in that order, as often as it needs to.
 
 0MQ uses C as its reference language and this is the main language we'll use for examples. If you're reading this on-line, the link below the example takes you to translations into other programming languages. Let's compare the same server in C++:
-
-////
-AO: I don't understand your convention. Where is the code itself?
-////
 
 [[code type="example" title="Hello World server" name="hwserver" language="C++"]]
 [[/code]]
@@ -116,7 +112,7 @@ You can see that the 0MQ API is similar in C and C++. In a language like PHP, we
 [[code type="example" title="Hello World server" name="hwserver" language="PHP"]]
 [[/code]]
 
-Here's the client code (click the link below the source to look at, or contribute a translation in your favorite programming language):
+Here's the client code:
 
 [[code type="example" title="Hello World client" name="hwclient"]]
 [[/code]]
@@ -142,11 +138,11 @@ Now this looks too simple to be realistic, but a 0MQ socket is what you get when
               Cosmic rays
 [[/code]]
 
-You could literally throw thousands of clients at this server, all at once, and it would continue to work happily and quickly. For fun, try starting the client and //then// starting the server, see how it all still works, then think for a second what this means.
+You could throw thousands of clients at this server, all at once, and it would continue to work happily and quickly. For fun, try starting the client and //then// starting the server, see how it all still works, then think for a second what this means.
 
-Let me explain briefly what these two programs are actually doing. They create a 0MQ context to work with, and a socket. Don't worry what the words mean. You'll pick it up. The server binds its REP (reply) socket to port 5555. The server waits for a request, in a loop, and responds each time with a reply. The client sends a request and reads the reply back from the server.
+Let us explain briefly what these two programs are actually doing. They create a 0MQ context to work with, and a socket. Don't worry what the words mean. You'll pick it up. The server binds its REP (reply) socket to port 5555. The server waits for a request, in a loop, and responds each time with a reply. The client sends a request and reads the reply back from the server.
 
-If you kill the server (Ctrl-C) and restart it, the client won't recover properly. Recovering from crashing processes isn't quite that easy. Making a reliable request-reply flow is complex enough that I won't cover it until Chapter Four.
+If you kill the server (Ctrl-C) and restart it, the client won't recover properly. Recovering from crashing processes isn't quite that easy. Making a reliable request-reply flow is complex enough that we won't cover it until Chapter Four.
 
 There is a lot happening behind the scenes but what matters to us programmers is how short and sweet the code is, and how often it doesn't crash, even under heavy load. This is the request-reply pattern, probably the simplest way to use 0MQ. It maps to RPC and the classic client-server model.
 
@@ -174,7 +170,7 @@ Then what goes onto the wire is a length (one byte for shorter strings) and the 
 +-----+    +-----+-----+-----+-----+-----+
 [[/code]]
 
-And if you read this from a C program, you will get something that looks like a string, and might by accident act like a string (if by luck the five bytes find themselves followed by an innocently lurking null), but isn't a proper string. Which means that your client and server don't agree on the string format, you will get weird results.
+And if you read this from a C program, you will get something that looks like a string, and might by accident act like a string (if by luck the five bytes find themselves followed by an innocently lurking null), but isn't a proper string. When your client and server don't agree on the string format, you will get weird results.
 
 When you receive string data from 0MQ, in C, you simply cannot trust that it's safely terminated. Every single time you read a string you should allocate a new buffer with space for an extra byte, copy the string, and terminate it properly with a null.
 
@@ -255,6 +251,10 @@ Here is client application, which listens to the stream of updates and grabs any
 [[code type="example" title="Weather update client" name="wuclient"]]
 [[/code]]
 
+////
+AO: I don't think "length-specified blobs" adds any useful information at this point.
+////
+
 Note that when you use a SUB socket you **must** set a subscription using zmq_setsockopt[3] and SUBSCRIBE, as in this code. If you don't set any subscription, you won't get any messages. It's a common mistake for beginners. The subscriber can set many subscriptions, which are added together. That is, if a update matches ANY subscription, the subscriber receives it. The subscriber can also unsubscribe specific subscriptions. Subscriptions are length-specified blobs. See zmq_setsockopt[3] for how this works.
 
 The PUB-SUB socket pair is asynchronous. The client does zmq_msg_recv[3], in a loop (or once if that's all it needs). Trying to send a message to a SUB socket will cause an error. Similarly the service does zmq_msg_send[3] as often as it needs to, but must not do zmq_msg_recv[3] on a PUB socket.
@@ -263,7 +263,7 @@ In theory with 0MQ sockets, it does not matter which end connects, and which end
 
 There is one more important thing to know about PUB-SUB sockets: you do not know precisely when a subscriber starts to get messages. Even if you start a subscriber, wait a while, and then start the publisher, **the subscriber will always miss the first messages that the publisher sends**. This is because as the subscriber connects to the publisher (something that takes a small but non-zero time), the publisher may already be sending messages out.
 
-This "slow joiner" symptom hits enough people, often enough, that I'm going to explain it in detail. Remember that 0MQ does asynchronous I/O, i.e. in the background. Say you have two nodes doing this, in this order:
+This "slow joiner" symptom hits enough people, often enough, that we're going to explain it in detail. Remember that 0MQ does asynchronous I/O, i.e. in the background. Say you have two nodes doing this, in this order:
 
 * Subscriber connects to an endpoint and receives and counts messages.
 * Publisher binds to an endpoint and immediately sends 1,000 messages.
@@ -272,9 +272,9 @@ Then the subscriber will most likely not receive anything. You'll blink, check t
 
 Making a TCP connection involves to and fro handshaking that takes several milliseconds depending on your network and the number of hops between peers. In that time, 0MQ can send very many messages. For sake of argument assume it takes 5 msecs to establish a connection, and that same link can handle 1M messages per second. During the 5 msecs that the subscriber is connecting to the publisher, it takes the publisher only 1 msec to send out those 1K messages.
 
-In Chapter Two I'll explain how to synchronize a publisher and subscribers so that you don't start to publish data until the subscriber(s) really are connected and ready. There is a simple and stupid way to delay the publisher, which is to sleep. I'd never do this in a real application though, it is extremely fragile as well as inelegant and slow. Use sleeps to prove to yourself what's happening, and then wait for Chapter 2 to see how to do this right.
+In <<more_advanced>> we'll explain how to synchronize a publisher and subscribers so that you don't start to publish data until the subscriber(s) really are connected and ready. There is a simple and stupid way to delay the publisher, which is to sleep. Don't do this in a real application, though, because it is extremely fragile as well as inelegant and slow. Use sleeps to prove to yourself what's happening, and then wait for Chapter 2 to see how to do this right.
 
-The alternative to synchronization is to simply assume that the published data stream is infinite and has no start, and no end. This is how we built our weather client example.
+The alternative to synchronization is to simply assume that the published data stream is infinite and has no start, and no end. One also assumes that the subscriber doesn't care what transpired before it started up. This is how we built our weather client example.
 
 So the client subscribes to its chosen zip code and collects a thousand updates for that zip code. That means about ten million updates from the server, if zip codes are randomly distributed. You can start the client, and then the server, and the client will keep working. You can stop and restart the server as often as you like, and the client will keep working. When the client has collected its thousand updates, it calculates the average, prints it, and exits.
 
@@ -302,11 +302,11 @@ sys     0m0.008s
 
 +++ Divide and Conquer
 
-As a final example (you are surely getting tired of juicy code and want to delve back into philological discussions about comparative abstractive norms), let's do a little supercomputing. Then coffee. Our supercomputing application is a fairly typical parallel processing model!figref():
+As a final example (you are surely getting tired of juicy code and want to delve back into philological discussions about comparative abstractive norms), let's do a little supercomputing. Then coffee. Our supercomputing application is a fairly typical parallel processing model!figref(). We have:
 
-* We have a ventilator that produces tasks that can be done in parallel.
-* We have a set of workers that process tasks.
-* We have a sink that collects results back from the worker processes.
+* A ventilator that produces tasks that can be done in parallel
+* A set of workers that process tasks
+* A sink that collects results back from the worker processes
 
 In reality, workers run on superfast boxes, perhaps using GPUs (graphic processing units) to do the hard maths. Here is the ventilator. It generates 100 tasks, each is a message telling the worker to sleep for some number of milliseconds:
 
