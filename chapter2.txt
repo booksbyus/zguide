@@ -24,6 +24,9 @@ We'll cover:
 * Using the high-water mark (HWM) to protect against memory overflows.
 
 +++ The Zen of Zero
+////
+AO: I'd like this short section in the preface.
+////
 
 The Ø in 0MQ is all about tradeoffs. On the one hand this strange name lowers 0MQ's visibility on Google and Twitter. On the other hand it annoys the heck out of some Danish folk who write us things like "ØMG røtfl", and "Ø is not a funny looking zero!" and "//Rødgrød med Fløde!//", which is apparently an insult that means "may your neighbours be the direct descendants of Grendel!"  Seems like a fair trade.
 
@@ -31,9 +34,13 @@ Originally the zero in 0MQ was meant as "zero broker" and (as close to) "zero la
 
 +++ The Socket API
 
-To be perfectly honest, 0MQ does a kind of switch-and-bait on you. Which we don't apologize for, it's for your own good and hurts us more than it hurts you. It presents a familiar socket-based API but that hides a bunch of message-processing engines that will slowly fix your world-view about how to design and write distributed software.
+To be perfectly honest, 0MQ does a kind of switch-and-bait on you. Which we don't apologize for, it's for your own good and hurts us more than it hurts you. It presents a familiar socket-based API, which requires great effort for us to hide a bunch of message-processing engines. However, the result will slowly fix your world-view about how to design and write distributed software.
 
 Sockets are the de-facto standard API for network programming, as well as being useful for stopping your eyes from falling onto your cheeks. One thing that makes 0MQ especially tasty to developers is that it uses sockets and messages instead of some other arbitrary set of concepts. Kudos to Martin Sustrik for pulling this off. It turns "Message Oriented Middleware", a phrase guaranteed to send the whole room off to Catatonia, into "Extra Spicy Sockets!" which leaves us with a strange craving for pizza, and a desire to know more.
+
+////
+AO: Actually, some people with sensative stomachs cannot tolerate pepperoni. Are you being sarcastic below? If not, I would choose some other "comfort food" that is less spicy.
+////
 
 Like a nice pepperoni pizza, 0MQ sockets are easy to digest. Sockets have a life in four parts, just like BSD sockets:
 
@@ -46,6 +53,10 @@ Like a nice pepperoni pizza, 0MQ sockets are easy to digest. Sockets have a life
 * Using the sockets to carry data by writing and receiving messages on them (see zmq_msg_send[3], zmq_msg_recv[3]).
 
 Which looks like this:
+
+////
+AO: I don't see why this example should be necessary. You have all these calls in Chapter 1, as part of a reasonably realistic example. If you have some deeper concepts to convey about sockets, you need to write more.
+////
 
 [[code type="fragment" name="mousetrap"]]
 void *mousetrap;
