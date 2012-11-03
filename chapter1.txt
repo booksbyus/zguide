@@ -98,6 +98,9 @@ how much effort you think it would be to put in the + signs. I
 wouldn't ask the production editor to do it, because of the risk
 of errors.
 
+I also feel it is extra gunk to include the man page section (3 or 7)
+in the description of the call.
+
 ////
 
 The REQ-REP socket pair is in lockstep. The client issues zmq_msg_send[3] and then zmq_msg_recv[3], in a loop (or once if that's all it needs). Doing any other sequence (e.g. sending two messages in a row) will result in a return code of -1 from the send or recv call. Similarly, the service issues zmq_msg_recv[3] and then zmq_msg_send[3] in that order, as often as it needs to.
