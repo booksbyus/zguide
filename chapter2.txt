@@ -95,7 +95,7 @@ AO: I'm adding some structure to some sections by making subsections.
 ////
 ++++ Plugging Sockets Into the Topology
 
-To create a connection between two nodes you use zmq_bind[3] in one node, and zmq_connect[3] in the other.  As a general rule of thumb, the node which does zmq_bind[3] is a "server", sitting on a well-known network address, and the node which does zmq_connect[3] is a "client", with unknown or arbitrary network addresses. Thus we say that we "bind a socket to an endpoint" and "connect a socket to an endpoint", the endpoint being that well-known network address.
+To create a connection between two nodes, issue zmq_bind[3] in one node and zmq_connect[3] in the other.  As a general rule of thumb, the node which does zmq_bind[3] is a "server", sitting on a well-known network address, and the node which does zmq_connect[3] is a "client", with unknown or arbitrary network addresses. Thus we say that we "bind a socket to an endpoint" and "connect a socket to an endpoint", the endpoint being that well-known network address.
 
 0MQ connections are somewhat different from old-fashioned TCP connections. The main notable differences are:
 
@@ -288,7 +288,7 @@ zmq_ctx_get (context, ZMQ_MAX_SOCKETS, max_sockets);
 assert (zmq_ctx_get (context, ZMQ_MAX_SOCKETS) == max_sockets);
 [[/code]]
 
-+++ Core Messaging Patterns
++++ Messaging Patterns
 
 Underneath the brown paper wrapping of 0MQ's socket API lies the world of messaging patterns. If you have a background in enterprise messaging, or know UDP well, these will be vaguely familiar. But to most 0MQ newcomers they are a surprise, we're so used to the TCP paradigm where a socket maps one-to-one to another node.
 
@@ -338,13 +338,13 @@ In memory, 0MQ messages are zmq_msg_t structures (or classes depending on your l
 
 * You create and pass around zmq_msg_t objects, not blocks of data.
 
-* To read a message you use zmq_msg_init[3] to create an empty message, and then you pass that to zmq_msg_recv[3].
+* To read a message, issue zmq_msg_init[3] to create an empty message, and then pass that to zmq_msg_recv[3].
 
-* To write a message from new data, you use zmq_msg_init_size[3] to create a message and at the same time allocate a block of data of some size. You then fill that data using memcpy[3], and pass the message to zmq_msg_send[3].
+* To write a message from new data, issue zmq_msg_init_size[3] to create a message and at the same time allocate a block of data of some size. Then fill that data using memcpy[3], and pass the message to zmq_msg_send[3].
 
-* To release (not destroy) a message you call zmq_msg_close[3]. This drops a reference, and eventually 0MQ will destroy the message.
+* To release (not destroy) a message, call zmq_msg_close[3]. This drops a reference, and eventually 0MQ will destroy the message.
 
-* To access the message content you use zmq_msg_data[3]. To know how much data the message contains, use zmq_msg_size[3].
+* To access the message content call zmq_msg_data[3]. To know how much data the message contains, call zmq_msg_size[3].
 
 * Do not use zmq_msg_move[3], zmq_msg_copy[3], or zmq_msg_init_data[3] unless you read the man pages and know precisely why you need these.
 
@@ -380,7 +380,8 @@ s_send (void *socket, char *string) {
 
 You can easily extend this code to send and receive blobs of arbitrary length.
 
-**Note than when you have passed a message to zmq_msg_send(3), ØMQ will clear the message, i.e. set the size to zero. You cannot send the same message twice, and you cannot access the message data after sending it.**
+NOTE:
+After you pass a message to zmq_msg_send(3), ØMQ will clear the message, i.e., set the size to zero. You cannot send the same message twice, and you cannot access the message data after sending it.**
 
 If you want to send the same message more than once, create a second message, initialize it using zmq_msg_init[3] and then use zmq_msg_copy[3] to create a copy of the first message. This does not copy the data but the reference. You can then send the message twice (or more, if you create more copies) and the message will only be finally destroyed when the last copy is sent or closed.
 
