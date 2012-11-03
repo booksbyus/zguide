@@ -1,4 +1,5 @@
 .output chapter4.wd
+[[reliable_request_reply]]
 ++ Chapter Four - Reliable Request-Reply
 
 In Chapter Three we looked at advanced use of 0MQ's request-reply pattern with worked examples. In this chapter we'll look at the general question of reliability and build a set of reliable messaging patterns on top of 0MQ's core request-reply pattern.
