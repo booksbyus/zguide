@@ -401,7 +401,7 @@ Some other things that are worth knowing about messages:
 
 And to be necessarily repetitive, do not use zmq_msg_init_data[3], yet. This is a zero-copy method and guaranteed to create trouble for you. There are far more important things to learn about 0MQ before you start to worry about shaving off microseconds.
 
-+++ Handling Multiple Sockets
+++++ Handling Multiple Sockets
 
 In all the examples so far, the main loop of most examples has been:
 
@@ -430,6 +430,9 @@ Now let's see the same little senseless application done right, using zmq_poll[3
 AO: What are the four members of the items structure?
 ////
 
+////
+AO: I'd like the following two subsections put under a new high-level section such as "Errors and Exceptions," but that's not crucial.
+////
 +++ Handling Errors and ETERM
 
 0MQ's error handling philosophy is a mix of fail-fast and resilience. Processes, we believe, should be as vulnerable as possible to internal errors, and as robust as possible against external attacks and errors. To give an analogy, a living cell will self-destruct if it detects a single internal error, yet it will resist attack from the outside by all means possible.
@@ -450,12 +453,6 @@ In most of the C examples we've seen so far there's been no error handling. **Re
 
 * A descriptive error text for logging is provided by zmq_strerror[3].
 
-There are two main exceptional conditions that you may want to handle as non-fatal:
-
-* When a thread calls zmq_msg_recv[3] with the ZMQ_DONTWAIT option and there is no waiting data. 0MQ will return -1 and set errno to EAGAIN.
-
-* When a thread calls zmq_ctx_destroy[3] and other threads are doing blocking work. The zmq_ctx_destroy[3] call closes the context and all blocking calls exit with -1, and errno set to ETERM.
-
 For example:
 
 [[code type="fragment" name="errorhandling"]]
@@ -469,6 +466,12 @@ if (rc != 0) {
     return -1;
 }
 [[/code]]
+
+There are two main exceptional conditions that you may want to handle as non-fatal:
+
+* When a thread calls zmq_msg_recv[3] with the ZMQ_DONTWAIT option and there is no waiting data. 0MQ will return -1 and set {{errno}} to EAGAIN.
+
+* When a thread calls zmq_ctx_destroy[3] and other threads are doing blocking work. The zmq_ctx_destroy[3] call closes the context and all blocking calls exit with -1, and {{errno}} set to ETERM.
 
 In C/C++, asserts can be removed entirely in optimized code, so don't make the mistake of wrapping the whole 0MQ call in an assert(). It looks neat, then the optimizer removes all the asserts and the calls you want to make, and your application breaks in impressive ways.
 
@@ -547,26 +550,26 @@ Here is the worker process, which manages two sockets (a PULL socket getting tas
 [[code type="example" title="Parallel task worker with kill signaling" name="taskwork2"]]
 [[/code]]
 
-Here is the modified sink application. When it's finished collecting results it broadcasts a KILL message to all workers:
+Here is the modified sink application. When it's finished collecting results it broadcasts a kill message to all workers:
 
 [[code type="example" title="Parallel task sink with kill signaling" name="tasksink2"]]
 [[/code]]
 
 +++ Handling Interrupt Signals
 
-Realistic applications need to shutdown cleanly when interrupted with Ctrl-C or another signal such as SIGTERM. By default, these simply kill the process, meaning messages won't be flushed, files won't be closed cleanly, etc.
+Realistic applications need to shut down cleanly when interrupted with Ctrl-C or another signal such as SIGTERM. By default, these simply kill the process, meaning messages won't be flushed, files won't be closed cleanly, etc.
 
 Here is how we handle a signal in various languages:
 
 [[code type="example" title="Handling Ctrl-C cleanly" name="interrupt"]]
 [[/code]]
 
-The program provides s_catch_signals(), which traps Ctrl-C (SIGINT) and SIGTERM. When either of these signals arrive, the s_catch_signals() handler sets the global variable s_interrupted. Your application will not die automatically, you have to now explicitly check for an interrupt, and handle it properly. Here's how:
+The program provides s_catch_signals(), which traps Ctrl-C (SIGINT) and SIGTERM. When either of these signals arrive, the s_catch_signals() handler sets the global variable s_interrupted. Thanks to your signal handler, your application will not die automatically. Instead, you have a chance to clean up and exit gracefully. You have to now explicitly check for an interrupt, and handle it properly. Do this by calling s_catch_signals() (copy this from interrupt.c) at the start of your main code. This sets-up the signal handling. The interrupt will affect 0MQ calls as follows:
 
-* Call s_catch_signals() (copy this from interrupt.c) at the start of your main code. This sets-up the signal handling.
 * If your code is blocking in zmq_msg_recv[3], zmq_poll[3], or zmq_msg_send[3], when a signal arrives, the call will return with EINTR.
 * Wrappers like s_recv() return NULL if they are interrupted.
-* So, your application checks for an EINTR return code, a NULL return, and/or s_interrupted.
+
+So check for an EINTR return code, a NULL return, and/or s_interrupted.
 
 Here is a typical code fragment:
 
@@ -581,15 +584,19 @@ while (!s_interrupted) {
 zmq_close (client);
 [[/code]]
 
-If you call s_catch_signals() and don't test for interrupts, the your application will become immune to Ctrl-C and SIGTERM, which may be useful, but is usually not.
+If you call s_catch_signals() and don't test for interrupts, your application will become immune to Ctrl-C and SIGTERM, which may be useful, but is usually not.
 
 +++ Detecting Memory Leaks
 
 Any long-running application has to manage memory correctly, or eventually it'll use up all available memory and crash. If you use a language that handles this automatically for you, congratulations. If you program in C or C++ or any other language where you're responsible for memory management, here's a short tutorial on using valgrind, which among other things will report on any leaks your programs have.
 
-* To install valgrind, e.g. on Ubuntu or Debian: {{sudo apt-get install valgrind}}.
+* To install valgrind, e.g. on Ubuntu or Debian issue:
 
-* By default, 0MQ will cause valgrind to complain a lot. To remove these warnings, create a file {{valgrind.supp}} that contains this:
+[[code]]
+sudo apt-get install valgrind
+[[/code]]
+
+* By default, 0MQ will cause valgrind to complain a lot. To remove these warnings, create a file called _valgrind.supp_ that contains this:
 
 [[code]]
 {
@@ -624,9 +631,13 @@ And after fixing any errors it reported, you should get the pleasant message:
 ==30536== ERROR SUMMARY: 0 errors from 0 contexts...
 [[/code]]
 
+////
+AO: Make the following two sections ++++ (for sect2 in DocBook) and put them under Messaging Patterns, before Handling Errors and ETERM.
+////
+
 +++ Multi-part Messages
 
-0MQ lets us compose a message out of several frames, giving us a 'multi-part message'. Realistic applications use multi-part messages heavily, both for wrapping messages with address information, and for simple serialization. We'll look at address envelopes later.
+0MQ lets us compose a message out of several frames, giving us a "multi-part message". Realistic applications use multi-part messages heavily, both for wrapping messages with address information, and for simple serialization. We'll look at address envelopes later.
 
 What we'll learn now is simply how to safely (but blindly) read and write multi-part messages in any application (like a proxy) that needs to forward messages without inspecting them.
 
@@ -710,7 +721,10 @@ In practice this leads to increasingly fragile and hard-to-manage architectures.
 
 There are quite a few answers to this but the very simplest answer is to add an intermediary, that is, a static point in the network to which all other nodes connect. In classic messaging, this is the job of the "message broker". 0MQ doesn't come with a message broker as such, but it lets us build intermediaries quite easily.
 
-You might wonder, if all networks eventually get large enough to need intermediaries, why don't we simply always design around a message broker? For beginners, it's a fair compromise. Just always use a star topology, forget about performance, and things will usually work. However message brokers are greedy things; in their role as central intermediaries, they become too complex, too stateful, and eventually a problem.
+////
+AO: I am guessing that my rewrite of the first sentence expresses your intention.
+////
+You might wonder, if all networks eventually get large enough to need intermediaries, why don't we simply have a message broker in place for all applications? For beginners, it's a fair compromise. Just always use a star topology, forget about performance, and things will usually work. However message brokers are greedy things; in their role as central intermediaries, they become too complex, too stateful, and eventually a problem.
 
 It's better to think of intermediaries as simple stateless message switches. The best analogy is an HTTP proxy; it's there but doesn't have any special role. Adding a pub-sub proxy solves the dynamic discovery problem in our example. We set the proxy in the "middle" of the network!figref(). The proxy opens an XSUB socket, an XPUB socket, and binds each to well-known IP addresses and ports. Then all other processes connect to the proxy, instead of to each other. It becomes trivial to add more subscribers or publishers.
 
@@ -782,9 +796,9 @@ We need XPUB and XSUB sockets because 0MQ does subscription forwarding: SUB sock
 +---------+   +---------+   +---------+
 [[/code]]
 
-++++ The Shared Queue Problem
+++++ The Shared Queue Problem (DEALER and ROUTER sockets)
 
-In the Hello World client-server application we have one client that talks to one service. However in real cases we usually need to allow multiple services as well as multiple clients. This lets us scale up the power of the service (many threads or processes or boxes rather than just one). The only constraint is that services must be stateless, all state being in the request or in some shared storage such as a database.
+In the Hello World client-server application we have one client that talks to one service. However in real cases we usually need to allow multiple services as well as multiple clients. This lets us scale up the power of the service (many threads or processes or nodes rather than just one). The only constraint is that services must be stateless, all state being in the request or in some shared storage such as a database.
 
 There are two ways to connect multiple clients to multiple servers. The brute-force way is to connect each client socket to multiple service endpoints. One client socket can connect to multiple service sockets, and the REQ socket will then load-balance requests among these services. Let's say you connect a client socket to three service endpoints, A, B, and C. The client makes requests R1, R2, R3, R4. R1 and R4 go to service A, R2 goes to B, and R3 goes to service C!figref().
 
@@ -820,7 +834,7 @@ That's clearly not the kind of thing we want to be doing at 3am when our superco
 
 So we'll write a little message queuing broker that gives us this flexibility. The broker binds to two endpoints, a frontend for clients and a backend for services. It then uses zmq_poll[3] to monitor these two sockets for activity and when it has some, it shuttles messages between its two sockets. It doesn't actually manage any queues explicitly -- 0MQ does that automatically on each socket.
 
-When you use REQ to talk to REP you get a strictly synchronous request-reply dialog. The client sends a request, the service reads the request and sends a reply. The client then reads the reply. If either the client or the service try to do anything else (e.g. sending two requests in a row without waiting for a response) they will get an error.
+When you use REQ to talk to REP you get a strictly synchronous request-reply dialog. The client sends a request. The service reads the request and sends a reply. The client then reads the reply. If either the client or the service try to do anything else (e.g. sending two requests in a row without waiting for a response) they will get an error.
 
 But our broker has to be non-blocking. Obviously we can use zmq_poll[3] to wait for activity on either socket, but we can't use REP and REQ.
 
@@ -854,7 +868,7 @@ In this simple stretched request-reply pattern, REQ talks to ROUTER and DEALER t
 +---------+   +---------+   +---------+
 [[/code]]
 
-The request-reply broker binds to two endpoints, one for clients to connect to (the frontend socket) and one for workers to connect to (the backend). To test this broker, you will want to change your workers so they connect to the backend socket. Here are a client and worker that show what I mean:
+The request-reply broker binds to two endpoints, one for clients to connect to (the frontend socket) and one for workers to connect to (the backend). To test this broker, you will want to change your workers so they connect to the backend socket. Here is a client that shows what I mean:
 
 [[code type="example" title="Request-reply client" name="rrclient"]]
 [[/code]]
