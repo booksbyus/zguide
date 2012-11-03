@@ -85,7 +85,7 @@ It comes down to behavioral economics and game theory. //The license we choose m
 
 If you've accepted my thesis up to now, great! Now, I'll explain the rough process by which we actually build an open source community. This was how we built or grew or gently steered the 0MQ community into existence.
 
-You recall the simplicity-oriented design process from Chapter 6, where I claimed that we build successfully accurate software by successfully exploring the problem landscape, rather than by sheer intellectual effort. Keep this in mind. Now, see your community as a group exploring that landscape and sharing the results of their work.
+You recall the simplicity-oriented design process from Chapter six, where I claimed that we build successfully accurate software by successfully exploring the problem landscape, rather than by sheer intellectual effort. Keep this in mind. Now, see your community as a group exploring that landscape and sharing the results of their work.
 
 Your goal as leader of a community is to motivate people to get out there and explore; to ensure they can do so safely and without disturbing others; to reward them when they make successful discoveries; and to ensure they share their knowledge with everyone else (and not because we ask them, not because they feel generous, but because it's The Law).
 
@@ -256,7 +256,7 @@ In the worst case scenario, where someone has submitted toxic code (patented, or
 
 > A patch SHOULD be a minimal and accurate answer to exactly one identified and agreed problem.
 
-Recall the Simplicity Oriented Design pattern from Chapter 6. This implements that. One clear problem, one minimal solution, apply, test, repeat.
+Recall the Simplicity Oriented Design pattern from Chapter six. This implements that. One clear problem, one minimal solution, apply, test, repeat.
 
 > A patch MUST adhere to the code style guidelines of the project if these are defined.
 
@@ -413,7 +413,7 @@ Now, the real thing is that public contracts //do change//. It's not about not c
 
 > A patch that modifies a Public Contract SHOULD not break existing applications unless there is prior consensus on the value of doing this.
 
-Sometimes the patch is fixing a bad API that no-one is using. It's a freedom we need but it should be based on consensus, not one person's dogma. However, making random changes just 'because' is nasty. Like, in 0MQ/3.x, renaming ZMQ_NOBLOCK to ZMQ_DONTWAIT. Sure, it's closer to the POSIX socket recv() call, but is that worth breaking thousands of applications? No-one ever reported it as an issue. To misquote Stallman: //your freedom to create an ideal world stops one inch from my application.//
+Sometimes the patch is fixing a bad API that no-one is using. It's a freedom we need but it should be based on consensus, not one person's dogma. However, making random changes just 'because' is not good. In 0MQ/3.x, did we benefit from renaming {{ZMQ_NOBLOCK}} to {{ZMQ_DONTWAIT}}? Sure, it's closer to the POSIX socket {{recv()}} call, but is that worth breaking thousands of applications? No-one ever reported it as an issue. To misquote Stallman: //your freedom to create an ideal world stops one inch from my application.//
 
 > A patch that introduces new features to a Public Contract SHOULD do so using new names.
 
@@ -429,7 +429,7 @@ Which in theory gives applications time to move onto stable new contracts but wi
 
 > Old names SHALL NOT be reused by new features.
 
-Ah, yes, the joy when 0MQ/3.x renamed the top-used API functions (zmq_send and zmq_recv) and then recycled the old names for new methods that were utterly incompatible (and which I suspect few people actually use). You should be slapping yourself in confusion again, but really, this is what happened and I was as guilty as anyone. After all, we did change the version number! Semantic Version FTW!! The only benefit of that experience was to get this rule.
+Ah, yes, the joy when 0MQ/3.x renamed the top-used API functions ({{zmq_send[3]}} and {{zmq_recv[3]}}) and then recycled the old names for new methods that were utterly incompatible (and which I suspect few people actually use). You should be slapping yourself in confusion again, but really, this is what happened and I was as guilty as anyone. After all, we did change the version number! Semantic Version FTW!! The only benefit of that experience was to get this rule.
 
 > When old names are removed, their implementations MUST provoke an exception (assertion) if used by applications.
 
@@ -488,7 +488,7 @@ Putting such thoughts aside, I create [https://zeromq.jira.com/browse/LIBZMQ-443
 > Problem: XPUB socket filters out duplicate subscriptions (deliberate design). However this makes it impossible to do subscription-based intelligence. See http://lists.zeromq.org/pipermail/zeromq-dev/2012-October/018838.html for a use-case.
 > Solution: make this behaviour configurable with a socket option.
 
-Naming time. The API sits in include/zmq.h, so this is where I added the option name. When you invent a concept, in an API or anywhere, //please// take a moment to choose a name that is explicit and short and obvious. Don't fall back on generic names which need additional context to understand. You have one chance to tell the reader what your concept is, and does. A name like ZMQ_SUBSCRIPTION_FORWARDING_FLAG is terrible. It technically kind of aims in the right direction but is miserably long and obscure. I chose ZMQ_XPUB_VERBOSE: short and explicit and clearly an on/off switch with "off" being the default setting.
+Naming time. The API sits in include/zmq.h, so this is where I added the option name. When you invent a concept, in an API or anywhere, //please// take a moment to choose a name that is explicit and short and obvious. Don't fall back on generic names which need additional context to understand. You have one chance to tell the reader what your concept is, and does. A name like {{ZMQ_SUBSCRIPTION_FORWARDING_FLAG}} is terrible. It technically kind of aims in the right direction but is miserably long and obscure. I chose {{ZMQ_XPUB_VERBOSE}}: short and explicit and clearly an on/off switch with "off" being the default setting.
 
 So, time to add a private property to the xpub class definition in xpub.hpp:
 
@@ -507,9 +507,9 @@ if (options.type == ZMQ_XPUB && (unique || verbose))
     pending.push_back (blob_t (data, size));
 [[/code]]
 
-The thing builds nicely first time. Which makes me a little suspicious, but being lazy and jet-lagged I don't immediately make a test case to actually try out the change. The process doesn't demand that, even if usually I'd do it just to catch that inevitable 10% of mistakes we all make. I do however document this new option on the doc/zmq_setsockopt.txt man page. In the worst case I added a patch that wasn't really useful. But I certainly didn't break anything.
+The thing builds nicely first time. Which makes me a little suspicious, but being lazy and jet-lagged I don't immediately make a test case to actually try out the change. The process doesn't demand that, even if usually I'd do it just to catch that inevitable 10% of mistakes we all make. I do however document this new option on the {{doc/zmq_setsockopt.txt}} man page. In the worst case I added a patch that wasn't really useful. But I certainly didn't break anything.
 
-I don't implement a matching zmq_getsockopt, since "minimal" means what it says. There's no obvious use case for getting the value of an option that you presumably just set, in code. Symmetry isn't a valid reason to double the size of a patch. I did have to document the new option since the process says, "All Public Contracts SHOULD be documented."
+I don't implement a matching {{zmq_getsockopt}}, since "minimal" means what it says. There's no obvious use case for getting the value of an option that you presumably just set, in code. Symmetry isn't a valid reason to double the size of a patch. I did have to document the new option since the process says, "All Public Contracts SHOULD be documented."
 
 Committing the code, I push the patch to my forked repository (the 'origin'):
 

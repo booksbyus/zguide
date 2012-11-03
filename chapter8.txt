@@ -49,7 +49,7 @@ If we can solve these dozen problems reasonably well, we get something like a fr
 
 You should have guessed from my rhetorical questions that there are two broad directions we can go. One is to centralize everything. The other is to distribute everything. I'm going to bet on decentralization. If you want centralization, you don't really need 0MQ; there are other options you can use.
 
-So very roughly, here's the story. One, the number of moving pieces increases exponentially over time (doubles every 24 months). Two, these pieces stop using wires since dragging cables everywhere gets //really// boring. Three, future applications run across clusters of these pieces using the Benevolent Tyrant pattern from Chapter 7. Four, today it's really difficult, nay still rather impossible, to build such applications. Five, let's make it cheap and easy using all the techniques and tools we've built up. Six, partay!
+So very roughly, here's the story. One, the number of moving pieces increases exponentially over time (doubles every 24 months). Two, these pieces stop using wires since dragging cables everywhere gets //really// boring. Three, future applications run across clusters of these pieces using the Benevolent Tyrant pattern from Chapter seven. Four, today it's really difficult, nay still rather impossible, to build such applications. Five, let's make it cheap and easy using all the techniques and tools we've built up. Six, partay!
 
 +++ The Secret Life of WiFi
 
@@ -344,7 +344,7 @@ If you do sit down and sketch out a UDP multicast protocol, realize that you nee
 
 +++ Spinning off a Library Project
 
-At this stage however, the code is growing larger than an example should be, so it's time to create a proper GitHub project. It's a rule: build your projects in public view, and tell people about them as you go, so your marketing and community building starts on day 1. I'll walk through what this involves. I explained in Chapter 7 about growing communities around projects. We need a few things:
+At this stage however, the code is growing larger than an example should be, so it's time to create a proper GitHub project. It's a rule: build your projects in public view, and tell people about them as you go, so your marketing and community building starts on day 1. I'll walk through what this involves. I explained in Chapter seven about growing communities around projects. We need a few things:
 
 * A name.
 * A slogan.
@@ -361,7 +361,7 @@ I'm somewhat shy about pushing new projects into the 0MQ community too aggressiv
 
 Start with the basics. The protocol (UDP and 0MQ/TCP) will be ZRE and the project will be ZyRE, with different capitalization to reduce confusion with the old project. I need a second maintainer, so invite my friend Dong Min (the Korean hacker behind JeroMQ, a pure-Java 0MQ stack) to join. He's been working on very similar ideas so is enthusiastic. We discuss this and we get the idea of building ZyRE on top of JeroMQ as well as on top of CZMQ and libzmq. This would make it a lot easier to run ZyRE on Android. It would also give us two fully separate implementations from the start, always a good thing for a protocol.
 
-So we take the FileMQ project I built in Chapter 6 as a template for a new GitHub project. The GNU autoconf tools are quite decent but have a painful syntax. It's easiest to copy existing project files, and modify them. The FileMQ project builds a library, has test tools, license files, man pages, and so on. It's not too large so it's a good starting point.
+So we take the FileMQ project I built in Chapter six as a template for a new GitHub project. The GNU autoconf tools are quite decent but have a painful syntax. It's easiest to copy existing project files, and modify them. The FileMQ project builds a library, has test tools, license files, man pages, and so on. It's not too large so it's a good starting point.
 
 I put together a README to summarize the goals of the project and point to C4. The issue tracker is enabled by default on new GitHub projects, so once we've pushed the UDP ping code as a first version, we're ready to go. However it's always good to recruit more maintainers, so I create an issue "Call for maintainers" that says:
 
@@ -559,7 +559,7 @@ I'm not going to work through the implementation of group messaging in detail si
 * A hash of groups for other peers, which we update with information from HELLO, JOIN, and LEAVE commands;
 * A hash of peers for each group, which we update with the same three commands.
 
-At this stage I'm starting to get pretty happy with the binary serialization (our codec generator from Chapter 6), which handles things like lists and hashes neatly.
+At this stage I'm starting to get pretty happy with the binary serialization (our codec generator from Chapter six), which handles things like lists and hashes neatly.
 
 This version is tagged in the repository as v0.2.0 and you can [[https://github.com/zeromq/zyre/tags download the tarball] if you want to check what the code looked like at this stage.
 
@@ -766,7 +766,7 @@ With ZyRE we want to distribute messages to a set of peers, and we want to do th
 
 The normal behavior of a DEALER socket that hits its high-water mark is to block. This is usually ideal, but it's a problem for us here. Our current interface design uses one thread that distributes messages to all peers. If one of those send calls were to block, all output would block.
 
-There are a few options to avoid blocking. One is to use zmq_poll on the whole set of DEALER sockets, and only write to sockets that are ready. I don't like this for a couple of reasons. First, the DEALER socket is hidden inside the peer class, and it is cleaner to allow each class to handle this opaquely. Second, what do we do with messages we can't yet deliver to a DEALER socket? Where do we queue them? Third, it seems to be side-stepping the issue. If a peer is really so busy it can't read its messages, something is wrong. Most likely, it's dead.
+There are a few options to avoid blocking. One is to use {{zmq_poll[3]}} on the whole set of DEALER sockets, and only write to sockets that are ready. I don't like this for a couple of reasons. First, the DEALER socket is hidden inside the peer class, and it is cleaner to allow each class to handle this opaquely. Second, what do we do with messages we can't yet deliver to a DEALER socket? Where do we queue them? Third, it seems to be side-stepping the issue. If a peer is really so busy it can't read its messages, something is wrong. Most likely, it's dead.
 
 So no polling for output. The second option is to use one thread per peer. I quite like the idea of this, since it fits into the 0MQ design pattern of "do one thing in one thread". But this is going to create a //lot// of threads (square of the number of nodes we start) in the simulation, and we're already running out of file handles.
 

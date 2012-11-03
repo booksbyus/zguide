@@ -201,7 +201,7 @@ Speaking of embarrassments, just as 0MQ lets us aim for really massive architect
 
 So MOPED is meant to save us from such mistakes. Partly it's about slowing down, partly it's about ensuring that when you move fast, you go - and this is essential, dear reader - in the //right direction//. It's my standard interview riddle: what's the rarest property of any software system, the absolute hardest thing to get right, the lack of which causes the slow or fast death of the vast majority of projects? The answer is not code quality, funding, performance, or even (though it's a close answer), popularity. The answer is "accuracy".
 
-If you've read the Guide observantly you'll have seen MOPED in action already. The development of Majordomo in Chapter 4 is a near-perfect case. But cute names are worth a thousand words.
+If you've read the Guide observantly you'll have seen MOPED in action already. The development of Majordomo in Chapter four is a near-perfect case. But cute names are worth a thousand words.
 
 The goal of MOPED is to define a process, a pattern by which we can take a rough use case for a new distributed application, and go from "hello world" to fully-working prototype in any language in under a week.
 
@@ -528,11 +528,11 @@ What if I told you of a way to build custom IDL generators cheaply and quickly? 
 
 At iMatix, until a few years ago, we used code generation to build ever larger and more ambitious systems until we decided the technology (GSL) was too dangerous for common use, and we sealed the archive and locked it, with heavy chains, in a deep dungeon. Well, we actually posted it on github. If you want to try the examples that are coming up, grab [https://github.com/imatix/gsl the repository] and build yourself a {{gsl}} command. Typing "make" in the src subdirectory should do it (and if you're that guy who loves Windows, I'm sure you'll send a patch with project files).
 
-This section isn't really about GSL at all, but about a useful and little-known trick that's useful for ambitious architects who want to scale themselves, as well as their work. Once you learn the trick is, you can whip up your own code generators in a short time. The code generators most software engineers know about come with a single hard-coded model. For instance, Ragel "compiles executable finite state machines from regular languages", i.e. Ragel's model is a regular language. This certainly works for a good set of problems but it's far from universal. How do you describe an API in Ragel? Or a project makefile? Or even a finite-state machine like the one we used to design the Binary Star pattern in Chapter 4?
+This section isn't really about GSL at all, but about a useful and little-known trick that's useful for ambitious architects who want to scale themselves, as well as their work. Once you learn the trick is, you can whip up your own code generators in a short time. The code generators most software engineers know about come with a single hard-coded model. For instance, Ragel "compiles executable finite state machines from regular languages", i.e. Ragel's model is a regular language. This certainly works for a good set of problems but it's far from universal. How do you describe an API in Ragel? Or a project makefile? Or even a finite-state machine like the one we used to design the Binary Star pattern in Chapter four?
 
 All these would benefit from code generation, but there's no universal model. So the trick is to design your own models as you need them, then make code generators as cheap compilers for that model. You need some experience in how to make good models, and you need a technology that makes it cheap to build custom code generators. Scripting languages like Perl and Python are a good option. However we actually built GSL specifically for this, and that's what I prefer.
 
-Let's take a simple example that ties into what we already know. We'll see more extensive examples later, because I really do believe that code generation is crucial knowledge for large-scale work. In Chapter 4, we developed the [http://rfc.zeromq.org/spec:7 Majordomo Protocol (MDP)], and wrote clients, brokers, and workers for that. Now could we generate those pieces mechanically, by building our own interface description language and code generators?
+Let's take a simple example that ties into what we already know. We'll see more extensive examples later, because I really do believe that code generation is crucial knowledge for large-scale work. In Chapter four, we developed the [http://rfc.zeromq.org/spec:7 Majordomo Protocol (MDP)], and wrote clients, brokers, and workers for that. Now could we generate those pieces mechanically, by building our own interface description language and code generators?
 
 When we write a GSL model, we can use //any// semantics we like, in other words we can invent domain-specific languages on the spot. I'll invent a couple - see if you can guess what they represent:
 
@@ -800,7 +800,7 @@ Here's our first cut at the code, where the client asks for the test data and th
 
 It's pretty simple but we already run into a problem: if we send too much data to the ROUTER socket, we can easily overflow it. The simple but stupid solution is to put an infinite high-water mark on the socket. It's stupid because we now have no protection against exhausting the server's memory. Yet without an infinite HWM we risk losing chunks of large files.
 
-Try this: set the HWM to 1,000 (in 0MQ/3.x this is the default) and then reduce the chunk size to 100K so we send 10K chunks in one go. Run the test, and you'll see it never finishes. As the zmq_socket[3] man page says with cheerful brutality, for the ROUTER socket: "ZMQ_HWM option action: Drop".
+Try this: set the HWM to 1,000 (in 0MQ/3.x this is the default) and then reduce the chunk size to 100K so we send 10K chunks in one go. Run the test, and you'll see it never finishes. As the {{zmq_socket[3]}} man page says with cheerful brutality, for the ROUTER socket: "ZMQ_HWM option action: Drop".
 
 We have to control the amount of data the server sends up-front. There's no point in it sending more than the network can handle. Let's try sending one chunk at a time. In this version of the protocol, the client will explicitly say,"give me chunk N", and the server will fetch that specific chunk from disk and send it.
 

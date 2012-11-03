@@ -287,7 +287,7 @@ Some points to consider when understanding and implementing heartbeating:
 
 * First, get the heartbeating working, and only //then// add in the rest of the message flow. You should be able to prove the heartbeating works by starting peers in any order, stopping and restarting them, simulating freezes, and so on.
 
-* When your main loop is based on zmq_poll[3], use a secondary timer to trigger heartbeats. Do //not// use the poll loop for this, because you'll enter the loop every time you receive any message (fun, when you have two peers sending each other heartbeats) (think about it).
+* When your main loop is based on {{zmq_poll[3]}}, use a secondary timer to trigger heartbeats. Do //not// use the poll loop for this, because you'll enter the loop every time you receive any message (fun, when you have two peers sending each other heartbeats) (think about it).
 
 Your language or binding should provide a method that returns the current system clock in milliseconds. It's easy to use this to calculate when to send the next heartbeats. Thus, in C:
 
@@ -1100,7 +1100,7 @@ Rather than invent yet another concept to manage, we'll use the connection endpo
 
 Remember how 0MQ identities work. The server ROUTER socket sets an identity before it binds its socket. When a client connects, they do a little handshake to exchange identities, before either side sends a real message. The client ROUTER socket, having not set an identity, sends a null identity to the server. The server generates a random UUID for the client, for its own use. The server sends its identity (which we've agreed is going to be an endpoint string) to the client.
 
-This means our client can route a message to the server (i.e. send on its ROUTER socket, specifying the server endpoint as identity) as soon as the connection is established. That's not //immediately// after doing a zmq_connect, but some random time thereafter. Herein lies one problem: we don't know when the server will actually be available and complete its connection handshake. If the server is actually online, it could be after a few milliseconds. If the server is down, and the sysadmin is out to lunch, it could be an hour.
+This means our client can route a message to the server (i.e. send on its ROUTER socket, specifying the server endpoint as identity) as soon as the connection is established. That's not //immediately// after doing a {{zmq_connect[3]}}, but some random time thereafter. Herein lies one problem: we don't know when the server will actually be available and complete its connection handshake. If the server is actually online, it could be after a few milliseconds. If the server is down, and the sysadmin is out to lunch, it could be an hour.
 
 There's a small paradox here. We need to know when servers become connected and available for work. In the Freelance pattern, unlike the broker-based patterns we saw earlier in this chapter, servers are silent until spoken to. Thus we can't talk to a server until it's told us it's on-line, which it can't do until we've asked it.
 

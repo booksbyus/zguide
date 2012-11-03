@@ -20,9 +20,11 @@ We'll cover:
 
 +++ Request-Reply Envelopes
 
+We've looked briefly at multi-part messages. Let's now look at their first use case, which is //message envelopes//. An envelope is a way of safely packaging up data with an address, without touching the data itself. By separating addresses into an envelope we make it possible to write general-purpose intermediaries such as APIs and proxies that create, read, remove addresses no matter what the message payload or structure.
+
 In the request-reply pattern, the envelope holds the return address for replies. It is how a 0MQ network with no state can create round-trip request-reply dialogs.
 
-You don't in fact need to understand how request-reply envelopes work to use them for common cases. When you use REQ and REP, your sockets build and use envelopes automatically. When you write a device, and we covered this in the last chapter, you just need to read and write all the parts of a message. 0MQ implements envelopes using multi-part data, so if you copy multi-part data safely, you implicitly copy envelopes too.
+You don't in fact need to understand how request-reply envelopes work to use them for common cases. When you use REQ and REP, your sockets build and use envelopes automatically. When you write a proxy, if you don't call {{zmq_proxy[3]}}, you need to read and write all the parts of a message. 0MQ implements envelopes using multi-part data, so if you copy multi-part data safely, you implicitly copy envelopes too.
 
 However, getting under the hood and playing with request-reply envelopes is necessary for advanced request-reply work. It's time to explain how the ROUTER socket works, in terms of envelopes:
 
@@ -34,7 +36,7 @@ If you leave the brown envelope alone, and then pass that message to another ROU
 
 The whole point of this is that each ROUTER knows how to send replies back to the right place. All you need to do, in your application, is respect the brown envelopes. Now the REP socket makes sense. It carefully slices open the brown envelopes, one by one, keeps them safely aside, and gives you (the application code that owns the REP socket) the original message. When you send the reply, it re-wraps the reply in the brown paper envelopes, so it can hand the resulting brown package back to the ROUTERs down the chain.
 
-Which lets you insert ROUTER-DEALER devices into a request-reply pattern like this:
+Which lets you insert ROUTER-DEALER proxies into a request-reply pattern like this:
 
 [[code]]
 [REQ] <--> [REP]
@@ -63,7 +65,7 @@ Breaking this down:
 
 * The reply address in frame 1 is prepended by the ROUTER before it passes the message to the receiving application.
 
-Now if we extend this with a chain of devices, we get envelope on envelope, with the newest envelope always stuck at the beginning of the stack!figref().
+Now if we extend this with a chain of proxies, we get envelope on envelope, with the newest envelope always stuck at the beginning of the stack!figref().
 
 [[code type="textdiagram" title="Multihop Request-reply Envelope"]]
      (Next envelope will go here)
@@ -189,7 +191,7 @@ The ROUTER-to-DEALER pattern is the simplest. You connect one ROUTER to many DEA
 
 If you expect the DEALER to reply, there should only be one ROUTER talking to it. DEALERs have no idea how to reply to a specific peer, so if they have multiple peers, they will just round-robin between them, which would be weird. If the DEALER is a sink, any number of ROUTERs can talk to it.
 
-What kind of routing can you do with a ROUTER-to-DEALER pattern? If the DEALERs talk back to the ROUTER, e.g. telling the ROUTER when they finished a task, you can use that knowledge to route depending on how fast a DEALER is. Since both ROUTER and DEALER are asynchronous, it can get a little tricky. You'd need to use zmq_poll[3] at least.
+What kind of routing can you do with a ROUTER-to-DEALER pattern? If the DEALERs talk back to the ROUTER, e.g. telling the ROUTER when they finished a task, you can use that knowledge to route depending on how fast a DEALER is. Since both ROUTER and DEALER are asynchronous, it can get a little tricky. You'd need to use {{zmq_poll[3]}} at least.
 
 We'll make an example where the DEALERs don't talk back, they're pure sinks. Our routing algorithm will be a weighted random scatter: we have two DEALERs and we send twice as many messages to one as to the other!figref().
 
@@ -309,7 +311,7 @@ Some comments on this code
 
 * We don't need any settle time, since the REQs explicitly tell the ROUTER when they are ready.
 
-* We're generating our own identities here, as printable strings, using the zhelpers.h s_set_id function. That's just to make our life a little simpler. In a realistic application the REQs would be fully anonymous and then you'd call zmq_msg_recv[3] and zmq_msg_send[3] directly instead of the zhelpers s_recv() and s_send() functions, which can only handle strings.
+* We're generating our own identities here, as printable strings, using the zhelpers.h s_set_id function. That's just to make our life a little simpler. In a realistic application the REQs would be fully anonymous and then you'd call {{zmq_msg_recv[3]}} and {{zmq_msg_send[3]}} directly instead of the zhelpers {{s_recv()}} and {{s_send()}} functions, which can only handle strings.
 
 * If you copy and paste example code without understanding it, you deserve what you get. It's like watching Spiderman leap off the roof and then trying that yourself.
 
@@ -397,7 +399,7 @@ Some comments on this code:
 
 * In reality we'd have the REP and ROUTER in separate nodes. This example does it all in one thread because it makes the sequence of events really clear.
 
-* zmq_connect[3] doesn't happen instantly. When the REP socket connects to the ROUTER, that takes a certain time and happens in the background. In a realistic application the ROUTER wouldn't even know the REP existed until there had been some previous dialog. In our toy example we'll just {{sleep (1);}} to make sure the connection's done. If you remove the sleep, the REP socket won't get the message. (Try it.)
+* {{zmq_connect[3]}} doesn't happen instantly. When the REP socket connects to the ROUTER, that takes a certain time and happens in the background. In a realistic application the ROUTER wouldn't even know the REP existed until there had been some previous dialog. In our toy example we'll just {{sleep (1);}} to make sure the connection's done. If you remove the sleep, the REP socket won't get the message. (Try it.)
 
 * We're routing using the REP's identity. Just to convince yourself this really is happening, try sending to a wrong address, like "B". The REP won't get the message.
 
@@ -417,7 +419,7 @@ Frame 3   | Data                                  |
 
 +++ A Request-Reply Message Broker
 
-I'll recap the knowledge we have so far about doing weird stuff with 0MQ message envelopes, and build the core of a generic custom routing queue device that we can properly call a //message broker//. Sorry for all the buzzwords. What we'll make is a //queue device// that connects a bunch of //clients// to a bunch of //workers//, and lets you use //any routing algorithm// you want. The algorith we'll implement is //least-recently used//, since it's the most obvious use-case after simple round-robin distribution.
+I'll recap the knowledge we have so far about doing weird stuff with 0MQ message envelopes, and build the core of a generic custom routing proxy that we can properly call a //message broker//. Sorry for all the buzzwords. What we'll make is a //proxy// that connects a bunch of //clients// to a bunch of //workers//, and lets you use //any routing algorithm// you want. The algorithm we'll implement is //least-recently used//, since it's the most obvious use-case after simple round-robin distribution.
 
 To start with, let's look back at the classic request-reply pattern and then see how it extends over a larger and larger service-oriented network. The basic pattern just has one client talking to a few workers!figref().
 
@@ -439,7 +441,7 @@ To start with, let's look back at the classic request-reply pattern and then see
 +--------+  +--------+  +--------+
 [[/code]]
 
-This extends to multiple workers, but if we want to handle multiple clients as well, we need a device in the middle. We'd use a simple ZMQ_QUEUE device connecting a ROUTER and a DEALER back to back. This device just switches message frames between the two sockets as fast as it can!figref().
+This extends to multiple workers, but if we want to handle multiple clients as well, we need a proxy in the middle. We'd use a simple proxy connecting a ROUTER and a DEALER back to back. This proxy just switches message frames between the two sockets as fast as it can!figref().
 
 [[code type="textdiagram" title="Stretched Request-reply"]]
 +--------+  +--------+  +--------+
@@ -655,7 +657,7 @@ Cutting the amount of code we have to write is profitable, especially since the 
 
 * //Portable clocks.// Even getting the time to a millisecond resolution, or sleeping for some milliseconds, is not portable. Realistic 0MQ applications need portable clocks, so our API should provide them.
 
-* //A reactor to replace zmq_poll[3].// The poll loop is simple but clumsy. Writing a lot of these, we end up doing the same work over and over: calculating timers, and calling code when sockets are ready. A simple reactor with socket readers, and timers, would save a lot of repeated work.
+* //A reactor to replace {{zmq_poll[3]}}.// The poll loop is simple but clumsy. Writing a lot of these, we end up doing the same work over and over: calculating timers, and calling code when sockets are ready. A simple reactor with socket readers, and timers, would save a lot of repeated work.
 
 * //Proper handling of Ctrl-C.// We already saw how to catch an interrupt. It would be useful if this happened in all applications.
 
@@ -680,21 +682,21 @@ while (true) {
 }
 [[/code]]
 
-Or, if you're doing zmq_poll, test on the return code:
+Or, if you're calling {{zmq_poll[3]}}, test on the return code:
 
 [[code type="fragment" name="polling"]]
 if (zmq_poll (items, 2, 1000 * 1000) == -1)
     break;              //  Interrupted
 [[/code]]
 
-The previous example still uses zmq_poll[3]. So how about reactors? The CZMQ {{zloop}} reactor is simple but functional. It lets you:
+The previous example still uses {{zmq_poll[3]}}. So how about reactors? The CZMQ {{zloop}} reactor is simple but functional. It lets you:
 
 * Set a reader on any socket, i.e. code that is called whenever the socket has input.
 * Cancel a reader on a socket.
 * Set a timer that goes off once or multiple times at specific intervals.
 * Cancel a timer.
 
-{{zloop}} of course uses zmq_poll[3] internally. It rebuilds its poll set each time you add or remove readers, and it calculates the poll timeout to match the next timer. Then, it calls the reader and timer handlers for each socket and timer that needs attention.
+{{zloop}} of course uses {{zmq_poll[3]}} internally. It rebuilds its poll set each time you add or remove readers, and it calculates the poll timeout to match the next timer. Then, it calls the reader and timer handlers for each socket and timer that needs attention.
 
 When we use a reactor pattern, our code turns inside out. The main logic looks like this:
 
@@ -705,14 +707,14 @@ zloop_start (reactor);
 zloop_destroy (&reactor);
 [[/code]]
 
-While the actual handling of messages sits inside dedicated functions or methods. You may not like the style, it's a matter of taste. What it does help with is mixing timers and socket activity. In the rest of this text we'll use zmq_poll[3] in simpler cases, and {{zloop}} in more complex examples.
+While the actual handling of messages sits inside dedicated functions or methods. You may not like the style, it's a matter of taste. What it does help with is mixing timers and socket activity. In the rest of this text we'll use {{zmq_poll[3]}} in simpler cases, and {{zloop}} in more complex examples.
 
 Here is the LRU queue broker rewritten once again, this time to use {{zloop}}:
 
 [[code type="example" title="LRU queue broker using zloop" name="lruqueue3"]]
 [[/code]]
 
-Getting applications to properly shut-down when you send them Ctrl-C can be tricky. If you use the zctx class it'll automatically set-up signal handling, but your code still has to cooperate. You must break any loop if zmq_poll returns -1 or if any of the recv methods (zstr_recv, zframe_recv, zmsg_recv) return NULL. If you have nested loops, it can be useful to make the outer ones conditional on {{!zctx_interrupted}}.
+Getting applications to properly shut-down when you send them Ctrl-C can be tricky. If you use the {{zctx}} class it'll automatically set-up signal handling, but your code still has to cooperate. You must break any loop if {{zmq_poll}} returns -1 or if any of the {{zstr_recv}}, {{zframe_recv}}, or {{zmsg_recv}} methods return NULL. If you have nested loops, it can be useful to make the outer ones conditional on {{!zctx_interrupted}}.
 
 +++ Asynchronous Client-Server
 
@@ -758,9 +760,9 @@ Just run that example by itself. Like other multi-task examples, it runs in a si
 
 Some comments on this code:
 
-* The clients send a request once per second, and get zero or more replies back. To make this work using zmq_poll[3], we can't simply poll with a 1-second timeout, or we'd end up sending a new request only one second //after we received the last reply//. So we poll at a high frequency (100 times at 1/100th of a second per poll), which is approximately accurate. This means the server could use requests as a form of heartbeat, i.e. detecting when clients are present or disconnected.
+* The clients send a request once per second, and get zero or more replies back. To make this work using {{zmq_poll[3]}}, we can't simply poll with a 1-second timeout, or we'd end up sending a new request only one second //after we received the last reply//. So we poll at a high frequency (100 times at 1/100th of a second per poll), which is approximately accurate. This means the server could use requests as a form of heartbeat, i.e. detecting when clients are present or disconnected.
 
-* The server uses a pool of worker threads, each processing one request synchronously. It connects these to its frontend socket using an internal queue. To help debug this, the code implements its own queue device logic. In the C code, you can uncomment the zmsg_dump() calls to get debugging output.
+* The server uses a pool of worker threads, each processing one request synchronously. It connects these to its frontend socket using an internal queue. It connects the frontend and backend sockets using a {{zmq_proxy[3]}} call.
 
 [[code type="textdiagram" title="Detail of Asynchronous Server"]]
     +---------+   +---------+   +---------+
@@ -1151,7 +1153,7 @@ Notes about this code:
 
 * Each broker has an identity that we use to construct {{ipc}} endpoint names. A real broker would need to work with TCP and a more sophisticated configuration scheme. We'll look at such schemes later in this book but for now, using generated {{ipc}} names lets us ignore the problem of where to get TCP/IP addresses or names from.
 
-* We use a zmq_poll[3] loop as the core of the program. This processes incoming messages and sends out state messages. We send a state message //only// if we did not get any incoming messages //and// we waited for a second. If we send out a state message each time we get one in, we'll get message storms.
+* We use a {{zmq_poll[3]}} loop as the core of the program. This processes incoming messages and sends out state messages. We send a state message //only// if we did not get any incoming messages //and// we waited for a second. If we send out a state message each time we get one in, we'll get message storms.
 
 * We use a two-part pubsub message consisting of sender address and data. Note that we will need to know the address of the publisher in order to send it tasks, and the only way is to send this explicitly as a part of the message.
 

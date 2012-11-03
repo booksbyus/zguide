@@ -30,7 +30,7 @@ None of these classic strategies fit. So we need to get creative. Rather than di
 
 How can a subscriber detect this? One way would be to sequence messages (number them in order), and use a HWM at the publisher. Now, if the subscriber detects a gap (i.e. the numbering isn't consecutive), it knows something is wrong. We then tune the HWM to the "croak and die if you hit this" level.
 
-There are two problems with this solution. One, if we have many publishers, how do we sequence messages? The solution is to give each publisher a unique ID and add that to the sequencing. Second, if subscribers use ZMQ_SUBSCRIBE filters, they will get gaps by definition. Our precious sequencing will be for nothing.
+There are two problems with this solution. One, if we have many publishers, how do we sequence messages? The solution is to give each publisher a unique ID and add that to the sequencing. Second, if subscribers use {{ZMQ_SUBSCRIBE}} filters, they will get gaps by definition. Our precious sequencing will be for nothing.
 
 Some use-cases won't use filters, and sequencing will work for them. But a more general solution is that the publisher timestamps each message. When a subscriber gets a message it checks the time, and if the difference is more than, say, one second, it does the "croak and die" thing. Possibly firing off a squawk to some operator console first.
 
@@ -622,7 +622,7 @@ Here, then, is the Clustered Hashmap Protocol, which "defines a cluster-wide key
 
 +++ The Espresso Pattern
 
-here is a fun little machine that exploits the zmq_proxy[3] method to show you what's happening on a pub-sub network. It's deceptively simple:
+here is a fun little machine that exploits the {{zmq_proxy[3]}} method to show you what's happening on a pub-sub network. It's deceptively simple:
 
 [[code type="example" title="Espresso Machine" name="espresso"]]
 [[/code]]
@@ -678,4 +678,4 @@ And now run as many instances of the subscriber as you want to try, each time co
 
 Each subscriber happily reports "Save Roger", and Roth the Escaped Convict slinks back to his cell for dinner and a nice cup of hot milk, which is all he really wanted anyhow and could someone call his mum and tell her his clean socks are almost all up.
 
-One note: the XPUB socket by default does not report duplicate subscriptions, which is what you want when you're naively connecting an XPUB to an XSUB. Our example sneakily gets around this by using random topics so the chance of it not working is one in a million. In a real LVC proxy you'll want to use the ZMQ_XPUB_VERBOSE option that we implement in Chapter 7 as an exercise.
+One note: the XPUB socket by default does not report duplicate subscriptions, which is what you want when you're naively connecting an XPUB to an XSUB. Our example sneakily gets around this by using random topics so the chance of it not working is one in a million. In a real LVC proxy you'll want to use the {{ZMQ_XPUB_VERBOSE}} option that we implement in Chapter seven as an exercise.

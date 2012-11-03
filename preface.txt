@@ -15,8 +15,22 @@ The Guide is originally [/page:all in C], but also in [/php:all PHP], [/py:all P
 
 .filter online
 For my children.
+.filter reset
 
 ++ Preface
+
++++ 0MQ in a Hundred Words
+
+0MQ (also seen as ZeroMQ, 0\MQ, zmq) looks like an embeddable networking library but acts like a concurrency framework. It gives you sockets that carry atomic messages across various transports like in-process, inter-process, TCP, and multicast. You can connect sockets N-to-N with patterns like fanout, pub-sub, task distribution, and request-reply. It's fast enough to be the fabric for clustered products. Its asynchronous I/O model gives you scalable multicore applications, built as asynchronous message-processing tasks. It has a score of language APIs and runs on most operating systems. 0MQ is from [http://www.imatix.com iMatix] and is LGPLv3 open source.
+
++++ The Zen of Zero
+
+The Ø in 0MQ is all about tradeoffs. On the one hand this strange name lowers 0MQ's visibility on Google and Twitter. On the other hand it annoys the heck out of some Danish folk who write us things like "ØMG røtfl", and "Ø is not a funny looking zero!" and "//Rødgrød med Fløde!//", which is apparently an insult that means "may your neighbours be the direct descendants of Grendel!"  Seems like a fair trade.
+
+Originally the zero in 0MQ was meant as "zero broker" and (as close to) "zero latency" (as possible). In the meantime it has come to cover different goals: zero administration, zero cost, zero waste. More generally, "zero" refers to the culture of minimalism that permeates the project. We add power by removing complexity rather than exposing new functionality.
+
+.filter online
++++ How the Guide Happened
 
 In the summer of 2010, 0MQ was still a little-known niche library described by its rather terse man pages and a living but sparse wiki. Martin Sustrik and myself (Pieter Hintjens) were sitting in the bar of the Hotel Kyjev in Bratislava plotting how to make 0MQ more widely popular. Martin had written most of the 0MQ code, and I'd put up the funding and organized the community. Over some Zlaty Bazants, we agreed that 0MQ needed a new, simpler web site, and a basic guide to new users.
 
@@ -41,75 +55,17 @@ This book is written for professional programmers who want to learn how to make 
 
 +++ Conventions Used in This Book
 
-We tried to be as unconventional as possible. Nevertheless, you'll
-tend to find the following typographical uses in this book:
+We tried to be as unconventional as possible. Nevertheless, you'll tend to find the following typographical uses in this book:
 
-_Italic_:: Indicates new terms, URLs, email addresses, filenames, and file extensions.
+* //Italic// - Indicates new terms, URLs, email addresses, filenames, and file extensions.
 
-{{Constant width}}:: Used for program listings, as well as within
-paragraphs to refer to program elements such as variable or function
-names, data types, and environment variables.
+* {{Constant width}} - Used for program listings, as well as within paragraphs to refer to program elements such as variable or function names, data types, and environment variables.
 
-[NOTE]
-====
-This icon signifies a tip, suggestion, or general note.
-====
+* [NOTE] - This signifies a tip, suggestion, or general note.
 
 +++ Using the Code Examples
 
 The code examples are all online in the Guide repository at _https://github.com/imatix/zguide/tree/master/examples/_. You'll find each example translated into several, often a dozen other languages. The examples are licensed under MIT/X11; see the LICENSE file in that directory. The text of the Guide explains in each case how to run each example.
-
-We appreciate, but do not require, attribution. An attribution usually
-includes the title, author, publisher, and ISBN. For example:
-â€œ_ZeroMQ_ by Pieter Hintjens and the ZeroMQ community
-(Oâ€™Reilly). Copyright 2012 Pieter Hintjens, 978-1-449-33406-2.â€
-
-If you feel your use of code examples falls outside fair use or the permission given above, feel free to contact us at pass:[<email>permissions@oreilly.com</email>].
-
-=== SafariÂ® Books Online
-
-[role = "safarienabled"]
-[NOTE]
-====
-pass:[<ulink role="orm:hideurl:ital" url="http://my.safaribooksonline.com/?portal=oreilly">Safari Books Online</ulink>] is an on-demand digital library that delivers expert pass:[<ulink role="orm:hideurl" url="http://www.safaribooksonline.com/content">content</ulink>] in both book and video form from the world&#8217;s leading authors in technology and business.
-====
-
-Technology professionals, software developers, web designers, and business and creative professionals use Safari Books Online as their primary resource for research, problem solving, learning, and certification training.
-
-Safari Books Online offers a range of pass:[<ulink role="orm:hideurl" url="http://www.safaribooksonline.com/subscriptions">product mixes</ulink>] and pricing programs for pass:[<ulink role="orm:hideurl" url="http://www.safaribooksonline.com/organizations-teams">organizations</ulink>], pass:[<ulink role="orm:hideurl" url="http://www.safaribooksonline.com/government">government agencies</ulink>], and pass:[<ulink role="orm:hideurl" url="http://www.safaribooksonline.com/individuals">individuals</ulink>]. Subscribers have access to thousands of books, training videos, and prepublication manuscripts in one fully searchable database from publishers like Oâ€™Reilly Media, Prentice Hall Professional, Addison-Wesley Professional, Microsoft Press, Sams, Que, Peachpit Press, Focal Press, Cisco Press, John Wiley & Sons, Syngress, Morgan Kaufmann, IBM Redbooks, Packt, Adobe Press, FT Press, Apress, Manning, New Riders, McGraw-Hill, Jones & Bartlett, Course Technology, and dozens pass:[<ulink role="orm:hideurl" url="http://www.safaribooksonline.com/publishers">more</ulink>]. For more information about Safari Books Online, please visit us pass:[<ulink role="orm:hideurl" url="http://www.safaribooksonline.com/">online</ulink>].
-
-=== How to Contact Us
-
-Please address comments and questions concerning this book to the publisher:
-
-++++
-<simplelist>
-<member>Oâ€™Reilly Media, Inc.</member>
-<member>1005 Gravenstein Highway North</member>
-<member>Sebastopol, CA 95472</member>
-<member>800-998-9938 (in the United States or Canada)</member>
-<member>707-829-0515 (international or local)</member>
-<member>707-829-0104 (fax)</member>
-</simplelist>
-++++
-
-We have a web page for this book, where we list errata, examples, and any additional information. You can access this page at link:$$http://www.oreilly.com/catalog/9781449334062$$[].
-
-To comment or ask technical questions about this book, send email to pass:[<email>bookquestions@oreilly.com</email>].
-
-For more information about our books, courses, conferences, and news, see our website at link:$$http://www.oreilly.com$$[].
-
-Find us on Facebook: link:$$http://facebook.com/oreilly$$[]
-
-Follow us on Twitter: link:$$http://twitter.com/oreillymedia$$[]
-
-Watch us on YouTube: link:$$http://www.youtube.com/oreillymedia$$[]
-
-=== Acknowledgments
-
-++++
-<remark>Fill in...</remark>
-++++The code examples are all online in the Guide repository at https://github.com/imatix/zguide/tree/master/examples/. You'll find each example translated into several, often a dozen other languages. The examples are licensed under MIT/X11; see the LICENSE file in that directory. The text of the Guide explains in each case how to run each example.
 
 +++ Acknowledgements
 
