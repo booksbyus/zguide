@@ -90,9 +90,9 @@ AO: Normally, we ask authors to put all references to parts of code in
 constant width in their paragraphs. That means awkward constructs
 like:
 
- +zmq_msg_send[3]+
+ {{zmq_msg_send[3]}}
 
-And even send and recv should be in + for constant width.
+And even send and recv should be in {{}} for constant width.
 
 This is a lot of work. We might skip it for this book, but I wonder
 how much effort you think it would be to put in the + signs. I

@@ -409,9 +409,9 @@ In all the examples so far, the main loop of most examples has been:
 # process message
 # repeat
 
-What if we want to read from multiple sockets at the same time? The simplest way is to connect one socket to multiple endpoints and get 0MQ to do the fan-in for us. This is legal if the remote endpoints are in the same pattern but it would be wrong to e.g. connect a PULL socket to a PUB endpoint.
+What if we want to read from multiple endpoints at the same time? The simplest way is to connect one socket to all the endpoints and get 0MQ to do the fan-in for us. This is legal if the remote endpoints are in the same pattern but it would be wrong to e.g. connect a PULL socket to a PUB endpoint.
 
-The right way is to use zmq_poll[3]. An even better way might be to wrap zmq_poll[3] in a framework that turns it into a nice event-driven //reactor//, but it's significantly more work than we want to cover here.
+To actually read from multiple sockets at once, use zmq_poll[3]. An even better way might be to wrap zmq_poll[3] in a framework that turns it into a nice event-driven //reactor//, but it's significantly more work than we want to cover here.
 
 Let's start with a dirty hack, partly for the fun of not doing it right, but mainly because it lets me show you how to do non-blocking socket reads. Here is a simple example of reading from two sockets using non-blocking reads. This rather confused program acts both as a subscriber to weather updates, and a worker for parallel tasks:
 
@@ -426,6 +426,9 @@ Now let's see the same little senseless application done right, using zmq_poll[3
 
 [[code type="example" title="Multiple socket poller" name="mspoller"]]
 [[/code]]
+////
+AO: What are the four members of the items structure?
+////
 
 +++ Handling Errors and ETERM
 
@@ -437,11 +440,11 @@ When 0MQ detects an external fault it returns an error to the calling code. In s
 
 In most of the C examples we've seen so far there's been no error handling. **Real code should do error handling on every single 0MQ call**. If you're using a language binding other than C, the binding may handle errors for you. In C you do need to do this yourself. There are some simple rules, starting with POSIX conventions:
 
-* Methods that create objects will return NULL if they fail.
+* Methods that create objects return NULL if they fail.
 
 * Methods that process data may return the number of bytes processed, or -1 on an error or failure.
 
-* Other methods will return 0 on success and -1 on an error or failure.
+* Other methods return 0 on success and -1 on an error or failure.
 
 * The error code is provided in {{errno}} or zmq_errno[3].
 
