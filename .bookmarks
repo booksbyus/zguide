@@ -1,0 +1,459 @@
+Architecture-of-the-MQ-Community How to Make Really Large Architectures
+Binary-Star-Implementation Binary Star Reactor
+Chapter-Serialization-Languages Serialization Libraries
+Chapter-Ping-Pong-Heartbeats State Machines
+Chapter-Cooperative-Discovery-using-UDP-Broadcasts Multiple Nodes on One Device
+Chapter-The-Socket-API Plugging Sockets Into the Topology
+Burnout Patterns for The Game
+Chapter-The-Hangman The Historian
+Upgrading-from-MQ-to-MQ Warning - Unstable Paradigms!
+Vadim-Shalts-s-Story How the Guide Happened
+Advanced-Request-Reply-Patterns Request-Reply Envelopes
+Service-Oriented-Reliable-Queuing-Majordomo-Pattern Asynchronous Majordomo Pattern
+the-community The ØMQ Community
+Preemptive-Discovery-over-Raw-Sockets Cooperative Discovery using UDP Broadcasts
+Goals Preliminaries
+Chapter-Making-a-Clean-Exit Why We Needed ØMQ
+Crazy-Beautiful-and-Easy Stranger, meet Stranger
+Messaging-Patterns High-level Messaging Patterns
+Chapter-Preemptive-Discovery-over-Raw-Sockets Cooperative Discovery using UDP Broadcasts
+Step-Draw-a-Rough-Architecture Step 3: Decide on the Contracts
+Divide-and-Conquer Programming with ØMQ
+Group-Messaging Testing and Simulation
+Chapter-The-Human-Scale The Tale of Two Bridges
+Basics Fixing the World
+A-Minor-Note-on-Strings Version Reporting
+Chapter-Development-Process Creating Stable Releases
+Chapter-Testing-and-Simulation On Assertions
+The-Flash-Mob The Canary Watcher
+Chapter-A-High-Level-API-for-MQ Asynchronous Client-Server
+Chapter-Surprise-and-Expectations Economics of Participation
+Chapter-Serializing-your-Data Cheap and Nasty
+Chapter-Authentication-using-SASL Large-scale File Publishing
+Initial-Design-Cut-the-API Initial Design Cut - the Protocol
+Chapter-Multiple-Nodes-on-One-Device Designing the API
+Making-a-Clean-Exit Why We Needed ØMQ
+Chapter-On-Assertions On Up-front Testing
+-MQ-is-Not-a-Neutral-Carrier I/O Threads
+Chapter-Spinning-off-a-Library-Project Point-to-point Messaging
+Upfront-Coordination Scalability
+Chapter-Conventions-Used-in-This-Book Using the Code Examples
+Chapter-Detecting-Memory-Leaks Multithreading with ØMQ
+The-Zen-of-Zero How the Guide Happened
+Why-We-Needed-MQ Socket Scalability
+Chapter-Establishing-the-Details Architecture of a Single Cluster
+A-Shared-Key-Value-Cache-Clone-Pattern Distributing Key-Value Updates
+Tom-van-Leeuwen-s-Story Michael Jakl's Story
+Using-Sockets-to-Carry-Data Unicast Transports
+Chapter-Detecting-Disappearances Group Messaging
+Chapter-Reliable-Request-Reply-Patterns What is "Reliability"?
+Configuration File Stability
+Slow-Subscriber-Detection-Suicidal-Snail-Pattern High-speed Subscribers (Black Box Pattern)
+Chapter-Binary-Star-Implementation Binary Star Reactor
+Chapter-The-Mindful-General The Social Engineer
+How-the-Guide-Happened Removing Friction
+Chapter-File-Stability Test Use Case
+Working-with-Messages Handling Multiple Sockets
+Chapter-How-to-Write-Unprotocols Why use the GPLv3 for Public Specifications?
+Chapter-Burnout Patterns for The Game
+Chapter-Asynchronous-Majordomo-Pattern Service Discovery
+Heartbeating Shrugging It Off
+Chapter-Audience Conventions Used in This Book
+Chapter-Socket-Scalability Upgrading from ØMQ/2.2 to ØMQ/3.2
+Chapter-Cheap-and-Nasty ØMQ Framing
+Binary-Star-Reactor Brokerless Reliability (Freelance Pattern)
+Chapter-The-Dynamic-Discovery-Problem Shared Queue (DEALER and ROUTER sockets)
+Preface ØMQ in a Hundred Words
+Chapter-Using-Sockets-to-Carry-Data Unicast Transports
+Chapter-The-Tale-of-Two-Bridges Code on the Human Scale
+Prototyping-the-Local-and-Cloud-Flows Putting it All Together
+Chapter-Cost-of-Failure Upfront Coordination
+Detecting-Disappearances Group Messaging
+Chapter-Model-Three-Complex-and-Nasty Conclusion
+Chapter-The-Rolling-Stone The Pirate Gang
+Chapter-Messaging-Patterns High-level Messaging Patterns
+Chapter-The-MQ-Community Architecture of the ØMQ Community
+Chapter-A-Universe-of-Moving-Pieces Design for The Real World
+Cooperative-Discovery-using-UDP-Broadcasts Multiple Nodes on One Device
+High-level-Messaging-Patterns Working with Messages
+Michael-Jakl-s-Story Vadim Shalts's Story
+Point-to-point-Messaging UDP Beacon Framing
+-MQ-Framing Serialization Languages
+Chapter-A-Shared-Key-Value-Cache-Clone-Pattern Distributing Key-Value Updates
+Testing-and-Simulation On Assertions
+One-Way-Heartbeats Ping-Pong Heartbeats
+Chapter-Shared-Queue-DEALER-and-ROUTER-sockets ØMQ's Built-in Proxy Function
+What-is-Reliability Designing Reliability
+Chapter-The-Bad-the-Ugly-and-the-Delicious Trash-Oriented Design
+Clone-Protocol-Specification The Espresso Pattern
+Chapter-Learning-Curve Cost of Failure
+Chapter-The-ZyRE-Tester Test Results
+Chapter-Vadim-Shalts-s-Story How the Guide Happened
+Getting-the-Message-Out Divide and Conquer
+Chapter-Detailed-Requirements Preventing Split-Brain Syndrome
+Chapter-MQ-Framing Serialization Languages
+The-Secret-Life-of-WiFi Why Mesh isn't Here Yet
+Conclusions Discovery
+The-Tale-of-Two-Bridges Code on the Human Scale
+Ephemeral-Values Clone Server Reliability
+Pub-Sub-Message-Envelopes High Water Marks
+Chapter-Least-Recently-Used-Routing-LRU-Pattern Address-based Routing
+Step-Decide-on-the-Contracts Step 4: Write a Minimal End-to-End Solution
+Overview Detailed Requirements
+Chapter-Visibility Conclusions
+Tracing-Activity Dealing with Blocked Peers
+Chapter-High-availability-Pair-Binary-Star-Pattern Overview
+Chapter-Handling-Interrupt-Signals Detecting Memory Leaks
+Chapter-Custom-Request-Reply-Routing ROUTER-to-DEALER Routing
+Simplicity-vs-Complexity Change Latency
+Language Goals
+Chapter-Multithreading-with-MQ Signaling between Threads (PAIR sockets)
+Chapter-Unprotocols Why Unprotocols?
+reliable-request-reply Reliable Request-Reply Patterns
+Code-on-the-Human-Scale Psychology of Software Development
+Chapter-Hand-written-Binary-Serialization Code Generation
+Chapter-Federation-vs-Peering The Naming Ceremony
+Idempotent-Services Disconnected Reliability (Titanic Pattern)
+Chapter-Michael-Jakl-s-Story Vadim Shalts's Story
+Audience-for-This-Book Getting the Examples
+Chapter-Republishing-Updates Clone Subtrees
+Chapter-Ephemeral-Values Clone Server Reliability
+Shared-Queue-DEALER-and-ROUTER-sockets ØMQ's Built-in Proxy Function
+Surprise-and-Expectations Economics of Participation
+Chapter-Client-side-Reliability-Lazy-Pirate-Pattern Basic Reliable Queuing (Simple Pirate Pattern)
+Chapter-Handling-Errors-and-ETERM Handling Interrupt Signals
+The-ZyRE-Tester Test Results
+The-Social-Engineer The Constant Gardener
+Chapter-Distributing-Key-Value-Updates Getting a Snapshot
+I-O-Threads Messaging Patterns
+Ask-and-Ye-Shall-Receive A Minor Note on Strings
+Economics-of-Participation Robustness in Conflict
+Chapter-Initial-Design-Cut-the-API Initial Design Cut - the Protocol
+Transferring-Files Heartbeating
+Chapter-Why-make-FileMQ Initial Design Cut - the API
+Chapter-The-Secret-Life-of-WiFi Why Mesh isn't Here Yet
+Zero-Copy Pub-Sub Message Envelopes
+Disconnected-Reliability-Titanic-Pattern High-availability Pair (Binary Star Pattern)
+Test-Results Tracing Activity
+Node-Coordination Zero Copy
+Chapter-Care-and-Feeding The ØMQ Process - C4
+Chapter-How-to-Make-Really-Large-Architectures The Game
+Chapter-Goals Preliminaries
+Least-Recently-Used-Routing-LRU-Pattern Address-based Routing
+Patterns-for-The-Game The Lazy Perfectionist
+Socket-Scalability Upgrading from ØMQ/2.2 to ØMQ/3.2
+Creating-Stable-Releases Evolution of Public Contracts
+Chapter-Scaling-to-Multiple-Clusters Federation vs. Peering
+Using-the-Code-Examples Acknowledgements
+Scaling-to-Multiple-Clusters Federation vs. Peering
+Chapter-What-is-Reliability Designing Reliability
+Psychology-of-Software-Development The Bad, the Ugly, and the Delicious
+Step-Write-a-Minimal-End-to-End-Solution Step 5: Solve One Problem and Repeat
+Chapter-Prototyping-the-Local-and-Cloud-Flows Putting it All Together
+The-Lazy-Perfectionist The Benevolent Tyrant
+Chapter-Design-for-The-Real-World The Secret Life of WiFi
+Licensing-and-Ownership Patch Requirements
+Chapter-Programming-with-MQ Getting the Context Right
+High-Water-Marks Missing Message Problem Solver
+How-to-Make-Really-Large-Architectures The Game
+Tales-from-Out-There Rob Gagnon's Story
+Chapter-The-Benevolent-Tyrant The Earth and Sky
+Prototyping-the-State-Flow Prototyping the Local and Cloud Flows
+Serializing-your-Data Cheap and Nasty
+Chapter-Economics-of-Participation Robustness in Conflict
+Signaling-between-Threads-PAIR-sockets Node Coordination
+Chapter-Service-Discovery Idempotent Services
+Chapter-Some-Physics What's the Current Status?
+Large-scale-File-Publishing Why make FileMQ?
+Federation-vs-Peering The Naming Ceremony
+The-Mindful-General The Social Engineer
+Why-use-the-GPLv-for-Public-Specifications Using ABNF
+Chapter-Complexity-Oriented-Design Simplicity-Oriented Design
+The-Pirate-Gang The Flash Mob
+Asynchronous-Client-Server Worked Example: Inter-Broker Routing
+Chapter-Binary-Star-Reactor Brokerless Reliability (Freelance Pattern)
+Chapter-The-Flash-Mob The Canary Watcher
+Shrugging-It-Off One-Way Heartbeats
+Chapter-The-Constant-Gardener The Rolling Stone
+Chapter-Infinite-Property Care and Feeding
+Chapter-Guarantees-of-Isolation Visibility
+Chapter-A-Minor-Note-on-Strings Version Reporting
+Address-based-Routing A Request-Reply Message Broker
+High-availability-Pair-Binary-Star-Pattern Overview
+Chapter-Ask-and-Ye-Shall-Receive A Minor Note on Strings
+Chapter-Model-Two-Brutal-Shotgun-Massacre Model Three - Complex and Nasty
+Chapter-The-Historian The Provocateur
+Spinning-off-a-Library-Project Point-to-point Messaging
+Multithreading-with-MQ Signaling between Threads (PAIR sockets)
+Plugging-Sockets-Into-the-Topology Using Sockets to Carry Data
+Chapter-The-MQ-Process-C Language
+Chapter-Why-Mesh-isn-t-Here-Yet Some Physics
+On-Up-front-Testing The ZyRE Tester
+Trash-Oriented-Design Complexity-Oriented Design
+Chapter-Initial-Design-Cut-the-Protocol Building and Trying FileMQ
+Client-side-Reliability-Lazy-Pirate-Pattern Basic Reliable Queuing (Simple Pirate Pattern)
+Chapter-Version-Reporting Getting the Message Out
+Chapter-Upgrading-from-MQ-to-MQ Warning - Unstable Paradigms!
+Chapter-High-Water-Marks Missing Message Problem Solver
+Chapter-The-Myth-of-Intelligent-Design Burnout
+Hand-written-Binary-Serialization Code Generation
+File-Stability Test Use Case
+Chapter-Discovery Preemptive Discovery over Raw Sockets
+Programming-with-MQ Getting the Context Right
+The-Human-Scale The Tale of Two Bridges
+Step-Internalize-the-Semantics Step 2: Draw a Rough Architecture
+Chapter-Group-Messaging Testing and Simulation
+The-Constant-Gardener The Rolling Stone
+Chapter-Zero-Copy Pub-Sub Message Envelopes
+Chapter-Why-We-Needed-MQ Socket Scalability
+Chapter-Public-API Design Notes
+Chapter-Change-Latency Learning Curve
+Chapter-The-Canary-Watcher The Hangman
+Chapter-Configuration File Stability
+Robustness-in-Conflict Guarantees of Isolation
+Unprotocols Why Unprotocols?
+Chapter-True-Peer-Connectivity-Harmony-Pattern Detecting Disappearances
+Chapter-Request-Reply-Envelopes Custom Request-Reply Routing
+Transport-Bridging Handling Errors and ETERM
+Chapter-Advanced-Publish-Subscribe-Patterns Slow Subscriber Detection (Suicidal Snail Pattern)
+Chapter-The-Earth-and-Sky The Open Door
+Chapter-Tracing-Activity Dealing with Blocked Peers
+Chapter-Clone-Server-Reliability Clone Protocol Specification
+Chapter-The-Social-Engineer The Constant Gardener
+Chapter-Getting-the-Message-Out Divide and Conquer
+Chapter-Divide-and-Conquer Programming with ØMQ
+Chapter-Signaling-between-Threads-PAIR-sockets Node Coordination
+Chapter-MQ-in-a-Hundred-Words The Zen of Zero
+The-Benevolent-Tyrant The Earth and Sky
+Chapter-Patterns-for-The-Game The Lazy Perfectionist
+Cost-of-Failure Upfront Coordination
+Worked-Example Git Branches Considered Harmful
+Chapter-Trash-Oriented-Design Complexity-Oriented Design
+Chapter-Language Goals
+Chapter-The-Contract The Process
+Chapter-Licensing-and-Ownership Patch Requirements
+Chapter-Getting-the-Context-Right Making a Clean Exit
+Service-Discovery Idempotent Services
+Chapter-The-Laughing-Clown The Mindful General
+Chapter-Getting-the-Examples Ask and Ye Shall Receive
+postface Postface
+Chapter-The-Lazy-Perfectionist The Benevolent Tyrant
+On-Assertions On Up-front Testing
+basics Basics
+Chapter-High-level-Messaging-Patterns Working with Messages
+A-High-Level-API-for-MQ Asynchronous Client-Server
+Reliable-Request-Reply-Patterns What is "Reliability"?
+Chapter-Intermediaries-and-Proxies The Dynamic Discovery Problem
+the-human-scale The Human Scale
+Chapter-Architecture-of-the-MQ-Community How to Make Really Large Architectures
+Chapter-Prototyping-the-State-Flow Prototyping the Local and Cloud Flows
+Why-make-FileMQ Initial Design Cut - the API
+Model-Two-Brutal-Shotgun-Massacre Model Three - Complex and Nasty
+Chapter-Point-to-point-Messaging UDP Beacon Framing
+Chapter-Step-Decide-on-the-Contracts Step 4: Write a Minimal End-to-End Solution
+Chapter-Multi-part-Messages Intermediaries and Proxies
+Using-ABNF Serializing your Data
+Chapter-Preventing-Split-Brain-Syndrome Binary Star Implementation
+advanced-request-reply Advanced Request-Reply Patterns
+High-speed-Subscribers-Black-Box-Pattern A Shared Key-Value Cache (Clone Pattern)
+Chapter-Node-Coordination Zero Copy
+Chapter-Disconnected-Reliability-Titanic-Pattern High-availability Pair (Binary Star Pattern)
+Chapter-Creating-Stable-Releases Evolution of Public Contracts
+Chapter-Robustness-in-Conflict Guarantees of Isolation
+moving-pieces A Universe of Moving Pieces
+Chapter-Model-One-Simple-Retry-and-Failover Model Two - Brutal Shotgun Massacre
+The-Canary-Watcher The Hangman
+Chapter-Step-Solve-One-Problem-and-Repeat Unprotocols
+Chapter-The-Pirate-Gang The Flash Mob
+Chapter-Sockets-and-Patterns The Socket API
+Chapter-ROUTER-to-DEALER-Routing Least-Recently Used Routing (LRU Pattern)
+Design-for-The-Real-World The Secret Life of WiFi
+Design-Notes Reliabilty
+Reliabilty Configuration
+Chapter-Using-ABNF Serializing your Data
+ROUTER-to-DEALER-Routing Least-Recently Used Routing (LRU Pattern)
+What-s-the-Current-Status Conclusions
+Chapter-Advanced-Request-Reply-Patterns Request-Reply Envelopes
+Contracts-and-Protocols Service-Oriented Reliable Queuing (Majordomo Pattern)
+Chapter-Tom-van-Leeuwen-s-Story Michael Jakl's Story
+Brokerless-Reliability-Freelance-Pattern Model One - Simple Retry and Failover
+Chapter-Plugging-Sockets-Into-the-Topology Using Sockets to Carry Data
+Chapter-Simplicity-vs-Complexity Change Latency
+The-Espresso-Pattern Last Value Caching
+The-Socket-API Plugging Sockets Into the Topology
+Chapter-The-Naming-Ceremony Prototyping the State Flow
+Chapter-Psychology-of-Software-Development The Bad, the Ugly, and the Delicious
+Chapter-More-about-UDP Spinning off a Library Project
+Chapter-Using-the-Code-Examples Acknowledgements
+Chapter-Serialization-Libraries Hand-written Binary Serialization
+Step-Solve-One-Problem-and-Repeat Unprotocols
+Chapter-Worked-Example-Inter-Broker-Routing Establishing the Details
+Git-Branches-Considered-Harmful Simplicity vs. Complexity
+Discovery Preemptive Discovery over Raw Sockets
+Authentication-using-SASL Large-scale File Publishing
+Chapter-State-Machines Authentication using SASL
+Chapter-Evolution-of-Public-Contracts Worked Example
+Stranger-meet-Stranger Infinite Property
+Chapter-Audience-for-This-Book Getting the Examples
+Fixing-the-World Audience for This Book
+The-Naming-Ceremony Prototyping the State Flow
+Advanced-Publish-Subscribe-Patterns Slow Subscriber Detection (Suicidal Snail Pattern)
+Chapter-Asynchronous-Client-Server Worked Example: Inter-Broker Routing
+Chapter-The-Process Crazy, Beautiful, and Easy
+Preventing-Split-Brain-Syndrome Binary Star Implementation
+The-Open-Door The Laughing Clown
+Custom-Request-Reply-Routing ROUTER-to-DEALER Routing
+Model-One-Simple-Retry-and-Failover Model Two - Brutal Shotgun Massacre
+The-Earth-and-Sky The Open Door
+Simplicity-Oriented-Design Message Oriented Pattern for Elastic Design
+Care-and-Feeding The ØMQ Process - C4
+Getting-the-Context-Right Making a Clean Exit
+Chapter-Designing-the-API More about UDP
+Chapter-Dealing-with-Blocked-Peers More Coming Soon
+Chapter-A-Request-Reply-Message-Broker A High-Level API for ØMQ
+Handling-Multiple-Sockets Multi-part Messages
+-MQ-in-a-Hundred-Words The Zen of Zero
+Detailed-Requirements Preventing Split-Brain Syndrome
+Chapter-The-Open-Door The Laughing Clown
+Version-Reporting Getting the Message Out
+Chapter-The-Espresso-Pattern Last Value Caching
+advanced-pub-sub Advanced Publish-Subscribe Patterns
+Distributing-Key-Value-Updates Getting a Snapshot
+Chapter-Heartbeating Shrugging It Off
+Visibility Conclusions
+Serialization-Languages Serialization Libraries
+Chapter-Git-Branches-Considered-Harmful Simplicity vs. Complexity
+Chapter-Contracts-and-Protocols Service-Oriented Reliable Queuing (Majordomo Pattern)
+Chapter-Step-Write-a-Minimal-End-to-End-Solution Step 5: Solve One Problem and Repeat
+Chapter-Reliabilty Configuration
+Chapter-UDP-Beacon-Framing True Peer Connectivity (Harmony Pattern)
+Cheap-and-Nasty ØMQ Framing
+Learning-Curve Cost of Failure
+Chapter-Brokerless-Reliability-Freelance-Pattern Model One - Simple Retry and Failover
+Chapter-Design-Notes Reliabilty
+Chapter-Why-Unprotocols How to Write Unprotocols
+UDP-Beacon-Framing True Peer Connectivity (Harmony Pattern)
+Chapter-Architecture-of-a-Single-Cluster Scaling to Multiple Clusters
+Chapter-Internal-Architecture Public API
+Why-Unprotocols How to Write Unprotocols
+A-Request-Reply-Message-Broker A High-Level API for ØMQ
+Serialization-Libraries Hand-written Binary Serialization
+Internal-Architecture Public API
+Chapter-Basic-Reliable-Queuing-Simple-Pirate-Pattern Robust Reliable Queuing (Paranoid Pirate Pattern)
+Chapter-Robust-Reliable-Queuing-Paranoid-Pirate-Pattern Heartbeating
+The-Game The Contract
+The-MQ-Process-C Language
+Sockets-and-Patterns The Socket API
+The-Contract The Process
+Chapter-Step-Draw-a-Rough-Architecture Step 3: Decide on the Contracts
+Multi-part-Messages Intermediaries and Proxies
+The-Historian The Provocateur
+Chapter-Removing-Friction Licensing
+Chapter-Clone-Subtrees Ephemeral Values
+Chapter-Crazy-Beautiful-and-Easy Stranger, meet Stranger
+Basic-Reliable-Queuing-Simple-Pirate-Pattern Robust Reliable Queuing (Paranoid Pirate Pattern)
+Building-and-Trying-FileMQ Internal Architecture
+Chapter-Shrugging-It-Off One-Way Heartbeats
+Designing-Reliability Client-side Reliability (Lazy Pirate Pattern)
+Designing-the-API More about UDP
+Chapter-Upfront-Coordination Scalability
+Chapter-Test-Results Tracing Activity
+Chapter-Service-Oriented-Reliable-Queuing-Majordomo-Pattern Asynchronous Majordomo Pattern
+Why-Mesh-isn-t-Here-Yet Some Physics
+Ping-Pong-Heartbeats State Machines
+Chapter-I-O-Threads Messaging Patterns
+Chapter-Simplicity-Oriented-Design Message Oriented Pattern for Elastic Design
+Chapter-The-Game The Contract
+Preliminaries Licensing and Ownership
+Chapter-Scalability Surprise and Expectations
+Change-Latency Learning Curve
+Chapter-MQ-s-Built-in-Proxy-Function Transport Bridging
+Request-Reply-Envelopes Custom Request-Reply Routing
+The-Hangman The Historian
+The-Laughing-Clown The Mindful General
+Chapter-Pub-Sub-Message-Envelopes High Water Marks
+Chapter-Conclusions Discovery
+Chapter-Handling-Multiple-Sockets Multi-part Messages
+The-Provocateur The Mystic
+Chapter-Slow-Subscriber-Detection-Suicidal-Snail-Pattern High-speed Subscribers (Black Box Pattern)
+Asynchronous-Majordomo-Pattern Service Discovery
+Chapter-Message-Oriented-Pattern-for-Elastic-Design Step 1: Internalize the Semantics
+Chapter-Worked-Example Git Branches Considered Harmful
+Chapter-High-speed-Subscribers-Black-Box-Pattern A Shared Key-Value Cache (Clone Pattern)
+Chapter-Code-Generation Transferring Files
+Clone-Subtrees Ephemeral Values
+Robust-Reliable-Queuing-Paranoid-Pirate-Pattern Heartbeating
+Chapter-Code-on-the-Human-Scale Psychology of Software Development
+sockets-and-patterns Sockets and Patterns
+Chapter-Rob-Gagnon-s-Story Tom van Leeuwen's Story
+Handling-Errors-and-ETERM Handling Interrupt Signals
+Chapter-Unicast-Transports ØMQ is Not a Neutral Carrier
+Chapter-Tales-from-Out-There Rob Gagnon's Story
+Chapter-Preliminaries Licensing and Ownership
+Unicast-Transports ØMQ is Not a Neutral Carrier
+True-Peer-Connectivity-Harmony-Pattern Detecting Disappearances
+Establishing-the-Details Architecture of a Single Cluster
+Chapter-Getting-a-Snapshot Republishing Updates
+Chapter-Step-Internalize-the-Semantics Step 2: Draw a Rough Architecture
+Chapter-Why-use-the-GPLv-for-Public-Specifications Using ABNF
+The-Bad-the-Ugly-and-the-Delicious Trash-Oriented Design
+Scalability Surprise and Expectations
+Initial-Design-Cut-the-Protocol Building and Trying FileMQ
+Worked-Example-Inter-Broker-Routing Establishing the Details
+-MQ-s-Built-in-Proxy-Function Transport Bridging
+Removing-Friction Licensing
+Patch-Requirements Development Process
+Chapter-The-Zen-of-Zero How the Guide Happened
+Chapter-What-s-the-Current-Status Conclusions
+Detecting-Memory-Leaks Multithreading with ØMQ
+The-Dynamic-Discovery-Problem Shared Queue (DEALER and ROUTER sockets)
+How-to-Write-Unprotocols Why use the GPLv3 for Public Specifications?
+Chapter-Working-with-Messages Handling Multiple Sockets
+Chapter-Basics Fixing the World
+Chapter-Transferring-Files Heartbeating
+Conventions-Used-in-This-Book Using the Code Examples
+Getting-the-Examples Ask and Ye Shall Receive
+The-Myth-of-Intelligent-Design Burnout
+Some-Physics What's the Current Status?
+Chapter-Address-based-Routing A Request-Reply Message Broker
+Chapter-One-Way-Heartbeats Ping-Pong Heartbeats
+The-MQ-Community Architecture of the ØMQ Community
+Chapter-Building-and-Trying-FileMQ Internal Architecture
+Message-Oriented-Pattern-for-Elastic-Design Step 1: Internalize the Semantics
+Guarantees-of-Isolation Visibility
+Dealing-with-Blocked-Peers More Coming Soon
+Public-API Design Notes
+Chapter-Transport-Bridging Handling Errors and ETERM
+A-Universe-of-Moving-Pieces Design for The Real World
+Chapter-Designing-Reliability Client-side Reliability (Lazy Pirate Pattern)
+Chapter-How-the-Guide-Happened Removing Friction
+Chapter-Overview Detailed Requirements
+Chapter-Patch-Requirements Development Process
+Republishing-Updates Clone Subtrees
+Chapter-Stranger-meet-Stranger Infinite Property
+Chapter-The-Provocateur The Mystic
+Architecture-of-a-Single-Cluster Scaling to Multiple Clusters
+Audience Conventions Used in This Book
+Model-Three-Complex-and-Nasty Conclusion
+Getting-a-Snapshot Republishing Updates
+Development-Process Creating Stable Releases
+Chapter-On-Up-front-Testing The ZyRE Tester
+Infinite-Property Care and Feeding
+The-Rolling-Stone The Pirate Gang
+Postface Tales from Out There
+Complexity-Oriented-Design Simplicity-Oriented Design
+State-Machines Authentication using SASL
+Chapter-MQ-is-Not-a-Neutral-Carrier I/O Threads
+Multiple-Nodes-on-One-Device Designing the API
+More-about-UDP Spinning off a Library Project
+Chapter-Clone-Protocol-Specification The Espresso Pattern
+Intermediaries-and-Proxies The Dynamic Discovery Problem
+Chapter-Idempotent-Services Disconnected Reliability (Titanic Pattern)
+The-Process Crazy, Beautiful, and Easy
+Evolution-of-Public-Contracts Worked Example
+Chapter-Large-scale-File-Publishing Why make FileMQ?
+Chapter-Fixing-the-World Audience for This Book
+Rob-Gagnon-s-Story Tom van Leeuwen's Story
+Clone-Server-Reliability Clone Protocol Specification
+Handling-Interrupt-Signals Detecting Memory Leaks
+Code-Generation Transferring Files

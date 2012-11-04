@@ -1,54 +1,54 @@
 //  NOTE: do NOT reuse this example code!
-static char *topic_str = "msg.x|";
+static char *topic-str = "msg.x|";
 
-void* pub_worker(void* arg){
+void* pub-worker(void* arg){
     void *ctx = arg;
     assert(ctx);
 
-    void *qskt = zmq_socket(ctx, ZMQ_REP);
+    void *qskt = zmq-socket(ctx, ZMQ-REP);
     assert(qskt);
 
-    int rc = zmq_connect(qskt, "inproc://querys");
+    int rc = zmq-connect(qskt, "inproc://querys");
     assert(rc == 0);
 
-    void *pubskt = zmq_socket(ctx, ZMQ_PUB);
+    void *pubskt = zmq-socket(ctx, ZMQ-PUB);
     assert(pubskt);
 
-    rc = zmq_bind(pubskt, "inproc://publish");
+    rc = zmq-bind(pubskt, "inproc://publish");
     assert(rc == 0);
 
-    uint8_t cmd;
-    uint32_t nb;
-    zmq_msg_t topic_msg, cmd_msg, nb_msg, resp_msg;
+    uint8-t cmd;
+    uint32-t nb;
+    zmq-msg-t topic-msg, cmd-msg, nb-msg, resp-msg;
 
-    zmq_msg_init_data(&topic_msg, topic_str, strlen(topic_str) , NULL, NULL);
+    zmq-msg-init-data(&topic-msg, topic-str, strlen(topic-str) , NULL, NULL);
 
     fprintf(stdout,"WORKER: ready to receive messages\n");
     //  NOTE: do NOT reuse this example code, It's broken.
-    //  e.g. topic_msg will be invalid the second time through
+    //  e.g. topic-msg will be invalid the second time through
     while (1){
-    zmq_msg_send(pubskt, &topic_msg, ZMQ_SNDMORE);
+    zmq-msg-send(pubskt, &topic-msg, ZMQ-SNDMORE);
 
-    zmq_msg_init(&cmd_msg);
-    zmq_msg_recv(qskt, &cmd_msg, 0);
-    memcpy(&cmd, zmq_msg_data(&cmd_msg), sizeof(uint8_t));
-    zmq_msg_send(pubskt, &cmd_msg, ZMQ_SNDMORE);
-    zmq_msg_close(&cmd_msg);
+    zmq-msg-init(&cmd-msg);
+    zmq-msg-recv(qskt, &cmd-msg, 0);
+    memcpy(&cmd, zmq-msg-data(&cmd-msg), sizeof(uint8-t));
+    zmq-msg-send(pubskt, &cmd-msg, ZMQ-SNDMORE);
+    zmq-msg-close(&cmd-msg);
 
     fprintf(stdout, "received cmd %u\n", cmd);
 
-    zmq_msg_init(&nb_msg);
-    zmq_msg_recv(qskt, &nb_msg, 0);
-    memcpy(&nb, zmq_msg_data(&nb_msg), sizeof(uint32_t));
-    zmq_msg_send(pubskt, &nb_msg, 0);
-    zmq_msg_close(&nb_msg);
+    zmq-msg-init(&nb-msg);
+    zmq-msg-recv(qskt, &nb-msg, 0);
+    memcpy(&nb, zmq-msg-data(&nb-msg), sizeof(uint32-t));
+    zmq-msg-send(pubskt, &nb-msg, 0);
+    zmq-msg-close(&nb-msg);
 
     fprintf(stdout, "received nb %u\n", nb);
 
-    zmq_msg_init_size(&resp_msg, sizeof(uint8_t));
-    memset(zmq_msg_data(&resp_msg), 0, sizeof(uint8_t));
-    zmq_msg_send(qskt, &resp_msg, 0);
-    zmq_msg_close(&resp_msg);
+    zmq-msg-init-size(&resp-msg, sizeof(uint8-t));
+    memset(zmq-msg-data(&resp-msg), 0, sizeof(uint8-t));
+    zmq-msg-send(qskt, &resp-msg, 0);
+    zmq-msg-close(&resp-msg);
 
     }
     return NULL;

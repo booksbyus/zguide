@@ -47,7 +47,6 @@ function mkone {
     upload $3 postface "Postface"
     upload $3 all "ØMQ - The Guide"
     sh ./upload.sh
-    rm upload.sh
 }
 
 mkone C      online page

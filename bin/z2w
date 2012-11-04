@@ -64,6 +64,7 @@ use Digest::SHA1 qw(sha1_hex);
 $source = $ENV {'Z2W_LANG'} || "C";
 $format = $ENV {'Z2W_FORM'} || "online";
 signatures_load ();
+bookmarks_load ();
 
 #   When filtering, we drop text that we don't want online
 $filter = 0;
@@ -133,7 +134,8 @@ while (<>) {
             #   Skip .inbook directive
         }
         elsif (/^\.bookmark\s+(\w.*)/) {
-            #   No handling for bookmark yet
+            writeln ("[[# $1]]");
+            $anchor = $1;
         }
         elsif (/^\.filter\s+(\w.*)/) {
             $filter = ($1 eq "online");
@@ -146,11 +148,16 @@ while (<>) {
         }
     }
     elsif (/^([\+]+)\s+(.*)$/) {
+        $bookmarks{$anchor} = zmq_symbol ($2) if $anchor;
         $this++;
         $prev = $this - 1;
         $next = $this + 1;
         $indent = $1;
         $header = $2;
+        if ($indent eq "++" && $header ne "Preface" && $header ne "Postface") {
+            $chapter++;
+            $header = "Chapter $chapter - $header";
+        }
         $anchor = $header;
         $anchor =~ s/[^a-zA-Z]/-/g;
         $anchor =~ s/\-+/-/g;
@@ -313,6 +320,7 @@ close (OUTPUT);
 close (UPLOAD);
 
 signatures_save ();
+bookmarks_save ();
 exit (0);
 
 
@@ -449,6 +457,29 @@ sub signatures_save {
     print "$count saved\n";
 }
 
+#   Load bookmarks
+sub bookmarks_load {
+    if (open (BOOKMARKS, ".bookmarks")) {
+        while (<BOOKMARKS>) {
+            chop;
+            if (/(\S+)\s+(.+)/) {
+                $bookmarks {$1} = $2;
+            }
+        }
+        close (BOOKMARKS);
+    }
+}
+
+#   Save bookmarks
+sub bookmarks_save {
+    if (open (BOOKMARKS, ">.bookmarks")) {
+        foreach $bookmark (keys %bookmarks) {
+            print BOOKMARKS "$bookmark $bookmarks{$bookmark}\n";
+        }
+        close (BOOKMARKS);
+    }
+}
+
 
 #-- Symbol expansion code, taken from htmlpp
 
@@ -514,6 +545,9 @@ sub expand_symbols {
         }
         elsif (/zmq_([\w_]+)\[(.)\]/) {
             $_ = $`."[http://api.zeromq.org/3-2:zmq_$1 zmq_$1()]".$';
+        }
+        elsif (/\[#(\S+)\]/) {
+            $_ = $`."[#$1 $bookmarks{$1}]".$';
         }
         else {
             last;

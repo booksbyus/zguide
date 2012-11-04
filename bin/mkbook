@@ -60,6 +60,8 @@ $cutoff = 60;
               'Tcl' => 'tcl' );
 
 signatures_load ();
+bookmarks_load ();
+
 
 #   When filtering, we drop text that we don't want in the printed book
 $filter = 0;
@@ -118,7 +120,7 @@ while (<>) {
             }
         }
         elsif (/^\.bookmark\s+(\w.*)/) {
-            #   No handling for bookmark yet
+            $anchor = $1;
         }
         elsif (/^\.filter\s+(\w.*)/) {
             $filter = ($1 eq $format);
@@ -131,16 +133,19 @@ while (<>) {
         }
     }
     elsif (/^\+\+\s+Preface/) {
+        $bookmarks{$anchor} = "Preface" if $anchor;
         close_list ();
         start_block (1, "preface");
         writeln (requote ("<title>Preface</title>"));
     }
-    elsif (/^\+\+\s+Chapter\s+\w+\s+-\s+(.*)$/) {
+    elsif (/^\+\+\s+(.*)$/) {
+        $bookmarks{$anchor} = zmq_symbol ($1) if $anchor;
         close_list ();
         start_block (1, "chapter");
         writeln (requote ("<title>$1</title>"));
     }
     elsif (/^\+\+\s+Postface/) {
+        $bookmarks{$anchor} = "Postface" if $anchor;
         close_list ();
         #   Don't have a Postface item, so make this a chapter
         start_block (1, "chapter");
@@ -359,6 +364,7 @@ writeln ("</book>");
 close (OUTPUT);
 
 signatures_save ();
+bookmarks_save ();
 exit (0);
 
 #   Open and close block elements
@@ -370,7 +376,13 @@ sub start_block {
         writeln ("</".$block [$cur_level].">");
         $cur_level--;
     }
-    writeln ("<$name>");
+    if ($anchor) {
+        writeln ("<$name id=\"$anchor\">");
+        $anchor = "";
+    }
+    else {
+        writeln ("<$name>");
+    }
     $block [$level] = $name;
     $cur_level = $level;
 }
@@ -501,6 +513,29 @@ sub signatures_save {
     print "$count saved\n";
 }
 
+#   Load bookmarks
+sub bookmarks_load {
+    if (open (BOOKMARKS, ".bookmarks")) {
+        while (<BOOKMARKS>) {
+            chop;
+            if (/(\S+)\s+(.+)/) {
+                $bookmarks {$1} = $2;
+            }
+        }
+        close (BOOKMARKS);
+    }
+}
+
+#   Save bookmarks
+sub bookmarks_save {
+    if (open (BOOKMARKS, ">.bookmarks")) {
+        foreach $bookmark (keys %bookmarks) {
+            print BOOKMARKS "$bookmark $bookmarks{$bookmark}\n";
+        }
+        close (BOOKMARKS);
+    }
+}
+
 
 #-- Symbol expansion code, taken from htmlpp
 
@@ -565,6 +600,9 @@ sub expand_symbols {
         }
         elsif (/zmq_([\w_]+)\[(.)\]/) {
             $_ = $`."zmq_$1()".$';
+        }
+        elsif (/\[\#([\w_-]+)\]/) {
+            $_ = $`."$bookmarks{$1}<xref linkend=\"$1\"/>".$';
         }
         else {
             last;

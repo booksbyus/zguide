@@ -1,8 +1,8 @@
 .output chapter5.wd
-.bookmark advanced-publish-subscribe
-++ Advanced Publish-Subscribe
+.bookmark advanced-pub-sub
+++ Advanced Publish-Subscribe Patterns
 
-In <<advanced-request-reply>> and <<reliable-request-reply>> we looked at advanced use of 0MQ's request-reply pattern. If you managed to digest all that, congratulations. In this chapter we'll focus on publish-subscribe, and extend 0MQ's core pub-sub pattern with higher-level patterns for performance, reliability, state distribution, and monitoring.
+In [#advanced-request-reply] and [#reliable-request-reply] we looked at advanced use of 0MQ's request-reply pattern. If you managed to digest all that, congratulations. In this chapter we'll focus on publish-subscribe, and extend 0MQ's core pub-sub pattern with higher-level patterns for performance, reliability, state distribution, and monitoring.
 
 We'll cover:
 
@@ -194,7 +194,7 @@ The key aspect of the Clone pattern is that clients talk back to servers, which 
 
 ++++ Distributing Key-Value Updates
 
-We'll develop Clone in stages, solving one problem at a time. First, let's look at how to distribute key-value updates from a server to a set of clients. We'll take our weather server from <<basics>> and refactor it to send messages as key-value pairs!figref(). We'll modify our client to store these in a hash table.
+We'll develop Clone in stages, solving one problem at a time. First, let's look at how to distribute key-value updates from a server to a set of clients. We'll take our weather server from [#basics] and refactor it to send messages as key-value pairs!figref(). We'll modify our client to store these in a hash table.
 
 [[code type="textdiagram" title="Simplest Clone Model"]]
                +-------------+
@@ -437,7 +437,7 @@ Let's list the failures we want to be able to handle:
 
 * Clone server process or machine gets disconnected from the network, e.g. a switch dies. It may come back at some point, but in the meantime clients need an alternate server.
 
-Our first step is to add a second server. We can use the Binary Star pattern from <<reliable-request-reply>> to organize these into primary and backup. Binary Star is a reactor, so it's useful that we already refactored the last server model into a reactor style.
+Our first step is to add a second server. We can use the Binary Star pattern from [#reliable-request-reply] to organize these into primary and backup. Binary Star is a reactor, so it's useful that we already refactored the last server model into a reactor style.
 
 We need to ensure that updates are not lost if the primary server crashes. The simplest technique is to send them to both servers.
 
@@ -568,7 +568,7 @@ Which has the advantage of simplicity (one server sits at one endpoint) but has 
 * The server updates publisher (PUB) is at port P + 1.
 * The server updates subscriber (SUB) is at port P + 2.
 
-The clone class has the same structure as the flcliapi class from <<reliable-request-reply>>. It consists of two parts:
+The clone class has the same structure as the flcliapi class from [#reliable-request-reply]. It consists of two parts:
 
 * An asynchronous clone agent that runs in a background thread. The agent handles all network I/O, talking to servers in real-time, no matter what the application is doing.
 
@@ -679,4 +679,4 @@ And now run as many instances of the subscriber as you want to try, each time co
 
 Each subscriber happily reports "Save Roger", and Roth the Escaped Convict slinks back to his cell for dinner and a nice cup of hot milk, which is all he really wanted anyhow and could someone call his mum and tell her his clean socks are almost all up.
 
-One note: the XPUB socket by default does not report duplicate subscriptions, which is what you want when you're naively connecting an XPUB to an XSUB. Our example sneakily gets around this by using random topics so the chance of it not working is one in a million. In a real LVC proxy you'll want to use the {{ZMQ_XPUB_VERBOSE}} option that we implement later in <<the-0MQ-community>> as an exercise.
+One note: the XPUB socket by default does not report duplicate subscriptions, which is what you want when you're naively connecting an XPUB to an XSUB. Our example sneakily gets around this by using random topics so the chance of it not working is one in a million. In a real LVC proxy you'll want to use the {{ZMQ_XPUB_VERBOSE}} option that we implement later in [#the-community] as an exercise.

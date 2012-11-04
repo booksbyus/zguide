@@ -1,18 +1,18 @@
 <html>
 <pre class="textdiagram" id="fig29">
-|   Client  |
-|           |
 +-----------+
+|           |       zmq_setsockopt (socket,
+|   Client  |           ZMQ_IDENTITY, "Lucy", 4);
 |           |
 +-----------+       +---------+
 |    REQ    |       |  Data   |     Client sends this
 \-----+-----/       +---------+
       |
-      |  "My identity is empty"
+      |  "Hi, my name is Lucy"
       v
 /-----------\       +---------+
-|  ROUTER   |       |  UUID   |     ROUTER invents UUID to
-+-----------+       +-+-------+     use as reply address
+|  ROUTER   |       | 'Lucy'  |     ROUTER uses identity of
++-----------+       +-+-------+     client as reply address
 |           |       | |
 |  Service  |       +-+-------+
 |           |       |  Data   |

@@ -25,6 +25,7 @@ The Ø in 0MQ is all about tradeoffs. On the one hand this strange name lowers 0
 
 Originally the zero in 0MQ was meant as "zero broker" and (as close to) "zero latency" (as possible). In the meantime it has come to cover different goals: zero administration, zero cost, zero waste. More generally, "zero" refers to the culture of minimalism that permeates the project. We add power by removing complexity rather than exposing new functionality.
 
+.filter online
 +++ How the Guide Happened
 
 In the summer of 2010, 0MQ was still a little-known niche library described by its rather terse man pages and a living but sparse wiki. Martin Sustrik and myself (Pieter Hintjens) were sitting in the bar of the Hotel Kyjev in Bratislava plotting how to make 0MQ more widely popular. Martin had written most of the 0MQ code, and I'd put up the funding and organized the community. Over some Zlaty Bazants, we agreed that 0MQ needed a new, simpler web site, and a basic guide to new users.
@@ -42,6 +43,7 @@ But the goal of the Guide was, from the start, a printed book. So it was excitin
 Of course as soon as O'Reilly announced a 0MQ book, other publishers started sending out emails to potential authors. You'll probably see a rash of 0MQ books coming out next year. That's good: our niche library has hit the mainstream and deserves its six inches of shelf space. My apologies to the other 0MQ authors: we've set the bar horribly high, and my advice is to make your books complimentary. Perhaps focus on a specific language, platform, or pattern.
 
 This is the magic and power of communities: be the first community in a space, stay healthy, and you own that space for ever.
+.filter reset
 
 +++ Audience
 
@@ -57,9 +59,11 @@ We tried to be as unconventional as possible. Nevertheless, you'll tend to find 
 
 * [NOTE] - This signifies a tip, suggestion, or general note.
 
+.filter online
 +++ Using the Code Examples
 
 .inbook preface.xml
+.filter reset
 
 +++ Acknowledgements
 

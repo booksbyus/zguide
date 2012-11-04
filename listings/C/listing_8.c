@@ -12,3 +12,14 @@ s-recv (void *socket) {
     string [size] = 0;
     return (string);
 }
+
+//  Convert C string to 0MQ string and send to socket
+static int
+s-send (void *socket, char *string) {
+    zmq-msg-t message;
+    zmq-msg-init-size (&message, strlen (string));
+    memcpy (zmq-msg-data (&message), string, strlen (string));
+    int size = zmq-msg-send (&message, socket, 0);
+    zmq-msg-close (&message);
+    return (size);
+}

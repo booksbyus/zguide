@@ -240,9 +240,10 @@ lovely children in Brussels, Belgium and travels extensively.</para></authorblur
 
 <para>Thanks to Stathis Sideris for <ulink url="http://www.ditaa.org">Ditaa</ulink>.</para>
 
-<para>++ Basics</para>
-
 </sect1>
+</preface>
+<chapter id="basics">
+<title>Basics</title>
 <sect1>
 <title>Fixing the World</title>
 <para>How to explain &Oslash;MQ? Some of us start by saying all the wonderful things it does. <emphasis>It's sockets on steroids. It's like mailboxes with routing. It's fast!</emphasis>  Others try to share their moment of enlightenment, that zap-pow-kaboom satori paradigm-shift moment when it all became obvious. <emphasis>Things just become simpler. Complexity goes away. It opens the mind.</emphasis>  Others try to explain by comparison. <emphasis>It's smaller, simpler, but still looks familiar.</emphasis>  Personally, I like to remember why we made &Oslash;MQ at all, because that's most likely where you, the reader, still are today.</para>
@@ -481,7 +482,7 @@ int main (void)
 
 <para>Let us explain briefly what these two programs are actually doing. They create a &Oslash;MQ context to work with, and a socket. Don't worry what the words mean. You'll pick it up. The server binds its REP (reply) socket to port 5555. The server waits for a request, in a loop, and responds each time with a reply. The client sends a request and reads the reply back from the server.</para>
 
-<para>If you kill the server (Ctrl-C) and restart it, the client won't recover properly. Recovering from crashing processes isn't quite that easy. Making a reliable request-reply flow is complex enough that we won't cover it until <<reliable-request-reply>>.</para>
+<para>If you kill the server (Ctrl-C) and restart it, the client won't recover properly. Recovering from crashing processes isn't quite that easy. Making a reliable request-reply flow is complex enough that we won't cover it until Reliable Request-Reply Patterns<xref linkend="reliable-request-reply"/>.</para>
 
 <para>There is a lot happening behind the scenes but what matters to us programmers is how short and sweet the code is, and how often it doesn't crash, even under heavy load. This is the request-reply pattern, probably the simplest way to use &Oslash;MQ. It maps to RPC and the classic client-server model.</para>
 
@@ -692,7 +693,7 @@ int main (int argc, char *argv [])
 
 <para>Making a TCP connection involves to and fro handshaking that takes several milliseconds depending on your network and the number of hops between peers. In that time, &Oslash;MQ can send very many messages. For sake of argument assume it takes 5 msecs to establish a connection, and that same link can handle 1M messages per second. During the 5 msecs that the subscriber is connecting to the publisher, it takes the publisher only 1 msec to send out those 1K messages.</para>
 
-<para>In <<sockets-and-patterns>> we'll explain how to synchronize a publisher and subscribers so that you don't start to publish data until the subscriber(s) really are connected and ready. There is a simple and stupid way to delay the publisher, which is to sleep. Don't do this in a real application, though, because it is extremely fragile as well as inelegant and slow. Use sleeps to prove to yourself what's happening, and then wait for <<sockets-patterns>> to see how to do this right.</para>
+<para>In Sockets and Patterns<xref linkend="sockets-and-patterns"/> we'll explain how to synchronize a publisher and subscribers so that you don't start to publish data until the subscriber(s) really are connected and ready. There is a simple and stupid way to delay the publisher, which is to sleep. Don't do this in a real application, though, because it is extremely fragile as well as inelegant and slow. Use sleeps to prove to yourself what's happening, and then wait for Sockets and Patterns<xref linkend="sockets-and-patterns"/> to see how to do this right.</para>
 
 <para>The alternative to synchronization is to simply assume that the published data stream is infinite and has no start, and no end. One also assumes that the subscriber doesn't care what transpired before it started up. This is how we built our weather client example.</para>
 
@@ -1186,9 +1187,11 @@ wuclient 56789 &amp;
 
 <para>If you're reading this Guide for the first time, realize that until you actually write &Oslash;MQ code for a day or two (and maybe three or four days), you may feel confused, especially by how simple &Oslash;MQ makes things for you, and you may try to impose that general assumption on &Oslash;MQ, and it won't work. And then you will experience your moment of enlightenment and trust, that <emphasis>zap-pow-kaboom</emphasis> satori paradigm-shift moment when it all becomes clear.</para>
 
-<para>++ Sockets and Patterns</para>
-
-<para>In <<basics>> we took &Oslash;MQ for a drive, with some basic examples of the main &Oslash;MQ patterns: request-reply, publish-subscribe, and pipeline. In this chapter we're going to get our hands dirty and start to learn how to use these tools in real programs.</para>
+</sect1>
+</chapter>
+<chapter id="sockets-and-patterns">
+<title>Sockets and Patterns</title>
+<para>In Basics<xref linkend="basics"/> we took &Oslash;MQ for a drive, with some basic examples of the main &Oslash;MQ patterns: request-reply, publish-subscribe, and pipeline. In this chapter we're going to get our hands dirty and start to learn how to use these tools in real programs.</para>
 
 <para>We'll cover:</para>
 
@@ -1210,7 +1213,6 @@ wuclient 56789 &amp;
   <listitem><para>How to create and use message envelopes for publish-subscribe.</para></listitem>
   <listitem><para>Using the high-water mark (HWM) to protect against memory overflows.</para></listitem>
 </itemizedlist>
-</sect1>
 <sect1>
 <title>The Socket API</title>
 <para>To be perfectly honest, &Oslash;MQ does a kind of switch-and-bait on you. Which we don't apologize for, it's for your own good and hurts us more than it hurts you. It presents a familiar socket-based API, which requires great effort for us to hide a bunch of message-processing engines. However, the result will slowly fix your world-view about how to design and write distributed software.</para>
@@ -1385,7 +1387,7 @@ assert (zmq-ctx-get (context, ZMQ-IO-THREADS) == io-threads);
 <title>High-level Messaging Patterns</title>
 <para>These four core patterns are cooked-in to &Oslash;MQ. They are part of the &Oslash;MQ API, implemented in the core C++ library, and guaranteed to be available in all fine retail stores.</para>
 
-<para>On top, we add <emphasis>high-level patterns</emphasis>. We build these high-level patterns on top of &Oslash;MQ and implement them in whatever language we're using for our application. They are not part of the core library, do not come with the &Oslash;MQ package, and exist in their own space, as part of the &Oslash;MQ community. For example the Majordomo pattern, which we explore in <<reliable-request-reply>>, sits in the GitHub Majordomo project in the ZeroMQ organization.</para>
+<para>On top, we add <emphasis>high-level patterns</emphasis>. We build these high-level patterns on top of &Oslash;MQ and implement them in whatever language we're using for our application. They are not part of the core library, do not come with the &Oslash;MQ package, and exist in their own space, as part of the &Oslash;MQ community. For example the Majordomo pattern, which we explore in Reliable Request-Reply Patterns<xref linkend="reliable-request-reply"/>, sits in the GitHub Majordomo project in the ZeroMQ organization.</para>
 
 <para>One of the things we aim to provide you with this guide are a set of such high-level patterns, both small (how to handle messages sanely) to large (how to make a reliable publish-subscribe architecture).</para>
 
@@ -1442,7 +1444,7 @@ s-send (void *socket, char *string) {
 
 <para>If you want to send the same message more than once, create a second message, initialize it using <literal>zmq-msg-init[3]</literal> and then use <literal>zmq-msg-copy[3]</literal> to create a copy of the first message. This does not copy the data but the reference. You can then send the message twice (or more, if you create more copies) and the message will only be finally destroyed when the last copy is sent or closed.</para>
 
-<para>&Oslash;MQ also supports <emphasis>multi-part</emphasis> messages, which let you send or receive a list of frames as a single on-the-wire message. This is widely used in real applications and we'll look at that later in this chapter and in <<advanced-request-reply>>.</para>
+<para>&Oslash;MQ also supports <emphasis>multi-part</emphasis> messages, which let you send or receive a list of frames as a single on-the-wire message. This is widely used in real applications and we'll look at that later in this chapter and in Advanced Request-Reply Patterns<xref linkend="advanced-request-reply"/>.</para>
 
 <para>Some other things that are worth knowing about messages:</para>
 
@@ -1722,7 +1724,7 @@ while (1) {
 
 <para>But our broker has to be non-blocking. Obviously we can use <literal>zmq-poll[3]</literal> to wait for activity on either socket, but we can't use REP and REQ.</para>
 
-<para>Luckily there are two sockets called DEALER and ROUTER that let you do non-blocking request-response. You'll see in <<advanced-request-reply>> how DEALER and ROUTER sockets let you build all kinds of asynchronous request-reply flows. For now, we're just going to see how DEALER and ROUTER let us extend REQ-REP across an intermediary, that is, our little broker.</para>
+<para>Luckily there are two sockets called DEALER and ROUTER that let you do non-blocking request-response. You'll see in Advanced Request-Reply Patterns<xref linkend="advanced-request-reply"/> how DEALER and ROUTER sockets let you build all kinds of asynchronous request-reply flows. For now, we're just going to see how DEALER and ROUTER let us extend REQ-REP across an intermediary, that is, our little broker.</para>
 
 <para>In this simple stretched request-reply pattern, REQ talks to ROUTER and DEALER talks to REP. In between the DEALER and ROUTER we have to have code (like our broker) that pulls messages off the one socket and shoves them onto the other(<xref linkend="figure-16"/>).</para>
 
@@ -2414,7 +2416,7 @@ int main (void)
   <listitem><para>The server creates a DEALER socket to talk to the workers and binds this to its internal interface (over <literal>inproc</literal>).</para></listitem>
   <listitem><para>The server starts a proxy that connects the two sockets. The proxy pulls incoming requests fairly from all clients, and distributes those out to workers. It also routes replies back to their origin.</para></listitem>
 </itemizedlist>
-<para>Note that creating threads is not portable in most programming languages. The POSIX library is pthreads, but on Windows you have to use a different API. In our example, the <literal>pthread-create</literal> call starts up a new thread running the <literal>worker-routine</literal> function we defined. We'll see in <<advanced-request-reply>> how to wrap this in a portable API.</para>
+<para>Note that creating threads is not portable in most programming languages. The POSIX library is pthreads, but on Windows you have to use a different API. In our example, the <literal>pthread-create</literal> call starts up a new thread running the <literal>worker-routine</literal> function we defined. We'll see in Advanced Request-Reply Patterns<xref linkend="advanced-request-reply"/> how to wrap this in a portable API.</para>
 
 <para>Here the 'work' is just a one-second pause. We could do anything in the workers, including talking to other nodes. This is what the MT server looks like in terms of &Oslash;MQ sockets and nodes. Note how the request-reply chain is <literal>REQ-ROUTER-queue-DEALER-REP</literal>(<xref linkend="figure-20"/>).</para>
 
@@ -2862,9 +2864,11 @@ int main (void)
 
 <para>In short: if you have not proven an architecture works in realistic conditions, it will most likely break at the worst possible moment.</para>
 
-<para>++ Advanced Request-Reply Patterns</para>
-
-<para>In <<sockets-and-patterns>> we worked through the basics of using &Oslash;MQ by developing a series of small applications, each time exploring new aspects of &Oslash;MQ. We'll continue this approach in this chapter, as we explore advanced patterns built on top of &Oslash;MQ's core request-reply pattern.</para>
+</sect1>
+</chapter>
+<chapter id="advanced-request-reply">
+<title>Advanced Request-Reply Patterns</title>
+<para>In Sockets and Patterns<xref linkend="sockets-and-patterns"/> we worked through the basics of using &Oslash;MQ by developing a series of small applications, each time exploring new aspects of &Oslash;MQ. We'll continue this approach in this chapter, as we explore advanced patterns built on top of &Oslash;MQ's core request-reply pattern.</para>
 
 <para>We'll cover:</para>
 
@@ -2881,7 +2885,6 @@ int main (void)
   <listitem><para>How to build a scalable cloud of request-reply clusters.</para></listitem>
   <listitem><para>How to use pipeline sockets for monitoring threads.</para></listitem>
 </itemizedlist>
-</sect1>
 <sect1>
 <title>Request-Reply Envelopes</title>
 <para>We've looked briefly at multi-part messages. Let's now look at their first use case, which is <emphasis>message envelopes</emphasis>. An envelope is a way of safely packaging up data with an address, without touching the data itself. By separating addresses into an envelope we make it possible to write general-purpose intermediaries such as APIs and proxies that create, read, remove addresses no matter what the message payload or structure.</para>
@@ -5350,9 +5353,12 @@ int main (int argc, char *argv [])
 </itemizedlist>
 <para>This simulation does not detect disappearance of a cloud peer. If you start several peers and stop one, and it was broadcasting capacity to the others, they will continue to send it work even if it's gone. You can try this, and you will get clients that complain of lost requests. The solution is twofold: first, only keep the capacity information for a short time so that if a peer does disappear, its capacity is quickly set to 'zero'. Second, add reliability to the request-reply chain. We'll look at reliability in the next chapter.</para>
 
-<para>++ Reliable Request-Reply</para>
-
-<para>In <<advanced-request-reply>> we looked at advanced use of &Oslash;MQ's request-reply pattern with worked examples. In this chapter we'll look at the general question of reliability and build a set of reliable messaging patterns on top of &Oslash;MQ's core request-reply pattern.</para>
+</sect2>
+</sect1>
+</chapter>
+<chapter id="reliable-request-reply">
+<title>Reliable Request-Reply Patterns</title>
+<para>In Advanced Request-Reply Patterns<xref linkend="advanced-request-reply"/> we looked at advanced use of &Oslash;MQ's request-reply pattern with worked examples. In this chapter we'll look at the general question of reliability and build a set of reliable messaging patterns on top of &Oslash;MQ's core request-reply pattern.</para>
 
 <para>In this chapter we focus heavily on user-space request-reply 'patterns', reusable models that help you design your own &Oslash;MQ architectures:</para>
 
@@ -5365,8 +5371,6 @@ int main (int argc, char *argv [])
   <listitem><para>The <emphasis>Binary Star</emphasis> pattern: primary-backup server fail-over.</para></listitem>
   <listitem><para>The <emphasis>Freelance</emphasis> pattern: brokerless reliable request-reply.</para></listitem>
 </itemizedlist>
-</sect2>
-</sect1>
 <sect1>
 <title>What is "Reliability"?</title>
 <para>Most people who speak of 'reliability' don't really know what they mean. We can only define reliability in terms of failure. That is, if we can handle a certain set of well-defined and understood failures, we are reliable with respect to those failures. No more, no less. So let's look at the possible causes of failure in a distributed &Oslash;MQ application, in roughly descending order of probability:</para>
@@ -5613,7 +5617,7 @@ E: server seems to be offline, abandoning
 
 <para>In all these Pirate patterns, workers are stateless, or have some shared state we don't know about, e.g. a shared database. Having a queue device means workers can come and go without clients knowing anything about it. If one worker dies, another takes over. This is a nice simple topology with only one real weakness, namely the central queue itself, which can become a problem to manage, and a single point of failure.</para>
 
-<para>The basis for the queue device is the least-recently-used (LRU) routing queue from <<advanced-request-reply>>. What is the very <emphasis>minimum</emphasis> we need to do to handle dead or blocked workers? Turns out, it's surprisingly little. We already have a retry mechanism in the client. So using the standard LRU queue will work pretty well. This fits with &Oslash;MQ's philosophy that we can extend a peer-to-peer pattern like request-reply by plugging naive devices in the middle(<xref linkend="figure-54"/>).</para>
+<para>The basis for the queue device is the least-recently-used (LRU) routing queue from Advanced Request-Reply Patterns<xref linkend="advanced-request-reply"/>. What is the very <emphasis>minimum</emphasis> we need to do to handle dead or blocked workers? Turns out, it's surprisingly little. We already have a retry mechanism in the client. So using the standard LRU queue will work pretty well. This fits with &Oslash;MQ's philosophy that we can extend a peer-to-peer pattern like request-reply by plugging naive devices in the middle(<xref linkend="figure-54"/>).</para>
 
 <figure id="figure-54">
     <title>The Simple Pirate Pattern</title>
@@ -5728,7 +5732,7 @@ int main (void)
 </itemizedlist>
 <para>We'll fix these in a properly pedantic Paranoid Pirate Pattern.</para>
 
-<para>We previously used a REQ socket for the worker. For the Paranoid Pirate worker we'll switch to a DEALER socket(<xref linkend="figure-55"/>). This has the advantage of letting us send and receive messages at any time, rather than the lock-step send/receive that REQ imposes. The downside of DEALER is that we have to do our own envelope management. If you don't know what I mean, please re-read <<advanced-request-reply>>.</para>
+<para>We previously used a REQ socket for the worker. For the Paranoid Pirate worker we'll switch to a DEALER socket(<xref linkend="figure-55"/>). This has the advantage of letting us send and receive messages at any time, rather than the lock-step send/receive that REQ imposes. The downside of DEALER is that we have to do our own envelope management. If you don't know what I mean, please re-read Advanced Request-Reply Patterns<xref linkend="advanced-request-reply"/>.</para>
 
 <figure id="figure-55">
     <title>The Paranoid Pirate Pattern</title>
@@ -10042,9 +10046,11 @@ flcliapi_agent (void *args, zctx_t *ctx, void *pipe)
 <title>Conclusion</title>
 <para>In this chapter we've seen a variety of reliable request-reply mechanisms, each with certain costs and benefits. The example code is largely ready for real use, though it is not optimized. Of all the different patterns, the two that stand out are the Majordomo pattern, for broker-based reliability, and the Freelance pattern for brokerless reliability.</para>
 
-<para>++ Advanced Publish-Subscribe</para>
-
-<para>In <<advanced-request-reply>> and <<reliable-request-reply>> we looked at advanced use of &Oslash;MQ's request-reply pattern. If you managed to digest all that, congratulations. In this chapter we'll focus on publish-subscribe, and extend &Oslash;MQ's core pub-sub pattern with higher-level patterns for performance, reliability, state distribution, and monitoring.</para>
+</sect1>
+</chapter>
+<chapter id="advanced-pub-sub">
+<title>Advanced Publish-Subscribe Patterns</title>
+<para>In Advanced Request-Reply Patterns<xref linkend="advanced-request-reply"/> and Reliable Request-Reply Patterns<xref linkend="reliable-request-reply"/> we looked at advanced use of &Oslash;MQ's request-reply pattern. If you managed to digest all that, congratulations. In this chapter we'll focus on publish-subscribe, and extend &Oslash;MQ's core pub-sub pattern with higher-level patterns for performance, reliability, state distribution, and monitoring.</para>
 
 <para>We'll cover:</para>
 
@@ -10056,7 +10062,6 @@ flcliapi_agent (void *args, zctx_t *ctx, void *pipe)
   <listitem><para>How to use the Binary Star pattern to add failover to a server.</para></listitem>
   <listitem><para>How to monitor a publish-subscribe network (the <emphasis>Espresso</emphasis> pattern).</para></listitem>
 </itemizedlist>
-</sect1>
 <sect1>
 <title>Slow Subscriber Detection (Suicidal Snail Pattern)</title>
 <para>A common problem you will hit when using the pub-sub pattern in real life is the slow subscriber. In an ideal world, we stream data at full speed from publishers to subscribers. In reality, subscriber applications are often written in interpreted languages, or just do a lot of work, or are just badly written, to the extent that they can't keep up with publishers.</para>
@@ -10280,7 +10285,7 @@ int main (void)
 
 <sect2>
 <title>Distributing Key-Value Updates</title>
-<para>We'll develop Clone in stages, solving one problem at a time. First, let's look at how to distribute key-value updates from a server to a set of clients. We'll take our weather server from <<basics>> and refactor it to send messages as key-value pairs(<xref linkend="figure-64"/>). We'll modify our client to store these in a hash table.</para>
+<para>We'll develop Clone in stages, solving one problem at a time. First, let's look at how to distribute key-value updates from a server to a set of clients. We'll take our weather server from Basics<xref linkend="basics"/> and refactor it to send messages as key-value pairs(<xref linkend="figure-64"/>). We'll modify our client to store these in a hash table.</para>
 
 <figure id="figure-64">
     <title>Simplest Clone Model</title>
@@ -12063,7 +12068,7 @@ s_flush_ttl (zloop_t *loop, zmq_pollitem_t *poller, void *args)
   <listitem><para>Clone server machine dies and is off-line for a significant time. Clients have to switch to an alternate server somewhere.</para></listitem>
   <listitem><para>Clone server process or machine gets disconnected from the network, e.g. a switch dies. It may come back at some point, but in the meantime clients need an alternate server.</para></listitem>
 </itemizedlist>
-<para>Our first step is to add a second server. We can use the Binary Star pattern from <<reliable-request-reply>> to organize these into primary and backup. Binary Star is a reactor, so it's useful that we already refactored the last server model into a reactor style.</para>
+<para>Our first step is to add a second server. We can use the Binary Star pattern from Reliable Request-Reply Patterns<xref linkend="reliable-request-reply"/> to organize these into primary and backup. Binary Star is a reactor, so it's useful that we already refactored the last server model into a reactor style.</para>
 
 <para>We need to ensure that updates are not lost if the primary server crashes. The simplest technique is to send them to both servers.</para>
 
@@ -12157,7 +12162,7 @@ clone_connect (clone, "tcp://localhost:5561");
   <listitem><para>The server updates publisher (PUB) is at port P + 1.</para></listitem>
   <listitem><para>The server updates subscriber (SUB) is at port P + 2.</para></listitem>
 </itemizedlist>
-<para>The clone class has the same structure as the flcliapi class from <<reliable-request-reply>>. It consists of two parts:</para>
+<para>The clone class has the same structure as the flcliapi class from Reliable Request-Reply Patterns<xref linkend="reliable-request-reply"/>. It consists of two parts:</para>
 
 <itemizedlist>
   <listitem><para>An asynchronous clone agent that runs in a background thread. The agent handles all network I/O, talking to servers in real-time, no matter what the application is doing.</para></listitem>
@@ -13366,10 +13371,12 @@ int main (void)
 
 <para>Each subscriber happily reports "Save Roger", and Roth the Escaped Convict slinks back to his cell for dinner and a nice cup of hot milk, which is all he really wanted anyhow and could someone call his mum and tell her his clean socks are almost all up.</para>
 
-<para>One note: the XPUB socket by default does not report duplicate subscriptions, which is what you want when you're naively connecting an XPUB to an XSUB. Our example sneakily gets around this by using random topics so the chance of it not working is one in a million. In a real LVC proxy you'll want to use the <literal>ZMQ_XPUB_VERBOSE</literal> option that we implement later in <<the-&Oslash;MQ-community>> as an exercise.</para>
+<para>One note: the XPUB socket by default does not report duplicate subscriptions, which is what you want when you're naively connecting an XPUB to an XSUB. Our example sneakily gets around this by using random topics so the chance of it not working is one in a million. In a real LVC proxy you'll want to use the <literal>ZMQ_XPUB_VERBOSE</literal> option that we implement later in The &Oslash;MQ Community<xref linkend="the-community"/> as an exercise.</para>
 
-<para>++ The Human Scale</para>
-
+</sect1>
+</chapter>
+<chapter id="the-human-scale">
+<title>The Human Scale</title>
 <para>If you've survived the first five chapters, congratulations. It was hard for for me too. Happily the jokes and the code mostly write themselves, so we'll continue with our journey of exploring &Oslash;MQ. In this chapter I'm going to step back from the nuts and bolts of &Oslash;MQ's technical machinery, and look more at how to use &Oslash;MQ successfully in larger projects.</para>
 
 <para>We'll cover:</para>
@@ -13389,7 +13396,6 @@ int main (void)
   <listitem><para>How to make a secure protocol over &Oslash;MQ (yay!).</para></listitem>
   <listitem><para>A large-scale file publishing system (FileMQ).</para></listitem>
 </itemizedlist>
-</sect1>
 <sect1>
 <title>The Tale of Two Bridges</title>
 <para>Two old engineers were talking of their lives and boasting of their greatest projects. One of the engineers explained how he had designed one of the greatest bridges ever made.</para>
@@ -13551,7 +13557,7 @@ int main (void)
 
 <para>So MOPED is meant to save us from such mistakes. Partly it's about slowing down, partly it's about ensuring that when you move fast, you go - and this is essential, dear reader - in the <emphasis>right direction</emphasis>. It's my standard interview riddle: what's the rarest property of any software system, the absolute hardest thing to get right, the lack of which causes the slow or fast death of the vast majority of projects? The answer is not code quality, funding, performance, or even (though it's a close answer), popularity. The answer is "accuracy".</para>
 
-<para>If you've read the Guide observantly you'll have seen MOPED in action already. The development of Majordomo in <<reliable-request-reply>> is a near-perfect case. But cute names are worth a thousand words.</para>
+<para>If you've read the Guide observantly you'll have seen MOPED in action already. The development of Majordomo in Reliable Request-Reply Patterns<xref linkend="reliable-request-reply"/> is a near-perfect case. But cute names are worth a thousand words.</para>
 
 <para>The goal of MOPED is to define a process, a pattern by which we can take a rough use case for a new distributed application, and go from "hello world" to fully-working prototype in any language in under a week.</para>
 
@@ -13626,7 +13632,7 @@ int main (void)
 
 <para>It used to be, decades ago, when the Internet was a young modest thing, that protocols were short and sweet. They weren't even "standards", but "requests for comments", which is as modest as you can get. It's been one of my goals since we started iMatix in 1995 to find a way for ordinary people like me to write small, accurate protocols without the overhead of the committees.</para>
 
-<para>Now, &Oslash;MQ does appear to provide a living, successful protocol abstraction layer with its "we'll carry multi-part messages over random transports" way of working. Since &Oslash;MQ deals silently with framing, connections, and routing, it's surprisingly easy to write full protocol specs on top of &Oslash;MQ, and in <<reliable-request-reply>> and <<advanced-publish-subscribe>> I showed how to do this.</para>
+<para>Now, &Oslash;MQ does appear to provide a living, successful protocol abstraction layer with its "we'll carry multi-part messages over random transports" way of working. Since &Oslash;MQ deals silently with framing, connections, and routing, it's surprisingly easy to write full protocol specs on top of &Oslash;MQ, and in Reliable Request-Reply Patterns<xref linkend="reliable-request-reply"/> and Advanced Publish-Subscribe Patterns<xref linkend="advanced-pub-sub"/> I showed how to do this.</para>
 
 <para>Somewhere around mid-2007, I kicked-off the Digital Standards Organization to define new simpler ways of producing little standards, protocols, specifications. In my defense, it was a quiet summer. At the time <ulink url="http://www.digistan.org/spec:1">I wrote that</ulink> a new specification should take "minutes to explain, hours to design, days to write, weeks to prove, months to become mature, and years to replace."</para>
 
@@ -13879,11 +13885,11 @@ Virtual-host: test-env
 
 <para>At iMatix, until a few years ago, we used code generation to build ever larger and more ambitious systems until we decided the technology (GSL) was too dangerous for common use, and we sealed the archive and locked it, with heavy chains, in a deep dungeon. Well, we actually posted it on github. If you want to try the examples that are coming up, grab <ulink url="https://github.com/imatix/gsl">the repository</ulink> and build yourself a <literal>gsl</literal> command. Typing "make" in the src subdirectory should do it (and if you're that guy who loves Windows, I'm sure you'll send a patch with project files).</para>
 
-<para>This section isn't really about GSL at all, but about a useful and little-known trick that's useful for ambitious architects who want to scale themselves, as well as their work. Once you learn the trick is, you can whip up your own code generators in a short time. The code generators most software engineers know about come with a single hard-coded model. For instance, Ragel "compiles executable finite state machines from regular languages", i.e. Ragel's model is a regular language. This certainly works for a good set of problems but it's far from universal. How do you describe an API in Ragel? Or a project makefile? Or even a finite-state machine like the one we used to design the Binary Star pattern in <<reliable-request-reply>>?</para>
+<para>This section isn't really about GSL at all, but about a useful and little-known trick that's useful for ambitious architects who want to scale themselves, as well as their work. Once you learn the trick is, you can whip up your own code generators in a short time. The code generators most software engineers know about come with a single hard-coded model. For instance, Ragel "compiles executable finite state machines from regular languages", i.e. Ragel's model is a regular language. This certainly works for a good set of problems but it's far from universal. How do you describe an API in Ragel? Or a project makefile? Or even a finite-state machine like the one we used to design the Binary Star pattern in Reliable Request-Reply Patterns<xref linkend="reliable-request-reply"/>?</para>
 
 <para>All these would benefit from code generation, but there's no universal model. So the trick is to design your own models as you need them, then make code generators as cheap compilers for that model. You need some experience in how to make good models, and you need a technology that makes it cheap to build custom code generators. Scripting languages like Perl and Python are a good option. However we actually built GSL specifically for this, and that's what I prefer.</para>
 
-<para>Let's take a simple example that ties into what we already know. We'll see more extensive examples later, because I really do believe that code generation is crucial knowledge for large-scale work. In <<reliable-request-reply>>, we developed the <ulink url="http://rfc.zeromq.org/spec:7">Majordomo Protocol (MDP)</ulink>, and wrote clients, brokers, and workers for that. Now could we generate those pieces mechanically, by building our own interface description language and code generators?</para>
+<para>Let's take a simple example that ties into what we already know. We'll see more extensive examples later, because I really do believe that code generation is crucial knowledge for large-scale work. In Reliable Request-Reply Patterns<xref linkend="reliable-request-reply"/>, we developed the <ulink url="http://rfc.zeromq.org/spec:7">Majordomo Protocol (MDP)</ulink>, and wrote clients, brokers, and workers for that. Now could we generate those pieces mechanically, by building our own interface description language and code generators?</para>
 
 <para>When we write a GSL model, we can use <emphasis>any</emphasis> semantics we like, in other words we can invent domain-specific languages on the spot. I'll invent a couple - see if you can guess what they represent:</para>
 
@@ -15238,8 +15244,10 @@ int main (int argc, char *argv [])
 
 <para>Note how we work with physical paths in this tool. The server publishes the physical path "/home/ph/Music" and maps this to the virtual path "/". The client subscribes to "/" and receives all files in "/media/3230-6364/MUSIC". I could use any structure within the server directory, and it would be copied faithfully to the client's inbox.</para>
 
-<para>++ The &Oslash;MQ Community</para>
-
+</sect1>
+</chapter>
+<chapter id="the-community">
+<title>The &Oslash;MQ Community</title>
 <para>People sometimes ask what's special about &Oslash;MQ. My standard answer is, it's true that &Oslash;MQ is arguably the best answer we have to the vexing question of "how do we make the distributed software that the 21st century demands?" but more than that, &Oslash;MQ is special because of its community. This is ultimately what separates the wolves from the sheep.</para>
 
 <para>There are three main open source patterns. One, the large firm dumping code to break the market for others. This is the Apache Foundation model. Two, tiny teams or small firms building their dream. This is the most common open source model, and it can be very successful commercially. Three, aggressive and diverse communities that swarm over a problem landscape. This is the Linux model, and the one we aspire to with &Oslash;MQ.</para>
@@ -15265,7 +15273,6 @@ int main (int argc, char *argv [])
   <listitem><para>Who decides on the &Oslash;MQ road-map?</para></listitem>
   <listitem><para>A worked example of a change to libzmq.</para></listitem>
 </itemizedlist>
-</sect1>
 <sect1>
 <title>Architecture of the &Oslash;MQ Community</title>
 <para>You know that &Oslash;MQ is an LGPL-licensed project. In fact it's a collection of projects, built around the core library, <literal>libzmq</literal>. I'll visualize these projects as an expanding galaxy:</para>
@@ -15327,7 +15334,7 @@ int main (int argc, char *argv [])
 <title>The Process</title>
 <para>If you've accepted my thesis up to now, great! Now, I'll explain the rough process by which we actually build an open source community. This was how we built or grew or gently steered the &Oslash;MQ community into existence.</para>
 
-<para>You recall the simplicity-oriented design process from <<the-human-scale>>, where I claimed that we build successfully accurate software by successfully exploring the problem landscape, rather than by sheer intellectual effort. Keep this in mind. Now, see your community as a group exploring that landscape and sharing the results of their work.</para>
+<para>You recall the simplicity-oriented design process from The Human Scale<xref linkend="the-human-scale"/>, where I claimed that we build successfully accurate software by successfully exploring the problem landscape, rather than by sheer intellectual effort. Keep this in mind. Now, see your community as a group exploring that landscape and sharing the results of their work.</para>
 
 <para>Your goal as leader of a community is to motivate people to get out there and explore; to ensure they can do so safely and without disturbing others; to reward them when they make successful discoveries; and to ensure they share their knowledge with everyone else (and not because we ask them, not because they feel generous, but because it's The Law).</para>
 
@@ -15528,7 +15535,7 @@ int main (int argc, char *argv [])
 <blockquote>
   <para>A patch SHOULD be a minimal and accurate answer to exactly one identified and agreed problem.</para>
 </blockquote>
-<para>Recall the Simplicity Oriented Design pattern from <<the-human-scale>>. This implements that. One clear problem, one minimal solution, apply, test, repeat.</para>
+<para>Recall the Simplicity Oriented Design pattern from The Human Scale<xref linkend="the-human-scale"/>. This implements that. One clear problem, one minimal solution, apply, test, repeat.</para>
 
 <blockquote>
   <para>A patch MUST adhere to the code style guidelines of the project if these are defined.</para>
@@ -16133,8 +16140,11 @@ git log
 
 <para>The Mystic never argues directly. He knows that to argue with an emotional person only creates more emotion. Instead he side-steps the discussion. It's hard to be angry at a Chinese general, especially when he has been dead for 2,400 years. The Mystic plays Hangman when people insist on the right to get it wrong.</para>
 
-<para>++ A Universe of Moving Pieces</para>
-
+</sect2>
+</sect1>
+</chapter>
+<chapter id="moving-pieces">
+<title>A Universe of Moving Pieces</title>
 <para>So far in this book I've aimed to take you though a journey of understanding &Oslash;MQ in its many aspects. By now you may have started to build your own products using the techniques I explained, and others you've figured out yourself. You will start to face questions about to make these products work in the real world.</para>
 
 <para>But what is that "real world"? My view is that it is becoming a world of ever increasing numbers of moving pieces. Some people use the phrase the "Internet of Things", suggesting that we'll see a new category of devices that are more numerous but rather stupider than our current smart phones and tablets and laptops and servers. However, I don't think the data points this way at all. Yes, more and more devices, but they're not stupid at all. They're smart and powerful and getting more so all the time.</para>
@@ -16154,8 +16164,6 @@ git log
 <itemizedlist>
   <listitem><para>Building a basic framework for distributed computing.</para></listitem>
 </itemizedlist>
-</sect2>
-</sect1>
 <sect1>
 <title>Design for The Real World</title>
 <para>Whether we're connecting a roomful of mobile devices over WiFi, or a cluster of virtual boxes over simulated Ethernet, we will hit the same kinds of problems. These are:</para>
@@ -16177,7 +16185,7 @@ git log
 
 <para>You should have guessed from my rhetorical questions that there are two broad directions we can go. One is to centralize everything. The other is to distribute everything. I'm going to bet on decentralization. If you want centralization, you don't really need &Oslash;MQ; there are other options you can use.</para>
 
-<para>So very roughly, here's the story. One, the number of moving pieces increases exponentially over time (doubles every 24 months). Two, these pieces stop using wires since dragging cables everywhere gets <emphasis>really</emphasis> boring. Three, future applications run across clusters of these pieces using the Benevolent Tyrant pattern from <<the-&Oslash;MQ-community>>. Four, today it's really difficult, nay still rather impossible, to build such applications. Five, let's make it cheap and easy using all the techniques and tools we've built up. Six, partay!</para>
+<para>So very roughly, here's the story. One, the number of moving pieces increases exponentially over time (doubles every 24 months). Two, these pieces stop using wires since dragging cables everywhere gets <emphasis>really</emphasis> boring. Three, future applications run across clusters of these pieces using the Benevolent Tyrant pattern from The &Oslash;MQ Community<xref linkend="the-community"/>. Four, today it's really difficult, nay still rather impossible, to build such applications. Five, let's make it cheap and easy using all the techniques and tools we've built up. Six, partay!</para>
 
 </sect1>
 <sect1>
@@ -16979,7 +16987,7 @@ interface_agent (void *args, zctx_t *ctx, void *pipe)
 </sect1>
 <sect1>
 <title>Spinning off a Library Project</title>
-<para>At this stage however, the code is growing larger than an example should be, so it's time to create a proper GitHub project. It's a rule: build your projects in public view, and tell people about them as you go, so your marketing and community building starts on day 1. I'll walk through what this involves. I explained in <<the-&Oslash;MQ-community>> about growing communities around projects. We need a few things:</para>
+<para>At this stage however, the code is growing larger than an example should be, so it's time to create a proper GitHub project. It's a rule: build your projects in public view, and tell people about them as you go, so your marketing and community building starts on day 1. I'll walk through what this involves. I explained in The &Oslash;MQ Community<xref linkend="the-community"/> about growing communities around projects. We need a few things:</para>
 
 <itemizedlist>
   <listitem><para>A name.</para></listitem>
@@ -16997,7 +17005,7 @@ interface_agent (void *args, zctx_t *ctx, void *pipe)
 
 <para>Start with the basics. The protocol (UDP and &Oslash;MQ/TCP) will be ZRE and the project will be ZyRE, with different capitalization to reduce confusion with the old project. I need a second maintainer, so invite my friend Dong Min (the Korean hacker behind JeroMQ, a pure-Java &Oslash;MQ stack) to join. He's been working on very similar ideas so is enthusiastic. We discuss this and we get the idea of building ZyRE on top of JeroMQ as well as on top of CZMQ and libzmq. This would make it a lot easier to run ZyRE on Android. It would also give us two fully separate implementations from the start, always a good thing for a protocol.</para>
 
-<para>So we take the FileMQ project I built in <<the-human-scale>> as a template for a new GitHub project. The GNU autoconf tools are quite decent but have a painful syntax. It's easiest to copy existing project files, and modify them. The FileMQ project builds a library, has test tools, license files, man pages, and so on. It's not too large so it's a good starting point.</para>
+<para>So we take the FileMQ project I built in The Human Scale<xref linkend="the-human-scale"/> as a template for a new GitHub project. The GNU autoconf tools are quite decent but have a painful syntax. It's easiest to copy existing project files, and modify them. The FileMQ project builds a library, has test tools, license files, man pages, and so on. It's not too large so it's a good starting point.</para>
 
 <para>I put together a README to summarize the goals of the project and point to C4. The issue tracker is enabled by default on new GitHub projects, so once we've pushed the UDP ping code as a first version, we're ready to go. However it's always good to recruit more maintainers, so I create an issue "Call for maintainers" that says:</para>
 
@@ -17210,7 +17218,7 @@ if (memcmp (beacon.uuid, self-&gt;uuid, sizeof (uuid_t))) {
   <listitem><para>A hash of groups for other peers, which we update with information from HELLO, JOIN, and LEAVE commands;</para></listitem>
   <listitem><para>A hash of peers for each group, which we update with the same three commands.</para></listitem>
 </itemizedlist>
-<para>At this stage I'm starting to get pretty happy with the binary serialization (our codec generator from <<the-human-scale>>), which handles things like lists and hashes neatly.</para>
+<para>At this stage I'm starting to get pretty happy with the binary serialization (our codec generator from The Human Scale<xref linkend="the-human-scale"/>), which handles lists and dictionaries as well as strings and integers.</para>
 
 <para>This version is tagged in the repository as v0.2.0 and you can [<ulink url="https://github.com/zeromq/zyre/tags">download the tarball</ulink> if you want to check what the code looked like at this stage.</para>
 
@@ -17522,8 +17530,8 @@ zre_peer_disconnect (zre_peer_t *self)
 <para>In the rest of this chapter we'll develop a distributed logging service as a ZyRE application, and we'll complete the rest of the ZyRE framework: file transfer, security, state synchronization.</para>
 
 </sect1>
-</preface>
-<chapter>
+</chapter>
+<chapter id="postface">
 <title>Postface</title>
 <sect1>
 <title>Tales from Out There</title>
