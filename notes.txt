@@ -1,15 +1,3 @@
-++++ Limiting Socket Use
-
-By default, a 0MQ socket will continue to accept connections until your operating system runs out of file handles. This isn't always the best policy for public-facing services as it leaves you open to a simple denial-of-service attack. You can set a limit using another {{zmq_ctx_set[3]}} call:
-
-[[code type="fragment" name="maxsockets"]]
-int max_sockets = 1024;
-void *context = zmq_ctx_new ();
-zmq_ctx_get (context, ZMQ_MAX_SOCKETS, max_sockets);
-assert (zmq_ctx_get (context, ZMQ_MAX_SOCKETS) == max_sockets);
-[[/code]]
-
-
 
 
 +++ Distributed Logging
