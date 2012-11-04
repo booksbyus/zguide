@@ -129,6 +129,12 @@ while (<>) {
         elsif (/^\.prelude\s+(\w.*)/) {
             $prelude = $1;
         }
+        elsif (/^\.inbook\s+(\w.*)/) {
+            #   Skip .inbook directive
+        }
+        elsif (/^\.bookmark\s+(\w.*)/) {
+            #   No handling for bookmark yet
+        }
         elsif (/^\.filter\s+(\w.*)/) {
             $filter = ($1 eq "online");
         }

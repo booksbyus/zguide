@@ -1,8 +1,8 @@
 .output chapter3.wd
-[[advanced_request_reply_patterns]]
+.bookmark advanced-request-reply
 ++ Advanced Request-Reply Patterns
 
-In Chapter Two we worked through the basics of using 0MQ by developing a series of small applications, each time exploring new aspects of 0MQ. We'll continue this approach in this chapter, as we explore advanced patterns built on top of 0MQ's core request-reply pattern.
+In <<sockets-and-patterns>> we worked through the basics of using 0MQ by developing a series of small applications, each time exploring new aspects of 0MQ. We'll continue this approach in this chapter, as we explore advanced patterns built on top of 0MQ's core request-reply pattern.
 
 We'll cover:
 

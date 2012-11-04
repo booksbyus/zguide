@@ -72,12 +72,13 @@ print OUTPUT "<!DOCTYPE book PUBLIC \"-//OASIS//DTD DocBook XML V4.5//EN\"\n";
 print OUTPUT "\"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd\">\n";
 print OUTPUT "<book>\n";
 
-#   Include bookinfo if publisher directory exists
+#   Include bookinfo if book directory exists
 if ($format eq "book" && open (BOOKINFO, "book/bookinfo.xml")) {
     print OUTPUT "<title>ZeroMQ - Connecting your Code</title>\n";
     while (<BOOKINFO>) {
         print OUTPUT $_ unless /DOCTYPE/;
     }
+    close (BOOKINFO);
 }
 else {
     print OUTPUT "<title>The ZeroMQ Guide - for $source Developers</title>\n";
@@ -106,6 +107,15 @@ while (<>) {
         }
         elsif (/^\.prelude\s+(\w.*)/) {
             $prelude = $1;
+        }
+        elsif (/^\.inbook\s+(\w.*)/) {
+            #   Include book boilerplate if book directory exists
+            if ($format eq "book" && open (BOILER, "book/$1")) {
+                while (<BOILER>) {
+                    print OUTPUT $_;
+                }
+                close (BOILER);
+            }
         }
         elsif (/^\.filter\s+(\w.*)/) {
             $filter = ($1 eq $format);

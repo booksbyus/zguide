@@ -13,10 +13,6 @@ Please use the [$(GIT)/issues issue tracker] for all comments and errata. This v
 The Guide is originally [/page:all in C], but also in [/php:all PHP], [/py:all Python], [/lua:all Lua], and [/hx:all Haxe]. We've also translated most of the examples into C++, C#, CL, Delphi, Erlang, F#, Felix, Haskell, Java, Objective-C, Ruby, Ada, Basic, Clojure, Go, Haxe, Node.js, ooc, Perl, and Scala.
 .filter reset
 
-.filter online
-For my children.
-.filter reset
-
 ++ Preface
 
 +++ 0MQ in a Hundred Words
@@ -29,7 +25,6 @@ The Ø in 0MQ is all about tradeoffs. On the one hand this strange name lowers 0
 
 Originally the zero in 0MQ was meant as "zero broker" and (as close to) "zero latency" (as possible). In the meantime it has come to cover different goals: zero administration, zero cost, zero waste. More generally, "zero" refers to the culture of minimalism that permeates the project. We add power by removing complexity rather than exposing new functionality.
 
-.filter online
 +++ How the Guide Happened
 
 In the summer of 2010, 0MQ was still a little-known niche library described by its rather terse man pages and a living but sparse wiki. Martin Sustrik and myself (Pieter Hintjens) were sitting in the bar of the Hotel Kyjev in Bratislava plotting how to make 0MQ more widely popular. Martin had written most of the 0MQ code, and I'd put up the funding and organized the community. Over some Zlaty Bazants, we agreed that 0MQ needed a new, simpler web site, and a basic guide to new users.
@@ -47,7 +42,6 @@ But the goal of the Guide was, from the start, a printed book. So it was excitin
 Of course as soon as O'Reilly announced a 0MQ book, other publishers started sending out emails to potential authors. You'll probably see a rash of 0MQ books coming out next year. That's good: our niche library has hit the mainstream and deserves its six inches of shelf space. My apologies to the other 0MQ authors: we've set the bar horribly high, and my advice is to make your books complimentary. Perhaps focus on a specific language, platform, or pattern.
 
 This is the magic and power of communities: be the first community in a space, stay healthy, and you own that space for ever.
-.filter reset
 
 +++ Audience
 
@@ -65,7 +59,7 @@ We tried to be as unconventional as possible. Nevertheless, you'll tend to find 
 
 +++ Using the Code Examples
 
-The code examples are all online in the Guide repository at _https://github.com/imatix/zguide/tree/master/examples/_. You'll find each example translated into several, often a dozen other languages. The examples are licensed under MIT/X11; see the LICENSE file in that directory. The text of the Guide explains in each case how to run each example.
+.inbook preface.xml
 
 +++ Acknowledgements
 
@@ -74,5 +68,3 @@ Thanks to Andy Oram for making [http://shop.oreilly.com/product/0636920026136.do
 Thanks to Bill Desmarais, Brian Dorsey, Daniel Lin, Eric Desgranges, Gonzalo Diethelm, Guido Goldstein, Hunter Ford, Kamil Shakirov, Martin Sustrik, Mike Castleman, Naveen Chawla, Nicola Peduzzi, Oliver Smith, Olivier Chamoux, Peter Alexander, Pierre Rouleau, Randy Dryburgh, John Unwin, Alex Thomas, Mihail Minkov, Jeremy Avnet, Michael Compton, Kamil Kisiel, Mark Kharitonov, Guillaume Aubert, Ian Barber, Mike Sheridan, Faruk Akgul, Oleg Sidorov, Lev Givon, Allister MacLeod, Alexander D'Archangel, Andreas Hoelzlwimmer, Han Holl, Robert G. Jakabosky, Felipe Cruz, Marcus McCurdy, Mikhail Kulemin, Dr. Gergő Érdi, Pavel Zhukov, Alexander Else, Giovanni Ruggiero, Rick "Technoweenie", Daniel Lundin, Dave Hoover, Simon Jefford, Benjamin Peterson, Justin Case, Devon Weller, Richard Smith, Alexander Morland, Wadim Grasza, Michael Jakl, Uwe Dauernheim, Sebastian Nowicki, Simone Deponti, Aaron Raddon, Dan Colish, Markus Schirp, Benoit Larroque, Jonathan Palardy, Isaiah Peng, Arkadiusz Orzechowski, Umut Aydin, Matthew Horsfall, Jeremy W. Sherman, Eric Pugh, Tyler Sellon, John E. Vincent, Pavel Mitin, Min RK, Igor Wiedler, Olof Åkesson, Patrick Lucas, Heow Goodman, Senthil Palanisami, John Gallagher, Tomas Roos, Stephen McQuay, Erik Allik, Arnaud Cogoluègnes, Rob Gagnon, Dan Williams, Edward Smith, James Tucker, Kristian Kristensen, Vadim Shalts, Martin Trojer, Tom van Leeuwen, Pandya Hiten, Harm Aarts, Marc Harter, Iskren Ivov Chernev, Jay Han, Sonia Hamilton, Nathan Stocks, Naveen Palli, and Zed Shaw for their contributions.
 
 Thanks to Stathis Sideris for [http://www.ditaa.org Ditaa].
-
-And finally, thanks to Allen Ding, Mikko Koppanen, and y'all in Dallas for your support.

@@ -1,5 +1,5 @@
 .output chapter2.wd
-[[sockets_patterns]]
+.bookmark sockets-and-patterns
 ++ Sockets and Patterns
 
 In <<basics>> we took 0MQ for a drive, with some basic examples of the main 0MQ patterns: request-reply, publish-subscribe, and pipeline. In this chapter we're going to get our hands dirty and start to learn how to use these tools in real programs.
@@ -31,44 +31,44 @@ Sockets are the de-facto standard API for network programming, as well as being 
 
 Like a favorite dish, 0MQ sockets are easy to digest. Sockets have a life in four parts, just like BSD sockets:
 
-* Creating and destroying sockets, which go together to form a karmic circle of socket life (see {{zmq_socket[3]}}, {{zmq_close[3]).
+* Creating and destroying sockets, which go together to form a karmic circle of socket life (see {{zmq-socket[3]}}, {{zmq-close[3]).
 
-* Configuring sockets by setting options on them and checking them if necessary (see {{zmq_setsockopt[3]}}, {{zmq_getsockopt[3]).
+* Configuring sockets by setting options on them and checking them if necessary (see {{zmq-setsockopt[3]}}, {{zmq-getsockopt[3]).
 
-* Plugging sockets onto the network topology by creating 0MQ connections to and from them (see {{zmq_bind[3]}}, {{zmq_connect[3]).
+* Plugging sockets onto the network topology by creating 0MQ connections to and from them (see {{zmq-bind[3]}}, {{zmq-connect[3]).
 
-* Using the sockets to carry data by writing and receiving messages on them (see {{zmq_msg_send[3]}}, {{zmq_msg_recv[3]).
+* Using the sockets to carry data by writing and receiving messages on them (see {{zmq-msg-send[3]}}, {{zmq-msg-recv[3]).
 
-Note that sockets are always void pointers, and messages (which we'll come to very soon) are structures. So in C you pass sockets as-such, but you pass addresses of messages in all functions that work with messages, like {{zmq_msg_send[3]}} and {{zmq_msg_recv[3]}}. As a mnemonic, realize that "in 0MQ all your sockets are belong to us", but messages are things you actually own in your code.
+Note that sockets are always void pointers, and messages (which we'll come to very soon) are structures. So in C you pass sockets as-such, but you pass addresses of messages in all functions that work with messages, like {{zmq-msg-send[3]}} and {{zmq-msg-recv[3]}}. As a mnemonic, realize that "in 0MQ all your sockets are belong to us", but messages are things you actually own in your code.
 
 Creating, destroying, and configuring sockets works as you'd expect for any object. But remember that 0MQ is an asynchronous, elastic fabric. This has some impact on how we plug sockets into the network topology, and how we use the sockets after that.
 
 ++++ Plugging Sockets Into the Topology
 
-To create a connection between two nodes you use {{zmq_bind[3]}} in one node, and {{zmq_connect[3]}} in the other.  As a general rule of thumb, the node which does {{zmq_bind[3]}} is a "server", sitting on a well-known network address, and the node which does {{zmq_connect[3]}} is a "client", with unknown or arbitrary network addresses. Thus we say that we "bind a socket to an endpoint" and "connect a socket to an endpoint", the endpoint being that well-known network address.
+To create a connection between two nodes you use {{zmq-bind[3]}} in one node, and {{zmq-connect[3]}} in the other.  As a general rule of thumb, the node which does {{zmq-bind[3]}} is a "server", sitting on a well-known network address, and the node which does {{zmq-connect[3]}} is a "client", with unknown or arbitrary network addresses. Thus we say that we "bind a socket to an endpoint" and "connect a socket to an endpoint", the endpoint being that well-known network address.
 
 0MQ connections are somewhat different from old-fashioned TCP connections. The main notable differences are:
 
-* They go across an arbitrary transport ({{inproc}}, {{ipc}}, {{tcp}}, {{pgm}} or {{epgm}}). See {{zmq_inproc[7]}}, {{zmq_ipc[7]}}, {{zmq_tcp[7]}}, {{zmq_pgm[7]}}, and {{zmq_epgm[7]}}.
+* They go across an arbitrary transport ({{inproc}}, {{ipc}}, {{tcp}}, {{pgm}} or {{epgm}}). See {{zmq-inproc[7]}}, {{zmq-ipc[7]}}, {{zmq-tcp[7]}}, {{zmq-pgm[7]}}, and {{zmq-epgm[7]}}.
 
 * One socket may have many outgoing and many incoming connections.
 
-* There is no {{zmq_accept() method. When a socket is bound to an endpoint it automatically starts accepting connections.
+* There is no {{zmq-accept() method. When a socket is bound to an endpoint it automatically starts accepting connections.
 
 * The network connection itself happens in the background, and 0MQ will automatically re-connect if the network connection is broken (e.g. if the peer disappears and then comes back).
 
 * Your application code cannot work with these connections directly; they are encapsulated under the socket.
 
-Many architectures follow some kind of client-server model, where the server is the component that is most static, and the clients are the components that are most dynamic, i.e. they come and go the most. There are sometimes issues of addressing: servers will be visible to clients, but not necessarily vice-versa. So mostly it's obvious which node should be doing {{zmq_bind[3]}} (the server) and which should be doing {{zmq_connect[3]}} (the client). It also depends on the kind of sockets you're using, with some exceptions for unusual network architectures. We'll look at socket types later.
+Many architectures follow some kind of client-server model, where the server is the component that is most static, and the clients are the components that are most dynamic, i.e. they come and go the most. There are sometimes issues of addressing: servers will be visible to clients, but not necessarily vice-versa. So mostly it's obvious which node should be doing {{zmq-bind[3]}} (the server) and which should be doing {{zmq-connect[3]}} (the client). It also depends on the kind of sockets you're using, with some exceptions for unusual network architectures. We'll look at socket types later.
 
-Now, imagine we start the client //before// we start the server. In traditional networking we get a big red Fail flag. But 0MQ lets us start and stop pieces arbitrarily. As soon as the client node does {{zmq_connect[3]}} the connection exists and that node can start to write messages to the socket. At some stage (hopefully before messages queue up so much that they start to get discarded, or the client blocks), the server comes alive, does a {{zmq_bind[3]}} and 0MQ starts to deliver messages.
+Now, imagine we start the client //before// we start the server. In traditional networking we get a big red Fail flag. But 0MQ lets us start and stop pieces arbitrarily. As soon as the client node does {{zmq-connect[3]}} the connection exists and that node can start to write messages to the socket. At some stage (hopefully before messages queue up so much that they start to get discarded, or the client blocks), the server comes alive, does a {{zmq-bind[3]}} and 0MQ starts to deliver messages.
 
 A server node can bind to many endpoints (that is, a combination of protocol and address) and it can do this using a single socket. This means it will accept connections across different transports:
 
 [[code type="fragment" name="binding"]]
-zmq_bind (socket, "tcp://*:5555");
-zmq_bind (socket, "tcp://*:9999");
-zmq_bind (socket, "inproc://somename");
+zmq-bind (socket, "tcp://*:5555");
+zmq-bind (socket, "tcp://*:9999");
+zmq-bind (socket, "inproc://somename");
 [[/code]]
 
 With most transports you cannot bind to the same endpoint twice, unlike for example in UDP. The {{ipc}} transport does however let one process bind to an endpoint already used by a first process. It's meant to allow a process to recover after a crash.
@@ -81,7 +81,7 @@ It's the ability to connect sockets in these different ways that gives 0MQ its b
 
 ++++ Using Sockets to Carry Data
 
-To send and receive messages you use the {{zmq_msg_send[3]}} and {{zmq_msg_recv[3]}} methods. The names are conventional but 0MQ's I/O model is different enough from the TCP model!figref() that you will need time to get your head around it.
+To send and receive messages you use the {{zmq-msg-send[3]}} and {{zmq-msg-recv[3]}} methods. The names are conventional but 0MQ's I/O model is different enough from the TCP model!figref() that you will need time to get your head around it.
 
 [[code type="textdiagram" title="TCP sockets are 1 to 1"]]
 +------------+
@@ -113,7 +113,7 @@ Let's look at the main differences between TCP sockets and 0MQ sockets when it c
 
 * 0MQ sockets have one-to-N routing behavior built-in, according to the socket type.
 
-The {{zmq_msg_send[3]}} method does not actually send the message to the socket connection(s). It queues the message so that the I/O thread can send it asynchronously. It does not block except in some exception cases. So the message is not necessarily sent when {{zmq_msg_send[3]}} returns to your application. If you created a message using {{zmq_msg_init_data[3]}} you cannot reuse the data or free it, otherwise the I/O thread will rapidly find itself writing overwritten or unallocated garbage. This is a common mistake for beginners. We'll see a little later how to properly work with messages.
+The {{zmq-msg-send[3]}} method does not actually send the message to the socket connection(s). It queues the message so that the I/O thread can send it asynchronously. It does not block except in some exception cases. So the message is not necessarily sent when {{zmq-msg-send[3]}} returns to your application. If you created a message using {{zmq-msg-init-data[3]}} you cannot reuse the data or free it, otherwise the I/O thread will rapidly find itself writing overwritten or unallocated garbage. This is a common mistake for beginners. We'll see a little later how to properly work with messages.
 
 ++++ Unicast Transports
 
@@ -153,13 +153,13 @@ There is however a good answer to the question, "How can I make profitable use o
 
 ++++ I/O Threads
 
-We said that 0MQ does I/O in a background thread. One I/O thread (for all sockets) is sufficient for all but the most extreme applications. When you create a new context it starts with one I/O thread. The general rule of thumb is to allow one I/O thread per gigabyte of data in or out per second. To raise the number of I/O threads, use the {{zmq_ctx_set[3]}} call //before// creating any sockets:
+We said that 0MQ does I/O in a background thread. One I/O thread (for all sockets) is sufficient for all but the most extreme applications. When you create a new context it starts with one I/O thread. The general rule of thumb is to allow one I/O thread per gigabyte of data in or out per second. To raise the number of I/O threads, use the {{zmq-ctx-set[3]}} call //before// creating any sockets:
 
 [[code type="fragment" name="iothreads"]]
-int io_threads = 4;
-void *context = zmq_ctx_new ();
-zmq_ctx_set (context, ZMQ_IO_THREADS, io_threads);
-assert (zmq_ctx_get (context, ZMQ_IO_THREADS) == io_threads);
+int io-threads = 4;
+void *context = zmq-ctx-new ();
+zmq-ctx-set (context, ZMQ-IO-THREADS, io-threads);
+assert (zmq-ctx-get (context, ZMQ-IO-THREADS) == io-threads);
 [[/code]]
 
 We've seen that one socket can handle many (dozens, thousands of) connections at once. This has a fundamental impact on how you write applications. A traditional networked application has one process or one thread per remote connection, and that process or thread handles one socket. 0MQ lets you collapse this entire structure into a single process, and then break it up as necessary for scaling.
@@ -186,7 +186,7 @@ The built-in core 0MQ patterns are:
 
 We looked at each of these in the first chapter. There's one more pattern that people tend to try to use when they still think of 0MQ in terms of traditional TCP sockets: **Exclusive pair**, which connects two sockets exclusively. This is a pattern you should use only to connect two threads in a process. We'll see an example at the end of this chapter.
 
-The {{zmq_socket[3]}} man page is fairly clear about the patterns, it's worth reading several times until it starts to make sense. These are the socket combinations that are valid for a connect-bind pair (either side can bind):
+The {{zmq-socket[3]}} man page is fairly clear about the patterns, it's worth reading several times until it starts to make sense. These are the socket combinations that are valid for a connect-bind pair (either side can bind):
 
 * PUB and SUB
 * REQ and REP
@@ -204,7 +204,7 @@ You'll also see references to XPUB and XSUB sockets, which we'll come to later (
 
 These four core patterns are cooked-in to 0MQ. They are part of the 0MQ API, implemented in the core C++ library, and guaranteed to be available in all fine retail stores.
 
-On top, we add //high-level patterns//. We build these high-level patterns on top of 0MQ and implement them in whatever language we're using for our application. They are not part of the core library, do not come with the 0MQ package, and exist in their own space, as part of the 0MQ community. For example the Majordomo pattern, which we explore in <<reliable_request_reply>>, sits in the GitHub Majordomo project in the ZeroMQ organization.
+On top, we add //high-level patterns//. We build these high-level patterns on top of 0MQ and implement them in whatever language we're using for our application. They are not part of the core library, do not come with the 0MQ package, and exist in their own space, as part of the 0MQ community. For example the Majordomo pattern, which we explore in <<reliable-request-reply>>, sits in the GitHub Majordomo project in the ZeroMQ organization.
 
 One of the things we aim to provide you with this guide are a set of such high-level patterns, both small (how to handle messages sanely) to large (how to make a reliable publish-subscribe architecture).
 
@@ -212,46 +212,46 @@ One of the things we aim to provide you with this guide are a set of such high-l
 
 On the wire, 0MQ messages are blobs of any size from zero upwards, fitting in memory. You do your own serialization using protobufs, msgpack, JSON, or whatever else your applications need to speak. It's wise to choose a data representation that is portable and fast, but you can make your own decisions about trade-offs.
 
-In memory, 0MQ messages are {{zmq_msg_t}} structures (or classes depending on your language). Here are the basic ground rules for using 0MQ messages in C:
+In memory, 0MQ messages are {{zmq-msg-t}} structures (or classes depending on your language). Here are the basic ground rules for using 0MQ messages in C:
 
-* You create and pass around {{zmq_msg_t}} objects, not blocks of data.
+* You create and pass around {{zmq-msg-t}} objects, not blocks of data.
 
-* To read a message you use {{zmq_msg_init[3]}} to create an empty message, and then you pass that to {{zmq_msg_recv[3]}}.
+* To read a message you use {{zmq-msg-init[3]}} to create an empty message, and then you pass that to {{zmq-msg-recv[3]}}.
 
-* To write a message from new data, you use {{zmq_msg_init_size[3]}} to create a message and at the same time allocate a block of data of some size. You then fill that data using {{memcpy}}, and pass the message to {{zmq_msg_send[3]}}.
+* To write a message from new data, you use {{zmq-msg-init-size[3]}} to create a message and at the same time allocate a block of data of some size. You then fill that data using {{memcpy}}, and pass the message to {{zmq-msg-send[3]}}.
 
-* To release (not destroy) a message you call {{zmq_msg_close[3]}}. This drops a reference, and eventually 0MQ will destroy the message.
+* To release (not destroy) a message you call {{zmq-msg-close[3]}}. This drops a reference, and eventually 0MQ will destroy the message.
 
-* To access the message content you use {{zmq_msg_data[3]}}. To know how much data the message contains, use {{zmq_msg_size[3]}}.
+* To access the message content you use {{zmq-msg-data[3]}}. To know how much data the message contains, use {{zmq-msg-size[3]}}.
 
-* Do not use {{zmq_msg_move[3]}}, {{zmq_msg_copy[3]}}, or {{zmq_msg_init_data[3]}} unless you read the man pages and know precisely why you need these.
+* Do not use {{zmq-msg-move[3]}}, {{zmq-msg-copy[3]}}, or {{zmq-msg-init-data[3]}} unless you read the man pages and know precisely why you need these.
 
 Here is a typical chunk of code working with messages, which should be familiar if you have been paying attention. This is from the {{zhelpers.h}} file we use in all the examples:
 
 [[code language="C"]]
 //  Receive 0MQ string from socket and convert into C string
 static char *
-s_recv (void *socket) {
-    zmq_msg_t message;
-    zmq_msg_init (&message);
-    int size = zmq_msg_recv (&message, socket, 0);
+s-recv (void *socket) {
+    zmq-msg-t message;
+    zmq-msg-init (&message);
+    int size = zmq-msg-recv (&message, socket, 0);
     if (size == -1)
         return NULL;
     char *string = malloc (size + 1);
-    memcpy (string, zmq_msg_data (&message), size);
-    zmq_msg_close (&message);
+    memcpy (string, zmq-msg-data (&message), size);
+    zmq-msg-close (&message);
     string [size] = 0;
     return (string);
 }
 
 //  Convert C string to 0MQ string and send to socket
 static int
-s_send (void *socket, char *string) {
-    zmq_msg_t message;
-    zmq_msg_init_size (&message, strlen (string));
-    memcpy (zmq_msg_data (&message), string, strlen (string));
-    int size = zmq_msg_send (&message, socket, 0);
-    zmq_msg_close (&message);
+s-send (void *socket, char *string) {
+    zmq-msg-t message;
+    zmq-msg-init-size (&message, strlen (string));
+    memcpy (zmq-msg-data (&message), string, strlen (string));
+    int size = zmq-msg-send (&message, socket, 0);
+    zmq-msg-close (&message);
     return (size);
 }
 [[/code]]
@@ -259,11 +259,11 @@ s_send (void *socket, char *string) {
 You can easily extend this code to send and receive blobs of arbitrary length.
 
 NOTE:
-After you pass a message to {{zmq_msg_send[3]}}, ØMQ will clear the message, i.e., set the size to zero. You cannot send the same message twice, and you cannot access the message data after sending it.
+After you pass a message to {{zmq-msg-send[3]}}, ØMQ will clear the message, i.e., set the size to zero. You cannot send the same message twice, and you cannot access the message data after sending it.
 
-If you want to send the same message more than once, create a second message, initialize it using {{zmq_msg_init[3]}} and then use {{zmq_msg_copy[3]}} to create a copy of the first message. This does not copy the data but the reference. You can then send the message twice (or more, if you create more copies) and the message will only be finally destroyed when the last copy is sent or closed.
+If you want to send the same message more than once, create a second message, initialize it using {{zmq-msg-init[3]}} and then use {{zmq-msg-copy[3]}} to create a copy of the first message. This does not copy the data but the reference. You can then send the message twice (or more, if you create more copies) and the message will only be finally destroyed when the last copy is sent or closed.
 
-0MQ also supports //multi-part// messages, which let you send or receive a list of frames as a single on-the-wire message. This is widely used in real applications and we'll look at that later in this chapter and in <<advanced_request_reply_patterns>>.
+0MQ also supports //multi-part// messages, which let you send or receive a list of frames as a single on-the-wire message. This is widely used in real applications and we'll look at that later in this chapter and in <<advanced-request-reply>>.
 
 Some other things that are worth knowing about messages:
 
@@ -275,9 +275,9 @@ Some other things that are worth knowing about messages:
 
 * A message must fit in memory. If you want to send files of arbitrary sizes, you should break them into pieces and send each piece as a separate message.
 
-* You must call {{zmq_msg_close[3]}} when finished with a message, in languages that don't automatically destroy objects when a scope closes.
+* You must call {{zmq-msg-close[3]}} when finished with a message, in languages that don't automatically destroy objects when a scope closes.
 
-And to be necessarily repetitive, do not use {{zmq_msg_init_data[3]}}, yet. This is a zero-copy method and guaranteed to create trouble for you. There are far more important things to learn about 0MQ before you start to worry about shaving off microseconds.
+And to be necessarily repetitive, do not use {{zmq-msg-init-data[3]}}, yet. This is a zero-copy method and guaranteed to create trouble for you. There are far more important things to learn about 0MQ before you start to worry about shaving off microseconds.
 
 ++++ Handling Multiple Sockets
 
@@ -289,7 +289,7 @@ In all the examples so far, the main loop of most examples has been:
 
 What if we want to read from multiple endpoints at the same time? The simplest way is to connect one socket to all the endpoints and get 0MQ to do the fan-in for us. This is legal if the remote endpoints are in the same pattern but it would be wrong to e.g. connect a PULL socket to a PUB endpoint.
 
-To actually read from multiple sockets at once, use {{zmq_poll[3]}}. An even better way might be to wrap {{zmq_poll[3]}} in a framework that turns it into a nice event-driven //reactor//, but it's significantly more work than we want to cover here.
+To actually read from multiple sockets at once, use {{zmq-poll[3]}}. An even better way might be to wrap {{zmq-poll[3]}} in a framework that turns it into a nice event-driven //reactor//, but it's significantly more work than we want to cover here.
 
 Let's start with a dirty hack, partly for the fun of not doing it right, but mainly because it lets me show you how to do non-blocking socket reads. Here is a simple example of reading from two sockets using non-blocking reads. This rather confused program acts both as a subscriber to weather updates, and a worker for parallel tasks:
 
@@ -300,7 +300,7 @@ The cost of this approach is some additional latency on the first message (the s
 
 You can treat the sockets fairly by reading first from one, then the second rather than prioritizing them as we did in this example.
 
-Now let's see the same little senseless application done right, using {{zmq_poll[3]}}:
+Now let's see the same little senseless application done right, using {{zmq-poll[3]}}:
 
 [[code type="example" title="Multiple socket poller" name="mspoller"]]
 [[/code]]
@@ -313,7 +313,7 @@ typedef struct {
     int fd;             //  OR, native file handle to poll on
     short events;       //  Events to poll on
     short revents;      //  Events returned after poll
-} zmq_pollitem_t;
+} zmq-pollitem-t;
 [[/code]]
 
 ++++ Multi-part Messages
@@ -322,30 +322,30 @@ typedef struct {
 
 What we'll learn now is simply how to safely (but blindly) read and write multi-part messages in any application (like a proxy) that needs to forward messages without inspecting them.
 
-When you work with multi-part messages, each part is a {{zmq_msg}} item. E.g. if you are sending a message with five parts, you must construct, send, and destroy five {{zmq_msg}} items. You can do this in advance (and store the {{zmq_msg}} items in an array or structure), or as you send them, one by one.
+When you work with multi-part messages, each part is a {{zmq-msg}} item. E.g. if you are sending a message with five parts, you must construct, send, and destroy five {{zmq-msg}} items. You can do this in advance (and store the {{zmq-msg}} items in an array or structure), or as you send them, one by one.
 
 Here is how we send the frames in a multi-part message (we receive each frame into a message object):
 
 [[code type="fragment" name="sendmore"]]
-zmq_msg_send (socket, &message, ZMQ_SNDMORE);
+zmq-msg-send (socket, &message, ZMQ-SNDMORE);
 ...
-zmq_msg_send (socket, &message, ZMQ_SNDMORE);
+zmq-msg-send (socket, &message, ZMQ-SNDMORE);
 ...
-zmq_msg_send (socket, &message, 0);
+zmq-msg-send (socket, &message, 0);
 [[/code]]
 
 Here is how we receive and process all the parts in a message, be it single part or multi-part:
 
 [[code type="fragment" name="recvmore"]]
 while (1) {
-    zmq_msg_t message;
-    zmq_msg_init (&message);
-    zmq_msg_recv (socket, &message, 0);
+    zmq-msg-t message;
+    zmq-msg-init (&message);
+    zmq-msg-recv (socket, &message, 0);
     //  Process the message frame
-    zmq_msg_close (&message);
-    int_t more;
-    size_t more_size = sizeof (more);
-    zmq_getsockopt (socket, ZMQ_RCVMORE, &more, &more_size);
+    zmq-msg-close (&message);
+    int-t more;
+    size-t more-size = sizeof (more);
+    zmq-getsockopt (socket, ZMQ-RCVMORE, &more, &more-size);
     if (!more)
         break;      //  Last message frame
 }
@@ -354,9 +354,9 @@ while (1) {
 Some things to know about multi-part messages:
 
 * When you send a multi-part message, the first part (and all following parts) are only actually sent on the wire when you send the final part.
-* If you are using {{zmq_poll[3]}}, when you receive the first part of a message, all the rest has also arrived.
+* If you are using {{zmq-poll[3]}}, when you receive the first part of a message, all the rest has also arrived.
 * You will receive all parts of a message, or none at all.
-* Each part of a message is a separate {{zmq_msg}} item.
+* Each part of a message is a separate {{zmq-msg}} item.
 * You will receive all parts of a message whether or not you check the RCVMORE option.
 * On sending, 0MQ queues message frames in memory until the last is received, then sends them all.
 * There is no way to cancel a partially sent message, except by closing the socket.
@@ -510,13 +510,13 @@ This design lets you add more clients cheaply. You can also add more services. E
 
 That's clearly not the kind of thing we want to be doing at 3am when our supercomputing cluster has run out of resources and we desperately need to add a couple of hundred new service nodes. Too many static pieces are like liquid concrete: knowledge is distributed and the more static pieces you have, the more effort it is to change the topology. What we want is something sitting in between clients and services that centralizes all knowledge of the topology. Ideally, we should be able to add and remove services or clients at any time without touching any other part of the topology.
 
-So we'll write a little message queuing broker that gives us this flexibility. The broker binds to two endpoints, a frontend for clients and a backend for services. It then uses {{zmq_poll[3]}} to monitor these two sockets for activity and when it has some, it shuttles messages between its two sockets. It doesn't actually manage any queues explicitly -- 0MQ does that automatically on each socket.
+So we'll write a little message queuing broker that gives us this flexibility. The broker binds to two endpoints, a frontend for clients and a backend for services. It then uses {{zmq-poll[3]}} to monitor these two sockets for activity and when it has some, it shuttles messages between its two sockets. It doesn't actually manage any queues explicitly -- 0MQ does that automatically on each socket.
 
 When you use REQ to talk to REP you get a strictly synchronous request-reply dialog. The client sends a request. The service reads the request and sends a reply. The client then reads the reply. If either the client or the service try to do anything else (e.g. sending two requests in a row without waiting for a response) they will get an error.
 
-But our broker has to be non-blocking. Obviously we can use {{zmq_poll[3]}} to wait for activity on either socket, but we can't use REP and REQ.
+But our broker has to be non-blocking. Obviously we can use {{zmq-poll[3]}} to wait for activity on either socket, but we can't use REP and REQ.
 
-Luckily there are two sockets called DEALER and ROUTER that let you do non-blocking request-response. You'll see in <<advanced_request_reply_patterns>> how DEALER and ROUTER sockets let you build all kinds of asynchronous request-reply flows. For now, we're just going to see how DEALER and ROUTER let us extend REQ-REP across an intermediary, that is, our little broker.
+Luckily there are two sockets called DEALER and ROUTER that let you do non-blocking request-response. You'll see in <<advanced-request-reply>> how DEALER and ROUTER sockets let you build all kinds of asynchronous request-reply flows. For now, we're just going to see how DEALER and ROUTER let us extend REQ-REP across an intermediary, that is, our little broker.
 
 In this simple stretched request-reply pattern, REQ talks to ROUTER and DEALER talks to REP. In between the DEALER and ROUTER we have to have code (like our broker) that pulls messages off the one socket and shoves them onto the other!figref().
 
@@ -613,13 +613,13 @@ Using a request-reply broker makes your client-server architectures easier to sc
 
 ++++ 0MQ's Built-in Proxy Function
 
-It turns out that the core loop in the previous section's rrbroker is very useful, and reusable. It lets us build pub-sub forwarders and shared queues and other little intermediaries, with very little effort. 0MQ wraps this up in a single method, {{zmq_proxy[3]}}:
+It turns out that the core loop in the previous section's rrbroker is very useful, and reusable. It lets us build pub-sub forwarders and shared queues and other little intermediaries, with very little effort. 0MQ wraps this up in a single method, {{zmq-proxy[3]}}:
 
 [[code type="fragment" name="proxy"]]
-zmq_proxy (frontend, backend, capture);
+zmq-proxy (frontend, backend, capture);
 [[/code]]
 
-The two (or three sockets, if we want to capture data) must be properly connected, bound, configured. When we call the {{zmq_proxy}} method it's exactly like starting the main loop of rrbroker. Let's rewrite the request-reply broker to call {{zmq_proxy}}, and re-badge this as an expensive-sounding "message queue" (people have charged houses for code that did less):
+The two (or three sockets, if we want to capture data) must be properly connected, bound, configured. When we call the {{zmq-proxy}} method it's exactly like starting the main loop of rrbroker. Let's rewrite the request-reply broker to call {{zmq-proxy}}, and re-badge this as an expensive-sounding "message queue" (people have charged houses for code that did less):
 
 [[code type="example" title="Message queue broker" name="msgqueue"]]
 [[/code]]
@@ -696,18 +696,18 @@ In most of the C examples we've seen so far there's been no error handling. **Re
 
 * Other methods return 0 on success and -1 on an error or failure.
 
-* The error code is provided in {{errno}} or {{zmq_errno[3]}}.
+* The error code is provided in {{errno}} or {{zmq-errno[3]}}.
 
-* A descriptive error text for logging is provided by {{zmq_strerror[3]}}.
+* A descriptive error text for logging is provided by {{zmq-strerror[3]}}.
 
 For example:
 
 [[code type="fragment" name="errorhandling"]]
-void *context = zmq_ctx_new ();
+void *context = zmq-ctx-new ();
 assert (context);
-void *socket = zmq_socket (context, ZMQ_REP);
+void *socket = zmq-socket (context, ZMQ-REP);
 assert (socket);
-int rc = zmq_bind (socket, "tcp://*:5555");
+int rc = zmq-bind (socket, "tcp://*:5555");
 if (rc != 0) {
     printf ("E: bind failed: %s\n", strerror (errno));
     return -1;
@@ -716,9 +716,9 @@ if (rc != 0) {
 
 There are two main exceptional conditions that you may want to handle as non-fatal:
 
-* When a thread calls {{zmq_msg_recv[3]}} with the {{ZMQ_DONTWAIT}} option and there is no waiting data. 0MQ will return -1 and set {{errno}} to {{EAGAIN}}.
+* When a thread calls {{zmq-msg-recv[3]}} with the {{ZMQ-DONTWAIT}} option and there is no waiting data. 0MQ will return -1 and set {{errno}} to {{EAGAIN}}.
 
-* When a thread calls {{zmq_ctx_destroy[3]}} and other threads are doing blocking work. The {{zmq_ctx_destroy[3]}} call closes the context and all blocking calls exit with -1, and errno set to {{ETERM}}.
+* When a thread calls {{zmq-ctx-destroy[3]}} and other threads are doing blocking work. The {{zmq-ctx-destroy[3]}} call closes the context and all blocking calls exit with -1, and errno set to {{ETERM}}.
 
 In C/C++, asserts can be removed entirely in optimized code, so don't make the mistake of wrapping the whole 0MQ call in an assert(). It looks neat, then the optimizer removes all the asserts and the calls you want to make, and your application breaks in impressive ways.
 
@@ -734,13 +734,13 @@ How do we connect the sink to the workers? The PUSH/PULL sockets are one-way onl
 It doesn't take much new code in the sink:
 
 [[code type="fragment" name="killsignal"]]
-void *control = zmq_socket (context, ZMQ_PUB);
-zmq_bind (control, "tcp://*:5559");
+void *control = zmq-socket (context, ZMQ-PUB);
+zmq-bind (control, "tcp://*:5559");
 ...
 //  Send kill signal to workers
-zmq_msg_init_data (&message, "KILL", 5);
-zmq_msg_send (control, &message, 0);
-zmq_msg_close (&message);
+zmq-msg-init-data (&message, "KILL", 5);
+zmq-msg-send (control, &message, 0);
+zmq-msg-close (&message);
 [[/code]]
 
 [[code type="textdiagram" title="Parallel Pipeline with Kill Signaling"]]
@@ -792,7 +792,7 @@ zmq_msg_close (&message);
                       \--------------------------/
 [[/code]]
 
-Here is the worker process, which manages two sockets (a PULL socket getting tasks, and a SUB socket getting control commands) using the {{zmq_poll[3]}} technique we saw earlier:
+Here is the worker process, which manages two sockets (a PULL socket getting tasks, and a SUB socket getting control commands) using the {{zmq-poll[3]}} technique we saw earlier:
 
 [[code type="example" title="Parallel task worker with kill signaling" name="taskwork2"]]
 [[/code]]
@@ -811,27 +811,27 @@ Here is how we handle a signal in various languages:
 [[code type="example" title="Handling Ctrl-C cleanly" name="interrupt"]]
 [[/code]]
 
-The program provides {{s_catch_signals()}}, which traps Ctrl-C ({{SIGINT}}) and {{SIGTERM}}. When either of these signals arrive, the {{s_catch_signals()}} handler sets the global variable {{s_interrupted}}. Thanks to your signal handler, your application will not die automatically. Instead, you have a chance to clean up and exit gracefully. You have to now explicitly check for an interrupt, and handle it properly. Do this by calling {{s_catch_signals()}} (copy this from {{interrupt.c}}) at the start of your main code. This sets-up the signal handling. The interrupt will affect 0MQ calls as follows:
+The program provides {{s-catch-signals()}}, which traps Ctrl-C ({{SIGINT}}) and {{SIGTERM}}. When either of these signals arrive, the {{s-catch-signals()}} handler sets the global variable {{s-interrupted}}. Thanks to your signal handler, your application will not die automatically. Instead, you have a chance to clean up and exit gracefully. You have to now explicitly check for an interrupt, and handle it properly. Do this by calling {{s-catch-signals()}} (copy this from {{interrupt.c}}) at the start of your main code. This sets-up the signal handling. The interrupt will affect 0MQ calls as follows:
 
-* If your code is blocking in {{zmq_msg_recv[3]}}, {{zmq_poll[3]}}, or {{zmq_msg_send[3]}}, when a signal arrives, the call will return with {{EINTR}}.
-* Wrappers like {{s_recv()}} return NULL if they are interrupted.
+* If your code is blocking in {{zmq-msg-recv[3]}}, {{zmq-poll[3]}}, or {{zmq-msg-send[3]}}, when a signal arrives, the call will return with {{EINTR}}.
+* Wrappers like {{s-recv()}} return NULL if they are interrupted.
 
-So check for an {{EINTR}} return code, a NULL return, and/or {{s_interrupted}}.
+So check for an {{EINTR}} return code, a NULL return, and/or {{s-interrupted}}.
 
 Here is a typical code fragment:
 
 [[code]]
-s_catch_signals ();
-client = zmq_socket (...);
-while (!s_interrupted) {
-    char *message = s_recv (client);
+s-catch-signals ();
+client = zmq-socket (...);
+while (!s-interrupted) {
+    char *message = s-recv (client);
     if (!message)
         break;          //  Ctrl-C used
 }
-zmq_close (client);
+zmq-close (client);
 [[/code]]
 
-If you call {{s_catch_signals()}} and don't test for interrupts, the your application will become immune to Ctrl-C and SIGTERM, which may be useful, but is usually not.
+If you call {{s-catch-signals()}} and don't test for interrupts, the your application will become immune to Ctrl-C and SIGTERM, which may be useful, but is usually not.
 
 +++ Detecting Memory Leaks
 
@@ -847,14 +847,14 @@ sudo apt-get install valgrind
 
 [[code]]
 {
-   <socketcall_sendto>
+   <socketcall-sendto>
    Memcheck:Param
    socketcall.sendto(msg)
    fun:send
    ...
 }
 {
-   <socketcall_sendto>
+   <socketcall-sendto>
    Memcheck:Param
    socketcall.send(msg)
    fun:send
@@ -929,7 +929,7 @@ All the code should be recognizable to you by now. How it works:
 
 * The server starts a proxy that connects the two sockets. The proxy pulls incoming requests fairly from all clients, and distributes those out to workers. It also routes replies back to their origin.
 
-Note that creating threads is not portable in most programming languages. The POSIX library is pthreads, but on Windows you have to use a different API. In our example, the {{pthread_create}} call starts up a new thread running the {{worker_routine}} function we defined. We'll see in <<advanced_request_reply_patterns>> how to wrap this in a portable API.
+Note that creating threads is not portable in most programming languages. The POSIX library is pthreads, but on Windows you have to use a different API. In our example, the {{pthread-create}} call starts up a new thread running the {{worker-routine}} function we defined. We'll see in <<advanced-request-reply>> how to wrap this in a portable API.
 
 Here the 'work' is just a one-second pause. We could do anything in the workers, including talking to other nodes. This is what the MT server looks like in terms of ØMQ sockets and nodes. Note how the request-reply chain is {{REQ-ROUTER-queue-DEALER-REP}}!figref().
 
@@ -1129,16 +1129,16 @@ A more robust model could be:
 
 0MQ's message API lets you can send and receive messages directly from and to application buffers without copying data. We call "zero-copy", and it can improve performance in some applications. Like all optimizations, use this when you know it helps, and measure before and after. Zero-copy makes your code more complex.
 
-To do zero-copy you use {{zmq_msg_init_data[3]}} to create a message that refers to a block of data already allocated on the heap with {{malloc()}}, and then you pass that to {{zmq_msg_send[3]}}. When you create the message you also pass a function that 0MQ will call to free the block of data, when it has finished sending the message. This is the simplest example, assuming 'buffer' is a block of 1000 bytes allocated on the heap:
+To do zero-copy you use {{zmq-msg-init-data[3]}} to create a message that refers to a block of data already allocated on the heap with {{malloc()}}, and then you pass that to {{zmq-msg-send[3]}}. When you create the message you also pass a function that 0MQ will call to free the block of data, when it has finished sending the message. This is the simplest example, assuming 'buffer' is a block of 1000 bytes allocated on the heap:
 
 [[code type="fragment" name="zerocopy"]]
-void my_free (void *data, void *hint) {
+void my-free (void *data, void *hint) {
     free (data);
 }
 //  Send message from buffer, which we allocate and 0MQ will free for us
-zmq_msg_t message;
-zmq_msg_init_data (&message, buffer, 1000, my_free, NULL);
-zmq_msg_send (socket, &message, 0);
+zmq-msg-t message;
+zmq-msg-init-data (&message, buffer, 1000, my-free, NULL);
+zmq-msg-send (socket, &message, 0);
 [[/code]]
 
 There is no way to do zero-copy on receive: 0MQ delivers you a buffer that you can store as long as you wish but it will not write data directly into application buffers.
@@ -1224,8 +1224,8 @@ As you build applications with 0MQ you will come across this problem more than o
 +-----------------+
 | I'm not getting |        +-----------------+        +----------------+
 |     my data!    |        |  Do you set a   |        | Use the        |
-|             {o} |   /--->|  subscription   +------->| zmq_setsockopt |
-+--------+--------+   |    |  for messages?  | No     | ZMQ_SUBSCRIBE  |
+|             {o} |   /--->|  subscription   +------->| zmq-setsockopt |
++--------+--------+   |    |  for messages?  | No     | ZMQ-SUBSCRIBE  |
          |            |    |             {o} |        | ("") option    |
          v            |    +--------+--------+        +----------------+
 +-----------------+   |             | Yes
@@ -1275,8 +1275,8 @@ As you build applications with 0MQ you will come across this problem more than o
          +--------------------------+
          |
          v                 +-----------------+        +------------------+
-+-----------------+        | Are you calling |        | Call zmq_ctx_new |
-|  Are you using  |        |   zmq_ctx_new   +------->| exactly once in  |
++-----------------+        | Are you calling |        | Call zmq-ctx-new |
+|  Are you using  |        |   zmq-ctx-new   +------->| exactly once in  |
 |   the inproc    +------->| more than once? | Yes    | every process.   |
 |   transport?    | Yes    |             {o} |        |                  |
 |             {o} |        +--------+--------+        +------------------+

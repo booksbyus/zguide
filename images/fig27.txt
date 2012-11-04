@@ -1,7 +1,13 @@
+     (Next envelope will go here)
+
           +---------------+
-Frame 1   | Reply address |   <----- Envelope
+Frame 1   | Reply address |   <----- Envelope (ROUTER)
+          +---------------+
+Frame 2   | Reply address |   <----- Envelope (ROUTER)
+          +---------------+
+Frame 3   | Reply address |   <----- Envelope (ROUTER)
           +---+-----------+
-Frame 2   |   |   <------ Empty message frame
+Frame 4   |   |   <------ Empty message frame (REQ)
           +---+-------------------------------------+
-Frame 3   | Data                                    |
+Frame 5   | Data                                    |
           +-----------------------------------------+
