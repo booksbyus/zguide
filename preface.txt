@@ -49,21 +49,7 @@ This is the magic and power of communities: be the first community in a space, s
 
 This book is written for professional programmers who want to learn how to make the massively distributed software that will dominate the future of computing. We assume you can read C code, because most of the examples here are in C even though 0MQ is used in many languages. We assume you care about scale, because 0MQ solves that problem above all others. We assume you need the best possible results with the least possible cost, because otherwise you won't appreciate the trade-offs that 0MQ makes. Other than that basic background, we try to present all the concepts in networking and distributed computing you will need to use 0MQ.
 
-+++ Conventions Used in This Book
-
-We tried to be as unconventional as possible. Nevertheless, you'll tend to find the following typographical uses in this book:
-
-* //Italic// - Indicates new terms, URLs, email addresses, filenames, and file extensions.
-
-* {{Constant width}} - Used for program listings, as well as within paragraphs to refer to program elements such as variable or function names, data types, and environment variables.
-
-* [NOTE] - This signifies a tip, suggestion, or general note.
-
-.filter online
-+++ Using the Code Examples
-
 .inbook preface.xml
-.filter reset
 
 +++ Acknowledgements
 

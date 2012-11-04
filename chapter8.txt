@@ -562,7 +562,7 @@ I'm not going to work through the implementation of group messaging in detail si
 
 At this stage I'm starting to get pretty happy with the binary serialization (our codec generator from [#the-human-scale]), which handles lists and dictionaries as well as strings and integers.
 
-This version is tagged in the repository as v0.2.0 and you can [[https://github.com/zeromq/zyre/tags download the tarball] if you want to check what the code looked like at this stage.
+This version is tagged in the repository as v0.2.0 and you can [https://github.com/zeromq/zyre/tags download the tarball] if you want to check what the code looked like at this stage.
 
 +++ Testing and Simulation
 
@@ -739,7 +739,7 @@ In fact, if you draw this on a piece of paper and think it through, you'll see t
 
 You'll also see that there's no risk of confusion, no way for commands from two peers to get mixed into a single stream on our DEALER socket.
 
-When you are satisfied this works, we're ready to move on. This version is tagged in the repository as v0.3.0 and you can [[https://github.com/zeromq/zyre/tags download the tarball] if you want to check what the code looked like at this stage.
+When you are satisfied this works, we're ready to move on. This version is tagged in the repository as v0.3.0 and you can [https://github.com/zeromq/zyre/tags download the tarball] if you want to check what the code looked like at this stage.
 
 Note that doing heavy simulation of lots of nodes will probably cause your process to run out of file handles, giving an assertion failure in libzmq. I raised the per-process limit to 30,000 by running (on my Linux box):
 
