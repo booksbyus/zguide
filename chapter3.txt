@@ -311,7 +311,7 @@ Some comments on this code
 
 * We don't need any settle time, since the REQs explicitly tell the ROUTER when they are ready.
 
-* We're generating our own identities here, as printable strings, using the zhelpers.h s_set_id function. That's just to make our life a little simpler. In a realistic application the REQs would be fully anonymous and then you'd call {{zmq_msg_recv[3]}} and {{zmq_msg_send[3]}} directly instead of the zhelpers {{s_recv()}} and {{s_send()}} functions, which can only handle strings.
+* We're generating our own identities here, as printable strings, using the zhelpers.h s_set_id function. That's just to make our life a little simpler. In a realistic application the REQs would be fully anonymous and then you'd call {{zmq_msg_recv[3]}} and {{zmq_msg_send[3]}} directly instead of the zhelpers {{s_recv}} and {{s_send}} functions, which can only handle strings.
 
 * If you copy and paste example code without understanding it, you deserve what you get. It's like watching Spiderman leap off the roof and then trying that yourself.
 
@@ -638,7 +638,7 @@ What we want is an API that lets us receive and send an entire message in one sh
 
 Making a good message API is fairly difficult, especially if we want to avoid copying data around too much. We have a problem of terminology: 0MQ uses "message" to describe both multi-part messages, and individual parts of a message. We have a problem of semantics: sometimes it's natural to see message content as printable string data, sometimes as binary blobs.
 
-So one solution is to use three concepts: //string// (already the basis for s_send and s_recv), //frame// (a message frame), and //message// (a list of one or more frames). Here is the worker code, rewritten onto an API using these concepts:
+So one solution is to use three concepts: //string// (already the basis for {{s_send} and {{s_recv}}), //frame// (a message frame), and //message// (a list of one or more frames). Here is the worker code, rewritten onto an API using these concepts:
 
 [[code type="fragment" name="highreader"]]
 while (true) {

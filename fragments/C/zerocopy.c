@@ -1,7 +1,7 @@
-void my_free (void *data, void *hint) {
+void my-free (void *data, void *hint) {
     free (data);
 }
 //  Send message from buffer, which we allocate and 0MQ will free for us
-zmq_msg_t message;
-zmq_msg_init_data (&message, buffer, 1000, my_free, NULL);
-zmq_msg_send (socket, &message, 0);
+zmq-msg-t message;
+zmq-msg-init-data (&message, buffer, 1000, my-free, NULL);
+zmq-msg-send (socket, &message, 0);

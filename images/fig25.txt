@@ -1,8 +1,8 @@
 +-----------------+
 | I'm not getting |        +-----------------+        +----------------+
 |     my data!    |        |  Do you set a   |        | Use the        |
-|                 |   /--->|  subscription   +------->| zmq_setsockopt |
-+--------+--------+   |    |  for messages?  | No     | ZMQ_SUBSCRIBE  |
+|                 |   /--->|  subscription   +------->| zmq-setsockopt |
++--------+--------+   |    |  for messages?  | No     | ZMQ-SUBSCRIBE  |
          |            |    |                 |        | ("") option    |
          v            |    +--------+--------+        +----------------+
 +-----------------+   |             | Yes
@@ -52,8 +52,8 @@
          +--------------------------+
          |
          v                 +-----------------+        +------------------+
-+-----------------+        | Are you calling |        | Call zmq_ctx_new |
-|  Are you using  |        |   zmq_ctx_new   +------->| exactly once in  |
++-----------------+        | Are you calling |        | Call zmq-ctx-new |
+|  Are you using  |        |   zmq-ctx-new   +------->| exactly once in  |
 |   the inproc    +------->| more than once? | Yes    | every process.   |
 |   transport?    | Yes    |                 |        |                  |
 |                 |        +--------+--------+        +------------------+

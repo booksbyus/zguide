@@ -117,6 +117,9 @@ while (<>) {
                 close (BOILER);
             }
         }
+        elsif (/^\.bookmark\s+(\w.*)/) {
+            #   No handling for bookmark yet
+        }
         elsif (/^\.filter\s+(\w.*)/) {
             $filter = ($1 eq $format);
         }
@@ -559,6 +562,9 @@ sub expand_symbols {
                     unless $nofunc_mode;
                 last;
             }
+        }
+        elsif (/zmq_([\w_]+)\[(.)\]/) {
+            $_ = $`."zmq_$1()".$';
         }
         else {
             last;

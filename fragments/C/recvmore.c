@@ -1,12 +1,12 @@
 while (1) {
-    zmq_msg_t message;
-    zmq_msg_init (&message);
-    zmq_msg_recv (socket, &message, 0);
+    zmq-msg-t message;
+    zmq-msg-init (&message);
+    zmq-msg-recv (socket, &message, 0);
     //  Process the message frame
-    zmq_msg_close (&message);
-    int_t more;
-    size_t more_size = sizeof (more);
-    zmq_getsockopt (socket, ZMQ_RCVMORE, &more, &more_size);
+    zmq-msg-close (&message);
+    int-t more;
+    size-t more-size = sizeof (more);
+    zmq-getsockopt (socket, ZMQ-RCVMORE, &more, &more-size);
     if (!more)
         break;      //  Last message frame
 }
