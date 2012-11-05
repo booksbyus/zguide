@@ -132,7 +132,7 @@ A common question that newcomers to 0MQ ask (it's one I asked myself) is, "how d
 The implication is that if we use normal sockets to carry HTTP requests and responses, we should be able to use 0MQ sockets to do the same, only much faster and better.
 
 Sadly the answer is "this is not how it works". 0MQ is not a neutral carrier, it imposes a framing on the transport protocols it uses. This framing is not compatible with existing protocols, which tend to use their own framing. For example, compare an HTTP request!figref(), and a 0MQ request!figref(), both over TCP/IP.
-The HTTP request uses CR-LF as its simplest framing delimiter, whereas 0MQ uses a length-specified frame
+The HTTP request uses CR-LF as its simplest framing delimiter, whereas 0MQ uses a length-specified frame.
 
 
 [[code type="textdiagram" title="HTTP On the Wire"]]
@@ -265,6 +265,13 @@ If you want to send the same message more than once, create a second message, in
 
 0MQ also supports //multi-part// messages, which let you send or receive a list of frames as a single on-the-wire message. This is widely used in real applications and we'll look at that later in this chapter and in [#advanced-request-reply].
 
+////
+AO: You have talked about sockets and messages, but you haven't said
+what frames are. You illustrated one earlier, but what actually is a
+frame and how do messages consist of multiple frames? In the next
+chapter, you use s_sendmore to send a frame that doesn't end a
+message.
+////
 Some other things that are worth knowing about messages:
 
 * 0MQ sends and receives them atomically, i.e. you get a whole message, or you don't get it at all. This is also true for multi-part messages.
