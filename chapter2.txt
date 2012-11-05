@@ -107,7 +107,7 @@ To send and receive messages you use the {{zmq-msg-send[3]}} and {{zmq-msg-recv[
 
 Let's look at the main differences between TCP sockets and 0MQ sockets when it comes to working with data:
 
-* 0MQ sockets carry messages, rather than bytes (as in TCP) or frames (as in UDP). A message is length-specified binary data. We'll come to messages shortly, their design is optimized for performance and so a little tricky.
+* 0MQ sockets carry messages, like UDP, rather than a stream of bytes as TCP does. A 0MQ message is length-specified binary data. We'll come to messages shortly, their design is optimized for performance and so a little tricky.
 
 * 0MQ sockets do their I/O in a background thread. This means that messages arrive in local input queues, and are sent from local output queues, no matter what your application is busy doing.
 
@@ -132,8 +132,8 @@ A common question that newcomers to 0MQ ask (it's one I asked myself) is, "how d
 The implication is that if we use normal sockets to carry HTTP requests and responses, we should be able to use 0MQ sockets to do the same, only much faster and better.
 
 Sadly the answer is "this is not how it works". 0MQ is not a neutral carrier, it imposes a framing on the transport protocols it uses. This framing is not compatible with existing protocols, which tend to use their own framing. For example, compare an HTTP request!figref(), and a 0MQ request!figref(), both over TCP/IP.
-The HTTP request uses CR-LF as its simplest framing delimiter, whereas 0MQ uses a length-specified frame.
 
+The HTTP request uses CR-LF as its simplest framing delimiter, whereas 0MQ uses a length-specified frame.
 
 [[code type="textdiagram" title="HTTP On the Wire"]]
 +----------------+----+----+----+----+
@@ -265,22 +265,29 @@ If you want to send the same message more than once, create a second message, in
 
 0MQ also supports //multi-part// messages, which let you send or receive a list of frames as a single on-the-wire message. This is widely used in real applications and we'll look at that later in this chapter and in [#advanced-request-reply].
 
-////
-AO: You have talked about sockets and messages, but you haven't said
-what frames are. You illustrated one earlier, but what actually is a
-frame and how do messages consist of multiple frames? In the next
-chapter, you use s_sendmore to send a frame that doesn't end a
-message.
-////
+Frames (also called "message parts" in the 0MQ reference manual pages) are the basic wire format for 0MQ messages. A frame is a length-specified block of data. The length can be zero upwards. If you've done any TCP programming you'll appreciate why frames are a useful answer to the question "how much data am I supposed to read of this network socket now?"
+
+There is a wire-level [http://rfc.zeromq.org/spec:15 protocol called ZMTP] that defines how 0MQ reads and writes frames on a TCP connection. If you're interested in how this works, the spec is quite short, just a few pages.
+
+Originally, a 0MQ message was one frame, like UDP. We later extended this with "multipart" messages, which are quite simply series of frames with a "more" bit set to one, followed by one with that bit set to zero. The 0MQ API then lets you write messages with a "more" flag, and when you read messages, lets you check if there's "more".
+
+In the low-level 0MQ API and the reference manual, therefore, there's some fuzziness about messages vs. frames. So here's a useful lexicon:
+
+* A message can be one or more parts.
+* These parts are also called "frames".
+* Each part is a zmq_msg_t object.
+* You send and receive each part separately, in the low-level API.
+* Higher-level APIs provide wrappers to send entire multi-part messages.
+
 Some other things that are worth knowing about messages:
-
-* 0MQ sends and receives them atomically, i.e. you get a whole message, or you don't get it at all. This is also true for multi-part messages.
-
-* 0MQ does not send a message right away but at some indeterminate later time.
 
 * You may send zero-length messages, e.g. for sending a signal from one thread to another.
 
-* A message must fit in memory. If you want to send files of arbitrary sizes, you should break them into pieces and send each piece as a separate message.
+* 0MQ guarantees to deliver all the parts (one or more) for a message, or none of them.
+
+* 0MQ does not send the message (single, or multi-part) right away but at some indeterminate later time. A multi-part message must therefore fit in memory.
+
+* A message (single, or multi-part) must fit in memory. If you want to send files of arbitrary sizes, you should break them into pieces and send each piece as separate single-part messages.
 
 * You must call {{zmq-msg-close[3]}} when finished with a message, in languages that don't automatically destroy objects when a scope closes.
 
