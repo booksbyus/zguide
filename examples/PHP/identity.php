@@ -18,9 +18,9 @@ $anonymous->connect("inproc://example");
 $anonymous->send("ROUTER uses a generated UUID");
 s_dump ($sink);
 
-//  Then set the identity ourself
+//  Then set the identity ourselves
 $identified = new ZMQSocket($context, ZMQ::SOCKET_REQ);
-$identified->setSockOpt(ZMQ::SOCKOPT_IDENTITY, "Hello");
+$identified->setSockOpt(ZMQ::SOCKOPT_IDENTITY, "PEER2");
 $identified->connect("inproc://example");
 $identified->send("ROUTER socket uses REQ's socket identity");
 s_dump ($sink);

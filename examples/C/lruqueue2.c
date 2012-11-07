@@ -49,7 +49,6 @@ worker_task (void *args)
         zmsg_t *msg = zmsg_recv (worker);
         if (!msg)
             break;              //  Interrupted
-        //zframe_print (zmsg_last (msg), "Worker: ");
         zframe_reset (zmsg_last (msg), "OK", 2);
         zmsg_send (&msg, worker);
     }

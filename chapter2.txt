@@ -127,11 +127,9 @@ The inter-thread transport, **{{inproc}}**, is a connected signaling transport. 
 
 ++++ 0MQ is Not a Neutral Carrier
 
-A common question that newcomers to 0MQ ask (it's one I asked myself) is, "how do I write an XYZ server in 0MQ?" For example, "how do I write an HTTP server in 0MQ?"
+A common question that newcomers to 0MQ ask (it's one I asked myself) is, "how do I write an XYZ server in 0MQ?" For example, "how do I write an HTTP server in 0MQ?" The implication is that if we use normal sockets to carry HTTP requests and responses, we should be able to use 0MQ sockets to do the same, only much faster and better.
 
-The implication is that if we use normal sockets to carry HTTP requests and responses, we should be able to use 0MQ sockets to do the same, only much faster and better.
-
-Sadly the answer is "this is not how it works". 0MQ is not a neutral carrier, it imposes a framing on the transport protocols it uses. This framing is not compatible with existing protocols, which tend to use their own framing. For example, compare an HTTP request!figref(), and a 0MQ request!figref(), both over TCP/IP.
+The answer used to be "this is not how it works". 0MQ is not a neutral carrier, it imposes a framing on the transport protocols it uses. This framing is not compatible with existing protocols, which tend to use their own framing. For example, compare an HTTP request!figref(), and a 0MQ request!figref(), both over TCP/IP.
 
 The HTTP request uses CR-LF as its simplest framing delimiter, whereas 0MQ uses a length-specified frame.
 
@@ -149,7 +147,7 @@ The HTTP request uses CR-LF as its simplest framing delimiter, whereas 0MQ uses 
 
 So you could write a HTTP-like protocol using 0MQ, using for example the request-reply socket pattern. But it would not be HTTP.
 
-There is however a good answer to the question, "How can I make profitable use of 0MQ when making my new XYZ server?"  You need to implement whatever protocol you want to speak in any case, but you can connect that protocol server (which can be extremely thin) to a 0MQ backend that does the real work. The beautiful part here is that you can then extend your backend with code in any language, running locally or remotely, as you wish. Zed Shaw's [http://www.mongrel2.org Mongrel2] web server is a great example of such an architecture.
+Since 0MQ/3.3, however, the {{ZMQ_ROUTER_RAW}} socket option lets you read and write TCP bytes without the 0MQ framing. Hardeep Singh contributed this change so that he could connect to Telnet servers from his 0MQ application. This is still, at time of writing, somewhat experimental, but it shows how 0MQ keeps evolving to solve new problems. Maybe the next patch will be yours.
 
 ++++ I/O Threads
 
@@ -332,7 +330,7 @@ typedef struct {
 
 ++++ Multi-part Messages
 
-0MQ lets us compose a message out of several frames, giving us a "multi-part message". Realistic applications use multi-part messages heavily, both for wrapping messages with address information, and for simple serialization. We'll look at address envelopes later.
+0MQ lets us compose a message out of several frames, giving us a "multi-part message". Realistic applications use multi-part messages heavily, both for wrapping messages with address information, and for simple serialization. We'll look at reply envelopes later.
 
 What we'll learn now is simply how to safely (but blindly) read and write multi-part messages in any application (like a proxy) that needs to forward messages without inspecting them.
 
@@ -532,7 +530,7 @@ But our broker has to be non-blocking. Obviously we can use {{zmq-poll[3]}} to w
 
 Luckily there are two sockets called DEALER and ROUTER that let you do non-blocking request-response. You'll see in [#advanced-request-reply] how DEALER and ROUTER sockets let you build all kinds of asynchronous request-reply flows. For now, we're just going to see how DEALER and ROUTER let us extend REQ-REP across an intermediary, that is, our little broker.
 
-In this simple stretched request-reply pattern, REQ talks to ROUTER and DEALER talks to REP. In between the DEALER and ROUTER we have to have code (like our broker) that pulls messages off the one socket and shoves them onto the other!figref().
+In this simple extended request-reply pattern, REQ talks to ROUTER and DEALER talks to REP. In between the DEALER and ROUTER we have to have code (like our broker) that pulls messages off the one socket and shoves them onto the other!figref().
 
 [[code type="textdiagram" title="Extended Request-reply"]]
 +---------+   +---------+   +---------+
@@ -1197,13 +1195,13 @@ When you run the two programs, the subscriber should show you this:
 
 This examples shows that the subscription filter rejects or accepts the entire multi-part message (key plus data). You won't get part of a multi-part message, ever.
 
-If you subscribe to multiple publishers and you want to know their identity so that you can send them data via another socket (and this is a fairly typical use-case), create a three-part message:
+If you subscribe to multiple publishers and you want to know their address so that you can send them data via another socket (and this is a typical use-case), create a three-part message:
 
 [[code type="textdiagram" title="Pub-Sub Envelope with Sender Address"]]
           +-------------+
 Frame 1   | Key         |     Subscription key
           +-------------+
-Frame 2   | Identity    |     Address of publisher
+Frame 2   | Address     |     Address of publisher
           +-------------+
 Frame 3   | Data        |     Actual message body
           +-------------+

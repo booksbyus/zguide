@@ -52,7 +52,7 @@ worker_task (void *args)
     //  Tell broker we're ready for work
     s_send (worker, "READY");
 
-    while (true) {
+    while (1) {
         //  Read and save all frames until we get an empty frame
         //  In this example there is only 1 but it could be more
         char *address = s_recv (worker);
@@ -116,7 +116,7 @@ int main (void)
     int available_workers = 0;
     char *worker_queue [10];
 
-    while (true) {
+    while (1) {
         zmq_pollitem_t items [] = {
             { backend,  0, ZMQ_POLLIN, 0 },
             { frontend, 0, ZMQ_POLLIN, 0 }

@@ -22,9 +22,9 @@ let main () =
   "ROUTER uses a generated UUID" |> s_send anonymous
   s_dump sink
 
-  // then set the identity ourself
+  // then set the identity ourselves
   use identified = req context
-  (ZMQ.IDENTITY,"Hello"B) |> set identified
+  (ZMQ.IDENTITY,"PEER2"B) |> set identified
   "inproc://example" |> connect identified
   "ROUTER socket uses REQ's socket identity" |> s_send identified
   s_dump sink

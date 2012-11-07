@@ -19,9 +19,9 @@ anonymous:connect("inproc://example")
 anonymous:send("ROUTER uses a generated UUID")
 s_dump(sink)
 
---  Then set the identity ourself
+--  Then set the identity ourselves
 local identified = context:socket(zmq.REQ)
-identified:setopt(zmq.IDENTITY, "Hello")
+identified:setopt(zmq.IDENTITY, "PEER2")
 identified:connect("inproc://example")
 identified:send("ROUTER socket uses REQ's socket identity")
 s_dump(sink)

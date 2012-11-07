@@ -19,9 +19,9 @@ anon_message = ZMQ::Message.new("Router uses a generated UUID")
 anonymous.send(anon_message)
 s_dump(sink)
 
-# 0MQ will set the identity here
+# Set the identity ourselves
 identified = context.socket(ZMQ::DEALER)
-identified.setsockopt(ZMQ::IDENTITY, "Hello")
+identified.setsockopt(ZMQ::IDENTITY, "PEER2")
 identified.connect(uri)
 identified_message = ZMQ::Message.new("Router uses socket identity")
 identified.send(identified_message)

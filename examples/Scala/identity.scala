@@ -8,22 +8,22 @@ import ZHelpers._
 
 object identity {
   def main(args : Array[String]) {
-		val context = ZMQ.context(1)
+	val context = ZMQ.context(1)
 
-		val sink = context.socket(ZMQ.DEALER)
-		sink.bind("inproc://example")
+	val sink = context.socket(ZMQ.DEALER)
+	sink.bind("inproc://example")
 
-		val anonymous = context.socket(ZMQ.REQ)
-		anonymous.connect("inproc://example")
-		anonymous.send("ROUTER uses a generated UUID".getBytes,0)
-		dump(sink)
+	val anonymous = context.socket(ZMQ.REQ)
+	anonymous.connect("inproc://example")
+	anonymous.send("ROUTER uses a generated UUID".getBytes,0)
+	dump(sink)
 
-		val identified = context.socket(ZMQ.REQ)
-		identified.setIdentity("Hello" getBytes)
-		identified.connect("inproc://example")
-		identified.send("ROUTER socket uses REQ's socket identity".getBytes,0)
-		dump(sink)
+	val identified = context.socket(ZMQ.REQ)
+	identified.setIdentity("PEER2" getBytes)
+	identified.connect("inproc://example")
+	identified.send("ROUTER socket uses REQ's socket identity".getBytes,0)
+	dump(sink)
 
-		identified.close
-	}
+	identified.close
+    }
 }

@@ -14,7 +14,7 @@ main = withContext 1 $ \context -> do
             dumpSock sink
             
         withSocket context Req $ \identified -> do
-            setOption identified (Identity "Hello")
+            setOption identified (Identity "PEER2")
             connect identified "inproc://example"
-            send identified (pack "XRep socket uses REQ's socket identity") []
+            send identified (pack "ROUTER socket uses REQ's socket identity") []
             dumpSock sink

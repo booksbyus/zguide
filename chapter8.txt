@@ -472,7 +472,7 @@ TCP, which is the most commonly-used transport in 0MQ, is not symmetric; one sid
 
 Developers who study 0MQ and then try to create N-to-N connections between sets of equal peers often try a ROUTER-to-ROUTER flow. It's obvious why: each peer needs to address a set of peers, which requires ROUTER. It usually ends with a plaintive email to the list.
 
-My conclusion after trying several times from different angles is that ROUTER-to-ROUTER does not work. At a minimum, because one peer must bind and one must connect, meaning the architecture is not symmetrical. But also because you simply can't tell when you are allowed to safely send a message to a peer. It's Catch-22: you can talk to a peer after it's talked to you. But the peer can't talk to you until you've talked to it. One side or the other will be losing messages and thus has to retry, which means the peers cannot be equal.
+My conclusion after trying several times from different angles is that ROUTER-to-ROUTER does not work. And the 0MQ reference manual does not allow it when it discusses ROUTER sockets in {{zmq_socket[3]}}. At a minimum, one peer must bind and one must connect, meaning the architecture is not symmetrical. But also because you simply can't tell when you are allowed to safely send a message to a peer. It's Catch-22: you can talk to a peer after it's talked to you. But the peer can't talk to you until you've talked to it. One side or the other will be losing messages and thus has to retry, which means the peers cannot be equal.
 
 I'm going to explain the Harmony pattern, which solves this problem, and which we use in ZyRE.
 

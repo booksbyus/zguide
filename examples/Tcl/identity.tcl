@@ -17,9 +17,9 @@ anonymous send "ROUTER uses a generated UUID"
 puts "--------------------------------------------------"
 puts [join [sink dump] \n]
 
-# Then set the identity ourself
+# Then set the identity ourselves
 zmq socket identified context REQ
-identified setsockopt IDENTITY "Hello"
+identified setsockopt IDENTITY "PEER2"
 identified connect "inproc://example"
 identified send "ROUTER socket uses REQ's socket identity"
 puts "--------------------------------------------------"

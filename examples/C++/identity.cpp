@@ -20,9 +20,9 @@ int main () {
     s_send (anonymous, "ROUTER uses a generated UUID");
     s_dump (sink);
 
-    //  Then set the identity ourself
+    //  Then set the identity ourselves
     zmq::socket_t identified (context, ZMQ_REQ);
-    identified.setsockopt( ZMQ_IDENTITY, "Hello", 5);
+    identified.setsockopt( ZMQ_IDENTITY, "PEER2", 5);
     identified.connect( "inproc://example");
 
     s_send (identified, "ROUTER socket uses REQ's socket identity");

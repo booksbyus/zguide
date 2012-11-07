@@ -48,11 +48,11 @@ func main() {
 
 	dump(sink)
 
-	//  Then set the identity ourself
+	//  Then set the identity ourselves
 	identified, err := context.NewSocket(zmq.REQ)
 	if err != nil { print(err) }
 	defer identified.Close()
-	identified.SetSockOptString(zmq.IDENTITY, "Hello")
+	identified.SetSockOptString(zmq.IDENTITY, "PEER2")
 	identified.Connect("inproc://example")
 	identified.Send([]byte("ROUTER socket uses REQ's socket identity"), zmq.NOBLOCK)
 

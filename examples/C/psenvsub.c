@@ -11,7 +11,7 @@ int main (void)
     zmq_connect (subscriber, "tcp://localhost:5563");
     zmq_setsockopt (subscriber, ZMQ_SUBSCRIBE, "B", 1);
 
-    while (true) {
+    while (1) {
         //  Read envelope with address
         char *address = s_recv (subscriber);
         //  Read message contents

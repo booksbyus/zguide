@@ -8,540 +8,355 @@ We'll cover:
 
 * How to create and use message envelopes for request-reply.
 * How to use the REQ, REP, DEALER, and ROUTER sockets.
-* How to set manual reply addresses using identities.
-* How to do custom random scatter routing.
-* How to do custom least-recently used routing.
+* How to use your own identities for peers.
+
+
+* How to do least-recently used routing.
 * How to build a higher-level message class.
 * How to build a basic request-reply broker.
 * How to choose good names for sockets.
 * How to simulate a cluster of clients and workers.
 * How to build a scalable cloud of request-reply clusters.
-* How to use pipeline sockets for monitoring threads.
 
-+++ Request-Reply Envelopes
++++ The Request-Reply Mechanisms
 
-We've looked briefly at multi-part messages. Let's now look at their first use case, which is //message envelopes//. An envelope is a way of safely packaging up data with an address, without touching the data itself. By separating addresses into an envelope we make it possible to write general-purpose intermediaries such as APIs and proxies that create, read, and remove addresses no matter what the message payload or structure.
-////
-AO: The previous explanation is pretty good. You were trying to achieve it in Chapter 2 but did not.
-////
+We already looked briefly at multi-part messages. Let's now look at a major use case, which is //reply message envelopes//. An envelope is a way of safely packaging up data with an address, without touching the data itself. By separating reply addresses into an envelope we make it possible to write general-purpose intermediaries such as APIs and proxies that create, read, and remove addresses no matter what the message payload or structure.
 
 In the request-reply pattern, the envelope holds the return address for replies. It is how a 0MQ network with no state can create round-trip request-reply dialogs.
 
-You don't in fact need to understand how request-reply envelopes work to use them for common cases. When you use REQ and REP, your sockets build and use envelopes automatically.
-////
-AO: The following doesn't help the reader. What is zmq_proxy for? Why would you call it, or not call it? What does it mean to use a proxy without calling it? And do we have to learn here how to do a proxy manually? If so, that calls for a separate section. I notice that your first example, later in this chapter, doesn't call zmq_proxy. So is it carrying out the procedure you describe here?
-////
-When you write a proxy, if you don't call {{zmq_proxy[3]}}, you need to read and write all the parts of a message. 0MQ implements envelopes using multi-part data, so if you copy multi-part data safely, you implicitly copy envelopes too.
+When you use REQ and REP sockets you don't even see envelopes; these sockets deal with them automatically. But for most of the interesting request-reply patterns, you'll want to understand envelopes and particularly ROUTER sockets. We'll work through this step-by-step.
 
-++++ How Sockets Handle Envelopes
+++++ The Simple Reply Envelope
 
-////
-AO: Why is it time to explain ROUTER sockets? You have many types in this chapter; why this one? Anyway, you're describing DEALER as well as ROUTER.
-////
-However, getting under the hood and playing with request-reply envelopes is necessary for advanced request-reply work. It's time to explain how the ROUTER socket works, in terms of envelopes:
+A request-reply exchange consists of a //request// message, and an eventual //reply// message. In the simple request-reply pattern there's one reply for each request. In more advanced patterns, requests and replies can flow asynchronously. However, the reply envelope always works the same way.
 
-* When you receive a message from a ROUTER socket, it shoves a brown paper envelope around the message and scribbles on with indelible ink, "This came from Lucy". Then it gives that to you. That is, the ROUTER gives you what came off the wire, wrapped up in an envelope with the reply address on it.
+The 0MQ reply envelope formally consists of zero or more reply addresses, followed by an empty frame (the envelope delimiter), followed by the message body (zero or more frames). The envelope is created by multiple sockets working together in a chain. We'll break this down.
 
-* When you send a message to a ROUTER, it rips off that brown paper envelope, tries to read its own handwriting, and if it knows who "Lucy" is, sends the contents back to Lucy. That is the reverse process of receiving a message.
+We'll start by sending "Hello" through a REQ socket. The REQ socket creates the simplest possible reply envelope, which has no addresses, just an empty delimiter frame and the message frame containing the "Hello" string. This is a two-frame message!figref().
 
-If you leave the brown envelope alone, and then pass that message through a DEALER and another ROUTER, the second ROUTER will in turn stick another brown envelope on it, and scribble the name of that DEALER on it.
-
-The whole point of this is that each ROUTER knows how to send replies back to the right place. All you need to do, in your application, is respect the brown envelopes. At the end of the chain comes a REP socket, which carefully slices open the brown envelopes, one by one, keeps them safely aside, and gives you (the application code that owns the REP socket) the original message. When you send the reply, it re-wraps the reply in the brown paper envelopes, so it can hand the resulting brown package back to the ROUTERs down the chain.
-
-This behavior lets you insert ROUTER-DEALER proxies into a request-reply pattern to any desired depth:
-
-////
-AO: This is actually a figure.
-////
-[[code type="textdiagram" title="ROUTER-DEALER proxy in a request-reply pattern"]]
-[REQ] <--> [REP]
-[REQ] <--> [ROUTER--DEALER] <--> [REP]
-[REQ] <--> [ROUTER--DEALER] <--> [ROUTER--DEALER] <--> [REP]
-...etc.
+[[code type="textdiagram" title="Request with Minimal Envelope"]]
+          +---+
+Frame 1   |   |   <------ Empty delimiter frame
+          +---+---+
+Frame 2   | Hello |
+          +-------+
 [[/code]]
 
-If you connect a REQ socket to a ROUTER, and send one request message, you will get a message that consists of three frames: a reply address, an empty message frame, and the 'real' message!figref().
+The REP socket does the matching work: it strips off the envelope, up to and including the delimiter frame, saves the whole envelope, and passes the "Hello" string up the application. Thus our original Hello World example used request-reply envelopes internally, but the application never saw them.
 
-[[code type="textdiagram" title="Single-hop Request-reply Envelope"]]
-          +---------------+
-Frame 1   | Reply address |   <----- Envelope
-          +---+-----------+
-Frame 2   |   |   <------ Empty message frame
-          +---+-------------------------------------+
-Frame 3   | Data                                    |
-          +-----------------------------------------+
+If you spy on the network data flowing between hwclient and hwserver, this is what you'll see: every request and every reply is in fact two frames, an empty frame and then the body. It doesn't seem to make much sense for a simple REQ-REP dialog. However you'll see the reason when we explore how ROUTERS and DEALERS handle envelopes.
+
+++++ The Extended Reply Envelope
+
+Now let's extend the REQ-REP pair with a ROUTER-DEALER proxy in the middle and see how this affects the reply envelope. This is the //extended request-reply pattern// we already saw in [#sockets-and-patterns]. We can in fact insert any number of proxy steps!figref(). The mechanics are the same.
+
+[[code type="textdiagram" title="Extended Request-Reply Pattern"]]
++-------+      +-------+
+|  REQ  |------|  REP  |
++-------+      +-------+
+
+
++-------+      +--------+--------+      +-------+
+|  REQ  |------| ROUTER | DEALER |------|  REP  |
++-------+      +--------+--------+      +-------+
+
+
++-------+      +--------+--------+      +--------+--------+      +-------+
+|  REQ  |------| ROUTER | DEALER |------| ROUTER | DEALER |------|  REP  |
++-------+      +--------+--------+      +--------+--------+      +-------+
 [[/code]]
 
-Breaking this down:
+The proxy does this, in pseudo-code:
 
-* The data in frame 3 is what the sending application sends to the REQ socket.
-
-* The empty message frame in frame 2 is prepended by the REQ socket when it sends the message to the ROUTER.
-
-* The reply address in frame 1 is prepended by the ROUTER before it passes the message to the receiving application.
-
-Now if we extend this with a chain of proxies, we get one envelope upon another envelope, with the newest envelope always stuck at the beginning of the stack!figref().
-
-[[code type="textdiagram" title="Multihop Request-reply Envelope"]]
-     (Next envelope will go here)
-
-          +---------------+
-Frame 1   | Reply address |   <----- Envelope (ROUTER)
-          +---------------+
-Frame 2   | Reply address |   <----- Envelope (ROUTER)
-          +---------------+
-Frame 3   | Reply address |   <----- Envelope (ROUTER)
-          +---+-----------+
-Frame 4   |   |   <------ Empty message frame (REQ)
-          +---+-------------------------------------+
-Frame 5   | Data                                    |
-          +-----------------------------------------+
+[[code]]
+prepare context, frontend and backend sockets
+while true:
+    poll on both sockets
+    if frontend had input:
+        read all frames from frontend
+        send to backend
+    if backend had input:
+        read all frames from backend
+        send to frontend
 [[/code]]
 
-Here now is a more detailed explanation of the four socket types we use for request-reply patterns:
+The ROUTER socket, unlike other sockets, tracks every connection it has, and tells the caller about these. The way it tells the caller is to stick the connection //identity// in front of each message received. An identity, sometimes called an //address//, is just a binary string with no meaning except "this is a unique handle to the connection". Then, when you send a message via a ROUTER socket, you first send an identity frame.
 
-* DEALER just deals out the messages you send to all connected peers (aka "round-robin"), and deals in (aka "fair queuing") the messages it receives. It is exactly like a PUSH and PULL socket combined.
+The {{zmq_socket[3]}} man page describes it thus: //when receiving messages a ZMQ_ROUTER socket shall prepend a message part containing the identity of the originating peer to the message before passing it to the application. Messages received are fair-queued from among all connected peers. When sending messages a ZMQ_ROUTER socket shall remove the first part of the message and use it to determine the identity of the peer the message shall be routed to.//
 
-* REQ prepends an empty message frame to every message you send, and removes the empty message frame from each message you receive. It then works like DEALER (and in fact is built on DEALER) except it also imposes a strict send / receive cycle.
+As a historical note, 0MQ/2.2 and earlier use UUIDs as identities, and 0MQ/3.0 and later use short integers. There's some impact on network performance but only when you use multiple proxy hops, which is rare.
 
-////
-AO: You described DEALER and ROUTER before. It would be better to combine all that information in one place and focus here on REP and REQ.
-////
-* ROUTER prepends an envelope with a reply address to each message it receives, before passing it to the application. It also chops off the envelope (the first message frame) from each message it sends, and uses that reply address to decide which peer the message should go to.
+It's a difficult concept to understand but essential if you want to become a 0MQ expert. The ROUTER socket //invents// an random identity for each connection it works with. If there are three REQ sockets connected to a ROUTER socket, it will invent three random identities, one for each REQ socket.
 
-* REP stores all the message frames up to the first empty message frame, when you receive a message and it passes the rest (the data) to your application. When you send a reply, REP prepends the saved envelopes to the message and sends it back using the same semantics as ROUTER (and in fact REP is built on top of ROUTER), but matching REQ, imposes a strict receive / send cycle.
-////
-AO; The previous sentence is garbled. How does REP match REQ? Are both sending and receiving? And how can it be a strict cycle when you say later that messages can be totally asynchronous?
-////
+So if we continue our worked example, let's say the REQ socket has identity {{02}}. Internally, this means the ROUTER socket keeps a hash table where it can search for {{02}} and find the TCP connection for the REQ socket.
 
-REP requires that the envelopes end with an empty message frame. If you're not using REQ at the other end of the chain, you must add the empty message frame yourself.
+When we receive the message off the ROUTER socket, we get three frames!figref().
 
-++++ Assigning Addresses
-////
-AO: I realized that addressing is a major issue and created a section for it. You should try to consolidate information about addressing here.
-////
-
-A natural question to ask about ROUTER is, where does it get the reply addresses from? It takes them from the socket's identity.
-////
-AO: I assume this is the more common case, so I put it first, but I might be wrong.
-////
-When we use {{zmq_setsockopt}} to set our identity on a socket, this gets passed to the ROUTER, which passes it to the application as part of the envelope for each message that comes in!figref().
-
-[[code type="textdiagram" title="ROUTER uses Identity If It knows It"]]
-+-----------+
-|           |       zmq_setsockopt (socket,
-|   Client  |           ZMQ_IDENTITY, "Lucy", 4);
-|           |
-+-----------+       +---------+
-|    REQ    |       |  Data   |     Client sends this
-\-----+-----/       +---------+
-      |
-      |  "Hi, my name is Lucy"
-      v
-/-----------\       +---------+
-|  ROUTER   |       | 'Lucy'  |     ROUTER uses identity of
-+-----------+       +-+-------+     client as reply address
-|           |       | |
-|  Service  |       +-+-------+
-|           |       |  Data   |
-+-----------+       +---------+
+[[code type="textdiagram" title="Request with One Address"]]
+          +----+
+Frame 1   | 02 |   <------ Identity of connection
+          +----+
+Frame 2   |   |  
+          +---+---+
+Frame 3   | Hello |
+          +-------+
 [[/code]]
 
-And as we already learned, if a socket does not set an identity, the ROUTER generates an identity that it can associate with the connection to that socket!figref().
+The core of the proxy loop is 'read from one socket, write to the other', so we literally send these three frames out on the DEALER socket. If you now sniffed the network traffic, you would see these three frames flying from the DEALER socket to the REP socket. The REP socket does as before, strips off the whole envelope including the new reply address, and once again delivers the "Hello" to the caller.
 
-[[code type="textdiagram" title="ROUTER Invents a UUID"]]
-|   Client  |
-|           |
-+-----------+
-|           |
-+-----------+       +---------+
-|    REQ    |       |  Data   |     Client sends this
-\-----+-----/       +---------+
-      |
-      |  "My identity is empty"
-      v
-/-----------\       +---------+
-|  ROUTER   |       |  UUID   |     ROUTER invents UUID to
-+-----------+       +-+-------+     use as reply address
-|           |       | |
-|  Service  |       +-+-------+
-|           |       |  Data   |
-+-----------+       +---------+
+Incidentally the REP socket can only deal with one request-reply exchange at a time, which is why if you try to read multiple requests or send multiple replies without sticking to a strict recv-send cycle, it gives an error.
+
+You should now be able to visualize the return path. When the hwserver sends "World" back, the REP socket wraps that with the envelope it saved, and sends a three-frame reply message across the wire to the DEALER socket!figref().
+
+[[code type="textdiagram" title="Reply with one Address"]]
+          +----+
+Frame 1   | 02 | 
+          +----+
+Frame 2   |   |  
+          +---+---+
+Frame 3   | World |
+          +-------+
 [[/code]]
 
-Let's observe the above two cases in practice. This program dumps the contents of the message frames that a ROUTER receives from two REP sockets, one not using identities, and one using an identity 'Hello':
+Now the DEALER reads these three frames, and sends all three out via the ROUTER socket. The ROUTER takes the first frame for the message, which is the {{02}} identity, and looks up the connection for this. If it finds that, it then pumps the next two frames out onto the wire!figref().
+
+[[code type="textdiagram" title="Reply with Minimal Envelope"]]
+          +---+
+Frame 1   |   |  
+          +---+---+
+Frame 2   | World |
+          +-------+
+[[/code]]
+
+The REQ socket picks this message up, and checks that the first frame is the empty delimiter, which it is. The REQ socket discards that frame and passes "World" to the calling application, which prints it out to the amazement of the younger us looking at 0MQ for the first time.
+
+++++ What's This Good For?
+
+To be honest the use cases for strict request-reply or extended request-reply are somewhat limited. For one thing, there's no easy way to recover from common failures like the server crashing due to buggy application code. We'll see more about this in [#reliable-request-reply]. However once you grasp the way these four sockets deal with envelopes, and how they talk to each other, you can do very useful things. We saw how ROUTER uses the reply envelope to decide which client REQ socket to route a reply back to. Now let's express this another way:
+
+* Each time ROUTER gives you a message it tells you what peer that came from, as an identity.
+* You can use this with a hash table (with the identity as key) to track new peers as they arrive.
+* ROUTER will route messages asynchronously to any peer connected to it, if you prefix the identity as the first frame of the message.
+
+ROUTER sockets don't care about the whole envelope. They don't know anything about the empty delimiter. All they care about is that one identity frame that lets them figure out which connect to send a message to.
+
+++++ Recap of Request-Reply Sockets
+
+Let's recap this:
+
+* The REQ socket sends, to the network, an empty delimiter frame in front of the message data. REQ sockets are synchronous. REQ sockets always send one request and then wait for one reply. REQ sockets talk to one peer at a time. If you connect a REQ socket to multiple peers, requests are distributed to and replies expected from each peer one turn at a time.
+
+* The REP socket reads and saves all identity frames up to and including the empty delimiter, then passes the following frame or frames to the caller. REP sockets are synchronous and talk to one peer at a time. If you connect a REP socket to multiple peers, requests are read from peers in fair fashion, and replies are always sent to the same peer that made the last request.
+
+* The DEALER socket is oblivious to the reply envelope and handles this like any multi-part message. DEALER sockets are asynchronous and like PUSH and PULL combined. They distribute sent messages among all connections, and fair-queue received messages from all connections.
+
+* The ROUTER socket is oblivious to the reply envelope, like DEALER. It creates identities for its connections, and passes these identities to the caller as a first frame in any received message. Conversely, when the caller sends a message, it use the first message frame as an identity to look-up the connection to send to. ROUTERS are asynchronous.
+
++++ Request-Reply Combinations
+
+We have four request-reply sockets, each with a certain behavior. We've seen how they connect in simple and extended request-reply patterns. But these sockets are building blocks that you can use to solve many problems.
+
+These are the legal combinations:
+
+* REQ to REP
+* DEALER to REP
+* REQ to ROUTER
+* DEALER to ROUTER
+* DEALER to DEALER
+
+And these combinations are invalid (and I'll explain why):
+
+* REQ to REQ
+* REQ to DEALER
+* REP to REP
+* REP to ROUTER
+* ROUTER to ROUTER
+
+Here are some tips for remembering the semantics. DEALER is like an asynchronous REQ socket, and ROUTER is like an asynchronous REP socket. Where we use a REQ socket we can use a DEALER, we just have to read and write the envelope ourselves. Where we use a REP socket we can stick a ROUTER, we just need to manage the identities ourselves.
+
+Think of REQ and DEALER sockets as "clients" and REP and ROUTER sockets as "servers". Mostly you'll want to bind REP and ROUTER sockets, and connect REQ and DEALER sockets to them. It's not always going to be this simple, but it is a clean and memorable place to start.
+
+++++ The REQ to REP Combination
+
+We've already covered a REQ client talking to a REP server but let's take one aspect: the REQ client //must// initiate the message flow. A REP server cannot talk to a REQ client that hasn't first sent it a request. Technically it's not even possible, and the API also returns an {{EFSM}} error if you try it.
+
+++++ The DEALER to REP Combination
+
+Now, let's replace the REQ client with a DEALER. This gives us an asynchronous client that can talk to multiple REP servers. If we rewrote the hello world client using DEALER, we'd be able to send off any number of "Hello" requests without waiting for replies.
+
+When we use a DEALER to talk to a REP socket, we //must// accurately emulate the envelope that the REQ socket would have sent, otherwise the REP socket will discard the message as invalid. So, to send a message, we:
+
+* send an empty message frame with the MORE flag set; then
+* send the message body.
+
+And when we receive a message, we:
+
+* receive the first frame, if it's not empty, discard the whole message;
+* receive the next frame and pass that to the application.
+
+++++ The REQ to ROUTER Combination
+
+In the same way as we can replace REQ with DEALER, we can replace REP with ROUTER. This gives us an asynchronous server that can talk to multiple REQ clients at the same time. If we rewrote the hello world server using ROUTER, we'd be able to process any number of "Hello" requests in parallel. We saw this in the [#sockets-and-patterns] mtserver example.
+
+We can use ROUTER in two distinct ways:
+
+* As a proxy that switches messages between a frontend and backend sockets.
+* As an application that reads the message and acts on it.
+
+In the first case the ROUTER simply reads all frames including the artificial identity frame, and passes them on blindly. In the second case the ROUTER //must// know the format of the reply envelope it's being sent. As the other peer is a REQ socket, the ROUTER gets the identity frame, an empty frame, then the data frame.
+
+++++ The DEALER to ROUTER Combination
+
+Now, we can switch out both REQ and REP with DEALER and ROUTER to get the most powerful socket combination, which is DEALER talking to ROUTER. It gives us asynchronous clients talking to asynchronous servers, where both sides have full control over the message formats.
+
+Since both DEALER and ROUTER can work with arbitrary message formats, if you hope to use these safely you have to become a little bit of a protocol designer. At the very least you must decide whether you wish to emulate the REQ/REP reply envelope. It depends on whether you actually need to send replies, or not.
+
+++++ The DEALER to DEALER Combination
+
+This is the odd one out, and things would be more symmetric if this combination was invalid. But there are cases where it's useful. I said you can swap a REP with a ROUTER, but you can also swap a REP with a DEALER, if the DEALER is talking to one and only one peer.
+
+When you replace a REP with a DEALER, your worker can suddenly go full asynchronous, sending any number of replies back. The cost is that you have to manage the reply envelopes yourself, and get them right, or nothing at all will work. We'll see a worked example later. Let's just say for now that DEALER to DEALER is one of the trickier patterns to get right, and happily it's rare that we need it.
+
+++++ Invalid Combinations
+
+Mostly, trying to connect clients to clients, or servers to servers, is a bad idea and won't work. However rather than give general vague warnings, I'll explain in detail:
+
+* REQ to REQ: both sides want to start by sending messages to each other, and this could only work if you timed things so that both peers exchanged messages at the same time. It hurts my brain to even think about it.
+
+* REQ to DEALER: you could in theory do this, but it would break if you added a second REQ, since DEALER has no way of sending a reply to the original peer. Thus the REQ socket would get confused, and/or return messages meant for another client.
+
+* REP to REP: both sides would wait for the other to send the first message.
+
+* REP to ROUTER: the ROUTER socket can in theory initiate the dialog and send a properly-formatted request, if it knows the REP socket has connected //and// it knows the identity of that connection. It's messy and adds nothing over DEALER to ROUTER.
+
+* ROUTER to ROUTER: this is a combination that many people feel //should// work, especially for peer-to-peer architectures. But it has the same problems as REP to ROUTER. We'll come back to peer-to-peer architectures in [#moving-pieces].
+
+The common thread in this valid vs. invalid breakdown is that a 0MQ socket connection is always biased towards one peer that binds to an endpoint, and another that connects to that. Further, that which side binds and which side connects is not arbitrary, but follows natural patterns. The side which we expect to "be there" binds: it'll be a server, a broker, a publisher, a collector. The side that "comes and goes" connects: it'll be clients and workers. Remembering this will help you design better 0MQ architectures.
+
++++ Exploring ROUTER Sockets
+
+++++ Identities and Addresses
+
+The //identity// concept in 0MQ refers specifically to ROUTER sockets and how they identity the connections they have to other sockets. More broadly, identities are used as addresses in the reply envelope. In most cases the identity is arbitrary and local to the ROUTER socket: it's a lookup key in a hash table. Independently, a peer can have an address that is physical (a network endpoint like "tcp://192.168.55.117:5670") or logical (a UUID or email address or other unique key).
+
+An application that uses a ROUTER socket to talk to specific peers can convert a logical address to an identity if it has built the necessary hash table. Since ROUTER sockets only announce the identity of a connection (to a specific peer) when that peer sends a message, you can only really reply to a message, not spontaneously talk to a peer.
+
+This is true even if you flip the rules and make the ROUTER connect to the peer rather than wait for the peer to connect to the ROUTER.
+
+However you can force the ROUTER socket to use a logical address in place of its identity. The {{zmq_setsockopt}} reference page calls this "setting the socket identity". It works as follows:
+
+* The peer application sets the {{ZMQ_IDENTITY}} option its peer socket (DEALER or REQ), //before// binding or connecting.
+* Usually the peer then connects to the already-bound ROUTER socket. But the ROUTER can also connect to the peer.
+* At connection time, the peer socket tells the router socket, "please use this identity for this connection".
+* If the peer socket doesn't say that, the router generates its usual arbitrary random identity for the connection.
+* The ROUTER socket now provides this logical address to the application as a prefix identity frame for any messages coming in from that peer.
+* The ROUTER also expects the logical address as the prefix identity frame for any outgoing messages.
+
+Here is a simple example of two peers that connect to a ROUTER socket, one that imposes a logical address "PEER2":
 
 [[code type="example" title="Identity check" name="identity"]]
 [[/code]]
 
-Here is what the dump function prints:
+Here is what the program prints:
 
 [[code]]
 ----------------------------------------
-[017] 00314F043F46C441E28DD0AC54BE8DA727
+[005] 006B8B4567
 [000]
 [026] ROUTER uses a generated UUID
 ----------------------------------------
-[005] Hello
+[005] PEER2
 [000]
 [038] ROUTER uses REQ's socket identity
 [[/code]]
 
-WARNING:
-If you use an invalid address, the ROUTER discards the message silently. There is not much else it can do usefully. In normal cases this means either that the peer has gone away, or that there is a programming error somewhere and you're using a bogus address. In any case, you cannot ever assume a message will be routed successfully until and unless you get a reply of some sort from the destination node. We'll come to creating reliable patterns later on.
+++++ ROUTER Error Handling
 
-////
-AO: What makes the following "custom"? Every request-reply application is unique. This section presents three patterns, so I don't see any customization.
-////
-+++ Custom Request-Reply Routing
+ROUTER sockets do have a somewhat brutal way of dealing with messages they can't send anywhere: they drop them silently. It's an attitude that makes sense in working code, but makes debugging hard. The "send identity as first frame" is tricky enough that we get this wrong when we're learning, and the ROUTER's stony silence when we mess up isn't very constructive.
 
-////
-AO: Your second way of stating your point is very useful. I would put that at the beginning of this chapter, if not in the previous chapter. It makes something clear that has been fuzzy up to now.
-////
-We already saw that ROUTER uses the message envelope to decide which client to route a reply back to. Now let's express that in another way: //ROUTER will route messages asynchronously to any peer connected to it, if you provide the correct routing address via a properly constructed envelope.//
+Since 0MQ/3.2 there's a socket option you can set to catch this error: {{ZMQ_ROUTER_MANDATORY}}. Set that on the ROUTER socket and then you provide an unroutable identity on a send call, the socket will signal an EHOSTUNREACH error.
 
-////
-AO: I don't know what kind of control you're talking about, and "fully" is an empty word. It's an absolute, whereas control has different layers.
-////
-So ROUTER is fully controllable. We'll dig into this magic in detail.
++++ The Least-Recently Used (LRU) Worker Pattern
 
-But first, and because we're going to go off-road into some rough and possibly illegal terrain now, let's look closer at REQ and REP. These provide your kindergarten request-reply socket pattern. It's an easy pattern to learn but quite rapidly gets annoying as it provides, for instance, no way to resend a request if it gets lost for some reason.
+Let's now look at some code. We'll see how to connect a ROUTER socket to a REQ socket, and then to a DEALER socket. These two examples follow the same logic, which is a //least-recently used worker// or LRU pattern. This pattern is our first exposure to using the ROUTER socket for deliberate routing, rather than simply acting as a reply channel.
 
-////
-AO: The second half of the following sentence is redundant. Your earlier figures already made it clear.
-////
-Although we usually think of request-reply as a to-and-fro pattern, in fact it can be fully asynchronous, as long as we understand that any REQs and REPS will be at the end of a chain, never in the middle of it, and always synchronous. All we need to know is the address of the peer we want to talk to, and then we can then send it messages asynchronously, via a ROUTER. The ROUTER is the one and only 0MQ socket type capable of being told "send this message to X" where X is the address of a connected peer.
+The LRU worker pattern is very common and we'll see it several times in the Guide. It solves the main problem with simple round-robin routing (as PUSH and DEALER offer) which is that round-robin becomes inefficient if tasks do not all roughly take the same time.
 
-////
-AO: You had a section on addressing before, and it seems logical to put the following material back there.
-////
-These are the ways we can know the address to send a message to, and you'll see most of these used in the examples of custom request-reply routing:
+It's the post office analogy. If you have one queue per counter, and you have some people buying stamps (a fast, simple transaction), and some people opening new accounts (a very slow transaction), then you will find stamp-buyers getting unfairly stuck in queues. Just as in a post office, if your messaging architecture is unfair, people will get annoyed.
 
-* By default, a peer has a null identity. The ROUTER will generate a UUID and use that to refer to the connection when it delivers you each incoming message from that peer.
+The solution in the post office is to create a single queue so that even if one or two counters get 'stuck' with slow work, other counters will continue to serve clients on a first-come, first-serve basis.
 
-* If the peer socket set an identity, the ROUTER will give that identity when it delivers an incoming request envelope from that peer.
+One reason PUSH and DEALER use the simplistic approach is sheer performance. If you arrive in any major US airport, you'll find long queues of people waiting at immigration. The border-patrol officials will send people in advance to queue up at each counter, rather than using a single queue. Having people walk fifty yards in advance saves a minute or two per passenger. And since every passport check takes roughly the same time, it's more or less fair. And this is the strategy for PUSH and DEALER: send work loads ahead of time so that there is less walking distance.
 
-* Peers with explicit identities can send them via some other mechanism, e.g. via some other sockets.
+This is a recurring theme with 0MQ: the world's problems are diverse and you can really benefit from solving different problems each in the right way. The airport isn't the post-office and one size fits no-one, really well.
 
-* Peers can have prior knowledge of each others' identities, e.g. via configuration files or some other magic.
+Back to a worker (DEALER or REQ) connected to a broker (ROUTER). The broker has to know when the worker is ready, and keep a list of workers so that it can take the //least recently used// worker each time.
 
-++++ Request-Reply Patterns
+The solution is really simple in fact: workers send a "Ready" message when they start, and after they finish each task. The broker reads these messages one by one. Each time it reads a message, that is from the least-recently used worker. And since we're using a ROUTER socket, we get an identity that we can then use to send a task back to the worker.
 
-There are at least three routing patterns, one for each of the socket types we can easily connect to a ROUTER:
+It's a twist on request-reply because the task is sent with the reply, and any response for the task is sent as a new request. The following code examples should make it clearer.
 
-* ROUTER-to-DEALER
-* ROUTER-to-REQ
-* ROUTER-to-REP
-////
-AO: Since you listed three patterns, I expect a section explaining the use for each pattern and how to do it. So I changed the headings.
-////
+++++ ROUTER Broker and REQ Workers
 
-In each of these cases we have total control over how we route messages, but the different patterns cover different use-cases and message flows. Let's break it down over the next sections with examples of different routing algorithms.
+Here is an example of the LRU pattern using a ROUTER broker talking to a set of REQ workers:
 
-+++++ ROUTER-to-DEALER routing
-
-The ROUTER-to-DEALER pattern is the simplest. You connect one ROUTER to many DEALERs, and then distribute messages to the DEALERs using any algorithm you like. The DEALERs can be sinks (processing the messages without any response), proxies (sending the messages on to other nodes), or services (sending back replies).
-
-If you expect the DEALER to reply to the ROUTER, there should be only one ROUTER talking to it. DEALERs have no idea how to reply to a specific peer, so if they have multiple peers, they will just round-robin between them, which would be weird. If the DEALER is a sink, any number of ROUTERs can talk to it.
-
-////
-AO: General information about structure and what an example does should come before the example, so I moved this up.
-////
-To route to a DEALER, we create an envelope consisting of just an identity frame (we don't need a null separator)!figref().
-
-[[code type="textdiagram" title="Routing Envelope for DEALER"]]
-          +-------------+
-Frame 1   | Address     |
-          +-------------+-------------------------+
-Frame 2   | Data                                  |
-          +---------------------------------------+
+[[code type="example" title="ROUTER-to-REQ" name="rtreq"]]
 [[/code]]
 
-What kind of routing can you do with a ROUTER-to-DEALER pattern? If the DEALERs talk back to the ROUTER, e.g., telling the ROUTER when they finished a task, you can use that knowledge to route depending on how fast a DEALER is. Since both ROUTER and DEALER are asynchronous, this can get a little tricky. You'd need to use {{zmq_poll[3]}} at least.
-////
-AO: That previous sentence is not helpful. How are you using zmq_poll? What else do you need?
-////
+The example runs for five seconds and then each worker prints how many tasks they handled. If the routing worked, we'd expect a fair distribution of work:
 
-For an example, our DEALERs will be pure sinks that don't talk back. Our routing algorithm will be a weighted random scatter: we have two DEALERs and we send twice as many messages to one as to the other!figref().
-
-[[code type="textdiagram" title="ROUTER-to-DEALER Custom Routing"]]
-       +-------------+
-       |             |
-       |   Client    |  Send to "A" or "B"
-       |             |
-       +-------------+
-       |   ROUTER    |
-       \------+------/
-              |
-              |
-      +-------+-------+
-      |               |
-      |               |
-      v               v
-/-----------\   /-----------\
-|  DEALER   |   |  DEALER   |
-|    "A"    |   |    "B"    |
-+-----------+   +-----------+
-|           |   |           |
-|  Worker   |   |   Worker  |
-|           |   |           |
-+-----------+   +-----------+
+[[code]]
+Completed: 20 tasks
+Completed: 18 tasks
+Completed: 21 tasks
+Completed: 23 tasks
+Completed: 19 tasks
+Completed: 21 tasks
+Completed: 17 tasks
+Completed: 17 tasks
+Completed: 25 tasks
+Completed: 19 tasks
 [[/code]]
 
-Here's code that shows how this works:
+To talk to the workers in this example, we have to create a REQ-friendly envelope consisting of an identity plus an empty envelope delimiter frame!figref().
+
+[[code type="textdiagram" title="Routing Envelope for REQ"]]
+          +-----------+
+Frame 1   | Identity  |
+          +---+-------+
+Frame 2   |   |   <------ Empty delimiter frame
+          +---+-------+
+Frame 3   | Data      |
+          +-----------+
+[[/code]]
+
+++++ ROUTER Broker and DEALER Workers
+
+Anywhere you can use REQ, you can use DEALER. There are two specific differences:
+
+* The REQ socket always sends an empty delimiter frame before any data frames; the DEALER does not.
+* The REQ socket will send only one message before it receives a reply; the DEALER is fully asynchronous.
+
+The synchronous vs. asynchronous behavior has no effect on our example since we're doing strict request-reply anyhow. It is more relevant when we come to recovering from failures, which we'll come to in [#reliable-request-reply].
+
+Now let's look at exactly the same example but with the REQ socket replaced by a DEALER socket:
 
 [[code type="example" title="ROUTER-to-DEALER" name="rtdealer"]]
 [[/code]]
 
-The ROUTER doesn't know when the DEALERs are ready, and it would be distracting for our example to add in the signaling to do that. So the ROUTER just does a "sleep (1)" after starting the DEALER threads. Without this sleep, the ROUTER will send out messages that can't be routed, and 0MQ will discard them.
-Note that this behavior is specific to ROUTERs. PUB sockets will also discard messages if there are no subscribers, but all other socket types will queue sent messages until there's a peer to receive them.
+The code is almost identical except that the worker uses a DEALER socket, and reads and writes that empty frame before the data frame. This is the approach I'd use when I wanted to keep compatibility with REQ workers.
 
-////
-AO: What circumstances are you talking about below? Not the previous example, because the DEALER did not send messages back in that example.
-////
-The ROUTER socket removes the first frame, and sends the second frame, which the DEALER gets as-is. When the DEALER sends a message to the ROUTER, it sends one frame. The ROUTER prepends the DEALER's address and gives us back a similar envelope in two parts.
+However remember the reason for that empty delimiter frame: it's to allow multihop extended requests that terminate in a REP socket, which uses that delimiter to split off the reply envelope, so it can hand the data frames to its application.
 
-DEALERs in fact work exactly like PUSH and PULL combined. Do not however connect PUSH or PULL sockets to DEALERS. That would just be nasty and pointless.
+If we never need to pass the message along to a REP socket, we can simply drop the empty delimiter frame at both sides, which makes things simpler. This is usually the design I use for pure DEALER to ROUTER protocols.
 
-+++++ ROUTER-to-REQ routing and the Least-Recently Used (LRU) pattern
+++++ A Load-Balancing Broker
 
-REQ sockets don't listen to you, and if you try to speak out of turn they'll ignore you. You have to wait for them to say something, and //then// you can give a sarcastic answer. This is very useful for routing because it means we can keep a bunch of REQs waiting for answers. In effect, a REQ socket will tell us when it's ready.
+The previous example is half-complete. It can manage a set of workers with dummy requests and replies, but it has no way to talk to clients.
 
-You can connect one ROUTER to many REQs, and distribute messages as you would to DEALERs. REQs will usually want to reply, but they will let you have the last word. However it's one thing at a time:
+If we add a second //frontend// ROUTER socket that accepts client requests, and turn our example into a proxy that can switch messages from frontend to backend, we get a useful and reusable little message broker!figref().
 
-. REQ speaks to ROUTER
-. ROUTER replies to REQ
-. REQ speaks to ROUTER
-. ROUTER replies to REQ
-. etc.
-
-Like DEALERs, a REQ can talk to only one ROUTER, and since REQs always start by talking to the ROUTER, you should never connect one REQ to more than one ROUTER unless you are doing sneaky stuff like multi-pathway redundant routing!figref(). I'm not even going to explain that now, and hopefully the jargon is complex enough to stop you trying this until you need it.
-
-[[code type="textdiagram" title="ROUTER to REQ Custom Routing"]]
-       +-------------+
-       |             |
-       |   Client    |   Send to "A" or "B"
-       |             |
-       +-------------+
-       |   ROUTER    |
-       \-------------/
-              ^
-              |  (1) REQ says Hi
-              |
-      +-------+-------+
-      |               |
-      |               |   (2) ROUTER gives laundry
-      v               v
-/-----------\   /-----------\
-|    REQ    |   |    REQ    |
-|    "A"    |   |    "B"    |
-+-----------+   +-----------+
-|           |   |           |
-|  Worker   |   |   Worker  |
-|           |   |           |
-+-----------+   +-----------+
-[[/code]]
-
-To route to a REQ, we must create a REQ-friendly envelope consisting of an address plus an empty message frame!figref().
-
-[[code type="textdiagram" title="Routing Envelope for REQ"]]
-          +-------------+
-Frame 1   | Address     |
-          +---+---------+
-Frame 2   |   |   <------ Empty message frame
-          +---+-----------------------------------+
-Frame 3   | Data                                  |
-          +---------------------------------------+
-[[/code]]
-
-
-What kind of routing can you do with a ROUTER-to-REQ pattern? Probably the most obvious is "least-recently-used" (LRU), where we always route to the REQ that has been waiting longest.
-Here is an example that does LRU routing to a set of REQs. Each worker lets us know it's waiting by sending a "ready" message, so we just handle these messages in order to find the least recently used worker each time:
-
-[[code type="example" title="ROUTER-to-REQ" name="rtmama"]]
-[[/code]]
-
-For this example, the LRU doesn't need any particular data structures above what 0MQ gives us (message queues) because we don't need to synchronize the workers with anything. A more realistic LRU algorithm would have to collect workers as they become ready, into a queue, and the use this queue when routing client requests. We'll do this in a later example.
-
-To prove that the LRU is working as expected, the REQs print the total tasks they each did. Since the REQs do random work, and we're not load balancing, we expect each REQ to do approximately the same amount but with random variation. And that is indeed what we see:
-
-[[code]]
-Processed: 8 tasks
-Processed: 8 tasks
-Processed: 11 tasks
-Processed: 7 tasks
-Processed: 9 tasks
-Processed: 11 tasks
-Processed: 14 tasks
-Processed: 11 tasks
-Processed: 11 tasks
-Processed: 10 tasks
-[[/code]]
-
-Some comments on this code:
-
-* We don't need any settle time, since the REQs explicitly tell the ROUTER when they are ready.
-
-* We're generating our own identities here, as printable strings, using the zhelpers.h s_set_id function. That's just to make our life a little simpler. In a realistic application, the REQs would be fully anonymous. You'd call {{zmq_msg_recv[3]}} and {{zmq_msg_send[3]}} directly instead of the zhelpers {{s_recv}} and {{s_send}} functions, which can handle only strings.
-
-////
-AO: Why is the following here?
-////
-* If you copy and paste example code without understanding it, you deserve what you get. It's like watching Spiderman leap off the roof and then trying that yourself.
-
-+++++ ROUTER-to-REP (address-based) routing
-
-In a classic request-reply pattern, a ROUTER wouldn't talk to a REP socket at all, but rather would get a DEALER to do the job for it. It's worth remembering with 0MQ that the classic patterns are the ones that work best, that the beaten path is there for a reason, and that when we go off-road we take the risk of falling off cliffs and getting eaten by zombies. Having said that, let's plug a ROUTER into a REP and see what the heck emerges.
-
-There are two special things about REPs:
-
-* They operate in a strictly lockstep request-reply manner.
-* They accept an envelope stack of any size and will return that intact.
-
-To route to a REP, we must create a REP-friendly envelope!figref().
-
-[[code type="textdiagram" title="Routing Envelope for REP"]]
-          +-------------+
-Frame 1   | Address     |  <--- Zero or more of these
-          +---+---------+
-Frame 2   |   |   <------ Exactly one empty message frame
-          +---+-----------------------------------+
-Frame 3   | Data                                  |
-          +---------------------------------------+
-[[/code]]
-
-In the normal request-reply pattern, REPs are anonymous and replaceable, but we're learning about custom routing. So, in our use-case we have reason to send a request to REP A rather than REP B. This is essential if you want to keep some kind of a conversation going between you, at one end of a large network, and a REP sitting somewhere far away.
-
-A core philosophy of 0MQ is that the edges are smart and many, and the middle is vast and dumb. This does mean the edges can address each other, and this also means we want to know how to reach a given REP. We'll look at routing across multiple hops later, but for now we'll look just at the final step: a ROUTER talking to a specific REP!figref().
-
-[[code type="textdiagram" title="ROUTER-to-REP Custom Routing"]]
-       +-------------+
-       |             |
-       |   Client    |   Send to "A" or "B"
-       |             |
-       +-------------+
-       |   ROUTER    |
-       \-------------/
-              ^
-              |
-              |
-      +-------+-------+
-      |               |
-      |               |
-      v               v
-/-----------\   /-----------\
-|    REP    |   |    REP    |
-|    "A"    |   |    "B"    |
-+-----------+   +-----------+
-|           |   |           |
-|  Worker   |   |   Worker  |
-|           |   %|           |
-+-----------+   +-----------+
-[[/code]]
-
-This example shows a very specific chain of events:
-
-////
-AO: The example has three addresses, not two. Are the first two simulating a client while the third is for the REP? This has to be explained.
-////
-. The client has a message that it expects to route back (via another ROUTER) to some node. The message has two addresses (a stack), an empty part, and a body.
-. The client passes that to the ROUTER, specifying a REP address.
-. The ROUTER removes the REP address and consults it to decide which REP to send the message to.
-. The REP receives the original addresses, empty part, and body.
-. It removes the addresses, saves them, and passes the body to the worker.
-. The worker sends a reply back to the REP.
-. The REP recreates the envelope stack and sends that back with the worker's reply to the ROUTER.
-. The ROUTER prepends the REP's address and provides that to the client along with the rest of the address stack, empty part, and the body.
-
-It's complex but worth working through until you understand it. Just remember that a REP is garbage in, garbage out.
-////
-AO: Another loose warning whose purpose is unclear.
-////
-
-[[code type="example" title="ROUTER-to-REP" name="rtpapa"]]
-[[/code]]
-
-Run this program and it should show you this:
-
-[[code]]
-----------------------------------------
-[020] This is the workload
-----------------------------------------
-[001] A
-[009] address 3
-[009] address 2
-[009] address 1
-[000]
-[017] This is the reply
-[[/code]]
-
-Some comments on this code:
-
-* In reality we'd have the REP and ROUTER in separate nodes. This example does it all in one thread because it makes the sequence of events really clear.
-
-* {{zmq_connect[3]}} doesn't happen instantly. When the REP socket connects to the ROUTER, that takes a certain time and happens in the background. In a realistic application the ROUTER wouldn't even know the REP existed until there had been some previous dialog. In our toy example, we just {{sleep (1);}} to make sure the connection's done. If you remove the sleep, the REP socket won't get the message. (Try it.)
-
-* We're routing using the REP's identity. Just to convince yourself this really is happening, try sending to a wrong address, like "B". The REP won't get the message.
-
-* The s_dump and other utility functions (in the C code) come from the zhelpers.h header file. As it becomes clear that we do the same work over and over on sockets, there are interesting layers we can build on top of the 0MQ API. We'll come back to this later when we make a real application rather than these toy examples.
-
-++++ A Request-Reply Message Broker
-
-I'll recap the knowledge we have so far about doing weird stuff with 0MQ message envelopes, and build the core of a generic custom routing proxy that we can properly call a //message broker//. Sorry for all the buzzwords. What we'll make is a //proxy// that connects a bunch of //clients// to a bunch of //workers//, and lets you use //any routing algorithm// you want. The algorithm we'll implement is //least-recently used//, since it's the most obvious use-case after simple round-robin distribution.
-
-To start with, let's look back at the classic request-reply pattern and then see how it extends over a larger and larger service-oriented network. The basic pattern just has one client talking to a few workers!figref().
-
-[[code type="textdiagram" title="Basic Request-reply"]]
-            +--------+
-            | Client |
-            +--------+
-            |  REQ   |
-            +---+----+
-                |
-                |
-    +-----------+-----------+
-    |           |           |
-    |           |           |
-+---+----+  +---+----+  +---+----+
-|  REP   |  |  REP   |  |  REP   |
-+--------+  +--------+  +--------+
-| Worker |  | Worker |  | Worker |
-+--------+  +--------+  +--------+
-[[/code]]
-
-This extends to multiple workers, but if we want to handle multiple clients as well, we need a proxy in the middle. We'd use a simple proxy connecting a ROUTER and a DEALER back to back. This proxy just switches message frames between the two sockets as fast as it can!figref().
-
-[[code type="textdiagram" title="Stretched Request-reply"]]
-+--------+  +--------+  +--------+
-| Client |  | Client |  | Client |
-+--------+  +--------+  +--------+
-|  REQ   |  |  REQ   |  |  REQ   |
-+---+----+  +---+----+  +---+----+
-    |           |           |
-    +-----------+-----------+
-                |
-            +---+----+
-            | ROUTER |
-            +--------+
-            | Device |
-            +--------+
-            | DEALER |
-            +---+----+
-                |
-    +-----------+-----------+
-    |           |           |
-+---+----+  +---+----+  +---+----+
-|  REP   |  |  REP   |  |  REP   |
-+--------+  +--------+  +--------+
-| Worker |  | Worker |  | Worker |
-+--------+  +--------+  +--------+
-[[/code]]
-
-The key here is that the ROUTER stores the originating client address in the request envelope, the DEALER and workers don't touch that, and so the ROUTER knows which client to send the reply back to. This pattern assumes all workers provide the exact same service.
-
-In the above design, we're using the built-in round-robin routing that DEALER provides. However this means some workers may be idle while others have multiple requests waiting. For better efficiency and proper load-balancing we want to use a least-recently used algorithm, so we take the ROUTER-REQ pattern we learned, and apply that!figref().
-
-[[code type="textdiagram" title="Stretched Request-reply with LRU"]]
+[[code type="textdiagram" title="Load-Balancing Broker"]]
 +--------+  +--------+  +--------+
 | Client |  | Client |  | Client |
 +--------+  +--------+  +--------+
@@ -553,7 +368,7 @@ In the above design, we're using the built-in round-robin routing that DEALER pr
             +---+----+
             | ROUTER |  Frontend
             +--------+
-            | Device |  LRU queue
+            | Proxy  |  LRU queue
             +--------+
             | ROUTER |  Backend
             +---+----+
@@ -567,16 +382,23 @@ In the above design, we're using the built-in round-robin routing that DEALER pr
 +--------+  +--------+  +--------+
 [[/code]]
 
-Our broker - a ROUTER-to-ROUTER LRU queue - can't simply copy message frames blindly. Here is the code, it's a fair chunk of code, but we can reuse the core logic any time we want to do load-balancing:
+What this broker does is:
 
-[[code type="example" title="LRU queue broker" name="lruqueue"]]
+* Accepts connections from a set of clients.
+* Accepts connections from a set of workers.
+* Accepts requests from clients and holds these in a single queue.
+* Sends these requests to workers using the LRU load-balancing pattern.
+* Receives replies back from workers.
+* Sends these replies back to the original requesting client.
+
+The broker code is fairly long but worth understanding:
+
+[[code type="example" title="Load-balancing broker" name="lruqueue"]]
 [[/code]]
 
 The difficult part of this program is (a) the envelopes that each socket reads and writes, and (b) the LRU algorithm. We'll take these in turn, starting with the message envelope formats.
 
-First, recall that a REQ REQ socket always puts on an empty part (the envelope delimiter) on sending and removes this empty part on reception. The reason for this isn't important, it's just part of the 'normal' request-reply pattern. What we care about here is just keeping REQ happy by doing precisely what she needs. Second, the ROUTER always adds an envelope with the address of whomever the message came from.
-
-We can now walk through a full request-reply chain from client to worker and back. In this code we set the identity of client and worker sockets to make it easier to trace the message frames. Most normal applications do not use identities. Let's assume the client's identity is "CLIENT" and the worker's identity is "WORKER". The client sends a single frame with the message!figref().
+Let's walk through a full request-reply chain from client to worker and back. In this code we set the identity of client and worker sockets to make it easier to trace the message frames. In reality we'd allow the ROUTER sockets to invent identities for connections. Let's assume the client's identity is "CLIENT" and the worker's identity is "WORKER". The client application sends a single frame containing "HELLO"!figref().
 
 [[code type="textdiagram" title="Message that Client Sends"]]
           +---+-------+
@@ -584,29 +406,29 @@ Frame 1   | 5 | HELLO |       Data frame
           +---+-------+
 [[/code]]
 
-What the queue gets, when reading off the ROUTER frontend socket, are three frames consisting of the sender address, empty frame delimiter, and the data part!figref().
+Since the REQ socket adds its empty delimiter frame, and the ROUTER socket adds its connection identity, what the proxy reads off the frontend ROUTER socket are three frames: the client address, empty delimiter frame, and the data part!figref().
 
 [[code type="textdiagram" title="Message Coming in on Frontend"]]
           +---+--------+
-Frame 1   | 6 | CLIENT |    Identity of client
+Frame 1   | 6 | CLIENT |    Client address
           +---+--------+
-Frame 2   | 0 |               Empty message frame
+Frame 2   | 0 |             Empty delimiter frame
           +---+-------+
-Frame 3   | 5 | HELLO |       Data frame
+Frame 3   | 5 | HELLO |     Data frame
           +---+-------+
 [[/code]]
 
-The broker sends this to the worker, prefixed by the address of the worker, taken from the LRU queue, plus an additional empty part to keep the REQ at the other end happy!figref().
+The broker sends this to the worker, prefixed by the address of the chosen worker, plus an additional empty part to keep the REQ at the other end happy!figref().
 
 [[code type="textdiagram" title="Message Sent to Backend"]]
           +---+--------+
-Frame 1   | 6 | WORKER |     Identity of worker
+Frame 1   | 6 | WORKER |      Address of worker
           +---+--------+
-Frame 2   | 0 |               Empty message frame
+Frame 2   | 0 |               Empty delimiter frame
           +---+--------+
-Frame 3   | 6 | CLIENT |    Identity of client
+Frame 3   | 6 | CLIENT |      Identity of client
           +---+--------+
-Frame 4   | 0 |               Empty message frame
+Frame 4   | 0 |               Empty delimiter frame
           +---+-------+
 Frame 5   | 5 | HELLO |       Data frame
           +---+-------+
@@ -624,9 +446,9 @@ Frame 3   | 5 | HELLO |       Data frame
           +---+-------+
 [[/code]]
 
-Which is exactly the same as what the queue received on its frontend ROUTER socket. The worker has to save the envelope (which is all the parts up to and including the empty message frame) and then it can do what's needed with the data part.
+The worker has to save the envelope (which is all the parts up to and including the empty message frame) and then it can do what's needed with the data part. Note that a REP socket would do this automatically but we're using the REQ-ROUTER pattern so we can get proper load-balancing.
 
-On the return path the messages are the same as when they come in, i.e. the backend socket gives the queue a message in five parts, and the queue sends the frontend socket a message in three parts, and the client gets a message in one part.
+On the return path the messages are the same as when they come in, i.e. the backend socket gives the broker a message in five parts, and the broker sends the frontend socket a message in three parts, and the client gets a message in one part.
 
 Now let's look at the LRU algorithm. It requires that both clients and workers use REQ sockets, and that workers correctly store and replay the envelope on messages they get. The algorithm is:
 
@@ -642,7 +464,11 @@ You should now see that you can reuse and extend the LRU algorithm with variatio
 
 +++ A High-Level API for 0MQ
 
-Reading and writing multi-part messages using the native 0MQ API is, to be polite, a lot of work. Look at the core of the worker thread from our LRU queue broker:
+//PH: this section is an apparently artificial break but I needed to switch from using the verbose low-level API, which is what the man pages use, to CZMQ, which cuts code size by several times. Also, there's a motivation for others to invest in higher-level bindings by this stage.//
+
+++++ Low-Level API is Low-Level
+
+Reading and writing multi-part messages using the native 0MQ API is, to be polite, a lot of work. Look at the core of the worker thread from our load-balancing message broker:
 
 [[code type="fragment" name="lrureader"]]
 while (true) {
@@ -665,7 +491,7 @@ while (true) {
 }
 [[/code]]
 
-That code isn't even reusable, because it can only handle one envelope. And this code already does some wrapping around the 0MQ API. If we used the libzmq API directly this is what we'd have to write:
+That code isn't even reusable, because it can only handle one reply address in the envelope. And this code already does some wrapping around the 0MQ API. If we used the libzmq API directly this is what we'd have to write:
 
 [[code type="fragment" name="lowreader"]]
 while (true) {
@@ -706,20 +532,21 @@ What we want is an API that lets us receive and send an entire message in one sh
 
 Making a good message API is fairly difficult, especially if we want to avoid copying data around too much. We have a problem of terminology: 0MQ uses "message" to describe both multi-part messages, and individual parts of a message. We have a problem of semantics: sometimes it's natural to see message content as printable string data, sometimes as binary blobs.
 
-So one solution is to use three concepts: //string// (already the basis for {{s_send} and {{s_recv}}), //frame// (a message frame), and //message// (a list of one or more frames). Here is the worker code, rewritten onto an API using these concepts:
+++++ Features of a Higher-Level API
+
+My solution is to use three fairly natural and obvious concepts: //string// (already the basis for {{s_send} and {{s_recv}}), //frame// (a message frame), and //message// (a list of one or more frames). Here is the worker code, rewritten onto an API using these concepts:
 
 [[code type="fragment" name="highreader"]]
 while (true) {
-    zmsg_t *zmsg = zmsg_recv (worker);
-    zframe_print (zmsg_last (zmsg), "Worker: ");
-    zframe_reset (zmsg_last (zmsg), "OK", 2);
-    zmsg_send (&zmsg, worker);
+    zmsg_t *msg = zmsg_recv (worker);
+    zframe_reset (zmsg_last (msg), "OK", 2);
+    zmsg_send (&msg, worker);
 }
 [[/code]]
 
 Cutting the amount of code we have to write is profitable, especially since the results are easy to read and understand. We can continue this process for other aspects of working with 0MQ. Let's make a wishlist of things we would like in a higher-level API:
 
-* //Automatic handling of sockets.// I find it really annoying to have to close sockets manually, and to have to explicitly define the linger timeout in some but not all cases. It'd be great to have a way to close sockets automatically when I close the context.
+* //Automatic handling of sockets.// I find it cumbersome to have to close sockets manually, and to have to explicitly define the linger timeout in some (but not all) cases. It'd be great to have a way to close sockets automatically when I close the context.
 
 * //Portable thread management.// Every non-trivial 0MQ application uses threads, but POSIX threads aren't portable. So a decent high-level API should hide this under a portable layer.
 
@@ -729,11 +556,13 @@ Cutting the amount of code we have to write is profitable, especially since the 
 
 * //Proper handling of Ctrl-C.// We already saw how to catch an interrupt. It would be useful if this happened in all applications.
 
-Turning this wishlist into reality gives us [http://zero.mq/c CZMQ], a high-level C API for 0MQ. This high-level binding in fact developed out of earlier versions of the Guide. It combines nicer semantics for working with 0MQ with some portability layers, and (importantly for C but less for other languages) containers like hashes and lists. CZMQ also uses an elegant object model that leads to frankly lovely code.
+++++ The CZMQ High-Level API
 
-Here is the LRU queue broker rewritten to use a higher-level API (CZMQ for the C case):
+Turning this wishlist into reality for the C language gives us [http://zero.mq/c CZMQ], a 0MQ language binding for C. This high-level binding in fact developed out of earlier versions of the Guide. It combines nicer semantics for working with 0MQ with some portability layers, and (importantly for C but less for other languages) containers like hashes and lists. CZMQ also uses an elegant object model that leads to frankly lovely code.
 
-[[code type="example" title="LRU queue broker using high-level API" name="lruqueue2"]]
+Here is the load-balancing message broker rewritten to use a higher-level API (CZMQ for the C case):
+
+[[code type="example" title="Load-balancing broker using high-level API" name="lruqueue2"]]
 [[/code]]
 
 One thing CZMQ provides is clean interrupt handling. This means that Ctrl-C will cause any blocking 0MQ call to exit with a return code -1 and errno set to EINTR. The high-level recv methods will return NULL in such cases. So, you can cleanly exit a loop like this:
@@ -777,16 +606,16 @@ zloop_destroy (&reactor);
 
 While the actual handling of messages sits inside dedicated functions or methods. You may not like the style, it's a matter of taste. What it does help with is mixing timers and socket activity. In the rest of this text we'll use {{zmq_poll[3]}} in simpler cases, and {{zloop}} in more complex examples.
 
-Here is the LRU queue broker rewritten once again, this time to use {{zloop}}:
+Here is the load-balancing broker rewritten once again, this time to use {{zloop}}:
 
 [[code type="example" title="LRU queue broker using zloop" name="lruqueue3"]]
 [[/code]]
 
 Getting applications to properly shut-down when you send them Ctrl-C can be tricky. If you use the {{zctx}} class it'll automatically set-up signal handling, but your code still has to cooperate. You must break any loop if {{zmq_poll}} returns -1 or if any of the {{zstr_recv}}, {{zframe_recv}}, or {{zmsg_recv}} methods return NULL. If you have nested loops, it can be useful to make the outer ones conditional on {{!zctx_interrupted}}.
 
-+++ Asynchronous Client-Server
++++ The Asynchronous Client-Server Pattern
 
-In the ROUTER-to-DEALER example we saw a 1-to-N use case where one client talks asynchronously to multiple workers. We can turn this upside-down to get a very useful N-to-1 architecture where various clients talk to a single server, and do this asynchronously!figref().
+In the ROUTER to DEALER example we saw a 1-to-N use case where one server talks asynchronously to multiple workers. We can turn this upside-down to get a very useful N-to-1 architecture where various clients talk to a single server, and do this asynchronously!figref().
 
 [[code type="textdiagram" title="Asynchronous Client-Server"]]
 +-----------+   +-----------+
@@ -815,7 +644,7 @@ In the ROUTER-to-DEALER example we saw a 1-to-N use case where one client talks 
 Here's how it works:
 
 * Clients connect to the server and send requests.
-* For each request, the server sends 0 to N replies.
+* For each request, the server sends 0 or more replies.
 * Clients can send multiple requests without waiting for a reply.
 * Servers can send multiple replies without waiting for new requests.
 
@@ -824,11 +653,11 @@ Here's code that shows how this works:
 [[code type="example" title="Asynchronous client-server" name="asyncsrv"]]
 [[/code]]
 
-Just run that example by itself. Like other multi-task examples, it runs in a single process but each task has its own context and conceptually acts as a separate process!figref(). You will see three clients (each with a random ID), printing out the replies they get from the server. Look carefully and you'll see each client task gets 0 or more replies per request.
+The example runs in one process, with multiple threads simulating a real multi-process architecture. When you run the example, you'll see three clients (each with a random ID), printing out the replies they get from the server. Look carefully and you'll see each client task gets 0 or more replies per request.
 
 Some comments on this code:
 
-* The clients send a request once per second, and get zero or more replies back. To make this work using {{zmq_poll[3]}}, we can't simply poll with a 1-second timeout, or we'd end up sending a new request only one second //after we received the last reply//. So we poll at a high frequency (100 times at 1/100th of a second per poll), which is approximately accurate. This means the server could use requests as a form of heartbeat, i.e. detecting when clients are present or disconnected.
+* The clients send a request once per second, and get zero or more replies back. To make this work using {{zmq_poll[3]}}, we can't simply poll with a 1-second timeout, or we'd end up sending a new request only one second //after we received the last reply//. So we poll at a high frequency (100 times at 1/100th of a second per poll), which is approximately accurate.
 
 * The server uses a pool of worker threads, each processing one request synchronously. It connects these to its frontend socket using an internal queue. It connects the frontend and backend sockets using a {{zmq_proxy[3]}} call.
 
@@ -874,11 +703,11 @@ Some comments on this code:
 \---------------------------------------------/
 [[/code]]
 
-Note that we're doing a DEALER-to-ROUTER dialog between client and server, but internally between the server main thread and workers we're doing DEALER-to-DEALER. If the workers were strictly synchronous, we'd use REP. But since we want to send multiple replies we need an async socket. We do //not// want to route replies, they always go to the single server thread that sent us the request.
+Note that we're doing DEALER to ROUTER dialog between client and server, but internally between the server main thread and workers we're doing DEALER to DEALER. If the workers were strictly synchronous, we'd use REP. But since we want to send multiple replies we need an async socket. We do //not// want to route replies, they always go to the single server thread that sent us the request.
 
 Let's think about the routing envelope. The client sends a simple message. The server thread receives a two-part message (real message prefixed by client identity). We have two possible designs for the server-to-worker interface:
 
-* Workers get unaddressed messages, and we manage the connections from server thread to worker threads explicitly using a ROUTER socket as backend. This would require that workers start by telling the server they exist, which can then route requests to workers and track which client is 'connected' to which worker. This is the LRU pattern we already covered.
+* Workers get unaddressed messages, and we manage the connections from server thread to worker threads explicitly using a ROUTER socket as backend. This would require that workers start by telling the server they exist, which can then route requests to workers and track which client is 'connected' to which worker. This is the LRU load-balancing pattern we already covered.
 
 * Workers get addressed messages, and they return addressed replies. This requires that workers can properly decode and recode envelopes but it doesn't need any other mechanisms.
 
@@ -902,7 +731,9 @@ We cheat in the above example by keeping state only for a very short time (the t
 
 +++ Worked Example: Inter-Broker Routing
 
-Let's take everything we've seen so far, and scale things up. Our best client calls us urgently and asks for a design of a large cloud computing facility. He has this vision of a cloud that spans many data centers, each a cluster of clients and workers, and that works together as a whole.
+Let's take everything we've seen so far, and scale things up to a real application. We'll build this step by step over several iterations.
+
+Our best client calls us urgently and asks for a design of a large cloud computing facility. He has this vision of a cloud that spans many data centers, each a cluster of clients and workers, and that works together as a whole.
 
 Because we're smart enough to know that practice always beats theory, we propose to make a working simulation using 0MQ. Our client, eager to lock down the budget before his own boss changes his mind, and having read great things about 0MQ on Twitter, agrees.
 
@@ -1068,7 +899,7 @@ We know the basic model well by now:
 
 ++++ Federation vs. Peering
 
-There are several possible ways to interconnect brokers. What we //want// is to be able to tell other brokers, "we have capacity", and then receive multiple tasks. We also need to be able to tell other brokers "stop, we're full". It doesn't need to be perfect: sometimes we may accept jobs we can't process immediately, then we'll do them as soon as possible.
+There are several possible ways to interconnect brokers. What we want is to be able to tell other brokers, "we have capacity", and then receive multiple tasks. We also need to be able to tell other brokers "stop, we're full". It doesn't need to be perfect: sometimes we may accept jobs we can't process immediately, then we'll do them as soon as possible.
 
 The simplest interconnect is //federation// in which brokers simulate clients and workers for each other. We would do this by connecting our frontend to the other broker's backend socket!figref(). Note that it is legal to both bind a socket to an endpoint and connect it to other endpoints.
 
@@ -1094,7 +925,7 @@ The simplest interconnect is //federation// in which brokers simulate clients an
 
 This would give us simple logic in both brokers and a reasonably good mechanism: when there are no clients, tell the other broker 'ready', and accept one job from it. The problem is also that it is too simple for this problem. A federated broker would be able to handle only one task at once. If the broker emulates a lock-step client and worker, it is by definition also going to be lock-step and if it has lots of available workers they won't be used. Our brokers need to be connected in a fully asynchronous fashion.
 
-The federation model is perfect for other kinds of routing, especially service-oriented architectures or SOAs (which route by service name and proximity rather than LRU or round-robin or random scatter). So don't dismiss it as useless, it's just not right for least-recently used and cluster load-balancing.
+The federation model is perfect for other kinds of routing, especially service-oriented architectures (SOAs) which route by service name and proximity rather than LRU or round-robin. So don't dismiss it as useless, it's just not right for least-recently used and cluster load-balancing.
 
 So instead of federation, let's look at a //peering// approach in which brokers are explicitly aware of each other and talk over privileged channels. Let's break this down, assuming we want to interconnect N brokers. Each broker has (N - 1) peers, and all brokers are using exactly the same code and logic. There are two distinct flows of information between brokers:
 
@@ -1319,7 +1150,7 @@ peering2 you me
 
 Some comments on this code:
 
-* Using the zmsg class makes life much easier, and our code much shorter. It's obviously an abstraction that works. If you build 0MQ applications in C, you should use CZMQ.
+* In the C code at least, using the zmsg class makes life much easier, and our code much shorter. It's obviously an abstraction that works. If you build 0MQ applications in C, you should use CZMQ.
 
 * Since we're not getting any state information from peers, we naively assume they are running. The code prompts you to confirm when you've started all the brokers. In the real case we'd not send anything to brokers who had not told us they exist.
 

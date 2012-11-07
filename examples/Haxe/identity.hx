@@ -32,9 +32,9 @@ class Identity
 		anonymous.sendMsg(Bytes.ofString("ROUTER uses a generated UUID"));
 		ZHelpers.dump(sink);
 		
-		// Then set the identity ourself
+		// Then set the identity ourselves
 		var identified:ZMQSocket = context.createSocket(ZMQ_REQ);
-		identified.setsockopt(ZMQ_IDENTITY, Bytes.ofString("Hello"));
+		identified.setsockopt(ZMQ_IDENTITY, Bytes.ofString("PEER2"));
 		identified.connect("inproc://example");
 		identified.sendMsg(Bytes.ofString("ROUTER socket uses REQ's socket identity"));
 		ZHelpers.dump(sink);

@@ -10,7 +10,7 @@ worker_routine (void *context) {
     void *receiver = zmq_socket (context, ZMQ_REP);
     zmq_connect (receiver, "inproc://workers");
 
-    while (true) {
+    while (1) {
         char *string = s_recv (receiver);
         printf ("Received request: [%s]\n", string);
         free (string);
