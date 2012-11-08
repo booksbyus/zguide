@@ -6,17 +6,14 @@ In [#sockets-and-patterns] we worked through the basics of using 0MQ by developi
 
 We'll cover:
 
-* How to create and use message envelopes for request-reply.
-* How to use the REQ, REP, DEALER, and ROUTER sockets.
-* How to use your own identities for peers.
-
-
-* How to do least-recently used routing.
-* How to build a higher-level message class.
-* How to build a basic request-reply broker.
-* How to choose good names for sockets.
-* How to simulate a cluster of clients and workers.
-* How to build a scalable cloud of request-reply clusters.
+* How the request-reply mechanisms work.
+* How to combine REQ, REP, DEALER, and ROUTER sockets.
+* How ROUTER sockets work, in detail.
+* The least-recently used worker pattern.
+* Building a simple load-balancing message broker.
+* Designing a high-level API for 0MQ.
+* Building an asynchronous request-reply server.
+* A detailed inter-broker routing example.
 
 +++ The Request-Reply Mechanisms
 
