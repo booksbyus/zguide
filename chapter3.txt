@@ -464,11 +464,9 @@ You should now see that you can reuse and extend the LRU algorithm with variatio
 
 +++ A High-Level API for 0MQ
 
-//PH: this section is an apparently artificial break but I needed to switch from using the verbose low-level API, which is what the man pages use, to CZMQ, which cuts code size by several times. Also, there's a motivation for others to invest in higher-level bindings by this stage.//
+++++ Making a Detour
 
-++++ Low-Level API is Low-Level
-
-Reading and writing multi-part messages using the native 0MQ API is, to be polite, a lot of work. Look at the core of the worker thread from our load-balancing message broker:
+We're going to push request-reply onto the stack and open a different area, which is the 0MQ API itself. There's a reason for this detour: as we write more complex examples, the low-level 0MQ API starts to look increasingly clumsy. Look at the core of the worker thread from our load-balancing message broker:
 
 [[code type="fragment" name="lrureader"]]
 while (true) {
@@ -491,7 +489,7 @@ while (true) {
 }
 [[/code]]
 
-That code isn't even reusable, because it can only handle one reply address in the envelope. And this code already does some wrapping around the 0MQ API. If we used the libzmq API directly this is what we'd have to write:
+That code isn't even reusable, because it can only handle one reply address in the envelope. And it already does some wrapping around the 0MQ API. If we used the libzmq API directly this is what we'd have to write:
 
 [[code type="fragment" name="lowreader"]]
 while (true) {
@@ -528,13 +526,19 @@ while (true) {
 }
 [[/code]]
 
-What we want is an API that lets us receive and send an entire message in one shot, including all envelopes. One that lets us do what we want with the absolute least lines of code. The 0MQ core API itself doesn't aim to do this, but nothing prevents us making layers on top, and part of learning to use 0MQ intelligently is to do exactly that.
+And when code is too long to write quickly, it's also too long to understand. Up to now, I've stuck to the native API because as 0MQ users we need to know that intimately. But when it gets in our way, we have to treat it as a problem to solve.
 
-Making a good message API is fairly difficult, especially if we want to avoid copying data around too much. We have a problem of terminology: 0MQ uses "message" to describe both multi-part messages, and individual parts of a message. We have a problem of semantics: sometimes it's natural to see message content as printable string data, sometimes as binary blobs.
+I'm not proposing changing the 0MQ API, which is a documented public contract that thousands of people have agreed to and depend on. What I'm proposing is to construct a higher-level API on top, based on our experience so far, and most specifically, our experience from writing more complex request-reply patterns.
+
+What we want is an API that lets us receive and send an entire message in one shot, including the reply envelope with any number of reply addresses. One that lets us do what we want with the absolute least lines of code.
+
+Making a good message API is fairly difficult. We have a problem of terminology: 0MQ uses "message" to describe both multi-part messages, and individual message frames. We have a problem of expectations: sometimes it's natural to see message content as printable string data, sometimes as binary blobs. And we have technical challenges, especially if we want to avoid copying data around too much.
+
+The challenge of making a good API affects all languages, though my specific use-case is C. Whatever language you use, think about how you could contribute to your language binding to make it as good (or better) than the C binding I'm going to describe.
 
 ++++ Features of a Higher-Level API
 
-My solution is to use three fairly natural and obvious concepts: //string// (already the basis for {{s_send} and {{s_recv}}), //frame// (a message frame), and //message// (a list of one or more frames). Here is the worker code, rewritten onto an API using these concepts:
+My solution is to use three fairly natural and obvious concepts: //string// (already the basis for our {{s_send} and {{s_recv}}) helpers, //frame// (a message frame), and //message// (a list of one or more frames). Here is the worker code, rewritten onto an API using these concepts:
 
 [[code type="fragment" name="highreader"]]
 while (true) {
@@ -544,7 +548,7 @@ while (true) {
 }
 [[/code]]
 
-Cutting the amount of code we have to write is profitable, especially since the results are easy to read and understand. We can continue this process for other aspects of working with 0MQ. Let's make a wishlist of things we would like in a higher-level API:
+Cutting the amount of code we need to read and write complex messages is great: the results are easy to read and understand. Let's continue this process for other aspects of working with 0MQ. Here's a wishlist of things I'd like in a higher-level API, based on my experience with 0MQ so far:
 
 * //Automatic handling of sockets.// I find it cumbersome to have to close sockets manually, and to have to explicitly define the linger timeout in some (but not all) cases. It'd be great to have a way to close sockets automatically when I close the context.
 
