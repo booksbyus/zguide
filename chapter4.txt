@@ -6,7 +6,7 @@
 In this chapter we focus heavily on user-space request-reply "patterns", reusable models that help you design your own 0MQ architectures:
 
 * The //Lazy Pirate// pattern: reliable request reply from the client side
-* The //Simple Pirate// pattern: reliable request-reply using a LRU queue
+* The //Simple Pirate// pattern: reliable request-reply using load-balancing
 * The //Paranoid Pirate// pattern: reliable request-reply with heartbeating
 * The //Majordomo// pattern: service-oriented reliable queuing
 * The //Titanic// pattern: disk-based / disconnected reliable queuing
@@ -41,30 +41,27 @@ So to make things brutally simple, reliability is "keeping things working proper
 
 Let's take them one by one:
 
-Request-reply:: If the server dies (while processing a request), the client can figure that out because it won't get an answer back. Then it can give up in a huff, wait and try again later, find another server, etc. As for the client dying, we can brush that off as "someone else's problem" for now.
+* Request-reply - if the server dies (while processing a request), the client can figure that out because it won't get an answer back. Then it can give up in a huff, wait and try again later, find another server, etc. As for the client dying, we can brush that off as "someone else's problem" for now.
 
-Publish-subscribe:: if the client dies (having gotten some data), the server doesn't know about it. Pubsub doesn't send any information back from client to server. But the client can contact the server out-of-band, e.g. via request-reply, and ask, "please resend everything I missed". As for the server dying, that's out of scope for here. Subscribers can also self-verify that they're not running too slowly, and take action (e.g., warn the operator, and die) if they are.
+* Publish-subscribe - if the client dies (having gotten some data), the server doesn't know about it. Pubsub doesn't send any information back from client to server. But the client can contact the server out-of-band, e.g. via request-reply, and ask, "please resend everything I missed". As for the server dying, that's out of scope for here. Subscribers can also self-verify that they're not running too slowly, and take action (e.g., warn the operator, and die) if they are.
 
-Pipeline:: if a worker dies (while working), the ventilator doesn't know about it. Pipelines, like pubsub, and the grinding gears of time, only work in one direction. But the downstream collector can detect that one task didn't get done, and send a message back to the ventilator saying, "hey, resend task 324!" If the ventilator or collector dies, whatever upstream client originally sent the work batch can get tired of waiting and resend the whole lot. It's not elegant, but system code should really not die often enough to matter.
+* Pipeline - if a worker dies (while working), the ventilator doesn't know about it. Pipelines, like pubsub, and the grinding gears of time, only work in one direction. But the downstream collector can detect that one task didn't get done, and send a message back to the ventilator saying, "hey, resend task 324!" If the ventilator or collector dies, whatever upstream client originally sent the work batch can get tired of waiting and resend the whole lot. It's not elegant, but system code should really not die often enough to matter.
 
-In this chapter we'll focus on just on request-reply, which is the low-hanging Durian fruit of reliable messaging. We'll cover reliable pub-sub and pipeline in later chapters.
+In this chapter we'll focus on just on request-reply, which is the low-hanging fruit of reliable messaging.
 
 The basic request-reply pattern (a REQ client socket doing a blocking send/recv to a REP server socket) scores low on handling the most common types of failure. If the server crashes while processing the request, the client just hangs forever. If the network loses the request or the reply, the client hangs forever.
 
 Request-reply is still much better than TCP, thanks to 0MQ's ability to reconnect peers silently, to load-balance messages, and so on. But it's still not good enough for real work. The only case where you can really trust the basic request-reply pattern is between two threads in the same process where there's no network or separate server process to die.
 
-However, with a little extra work this humble pattern becomes a good basis for real work across a distributed network, and we get a set of reliable request-reply (RRR) patterns I like to call the "Pirate" patterns (you'll get the joke, eventually).
+However, with a little extra work this humble pattern becomes a good basis for real work across a distributed network, and we get a set of reliable request-reply (RRR) patterns I like to call the //Pirate// patterns (you'll eventually get the joke, I hope).
 
 There are, in my experience, roughly three ways to connect clients to servers. Each needs a specific approach to reliability:
 
 * Multiple clients talking directly to a single server. Use case: a single well-known server that clients need to talk to. Types of failure we aim to handle: server crashes and restarts, network disconnects.
 
-////
-AO: I'd prefer to state the use case differently, because the current use case sounds exactly like the approach itself; it's tautological.
-////
-* Multiple clients talking to a single queue device that distributes work to multiple servers. Use case: workload distribution to workers. Types of failure we aim to handle: worker crashes and restarts, worker busy looping, worker overload, queue crashes and restarts, network disconnects.
+* Multiple clients talking to a broker proxy that distributes work to multiple workers. Use case: service oriented transaction processing. Types of failure we aim to handle: worker crashes and restarts, worker busy looping, worker overload, queue crashes and restarts, network disconnects.
 
-* Multiple clients talking to multiple servers with no intermediary devices. Use case: distributed services such as name resolution. Types of failure we aim to handle: service crashes and restarts, service busy looping, service overload, network disconnects.
+* Multiple clients talking to multiple servers with no intermediary proxies. Use case: distributed services such as name resolution. Types of failure we aim to handle: service crashes and restarts, service busy looping, service overload, network disconnects.
 
 Each of these approaches has its trade-offs and often you'll mix them. We'll look at all three in detail.
 
@@ -146,20 +143,13 @@ So, pros and cons:
 * Pro: 0MQ automatically retries the actual reconnection until it works.
 * Con: doesn't do fail-over to backup / alternate servers.
 
-////
-AO: You didn't explain where the term Pirate comes from.
-////
-
 +++ Basic Reliable Queuing (Simple Pirate Pattern)
 
-Our second approach extends the Lazy Pirate pattern with a queue device that lets us talk, transparently, to multiple servers, which we can more accurately call "workers". We'll develop this in stages, starting with a minimal working model, the Simple Pirate pattern.
+Our second approach extends the Lazy Pirate pattern with a queue proxy that lets us talk, transparently, to multiple servers, which we can more accurately call "workers". We'll develop this in stages, starting with a minimal working model, the Simple Pirate pattern.
 
-In all these Pirate patterns, workers are stateless. If the application requires some shared state--e.g., a shared database--we don't know about it as we design our messaging framework. Having a queue device means workers can come and go without clients knowing anything about it. If one worker dies, another takes over. This is a nice, simple topology with only one real weakness, namely the central queue itself, which can become a problem to manage, and a single point of failure.
+In all these Pirate patterns, workers are stateless. If the application requires some shared state--e.g., a shared database--we don't know about it as we design our messaging framework. Having a queue proxy means workers can come and go without clients knowing anything about it. If one worker dies, another takes over. This is a nice, simple topology with only one real weakness, namely the central queue itself, which can become a problem to manage, and a single point of failure.
 
-////
-AO: It would be nice to point directly to the section within Chapter 3, but your tools might not support that.
-////
-The basis for the queue device is the least-recently-used (LRU) routing queue from [#advanced-request-reply]. What is the very //minimum// we need to do to handle dead or blocked workers? Turns out, it's surprisingly little. We already have a retry mechanism in the client. So using the standard LRU queue will work pretty well. This fits with 0MQ's philosophy that we can extend a peer-to-peer pattern like request-reply by plugging naive devices in the middle!figref().
+The basis for the queue proxy is the load-balancing broker from [#advanced-request-reply]. What is the very //minimum// we need to do to handle dead or blocked workers? Turns out, it's surprisingly little. We already have a retry mechanism in the client. So using the load-balancing pattern will work pretty well. This fits with 0MQ's philosophy that we can extend a peer-to-peer pattern like request-reply by plugging naive proxies in the middle!figref().
 
 [[code type="textdiagram" title="The Simple Pirate Pattern"]]
 +-----------+   +-----------+   +-----------+
@@ -177,8 +167,8 @@ The basis for the queue device is the least-recently-used (LRU) routing queue fr
                 /-----------\
                 |  ROUTER   |
                 +-----------+
-                |    LRU    |
-                |   Queue   |
+                |   Load    |
+                |  balancer |
                 +-----------+
                 |  ROUTER   |
                 \-----------/
@@ -190,25 +180,21 @@ The basis for the queue device is the least-recently-used (LRU) routing queue fr
 /-----------\   /-----------\   /-----------\
 |    REQ    |   |    REQ    |   |    REQ    |
 +-----------+   +-----------+   +-----------+
-|    LRU    |   |    LRU    |   |    LRU    |
 |   Worker  |   |   Worker  |   |   Worker  |
 +-----------+   +-----------+   +-----------+
 [[/code]]
 
-////
-AO: Actually, it may be more accurate to say that you are basing your client on the previous section's Lazy Pirate, because there are changes.
-////
-We don't need a special client; we're still using the Lazy Pirate client. Here is the queue, which is precisely the LRU queue described in [#advanced-request-reply], no more or less:
+We don't need a special client; we're still using the Lazy Pirate client. Here is the queue, which is identical to the main task of the load-balancing broker:
 
 [[code type="example" title="Simple Pirate queue" name="spqueue"]]
 [[/code]]
 
-Here is the worker, which takes the Lazy Pirate server and adapts it for the LRU pattern (using the REQ 'ready' signaling):
+Here is the worker, which takes the Lazy Pirate server and adapts it for the load-balancing pattern (using the REQ 'ready' signaling):
 
 [[code type="example" title="Simple Pirate worker" name="spworker"]]
 [[/code]]
 
-To test this, start a handful of workers, a client, and the queue, in any order. You'll see that the workers eventually all crash and burn, and the client retries and then gives up. The queue never stops, and you can restart workers and clients ad-nauseam. This model works with any number of clients and workers.
+To test this, start a handful of workers, a Lazy Pirate client, and the queue, in any order. You'll see that the workers eventually all crash and burn, and the client retries and then gives up. The queue never stops, and you can restart workers and clients ad-nauseam. This model works with any number of clients and workers.
 
 +++ Robust Reliable Queuing (Paranoid Pirate Pattern)
 
@@ -258,12 +244,12 @@ We previously used a REQ socket for the worker. For the Paranoid Pirate worker w
 +-----------+   +-----------+   +-----------+
 [[/code]]
 
-We're still using the Lazy Pirate client. Here is the Paranoid Pirate queue device:
+We're still using the Lazy Pirate client. Here is the Paranoid Pirate queue proxy:
 
 [[code type="example" title="Paranoid Pirate queue" name="ppqueue"]]
 [[/code]]
 
-The queue extends the LRU pattern with heartbeating of workers. Heartbeating is one of those "simple" things that can be subtle to get right. I'll explain more about that in a second.
+The queue extends the load-balancing pattern with heartbeating of workers. Heartbeating is one of those "simple" things that can be subtle to get right. I'll explain more about that in a second.
 
 Here is the Paranoid Pirate worker:
 
@@ -274,10 +260,7 @@ Some comments about this example:
 
 * The code includes simulation of failures, as before. This makes it (a) very hard to debug, and (b) dangerous to reuse. When you want to debug this, disable the failure simulation.
 
-* The worker uses a reconnect strategy similar to the one we designed for the Lazy Pirate client, with two major differences: (a) it does an exponential back-off, and (b) it never abandons.
-////
-AO: Abandons the queue?
-////
+* The worker uses a reconnect strategy similar to the one we designed for the Lazy Pirate client, with two major differences: (a) it does an exponential back-off, and (b) it retries indefinitely (where as the client retries a few times before reporting a failure).
 
 Try the client, queue, and workers, such as by using a script like this:
 
@@ -294,49 +277,120 @@ You should see the workers die, one by one, as they simulate a crash, and the cl
 
 +++ Heartbeating
 
-When writing the Paranoid Pirate examples, it took about five hours to get the queue-to-worker heartbeating working properly. The rest of the request-reply chain took perhaps ten minutes. Heartbeating is one of those reliability layers that often causes more trouble than it saves. It is especially easy to create "false failures", i.e., when peers decide that they are disconnected because the heartbeats aren't sent properly.
+Heartbeating solves the problem of knowing whether a peer is alive or dead. This is not an issue specific to 0MQ. TCP has a long timeout (30 minutes or so), that means that it can be impossible to know whether a peer has died, been disconnected, or gone on a weekend to Prague with a case of vodka, a redhead, and a large expense account.
 
-Some points to consider when understanding and implementing heartbeating:
-////
-AO: The following points are useful guidelines, but they are no substitute for an explanation of how to do heartbeating. The code is hard to trace through, particularly given that multiple nodes are doing different things that interact somehow through messages. You need to explain what you did.
-////
+It's is not easy to get heartbeating right. When writing the Paranoid Pirate examples, it took about five hours to get the heartbeating working properly. The rest of the request-reply chain took perhaps ten minutes. It is especially easy to create "false failures", i.e., when peers decide that they are disconnected because the heartbeats aren't sent properly.
 
-* Note that heartbeats are not request-reply. They flow asynchronously in both directions. Either peer can decide the other is 'dead' and stop talking to it.
+We'll look at the three main answers people use for heartbeating with 0MQ.
 
-* First, get the heartbeating working, and only //then// add in the rest of the message flow. You should be able to prove the heartbeating works by starting peers in any order, stopping and restarting them, simulating freezes, and so on.
+++++ Shrugging It Off
 
-* When your main loop is based on {{zmq_poll[3]}}, use a secondary timer to trigger heartbeats. Do //not// use the poll loop for this, because you'll enter the loop every time you receive any message--fun, when you have two peers sending each other heartbeats (think about it).
+The most common approach is to do no heartbeating at all and hope for the best. Many if not most 0MQ applications do this. 0MQ encourages this by hiding peers in many cases. What problems does this approach cause?
 
-Your language or binding should provide a method that returns the current system clock in milliseconds. It's easy to use this to calculate when to send the next heartbeats. Thus, in C:
+* When we use a ROUTER socket in an application that tracks peers, as peers disconnect and reconnect, the application will leak memory (resources that the application holds for each peer) and get slower and slower.
+
+* When we use SUB or DEALER-based data recipients, we can't tell the difference between good silence (there's no data) and bad silence (the other end died). When a recipient knows the other side died, it can for example switch over to a backup route.
+
+* If we use a TCP connection that stays silent for a long while, it will, in some networks, just die. Sending something (technically, a "keep-alive" more than a heartbeat), will keep the network alive.
+
+++++ One-Way Heartbeats
+
+A second option is to sending a heartbeat message from each node to its peers, every second or so. When one node hears nothing from another, within some timeout (several seconds, typically), it will treat that peer as dead. Sounds good, right? Sadly no. This works in some cases but has nasty edge cases in other cases.
+
+For PUB-SUB, this does work, and it's the only model you can use. SUB sockets cannot talk back to PUB sockets, but PUB sockets can happily send "I'm alive" messages to their subscribers.
+
+As an optimization, you can send heartbeats only when there is no real data to send. Furthermore, you can send heartbeats progressively slower and slower, if network activity is an issue (e.g. on mobile networks where activity drains the battery). As long as the recipient can detect a failure (sharp stop in activity), that's fine.
+
+Now the typical problems with this design:
+
+* It can be inaccurate when we send large amounts of data, since heartbeats will be delayed behind that data. If heartbeats are delayed, you can get false timeouts and disconnections due to network congestion. Thus, always treat //any// incoming data as a heartbeat, whether or not the sender optimizes out heartbeats.
+
+* While the PUB-SUB pattern will drop messages for disappeared recipients, PUSH and DEALER sockets will queue them. So, if you send heartbeats to a dead peer, and it comes back, it'll get all the heartbeats you sent. Which can be thousands. Whoa, whoa!
+
+* This design assumes that heartbeat timeouts are the same across the whole network. But that won't be accurate. Some peers will want very aggressive heart-beating, to detect faults rapidly. And some will want very relaxed heart-beating, to let sleeping networks lie, and save power.
+
+++++ Ping-Pong Heartbeats
+
+The third option is to use a ping-pong dialog. One peer sends a ping command to the other, which replies with a pong command. Neither command has any payload. Pings and pongs are not correlated. Since the roles of "client" and "server" are arbitrary in some networks, we usually specify that either peer can in fact send a ping and expect a pong in response. However, since the timeouts depend on network topologies known best to dynamic clients, it is usually the client which pings the server.
+
+This works for all ROUTER-based brokers. The same optimizations we used in the second model make this work even better: treat any incoming data as a pong, and only send a ping when not otherwise sending data.
+
+++++ Heartbeating for Paranoid Pirate
+
+For Paranoid Pirate we chose the second approach. It might not have been the simplest option: if designing this today, I'd probably try a ping-pong approach instead. However the principles are similar. The heartbeat messages flow asynchronously in both directions, and either peer can decide the other is 'dead' and stop talking to it.
+
+In the worker, this is how we handle heartbeats from the queue:
+
+* We calculate a //liveness// which is how many heartbeats we can still miss before deciding the queue is dead. It starts at 3 and we decrement it each time we miss a heartbeat.
+* We wait, in the {{zmq_poll}} loop, for one second each time, which is our heartbeat interval.
+* If there's any message from the queue during that time we reset our liveness to three.
+* If there's no message during that time, we count down our liveness.
+* If the liveness reaches zero, we consider the queue dead.
+* If the queue is 'dead', we destroy our socket, create a new one, and reconnect.
+* To avoid opening and closing too many sockets we wait for a certain //interval// before reconnecting, and we double the interval each time until it reaches 32 seconds.
+
+And this is how we handle heartbeats //to// the queue:
+
+* We calculate when to send the next heartbeat; this is a single variable since we're talking to one peer, the queue.
+* In the {{zmq_poll}} loop, whenever we pass this time, we send a heartbeat to the queue.
+
+Here's the essential heartbeating code for the worker:
 
 [[code type="fragment" name="heartbeats"]]
+#define HEARTBEAT_LIVENESS  3       //  3-5 is reasonable
+#define HEARTBEAT_INTERVAL  1000    //  msecs
+#define INTERVAL_INIT       1000    //  Initial reconnect
+#define INTERVAL_MAX       32000    //  After exponential backoff
+
+...
+//  If liveness hits zero, queue is considered disconnected
+size_t liveness = HEARTBEAT_LIVENESS;
+size_t interval = INTERVAL_INIT;
+
 //  Send out heartbeats at regular intervals
 uint64_t heartbeat_at = zclock_time () + HEARTBEAT_INTERVAL;
 
 while (true) {
-    ...
+    zmq_pollitem_t items [] = { { worker,  0, ZMQ_POLLIN, 0 } };
     int rc = zmq_poll (items, 1, HEARTBEAT_INTERVAL * ZMQ_POLL_MSEC);
-    ...
+
+    if (items [0].revents & ZMQ_POLLIN) {
+        //  Receive any message from queue
+        liveness = HEARTBEAT_LIVENESS;
+        interval = INTERVAL_INIT;
+    }
+    else
+    if (--liveness == 0) {
+        zclock_sleep (interval);
+        if (interval < INTERVAL_MAX)
+            interval *= 2;
+        zsocket_destroy (ctx, worker);
+        ...
+        liveness = HEARTBEAT_LIVENESS;
+    }
     //  Send heartbeat to queue if it's time
     if (zclock_time () > heartbeat_at) {
-        ... Send heartbeats to all peers that expect them
-        //  Set timer for next heartbeat
         heartbeat_at = zclock_time () + HEARTBEAT_INTERVAL;
+        //  Send heartbeat message to queue
     }
 }
 [[/code]]
 
-* Your main poll loop should use the heartbeat interval as its timeout. Anything less will just waste cycles. Obviously, don't use infinity.
+The queue does the same, but manages an expiry time for each worker.
+
+Here are some tips for your own heartbeating implementation:
+
+* Use {{zmq_poll}} or a reactor as the core of your application's main task.
+
+* Start by building the heartbeating between peers, test it by simulating failures, and //then// build the rest of the message flow. Adding heartbeating afterwards is much trickier.
 
 * Use simple tracing, i.e. print to console, to get this working. Some tricks to help you trace the flow of messages between peers: a dump method such as zmsg offers; number messages incrementally so you can see if there are gaps.
 
 * In a real application, heartbeating must be configurable and usually negotiated with the peer. Some peers will want aggressive heartbeating, as low as 10 msecs. Other peers will be far away and want heartbeating as high as 30 seconds.
 
-* If you have different heartbeat intervals for different peers, your poll timeout should be the lowest (shortest time) of these.
+* If you have different heartbeat intervals for different peers, your poll timeout should be the lowest (shortest time) of these. Do not use an infinite timeout.
 
-* You might be tempted to open a separate socket dialog for heartbeats. This is superficially nice because you can separate different dialogs, e.g. the synchronous request-reply from the asynchronous heartbeating. However it's a bad idea for several reasons. First, if you're sending data you don't need to send heartbeats. Second, sockets may, due to network vagaries, become jammed. You need to know when your main data socket is silent because it's dead, rather than just not busy, so you need heartbeats on that socket. Lastly, two sockets is more complex than one.
-
-* We're not doing heartbeating from client to queue. It does make things more complex, but we do that in real applications so that clients can detect when brokers die, and do clever things like switch to alternate brokers.
+* Do heartbeating on the same socket as you use for messages, so your heartbeats also act as a //keep-alive// to stop the network connection from going stale (some firewalls can be unkind to silent connections).
 
 +++ Contracts and Protocols
 
@@ -345,6 +399,7 @@ If you're paying attention you'll realize that Paranoid Pirate is not interopera
 It's fun to experiment without specifications, but that's not a sensible basis for real applications. What happens if we want to write a worker in another language? Do we have to read code to see how things work? What if we want to change the protocol for some reason? The protocol may be simple but it's not obvious, and if it's successful, it must become more complex.
 
 Lack of contracts is a sure sign of a disposable application. So, let's write a contract for this protocol. How do we do that?
+
 There's a wiki at [http://rfc.zeromq.org rfc.zeromq.org] that we made especially as a home for public 0MQ contracts.
 To create a new specification, register, and follow the instructions. It's straightforward, though technical writing is not for everyone.
 
@@ -361,13 +416,7 @@ Turning PPP into a real protocol would take more work:
 The nice thing about progress is how fast it happens when lawyers and committees aren't involved. Just a few sentences ago we were dreaming of a better protocol that would fix the world. And [http://rfc.zeromq.org/spec:7 here we have it].
 This one-page specification turs PPP into something more solid!figref(). This is how we should design complex architectures: start by writing down the contracts, and only //then// write software to implement them.
 
-The Majordomo Protocol (MDP) extends and improves PPP in one interesting way apart from the two points above.
-////
-AO: Where is above?
-////
-It adds a "service name" to requests that the client sends, and asks workers to register for specific services. The nice thing about MDP is that it came from working code, a simpler protocol, and a precise set of improvements. This made it easy to draft.
-
-Adding service names is a small but significant change that turns our Paranoid Pirate queue into a service-oriented broker.
+The Majordomo Protocol (MDP) extends and improves on PPP in one interesting way: it adds a "service name" to requests that the client sends, and asks workers to register for specific services. Adding service names turns our Paranoid Pirate queue into a service-oriented broker. The nice thing about MDP is that it came out working code, a simpler ancestor protocol (PPP), and a precise set of improvements. This made it easy to draft.
 
 [[code type="textdiagram" title="The Majordomo Pattern"]]
 +-----------+   +-----------+   +-----------+
@@ -457,15 +506,12 @@ And here is the broker:
 
 [[code type="example" title="Majordomo broker" name="mdbroker"]]
 [[/code]]
-////
-AO: I suggest you break the code into several parts and perhaps turn some of the comments before major functions into text that introduces the reader to the part of the code that's coming next.
-////
 
 This is by far the most complex example we've seen. It's almost 500 lines of code. To write this, and make it somewhat robust took two days. However this is still a short piece of code for a full service-oriented broker.
 
 Notes on this code:
 
-* The Majordomo Protocol lets us handle both clients and workers on a single socket. This is nicer for those deploying and managing the broker: it just sits on one 0MQ endpoint rather than the two that most devices need.
+* The Majordomo Protocol lets us handle both clients and workers on a single socket. This is nicer for those deploying and managing the broker: it just sits on one 0MQ endpoint rather than the two that most proxies need.
 
 * The broker implements all of MDP/0.1 properly (as far as I know), including disconnection if the broker sends invalid commands, heartbeating, and the rest.
 
@@ -496,7 +542,7 @@ Asynchronous round-trip test...
  173010 calls/second
 [[/code]]
 
-Note that the client thread does a small pause before starting. This is to get around one of the "features" of the router socket: if you send a message with the address of a peer that's not yet connected, the message gets discarded. In this example we don't use the LRU mechanism, so without the sleep, if the worker thread is too slow to connect, it will lose messages, making a mess of our test.
+Note that the client thread does a small pause before starting. This is to get around one of the "features" of the router socket: if you send a message with the address of a peer that's not yet connected, the message gets discarded. In this example we don't use the load-balancing mechanism, so without the sleep, if the worker thread is too slow to connect, it will lose messages, making a mess of our test.
 
 As we see, round-tripping in the simplest case is 20 times slower than the  asynchronous, "shove it down the pipe as fast as it'll go" approach. Let's see if we can apply this to Majordomo to make it faster.
 
@@ -510,14 +556,19 @@ zmsg_t  *mdcli_recv    (mdcli_t *self);
 [[/code]]
 
 It's literally a few minutes' work to refactor the synchronous client API to become asynchronous:
-////
-AO: Summarize the changes. Some are undocumente and some are buried in the code. I see you substitute a DEALER socket, but I don't see the asynchronous behavior.
-////
 
 [[code type="example" title="Majordomo asynchronous client API" name="mdcliapi2"]]
 [[/code]]
 
-And here's the corresponding client test program:
+The differences are:
+
+* We use a DEALER socket instead of REQ, so we emulate REQ with an empty delimiter frame before each request and each response.
+* We don't retry requests; if the application needs to retry, it can do this itself.
+* We break the synchronous {{send}} method into separate {{send}} and {{recv}} methods.
+* The {{send}} method is asynchronous and returns immediately after sending. The caller can thus send a number of messages before getting a response.
+* The {{recv}} method waits for (with a timeout) one response and returns that to the caller.
+
+And here's the corresponding client test program, which sends 100,000 messages and then receives 100,00 back:
 
 [[code type="example" title="Majordomo client application" name="mdclient2"]]
 [[/code]]
@@ -555,7 +606,7 @@ user    0m0.730s
 sys     0m0.470s
 [[/code]]
 
-It isn't fully asynchronous since workers get their messages on a strict LRU basis. But it will scale better with more workers. On my PC, after eight or so workers it doesn't get any faster. Four cores only stretches so far. But we got a 4x improvement in throughput with just a few minutes' work. The broker is still unoptimized. It spends most of its time copying message frames around, instead of doing zero copy, which it could. But we're getting 25K reliable request/reply calls a second, with pretty low effort.
+It isn't fully asynchronous since workers get their messages on a strict last-used basis. But it will scale better with more workers. On my PC, after eight or so workers it doesn't get any faster. Four cores only stretches so far. But we got a 4x improvement in throughput with just a few minutes' work. The broker is still unoptimized. It spends most of its time copying message frames around, instead of doing zero copy, which it could. But we're getting 25K reliable request/reply calls a second, with pretty low effort.
 
 However, the asynchronous Majordomo pattern isn't all roses. It has a fundamental weakness, namely that it cannot survive a broker crash without more work. If you look at the mdcliapi2 code you'll see it does not attempt to reconnect after a failure. A proper reconnect would require:
 
@@ -573,15 +624,22 @@ Another option is to do what email does, and ask that undeliverable requests be 
 
 Let's try to use what we've already built, building on top of MDP instead of modifying it. Service discovery is, itself, a service. It might indeed be one of several management services, such as "disable service X", "provide statistics", and so on. What we want is a general, extensible solution that doesn't affect the protocol or existing applications.
 
-////
-AO: Your display of the code should explain the major things you did in it.
-////
-So here's a small RFC that layers this on top of MDP: [http://rfc.zeromq.org/spec:8 the Majordomo Management Interface (MMI)]. We already implemented it in the broker, though unless you read the whole thing you probably missed that. Here's how we use the service discovery in an application:
+So here's a small RFC that layers this on top of MDP: [http://rfc.zeromq.org/spec:8 the Majordomo Management Interface (MMI)]. We already implemented it in the broker, though unless you read the whole thing you probably missed that. I'll explain how it works in the broker:
+
+* When a client requests a service that starts with "mmi.", instead of routing this to a worker, we handle it internally.
+
+* We handle just one service in this broker, which is "mmi.service", the service discovery service.
+
+* The payload for the request is the name of an external service (a real one, provided by a worker).
+
+* The broker returns "200" (OK) or "404" (Not found) depending on whether there are workers registered for that service, or not.
+
+Here's how we use the service discovery in an application:
 
 [[code type="example" title="Service discovery over Majordomo" name="mmiecho"]]
 [[/code]]
 
-The broker checks the service name, and handles any service starting with "mmi." itself, rather than passing the request on to a worker. Try this with and without a worker running, and you should see the little program report '200' or '404' accordingly. The implementation of MMI in our example broker is pretty weak. For example if a worker disappears, services remain "present". In practice, a broker should remove services that have no workers after some configurable timeout.
+Try this with and without a worker running, and you should see the little program report "200" or "404" accordingly. The implementation of MMI in our example broker is flimsy. For example if a worker disappears, services remain "present". In practice, a broker should remove services that have no workers after some configurable timeout.
 
 +++ Idempotent Services
 
@@ -610,16 +668,13 @@ To handle non-idempotent operations, use the fairly standard solution of detecti
 
 Once you realize that Majordomo is a "reliable" message broker, you might be tempted to add some spinning rust (that is, ferrous-based hard disk platters). After all, this works for all the enterprise messaging systems. It's such a tempting idea that it's a little sad to have to be negative toward it. But brutal cynicism is one of my specialties. So, some reasons you don't want rust-based brokers sitting in the center of your architecture are:
 
-* As you've seen, the Lazy Pirate client performs surprisingly well. It works across a whole range of architectures, from direct client-to-server to distributed queue devices. It does tend to assume that workers are stateless and idempotent. But we can work around that limitation without resorting to rust.
+* As you've seen, the Lazy Pirate client performs surprisingly well. It works across a whole range of architectures, from direct client-to-server to distributed queue proxies. It does tend to assume that workers are stateless and idempotent. But we can work around that limitation without resorting to rust.
 
 * Rust brings a whole set of problems, from slow performance to additional pieces that you have to manage, repair, and handle 6am panics from, as they inevitably break at the start of daily operations. The beauty of the Pirate patterns in general is their simplicity. They won't crash. And if you're still worried about the hardware, you can move to a peer-to-peer pattern that has no broker at all. I'll explain later in this chapter.
 
 Having said this, however, there is one sane use case for rust-based reliability, which is an asynchronous disconnected network. It solves a major problem with Pirate, namely that a client has to wait for an answer in real-time. If clients and workers are only sporadically connected (think of email as an analogy), we can't use a stateless network between clients and workers. We have to put state in the middle.
 
-////
-AO: This name seems pretty ironic.
-////
-So, here's the Titanic pattern!figref(), in which we write messages to disk to ensure they never get lost, no matter how sporadically clients and workers are connected. As we did for service discovery, we're going to layer Titanic on top of Majordomo rather than extend MDP. It's wonderfully lazy because it means we can implement our fire-and-forget reliability in a specialized worker, rather than in the broker. This is excellent for several reasons:
+So, here's the Titanic pattern!figref(), in which we write messages to disk to ensure they never get lost, no matter how sporadically clients and workers are connected. As we did for service discovery, we're going to layer Titanic on top of MDP rather than extend it. It's wonderfully lazy because it means we can implement our fire-and-forget reliability in a specialized worker, rather than in the broker. This is excellent for several reasons:
 
 * It is //much// easier because we divide and conquer: the broker handles message routing and the worker handles reliability.
 * It lets us mix brokers written in one language with workers written in another.
@@ -668,11 +723,9 @@ Titanic is thus both a worker and a client. The dialog between client and Titani
 
 Whereas the dialog between Titanic and broker and worker goes like this:
 
-////
-AO: I'm not sure what you mean by "echo". Is this a redundant request that is handled gracefully somehow?
-////
-* Titanic: hey, broker, is there an echo service? Broker: uhm, yeah, seems like.
-* Titanic: hey, echo, please handle this for me. Echo: sure, here you are.
+* Titanic: hey, broker, is there an Coffee service? Broker: uhm, yeah, seems like.
+* Titanic: hey, Coffee service, please handle this for me.
+* Coffee: sure, here you are.
 * Titanic: sweeeeet!
 
 You can work through this, and the possible failure scenarios. If a worker crashes while processing a request, Titanic retries, indefinitely. If a reply gets lost somewhere, Titanic will retry. If the request gets processed but the client doesn't get the reply, it will ask again. If Titanic crashes while processing a request, or a reply, the client will try again. As long as requests are fully committed to safe storage, work can't get lost.
@@ -681,47 +734,38 @@ The handshaking is pedantic, but can be pipelined, i.e., clients can use the asy
 
 We need some way for a client to request //its// replies. We'll have many clients asking for the same services, and clients disappear and reappear with different identities. So here is a simple, reasonably secure solution:
 
-////
-AO: Did I rewrite the following correctly?
-////
-* Every request generates a universally unique ID (UUID), which Titanic returns to the client after the client has queued the request.
+* Every request generates a universally unique ID (UUID), which Titanic returns to the client after it has queued the request.
 * When a client asks for a reply, it must specify the UUID for the original request.
 
-This puts some onus on the client to store its request UUIDs safely, but it removes any need for authentication. What alternatives are there?
-////
-AO: Is that question rhetorical? You don't seem to answer it.
-////
+In a realistic case the client would want to store its request UUIDs safely, e.g. in a local database.
 
 Before we jump off and write yet another formal specification (fun, fun!) let's consider how the client talks to Titanic. One way is to use a single service and send it three different request types. Another way, which seems simpler, is to use three services:
 
-**titanic.request**:: Store a request message, and return a UUID for the request.
-**titanic.reply**:: Fetch a reply, if available, for a given request UUID.
-**titanic.close**:: Confirm that a reply has been stored and processed.
+* {{titanic.request}} - store a request message, and return a UUID for the request.
+* {{titanic.reply}} - fetch a reply, if available, for a given request UUID.
+* {{titanic.close}} - confirm that a reply has been stored and processed.
 
-We'll just make a multithreaded worker, which as we've seen from our multithreading experience with 0MQ, is trivial. However before jumping into code, let's sketch down what Titanic would look like in terms of 0MQ messages and frames: the [http://rfc.zeromq.org/spec:9 Titanic Service Protocol (TSP)].
+We'll just make a multithreaded worker, which as we've seen from our multithreading experience with 0MQ, is trivial. However let's first sketch what Titanic would look like in terms of 0MQ messages and frames. This gives us the [http://rfc.zeromq.org/spec:9 Titanic Service Protocol (TSP)].
 
 Using TSP is clearly more work for client applications than accessing a service directly via MDP. Here's the shortest robust "echo" client example:
-////
-AO: Seems like you've created a simple example by polling in a wait loop for a reply, but wouldn't it be better to do something else and check for replies in a more efficient way?
-////
 
 [[code type="example" title="Titanic client example" name="ticlient"]]
 [[/code]]
 
-Of course this can and in practice would be wrapped up in some kind of framework. Real application developers should never see messaging up close, it's a tool for more technically-minded experts to build frameworks and APIs. If we had infinite time to explore this, I'd make a TSP API example, and bring the client application back down to a few lines of code. But it's the same principle as we saw for MDP, no need to be repetitive.
+Of course this can be, and should be, wrapped up in some kind of framework or API. It's not healthy to ask average application developers to learn the full details of messaging: it hurts their brains, costs time, and offers too many ways to make buggy complexity. Additionally, it makes it hard to add intelligence. 
+
+For example, this client blocks on each request whereas in a real application we'd want to be doing useful work while tasks are executed. This requires some non-trivial plumbing, to build a background thread and talk to that cleanly. It's the kind of thing you want to wrap in a nice simple API that the average developer cannot misuse. It's the same approach that we used for Majordomo.
 
 Here's the Titanic implementation. This server handles the three services using three threads, as proposed. It does full persistence to disk using the most brute-force approach possible: one file per message. It's so simple it's scary. The only complex part is that it keeps a separate 'queue' of all requests to avoid reading the directory over and over:
 
 [[code type="example" title="Titanic broker example" name="titanic"]]
 [[/code]]
-////
-AO: Seems strange to put a send at the top of the main loop. I think some explanation is required.
-////
 
 To test this, start {{mdbroker}} and {{titanic}}, then run {{ticlient}}. Now start {{mdworker}} arbitrarily, and you should see the client getting a response and exiting happily.
 
 Some notes about this code:
 
+* Note that some loops start by sending, others by receiving messages. This is because Titanic acts both as a client and a worker in different roles.
 * We send requests only to services that appear to be running, using MMI. This works as well as the MMI implementation in the broker.
 * We use an inproc connection to send new request data from the **titanic.request** service through to the main dispatcher. This saves the dispatcher from having to scan the disk directory, load all request files, and sort them by date/time.
 
@@ -735,8 +779,7 @@ If you want to use Titanic in real cases, you'll rapidly be asking "how do we ma
 * Use a solid-state drive rather than spinning iron oxide platters.
 * Preallocate the entire file, or allocate it in large chunks allowing the circular buffer to grow and shrink as needed. This avoids fragmentation and ensures most reads and writes are contiguous.
 
-And so on. What I'd not recommend is storing messages in a database, not even a
-"fast" key/value store, unless you really like a specific database and don't have performance worries. You will pay a steep price for the abstraction, 10 to 1000x over a raw disk file.
+And so on. What I'd not recommend is storing messages in a database, not even a "fast" key/value store, unless you really like a specific database and don't have performance worries. You will pay a steep price for the abstraction, ten to a thousand times over a raw disk file.
 
 If you want to make Titanic //even more reliable//, duplicate the requests to a second server, which you'd place in a second location just far enough to survive nuclear attack on your primary location, yet not so far that you get too much latency.
 
@@ -744,10 +787,7 @@ If you want to make Titanic //much faster and less reliable//, store requests an
 
 +++ High-availability Pair (Binary Star Pattern)
 
-////
-AO: Usually, master and slave in computing have a different connotation. A slave makes no independent decisions (such as writing to a database) but follows along doing what the master does. So what you describe is not a master/slave relationship. The second server is merely a backup server. The distinction you create later between master and primary servers doesn't justify the use of the term "master". The terms used in the code, active and passive, are fine.
-////
-The Binary Star pattern puts two servers in a primary-backup high-availability pair!figref(). At any given time, one of these (the master) accepts connections from client applications. The other (the slave) does nothing, but the two servers monitor each other. If the master disappears from the network, after a certain time the slave takes over as master.
+The Binary Star pattern puts two servers in a primary-backup high-availability pair!figref(). At any given time, one of these (the active) accepts connections from client applications. The other (the passive) does nothing, but the two servers monitor each other. If the active disappears from the network, after a certain time the passive takes over as active.
 
 Binary Star pattern was developed by Pieter Hintjens and Martin Sustrik for the iMatix [http://www.openamq.org OpenAMQ server]. We designed it:
 
@@ -759,7 +799,7 @@ Binary Star pattern was developed by Pieter Hintjens and Martin Sustrik for the 
 +------------+               +------------+
 |            |               |            |
 |  Primary   |<------------->|   Backup   |
-|  "master"  |               |   "slave"  |
+|  "active"  |               |  "passive" |
 |            |               |            |
 +------------+               +------------+
       ^
@@ -783,7 +823,7 @@ Assuming we have a Binary Star pair running, here are the different scenarios th
 +------------+               +------------+
 |            |               |            |
 |  Primary   |<------------->|   Backup   |
-|  "slave"   |               |  "master"  |
+| "passive"  |               |  "active"  |
 |            |               |            |
 +------------+               +------------+
                                     ^
@@ -803,7 +843,7 @@ Recovery from fail-over works as follows:
 . The operators stop the backup server at a moment when it will cause minimal disruption to applications.
 . When applications have reconnected to the primary server, the operators restart the backup server.
 
-Recovery (to using the primary server as master) is a manual operation. Painful experience teaches us that automatic recovery is undesirable. There are several reasons:
+Recovery (to using the primary server as active) is a manual operation. Painful experience teaches us that automatic recovery is undesirable. There are several reasons:
 
 * Failover creates an interruption of service to applications, possibly lasting 10-30 seconds. If there is a real emergency, this is much better than total outage. But if recovery creates a further 10-30 second outage, it is better that this happens off-peak, when users have gone off the network.
 
@@ -837,7 +877,7 @@ AO: In fact, I think such recoveries are built in to some earlier solutions in C
 
 * The semantics for client applications should be simple and easy for developers to understand. Ideally they should be hidden in the client API.
 
-* There should be clear instructions for network architects on how to avoid designs that could lead to //split brain syndrome//, in which both servers in a Binary Star pair think they are the master server.
+* There should be clear instructions for network architects on how to avoid designs that could lead to //split brain syndrome//, in which both servers in a Binary Star pair think they are the active server.
 
 * There should be no dependencies on the order in which the two servers are started.
 
@@ -867,13 +907,13 @@ We don't attempt to cover:
 
 Here is the key terminology we use in Binary Star:
 
-**Primary**:: The server that is normally 'master'.
+* //Primary// - the server that is normally or initially 'active'.
 
-**Backup**:: The server that is normally 'slave'. It will become master if and when the primary server disappears from the network, and when client applications ask the backup server to connect.
+* //Backup// - the server that is normally 'passive'. It will become active if and when the primary server disappears from the network, and when client applications ask the backup server to connect.
 
-**Master**:: The server that accepts client connections. There is at most one master server.
+* //Active// - the server that accepts client connections. There is at most one active server.
 
-**Slave**:: The server that takes over if the master disappears. Note that when a Binary Star pair is running normally, the primary server is master, and the backup is slave. When a fail-over has happened, the roles are switched.
+* //Passive// - the server that takes over if the active disappears. Note that when a Binary Star pair is running normally, the primary server is active, and the backup is passive. When a fail-over has happened, the roles are switched.
 
 To configure a Binary Star pair, you need to:
 
@@ -881,7 +921,7 @@ To configure a Binary Star pair, you need to:
 # Tell the backup server where the primary server is.
 # Optionally, tune the fail-over response times, which must be the same for both servers.
 
-The main tuning concern is how frequently you want the servers to check their peering status, and how quickly you want to activate fail-over. In our example, the fail-over timeout value defaults to 2,000 msec. If you reduce this, the backup server will take over as master more rapidly but may take over in cases where the primary server could recover. You may for example have wrapped the primary server in a shell script that restarts it if it crashes. In that case the timeout should be higher than the time needed to restart the primary server.
+The main tuning concern is how frequently you want the servers to check their peering status, and how quickly you want to activate fail-over. In our example, the fail-over timeout value defaults to 2,000 msec. If you reduce this, the backup server will take over as active more rapidly but may take over in cases where the primary server could recover. You may for example have wrapped the primary server in a shell script that restarts it if it crashes. In that case the timeout should be higher than the time needed to restart the primary server.
 
 For client applications to work properly with a Binary Star pair, they must:
 
@@ -901,14 +941,14 @@ These are the main limitations of the Binary Star pattern:
 
 * A server process cannot be part of more than one Binary Star pair.
 * A primary server can have a single backup server, no more.
-* The backup server cannot do useful work while in slave mode.
+* Whichever server is passive is wasted.
 * The backup server must be capable of handling full application loads.
 * Failover configuration cannot be modified at runtime.
 * Client applications must do some work to benefit from fail-over.
 
 ++++ Preventing Split-Brain Syndrome
 
-//Split-brain syndrome// occurs when different parts of a cluster think they are "master" at the same time. It causes applications to stop seeing each other. Binary Star has an algorithm for detecting and eliminating split brain, based on a three-way decision mechanism (a server will not decide to become master until it gets application connection requests and it cannot see its peer server).
+//Split-brain syndrome// occurs when different parts of a cluster think they are active at the same time. It causes applications to stop seeing each other. Binary Star has an algorithm for detecting and eliminating split brain, based on a three-way decision mechanism (a server will not decide to become active until it gets application connection requests and it cannot see its peer server).
 
 However it is still possible to (mis)design a network to fool this algorithm. A typical scenario would be a Binary Star pair distributed between two buildings, where each building also had a set of applications, and there was a single network link between both buildings. Breaking this link would create two sets of client applications, each with half of the Binary Star pair, and each fail-over server would become active.
 
@@ -940,10 +980,7 @@ bstarcli
 
 You can then provoke fail-over by killing the primary server, and recovery by restarting the primary and killing the backup. Note how it's the client vote that triggers fail-over, and recovery.
 
-////
-AO: Some readers will have black-and-white print books, while others will have black-and-white e-readers. So in addition to color, it's a good idea to use hatching or some other background to distinguish boxes. Our artist can do that, but we should explain what to do in Figure_list.
-////
-Binary star is driven by a finite state machine!figref(). States in green accept client requests, states in pink refuse them. Events are the peer state, so "Peer Active" means the other server has told us it's active. "Client Request" means we've received a client request. "Client Vote" means we've received a client request AND our peer is inactive for two heartbeats.
+Binary star is driven by a finite state machine!figref(). States in white accept client requests, states in grey refuse them. Events are the peer state, so "Peer Active" means the other server has told us it's active. "Client Request" means we've received a client request. "Client Vote" means we've received a client request AND our peer is inactive for two heartbeats.
 
 [[code type="textdiagram" title="Binary Star Finite State Machine"]]
     Start /-----------------------\   /----------\               Start
@@ -953,7 +990,7 @@ Binary star is driven by a finite state machine!figref(). States in green accept
 |           | Peer Backup     |           +------/           |           |
 |  Primary  +---------------->|  Active   |<--------------\  |  Backup   |
 |           |         /------>|           |<-----\        |  |           |
-| {o} c9FB  |         |       | {o} c9FB  |      |        |  | {o} cF9B  |
+| {o}       |         |       | {o}       |      |        |  | {o} c333  |
 +-----+-----+         |       +-----+-----+      |        |  +-----+-----+
       |               |             |            |        |        |
   Peer|Active         |         Peer|Active      |        |    Peer|Active
@@ -962,7 +999,7 @@ Binary star is driven by a finite state machine!figref(). States in green accept
       |               |       |           |      |        |        |
       |           Peer|Backup |  Error!   |  Peer|Primary |        |
       |               |       |           |      |        |        |
-      |               |       | {o} cF00  |      |        |        |
+      |               |       | {o} c333  |      |        |        |
       |               |       +-----------+      |        |        |
       |               |             ^            |        |        |
       |               |         Peer|Passive     |  Client|Vote    |
@@ -971,7 +1008,7 @@ Binary star is driven by a finite state machine!figref(). States in green accept
       |               |       |           +------/        |        |
       |               \-------+  Passive  +---------------/        |
       \---------------------->|           |<-----------------------/
-                              | {o} cF9B  |
+                              | {o} c333  |
                               +-----------+
 [[/code]]
 
@@ -980,10 +1017,8 @@ Note that the servers use PUB-SUB sockets for state exchange. No other socket co
 ++++ Binary Star Reactor
 
 Binary Star is useful and generic enough to package up as a reusable reactor class. The reactor then runs and calls our code whenever it has a message to process. This is much nicer than copying/pasting the Binary Star code into each server where we want that capability.
-////
-The following is vague: what does zloop offer, how do we use it, and what would differ in other languages?
-////
-In C we wrap the CZMQ {{zloop}} class, though your mileage may vary in other languages. Here is the {{bstar}} API:
+
+In C we wrap the CZMQ {{zloop}} class that we saw before. {{zloop}} lets you register handlers to react on socket and timer events. In the Binary Star reactor, we provide handlers for voters, and for state changes (active to passive, and vice-versa). Here is the {{bstar}} API:
 
 [[code type="fragment" name="bstar"]]
 //  Create a new Binary Star instance, using local (bind) and
@@ -1002,8 +1037,8 @@ int bstar_voter (bstar_t *self, char *endpoint, int type,
                  zloop_fn handler, void *arg);
 
 //  Register main state change handlers
-void bstar_new_master (bstar_t *self, zloop_fn handler, void *arg);
-void bstar_new_slave (bstar_t *self, zloop_fn handler, void *arg);
+void bstar_new_active (bstar_t *self, zloop_fn handler, void *arg);
+void bstar_new_passive (bstar_t *self, zloop_fn handler, void *arg);
 
 //  Start the reactor, ends if a callback function returns -1, or the
 //  process received SIGINT or SIGTERM.
@@ -1022,9 +1057,9 @@ Which gives us the following short main program for the server:
 
 +++ Brokerless Reliability (Freelance Pattern)
 
-It might seem ironic to focus so much on broker-based reliability, when we often explain 0MQ as "brokerless messaging". However in messaging, as in real life, the middleman is both a burden and a benefit. In practice, most messaging architectures benefit from a mix of distributed and brokered messaging. You get the best results when you can decide freely what tradeoffs you want to make. This is why I can drive 10km to a wholesaler to buy five cases of wine for a party, but I can also walk 10 minutes to a corner store to buy one bottle for a dinner. Our highly context-sensitive relative valuations of time, energy, and cost are essential to the real world economy. And they are essential to an optimal message-based architecture.
+It might seem ironic to focus so much on broker-based reliability, when we often explain 0MQ as "brokerless messaging". However in messaging, as in real life, the middleman is both a burden and a benefit. In practice, most messaging architectures benefit from a mix of distributed and brokered messaging. You get the best results when you can decide freely what trade-offs you want to make. This is why I can drive 10km to a wholesaler to buy five cases of wine for a party, but I can also walk 10 minutes to a corner store to buy one bottle for a dinner. Our highly context-sensitive relative valuations of time, energy, and cost are essential to the real world economy. And they are essential to an optimal message-based architecture.
 
-Which is why 0MQ does not //impose// a broker-centric architecture, though it gives you the tools to build brokers, aka "devices", and we've built a dozen or so different ones so far, just for practice.
+Which is why 0MQ does not //impose// a broker-centric architecture, though it gives you the tools to build brokers, aka //proxies//, and we've built a dozen or so different ones so far, just for practice.
 
 So we'll end this chapter by deconstructing the broker-based reliability we've built so far, and turning it back into a distributed peer-to-peer architecture I call the Freelance pattern. Our use case will be a name resolution service. This is a common problem with 0MQ architectures: how do we know the endpoint to connect to? Hard-coding TCP/IP addresses in code is insanely fragile. Using configuration files creates an administration nightmare. Imagine if you had to hand-configure your web browser, on every PC or mobile phone you used, to realize that "google.com" was "74.125.230.82".
 
@@ -1116,9 +1151,6 @@ Start one or more servers, specifying a bind endpoint each time:
 
 [[code type="example" title="Freelance server, Model Two" name="flserver2"]]
 [[/code]]
-////
-AO: Is the "address" the number sent by the client? If so, that seems an odd term.
-////
 
 Then start the client, specifying the connect endpoints as arguments:
 
@@ -1149,10 +1181,7 @@ The shotgun approach seems too good to be true. Let's be scientific and work thr
 
 We can solve the main problems of the client by switching to a ROUTER socket. That lets us send requests to specific servers, avoid servers we know are dead, and in general be as smart as we want to make it. We can also solve the main problem of the server (single-threadedness) by switching to a ROUTER socket.
 
-////
-AO: I added a bit of justification below.
-////
-But doing ROUTER-to-ROUTER between two anonymous sockets (which haven't set an identity) is not possible. Both sides generate an identity (for the other peer) only when they receive a first message, and thus neither can talk to the other until it has first received a message. The only way out of this conundrum is to cheat, and use hard-coded identities in one direction. The proper way to cheat, in a client server case, is to let client 'know' the identity of the server. Doing it the other way around would be insane, on top of complex and nasty, because any number of clients should be able to arise independently. Insane, complex, and nasty are great attributes for a genocidal dictator, but terrible ones for software.
+But doing ROUTER to ROUTER between two anonymous sockets (which haven't set an identity) is not possible. Both sides generate an identity (for the other peer) only when they receive a first message, and thus neither can talk to the other until it has first received a message. The only way out of this conundrum is to cheat, and use hard-coded identities in one direction. The proper way to cheat, in a client server case, is to let client 'know' the identity of the server. Doing it the other way around would be insane, on top of complex and nasty, because any number of clients should be able to arise independently. Insane, complex, and nasty are great attributes for a genocidal dictator, but terrible ones for software.
 
 Rather than invent yet another concept to manage, we'll use the connection endpoint as identity. This is a unique string both sides can agree on without more prior knowledge than they already have for the shotgun model. It's a sneaky and effective way to connect two ROUTER sockets.
 
@@ -1165,6 +1194,7 @@ There's a small paradox here. We need to know when servers become connected and 
 My solution is to mix in a little of the shotgun approach from model 2, meaning we'll fire (harmless) shots at anything we can, and if anything moves, we know it's alive. We're not going to fire real requests, but rather a kind of ping-pong heartbeat.
 
 This brings us to the realm of protocols again, so here's a [http://rfc.zeromq.org/spec:10 short spec that defines how a Freelance client and server exchange PING-PONG commands and request-reply commands].
+
 It is short and sweet to implement as a server. Here's our echo server, Model Three, now speaking FLP:
 
 [[code type="example" title="Freelance server, Model Three" name="flserver3"]]

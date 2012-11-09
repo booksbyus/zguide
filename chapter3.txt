@@ -9,7 +9,7 @@ We'll cover:
 * How the request-reply mechanisms work.
 * How to combine REQ, REP, DEALER, and ROUTER sockets.
 * How ROUTER sockets work, in detail.
-* The least-recently used worker pattern.
+* The load-balancing pattern.
 * Building a simple load-balancing message broker.
 * Designing a high-level API for 0MQ.
 * Building an asynchronous request-reply server.
@@ -160,6 +160,7 @@ These are the legal combinations:
 * REQ to ROUTER
 * DEALER to ROUTER
 * DEALER to DEALER
+* ROUTER to ROUTER
 
 And these combinations are invalid (and I'll explain why):
 
@@ -167,7 +168,6 @@ And these combinations are invalid (and I'll explain why):
 * REQ to DEALER
 * REP to REP
 * REP to ROUTER
-* ROUTER to ROUTER
 
 Here are some tips for remembering the semantics. DEALER is like an asynchronous REQ socket, and ROUTER is like an asynchronous REP socket. Where we use a REQ socket we can use a DEALER, we just have to read and write the envelope ourselves. Where we use a REP socket we can stick a ROUTER, we just need to manage the identities ourselves.
 
@@ -210,9 +210,13 @@ Since both DEALER and ROUTER can work with arbitrary message formats, if you hop
 
 ++++ The DEALER to DEALER Combination
 
-This is the odd one out, and things would be more symmetric if this combination was invalid. But there are cases where it's useful. I said you can swap a REP with a ROUTER, but you can also swap a REP with a DEALER, if the DEALER is talking to one and only one peer.
+You can swap a REP with a ROUTER, but you can also swap a REP with a DEALER, if the DEALER is talking to one and only one peer.
 
 When you replace a REP with a DEALER, your worker can suddenly go full asynchronous, sending any number of replies back. The cost is that you have to manage the reply envelopes yourself, and get them right, or nothing at all will work. We'll see a worked example later. Let's just say for now that DEALER to DEALER is one of the trickier patterns to get right, and happily it's rare that we need it.
+
+++++ The ROUTER to ROUTER Combination
+
+This sounds perfect for N-to-N connections but it's the most difficult combination to use. You should avoid it until you are well-advanced with 0MQ. We'll see one example it in the Freelance pattern in [#reliable-request-reply], and an alternative DEALER to ROUTER design for peer-to-peer work in [#moving-pieces].
 
 ++++ Invalid Combinations
 
@@ -225,8 +229,6 @@ Mostly, trying to connect clients to clients, or servers to servers, is a bad id
 * REP to REP: both sides would wait for the other to send the first message.
 
 * REP to ROUTER: the ROUTER socket can in theory initiate the dialog and send a properly-formatted request, if it knows the REP socket has connected //and// it knows the identity of that connection. It's messy and adds nothing over DEALER to ROUTER.
-
-* ROUTER to ROUTER: this is a combination that many people feel //should// work, especially for peer-to-peer architectures. But it has the same problems as REP to ROUTER. We'll come back to peer-to-peer architectures in [#moving-pieces].
 
 The common thread in this valid vs. invalid breakdown is that a 0MQ socket connection is always biased towards one peer that binds to an endpoint, and another that connects to that. Further, that which side binds and which side connects is not arbitrary, but follows natural patterns. The side which we expect to "be there" binds: it'll be a server, a broker, a publisher, a collector. The side that "comes and goes" connects: it'll be clients and workers. Remembering this will help you design better 0MQ architectures.
 
@@ -273,11 +275,11 @@ ROUTER sockets do have a somewhat brutal way of dealing with messages they can't
 
 Since 0MQ/3.2 there's a socket option you can set to catch this error: {{ZMQ_ROUTER_MANDATORY}}. Set that on the ROUTER socket and then you provide an unroutable identity on a send call, the socket will signal an EHOSTUNREACH error.
 
-+++ The Least-Recently Used (LRU) Worker Pattern
++++ The Load-balancing Pattern
 
-Let's now look at some code. We'll see how to connect a ROUTER socket to a REQ socket, and then to a DEALER socket. These two examples follow the same logic, which is a //least-recently used worker// or LRU pattern. This pattern is our first exposure to using the ROUTER socket for deliberate routing, rather than simply acting as a reply channel.
+Let's now look at some code. We'll see how to connect a ROUTER socket to a REQ socket, and then to a DEALER socket. These two examples follow the same logic, which is a //load-balancing// pattern. This pattern is our first exposure to using the ROUTER socket for deliberate routing, rather than simply acting as a reply channel.
 
-The LRU worker pattern is very common and we'll see it several times in the Guide. It solves the main problem with simple round-robin routing (as PUSH and DEALER offer) which is that round-robin becomes inefficient if tasks do not all roughly take the same time.
+The load-balancing pattern is very common and we'll see it several times in the Guide. It solves the main problem with simple round-robin routing (as PUSH and DEALER offer) which is that round-robin becomes inefficient if tasks do not all roughly take the same time.
 
 It's the post office analogy. If you have one queue per counter, and you have some people buying stamps (a fast, simple transaction), and some people opening new accounts (a very slow transaction), then you will find stamp-buyers getting unfairly stuck in queues. Just as in a post office, if your messaging architecture is unfair, people will get annoyed.
 
@@ -289,13 +291,13 @@ This is a recurring theme with 0MQ: the world's problems are diverse and you can
 
 Back to a worker (DEALER or REQ) connected to a broker (ROUTER). The broker has to know when the worker is ready, and keep a list of workers so that it can take the //least recently used// worker each time.
 
-The solution is really simple in fact: workers send a "Ready" message when they start, and after they finish each task. The broker reads these messages one by one. Each time it reads a message, that is from the least-recently used worker. And since we're using a ROUTER socket, we get an identity that we can then use to send a task back to the worker.
+The solution is really simple in fact: workers send a "Ready" message when they start, and after they finish each task. The broker reads these messages one by one. Each time it reads a message, that is from the last used worker. And since we're using a ROUTER socket, we get an identity that we can then use to send a task back to the worker.
 
 It's a twist on request-reply because the task is sent with the reply, and any response for the task is sent as a new request. The following code examples should make it clearer.
 
 ++++ ROUTER Broker and REQ Workers
 
-Here is an example of the LRU pattern using a ROUTER broker talking to a set of REQ workers:
+Here is an example of the load-balancing pattern using a ROUTER broker talking to a set of REQ workers:
 
 [[code type="example" title="ROUTER-to-REQ" name="rtreq"]]
 [[/code]]
@@ -347,11 +349,11 @@ However remember the reason for that empty delimiter frame: it's to allow multih
 
 If we never need to pass the message along to a REP socket, we can simply drop the empty delimiter frame at both sides, which makes things simpler. This is usually the design I use for pure DEALER to ROUTER protocols.
 
-++++ A Load-Balancing Broker
+++++ A Load-Balancing Message Broker
 
 The previous example is half-complete. It can manage a set of workers with dummy requests and replies, but it has no way to talk to clients.
 
-If we add a second //frontend// ROUTER socket that accepts client requests, and turn our example into a proxy that can switch messages from frontend to backend, we get a useful and reusable little message broker!figref().
+If we add a second //frontend// ROUTER socket that accepts client requests, and turn our example into a proxy that can switch messages from frontend to backend, we get a useful and reusable tiny load-balancing message broker!figref().
 
 [[code type="textdiagram" title="Load-Balancing Broker"]]
 +--------+  +--------+  +--------+
@@ -365,7 +367,7 @@ If we add a second //frontend// ROUTER socket that accepts client requests, and 
             +---+----+
             | ROUTER |  Frontend
             +--------+
-            | Proxy  |  LRU queue
+            | Proxy  |  Load-balancer
             +--------+
             | ROUTER |  Backend
             +---+----+
@@ -384,16 +386,16 @@ What this broker does is:
 * Accepts connections from a set of clients.
 * Accepts connections from a set of workers.
 * Accepts requests from clients and holds these in a single queue.
-* Sends these requests to workers using the LRU load-balancing pattern.
+* Sends these requests to workers using the load-balancing pattern.
 * Receives replies back from workers.
 * Sends these replies back to the original requesting client.
 
 The broker code is fairly long but worth understanding:
 
-[[code type="example" title="Load-balancing broker" name="lruqueue"]]
+[[code type="example" title="Load-balancing broker" name="lbbroker"]]
 [[/code]]
 
-The difficult part of this program is (a) the envelopes that each socket reads and writes, and (b) the LRU algorithm. We'll take these in turn, starting with the message envelope formats.
+The difficult part of this program is (a) the envelopes that each socket reads and writes, and (b) the load-balancing algorithm. We'll take these in turn, starting with the message envelope formats.
 
 Let's walk through a full request-reply chain from client to worker and back. In this code we set the identity of client and worker sockets to make it easier to trace the message frames. In reality we'd allow the ROUTER sockets to invent identities for connections. Let's assume the client's identity is "CLIENT" and the worker's identity is "WORKER". The client application sends a single frame containing "HELLO"!figref().
 
@@ -447,25 +449,25 @@ The worker has to save the envelope (which is all the parts up to and including 
 
 On the return path the messages are the same as when they come in, i.e. the backend socket gives the broker a message in five parts, and the broker sends the frontend socket a message in three parts, and the client gets a message in one part.
 
-Now let's look at the LRU algorithm. It requires that both clients and workers use REQ sockets, and that workers correctly store and replay the envelope on messages they get. The algorithm is:
+Now let's look at the load-balancing algorithm. It requires that both clients and workers use REQ sockets, and that workers correctly store and replay the envelope on messages they get. The algorithm is:
 
 * Create a pollset which polls the backend always, and the frontend only if there are one or more workers available.
 
 * Poll for activity with infinite timeout.
 
-* If there is activity on the backend, we either have a "ready" message or a reply for a client. In either case we store the worker address (the first part) on our LRU queue, and if the rest is a client reply we send it back to that client via the frontend.
+* If there is activity on the backend, we either have a "ready" message or a reply for a client. In either case we store the worker address (the first part) on our worker queue, and if the rest is a client reply we send it back to that client via the frontend.
 
-* If there is activity on the frontend, we take the client request, pop the next worker (which is the least-recently used), and send the request to the backend. This means sending the worker address, empty part, and then the three parts of the client request.
+* If there is activity on the frontend, we take the client request, pop the next worker (which is the last used), and send the request to the backend. This means sending the worker address, empty part, and then the three parts of the client request.
 
-You should now see that you can reuse and extend the LRU algorithm with variations based on the information the worker provides in its initial "ready" message. For example, workers might start up and do a performance self-test, then tell the broker how fast they are. The broker can then choose the fastest available worker rather than LRU or round-robin.
+You should now see that you can reuse and extend the load-balancing algorithm with variations based on the information the worker provides in its initial "ready" message. For example, workers might start up and do a performance self-test, then tell the broker how fast they are. The broker can then choose the fastest available worker rather than the oldest.
 
 +++ A High-Level API for 0MQ
 
 ++++ Making a Detour
 
-We're going to push request-reply onto the stack and open a different area, which is the 0MQ API itself. There's a reason for this detour: as we write more complex examples, the low-level 0MQ API starts to look increasingly clumsy. Look at the core of the worker thread from our load-balancing message broker:
+We're going to push request-reply onto the stack and open a different area, which is the 0MQ API itself. There's a reason for this detour: as we write more complex examples, the low-level 0MQ API starts to look increasingly clumsy. Look at the core of the worker thread from our load-balancing broker:
 
-[[code type="fragment" name="lrureader"]]
+[[code type="fragment" name="lbreader"]]
 while (true) {
     //  Read and save all frames until we get an empty frame
     //  In this example there is only 1 but it could be more
@@ -561,9 +563,9 @@ Cutting the amount of code we need to read and write complex messages is great: 
 
 Turning this wishlist into reality for the C language gives us [http://zero.mq/c CZMQ], a 0MQ language binding for C. This high-level binding in fact developed out of earlier versions of the Guide. It combines nicer semantics for working with 0MQ with some portability layers, and (importantly for C but less for other languages) containers like hashes and lists. CZMQ also uses an elegant object model that leads to frankly lovely code.
 
-Here is the load-balancing message broker rewritten to use a higher-level API (CZMQ for the C case):
+Here is the load-balancing broker rewritten to use a higher-level API (CZMQ for the C case):
 
-[[code type="example" title="Load-balancing broker using high-level API" name="lruqueue2"]]
+[[code type="example" title="Load-balancing broker using high-level API" name="lbbroker2"]]
 [[/code]]
 
 One thing CZMQ provides is clean interrupt handling. This means that Ctrl-C will cause any blocking 0MQ call to exit with a return code -1 and errno set to EINTR. The high-level recv methods will return NULL in such cases. So, you can cleanly exit a loop like this:
@@ -609,7 +611,7 @@ While the actual handling of messages sits inside dedicated functions or methods
 
 Here is the load-balancing broker rewritten once again, this time to use {{zloop}}:
 
-[[code type="example" title="LRU queue broker using zloop" name="lruqueue3"]]
+[[code type="example" title="Load balancing broker using zloop" name="lbbroker3"]]
 [[/code]]
 
 Getting applications to properly shut-down when you send them Ctrl-C can be tricky. If you use the {{zctx}} class it'll automatically set-up signal handling, but your code still has to cooperate. You must break any loop if {{zmq_poll}} returns -1 or if any of the {{zstr_recv}}, {{zframe_recv}}, or {{zmsg_recv}} methods return NULL. If you have nested loops, it can be useful to make the outer ones conditional on {{!zctx_interrupted}}.
@@ -708,7 +710,7 @@ Note that we're doing DEALER to ROUTER dialog between client and server, but int
 
 Let's think about the routing envelope. The client sends a simple message. The server thread receives a two-part message (real message prefixed by client identity). We have two possible designs for the server-to-worker interface:
 
-* Workers get unaddressed messages, and we manage the connections from server thread to worker threads explicitly using a ROUTER socket as backend. This would require that workers start by telling the server they exist, which can then route requests to workers and track which client is 'connected' to which worker. This is the LRU load-balancing pattern we already covered.
+* Workers get unaddressed messages, and we manage the connections from server thread to worker threads explicitly using a ROUTER socket as backend. This would require that workers start by telling the server they exist, which can then route requests to workers and track which client is 'connected' to which worker. This is the load-balancing pattern again.
 
 * Workers get addressed messages, and they return addressed replies. This requires that workers can properly decode and recode envelopes but it doesn't need any other mechanisms.
 
@@ -766,7 +768,7 @@ It's a straight-forward problem that requires no exotic hardware or protocols, j
 
 ++++ Architecture of a Single Cluster
 
-Workers and clients are synchronous. We want to use the LRU pattern to route tasks to workers. Workers are all identical, our facility has no notion of different services. Workers are anonymous, clients never address them directly. We make no attempt here to provide guaranteed delivery, retry, etc.
+Workers and clients are synchronous. We want to use the load-balancing pattern to route tasks to workers. Workers are all identical, our facility has no notion of different services. Workers are anonymous, clients never address them directly. We make no attempt here to provide guaranteed delivery, retry, etc.
 
 For reasons we already looked at, clients and workers won't speak to each other directly. It makes it impossible to add or remove nodes dynamically. So our basic model consists of the request-reply message broker we saw earlier!figref().
 
@@ -784,7 +786,8 @@ For reasons we already looked at, clients and workers won't speak to each other 
 |         +-----+------+         |
 |         |   ROUTER   |         |
 |         +------------+         |
-|         | LRU Queue  |         |
+|         |    Load    |         |
+|         |  balancer  |         |
 |         +------------+         |
 |         |   ROUTER   |         |
 |         +-----+------+         |
@@ -829,7 +832,7 @@ The question is: how do we get the clients of each cluster talking to the worker
 
 * Clients could connect directly to both brokers. The advantage is that we don't need to modify brokers or workers. But clients get more complex, and become aware of the overall topology. If we want to add, e.g. a third or forth cluster, all the clients are affected. In effect we have to move routing and fail-over logic into the clients and that's not nice.
 
-* Workers might connect directly to both brokers. But REQ workers can't do that, they can only reply to one broker. We might use REPs but REPs don't give us customizable broker-to-worker routing like LRU, only the built-in load balancing. That's a fail, if we want to distribute work to idle workers: we precisely need LRU. One solution would be to use ROUTER sockets for the worker nodes. Let's label this "Idea #1".
+* Workers might connect directly to both brokers. But REQ workers can't do that, they can only reply to one broker. We might use REPs but REPs don't give us customizable broker-to-worker routing like load-balancing, only the built-in load balancing. That's a fail, if we want to distribute work to idle workers: we precisely need load-balancing. One solution would be to use ROUTER sockets for the worker nodes. Let's label this "Idea #1".
 
 * Brokers could connect to each other. This looks neatest because it creates the fewest additional connections. We can't add clusters on the fly but that is probably out of scope. Now clients and workers remain ignorant of the real network topology, and brokers tell each other when they have spare capacity. Let's label this "Idea #2".
 
@@ -896,7 +899,7 @@ We know the basic model well by now:
 
 * The REQ client (REQ) threads create workloads and pass them to the broker (ROUTER).
 * The REQ worker (REQ) threads process workloads and return the results to the broker (ROUTER).
-* The broker queues and distributes workloads using the LRU routing model.
+* The broker queues and distributes workloads using the load-balancing pattern.
 
 ++++ Federation vs. Peering
 
@@ -926,9 +929,9 @@ The simplest interconnect is //federation// in which brokers simulate clients an
 
 This would give us simple logic in both brokers and a reasonably good mechanism: when there are no clients, tell the other broker 'ready', and accept one job from it. The problem is also that it is too simple for this problem. A federated broker would be able to handle only one task at once. If the broker emulates a lock-step client and worker, it is by definition also going to be lock-step and if it has lots of available workers they won't be used. Our brokers need to be connected in a fully asynchronous fashion.
 
-The federation model is perfect for other kinds of routing, especially service-oriented architectures (SOAs) which route by service name and proximity rather than LRU or round-robin. So don't dismiss it as useless, it's just not right for least-recently used and cluster load-balancing.
+The federation model is perfect for other kinds of routing, especially service-oriented architectures (SOAs) which route by service name and proximity rather than load-balancing or round-robin. So don't dismiss it as useless, it's just not right for all use-cases.
 
-So instead of federation, let's look at a //peering// approach in which brokers are explicitly aware of each other and talk over privileged channels. Let's break this down, assuming we want to interconnect N brokers. Each broker has (N - 1) peers, and all brokers are using exactly the same code and logic. There are two distinct flows of information between brokers:
+Instead of federation, let's look at a //peering// approach in which brokers are explicitly aware of each other and talk over privileged channels. Let's break this down, assuming we want to interconnect N brokers. Each broker has (N - 1) peers, and all brokers are using exactly the same code and logic. There are two distinct flows of information between brokers:
 
 * Each broker needs to tell its peers how many workers it has available at any time. This can be fairly simple information, just a quantity that is updated regularly. The obvious (and correct) socket pattern for this is publish-subscribe. So every broker opens a PUB socket and publishes state information on that, and every broker also opens a SUB socket and connects that to the PUB socket of every other broker, to get state information from its peers.
 
@@ -1123,7 +1126,7 @@ Before we jump into the code, which is getting a little complex, let's sketch th
 
 We need two queues, one for requests from local clients and one for requests from cloud clients. One option would be to pull messages off the local and cloud frontends, and pump these onto their respective queues. But this is kind of pointless because 0MQ sockets //are// queues already. So let's use the 0MQ socket buffers as queues.
 
-This was the technique we used in the LRU queue broker, and it worked nicely. We only read from the two frontends when there is somewhere to send the requests. We can always read from the backends, since they give us replies to route back. As long as the backends aren't talking to us, there's no point in even looking at the frontends.
+This was the technique we used in the load-balancing broker, and it worked nicely. We only read from the two frontends when there is somewhere to send the requests. We can always read from the backends, since they give us replies to route back. As long as the backends aren't talking to us, there's no point in even looking at the frontends.
 
 So our main loop becomes:
 

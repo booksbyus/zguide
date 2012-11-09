@@ -88,9 +88,9 @@ server_worker (void *args, zctx_t *ctx, void *pipe)
     zsocket_connect (worker, "inproc://backend");
 
     while (true) {
-        //  The DEALER socket gives us the address envelope and message
+        //  The DEALER socket gives us the reply envelope and message
         zmsg_t *msg = zmsg_recv (worker);
-        zframe_t *address = zmsg_pop (msg);
+        zframe_t *identity = zmsg_pop (msg);
         zframe_t *content = zmsg_pop (msg);
         assert (content);
         zmsg_destroy (&msg);
@@ -100,10 +100,10 @@ server_worker (void *args, zctx_t *ctx, void *pipe)
         for (reply = 0; reply < replies; reply++) {
             //  Sleep for some fraction of a second
             zclock_sleep (randof (1000) + 1);
-            zframe_send (&address, worker, ZFRAME_REUSE + ZFRAME_MORE);
+            zframe_send (&identity, worker, ZFRAME_REUSE + ZFRAME_MORE);
             zframe_send (&content, worker, ZFRAME_REUSE);
         }
-        zframe_destroy (&address);
+        zframe_destroy (&identity);
         zframe_destroy (&content);
     }
 }

@@ -29,7 +29,7 @@ struct _mdwrk_t {
     int reconnect;              //  Reconnect delay, msecs
 
     int expect_reply;           //  Zero only at start
-    zframe_t *reply_to;         //  Return address, if any
+    zframe_t *reply_to;         //  Return identity, if any
 };
 
 

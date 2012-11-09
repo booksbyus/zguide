@@ -33,10 +33,10 @@ struct _bstar_t {
     int64_t peer_expiry;        //  When peer is considered 'dead'
     zloop_fn *voter_fn;         //  Voting socket handler
     void *voter_arg;            //  Arguments for voting handler
-    zloop_fn *master_fn;        //  Call when become master
-    void *master_arg;           //  Arguments for handler
-    zloop_fn *slave_fn;         //  Call when become slave
-    void *slave_arg;            //  Arguments for handler
+    zloop_fn *active_fn;        //  Call when become active
+    void *active_arg;           //  Arguments for handler
+    zloop_fn *passive_fn;         //  Call when become passive
+    void *passive_arg;            //  Arguments for handler
 };
 
 //  The finite-state machine is the same as in the proof-of-concept server.
@@ -59,32 +59,32 @@ s_execute_fsm (bstar_t *self)
     //  Accepts CLIENT_REQUEST events in this state
     if (self->state == STATE_PRIMARY) {
         if (self->event == PEER_BACKUP) {
-            zclock_log ("I: connected to backup (slave), ready as master");
+            zclock_log ("I: connected to backup (passive), ready as active");
             self->state = STATE_ACTIVE;
-            if (self->master_fn)
-                (self->master_fn) (self->loop, NULL, self->master_arg);
+            if (self->active_fn)
+                (self->active_fn) (self->loop, NULL, self->active_arg);
         }
         else
         if (self->event == PEER_ACTIVE) {
-            zclock_log ("I: connected to backup (master), ready as slave");
+            zclock_log ("I: connected to backup (active), ready as passive");
             self->state = STATE_PASSIVE;
-            if (self->slave_fn)
-                (self->slave_fn) (self->loop, NULL, self->slave_arg);
+            if (self->passive_fn)
+                (self->passive_fn) (self->loop, NULL, self->passive_arg);
         }
         else
         if (self->event == CLIENT_REQUEST) {
-            // Allow client requests to turn us into the master if we've
+            // Allow client requests to turn us into the active if we've
             // waited sufficiently long to believe the backup is not
-            // currently acting as master (i.e., after a failover)
+            // currently acting as active (i.e., after a failover)
             assert (self->peer_expiry > 0);
             if (zclock_time () >= self->peer_expiry) {
-                zclock_log ("I: request from client, ready as master");
+                zclock_log ("I: request from client, ready as active");
                 self->state = STATE_ACTIVE;
-                if (self->master_fn)
-                    (self->master_fn) (self->loop, NULL, self->master_arg);
+                if (self->active_fn)
+                    (self->active_fn) (self->loop, NULL, self->active_arg);
             } else
                 // Don't respond to clients yet - it's possible we're
-                // performing a failback and the backup is currently master
+                // performing a failback and the backup is currently active
                 rc = -1;
         }
     }
@@ -93,10 +93,10 @@ s_execute_fsm (bstar_t *self)
     //  Rejects CLIENT_REQUEST events in this state
     if (self->state == STATE_BACKUP) {
         if (self->event == PEER_ACTIVE) {
-            zclock_log ("I: connected to primary (master), ready as slave");
+            zclock_log ("I: connected to primary (active), ready as passive");
             self->state = STATE_PASSIVE;
-            if (self->slave_fn)
-                (self->slave_fn) (self->loop, NULL, self->slave_arg);
+            if (self->passive_fn)
+                (self->passive_fn) (self->loop, NULL, self->passive_arg);
         }
         else
         if (self->event == CLIENT_REQUEST)
@@ -108,8 +108,8 @@ s_execute_fsm (bstar_t *self)
     //  The only way out of ACTIVE is death
     if (self->state == STATE_ACTIVE) {
         if (self->event == PEER_ACTIVE) {
-            //  Two masters would mean split-brain
-            zclock_log ("E: fatal error - dual masters, aborting");
+            //  Two actives would mean split-brain
+            zclock_log ("E: fatal error - dual actives, aborting");
             rc = -1;
         }
     }
@@ -119,29 +119,29 @@ s_execute_fsm (bstar_t *self)
     if (self->state == STATE_PASSIVE) {
         if (self->event == PEER_PRIMARY) {
             //  Peer is restarting - become active, peer will go passive
-            zclock_log ("I: primary (slave) is restarting, ready as master");
+            zclock_log ("I: primary (passive) is restarting, ready as active");
             self->state = STATE_ACTIVE;
         }
         else
         if (self->event == PEER_BACKUP) {
             //  Peer is restarting - become active, peer will go passive
-            zclock_log ("I: backup (slave) is restarting, ready as master");
+            zclock_log ("I: backup (passive) is restarting, ready as active");
             self->state = STATE_ACTIVE;
         }
         else
         if (self->event == PEER_PASSIVE) {
             //  Two passives would mean cluster would be non-responsive
-            zclock_log ("E: fatal error - dual slaves, aborting");
+            zclock_log ("E: fatal error - dual passives, aborting");
             rc = -1;
         }
         else
         if (self->event == CLIENT_REQUEST) {
-            //  Peer becomes master if timeout has passed
+            //  Peer becomes active if timeout has passed
             //  It's the client request that triggers the failover
             assert (self->peer_expiry > 0);
             if (zclock_time () >= self->peer_expiry) {
                 //  If peer is dead, switch to the active state
-                zclock_log ("I: failover successful, ready as master");
+                zclock_log ("I: failover successful, ready as active");
                 self->state = STATE_ACTIVE;
             }
             else
@@ -149,8 +149,8 @@ s_execute_fsm (bstar_t *self)
                 rc = -1;
         }
         //  Call state change handler if necessary
-        if (self->state == STATE_ACTIVE && self->master_fn)
-            (self->master_fn) (self->loop, NULL, self->master_arg);
+        if (self->state == STATE_ACTIVE && self->active_fn)
+            (self->active_fn) (self->loop, NULL, self->active_arg);
     }
     return rc;
 }
@@ -289,19 +289,19 @@ bstar_voter (bstar_t *self, char *endpoint, int type, zloop_fn handler,
 //  Register handlers to be called each time there's a state change:
 
 void
-bstar_new_master (bstar_t *self, zloop_fn handler, void *arg)
+bstar_new_active (bstar_t *self, zloop_fn handler, void *arg)
 {
-    assert (!self->master_fn);
-    self->master_fn = handler;
-    self->master_arg = arg;
+    assert (!self->active_fn);
+    self->active_fn = handler;
+    self->active_arg = arg;
 }
 
 void
-bstar_new_slave (bstar_t *self, zloop_fn handler, void *arg)
+bstar_new_passive (bstar_t *self, zloop_fn handler, void *arg)
 {
-    assert (!self->slave_fn);
-    self->slave_fn = handler;
-    self->slave_arg = arg;
+    assert (!self->passive_fn);
+    self->passive_fn = handler;
+    self->passive_arg = arg;
 }
 
 //  .split enable/disable tracing

@@ -20,14 +20,14 @@ int main (int argc, char *argv [])
     //      -b  backup server, at tcp://localhost:5002
     bstar_t *bstar;
     if (argc == 2 && streq (argv [1], "-p")) {
-        printf ("I: Primary master, waiting for backup (slave)\n");
+        printf ("I: Primary active, waiting for backup (passive)\n");
         bstar = bstar_new (BSTAR_PRIMARY,
             "tcp://*:5003", "tcp://localhost:5004");
         bstar_voter (bstar, "tcp://*:5001", ZMQ_ROUTER, s_echo, NULL);
     }
     else
     if (argc == 2 && streq (argv [1], "-b")) {
-        printf ("I: Backup slave, waiting for primary (master)\n");
+        printf ("I: Backup passive, waiting for primary (active)\n");
         bstar = bstar_new (BSTAR_BACKUP,
             "tcp://*:5004", "tcp://localhost:5003");
         bstar_voter (bstar, "tcp://*:5002", ZMQ_ROUTER, s_echo, NULL);

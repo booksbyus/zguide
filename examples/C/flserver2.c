@@ -22,11 +22,11 @@ int main (int argc, char *argv [])
         //  Fail nastily if run against wrong client
         assert (zmsg_size (request) == 2);
 
-        zframe_t *address = zmsg_pop (request);
+        zframe_t *identity = zmsg_pop (request);
         zmsg_destroy (&request);
 
         zmsg_t *reply = zmsg_new ();
-        zmsg_add (reply, address);
+        zmsg_add (reply, identity);
         zmsg_addstr (reply, "OK");
         zmsg_send (&reply, server);
     }

@@ -1,10 +1,10 @@
 //
 //  Simple Pirate worker
 //  Connects REQ socket to tcp://*:5556
-//  Implements worker part of LRU queueing
+//  Implements worker part of load-balancing
 //
 #include "czmq.h"
-#define LRU_READY   "\001"      //  Signals worker is ready
+#define WORKER_READY   "\001"      //  Signals worker is ready
 
 int main (void)
 {
@@ -20,7 +20,7 @@ int main (void)
 
     //  Tell broker we're ready for work
     printf ("I: (%s) worker ready\n", identity);
-    zframe_t *frame = zframe_new (LRU_READY, 1);
+    zframe_t *frame = zframe_new (WORKER_READY, 1);
     zframe_send (&frame, worker, 0);
 
     int cycles = 0;

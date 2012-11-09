@@ -1,5 +1,5 @@
 //
-//  Least-recently used (LRU) queue device
+//  Load-balancing broker
 //  Clients and workers are shown here in-process
 //
 #include "zhelpers.h"
@@ -37,7 +37,7 @@ client_task (void *args)
 //  While this example runs in a single process, that is just to make
 //  it easier to start and stop the example. Each thread has its own
 //  context and conceptually acts as a separate process.
-//  This is the worker task, using a REQ socket to do LRU routing.
+//  This is the worker task, using a REQ socket to do load-balancing.
 //  Since s_send and s_recv can't handle 0MQ binary identities we
 //  set a printable text identity to allow routing.
 
@@ -55,7 +55,7 @@ worker_task (void *args)
     while (1) {
         //  Read and save all frames until we get an empty frame
         //  In this example there is only 1 but it could be more
-        char *address = s_recv (worker);
+        char *identity = s_recv (worker);
         char *empty = s_recv (worker);
         assert (*empty == 0);
         free (empty);
@@ -65,10 +65,10 @@ worker_task (void *args)
         printf ("Worker: %s\n", request);
         free (request);
 
-        s_sendmore (worker, address);
+        s_sendmore (worker, identity);
         s_sendmore (worker, "");
         s_send     (worker, "OK");
-        free (address);
+        free (identity);
     }
     zmq_close (worker);
     zmq_ctx_destroy (context);
@@ -79,8 +79,8 @@ worker_task (void *args)
 //  This is the main task. It starts the clients and workers, and then
 //  routes requests between the two layers. Workers signal READY when
 //  they start; after that we treat them as ready when they reply with
-//  a response back to a client. The LRU data structure is just a queue
-//  of next available workers.
+//  a response back to a client. The load-balancing data structure is 
+// just a queue of next available workers.
 
 int main (void)
 {
@@ -108,9 +108,9 @@ int main (void)
     //  one or more workers ready. This is a neat way to use 0MQ's own queues
     //  to hold messages we're not ready to process yet. When we get a client
     //  reply, we pop the next available worker, and send the request to it,
-    //  including the originating client address. When a worker replies, we
+    //  including the originating client identity. When a worker replies, we
     //  re-queue that worker, and we forward the reply to the original client,
-    //  using the address envelope.
+    //  using the reply envelope.
 
     //  Queue of available workers
     int available_workers = 0;
@@ -128,41 +128,41 @@ int main (void)
 
         //  Handle worker activity on backend
         if (items [0].revents & ZMQ_POLLIN) {
-            //  Queue worker address for LRU routing
-            char *worker_addr = s_recv (backend);
+            //  Queue worker identity for load-balancing
+            char *worker_id = s_recv (backend);
             assert (available_workers < NBR_WORKERS);
-            worker_queue [available_workers++] = worker_addr;
+            worker_queue [available_workers++] = worker_id;
 
             //  Second frame is empty
             char *empty = s_recv (backend);
             assert (empty [0] == 0);
             free (empty);
 
-            //  Third frame is READY or else a client reply address
-            char *client_addr = s_recv (backend);
+            //  Third frame is READY or else a client reply identity
+            char *client_id = s_recv (backend);
 
             //  If client reply, send rest back to frontend
-            if (strcmp (client_addr, "READY") != 0) {
+            if (strcmp (client_id, "READY") != 0) {
                 empty = s_recv (backend);
                 assert (empty [0] == 0);
                 free (empty);
                 char *reply = s_recv (backend);
-                s_sendmore (frontend, client_addr);
+                s_sendmore (frontend, client_id);
                 s_sendmore (frontend, "");
                 s_send     (frontend, reply);
                 free (reply);
                 if (--client_nbr == 0)
                     break;      //  Exit after N messages
             }
-            free (client_addr);
+            free (client_id);
         }
         //  .split handling a client request
         //  Here is how we handle a client request:
 
         if (items [1].revents & ZMQ_POLLIN) {
-            //  Now get next client request, route to LRU worker
-            //  Client request is [address][empty][request]
-            char *client_addr = s_recv (frontend);
+            //  Now get next client request, route to last-used worker
+            //  Client request is [identity][empty][request]
+            char *client_id = s_recv (frontend);
             char *empty = s_recv (frontend);
             assert (empty [0] == 0);
             free (empty);
@@ -170,14 +170,14 @@ int main (void)
 
             s_sendmore (backend, worker_queue [0]);
             s_sendmore (backend, "");
-            s_sendmore (backend, client_addr);
+            s_sendmore (backend, client_id);
             s_sendmore (backend, "");
             s_send     (backend, request);
 
-            free (client_addr);
+            free (client_id);
             free (request);
 
-            //  Dequeue and drop the next worker address
+            //  Dequeue and drop the next worker identity
             free (worker_queue [0]);
             DEQUEUE (worker_queue);
             available_workers--;

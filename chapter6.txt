@@ -15,7 +15,6 @@ We'll cover:
 * How to write and license an protocol specification.
 * How to do fast restartable file transfer over 0MQ.
 * How to do credit-based flow control.
-* How to do heartbeating for different 0MQ patterns.
 * How to build protocol servers and clients as state machines.
 * How to make a secure protocol over 0MQ (yay!).
 * A large-scale file publishing system (FileMQ).
@@ -935,44 +934,6 @@ Thinking this through a little more, though, we can see that fetch is just a spe
 To make this work (and we will, my dear readers), we need to be a little more explicit about how we send credit to the server. The cute trick of treating a pipelined "fetch chunk" request as credit won't fly since the client doesn't know any longer what files actually exist, how large they are, anything. If the client says, "I'm good for 250,000 bytes of data", this should work equally for one file of 250K bytes, or 100 files of 2,500 bytes.
 
 And this gives us "credit-based flow control", which effectively removes the need for HWMs, and any risk of memory overflow.
-
-+++ Heartbeating
-
-Just as a real protocol needs to solve the problem of flow control, it also needs to solve the problem of knowing whether a peer is alive or dead. This is not an issue specific to 0MQ. TCP has a long timeout (30 minutes or so), that means that it can be impossible to know whether a peer has died, been disconnected, or gone on a weekend to Prague with a case of vodka, a redhead, and a large expense account.
-
-Heartbeating is not easy to get right, and as with flow control it can make the difference between a working, and failing architecture. So using our standard approach, let's start with the simplest possible heartbeat design, and develop better and better designs until we have one with no visible faults.
-
-++++ Shrugging It Off
-
-A decent first iteration is to do no heartbeating at all and see what actually happens. Many if not most 0MQ applications do this. 0MQ encourages this by hiding peers in many cases. What problems does this approach cause?
-
-* When we use a ROUTER socket in an application that tracks peers, as peers disconnect and reconnect, the application will leak memory and get slower and slower.
-
-* When we use SUB or DEALER-based data recipients, we can't tell the difference between good silence (there's no data) and bad silence (the other end died). When a recipient knows the other side died, it can for example switch over to a backup route.
-
-* If we use a TCP connection that stays silent for a long while, it will, in some networks, just die. Sending something (technically, a "keep-alive" more than a heartbeat), will keep the network alive.
-
-++++ One-Way Heartbeats
-
-So, our first solution is to sending a "heartbeat" message from each node to its peers, every second or so. When one node hears nothing from another, within some timeout (several seconds, typically), it will treat that peer as dead. Sounds good, right? Sadly no. This works in some cases but has nasty edge cases in other cases.
-
-For PUB-SUB, this does work, and it's the only model you can use. SUB sockets cannot talk back to PUB sockets, but PUB sockets can happily send "I'm alive" messages to their subscribers.
-
-As an optimization, you can send heartbeats only when there is no real data to send. Furthermore, you can send heartbeats progressively slower and slower, if network activity is an issue (e.g. on mobile networks where activity drains the battery). As long as the recipient can detect a failure (sharp stop in activity), that's fine.
-
-Now the typical problems with this design:
-
-* It can be inaccurate when we send large amounts of data, since heartbeats will be delayed behind that data. If heartbeats are delayed, you can get false timeouts and disconnections due to network congestion. Thus, always treat //any// incoming data as a heartbeat, whether or not the sender optimizes out heartbeats.
-
-* While the PUB-SUB pattern will drop messages for disappeared recipients, PUSH and DEALER sockets will queue them. So, if you send heartbeats to a dead peer, and it comes back, it'll get all the heartbeats you sent. Which can be thousands. Whoa, whoa!
-
-* This design assumes that heartbeat timeouts are the same across the whole network. But that won't be accurate. Some peers will want very aggressive heart-beating, to detect faults rapidly. And some will want very relaxed heart-beating, to let sleeping networks lie, and save power.
-
-++++ Ping-Pong Heartbeats
-
-Our third design uses a ping-pong dialog. One peer sends a ping command to the other, which replies with a pong command. Neither command has any payload. Pings and pongs are not correlated. Since the roles of "client" and "server" are often arbitrary, we specify that either peer can in fact send a ping and expect a pong in response. However, since the timeouts depend on network topologies known best to dynamic clients, it is usually the client which pings the server.
-
-This works for all ROUTER-based brokers. The same optimizations we used in the second model make this work even better: treat any incoming data as a pong, and only send a ping when not otherwise sending data.
 
 +++ State Machines
 

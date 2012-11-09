@@ -1,5 +1,5 @@
 //
-//  Least-recently used (LRU) queue device
+//  Load-balancing broker
 //  Demonstrates use of the CZMQ API and reactor style
 //
 //  The client and worker tasks are identical from the previous example.
@@ -9,7 +9,7 @@
 
 #define NBR_CLIENTS 10
 #define NBR_WORKERS 3
-#define LRU_READY   "\001"      //  Signals worker is ready
+#define WORKER_READY   "\001"      //  Signals worker is ready
 
 //  Basic request-reply client using REQ socket
 //
@@ -34,7 +34,7 @@ client_task (void *args)
     return NULL;
 }
 
-//  Worker using REQ socket to do LRU routing
+//  Worker using REQ socket to do load-balancing
 //
 static void *
 worker_task (void *args)
@@ -44,7 +44,7 @@ worker_task (void *args)
     zsocket_connect (worker, "ipc://backend.ipc");
 
     //  Tell broker we're ready for work
-    zframe_t *frame = zframe_new (LRU_READY, 1);
+    zframe_t *frame = zframe_new (WORKER_READY, 1);
     zframe_send (&frame, worker, 0);
 
     //  Process messages as they arrive
@@ -61,12 +61,12 @@ worker_task (void *args)
 }
 
 //  .until
-//  Our LRU queue structure, passed to reactor handlers
+//  Our load-balancer structure, passed to reactor handlers
 typedef struct {
     void *frontend;             //  Listen to clients
     void *backend;              //  Listen to workers
     zlist_t *workers;           //  List of ready workers
-} lruqueue_t;
+} lbbroker_t;
 
 
 //  .split reactor design
@@ -77,7 +77,7 @@ typedef struct {
 //  Handle input from client, on frontend
 int s_handle_frontend (zloop_t *loop, zmq_pollitem_t *poller, void *arg)
 {
-    lruqueue_t *self = (lruqueue_t *) arg;
+    lbbroker_t *self = (lbbroker_t *) arg;
     zmsg_t *msg = zmsg_recv (self->frontend);
     if (msg) {
         zmsg_wrap (msg, (zframe_t *) zlist_pop (self->workers));
@@ -95,12 +95,12 @@ int s_handle_frontend (zloop_t *loop, zmq_pollitem_t *poller, void *arg)
 //  Handle input from worker, on backend
 int s_handle_backend (zloop_t *loop, zmq_pollitem_t *poller, void *arg)
 {
-    //  Use worker address for LRU routing
-    lruqueue_t *self = (lruqueue_t *) arg;
+    //  Use worker identity for load-balancing
+    lbbroker_t *self = (lbbroker_t *) arg;
     zmsg_t *msg = zmsg_recv (self->backend);
     if (msg) {
-        zframe_t *address = zmsg_unwrap (msg);
-        zlist_append (self->workers, address);
+        zframe_t *identity = zmsg_unwrap (msg);
+        zlist_append (self->workers, identity);
 
         //  Enable reader on frontend if we went from 0 to 1 workers
         if (zlist_size (self->workers) == 1) {
@@ -109,7 +109,7 @@ int s_handle_backend (zloop_t *loop, zmq_pollitem_t *poller, void *arg)
         }
         //  Forward message to client if it's not a READY
         zframe_t *frame = zmsg_first (msg);
-        if (memcmp (zframe_data (frame), LRU_READY, 1) == 0)
+        if (memcmp (zframe_data (frame), WORKER_READY, 1) == 0)
             zmsg_destroy (&msg);
         else
             zmsg_send (&msg, self->frontend);
@@ -126,7 +126,7 @@ int s_handle_backend (zloop_t *loop, zmq_pollitem_t *poller, void *arg)
 int main (void)
 {
     zctx_t *ctx = zctx_new ();
-    lruqueue_t *self = (lruqueue_t *) zmalloc (sizeof (lruqueue_t));
+    lbbroker_t *self = (lbbroker_t *) zmalloc (sizeof (lbbroker_t));
     self->frontend = zsocket_new (ctx, ZMQ_ROUTER);
     self->backend = zsocket_new (ctx, ZMQ_ROUTER);
     zsocket_bind (self->frontend, "ipc://frontend.ipc");

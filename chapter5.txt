@@ -449,11 +449,11 @@ So, Model Six introduces these changes over Model Five:
 
 * We add heartbeats to server updates (to clients), so that a client can detect when the primary server has died. It can then switch over to the backup server.
 
-* We connect the two servers using the Binary Star {{bstar}} reactor class. Binary Star relies on the clients to 'vote' by making an explicit request to the server they consider "master". We'll use snapshot requests for this.
+* We connect the two servers using the Binary Star {{bstar}} reactor class. Binary Star relies on the clients to 'vote' by making an explicit request to the server they consider "active". We'll use snapshot requests for this.
 
 * We make all update messages uniquely identifiable by adding a UUID field. The client generates this, and the server propagates it back on re-published updates.
 
-* The slave server keeps a "pending list" of updates that it has received from clients, but not yet from the master server. Or, updates it's received from the master, but not yet clients. The list is ordered from oldest to newest, so that it is easy to remove updates off the head.
+* The passive server keeps a "pending list" of updates that it has received from clients, but not yet from the active server. Or, updates it's received from the active, but not yet clients. The list is ordered from oldest to newest, so that it is easy to remove updates off the head.
 
 It's useful to design the client logic as a finite state machine. The client cycles through three states:
 
@@ -503,7 +503,7 @@ Fail-over happens as follows:
 
 When the primary server comes back on-line, it will:
 
-* Start up as slave server, and connect to the backup server as a Clone client.
+* Start up as passive server, and connect to the backup server as a Clone client.
 
 * Start to receive updates from clients, via its SUB socket.
 
@@ -611,7 +611,7 @@ This main program is only a few hundred lines of code, but it took some time to 
 
 I'm sure the code still has flaws which kind readers will spend weekends debugging and fixing for me. I'm happy enough with this model to use it as the basis for real applications.
 
-To test the sixth model, start the primary server and backup server, and a set of clients, in any order. Then kill and restart one of the servers, randomly, and keep doing this. If the design and code is accurate, clients will continue to get the same stream of updates from whatever server is currently master.
+To test the sixth model, start the primary server and backup server, and a set of clients, in any order. Then kill and restart one of the servers, randomly, and keep doing this. If the design and code is accurate, clients will continue to get the same stream of updates from whatever server is currently active.
 
 ++++ Clone Protocol Specification
 

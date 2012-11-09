@@ -29,7 +29,7 @@ int main (int argc, char *argv [])
         //  Frame 0: identity of client
         //  Frame 1: PING, or client control frame
         //  Frame 2: request body
-        zframe_t *address = zmsg_pop (request);
+        zframe_t *identity = zmsg_pop (request);
         zframe_t *control = zmsg_pop (request);
         zmsg_t *reply = zmsg_new ();
         if (zframe_streq (control, "PING"))
@@ -39,7 +39,7 @@ int main (int argc, char *argv [])
             zmsg_addstr (reply, "OK");
         }
         zmsg_destroy (&request);
-        zmsg_push (reply, address);
+        zmsg_push (reply, identity);
         if (verbose && reply)
             zmsg_dump (reply);
         zmsg_send (&reply, server);

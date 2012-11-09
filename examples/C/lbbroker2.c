@@ -1,12 +1,12 @@
 //
-//  Least-recently used (LRU) queue device
+//  Load-balancing broker
 //  Demonstrates use of the CZMQ API
 //
 #include "czmq.h"
 
 #define NBR_CLIENTS 10
 #define NBR_WORKERS 3
-#define LRU_READY   "\001"      //  Signals worker is ready
+#define WORKER_READY   "\001"      //  Signals worker is ready
 
 //  Basic request-reply client using REQ socket
 //
@@ -31,7 +31,7 @@ client_task (void *args)
     return NULL;
 }
 
-//  Worker using REQ socket to do LRU routing
+//  Worker using REQ socket to do load-balancing
 //
 static void *
 worker_task (void *args)
@@ -41,7 +41,7 @@ worker_task (void *args)
     zsocket_connect (worker, "ipc://backend.ipc");
 
     //  Tell broker we're ready for work
-    zframe_t *frame = zframe_new (LRU_READY, 1);
+    zframe_t *frame = zframe_new (WORKER_READY, 1);
     zframe_send (&frame, worker, 0);
 
     //  Process messages as they arrive
@@ -58,7 +58,7 @@ worker_task (void *args)
 
 //  .split main task
 //  Now we come to the main task. This has the identical functionality to
-//  the previous lruqueue example but uses CZMQ to start child threads,
+//  the previous lbbroker example but uses CZMQ to start child threads,
 //  to hold the list of workers, and to read and send messages:
 
 int main (void)
@@ -79,8 +79,8 @@ int main (void)
     //  Queue of available workers
     zlist_t *workers = zlist_new ();
 
-    //  .split main LRU queue loop
-    //  Here is the main loop for the LRU queue. It works the same way
+    //  .split main load-balancer loop
+    //  Here is the main loop for the load-balancer. It works the same way
     //  as the previous example, but is a lot shorter because CZMQ gives
     //  us an API that does more with fewer calls:
     while (true) {
@@ -95,16 +95,16 @@ int main (void)
 
         //  Handle worker activity on backend
         if (items [0].revents & ZMQ_POLLIN) {
-            //  Use worker address for LRU routing
+            //  Use worker identity for load-balancing
             zmsg_t *msg = zmsg_recv (backend);
             if (!msg)
                 break;          //  Interrupted
-            zframe_t *address = zmsg_unwrap (msg);
-            zlist_append (workers, address);
+            zframe_t *identity = zmsg_unwrap (msg);
+            zlist_append (workers, identity);
 
             //  Forward message to client if it's not a READY
             zframe_t *frame = zmsg_first (msg);
-            if (memcmp (zframe_data (frame), LRU_READY, 1) == 0)
+            if (memcmp (zframe_data (frame), WORKER_READY, 1) == 0)
                 zmsg_destroy (&msg);
             else
                 zmsg_send (&msg, frontend);
