@@ -1,9 +1,11 @@
 <html>
 <pre class="textdiagram" id="fig31">
-          +-------------+
-Frame 1   | Address     |
-          +-------------+-------------------------+
-Frame 2   | Data                                  |
-          +---------------------------------------+
+          +-----------+
+Frame 1   | Identity  |
+          +---+-------+
+Frame 2   |   |   <------ Empty delimiter frame
+          +---+-------+
+Frame 3   | Data      |
+          +-----------+
 </pre>
 </html>

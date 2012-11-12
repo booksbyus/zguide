@@ -14,8 +14,8 @@ int bstar_voter (bstar_t *self, char *endpoint, int type,
                  zloop_fn handler, void *arg);
 
 //  Register main state change handlers
-void bstar_new_master (bstar_t *self, zloop_fn handler, void *arg);
-void bstar_new_slave (bstar_t *self, zloop_fn handler, void *arg);
+void bstar_new_active (bstar_t *self, zloop_fn handler, void *arg);
+void bstar_new_passive (bstar_t *self, zloop_fn handler, void *arg);
 
 //  Start the reactor, ends if a callback function returns -1, or the
 //  process received SIGINT or SIGTERM.

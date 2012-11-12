@@ -961,7 +961,7 @@ ZeroMQ is not connection-oriented so there's no way to "close the connection" wh
 
 So let's define a //protocol assertion// as being a unique signature that we place at the start of each message, and which identities the intended protocol. When we read a message, we check the signature, and if it's not what we expect, we discard the message silently. A good signature should be hard to confuse with regular data, and give us enough space for a number of protocols.
 
-I'm going to use a 16-bit signature consisting of a twelve-bit pattern and a 4-bit protocol ID!figref(). The pattern %xAAA is meant to stay away from values we might expect to see at the start of a message: %x00, %xFF, and printable characters.
+I'm going to use a 16-bit signature consisting of a twelve-bit pattern and a 4-bit protocol ID!figref(). The pattern %xAAA is meant to stay away from values we might otherwise expect to see at the start of a message: %x00, %xFF, and printable characters.
 
 [[code type="textdiagram" title="Protocol signature"]]
 +---+---+---+---+---+---+---+---+---+---+---+---+---------------+

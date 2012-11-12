@@ -1,17 +1,17 @@
 <html>
 <pre class="textdiagram" id="fig27">
-     (Next envelope will go here)
++-------+      +-------+
+|  REQ  |------|  REP  |
++-------+      +-------+
 
-          +---------------+
-Frame 1   | Reply address |   <----- Envelope (ROUTER)
-          +---------------+
-Frame 2   | Reply address |   <----- Envelope (ROUTER)
-          +---------------+
-Frame 3   | Reply address |   <----- Envelope (ROUTER)
-          +---+-----------+
-Frame 4   |   |   <------ Empty message frame (REQ)
-          +---+-------------------------------------+
-Frame 5   | Data                                    |
-          +-----------------------------------------+
+
++-------+      +--------+--------+      +-------+
+|  REQ  |------| ROUTER | DEALER |------|  REP  |
++-------+      +--------+--------+      +-------+
+
+
++-------+      +--------+--------+      +--------+--------+      +-------+
+|  REQ  |------| ROUTER | DEALER |------| ROUTER | DEALER |------|  REP  |
++-------+      +--------+--------+      +--------+--------+      +-------+
 </pre>
 </html>
