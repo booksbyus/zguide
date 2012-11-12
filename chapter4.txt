@@ -789,7 +789,7 @@ If you want to make Titanic //much faster and less reliable//, store requests an
 
 The Binary Star pattern puts two servers in a primary-backup high-availability pair!figref(). At any given time, one of these (the active) accepts connections from client applications. The other (the passive) does nothing, but the two servers monitor each other. If the active disappears from the network, after a certain time the passive takes over as active.
 
-Binary Star pattern was developed by Pieter Hintjens and Martin Sustrik for the iMatix [http://www.openamq.org OpenAMQ server]. We designed it:
+Binary Star pattern was developed by myself and Martin Sustrik for the iMatix [http://www.openamq.org OpenAMQ server]. We designed it:
 
 * To provide a straight-forward high-availability solution.
 * To be simple enough to actually understand and use.
@@ -990,7 +990,7 @@ Binary star is driven by a finite state machine!figref(). States in white accept
 |           | Peer Backup     |           +------/           |           |
 |  Primary  +---------------->|  Active   |<--------------\  |  Backup   |
 |           |         /------>|           |<-----\        |  |           |
-| {o}       |         |       | {o}       |      |        |  | {o} c333  |
+| {o}       |         |       | {o}       |      |        |  | {o} cDDD  |
 +-----+-----+         |       +-----+-----+      |        |  +-----+-----+
       |               |             |            |        |        |
   Peer|Active         |         Peer|Active      |        |    Peer|Active
@@ -999,7 +999,7 @@ Binary star is driven by a finite state machine!figref(). States in white accept
       |               |       |           |      |        |        |
       |           Peer|Backup |  Error!   |  Peer|Primary |        |
       |               |       |           |      |        |        |
-      |               |       | {o} c333  |      |        |        |
+      |               |       | {o} cDDD  |      |        |        |
       |               |       +-----------+      |        |        |
       |               |             ^            |        |        |
       |               |         Peer|Passive     |  Client|Vote    |
@@ -1008,7 +1008,7 @@ Binary star is driven by a finite state machine!figref(). States in white accept
       |               |       |           +------/        |        |
       |               \-------+  Passive  +---------------/        |
       \---------------------->|           |<-----------------------/
-                              | {o} c333  |
+                              | {o} cDDD  |
                               +-----------+
 [[/code]]
 

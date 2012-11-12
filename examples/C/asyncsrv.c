@@ -114,7 +114,6 @@ server_worker (void *args, zctx_t *ctx, void *pipe)
 
 int main (void)
 {
-    zctx_t *ctx = zctx_new ();
     zthread_new (client_task, NULL);
     zthread_new (client_task, NULL);
     zthread_new (client_task, NULL);
@@ -122,6 +121,5 @@ int main (void)
 
     //  Run for 5 seconds then quit
     zclock_sleep (5 * 1000);
-    zctx_destroy (&ctx);
     return 0;
 }

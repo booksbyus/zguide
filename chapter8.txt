@@ -847,7 +847,193 @@ zre_peer_disconnect (zre_peer_t *self)
 }
 [[/code]]
 
-+++ More Coming Soon
++++ Distributed Logging and Monitoring
 
-In the rest of this chapter we'll develop a distributed logging service as a ZyRE application, and we'll complete the rest of the ZyRE framework: file transfer, security, state synchronization.
+Let's look at logging and monitoring. If you've ever managed a real server (like a web server) you know how vital it is to have a capture of what is going on. There are a long list of reasons, not least:
 
+* To measure the performance of the system over time.
+* To see what kinds of work are done the most, to optimize performance.
+* To track errors and how often they occur.
+* To do postmortems of failures.
+* To provide an audit trail in case of dispute.
+
+Let's scope this in terms of the problems we think we'll have to solve:
+
+* We want to track key events (such as nodes leaving and rejoining the network).
+* For each event we want to track a consistent set of data: the date/time, node which observed the event, peer that created the event, type of event itself, and other event data.
+* We want to be able to switch logging on and off at any time.
+* We want to be able to process log data mechanically, since it will be sizable.
+* We want to be able to monitor a running system, that is, collect logs and analyze in real-time.
+* We want log traffic to have minimal effect on the network.
+* We want to be able to collect log data at a single point on the network.
+
+As in any design, some of these requirements are hostile to each other. For example, collecting log data in real-time means sending it over the network, which will affect network traffic to some extent. However as in any design these requirements are also hypothetical until we have running code, so we can't take them too seriously. We'll aim for //plausibly good enough// and improve over time.
+
+++++ A Plausible Minimal Implementation
+
+Arguably, just dumping log data to disk is one solution, and it's what most mobile applications do (using 'debug logs'). But most failures require correlation of events from two nodes. This means searching lots of debug logs by hand to find the ones that matter. It's not a very clever approach.
+
+We want to send log data somewhere central, either immediately, or opportunistically (i.e. store and forward). For now, let's focus on immediate logging. My first idea, when it comes to sending data, is to use ZyRE for this. Just send log data to a group called "LOG", and hope someone collects it.
+
+But using ZyRE to log ZyRE itself is a Catch-22. Who logs the logger? What if we want a verbose log of every message sent? Do we include logging messages in that, or not? It quickly gets messy. We want a logging protocol that's independent of ZyRE's main ZRE protocol. The simplest approach is a PUB-SUB protocol, where all nodes publish log data on a PUB socket, and a collector picks that up via a SUB socket!figref().
+
+[[code type="textdiagram" title="Load-Balancing Broker"]]
++--------+      +--------+      +--------+
+|        |      |        |      |        |
+|  Node  |      |  Node  |      |  Node  |
+|        |      |        |      |        |
++--------+      +--------+      +--------+
+|  PUB   |      |  PUB   |      |  PUB   |
++--------+      +--------+      +--------+
+    |               |               |
+    |               |               |
+    +---------------+---------------+
+                    |
+                    |
+                    v
+              +-----------+
+              |    SUB    |
+              +-----------+
+              |           |
+              | Collector |
+              |           |
+              +-----------+
+[[/code]]
+
+The collector can, of course, run on any node. This gives us a nice range of use cases:
+
+* A passive log collector that stores log data on disk for eventual statistical analysis; this would be a PC with sufficient hard disk space for weeks or months of log data.
+
+* A collector that stores log data into a database where it can be used in real-time by other applications. This might be overkill for a small workgroup but would be snazzy for tracking the performance of larger groups. The collector could collect log data over WiFi and then forward it over Ethernet to a database somewhere.
+
+* A live meter application that joined the ZyRE network and then collected log data from nodes, showing events and statistics in real-time.
+
+Next question is how to interconnect the nodes and collector. Which side binds, and which connects? Both ways will work here but it's marginally better if the PUB sockets connect to the SUB socket. If you recall, 0MQ's internal buffers only pop into existence when there are connections. It means as soon as a node connects to the collector it can start sending log data without loss.
+
+How do we tell nodes what endpoint to connect to? We may have any number of collectors on the network, and they'll be using arbitrary network addresses and ports. We need some kind of service announcement mechanism, and here we can use ZyRE to do the work for us. We could use group messaging, but it seems neater to build service discovery into the ZRE protocol itself. It's nothing complex: if a node provides a service X, it can tell other nodes about that when it sends them a HELLO command.
+
+We'll extend the HELLO command with a //headers// field that holds a set of name=value pairs. Let's define that the header {{LOG_COLLECTOR}} specifies the collector endpoint (the SUB socket). A node that acts as a collector can add a header like this (for example):
+
+[[code]]
+LOG_COLLECTOR=tcp://192.168.1.122:9992
+[[/code]]
+
+When another node sees this header it simply connects its PUB socket to that endpoint. Log data now gets distributed to all collectors (zero or more) on the network.
+
+Making this first version was fairly simple and took half a day. Here are the pieces we had to make or change:
+
+* We made a new class {{zre_log}} that accepts log data and manages the connection to the collector, if any.
+* We added some basic management for peer headers, taken from the HELLO command.
+* When a peer has the LOG_COLLECTOR header, we connect to the endpoint it specifies.
+* Where we were logging to stdout, we switched to logging via the zre_log class.
+* We extended the interface API with a method that lets the application set headers.
+* We wrote a simple logger application that manages the SUB socket and sets the LOG_COLLECTOR header.
+* We send our own headers when we send a HELLO command.
+
+This version is tagged in the ZyRE repository as v0.4.0 and you can [https://github.com/zeromq/zyre/tags download the tarball] if you want to check what the code looked like at this stage.
+
+At this stage the log message is just a string. We'll make more professionally structured log data in a little while.
+
+First, a note on dynamic ports. In the zre_tester app that we use for testing, we create and destroy interfaces aggressively. One consequence is that a new interface can easily reuse a port that was just freed by another application. If there's a 0MQ socket somewhere trying to connect this port, the results can be hilarious.
+
+Here's the scenario I had, which caused a few minutes' confusion. The logger was running on a dynamic port:
+
+* Start logger application
+* Start tester application
+* Stop logger
+* Tester receives invalid message (and asserts as designed)
+
+As the tester created a new interface, that reused the dynamic port freed by the (just stopped) logger, and suddenly the interface began to receive log data from nodes, on its mailbox. We saw a similar situation before, where a new interface could reuse the port freed by an old interface, and start getting old data.
+
+The lesson is, if you use dynamic ports, be prepared to receive random data from ill-informed applications that are reconnecting to you. Switching to a static port stopped the misbehaving connection. That's not a full solution though. We two more changes:
+
+* As I write this, libzmq doesn't check socket types when connecting. The [http://rfc.zeromq.org/spec:15 ZMTP/2.0 protocol] does announce each peer's socket type, so this check is doable.
+
+* The ZRE protocol has no fail-fast (assertion) mechanism; we need to read and parse a whole message before realizing that it's invalid.
+
+Let's address the second problem. Socket pair validation wouldn't solve this fully anyhow.
+
+++++ Protocol Assertions
+
+As Wikipedia puts it, "Fail-fast systems are usually designed to stop normal operation rather than attempt to continue a possibly flawed process." A protocol like HTTP has a fail-fast mechanism in that the first four bytes that a client sends to an HTTP server must be "HTTP". If they're not, the server can close the connection without reading anything more.
+
+ZeroMQ is not connection-oriented so there's no way to "close the connection" when we get bad incoming messages (except in some limited cases). However we can throw-out the entire message if it's not valid. The problem is going to be worse when we use ephemeral ports, but it applies broadly to all protocols.
+
+So let's define a //protocol assertion// as being a unique signature that we place at the start of each message, and which identities the intended protocol. When we read a message, we check the signature, and if it's not what we expect, we discard the message silently. A good signature should be hard to confuse with regular data, and give us enough space for a number of protocols.
+
+I'm going to use a 16-bit signature consisting of a twelve-bit pattern and a 4-bit protocol ID!figref(). The pattern %xAAA is meant to stay away from values we might expect to see at the start of a message: %x00, %xFF, and printable characters.
+
+[[code type="textdiagram" title="Protocol signature"]]
++---+---+---+---+---+---+---+---+---+---+---+---+---------------+
+| 1 | 0 | 1 | 0 | 1 | 0 | 1 | 0 | 1 | 0 | 1 | 0 |   Signature   |
++---+---+---+---+---+---+---+---+---+---+---+---+---------------+
+[[/code]]
+
+As our protocol codec is generated, it's relatively easy to add this assertion. The logic is:
+
+* Get first frame of message.
+* Check if first two bytes are %xAAA with expected 4-bit signature.
+* If so, continue to parse rest of message.
+* If not, skip all 'more' frames, get first frame, and repeat.
+
+And to test, I switched the logger back to using an ephemeral port. The interface now properly detects and discards any messages that don't have a valid signature. If the message has a valid signature and is //still// wrong, that's a proper bug.
+
+++++ Binary Logging Protocol
+
+Now that we have the logging framework working properly, let's look at the protocol itself. Sending strings around the network is simple but when it comes to WiFi we really cannot afford to waste bandwidth. We have the tools to work with efficient binary protocols, so let's design one for logging.
+
+This is going to be a PUB-SUB protocol and in 0MQ/3.x we do publisher-side filtering. This means we can do multi-level logging (errors, warnings, information), if we put the logging level at the start of the message. So, our message starts with a protocol signature (two bytes), a logging level (one byte), and an event type (one byte).
+
+In the first version we send UUID strings to identify each node. As text, these are 32 characters each. We can send binary UUIDs but it's still verbose and wasteful. In the log files we don't care about the node identifiers. All we need is some way to correlate events. So what's the shortest identifier we can use that's going to be unique enough for logging? I say unique 'enough' because while we really want zero chance of duplicate UUIDs in the live code, log files are not so critical.
+
+Looking for the simplest plausible answer: hash the IP address and port into a 2-byte value. We'll get some collisions but they'll be rare. How rare? As a quick sanity check I write a small program that generates a bunch of addresses and hashes them into 16-bit values, looking for collisions. To be sure, I generate 10,000 addresses across a small number of IP addresses (matching a simulation set-up), and then across a large number of addresses (matching a real-life setup). The hashing algorithm is a //modified Bernstein//:
+
+[[code type="fragment" name="endpoint-hashing"]]
+uint16_t hash = 0;
+while (*endpoint)
+    hash = 33 * hash ^ *endpoint++;
+[[/code]]
+
+Over several runs I don't get any collisions, so this will work as identifier for the log data. This adds four bytes (two for the node recording the event, and two for its peer in events that come from a peer).
+
+Next, we want to store the date and time of the event. The POSIX time_t type used to be 32 bits but since this overflows in 2038, it's a 64-bit value. We'll use this; there's no need for millisecond resolution in a log file: events are sequential, clocks are unlikely to be that tightly synchronized, and network latencies mean that precise times aren't that meaningful.
+
+We're up to 16 bytes, which is decent. Finally we want to allow some additional data, formatted as text and depending on the type of event. Putting this all together gives the following message specification:
+
+[[code]]
+<class
+    name = "zre_log_msg"
+    script = "codec_c.gsl"
+    signature = "2"
+>
+This is the ZRE logging protocol - raw version.
+<include filename = "license.xml" />
+
+<!-- Protocol constants -->
+<define name = "VERSION" value = "1" />
+
+<define name = "LEVEL_ERROR" value = "1" />
+<define name = "LEVEL_WARNING" value = "2" />
+<define name = "LEVEL_INFO" value = "3" />
+
+<define name = "EVENT_JOIN" value = "1" />
+<define name = "EVENT_LEAVE" value = "2" />
+<define name = "EVENT_ENTER" value = "3" />
+<define name = "EVENT_EXIT" value = "4" />
+
+<message name = "LOG" id = "1">
+    <field name = "level" type = "number" size = "1" />
+    <field name = "event" type = "number" size = "1" />
+    <field name = "node" type = "number" size = "2" />
+    <field name = "peer" type = "number" size = "2" />
+    <field name = "time" type = "number" size = "8" />
+    <field name = "data" type = "string" />
+Log an event
+</message>
+
+</class>
+[[/code]]
+
+Which generates us 800 lines of perfect binary codec (the zre_log_msg class). The codec does protocol assertions just like the main ZRE protocol does. Code generation has a fairly steep starting curve but it makes it so much easier to push your designs past "amateur" into "professional".
+
+//More coming soon...//

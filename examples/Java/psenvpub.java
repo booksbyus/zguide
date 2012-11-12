@@ -21,6 +21,5 @@ public class psenvpub {
       publisher.send("We would like to see this".getBytes(), 0);
       Thread.sleep(1000);
     }
-
   }
 }
