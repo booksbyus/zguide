@@ -877,14 +877,14 @@ We want to send log data somewhere central, either immediately, or opportunistic
 
 But using ZyRE to log ZyRE itself is a Catch-22. Who logs the logger? What if we want a verbose log of every message sent? Do we include logging messages in that, or not? It quickly gets messy. We want a logging protocol that's independent of ZyRE's main ZRE protocol. The simplest approach is a PUB-SUB protocol, where all nodes publish log data on a PUB socket, and a collector picks that up via a SUB socket!figref().
 
-[[code type="textdiagram" title="Load-Balancing Broker"]]
+[[code type="textdiagram" title="Distributed Log Collection"]]
 +--------+      +--------+      +--------+
 |        |      |        |      |        |
 |  Node  |      |  Node  |      |  Node  |
 |        |      |        |      |        |
 +--------+      +--------+      +--------+
 |  PUB   |      |  PUB   |      |  PUB   |
-+--------+      +--------+      +--------+
++---+----+      +---+----+      +---+----+
     |               |               |
     |               |               |
     +---------------+---------------+
@@ -963,7 +963,7 @@ So let's define a //protocol assertion// as being a unique signature that we pla
 
 I'm going to use a 16-bit signature consisting of a twelve-bit pattern and a 4-bit protocol ID!figref(). The pattern %xAAA is meant to stay away from values we might otherwise expect to see at the start of a message: %x00, %xFF, and printable characters.
 
-[[code type="textdiagram" title="Protocol signature"]]
+[[code type="textdiagram" title="Protocol Signature"]]
 +---+---+---+---+---+---+---+---+---+---+---+---+---------------+
 | 1 | 0 | 1 | 0 | 1 | 0 | 1 | 0 | 1 | 0 | 1 | 0 |   Signature   |
 +---+---+---+---+---+---+---+---+---+---+---+---+---------------+
