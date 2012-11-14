@@ -181,6 +181,9 @@ We've already solved some of these, such as the slow subscriber, which we handle
 
 The difficulty is that we have no idea what our target applications actually want to do with their data. Do they filter it, and process only a subset of messages? Do they log the data somewhere for later reuse? Do they distribute the data further to workers? There are dozens of plausible scenarios, and each will have its own ideas about what reliability means and how much it's worth in terms of effort and performance.
 
+////
+AO: The notion of a cache is somewhat abstract. In most applications, a cache holds end-user data so the data can be served up multiple times without returning to a slower server. Is that what this cache is? I won't ask you to expand the examples at this late date, but I need some idea of typical applications and what these applications would store in the cache.
+////
 So we'll build an abstraction that we can implement once, and then reuse for many applications. This abstraction is a **shared key-value cache**, which stores a set of blobs indexed by unique keys.
 
 Don't confuse this with //distributed hash tables//, which solve the wider problem of connecting peers in a distributed network, or with //distributed key-value tables//, which act like non-SQL databases. All we will build is a system that reliably clones some in-memory state from a server to a set of clients. We want to:
@@ -464,6 +467,9 @@ It's useful to design the client logic as a finite state machine. The client cyc
 * When the client has gotten its snapshot, it waits for and processes updates. Again, if it doesn't hear anything from the server within some timeout, it fails over to the next server.
 
 The client loops forever. It's quite likely during startup or fail-over that some clients may be trying to talk to the primary server while others are trying to talk to the backup server. The Binary Star state machine handles this!figref(), hopefully accurately. (One of the joys of making designs like this is we cannot prove they are right, we can only prove them wrong. So it's like a guy falling off a tall building. So far, so good... so far, so good...)
+////
+AO: I don't know whether it's relevant, but your tall building metaphor is in an old movie by W.C. Fields, where he is in free-fall in a bucket going down a cliff.
+////
 
 [[code type="textdiagram" title="Clone Client Finite State Machine"]]
  +-----------+
@@ -585,6 +591,10 @@ void clone_connect (clone_t *self, char *address, char *service);
 void clone_set (clone_t *self, char *key, char *value);
 char *clone_get (clone_t *self, char *key);
 [[/code]]
+
+////
+AO: Looking at the clone code, I find it quite non-intuitive, and it needs some explanation. When is each string sent and popped (CONNECT, SUBTREE, etc.). There's an implied flow that you need to explain.
+////
 
 So here is Model Six of the clone client, which has now become just a thin shell using the clone class:
 
