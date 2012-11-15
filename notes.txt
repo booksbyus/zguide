@@ -1,29 +1,44 @@
+- initialize client
+    - simplest
+        - recalculate cache after each file change
+        - option to load cache into message
 
 
+    - fmq_dir_cache
+        - refreshes .cache on disk
+        - returns hash table
+        
+    
+    - load cache from disk
+    - fmq_dir_cache returns / updates it
+    - new file
+        -> update into cache
+        -> save whole cache
+    - icanhaz
+        -> send cache to server
+    - optional
+        -> resync command from API
+    
+filemq
+    client says
+        I want everything
+        I already have this, this, this
+            filename, size
 
+.filemq_dir
+    log files, first time
+    include file sha1 as sent by server
+server sends sha1 together with file chunk
+    
+        
 
+Chapter 5:
+    - durable subscribers
 
++++ Content Distribution
 
+We now have a robust framework for creating groups of nodes and letting them chat to each other. Next step is to allow them to distribute content. 
 
-
-
-
-
-
-
-
-
-
-+++ File Transfer
-
-We now have a robust framework for creating groups of nodes, and letting them chat to each other. As a next step
-
-
-+++ State Synchronization
-
-- peer property request/reply
-
-+++ High-Level APIs
 
 +++ Security
 
@@ -32,25 +47,9 @@ We now have a robust framework for creating groups of nodes, and letting them ch
 (More coming soon)
 
 
-Pieter Hintjens ‏@hintjens
-Browser implementation of #zeromq patterns: https://github.com/progrium/nullmq  #nullmq
-Expand
-
-7m Pieter Hintjens ‏@hintjens
-Node.js implementation of #zeromq patterns: https://github.com/visionmedia/axon … #axon
-Expand
-
 ++++ The Messaging Layer
 
 So we've solved discovery, presence, connectivity, and simulation. Next on our list: security, unicast messaging, and multicast messaging.
-
-- SASL security
-
-
-- one-to-one messaging by sending to node
-- one-to-many messaging by sending to group
-    - join group, leave group
-    - group management across all nodes
 
 ++++ File Transfer
 
@@ -82,18 +81,6 @@ Notes for The Guide
 - semantic compatibility
 - example 0MQ to HTTP
 - using zxxx library?
-
-+++ Decentralised Logging System
-
-- pubsub log events
-- filter levels
-- capture in log files or memory
-- dynamic graphing
-- log file cycling
-
-+++ Timer Service
-
-- ticks, 1/10, 1/100, etc.
 
 +++ Disconnected Security
     

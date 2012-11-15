@@ -16,7 +16,7 @@ We'll cover:
 * How to do fast restartable file transfer over 0MQ.
 * How to do credit-based flow control.
 * How to build protocol servers and clients as state machines.
-* How to make a secure protocol over 0MQ (yay!).
+* How to make a secure protocol over 0MQ.
 * A large-scale file publishing system (FileMQ).
 
 +++ The Tale of Two Bridges
@@ -203,7 +203,7 @@ So MOPED is meant to save us from such mistakes. Partly it's about slowing down,
 
 If you've read the Guide observantly you'll have seen MOPED in action already. The development of Majordomo in [#reliable-request-reply] is a near-perfect case. But cute names are worth a thousand words.
 
-The goal of MOPED is to define a process, a pattern by which we can take a rough use case for a new distributed application, and go from "hello world" to fully-working prototype in any language in under a week.
+The goal of MOPED is to define a process, a pattern by which we can take a rough use-case for a new distributed application, and go from "hello world" to fully-working prototype in any language in under a week.
 
 Using MOPED, you grow, more than build, a working 0MQ architecture from the ground-up, with minimal risk of failure. By focusing on the contracts, rather than the implementations, you avoid the risk of premature optimization. By driving the design process through ultra-short test-based cycles, you can be more certain what you have works, before you add more.
 
@@ -838,7 +838,7 @@ Our model 2 file transfer protocol isn't so bad, apart from performance:
 * It gives us fully restartable file transfers.
 * It allows the client to cancel the file transfer at any point in time.
 
-If we just didn't have to do a request for each chunk, it'd be a usable protocol. What we need is a way for the server to send multiple chunks, without waiting for the client to request or acknowledge each one. What are the options?
+If we just didn't have to do a request for each chunk, it'd be a usable protocol. What we need is a way for the server to send multiple chunks, without waiting for the client to request or acknowledge each one. What are our choices?
 
 * The server could send 10 chunks at once, then wait for a single acknowledgment. That's exactly like multiplying the chunk size by 10, so pointless. And yes, it's just as pointless for all values of 10.
 
@@ -1353,6 +1353,7 @@ path            = string        ; Full path or path prefix
 options         = dictionary
 dictionary      = size *key-value
 key-value       = string        ; Formatted as name=value
+cache           = dictionary    ; File SHA-1 signatures
 
 ;   The server confirms the subscription
 ICANHAZ-OK      = signature %x06
@@ -1505,10 +1506,7 @@ So I'll go through some of the design aspects:
 
 ++++ Reliabilty
 
-As it stands, FileMQ implements the classic 0MQ publish-subscribe pattern. That is, clients receive a stream of updates but with no guarantees about overall consistency. To make FileMQ reliable we'd have to add some functionality:
-
-* A way for clients to request all patches since a certain time (possibly, all patches).
-* A way for the server to store patches and subscriptions persistently.
+As it stands, FileMQ implements the classic 0MQ publish-subscribe pattern. That is, clients receive a stream of updates but with no guarantees about overall consistency. To make FileMQ reliable we'd have to add some way for clients to tell the server their state, and request a snapshot with the differences.
 
 ++++ Configuration
 
@@ -1586,61 +1584,53 @@ This doesn't affect the protocol in any way; it's an optimization in the server 
 
 Since we've collected all operations on files in a single class (fmq_file) it's a clean change. When we create a new file object we check if it's a symbolic link, and then all read-only actions (get file size, read file) operate on the target file, not the link.
 
-++++ The Late Joiner Problem
+++++ Recovery and Late Joiners
 
-The final challenge to solve for FileMQ as it stands now is that there's no support for late joiners. For some applications, but not all, this is a problem. The difference is whether or not the data is time-sensitive, that is, whether it has expired or not.
+As it stands now, FileMQ has one major remaining problem: it provides no way for clients to recover from failures. The scenario is that a client, connected to a server, starts to receive files, and then disconnects for some reason. The network may be too slow, or breaks. The client may be on a laptop which is shut down, then resumed. The WiFi may be disconnected. As we move to a more mobile world (see [#moving-pieces]) this use-case becomes more and more frequent. In some ways it's becoming a dominant use-case.
 
-Two contrasting use cases will make this clear:
+In the classic 0MQ publish-subscribe pattern, there are two strong underlying assumptions, both of which are usually wrong in FileMQ's real world. First, that data expires very rapidly so that there's no interest in asking from old data. Second, that networks are stable and rarely break (so it's better to invest in improving the infrastructure, and less in addressing recovery).
 
-* We're using FileMQ to distribute configuration files around a cloud. The cluster is running, and as we publish updates, these get correctly sent to all members of the cloud. We boot up a new machine and it joins the cloud. It has to get all existing configuration files.
+Take any FileMQ use case and you'll see that if the client disconnects, and reconnects, then it should get anything it missed. A further improvement would be to recover from partial failures, like HTTP and FTP do. But one thing at a time.
 
-* We're using FileMQ to distribute earthquake warnings across a wide network. When we join the network we don't want any old warnings, just new ones.
+One answer to recovery is "durable subscriptions", and the first drafts of the FILEMQ protocol aimed to support this, with client identifiers that the server could hold onto, and store. So, if a client reappears after a failure, the server would know what files it had not received.
 
-It might be tempting at this point to go off and design ways to store meta-data like expiry date/time for files. But remember the goal of a minimal globally usable API.
+Stateful servers are, however, nasty to make, and difficult to scale. How do we, for example, do failover to a secondary server? Where does it get its subscriptions from? It's far nicer if each client connection works independently and carries all necessary state with it.
 
-Instead of inventing concepts, lets just split these two use cases apart. The client application knows what it expects. We can make FileMQ's default behavior to send only changes, as we've done up to now, and add "get existing files" as a special case.
+Another nail in the coffin of durable subscriptions is that it requires upfront coordination. Upfront coordination is always a red flag, whether it's in a team of people working together, or a bunch of processes talking to each other. What about late joiners? In the real world, clients do not neatly line up and then all say "Ready!" at the same time. In the real world they come and go arbitrarily, and it's valuable if we can treat a brand new client in the same way as a client that went away, and came back.
 
-The ICANHAZ command has an 'options' field. Let's add a {{RESYNC}} option that tells the server that the client wants to resynchronize with whatever the server has:
+To answer this I will add two concepts to the protocol: a 'resync' option and a 'cache' field (a dictionary). If the client wants recovery, it sets the 'resync' option, and tells the server what files it already has via the 'cache' field. We need both, because there's no way in the protocol to distinguish between an empty field, and a null field. The FILEMQ RFC describes these fields as follows:
 
-[[code]]
-RESYNC=1
-[[/code]]
+> The 'options' field provides additional information to the server. The server SHOULD implement these options: {{RESYNC=1}} - if the client sets this, the server SHALL send the full contents of the virtual path to the client, except files the client already has, as identified by their SHA-1 digest in the 'cache' field.
 
-Now, we know that in many cases a late joiner will already have many of the server's files. Doing a full copy of every file would break almost immediately (as you can see from the test use case at the end of this chapter). So, the client has to tell the server, "get existing files except these ones".
+And:
 
-Now we come to some technical decisions about how to accurately identify files and track changes over time. Taking these one at a time, the only way to cleanly identify a file is with a full hash, e.g. using the Secure Hash Algorithm (SHA). Doing a cyclic-redundancy check (e.g. CRC-32) is a fast, but not reliable way of detecting differences in a file.
+> When the client specifies the RESYNC option, the 'cache' dictionary field tells the server which files the client already has. Each entry in the 'cache' dictionary is a "filename=digest" key/value pair where the digest SHALL be a SHA-1 digest in printable hexadecimal format. If the filename starts with '/' then it SHOULD start with the path, otherwise the server MUST ignore it. If the filename does not start with '/' then the server SHALL treat it as relative to the path.
 
-Either server or client can calculate the signature for a file as it reads and writes it. It's not a free calculation, since it can mean reading large amounts of file data. We can cache however this information at either side and recalculate it only when needed.
+Clients which know they are in the classic pub-sub use-case just don't provide any cache data, and clients that want recovery provide their cache data. It requires no state in the server, no upfront coordination, and works equally well for brand new clients (which may have received files via some out-of-band means), and clients that received some files and were then disconnected for a while.
 
-Now, the client knows the files it already has, and has a SHA hash for each one, so it can send this to the server as part of the ICANHAZ command. The server can then compare this list to its own list, and send the client any differences.
+I decided to use SHA-1 digests for several reasons. First, it's fast enough: 150msec to digest a 25MB core dump on my laptop. Second, it's reliable: the chance of getting the same hash for different versions of one file is close enough to zero. Third, it's the widest supported digest algorithm. A cyclic-redundancy check (e.g. CRC-32) is faster but not reliable. More recent SHA versions (SHA-256, SHA-512) are more secure but take 50% more CPU cycles, and are overkill for our needs.
 
-It does mean making a change to the protocol. We need a field to hold the hashes. Let's add a 'cache' dictionary field to ICANHAZ, field. It would have entries like this:
+Here is what a typical ICANHAZ message looks like when we use both caching and resyncing (this is output from the 'dump' method of the generated codec class):
 
 [[code]]
-/photos/DSCF0001.jpg=7408d44403616d36f436b63a9678883598d8f501
-/photos/DSCF0002.jpg=b4ad46db026f99ddebbe029fd5f1f0db711b1fa9
-/photos/DSCF0003.jpg=684b2a4870315aa4ea0881be62c9a2dd48ca96fa
-/photos/DSCF0004.jpg=6dd34f2538f42102843ca8d0c9bceb0422ab76cd
-/photos/DSCF0005.jpg=be6687617c18bd4bd0d3165317c933fea7c78e8f
-/photos/DSCF0006.jpg=9a8878a0955998fc1bce90cd8610261dc4814bdb
+ICANHAZ:
+    path='/photos'
+    options={
+        RESYNC=1
+    }
+    cache={
+        DSCF0001.jpg=1FABCD4259140ACA99E991E7ADD2034AC57D341D
+        DSCF0006.jpg=01267C7641C5A22F2F4B0174FFB0C94DC59866F6
+        DSCF0005.jpg=698E88C05B5C280E75C055444227FEA6FB60E564
+        DSCF0004.jpg=F0149101DD6FEC13238E6FD9CA2F2AC62829CBD0
+        DSCF0003.jpg=4A49F25E2030B60134F109ABD0AD9642C8577441
+        DSCF0002.jpg=F84E4D69D854D4BF94B5873132F9892C8B5FA94E
+    }
 [[/code]]
 
-- absolute or relative filenames
+Although we don't do this in FileMQ, the server can use the cache information to help the client catch up with deletions that it missed. To do this it would have to log deletions, and then compare this log with the client cache when a client subscribes.
 
-There are a few SHA algorithms we could use. The widest used is SHA-1, which is no longer considered fully secure. For any security-related work we'd want to use SHA-256 or SHA-512. But here we don't care: all we need is a good hash for the file that accurately detects changes.
-
-The default security library is OpenSSL. There are other SHA libraries, and we might include this in the FileMQ source - it would avoid an external dependency. But digest calculations like SHA are CPU intensive and if you compile such code without optimization, it goes extremely slowly.
-
-
-- does not handle changes on client side
-- optional, remove .cache file, it will recalculate
-- cache can work orthogonally to RESYNC option
-- review virtual pathname discussion if any
-- sign
-
-
-
-++++ Test Use Case - The 'track' tool
+++++ Test Use-Case - The 'track' tool
 
 To properly test something like FileMQ we need a test case that plays with live data. One of my sysadmin tasks is to manage the MP3 tracks on my music player. That is, by the way, a Sansa Clip reflashed with Rock Box, which I can highly recommend. As I download tracks into my Music folder I want to copy these to my player, and as I find tracks that annoy me, I delete them in the Music folder and want those gone from my player too.
 
@@ -1669,8 +1659,9 @@ int main (int argc, char *argv [])
     fmq_server_bind (server, "tcp://*:5670");
 
     fmq_client_t *client = fmq_client_new ();
-    fmq_client_connect   (client, "tcp://localhost:5670");
+    fmq_client_connect (client, "tcp://localhost:5670");
     fmq_client_set_inbox (client, argv [2]);
+    fmq_client_set_resync (client, true);
     fmq_client_subscribe (client, "/");
 
     while (!zctx_interrupted)
@@ -1683,7 +1674,7 @@ int main (int argc, char *argv [])
 }
 [[/code]]
 
-Note how we work with physical paths in this tool. The server publishes the physical path "/home/ph/Music" and maps this to the virtual path "/". The client subscribes to "/" and receives all files in "/media/3230-6364/MUSIC". I could use any structure within the server directory, and it would be copied faithfully to the client's inbox.
+Note how we work with physical paths in this tool. The server publishes the physical path "/home/ph/Music" and maps this to the virtual path "/". The client subscribes to "/" and receives all files in "/media/3230-6364/MUSIC". I could use any structure within the server directory, and it would be copied faithfully to the client's inbox. Note the API method {{    fmq_client_set_resync ()}}, which causes a server-to-client synchronization.
 
 +++ Getting an Official Port Number
 
@@ -1703,3 +1694,6 @@ If you aim to make a public protocol of any importance, such as FileMQ, you're g
 
 Note that you don't request a specific port number: IANA will assign you one. So, it's wise to start this process before you ship software, not afterwards.
 
++++ Conclusions
+
+This has been a large chapter, which took you through a theory of software design, and a worked example of a real and sophisticated file-transfer application.

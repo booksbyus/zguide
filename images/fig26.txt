@@ -1,7 +1,5 @@
-          +---------------+
-Frame 1   | Reply address |   <----- Envelope
-          +---+-----------+
-Frame 2   |   |   <------ Empty message frame
-          +---+-------------------------------------+
-Frame 3   | Data                                    |
-          +-----------------------------------------+
+          +---+
+Frame 1   |   |   <------ Empty delimiter frame
+          +---+---+
+Frame 2   | Hello |
+          +-------+

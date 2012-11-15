@@ -510,7 +510,7 @@ if (options.type == ZMQ_XPUB && (unique || verbose))
 
 The thing builds nicely first time. Which makes me a little suspicious, but being lazy and jet-lagged I don't immediately make a test case to actually try out the change. The process doesn't demand that, even if usually I'd do it just to catch that inevitable 10% of mistakes we all make. I do however document this new option on the {{doc/zmq_setsockopt.txt}} man page. In the worst case I added a patch that wasn't really useful. But I certainly didn't break anything.
 
-I don't implement a matching {{zmq_getsockopt}}, since "minimal" means what it says. There's no obvious use case for getting the value of an option that you presumably just set, in code. Symmetry isn't a valid reason to double the size of a patch. I did have to document the new option since the process says, "All Public Contracts SHOULD be documented."
+I don't implement a matching {{zmq_getsockopt}}, since "minimal" means what it says. There's no obvious use-case for getting the value of an option that you presumably just set, in code. Symmetry isn't a valid reason to double the size of a patch. I did have to document the new option since the process says, "All Public Contracts SHOULD be documented."
 
 Committing the code, I push the patch to my forked repository (the 'origin'):
 
