@@ -1222,7 +1222,7 @@ In the Libero state machine model there are a few more concepts that we've not u
 
 +++ Authentication using SASL
 
-When we designed AMQP in 2007, we chose [http://en.wikipedia.org/wiki/Simple_Authentication_and_Security_Layer SASL] for the authentication layer, one of the ideas we took from the BEEP protocol framework. SASL looks complex at first, but it's simple and fits very nicely into a 0MQ-based protocol. What I especially like about SASL is that it's scalable. You can start with anonymous access, or plain text authentication and no security, and grow to more secure mechanisms over time, without changing your protocol one bit.
+When we designed AMQP in 2007, we chose the [http://en.wikipedia.org/wiki/Simple_Authentication_and_Security_Layer Simple Authentication and Security Layer] (SASL) for the authentication layer, one of the ideas we took from the [http://www.rfc-editor.org/rfc/rfc3080.txt BEEP protocol framework]. SASL looks complex at first, but it's actually simple and fits neatly into a 0MQ-based protocol. What I especially like about SASL is that it's scalable. You can start with anonymous access or plain text authentication and no security, and grow to more secure mechanisms over time, without changing your protocol.
 
 I'm not going to give a deep explanation now, since we'll see SASL in action somewhat later. But I'll explain the principle so you're already somewhat prepared.
 
