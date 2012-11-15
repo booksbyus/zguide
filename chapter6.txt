@@ -16,7 +16,7 @@ We'll cover:
 * How to do fast restartable file transfer over 0MQ.
 * How to do credit-based flow control.
 * How to build protocol servers and clients as state machines.
-* How to make a secure protocol over 0MQ (yay!).
+* How to make a secure protocol over 0MQ.
 * A large-scale file publishing system (FileMQ).
 
 +++ The Tale of Two Bridges
@@ -115,19 +115,19 @@ Let's first look at the more common and less joyful processes, TOD and COD.
 
 The most popular design process in large businesses seems to be "Trash Oriented Design", or TOD. TOD feeds off the belief that all we need to make money are great ideas. It's tenacious nonsense but a powerful crutch for people who lack imagination. The theory goes that ideas are rare, so the trick is to capture them. It's like non-musicians being awed by a guitar player, not realizing that great talent is so cheap it literally plays on the streets for coins.
 
-The main output of TODs are expensive "ideations": concepts, design documents, and products that go straight into the trash can. It works as follows:
+The main output of TODs is expensive "ideation": concepts, design documents, and products that go straight into the trash can. It works as follows:
 
 * The Creative People come up with long lists of "we could do X and Y". I've seen endlessly detailed lists of everything amazing a product could do. Once the creative work of idea generation has happened, it's just a matter of execution, of course.
 
-* So the managers and their consultants pass their brilliant, world-shattering ideas to designers who create acres of detailed, preciously refined design documents. The designers take the tens of ideas the managers came up with, and turn them into hundreds of amazing, world-changing designs.
+* So the managers and their consultants pass their brilliant ideas to designers who create acres of preciously refined design documents. The designers take the tens of ideas the managers came up with, and turn them into hundreds of world-changing designs.
 
-* These designs get given to engineers who scratch their heads and wonder who the heck came up with such stupid nonsense. They start to argue back but the designs come from up high, and really, it's not up to engineers to argue with creative people and expensive consultants.
+* These designs get given to engineers who scratch their heads and wonder who the heck came up with such nonsense. They start to argue back but the designs come from up high, and really, it's not up to engineers to argue with creative people and expensive consultants.
 
-* So the engineers creep back to their cubicles, humiliated and threatened into building the gigantic but oh-so-elegant pile of junk. It is bone-breakingly hard work since the designs take no account of practical costs. Minor whims might take weeks of work to build. As the project gets delayed, the managers bully the engineers into giving up their evenings and weekends.
+* So the engineers creep back to their cubicles, humiliated and threatened into building the gigantic but oh-so-elegant junk heap. It is bone-breaking work since the designs take no account of practical costs. Minor whims might take weeks of work to build. As the project gets delayed, the managers bully the engineers into giving up their evenings and weekends.
 
 * Eventually, something resembling a working product makes it out of the door. It's creaky and fragile, complex and ugly. The designers curse the engineers for their incompetence and pay more consultants to put lipstick onto the pig, and slowly the product starts to look a little nicer.
 
-* By this time, the managers have started to try to sell the product and they find, shockingly, that no-one wants it. Undaunted and courageously they build million-dollar web sites and ad campaigns to explain to the public why they absolutely need this product. They do deals with other businesses to force the product on the lazy, stupid and ungrateful market.
+* By this time, the managers have started to try to sell the product and they find, shockingly, that no-one wants it. Undaunted they courageously build million-dollar web sites and ad campaigns to explain to the public why they absolutely need this product. They do deals with other businesses to force the product on the lazy, stupid and ungrateful market.
 
 * After twelve months of intense marketing, the product still isn't making profits. Worse, it suffers dramatic failures and gets branded in the press as a disaster. The company quietly shelves it, fires the consultants, buys a competing product from a small start-up and re-brands that as its own Version 2. Hundreds of millions of dollars end-up in the trash.
 
@@ -221,7 +221,7 @@ So MOPED is meant to save us from such mistakes. Partly it's about slowing down,
 
 If you've read the Guide observantly you'll have seen MOPED in action already. The development of Majordomo in [#reliable-request-reply] is a near-perfect case. But cute names are worth a thousand words.
 
-The goal of MOPED is to define a process, a pattern by which we can take a rough use case for a new distributed application, and go from "hello world" to fully-working prototype in any language in under a week.
+The goal of MOPED is to define a process, a pattern by which we can take a rough use-case for a new distributed application, and go from "hello world" to fully-working prototype in any language in under a week.
 
 Using MOPED, you grow, more than build, a working 0MQ architecture from the ground-up, with minimal risk of failure. By focusing on the contracts, rather than the implementations, you avoid the risk of premature optimization. By driving the design process through ultra-short test-based cycles, you can be more certain what you have works, before you add more.
 
@@ -799,7 +799,7 @@ Let's take a break from the lecturing and get back to our first love and the rea
 
 "How do I send a file?" is a common question on the 0MQ mailing lists. Not surprising, because file transfer is perhaps the oldest and most obvious type of messaging. Sending files around networks has lots of use-cases apart from annoying the copyright cartels. 0MQ is very good, out of the box, at sending events and tasks but less good at sending files.
 
-I've promised, for a year or two, to write a proper explanation. Here's a gratuitous piece of information to brighten your morning: the word "proper" comes from the archaic French "propre" which means "clean". The dark age English common folk, not being familiar with hot water and soap, changed the word to mean "foreign" or "upper-class", as in "that's proper food!" but later the word meant just "real", as in "that's a proper mess you've gotten us into!"
+I've promised, for a year or two, to write a proper explanation. Here's a gratuitous piece of information to brighten your morning: the word "proper" comes from the archaic French //propre// which means "clean". The dark age English common folk, not being familiar with hot water and soap, changed the word to mean "foreign" or "upper-class", as in "that's proper food!" but later the word meant just "real", as in "that's a proper mess you've gotten us into!"
 
 So, file transfer. There are several reasons you can't just pick up a random file, blindfold it, and shove it whole into a message. The most obvious being that despite decades of determined growth in RAM sizes (and who among us old-timers doesn't fondly remember saving up for that 1,014-byte memory extension card?!), disk sizes obstinately remain much larger. Even if we could send a file with one instruction (say, using a system call like sendfile), we'd hit the reality that networks are not infinitely fast, nor perfectly reliable. After trying to upload a large file several times on a slow flaky network (WiFi, anyone?), you'll realize that a proper file transfer protocol needs a way to recover from failures. That is, a way to send only the part of a file that wasn't yet received.
 
@@ -868,7 +868,7 @@ Our model 2 file transfer protocol isn't so bad, apart from performance:
 * It gives us fully restartable file transfers.
 * It allows the client to cancel the file transfer at any point in time.
 
-If we just didn't have to do a request for each chunk, it'd be a usable protocol. What we need is a way for the server to send multiple chunks, without waiting for the client to request or acknowledge each one. What are the options?
+If we just didn't have to do a request for each chunk, it'd be a usable protocol. What we need is a way for the server to send multiple chunks, without waiting for the client to request or acknowledge each one. What are our choices?
 
 * The server could send 10 chunks at once, then wait for a single acknowledgment. That's exactly like multiplying the chunk size by 10, so pointless. And yes, it's just as pointless for all values of 10.
 
@@ -1114,16 +1114,16 @@ Here's a simple main program that starts the generated NOM server:
 
 int main (int argc, char *argv [])
 {
-    printf ("Starting NOM protocol server on port 6000...\n");
+    printf ("Starting NOM protocol server on port 5670...\n");
     nom_server_t *server = nom_server_new ();
-    nom_server_bind (server, "tcp://*:6000");
+    nom_server_bind (server, "tcp://*:5670");
     nom_server_wait (server);
     nom_server_destroy (&server);
     return 0;
 }
 [[/code]]
 
-The generated nom_server class is a fairly classic model. It accepts client messages on a ROUTER socket. The first frame on every request is the client's identity. The server manages a set of clients, each with state. As messages arrive, it feeds these as 'events' to the state machine. Here's the core of the state machine, as a mix of GSL commands and the C code we intend to generate:
+The generated nom_server class is a fairly classic model. It accepts client messages on a ROUTER socket, so the first frame on every request is the client's connection identity. The server manages a set of clients, each with state. As messages arrive, it feeds these as 'events' to the state machine. Here's the core of the state machine, as a mix of GSL commands and the C code we intend to generate:
 
 [[code type="fragment" name="gsl-client-fsm"]]
 client_execute (client_t *self, int event)
@@ -1252,7 +1252,7 @@ In the Libero state machine model there are a few more concepts that we've not u
 
 +++ Authentication using SASL
 
-When we designed AMQP in 2007, we chose [http://en.wikipedia.org/wiki/Simple_Authentication_and_Security_Layer SASL] for the authentication layer, one of the ideas we took from the BEEP protocol framework. SASL looks complex at first, but it's simple and fits very nicely into a 0MQ-based protocol. What I especially like about SASL is that it's scalable. You can start with anonymous access, or plain text authentication and no security, and grow to more secure mechanisms over time, without changing your protocol one bit.
+When we designed AMQP in 2007, we chose the [http://en.wikipedia.org/wiki/Simple_Authentication_and_Security_Layer Simple Authentication and Security Layer] (SASL) for the authentication layer, one of the ideas we took from the [http://www.rfc-editor.org/rfc/rfc3080.txt BEEP protocol framework]. SASL looks complex at first, but it's actually simple and fits neatly into a 0MQ-based protocol. What I especially like about SASL is that it's scalable. You can start with anonymous access or plain text authentication and no security, and grow to more secure mechanisms over time, without changing your protocol.
 
 I'm not going to give a deep explanation now, since we'll see SASL in action somewhat later. But I'll explain the principle so you're already somewhat prepared.
 
@@ -1309,18 +1309,18 @@ A visionary idea, isn't it? Well, ideas are cheap. The hard part is making this,
 
 ++++ Initial Design Cut - the API
 
-Here's the way I see the first design. FileMQ has to be distributed, so every node can be a server and a client at the same time. But I don't want the protocol to be symmetric, because that seems forced. We have a natural flow of files from point A to point B, where A is the "server" and B is the "client". If files flow back the other way, we have two flows. So, FileMQ is //not// a synchronization protocol, though synchronizing two directories is going to be a common use case.
+Here's the way I see the first design. FileMQ has to be distributed, so every node can be a server and a client at the same time. But I don't want the protocol to be symmetric, because that seems forced. We have a natural flow of files from point A to point B, where A is the "server" and B is the "client". If files flow back the other way, we have two flows. FileMQ is not yet directory synchronization protocol but we'll bring it quite close.
 
 Thus, I'm going to build FileMQ as two pieces: a client, and a server. Then, I'll put these together in a main application (the "filemq" tool) that can act both as client and server. The two pieces will look quite similar to the nom_server, with the same kind of API:
 
 [[code type="fragment" name="filemq-main"]]
 fmq_server_t *server = fmq_server_new ();
-fmq_server_bind (server, "tcp://*:6000");
+fmq_server_bind (server, "tcp://*:5670");
 fmq_server_publish (server, "/home/ph/filemq/share", "/public");
 fmq_server_publish (server, "/home/ph/photos/stream", "/photostream");
 
 fmq_client_t *client = fmq_client_new ();
-fmq_client_connect (client, "tcp://pieter.filemq.org:6000");
+fmq_client_connect (client, "tcp://pieter.filemq.org:5670");
 fmq_client_subscribe (server, "/public/", "/home/ph/filemq/share");
 fmq_client_subscribe (server, "/photostream/", "/home/ph/photos/stream");
 
@@ -1353,73 +1353,77 @@ close-peering   = C:KTHXBAI / S:KTHXBAI
 error           = S:SRSLY / S:RTFM
 [[/code]]
 
-Here are the messages to and from the server:
+Here are the commands to and from the server:
 
 [[code]]
 ;   The client opens peering to the server
-OHAI            = %x01 protocol version identity
+OHAI            = signature %x01 protocol version
+signature       = %xAA %xA3
 protocol        = string        ; Must be "FILEMQ"
 string          = size *VCHAR
 size            = OCTET
 version         = %x01
-identity        = 16OCTET
 
 ;   The server challenges the client using the SASL model
-ORLY            = %x02 mechanisms challenge
+ORLY            = signature %x02 mechanisms challenge
 mechanisms      = size 1*mechanism
 mechanism       = string
 challenge       = *OCTET        ; 0MQ frame
 
 ;   The client responds with SASL authentication information
-YARLY           = %x03 mechanism response
+YARLY           = %signature x03 mechanism response
 response        = *OCTET        ; 0MQ frame
 
 ;   The server grants the client access
-OHAI-OK         = %x04
+OHAI-OK         = signature %x04
 
-;   The client subscribes to a path
-ICANHAZ         = %x05 path options
-path            = string        ; Full or partial path
+;   The client subscribes to a virtual path
+ICANHAZ         = signature %x05 path options cache
+path            = string        ; Full path or path prefix
 options         = dictionary
 dictionary      = size *key-value
 key-value       = string        ; Formatted as name=value
+cache           = dictionary    ; File SHA-1 signatures
 
 ;   The server confirms the subscription
-ICANHAZ-OK      = %x06
+ICANHAZ-OK      = signature %x06
 
 ;   The client sends credit to the server
-NOM             = %x07 credit
-credit          = number
-number          = 8OCTET        ; 64-bit integer, network order
-sequence        = number
+NOM             = signature %x07 credit
+credit          = 8OCTET        ; 64-bit integer, network order
+sequence        = 8OCTET        ; 64-bit integer, network order
 
 ;   The server sends a chunk of file data
-CHEEZBURGER     = %x08 sequence operation filename
+CHEEZBURGER     = signature %x08 sequence operation filename
                   offset headers chunk
-sequence        = number
+sequence        = 8OCTET        ; 64-bit integer, network order
 operation       = OCTET
 filename        = string
-offset          = number
+offset          = 8OCTET        ; 64-bit integer, network order
 headers         = dictionary
 chunk           = FRAME
 
-;   Client or server sends a heartbeat, the other peer responds
-HUGZ            = %x09
-HUGZ-OK         = %x0A
+;   Client or server sends a heartbeat
+HUGZ            = signature %x09
+
+;   Client or server responds to a heartbeat
+HUGZ-OK         = signature %x0A
 
 ;   Client closes the peering
-KTHXBAI         = %x0B
+KTHXBAI         = signature %x0B
 [[/code]]
 
 And here are the different ways the server can tell the client things went wrong:
 
 [[code]]
-;   Server error replies
-S:SRSLY         = %x80 reason    ; Refused due to access rights
-S:RTFM          = %x81 reason    ; Client sent an invalid command
+;   Server error reply - refused due to access rights
+S:SRSLY         = signature %x80 reason
+
+;   Server error reply - client sent an invalid command
+S:RTFM          = signature %x81 reason
 [[/code]]
 
-The FILEMQ/1.0 protocol is specified on the [http://rfc.zeromq.org/spec:19 0MQ unprotocols website].
+The FILEMQ/1.0 protocol is specified on the [http://rfc.zeromq.org/spec:19 0MQ unprotocols website] and has a registered TCP port with IANA (the Internet Assigned Numbers Authority), which is port 5670.
 
 ++++ Building and Trying FileMQ
 
@@ -1442,11 +1446,11 @@ cd src
 
 And open two file navigator windows, one into {{src/fmqroot/send}} and one into {{src/fmqroot/recv}}. Drop files into the send folder and you'll see them arrive in the recv folder. The server checks once per second for new files. Delete files in the send folder, and they're deleted in the recv folder similarly.
 
-I use track for things like updating my MP3 player mounted as a USB drive. As I add or remove files in my laptop's Music folder, the same changes happen on the MP3 player. FILEMQ isn't a full replication protocol it might become one.
+I use track for things like updating my MP3 player mounted as a USB drive. As I add or remove files in my laptop's Music folder, the same changes happen on the MP3 player. FileMQ isn't a full replication protocol yet, but we'll fix that later.
 
 ++++ Internal Architecture
 
-To build FileMQ I used a lot of code generation, possibly too much. However the code generators are all reusable in other stacks. They are an evolution of the set we saw earlier:
+To build FileMQ I used a lot of code generation, possibly too much for a tutorial. However the code generators are all reusable in other stacks, and will be important for our final project in [#moving-pieces]. They are an evolution of the set we saw earlier:
 
 * codec_c.gsl - generates a message codec for a given protocol.
 * server_c.gsl - generates a server class for a protocol and state machine.
@@ -1532,14 +1536,11 @@ So I'll go through some of the design aspects:
 
 ++++ Reliabilty
 
-As it stands, FileMQ implements the classic 0MQ publish-subscribe pattern. That is, clients receive a stream of updates but with no guarantees about overall consistency. To make FileMQ reliable we'd have to add some functionality:
-
-* A way for clients to request all patches since a certain time (possibly, all patches).
-* A way for the server to store patches and subscriptions persistently.
+As it stands, FileMQ implements the classic 0MQ publish-subscribe pattern. That is, clients receive a stream of updates but with no guarantees about overall consistency. To make FileMQ reliable we'd have to add some way for clients to tell the server their state, and request a snapshot with the differences.
 
 ++++ Configuration
 
-I've written many servers, like the Xitami web server that was popular in the late 90's, and the OpenAMQ messaging server. Getting configuration easy and obvious was a large part of making these servers fun to use.
+I've written many servers, like the Xitami web server that was popular in the late 90's, and the [http://www.openamq.org OpenAMQ messaging server]. Getting configuration easy and obvious was a large part of making these servers fun to use.
 
 We typically aim to solve a number of problems:
 
@@ -1556,7 +1557,7 @@ server = fmq_server_new ();
 fmq_server_configure (server, "server_test.cfg");
 fmq_server_publish (server, "./fmqroot/send", "/");
 fmq_server_publish (server, "./fmqroot/logs", "/logs");
-fmq_server_bind (server, "tcp://*:6000");
+fmq_server_bind (server, "tcp://*:5670");
 [[/code]]
 
 We do use a specific format for the config files, which is [http://rfc.zeromq.org/spec:4 ZPL], a minimalist syntax that we started using for 0MQ "devices" a few years ago, but which works well for any server:
@@ -1589,7 +1590,7 @@ security
 
 One cute thing (which seems useful) the generated server code does is to parse this config file (when you use the fmq_server_configure() method) and execute any section that matches an API method. Thus the 'publish' section works as a fmq_server_publish() method.
 
-+++ File Stability
+++++ File Stability
 
 It is quite common to poll a directory for changes and then do something 'interesting' with new files. But as one process is writing to a file, other processes have no idea when the file has been fully written. One solution is to add a second "indicator" file which we create after creating the first file. This is intrusive, however.
 
@@ -1597,9 +1598,71 @@ There is a neater way, which is to detect when a file is "stable", i.e. no-one i
 
 For this to work, and this is a requirement for any application hoping to use FileMQ successfully, do not buffer more than a second's worth of data in memory before writing. If you use very large block sizes, the file may look stable when it's not.
 
-+++ Test Use Case
+++++ Symbolic Links
 
-To properly test something like FileMQ we need a test case that plays with live data. One of my ongoing chores is to manage the MP3 tracks on my music player, which is a Sansa Clip reflashed with Rock Box (highly recommended). As I download tracks into my Music folder I want to copy these to my player, and as I find tracks that annoy me, I delete them in the Music folder and want those gone from my player too.
+While using a staging area is a nice, simple API, it also creates costs for senders. If I already have a 2GB video file on a camera, and want to send it via FileMQ, the current implementation asks that I copy it to a staging area before it will be sent to subscribers.
+
+One option is to mount the whole content directory (e.g. {{/home/me/Movies}}) but this is fragile since it means the application can't decide to send individual files. It's everything or nothing.
+
+A simple answer is to implement portable symbolic links. As Wikipedia explains: "A symbolic link contains a text string that is automatically interpreted and followed by the operating system as a path to another file or directory. This other file or directory is called the "target". The symbolic link is a second file that exists independently of its target. If a symbolic link is deleted, its target remains unaffected."
+
+This doesn't affect the protocol in any way; it's an optimization in the server implementation. Let's make a simple portable implementation:
+
+* A symbolic link consists of a file with the extension {{.ln}}.
+* The filename without {{.ln}} is the published file name.
+* The link file contains one line, which is the real path to the file.
+
+Since we've collected all operations on files in a single class (fmq_file) it's a clean change. When we create a new file object we check if it's a symbolic link, and then all read-only actions (get file size, read file) operate on the target file, not the link.
+
+++++ Recovery and Late Joiners
+
+As it stands now, FileMQ has one major remaining problem: it provides no way for clients to recover from failures. The scenario is that a client, connected to a server, starts to receive files, and then disconnects for some reason. The network may be too slow, or breaks. The client may be on a laptop which is shut down, then resumed. The WiFi may be disconnected. As we move to a more mobile world (see [#moving-pieces]) this use-case becomes more and more frequent. In some ways it's becoming a dominant use-case.
+
+In the classic 0MQ publish-subscribe pattern, there are two strong underlying assumptions, both of which are usually wrong in FileMQ's real world. First, that data expires very rapidly so that there's no interest in asking from old data. Second, that networks are stable and rarely break (so it's better to invest in improving the infrastructure, and less in addressing recovery).
+
+Take any FileMQ use case and you'll see that if the client disconnects, and reconnects, then it should get anything it missed. A further improvement would be to recover from partial failures, like HTTP and FTP do. But one thing at a time.
+
+One answer to recovery is "durable subscriptions", and the first drafts of the FILEMQ protocol aimed to support this, with client identifiers that the server could hold onto, and store. So, if a client reappears after a failure, the server would know what files it had not received.
+
+Stateful servers are, however, nasty to make, and difficult to scale. How do we, for example, do failover to a secondary server? Where does it get its subscriptions from? It's far nicer if each client connection works independently and carries all necessary state with it.
+
+Another nail in the coffin of durable subscriptions is that it requires upfront coordination. Upfront coordination is always a red flag, whether it's in a team of people working together, or a bunch of processes talking to each other. What about late joiners? In the real world, clients do not neatly line up and then all say "Ready!" at the same time. In the real world they come and go arbitrarily, and it's valuable if we can treat a brand new client in the same way as a client that went away, and came back.
+
+To answer this I will add two concepts to the protocol: a 'resync' option and a 'cache' field (a dictionary). If the client wants recovery, it sets the 'resync' option, and tells the server what files it already has via the 'cache' field. We need both, because there's no way in the protocol to distinguish between an empty field, and a null field. The FILEMQ RFC describes these fields as follows:
+
+> The 'options' field provides additional information to the server. The server SHOULD implement these options: {{RESYNC=1}} - if the client sets this, the server SHALL send the full contents of the virtual path to the client, except files the client already has, as identified by their SHA-1 digest in the 'cache' field.
+
+And:
+
+> When the client specifies the RESYNC option, the 'cache' dictionary field tells the server which files the client already has. Each entry in the 'cache' dictionary is a "filename=digest" key/value pair where the digest SHALL be a SHA-1 digest in printable hexadecimal format. If the filename starts with '/' then it SHOULD start with the path, otherwise the server MUST ignore it. If the filename does not start with '/' then the server SHALL treat it as relative to the path.
+
+Clients which know they are in the classic pub-sub use-case just don't provide any cache data, and clients that want recovery provide their cache data. It requires no state in the server, no upfront coordination, and works equally well for brand new clients (which may have received files via some out-of-band means), and clients that received some files and were then disconnected for a while.
+
+I decided to use SHA-1 digests for several reasons. First, it's fast enough: 150msec to digest a 25MB core dump on my laptop. Second, it's reliable: the chance of getting the same hash for different versions of one file is close enough to zero. Third, it's the widest supported digest algorithm. A cyclic-redundancy check (e.g. CRC-32) is faster but not reliable. More recent SHA versions (SHA-256, SHA-512) are more secure but take 50% more CPU cycles, and are overkill for our needs.
+
+Here is what a typical ICANHAZ message looks like when we use both caching and resyncing (this is output from the 'dump' method of the generated codec class):
+
+[[code]]
+ICANHAZ:
+    path='/photos'
+    options={
+        RESYNC=1
+    }
+    cache={
+        DSCF0001.jpg=1FABCD4259140ACA99E991E7ADD2034AC57D341D
+        DSCF0006.jpg=01267C7641C5A22F2F4B0174FFB0C94DC59866F6
+        DSCF0005.jpg=698E88C05B5C280E75C055444227FEA6FB60E564
+        DSCF0004.jpg=F0149101DD6FEC13238E6FD9CA2F2AC62829CBD0
+        DSCF0003.jpg=4A49F25E2030B60134F109ABD0AD9642C8577441
+        DSCF0002.jpg=F84E4D69D854D4BF94B5873132F9892C8B5FA94E
+    }
+[[/code]]
+
+Although we don't do this in FileMQ, the server can use the cache information to help the client catch up with deletions that it missed. To do this it would have to log deletions, and then compare this log with the client cache when a client subscribes.
+
+++++ Test Use-Case - The 'track' tool
+
+To properly test something like FileMQ we need a test case that plays with live data. One of my sysadmin tasks is to manage the MP3 tracks on my music player. That is, by the way, a Sansa Clip reflashed with Rock Box, which I can highly recommend. As I download tracks into my Music folder I want to copy these to my player, and as I find tracks that annoy me, I delete them in the Music folder and want those gone from my player too.
 
 This is kind of over-kill for a powerful file distribution protocol. I could write this using a bash or Perl script but to be honest the hardest work in FileMQ was the directory comparison code, and I want to benefit from that. So I put together a simple tool called "track" which calls the FileMQ API. From the command line this runs with two arguments; the sending and the receiving directories:
 
@@ -1623,11 +1686,12 @@ int main (int argc, char *argv [])
     fmq_server_configure (server, "anonymous.cfg");
     fmq_server_publish (server, argv [1], "/");
     fmq_server_set_anonymous (server, true);
-    fmq_server_bind (server, "tcp://*:6000");
+    fmq_server_bind (server, "tcp://*:5670");
 
     fmq_client_t *client = fmq_client_new ();
-    fmq_client_connect   (client, "tcp://localhost:6000");
+    fmq_client_connect (client, "tcp://localhost:5670");
     fmq_client_set_inbox (client, argv [2]);
+    fmq_client_set_resync (client, true);
     fmq_client_subscribe (client, "/");
 
     while (!zctx_interrupted)
@@ -1640,4 +1704,26 @@ int main (int argc, char *argv [])
 }
 [[/code]]
 
-Note how we work with physical paths in this tool. The server publishes the physical path "/home/ph/Music" and maps this to the virtual path "/". The client subscribes to "/" and receives all files in "/media/3230-6364/MUSIC". I could use any structure within the server directory, and it would be copied faithfully to the client's inbox.
+Note how we work with physical paths in this tool. The server publishes the physical path "/home/ph/Music" and maps this to the virtual path "/". The client subscribes to "/" and receives all files in "/media/3230-6364/MUSIC". I could use any structure within the server directory, and it would be copied faithfully to the client's inbox. Note the API method {{    fmq_client_set_resync ()}}, which causes a server-to-client synchronization.
+
++++ Getting an Official Port Number
+
+We've been using port 5670 in the examples for FileMQ. Unlike all the examples so far, this port isn't arbitrary but [http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt was assigned] by the Internet [http://www.iana.org Assigned Numbers Authority (IANA)], which "is responsible for the global coordination of the DNS Root, IP addressing, and other Internet protocol resources".
+
+I'll explain very briefly when and how to request registered port numbers for your application protocols. The main reason is to ensure that your applications can run in the public domain without conflict with other protocols. Technically, if you ship any software that uses port numbers between 1024 and 49151, you should be using only IANA registered port numbers. Many products don't bother with this, however, and tend instead to use the IANA list as "ports to avoid".
+
+If you aim to make a public protocol of any importance, such as FileMQ, you're going to want an IANA-registered port. I'll explain briefly how to do this:
+
+* Document your protocol clearly, as IANA will want a specification of how you intend to use the port. It's not a formal agreement but must be solid enough to pass expert review.
+
+* Decide what transport protocols you want: UDP, TCP, SCTP, etc. Usually with 0MQ you will want just TCP.
+
+* Fill-in the application on iana.org, providing all the necessary information.
+
+* IANA will then continue the process by email until your application is accepted, or rejected.
+
+Note that you don't request a specific port number: IANA will assign you one. So, it's wise to start this process before you ship software, not afterwards.
+
++++ Conclusions
+
+This has been a large chapter, which took you through a theory of software design, and a worked example of a real and sophisticated file-transfer application.

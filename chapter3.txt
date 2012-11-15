@@ -17,7 +17,7 @@ We'll cover:
 
 +++ The Request-Reply Mechanisms
 
-We already looked briefly at multi-part messages. Let's now look at a major use case, which is //reply message envelopes//. An envelope is a way of safely packaging up data with an address, without touching the data itself. By separating reply addresses into an envelope we make it possible to write general-purpose intermediaries such as APIs and proxies that create, read, and remove addresses no matter what the message payload or structure.
+We already looked briefly at multi-part messages. Let's now look at a major use-case, which is //reply message envelopes//. An envelope is a way of safely packaging up data with an address, without touching the data itself. By separating reply addresses into an envelope we make it possible to write general-purpose intermediaries such as APIs and proxies that create, read, and remove addresses no matter what the message payload or structure.
 
 In the request-reply pattern, the envelope holds the return address for replies. It is how a 0MQ network with no state can create round-trip request-reply dialogs.
 
@@ -129,7 +129,7 @@ The REQ socket picks this message up, and checks that the first frame is the emp
 
 ++++ What's This Good For?
 
-To be honest the use cases for strict request-reply or extended request-reply are somewhat limited. For one thing, there's no easy way to recover from common failures like the server crashing due to buggy application code. We'll see more about this in [#reliable-request-reply]. However once you grasp the way these four sockets deal with envelopes, and how they talk to each other, you can do very useful things. We saw how ROUTER uses the reply envelope to decide which client REQ socket to route a reply back to. Now let's express this another way:
+To be honest the use-cases for strict request-reply or extended request-reply are somewhat limited. For one thing, there's no easy way to recover from common failures like the server crashing due to buggy application code. We'll see more about this in [#reliable-request-reply]. However once you grasp the way these four sockets deal with envelopes, and how they talk to each other, you can do very useful things. We saw how ROUTER uses the reply envelope to decide which client REQ socket to route a reply back to. Now let's express this another way:
 
 * Each time ROUTER gives you a message it tells you what peer that came from, as an identity.
 * You can use this with a hash table (with the identity as key) to track new peers as they arrive.
@@ -618,7 +618,7 @@ Getting applications to properly shut-down when you send them Ctrl-C can be tric
 
 +++ The Asynchronous Client-Server Pattern
 
-In the ROUTER to DEALER example we saw a 1-to-N use case where one server talks asynchronously to multiple workers. We can turn this upside-down to get a very useful N-to-1 architecture where various clients talk to a single server, and do this asynchronously!figref().
+In the ROUTER to DEALER example we saw a 1-to-N use-case where one server talks asynchronously to multiple workers. We can turn this upside-down to get a very useful N-to-1 architecture where various clients talk to a single server, and do this asynchronously!figref().
 
 [[code type="textdiagram" title="Asynchronous Client-Server"]]
 +-----------+   +-----------+
@@ -708,19 +708,15 @@ Some comments on this code:
 
 Note that we're doing DEALER to ROUTER dialog between client and server, but internally between the server main thread and workers we're doing DEALER to DEALER. If the workers were strictly synchronous, we'd use REP. But since we want to send multiple replies we need an async socket. We do //not// want to route replies, they always go to the single server thread that sent us the request.
 
-Let's think about the routing envelope. The client sends a simple message. The server thread receives a two-part message (real message prefixed by client identity). We have two possible designs for the server-to-worker interface:
-
-* Workers get unaddressed messages, and we manage the connections from server thread to worker threads explicitly using a ROUTER socket as backend. This would require that workers start by telling the server they exist, which can then route requests to workers and track which client is 'connected' to which worker. This is the load-balancing pattern again.
-
-* Workers get addressed messages, and they return addressed replies. This requires that workers can properly decode and recode envelopes but it doesn't need any other mechanisms.
-
-The second design is much simpler, so that's what we use:
+Let's think about the routing envelope. The client sends a simple message. The server thread receives a two-part message (real message prefixed by client identity). We send this on to the worker, which treats it as a normal reply envelope, returns that to us, and we can then use it to route the reply back to the right client:
 
 [[code]]
      client          server       frontend       worker
    [ DEALER ]<---->[ ROUTER <----> DEALER <----> DEALER ]
              1 part         2 parts       2 parts
 [[/code]]
+
+Now for the sockets: we could use the load-balancing ROUTER to DEALER pattern to talk to workers, but it's extra work. In this case a DEALER to DEALER pattern is probably fine: the trade-off is lower-latency for each request but higher risk of unbalanced work distribution. Simplicity wins in this case.
 
 When you build servers that maintain stateful conversations with clients, you will run into a classic problem. If the server keeps some state per client, and clients keep coming and going, eventually it will run out of resources. Even if the same clients keep connecting, if you're using default identities, each connection will look like a new one.
 
@@ -1173,7 +1169,7 @@ It's a non-trivial program and took about a day to get working. These are the hi
 
 * The client threads detect and report a failed request. They do this by polling for a response and if none arrives after a while (10 seconds), printing an error message.
 
-* Client threads don't print directly, but instead send a message to a 'monitor' socket (PUSH) that the main loop collects (PULL) and prints off. This is the first case we've seen of using 0MQ sockets for monitoring and logging; this is a big use case we'll come back to later.
+* Client threads don't print directly, but instead send a message to a 'monitor' socket (PUSH) that the main loop collects (PULL) and prints off. This is the first case we've seen of using 0MQ sockets for monitoring and logging; this is a big use-case we'll come back to later.
 
 * Clients simulate varying loads to get the cluster 100% at random moments, so that tasks are shifted over to the cloud. The number of clients and workers, and delays in the client and worker threads control this. Feel free to play with them to see if you can make a more realistic simulation.
 

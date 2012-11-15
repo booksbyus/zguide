@@ -57,11 +57,11 @@ However, with a little extra work this humble pattern becomes a good basis for r
 
 There are, in my experience, roughly three ways to connect clients to servers. Each needs a specific approach to reliability:
 
-* Multiple clients talking directly to a single server. Use case: a single well-known server that clients need to talk to. Types of failure we aim to handle: server crashes and restarts, network disconnects.
+* Multiple clients talking directly to a single server. Use-case: a single well-known server that clients need to talk to. Types of failure we aim to handle: server crashes and restarts, network disconnects.
 
-* Multiple clients talking to a broker proxy that distributes work to multiple workers. Use case: service oriented transaction processing. Types of failure we aim to handle: worker crashes and restarts, worker busy looping, worker overload, queue crashes and restarts, network disconnects.
+* Multiple clients talking to a broker proxy that distributes work to multiple workers. Use-case: service oriented transaction processing. Types of failure we aim to handle: worker crashes and restarts, worker busy looping, worker overload, queue crashes and restarts, network disconnects.
 
-* Multiple clients talking to multiple servers with no intermediary proxies. Use case: distributed services such as name resolution. Types of failure we aim to handle: service crashes and restarts, service busy looping, service overload, network disconnects.
+* Multiple clients talking to multiple servers with no intermediary proxies. Use-case: distributed services such as name resolution. Types of failure we aim to handle: service crashes and restarts, service busy looping, service overload, network disconnects.
 
 Each of these approaches has its trade-offs and often you'll mix them. We'll look at all three in detail.
 
@@ -614,7 +614,7 @@ However, the asynchronous Majordomo pattern isn't all roses. It has a fundamenta
 * Tracking and holding onto all outstanding requests in the client API, i.e., those for which no reply has yet been received.
 * In case of fail-over, for the client API to //resend// all outstanding requests to the broker.
 
-It's not a deal breaker, but it does show that performance often means complexity. Is this worth doing for Majordomo? It depends on your use case. For a name lookup service you call once per session, no. For a web front-end serving thousands of clients, probably yes.
+It's not a deal breaker, but it does show that performance often means complexity. Is this worth doing for Majordomo? It depends on your use-case. For a name lookup service you call once per session, no. For a web front-end serving thousands of clients, probably yes.
 
 +++ Service Discovery
 
@@ -643,12 +643,12 @@ Try this with and without a worker running, and you should see the little progra
 
 +++ Idempotent Services
 
-Idempotency is not something you take a pill for. What it means is that it's safe to repeat an operation. Checking the clock is idempotent. Lending one's credit card to ones children is not. While many client-to-server use cases are idempotent, some are not. Examples of idempotent use cases include:
+Idempotency is not something you take a pill for. What it means is that it's safe to repeat an operation. Checking the clock is idempotent. Lending one's credit card to ones children is not. While many client-to-server use-cases are idempotent, some are not. Examples of idempotent use-cases include:
 
 * Stateless task distribution, i.e. a pipeline where the servers are stateless workers that compute a reply based purely on the state provided by a request. In such a case it's safe (though inefficient) to execute the same request many times.
 * A name service that translates logical addresses into endpoints to bind or connect to. In such a case it's safe to make the same lookup request many times.
 
-And here are examples of a non-idempotent use cases:
+And here are examples of a non-idempotent use-cases:
 
 * A logging service. One does not want the same log information recorded more than once.
 * Any service that has impact on downstream nodes, e.g., sends on information to other nodes. If that service gets the same request more than once, downstream nodes will get duplicate information.
@@ -672,7 +672,7 @@ Once you realize that Majordomo is a "reliable" message broker, you might be tem
 
 * Rust brings a whole set of problems, from slow performance to additional pieces that you have to manage, repair, and handle 6am panics from, as they inevitably break at the start of daily operations. The beauty of the Pirate patterns in general is their simplicity. They won't crash. And if you're still worried about the hardware, you can move to a peer-to-peer pattern that has no broker at all. I'll explain later in this chapter.
 
-Having said this, however, there is one sane use case for rust-based reliability, which is an asynchronous disconnected network. It solves a major problem with Pirate, namely that a client has to wait for an answer in real-time. If clients and workers are only sporadically connected (think of email as an analogy), we can't use a stateless network between clients and workers. We have to put state in the middle.
+Having said this, however, there is one sane use-case for rust-based reliability, which is an asynchronous disconnected network. It solves a major problem with Pirate, namely that a client has to wait for an answer in real-time. If clients and workers are only sporadically connected (think of email as an analogy), we can't use a stateless network between clients and workers. We have to put state in the middle.
 
 So, here's the Titanic pattern!figref(), in which we write messages to disk to ensure they never get lost, no matter how sporadically clients and workers are connected. As we did for service discovery, we're going to layer Titanic on top of MDP rather than extend it. It's wonderfully lazy because it means we can implement our fire-and-forget reliability in a specialized worker, rather than in the broker. This is excellent for several reasons:
 
@@ -1055,7 +1055,7 @@ It might seem ironic to focus so much on broker-based reliability, when we often
 
 Which is why 0MQ does not //impose// a broker-centric architecture, though it gives you the tools to build brokers, aka //proxies//, and we've built a dozen or so different ones so far, just for practice.
 
-So we'll end this chapter by deconstructing the broker-based reliability we've built so far, and turning it back into a distributed peer-to-peer architecture I call the Freelance pattern. Our use case will be a name resolution service. This is a common problem with 0MQ architectures: how do we know the endpoint to connect to? Hard-coding TCP/IP addresses in code is insanely fragile. Using configuration files creates an administration nightmare. Imagine if you had to hand-configure your web browser, on every PC or mobile phone you used, to realize that "google.com" was "74.125.230.82".
+So we'll end this chapter by deconstructing the broker-based reliability we've built so far, and turning it back into a distributed peer-to-peer architecture I call the Freelance pattern. Our use-case will be a name resolution service. This is a common problem with 0MQ architectures: how do we know the endpoint to connect to? Hard-coding TCP/IP addresses in code is insanely fragile. Using configuration files creates an administration nightmare. Imagine if you had to hand-configure your web browser, on every PC or mobile phone you used, to realize that "google.com" was "74.125.230.82".
 
 A 0MQ name service (and we'll make a simple implementation) has to:
 

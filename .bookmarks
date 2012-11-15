@@ -17,6 +17,7 @@ Goals Preliminaries
 Preemptive-Discovery-over-Raw-Sockets Cooperative Discovery using UDP Broadcasts
 ROUTER-Broker-and-DEALER-Workers A Load-Balancing Message Broker
 Chapter-Making-a-Clean-Exit Why We Needed ØMQ
+Symbolic-Links Directory Replication
 Chapter-Preemptive-Discovery-over-Raw-Sockets Cooperative Discovery using UDP Broadcasts
 Messaging-Patterns High-level Messaging Patterns
 Crazy-Beautiful-and-Easy Stranger, meet Stranger
@@ -140,6 +141,7 @@ Chapter-Initial-Design-Cut-the-API Initial Design Cut - the Protocol
 Chapter-Why-make-FileMQ Initial Design Cut - the API
 Transferring-Files State Machines
 Chapter-The-Secret-Life-of-WiFi Why Mesh isn't Here Yet
+Directory-Replication Test Use Case - The 'track' tool
 Disconnected-Reliability-Titanic-Pattern High-availability Pair (Binary Star Pattern)
 Zero-Copy Pub-Sub Message Envelopes
 Test-Results Tracing Activity
@@ -208,7 +210,7 @@ Chapter-Upgrading-from-MQ-to-MQ Warning - Unstable Paradigms!
 Chapter-The-Myth-of-Intelligent-Design Burnout
 Chapter-High-Water-Marks Missing Message Problem Solver
 Hand-written-Binary-Serialization Code Generation
-File-Stability Test Use Case
+File-Stability Symbolic Links
 Chapter-Discovery Preemptive Discovery over Raw Sockets
 The-Human-Scale The Tale of Two Bridges
 Programming-with-MQ Getting the Context Right
@@ -339,6 +341,7 @@ Chapter-The-Espresso-Pattern Last Value Caching
 advanced-pub-sub Advanced Publish-Subscribe Patterns
 Chapter-Heartbeating Shrugging It Off
 Distributing-Key-Value-Updates Getting a Snapshot
+Test-Use-Case-The-track-tool Getting an Official Port Number
 Visibility Conclusions
 Serialization-Languages Serialization Libraries
 Chapter-Git-Branches-Considered-Harmful Simplicity vs. Complexity

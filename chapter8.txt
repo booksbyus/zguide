@@ -41,15 +41,9 @@ Whether we're connecting a roomful of mobile devices over WiFi, or a cluster of 
 
 * //Distributed Logging// - how do we track what this cloud of nodes is doing so we can detect performance problems and failures? Do we create a main logging service, or do we allow every device to log the world around it?
 
-* //File transfer// - how do we send files from one node to another? Do we use server-centric protocols like FTP or HTTP, or do we use decentralized protocols like FILEMQ?
+* //Content distribution// - how do we send content from one node to another? Do we use server-centric protocols like FTP or HTTP, or do we use decentralized protocols like FileMQ?
 
-* //State synchronization// - how do we ensure that many nodes receive the same unique stream of events? Do we send events via single central point, or do we use a distributed eventually consistent model?
-
-* //Security// - how do we protect the confidentiality of information, and make sure people are who they claim to be? Do we use a centralised trust network, or do we use use some kind of distributed key management?
-
-* //Bridging// - how do we connect our networks across the Internet? Do we use the cloud as our central point for all messaging or do we create bridges that join groups to other groups?
-
-If we can solve these dozen problems reasonably well, we get something like a framework for what I might call "Really Cool Distributed Applications", or as my grandkids call it, "the software our world runs on".
+If we can solve these problems reasonably well, and the further problems that will emerge (like security and wide-area bridging) we get something like a framework for what I might call "Really Cool Distributed Applications", or as my grandkids call it, "the software our world runs on".
 
 You should have guessed from my rhetorical questions that there are two broad directions we can go. One is to centralize everything. The other is to distribute everything. I'm going to bet on decentralization. If you want centralization, you don't really need 0MQ; there are other options you can use.
 
@@ -774,7 +768,7 @@ There are a few options to avoid blocking. One is to use {{zmq_poll[3]}} on the 
 
 So no polling for output. The second option is to use one thread per peer. I quite like the idea of this, since it fits into the 0MQ design pattern of "do one thing in one thread". But this is going to create a //lot// of threads (square of the number of nodes we start) in the simulation, and we're already running out of file handles.
 
-A third option is to use a non-blocking send. This is nicer and it's the solution I choose. We can then provide each peer with a reasonable outgoing queue (the HWM) and if that gets full, treat it as a fatal error on that peer. This will work for smaller messages. If we're sending large chunks -- e.g. for file transfer -- we'll need a credit-based flow control on top.
+A third option is to use a non-blocking send. This is nicer and it's the solution I choose. We can then provide each peer with a reasonable outgoing queue (the HWM) and if that gets full, treat it as a fatal error on that peer. This will work for smaller messages. If we're sending large chunks -- e.g. for content distribution -- we'll need a credit-based flow control on top.
 
 First step therefore is to prove to ourselves that we can turn the normal blocking DEALER socket into a non-blocking socket. This example creates a normal DEALER socket, connects it to some endpoint (so there's an outgoing pipe and the socket will accept messages), sets the high-water mark to four, and then sets the send timeout to zero:
 
@@ -903,7 +897,7 @@ But using ZyRE to log ZyRE itself is a Catch-22. Who logs the logger? What if we
               +-----------+
 [[/code]]
 
-The collector can, of course, run on any node. This gives us a nice range of use cases:
+The collector can, of course, run on any node. This gives us a nice range of use-cases:
 
 * A passive log collector that stores log data on disk for eventual statistical analysis; this would be a PC with sufficient hard disk space for weeks or months of log data.
 
@@ -948,28 +942,30 @@ Here's the scenario I had, which caused a few minutes' confusion. The logger was
 
 As the tester created a new interface, that reused the dynamic port freed by the (just stopped) logger, and suddenly the interface began to receive log data from nodes, on its mailbox. We saw a similar situation before, where a new interface could reuse the port freed by an old interface, and start getting old data.
 
-The lesson is, if you use dynamic ports, be prepared to receive random data from ill-informed applications that are reconnecting to you. Switching to a static port stopped the misbehaving connection. That's not a full solution though. We two more changes:
+The lesson is, if you use dynamic ports, be prepared to receive random data from ill-informed applications that are reconnecting to you. Switching to a static port stopped the misbehaving connection. That's not a full solution though. There are two more weaknesses:
 
 * As I write this, libzmq doesn't check socket types when connecting. The [http://rfc.zeromq.org/spec:15 ZMTP/2.0 protocol] does announce each peer's socket type, so this check is doable.
 
 * The ZRE protocol has no fail-fast (assertion) mechanism; we need to read and parse a whole message before realizing that it's invalid.
 
-Let's address the second problem. Socket pair validation wouldn't solve this fully anyhow.
+Let's address the second one. Socket pair validation wouldn't solve this fully anyhow.
 
 ++++ Protocol Assertions
 
 As Wikipedia puts it, "Fail-fast systems are usually designed to stop normal operation rather than attempt to continue a possibly flawed process." A protocol like HTTP has a fail-fast mechanism in that the first four bytes that a client sends to an HTTP server must be "HTTP". If they're not, the server can close the connection without reading anything more.
 
-ZeroMQ is not connection-oriented so there's no way to "close the connection" when we get bad incoming messages (except in some limited cases). However we can throw-out the entire message if it's not valid. The problem is going to be worse when we use ephemeral ports, but it applies broadly to all protocols.
+Our ROUTER socket is not connection-oriented so there's no way to "close the connection" when we get bad incoming messages. However we can throw-out the entire message if it's not valid. The problem is going to be worse when we use ephemeral ports, but it applies broadly to all protocols.
 
 So let's define a //protocol assertion// as being a unique signature that we place at the start of each message, and which identities the intended protocol. When we read a message, we check the signature, and if it's not what we expect, we discard the message silently. A good signature should be hard to confuse with regular data, and give us enough space for a number of protocols.
 
 I'm going to use a 16-bit signature consisting of a twelve-bit pattern and a 4-bit protocol ID!figref(). The pattern %xAAA is meant to stay away from values we might otherwise expect to see at the start of a message: %x00, %xFF, and printable characters.
 
 [[code type="textdiagram" title="Protocol Signature"]]
-+---+---+---+---+---+---+---+---+---+---+---+---+---------------+
-| 1 | 0 | 1 | 0 | 1 | 0 | 1 | 0 | 1 | 0 | 1 | 0 |   Signature   |
-+---+---+---+---+---+---+---+---+---+---+---+---+---------------+
++---+---+---+---+---+---+---+---+  +---+---+---+---+---------------+
+| 1 | 0 | 1 | 0 | 1 | 0 | 1 | 0 |  | 1 | 0 | 1 | 0 |   Signature   |
++---+---+---+---+---+---+---+---+  +---+---+---+---+---------------+
+
+             Byte 0                             Byte 1
 [[/code]]
 
 As our protocol codec is generated, it's relatively easy to add this assertion. The logic is:
@@ -1039,4 +1035,9 @@ Log an event
 
 Which generates us 800 lines of perfect binary codec (the zre_log_msg class). The codec does protocol assertions just like the main ZRE protocol does. Code generation has a fairly steep starting curve but it makes it so much easier to push your designs past "amateur" into "professional".
 
-//More coming soon...//
++++ To be Continued
+
+FileMQ isn't finished. Like many of the projects in this book, it's an ice-breaker for others. There are some major areas unfinished. Most importantly, security.
+
+How do we build a fully decentralized security system? We might be able to leverage public key infrastructure for some work, but that requires that nodes have their own Internet access, which isn't guaranteed. The answer is, as far as we can tell, to use any existing secure peer-to-peer link (TLS, BlueTooth, perhaps NFC) to exchange a session key, a symmetric cipher. Symmetric ciphers have their advantages and disadvantages. We'll explore this in a future version of this book.
+
