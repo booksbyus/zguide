@@ -20,6 +20,9 @@ We'll cover:
 * A large-scale file publishing system (FileMQ).
 
 +++ The Tale of Two Bridges
+////
+AO: This anecdote doesn't have a context. It makes sense in Chapter 7 as part of the discussion of the value of a free software community.
+////
 
 Two old engineers were talking of their lives and boasting of their greatest projects. One of the engineers explained how he had designed one of the greatest bridges ever made.
 
@@ -30,7 +33,13 @@ The second man reflected for a while, then spoke. "One evening me and a friend g
 The first engineer was silent. "Funny thing," he said, "my bridge was demolished about ten years after we built it. Turns out it was built in the wrong place and no-one wanted to use it. Some guys had thrown a rope across the gorge, a few miles further downstream, and that's where everyone went."
 
 +++ Code on the Human Scale
+////
+AO: I don't see how this section contributes to the rest of the chapter. You are circling arouund the issue of how a community works in software. The next chapter does a pretty good job of introducing and justifying that topic. So far, this chapter does not. However, I see that you are trying to introduce a technique for software development that is independent of license, first, then introduce the extra advantages of open source in Chapter 7.
+////
 
+////
+AO: The language metaphor is weak. First, computer languages exist, and 0MQ is not one. Second, you don't say what the other language is.
+////
 To write a poem that captures the heart, first learn the language. To use 0MQ successfully at scale you have to learn two languages. The first is 0MQ itself. This takes even the best of us time. It's a truism that if you try to port an old architecture onto 0MQ, the results are going to be weird. 0MQ's language is subtle and profound and when you master it you will find yourself removing old complexity, not converting it.
 
 However the real challenge of using 0MQ is that old barriers fall away, and the size of the projects you can do increases hugely. Non-distributed code is often a single-person project. You can work in your corner, perhaps for years, like an author on a book. It's all about concentration. But distributed code is different. To quote my favorite author, it "has to talk to code, has to be chatty, sociable, well-connected".
@@ -43,10 +52,16 @@ All this is fine in theory. Here comes the catch: working with other people is /
 
 My response isn't very sympathetic. To succeed in the software industry as it turns into something more like a never-ending live jam, we have to learn to put away our egos, work successfully with others, worry less about our own skills and look more at others, put away our natural insolence and attitude, and to learn to like and trust other people.
 
+////
+AO: Writing code at scale: do you mean writing a large programming project? And it's not clear what "ourselves" is, because the sense of a community you introduce in the next chapter is not here.
+////
 So this is what this chapter is really about: writing code at scale by understanding ourselves much better. Of course these lessons apply to all large-scale applications. Using 0MQ we just hit the problem sooner than we'd expect.
 
 +++ Psychology of Software Development
 
+////
+AO: This section is much more successful than the earlier ones I criticized. You make a good point here.
+////
 Dirkjan Ochtman pointed me to [http://en.wikipedia.org/wiki/Software_architecture Wikipedia's definition of Software Architecture] as "the set of structures needed to reason about the system, which comprise software elements, relations among them, and properties of both". For me this vapid and circular jargon is a good example of how miserably little we understand about what actually makes a successful large scale software architecture.
 
 Architecture is the art and science of making large artificial structures for human use. If there is one thing I've learned and applied successfully in 30 years of making larger and larger software systems it is this: software is about people. Large structures in themselves are meaningless. It's how they function for //human use// that matters. And in software, human use starts with the programmers who make the software itself.
@@ -91,6 +106,9 @@ The classic errors are: to focus on ideas, not problems; to focus on the wrong p
 
 I'll propose a process called "Simplicity Oriented Design", or SOD, which is as far as I can tell a reliable, repeatable way of developing simple and elegant products. This process organizes people into flexible supply chains that are able to navigate a problem landscape rapidly and cheaply. They do this by building, testing, and keeping or discarding minimal plausible solutions, called "patches". Living products consist of long series of patches, applied one atop the other. Yes, you may recognize the process by which we develop 0MQ.
 
+////
+AO: Although your descriptions of TOD and COD sound accurate and are fun to read, you could consider taking them out to shorten the chapter. You could publish an online version of the chapter with these sections. I bet I could get this on Radar, where it would be reach a pretty big audience of people who can benefit from the chapter.
+////
 Let's first look at the more common and less joyful processes, TOD and COD.
 
 ++++ Trash-Oriented Design
@@ -223,6 +241,9 @@ At a certain point you'll feel a clicking noise in your brain. Maybe you'll have
 
 ++++ Step 2: Draw a Rough Architecture
 
+////
+AO: You don't give much space to this step, but I wager that it is much harder than it looks here. And a mistake could doom the whole project. It looks like you (or whoever did the original design) made a good choice for 0MQ, so some more guidelines would be valuable.
+////
 Whiteboard time. Get a couple of colleagues and try to draw your architecture on a whiteboard. you want to draw boxes connected with arrows, showing the flow of work, data, results, etc. Since we live in a gravity well, it's best to draw the main arrows going down. Almost all architectures have a //direction//, and a certain symmetry, and what you want to do is capture that as simply and cleanly as you can.
 
 Ignore anything that's not central to the core problem. Ignore logging, error handling, recovery from failures, etc. What you leave out is as important as what you capture: you can always add, but it's very hard to remove. When you have a simple, clean drawing, you're ready for step 3.
@@ -276,6 +297,9 @@ Somewhere around mid-2007, I kicked-off the Digital Standards Organization to de
 In 2010 we started calling such little specifications "unprotocols", which some people might mistake for a dastardly plan for world domination by a shadowy international organization, but which really just means, "protocols without the goats".
 
 ++++ How to Write Unprotocols
+////
+AO: I can't say whether this section would be helpful to people writing specs. I suspect it would not be. As with some earlier topics, I believe the problems in this area are deep and difficult, and the material here is uncontroversial but less important than the difficult stuff you don't cover. What's difficult is meeting all the requirements of a protocol or unprotocol: that it does what it's supposed to do, that it covers all cases, that it does not cover a particular case in two different ways (leading to inconsistency and incompatability), and that it can be implemented in an efficient way.
+////
 
 When you start to write an unprotocol specification document, stick to a consistent structure so that your readers know what to expect. Here is the structure I use:
 
@@ -348,6 +372,9 @@ When we start to design a protocol, one of the first questions we face is how we
 However, there is a general lesson I've learned over a couple of decades of writing protocols small and large. I call this the "Cheap and Nasty" pattern: you can often split your work into two layers, and solve these separately, one using a "cheap" approach, the other using a "nasty" approach.
 
 ++++ Cheap and Nasty
+////
+AO: I think the advice in this section is quite interesting. Perhaps call it Cheap or Nasty.
+////
 
 The key insight to making Cheap and Nasty work is to realize that many protocols mix a low-volume chatty part for control, and a high-volume asynchronous part for data. For instance, HTTP has a chatty dialog to authenticate and get pages, and an asynchronous dialog to stream data. FTP actually splits this over two ports; one port for control and one port for data.
 
@@ -480,6 +507,9 @@ message Person {
 }
 [[/code]]
 
+////
+AO: I haven't heard of protobufs before.
+////
 Now, the same message using the protobufs IDL:
 
 [[code]]
@@ -1301,7 +1331,7 @@ fmq_server_destroy (&server);
 fmq_client_destroy (&client);
 [[/code]]
 
-If we wrap this C API in other languages, we can easily script FileMQ, embed it applications, port it to smartphones, and so on. 
+If we wrap this C API in other languages, we can easily script FileMQ, embed it applications, port it to smartphones, and so on.
 
 ++++ Initial Design Cut - the Protocol
 
