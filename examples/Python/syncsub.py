@@ -1,6 +1,8 @@
 #
 #  Synchronized subscriber
 #
+import time
+
 import zmq
 
 def main():
@@ -10,6 +12,8 @@ def main():
     subscriber = context.socket(zmq.SUB)
     subscriber.connect('tcp://localhost:5561')
     subscriber.setsockopt(zmq.SUBSCRIBE, "")
+
+    time.sleep(1)
 
     # Second, synchronize with publisher
     syncclient = context.socket(zmq.REQ)
