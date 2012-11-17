@@ -2,6 +2,8 @@
 ØMQ - Python examples
 =====================
 
+See LICENSE in examples directory
+
 Before committing changes or additions to the Python examples,
 please run them through reindent.py. This minimizes diffs on
 non-significant whitespace.
