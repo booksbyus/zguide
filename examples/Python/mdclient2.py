@@ -19,7 +19,7 @@ def main():
         except KeyboardInterrupt:
             print "send interrupted, aborting"
             return
-    
+
     count = 0
     while count < requests:
         try:
@@ -32,7 +32,6 @@ def main():
                 break
         count += 1
     print "%i requests/replies processed" % count
-    
+
 if __name__ == '__main__':
     main()
-

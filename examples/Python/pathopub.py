@@ -26,7 +26,7 @@ def main(url=None):
             b"%03d" % topic_nbr,
             b"Save Roger",
         ])
-    
+
     while True:
         # Send one random update per second
         try:

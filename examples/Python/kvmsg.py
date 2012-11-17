@@ -28,7 +28,7 @@ class KVMsg(object):
     uuid=None
     properties = None
     body = None
-    
+
     def __init__(self, sequence, uuid=None, key=None, properties=None, body=None):
         assert isinstance(sequence, int)
         self.sequence = sequence
@@ -38,23 +38,23 @@ class KVMsg(object):
         self.key = key
         self.properties = {} if properties is None else properties
         self.body = body
-    
+
     # dictionary access maps to properties:
     def __getitem__(self, k):
         return self.properties[k]
-    
+
     def __setitem__(self, k, v):
         self.properties[k] = v
-    
+
     def get(self, k, default=None):
         return self.properties.get(k, default)
-    
+
     def store(self, dikt):
         """Store me in a dict if I have anything to store"""
         # this seems weird to check, but it's what the C example does
         if self.key is not None and self.body is not None:
             dikt[self.key] = self
-    
+
     def send(self, socket):
         """Send key-value message to socket; any empty frames are sent as such."""
         key = '' if self.key is None else self.key
@@ -62,12 +62,12 @@ class KVMsg(object):
         body = '' if self.body is None else self.body
         prop_s = json.dumps(self.properties)
         socket.send_multipart([ key, seq_s, self.uuid, prop_s, body ])
-    
+
     @classmethod
     def recv(cls, socket):
         """Reads key-value message from socket, returns new kvmsg instance."""
         return cls.from_msg(socket.recv_multipart())
-    
+
     @classmethod
     def from_msg(cls, msg):
         """Construct key-value message from a multipart message"""
@@ -77,7 +77,7 @@ class KVMsg(object):
         body = body if body else None
         prop = json.loads(prop_s)
         return cls(seq, uuid=uuid, key=key, properties=prop, body=body)
-    
+
     def dump(self):
         if self.body is None:
             size = 0
@@ -106,7 +106,7 @@ def test_kvmsg (verbose):
     output.bind("ipc://kvmsg_selftest.ipc")
     input = ctx.socket(zmq.DEALER)
     input.connect("ipc://kvmsg_selftest.ipc")
-    
+
     kvmap = {}
     # Test send and receive of simple message
     kvmsg = KVMsg(1)
@@ -122,9 +122,9 @@ def test_kvmsg (verbose):
         kvmsg2.dump()
     assert kvmsg2.key == "key"
     kvmsg2.store(kvmap)
-    
+
     assert len(kvmap) == 1 # shouldn't be different
-    
+
     # test send/recv with properties:
     kvmsg = KVMsg(2, key="key", body="body")
     kvmsg["prop1"] = "value1"

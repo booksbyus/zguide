@@ -12,7 +12,7 @@ from mdcliapi import MajorDomoClient
 
 def service_call (session, service, request):
     """Calls a TSP service
-    
+
     Returns reponse if successful (status code 200 OK), else None
     """
     reply = session.send(service, request)
@@ -36,7 +36,7 @@ def main():
     #  1. Send 'echo' request to Titanic
     request = ["echo", "Hello world"]
     reply = service_call(session, "titanic.request", request)
-    
+
     uuid = None
 
     if reply:

@@ -55,4 +55,3 @@ else:
 
 if reply:
     print "Service is running OK"
-

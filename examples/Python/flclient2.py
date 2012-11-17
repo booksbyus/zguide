@@ -75,4 +75,3 @@ for requests in xrange(10000):
         break
 print "Average round trip cost: %i usec" % ((time.time() - start) / 100)
 client.destroy()
-
