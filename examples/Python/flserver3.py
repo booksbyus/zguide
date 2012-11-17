@@ -13,7 +13,7 @@ from zhelpers import dump
 
 def main():
     verbose = '-v' in sys.argv
-    
+
     ctx = zmq.Context()
     # Prepare server socket with predictable identity
     bind_endpoint = "tcp://*:5555"
@@ -22,7 +22,7 @@ def main():
     server.identity = connect_endpoint
     server.bind(bind_endpoint)
     print "I: service is ready at", bind_endpoint
-    
+
     while True:
         try:
             request = server.recv_multipart()

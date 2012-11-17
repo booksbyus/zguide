@@ -1,5 +1,5 @@
 # File Transfer model #2
-# 
+#
 # In which the client requests each chunk individually, thus
 # eliminating server queue overflows, but at a cost in speed.
 
@@ -17,13 +17,13 @@ def client_thread(ctx, pipe):
     dealer = ctx.socket(zmq.DEALER)
     socket_set_hwm(dealer, PIPELINE)
     dealer.connect("tcp://127.0.0.1:6000")
-    
+
     credit = PIPELINE   # Up to PIPELINE chunks in transit
 
     total = 0           # Total bytes received
     chunks = 0          # Total chunks received
     offset = 0          # Offset of next chunk request
-    
+
     while True:
         while credit:
             # ask for next chunk
@@ -32,10 +32,10 @@ def client_thread(ctx, pipe):
                 b"%i" % total,
                 b"%i" % CHUNK_SIZE,
             ])
-            
+
             offset += CHUNK_SIZE
             credit -= 1
-        
+
         try:
             chunk = dealer.recv()
         except zmq.ZMQError as e:
@@ -43,14 +43,14 @@ def client_thread(ctx, pipe):
                 return   # shutting down, quit
             else:
                 raise
-        
+
         chunks += 1
         credit += 1
         size = len(chunk)
         total += size
         if size < CHUNK_SIZE:
             break   # Last chunk received; exit
-    
+
     print ("%i chunks received, %i bytes" % (chunks, total))
     pipe.send(b"OK")
 
@@ -61,11 +61,11 @@ def client_thread(ctx, pipe):
 
 def server_thread(ctx):
     file = open("testdata", "r")
-    
+
     router = ctx.socket(zmq.ROUTER)
     socket_set_hwm(router, PIPELINE)
     router.bind("tcp://*:6000")
-    
+
     while True:
         # First frame in each message is the sender identity
         # Second frame is "fetch" command
@@ -76,18 +76,18 @@ def server_thread(ctx):
                 return   # shutting down, quit
             else:
                 raise
-        
+
         identity, command, offset_str, chunksz_str = msg
-        
+
         assert command == b"fetch"
-        
+
         offset = int(offset_str)
         chunksz = int(chunksz_str)
-        
+
         # Read chunk of data from file
         file.seek(offset, os.SEEK_SET)
         data = file.read(chunksz)
-        
+
         # Send resulting chunk to client
         router.send_multipart([identity, data])
 
@@ -95,16 +95,16 @@ def server_thread(ctx):
 # .skip
 
 def main():
-    
+
     # Start child threads
     ctx = zmq.Context()
     a,b = zpipe(ctx)
-    
+
     client = Thread(target=client_thread, args=(ctx, b))
     server = Thread(target=server_thread, args=(ctx,))
     client.start()
     server.start()
-    
+
     # loop until client tells us it's done
     try:
         print a.recv()

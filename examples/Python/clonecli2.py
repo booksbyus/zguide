@@ -12,7 +12,7 @@ import zmq
 from kvsimple import KVMsg
 
 def main():
-    
+
     # Prepare our context and subscriber
     ctx = zmq.Context()
     snapshot = ctx.socket(zmq.DEALER)
@@ -33,7 +33,7 @@ def main():
             kvmsg = KVMsg.recv(snapshot)
         except:
             break;          # Interrupted
-            
+
         if kvmsg.key == "KTHXBAI":
             sequence = kvmsg.sequence
             print "Received snapshot=%d" % sequence

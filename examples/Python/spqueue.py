@@ -53,4 +53,3 @@ while True:
         msg = frontend.recv_multipart()
         request = [workers.pop(0), ''] + msg
         backend.send_multipart(request)
-

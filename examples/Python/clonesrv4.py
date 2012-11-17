@@ -14,7 +14,7 @@ class Route:
         self.socket = socket        # ROUTER socket to send to
         self.identity = identity    # Identity of peer who requested state
         self.subtree = subtree      # Client subtree specification
-        
+
 
 def send_single(key, kvmsg, route):
     """Send one state snapshot key-value pair to a socket"""
@@ -45,7 +45,7 @@ def main():
             items = dict(poller.poll(1000))
         except:
             break           # Interrupted
-        
+
         # Apply state update sent from client
         if collector in items:
             kvmsg = KVMsg.recv(collector)
@@ -54,7 +54,7 @@ def main():
             kvmsg.send(publisher)
             kvmsg.store(kvmap)
             print "I: publishing update %5d" % sequence
-        
+
         # Execute state snapshot request
         if snapshot in items:
             msg = snapshot.recv_multipart()
@@ -64,7 +64,7 @@ def main():
             else:
                 print "E: bad request, aborting\n",
                 break
-            
+
             # Send state snapshot to client
             route = Route(snapshot, identity, subtree)
 

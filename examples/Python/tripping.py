@@ -17,7 +17,7 @@ def client_task (ctx, pipe):
     client = ctx.socket(zmq.DEALER)
     client.identity = 'C'
     client.connect("tcp://localhost:5555")
-    
+
     print "Setting up test...\n",
     time.sleep(0.1)
 
@@ -36,7 +36,7 @@ def client_task (ctx, pipe):
     for r in xrange(requests):
         client.recv()
     print " %d calls/second\n" % (requests / (time.time()-start)),
-    
+
     # signal done:
     pipe.send("done")
 
@@ -63,13 +63,13 @@ def broker_task():
     poller = zmq.Poller()
     poller.register(backend, zmq.POLLIN)
     poller.register(frontend, zmq.POLLIN)
-    
+
     while True:
         try:
             items = dict(poller.poll())
         except:
             break # Interrupted
-        
+
         if frontend in items:
             msg = frontend.recv_multipart()
             msg[0] = 'W'
@@ -83,17 +83,17 @@ def main():
     # Create threads
     ctx = zmq.Context()
     client,pipe = zpipe(ctx)
-    
+
     client_thread = threading.Thread(target=client_task, args=(ctx, pipe))
     worker_thread = threading.Thread(target=worker_task)
     worker_thread.daemon=True
     broker_thread = threading.Thread(target=broker_task)
     broker_thread.daemon=True
-    
+
     worker_thread.start()
     broker_thread.start()
     client_thread.start()
-    
+
     # Wait for signal on client pipe
     client.recv()
 

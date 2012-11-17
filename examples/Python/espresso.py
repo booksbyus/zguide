@@ -35,7 +35,7 @@ def subscriber_thread():
             else:
                 raise
         count += 1
-    
+
     print ("Subscriber received %d messages" % count)
 
 
@@ -44,7 +44,7 @@ def subscriber_thread():
 
 def publisher_thread():
     ctx = zmq.Context.instance()
-    
+
     publisher = ctx.socket(zmq.PUB)
     publisher.bind("tcp://*:6000")
 
@@ -88,25 +88,25 @@ def main ():
     s_thread = Thread(target=subscriber_thread)
     p_thread.start()
     s_thread.start()
-    
+
     pipe = zpipe(ctx)
-    
+
     subscriber = ctx.socket(zmq.XSUB)
     subscriber.connect("tcp://localhost:6000")
-    
+
     publisher = ctx.socket(zmq.XPUB)
     publisher.bind("tcp://*:6001")
-    
+
     l_thread = Thread(target=listener_thread, args=(pipe[1],))
     l_thread.start()
-    
+
     try:
         monitored_queue(subscriber, publisher, pipe[0], 'pub', 'sub')
     except KeyboardInterrupt:
         print ("Interrupted")
-    
+
     del subscriber, publisher, pipe
     ctx.term()
-    
+
 if __name__ == '__main__':
     main()

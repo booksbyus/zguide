@@ -27,7 +27,7 @@ def main():
     else:
         print ("Usage: bstarsrv2.py { -p | -b }\n")
         return
-    
+
     star.start()
 
 if __name__ == '__main__':
