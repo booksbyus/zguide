@@ -24,7 +24,6 @@ def main():
                 break
         count += 1
     print "%i requests/replies processed" % count
-    
+
 if __name__ == '__main__':
     main()
-

@@ -33,4 +33,3 @@ while True:
 
     # Send results to sink
     sender.send('')
-

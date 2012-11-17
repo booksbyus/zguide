@@ -38,4 +38,3 @@ while True:
     print "I: (%s) normal reply" % identity
     time.sleep(1) # Do some heavy work
     worker.send_multipart(msg)
-

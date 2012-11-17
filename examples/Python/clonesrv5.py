@@ -20,7 +20,7 @@ class Route:
         self.socket = socket        # ROUTER socket to send to
         self.identity = identity    # Identity of peer who requested state
         self.subtree = subtree      # Client subtree specification
-        
+
 
 def send_single(key, kvmsg, route):
     """Send one state snapshot key-value pair to a socket"""
@@ -31,7 +31,7 @@ def send_single(key, kvmsg, route):
         kvmsg.send(route.socket)
 
 class CloneServer(object):
-    
+
     # Our server is defined by these properties
     ctx = None                  # Context wrapper
     kvmap = None                # Key-value store
@@ -41,13 +41,13 @@ class CloneServer(object):
     snapshot = None             # Handle snapshot requests
     publisher = None            # Publish updates to clients
     collector = None            # Collect updates from clients
-    
+
     def __init__(self, port=5556):
         self.port = port
         self.ctx = zmq.Context()
         self.kvmap = {}
         self.loop = IOLoop.instance()
-        
+
         # Set up our clone server sockets
         self.snapshot  = self.ctx.socket(zmq.ROUTER)
         self.publisher = self.ctx.socket(zmq.PUB)
@@ -60,17 +60,17 @@ class CloneServer(object):
         self.snapshot = ZMQStream(self.snapshot)
         self.publisher = ZMQStream(self.publisher)
         self.collector = ZMQStream(self.collector)
-        
+
         # Register our handlers with reactor
         self.snapshot.on_recv(self.handle_snapshot)
         self.collector.on_recv(self.handle_collect)
         self.flush_callback = PeriodicCallback(self.flush_ttl, 1000)
-        
+
         # basic log formatting:
         logging.basicConfig(format="%(asctime)s %(message)s", datefmt="%Y-%m-%d %H:%M:%S",
                 level=logging.INFO)
-        
-    
+
+
     def start(self):
         # Run reactor until process interrupted
         self.flush_callback.start()
@@ -78,7 +78,7 @@ class CloneServer(object):
             self.loop.start()
         except KeyboardInterrupt:
             pass
-    
+
     def handle_snapshot(self, msg):
         """snapshot requests"""
         if len(msg) != 3 or msg[1] != "ICANHAZ?":
@@ -94,7 +94,7 @@ class CloneServer(object):
             # For each entry in kvmap, send kvmsg to client
             for k,v in self.kvmap.items():
                 send_single(k,v,route)
-            
+
             # Now send END message with sequence number
             logging.info("I: Sending state shapshot=%d" % self.sequence)
             self.snapshot.send(identity, zmq.SNDMORE)
@@ -102,7 +102,7 @@ class CloneServer(object):
             kvmsg.key = "KTHXBAI"
             kvmsg.body = subtree
             kvmsg.send(self.snapshot)
-    
+
     def handle_collect(self, msg):
         """Collect updates from clients"""
         kvmsg = KVMsg.from_msg(msg)
@@ -114,12 +114,12 @@ class CloneServer(object):
             kvmsg['ttl'] = time.time() + ttl
         kvmsg.store(self.kvmap)
         logging.info("I: publishing update=%d", self.sequence)
-    
+
     def flush_ttl(self):
         """Purge ephemeral values that have expired"""
         for key,kvmsg in self.kvmap.items():
             self.flush_single(kvmsg)
-    
+
     def flush_single(self, kvmsg):
         """If key-value pair has expired, delete it and publish the fact
         to listening clients."""

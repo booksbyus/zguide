@@ -44,30 +44,30 @@ class BinaryStar(object):
     voter_callback = None   # Voting socket handler
     master_callback = None  # Call when become master
     slave_callback = None   # Call when become slave
-    heartbeat = None        # PeriodicCallback for 
-    
+    heartbeat = None        # PeriodicCallback for
+
     def __init__(self, primary, local, remote):
         # initialize the Binary Star
         self.ctx = zmq.Context()
         self.loop = IOLoop.instance()
         self.state = STATE_PRIMARY if primary else STATE_BACKUP
-        
+
         # Create publisher for state going to peer
         self.statepub = self.ctx.socket(zmq.PUB)
         self.statepub.bind(local)
-        
+
         # Create subscriber for state coming from peer
         self.statesub = self.ctx.socket(zmq.SUB)
         self.statesub.setsockopt(zmq.SUBSCRIBE, '')
         self.statesub.connect(remote)
-        
+
         # wrap statesub in ZMQStream for event triggers
         self.statesub = ZMQStream(self.statesub, self.loop)
-        
+
         # setup basic reactor events
         self.heartbeat = PeriodicCallback(self.send_state, HEARTBEAT, self.loop)
         self.statesub.on_recv(self.recv_state)
-        
+
         # setup log formmater
 
     def update_peer_expiry(self):
@@ -78,10 +78,10 @@ class BinaryStar(object):
         self.update_peer_expiry()
         self.heartbeat.start()
         return self.loop.start()
-    
+
     def execute_fsm(self):
         """Binary Star finite state machine (applies event to state)
-        
+
         returns True if connections should be accepted, False otherwise.
         """
         accept = True
@@ -184,27 +184,26 @@ class BinaryStar(object):
         else:
             # Message will be ignored
             pass
-    
+
     # -------------------------------------------------------------------------
     #
-    
+
     def register_voter(self, endpoint, type, handler):
         """Create socket, bind to local endpoint, and register as reader for
         voting. The socket will only be available if the Binary Star state
         machine allows it. Input on the socket will act as a "vote" in the
         Binary Star scheme.  We require exactly one voter per bstar instance.
-        
+
         handler will always be called with two arguments: (socket,msg)
         where socket is the one we are creating here, and msg is the message
         that triggered the POLLIN event.
         """
         assert self.voter_callback is None
-        
+
         socket = self.ctx.socket(type)
         socket.bind(endpoint)
         self.voter_socket = socket
         self.voter_callback = handler
-        
+
         stream = ZMQStream(socket, self.loop)
         stream.on_recv(self.voter_ready)
-

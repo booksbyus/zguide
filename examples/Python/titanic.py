@@ -26,7 +26,7 @@ def request_filename (uuid):
     """Returns freshly allocated request filename for given UUID"""
     return os.path.join(TITANIC_DIR, "%s.req" % uuid)
 
-# 
+#
 
 def reply_filename (uuid):
     """Returns freshly allocated reply filename for given UUID"""
@@ -76,7 +76,7 @@ def titanic_reply ():
         request = worker.recv(reply)
         if not request:
             break      # Interrupted, exit
-        
+
         uuid = request.pop(0)
         req_filename = request_filename(uuid)
         rep_filename = reply_filename(uuid)
@@ -102,7 +102,7 @@ def titanic_close():
         request = worker.recv(reply)
         if not request:
             break      # Interrupted, exit
-        
+
         uuid = request.pop(0)
         req_filename = request_filename(uuid)
         rep_filename = reply_filename(uuid)
@@ -119,11 +119,11 @@ def service_success(client, uuid):
     """Attempt to process a single request, return True if successful"""
     # Load request message, service will be first frame
     filename = request_filename (uuid)
-    
+
     # If the client already closed request, treat as successful
     if not os.path.exists(filename):
         return True
-    
+
     with open(filename, 'r') as f:
         request = pickle.load(f)
     service = request.pop(0)
@@ -175,14 +175,14 @@ def main():
             items = poller.poll(1000)
         except KeyboardInterrupt:
             break;              # Interrupted
-            
+
         if items:
 
             # Append UUID to queue, prefixed with '-' for pending
             uuid = request_pipe.recv()
             with open(os.path.join(TITANIC_DIR, 'queue'), 'a') as f:
                 f.write("-%s\n" % uuid)
-        
+
         # Brute-force dispatcher
         #
         with open(os.path.join(TITANIC_DIR, 'queue'), 'r+b') as f:
@@ -201,4 +201,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
