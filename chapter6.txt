@@ -31,6 +31,9 @@ We'll cover:
 * A worked example of a change to libzmq.
 
 +++ The Tale of Two Bridges
+////
+AO: I've always liked this story, but I've always thought (and still think) it is too far removed from the concrete history of how 0MQ evolved, which is what the story is commenting on. I suggest a little reorganization to bring the two sections next to each other.
+////
 
 Two old engineers were talking of their lives and boasting of their greatest projects. One of the engineers explained how he had designed one of the greatest bridges ever made.
 
@@ -44,7 +47,7 @@ The first engineer was silent. "Funny thing," he said, "my bridge was demolished
 
 You know that 0MQ is an LGPL-licensed project. In fact it's a collection of projects, built around the core library, {{libzmq}}. I'll visualize these projects as an expanding galaxy:
 
-* At the core, libzmq is the 0MQ core library. It's written in C++, with a low-level C API. The code is nasty, mainly because it's highly optimized but also because it's written in C++, a language that lends itself to subtle and deep nastiness. Martin Sustrik wrote the bulk of this code originally, today it has dozens of people who maintain different parts of it. 
+* At the core, libzmq is the 0MQ core library. It's written in C++, with a low-level C API. The code is nasty, mainly because it's highly optimized but also because it's written in C++, a language that lends itself to subtle and deep nastiness. Martin Sustrik wrote the bulk of this code originally, today it has dozens of people who maintain different parts of it.
 
 * Around libzmq there are about 50 "bindings". These are individual projects that create higher-level APIs for 0MQ, or at least map the low-level API into other languages. The bindings vary in quality from experimental to utterly awesome. By far the most awesome binding is [https://github.com/zeromq/pyzmq PyZMQ], which was one of the first community projects on top of 0MQ. If you are a binding author, you should really study PyZMQ and aspire to making your code and community as awesome.
 
@@ -64,7 +67,7 @@ My firm doesn't just have the community's back, we also built the community. Thi
 
 +++ How to Make Really Large Architectures
 
-There are, it has been said (at least by people reading this sentence out loud), two ways to make really large-scale software. Option One is to throw massive amounts of money and problems at empires of smart people, and hope that what emerges is not yet another career killer. If you're very lucky, and are building on lots of experience, and have kept your teams solid, and are not aiming for technical brilliance, and are furthermore incredibly lucky, it works.
+There are, it has been said (at least by people reading this sentence out loud), two ways to make really large-scale software. Option One is to throw massive amounts of money and problems at empires of smart people, and hope that what emerges is not yet another career killer. If you're very lucky, and are building on l ots of experience, and have kept your teams solid, and are not aiming for technical brilliance, and are furthermore incredibly lucky, it works.
 
 But gambling with hundreds of millions of others' money isn't for everyone. For the rest of us who want to build large-scale software, there's Option Two, which is open source, and more specifically, //free software//. If you're asking how the choice of software license is relevant to the scale of the software you build, that's the right question.
 
@@ -449,6 +452,9 @@ I've not tested this rule to be certain it makes sense. Perhaps what it means is
 C4 is not perfect, few things are. The process for changing it (Digistan's COSS) is a little outdated now: it relies on a single-editor workflow with the ability to fork, but not merge. This seems to work but it could be better to use C4 for protocols like C4.
 
 +++ Worked Example
+////
+AO: Do you mean "working example"? I think this is an instance of a "real-life example".
+////
 
 In [http://lists.zeromq.org/pipermail/zeromq-dev/2012-October/018838.html this email thread], Dan Goes asks how to make a publisher that knows when a new client subscribes, and sends out previous matching messages. It's a standard pub-sub technique called "last value caching". Now over a 1-way transport like pgm (where subscribers literally send no packets back to publishers) this can't be done. But over TCP, it can, if we use an XPUB socket and if that socket didn't cleverly filter out duplicate subscriptions to reduce upstream traffic.
 
@@ -643,6 +649,9 @@ If you can't use forks, perhaps because your firm doesn't trust GitHub's private
 +++ Designing for Innovation
 
 ++++ How 0MQ Lost its Road-map
+////
+AO: If I remember right, 0MQ had a history before this conference, and it illustrates well why the crowdsourced method you used was better than a road-map. So that history should come first.
+////
 
 Presenting 0MQ at the Mix-IT conference in Lyon in early 2012, I was asked several times for the "road-map". My answer was: there is no road-map any longer, and the road-maps we made were bad for several reasons. First, they made promises we could rarely keep, which caused problems for our users. Second, they claimed territory and thus made it harder for others to participate. Lastly, they preempted the thinking process of the community. We had road-maps, and we deleted them.
 
@@ -814,7 +823,7 @@ There are three simple techniques I've developed over the years to reduce the ri
 
 When someone is working alone on a critical project, you //know// they are going blow their fuses sooner or later. It's actually fairly predictable: something like 18-36 months depending on the individual and how much economic stress they face in their private lives. I've not seen anyone burn-out after half a year, nor last five years in a unrewarding project.
 
-There is a simple cure for burnout which works in at least some cases: get paid decently for your work. However this pretty much destroys the freedom of movement (across that infinite problem landscape) that the volunteer enjoys. 
+There is a simple cure for burnout which works in at least some cases: get paid decently for your work. However this pretty much destroys the freedom of movement (across that infinite problem landscape) that the volunteer enjoys.
 
 +++ Patterns for Success
 

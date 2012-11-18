@@ -29,6 +29,9 @@ We'll cover:
 * A large-scale file publishing system (FileMQ).
 
 +++ Psychology of Software Development
+////
+AO: This may fit more naturally into Chapter 6, because it has lots of implications for the community and development process that are the subjects of that chapter.
+////
 
 Dirkjan Ochtman pointed me to [http://en.wikipedia.org/wiki/Software_architecture Wikipedia's definition of Software Architecture] as "the set of structures needed to reason about the system, which comprise software elements, relations among them, and properties of both". For me this vapid and circular jargon is a good example of how miserably little we understand about what actually makes a successful large scale software architecture.
 
