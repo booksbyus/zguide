@@ -466,10 +466,7 @@ It's useful to design the client logic as a finite state machine. The client cyc
 
 * When the client has gotten its snapshot, it waits for and processes updates. Again, if it doesn't hear anything from the server within some timeout, it fails over to the next server.
 
-The client loops forever. It's quite likely during startup or fail-over that some clients may be trying to talk to the primary server while others are trying to talk to the backup server. The Binary Star state machine handles this!figref(), hopefully accurately. (One of the joys of making designs like this is we cannot prove they are right, we can only prove them wrong. So it's like a guy falling off a tall building. So far, so good... so far, so good...)
-////
-AO: I don't know whether it's relevant, but your tall building metaphor is in an old movie by W.C. Fields, where he is in free-fall in a bucket going down a cliff.
-////
+The client loops forever. It's quite likely during startup or fail-over that some clients may be trying to talk to the primary server while others are trying to talk to the backup server. The Binary Star state machine handles this!figref(), hopefully accurately. It's hard to prove software correct; instead we hammer it until we can't prove it wrong.
 
 [[code type="textdiagram" title="Clone Client Finite State Machine"]]
  +-----------+

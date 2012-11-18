@@ -1,13 +1,10 @@
 .output chapter8.wd
 .bookmark moving-pieces
-++ A Universe of Moving Pieces
-////
-AO: This title does not tell the reader what you're offering in this chapter, and therefore should be replaced. You want people to come read it, so give them a title that indicates how they'll benefit by knowing the content. I'm a little fuzzy on what the benefit is, myself!
-////
+++ A Framework for Distributed Computing
 
-So far in this book I've aimed to take you though a journey of understanding 0MQ in its many aspects. By now you may have started to build your own products using the techniques I explained, and others you've figured out yourself. You will start to face questions about to make these products work in the real world.
+We've gone though a journey of understanding 0MQ in its many aspects. By now you may have started to build your own products using the techniques I explained, and others you've figured out yourself. You will start to face questions about to make these products work in the real world.
 
-But what is that "real world"? My view is that it is becoming a world of ever increasing numbers of moving pieces. Some people use the phrase the "Internet of Things", suggesting that we'll see a new category of devices that are more numerous but rather stupider than our current smart phones and tablets and laptops and servers. However, I don't think the data points this way at all. Yes, more and more devices, but they're not stupid at all. They're smart and powerful and getting more so all the time.
+But what is that "real world"? I'll argue that it is becoming a world of ever increasing numbers of moving pieces. Some people use the phrase the "Internet of Things", suggesting that we'll see a new category of devices that are more numerous but rather stupider than our current smart phones and tablets and laptops and servers. However, I don't think the data points this way at all. Yes, more and more devices, but they're not stupid at all. They're smart and powerful and getting more so all the time.
 
 The mechanism at work is something I call "Cost Gravity" and it has the effect of cutting the cost of technology by half every 18-24 months. Or, put another way, our global computing capacity doubles every two years, over and over and over. The future is filled with trillions of devices that are fully powerful multi-core computers: they don't run some cut-down "operating system for things" but full operating systems and full applications.
 
@@ -21,7 +18,17 @@ This is what we'll attempt in this chapter: to build a framework for distributed
 
 We'll cover:
 
-* Building a basic framework for distributed computing.
+* Requirements for distributed computing.
+* The pros and cons of WiFi for proximity networking.
+* Discovery using UDP and TCP.
+* A message-based API.
+* Creating a new open source project.
+* Peer-to-peer connectivity (the Harmony pattern).
+* Tracking peer presence and disappearance.
+* Group messaging without central coordination.
+* Large-scale testing and simulation.
+* Dealing with high-water marks and blocked peers.
+* Distributed logging and monitoring.
 
 +++ Design for The Real World
 
@@ -359,7 +366,7 @@ I'm somewhat shy about pushing new projects into the 0MQ community too aggressiv
 
 Start with the basics. The protocol (UDP and 0MQ/TCP) will be ZRE and the project will be ZyRE, with different capitalization to reduce confusion with the old project. I need a second maintainer, so invite my friend Dong Min (the Korean hacker behind JeroMQ, a pure-Java 0MQ stack) to join. He's been working on very similar ideas so is enthusiastic. We discuss this and we get the idea of building ZyRE on top of JeroMQ as well as on top of CZMQ and libzmq. This would make it a lot easier to run ZyRE on Android. It would also give us two fully separate implementations from the start, always a good thing for a protocol.
 
-So we take the FileMQ project I built in [#the-human-scale] as a template for a new GitHub project. The GNU autoconf tools are quite decent but have a painful syntax. It's easiest to copy existing project files, and modify them. The FileMQ project builds a library, has test tools, license files, man pages, and so on. It's not too large so it's a good starting point.
+So we take the FileMQ project I built in [#advanced-architecture] as a template for a new GitHub project. The GNU autoconf tools are quite decent but have a painful syntax. It's easiest to copy existing project files, and modify them. The FileMQ project builds a library, has test tools, license files, man pages, and so on. It's not too large so it's a good starting point.
 
 I put together a README to summarize the goals of the project and point to C4. The issue tracker is enabled by default on new GitHub projects, so once we've pushed the UDP ping code as a first version, we're ready to go. However it's always good to recruit more maintainers, so I create an issue "Call for maintainers" that says:
 
@@ -557,7 +564,7 @@ I'm not going to work through the implementation of group messaging in detail si
 * A hash of groups for other peers, which we update with information from HELLO, JOIN, and LEAVE commands;
 * A hash of peers for each group, which we update with the same three commands.
 
-At this stage I'm starting to get pretty happy with the binary serialization (our codec generator from [#the-human-scale]), which handles lists and dictionaries as well as strings and integers.
+At this stage I'm starting to get pretty happy with the binary serialization (our codec generator from [#advanced-architecture]), which handles lists and dictionaries as well as strings and integers.
 
 This version is tagged in the repository as v0.2.0 and you can [https://github.com/zeromq/zyre/tags download the tarball] if you want to check what the code looked like at this stage.
 
