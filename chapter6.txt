@@ -19,6 +19,7 @@ In this chapter I'm going to look at our community from several angles, and conc
 We'll cover:
 
 * The rough structure of 0MQ as a set of projects.
+* What "software architecture" is really about.
 * Why we use the LGPL and not the BSD license.
 * How we designed and grew the 0MQ community.
 * The business that backs 0MQ.
@@ -29,19 +30,6 @@ We'll cover:
 * Why we don't use public git branches.
 * Who decides on the 0MQ road-map?
 * A worked example of a change to libzmq.
-
-+++ The Tale of Two Bridges
-////
-AO: I've always liked this story, but I've always thought (and still think) it is too far removed from the concrete history of how 0MQ evolved, which is what the story is commenting on. I suggest a little reorganization to bring the two sections next to each other.
-////
-
-Two old engineers were talking of their lives and boasting of their greatest projects. One of the engineers explained how he had designed one of the greatest bridges ever made.
-
-"We built it across a river gorge," he told his friend. "It was wide and deep. We spent two years studying the land, and choosing designs and materials. We hired the best engineers and designed the bridge, which took another five years. We contracted the largest engineering firms to build the structures, the towers, the tollbooths, and the roads that would connect the bridge to the main highways. Dozens died during the construction. Under the road level we had trains, and a special path for cyclists. That bridge represented years of my life."
-
-The second man reflected for a while, then spoke. "One evening me and a friend got drunk on vodka, and we threw a rope across a gorge," he said. "Just a rope, tied to two trees. There were two villages, one at each side. At first, people pulled packages across that rope with a pulley and string. Then someone threw a second rope, and built a foot walk. It was dangerous, but the kids loved it. A group of men then rebuilt that, made it solid, and women started to cross, everyday, with their produce. A market grew up on one side of the bridge, and slowly that became a large town, since there was a lot of space for houses. The rope bridge got replaced with a wooden bridge, to allow horses and carts to cross. Then the town built a real stone bridge, with metal beams. Later, they replaced the stone part with steel, and today there's a suspension bridge standing in that same spot."
-
-The first engineer was silent. "Funny thing," he said, "my bridge was demolished about ten years after we built it. Turns out it was built in the wrong place and no-one wanted to use it. Some guys had thrown a rope across the gorge, a few miles further downstream, and that's where everyone went."
 
 +++ Architecture of the 0MQ Community
 
@@ -74,6 +62,42 @@ But gambling with hundreds of millions of others' money isn't for everyone. For 
 The brilliant and visionary Eben Moglen once said, roughly, that a free software license is the contract on which a community builds. When I heard this, about ten years ago, the idea came to me, //can we deliberately grow free software communities//?
 
 Ten years later, the answer is "yes", and there is almost a science to it. I say "almost" because we don't yet have enough evidence of people doing this deliberately with a documented, reproducible process. It is what I'm trying to do with [http://softwareandsilicon.com/chapter:2#toc5 Social Architecture]. 0MQ came after Wikidot, after the [http://www.digistan.org Digital Standards Organization] (Digistan) and after the [http://www.ffii.org Foundation for a Free Information Infrastructure] (aka the FFII, an NGO that fights against software patents). Which came after a lot of less successful community projects like Xitami and Libero. My main takeaway from a long career of projects of every conceivable format is: if you want to build truly large-scale and long-lasting software, aim to build a free software community.
+
+++++ Psychology of Software Architecture
+
+Dirkjan Ochtman pointed me to [http://en.wikipedia.org/wiki/Software_architecture Wikipedia's definition of Software Architecture] as "the set of structures needed to reason about the system, which comprise software elements, relations among them, and properties of both". For me this vapid and circular jargon is a good example of how miserably little we understand about what actually makes a successful large scale software architecture.
+
+Architecture is the art and science of making large artificial structures for human use. If there is one thing I've learned and applied successfully in 30 years of making larger and larger software systems it is this: //software is about people//. Large structures in themselves are meaningless. It's how they function for //human use// that matters. And in software, human use starts with the programmers who make the software itself.
+
+The core problems in software architecture are driven by human psychology, not technology. There are many ways our psychology affects our work. I could point to the way teams seem to get stupider as they get larger, or have to work across larger distances. Does that mean the smaller the team, the more effective? How then does a large global community like 0MQ manage to work successfully?
+
+The 0MQ community wasn't accidental, it was a deliberate design, my contribution to the early days when the code came out of a cellar in Bratislava. The design was based on my pet science of "Social Architecture", which [http://en.wikipedia.org/wiki/Social_architecture Wikipedia defines] (what a coincidence!) as "the process, and the product, of planning, designing, and growing an on-line community."
+
+One of the tenets of Social Architecture is that //how we organize// is more significant than //who we are//. The same group, organized differently, can produce wholly different results. We are like peers in a 0MQ network, and our communication patterns have dramatic impact on our performance. Ordinary people, well connected, can far outperform a team of experts using poor patterns. If you're the architect of a larger 0MQ application, you're going to have to help others find the right patterns for working together. Do this right, and your project can succeed. Do it wrong, and your project will fail.
+
+The two most important psychological elements are IMO that we're really bad at understanding complexity, and that we are so good at working together to divide and conquer large problems. We're highly social apes, and kind of smart, but only in the right kind of crowd.
+
+So here is my short list of the Psychological Elements of Software Architecture:
+
+* **Stupidity**: our mental bandwidth is limited, so we're all stupid at some point. The architecture has to be simple to understand. This is the number one rule: simplicity beats functionality, every single time. If you can't understand an architecture on a cold gray Monday morning before coffee, it is too complex.
+
+* **Selfishness**: we act only out of self-interest, so the architecture must create space and opportunity for selfish acts that benefit the whole. Selfishness is often indirect and subtle. For example I'll spend hours helping someone else understand something because that could be worth days to me later.
+
+* **Laziness**: we make lots of assumptions, many of which are wrong. We are happiest when we can spend the least effort to get a result, to test an assumption quickly, so the architecture has to make this possible. Specifically, that means it must be simple.
+
+* **Jealousy**: we're jealous of others, which means we'll overcome our stupidity and laziness to prove others wrong, and beat them in competition. The architecture thus has to create space for public competition based on fair rules that anyone can understand.
+
+* **Fear**: we're unwilling to take risks, especially if it makes us look stupid. Fear of failure is a major reason people conform and follow the group in mass stupidity. The architecture should make silent experimentation easy and cheap, giving people opportunity for success without punishing failure.
+
+* **Reciprocity**: we'll pay extra in terms of hard work, even money, to punish cheats and enforce fair rules. The architecture should be heavily rule-based, telling people how to work together, but not what to work on.
+
+* **Conformity**: we're happiest to conform, out of fear and laziness, which means if the patterns are good, clearly explained and documented, and fairly enforced, we'll naturally choose the right path every time.
+
+* **Pride**: we're intensely aware of our social status, and we'll work hard to avoid looking stupid or incompetent in public. The architecture has to make sure every piece we make has our name on it, so we'll have sleepless nights stressing about what others will say about our work.
+
+* **Greed**: we're ultimately economic animals (see selfishness), so the architecture has to give us economic incentive to invest in making it happen. Maybe it's polishing our reputation as experts, maybe it's literally making money from some skill or component. It doesn't matter what it is, but there must be economic incentive. Think of architecture as a market place, not an engineering design.
+
+These strategies work on large scale but also on small scale, within an organization or team.
 
 ++++ The Contract
 
@@ -409,7 +433,7 @@ This may be over-detailed. The key point here is that these forked stabilization
 
 ++++ Evolution of Public Contracts
 
-By "public contracts" I mean APIs and protocols. Up until the end of 2011, libzmq's naturally happy state was marred by broken promises and broken contracts. We stopped making promises (aka "roadmaps") for libzmq completely, and our dominant theory of change is now that it emerges carefully and accurately over time. At a 2012 Chicago meetup, Garrett Smith and Chuck Remes called this the "drunken stumble to greatness", which is how I think of it now.
+By "public contracts" I mean APIs and protocols. Up until the end of 2011, libzmq's naturally happy state was marred by broken promises and broken contracts. We stopped making promises (aka "road-maps") for libzmq completely, and our dominant theory of change is now that it emerges carefully and accurately over time. At a 2012 Chicago meetup, Garrett Smith and Chuck Remes called this the "drunken stumble to greatness", which is how I think of it now.
 
 We stopped breaking public contracts simply by banning the practice. Before then it had been "OK" (as in we did it, and everyone complained bitterly, and we ignored them) to break the API or protocol so long as we changed the major version number. Sounds fine, until you get 0MQ version 2.0, 3.0, and 4.0, all in development at the same time, and not speaking to each other.
 
@@ -451,10 +475,7 @@ I've not tested this rule to be certain it makes sense. Perhaps what it means is
 
 C4 is not perfect, few things are. The process for changing it (Digistan's COSS) is a little outdated now: it relies on a single-editor workflow with the ability to fork, but not merge. This seems to work but it could be better to use C4 for protocols like C4.
 
-+++ Worked Example
-////
-AO: Do you mean "working example"? I think this is an instance of a "real-life example".
-////
++++ A Real-Life Example
 
 In [http://lists.zeromq.org/pipermail/zeromq-dev/2012-October/018838.html this email thread], Dan Goes asks how to make a publisher that knows when a new client subscribes, and sends out previous matching messages. It's a standard pub-sub technique called "last value caching". Now over a 1-way transport like pgm (where subscribers literally send no packets back to publishers) this can't be done. But over TCP, it can, if we use an XPUB socket and if that socket didn't cleverly filter out duplicate subscriptions to reduce upstream traffic.
 
@@ -648,14 +669,29 @@ If you can't use forks, perhaps because your firm doesn't trust GitHub's private
 
 +++ Designing for Innovation
 
+++++ The Tale of Two Bridges
+
+Two old engineers were talking of their lives and boasting of their greatest projects. One of the engineers explained how he had designed one of the greatest bridges ever made.
+
+"We built it across a river gorge," he told his friend. "It was wide and deep. We spent two years studying the land, and choosing designs and materials. We hired the best engineers and designed the bridge, which took another five years. We contracted the largest engineering firms to build the structures, the towers, the tollbooths, and the roads that would connect the bridge to the main highways. Dozens died during the construction. Under the road level we had trains, and a special path for cyclists. That bridge represented years of my life."
+
+The second man reflected for a while, then spoke. "One evening me and a friend got drunk on vodka, and we threw a rope across a gorge," he said. "Just a rope, tied to two trees. There were two villages, one at each side. At first, people pulled packages across that rope with a pulley and string. Then someone threw a second rope, and built a foot walk. It was dangerous, but the kids loved it. A group of men then rebuilt that, made it solid, and women started to cross, everyday, with their produce. A market grew up on one side of the bridge, and slowly that became a large town, since there was a lot of space for houses. The rope bridge got replaced with a wooden bridge, to allow horses and carts to cross. Then the town built a real stone bridge, with metal beams. Later, they replaced the stone part with steel, and today there's a suspension bridge standing in that same spot."
+
+The first engineer was silent. "Funny thing," he said, "my bridge was demolished about ten years after we built it. Turns out it was built in the wrong place and no-one wanted to use it. Some guys had thrown a rope across the gorge, a few miles further downstream, and that's where everyone went."
+
 ++++ How 0MQ Lost its Road-map
-////
-AO: If I remember right, 0MQ had a history before this conference, and it illustrates well why the crowdsourced method you used was better than a road-map. So that history should come first.
-////
 
-Presenting 0MQ at the Mix-IT conference in Lyon in early 2012, I was asked several times for the "road-map". My answer was: there is no road-map any longer, and the road-maps we made were bad for several reasons. First, they made promises we could rarely keep, which caused problems for our users. Second, they claimed territory and thus made it harder for others to participate. Lastly, they preempted the thinking process of the community. We had road-maps, and we deleted them.
+Presenting 0MQ at the Mix-IT conference in Lyon in early 2012, I was asked several times for the "road-map". My answer was: there is no road-map any longer. We had road-maps, and we deleted them. Instead of a few experts trying to lay out the next steps, we were allowing this to happen organically. The audience didn't really like my answer. So un-French.
 
-The audience didn't really like my answer. So un-French. Software engineers don't like the notion that powerful, effective solutions can come into existence without an intelligent designer actively thinking things through. And yet no-one in that room would question evolution. A strange irony, and one I wanted to explore further as it underpins the direction the 0MQ community has taken since the start of 2012.
+However the history of 0MQ makes it quite clear why road-maps were problematic. In the beginning, we had a small team making the library, with few contributors, and no documented road-map. As 0MQ grew more popular, and we switched to more contributors, users asked for road-maps. So we collected our plans together and tried to organize them into releases. Here, we wrote, is what will come in the next release.
+
+As we rolled out releases, we hit the problem that it's very easy to promise stuff, and rather harder to make it as planned. For one thing, much of the work was voluntary, and it's not clear how you force volunteers to commit to a road-map. But also, priorities can shift dramatically over time. So we were making promises we could not keep, and the real deliveries didn't match the road-maps.
+
+The second problem was that by defining the road-map, we in effect claimed territory, making it harder for others to participate. People do prefer to contribute to changes they believe were their idea. Writing down a list of things to do turns contribution into a chore rather than an opportunity.
+
+Finally, we saw changes in 0MQ that were quite traumatic, and the road-maps didn't help with this, despite a lot of discussion and effort to "do it right". For example, incompatible changes in APIs and protocols. It was quite clear that we needed a different approach for defining the change process.
+
+Software engineers don't like the notion that powerful, effective solutions can come into existence without an intelligent designer actively thinking things through. And yet no-one in that room in Lyon would have questioned evolution. A strange irony, and one I wanted to explore further as it underpins the direction the 0MQ community has taken since the start of 2012.
 
 In the dominant theory of innovation, brilliant individuals reflect on large problem sets and then carefully and precisely create a solution. Sometimes they will have "eureka" moments where they "get" brilliantly simple answers to whole large problem sets. The inventor, and the process of invention are rare, precious, and can command a monopoly. History is full of such heroic individuals. We owe them our modern world.
 

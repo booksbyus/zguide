@@ -73,6 +73,11 @@ print OUTPUT "<?xml version=\"1.0\"?>\n";
 print OUTPUT "<!DOCTYPE book PUBLIC \"-//OASIS//DTD DocBook XML V4.5//EN\"\n";
 print OUTPUT "\"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd\">\n";
 print OUTPUT "<book>\n";
+print OUTPUT "<author>\n";
+print OUTPUT "  <honorific>Mr</honorific>\n";
+print OUTPUT "  <firstname>Pieter</firstname>\n";
+print OUTPUT "  <surname>Hintjens</surname>\n";
+print OUTPUT "</author>\n";
 
 #   Include bookinfo if book directory exists
 if ($format eq "book" && open (BOOKINFO, "book/bookinfo.xml")) {
@@ -863,4 +868,3 @@ sub error {
     print STDERR "E: $_\n";
     $have_errors = 1;                   #   We have 1 or more errors
 }
-

@@ -1214,19 +1214,20 @@ When you can send messages rapidly from process to process, you soon discover th
 The problem is this: if you have process A sending messages to process B, which suddenly gets very busy (garbage collection, CPU overload, whatever), then what happens to the messages that process A wants to send? Some will sit in B's network buffers. Some will sit on the Ethernet wire itself. Some will sit in A's network buffers. And the rest will accumulate in A's memory. If you don't take some precaution, A can easily run out of memory and crash. It is a consistent, classic problem with message brokers.
 
 What are the answers? One is to pass the problem upstream. A is getting the messages from somewhere else. So tell that process, "stop!" And so on. This is called "flow control". It sounds great, but what if you're sending out a Twitter feed? Do you tell the whole world to stop tweeting while B gets its act together?
+
 Flow control works in some cases but in others. The transport layer can't tell the application layer to "stop" any more than a subway system can tell a large business, "please keep your staff at work another half an hour, I'm too busy".
 
-The answer for messaging is to set limits on the size of buffers, and then when we reach those limits, take some sensible action. In most cases (not for a subway system, though), the answer is to throw away messages. In a few others, it's to wait.
+The answer for messaging is to set limits on the size of buffers, and then when we reach those limits, take some sensible action. In some cases (not for a subway system, though), the answer is to throw away messages. In a others, the best strategy to wait.
 
-0MQ uses the concept of "high water mark" or HWM to define the capacity of its internal pipes. Each connection out of a socket or into a socket has its own pipe, and HWM capacity.
+0MQ uses the concept of "high water mark" or HWM to define the capacity of its internal pipes. Each connection out of a socket or into a socket has its own pipe, and high-water mark for sending, and/or receiving, depending on the socket type. Some sockets (PUB, PUSH) only have send buffers. Some (SUB, PULL, REQ, REP) only have receive buffers. Some (DEALER, ROUTER, PAIR) have both send and receive buffers.
 
 In 0MQ/2.x the HWM was infinite by default. In 0MQ/3.x it's set to 1,000 by default, which is more sensible. If you're still using 0MQ/2.x you should always set a HWM on your sockets, be it 1,000 to match 0MQ/3.x or another figure that takes into account your message sizes.
 
-The high water mark affects both the transmit and receive buffers of a single socket. Some sockets (PUB, PUSH) only have transmit buffers. Some (SUB, PULL, REQ, REP) only have receive buffers. Some (DEALER, ROUTER, PAIR) have both transmit and receive buffers.
+When your socket reaches its high-water mark, it will either block or drop data depending on the socket type. PUB and ROUTER sockets will drop data if they reach their high-water mark, while other socket types will block.
 
-When your socket reaches its high-water mark, it will either block or drop data depending on the socket type. PUB sockets will drop data if they reach their high-water mark, while other socket types will block.
+Over the {{inproc}} transport, the sender and receiver share the same buffers, so the real HWM is the sum of the HWM set by both sides.
 
-Over the {{inproc}} transport, the sender and receiver share the same buffers, so the real HWM is the sum of the HWM set by both sides. This means in effect that if one side does not set a HWM, there is no limit to the buffer size.
+Lastly, the high-water marks are counted in //message parts//, not whole messages. If you are sending two-part messages, the default HWM is 500. When you use the ROUTER socket type (which we'll see in [#advanced-request-reply]), every message is at least two parts.
 
 +++ Missing Message Problem Solver
 

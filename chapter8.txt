@@ -360,11 +360,11 @@ At this stage however, the code is growing larger than an example should be, so 
 * Two maintainers.
 * A first bootstrap version.
 
-The name and slogan first. The trademarks of the 21st century are domain names. So the first thing I do when spinning off a project is to look for a domain name that might work. Quite randomly, one of our old messaging products was called "Zyre" and I have the domain names for it. So, the "ZeroMQ Realtime Experience" project, which is a terribly forced construction but more or less accurate. We are aiming to create a framework for real time experiences (sharing games, photos, stories) over 0MQ.
+The name and slogan first. The trademarks of the 21st century are domain names. So the first thing I do when spinning off a project is to look for a domain name that might work. Quite randomly, one of our old mobile projects was called "Zyre" and I have the domain names for it. So, that's the full name: the ZeroMQ Realtime Exchange framework.
 
 I'm somewhat shy about pushing new projects into the 0MQ community too aggressively, and normally would start a project in either my personal account or the iMatix organization. But we've learned that moving projects after they become popular is counter-productive. My predictions of a future filled with moving pieces are either valid, or wrong. If this chapter is valid, we might as well launch this as a 0MQ project from the start. If it's wrong, we can delete the repository later or let it sink to the bottom of a long list of forgotten starts.
 
-Start with the basics. The protocol (UDP and 0MQ/TCP) will be ZRE and the project will be ZyRE, with different capitalization to reduce confusion with the old project. I need a second maintainer, so invite my friend Dong Min (the Korean hacker behind JeroMQ, a pure-Java 0MQ stack) to join. He's been working on very similar ideas so is enthusiastic. We discuss this and we get the idea of building ZyRE on top of JeroMQ as well as on top of CZMQ and libzmq. This would make it a lot easier to run ZyRE on Android. It would also give us two fully separate implementations from the start, always a good thing for a protocol.
+Start with the basics. The protocol (UDP and 0MQ/TCP) will be ZRE (ZeroMQ Realtime Exchange protocol) and the project will be Zyre. I need a second maintainer, so invite my friend Dong Min (the Korean hacker behind JeroMQ, a pure-Java 0MQ stack) to join. He's been working on very similar ideas so is enthusiastic. We discuss this and we get the idea of building Zyre on top of JeroMQ as well as on top of CZMQ and libzmq. This would make it a lot easier to run Zyre on Android. It would also give us two fully separate implementations from the start, always a good thing for a protocol.
 
 So we take the FileMQ project I built in [#advanced-architecture] as a template for a new GitHub project. The GNU autoconf tools are quite decent but have a painful syntax. It's easiest to copy existing project files, and modify them. The FileMQ project builds a library, has test tools, license files, man pages, and so on. It's not too large so it's a good starting point.
 
@@ -478,7 +478,7 @@ Developers who study 0MQ and then try to create N-to-N connections between sets 
 
 My conclusion after trying several times from different angles is that ROUTER-to-ROUTER does not work. And the 0MQ reference manual does not allow it when it discusses ROUTER sockets in {{zmq_socket[3]}}. At a minimum, one peer must bind and one must connect, meaning the architecture is not symmetrical. But also because you simply can't tell when you are allowed to safely send a message to a peer. It's Catch-22: you can talk to a peer after it's talked to you. But the peer can't talk to you until you've talked to it. One side or the other will be losing messages and thus has to retry, which means the peers cannot be equal.
 
-I'm going to explain the Harmony pattern, which solves this problem, and which we use in ZyRE.
+I'm going to explain the Harmony pattern, which solves this problem, and which we use in Zyre.
 
 We want a guarantee that when a peer "appears" on our network, we can talk to it safely, without 0MQ dropping messages. For this, we have to use a DEALER or PUSH socket which //connects out to the peer// so that even if that connection takes some non-zero time, there is immediately a pipe, and 0MQ will accept outgoing messages.
 
@@ -582,9 +582,9 @@ One trick that makes it easier is to use assertions. Assertions are not a form o
 
 The faster you can prove code incorrect, the faster and more accurately you can fix it. Believing that code works and proving that it behaves as expected is less science, and more magical thinking. It's far better to be able to say, "libzmq has five hundred assertions and despite all my efforts, not one of them fails".
 
-So the ZyRE code base is scattered with assertions, and particularly a couple on the code that deals with the state of peers. This is the hardest aspect to get right: peers need to track each other and exchange state accurately, or things stop working. The algorithms depends on asynchronous messages flying around and I'm pretty sure the initial design has flaws. They always do.
+So the Zyre code base is scattered with assertions, and particularly a couple on the code that deals with the state of peers. This is the hardest aspect to get right: peers need to track each other and exchange state accurately, or things stop working. The algorithms depends on asynchronous messages flying around and I'm pretty sure the initial design has flaws. They always do.
 
-And as I test the original ZyRE code by starting and stopping instances of zre_ping by hand, every so often I get an assertion failure. Running by hand doesn't reproduce these often enough, so let's make a proper tester tool.
+And as I test the original Zyre code by starting and stopping instances of zre_ping by hand, every so often I get an assertion failure. Running by hand doesn't reproduce these often enough, so let's make a proper tester tool.
 
 ++++ On Up-front Testing
 
@@ -602,15 +602,15 @@ The software was portable so we could test that as we wrote it, and as we collec
 
 Lesson is, test up-front so that when you plug the thing in, you know precisely how it's going to behave. If you haven't tested it up-front, you're going to be spending weeks and months in the field, ironing out problems that should never have been there.
 
-++++ The ZyRE Tester
+++++ The Zyre Tester
 
-During manual testing I did hit an assertion rarely. It then disappeared. Since I don't believe in magic, that means the code is still wrong somewhere. So, next step is heavy-duty testing of the ZyRE 0.2.0 code to try to break its assertions, and get a good idea of how it will behave in the field.
+During manual testing I did hit an assertion rarely. It then disappeared. Since I don't believe in magic, that means the code is still wrong somewhere. So, next step is heavy-duty testing of the Zyre 0.2.0 code to try to break its assertions, and get a good idea of how it will behave in the field.
 
 We packaged the discovery and messaging functionality as an 'interface' object that the main program creates, works with, and then destroys. We don't use any global variables. This makes it easy to start large numbers of interfaces and simulate real activity, all within one process. And if there's one thing we've learned from writing lots of examples, it's that 0MQ's ability to orchestrate multiple threads in a single process is //much// easier to work with than multiple processes.
 
 The first version of the tester consists of a main thread which starts and stops a set of child threads, each running one interface, each with a ROUTER, DEALER, and UDP socket ('R', 'D', and 'U' in the diagram)!figref().
 
-[[code type="textdiagram" title="ZyRE Tester Tool"]]
+[[code type="textdiagram" title="Zyre Tester Tool"]]
                         +----------+
                         |   Main   |
                         |  thread  |
@@ -633,7 +633,7 @@ The first version of the tester consists of a main thread which starts and stops
 +---+---+---+   +---+---+---+   +---+---+---+   +---+---+---+
 [[/code]]
 
-The nice thing is that when I am connected to a WiFi access point, all ZyRE traffic (even between two interfaces in the same process) goes across the AP. This means I can fully stress test any WiFi infrastructure with just a couple of PCs running in a room. It's hard to emphasize how valuable this is: if we had built ZyRE as, say, a dedicated service for Android, we'd literally need dozens of Android tablets or phones to do any large-scale testing. Kiosks, and all that.
+The nice thing is that when I am connected to a WiFi access point, all Zyre traffic (even between two interfaces in the same process) goes across the AP. This means I can fully stress test any WiFi infrastructure with just a couple of PCs running in a room. It's hard to emphasize how valuable this is: if we had built Zyre as, say, a dedicated service for Android, we'd literally need dozens of Android tablets or phones to do any large-scale testing. Kiosks, and all that.
 
 The focus is now on breaking the current code, trying to prove it wrong. There's //no point// at this stage in testing how well it runs, how fast it is, how much memory it uses, or anything else. We'll work up to trying (and failing) to break each individual functionality but first, we try to break some of the core assertions I've put into the code.
 
@@ -767,7 +767,7 @@ The very simplest technique is to print the necessary information to the console
 
 In any performance-sensitive 0MQ architecture you need to solve the problem of flow control. You cannot simply send unlimited messages to a socket and hope for the best. At the one extreme, you can exhaust memory. This is a classic failure pattern for a message broker: one slow client stops receiving messages; the broker starts to queue them, and eventually exhausts memory and the whole process dies. At the other extreme, the socket drops messages, or blocks, as you hit the high-water mark.
 
-With ZyRE we want to distribute messages to a set of peers, and we want to do this fairly. Using a single ROTER socket for output would be problematic since any one blocked peer would block outgoing traffic to all peers. TCP does have good algorithms for spreading the network capacity across a set of connections. And we're using a separate DEALER socket to talk to each peer, so in theory each DEALER socket will send its queued messages in the background reasonably fairly.
+With Zyre we want to distribute messages to a set of peers, and we want to do this fairly. Using a single ROTER socket for output would be problematic since any one blocked peer would block outgoing traffic to all peers. TCP does have good algorithms for spreading the network capacity across a set of connections. And we're using a separate DEALER socket to talk to each peer, so in theory each DEALER socket will send its queued messages in the background reasonably fairly.
 
 The normal behavior of a DEALER socket that hits its high-water mark is to block. This is usually ideal, but it's a problem for us here. Our current interface design uses one thread that distributes messages to all peers. If one of those send calls were to block, all output would block.
 
@@ -793,7 +793,7 @@ Sending message 4
 Resource temporarily unavailable
 [[/code]]
 
-Next step is to decide what a reasonable high water mark would be for a peer. ZyRE is meant for human interactions, that is applications which chat at a low frequency. Perhaps two games, or a shared drawing program. I'd expect a hundred messages per second to be quite a lot. Our "peer is really dead" timeout is 10 seconds. So a high-water mark of 1,000 seems fair.
+Next step is to decide what a reasonable high water mark would be for a peer. Zyre is meant for human interactions, that is applications which chat at a low frequency. Perhaps two games, or a shared drawing program. I'd expect a hundred messages per second to be quite a lot. Our "peer is really dead" timeout is 10 seconds. So a high-water mark of 1,000 seems fair.
 
 Rather than set a fixed HWM, or use the default (which randomly also happens to be 1,000) we calculate it as 100 * the timeout. Here's how we configure a new DEALER socket for a peer:
 
@@ -877,9 +877,9 @@ As in any design, some of these requirements are hostile to each other. For exam
 
 Arguably, just dumping log data to disk is one solution, and it's what most mobile applications do (using 'debug logs'). But most failures require correlation of events from two nodes. This means searching lots of debug logs by hand to find the ones that matter. It's not a very clever approach.
 
-We want to send log data somewhere central, either immediately, or opportunistically (i.e. store and forward). For now, let's focus on immediate logging. My first idea, when it comes to sending data, is to use ZyRE for this. Just send log data to a group called "LOG", and hope someone collects it.
+We want to send log data somewhere central, either immediately, or opportunistically (i.e. store and forward). For now, let's focus on immediate logging. My first idea, when it comes to sending data, is to use Zyre for this. Just send log data to a group called "LOG", and hope someone collects it.
 
-But using ZyRE to log ZyRE itself is a Catch-22. Who logs the logger? What if we want a verbose log of every message sent? Do we include logging messages in that, or not? It quickly gets messy. We want a logging protocol that's independent of ZyRE's main ZRE protocol. The simplest approach is a PUB-SUB protocol, where all nodes publish log data on a PUB socket, and a collector picks that up via a SUB socket!figref().
+But using Zyre to log Zyre itself is a Catch-22. Who logs the logger? What if we want a verbose log of every message sent? Do we include logging messages in that, or not? It quickly gets messy. We want a logging protocol that's independent of Zyre's main ZRE protocol. The simplest approach is a PUB-SUB protocol, where all nodes publish log data on a PUB socket, and a collector picks that up via a SUB socket!figref().
 
 [[code type="textdiagram" title="Distributed Log Collection"]]
 +--------+      +--------+      +--------+
@@ -910,11 +910,11 @@ The collector can, of course, run on any node. This gives us a nice range of use
 
 * A collector that stores log data into a database where it can be used in real-time by other applications. This might be overkill for a small workgroup but would be snazzy for tracking the performance of larger groups. The collector could collect log data over WiFi and then forward it over Ethernet to a database somewhere.
 
-* A live meter application that joined the ZyRE network and then collected log data from nodes, showing events and statistics in real-time.
+* A live meter application that joined the Zyre network and then collected log data from nodes, showing events and statistics in real-time.
 
 Next question is how to interconnect the nodes and collector. Which side binds, and which connects? Both ways will work here but it's marginally better if the PUB sockets connect to the SUB socket. If you recall, 0MQ's internal buffers only pop into existence when there are connections. It means as soon as a node connects to the collector it can start sending log data without loss.
 
-How do we tell nodes what endpoint to connect to? We may have any number of collectors on the network, and they'll be using arbitrary network addresses and ports. We need some kind of service announcement mechanism, and here we can use ZyRE to do the work for us. We could use group messaging, but it seems neater to build service discovery into the ZRE protocol itself. It's nothing complex: if a node provides a service X, it can tell other nodes about that when it sends them a HELLO command.
+How do we tell nodes what endpoint to connect to? We may have any number of collectors on the network, and they'll be using arbitrary network addresses and ports. We need some kind of service announcement mechanism, and here we can use Zyre to do the work for us. We could use group messaging, but it seems neater to build service discovery into the ZRE protocol itself. It's nothing complex: if a node provides a service X, it can tell other nodes about that when it sends them a HELLO command.
 
 We'll extend the HELLO command with a //headers// field that holds a set of name=value pairs. Let's define that the header {{LOG_COLLECTOR}} specifies the collector endpoint (the SUB socket). A node that acts as a collector can add a header like this (for example):
 
@@ -934,7 +934,7 @@ Making this first version was fairly simple and took half a day. Here are the pi
 * We wrote a simple logger application that manages the SUB socket and sets the LOG_COLLECTOR header.
 * We send our own headers when we send a HELLO command.
 
-This version is tagged in the ZyRE repository as v0.4.0 and you can [https://github.com/zeromq/zyre/tags download the tarball] if you want to check what the code looked like at this stage.
+This version is tagged in the Zyre repository as v0.4.0 and you can [https://github.com/zeromq/zyre/tags download the tarball] if you want to check what the code looked like at this stage.
 
 At this stage the log message is just a string. We'll make more professionally structured log data in a little while.
 
