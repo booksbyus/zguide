@@ -11,10 +11,9 @@ static void
 client_thread (void *args, zctx_t *ctx, void *pipe)
 {
     void *dealer = zsocket_new (ctx, ZMQ_DEALER);
-    zsocket_set_hwm (dealer, PIPELINE);
     zsocket_connect (dealer, "tcp://127.0.0.1:6000");
 
-    //  We'll allow up to five chunks in transit at once
+    //  Up to this many chunks in transit
     size_t credit = PIPELINE;
     
     size_t total = 0;       //  Total bytes received
@@ -65,7 +64,8 @@ server_thread (void *args, zctx_t *ctx, void *pipe)
     assert (file);
 
     void *router = zsocket_new (ctx, ZMQ_ROUTER);
-    zsocket_set_hwm (router, PIPELINE);
+    //  We have two parts per message so HWM is PIPELINE * 2
+    zsocket_set_hwm (router, PIPELINE * 2);
     zsocket_bind (router, "tcp://*:6000");
     while (true) {
         //  First frame in each message is the sender identity
