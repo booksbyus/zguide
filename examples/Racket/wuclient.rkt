@@ -4,7 +4,7 @@
 #   Connects SUB socket to tcp://localhost:5556
 #   Collects weather updates and finds avg temp in zipcode
 |#
-(require (planet jaymccarthy/zeromq))
+(require net/zmq)
 
 ;  Socket to talk to server
 (define ctxt (context 1))

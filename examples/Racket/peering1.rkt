@@ -3,7 +3,7 @@
 #   Broker peering simulation (part 1) in Racket
 #   Prototypes the state flow
 |#
-(require (planet jaymccarthy/zeromq))
+(require net/zmq)
 
 (define (main myself peers)
   (printf "Hello, I am ~a\n" myself)

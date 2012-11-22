@@ -4,7 +4,7 @@
 #   Binds PUB socket to tcp://*:5556
 #   Publishes random weather updates
 |#
-(require (planet jaymccarthy/zeromq))
+(require net/zmq)
 
 (define ctxt (context 1))
 (define sock (socket ctxt 'PUB))
