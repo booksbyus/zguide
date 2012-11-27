@@ -31,13 +31,13 @@ Sockets are the de-facto standard API for network programming, as well as being 
 
 Like a favorite dish, 0MQ sockets are easy to digest. Sockets have a life in four parts, just like BSD sockets:
 
-* Creating and destroying sockets, which go together to form a karmic circle of socket life (see {{zmq_socket[3]}}, {{zmq_close[3]).
+* Creating and destroying sockets, which go together to form a karmic circle of socket life (see {{zmq_socket[3]}}, {{zmq_close[3]}}).
 
-* Configuring sockets by setting options on them and checking them if necessary (see {{zmq_setsockopt[3]}}, {{zmq_getsockopt[3]).
+* Configuring sockets by setting options on them and checking them if necessary (see {{zmq_setsockopt[3]}}, {{zmq_getsockopt[3]}}).
 
-* Plugging sockets onto the network topology by creating 0MQ connections to and from them (see {{zmq_bind[3]}}, {{zmq_connect[3]).
+* Plugging sockets onto the network topology by creating 0MQ connections to and from them (see {{zmq_bind[3]}}, {{zmq_connect[3]}}).
 
-* Using the sockets to carry data by writing and receiving messages on them (see {{zmq_msg_send[3]}}, {{zmq_msg_recv[3]).
+* Using the sockets to carry data by writing and receiving messages on them (see {{zmq_msg_send[3]}}, {{zmq_msg_recv[3]}}).
 
 Note that sockets are always void pointers, and messages (which we'll come to very soon) are structures. So in C you pass sockets as-such, but you pass addresses of messages in all functions that work with messages, like {{zmq_msg_send[3]}} and {{zmq_msg_recv[3]}}. As a mnemonic, realize that "in 0MQ all your sockets are belong to us", but messages are things you actually own in your code.
 
@@ -53,7 +53,7 @@ To create a connection between two nodes you use {{zmq_bind[3]}} in one node, an
 
 * One socket may have many outgoing and many incoming connections.
 
-* There is no {{zmq_accept() method. When a socket is bound to an endpoint it automatically starts accepting connections.
+* There is no {{zmq_accept}}() method. When a socket is bound to an endpoint it automatically starts accepting connections.
 
 * The network connection itself happens in the background, and 0MQ will automatically re-connect if the network connection is broken (e.g. if the peer disappears and then comes back).
 
