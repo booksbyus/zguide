@@ -32,6 +32,7 @@ int main (void)
     void *snapshot = zsocket_new (ctx, ZMQ_ROUTER);
     zsocket_bind (snapshot, "tcp://*:5556");
     void *publisher = zsocket_new (ctx, ZMQ_PUB);
+    zsocket_set_hwm (publisher, 0);
     zsocket_bind (publisher, "tcp://*:5557");
     void *collector = zsocket_new (ctx, ZMQ_PULL);
     zsocket_bind (collector, "tcp://*:5558");

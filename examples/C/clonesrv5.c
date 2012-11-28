@@ -35,10 +35,11 @@ int main (void)
 
     //  Set up our clone server sockets
     self->snapshot  = zsocket_new (self->ctx, ZMQ_ROUTER);
-    self->publisher = zsocket_new (self->ctx, ZMQ_PUB);
-    self->collector = zsocket_new (self->ctx, ZMQ_PULL);
     zsocket_bind (self->snapshot,  "tcp://*:%d", self->port);
+    self->publisher = zsocket_new (self->ctx, ZMQ_PUB);
+    zsocket_set_hwm (publisher, 0);
     zsocket_bind (self->publisher, "tcp://*:%d", self->port + 1);
+    self->collector = zsocket_new (self->ctx, ZMQ_PULL);
     zsocket_bind (self->collector, "tcp://*:%d", self->port + 2);
 
     //  Register our handlers with reactor
