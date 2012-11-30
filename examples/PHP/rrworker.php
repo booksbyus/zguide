@@ -12,14 +12,14 @@ $context = new ZMQContext();
 $responder = new ZMQSocket($context, ZMQ::SOCKET_REP);
 $responder->connect("tcp://localhost:5560");
 
-while(true) {
-	//  Wait for next request from client
-	$string = $responder->recv();
-	printf ("Received request: [%s]%s", $string, PHP_EOL);
-	
-	// Do some 'work'
-	sleep(1);
-	
-	//  Send reply back to client
-	$responder->send("World");
+while (true) {
+    //  Wait for next request from client
+    $string = $responder->recv();
+    printf ("Received request: [%s]%s", $string, PHP_EOL);
+
+    // Do some 'work'
+    sleep(1);
+
+    //  Send reply back to client
+    $responder->send("World");
 }

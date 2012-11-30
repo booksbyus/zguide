@@ -7,8 +7,8 @@
 */
 
 if (count($argv) < 2) {
-	printf("I: Syntax: %s <endpoint>\n", $argv[0]);
-	exit;
+    printf("I: Syntax: %s <endpoint>\n", $argv[0]);
+    exit;
 }
 
 $endpoint = $argv[1];
@@ -17,7 +17,7 @@ $server = $context->getSocket(ZMQ::SOCKET_REP);
 $server->bind($endpoint);
 
 printf("I: Echo service is ready at %s\n", $endpoint);
-while(true) {
-	$msg = $server->recvMulti();
-	$server->sendMulti($msg);
+while (true) {
+    $msg = $server->recvMulti();
+    $server->sendMulti($msg);
 }

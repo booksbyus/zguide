@@ -1,4 +1,4 @@
-<?php 
+<?php
 /*
  *  Task ventilator
  *  Binds PUSH socket to tcp://localhost:5557
@@ -20,15 +20,15 @@ echo "Sending tasks to workers...", PHP_EOL;
 
 //  The first message is "0" and signals start of batch
 $sender->send(0);
-    
+
 //  Send 100 tasks
 $total_msec = 0;     //  Total expected cost in msecs
 for ($task_nbr = 0; $task_nbr < 100; $task_nbr++) {
-	//  Random workload from 1 to 100msecs
-	$workload = mt_rand(1, 100);
-	$total_msec += $workload;
-	$sender->send($workload);
-	
+    //  Random workload from 1 to 100msecs
+    $workload = mt_rand(1, 100);
+    $total_msec += $workload;
+    $sender->send($workload);
+
 }
 
 printf ("Total expected cost: %d msec\n", $total_msec);

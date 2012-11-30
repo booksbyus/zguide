@@ -2,6 +2,6 @@
 /*
  *  Test zmsg class
  */
-include "zmsg.php";
+include 'zmsg.php';
 
 Zmsg::test();

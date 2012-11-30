@@ -18,14 +18,14 @@ $backend->bind("tcp://10.1.1.0:8100");
 $frontend->setSockOpt(ZMQ::SOCKOPT_SUBSCRIBE, "");
 
 //  Shunt messages out to our own subscribers
-while(true) {
-	while(true) {
-		//  Process all parts of the message
-		$message = $frontend->recv();
-		$more = $frontend->getSockOpt(ZMQ::SOCKOPT_RCVMORE);
-		$backend->send($message, $more ? ZMQ::SOCKOPT_SNDMORE : 0);
-		if(!$more) {
-			break; // Last message part
-		}
-	}
+while (true) {
+    while (true) {
+        //  Process all parts of the message
+        $message = $frontend->recv();
+        $more = $frontend->getSockOpt(ZMQ::SOCKOPT_RCVMORE);
+        $backend->send($message, $more ? ZMQ::SOCKOPT_SNDMORE : 0);
+        if (!$more) {
+            break; // Last message part
+        }
+    }
 }
