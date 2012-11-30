@@ -21,16 +21,16 @@ $syncservice->bind("tcp://*:5562");
 //  Get synchronization from subscribers
 $subscribers = 0;
 while ($subscribers < SUBSCRIBERS_EXPECTED) {
-	//  - wait for synchronization request
-	$string = $syncservice->recv();
-	//  - send synchronization reply
-	$syncservice->send("");
-	$subscribers++;
+    //  - wait for synchronization request
+    $string = $syncservice->recv();
+    //  - send synchronization reply
+    $syncservice->send("");
+    $subscribers++;
 }
 
 //  Now broadcast exactly 1M updates followed by END
 for ($update_nbr = 0; $update_nbr < 1000000; $update_nbr++) {
-	$publisher->send("Rhubarb");
+    $publisher->send("Rhubarb");
 }
 
 $publisher->send("END");

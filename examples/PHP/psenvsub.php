@@ -11,10 +11,10 @@ $subscriber->connect("tcp://localhost:5563");
 $subscriber->setSockOpt(ZMQ::SOCKOPT_SUBSCRIBE, "B");
 
 while (true) {
-	//  Read envelope with address
-	$address = $subscriber->recv();
-	//  Read message contents
-	$contents = $subscriber->recv();
-	printf ("[%s] %s%s", $address, $contents, PHP_EOL);
+    //  Read envelope with address
+    $address = $subscriber->recv();
+    //  Read message contents
+    $contents = $subscriber->recv();
+    printf ("[%s] %s%s", $address, $contents, PHP_EOL);
 }
-//  We never get here 
+//  We never get here

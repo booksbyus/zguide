@@ -20,14 +20,14 @@ $sender->connect("tcp://localhost:5558");
 
 //  Process tasks forever
 while (true) {
-	$string = $receiver->recv();
-	
-	//  Simple progress indicator for the viewer
-	echo $string, PHP_EOL;
-   
-	//  Do the work
-	usleep($string * 1000);
+    $string = $receiver->recv();
+
+    //  Simple progress indicator for the viewer
+    echo $string, PHP_EOL;
+
+    //  Do the work
+    usleep($string * 1000);
 
    //  Send results to sink
-	$sender->send("");
+    $sender->send("");
 }
