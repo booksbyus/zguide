@@ -25,10 +25,10 @@ $string = $syncclient->recv();
 //  Third, get our updates and report how many we got
 $update_nbr = 0;
 while (true) {
-	$string = $subscriber->recv();
-	if($string == "END") {
-		break;
-	}
-	$update_nbr++;
+    $string = $subscriber->recv();
+    if ($string == "END") {
+        break;
+    }
+    $update_nbr++;
 }
 printf ("Received %d updates %s", $update_nbr, PHP_EOL);

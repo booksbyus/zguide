@@ -28,24 +28,24 @@ $readable = $writeable = array();
 
 //  Process messages from both sockets
 while (true) {
-	$events = $poll->poll($readable, $writeable);
-	if($events > 0) {
-		foreach($readable as $socket) {
-			if($socket === $receiver) {
-				$message = $socket->recv();
-				//  Simple progress indicator for the viewer
-				echo $message, PHP_EOL;
+    $events = $poll->poll($readable, $writeable);
+    if ($events > 0) {
+        foreach ($readable as $socket) {
+            if ($socket === $receiver) {
+                $message = $socket->recv();
+                //  Simple progress indicator for the viewer
+                echo $message, PHP_EOL;
 
-				//  Do the work
-				usleep($message * 1000);
+                //  Do the work
+                usleep($message * 1000);
 
-			   //  Send results to sink
-				$sender->send("");
-			}
-			//  Any waiting controller command acts as 'KILL'
-			else if($socket === $controller) {
-				exit();
-			}
-		}
-	}
+               //  Send results to sink
+                $sender->send("");
+            }
+            //  Any waiting controller command acts as 'KILL'
+            else if ($socket === $controller) {
+                exit();
+            }
+        }
+    }
 }

@@ -19,29 +19,29 @@ $subscriber->setSockOpt(ZMQ::SOCKOPT_SUBSCRIBE, "10001");
 
 //  Process messages from both sockets
 //  We prioritize traffic from the task ventilator
-while(true) {
-	//  Process any waiting tasks
-	try {
-		for($rc = 0; !$rc;) {
-			if($rc = $receiver->recv(ZMQ::MODE_NOBLOCK)) {
-				// process task
-			}
-		}
-	} catch (ZMQSocketException $e) {
-		// do nothing 
-	}
-	
-	try {
-		//  Process any waiting weather updates
-		for($rc = 0; !$rc;) {
-			if($rc = $subscriber->recv(ZMQ::MODE_NOBLOCK)) {
-				// process weather update
-			}
-		}
-	} catch (ZMQSocketException $e) {
-		// do nothing 
-	}
-		
-	//  No activity, so sleep for 1 msec
-	usleep(1);
+while (true) {
+    //  Process any waiting tasks
+    try {
+        for ($rc = 0; !$rc;) {
+            if ($rc = $receiver->recv(ZMQ::MODE_NOBLOCK)) {
+                // process task
+            }
+        }
+    } catch (ZMQSocketException $e) {
+        // do nothing
+    }
+
+    try {
+        //  Process any waiting weather updates
+        for ($rc = 0; !$rc;) {
+            if ($rc = $subscriber->recv(ZMQ::MODE_NOBLOCK)) {
+                // process weather update
+            }
+        }
+    } catch (ZMQSocketException $e) {
+        // do nothing
+    }
+
+    //  No activity, so sleep for 1 msec
+    usleep(1);
 }

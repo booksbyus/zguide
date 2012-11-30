@@ -6,8 +6,8 @@
 
 //  First argument is this broker's name
 //  Other arguments are our peers' names
-if($_SERVER['argc'] < 2) {
-	echo "syntax: peering1 me {you}...", PHP_EOL;
+if ($_SERVER['argc'] < 2) {
+    echo "syntax: peering1 me {you}...", PHP_EOL;
     exit();
 }
 $self = $_SERVER['argv'][1];
@@ -26,10 +26,10 @@ $statefe = $context->getSocket(ZMQ::SOCKET_SUB);
 $statefe->setSockOpt(ZMQ::SOCKOPT_SUBSCRIBE, "");
 
 for ($argn = 2; $argn < $_SERVER['argc']; $argn++) {
-	$peer = $_SERVER['argv'][$argn];
-	printf ("I: connecting to state backend at '%s'%s", $peer, PHP_EOL);
-	$endpoint = sprintf("ipc://%s-state.ipc", $peer);
-	$statefe->connect($endpoint);
+    $peer = $_SERVER['argv'][$argn];
+    printf ("I: connecting to state backend at '%s'%s", $peer, PHP_EOL);
+    $endpoint = sprintf("ipc://%s-state.ipc", $peer);
+    $statefe->connect($endpoint);
 }
 
 $readable = $writeable = array();
@@ -37,26 +37,25 @@ $readable = $writeable = array();
 //  Send out status messages to peers, and collect from peers
 //  The zmq_poll timeout defines our own heartbeating
 while (true) {
-	//  Initialize poll set
-	$poll = new ZMQPoll();
-	$poll->add($statefe, ZMQ::POLL_IN);
-	//  Poll for activity, or 1 second timeout
-	$events = $poll->poll($readable, $writeable, 1000);
-	
-	if($events > 0) {
-		//  Handle incoming status message
-		foreach($readable as $socket) {
-			$address = $socket->recv();
-			$body = $socket->recv();
-			printf ("%s - %s workers free%s", $address, $body, PHP_EOL);
-		}
-	} 
-	else {
-		//  We stick our own address onto the envelope
-		$statebe->send($self, ZMQ::MODE_SNDMORE);
-		//  Send random value for worker availability
-		$statebe->send(mt_rand(1, 10));
-		
-	}
+    //  Initialize poll set
+    $poll = new ZMQPoll();
+    $poll->add($statefe, ZMQ::POLL_IN);
+    //  Poll for activity, or 1 second timeout
+    $events = $poll->poll($readable, $writeable, 1000);
+
+    if ($events > 0) {
+        //  Handle incoming status message
+        foreach ($readable as $socket) {
+            $address = $socket->recv();
+            $body = $socket->recv();
+            printf ("%s - %s workers free%s", $address, $body, PHP_EOL);
+        }
+    } else {
+        //  We stick our own address onto the envelope
+        $statebe->send($self, ZMQ::MODE_SNDMORE);
+        //  Send random value for worker availability
+        $statebe->send(mt_rand(1, 10));
+
+    }
 }
-//  We never get here 
+//  We never get here

@@ -1,4 +1,4 @@
-<?php 
+<?php
 /*
  *  Reading from multiple sockets
  *  This version uses zmq_poll()
@@ -24,20 +24,19 @@ $poll->add($subscriber, ZMQ::POLL_IN);
 $readable = $writeable = array();
 
 //  Process messages from both sockets
-while(true) {
-	$events = $poll->poll($readable, $writeable);
-	if($events > 0) {
-		foreach($readable as $socket) {
-			if($socket === $receiver) {
-				$message = $socket->recv();
-				// Process task
-			} 
-			else if($socket === $subscriber) {
-				$mesage = $socket->recv();
-				// Process weather update
-			}
-		}
-	}
+while (true) {
+    $events = $poll->poll($readable, $writeable);
+    if ($events > 0) {
+        foreach ($readable as $socket) {
+            if ($socket === $receiver) {
+                $message = $socket->recv();
+                // Process task
+            } elseif ($socket === $subscriber) {
+                $mesage = $socket->recv();
+                // Process weather update
+            }
+        }
+    }
 }
-   
+
 //  We never get here
