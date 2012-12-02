@@ -488,7 +488,7 @@ Now, the next problem is to know who sent us a particular message. We need a rep
 
 And so the Harmony pattern comes down to:
 
-* One ROUTER socket that we bind to a transient port, which we broadcast in our beacons.
+* One ROUTER socket that we bind to a ephemeral port, which we broadcast in our beacons.
 * One DEALER socket //per peer// that we connect to the peer's ROUTER socket.
 * Reading from our ROUTER socket.
 * Writing to the peer's DEALER socket.
@@ -916,10 +916,10 @@ Next question is how to interconnect the nodes and collector. Which side binds, 
 
 How do we tell nodes what endpoint to connect to? We may have any number of collectors on the network, and they'll be using arbitrary network addresses and ports. We need some kind of service announcement mechanism, and here we can use Zyre to do the work for us. We could use group messaging, but it seems neater to build service discovery into the ZRE protocol itself. It's nothing complex: if a node provides a service X, it can tell other nodes about that when it sends them a HELLO command.
 
-We'll extend the HELLO command with a //headers// field that holds a set of name=value pairs. Let's define that the header {{LOG_COLLECTOR}} specifies the collector endpoint (the SUB socket). A node that acts as a collector can add a header like this (for example):
+We'll extend the HELLO command with a //headers// field that holds a set of name=value pairs. Let's define that the header {{X-ZRELOG}} specifies the collector endpoint (the SUB socket). A node that acts as a collector can add a header like this (for example):
 
 [[code]]
-LOG_COLLECTOR=tcp://192.168.1.122:9992
+X-ZRELOG=tcp://192.168.1.122:9992
 [[/code]]
 
 When another node sees this header it simply connects its PUB socket to that endpoint. Log data now gets distributed to all collectors (zero or more) on the network.
@@ -928,10 +928,10 @@ Making this first version was fairly simple and took half a day. Here are the pi
 
 * We made a new class {{zre_log}} that accepts log data and manages the connection to the collector, if any.
 * We added some basic management for peer headers, taken from the HELLO command.
-* When a peer has the LOG_COLLECTOR header, we connect to the endpoint it specifies.
+* When a peer has the X-ZRELOG header, we connect to the endpoint it specifies.
 * Where we were logging to stdout, we switched to logging via the zre_log class.
 * We extended the interface API with a method that lets the application set headers.
-* We wrote a simple logger application that manages the SUB socket and sets the LOG_COLLECTOR header.
+* We wrote a simple logger application that manages the SUB socket and sets the X-ZRELOG header.
 * We send our own headers when we send a HELLO command.
 
 This version is tagged in the Zyre repository as v0.4.0 and you can [https://github.com/zeromq/zyre/tags download the tarball] if you want to check what the code looked like at this stage.
@@ -1042,9 +1042,150 @@ Log an event
 
 Which generates us 800 lines of perfect binary codec (the zre_log_msg class). The codec does protocol assertions just like the main ZRE protocol does. Code generation has a fairly steep starting curve but it makes it so much easier to push your designs past "amateur" into "professional".
 
-+++ To be Continued
++++ Content Distribution
 
-FileMQ isn't finished. Like many of the projects in this book, it's an ice-breaker for others. There are some major areas unfinished. Most importantly, security.
+We now have a robust framework for creating groups of nodes, letting them chat to each other, and monitoring the resulting network. Next step is to allow them to distribute content, as files.
 
-How do we build a fully decentralized security system? We might be able to leverage public key infrastructure for some work, but that requires that nodes have their own Internet access, which isn't guaranteed. The answer is, as far as we can tell, to use any existing secure peer-to-peer link (TLS, BlueTooth, perhaps NFC) to exchange a session key, a symmetric cipher. Symmetric ciphers have their advantages and disadvantages. We'll explore this in a future version of this book.
+As usual, we'll aim for the very simplest plausible solution and then improve that step by step. At the very least we want that:
+
+* An application can tell the Zyre API, "publish this file", and provide the path to a file that exists somewhere in the file system.
+* Zyre will distribute that file to all peers, both those that are on the network at that time, and those that arrive later.
+* Each time an interface receives a file it tells its application, "here is this file".
+
+We might eventually want more discrimination, e.g. publishing to specific groups. We can add that later, if it's needed. In [#advanced-architecture] we developed a file distribution system (FileMQ) designed to be plugged into 0MQ applications. So let's use that.
+
+Each node is going to be a file publisher, and a file subscriber. We bind the publisher to an ephemeral port (if we use the standard FileMQ port 5670, we can't run multiple interfaces on one box), and we broadcast the publisher's endpoint in the HELLO message, as we did for the log collector. This lets us interconnect all nodes so that all subscribers talk to all publishers.
+
+We need to ensure that each node has its own directory for sending and receiving files (the 'outbox' and the 'inbox'). Again, it's so we can run multiple nodes on one box. Since we already have a unique ID per node, we just use that in the directory name.
+
+Here's how we set up the FileMQ API when we create a new interface:
+
+[[code type="fragment" name="filemq-outbox"]]
+sprintf (self->fmq_outbox, ".outbox/%s", self->identity);
+mkdir (self->fmq_outbox, 0775);
+
+sprintf (self->fmq_inbox, ".inbox/%s", self->identity);
+mkdir (self->fmq_inbox, 0775);
+
+self->fmq_server = fmq_server_new ();
+self->fmq_service = fmq_server_bind (self->fmq_server, "tcp://*:*");
+fmq_server_publish (self->fmq_server, self->fmq_outbox, "/");
+fmq_server_set_anonymous (self->fmq_server, true);
+char publisher [32];
+sprintf (publisher, "tcp://%s:%d", self->host, self->fmq_service);
+zhash_update (self->headers, "X-FILEMQ", strdup (publisher));
+
+//  Client will connect as it discovers new nodes
+self->fmq_client = fmq_client_new ();
+fmq_client_set_inbox (self->fmq_client, self->fmq_inbox);
+fmq_client_set_resync (self->fmq_client, true);
+fmq_client_subscribe (self->fmq_client, "/");
+[[/code]]
+
+And when we process a HELLO command, we check for the X-FILEMQ header field:
+
+[[code type="fragment" name="filemq-connect"]]
+//  If peer is a FileMQ publisher, connect to it
+char *publisher = zre_msg_headers_string (msg, "X-FILEMQ", NULL);
+if (publisher)
+    fmq_client_connect (self->fmq_client, publisher);
+[[/code]]
+
+Last thing is to expose content distribution in the Zyre API. We need two things:
+
+* A way for the application to say, "publish this file"
+* A way for the interface to tell the application, "we received this file".
+
+In theory the application can publish a file just by creating a symbolic link in the outbox directory, but as we're using a hidden outbox, this is a little difficult. So we add an API method 'publish':
+
+[[code type="fragment" name="publish-file"]]
+//  Publish file into virtual space
+void
+zre_interface_publish (zre_interface_t *self, char *pathname, char *virtual)
+{
+    zstr_sendm (self->pipe, "PUBLISH");
+    zstr_sendm (self->pipe, pathname);
+    zstr_send  (self->pipe, virtual);
+}
+[[/code]]
+
+Which the API passes to the interface thread, which creates the file in the outbox directory, so that the FileMQ server will pick it up and broadcast it. We could literally copy file data into this directory but since FileMQ supports symbolic links, we use that instead. The file has a ".ln" extension and contains one line, that has the actual pathname.
+
+Finally, how do we notify the recipient that a file has arrived? The FileMQ {{fmq_client}} API has a message, "DELIVER", for this, so all we have to do in {{zre_interface}} is grab this message from the fmq_client API and pass it on to our own API:
+
+[[code type="fragment" name="forward-deliver"]]
+zmsg_t *msg = fmq_client_recv (fmq_client_handle (self->fmq_client));
+zmsg_send (&msg, self->pipe);
+[[/code]]
+
+This is complex code that does a lot at once. But we're only at around 10K lines of code for FileMQ and Zyre together. The most complex Zyre class, zre_interface, is 800 lines of code. This is compact. Message-based applications do keep their shape, if you're careful to organize them properly.
+
++++ Writing the Unprotocol
+
+We have all the pieces for a formal protocol specification and it's time to put the protocol on paper. There are two reasons for this. First, to make sure that any other implementations talk to each other properly. Second, because I want to get an official port for the UDP discovery protocol and that means doing the paperwork.
+
+Like all the other unprotocols we developed in this book, the protocol lives on [http://rfc.zeromq.org/spec:20 the 0MQ RFC site]. The core of the protocol specification is the ABNF grammar for the commands and fields:
+
+[[code]]
+zre-protocol    = greeting *traffic
+
+greeting        = S:HELLO
+traffic         = S:WHISPER
+                / S:SHOUT
+                / S:JOIN
+                / S:LEAVE
+                / S:PING R:PING-OK
+
+;   Greet a peer so it can connect back to us
+S:HELLO         = header %x01 ipaddress mailbox groups status headers
+header          = signature sequence
+signature       = %xAA %xA1
+sequence        = 2OCTET        ; Incremental sequence number
+ipaddress       = string        ; Sender IP address
+string          = size *VCHAR
+size            = OCTET
+mailbox         = 2OCTET        ; Sender mailbox port number
+groups          = strings       ; List of groups sender is in
+strings         = size *string
+status          = OCTET         ; Sender group status sequence
+headers         = dictionary    ; Sender header properties
+dictionary      = size *key-value
+key-value       = string        ; Formatted as name=value
+
+; Send a message to a peer
+S:WHISPER       = header %x02 content
+content         = FRAME         ; Message content as 0MQ frame
+
+; Send a message to a group
+S:SHOUT         = header %x03 group content
+group           = string        ; Name of group
+content         = FRAME         ; Message content as 0MQ frame
+
+; Join a group
+S:JOIN          = header %x04 group status
+status          = OCTET         ; Sender group status sequence
+
+; Leave a group
+S:LEAVE         = header %x05 group status
+
+; Ping a peer that has gone silent
+S:PING          = header %06
+
+; Reply to a peer's ping
+R:PING-OK       = header %07
+[[/code]]
+
++++ Conclusions
+
+Building applications for unstable decentralized networks is one of the end-games for 0MQ. As the cost of computing falls every year, such networks become more and more common, be it consumer electronics or virtual boxes in the cloud. In this chapter we've pulled together many of the techniques from the book to build Zyre, a framework for proximity computing over a local network. Zyre isn't unique; there are and have been many attempts to open this area for applications: ZeroConf, SLP, SSDP, UPnP, DDS. But these all seem to end up too complex or otherwise hard for application developers to build on.
+
+Zyre isn't finished. Like many of the projects in this book, it's an ice-breaker for others. There are some major areas unfinished, which we may address in later editions of this book or versions of the software.
+
+* High-level APIs - the message based API that Zyre offers now is usable but still rather more complex than I'd like for average developers. If there's one target we absolutely cannot miss, it's raw //simplicity//. This means high-level APIs in lots of languages, which hide all the messaging and come down to simple methods: start, join/leave group, get message, publish file, stop.
+
+* Security - how do we build a fully decentralized security system? We might be able to leverage public key infrastructure for some work, but that requires that nodes have their own Internet access, which isn't guaranteed. The answer is, as far as we can tell, to use any existing secure peer-to-peer link (TLS, BlueTooth, perhaps NFC) to exchange a session key, a symmetric cipher. Symmetric ciphers have their advantages and disadvantages.
+
+* Nomadic content - how do I, as a user, manage my content across multiple devices? The Zyre + FileMQ combination might help, for local network use, but I'd like to be able to do this across the Internet too. Are there cloud services I could use? Something to make using 0MQ?
+
+* Federation - how do we scale a local-area distributed application across the globe? One plausible answer is federation, which means creating clusters of clusters. If 100 nodes can join together to create a local cluster, then perhaps 100 clusters can join together to create a wide-area cluster. The challenges are then quite similar: discovery, presence, group messaging.
 

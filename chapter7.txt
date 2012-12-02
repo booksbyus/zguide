@@ -1176,7 +1176,7 @@ If we wrap this C API in other languages, we can easily script FileMQ, embed it 
 
 ++++ Initial Design Cut - the Protocol
 
-To start with we write down the protocol as an ABNF grammar. Our grammar starts with the flow of commands between the client and server. You should recognize these as a combination of the various techniques we've seen already:
+The full name for the protocol is the "File Message Queuing Protocol", or FILEMQ in uppercase to distinguish it from the software. To start with we write down the protocol as an ABNF grammar. Our grammar starts with the flow of commands between the client and server. You should recognize these as a combination of the various techniques we've seen already:
 
 [[code]]
 filemq-protocol = open-peering *use-peering [ close-peering ]
@@ -1264,7 +1264,7 @@ S:SRSLY         = signature %x80 reason
 S:RTFM          = signature %x81 reason
 [[/code]]
 
-The FILEMQ/1.0 protocol is specified on the [http://rfc.zeromq.org/spec:19 0MQ unprotocols website] and has a registered TCP port with IANA (the Internet Assigned Numbers Authority), which is port 5670.
+FILEMQ lives on the [http://rfc.zeromq.org/spec:19 0MQ unprotocols website] and has a registered TCP port with IANA (the Internet Assigned Numbers Authority), which is port 5670.
 
 ++++ Building and Trying FileMQ
 
@@ -1287,7 +1287,7 @@ cd src
 
 And open two file navigator windows, one into {{src/fmqroot/send}} and one into {{src/fmqroot/recv}}. Drop files into the send folder and you'll see them arrive in the recv folder. The server checks once per second for new files. Delete files in the send folder, and they're deleted in the recv folder similarly.
 
-I use track for things like updating my MP3 player mounted as a USB drive. As I add or remove files in my laptop's Music folder, the same changes happen on the MP3 player. FileMQ isn't a full replication protocol yet, but we'll fix that later.
+I use track for things like updating my MP3 player mounted as a USB drive. As I add or remove files in my laptop's Music folder, the same changes happen on the MP3 player. FILEMQ isn't a full replication protocol yet, but we'll fix that later.
 
 ++++ Internal Architecture
 
@@ -1333,33 +1333,39 @@ The public API consists of two classes (as we sketched earlier):
 
 * fmq_server: provides the server API, with methods to bind to a port, configure the server, and publish a path.
 
+These classes provide an //asynchronous API//, a model we've used quite often now. When you create an API instance (i.e. {{fmq_server_new()}} or {{fmq_client_new()}}), this method kicks off a background thread which does the real work, i.e. runs the server or the client. The other API methods then talk to this thread over 0MQ sockets (a 'pipe' consisting of two PAIR sockets over inproc://).
+
 If I was a keen young developer eager to use FileMQ in another language, I'd probably spend a happy weekend writing a binding for this public API, then stick it in a subdirectory of the filemq project called, say, "bindings/", and make a pull request.
 
 The actual API methods come from the state machine description, like this (for the server):
 
 [[code]]
-<method name = "bind">
-<argument name = "endpoint" type = "string" />
-zmq_bind (self->router, endpoint);
-</method>
-
 <method name = "publish">
 <argument name = "location" type = "string" />
 <argument name = "alias" type = "string" />
 mount_t *mount = mount_new (location, alias);
 zlist_append (self->mounts, mount);
 </method>
+[[/code]]
 
-<method name = "set anonymous">
-<argument name = "access" type = "number" />
-//  Enable anonymous access without a config file
-fmq_config_path_set (self->config, "security/anonymous", access? "1" :"0");
-</method>
+Which gets turned into this code:
+
+[[code type="fragment" name="fmq-server-methods"]]
+void
+fmq_server_publish (fmq_server_t *self, const char *location, const char *alias)
+{
+    assert (self);
+    assert (location);
+    assert (alias);
+    zstr_sendm (self->pipe, "PUBLISH");
+    zstr_sendfm (self->pipe, "%s", location);
+    zstr_sendf (self->pipe, "%s", alias);
+}
 [[/code]]
 
 ++++ Design Notes
 
-The hardest part of making FileMQ wasn't the protocol part, but maintaining accurate state internally. An FTP or HTTP server is essentially stateless. But a publish/subscribe server //has// to maintain subscriptions, at least.
+The hardest part of making FileMQ wasn't implementing the protocol, but maintaining accurate state internally. An FTP or HTTP server is essentially stateless. But a publish/subscribe server //has// to maintain subscriptions, at least.
 
 So I'll go through some of the design aspects:
 
@@ -1434,6 +1440,18 @@ It is quite common to poll a directory for changes and then do something 'intere
 There is a neater way, which is to detect when a file is "stable", i.e. no-one is writing to it any longer. FileMQ does this by checking the modification time of the file. If it's more than a second old, then the file is considered stable, at least stable enough to be shipped off to clients. If a process comes along after five minutes and appends to the file, it'll be shipped off again.
 
 For this to work, and this is a requirement for any application hoping to use FileMQ successfully, do not buffer more than a second's worth of data in memory before writing. If you use very large block sizes, the file may look stable when it's not.
+
+++++ Delivery Notifications
+
+One of the nice things about the asynchronous API model we're using is that it's essentially message based. This makes it ideal for returning events back to the caller. A more conventional API approach would be to use callbacks. But callbacks that cross thread boundaries are somewhat delicate. Here's how the client sends a message back when it has received a complete file:
+
+[[code type="fragment" name="send-deliver"]]
+zstr_sendm (self->pipe, "DELIVER");
+zstr_sendm (self->pipe, filename);
+zstr_sendf (self->pipe, "%s/%s", inbox, filename);
+[[/code]]
+
+We can now add a _recv() method to the API that waits for events back from the client. It makes a clean style for the caller: create the client object, configure it, and then receive and process any events it returns.
 
 ++++ Symbolic Links
 
@@ -1515,10 +1533,6 @@ The code is a neat example of how to use the FileMQ API to do local file distrib
 
 int main (int argc, char *argv [])
 {
-    if (argc < 3) {
-        puts ("usage: track original-directory tracking-directory");
-        return 0;
-    }
     fmq_server_t *server = fmq_server_new ();
     fmq_server_configure (server, "anonymous.cfg");
     fmq_server_publish (server, argv [1], "/");
@@ -1531,10 +1545,22 @@ int main (int argc, char *argv [])
     fmq_client_set_resync (client, true);
     fmq_client_subscribe (client, "/");
 
-    while (!zctx_interrupted)
-        sleep (1);
-    puts ("interrupted");
-
+    while (true) {
+        //  Get message from fmq_client API
+        zmsg_t *msg = fmq_client_recv (client);
+        if (!msg)
+            break;              //  Interrupted
+        char *command = zmsg_popstr (msg);
+        if (streq (command, "DELIVER")) {
+            char *filename = zmsg_popstr (msg);
+            char *fullname = zmsg_popstr (msg);
+            printf ("I: received %s (%s)\n", filename, fullname);
+            free (filename);
+            free (fullname);
+        }
+        free (command);
+        zmsg_destroy (&msg);
+    }
     fmq_server_destroy (&server);
     fmq_client_destroy (&client);
     return 0;
@@ -1545,11 +1571,11 @@ Note how we work with physical paths in this tool. The server publishes the phys
 
 +++ Getting an Official Port Number
 
-We've been using port 5670 in the examples for FileMQ. Unlike all the previous examples in this book, this port isn't arbitrary but [http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt was assigned] by the Internet [http://www.iana.org Assigned Numbers Authority (IANA)], which "is responsible for the global coordination of the DNS Root, IP addressing, and other Internet protocol resources".
+We've been using port 5670 in the examples for FILEMQ. Unlike all the previous examples in this book, this port isn't arbitrary but [http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt was assigned] by the Internet [http://www.iana.org Assigned Numbers Authority (IANA)], which "is responsible for the global coordination of the DNS Root, IP addressing, and other Internet protocol resources".
 
 I'll explain very briefly when and how to request registered port numbers for your application protocols. The main reason is to ensure that your applications can run in the public domain without conflict with other protocols. Technically, if you ship any software that uses port numbers between 1024 and 49151, you should be using only IANA registered port numbers. Many products don't bother with this, however, and tend instead to use the IANA list as "ports to avoid".
 
-If you aim to make a public protocol of any importance, such as FileMQ, you're going to want an IANA-registered port. I'll explain briefly how to do this:
+If you aim to make a public protocol of any importance, such as FILEMQ, you're going to want an IANA-registered port. I'll explain briefly how to do this:
 
 * Document your protocol clearly, as IANA will want a specification of how you intend to use the port. It's not a formal agreement but must be solid enough to pass expert review.
 

@@ -1,8 +1,8 @@
 .output chapter6.wd
 .bookmark the-community
-+ Part 2
++ Part 2 - Software Engineering using 0MQ
 
-The second part of this book is really about software engineering using 0MQ. I'll introduce a set of techniques of software development, and demonstrate them with worked examples, starting with 0MQ itself and ending with a general-purpose framework for distributed applications. These techniques are independent of license, though open source amplifies them.
+The second part of this book is about software engineering using 0MQ. I'll introduce a set of techniques of software development, and demonstrate them with worked examples, starting with 0MQ itself and ending with a general-purpose framework for distributed applications. These techniques are independent of license, though open source amplifies them.
 
 ++ The 0MQ Community
 
@@ -122,8 +122,6 @@ It comes down to behavioral economics and game theory. //The license we choose m
 ++++ The Process
 
 If you've accepted my thesis up to now, great! Now, I'll explain the rough process by which we actually build an open source community. This was how we built or grew or gently steered the 0MQ community into existence.
-
-You recall the simplicity-oriented design process from [#the-human-scale], where I claimed that we build successfully accurate software by successfully exploring the problem landscape, rather than by sheer intellectual effort. Keep this in mind. Now, see your community as a group exploring that landscape and sharing the results of their work.
 
 Your goal as leader of a community is to motivate people to get out there and explore; to ensure they can do so safely and without disturbing others; to reward them when they make successful discoveries; and to ensure they share their knowledge with everyone else (and not because we ask them, not because they feel generous, but because it's The Law).
 
@@ -294,7 +292,7 @@ In the worst case scenario, where someone has submitted toxic code (patented, or
 
 > A patch SHOULD be a minimal and accurate answer to exactly one identified and agreed problem.
 
-Recall the Simplicity Oriented Design pattern from [#the-human-scale]. This implements that. One clear problem, one minimal solution, apply, test, repeat.
+This implements the Simplicity Oriented Design process that I'll come to later in this chapter. One clear problem, one minimal solution, apply, test, repeat.
 
 > A patch MUST adhere to the code style guidelines of the project if these are defined.
 
