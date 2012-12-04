@@ -135,7 +135,7 @@ while (<>) {
         }
         elsif (/^\.bookmark\s+(\w.*)/) {
             writeln ("[[# $1]]");
-            $anchor = $1;
+            $bookmark = $1;
         }
         elsif (/^\.filter\s+(\w.*)/) {
             $filter = ($1 eq "online");
@@ -148,7 +148,6 @@ while (<>) {
         }
     }
     elsif (/^([\+]+)\s+(.*)$/) {
-        $bookmarks{$anchor} = zmq_symbol ($2) if $anchor;
         $this++;
         $prev = $this - 1;
         $next = $this + 1;
@@ -162,6 +161,11 @@ while (<>) {
         $anchor =~ s/[^a-zA-Z]/-/g;
         $anchor =~ s/\-+/-/g;
         $anchor =~ s/\-$//;
+        $bookmarks {$anchor} = $header;
+        if ($bookmark) {
+            $bookmarks {$bookmark} = $header;
+            $bookmark = "";
+        }
         writeln ("[[# $anchor]][[# header-$this]]");
         writeln ("[[table style=\"width:100%\"]]");
         writeln ("[[row]]");
@@ -547,6 +551,9 @@ sub expand_symbols {
             $_ = $`."[http://api.zeromq.org/3-2:zmq_$1 zmq_$1()]".$';
         }
         elsif (/\[#(\S+)\]/) {
+            if (!defined ($bookmarks {$1})) {
+                print "Undefined bookmark: $1\n";
+            }
             $_ = $`."[#$1 $bookmarks{$1}]".$';
         }
         else {
