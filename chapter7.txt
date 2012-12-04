@@ -1333,7 +1333,7 @@ The public API consists of two classes (as we sketched earlier):
 
 * fmq_server: provides the server API, with methods to bind to a port, configure the server, and publish a path.
 
-These classes provide an //asynchronous API//, a model we've used quite often now. When you create an API instance (i.e. {{fmq_server_new()}} or {{fmq_client_new()}}), this method kicks off a background thread which does the real work, i.e. runs the server or the client. The other API methods then talk to this thread over 0MQ sockets (a 'pipe' consisting of two PAIR sockets over inproc://).
+These classes provide an //multithreaded API//, a model we've used a few times now. When you create an API instance (i.e. {{fmq_server_new()}} or {{fmq_client_new()}}), this method kicks off a background thread which does the real work, i.e. runs the server or the client. The other API methods then talk to this thread over 0MQ sockets (a 'pipe' consisting of two PAIR sockets over inproc://).
 
 If I was a keen young developer eager to use FileMQ in another language, I'd probably spend a happy weekend writing a binding for this public API, then stick it in a subdirectory of the filemq project called, say, "bindings/", and make a pull request.
 
@@ -1443,7 +1443,7 @@ For this to work, and this is a requirement for any application hoping to use Fi
 
 ++++ Delivery Notifications
 
-One of the nice things about the asynchronous API model we're using is that it's essentially message based. This makes it ideal for returning events back to the caller. A more conventional API approach would be to use callbacks. But callbacks that cross thread boundaries are somewhat delicate. Here's how the client sends a message back when it has received a complete file:
+One of the nice things about the multithreaded API model we're using is that it's essentially message based. This makes it ideal for returning events back to the caller. A more conventional API approach would be to use callbacks. But callbacks that cross thread boundaries are somewhat delicate. Here's how the client sends a message back when it has received a complete file:
 
 [[code type="fragment" name="send-deliver"]]
 zstr_sendm (self->pipe, "DELIVER");

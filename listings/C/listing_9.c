@@ -3,4 +3,4 @@ typedef struct {
     int fd;             //  OR, native file handle to poll on
     short events;       //  Events to poll on
     short revents;      //  Events returned after poll
-} zmq-pollitem-t;
+} zmq_pollitem_t;

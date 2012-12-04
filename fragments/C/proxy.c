@@ -1,1 +1,1 @@
-zmq-proxy (frontend, backend, capture);
+zmq_proxy (frontend, backend, capture);

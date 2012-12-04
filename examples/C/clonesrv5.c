@@ -37,17 +37,17 @@ int main (void)
     self->snapshot  = zsocket_new (self->ctx, ZMQ_ROUTER);
     zsocket_bind (self->snapshot,  "tcp://*:%d", self->port);
     self->publisher = zsocket_new (self->ctx, ZMQ_PUB);
-    zsocket_set_hwm (publisher, 0);
     zsocket_bind (self->publisher, "tcp://*:%d", self->port + 1);
     self->collector = zsocket_new (self->ctx, ZMQ_PULL);
     zsocket_bind (self->collector, "tcp://*:%d", self->port + 2);
 
     //  Register our handlers with reactor
-    zmq_pollitem_t poller = { self->snapshot, 0, ZMQ_POLLIN };
+    zmq_pollitem_t poller = { 0, 0, ZMQ_POLLIN };
+    poller.socket = self->snapshot;
     zloop_poller (self->loop, &poller, s_snapshots, self);
     poller.socket = self->collector;
     zloop_poller (self->loop, &poller, s_collector, self);
-    zloop_timer  (self->loop, 1000, 0, s_flush_ttl, self);
+    zloop_timer (self->loop, 1000, 0, s_flush_ttl, self);
 
     //  Run reactor until process interrupted
     zloop_start (self->loop);

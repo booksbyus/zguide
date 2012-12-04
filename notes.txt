@@ -1,62 +1,15 @@
-- initialize client
-    - simplest
-        - recalculate cache after each file change
-        - option to load cache into message
-
-
-    - fmq_dir_cache
-        - refreshes .cache on disk
-        - returns hash table
-        
-    
-    - load cache from disk
-    - fmq_dir_cache returns / updates it
-    - new file
-        -> update into cache
-        -> save whole cache
-    - icanhaz
-        -> send cache to server
-    - optional
-        -> resync command from API
-    
-filemq
-    client says
-        I want everything
-        I already have this, this, this
-            filename, size
-
-.filemq_dir
-    log files, first time
-    include file sha1 as sent by server
-server sends sha1 together with file chunk
-    
-        
-
 Chapter 5:
-    - durable subscribers
 
-+++ Content Distribution
+    -> how to make async APIs
 
-We now have a robust framework for creating groups of nodes and letting them chat to each other. Next step is to allow them to distribute content. 
-
-
+    -> adapting Clone for Zyre
+    -> state in HELLO
+    -> update messages
+    
 +++ Security
 
-+++ Bridging
-
-(More coming soon)
 
 
-++++ The Messaging Layer
-
-So we've solved discovery, presence, connectivity, and simulation. Next on our list: security, unicast messaging, and multicast messaging.
-
-++++ File Transfer
-
-Take FILEMQ and plug into this framework.
-
-Notes for The Guide
-    
 ==1742== Syscall param write(buf) points to uninitialised byte(s)
 ==1742==    at 0x5372100: __write_nocancel (syscall-template.S:82)
 ==1742==    by 0x5306312: _IO_file_write@@GLIBC_2.2.5 (fileops.c:1289)
@@ -118,4 +71,39 @@ The Xyz pattern takes pipeline and makes it robust against the only failure we c
 - call ventilator the 'client'
 - if task missing, resend
 - if end of batch missing, resend from last response
+
+
+/*
+ * Threadsafe basename implementation
+ *
+ * Returns the path component following the final slash ('/'), excluding
+ * any trailing slashes, which are dropped. If the pathname does not
+ * contain a slash, returns NULL (unlike POSIX basename which returns the
+ * whole path). And which is not re-entrant. If successful, allocates a
+ * new string that the caller must free when done with.
+ */
+
+char *magnet_basename (char *path)
+{
+    if (!path)
+        return NULL;
+
+    //  Strip off any trailing slashes
+    char *path_copy = strdup (path);
+    while (path_copy [strlen (path_copy) - 1] == '/')
+        path_copy [strlen (path_copy) - 1] = '\0';
+
+    //  Find last slash and take filename after that
+    char *last_slash = strrchr (path_copy, '/');
+    char *filename = NULL;
+    if (last_slash && last_slash > path_copy)
+        filename = strdup (last_slash + 1);
+    else
+    //  Or, take the whole filename unless it's dotted
+    if (*path_copy && *path_copy != '.')
+        filename = strdup (path_copy);
+
+    free (path_copy);
+    return filename;
+}
 

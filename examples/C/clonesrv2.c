@@ -13,7 +13,6 @@ int main (void)
     //  Prepare our context and sockets
     zctx_t *ctx = zctx_new ();
     void *publisher = zsocket_new (ctx, ZMQ_PUB);
-    zsocket_set_hwm (publisher, 0);
     zsocket_bind (publisher, "tcp://*:5557");
 
     int64_t sequence = 0;

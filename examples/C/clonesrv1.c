@@ -10,7 +10,6 @@ int main (void)
     //  Prepare our context and publisher socket
     zctx_t *ctx = zctx_new ();
     void *publisher = zsocket_new (ctx, ZMQ_PUB);
-    zsocket_set_hwm (publisher, 0);
     zsocket_bind (publisher, "tcp://*:5556");
     zclock_sleep (200);
 
