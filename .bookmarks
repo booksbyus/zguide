@@ -4,9 +4,9 @@ Protocol-Assertions Protocol Assertions
 The-ROUTER-to-ROUTER-Combination The ROUTER to ROUTER Combination
 Burnout Burnout
 Upgrading-from-MQ-to-MQ Upgrading from 0MQ/2.2 to 0MQ/3.2
+Writing-the-Unprotocol Writing the Unprotocol
 Republishing-Updates-from-Clients Republishing Updates from Clients
 Vadim-Shalts-s-Story Vadim Shalts's Story
-Writing-the-Unprotocol Writing the Unprotocol
 Service-Oriented-Reliable-Queuing-Majordomo-Pattern Service-Oriented Reliable Queuing (Majordomo Pattern)
 the-community Part 2 - Software Engineering using 0MQ
 ROUTER-Broker-and-DEALER-Workers ROUTER Broker and DEALER Workers
@@ -23,7 +23,7 @@ Getting-an-Out-of-band-Snapshot Getting an Out-of-band Snapshot
 The-Flash-Mob The Flash Mob
 The-Mystic The Mystic
 ROUTER-Broker-and-REQ-Workers ROUTER Broker and REQ Workers
-advanced-architecture Chapter 7 - Advanced Architecture using 0MQ
+advanced-architecture Advanced Architecture using ØMQ
 Initial-Design-Cut-the-API Initial Design Cut - the API
 Making-a-Clean-Exit Making a Clean Exit
 -MQ-is-Not-a-Neutral-Carrier 0MQ is Not a Neutral Carrier
@@ -70,7 +70,7 @@ Step-Decide-on-the-Contracts Step 3: Decide on the Contracts
 Tracing-Activity Tracing Activity
 Language Language
 Simplicity-vs-Complexity Simplicity vs. Complexity
-reliable-request-reply Chapter 4 - Reliable Request-Reply Patterns
+reliable-request-reply Reliable Request-Reply Patterns
 Idempotent-Services Idempotent Services
 Audience-for-This-Book Audience for This Book
 Binary-Logging-Protocol Binary Logging Protocol
@@ -124,9 +124,9 @@ File-Stability File Stability
 Programming-with-MQ Programming with 0MQ
 Step-Internalize-the-Semantics Step 1: Internalize the Semantics
 The-Constant-Gardener The Constant Gardener
+Robustness-in-Conflict Robustness in Conflict
 Representing-State-as-Key-Value-Pairs Representing State as Key-Value Pairs
 Unprotocols Unprotocols
-Robustness-in-Conflict Robustness in Conflict
 Exploring-ROUTER-Sockets Exploring ROUTER Sockets
 How-MQ-Lost-its-Road-map How 0MQ Lost its Road-map
 Chapter-Advanced-Publish-Subscribe-Patterns Chapter 5 - Advanced Publish-Subscribe Patterns
@@ -146,11 +146,11 @@ Model-Two-Brutal-Shotgun-Massacre Model Two - Brutal Shotgun Massacre
 Working-with-Subtrees Working with Subtrees
 A-Load-Balancing-Message-Broker A Load-Balancing Message Broker
 Using-ABNF Using ABNF
-advanced-request-reply Chapter 3 - Advanced Request-Reply Patterns
+advanced-request-reply Advanced Request-Reply Patterns
 Contracts-are-Hard Contracts are Hard
 High-speed-Subscribers-Black-Box-Pattern High-speed Subscribers (Black Box Pattern)
 The-DEALER-to-ROUTER-Combination The DEALER to ROUTER Combination
-moving-pieces Chapter 8 - A Framework for Distributed Computing
+moving-pieces A Framework for Distributed Computing
 The-Canary-Watcher The Canary Watcher
 Chapter-Sockets-and-Patterns Chapter 2 - Sockets and Patterns
 Content-Distribution Content Distribution
@@ -186,7 +186,7 @@ Handling-Multiple-Sockets Handling Multiple Sockets
 -MQ-in-a-Hundred-Words 0MQ in a Hundred Words
 Detailed-Requirements Detailed Requirements
 Version-Reporting Version Reporting
-advanced-pub-sub Chapter 5 - Advanced Publish-Subscribe Patterns
+advanced-pub-sub Advanced Publish-Subscribe Patterns
 Pub-sub-Tracing-Espresso-Pattern Pub-sub Tracing (Espresso Pattern)
 Test-Use-Case-The-track-tool Test Use-Case - The 'track' tool
 Visibility Visibility
@@ -222,7 +222,7 @@ Asynchronous-Majordomo-Pattern Asynchronous Majordomo Pattern
 Robust-Reliable-Queuing-Paranoid-Pirate-Pattern Robust Reliable Queuing (Paranoid Pirate Pattern)
 The-REQ-to-ROUTER-Combination The REQ to ROUTER Combination
 The-Extended-Reply-Envelope The Extended Reply Envelope
-sockets-and-patterns Chapter 2 - Sockets and Patterns
+sockets-and-patterns Sockets and Patterns
 Handling-Errors-and-ETERM Handling Errors and ETERM
 Unicast-Transports Unicast Transports
 True-Peer-Connectivity-Harmony-Pattern True Peer Connectivity (Harmony Pattern)
