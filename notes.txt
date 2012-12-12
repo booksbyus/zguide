@@ -8,6 +8,11 @@ Chapter 5:
     
 +++ Security
 
++++ Connecting over Internet
+
+* public IP addresses and testing reachability
+* security
+* bridging
 
 
 ==1742== Syscall param write(buf) points to uninitialised byte(s)
@@ -83,7 +88,7 @@ The Xyz pattern takes pipeline and makes it robust against the only failure we c
  * new string that the caller must free when done with.
  */
 
-char *magnet_basename (char *path)
+char *safe_basename (char *path)
 {
     if (!path)
         return NULL;

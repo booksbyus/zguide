@@ -1175,6 +1175,59 @@ S:PING          = header %06
 R:PING-OK       = header %07
 [[/code]]
 
++++ Example Zyre Application
+
+Let's now make a minimal example that uses Zyre to broadcast files around a distributed network. This example consists of two programs:
+
+* A //listener// that joins the Zyre network and reports whenever it receives a file.
+* A //sender// that joins a Zyre network and broadcasts exactly one file.
+
+The listener is quite short:
+
+[[code type="fragment" name="zyre-listener"]]
+#include <zre.h>
+
+int main (int argc, char *argv [])
+{
+    zre_interface_t *interface = zre_interface_new ();
+    while (true) {
+        zmsg_t *incoming = zre_interface_recv (interface);
+        if (!incoming)
+            break;
+        zmsg_dump (incoming);
+        zmsg_destroy (&incoming);
+    }
+    zre_interface_destroy (&interface);
+    return 0;
+}
+[[/code]]
+
+And the sender isn't much longer:
+
+[[code type="fragment" name="zyre-sender"]]
+#include <zre.h>
+
+int main (int argc, char *argv [])
+{
+    if (argc < 2) {
+        puts ("Syntax: sender filename virtualname");
+        return 0;
+    }
+    printf ("Publishing %s as %s\n", argv [1], argv [2]);
+    zre_interface_t *interface = zre_interface_new ();
+    zre_interface_publish (interface, argv [1], argv [2]);
+    while (true) {
+        zmsg_t *incoming = zre_interface_recv (interface);
+        if (!incoming)
+            break;
+        zmsg_dump (incoming);
+        zmsg_destroy (&incoming);
+    }
+    zre_interface_destroy (&interface);
+    return 0;
+}
+[[/code]]
+
 +++ Conclusions
 
 Building applications for unstable decentralized networks is one of the end-games for 0MQ. As the cost of computing falls every year, such networks become more and more common, be it consumer electronics or virtual boxes in the cloud. In this chapter we've pulled together many of the techniques from the book to build Zyre, a framework for proximity computing over a local network. Zyre isn't unique; there are and have been many attempts to open this area for applications: ZeroConf, SLP, SSDP, UPnP, DDS. But these all seem to end up too complex or otherwise hard for application developers to build on.
