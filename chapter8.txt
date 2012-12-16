@@ -1,6 +1,6 @@
 .output chapter8.wd
 .bookmark moving-pieces
-++ A Framework for Distributed Computing
++ A Framework for Distributed Computing
 
 We've gone though a journey of understanding 0MQ in its many aspects. By now you may have started to build your own products using the techniques I explained, and others you've figured out yourself. You will start to face questions about to make these products work in the real world.
 
@@ -30,7 +30,7 @@ We'll cover:
 * Dealing with high-water marks and blocked peers.
 * Distributed logging and monitoring.
 
-+++ Design for The Real World
+++ Design for The Real World
 
 Whether we're connecting a roomful of mobile devices over WiFi, or a cluster of virtual boxes over simulated Ethernet, we will hit the same kinds of problems. These are:
 
@@ -56,11 +56,11 @@ You should have guessed from my rhetorical questions that there are two broad di
 
 So very roughly, here's the story. One, the number of moving pieces increases exponentially over time (doubles every 24 months). Two, these pieces stop using wires since dragging cables everywhere gets //really// boring. Three, future applications run across clusters of these pieces using the Benevolent Tyrant pattern from [#the-community]. Four, today it's really difficult, nay still rather impossible, to build such applications. Five, let's make it cheap and easy using all the techniques and tools we've built up. Six, partay!
 
-+++ The Secret Life of WiFi
+++ The Secret Life of WiFi
 
 The future is clearly wireless, and while many big businesses live by concentrating data in their clouds, the future doesn't look quite so centralized. The devices at the edges of our networks get smarter every year, not dumber. They're hungry for work and information to digest and profit from. And they don't drag cables around, except once a night for power. It's all wireless, and more and more, 802.11-branded WiFi of different alphabetical flavors.
 
-++++ Why Mesh isn't Here Yet
++++ Why Mesh isn't Here Yet
 
 As such a vital part of our future, WiFi has a big problem that's not often discussed but which anyone betting on it needs to be aware of. The phone companies of the world have built themselves nice profitable mobile phone cartels in nearly every country with a functioning government, based on convincing governments that without monopoly rights to airwaves and ideas, the world would fall apart. Technically, we call this "regulatory capture" and "patents", but in fact it's just a form of blackmail and corruption. If you, the state, give me, a business, the right to overcharge and tax the market, and ban all real competitors, I'll give you 5%. Not enough? How about 10%? OK, 15% plus snacks. If you refuse, we pull service.
 
@@ -74,7 +74,7 @@ Right now streaming a movie from your phone to your TV is considered "leading ed
 
 Why, in 2012, and to get more serious, is our digital society in the hands of central points that are monitored, censored, logged, used to track who we talk to, collect evidence against us, and then shut down when the authorities decide we have too much free speech? The loss of privacy we're living through is only a problem when it's one-sided, but then the problem is calamitous. A truly wireless world would bypass all central censorship. It's how the Internet was designed, and it's quite feasible. Technically.
 
-++++ Some Physics
++++ Some Physics
 
 Naive developers of distributed software treat the network as infinitely fast and perfectly reliable. While this is approximately true for simple applications over Ethernet, WiFi rapidly proves the difference between magical thinking and science. That is, WiFi breaks so easily and dramatically under stress that I sometimes wonder how anyone would dare use it for real work. The ceiling moves up, as WiFi gets better, but never fast enough to stop us hitting it.
 
@@ -92,7 +92,7 @@ This effect has some consequences we need to be aware of if we want to build rob
 
 As you try to put more devices onto an AP, performance rapidly gets worse to the point where adding one more device can break the whole network, for everyone. Many APs solve this by randomly disconnecting clients when they reach some limit, four to eight devices for a mobile hotspot, 30-50 devices for a consumer AP, perhaps 100 devices for an enterprise AP.
 
-++++ What's the Current Status?
++++ What's the Current Status?
 
 Despite its uncomfortable role as enterprise technology that somehow escaped into the wild, WiFi is already useful for more than getting a free Skype call. It's not ideal but it works well enough to let us solve some interesting problems. Let me give you a rapid status report.
 
@@ -112,13 +112,13 @@ Fourth, battery life. There's no inherent reason that WiFi, when idle, is hungri
 
 Lastly, mobile access points. If we can't trust centralized APs, and if our devices are smart enough to run full operating systems, can't we make them work as APs? I'm //so glad// you asked that question. Yes, we can, and it works quite nicely. Especially since you can switch this on and off in software, on a modern OS like Android. Again, the villains of the peace are the US telcos, who mostly detest this feature and kill it or cripple it on the phones they control. Smarter telcos realize that it's a way to amplify their "last mile" and bring higher-value products to more users, but crooks don't compete on smarts.
 
-++++ Conclusions
++++ Conclusions
 
 WiFi is not Ethernet and although I believe future 0MQ applications will have a very important decentralized wireless presence, it's not going to be an easy road. Much of the basic reliability and capacity that you expect from Ethernet is missing. When you run a distributed application over WiFi you have to allow for frequent timeouts, random latencies, arbitrary disconnections, whole interfaces going down and coming up, and so on.
 
 The technological evolution of wireless networking is best described as "slow and joyless". Applications and frameworks that try to exploit decentralized wireless are mostly absent or poor. The only existing open source framework for proximity networking is [https://www.alljoyn.org AllJoyn], from Qualcomm. But with 0MQ we proved that the inertia and decrepit incompetence of existing players was no reason for us to sit still. When we accurately understand problems, we can solve them. What we imagine, we can make real.
 
-+++ Discovery
+++ Discovery
 
 One of the great things about short-range wireless is the proximity. WiFi maps closely to the physical space, which maps closely to how we naturally organize. In fact the Internet is quite abstract and this confuses a lot of people who kind of "get" it but in fact don't really. With WiFi we have technical connectivity that is potentially super-tangible. You see what you get and you get what you see. Tangible means easy to understand and that should mean love from users instead of the typical frustration and quiet hate.
 
@@ -126,7 +126,7 @@ Proximity is the key. We have a bunch of WiFi radios in room, happily beaconing 
 
 As a first step towards 0MQ-based proximity networking, let's look at how to do discovery. There exist libraries that do this. I don't like them. They seem too complex and too specific and somehow to date from a prehistoric era before people realized that distributed computing could be //fundamentally simple//.
 
-++++ Preemptive Discovery over Raw Sockets
++++ Preemptive Discovery over Raw Sockets
 
 I'm in a hotel room in Gangnam, Seoul, with a 4G wireless hotspot, a Linux laptop, and an couple of Android phones. The phones and laptop are talking to the hotspot. The {{ifconfig}} command says my IP address is 192.168.1.2. Let me try some {{ping}} commands. DHCP servers tend to dish out addresses in sequence, so my phones are probably close by, numerically speaking:
 
@@ -192,7 +192,7 @@ However, sadly, there's a fatal flaw in my idea of using ICMP_ECHO to discover d
 
 //Expletive deleted!// Let's try something in user space. The next step most people take is UDP multicast or broadcast. Let's follow that trail.
 
-++++ Cooperative Discovery using UDP Broadcasts
++++ Cooperative Discovery using UDP Broadcasts
 
 Multicast tends to be seen as more modern and "better" than broadcast. In IPv6, broadcast doesn't work at all: you have to always use broadcast. Nonetheless, all IPv4 local network discovery protocols end up using UDP broadcast anyhow. The reasons: broadcast and multicast end up working much the same, except broadcast is simpler and less risky. Multicast is seen by network admins as kind of dangerous, as it can leak over network segments.
 
@@ -266,7 +266,7 @@ The simplest plausible solution is simply to ignore IPv6 for now, and use broadc
 
 We'll stick with stupid and simple for now. There's always time to make it more complex.
 
-++++ Multiple Nodes on One Device
++++ Multiple Nodes on One Device
 
 So we can discover nodes on the WiFi network, as long as they're sending out beacons as we expect. So I try to test with two processes. But when I run udpping2 twice, the second instance complains "'Address already in use' on bind" and exits. Oh, right. UDP and TCP both return an error if you try to bind two different sockets to the same port. This is right. The semantics of two readers on one socket would be weird to say the least. Odd/even bytes? You get all the 1s, I get all the 0's?
 
@@ -278,7 +278,7 @@ And I speak from experience: we were, this summer, testing on dozens of devices 
 
 If I was a wizz Android developer with a free weekend I'd immediately (as in, it would take me two days) port this code to my phone and get it sending beacons to my PC. But sometimes lazy is more profitable. I //like// my Linux laptop. I like being able to start a dozen threads from one process, and have each thread acting like an independent node. I like not having to work in a real Faraday cage when I can simulate one on my laptop.
 
-++++ Designing the API
++++ Designing the API
 
 I'm going to run N nodes on a device, and they are going to have to discover each other, and also discover a bunch of other nodes out there on the local network. I can use UDP for local discovery as well as remote discovery. It's arguably not as efficient as using, e.g., the 0MQ inproc:// transport, but has the great advantage that the exact same code will work in simulation and in real deployment.
 
@@ -333,7 +333,7 @@ A decent strategy is to detect and report disappeared nodes rapidly, but only de
 
 As we will also see later, we have to treat any input from a node, not just UDP beacons, as a sign of life. UDP may get squashed when there's a lot of TCP traffic. This is perhaps the main reason we're not using an existing UDP discovery library: we have to integrate this tightly with our 0MQ messaging for it to work.
 
-++++ More about UDP
++++ More about UDP
 
 So we have discovery and presence working over UDP IPv4 broadcasts. It's not ideal, but it works for the local networks we have today. However we can't use UDP for real work, not without additional work to make it reliable. There's a joke about UDP but sometimes you'll get it, and sometimes you won't.
 
@@ -347,7 +347,7 @@ The curves cross around 6-12 devices depending on the network. You could in theo
 
 If you do sit down and sketch out a UDP multicast protocol, realize that you need a channel for recovery, to get lost packets. You'd probably want to do this over TCP, using 0MQ. For now, however, we'll forget about multicast UDP, and assume all traffic goes over TCP.
 
-+++ Spinning off a Library Project
+++ Spinning off a Library Project
 
 At this stage however, the code is growing larger than an example should be, so it's time to create a proper GitHub project. It's a rule: build your projects in public view, and tell people about them as you go, so your marketing and community building starts on day 1. I'll walk through what this involves. I explained in [#the-community] about growing communities around projects. We need a few things:
 
@@ -374,7 +374,7 @@ I put together a README to summarize the goals of the project and point to C4. T
 
 Finally, I change the issue tracker labels. GitHub by default offers the usual variety of issue types but with C4 we don't use them. Instead we need just two labels ("Urgent", in red, and "Ready", in black).
 
-+++ Point-to-point Messaging
+++ Point-to-point Messaging
 
 I'm going to take the last UDP ping program and build a point-to-point messaging layer on top of that. Our goal is that we can detect peers as they join and leave the network, that we can send messages to them, and that we can get replies. It is a non-trivial problem to solve and takes Min and me two days to get a "hello world" version working.
 
@@ -390,7 +390,7 @@ We had to solve a number of issues:
 
 I'll explain these in enough detail that you understand why we made each choice we did, with some code fragments to illustrate. We tagged this code as [https://github.com/zeromq/zyre/zipball/v0.1.0 version 0.1.0] so you can look at the code: most of the hard work is done in zre_interface.c.
 
-++++ UDP Beacon Framing
++++ UDP Beacon Framing
 
 Sending UUIDs across the network is the bare minimum for a logical addressing scheme. However we have a few more aspects to get working before this will work in real use:
 
@@ -468,7 +468,7 @@ if (memcmp (beacon.uuid, self->uuid, sizeof (uuid_t))) {
 }
 [[/code]]
 
-++++ True Peer Connectivity (Harmony Pattern)
++++ True Peer Connectivity (Harmony Pattern)
 
 Since 0MQ is designed to make distributed messaging easy, people often ask how to interconnect a set of true peers (as compared to obvious clients and servers). It is a thorny question and 0MQ doesn't really provide a single clear answer.
 
@@ -507,7 +507,7 @@ Breaking this down into steps:
 
 If we were not using UDP but some other discovery mechanism, I'd still use the Harmony pattern for a true peer network: one ROUTER for input from all peers, and one DEALER per peer for output. Bind the ROUTER, connect the DEALER, and start each conversation with an OHAI equivalent that provides the return IP address and port. You would need some external mechanism to bootstrap each connection.
 
-++++ Detecting Disappearances
++++ Detecting Disappearances
 
 Heartbeating sounds simple but it's not. UDP packets get dropped when there's a lot of TCP traffic, so if we depend on UDP beacons we'll get false disconnections. TCP traffic can be delayed for five, ten, 30 seconds if the network is really busy. So if we kill peers when they go quiet, we'll have false disconnections.
 
@@ -525,7 +525,7 @@ This gives us a set of states for each peer, though at this stage the code doesn
 
 There's one remaining scenario we didn't address in the code at this stage. It's possible for a peer to change IP addresses and ports without actually triggering a disappearance event. For example if the user switches off WiFi and then switches it back on, then the the access point can assign the peer a new IP address. We'll need to handle a disappeared WiFi interface on our node by unbinding the ROUTER socket and rebinding it when we can. Since this is not central to the design now, I decide to log an issue on the GitHub tracker and leave it for a rainy day.
 
-+++ Group Messaging
+++ Group Messaging
 
 Group messaging is a common and very useful pattern. The concept is simple: instead of talking to a single node, you talk to a "group" of nodes. The group is just a name, a string that you agree on in the application. It's precisely like using the publish-subscribe prefixes in PUB and SUB sockets. In fact the only reason I say "group messaging" and not "pub-sub" is to prevent confusion, since we're not going to use PUB/SUB sockets for this.
 
@@ -568,9 +568,9 @@ At this stage I'm starting to get pretty happy with the binary serialization (ou
 
 This version is tagged in the repository as v0.2.0 and you can [https://github.com/zeromq/zyre/tags download the tarball] if you want to check what the code looked like at this stage.
 
-+++ Testing and Simulation
+++ Testing and Simulation
 
-++++ On Assertions
++++ On Assertions
 
 The proper use of assertions is one of the hallmarks of a professional programmer.
 
@@ -586,7 +586,7 @@ So the Zyre code base is scattered with assertions, and particularly a couple on
 
 And as I test the original Zyre code by starting and stopping instances of zre_ping by hand, every so often I get an assertion failure. Running by hand doesn't reproduce these often enough, so let's make a proper tester tool.
 
-++++ On Up-front Testing
++++ On Up-front Testing
 
 Being able to fully test the real behavior of individual components in the laboratory can make a 10x or 100x difference to the cost of your project. That confirmation bias engineers have to their own work makes upfront testing incredibly profitable, and late-stage testing incredibly expensive.
 
@@ -602,7 +602,7 @@ The software was portable so we could test that as we wrote it, and as we collec
 
 Lesson is, test up-front so that when you plug the thing in, you know precisely how it's going to behave. If you haven't tested it up-front, you're going to be spending weeks and months in the field, ironing out problems that should never have been there.
 
-++++ The Zyre Tester
++++ The Zyre Tester
 
 During manual testing I did hit an assertion rarely. It then disappeared. Since I don't believe in magic, that means the code is still wrong somewhere. So, next step is heavy-duty testing of the Zyre 0.2.0 code to try to break its assertions, and get a good idea of how it will behave in the field.
 
@@ -712,7 +712,7 @@ while true:
 destroy interface
 [[/code]]
 
-++++ Test Results
++++ Test Results
 
 Yes, we broke the code. Several times, in fact. This was satisfying. I'll work through the different things we found.
 
@@ -751,7 +751,7 @@ Note that doing heavy simulation of lots of nodes will probably cause your proce
 ulimit -n 30000
 [[/code]]
 
-++++ Tracing Activity
++++ Tracing Activity
 
 To debug the kinds of problems we saw here, we need extensive logging. There's a lot happening in parallel but every problem can be traced down to a specific exchange between two nodes, consisting of a set of events that happen in strict sequence. We know how to make very sophisticated logging but as usual it's wiser to make just what we need, no more. We have to capture:
 
@@ -763,7 +763,7 @@ To debug the kinds of problems we saw here, we need extensive logging. There's a
 
 The very simplest technique is to print the necessary information to the console, with a timestamp. That's the approach I used. Then it's simple to find the nodes affected by a failure, filter the log file for only messages referring to them, and see exactly what happened.
 
-++++ Dealing with Blocked Peers
++++ Dealing with Blocked Peers
 
 In any performance-sensitive 0MQ architecture you need to solve the problem of flow control. You cannot simply send unlimited messages to a socket and hope for the best. At the one extreme, you can exhaust memory. This is a classic failure pattern for a message broker: one slow client stops receiving messages; the broker starts to queue them, and eventually exhausts memory and the whole process dies. At the other extreme, the socket drops messages, or blocks, as you hit the high-water mark.
 
@@ -851,7 +851,7 @@ zre_peer_disconnect (zre_peer_t *self)
 }
 [[/code]]
 
-+++ Distributed Logging and Monitoring
+++ Distributed Logging and Monitoring
 
 Let's look at logging and monitoring. If you've ever managed a real server (like a web server) you know how vital it is to have a capture of what is going on. There are a long list of reasons, not least:
 
@@ -873,7 +873,7 @@ Let's scope this in terms of the problems we think we'll have to solve:
 
 As in any design, some of these requirements are hostile to each other. For example, collecting log data in real-time means sending it over the network, which will affect network traffic to some extent. However as in any design these requirements are also hypothetical until we have running code, so we can't take them too seriously. We'll aim for //plausibly good enough// and improve over time.
 
-++++ A Plausible Minimal Implementation
++++ A Plausible Minimal Implementation
 
 Arguably, just dumping log data to disk is one solution, and it's what most mobile applications do (using 'debug logs'). But most failures require correlation of events from two nodes. This means searching lots of debug logs by hand to find the ones that matter. It's not a very clever approach.
 
@@ -957,7 +957,7 @@ The lesson is, if you use dynamic ports, be prepared to receive random data from
 
 Let's address the second one. Socket pair validation wouldn't solve this fully anyhow.
 
-++++ Protocol Assertions
++++ Protocol Assertions
 
 As Wikipedia puts it, "Fail-fast systems are usually designed to stop normal operation rather than attempt to continue a possibly flawed process." A protocol like HTTP has a fail-fast mechanism in that the first four bytes that a client sends to an HTTP server must be "HTTP". If they're not, the server can close the connection without reading anything more.
 
@@ -984,7 +984,7 @@ As our protocol codec is generated, it's relatively easy to add this assertion. 
 
 And to test, I switched the logger back to using an ephemeral port. The interface now properly detects and discards any messages that don't have a valid signature. If the message has a valid signature and is //still// wrong, that's a proper bug.
 
-++++ Binary Logging Protocol
++++ Binary Logging Protocol
 
 Now that we have the logging framework working properly, let's look at the protocol itself. Sending strings around the network is simple but when it comes to WiFi we really cannot afford to waste bandwidth. We have the tools to work with efficient binary protocols, so let's design one for logging.
 
@@ -1042,7 +1042,7 @@ Log an event
 
 Which generates us 800 lines of perfect binary codec (the zre_log_msg class). The codec does protocol assertions just like the main ZRE protocol does. Code generation has a fairly steep starting curve but it makes it so much easier to push your designs past "amateur" into "professional".
 
-+++ Content Distribution
+++ Content Distribution
 
 We now have a robust framework for creating groups of nodes, letting them chat to each other, and monitoring the resulting network. Next step is to allow them to distribute content, as files.
 
@@ -1120,7 +1120,7 @@ zmsg_send (&msg, self->pipe);
 
 This is complex code that does a lot at once. But we're only at around 10K lines of code for FileMQ and Zyre together. The most complex Zyre class, zre_interface, is 800 lines of code. This is compact. Message-based applications do keep their shape, if you're careful to organize them properly.
 
-+++ Writing the Unprotocol
+++ Writing the Unprotocol
 
 We have all the pieces for a formal protocol specification and it's time to put the protocol on paper. There are two reasons for this. First, to make sure that any other implementations talk to each other properly. Second, because I want to get an official port for the UDP discovery protocol and that means doing the paperwork.
 
@@ -1175,7 +1175,7 @@ S:PING          = header %06
 R:PING-OK       = header %07
 [[/code]]
 
-+++ Example Zyre Application
+++ Example Zyre Application
 
 Let's now make a minimal example that uses Zyre to broadcast files around a distributed network. This example consists of two programs:
 
@@ -1228,7 +1228,7 @@ int main (int argc, char *argv [])
 }
 [[/code]]
 
-+++ Conclusions
+++ Conclusions
 
 Building applications for unstable decentralized networks is one of the end-games for 0MQ. As the cost of computing falls every year, such networks become more and more common, be it consumer electronics or virtual boxes in the cloud. In this chapter we've pulled together many of the techniques from the book to build Zyre, a framework for proximity computing over a local network. Zyre isn't unique; there are and have been many attempts to open this area for applications: ZeroConf, SLP, SSDP, UPnP, DDS. But these all seem to end up too complex or otherwise hard for application developers to build on.
 

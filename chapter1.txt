@@ -1,12 +1,8 @@
 .output chapter1.wd
 .bookmark basics
-+ Part 1 - Learning 0MQ
++ Basics
 
-In the first part of this book you'll learn how to use 0MQ. We'll cover the basics, the API, the different socket types and how they work, reliability, and a host of patterns you can use in your applications. You'll get the best results by working through the examples and text from start to end.
-
-++ Basics
-
-+++ Fixing the World
+++ Fixing the World
 
 How to explain 0MQ? Some of us start by saying all the wonderful things it does. //It's sockets on steroids. It's like mailboxes with routing. It's fast!//  Others try to share their moment of enlightenment, that zap-pow-kaboom satori paradigm-shift moment when it all became obvious. //Things just become simpler. Complexity goes away. It opens the mind.//  Others try to explain by comparison. //It's smaller, simpler, but still looks familiar.//  Personally, I like to remember why we made 0MQ at all, because that's most likely where you, the reader, still are today.
 
@@ -32,11 +28,11 @@ Which brings us back to the science of programming. To fix the world, we needed 
 
 It sounds ridiculously simple. And maybe it is. That's kind of the whole point.
 
-+++ Starting Assumptions
+++ Starting Assumptions
 
 We assume you are using the latest 3.2 release of 0MQ. We assume you are using a Linux box or something similar. We assume you can read C code, more or less, that's the default language for the examples. We assume that when we write constants like PUSH or SUBSCRIBE you can imagine they are really called {{ZMQ_PUSH}} or {{ZMQ_SUBSCRIBE}} if the programming language needs it.
 
-+++ Getting the Examples
+++ Getting the Examples
 
 The examples live in a public [https://github.com/imatix/zguide GitHub repository]. The simplest way to get all the examples is to clone this repository:
 
@@ -46,7 +42,7 @@ git clone --depth=1 git://github.com/imatix/zguide.git
 
 And then browse the examples subdirectory. You'll find examples by language. If there are examples missing in a language you use, you're encouraged to [http://zguide.zeromq.org/main:translate submit a translation]. This is how this text became so useful, thanks to the work of many people. All examples are licensed under MIT/X11.
 
-+++ Ask and Ye Shall Receive
+++ Ask and Ye Shall Receive
 
 So let's start with some code. We start of course with a Hello World example. We'll make a client and a server. The client sends "Hello" to the server, which replies with "World"[figure]. Here's the server in C, which opens a 0MQ socket on port 5555, reads requests on it, and replies with "World" to each request:
 
@@ -100,7 +96,7 @@ If you kill the server (Ctrl-C) and restart it, the client won't recover properl
 
 There is a lot happening behind the scenes but what matters to us programmers is how short and sweet the code is, and how often it doesn't crash, even under heavy load. This is the request-reply pattern, probably the simplest way to use 0MQ. It maps to RPC and the classic client-server model.
 
-+++ A Minor Note on Strings
+++ A Minor Note on Strings
 
 0MQ doesn't know anything about the data you send except its size in bytes. That means you are responsible for formatting it safely so that applications can read it back. Doing this for objects and complex data types is a job for specialized libraries like Protocol Buffers. But even for strings you need to take care.
 
@@ -153,14 +149,14 @@ This makes a very handy helper function and in the spirit of making things we ca
 
 The result is {{zhelpers.h}}, which lets us write sweeter and shorter 0MQ applications in C. It is a fairly long source, and only fun for C developers, so [https://github.com/imatix/zguide/blob/master/examples/C/zhelpers.h read it at leisure].
 
-+++ Version Reporting
+++ Version Reporting
 
 0MQ does come in several versions and quite often, if you hit a problem, it'll be something that's been fixed in a later version. So it's a useful trick to know //exactly// what version of 0MQ you're actually linking with. Here is a tiny program that does that:
 
 [[code type="example" title="0MQ version reporting" name="version"]]
 [[/code]]
 
-+++ Getting the Message Out
+++ Getting the Message Out
 
 The second classic pattern is one-way data distribution, in which a server pushes updates to a set of clients. Let's see an example that pushes out weather updates consisting of a zip code, temperature, and relative humidity. We'll generate random values, just like the real weather stations do.
 
@@ -250,7 +246,7 @@ user    0m0.000s
 sys     0m0.008s
 [[/code]]
 
-+++ Divide and Conquer
+++ Divide and Conquer
 
 As a final example (you are surely getting tired of juicy code and want to delve back into philological discussions about comparative abstractive norms), let's do a little supercomputing. Then coffee. Our supercomputing application is a fairly typical parallel processing model[figure]. We have:
 
@@ -356,7 +352,7 @@ Let's look at some aspects of this code in more detail:
 
 The pipeline pattern also exhibits the "slow joiner" syndrome, leading to accusations that PUSH sockets don't load balance properly. If you are using PUSH and PULL, and one of your workers gets way more messages than the others, it's because that PULL socket has joined faster than the others, and grabs a lot of messages before the others manage to connect.
 
-+++ Programming with 0MQ
+++ Programming with 0MQ
 
 Having seen some examples, you're eager to start using 0MQ in some apps. Before you start that, take a deep breath, chillax, and reflect on some basic advice that will save you stress and confusion.
 
@@ -465,7 +461,7 @@ worker_thread (void *arg) {
 
 In the end, the problem was that the application was passing sockets between threads, which crashes weirdly. Sockets are not threadsafe. It became legal behavior to migrate sockets from one thread to another in 0MQ/2.1, but this remains dangerous unless you use a "full memory barrier". If you don't know what that means, don't attempt socket migration.
 
-++++ Getting the Context Right
++++ Getting the Context Right
 
 0MQ applications always start by creating a //context//, and then using that for creating sockets. In C, it's the {{zmq_ctx_new[3]}} call. You should create and use exactly one context in your process. Technically, the context is the container for all sockets in a single process, and acts as the transport for {{inproc}} sockets, which are the fastest way to connect threads in one process. If at runtime a process has two contexts, these are like separate 0MQ instances. If that's explicitly what you want, OK, but otherwise remember:
 
@@ -473,7 +469,7 @@ In the end, the problem was that the application was passing sockets between thr
 
 If you're using the {{fork()}} system call, each process needs its own context. If you do {{zmq_ctx_new[3]}} in the main process before calling {{fork()}}, the child processes get their own contexts. In general you want to do the interesting stuff in the child processes, and just manage these from the parent process.
 
-++++ Making a Clean Exit
++++ Making a Clean Exit
 
 Classy programmers share the same motto as classy hit men: always clean-up when you finish the job. When you use 0MQ in a language like Python, stuff gets automatically freed for you. But when using C you have to carefully free objects when you're finished with them, or you get memory leaks, unstable applications, and generally bad karma.
 
@@ -497,7 +493,7 @@ Finally, destroy the context. This will cause any blocking receives or polls or 
 
 Voila! It's complex and painful enough that any language binding author worth his or her salt will do this automatically and make the socket closing dance unnecessary.
 
-+++ Why We Needed 0MQ
+++ Why We Needed 0MQ
 
 Now that you've seen 0MQ in action, let's go back to the "why".
 
@@ -617,7 +613,7 @@ Specifically:
 
 Actually 0MQ does rather more than this. It has a subversive effect on how you develop network-capable applications. Superficially it's a socket-inspired API on which you do {{zmq_msg_recv[3]}} and {{zmq_msg_send[3]}}. But message processing rapidly becomes the central loop, and your application soon breaks down into a set of message processing tasks. It is elegant and natural. And it scales: each of these tasks maps to a node, and the nodes talk to each other across arbitrary transports. Two nodes in one process (node is a thread), two nodes on one box (node is a process), or two boxes on one network (node is a box) - it's all the same, with no application code changes.
 
-+++ Socket Scalability
+++ Socket Scalability
 
 Let's see 0MQ's scalability in action. Here is a shell script that starts the weather server and then a bunch of clients in parallel:
 
@@ -644,7 +640,7 @@ As the clients run, we take a look at the active processes using 'top', and we s
 
 Let's think for a second about what is happening here. The weather server has a single socket, and yet here we have it sending data to five clients in parallel. We could have thousands of concurrent clients. The server application doesn't see them, doesn't talk to them directly. So the 0MQ socket is acting like a little server, silently accepting client requests and shoving data out to them as fast as the network can handle it. And it's a multithreaded server, squeezing more juice out of your CPU.
 
-+++ Upgrading from 0MQ/2.2 to 0MQ/3.2
+++ Upgrading from 0MQ/2.2 to 0MQ/3.2
 
 In early 2012, 0MQ/3.2 became stable enough for live use and by the time you're reading this, it's what you really should be using. If you are still using 2.2, here's a quick summary of the changes, and how to migrate your code.
 
@@ -658,7 +654,7 @@ Other parts of the libzmq API became more consistent. We deprecated {{zmq_init[3
 
 Finally, we added context monitoring via the {{zmq_ctx_set_monitor[3]}} call, which lets you track connections and disconnections, and other events on sockets.
 
-+++ Warning - Unstable Paradigms!
+++ Warning - Unstable Paradigms!
 
 Traditional network programming is built on the general assumption that one socket talks to one connection, one peer. There are multicast protocols but these are exotic. When we assume "one socket = one connection", we scale our architectures in certain ways. We create threads of logic where each thread work with one socket, one peer. We place intelligence and state in these threads.
 

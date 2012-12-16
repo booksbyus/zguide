@@ -60,6 +60,7 @@ $cutoff = 60;
 signatures_load ();
 bookmarks_load ();
 
+#   If we have parts, content is indented one extra level
 $have_parts = 0;
 
 die "Can't create book.xml: $!"
@@ -135,31 +136,31 @@ while (<>) {
         writeln (requote ("<title>$'</title>"));
         start_block (2, "partintro");
     }
-    elsif (/^\+\+\s+Preface/) {
+    elsif (/^\+\s+Preface/) {
         $bookmarks{$anchor} = "Preface" if $anchor;
         close_list ();
         start_block (1 + $have_parts, "preface");
         writeln (requote ("<title>Preface</title>"));
     }
-    elsif (/^\+\+\s+(.*)$/) {
+    elsif (/^\+\s+(.*)$/) {
         $bookmarks{$anchor} = zmq_symbol ($1) if $anchor;
         close_list ();
         start_block (1 + $have_parts, "chapter");
         writeln (requote ("<title>$1</title>"));
     }
-    elsif (/^\+\+\s+Postface/) {
+    elsif (/^\+\s+Postface/) {
         $bookmarks{$anchor} = "Postface" if $anchor;
         close_list ();
         #   Don't have a Postface item, so make this a chapter
         start_block (1 + $have_parts, "chapter");
         writeln (requote ("<title>Postface</title>"));
     }
-    elsif (/^\+\+\+\s+(.*)$/) {
+    elsif (/^\+\+\s+(.*)$/) {
         close_list ();
         start_block (2 + $have_parts, "sect1");
         writeln (requote ("<title>$1</title>"));
     }
-    elsif (/^\+\+\+\+\s+(.*)$/) {
+    elsif (/^\+\+\+\s+(.*)$/) {
         close_list ();
         start_block (3 + $have_parts, "sect2");
         writeln (requote ("<title>$1</title>"));

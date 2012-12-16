@@ -1,6 +1,6 @@
 .output chapter5.wd
 .bookmark advanced-pub-sub
-++ Advanced Publish-Subscribe Patterns
++ Advanced Publish-Subscribe Patterns
 
 In [#advanced-request-reply] and [#reliable-request-reply] we looked at advanced use of 0MQ's request-reply pattern. If you managed to digest all that, congratulations. In this chapter we'll focus on publish-subscribe, and extend 0MQ's core pub-sub pattern with higher-level patterns for performance, reliability, state distribution, and monitoring.
 
@@ -14,7 +14,7 @@ We'll cover:
 * How to use reactors to simplify complex servers.
 * How to use the Binary Star pattern to add failover to a server.
 
-+++ Pros and Cons of Publish-Subscribe
+++ Pros and Cons of Publish-Subscribe
 
 0MQ's low-level patterns have their different characters. Pub-sub addresses an old messaging problem, which is //multicast// or //group messaging//. It has that unique mix of meticulous simplicity and brutal indifference that characterizes 0MQ. It's worth understanding the trade-offs that pub-sub makes, how these benefit us, and how we can work around them if needed.
 
@@ -51,7 +51,7 @@ A lot more can go wrong but these are the typical failures we see in a realistic
 
 All of these failure cases have answers, though not always simple ones. Reliability means complexity, and most of us don't need this, most of the time, which is why 0MQ doesn't attempt to do this out of the box.
 
-+++ Pub-sub Tracing (Espresso Pattern)
+++ Pub-sub Tracing (Espresso Pattern)
 
 Let's start this chapter by looking at a way to trace pub-sub networks. In [#sockets-and-patterns] we saw a simple proxy that used these to do transport bridging. The {{zmq_proxy[3]}} method has three arguments; a //front-end// and //back-end// socket that it bridges together, and a //capture// socket that it will send all messages to.
 
@@ -78,7 +78,7 @@ The subscriber thread subscribes to "A" and "B", receives five messages, and the
 
 Which shows neatly how the publisher socket stops sending data when there are no subscribers for it. The publisher thread is still sending messages. The socket just drops them silently.
 
-+++ Last Value Caching
+++ Last Value Caching
 
 If you've used commercial publish-subscribe systems you may be used to some features that are missing in the fast and cheerful 0MQ pub-sub model. One of these is "last value caching" (LVC). The problem this solves is how a new subscriber catches up when it joins the network. The theory is that publishers get notified when a new subscriber joins and subscribes to some specific topics. The publisher can then re-broadcast the last message for those topics.
 
@@ -131,7 +131,7 @@ Each subscriber happily reports "Save Roger", and Gregor the Escaped Convict sli
 
 One note: the XPUB socket by default does not report duplicate subscriptions, which is what you want when you're naively connecting an XPUB to an XSUB. Our example sneakily gets around this by using random topics so the chance of it not working is one in a million. In a real LVC proxy you'll want to use the {{ZMQ_XPUB_VERBOSE}} option that we implement in [#the-community] as an exercise.
 
-+++ Slow Subscriber Detection (Suicidal Snail Pattern)
+++ Slow Subscriber Detection (Suicidal Snail Pattern)
 
 A common problem you will hit when using the pub-sub pattern in real life is the slow subscriber. In an ideal world, we stream data at full speed from publishers to subscribers. In reality, subscriber applications are often written in interpreted languages, or just do a lot of work, or are just badly written, to the extent that they can't keep up with publishers.
 
@@ -165,7 +165,7 @@ Notes about this example:
 * The message here consists simply of the current system clock as a number of milliseconds. In a realistic application you'd have at least a message header with the timestamp, and a message body with data.
 * The example has subscriber and publisher in a single process, as two threads. In reality they would be separate processes. Using threads is just convenient for the demonstration.
 
-+++ High-speed Subscribers (Black Box Pattern)
+++ High-speed Subscribers (Black Box Pattern)
 
 Now lets look at one way to make our subscribers faster. A common use-case for pub-sub is distributing large data streams like market data coming from stock exchanges. A typical set-up would have a publisher connected to a stock exchange, taking price quotes, and sending them out to a number of subscribers. If there are a handful of subscribers, we could use TCP. If we have a larger number of subscribers, we'd probably use reliable multicast, i.e. PGM.
 
@@ -276,7 +276,7 @@ With two streams, working at full speed, we would configure 0MQ as follows:
 
 With ideally, no more threads in our architecture than we had cores. Once we create more threads than cores, we get contention between threads, and diminishing returns. There would be no benefit, for example, in creating more I/O threads.
 
-+++ Reliable Publish-Subscribe (Clone Pattern)
+++ Reliable Publish-Subscribe (Clone Pattern)
 
 As a larger worked example, we'll take the problem of making a reliable publish-subscribe architecture. We'll develop this in stages. The goal is to allow a set of applications to share some common state. Here are our technical challenges:
 
@@ -291,7 +291,7 @@ Let's say that updates are reasonably low-volume. We don't have real-time goals.
 * Some game state shared by a group of players.
 * Exchange rate data that is updated in real-time and available to applications.
 
-++++ Centralized vs. Decentralized
++++ Centralized vs. Decentralized
 
 A first decision we have to make is whether we work with a central server or not. It makes a big difference in the design we end up with. The trade-offs are these:
 
@@ -305,7 +305,7 @@ A first decision we have to make is whether we work with a central server or not
 
 So, for the Clone pattern we'll work with a //server// that publishes state updates and a set of //clients// that represent applications.
 
-++++ Representing State as Key-Value Pairs
++++ Representing State as Key-Value Pairs
 
 We'll develop Clone in stages, solving one problem at a time. First, let's look at how to update a shared state across a set of clients. We need to decide how to represent our state, and the updates. The simplest plausible format is a key-value store, where one key-value pair represents an atomic unit of change in the shared state.
 
@@ -369,7 +369,7 @@ Later we'll make a more sophisticated kvmsg class that will work in in real appl
 
 Both the server and client maintain hash tables, but this first model only works properly if we start all clients before the server, and the clients never crash. That's very artificial.
 
-++++ Getting an Out-of-band Snapshot
++++ Getting an Out-of-band Snapshot
 
 So now we have our second problem: how to deal with late-joining clients or clients that crash and then restart. 
 
@@ -434,7 +434,7 @@ Some notes about this code:
 
 Right now, these two programs don't do anything real, but they correctly synchronize state. It's a neat example of how to mix different patterns: PAIR-PAIR, PUB-SUB, and ROUTER-DEALER.
 
-++++ Republishing Updates from Clients
++++ Republishing Updates from Clients
 
 In our second model, changes to the key-value store came from the server itself. This is a centralized model, useful for example if we have a central configuration file we want to distribute, with local caching on each node. A more interesting model takes updates from clients, not the server. The server thus becomes a stateless broker. This gives us some benefits:
 
@@ -493,7 +493,7 @@ Some notes about this code:
 
 * The client uses a simple tickless timer to send a random update to the server once a second. In a real implementation we would drive updates from application code.
 
-++++ Working with Subtrees
++++ Working with Subtrees
 
 As we grow the number of clients, the size of our shared store will also grow. It stops being reasonable to send everything to every client. This is the classic story with publish-subscribe: when you have a very small number of clients, you can send every message to all clients. As you grow the architecture, this becomes inefficient. Clients specialize in different areas.
 
@@ -516,7 +516,7 @@ And here is the corresponding client:
 [[code type="example" title="Clone client, Model Four" name="clonecli4"]]
 [[/code]]
 
-++++ Ephemeral Values
++++ Ephemeral Values
 
 An ephemeral value is one that expires automatically unless regularly refreshed. If you think of Clone being used for a registration service, then ephemeral values would let you do dynamic values. A node joins the network, publishes its address, and refreshes this regularly. If the node dies, its address eventually gets removed.
 
@@ -539,7 +539,7 @@ The Model Five client is almost identical to Model Four. It uses the full kvmsg 
 kvmsg_set_prop (kvmsg, "ttl", "%d", randof (30));
 [[/code]]
 
-++++ Using a Reactor
++++ Using a Reactor
 
 Up to now we used a poll loop in the server. In this next model of the server we switch to using a reactor. In C, we use CZMQ's zloop class. Using a reactor makes the code more verbose but easier to understand and build out, since each piece of the server is handled by a separate reactor handler.
 
@@ -554,7 +554,7 @@ There are three reactor handlers:
 [[code type="example" title="Clone server, Model Five" name="clonesrv5"]]
 [[/code]]
 
-++++ Adding the Binary Star Pattern for Reliability
++++ Adding the Binary Star Pattern for Reliability
 
 The Clone models up to now are relatively simple. However we're now going to get into unpleasantly complex territory here that has me getting up for another espresso. You should appreciate that making "reliable" messaging is complex enough that you always need to ask, "do we actually need this?" before jumping into it. If you can get away with unreliable, or "good enough" reliability, you can make a huge win in terms of cost and complexity. Sure, you may lose some data now and then. It is often a good trade-off. Having said, that, and... sips... since the espresso is really good, let's jump in.
 
@@ -680,7 +680,7 @@ I built it piece by piece, and got each piece working //properly// before going 
 
 For testing, I always try to use Valgrind, which catches memory leaks and invalid memory accesses. In C this is a major concern, since you can't delegate to a garbage collector. Using proper and consistent abstractions like kvmsg and CZMQ helps enormously.
 
-++++ The Clustered Hashmap Protocol
++++ The Clustered Hashmap Protocol
 
 While the server is pretty much a mashup of the previous model plus the Binary Star pattern, the client is quite a lot more complex. But before we get to that, let's look at the final protocol. I've written this up as a specification on the ZeroMQ RFC website as the [http://rfc.zeromq.org/spec:12 Clustered Hashmap Protocol].
 
@@ -834,7 +834,7 @@ CHP is designed to be scalable to large numbers (thousands) of clients, limited 
 
 CHP does not implement any authentication, access control, or encryption mechanisms and should not be used in any deployment where these are required.
 
-++++ Building a Multithreaded Stack and API
++++ Building a Multithreaded Stack and API
 
 The client stack we used so far isn't smart enough to handle this protocol properly. As soon as we start doing heartbeats we need a client stack that can run in a background thread. In the Freelance pattern at the end of [#reliable-request-reply] we used a multithreaded API but didn't explain it in detail. It turns out that multithreaded APIs are really useful when you start to make more complex 0MQ protocols like CHP.
 

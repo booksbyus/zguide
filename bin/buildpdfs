@@ -9,7 +9,19 @@ BOOK=zguide
 function mkone {
     export BOOK_LANG=$1
     export BOOK_FORM=pdf
-    bin/mkdocbook preface_print.txt chapter*.txt postface.txt
+    bin/mkdocbook \
+        preface_print.txt \
+        part1.txt \
+        chapter1.txt \
+        chapter2.txt \
+        chapter3.txt \
+        chapter4.txt \
+        chapter5.txt \
+        part2.txt \
+        chapter6.txt \
+        chapter7.txt \
+        chapter8.txt \
+        postface.txt
 
     #  Produce and upload PDF
     docbook2ps book.xml
