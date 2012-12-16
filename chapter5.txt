@@ -171,7 +171,7 @@ Now lets look at one way to make our subscribers faster. A common use-case for p
 
 Let's imagine our feed has an average of 100,000 100-byte messages a second. That's a typical rate, after filtering market data we don't need to send on to subscribers. Now we decide to record a day's data (maybe 250 GB in 8 hours), and then replay it to a simulation network, i.e. a small group of subscribers. While 100K messages a second is easy for a 0MQ application, we want to replay //much faster//.
 
-So we set-up our architecture with a bunch of boxes, one for the publisher, and one for each subscriber. These are well-specified boxes, eight cores, twelve for the publisher. (If you're reading this in 2015, which is when the Guide is scheduled to be finished, please add a zero to those numbers.)
+So we set-up our architecture with a bunch of boxes, one for the publisher, and one for each subscriber. These are well-specified boxes, eight cores, twelve for the publisher.
 
 And as we pump data into our subscribers, we notice two things:
 
@@ -180,7 +180,7 @@ And as we pump data into our subscribers, we notice two things:
 
 The first thing we have to do is break our subscriber into a multithreaded design so that we can do work with messages in one set of threads, while reading messages in another. Typically we don't want to process every message the same way. Rather, the subscriber will filter some messages, perhaps by prefix key. When a message matches some criteria, the subscriber will call a worker to deal with it. In 0MQ terms this means sending the message to a worker thread.
 
-So the subscriber looks something like a queue device. We could use various sockets to connect the subscriber and workers. If we assume one-way traffic, and workers that are all identical, we can use PUSH and PULL, and delegate all the routing work to 0MQ!figref(). This is the simplest and fastest approach.
+So the subscriber looks something like a queue device. We could use various sockets to connect the subscriber and workers. If we assume one-way traffic, and workers that are all identical, we can use PUSH and PULL, and delegate all the routing work to 0MQ. This is the simplest and fastest approach.
 
 [[code type="textdiagram" title="The Simple Black Box Pattern"]]
                     +-----------+
@@ -223,7 +223,7 @@ The subscriber talks to the publisher over TCP or PGM. The subscriber talks to i
 
 Now to break that ceiling. What happens is that the subscriber thread hits 100% of CPU, and since it is one thread, it cannot use more than one core. A single thread will always hit a ceiling, be it at 2M, 6M, or more messages per second. We want to split the work across multiple threads that can run in parallel.
 
-The approach used by many high-performance products, which works here, is //sharding//, meaning we split the work into parallel and independent streams. E.g. half of the topic keys are in one stream, half in another!figref(). We could use many streams, but performance won't scale unless we have free cores.
+The approach used by many high-performance products, which works here, is //sharding//, meaning we split the work into parallel and independent streams. E.g. half of the topic keys are in one stream, half in another. We could use many streams, but performance won't scale unless we have free cores.
 
 So let's see how to shard into two streams:
 
@@ -309,7 +309,7 @@ So, for the Clone pattern we'll work with a //server// that publishes state upda
 
 We'll develop Clone in stages, solving one problem at a time. First, let's look at how to update a shared state across a set of clients. We need to decide how to represent our state, and the updates. The simplest plausible format is a key-value store, where one key-value pair represents an atomic unit of change in the shared state.
 
-We have a simple pub-sub example in [#basics], the weather server and client. Let's change the server to send key-value pairs, and the client to store these in a hash table. This lets us send updates from one server to a set of clients using the classic pub-sub model!figref().
+We have a simple pub-sub example in [#basics], the weather server and client. Let's change the server to send key-value pairs, and the client to store these in a hash table. This lets us send updates from one server to a set of clients using the classic pub-sub model.
 
 An update is either a new key-value pair, a modified value for an existing key, or a deleted key. We can assume for now that the whole store fits in memory and that applications access it by key, e.g. using a hash table or dictionary. For larger stores and some kind of persistence we'd probably store the state in a database, but that's not relevant here.
 
@@ -373,7 +373,7 @@ Both the server and client maintain hash tables, but this first model only works
 
 So now we have our second problem: how to deal with late-joining clients or clients that crash and then restart. 
 
-In order to allow a late (or recovering) client to catch up with a server it has to get a snapshot of the server's state. Just as we've reduced "message" to mean "a sequenced key-value pair", we can reduce "state" to mean "a hash table". To get the server state, a client opens a DEALER socket and asks for it explicitly!figref().
+In order to allow a late (or recovering) client to catch up with a server it has to get a snapshot of the server's state. Just as we've reduced "message" to mean "a sequenced key-value pair", we can reduce "state" to mean "a hash table". To get the server state, a client opens a DEALER socket and asks for it explicitly.
 
 [[code type="textdiagram" title="State Replication"]]
                   +-----------------+
@@ -442,7 +442,7 @@ In our second model, changes to the key-value store came from the server itself.
 
 * We can use the key-value store to share knowledge between active peers.
 
-To send updates from clients back to the server we could use a variety of socket patterns. The simplest plausible solution is a PUSH-PULL combination!figref().
+To send updates from clients back to the server we could use a variety of socket patterns. The simplest plausible solution is a PUSH-PULL combination.
 
 [[code type="textdiagram" title="Republishing Updates"]]
              +--------------------------+
@@ -592,7 +592,7 @@ It's useful to design the client logic as a finite state machine. The client cyc
 
 * When the client has gotten its snapshot, it waits for and processes updates. Again, if it doesn't hear anything from the server within some timeout, it fails over to the next server.
 
-The client loops forever. It's quite likely during startup or fail-over that some clients may be trying to talk to the primary server while others are trying to talk to the backup server. The Binary Star state machine handles this!figref(), hopefully accurately. It's hard to prove software correct; instead we hammer it until we can't prove it wrong.
+The client loops forever. It's quite likely during startup or fail-over that some clients may be trying to talk to the primary server while others are trying to talk to the backup server. The Binary Star state machine handles this, hopefully accurately. It's hard to prove software correct; instead we hammer it until we can't prove it wrong.
 
 [[code type="textdiagram" title="Clone Client Finite State Machine"]]
  +-----------+
@@ -642,7 +642,7 @@ We make some assumptions:
 
 * That multiple clients do not update the same hash keys, at the same time. Client updates will arrive at the two servers in a different order. So, the backup server may apply updates from its pending list in a different order than the primary server would or did. Updates from one client will always arrive in the same order on both servers, so that is safe.
 
-So the architecture for our high-availability server pair using the Binary Star pattern has two servers and a set of clients that talk to both servers!figref().
+So the architecture for our high-availability server pair using the Binary Star pattern has two servers and a set of clients that talk to both servers.
 
 [[code type="textdiagram" title="High-availability Clone Server Pair"]]
 +--------------------+                 +--------------------+
@@ -672,7 +672,7 @@ Here is the sixth and last model of the clone server:
 [[code type="example" title="Clone server, Model Six" name="clonesrv6"]]
 [[/code]]
 
-This model is only a few hundred lines of code, but it took quite a while to get working. To be accurate, building Model Six took about a full week of "sweet god, this is just too complex for the Guide" hacking. We've assembled pretty much everything and the kitchen sink into this small application. We have fail-over, ephemeral values, subtrees, and so on. What surprised me was that the upfront design was pretty accurate. But the details of writing and debugging so many socket flows is quite challenging.
+This model is only a few hundred lines of code, but it took quite a while to get working. To be accurate, building Model Six took about a full week of "sweet god, this is just too complex for an example" hacking. We've assembled pretty much everything and the kitchen sink into this small application. We have fail-over, ephemeral values, subtrees, and so on. What surprised me was that the upfront design was pretty accurate. But the details of writing and debugging so many socket flows is quite challenging.
 
 The reactor-based design removes a lot of the grunt work from the code, and what remains is simpler and easier to understand. We reuse the bstar reactor from [#reliable-request-reply]. The whole server runs as one thread, so there's no inter-thread weirdness going on. Just a structure pointer ('self') passed around to all handlers, which can do their thing happily. One nice side-effect of using reactors is that code, being less tightly integrated into a poll loop, is much easier to reuse. Large chunks of Model Six are taken from Model Five.
 
@@ -840,7 +840,7 @@ The client stack we used so far isn't smart enough to handle this protocol prope
 
 If you make a non-trivial protocol, and you expect applications to implement it properly, most developers will get it wrong, most of the time. You're going to be left with a lot of unhappy people complaining that your protocol is too complex, too fragile, and too hard to use. Whereas if you give them a simple API to call, you have some chance of buy-in.
 
-Our multithreaded API consists of a front-end object and a background agent, connected by two PAIR sockets!figref(). Connecting two PAIR sockets like this is so useful that your high-level binding should probably do what CZMQ does, package a "create new thread with a pipe that I can use to send messages to it" method.
+Our multithreaded API consists of a front-end object and a background agent, connected by two PAIR sockets. Connecting two PAIR sockets like this is so useful that your high-level binding should probably do what CZMQ does, package a "create new thread with a pipe that I can use to send messages to it" method.
 
 [[code type="textdiagram" title="Multithreaded API"]]
          +--------------+

@@ -398,7 +398,7 @@ Sending UUIDs across the network is the bare minimum for a logical addressing sc
 * We need some version information so that we can change this protocol over time.
 * We need to tell other nodes how to reach us via TCP, i.e. a 0MQ port they can talk to us on.
 
-Let's start with the beacon message format. We probably want a fixed protocol header that will never change in future versions, and a body that depends on the version!figref().
+Let's start with the beacon message format. We probably want a fixed protocol header that will never change in future versions, and a body that depends on the version[figure].
 
 [[code type="textdiagram" title="ZRE discovery message"]]
 +---+---+---+------+  +------+------+
@@ -608,7 +608,7 @@ During manual testing I did hit an assertion rarely. It then disappeared. Since 
 
 We packaged the discovery and messaging functionality as an 'interface' object that the main program creates, works with, and then destroys. We don't use any global variables. This makes it easy to start large numbers of interfaces and simulate real activity, all within one process. And if there's one thing we've learned from writing lots of examples, it's that 0MQ's ability to orchestrate multiple threads in a single process is //much// easier to work with than multiple processes.
 
-The first version of the tester consists of a main thread which starts and stops a set of child threads, each running one interface, each with a ROUTER, DEALER, and UDP socket ('R', 'D', and 'U' in the diagram)!figref().
+The first version of the tester consists of a main thread which starts and stops a set of child threads, each running one interface, each with a ROUTER, DEALER, and UDP socket ('R', 'D', and 'U' in the diagram)[figure].
 
 [[code type="textdiagram" title="Zyre Tester Tool"]]
                         +----------+
@@ -879,7 +879,7 @@ Arguably, just dumping log data to disk is one solution, and it's what most mobi
 
 We want to send log data somewhere central, either immediately, or opportunistically (i.e. store and forward). For now, let's focus on immediate logging. My first idea, when it comes to sending data, is to use Zyre for this. Just send log data to a group called "LOG", and hope someone collects it.
 
-But using Zyre to log Zyre itself is a Catch-22. Who logs the logger? What if we want a verbose log of every message sent? Do we include logging messages in that, or not? It quickly gets messy. We want a logging protocol that's independent of Zyre's main ZRE protocol. The simplest approach is a PUB-SUB protocol, where all nodes publish log data on a PUB socket, and a collector picks that up via a SUB socket!figref().
+But using Zyre to log Zyre itself is a Catch-22. Who logs the logger? What if we want a verbose log of every message sent? Do we include logging messages in that, or not? It quickly gets messy. We want a logging protocol that's independent of Zyre's main ZRE protocol. The simplest approach is a PUB-SUB protocol, where all nodes publish log data on a PUB socket, and a collector picks that up via a SUB socket[figure].
 
 [[code type="textdiagram" title="Distributed Log Collection"]]
 +--------+      +--------+      +--------+
@@ -965,7 +965,7 @@ Our ROUTER socket is not connection-oriented so there's no way to "close the con
 
 So let's define a //protocol assertion// as being a unique signature that we place at the start of each message, and which identities the intended protocol. When we read a message, we check the signature, and if it's not what we expect, we discard the message silently. A good signature should be hard to confuse with regular data, and give us enough space for a number of protocols.
 
-I'm going to use a 16-bit signature consisting of a twelve-bit pattern and a 4-bit protocol ID!figref(). The pattern %xAAA is meant to stay away from values we might otherwise expect to see at the start of a message: %x00, %xFF, and printable characters.
+I'm going to use a 16-bit signature consisting of a twelve-bit pattern and a 4-bit protocol ID[figure]. The pattern %xAAA is meant to stay away from values we might otherwise expect to see at the start of a message: %x00, %xFF, and printable characters.
 
 [[code type="textdiagram" title="Protocol Signature"]]
 +---+---+---+---+---+---+---+---+  +---+---+---+---+---------------+

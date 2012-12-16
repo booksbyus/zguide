@@ -67,7 +67,7 @@ Each of these approaches has its trade-offs and often you'll mix them. We'll loo
 
 +++ Client-side Reliability (Lazy Pirate Pattern)
 
-We can get very simple reliable request-reply with some changes to the client. We call this the Lazy Pirate pattern!figref(). Rather than doing a blocking receive, we:
+We can get very simple reliable request-reply with some changes to the client. We call this the Lazy Pirate pattern[figure]. Rather than doing a blocking receive, we:
 
 * Poll the REQ socket and receive from it only when it's sure a reply has arrived.
 * Resend a request, if no reply has arrived within a timeout period.
@@ -149,7 +149,7 @@ Our second approach extends the Lazy Pirate pattern with a queue proxy that lets
 
 In all these Pirate patterns, workers are stateless. If the application requires some shared state--e.g., a shared database--we don't know about it as we design our messaging framework. Having a queue proxy means workers can come and go without clients knowing anything about it. If one worker dies, another takes over. This is a nice, simple topology with only one real weakness, namely the central queue itself, which can become a problem to manage, and a single point of failure.
 
-The basis for the queue proxy is the load-balancing broker from [#advanced-request-reply]. What is the very //minimum// we need to do to handle dead or blocked workers? Turns out, it's surprisingly little. We already have a retry mechanism in the client. So using the load-balancing pattern will work pretty well. This fits with 0MQ's philosophy that we can extend a peer-to-peer pattern like request-reply by plugging naive proxies in the middle!figref().
+The basis for the queue proxy is the load-balancing broker from [#advanced-request-reply]. What is the very //minimum// we need to do to handle dead or blocked workers? Turns out, it's surprisingly little. We already have a retry mechanism in the client. So using the load-balancing pattern will work pretty well. This fits with 0MQ's philosophy that we can extend a peer-to-peer pattern like request-reply by plugging naive proxies in the middle[figure].
 
 [[code type="textdiagram" title="The Simple Pirate Pattern"]]
 +-----------+   +-----------+   +-----------+
@@ -206,7 +206,7 @@ The Simple Pirate Queue pattern works pretty well, especially since it's just a 
 
 We'll fix these in a properly pedantic Paranoid Pirate Pattern.
 
-We previously used a REQ socket for the worker. For the Paranoid Pirate worker we'll switch to a DEALER socket!figref(). This has the advantage of letting us send and receive messages at any time, rather than the lock-step send/receive that REQ imposes. The downside of DEALER is that we have to do our own envelope management (re-read [#advanced-request-reply] for background on this concept).
+We previously used a REQ socket for the worker. For the Paranoid Pirate worker we'll switch to a DEALER socket[figure]. This has the advantage of letting us send and receive messages at any time, rather than the lock-step send/receive that REQ imposes. The downside of DEALER is that we have to do our own envelope management (re-read [#advanced-request-reply] for background on this concept).
 
 [[code type="textdiagram" title="The Paranoid Pirate Pattern"]]
 +-----------+   +-----------+   +-----------+
@@ -414,7 +414,7 @@ Turning PPP into a real protocol would take more work:
 +++ Service-Oriented Reliable Queuing (Majordomo Pattern)
 
 The nice thing about progress is how fast it happens when lawyers and committees aren't involved. Just a few sentences ago we were dreaming of a better protocol that would fix the world. And [http://rfc.zeromq.org/spec:7 here we have it].
-This one-page specification turs PPP into something more solid!figref(). This is how we should design complex architectures: start by writing down the contracts, and only //then// write software to implement them.
+This one-page specification turs PPP into something more solid[figure]. This is how we should design complex architectures: start by writing down the contracts, and only //then// write software to implement them.
 
 The Majordomo Protocol (MDP) extends and improves on PPP in one interesting way: it adds a "service name" to requests that the client sends, and asks workers to register for specific services. Adding service names turns our Paranoid Pirate queue into a service-oriented broker. The nice thing about MDP is that it came out working code, a simpler ancestor protocol (PPP), and a precise set of improvements. This made it easy to draft.
 
@@ -521,7 +521,7 @@ Notes on this code:
 
 * The examples use 5-second heartbeats, mainly to reduce the amount of output when you enable tracing. Realistic values would be lower for most LAN applications. However, any retry has to be slow enough to allow for a service to restart, say 10 seconds at least.
 
-We later improved and extended the protocol and the Majordomo implementation, which now sits in its own Github project. If you want a properly usable Majordomo stack, use the github project.
+We later improved and extended the protocol and the Majordomo implementation, which now sits in its own Github project. If you want a properly usable Majordomo stack, use the GitHub project.
 
 +++ Asynchronous Majordomo Pattern
 
@@ -674,7 +674,7 @@ Once you realize that Majordomo is a "reliable" message broker, you might be tem
 
 Having said this, however, there is one sane use-case for rust-based reliability, which is an asynchronous disconnected network. It solves a major problem with Pirate, namely that a client has to wait for an answer in real-time. If clients and workers are only sporadically connected (think of email as an analogy), we can't use a stateless network between clients and workers. We have to put state in the middle.
 
-So, here's the Titanic pattern!figref(), in which we write messages to disk to ensure they never get lost, no matter how sporadically clients and workers are connected. As we did for service discovery, we're going to layer Titanic on top of MDP rather than extend it. It's wonderfully lazy because it means we can implement our fire-and-forget reliability in a specialized worker, rather than in the broker. This is excellent for several reasons:
+So, here's the Titanic pattern[figure], in which we write messages to disk to ensure they never get lost, no matter how sporadically clients and workers are connected. As we did for service discovery, we're going to layer Titanic on top of MDP rather than extend it. It's wonderfully lazy because it means we can implement our fire-and-forget reliability in a specialized worker, rather than in the broker. This is excellent for several reasons:
 
 * It is //much// easier because we divide and conquer: the broker handles message routing and the worker handles reliability.
 * It lets us mix brokers written in one language with workers written in another.
@@ -787,7 +787,7 @@ If you want to make Titanic //much faster and less reliable//, store requests an
 
 +++ High-availability Pair (Binary Star Pattern)
 
-The Binary Star pattern puts two servers in a primary-backup high-availability pair!figref(). At any given time, one of these (the active) accepts connections from client applications. The other (the passive) does nothing, but the two servers monitor each other. If the active disappears from the network, after a certain time the passive takes over as active.
+The Binary Star pattern puts two servers in a primary-backup high-availability pair[figure]. At any given time, one of these (the active) accepts connections from client applications. The other (the passive) does nothing, but the two servers monitor each other. If the active disappears from the network, after a certain time the passive takes over as active.
 
 Binary Star pattern was developed by myself and Martin Sustrik for the iMatix [http://www.openamq.org OpenAMQ server]. We designed it:
 
@@ -813,7 +813,7 @@ Binary Star pattern was developed by myself and Martin Sustrik for the iMatix [h
 +------------+
 [[/code]]
 
-Assuming we have a Binary Star pair running, here are the different scenarios that will result in a fail-over!figref():
+Assuming we have a Binary Star pair running, here are the different scenarios that will result in a fail-over[figure]:
 
 * The hardware running the primary server has a fatal problem (power supply explodes, machine catches fire, or someone simply unplugs it by mistake), and disappears. Applications see this, and reconnect to the backup server.
 * The network segment on which the primary server sits crashes--perhaps a router gets hit by a power spike--and applications start to reconnect to the backup server.
@@ -974,7 +974,7 @@ bstarcli
 
 You can then provoke fail-over by killing the primary server, and recovery by restarting the primary and killing the backup. Note how it's the client vote that triggers fail-over, and recovery.
 
-Binary star is driven by a finite state machine!figref(). States in white accept client requests, states in grey refuse them. Events are the peer state, so "Peer Active" means the other server has told us it's active. "Client Request" means we've received a client request. "Client Vote" means we've received a client request AND our peer is inactive for two heartbeats.
+Binary star is driven by a finite state machine[figure]. States in white accept client requests, states in grey refuse them. Events are the peer state, so "Peer Active" means the other server has told us it's active. "Client Request" means we've received a client request. "Client Vote" means we've received a client request AND our peer is inactive for two heartbeats.
 
 [[code type="textdiagram" title="Binary Star Finite State Machine"]]
     Start /-----------------------\   /----------\               Start
@@ -1065,7 +1065,7 @@ A 0MQ name service (and we'll make a simple implementation) has to:
 
 Putting a name service behind a service-oriented Majordomo broker is clever from some points of view. However it's simpler and much less surprising to just expose the name service as a server that clients can connect to directly. If we do this right, the name service becomes the //only// global network endpoint we need to hard-code in our code or configuration files.
 
-The types of failure we aim to handle are server crashes and restarts, server busy looping, server overload, and network issues. To get reliability, we'll create a pool of name servers so if one crashes or goes away, clients can connect to another, and so on. In practice, two would be enough. But for the example, we'll assume the pool can be any size!figref().
+The types of failure we aim to handle are server crashes and restarts, server busy looping, server overload, and network issues. To get reliability, we'll create a pool of name servers so if one crashes or goes away, clients can connect to another, and so on. In practice, two would be enough. But for the example, we'll assume the pool can be any size[figure].
 
 [[code type="textdiagram" title="The Freelance Pattern"]]
 +-----------+   +-----------+   +-----------+

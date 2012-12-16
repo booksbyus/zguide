@@ -31,7 +31,7 @@ We'll cover:
 
 I'll introduce MOPED, a software engineering pattern for 0MQ architectures. It was either "MOPED" or "BIKE", the Backronym-Induced Kinetic Effect. That's short for "BICICLE", the Backronym-Inflated See if I Care Less Effect. In life, one learns to go with the least embarrassing choices.
 
-If you've read the Guide observantly you'll have seen MOPED in action already. The development of Majordomo in [#reliable-request-reply] is a near-perfect case. But cute names are worth a thousand words.
+If you've read this book observantly you'll have seen MOPED in action already. The development of Majordomo in [#reliable-request-reply] is a near-perfect case. But cute names are worth a thousand words.
 
 The goal of MOPED is to define a process by which we can take a rough use-case for a new distributed application, and go from "hello world" to fully-working prototype in any language in under a week.
 
@@ -47,7 +47,7 @@ We can turn this into five real steps:
 
 ++++ Step 1: Internalize the Semantics
 
-You must learn and digest 0MQ's "language", that is the socket patterns and how they work. The only way to learn a language is to use it. There's no way to avoid this investment, no tapes you can play while you sleep, no chips you can plug in to magically become smarter. Read Part one of the Guide, work through the code examples, understand what's going on, and (most importantly) write some examples yourself, and then throw them away.
+You must learn and digest 0MQ's "language", that is the socket patterns and how they work. The only way to learn a language is to use it. There's no way to avoid this investment, no tapes you can play while you sleep, no chips you can plug in to magically become smarter. Read this book from the start, work through the code examples in whatever language you prefer, understand what's going on, and (most importantly) write some examples yourself, and then throw them away.
 
 At a certain point you'll feel a clicking noise in your brain. Maybe you'll have a weird chili-induced dream where little 0MQ tasks run around trying to eat you alive. Maybe you'll just think "aaahh, so //that's// what it means!" If we did our work right, it should take 2-3 days. However long it takes, until you start thinking in terms of 0MQ sockets and patterns, you're not ready for step 2.
 
@@ -593,7 +593,7 @@ A DISCONNECT command consists of a multi-part message of 3 frames:
 * Frame 3: 0x05 (1 byte, DISCONNECT)
 [[/code]]
 
-Which as you can see is close to what I wrote by hand in the original spec. Now, if you have cloned the Guide repository and you are looking at the code in examples/models, you can generate the MDP client and worker codecs. We pass the same two models to a different code generator:
+Which as you can see is close to what I wrote by hand in the original spec. Now, if you have cloned the zguide repository and you are looking at the code in examples/models, you can generate the MDP client and worker codecs. We pass the same two models to a different code generator:
 
 [[code]]
 gsl -script:codec_c mdp_client.xml mdp_worker.xml
@@ -848,7 +848,7 @@ I've not found a quick way to explain the true nature of state machine programmi
 
 A useful thing about state machines is that you can read them state by state. Each state has a unique descriptive name, and one or more //events//, which we list in any order. For each event we perform zero or more //actions//, and we then move to a //next state// (or stay in the same state).
 
-In a 0MQ protocol server, we have a state machine instance //per client//. That sounds complex but it isn't, as we'll see. We describe our first state (Start) as having one valid event, "OHAI". We check the user's credentials and then arrive in the Authenticated state!figref().
+In a 0MQ protocol server, we have a state machine instance //per client//. That sounds complex but it isn't, as we'll see. We describe our first state (Start) as having one valid event, "OHAI". We check the user's credentials and then arrive in the Authenticated state[figure].
 
 [[code type="textdiagram" title="The 'Start' State"]]
 /-------------------\
@@ -861,7 +861,7 @@ In a 0MQ protocol server, we have a state machine instance //per client//. That 
                    Check Credentials
 [[/code]]
 
-The Check Credentials action produces either an 'ok' or an 'error' event. It's in the Authenticated state that we handle these two possible events, by sending an appropriate reply back to the client!figref(). If authentication failed, we return to the Start state where the client can try again.
+The Check Credentials action produces either an 'ok' or an 'error' event. It's in the Authenticated state that we handle these two possible events, by sending an appropriate reply back to the client[figure]. If authentication failed, we return to the Start state where the client can try again.
 
 [[code type="textdiagram" title="The 'Authenticated' State"]]
 /-------------------\
@@ -879,7 +879,7 @@ The Check Credentials action produces either an 'ok' or an 'error' event. It's i
                    Send WTF
 [[/code]]
 
-When authentication has succeeded, we arrive in the Ready state. Here we have three possible events: an ICANHAZ or HUGZ message from the client, or a heartbeat timer event!figref().
+When authentication has succeeded, we arrive in the Ready state. Here we have three possible events: an ICANHAZ or HUGZ message from the client, or a heartbeat timer event[figure].
 
 [[code type="textdiagram" title="The 'Ready' State"]]
 /-------------------\

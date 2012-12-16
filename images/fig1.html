@@ -1,23 +1,20 @@
 <html>
 <pre class="textdiagram" id="fig1">
- +------------+
- |            |
- |   Client   |
- |            |
- +------------+
- |    REQ     |
- \---+--------/
-     |    ^
-     |    |
-"Hello"  "World"
-     |    |
-     v    |
- /--------+---\
- |    REP     |
- +------------+
- |            |
- |   Server   |
- |            |
- +------------+
++------------+        +------------+
+|            |        |            | Zap!
+| TCP socket +------->| ØMQ socket |
+|            | BOOM!  |      cC00  |  POW!!
++------------+        +------------+
+  ^    ^    ^
+  |    |    |
+  |    |    +---------+
+  |    |              |
+  |    +----------+   |
+ Illegal          |   |
+ radioisotopes    |   |
+ from secret      |   |
+ Soviet atomic    | Spandex
+ city             |
+              Cosmic rays
 </pre>
 </html>

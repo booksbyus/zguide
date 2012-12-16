@@ -1,6 +1,6 @@
 .output chapter1.wd
 .bookmark basics
-+ Part 1 - Learning to Work with 0MQ
++ Part 1 - Learning 0MQ
 
 In the first part of this book you'll learn how to use 0MQ. We'll cover the basics, the API, the different socket types and how they work, reliability, and a host of patterns you can use in your applications. You'll get the best results by working through the examples and text from start to end.
 
@@ -32,23 +32,23 @@ Which brings us back to the science of programming. To fix the world, we needed 
 
 It sounds ridiculously simple. And maybe it is. That's kind of the whole point.
 
-+++ Audience for This Book
++++ Starting Assumptions
 
 We assume you are using the latest 3.2 release of 0MQ. We assume you are using a Linux box or something similar. We assume you can read C code, more or less, that's the default language for the examples. We assume that when we write constants like PUSH or SUBSCRIBE you can imagine they are really called {{ZMQ_PUSH}} or {{ZMQ_SUBSCRIBE}} if the programming language needs it.
 
 +++ Getting the Examples
 
-The Guide examples live in the Guide's [https://github.com/imatix/zguide git repository]. The simplest way to get all the examples is to clone this repository:
+The examples live in a public [https://github.com/imatix/zguide GitHub repository]. The simplest way to get all the examples is to clone this repository:
 
 [[code]]
 git clone --depth=1 git://github.com/imatix/zguide.git
 [[/code]]
 
-And then browse the examples subdirectory. You'll find examples by language. If there are examples missing in a language you use, you're encouraged to [http://zguide.zeromq.org/main:translate submit a translation]. This is how the Guide became so useful, thanks to the work of many people. All examples are licensed under MIT/X11.
+And then browse the examples subdirectory. You'll find examples by language. If there are examples missing in a language you use, you're encouraged to [http://zguide.zeromq.org/main:translate submit a translation]. This is how this text became so useful, thanks to the work of many people. All examples are licensed under MIT/X11.
 
 +++ Ask and Ye Shall Receive
 
-So let's start with some code. We start of course with a Hello World example. We'll make a client and a server. The client sends "Hello" to the server, which replies with "World"!figref(). Here's the server in C, which opens a 0MQ socket on port 5555, reads requests on it, and replies with "World" to each request:
+So let's start with some code. We start of course with a Hello World example. We'll make a client and a server. The client sends "Hello" to the server, which replies with "World"[figure]. Here's the server in C, which opens a 0MQ socket on port 5555, reads requests on it, and replies with "World" to each request:
 
 [[code type="example" title="Hello World server" name="hwserver" language="C"]]
 [[/code]]
@@ -92,28 +92,7 @@ Here's the client code:
 [[code type="example" title="Hello World client" name="hwclient"]]
 [[/code]]
 
-Now this looks too simple to be realistic, but a 0MQ socket is what you get when you take a normal TCP socket, inject it with a mix of radioactive isotopes stolen from a secret Soviet atomic research project, bombard it with 1950-era cosmic rays, and put it into the hands of a drug-addled comic book author with a badly-disguised fetish for bulging muscles clad in spandex!figref(). Yes, 0MQ sockets are the world-saving superheroes of the networking world.
-
-[[code type="textdiagram" title="A terrible accident..."]]
-+------------+        +------------+
-|            |        |            | Zap!
-| TCP socket +------->| 0MQ socket |
-|            | BOOM!  |     cC00   |  POW!!
-+------------+        +------------+
-  ^    ^    ^
-  |    |    |
-  |    |    +---------+
-  |    |              |
-  |    +----------+   |
- Illegal          |   |
- radioisotopes    |   |
- from secret      |   |
- Soviet atomic    | Spandex
- city             |
-              Cosmic rays
-[[/code]]
-
-You could throw thousands of clients at this server, all at once, and it would continue to work happily and quickly. For fun, try starting the client and //then// starting the server, see how it all still works, then think for a second what this means.
+Now this looks too simple to be realistic, but 0MQ sockets have, as we already learned, superpowers. You could throw thousands of clients at this server, all at once, and it would continue to work happily and quickly. For fun, try starting the client and //then// starting the server, see how it all still works, then think for a second what this means.
 
 Let us explain briefly what these two programs are actually doing. They create a 0MQ context to work with, and a socket. Don't worry what the words mean. You'll pick it up. The server binds its REP (reply) socket to port 5555. The server waits for a request, in a loop, and responds each time with a reply. The client sends a request and reads the reply back from the server.
 
@@ -137,7 +116,7 @@ However if you send a string from another language it probably will not include 
 socket.send ("Hello")
 [[/code]]
 
-Then what goes onto the wire is a length (one byte for shorter strings) and the string contents, as individual characters!figref().
+Then what goes onto the wire is a length (one byte for shorter strings) and the string contents, as individual characters[figure].
 
 [[code type="textdiagram" title="A 0MQ string"]]
 +-----+    +-----+-----+-----+-----+-----+
@@ -190,7 +169,7 @@ Here's the server. We'll use port 5556 for this application:
 [[code type="example" title="Weather update server" name="wuserver"]]
 [[/code]]
 
-There's no start, and no end to this stream of updates, it's like a never ending broadcast!figref().
+There's no start, and no end to this stream of updates, it's like a never ending broadcast[figure].
 
 [[code type="textdiagram" title="Publish-Subscribe"]]
                +-------------+
@@ -259,10 +238,10 @@ Some points about the publish-subscribe pattern:
 
 * From 0MQ 3.x, filtering happens at the publisher side, when using a connected protocol ({{tcp://}} or {{ipc://}}). Using the {{epgm://}} protocol, filtering happens at the subscriber side. In 0MQ/2.x, all filtering happened at the subscriber side.
 
-This is how long it takes to receive and filter 10M messages on my laptop, which is an 2011-era Intel I7, fast but nothing special:
+This is how long it takes to receive and filter 10M messages on my laptop, which is an 2011-era Intel i5, decent but nothing special:
 
 [[code]]
-ph@nb201103:~/work/git/zguide/examples/c$ time wuclient
+$ time wuclient
 Collecting updates from weather server...
 Average temperature for zipcode '10001 ' was 28F
 
@@ -273,7 +252,7 @@ sys     0m0.008s
 
 +++ Divide and Conquer
 
-As a final example (you are surely getting tired of juicy code and want to delve back into philological discussions about comparative abstractive norms), let's do a little supercomputing. Then coffee. Our supercomputing application is a fairly typical parallel processing model!figref(). We have:
+As a final example (you are surely getting tired of juicy code and want to delve back into philological discussions about comparative abstractive norms), let's do a little supercomputing. Then coffee. Our supercomputing application is a fairly typical parallel processing model[figure]. We have:
 
 * A ventilator that produces tasks that can be done in parallel
 * A set of workers that process tasks
@@ -355,7 +334,7 @@ Let's look at some aspects of this code in more detail:
 
 * The ventilator's PUSH socket distributes tasks to workers (assuming they are all connected //before// the batch starts going out) evenly. This is called //load-balancing// and it's something we'll look at again in more detail.
 
-* The sink's PULL socket collects results from workers evenly. This is called //fair-queuing//!figref().
+* The sink's PULL socket collects results from workers evenly. This is called //fair-queuing//[figure].
 
 [[code type="textdiagram" title="Fair Queuing"]]
 +---------+   +---------+   +---------+
@@ -550,7 +529,7 @@ Let's look at the typical problems we face when we start to connect pieces using
 
 Take a typical open source project like [http://hadoop.apache.org/zookeeper/ Hadoop Zookeeper] and read the C API code in [http://github.com/apache/zookeeper/blob/trunk/src/c/src/zookeeper.c src/c/src/zookeeper.c]. As I write this, in 2010, the code is 3,200 lines of mystery and in there is an undocumented, client-server network communication protocol. I see it's efficient because it uses poll() instead of select(). But really, Zookeeper should be using a generic messaging layer and an explicitly documented wire level protocol. It is incredibly wasteful for teams to be building this particular wheel over and over.
 
-But how to make a reusable messaging layer? Why, when so many projects need this technology, are people still doing it the hard way, by driving TCP sockets in their code, and solving the problems in that long list, over and over!figref()?
+But how to make a reusable messaging layer? Why, when so many projects need this technology, are people still doing it the hard way, by driving TCP sockets in their code, and solving the problems in that long list, over and over[figure]?
 
 [[code type="textdiagram" title="Messaging as it Starts"]]
 +------------+
@@ -576,7 +555,7 @@ Most messaging projects, like AMQP, that try to solve this long list of problems
 
 And a broker-centric set-up needs its own operations team. You literally need to watch the brokers day and night, and beat them with a stick when they start misbehaving. You need boxes, and you need backup boxes, and you need people to manage those boxes. It is only worth doing for large applications with many moving pieces, built by several teams of people, over several years.
 
-So small to medium application developers are trapped. Either they avoid network programming, and make monolithic applications that do not scale. Or they jump into network programming and make brittle, complex applications that are hard to maintain. Or they bet on a messaging product, and end up with scalable applications that depend on expensive, easily broken technology. There has been no really good choice, which is maybe why messaging is largely stuck in the last century and stirs strong emotions. Negative ones for users, gleeful joy for those selling support and licenses!figref().
+So small to medium application developers are trapped. Either they avoid network programming, and make monolithic applications that do not scale. Or they jump into network programming and make brittle, complex applications that are hard to maintain. Or they bet on a messaging product, and end up with scalable applications that depend on expensive, easily broken technology. There has been no really good choice, which is maybe why messaging is largely stuck in the last century and stirs strong emotions. Negative ones for users, gleeful joy for those selling support and licenses[figure].
 
 [[code type="textdiagram" title="Messaging as it Becomes"]]
         +---+          |  +---+

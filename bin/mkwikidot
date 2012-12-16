@@ -1,22 +1,17 @@
 #! /usr/bin/perl
-#   z2w - convert ZeroMQ document to Wikidot format
+#   mkwikidot
+#   - convert ZeroMQ document to Wikidot format
 #   - converts [[code type="textdiagram"]] via ditaa
 #   - converts zmq_something(3) into URL to http://api.zeromq.org
 #
-#   Usage: z2w docfile
+#   Usage: mkwikidot docfile
 #
 #   Creates Wikidot file as specified by .output and images in images/.
-#
-#   Dependencies (Ubuntu 10.10 packages):
-#       pygmentize
-#       imagemagick (mogrify tool)
-#       ditaa
 #
 #   By Pieter Hintjens, free for remixing without conditions.
 #   Images are stored in the github repository at
 #   https://github.com/imatix/zguide
 #
-require 'sflcvdp.pl';                   #   SFL date picture formatting
 use Digest::SHA1 qw(sha1_hex);
 
 @languages = ('Ada', 'Basic', 'C', 'C++', 'C#', 'Clojure', 'CL', 'Delphi', 'Erlang', 
@@ -65,9 +60,6 @@ $source = $ENV {'Z2W_LANG'} || "C";
 $format = $ENV {'Z2W_FORM'} || "online";
 signatures_load ();
 bookmarks_load ();
-
-#   When filtering, we drop text that we don't want online
-$filter = 0;
 
 printf "Generating $source/$format version of Guide...\n";
 
@@ -130,18 +122,9 @@ while (<>) {
         elsif (/^\.prelude\s+(\w.*)/) {
             $prelude = $1;
         }
-        elsif (/^\.inbook\s+(\w.*)/) {
-            #   Skip .inbook directive
-        }
         elsif (/^\.bookmark\s+(\w.*)/) {
             writeln ("[[# $1]]");
             $bookmark = $1;
-        }
-        elsif (/^\.filter\s+(\w.*)/) {
-            $filter = ($1 eq "online");
-        }
-        elsif (/^\.filter reset/) {
-            $filter = 0;
         }
         else {
             print "Illegal directive $_ at line $.\n";
@@ -309,7 +292,7 @@ while (<>) {
         writeln ($_);
     }
 }
-if ($format eq "online") {
+if ($format eq "online" && $examples) {
     die "Can't create scoreboard.wd: $!"
         unless open (SCOREBOARD, ">scoreboard.wd");
     print (SCOREBOARD "||||||~ Translations ($examples in total)||\n");
@@ -333,12 +316,12 @@ exit (0);
 sub writeln {
     local ($_) = @_;
     $_ = expand_symbols ($_);
-    print OUTPUT "$_\n" unless $EOD or $filter;
+    print OUTPUT "$_\n" unless $EOD;
 }
 
 sub writesrc {
     local ($_) = @_;
-    print OUTPUT "$_\n" unless $EOD or $filter;
+    print OUTPUT "$_\n" unless $EOD;
 }
 
 #   Process one example in one language
@@ -485,15 +468,7 @@ sub bookmarks_save {
 }
 
 
-#-- Symbol expansion code, taken from htmlpp
-
-#   Recursively expand symbols like this (and in this order):
-#
-#   $(xxx)                  - value of variable
-#   $(xxx?zzz)              - value of variable, or zzz if undefined
-#   %(text?zzz)             - value of environment variable, or zzz if undef
-#   !abc(text)              - intrinsic function with arguments
-#   zmq_zzz[n]              - link to 0MQ reference manual page
+#   Expand symbols, hyperlinks, etc
 #
 sub expand_symbols {
     local ($_) = @_;
@@ -504,8 +479,13 @@ sub expand_symbols {
 
     return unless ($_);                 #   Quit if input string is empty
 
+    #   Replace 0MQs
     $_ = zmq_symbol ($_);
 
+    #   Recursively expand symbols like this (and in this order):
+    #   $(xxx)          value of variable
+    #   $(xxx?zzz)      value of variable, or zzz if undefined
+    #   %(text?zzz)     value of environment variable, or zzz if undef
     for (;;) {
         #   Force expansion from end of string first, so things like
         #   $(xxx?$(yyy)) work properly.
@@ -531,38 +511,23 @@ sub expand_symbols {
         elsif (/\%\(([^\)]+)\?([^)\$]*)\)/) {
             $_ = $`.($ENV {$1}? $ENV {$1}: $2).$';
         }
-        #   !abc(text)
-        elsif (/\!([a-z_]+)\s*\(([^\)]*)\)/i) {
-            $funct = $1;
-            $args = $2;
-            $before = $`;
-            $after = $';
-            $args =~ s/\\/\\\\/g;
-            $args =~ s/#/"/g;
-            $_ = eval ("&intrinsic_$funct ($args)");
-            $_ = $before.$_.$after;
-            if ($@) {                   #   Syntax error in Perl statement?
-                &error ("$funct is not a valid intrinsic function")
-                    unless $nofunc_mode;
-                last;
-            }
-        }
-        elsif (/zmq_([\w_]+)\[(.)\]/) {
-            $_ = $`."[http://api.zeromq.org/3-2:zmq_$1 zmq_$1()]".$';
-        }
-        elsif (/\[#(\S+)\]/) {
-            if (!defined ($bookmarks {$1})) {
-                print "Undefined bookmark: $1\n";
-            }
-            $_ = $`."[#$1 $bookmarks{$1}]".$';
-        }
         else {
             last;
         }
     }
+    #   Translate bookmark references
+    while (/\[#(\S+)\]/) {
+        print "Undefined bookmark: $1\n"
+            unless defined ($bookmarks {$1});
+        $_ = $`."[#$1 $bookmarks{$1}]".$';
+    }
+    #   Translate figure references
+    s/\[figure\]//g;
+    
+    #   Translate man page references
+    s/zmq_([\w_]+)\[.\]/[http:\/\/api.zeromq.org\/3-2:zmq_$1 zmq_$1()]/g;
     return $_;
 }
-
 
 #   Translate 0MQ into ØMQ and 0\MQ into 0MQ
 sub zmq_symbol {
@@ -590,196 +555,7 @@ sub valueof {
     elsif (defined ($default)) {
         return ($default);
     }
-    &error ("$_");
-    &error ("($.) undefined symbol \"$symbol\"");
-    $default_warning == 1 || do {
-        &error ("I: Use \$($symbol?default) for default values.");
-        $default_warning = 1;
-    };
+    print ("E: undefined symbol \"$symbol\"");
     $symbols {$symbol} = "UNDEF";
     return $symbols {$symbol};
-}
-
-
-#   INTRINSIC FUNCTIONS
-#
-#   figref()                   - Replaced by empty string
-#   time()                     - Format current time as hh:mm:ss
-#   date()                     - Return current date value
-#   date(#picture#)            - Format current date using picture
-#   date(#picture#, date, lc)  - Format specified date using picture & language
-#   week_day([date])           - Get day of week, 0=Sunday to 6=Saturday
-#   year_week([date])          - Get week of year, 1 is first full week
-#   julian_date([date])        - Get Julian date for date
-#   lillian_date([date])       - Get Lillian date for date
-#   date_to_days(date)         - Convert yyyymmdd to Lillian date
-#   days_to_date(days)         - Convert Lillian date to yyyymmdd
-#   future_date(days[,date])   - Calculate a future date
-#   past_date(days[,date])     - Calculate a past date
-#   date_diff(date1[,date2])   - Calculate date1 - date2
-#   image_height(#image.ext#)  - Get image height (GIF, JPEG)
-#   image_width(#image.ext#)   - Get image width (GIF, JPEG)
-#   file_size(#filename#,arg)  - Get size of file: optional arg K or M
-#   file_date(#filename#)      - Get date of file
-#   file_time(#filename#)      - Get time of file as hh:mm:ss
-#   normalise(#filename#)      - Normalise filename to UNIX format
-#   system(#command#)          - Call a system utility
-#   lower(#string#)            - Convert string to lower case
-#   upper(#string#)            - Convert string to upper case
-#
-
-sub intrinsic_figref {
-    return "";
-}
-
-sub intrinsic_date {
-    local ($picture, $value, $language) = @_;
-    $value = &date_now unless $value;
-    $language = $symbols{LANG} unless $language;
-    if ($picture) {
-        return (&conv_date_pict ($value, $picture, $language));
-    }
-    else {
-        return ($value);
-    }
-}
-
-sub intrinsic_time {
-    local ($sec, $min, $hour, $day, $month, $year) = localtime;
-    return (sprintf ("%2d:%02d:%02d", $hour, $min, $sec));
-}
-
-sub intrinsic_week_day {
-    return (&day_of_week ($_ [0]? $_ [0]: &date_now));
-}
-
-sub intrinsic_year_week {
-    return (&week_of_year ($_ [0]? $_ [0]: &date_now));
-}
-
-sub intrinsic_julian_date {
-    return (&julian_date ($_ [0]? $_ [0]: &date_now));
-}
-
-sub intrinsic_lillian_date {
-    return (&date_to_days ($_ [0]? $_ [0]: &date_now));
-}
-
-sub intrinsic_date_to_days {
-    return (&date_to_days ($_ [0]));
-}
-
-sub intrinsic_days_to_date {
-    return (&days_to_date ($_ [0]));
-}
-
-sub intrinsic_future_date {
-    local ($date) = &future_date ($_ [1], 0, $_ [0], 0);
-    return ($date);
-}
-
-sub intrinsic_past_date {
-    local ($date) = &past_date ($_ [1], 0, $_ [0], 0);
-    return ($date);
-}
-
-sub intrinsic_date_diff {
-    local ($date1, $date2) = @_;
-    $date1 = &date_now unless $date1;
-    $date2 = &date_now unless $date2;
-    local ($days) = &date_diff ($date1, 0, $date2, 0);
-    return ($days);
-}
-
-sub intrinsic_image_height {
-    local ($filename) = @_;
-    if (! -e $filename) {
-        &error ("($.) file not found: \"$filename\"");
-    }
-    else {
-        return (&image_height ($filename));
-    }
-}
-
-sub intrinsic_image_width {
-    local ($filename) = @_;
-    if (! -e $filename) {
-        &error ("($.) file not found: \"$filename\"");
-    }
-    else {
-        return (&image_width ($filename));
-    }
-}
-
-sub intrinsic_file_size {
-    local ($filename, $arg) = @_;
-    local ($size) = (stat ($filename)) [7];
-
-    if (! -e $filename) {
-        &error ("($.) file not found: \"$filename\"");
-    }
-    elsif ($arg eq "K") {
-        $size /= 1024;
-    }
-    elsif ($arg eq "M") {
-        $size /= 1048576;
-    }
-    return (int ($size));
-}
-
-sub intrinsic_file_date {
-    local ($filename) = @_;
-    if (! -e $filename) {
-        &error ("($.) file not found: \"$filename\"");
-    }
-    else {
-        local ($mtime) = (stat ($filename)) [9];
-        local ($sec,$min,$hour,$mday,$mon,$year) = localtime ($mtime);
-        return (($year + 1900) * 10000 + ($mon + 1) * 100 + $mday);
-    }
-}
-
-sub intrinsic_file_time {
-    local ($filename) = @_;
-    if (! -e $filename) {
-        &error ("($.) file not found: \"$filename\"");
-    }
-    else {
-        local ($mtime) = (stat ($filename)) [9];
-        local ($sec,$min,$hour,$mday,$mon,$year) = localtime ($mtime);
-        return (sprintf ("%2d:%02d:%02d", $hour, $min, $sec));
-    }
-}
-
-sub intrinsic_normalise {
-    local ($_) = @_;                    #   Get filename argument
-    s/\\/\//g;                          #   Replace DOS-style \ by /
-    s/\s/_/g;                           #   Replace white space by _
-    return ($_);
-}
-
-sub intrinsic_system {
-    local ($_) = `@_`;
-
-    #   Return all but the last character, which should be a newline
-    chop;
-    return ($_);
-}
-
-sub intrinsic_lower {
-    local ($_) = @_;                    #   Get filename argument
-    tr/A-Z/a-z/;
-    return ($_);
-}
-
-sub intrinsic_upper {
-    local ($_) = @_;                    #   Get filename argument
-    tr/a-z/A-Z/;
-    return ($_);
-}
-
-sub error {
-    ($_) = @_;                          #   Get argument
-    print STDERR "E: $_\n";
-    $have_errors = 1;                   #   We have 1 or more errors
 }
