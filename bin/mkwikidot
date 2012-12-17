@@ -109,18 +109,6 @@ while (<>) {
             close (OUTPUT);
             die "Can't create $1: $!"
                 unless open (OUTPUT, ">$1");
-            if ($prelude) {
-                die "Can't open $prelude: $!"
-                    unless open (PRELUDE, $prelude);
-                while (<PRELUDE>) {
-                    chop;
-                    writeln ($_)
-                }
-                close (PRELUDE);
-            }
-        }
-        elsif (/^\.prelude\s+(\w.*)/) {
-            $prelude = $1;
         }
         elsif (/^\.bookmark\s+(\w.*)/) {
             writeln ("[[# $1]]");

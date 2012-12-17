@@ -33,7 +33,7 @@ You know that 0MQ is an LGPL-licensed project. In fact it's a collection of proj
 
 * At the core, libzmq is the 0MQ core library. It's written in C++, with a low-level C API. The code is nasty, mainly because it's highly optimized but also because it's written in C++, a language that lends itself to subtle and deep nastiness. Martin Sustrik wrote the bulk of this code originally, today it has dozens of people who maintain different parts of it.
 
-* Around libzmq there are about 50 "bindings". These are individual projects that create higher-level APIs for 0MQ, or at least map the low-level API into other languages. The bindings vary in quality from experimental to utterly awesome. By far the most awesome binding is [https://github.com/zeromq/pyzmq PyZMQ], which was one of the first community projects on top of 0MQ. If you are a binding author, you should really study PyZMQ and aspire to making your code and community as awesome.
+* Around libzmq there are about 50 "bindings". These are individual projects that create higher-level APIs for 0MQ, or at least map the low-level API into other languages. The bindings vary in quality from experimental to utterly awesome. Probably the most impressive binding is [https://github.com/zeromq/pyzmq PyZMQ], which was one of the first community projects on top of 0MQ. If you are a binding author, you should really study PyZMQ and aspire to making your code and community as great.
 
 * A lot of languages have multiple bindings (Erlang, Ruby, C#, at least) written by different people over time, or taking different approaches. We don't regulate these in any way. There are no "official" bindings. You vote by using one or the other, contributing to it, or ignoring it.
 
@@ -185,7 +185,7 @@ By starting with the RFC 2119 language, the C4 text makes very clear its intenti
 
 I think C4 is the first time anyone has attempted to codify a community's rulebook as a formal and reusable protocol spec. Before, our rules were spread out over several wiki pages, and quite specific to libzmq in many ways. But experience teaches us that the more formal and accurate and reusable the rules, the easier it is for strangers to collaborate up-front. And less friction means a more scalable community. At the time of C4, we also had some disagreement in the libzmq over precisely what process we were using. Not everyone felt bound by the same rules. Let's just say some people felt they had a special status, which created friction with the rest of the community. So codification made things clear.
 
-It's easy to use C4: just host your project on GitHub, get one other person to join, and open the floor to pull requests. In your README, put a link to C4 and that's it. We've done this in quite a few projects and it does seem to work. I've been pleasantly surprised a few times just applying these rules to my own work, like CZMQ. We are none of us, as I'll explain later in this chapter, so amazing that we can work without others.
+It's easy to use C4: just host your project on GitHub, get one other person to join, and open the floor to pull requests. In your README, put a link to C4 and that's it. We've done this in quite a few projects and it does seem to work. I've been pleasantly surprised a few times just applying these rules to my own work, like CZMQ. We are none of us so amazing that we can work without others.
 
 +++ Goals
 
@@ -216,7 +216,7 @@ To be honest, this goal seems to be fading into irrelevance. It's quite an inter
 
 > To reduce the internal complexity of project repositories, thus making it easier for Contributors to participate and reducing the scope for error;
 
-Curious observation: people who thrive in complex situations like to create complexity because it keeps their value high. It's the Cobra Effect (Google it). Git made branches easy and left us with the all too common syndrome of "git is easy once you understand that a git branch is just a folded five-dimensional lepton space that has a detached history with no intervening cache". Developers should not be made to feel stupid by their tools. I've too many top-class developers confused by repository structures, to accept conventional wisdom on git branches. We'll come back to dispose of git branches shortly, dear reader.
+Curious observation: people who thrive in complex situations like to create complexity because it keeps their value high. It's the Cobra Effect (Google it). Git made branches easy and left us with the all too common syndrome of "git is easy once you understand that a git branch is just a folded five-dimensional lepton space that has a detached history with no intervening cache". Developers should not be made to feel stupid by their tools. I've seen too many top-class developers confused by repository structures, to accept conventional wisdom on git branches. We'll come back to dispose of git branches shortly, dear reader.
 
 > To enforce collective ownership of the project, which increases economic incentive to Contributors and reduces the risk of hijack by hostile entities.
 
@@ -230,11 +230,11 @@ Git has its faults. Its command-line API is horribly inconsistent, and it has a 
 
 > The project SHALL be hosted on github.com or equivalent, herein called the "Platform".
 
-I'm sure one day some large firm will buy GitHub and break it, and another platform will rise in its place. Github serves up a near-perfect set of minimal, fast, simple tools. I've thrown hundreds of people at it, and they all stick, like flies stuck in a dish of honey.
+I'm sure one day some large firm will buy GitHub and break it, and another platform will rise in its place. Until then, Github serves up a near-perfect set of minimal, fast, simple tools. I've thrown hundreds of people at it, and they all stick, like flies stuck in a dish of honey.
 
 > The project SHALL use the Platform issue tracker.
 
-We made the mistake in libzmq of switching to Jira (mainly because a now departed person didn't like GitHub). Jira is a great example of how to turn something useful into a complex mess because the business depends on selling more "features". But even without criticizing Jira, keeping the issue tracker on the same platform means one less UI to learn, one less login, and integration between issues and patches.
+We made the mistake in libzmq of switching to Jira (there was an anti-GitHub faction in the community at some point). Jira is a great example of how to turn something useful into a complex mess because the business depends on selling more "features". But even without criticizing Jira, keeping the issue tracker on the same platform means one less UI to learn, one less login, and integration between issues and patches.
 
 > The project SHOULD have clearly documented guidelines for code style.
 
@@ -254,7 +254,7 @@ What we wanted to avoid was people pushing their changes directly to master. Thi
 
 We had to state this explicitly. It used to be that the libzmq "maintainers" would reject patches simply because they didn't like them. Now, that may sound reasonable to the author of a library (though libzmq was not written by any one person) but let's remember our goal of creating a work that is owned by as many people as possible. Saying "I don't like your patch so I'm going to reject it" is equivalent to saying, "I claim to own this and I think I'm better than you, and I don't trust you". Those are toxic messages to give to others who are thinking of becoming your co-investors.
 
-I think this fight between individual expertise and collective intelligence plays out in other areas. It defined Wikipedia, and still does, a decade after that work surpassed anything built by small groups of experts. For me, we make software by synthesizing knowledge, much as we make Wikipedia articles.
+I think this fight between individual expertise and collective intelligence plays out in other areas. It defined Wikipedia, and still does, a decade after that work surpassed anything built by small groups of experts. For me, we make software by slowly synthesizing the most accurate knowledge, much as we make Wikipedia articles.
 
 +++ Licensing and Ownership
 
@@ -296,7 +296,7 @@ This is just sanity: I've spent time cleaning up other peoples' patches because 
 
 > A patch MUST adhere to the "Evolution of Public Contracts" guidelines defined below.
 
-Ah, the pain, the pain. I'm not speaking of the time at age eight when I stepped on a plank with a 4-inch nail protruding from it. That was relatively OK. I'm speaking of 2010-2011 when we had multiple parallel releases of 0MQ, each with different //incompatible// APIs or wire protocols. It was an exercise in bad rules pointlessly enforced. The rule was "if you change the API or protocol, you SHALL create a new major version". Give me the nail through the foot, that hurt less.
+Ah, the pain, the pain. I'm not speaking of the time at age eight when I stepped on a plank with a 4-inch nail protruding from it. That was relatively OK. I'm speaking of 2010-2011 when we had multiple parallel releases of 0MQ, each with different //incompatible// APIs or wire protocols. It was an exercise in bad rules, pointlessly enforced, that still hurts us today. The rule was "if you change the API or protocol, you SHALL create a new major version". Give me the nail through the foot, that hurt less.
 
 One of the big changes we made with C4 was simply to ban, outright, this kind of sanctioned sabotage. Amazingly, it's not even hard. We just don't allow the breaking of existing public contracts, period, unless everyone agrees, in which case no period.
 
@@ -318,7 +318,7 @@ In this section we aim to describe the actual development process, step by step.
 
 > Change on the project SHALL be governed by the pattern of accurately identifying problems and applying minimal, accurate solutions to these problems.
 
-This is a blatant attempt to ram through thirty years' software design experience. It's a profoundly simple approach to design: make minimal, accurate solutions to real problems. Nothing more or less. Note the stress on "accuracy", a rare but essential ingredient. In 0MQ we don't have feature requests. Treating new features the same as bugs confuses newbies. But this process works, and not just in open source. Enunciating the problem we're trying to solve, with every single change, is key to deciding whether the change is worth making or not.
+This is a unapologetic ramming through of thirty years' software design experience. It's a profoundly simple approach to design: make minimal, accurate solutions to real problems, nothing more or less. In 0MQ we don't have feature requests. Treating new features the same as bugs confuses some newcomers. But this process works, and not just in open source. Enunciating the problem we're trying to solve, with every single change, is key to deciding whether the change is worth making or not.
 
 > To initiate changes, a user SHALL log an issue on the project Platform issue tracker.
 
@@ -346,7 +346,7 @@ Here we explain the GitHub fork + pull request model so that newcomers only have
 
 > To submit a patch, a Contributor SHALL create a Platform pull request back to the project.
 
-GitHub has made this so simple that we don't need to learn git commands to do it, for which I'm deeply grateful. Sometimes, I'll tell people who I don't particularly like that command-line git is awesome and all they need to do is learn git's internal model in detail before trying to use it on real work. When I see them several months later they look... different.
+GitHub has made this so simple that we don't need to learn git commands to do it, for which I'm deeply grateful. Sometimes, I'll tell people who I don't particularly like that command-line git is awesome and all they need to do is learn git's internal model in detail before trying to use it on real work. When I see them several months later they look... changed.
 
 > A Contributor SHALL NOT commit changes directly to the project.
 
@@ -382,7 +382,7 @@ When one person opens an issue, and another works on it, it's best to allow the 
 
 > Maintainers SHOULD ask for improvements to incorrect patches and SHOULD reject incorrect patches if the Contributor does not respond constructively.
 
-Initially I felt it was worth merging all patches no matter how poor. There's an element of trolling involved. Merging broken code to master might, I felt, pull in more contributors. But people were uncomfortable with this so we defined the "correct patch" rules, and the Maintainer's role in checking for quality. On the negative side I think we didn't take some interesting risks which could have paid off with more participants. On the positive side this has led to 0MQ master (and in all projects that use C4) being practically production quality, practically all the time.
+Initially I felt it was worth merging all patches no matter how poor. There's an element of trolling involved. Merging broken code to master might, I felt, pull in more contributors. But people were uncomfortable with this so we defined the "correct patch" rules, and the Maintainer's role in checking for quality. On the negative side I think we didn't take some interesting risks which could have paid off with more participants. On the positive side this has led to libzmq master (and in all projects that use C4) being practically production quality, practically all the time.
 
 > Any Contributor who has value judgments on a correct patch SHOULD express these via their own patches.
 
@@ -390,7 +390,7 @@ In essence, the goal here is to allow users to try patches rather than to spend 
 
 > Maintainers MAY commit changes to non-source documentation directly to the project.
 
-This exit allows maintainers who are making release notes to push those without having to create an issue which would then affect the release notes, leading to stress on the space time fabric and possibly involuntary rerouting backwards in the fourth dimension to before the invention of cold beer. Shudder. Simpler to agree that release notes aren't changes to the software.
+This exit allows maintainers who are making release notes to push those without having to create an issue which would then affect the release notes, leading to stress on the space time fabric and possibly involuntary rerouting backwards in the fourth dimension to before the invention of cold beer. Shudder. Simpler to agree that release notes aren't technically software.
 
 +++ Creating Stable Releases
 
@@ -427,7 +427,7 @@ This may be over-detailed. The key point here is that these forked stabilization
 
 +++ Evolution of Public Contracts
 
-By "public contracts" I mean APIs and protocols. Up until the end of 2011, libzmq's naturally happy state was marred by broken promises and broken contracts. We stopped making promises (aka "road-maps") for libzmq completely, and our dominant theory of change is now that it emerges carefully and accurately over time. At a 2012 Chicago meetup, Garrett Smith and Chuck Remes called this the "drunken stumble to greatness", which is how I think of it now.
+By "public contracts" I mean APIs and protocols. Up until the end of 2011, libzmq's naturally happy state was marred by broken promises and broken contracts. We stopped making promises (aka "road-maps") for libzmq completely, and our dominant theory of change is now that it emerges carefully and accurately over time. At the 2012 Chicago meetup, Garrett Smith and Chuck Remes called this the "drunken stumble to greatness", which is how I think of it now.
 
 We stopped breaking public contracts simply by banning the practice. Before then it had been "OK" (as in we did it, and everyone complained bitterly, and we ignored them) to break the API or protocol so long as we changed the major version number. Sounds fine, until you get 0MQ version 2.0, 3.0, and 4.0, all in development at the same time, and not speaking to each other.
 

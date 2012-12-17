@@ -73,7 +73,7 @@ print OUTPUT "<book>\n";
 
 #   Include bookinfo if book directory exists
 if ($format eq "book" && open (BOOKINFO, "book/bookinfo.xml")) {
-    print OUTPUT "<title>ZeroMQ - Connecting your Code</title>\n";
+    print OUTPUT "<title>ZeroMQ</title>\n";
     while (<BOOKINFO>) {
         print OUTPUT $_ unless /DOCTYPE/;
     }
@@ -109,9 +109,6 @@ while (<>) {
         }
         elsif (/^\.output\s+(\w.*)/) {
             #   Ignore .output directives here
-        }
-        elsif (/^\.prelude\s+(\w.*)/) {
-            $prelude = $1;
         }
         elsif (/^\.inbook\s+(\w.*)/) {
             #   Include book boilerplate if book directory exists
