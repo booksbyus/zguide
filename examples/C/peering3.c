@@ -49,11 +49,11 @@ client_task (void *args)
                     break;              //  Interrupted
                 //  Worker is supposed to answer us with our task id
                 assert (streq (reply, task_id));
-                zstr_sendf (monitor, "%s", reply);
+                zstr_send (monitor, "%s", reply);
                 free (reply);
             }
             else {
-                zstr_sendf (monitor,
+                zstr_send (monitor,
                     "E: CLIENT EXIT - lost task %s", task_id);
                 return NULL;
             }
@@ -294,7 +294,7 @@ int main (int argc, char *argv [])
             //  We stick our own identity onto the envelope
             zstr_sendm (statebe, self);
             //  Broadcast new capacity
-            zstr_sendf (statebe, "%d", local_capacity);
+            zstr_send (statebe, "%d", local_capacity);
         }
     }
     //  When we're done, clean up properly
