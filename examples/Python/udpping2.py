@@ -16,15 +16,15 @@ PING_MSG_SIZE    = 1
 PING_INTERVAL    = 1  # Once per second
 
 def main():
-    
+
     udp = UDP(PING_PORT_NUMBER)
-    
+
     poller = zmq.Poller()
     poller.register(udp.handle, zmq.POLLIN)
-    
+
     # Send first ping right away
     ping_at = time.time()
-    
+
     while True:
         timeout = ping_at - time.time()
         if timeout < 0:
@@ -34,11 +34,11 @@ def main():
         except KeyboardInterrupt:
             print("interrupted")
             break
-        
+
         # Someone answered our ping
         if udp.handle.fileno() in events:
             udp.recv(PING_MSG_SIZE)
-        
+
         if time.time() >= ping_at:
             # Broadcast our beacon
             print ("Pinging peers...")

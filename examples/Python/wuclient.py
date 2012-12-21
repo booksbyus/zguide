@@ -25,5 +25,5 @@ for update_nbr in range (5):
     zipcode, temperature, relhumidity = string.split()
     total_temp += int(temperature)
 
-print "Average temperature for zipcode '%s' was %dF" % (           
+print "Average temperature for zipcode '%s' was %dF" % (
       zip_filter, total_temp / update_nbr)

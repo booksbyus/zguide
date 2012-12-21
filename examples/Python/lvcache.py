@@ -11,7 +11,7 @@ def main():
     frontend.bind("tcp://*:5557")
     backend = ctx.socket(zmq.XPUB)
     backend.bind("tcp://*:5558")
-    
+
     # Subscribe to every single topic from publisher
     frontend.setsockopt(zmq.SUBSCRIBE, b"")
 
@@ -26,20 +26,20 @@ def main():
     poller.register(frontend, zmq.POLLIN)
     poller.register(backend, zmq.POLLIN)
     while True:
-        
+
         try:
             events = dict(poller.poll(1000))
         except KeyboardInterrupt:
             print("interrupted")
             break
-        
+
         # Any new topic data we cache and then forward
         if frontend in events:
             msg = frontend.recv_multipart()
             topic, current = msg
             cache[topic] = current
             backend.send_multipart(msg)
-        
+
         # .split handle subscriptions
         # When we get a new subscription we pull data from the cache:
         if backend in events:

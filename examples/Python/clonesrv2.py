@@ -17,13 +17,13 @@ def main():
     ctx = zmq.Context()
     publisher = ctx.socket(zmq.PUB)
     publisher.bind("tcp://*:5557")
-    
+
     updates, peer = zpipe(ctx)
-    
+
     manager_thread = threading.Thread(target=state_manager, args=(ctx,peer))
     manager_thread.daemon=True
     manager_thread.start()
-    
+
 
     sequence = 0
     random.seed(time.time())
@@ -48,7 +48,7 @@ class Route:
 
 def send_single(key, kvmsg, route):
     """Send one state snapshot key-value pair to a socket
-    
+
     Hash item data is our kvmsg object, ready to send
     """
     # Send identity of recipient first
@@ -63,11 +63,11 @@ def state_manager(ctx, pipe):
     pipe.send("READY")
     snapshot = ctx.socket(zmq.ROUTER)
     snapshot.bind("tcp://*:5556")
-    
+
     poller = zmq.Poller()
     poller.register(pipe, zmq.POLLIN)
     poller.register(snapshot, zmq.POLLIN)
-    
+
     sequence = 0       # Current snapshot version number
     while True:
         try:
@@ -90,7 +90,7 @@ def state_manager(ctx, pipe):
             else:
                 print "E: bad request, aborting\n",
                 break
-            
+
             # Send state snapshot to client
             route = Route(snapshot, identity)
 

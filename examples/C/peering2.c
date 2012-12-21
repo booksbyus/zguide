@@ -6,7 +6,7 @@
 
 #define NBR_CLIENTS 10
 #define NBR_WORKERS 3
-#define LRU_READY   "\001"      //  Signals worker is ready
+#define WORKER_READY   "\001"      //  Signals worker is ready
 
 //  Our own name; in practice this would be configured per node
 static char *self;
@@ -37,7 +37,7 @@ client_task (void *args)
 }
 
 //  .split worker task
-//  The worker task plugs into the LRU routing dialog using a REQ
+//  The worker task plugs into the load-balancer using a REQ
 //  socket:
 
 static void *
@@ -48,7 +48,7 @@ worker_task (void *args)
     zsocket_connect (worker, "ipc://%s-localbe.ipc", self);
 
     //  Tell broker we're ready for work
-    zframe_t *frame = zframe_new (LRU_READY, 1);
+    zframe_t *frame = zframe_new (WORKER_READY, 1);
     zframe_send (&frame, worker, 0);
 
     //  Process messages as they arrive
@@ -119,7 +119,7 @@ int main (int argc, char *argv [])
         zthread_new (client_task, NULL);
 
     //  .split request-reply handling
-    //  Here we handle the request-reply flow. We're using the LRU approach
+    //  Here we handle the request-reply flow. We're using load-balancing
     //  to poll workers at all times, and clients only when there are one or
     //  more workers available.
 
@@ -145,13 +145,13 @@ int main (int argc, char *argv [])
             msg = zmsg_recv (localbe);
             if (!msg)
                 break;          //  Interrupted
-            zframe_t *address = zmsg_unwrap (msg);
-            zlist_append (workers, address);
+            zframe_t *identity = zmsg_unwrap (msg);
+            zlist_append (workers, identity);
             capacity++;
 
             //  If it's READY, don't route the message any further
             zframe_t *frame = zmsg_first (msg);
-            if (memcmp (zframe_data (frame), LRU_READY, 1) == 0)
+            if (memcmp (zframe_data (frame), WORKER_READY, 1) == 0)
                 zmsg_destroy (&msg);
         }
         //  Or handle reply from peer broker
@@ -160,9 +160,9 @@ int main (int argc, char *argv [])
             msg = zmsg_recv (cloudbe);
             if (!msg)
                 break;          //  Interrupted
-            //  We don't use peer broker address for anything
-            zframe_t *address = zmsg_unwrap (msg);
-            zframe_destroy (&address);
+            //  We don't use peer broker identity for anything
+            zframe_t *identity = zmsg_unwrap (msg);
+            zframe_destroy (&identity);
         }
         //  Route reply to cloud if it's addressed to a broker
         for (argn = 2; msg && argn < argc; argn++) {

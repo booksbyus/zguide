@@ -16,10 +16,10 @@ def main(url=None):
     if url is None:
         url = "tcp://localhost:5556"
     subscriber.connect(url)
-    
+
     subscription = b"%03d" % randint(0,999)
     subscriber.setsockopt(zmq.SUBSCRIBE, subscription)
-    
+
     while True:
         topic, data = subscriber.recv_multipart()
         assert topic == subscription

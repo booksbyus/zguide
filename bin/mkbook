@@ -60,9 +60,12 @@ $cutoff = 60;
               'Tcl' => 'tcl' );
 
 signatures_load ();
+bookmarks_load ();
+
 
 #   When filtering, we drop text that we don't want in the printed book
 $filter = 0;
+$have_parts = 0;
 
 die "Can't create book.xml: $!"
     unless open (OUTPUT, ">book.xml");
@@ -72,16 +75,21 @@ print OUTPUT "<!DOCTYPE book PUBLIC \"-//OASIS//DTD DocBook XML V4.5//EN\"\n";
 print OUTPUT "\"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd\">\n";
 print OUTPUT "<book>\n";
 
-#   Include bookinfo if publisher directory exists
+#   Include bookinfo if book directory exists
 if ($format eq "book" && open (BOOKINFO, "book/bookinfo.xml")) {
     print OUTPUT "<title>ZeroMQ - Connecting your Code</title>\n";
     while (<BOOKINFO>) {
         print OUTPUT $_ unless /DOCTYPE/;
     }
+    close (BOOKINFO);
 }
 else {
     print OUTPUT "<title>The ZeroMQ Guide - for $source Developers</title>\n";
     print OUTPUT "<bookinfo>\n";
+    print OUTPUT "  <author>\n";
+    print OUTPUT "    <firstname>Pieter</firstname>\n";
+    print OUTPUT "    <surname>Hintjens</surname>\n";
+    print OUTPUT "  </author>\n";
     print OUTPUT "  <isbn><!-- ISBN goes here --></isbn>\n";
     print OUTPUT "</bookinfo>\n";
 }
@@ -107,6 +115,18 @@ while (<>) {
         elsif (/^\.prelude\s+(\w.*)/) {
             $prelude = $1;
         }
+        elsif (/^\.inbook\s+(\w.*)/) {
+            #   Include book boilerplate if book directory exists
+            if ($format eq "book" && open (BOILER, "book/$1")) {
+                while (<BOILER>) {
+                    print OUTPUT $_;
+                }
+                close (BOILER);
+            }
+        }
+        elsif (/^\.bookmark\s+(\w.*)/) {
+            $anchor = $1;
+        }
         elsif (/^\.filter\s+(\w.*)/) {
             $filter = ($1 eq $format);
         }
@@ -117,30 +137,40 @@ while (<>) {
             print "Illegal directive $_ at line $.\n";
         }
     }
-    elsif (/^\+\+\s+Preface/) {
+    elsif (/^\+\s+Part\s+\w+\s+\-\s+/) {
+        $have_parts = 1;
         close_list ();
-        start_block (1, "preface");
+        start_block (1, "part");
+        writeln (requote ("<title>$'</title>"));
+        start_block (2, "partintro");
+    }
+    elsif (/^\+\+\s+Preface/) {
+        $bookmarks{$anchor} = "Preface" if $anchor;
+        close_list ();
+        start_block (1 + $have_parts, "preface");
         writeln (requote ("<title>Preface</title>"));
     }
-    elsif (/^\+\+\s+Chapter\s+\w+\s+-\s+(.*)$/) {
+    elsif (/^\+\+\s+(.*)$/) {
+        $bookmarks{$anchor} = zmq_symbol ($1) if $anchor;
         close_list ();
-        start_block (1, "chapter");
+        start_block (1 + $have_parts, "chapter");
         writeln (requote ("<title>$1</title>"));
     }
     elsif (/^\+\+\s+Postface/) {
+        $bookmarks{$anchor} = "Postface" if $anchor;
         close_list ();
         #   Don't have a Postface item, so make this a chapter
-        start_block (1, "chapter");
+        start_block (1 + $have_parts, "chapter");
         writeln (requote ("<title>Postface</title>"));
     }
     elsif (/^\+\+\+\s+(.*)$/) {
         close_list ();
-        start_block (2, "sect1");
+        start_block (2 + $have_parts, "sect1");
         writeln (requote ("<title>$1</title>"));
     }
     elsif (/^\+\+\+\+\s+(.*)$/) {
         close_list ();
-        start_block (3, "sect2");
+        start_block (3 + $have_parts, "sect2");
         writeln (requote ("<title>$1</title>"));
     }
     #  Process unnamed code listing
@@ -160,9 +190,13 @@ while (<>) {
     elsif (/\[\[code\s+type=\"fragment\"\s+name=\"([^"]+)\"/) {
         close_list ();
         
-        #   Skip code fragment from text
+        #   Thunk fragment source code into C directory in any case
+        $name = $1;
+        die "Can't create fragments/C/$name.c: $!"
+            unless open (FRAGMENT, ">fragments/C/$name.c");
         while (<>) {
             last if /\[\[\/code\]\]/;
+            print FRAGMENT $_;
         }
         #   Look for translation in current source language, fall back on C if none
         $name = $1;
@@ -333,7 +367,7 @@ while (<>) {
     elsif ($_) {
         #   Normal text
         close_list ();
-        writeln (requote ("<para>$_</para>\n")) unless $filter;
+        writeln (requote ("<para>$_</para>\n"));
     }
 }
 close_list ();
@@ -342,6 +376,7 @@ writeln ("</book>");
 close (OUTPUT);
 
 signatures_save ();
+bookmarks_save ();
 exit (0);
 
 #   Open and close block elements
@@ -353,7 +388,13 @@ sub start_block {
         writeln ("</".$block [$cur_level].">");
         $cur_level--;
     }
-    writeln ("<$name>");
+    if ($anchor) {
+        writeln ("<$name id=\"$anchor\">");
+        $anchor = "";
+    }
+    else {
+        writeln ("<$name>");
+    }
     $block [$level] = $name;
     $cur_level = $level;
 }
@@ -372,7 +413,7 @@ sub writeln {
     #   Do once, since expand_symbols is recursive
     s/&/&amp;/g;
     $_ = expand_symbols ($_);
-    print OUTPUT "$_\n";
+    print OUTPUT "$_\n" unless $filter;
 }
 
 sub writect {
@@ -380,7 +421,7 @@ sub writect {
     #   Do once, since expand_symbols is recursive
     s/&/&amp;/g;
     $_ = expand_symbols ($_);
-    print OUTPUT "$_";
+    print OUTPUT "$_" unless $filter;
 }
 
 sub writesrc {
@@ -388,7 +429,7 @@ sub writesrc {
     s/&/&amp;/g;
     s/</&lt;/g;
     s/>/&gt;/g;
-    print OUTPUT "$_\n";
+    print OUTPUT "$_\n" unless $filter;
 }
 
 #   Do smart curly quotes before we add any tags
@@ -484,6 +525,29 @@ sub signatures_save {
     print "$count saved\n";
 }
 
+#   Load bookmarks
+sub bookmarks_load {
+    if (open (BOOKMARKS, ".bookmarks")) {
+        while (<BOOKMARKS>) {
+            chop;
+            if (/(\S+)\s+(.+)/) {
+                $bookmarks {$1} = $2;
+            }
+        }
+        close (BOOKMARKS);
+    }
+}
+
+#   Save bookmarks
+sub bookmarks_save {
+    if (open (BOOKMARKS, ">.bookmarks")) {
+        foreach $bookmark (keys %bookmarks) {
+            print BOOKMARKS "$bookmark $bookmarks{$bookmark}\n";
+        }
+        close (BOOKMARKS);
+    }
+}
+
 
 #-- Symbol expansion code, taken from htmlpp
 
@@ -545,6 +609,12 @@ sub expand_symbols {
                     unless $nofunc_mode;
                 last;
             }
+        }
+        elsif (/zmq_([\w_]+)\[(.)\]/) {
+            $_ = $`."zmq_$1()".$';
+        }
+        elsif (/\[\#([\w_-]+)\]/) {
+            $_ = $`."$bookmarks{$1}<xref linkend=\"$1\"/>".$';
         }
         else {
             last;
@@ -805,4 +875,3 @@ sub error {
     print STDERR "E: $_\n";
     $have_errors = 1;                   #   We have 1 or more errors
 }
-

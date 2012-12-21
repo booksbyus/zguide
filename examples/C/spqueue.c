@@ -1,11 +1,11 @@
 //
-//  Simple Pirate queue
-//  This is identical to the LRU pattern, with no reliability mechanisms
-//  at all. It depends on the client for recovery. Runs forever.
+//  Simple Pirate broker
+//  This is identical to load-balancing pattern, with no reliability
+//  mechanisms. It depends on the client for recovery. Runs forever.
 //
 #include "czmq.h"
 
-#define LRU_READY   "\001"      //  Signals worker is ready
+#define WORKER_READY   "\001"      //  Signals worker is ready
 
 int main (void)
 {
@@ -18,7 +18,7 @@ int main (void)
     //  Queue of available workers
     zlist_t *workers = zlist_new ();
     
-    //  The body of this example is exactly the same as lruqueue2.
+    //  The body of this example is exactly the same as lbbroker2.
     //  .skip
     while (true) {
         zmq_pollitem_t items [] = {
@@ -32,16 +32,16 @@ int main (void)
 
         //  Handle worker activity on backend
         if (items [0].revents & ZMQ_POLLIN) {
-            //  Use worker address for LRU routing
+            //  Use worker identity for load-balancing
             zmsg_t *msg = zmsg_recv (backend);
             if (!msg)
                 break;          //  Interrupted
-            zframe_t *address = zmsg_unwrap (msg);
-            zlist_append (workers, address);
+            zframe_t *identity = zmsg_unwrap (msg);
+            zlist_append (workers, identity);
 
             //  Forward message to client if it's not a READY
             zframe_t *frame = zmsg_first (msg);
-            if (memcmp (zframe_data (frame), LRU_READY, 1) == 0)
+            if (memcmp (zframe_data (frame), WORKER_READY, 1) == 0)
                 zmsg_destroy (&msg);
             else
                 zmsg_send (&msg, frontend);

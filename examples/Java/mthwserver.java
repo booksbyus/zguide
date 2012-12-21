@@ -36,6 +36,7 @@ public class mthwserver {
 	            }
 	            catch(InterruptedException e){
 	                e.printStackTrace();
+	                Thread.currentThread().interrupt();
 	            }
 
 	            //  Send reply back to client

@@ -8,7 +8,7 @@ SUBSCRIBERS_EXPECTED = 10
 
 def main():
     context = zmq.Context()
-    
+
     # Socket to talk to clients
     publisher = context.socket(zmq.PUB)
     publisher.bind('tcp://*:5561')
@@ -26,10 +26,10 @@ def main():
         syncservice.send('')
         subscribers += 1
         print "+1 subscriber"
-    
+
     # Now broadcast exactly 1M updates followed by END
     for i in range(1000000):
-       publisher.send('Rhubarb');
+        publisher.send('Rhubarb');
 
     publisher.send('END')
 

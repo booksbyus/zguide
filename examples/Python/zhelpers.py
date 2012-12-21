@@ -53,9 +53,9 @@ def socket_set_hwm(socket, hwm=-1):
 
 def zpipe(ctx):
     """build inproc pipe for talking to threads
-    
+
     mimic pipe used in czmq zthread_fork.
-    
+
     Returns a pair of PAIRs connected via inproc
     """
     a = ctx.socket(zmq.PAIR)
@@ -68,4 +68,3 @@ def zpipe(ctx):
     a.bind(iface)
     b.connect(iface)
     return a,b
-    

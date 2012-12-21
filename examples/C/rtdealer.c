@@ -1,56 +1,39 @@
 //
-//  Custom routing Router to Dealer
+//  ROUTER-to-DEALER example
 //
 #include "zhelpers.h"
 #include <pthread.h>
 
-//  We have two workers, here we copy the code, normally these would
-//  run on different boxes...
-//
+#define NBR_WORKERS 10
+
 static void *
-worker_task_a (void *args)
+worker_task (void *args)
 {
     void *context = zmq_ctx_new ();
     void *worker = zmq_socket (context, ZMQ_DEALER);
-    zmq_setsockopt (worker, ZMQ_IDENTITY, "A", 1);
-    zmq_connect (worker, "ipc://routing.ipc");
+    s_set_id (worker);          //  Set a printable identity
+    zmq_connect (worker, "tcp://localhost:5671");
 
     int total = 0;
-    while (true) {
-        //  We receive one part, with the workload
-        char *request = s_recv (worker);
-        int finished = (strcmp (request, "END") == 0);
-        free (request);
+    while (1) {
+        //  Tell the broker we're ready for work
+        s_sendmore (worker, "");
+        s_send (worker, "Hi Boss");
+
+        //  Get workload from broker, until finished
+        free (s_recv (worker));     //  Envelope delimiter
+        char *workload = s_recv (worker);
+        //  .skip
+        int finished = (strcmp (workload, "Fired!") == 0);
+        free (workload);
         if (finished) {
-            printf ("A received: %d\n", total);
+            printf ("Completed: %d tasks\n", total);
             break;
         }
         total++;
-    }
-    zmq_close (worker);
-    zmq_ctx_destroy (context);
-    return NULL;
-}
 
-static void *
-worker_task_b (void *args)
-{
-    void *context = zmq_ctx_new ();
-    void *worker = zmq_socket (context, ZMQ_DEALER);
-    zmq_setsockopt (worker, ZMQ_IDENTITY, "B", 1);
-    zmq_connect (worker, "ipc://routing.ipc");
-
-    int total = 0;
-    while (true) {
-        //  We receive one part, with the workload
-        char *request = s_recv (worker);
-        int finished = (strcmp (request, "END") == 0);
-        free (request);
-        if (finished) {
-            printf ("B received: %d\n", total);
-            break;
-        }
-        total++;
+        //  Do some random work
+        s_sleep (randof (500) + 1);
     }
     zmq_close (worker);
     zmq_ctx_destroy (context);
@@ -58,47 +41,46 @@ worker_task_b (void *args)
 }
 
 //  .split main task
-//  After we've defined the two worker tasks, we have the main task.
-//  Recall that these three tasks could be in separate processes, even
-//  running on different boxes. It's just easier to start by writing
-//  these in a single program. The main task starts the two workers,
-//  then scatters tasks to the workers. It sends an END message to each
-//  worker to tell them to exit:
+//  While this example runs in a single process, that is just to make
+//  it easier to start and stop the example. Each thread has its own
+//  context and conceptually acts as a separate process.
 
 int main (void)
 {
     void *context = zmq_ctx_new ();
-    void *client = zmq_socket (context, ZMQ_ROUTER);
-    zmq_bind (client, "ipc://routing.ipc");
+    void *broker = zmq_socket (context, ZMQ_ROUTER);
 
-    pthread_t worker;
-    pthread_create (&worker, NULL, worker_task_a, NULL);
-    pthread_create (&worker, NULL, worker_task_b, NULL);
-
-    //  Wait for threads to connect, since otherwise the messages
-    //  we send won't be routable.
-    sleep (1);
-
-    //  Send 10 tasks scattered to A twice as often as B
-    int task_nbr;
+    zmq_bind (broker, "tcp://*:5671");
     srandom ((unsigned) time (NULL));
-    for (task_nbr = 0; task_nbr < 10; task_nbr++) {
-        //  Send two message parts, first the address...
-        if (randof (3) > 0)
-            s_sendmore (client, "A");
-        else
-            s_sendmore (client, "B");
 
-        //  And then the workload
-        s_send (client, "This is the workload");
+    int worker_nbr;
+    for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++) {
+        pthread_t worker;
+        pthread_create (&worker, NULL, worker_task, NULL);
     }
-    s_sendmore (client, "A");
-    s_send     (client, "END");
+    //  Run for five seconds and then tell workers to end
+    int64_t end_time = s_clock () + 5000;
+    int workers_fired = 0;
+    while (1) {
+        //  Next message gives us least recently used worker
+        char *identity = s_recv (broker);
+        s_sendmore (broker, identity);
+        free (identity);
+        free (s_recv (broker));     //  Envelope delimiter
+        free (s_recv (broker));     //  Response from worker
+        s_sendmore (broker, "");
 
-    s_sendmore (client, "B");
-    s_send     (client, "END");
-
-    zmq_close (client);
+        //  Encourage workers until it's time to fire them
+        if (s_clock () < end_time)
+            s_send (broker, "Work harder");
+        else {
+            s_send (broker, "Fired!");
+            if (++workers_fired == NBR_WORKERS)
+                break;
+        }
+    }
+    zmq_close (broker);
     zmq_ctx_destroy (context);
     return 0;
 }
+//  .until

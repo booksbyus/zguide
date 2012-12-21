@@ -26,9 +26,9 @@
         (send-text anonymous "ROUTER uses a generated UUID")
         (dump-socket sink)
 
-        ;; Then set the identity ourself
+        ;; Then set the identity ourselves
         (zmq:with-socket (identified context zmq:req)
-          (zmq:setsockopt identified zmq:identity "Hello")
+          (zmq:setsockopt identified zmq:identity "PEER2")
           (zmq:connect identified "inproc://example")
           (send-text identified "ROUTER socket uses REQ's socket identity")
           (dump-socket sink)))))

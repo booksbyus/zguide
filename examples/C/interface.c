@@ -22,9 +22,9 @@ static void
     interface_agent (void *args, zctx_t *ctx, void *pipe);
 
 //  .split constructor and destructor
-//  Constructor and destructor for the interface class. Note that
-//  the class has barely any properties, it is just an excuse to
-//  start the background thread, and a wrapper around zmsg_recv():
+//  Here are the constructor and destructor for the interface class.
+//  Note that the class has barely any properties, it is just an excuse
+//  to start the background thread, and a wrapper around zmsg_recv():
 
 interface_t *
 interface_new (void)
@@ -95,7 +95,7 @@ s_uuid_str (uuid_t uuid)
 }
 
 //  .split peer constructor and destructor
-//  Constructor and destructor for the peer class:
+//  We have a constructor and destructor for the peer class:
 
 static peer_t *
 peer_new (uuid_t uuid)
@@ -171,8 +171,8 @@ typedef struct {
 } agent_t;
 
 //  .split agent constructor and destructor
-//  Constructor and destructor for agent. Each interface has one
-//  agent object, which implements its background thread:
+//  Now the constructor and destructor for our agent. Each interface
+//  has one agent object, which implements its background thread:
 
 static agent_t *
 agent_new (zctx_t *ctx, void *pipe)
@@ -223,8 +223,9 @@ agent_control_message (agent_t *self)
 //  .until
 
 //  .split handle beacon
-//  Handle beacon coming into UDP socket; this may be from other
-//  peers or an echo of our own broadcast beacon:
+//  This is how we handle a beacon coming into our UDP socket;
+//  this may be from other peers or an echo of our own broadcast
+//  beacon:
 
 static int
 agent_handle_beacon (agent_t *self)

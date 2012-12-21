@@ -4,6 +4,7 @@ tmp_*
 node_modules
 *.ipc
 *.pdf
+*.epub
 *.pyc
 *.pyo
 *.o
@@ -11,4 +12,5 @@ node_modules
 *~
 ebook.xml
 book
-
+book.ps
+book.xml

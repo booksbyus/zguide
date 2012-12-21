@@ -17,14 +17,14 @@ subscriber_thread (void *args, zctx_t *ctx, void *pipe)
     zsockopt_set_subscribe (subscriber, "B");
 
     int count = 0;
-    while (true) {
+    while (count < 5) {
         char *string = zstr_recv (subscriber);
         if (!string)
             break;              //  Interrupted
         free (string);
         count++;
     }
-    printf ("Subscriber received %d messages\n", count);
+    zsocket_destroy (ctx, subscriber);
 }
 
 //  .split publisher thread
@@ -36,7 +36,7 @@ publisher_thread (void *args, zctx_t *ctx, void *pipe)
     void *publisher = zsocket_new (ctx, ZMQ_PUB);
     zsocket_bind (publisher, "tcp://*:6000");
 
-    while (true) {
+    while (!zctx_interrupted) {
         char string [10];
         sprintf (string, "%c-%05d", randof (10) + 'A', randof (100000));
         if (zstr_send (publisher, string) == -1)
@@ -55,11 +55,11 @@ listener_thread (void *args, zctx_t *ctx, void *pipe)
 {
     //  Print everything that arrives on pipe
     while (true) {
-        char *string = zstr_recv (pipe);
-        if (!string)
+        zframe_t *frame = zframe_recv (pipe);
+        if (!frame)
             break;              //  Interrupted
-        puts (string);
-        free (string);
+        zframe_print (frame, NULL);
+        zframe_destroy (&frame);
     }
 }
 
@@ -82,7 +82,6 @@ int main (void)
     zmq_proxy (subscriber, publisher, listener);
 
     puts (" interrupted");
-    
     //  Tell attached threads to exit
     zctx_destroy (&ctx);
     return 0;

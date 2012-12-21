@@ -1,27 +1,49 @@
 <html>
 <pre class="textdiagram" id="fig17">
 +---------+   +---------+   +---------+
-|   PUB   |   |   PUB   |   |   PUB   |
-\----+----/   \----+----/   \----+----/
+|         |   |         |   |         |
+| Client  |   | Client  |   | Client  |
+|         |   |         |   |         |
++---------+   +---------+   +---------+
+|   REQ   |   |   REQ   |   |   REQ   |
+\---------/   \---------/   \---------/
+  connect       connect       connect
      |             |             |
+     |             |             |
+  request       request       request
      |             |             |
      +-------------+-------------+
                    |
+             fair-queuing
                    |
-             /-----+-----\
-             |   XSUB    |
+                   v
+                 bind
+             /-----------\
+             |  ROUTER   |
              +-----------+
-             |   code    |
+             |           |
+             |   Broker  |
+             |           |
              +-----------+
-             |   XPUB    |
-             \-----+-----/
+             |  DEALER   |
+             \-----------/
+                 bind
                    |
+            load balancing
                    |
      +-------------+-------------+
      |             |             |
+  request       request       request
      |             |             |
-/----+----\   /----+----\   /----+----\
-|   SUB   |   |   SUB   |   |   SUB   |
+     v             v             v
+  connect       connect       connect
+/---------\   /---------\   /---------\
+|   REP   |   |   REP   |   |   REP   |
++---------+   +---------+   +---------+
+|         |   |         |   |         |
+| Service |   | Service |   | Service |
+|    A    |   |    B    |   |    C    |
+|         |   |         |   |         |
 +---------+   +---------+   +---------+
 </pre>
 </html>

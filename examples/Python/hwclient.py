@@ -16,7 +16,7 @@ socket.connect ("tcp://localhost:5555")
 for request in range (10):
     print "Sending request ", request,"..."
     socket.send ("Hello")
-    
+
     #  Get the reply.
     message = socket.recv()
     print "Received reply ", request, "[", message, "]"

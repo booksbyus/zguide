@@ -15,9 +15,9 @@ main(_) ->
     ok = erlzmq:send(Anonymous, <<"ROUTER uses a generated UUID">>),
     erlzmq_util:dump(Sink),
 
-    %% Then set the identity ourself
+    %% Then set the identity ourselves
     {ok, Identified} = erlzmq:socket(Context, req),
-    ok = erlzmq:setsockopt(Identified, identity, <<"Hello">>),
+    ok = erlzmq:setsockopt(Identified, identity, <<"PEER2">>),
     ok = erlzmq:connect(Identified, "inproc://example"),
     ok = erlzmq:send(Identified,
                      <<"ROUTER socket uses REQ's socket identity">>),

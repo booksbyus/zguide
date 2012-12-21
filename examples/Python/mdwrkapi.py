@@ -16,10 +16,10 @@ import MDP
 
 class MajorDomoWorker(object):
     """Majordomo Protocol Worker API, Python version
-    
+
     Implements the MDP/Worker spec at http:#rfc.zeromq.org/spec:7.
     """
-    
+
     HEARTBEAT_LIVENESS = 3 # 3-5 is reasonable
     broker = None
     ctx = None
@@ -30,7 +30,7 @@ class MajorDomoWorker(object):
     liveness = 0 # How many attempts left
     heartbeat = 2500 # Heartbeat delay, msecs
     reconnect = 2500 # Reconnect delay, msecs
-    
+
     # Internal state
     expect_reply = False # False only at start
 
@@ -39,7 +39,7 @@ class MajorDomoWorker(object):
 
     # Return address, if any
     reply_to = None
-    
+
     def __init__(self, broker, service, verbose=False):
         self.broker = broker
         self.service = service
@@ -62,10 +62,10 @@ class MajorDomoWorker(object):
         self.poller.register(self.worker, zmq.POLLIN)
         if self.verbose:
             logging.info("I: connecting to broker at %s...", self.broker)
-        
+
         # Register service with broker
         self.send_to_broker(MDP.W_READY, self.service, [])
-        
+
         # If liveness hits zero, queue is considered disconnected
         self.liveness = self.HEARTBEAT_LIVENESS
         self.heartbeat_at = time.time() + 1e-3 * self.heartbeat
@@ -73,24 +73,24 @@ class MajorDomoWorker(object):
 
     def send_to_broker(self, command, option=None, msg=None):
         """Send message to broker.
-        
+
         If no msg is provided, creates one internally
         """
         if msg is None:
             msg = []
         elif not isinstance(msg, list):
             msg = [msg]
-        
+
         if option:
             msg = [option] + msg
-        
+
         msg = ['', MDP.W_WORKER, command] + msg
         if self.verbose:
             logging.info("I: sending %s to broker", command)
             dump(msg)
         self.worker.send_multipart(msg)
-    
-    
+
+
     def recv(self, reply=None):
         """Send reply, if any, to broker and wait for next request."""
         # Format and send the reply if we were provided one
@@ -100,22 +100,22 @@ class MajorDomoWorker(object):
             assert self.reply_to is not None
             reply = [self.reply_to, ''] + reply
             self.send_to_broker(MDP.W_REPLY, msg=reply)
-        
+
         self.expect_reply = True
-        
+
         while True:
             # Poll socket for a reply, with timeout
             try:
                 items = self.poller.poll(self.timeout)
             except KeyboardInterrupt:
                 break # Interrupted
-            
+
             if items:
                 msg = self.worker.recv_multipart()
                 if self.verbose:
                     logging.info("I: received message from broker: ")
                     dump(msg)
-                
+
                 self.liveness = self.HEARTBEAT_LIVENESS
                 # Don't try to handle errors, just assert noisily
                 assert len(msg) >= 3
@@ -133,7 +133,7 @@ class MajorDomoWorker(object):
                     self.reply_to = msg.pop(0)
                     # pop empty
                     assert msg.pop(0) == ''
-                    
+
                     return msg # We have a request to process
                 elif command == MDP.W_HEARTBEAT:
                     # Do nothing for heartbeats
@@ -143,7 +143,7 @@ class MajorDomoWorker(object):
                 else :
                     logging.error("E: invalid input message: ")
                     dump(msg)
-            
+
             else:
                 self.liveness -= 1
                 if self.liveness == 0:
@@ -154,16 +154,16 @@ class MajorDomoWorker(object):
                     except KeyboardInterrupt:
                         break
                     self.reconnect_to_broker()
-            
+
             # Send HEARTBEAT if it's time
             if time.time() > self.heartbeat_at:
                 self.send_to_broker(MDP.W_HEARTBEAT)
                 self.heartbeat_at = time.time() + 1e-3*self.heartbeat
-        
+
         logging.warn("W: interrupt received, killing worker...")
         return None
-    
-    
+
+
     def destroy(self):
         # context.destroy depends on pyzmq >= 2.1.10
         self.ctx.destroy(0)

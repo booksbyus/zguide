@@ -10,13 +10,13 @@
 //  We define a set of reactor handlers and our server object structure:
 
 //  Bstar reactor handlers
-static int s_snapshots  (zloop_t *loop, zmq_pollitem_t *poller, void *args);
-static int s_collector  (zloop_t *loop, zmq_pollitem_t *poller, void *args);
-static int s_flush_ttl  (zloop_t *loop, zmq_pollitem_t *poller, void *args);
-static int s_send_hugz  (zloop_t *loop, zmq_pollitem_t *poller, void *args);
-static int s_new_master (zloop_t *loop, zmq_pollitem_t *poller, void *args);
-static int s_new_slave  (zloop_t *loop, zmq_pollitem_t *poller, void *args);
-static int s_subscriber (zloop_t *loop, zmq_pollitem_t *poller, void *args);
+static int s_snapshots   (zloop_t *loop, zmq_pollitem_t *poller, void *args);
+static int s_collector   (zloop_t *loop, zmq_pollitem_t *poller, void *args);
+static int s_flush_ttl   (zloop_t *loop, zmq_pollitem_t *poller, void *args);
+static int s_send_hugz   (zloop_t *loop, zmq_pollitem_t *poller, void *args);
+static int s_new_active  (zloop_t *loop, zmq_pollitem_t *poller, void *args);
+static int s_new_passive (zloop_t *loop, zmq_pollitem_t *poller, void *args);
+static int s_subscriber  (zloop_t *loop, zmq_pollitem_t *poller, void *args);
 
 //  Our server is defined by these properties
 typedef struct {
@@ -31,8 +31,8 @@ typedef struct {
     void *subscriber;           //  Get updates from peer
     zlist_t *pending;           //  Pending updates from clients
     Bool primary;               //  TRUE if we're primary
-    Bool master;                //  TRUE if we're master
-    Bool slave;                 //  TRUE if we're slave
+    Bool active;                //  TRUE if we're active
+    Bool passive;                 //  TRUE if we're passive
 } clonesrv_t;
 
 //  .split main task setup
@@ -50,7 +50,7 @@ int main (int argc, char *argv [])
 {
     clonesrv_t *self = (clonesrv_t *) zmalloc (sizeof (clonesrv_t));
     if (argc == 2 && streq (argv [1], "-p")) {
-        zclock_log ("I: primary master, waiting for backup (slave)");
+        zclock_log ("I: primary active, waiting for backup (passive)");
         self->bstar = bstar_new (BSTAR_PRIMARY, "tcp://*:5003",
                                  "tcp://localhost:5004");
         bstar_voter (self->bstar, "tcp://*:5556", ZMQ_ROUTER, s_snapshots, self);
@@ -60,7 +60,7 @@ int main (int argc, char *argv [])
     }
     else
     if (argc == 2 && streq (argv [1], "-b")) {
-        zclock_log ("I: backup slave, waiting for primary (master)");
+        zclock_log ("I: backup passive, waiting for primary (active)");
         self->bstar = bstar_new (BSTAR_BACKUP, "tcp://*:5004",
                                  "tcp://localhost:5003");
         bstar_voter (self->bstar, "tcp://*:5566", ZMQ_ROUTER, s_snapshots, self);
@@ -73,7 +73,7 @@ int main (int argc, char *argv [])
         free (self);
         exit (0);
     }
-    //  Primary server will become first master
+    //  Primary server will become first active
     if (self->primary)
         self->kvmap = zhash_new ();
 
@@ -100,8 +100,8 @@ int main (int argc, char *argv [])
     //  interrupt:
 
     //  Register state change handlers
-    bstar_new_master (self->bstar, s_new_master, self);
-    bstar_new_slave (self->bstar, s_new_slave, self);
+    bstar_new_active (self->bstar, s_new_active, self);
+    bstar_new_passive (self->bstar, s_new_passive, self);
 
     //  Register our other handlers with the bstar reactor
     zmq_pollitem_t poller = { self->collector, 0, ZMQ_POLLIN };
@@ -193,8 +193,8 @@ s_snapshots (zloop_t *loop, zmq_pollitem_t *poller, void *args)
 
 //  .split collect updates
 //  The collector is more complex than in the clonesrv5 example since how
-//  process updates depends on whether we're master or slave. The master
-//  applies them immediately to its kvmap, whereas the slave queues them
+//  process updates depends on whether we're active or passive. The active
+//  applies them immediately to its kvmap, whereas the passive queues them
 //  as pending:
 
 //  If message was already on pending list, remove it and return TRUE,
@@ -221,7 +221,7 @@ s_collector (zloop_t *loop, zmq_pollitem_t *poller, void *args)
 
     kvmsg_t *kvmsg = kvmsg_recv (poller->socket);
     if (kvmsg) {
-        if (self->master) {
+        if (self->active) {
             kvmsg_set_sequence (kvmsg, ++self->sequence);
             kvmsg_send (kvmsg, self->publisher);
             int ttl = atoi (kvmsg_get_prop (kvmsg, "ttl"));
@@ -232,7 +232,7 @@ s_collector (zloop_t *loop, zmq_pollitem_t *poller, void *args)
             zclock_log ("I: publishing update=%d", (int) self->sequence);
         }
         else {
-            //  If we already got message from master, drop it, else
+            //  If we already got message from active, drop it, else
             //  hold on pending list
             if (s_was_pending (self, kvmsg))
                 kvmsg_destroy (&kvmsg);
@@ -279,7 +279,7 @@ s_flush_ttl (zloop_t *loop, zmq_pollitem_t *poller, void *args)
 //  .split heartbeating
 //  We send a HUGZ message once a second to all subscribers so that they
 //  can detect if our server dies. They'll then switch over to the backup
-//  server, which will become master:
+//  server, which will become active:
 
 static int
 s_send_hugz (zloop_t *loop, zmq_pollitem_t *poller, void *args)
@@ -296,17 +296,17 @@ s_send_hugz (zloop_t *loop, zmq_pollitem_t *poller, void *args)
 }
 
 //  .split handling state changes
-//  When we switch from slave to master, we apply our pending list so that
-//  our kvmap is up-to-date. When we switch to slave, we wipe our kvmap
-//  and grab a new snapshot from the master:
+//  When we switch from passive to active, we apply our pending list so that
+//  our kvmap is up-to-date. When we switch to passive, we wipe our kvmap
+//  and grab a new snapshot from the active:
 
 static int
-s_new_master (zloop_t *loop, zmq_pollitem_t *unused, void *args)
+s_new_active (zloop_t *loop, zmq_pollitem_t *unused, void *args)
 {
     clonesrv_t *self = (clonesrv_t *) args;
 
-    self->master = TRUE;
-    self->slave = FALSE;
+    self->active = TRUE;
+    self->passive = FALSE;
 
     //  Stop subscribing to updates
     zmq_pollitem_t poller = { self->subscriber, 0, ZMQ_POLLIN };
@@ -324,13 +324,13 @@ s_new_master (zloop_t *loop, zmq_pollitem_t *unused, void *args)
 }
 
 static int
-s_new_slave (zloop_t *loop, zmq_pollitem_t *unused, void *args)
+s_new_passive (zloop_t *loop, zmq_pollitem_t *unused, void *args)
 {
     clonesrv_t *self = (clonesrv_t *) args;
 
     zhash_destroy (&self->kvmap);
-    self->master = FALSE;
-    self->slave = TRUE;
+    self->active = FALSE;
+    self->passive = TRUE;
 
     //  Start subscribing to updates
     zmq_pollitem_t poller = { self->subscriber, 0, ZMQ_POLLIN };
@@ -341,7 +341,7 @@ s_new_slave (zloop_t *loop, zmq_pollitem_t *unused, void *args)
 
 //  .split subscriber handler
 //  When we get an update, we create a new kvmap if necessary, and then
-//  add our update to our kvmap. We're always slave in this case:
+//  add our update to our kvmap. We're always passive in this case:
 
 static int
 s_subscriber (zloop_t *loop, zmq_pollitem_t *poller, void *args)
@@ -377,8 +377,8 @@ s_subscriber (zloop_t *loop, zmq_pollitem_t *poller, void *args)
 
     if (strneq (kvmsg_key (kvmsg), "HUGZ")) {
         if (!s_was_pending (self, kvmsg)) {
-            //  If master update came before client update, flip it
-            //  around, store master update (with sequence) on pending
+            //  If active update came before client update, flip it
+            //  around, store active update (with sequence) on pending
             //  list and use to clear client update when it comes later
             zlist_append (self->pending, kvmsg_dup (kvmsg));
         }

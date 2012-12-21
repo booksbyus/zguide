@@ -1,6 +1,5 @@
 while (true) {
-    zmsg_t *zmsg = zmsg_recv (worker);
-    zframe_print (zmsg_last (zmsg), "Worker: ");
-    zframe_reset (zmsg_last (zmsg), "OK", 2);
-    zmsg_send (&zmsg, worker);
+    zmsg_t *msg = zmsg_recv (worker);
+    zframe_reset (zmsg_last (msg), "OK", 2);
+    zmsg_send (&msg, worker);
 }

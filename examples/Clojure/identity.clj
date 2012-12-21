@@ -18,7 +18,7 @@
     (mq/connect anonymous "inproc://example")
     (mq/send anonymous "ROUTER uses a generated UUID\u0000")
     (mq/dump sink)
-    (mq/identify identified "Hello")
+    (mq/identify identified "PEER2")
     (mq/connect identified "inproc://example")
     (mq/send identified "ROUTER socket uses REQ's socket identity\u0000")
     (mq/dump sink)

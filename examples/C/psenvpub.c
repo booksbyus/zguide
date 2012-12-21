@@ -11,7 +11,7 @@ int main (void)
     void *publisher = zmq_socket (context, ZMQ_PUB);
     zmq_bind (publisher, "tcp://*:5563");
 
-    while (true) {
+    while (1) {
         //  Write two messages, each with an envelope and content
         s_sendmore (publisher, "A");
         s_send (publisher, "We don't want to see this");

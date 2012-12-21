@@ -12,7 +12,7 @@ import zmq
 from kvsimple import KVMsg
 
 def main():
-    
+
     # Prepare our context and subscriber
     ctx = zmq.Context()
     snapshot = ctx.socket(zmq.DEALER)
@@ -37,16 +37,16 @@ def main():
             kvmsg = KVMsg.recv(snapshot)
         except:
             return          # Interrupted
-            
+
         if kvmsg.key == "KTHXBAI":
             sequence = kvmsg.sequence
             print "I: Received snapshot=%d" % sequence
             break          # Done
         kvmsg.store(kvmap)
-    
+
     poller = zmq.Poller()
     poller.register(subscriber, zmq.POLLIN)
-    
+
     alarm = time.time()+1.
     while True:
         tickless = 1000*max(0, alarm - time.time())
@@ -54,7 +54,7 @@ def main():
             items = dict(poller.poll(tickless))
         except:
             break           # Interrupted
-        
+
         if subscriber in items:
             kvmsg = KVMsg.recv(subscriber)
 
@@ -63,7 +63,7 @@ def main():
                 sequence = kvmsg.sequence
                 kvmsg.store(kvmap)
                 print "I: received update=%d" % sequence
-        
+
         # If we timed-out, generate a random kvmsg
         if time.time() >= alarm:
             kvmsg = KVMsg(0)

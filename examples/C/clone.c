@@ -1,5 +1,5 @@
 /*  =====================================================================
- *  clone - client-side Clone Pattern class
+ *  clone - clone client API stack (multithreaded)
  *  ===================================================================== */
 
 #include "clone.h"
@@ -23,7 +23,9 @@ struct _clone_t {
 static void clone_agent (void *args, zctx_t *ctx, void *pipe);
 
 //  .split constructor and destructor
-//  Constructor and destructor for the clone class:
+//  Constructor and destructor for the clone class. Note that we create
+//  a context specifically for the pipe that connects our frontend to the
+//  backend agent:
 
 clone_t *
 clone_new (void)
@@ -50,8 +52,10 @@ clone_destroy (clone_t **self_p)
 }
 
 //  .split subtree method
-//  Specify subtree for snapshot and updates, do before connect.
-//  Sends [SUBTREE][subtree] to the agent:
+//  Specify subtree for snapshot and updates, which we must do before
+//  connecting to a server since the subtree specification is sent as
+//  first command to the server. Sends a [SUBTREE][subtree] command to
+//  the agent:
 
 void clone_subtree (clone_t *self, char *subtree)
 {
@@ -63,8 +67,8 @@ void clone_subtree (clone_t *self, char *subtree)
 }
 
 //  .split connect method
-//  Connect to new server endpoint.
-//  Sends [CONNECT][endpoint][service] to the agent:
+//  Connect to a new server endpoint. We can connect to at most two
+//  servers. Sends [CONNECT][endpoint][service] to the agent:
 
 void
 clone_connect (clone_t *self, char *address, char *service)
@@ -78,8 +82,8 @@ clone_connect (clone_t *self, char *address, char *service)
 }
 
 //  .split set method
-//  Set new value in distributed hash table.
-//  Sends [SET][key][value][ttl] to the agent:
+//  Set a new value in the shared hashmap. Sends a [SET][key][value][ttl]
+//  command through to the agent which does the actual work:
 
 void
 clone_set (clone_t *self, char *key, char *value, int ttl)
@@ -97,9 +101,9 @@ clone_set (clone_t *self, char *key, char *value, int ttl)
 }
 
 //  .split get method
-//  Lookup value in distributed hash table.
-//  Sends [GET][key] to the agent and waits for a value response.
-//  If there is no clone available, will eventually return NULL:
+//  Look-up value in distributed hash table. Sends [GET][key] to the agent and
+//  waits for a value response. If there is no value available, will eventually
+//  return NULL:
 
 char *
 clone_get (clone_t *self, char *key)

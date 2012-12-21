@@ -1,25 +1,11 @@
 <html>
 <pre class="textdiagram" id="fig24">
-+----------------+
-|                |
-|   Publisher    |
-|                |
-+--------+-------+
-|  PUB   |  REP  |
-\---+----+-----+-/
-    |      ^   |
-    |      |   |
-    |     (1)  |
-   [3]     |   |
-    |      |  (2)
-    |      |   |
-    v      |   v
-/--------+-+-----\
-|  SUB   |  REQ  |
-+--------+-------+
-|                |
-|   Subscriber   |
-|                |
-+----------------+
+          +-------------+
+Frame 1   | Key         |     Subscription key
+          +-------------+
+Frame 2   | Address     |     Address of publisher
+          +-------------+
+Frame 3   | Data        |     Actual message body
+          +-------------+
 </pre>
 </html>

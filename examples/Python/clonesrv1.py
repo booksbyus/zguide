@@ -14,7 +14,7 @@ def main():
     # Prepare our context and publisher socket
     ctx = zmq.Context()
     publisher = ctx.socket(zmq.PUB)
-    
+
     publisher.bind("tcp://*:5556")
     time.sleep(0.2)
 

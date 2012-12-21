@@ -20,9 +20,9 @@ $subscriber->setSockOpt(ZMQ::SOCKOPT_SUBSCRIBE, $filter);
 //  Process 100 updates
 $total_temp = 0;
 for ($update_nbr = 0; $update_nbr < 100; $update_nbr++) {
-	$string = $subscriber->recv();
-	sscanf ($string, "%d %d %d", $zipcode, $temperature, $relhumidity);
-	$total_temp += $temperature;
+    $string = $subscriber->recv();
+    sscanf ($string, "%d %d %d", $zipcode, $temperature, $relhumidity);
+    $total_temp += $temperature;
 }
 printf ("Average temperature for zipcode '%s' was %dF\n",
     $filter, (int) ($total_temp / $update_nbr));

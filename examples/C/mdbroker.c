@@ -62,14 +62,14 @@ static void
 
 typedef struct {
     broker_t *broker;           //  Broker instance
-    char *identity;             //  Identity of worker
-    zframe_t *address;          //  Address frame to route to
+    char *id_string;            //  Identity of worker as string
+    zframe_t *identity;         //  Identity frame for routing
     service_t *service;         //  Owning service, if known
     int64_t expiry;             //  Expires at unless heartbeat
 } worker_t;
 
 static worker_t *
-    s_worker_require (broker_t *self, zframe_t *address);
+    s_worker_require (broker_t *self, zframe_t *identity);
 static void
     s_worker_delete (worker_t *self, int disconnect);
 static void
@@ -136,9 +136,9 @@ s_broker_worker_msg (broker_t *self, zframe_t *sender, zmsg_t *msg)
     assert (zmsg_size (msg) >= 1);     //  At least, command
 
     zframe_t *command = zmsg_pop (msg);
-    char *identity = zframe_strhex (sender);
-    int worker_ready = (zhash_lookup (self->workers, identity) != NULL);
-    free (identity);
+    char *id_string = zframe_strhex (sender);
+    int worker_ready = (zhash_lookup (self->workers, id_string) != NULL);
+    free (id_string);
     worker_t *worker = s_worker_require (self, sender);
 
     if (zframe_streq (command, MDPW_READY)) {
@@ -202,7 +202,7 @@ s_broker_client_msg (broker_t *self, zframe_t *sender, zmsg_t *msg)
     zframe_t *service_frame = zmsg_pop (msg);
     service_t *service = s_service_require (self, service_frame);
 
-    //  Set reply return address to client sender
+    //  Set reply return identity to client sender
     zmsg_wrap (msg, zframe_dup (sender));
 
     //  If we got a MMI service request, process that internally
@@ -251,7 +251,7 @@ s_broker_purge (broker_t *self)
             break;                  //  Worker is alive, we're done here
         if (self->verbose)
             zclock_log ("I: deleting expired worker: %s",
-                        worker->identity);
+                        worker->id_string);
 
         s_worker_delete (worker, 0);
         worker = (worker_t *) zlist_first (self->waiting);
@@ -333,27 +333,27 @@ s_service_dispatch (service_t *self, zmsg_t *msg)
 //  worker if there is no worker already with that identity.
 
 static worker_t *
-s_worker_require (broker_t *self, zframe_t *address)
+s_worker_require (broker_t *self, zframe_t *identity)
 {
-    assert (address);
+    assert (identity);
 
     //  self->workers is keyed off worker identity
-    char *identity = zframe_strhex (address);
+    char *id_string = zframe_strhex (identity);
     worker_t *worker =
-        (worker_t *) zhash_lookup (self->workers, identity);
+        (worker_t *) zhash_lookup (self->workers, id_string);
 
     if (worker == NULL) {
         worker = (worker_t *) zmalloc (sizeof (worker_t));
         worker->broker = self;
-        worker->identity = identity;
-        worker->address = zframe_dup (address);
-        zhash_insert (self->workers, identity, worker);
-        zhash_freefn (self->workers, identity, s_worker_destroy);
+        worker->id_string = id_string;
+        worker->identity = zframe_dup (identity);
+        zhash_insert (self->workers, id_string, worker);
+        zhash_freefn (self->workers, id_string, s_worker_destroy);
         if (self->verbose)
-            zclock_log ("I: registering new worker: %s", identity);
+            zclock_log ("I: registering new worker: %s", id_string);
     }
     else
-        free (identity);
+        free (id_string);
     return worker;
 }
 
@@ -372,7 +372,7 @@ s_worker_delete (worker_t *self, int disconnect)
     }
     zlist_remove (self->broker->waiting, self);
     //  This implicitly calls s_worker_destroy
-    zhash_delete (self->broker->workers, self->identity);
+    zhash_delete (self->broker->workers, self->id_string);
 }
 
 //  Worker destructor is called automatically whenever the worker is
@@ -382,8 +382,8 @@ static void
 s_worker_destroy (void *argument)
 {
     worker_t *self = (worker_t *) argument;
-    zframe_destroy (&self->address);
-    free (self->identity);
+    zframe_destroy (&self->identity);
+    free (self->id_string);
     free (self);
 }
 
@@ -403,7 +403,7 @@ s_worker_send (worker_t *self, char *command, char *option, zmsg_t *msg)
     zmsg_pushstr (msg, MDPW_WORKER);
 
     //  Stack routing envelope to start of message
-    zmsg_wrap (msg, zframe_dup (self->address));
+    zmsg_wrap (msg, zframe_dup (self->identity));
 
     if (self->broker->verbose) {
         zclock_log ("I: sending %s to worker",

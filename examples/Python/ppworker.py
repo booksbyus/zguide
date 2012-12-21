@@ -89,5 +89,3 @@ while True:
         heartbeat_at = time.time() + HEARTBEAT_INTERVAL
         print "I: Worker heartbeat"
         worker.send(PPP_HEARTBEAT)
-
-

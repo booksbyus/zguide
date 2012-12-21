@@ -1,0 +1,17 @@
+# Changes to Examples
+
+This log is meant to help example authors track changes to the main C
+example set. You can also use the GitHub logs.
+
+## 2012-11-09
+
+* All "LRU" changed to "load-balancing" in comments.
+* bstar: changed 'master' and 'slave' to 'active' and 'passive'.
+
+## 2012-11-07
+
+* identity.c: changed 'Hello' address to 'PEER2' to be more expressive.
+* rtpapa.c: example deleted as it shows an invalid socket combination.
+* rtmama.c: renamed to 'rtreq.c' for clarity.
+* rtreq.c: mostly rewritten
+* rtdealer.c: entirely rewritten 

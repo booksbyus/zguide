@@ -1,17 +1,7 @@
-|   Client  |
-|           |
-+-----------+
-|           |
-+-----------+       +---------+
-|    REQ    |       |  Data   |     Client sends this
-\-----+-----/       +---------+
-      |
-      |  "My identity is empty"
-      v
-/-----------\       +---------+
-|  ROUTER   |       |  UUID   |     ROUTER invents UUID to
-+-----------+       +-+-------+     use as reply address
-|           |       | |
-|  Service  |       +-+-------+
-|           |       |  Data   |
-+-----------+       +---------+
+          +----+
+Frame 1   | 02 | 
+          +----+
+Frame 2   |   |  
+          +---+---+
+Frame 3   | World |
+          +-------+

@@ -14,7 +14,7 @@ from zhelpers import zpipe
 
 # If no server replies within this time, abandon request
 GLOBAL_TIMEOUT = 3000    # msecs
-# PING interval for servers we think are alivecp 
+# PING interval for servers we think are alivecp
 PING_INTERVAL  = 2000    # msecs
 # Server considered dead if silent for this long
 SERVER_TTL     = 6000    # msecs
@@ -32,15 +32,15 @@ class FreelanceClient(object):
     ctx = None      # Our Context
     pipe = None     # Pipe through to flciapi agent
     agent = None    # agent in a thread
-    
+
     def __init__(self):
         self.ctx = zmq.Context()
         self.pipe, peer = zpipe(self.ctx)
         self.agent = threading.Thread(target=agent_task, args=(self.ctx,peer))
         self.agent.daemon = True
         self.agent.start()
-        
-    
+
+
     def connect(self, endpoint):
         """Connect to new server endpoint
         Sends [CONNECT][endpoint] to the agent
@@ -75,12 +75,12 @@ class FreelanceServer(object):
         self.alive = True
         self.ping_at = time.time() + 1e-3*PING_INTERVAL
         self.expires = time.time() + 1e-3*SERVER_TTL
-    
+
     def ping(self, socket):
         if time.time() > self.ping_at:
             socket.send_multipart([self.endpoint, 'PING'])
             self.ping_at = time.time() + 1e-3*PING_INTERVAL
-    
+
     def tickless(self, tickless):
         if tickless > self.ping_at:
             tickless = self.ping_at
@@ -125,7 +125,7 @@ class FreelanceAgent(object):
             assert not self.request    # Strict request-reply cycle
             # Prefix request with sequence number and empty envelope
             self.request = [str(self.sequence), ''] + msg
-        
+
             # Request expires after global timeout
             self.expires = time.time() + 1e-3*GLOBAL_TIMEOUT
 
@@ -137,7 +137,7 @@ class FreelanceAgent(object):
         if not server.alive:
             self.actives.append(server)
             server.alive = 1
-    
+
         server.ping_at = time.time() + 1e-3*PING_INTERVAL
         server.expires = time.time() + 1e-3*SERVER_TTL;
 
@@ -159,7 +159,7 @@ def agent_task(ctx, pipe):
     poller = zmq.Poller()
     poller.register(agent.pipe, zmq.POLLIN)
     poller.register(agent.router, zmq.POLLIN)
-    
+
     while True:
         # Calculate tickless timer, up to 1 hour
         tickless = time.time() + 3600

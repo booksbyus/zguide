@@ -21,26 +21,26 @@ class KVMsg(object):
     key = None # key (string)
     sequence = 0 # int
     body = None # blob
-    
+
     def __init__(self, sequence, key=None, body=None):
         assert isinstance(sequence, int)
         self.sequence = sequence
         self.key = key
         self.body = body
-    
+
     def store(self, dikt):
         """Store me in a dict if I have anything to store"""
         # this seems weird to check, but it's what the C example does
         if self.key is not None and self.body is not None:
             dikt[self.key] = self
-    
+
     def send(self, socket):
         """Send key-value message to socket; any empty frames are sent as such."""
         key = '' if self.key is None else self.key
         seq_s = struct.pack('!l', self.sequence)
         body = '' if self.body is None else self.body
         socket.send_multipart([ key, seq_s, body ])
-    
+
     @classmethod
     def recv(cls, socket):
         """Reads key-value message from socket, returns new kvmsg instance."""
@@ -49,7 +49,7 @@ class KVMsg(object):
         seq = struct.unpack('!l',seq_s)[0]
         body = body if body else None
         return cls(seq, key=key, body=body)
-    
+
     def dump(self):
         if self.body is None:
             size = 0
@@ -76,7 +76,7 @@ def test_kvmsg (verbose):
     output.bind("ipc://kvmsg_selftest.ipc")
     input = ctx.socket(zmq.DEALER)
     input.connect("ipc://kvmsg_selftest.ipc")
-    
+
     kvmap = {}
     # Test send and receive of simple message
     kvmsg = KVMsg(1)
@@ -92,9 +92,9 @@ def test_kvmsg (verbose):
         kvmsg2.dump()
     assert kvmsg2.key == "key"
     kvmsg2.store(kvmap)
-    
+
     assert len(kvmap) == 1 # shouldn't be different
-    
+
     print "OK"
 
 if __name__ == '__main__':

@@ -13,7 +13,7 @@ import zmq
 def main(url=None):
     ctx = zmq.Context.instance()
     publisher = ctx.socket(zmq.PUB)
-    if connect:
+    if url:
         publisher.connect(url)
     else:
         publisher.bind("tcp://*:5556")
@@ -26,7 +26,7 @@ def main(url=None):
             b"%03d" % topic_nbr,
             b"Save Roger",
         ])
-    
+
     while True:
         # Send one random update per second
         try:

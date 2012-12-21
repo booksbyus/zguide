@@ -1,0 +1,10 @@
+#  Run selftests and check memory
+echo "Generating sources..."
+gsl -q mdp_client.xml
+gsl -q mdp_worker.xml
+gsl -q -trace:1 nom_server.xml
+gcc -g -o models_test models_test.c mdp_client.c mdp_worker.c nom_server.c ${CFLAGS} ${LDFLAGS} -lczmq -lzmq
+if [ $? -eq 0 ]; then
+    echo "Starting Valgrind memcheck..."
+    valgrind --quiet --tool=memcheck --leak-check=full --suppressions=valgrind.supp ./models_test
+fi

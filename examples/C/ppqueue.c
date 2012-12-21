@@ -15,18 +15,18 @@
 //  as constructor, destructor, and methods on worker objects:
 
 typedef struct {
-    zframe_t *address;          //  Address of worker
-    char *identity;             //  Printable identity
+    zframe_t *identity;         //  Identity of worker
+    char *id_string;            //  Printable identity
     int64_t expiry;             //  Expires at this time
 } worker_t;
 
 //  Construct new worker
 static worker_t *
-s_worker_new (zframe_t *address)
+s_worker_new (zframe_t *identity)
 {
     worker_t *self = (worker_t *) zmalloc (sizeof (worker_t));
-    self->address = address;
-    self->identity = zframe_strdup (address);
+    self->identity = identity;
+    self->id_string = zframe_strdup (identity);
     self->expiry = zclock_time () + HEARTBEAT_INTERVAL * HEARTBEAT_LIVENESS;
     return self;
 }
@@ -38,8 +38,8 @@ s_worker_destroy (worker_t **self_p)
     assert (self_p);
     if (*self_p) {
         worker_t *self = *self_p;
-        zframe_destroy (&self->address);
-        free (self->identity);
+        zframe_destroy (&self->identity);
+        free (self->id_string);
         free (self);
         *self_p = NULL;
     }
@@ -53,7 +53,7 @@ s_worker_ready (worker_t *self, zlist_t *workers)
 {
     worker_t *worker = (worker_t *) zlist_first (workers);
     while (worker) {
-        if (streq (self->identity, worker->identity)) {
+        if (streq (self->id_string, worker->id_string)) {
             zlist_remove (workers, worker);
             s_worker_destroy (&worker);
             break;
@@ -64,15 +64,15 @@ s_worker_ready (worker_t *self, zlist_t *workers)
 }
 
 //  .split get next available worker
-//  The next method returns the next available worker address:
+//  The next method returns the next available worker identity:
 
 static zframe_t *
 s_workers_next (zlist_t *workers)
 {
     worker_t *worker = zlist_pop (workers);
     assert (worker);
-    zframe_t *frame = worker->address;
-    worker->address = NULL;
+    zframe_t *frame = worker->identity;
+    worker->identity = NULL;
     s_worker_destroy (&worker);
     return frame;
 }
@@ -96,8 +96,8 @@ s_workers_purge (zlist_t *workers)
 }
 
 //  .split main task
-//  The main task is an LRU queue with heartbeating on workers so we can
-//  detect crashed or blocked worker tasks:
+//  The main task is a load-balancer with heartbeating on workers so we
+//  can detect crashed or blocked worker tasks:
 
 int main (void)
 {
@@ -126,14 +126,14 @@ int main (void)
 
         //  Handle worker activity on backend
         if (items [0].revents & ZMQ_POLLIN) {
-            //  Use worker address for LRU routing
+            //  Use worker identity for load-balancing
             zmsg_t *msg = zmsg_recv (backend);
             if (!msg)
                 break;          //  Interrupted
 
             //  Any sign of life from worker means it's ready
-            zframe_t *address = zmsg_unwrap (msg);
-            worker_t *worker = s_worker_new (address);
+            zframe_t *identity = zmsg_unwrap (msg);
+            worker_t *worker = s_worker_new (identity);
             s_worker_ready (worker, workers);
 
             //  Validate control message, or return reply to client
@@ -166,7 +166,7 @@ int main (void)
         if (zclock_time () >= heartbeat_at) {
             worker_t *worker = (worker_t *) zlist_first (workers);
             while (worker) {
-                zframe_send (&worker->address, backend,
+                zframe_send (&worker->identity, backend,
                              ZFRAME_REUSE + ZFRAME_MORE);
                 zframe_t *frame = zframe_new (PPP_HEARTBEAT, 1);
                 zframe_send (&frame, backend, 0);

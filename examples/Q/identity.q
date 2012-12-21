@@ -10,9 +10,9 @@ m0:zmsg.new[]
 zmsg.push[m0; zframe.new["ROUTER uses a generated UUID"]]
 zmsg.send[m0; anonymous]
 zmsg.dump[zmsg.recv[sink]]
-//  Then set the identity ourself
+//  Then set the identity ourselves
 identified:zsocket.new[ctx; zmq`REQ]
-zsockopt.set_identity[identified; "Hello"]
+zsockopt.set_identity[identified; "PEER2"]
 zsocket.connect[identified; `inproc://example]
 m1:zmsg.new[]
 zmsg.push[m1; zframe.new["ROUTER socket users REQ's socket identity"]]

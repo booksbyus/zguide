@@ -18,7 +18,7 @@ def main():
     clone.subtree = SUBTREE
     clone.connect("tcp://localhost", 5556)
     clone.connect("tcp://localhost", 5566)
-    
+
     try:
         while True:
             # Distribute as key-value message

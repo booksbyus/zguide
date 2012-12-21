@@ -13,12 +13,12 @@ $publisher->bind("tcp://*:5556");
 $publisher->bind("ipc://weather.ipc");
 
 while (true) {
-	//  Get values that will fool the boss
-	$zipcode     = mt_rand(0, 100000);
-	$temperature = mt_rand(-80, 135);
-	$relhumidity = mt_rand(10, 60);
+    //  Get values that will fool the boss
+    $zipcode     = mt_rand(0, 100000);
+    $temperature = mt_rand(-80, 135);
+    $relhumidity = mt_rand(10, 60);
 
-	//  Send message to all subscribers
-	$update = sprintf ("%05d %d %d", $zipcode, $temperature, $relhumidity);
-	$publisher->send($update);
+    //  Send message to all subscribers
+    $update = sprintf ("%05d %d %d", $zipcode, $temperature, $relhumidity);
+    $publisher->send($update);
 }

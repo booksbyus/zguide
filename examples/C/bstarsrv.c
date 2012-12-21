@@ -46,12 +46,12 @@ s_state_machine (bstar_t *fsm)
     //  ACTIVE or PASSIVE depending on events we get from our peer:
     if (fsm->state == STATE_PRIMARY) {
         if (fsm->event == PEER_BACKUP) {
-            printf ("I: connected to backup (slave), ready as master\n");
+            printf ("I: connected to backup (passive), ready as active\n");
             fsm->state = STATE_ACTIVE;
         }
         else
         if (fsm->event == PEER_ACTIVE) {
-            printf ("I: connected to backup (master), ready as slave\n");
+            printf ("I: connected to backup (active), ready as passive\n");
             fsm->state = STATE_PASSIVE;
         }
         //  Accept client connections
@@ -59,7 +59,7 @@ s_state_machine (bstar_t *fsm)
     else
     if (fsm->state == STATE_BACKUP) {
         if (fsm->event == PEER_ACTIVE) {
-            printf ("I: connected to primary (master), ready as slave\n");
+            printf ("I: connected to primary (active), ready as passive\n");
             fsm->state = STATE_PASSIVE;
         }
         else
@@ -73,8 +73,8 @@ s_state_machine (bstar_t *fsm)
 
     if (fsm->state == STATE_ACTIVE) {
         if (fsm->event == PEER_ACTIVE) {
-            //  Two masters would mean split-brain
-            printf ("E: fatal error - dual masters, aborting\n");
+            //  Two actives would mean split-brain
+            printf ("E: fatal error - dual actives, aborting\n");
             exception = TRUE;
         }
     }
@@ -84,29 +84,29 @@ s_state_machine (bstar_t *fsm)
     if (fsm->state == STATE_PASSIVE) {
         if (fsm->event == PEER_PRIMARY) {
             //  Peer is restarting - become active, peer will go passive
-            printf ("I: primary (slave) is restarting, ready as master\n");
+            printf ("I: primary (passive) is restarting, ready as active\n");
             fsm->state = STATE_ACTIVE;
         }
         else
         if (fsm->event == PEER_BACKUP) {
             //  Peer is restarting - become active, peer will go passive
-            printf ("I: backup (slave) is restarting, ready as master\n");
+            printf ("I: backup (passive) is restarting, ready as active\n");
             fsm->state = STATE_ACTIVE;
         }
         else
         if (fsm->event == PEER_PASSIVE) {
             //  Two passives would mean cluster would be non-responsive
-            printf ("E: fatal error - dual slaves, aborting\n");
+            printf ("E: fatal error - dual passives, aborting\n");
             exception = TRUE;
         }
         else
         if (fsm->event == CLIENT_REQUEST) {
-            //  Peer becomes master if timeout has passed
+            //  Peer becomes active if timeout has passed
             //  It's the client request that triggers the failover
             assert (fsm->peer_expiry > 0);
             if (zclock_time () >= fsm->peer_expiry) {
                 //  If peer is dead, switch to the active state
-                printf ("I: failover successful, ready as master\n");
+                printf ("I: failover successful, ready as active\n");
                 fsm->state = STATE_ACTIVE;
             }
             else
@@ -137,7 +137,7 @@ int main (int argc, char *argv [])
     bstar_t fsm = { 0 };
 
     if (argc == 2 && streq (argv [1], "-p")) {
-        printf ("I: Primary master, waiting for backup (slave)\n");
+        printf ("I: Primary active, waiting for backup (passive)\n");
         zsocket_bind (frontend, "tcp://*:5001");
         zsocket_bind (statepub, "tcp://*:5003");
         zsocket_connect (statesub, "tcp://localhost:5004");
@@ -145,7 +145,7 @@ int main (int argc, char *argv [])
     }
     else
     if (argc == 2 && streq (argv [1], "-b")) {
-        printf ("I: Backup slave, waiting for primary (master)\n");
+        printf ("I: Backup passive, waiting for primary (active)\n");
         zsocket_bind (frontend, "tcp://*:5002");
         zsocket_bind (statepub, "tcp://*:5004");
         zsocket_connect (statesub, "tcp://localhost:5003");

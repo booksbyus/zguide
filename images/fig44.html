@@ -1,25 +1,41 @@
 <html>
 <pre class="textdiagram" id="fig44">
-+-----------+   +-----------+
-|           |   |           |
-|  Client   |   |  Client   |
-|           |   |           |
-+-----------+   +-----------+
-|  DEALER   |   |  DEALER   |
-\-----------/   \-----------/
-      ^               ^
-      |               |
-      |               |
-      +-------+-------+
-              |
-              |
-              v
-       /------+------\
-       |   ROUTER    |
-       +-------------+
-       |             |
-       |   Server    |
-       |             |
-       +-------------+
++---------+ +---------+ +---------+
+| Client  | | Broker  | | Broker  |
+|         | | cloudbe | | statebe |
++---------+ +---------+ +---------+
+| connect | | connect | |  bind   |
++---------+ +---------+ +---------+
+  request     request      state
+     |           |           |
+     +-+         |         +-+
+       |         |         |
+       v         v         v
+  +---------+---------+---------+
+  |  bind   |  bind   | connect |
+  +---------+---------+---------+
+  | localfe | cloudfe | statefe |     Frontends
+  | ROUTER  | ROUTER  |   SUB   |     (incoming)
+  +---------+---------+---------+
+  |                             |
+  |           Broker            |
+  |                             |
+  +---------+---------+---------+
+  | ROUTER  | ROUTER  |   PUB   |     Backends
+  | localbe | cloudbe | statebe |     (outgoing)
+  +---------+---------+---------+
+  |  bind   | connect |  bind   |
+  +---------+---------+---------+
+    request   request    state
+       |         |         |
+     +-+         |         +-+
+     |           |           |
+     v           v           v
++---------+ +---------+ +---------+
+| connect | |  bind   | | connect |
++---------+ +---------+ +---------+
+| Worker  | | Broker  | | Broker  |
+|         | | cloudfe | | statefe |
++---------+ +---------+ +---------+
 </pre>
 </html>
