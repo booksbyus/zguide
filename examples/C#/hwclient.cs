@@ -1,6 +1,6 @@
 ﻿//
 //  Hello World client
-//  Connects REQ socket to tcp://localhost:5555
+//  Connects REQ ZmqSocket to tcp://localhost:5555
 //  Sends "Hello" to server, expects "World" back
 //
 
@@ -9,17 +9,17 @@
 
 using System;
 using System.Text;
-using ZMQ;
+using ZeroMQ;
 
 namespace ZMQGuide 
 {
-    internal class Program 
+    internal class Program25
     {
         public static void Main(string[] args)
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket requester = context.Socket(SocketType.REQ))
+                using (ZmqSocket requester = context.CreateSocket(SocketType.REQ))
                 {
                     requester.Connect("tcp://localhost:5555");
 
@@ -31,7 +31,7 @@ namespace ZMQGuide
                         Console.WriteLine("Sending request {0}...", requestNumber);
                         requester.Send(requestMessage, Encoding.Unicode);
 
-                        string reply = requester.Recv(Encoding.Unicode);
+                        string reply = requester.Receive(Encoding.Unicode);
                         Console.WriteLine("Received reply {0}: {1}", requestNumber, reply);
                     }
                 }

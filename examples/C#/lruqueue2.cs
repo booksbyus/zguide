@@ -4,7 +4,7 @@
 //
 //  While this example runs in a single process, that is just to make
 //  it easier to start and stop the example. Each thread has its own
-//  context and conceptually acts as a separate process.
+//  ZmqContext and conceptually acts as a separate process.
 //
 
 //  Author:     Michael Compton, Tomas Roos
@@ -13,19 +13,20 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using ZMQ;
+using ZeroMQ;
 using System.Threading;
+using zguide;
 
 namespace ZMQGuide
 {
-    internal class Program
+    internal class Program36
     {
 
         private static void ClientTask()
         {
-            using (var ctx = new Context(1))
+            using (var ctx = ZmqContext.Create())
             {
-                using (var client = ctx.Socket(SocketType.REQ))
+                using (var client = ctx.CreateSocket(SocketType.REQ))
                 {
                     ZHelpers.SetID(client, Encoding.Unicode);
                     client.Connect("tcp://localhost:5555");
@@ -34,7 +35,7 @@ namespace ZMQGuide
                     {
                         //  Send request, get repl
                         client.Send("HELLO", Encoding.Unicode);
-                        string reply = client.Recv(Encoding.Unicode);
+                        string reply = client.Receive(Encoding.Unicode);
 
                         if (string.IsNullOrEmpty(reply))
                         {
@@ -55,22 +56,22 @@ namespace ZMQGuide
             var workers = new List<Thread>();
             var clients = new List<Thread>();
 
-            //  Prepare our context and sockets
-            using (var ctx = new Context(1))
+            //  Prepare our ZmqContext and sockets
+            using (var ctx = ZmqContext.Create())
             {
-                using (Socket frontend = ctx.Socket(SocketType.ROUTER), backend = ctx.Socket(SocketType.ROUTER))
+                using (ZmqSocket frontend = ctx.CreateSocket(SocketType.ROUTER), backend = ctx.CreateSocket(SocketType.ROUTER))
                 {
                     frontend.Bind("tcp://*:5555");
                     backend.Bind("tcp://*:5556");
 
                     int clientId;
-                    for (clientId = 0; clientId < Program.clients; clientId++)
+                    for (clientId = 0; clientId < clients; clientId++)
                     {
                         clients.Add(new Thread(ClientTask));
                         clients[clientId].Start();
                     }
 
-                    for (int workerId = 0; workerId < Program.workers; workerId++)
+                    for (int workerId = 0; workerId < workers; workerId++)
                     {
                         workers.Add(new Thread(WorkerTask));
                         workers[workerId].Start();
@@ -110,9 +111,9 @@ namespace ZMQGuide
 
                     while (true)
                     {
-                        int rc = Context.Poller(workerQueue.Count > 0
-                                           ? new List<Socket>(new Socket[] {frontend, backend})
-                                           : new List<Socket>(new Socket[] {backend}));
+                        int rc = context.Poller(workerQueue.Count > 0
+                                           ? new List<ZmqSocket>(new ZmqSocket[] {frontend, backend})
+                                           : new List<ZmqSocket>(new ZmqSocket[] {backend}));
 
                         if (rc == -1)
                         {
@@ -126,9 +127,9 @@ namespace ZMQGuide
 
         private static void WorkerTask()
         {
-            using (var ctx = new Context(1))
+            using (var ctx = ZmqContext.Create())
             {
-                using (var worker = ctx.Socket(SocketType.REQ))
+                using (var worker = ctx.CreateSocket(SocketType.REQ))
                 {
                     ZHelpers.SetID(worker, Encoding.Unicode);
                     worker.Connect("tcp://localhost:5556");

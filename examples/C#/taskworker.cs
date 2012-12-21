@@ -1,9 +1,9 @@
 ﻿//
 //  Task worker
-//  Connects PULL socket to tcp://localhost:5557
-//  Collects workloads from ventilator via that socket
-//  Connects PUSH socket to tcp://localhost:5558
-//  Sends results to sink via that socket
+//  Connects PULL ZmqSocket to tcp://localhost:5557
+//  Collects workloads from ventilator via that ZmqSocket
+//  Connects PUSH ZmqSocket to tcp://localhost:5558
+//  Sends results to sink via that ZmqSocket
 //
 
 //  Author:     Michael Compton
@@ -12,22 +12,22 @@
 using System;
 using System.Text;
 using System.Threading;
-using ZMQ;
+using ZeroMQ;
 
 namespace ZMQGuide {
-    class Program {
+    class Program30 {
         static void Main(string[] args) {
-            //  Prepare our context
-            using (Context context = new Context(1)) {
+            //  Prepare our ZmqContext
+            using (ZmqContext ZmqContext = ZmqContext.Create()) {
                 //  Sockets to send and receive messages on
-                using (Socket receiver = context.Socket(SocketType.PULL),
-                    sender = context.Socket(SocketType.PUSH)) {
+                using (ZmqSocket receiver = context.CreateSocket(SocketType.PULL),
+                    sender = context.CreateSocket(SocketType.PUSH)) {
                     receiver.Connect("tcp://localhost:5557");
                     sender.Connect("tcp://localhost:5558");
 
                     //  Process tasks forever
                     while (true) {
-                        string message = receiver.Recv(Encoding.Unicode);
+                        string message = receiver.Receive(Encoding.Unicode);
                         //  Simple progress indicator for the viewer
                         Console.Clear();
                         Console.WriteLine("{0}.", message);

@@ -1,6 +1,6 @@
 ﻿//
 //  Request-reply service
-//  Connects REP socket to tcp://localhost:5560
+//  Connects REP ZmqSocket to tcp://localhost:5560
 //  Expects "Hello" from client, replies with "World"
 //
 
@@ -9,25 +9,25 @@
 
 using System;
 using System.Text;
-using ZMQ;
+using ZeroMQ;
 
 namespace ZMQGuide
 {
-    internal class Program
+    internal class Program17
     {
         public static void Main(string[] args)
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket socket = context.Socket(SocketType.REP))
+                using (ZmqSocket ZmqSocket = context.CreateSocket(SocketType.REP))
                 {
-                    socket.Connect("tcp://localhost:5560");
+                    ZmqSocket.Connect("tcp://localhost:5560");
 
                     while (true)
                     {
-                        string message = socket.Recv(Encoding.Unicode);
+                        string message = ZmqSocket.Receive(Encoding.Unicode);
                         Console.WriteLine("Received request: " + message);
-                        socket.Send("World", Encoding.Unicode);
+                        ZmqSocket.Send("World", Encoding.Unicode);
                     }
                 }
             }

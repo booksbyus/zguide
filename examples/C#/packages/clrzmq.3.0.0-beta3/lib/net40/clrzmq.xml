@@ -1,0 +1,2405 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>clrzmq</name>
+    </assembly>
+    <members>
+        <member name="T:ZeroMQ.Devices.Device">
+            <summary>
+            Forwards messages received by a front-end socket to a back-end socket, from which
+            they are then sent.
+            </summary>
+            <remarks>
+            The base implementation of <see cref="T:ZeroMQ.Devices.Device"/> is <b>not</b> threadsafe. Do not construct
+            a device with sockets that were created in separate threads or separate contexts.
+            </remarks>
+        </member>
+        <member name="T:ZeroMQ.Devices.IDevice">
+            <summary>
+            Represents a ZeroMQ device, which connects a set of frontend sockets to a set of backend sockets.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.Devices.IDevice.Start">
+            <summary>
+            Start the device.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.Devices.IDevice.Join">
+            <summary>
+            Blocks the calling thread until the device terminates.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.Devices.IDevice.Join(System.TimeSpan)">
+            <summary>
+            Blocks the calling thread until the device terminates or the specified time elapses.
+            </summary>
+            <param name="timeout">
+            A <see cref="T:System.TimeSpan"/> set to the amount of time to wait for the device to terminate.
+            </param>
+            <returns>
+            true if the device terminated; false if the device has not terminated after
+            the amount of time specified by <paramref name="timeout"/> has elapsed.
+            </returns>
+        </member>
+        <member name="M:ZeroMQ.Devices.IDevice.Stop">
+            <summary>
+            Stop the device in such a way that it can be restarted.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.Devices.IDevice.Close">
+            <summary>
+            Stop the device and safely terminate the underlying sockets.
+            </summary>
+        </member>
+        <member name="P:ZeroMQ.Devices.IDevice.IsRunning">
+            <summary>
+            Gets a value indicating whether the device loop is running.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.Devices.Device.PollingIntervalMsec">
+            <summary>
+            The polling interval in milliseconds.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.Devices.Device.FrontendSocket">
+            <summary>
+            The frontend socket that will normally pass messages to <see cref="F:ZeroMQ.Devices.Device.BackendSocket"/>.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.Devices.Device.BackendSocket">
+            <summary>
+            The backend socket that will normally receive messages from (and possibly send replies to) <see cref="F:ZeroMQ.Devices.Device.FrontendSocket"/>.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.Devices.Device.#ctor(ZeroMQ.ZmqSocket,ZeroMQ.ZmqSocket,ZeroMQ.Devices.DeviceMode)">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.Devices.Device"/> class.
+            </summary>
+            <param name="frontendSocket">
+            A <see cref="T:ZeroMQ.ZmqSocket"/> that will pass incoming messages to <paramref name="backendSocket"/>.
+            </param>
+            <param name="backendSocket">
+            A <see cref="T:ZeroMQ.ZmqSocket"/> that will receive messages from (and optionally send replies to) <paramref name="frontendSocket"/>.
+            </param>
+            <param name="mode">The <see cref="T:ZeroMQ.Devices.DeviceMode"/> for the current device.</param>
+        </member>
+        <member name="M:ZeroMQ.Devices.Device.Finalize">
+            <summary>
+            Finalizes an instance of the <see cref="T:ZeroMQ.Devices.Device"/> class.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.Devices.Device.Initialize">
+            <summary>
+            Initializes the frontend and backend sockets. Called automatically when starting the device.
+            If called multiple times, will only execute once.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.Devices.Device.Start">
+            <summary>
+            Start the device in the current thread.
+            </summary>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.Devices.Device"/> has already been disposed.</exception>
+        </member>
+        <member name="M:ZeroMQ.Devices.Device.Join">
+            <summary>
+            Blocks the calling thread until the device terminates.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.Devices.Device.Join(System.TimeSpan)">
+            <summary>
+            Blocks the calling thread until the device terminates or the specified time elapses.
+            </summary>
+            <param name="timeout">
+            A <see cref="T:System.TimeSpan"/> set to the amount of time to wait for the device to terminate.
+            </param>
+            <returns>
+            true if the device terminated; false if the device has not terminated after
+            the amount of time specified by <paramref name="timeout"/> has elapsed.
+            </returns>
+        </member>
+        <member name="M:ZeroMQ.Devices.Device.Stop">
+            <summary>
+            Stop the device in such a way that it can be restarted.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.Devices.Device.Close">
+            <summary>
+            Stop the device and safely terminate the underlying sockets.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.Devices.Device.Dispose">
+            <summary>
+            Releases all resources used by the current instance, including the frontend and backend sockets.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.Devices.Device.Run">
+            <summary>
+            Start the device in the current thread. Should be used by implementations of the <see cref="M:ZeroMQ.Devices.DeviceRunner.Start"/> method.
+            </summary>
+            <remarks>
+            Initializes the sockets prior to starting the device with <see cref="M:ZeroMQ.Devices.Device.Initialize"/>.
+            </remarks>
+        </member>
+        <member name="M:ZeroMQ.Devices.Device.FrontendHandler(ZeroMQ.SocketEventArgs)">
+            <summary>
+            Invoked when a message has been received by the frontend socket.
+            </summary>
+            <param name="args">A <see cref="T:ZeroMQ.SocketEventArgs"/> object containing the poll event args.</param>
+        </member>
+        <member name="M:ZeroMQ.Devices.Device.BackendHandler(ZeroMQ.SocketEventArgs)">
+            <summary>
+            Invoked when a message has been received by the backend socket.
+            </summary>
+            <param name="args">A <see cref="T:ZeroMQ.SocketEventArgs"/> object containing the poll event args.</param>
+        </member>
+        <member name="M:ZeroMQ.Devices.Device.Dispose(System.Boolean)">
+            <summary>
+            Stops the device and releases the underlying sockets. Optionally disposes of managed resources.
+            </summary>
+            <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
+        </member>
+        <member name="P:ZeroMQ.Devices.Device.IsRunning">
+            <summary>
+            Gets a value indicating whether the device loop is running.
+            </summary>
+        </member>
+        <member name="P:ZeroMQ.Devices.Device.BackendSetup">
+            <summary>
+            Gets a <see cref="T:ZeroMQ.Devices.DeviceSocketSetup"/> for configuring the frontend socket.
+            </summary>
+        </member>
+        <member name="P:ZeroMQ.Devices.Device.FrontendSetup">
+            <summary>
+            Gets a <see cref="T:ZeroMQ.Devices.DeviceSocketSetup"/> for configuring the backend socket.
+            </summary>
+        </member>
+        <member name="P:ZeroMQ.Devices.Device.DoneEvent">
+            <summary>
+            Gets a <see cref="T:System.Threading.ManualResetEvent"/> that can be used to block while the device is running.
+            </summary>
+        </member>
+        <member name="P:ZeroMQ.Devices.Device.PollerPulse">
+            <summary>
+            Gets an <see cref="T:System.Threading.AutoResetEvent"/> that is pulsed after every Poll call.
+            </summary>
+        </member>
+        <member name="T:ZeroMQ.Devices.DeviceMode">
+            <summary>
+            Specifies possible running modes for a <see cref="T:ZeroMQ.Devices.Device"/>.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.Devices.DeviceMode.Blocking">
+            <summary>
+            The device runs in the current thread.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.Devices.DeviceMode.Threaded">
+            <summary>
+            The device runs in a self-managed thread.
+            </summary>
+        </member>
+        <member name="T:ZeroMQ.Devices.DeviceSocketSetup">
+            <summary>
+            Defines a fluent interface for configuring device sockets.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.Devices.DeviceSocketSetup.Bind(System.String)">
+            <summary>
+            Configure the socket to bind to a given endpoint. See <see cref="M:ZeroMQ.ZmqSocket.Bind(System.String)"/> for details.
+            </summary>
+            <param name="endpoint">A string representing the endpoint to which the socket will bind.</param>
+            <returns>The current <see cref="T:ZeroMQ.Devices.DeviceSocketSetup"/> object.</returns>
+        </member>
+        <member name="M:ZeroMQ.Devices.DeviceSocketSetup.Connect(System.String)">
+            <summary>
+            Configure the socket to connect to a given endpoint. See <see cref="M:ZeroMQ.ZmqSocket.Connect(System.String)"/> for details.
+            </summary>
+            <param name="endpoint">A string representing the endpoint to which the socket will connect.</param>
+            <returns>The current <see cref="T:ZeroMQ.Devices.DeviceSocketSetup"/> object.</returns>
+        </member>
+        <member name="M:ZeroMQ.Devices.DeviceSocketSetup.SetSocketOption(System.Linq.Expressions.Expression{System.Func{ZeroMQ.ZmqSocket,System.Int32}},System.Int32)">
+            <summary>
+            Set an int-based socket option.
+            </summary>
+            <param name="property">The <see cref="T:ZeroMQ.ZmqSocket"/> property to set.</param>
+            <param name="value">The int value to assign.</param>
+            <returns>The current <see cref="T:ZeroMQ.Devices.DeviceSocketSetup"/> object.</returns>
+        </member>
+        <member name="M:ZeroMQ.Devices.DeviceSocketSetup.SetSocketOption(System.Linq.Expressions.Expression{System.Func{ZeroMQ.ZmqSocket,System.Int64}},System.Int64)">
+            <summary>
+            Set a long-based socket option.
+            </summary>
+            <param name="property">The <see cref="T:ZeroMQ.ZmqSocket"/> property to set.</param>
+            <param name="value">The long value to assign.</param>
+            <returns>The current <see cref="T:ZeroMQ.Devices.DeviceSocketSetup"/> object.</returns>
+        </member>
+        <member name="M:ZeroMQ.Devices.DeviceSocketSetup.SetSocketOption(System.Linq.Expressions.Expression{System.Func{ZeroMQ.ZmqSocket,System.UInt64}},System.UInt64)">
+            <summary>
+            Set a ulong-based socket option.
+            </summary>
+            <param name="property">The <see cref="T:ZeroMQ.ZmqSocket"/> property to set.</param>
+            <param name="value">The ulong value to assign.</param>
+            <returns>The current <see cref="T:ZeroMQ.Devices.DeviceSocketSetup"/> object.</returns>
+        </member>
+        <member name="M:ZeroMQ.Devices.DeviceSocketSetup.SetSocketOption(System.Linq.Expressions.Expression{System.Func{ZeroMQ.ZmqSocket,System.Byte[]}},System.Byte[])">
+            <summary>
+            Set a byte array-based socket option.
+            </summary>
+            <param name="property">The <see cref="T:ZeroMQ.ZmqSocket"/> property to set.</param>
+            <param name="value">The byte array value to assign.</param>
+            <returns>The current <see cref="T:ZeroMQ.Devices.DeviceSocketSetup"/> object.</returns>
+        </member>
+        <member name="M:ZeroMQ.Devices.DeviceSocketSetup.SetSocketOption(System.Linq.Expressions.Expression{System.Func{ZeroMQ.ZmqSocket,System.TimeSpan}},System.TimeSpan)">
+            <summary>
+            Set a <see cref="T:System.TimeSpan"/>-based socket option.
+            </summary>
+            <param name="property">The <see cref="T:ZeroMQ.ZmqSocket"/> property to set.</param>
+            <param name="value">The <see cref="T:System.TimeSpan"/> value to assign.</param>
+            <returns>The current <see cref="T:ZeroMQ.Devices.DeviceSocketSetup"/> object.</returns>
+        </member>
+        <member name="M:ZeroMQ.Devices.DeviceSocketSetup.Subscribe(System.Byte[])">
+            <summary>
+            Configure the socket to subscribe to a specific prefix. See <see cref="M:ZeroMQ.ZmqSocket.Subscribe(System.Byte[])"/> for details.
+            </summary>
+            <param name="prefix">A byte array containing the prefix to which the socket will subscribe.</param>
+            <returns>The current <see cref="T:ZeroMQ.Devices.DeviceSocketSetup"/> object.</returns>
+        </member>
+        <member name="M:ZeroMQ.Devices.DeviceSocketSetup.SubscribeAll">
+            <summary>
+            Configure the socket to subscribe to all incoming messages. See <see cref="M:ZeroMQ.ZmqSocket.SubscribeAll"/> for details.
+            </summary>
+            <returns>The current <see cref="T:ZeroMQ.Devices.DeviceSocketSetup"/> object.</returns>
+        </member>
+        <member name="T:ZeroMQ.Devices.ForwarderDevice">
+            <summary>
+            Collects messages from a set of publishers and forwards these to a set of subscribers.
+            </summary>
+            <remarks>
+            Generally used to bridge networks. E.g. read on TCP unicast and forward on multicast.
+            This device is part of the publish-subscribe pattern. The frontend speaks to publishers
+            and the backend speaks to subscribers.
+            </remarks>
+        </member>
+        <member name="F:ZeroMQ.Devices.ForwarderDevice.FrontendType">
+            <summary>
+            The frontend <see cref="T:ZeroMQ.SocketType"/> for a forwarder device.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.Devices.ForwarderDevice.BackendType">
+            <summary>
+            The backend <see cref="T:ZeroMQ.SocketType"/> for a forwarder device.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.Devices.ForwarderDevice.#ctor(ZeroMQ.ZmqContext,System.String,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.Devices.ForwarderDevice"/> class that will run in a
+            self-managed thread.
+            </summary>
+            <param name="context">The <see cref="T:ZeroMQ.ZmqContext"/> to use when creating the sockets.</param>
+            <param name="frontendBindAddr">The address used to bind the frontend socket.</param>
+            <param name="backendBindAddr">The endpoint used to bind the backend socket.</param>
+        </member>
+        <member name="M:ZeroMQ.Devices.ForwarderDevice.#ctor(ZeroMQ.ZmqContext,System.String,System.String,ZeroMQ.Devices.DeviceMode)">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.Devices.ForwarderDevice"/> class.
+            </summary>
+            <param name="context">The <see cref="T:ZeroMQ.ZmqContext"/> to use when creating the sockets.</param>
+            <param name="frontendBindAddr">The address used to bind the frontend socket.</param>
+            <param name="backendBindAddr">The endpoint used to bind the backend socket.</param>
+            <param name="mode">The <see cref="T:ZeroMQ.Devices.DeviceMode"/> for the current device.</param>
+        </member>
+        <member name="M:ZeroMQ.Devices.ForwarderDevice.#ctor(ZeroMQ.ZmqContext)">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.Devices.ForwarderDevice"/> class that will run in a
+            self-managed thread.
+            </summary>
+            <param name="context">The <see cref="T:ZeroMQ.ZmqContext"/> to use when creating the sockets.</param>
+        </member>
+        <member name="M:ZeroMQ.Devices.ForwarderDevice.#ctor(ZeroMQ.ZmqContext,ZeroMQ.Devices.DeviceMode)">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.Devices.ForwarderDevice"/> class.
+            </summary>
+            <param name="context">The <see cref="T:ZeroMQ.ZmqContext"/> to use when creating the sockets.</param>
+            <param name="mode">The <see cref="T:ZeroMQ.Devices.DeviceMode"/> for the current device.</param>
+        </member>
+        <member name="M:ZeroMQ.Devices.ForwarderDevice.FrontendHandler(ZeroMQ.SocketEventArgs)">
+            <summary>
+            Forwards requests from the frontend socket to the backend socket.
+            </summary>
+            <param name="args">A <see cref="T:ZeroMQ.SocketEventArgs"/> object containing the poll event args.</param>
+        </member>
+        <member name="M:ZeroMQ.Devices.ForwarderDevice.BackendHandler(ZeroMQ.SocketEventArgs)">
+            <summary>
+            Not implemented for the <see cref="T:ZeroMQ.Devices.ForwarderDevice"/>.
+            </summary>
+            <param name="args">A <see cref="T:ZeroMQ.SocketEventArgs"/> object containing the poll event args.</param>
+        </member>
+        <member name="T:ZeroMQ.Devices.QueueDevice">
+            <summary>
+            A shared queue that collects requests from a set of clients and distributes
+            these fairly among a set of services.
+            </summary>
+            <remarks>
+            Requests are fair-queued from frontend connections and load-balanced between
+            backend connections. Replies automatically return to the client that made the
+            original request. This device is part of the request-reply pattern. The frontend
+            speaks to clients and the backend speaks to services.
+            </remarks>
+        </member>
+        <member name="F:ZeroMQ.Devices.QueueDevice.FrontendType">
+            <summary>
+            The frontend <see cref="T:ZeroMQ.SocketType"/> for a queue device.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.Devices.QueueDevice.BackendType">
+            <summary>
+            The backend <see cref="T:ZeroMQ.SocketType"/> for a queue device.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.Devices.QueueDevice.#ctor(ZeroMQ.ZmqContext,System.String,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.Devices.QueueDevice"/> class that will run in a
+            self-managed thread.
+            </summary>
+            <param name="context">The <see cref="T:ZeroMQ.ZmqContext"/> to use when creating the sockets.</param>
+            <param name="frontendBindAddr">The endpoint used to bind the frontend socket.</param>
+            <param name="backendBindAddr">The endpoint used to bind the backend socket.</param>
+        </member>
+        <member name="M:ZeroMQ.Devices.QueueDevice.#ctor(ZeroMQ.ZmqContext,System.String,System.String,ZeroMQ.Devices.DeviceMode)">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.Devices.QueueDevice"/> class.
+            </summary>
+            <param name="context">The <see cref="T:ZeroMQ.ZmqContext"/> to use when creating the sockets.</param>
+            <param name="frontendBindAddr">The endpoint used to bind the frontend socket.</param>
+            <param name="backendBindAddr">The endpoint used to bind the backend socket.</param>
+            <param name="mode">The <see cref="T:ZeroMQ.Devices.DeviceMode"/> for the current device.</param>
+        </member>
+        <member name="M:ZeroMQ.Devices.QueueDevice.#ctor(ZeroMQ.ZmqContext)">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.Devices.QueueDevice"/> class that will run in a
+            self-managed thread.
+            </summary>
+            <param name="context">The <see cref="T:ZeroMQ.ZmqContext"/> to use when creating the sockets.</param>
+        </member>
+        <member name="M:ZeroMQ.Devices.QueueDevice.#ctor(ZeroMQ.ZmqContext,ZeroMQ.Devices.DeviceMode)">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.Devices.QueueDevice"/> class.
+            </summary>
+            <param name="context">The <see cref="T:ZeroMQ.ZmqContext"/> to use when creating the sockets.</param>
+            <param name="mode">The <see cref="T:ZeroMQ.Devices.DeviceMode"/> for the current device.</param>
+        </member>
+        <member name="M:ZeroMQ.Devices.QueueDevice.FrontendHandler(ZeroMQ.SocketEventArgs)">
+            <summary>
+            Forwards requests from the frontend socket to the backend socket.
+            </summary>
+            <param name="args">A <see cref="T:ZeroMQ.SocketEventArgs"/> object containing the poll event args.</param>
+        </member>
+        <member name="M:ZeroMQ.Devices.QueueDevice.BackendHandler(ZeroMQ.SocketEventArgs)">
+            <summary>
+            Forwards replies from the backend socket to the frontend socket.
+            </summary>
+            <param name="args">A <see cref="T:ZeroMQ.SocketEventArgs"/> object containing the poll event args.</param>
+        </member>
+        <member name="T:ZeroMQ.Devices.StreamerDevice">
+            <summary>
+            Collects tasks from a set of pushers and forwards these to a set of pullers.
+            </summary>
+            <remarks>
+            Generally used to bridge networks. Messages are fair-queued from pushers and
+            load-balanced to pullers. This device is part of the pipeline pattern. The
+            frontend speaks to pushers and the backend speaks to pullers.
+            </remarks>
+        </member>
+        <member name="F:ZeroMQ.Devices.StreamerDevice.FrontendType">
+            <summary>
+            The frontend <see cref="T:ZeroMQ.SocketType"/> for a streamer device.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.Devices.StreamerDevice.BackendType">
+            <summary>
+            The backend <see cref="T:ZeroMQ.SocketType"/> for a streamer device.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.Devices.StreamerDevice.#ctor(ZeroMQ.ZmqContext,System.String,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.Devices.StreamerDevice"/> class that will run in
+            a self-managed thread.
+            </summary>
+            <param name="context">The <see cref="T:ZeroMQ.ZmqContext"/> to use when creating the sockets.</param>
+            <param name="frontendBindAddr">The address used to bind the frontend socket.</param>
+            <param name="backendBindAddr">The endpoint used to bind the backend socket.</param>
+        </member>
+        <member name="M:ZeroMQ.Devices.StreamerDevice.#ctor(ZeroMQ.ZmqContext,System.String,System.String,ZeroMQ.Devices.DeviceMode)">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.Devices.StreamerDevice"/> class.
+            </summary>
+            <param name="context">The <see cref="T:ZeroMQ.ZmqContext"/> to use when creating the sockets.</param>
+            <param name="frontendBindAddr">The address used to bind the frontend socket.</param>
+            <param name="backendBindAddr">The endpoint used to bind the backend socket.</param>
+            <param name="mode">The <see cref="T:ZeroMQ.Devices.DeviceMode"/> for the current device.</param>
+        </member>
+        <member name="M:ZeroMQ.Devices.StreamerDevice.#ctor(ZeroMQ.ZmqContext)">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.Devices.StreamerDevice"/> class that will run in
+            a self-managed thread.
+            </summary>
+            <param name="context">The <see cref="T:ZeroMQ.ZmqContext"/> to use when creating the sockets.</param>
+        </member>
+        <member name="M:ZeroMQ.Devices.StreamerDevice.#ctor(ZeroMQ.ZmqContext,ZeroMQ.Devices.DeviceMode)">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.Devices.StreamerDevice"/> class.
+            </summary>
+            <param name="context">The <see cref="T:ZeroMQ.ZmqContext"/> to use when creating the sockets.</param>
+            <param name="mode">The <see cref="T:ZeroMQ.Devices.DeviceMode"/> for the current device.</param>
+        </member>
+        <member name="M:ZeroMQ.Devices.StreamerDevice.FrontendHandler(ZeroMQ.SocketEventArgs)">
+            <summary>
+            Forwards requests from the frontend socket to the backend socket.
+            </summary>
+            <param name="args">A <see cref="T:ZeroMQ.SocketEventArgs"/> object containing the poll event args.</param>
+        </member>
+        <member name="M:ZeroMQ.Devices.StreamerDevice.BackendHandler(ZeroMQ.SocketEventArgs)">
+            <summary>
+            Not implemented for the <see cref="T:ZeroMQ.Devices.StreamerDevice"/>.
+            </summary>
+            <param name="args">A <see cref="T:ZeroMQ.SocketEventArgs"/> object containing the poll event args.</param>
+        </member>
+        <member name="T:ZeroMQ.Devices.ZmqDeviceException">
+            <summary>
+            The exception that is thrown when a ZeroMQ device error occurs.
+            </summary>
+        </member>
+        <member name="T:ZeroMQ.ZmqException">
+            <summary>
+            An exception thrown by the result of a ZeroMQ library call.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.ZmqException.#ctor(System.Int32)">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.ZmqException"/> class.
+            </summary>
+            <param name="errorCode">The error code returned by the ZeroMQ library call.</param>
+        </member>
+        <member name="M:ZeroMQ.ZmqException.#ctor(System.Int32,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.ZmqException"/> class.
+            </summary>
+            <param name="errorCode">The error code returned by the ZeroMQ library call.</param>
+            <param name="message">The message that describes the error</param>
+        </member>
+        <member name="M:ZeroMQ.ZmqException.#ctor(System.Int32,System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.ZmqException"/> class.
+            </summary>
+            <param name="errorCode">The error code returned by the ZeroMQ library call.</param>
+            <param name="message">The message that describes the error</param>
+            <param name="inner">The exception that is the cause of the current exception, or a null reference (Nothing in Visual Basic) if no inner exception is specified.</param>
+        </member>
+        <member name="M:ZeroMQ.ZmqException.#ctor(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.ZmqException"/> class.
+            </summary>
+            <param name="info"><see cref="T:System.Runtime.Serialization.SerializationInfo"/> that holds the serialized object data about the exception being thrown.</param>
+            <param name="context"><see cref="T:System.Runtime.Serialization.StreamingContext"/> that contains contextual information about the source or destination.</param>
+        </member>
+        <member name="P:ZeroMQ.ZmqException.ErrorCode">
+            <summary>
+            Gets the error code returned by the ZeroMQ library call.
+            </summary>
+        </member>
+        <member name="P:ZeroMQ.ZmqException.ErrorName">
+            <summary>
+            Gets the string representation of the error code, as found in the ZeroMQ docs.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.Devices.ZmqDeviceException.#ctor(System.Int32)">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.Devices.ZmqDeviceException"/> class.
+            </summary>
+            <param name="errorCode">The error code returned by the ZeroMQ library call.</param>
+        </member>
+        <member name="M:ZeroMQ.Devices.ZmqDeviceException.#ctor(System.Int32,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.Devices.ZmqDeviceException"/> class.
+            </summary>
+            <param name="errorCode">The error code returned by the ZeroMQ library call.</param>
+            <param name="message">The message that describes the error</param>
+        </member>
+        <member name="M:ZeroMQ.Devices.ZmqDeviceException.#ctor(System.Int32,System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.Devices.ZmqDeviceException"/> class.
+            </summary>
+            <param name="errorCode">The error code returned by the ZeroMQ library call.</param>
+            <param name="message">The message that describes the error</param>
+            <param name="inner">The exception that is the cause of the current exception, or a null reference if no inner exception is specified.</param>
+        </member>
+        <member name="M:ZeroMQ.Devices.ZmqDeviceException.#ctor(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.Devices.ZmqDeviceException"/> class.
+            </summary>
+            <param name="info"><see cref="T:System.Runtime.Serialization.SerializationInfo"/> that holds the serialized object data about the exception being thrown.</param>
+            <param name="context"><see cref="T:System.Runtime.Serialization.StreamingContext"/> that contains contextual information about the source or destination.</param>
+        </member>
+        <member name="T:ZeroMQ.ZmqSocket">
+            <summary>
+            Sends and receives messages across various transports to potentially multiple endpoints
+            using the ZMQ protocol.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.ZmqSocket.MaxBufferSize">
+            <summary>
+            The maximum buffer length when using the high performance Send/Receive methods (8192).
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.ZmqSocket.Finalize">
+            <summary>
+            Finalizes an instance of the <see cref="T:ZeroMQ.ZmqSocket"/> class.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.ZmqSocket.Bind(System.String)">
+            <summary>
+            Create an endpoint for accepting connections and bind it to the current socket.
+            </summary>
+            <param name="endpoint">A string consisting of a transport and an address, formatted as <c><em>transport</em>://<em>address</em></c>.</param>
+            <exception cref="T:System.ArgumentNullException"><paramref name="endpoint"/> is null.</exception>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred binding the socket to an endpoint.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+        </member>
+        <member name="M:ZeroMQ.ZmqSocket.Unbind(System.String)">
+            <summary>
+            Stop accepting connections for a previously bound endpoint on the current socket.
+            </summary>
+            <param name="endpoint">A string consisting of a transport and an address, formatted as <c><em>transport</em>://<em>address</em></c>.</param>
+            <exception cref="T:System.ArgumentNullException"><paramref name="endpoint"/> is null.</exception>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred unbinding the socket to an endpoint.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+        </member>
+        <member name="M:ZeroMQ.ZmqSocket.Connect(System.String)">
+            <summary>
+            Connect the current socket to the specified endpoint.
+            </summary>
+            <param name="endpoint">A string consisting of a transport and an address, formatted as <c><em>transport</em>://<em>address</em></c>.</param>
+            <exception cref="T:System.ArgumentNullException"><paramref name="endpoint"/> is null.</exception>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred connecting the socket to a remote endpoint.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+        </member>
+        <member name="M:ZeroMQ.ZmqSocket.Disconnect(System.String)">
+            <summary>
+            Disconnect the current socket from a previously connected endpoint.
+            </summary>
+            <param name="endpoint">A string consisting of a transport and an address, formatted as <c><em>transport</em>://<em>address</em></c>.</param>
+            <exception cref="T:System.ArgumentNullException"><paramref name="endpoint"/> is null.</exception>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred disconnecting the socket from a remote endpoint.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+        </member>
+        <member name="M:ZeroMQ.ZmqSocket.Close">
+            <summary>
+            Destroy the current socket.
+            </summary>
+            <remarks>
+            Any outstanding messages physically received from the network but not yet received by the application
+            with Receive shall be discarded. The behaviour for discarding messages sent by the application
+            with Send but not yet physically transferred to the network depends on the value of
+            the <see cref="P:ZeroMQ.ZmqSocket.Linger"/> socket option.
+            </remarks>
+            <exception cref="T:ZeroMQ.ZmqSocketException">The underlying socket object is not valid.</exception>
+        </member>
+        <member name="M:ZeroMQ.ZmqSocket.Receive(System.Byte[])">
+            <summary>
+            Receive a single message-part from a remote socket in blocking mode (high performance).
+            </summary>
+            <remarks>
+            Warning: This overload will only receive as much data as can fit in the supplied <paramref name="buffer"/>
+            Up to <see cref="P:ZeroMQ.ZmqSocket.MaxMessageSize"/>. Any message data beyond the maximum length will be discarded.
+            It is intended to be used when the maximum messaging performance is required; it will not allocate a new
+            buffer (or copy received data) if the received message exceeds the current buffer size.
+            If the maximum message size is not known in advance, use the <see cref="M:ZeroMQ.ZmqSocket.Receive(System.Byte[],System.Int32@)"/> overload.
+            </remarks>
+            <param name="buffer">A <see cref="T:System.Byte"/> array that will store the received data.</param>
+            <returns>The number of bytes contained in the resulting message.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="buffer"/> is null.</exception>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred receiving data from a remote endpoint.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <exception cref="T:System.NotSupportedException">The current socket type does not support Receive operations.</exception>
+        </member>
+        <member name="M:ZeroMQ.ZmqSocket.Receive(System.Byte[],System.TimeSpan)">
+            <summary>
+            Receive a single message-part from a remote socket in non-blocking mode with a specified timeout (high performance).
+            </summary>
+            <remarks>
+            Warning: This overload will only receive as much data as can fit in the supplied <paramref name="buffer"/>
+            Up to <see cref="P:ZeroMQ.ZmqSocket.MaxMessageSize"/>. Any message data beyond the maximum length will be discarded.
+            It is intended to be used when the maximum messaging performance is required, as it does not perform
+            any unnecessary memory allocation, copying or marshalling.
+            If the maximum message size is not known in advance, use the <see cref="M:ZeroMQ.ZmqSocket.Receive(System.Byte[],System.TimeSpan,System.Int32@)"/> overload.
+            </remarks>
+            <param name="buffer">A <see cref="T:System.Byte"/> array that will store the received data.</param>
+            <param name="timeout">A <see cref="T:System.TimeSpan"/> specifying the receive timeout.</param>
+            <returns>
+            The number of bytes contained in the resulting message or -1 if the timeout expired or an interrupt occurred.
+            See <see cref="P:ZeroMQ.ZmqSocket.ReceiveStatus"/> for details.
+            </returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="buffer"/> is null.</exception>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred receiving data from a remote endpoint.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <exception cref="T:System.NotSupportedException">The current socket type does not support Receive operations.</exception>
+        </member>
+        <member name="M:ZeroMQ.ZmqSocket.Receive(System.Byte[],ZeroMQ.SocketFlags)">
+            <summary>
+            Receive a single message-part from a remote socket (high performance).
+            </summary>
+            <remarks>
+            Warning: This overload will only receive as much data as can fit in the supplied <paramref name="buffer"/>
+            Up to <see cref="P:ZeroMQ.ZmqSocket.MaxMessageSize"/>. Any message data beyond the maximum length will be discarded.
+            It is intended to be used when the maximum messaging performance is required; it will not allocate a new
+            buffer (or copy received data) if the received message exceeds the current buffer size.
+            If the maximum message size is not known in advance, use the <see cref="M:ZeroMQ.ZmqSocket.Receive(System.Byte[],System.Int32@)"/> overload.
+            </remarks>
+            <param name="buffer">A <see cref="T:System.Byte"/> array that will store the received data.</param>
+            <param name="flags">A combination of <see cref="T:ZeroMQ.SocketFlags"/> values to use when receiving.</param>
+            <returns>The number of bytes contained in the resulting message.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="buffer"/> is null.</exception>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred receiving data from a remote endpoint.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <exception cref="T:System.NotSupportedException">The current socket type does not support Receive operations.</exception>
+        </member>
+        <member name="M:ZeroMQ.ZmqSocket.Receive(System.Byte[],System.Int32@)">
+            <summary>
+            Receive a single message-part from a remote socket in blocking mode.
+            </summary>
+            <remarks>
+            This overload will receive all available data in the message-part. If the size of <paramref name="buffer"/>
+            is insufficient, a new buffer will be allocated.
+            </remarks>
+            <param name="buffer">A <see cref="T:System.Byte"/> array that may store the received data.</param>
+            <param name="size">An <see cref="T:System.Int32"/> that will contain the number of bytes in the received data.</param>
+            <returns>
+            A <see cref="T:System.Byte"/> array containing the data received from the remote endpoint, which may or may
+            not be the supplied <paramref name="buffer"/>.
+            </returns>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred receiving data from a remote endpoint.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <exception cref="T:System.NotSupportedException">The current socket type does not support Receive operations.</exception>
+        </member>
+        <member name="M:ZeroMQ.ZmqSocket.Receive(System.Byte[],System.TimeSpan,System.Int32@)">
+            <summary>
+            Receive a single message-part from a remote socket in non-blocking mode with a specified timeout.
+            </summary>
+            <remarks>
+            This overload will receive all available data in the message-part. If the size of <paramref name="buffer"/>
+            is insufficient, a new buffer will be allocated.
+            </remarks>
+            <param name="buffer">A <see cref="T:ZeroMQ.Frame"/> that will store the received data.</param>
+            <param name="timeout">A <see cref="T:System.TimeSpan"/> specifying the receive timeout.</param>
+            <param name="size">An <see cref="T:System.Int32"/> that will contain the number of bytes in the received data.</param>
+            <returns>
+            A <see cref="T:System.Byte"/> array containing the data received from the remote endpoint, which may or may
+            not be the supplied <paramref name="buffer"/>.
+            </returns>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred receiving data from a remote endpoint.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <exception cref="T:System.NotSupportedException">The current socket type does not support Receive operations.</exception>
+        </member>
+        <member name="M:ZeroMQ.ZmqSocket.Receive(System.Byte[],ZeroMQ.SocketFlags,System.Int32@)">
+            <summary>
+            Receive a single message-part from a remote socket.
+            </summary>
+            <remarks>
+            This overload will receive all available data in the message-part. If the size of <paramref name="buffer"/>
+            is insufficient, a new buffer will be allocated.
+            </remarks>
+            <param name="buffer">A <see cref="T:System.Byte"/> array that may store the received data.</param>
+            <param name="flags">A combination of <see cref="T:ZeroMQ.SocketFlags"/> values to use when sending.</param>
+            <param name="size">An <see cref="T:System.Int32"/> that will contain the number of bytes in the received data.</param>
+            <returns>
+            A <see cref="T:System.Byte"/> array containing the data received from the remote endpoint, which may or may
+            not be the supplied <paramref name="buffer"/>.
+            </returns>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred receiving data from a remote endpoint.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <exception cref="T:System.NotSupportedException">The current socket type does not support Receive operations.</exception>
+        </member>
+        <member name="M:ZeroMQ.ZmqSocket.Send(System.Byte[],System.Int32,ZeroMQ.SocketFlags)">
+            <summary>
+            Queue a message buffer to be sent by the socket in blocking mode.
+            </summary>
+            <remarks>
+            Performance tip: To increase send performance, especially on low-powered devices, restrict the
+            size of <paramref name="buffer"/> to <see cref="F:ZeroMQ.ZmqSocket.MaxBufferSize"/>. This will reduce the number of
+            P/Invoke calls required to send the message buffer.
+            </remarks>
+            <param name="buffer">A <see cref="T:System.Byte"/> array that contains the message to be sent.</param>
+            <param name="size">The size of the message to send.</param>
+            <param name="flags">A combination of <see cref="T:ZeroMQ.SocketFlags"/> values to use when sending.</param>
+            <returns>The number of bytes sent by the socket.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="buffer"/> is null.</exception>
+            <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="size"/> is a negative value or is larger than the length of <paramref name="buffer"/>.</exception>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred sending data to a remote endpoint.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <exception cref="T:System.NotSupportedException">The current socket type does not support Send operations.</exception>
+        </member>
+        <member name="M:ZeroMQ.ZmqSocket.Send(System.Byte[],System.Int32,ZeroMQ.SocketFlags,System.TimeSpan)">
+            <summary>
+            Queue a message buffer to be sent by the socket in non-blocking mode with a specified timeout.
+            </summary>
+            <remarks>
+            Performance tip: To increase send performance, especially on low-powered devices, restrict the
+            size of <paramref name="buffer"/> to <see cref="F:ZeroMQ.ZmqSocket.MaxBufferSize"/>. This will reduce the number of
+            P/Invoke calls required to send the message buffer.
+            </remarks>
+            <param name="buffer">A <see cref="T:System.Byte"/> array that contains the message to be sent.</param>
+            <param name="size">The size of the message to send.</param>
+            <param name="flags">A combination of <see cref="T:ZeroMQ.SocketFlags"/> values to use when sending.</param>
+            <param name="timeout">A <see cref="T:System.TimeSpan"/> specifying the send timeout.</param>
+            <returns>The number of bytes sent by the socket.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="buffer"/> is null.</exception>
+            <exception cref="T:System.ArgumentOutOfRangeException">
+            <paramref name="size"/> is a negative value or is larger than the length of <paramref name="buffer"/>.
+            </exception>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred sending data to a remote endpoint.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <exception cref="T:System.NotSupportedException">The current socket type does not support Send operations.</exception>
+        </member>
+        <member name="M:ZeroMQ.ZmqSocket.Forward(ZeroMQ.ZmqSocket)">
+            <summary>
+            Forwards a single-part or all parts of a multi-part message to a destination socket.
+            </summary>
+            <remarks>
+            This method is useful for implementing devices as data is not marshalled into managed code; it
+            is forwarded directly in the unmanaged layer. As an example, this method could forward all traffic
+            from a device's front-end socket to its backend socket.
+            </remarks>
+            <param name="destination">A <see cref="T:ZeroMQ.ZmqSocket"/> that will receive the incoming message(s).</param>
+        </member>
+        <member name="M:ZeroMQ.ZmqSocket.SubscribeAll">
+            <summary>
+            Subscribe to all messages.
+            </summary>
+            <remarks>
+            Only applies to <see cref="F:ZeroMQ.SocketType.SUB"/> and <see cref="F:ZeroMQ.SocketType.XSUB"/> sockets.
+            </remarks>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <exception cref="T:System.NotSupportedException">The current socket type does not support subscriptions.</exception>
+        </member>
+        <member name="M:ZeroMQ.ZmqSocket.Subscribe(System.Byte[])">
+            <summary>
+            Subscribe to messages that begin with a specified prefix.
+            </summary>
+            <remarks>
+            Only applies to <see cref="F:ZeroMQ.SocketType.SUB"/> and <see cref="F:ZeroMQ.SocketType.XSUB"/> sockets.
+            </remarks>
+            <param name="prefix">Prefix for subscribed messages.</param>
+            <exception cref="T:System.ArgumentNullException"><paramref name="prefix"/> is null.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <exception cref="T:System.NotSupportedException">The current socket type does not support subscriptions.</exception>
+        </member>
+        <member name="M:ZeroMQ.ZmqSocket.UnsubscribeAll">
+            <summary>
+            Unsubscribe from all messages.
+            </summary>
+            <remarks>
+            Only applies to <see cref="F:ZeroMQ.SocketType.SUB"/> and <see cref="F:ZeroMQ.SocketType.XSUB"/> sockets.
+            </remarks>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <exception cref="T:System.NotSupportedException">The current socket type does not support subscriptions.</exception>
+        </member>
+        <member name="M:ZeroMQ.ZmqSocket.Unsubscribe(System.Byte[])">
+            <summary>
+            Unsubscribe from messages that begin with a specified prefix.
+            </summary>
+            <remarks>
+            Only applies to <see cref="F:ZeroMQ.SocketType.SUB"/> and <see cref="F:ZeroMQ.SocketType.XSUB"/> sockets.
+            </remarks>
+            <param name="prefix">Prefix for subscribed messages.</param>
+            <exception cref="T:System.ArgumentNullException"><paramref name="prefix"/> is null.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <exception cref="T:System.NotSupportedException">The current socket type does not support subscriptions.</exception>
+        </member>
+        <member name="M:ZeroMQ.ZmqSocket.AddTcpAcceptFilter(System.String)">
+            <summary>
+            Add a filter that will be applied for each new TCP transport connection on a listening socket.
+            Example: "127.0.0.1", "mail.ru/24", "::1", "::1/128", "3ffe:1::", "3ffe:1::/56"
+            </summary>
+            <seealso cref="M:ZeroMQ.ZmqSocket.ClearTcpAcceptFilter"/>
+            <remarks>
+            If no filters are applied, then TCP transport allows connections from any IP. If at least one
+            filter is applied then new connection source IP should be matched.
+            </remarks>
+            <param name="filter">IPV6 or IPV4 CIDR filter.</param>
+            <exception cref="T:System.ArgumentNullException"><paramref name="filter"/> is null.</exception>
+            <exception cref="T:System.ArgumentException"><paramref name="filter"/> is empty string.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+        </member>
+        <member name="M:ZeroMQ.ZmqSocket.ClearTcpAcceptFilter">
+            <summary>
+            Reset all TCP filters assigned by <see cref="M:ZeroMQ.ZmqSocket.AddTcpAcceptFilter(System.String)"/> and allow TCP transport to accept connections from any IP.
+            </summary>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+        </member>
+        <member name="M:ZeroMQ.ZmqSocket.Dispose">
+            <summary>
+            Releases all resources used by the current instance of the <see cref="T:ZeroMQ.ZmqSocket"/> class.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.ZmqSocket.Dispose(System.Boolean)">
+            <summary>
+            Releases the unmanaged resources used by the <see cref="T:ZeroMQ.ZmqSocket"/>, and optionally disposes of the managed resources.
+            </summary>
+            <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
+        </member>
+        <member name="E:ZeroMQ.ZmqSocket.ReceiveReady">
+            <summary>
+            Occurs when at least one message may be received from the socket without blocking.
+            </summary>
+        </member>
+        <member name="E:ZeroMQ.ZmqSocket.SendReady">
+            <summary>
+            Occurs when at least one message may be sent via the socket without blocking.
+            </summary>
+        </member>
+        <member name="P:ZeroMQ.ZmqSocket.SocketType">
+            <summary>
+            Gets the <see cref="T:ZeroMQ.SocketType"/> value for the current socket.
+            </summary>
+        </member>
+        <member name="P:ZeroMQ.ZmqSocket.Affinity">
+            <summary>
+            Gets or sets the I/O thread affinity for newly created connections on this socket.
+            </summary>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred when getting or setting the socket option.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+        </member>
+        <member name="P:ZeroMQ.ZmqSocket.Backlog">
+            <summary>
+            Gets or sets the maximum length of the queue of outstanding peer connections. (Default = 100 connections).
+            </summary>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred when getting or setting the socket option.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+        </member>
+        <member name="P:ZeroMQ.ZmqSocket.Identity">
+            <summary>
+            Gets or sets the identity of the current socket.
+            </summary>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred when getting or setting the socket option.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+        </member>
+        <member name="P:ZeroMQ.ZmqSocket.Linger">
+            <summary>
+            Gets or sets the linger period for socket shutdown. (Default = <see cref="F:System.TimeSpan.MaxValue"/>, infinite).
+            </summary>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred when getting or setting the socket option.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+        </member>
+        <member name="P:ZeroMQ.ZmqSocket.MaxMessageSize">
+            <summary>
+            Gets or sets the maximum size for inbound messages (bytes). (Default = -1, no limit).
+            </summary>
+            <exception cref="T:ZeroMQ.ZmqVersionException">This socket option was used in ZeroMQ 2.x or lower.</exception>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred when getting or setting the socket option.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+        </member>
+        <member name="P:ZeroMQ.ZmqSocket.MulticastHops">
+            <summary>
+            Gets or sets the time-to-live field in every multicast packet sent from this socket (network hops). (Default = 1 hop).
+            </summary>
+            <exception cref="T:ZeroMQ.ZmqVersionException">This socket option was used in ZeroMQ 2.x or lower.</exception>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred when getting or setting the socket option.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+        </member>
+        <member name="P:ZeroMQ.ZmqSocket.MulticastRate">
+            <summary>
+            Gets or sets the maximum send or receive data rate for multicast transports (kbps). (Default = 100 kbps).
+            </summary>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred when getting or setting the socket option.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+        </member>
+        <member name="P:ZeroMQ.ZmqSocket.MulticastRecoveryInterval">
+            <summary>
+            Gets or sets the recovery interval for multicast transports. (Default = 10 seconds).
+            </summary>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred when getting or setting the socket option.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+        </member>
+        <member name="P:ZeroMQ.ZmqSocket.ReceiveBufferSize">
+            <summary>
+            Gets or sets the underlying kernel receive buffer size for the current socket (bytes). (Default = 0, OS default).
+            </summary>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred when getting or setting the socket option.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+        </member>
+        <member name="P:ZeroMQ.ZmqSocket.ReceiveHighWatermark">
+            <summary>
+            Gets or sets the high water mark for inbound messages (number of messages). (Default = 0, no limit).
+            </summary>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred when getting or setting the socket option.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <remarks>If using 0MQ 2.x, will use the (deprecated) HWM socket option instead.</remarks>
+        </member>
+        <member name="P:ZeroMQ.ZmqSocket.ReceiveMore">
+            <summary>
+            Gets a value indicating whether the multi-part message currently being read has more message parts to follow.
+            </summary>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred when getting or setting the socket option.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+        </member>
+        <member name="P:ZeroMQ.ZmqSocket.ReceiveTimeout">
+            <summary>
+            Gets or sets the timeout for receive operations. (Default = <see cref="F:System.TimeSpan.MaxValue"/>, infinite).
+            </summary>
+            <exception cref="T:ZeroMQ.ZmqVersionException">This socket option was used in ZeroMQ 2.x or lower.</exception>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred when getting or setting the socket option.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+        </member>
+        <member name="P:ZeroMQ.ZmqSocket.ReconnectInterval">
+            <summary>
+            Gets or sets the initial reconnection interval. (Default = 100 milliseconds).
+            </summary>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred when getting or setting the socket option.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+        </member>
+        <member name="P:ZeroMQ.ZmqSocket.ReconnectIntervalMax">
+            <summary>
+            Gets or sets the maximum reconnection interval. (Default = 0, only use <see cref="P:ZeroMQ.ZmqSocket.ReconnectInterval"/>).
+            </summary>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred when getting or setting the socket option.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+        </member>
+        <member name="P:ZeroMQ.ZmqSocket.SendBufferSize">
+            <summary>
+            Gets or sets the underlying kernel transmit buffer size for the current socket (bytes). (Default = 0, OS default).
+            </summary>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred when getting or setting the socket option.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+        </member>
+        <member name="P:ZeroMQ.ZmqSocket.SendHighWatermark">
+            <summary>
+            Gets or sets the high water mark for outbound messages (number of messages). (Default = 0, no limit).
+            </summary>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred when getting or setting the socket option.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <remarks>If using 0MQ 2.x, will use the (deprecated) HWM socket option instead.</remarks>
+        </member>
+        <member name="P:ZeroMQ.ZmqSocket.SendTimeout">
+            <summary>
+            Gets or sets the timeout for send operations. (Default = <see cref="F:System.TimeSpan.MaxValue"/>, infinite).
+            </summary>
+            <exception cref="T:ZeroMQ.ZmqVersionException">This socket option was used in ZeroMQ 2.x or lower.</exception>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred when getting or setting the socket option.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+        </member>
+        <member name="P:ZeroMQ.ZmqSocket.SupportedProtocol">
+            <summary>
+            Gets or sets the supported socket protocol(s) when using TCP transports. (Default = <see cref="F:ZeroMQ.ProtocolType.Ipv4Only"/>).
+            </summary>
+            <exception cref="T:ZeroMQ.ZmqVersionException">This socket option was used in ZeroMQ 2.x or lower.</exception>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred when getting or setting the socket option.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <remarks>Not supported in 0MQ version 2.</remarks>
+        </member>
+        <member name="P:ZeroMQ.ZmqSocket.Swap">
+            <summary>
+            Gets or sets the disk offload (swap) size for the specified socket. (Default = 0).
+            </summary>
+            <exception cref="T:ZeroMQ.ZmqVersionException">This socket option was used in ZeroMQ 3 or above.</exception>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred when getting or setting the socket option.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <remarks>Not supported in 0MQ version 3.</remarks>
+        </member>
+        <member name="P:ZeroMQ.ZmqSocket.LastEndpoint">
+            <summary>
+            Gets the last endpoint bound for TCP and IPC transports.
+            The returned value will be a string in the form of a ZMQ DSN.
+            </summary>
+            <remarks>
+            Note that if the TCP host is INADDR_ANY, indicated by a *, then the
+            returned address will be 0.0.0.0 (for IPv4).</remarks>
+            <exception cref="T:ZeroMQ.ZmqVersionException">This socket option was used in ZeroMQ 2.x or lower.</exception>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred when getting or setting the socket option.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <remarks>Not supported in 0MQ version 2.</remarks>
+        </member>
+        <member name="P:ZeroMQ.ZmqSocket.RouterBehavior">
+            <summary>
+            Sets the behavior when an unroutable message is encountered. (Default = <see cref="F:ZeroMQ.RouterBehavior.Discard"/>).
+            Only applicable to the <see cref="F:ZeroMQ.SocketType.ROUTER"/> socket type.
+            </summary>
+            <exception cref="T:ZeroMQ.ZmqVersionException">This socket option was used in ZeroMQ 2.x or lower.</exception>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred when getting or setting the socket option.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <remarks>Not supported in 0MQ version 2.</remarks>
+        </member>
+        <member name="P:ZeroMQ.ZmqSocket.TcpKeepalive">
+            <summary>
+            Gets or sets the override value for the SO_KEEPALIVE TCP socket option. (where supported by OS). (Default = -1, OS default).
+            </summary>
+            <exception cref="T:ZeroMQ.ZmqVersionException">This socket option was used in ZeroMQ 2.x or lower.</exception>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred when getting or setting the socket option.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <remarks>Not supported in 0MQ version 2.</remarks>
+        </member>
+        <member name="P:ZeroMQ.ZmqSocket.TcpKeepaliveCnt">
+            <summary>
+            Gets or sets the override value for the 'TCP_KEEPCNT' socket option (where supported by OS). (Default = -1, OS default).
+            The default value of '-1' means to skip any overrides and leave it to OS default.
+            </summary>
+            <exception cref="T:ZeroMQ.ZmqVersionException">This socket option was used in ZeroMQ 2.x or lower.</exception>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred when getting or setting the socket option.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <remarks>Not supported in 0MQ version 2.</remarks>
+        </member>
+        <member name="P:ZeroMQ.ZmqSocket.TcpKeepaliveIdle">
+            <summary>
+            Gets or sets the override value for the TCP_KEEPCNT (or TCP_KEEPALIVE on some OS). (Default = -1, OS default).
+            </summary>
+            <exception cref="T:ZeroMQ.ZmqVersionException">This socket option was used in ZeroMQ 2.x or lower.</exception>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred when getting or setting the socket option.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <remarks>Not supported in 0MQ version 2.</remarks>
+        </member>
+        <member name="P:ZeroMQ.ZmqSocket.TcpKeepaliveIntvl">
+            <summary>
+            Gets or sets the override value for the TCP_KEEPINTVL socket option (where supported by OS). (Default = -1, OS default).
+            </summary>
+            <exception cref="T:ZeroMQ.ZmqVersionException">This socket option was used in ZeroMQ 2.x or lower.</exception>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred when getting or setting the socket option.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <remarks>Not supported in 0MQ version 2.</remarks>
+        </member>
+        <member name="P:ZeroMQ.ZmqSocket.ReceiveStatus">
+            <summary>
+            Gets the status of the last Receive operation.
+            </summary>
+        </member>
+        <member name="P:ZeroMQ.ZmqSocket.SendStatus">
+            <summary>
+            Gets the status of the last Send operation.
+            </summary>
+        </member>
+        <member name="T:ZeroMQ.ErrorCode">
+            <summary>
+            Contains cross-platform error code definitions.
+            </summary>
+        </member>
+        <member name="T:ZeroMQ.Frame">
+            <summary>
+            A single message-part to be sent or received via a <see cref="T:ZeroMQ.ZmqSocket"/>.
+            </summary>
+            <remarks>
+            The <see cref="T:ZeroMQ.Frame"/> class has a one-to-one correspondence with the native <c>zmq_msg_t</c> struct.
+            </remarks>
+        </member>
+        <member name="M:ZeroMQ.Frame.#ctor(System.Byte[])">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.Frame"/> class. The contents of <paramref name="buffer"/>
+            will be copied into the resulting <see cref="T:ZeroMQ.Frame"/>.
+            </summary>
+            <param name="buffer">A <see cref="T:System.Byte"/> array containing the frame data to copy.</param>
+            <exception cref="T:System.ArgumentNullException"><paramref name="buffer"/> is null.</exception>
+        </member>
+        <member name="M:ZeroMQ.Frame.#ctor(System.Int32)">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.Frame"/> class. The resulting <see cref="T:ZeroMQ.Frame"/> will have
+            a buffer size equal to <paramref name="length"/>.
+            </summary>
+            <param name="length">An <see cref="T:System.Int32"/> containing the frame buffer length.</param>
+            <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="length"/> is negative.</exception>
+        </member>
+        <member name="M:ZeroMQ.Frame.op_Implicit(ZeroMQ.Frame)~System.Byte[]">
+            <summary>
+            Converts a <see cref="T:ZeroMQ.Frame"/> to a <see cref="T:System.Byte"/> array.
+            </summary>
+            <param name="frame">The <see cref="T:ZeroMQ.Frame"/> to convert.</param>
+            <returns>The data contained by <paramref name="frame"/>.</returns>
+        </member>
+        <member name="M:ZeroMQ.Frame.Copy(System.Byte[])">
+            <summary>
+            Create a copy of the supplied buffer and store it in a <see cref="T:ZeroMQ.Frame"/>.
+            </summary>
+            <param name="buffer">The <see cref="T:System.Byte"/> array to copy.</param>
+            <returns>A <see cref="T:ZeroMQ.Frame"/> containing a copy of <paramref name="buffer"/>.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="buffer"/> is null.</exception>
+        </member>
+        <member name="M:ZeroMQ.Frame.Copy(ZeroMQ.Frame)">
+            <summary>
+            Create a copy of the supplied <see cref="T:ZeroMQ.Frame"/>.
+            </summary>
+            <param name="frame">The <see cref="T:ZeroMQ.Frame"/> to copy.</param>
+            <returns>A <see cref="T:ZeroMQ.Frame"/> containing a copy of <paramref name="frame"/>.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="frame"/> is null.</exception>
+        </member>
+        <member name="M:ZeroMQ.Frame.Equals(ZeroMQ.Frame)">
+            <summary>
+            Determines whether the specified <see cref="T:ZeroMQ.Frame"/> is equal to the current <see cref="T:ZeroMQ.Frame"/>.
+            </summary>
+            <param name="other">The <see cref="T:ZeroMQ.Frame"/> to compare with the current <see cref="T:ZeroMQ.Frame"/>.</param>
+            <returns>true if the specified System.Object is equal to the current System.Object; otherwise, false.</returns>
+        </member>
+        <member name="P:ZeroMQ.Frame.Empty">
+            <summary>
+            Gets an empty <see cref="T:ZeroMQ.Frame"/> that may be used as message separators.
+            </summary>
+        </member>
+        <member name="P:ZeroMQ.Frame.Buffer">
+            <summary>
+            Gets the underlying frame data buffer.
+            </summary>
+        </member>
+        <member name="P:ZeroMQ.Frame.BufferSize">
+            <summary>
+            Gets the maximum size of the frame buffer.
+            </summary>
+        </member>
+        <member name="P:ZeroMQ.Frame.MessageSize">
+            <summary>
+            Gets or sets the size of the message data contained in the frame.
+            </summary>
+        </member>
+        <member name="P:ZeroMQ.Frame.HasMore">
+            <summary>
+            Gets or sets a value indicating whether more frames will follow in a multi-part message sequence.
+            </summary>
+        </member>
+        <member name="P:ZeroMQ.Frame.ReceiveStatus">
+            <summary>
+            Gets the status of the last Recieve operation.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.Interop.ContextProxy._callback">
+            <summary>
+            This will prevent the garbage collector from collecting the callback delegate during the execution.
+            </summary>
+        </member>
+        <member name="T:ZeroMQ.Interop.SafeLibraryHandle">
+            <summary>
+            Safe handle for unmanaged libraries. See http://msdn.microsoft.com/msdnmag/issues/05/10/Reliability/ for more about safe handles.
+            </summary>
+        </member>
+        <member name="T:ZeroMQ.Interop.UnmanagedLibrary">
+            <summary>
+            Utility class to wrap an unmanaged shared lib and be responsible for freeing it.
+            </summary>
+            <remarks>
+            This is a managed wrapper over the native LoadLibrary, GetProcAddress, and FreeLibrary calls on Windows
+            and dlopen, dlsym, and dlclose on Posix environments.
+            </remarks>
+        </member>
+        <member name="M:ZeroMQ.Interop.UnmanagedLibrary.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.Interop.UnmanagedLibrary"/> class. Loads a dll and takes responible for freeing it.
+            </summary>
+            <remarks>Throws exceptions on failure. Most common failure would be file-not-found, that the file is not a loadable image.</remarks>
+            <param name="fileName">full path name of dll to load</param>
+            <exception cref="T:System.IO.FileNotFoundException">if fileName can't be found</exception>
+        </member>
+        <member name="M:ZeroMQ.Interop.UnmanagedLibrary.GetUnmanagedFunction``1(System.String)">
+            <summary>
+            Dynamically look up a function in the dll via kernel32!GetProcAddress or libdl!dlsym.
+            </summary>
+            <typeparam name="TDelegate">Delegate type to load</typeparam>
+            <param name="functionName">Raw name of the function in the export table.</param>
+            <returns>A delegate to the unmanaged function.</returns>
+            <exception cref="T:System.MissingMethodException">Thrown if the given function name is not found in the library.</exception>
+            <remarks>
+            GetProcAddress results are valid as long as the dll is not yet unloaded. This
+            is very very dangerous to use since you need to ensure that the dll is not unloaded
+            until after you're done with any objects implemented by the dll. For example, if you
+            get a delegate that then gets an IUnknown implemented by this dll,
+            you can not dispose this library until that IUnknown is collected. Else, you may free
+            the library and then the CLR may call release on that IUnknown and it will crash.
+            </remarks>
+        </member>
+        <member name="T:ZeroMQ.Monitoring.ZmqMonitor">
+            <summary>
+            A socket monitoring object.
+            </summary>
+            <remarks>
+            CAUTION: <see cref="T:ZeroMQ.Monitoring.ZmqMonitor"/> is intended for monitoring infrastructure /
+            operations concerns only - NOT BUSINESS LOGIC. An event is a representation of
+            something that happened - you cannot change the past, but only react to them.
+            The implementation is also only concerned with a single session. No state of
+            peers, other sessions etc. are tracked - this will only pollute internals and
+            is the responsibility of application authors to either implement or correlate
+            in another datastore. Monitor events are exceptional conditions and are thus
+            not directly in the messaging critical path. However, still be careful with
+            what you're doing in the event handlers as excess time spent in the handler
+            will block the socket's application thread.
+            </remarks>
+        </member>
+        <member name="M:ZeroMQ.Monitoring.ZmqMonitor.Unregister">
+            <summary>
+            Unregisters the <see cref="T:ZeroMQ.Monitoring.ZmqMonitor"/> from its <see cref="T:ZeroMQ.ZmqContext"/>. After calling this
+            method, no more events will be invoked.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.Monitoring.ZmqMonitor.Dispose">
+            <summary>
+            Releases all resources used by the current instance of the <see cref="T:ZeroMQ.Monitoring.ZmqMonitor"/> class.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.Monitoring.ZmqMonitor.Dispose(System.Boolean)">
+            <summary>
+            Releases the unmanaged resources used by the <see cref="T:ZeroMQ.Monitoring.ZmqMonitor"/>, and optionally disposes of the managed resources.
+            </summary>
+            <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
+        </member>
+        <member name="E:ZeroMQ.Monitoring.ZmqMonitor.Connected">
+            <summary>
+            Occurs when a new connection is established.
+            </summary>
+        </member>
+        <member name="E:ZeroMQ.Monitoring.ZmqMonitor.ConnectDelayed">
+            <summary>
+            Occurs when a synchronous connection attempt failed, and its completion is being polled for.
+            </summary>
+        </member>
+        <member name="E:ZeroMQ.Monitoring.ZmqMonitor.ConnectRetried">
+            <summary>
+            Occurs when an asynchronous connect / reconnection attempt is being handled by a reconnect timer.
+            </summary>
+        </member>
+        <member name="E:ZeroMQ.Monitoring.ZmqMonitor.Listening">
+            <summary>
+            Occurs when a socket is bound to an address and is ready to accept connections.
+            </summary>
+        </member>
+        <member name="E:ZeroMQ.Monitoring.ZmqMonitor.BindFailed">
+            <summary>
+            Occurs when a socket could not bind to an address.
+            </summary>
+        </member>
+        <member name="E:ZeroMQ.Monitoring.ZmqMonitor.Accepted">
+            <summary>
+            Occurs when a connection from a remote peer has been established with a socket's listen address.
+            </summary>
+        </member>
+        <member name="E:ZeroMQ.Monitoring.ZmqMonitor.AcceptFailed">
+            <summary>
+            Occurs when a connection attempt to a socket's bound address fails.
+            </summary>
+        </member>
+        <member name="E:ZeroMQ.Monitoring.ZmqMonitor.Closed">
+            <summary>
+            Occurs when a connection was closed.
+            </summary>
+        </member>
+        <member name="E:ZeroMQ.Monitoring.ZmqMonitor.CloseFailed">
+            <summary>
+            Occurs when a connection couldn't be closed.
+            </summary>
+        </member>
+        <member name="E:ZeroMQ.Monitoring.ZmqMonitor.Disconnected">
+            <summary>
+            Occurs when the stream engine (tcp and ipc specific) detects a corrupted / broken session.
+            </summary>
+        </member>
+        <member name="T:ZeroMQ.Monitoring.ZmqMonitorErrorEventArgs">
+            <summary>
+            Provides data for <see cref="E:ZeroMQ.Monitoring.ZmqMonitor.ConnectDelayed"/>, <see cref="E:ZeroMQ.Monitoring.ZmqMonitor.AcceptFailed"/>,
+            <see cref="T:ZeroMQ.Monitoring.ZmqMonitorErrorEventArgs"/> and <see cref="E:ZeroMQ.Monitoring.ZmqMonitor.BindFailed"/> events.
+            </summary>
+        </member>
+        <member name="T:ZeroMQ.Monitoring.ZmqMonitorEventArgs">
+            <summary>
+            A base class for the all ZmqMonitor events.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.Monitoring.ZmqMonitorEventArgs.#ctor(ZeroMQ.ZmqSocket,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.Monitoring.ZmqMonitorEventArgs"/> class.
+            </summary>
+            <param name="socket">The <see cref="T:ZeroMQ.ZmqSocket"/> that triggered the event.</param>
+            <param name="address">The peer address.</param>
+        </member>
+        <member name="P:ZeroMQ.Monitoring.ZmqMonitorEventArgs.Socket">
+            <summary>
+            Gets the socket that triggered the event.
+            </summary>
+        </member>
+        <member name="P:ZeroMQ.Monitoring.ZmqMonitorEventArgs.Address">
+            <summary>
+            Gets the peer address.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.Monitoring.ZmqMonitorErrorEventArgs.#ctor(ZeroMQ.ZmqSocket,System.String,System.Int32)">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.Monitoring.ZmqMonitorErrorEventArgs"/> class.
+            </summary>
+            <param name="socket">The <see cref="T:ZeroMQ.ZmqSocket"/> that triggered the event.</param>
+            <param name="address">The connected peer's address.</param>
+            <param name="errorCode">The error code representing the reason for failure.</param>
+        </member>
+        <member name="P:ZeroMQ.Monitoring.ZmqMonitorErrorEventArgs.ErrorCode">
+            <summary>
+            Gets error code number.
+            </summary>
+        </member>
+        <member name="T:ZeroMQ.Monitoring.ZmqMonitorFileDescriptorEventArgs">
+            <summary>
+            Provides data for <see cref="E:ZeroMQ.Monitoring.ZmqMonitor.Connected"/>, <see cref="E:ZeroMQ.Monitoring.ZmqMonitor.Listening"/>, <see cref="E:ZeroMQ.Monitoring.ZmqMonitor.Accepted"/>, <see cref="E:ZeroMQ.Monitoring.ZmqMonitor.Closed"/> and <see cref="E:ZeroMQ.Monitoring.ZmqMonitor.Disconnected"/> events.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.Monitoring.ZmqMonitorFileDescriptorEventArgs.#ctor(ZeroMQ.ZmqSocket,System.String,System.IntPtr)">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.Monitoring.ZmqMonitorFileDescriptorEventArgs"/> class.
+            </summary>
+            <param name="socket">The <see cref="T:ZeroMQ.ZmqSocket"/> that triggered the event.</param>
+            <param name="address">The peer address.</param>
+            <param name="fileDescriptor">The socket descriptor associated with the event.</param>
+        </member>
+        <member name="P:ZeroMQ.Monitoring.ZmqMonitorFileDescriptorEventArgs.FileDescriptor">
+            <summary>
+            Gets the socket descriptor.
+            </summary>
+        </member>
+        <member name="T:ZeroMQ.Monitoring.ZmqMonitorIntervalEventArgs">
+            <summary>
+            Provides data for <see cref="E:ZeroMQ.Monitoring.ZmqMonitor.ConnectRetried"/> event.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.Monitoring.ZmqMonitorIntervalEventArgs.#ctor(ZeroMQ.ZmqSocket,System.String,System.Int32)">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.Monitoring.ZmqMonitorIntervalEventArgs"/> class.
+            </summary>
+            <param name="socket">The <see cref="T:ZeroMQ.ZmqSocket"/> that triggered the event.</param>
+            <param name="address">The peer address.</param>
+            <param name="interval">The computed reconnect interval</param>
+        </member>
+        <member name="P:ZeroMQ.Monitoring.ZmqMonitorIntervalEventArgs.Interval">
+            <summary>
+            Gets the computed reconnect interval.
+            </summary>
+        </member>
+        <member name="T:ZeroMQ.Poller">
+            <summary>
+            Multiplexes input/output events in a level-triggered fashion over a set of sockets.
+            </summary>
+            <remarks>
+            <para>
+            Sockets will be polled according to their capabilities. For example, sockets that are
+            receive-only (e.g., PULL and SUB sockets) will only poll for Input events. Sockets that
+            can both send and receive (e.g., REP, REQ, etc.) will poll for both Input and Output events.
+            </para>
+            <para>
+            To actually send or receive data, the socket's <see cref="E:ZeroMQ.ZmqSocket.ReceiveReady"/> and/or
+            <see cref="E:ZeroMQ.ZmqSocket.SendReady"/> event handlers must be attached to. If attached, these will
+            be invoked when data is ready to be received or sent.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:ZeroMQ.Poller.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.Poller"/> class.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.Poller.#ctor(System.Collections.Generic.IEnumerable{ZeroMQ.ZmqSocket})">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.Poller"/> class with a collection of sockets to poll over.
+            </summary>
+            <param name="socketsToPoll">The collection of <see cref="T:ZeroMQ.ZmqSocket"/>s to poll.</param>
+        </member>
+        <member name="M:ZeroMQ.Poller.Dispose">
+            <summary>
+            Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.Poller.AddSocket(ZeroMQ.ZmqSocket)">
+            <summary>
+            Add a socket that will be polled for input/output events, depending on its capabilities.
+            </summary>
+            <param name="socket">The <see cref="T:ZeroMQ.ZmqSocket"/> to poll.</param>
+            <exception cref="T:System.ArgumentNullException"><paramref name="socket"/> is null.</exception>
+            <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="socket"/> has no event handlers.</exception>
+        </member>
+        <member name="M:ZeroMQ.Poller.AddSockets(System.Collections.Generic.IEnumerable{ZeroMQ.ZmqSocket})">
+            <summary>
+            Add a collection of sockets that will be polled for input/output events, depending on their capabilities.
+            </summary>
+            <param name="sockets">The collection of <see cref="T:ZeroMQ.ZmqSocket"/>s to poll.</param>
+        </member>
+        <member name="M:ZeroMQ.Poller.ClearSockets">
+            <summary>
+            Removes all sockets from the current collection.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.Poller.Poll">
+            <summary>
+            Multiplex input/output events over the contained set of sockets in blocking mode, firing
+            <see cref="E:ZeroMQ.ZmqSocket.ReceiveReady"/> or <see cref="E:ZeroMQ.ZmqSocket.SendReady"/> as appropriate.
+            </summary>
+            <returns>The number of ready events that were signaled.</returns>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred polling for socket events.</exception>
+        </member>
+        <member name="M:ZeroMQ.Poller.Poll(System.TimeSpan)">
+            <summary>
+            Multiplex input/output events over the contained set of sockets in non-blocking mode, firing
+            <see cref="E:ZeroMQ.ZmqSocket.ReceiveReady"/> or <see cref="E:ZeroMQ.ZmqSocket.SendReady"/> as appropriate.
+            Returns when one or more events are ready to fire or when the specified timeout elapses, whichever
+            comes first.
+            </summary>
+            <returns>The number of ready events that were signaled.</returns>
+            <param name="timeout">A <see cref="T:System.TimeSpan"/> indicating the timeout value.</param>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred polling for socket events.</exception>
+        </member>
+        <member name="M:ZeroMQ.Poller.Dispose(System.Boolean)">
+            <summary>
+            Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+            </summary>
+            <param name="disposing">True if the object is being disposed, false otherwise.</param>
+        </member>
+        <member name="P:ZeroMQ.Poller.Pulse">
+            <summary>
+            Gets an <see cref="T:System.Threading.AutoResetEvent"/> that is pulsed after every Poll call.
+            </summary>
+        </member>
+        <member name="T:ZeroMQ.ProtocolType">
+            <summary>
+            Specifies the protocols that an <see cref="T:ZeroMQ.ZmqSocket"/> supports.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.ProtocolType.Both">
+            <summary>
+            Both Internet Protocol versions 4 and 6.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.ProtocolType.Ipv4Only">
+            <summary>
+            Internet Protocol version 4.
+            </summary>
+        </member>
+        <member name="T:ZeroMQ.ReceiveStatus">
+            <summary>
+            Specifies possible results for socket receive operations.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.ReceiveStatus.None">
+            <summary>
+            No receive operation has been performed.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.ReceiveStatus.Received">
+            <summary>
+            The receive operation returned a message that contains data.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.ReceiveStatus.TryAgain">
+            <summary>
+            Non-blocking mode was requested and no messages are available at the moment.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.ReceiveStatus.Interrupted">
+            <summary>
+            The receive operation was interrupted, likely by terminating the containing context.
+            </summary>
+        </member>
+        <member name="T:ZeroMQ.RouterBehavior">
+            <summary>
+            Specifies <see cref="F:ZeroMQ.SocketType.ROUTER"/> socket behavior when
+            an unroutable message is encountered.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.RouterBehavior.Discard">
+            <summary>
+            Silently discard messages.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.RouterBehavior.Report">
+            <summary>
+            Force sending to fail with an 'EAGAIN' error code, effectively
+            enabling blocking sends.
+            </summary>
+        </member>
+        <member name="T:ZeroMQ.SendReceiveExtensions">
+            <summary>
+            Defines extensions for Send/Receive methods in <see cref="T:ZeroMQ.ZmqSocket"/>.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.SendReceiveExtensions.Send(ZeroMQ.ZmqSocket,System.Byte[])">
+            <summary>
+            Queue a single-part (or final multi-part) message buffer to be sent by the socket in blocking mode.
+            </summary>
+            <remarks>
+            This method assumes that the message fills the entire buffer.
+            </remarks>
+            <param name="socket">A <see cref="T:ZeroMQ.ZmqSocket"/> object.</param>
+            <param name="buffer">A <see cref="T:System.Byte"/> array that contains the message to be sent.</param>
+            <returns>A <see cref="T:ZeroMQ.SendStatus"/> describing the outcome of the send operation.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="buffer"/> is null.</exception>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred sending data to a remote endpoint.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <exception cref="T:System.NotSupportedException">The current socket type does not support Send operations.</exception>
+        </member>
+        <member name="M:ZeroMQ.SendReceiveExtensions.Send(ZeroMQ.ZmqSocket,System.Byte[],System.TimeSpan)">
+            <summary>
+            Queue a single-part (or final multi-part) message buffer to be sent by the socket in
+            non-blocking mode with a specified timeout.
+            </summary>
+            <remarks>
+            This method assumes that the message fills the entire buffer.
+            </remarks>
+            <param name="socket">A <see cref="T:ZeroMQ.ZmqSocket"/> object.</param>
+            <param name="buffer">A <see cref="T:System.Byte"/> array that contains the message to be sent.</param>
+            <param name="timeout">A <see cref="T:System.TimeSpan"/> specifying the send timeout.</param>
+            <returns>A <see cref="T:ZeroMQ.SendStatus"/> describing the outcome of the send operation.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="buffer"/> is null.</exception>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred sending data to a remote endpoint.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <exception cref="T:System.NotSupportedException">The current socket type does not support Send operations.</exception>
+        </member>
+        <member name="M:ZeroMQ.SendReceiveExtensions.Send(ZeroMQ.ZmqSocket,System.String,System.Text.Encoding)">
+            <summary>
+            Queue a single-part (or final multi-part) message string to be sent by the socket in blocking mode.
+            </summary>
+            <param name="socket">A <see cref="T:ZeroMQ.ZmqSocket"/> object.</param>
+            <param name="message">A <see cref="T:System.String"/> that contains the message to be sent.</param>
+            <param name="encoding">The <see cref="T:System.Text.Encoding"/> to use when converting <paramref name="message"/> to a buffer.</param>
+            <returns>A <see cref="T:ZeroMQ.SendStatus"/> describing the outcome of the send operation.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="message"/> or <paramref name="encoding"/> is null.</exception>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred sending data to a remote endpoint.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <exception cref="T:System.NotSupportedException">The current socket type does not support Send operations.</exception>
+        </member>
+        <member name="M:ZeroMQ.SendReceiveExtensions.Send(ZeroMQ.ZmqSocket,System.String,System.Text.Encoding,System.TimeSpan)">
+            <summary>
+            Queue a single-part (or final multi-part) message string to be sent by the socket in
+            non-blocking mode with a specified timeout.
+            </summary>
+            <param name="socket">A <see cref="T:ZeroMQ.ZmqSocket"/> object.</param>
+            <param name="message">A <see cref="T:System.String"/> that contains the message to be sent.</param>
+            <param name="encoding">The <see cref="T:System.Text.Encoding"/> to use when converting <paramref name="message"/> to a buffer.</param>
+            <param name="timeout">A <see cref="T:System.TimeSpan"/> specifying the send timeout.</param>
+            <returns>A <see cref="T:ZeroMQ.SendStatus"/> describing the outcome of the send operation.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="message"/> or <paramref name="encoding"/> is null.</exception>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred sending data to a remote endpoint.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <exception cref="T:System.NotSupportedException">The current socket type does not support Send operations.</exception>
+        </member>
+        <member name="M:ZeroMQ.SendReceiveExtensions.SendMore(ZeroMQ.ZmqSocket,System.Byte[])">
+            <summary>
+            Queue a non-final message-part buffer to be sent by the socket in blocking mode.
+            </summary>
+            <remarks>
+            This method assumes that the message fills the entire buffer. The final message-part in
+            this series must be sent with <see cref="M:ZeroMQ.SendReceiveExtensions.Send(ZeroMQ.ZmqSocket,System.Byte[])"/> or another overload
+            that does not specify <see cref="F:ZeroMQ.SocketFlags.SendMore"/>.
+            </remarks>
+            <param name="socket">A <see cref="T:ZeroMQ.ZmqSocket"/> object.</param>
+            <param name="buffer">A <see cref="T:System.Byte"/> array that contains the message to be sent.</param>
+            <returns>A <see cref="T:ZeroMQ.SendStatus"/> describing the outcome of the send operation.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="buffer"/> is null.</exception>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred sending data to a remote endpoint.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <exception cref="T:System.NotSupportedException">The current socket type does not support Send operations.</exception>
+        </member>
+        <member name="M:ZeroMQ.SendReceiveExtensions.SendMore(ZeroMQ.ZmqSocket,System.Byte[],System.TimeSpan)">
+            <summary>
+            Queue a non-final message-part buffer to be sent by the socket in non-blocking mode with a specified timeout.
+            </summary>
+            <remarks>
+            This method assumes that the message fills the entire buffer. The final message-part in
+            this series must be sent with <see cref="M:ZeroMQ.SendReceiveExtensions.Send(ZeroMQ.ZmqSocket,System.Byte[],System.TimeSpan)"/> or another overload
+            that does not specify <see cref="F:ZeroMQ.SocketFlags.SendMore"/>.
+            </remarks>
+            <param name="socket">A <see cref="T:ZeroMQ.ZmqSocket"/> object.</param>
+            <param name="buffer">A <see cref="T:System.Byte"/> array that contains the message to be sent.</param>
+            <param name="timeout">A <see cref="T:System.TimeSpan"/> specifying the send timeout.</param>
+            <returns>A <see cref="T:ZeroMQ.SendStatus"/> describing the outcome of the send operation.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="buffer"/> is null.</exception>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred sending data to a remote endpoint.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <exception cref="T:System.NotSupportedException">The current socket type does not support Send operations.</exception>
+        </member>
+        <member name="M:ZeroMQ.SendReceiveExtensions.SendMore(ZeroMQ.ZmqSocket,System.String,System.Text.Encoding)">
+            <summary>
+            Queue a non-final message-part string to be sent by the socket in blocking mode.
+            </summary>
+            <param name="socket">A <see cref="T:ZeroMQ.ZmqSocket"/> object.</param>
+            <param name="message">A <see cref="T:System.String"/> that contains the message to be sent.</param>
+            <param name="encoding">The <see cref="T:System.Text.Encoding"/> to use when converting <paramref name="message"/> to a buffer.</param>
+            <returns>A <see cref="T:ZeroMQ.SendStatus"/> describing the outcome of the send operation.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="message"/> or <paramref name="encoding"/> is null.</exception>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred sending data to a remote endpoint.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <exception cref="T:System.NotSupportedException">The current socket type does not support Send operations.</exception>
+        </member>
+        <member name="M:ZeroMQ.SendReceiveExtensions.SendMore(ZeroMQ.ZmqSocket,System.String,System.Text.Encoding,System.TimeSpan)">
+            <summary>
+            Queue a non-final message-part string to be sent by the socket in non-blocking mode with a specified timeout.
+            </summary>
+            <param name="socket">A <see cref="T:ZeroMQ.ZmqSocket"/> object.</param>
+            <param name="message">A <see cref="T:System.String"/> that contains the message to be sent.</param>
+            <param name="encoding">The <see cref="T:System.Text.Encoding"/> to use when converting <paramref name="message"/> to a buffer.</param>
+            <param name="timeout">A <see cref="T:System.TimeSpan"/> specifying the send timeout.</param>
+            <returns>A <see cref="T:ZeroMQ.SendStatus"/> describing the outcome of the send operation.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="message"/> or <paramref name="encoding"/> is null.</exception>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred sending data to a remote endpoint.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <exception cref="T:System.NotSupportedException">The current socket type does not support Send operations.</exception>
+        </member>
+        <member name="M:ZeroMQ.SendReceiveExtensions.Receive(ZeroMQ.ZmqSocket,System.Text.Encoding)">
+            <summary>
+            Receive a string message from a remote socket in blocking mode.
+            </summary>
+            <param name="socket">A <see cref="T:ZeroMQ.ZmqSocket"/> object.</param>
+            <param name="encoding">The <see cref="T:System.Text.Encoding"/> to use when converting the received buffer to a string.</param>
+            <returns>A <see cref="T:System.String"/> containing the message received from the remote endpoint.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="encoding"/> is null.</exception>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred receiving data from a remote endpoint.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <exception cref="T:System.NotSupportedException">The current socket type does not support Receive operations.</exception>
+        </member>
+        <member name="M:ZeroMQ.SendReceiveExtensions.Receive(ZeroMQ.ZmqSocket,System.Text.Encoding,System.TimeSpan)">
+            <summary>
+            Receive a string message from a remote socket in non-blocking mode with a specified timeout.
+            </summary>
+            <param name="socket">A <see cref="T:ZeroMQ.ZmqSocket"/> object.</param>
+            <param name="encoding">The <see cref="T:System.Text.Encoding"/> to use when converting the received buffer to a string.</param>
+            <param name="timeout">A <see cref="T:System.TimeSpan"/> specifying the receive timeout.</param>
+            <returns>
+            A <see cref="T:System.String"/> containing the message received from the remote endpoint or <c>null</c>
+            if the timeout expired before a message was received.
+            </returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="encoding"/> is null.</exception>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred receiving data from a remote endpoint.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <exception cref="T:System.NotSupportedException">The current socket type does not support Receive operations.</exception>
+        </member>
+        <member name="M:ZeroMQ.SendReceiveExtensions.ReceiveFrame(ZeroMQ.ZmqSocket)">
+            <summary>
+            Receive a single frame from a remote socket in blocking mode.
+            </summary>
+            <remarks>
+            This overload will allocate a new <see cref="T:ZeroMQ.Frame"/> for receiving all available data in the message-part.
+            </remarks>
+            <param name="socket">A <see cref="T:ZeroMQ.ZmqSocket"/> object.</param>
+            <returns>A <see cref="T:ZeroMQ.Frame"/> containing the data received from the remote endpoint.</returns>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred receiving data from a remote endpoint.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <exception cref="T:System.NotSupportedException">The current socket type does not support Receive operations.</exception>
+        </member>
+        <member name="M:ZeroMQ.SendReceiveExtensions.ReceiveFrame(ZeroMQ.ZmqSocket,System.TimeSpan)">
+            <summary>
+            Receive a single frame from a remote socket in non-blocking mode with a specified timeout.
+            </summary>
+            <remarks>
+            This overload will allocate a new <see cref="T:ZeroMQ.Frame"/> for receiving all available data in the message-part.
+            </remarks>
+            <param name="socket">A <see cref="T:ZeroMQ.ZmqSocket"/> object.</param>
+            <param name="timeout">A <see cref="T:System.TimeSpan"/> specifying the receive timeout.</param>
+            <returns>A <see cref="T:ZeroMQ.Frame"/> containing the data received from the remote endpoint.</returns>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred receiving data from a remote endpoint.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <exception cref="T:System.NotSupportedException">The current socket type does not support Receive operations.</exception>
+        </member>
+        <member name="M:ZeroMQ.SendReceiveExtensions.ReceiveFrame(ZeroMQ.ZmqSocket,ZeroMQ.Frame)">
+            <summary>
+            Receive a single frame from a remote socket in blocking mode.
+            </summary>
+            <remarks>
+            This overload will receive all available data in the message-part. If the buffer size of <paramref name="frame"/>
+            is insufficient, a new buffer will be allocated.
+            </remarks>
+            <param name="socket">A <see cref="T:ZeroMQ.ZmqSocket"/> object.</param>
+            <param name="frame">A <see cref="T:ZeroMQ.Frame"/> that will store the received data.</param>
+            <returns>A <see cref="T:ZeroMQ.Frame"/> containing the data received from the remote endpoint.</returns>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred receiving data from a remote endpoint.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <exception cref="T:System.NotSupportedException">The current socket type does not support Receive operations.</exception>
+        </member>
+        <member name="M:ZeroMQ.SendReceiveExtensions.ReceiveFrame(ZeroMQ.ZmqSocket,ZeroMQ.Frame,System.TimeSpan)">
+            <summary>
+            Receive a single frame from a remote socket in non-blocking mode with a specified timeout.
+            </summary>
+            <remarks>
+            This overload will receive all available data in the message-part. If the buffer size of <paramref name="frame"/>
+            is insufficient, a new buffer will be allocated.
+            </remarks>
+            <param name="socket">A <see cref="T:ZeroMQ.ZmqSocket"/> object.</param>
+            <param name="frame">A <see cref="T:ZeroMQ.Frame"/> that will store the received data.</param>
+            <param name="timeout">A <see cref="T:System.TimeSpan"/> specifying the receive timeout.</param>
+            <returns>A <see cref="T:ZeroMQ.Frame"/> containing the data received from the remote endpoint.</returns>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred receiving data from a remote endpoint.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <exception cref="T:System.NotSupportedException">The current socket type does not support Receive operations.</exception>
+        </member>
+        <member name="M:ZeroMQ.SendReceiveExtensions.SendFrame(ZeroMQ.ZmqSocket,ZeroMQ.Frame)">
+            <summary>
+            Queue a message frame to be sent by the socket in blocking mode.
+            </summary>
+            <remarks>
+            The <see cref="P:ZeroMQ.Frame.HasMore"/> property on <paramref name="frame"/> will be used to indicate whether
+            more frames will follow in the current multi-part message sequence.
+            </remarks>
+            <param name="socket">A <see cref="T:ZeroMQ.ZmqSocket"/> object.</param>
+            <param name="frame">A <see cref="T:ZeroMQ.Frame"/> that contains the message to be sent.</param>
+            <returns>A <see cref="T:ZeroMQ.SendStatus"/> describing the outcome of the send operation.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="frame"/> is null.</exception>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred sending data to a remote endpoint.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <exception cref="T:System.NotSupportedException">The current socket type does not support Send operations.</exception>
+        </member>
+        <member name="M:ZeroMQ.SendReceiveExtensions.SendFrame(ZeroMQ.ZmqSocket,ZeroMQ.Frame,System.TimeSpan)">
+            <summary>
+            Queue a message frame to be sent by the socket in non-blocking mode with a specified timeout.
+            </summary>
+            <remarks>
+            The <see cref="P:ZeroMQ.Frame.HasMore"/> property on <paramref name="frame"/> will be used to indicate whether
+            more frames will follow in the current multi-part message sequence.
+            </remarks>
+            <param name="socket">A <see cref="T:ZeroMQ.ZmqSocket"/> object.</param>
+            <param name="frame">A <see cref="T:ZeroMQ.Frame"/> that contains the message to be sent.</param>
+            <param name="timeout">A <see cref="T:System.TimeSpan"/> specifying the send timeout.</param>
+            <returns>A <see cref="T:ZeroMQ.SendStatus"/> describing the outcome of the send operation.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="frame"/> is null.</exception>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred sending data to a remote endpoint.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <exception cref="T:System.NotSupportedException">The current socket type does not support Send operations.</exception>
+        </member>
+        <member name="M:ZeroMQ.SendReceiveExtensions.ReceiveMessage(ZeroMQ.ZmqSocket)">
+            <summary>
+            Receive all parts of a multi-part message from a remote socket in blocking mode.
+            </summary>
+            <param name="socket">A <see cref="T:ZeroMQ.ZmqSocket"/> object.</param>
+            <returns>A <see cref="T:ZeroMQ.ZmqMessage"/> containing a collection of <see cref="T:ZeroMQ.Frame"/>s received from the remote endpoint.</returns>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred receiving data from a remote endpoint.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <exception cref="T:System.NotSupportedException">The current socket type does not support Receive operations.</exception>
+        </member>
+        <member name="M:ZeroMQ.SendReceiveExtensions.ReceiveMessage(ZeroMQ.ZmqSocket,ZeroMQ.ZmqMessage)">
+            <summary>
+            Receive all parts of a multi-part message from a remote socket in blocking mode
+            and append them to a given message.
+            </summary>
+            <param name="socket">A <see cref="T:ZeroMQ.ZmqSocket"/> object.</param>
+            <param name="message">The <see cref="T:ZeroMQ.ZmqMessage"/> to which message-parts will be appended.</param>
+            <returns>The supplied <see cref="T:ZeroMQ.ZmqMessage"/> with newly received <see cref="T:ZeroMQ.Frame"/> objects appended.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="message"/> is null.</exception>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred receiving data from a remote endpoint.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <exception cref="T:System.NotSupportedException">The current socket type does not support Receive operations.</exception>
+        </member>
+        <member name="M:ZeroMQ.SendReceiveExtensions.ReceiveMessage(ZeroMQ.ZmqSocket,System.TimeSpan)">
+            <summary>
+            Receive all parts of a multi-part message from a remote socket in non-blocking mode.
+            </summary>
+            <remarks>
+            The <paramref name="frameTimeout"/> will be used for each underlying Receive operation. If the timeout
+            elapses before the last message is received, an incomplete message will be returned. Use the
+            <see cref="M:ZeroMQ.SendReceiveExtensions.ReceiveMessage(ZeroMQ.ZmqSocket,ZeroMQ.ZmqMessage,System.TimeSpan)"/> overload to continue
+            appending message-parts if the returned <see cref="T:ZeroMQ.ZmqMessage"/> has its <see cref="P:ZeroMQ.ZmqMessage.IsComplete"/>
+            property set to false.
+            </remarks>
+            <param name="socket">A <see cref="T:ZeroMQ.ZmqSocket"/> object.</param>
+            <param name="frameTimeout">A <see cref="T:System.TimeSpan"/> specifying the receive timeout for each frame.</param>
+            <returns>A <see cref="T:ZeroMQ.ZmqMessage"/> containing newly received <see cref="T:ZeroMQ.Frame"/> objects.</returns>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred receiving data from a remote endpoint.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <exception cref="T:System.NotSupportedException">The current socket type does not support Receive operations.</exception>
+        </member>
+        <member name="M:ZeroMQ.SendReceiveExtensions.ReceiveMessage(ZeroMQ.ZmqSocket,ZeroMQ.ZmqMessage,System.TimeSpan)">
+            <summary>
+            Receive all parts of a multi-part message from a remote socket in non-blocking mode.
+            </summary>
+            <remarks>
+            The <paramref name="frameTimeout"/> will be used for each underlying Receive operation. If the timeout
+            elapses before the last message is received, an incomplete message will be returned.
+            </remarks>
+            <param name="socket">A <see cref="T:ZeroMQ.ZmqSocket"/> object.</param>
+            <param name="message">The <see cref="T:ZeroMQ.ZmqMessage"/> to which message-parts will be appended.</param>
+            <param name="frameTimeout">A <see cref="T:System.TimeSpan"/> specifying the receive timeout for each frame.</param>
+            <returns>A <see cref="T:ZeroMQ.ZmqMessage"/> containing newly received <see cref="T:ZeroMQ.Frame"/> objects.</returns>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred receiving data from a remote endpoint.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <exception cref="T:System.NotSupportedException">The current socket type does not support Receive operations.</exception>
+        </member>
+        <member name="M:ZeroMQ.SendReceiveExtensions.SendMessage(ZeroMQ.ZmqSocket,ZeroMQ.ZmqMessage)">
+            <summary>
+            Queue a multi-part message to be sent by the socket in blocking mode.
+            </summary>
+            <param name="socket">A <see cref="T:ZeroMQ.ZmqSocket"/> object.</param>
+            <param name="message">A <see cref="T:ZeroMQ.ZmqMessage"/> that contains the message parts to be sent.</param>
+            <returns>A <see cref="T:ZeroMQ.SendStatus"/> describing the outcome of the send operation.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="message"/> is null.</exception>
+            <exception cref="T:System.ArgumentException"><paramref name="message"/> is incomplete.</exception>
+            <exception cref="T:ZeroMQ.ZmqSocketException">An error occurred sending data to a remote endpoint.</exception>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqSocket"/> has been closed.</exception>
+            <exception cref="T:System.NotSupportedException">The current socket type does not support Send operations.</exception>
+        </member>
+        <member name="T:ZeroMQ.SendStatus">
+            <summary>
+            Specifies possible results for socket send operations.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.SendStatus.None">
+            <summary>
+            No send operation was performed.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.SendStatus.Sent">
+            <summary>
+            The message was queued to be sent by the socket.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.SendStatus.Incomplete">
+            <summary>
+            The send operation completed but only part of the requested message was sent.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.SendStatus.TryAgain">
+            <summary>
+            Non-blocking mode was requested and the message cannot be sent at the moment.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.SendStatus.Interrupted">
+            <summary>
+            The send operation was interrupted, likely by terminating the containing context.
+            </summary>
+        </member>
+        <member name="T:ZeroMQ.SocketEventArgs">
+            <summary>
+            Provides data for <see cref="E:ZeroMQ.ZmqSocket.ReceiveReady"/> and <see cref="E:ZeroMQ.ZmqSocket.SendReady"/> events.
+            </summary>
+        </member>
+        <member name="P:ZeroMQ.SocketEventArgs.Socket">
+            <summary>
+            Gets the socket that may be used to receive or send at least one message without blocking.
+            </summary>
+        </member>
+        <member name="P:ZeroMQ.SocketEventArgs.ReceiveReady">
+            <summary>
+            Gets a value indicating whether at least one message may be received by the socket without blocking.
+            </summary>
+        </member>
+        <member name="P:ZeroMQ.SocketEventArgs.SendReady">
+            <summary>
+            Gets a value indicating whether at least one message may be sent by the socket without blocking.
+            </summary>
+        </member>
+        <member name="T:ZeroMQ.SocketFlags">
+            <summary>
+            Flags used by socket Send and Receive operations.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.SocketFlags.None">
+            <summary>
+            No socket flags are specified.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.SocketFlags.DontWait">
+            <summary>
+            The operation should be performed in non-blocking mode.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.SocketFlags.SendMore">
+            <summary>
+            The message being sent is a multi-part message, and that further message parts are to follow.
+            </summary>
+        </member>
+        <member name="T:ZeroMQ.SocketType">
+            <summary>
+            Specifies possible socket types defined by ZMQ messaging patterns.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.SocketType.PAIR">
+            <summary>
+            Can only be connected to a single peer at any one time.
+            Part of the Exclusive Pair pattern.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.SocketType.PUB">
+            <summary>
+            Used by a publisher to distribute messages in a fan out fashion to all connected peers.
+            Part of the Publish-Subscribe pattern.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.SocketType.SUB">
+            <summary>
+            Used by a subscriber to subscribe to data distributed by a publisher.
+            Part of the Publish-Subscribe pattern.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.SocketType.REQ">
+            <summary>
+            Used by a client to send requests to and receive replies from a service.
+            Part of the Request-Reply pattern.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.SocketType.REP">
+            <summary>
+            Used by a service to receive requests from and send replies to a client.
+            Part of the Request-Reply pattern.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.SocketType.DEALER">
+            <summary>
+            Used for extending request/reply sockets. Each message sent is round-robined
+            among all connected peers, and each message received is fair-queued from all connected peers.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.SocketType.ROUTER">
+            <summary>
+            Used for extending request/reply sockets. Messages received are fair-queued
+            from among all connected peers.
+            </summary>
+            <remarks>
+            When receiving messages a <see cref="F:ZeroMQ.SocketType.ROUTER"/> socket shall prepend a message
+            part containing the identity of the originating peer to the message before
+            passing it to the application. When sending messages a ZMQ_ROUTER socket shall remove
+            the first part of the message and use it to determine the identity of the peer the message
+            shall be routed to. If the peer does not exist anymore the message shall be silently discarded.
+            </remarks>
+        </member>
+        <member name="F:ZeroMQ.SocketType.PULL">
+            <summary>
+            Used by a pipeline node to receive messages from upstream pipeline nodes.
+            Part of the Pipeline pattern.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.SocketType.PUSH">
+            <summary>
+            Used by a pipeline node to send messages to downstream pipeline nodes.
+            Part of the Pipeline pattern.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.SocketType.XPUB">
+            <summary>
+            Same as <see cref="F:ZeroMQ.SocketType.PUB"/> except subscriptions can be received from peers as incoming messages.
+            Part of the Publish-Subscribe pattern.
+            </summary>
+            <remarks>
+            Subscription message is a byte '1' (for subscriptions) or byte '0' (for unsubscriptions) followed by the subscription body.
+            </remarks>
+        </member>
+        <member name="F:ZeroMQ.SocketType.XSUB">
+            <summary>
+            Same as <see cref="F:ZeroMQ.SocketType.SUB"/> except subscription messages can be sent to the publisher.
+            Part of the Publish-Subscribe pattern.
+            </summary>
+            <remarks>
+            Subscription message is a byte '1' (for subscriptions) or byte '0' (for unsubscriptions) followed by the subscription body.
+            </remarks>
+        </member>
+        <member name="F:ZeroMQ.SocketType.XREP">
+            <summary>
+            Alias for <see cref="F:ZeroMQ.SocketType.ROUTER"/>.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.SocketType.XREQ">
+            <summary>
+            Alias for <see cref="F:ZeroMQ.SocketType.DEALER"/>.
+            </summary>
+        </member>
+        <member name="T:ZeroMQ.TcpKeepaliveBehaviour">
+            <summary>
+            Keep-alive packets behavior for a <see cref="T:ZeroMQ.ZmqSocket"/> connection.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.TcpKeepaliveBehaviour.Default">
+            <summary>
+            Use Operating System default behavior.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.TcpKeepaliveBehaviour.Disable">
+            <summary>
+            Disable keep-alive packets.
+            </summary>
+        </member>
+        <member name="F:ZeroMQ.TcpKeepaliveBehaviour.Enable">
+            <summary>
+            Enable keep-alive packets.
+            </summary>
+        </member>
+        <member name="T:ZeroMQ.ZmqContext">
+            <summary>
+            Creates <see cref="T:ZeroMQ.ZmqSocket"/> instances within a process boundary.
+            </summary>
+            <remarks>
+            The <see cref="T:ZeroMQ.ZmqContext"/> object is a container for all sockets in a single process,
+            and acts as the transport for inproc sockets. <see cref="T:ZeroMQ.ZmqContext"/> is thread safe.
+            A <see cref="T:ZeroMQ.ZmqContext"/> must not be terminated until all spawned sockets have been
+            successfully closed.
+            </remarks>
+        </member>
+        <member name="M:ZeroMQ.ZmqContext.Finalize">
+            <summary>
+            Finalizes an instance of the <see cref="T:ZeroMQ.ZmqContext"/> class.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.ZmqContext.Create">
+            <summary>
+            Create a <see cref="T:ZeroMQ.ZmqContext"/> instance.
+            </summary>
+            <returns>A <see cref="T:ZeroMQ.ZmqContext"/> instance with the default thread pool size (1).</returns>
+        </member>
+        <member name="M:ZeroMQ.ZmqContext.CreateSocket(ZeroMQ.SocketType)">
+            <summary>
+            Create a socket with the current context and the specified socket type.
+            </summary>
+            <param name="socketType">A <see cref="T:ZeroMQ.SocketType"/> value for the socket.</param>
+            <returns>A <see cref="T:ZeroMQ.ZmqSocket"/> instance with the current context and the specified socket type.</returns>
+        </member>
+        <member name="M:ZeroMQ.ZmqContext.Terminate">
+            <summary>
+            Terminate the ZeroMQ context.
+            </summary>
+            <remarks>
+            Context termination is performed in the following steps:
+            <ul>
+              <li>
+                Any blocking operations currently in progress on sockets open within context shall return immediately
+                with an error code of ETERM. With the exception of <see cref="M:ZeroMQ.ZmqSocket.Close"/>, any further operations
+                on sockets open within the context shall fail with a <see cref="T:ZeroMQ.ZmqSocketException"/>.
+              </li>
+              <li>
+                After interrupting all blocking calls, <see cref="M:ZeroMQ.ZmqContext.Terminate"/> shall block until the following conditions
+                are met:
+                <ul>
+                  <li>
+                    All sockets open within the context have been closed with <see cref="M:ZeroMQ.ZmqSocket.Close"/>.
+                  </li>
+                  <li>
+                    For each socket within the context, all messages sent by the application  have either been
+                    physically transferred to a network peer, or the socket's linger period set with the
+                    <see cref="P:ZeroMQ.ZmqSocket.Linger"/> socket option has expired.
+                  </li>
+                </ul>
+              </li>
+            </ul>
+            </remarks>
+            <exception cref="T:System.ObjectDisposedException">The <see cref="T:ZeroMQ.ZmqContext"/> has already been disposed.</exception>
+            <exception cref="T:ZeroMQ.ZmqException">An error occurred creating the socket.</exception>
+        </member>
+        <member name="M:ZeroMQ.ZmqContext.CreateMonitor">
+            <summary>
+            Create a socket monitoring object.
+            </summary>
+            <remarks>
+            Only a single instance per context is allowed.
+            Use <see cref="M:ZeroMQ.Monitoring.ZmqMonitor.Unregister"/> to unregister the monitoring object or dispose it.
+            </remarks>
+            <returns>A <see cref="T:ZeroMQ.ZmqSocket"/> instance with the monitoring object for the current context.</returns>
+            <exception cref="T:ZeroMQ.ZmqException">An error occurred while creating the monitor object.</exception>
+            <exception cref="T:System.InvalidOperationException">The <see cref="T:ZeroMQ.Monitoring.ZmqMonitor"/> has already been created for the current context.</exception>
+        </member>
+        <member name="M:ZeroMQ.ZmqContext.Dispose">
+            <summary>
+            Releases all resources used by the current instance of the <see cref="T:ZeroMQ.ZmqContext"/> class.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.ZmqContext.Dispose(System.Boolean)">
+            <summary>
+            Releases the unmanaged resources used by the <see cref="T:ZeroMQ.ZmqContext"/>, and optionally disposes of the managed resources.
+            </summary>
+            <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
+        </member>
+        <member name="P:ZeroMQ.ZmqContext.DefaultEncoding">
+            <summary>
+            Gets or sets the default encoding for all sockets in the current process.
+            </summary>
+        </member>
+        <member name="P:ZeroMQ.ZmqContext.ContextHandle">
+            <summary>
+            Gets a handle to the native 0MQ context.
+            </summary>
+            <remarks>
+            May be used to share a single ZmqContext with native libraries that use the
+            0MQ API directly. Allows the inproc transport to be used if a single process
+            has a heterogeneous codebase.
+            </remarks>
+        </member>
+        <member name="P:ZeroMQ.ZmqContext.ThreadPoolSize">
+            <summary>
+            Gets or sets the size of the thread pool for the current context (default = 1).
+            </summary>
+        </member>
+        <member name="P:ZeroMQ.ZmqContext.MaxSockets">
+            <summary>
+            Gets or sets the maximum number of sockets for the current context (default = 1024).
+            </summary>
+        </member>
+        <member name="T:ZeroMQ.ZmqMessage">
+            <summary>
+            A single or multi-part message sent or received via a <see cref="T:ZeroMQ.ZmqSocket"/>.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.ZmqMessage.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.ZmqMessage"/> class.
+            Creates an empty message.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.ZmqMessage.#ctor(System.Collections.Generic.IEnumerable{ZeroMQ.Frame})">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.ZmqMessage"/> class.
+            Creates a message that contains the given <see cref="T:ZeroMQ.Frame"/> objects.
+            </summary>
+            <param name="frames">A collection of <see cref="T:ZeroMQ.Frame"/> objects to be stored by this <see cref="T:ZeroMQ.ZmqMessage"/>.</param>
+            <exception cref="T:System.ArgumentNullException"><paramref name="frames"/> is null.</exception>
+        </member>
+        <member name="M:ZeroMQ.ZmqMessage.#ctor(System.Collections.Generic.IEnumerable{System.Byte[]})">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.ZmqMessage"/> class.
+            Creates a message that contains the given <see cref="T:System.Byte"/> arrays converted to <see cref="T:ZeroMQ.Frame"/>s.
+            </summary>
+            <param name="buffers">A collection of <see cref="T:System.Byte"/> arrays to be stored by this <see cref="T:ZeroMQ.ZmqMessage"/>.</param>
+            <exception cref="T:System.ArgumentNullException"><paramref name="buffers"/> is null.</exception>
+        </member>
+        <member name="M:ZeroMQ.ZmqMessage.Append(ZeroMQ.Frame)">
+            <summary>
+            Adds the given <see cref="T:ZeroMQ.Frame"/> to the end of the current <see cref="T:ZeroMQ.ZmqMessage"/>.
+            </summary>
+            <remarks>
+            Updates the <see cref="P:ZeroMQ.Frame.HasMore"/> property of the preceding frames accordingly.
+            </remarks>
+            <param name="frame">A <see cref="T:ZeroMQ.Frame"/> object to append to this <see cref="T:ZeroMQ.ZmqMessage"/>.</param>
+            <exception cref="T:System.ArgumentNullException"><paramref name="frame"/> is null.</exception>
+        </member>
+        <member name="M:ZeroMQ.ZmqMessage.Append(System.Byte[])">
+            <summary>
+            Adds the given <see cref="T:System.Byte"/> array to the end of the current <see cref="T:ZeroMQ.ZmqMessage"/>
+            as a <see cref="T:ZeroMQ.Frame"/>.
+            </summary>
+            <remarks>
+            Updates the <see cref="P:ZeroMQ.Frame.HasMore"/> property of the preceding frames accordingly.
+            </remarks>
+            <param name="buffer">A <see cref="T:System.Byte"/> array to append to this <see cref="T:ZeroMQ.ZmqMessage"/>.</param>
+            <exception cref="T:System.ArgumentNullException"><paramref name="buffer"/> is null.</exception>
+        </member>
+        <member name="M:ZeroMQ.ZmqMessage.AppendEmptyFrame">
+            <summary>
+            Adds an empty <see cref="T:ZeroMQ.Frame"/> to the end of the current <see cref="T:ZeroMQ.ZmqMessage"/>.
+            </summary>
+            <remarks>
+            Updates the <see cref="P:ZeroMQ.Frame.HasMore"/> property of the preceding frames accordingly.
+            </remarks>
+        </member>
+        <member name="M:ZeroMQ.ZmqMessage.Push(ZeroMQ.Frame)">
+            <summary>
+            Inserts <paramref name="frame"/> at the front of the message.
+            </summary>
+            <param name="frame">A <see cref="T:ZeroMQ.Frame"/> to insert.</param>
+        </member>
+        <member name="M:ZeroMQ.ZmqMessage.Push(System.Byte[])">
+            <summary>
+            Inserts a new <see cref="T:ZeroMQ.Frame"/> containing <paramref name="buffer"/>
+            at the front of the message.
+            </summary>
+            <param name="buffer">A <see cref="T:System.Byte"/> array containing the frame data to push.</param>
+        </member>
+        <member name="M:ZeroMQ.ZmqMessage.PushEmptyFrame">
+            <summary>
+            Inserts an empty <see cref="T:ZeroMQ.Frame"/> at the front of the message.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.ZmqMessage.Wrap(ZeroMQ.Frame)">
+            <summary>
+            Pushes <paramref name="frame"/> plus an empty frame to the front
+            of the message.
+            </summary>
+            <param name="frame">A <see cref="T:ZeroMQ.Frame"/> to push to the front of the message.</param>
+        </member>
+        <member name="M:ZeroMQ.ZmqMessage.Unwrap">
+            <summary>
+            Pops a <see cref="T:ZeroMQ.Frame"/> off the front of the message.
+            If the next frame is empty, that empty frame is removed.
+            </summary>
+            <returns>The first <see cref="T:ZeroMQ.Frame"/> in the message or <c>null</c> if the message is empty.</returns>
+        </member>
+        <member name="M:ZeroMQ.ZmqMessage.GetEnumerator">
+            <summary>
+            Returns an enumerator that iterates through the <see cref="T:ZeroMQ.Frame"/> objects
+            contained by this <see cref="T:ZeroMQ.ZmqMessage"/>.
+            </summary>
+            <returns>An <see cref="T:System.Collections.Generic.IEnumerator`1"/> for the current <see cref="T:ZeroMQ.ZmqMessage"/>.</returns>
+        </member>
+        <member name="P:ZeroMQ.ZmqMessage.First">
+            <summary>
+            Gets the first frame in the current message.
+            </summary>
+        </member>
+        <member name="P:ZeroMQ.ZmqMessage.Last">
+            <summary>
+            Gets the last frame in the current message.
+            </summary>
+        </member>
+        <member name="P:ZeroMQ.ZmqMessage.IsComplete">
+            <summary>
+            Gets a value indicating whether the current message is complete
+            (i.e. no more message parts follow the last part of this message).
+            </summary>
+        </member>
+        <member name="P:ZeroMQ.ZmqMessage.IsEmpty">
+            <summary>
+            Gets a value indicating whether the current message is empty.
+            </summary>
+        </member>
+        <member name="P:ZeroMQ.ZmqMessage.FrameCount">
+            <summary>
+            Gets the number of <see cref="T:ZeroMQ.Frame"/> objects contained by this message.
+            </summary>
+        </member>
+        <member name="P:ZeroMQ.ZmqMessage.TotalSize">
+            <summary>
+            Gets the total number of bytes in this message.
+            </summary>
+        </member>
+        <member name="P:ZeroMQ.ZmqMessage.Item(System.Int32)">
+            <summary>
+            Gets the <see cref="T:ZeroMQ.Frame"/> at the specified index.
+            </summary>
+            <param name="index">The zero-based index of the <see cref="T:ZeroMQ.Frame"/> to get.</param>
+            <returns>The <see cref="T:ZeroMQ.Frame"/> at the specified index.</returns>
+            <exception cref="T:System.ArgumentOutOfRangeException">
+            <paramref name="index"/>is less than 0 -or- <paramref name="index"/> is equal to or greater than <see cref="P:ZeroMQ.ZmqMessage.FrameCount"/>.
+            </exception>
+        </member>
+        <member name="T:ZeroMQ.ZmqSocketException">
+            <summary>
+            The exception that is thrown when a ZeroMQ socket error occurs.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.ZmqSocketException.#ctor(System.Int32)">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.ZmqSocketException"/> class.
+            </summary>
+            <param name="errorCode">The error code returned by the ZeroMQ library call.</param>
+        </member>
+        <member name="M:ZeroMQ.ZmqSocketException.#ctor(System.Int32,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.ZmqSocketException"/> class.
+            </summary>
+            <param name="errorCode">The error code returned by the ZeroMQ library call.</param>
+            <param name="message">The message that describes the error</param>
+        </member>
+        <member name="M:ZeroMQ.ZmqSocketException.#ctor(System.Int32,System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.ZmqSocketException"/> class.
+            </summary>
+            <param name="errorCode">The error code returned by the ZeroMQ library call.</param>
+            <param name="message">The message that describes the error</param>
+            <param name="inner">The exception that is the cause of the current exception, or a null reference if no inner exception is specified.</param>
+        </member>
+        <member name="M:ZeroMQ.ZmqSocketException.#ctor(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.ZmqSocketException"/> class.
+            </summary>
+            <param name="info"><see cref="T:System.Runtime.Serialization.SerializationInfo"/> that holds the serialized object data about the exception being thrown.</param>
+            <param name="context"><see cref="T:System.Runtime.Serialization.StreamingContext"/> that contains contextual information about the source or destination.</param>
+        </member>
+        <member name="T:ZeroMQ.ZmqVersion">
+            <summary>
+            Provides ZeroMQ version information.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.ZmqVersion.IsAtLeast(System.Int32)">
+            <summary>
+            Determine whether the current version of ZeroMQ meets the specified minimum required version.
+            </summary>
+            <param name="requiredMajor">An <see cref="T:System.Int32"/> containing the minimum required major version.</param>
+            <returns>true if the current ZeroMQ version meets the minimum requirement; false otherwise.</returns>
+        </member>
+        <member name="M:ZeroMQ.ZmqVersion.IsAtLeast(System.Int32,System.Int32)">
+            <summary>
+            Determine whether the current version of ZeroMQ meets the specified minimum required version.
+            </summary>
+            <param name="requiredMajor">An <see cref="T:System.Int32"/> containing the minimum required major version.</param>
+            <param name="requiredMinor">An <see cref="T:System.Int32"/> containing the minimum required minor version.</param>
+            <returns>true if the current ZeroMQ version meets the minimum requirement; false otherwise.</returns>
+        </member>
+        <member name="M:ZeroMQ.ZmqVersion.IsAtMost(System.Int32)">
+            <summary>
+            Determine whether the current version of ZeroMQ meets the specified maximum allowable version.
+            </summary>
+            <param name="requiredMajor">An <see cref="T:System.Int32"/> containing the maximum allowable major version.</param>
+            <returns>true if the current ZeroMQ version meets the maximum allowed; false otherwise.</returns>
+        </member>
+        <member name="M:ZeroMQ.ZmqVersion.IsAtMost(System.Int32,System.Int32)">
+            <summary>
+            Determine whether the current version of ZeroMQ meets the specified maximum allowable version.
+            </summary>
+            <param name="requiredMajor">An <see cref="T:System.Int32"/> containing the maximum allowable major version.</param>
+            <param name="requiredMinor">An <see cref="T:System.Int32"/> containing the maximum allowable minor version.</param>
+            <returns>true if the current ZeroMQ version meets the maximum allowed; false otherwise.</returns>
+        </member>
+        <member name="M:ZeroMQ.ZmqVersion.AssertAtLeast(System.Int32,System.Int32)">
+            <summary>
+            Assert that the current version of ZeroMQ meets the specified minimum required version.
+            </summary>
+            <param name="requiredMajor">An <see cref="T:System.Int32"/> containing the minimum required major version.</param>
+            <param name="requiredMinor">An <see cref="T:System.Int32"/> containing the minimum required minor version.</param>
+            <exception cref="T:ZeroMQ.ZmqVersionException">The ZeroMQ version does not meet the minimum requirements.</exception>
+        </member>
+        <member name="M:ZeroMQ.ZmqVersion.AssertAtMost(System.Int32,System.Int32)">
+            <summary>
+            Assert that the current version of ZeroMQ meets the specified maximum allowed version.
+            </summary>
+            <param name="requiredMajor">An <see cref="T:System.Int32"/> containing the maximum allowable major version.</param>
+            <param name="requiredMinor">An <see cref="T:System.Int32"/> containing the maximum allowable minor version.</param>
+            <exception cref="T:ZeroMQ.ZmqVersionException">The ZeroMQ version does not meet the minimum requirements.</exception>
+        </member>
+        <member name="M:ZeroMQ.ZmqVersion.ToString">
+            <summary>
+            Returns a <see cref="T:System.String"/> that represents the current <see cref="T:ZeroMQ.ZmqVersion"/>.
+            </summary>
+            <returns>A string containing the current ZeroMQ version, formatted as "major.minor.patch".</returns>
+        </member>
+        <member name="P:ZeroMQ.ZmqVersion.Current">
+            <summary>
+            Gets a <see cref="T:ZeroMQ.ZmqVersion"/> value for the current library version.
+            </summary>
+        </member>
+        <member name="P:ZeroMQ.ZmqVersion.Major">
+            <summary>
+            Gets the major version part.
+            </summary>
+        </member>
+        <member name="P:ZeroMQ.ZmqVersion.Minor">
+            <summary>
+            Gets the minor version part.
+            </summary>
+        </member>
+        <member name="P:ZeroMQ.ZmqVersion.Patch">
+            <summary>
+            Gets the patch version part.
+            </summary>
+        </member>
+        <member name="T:ZeroMQ.ZmqVersionException">
+            <summary>
+            The exception that is thrown when the current ZeroMQ version does not meet application requirements.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.ZmqVersionException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.ZmqVersionException"/> class.
+            </summary>
+        </member>
+        <member name="M:ZeroMQ.ZmqVersionException.#ctor(System.Int32,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.ZmqVersionException"/> class.
+            </summary>
+            <param name="major">The current major 0MQ version.</param>
+            <param name="minor">The current minor 0MQ version.</param>
+            <param name="requiredMajor">The required major 0MQ version.</param>
+            <param name="requiredMinor">The required minor 0MQ version.</param>
+        </member>
+        <member name="M:ZeroMQ.ZmqVersionException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.ZmqVersionException"/> class.
+            </summary>
+            <param name="message">The message that describes the error</param>
+        </member>
+        <member name="M:ZeroMQ.ZmqVersionException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.ZmqVersionException"/> class.
+            </summary>
+            <param name="message">The message that describes the error</param>
+            <param name="inner">The exception that is the cause of the current exception, or a null reference (Nothing in Visual Basic) if no inner exception is specified.</param>
+        </member>
+        <member name="M:ZeroMQ.ZmqVersionException.#ctor(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            Initializes a new instance of the <see cref="T:ZeroMQ.ZmqVersionException"/> class.
+            </summary>
+            <param name="info"><see cref="T:System.Runtime.Serialization.SerializationInfo"/> that holds the serialized object data about the exception being thrown.</param>
+            <param name="context"><see cref="T:System.Runtime.Serialization.StreamingContext"/> that contains contextual information about the source or destination.</param>
+        </member>
+    </members>
+</doc>

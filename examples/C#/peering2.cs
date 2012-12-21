@@ -4,7 +4,7 @@
 //
 //  While this example runs in a single process, that is just to make
 //  it easier to start and stop the example. Each thread has its own
-//  context and conceptually acts as a separate process.
+//  ZmqContext and conceptually acts as a separate process.
 //
 //  Note! ipc doesnt work on windows and therefore type peering2 801 802 803
 
@@ -16,11 +16,12 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
-using ZMQ;
+using ZeroMQ;
+using zguide;
 
 namespace ZMQGuide
 {
-    internal class Program
+    internal class Program38
     {
         private const int numberOfClients = 10;
         private const int numberOfWorkers = 3;
@@ -41,10 +42,10 @@ namespace ZMQGuide
             var myself = args[0];
             Console.WriteLine("Hello, I am " + myself);
 
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket cloudfe = context.Socket(SocketType.ROUTER), cloudbe = context.Socket(SocketType.ROUTER),
-                    localfe = context.Socket(SocketType.ROUTER), localbe = context.Socket(SocketType.ROUTER))
+                using (ZmqSocket cloudfe = context.CreateSocket(SocketType.ROUTER), cloudbe = context.CreateSocket(SocketType.ROUTER),
+                    localfe = context.CreateSocket(SocketType.ROUTER), localbe = context.CreateSocket(SocketType.ROUTER))
                 {
                     cloudFeAddress = "tcp://127.0.0.1:" + myself;
                     cloudfe.Identity = Encoding.Unicode.GetBytes(myself);
@@ -88,9 +89,9 @@ namespace ZMQGuide
 
                     var backends = new PollItem[2];
                     backends[0] = localbe.CreatePollItem(IOMultiPlex.POLLIN);
-                    backends[0].PollInHandler += (socket, revents) =>
+                    backends[0].PollInHandler += (ZmqSocket, revents) =>
                                                      {
-                                                         var zmsg = new ZMessage(socket);
+                                                         var zmsg = new ZMessage(ZmqSocket);
 
                                                          //  Use worker address for LRU routing
                                                          workerQueue.Enqueue(zmsg.Unwrap());
@@ -102,9 +103,9 @@ namespace ZMQGuide
                                                      };
 
                     backends[1] = cloudbe.CreatePollItem(IOMultiPlex.POLLIN);
-                    backends[1].PollInHandler += (socket, revents) =>
+                    backends[1].PollInHandler += (ZmqSocket, revents) =>
                     {
-                        var zmsg = new ZMessage(socket);
+                        var zmsg = new ZMessage(ZmqSocket);
                         //  We don't use peer broker address for anything
                         zmsg.Unwrap();
 
@@ -113,13 +114,13 @@ namespace ZMQGuide
 
                     var frontends = new PollItem[2];
                     frontends[0] = cloudfe.CreatePollItem(IOMultiPlex.POLLIN);
-                    frontends[0].PollInHandler += (socket, revents) =>
+                    frontends[0].PollInHandler += (ZmqSocket, revents) =>
                                                     {
                                                         cloudfeReady = true;
                                                     };
 
                     frontends[1] = localfe.CreatePollItem(IOMultiPlex.POLLIN);
-                    frontends[1].PollInHandler += (socket, revents) =>
+                    frontends[1].PollInHandler += (ZmqSocket, revents) =>
                                                      {
                                                          localfeReady = true;
                                                      };
@@ -128,14 +129,14 @@ namespace ZMQGuide
                     while (true)
                     {
                         var timeout = (workerQueue.Count > 0 ? 1000000 : -1);
-                        var rc = Context.Poller(backends, timeout);
+                        var rc = ZmqContext.Poller(backends, timeout);
 
                         if (rc == -1)
                             break; // Interrupted
 
                         while (workerQueue.Count > 0)
                         {
-                            Context.Poller(frontends, 0);
+                            ZmqContext.Poller(frontends, 0);
                             bool reRoutable;
 
                             ZMessage msg;
@@ -176,7 +177,7 @@ namespace ZMQGuide
             }
         }
 
-        private static void SendReply(ZMessage msg, Socket cloudfe, Socket localfe)
+        private static void SendReply(ZMessage msg, ZmqSocket cloudfe, ZmqSocket localfe)
         {
             var address = Encoding.Unicode.GetString(msg.Address);
             //  Route reply to cloud if it's addressed to a broker
@@ -195,9 +196,9 @@ namespace ZMQGuide
 
         private static void WorkerTask()
         {
-            using (var ctx = new Context(1))
+            using (var ctx = ZmqContext.Create())
             {
-                using (var worker = ctx.Socket(SocketType.REQ))
+                using (var worker = ctx.ZmqSocket(SocketType.REQ))
                 {
                     ZHelpers.SetID(worker, Encoding.Unicode);
                     worker.Connect(localBeAddress);
@@ -223,9 +224,9 @@ namespace ZMQGuide
 
         private static void ClientTask()
         {
-            using (var ctx = new Context(1))
+            using (var ctx = ZmqContext.Create())
             {
-                using (var client = ctx.Socket(SocketType.REQ))
+                using (var client = ctx.CreateSocket(SocketType.REQ))
                 {
                     ZHelpers.SetID(client, Encoding.Unicode);
                     client.Connect(localFeAddress);
@@ -233,7 +234,7 @@ namespace ZMQGuide
                     while (true)
                     {
                         client.Send("HELLO", Encoding.Unicode);
-                        string reply = client.Recv(Encoding.Unicode);
+                        string reply = client.Receive(Encoding.Unicode);
 
                         if (string.IsNullOrEmpty(reply))
                         {

@@ -6,9 +6,9 @@
 
 using System.Collections.Generic;
 using System.Text;
-using ZMQ;
+using ZeroMQ;
 
-namespace ZMQ
+namespace ZMQGuide
 {
     public class ZMessage
     {
@@ -19,9 +19,9 @@ namespace ZMQ
         {
         }
 
-        public ZMessage(Socket socket)
+        public ZMessage(ZmqSocket ZmqSocket)
         {
-            Recv(socket);
+            Receive(ZmqSocket);
         }
 
         public ZMessage(string body, Encoding encoding)
@@ -40,9 +40,9 @@ namespace ZMQ
             frames.Add(body);
         }
 
-        public void Recv(Socket socket)
+        public void Receive(ZmqSocket ZmqSocket)
         {
-            Queue<byte[]> receivedFrames = socket.RecvAll();
+            Queue<byte[]> receivedFrames = ZmqSocket.RecvAll();
 
             while (receivedFrames.Count > 0)
             {
@@ -50,14 +50,14 @@ namespace ZMQ
             }
         }
 
-        public void Send(Socket socket)
+        public void Send(ZmqSocket ZmqSocket)
         {
             for (int index = frames.Count - 1; index > 0; index--)
             {
-                socket.SendMore(frames[index]);
+                ZmqSocket.SendMore(frames[index]);
             }
 
-            socket.Send(frames[0]);
+            ZmqSocket.Send(frames[0]);
         }
 
         public string BodyToString()

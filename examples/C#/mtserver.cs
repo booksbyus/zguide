@@ -7,17 +7,17 @@
 
 using System.Text;
 using System.Threading;
-using ZMQ;
+using ZeroMQ;
 
 namespace ZMQGuide
 {
-    internal class Program
+    internal class Program9
     {
         public static void Main(string[] args)
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket clients = context.Socket(SocketType.ROUTER), workers = context.Socket(SocketType.DEALER))
+                using (ZmqSocket clients = context.CreateSocket(SocketType.ROUTER), workers = context.CreateSocket(SocketType.DEALER))
                 {
                     clients.Bind("tcp://*:5555");
                     workers.Bind("inproc://workers"); // FYI, inproc requires that bind is performed before connect
@@ -31,19 +31,19 @@ namespace ZMQGuide
 
                     //  Connect work threads to client threads via a queue
                     //  Devices will be depricated from 3.x
-                    Socket.Device.Queue(clients, workers);
+                    ZeroMQ.Devices.QueueDevice(clients, workers);
                 }
             }
         }
 
         private static void WorkerRoutine(object context)
         {
-            Socket receiver = ((Context)context).Socket(SocketType.REP);
+            ZmqSocket receiver = ((ZmqContext)context).CreateSocket(SocketType.REP);
             receiver.Connect("inproc://workers");
 
             while (true)
             {
-                string message = receiver.Recv(Encoding.Unicode);
+                string message = receiver.Receive(Encoding.Unicode);
 
                 Thread.Sleep(1000); //  Simulate 'work'
                 

@@ -13,15 +13,15 @@ namespace Server
     {
         //
         //  Task ventilator
-        //  Binds PUSH socket to tcp://localhost:5557
-        //  Sends batch of tasks to workers via that socket
+        //  Binds PUSH ZmqSocket to tcp://localhost:5557
+        //  Sends batch of tasks to workers via that ZmqSocket
         //
         static void Main()
         {
-            using (var context = new ZMQ.Context(1))
+            using (var ZmqContext = new ZMQ.ZmqContext(1))
             {
-                //  Socket to send messages on
-                var sender = context.Socket(ZMQ.PUSH);
+                //  ZmqSocket to send messages on
+                var sender = context.CreateSocket(ZMQ.PUSH);
                 sender.Bind("tcp://*:5557");
 
                 Console.WriteLine("Press Enter when the workers are ready: ");

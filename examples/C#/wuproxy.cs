@@ -6,17 +6,17 @@
 //  Email:      michael.compton@littleedge.co.uk, ptomasroos@gmail.com
 
 using System.Text;
-using ZMQ;
+using ZeroMQ;
 
 namespace ZMQGuide
 {
-    internal class Program
+    internal class Program4
     {
         public static void Main(string[] args)
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket frontend = context.Socket(SocketType.SUB), backend = context.Socket(SocketType.PUB))
+                using (ZmqSocket frontend = context.CreateSocket(SocketType.SUB), backend = context.CreateSocket(SocketType.PUB))
                 {
                     //  This is where the weather server sits
                     frontend.Connect("tcp://127.0.0.1:5556");
@@ -31,8 +31,8 @@ namespace ZMQGuide
                         bool hasMore = true;
                         while (hasMore)
                         {
-                            string message = frontend.Recv(Encoding.Unicode);
-                            hasMore = frontend.RcvMore;
+                            string message = frontend.Receive(Encoding.Unicode);
+                            hasMore = frontend.ReceiveMore;
                             backend.Send(message, Encoding.Unicode, hasMore ? SendRecvOpt.SNDMORE : SendRecvOpt.NONE);
                         }
                     }

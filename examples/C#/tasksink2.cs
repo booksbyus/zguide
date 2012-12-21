@@ -9,23 +9,23 @@
 using System;
 using System.Text;
 using System.Diagnostics;
-using ZMQ;
+using ZeroMQ;
 
 namespace ZMQGuide 
 {
-    internal class Program 
+    internal class Program16
     {
         public static void Main(string[] args) 
         {
-            using (var context = new Context(1)) 
+            using (var context = ZmqContext.Create()) 
             {
-                using (Socket receiver = context.Socket(SocketType.PULL), controller = context.Socket(SocketType.PUB)) 
+                using (ZmqSocket receiver = context.CreateSocket(SocketType.PULL), controller = context.CreateSocket(SocketType.PUB)) 
                 {
                     receiver.Bind("tcp://*:5558");
                     controller.Bind("tcp://*:5559");
                     
                     //  Wait for start of batch
-                    receiver.Recv();
+                    receiver.Receive();
 
                     var stopwatch = new Stopwatch();
                     stopwatch.Start();
@@ -33,7 +33,7 @@ namespace ZMQGuide
                     const int tasksToConfirm = 100;
                     for (int taskNumber = 0; taskNumber < tasksToConfirm; taskNumber++)
                     {
-                        string message = receiver.Recv(Encoding.Unicode);
+                        string message = receiver.Receive(Encoding.Unicode);
                         Console.WriteLine(taskNumber % 10 == 0 ? ":" : ".");
                     }
 

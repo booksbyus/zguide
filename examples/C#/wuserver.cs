@@ -1,6 +1,6 @@
 ﻿//
 //  Weather update server
-//  Binds PUB socket to tcp://*:5556
+//  Binds PUB ZmqSocket to tcp://*:5556
 //  Publishes random weather updates
 //
 
@@ -9,17 +9,17 @@
 
 using System;
 using System.Text;
-using ZMQ;
+using ZeroMQ;
 
 namespace ZMQGuide 
 {
-    internal class Program 
+    internal class Program13
     {
         public static void Main(string[] args)
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket publisher = context.Socket(SocketType.PUB))
+                using (ZmqSocket publisher = context.CreateSocket(SocketType.PUB))
                 {
                     publisher.Bind("tcp://*:5556");
 
@@ -34,7 +34,7 @@ namespace ZMQGuide
 
                         string update = zipcode.ToString() + " " + temperature.ToString() + " " + relativeHumidity.ToString();
 
-                        //  Send message to 0..N subscribers via a pub socket
+                        //  Send message to 0..N subscribers via a pub ZmqSocket
                         publisher.Send(update, Encoding.Unicode);
                     }
                 }

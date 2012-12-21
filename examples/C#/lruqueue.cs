@@ -4,7 +4,7 @@
 //
 //  While this example runs in a single process, that is just to make
 //  it easier to start and stop the example. Each thread has its own
-//  context and conceptually acts as a separate process.
+//  ZmqContext and conceptually acts as a separate process.
 //
 
 //  Author:     Michael Compton, Tomas Roos
@@ -13,12 +13,13 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using ZMQ;
+using ZeroMQ;
 using System.Threading;
+using zguide;
 
 namespace ZMQGuide
 {
-    internal class Program
+    internal class Program37
     {
         public static void Main(string[] args)
         {
@@ -28,9 +29,9 @@ namespace ZMQGuide
             var workers = new List<Thread>();
             var clients = new List<Thread>();
 
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket frontend = context.Socket(SocketType.ROUTER), backend = context.Socket(SocketType.ROUTER))
+                using (ZmqSocket frontend = context.CreateSocket(SocketType.ROUTER), backend = context.CreateSocket(SocketType.ROUTER))
                 {
                     frontend.Bind("tcp://*:5555");
                     backend.Bind("tcp://*:5556");
@@ -55,23 +56,23 @@ namespace ZMQGuide
                     var workerQueue = new Queue<string>();
 
                     //  Handle worker activity on backend
-                    backend.PollInHandler += (socket, revents) =>
+                    backend.PollInHandler += (ZmqSocket, revents) =>
                     {
                         //  Queue worker address for LRU routing
-                        string workerAddress = socket.Recv(Encoding.Unicode);
+                        string workerAddress = ZmqSocket.Receive(Encoding.Unicode);
                         workerQueue.Enqueue(workerAddress);
 
                         //  Second frame is empty
-                        string empty = socket.Recv(Encoding.Unicode);
+                        string empty = ZmqSocket.Receive(Encoding.Unicode);
 
                         //  Third frame is READY or else a client reply address
-                        string clientAddress = socket.Recv(Encoding.Unicode);
+                        string clientAddress = ZmqSocket.Receive(Encoding.Unicode);
 
                         //  If client reply, send rest back to frontend
                         if (!clientAddress.Equals("READY"))
                         {
-                            empty = socket.Recv(Encoding.Unicode);
-                            string reply = socket.Recv(Encoding.Unicode);
+                            empty = ZmqSocket.Receive(Encoding.Unicode);
+                            string reply = ZmqSocket.Receive(Encoding.Unicode);
                             frontend.SendMore(clientAddress, Encoding.Unicode);
                             frontend.SendMore();
                             frontend.Send(reply, Encoding.Unicode);
@@ -80,13 +81,13 @@ namespace ZMQGuide
                         }
                     };
 
-                    frontend.PollInHandler += (socket, revents) =>
+                    frontend.PollInHandler += (ZmqSocket, revents) =>
                     {
                         //  Now get next client request, route to LRU worker
                         //  Client request is [address][empty][request]
-                        string clientAddr = socket.Recv(Encoding.Unicode);
-                        string empty = socket.Recv(Encoding.Unicode);
-                        string request = socket.Recv(Encoding.Unicode);
+                        string clientAddr = ZmqSocket.Receive(Encoding.Unicode);
+                        string empty = ZmqSocket.Receive(Encoding.Unicode);
+                        string request = ZmqSocket.Receive(Encoding.Unicode);
 
                         backend.SendMore(workerQueue.Dequeue(), Encoding.Unicode);
                         backend.SendMore();
@@ -98,9 +99,9 @@ namespace ZMQGuide
 
                     while (clientsRunning > 0)
                     { //  Exit after N messages
-                        Context.Poller(workerQueue.Count > 0
-                                           ? new List<Socket>(new Socket[] {frontend, backend})
-                                           : new List<Socket>(new Socket[] {backend}));
+                        ZmqContext.Poller(workerQueue.Count > 0
+                                           ? new List<ZmqSocket>(new ZmqSocket[] {frontend, backend})
+                                           : new List<ZmqSocket>(new ZmqSocket[] {backend}));
                     }
                 }
             }
@@ -108,16 +109,16 @@ namespace ZMQGuide
 
         private static void ClientTask()
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket client = context.Socket(SocketType.REQ))
+                using (ZmqSocket client = context.CreateSocket(SocketType.REQ))
                 {
                     ZHelpers.SetID(client, Encoding.Unicode);
                     client.Connect("tcp://localhost:5555");
 
                     //  Send request, get reply
                     client.Send("HELLO", Encoding.Unicode);
-                    string reply = client.Recv(Encoding.Unicode);
+                    string reply = client.Receive(Encoding.Unicode);
                     Console.WriteLine("Client: {0}", reply);
                 }
             }
@@ -125,9 +126,9 @@ namespace ZMQGuide
 
         private static void WorkerTask()
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket worker = context.Socket(SocketType.REQ))
+                using (ZmqSocket worker = context.CreateSocket(SocketType.REQ))
                 {
                     ZHelpers.SetID(worker, Encoding.Unicode);
                     worker.Connect("tcp://localhost:5556");
@@ -139,11 +140,11 @@ namespace ZMQGuide
                     {
                         //  Read and save all frames until we get an empty frame
                         //  In this example there is only 1 but it could be more
-                        string address = worker.Recv(Encoding.Unicode);
-                        string empty = worker.Recv(Encoding.Unicode);
+                        string address = worker.Receive(Encoding.Unicode);
+                        string empty = worker.Receive(Encoding.Unicode);
 
                         //  Get request, send reply
-                        string request = worker.Recv(Encoding.Unicode);
+                        string request = worker.Receive(Encoding.Unicode);
                         Console.WriteLine("Worker: {0}", request);
 
                         worker.SendMore(address, Encoding.Unicode);

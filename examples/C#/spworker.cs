@@ -1,6 +1,6 @@
 ﻿//
 //  Simple Pirate worker
-//  Connects REQ socket to tcp://*:5556
+//  Connects REQ ZmqSocket to tcp://*:5556
 //  Implements worker part of LRU queueing
 //
 //  Author: Kristian Kristensen <kristian@kristenseninc.com>
@@ -8,8 +8,9 @@
 
 using System;
 using System.Text;
-using ZMQ;
-using ZMQ.ZMQExt;
+using ZMQGuide;
+using ZeroMQ;
+using zguide;
 
 namespace Worker
 {
@@ -19,9 +20,9 @@ namespace Worker
 
         static void Main(string[] args)
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (var worker = context.Socket(SocketType.REQ))
+                using (var worker = context.CreateSocket(SocketType.REQ))
                 {
                     var randomizer = new Random(DateTime.Now.Millisecond);
                     var identity = ZHelpers.SetID(worker, Encoding.Unicode);

@@ -9,11 +9,11 @@
 using System;
 using System.Text;
 using System.Threading;
-using ZMQ;
+using ZeroMQ;
 
 namespace ZMQGuide
 {
-    internal class Program
+    internal class Program24
     {
         private static int requestTimeout = 2500;
         private static int requestRetries = 3;
@@ -23,11 +23,11 @@ namespace ZMQGuide
         private static bool expectReply = true;
         private static int retriesLeft = requestRetries;
 
-        private static Socket CreateServerSocket(Context context)
+        private static ZmqSocket CreateServerSocket(ZmqContext ZmqContext)
         {
             Console.WriteLine("Connecting to server...");
 
-            var client = context.Socket(SocketType.REQ);
+            var client = context.CreateSocket(SocketType.REQ);
             client.Connect(serverEndpoint);
             client.Linger = 0;
             client.PollInHandler += PollInHandler;
@@ -37,7 +37,7 @@ namespace ZMQGuide
 
         public static void Main(string[] args)
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
                 var client = CreateServerSocket(context);
 
@@ -50,7 +50,7 @@ namespace ZMQGuide
 
                     while (expectReply)
                     {
-                        int count = Context.Poller(requestTimeout * 1000, client);
+                        int count = ZmqContext.Poller(requestTimeout * 1000, client);
 
                         if (count == 0)
                         {
@@ -75,9 +75,9 @@ namespace ZMQGuide
             }
         }
 
-        private static void PollInHandler(Socket socket, IOMultiPlex revents)
+        private static void PollInHandler(ZmqSocket ZmqSocket, Poller revents)
         {
-            var reply = socket.Recv(Encoding.Unicode);
+            var reply = ZmqSocket.Receive(Encoding.Unicode);
 
             if (Int32.Parse(reply) == sequence)
             {

@@ -7,19 +7,20 @@
 
 using System.Text;
 using System.Threading;
-using ZMQ;
+using ZeroMQ;
+using zguide;
 
 namespace ZMQGuide
 {
-    internal class Program
+    internal class Program5
     {
         //  We will do this all in one thread to emphasize the sequence
         //  of events...
         public static void Main(string[] args)
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket client = context.Socket(SocketType.ROUTER), worker = context.Socket(SocketType.REP))
+                using (ZmqSocket client = context.CreateSocket(SocketType.ROUTER), worker = context.CreateSocket(SocketType.REP))
                 {
                     client.Bind("inproc://routing");
 
@@ -44,7 +45,7 @@ namespace ZMQGuide
                     //  We don't play with envelopes in the worker
                     worker.Send("This is the reply", Encoding.Unicode);
 
-                    //  Now dump what we got off the ROUTER socket...
+                    //  Now dump what we got off the ROUTER ZmqSocket...
                     ZHelpers.Dump(client, Encoding.Unicode);
                 }
             }

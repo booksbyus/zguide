@@ -3,7 +3,7 @@
 //
 //  While this example runs in a single process, that is just to make
 //  it easier to start and stop the example. Each thread has its own
-//  context and conceptually acts as a separate process.
+//  ZmqContext and conceptually acts as a separate process.
 //
 
 //  Author:     Michael Compton, Tomas Roos
@@ -13,11 +13,11 @@ using System;
 using System.Threading;
 using System.Collections.Generic;
 using System.Text;
-using ZMQ;
+using ZeroMQ;
 
 namespace ZMQGuide
 {
-    internal class Program
+    internal class Program34
     {
         //  We have two workers, here we copy the code, normally these would
         //  run on different boxes...
@@ -26,9 +26,9 @@ namespace ZMQGuide
             var randomizer = new Random(DateTime.Now.Millisecond);
             var workers = new List<Thread>(new[] { new Thread(WorkerTaskA), new Thread(WorkerTaskB) });
             
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket client = context.Socket(SocketType.ROUTER))
+                using (ZmqSocket client = context.CreateSocket(SocketType.ROUTER))
                 {
                     client.Bind("tcp://*:5555");
                     foreach (Thread thread in workers)
@@ -61,9 +61,9 @@ namespace ZMQGuide
 
         private static void WorkerTaskA()
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket worker = context.Socket(SocketType.DEALER))
+                using (ZmqSocket worker = context.CreateSocket(SocketType.DEALER))
                 {
                     worker.StringToIdentity("A", Encoding.Unicode);
                     worker.Connect("tcp://localhost:5555");
@@ -74,7 +74,7 @@ namespace ZMQGuide
 
                     while (!end)
                     {
-                        string request = worker.Recv(Encoding.Unicode);
+                        string request = worker.Receive(Encoding.Unicode);
                         
                         if (request.Equals("END"))
                         {
@@ -93,9 +93,9 @@ namespace ZMQGuide
 
         private static void WorkerTaskB()
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket worker = context.Socket(SocketType.DEALER))
+                using (ZmqSocket worker = context.CreateSocket(SocketType.DEALER))
                 {
                     worker.StringToIdentity("B", Encoding.Unicode);
                     worker.Connect("tcp://localhost:5555");
@@ -106,7 +106,7 @@ namespace ZMQGuide
 
                     while (!end)
                     {
-                        string request = worker.Recv(Encoding.Unicode);
+                        string request = worker.Receive(Encoding.Unicode);
 
                         if (request.Equals("END"))
                         {

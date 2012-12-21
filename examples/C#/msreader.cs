@@ -9,18 +9,18 @@
 using System;
 using System.Text;
 using System.Threading;
-using ZMQ;
+using ZeroMQ;
 
 namespace ZMQGuide
 {
-    internal class Program
+    internal class Program20
     {
         public static void Main(string[] args)
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
                 //  Connect to task ventilator and weather server
-                using (Socket receiver = context.Socket(SocketType.PULL), subscriber = context.Socket(SocketType.SUB))
+                using (ZmqSocket receiver = context.CreateSocket(SocketType.PULL), subscriber = context.CreateSocket(SocketType.SUB))
                 {
                     receiver.Connect("tcp://localhost:5557");
                     subscriber.Connect("tcp://localhost:5556");
@@ -33,7 +33,7 @@ namespace ZMQGuide
                         //  Process any waiting tasks
                         while (true)
                         {
-                            byte[] message = receiver.Recv(SendRecvOpt.NOBLOCK);
+                            byte[] message = receiver.Receive(SendRecvOpt.NOBLOCK);
                             if (message != null)
                             {
                                 Console.WriteLine("Process Task");
@@ -47,7 +47,7 @@ namespace ZMQGuide
                         //  Process any waiting weather updates
                         while (true)
                         {
-                            byte[] message = subscriber.Recv(SendRecvOpt.NOBLOCK);
+                            byte[] message = subscriber.Receive(SendRecvOpt.NOBLOCK);
                             if (message != null)
                             {
                                 Console.WriteLine("Process Weather");

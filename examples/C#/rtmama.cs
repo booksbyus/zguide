@@ -3,7 +3,7 @@
 //
 //  While this example runs in a single process, that is just to make
 //  it easier to start and stop the example. Each thread has its own
-//  context and conceptually acts as a separate process.
+//  ZmqContext and conceptually acts as a separate process.
 //
 
 //  Author:     Michael Compton, Tomas Roos
@@ -12,21 +12,22 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using ZMQ;
+using ZeroMQ;
 using System.Threading;
+using zguide;
 
 namespace ZMQGuide
 {
-    internal class Program
+    internal class Program33
     {
         public static void Main(string[] args)
         {
             const int workersCount = 10;
             var workers = new List<Thread>(workersCount);
             
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket client = context.Socket(SocketType.ROUTER))
+                using (ZmqSocket client = context.CreateSocket(SocketType.ROUTER))
                 {
                     client.Bind("tcp://*:5555");
 
@@ -39,9 +40,9 @@ namespace ZMQGuide
                     for (int taskNumber = 0; taskNumber < workersCount * 10; taskNumber++)
                     {
                         //  LRU worker is next waiting in queue
-                        string address = client.Recv(Encoding.Unicode);
-                        string empty = client.Recv(Encoding.Unicode);
-                        string ready = client.Recv(Encoding.Unicode);
+                        string address = client.Receive(Encoding.Unicode);
+                        string empty = client.Receive(Encoding.Unicode);
+                        string ready = client.Receive(Encoding.Unicode);
 
                         client.SendMore(address, Encoding.Unicode);
                         client.SendMore();
@@ -51,9 +52,9 @@ namespace ZMQGuide
                     //  Now ask mamas to shut down and report their results
                     for (int taskNbr = 0; taskNbr < workersCount; taskNbr++)
                     {
-                        string address = client.Recv(Encoding.Unicode);
-                        string empty = client.Recv(Encoding.Unicode);
-                        string ready = client.Recv(Encoding.Unicode);
+                        string address = client.Receive(Encoding.Unicode);
+                        string empty = client.Receive(Encoding.Unicode);
+                        string ready = client.Receive(Encoding.Unicode);
 
                         client.SendMore(address, Encoding.Unicode);
                         client.SendMore();
@@ -69,9 +70,9 @@ namespace ZMQGuide
         {
             var randomizer = new Random(DateTime.Now.Millisecond);
 
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket worker = context.Socket(SocketType.REQ))
+                using (ZmqSocket worker = context.CreateSocket(SocketType.REQ))
                 {
                     //  We use a string identity for ease here
                     ZHelpers.SetID(worker, Encoding.Unicode);
@@ -86,7 +87,7 @@ namespace ZMQGuide
                         worker.Send("Ready", Encoding.Unicode);
 
                         //  Get workload from router, until finished
-                        string workload = worker.Recv(Encoding.Unicode);
+                        string workload = worker.Receive(Encoding.Unicode);
 
                         if (workload.Equals("END"))
                         {
@@ -100,7 +101,7 @@ namespace ZMQGuide
                         }
                     }
 
-                    Console.WriteLine("ID ({0}) processed: {1} tasks", worker.IdentityToString(Encoding.Unicode), total);
+                    Console.WriteLine("ID ({0}) processed: {1} tasks", worker.Identity, total);
                 }
             }
         }

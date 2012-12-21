@@ -1,7 +1,7 @@
 ﻿//
 //  Task sink
-//  Binds PULL socket to tcp://localhost:5558
-//  Collects results from workers via that socket
+//  Binds PULL ZmqSocket to tcp://localhost:5558
+//  Collects results from workers via that ZmqSocket
 //
 
 //  Author:     Michael Compton, Tomas Roos
@@ -10,22 +10,22 @@
 using System;
 using System.Text;
 using System.Diagnostics;
-using ZMQ;
+using ZeroMQ;
 
 namespace ZMQGuide 
 {
-    internal class Program 
+    internal class Program27
     {
         public static void Main(string[] args)
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket receiver = context.Socket(SocketType.PULL))
+                using (ZmqSocket receiver = context.CreateSocket(SocketType.PULL))
                 {
                     receiver.Bind("tcp://*:5558");
 
                     //  Wait for start of batch
-                    receiver.Recv();
+                    receiver.Receive();
 
                     var stopwatch = new Stopwatch();
                     stopwatch.Start();
@@ -33,7 +33,7 @@ namespace ZMQGuide
                     const int tasksToConfirm = 100;
                     for (int taskNumber = 0; taskNumber < tasksToConfirm; taskNumber++)
                     {
-                        string message = receiver.Recv(Encoding.Unicode);
+                        string message = receiver.Receive(Encoding.Unicode);
                         Console.WriteLine(taskNumber % 10 == 0 ? ":" : ".");
                     }
 

@@ -8,50 +8,50 @@
 
 using System;
 using System.Text;
-using ZMQ;
+using ZeroMQ;
 using System.Threading;
 
 namespace ZMQGuide {
     class TaskWorker2 {
-        private Context context;
-        private Socket receiver;
-        private Socket sender;
-        private Socket controller;
+        private ZmqContext context;
+        private ZmqSocket receiver;
+        private ZmqSocket sender;
+        private ZmqSocket controller;
         private bool killCommand;
 
         public TaskWorker2() {
-            context = new Context(1);
-            receiver = context.Socket(SocketType.PULL);
-            sender = context.Socket(SocketType.PUSH);
-            controller = context.Socket(SocketType.SUB);
+            context = ZmqContext.Create();
+            receiver = context.CreateSocket(SocketType.PULL);
+            sender = context.CreateSocket(SocketType.PUSH);
+            controller = context.CreateSocket(SocketType.SUB);
         }
 
         public void Process() {
-            //  Socket to receive messages on
+            //  ZmqSocket to receive messages on
             receiver.Connect("tcp://localhost:5557");
-            //  Socket to send messages to
+            //  ZmqSocket to send messages to
             sender.Connect("tcp://localhost:5558");
-            //  Socket for control input
+            //  ZmqSocket for control input
             controller.Connect("tcp://localhost:5559");
             controller.Subscribe("", Encoding.Unicode);
 
             //  Process messages from receiver and controller
             PollItem[] items = new PollItem[2];
-            items[0] = receiver.CreatePollItem(IOMultiPlex.POLLIN);
+            items[0] = receiver.CreatePollItem(Poller.POLLIN);
             items[0].PollInHandler += new PollHandler(ReceiverPollInHandler);
-            items[1] = controller.CreatePollItem(IOMultiPlex.POLLIN);
+            items[1] = controller.CreatePollItem(Poller.POLLIN);
             items[1].PollInHandler += new PollHandler(ControllerPollInHandler);
 
             //  Process messages from both sockets
             killCommand = false;
             while (!killCommand) {
-                context.Poll(items, -1);
+                ZmqContext.Poll(items, -1);
             }
         }
 
-        private void ReceiverPollInHandler(Socket socket, IOMultiPlex revents) {
+        private void ReceiverPollInHandler(ZmqSocket ZmqSocket, Poller revents) {
             //  Process task
-            int workload = Convert.ToInt32(socket.Recv(Encoding.Unicode));
+            int workload = Convert.ToInt32(ZmqSocket.Receive(Encoding.Unicode));
             //  Do the work
             Thread.Sleep(workload);
             //  Send results to sink
@@ -60,14 +60,15 @@ namespace ZMQGuide {
             Console.Clear();
         }
 
-        private void ControllerPollInHandler(Socket socket, IOMultiPlex revents) {
+        private void ControllerPollInHandler(ZmqSocket ZmqSocket, Poller revents)
+        {
             //  Any waiting controller command acts as 'KILL'
             Console.WriteLine("Killed...");
             killCommand = true;
         }
     }
 
-    class Program {
+    class Program39 {
         static void Main(string[] args) {
             TaskWorker2 taskworker = new TaskWorker2();
             taskworker.Process();

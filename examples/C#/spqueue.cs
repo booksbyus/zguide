@@ -11,7 +11,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using ZMQ;
+using ZMQGuide;
+using ZeroMQ;
 
 namespace Server
 {
@@ -21,9 +22,9 @@ namespace Server
 
         static void Main(string[] args)
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket frontend = context.Socket(SocketType.ROUTER), backend = context.Socket(SocketType.ROUTER))
+                using (ZmqSocket frontend = context.CreateSocket(SocketType.ROUTER), backend = context.CreateSocket(SocketType.ROUTER))
                 {
                     frontend.Bind("tcp://*:5555"); // For Clients
                     backend.Bind("tcp://*:5556"); // For Workers
@@ -38,9 +39,9 @@ namespace Server
                     var workerQueue = new Queue<byte[]>();
 
                     //  Handle worker activity on backend
-                    backend.PollInHandler += (socket, revents) =>
+                    backend.PollInHandler += (ZmqSocket, revents) =>
                                                  {
-                                                     var zmsg = new ZMessage(socket);
+                                                     var zmsg = new ZMessage(ZmqSocket);
                                                      //  Use worker address for LRU routing
                                                      workerQueue.Enqueue(zmsg.Unwrap());
 
@@ -62,9 +63,9 @@ namespace Server
 
                     while (true)
                     {
-                        int rc = Context.Poller(workerQueue.Count > 0
-                                                    ? new List<Socket>(new Socket[] {frontend, backend})
-                                                    : new List<Socket>(new Socket[] {backend}));
+                        int rc = ZmqContext.Poller(workerQueue.Count > 0
+                                                    ? new List<ZmqSocket>(new ZmqSocket[] {frontend, backend})
+                                                    : new List<ZmqSocket>(new ZmqSocket[] {backend}));
 
                         if (rc == -1)
                         {

@@ -7,25 +7,25 @@
 
 using System;
 using System.Text;
-using ZMQ;
+using ZeroMQ;
 
 namespace ZMQGuide
 {
-    internal class Program
+    internal class Program7
     {
         public static void Main(string[] args)
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket subscriber = context.Socket(SocketType.SUB))
+                using (ZmqSocket subscriber = context.CreateSocket(SocketType.SUB))
                 {
                     subscriber.Connect("tcp://localhost:5563");
                     subscriber.Subscribe("B", Encoding.Unicode);
 
                     while (true)
                     {
-                        string address = subscriber.Recv(Encoding.Unicode);
-                        string contents = subscriber.Recv(Encoding.Unicode);
+                        string address = subscriber.Receive(Encoding.Unicode);
+                        string contents = subscriber.Receive(Encoding.Unicode);
                         Console.WriteLine("{0} : {1}", address, contents);
                     }
                 }

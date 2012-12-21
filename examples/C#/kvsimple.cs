@@ -10,7 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-using ZMQ;
+using ZeroMQ;
 
 namespace ZMQGuide
 {
@@ -29,16 +29,16 @@ namespace ZMQGuide
 
         public string Body { get; set; }
 
-        public static KvMsg Recv(Socket subscriber)
+        public static KvMsg Receive(ZmqSocket subscriber)
         {
-            var key = subscriber.Recv(Encoding.Unicode);
-            var sequence = BitConverter.ToInt64(subscriber.Recv(), 0);
-            var body = subscriber.Recv(Encoding.Unicode);
+            var key = subscriber.Receive(Encoding.Unicode);
+            var sequence = BitConverter.ToInt64(subscriber.Receive(), 0);
+            var body = subscriber.Receive(Encoding.Unicode);
 
             return new KvMsg(sequence, key, body);
         }
 
-        public void Send(Socket publisher) 
+        public void Send(ZmqSocket publisher) 
         {
             publisher.SendMore(Key, Encoding.Unicode);
             publisher.SendMore(BitConverter.GetBytes(Sequence));

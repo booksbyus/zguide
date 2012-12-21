@@ -8,26 +8,26 @@
 using System;
 using System.Text;
 using System.Threading;
-using ZMQ;
+using ZeroMQ;
 
 namespace ZMQGuide
 {
-    internal class Program
+    internal class Program11
     {
         public static void Main(string[] args)
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket socket = context.Socket(SocketType.PAIR))
+                using (ZmqSocket ZmqSocket = context.CreateSocket(SocketType.PAIR))
                 {
                     //  Bind to inproc: endpoint, then start upstream thread
-                    socket.Bind("inproc://step3");
+                    ZmqSocket.Bind("inproc://step3");
 
                     var step2 = new Thread(Step2);
                     step2.Start(context);
 
                     //  Wait for signal
-                    socket.Recv();
+                    ZmqSocket.Receive();
 
                     Console.WriteLine("Test Successful!!!");
                 }
@@ -37,7 +37,7 @@ namespace ZMQGuide
         private static void Step2(object context)
         {
             //  Bind to inproc: endpoint, then start upstream thread
-            using (Socket receiver = ((Context)context).Socket(SocketType.PAIR))
+            using (ZmqSocket receiver = ((ZmqContext)context).CreateSocket(SocketType.PAIR))
             {
                 receiver.Bind("inproc://step2");
 
@@ -45,21 +45,21 @@ namespace ZMQGuide
                 step1.Start(context);
 
                 //  Wait for signal
-                receiver.Recv();
+                receiver.Receive();
             }
 
             //  Signal downstream to step 3
-            using (Socket sender = ((Context)context).Socket(SocketType.PAIR))
+            using (ZmqSocket sender = ((ZmqContext)context).CreateSocket(SocketType.PAIR))
             {
                 sender.Connect("inproc://step3");
                 sender.Send("", Encoding.Unicode);
             }
         }
 
-        private static void Step1(object context)
+        private static void Step1(object ZmqContext)
         {
             //  Signal downstream to step 2
-            using (Socket sender = ((Context)context).Socket(SocketType.PAIR))
+            using (ZmqSocket sender = ((ZmqContext)context).CreateSocket(SocketType.PAIR))
             {
                 sender.Connect("inproc://step2");
                 sender.Send("", Encoding.Unicode);

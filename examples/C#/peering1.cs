@@ -9,11 +9,11 @@
 using System;
 using System.Text;
 using System.Threading;
-using ZMQ;
+using ZeroMQ;
 
 namespace ZMQGuide
 {
-    internal class Program
+    internal class Program19
     {
         public static void Main(string[] args)
         {
@@ -28,9 +28,9 @@ namespace ZMQGuide
             var myself = args[0];
             Console.WriteLine("Hello, I am " + myself);
 
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket statebe = context.Socket(SocketType.PUB), statefe = context.Socket(SocketType.SUB))
+                using (ZmqSocket statebe = context.CreateSocket(SocketType.PUB), statefe = context.CreateSocket(SocketType.SUB))
                 {
                     var bindAddress = "tcp://127.0.0.1:" + myself;
                     statebe.Bind(bindAddress);
@@ -44,17 +44,17 @@ namespace ZMQGuide
                         Thread.Sleep(1000);
                     }
 
-                    statefe.PollInHandler += (socket, revents) =>
+                    statefe.PollInHandler += (ZmqSocket, revents) =>
                                                  {
-                                                     string peerName = socket.Recv(Encoding.Unicode);
-                                                     string available = socket.Recv(Encoding.Unicode);
+                                                     string peerName = ZmqSocket.Receive(Encoding.Unicode);
+                                                     string available = ZmqSocket.Receive(Encoding.Unicode);
 
                                                      Console.WriteLine("{0} - {1} workers free\n", peerName, available);
                                                  };
 
                     while (true)
                     {
-                        int count = Context.Poller(1000 * 1000, statefe);
+                        int count = ZmqContext.Poller(1000 * 1000, statefe);
                         
                         if (count == 0)
                         {

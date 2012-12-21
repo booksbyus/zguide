@@ -1,10 +1,10 @@
 //
 //  Task worker - design 2
-//  Connects PULL socket to tcp://localhost:5557
-//  Collects workloads from ventilator via that socket
-//  Connects PUSH socket to tcp://localhost:5558
-//  Sends results to sink via that socket
-//  Connects SUB socket to tcp://localhost:5559
+//  Connects PULL ZmqSocket to tcp://localhost:5557
+//  Collects workloads from ventilator via that ZmqSocket
+//  Connects PUSH ZmqSocket to tcp://localhost:5558
+//  Sends results to sink via that ZmqSocket
+//  Connects SUB ZmqSocket to tcp://localhost:5559
 //  And shuts down worker when it gets the kill signal
 //
 
@@ -14,17 +14,17 @@
 using System;
 using System.Text;
 using System.Threading;
-using ZMQ;
+using ZeroMQ;
 
 namespace ZMQGuide
 {
-    internal class Program
+    internal class Program35
     {
         public static void Main(string[] args)
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket receiver = context.Socket(SocketType.PULL), sender = context.Socket(SocketType.PUSH), controller = context.Socket(SocketType.SUB))
+                using (ZmqSocket receiver = context.CreateSocket(SocketType.PULL), sender = context.CreateSocket(SocketType.PUSH), controller = context.CreateSocket(SocketType.SUB))
                 {
                     receiver.Connect("tcp://localhost:5557");
                     sender.Connect("tcp://localhost:5558");
@@ -35,22 +35,22 @@ namespace ZMQGuide
 
                     var items = new PollItem[2];
                     items[0] = receiver.CreatePollItem(IOMultiPlex.POLLIN);
-                    items[0].PollInHandler += (socket, revents) => ReceiverPollInHandler(socket, sender);
+                    items[0].PollInHandler += (ZmqSocket, revents) => ReceiverPollInHandler(ZmqSocket, sender);
                     items[1] = controller.CreatePollItem(IOMultiPlex.POLLIN);
                     items[1].PollInHandler += delegate { run = false; };
 
                     //  Process tasks as long as the controller does not signal the end.
                     while (run)
                     {
-                        context.Poll(items);
+                        ZmqContext.Poll(items);
                     }
                 }
             }
         }
 
-        private static void ReceiverPollInHandler(Socket receiver, Socket sender)
+        private static void ReceiverPollInHandler(ZmqSocket receiver, ZmqSocket sender)
         {
-            string task = receiver.Recv(Encoding.Unicode);
+            string task = receiver.Receive(Encoding.Unicode);
 
             //  Simple progress indicator for the viewer;
             Console.WriteLine("{0}.", task);

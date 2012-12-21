@@ -9,17 +9,17 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using ZMQ;
+using ZeroMQ;
 
 namespace ZMQGuide
 {
-    internal class Program
+    internal class Program29
     {
         public static void Main(string[] args)
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (var publisher = context.Socket(SocketType.PUB))
+                using (var publisher = ZmqContext.CreateSocket(SocketType.PUB))
                 {
                     publisher.Bind("tcp://*:5556");
                     Thread.Sleep(TimeSpan.FromMilliseconds(200));
