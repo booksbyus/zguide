@@ -304,31 +304,28 @@ while (<>) {
         #   Create text file for diagram
         $title = $1;
         $figure = $figure + 1;
-        $filename = "images/fig$figure.txt";
-        die "Can't create $filename: $!"
-            unless open (IMAGE, ">$filename");
+        die "Can't create images/fig$figure.txt: $!"
+            unless open (IMAGE, ">images/fig$figure.txt");
         $longest = 0;
         while (<>) {
             chop;
             last if /\[\[\/code\]\]/;
-            #   DitaaEps uses Ditaa 0.6b, which doesn't support {o}
-            s/\{o\}/   /g;
             $longest = length ($_) if length ($_) > $longest;
             print IMAGE "$_\n";
         }
         close (IMAGE);
-        
+
         #   Calculate scaling so image looks decent
-        $scale = 40 / $longest;
+        $scale = 60 / $longest;
         $scale = 1 if $scale > 1;
 
         #   Convert diagram into image of required format
-        if (signature_changed ($filename)) {
-            print "Converting $filename to EPS image...\n";
-            system ("java -jar bin/DitaaEps/DitaaEps.jar -s $scale $filename temp.eps");
-            system ("epstool --quiet --copy --bbox temp.eps images/fig$figure.eps");
-            system ("rm temp.eps");
-            signature_update ($filename);
+        if (signature_changed ("images/fig$figure.txt")) {
+            print "Converting fig$figure.txt to SVG...\n";
+            system ("a2s -iimages/fig$figure.txt -oimages/fig$figure.svg");
+            system ("rasterizer -d images images/fig$figure.svg");
+            system ("inkscape -f images/fig$figure.svg -E images/fig$figure.eps");
+            signature_update ("images/fig$figure.txt");
         }
         writeln ("<figure id=\"figure-$figure\">");
         writeln ("    <title>$title</title>");

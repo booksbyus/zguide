@@ -233,7 +233,6 @@ while (<>) {
         }
     }
     elsif (/\[\[code type=\"textdiagram\"\s+title=\"([^"]+)\"\]\]/) {
-        #   Create HTML file for text diagram
         $title = $1;
         $figure = $figure + 1;
         die "Can't create images/fig$figure.txt: $!"
@@ -256,6 +255,7 @@ while (<>) {
             print "Converting fig$figure.txt to SVG...\n";
             system ("a2s -iimages/fig$figure.txt -oimages/fig$figure.svg");
             system ("rasterizer -d images images/fig$figure.svg");
+            system ("inkscape -f images/fig$figure.svg -E images/fig$figure.eps");
             signature_update ("images/fig$figure.txt");
         }
         #   Link to resource in git, nice way to upload images
