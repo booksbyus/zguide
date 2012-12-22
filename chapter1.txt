@@ -533,17 +533,53 @@ Let's think for a second about what is happening here. The weather server has a 
 
 ++ Upgrading from 0MQ/2.2 to 0MQ/3.2
 
-In early 2012, 0MQ/3.2 became stable enough for live use and by the time you're reading this, it's what you really should be using. If you are still using 2.2, here's a quick summary of the changes, and how to migrate your code.
++++ Compatible Changes
 
-The main change in 3.x is that PUB-SUB works properly, as in, the publisher only sends subscribers stuff they actually want. In 2.x, publishers send everything and the subscribers filter. Simple, but not ideal for performance on a TCP network.
+These changes don't impact existing application code directly:
 
-Most of the API is backwards compatible, except a few changes that went into 3.0 with little regard to the cost of breaking existing code. The syntax of {{zmq_send[3]}} and {{zmq_recv[3]}} changed, and {{ZMQ_NOBLOCK}} got rebaptized to {{ZMQ_DONTWAIT}}. So although I'd love to say, "you just recompile your code with the latest libzmq and everything will work", that's not how it is. For what it's worth, we banned such API breakage afterwards.
+* Pub-sub filtering is now done at the publisher side instead of subscriber side. This improves performance significantly in many pub-sub use cases.
 
-So the minimal change for C/C++ apps that use the low-level libzmq API is to replace all calls to {{zmq_send[3]}} with {{zmq_msg_send[3]}}, and {{zmq_recv[3]}} with {{zmq_msg_recv[3]}}. In other languages, your binding author may have done the work already. Note that these two functions now return -1 in case of error, and zero or more according to how many bytes were sent or received.
+* 0MQ/3.2 has many new API methods ({{zmq_disconnect[3]}}, {{zmq_unbind[3]}}, {{zmq_monitor[3]}}, {{zmq_ctx_set[3]}}, etc.)
 
-Other parts of the libzmq API became more consistent. We deprecated {{zmq_init[3]}} and {{zmq_term[3]}}, replacing them with {{zmq_ctx_new[3]}} and {{zmq_ctx_destroy[3]}}. We added {{zmq_ctx_set[3]}} to let you configure a context before starting to work with it.
++++ Incompatible Changes
 
-Finally, we added context monitoring via the {{zmq_ctx_set_monitor[3]}} call, which lets you track connections and disconnections, and other events on sockets.
+These are the main areas of impact on applications and language bindings:
+
+* Changed send/recv methods: {{zmq_send[3]}} and {{zmq_recv[3]}} have a different, simpler interface, and the old functionality is now provided by {{zmq_msg_send[3]}} and {{zmq_msg_recv[3]}}. Symptom: compile errors. Solution: fix up your code.
+
+* These two methods return positive values on success, and -1 on error. In 2.x they always returned zero on success. Symptom: apparent errors when things actually work fine. Solution: test strictly for return code = -1, not non-zero.
+
+* {{zmq_poll[3]}} now waits for milliseconds, not microseconds. Symptom: application stops responding (in fact responds 1000 times slower). Solution: use the ZMQ_POLL_MSEC macro defined below, in all zmq_poll calls.
+
+* {{ZMQ_NOBLOCK}} is now called {{ZMQ_DONTWAIT}}. Symptom: compile failures on the ZMQ_NOBLOCK macro.
+
+* The {{ZMQ_HWM}} socket option is now broken into {{ZMQ_SNDHWM}} and {{ZMQ_RCVHWM}}.  Symptom: compile failures on the ZMQ_HWM macro.
+
+* Most but not all {{zmq_getsockopt[3]}} options are now integer values. Symptom: runtime error returns on zmq_setsockopt and zmq_getsockopt.
+
+* The {{ZMQ_SWAP}} option has been removed. Symptom: compile failures on ZMQ_SWAP. Solution: redesign any code that uses this functionality.
+
++++ Suggested Shim Macros
+
+For applications that want to run on both 2.x and 3.2, such as language bindings, our advice is to emulate 3.2 as far as possible. Here are C macro definitions that help your C/C++ code to work across both versions (taken from [http://czmq.zeromq.org CZMQ]):
+
+[[code type="fragment" name="upgrade-shim"]]
+#ifndef ZMQ_DONTWAIT
+#   define ZMQ_DONTWAIT     ZMQ_NOBLOCK
+#endif
+#if ZMQ_VERSION_MAJOR == 2
+#   define zmq_msg_send(msg,sock,opt) zmq_send (sock, msg, opt)
+#   define zmq_msg_recv(msg,sock,opt) zmq_recv (sock, msg, opt)
+#   define zmq_ctx_destroy(context) zmq_term(context)
+#   define ZMQ_POLL_MSEC    1000        //  zmq_poll is usec
+#   define more_t int64_t
+#   define ZMQ_SNDHWM ZMQ_HWM
+#   define ZMQ_RCVHWM ZMQ_HWM
+#elif ZMQ_VERSION_MAJOR == 3
+#   define ZMQ_POLL_MSEC    1           //  zmq_poll is msec
+#   define more_t int
+#endif
+[[/code]]
 
 ++ Warning - Unstable Paradigms!
 

@@ -1262,8 +1262,8 @@ class ASCIIToSVG {
     }
 
     /* Add a fudge factor for drop-shadow and gaussian blur */
-    $canvasWidth = $canvasWidth * $o->xScale + 30;
-    $canvasHeight = count($this->grid) * $o->yScale + 30;
+    $canvasWidth = $canvasWidth * $o->xScale + 0;
+    $canvasHeight = count($this->grid) * $o->yScale + 0;
 
     /*
      * Boilerplate header with definitions that we might be using for markers
@@ -1727,7 +1727,7 @@ SVG;
     $this->svgObjects->pushGroup('text');
     $this->svgObjects->setOption('fill', 'black');
     $this->svgObjects->setOption('style',
-        "font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:{$fSize}px");
+        "font-family:LMMono10,monospace;font-size:{$fSize}px");
 
     /*
      * Text gets the same scanning treatment as boxes. We do left-to-right
