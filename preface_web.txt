@@ -20,22 +20,21 @@ The Guide is originally [/page:all in C], but also in [/php:all PHP], [/py:all P
 We took a normal TCP socket, injected it with a mix of radioactive isotopes stolen from a secret Soviet atomic research project, bombarded it with 1950-era cosmic rays, and put it into the hands of a drug-addled comic book author with a badly-disguised fetish for bulging muscles clad in spandex[figure]. Yes, 0MQ sockets are the world-saving superheroes of the networking world.
 
 [[code type="textdiagram" title="A terrible accident..."]]
-+------------+        +------------+
-|            |        |            | Zap!
-| TCP socket +------->| 0MQ socket |
-|            | BOOM!  |      cC00  |  POW!!
-+------------+        +------------+
-  ^    ^    ^
+.------------.        .--------------.
+|            |        |              |
+| TCP socket +------->|              | ZAP!
+|            | BOOM!  |  0MQ socket  |
+'------------'        |              |  POW!!
+  ^    ^    ^         |              |
+  |    |    |         '--------------'
   |    |    |
-  |    |    +---------+
-  |    |              |
-  |    +----------+   |
- Illegal          |   |
- radioisotopes    |   |
- from secret      |   |
- Soviet atomic    | Spandex
- city             |
-              Cosmic rays
+  |    |    |
+  |    |    '--------- Spandex
+  |    |
+  |    '-------------- Cosmic rays
+
+ Illegal radioisotopes from
+ secret Soviet atomic city
 [[/code]]
 
 ++ The Zen of Zero

@@ -32,11 +32,11 @@ The 0MQ reply envelope formally consists of zero or more reply addresses, follow
 We'll start by sending "Hello" through a REQ socket. The REQ socket creates the simplest possible reply envelope, which has no addresses, just an empty delimiter frame and the message frame containing the "Hello" string. This is a two-frame message[figure].
 
 [[code type="textdiagram" title="Request with Minimal Envelope"]]
-          +---+
-Frame 1   |   |   <------ Empty delimiter frame
-          +---+---+
-Frame 2   | Hello |
-          +-------+
+          #---#
+Frame 1   | 0 |            Empty delimiter frame
+          #---#-------#
+Frame 2   | 5 | Hello |    Data frame
+          #---+-------#
 [[/code]]
 
 The REP socket does the matching work: it strips off the envelope, up to and including the delimiter frame, saves the whole envelope, and passes the "Hello" string up the application. Thus our original Hello World example used request-reply envelopes internally, but the application never saw them.
@@ -48,19 +48,19 @@ If you spy on the network data flowing between hwclient and hwserver, this is wh
 Now let's extend the REQ-REP pair with a ROUTER-DEALER proxy in the middle and see how this affects the reply envelope. This is the //extended request-reply pattern// we already saw in [#sockets-and-patterns]. We can in fact insert any number of proxy steps[figure]. The mechanics are the same.
 
 [[code type="textdiagram" title="Extended Request-Reply Pattern"]]
-+-------+      +-------+
-|  REQ  |------|  REP  |
-+-------+      +-------+
+#-------#     #-------#
+|  REQ  |<--->|  REP  |
+#-------#     #-------#
 
 
-+-------+      +--------+--------+      +-------+
-|  REQ  |------| ROUTER | DEALER |------|  REP  |
-+-------+      +--------+--------+      +-------+
+#-------#     #--------+--------#     #-------#
+|  REQ  |<--->| ROUTER | DEALER |<--->|  REP  |
+#-------#     #--------+--------#     #-------#
 
 
-+-------+      +--------+--------+      +--------+--------+      +-------+
-|  REQ  |------| ROUTER | DEALER |------| ROUTER | DEALER |------|  REP  |
-+-------+      +--------+--------+      +--------+--------+      +-------+
+#-------#     #--------+--------#     #--------+--------#     #-------#
+|  REQ  |<--->| ROUTER | DEALER |<--->| ROUTER | DEALER |<--->|  REP  |
+#-------#     #--------+--------#     #--------+--------#     #-------#
 [[/code]]
 
 The proxy does this, in pseudo-code:
@@ -85,18 +85,18 @@ As a historical note, 0MQ/2.2 and earlier use UUIDs as identities, and 0MQ/3.0 a
 
 It's a difficult concept to understand but essential if you want to become a 0MQ expert. The ROUTER socket //invents// an random identity for each connection it works with. If there are three REQ sockets connected to a ROUTER socket, it will invent three random identities, one for each REQ socket.
 
-So if we continue our worked example, let's say the REQ socket has identity {{02}}. Internally, this means the ROUTER socket keeps a hash table where it can search for {{02}} and find the TCP connection for the REQ socket.
+So if we continue our worked example, let's say the REQ socket has a 3-byte identity {{ABC"}}. Internally, this means the ROUTER socket keeps a hash table where it can search for {{ABC}} and find the TCP connection for the REQ socket.
 
 When we receive the message off the ROUTER socket, we get three frames[figure].
 
 [[code type="textdiagram" title="Request with One Address"]]
-          +----+
-Frame 1   | 02 |   <------ Identity of connection
-          +----+
-Frame 2   |   |  
-          +---+---+
-Frame 3   | Hello |
-          +-------+
+          #---+-----#
+Frame 1   | 3 | ABC |      Identity of connection
+          #---#-----#
+Frame 2   | 0 |            Empty delimiter frame
+          #---#-------#
+Frame 3   | 5 | Hello |    Data frame
+          #---+-------#
 [[/code]]
 
 The core of the proxy loop is 'read from one socket, write to the other', so we literally send these three frames out on the DEALER socket. If you now sniffed the network traffic, you would see these three frames flying from the DEALER socket to the REP socket. The REP socket does as before, strips off the whole envelope including the new reply address, and once again delivers the "Hello" to the caller.
@@ -106,23 +106,23 @@ Incidentally the REP socket can only deal with one request-reply exchange at a t
 You should now be able to visualize the return path. When the hwserver sends "World" back, the REP socket wraps that with the envelope it saved, and sends a three-frame reply message across the wire to the DEALER socket[figure].
 
 [[code type="textdiagram" title="Reply with one Address"]]
-          +----+
-Frame 1   | 02 | 
-          +----+
-Frame 2   |   |  
-          +---+---+
-Frame 3   | World |
-          +-------+
+          #---+-----#
+Frame 1   | 3 | ABC |      Identity of connection
+          #---#-----#
+Frame 2   | 0 |            Empty delimiter frame
+          #---#-------#
+Frame 3   | 5 | World |    Data frame
+          #---+-------#
 [[/code]]
 
-Now the DEALER reads these three frames, and sends all three out via the ROUTER socket. The ROUTER takes the first frame for the message, which is the {{02}} identity, and looks up the connection for this. If it finds that, it then pumps the next two frames out onto the wire[figure].
+Now the DEALER reads these three frames, and sends all three out via the ROUTER socket. The ROUTER takes the first frame for the message, which is the {{ABC}} identity, and looks up the connection for this. If it finds that, it then pumps the next two frames out onto the wire[figure].
 
 [[code type="textdiagram" title="Reply with Minimal Envelope"]]
-          +---+
-Frame 1   |   |  
-          +---+---+
-Frame 2   | World |
-          +-------+
+          #---#
+Frame 1   | 0 |            Empty delimiter frame
+          #---#-------#
+Frame 2   | 5 | World |    Data frame
+          #---+-------#
 [[/code]]
 
 The REQ socket picks this message up, and checks that the first frame is the empty delimiter, which it is. The REQ socket discards that frame and passes "World" to the calling application, which prints it out to the amazement of the younger us looking at 0MQ for the first time.
@@ -320,13 +320,13 @@ Completed: 19 tasks
 To talk to the workers in this example, we have to create a REQ-friendly envelope consisting of an identity plus an empty envelope delimiter frame[figure].
 
 [[code type="textdiagram" title="Routing Envelope for REQ"]]
-          +-----------+
-Frame 1   | Identity  |
-          +---+-------+
-Frame 2   |   |   <------ Empty delimiter frame
-          +---+-------+
-Frame 3   | Data      |
-          +-----------+
+          #---+-------#
+Frame 1   | n | ...   |     Identity of connection
+          #---#-------#
+Frame 2   | 0 |             Empty delimiter frame
+          #---#--------#
+Frame 3   | n | ...    |    Data frame
+          #---+--------#
 [[/code]]
 
 +++ ROUTER Broker and DEALER Workers
@@ -356,29 +356,29 @@ The previous example is half-complete. It can manage a set of workers with dummy
 If we add a second //frontend// ROUTER socket that accepts client requests, and turn our example into a proxy that can switch messages from frontend to backend, we get a useful and reusable tiny load-balancing message broker[figure].
 
 [[code type="textdiagram" title="Load-Balancing Broker"]]
-+--------+  +--------+  +--------+
+#--------#  #--------#  #--------#
 | Client |  | Client |  | Client |
 +--------+  +--------+  +--------+
 |  REQ   |  |  REQ   |  |  REQ   |
-+---+----+  +---+----+  +---+----+
+'---+----'  '---+----'  '---+----'
     |           |           |
-    +-----------+-----------+
+    '-----------+-----------'
                 |
-            +---+----+
+            .---+----.
             | ROUTER |  Frontend
             +--------+
             | Proxy  |  Load-balancer
             +--------+
             | ROUTER |  Backend
-            +---+----+
+            '---+----'
                 |
-    +-----------+-----------+
+    .-----------+-----------.
     |           |           |
-+---+----+  +---+----+  +---+----+
+.---+----.  .---+----.  .---+----.
 |  REQ   |  |  REQ   |  |  REQ   |
 +--------+  +--------+  +--------+
 | Worker |  | Worker |  | Worker |
-+--------+  +--------+  +--------+
+#--------#  #--------#  #--------#
 [[/code]]
 
 What this broker does is:
@@ -397,52 +397,52 @@ The broker code is fairly long but worth understanding:
 
 The difficult part of this program is (a) the envelopes that each socket reads and writes, and (b) the load-balancing algorithm. We'll take these in turn, starting with the message envelope formats.
 
-Let's walk through a full request-reply chain from client to worker and back. In this code we set the identity of client and worker sockets to make it easier to trace the message frames. In reality we'd allow the ROUTER sockets to invent identities for connections. Let's assume the client's identity is "CLIENT" and the worker's identity is "WORKER". The client application sends a single frame containing "HELLO"[figure].
+Let's walk through a full request-reply chain from client to worker and back. In this code we set the identity of client and worker sockets to make it easier to trace the message frames. In reality we'd allow the ROUTER sockets to invent identities for connections. Let's assume the client's identity is "CLIENT" and the worker's identity is "WORKER". The client application sends a single frame containing "Hello"[figure].
 
 [[code type="textdiagram" title="Message that Client Sends"]]
-          +---+-------+
-Frame 1   | 5 | HELLO |       Data frame
-          +---+-------+
+          #---+-------#
+Frame 1   | 5 | Hello |   Data frame
+          #---+-------#
 [[/code]]
 
 Since the REQ socket adds its empty delimiter frame, and the ROUTER socket adds its connection identity, what the proxy reads off the frontend ROUTER socket are three frames: the client address, empty delimiter frame, and the data part[figure].
 
 [[code type="textdiagram" title="Message Coming in on Frontend"]]
-          +---+--------+
-Frame 1   | 6 | CLIENT |    Client address
-          +---+--------+
-Frame 2   | 0 |             Empty delimiter frame
-          +---+-------+
-Frame 3   | 5 | HELLO |     Data frame
-          +---+-------+
+          #---+--------#
+Frame 1   | 6 | CLIENT |   Client address
+          #---#--------#
+Frame 2   | 0 |            Empty delimiter frame
+          #---#-------#
+Frame 3   | 5 | Hello |    Data frame
+          #---+-------#
 [[/code]]
 
 The broker sends this to the worker, prefixed by the address of the chosen worker, plus an additional empty part to keep the REQ at the other end happy[figure].
 
 [[code type="textdiagram" title="Message Sent to Backend"]]
-          +---+--------+
-Frame 1   | 6 | WORKER |      Address of worker
-          +---+--------+
-Frame 2   | 0 |               Empty delimiter frame
-          +---+--------+
-Frame 3   | 6 | CLIENT |      Identity of client
-          +---+--------+
-Frame 4   | 0 |               Empty delimiter frame
-          +---+-------+
-Frame 5   | 5 | HELLO |       Data frame
-          +---+-------+
+          #---+--------#
+Frame 1   | 6 | WORKER |   Address of worker
+          #---#--------#
+Frame 2   | 0 |            Empty delimiter frame
+          #---#--------#
+Frame 3   | 6 | CLIENT |   Identity of client
+          #---#--------#
+Frame 4   | 0 |            Empty delimiter frame
+          #---#-------#
+Frame 5   | 5 | Hello |    Data frame
+          #---+-------#
 [[/code]]
 
 This complex envelope stack gets chewed up first by the backend ROUTER socket, which removes the first frame. Then the REQ socket in the worker removes the empty part, and provides the rest to the worker application[figure].
 
 [[code type="textdiagram" title="Message Delivered to Worker"]]
-          +---+--------+
-Frame 1   | 6 | CLIENT |    Identity of client
-          +---+--------+
-Frame 2   | 0 |               Empty message frame
-          +---+-------+
-Frame 3   | 5 | HELLO |       Data frame
-          +---+-------+
+          #---+--------#
+Frame 1   | 6 | CLIENT |   Identity of client
+          #---#--------#
+Frame 2   | 0 |            Empty delimiter frame
+          #---#-------#
+Frame 3   | 5 | Hello |    Data frame
+          #---+-------#
 [[/code]]
 
 The worker has to save the envelope (which is all the parts up to and including the empty message frame) and then it can do what's needed with the data part. Note that a REP socket would do this automatically but we're using the REQ-ROUTER pattern so we can get proper load-balancing.
@@ -572,7 +572,7 @@ One thing CZMQ provides is clean interrupt handling. This means that Ctrl-C will
 
 [[code type="fragment" name="interrupt"]]
 while (true) {
-    zstr_send (client, "HELLO");
+    zstr_send (client, "Hello");
     char *reply = zstr_recv (client);
     if (!reply)
         break;              //  Interrupted
@@ -621,27 +621,21 @@ Getting applications to properly shut-down when you send them Ctrl-C can be tric
 In the ROUTER to DEALER example we saw a 1-to-N use-case where one server talks asynchronously to multiple workers. We can turn this upside-down to get a very useful N-to-1 architecture where various clients talk to a single server, and do this asynchronously[figure].
 
 [[code type="textdiagram" title="Asynchronous Client-Server"]]
-+-----------+   +-----------+
-|           |   |           |
-|  Client   |   |  Client   |
-|           |   |           |
-+-----------+   +-----------+
-|  DEALER   |   |  DEALER   |
-\-----------/   \-----------/
-      ^               ^
-      |               |
-      |               |
-      +-------+-------+
-              |
-              |
-              v
-       /------+------\
-       |   ROUTER    |
-       +-------------+
-       |             |
-       |   Server    |
-       |             |
-       +-------------+
+#----------#   #----------#
+|  Client  |   |  Client  |
++----------+   +----------+
+|  DEALER  |   |  DEALER  |
+'----------'   '----------'
+      ^              ^
+      |              |
+      '------+-------'
+             |
+             v
+      .-------------.
+      |   ROUTER    |
+      +-------------+
+      |   Server    |
+      #-------------#
 [[/code]]
 
 Here's how it works:
@@ -665,45 +659,37 @@ Some comments on this code:
 * The server uses a pool of worker threads, each processing one request synchronously. It connects these to its frontend socket using an internal queue. It connects the frontend and backend sockets using a {{zmq_proxy[3]}} call.
 
 [[code type="textdiagram" title="Detail of Asynchronous Server"]]
-    +---------+   +---------+   +---------+
-    |         |   |         |   |         |
+    #---------#   #---------#   #---------#
     | Client  |   | Client  |   | Client  |
-    |         |   |         |   |         |
     +---------+   +---------+   +---------+
     | DEALER  |   | DEALER  |   | DEALER  |
-    \---------/   \---------/   \---------/
+    '---------'   '---------'   '---------'
       connect       connect       connect
          |             |             |
-         |             |             |
-         +-------------+-------------+
+         '-------------+-------------'
                        |
-/----------------------|----------------------\
+.--------------------- | ---------------------.
 :                      v                      :
 :                    bind                     :
-:                /-----------\                :
+:                .-----------.                :
 :                |  ROUTER   |                :
 :                +-----------+                :
-:                |           |                :
 :                |  Server   |                :
-:                |           |                :
 :                +-----------+                :
 :                |  DEALER   |                :
-:                \-----------/                :
+:                '-----------'                :
 :                    bind                     :
 :                      |                      :
-:        +-------------+-------------+        :
+:        .-------------+-------------.        :
 :        |             |             |        :
 :        v             v             v        :
 :     connect       connect       connect     :
-:   /---------\   /---------\   /---------\   :
+:   .---------.   .---------.   .---------.   :
 :   | DEALER  |   | DEALER  |   | DEALER  |   :
 :   +---------+   +---------+   +---------+   :
-:   |         |   |         |   |         |   :
 :   | Worker  |   | Worker  |   | Worker  |   :
-:   |         |   |         |   |         |   :
-:   +---------+   +---------+   +---------+   :
-:                                             :
-\---------------------------------------------/
+:   #---------#   #---------#   #---------#   :
+'---------------------------------------------'
 [[/code]]
 
 Note that we're doing DEALER to ROUTER dialog between client and server, but internally between the server main thread and workers we're doing DEALER to DEALER. If the workers were strictly synchronous, we'd use REP. But since we want to send multiple replies we need an async socket. We do //not// want to route replies, they always go to the single server thread that sent us the request.
@@ -769,35 +755,34 @@ Workers and clients are synchronous. We want to use the load-balancing pattern t
 For reasons we already looked at, clients and workers won't speak to each other directly. It makes it impossible to add or remove nodes dynamically. So our basic model consists of the request-reply message broker we saw earlier[figure].
 
 [[code type="textdiagram" title="Cluster Architecture"]]
-+--------+  +--------+  +--------+
+#--------#  #--------#  #--------#
 | Client |  | Client |  | Client |
 +--------+  +--------+  +--------+
 |  REQ   |  |  REQ   |  |  REQ   |
-+---+----+  +---+----+  +---+----+
+'---+----'  '---+----'  '---+----'
     |           |           |
-    +-----------+-----------+
+    '-----------+-----------'
                 |
-+--------------------------------+
+.-------------- | ---------------.
 |               |                |
-|         +-----+------+         |
+|         .-----+------.         |
 |         |   ROUTER   |         |
 |         +------------+         |
 |         |    Load    |         |
 |         |  balancer  |         |
 |         +------------+         |
 |         |   ROUTER   |         |
-|         +-----+------+         |
-|               |         Broker :
-+--------------------------------+
+|         '-----+------'         |
+|               |         Broker |
+'=------------- | --------------='
                 |
-                |
-    +-----------+-----------+
+    .-----------+-----------.
     |           |           |
-+---+----+  +---+----+  +---+----+
+.---+----.  .---+----.  .---+----.
 |  REQ   |  |  REQ   |  |  REQ   |
 +--------+  +--------+  +--------+
 | Worker |  | Worker |  | Worker |
-+--------+  +--------+  +--------+
+#--------#  #--------#  #--------#
 [[/code]]
 
 +++ Scaling to Multiple Clusters
@@ -807,20 +792,19 @@ Now we scale this out to more than one cluster. Each cluster has a set of client
 [[code type="textdiagram" title="Multiple Clusters"]]
      Cluster 1          :          Cluster 2
                         :
-                        :
-+---+  +---+  +---+     :     +---+  +---+  +---+
+.---.  .---.  .---.     :     .---.  .---.  .---.
 | C |  | C |  | C |     :     | C |  | C |  | C |
-+-+-+  +-+-+  +-+-+     :     +-+-+  +-+-+  +-+-+
+'-+-'  '-+-'  '-+-'     :     '-+-'  '-+-'  #-+-'
   |      |      |       :       |      |      |
   |      |      |       :       |      |      |
-+-+------+------+-+     :     +-+------+------+-+
+#-+------+------+-#     :     #-+------+------+-#
 |     Broker      |     :     |     Broker      |
-+-+------+------+-+     :     +-+------+------+-+
+#-+------+------+-#     :     #-+------+------+-#
   |      |      |       :       |      |      |
   |      |      |       :       |      |      |
-+-+-+  +-+-+  +-+-+     :     +-+-+  +-+-+  +-+-+
+.-+-.  .-+-.  .-+-.     :     .-+-.  .-+-.  .-+-.
 | W |  | W |  | W |     :     | W |  | W |  | W |
-+---+  +---+  +---+     :     +---+  +---+  +---+
+'---'  '---'  '---'     :     '---'  '---'  '---'
                         :
 [[/code]]
 
@@ -835,24 +819,24 @@ The question is: how do we get the clients of each cluster talking to the worker
 Let's explore Idea #1. In this model we have workers connecting to both brokers and accepting jobs from either[figure].
 
 [[code type="textdiagram" title="Idea 1 - Cross-connected Workers"]]
-            Cluster 1          :         Cluster 2
-                               :
-                               :
-          |            |               |            |
-          +------------+               +------------+
-          |   ROUTER   |               |   ROUTER   |
-          +-----+------+               +-----+------+
-                |                            |
-      +---------|-+--=--------+--------------+
-      :         | :           :
-    +-----------+-----------+ :
-    | :         | :         | :
-    | :         | :         | :
-+---+-+--+  +---+-+--+  +---+-+--+
-| ROUTER |  | ROUTER |  | ROUTER |
-+--------+  +--------+  +--------+
-| Worker |  | Worker |  | Worker |
-+--------+  +--------+  +--------+
+            Cluster 1               :      Cluster 2  
+                                    :
+          #------------#            :    #------------#  
+          |            |            :    |            |  
+          +------------+            :    +------------+  
+          |   ROUTER   |            :    |   ROUTER   |  
+          '-----+------'            :    '-----+------'  
+                |                   :          |  
+      .---------+-+-----------+----------------'  
+      |         | |           |     :
+    .-+---------+-+---------. |     :
+    | |         | |         | |     :
+    | |         | |         | |     :
+.---+-+--.  .---+-+--.  .---+-+--.  :
+| ROUTER |  | ROUTER |  | ROUTER |  :
++--------+  +--------+  +--------+  :
+| Worker |  | Worker |  | Worker |  :
+#--------#  #--------#  #--------#  :
 [[/code]]
 
 It looks feasible. However it doesn't provide what we wanted, which was that clients get local workers if possible and remote workers only if it's better than waiting. Also workers will signal "ready" to both brokers and can get two jobs at once, while other workers remain idle. It seems this design fails because again we're putting routing logic at the edges.
@@ -863,19 +847,19 @@ So idea #2 then. We interconnect the brokers and don't touch the clients or work
      Cluster 1          :          Cluster 2
                         :
                         :
-+---+  +---+  +---+     :     +---+  +---+  +---+
+.---.  .---.  .---.     :     .---.  .---.  .---.
 | C |  | C |  | C |     :     | C |  | C |  | C |
-+-+-+  +-+-+  +-+-+     :     +-+-+  +-+-+  +-+-+
+'-+-'  '-+-'  '-+-'     :     '-+-'  '-+-'  '-+-'
   |      |      |       :       |      |      |
   |      |      |       :       |      |      |
-+-+------+------+-+     :     +-+------+------+-+
+#-+------+------+-#     :     #-+------+------+-#
 |     Broker      |<--------->|     Broker      |
-+-+------+------+-+     :     +-+------+------+-+
+#-+------+------+-#     :     #-+------+------+-#
   |      |      |       :       |      |      |
   |      |      |       :       |      |      |
-+-+-+  +-+-+  +-+-+     :     +-+-+  +-+-+  +-+-+
+.-+-.  .-+-.  .-+-.     :     .-+-.  .-+-.  .-+-.
 | W |  | W |  | W |     :     | W |  | W |  | W |
-+---+  +---+  +---+     :     +---+  +---+  +---+
+'---'  '---'  '---'     :     '---'  '---'  '---'
                         :
 [[/code]]
 
@@ -907,19 +891,19 @@ The simplest interconnect is //federation// in which brokers simulate clients an
      Cluster 1          :          Cluster 2
                         :
                         :
-+---+  +---+            :             +---+  +---+
+.---.  .---.            :             .---.  .---.
 | C |  | C |            :             | C |  | C |
-+-+-+  +-+-+    +----+  :  +-----+    +-+-+  +-+-+
+'-+-'  '-+-'    .----.  :  .-----.    '-+-'  '-+-'
   |      |      |    |  :  |     |      |      |
   |      |      |    |  :  |     |      |      |
-+-+------+------+-+  |  :  |   +-+------+------+-+
+#-+------+------+-#  |  :  |   #-+------+------+-#
 |     Broker      |  |  :  |   |     Broker      |
-+-+------+--------+  |  :  |   +--------+------+-+
+#-+------+--------#  |  :  |   #--------+------+-#
   |      |      ^    |  :  |     ^      |      |
   |      |      |    |  :  |     |      |      |
-+-+-+  +-+-+    |    +-----------+    +-+-+  +-+-+
+.-+-.  .-+-.    |    '-----------'    .-+-.  .-+-.
 | W |  | W |    |       :  |          | W |  | W |
-+---+  +---+    +----------+          +---+  +---+
+'---'  '---'    '----------'          '---'  '---'
                         :
 [[/code]]
 
@@ -958,43 +942,43 @@ For our transport and because we're simulating the whole thing on one box, we'll
 You may be thinking that this is a lot of work for some names. Why not call them s1, s2, s3, s4, etc.? The answer is that if your brain is not a perfect machine, you need a lot of help when reading code, and we'll see that these names do help. It's easier to remember "three flows, two directions" than "six different sockets"[figure].
 
 [[code type="textdiagram" title="Broker Socket Arrangement"]]
-+---------+ +---------+ +---------+
-| Client  | | Broker  | | Broker  |
-|         | | cloudbe | | statebe |
-+---------+ +---------+ +---------+
-| connect | | connect | |  bind   |
-+---------+ +---------+ +---------+
-  request     request      state
-     |           |           |
-     +-+         |         +-+
-       |         |         |
-       v         v         v
-  +---------+---------+---------+
-  |  bind   |  bind   | connect |
-  +---------+---------+---------+
-  | localfe | cloudfe | statefe |     Frontends
-  | ROUTER  | ROUTER  |   SUB   |     (incoming)
-  +---------+---------+---------+
-  |                             |
-  |           Broker            |
-  |                             |
-  +---------+---------+---------+
-  | ROUTER  | ROUTER  |   PUB   |     Backends
-  | localbe | cloudbe | statebe |     (outgoing)
-  +---------+---------+---------+
-  |  bind   | connect |  bind   |
-  +---------+---------+---------+
-    request   request    state
-       |         |         |
-     +-+         |         +-+
-     |           |           |
-     v           v           v
-+---------+ +---------+ +---------+
-| connect | |  bind   | | connect |
-+---------+ +---------+ +---------+
-| Worker  | | Broker  | | Broker  |
-|         | | cloudfe | | statefe |
-+---------+ +---------+ +---------+
+#---------#  #---------#  #---------#
+| Client  |  | Broker  |  | Broker  |
+|         |  | cloudbe |  | statebe |
++---------+  +---------+  +---------+
+| connect |  | connect |  |  bind   |
+'---------'  '---------'  '---------'
+  request      request       state
+     |            |            |
+     '-.          |          .-'
+       |          |          |
+       v          v          v
+   .---------+---------+---------.
+   |  bind   |  bind   | connect |
+   +---------+---------+---------+
+   | localfe | cloudfe | statefe |     Frontends
+   | ROUTER  | ROUTER  |   SUB   |     (incoming)
+   +---------+---------+---------+
+   |                             |
+   |           Broker            |
+   |                             |
+   +---------+---------+---------+
+   | ROUTER  | ROUTER  |   PUB   |     Backends
+   | localbe | cloudbe | statebe |     (outgoing)
+   +---------+---------+---------+
+   |  bind   | connect |  bind   |
+   '---------+---------+---------'
+     request    request     state
+       |          |          |
+     .-'          |          '-.
+     |            |            |
+     v            v            v
+.---------.  .---------.  .---------.
+| connect |  |  bind   |  | connect |
++---------+  +---------+  +---------+
+| Worker  |  | Broker  |  | Broker  |
+|         |  | cloudfe |  | statefe |
+#---------#  #---------#  #---------#
 [[/code]]
 
 Note that we connect the cloudbe in each broker to the cloudfe in every other broker, and likewise we connect the statebe in each broker to the statefe in every other broker.
@@ -1004,18 +988,18 @@ Note that we connect the cloudbe in each broker to the cloudfe in every other br
 Since each socket flow has its own little traps for the unwary, we will test them in real code one by one, rather than try to throw the whole lot into code in one go. When we're happy with each flow, we can put them together into a full program. We'll start with the state flow[figure].
 
 [[code type="textdiagram" title="The State Flow"]]
-                      +---------+
+                      #---------#
                       | Broker  |
                       | statebe |
                       +---------+
                       |  bind   |
-                      +---------+
+                      '---------'
                          state
                            |
-                         +-+
+                         .-'
                          |
                          v
-+---------+---------+---------+
+.---------+---------+---------.
 |         |         | connect |
 +---------+---------+---------+
 |         |         | statefe |
@@ -1029,18 +1013,18 @@ Since each socket flow has its own little traps for the unwary, we will test the
 |         |         | statebe |
 +---------+---------+---------+
 |         |         |  bind   |
-+---------+---------+---------+
+'---------+---------+---------'
                        state
                          |
-                         +-+
+                         '-.
                            |
                            v
-                      +---------+
+                      .---------.
                       | connect |
                       +---------+
                       | statefe |
                       | Broker  |
-                      +---------+
+                      #---------#
 [[/code]]
 
 Here is how this works in code:
@@ -1079,43 +1063,43 @@ If we wanted to send state messages at precise intervals we'd create a child thr
 Let's now prototype at the flow of tasks via the local and cloud sockets[figure]. This code pulls requests from clients and then distributes them to local workers and cloud peers on a random basis.
 
 [[code type="textdiagram" title="The Flow of Tasks"]]
-+---------+ +---------+
-| Client  | | Broker  |
-|         | | cloudbe |
-+---------+ +---------+
-| connect | | connect |
-+---------+ +---------+
-  request     request
-     |           |
-     +-+         |
-       |         |
-       v         v
-  +---------+---------+---------+
-  |  bind   |  bind   |         |
-  +---------+---------+---------+
-  | localfe | cloudfe |         |
-  | ROUTER  | ROUTER  |         |
-  +---------+---------+---------+
-  |                             |
-  |           Broker            |
-  |                             |
-  +---------+---------+---------+
-  | ROUTER  | ROUTER  |         |
-  | localbe | cloudbe |         |
-  +---------+---------+---------+
-  |  bind   | connect |         |
-  +---------+---------+---------+
-    request   request
-       |         |
-     +-+         |
-     |           |
-     v           v
-+---------+ +---------+
-| connect | |  bind   |
-+---------+ +---------+
-|         | | cloudfe |
-| Worker  | | Broker  |
-+---------+ +---------+
+#---------#  #---------#
+| Client  |  | Broker  |
+|         |  | cloudbe |
++---------+  +---------+
+| connect |  | connect |
+'---------'  '---------'
+  request      request
+     |            |
+     '-.          |
+       |          |
+       v          v
+   .---------+---------+---------.
+   |  bind   |  bind   |         |
+   +---------+---------+---------+
+   | localfe | cloudfe |         |
+   | ROUTER  | ROUTER  |         |
+   +---------+---------+---------+
+   |                             |
+   |           Broker            |
+   |                             |
+   +---------+---------+---------+
+   | ROUTER  | ROUTER  |         |
+   | localbe | cloudbe |         |
+   +---------+---------+---------+
+   |  bind   | connect |         |
+   '---------+---------+---------'
+     request    request
+       |          |
+     .-'          |
+     |            |
+     v            v
+.---------.  .---------.
+| connect |  |  bind   |
++---------+  +---------+
+|         |  | cloudfe |
+| Worker  |  | Broker  |
+#---------#  #---------#
 [[/code]]
 
 Before we jump into the code, which is getting a little complex, let's sketch the core routing logic and break it down into a simple but robust design.

@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 #   mkwikidot
 #   - convert ZeroMQ document to Wikidot format
-#   - converts [[code type="textdiagram"]] via ditaa
+#   - converts [[code type="textdiagram"]] via asciitosvg
 #   - converts zmq_something(3) into URL to http://api.zeromq.org
 #
 #   Usage: mkwikidot docfile

@@ -1,0 +1,159 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Created with ASCIIToSVG (http://9vx.org/~dho/a2s/) -->
+<svg width="381px" height="654px" version="1.1"
+  xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <filter id="dsFilter" width="150%" height="150%">
+      <feOffset result="offOut" in="SourceGraphic" dx="3" dy="3"/>
+      <feColorMatrix result="matrixOut" in="offOut" type="matrix" values="0.2 0 0 0 0 0 0.2 0 0 0 0 0 0.2 0 0 0 0 0 1 0"/>
+      <feGaussianBlur result="blurOut" in="matrixOut" stdDeviation="3"/>
+      <feBlend in="SourceGraphic" in2="blurOut" mode="normal"/>
+    </filter>
+    <marker id="iPointer"
+      viewBox="0 0 10 10" refX="5" refY="5" 
+      markerUnits="strokeWidth"
+      markerWidth="8" markerHeight="7"
+      orient="auto">
+      <path d="M 10 0 L 10 10 L 0 5 z" />
+    </marker>
+    <marker id="Pointer"
+      viewBox="0 0 10 10" refX="5" refY="5" 
+      markerUnits="strokeWidth"
+      markerWidth="8" markerHeight="7"
+      orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" />
+    </marker>
+  </defs><g id="boxes" stroke="black" stroke-width="2" fill="none" >
+<g id="group0">
+	<path id="path0" filter="url(#dsFilter)" fill="#fff" d="M 4.5 8 L 94.5 8 L 94.5 62 Q 94.5 72 84.5 72 L 14.5 72 Q 4.5 72 4.5 62 Z" />
+	<text x="17.1" y="28.8" id="text0" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Client </text>
+
+	<text x="35.1" y="60.8" id="text0" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >REQ </text>
+
+</g>
+<g id="group2">
+	<path id="path2" filter="url(#dsFilter)" fill="#fff" d="M 130.5 8 L 220.5 8 L 220.5 62 Q 220.5 72 210.5 72 L 140.5 72 Q 130.5 72 130.5 62 Z" />
+	<text x="143.1" y="28.8" id="text2" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Client </text>
+
+	<text x="161.1" y="60.8" id="text2" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >REQ </text>
+
+</g>
+<g id="group4">
+	<path id="path4" filter="url(#dsFilter)" fill="#fff" d="M 256.5 8 L 346.5 8 L 346.5 62 Q 346.5 72 336.5 72 L 266.5 72 Q 256.5 72 256.5 62 Z" />
+	<text x="269.1" y="28.8" id="text4" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Client </text>
+
+	<text x="287.1" y="60.8" id="text4" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >REQ </text>
+
+</g>
+<g id="group21">
+	<path id="path21" filter="url(#dsFilter)" fill="#fff" d="M 121.5 258 Q 121.5 248 131.5 248 L 219.5 248 Q 229.5 248 229.5 258 L 229.5 334 Q 229.5 344 219.5 344 L 131.5 344 Q 121.5 344 121.5 334 Z" />
+	<text x="143.1" y="268.8" id="text21" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >ROUTER </text>
+
+	<text x="143.1" y="300.8" id="text21" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Broker </text>
+
+	<text x="143.1" y="332.8" id="text21" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >DEALER </text>
+
+</g>
+<g id="group32">
+	<path id="path32" filter="url(#dsFilter)" fill="#fff" d="M 4.5 530 Q 4.5 520 14.5 520 L 84.5 520 Q 94.5 520 94.5 530 L 94.5 600 L 4.5 600 Z" />
+	<text x="35.1" y="540.8" id="text32" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >REP </text>
+
+	<text x="17.1" y="572.8" id="text32" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Service </text>
+
+	<text x="44.1" y="588.8" id="text32" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >A</text>
+
+</g>
+<g id="group34">
+	<path id="path34" filter="url(#dsFilter)" fill="#fff" d="M 130.5 530 Q 130.5 520 140.5 520 L 210.5 520 Q 220.5 520 220.5 530 L 220.5 600 L 130.5 600 Z" />
+	<text x="161.1" y="540.8" id="text34" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >REP </text>
+
+	<text x="143.1" y="572.8" id="text34" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Service </text>
+
+	<text x="170.1" y="588.8" id="text34" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >B</text>
+
+</g>
+<g id="group36">
+	<path id="path36" filter="url(#dsFilter)" fill="#fff" d="M 256.5 530 Q 256.5 520 266.5 520 L 336.5 520 Q 346.5 520 346.5 530 L 346.5 600 L 256.5 600 Z" />
+	<text x="287.1" y="540.8" id="text36" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >REP </text>
+
+	<text x="269.1" y="572.8" id="text36" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Service </text>
+
+	<text x="296.1" y="588.8" id="text36" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >C</text>
+
+</g>
+</g>
+<g id="lines" stroke="black" stroke-width="2" fill="none" >
+<g id="group52">
+	<path id="path52" d="M 4.5 40 L 94.5 40 " />
+</g>
+<g id="group85">
+	<path id="path85" d="M 4.5 552 L 94.5 552 " />
+</g>
+<g id="group255">
+	<path id="path255" d="M 49.5 136 L 49.5 142 Q 49.5 152 59.5 152 L 175.5 152 L 291.5 152 Q 301.5 152 301.5 142 L 301.5 120 " />
+</g>
+<g id="group274">
+	<path id="path274" d="M 49.5 440 L 49.5 434 Q 49.5 424 59.5 424 L 175.5 424 L 291.5 424 Q 301.5 424 301.5 434 L 301.5 456 " />
+</g>
+<g id="group277">
+	<path id="path277" marker-start="url(#iPointer)" d="M 49.5 488 L 49.5 456 " />
+</g>
+<g id="group576">
+	<path id="path576" d="M 121.5 280 L 229.5 280 " />
+</g>
+<g id="group579">
+	<path id="path579" d="M 121.5 312 L 229.5 312 " />
+</g>
+<g id="group602">
+	<path id="path602" d="M 130.5 40 L 220.5 40 " />
+</g>
+<g id="group635">
+	<path id="path635" d="M 130.5 552 L 220.5 552 " />
+</g>
+<g id="group805">
+	<path id="path805" d="M 175.5 136 L 175.5 152 L 175.5 184 " />
+</g>
+<g id="group810">
+	<path id="path810" marker-start="url(#iPointer)" d="M 175.5 216 L 175.5 184 " />
+</g>
+<g id="group822">
+	<path id="path822" d="M 175.5 408 L 175.5 424 L 175.5 456 " />
+</g>
+<g id="group827">
+	<path id="path827" marker-start="url(#iPointer)" d="M 175.5 488 L 175.5 456 " />
+</g>
+<g id="group1150">
+	<path id="path1150" d="M 256.5 40 L 346.5 40 " />
+</g>
+<g id="group1183">
+	<path id="path1183" d="M 256.5 552 L 346.5 552 " />
+</g>
+<g id="group1375">
+	<path id="path1375" marker-start="url(#iPointer)" d="M 301.5 488 L 301.5 456 " />
+</g>
+</g>
+<g id="text" fill="black" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >
+<text x="17.1" y="92.8" id="text6" fill="#000" >connect </text>
+<text x="143.1" y="92.8" id="text7" fill="#000" >connect </text>
+<text x="269.1" y="92.8" id="text8" fill="#000" >connect</text>
+<text x="44.1" y="108.8" id="text9" fill="#000" >|</text>
+<text x="170.1" y="108.8" id="text10" fill="#000" >|</text>
+<text x="296.1" y="108.8" id="text11" fill="#000" >|</text>
+<text x="17.1" y="124.8" id="text12" fill="#000" >request </text>
+<text x="143.1" y="124.8" id="text13" fill="#000" >request </text>
+<text x="269.1" y="124.8" id="text14" fill="#000" >request</text>
+<text x="116.1" y="188.8" id="text15" fill="#000" >fair-queuing</text>
+<text x="152.1" y="236.8" id="text16" fill="#000" >bind</text>
+<text x="152.1" y="364.8" id="text20" fill="#000" >bind</text>
+<text x="170.1" y="380.8" id="text21" fill="#000" >|</text>
+<text x="107.1" y="396.8" id="text22" fill="#000" >load balancing</text>
+<text x="17.1" y="460.8" id="text23" fill="#000" >request </text>
+<text x="143.1" y="460.8" id="text24" fill="#000" >request </text>
+<text x="269.1" y="460.8" id="text25" fill="#000" >request</text>
+<text x="17.1" y="508.8" id="text26" fill="#000" >connect </text>
+<text x="143.1" y="508.8" id="text27" fill="#000" >connect </text>
+<text x="269.1" y="508.8" id="text28" fill="#000" >connect</text>
+</g>
+</svg>

@@ -1,0 +1,107 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Created with ASCIIToSVG (http://9vx.org/~dho/a2s/) -->
+<svg width="327px" height="638px" version="1.1"
+  xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <filter id="dsFilter" width="150%" height="150%">
+      <feOffset result="offOut" in="SourceGraphic" dx="3" dy="3"/>
+      <feColorMatrix result="matrixOut" in="offOut" type="matrix" values="0.2 0 0 0 0 0 0.2 0 0 0 0 0 0.2 0 0 0 0 0 1 0"/>
+      <feGaussianBlur result="blurOut" in="matrixOut" stdDeviation="3"/>
+      <feBlend in="SourceGraphic" in2="blurOut" mode="normal"/>
+    </filter>
+    <marker id="iPointer"
+      viewBox="0 0 10 10" refX="5" refY="5" 
+      markerUnits="strokeWidth"
+      markerWidth="8" markerHeight="7"
+      orient="auto">
+      <path d="M 10 0 L 10 10 L 0 5 z" />
+    </marker>
+    <marker id="Pointer"
+      viewBox="0 0 10 10" refX="5" refY="5" 
+      markerUnits="strokeWidth"
+      markerWidth="8" markerHeight="7"
+      orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" />
+    </marker>
+  </defs><g id="boxes" stroke="black" stroke-width="2" fill="none" >
+<g id="group0">
+	<path id="path0" filter="url(#dsFilter)" fill="#fff" d="M 202.5 8 L 292.5 8 L 292.5 78 Q 292.5 88 282.5 88 L 212.5 88 Q 202.5 88 202.5 78 Z" />
+	<text x="215.1" y="28.8" id="text0" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Broker </text>
+
+	<text x="215.1" y="44.8" id="text0" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >statebe </text>
+
+	<text x="224.1" y="76.8" id="text0" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >bind </text>
+
+</g>
+<g id="group8">
+	<path id="path8" filter="url(#dsFilter)" fill="#fff" d="M 4.5 194 Q 4.5 184 14.5 184 L 264.5 184 Q 274.5 184 274.5 194 L 274.5 398 Q 274.5 408 264.5 408 L 14.5 408 Q 4.5 408 4.5 398 Z" />
+	<text x="197.1" y="204.8" id="text8" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >connect </text>
+
+	<text x="197.1" y="236.8" id="text8" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >statefe </text>
+
+	<text x="215.1" y="252.8" id="text8" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >SUB </text>
+
+	<text x="107.1" y="300.8" id="text8" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Broker </text>
+
+	<text x="215.1" y="348.8" id="text8" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >PUB </text>
+
+	<text x="197.1" y="364.8" id="text8" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >statebe </text>
+
+	<text x="206.1" y="396.8" id="text8" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >bind </text>
+
+</g>
+<g id="group34">
+	<path id="path34" filter="url(#dsFilter)" fill="#fff" d="M 202.5 514 Q 202.5 504 212.5 504 L 282.5 504 Q 292.5 504 292.5 514 L 292.5 584 L 202.5 584 Z" />
+	<text x="215.1" y="524.8" id="text34" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >connect </text>
+
+	<text x="215.1" y="556.8" id="text34" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >statefe </text>
+
+	<text x="215.1" y="572.8" id="text34" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Broker </text>
+
+</g>
+</g>
+<g id="lines" stroke="black" stroke-width="2" fill="none" >
+<g id="group53">
+	<path id="path53" d="M 4.5 216 L 94.5 216 L 184.5 216 L 274.5 216 " />
+</g>
+<g id="group57">
+	<path id="path57" d="M 4.5 264 L 94.5 264 L 184.5 264 L 274.5 264 " />
+</g>
+<g id="group62">
+	<path id="path62" d="M 4.5 328 L 94.5 328 L 184.5 328 L 274.5 328 " />
+</g>
+<g id="group66">
+	<path id="path66" d="M 4.5 376 L 94.5 376 L 184.5 376 L 274.5 376 " />
+</g>
+<g id="group435">
+	<path id="path435" d="M 94.5 184 L 94.5 216 L 94.5 264 " />
+</g>
+<g id="group445">
+	<path id="path445" d="M 94.5 328 L 94.5 376 L 94.5 408 " />
+</g>
+<g id="group817">
+	<path id="path817" d="M 184.5 184 L 184.5 216 L 184.5 264 " />
+</g>
+<g id="group827">
+	<path id="path827" d="M 184.5 328 L 184.5 376 L 184.5 408 " />
+</g>
+<g id="group887">
+	<path id="path887" d="M 202.5 56 L 292.5 56 " />
+</g>
+<g id="group918">
+	<path id="path918" d="M 202.5 536 L 292.5 536 " />
+</g>
+<g id="group1010">
+	<path id="path1010" marker-start="url(#iPointer)" d="M 229.5 168 L 229.5 146 Q 229.5 136 239.5 136 L 237.5 136 Q 247.5 136 247.5 126 L 247.5 104 " />
+</g>
+<g id="group1027">
+	<path id="path1027" marker-end="url(#Pointer)" d="M 229.5 440 L 229.5 446 Q 229.5 456 239.5 456 L 237.5 456 Q 247.5 456 247.5 466 L 247.5 488 " />
+</g>
+</g>
+<g id="text" fill="black" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >
+<text x="224.1" y="108.8" id="text3" fill="#000" >state</text>
+<text x="206.1" y="428.8" id="text11" fill="#000" >state</text>
+</g>
+</svg>

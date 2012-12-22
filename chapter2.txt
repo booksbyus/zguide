@@ -84,25 +84,21 @@ It's the ability to connect sockets in these different ways that gives 0MQ its b
 To send and receive messages you use the {{zmq_msg_send[3]}} and {{zmq_msg_recv[3]}} methods. The names are conventional but 0MQ's I/O model is different enough from the TCP model[figure] that you will need time to get your head around it.
 
 [[code type="textdiagram" title="TCP sockets are 1 to 1"]]
-+------------+
-|            |
+#------------#
 |    Node    |
-|            |
 +------------+
 |   Socket   |
-\------------/
+'------------'
       ^
       |
    1 to 1
       |
       v
-/------------\
+.------------.
 |   Socket   |
 +------------+
-|            |
 |    Node    |
-|            |
-+------------+
+#------------#
 [[/code]]
 
 Let's look at the main differences between TCP sockets and 0MQ sockets when it comes to working with data:
@@ -134,15 +130,15 @@ The answer used to be "this is not how it works". 0MQ is not a neutral carrier, 
 The HTTP request uses CR-LF as its simplest framing delimiter, whereas 0MQ uses a length-specified frame.
 
 [[code type="textdiagram" title="HTTP On the Wire"]]
-+----------------+----+----+----+----+
+#----------------+----+----+----+----#
 | GET /index.html| 13 | 10 | 13 | 10 |
-+----------------+----+----+----+----+
+#----------------+----+----+----+----#
 [[/code]]
 
 [[code type="textdiagram" title="0MQ On the Wire"]]
-+---+---+---+---+---+---+
+#---+---+---+---+---+---#
 | 5 | H | E | L | L | O |
-+---+---+---+---+---+---+
+#---+---+---+---+---+---#
 [[/code]]
 
 So you could write a HTTP-like protocol using 0MQ, using for example the request-reply socket pattern. But it would not be HTTP.
@@ -388,28 +384,24 @@ There are several solutions to dynamic discovery. The simplest is to entirely av
 In practice this leads to increasingly fragile and hard-to-manage architectures. Let's say you have one publisher and a hundred subscribers. You connect each subscriber to the publisher by configuring a publisher endpoint in each subscriber. That's easy[figure]. Subscribers are dynamic, the publisher is static. Now say you add more publishers. Suddenly it's not so easy any more. If you continue to connect each subscriber to each publisher, the cost of avoiding dynamic discovery gets higher and higher.
 
 [[code type="textdiagram" title="Small-scale Pub-Sub Network"]]
-                 +-----------+
-                 |           |
+                 #-----------#
                  | Publisher |
-                 |           |
                  +-----------+
                  |    PUB    |
-                 \-----------/
+                 '-----------'
                      bind
            tcp://192.168.55.210:5556
                        |
                        |
-      +----------------+----------------+
+      .----------------+----------------.
       |                |                |
       |                |                |
    connect           connect          connect
-/------------\   /------------\   /------------\
+.------------.   .------------.   .------------.
 |    SUB     |   |    SUB     |   |    SUB     |
 +------------+   +------------+   +------------+
-|            |   |            |   |            |
 | Subscriber |   | Subscriber |   | Subscriber |
-|            |   |            |   |            |
-+------------+   +------------+   +------------+
+#------------#   #------------#   #------------#
 [[/code]]
 
 There are quite a few answers to this but the very simplest answer is to add an intermediary, that is, a static point in the network to which all other nodes connect. In classic messaging, this is the job of the "message broker". 0MQ doesn't come with a message broker as such, but it lets us build intermediaries quite easily.
@@ -419,71 +411,57 @@ You might wonder, if all networks eventually get large enough to need intermedia
 It's better to think of intermediaries as simple stateless message switches. The best analogy is an HTTP proxy; it's there but doesn't have any special role. Adding a pub-sub proxy solves the dynamic discovery problem in our example. We set the proxy in the "middle" of the network[figure]. The proxy opens an XSUB socket, an XPUB socket, and binds each to well-known IP addresses and ports. Then all other processes connect to the proxy, instead of to each other. It becomes trivial to add more subscribers or publishers.
 
 [[code type="textdiagram" title="Pub-Sub Network with a Proxy"]]
-+------------+   +------------+   +------------+
-|            |   |            |   |            |
+#------------#   #------------#   #------------#
 | Publisher  |   | Publisher  |   | Publisher  |
-|            |   |            |   |            |
 +------------+   +------------+   +------------+
 |    PUB     |   |    PUB     |   |    PUB     |
-\------------/   \------------/   \------------/
+'------------'   '------------'   '------------'
    connect          connect          connect
       |                |                |
-      |                |                |
-      +----------------+----------------+
-                       |
+      '----------------+----------------'
                        |
                       bind
-                 /------------\
+                 .------------.
                  |    XSUB    |
                  +------------+
-                 |            |
                  |   Proxy    |
-                 |            |
                  +------------+
                  |    XPUB    |
-                 \------------/
+                 '------------'
                       bind
                        |
-                       |
-      +----------------+----------------+
-      |                |                |
+      .----------------+----------------.
       |                |                |
    connect           connect          connect
-/------------\   /------------\   /------------\
+.------------.   .------------.   .------------.
 |    SUB     |   |    SUB     |   |    SUB     |
 +------------+   +------------+   +------------+
-|            |   |            |   |            |
 | Subscriber |   | Subscriber |   | Subscriber |
-|            |   |            |   |            |
-+------------+   +------------+   +------------+
+#------------#   #------------#   #------------#
 [[/code]]
 
 We need XPUB and XSUB sockets because 0MQ does subscription forwarding: SUB sockets actually send subscriptions to PUB sockets as special messages. The proxy has to forward these as well, by reading them from the XPUB socket and writing them to the XSUB socket. This is the main use-case for XSUB and XPUB[figure].
 
 [[code type="textdiagram" title="Extended Publish-Subscribe"]]
-+---------+   +---------+   +---------+
+#---------#   #---------#   #---------#
 |   PUB   |   |   PUB   |   |   PUB   |
-\----+----/   \----+----/   \----+----/
+'----+----'   '----+----'   '----+----'
      |             |             |
-     |             |             |
-     +-------------+-------------+
+     '-------------+-------------'
                    |
-                   |
-             /-----+-----\
+             .-----+-----.
              |   XSUB    |
              +-----------+
              |   code    |
              +-----------+
              |   XPUB    |
-             \-----+-----/
+             '-----+-----'
                    |
-                   |
-     +-------------+-------------+
+     .-------------+-------------.
      |             |             |
-     |             |             |
-/----+----\   /----+----\   /----+----\
+.----+----.   .----+----.   .----+----.
 |   SUB   |   |   SUB   |   |   SUB   |
-+---------+   +---------+   +---------+
+#---------#   #---------#   #---------#
 [[/code]]
 
 +++ Shared Queue (DEALER and ROUTER sockets)
@@ -493,29 +471,25 @@ In the Hello World client-server application we have one client that talks to on
 There are two ways to connect multiple clients to multiple servers. The brute-force way is to connect each client socket to multiple service endpoints. One client socket can connect to multiple service sockets, and the REQ socket will then distribute requests among these services. Let's say you connect a client socket to three service endpoints, A, B, and C. The client makes requests R1, R2, R3, R4. R1 and R4 go to service A, R2 goes to B, and R3 goes to service C[figure].
 
 [[code type="textdiagram" title="Request Distribution"]]
-             +-----------+
-             |           |
-             |   Client  |
-             |           |
+             #-----------#
+             |  Client   |
              +-----------+
              |    REQ    |
-             \-----+-----/
+             '-----+-----'
                    |
              R1, R2, R3, R4
                    |
-     +-------------+-------------+
+     .-------------+-------------.
      |             |             |
   R1, R4           R2            R3
      |             |             |
      v             v             v
-/---------\   /---------\   /---------\
+.---------.   .---------.   .---------.
 |   REP   |   |   REP   |   |   REP   |
 +---------+   +---------+   +---------+
-|         |   |         |   |         |
 | Service |   | Service |   | Service |
 |    A    |   |    B    |   |    C    |
-|         |   |         |   |         |
-+---------+   +---------+   +---------+
+#---------#   #---------#   #---------#
 [[/code]]
 
 This design lets you add more clients cheaply. You can also add more services. Each client will distribute its requests to the services. But each client has to know the service topology. If you have 100 clients and then you decide to add three more services, you need to reconfigure and restart 100 clients in order for the clients to know about the three new services.
@@ -533,29 +507,26 @@ Luckily there are two sockets called DEALER and ROUTER that let you do non-block
 In this simple extended request-reply pattern, REQ talks to ROUTER and DEALER talks to REP. In between the DEALER and ROUTER we have to have code (like our broker) that pulls messages off the one socket and shoves them onto the other[figure].
 
 [[code type="textdiagram" title="Extended Request-reply"]]
-+---------+   +---------+   +---------+
+#---------#   #---------#   #---------#
 |   REQ   |   |   REQ   |   |   REQ   |
-\----+----/   \----+----/   \----+----/
+'----+----'   '----+----'   '----+----'
      |             |             |
-     |             |             |
-     +-------------+-------------+
+     '-------------+-------------'
                    |
-                   |
-             /-----+-----\
+             .-----+-----.
              |  ROUTER   |
              +-----------+
              |   code    |
              +-----------+
              |  DEALER   |
-             \-----+-----/
+             '-----+-----'
                    |
-                   |
-     +-------------+-------------+
+     .-------------+-------------.
      |             |             |
-     |             |             |
-/----+----\   /----+----\   /----+----\
+     v             v             v
+.---------.   .---------.   .---------.
 |   REP   |   |   REP   |   |   REP   |
-+---------+   +---------+   +---------+
+#---------#   #---------#   #---------#
 [[/code]]
 
 The request-reply broker binds to two endpoints, one for clients to connect to (the frontend socket) and one for workers to connect to (the backend). To test this broker, you will want to change your workers so they connect to the backend socket. Here is a client that shows what I mean:
@@ -576,51 +547,44 @@ And here is the broker, which properly handles multi-part messages:
 Using a request-reply broker makes your client-server architectures easier to scale since clients don't see workers, and workers don't see clients. The only static node is the broker in the middle[figure].
 
 [[code type="textdiagram" title="Request-reply Broker"]]
-+---------+   +---------+   +---------+
-|         |   |         |   |         |
+#---------#   #---------#   #---------#
 | Client  |   | Client  |   | Client  |
-|         |   |         |   |         |
 +---------+   +---------+   +---------+
 |   REQ   |   |   REQ   |   |   REQ   |
-\---------/   \---------/   \---------/
+'---------'   '---------'   '---------'
   connect       connect       connect
-     |             |             |
      |             |             |
   request       request       request
      |             |             |
-     +-------------+-------------+
+     '-------------+-------------'
                    |
              fair-queuing
                    |
                    v
                  bind
-             /-----------\
+             .-----------.
              |  ROUTER   |
              +-----------+
-             |           |
-             |   Broker  |
-             |           |
+             |  Broker   |
              +-----------+
              |  DEALER   |
-             \-----------/
+             '-----------'
                  bind
                    |
             load balancing
                    |
-     +-------------+-------------+
+     .-------------+-------------.
      |             |             |
   request       request       request
      |             |             |
      v             v             v
   connect       connect       connect
-/---------\   /---------\   /---------\
+.---------.   .---------.   .---------.
 |   REP   |   |   REP   |   |   REP   |
 +---------+   +---------+   +---------+
-|         |   |         |   |         |
 | Service |   | Service |   | Service |
 |    A    |   |    B    |   |    C    |
-|         |   |         |   |         |
-+---------+   +---------+   +---------+
+#---------#   #---------#   #---------#
 [[/code]]
 
 +++ 0MQ's Built-in Proxy Function
@@ -650,46 +614,40 @@ As an example, we're going to write a little proxy that sits in between a publis
 It looks very similar to the earlier proxy example but the key part is that the frontend and backend sockets are on two different networks. We can use this model for example to connect a multicast network ({{pgm}} transport) to a TCP publisher.
 
 [[code type="textdiagram" title="Pub-Sub Forwarder Proxy"]]
-                 +-----------+
-                 |           |
+                 #-----------#
                  | Publisher |
-                 |           |
                  +-----------+
                  |    PUB    |
-                 \-----------/
+                 '-----------'
                      bind
            tcp://192.168.55.210:5556
                        |
-                       |
-      +----------------+----------------+
+      .----------------+----------------.
       |                |                |
+   connect           connect          connect
       |                |                |
-   connect           connect            |
-/------------\   /------------\       connect
-|    SUB     |   |    SUB     |   /------------\
-+------------+   +------------+   |    XSUB    |
-|            |   |            |   +------------+
-| Subscriber |   | Subscriber |   |            |
-|            |   |            |   | Forwarder  |
-+------------+   +------------+   |            |
-                                  +------------+
- Internal network                 |    XPUB    |
- ---------------------------------\------------/--------
+      v                v                v
+.------------.   .------------.   .------------.
+|    SUB     |   |    SUB     |   |    XSUB    |
++------------+   +------------+   +------------+
+| Subscriber |   | Subscriber |   |   Proxy    |
+#------------#   #------------#   +------------+
+                                  |    XPUB    |
+ Internal network                 '-----+------'
+ ---------------------------------------|---------------
  External network                      bind
                                 tcp://10.1.1.0:8100
                                         |
-                                        |
-                               +--------+--------+
-                               |                 |
+                               .--------+--------.
                                |                 |
                             connect           connect
-                         /------------\    /------------\
+                               |                 |
+                               v                 v
+                         .------------.    .------------.
                          |    SUB     |    |    SUB     |
                          +------------+    +------------+
-                         |            |    |            |
                          | Subscriber |    | Subscriber |
-                         |            |    |            |
-                         +------------+    +------------+
+                         #------------#    #------------#
 [[/code]]
 
 ++ Handling Errors and ETERM
@@ -756,52 +714,41 @@ zmq_msg_close (&message);
 [[/code]]
 
 [[code type="textdiagram" title="Parallel Pipeline with Kill Signaling"]]
-             +-------------+
-             |             |
+             #-------------#
              |  Ventilator |
-             |             |
              +-------------+
              |    PUSH     |
-             \------+------/
-                    |
+             '------+------'
                   tasks
                     |
-    +---------------+---------------+
+    .---------------+---------------.
     |               |               |
-    |     /=--------|-----+=--------|-----+------\
-  task    |       task    |        task   |      :
+    |     .--=------|-----+=--------|-----+---=--.
+  task    |       task    |        task   |      |
     |     |         |     |         |     |      |
     v     v         v     v         v     v      |
-/------+-----\  /------+-----\  /------+-----\   |
+.------+-----.  .------+-----.  .------+-----.   |
 | PULL | SUB |  | PULL | SUB |  | PULL | SUB |   |
 +------+-----+  +------+-----+  +------+-----+   |
-|            |  |            |  |            |   |
 |   Worker   |  |   Worker   |  |   Worker   |   |
-|            |  |            |  |            |   |
 +------------+  +------------+  +------------+   |
 |    PUSH    |  |    PUSH    |  |    PUSH    |   |
-\-----+------/  \-----+------/  \-----+------/   |
+'-----+------'  '-----+------'  '-----+------'   |
       |               |               |          |
     result          result          result       |
       |               |               |          |
-      +---------------+---------------+          |
+      '---------------+---------------'          |
                       |                          |
                    results                       |
                       |                          |
                       v                          |
-               /-------------\                   |
+               .-------------.                   |
                |    PULL     |                   |
                +-------------+                   |
-               |             |                   |
                |    Sink     |                   |
-               |             |                   |
                +-------------+                   |
-               |     PUB     |                   |
-               \------+------/                   |
-                      |                          |
-                 KILL signal                     |
-                      |                          |
-                      \--------------------------/
+               |     PUB     +--=-KILL signal----'
+               '-------------'
 [[/code]]
 
 Here is the worker process, which manages two sockets (a PULL socket getting tasks, and a SUB socket getting control commands) using the {{zmq_poll[3]}} technique we saw earlier:
@@ -946,47 +893,37 @@ Note that creating threads is not portable in most programming languages. The PO
 Here the 'work' is just a one-second pause. We could do anything in the workers, including talking to other nodes. This is what the MT server looks like in terms of ØMQ sockets and nodes. Note how the request-reply chain is {{REQ-ROUTER-queue-DEALER-REP}}[figure].
 
 [[code type="textdiagram" title="Multithreaded Server"]]
-               +------------+
-               |            |
+               #------------#
                |   Client   |
-               |            |
                +------------+
                |    REQ     |
-               \---+--------/
+               '---+--------'
                    |    ^
                    |    |
               "Hello"  "World"
-                   |    |
-/------------------|--=-|------------------\
+.----------------= | -= | =----------------.
 |                  v    |                  :
-|              /--------+---\              |
+|              .--------+---.              |
 |              |   ROUTER   |              |
 |              +------------+              |
-|              |            |              |
 |              |   Server   |              |
-|              |            |              |
 |              +------------+              |
-|              |            |              |
 |              |   Queue    |              |
 |              |   proxy    |              |
-|              |            |              |
 |              +------------+              |
 |              |   DEALER   |              |
-|              \------------/              |
+|              '------------'              |
 |                    ^                     |
 |                    |                     |
-|        +-----------+-----------+         |
+|        .-----------+-----------.         |
 |        |           |           |         |
 |        v           v           v         |
-|    /--------\  /--------\  /--------\    |
+|    .--------.  .--------.  .--------.    |
 |    |  REP   |  |  REP   |  |  REP   |    |
 |    +--------+  +--------+  +--------+    |
-|    |        |  |        |  |        |    |
 |    | Worker |  | Worker |  | Worker |    |
-|    |        |  |        |  |        |    |
-|    +--------+  +--------+  +--------+    |
-|                                          |
-\------------------------------------------/
+|    #--------#  #--------#  #--------#    |
+'------------------------------------------'
 [[/code]]
 
 ++ Signaling between Threads (PAIR sockets)
@@ -999,39 +936,31 @@ Let's make three threads that signal each other when they are ready[figure]. In 
 [[/code]]
 
 [[code type="textdiagram" title="The Relay Race"]]
-+------------+
-|            |
+#------------#
 |   Step 1   |
-|            |
 +------------+
 |    PAIR    |
-\-----+------/
-      |
+'-----+------'
       |
     Ready!
       |
       v
-/------------\
+.------------.
 |    PAIR    |
 +------------+
-|            |
 |   Step 2   |
-|            |
 +------------+
 |    PAIR    |
-\-----+------/
-      |
+'-----+------'
       |
     Ready!
       |
       v
-/------------\
+.------------.
 |    PAIR    |
 +------------+
-|            |
 |   Step 3   |
-|            |
-+------------+
+#------------#
 [[/code]]
 
 
@@ -1073,27 +1002,20 @@ In this case we'll use a REQ-REP socket flow to synchronize subscribers and publ
 [[/code]]
 
 [[code type="textdiagram" title="Pub-Sub Synchronization"]]
-+----------------+
-|                |
-|   Publisher    |
-|                |
-+--------+-------+
-|  PUB   |  REP  |
-\---+----+-----+-/
-    |      ^   |
-    |      |   |
-    |     (1)  |
-   [3]     |   |
-    |      |  (2)
-    |      |   |
-    v      |   v
-/--------+-+-----\
-|  SUB   |  REQ  |
-+--------+-------+
-|                |
-|   Subscriber   |
-|                |
-+----------------+
+#------------#
+| Publisher  |
++-----+------+
+| PUB | REP  |
+'--+--+----+-'
+   |    ^  |
+  (3)   | (2)
+   |   (1) |
+   v    |  v
+.-----+-+----.
+| SUB | REQ  |
++-----+------+
+| Subscriber |
+#------------#
 [[/code]]
 
 And here is the subscriber:
@@ -1164,11 +1086,11 @@ In the pub-sub pattern we can split the key into a separate message frame that w
 Here is what a publish-subscribe message with an envelope looks like:
 
 [[code type="textdiagram" title="Pub-Sub Envelope with Separate Key"]]
-          +-------------+
-Frame 1   | Key         |     Message envelope
-          +-------------+
-Frame 2   | Data        |     Actual message body
-          +-------------+
+          #--------#
+Frame 1   | Key    |   Message envelope
+          +--------+
+Frame 2   | Data   |   Actual message body
+          #--------#
 [[/code]]
 
 Recall that subscriptions do a prefix match. That is, "all messages starting with XYZ". The obvious question is: how to delimit keys from data so that the prefix match doesn't accidentally match data. The best answer is to use an envelope, since the match won't cross a frame boundary.
@@ -1198,13 +1120,13 @@ This examples shows that the subscription filter rejects or accepts the entire m
 If you subscribe to multiple publishers and you want to know their address so that you can send them data via another socket (and this is a typical use-case), create a three-part message:
 
 [[code type="textdiagram" title="Pub-Sub Envelope with Sender Address"]]
-          +-------------+
-Frame 1   | Key         |     Subscription key
-          +-------------+
-Frame 2   | Address     |     Address of publisher
-          +-------------+
-Frame 3   | Data        |     Actual message body
-          +-------------+
+          #---------#
+Frame 1   | Key     |   Subscription key
+          +---------+
+Frame 2   | Address |   Address of publisher
+          +---------+
+Frame 3   | Data    |   Actual message body
+          #---------#
 [[/code]]
 
 ++ High Water Marks
@@ -1234,94 +1156,68 @@ Lastly, the high-water marks are counted in //message parts//, not whole message
 As you build applications with 0MQ you will come across this problem more than once: losing messages that you expect to receive. We have put together a diagram[figure] that walks through the most common causes for this.
 
 [[code type="textdiagram" title="Missing Message Problem Solver"]]
-+-----------------+
-| I'm not getting |        +-----------------+        +----------------+
-|     my data!    |        |  Do you set a   |        | Use the        |
-|             {o} |   /--->|  subscription   +------->| zmq_setsockopt |
-+--------+--------+   |    |  for messages?  | No     | ZMQ_SUBSCRIBE  |
-         |            |    |             {o} |        | ("") option    |
-         v            |    +--------+--------+        +----------------+
-+-----------------+   |             | Yes
-| Are you losing  |   |             v
-|  messages in a  +---/    +-----------------+        +----------------+
-|   SUB socket?   | Yes    |  Do you start   |        | Start all SUB  |
-|             {o} |        |  the SUB socket +------->| sockets first, |
-+--------+--------+        |  after the PUB? | Yes    | then the PUB   |
-         | No              |             {o} |        | sockets to     |
-         |                 +--------+--------+        | avoid loss     |
-         |                          | No              +----------------+
-         |                          v
-         |                +--------------------+
-         |                | See explanation of |
-         |                | the "slow joiner"  |
-+-----------------+       | syndrome in text.  |     +--------------------+
-|                 |       +--------------------+     | With REQ, send and |
-|  Are you using  |                                  | recv in a loop and |
-|   REQ and REP   +--------------------------------->| check the return   |
-|     sockets?    | Yes                              | codes. With REP    |
-|             {o} |                                  | it's recv + send.  |
-+--------+--------+                                  +--------------------+
-         | No
-         v                 +---------------------+        +-----------------+
-+-----------------+        | The 1st PULL socket |        | You may need to |
-|  Are you using  |        | to connect can grab |        | do extra work to|
-|  PUSH sockets?  +------->| 1000's of messages  +------->| synchronize your|
-|             {o} | Yes    | before the others   |        | sockets before  |
-+--------+--------+        | get there.          |        | sending tasks.  |
-         | No              +---------------------+        +-----------------+
+.---------------.     
+| So you're not |        .---------------.        .----------------.
+| getting every |        | Do you set a  |        | On SUB sockets |
+| message?      |    .-->| subscription  +------->| you have to    |
+'--------+------'    |   | for messages? | No     | subscribe to   |
+         |           |   '-------+-------'        | get messages   |
+         v           |           |                '----------------'
+.----------------.   |           v
+| Are you losing |   |   .----------------.        .---------------.
+| messages in a  +---'   | Do you start   |        | Start all SUB |
+| SUB socket?    | Yes   | the SUB socket +------->| sockets first |
+'--------+-------'       | after the PUB? | Yes    | then the PUB  |
+         | No            '--------+-------'        | sockets to    |
+         |                        | No             | avoid loss    |
+         v                        v                '---------------'
+.---------------.       .-----------------.
+| Are you using | Yes   | See explanation |     .------------------.
+| REQ and REP   +---.   | of slow joiners |     | Send and recv in |
+| sockets?      |   |   | in the text     |     | a loop and check |
+'--------+------'   |   '-----------------'  .->| return codes.    |
+         |          '------------------------'  | With REP, recv   |
+         | No                                   | and send         |
+         v               .----------------.     '------------------'
+.-----------------.      | First PULL can |
+|  Are you using  +----->| grab many msgs |       .---------------.
+|  PUSH sockets?  | Yes  | while others   +--.    | Use the load- |
+'--------+--------'      | are still busy |  |    | balancing     |
+         | No            | connecting     |  '--->| pattern and   |
+         v               '----------------'       | ROUTER/DEALER |
+.-----------------.                               | sockets       |
+|  Do you check   | No    .-----------------.     '---------------'
+| return codes on +---.   | Check every 0MQ |
+|  all methods?   |   '-->| method call. In |
+'--------+--------'       | C, use asserts  |
+         | Yes            '-----------------'
          v
-+-----------------+        +-----------------+
-|  Do you check   |        | Check every 0MQ |
-| return codes on +------->| method call. In |
-|  all methods?   | No     | C, use asserts. |
-|             {o} |        |                 |
-+--------+--------+        +-----------------+
-         | Yes
-         v
-+-----------------+        +-----------------+        +------------------+
-| Are you using   |        |   Do you pass   |        | Create a socket  |
-| threads in your +------->| sockets between +------->| in the thread    |
-|  app already?   | Yes    |    threads?     | Yes    | where you use it |
-|             {o} |        |             {o} |        |                  |
-+--------+--------+        +--------+--------+        +------------------+
-         | No                       | No
-         +--------------------------+
-         |
-         v                 +-----------------+        +------------------+
-+-----------------+        | Are you calling |        | Call zmq_ctx_new |
-|  Are you using  |        |   zmq_ctx_new   +------->| exactly once in  |
-|   the inproc    +------->| more than once? | Yes    | every process.   |
-|   transport?    | Yes    |             {o} |        |                  |
-|             {o} |        +--------+--------+        +------------------+
-+--------+--------+                 | No
-         | No                       v
-         |                 +-----------------+
-         |                 | Check that you  |
-         |                 | bind before you |
-         |                 | connect.        |
-         |                 +-----------------+
-         v
-+-----------------+        +-----------------+        +-----------------+
-|                 |        | Check that the  |        | If you're using |
-|  Are you using  |        | reply address   |        | identities make |
-| ROUTER sockets? +------->| is valid. 0MQ   +------->| sure to set them|
-|             {o} | Yes    | drops messages  |        | before not after|
-+--------+--------+        | it can't route. |        | you connect.    |
-         | No              +-----------------+        +-----------------+
-         v
-+-----------------+        +--------------------+
-| Are you losing  |        | You probably have  |
-|  every second   +------->| a client running   |
-|    message?     | Yes    | in the background. |
-|             {o} |        | Kill it and start  |
-+--------+--------+        | again.             |
-         | No              +--------------------+
-         v
-+-----------------+
-| Make a minimal  |
-| test case, ask  |
-| on IRC channel. |
-+-----------------+
+.-----------------.       .----------------.
+| Are you using a |       | Do not share   |
+| socket in more  +------>| sockets across |
+| than 1 thread?  | Yes   | threads        |
+'--------+--------'       '----------------'
+         | No                                     .---------------.
+         v                .----------------.      | To use inproc |
+.---------------.         | Do you call    |      | your sockets  |
+| Are you using |    .--->| zmq_ctx_new    +----->| must be in    |
+| the inproc:// +----'    | twice or more? |Yes   | the same      |
+| transport?    | Yes     '--------+-------'      | 0MQ context   |
+'--------+------'                  | No           '---------------'
+         | No                      v             
+         v                .-----------------.
+.-----------------.       | Check that you  |
+|  Are you using  | Yes   | bind before you |
+| ROUTER sockets? +---.   | connect         |
+'--------+--------'   |   '-----------------'
+         | No         |
+         v            |   .----------------.     .------------.
+.----------------.    |   | Check that the |     | If you use |
+| Make a minimal |    |   | reply address  |     | identities |
+| test case, ask |    '-->| is valid. 0MQ  +---->| set them   |
+| on IRC channel |        | drops messages |     | before you |
+'----------------'        | it can't route |     | connect    |
+                          '----------------'     '------------'
 [[/code]]
 
 If you're using 0MQ in a context where failures are expensive, then you want to plan properly. First, build prototypes that let you learn and test the different aspects of your design. Stress them until they break, so that you know exactly how strong your designs are. Second, invest in testing. This means building test frameworks, ensuring you have access to realistic setups with sufficient computer power, and getting time or help to actually test seriously. Ideally, one team writes the code, a second team tries to break it. Lastly, do get your organization to [http://www.imatix.com/contact contact iMatix] to discuss how we can help to make sure things work properly, and can be fixed rapidly if they break.

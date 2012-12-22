@@ -401,9 +401,9 @@ Sending UUIDs across the network is the bare minimum for a logical addressing sc
 Let's start with the beacon message format. We probably want a fixed protocol header that will never change in future versions, and a body that depends on the version[figure].
 
 [[code type="textdiagram" title="ZRE discovery message"]]
-+---+---+---+------+  +------+------+
+#---+---+---+------#  #------+------#
 | Z | R | E | %x01 |  | UUID | port |
-+---+---+---+------+  +------+------+
+#---+---+---+------#  #------+------#
 
        Header               Body
 [[/code]]
@@ -611,26 +611,26 @@ We packaged the discovery and messaging functionality as an 'interface' object t
 The first version of the tester consists of a main thread which starts and stops a set of child threads, each running one interface, each with a ROUTER, DEALER, and UDP socket ('R', 'D', and 'U' in the diagram)[figure].
 
 [[code type="textdiagram" title="Zyre Tester Tool"]]
-                        +----------+
+                        #----------#
                         |   Main   |
                         |  thread  |
-                        +-----+----+
+                        #-----+----#
                               |
                               |
-      /---------------+-------+-------+---------------\
+      .---------------+-------+-------+---------------.
       |               |               |               |
       v               v               v               v
-+-----------+   +-----------+   +-----------+   +-----------+
+#-----------#   #-----------#   #-----------#   #-----------#
 |  Child    |   |  Child    |   |  Child    |   |  Child    |
 |  thread   |   |  thread   |   |  thread   |   |  thread   |
-+-----+-----+   +-----+-----+   +-----+-----+   +-----+-----+
+#-----+-----#   #-----+-----#   #-----+-----#   #-----+-----#
       |               |               |               |
       v               v               v               v
-+-----------+   +-----------+   +-----------+   +-----------+
+#-----------#   #-----------#   #-----------#   #-----------#
 | Interface |   | Interface |   | Interface |   | Interface |
 +---+---+---+   +---+---+---+   +---+---+---+   +---+---+---+
 | R | D | U |   | R | D | U |   | R | D | U |   | R | D | U |
-+---+---+---+   +---+---+---+   +---+---+---+   +---+---+---+
+#---+---+---#   #---+---+---#   #---+---+---#   #---+---+---#
 [[/code]]
 
 The nice thing is that when I am connected to a WiFi access point, all Zyre traffic (even between two interfaces in the same process) goes across the AP. This means I can fully stress test any WiFi infrastructure with just a couple of PCs running in a room. It's hard to emphasize how valuable this is: if we had built Zyre as, say, a dedicated service for Android, we'd literally need dozens of Android tablets or phones to do any large-scale testing. Kiosks, and all that.
@@ -882,26 +882,20 @@ We want to send log data somewhere central, either immediately, or opportunistic
 But using Zyre to log Zyre itself is a Catch-22. Who logs the logger? What if we want a verbose log of every message sent? Do we include logging messages in that, or not? It quickly gets messy. We want a logging protocol that's independent of Zyre's main ZRE protocol. The simplest approach is a PUB-SUB protocol, where all nodes publish log data on a PUB socket, and a collector picks that up via a SUB socket[figure].
 
 [[code type="textdiagram" title="Distributed Log Collection"]]
-+--------+      +--------+      +--------+
-|        |      |        |      |        |
+#--------#      #--------#      #--------#
 |  Node  |      |  Node  |      |  Node  |
-|        |      |        |      |        |
 +--------+      +--------+      +--------+
 |  PUB   |      |  PUB   |      |  PUB   |
-+---+----+      +---+----+      +---+----+
+'---+----'      '---+----'      '---+----'
     |               |               |
-    |               |               |
-    +---------------+---------------+
-                    |
+    '---------------+---------------'
                     |
                     v
-              +-----------+
+              .-----------.
               |    SUB    |
               +-----------+
-              |           |
               | Collector |
-              |           |
-              +-----------+
+              #-----------#
 [[/code]]
 
 The collector can, of course, run on any node. This gives us a nice range of use-cases:
@@ -968,9 +962,9 @@ So let's define a //protocol assertion// as being a unique signature that we pla
 I'm going to use a 16-bit signature consisting of a twelve-bit pattern and a 4-bit protocol ID[figure]. The pattern %xAAA is meant to stay away from values we might otherwise expect to see at the start of a message: %x00, %xFF, and printable characters.
 
 [[code type="textdiagram" title="Protocol Signature"]]
-+---+---+---+---+---+---+---+---+  +---+---+---+---+---------------+
+#---+---+---+---+---+---+---+---#  #---+---+---+---+---------------#
 | 1 | 0 | 1 | 0 | 1 | 0 | 1 | 0 |  | 1 | 0 | 1 | 0 |   Signature   |
-+---+---+---+---+---+---+---+---+  +---+---+---+---+---------------+
+#---+---+---+---+---+---+---+---#  #---+---+---+---+---------------#
 
              Byte 0                             Byte 1
 [[/code]]

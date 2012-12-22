@@ -93,9 +93,9 @@ Once we have an idea of who works on what, we know how to structure the work its
 
 I like to write in a plain text format. It's fast and works well with source control systems like git. Since the main platform for our websites is Wikidot, I write using Wikidot's very readable markup format.
 
-At least in the first chapters, it was important to draw pictures to explain the flow of messages between peers. I found Ditaa, a lovely tool that chews up line-drawings and spits out elegant graphics. Having the graphics in the text, as text, makes it remarkably easy to work.
+At least in the first chapters, it was important to draw pictures to explain the flow of messages between peers. Making diagrams by hand is a lot of work, and when we want to get final output in different formats, image conversion becomes a chore. I started with Ditaa, which turns text diagrams into PNGs, then later switched to asciitosvg, which produces SVG files, which are rather better. Having the graphics in the markup text, as text, makes it remarkably easy to work.
 
-By now you'll realize that the toolchain we use is highly customized, though it uses a lot of external tools. All are available on Ubuntu, which is a mercy, and the whole toolchain is in the zguide repository in the bin subdirectory.
+By now you'll realize that the toolchain we use is highly customized, though it uses a lot of external tools. All are available on Ubuntu, which is a mercy, and the whole custom toolchain is in the zguide repository in the bin subdirectory.
 
 Let's walk through the editing and publishing process. Here is how we produce the online version:
 
@@ -109,7 +109,7 @@ Which works as follows:
 * The examples sit in the examples subdirectory, classified per language.
 * We take the text, and process this using a custom Perl script, mkwikidot, into a set of Wikidot-ready files.
 * We do this for each of the languages that get their own Guide version.
-* We extract the graphics and calls Ditaa on each one to produce image files, which it stores in the images subdirectory.
+* We extract the graphics and calls asciitosvg and rasterize on each one to produce image files, which it stores in the images subdirectory.
 * We extract inline listings (which are not translated) and stores these in the listings subdirectory.
 * We use pygmentize on each example and listing to create a marked-up page in Wikidot format.
 * We upload all changed files to the online wiki using the Wikidot API.

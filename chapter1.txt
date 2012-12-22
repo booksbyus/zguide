@@ -50,25 +50,21 @@ So let's start with some code. We start of course with a Hello World example. We
 [[/code]]
 
 [[code type="textdiagram" title="Request-Reply"]]
- +------------+
- |            |
- |   Client   |
- |            |
- +------------+
- |    REQ     |
- \---+--------/
-     |    ^
-     |    |
-"Hello"  "World"
-     |    |
-     v    |
- /--------+---\
- |    REP     |
- +------------+
- |            |
- |   Server   |
- |            |
- +------------+
+  #------------#
+  |   Client   |
+  +------------+
+  |    REQ     |
+  '---+--------'
+      |    ^
+      |    |
+Hello |    | World
+      |    |
+      v    |
+  .--------+---.
+  |    REP     |
+  +------------+
+  |   Server   |
+  #------------#
 [[/code]]
 
 The REQ-REP socket pair is in lockstep. The client issues {{zmq_msg_send[3]}} and then {{zmq_msg_recv[3]}}, in a loop (or once if that's all it needs). Doing any other sequence (e.g. sending two messages in a row) will result in a return code of -1 from the {{send}} or {{recv}} call. Similarly, the service issues {{zmq_msg_recv[3]}} and then {{zmq_msg_send[3]}} in that order, as often as it needs to.
@@ -168,32 +164,28 @@ Here's the server. We'll use port 5556 for this application:
 There's no start, and no end to this stream of updates, it's like a never ending broadcast[figure].
 
 [[code type="textdiagram" title="Publish-Subscribe"]]
-               +-------------+
-               |             |
+               #-------------#
                |  Publisher  |
-               |             |
                +-------------+
                |     PUB     |
-               \-------------/
+               '-------------'
                     bind
                       |
                       |
                    updates
                       |
-      +---------------+---------------+
+      .---------------+---------------.
       |               |               |
    updates         updates         updates
       |               |               |
       |               |               |
       v               v               v
    connect         connect         connect
-/------------\  /------------\  /------------\
+.------------.  .------------.  .------------.
 |    SUB     |  |    SUB     |  |    SUB     |
 +------------+  +------------+  +------------+
-|            |  |            |  |            |
 | Subscriber |  | Subscriber |  | Subscriber |
-|            |  |            |  |            |
-+------------+  +------------+  +------------+
+#------------#  #------------#  #------------#
 [[/code]]
 
 Here is client application, which listens to the stream of updates and grabs anything to do with a specified zip code, by default New York City because that's a great place to start any adventure:
@@ -260,45 +252,39 @@ In reality, workers run on superfast boxes, perhaps using GPUs (graphic processi
 [[/code]]
 
 [[code type="textdiagram" title="Parallel Pipeline"]]
-               +-------------+
-               |             |
+               #-------------#
                |  Ventilator |
-               |             |
                +-------------+
                |    PUSH     |
-               \------+------/
+               '------+------'
                       |
                     tasks
                       |
-      +---------------+---------------+
+      .---------------+---------------.
       |               |               |
     task            task             task
       |               |               |
       v               v               v
-/------------\  /------------\  /------------\
+.------------.  .------------.  .------------.
 |    PULL    |  |    PULL    |  |    PULL    |
 +------------+  +------------+  +------------+
-|            |  |            |  |            |
 |   Worker   |  |   Worker   |  |   Worker   |
-|            |  |            |  |            |
 +------------+  +------------+  +------------+
 |    PUSH    |  |    PUSH    |  |    PUSH    |
-\-----+------/  \-----+------/  \-----+------/
+'-----+------'  '-----+------'  '-----+------'
       |               |               |
     result          result          result
       |               |               |
-      +---------------+---------------+
+      '---------------+---------------'
                       |
                    results
                       |
                       v
-               /-------------\
+               .-------------.
                |    PULL     |
                +-------------+
-               |             |
                |    Sink     |
-               |             |
-               +-------------+
+               #-------------#
 [[/code]]
 
 Here is the worker application. It receives a message, sleeps for that number of seconds, then signals that it's finished:
@@ -333,24 +319,24 @@ Let's look at some aspects of this code in more detail:
 * The sink's PULL socket collects results from workers evenly. This is called //fair-queuing//[figure].
 
 [[code type="textdiagram" title="Fair Queuing"]]
-+---------+   +---------+   +---------+
+#---------#   #---------#   #---------#
 |  PUSH   |   |  PUSH   |   |  PUSH   |
-\----+----/   \----+----/   \----+----/
+'----+----'   '----+----'   '----+----'
      |             |             |
  R1, R2, R3       R4           R5, R6
      |             |             |
-     +-------------+-------------+
+     '-------------+-------------'
                    |
              fair-queuing
          R1, R4, R5, R2, R6, R3
                    |
                    v
-            /-------------\
+            .-------------.
             |     PULL    |
-            +-------------+
+            #-------------#
 [[/code]]
 
-The pipeline pattern also exhibits the "slow joiner" syndrome, leading to accusations that PUSH sockets don't load balance properly. If you are using PUSH and PULL, and one of your workers gets way more messages than the others, it's because that PULL socket has joined faster than the others, and grabs a lot of messages before the others manage to connect.
+The pipeline pattern also exhibits the "slow joiner" syndrome, leading to accusations that PUSH sockets don't load balance properly. If you are using PUSH and PULL, and one of your workers gets way more messages than the others, it's because that PULL socket has joined faster than the others, and grabs a lot of messages before the others manage to connect. If you want proper load-balancing, you probably want to look at the The load-balancing pattern in [#advanced-request-reply].
 
 ++ Programming with 0MQ
 
@@ -433,21 +419,21 @@ Take a typical open source project like [http://hadoop.apache.org/zookeeper/ Had
 But how to make a reusable messaging layer? Why, when so many projects need this technology, are people still doing it the hard way, by driving TCP sockets in their code, and solving the problems in that long list, over and over[figure]?
 
 [[code type="textdiagram" title="Messaging as it Starts"]]
-+------------+
+.------------.
 |            |
 |  Piece A   |
 |            |
-+------------+
+'------------'
       ^
       |
      TCP
       |
       v
-+------------+
+.------------.
 |            |
 |  Piece B   |
 |            |
-+------------+
+'------------'
 [[/code]]
 
 It turns out that building reusable messaging systems is really difficult, which is why few FOSS projects ever tried, and why commercial messaging products are complex, expensive, inflexible, and brittle. In 2006 iMatix designed [http://www.amqp.org AMQP] which started to give FOSS developers perhaps the first reusable recipe for a messaging system. AMQP works better than many other designs [http://www.imatix.com/articles:whats-wrong-with-amqp but remains relatively complex, expensive, and brittle]. It takes weeks to learn to use, and months to create stable architectures that don't crash when things get hairy.
@@ -459,31 +445,31 @@ And a broker-centric set-up needs its own operations team. You literally need to
 So small to medium application developers are trapped. Either they avoid network programming, and make monolithic applications that do not scale. Or they jump into network programming and make brittle, complex applications that are hard to maintain. Or they bet on a messaging product, and end up with scalable applications that depend on expensive, easily broken technology. There has been no really good choice, which is maybe why messaging is largely stuck in the last century and stirs strong emotions. Negative ones for users, gleeful joy for those selling support and licenses[figure].
 
 [[code type="textdiagram" title="Messaging as it Becomes"]]
-        +---+          |  +---+
-+---+   |   |   +---+  |  |   |
-|   +-->|   |   |   |  |  |   |
-|   |   +---+   |   |  |  +-+-+
-+-+-+           +-+-+  |    |
-  |               |    |    |
-  |       +-----------------+
+        .---.             .---.
+.---.   |   |   .---.  ^  |   |
+|   +-->|   |<--|   |  |  |   |
+|   |   '---'   |   |  |  '-+-'
+'-+-'           '-+-'  |    |
+  |               ^    |    |
+  |       .-------+----+----'
   |       |       |    |
-  +-----------------------+
+  '-------+-------+----+--.
           |       |    |  |
-  +-------|-------|----+--|------+
-  |       v       |       v      |
-+-+-+   +---+     |     +---+    |
-|   |   |   |   +-+-+   |   |    |
-|   |   |   |   |   |   |   |    |
-+---+   +---+   |   |   +---+    |
-          ^     +---+     ^      |
-          |       ^       |    +-+
-  +-------+-------+-------+    |
-  |       |       |            |
-  v     +-+-+     v     +---+  |
-+---+   |   |   +---+   |   |  |
-|   |   |   |<--+   |   |   |<-+
-|   |   +---+   |   |   +-+-+
-+---+           +---+
+  .-------+-------+----+--+-----.
+  |       v       |       v     | 
+.-+-.   .---.     |     .---.   | 
+|   |   |   |   .-+-.   |   |-->|
+|   +-->|   +-->|   +-->|   |   | 
+'---'   '---'   |   |   '---'   | 
+          ^     '-+-'     ^     | 
+          |       |       |     | 
+  .-------+-------+-------'     |
+  |       |       |             |
+  v     .-+-.     v     .---.   |
+.---.   |   |   .---.   |   |   |
+|   |<--|   |<--|   |<--|   |<--'
+|   |   '---'   |   |   '---'
+'---'           '---'
 [[/code]]
 
 What we need is something that does the job of messaging but does it in such a simple and cheap way that it can work in any application, with close to zero cost. It should be a library that you just link with, without any other dependencies. No additional moving pieces, so no additional risk. It should run on any OS and work with any programming language.

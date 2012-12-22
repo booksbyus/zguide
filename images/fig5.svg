@@ -1,0 +1,143 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Created with ASCIIToSVG (http://9vx.org/~dho/a2s/) -->
+<svg width="444px" height="574px" version="1.1"
+  xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <filter id="dsFilter" width="150%" height="150%">
+      <feOffset result="offOut" in="SourceGraphic" dx="3" dy="3"/>
+      <feColorMatrix result="matrixOut" in="offOut" type="matrix" values="0.2 0 0 0 0 0 0.2 0 0 0 0 0 0.2 0 0 0 0 0 1 0"/>
+      <feGaussianBlur result="blurOut" in="matrixOut" stdDeviation="3"/>
+      <feBlend in="SourceGraphic" in2="blurOut" mode="normal"/>
+    </filter>
+    <marker id="iPointer"
+      viewBox="0 0 10 10" refX="5" refY="5" 
+      markerUnits="strokeWidth"
+      markerWidth="8" markerHeight="7"
+      orient="auto">
+      <path d="M 10 0 L 10 10 L 0 5 z" />
+    </marker>
+    <marker id="Pointer"
+      viewBox="0 0 10 10" refX="5" refY="5" 
+      markerUnits="strokeWidth"
+      markerWidth="8" markerHeight="7"
+      orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" />
+    </marker>
+  </defs><g id="boxes" stroke="black" stroke-width="2" fill="none" >
+<g id="group0">
+	<path id="path0" filter="url(#dsFilter)" fill="#fff" d="M 139.5 8 L 265.5 8 L 265.5 62 Q 265.5 72 255.5 72 L 149.5 72 Q 139.5 72 139.5 62 Z" />
+	<text x="161.1" y="28.8" id="text0" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Ventilator </text>
+
+	<text x="179.1" y="60.8" id="text0" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >PUSH </text>
+
+</g>
+<g id="group10">
+	<path id="path10" filter="url(#dsFilter)" fill="#fff" d="M 4.5 226 Q 4.5 216 14.5 216 L 111.5 216 Q 121.5 216 121.5 226 L 121.5 302 Q 121.5 312 111.5 312 L 14.5 312 Q 4.5 312 4.5 302 Z" />
+	<text x="44.1" y="236.8" id="text10" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >PULL </text>
+
+	<text x="35.1" y="268.8" id="text10" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Worker </text>
+
+	<text x="44.1" y="300.8" id="text10" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >PUSH </text>
+
+</g>
+<g id="group12">
+	<path id="path12" filter="url(#dsFilter)" fill="#fff" d="M 148.5 226 Q 148.5 216 158.5 216 L 255.5 216 Q 265.5 216 265.5 226 L 265.5 302 Q 265.5 312 255.5 312 L 158.5 312 Q 148.5 312 148.5 302 Z" />
+	<text x="188.1" y="236.8" id="text12" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >PULL </text>
+
+	<text x="179.1" y="268.8" id="text12" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Worker </text>
+
+	<text x="188.1" y="300.8" id="text12" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >PUSH </text>
+
+</g>
+<g id="group14">
+	<path id="path14" filter="url(#dsFilter)" fill="#fff" d="M 292.5 226 Q 292.5 216 302.5 216 L 399.5 216 Q 409.5 216 409.5 226 L 409.5 302 Q 409.5 312 399.5 312 L 302.5 312 Q 292.5 312 292.5 302 Z" />
+	<text x="332.1" y="236.8" id="text14" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >PULL </text>
+
+	<text x="323.1" y="268.8" id="text14" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Worker </text>
+
+	<text x="332.1" y="300.8" id="text14" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >PUSH </text>
+
+</g>
+<g id="group40">
+	<path id="path40" filter="url(#dsFilter)" fill="#fff" d="M 139.5 466 Q 139.5 456 149.5 456 L 255.5 456 Q 265.5 456 265.5 466 L 265.5 520 L 139.5 520 Z" />
+	<text x="179.1" y="476.8" id="text40" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >PULL </text>
+
+	<text x="179.1" y="508.8" id="text40" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Sink </text>
+
+</g>
+</g>
+<g id="lines" stroke="black" stroke-width="2" fill="none" >
+<g id="group61">
+	<path id="path61" d="M 4.5 248 L 121.5 248 " />
+</g>
+<g id="group64">
+	<path id="path64" d="M 4.5 280 L 121.5 280 " />
+</g>
+<g id="group261">
+	<path id="path261" d="M 58.5 152 L 58.5 146 Q 58.5 136 68.5 136 L 202.5 136 L 336.5 136 Q 346.5 136 346.5 146 L 346.5 168 " />
+</g>
+<g id="group264">
+	<path id="path264" marker-start="url(#iPointer)" d="M 58.5 200 L 58.5 168 " />
+</g>
+<g id="group271">
+	<path id="path271" d="M 58.5 312 L 58.5 344 " />
+</g>
+<g id="group275">
+	<path id="path275" d="M 58.5 360 L 58.5 366 Q 58.5 376 68.5 376 L 202.5 376 L 336.5 376 Q 346.5 376 346.5 366 L 346.5 344 " />
+</g>
+<g id="group561">
+	<path id="path561" d="M 139.5 40 L 265.5 40 " />
+</g>
+<g id="group590">
+	<path id="path590" d="M 139.5 488 L 265.5 488 " />
+</g>
+<g id="group610">
+	<path id="path610" d="M 148.5 248 L 265.5 248 " />
+</g>
+<g id="group613">
+	<path id="path613" d="M 148.5 280 L 265.5 280 " />
+</g>
+<g id="group805">
+	<path id="path805" d="M 202.5 72 L 202.5 104 " />
+</g>
+<g id="group809">
+	<path id="path809" d="M 202.5 120 L 202.5 136 L 202.5 168 " />
+</g>
+<g id="group814">
+	<path id="path814" marker-start="url(#iPointer)" d="M 202.5 200 L 202.5 168 " />
+</g>
+<g id="group821">
+	<path id="path821" d="M 202.5 312 L 202.5 344 " />
+</g>
+<g id="group825">
+	<path id="path825" d="M 202.5 360 L 202.5 376 L 202.5 408 " />
+</g>
+<g id="group830">
+	<path id="path830" marker-start="url(#iPointer)" d="M 202.5 440 L 202.5 408 " />
+</g>
+<g id="group1158">
+	<path id="path1158" d="M 292.5 248 L 409.5 248 " />
+</g>
+<g id="group1161">
+	<path id="path1161" d="M 292.5 280 L 409.5 280 " />
+</g>
+<g id="group1361">
+	<path id="path1361" marker-start="url(#iPointer)" d="M 346.5 200 L 346.5 168 " />
+</g>
+<g id="group1368">
+	<path id="path1368" d="M 346.5 312 L 346.5 344 " />
+</g>
+</g>
+<g id="text" fill="black" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >
+<text x="179.1" y="108.8" id="text2" fill="#000" >tasks</text>
+<text x="35.1" y="172.8" id="text3" fill="#000" >task </text>
+<text x="179.1" y="172.8" id="text4" fill="#000" >task </text>
+<text x="332.1" y="172.8" id="text5" fill="#000" >task</text>
+<text x="35.1" y="348.8" id="text15" fill="#000" >result </text>
+<text x="179.1" y="348.8" id="text16" fill="#000" >result </text>
+<text x="323.1" y="348.8" id="text17" fill="#000" >result</text>
+<text x="170.1" y="412.8" id="text18" fill="#000" >results</text>
+</g>
+</svg>

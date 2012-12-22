@@ -267,6 +267,16 @@ It's usually good to distinguish a few kinds of errors, but as always keep it mi
 
 When we start to design a protocol, one of the first questions we face is how we encode data on the wire. There is no universal answer. There are a half-dozen different ways to serialize data, each with pros and cons. We'll explore some of these.
 
++++ Abstraction Level
+
+Before looking at how to put data onto the wire, it's worth asking what data we actually want to exchange between applications. If we don't use any abstraction, we literally serialize and deserialize our internal state. That is, the objects and structures we use to implement our functionality.
+
+Putting internal state onto the wire is however a really bad idea. It's like exposing internal state in an API. When you do this, you are hard-coding your implementation decisions into your protocols. You are also going to produce protocols that are significantly more complex than they need to be.
+
+It's perhaps the main reason so many older protocols and APIs are so complex: their designers did not think about how to abstract them into simpler concepts. There is of course no guarantee than an abstraction will be //simpler//, that's where the hard work comes in.
+
+A good protocol or API abstraction encapsulates natural patterns of use, and gives them name and properties that are predictable and regular. It chooses sensible defaults so that the main use cases can be specified minimally. It aims to be simple for the simple cases, and expressive for the rare complex cases. It does not make any assumptions about internal implementation unless that is absolutely needed for interoperability.
+
 +++ 0MQ Framing
 
 The simplest and most widely used serialization format for 0MQ applications is 0MQ's own multi-part framing. For example, here is how the [http://rfc.zeromq.org/spec:7 Majordomo Protocol] defines a request:
@@ -334,11 +344,13 @@ So you can drive your choice according to the languages you're aiming for. If yo
 
 +++ Serialization Libraries
 
-The msgpack.org site says, "It's like JSON. but fast and small. MessagePack is an efficient binary serialization format. It lets you exchange data among multiple languages like JSON but it's faster and smaller. For example, small integers (like flags or error code) are encoded into a single byte, and typical short strings only require an extra byte in addition to the strings themselves."
+The msgpack.org site says,
+
+>It's like JSON. but fast and small. MessagePack is an efficient binary serialization format. It lets you exchange data among multiple languages like JSON but it's faster and smaller. For example, small integers (like flags or error code) are encoded into a single byte, and typical short strings only require an extra byte in addition to the strings themselves.
 
 I'm going to make the perhaps unpopular claim that "fast and small" are features that solve non-problems. The only real problem that serialization libraries solve is, as far as I can tell, the need to document the message contracts and actually serialize data to and from the wire.
 
-Let's start with "fast and small". It's based on a two-part argument. First, that making your messages smaller, and that reducing CPU cost for encoding and decoding will make a significant different to your application's performance. Second, that this equally valid across-the-board to all messages.
+Let's start by debunking "fast and small". It's based on a two-part argument. First, that making your messages smaller, and that reducing CPU cost for encoding and decoding will make a significant different to your application's performance. Second, that this equally valid across-the-board to all messages.
 
 But most real applications tend to fall into one of two categories. Either the speed of serialization and size of encoding is marginal compared to other costs, such as database access or application code performance. Or, network performance really is critical, and then all significant costs occur in a few specific message types.
 
@@ -851,54 +863,54 @@ A useful thing about state machines is that you can read them state by state. Ea
 In a 0MQ protocol server, we have a state machine instance //per client//. That sounds complex but it isn't, as we'll see. We describe our first state (Start) as having one valid event, "OHAI". We check the user's credentials and then arrive in the Authenticated state[figure].
 
 [[code type="textdiagram" title="The 'Start' State"]]
-/-------------------\
+.-------------------.
 | Start             |
-\-------------------/
+'-+-----------------'
   |
-  +-------------+                    /-------------------\
-  | OHAI        |------------------->| Authenticated     |
-  +-------------+                    \-------------------/
+  #-------------#                    .-------------------.
+  | OHAI        +------------------->| Authenticated     |
+  #-------------#                    '-------------------'
                    Check Credentials
 [[/code]]
 
 The Check Credentials action produces either an 'ok' or an 'error' event. It's in the Authenticated state that we handle these two possible events, by sending an appropriate reply back to the client[figure]. If authentication failed, we return to the Start state where the client can try again.
 
 [[code type="textdiagram" title="The 'Authenticated' State"]]
-/-------------------\
+.-------------------.
 | Authenticated     |
-\-------------------/
+'-+-----------------'
   |
-  +-------------+                    /-------------------\
-  | ok          |------------------->| Ready             |
-  +-------------+                    \-------------------/
+  #-------------#                    .-------------------.
+  | ok          +------------------->| Ready             |
+  #-------------#                    '-------------------'
   |                Send OHAI-OK
   |
-  +-------------+                    /-------------------\
-  | error       |------------------->| Start             |
-  +-------------+                    \-------------------/
+  #-------------#                    .-------------------.
+  | error       +------------------->| Start             |
+  #-------------#                    '-------------------'
                    Send WTF
 [[/code]]
 
 When authentication has succeeded, we arrive in the Ready state. Here we have three possible events: an ICANHAZ or HUGZ message from the client, or a heartbeat timer event[figure].
 
 [[code type="textdiagram" title="The 'Ready' State"]]
-/-------------------\
+.-------------------.
 | Ready             |
-\-------------------/
+'-+-----------------'
   |
-  +-------------+                    /-------------------\
-  | ICANHAZ     |------------------->| Ready             |
-  +-------------+                    \-------------------/
+  #-------------#                    .-------------------.
+  | ICANHAZ     +------------------->| Ready             |
+  #-------------#                    '-------------------'
   |                Send CHEEZBURGER
   |
-  +-------------+                    /-------------------\
-  | HUGZ        |------------------->| Ready             |
-  +-------------+                    \-------------------/
+  #-------------#                    .-------------------.
+  | HUGZ        +------------------->| Ready             |
+  #-------------#                    '-------------------'
   |                Send HUGZ-OK
   |
-  +-------------+                    /-------------------\
-  | heartbeat   |------------------->| Ready             |
-  +-------------+                    \-------------------/
+  #-------------#                    .-------------------.
+  | heartbeat   +------------------->| Ready             |
+  #-------------#                    '-------------------'
                    Send HUGZ
 [[/code]]
 
