@@ -104,26 +104,27 @@ class CustomObjects {
   public static function loadObjects() {
     $cacheFile = sys_get_temp_dir() . "/.a2s.objcache";
     $dir = './objects';
-
     if (is_callable(self::$loadCacheFn)) {
-      /*
-       * Should return exactly what was given to the $storCacheFn when it was
-       * last called, or null if nothing can be loaded.
-       */
-      $fn = self::$loadCacheFn;
-      self::$objects = $fn();
-      return;
-    } else {
-      if (is_readable($cacheFile) && is_readable($dir)) {
+        /*
+        * Should return exactly what was given to the $storCacheFn when it was
+        * last called, or null if nothing can be loaded.
+        */
+        $fn = self::$loadCacheFn;
+        self::$objects = $fn();
+        return;
+    } 
+    elseif (!is_readable ($dir)) {
+        return;
+    }
+    elseif (is_readable($cacheFile)) {
         $cacheTime = filemtime($cacheFile);
-
         if (filemtime($dir) <= filemtime($cacheFile)) {
-          self::$objects = unserialize(file_get_contents($cacheFile));
-          return;
+            self::$objects = unserialize(file_get_contents($cacheFile));
+            return;
         }
-      } else {
-        $cacheTime = 0;
-      }
+        else {
+            $cacheTime = 0;
+        }
     }
 
     if (is_callable(self::$loadObjsFn)) {
