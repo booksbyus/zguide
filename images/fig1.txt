@@ -1,16 +1,15 @@
-+------------+        +------------+
-|            |        |            | Zap!
-| TCP socket +------->| 0MQ socket |
-|            | BOOM!  |            |  POW!!
-+------------+        +------------+
-  ^    ^    ^
+.------------.        .--------------.
+|            |        |              |
+| TCP socket +------->|              | ZAP!
+|            | BOOM!  |  0MQ socket  |
+'------------'        |              |  POW!!
+  ^    ^    ^         |              |
+  |    |    |         '--------------'
   |    |    |
-  |    |    +---------+
-  |    |              |
-  |    +----------+   |
- Illegal          |   |
- radioisotopes    |   |
- from secret      |   |
- Soviet atomic    | Spandex
- city             |
-              Cosmic rays
+  |    |    |
+  |    |    '--------- Spandex
+  |    |
+  |    '-------------- Cosmic rays
+
+ Illegal radioisotopes from
+ secret Soviet atomic city
