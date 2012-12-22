@@ -1,42 +1,42 @@
-Architecture-of-the-MQ-Community Architecture of the 0MQ Community
 Binary-Star-Implementation Binary Star Implementation
+Architecture-of-the-MQ-Community Architecture of the 0MQ Community
 Protocol-Assertions Protocol Assertions
 The-ROUTER-to-ROUTER-Combination The ROUTER to ROUTER Combination
 Burnout Burnout
 Upgrading-from-MQ-to-MQ Upgrading from 0MQ/2.2 to 0MQ/3.2
-Writing-the-Unprotocol Writing the Unprotocol
 Republishing-Updates-from-Clients Republishing Updates from Clients
 Vadim-Shalts-s-Story Vadim Shalts's Story
-the-community Chapter 6 - The 0MQ Community
+Writing-the-Unprotocol Writing the Unprotocol
 Service-Oriented-Reliable-Queuing-Majordomo-Pattern Service-Oriented Reliable Queuing (Majordomo Pattern)
-Preemptive-Discovery-over-Raw-Sockets Preemptive Discovery over Raw Sockets
-Goals Goals
+the-community Chapter 6 - The 0MQ Community
 ROUTER-Broker-and-DEALER-Workers ROUTER Broker and DEALER Workers
-Symbolic-Links Symbolic Links
-Crazy-Beautiful-and-Easy Crazy, Beautiful, and Easy
+Goals Goals
+Preemptive-Discovery-over-Raw-Sockets Preemptive Discovery over Raw Sockets
 Messaging-Patterns Messaging Patterns
-Step-Draw-a-Rough-Architecture Step 2: Draw a Rough Architecture
+Crazy-Beautiful-and-Easy Crazy, Beautiful, and Easy
+Symbolic-Links Symbolic Links
 Divide-and-Conquer Divide and Conquer
+Step-Draw-a-Rough-Architecture Step 2: Draw a Rough Architecture
 Group-Messaging Group Messaging
-Getting-an-Out-of-band-Snapshot Getting an Out-of-band Snapshot
 A-Minor-Note-on-Strings A Minor Note on Strings
+Getting-an-Out-of-band-Snapshot Getting an Out-of-band Snapshot
 The-Flash-Mob The Flash Mob
 The-Mystic The Mystic
-advanced-architecture Chapter 7 - Advanced Architecture using 0MQ
 ROUTER-Broker-and-REQ-Workers ROUTER Broker and REQ Workers
+advanced-architecture Chapter 7 - Advanced Architecture using 0MQ
 Initial-Design-Cut-the-API Initial Design Cut - the API
 Making-a-Clean-Exit Making a Clean Exit
 -MQ-is-Not-a-Neutral-Carrier 0MQ is Not a Neutral Carrier
 Upfront-Coordination Upfront Coordination
 Chapter-A-Framework-for-Distributed-Computing Chapter 8 - A Framework for Distributed Computing
-The-Zen-of-Zero The Zen of Zero
 Why-We-Needed-MQ Why We Needed 0MQ
+The-Zen-of-Zero The Zen of Zero
 Tom-van-Leeuwen-s-Story Tom van Leeuwen's Story
 A-Plausible-Minimal-Implementation A Plausible Minimal Implementation
 Using-Sockets-to-Carry-Data Using Sockets to Carry Data
 Chapter-Reliable-Request-Reply-Patterns Chapter 4 - Reliable Request-Reply Patterns
-Configuration Configuration
 Slow-Subscriber-Detection-Suicidal-Snail-Pattern Slow Subscriber Detection (Suicidal Snail Pattern)
+Configuration Configuration
 How-the-Guide-Happened How the Guide Happened
 Working-with-Messages Working with Messages
 Heartbeating Heartbeating
@@ -68,8 +68,8 @@ Ephemeral-Values Ephemeral Values
 Pub-Sub-Message-Envelopes Pub-Sub Message Envelopes
 Step-Decide-on-the-Contracts Step 3: Decide on the Contracts
 Tracing-Activity Tracing Activity
-Simplicity-vs-Complexity Simplicity vs. Complexity
 Language Language
+Simplicity-vs-Complexity Simplicity vs. Complexity
 Starting-Assumptions Starting Assumptions
 reliable-request-reply Chapter 4 - Reliable Request-Reply Patterns
 Idempotent-Services Idempotent Services
@@ -127,15 +127,15 @@ File-Stability File Stability
 Programming-with-MQ Programming with 0MQ
 Step-Internalize-the-Semantics Step 1: Internalize the Semantics
 The-Constant-Gardener The Constant Gardener
-Representing-State-as-Key-Value-Pairs Representing State as Key-Value Pairs
-Unprotocols Unprotocols
 Robustness-in-Conflict Robustness in Conflict
+Unprotocols Unprotocols
+Representing-State-as-Key-Value-Pairs Representing State as Key-Value Pairs
 Exploring-ROUTER-Sockets Exploring ROUTER Sockets
 How-MQ-Lost-its-Road-map How 0MQ Lost its Road-map
-Transport-Bridging Transport Bridging
 Chapter-Advanced-Publish-Subscribe-Patterns Chapter 5 - Advanced Publish-Subscribe Patterns
-Delivery-Notifications Delivery Notifications
+Transport-Bridging Transport Bridging
 The-DEALER-to-REP-Combination The DEALER to REP Combination
+Delivery-Notifications Delivery Notifications
 The-Benevolent-Tyrant The Benevolent Tyrant
 Cost-of-Failure Cost of Failure
 Identities-and-Addresses Identities and Addresses
@@ -261,19 +261,19 @@ Architecture-of-a-Single-Cluster Architecture of a Single Cluster
 Audience Audience
 Model-Three-Complex-and-Nasty Model Three - Complex and Nasty
 Development-Process Development Process
-Infinite-Property Infinite Property
 The-Rolling-Stone The Rolling Stone
+Infinite-Property Infinite Property
 Example-Zyre-Application Example Zyre Application
 Postface Postface
 Making-a-Detour Making a Detour
-Complexity-Oriented-Design Complexity-Oriented Design
 State-Machines State Machines
-Multiple-Nodes-on-One-Device Multiple Nodes on One Device
+Complexity-Oriented-Design Complexity-Oriented Design
 More-about-UDP More about UDP
+Multiple-Nodes-on-One-Device Multiple Nodes on One Device
 Intermediaries-and-Proxies Intermediaries and Proxies
 Reliable-Publish-Subscribe-Clone-Pattern Reliable Publish-Subscribe (Clone Pattern)
-The-Process The Process
 Evolution-of-Public-Contracts Evolution of Public Contracts
+The-Process The Process
 Rob-Gagnon-s-Story Rob Gagnon's Story
-Handling-Interrupt-Signals Handling Interrupt Signals
 Code-Generation Code Generation
+Handling-Interrupt-Signals Handling Interrupt Signals

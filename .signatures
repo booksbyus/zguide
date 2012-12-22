@@ -71,8 +71,8 @@ b02005487696f2e75f5fe6ebc2a9d6f34d425425 examples/Erlang/hwclient.es
 8d65609f4c5a245f18abdf39ea5f17378ebe7949 examples/Python/clonecli1.py
 4a39ab9dcffe45ee068128e8bb2b79071c654c70 images/fig34.txt
 19950526a70c9d6d69aa49e26410278a76a2c7b9 examples/Python/mdcliapi2.py
-5e920cc8ab69c567a8e86f514ed330b684ec8803 examples/Java/lpclient.java
 533912e22da75f4c27e8f865dca8858b804f0346 examples/C++/mtserver.cpp
+5e920cc8ab69c567a8e86f514ed330b684ec8803 examples/Java/lpclient.java
 f5255561e6c274c9214ca1e53e4b40d6fff86d47 examples/Java/tripping.java
 b9176d1cf9d04301ee470dbe13e3abb4baee3360 examples/Java/version.java
 dfe97e2297014f74a9941bbe0d28d6021de0eb51 examples/F#/syncpub.fsx
@@ -91,6 +91,7 @@ ce11487c92b25457062d16cfa03aaee428dadc96 examples/Tcl/flclient1.tcl
 baa5687f33207675ad5a256620598e09f1dd67a6 examples/Haskell/identity.hs
 e51a5ba89f2f990a74143e947d5eb138b4437bd0 examples/C/tasksink2.c
 6f356d1d98158e5ded441b702cca208aca02f052 examples/Haxe/wuclient.hx
+509ecc744f464f4966a891a01cd29624d82382e5 examples/C#/ppworker.cs
 6d7629f3a49bffaef56ad21691dd42178608c8b5 examples/Ruby/ticlient.rb
 87bb28c49bb1dc83b09dd58aac624a0ea8c06761 examples/C#/mtserver.cs
 01b94a290674970a11b07b24f76872a78cfb238f examples/Racket/syncpub.rkt
@@ -125,8 +126,8 @@ c9aa1cea8ad4b225bfaeaae56d2388db2a4bbe13 listings/Lua/listing_52.lua
 33eb7e43b88c56411dbb639471fb164e7331d274 examples/Delphi/taskwork.dpr
 5d83e50701bd3d32af15cb0739ed8888e721c32c fragments/C/iothreads.c
 e0588e9167edf9fb11154ea7364ed1f45b7b8cba examples/C/mdclient2.c
-b55d6909f384e41673a0ac08c2fc383af38378d3 examples/Haxe/tasksink2.hx
 946d8d8e0dac7224685f0b82024a33573bbf6248 images/fig2.html
+b55d6909f384e41673a0ac08c2fc383af38378d3 examples/Haxe/tasksink2.hx
 6ac10c128697c5696144b44e6b6f2b22365f8fae examples/C/rrworker.c
 c2e5818c670b5999a3a1de96b1080932df2ec612 examples/Felix/wuclient.flx
 aa7f062cb4b086f3c00fd02a769fc15c41751829 images/fig55.html
@@ -134,8 +135,8 @@ aa7f062cb4b086f3c00fd02a769fc15c41751829 images/fig55.html
 8aa0ee8cdceada1858674ac5f7766ccd1391e0c1 examples/Ruby/psenvsub.rb
 89e33e7a0541c59b007ed1cd5a7906c7f29f1e54 images/fig14.html
 ddfc2281b409a383f380b8bbd2ef8b63916740e3 examples/Clojure/tasksink2.clj
-757c637e8ce0b9cdedceab28224d7081baef0172 examples/Tcl/rtdealer.tcl
 6e6502fd6552b22bc7b2ac4b3a5b1e3bf0fbafc5 examples/Python/syncpub.py
+757c637e8ce0b9cdedceab28224d7081baef0172 examples/Tcl/rtdealer.tcl
 d50c97ecd4fdfc0c982323734e4f7a3554366b0b fragments/C/endpoint-hashing.c
 a3c78d15e03ff754a35ad2d4d9c5129bd6e0781b examples/Erlang/syncsub.es
 d4a51d25b984a549dd99076aa80900d071f9c2d1 examples/Ruby/hwclient.rb
@@ -797,6 +798,7 @@ bccd2903912a0ee9327147df46c2f2ee4af4eb7d examples/PHP/msgqueue.php
 5ab6f9eae9b48e19d8d9db8fe00491d7afde1d09 examples/Perl/hwclient.pl
 3c6a9991700252ff4bf317ea30374b89f5397369 examples/PHP/ppqueue.php
 eac1fdeea054fa75aa75ca66f260c4311e1f20cd fragments/C/fmq-server-methods.c
+ed847f4794451efafbc3fe0147f473d39b0f9d02 examples/C#/ppqueue.cs
 050c9a52a5e95e34019579a68f6d69ac4593e074 examples/Haxe/psenvpub.hx
 454aaf49cf11eb196137db4b526ade21a29b9678 examples/PHP/rrworker.php
 8e636c1772843986c290c680361eb88fb98eeadf examples/Python/clonesrv3.py
@@ -882,7 +884,7 @@ e0262047664aeec36e21064043def139c1fc9155 images/fig70.txt
 c5daa5026683f992a38e451a02137c852ac10cf6 examples/Ruby/taskwork.rb
 37cae4e61787d0e919eecb92bf8bb120b7af9720 examples/C#/wuclient.cs
 b42c1d6d1c4ffafeddf3195ebd8d32454a31d131 examples/PHP/flclient2.php
-475fc02c5d2db1db93a128341110240d89565e76 images/fig3.txt
+f05049e9fe014ac889bf9adf03ef0b1b1786482f images/fig3.txt
 49d8e81d1a2a15f28797329da96cf4357c0295b5 listings/Tcl/listing_53.tcl
 6d0728c1f389c9146353665ea97e9dccd013c067 examples/Ruby/identity.rb
 355f613847209ec070652f0172c7977bb831bbbc fragments/C/clone-methods.c
@@ -1026,8 +1028,8 @@ ac1156ba2f953b3997550affe245164d50925024 examples/PHP/lbbroker2.php
 a58db4e6242dcbd31dcfe8248382a69cb5ebf4dc examples/C/rtdealer.c
 3505522b83dc283a63a9ce5654cd9d7071612314 images/fig4.txt
 98913d674c40172faadc26833ee49e6b298c507c fragments/C/proxy.c
-2f7baf7baed1713272d61725d94f3aa7859e47a1 examples/Go/mspoller.go
 b59f86b32ba40e90f104ba6aa9cbb683876b9853 examples/Java/ppworker.java
+2f7baf7baed1713272d61725d94f3aa7859e47a1 examples/Go/mspoller.go
 7377682230bfb1631480a93cd27cadacaeb4f1e3 examples/Python/psenvpub.py
-8e4e30e4e224edd0c4a78420a6ddb3c0589e1cfb images/fig26.txt
 cf00f05adee687a45fa3c0bd1d1b90a7843f0070 images/fig63.html
+8e4e30e4e224edd0c4a78420a6ddb3c0589e1cfb images/fig26.txt

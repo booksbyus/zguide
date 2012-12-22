@@ -111,9 +111,9 @@ socket.send ("Hello")
 Then what goes onto the wire is a length (one byte for shorter strings) and the string contents, as individual characters[figure].
 
 [[code type="textdiagram" title="A 0MQ string"]]
-+-----+    +-----+-----+-----+-----+-----+
+#-----#    #-----+-----+-----+-----+-----#
 |  5  |    |  H  |  e  |  l  |  l  |  o  |
-+-----+    +-----+-----+-----+-----+-----+
+#-----#    #-----+-----+-----+-----+-----#
 [[/code]]
 
 And if you read this from a C program, you will get something that looks like a string, and might by accident act like a string (if by luck the five bytes find themselves followed by an innocently lurking null), but isn't a proper string. When your client and server don't agree on the string format, you will get weird results.
