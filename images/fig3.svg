@@ -1,0 +1,52 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Created with ASCIIToSVG (http://9vx.org/~dho/a2s/) -->
+<svg width="408px" height="94px" version="1.1"
+  xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <filter id="dsFilter" width="150%" height="150%">
+      <feOffset result="offOut" in="SourceGraphic" dx="3" dy="3"/>
+      <feColorMatrix result="matrixOut" in="offOut" type="matrix" values="0.2 0 0 0 0 0 0.2 0 0 0 0 0 0.2 0 0 0 0 0 1 0"/>
+      <feGaussianBlur result="blurOut" in="matrixOut" stdDeviation="3"/>
+      <feBlend in="SourceGraphic" in2="blurOut" mode="normal"/>
+    </filter>
+    <marker id="iPointer"
+      viewBox="0 0 10 10" refX="5" refY="5" 
+      markerUnits="strokeWidth"
+      markerWidth="8" markerHeight="7"
+      orient="auto">
+      <path d="M 10 0 L 10 10 L 0 5 z" />
+    </marker>
+    <marker id="Pointer"
+      viewBox="0 0 10 10" refX="5" refY="5" 
+      markerUnits="strokeWidth"
+      markerWidth="8" markerHeight="7"
+      orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" />
+    </marker>
+  </defs><g id="boxes" stroke="black" stroke-width="2" fill="none" >
+</g>
+<g id="lines" stroke="black" stroke-width="2" fill="none" >
+</g>
+<g id="text" fill="black" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >
+<text x="-0.9" y="12.8" id="text0" fill="#000" >+-----+ </text>
+<text x="98.1" y="12.8" id="text1" fill="#000" >+-----+-----+-----+-----+-----+</text>
+<text x="-0.9" y="28.8" id="text2" fill="#000" >|</text>
+<text x="26.1" y="28.8" id="text3" fill="#000" >5</text>
+<text x="53.1" y="28.8" id="text4" fill="#000" >|</text>
+<text x="98.1" y="28.8" id="text5" fill="#000" >|</text>
+<text x="125.1" y="28.8" id="text6" fill="#000" >H</text>
+<text x="152.1" y="28.8" id="text7" fill="#000" >|</text>
+<text x="179.1" y="28.8" id="text8" fill="#000" >e</text>
+<text x="206.1" y="28.8" id="text9" fill="#000" >|</text>
+<text x="233.1" y="28.8" id="text10" fill="#000" >l</text>
+<text x="260.1" y="28.8" id="text11" fill="#000" >|</text>
+<text x="287.1" y="28.8" id="text12" fill="#000" >l</text>
+<text x="314.1" y="28.8" id="text13" fill="#000" >|</text>
+<text x="341.1" y="28.8" id="text14" fill="#000" >o</text>
+<text x="368.1" y="28.8" id="text15" fill="#000" >|</text>
+<text x="-0.9" y="44.8" id="text16" fill="#000" >+-----+ </text>
+<text x="98.1" y="44.8" id="text17" fill="#000" >+-----+-----+-----+-----+-----+</text>
+</g>
+</svg>
