@@ -42,38 +42,28 @@
 //  is being terminated.
 static char *
 s_recv (void *socket) {
-    zmq_msg_t message;
-    zmq_msg_init (&message);
-    int size = zmq_msg_recv (&message, socket, 0);
+    char buffer [256];
+    int size = zmq_recv (socket, buffer, 255, 0);
     if (size == -1)
         return NULL;
-    char *string = malloc (size + 1);
-    memcpy (string, zmq_msg_data (&message), size);
-    zmq_msg_close (&message);
-    string [size] = 0;
-    return (string);
+    if (size > 255)
+        size = 255;
+    buffer [size] = 0;
+    return strdup (buffer);
 }
 
 //  Convert C string to 0MQ string and send to socket
 static int
 s_send (void *socket, char *string) {
-    zmq_msg_t message;
-    zmq_msg_init_size (&message, strlen (string));
-    memcpy (zmq_msg_data (&message), string, strlen (string));
-    int size = zmq_msg_send (&message, socket, 0);
-    zmq_msg_close (&message);
-    return (size);
+    int size = zmq_send (socket, string, strlen (string), 0);
+    return size;
 }
 
 //  Sends string as 0MQ string, as multipart non-terminal
 static int
 s_sendmore (void *socket, char *string) {
-    zmq_msg_t message;
-    zmq_msg_init_size (&message, strlen (string));
-    memcpy (zmq_msg_data (&message), string, strlen (string));
-    int size = zmq_msg_send (&message, socket, ZMQ_SNDMORE);
-    zmq_msg_close (&message);
-    return (size);
+    int size = zmq_send (socket, string, strlen (string), ZMQ_SNDMORE);
+    return size;
 }
 
 //  Receives all message parts from socket, prints neatly

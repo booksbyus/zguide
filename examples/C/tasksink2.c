@@ -6,9 +6,8 @@
 
 int main (void) 
 {
-    void *context = zmq_ctx_new ();
-
     //  Socket to receive messages on
+    void *context = zmq_ctx_new ();
     void *receiver = zmq_socket (context, ZMQ_PULL);
     zmq_bind (receiver, "tcp://*:5558");
 
@@ -19,7 +18,7 @@ int main (void)
     //  Wait for start of batch
     char *string = s_recv (receiver);
     free (string);
-
+    
     //  Start our clock now
     int64_t start_time = s_clock ();
 
@@ -39,8 +38,6 @@ int main (void)
 
     //  Send kill signal to workers
     s_send (controller, "KILL");
-
-    //  Finished
     sleep (1);              //  Give 0MQ time to deliver
 
     zmq_close (receiver);

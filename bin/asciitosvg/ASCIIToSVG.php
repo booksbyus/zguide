@@ -1862,7 +1862,7 @@ SVG;
           if (count($boxQueue) > 0) {
             $t->setOption('stroke', 'none');
             $t->setOption('style',
-              "font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:{$fSize}px");
+              "font-family:LMMono10,monospace;font-size:{$fSize}px");
             $boxQueue[count($boxQueue) - 1]->addText($t);
           } else {
             $this->svgObjects->addObject($t);

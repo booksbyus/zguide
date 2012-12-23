@@ -6,10 +6,8 @@
 
 int main (void) 
 {
-    //  Prepare our context and sockets
-    void *context = zmq_ctx_new ();
-
     //  Connect to task ventilator
+    void *context = zmq_ctx_new ();
     void *receiver = zmq_socket (context, ZMQ_PULL);
     zmq_connect (receiver, "tcp://localhost:5557");
 
@@ -21,29 +19,26 @@ int main (void)
     //  Process messages from both sockets
     //  We prioritize traffic from the task ventilator
     while (1) {
-        //  Process any waiting tasks
-        int rc;
-        for (rc = 0; !rc; ) {
-            zmq_msg_t task;
-            zmq_msg_init (&task);
-            if ((rc = zmq_msg_recv (&task, receiver, ZMQ_DONTWAIT)) != -1) {
-                //  process task
+        char msg [256];
+        while (1) {
+            int size = zmq_recv (receiver, msg, 255, ZMQ_DONTWAIT);
+            if (size != -1) {
+                //  Process task
             }
-            zmq_msg_close (&task);
+            else
+                break;
         }
-        //  Process any waiting weather updates
-        for (rc = 0; !rc; ) {
-            zmq_msg_t update;
-            zmq_msg_init (&update);
-            if ((rc = zmq_msg_recv (&update, subscriber, ZMQ_DONTWAIT)) != -1) {
-                //  process weather update
+        while (1) {
+            int size = zmq_recv (subscriber, msg, 255, ZMQ_DONTWAIT);
+            if (size != -1) {
+                //  Process weather update
             }
-            zmq_msg_close (&update);
+            else
+                break;
         }
         //  No activity, so sleep for 1 msec
         s_sleep (1);
     }
-    //  We never get here but clean up anyhow
     zmq_close (receiver);
     zmq_close (subscriber);
     zmq_ctx_destroy (context);

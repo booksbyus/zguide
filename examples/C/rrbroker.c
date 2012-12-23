@@ -20,19 +20,16 @@ int main (void)
     //  Switch messages between sockets
     while (1) {
         zmq_msg_t message;
-        int more;           //  Multipart detection
-
         zmq_poll (items, 2, -1);
         if (items [0].revents & ZMQ_POLLIN) {
             while (1) {
                 //  Process all parts of the message
                 zmq_msg_init (&message);
                 zmq_msg_recv (&message, frontend, 0);
-                size_t more_size = sizeof (more);
-                zmq_getsockopt (frontend, ZMQ_RCVMORE, &more, &more_size);
-                zmq_msg_send (&message, backend, more? ZMQ_SNDMORE: 0);
+                zmq_msg_send (&message, backend,
+                    zmq_msg_more (&message)? ZMQ_SNDMORE: 0);
                 zmq_msg_close (&message);
-                if (!more)
+                if (!zmq_msg_more (&message))
                     break;      //  Last message part
             }
         }
@@ -41,11 +38,10 @@ int main (void)
                 //  Process all parts of the message
                 zmq_msg_init (&message);
                 zmq_msg_recv (&message, backend, 0);
-                size_t more_size = sizeof (more);
-                zmq_getsockopt (backend, ZMQ_RCVMORE, &more, &more_size);
-                zmq_msg_send (&message, frontend, more? ZMQ_SNDMORE: 0);
+                zmq_msg_send (&message, frontend,
+                    zmq_msg_more (&message)? ZMQ_SNDMORE: 0);
                 zmq_msg_close (&message);
-                if (!more)
+                if (!zmq_msg_more (&message))
                     break;      //  Last message part
             }
         }

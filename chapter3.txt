@@ -469,8 +469,7 @@ We're going to push request-reply onto the stack and open a different area, whic
 
 [[code type="fragment" name="lbreader"]]
 while (true) {
-    //  Read and save all frames until we get an empty frame
-    //  In this example there is only 1 but it could be more
+    //  Get one address frame and empty delimiter
     char *address = s_recv (worker);
     char *empty = s_recv (worker);
     assert (*empty == 0);
@@ -488,46 +487,40 @@ while (true) {
 }
 [[/code]]
 
-That code isn't even reusable, because it can only handle one reply address in the envelope. And it already does some wrapping around the 0MQ API. If we used the libzmq API directly this is what we'd have to write:
+That code isn't even reusable, because it can only handle one reply address in the envelope. And it already does some wrapping around the 0MQ API. If we used the libzmq simple message API this is what we'd have to write:
 
 [[code type="fragment" name="lowreader"]]
 while (true) {
-    //  Read and save all frames until we get an empty frame
-    //  In this example there is only 1 but it could be more
-    zmq_msg_t address;
-    zmq_msg_init (&address);
-    zmq_msg_recv (worker, &address, 0);
+    //  Get one address frame and empty delimiter
+    char address [255];
+    int address_size = zmq_recv (worker, address, 255, 0);
+    if (address_size == -1)
+        break;
 
-    zmq_msg_t empty;
-    zmq_msg_init (&empty);
-    zmq_msg_recv (worker, &empty, 0);
+    char empty [1];
+    int empty_size = zmq_recv (worker, empty, 1, 0);
+    zmq_recv (worker, &empty, 0);
+    assert (empty_size <= 0);
+    if (empty_size == -1)
+        break;
 
     //  Get request, send reply
-    zmq_msg_t payload;
-    zmq_msg_init (&payload);
-    zmq_msg_recv (worker, &payload, 0);
-
-    int char_nbr;
-    printf ("Worker: ");
-    for (char_nbr = 0; char_nbr < zmq_msg_size (&payload); char_nbr++)
-        printf ("%c", *(char *) (zmq_msg_data (&payload) + char_nbr));
-    printf ("\n");
-
-    zmq_msg_init_size (&payload, 2);
-    memcpy (zmq_msg_data (&payload), "OK", 2);
-
-    zmq_msg_send (worker, &address, ZMQ_SNDMORE);
-    zmq_close (&address);
-    zmq_msg_send (worker, &empty, ZMQ_SNDMORE);
-    zmq_close (&empty);
-    zmq_msg_send (worker, &payload, 0);
-    zmq_close (&payload);
+    char request [256];
+    int request_size = zmq_recv (worker, request, 255, 0);
+    if (request_size == -1)
+        return NULL;
+    request [request_size] = 0;
+    printf ("Worker: %s\n", request);
+    
+    zmq_send (worker, address, address_size, ZMQ_SNDMORE);
+    zmq_send (worker, empty, 0, ZMQ_SNDMORE);
+    zmq_send (worker, "OK", 2, 0);
 }
 [[/code]]
 
 And when code is too long to write quickly, it's also too long to understand. Up to now, I've stuck to the native API because as 0MQ users we need to know that intimately. But when it gets in our way, we have to treat it as a problem to solve.
 
-I'm not proposing changing the 0MQ API, which is a documented public contract that thousands of people have agreed to and depend on. What I'm proposing is to construct a higher-level API on top, based on our experience so far, and most specifically, our experience from writing more complex request-reply patterns.
+We can't of course just change the 0MQ API, which is a documented public contract that thousands of people have agreed to and depend on. Instead, we construct a higher-level API on top, based on our experience so far, and most specifically, our experience from writing more complex request-reply patterns.
 
 What we want is an API that lets us receive and send an entire message in one shot, including the reply envelope with any number of reply addresses. One that lets us do what we want with the absolute least lines of code.
 
@@ -552,6 +545,8 @@ Cutting the amount of code we need to read and write complex messages is great: 
 * //Automatic handling of sockets.// I find it cumbersome to have to close sockets manually, and to have to explicitly define the linger timeout in some (but not all) cases. It'd be great to have a way to close sockets automatically when I close the context.
 
 * //Portable thread management.// Every non-trivial 0MQ application uses threads, but POSIX threads aren't portable. So a decent high-level API should hide this under a portable layer.
+
+* //Piping from parent to child threads.// It's a recurrent problem: how to signal between parent and child threads. Our API should provide a 0MQ message pipe (using PAIR sockets and {{inproc}} automatically.
 
 * //Portable clocks.// Even getting the time to a millisecond resolution, or sleeping for some milliseconds, is not portable. Realistic 0MQ applications need portable clocks, so our API should provide them.
 

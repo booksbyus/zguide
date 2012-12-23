@@ -67,7 +67,7 @@ Hello |    | World
   #------------#
 [[/code]]
 
-The REQ-REP socket pair is in lockstep. The client issues {{zmq_msg_send[3]}} and then {{zmq_msg_recv[3]}}, in a loop (or once if that's all it needs). Doing any other sequence (e.g. sending two messages in a row) will result in a return code of -1 from the {{send}} or {{recv}} call. Similarly, the service issues {{zmq_msg_recv[3]}} and then {{zmq_msg_send[3]}} in that order, as often as it needs to.
+The REQ-REP socket pair is in lockstep. The client issues {{zmq_send[3]}} and then {{zmq_recv[3]}}, in a loop (or once if that's all it needs). Doing any other sequence (e.g. sending two messages in a row) will result in a return code of -1 from the {{send}} or {{recv}} call. Similarly, the service issues {{zmq_recv[3]}} and then {{zmq_send[3]}} in that order, as often as it needs to.
 
 0MQ uses C as its reference language and this is the main language we'll use for examples. If you're reading this on-line, the link below the example takes you to translations into other programming languages. Let's compare the same server in C++:
 
@@ -99,7 +99,7 @@ There is a lot happening behind the scenes but what matters to us programmers is
 In C and some other languages, strings are terminated with a null byte. We could send a string like "HELLO" with that extra null byte:
 
 [[code language="C"]]
-zmq_msg_init_data (&request, "Hello", 6, NULL, NULL);
+zmq_send (requester, "Hello", 6, 0);
 [[/code]]
 
 However if you send a string from another language it probably will not include that null byte. For example, when we send that same string in Python, we do this:
@@ -126,22 +126,21 @@ Here is what we need to do, in C, to receive a 0MQ string and deliver it to the 
 
 [[code language="C"]]
 //  Receive 0MQ string from socket and convert into C string
+//  Chops string at 255 chars, if it's longer
 static char *
 s_recv (void *socket) {
-    zmq_msg_t message;
-    zmq_msg_init (&message);
-    int size = zmq_msg_recv (&message, socket, 0);
+    char buffer [256];
+    int size = zmq_recv (socket, buffer, 255, 0);
     if (size == -1)
         return NULL;
-    char *string = malloc (size + 1);
-    memcpy (string, zmq_msg_data (&message), size);
-    zmq_msg_close (&message);
-    string [size] = 0;
-    return (string);
+    if (size > 255)
+        size = 255;
+    buffer [size] = 0;
+    return strdup (buffer);
 }
 [[/code]]
 
-This makes a very handy helper function and in the spirit of making things we can reuse profitably, let's write a similar 's_send' function that sends strings in the correct 0MQ format, and package this into a header file we can reuse.
+This makes a handy helper function and in the spirit of making things we can reuse profitably, let's write a similar 's_send' function that sends strings in the correct 0MQ format, and package this into a header file we can reuse.
 
 The result is {{zhelpers.h}}, which lets us write sweeter and shorter 0MQ applications in C. It is a fairly long source, and only fun for C developers, so [https://github.com/imatix/zguide/blob/master/examples/C/zhelpers.h read it at leisure].
 
@@ -195,7 +194,7 @@ Here is client application, which listens to the stream of updates and grabs any
 
 Note that when you use a SUB socket you **must** set a subscription using {{zmq_setsockopt[3]}} and SUBSCRIBE, as in this code. If you don't set any subscription, you won't get any messages. It's a common mistake for beginners. The subscriber can set many subscriptions, which are added together. That is, if a update matches ANY subscription, the subscriber receives it. The subscriber can also cancel specific subscriptions. A subscription is often but not necessarily a printable string. See {{zmq_setsockopt[3]}} for how this works.
 
-The PUB-SUB socket pair is asynchronous. The client does {{zmq_msg_recv[3]}}, in a loop (or once if that's all it needs). Trying to send a message to a SUB socket will cause an error. Similarly the service does {{zmq_msg_send[3]}} as often as it needs to, but must not do {{zmq_msg_recv[3]}} on a PUB socket.
+The PUB-SUB socket pair is asynchronous. The client does {{zmq_recv[3]}}, in a loop (or once if that's all it needs). Trying to send a message to a SUB socket will cause an error. Similarly the service does {{zmq_send[3]}} as often as it needs to, but must not do {{zmq_recv[3]}} on a PUB socket.
 
 In theory with 0MQ sockets, it does not matter which end connects, and which end binds. However in practice there are undocumented differences that I'll come to later. For now, bind the PUB and connect the SUB, unless your network design makes that impossible.
 
@@ -496,13 +495,13 @@ Specifically:
 
 * It delivers whole messages exactly as they were sent, using a simple framing on the wire. If you write a 10k message, you will receive a 10k message.
 
-* It does not impose any format on messages. They are blobs of zero to gigabytes large. When you want to represent data you choose some other product on top, such as Google's protocol buffers, XDR, and others.
+* It does not impose any format on messages. They are blobs of zero to gigabytes large. When you want to represent data you choose some other product on top, such as msgpack, Google's protocol buffers, and others.
 
-* It handles network errors intelligently. Sometimes it retries, sometimes it tells you an operation failed.
+* It handles network errors intelligently, by retrying automatically in cases where it makes sense.
 
 * It reduces your carbon footprint. Doing more with less CPU means your boxes use less power, and you can keep your old boxes in use for longer. Al Gore would love 0MQ.
 
-Actually 0MQ does rather more than this. It has a subversive effect on how you develop network-capable applications. Superficially it's a socket-inspired API on which you do {{zmq_msg_recv[3]}} and {{zmq_msg_send[3]}}. But message processing rapidly becomes the central loop, and your application soon breaks down into a set of message processing tasks. It is elegant and natural. And it scales: each of these tasks maps to a node, and the nodes talk to each other across arbitrary transports. Two nodes in one process (node is a thread), two nodes on one box (node is a process), or two boxes on one network (node is a box) - it's all the same, with no application code changes.
+Actually 0MQ does rather more than this. It has a subversive effect on how you develop network-capable applications. Superficially it's a socket-inspired API on which you do {{zmq_recv[3]}} and {{zmq_send[3]}}. But message processing rapidly becomes the central loop, and your application soon breaks down into a set of message processing tasks. It is elegant and natural. And it scales: each of these tasks maps to a node, and the nodes talk to each other across arbitrary transports. Two nodes in one process (node is a thread), two nodes on one box (node is a process), or two boxes on one network (node is a box) - it's all the same, with no application code changes.
 
 ++ Socket Scalability
 
@@ -520,13 +519,13 @@ wuclient 56789 &
 As the clients run, we take a look at the active processes using 'top', and we see something like (on a 4-core box):
 
 [[code]]
-  PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND
- 7136 ph        20   0 1040m 959m 1156 R  157 12.0  16:25.47 wuserver
- 7966 ph        20   0 98608 1804 1372 S   33  0.0   0:03.94 wuclient
- 7963 ph        20   0 33116 1748 1372 S   14  0.0   0:00.76 wuclient
- 7965 ph        20   0 33116 1784 1372 S    6  0.0   0:00.47 wuclient
- 7964 ph        20   0 33116 1788 1372 S    5  0.0   0:00.25 wuclient
- 7967 ph        20   0 33072 1740 1372 S    5  0.0   0:00.35 wuclient
+ PID USER PR  NI  VIRT  RES  SHR S %CPU %MEM   TIME+  COMMAND
+7136 ph   20   0 1040m 959m 1156 R  157 12.0 16:25.47 wuserver
+7966 ph   20   0 98608 1804 1372 S   33  0.0  0:03.94 wuclient
+7963 ph   20   0 33116 1748 1372 S   14  0.0  0:00.76 wuclient
+7965 ph   20   0 33116 1784 1372 S    6  0.0  0:00.47 wuclient
+7964 ph   20   0 33116 1788 1372 S    5  0.0  0:00.25 wuclient
+7967 ph   20   0 33072 1740 1372 S    5  0.0  0:00.35 wuclient
 [[/code]]
 
 Let's think for a second about what is happening here. The weather server has a single socket, and yet here we have it sending data to five clients in parallel. We could have thousands of concurrent clients. The server application doesn't see them, doesn't talk to them directly. So the 0MQ socket is acting like a little server, silently accepting client requests and shoving data out to them as fast as the network can handle it. And it's a multithreaded server, squeezing more juice out of your CPU.

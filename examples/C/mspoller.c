@@ -6,9 +6,8 @@
 
 int main (void) 
 {
-    void *context = zmq_ctx_new ();
-
     //  Connect to task ventilator
+    void *context = zmq_ctx_new ();
     void *receiver = zmq_socket (context, ZMQ_PULL);
     zmq_connect (receiver, "tcp://localhost:5557");
 
@@ -17,30 +16,27 @@ int main (void)
     zmq_connect (subscriber, "tcp://localhost:5556");
     zmq_setsockopt (subscriber, ZMQ_SUBSCRIBE, "10001 ", 6);
 
-    //  Initialize poll set
-    zmq_pollitem_t items [] = {
-        { receiver, 0, ZMQ_POLLIN, 0 },
-        { subscriber, 0, ZMQ_POLLIN, 0 }
-    };
     //  Process messages from both sockets
     while (1) {
-        zmq_msg_t message;
+        char msg [256];
+        zmq_pollitem_t items [] = {
+            { receiver,   0, ZMQ_POLLIN, 0 },
+            { subscriber, 0, ZMQ_POLLIN, 0 }
+        };
         zmq_poll (items, 2, -1);
         if (items [0].revents & ZMQ_POLLIN) {
-            zmq_msg_init (&message);
-            zmq_msg_recv (&message, receiver, 0);
-            //  Process task
-            zmq_msg_close (&message);
+            int size = zmq_recv (receiver, msg, 255, 0);
+            if (size != -1) {
+                //  Process task
+            }
         }
         if (items [1].revents & ZMQ_POLLIN) {
-            zmq_msg_init (&message);
-            zmq_msg_recv (&message, subscriber, 0);
-            //  Process weather update
-            zmq_msg_close (&message);
+            int size = zmq_recv (subscriber, msg, 255, 0);
+            if (size != -1) {
+                //  Process weather update
+            }
         }
     }
-    //  We never get here
-    zmq_close (receiver);
     zmq_close (subscriber);
     zmq_ctx_destroy (context);
     return 0;

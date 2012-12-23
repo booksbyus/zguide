@@ -6,9 +6,8 @@
 
 int main (void) 
 {
-    void *context = zmq_ctx_new ();
-
     //  Socket to receive messages on
+    void *context = zmq_ctx_new ();
     void *receiver = zmq_socket (context, ZMQ_PULL);
     zmq_connect (receiver, "tcp://localhost:5557");
 
@@ -21,37 +20,25 @@ int main (void)
     zmq_connect (controller, "tcp://localhost:5559");
     zmq_setsockopt (controller, ZMQ_SUBSCRIBE, "", 0);
 
-    //  Process messages from receiver and controller
-    zmq_pollitem_t items [] = {
-        { receiver, 0, ZMQ_POLLIN, 0 },
-        { controller, 0, ZMQ_POLLIN, 0 }
-    };
-    //  Process messages from both sockets
+    //  Process messages from either socket
     while (1) {
-        zmq_msg_t message;
+        zmq_pollitem_t items [] = {
+            { receiver, 0, ZMQ_POLLIN, 0 },
+            { controller, 0, ZMQ_POLLIN, 0 }
+        };
         zmq_poll (items, 2, -1);
         if (items [0].revents & ZMQ_POLLIN) {
-            zmq_msg_init (&message);
-            zmq_msg_recv (&message, receiver, 0);
-
-            //  Do the work
-            s_sleep (atoi ((char *) zmq_msg_data (&message)));
-
-            //  Send results to sink
-            zmq_msg_init (&message);
-            zmq_msg_send (&message, sender, 0);
-
-            //  Simple progress indicator for the viewer
-            printf (".");
+            char *string = s_recv (receiver);
+            printf ("%s.", string);     //  Show progress
             fflush (stdout);
-
-            zmq_msg_close (&message);
+            s_sleep (atoi (string));    //  Do the work
+            free (string);
+            s_send (sender, "");        //  Send results to sink
         }
         //  Any waiting controller command acts as 'KILL'
         if (items [1].revents & ZMQ_POLLIN)
             break;                      //  Exit loop
     }
-    //  Finished
     zmq_close (receiver);
     zmq_close (sender);
     zmq_close (controller);

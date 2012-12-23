@@ -5,12 +5,12 @@
 #include <stdio.h>
 #include <signal.h>
 
-//  ---------------------------------------------------------------------
+//  ---------------------------------------------------------------
 //  Signal handling
 //
-//  Call s_catch_signals() in your application at startup, and then exit 
-//  your main loop if s_interrupted is ever 1. Works especially well with 
-//  zmq_poll.
+//  Call s_catch_signals() in your application at startup, and then
+//  exit your main loop if s_interrupted is ever 1. Works especially
+//  well with zmq_poll.
 
 static int s_interrupted = 0;
 static void s_signal_handler (int signal_value)
@@ -37,10 +37,8 @@ int main (void)
     s_catch_signals ();
     while (1) {
         //  Blocking read will exit on a signal
-        zmq_msg_t message;
-        zmq_msg_init (&message);
-        zmq_msg_recv (&message, socket, 0);
-
+        char buffer [255];
+        zmq_recv (socket, buffer, 255, 0);
         if (s_interrupted) {
             printf ("W: interrupt received, killing server...\n");
             break;

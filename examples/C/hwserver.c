@@ -20,9 +20,9 @@ int main (void)
 
     while (1) {
         char buffer [10];
-        rc = zmq_recv (requester, buffer, 10, 0);
+        rc = zmq_recv (responder, buffer, 10, 0);
         printf ("Received Hello\n");
-        rc = zmq_send (requester, "World", 5, 0);
+        rc = zmq_send (responder, "World", 5, 0);
         sleep (1);          //  Do some 'work'
     }
     return 0;
