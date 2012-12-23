@@ -263,7 +263,7 @@ Some other things that are worth knowing about messages:
 
 * A message (single, or multi-part) must fit in memory. If you want to send files of arbitrary sizes, you should break them into pieces and send each piece as separate single-part messages. //Using multi-part data will not reduce memory consumption.//
 
-* You must call {{zmq_msg_close[3]}} when finished with a message, in languages that don't automatically destroy objects when a scope closes.
+* You must call {{zmq_msg_close[3]}} when finished with a received message, in languages that don't automatically destroy objects when a scope closes. You don't call this method after sending a message.
 
 And to be repetitive, do not use {{zmq_msg_init_data[3]}} yet. This is a zero-copy method and guaranteed to create trouble for you. There are far more important things to learn about 0MQ before you start to worry about shaving off microseconds.
 

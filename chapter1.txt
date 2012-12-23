@@ -367,7 +367,9 @@ Memory leaks are one thing, but 0MQ is quite finicky about how you exit an appli
 
 The 0MQ objects we need to worry about are messages, sockets, and contexts. Luckily it's quite simple, at least in simple programs:
 
-* Always close a message the moment you are done with it, using {{zmq_msg_close[3]}}.
+* Use {{zmq_send[3]}} and {{zmq_recv[3]}} when you can, it avoids the need to work with zmq_msg_t objects.
+
+* If you do use {{zmq_msg_recv[3]}}, always release the received message as soon as you're done with it, by calling {{zmq_msg_close[3]}}.
 
 * If you are opening and closing a lot of sockets, that's probably a sign you need to redesign your application.
 
