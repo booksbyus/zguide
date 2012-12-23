@@ -1,0 +1,539 @@
+#! /usr/bin/perl
+#   mkwikidot
+#   - convert ZeroMQ document to Wikidot format
+#   - converts [[code type="textdiagram"]] via asciitosvg
+#   - converts zmq_something(3) into URL to http://api.zeromq.org
+#
+#   Usage: mkwikidot docfile
+#
+#   Creates Wikidot file as specified by .output and images in images/.
+#
+#   By Pieter Hintjens, free for remixing without conditions.
+#   Images are stored in the github repository at
+#   https://github.com/imatix/zguide
+#
+use Digest::SHA1 qw(sha1_hex);
+
+@languages = ('Ada', 'Basic', 'C', 'C++', 'C#', 'Clojure', 'CL', 'Delphi', 'Erlang', 
+              'F#', 'Felix', 'Go', 'Haskell', 'Haxe', 'Java', 'Lua', 'Node.js', 
+              'Objective-C', 'ooc', 'Perl', 'PHP', 'Python', 'Q', 'Racket', 
+              'Ruby', 'Scala', 'Tcl');
+
+#   File extensions for each language
+%extension = ('Ada' => 'ada',
+              'Basic' => 'bas',
+              'C' => 'c',
+              'C++' => 'cpp',
+              'C#' => 'cs',
+              'CL' => 'lisp',
+              'Clojure' => 'clj',
+              'Delphi' => 'dpr',
+              'Erlang' => 'es',
+              'F#' => 'fsx',
+              'Felix' => 'flx',
+              'Go' => 'go',
+              'Haskell' => 'hs',
+              'Haxe' => 'hx',
+              'Java' => 'java',
+              'Lua' => 'lua',
+              'Node.js' => 'js',
+              'Objective-C' => 'm',
+              'ooc' => 'ooc',
+              'Perl' => 'pl',
+              'PHP' => 'php',
+              'Python' => 'py',
+              'Q' => 'q',
+              'Racket' => 'rkt',
+              'Ruby' => 'rb',
+              'Scala' => 'scala',
+              'Tcl' => 'tcl' );
+
+#   Specific Pygmentizer lexer for each language, if needed
+%lexer = ('Erlang' => 'erlang',
+          'F#' => 'ocaml',
+          'Q' => 'text',
+          'Racket' => 'text',
+          'Delphi' => 'delphi'
+          );
+
+$source = $ENV {'Z2W_LANG'} || "C";
+$format = $ENV {'Z2W_FORM'} || "online";
+signatures_load ();
+bookmarks_load ();
+
+printf "Generating $source/$format version of Guide...\n";
+
+#   Inline action options
+$inline_action = 0;
+$inline_source = 1;
+$inline_collapsed = 2;
+$inline_listing = 3;
+
+#   Ensure all languages have an examples directory
+foreach (@languages) {
+    $translations {$_} = 0;
+    mkdir ("examples/$_") unless -d "examples/$_";
+    if (!-f "examples/$_/README") {
+        die "Can't create examples/$_/README: $!"
+            unless open (README, ">examples/$_/README");
+        print README "Examples in $_\n";
+        print README "See LICENSE in examples directory\n";
+    }
+}
+$examples = 0;
+$listings = 0;
+$this = 0;
+
+die "Can't create wdtemp.txt: $!"
+    unless open (OUTPUT, ">wdtemp.txt");
+die "Can't create upload.sh: $!"
+    unless open (UPLOAD, ">upload.sh");
+
+writeln ('[!-- Generated documentation file, do not edit --]');
+
+while (<>) {
+    chop while /\s$/;
+    if (/^\./) {
+        #   Process directive
+        if (/^\.set\s+(\w+)=(.*)/) {
+            $symbols {$1} = $2;
+        }
+        elsif (/^\.\-/) {
+            #   Comment, ignore
+        }
+        elsif (/^\.end/) {
+            writeln ("(More coming soon...)");
+            $EOD = 1;       #   Stop output here
+        }
+        elsif (/^\.output\s+(\w.*)/) {
+            close (OUTPUT);
+            die "Can't create $1: $!"
+                unless open (OUTPUT, ">$1");
+        }
+        elsif (/^\.bookmark\s+(\w.*)/) {
+            writeln ("[[# $1]]");
+            $bookmark = $1;
+        }
+        else {
+            print "Illegal directive $_ at line $.\n";
+        }
+    }
+    elsif (/^([\+]+)\s+(.*)$/) {
+        $this++;
+        $prev = $this - 1;
+        $next = $this + 1;
+        $level = $1;
+        $header = $2;
+        if ($level eq "+" && $header ne "Preface" && $header ne "Postface") {
+            $chapter++;
+            $header = "Chapter $chapter - $header";
+        }
+        $anchor = $header;
+        $anchor =~ s/[^a-zA-Z]/-/g;
+        $anchor =~ s/\-+/-/g;
+        $anchor =~ s/\-$//;
+        $bookmarks {$anchor} = $header;
+        if ($bookmark) {
+            $bookmarks {$bookmark} = $header;
+            $bookmark = "";
+        }
+        writeln ("[[# $anchor]][[# header-$this]]");
+        writeln ("[[table style=\"width:100%\"]]");
+        writeln ("[[row]]");
+        writeln ("[[cell]]");
+        writeln ("+$level [#$anchor $header]");
+        writeln ("[[/cell]]");
+        writeln ("[[cell style=\"text-align:right; font-size:80%;\"]]");
+        writeln ("[#top top] [#header-$prev prev] [#header-$next next]");
+        writeln ("[[/cell]]");
+        writeln ("[[/row]]");
+        writeln ("[[/table]]");
+    }
+    #  Process unnamed code listing
+    elsif (/\[\[code\s+language=\"(.+)\"\]\]/) {
+        $listings++;
+        $title = "Listing $listings";
+        $name = "listing_$listings";
+        $language = $1;
+        $filename = "listings/$language/$name.$extension{$language}";
+        mkdir ("listings") unless -d "listings";
+        mkdir ("listings/$language") unless -d "listings/$language";
+
+        die "Can't create $filename: $!"
+            unless open (LISTING, ">$filename");
+        while (<>) {
+            last if /\[\[\/code\]\]/;
+            print LISTING $_;
+        }
+        process_one_language ("listings", $name, $language, $title, $inline_listing);
+    }
+    #  Process named fragment codeblock
+    elsif (/\[\[code\s+type=\"fragment\"\s+name=\"([^"]+)\"/) {
+        #   Thunk fragment source code into C directory in any case
+        $name = $1;
+        die "Can't create fragments/C/$name.c: $!"
+            unless open (FRAGMENT, ">fragments/C/$name.c");
+        while (<>) {
+            last if /\[\[\/code\]\]/;
+            print FRAGMENT $_;
+        }
+        #   Look for translation in current source language, fall back on C if none
+        $filename = "fragments/$source/$name".$extension{$source};
+        $language = -f $filename? $source: "C";
+        $listings++;
+        $title = "Listing $listings";
+        process_one_language ("fragments", $name, $language, $title, $inline_listing);
+    }
+    #  Process named example codeblock
+    elsif (/\[\[code\s+type=\"example\"\s+title=\"([^"]+)\"\s+name=\"([^"]+)\"(\s+language=\"([^"]+)\")?\]\]/) {
+        $title = zmq_symbol ($1); #  Some titles have '0MQ'
+        $name = $2;
+        $language = $4;
+        if ($language) {
+            process_one_language ("examples", $name, $language, $title, $inline_source);
+        }
+        else {
+            $actions = "";
+            $missing = "";
+            #   Show primary language example inline
+            if (process_one_language ("examples",
+                $name, $source, $title, $inline_collapsed)) {
+                $translations {$source} += 1;
+            }
+            #   Show other languages as new tabs
+            foreach $language (@languages) {
+                if ($language ne $source) {
+                    if (process_one_language ("examples",
+                        $name, $language, $title, $inline_action)) {
+                        $translations {$language} += 1;
+                    }
+                }
+            }
+            if ($missing) {
+                $actions = $actions." | " if $actions;
+                $actions = $actions."[/main:translate $missing]";
+                $actions = "[[size smaller]]".$actions."[[/size]]";
+            }
+            writeln ($actions);
+            $examples++;
+        }
+        #   Discard any real contents of code block
+        while (<>) {
+            last if /\[\[\/code\]\]/;
+            print "W: discarding code for $title - $name\n";
+        }
+    }
+    #  Process plain code block
+    elsif (/\[\[code\]\]/) {
+        writesrc ($_);
+        while (<>) {
+            chop;
+            writesrc ($_);
+            last if /\[\[\/code\]\]/;
+        }
+    }
+    elsif (/\[\[code type=\"textdiagram\"\s+title=\"([^"]+)\"\]\]/) {
+        #   Create HTML file for text diagram
+        $title = $1;
+        $figure = $figure + 1;
+        die "Can't create images/fig$figure.txt: $!"
+            unless open (IMAGE, ">images/fig$figure.txt");
+        $longest = 0;
+        while (<>) {
+            chop;
+            last if /\[\[\/code\]\]/;
+            $longest = length ($_) if length ($_) > $longest;
+            print IMAGE "$_\n";
+        }
+        close (IMAGE);
+
+        #   Calculate scaling so image looks decent
+        $scale = 60 / $longest;
+        $scale = 1 if $scale > 1;
+
+        #   Convert diagram into image of required format
+        if (signature_changed ("images/fig$figure.txt")) {
+            print "Converting fig$figure.txt to SVG...\n";
+            system ("a2s -iimages/fig$figure.txt -oimages/fig$figure.svg");
+            system ("rasterizer -d images images/fig$figure.svg");
+            signature_update ("images/fig$figure.txt");
+        }
+        #   Link to resource in git, nice way to upload images
+        writeln ("**Figure $figure - $title**");
+        writeln ("[[=image $symbols{GIT}/raw/$symbols{BRANCH}/images/fig$figure.png]]");
+    }
+    elsif (/\[\[code/) {
+        print "E: unparsed code block: $_\n";
+    }
+    else {
+        #   Normal text
+        writeln ($_);
+    }
+}
+if ($format eq "online" && $examples) {
+    die "Can't create scoreboard.wd: $!"
+        unless open (SCOREBOARD, ">scoreboard.wd");
+    print (SCOREBOARD "||||||~ Translations ($examples in total)||\n");
+    foreach $language (@languages) {
+        printf (SCOREBOARD "|| [/$extension{$language}:_start %s] || %3d || %3d%% ||\n",
+            $language, $translations {$language},
+            ($translations {$language} * 100) / $examples);
+    }
+    close (SCOREBOARD);
+}
+close (OUTPUT);
+close (UPLOAD);
+
+signatures_save ();
+bookmarks_save ();
+exit (0);
+
+
+#   Writes $_ to OUTPUT after expanding all symbols
+
+sub writeln {
+    local ($_) = @_;
+    $_ = expand_symbols ($_);
+    print OUTPUT "$_\n" unless $EOD;
+}
+
+sub writesrc {
+    local ($_) = @_;
+    print OUTPUT "$_\n" unless $EOD;
+}
+
+#   Process one example in one language
+
+sub process_one_language {
+    local ($directory, $name, $language, $title, $inline) = @_;
+    local $ext = $extension{$language};
+
+    $filename = "$directory/$language/$name.$ext";
+    if (-f $filename) {
+        if ($inline == $inline_source) {
+            writeln ("[[include $ext:$name]]");
+            writeln ("[[>]]");
+            writeln ("//$name.$ext: $title//");
+            writeln ("[[/>]]");
+        }
+        elsif ($inline == $inline_collapsed) {
+            writeln ("[[collapsible show=\"$name: $title in $language\" hide=\"$name: $title in $language\"]]");
+            writeln ("[[include $ext:$name]]");
+            writeln ("[[/collapsible]]");
+        }
+        elsif ($inline == $inline_action) {
+            $actions = $actions." | " if $actions;
+            $actions = $actions."[*/$ext:$name $language]";
+        }
+        elsif ($inline == $inline_listing) {
+            writeln ("[[include $ext:$name]]");
+        }
+        if (signature_changed ($filename)) {
+            print "Processing $name (in $language)...\n";
+            mkdir (".wdtemp") unless -d ".wdtemp";
+            mkdir (".wdtemp/$language") unless -d ".wdtemp/$language";
+            $lexopt = $lexer {$language}? "-l $lexer{$language}": "";
+            system ("egrep -v \" \\.split| \\.skip| \\.until\" $filename > tempfile.$ext");
+            system ("pygmentize -f bb $lexopt tempfile.$ext > tempfile.bb");
+            exit (1) if $?;
+            system ("bin/bb2wd tempfile.bb >.wdtemp/$language/$name.wd");
+            system ("rm tempfile.$ext tempfile.bb");
+            print UPLOAD "cd .wdtemp/$language\n";
+            print UPLOAD "    wdput zguide $ext $name \"$title in $language\"\n";
+            print UPLOAD "    rm $name.wd\n";
+            print UPLOAD "cd ../..\n";
+            signature_update ($filename);
+        }
+        return 1;       #   File exists
+    }
+    else {
+        if ($inline == $inline_source) {
+            writeln ("[[include c:$name]]");
+            writeln ("[[>]]");
+            writeln ("//$name.c: $title//");
+            writeln ("[[/>]]");
+        }
+        else {
+            $missing = "$missing | " if $missing;
+            $missing = "$missing$language";
+        }
+        return 0;
+    }
+}
+
+
+#   Load signatures hash tables
+sub signatures_load {
+    print "I: loading signatures... ";
+    undef %signatures;
+    local $count = 0;
+    if (open (SIGNATURES, ".signatures")) {
+        while (<SIGNATURES>) {
+            /([^\s]+)\s+([^\s]+)/;
+            $signatures {$2} = $1;
+            $count++;
+        }
+    }
+    print "$count loaded\n";
+}
+
+#   If file signature has changed, return 1, else 0
+sub signature_changed {
+    local ($filename) = @_;
+    $_ = `sha1sum $filename`;
+    if (/([^\s]+)\s+/) {
+        if ($signatures {$filename} eq $1) {
+            return 0;
+        }
+        else {
+            return 1;
+        }
+    }
+    else {
+        "E: can't sha1sum $filename\n";
+        return 0;
+    }
+}
+
+#   Save file signature into table
+sub signature_update {
+    local ($filename) = @_;
+    $_ = `sha1sum $filename`;
+    if (/([^\s]+)\s+/) {
+        $signatures {$filename} = $1;
+    }
+    else {
+        "E: can't sha1sum $filename\n";
+        return 0;
+    }
+}
+
+#   Save signatures table
+sub signatures_save {
+    print "I: saving signatures... ";
+    local $count = 0;
+    local $filename;
+    if (open (SIGNATURES, ">.signatures")) {
+        foreach $filename (keys %signatures) {
+            print SIGNATURES "$signatures{$filename} $filename\n";
+            $count++;
+        }
+    }
+    print "$count saved\n";
+}
+
+#   Load bookmarks
+sub bookmarks_load {
+    if (open (BOOKMARKS, ".bookmarks")) {
+        while (<BOOKMARKS>) {
+            chop;
+            if (/(\S+)\s+(.+)/) {
+                $bookmarks {$1} = $2;
+            }
+        }
+        close (BOOKMARKS);
+    }
+}
+
+#   Save bookmarks
+sub bookmarks_save {
+    if (open (BOOKMARKS, ">.bookmarks")) {
+        foreach $bookmark (keys %bookmarks) {
+            print BOOKMARKS "$bookmark $bookmarks{$bookmark}\n";
+        }
+        close (BOOKMARKS);
+    }
+}
+
+
+#   Expand symbols, hyperlinks, etc
+#
+sub expand_symbols {
+    local ($_) = @_;
+    local ($before,
+           $match,
+           $after,
+           $expr);
+
+    return unless ($_);                 #   Quit if input string is empty
+
+    #   Replace 0MQs
+    $_ = zmq_symbol ($_);
+
+    #   Recursively expand symbols like this (and in this order):
+    #   $(xxx)          value of variable
+    #   $(xxx?zzz)      value of variable, or zzz if undefined
+    #   %(text?zzz)     value of environment variable, or zzz if undef
+    for (;;) {
+        #   Force expansion from end of string first, so things like
+        #   $(xxx?$(yyy)) work properly.
+        if (/[\$%]\(/ || /\!([a-z_]+)\s*\(/i) {
+            $before = $`;
+            $match  = $&;
+            $after  = expand_symbols ($');
+            $_ = $before.$match.$after;
+        }
+        #   $(xxx)
+        if (/\$\(([A-Za-z0-9-_\.]+)\)/) {
+            $_ = $`.&valueof ($1).$';
+        }
+        #   $(xxx?zzz)
+        elsif (/\$\(([A-Za-z0-9-_\.]+)\?([^)\$]*)\)/) {
+            $_ = $`.&valueof ($1, $2).$';
+        }
+        #   %(text)
+        elsif (/\%\(([^\)]+)\)/) {
+            $_ = $`.$ENV {$1}.$';
+        }
+        #   %(text?zzz)
+        elsif (/\%\(([^\)]+)\?([^)\$]*)\)/) {
+            $_ = $`.($ENV {$1}? $ENV {$1}: $2).$';
+        }
+        else {
+            last;
+        }
+    }
+    #   Translate bookmark references
+    while (/\[#(\S+)\]/) {
+        print "Undefined bookmark: $1\n"
+            unless defined ($bookmarks {$1});
+        $_ = $`."[#$1 $bookmarks{$1}]".$';
+    }
+    #   Translate figure references
+    s/\[figure\]//g;
+    
+    #   Translate man page references
+    s/zmq_([\w_]+)\[.\]/[http:\/\/api.zeromq.org\/3-2:zmq_$1 zmq_$1()]/g;
+    return $_;
+}
+
+#   Translate 0MQ into ØMQ and 0\MQ into 0MQ
+sub zmq_symbol {
+    local ($_) = @_;
+
+    s/0MQ/ØMQ/g;
+    s/0\\MQ/0MQ/g;
+    return $_;
+}
+
+
+#   Subroutine returns the value of the specified symbol; it issues a
+#   warning message and returns 'UNDEF' if the symbol is not defined
+#   and the default value is empty.
+#
+sub valueof {
+    local ($symbol, $default) = @_;     #   Argument is symbol name
+    local ($return);                    #   Returned value
+    local ($langed_symbol);             #   Language-dependent symbol
+
+    if (defined ($symbols {$symbol})) {
+        $return = $symbols {$symbol};
+        return $return;
+    }
+    elsif (defined ($default)) {
+        return ($default);
+    }
+    print ("E: undefined symbol \"$symbol\"");
+    $symbols {$symbol} = "UNDEF";
+    return $symbols {$symbol};
+}

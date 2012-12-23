@@ -1,6 +1,5 @@
 //
 //  Clone server Model Five
-//
 
 //  Lets us build this source without creating a library
 #include "kvmsg.c"
@@ -26,7 +25,6 @@ typedef struct {
 int main (void)
 {
     clonesrv_t *self = (clonesrv_t *) zmalloc (sizeof (clonesrv_t));
-
     self->port = 5556;
     self->ctx = zctx_new ();
     self->kvmap = zhash_new ();

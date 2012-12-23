@@ -168,7 +168,7 @@ s_update_peer_expiry (bstar_t *self)
 int s_send_state (zloop_t *loop, zmq_pollitem_t *poller, void *arg)
 {
     bstar_t *self = (bstar_t *) arg;
-    zstr_sendf (self->statepub, "%d", self->state);
+    zstr_send (self->statepub, "%d", self->state);
     return 0;
 }
 

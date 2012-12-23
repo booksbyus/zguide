@@ -1,88 +1,62 @@
-+-----------------+
-| I'm not getting |        +-----------------+        +----------------+
-|     my data!    |        |  Do you set a   |        | Use the        |
-|                 |   /--->|  subscription   +------->| zmq_setsockopt |
-+--------+--------+   |    |  for messages?  | No     | ZMQ_SUBSCRIBE  |
-         |            |    |                 |        | ("") option    |
-         v            |    +--------+--------+        +----------------+
-+-----------------+   |             | Yes
-| Are you losing  |   |             v
-|  messages in a  +---/    +-----------------+        +----------------+
-|   SUB socket?   | Yes    |  Do you start   |        | Start all SUB  |
-|                 |        |  the SUB socket +------->| sockets first, |
-+--------+--------+        |  after the PUB? | Yes    | then the PUB   |
-         | No              |                 |        | sockets to     |
-         |                 +--------+--------+        | avoid loss     |
-         |                          | No              +----------------+
-         |                          v
-         |                +--------------------+
-         |                | See explanation of |
-         |                | the "slow joiner"  |
-+-----------------+       | syndrome in text.  |     +--------------------+
-|                 |       +--------------------+     | With REQ, send and |
-|  Are you using  |                                  | recv in a loop and |
-|   REQ and REP   +--------------------------------->| check the return   |
-|     sockets?    | Yes                              | codes. With REP    |
-|                 |                                  | it's recv + send.  |
-+--------+--------+                                  +--------------------+
-         | No
-         v                 +---------------------+        +-----------------+
-+-----------------+        | The 1st PULL socket |        | You may need to |
-|  Are you using  |        | to connect can grab |        | do extra work to|
-|  PUSH sockets?  +------->| 1000's of messages  +------->| synchronize your|
-|                 | Yes    | before the others   |        | sockets before  |
-+--------+--------+        | get there.          |        | sending tasks.  |
-         | No              +---------------------+        +-----------------+
+.---------------.     
+| So you're not |        .---------------.        .----------------.
+| getting every |        | Do you set a  |        | On SUB sockets |
+| message?      |    .-->| subscription  +------->| you have to    |
+'--------+------'    |   | for messages? | No     | subscribe to   |
+         |           |   '-------+-------'        | get messages   |
+         v           |           |                '----------------'
+.----------------.   |           v
+| Are you losing |   |   .----------------.        .---------------.
+| messages in a  +---'   | Do you start   |        | Start all SUB |
+| SUB socket?    | Yes   | the SUB socket +------->| sockets first |
+'--------+-------'       | after the PUB? | Yes    | then the PUB  |
+         | No            '--------+-------'        | sockets to    |
+         |                        | No             | avoid loss    |
+         v                        v                '---------------'
+.---------------.       .-----------------.
+| Are you using | Yes   | See explanation |     .------------------.
+| REQ and REP   +---.   | of slow joiners |     | Send and recv in |
+| sockets?      |   |   | in the text     |     | a loop and check |
+'--------+------'   |   '-----------------'  .->| return codes.    |
+         |          '------------------------'  | With REP, recv   |
+         | No                                   | and send         |
+         v               .----------------.     '------------------'
+.-----------------.      | First PULL can |
+|  Are you using  +----->| grab many msgs |       .---------------.
+|  PUSH sockets?  | Yes  | while others   +--.    | Use the load- |
+'--------+--------'      | are still busy |  |    | balancing     |
+         | No            | connecting     |  '--->| pattern and   |
+         v               '----------------'       | ROUTER/DEALER |
+.-----------------.                               | sockets       |
+|  Do you check   | No    .-----------------.     '---------------'
+| return codes on +---.   | Check every 0MQ |
+|  all methods?   |   '-->| method call. In |
+'--------+--------'       | C, use asserts  |
+         | Yes            '-----------------'
          v
-+-----------------+        +-----------------+
-|  Do you check   |        | Check every 0MQ |
-| return codes on +------->| method call. In |
-|  all methods?   | No     | C, use asserts. |
-|                 |        |                 |
-+--------+--------+        +-----------------+
-         | Yes
-         v
-+-----------------+        +-----------------+        +------------------+
-| Are you using   |        |   Do you pass   |        | Create a socket  |
-| threads in your +------->| sockets between +------->| in the thread    |
-|  app already?   | Yes    |    threads?     | Yes    | where you use it |
-|                 |        |                 |        |                  |
-+--------+--------+        +--------+--------+        +------------------+
-         | No                       | No
-         +--------------------------+
-         |
-         v                 +-----------------+        +------------------+
-+-----------------+        | Are you calling |        | Call zmq_ctx_new |
-|  Are you using  |        |   zmq_ctx_new   +------->| exactly once in  |
-|   the inproc    +------->| more than once? | Yes    | every process.   |
-|   transport?    | Yes    |                 |        |                  |
-|                 |        +--------+--------+        +------------------+
-+--------+--------+                 | No
-         | No                       v
-         |                 +-----------------+
-         |                 | Check that you  |
-         |                 | bind before you |
-         |                 | connect.        |
-         |                 +-----------------+
-         v
-+-----------------+        +-----------------+        +-----------------+
-|                 |        | Check that the  |        | If you're using |
-|  Are you using  |        | reply address   |        | identities make |
-| ROUTER sockets? +------->| is valid. 0MQ   +------->| sure to set them|
-|                 | Yes    | drops messages  |        | before not after|
-+--------+--------+        | it can't route. |        | you connect.    |
-         | No              +-----------------+        +-----------------+
-         v
-+-----------------+        +--------------------+
-| Are you losing  |        | You probably have  |
-|  every second   +------->| a client running   |
-|    message?     | Yes    | in the background. |
-|                 |        | Kill it and start  |
-+--------+--------+        | again.             |
-         | No              +--------------------+
-         v
-+-----------------+
-| Make a minimal  |
-| test case, ask  |
-| on IRC channel. |
-+-----------------+
+.-----------------.       .----------------.
+| Are you using a |       | Do not share   |
+| socket in more  +------>| sockets across |
+| than 1 thread?  | Yes   | threads        |
+'--------+--------'       '----------------'
+         | No                                     .---------------.
+         v                .----------------.      | To use inproc |
+.---------------.         | Do you call    |      | your sockets  |
+| Are you using |    .--->| zmq_ctx_new    +----->| must be in    |
+| the inproc:// +----'    | twice or more? |Yes   | the same      |
+| transport?    | Yes     '--------+-------'      | 0MQ context   |
+'--------+------'                  | No           '---------------'
+         | No                      v             
+         v                .-----------------.
+.-----------------.       | Check that you  |
+|  Are you using  | Yes   | bind before you |
+| ROUTER sockets? +---.   | connect         |
+'--------+--------'   |   '-----------------'
+         | No         |
+         v            |   .----------------.     .------------.
+.----------------.    |   | Check that the |     | If you use |
+| Make a minimal |    |   | reply address  |     | identities |
+| test case, ask |    '-->| is valid. 0MQ  +---->| set them   |
+| on IRC channel |        | drops messages |     | before you |
+'----------------'        | it can't route |     | connect    |
+                          '----------------'     '------------'

@@ -1,5 +1,5 @@
 while (true) {
-    zstr_send (client, "HELLO");
+    zstr_send (client, "Hello");
     char *reply = zstr_recv (client);
     if (!reply)
         break;              //  Interrupted

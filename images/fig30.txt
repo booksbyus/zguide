@@ -1,5 +1,5 @@
-          +---+
-Frame 1   |   |  
-          +---+---+
-Frame 2   | World |
-          +-------+
+          #---#
+Frame 1   | 0 |            Empty delimiter frame
+          #---#-------#
+Frame 2   | 5 | World |    Data frame
+          #---+-------#

@@ -1,0 +1,50 @@
+#! /bin/bash
+#
+#   Generates and uploads the Guide in PDF format
+#
+SITE=zguide
+PAGE=main:_start
+BOOK=zguide
+
+function mkone {
+    export BOOK_LANG=$1
+    export BOOK_FORM=pdf
+    bin/mkdocbook \
+        preface_print.txt \
+        part1.txt \
+        chapter1.txt \
+        chapter2.txt \
+        chapter3.txt \
+        chapter4.txt \
+        chapter5.txt \
+        part2.txt \
+        chapter6.txt \
+        chapter7.txt \
+        chapter8.txt \
+        postface.txt
+
+    #  Produce and upload PDF
+    docbook2ps book.xml
+    ps2pdf book.ps
+    mv book.pdf $BOOK-$2.pdf
+    if [ ! -z "$APISITE_USER" ];  then
+        echo "Uploading $BOOK-$2.pdf to $SITE:$PAGE..."
+        bin/wdattach $SITE $PAGE $BOOK-$2.pdf
+    fi
+    
+    # Produce and upload EPUB
+    sed -e "s/\.eps/\.png/g" \
+        -e "s/format=\"EPS\"/format=\"PNG\"/g" < book.xml > ebook.xml
+    dbtoepub ebook.xml
+    mv ebook.epub $BOOK-$2.epub
+    if [ ! -z "$APISITE_USER" ];  then
+        echo "Uploading $BOOK-$2.epub to $SITE:$PAGE..."
+        bin/wdattach $SITE $PAGE $BOOK-$2.epub
+    fi
+}
+
+mkone C         c
+mkone Haxe      hx
+mkone Lua       lua
+mkone Python    py
+mkone PHP       php

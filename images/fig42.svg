@@ -1,0 +1,151 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Created with ASCIIToSVG (http://9vx.org/~dho/a2s/) -->
+<svg width="441px" height="288px" version="1.1"
+  xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <filter id="dsFilter" width="150%" height="150%">
+      <feOffset result="offOut" in="SourceGraphic" dx="3" dy="3"/>
+      <feColorMatrix result="matrixOut" in="offOut" type="matrix" values="0.2 0 0 0 0 0 0.2 0 0 0 0 0 0.2 0 0 0 0 0 1 0"/>
+      <feGaussianBlur result="blurOut" in="matrixOut" stdDeviation="3"/>
+      <feBlend in="SourceGraphic" in2="blurOut" mode="normal"/>
+    </filter>
+    <marker id="iPointer"
+      viewBox="0 0 10 10" refX="5" refY="5" 
+      markerUnits="strokeWidth"
+      markerWidth="8" markerHeight="7"
+      orient="auto">
+      <path d="M 10 0 L 10 10 L 0 5 z" />
+    </marker>
+    <marker id="Pointer"
+      viewBox="0 0 10 10" refX="5" refY="5" 
+      markerUnits="strokeWidth"
+      markerWidth="8" markerHeight="7"
+      orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" />
+    </marker>
+  </defs><g id="boxes" stroke="black" stroke-width="2" fill="none" >
+<g id="group0">
+	<path id="path0" filter="url(#dsFilter)" fill="#fff" d="M 4.5 66 Q 4.5 56 14.5 56 L 30.5 56 Q 40.5 56 40.5 66 L 40.5 78 Q 40.5 88 30.5 88 L 14.5 88 Q 4.5 88 4.5 78 Z" />
+	<text x="17.1" y="76.8" id="text0" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >C</text>
+
+</g>
+<g id="group2">
+	<path id="path2" filter="url(#dsFilter)" fill="#fff" d="M 67.5 66 Q 67.5 56 77.5 56 L 93.5 56 Q 103.5 56 103.5 66 L 103.5 78 Q 103.5 88 93.5 88 L 77.5 88 Q 67.5 88 67.5 78 Z" />
+	<text x="80.1" y="76.8" id="text2" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >C</text>
+
+</g>
+<g id="group4">
+	<path id="path4" filter="url(#dsFilter)" fill="#fff" d="M 130.5 66 Q 130.5 56 140.5 56 L 156.5 56 Q 166.5 56 166.5 66 L 166.5 78 Q 166.5 88 156.5 88 L 140.5 88 Q 130.5 88 130.5 78 Z" />
+	<text x="143.1" y="76.8" id="text4" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >C</text>
+
+</g>
+<g id="group6">
+	<path id="path6" filter="url(#dsFilter)" fill="#fff" d="M 274.5 66 Q 274.5 56 284.5 56 L 300.5 56 Q 310.5 56 310.5 66 L 310.5 78 Q 310.5 88 300.5 88 L 284.5 88 Q 274.5 88 274.5 78 Z" />
+	<text x="287.1" y="76.8" id="text6" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >C</text>
+
+</g>
+<g id="group8">
+	<path id="path8" filter="url(#dsFilter)" fill="#fff" d="M 337.5 66 Q 337.5 56 347.5 56 L 363.5 56 Q 373.5 56 373.5 66 L 373.5 78 Q 373.5 88 363.5 88 L 347.5 88 Q 337.5 88 337.5 78 Z" />
+	<text x="350.1" y="76.8" id="text8" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >C</text>
+
+</g>
+<g id="group10">
+	<path id="path10" filter="url(#dsFilter)" fill="#fff" d="M 400.5 66 Q 400.5 56 410.5 56 L 426.5 56 Q 436.5 56 436.5 66 L 436.5 78 Q 436.5 88 426.5 88 L 410.5 88 Q 400.5 88 400.5 78 Z" />
+	<text x="413.1" y="76.8" id="text10" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >C</text>
+
+</g>
+<g id="group30">
+	<path id="path30" filter="url(#dsFilter)" fill="#fff" d="M 4.5 136 L 166.5 136 L 166.5 168 L 4.5 168 Z" />
+	<text x="53.1" y="156.8" id="text30" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Broker </text>
+
+</g>
+<g id="group35">
+	<path id="path35" filter="url(#dsFilter)" fill="#fff" d="M 274.5 136 L 436.5 136 L 436.5 168 L 274.5 168 Z" />
+	<text x="323.1" y="156.8" id="text35" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Broker </text>
+
+</g>
+<g id="group50">
+	<path id="path50" filter="url(#dsFilter)" fill="#fff" d="M 4.5 226 Q 4.5 216 14.5 216 L 30.5 216 Q 40.5 216 40.5 226 L 40.5 238 Q 40.5 248 30.5 248 L 14.5 248 Q 4.5 248 4.5 238 Z" />
+	<text x="17.1" y="236.8" id="text50" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >W</text>
+
+</g>
+<g id="group53">
+	<path id="path53" filter="url(#dsFilter)" fill="#fff" d="M 67.5 226 Q 67.5 216 77.5 216 L 93.5 216 Q 103.5 216 103.5 226 L 103.5 238 Q 103.5 248 93.5 248 L 77.5 248 Q 67.5 248 67.5 238 Z" />
+	<text x="80.1" y="236.8" id="text53" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >W</text>
+
+</g>
+<g id="group56">
+	<path id="path56" filter="url(#dsFilter)" fill="#fff" d="M 130.5 226 Q 130.5 216 140.5 216 L 156.5 216 Q 166.5 216 166.5 226 L 166.5 238 Q 166.5 248 156.5 248 L 140.5 248 Q 130.5 248 130.5 238 Z" />
+	<text x="143.1" y="236.8" id="text56" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >W</text>
+
+</g>
+<g id="group59">
+	<path id="path59" filter="url(#dsFilter)" fill="#fff" d="M 274.5 226 Q 274.5 216 284.5 216 L 300.5 216 Q 310.5 216 310.5 226 L 310.5 238 Q 310.5 248 300.5 248 L 284.5 248 Q 274.5 248 274.5 238 Z" />
+	<text x="287.1" y="236.8" id="text59" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >W</text>
+
+</g>
+<g id="group62">
+	<path id="path62" filter="url(#dsFilter)" fill="#fff" d="M 337.5 226 Q 337.5 216 347.5 216 L 363.5 216 Q 373.5 216 373.5 226 L 373.5 238 Q 373.5 248 363.5 248 L 347.5 248 Q 337.5 248 337.5 238 Z" />
+	<text x="350.1" y="236.8" id="text62" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >W</text>
+
+</g>
+<g id="group65">
+	<path id="path65" filter="url(#dsFilter)" fill="#fff" d="M 400.5 226 Q 400.5 216 410.5 216 L 426.5 216 Q 436.5 216 436.5 226 L 436.5 238 Q 436.5 248 426.5 248 L 410.5 248 Q 400.5 248 400.5 238 Z" />
+	<text x="413.1" y="236.8" id="text65" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >W</text>
+
+</g>
+</g>
+<g id="lines" stroke="black" stroke-width="2" fill="none" >
+<g id="group121">
+	<path id="path121" d="M 22.5 88 L 22.5 136 " />
+</g>
+<g id="group127">
+	<path id="path127" d="M 22.5 168 L 22.5 216 " />
+</g>
+<g id="group249">
+	<path id="path249" d="M 85.5 88 L 85.5 136 " />
+</g>
+<g id="group255">
+	<path id="path255" d="M 85.5 168 L 85.5 216 " />
+</g>
+<g id="group377">
+	<path id="path377" d="M 148.5 88 L 148.5 136 " />
+</g>
+<g id="group383">
+	<path id="path383" d="M 148.5 168 L 148.5 216 " />
+</g>
+<g id="group437">
+	<path id="path437" marker-start="url(#iPointer)" marker-end="url(#Pointer)" d="M 175.5 152 L 265.5 152 " />
+</g>
+<g id="group518">
+	<path id="path518" stroke-dasharray="5 5" d="M 220.5 8 L 220.5 152 " />
+</g>
+<g id="group528">
+	<path id="path528" stroke-dasharray="5 5" d="M 220.5 168 L 220.5 280 " />
+</g>
+<g id="group667">
+	<path id="path667" d="M 292.5 88 L 292.5 136 " />
+</g>
+<g id="group673">
+	<path id="path673" d="M 292.5 168 L 292.5 216 " />
+</g>
+<g id="group795">
+	<path id="path795" d="M 355.5 88 L 355.5 136 " />
+</g>
+<g id="group801">
+	<path id="path801" d="M 355.5 168 L 355.5 216 " />
+</g>
+<g id="group923">
+	<path id="path923" d="M 418.5 88 L 418.5 136 " />
+</g>
+<g id="group929">
+	<path id="path929" d="M 418.5 168 L 418.5 216 " />
+</g>
+</g>
+<g id="text" fill="black" style="font-family:LMMono10,monospace;font-size:15.2px" >
+<text x="44.1" y="12.8" id="text0" fill="#000" >Cluster 1 </text>
+<text x="314.1" y="12.8" id="text1" fill="#000" >Cluster 2</text>
+</g>
+</svg>
