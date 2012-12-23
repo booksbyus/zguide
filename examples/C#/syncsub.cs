@@ -10,9 +10,9 @@ using System.Text;
 using System.Threading;
 using ZeroMQ;
 
-namespace ZMQGuide
+namespace zguide.syncsub
 {
-    internal class Program10
+    internal class Program
     {
         public static void Main(string[] args)
         {

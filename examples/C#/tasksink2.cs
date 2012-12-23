@@ -11,9 +11,9 @@ using System.Text;
 using System.Diagnostics;
 using ZeroMQ;
 
-namespace ZMQGuide 
+namespace zguide.tasksink2
 {
-    internal class Program16
+    internal class Program
     {
         public static void Main(string[] args) 
         {

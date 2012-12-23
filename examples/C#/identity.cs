@@ -9,9 +9,9 @@ using System.Text;
 using ZeroMQ;
 using zguide;
 
-namespace ZMQGuide
+namespace zguide.identity
 {
-    internal class Program3
+    internal class Program
     {
         public static void Main(string[] args)
         {
@@ -29,7 +29,7 @@ namespace ZMQGuide
                     //  Then set the identity ourselves
                     identified.StringToIdentity("PEER2", Encoding.Unicode);
                     identified.Connect("inproc://example");
-                    identified.Send("ROUTER ZmqSocket uses REQ's ZmqSocket identity", Encoding.Unicode);
+                    identified.Send("ROUTER socket uses REQ's socket identity", Encoding.Unicode);
                     ZHelpers.Dump(sink, Encoding.Unicode);
                 }
             }

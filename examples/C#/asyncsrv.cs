@@ -3,7 +3,7 @@
 //
 //  While this example runs in a single process, that is just to make
 //  it easier to start and stop the example. Each task has its own
-//  ZmqContext and conceptually acts as a separate process.
+//  context and conceptually acts as a separate process.
 
 //  Author:     Michael Compton, Tomas Roos
 //  Email:      michael.compton@littleedge.co.uk, ptomasroos@gmail.com
@@ -15,7 +15,7 @@ using System.Threading;
 using ZeroMQ;
 using zguide;
 
-namespace ZMQGuide
+namespace zguide.asycnsrv
 {
     internal class Program
     {
@@ -52,9 +52,9 @@ namespace ZMQGuide
                     string identity = client.IdentityToString(Encoding.Unicode);
                     client.Connect("tcp://localhost:5570");
 
-                    client.PollInHandler += (ZmqSocket, revents) =>
+                    client.PollInHandler += (socket, revents) =>
                     {
-                        var zmsg = new ZMessage(ZmqSocket);
+                        var zmsg = new ZMessage(socket);
                         Console.WriteLine("{0} : {1}", identity, zmsg.BodyToString());
                     };
 
@@ -94,19 +94,19 @@ namespace ZMQGuide
                     for (int workerNumber = 0; workerNumber < 5; workerNumber++)
                     {
                         workers.Add(new Thread(ServerWorker));
-                        workers[workerNumber].Start(ZmqContext);
+                        workers[workerNumber].Start(context);
                     }
 
                     //  Switch messages between frontend and backend
-                    frontend.PollInHandler += (ZmqSocket, revents) =>
+                    frontend.PollInHandler += (socket, revents) =>
                     {
-                        var zmsg = new ZMessage(ZmqSocket);
+                        var zmsg = new ZMessage(socket);
                         zmsg.Send(backend);
                     };
 
-                    backend.PollInHandler += (ZmqSocket, revents) =>
+                    backend.PollInHandler += (socket, revents) =>
                     {
-                        var zmsg = new ZMessage(ZmqSocket);
+                        var zmsg = new ZMessage(socket);
                         zmsg.Send(frontend);
                     };
 
@@ -122,16 +122,16 @@ namespace ZMQGuide
 
         //  Accept a request and reply with the same text a random number of
         //  times, with random delays between replies.
-        private static void ServerWorker(object ZmqContext)
+        private static void ServerWorker(object context)
         {
             var randomizer = new Random(DateTime.Now.Millisecond);
-            using (ZmqSocket worker = ((ZmqContext)ZmqContext).CreateSocket(SocketType.DEALER))
+            using (ZmqSocket worker = ((ZmqContext)context).CreateSocket(SocketType.DEALER))
             {
                 worker.Connect("inproc://backend");
 
                 while (true)
                 {
-                    //  The DEALER ZmqSocket gives us the address envelope and message
+                    //  The DEALER socket gives us the address envelope and message
                     var zmsg = new ZMessage(worker);
                     //  Send 0..4 replies back
                     int replies = randomizer.Next(5);

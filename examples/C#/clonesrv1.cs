@@ -11,15 +11,15 @@ using System.Collections.Generic;
 using System.Threading;
 using ZeroMQ;
 
-namespace ZMQGuide
+namespace zguide.clonesrv1
 {
-    internal class Program29
+    internal class Program
     {
         public static void Main(string[] args)
         {
             using (var context = ZmqContext.Create())
             {
-                using (var publisher = ZmqContext.CreateSocket(SocketType.PUB))
+                using (var publisher = context.CreateSocket(SocketType.PUB))
                 {
                     publisher.Bind("tcp://*:5556");
                     Thread.Sleep(TimeSpan.FromMilliseconds(200));

@@ -1,7 +1,7 @@
 ﻿//
 //  Task ventilator
-//  Binds PUSH ZmqSocket to tcp://localhost:5557
-//  Sends batch of tasks to workers via that ZmqSocket
+//  Binds PUSH socket to tcp://localhost:5557
+//  Sends batch of tasks to workers via that socket
 //
 
 //  Author:     Michael Compton, Tomas Roos
@@ -11,9 +11,9 @@ using System;
 using System.Text;
 using ZeroMQ;
 
-namespace ZMQGuide 
+namespace zguide.taskvent
 {
-    internal class Program15
+    internal class Program
     {
         public static void Main(string[] args)
         {

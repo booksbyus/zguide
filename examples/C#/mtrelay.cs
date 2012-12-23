@@ -10,24 +10,24 @@ using System.Text;
 using System.Threading;
 using ZeroMQ;
 
-namespace ZMQGuide
+namespace zguide.mtrelay
 {
-    internal class Program11
+    internal class Program
     {
         public static void Main(string[] args)
         {
             using (var context = ZmqContext.Create())
             {
-                using (ZmqSocket ZmqSocket = context.CreateSocket(SocketType.PAIR))
+                using (ZmqSocket socket = context.CreateSocket(SocketType.PAIR))
                 {
                     //  Bind to inproc: endpoint, then start upstream thread
-                    ZmqSocket.Bind("inproc://step3");
+                    socket.Bind("inproc://step3");
 
                     var step2 = new Thread(Step2);
                     step2.Start(context);
 
                     //  Wait for signal
-                    ZmqSocket.Receive();
+                    socket.Receive();
 
                     Console.WriteLine("Test Successful!!!");
                 }
@@ -56,7 +56,7 @@ namespace ZMQGuide
             }
         }
 
-        private static void Step1(object ZmqContext)
+        private static void Step1(object context)
         {
             //  Signal downstream to step 2
             using (ZmqSocket sender = ((ZmqContext)context).CreateSocket(SocketType.PAIR))

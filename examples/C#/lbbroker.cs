@@ -4,7 +4,7 @@
 //
 //  While this example runs in a single process, that is just to make
 //  it easier to start and stop the example. Each thread has its own
-//  ZmqContext and conceptually acts as a separate process.
+//  context and conceptually acts as a separate process.
 //
 
 //  Author:     Michael Compton, Tomas Roos
@@ -17,9 +17,9 @@ using ZeroMQ;
 using System.Threading;
 using zguide;
 
-namespace ZMQGuide
+namespace zguide.lbbroker
 {
-    internal class Program37
+    internal class Program
     {
         public static void Main(string[] args)
         {
@@ -56,23 +56,23 @@ namespace ZMQGuide
                     var workerQueue = new Queue<string>();
 
                     //  Handle worker activity on backend
-                    backend.PollInHandler += (ZmqSocket, revents) =>
+                    backend.PollInHandler += (socket, revents) =>
                     {
                         //  Queue worker address for LRU routing
-                        string workerAddress = ZmqSocket.Receive(Encoding.Unicode);
+                        string workerAddress = socket.Receive(Encoding.Unicode);
                         workerQueue.Enqueue(workerAddress);
 
                         //  Second frame is empty
-                        string empty = ZmqSocket.Receive(Encoding.Unicode);
+                        string empty = socket.Receive(Encoding.Unicode);
 
                         //  Third frame is READY or else a client reply address
-                        string clientAddress = ZmqSocket.Receive(Encoding.Unicode);
+                        string clientAddress = socket.Receive(Encoding.Unicode);
 
                         //  If client reply, send rest back to frontend
                         if (!clientAddress.Equals("READY"))
                         {
-                            empty = ZmqSocket.Receive(Encoding.Unicode);
-                            string reply = ZmqSocket.Receive(Encoding.Unicode);
+                            empty = socket.Receive(Encoding.Unicode);
+                            string reply = socket.Receive(Encoding.Unicode);
                             frontend.SendMore(clientAddress, Encoding.Unicode);
                             frontend.SendMore();
                             frontend.Send(reply, Encoding.Unicode);
@@ -81,13 +81,13 @@ namespace ZMQGuide
                         }
                     };
 
-                    frontend.PollInHandler += (ZmqSocket, revents) =>
+                    frontend.PollInHandler += (socket, revents) =>
                     {
                         //  Now get next client request, route to LRU worker
                         //  Client request is [address][empty][request]
-                        string clientAddr = ZmqSocket.Receive(Encoding.Unicode);
-                        string empty = ZmqSocket.Receive(Encoding.Unicode);
-                        string request = ZmqSocket.Receive(Encoding.Unicode);
+                        string clientAddr = socket.Receive(Encoding.Unicode);
+                        string empty = socket.Receive(Encoding.Unicode);
+                        string request = socket.Receive(Encoding.Unicode);
 
                         backend.SendMore(workerQueue.Dequeue(), Encoding.Unicode);
                         backend.SendMore();

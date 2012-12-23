@@ -1,6 +1,6 @@
 ﻿//
 //  Simple Pirate worker
-//  Connects REQ ZmqSocket to tcp://*:5556
+//  Connects REQ socket to tcp://*:5556
 //  Implements worker part of LRU queueing
 //
 //  Author: Kristian Kristensen <kristian@kristenseninc.com>
@@ -8,13 +8,12 @@
 
 using System;
 using System.Text;
-using ZMQGuide;
 using ZeroMQ;
 using zguide;
 
-namespace Worker
+namespace zguide.spworker
 {
-    class Worker
+    class Program
     {
         private const string LRU_READY = "READY";
 

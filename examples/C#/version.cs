@@ -9,9 +9,9 @@ using System;
 using ZeroMQ;
 using zguide;
 
-namespace ZMQGuide 
+namespace zguide.version
 {
-    internal class Program1 
+    internal class Program 
     {
         public static void Main(string[] args) 
         {

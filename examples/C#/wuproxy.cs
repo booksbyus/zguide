@@ -8,9 +8,9 @@
 using System.Text;
 using ZeroMQ;
 
-namespace ZMQGuide
+namespace zguide.wuproxy
 {
-    internal class Program4
+    internal class Program
     {
         public static void Main(string[] args)
         {
@@ -33,7 +33,7 @@ namespace ZMQGuide
                         {
                             string message = frontend.Receive(Encoding.Unicode);
                             hasMore = frontend.ReceiveMore;
-                            backend.Send(message, Encoding.Unicode, hasMore ? SendRecvOpt.SNDMORE : SendRecvOpt.NONE);
+                            backend.Send(message, Encoding.Unicode, hasMore ? SocketFlags.SendMore : SocketFlags.None);
                         }
                     }
                 }

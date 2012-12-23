@@ -9,9 +9,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using ZMQ;
+using ZeroMQ;
+using zguide;
 
-namespace ZMQGuide
+namespace zguide.ppworker 
 {
     class Program
     {
@@ -25,7 +26,7 @@ namespace ZMQGuide
 
         static void Main(string[] args)
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
                 int interval = INTERVAL_INIT;
                 int liveness = HEARTBEAT_LIVENESS;
@@ -34,7 +35,7 @@ namespace ZMQGuide
                 {
                     int cylces = 0;
 
-                    using (Socket worker = ConnectWorker(context))
+                    using (ZmqSocket worker = ConnectWorker(context))
                     {
                         worker.PollInHandler += (socket, revents) =>
                         {
@@ -73,8 +74,8 @@ namespace ZMQGuide
 
                         while (true)
                         {
-                            List<Socket> pollItems = new List<Socket>(new Socket[] { worker });
-                            Context.Poller(pollItems, HEARTBEAT_INTERVAL * 1000);
+                            List<ZmqSocket> pollItems = new List<ZmqSocket>(new ZmqSocket[] { worker });
+                            context.Poller(pollItems, HEARTBEAT_INTERVAL * 1000);
 
                             //If liveness hits zero, queue is considered disconnected
                             if (--liveness <= 0)
@@ -146,9 +147,9 @@ namespace ZMQGuide
             return true;
         }
 
-        static Socket ConnectWorker(Context context)
+        static ZmqSocket ConnectWorker(ZmqContext context)
         {
-            Socket worker = context.Socket(SocketType.DEALER);
+            ZmqSocket worker = context.CreateSocket(SocketType.DEALER);
 
             //Set random identity to make tracing easier
             ZHelpers.SetID(worker, Encoding.Unicode);

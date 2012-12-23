@@ -11,9 +11,9 @@ using System.Text;
 using System.Threading;
 using ZeroMQ;
 
-namespace ZMQGuide
+namespace zguide.lpclient
 {
-    internal class Program24
+    internal class Program
     {
         private static int requestTimeout = 2500;
         private static int requestRetries = 3;
@@ -23,13 +23,13 @@ namespace ZMQGuide
         private static bool expectReply = true;
         private static int retriesLeft = requestRetries;
 
-        private static ZmqSocket CreateServerSocket(ZmqContext ZmqContext)
+        private static ZmqSocket CreateServerSocket(ZmqContext context)
         {
             Console.WriteLine("Connecting to server...");
 
             var client = context.CreateSocket(SocketType.REQ);
             client.Connect(serverEndpoint);
-            client.Linger = 0;
+            client.Linger = TimeSpan.Zero;
             client.PollInHandler += PollInHandler;
 
             return client;
@@ -75,9 +75,9 @@ namespace ZMQGuide
             }
         }
 
-        private static void PollInHandler(ZmqSocket ZmqSocket, Poller revents)
+        private static void PollInHandler(ZmqSocket socket, Poller revents)
         {
-            var reply = ZmqSocket.Receive(Encoding.Unicode);
+            var reply = socket.Receive(Encoding.Unicode);
 
             if (Int32.Parse(reply) == sequence)
             {

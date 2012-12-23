@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Text;
 using ZeroMQ;
 
-namespace ZMQGuide
+namespace zguide
 {
     public class ZMessage
     {
@@ -42,7 +42,7 @@ namespace ZMQGuide
 
         public void Receive(ZmqSocket ZmqSocket)
         {
-            Queue<byte[]> receivedFrames = ZmqSocket.RecvAll();
+            Queue<byte[]> receivedFrames = ZmqSocket.ReceiveAll();
 
             while (receivedFrames.Count > 0)
             {
@@ -50,14 +50,14 @@ namespace ZMQGuide
             }
         }
 
-        public void Send(ZmqSocket ZmqSocket)
+        public void Send(ZmqSocket socket)
         {
             for (int index = frames.Count - 1; index > 0; index--)
             {
-                ZmqSocket.SendMore(frames[index]);
+                socket.SendMore(frames[index]);
             }
 
-            ZmqSocket.Send(frames[0]);
+            socket.Send(frames[0]);
         }
 
         public string BodyToString()

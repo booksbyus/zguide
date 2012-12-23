@@ -8,10 +8,11 @@
 using System;
 using System.Text;
 using ZeroMQ;
+using ZeroMQ.Interop;
 
-namespace ZMQGuide
+namespace zguide.rrbroker
 {
-    internal class Program6
+    internal class Program
     {
         public static void Main(string[] args)
         {
@@ -30,7 +31,7 @@ namespace ZMQGuide
 
                     while (true)
                     {
-                        ZmqContext.Poll(pollItems, -1);
+                        context.Poll(pollItems, -1);
                     }
                 }
             }
@@ -61,7 +62,7 @@ namespace ZMQGuide
 
                 byte[] message = source.Receive();
                 hasMore = source.ReceiveMore;
-                destination.Send(message, hasMore ? SendRecvOpt.SNDMORE : SendRecvOpt.NONE);
+                destination.Send(message, hasMore ? SocketFlags.SendMore : SocketFlags.None);
             }
         }
     }

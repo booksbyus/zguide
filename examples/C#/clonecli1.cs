@@ -11,9 +11,9 @@ using System.Collections.Generic;
 using System.Text;
 using ZeroMQ;
 
-namespace ZMQGuide
+namespace zguide.clonecli1
 {
-    internal class Program26
+    internal class Program
     {
         public static void Main(string[] args)
         {

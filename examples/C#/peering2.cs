@@ -4,7 +4,7 @@
 //
 //  While this example runs in a single process, that is just to make
 //  it easier to start and stop the example. Each thread has its own
-//  ZmqContext and conceptually acts as a separate process.
+//  context and conceptually acts as a separate process.
 //
 //  Note! ipc doesnt work on windows and therefore type peering2 801 802 803
 
@@ -17,11 +17,11 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using ZeroMQ;
-using zguide;
+using ZeroMQ.Interop;
 
-namespace ZMQGuide
+namespace zguide.peering2
 {
-    internal class Program38
+    internal class Program
     {
         private const int numberOfClients = 10;
         private const int numberOfWorkers = 3;
@@ -88,10 +88,10 @@ namespace ZMQGuide
                     var cloudfeReady = false;
 
                     var backends = new PollItem[2];
-                    backends[0] = localbe.CreatePollItem(IOMultiPlex.POLLIN);
-                    backends[0].PollInHandler += (ZmqSocket, revents) =>
+                    backends[0] = localbe.CreatePollItem(Poller.POLLIN);
+                    backends[0].PollInHandler += (socket, revents) =>
                                                      {
-                                                         var zmsg = new ZMessage(ZmqSocket);
+                                                         var zmsg = new ZMessage(socket);
 
                                                          //  Use worker address for LRU routing
                                                          workerQueue.Enqueue(zmsg.Unwrap());
@@ -102,10 +102,10 @@ namespace ZMQGuide
                                                          }
                                                      };
 
-                    backends[1] = cloudbe.CreatePollItem(IOMultiPlex.POLLIN);
-                    backends[1].PollInHandler += (ZmqSocket, revents) =>
+                    backends[1] = cloudbe.CreatePollItem(Poller.POLLIN);
+                    backends[1].PollInHandler += (socket, revents) =>
                     {
-                        var zmsg = new ZMessage(ZmqSocket);
+                        var zmsg = new ZMessage(socket);
                         //  We don't use peer broker address for anything
                         zmsg.Unwrap();
 
@@ -113,14 +113,14 @@ namespace ZMQGuide
                     };
 
                     var frontends = new PollItem[2];
-                    frontends[0] = cloudfe.CreatePollItem(IOMultiPlex.POLLIN);
-                    frontends[0].PollInHandler += (ZmqSocket, revents) =>
+                    frontends[0] = cloudfe.CreatePollItem(Poller.POLLIN);
+                    frontends[0].PollInHandler += (socket, revents) =>
                                                     {
                                                         cloudfeReady = true;
                                                     };
 
-                    frontends[1] = localfe.CreatePollItem(IOMultiPlex.POLLIN);
-                    frontends[1].PollInHandler += (ZmqSocket, revents) =>
+                    frontends[1] = localfe.CreatePollItem(Poller.POLLIN);
+                    frontends[1].PollInHandler += (socket, revents) =>
                                                      {
                                                          localfeReady = true;
                                                      };
@@ -198,7 +198,7 @@ namespace ZMQGuide
         {
             using (var ctx = ZmqContext.Create())
             {
-                using (var worker = ctx.ZmqSocket(SocketType.REQ))
+                using (var worker = ctx.CreateSocket(SocketType.REQ))
                 {
                     ZHelpers.SetID(worker, Encoding.Unicode);
                     worker.Connect(localBeAddress);

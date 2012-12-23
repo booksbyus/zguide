@@ -1,6 +1,6 @@
 ﻿//
 //  Weather update client
-//  Connects SUB ZmqSocket to tcp://localhost:5556
+//  Connects SUB socket to tcp://localhost:5556
 //  Collects weather updates and finds avg temp in zipcode
 //
 
@@ -11,9 +11,9 @@ using System;
 using System.Text;
 using ZeroMQ;
 
-namespace ZMQGuide 
+namespace zguide.wuclient
 {
-    internal class Program14
+    internal class Program
     {
         public static void Main(string[] args) {
             Console.WriteLine("Collecting updates from weather server...");

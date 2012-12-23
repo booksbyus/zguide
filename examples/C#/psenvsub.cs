@@ -9,9 +9,9 @@ using System;
 using System.Text;
 using ZeroMQ;
 
-namespace ZMQGuide
+namespace zguide.psenvsub
 {
-    internal class Program7
+    internal class Program
     {
         public static void Main(string[] args)
         {

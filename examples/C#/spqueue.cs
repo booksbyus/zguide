@@ -11,10 +11,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using ZMQGuide;
 using ZeroMQ;
 
-namespace Server
+namespace zguide.spqueue
 {
     class Program
     {
@@ -39,9 +38,9 @@ namespace Server
                     var workerQueue = new Queue<byte[]>();
 
                     //  Handle worker activity on backend
-                    backend.PollInHandler += (ZmqSocket, revents) =>
+                    backend.PollInHandler += (socket, revents) =>
                                                  {
-                                                     var zmsg = new ZMessage(ZmqSocket);
+                                                     var zmsg = new ZMessage(socket);
                                                      //  Use worker address for LRU routing
                                                      workerQueue.Enqueue(zmsg.Unwrap());
 

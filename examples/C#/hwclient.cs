@@ -1,6 +1,6 @@
 ﻿//
 //  Hello World client
-//  Connects REQ ZmqSocket to tcp://localhost:5555
+//  Connects REQ socket to tcp://localhost:5555
 //  Sends "Hello" to server, expects "World" back
 //
 
@@ -11,9 +11,9 @@ using System;
 using System.Text;
 using ZeroMQ;
 
-namespace ZMQGuide 
+namespace zguide.hwclient
 {
-    internal class Program25
+    internal class Program
     {
         public static void Main(string[] args)
         {

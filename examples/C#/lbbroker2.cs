@@ -4,7 +4,7 @@
 //
 //  While this example runs in a single process, that is just to make
 //  it easier to start and stop the example. Each thread has its own
-//  ZmqContext and conceptually acts as a separate process.
+//  context and conceptually acts as a separate process.
 //
 
 //  Author:     Michael Compton, Tomas Roos
@@ -17,9 +17,9 @@ using ZeroMQ;
 using System.Threading;
 using zguide;
 
-namespace ZMQGuide
+namespace zguide.lbbroker2
 {
-    internal class Program36
+    internal class Program
     {
 
         private static void ClientTask()
@@ -56,7 +56,7 @@ namespace ZMQGuide
             var workers = new List<Thread>();
             var clients = new List<Thread>();
 
-            //  Prepare our ZmqContext and sockets
+            //  Prepare our context and sockets
             using (var ctx = ZmqContext.Create())
             {
                 using (ZmqSocket frontend = ctx.CreateSocket(SocketType.ROUTER), backend = ctx.CreateSocket(SocketType.ROUTER))
@@ -65,13 +65,13 @@ namespace ZMQGuide
                     backend.Bind("tcp://*:5556");
 
                     int clientId;
-                    for (clientId = 0; clientId < clients; clientId++)
+                    for (clientId = 0; clientId < Program.clients; clientId++)
                     {
                         clients.Add(new Thread(ClientTask));
                         clients[clientId].Start();
                     }
 
-                    for (int workerId = 0; workerId < workers; workerId++)
+                    for (int workerId = 0; workerId < Program.workers; workerId++)
                     {
                         workers.Add(new Thread(WorkerTask));
                         workers[workerId].Start();

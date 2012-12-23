@@ -3,7 +3,7 @@
 //
 //  While this example runs in a single process, that is just to make
 //  it easier to start and stop the example. Each thread has its own
-//  ZmqContext and conceptually acts as a separate process.
+//  context and conceptually acts as a separate process.
 //
 
 //  Author:     Michael Compton, Tomas Roos
@@ -15,9 +15,9 @@ using System.Collections.Generic;
 using System.Text;
 using ZeroMQ;
 
-namespace ZMQGuide
+namespace zguide.rtdealer
 {
-    internal class Program34
+    internal class Program
     {
         //  We have two workers, here we copy the code, normally these would
         //  run on different boxes...

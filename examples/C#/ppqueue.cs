@@ -9,9 +9,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using ZMQ;
+using ZeroMQ;
 
-namespace ZMQGuide
+namespace zguide.ppqueue
 {
     class Program
     {
@@ -57,9 +57,9 @@ namespace ZMQGuide
 
         static void Main(string[] args)
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket frontend = context.Socket(SocketType.ROUTER), backend = context.Socket(SocketType.ROUTER))
+                using (ZmqSocket frontend = context.CreateSocket(SocketType.ROUTER), backend = context.CreateSocket(SocketType.ROUTER))
                 {
                     frontend.Bind("tcp://*:5555"); // For Clients
                     backend.Bind("tcp://*:5556"); // For Workers
@@ -136,13 +136,13 @@ namespace ZMQGuide
                         //Only poll frontend only if there are workers ready
                         if (workerQueue.Count > 0)
                         {
-                            List<Socket> pollItems = new List<Socket>(new Socket[] { frontend, backend });
-                            Context.Poller(pollItems, HEARTBEAT_INTERVAL * 1000);
+                            List<ZmqSocket> pollItems = new List<ZmqSocket>(new ZmqSocket[] { frontend, backend });
+                            context.Poller(pollItems, HEARTBEAT_INTERVAL * 1000);
                         }
                         else
                         {
-                            List<ZMQ.Socket> pollItems = new List<Socket>(new Socket[] { backend });
-                            Context.Poller(pollItems, HEARTBEAT_INTERVAL * 1000);
+                            List<ZmqSocket> pollItems = new List<ZmqSocket>(new ZmqSocket[] { backend });
+                            context.Poller(pollItems, HEARTBEAT_INTERVAL * 1000);
                         }
 
                         //Send heartbeats to idle workers if it's time

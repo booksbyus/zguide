@@ -1,6 +1,6 @@
 //
 //  Lazy Pirate server
-//  Binds REQ ZmqSocket to tcp://*:5555
+//  Binds REQ socket to tcp://*:5555
 //  Like hwserver except:
 //   echoes request as-is
 //   randomly runs slowly, or exits to simulate a crash.
@@ -13,9 +13,9 @@ using System.Text;
 using System.Threading;
 using ZeroMQ;
 
-namespace ZMQGuide
+namespace zguide.lpserver
 {
-    internal class Program31
+    internal class Program
     {
         public static void Main(string[] args)
         {

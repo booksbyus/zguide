@@ -1,9 +1,9 @@
 //
 //  Task worker
-//  Connects PULL ZmqSocket to tcp://localhost:5557
-//  Collects workloads from ventilator via that ZmqSocket
-//  Connects PUSH ZmqSocket to tcp://localhost:5558
-//  Sends results to sink via that ZmqSocket
+//  Connects PULL socket to tcp://localhost:5557
+//  Collects workloads from ventilator via that socket
+//  Connects PUSH socket to tcp://localhost:5558
+//  Sends results to sink via that socket
 //
 
 //  Author:     Mike Sheridan, Tomas Roos
@@ -14,9 +14,9 @@ using System.Text;
 using System.Threading;
 using ZeroMQ;
 
-namespace ZMQGuide
+namespace zguide.taskwork
 {
-    internal class Program32
+    internal class Program
     {
         public static void Main(string[] args)
         {

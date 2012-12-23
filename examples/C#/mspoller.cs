@@ -11,9 +11,9 @@ using System;
 using System.Text;
 using ZeroMQ;
 
-namespace ZMQGuide
+namespace zguide.mspoller
 {
-    internal class Program21
+    internal class Program
     {
         public static void Main(string[] args)
         {
@@ -27,31 +27,31 @@ namespace ZMQGuide
                     subscriber.Subscribe("10001 ", Encoding.Unicode);
 
                     var items = new PollItem[2];
-                    items[0] = receiver.CreatePollItem(IOMultiPlex.POLLIN);
+                    items[0] = receiver.CreatePollItem(Poller.POLLIN);
                     items[0].PollInHandler += ReceiverPollInHandler;
-                    items[1] = subscriber.CreatePollItem(IOMultiPlex.POLLIN);
+                    items[1] = subscriber.CreatePollItem(Poller.POLLIN);
                     items[1].PollInHandler += SubscriberPollInHandler;
                     
                     //  Process messages from both sockets
                     while (true)
                     {
-                        ZmqContext.Poll(items, -1);
+                        context.Poll(items, -1);
                     }
                 }
             }
         }
 
         // Task Processing event
-        public static void ReceiverPollInHandler(ZmqSocket ZmqSocket, Poller revents)
+        public static void ReceiverPollInHandler(ZmqSocket socket, Poller revents)
         {
-            ZmqSocket.Receive();
+            socket.Receive();
             Console.WriteLine("Process Task");
         }
 
         // Weather server event
-        public static void SubscriberPollInHandler(ZmqSocket ZmqSocket, Poller revents)
+        public static void SubscriberPollInHandler(ZmqSocket socket, Poller revents)
         {
-            ZmqSocket.Receive();
+            socket.Receive();
             Console.WriteLine("Process Weather");
         }
     }

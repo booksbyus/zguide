@@ -11,9 +11,9 @@ using System.Text;
 using System.Threading;
 using ZeroMQ;
 
-namespace ZMQGuide
+namespace zguide.peering1
 {
-    internal class Program19
+    internal class Program
     {
         public static void Main(string[] args)
         {
@@ -44,10 +44,10 @@ namespace ZMQGuide
                         Thread.Sleep(1000);
                     }
 
-                    statefe.PollInHandler += (ZmqSocket, revents) =>
+                    statefe.PollInHandler += (socket, revents) =>
                                                  {
-                                                     string peerName = ZmqSocket.Receive(Encoding.Unicode);
-                                                     string available = ZmqSocket.Receive(Encoding.Unicode);
+                                                     string peerName = socket.Receive(Encoding.Unicode);
+                                                     string available = socket.Receive(Encoding.Unicode);
 
                                                      Console.WriteLine("{0} - {1} workers free\n", peerName, available);
                                                  };

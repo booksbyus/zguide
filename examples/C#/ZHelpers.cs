@@ -28,5 +28,15 @@ namespace zguide
                     Console.WriteLine("{0}", encoding.GetString(frame.Buffer));
             }
         }
+
+        public static void SetID(ZmqSocket client, Encoding unicode)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static bool Version()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

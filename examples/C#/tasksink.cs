@@ -1,7 +1,7 @@
 ﻿//
 //  Task sink
-//  Binds PULL ZmqSocket to tcp://localhost:5558
-//  Collects results from workers via that ZmqSocket
+//  Binds PULL socket to tcp://localhost:5558
+//  Collects results from workers via that socket
 //
 
 //  Author:     Michael Compton, Tomas Roos
@@ -12,9 +12,9 @@ using System.Text;
 using System.Diagnostics;
 using ZeroMQ;
 
-namespace ZMQGuide 
+namespace zguide.tasksink
 {
-    internal class Program27
+    internal class Program
     {
         public static void Main(string[] args)
         {

@@ -9,8 +9,9 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>zguide</RootNamespace>
     <AssemblyName>zguide</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -31,15 +32,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="clrzmq">
-      <HintPath>packages\clrzmq.3.0.0-beta3\lib\net40\clrzmq.dll</HintPath>
+      <HintPath>packages\clrzmq.3.0.0-rc1\lib\net40\clrzmq.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="asyncsrv.cs" />
@@ -50,10 +46,10 @@
     <Compile Include="identity.cs" />
     <Compile Include="interrupt.cs" />
     <Compile Include="kvsimple.cs" />
+    <Compile Include="lbbroker.cs" />
+    <Compile Include="lbbroker2.cs" />
     <Compile Include="lpclient.cs" />
     <Compile Include="lpserver.cs" />
-    <Compile Include="lruqueue.cs" />
-    <Compile Include="lruqueue2.cs" />
     <Compile Include="msgqueue.cs" />
     <Compile Include="mspoller.cs" />
     <Compile Include="msreader.cs" />
@@ -61,14 +57,15 @@
     <Compile Include="mtserver.cs" />
     <Compile Include="peering1.cs" />
     <Compile Include="peering2.cs" />
+    <Compile Include="ppqueue.cs" />
+    <Compile Include="ppworker.cs" />
     <Compile Include="psenvpub.cs" />
     <Compile Include="psenvsub.cs" />
     <Compile Include="rrbroker.cs" />
     <Compile Include="rrclient.cs" />
     <Compile Include="rrworker.cs" />
     <Compile Include="rtdealer.cs" />
-    <Compile Include="rtmama.cs" />
-    <Compile Include="rtpapa.cs" />
+    <Compile Include="rtreq.cs" />
     <Compile Include="spqueue.cs" />
     <Compile Include="spworker.cs" />
     <Compile Include="syncpub.cs" />

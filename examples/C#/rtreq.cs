@@ -3,7 +3,7 @@
 //
 //  While this example runs in a single process, that is just to make
 //  it easier to start and stop the example. Each thread has its own
-//  ZmqContext and conceptually acts as a separate process.
+//  context and conceptually acts as a separate process.
 //
 
 //  Author:     Michael Compton, Tomas Roos
@@ -16,9 +16,9 @@ using ZeroMQ;
 using System.Threading;
 using zguide;
 
-namespace ZMQGuide
+namespace zguide.rtreq
 {
-    internal class Program33
+    internal class Program
     {
         public static void Main(string[] args)
         {

@@ -11,9 +11,9 @@ using System.Text;
 using System.Threading;
 using ZeroMQ;
 
-namespace ZMQGuide
+namespace zguide.msreader
 {
-    internal class Program20
+    internal class Program
     {
         public static void Main(string[] args)
         {
@@ -33,7 +33,7 @@ namespace ZMQGuide
                         //  Process any waiting tasks
                         while (true)
                         {
-                            byte[] message = receiver.Receive(SendRecvOpt.NOBLOCK);
+                            byte[] message = receiver.Receive(SocketFlags.DontWait);
                             if (message != null)
                             {
                                 Console.WriteLine("Process Task");
@@ -47,7 +47,7 @@ namespace ZMQGuide
                         //  Process any waiting weather updates
                         while (true)
                         {
-                            byte[] message = subscriber.Receive(SendRecvOpt.NOBLOCK);
+                            byte[] message = subscriber.Receive(SocketFlags.DontWait);
                             if (message != null)
                             {
                                 Console.WriteLine("Process Weather");

@@ -12,7 +12,7 @@ using System.Text;
 
 using ZeroMQ;
 
-namespace ZMQGuide
+namespace zguide
 {
     public class KvMsg
     {

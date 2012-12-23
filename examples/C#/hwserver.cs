@@ -1,6 +1,6 @@
 ﻿//
 //  Hello World server
-//  Binds REP ZmqSocket to tcp://*:5555
+//  Binds REP socket to tcp://*:5555
 //  Expects "Hello" from client, replies with "World"
 //
 
@@ -12,9 +12,9 @@ using System.Text;
 using System.Threading;
 using ZeroMQ;
 
-namespace ZMQGuide 
+namespace zguide.hwserver
 {
-    internal class Program28
+    internal class Program
     {
         public static void Main(string[] args)
         {

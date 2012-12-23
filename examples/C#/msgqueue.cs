@@ -8,9 +8,9 @@
 
 using ZeroMQ;
 
-namespace ZMQGuide
+namespace zguide.msqueue
 {
-    internal class Program2
+    internal class Program
     {
         public static void Main(string[] args)
         {

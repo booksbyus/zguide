@@ -9,9 +9,10 @@
 using System;
 using System.Text;
 using ZeroMQ;
+using ZeroMQ.Interop;
 using System.Threading;
 
-namespace ZMQGuide {
+namespace zguide.taskworker2 {
     class TaskWorker2 {
         private ZmqContext context;
         private ZmqSocket receiver;
@@ -27,11 +28,11 @@ namespace ZMQGuide {
         }
 
         public void Process() {
-            //  ZmqSocket to receive messages on
+            //  Socket to receive messages on
             receiver.Connect("tcp://localhost:5557");
-            //  ZmqSocket to send messages to
+            //  Socket to send messages to
             sender.Connect("tcp://localhost:5558");
-            //  ZmqSocket for control input
+            //  Socket for control input
             controller.Connect("tcp://localhost:5559");
             controller.Subscribe("", Encoding.Unicode);
 
@@ -45,13 +46,14 @@ namespace ZMQGuide {
             //  Process messages from both sockets
             killCommand = false;
             while (!killCommand) {
-                ZmqContext.Poll(items, -1);
+                context.Poll(items, -1);
             }
         }
 
-        private void ReceiverPollInHandler(ZmqSocket ZmqSocket, Poller revents) {
+        private void ReceiverPollInHandler(ZmqSocket socket, Poller revents)
+        {
             //  Process task
-            int workload = Convert.ToInt32(ZmqSocket.Receive(Encoding.Unicode));
+            int workload = Convert.ToInt32(socket.Receive(Encoding.Unicode));
             //  Do the work
             Thread.Sleep(workload);
             //  Send results to sink
@@ -60,7 +62,7 @@ namespace ZMQGuide {
             Console.Clear();
         }
 
-        private void ControllerPollInHandler(ZmqSocket ZmqSocket, Poller revents)
+        private void ControllerPollInHandler(ZmqSocket socket, Poller revents)
         {
             //  Any waiting controller command acts as 'KILL'
             Console.WriteLine("Killed...");
@@ -68,7 +70,7 @@ namespace ZMQGuide {
         }
     }
 
-    class Program39 {
+    class Program {
         static void Main(string[] args) {
             TaskWorker2 taskworker = new TaskWorker2();
             taskworker.Process();
