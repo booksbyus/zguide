@@ -1260,6 +1260,8 @@ class ASCIIToSVG {
         $canvasWidth = count($line);
       }
     }
+
+    /* Add a fudge factor for drop-shadow and gaussian blur */
     $canvasWidth = $canvasWidth * $o->xScale + 0;
     $canvasHeight = count($this->grid) * $o->yScale + 0;
 
@@ -1278,8 +1280,7 @@ class ASCIIToSVG {
     <filter id="dsFilter" width="150%" height="150%">
       <feOffset result="offOut" in="SourceGraphic" dx="3" dy="3"/>
       <feColorMatrix result="matrixOut" in="offOut" type="matrix" values="0.2 0 0 0 0 0 0.2 0 0 0 0 0 0.2 0 0 0 0 0 1 0"/>
-      <feGaussianBlur result="blurOut" in="matrixOut" stdDeviation="3"/>
-      <feBlend in="SourceGraphic" in2="blurOut" mode="normal"/>
+      <feBlend in="SourceGraphic" in2="matrixOut" mode="normal"/>
     </filter>
     <marker id="iPointer"
       viewBox="0 0 10 10" refX="5" refY="5" 
