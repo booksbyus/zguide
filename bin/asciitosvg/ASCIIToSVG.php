@@ -1260,8 +1260,6 @@ class ASCIIToSVG {
         $canvasWidth = count($line);
       }
     }
-
-    /* Add a fudge factor for drop-shadow and gaussian blur */
     $canvasWidth = $canvasWidth * $o->xScale + 0;
     $canvasHeight = count($this->grid) * $o->yScale + 0;
 
