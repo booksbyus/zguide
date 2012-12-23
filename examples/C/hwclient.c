@@ -23,10 +23,8 @@ int main (void)
     for (request_nbr = 0; request_nbr != 10; request_nbr++) {
         char buffer [10];
         printf ("Sending Hello %d...\n", request_nbr);
-        rc = zmq_send (requester, "Hello", 5, 0);
-        assert (rc == 5);
-        rc = zmq_recv (requester, buffer, 10, 0);
-        assert (rc == 5);
+        zmq_send (requester, "Hello", 5, 0);
+        zmq_recv (requester, buffer, 10, 0);
         printf ("Received World %d\n", request_nbr);
     }
     zmq_close (requester);
