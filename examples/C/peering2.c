@@ -76,7 +76,7 @@ int main (int argc, char *argv [])
     //
     if (argc < 2) {
         printf ("syntax: peering2 me {you}...\n");
-        exit (EXIT_FAILURE);
+        return 0;
     }
     self = argv [1];
     printf ("I: preparing broker at %s...\n", self);

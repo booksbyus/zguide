@@ -8,7 +8,7 @@ int main (int argc, char *argv [])
 {
     if (argc < 2) {
         printf ("I: syntax: %s <endpoint>\n", argv [0]);
-        exit (EXIT_SUCCESS);
+        return 0;
     }
     zctx_t *ctx = zctx_new ();
     void *server = zsocket_new (ctx, ZMQ_REP);

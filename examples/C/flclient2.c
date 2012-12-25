@@ -26,7 +26,7 @@ int main (int argc, char *argv [])
 {
     if (argc == 1) {
         printf ("I: syntax: %s <endpoint> ...\n", argv [0]);
-        exit (EXIT_SUCCESS);
+        return 0;
     }
     //  Create new freelance client object
     flclient_t *client = flclient_new ();

@@ -1106,87 +1106,85 @@ Frame 3   | Data    |   Actual message body
 
 When you can send messages rapidly from process to process, you soon discover that memory is a precious resource, and one that can be trivially filled up. A few seconds of delay somewhere in a process can turn into a backlog that blows up a server, unless you understand the problem and take precautions.
 
-The problem is this: if you have process A sending messages to process B, which suddenly gets very busy (garbage collection, CPU overload, whatever), then what happens to the messages that process A wants to send? Some will sit in B's network buffers. Some will sit on the Ethernet wire itself. Some will sit in A's network buffers. And the rest will accumulate in A's memory. If you don't take some precaution, A can easily run out of memory and crash. It is a consistent, classic problem with message brokers.
+The problem is this: imagine you have process A sending messages at high frequency to process B, which is processing them. Suddenly B gets very busy (garbage collection, CPU overload, whatever), and can't process the messages for a short period. It could be a few seconds for some heavy garbage collection, or it could be much longer, if there's a more serious problem. What happens to the messages that process A is still trying to send frantically? Some will sit in B's network buffers. Some will sit on the Ethernet wire itself. Some will sit in A's network buffers. And the rest will accumulate in A's memory, as rapidly as the application behind A sends them. If you don't take some precaution, A can easily run out of memory and crash.
 
-What are the answers? One is to pass the problem upstream. A is getting the messages from somewhere else. So tell that process, "stop!" And so on. This is called "flow control". It sounds great, but what if you're sending out a Twitter feed? Do you tell the whole world to stop tweeting while B gets its act together?
+It is a consistent, classic problem with message brokers. What makes it hurt more is that it's B's fault, superficially, and B is typically a user-written application which A has no control over.
+
+What are the answers? One is to pass the problem upstream. A is getting the messages from somewhere else. So tell that process, "stop!" And so on. This is called "flow control". It sounds plausible, but what if you're sending out a Twitter feed? Do you tell the whole world to stop tweeting while B gets its act together?
 
 Flow control works in some cases but in others. The transport layer can't tell the application layer to "stop" any more than a subway system can tell a large business, "please keep your staff at work another half an hour, I'm too busy". The answer for messaging is to set limits on the size of buffers, and then when we reach those limits, take some sensible action. In some cases (not for a subway system, though), the answer is to throw away messages. In a others, the best strategy to wait.
 
 0MQ uses the concept of "high water mark" or HWM to define the capacity of its internal pipes. Each connection out of a socket or into a socket has its own pipe, and high-water mark for sending, and/or receiving, depending on the socket type. Some sockets (PUB, PUSH) only have send buffers. Some (SUB, PULL, REQ, REP) only have receive buffers. Some (DEALER, ROUTER, PAIR) have both send and receive buffers.
 
-In 0MQ/2.x the HWM was infinite by default. In 0MQ/3.x it's set to 1,000 by default, which is more sensible. If you're still using 0MQ/2.x you should always set a HWM on your sockets, be it 1,000 to match 0MQ/3.x or another figure that takes into account your message sizes.
+In 0MQ/2.x the HWM was infinite by default. This was easy but also typically fatal for high-volume publishers. In 0MQ/3.x it's set to 1,000 by default, which is more sensible. If you're still using 0MQ/2.x you should always set a HWM on your sockets, be it 1,000 to match 0MQ/3.x or another figure that takes into account your message sizes and expected subscriber performance.
 
 When your socket reaches its high-water mark, it will either block or drop data depending on the socket type. PUB and ROUTER sockets will drop data if they reach their high-water mark, while other socket types will block. Over the {{inproc}} transport, the sender and receiver share the same buffers, so the real HWM is the sum of the HWM set by both sides.
 
-Lastly, the high-water marks are counted in //message parts//, not whole messages. If you are sending two-part messages, the default HWM is 500. When you use the ROUTER socket type (which we'll see in [#advanced-request-reply]), every message is at least two parts.
+Lastly, the high-water marks are not exact; while you may get //up to// 1,000 messages by default, the real buffer size may be much lower (as little as half), due to the way libzmq implements its queues.
 
 ++ Missing Message Problem Solver
 
 As you build applications with 0MQ you will come across this problem more than once: losing messages that you expect to receive. We have put together a diagram[figure] that walks through the most common causes for this.
 
 [[code type="textdiagram" title="Missing Message Problem Solver"]]
-.---------------.     
-| So you're not |        .---------------.        .----------------.
-| getting every |        | Do you set a  |        | On SUB sockets |
-| message?      |    .-->| subscription  +------->| you have to    |
-'--------+------'    |   | for messages? | No     | subscribe to   |
-         |           |   '-------+-------'        | get messages   |
-         v           |           |                '----------------'
-.----------------.   |           v
-| Are you losing |   |   .----------------.        .---------------.
-| messages in a  +---'   | Do you start   |        | Start all SUB |
-| SUB socket?    | Yes   | the SUB socket +------->| sockets first |
-'--------+-------'       | after the PUB? | Yes    | then the PUB  |
-         | No            '--------+-------'        '---------------'
-         |                        | No
-         v                        v   
-.---------------.       .-----------------.
-| Are you using | Yes   | See explanation |     .------------------.
-| REQ and REP   +---.   | of slow joiners |     | Send and recv in |
-| sockets?      |   |   | in the text     |     | a loop and check |
-'--------+------'   |   '-----------------'  .->| return codes.    |
-         |          '------------------------'  | With REP, recv   |
-         | No                                   | and send         |
-         v               .----------------.     '------------------'
-.-----------------.      | First PULL can |
-|  Are you using  +----->| grab many msgs |       .---------------.
-|  PUSH sockets?  | Yes  | while others   +--.    | Use the load- |
-'--------+--------'      | are still busy |  |    | balancing     |
-         | No            | connecting     |  '--->| pattern and   |
-         v               '----------------'       | ROUTER/DEALER |
-.-----------------.                               | sockets       |
-|  Do you check   | No    .-----------------.     '---------------'
-| return codes on +---.   | Check every 0MQ |
-|  all methods?   |   '-->| method call. In |
-'--------+--------'       | C, use asserts  |
-         | Yes            '-----------------'
-         v
-.-----------------.       .----------------.
-| Are you using a |       | Do not share   |
-| socket in more  +------>| sockets across |
-| than 1 thread?  | Yes   | threads        |
-'--------+--------'       '----------------'
-         | No                                     .---------------.
-         v                .----------------.      | To use inproc |
-.---------------.         | Do you call    |      | your sockets  |
-| Are you using |    .--->| zmq_ctx_new    +----->| must be in    |
-| the inproc:// +----'    | twice or more? |Yes   | the same      |
-| transport?    | Yes     '--------+-------'      | 0MQ context   |
-'--------+------'                  | No           '---------------'
-         | No                      v             
-         v                .-----------------.
-.-----------------.       | Check that you  |
-|  Are you using  | Yes   | bind before you |
-| ROUTER sockets? +---.   | connect         |
-'--------+--------'   |   '-----------------'
-         | No         |
-         v            |   .----------------.     .------------.
-.----------------.    |   | Check that the |     | If you use |
-| Make a minimal |    |   | reply address  |     | identities |
-| test case, ask |    '-->| is valid. 0MQ  +---->| set them   |
-| on IRC channel |        | drops messages |     | before you |
-'----------------'        | it can't route |     | connect    |
-                          '----------------'     '------------'
+.---------------.        .---------------.        .----------------.
+| So you're not |        | Do you set a  |        | On SUB sockets |
+| getting every |    .-->| subscription  +------->| you have to    |
+| message?      |    |   | for messages? | No     | subscribe to   |
+'--------+------'    |   '-------+-------'        | get messages   |
+         | Yes       |           |                '----------------'
+         v           |           v
+.----------------.   |   .----------------.        .---------------.
+| Are you losing |   |   | Do you start   |        | Start all SUB |
+| messages in a  +---'   | the SUB socket +------->| sockets first |
+| SUB socket?    | Yes   | after the PUB? | Yes    | then the PUB  |
+'--------+-------'       '--------+-------'        '---------------'
+         | No                     | No
+         v                        v             .------------------.
+.---------------.       .-----------------.     | Send and recv in |
+| Are you using | Yes   | See explanation |     | a loop and check |
+| REQ and REP?  +---.   | of slow joiners |  .->| return codes.    |
+'--------+------'   |   | in the text     |  |  | With REP, recv   |
+         | No       |   '-----------------'  |  | and send         |
+         v          '------------------------'  '------------------'
+.-----------------.      .----------------.                          
+|  Are you using  +--.   | First PULL can |       .---------------.
+|  PUSH sockets?  |  '-->| grab many msgs |       | Use the load- |
+'--------+--------' Yes  | while others   +--.    | balancing     |
+         | No            | are still busy |  '--->| pattern and   |
+         v               | connecting     |       | ROUTER/DEALER |
+.-----------------.      '----------------'       | sockets       |
+|  Do you check   | No                            '---------------'
+| return codes on +---.   .----------------.
+|  all methods?   |   |   | Check each 0MQ |   .------------------.
+'--------+--------'   '-->| method call    |   | Use sockets only |
+         | Yes            '----------------'   | in their owning  |
+         v                                     | threads unless   |
+.-----------------.      .---.         .------>| you know about   |
+| Are you using a |      |   |      .--'       | memory barriers  |
+| socket in more  +------'   |      |          '------------------'
+| than 1 thread?  | Yes      '------'         
+'--------+--------'                               .---------------.
+         | No             .----------------.      | To use inproc |
+         v                | Do you call    |      | your sockets  |
+.---------------.   .---->| zmq_ctx_new    +----->| must be in    |
+| Are you using |   |     | twice or more? |Yes   | the same      |
+| the inproc:// +---'     '--------+-------'      | 0MQ context   |
+| transport?    | Yes              | No           '---------------'
+'--------+------'                  v                              
+         | No             .-----------------.
+         v                | Check that you  |
+.-----------------.       | bind before you |
+|  Are you using  | Yes   | connect         |
+| ROUTER sockets? +---.   '-----------------'
+'--------+--------'   |                      
+         | No         |   .----------------.     .------------.
+         v            |   | Check that the |     | If you use |
+.----------------.    |   | reply address  |     | identities |
+| Make a minimal |    '-->| is valid. 0MQ  +---->| set them   |
+| test case, ask |        | drops messages |     | before you |
+| on IRC channel |        | it can't route |     | connect    |
+'----------------'        '----------------'     '------------'
 [[/code]]
 
 Here's a summary of what the graphic says:
