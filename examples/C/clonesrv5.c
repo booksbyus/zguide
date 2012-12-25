@@ -5,9 +5,9 @@
 #include "kvmsg.c"
 
 //  zloop reactor handlers
-static int s_snapshots  (zloop_t *loop, zmq_pollitem_t *poller, void *args);
-static int s_collector  (zloop_t *loop, zmq_pollitem_t *poller, void *args);
-static int s_flush_ttl  (zloop_t *loop, zmq_pollitem_t *poller, void *args);
+static int s_snapshots (zloop_t *loop, zmq_pollitem_t *poller, void *args);
+static int s_collector (zloop_t *loop, zmq_pollitem_t *poller, void *args);
+static int s_flush_ttl (zloop_t *loop, zmq_pollitem_t *poller, void *args);
 
 //  Our server is defined by these properties
 typedef struct {

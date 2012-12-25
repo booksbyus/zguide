@@ -120,8 +120,8 @@ int main (int argc, char *argv [])
 
     //  .split request-reply handling
     //  Here we handle the request-reply flow. We're using load-balancing
-    //  to poll workers at all times, and clients only when there are one or
-    //  more workers available.
+    //  to poll workers at all times, and clients only when there are one 
+    //  or more workers available.
 
     //  Least recently used queue of available workers
     int capacity = 0;
@@ -209,8 +209,8 @@ int main (int argc, char *argv [])
             //
             if (reroutable && argc > 2 && randof (5) == 0) {
                 //  Route to random broker peer
-                int random_peer = randof (argc - 2) + 2;
-                zmsg_pushmem (msg, argv [random_peer], strlen (argv [random_peer]));
+                int peer = randof (argc - 2) + 2;
+                zmsg_pushmem (msg, argv [peer], strlen (argv [peer]));
                 zmsg_send (&msg, cloudbe);
             }
             else {

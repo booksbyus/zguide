@@ -3,9 +3,10 @@
 //
 #include "czmq.h"
 
-//  This is our subscriber. It connects to the publisher and subscribes to
-//  everything. It sleeps for a short time between messages to simulate doing
-//  too much work. If a message is more than 1 second late, it croaks:
+//  This is our subscriber. It connects to the publisher and subscribes
+//  to everything. It sleeps for a short time between messages to
+//  simulate doing too much work. If a message is more than 1 second
+//  late, it croaks.
 
 #define MAX_ALLOWED_DELAY   1000    //  msecs
 

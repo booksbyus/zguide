@@ -281,8 +281,8 @@ int main (int argc, char *argv [])
             }
             else {
                 //  Route to random broker peer
-                int random_peer = randof (argc - 2) + 2;
-                zmsg_pushmem (msg, argv [random_peer], strlen (argv [random_peer]));
+                int peer = randof (argc - 2) + 2;
+                zmsg_pushmem (msg, argv [peer], strlen (argv [peer]));
                 zmsg_send (&msg, cloudbe);
             }
         }

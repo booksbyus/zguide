@@ -1,6 +1,4 @@
-/*  =====================================================================
- *  kvsimple - simple key-value message class for example applications
- *  ===================================================================== */
+//  kvsimple class - simple key-value message class for example applications
 
 #include "kvsimple.h"
 #include "zlist.h"

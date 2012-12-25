@@ -1,8 +1,8 @@
-#include <czmq.h>
-
 //  A UDP class.
 //  Implemented as a proper wee class using the CZMQ style.
 //  Include directly into your application source code.
+
+#include <czmq.h>
 
 typedef struct _udp_t udp_t;
 

@@ -10,13 +10,20 @@
 //  We define a set of reactor handlers and our server object structure:
 
 //  Bstar reactor handlers
-static int s_snapshots   (zloop_t *loop, zmq_pollitem_t *poller, void *args);
-static int s_collector   (zloop_t *loop, zmq_pollitem_t *poller, void *args);
-static int s_flush_ttl   (zloop_t *loop, zmq_pollitem_t *poller, void *args);
-static int s_send_hugz   (zloop_t *loop, zmq_pollitem_t *poller, void *args);
-static int s_new_active  (zloop_t *loop, zmq_pollitem_t *poller, void *args);
-static int s_new_passive (zloop_t *loop, zmq_pollitem_t *poller, void *args);
-static int s_subscriber  (zloop_t *loop, zmq_pollitem_t *poller, void *args);
+static int
+    s_snapshots   (zloop_t *loop, zmq_pollitem_t *poller, void *args);
+static int
+    s_collector   (zloop_t *loop, zmq_pollitem_t *poller, void *args);
+static int
+    s_flush_ttl   (zloop_t *loop, zmq_pollitem_t *poller, void *args);
+static int
+    s_send_hugz   (zloop_t *loop, zmq_pollitem_t *poller, void *args);
+static int
+    s_new_active  (zloop_t *loop, zmq_pollitem_t *poller, void *args);
+static int
+    s_new_passive (zloop_t *loop, zmq_pollitem_t *poller, void *args);
+static int
+    s_subscriber  (zloop_t *loop, zmq_pollitem_t *poller, void *args);
 
 //  Our server is defined by these properties
 typedef struct {
@@ -53,7 +60,8 @@ int main (int argc, char *argv [])
         zclock_log ("I: primary active, waiting for backup (passive)");
         self->bstar = bstar_new (BSTAR_PRIMARY, "tcp://*:5003",
                                  "tcp://localhost:5004");
-        bstar_voter (self->bstar, "tcp://*:5556", ZMQ_ROUTER, s_snapshots, self);
+        bstar_voter (self->bstar, "tcp://*:5556",
+                     ZMQ_ROUTER, s_snapshots, self);
         self->port = 5556;
         self->peer = 5566;
         self->primary = TRUE;
@@ -63,7 +71,8 @@ int main (int argc, char *argv [])
         zclock_log ("I: backup passive, waiting for primary (active)");
         self->bstar = bstar_new (BSTAR_BACKUP, "tcp://*:5004",
                                  "tcp://localhost:5003");
-        bstar_voter (self->bstar, "tcp://*:5566", ZMQ_ROUTER, s_snapshots, self);
+        bstar_voter (self->bstar, "tcp://*:5566",
+                     ZMQ_ROUTER, s_snapshots, self);
         self->port = 5566;
         self->peer = 5556;
         self->primary = FALSE;
@@ -91,7 +100,8 @@ int main (int argc, char *argv [])
     //  Set up our own clone client interface to peer
     self->subscriber = zsocket_new (self->ctx, ZMQ_SUB);
     zsockopt_set_subscribe (self->subscriber, "");
-    zsocket_connect (self->subscriber, "tcp://localhost:%d", self->peer + 1);
+    zsocket_connect (self->subscriber,
+                     "tcp://localhost:%d", self->peer + 1);
 
     //  .split main task body
     //  After we've set-up our sockets we register our binary star

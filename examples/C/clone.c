@@ -1,6 +1,4 @@
-/*  =====================================================================
- *  clone - clone client API stack (multithreaded)
- *  ===================================================================== */
+//  clone class - Clone client API stack (multithreaded)
 
 #include "clone.h"
 

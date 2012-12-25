@@ -7,17 +7,17 @@
 
 int main (int argc, char *argv [])
 {
-    void *context = zmq_ctx_new ();
-
     //  Socket to talk to server
     printf ("Collecting updates from weather server...\n");
+    void *context = zmq_ctx_new ();
     void *subscriber = zmq_socket (context, ZMQ_SUB);
     int rc = zmq_connect (subscriber, "tcp://localhost:5556");
     assert (rc == 0);
 
     //  Subscribe to zipcode, default is NYC, 10001
     char *filter = (argc > 1)? argv [1]: "10001 ";
-    rc = zmq_setsockopt (subscriber, ZMQ_SUBSCRIBE, filter, strlen (filter));
+    rc = zmq_setsockopt (subscriber, ZMQ_SUBSCRIBE,
+                         filter, strlen (filter));
     assert (rc == 0);
 
     //  Process 100 updates

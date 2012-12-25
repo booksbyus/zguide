@@ -46,12 +46,12 @@ s_state_machine (bstar_t *fsm)
     //  ACTIVE or PASSIVE depending on events we get from our peer:
     if (fsm->state == STATE_PRIMARY) {
         if (fsm->event == PEER_BACKUP) {
-            printf ("I: connected to backup (passive), ready as active\n");
+            printf ("I: connected to backup (passive), ready active\n");
             fsm->state = STATE_ACTIVE;
         }
         else
         if (fsm->event == PEER_ACTIVE) {
-            printf ("I: connected to backup (active), ready as passive\n");
+            printf ("I: connected to backup (active), ready passive\n");
             fsm->state = STATE_PASSIVE;
         }
         //  Accept client connections
@@ -59,7 +59,7 @@ s_state_machine (bstar_t *fsm)
     else
     if (fsm->state == STATE_BACKUP) {
         if (fsm->event == PEER_ACTIVE) {
-            printf ("I: connected to primary (active), ready as passive\n");
+            printf ("I: connected to primary (active), ready passive\n");
             fsm->state = STATE_PASSIVE;
         }
         else
@@ -84,13 +84,13 @@ s_state_machine (bstar_t *fsm)
     if (fsm->state == STATE_PASSIVE) {
         if (fsm->event == PEER_PRIMARY) {
             //  Peer is restarting - become active, peer will go passive
-            printf ("I: primary (passive) is restarting, ready as active\n");
+            printf ("I: primary (passive) is restarting, ready active\n");
             fsm->state = STATE_ACTIVE;
         }
         else
         if (fsm->event == PEER_BACKUP) {
             //  Peer is restarting - become active, peer will go passive
-            printf ("I: backup (passive) is restarting, ready as active\n");
+            printf ("I: backup (passive) is restarting, ready active\n");
             fsm->state = STATE_ACTIVE;
         }
         else
@@ -106,7 +106,7 @@ s_state_machine (bstar_t *fsm)
             assert (fsm->peer_expiry > 0);
             if (zclock_time () >= fsm->peer_expiry) {
                 //  If peer is dead, switch to the active state
-                printf ("I: failover successful, ready as active\n");
+                printf ("I: failover successful, ready active\n");
                 fsm->state = STATE_ACTIVE;
             }
             else

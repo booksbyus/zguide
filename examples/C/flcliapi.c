@@ -1,7 +1,5 @@
-/*  =====================================================================
- *  flcliapi - Freelance Pattern agent class
- *  Implements the Freelance Protocol at http://rfc.zeromq.org/spec:10.
- *  ===================================================================== */
+//  flcliapi class - Freelance Pattern agent class
+//  Implements the Freelance Protocol at http://rfc.zeromq.org/spec:10
 
 #include "flcliapi.h"
 

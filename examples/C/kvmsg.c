@@ -1,6 +1,4 @@
-/*  =====================================================================
- *  kvmsg - key-value message class for example applications
- *  ===================================================================== */
+//  kvmsg class - key-value message class for example applications
 
 #include "kvmsg.h"
 #include <uuid/uuid.h>

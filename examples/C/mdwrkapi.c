@@ -1,7 +1,5 @@
-/*  =====================================================================
- *  mdwrkapi.c - Majordomo Protocol Worker API
- *  Implements the MDP/Worker spec at http://rfc.zeromq.org/spec:7.
- *  ===================================================================== */
+//  mdwrkapi class - Majordomo Protocol Worker API
+//  Implements the MDP/Worker spec at http://rfc.zeromq.org/spec:7.
 
 #include "mdwrkapi.h"
 

@@ -1,7 +1,5 @@
-/*  =====================================================================
- *  mdcliapi2.c - Majordomo Protocol Client API
- *  Implements the MDP/Worker spec at http://rfc.zeromq.org/spec:7.
- *  ===================================================================== */
+//  mdcliapi2 class - Majordomo Protocol Client API
+//  Implements the MDP/Worker spec at http://rfc.zeromq.org/spec:7.
 
 #include "mdcliapi2.h"
 
