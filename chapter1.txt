@@ -215,7 +215,7 @@ The alternative to synchronization is to simply assume that the published data s
 
 So the client subscribes to its chosen zip code and collects a thousand updates for that zip code. That means about ten million updates from the server, if zip codes are randomly distributed. You can start the client, and then the server, and the client will keep working. You can stop and restart the server as often as you like, and the client will keep working. When the client has collected its thousand updates, it calculates the average, prints it, and exits.
 
-Some points about the publish-subscribe pattern:
+Some points about the publish-subscribe (pub-sub) pattern:
 
 * A subscriber can connect to more than one publisher, using one 'connect' call each time. Data will then arrive and be interleaved ("fair-queued") so that no single publisher drowns out the others.
 
@@ -371,7 +371,7 @@ The 0MQ objects we need to worry about are messages, sockets, and contexts. Luck
 
 * If you do use {{zmq_msg_recv[3]}}, always release the received message as soon as you're done with it, by calling {{zmq_msg_close[3]}}.
 
-* If you are opening and closing a lot of sockets, that's probably a sign you need to redesign your application.
+* If you are opening and closing a lot of sockets, that's probably a sign you need to redesign your application. In some cases socket handles won't be freed until you destroy the context.
 
 * When you exit the program, close your sockets and then call {{zmq_ctx_destroy[3]}}. This destroys the context.
 
@@ -491,7 +491,7 @@ Specifically:
 
 * It handles slow/blocked readers safely, using different strategies that depend on the messaging pattern.
 
-* It lets you route messages using a variety of patterns such as request-reply and publish-subscribe. These patterns are how you create the topology, the structure of your network.
+* It lets you route messages using a variety of patterns such as request-reply and pub-sub. These patterns are how you create the topology, the structure of your network.
 
 * It lets you create proxies to queue, forward, or capture messages with a single call. Proxies can reduce the interconnection complexity of a network.
 
@@ -521,13 +521,13 @@ wuclient 56789 &
 As the clients run, we take a look at the active processes using 'top', and we see something like (on a 4-core box):
 
 [[code]]
- PID USER PR  NI  VIRT  RES  SHR S %CPU %MEM   TIME+  COMMAND
-7136 ph   20   0 1040m 959m 1156 R  157 12.0 16:25.47 wuserver
-7966 ph   20   0 98608 1804 1372 S   33  0.0  0:03.94 wuclient
-7963 ph   20   0 33116 1748 1372 S   14  0.0  0:00.76 wuclient
-7965 ph   20   0 33116 1784 1372 S    6  0.0  0:00.47 wuclient
-7964 ph   20   0 33116 1788 1372 S    5  0.0  0:00.25 wuclient
-7967 ph   20   0 33072 1740 1372 S    5  0.0  0:00.35 wuclient
+PID  USER  PR  NI  VIRT  RES  SHR S %CPU %MEM   TIME+  COMMAND
+7136  ph   20   0 1040m 959m 1156 R  157 12.0 16:25.47 wuserver
+7966  ph   20   0 98608 1804 1372 S   33  0.0  0:03.94 wuclient
+7963  ph   20   0 33116 1748 1372 S   14  0.0  0:00.76 wuclient
+7965  ph   20   0 33116 1784 1372 S    6  0.0  0:00.47 wuclient
+7964  ph   20   0 33116 1788 1372 S    5  0.0  0:00.25 wuclient
+7967  ph   20   0 33072 1740 1372 S    5  0.0  0:00.35 wuclient
 [[/code]]
 
 Let's think for a second about what is happening here. The weather server has a single socket, and yet here we have it sending data to five clients in parallel. We could have thousands of concurrent clients. The server application doesn't see them, doesn't talk to them directly. So the 0MQ socket is acting like a little server, silently accepting client requests and shoving data out to them as fast as the network can handle it. And it's a multithreaded server, squeezing more juice out of your CPU.

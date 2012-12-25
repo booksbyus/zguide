@@ -1,20 +1,20 @@
 .output chapter5.wd
 .bookmark advanced-pub-sub
-+ Advanced Publish-Subscribe Patterns
++ Advanced Pub-Sub Patterns
 
-In [#advanced-request-reply] and [#reliable-request-reply] we looked at advanced use of 0MQ's request-reply pattern. If you managed to digest all that, congratulations. In this chapter we'll focus on publish-subscribe, and extend 0MQ's core pub-sub pattern with higher-level patterns for performance, reliability, state distribution, and monitoring.
+In [#advanced-request-reply] and [#reliable-request-reply] we looked at advanced use of 0MQ's request-reply pattern. If you managed to digest all that, congratulations. In this chapter we'll focus on pub-sub, and extend 0MQ's core pub-sub pattern with higher-level patterns for performance, reliability, state distribution, and monitoring.
 
 We'll cover:
 
-* When to use publish-subscribe.
+* When to use pub-sub.
 * How to handle too-slow subscribers (the //Suicidal Snail// pattern).
 * How to design high-speed subscribers (the //Black Box// pattern).
-* How to monitor a publish-subscribe network (the //Espresso// pattern).
+* How to monitor a pub-sub network (the //Espresso// pattern).
 * How to build a shared key-value store (the //Clone// pattern).
 * How to use reactors to simplify complex servers.
 * How to use the Binary Star pattern to add failover to a server.
 
-++ Pros and Cons of Publish-Subscribe
+++ Pros and Cons of Pub-Sub
 
 0MQ's low-level patterns have their different characters. Pub-sub addresses an old messaging problem, which is //multicast// or //group messaging//. It has that unique mix of meticulous simplicity and brutal indifference that characterizes 0MQ. It's worth understanding the trade-offs that pub-sub makes, how these benefit us, and how we can work around them if needed.
 
@@ -80,7 +80,7 @@ Which shows neatly how the publisher socket stops sending data when there are no
 
 ++ Last Value Caching
 
-If you've used commercial publish-subscribe systems you may be used to some features that are missing in the fast and cheerful 0MQ pub-sub model. One of these is "last value caching" (LVC). The problem this solves is how a new subscriber catches up when it joins the network. The theory is that publishers get notified when a new subscriber joins and subscribes to some specific topics. The publisher can then re-broadcast the last message for those topics.
+If you've used commercial pub-sub systems you may be used to some features that are missing in the fast and cheerful 0MQ pub-sub model. One of these is "last value caching" (LVC). The problem this solves is how a new subscriber catches up when it joins the network. The theory is that publishers get notified when a new subscriber joins and subscribes to some specific topics. The publisher can then re-broadcast the last message for those topics.
 
 I've already explained why publishers don't get notified when there are new subscribers, because in large pub-sub systems the volumes of data make it pretty much impossible. To make really large-scale pub-sub networks you need a protocol like PGM that exploits an upscale Ethernet switch's ability to multicast data to thousands of subscribers. Trying to do a TCP unicast from the publisher to each of thousands of subscribers just doesn't scale. You get weird spikes, unfair distribution (some subscribers getting the message before others), network congestion, and general unhappiness.
 
@@ -260,9 +260,9 @@ With two streams, working at full speed, we would configure 0MQ as follows:
 
 With ideally, no more threads in our architecture than we had cores. Once we create more threads than cores, we get contention between threads, and diminishing returns. There would be no benefit, for example, in creating more I/O threads.
 
-++ Reliable Publish-Subscribe (Clone Pattern)
+++ Reliable Pub-Sub (Clone Pattern)
 
-As a larger worked example, we'll take the problem of making a reliable publish-subscribe architecture. We'll develop this in stages. The goal is to allow a set of applications to share some common state. Here are our technical challenges:
+As a larger worked example, we'll take the problem of making a reliable pub-sub architecture. We'll develop this in stages. The goal is to allow a set of applications to share some common state. Here are our technical challenges:
 
 * We have a large set of client applications, say thousands or tens of thousands.
 * They will join and leave the network arbitrarily.
@@ -465,7 +465,7 @@ Some notes about this code:
 
 +++ Working with Subtrees
 
-As we grow the number of clients, the size of our shared store will also grow. It stops being reasonable to send everything to every client. This is the classic story with publish-subscribe: when you have a very small number of clients, you can send every message to all clients. As you grow the architecture, this becomes inefficient. Clients specialize in different areas.
+As we grow the number of clients, the size of our shared store will also grow. It stops being reasonable to send everything to every client. This is the classic story with pub-sub: when you have a very small number of clients, you can send every message to all clients. As you grow the architecture, this becomes inefficient. Clients specialize in different areas.
 
 So even a shared store, some clients will want to work only with a part of that store, which we call a //subtree//. The client has to request the subtree when it makes a state request, and it has to specify the same subtree when it subscribes to updates.
 
@@ -889,7 +889,7 @@ void
 //  Get a value from the shared hashmap
 char *
     clone_get (clone_t *self, char *key);
-[[/clone]]
+[[/code]]
 
 So here is Model Six of the clone client, which has now become just a thin shell using the clone class:
 

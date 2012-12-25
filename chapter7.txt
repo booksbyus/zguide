@@ -807,11 +807,11 @@ So far, our semantic has been "fetch"; that is, the recipient knows (somehow), t
 
 How about a "push" semantic? There are two plausible use-cases for this. First, if we adopt a centralized architecture with files on a main "server" (not something I'm advocating, but people do sometimes like this), then it's very useful to allow clients to upload files to the server. Second, it lets do a kind of pub-sub for files, where the client asks for all new files of some type; as the server gets these, it forwards them to the client.
 
-A fetch semantic is synchronous, while a push semantic is asynchronous. Asynchronous is less chatty, so faster. Also, you can do cute things like "subscribe to this path" so creating a publish-subscribe file transfer architecture. That is so obviously awesome that I shouldn't need to explain what problem it solves.
+A fetch semantic is synchronous, while a push semantic is asynchronous. Asynchronous is less chatty, so faster. Also, you can do cute things like "subscribe to this path" so creating a pub-sub file transfer architecture. That is so obviously awesome that I shouldn't need to explain what problem it solves.
 
 Still, here is the problem with the fetch semantic: that out-of-band route to tell clients what files exist. No matter how you do this, it ends up complex. Either clients have to poll, or you need a separate pub-sub channel to keep clients up to date, or you need user interaction.
 
-Thinking this through a little more, though, we can see that fetch is just a special case of publish-subscribe. So we can get the best of both worlds. Here is the general design:
+Thinking this through a little more, though, we can see that fetch is just a special case of pub-sub. So we can get the best of both worlds. Here is the general design:
 
 * Fetch this path
 * Here is credit (repeat)
@@ -1485,7 +1485,7 @@ Since we've collected all operations on files in a single class (fmq_file) it's 
 
 As it stands now, FileMQ has one major remaining problem: it provides no way for clients to recover from failures. The scenario is that a client, connected to a server, starts to receive files, and then disconnects for some reason. The network may be too slow, or breaks. The client may be on a laptop which is shut down, then resumed. The WiFi may be disconnected. As we move to a more mobile world (see [#moving-pieces]) this use-case becomes more and more frequent. In some ways it's becoming a dominant use-case.
 
-In the classic 0MQ publish-subscribe pattern, there are two strong underlying assumptions, both of which are usually wrong in FileMQ's real world. First, that data expires very rapidly so that there's no interest in asking from old data. Second, that networks are stable and rarely break (so it's better to invest in improving the infrastructure, and less in addressing recovery).
+In the classic 0MQ pub-sub pattern, there are two strong underlying assumptions, both of which are usually wrong in FileMQ's real world. First, that data expires very rapidly so that there's no interest in asking from old data. Second, that networks are stable and rarely break (so it's better to invest in improving the infrastructure, and less in addressing recovery).
 
 Take any FileMQ use case and you'll see that if the client disconnects, and reconnects, then it should get anything it missed. A further improvement would be to recover from partial failures, like HTTP and FTP do. But one thing at a time.
 

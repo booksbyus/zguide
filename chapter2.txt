@@ -2,7 +2,7 @@
 .bookmark sockets-and-patterns
 + Sockets and Patterns
 
-In [#basics] we took 0MQ for a drive, with some basic examples of the main 0MQ patterns: request-reply, publish-subscribe, and pipeline. In this chapter we're going to get our hands dirty and start to learn how to use these tools in real programs.
+In [#basics] we took 0MQ for a drive, with some basic examples of the main 0MQ patterns: request-reply, pub-sub, and pipeline. In this chapter we're going to get our hands dirty and start to learn how to use these tools in real programs.
 
 We'll cover:
 
@@ -20,7 +20,7 @@ We'll cover:
 * How to write multithreaded applications with 0MQ.
 * How to use 0MQ to signal between threads.
 * How to use 0MQ to coordinate a network of nodes.
-* How to create and use message envelopes for publish-subscribe.
+* How to create and use message envelopes for pub-sub.
 * Using the high-water mark (HWM) to protect against memory overflows.
 
 ++ The Socket API
@@ -176,7 +176,7 @@ The built-in core 0MQ patterns are:
 
 * **Request-reply**, which connects a set of clients to a set of services. This is a remote procedure call and task distribution pattern.
 
-* **Publish-subscribe**, which connects a set of publishers to a set of subscribers. This is a data distribution pattern.
+* **Pub-sub**, which connects a set of publishers to a set of subscribers. This is a data distribution pattern.
 
 * **Pipeline**, which connects nodes in a fan-out / fan-in pattern that can have multiple steps, and loops. This is a parallel task distribution and collection pattern.
 
@@ -202,7 +202,7 @@ These four core patterns are cooked-in to 0MQ. They are part of the 0MQ API, imp
 
 On top, we add //high-level patterns//. We build these high-level patterns on top of 0MQ and implement them in whatever language we're using for our application. They are not part of the core library, do not come with the 0MQ package, and exist in their own space, as part of the 0MQ community. For example the Majordomo pattern, which we explore in [#reliable-request-reply], sits in the GitHub Majordomo project in the ZeroMQ organization.
 
-One of the things we aim to provide you with this guide are a set of such high-level patterns, both small (how to handle messages sanely) to large (how to make a reliable publish-subscribe architecture).
+One of the things we aim to provide you with this guide are a set of such high-level patterns, both small (how to handle messages sanely) to large (how to make a reliable pub-sub architecture).
 
 +++ Working with Messages
 
@@ -388,7 +388,7 @@ There are quite a few answers to this but the very simplest answer is to add an 
 
 You might wonder, if all networks eventually get large enough to need intermediaries, why don't we simply have a message broker in place for all applications? For beginners, it's a fair compromise. Just always use a star topology, forget about performance, and things will usually work. However message brokers are greedy things; in their role as central intermediaries, they become too complex, too stateful, and eventually a problem.
 
-It's better to think of intermediaries as simple stateless message switches. The best analogy is an HTTP proxy; it's there but doesn't have any special role. Adding a pub-sub proxy solves the dynamic discovery problem in our example. We set the proxy in the "middle" of the network[figure]. The proxy opens an XSUB socket, an XPUB socket, and binds each to well-known IP addresses and ports. Then all other processes connect to the proxy, instead of to each other. It becomes trivial to add more subscribers or publishers.
+It's better to think of intermediaries as simple stateless message switches. A good analogy is an HTTP proxy; it's there but doesn't have any special role. Adding a pub-sub proxy solves the dynamic discovery problem in our example. We set the proxy in the "middle" of the network[figure]. The proxy opens an XSUB socket, an XPUB socket, and binds each to well-known IP addresses and ports. Then all other processes connect to the proxy, instead of to each other. It becomes trivial to add more subscribers or publishers.
 
 [[code type="textdiagram" title="Pub-Sub Network with a Proxy"]]
 #------------#   #------------#   #------------#
@@ -420,9 +420,9 @@ It's better to think of intermediaries as simple stateless message switches. The
 #------------#   #------------#   #------------#
 [[/code]]
 
-We need XPUB and XSUB sockets because 0MQ does subscription forwarding: SUB sockets actually send subscriptions to PUB sockets as special messages. The proxy has to forward these as well, by reading them from the XPUB socket and writing them to the XSUB socket. This is the main use-case for XSUB and XPUB[figure].
+We need XPUB and XSUB sockets because 0MQ does subscription forwarding from subscribers to publishers. XSUB and XPUB are exactly like SUB and PUB except they expose subscriptions as special messages. The proxy has to forward these subscription messages from subscriber side to publisher side, by reading them from the XPUB socket and writing them to the XSUB socket. This is the main use-case for XSUB and XPUB[figure].
 
-[[code type="textdiagram" title="Extended Publish-Subscribe"]]
+[[code type="textdiagram" title="Extended Pub-Sub"]]
 #---------#   #---------#   #---------#
 |   PUB   |   |   PUB   |   |   PUB   |
 '----+----'   '----+----'   '----+----'
@@ -670,7 +670,7 @@ In C/C++, asserts can be removed entirely in optimized code, so don't make the m
 
 Let's see how to shut down a process cleanly. We'll take the parallel pipeline example from the previous section. If we've started a whole lot of workers in the background, we now want to kill them when the batch is finished. Let's do this by sending a kill message to the workers. The best place to do this is the sink, since it really knows when the batch is done.
 
-How do we connect the sink to the workers? The PUSH/PULL sockets are one-way only. The standard 0MQ answer is: create a new socket flow for each type of problem you need to solve. We'll use a publish-subscribe model to send kill messages to the workers[figure]:
+How do we connect the sink to the workers? The PUSH/PULL sockets are one-way only. We could switch to another socket type, or we could mix multiple socket flows. Let's try the latter: using a pub-sub model to send kill messages to the workers[figure]:
 
 * The sink creates a PUB socket on a new endpoint.
 * Workers bind their input socket to this endpoint.
@@ -802,7 +802,10 @@ sudo apt-get install valgrind
 * Finally, run valgrind thus:
 
 [[code]]
-valgrind --tool=memcheck --leak-check=full --suppressions=valgrind.supp someprog
+valgrind --tool=memcheck \
+         --leak-check=full \
+         --suppressions=valgrind.supp
+         someprog
 [[/code]]
 
 And after fixing any errors it reported, you should get the pleasant message:
@@ -1015,12 +1018,7 @@ Starting subscribers...
 Starting publisher...
 Received 1000000 updates
 Received 1000000 updates
-Received 1000000 updates
-Received 1000000 updates
-Received 1000000 updates
-Received 1000000 updates
-Received 1000000 updates
-Received 1000000 updates
+...
 Received 1000000 updates
 Received 1000000 updates
 [[/code]]
@@ -1061,7 +1059,7 @@ On writing, 0MQ's multi-part messages work nicely together with zero-copy. In tr
 
 In the pub-sub pattern we can split the key into a separate message frame that we call an "envelope". If you want to use pub-sub envelopes, make them yourself. It's optional, and in previous pub-sub examples we didn't do this. Using a pub-sub envelope is a little more work for simple cases but it's cleaner especially for real cases, where the key and the data are naturally separate things.
 
-Here is what a publish-subscribe message with an envelope looks like:
+Here is what a pub-sub message with an envelope looks like:
 
 [[code type="textdiagram" title="Pub-Sub Envelope with Separate Key"]]
           #--------#
@@ -1071,9 +1069,9 @@ Frame 2   | Data   |   Actual message body
           #--------#
 [[/code]]
 
-Recall that subscriptions do a prefix match. That is, "all messages starting with XYZ". The obvious question is: how to delimit keys from data so that the prefix match doesn't accidentally match data. The best answer is to use an envelope, since the match won't cross a frame boundary.
+Recall that subscriptions do a prefix match. That is, "all messages starting with XYZ". The obvious question is: how to delimit keys from data so that the prefix match doesn't accidentally match data. The best answer is to use an envelope, since the match won't cross a frame boundary. Here is a minimalist example of how pub-sub envelopes look in code. This publisher sends messages of two types, A and B.
 
-Here is a minimalist example of how pub-sub envelopes look in code. This publisher sends messages of two types, A and B. The envelope holds the message type:
+The envelope holds the message type:
 
 [[code type="example" title="Pub-Sub envelope publisher" name="psenvpub"]]
 [[/code]]
@@ -1089,13 +1087,10 @@ When you run the two programs, the subscriber should show you this:
 [B] We would like to see this
 [B] We would like to see this
 [B] We would like to see this
-[B] We would like to see this
 ...
 [[/code]]
 
-This examples shows that the subscription filter rejects or accepts the entire multi-part message (key plus data). You won't get part of a multi-part message, ever.
-
-If you subscribe to multiple publishers and you want to know their address so that you can send them data via another socket (and this is a typical use-case), create a three-part message:
+This examples shows that the subscription filter rejects or accepts the entire multi-part message (key plus data). You won't get part of a multi-part message, ever. If you subscribe to multiple publishers and you want to know their address so that you can send them data via another socket (and this is a typical use-case), create a three-part message:
 
 [[code type="textdiagram" title="Pub-Sub Envelope with Sender Address"]]
           #---------#
@@ -1115,17 +1110,13 @@ The problem is this: if you have process A sending messages to process B, which 
 
 What are the answers? One is to pass the problem upstream. A is getting the messages from somewhere else. So tell that process, "stop!" And so on. This is called "flow control". It sounds great, but what if you're sending out a Twitter feed? Do you tell the whole world to stop tweeting while B gets its act together?
 
-Flow control works in some cases but in others. The transport layer can't tell the application layer to "stop" any more than a subway system can tell a large business, "please keep your staff at work another half an hour, I'm too busy".
-
-The answer for messaging is to set limits on the size of buffers, and then when we reach those limits, take some sensible action. In some cases (not for a subway system, though), the answer is to throw away messages. In a others, the best strategy to wait.
+Flow control works in some cases but in others. The transport layer can't tell the application layer to "stop" any more than a subway system can tell a large business, "please keep your staff at work another half an hour, I'm too busy". The answer for messaging is to set limits on the size of buffers, and then when we reach those limits, take some sensible action. In some cases (not for a subway system, though), the answer is to throw away messages. In a others, the best strategy to wait.
 
 0MQ uses the concept of "high water mark" or HWM to define the capacity of its internal pipes. Each connection out of a socket or into a socket has its own pipe, and high-water mark for sending, and/or receiving, depending on the socket type. Some sockets (PUB, PUSH) only have send buffers. Some (SUB, PULL, REQ, REP) only have receive buffers. Some (DEALER, ROUTER, PAIR) have both send and receive buffers.
 
 In 0MQ/2.x the HWM was infinite by default. In 0MQ/3.x it's set to 1,000 by default, which is more sensible. If you're still using 0MQ/2.x you should always set a HWM on your sockets, be it 1,000 to match 0MQ/3.x or another figure that takes into account your message sizes.
 
-When your socket reaches its high-water mark, it will either block or drop data depending on the socket type. PUB and ROUTER sockets will drop data if they reach their high-water mark, while other socket types will block.
-
-Over the {{inproc}} transport, the sender and receiver share the same buffers, so the real HWM is the sum of the HWM set by both sides.
+When your socket reaches its high-water mark, it will either block or drop data depending on the socket type. PUB and ROUTER sockets will drop data if they reach their high-water mark, while other socket types will block. Over the {{inproc}} transport, the sender and receiver share the same buffers, so the real HWM is the sum of the HWM set by both sides.
 
 Lastly, the high-water marks are counted in //message parts//, not whole messages. If you are sending two-part messages, the default HWM is 500. When you use the ROUTER socket type (which we'll see in [#advanced-request-reply]), every message is at least two parts.
 
@@ -1198,6 +1189,20 @@ As you build applications with 0MQ you will come across this problem more than o
                           '----------------'     '------------'
 [[/code]]
 
-If you're using 0MQ in a context where failures are expensive, then you want to plan properly. First, build prototypes that let you learn and test the different aspects of your design. Stress them until they break, so that you know exactly how strong your designs are. Second, invest in testing. This means building test frameworks, ensuring you have access to realistic setups with sufficient computer power, and getting time or help to actually test seriously. Ideally, one team writes the code, a second team tries to break it. Lastly, do get your organization to [http://www.imatix.com/contact contact iMatix] to discuss how we can help to make sure things work properly, and can be fixed rapidly if they break.
+Here's a summary of what the graphic says:
 
-In short: if you have not proven an architecture works in realistic conditions, it will most likely break at the worst possible moment.
+* On SUB sockets, set a subscription using {{zmq_setsockopt[3]}} with {{ZMQ_SUBSCRIBE}}, or you won't get messages. Since you subscribe to messages by prefix, if you subscribe to "" (an empty subscription), you will get everything.
+
+* If you start the SUB socket (i.e. establish a connection to a PUB socket) //after// the PUB socket has started sending out data, you will lose whatever it published before the connection was made. If this is a problem, set-up your architecture so the SUB socket starts first, then the PUB socket starts publishing.
+
+* Even if you synchronize a SUB and PUB socket, you may still lose messages. It's due to the fact that internal queues aren't created until a connection is actually created. If you can switch the bind/connect direction so the SUB socket binds, and the PUB socket connects, you may find it works more as you'd expect.
+
+* If you're using REP and REQ sockets, and you're not sticking to the synchronous send/recv/send/recv order, 0MQ will report errors, which you might ignore. Then, it would look like you're losing messages. If you use REQ or REP, stick to the send/recv order, and always, in real code, check for errors on 0MQ calls.
+
+* If you're using PUSH sockets, you'll find that the first PULL socket to connect will grab an unfair share of messages. The accurate rotation of messages only happens when all PULL sockets are successfully connected, which can take some milliseconds. As an alternative to PUSH/PULL, for lower data rates, consider using ROUTER/DEALER and the load-balancer pattern.
+
+* If you're sharing sockets across threads, don't. It will lead to random weirdness, and crashes.
+
+* If you're using {{inproc}}, make sure both sockets are in the same context. Otherwise the connecting side will in fact fail. Also, bind first, then connect. {{inproc}} is not a disconnected transport like {{tcp}}.
+
+* Lastly, if you're using ROUTER sockets, it's remarkably easy to lose messages by accident, by sending malformed identity frames (or forgetting to send an identity frame). In general setting the {{ZMQ_ROUTER_MANDATORY}} option on ROUTER sockets is a good idea, but do also check the return code on every send call.

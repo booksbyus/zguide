@@ -42,7 +42,7 @@ Whether we're connecting a roomful of mobile devices over WiFi, or a cluster of 
 
 * //Point-to-point messaging// - how do we send a message from one node to another? Do we send this to the node's network address, or do we use some indirect addressing via a centralized message broker?
 
-* //Group messaging// - how do we send a message from one node to a group of others? Do we work via centralized message broker, or do we use a publish-subscribe model like 0MQ?
+* //Group messaging// - how do we send a message from one node to a group of others? Do we work via centralized message broker, or do we use a pub-sub model like 0MQ?
 
 * //Testing and simulation// - how do we simulate large numbers of nodes so we can test performance properly? Do we have to buy two dozen Android tablets, or can we use pure software simulation?
 
@@ -527,9 +527,9 @@ There's one remaining scenario we didn't address in the code at this stage. It's
 
 ++ Group Messaging
 
-Group messaging is a common and very useful pattern. The concept is simple: instead of talking to a single node, you talk to a "group" of nodes. The group is just a name, a string that you agree on in the application. It's precisely like using the publish-subscribe prefixes in PUB and SUB sockets. In fact the only reason I say "group messaging" and not "pub-sub" is to prevent confusion, since we're not going to use PUB/SUB sockets for this.
+Group messaging is a common and very useful pattern. The concept is simple: instead of talking to a single node, you talk to a "group" of nodes. The group is just a name, a string that you agree on in the application. It's precisely like using the pub-sub prefixes in PUB and SUB sockets. In fact the only reason I say "group messaging" and not "pub-sub" is to prevent confusion, since we're not going to use PUB/SUB sockets for this.
 
-PUB/SUB would almost work. But we've just done such a lot of work to solve the late joiner problem. Applications are inevitably going to wait for peers to arrive before sending messages to groups, so we have to build on the Harmony pattern rather than start again beside it.
+PUB/SUB sockets would almost work. But we've just done such a lot of work to solve the late joiner problem. Applications are inevitably going to wait for peers to arrive before sending messages to groups, so we have to build on the Harmony pattern rather than start again beside it.
 
 Let's look at the operations we want to do on groups:
 
@@ -554,7 +554,7 @@ I'll use the UDP beacon for this. What we want is a rolling counter that simply 
 
 Time to choose verbs for the group messaging. We need a command that means "talk to one peer" and one that means "talk to many peers". After some attempts, my best choices are "WHISPER" and "SHOUT", and this is what the code uses. The SHOUT command needs to tell the user the group name, as well as the sender peer.
 
-Since groups are like publish-subscribe, you might be tempted to use this to broadcast the JOIN and LEAVE commands as well, perhaps by creating a "global" group that all nodes join. My advice is to keep groups purely as user-space concepts for two reasons. First, how do you join the global group if you need the global group to send out a JOIN command? Second, it creates special cases ('reserved names') which are messy.
+Since groups are like pub-sub, you might be tempted to use this to broadcast the JOIN and LEAVE commands as well, perhaps by creating a "global" group that all nodes join. My advice is to keep groups purely as user-space concepts for two reasons. First, how do you join the global group if you need the global group to send out a JOIN command? Second, it creates special cases ('reserved names') which are messy.
 
 It's simpler just to send JOINs and LEAVEs explicitly to all connected peers, period.
 
@@ -716,7 +716,7 @@ destroy interface
 
 Yes, we broke the code. Several times, in fact. This was satisfying. I'll work through the different things we found.
 
-Getting nodes to agree on consistent group status was the most difficult. Every node needs to track the group membership of the whole network, as I already explained in the section "Group Messaging". Group messaging is a publish-subscribe pattern. JOINs and LEAVEs are analogous to 'subscribe' and 'unsubscribe' messages. It's essential none of these ever get lost, or we'll find nodes dropping randomly off groups.
+Getting nodes to agree on consistent group status was the most difficult. Every node needs to track the group membership of the whole network, as I already explained in the section "Group Messaging". Group messaging is a pub-sub pattern. JOINs and LEAVEs are analogous to 'subscribe' and 'unsubscribe' messages. It's essential none of these ever get lost, or we'll find nodes dropping randomly off groups.
 
 So each node counts the total number of JOINs and LEAVEs it's ever done, and broadcasts this status (as 1-byte rolling counter) in its UDP beacon. Other nodes pick up the status, compare it to their own calculations, and if there's a difference, the code asserts.
 
@@ -879,7 +879,7 @@ Arguably, just dumping log data to disk is one solution, and it's what most mobi
 
 We want to send log data somewhere central, either immediately, or opportunistically (i.e. store and forward). For now, let's focus on immediate logging. My first idea, when it comes to sending data, is to use Zyre for this. Just send log data to a group called "LOG", and hope someone collects it.
 
-But using Zyre to log Zyre itself is a Catch-22. Who logs the logger? What if we want a verbose log of every message sent? Do we include logging messages in that, or not? It quickly gets messy. We want a logging protocol that's independent of Zyre's main ZRE protocol. The simplest approach is a PUB-SUB protocol, where all nodes publish log data on a PUB socket, and a collector picks that up via a SUB socket[figure].
+But using Zyre to log Zyre itself is a Catch-22. Who logs the logger? What if we want a verbose log of every message sent? Do we include logging messages in that, or not? It quickly gets messy. We want a logging protocol that's independent of Zyre's main ZRE protocol. The simplest approach is a pub-sub protocol, where all nodes publish log data on a PUB socket, and a collector picks that up via a SUB socket[figure].
 
 [[code type="textdiagram" title="Distributed Log Collection"]]
 #--------#      #--------#      #--------#
@@ -982,7 +982,7 @@ And to test, I switched the logger back to using an ephemeral port. The interfac
 
 Now that we have the logging framework working properly, let's look at the protocol itself. Sending strings around the network is simple but when it comes to WiFi we really cannot afford to waste bandwidth. We have the tools to work with efficient binary protocols, so let's design one for logging.
 
-This is going to be a PUB-SUB protocol and in 0MQ/3.x we do publisher-side filtering. This means we can do multi-level logging (errors, warnings, information), if we put the logging level at the start of the message. So, our message starts with a protocol signature (two bytes), a logging level (one byte), and an event type (one byte).
+This is going to be a pub-sub protocol and in 0MQ/3.x we do publisher-side filtering. This means we can do multi-level logging (errors, warnings, information), if we put the logging level at the start of the message. So, our message starts with a protocol signature (two bytes), a logging level (one byte), and an event type (one byte).
 
 In the first version we send UUID strings to identify each node. As text, these are 32 characters each. We can send binary UUIDs but it's still verbose and wasteful. In the log files we don't care about the node identifiers. All we need is some way to correlate events. So what's the shortest identifier we can use that's going to be unique enough for logging? I say unique 'enough' because while we really want zero chance of duplicate UUIDs in the live code, log files are not so critical.
 
