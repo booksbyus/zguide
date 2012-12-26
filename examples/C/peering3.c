@@ -1,9 +1,7 @@
-//
 //  Broker peering simulation (part 3)
 //  Prototypes the full flow of status and tasks
-//
-#include "czmq.h"
 
+#include "czmq.h"
 #define NBR_CLIENTS 10
 #define NBR_WORKERS 5
 #define WORKER_READY   "\001"      //  Signals worker is ready

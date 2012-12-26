@@ -1,6 +1,4 @@
-//
 //  Clone server Model Six
-//
 
 //  Lets us build this source without creating a library
 #include "bstar.c"

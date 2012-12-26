@@ -1,7 +1,5 @@
-//
 //  Majordomo Protocol client example
 //  Uses the mdcli API to hide all MDP aspects
-//
 
 //  Lets us build this source without creating a library
 #include "mdcliapi.c"

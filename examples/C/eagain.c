@@ -1,6 +1,5 @@
-//
 //  Shows how to provoke EAGAIN when reaching HWM
-//
+
 #include <czmq.h>
 
 int main (void) {

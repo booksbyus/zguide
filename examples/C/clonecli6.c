@@ -1,10 +1,7 @@
-//
 //  Clone client Model Six
-//
 
 //  Lets us build this source without creating a library
 #include "clone.c"
-
 #define SUBTREE "/client/"
 
 int main (void)

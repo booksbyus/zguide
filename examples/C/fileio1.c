@@ -69,7 +69,8 @@ server_thread (void *args, zctx_t *ctx, void *pipe)
             byte *data = malloc (CHUNK_SIZE);
             assert (data);
             size_t size = fread (data, 1, CHUNK_SIZE, file);
-            zframe_t *chunk = zframe_new_zero_copy (data, size, free_chunk, NULL);
+            zframe_t *chunk = zframe_new_zero_copy (
+                data, size, free_chunk, NULL);
             zframe_send (&identity, router, ZFRAME_REUSE + ZFRAME_MORE);
             zframe_send (&chunk, router, 0);
             if (size == 0)

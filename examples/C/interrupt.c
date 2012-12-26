@@ -1,6 +1,5 @@
-//
 //  Shows how to handle Ctrl-C
-//
+
 #include <zmq.h>
 #include <stdio.h>
 #include <signal.h>

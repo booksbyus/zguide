@@ -1,7 +1,6 @@
-//
 //  Simple message queuing broker
 //  Same as request-reply broker but using QUEUE device
-//
+
 #include "zhelpers.h"
 
 int main (void) 

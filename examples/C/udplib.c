@@ -3,7 +3,6 @@
 //  Include directly into your application source code.
 
 #include <czmq.h>
-
 typedef struct _udp_t udp_t;
 
 //  Constructor

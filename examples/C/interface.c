@@ -1,4 +1,4 @@
-//  Interface class for Chapter 8
+//  Interface class for Chapter on Distributed Computing
 //  This implements an "interface" to our network of nodes
 
 #include <czmq.h>

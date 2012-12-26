@@ -1,6 +1,5 @@
-//
 //  Suicidal Snail
-//
+
 #include "czmq.h"
 
 //  This is our subscriber. It connects to the publisher and subscribes

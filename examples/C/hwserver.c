@@ -1,8 +1,7 @@
-//
 //  Hello World server
 //  Binds REP socket to tcp://*:5555
 //  Expects "Hello" from client, replies with "World"
-//
+
 #include <zmq.h>
 #include <stdio.h>
 #include <unistd.h>

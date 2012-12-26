@@ -1,4 +1,3 @@
-//
 //  Asynchronous client-to-server (DEALER to ROUTER)
 //
 //  While this example runs in a single process, that is just to make

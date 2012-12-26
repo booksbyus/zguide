@@ -1,6 +1,4 @@
-//
 //  Binary Star server, using bstar reactor
-//
 
 //  Lets us build this source without creating a library
 #include "bstar.c"

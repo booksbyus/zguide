@@ -1,6 +1,5 @@
-//
 //  Pubsub envelope subscriber
-//
+
 #include "zhelpers.h"
 
 int main (void)

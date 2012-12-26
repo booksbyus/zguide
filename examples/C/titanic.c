@@ -1,6 +1,4 @@
-//
 //  Titanic service
-//
 //  Implements server side of http://rfc.zeromq.org/spec:9
 
 //  Lets us build this source without creating a library

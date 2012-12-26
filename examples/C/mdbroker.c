@@ -1,8 +1,7 @@
-//
 //  Majordomo Protocol broker
 //  A minimal C implementation of the Majordomo Protocol as defined in
 //  http://rfc.zeromq.org/spec:7 and http://rfc.zeromq.org/spec:8.
-//
+
 #include "czmq.h"
 #include "mdp.h"
 

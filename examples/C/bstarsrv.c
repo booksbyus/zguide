@@ -1,4 +1,3 @@
-//
 //  Binary Star server proof-of-concept implementation. This server does no
 //  real work; it just demonstrates the Binary Star failover model.
 

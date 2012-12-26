@@ -538,7 +538,7 @@ Let's think for a second about what is happening here. The weather server has a 
 
 These changes don't impact existing application code directly:
 
-* Pub-sub filtering is now done at the publisher side instead of subscriber side. This improves performance significantly in many pub-sub use cases.
+* Pub-sub filtering is now done at the publisher side instead of subscriber side. This improves performance significantly in many pub-sub use cases. You can mix 3.2 and 2.1/2.2 publishers and subscribers safely.
 
 * 0MQ/3.2 has many new API methods ({{zmq_disconnect[3]}}, {{zmq_unbind[3]}}, {{zmq_monitor[3]}}, {{zmq_ctx_set[3]}}, etc.)
 
@@ -550,15 +550,15 @@ These are the main areas of impact on applications and language bindings:
 
 * These two methods return positive values on success, and -1 on error. In 2.x they always returned zero on success. Symptom: apparent errors when things actually work fine. Solution: test strictly for return code = -1, not non-zero.
 
-* {{zmq_poll[3]}} now waits for milliseconds, not microseconds. Symptom: application stops responding (in fact responds 1000 times slower). Solution: use the ZMQ_POLL_MSEC macro defined below, in all zmq_poll calls.
+* {{zmq_poll[3]}} now waits for milliseconds, not microseconds. Symptom: application stops responding (in fact responds 1000 times slower). Solution: use the {{ZMQ_POLL_MSEC}} macro defined below, in all {{zmq_poll}} calls.
 
-* {{ZMQ_NOBLOCK}} is now called {{ZMQ_DONTWAIT}}. Symptom: compile failures on the ZMQ_NOBLOCK macro.
+* {{ZMQ_NOBLOCK}} is now called {{ZMQ_DONTWAIT}}. Symptom: compile failures on the {{ZMQ_NOBLOCK}} macro.
 
-* The {{ZMQ_HWM}} socket option is now broken into {{ZMQ_SNDHWM}} and {{ZMQ_RCVHWM}}.  Symptom: compile failures on the ZMQ_HWM macro.
+* The {{ZMQ_HWM}} socket option is now broken into {{ZMQ_SNDHWM}} and {{ZMQ_RCVHWM}}.  Symptom: compile failures on the {{ZMQ_HWM}} macro.
 
-* Most but not all {{zmq_getsockopt[3]}} options are now integer values. Symptom: runtime error returns on zmq_setsockopt and zmq_getsockopt.
+* Most but not all {{zmq_getsockopt[3]}} options are now integer values. Symptom: runtime error returns on {{zmq_setsockopt}} and {{zmq_getsockopt}}.
 
-* The {{ZMQ_SWAP}} option has been removed. Symptom: compile failures on ZMQ_SWAP. Solution: redesign any code that uses this functionality.
+* The {{ZMQ_SWAP}} option has been removed. Symptom: compile failures on {{ZMQ_SWAP}}. Solution: redesign any code that uses this functionality.
 
 +++ Suggested Shim Macros
 
@@ -573,12 +573,10 @@ For applications that want to run on both 2.x and 3.2, such as language bindings
 #   define zmq_msg_recv(msg,sock,opt) zmq_recv (sock, msg, opt)
 #   define zmq_ctx_destroy(context) zmq_term(context)
 #   define ZMQ_POLL_MSEC    1000        //  zmq_poll is usec
-#   define more_t int64_t
 #   define ZMQ_SNDHWM ZMQ_HWM
 #   define ZMQ_RCVHWM ZMQ_HWM
 #elif ZMQ_VERSION_MAJOR == 3
 #   define ZMQ_POLL_MSEC    1           //  zmq_poll is msec
-#   define more_t int
 #endif
 [[/code]]
 
@@ -588,7 +586,7 @@ Traditional network programming is built on the general assumption that one sock
 
 In the 0MQ universe, sockets are doorways to fast little background communications engines that manage a whole set of connections automagically for you. You can't see, work with, open, close, or attach state to these connections. Whether you use blocking send or receive, or poll, all you can talk to is the socket, not the connections it manages for you. The connections are private and invisible, and this is the key to 0MQ's scalability.
 
-Because your code, talking to a socket, can then handle any number of connections across whatever network protocols are around, without change. A messaging pattern sitting in 0MQ can scale more cheaply than a messaging pattern sitting in your application code.
+Because your code, talking to a socket, can then handle any number of connections across whatever network protocols are around, without change. A messaging pattern sitting in 0MQ scales more cheaply than a messaging pattern sitting in your application code.
 
 So the general assumption no longer applies. As you read the code examples, your brain will try to map them to what you know. You will read "socket" and think "ah, that represents a connection to another node". That is wrong. You will read "thread" and your brain will again think, "ah, a thread represents a connection to another node", and again your brain will be wrong.
 

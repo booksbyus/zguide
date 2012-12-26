@@ -1,10 +1,7 @@
-//
 //  Synchronized publisher
-//
-#include "zhelpers.h"
 
-//  We wait for 10 subscribers
-#define SUBSCRIBERS_EXPECTED  10
+#include "zhelpers.h"
+#define SUBSCRIBERS_EXPECTED  10  //  We wait for 10 subscribers 
 
 int main (void)
 {

@@ -1,4 +1,3 @@
-//
 //  Load-balancing broker
 //  Demonstrates use of the CZMQ API and reactor style
 //
@@ -6,7 +5,6 @@
 //  .skip
 
 #include "czmq.h"
-
 #define NBR_CLIENTS 10
 #define NBR_WORKERS 3
 #define WORKER_READY   "\001"      //  Signals worker is ready

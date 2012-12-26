@@ -1,6 +1,5 @@
-//
 //  Test kvsimple class
-//
+
 #include "kvsimple.c"
 
 int main (int argc, char *argv [])

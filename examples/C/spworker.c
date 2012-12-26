@@ -1,8 +1,7 @@
-//
 //  Simple Pirate worker
 //  Connects REQ socket to tcp://*:5556
 //  Implements worker part of load-balancing
-//
+
 #include "czmq.h"
 #define WORKER_READY   "\001"      //  Signals worker is ready
 

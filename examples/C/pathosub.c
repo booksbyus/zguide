@@ -1,7 +1,6 @@
-//
 //  Pathological subscriber
 //  Subscribes to one random topic and prints received messages
-//
+
 #include "czmq.h"
 
 int main (int argc, char *argv [])

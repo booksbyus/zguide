@@ -1,10 +1,8 @@
-//
 //  Simple Pirate broker
 //  This is identical to load-balancing pattern, with no reliability
 //  mechanisms. It depends on the client for recovery. Runs forever.
-//
-#include "czmq.h"
 
+#include "czmq.h"
 #define WORKER_READY   "\001"      //  Signals worker is ready
 
 int main (void)

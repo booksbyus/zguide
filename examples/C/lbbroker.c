@@ -1,10 +1,8 @@
-//
 //  Load-balancing broker
 //  Clients and workers are shown here in-process
-//
+
 #include "zhelpers.h"
 #include <pthread.h>
-
 #define NBR_CLIENTS 10
 #define NBR_WORKERS 3
 

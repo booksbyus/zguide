@@ -1,10 +1,9 @@
-//
 //  Lazy Pirate server
 //  Binds REQ socket to tcp://*:5555
 //  Like hwserver except:
 //   - echoes request as-is
 //   - randomly runs slowly, or exits to simulate a crash.
-//
+
 #include "zhelpers.h"
 
 int main (void)

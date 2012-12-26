@@ -1,7 +1,6 @@
-//
 //  UDP ping command
 //  Model 3, uses abstract network interface
-//
+
 #include <czmq.h>
 #include "interface.c"
 

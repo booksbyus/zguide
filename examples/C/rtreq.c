@@ -1,9 +1,7 @@
-//
 //  ROUTER-to-REQ example
-//
+
 #include "zhelpers.h"
 #include <pthread.h>
-
 #define NBR_WORKERS 10
 
 static void *

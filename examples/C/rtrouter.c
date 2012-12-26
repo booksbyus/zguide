@@ -1,6 +1,5 @@
-//
 //  Cross-connected ROUTER sockets addressing each other
-//
+
 #include "zhelpers.h"
 
 int main (void) 

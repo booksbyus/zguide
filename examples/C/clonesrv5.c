@@ -1,4 +1,3 @@
-//
 //  Clone server Model Five
 
 //  Lets us build this source without creating a library

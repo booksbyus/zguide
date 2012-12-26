@@ -79,11 +79,13 @@ while true:
 
 The ROUTER socket, unlike other sockets, tracks every connection it has, and tells the caller about these. The way it tells the caller is to stick the connection //identity// in front of each message received. An identity, sometimes called an //address//, is just a binary string with no meaning except "this is a unique handle to the connection". Then, when you send a message via a ROUTER socket, you first send an identity frame.
 
-The {{zmq_socket[3]}} man page describes it thus: //when receiving messages a ZMQ_ROUTER socket shall prepend a message part containing the identity of the originating peer to the message before passing it to the application. Messages received are fair-queued from among all connected peers. When sending messages a ZMQ_ROUTER socket shall remove the first part of the message and use it to determine the identity of the peer the message shall be routed to.//
+The {{zmq_socket[3]}} man page describes it thus:
 
-As a historical note, 0MQ/2.2 and earlier use UUIDs as identities, and 0MQ/3.0 and later use short integers. There's some impact on network performance but only when you use multiple proxy hops, which is rare.
+> When receiving messages a ZMQ_ROUTER socket shall prepend a message part containing the identity of the originating peer to the message before passing it to the application. Messages received are fair-queued from among all connected peers. When sending messages a ZMQ_ROUTER socket shall remove the first part of the message and use it to determine the identity of the peer the message shall be routed to.
 
-It's a difficult concept to understand but essential if you want to become a 0MQ expert. The ROUTER socket //invents// an random identity for each connection it works with. If there are three REQ sockets connected to a ROUTER socket, it will invent three random identities, one for each REQ socket.
+As a historical note, 0MQ/2.2 and earlier use UUIDs as identities, and 0MQ/3.0 and later use short integers. There's some impact on network performance but only when you use multiple proxy hops, which is rare. Mostly the change was to simplify building libzmq by removing the dependency on a UUID library.
+
+Identies are a difficult concept to understand but essential if you want to become a 0MQ expert. The ROUTER socket //invents// an random identity for each connection it works with. If there are three REQ sockets connected to a ROUTER socket, it will invent three random identities, one for each REQ socket.
 
 So if we continue our worked example, let's say the REQ socket has a 3-byte identity {{ABC"}}. Internally, this means the ROUTER socket keeps a hash table where it can search for {{ABC}} and find the TCP connection for the REQ socket.
 

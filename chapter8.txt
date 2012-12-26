@@ -449,7 +449,8 @@ To validate a frame we check its size and header. If those are OK, we assume the
 [[code type="fragment" name="zyre-beacon-recv"]]
 //  Get beacon frame from network
 beacon_t beacon;
-ssize_t size = zre_udp_recv (self->udp, (byte *) &beacon, sizeof (beacon_t));
+ssize_t size = zre_udp_recv (self->udp,
+    (byte *) &beacon, sizeof (beacon_t));
 
 //  Basic validation on the frame
 if (size != sizeof (beacon_t)
@@ -675,11 +676,13 @@ int main (int argc, char *argv [])
             zstr_send (pipes [index], "STOP");
             zsocket_destroy (ctx, pipes [index]);
             pipes [index] = NULL;
-            zclock_log ("I: Stopped interface (%d running)", --nbr_interfaces);
+            zclock_log ("I: Stopped interface (%d running)",
+                --nbr_interfaces);
         }
         else {
             pipes [index] = zthread_fork (ctx, interface_task, NULL);
-            zclock_log ("I: Started interface (%d running)", ++nbr_interfaces);
+            zclock_log ("I: Started interface (%d running)",
+                ++nbr_interfaces);
         }
         //  Sleep ~750 msecs randomly so we smooth out activity
         zclock_sleep (randof (500) + 500);
@@ -1095,11 +1098,12 @@ In theory the application can publish a file just by creating a symbolic link in
 [[code type="fragment" name="publish-file"]]
 //  Publish file into virtual space
 void
-zre_interface_publish (zre_interface_t *self, char *pathname, char *virtual)
+zre_interface_publish (zre_interface_t *self,
+                       char *filename, char *external)
 {
     zstr_sendm (self->pipe, "PUBLISH");
-    zstr_sendm (self->pipe, pathname);
-    zstr_send  (self->pipe, virtual);
+    zstr_sendm (self->pipe, filename);  //  Real file name
+    zstr_send  (self->pipe, external);  //  Location in virtual space
 }
 [[/code]]
 

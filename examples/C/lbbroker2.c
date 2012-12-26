@@ -1,7 +1,6 @@
-//
 //  Load-balancing broker
 //  Demonstrates use of the CZMQ API
-//
+
 #include "czmq.h"
 
 #define NBR_CLIENTS 10

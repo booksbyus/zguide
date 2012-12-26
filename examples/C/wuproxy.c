@@ -1,6 +1,5 @@
-//
 //  Weather proxy device
-//
+
 #include "zhelpers.h"
 
 int main (void)

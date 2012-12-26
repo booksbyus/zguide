@@ -1,7 +1,6 @@
-//
 //  Reading from multiple sockets
 //  This version uses a simple recv loop
-//
+
 #include "zhelpers.h"
 
 int main (void) 

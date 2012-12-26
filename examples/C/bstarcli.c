@@ -1,9 +1,7 @@
-//
 //  Binary Star client proof-of-concept implementation. This client does no
 //  real work; it just demonstrates the Binary Star failover model.
 
 #include "czmq.h"
-
 #define REQUEST_TIMEOUT     1000    //  msecs
 #define SETTLE_DELAY        2000    //  Before failing over
 

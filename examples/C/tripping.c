@@ -1,10 +1,8 @@
-//
 //  Round-trip demonstrator
-//
 //  While this example runs in a single process, that is just to make
 //  it easier to start and stop the example. The client task signals to
 //  main when it's ready.
-//
+
 #include "czmq.h"
 
 static void

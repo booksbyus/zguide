@@ -1,9 +1,7 @@
-//
 //  Broker peering simulation (part 2)
 //  Prototypes the request-reply flow
-//
-#include "czmq.h"
 
+#include "czmq.h"
 #define NBR_CLIENTS 10
 #define NBR_WORKERS 3
 #define WORKER_READY   "\001"      //  Signals worker is ready

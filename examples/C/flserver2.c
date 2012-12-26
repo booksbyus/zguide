@@ -1,7 +1,6 @@
-//
 //  Freelance server - Model 2
 //  Does some work, replies OK, with message sequencing
-//
+
 #include "czmq.h"
 
 int main (int argc, char *argv [])

@@ -1,6 +1,4 @@
-//
 //  Clone client Model Two
-//
 
 //  Lets us build this source without creating a library
 #include "kvsimple.c"

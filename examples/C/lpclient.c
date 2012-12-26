@@ -1,10 +1,8 @@
-//
 //  Lazy Pirate client
 //  Use zmq_poll to do a safe request-reply
 //  To run, start lpserver and then randomly kill/restart it
-//
-#include "czmq.h"
 
+#include "czmq.h"
 #define REQUEST_TIMEOUT     2500    //  msecs, (> 1000!)
 #define REQUEST_RETRIES     3       //  Before we abandon
 #define SERVER_ENDPOINT     "tcp://localhost:5555"

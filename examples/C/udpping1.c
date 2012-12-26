@@ -1,7 +1,6 @@
-//
 //  UDP ping command
 //  Model 1, does UDP work inline
-//
+
 #include <czmq.h>
 #define PING_PORT_NUMBER 9999
 #define PING_MSG_SIZE    1
@@ -59,7 +58,8 @@ int main (void)
         if (pollitems [0].revents & ZMQ_POLLIN) {
             struct sockaddr_in si_that;
             socklen_t si_len;
-            ssize_t size = recvfrom (fd, buffer, PING_MSG_SIZE, 0, &si_that, &si_len);
+            ssize_t size = recvfrom (fd, buffer, PING_MSG_SIZE, 0,
+                                     &si_that, &si_len);
             if (size == -1)
                 derp ("recvfrom");
             printf ("Found peer %s:%d\n",
@@ -71,7 +71,8 @@ int main (void)
             buffer [0] = '!';
             struct sockaddr_in si_that = si_this;
             inet_aton ("255.255.255.255", &si_that.sin_addr);
-            if (sendto (fd, buffer, PING_MSG_SIZE, 0, &si_that, sizeof (struct sockaddr_in)) == -1)
+            if (sendto (fd, buffer, PING_MSG_SIZE, 0,
+                        &si_that, sizeof (struct sockaddr_in)) == -1)
                 derp ("sendto");
             ping_at = zclock_time () + PING_INTERVAL;
         }

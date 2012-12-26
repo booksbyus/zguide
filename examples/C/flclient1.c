@@ -1,9 +1,7 @@
-//
 //  Freelance client - Model 1
 //  Uses REQ socket to query one or more services
-//
-#include "czmq.h"
 
+#include "czmq.h"
 #define REQUEST_TIMEOUT     1000
 #define MAX_RETRIES         3       //  Before we abandon
 

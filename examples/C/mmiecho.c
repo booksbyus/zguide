@@ -1,6 +1,4 @@
-//
 //  MMI echo query example
-//
 
 //  Lets us build this source without creating a library
 #include "mdcliapi.c"

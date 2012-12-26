@@ -1,10 +1,7 @@
-//
 //  Clone client Model Five
-//
 
 //  Lets us build this source without creating a library
 #include "kvmsg.c"
-
 #define SUBTREE "/client/"
 
 int main (void)

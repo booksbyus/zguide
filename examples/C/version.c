@@ -1,6 +1,5 @@
-//
 //  Report 0MQ version
-//
+
 #include <zmq.h>
 
 int main (void)

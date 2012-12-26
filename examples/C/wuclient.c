@@ -1,8 +1,7 @@
-//
 //  Weather update client
 //  Connects SUB socket to tcp://localhost:5556
 //  Collects weather updates and finds avg temp in zipcode
-//
+
 #include "zhelpers.h"
 
 int main (int argc, char *argv [])

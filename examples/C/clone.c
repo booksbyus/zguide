@@ -1,7 +1,6 @@
 //  clone class - Clone client API stack (multithreaded)
 
 #include "clone.h"
-
 //  If no server replies within this time, abandon request
 #define GLOBAL_TIMEOUT  4000    //  msecs
 

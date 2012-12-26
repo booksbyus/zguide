@@ -1,7 +1,6 @@
-//
 //  Last value cache
 //  Uses XPUB subscription messages to re-send data
-//
+
 #include "czmq.h"
 
 int main (void)

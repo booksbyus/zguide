@@ -1,7 +1,6 @@
-//
 //  Freelance client - Model 2
 //  Uses DEALER socket to blast one or more services
-//
+
 #include "czmq.h"
 
 //  We design our client API as a class, using the CZMQ style
