@@ -44,7 +44,6 @@ int main (void)
         }
         kvmsg_store (&kvmsg, kvmap);
     }
-
     int64_t alarm = zclock_time () + 1000;
     while (!zctx_interrupted) {
         zmq_pollitem_t items [] = { { subscriber, 0, ZMQ_POLLIN, 0 } };

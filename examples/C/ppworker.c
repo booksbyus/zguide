@@ -123,7 +123,6 @@ int main (void)
             worker = s_worker_socket (ctx);
             liveness = HEARTBEAT_LIVENESS;
         }
-
         //  Send heartbeat to queue if it's time
         if (zclock_time () > heartbeat_at) {
             heartbeat_at = zclock_time () + HEARTBEAT_INTERVAL;

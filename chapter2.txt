@@ -776,7 +776,7 @@ Any long-running application has to manage memory correctly, or eventually it'll
 sudo apt-get install valgrind
 [[/code]]
 
-* By default, 0MQ will cause valgrind to complain a lot. To remove these warnings, create a file called {{valgrind.supp}} that contains this:
+* By default, 0MQ will cause valgrind to complain a lot. To remove these warnings, create a file called {{vg.supp}} that contains this:
 
 [[code]]
 {
@@ -802,10 +802,7 @@ sudo apt-get install valgrind
 * Finally, run valgrind thus:
 
 [[code]]
-valgrind --tool=memcheck \
-         --leak-check=full \
-         --suppressions=valgrind.supp
-         someprog
+valgrind --tool=memcheck --leak-check=full --suppressions=vg.supp someprog
 [[/code]]
 
 And after fixing any errors it reported, you should get the pleasant message:

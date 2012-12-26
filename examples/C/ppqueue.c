@@ -156,12 +156,10 @@ int main (void)
             zmsg_push (msg, s_workers_next (workers));
             zmsg_send (&msg, backend);
         }
-
         //  .split handle heartbeating
         //  We handle heartbeating after any socket activity. First we send
         //  heartbeats to any idle workers if it's time. Then we purge any
         //  dead workers:
-        
         if (zclock_time () >= heartbeat_at) {
             worker_t *worker = (worker_t *) zlist_first (workers);
             while (worker) {
@@ -175,7 +173,6 @@ int main (void)
         }
         s_workers_purge (workers);
     }
-
     //  When we're done, clean up properly
     while (zlist_size (workers)) {
         worker_t *worker = (worker_t *) zlist_pop (workers);

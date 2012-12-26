@@ -291,7 +291,6 @@ interface_agent (void *args, zctx_t *ctx, void *pipe)
         { self->pipe, 0, ZMQ_POLLIN, 0 },
         { 0, udp_handle (self->udp), ZMQ_POLLIN, 0 }
     };
-    
     while (!zctx_interrupted) {
         long timeout = (long) (ping_at - zclock_time ());
         if (timeout < 0)

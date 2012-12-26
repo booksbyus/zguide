@@ -56,7 +56,6 @@ int main (int argc, char *argv [])
         zmsg_destroy (&reply);
         zframe_print (uuid, "I: request UUID ");
     }
-
     //  2. Wait until we get a reply
     while (!zctx_interrupted) {
         zclock_sleep (100);
