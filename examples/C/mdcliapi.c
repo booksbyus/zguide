@@ -15,8 +15,6 @@ struct _mdcli_t {
     int retries;                //  Request retries
 };
 
-
-//  ---------------------------------------------------------------------
 //  Connect or reconnect to broker
 
 void s_mdcli_connect_to_broker (mdcli_t *self)
@@ -29,11 +27,9 @@ void s_mdcli_connect_to_broker (mdcli_t *self)
         zclock_log ("I: connecting to broker at %s...", self->broker);
 }
 
-
 //  .split constructor and destructor
 //  Here we have the constructor and destructor for our mdcli class:
 
-//  ---------------------------------------------------------------------
 //  Constructor
 
 mdcli_t *
@@ -52,8 +48,6 @@ mdcli_new (char *broker, int verbose)
     return self;
 }
 
-
-//  ---------------------------------------------------------------------
 //  Destructor
 
 void
@@ -69,12 +63,10 @@ mdcli_destroy (mdcli_t **self_p)
     }
 }
 
-
 //  .split configure retry behavior
 //  These are the class methods. We can set the request timeout and number
 //  of retry attempts, before sending requests:
 
-//  ---------------------------------------------------------------------
 //  Set request timeout
 
 void
@@ -84,8 +76,6 @@ mdcli_set_timeout (mdcli_t *self, int timeout)
     self->timeout = timeout;
 }
 
-
-//  ---------------------------------------------------------------------
 //  Set request retries
 
 void
@@ -94,7 +84,6 @@ mdcli_set_retries (mdcli_t *self, int retries)
     assert (self);
     self->retries = retries;
 }
-
 
 //  .split send request and wait for reply
 //  Here is the send method. It sends a request to the broker and gets a

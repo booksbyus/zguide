@@ -18,7 +18,6 @@
 //  in a background thread. The front-end talks to the back-end over an
 //  inproc pipe socket:
 
-//  ---------------------------------------------------------------------
 //  Structure of our front-end class
 
 struct _flcliapi_t {
@@ -29,7 +28,6 @@ struct _flcliapi_t {
 //  This is the thread that handles our real flcliapi class
 static void flcliapi_agent (void *args, zctx_t *ctx, void *pipe);
 
-//  ---------------------------------------------------------------------
 //  Constructor
 
 flcliapi_t *
@@ -44,7 +42,6 @@ flcliapi_new (void)
     return self;
 }
 
-//  ---------------------------------------------------------------------
 //  Destructor
 
 void
@@ -107,7 +104,6 @@ flcliapi_request (flcliapi_t *self, zmsg_t **request_p)
 //  so we'll break it down into pieces. First, the agent manages a set of
 //  servers, using our familiar class approach:
 
-//  ---------------------------------------------------------------------
 //  Simple class for one server we talk to
 
 typedef struct {
@@ -169,7 +165,6 @@ server_tickless (const char *key, void *server, void *arg)
 //  We build the agent as a class that's capable of processing messages
 //  coming in from its various sockets:
 
-//  ---------------------------------------------------------------------
 //  Simple class for one background agent
 
 typedef struct {

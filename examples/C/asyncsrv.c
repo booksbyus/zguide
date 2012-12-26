@@ -6,7 +6,6 @@
 
 #include "czmq.h"
 
-//  ---------------------------------------------------------------------
 //  This is our client task
 //  It connects to the server, and then sends a request once per second
 //  It collects responses as they arrive, and it prints them out. We will

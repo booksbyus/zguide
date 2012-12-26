@@ -46,7 +46,6 @@ s_reply_filename (char *uuid) {
     return filename;
 }
 
-
 //  .split Titanic request service
 //  The "titanic.request" task waits for requests to this service. It writes 
 //  each request to disk and returns a UUID to the client. The client picks
@@ -299,4 +298,3 @@ s_service_success (char *uuid)
     free (service_name);
     return result;
 }
-

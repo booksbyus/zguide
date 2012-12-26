@@ -68,7 +68,6 @@ struct _flclient_t {
     uint sequence;      //  Number of requests ever sent
 };
 
-//  --------------------------------------------------------------------
 //  Constructor
 
 flclient_t *
@@ -83,7 +82,6 @@ flclient_new (void)
     return self;
 }
 
-//  --------------------------------------------------------------------
 //  Destructor
 
 void
@@ -98,7 +96,6 @@ flclient_destroy (flclient_t **self_p)
     }
 }
 
-//  --------------------------------------------------------------------
 //  Connect to new server endpoint
 
 void

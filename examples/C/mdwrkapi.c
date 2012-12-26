@@ -35,7 +35,6 @@ struct _mdwrk_t {
 //  We have two utility functions; to send a message to the broker and
 //  to (re-)connect to the broker:
 
-//  ---------------------------------------------------------------------
 //  Send message to broker
 //  If no msg is provided, creates one internally
 
@@ -61,7 +60,6 @@ s_mdwrk_send_to_broker (mdwrk_t *self, char *command, char *option,
 }
 
 
-//  ---------------------------------------------------------------------
 //  Connect or reconnect to broker
 
 void s_mdwrk_connect_to_broker (mdwrk_t *self)
@@ -85,7 +83,6 @@ void s_mdwrk_connect_to_broker (mdwrk_t *self)
 //  .split constructor and destructor
 //  Here we have the constructor and destructor for our mdwrk class:
 
-//  ---------------------------------------------------------------------
 //  Constructor
 
 mdwrk_t *
@@ -107,7 +104,6 @@ mdwrk_new (char *broker,char *service, int verbose)
 }
 
 
-//  ---------------------------------------------------------------------
 //  Destructor
 
 void
@@ -129,7 +125,6 @@ mdwrk_destroy (mdwrk_t **self_p)
 //  We provide two methods to configure the worker API. You can set the
 //  heartbeat interval and retries to match the expected network performance.
 
-//  ---------------------------------------------------------------------
 //  Set heartbeat delay
 
 void
@@ -139,7 +134,6 @@ mdwrk_set_heartbeat (mdwrk_t *self, int heartbeat)
 }
 
 
-//  ---------------------------------------------------------------------
 //  Set reconnect delay
 
 void
@@ -153,7 +147,6 @@ mdwrk_set_reconnect (mdwrk_t *self, int reconnect)
 //  any reply and then waits for a new request. If you have a better name
 //  for this, let me know:
 
-//  ---------------------------------------------------------------------
 //  Send reply, if any, to broker and wait for next request.
 
 zmsg_t *

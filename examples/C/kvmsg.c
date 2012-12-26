@@ -163,7 +163,6 @@ kvmsg_recv (void *socket)
 }
 
 
-//  ---------------------------------------------------------------------
 //  Send key-value message to socket; any empty frames are sent as such.
 
 void
@@ -218,7 +217,6 @@ kvmsg_dup (kvmsg_t *self)
 //  The key, sequence, body, and size methods are the same as in kvsimple.
 //  .skip
 
-//  ---------------------------------------------------------------------
 //  Return key from last read message, if any, else NULL
 
 char *
@@ -241,7 +239,6 @@ kvmsg_key (kvmsg_t *self)
 }
 
 
-//  ---------------------------------------------------------------------
 //  Set message key as provided
 
 void
@@ -257,7 +254,6 @@ kvmsg_set_key (kvmsg_t *self, char *key)
 }
 
 
-//  ---------------------------------------------------------------------
 //  Set message key using printf format
 
 void
@@ -274,7 +270,6 @@ kvmsg_fmt_key (kvmsg_t *self, char *format, ...)
 }
 
 
-//  ---------------------------------------------------------------------
 //  Return sequence nbr from last read message, if any
 
 int64_t
@@ -299,7 +294,6 @@ kvmsg_sequence (kvmsg_t *self)
 }
 
 
-//  ---------------------------------------------------------------------
 //  Set message sequence number
 
 void
@@ -324,7 +318,6 @@ kvmsg_set_sequence (kvmsg_t *self, int64_t sequence)
     self->present [FRAME_SEQ] = 1;
 }
 
-//  ---------------------------------------------------------------------
 //  Return body from last read message, if any, else NULL
 
 byte *
@@ -338,7 +331,6 @@ kvmsg_body (kvmsg_t *self)
 }
 
 
-//  ---------------------------------------------------------------------
 //  Set message body
 
 void
@@ -354,7 +346,6 @@ kvmsg_set_body (kvmsg_t *self, byte *body, size_t size)
 }
 
 
-//  ---------------------------------------------------------------------
 //  Set message body using printf format
 
 void
@@ -371,7 +362,6 @@ kvmsg_fmt_body (kvmsg_t *self, char *format, ...)
 }
 
 
-//  ---------------------------------------------------------------------
 //  Return body size from last read message, if any, else zero
 
 size_t

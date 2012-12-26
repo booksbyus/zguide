@@ -14,7 +14,6 @@ struct _mdcli_t {
     int timeout;                //  Request timeout
 };
 
-//  ---------------------------------------------------------------------
 //  Connect or reconnect to broker. In this asynchronous class we use a
 //  DEALER socket instead of a REQ socket; this lets us send any number
 //  of requests without waiting for a reply.
@@ -52,7 +51,6 @@ mdcli_new (char *broker, int verbose)
 }
 
 
-//  ---------------------------------------------------------------------
 //  Destructor
 
 void
@@ -69,7 +67,6 @@ mdcli_destroy (mdcli_t **self_p)
 }
 
 
-//  ---------------------------------------------------------------------
 //  Set request timeout
 
 void

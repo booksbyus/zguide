@@ -25,7 +25,6 @@ static void
 static ssize_t
     udp_recv (udp_t *self, byte *buffer, size_t length);
 
-//  -----------------------------------------------------------------
 //  UDP instance
 
 struct _udp_t {
@@ -79,7 +78,6 @@ s_handle_io_error (char *reason)
 }
 
 
-//  -----------------------------------------------------------------
 //  Constructor
 
 static udp_t *
@@ -134,7 +132,6 @@ udp_new (int port_nbr)
 }
 
 
-//  -----------------------------------------------------------------
 //  Destructor
 
 static void

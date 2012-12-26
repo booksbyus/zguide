@@ -9,7 +9,6 @@
 //  =====================================================================
 //  Synchronous part, works in our application thread
 
-//  ---------------------------------------------------------------------
 //  Structure of our class
 
 typedef struct {

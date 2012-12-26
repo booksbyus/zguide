@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <signal.h>
 
-//  ---------------------------------------------------------------
 //  Signal handling
 //
 //  Call s_catch_signals() in your application at startup, and then

@@ -45,7 +45,6 @@ struct _bstar_t {
 //  If peer doesn't respond in two heartbeats, it is 'dead'
 #define BSTAR_HEARTBEAT     1000        //  In msecs
 
-//  ---------------------------------------------------------------------
 //  Binary Star finite state machine (applies event to state)
 //  Returns -1 if there was an exception, 0 if event was valid.
 
@@ -159,7 +158,6 @@ s_update_peer_expiry (bstar_t *self)
     self->peer_expiry = zclock_time () + 2 * BSTAR_HEARTBEAT;
 }
 
-//  ---------------------------------------------------------------------
 //  Reactor event handlers...
 
 //  Publish our state to peer
