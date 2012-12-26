@@ -2,11 +2,11 @@
 .bookmark advanced-pub-sub
 + Advanced Pub-Sub Patterns
 
-In [#advanced-request-reply] and [#reliable-request-reply] we looked at advanced use of 0MQ's request-reply pattern. If you managed to digest all that, congratulations. In this chapter we'll focus on pub-sub, and extend 0MQ's core pub-sub pattern with higher-level patterns for performance, reliability, state distribution, and monitoring.
+In [#advanced-request-reply] and [#reliable-request-reply] we looked at advanced use of 0MQ's request-reply pattern. If you managed to digest all that, congratulations. In this chapter we'll focus on publish-subscribe ("pub-sub"), and extend 0MQ's core pub-sub pattern with higher-level patterns for performance, reliability, state distribution, and monitoring.
 
 We'll cover:
 
-* When to use pub-sub.
+* When to use publish-subscribe.
 * How to handle too-slow subscribers (the //Suicidal Snail// pattern).
 * How to design high-speed subscribers (the //Black Box// pattern).
 * How to monitor a pub-sub network (the //Espresso// pattern).
@@ -49,7 +49,7 @@ As we did for request-reply, let's define //reliability// in terms of what can g
 
 A lot more can go wrong but these are the typical failures we see in a realistic system. Since 3.x, 0MQ forces default limits on its internal buffers (the so-called 'high-water mark' or HWM), so publisher crashes are rarer unless you deliberately set the HWM to infinite.
 
-All of these failure cases have answers, though not always simple ones. Reliability means complexity, and most of us don't need this, most of the time, which is why 0MQ doesn't attempt to do this out of the box.
+All of these failure cases have answers, though not always simple ones. Reliability means complexity, and most of us don't need reliability, most of the time, which is why 0MQ doesn't attempt to provide it out of the box (even if there was one global design for reliability, which there isn't).
 
 ++ Pub-sub Tracing (Espresso Pattern)
 
@@ -169,6 +169,35 @@ Notes about this example:
 
 Now lets look at one way to make our subscribers faster. A common use-case for pub-sub is distributing large data streams like market data coming from stock exchanges. A typical set-up would have a publisher connected to a stock exchange, taking price quotes, and sending them out to a number of subscribers. If there are a handful of subscribers, we could use TCP. If we have a larger number of subscribers, we'd probably use reliable multicast, i.e. PGM.
 
+[[code type="textdiagram" title="The Simple Black Box Pattern"]]
+               #-----------#
+               | Publisher |
+               +-----------+
+               |    PUB    |
+               '-----+-----'
+                     |
+.------------------- | ------------------.
+:                    |          Fast box :
+:                    v                   :
+:              .-----------.             :
+:              |    SUB    |             :
+:              +-----------+             :
+:              | Subscriber|             :
+:              +-----------+             :
+:              |   PUSH    |             :
+:              '-----+-----'             :
+:                    |                   :
+:       .------------+------------.      :
+:       |            |            |      :
+:       v            v            v      :
+:  .--------.   .--------.   .--------.  :
+:  |  PULL  |   |  PULL  |   |  PULL  |  :
+:  +--------+   +--------+   +--------+  :
+:  | Worker |   | Worker |   | Worker |  :
+:  #--------#   #--------#   #--------#  :
+'----------------------------------------'
+[[/code]]
+
 Let's imagine our feed has an average of 100,000 100-byte messages a second. That's a typical rate, after filtering market data we don't need to send on to subscribers. Now we decide to record a day's data (maybe 250 GB in 8 hours), and then replay it to a simulation network, i.e. a small group of subscribers. While 100K messages a second is easy for a 0MQ application, we want to replay //much faster//.
 
 So we set-up our architecture with a bunch of boxes, one for the publisher, and one for each subscriber. These are well-specified boxes, eight cores, twelve for the publisher.
@@ -182,71 +211,40 @@ The first thing we have to do is break our subscriber into a multithreaded desig
 
 So the subscriber looks something like a queue device. We could use various sockets to connect the subscriber and workers. If we assume one-way traffic, and workers that are all identical, we can use PUSH and PULL, and delegate all the routing work to 0MQ[figure]. This is the simplest and fastest approach.
 
-[[code type="textdiagram" title="The Simple Black Box Pattern"]]
-                    #-----------#
-                    | Publisher |
-                    +-----------+
-                    |    PUB    |
-                    '-----+-----'
-                          |
-.-------------------------|-------------------------.
-:                         |                Fast box :
-:                         v                         :
-:                   .-----------.                   :
-:                   |    SUB    |                   :
-:                   +-----------+                   :
-:                   | Subscriber|                   :
-:                   +-----------+                   :
-:                   |   PUSH    |                   :
-:                   '-----+-----'                   :
-:                         |                         :
-:         .---------------+---------------.         :
-:         |               |               |         :
-:         v               v               v         :
-:   .-----------.   .-----------.   .-----------.   :
-:   |   PULL    |   |   PULL    |   |   PULL    |   :
-:   +-----------+   +-----------+   +-----------+   :
-:   |  Worker   |   |  Worker   |   |  Worker   |   :
-:   #-----------#   #-----------#   #-----------#   :
-'---------------------------------------------------'
-[[/code]]
-
 The subscriber talks to the publisher over TCP or PGM. The subscriber talks to its workers, which are all in the same process, over {{inproc://}}.
+
+[[code type="textdiagram" title="Mad Black Box Pattern"]]
+               #-----------#
+               | Publisher |
+               +-----+-----+
+               | PUB | PUB |
+               '--+--+--+--'
+                  |     |
+.------------=--- | -=- | ---------------.
+:                 |     |      Fast box  :
+:                 v     v                :
+:              .-----+-----.             :
+:              | SUB | SUB |             :
+:              +-----+-----+             :
+:              | Subscriber|             :
+:              +-----+-----+             :
+:              | PUSH|PUSH |             :
+:              '--+--+--+--'             :
+:                 |     |                :
+:      .----------+-.   '--------.       :
+:      |            |            |       :
+:      v            v            v       :
+:  .--------.   .--------.   .--------.  :
+:  |  PULL  |   |  PULL  |   |  PULL  |  :
+:  +--------+   +--------+   +--------+  :
+:  | Worker |   | Worker |   | Worker |  :
+:  #--------#   #--------#   #--------#  :
+'----------------------------------------'
+[[/code]]
 
 Now to break that ceiling. What happens is that the subscriber thread hits 100% of CPU, and since it is one thread, it cannot use more than one core. A single thread will always hit a ceiling, be it at 2M, 6M, or more messages per second. We want to split the work across multiple threads that can run in parallel.
 
-The approach used by many high-performance products, which works here, is //sharding//, meaning we split the work into parallel and independent streams. E.g. half of the topic keys are in one stream, half in another[figure]. We could use many streams, but performance won't scale unless we have free cores.
-
-So let's see how to shard into two streams:
-
-[[code type="textdiagram" title="Mad Black Box Pattern"]]
-                    #-----------#
-                    | Publisher |
-                    +-----+-----+
-                    | PUB | PUB |
-                    '--+--+--+--'
-                       |     |
-.----------------------|--=--|----------------------.
-:                      |     |             Fast box :
-:                      v     v                      :
-:                   .-----+-----.                   :
-:                   | SUB | SUB |                   :
-:                   +-----+-----+                   :
-:                   | Subscriber|                   :
-:                   +-----+-----+                   :
-:                   | PUSH|PUSH |                   :
-:                   '--+--+--+--'                   :
-:                      |     |                      :
-:         .------------+--.  '------------.         :
-:         |               |               |         :
-:         v               v               v         :
-:   .-----------.   .-----------.   .-----------.   :
-:   |   PULL    |   |   PULL    |   |   PULL    |   :
-:   +-----------+   +-----------+   +-----------+   :
-:   |  Worker   |   |  Worker   |   |  Worker   |   :
-:   #-----------#   #-----------#   #-----------#   :
-'---------------------------------------------------'
-[[/code]]
+The approach used by many high-performance products, which works here, is //sharding//, meaning we split the work into parallel and independent streams. E.g. half of the topic keys are in one stream, half in another. We could use many streams, but performance won't scale unless we have free cores. So let's see how to shard into two streams[figure].
 
 With two streams, working at full speed, we would configure 0MQ as follows:
 
@@ -297,6 +295,16 @@ We have a simple pub-sub example in [#basics], the weather server and client. Le
 
 An update is either a new key-value pair, a modified value for an existing key, or a deleted key. We can assume for now that the whole store fits in memory and that applications access it by key, e.g. using a hash table or dictionary. For larger stores and some kind of persistence we'd probably store the state in a database, but that's not relevant here.
 
+This is the server:
+
+[[code type="example" title="Clone server, Model One" name="clonesrv1"]]
+[[/code]]
+
+And here is the client:
+
+[[code type="example" title="Clone client, Model One" name="clonecli1"]]
+[[/code]]
+
 [[code type="textdiagram" title="Publishing State Updates"]]
           #-----------#
           |  Server   |
@@ -314,16 +322,6 @@ An update is either a new key-value pair, a modified value for an existing key, 
 +--------+  +--------+  +--------+
 | Client |  | Client |  | Client |
 #--------#  #--------#  #--------#
-[[/code]]
-
-This is the server:
-
-[[code type="example" title="Clone server, Model One" name="clonesrv1"]]
-[[/code]]
-
-And here is the client:
-
-[[code type="example" title="Clone client, Model One" name="clonecli1"]]
 [[/code]]
 
 Some notes about this code:
@@ -353,6 +351,8 @@ So now we have our second problem: how to deal with late-joining clients or clie
 
 In order to allow a late (or recovering) client to catch up with a server it has to get a snapshot of the server's state. Just as we've reduced "message" to mean "a sequenced key-value pair", we can reduce "state" to mean "a hash table". To get the server state, a client opens a DEALER socket and asks for it explicitly[figure].
 
+To make this work, we have to solve a problem of timing. Getting a state snapshot will take a certain time, possibly fairly long if the snapshot is large. We need to correctly apply updates to the snapshot. But the server won't know when to start sending us updates. One way would be to start subscribing, get a first update, and then ask for "state for update N". This would require the server storing one snapshot for each update, which isn't practical.
+
 [[code type="textdiagram" title="State Replication"]]
                    #--------------#
                    |   Server     |
@@ -373,8 +373,6 @@ In order to allow a late (or recovering) client to catch up with a server it has
 |   Client     |   |   Client     |   |   Client     |
 #--------------#   #--------------#   #--------------#
 [[/code]]
-
-To make this work, we have to solve a problem of timing. Getting a state snapshot will take a certain time, possibly fairly long if the snapshot is large. We need to correctly apply updates to the snapshot. But the server won't know when to start sending us updates. One way would be to start subscribing, get a first update, and then ask for "state for update N". This would require the server storing one snapshot for each update, which isn't practical.
 
 So we will do the synchronization in the client, as follows:
 
@@ -418,6 +416,10 @@ In our second model, changes to the key-value store came from the server itself.
 
 To send updates from clients back to the server we could use a variety of socket patterns. The simplest plausible solution is a PUSH-PULL combination[figure].
 
+Why don't we allow clients to publish updates directly to each other? While this would reduce latency, it would remove the guarantee of consistency. You can't get consistent shared state if you allow the order of updates to change depending on who receives them. Say we have two clients, changing different keys. This will work fine. But if the two clients try to change the same key at roughly the same time, they'll end up with different notions of what its value is.
+
+There are a few strategies for getting consistency when changes happen in multiple places at once. We'll use the approach of centralizing all change. No matter the precise timing of the changes that clients make, they are all pushed through the server, which enforces a single sequence according to the order in which it gets updates.
+
 [[code type="textdiagram" title="Republishing Updates"]]
                #----------------------#
                |        Server        |
@@ -440,10 +442,6 @@ To send updates from clients back to the server we could use a variety of socket
 |       Client        |     |       Client        |
 #---------------------#     #---------------------#
 [[/code]]
-
-Why don't we allow clients to publish updates directly to each other? While this would reduce latency, it would remove the guarantee of consistency. You can't get consistent shared state if you allow the order of updates to change depending on who receives them. Say we have two clients, changing different keys. This will work fine. But if the two clients try to change the same key at roughly the same time, they'll end up with different notions of what its value is.
-
-There are a few strategies for getting consistency when changes happen in multiple places at once. We'll use the approach of centralizing all change. No matter the precise timing of the changes that clients make, they are all pushed through the server, which enforces a single sequence according to the order in which it gets updates.
 
 By meditating all changes, the server can also add a unique sequence number to all updates. With unique sequencing, clients can detect the nastier failures - network congestion and queue overflow. If a client discovers that its incoming message stream has a hole, it can take action. It seems sensible that the client contact the server and ask for the missing messages, but in practice that isn't useful. If there are holes, they're caused by network stress, and adding more stress to the network will make things worse. All the client can really do is warn its users "Unable to continue", and stop, and not restart until someone has manually checked the cause of the problem.
 
@@ -554,16 +552,6 @@ So, Model Six introduces these changes over Model Five:
 
 * The passive server keeps a "pending list" of updates that it has received from clients, but not yet from the active server. Or, updates it's received from the active, but not yet clients. The list is ordered from oldest to newest, so that it is easy to remove updates off the head.
 
-It's useful to design the client logic as a finite state machine. The client cycles through three states:
-
-* The client opens and connects its sockets, and then requests a snapshot from the first server. To avoid request storms, it will ask any given server only twice. One request might get lost, that'd be bad luck. Two getting lost would be carelessness.
-
-* The client waits for a reply (snapshot data) from the current server, and if it gets it, it stores it. If there is no reply within some timeout, it fails over to the next server.
-
-* When the client has gotten its snapshot, it waits for and processes updates. Again, if it doesn't hear anything from the server within some timeout, it fails over to the next server.
-
-The client loops forever. It's quite likely during startup or fail-over that some clients may be trying to talk to the primary server while others are trying to talk to the backup server. The Binary Star state machine handles this[figure], hopefully accurately. It's hard to prove software correct; instead we hammer it until we can't prove it wrong.
-
 [[code type="textdiagram" title="Clone Client Finite State Machine"]]
  #-----------#
  |           |<----------------------.
@@ -589,6 +577,16 @@ Request|snapshot                  |  |
  |           +-SILENCE---------------'
  #-----------# Failover to next
 [[/code]]
+
+It's useful to design the client logic as a finite state machine. The client cycles through three states:
+
+* The client opens and connects its sockets, and then requests a snapshot from the first server. To avoid request storms, it will ask any given server only twice. One request might get lost, that'd be bad luck. Two getting lost would be carelessness.
+
+* The client waits for a reply (snapshot data) from the current server, and if it gets it, it stores it. If there is no reply within some timeout, it fails over to the next server.
+
+* When the client has gotten its snapshot, it waits for and processes updates. Again, if it doesn't hear anything from the server within some timeout, it fails over to the next server.
+
+The client loops forever. It's quite likely during startup or fail-over that some clients may be trying to talk to the primary server while others are trying to talk to the backup server. The Binary Star state machine handles this[figure], hopefully accurately. It's hard to prove software correct; instead we hammer it until we can't prove it wrong.
 
 Fail-over happens as follows:
 
@@ -804,10 +802,6 @@ CHP does not implement any authentication, access control, or encryption mechani
 
 The client stack we used so far isn't smart enough to handle this protocol properly. As soon as we start doing heartbeats we need a client stack that can run in a background thread. In the Freelance pattern at the end of [#reliable-request-reply] we used a multithreaded API but didn't explain it in detail. It turns out that multithreaded APIs are really useful when you start to make more complex 0MQ protocols like CHP.
 
-If you make a non-trivial protocol, and you expect applications to implement it properly, most developers will get it wrong, most of the time. You're going to be left with a lot of unhappy people complaining that your protocol is too complex, too fragile, and too hard to use. Whereas if you give them a simple API to call, you have some chance of buy-in.
-
-Our multithreaded API consists of a front-end object and a background agent, connected by two PAIR sockets[figure]. Connecting two PAIR sockets like this is so useful that your high-level binding should probably do what CZMQ does, package a "create new thread with a pipe that I can use to send messages to it" method.
-
 [[code type="textdiagram" title="Multithreaded API"]]
          #--------------#
          |   Calling    |
@@ -833,6 +827,10 @@ Our multithreaded API consists of a front-end object and a background agent, con
 '---------------------------------'
             Clone class
 [[/code]]
+
+If you make a non-trivial protocol, and you expect applications to implement it properly, most developers will get it wrong, most of the time. You're going to be left with a lot of unhappy people complaining that your protocol is too complex, too fragile, and too hard to use. Whereas if you give them a simple API to call, you have some chance of buy-in.
+
+Our multithreaded API consists of a front-end object and a background agent, connected by two PAIR sockets[figure]. Connecting two PAIR sockets like this is so useful that your high-level binding should probably do what CZMQ does, package a "create new thread with a pipe that I can use to send messages to it" method.
 
 The multithreaded APIs that we see in this Guide all take the same form:
 

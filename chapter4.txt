@@ -73,6 +73,18 @@ We can get very simple reliable request-reply with some changes to the client. W
 * Resend a request, if no reply has arrived within a timeout period.
 * Abandon the transaction if there is still no reply after several requests.
 
+If you try to use a REQ socket in anything than a strict send-recv fashion, you'll get an error (technically, the REQ socket implements a small finite-state machine to enforce the send-recv ping-pong, and so the error code is called "EFSM"). This is slightly annoying when we want to use REQ in a pirate pattern, because we may send several requests before getting a reply.
+
+The pretty good brute-force solution is to close and reopen the REQ socket after an error:
+
+[[code type="example" title="Lazy Pirate client" name="lpclient"]]
+[[/code]]
+
+Run this together with the matching server:
+
+[[code type="example" title="Lazy Pirate server" name="lpserver"]]
+[[/code]]
+
 [[code type="textdiagram" title="The Lazy Pirate Pattern"]]
 #-----------#   #-----------#   #-----------#
 |  Client   |   |  Client   |   |  Client   |
@@ -93,16 +105,6 @@ We can get very simple reliable request-reply with some changes to the client. W
                |    Server   |
                |             |
                #-------------#
-[[/code]]
-
-If you try to use a REQ socket in anything than a strict send-recv fashion, you'll get an error (technically, the REQ socket implements a small finite-state machine to enforce the send-recv ping-pong, and so the error code is called "EFSM"). This is slightly annoying when we want to use REQ in a pirate pattern, because we may send several requests before getting a reply. The pretty good brute-force solution is to close and reopen the REQ socket after an error:
-
-[[code type="example" title="Lazy Pirate client" name="lpclient"]]
-[[/code]]
-
-Run this together with the matching server:
-
-[[code type="example" title="Lazy Pirate server" name="lpserver"]]
 [[/code]]
 
 To run this test case, start the client and the server in two console windows. The server will randomly misbehave after a few messages. You can check the client's response. Here is typical output from the server:
@@ -149,8 +151,6 @@ Our second approach extends the Lazy Pirate pattern with a queue proxy that lets
 
 In all these Pirate patterns, workers are stateless. If the application requires some shared state--e.g., a shared database--we don't know about it as we design our messaging framework. Having a queue proxy means workers can come and go without clients knowing anything about it. If one worker dies, another takes over. This is a nice, simple topology with only one real weakness, namely the central queue itself, which can become a problem to manage, and a single point of failure.
 
-The basis for the queue proxy is the load-balancing broker from [#advanced-request-reply]. What is the very //minimum// we need to do to handle dead or blocked workers? Turns out, it's surprisingly little. We already have a retry mechanism in the client. So using the load-balancing pattern will work pretty well. This fits with 0MQ's philosophy that we can extend a peer-to-peer pattern like request-reply by plugging naive proxies in the middle[figure].
-
 [[code type="textdiagram" title="The Simple Pirate Pattern"]]
 #-----------#   #-----------#   #-----------#
 |  Client   |   |  Client   |   |  Client   |
@@ -158,8 +158,7 @@ The basis for the queue proxy is the load-balancing broker from [#advanced-reque
 |   Retry   |   |   Retry   |   |   Retry   |
 +-----------+   +-----------+   +-----------+
 |    REQ    |   |    REQ    |   |    REQ    |
-'-----------'   '-----------'   '-----------'
-      ^               ^               ^
+'-----+-----'   '-----+-----'   '-----+-----'
       |               |               |
       '---------------+---------------'
                       |
@@ -176,13 +175,14 @@ The basis for the queue proxy is the load-balancing broker from [#advanced-reque
                       |
       .---------------+---------------.
       |               |               |
-      v               v               v
-.-----------.   .-----------.   .-----------.
+.-----+-----.   .-----+-----.   .-----+-----.
 |    REQ    |   |    REQ    |   |    REQ    |
 +-----------+   +-----------+   +-----------+
 |   Worker  |   |   Worker  |   |   Worker  |
 #-----------#   #-----------#   #-----------#
 [[/code]]
+
+The basis for the queue proxy is the load-balancing broker from [#advanced-request-reply]. What is the very //minimum// we need to do to handle dead or blocked workers? Turns out, it's surprisingly little. We already have a retry mechanism in the client. So using the load-balancing pattern will work pretty well. This fits with 0MQ's philosophy that we can extend a peer-to-peer pattern like request-reply by plugging naive proxies in the middle[figure].
 
 We don't need a special client; we're still using the Lazy Pirate client. Here is the queue, which is identical to the main task of the load-balancing broker:
 
@@ -198,16 +198,6 @@ To test this, start a handful of workers, a Lazy Pirate client, and the queue, i
 
 ++ Robust Reliable Queuing (Paranoid Pirate Pattern)
 
-The Simple Pirate Queue pattern works pretty well, especially since it's just a combination of two existing patterns, but it has some weaknesses:
-
-* It's not robust in the face of a queue crash and restart. The client will recover, but the workers won't. While 0MQ will reconnect workers' sockets automatically, as far as the newly started queue is concerned, the workers haven't signaled "READY", so don't exist. To fix this we have to do heartbeating from queue to worker, so that the worker can detect when the queue has gone away.
-
-* The queue does not detect worker failure, so if a worker dies while idle, the queue can't remove it from its worker queue until the queue sends it a request. The client waits and retries for nothing. It's not a critical problem, but it's not nice. To make this work properly we do heartbeating from worker to queue, so that the queue can detect a lost worker at any stage.
-
-We'll fix these in a properly pedantic Paranoid Pirate Pattern.
-
-We previously used a REQ socket for the worker. For the Paranoid Pirate worker we'll switch to a DEALER socket[figure]. This has the advantage of letting us send and receive messages at any time, rather than the lock-step send/receive that REQ imposes. The downside of DEALER is that we have to do our own envelope management (re-read [#advanced-request-reply] for background on this concept).
-
 [[code type="textdiagram" title="The Paranoid Pirate Pattern"]]
 #-----------#   #-----------#   #-----------#
 |  Client   |   |  Client   |   |  Client   |
@@ -215,8 +205,7 @@ We previously used a REQ socket for the worker. For the Paranoid Pirate worker w
 |   Retry   |   |   Retry   |   |   Retry   |
 +-----------+   +-----------+   +-----------+
 |    REQ    |   |    REQ    |   |    REQ    |
-'-----------'   '-----------'   '-----------'
-      ^               ^               ^
+'-----+-----'   '-----+-----'   '-----+-----'
       |               |               |
       '---------------+---------------'
                       |
@@ -234,8 +223,7 @@ We previously used a REQ socket for the worker. For the Paranoid Pirate worker w
                       |
       .---------------+---------------.
       |               |               |
-      v               v               v
-.-----------.   .-----------.   .-----------.
+.-----+-----.   .-----+-----.   .-----+-----.
 |  DEALER   |   |  DEALER   |   |  DEALER   |
 +-----------+   +-----------+   +-----------+
 | Heartbeat |   | Heartbeat |   | Heartbeat |
@@ -243,6 +231,16 @@ We previously used a REQ socket for the worker. For the Paranoid Pirate worker w
 |   Worker  |   |   Worker  |   |   Worker  |
 #-----------#   #-----------#   #-----------#
 [[/code]]
+
+The Simple Pirate Queue pattern works pretty well, especially since it's just a combination of two existing patterns, but it has some weaknesses:
+
+* It's not robust in the face of a queue crash and restart. The client will recover, but the workers won't. While 0MQ will reconnect workers' sockets automatically, as far as the newly started queue is concerned, the workers haven't signaled "READY", so don't exist. To fix this we have to do heartbeating from queue to worker, so that the worker can detect when the queue has gone away.
+
+* The queue does not detect worker failure, so if a worker dies while idle, the queue can't remove it from its worker queue until the queue sends it a request. The client waits and retries for nothing. It's not a critical problem, but it's not nice. To make this work properly we do heartbeating from worker to queue, so that the queue can detect a lost worker at any stage.
+
+We'll fix these in a properly pedantic Paranoid Pirate Pattern.
+
+We previously used a REQ socket for the worker. For the Paranoid Pirate worker we'll switch to a DEALER socket[figure]. This has the advantage of letting us send and receive messages at any time, rather than the lock-step send/receive that REQ imposes. The downside of DEALER is that we have to do our own envelope management (re-read [#advanced-request-reply] for background on this concept).
 
 We're still using the Lazy Pirate client. Here is the Paranoid Pirate queue proxy:
 
@@ -401,7 +399,7 @@ It's fun to experiment without specifications, but that's not a sensible basis f
 Lack of contracts is a sure sign of a disposable application. So, let's write a contract for this protocol. How do we do that?
 
 There's a wiki at [http://rfc.zeromq.org rfc.zeromq.org] that we made especially as a home for public 0MQ contracts.
-To create a new specification, register, and follow the instructions. It's straightforward, though technical writing is not for everyone.
+To create a new specification, register on the wiki if needed, and follow the instructions. It's clear-cut, though technical writing is not for everyone.
 
 It took me about fifteen minutes to draft the new [http://rfc.zeromq.org/spec:6 Pirate Pattern Protocol]. It's not a big specification but it does capture enough to act as the basis for arguments ("your queue isn't PPP compatible, please fix it!").
 
@@ -413,40 +411,33 @@ Turning PPP into a real protocol would take more work:
 
 ++ Service-Oriented Reliable Queuing (Majordomo Pattern)
 
-The nice thing about progress is how fast it happens when lawyers and committees aren't involved. Just a few sentences ago we were dreaming of a better protocol that would fix the world. And [http://rfc.zeromq.org/spec:7 here we have it].
-This one-page specification turs PPP into something more solid[figure]. This is how we should design complex architectures: start by writing down the contracts, and only //then// write software to implement them.
-
-The Majordomo Protocol (MDP) extends and improves on PPP in one interesting way: it adds a "service name" to requests that the client sends, and asks workers to register for specific services. Adding service names turns our Paranoid Pirate queue into a service-oriented broker. The nice thing about MDP is that it came out working code, a simpler ancestor protocol (PPP), and a precise set of improvements. This made it easy to draft.
-
 [[code type="textdiagram" title="The Majordomo Pattern"]]
 #-----------#   #-----------#   #-----------#
-|           |   |           |   |           |
 |  Client   |   |  Client   |   |  Client   |
-|           |   |           |   |           |
-'-----------'   '-----------'   '-----------'
-      ^               ^               ^
+'-----+-----'   '-----+-----'   '-----+-----'
       |               |               |
       '---------------+---------------'
 "Give me coffee"      |         "Give me tea"
                       v
                 .-----------.
-                |           |
                 |  Broker   |
-                |           |
                 '-----------'
                       ^
                       |
       .---------------+---------------.
       |               |               |
-      v               v               v
-.-----------.   .-----------.   .-----------.
+.-----+-----.   .-----+-----.   .-----+-----.
 |  "Water"  |   |   "Tea"   |   | "Coffee"  |
 +-----------+   +-----------+   +-----------+
 |  Worker   |   |  Worker   |   |  Worker   |
 #-----------#   #-----------#   #-----------#
 [[/code]]
 
-To implement Majordomo we need to write a framework for clients and workers. It's really not sane to ask every application developer to read the spec and make it work, when they could be using a simpler API built and tested just once.
+The nice thing about progress is how fast it happens when lawyers and committees aren't involved. The [http://rfc.zeromq.org/spec:7 one-page MDP specification] turns PPP into something more solid[figure]. This is how we should design complex architectures: start by writing down the contracts, and only //then// write software to implement them.
+
+The Majordomo Protocol (MDP) extends and improves on PPP in one interesting way: it adds a "service name" to requests that the client sends, and asks workers to register for specific services. Adding service names turns our Paranoid Pirate queue into a service-oriented broker. The nice thing about MDP is that it came out of working code, a simpler ancestor protocol (PPP), and a precise set of improvements that each solved a clear problem. This made it easy to draft.
+
+To implement Majordomo we need to write a framework for clients and workers. It's really not sane to ask every application developer to read the spec and make it work, when they could be using a simpler API that does the work for them.
 
 So, while our first contract (MDP itself) defines how the pieces of our distributed architecture talk to each other, our second contract defines how user applications talk to the technical framework we're going to design.
 
@@ -466,7 +457,7 @@ void     mdwrk_destroy (mdwrk_t **self_p);
 zmsg_t  *mdwrk_recv    (mdwrk_t *self, zmsg_t *reply);
 [[/code]]
 
-It's more or less symmetrical,but the worker dialog is a little different. The first time a worker does a recv(), it passes a null reply. Thereafter, it passes the current reply, and gets a new request.
+It's more or less symmetrical, but the worker dialog is a little different. The first time a worker does a recv(), it passes a null reply. Thereafter, it passes the current reply, and gets a new request.
 
 The client and worker APIs were fairly simple to construct, since they're heavily based on the Paranoid Pirate code we already developed. Here is the client API:
 
@@ -641,7 +632,7 @@ Try this with and without a worker running, and you should see the little progra
 
 ++ Idempotent Services
 
-Idempotency is not something you take a pill for. What it means is that it's safe to repeat an operation. Checking the clock is idempotent. Lending one's credit card to ones children is not. While many client-to-server use-cases are idempotent, some are not. Examples of idempotent use-cases include:
+Idempotency is not something you take a pill for. What it means is that it's safe to repeat an operation. Checking the clock is idempotent. Lending ones credit card to ones children is not. While many client-to-server use-cases are idempotent, some are not. Examples of idempotent use-cases include:
 
 * Stateless task distribution, i.e. a pipeline where the servers are stateless workers that compute a reply based purely on the state provided by a request. In such a case it's safe (though inefficient) to execute the same request many times.
 * A name service that translates logical addresses into endpoints to bind or connect to. In such a case it's safe to make the same lookup request many times.
@@ -650,7 +641,7 @@ And here are examples of a non-idempotent use-cases:
 
 * A logging service. One does not want the same log information recorded more than once.
 * Any service that has impact on downstream nodes, e.g., sends on information to other nodes. If that service gets the same request more than once, downstream nodes will get duplicate information.
-* Any service that modifies shared data in some non-idempotent way; e.g., a service that debits a bank account is definitely not idempotent.
+* Any service that modifies shared data in some non-idempotent way; e.g., a service that debits a bank account is not idempotent without extra work.
 
 When our server applications are not idempotent, we have to think more carefully about when exactly they might crash. If an application dies when it's idle, or while it's processing a request, that's usually fine. We can use database transactions to make sure a debit and a credit are always done together, if at all. If the server dies while sending its reply, that's a problem, because as far as it's concerned, it has done its work.
 
@@ -785,19 +776,13 @@ If you want to make Titanic //much faster and less reliable//, store requests an
 
 The Binary Star pattern puts two servers in a primary-backup high-availability pair[figure]. At any given time, one of these (the active) accepts connections from client applications. The other (the passive) does nothing, but the two servers monitor each other. If the active disappears from the network, after a certain time the passive takes over as active.
 
-Binary Star pattern was developed by myself and Martin Sustrik for the iMatix [http://www.openamq.org OpenAMQ server]. We designed it:
-
-* To provide a straight-forward high-availability solution.
-* To be simple enough to actually understand and use.
-* To fail-over reliably when needed, and only when needed.
-
 [[code type="textdiagram" title="High-availability Pair, Normal Operation"]]
-#------------#               #------------#
-|            |               |            |
-|  Primary   |<------------->|   Backup   |
-|  "active"  |               |  "passive" |
-|            |               |            |
-#------------#               #------------#
+#------------#           #------------#
+|            |           |            |
+|  Primary   |<--------->|   Backup   |
+|  "active"  |           |  "passive" |
+|            |           |            |
+#------------#           #------------#
       ^
       |
       |
@@ -809,6 +794,12 @@ Binary Star pattern was developed by myself and Martin Sustrik for the iMatix [h
 #------------#
 [[/code]]
 
+Binary Star pattern was developed by myself and Martin Sustrik for the iMatix [http://www.openamq.org OpenAMQ server]. We designed it:
+
+* To provide a straight-forward high-availability solution.
+* To be simple enough to actually understand and use.
+* To fail-over reliably when needed, and only when needed.
+
 Assuming we have a Binary Star pair running, here are the different scenarios that will result in a fail-over[figure]:
 
 * The hardware running the primary server has a fatal problem (power supply explodes, machine catches fire, or someone simply unplugs it by mistake), and disappears. Applications see this, and reconnect to the backup server.
@@ -816,15 +807,15 @@ Assuming we have a Binary Star pair running, here are the different scenarios th
 * The primary server crashes or is killed by the operator and does not restart automatically.
 
 [[code type="textdiagram" title="High-availability Pair During Failover"]]
-#------------#               #------------#
-|            |               |            |
-|  Primary   |<------------->|   Backup   |
-| "passive"  |               |  "active"  |
-|            |               |            |
-#------------#               #------------#
-                                    ^
-                                    |
-      .-----------------------------'
+#------------#           #------------#
+|            |           |            |
+|  Primary   |<--------->|   Backup   |
+| "passive"  |           |  "active"  |
+|            |           |            |
+#------------#           #------------#
+                                ^
+                                |
+      .-------------------------'
       |
 #-----+------#
 |            |
@@ -946,11 +937,11 @@ To prevent split-brain situations, we must connect a Binary Star pair using a de
 
 We must not split a Binary Star architecture into two islands, each with a set of applications. While this may be a common type of network architecture, you should use federation, not high-availability fail-over, in such cases.
 
-A suitably paranoid network configuration would use two private cluster interconnects, rather than a single one. Further, the network cards used for the cluster would be different from those used for message traffic, and possibly even on different PCI paths on the server hardware. The goal is to separate possible failures in the network from possible failures in the cluster. Network ports have a relatively high failure rate.
+A suitably paranoid network configuration would use two private cluster interconnects, rather than a single one. Further, the network cards used for the cluster would be different from those used for message traffic, and possibly even on different paths on the server hardware. The goal is to separate possible failures in the network from possible failures in the cluster. Network ports can have a relatively high failure rate.
 
 +++ Binary Star Implementation
 
-Without further ado, here is a proof-of-concept implementation of the Binary Star server. The primary and backup servers run the same code, and their roles are chosen by the invoker:
+Without further ado, here is a proof-of-concept implementation of the Binary Star server. The primary and backup servers run the same code, you choose their roles when you run the code:
 
 [[code type="example" title="Binary Star server" name="bstarsrv"]]
 [[/code]]
@@ -971,6 +962,8 @@ bstarcli
 You can then provoke fail-over by killing the primary server, and recovery by restarting the primary and killing the backup. Note how it's the client vote that triggers fail-over, and recovery.
 
 Binary star is driven by a finite state machine[figure]. Events are the peer state, so "Peer Active" means the other server has told us it's active. "Client Request" means we've received a client request. "Client Vote" means we've received a client request AND our peer is inactive for two heartbeats.
+
+Note that the servers use PUB-SUB sockets for state exchange. No other socket combination will work here. PUSH and DEALER block if there is no peer ready to receive a message. PAIR does not reconnect if the peer disappears and comes back. ROUTER needs the address of the peer before it can send it a message.
 
 [[code type="textdiagram" title="Binary Star Finite State Machine"]]
     Start .-----------------------.   .----------.               Start
@@ -997,10 +990,7 @@ Binary star is driven by a finite state machine[figure]. Events are the peer sta
       |               '-------+  Passive  +---------------'        |
       '---------------------->|           |<-----------------------'
                               '-----------'
-                                             
 [[/code]]
-
-Note that the servers use PUB-SUB sockets for state exchange. No other socket combination will work here. PUSH and DEALER block if there is no peer ready to receive a message. PAIR does not reconnect if the peer disappears and comes back. ROUTER needs the address of the peer before it can send it a message.
 
 +++ Binary Star Reactor
 
@@ -1059,8 +1049,6 @@ A 0MQ name service (and we'll make a simple implementation) has to:
 
 Putting a name service behind a service-oriented Majordomo broker is clever from some points of view. However it's simpler and much less surprising to just expose the name service as a server that clients can connect to directly. If we do this right, the name service becomes the //only// global network endpoint we need to hard-code in our code or configuration files.
 
-The types of failure we aim to handle are server crashes and restarts, server busy looping, server overload, and network issues. To get reliability, we'll create a pool of name servers so if one crashes or goes away, clients can connect to another, and so on. In practice, two would be enough. But for the example, we'll assume the pool can be any size[figure].
-
 [[code type="textdiagram" title="The Freelance Pattern"]]
 #-----------#   #-----------#   #-----------#
 |  Client   |   |  Client   |   |  Client   |
@@ -1077,6 +1065,8 @@ The types of failure we aim to handle are server crashes and restarts, server bu
 #-----------#   #-----------#   #-----------#
 [[/code]]
 
+The types of failure we aim to handle are server crashes and restarts, server busy looping, server overload, and network issues. To get reliability, we'll create a pool of name servers so if one crashes or goes away, clients can connect to another, and so on. In practice, two would be enough. But for the example, we'll assume the pool can be any size[figure].
+
 In this architecture, a large set of clients connect to a small set of servers directly. The servers bind to their respective addresses. It's fundamentally different from a broker-based approach like Majordomo, where workers connect to the broker. Clients have a couple options:
 
 * Use REQ sockets and the Lazy Pirate pattern. Easy, but would need some additional intelligence so clients don't stupidly try to reconnect to dead servers over and over.
@@ -1089,7 +1079,9 @@ We'll develop each of these in the following subsections.
 
 +++ Model One - Simple Retry and Failover
 
-So our menu appears to offer: simple, brutal, complex, or nasty. Let's start with 'simple' and then work out the kinks. We take Lazy Pirate and rewrite it to work with multiple server endpoints. Start one or several servers first, specifying a bind endpoint as the argument:
+So our menu appears to offer: simple, brutal, complex, or nasty. Let's start with 'simple' and then work out the kinks. We take Lazy Pirate and rewrite it to work with multiple server endpoints.
+
+Start one or several servers first, specifying a bind endpoint as the argument:
 
 [[code type="example" title="Freelance server, Model One" name="flserver1"]]
 [[/code]]

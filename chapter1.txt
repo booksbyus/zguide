@@ -111,9 +111,9 @@ socket.send ("Hello")
 Then what goes onto the wire is a length (one byte for shorter strings) and the string contents, as individual characters[figure].
 
 [[code type="textdiagram" title="A 0MQ string"]]
-#-----#    #-----+-----+-----+-----+-----#
-|  5  |    |  H  |  e  |  l  |  l  |  o  |
-#-----#    #-----+-----+-----+-----+-----#
+#-----#  #-----+-----+-----+-----+-----#
+|  5  |  |  H  |  e  |  l  |  l  |  o  |
+#-----#  #-----+-----+-----+-----+-----#
 [[/code]]
 
 And if you read this from a C program, you will get something that looks like a string, and might by accident act like a string (if by luck the five bytes find themselves followed by an innocently lurking null), but isn't a proper string. When your client and server don't agree on the string format, you will get weird results.
@@ -162,6 +162,11 @@ Here's the server. We'll use port 5556 for this application:
 
 There's no start, and no end to this stream of updates, it's like a never ending broadcast[figure].
 
+Here is client application, which listens to the stream of updates and grabs anything to do with a specified zip code, by default New York City because that's a great place to start any adventure:
+
+[[code type="example" title="Weather update client" name="wuclient"]]
+[[/code]]
+
 [[code type="textdiagram" title="Publish-Subscribe"]]
                #-------------#
                |  Publisher  |
@@ -185,11 +190,6 @@ There's no start, and no end to this stream of updates, it's like a never ending
 +------------+  +------------+  +------------+
 | Subscriber |  | Subscriber |  | Subscriber |
 #------------#  #------------#  #------------#
-[[/code]]
-
-Here is client application, which listens to the stream of updates and grabs anything to do with a specified zip code, by default New York City because that's a great place to start any adventure:
-
-[[code type="example" title="Weather update client" name="wuclient"]]
 [[/code]]
 
 Note that when you use a SUB socket you **must** set a subscription using {{zmq_setsockopt[3]}} and SUBSCRIBE, as in this code. If you don't set any subscription, you won't get any messages. It's a common mistake for beginners. The subscriber can set many subscriptions, which are added together. That is, if a update matches ANY subscription, the subscriber receives it. The subscriber can also cancel specific subscriptions. A subscription is often but not necessarily a printable string. See {{zmq_setsockopt[3]}} for how this works.
@@ -239,17 +239,6 @@ sys     0m0.008s
 
 ++ Divide and Conquer
 
-As a final example (you are surely getting tired of juicy code and want to delve back into philological discussions about comparative abstractive norms), let's do a little supercomputing. Then coffee. Our supercomputing application is a fairly typical parallel processing model[figure]. We have:
-
-* A ventilator that produces tasks that can be done in parallel
-* A set of workers that process tasks
-* A sink that collects results back from the worker processes
-
-In reality, workers run on superfast boxes, perhaps using GPUs (graphic processing units) to do the hard math. Here is the ventilator. It generates 100 tasks, each is a message telling the worker to sleep for some number of milliseconds:
-
-[[code type="example" title="Parallel task ventilator" name="taskvent"]]
-[[/code]]
-
 [[code type="textdiagram" title="Parallel Pipeline"]]
                #-------------#
                |  Ventilator |
@@ -261,8 +250,6 @@ In reality, workers run on superfast boxes, perhaps using GPUs (graphic processi
                       |
       .---------------+---------------.
       |               |               |
-    task            task             task
-      |               |               |
       v               v               v
 .------------.  .------------.  .------------.
 |    PULL    |  |    PULL    |  |    PULL    |
@@ -271,8 +258,6 @@ In reality, workers run on superfast boxes, perhaps using GPUs (graphic processi
 +------------+  +------------+  +------------+
 |    PUSH    |  |    PUSH    |  |    PUSH    |
 '-----+------'  '-----+------'  '-----+------'
-      |               |               |
-    result          result          result
       |               |               |
       '---------------+---------------'
                       |
@@ -286,6 +271,17 @@ In reality, workers run on superfast boxes, perhaps using GPUs (graphic processi
                #-------------#
 [[/code]]
 
+As a final example (you are surely getting tired of juicy code and want to delve back into philological discussions about comparative abstractive norms), let's do a little supercomputing. Then coffee. Our supercomputing application is a fairly typical parallel processing model[figure]. We have:
+
+* A ventilator that produces tasks that can be done in parallel
+* A set of workers that process tasks
+* A sink that collects results back from the worker processes
+
+In reality, workers run on superfast boxes, perhaps using GPUs (graphic processing units) to do the hard math. Here is the ventilator. It generates 100 tasks, each is a message telling the worker to sleep for some number of milliseconds:
+
+[[code type="example" title="Parallel task ventilator" name="taskvent"]]
+[[/code]]
+
 Here is the worker application. It receives a message, sleeps for that number of seconds, then signals that it's finished:
 
 [[code type="example" title="Parallel task worker" name="taskwork"]]
@@ -296,16 +292,11 @@ Here is the sink application. It collects the 100 tasks, then calculates how lon
 [[code type="example" title="Parallel task sink" name="tasksink"]]
 [[/code]]
 
-The average cost of a batch is 5 seconds. When we start 1, 2, 4 workers we get results like this from the sink:
+The average cost of a batch is 5 seconds. When we start 1, 2, or 4 workers we get results like this from the sink:
 
-[[code]]
-#   1 worker
-Total elapsed time: 5034 msec
-#   2 workers
-Total elapsed time: 2421 msec
-#   4 workers
-Total elapsed time: 1018 msec
-[[/code]]
+* 1 worker - total elapsed time: 5034 msecs.
+* 2 workers - total elapsed time: 2421 msecs.
+* 4 workers - total elapsed time: 1018 msecs.
 
 Let's look at some aspects of this code in more detail:
 
@@ -419,6 +410,8 @@ Take a typical open source project like [http://hadoop.apache.org/zookeeper/ Had
 
 But how to make a reusable messaging layer? Why, when so many projects need this technology, are people still doing it the hard way, by driving TCP sockets in their code, and solving the problems in that long list, over and over[figure]?
 
+It turns out that building reusable messaging systems is really difficult, which is why few FOSS projects ever tried, and why commercial messaging products are complex, expensive, inflexible, and brittle. In 2006 iMatix designed [http://www.amqp.org AMQP] which started to give FOSS developers perhaps the first reusable recipe for a messaging system. AMQP works better than many other designs [http://www.imatix.com/articles:whats-wrong-with-amqp but remains relatively complex, expensive, and brittle]. It takes weeks to learn to use, and months to create stable architectures that don't crash when things get hairy.
+
 [[code type="textdiagram" title="Messaging as it Starts"]]
 .------------.
 |            |
@@ -437,13 +430,15 @@ But how to make a reusable messaging layer? Why, when so many projects need this
 '------------'
 [[/code]]
 
-It turns out that building reusable messaging systems is really difficult, which is why few FOSS projects ever tried, and why commercial messaging products are complex, expensive, inflexible, and brittle. In 2006 iMatix designed [http://www.amqp.org AMQP] which started to give FOSS developers perhaps the first reusable recipe for a messaging system. AMQP works better than many other designs [http://www.imatix.com/articles:whats-wrong-with-amqp but remains relatively complex, expensive, and brittle]. It takes weeks to learn to use, and months to create stable architectures that don't crash when things get hairy.
-
 Most messaging projects, like AMQP, that try to solve this long list of problems in a reusable way do so by inventing a new concept, the "broker", that does addressing, routing, and queuing. This results in a client-server protocol or a set of APIs on top of some undocumented protocol, that let applications speak to this broker. Brokers are an excellent thing in reducing the complexity of large networks. But adding broker-based messaging to a product like Zookeeper would make it worse, not better. It would mean adding an additional big box, and a new single point of failure. A broker rapidly becomes a bottleneck and a new risk to manage. If the software supports it, we can add a second, third, fourth broker and make some fail-over scheme. People do this. It creates more moving pieces, more complexity, more things to break.
 
 And a broker-centric set-up needs its own operations team. You literally need to watch the brokers day and night, and beat them with a stick when they start misbehaving. You need boxes, and you need backup boxes, and you need people to manage those boxes. It is only worth doing for large applications with many moving pieces, built by several teams of people, over several years.
 
 So small to medium application developers are trapped. Either they avoid network programming, and make monolithic applications that do not scale. Or they jump into network programming and make brittle, complex applications that are hard to maintain. Or they bet on a messaging product, and end up with scalable applications that depend on expensive, easily broken technology. There has been no really good choice, which is maybe why messaging is largely stuck in the last century and stirs strong emotions. Negative ones for users, gleeful joy for those selling support and licenses[figure].
+
+What we need is something that does the job of messaging but does it in such a simple and cheap way that it can work in any application, with close to zero cost. It should be a library that you just link with, without any other dependencies. No additional moving pieces, so no additional risk. It should run on any OS and work with any programming language.
+
+And this is 0MQ: an efficient, embeddable library that solves most of the problems an application needs to become nicely elastic across a network, without much cost.
 
 [[code type="textdiagram" title="Messaging as it Becomes"]]
         .---.             .---.
@@ -472,10 +467,6 @@ So small to medium application developers are trapped. Either they avoid network
 |   |   '---'   |   |   '---'
 '---'           '---'
 [[/code]]
-
-What we need is something that does the job of messaging but does it in such a simple and cheap way that it can work in any application, with close to zero cost. It should be a library that you just link with, without any other dependencies. No additional moving pieces, so no additional risk. It should run on any OS and work with any programming language.
-
-And this is 0MQ: an efficient, embeddable library that solves most of the problems an application needs to become nicely elastic across a network, without much cost.
 
 Specifically:
 

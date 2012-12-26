@@ -125,9 +125,7 @@ The inter-thread transport, **{{inproc}}**, is a connected signaling transport. 
 
 A common question that newcomers to 0MQ ask (it's one I asked myself) is, "how do I write an XYZ server in 0MQ?" For example, "how do I write an HTTP server in 0MQ?" The implication is that if we use normal sockets to carry HTTP requests and responses, we should be able to use 0MQ sockets to do the same, only much faster and better.
 
-The answer used to be "this is not how it works". 0MQ is not a neutral carrier, it imposes a framing on the transport protocols it uses. This framing is not compatible with existing protocols, which tend to use their own framing. For example, compare an HTTP request[figure], and a 0MQ request[figure], both over TCP/IP.
-
-The HTTP request uses CR-LF as its simplest framing delimiter:
+The answer used to be "this is not how it works". 0MQ is not a neutral carrier, it imposes a framing on the transport protocols it uses. This framing is not compatible with existing protocols, which tend to use their own framing. For example, compare an HTTP request, and a 0MQ request, both over TCP/IP.
 
 [[code type="textdiagram" title="HTTP On the Wire"]]
 #----------------+----+----+----+----#
@@ -135,15 +133,13 @@ The HTTP request uses CR-LF as its simplest framing delimiter:
 #----------------+----+----+----+----#
 [[/code]]
 
-Whereas 0MQ uses a length-specified frame:
+The HTTP request uses CR-LF as its simplest framing delimiter[figure], whereas 0MQ uses a length-specified frame[figure]. So you could write a HTTP-like protocol using 0MQ, using for example the request-reply socket pattern. But it would not be HTTP.
 
 [[code type="textdiagram" title="0MQ On the Wire"]]
 #---+---+---+---+---+---#
 | 5 | H | E | L | L | O |
 #---+---+---+---+---+---#
 [[/code]]
-
-So you could write a HTTP-like protocol using 0MQ, using for example the request-reply socket pattern. But it would not be HTTP.
 
 Since 0MQ/3.3, however, the {{ZMQ_ROUTER_RAW}} socket option lets you read and write TCP bytes without the 0MQ framing. Hardeep Singh contributed this change so that he could connect to Telnet servers from his 0MQ application. This is still, at time of writing, somewhat experimental, but it shows how 0MQ keeps evolving to solve new problems. Maybe the next patch will be yours.
 
@@ -361,8 +357,6 @@ One of the problems you will hit as you design larger distributed architectures 
 
 There are several solutions to dynamic discovery. The simplest is to entirely avoid it by hard-coding (or configuring) the network architecture so discovery is done by hand. That is, when you add a new piece, you reconfigure the network to know about it.
 
-In practice this leads to increasingly fragile and hard-to-manage architectures. Let's say you have one publisher and a hundred subscribers. You connect each subscriber to the publisher by configuring a publisher endpoint in each subscriber. That's easy[figure]. Subscribers are dynamic, the publisher is static. Now say you add more publishers. Suddenly it's not so easy any more. If you continue to connect each subscriber to each publisher, the cost of avoiding dynamic discovery gets higher and higher.
-
 [[code type="textdiagram" title="Small-scale Pub-Sub Network"]]
                  #-----------#
                  | Publisher |
@@ -384,11 +378,7 @@ In practice this leads to increasingly fragile and hard-to-manage architectures.
 #------------#   #------------#   #------------#
 [[/code]]
 
-There are quite a few answers to this but the very simplest answer is to add an intermediary, that is, a static point in the network to which all other nodes connect. In classic messaging, this is the job of the "message broker". 0MQ doesn't come with a message broker as such, but it lets us build intermediaries quite easily.
-
-You might wonder, if all networks eventually get large enough to need intermediaries, why don't we simply have a message broker in place for all applications? For beginners, it's a fair compromise. Just always use a star topology, forget about performance, and things will usually work. However message brokers are greedy things; in their role as central intermediaries, they become too complex, too stateful, and eventually a problem.
-
-It's better to think of intermediaries as simple stateless message switches. A good analogy is an HTTP proxy; it's there but doesn't have any special role. Adding a pub-sub proxy solves the dynamic discovery problem in our example. We set the proxy in the "middle" of the network[figure]. The proxy opens an XSUB socket, an XPUB socket, and binds each to well-known IP addresses and ports. Then all other processes connect to the proxy, instead of to each other. It becomes trivial to add more subscribers or publishers.
+In practice this leads to increasingly fragile and hard-to-manage architectures. Let's say you have one publisher and a hundred subscribers. You connect each subscriber to the publisher by configuring a publisher endpoint in each subscriber. That's easy[figure]. Subscribers are dynamic, the publisher is static. Now say you add more publishers. Suddenly it's not so easy any more. If you continue to connect each subscriber to each publisher, the cost of avoiding dynamic discovery gets higher and higher.
 
 [[code type="textdiagram" title="Pub-Sub Network with a Proxy"]]
 #------------#   #------------#   #------------#
@@ -420,7 +410,11 @@ It's better to think of intermediaries as simple stateless message switches. A g
 #------------#   #------------#   #------------#
 [[/code]]
 
-We need XPUB and XSUB sockets because 0MQ does subscription forwarding from subscribers to publishers. XSUB and XPUB are exactly like SUB and PUB except they expose subscriptions as special messages. The proxy has to forward these subscription messages from subscriber side to publisher side, by reading them from the XPUB socket and writing them to the XSUB socket. This is the main use-case for XSUB and XPUB[figure].
+There are quite a few answers to this but the very simplest answer is to add an intermediary, that is, a static point in the network to which all other nodes connect. In classic messaging, this is the job of the "message broker". 0MQ doesn't come with a message broker as such, but it lets us build intermediaries quite easily.
+
+You might wonder, if all networks eventually get large enough to need intermediaries, why don't we simply have a message broker in place for all applications? For beginners, it's a fair compromise. Just always use a star topology, forget about performance, and things will usually work. However message brokers are greedy things; in their role as central intermediaries, they become too complex, too stateful, and eventually a problem.
+
+It's better to think of intermediaries as simple stateless message switches. A good analogy is an HTTP proxy; it's there but doesn't have any special role. Adding a pub-sub proxy solves the dynamic discovery problem in our example. We set the proxy in the "middle" of the network[figure]. The proxy opens an XSUB socket, an XPUB socket, and binds each to well-known IP addresses and ports. Then all other processes connect to the proxy, instead of to each other. It becomes trivial to add more subscribers or publishers.
 
 [[code type="textdiagram" title="Extended Pub-Sub"]]
 #---------#   #---------#   #---------#
@@ -444,11 +438,11 @@ We need XPUB and XSUB sockets because 0MQ does subscription forwarding from subs
 #---------#   #---------#   #---------#
 [[/code]]
 
+We need XPUB and XSUB sockets because 0MQ does subscription forwarding from subscribers to publishers. XSUB and XPUB are exactly like SUB and PUB except they expose subscriptions as special messages. The proxy has to forward these subscription messages from subscriber side to publisher side, by reading them from the XPUB socket and writing them to the XSUB socket. This is the main use-case for XSUB and XPUB[figure].
+
 +++ Shared Queue (DEALER and ROUTER sockets)
 
 In the Hello World client-server application we have one client that talks to one service. However in real cases we usually need to allow multiple services as well as multiple clients. This lets us scale up the power of the service (many threads or processes or nodes rather than just one). The only constraint is that services must be stateless, all state being in the request or in some shared storage such as a database.
-
-There are two ways to connect multiple clients to multiple servers. The brute-force way is to connect each client socket to multiple service endpoints. One client socket can connect to multiple service sockets, and the REQ socket will then distribute requests among these services. Let's say you connect a client socket to three service endpoints, A, B, and C. The client makes requests R1, R2, R3, R4. R1 and R4 go to service A, R2 goes to B, and R3 goes to service C[figure].
 
 [[code type="textdiagram" title="Request Distribution"]]
              #-----------#
@@ -472,6 +466,8 @@ There are two ways to connect multiple clients to multiple servers. The brute-fo
 #---------#   #---------#   #---------#
 [[/code]]
 
+There are two ways to connect multiple clients to multiple servers. The brute-force way is to connect each client socket to multiple service endpoints. One client socket can connect to multiple service sockets, and the REQ socket will then distribute requests among these services. Let's say you connect a client socket to three service endpoints, A, B, and C. The client makes requests R1, R2, R3, R4. R1 and R4 go to service A, R2 goes to B, and R3 goes to service C[figure].
+
 This design lets you add more clients cheaply. You can also add more services. Each client will distribute its requests to the services. But each client has to know the service topology. If you have 100 clients and then you decide to add three more services, you need to reconfigure and restart 100 clients in order for the clients to know about the three new services.
 
 That's clearly not the kind of thing we want to be doing at 3am when our supercomputing cluster has run out of resources and we desperately need to add a couple of hundred new service nodes. Too many static pieces are like liquid concrete: knowledge is distributed and the more static pieces you have, the more effort it is to change the topology. What we want is something sitting in between clients and services that centralizes all knowledge of the topology. Ideally, we should be able to add and remove services or clients at any time without touching any other part of the topology.
@@ -481,10 +477,6 @@ So we'll write a little message queuing broker that gives us this flexibility. T
 When you use REQ to talk to REP you get a strictly synchronous request-reply dialog. The client sends a request. The service reads the request and sends a reply. The client then reads the reply. If either the client or the service try to do anything else (e.g. sending two requests in a row without waiting for a response) they will get an error.
 
 But our broker has to be non-blocking. Obviously we can use {{zmq_poll[3]}} to wait for activity on either socket, but we can't use REP and REQ.
-
-Luckily there are two sockets called DEALER and ROUTER that let you do non-blocking request-response. You'll see in [#advanced-request-reply] how DEALER and ROUTER sockets let you build all kinds of asynchronous request-reply flows. For now, we're just going to see how DEALER and ROUTER let us extend REQ-REP across an intermediary, that is, our little broker.
-
-In this simple extended request-reply pattern, REQ talks to ROUTER and DEALER talks to REP. In between the DEALER and ROUTER we have to have code (like our broker) that pulls messages off the one socket and shoves them onto the other[figure].
 
 [[code type="textdiagram" title="Extended Request-reply"]]
 #---------#   #---------#   #---------#
@@ -509,6 +501,10 @@ In this simple extended request-reply pattern, REQ talks to ROUTER and DEALER ta
 #---------#   #---------#   #---------#
 [[/code]]
 
+Luckily there are two sockets called DEALER and ROUTER that let you do non-blocking request-response. You'll see in [#advanced-request-reply] how DEALER and ROUTER sockets let you build all kinds of asynchronous request-reply flows. For now, we're just going to see how DEALER and ROUTER let us extend REQ-REP across an intermediary, that is, our little broker.
+
+In this simple extended request-reply pattern, REQ talks to ROUTER and DEALER talks to REP. In between the DEALER and ROUTER we have to have code (like our broker) that pulls messages off the one socket and shoves them onto the other[figure].
+
 The request-reply broker binds to two endpoints, one for clients to connect to (the frontend socket) and one for workers to connect to (the backend). To test this broker, you will want to change your workers so they connect to the backend socket. Here is a client that shows what I mean:
 
 [[code type="example" title="Request-reply client" name="rrclient"]]
@@ -524,41 +520,27 @@ And here is the broker, which properly handles multi-part messages:
 [[code type="example" title="Request-reply broker" name="rrbroker"]]
 [[/code]]
 
-Using a request-reply broker makes your client-server architectures easier to scale since clients don't see workers, and workers don't see clients. The only static node is the broker in the middle[figure].
-
 [[code type="textdiagram" title="Request-reply Broker"]]
 #---------#   #---------#   #---------#
 | Client  |   | Client  |   | Client  |
 +---------+   +---------+   +---------+
 |   REQ   |   |   REQ   |   |   REQ   |
-'---------'   '---------'   '---------'
-  connect       connect       connect
-     |             |             |
-  request       request       request
+'----+----'   '----+----'   '----+----'
      |             |             |
      '-------------+-------------'
                    |
-             fair-queuing
-                   |
                    v
-                 bind
              .-----------.
              |  ROUTER   |
              +-----------+
              |  Broker   |
              +-----------+
              |  DEALER   |
-             '-----------'
-                 bind
-                   |
-            load balancing
+             '-----+-----'
                    |
      .-------------+-------------.
      |             |             |
-  request       request       request
-     |             |             |
      v             v             v
-  connect       connect       connect
 .---------.   .---------.   .---------.
 |   REP   |   |   REP   |   |   REP   |
 +---------+   +---------+   +---------+
@@ -566,6 +548,8 @@ Using a request-reply broker makes your client-server architectures easier to sc
 |    A    |   |    B    |   |    C    |
 #---------#   #---------#   #---------#
 [[/code]]
+
+Using a request-reply broker makes your client-server architectures easier to scale since clients don't see workers, and workers don't see clients. The only static node is the broker in the middle[figure].
 
 +++ 0MQ's Built-in Proxy Function
 
@@ -584,51 +568,51 @@ If you're like most 0MQ users, at this stage your mind is starting to think, "wh
 
 +++ Transport Bridging
 
+[[code type="textdiagram" title="Pub-Sub Forwarder Proxy"]]
+               #-----------#
+               | Publisher |
+               +-----------+
+               |    PUB    |
+               '-----------'
+                   bind
+         tcp://192.168.55.210:5556
+                    |
+     .--------------+--------------.
+     |              |              |
+  connect        connect        connect
+     |              |              |
+     v              v              v
+.----------.   .----------.   .----------.
+|   SUB    |   |   SUB    |   |   XSUB   |
++----------+   +----------+   +----------+
+|Subscriber|   |Subscriber|   |  Proxy   |
+#----------#   #----------#   +----------+
+                              |   XPUB   |
+ Internal network             '-----+----'
+----------------------------------- | -----------
+ External network                  bind
+                            tcp://10.1.1.0:8100
+                                    |
+                            .-------+-------.
+                            |               |
+                         connect         connect
+                            |               |
+                            v               v
+                       .----------.   .----------.
+                       |   SUB    |   |   SUB    |
+                       +----------+   +----------+
+                       |Subscriber|   |Subscriber|
+                       #----------#   #----------#
+[[/code]]
+
 A frequent request from 0MQ users is "how do I connect my 0MQ network with technology X?" where X is some other networking or messaging technology. The simple answer is to build a "bridge". A bridge is a small application that speaks one protocol at one socket, and converts to/from a second protocol at another socket. A protocol interpreter, if you like. A common bridging problem in 0MQ is to bridge two transports or networks.
 
-As an example, we're going to write a little proxy that sits in between a publisher and a set of subscribers, bridging two networks. The frontend socket (SUB) faces the internal network, where the weather server is sitting, and the backend (PUB) faces subscribers on the external network. It subscribes to the weather service on the frontend socket, and republishes its data on the backend socket[figure].
+As an example, we're going to write a little proxy that sits in between a publisher and a set of subscribers, bridging two networks. The frontend socket (SUB) faces the internal network, where the weather server is sitting, and the backend (PUB) faces subscribers on the external network. It subscribes to the weather service on the frontend socket, and republishes its data on the backend socket.
 
 [[code type="example" title="Weather update proxy" name="wuproxy"]]
 [[/code]]
 
-It looks very similar to the earlier proxy example but the key part is that the frontend and backend sockets are on two different networks. We can use this model for example to connect a multicast network ({{pgm}} transport) to a {{tcp}} publisher.
-
-[[code type="textdiagram" title="Pub-Sub Forwarder Proxy"]]
-                 #-----------#
-                 | Publisher |
-                 +-----------+
-                 |    PUB    |
-                 '-----------'
-                     bind
-           tcp://192.168.55.210:5556
-                       |
-      .----------------+----------------.
-      |                |                |
-   connect           connect          connect
-      |                |                |
-      v                v                v
-.------------.   .------------.   .------------.
-|    SUB     |   |    SUB     |   |    XSUB    |
-+------------+   +------------+   +------------+
-| Subscriber |   | Subscriber |   |   Proxy    |
-#------------#   #------------#   +------------+
-                                  |    XPUB    |
- Internal network                 '-----+------'
- -------------------------------------- | --------------
- External network                      bind
-                                tcp://10.1.1.0:8100
-                                        |
-                               .--------+--------.
-                               |                 |
-                            connect           connect
-                               |                 |
-                               v                 v
-                         .------------.    .------------.
-                         |    SUB     |    |    SUB     |
-                         +------------+    +------------+
-                         | Subscriber |    | Subscriber |
-                         #------------#    #------------#
-[[/code]]
+It looks very similar to the earlier proxy example but the key part is that the frontend and backend sockets are on two different networks[figure]. We can use this model for example to connect a multicast network ({{pgm}} transport) to a {{tcp}} publisher.
 
 ++ Handling Errors and ETERM
 
@@ -668,6 +652,41 @@ There are two main exceptional conditions that you should handle as non-fatal:
 
 In C/C++, asserts can be removed entirely in optimized code, so don't make the mistake of wrapping the whole 0MQ call in an assert(). It looks neat, then the optimizer removes all the asserts and the calls you want to make, and your application breaks in impressive ways.
 
+[[code type="textdiagram" title="Parallel Pipeline with Kill Signaling"]]
+             #-------------#
+             |  Ventilator |
+             +-------------+
+             |    PUSH     |
+             '------+------'
+                  tasks
+                    |
+    .---------------+---------------.
+    |               |               |
+    |     .--=------|-----+=--------|-----+---=--.
+    |     |         |     |         |     |      |
+    v     v         v     v         v     v      |
+.------+-----.  .------+-----.  .------+-----.   |
+| PULL | SUB |  | PULL | SUB |  | PULL | SUB |   |
++------+-----+  +------+-----+  +------+-----+   |
+|   Worker   |  |   Worker   |  |   Worker   |   |
++------------+  +------------+  +------------+   |
+|    PUSH    |  |    PUSH    |  |    PUSH    |   |
+'-----+------'  '-----+------'  '-----+------'   |
+      |               |               |          |
+      '---------------+---------------'          |
+                      |                          |
+                   results                       |
+                      |                          |
+                      v                          |
+               .-------------.                   |
+               |    PULL     |                   |
+               +-------------+                   |
+               |    Sink     |                   |
+               +-------------+                   |
+               |     PUB     +--=-KILL signal----'
+               '-------------'
+[[/code]]
+
 Let's see how to shut down a process cleanly. We'll take the parallel pipeline example from the previous section. If we've started a whole lot of workers in the background, we now want to kill them when the batch is finished. Let's do this by sending a kill message to the workers. The best place to do this is the sink, since it really knows when the batch is done.
 
 How do we connect the sink to the workers? The PUSH/PULL sockets are one-way only. We could switch to another socket type, or we could mix multiple socket flows. Let's try the latter: using a pub-sub model to send kill messages to the workers[figure]:
@@ -685,44 +704,6 @@ zmq_bind (control, "tcp://*:5559");
 ...
 //  Send kill signal to workers
 s_send (controller, "KILL");
-[[/code]]
-
-[[code type="textdiagram" title="Parallel Pipeline with Kill Signaling"]]
-             #-------------#
-             |  Ventilator |
-             +-------------+
-             |    PUSH     |
-             '------+------'
-                  tasks
-                    |
-    .---------------+---------------.
-    |               |               |
-    |     .--=------|-----+=--------|-----+---=--.
-  task    :       task    :        task   :      |
-    |     |         |     |         |     |      |
-    v     v         v     v         v     v      |
-.------+-----.  .------+-----.  .------+-----.   |
-| PULL | SUB |  | PULL | SUB |  | PULL | SUB |   |
-+------+-----+  +------+-----+  +------+-----+   |
-|   Worker   |  |   Worker   |  |   Worker   |   |
-+------------+  +------------+  +------------+   |
-|    PUSH    |  |    PUSH    |  |    PUSH    |   |
-'-----+------'  '-----+------'  '-----+------'   |
-      |               |               |          |
-    result          result          result       |
-      |               |               |          |
-      '---------------+---------------'          |
-                      |                          |
-                   results                       |
-                      |                          |
-                      v                          |
-               .-------------.                   |
-               |    PULL     |                   |
-               +-------------+                   |
-               |    Sink     |                   |
-               +-------------+                   |
-               |     PUB     +--=-KILL signal----'
-               '-------------'
 [[/code]]
 
 Here is the worker process, which manages two sockets (a PULL socket getting tasks, and a SUB socket getting control commands) using the {{zmq_poll[3]}} technique we saw earlier:
@@ -858,20 +839,6 @@ The MT version of the Hello World service basically collapses the broker and wor
 [[code type="example" title="Multithreaded service" name="mtserver"]]
 [[/code]]
 
-All the code should be recognizable to you by now. How it works:
-
-* The server starts a set of worker threads. Each worker thread creates a REP socket and then processes requests on this socket. Worker threads are just like single-threaded servers. The only differences are the transport ({{inproc}} instead of {{tcp}}), and the bind-connect direction.
-
-* The server creates a ROUTER socket to talk to clients and binds this to its external interface (over {{tcp}}).
-
-* The server creates a DEALER socket to talk to the workers and binds this to its internal interface (over {{inproc}}).
-
-* The server starts a proxy that connects the two sockets. The proxy pulls incoming requests fairly from all clients, and distributes those out to workers. It also routes replies back to their origin.
-
-Note that creating threads is not portable in most programming languages. The POSIX library is pthreads, but on Windows you have to use a different API. In our example, the {{pthread_create}} call starts up a new thread running the {{worker_routine}} function we defined. We'll see in [#advanced-request-reply] how to wrap this in a portable API.
-
-Here the 'work' is just a one-second pause. We could do anything in the workers, including talking to other nodes. This is what the MT server looks like in terms of ØMQ sockets and nodes. Note how the request-reply chain is {{REQ-ROUTER-queue-DEALER-REP}}[figure].
-
 [[code type="textdiagram" title="Multithreaded Server"]]
                #------------#
                |   Client   |
@@ -905,6 +872,20 @@ Here the 'work' is just a one-second pause. We could do anything in the workers,
 |    #--------#  #--------#  #--------#    |
 '------------------------------------------'
 [[/code]]
+
+All the code should be recognizable to you by now. How it works:
+
+* The server starts a set of worker threads. Each worker thread creates a REP socket and then processes requests on this socket. Worker threads are just like single-threaded servers. The only differences are the transport ({{inproc}} instead of {{tcp}}), and the bind-connect direction.
+
+* The server creates a ROUTER socket to talk to clients and binds this to its external interface (over {{tcp}}).
+
+* The server creates a DEALER socket to talk to the workers and binds this to its internal interface (over {{inproc}}).
+
+* The server starts a proxy that connects the two sockets. The proxy pulls incoming requests fairly from all clients, and distributes those out to workers. It also routes replies back to their origin.
+
+Note that creating threads is not portable in most programming languages. The POSIX library is pthreads, but on Windows you have to use a different API. In our example, the {{pthread_create}} call starts up a new thread running the {{worker_routine}} function we defined. We'll see in [#advanced-request-reply] how to wrap this in a portable API.
+
+Here the 'work' is just a one-second pause. We could do anything in the workers, including talking to other nodes. This is what the MT server looks like in terms of ØMQ sockets and nodes. Note how the request-reply chain is {{REQ-ROUTER-queue-DEALER-REP}}[figure].
 
 ++ Signaling between Threads (PAIR sockets)
 
@@ -968,19 +949,6 @@ When you want to coordinate a set of nodes on a network, PAIR sockets won't work
 
 The second significant difference between threads and nodes is that you typically have a fixed number of threads but a more variable number of nodes. Let's take one of our earlier scenarios (the weather server and clients) and use node coordination to ensure that subscribers don't lose data when starting up.
 
-This is how the application will work:
-
-* The publisher knows in advance how many subscribers it expects. This is just a magic number it gets from somewhere.
-
-* The publisher starts up and waits for all subscribers to connect. This is the node coordination part. Each subscriber subscribes and then tells the publisher it's ready via another socket.
-
-* When the publisher has all subscribers connected, it starts to publish data.
-
-In this case we'll use a REQ-REP socket flow to synchronize subscribers and publisher[figure]. Here is the publisher:
-
-[[code type="example" title="Synchronized publisher" name="syncpub"]]
-[[/code]]
-
 [[code type="textdiagram" title="Pub-Sub Synchronization"]]
 #------------#
 | Publisher  |
@@ -996,6 +964,19 @@ In this case we'll use a REQ-REP socket flow to synchronize subscribers and publ
 +-----+------+
 | Subscriber |
 #------------#
+[[/code]]
+
+This is how the application will work:
+
+* The publisher knows in advance how many subscribers it expects. This is just a magic number it gets from somewhere.
+
+* The publisher starts up and waits for all subscribers to connect. This is the node coordination part. Each subscriber subscribes and then tells the publisher it's ready via another socket.
+
+* When the publisher has all subscribers connected, it starts to publish data.
+
+In this case we'll use a REQ-REP socket flow to synchronize subscribers and publisher[figure]. Here is the publisher:
+
+[[code type="example" title="Synchronized publisher" name="syncpub"]]
 [[/code]]
 
 And here is the subscriber:
@@ -1091,8 +1072,6 @@ When you run the two programs, the subscriber should show you this:
 ...
 [[/code]]
 
-This examples shows that the subscription filter rejects or accepts the entire multi-part message (key plus data). You won't get part of a multi-part message, ever. If you subscribe to multiple publishers and you want to know their address so that you can send them data via another socket (and this is a typical use-case), create a three-part message:
-
 [[code type="textdiagram" title="Pub-Sub Envelope with Sender Address"]]
           #---------#
 Frame 1   | Key     |   Subscription key
@@ -1102,6 +1081,8 @@ Frame 2   | Address |   Address of publisher
 Frame 3   | Data    |   Actual message body
           #---------#
 [[/code]]
+
+This example shows that the subscription filter rejects or accepts the entire multi-part message (key plus data). You won't get part of a multi-part message, ever. If you subscribe to multiple publishers and you want to know their address so that you can send them data via another socket (and this is a typical use-case), create a three-part message[figure].
 
 ++ High Water Marks
 

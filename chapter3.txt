@@ -319,8 +319,6 @@ Completed: 25 tasks
 Completed: 19 tasks
 [[/code]]
 
-To talk to the workers in this example, we have to create a REQ-friendly envelope consisting of an identity plus an empty envelope delimiter frame[figure].
-
 [[code type="textdiagram" title="Routing Envelope for REQ"]]
           #---+-------#
 Frame 1   | n | ...   |     Identity of connection
@@ -330,6 +328,8 @@ Frame 2   | 0 |             Empty delimiter frame
 Frame 3   | n | ...    |    Data frame
           #---+--------#
 [[/code]]
+
+To talk to the workers in this example, we have to create a REQ-friendly envelope consisting of an identity plus an empty envelope delimiter frame[figure].
 
 +++ ROUTER Broker and DEALER Workers
 
@@ -399,15 +399,13 @@ The broker code is fairly long but worth understanding:
 
 The difficult part of this program is (a) the envelopes that each socket reads and writes, and (b) the load-balancing algorithm. We'll take these in turn, starting with the message envelope formats.
 
-Let's walk through a full request-reply chain from client to worker and back. In this code we set the identity of client and worker sockets to make it easier to trace the message frames. In reality we'd allow the ROUTER sockets to invent identities for connections. Let's assume the client's identity is "CLIENT" and the worker's identity is "WORKER". The client application sends a single frame containing "Hello"[figure].
-
 [[code type="textdiagram" title="Message that Client Sends"]]
           #---+-------#
 Frame 1   | 5 | Hello |   Data frame
           #---+-------#
 [[/code]]
 
-Since the REQ socket adds its empty delimiter frame, and the ROUTER socket adds its connection identity, what the proxy reads off the frontend ROUTER socket are three frames: the client address, empty delimiter frame, and the data part[figure].
+Let's walk through a full request-reply chain from client to worker and back. In this code we set the identity of client and worker sockets to make it easier to trace the message frames. In reality we'd allow the ROUTER sockets to invent identities for connections. Let's assume the client's identity is "CLIENT" and the worker's identity is "WORKER". The client application sends a single frame containing "Hello"[figure].
 
 [[code type="textdiagram" title="Message Coming in on Frontend"]]
           #---+--------#
@@ -419,7 +417,7 @@ Frame 3   | 5 | Hello |    Data frame
           #---+-------#
 [[/code]]
 
-The broker sends this to the worker, prefixed by the address of the chosen worker, plus an additional empty part to keep the REQ at the other end happy[figure].
+Since the REQ socket adds its empty delimiter frame, and the ROUTER socket adds its connection identity, what the proxy reads off the frontend ROUTER socket are three frames: the client address, empty delimiter frame, and the data part[figure].
 
 [[code type="textdiagram" title="Message Sent to Backend"]]
           #---+--------#
@@ -435,7 +433,11 @@ Frame 5   | 5 | Hello |    Data frame
           #---+-------#
 [[/code]]
 
+The broker sends this to the worker, prefixed by the address of the chosen worker, plus an additional empty part to keep the REQ at the other end happy[figure].
+
 This complex envelope stack gets chewed up first by the backend ROUTER socket, which removes the first frame. Then the REQ socket in the worker removes the empty part, and provides the rest to the worker application[figure].
+
+The worker has to save the envelope (which is all the parts up to and including the empty message frame) and then it can do what's needed with the data part. Note that a REP socket would do this automatically but we're using the REQ-ROUTER pattern so we can get proper load-balancing.
 
 [[code type="textdiagram" title="Message Delivered to Worker"]]
           #---+--------#
@@ -446,8 +448,6 @@ Frame 2   | 0 |            Empty delimiter frame
 Frame 3   | 5 | Hello |    Data frame
           #---+-------#
 [[/code]]
-
-The worker has to save the envelope (which is all the parts up to and including the empty message frame) and then it can do what's needed with the data part. Note that a REP socket would do this automatically but we're using the REQ-ROUTER pattern so we can get proper load-balancing.
 
 On the return path the messages are the same as when they come in, i.e. the backend socket gives the broker a message in five parts, and the broker sends the frontend socket a message in three parts, and the client gets a message in one part.
 
@@ -615,8 +615,6 @@ Getting applications to properly shut-down when you send them Ctrl-C can be tric
 
 ++ The Asynchronous Client-Server Pattern
 
-In the ROUTER to DEALER example we saw a 1-to-N use-case where one server talks asynchronously to multiple workers. We can turn this upside-down to get a very useful N-to-1 architecture where various clients talk to a single server, and do this asynchronously[figure].
-
 [[code type="textdiagram" title="Asynchronous Client-Server"]]
 #----------#   #----------#
 |  Client  |   |  Client  |
@@ -635,6 +633,8 @@ In the ROUTER to DEALER example we saw a 1-to-N use-case where one server talks 
       #-------------#
 [[/code]]
 
+In the ROUTER to DEALER example we saw a 1-to-N use-case where one server talks asynchronously to multiple workers. We can turn this upside-down to get a very useful N-to-1 architecture where various clients talk to a single server, and do this asynchronously[figure].
+
 Here's how it works:
 
 * Clients connect to the server and send requests.
@@ -649,45 +649,45 @@ Here's code that shows how this works:
 
 The example runs in one process, with multiple threads simulating a real multi-process architecture. When you run the example, you'll see three clients (each with a random ID), printing out the replies they get from the server. Look carefully and you'll see each client task gets 0 or more replies per request.
 
+[[code type="textdiagram" title="Detail of Asynchronous Server"]]
+   #---------#   #---------#   #---------#
+   | Client  |   | Client  |   | Client  |
+   +---------+   +---------+   +---------+
+   | DEALER  |   | DEALER  |   | DEALER  |
+   '---------'   '---------'   '---------'
+     connect       connect       connect
+        |             |             |
+        '-------------+-------------'
+                      |
+.-------------------- | --------------------.
+:                     v                     :
+:                   bind                    :
+:               .-----------.               :
+:               |  ROUTER   |               :
+:               +-----------+               :
+:               |  Server   |               :
+:               +-----------+               :
+:               |  DEALER   |               :
+:               '-----------'               :
+:                   bind                    :
+:                     |                     :
+:       .-------------+-------------.       :
+:       |             |             |       :
+:       v             v             v       :
+:    connect       connect       connect    :
+:  .---------.   .---------.   .---------.  :
+:  | DEALER  |   | DEALER  |   | DEALER  |  :
+:  +---------+   +---------+   +---------+  :
+:  | Worker  |   | Worker  |   | Worker  |  :
+:  #---------#   #---------#   #---------#  :
+'-------------------------------------------'
+[[/code]]
+
 Some comments on this code:
 
 * The clients send a request once per second, and get zero or more replies back. To make this work using {{zmq_poll[3]}}, we can't simply poll with a 1-second timeout, or we'd end up sending a new request only one second //after we received the last reply//. So we poll at a high frequency (100 times at 1/100th of a second per poll), which is approximately accurate.
 
-* The server uses a pool of worker threads, each processing one request synchronously. It connects these to its frontend socket using an internal queue. It connects the frontend and backend sockets using a {{zmq_proxy[3]}} call.
-
-[[code type="textdiagram" title="Detail of Asynchronous Server"]]
-    #---------#   #---------#   #---------#
-    | Client  |   | Client  |   | Client  |
-    +---------+   +---------+   +---------+
-    | DEALER  |   | DEALER  |   | DEALER  |
-    '---------'   '---------'   '---------'
-      connect       connect       connect
-         |             |             |
-         '-------------+-------------'
-                       |
-.--------------------- | ---------------------.
-:                      v                      :
-:                    bind                     :
-:                .-----------.                :
-:                |  ROUTER   |                :
-:                +-----------+                :
-:                |  Server   |                :
-:                +-----------+                :
-:                |  DEALER   |                :
-:                '-----------'                :
-:                    bind                     :
-:                      |                      :
-:        .-------------+-------------.        :
-:        |             |             |        :
-:        v             v             v        :
-:     connect       connect       connect     :
-:   .---------.   .---------.   .---------.   :
-:   | DEALER  |   | DEALER  |   | DEALER  |   :
-:   +---------+   +---------+   +---------+   :
-:   | Worker  |   | Worker  |   | Worker  |   :
-:   #---------#   #---------#   #---------#   :
-'---------------------------------------------'
-[[/code]]
+* The server uses a pool of worker threads, each processing one request synchronously. It connects these to its frontend socket using an internal queue[figure]. It connects the frontend and backend sockets using a {{zmq_proxy[3]}} call.
 
 Note that we're doing DEALER to ROUTER dialog between client and server, but internally between the server main thread and workers we're doing DEALER to DEALER. If the workers were strictly synchronous, we'd use REP. But since we want to send multiple replies we need an async socket. We do //not// want to route replies, they always go to the single server thread that sent us the request.
 
@@ -713,15 +713,13 @@ We cheat in the above example by keeping state only for a very short time (the t
 
 ++ Worked Example: Inter-Broker Routing
 
-Let's take everything we've seen so far, and scale things up to a real application. We'll build this step by step over several iterations.
-
-Our best client calls us urgently and asks for a design of a large cloud computing facility. He has this vision of a cloud that spans many data centers, each a cluster of clients and workers, and that works together as a whole.
-
-Because we're smart enough to know that practice always beats theory, we propose to make a working simulation using 0MQ. Our client, eager to lock down the budget before his own boss changes his mind, and having read great things about 0MQ on Twitter, agrees.
+Let's take everything we've seen so far, and scale things up to a real application. We'll build this step by step over several iterations. Our best client calls us urgently and asks for a design of a large cloud computing facility. He has this vision of a cloud that spans many data centers, each a cluster of clients and workers, and that works together as a whole. Because we're smart enough to know that practice always beats theory, we propose to make a working simulation using 0MQ. Our client, eager to lock down the budget before his own boss changes his mind, and having read great things about 0MQ on Twitter, agrees.
 
 +++ Establishing the Details
 
-Several espressos later, we want to jump into writing code but a little voice tells us to get more details before making a sensational solution to entirely the wrong problem. "What kind of work is the cloud doing?", we ask. The client explains:
+Several espressos later, we want to jump into writing code but a little voice tells us to get more details before making a sensational solution to entirely the wrong problem. "What kind of work is the cloud doing?", we ask.
+
+The client explains:
 
 * Workers run on various kinds of hardware, but they are all able to handle any task. There are several hundred workers per cluster, and as many as a dozen clusters in total.
 
@@ -734,22 +732,6 @@ Several espressos later, we want to jump into writing code but a little voice te
 * Clients send out one task at a time, waiting for a reply. If they don't get an answer within X seconds they'll just send out the task again. This ain't our concern, the client API does it already.
 
 * Workers process one task at a time, they are very simple beasts. If they crash, they get restarted by whatever script started them.
-
-So we double check to make sure that we understood this correctly:
-
-* "There will be some kind of super-duper network interconnect between clusters, right?", we ask. The client says, "Yes, of course, we're not idiots."
-
-* "What kind of volumes are we talking about?", we ask. The client replies, "Up to a thousand clients per cluster, each doing max. ten requests per second. Requests are small, and replies are also small, no more than 1K bytes each."
-
-So we do a little calculation and see that this will work nicely over plain TCP. 2,500 clients x 10/second x 1,000 bytes x 2 directions = 50MB/sec or 400Mb/sec, not a problem for a 1Gb network.
-
-It's a straight-forward problem that requires no exotic hardware or protocols, just some clever routing algorithms and careful design. We start by designing one cluster (one data center) and then we figure out how to connect clusters together.
-
-+++ Architecture of a Single Cluster
-
-Workers and clients are synchronous. We want to use the load-balancing pattern to route tasks to workers. Workers are all identical, our facility has no notion of different services. Workers are anonymous, clients never address them directly. We make no attempt here to provide guaranteed delivery, retry, etc.
-
-For reasons we already looked at, clients and workers won't speak to each other directly. It makes it impossible to add or remove nodes dynamically. So our basic model consists of the request-reply message broker we saw earlier[figure].
 
 [[code type="textdiagram" title="Cluster Architecture"]]
 #--------#  #--------#  #--------#
@@ -782,9 +764,25 @@ For reasons we already looked at, clients and workers won't speak to each other 
 #--------#  #--------#  #--------#
 [[/code]]
 
+So we double check to make sure that we understood this correctly:
+
+* "There will be some kind of super-duper network interconnect between clusters, right?", we ask. The client says, "Yes, of course, we're not idiots."
+
+* "What kind of volumes are we talking about?", we ask. The client replies, "Up to a thousand clients per cluster, each doing max. ten requests per second. Requests are small, and replies are also small, no more than 1K bytes each."
+
+So we do a little calculation and see that this will work nicely over plain TCP. 2,500 clients x 10/second x 1,000 bytes x 2 directions = 50MB/sec or 400Mb/sec, not a problem for a 1Gb network.
+
+It's a straight-forward problem that requires no exotic hardware or protocols, just some clever routing algorithms and careful design. We start by designing one cluster (one data center) and then we figure out how to connect clusters together.
+
++++ Architecture of a Single Cluster
+
+Workers and clients are synchronous. We want to use the load-balancing pattern to route tasks to workers. Workers are all identical, our facility has no notion of different services. Workers are anonymous, clients never address them directly. We make no attempt here to provide guaranteed delivery, retry, etc.
+
+For reasons we already looked at, clients and workers won't speak to each other directly. It makes it impossible to add or remove nodes dynamically. So our basic model consists of the request-reply message broker we saw earlier[figure].
+
 +++ Scaling to Multiple Clusters
 
-Now we scale this out to more than one cluster. Each cluster has a set of clients and workers, and a broker that joins these together:
+Now we scale this out to more than one cluster. Each cluster has a set of clients and workers, and a broker that joins these together[figure].
 
 [[code type="textdiagram" title="Multiple Clusters"]]
      Cluster 1          :          Cluster 2
@@ -813,18 +811,16 @@ The question is: how do we get the clients of each cluster talking to the worker
 
 * Brokers could connect to each other. This looks neatest because it creates the fewest additional connections. We can't add clusters on the fly but that is probably out of scope. Now clients and workers remain ignorant of the real network topology, and brokers tell each other when they have spare capacity. Let's label this "Idea #2".
 
-Let's explore Idea #1. In this model we have workers connecting to both brokers and accepting jobs from either[figure].
-
 [[code type="textdiagram" title="Idea 1 - Cross-connected Workers"]]
-            Cluster 1               :      Cluster 2  
+            Cluster 1               :  Cluster 2
                                     :
-          #------------#            :    #------------#  
-          |            |            :    |            |  
-          +------------+            :    +------------+  
-          |   ROUTER   |            :    |   ROUTER   |  
-          '-----+------'            :    '-----+------'  
-                |                   :          |  
-      .---------+-+-----------+----------------'  
+            #--------#              :  #--------#
+            |        |              :  |        |
+            +--------+              :  +--------+
+            | ROUTER |              :  | ROUTER |
+            '---+----'              :  '---+----'
+                |                   :      |
+      .---------+-+-----------+------------'
       |         | |           |     :
     .-+---------+-+---------. |     :
     | |         | |         | |     :
@@ -836,31 +832,33 @@ Let's explore Idea #1. In this model we have workers connecting to both brokers 
 #--------#  #--------#  #--------#  :
 [[/code]]
 
+Let's explore Idea #1. In this model we have workers connecting to both brokers and accepting jobs from either[figure].
+
 It looks feasible. However it doesn't provide what we wanted, which was that clients get local workers if possible and remote workers only if it's better than waiting. Also workers will signal "ready" to both brokers and can get two jobs at once, while other workers remain idle. It seems this design fails because again we're putting routing logic at the edges.
 
 So idea #2 then. We interconnect the brokers and don't touch the clients or workers, which are REQs like we're used to[figure].
 
-[[code type="textdiagram" title="Idea 2 - Brokers Talking to Each Other"]]
-     Cluster 1          :          Cluster 2
-                        :
-                        :
-.---.  .---.  .---.     :     .---.  .---.  .---.
-| C |  | C |  | C |     :     | C |  | C |  | C |
-'-+-'  '-+-'  '-+-'     :     '-+-'  '-+-'  '-+-'
-  |      |      |       :       |      |      |
-  |      |      |       :       |      |      |
-#-+------+------+-#     :     #-+------+------+-#
-|     Broker      |<--------->|     Broker      |
-#-+------+------+-#     :     #-+------+------+-#
-  |      |      |       :       |      |      |
-  |      |      |       :       |      |      |
-.-+-.  .-+-.  .-+-.     :     .-+-.  .-+-.  .-+-.
-| W |  | W |  | W |     :     | W |  | W |  | W |
-'---'  '---'  '---'     :     '---'  '---'  '---'
-                        :
-[[/code]]
-
 This design is appealing because the problem is solved in one place, invisible to the rest of the world. Basically, brokers open secret channels to each other and whisper, like camel traders, "Hey, I've got some spare capacity, if you have too many clients give me a shout and we'll deal".
+
+[[code type="textdiagram" title="Idea 2 - Brokers Talking to Each Other"]]
+     Cluster 1         :         Cluster 2
+                       :
+                       :
+.---.  .---.  .---.    :    .---.  .---.  .---.
+| C |  | C |  | C |    :    | C |  | C |  | C |
+'-+-'  '-+-'  '-+-'    :    '-+-'  '-+-'  '-+-'
+  |      |      |      :      |      |      |
+  |      |      |      :      |      |      |
+#-+------+------+-#    :    #-+------+------+-#
+|     Broker      |<------->|     Broker      |
+#-+------+------+-#    :    #-+------+------+-#
+  |      |      |      :      |      |      |
+  |      |      |      :      |      |      |
+.-+-.  .-+-.  .-+-.    :    .-+-.  .-+-.  .-+-.
+| W |  | W |  | W |    :    | W |  | W |  | W |
+'---'  '---'  '---'    :    '---'  '---'  '---'
+                       :
+[[/code]]
 
 It is in effect just a more sophisticated routing algorithm: brokers become subcontractors for each other. Other things to like about this design, even before we play with real code:
 
@@ -882,27 +880,27 @@ We know the basic model well by now:
 
 There are several possible ways to interconnect brokers. What we want is to be able to tell other brokers, "we have capacity", and then receive multiple tasks. We also need to be able to tell other brokers "stop, we're full". It doesn't need to be perfect: sometimes we may accept jobs we can't process immediately, then we'll do them as soon as possible.
 
-The simplest interconnect is //federation// in which brokers simulate clients and workers for each other. We would do this by connecting our frontend to the other broker's backend socket[figure]. Note that it is legal to both bind a socket to an endpoint and connect it to other endpoints.
-
 [[code type="textdiagram" title="Cross-connected Brokers in Federation Model"]]
-     Cluster 1          :          Cluster 2
+     Cluster 1          :         Cluster 2
                         :
                         :
-.---.  .---.            :             .---.  .---.
-| C |  | C |            :             | C |  | C |
-'-+-'  '-+-'    .----.  :  .-----.    '-+-'  '-+-'
-  |      |      |    |  :  |     |      |      |
-  |      |      |    |  :  |     |      |      |
-#-+------+------+-#  |  :  |   #-+------+------+-#
-|     Broker      |  |  :  |   |     Broker      |
-#-+------+--------#  |  :  |   #--------+------+-#
-  |      |      ^    |  :  |     ^      |      |
-  |      |      |    |  :  |     |      |      |
-.-+-.  .-+-.    |    '-----------'    .-+-.  .-+-.
-| W |  | W |    |       :  |          | W |  | W |
-'---'  '---'    '----------'          '---'  '---'
+.---.  .---.            :            .---.  .---.
+| C |  | C |            :            | C |  | C |
+'-+-'  '-+-'    .----.  :  .----.    '-+-'  '-+-'
+  |      |      |    |  :  |    |      |      |
+  |      |      |    |  :  |    |      |      |
+#-+------+------+-#  |  :  |  #-+------+------+-#
+|     Broker      |  |  :  |  |     Broker      |
+#-+------+--------#  |  :  |  #--------+------+-#
+  |      |      ^    |  :  |    ^      |      |
+  |      |      |    |  :  |    |      |      |
+.-+-.  .-+-.    |    '----------'    .-+-.  .-+-.
+| W |  | W |    |       :  |         | W |  | W |
+'---'  '---'    '----------'         '---'  '---'
                         :
 [[/code]]
+
+The simplest interconnect is //federation// in which brokers simulate clients and workers for each other. We would do this by connecting our frontend to the other broker's backend socket[figure]. Note that it is legal to both bind a socket to an endpoint and connect it to other endpoints.
 
 This would give us simple logic in both brokers and a reasonably good mechanism: when there are no clients, tell the other broker 'ready', and accept one job from it. The problem is also that it is too simple for this problem. A federated broker would be able to handle only one task at once. If the broker emulates a lock-step client and worker, it is by definition also going to be lock-step and if it has lots of available workers they won't be used. Our brokers need to be connected in a fully asynchronous fashion.
 
@@ -934,10 +932,6 @@ So in all the code we write for this tutorial will use these socket names:
 * //cloudfe// and //cloudbe// for the cloud flow.
 * //statefe// and //statebe// for the state flow.
 
-For our transport and because we're simulating the whole thing on one box, we'll use {{ipc}} for everything. This has the advantage of working like {{tcp}} in terms of connectivity (i.e. it's a disconnected transport, unlike {{inproc}}), yet we don't need IP addresses or DNS names, which would be a pain here. Instead, we will use {{ipc}} endpoints called //something//-{{local}}, //something//-{{cloud}}, and //something//-{{state}}, where //something// is the name of our simulated cluster.
-
-You may be thinking that this is a lot of work for some names. Why not call them s1, s2, s3, s4, etc.? The answer is that if your brain is not a perfect machine, you need a lot of help when reading code, and we'll see that these names do help. It's easier to remember "three flows, two directions" than "six different sockets"[figure].
-
 [[code type="textdiagram" title="Broker Socket Arrangement"]]
 #---------#  #---------#  #---------#
 | Client  |  | Broker  |  | Broker  |
@@ -946,29 +940,25 @@ You may be thinking that this is a lot of work for some names. Why not call them
 | connect |  | connect |  |  bind   |
 '---------'  '---------'  '---------'
   request      request       state
-     |            |            |
-     '-.          |          .-'
-       |          |          |
+     \            |            /
+      \           |           /
        v          v          v
    .---------+---------+---------.
    |  bind   |  bind   | connect |
    +---------+---------+---------+
-   | localfe | cloudfe | statefe |     Frontends
-   | ROUTER  | ROUTER  |   SUB   |     (incoming)
+   | localfe | cloudfe | statefe |   Frontends
+   | ROUTER  | ROUTER  |   SUB   |   (incoming)
    +---------+---------+---------+
-   |                             |
    |           Broker            |
-   |                             |
    +---------+---------+---------+
-   | ROUTER  | ROUTER  |   PUB   |     Backends
-   | localbe | cloudbe | statebe |     (outgoing)
+   | ROUTER  | ROUTER  |   PUB   |   Backends
+   | localbe | cloudbe | statebe |   (outgoing)
    +---------+---------+---------+
    |  bind   | connect |  bind   |
    '---------+---------+---------'
-     request    request     state
-       |          |          |
-     .-'          |          '-.
-     |            |            |
+     request    request   state
+       /          |          \  
+      /           |           \ 
      v            v            v
 .---------.  .---------.  .---------.
 | connect |  |  bind   |  | connect |
@@ -978,11 +968,20 @@ You may be thinking that this is a lot of work for some names. Why not call them
 #---------#  #---------#  #---------#
 [[/code]]
 
+For our transport and because we're simulating the whole thing on one box, we'll use {{ipc}} for everything. This has the advantage of working like {{tcp}} in terms of connectivity (i.e. it's a disconnected transport, unlike {{inproc}}), yet we don't need IP addresses or DNS names, which would be a pain here. Instead, we will use {{ipc}} endpoints called //something//-{{local}}, //something//-{{cloud}}, and //something//-{{state}}, where //something// is the name of our simulated cluster.
+
+You may be thinking that this is a lot of work for some names. Why not call them s1, s2, s3, s4, etc.? The answer is that if your brain is not a perfect machine, you need a lot of help when reading code, and we'll see that these names do help. It's easier to remember "three flows, two directions" than "six different sockets"[figure].
+
 Note that we connect the cloudbe in each broker to the cloudfe in every other broker, and likewise we connect the statebe in each broker to the statefe in every other broker.
 
 +++ Prototyping the State Flow
 
 Since each socket flow has its own little traps for the unwary, we will test them in real code one by one, rather than try to throw the whole lot into code in one go. When we're happy with each flow, we can put them together into a full program. We'll start with the state flow[figure].
+
+Here is how this works in code:
+
+[[code type="example" title="Prototype state flow" name="peering1"]]
+[[/code]]
 
 [[code type="textdiagram" title="The State Flow"]]
                       #---------#
@@ -992,29 +991,25 @@ Since each socket flow has its own little traps for the unwary, we will test the
                       |  bind   |
                       '---------'
                          state
-                           |
-                         .-'
-                         |
+                           /
+                          /
                          v
-.---------+---------+---------.
-|         |         | connect |
-+---------+---------+---------+
-|         |         | statefe |
-|         |         |   SUB   |
-+---------+---------+---------+
-|                             |
+.-------------------+---------.
+|                   | connect |
+|                   +---------+
+|                   | statefe |
+|                   |   SUB   |
++-------------------+---------+
 |           Broker            |
-|                             |
-+---------+---------+---------+
-|         |         |   PUB   |
-|         |         | statebe |
-+---------+---------+---------+
-|         |         |  bind   |
-'---------+---------+---------'
++-------------------+---------+
+|                   |   PUB   |
+|                   | statebe |
+|                   +---------+
+|                   |  bind   |
+'-------------------+---------'
                        state
-                         |
-                         '-.
-                           |
+                         \
+                          \
                            v
                       .---------.
                       | connect |
@@ -1022,11 +1017,6 @@ Since each socket flow has its own little traps for the unwary, we will test the
                       | statefe |
                       | Broker  |
                       #---------#
-[[/code]]
-
-Here is how this works in code:
-
-[[code type="example" title="Prototype state flow" name="peering1"]]
 [[/code]]
 
 Notes about this code:
@@ -1057,8 +1047,6 @@ If we wanted to send state messages at precise intervals we'd create a child thr
 
 +++ Prototyping the Local and Cloud Flows
 
-Let's now prototype at the flow of tasks via the local and cloud sockets[figure]. This code pulls requests from clients and then distributes them to local workers and cloud peers on a random basis.
-
 [[code type="textdiagram" title="The Flow of Tasks"]]
 #---------#  #---------#
 | Client  |  | Broker  |
@@ -1067,29 +1055,25 @@ Let's now prototype at the flow of tasks via the local and cloud sockets[figure]
 | connect |  | connect |
 '---------'  '---------'
   request      request
-     |            |
-     '-.          |
-       |          |
+     \            |
+      \           |
        v          v
    .---------+---------+---------.
    |  bind   |  bind   |         |
-   +---------+---------+---------+
+   +---------+---------+         |
    | localfe | cloudfe |         |
    | ROUTER  | ROUTER  |         |
    +---------+---------+---------+
-   |                             |
    |           Broker            |
-   |                             |
    +---------+---------+---------+
    | ROUTER  | ROUTER  |         |
    | localbe | cloudbe |         |
-   +---------+---------+---------+
+   +---------+---------+         |
    |  bind   | connect |         |
    '---------+---------+---------'
      request    request
-       |          |
-     .-'          |
-     |            |
+       /          |
+      /           |
      v            v
 .---------.  .---------.
 | connect |  |  bind   |
@@ -1098,6 +1082,8 @@ Let's now prototype at the flow of tasks via the local and cloud sockets[figure]
 | Worker  |  | Broker  |
 #---------#  #---------#
 [[/code]]
+
+Let's now prototype at the flow of tasks via the local and cloud sockets[figure]. This code pulls requests from clients and then distributes them to local workers and cloud peers on a random basis.
 
 Before we jump into the code, which is getting a little complex, let's sketch the core routing logic and break it down into a simple but robust design.
 
