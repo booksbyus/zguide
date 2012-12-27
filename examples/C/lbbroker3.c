@@ -66,7 +66,6 @@ typedef struct {
     zlist_t *workers;           //  List of ready workers
 } lbbroker_t;
 
-
 //  .split reactor design
 //  In the reactor design, each time a message arrives on a socket, the
 //  reactor passes it to a handler function. We have two handlers; one

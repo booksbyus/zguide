@@ -27,7 +27,6 @@ struct _kvmsg {
     char key [KVMSG_KEY_MAX + 1];
 };
 
-
 //  .split constructor and destructor
 //  Here are the constructor and destructor for the class:
 
@@ -71,7 +70,6 @@ kvmsg_destroy (kvmsg_t **self_p)
     }
 }
 
-
 //  .split recv method
 //  The recv method reads a key-value message from socket, and returns a new
 //  kvmsg instance:
@@ -103,7 +101,6 @@ kvmsg_recv (void *socket)
     return self;
 }
 
-
 //  .split send method
 //  The send method sends a multi-frame key-value message to a socket:
 
@@ -124,7 +121,6 @@ kvmsg_send (kvmsg_t *self, void *socket)
         zmq_msg_close (&copy);
     }
 }
-
 
 //  .split key methods
 //  These methods let the caller get and set the message key, as a
@@ -173,7 +169,6 @@ kvmsg_fmt_key (kvmsg_t *self, char *format, ...)
     va_end (args);
     kvmsg_set_key (self, value);
 }
-
 
 //  .split sequence methods
 //  These two methods let the caller get and set the message sequence number:
@@ -259,7 +254,6 @@ kvmsg_fmt_body (kvmsg_t *self, char *format, ...)
     va_end (args);
     kvmsg_set_body (self, (byte *) value, strlen (value));
 }
-
 
 //  .split size method
 //  The size method returns the body size of the last-read message, if any:

@@ -1,13 +1,10 @@
-//  Demonstrate identities as used by the request-reply pattern.  Run this
-//  program by itself.  Note that the utility functions s_ are provided by
-//  zhelpers.h.  It gets boring for everyone to keep repeating this code.
+//  Demonstrate request-reply identities
 
 #include "zhelpers.h"
 
 int main (void) 
 {
     void *context = zmq_ctx_new ();
-
     void *sink = zmq_socket (context, ZMQ_ROUTER);
     zmq_bind (sink, "inproc://example");
 

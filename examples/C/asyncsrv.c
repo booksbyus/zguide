@@ -53,9 +53,8 @@ static void server_worker (void *args, zctx_t *ctx, void *pipe);
 
 void *server_task (void *args)
 {
-    zctx_t *ctx = zctx_new ();
-
     //  Frontend socket talks to clients over TCP
+    zctx_t *ctx = zctx_new ();
     void *frontend = zsocket_new (ctx, ZMQ_ROUTER);
     zsocket_bind (frontend, "tcp://*:5570");
 
@@ -106,7 +105,6 @@ server_worker (void *args, zctx_t *ctx, void *pipe)
     }
 }
 
-
 //  The main thread simply starts several clients, and a server, and then
 //  waits for the server to finish.
 
@@ -116,8 +114,6 @@ int main (void)
     zthread_new (client_task, NULL);
     zthread_new (client_task, NULL);
     zthread_new (server_task, NULL);
-
-    //  Run for 5 seconds then quit
-    zclock_sleep (5 * 1000);
+    zclock_sleep (5 * 1000);    //  Run for 5 seconds then quit
     return 0;
 }

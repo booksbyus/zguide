@@ -55,7 +55,6 @@ int main (int argc, char *argv [])
     return 0;
 }
 
-
 //  .split class implementation
 //  Here is the flclient class implementation. Each instance has a context,
 //  a DEALER socket it uses to talk to the servers, a counter of how many

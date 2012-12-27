@@ -1,6 +1,4 @@
 //  Hello World server
-//  Binds REP socket to tcp://*:5555
-//  Expects "Hello" from client, replies with "World"
 
 #include <zmq.h>
 #include <stdio.h>
@@ -10,9 +8,8 @@
 
 int main (void)
 {
-    void *context = zmq_ctx_new ();
-
     //  Socket to talk to clients
+    void *context = zmq_ctx_new ();
     void *responder = zmq_socket (context, ZMQ_REP);
     int rc = zmq_bind (responder, "tcp://*:5555");
     assert (rc == 0);

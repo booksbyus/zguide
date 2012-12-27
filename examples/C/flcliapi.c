@@ -10,7 +10,6 @@
 //  Server considered dead if silent for this long
 #define SERVER_TTL      6000    //  msecs
 
-
 //  .split API structure
 //  This API works in two halves, a common pattern for APIs that need to
 //  run in the background. One half is an front-end object our application
@@ -97,7 +96,6 @@ flcliapi_request (flcliapi_t *self, zmsg_t **request_p)
     return reply;
 }
 
-
 //  .split back-end agent
 //  Here we see the back-end agent. It runs as an attached thread, talking
 //  to its parent over a pipe socket. It is a fairly complex piece of work
@@ -159,7 +157,6 @@ server_tickless (const char *key, void *server, void *arg)
         *tickless = self->ping_at;
     return 0;
 }
-
 
 //  .split back-end agent class
 //  We build the agent as a class that's capable of processing messages
@@ -287,7 +284,6 @@ agent_router_message (agent_t *self)
     else
         zmsg_destroy (&reply);
 }
-
 
 //  .split back-end agent implementation
 //  Finally here's the agent task itself, which polls its two sockets

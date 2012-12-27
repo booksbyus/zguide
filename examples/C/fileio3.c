@@ -103,7 +103,6 @@ server_thread (void *args, zctx_t *ctx, void *pipe)
     fclose (file);
 }
 
-
 //  The main task starts the client and server threads; it's easier
 //  to test this as a single process with threads, than as multiple
 //  processes:

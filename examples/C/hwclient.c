@@ -1,22 +1,15 @@
 //  Hello World client
-//  Connects REQ socket to tcp://localhost:5555
-//  Sends "Hello" to server, expects "World" back
-
 #include <zmq.h>
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <assert.h>
 
 int main (void)
 {
-    void *context = zmq_ctx_new ();
-
-    //  Socket to talk to server
     printf ("Connecting to hello world server...\n");
+    void *context = zmq_ctx_new ();
     void *requester = zmq_socket (context, ZMQ_REQ);
-    int rc = zmq_connect (requester, "tcp://localhost:5555");
-    assert (rc == 0);
+    zmq_connect (requester, "tcp://localhost:5555");
 
     int request_nbr;
     for (request_nbr = 0; request_nbr != 10; request_nbr++) {

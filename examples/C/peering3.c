@@ -104,7 +104,6 @@ int main (int argc, char *argv [])
 {
     //  First argument is this broker's name
     //  Other arguments are our peers' names
-    //
     if (argc < 2) {
         printf ("syntax: peering3 me {you}...\n");
         return 0;
@@ -113,9 +112,8 @@ int main (int argc, char *argv [])
     printf ("I: preparing broker at %s...\n", self);
     srandom ((unsigned) time (NULL));
 
-    zctx_t *ctx = zctx_new ();
-
     //  Prepare local frontend and backend
+    zctx_t *ctx = zctx_new ();
     void *localfe = zsocket_new (ctx, ZMQ_ROUTER);
     zsocket_bind (localfe, "ipc://%s-localfe.ipc", self);
 
@@ -191,9 +189,7 @@ int main (int argc, char *argv [])
 
         //  Track if capacity changes during this iteration
         int previous = local_capacity;
-
-        //  Handle reply from local worker
-        zmsg_t *msg = NULL;
+        zmsg_t *msg = NULL;     //  Reply from local worker
 
         if (primary [0].revents & ZMQ_POLLIN) {
             msg = zmsg_recv (localbe);

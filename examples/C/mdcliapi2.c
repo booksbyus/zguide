@@ -28,7 +28,6 @@ void s_mdcli_connect_to_broker (mdcli_t *self)
         zclock_log ("I: connecting to broker at %s...", self->broker);
 }
 
-
 //  The constructor and destructor are the same as in mdcliapi, except
 //  we don't do retries, so there's no retries property.
 //  .skip
@@ -50,7 +49,6 @@ mdcli_new (char *broker, int verbose)
     return self;
 }
 
-
 //  Destructor
 
 void
@@ -65,7 +63,6 @@ mdcli_destroy (mdcli_t **self_p)
         *self_p = NULL;
     }
 }
-
 
 //  Set request timeout
 
@@ -104,7 +101,6 @@ mdcli_send (mdcli_t *self, char *service, zmsg_t **request_p)
     zmsg_send (&request, self->client);
     return 0;
 }
-
 
 //  .skip
 //  The recv method waits for a reply message and returns that to the 

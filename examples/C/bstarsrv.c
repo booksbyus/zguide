@@ -116,7 +116,6 @@ s_state_machine (bstar_t *fsm)
     return exception;
 }
 
-
 //  .split main task
 //  This is our main task. First we bind/connect our sockets with our
 //  peer and make sure we will get state messages correctly. We use

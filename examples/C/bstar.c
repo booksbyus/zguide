@@ -232,7 +232,6 @@ bstar_new (int primary, char *local, char *remote)
     return self;
 }
 
-
 //  .split destructor
 //  The destructor shuts down the bstar reactor:
 
@@ -249,7 +248,6 @@ bstar_destroy (bstar_t **self_p)
     }
 }
 
-
 //  .split zloop method
 //  The zloop method returns the underlying zloop reactor, so we can add
 //  additional timers and readers:
@@ -259,7 +257,6 @@ bstar_zloop (bstar_t *self)
 {
     return self->loop;
 }
-
 
 //  .split voter method
 //  The voter method registers a client voter socket. Messages received

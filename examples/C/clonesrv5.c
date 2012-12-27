@@ -20,7 +20,6 @@ typedef struct {
     void *collector;            //  Collect updates from clients
 } clonesrv_t;
 
-
 int main (void)
 {
     clonesrv_t *self = (clonesrv_t *) zmalloc (sizeof (clonesrv_t));

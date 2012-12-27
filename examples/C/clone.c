@@ -4,7 +4,6 @@
 //  If no server replies within this time, abandon request
 #define GLOBAL_TIMEOUT  4000    //  msecs
 
-
 //  =====================================================================
 //  Synchronous part, works in our application thread
 
@@ -119,7 +118,6 @@ clone_get (clone_t *self, char *key)
     }
     return NULL;
 }
-
 
 //  .split working with servers
 //  The back-end agent manages a set of servers, which we implement using

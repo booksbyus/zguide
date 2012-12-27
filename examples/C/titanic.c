@@ -93,7 +93,6 @@ titanic_request (void *args, zctx_t *ctx, void *pipe)
     mdwrk_destroy (&worker);
 }
 
-
 //  .split Titanic reply service
 //  The "titanic.reply" task checks if there's a reply for the specified
 //  request (by UUID), and returns a 200 OK, 300 Pending, or 400 Unknown
@@ -137,7 +136,6 @@ titanic_reply (void *context)
     return 0;
 }
 
-
 //  .split Titanic close task
 //  The "titanic.close" task removes any waiting replies for the request
 //  (specified by UUID). It's idempotent, so safe to call more than once
@@ -171,7 +169,6 @@ titanic_close (void *context)
     mdwrk_destroy (&worker);
     return 0;
 }
-
 
 //  .split worker task
 //  This is the main thread for the Titanic worker. It starts three child

@@ -162,9 +162,7 @@ kvmsg_recv (void *socket)
     return self;
 }
 
-
 //  Send key-value message to socket; any empty frames are sent as such.
-
 void
 kvmsg_send (kvmsg_t *self, void *socket)
 {
@@ -218,7 +216,6 @@ kvmsg_dup (kvmsg_t *self)
 //  .skip
 
 //  Return key from last read message, if any, else NULL
-
 char *
 kvmsg_key (kvmsg_t *self)
 {
@@ -238,9 +235,7 @@ kvmsg_key (kvmsg_t *self)
         return NULL;
 }
 
-
 //  Set message key as provided
-
 void
 kvmsg_set_key (kvmsg_t *self, char *key)
 {
@@ -253,9 +248,7 @@ kvmsg_set_key (kvmsg_t *self, char *key)
     self->present [FRAME_KEY] = 1;
 }
 
-
 //  Set message key using printf format
-
 void
 kvmsg_fmt_key (kvmsg_t *self, char *format, ...)
 {
@@ -269,9 +262,7 @@ kvmsg_fmt_key (kvmsg_t *self, char *format, ...)
     kvmsg_set_key (self, value);
 }
 
-
 //  Return sequence nbr from last read message, if any
-
 int64_t
 kvmsg_sequence (kvmsg_t *self)
 {
@@ -293,9 +284,7 @@ kvmsg_sequence (kvmsg_t *self)
         return 0;
 }
 
-
 //  Set message sequence number
-
 void
 kvmsg_set_sequence (kvmsg_t *self, int64_t sequence)
 {
@@ -319,7 +308,6 @@ kvmsg_set_sequence (kvmsg_t *self, int64_t sequence)
 }
 
 //  Return body from last read message, if any, else NULL
-
 byte *
 kvmsg_body (kvmsg_t *self)
 {
@@ -330,9 +318,7 @@ kvmsg_body (kvmsg_t *self)
         return NULL;
 }
 
-
 //  Set message body
-
 void
 kvmsg_set_body (kvmsg_t *self, byte *body, size_t size)
 {
@@ -345,9 +331,7 @@ kvmsg_set_body (kvmsg_t *self, byte *body, size_t size)
     memcpy (zmq_msg_data (msg), body, size);
 }
 
-
 //  Set message body using printf format
-
 void
 kvmsg_fmt_body (kvmsg_t *self, char *format, ...)
 {
@@ -361,9 +345,7 @@ kvmsg_fmt_body (kvmsg_t *self, char *format, ...)
     kvmsg_set_body (self, (byte *) value, strlen (value));
 }
 
-
 //  Return body size from last read message, if any, else zero
-
 size_t
 kvmsg_size (kvmsg_t *self)
 {
@@ -404,7 +386,6 @@ kvmsg_set_uuid (kvmsg_t *self)
     self->present [FRAME_UUID] = 1;
 }
 
-
 //  .split property methods
 //  These methods get/set a specified message property:
 
@@ -424,7 +405,6 @@ kvmsg_get_prop (kvmsg_t *self, char *name)
     }
     return "";
 }
-
 
 //  Set message property. Property name cannot contain '='. Max length of
 //  value is 255 chars.

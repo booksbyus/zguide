@@ -5,7 +5,6 @@
 #include <uuid/uuid.h>
 #include "udplib.c"
 
-
 //  =====================================================================
 //  Synchronous part, works in our application thread
 
@@ -60,7 +59,6 @@ interface_recv (interface_t *self)
     zmsg_t *msg = zmsg_recv (self->pipe);
     return msg;
 }
-
 
 //  =====================================================================
 //  Asynchronous part, works in the background

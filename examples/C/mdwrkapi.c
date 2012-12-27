@@ -30,7 +30,6 @@ struct _mdwrk_t {
     zframe_t *reply_to;         //  Return identity, if any
 };
 
-
 //  .split utility functions
 //  We have two utility functions; to send a message to the broker and
 //  to (re-)connect to the broker:
@@ -59,7 +58,6 @@ s_mdwrk_send_to_broker (mdwrk_t *self, char *command, char *option,
     zmsg_send (&msg, self->worker);
 }
 
-
 //  Connect or reconnect to broker
 
 void s_mdwrk_connect_to_broker (mdwrk_t *self)
@@ -78,7 +76,6 @@ void s_mdwrk_connect_to_broker (mdwrk_t *self)
     self->liveness = HEARTBEAT_LIVENESS;
     self->heartbeat_at = zclock_time () + self->heartbeat;
 }
-
 
 //  .split constructor and destructor
 //  Here we have the constructor and destructor for our mdwrk class:
@@ -103,7 +100,6 @@ mdwrk_new (char *broker,char *service, int verbose)
     return self;
 }
 
-
 //  Destructor
 
 void
@@ -120,7 +116,6 @@ mdwrk_destroy (mdwrk_t **self_p)
     }
 }
 
-
 //  .split configure worker
 //  We provide two methods to configure the worker API. You can set the
 //  heartbeat interval and retries to match the expected network performance.
@@ -132,7 +127,6 @@ mdwrk_set_heartbeat (mdwrk_t *self, int heartbeat)
 {
     self->heartbeat = heartbeat;
 }
-
 
 //  Set reconnect delay
 

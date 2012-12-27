@@ -77,7 +77,6 @@ s_handle_io_error (char *reason)
     }
 }
 
-
 //  Constructor
 
 static udp_t *
@@ -131,7 +130,6 @@ udp_new (int port_nbr)
     return self;
 }
 
-
 //  Destructor
 
 static void
@@ -145,7 +143,6 @@ udp_destroy (udp_t **self_p)
         *self_p = NULL;
     }
 }
-
 
 //  Returns UDP socket handle
 
