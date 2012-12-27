@@ -758,7 +758,9 @@ Some notes about this code:
 
 The important thing about this example is not performance (which, although I haven't tested it, is surely terrible), but how well it implements the reliability contract. To try it, start the mdbroker and titanic programs. Then start the ticlient, and then start the mdworker echo service. You can run all four of these using the {{-v}} option to do verbose activity tracing. You can stop and restart any piece //except// the client and nothing will get lost.
 
-If you want to use Titanic in real cases, you'll rapidly be asking "how do we make this faster?" Here's what I'd do, starting with the example implementation:
+If you want to use Titanic in real cases, you'll rapidly be asking "how do we make this faster?"
+
+Here's what I'd do, starting with the example implementation:
 
 * Use a single disk file for all data, rather than multiple files. Operating systems are usually better at handling a few large files than many smaller ones.
 * Organize that disk file as a circular buffer so that new requests can be written contiguously (with very occasional wraparound). One thread, writing full speed to a disk file, can work rapidly.
@@ -773,8 +775,6 @@ If you want to make Titanic //even more reliable//, duplicate the requests to a 
 If you want to make Titanic //much faster and less reliable//, store requests and replies purely in memory. This will give you the functionality of a disconnected network, but requests won't survive a crash of the Titanic server itself.
 
 ++ High-availability Pair (Binary Star Pattern)
-
-The Binary Star pattern puts two servers in a primary-backup high-availability pair[figure]. At any given time, one of these (the active) accepts connections from client applications. The other (the passive) does nothing, but the two servers monitor each other. If the active disappears from the network, after a certain time the passive takes over as active.
 
 [[code type="textdiagram" title="High-availability Pair, Normal Operation"]]
 #------------#           #------------#
@@ -794,7 +794,9 @@ The Binary Star pattern puts two servers in a primary-backup high-availability p
 #------------#
 [[/code]]
 
-Binary Star pattern was developed by myself and Martin Sustrik for the iMatix [http://www.openamq.org OpenAMQ server]. We designed it:
+The Binary Star pattern puts two servers in a primary-backup high-availability pair[figure]. At any given time, one of these (the active) accepts connections from client applications. The other (the passive) does nothing, but the two servers monitor each other. If the active disappears from the network, after a certain time the passive takes over as active.
+
+Binary Star pattern was developed by Martin Sustrik and myself for the iMatix [http://www.openamq.org OpenAMQ server]. We designed it:
 
 * To provide a straight-forward high-availability solution.
 * To be simple enough to actually understand and use.
@@ -1186,15 +1188,11 @@ And here, almost as complex and large as the Majordomo broker, is the client API
 [[code type="example" title="Freelance client API" name="flcliapi"]]
 [[/code]]
 
-This API implementation is fairly sophisticated and uses a couple of techniques that we've not seen before:
+This API implementation is fairly sophisticated and uses a couple of techniques that we've not seen before.
 
-**Multithreaded API**
+* **Multithreaded API** - the client API consists of two parts, a synchronous 'flcliapi' class that runs in the application thread, and an asynchronous 'agent' class that runs as a background thread. Remember how 0MQ makes it easy to create multithreaded apps. The flcliapi and agent classes talk to each other with messages over an {{inproc}} socket. All 0MQ aspects (such as creating and destroying a context) are hidden in the API. The agent in effect acts like a mini-broker, talking to servers in the background, so that when we make a request, it can make a best effort to reach a server it believes is available.
 
-The client API consists of two parts, a synchronous 'flcliapi' class that runs in the application thread, and an asynchronous 'agent' class that runs as a background thread. Remember how 0MQ makes it easy to create multithreaded apps. The flcliapi and agent classes talk to each other with messages over an {{inproc}} socket. All 0MQ aspects (such as creating and destroying a context) are hidden in the API. The agent in effect acts like a mini-broker, talking to servers in the background, so that when we make a request, it can make a best effort to reach a server it believes is available.
-
-**Tickless poll timer**
-
-In previous poll loops we always used a fixed tick interval, e.g., 1 second, which is simple enough but not excellent on power-sensitive clients, such as notebooks or mobile phones, where waking the CPU costs power. For fun, and to help save the planet, the agent uses a 'tickless timer', which calculates the poll delay based on the next timeout we're expecting. A proper implementation would keep an ordered list of timeouts. We just check all timeouts and calculate the poll delay until the next one.
+* **Tickless poll timer** - in previous poll loops we always used a fixed tick interval, e.g., 1 second, which is simple enough but not excellent on power-sensitive clients, such as notebooks or mobile phones, where waking the CPU costs power. For fun, and to help save the planet, the agent uses a 'tickless timer', which calculates the poll delay based on the next timeout we're expecting. A proper implementation would keep an ordered list of timeouts. We just check all timeouts and calculate the poll delay until the next one.
 
 ++ Conclusion
 

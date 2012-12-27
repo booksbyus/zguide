@@ -573,6 +573,8 @@ If you're like most 0MQ users, at this stage your mind is starting to think, "wh
 
 +++ Transport Bridging
 
+A frequent request from 0MQ users is "how do I connect my 0MQ network with technology X?" where X is some other networking or messaging technology.
+
 [[code type="textdiagram" title="Pub-Sub Forwarder Proxy"]]
                #-----------#
                | Publisher |
@@ -580,11 +582,9 @@ If you're like most 0MQ users, at this stage your mind is starting to think, "wh
                |    PUB    |
                '-----------'
                    bind
-         tcp://192.168.55.210:5556
+        tcp://192.168.55.210:5556
                     |
      .--------------+--------------.
-     |              |              |
-  connect        connect        connect
      |              |              |
      v              v              v
 .----------.   .----------.   .----------.
@@ -594,13 +594,11 @@ If you're like most 0MQ users, at this stage your mind is starting to think, "wh
 #----------#   #----------#   +----------+
                               |   XPUB   |
  Internal network             '-----+----'
------------------------------------ | -----------
+=---------------------------------- | -----------
  External network                  bind
-                            tcp://10.1.1.0:8100
+                           tcp://10.1.1.0:8100
                                     |
                             .-------+-------.
-                            |               |
-                         connect         connect
                             |               |
                             v               v
                        .----------.   .----------.
@@ -610,7 +608,7 @@ If you're like most 0MQ users, at this stage your mind is starting to think, "wh
                        #----------#   #----------#
 [[/code]]
 
-A frequent request from 0MQ users is "how do I connect my 0MQ network with technology X?" where X is some other networking or messaging technology. The simple answer is to build a "bridge". A bridge is a small application that speaks one protocol at one socket, and converts to/from a second protocol at another socket. A protocol interpreter, if you like. A common bridging problem in 0MQ is to bridge two transports or networks.
+The simple answer is to build a "bridge". A bridge is a small application that speaks one protocol at one socket, and converts to/from a second protocol at another socket. A protocol interpreter, if you like. A common bridging problem in 0MQ is to bridge two transports or networks.
 
 As an example, we're going to write a little proxy that sits in between a publisher and a set of subscribers, bridging two networks. The frontend socket (SUB) faces the internal network, where the weather server is sitting, and the backend (PUB) faces subscribers on the external network. It subscribes to the weather service on the frontend socket, and republishes its data on the backend socket.
 
@@ -952,8 +950,6 @@ For these reasons, PAIR makes the best choice for coordination between pairs of 
 
 When you want to coordinate a set of nodes on a network, PAIR sockets won't work well any more. This is one of the few areas where the strategies for threads and nodes are different. Principally nodes come and go whereas threads (unless they are 'detatched' threads imitating nodes) are static. PAIR sockets do not automatically reconnect if the remote node goes away and comes back.
 
-The second significant difference between threads and nodes is that you typically have a fixed number of threads but a more variable number of nodes. Let's take one of our earlier scenarios (the weather server and clients) and use node coordination to ensure that subscribers don't lose data when starting up.
-
 [[code type="textdiagram" title="Pub-Sub Synchronization"]]
 #------------#
 | Publisher  |
@@ -970,6 +966,8 @@ The second significant difference between threads and nodes is that you typicall
 | Subscriber |
 #------------#
 [[/code]]
+
+The second significant difference between threads and nodes is that you typically have a fixed number of threads but a more variable number of nodes. Let's take one of our earlier scenarios (the weather server and clients) and use node coordination to ensure that subscribers don't lose data when starting up.
 
 This is how the application will work:
 

@@ -242,9 +242,7 @@ The //identity// concept in 0MQ refers specifically to ROUTER sockets and how th
 
 An application that uses a ROUTER socket to talk to specific peers can convert a logical address to an identity if it has built the necessary hash table. Since ROUTER sockets only announce the identity of a connection (to a specific peer) when that peer sends a message, you can only really reply to a message, not spontaneously talk to a peer.
 
-This is true even if you flip the rules and make the ROUTER connect to the peer rather than wait for the peer to connect to the ROUTER.
-
-However you can force the ROUTER socket to use a logical address in place of its identity. The {{zmq_setsockopt}} reference page calls this "setting the socket identity". It works as follows:
+This is true even if you flip the rules and make the ROUTER connect to the peer rather than wait for the peer to connect to the ROUTER. However you can force the ROUTER socket to use a logical address in place of its identity. The {{zmq_setsockopt}} reference page calls this "setting the socket identity". It works as follows:
 
 * The peer application sets the {{ZMQ_IDENTITY}} option its peer socket (DEALER or REQ), //before// binding or connecting.
 * Usually the peer then connects to the already-bound ROUTER socket. But the ROUTER can also connect to the peer.
@@ -353,10 +351,6 @@ If we never need to pass the message along to a REP socket, we can simply drop t
 
 +++ A Load-Balancing Message Broker
 
-The previous example is half-complete. It can manage a set of workers with dummy requests and replies, but it has no way to talk to clients.
-
-If we add a second //frontend// ROUTER socket that accepts client requests, and turn our example into a proxy that can switch messages from frontend to backend, we get a useful and reusable tiny load-balancing message broker[figure].
-
 [[code type="textdiagram" title="Load-Balancing Broker"]]
 #--------#  #--------#  #--------#
 | Client |  | Client |  | Client |
@@ -382,6 +376,10 @@ If we add a second //frontend// ROUTER socket that accepts client requests, and 
 | Worker |  | Worker |  | Worker |
 #--------#  #--------#  #--------#
 [[/code]]
+
+The previous example is half-complete. It can manage a set of workers with dummy requests and replies, but it has no way to talk to clients.
+
+If we add a second //frontend// ROUTER socket that accepts client requests, and turn our example into a proxy that can switch messages from frontend to backend, we get a useful and reusable tiny load-balancing message broker[figure].
 
 What this broker does is:
 
@@ -691,7 +689,9 @@ Some comments on this code:
 
 Note that we're doing DEALER to ROUTER dialog between client and server, but internally between the server main thread and workers we're doing DEALER to DEALER. If the workers were strictly synchronous, we'd use REP. But since we want to send multiple replies we need an async socket. We do //not// want to route replies, they always go to the single server thread that sent us the request.
 
-Let's think about the routing envelope. The client sends a simple message. The server thread receives a two-part message (real message prefixed by client identity). We send this on to the worker, which treats it as a normal reply envelope, returns that to us, and we can then use it to route the reply back to the right client:
+Let's think about the routing envelope. The client sends a message consisting of a single frame. The server thread receives a two-frame message (original message prefixed by client identity). We send these two frames on to the worker, which treats it as a normal reply envelope, returns that to us as a two frame message. We then use the first frame as an identity to route the second frame back to the client as a reply.
+
+It looks something like this:
 
 [[code]]
      client          server       frontend       worker
@@ -733,37 +733,6 @@ The client explains:
 
 * Workers process one task at a time, they are very simple beasts. If they crash, they get restarted by whatever script started them.
 
-[[code type="textdiagram" title="Cluster Architecture"]]
-#--------#  #--------#  #--------#
-| Client |  | Client |  | Client |
-+--------+  +--------+  +--------+
-|  REQ   |  |  REQ   |  |  REQ   |
-'---+----'  '---+----'  '---+----'
-    |           |           |
-    '-----------+-----------'
-                |
-.-------------- | ---------------.
-|               |                |
-|         .-----+------.         |
-|         |   ROUTER   |         |
-|         +------------+         |
-|         |    Load    |         |
-|         |  balancer  |         |
-|         +------------+         |
-|         |   ROUTER   |         |
-|         '-----+------'         |
-|               |         Broker |
-'=------------- | --------------='
-                |
-    .-----------+-----------.
-    |           |           |
-.---+----.  .---+----.  .---+----.
-|  REQ   |  |  REQ   |  |  REQ   |
-+--------+  +--------+  +--------+
-| Worker |  | Worker |  | Worker |
-#--------#  #--------#  #--------#
-[[/code]]
-
 So we double check to make sure that we understood this correctly:
 
 * "There will be some kind of super-duper network interconnect between clusters, right?", we ask. The client says, "Yes, of course, we're not idiots."
@@ -773,6 +742,33 @@ So we double check to make sure that we understood this correctly:
 So we do a little calculation and see that this will work nicely over plain TCP. 2,500 clients x 10/second x 1,000 bytes x 2 directions = 50MB/sec or 400Mb/sec, not a problem for a 1Gb network.
 
 It's a straight-forward problem that requires no exotic hardware or protocols, just some clever routing algorithms and careful design. We start by designing one cluster (one data center) and then we figure out how to connect clusters together.
+
+[[code type="textdiagram" title="Cluster Architecture"]]
+#--------#  #--------#  #--------#
+| Client |  | Client |  | Client |
++--------+  +--------+  +--------+
+|  REQ   |  |  REQ   |  |  REQ   |
+'---+----'  '---+----'  '---+----'
+    |           |           |
+    '-----------+-----------'
+                |
+          .-----+------.
+          |   ROUTER   |
+          +------------+
+          |    Load    |
+          |  balancer  |  Broker
+          +------------+
+          |   ROUTER   |
+          '-----+------'
+                |
+    .-----------+-----------.
+    |           |           |
+.---+----.  .---+----.  .---+----.
+|  REQ   |  |  REQ   |  |  REQ   |
++--------+  +--------+  +--------+
+| Worker |  | Worker |  | Worker |
+#--------#  #--------#  #--------#
+[[/code]]
 
 +++ Architecture of a Single Cluster
 
@@ -800,7 +796,6 @@ Now we scale this out to more than one cluster. Each cluster has a set of client
 .-+-.  .-+-.  .-+-.     :     .-+-.  .-+-.  .-+-.
 | W |  | W |  | W |     :     | W |  | W |  | W |
 '---'  '---'  '---'     :     '---'  '---'  '---'
-                        :
 [[/code]]
 
 The question is: how do we get the clients of each cluster talking to the workers of the other cluster? There are a few possibilities, each with pros and cons:
@@ -810,6 +805,12 @@ The question is: how do we get the clients of each cluster talking to the worker
 * Workers might connect directly to both brokers. But REQ workers can't do that, they can only reply to one broker. We might use REPs but REPs don't give us customizable broker-to-worker routing like load-balancing, only the built-in load balancing. That's a fail, if we want to distribute work to idle workers: we precisely need load-balancing. One solution would be to use ROUTER sockets for the worker nodes. Let's label this "Idea #1".
 
 * Brokers could connect to each other. This looks neatest because it creates the fewest additional connections. We can't add clusters on the fly but that is probably out of scope. Now clients and workers remain ignorant of the real network topology, and brokers tell each other when they have spare capacity. Let's label this "Idea #2".
+
+Let's explore Idea #1. In this model we have workers connecting to both brokers and accepting jobs from either[figure].
+
+It looks feasible. However it doesn't provide what we wanted, which was that clients get local workers if possible and remote workers only if it's better than waiting. Also workers will signal "ready" to both brokers and can get two jobs at once, while other workers remain idle. It seems this design fails because again we're putting routing logic at the edges.
+
+So idea #2 then. We interconnect the brokers and don't touch the clients or workers, which are REQs like we're used to[figure].
 
 [[code type="textdiagram" title="Idea 1 - Cross-connected Workers"]]
             Cluster 1               :  Cluster 2
@@ -832,17 +833,18 @@ The question is: how do we get the clients of each cluster talking to the worker
 #--------#  #--------#  #--------#  :
 [[/code]]
 
-Let's explore Idea #1. In this model we have workers connecting to both brokers and accepting jobs from either[figure].
-
-It looks feasible. However it doesn't provide what we wanted, which was that clients get local workers if possible and remote workers only if it's better than waiting. Also workers will signal "ready" to both brokers and can get two jobs at once, while other workers remain idle. It seems this design fails because again we're putting routing logic at the edges.
-
-So idea #2 then. We interconnect the brokers and don't touch the clients or workers, which are REQs like we're used to[figure].
-
 This design is appealing because the problem is solved in one place, invisible to the rest of the world. Basically, brokers open secret channels to each other and whisper, like camel traders, "Hey, I've got some spare capacity, if you have too many clients give me a shout and we'll deal".
+
+It is in effect just a more sophisticated routing algorithm: brokers become subcontractors for each other. Other things to like about this design, even before we play with real code:
+
+* It treats the common case (clients and workers on the same cluster) as default and does extra work for the exceptional case (shuffling jobs between clusters).
+
+* It lets us use different message flows for the different types of work. That means we can handle them differently, e.g. using different types of network connection.
+
+* It feels like it would scale smoothly. Interconnecting three, or more brokers doesn't get over-complex. If we find this to be a problem, it's easy to solve by adding a super-broker.
 
 [[code type="textdiagram" title="Idea 2 - Brokers Talking to Each Other"]]
      Cluster 1         :         Cluster 2
-                       :
                        :
 .---.  .---.  .---.    :    .---.  .---.  .---.
 | C |  | C |  | C |    :    | C |  | C |  | C |
@@ -857,16 +859,7 @@ This design is appealing because the problem is solved in one place, invisible t
 .-+-.  .-+-.  .-+-.    :    .-+-.  .-+-.  .-+-.
 | W |  | W |  | W |    :    | W |  | W |  | W |
 '---'  '---'  '---'    :    '---'  '---'  '---'
-                       :
 [[/code]]
-
-It is in effect just a more sophisticated routing algorithm: brokers become subcontractors for each other. Other things to like about this design, even before we play with real code:
-
-* It treats the common case (clients and workers on the same cluster) as default and does extra work for the exceptional case (shuffling jobs between clusters).
-
-* It lets us use different message flows for the different types of work. That means we can handle them differently, e.g. using different types of network connection.
-
-* It feels like it would scale smoothly. Interconnecting three, or more brokers doesn't get over-complex. If we find this to be a problem, it's easy to solve by adding a super-broker.
 
 We'll now make a worked example. We'll pack an entire cluster into one process. That is obviously not realistic but it makes it simple to simulate, and the simulation can accurately scale to real processes. This is the beauty of 0MQ, you can design at the microlevel and scale that up to the macro level. Threads become processes, become boxes and the patterns and logic remain the same. Each of our 'cluster' processes contains client threads, worker threads, and a broker thread.
 
@@ -916,22 +909,6 @@ And there is also the flow of information between a broker and its local clients
 
 +++ The Naming Ceremony
 
-Three flows x two sockets for each flow = six sockets that we have to manage in the broker.  Choosing good names is vital to keeping a multi-socket juggling act reasonably coherent in our minds. Sockets //do// something and what they do should form the basis for their names. It's about being able to read the code several weeks later on a cold Monday morning before coffee, and not feeling pain.
-
-Let's do a shamanistic naming ceremony for the sockets. The three flows are:
-
-* A //local// request-reply flow between the broker and its clients and workers.
-* A //cloud// request-reply flow between the broker and its peer brokers.
-* A //state// flow between the broker and its peer brokers.
-
-Finding meaningful names that are all the same length means our code will align nicely. It's not a big thing, but attention to details helps. For each flow the broker has two sockets that we can orthogonally call the "frontend" and "backend". We've used these names quite often. A frontend receives information or tasks. A backend sends those out to other peers. The conceptual flow is from front to back (with replies going in the opposite direction from back to front).
-
-So in all the code we write for this tutorial will use these socket names:
-
-* //localfe// and //localbe// for the local flow.
-* //cloudfe// and //cloudbe// for the cloud flow.
-* //statefe// and //statebe// for the state flow.
-
 [[code type="textdiagram" title="Broker Socket Arrangement"]]
 #---------#  #---------#  #---------#
 | Client  |  | Broker  |  | Broker  |
@@ -957,8 +934,8 @@ So in all the code we write for this tutorial will use these socket names:
    |  bind   | connect |  bind   |
    '---------+---------+---------'
      request    request   state
-       /          |          \  
-      /           |           \ 
+       /          |          \
+      /           |           \
      v            v            v
 .---------.  .---------.  .---------.
 | connect |  |  bind   |  | connect |
@@ -967,6 +944,22 @@ So in all the code we write for this tutorial will use these socket names:
 |         |  | cloudfe |  | statefe |
 #---------#  #---------#  #---------#
 [[/code]]
+
+Three flows x two sockets for each flow = six sockets that we have to manage in the broker.  Choosing good names is vital to keeping a multi-socket juggling act reasonably coherent in our minds. Sockets //do// something and what they do should form the basis for their names. It's about being able to read the code several weeks later on a cold Monday morning before coffee, and not feeling pain.
+
+Let's do a shamanistic naming ceremony for the sockets. The three flows are:
+
+* A //local// request-reply flow between the broker and its clients and workers.
+* A //cloud// request-reply flow between the broker and its peer brokers.
+* A //state// flow between the broker and its peer brokers.
+
+Finding meaningful names that are all the same length means our code will align nicely. It's not a big thing, but attention to details helps. For each flow the broker has two sockets that we can orthogonally call the "frontend" and "backend". We've used these names quite often. A frontend receives information or tasks. A backend sends those out to other peers. The conceptual flow is from front to back (with replies going in the opposite direction from back to front).
+
+So in all the code we write for this tutorial will use these socket names:
+
+* //localfe// and //localbe// for the local flow.
+* //cloudfe// and //cloudbe// for the cloud flow.
+* //statefe// and //statebe// for the state flow.
 
 For our transport and because we're simulating the whole thing on one box, we'll use {{ipc}} for everything. This has the advantage of working like {{tcp}} in terms of connectivity (i.e. it's a disconnected transport, unlike {{inproc}}), yet we don't need IP addresses or DNS names, which would be a pain here. Instead, we will use {{ipc}} endpoints called //something//-{{local}}, //something//-{{cloud}}, and //something//-{{state}}, where //something// is the name of our simulated cluster.
 
@@ -984,39 +977,39 @@ Here is how this works in code:
 [[/code]]
 
 [[code type="textdiagram" title="The State Flow"]]
-                      #---------#
-                      | Broker  |
-                      | statebe |
-                      +---------+
-                      |  bind   |
-                      '---------'
-                         state
-                           /
-                          /
-                         v
-.-------------------+---------.
-|                   | connect |
-|                   +---------+
-|                   | statefe |
-|                   |   SUB   |
-+-------------------+---------+
-|           Broker            |
-+-------------------+---------+
-|                   |   PUB   |
-|                   | statebe |
-|                   +---------+
-|                   |  bind   |
-'-------------------+---------'
-                       state
-                         \
-                          \
-                           v
-                      .---------.
-                      | connect |
-                      +---------+
-                      | statefe |
-                      | Broker  |
-                      #---------#
+           #---------#
+           | Broker  |
+           | statebe |
+           +---------+
+           |  bind   |
+           '---------'
+              state
+                /
+               /
+              v
+.--------+---------.
+|        | connect |
+|        +---------+
+|        | statefe |
+|        |   SUB   |
++--------+---------+
+|     Broker       |
++--------+---------+
+|        |   PUB   |
+|        | statebe |
+|        +---------+
+|        |  bind   |
+'--------+---------'
+            state
+              \
+               \
+                v
+           .---------.
+           | connect |
+           +---------+
+           | statefe |
+           | Broker  |
+           #---------#
 [[/code]]
 
 Notes about this code:
@@ -1058,19 +1051,19 @@ If we wanted to send state messages at precise intervals we'd create a child thr
      \            |
       \           |
        v          v
-   .---------+---------+---------.
-   |  bind   |  bind   |         |
-   +---------+---------+         |
-   | localfe | cloudfe |         |
-   | ROUTER  | ROUTER  |         |
-   +---------+---------+---------+
-   |           Broker            |
-   +---------+---------+---------+
-   | ROUTER  | ROUTER  |         |
-   | localbe | cloudbe |         |
-   +---------+---------+         |
-   |  bind   | connect |         |
-   '---------+---------+---------'
+   .---------+---------+---.
+   |  bind   |  bind   |   |
+   +---------+---------+   |
+   | localfe | cloudfe |   |
+   | ROUTER  | ROUTER  |   |
+   +---------+---------+---+
+   |         Broker        |
+   +---------+---------+---+
+   | ROUTER  | ROUTER  |   |
+   | localbe | cloudbe |   |
+   +---------+---------+   |
+   |  bind   | connect |   |
+   '---------+---------+---'
      request    request
        /          |
       /           |
