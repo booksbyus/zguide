@@ -17,22 +17,17 @@ namespace zguide.mtserver
         {
             using (var context = ZmqContext.Create())
             {
-                using (ZmqSocket clients = context.CreateSocket(SocketType.ROUTER), workers = context.CreateSocket(SocketType.DEALER))
-                {
-                    clients.Bind("tcp://*:5555");
-                    workers.Bind("inproc://workers"); // FYI, inproc requires that bind is performed before connect
 
+                using (var queue = new ZeroMQ.Devices.QueueDevice(context, "tcp://*:5555", "inproc://workers"))
+                {
                     var workerThreads = new Thread[5];
                     for (int threadId = 0; threadId < workerThreads.Length; threadId++)
                     {
                         workerThreads[threadId] = new Thread(WorkerRoutine);
                         workerThreads[threadId].Start(context);
                     }
-
-                    //  Connect work threads to client threads via a queue
-                    //  Devices will be depricated from 3.x
-                    ZeroMQ.Devices.QueueDevice(clients, workers);
                 }
+
             }
         }
 

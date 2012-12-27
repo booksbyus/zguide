@@ -7,6 +7,7 @@
 //  Email:      michael.compton@littleedge.co.uk
 
 using System;
+using System.Collections.Generic;
 using System.Text;
 using ZeroMQ;
 using ZeroMQ.Interop;
@@ -34,26 +35,25 @@ namespace zguide.taskworker2 {
             sender.Connect("tcp://localhost:5558");
             //  Socket for control input
             controller.Connect("tcp://localhost:5559");
-            controller.Subscribe("", Encoding.Unicode);
+            controller.Subscribe(Encoding.Unicode.GetBytes(string.Empty));
 
             //  Process messages from receiver and controller
-            PollItem[] items = new PollItem[2];
-            items[0] = receiver.CreatePollItem(Poller.POLLIN);
-            items[0].PollInHandler += new PollHandler(ReceiverPollInHandler);
-            items[1] = controller.CreatePollItem(Poller.POLLIN);
-            items[1].PollInHandler += new PollHandler(ControllerPollInHandler);
+            receiver.ReceiveReady += ReceiverPollInHandler;
+            controller.ReceiveReady += ControllerPollInHandler;
+
+            var poller = new Poller(new List<ZmqSocket> { receiver, controller });
 
             //  Process messages from both sockets
             killCommand = false;
             while (!killCommand) {
-                context.Poll(items, -1);
+                poller.Poll();
             }
         }
 
-        private void ReceiverPollInHandler(ZmqSocket socket, Poller revents)
+        private void ReceiverPollInHandler(object s, SocketEventArgs e)
         {
             //  Process task
-            int workload = Convert.ToInt32(socket.Receive(Encoding.Unicode));
+            int workload = Convert.ToInt32(e.Socket.Receive(Encoding.Unicode));
             //  Do the work
             Thread.Sleep(workload);
             //  Send results to sink
@@ -62,7 +62,7 @@ namespace zguide.taskworker2 {
             Console.Clear();
         }
 
-        private void ControllerPollInHandler(ZmqSocket socket, Poller revents)
+        private void ControllerPollInHandler(object s, SocketEventArgs e)
         {
             //  Any waiting controller command acts as 'KILL'
             Console.WriteLine("Killed...");

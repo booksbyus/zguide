@@ -87,11 +87,11 @@ namespace zguide.peering2
                     var localfeReady = false;
                     var cloudfeReady = false;
 
-                    var backends = new PollItem[2];
-                    backends[0] = localbe.CreatePollItem(Poller.POLLIN);
-                    backends[0].PollInHandler += (socket, revents) =>
+                    var backends = new Poller();
+
+                    localbe.ReceiveReady += (socket, revents) =>
                                                      {
-                                                         var zmsg = new ZMessage(socket);
+                                                         var zmsg = new ZMessage(revents.Socket);
 
                                                          //  Use worker address for LRU routing
                                                          workerQueue.Enqueue(zmsg.Unwrap());
@@ -102,25 +102,23 @@ namespace zguide.peering2
                                                          }
                                                      };
 
-                    backends[1] = cloudbe.CreatePollItem(Poller.POLLIN);
-                    backends[1].PollInHandler += (socket, revents) =>
+
+                    cloudbe.ReceiveReady += (socket, revents) =>
                     {
-                        var zmsg = new ZMessage(socket);
+                        var zmsg = new ZMessage(revents.Socket);
                         //  We don't use peer broker address for anything
                         zmsg.Unwrap();
 
                         SendReply(zmsg, cloudfe, localfe);
                     };
 
-                    var frontends = new PollItem[2];
-                    frontends[0] = cloudfe.CreatePollItem(Poller.POLLIN);
-                    frontends[0].PollInHandler += (socket, revents) =>
+                    var frontends = new Poller();
+                    cloudfe.ReceiveReady += (socket, revents) =>
                                                     {
                                                         cloudfeReady = true;
                                                     };
 
-                    frontends[1] = localfe.CreatePollItem(Poller.POLLIN);
-                    frontends[1].PollInHandler += (socket, revents) =>
+                    localfe.ReceiveReady += (socket, revents) =>
                                                      {
                                                          localfeReady = true;
                                                      };
@@ -129,14 +127,14 @@ namespace zguide.peering2
                     while (true)
                     {
                         var timeout = (workerQueue.Count > 0 ? 1000000 : -1);
-                        var rc = ZmqContext.Poller(backends, timeout);
+                        var rc = backends.Poll(TimeSpan.FromMilliseconds(timeout));
 
                         if (rc == -1)
                             break; // Interrupted
 
                         while (workerQueue.Count > 0)
                         {
-                            ZmqContext.Poller(frontends, 0);
+                            frontends.Poll(TimeSpan.Zero);
                             bool reRoutable;
 
                             ZMessage msg;

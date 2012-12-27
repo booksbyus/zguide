@@ -49,23 +49,25 @@ namespace zguide.asycnsrv
                 {
                     //  Generate printable identity for the client
                     ZHelpers.SetID(client, Encoding.Unicode);
-                    string identity = client.IdentityToString(Encoding.Unicode);
+                    string identity = Encoding.Unicode.GetString(client.Identity);
                     client.Connect("tcp://localhost:5570");
 
-                    client.PollInHandler += (socket, revents) =>
+                    client.ReceiveReady += (s, e) =>
                     {
-                        var zmsg = new ZMessage(socket);
+                        var zmsg = new ZMessage(e.Socket);
                         Console.WriteLine("{0} : {1}", identity, zmsg.BodyToString());
                     };
 
                     int requestNumber = 0;
+
+                    var poller = new Poller(new List<ZmqSocket> { client });
 
                     while (true)
                     {
                         //  Tick once per second, pulling in arriving messages
                         for (int centitick = 0; centitick < 100; centitick++)
                         {
-                            ZmqContext.Poller(new List<ZmqSocket>(new[] { client }), 10000);
+                            poller.Poll(TimeSpan.FromMilliseconds(10000));
                         }
                         var zmsg = new ZMessage("");
                         zmsg.StringToBody(String.Format("request: {0}", ++requestNumber));
@@ -98,23 +100,23 @@ namespace zguide.asycnsrv
                     }
 
                     //  Switch messages between frontend and backend
-                    frontend.PollInHandler += (socket, revents) =>
+                    frontend.ReceiveReady += (s, e) =>
                     {
-                        var zmsg = new ZMessage(socket);
+                        var zmsg = new ZMessage(e.Socket);
                         zmsg.Send(backend);
                     };
 
-                    backend.PollInHandler += (socket, revents) =>
+                    backend.ReceiveReady += (s, e) =>
                     {
-                        var zmsg = new ZMessage(socket);
+                        var zmsg = new ZMessage(e.Socket);
                         zmsg.Send(frontend);
                     };
 
-                    var sockets = new List<ZmqSocket> {frontend, backend};
+                    var poller = new Poller(new List<ZmqSocket> {frontend, backend});
 
                     while (true)
                     {
-                        ZmqContext.Poller(sockets);
+                        poller.Poll();
                     }
                 }
             }

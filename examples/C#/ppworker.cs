@@ -37,9 +37,9 @@ namespace zguide.ppworker
 
                     using (ZmqSocket worker = ConnectWorker(context))
                     {
-                        worker.PollInHandler += (socket, revents) =>
+                        worker.ReceiveReady += (socket, revents) =>
                         {
-                            var zmsg = new ZMessage(socket);
+                            var zmsg = new ZMessage(revents.Socket);
 
                             byte[] identity = zmsg.Unwrap();
 
@@ -74,8 +74,9 @@ namespace zguide.ppworker
 
                         while (true)
                         {
-                            List<ZmqSocket> pollItems = new List<ZmqSocket>(new ZmqSocket[] { worker });
-                            context.Poller(pollItems, HEARTBEAT_INTERVAL * 1000);
+                            var poller = new Poller(new List<ZmqSocket> { worker });
+                            
+                            poller.Poll(TimeSpan.FromMilliseconds(HEARTBEAT_INTERVAL * 1000));
 
                             //If liveness hits zero, queue is considered disconnected
                             if (--liveness <= 0)

@@ -38,9 +38,9 @@ namespace zguide.spqueue
                     var workerQueue = new Queue<byte[]>();
 
                     //  Handle worker activity on backend
-                    backend.PollInHandler += (socket, revents) =>
+                    backend.ReceiveReady += (s, e) =>
                                                  {
-                                                     var zmsg = new ZMessage(socket);
+                                                     var zmsg = new ZMessage(e.Socket);
                                                      //  Use worker address for LRU routing
                                                      workerQueue.Enqueue(zmsg.Unwrap());
 
@@ -51,20 +51,24 @@ namespace zguide.spqueue
                                                      }
                                                  };
 
-                    frontend.PollInHandler += (socket, revents) =>
+                    frontend.ReceiveReady += (s, e) =>
                                                   {
                                                       //  Now get next client request, route to next worker
                                                       //  Dequeue and drop the next worker address
-                                                      var zmsg = new ZMessage(socket);
+                                                      var zmsg = new ZMessage(e.Socket);
                                                       zmsg.Wrap(workerQueue.Dequeue(), new byte[0]);
                                                       zmsg.Send(backend);
                                                   };
 
+                    var poller = new Poller(new ZmqSocket[] { frontend, backend });
+
                     while (true)
                     {
-                        int rc = ZmqContext.Poller(workerQueue.Count > 0
-                                                    ? new List<ZmqSocket>(new ZmqSocket[] {frontend, backend})
-                                                    : new List<ZmqSocket>(new ZmqSocket[] {backend}));
+                        //int rc = ZmqContext.Poller(workerQueue.Count > 0
+                        //                            ? new List<ZmqSocket>(new ZmqSocket[] {frontend, backend})
+                        //                            : new List<ZmqSocket>(new ZmqSocket[] {backend}));
+
+                        int rc = poller.Poll();
 
                         if (rc == -1)
                         {

@@ -16,14 +16,9 @@ namespace zguide.msqueue
         {
             using (var context = ZmqContext.Create())
             {
-                using (ZmqSocket frontend = context.CreateSocket(SocketType.ROUTER), backend = context.CreateSocket(SocketType.DEALER))
+                using (var queue = new ZeroMQ.Devices.QueueDevice(context, "tcp://*:5559", "tcp://*:5560"))
                 {
-                    frontend.Bind("tcp://*:5559");
-                    backend.Bind("tcp://*:5560");
-
-                    //  Note that the Devices will be removed in the 3.x release.
-                    //  This replaces the example in rrbroker.cs
-                    ZeroMQ.Devices.QueueDevice.Queue(frontend, backend);
+                    
                 }
             }
         }

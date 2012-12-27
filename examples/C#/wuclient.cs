@@ -28,7 +28,7 @@ namespace zguide.wuclient
             {
                 using (ZmqSocket subscriber = context.CreateSocket(SocketType.SUB))
                 {
-                    subscriber.Subscribe(zipcode, Encoding.Unicode);
+                    subscriber.Subscribe(Encoding.Unicode.GetBytes(zipcode));
                     subscriber.Connect("tcp://localhost:5556");
 
                     const int updatesToCollect = 100;

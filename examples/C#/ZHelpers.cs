@@ -29,7 +29,7 @@ namespace zguide
             }
         }
 
-        public static void SetID(ZmqSocket client, Encoding unicode)
+        public static string SetID(ZmqSocket client, Encoding unicode)
         {
             throw new NotImplementedException();
         }

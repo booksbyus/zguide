@@ -67,9 +67,9 @@ namespace zguide.ppqueue
                     //  Queue of available workers
                     var workerQueue = new List<Worker>();
 
-                    backend.PollInHandler += (socket, revents) =>
+                    backend.ReceiveReady += (socket, e) =>
                     {
-                        var zmsg = new ZMessage(socket);
+                        var zmsg = new ZMessage(e.Socket);
 
                         byte[] identity = zmsg.Unwrap();
 
@@ -80,7 +80,7 @@ namespace zguide.ppqueue
                         {
                             var workers = workerQueue.Where(x => x.address.SequenceEqual(identity));
 
-                            if (workers.Count() > 0)
+                            if (workers.Any())
                                 worker = workers.Single();
                         }
 
@@ -116,11 +116,11 @@ namespace zguide.ppqueue
                         };
                     };
 
-                    frontend.PollInHandler += (socket, revents) =>
+                    frontend.ReceiveReady += (socket, e) =>
                     {
                         //  Now get next client request, route to next worker
                         //  Dequeue and drop the next worker address
-                        var zmsg = new ZMessage(socket);
+                        var zmsg = new ZMessage(e.Socket);
 
                         Worker w = workerQueue[0];
                         zmsg.Wrap(w.address, new byte[0]);
@@ -129,6 +129,8 @@ namespace zguide.ppqueue
                         zmsg.Send(backend);
                     };
 
+                    var poller = new Poller(new List<ZmqSocket> { frontend, backend });
+
                     DateTime heartbeat_at = DateTime.Now.AddMilliseconds(HEARTBEAT_INTERVAL);
 
                     while (true)
@@ -136,13 +138,13 @@ namespace zguide.ppqueue
                         //Only poll frontend only if there are workers ready
                         if (workerQueue.Count > 0)
                         {
-                            List<ZmqSocket> pollItems = new List<ZmqSocket>(new ZmqSocket[] { frontend, backend });
-                            context.Poller(pollItems, HEARTBEAT_INTERVAL * 1000);
+                            //List<ZmqSocket> pollItems = new List<ZmqSocket>(new ZmqSocket[] { frontend, backend });
+                            poller.Poll(TimeSpan.FromMilliseconds(HEARTBEAT_INTERVAL * 1000));
                         }
                         else
                         {
-                            List<ZmqSocket> pollItems = new List<ZmqSocket>(new ZmqSocket[] { backend });
-                            context.Poller(pollItems, HEARTBEAT_INTERVAL * 1000);
+                            //List<ZmqSocket> pollItems = new List<ZmqSocket>(new ZmqSocket[] { backend });
+                            poller.Poll(TimeSpan.FromMilliseconds(HEARTBEAT_INTERVAL * 1000));
                         }
 
                         //Send heartbeats to idle workers if it's time

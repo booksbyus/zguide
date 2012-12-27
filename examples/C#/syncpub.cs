@@ -27,7 +27,7 @@ namespace zguide.syncpub
                     const int subscribersToWaitFor = 10;
                     for (int count = 0; count < subscribersToWaitFor; count++)
                     {
-                        syncService.Receive();
+                        syncService.Receive(Encoding.Unicode);
                         syncService.Send("", Encoding.Unicode);
                     }
 

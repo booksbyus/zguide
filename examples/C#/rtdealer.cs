@@ -65,7 +65,7 @@ namespace zguide.rtdealer
             {
                 using (ZmqSocket worker = context.CreateSocket(SocketType.DEALER))
                 {
-                    worker.StringToIdentity("A", Encoding.Unicode);
+                    worker.Identity = Encoding.Unicode.GetBytes("A");
                     worker.Connect("tcp://localhost:5555");
 
                     int total = 0;
@@ -97,7 +97,7 @@ namespace zguide.rtdealer
             {
                 using (ZmqSocket worker = context.CreateSocket(SocketType.DEALER))
                 {
-                    worker.StringToIdentity("B", Encoding.Unicode);
+                    worker.Identity = Encoding.Unicode.GetBytes("B");
                     worker.Connect("tcp://localhost:5555");
 
                     int total = 0;

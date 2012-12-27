@@ -28,7 +28,7 @@ namespace zguide.spworker
                     worker.Connect("tcp://localhost:5556");
 
                     Console.WriteLine("I: {0} worker ready", identity);
-                    worker.Send("READY");
+                    worker.Send("READY", Encoding.Unicode);
 
                     var cycles = 0;
                     while (true)

@@ -25,7 +25,7 @@ namespace zguide.tasksink2
                     controller.Bind("tcp://*:5559");
                     
                     //  Wait for start of batch
-                    receiver.Receive();
+                    receiver.Receive(Encoding.Unicode);
 
                     var stopwatch = new Stopwatch();
                     stopwatch.Start();

@@ -6,6 +6,8 @@
 //  Email:      michael.compton@littleedge.co.uk, ptomasroos@gmail.com
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using ZeroMQ;
 using ZeroMQ.Interop;
@@ -23,15 +25,14 @@ namespace zguide.rrbroker
                     frontend.Bind("tcp://*:5559");
                     backend.Bind("tcp://*:5560");
 
-                    var pollItems = new PollItem[2];
-                    pollItems[0] = frontend.CreatePollItem(Poller.POLLIN);
-                    pollItems[0].PollInHandler += (ZmqSocket, revents) => FrontendPollInHandler(ZmqSocket, backend);
-                    pollItems[1] = backend.CreatePollItem(Poller.POLLIN);
-                    pollItems[1].PollInHandler += (ZmqSocket, revents) => BackendPollInHandler(ZmqSocket, frontend);
+                    frontend.ReceiveReady += (sender, e) => FrontendPollInHandler(e.Socket, backend);
+                    backend.ReceiveReady += (sender, e) => BackendPollInHandler(e.Socket, backend);
+
+                    var poller = new Poller(new List<ZmqSocket> { frontend, backend });
 
                     while (true)
                     {
-                        context.Poll(pollItems, -1);
+                        poller.Poll();
                     }
                 }
             }
@@ -60,9 +61,10 @@ namespace zguide.rrbroker
                 //hasMore = source.RcvMore;
                 //destination.Send(message, Encoding.Unicode, hasMore ? SendRecvOpt.SNDMORE : SendRecvOpt.NONE);
 
-                byte[] message = source.Receive();
+                byte[] message = new byte[0];
+                source.Receive(message);
                 hasMore = source.ReceiveMore;
-                destination.Send(message, hasMore ? SocketFlags.SendMore : SocketFlags.None);
+                destination.Send(message, message.Length, hasMore ? SocketFlags.SendMore : SocketFlags.None);
             }
         }
     }

@@ -20,7 +20,7 @@ namespace zguide.wuproxy
                 {
                     //  This is where the weather server sits
                     frontend.Connect("tcp://127.0.0.1:5556");
-                    frontend.Subscribe("", Encoding.Unicode);
+                    frontend.Subscribe(new byte[0]);
 
                     //  This is our public endpoint for subscribers
                     backend.Bind("tcp://*:8100"); // i use local to be able to run the example, this could be the public ip instead eg. tcp://10.1.1.0:8100
@@ -33,7 +33,7 @@ namespace zguide.wuproxy
                         {
                             string message = frontend.Receive(Encoding.Unicode);
                             hasMore = frontend.ReceiveMore;
-                            backend.Send(message, Encoding.Unicode, hasMore ? SocketFlags.SendMore : SocketFlags.None);
+                            backend.Send(Encoding.Unicode.GetBytes(message), message.Length, hasMore ? SocketFlags.SendMore : SocketFlags.None);
                         }
                     }
                 }

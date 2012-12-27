@@ -24,7 +24,7 @@ namespace zguide.msreader
                 {
                     receiver.Connect("tcp://localhost:5557");
                     subscriber.Connect("tcp://localhost:5556");
-                    subscriber.Subscribe("10001 ", Encoding.Unicode);
+                    subscriber.Subscribe(Encoding.Unicode.GetBytes("10001 "));
 
                     //  Process messages from both sockets
                     //  We prioritize traffic from the task ventilator
@@ -33,7 +33,8 @@ namespace zguide.msreader
                         //  Process any waiting tasks
                         while (true)
                         {
-                            byte[] message = receiver.Receive(SocketFlags.DontWait);
+                            var message = new byte[0];
+                            receiver.Receive(message, SocketFlags.DontWait);
                             if (message != null)
                             {
                                 Console.WriteLine("Process Task");
@@ -47,7 +48,8 @@ namespace zguide.msreader
                         //  Process any waiting weather updates
                         while (true)
                         {
-                            byte[] message = subscriber.Receive(SocketFlags.DontWait);
+                            var message = new byte[0];
+                            subscriber.Receive(message, SocketFlags.DontWait);
                             if (message != null)
                             {
                                 Console.WriteLine("Process Weather");

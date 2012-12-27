@@ -45,7 +45,7 @@ namespace zguide.rtreq
                         string ready = client.Receive(Encoding.Unicode);
 
                         client.SendMore(address, Encoding.Unicode);
-                        client.SendMore();
+                        client.SendMore(string.Empty, Encoding.Unicode);
                         client.Send("This is the workload", Encoding.Unicode);
                     }
 
@@ -57,7 +57,7 @@ namespace zguide.rtreq
                         string ready = client.Receive(Encoding.Unicode);
 
                         client.SendMore(address, Encoding.Unicode);
-                        client.SendMore();
+                        client.SendMore(string.Empty, Encoding.Unicode);
                         client.Send("END", Encoding.Unicode);
                     }
                 }

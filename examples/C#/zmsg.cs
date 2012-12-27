@@ -42,11 +42,11 @@ namespace zguide
 
         public void Receive(ZmqSocket ZmqSocket)
         {
-            Queue<byte[]> receivedFrames = ZmqSocket.ReceiveAll();
+            var zmqMessage = ZmqSocket.ReceiveMessage();
 
-            while (receivedFrames.Count > 0)
+            foreach (var frame in zmqMessage)
             {
-                frames.Insert(0, (receivedFrames.Dequeue()));
+                frames.Insert(0, frame.Buffer);
             }
         }
 

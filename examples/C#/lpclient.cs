@@ -7,6 +7,7 @@
 //  Email:      ptomasroos@gmail.com
 
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using ZeroMQ;
@@ -30,7 +31,7 @@ namespace zguide.lpclient
             var client = context.CreateSocket(SocketType.REQ);
             client.Connect(serverEndpoint);
             client.Linger = TimeSpan.Zero;
-            client.PollInHandler += PollInHandler;
+            client.ReceiveReady += PollInHandler;
 
             return client;
         }
@@ -50,7 +51,8 @@ namespace zguide.lpclient
 
                     while (expectReply)
                     {
-                        int count = ZmqContext.Poller(requestTimeout * 1000, client);
+                        var poller = new Poller(new List<ZmqSocket> { client });
+                        int count = poller.Poll(TimeSpan.FromMilliseconds(requestTimeout * 1000));
 
                         if (count == 0)
                         {
@@ -75,9 +77,9 @@ namespace zguide.lpclient
             }
         }
 
-        private static void PollInHandler(ZmqSocket socket, Poller revents)
+        private static void PollInHandler(object sender, SocketEventArgs e)
         {
-            var reply = socket.Receive(Encoding.Unicode);
+            var reply = e.Socket.Receive(Encoding.Unicode);
 
             if (Int32.Parse(reply) == sequence)
             {

@@ -56,52 +56,53 @@ namespace zguide.lbbroker
                     var workerQueue = new Queue<string>();
 
                     //  Handle worker activity on backend
-                    backend.PollInHandler += (socket, revents) =>
+                    backend.ReceiveReady += (sender, e) =>
                     {
                         //  Queue worker address for LRU routing
-                        string workerAddress = socket.Receive(Encoding.Unicode);
+                        string workerAddress = e.Socket.Receive(Encoding.Unicode);
                         workerQueue.Enqueue(workerAddress);
 
                         //  Second frame is empty
-                        string empty = socket.Receive(Encoding.Unicode);
+                        string empty = e.Socket.Receive(Encoding.Unicode);
 
                         //  Third frame is READY or else a client reply address
-                        string clientAddress = socket.Receive(Encoding.Unicode);
+                        string clientAddress = e.Socket.Receive(Encoding.UTF8);
 
                         //  If client reply, send rest back to frontend
                         if (!clientAddress.Equals("READY"))
                         {
-                            empty = socket.Receive(Encoding.Unicode);
-                            string reply = socket.Receive(Encoding.Unicode);
+                            empty = e.Socket.Receive(Encoding.Unicode);
+                            string reply = e.Socket.Receive(Encoding.Unicode);
                             frontend.SendMore(clientAddress, Encoding.Unicode);
-                            frontend.SendMore();
+                            //frontend.SendMore();
                             frontend.Send(reply, Encoding.Unicode);
 
                             clientsRunning--; //  Exit after N messages
                         }
                     };
 
-                    frontend.PollInHandler += (socket, revents) =>
+                    frontend.ReceiveReady += (sender, e) =>
                     {
                         //  Now get next client request, route to LRU worker
                         //  Client request is [address][empty][request]
-                        string clientAddr = socket.Receive(Encoding.Unicode);
-                        string empty = socket.Receive(Encoding.Unicode);
-                        string request = socket.Receive(Encoding.Unicode);
+                        string clientAddr = e.Socket.Receive(Encoding.Unicode);
+                        string empty = e.Socket.Receive(Encoding.Unicode);
+                        string request = e.Socket.Receive(Encoding.Unicode);
 
                         backend.SendMore(workerQueue.Dequeue(), Encoding.Unicode);
-                        backend.SendMore();
+                        backend.SendMore(string.Empty, Encoding.Unicode);
                         backend.SendMore(clientAddr, Encoding.Unicode);
-                        backend.SendMore();
+                        backend.SendMore(string.Empty, Encoding.Unicode);
                         backend.Send(request, Encoding.Unicode);
                     };
 
+                    var poller = new Poller(workerQueue.Count > 0
+                                           ? new List<ZmqSocket>(new ZmqSocket[] { frontend, backend })
+                                           : new List<ZmqSocket>(new ZmqSocket[] { backend }));
 
                     while (clientsRunning > 0)
                     { //  Exit after N messages
-                        ZmqContext.Poller(workerQueue.Count > 0
-                                           ? new List<ZmqSocket>(new ZmqSocket[] {frontend, backend})
-                                           : new List<ZmqSocket>(new ZmqSocket[] {backend}));
+                        poller.Poll();
                     }
                 }
             }
@@ -148,7 +149,7 @@ namespace zguide.lbbroker
                         Console.WriteLine("Worker: {0}", request);
 
                         worker.SendMore(address, Encoding.Unicode);
-                        worker.SendMore();
+                        //worker.SendMore();
                         worker.Send("OK", Encoding.Unicode);
                     }
                 }

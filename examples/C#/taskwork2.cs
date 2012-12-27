@@ -12,6 +12,7 @@
 //  Email:      Mark.Kharitonov@shunra.co.il, ptomasroos@gmail.com
 
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using ZeroMQ;
@@ -30,20 +31,19 @@ namespace zguide.taskwork2
                     receiver.Connect("tcp://localhost:5557");
                     sender.Connect("tcp://localhost:5558");
                     controller.Connect("tcp://localhost:5559");
-                    controller.Subscribe(string.Empty, Encoding.Unicode);
+                    controller.SubscribeAll();
 
                     bool run = true;
 
-                    var items = new PollItem[2];
-                    items[0] = receiver.CreatePollItem(Poller.POLLIN);
-                    items[0].PollInHandler += (socket, revents) => ReceiverPollInHandler(socket, sender);
-                    items[1] = controller.CreatePollItem(Poller.POLLIN);
-                    items[1].PollInHandler += delegate { run = false; };
+                    var poller = new Poller(new List<ZmqSocket> { receiver, controller });
+
+                    receiver.ReceiveReady += (s, e) => ReceiverPollInHandler(e.Socket, sender);
+                    controller.ReceiveReady += delegate { run = false; };
 
                     //  Process tasks as long as the controller does not signal the end.
                     while (run)
                     {
-                        context.Poll(items);
+                        poller.Poll();
                     }
                 }
             }

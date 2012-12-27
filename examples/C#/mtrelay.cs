@@ -27,7 +27,7 @@ namespace zguide.mtrelay
                     step2.Start(context);
 
                     //  Wait for signal
-                    socket.Receive();
+                    socket.Receive(Encoding.Unicode);
 
                     Console.WriteLine("Test Successful!!!");
                 }
@@ -45,7 +45,7 @@ namespace zguide.mtrelay
                 step1.Start(context);
 
                 //  Wait for signal
-                receiver.Receive();
+                receiver.Receive(Encoding.Unicode);
             }
 
             //  Signal downstream to step 3

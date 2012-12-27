@@ -32,7 +32,7 @@ namespace zguide
         public static KvMsg Receive(ZmqSocket subscriber)
         {
             var key = subscriber.Receive(Encoding.Unicode);
-            var sequence = BitConverter.ToInt64(subscriber.Receive(), 0);
+            var sequence = BitConverter.ToInt64(Encoding.Unicode.GetBytes(subscriber.Receive(Encoding.Unicode)), 0);
             var body = subscriber.Receive(Encoding.Unicode);
 
             return new KvMsg(sequence, key, body);

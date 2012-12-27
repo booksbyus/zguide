@@ -8,6 +8,7 @@
 //  Email:      michael.compton@littleedge.co.uk, ptomasroos@gmail.com
 
 using System;
+using System.Collections.Generic;
 using System.Text;
 using ZeroMQ;
 
@@ -24,34 +25,33 @@ namespace zguide.mspoller
                 {
                     receiver.Connect("tcp://localhost:5557");
                     subscriber.Connect("tcp://localhost:5556");
-                    subscriber.Subscribe("10001 ", Encoding.Unicode);
+                    subscriber.Subscribe(Encoding.Unicode.GetBytes("10001 "));
 
-                    var items = new PollItem[2];
-                    items[0] = receiver.CreatePollItem(Poller.POLLIN);
-                    items[0].PollInHandler += ReceiverPollInHandler;
-                    items[1] = subscriber.CreatePollItem(Poller.POLLIN);
-                    items[1].PollInHandler += SubscriberPollInHandler;
+                    receiver.ReceiveReady += ReceiverPollInHandler;
+                    subscriber.ReceiveReady += SubscriberPollInHandler;
+
+                    var poller = new Poller(new List<ZmqSocket> {  });
                     
                     //  Process messages from both sockets
                     while (true)
                     {
-                        context.Poll(items, -1);
+                        poller.Poll();
                     }
                 }
             }
         }
 
         // Task Processing event
-        public static void ReceiverPollInHandler(ZmqSocket socket, Poller revents)
+        public static void ReceiverPollInHandler(object sender, SocketEventArgs e)
         {
-            socket.Receive();
+            e.Socket.Receive(Encoding.Unicode);
             Console.WriteLine("Process Task");
         }
 
         // Weather server event
-        public static void SubscriberPollInHandler(ZmqSocket socket, Poller revents)
+        public static void SubscriberPollInHandler(object sender, SocketEventArgs e)
         {
-            socket.Receive();
+            e.Socket.Receive(Encoding.Unicode);
             Console.WriteLine("Process Weather");
         }
     }

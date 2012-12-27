@@ -7,6 +7,7 @@
 //  Email:      ptomasroos@gmail.com
 
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using ZeroMQ;
@@ -40,21 +41,23 @@ namespace zguide.peering1
                     {
                         var endpoint = "tcp://127.0.0.1:" + args[arg];
                         statefe.Connect(endpoint);
-                        statefe.Subscribe(string.Empty, Encoding.Unicode);
+                        statefe.Subscribe(Encoding.Unicode.GetBytes(string.Empty));
                         Thread.Sleep(1000);
                     }
 
-                    statefe.PollInHandler += (socket, revents) =>
+                    statefe.ReceiveReady += (s, e) =>
                                                  {
-                                                     string peerName = socket.Receive(Encoding.Unicode);
-                                                     string available = socket.Receive(Encoding.Unicode);
+                                                     string peerName = e.Socket.Receive(Encoding.Unicode);
+                                                     string available = e.Socket.Receive(Encoding.Unicode);
 
                                                      Console.WriteLine("{0} - {1} workers free\n", peerName, available);
                                                  };
 
+                    var poller = new Poller(new List<ZmqSocket> { statefe });
+
                     while (true)
                     {
-                        int count = ZmqContext.Poller(1000 * 1000, statefe);
+                        int count = poller.Poll(TimeSpan.FromMilliseconds(1000 * 1000));
                         
                         if (count == 0)
                         {

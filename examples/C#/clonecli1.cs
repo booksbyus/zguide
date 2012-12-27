@@ -22,7 +22,7 @@ namespace zguide.clonecli1
                 using (var subscriber = context.CreateSocket(SocketType.SUB))
                 {
                     subscriber.Connect("tcp://localhost:5556");
-                    subscriber.Subscribe(string.Empty, Encoding.Unicode);
+                    subscriber.Subscribe(Encoding.Unicode.GetBytes(string.Empty));
 
                     var interrupted = false;
                     var sequence = 0L;

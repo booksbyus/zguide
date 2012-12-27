@@ -20,7 +20,7 @@ namespace zguide.psenvsub
                 using (ZmqSocket subscriber = context.CreateSocket(SocketType.SUB))
                 {
                     subscriber.Connect("tcp://localhost:5563");
-                    subscriber.Subscribe("B", Encoding.Unicode);
+                    subscriber.Subscribe(Encoding.Unicode.GetBytes("B"));
 
                     while (true)
                     {

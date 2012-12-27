@@ -21,14 +21,14 @@ namespace zguide.syncsub
                 using (ZmqSocket subscriber = context.CreateSocket(SocketType.SUB), syncClient = context.CreateSocket(SocketType.REQ))
                 {
                     subscriber.Connect("tcp://localhost:5561");
-                    subscriber.Subscribe("", Encoding.Unicode);
+                    subscriber.Subscribe(Encoding.Unicode.GetBytes(string.Empty));
 
                     syncClient.Connect("tcp://localhost:5562");
 
                     //  - send a synchronization request
                     syncClient.Send("", Encoding.Unicode);
                     //  - wait for synchronization reply
-                    syncClient.Receive();
+                    syncClient.Receive(Encoding.Unicode);
 
                     int receivedUpdates = 0;
                     while (!subscriber.Receive(Encoding.Unicode).Equals("END"))

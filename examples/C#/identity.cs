@@ -27,7 +27,7 @@ namespace zguide.identity
                     ZHelpers.Dump(sink, Encoding.Unicode);
 
                     //  Then set the identity ourselves
-                    identified.StringToIdentity("PEER2", Encoding.Unicode);
+                    identified.Identity = Encoding.Unicode.GetBytes("PEER2");
                     identified.Connect("inproc://example");
                     identified.Send("ROUTER socket uses REQ's socket identity", Encoding.Unicode);
                     ZHelpers.Dump(sink, Encoding.Unicode);
