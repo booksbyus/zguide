@@ -149,6 +149,7 @@ flclient_request (flclient_t *self, zmsg_t **request_p)
             free (sequence);
             if (sequence_nbr == self->sequence)
                 break;
+            zmsg_destroy (&reply);
         }
     }
     zmsg_destroy (request_p);
