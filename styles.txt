@@ -1,0 +1,55 @@
+Style Guide
+
+Hyphenated:
+
+    fan-out
+    fan-in
+    single-part
+    in-process (adj)
+    inter-broker
+    inter-thread
+    load-balancing
+    publish-subscribe
+    pub-sub
+    request-reply
+    step-by-step
+    zero-copy
+    double-check
+    connect-bind pair
+
+No hyphens in:
+
+    frontend
+    backend
+    single socket API
+    timeout
+    online
+    multicast
+    multipart
+    nonfatal
+    general purpose
+    round robin
+    no one
+    side effect
+    use case
+    wish list
+    nontrivial
+    setup (n)
+    set up (v)
+    shut down
+    straightforward
+    failover (n)
+    fail over (v)
+
+Other notes:
+
+    "1 a.m.", "2.30p.m".
+    PUB or SUB in capitals when preceding socket
+    "client/server"
+    Always make sure that i.e. and e.g. are followed by a comma.
+    When referring to version numbers use "0MQ v2.x", "0MQ v3.x"
+    Use "because" not "since" for causation
+    Commas after introductory participles
+    No commas in conjunctions
+    "versus", not "vs."
+    "and so on", not "etc."
