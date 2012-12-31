@@ -194,7 +194,7 @@ However, sadly, there's a fatal flaw in my idea of using ICMP_ECHO to discover d
 
 +++ Cooperative Discovery using UDP Broadcasts
 
-Multicast tends to be seen as more modern and "better" than broadcast. In IPv6, broadcast doesn't work at all: you have to always use broadcast. Nonetheless, all IPv4 local network discovery protocols end up using UDP broadcast anyhow. The reasons: broadcast and multicast end up working much the same, except broadcast is simpler and less risky. Multicast is seen by network admins as kind of dangerous, as it can leak over network segments.
+Multicast tends to be seen as more modern and "better" than broadcast. In IPv6, broadcast doesn't work at all: you have to always use multicast. Nonetheless, all IPv4 local network discovery protocols end up using UDP broadcast anyhow. The reasons: broadcast and multicast end up working much the same, except broadcast is simpler and less risky. Multicast is seen by network admins as kind of dangerous, as it can leak over network segments.
 
 If you never used UDP, you'll discover it's quite a nice protocol. In some ways it reminds us of 0MQ, sending whole messages to peers using a two different patterns: one-to-one, and one-to-many. The main problems with UDP are that (a) the POSIX socket API was designed for universal flexibility not simplicity, (b) UDP messages are limited for practical purposes to about 512 bytes, and (c) when you start to use UDP for real data, you find that a lot of messages get dropped, especially as infrastructure tends to favor TCP over UDP.
 
@@ -642,7 +642,7 @@ These are:
 
 * The first command that any node receives from a peer MUST be "HELLO". In other words, messages //cannot// be lost during the peer-to-peer connection process.
 
-* The state each node each node calculates for its peers matches the state each peer calculates for itself. In other words, again, no messages are lost in the network.
+* The state each node calculates for its peers matches the state each peer calculates for itself. In other words, again, no messages are lost in the network.
 
 * When my application sends a message to a peer, we have a connection to that peer. In other words, the application only "sees" a peer after we have established a 0MQ connection to it.
 
@@ -770,7 +770,7 @@ The very simplest technique is to print the necessary information to the console
 
 In any performance-sensitive 0MQ architecture you need to solve the problem of flow control. You cannot simply send unlimited messages to a socket and hope for the best. At the one extreme, you can exhaust memory. This is a classic failure pattern for a message broker: one slow client stops receiving messages; the broker starts to queue them, and eventually exhausts memory and the whole process dies. At the other extreme, the socket drops messages, or blocks, as you hit the high-water mark.
 
-With Zyre we want to distribute messages to a set of peers, and we want to do this fairly. Using a single ROTER socket for output would be problematic since any one blocked peer would block outgoing traffic to all peers. TCP does have good algorithms for spreading the network capacity across a set of connections. And we're using a separate DEALER socket to talk to each peer, so in theory each DEALER socket will send its queued messages in the background reasonably fairly.
+With Zyre we want to distribute messages to a set of peers, and we want to do this fairly. Using a single ROUTER socket for output would be problematic since any one blocked peer would block outgoing traffic to all peers. TCP does have good algorithms for spreading the network capacity across a set of connections. And we're using a separate DEALER socket to talk to each peer, so in theory each DEALER socket will send its queued messages in the background reasonably fairly.
 
 The normal behavior of a DEALER socket that hits its high-water mark is to block. This is usually ideal, but it's a problem for us here. Our current interface design uses one thread that distributes messages to all peers. If one of those send calls were to block, all output would block.
 
