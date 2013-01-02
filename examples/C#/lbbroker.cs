@@ -96,12 +96,12 @@ namespace zguide.lbbroker
                         backend.Send(request, Encoding.Unicode);
                     };
 
-                    var poller = new Poller(workerQueue.Count > 0
-                                           ? new List<ZmqSocket>(new ZmqSocket[] { frontend, backend })
-                                           : new List<ZmqSocket>(new ZmqSocket[] { backend }));
-
                     while (clientsRunning > 0)
                     { //  Exit after N messages
+                        var poller = new Poller(workerQueue.Count > 0
+                                           ? new List<ZmqSocket>(new ZmqSocket[] { frontend, backend })
+                                           : new List<ZmqSocket>(new ZmqSocket[] { backend }));                    
+                    
                         poller.Poll();
                     }
                 }
