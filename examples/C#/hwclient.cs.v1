@@ -18,17 +18,17 @@ namespace Examples
             // allocate a buffer
             byte[] zmq_buffer = new byte[1024];
 
-            //  Prepare our context and socket
-            ZMQ.Context context = new ZMQ.Context(1);
-            ZMQ.Socket socket = context.Socket(ZMQ.REQ);
-            socket.Connect("tcp://localhost:5555");
+            //  Prepare our ZmqContext and ZmqSocket
+            ZMQ.ZmqContext ZmqContext = new ZMQ.ZmqContext(1);
+            ZMQ.ZmqSocket ZmqSocket = context.CreateSocket(ZMQ.REQ);
+            ZmqSocket.Connect("tcp://localhost:5555");
 
             string request = "";
             for (long requestNum = 0; requestNum != 10; requestNum++)
             {
-                socket.Send(Encoding.ASCII.GetBytes("Hello".ToCharArray()));
+                ZmqSocket.Send(Encoding.ASCII.GetBytes("Hello".ToCharArray()));
                 //  Wait for next request from client
-                socket.Recv(out zmq_buffer);
+                ZmqSocket.Receive(out zmq_buffer);
                 request = Encoding.ASCII.GetString(zmq_buffer);
            }
         }

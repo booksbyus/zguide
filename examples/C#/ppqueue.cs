@@ -9,9 +9,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using ZMQ;
+using ZeroMQ;
 
-namespace ZMQGuide
+namespace zguide.ppqueue
 {
     class Program
     {
@@ -57,9 +57,9 @@ namespace ZMQGuide
 
         static void Main(string[] args)
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket frontend = context.Socket(SocketType.ROUTER), backend = context.Socket(SocketType.ROUTER))
+                using (ZmqSocket frontend = context.CreateSocket(SocketType.ROUTER), backend = context.CreateSocket(SocketType.ROUTER))
                 {
                     frontend.Bind("tcp://*:5555"); // For Clients
                     backend.Bind("tcp://*:5556"); // For Workers
@@ -67,9 +67,9 @@ namespace ZMQGuide
                     //  Queue of available workers
                     var workerQueue = new List<Worker>();
 
-                    backend.PollInHandler += (socket, revents) =>
+                    backend.ReceiveReady += (socket, e) =>
                     {
-                        var zmsg = new ZMessage(socket);
+                        var zmsg = new ZMessage(e.Socket);
 
                         byte[] identity = zmsg.Unwrap();
 
@@ -80,7 +80,7 @@ namespace ZMQGuide
                         {
                             var workers = workerQueue.Where(x => x.address.SequenceEqual(identity));
 
-                            if (workers.Count() > 0)
+                            if (workers.Any())
                                 worker = workers.Single();
                         }
 
@@ -116,11 +116,11 @@ namespace ZMQGuide
                         };
                     };
 
-                    frontend.PollInHandler += (socket, revents) =>
+                    frontend.ReceiveReady += (socket, e) =>
                     {
                         //  Now get next client request, route to next worker
                         //  Dequeue and drop the next worker address
-                        var zmsg = new ZMessage(socket);
+                        var zmsg = new ZMessage(e.Socket);
 
                         Worker w = workerQueue[0];
                         zmsg.Wrap(w.address, new byte[0]);
@@ -129,6 +129,8 @@ namespace ZMQGuide
                         zmsg.Send(backend);
                     };
 
+                    var poller = new Poller(new List<ZmqSocket> { frontend, backend });
+
                     DateTime heartbeat_at = DateTime.Now.AddMilliseconds(HEARTBEAT_INTERVAL);
 
                     while (true)
@@ -136,13 +138,13 @@ namespace ZMQGuide
                         //Only poll frontend only if there are workers ready
                         if (workerQueue.Count > 0)
                         {
-                            List<Socket> pollItems = new List<Socket>(new Socket[] { frontend, backend });
-                            Context.Poller(pollItems, HEARTBEAT_INTERVAL * 1000);
+                            //List<ZmqSocket> pollItems = new List<ZmqSocket>(new ZmqSocket[] { frontend, backend });
+                            poller.Poll(TimeSpan.FromMilliseconds(HEARTBEAT_INTERVAL * 1000));
                         }
                         else
                         {
-                            List<ZMQ.Socket> pollItems = new List<Socket>(new Socket[] { backend });
-                            Context.Poller(pollItems, HEARTBEAT_INTERVAL * 1000);
+                            //List<ZmqSocket> pollItems = new List<ZmqSocket>(new ZmqSocket[] { backend });
+                            poller.Poll(TimeSpan.FromMilliseconds(HEARTBEAT_INTERVAL * 1000));
                         }
 
                         //Send heartbeats to idle workers if it's time

@@ -12,24 +12,24 @@
 using System;
 using System.Text;
 using System.Threading;
-using ZMQ;
+using ZeroMQ;
 
-namespace ZMQGuide
+namespace zguide.taskwork
 {
     internal class Program
     {
         public static void Main(string[] args)
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket receiver = context.Socket(SocketType.PULL), sender = context.Socket(SocketType.PUSH))
+                using (ZmqSocket receiver = context.CreateSocket(SocketType.PULL), sender = context.CreateSocket(SocketType.PUSH))
                 {
                     receiver.Connect("tcp://localhost:5557");
                     sender.Connect("tcp://localhost:5558");
 
                     while (true)
                     {
-                        string task = receiver.Recv(Encoding.Unicode);
+                        string task = receiver.Receive(Encoding.Unicode);
 
                         //  Simple progress indicator for the viewer;
                         Console.WriteLine("{0}.", task);

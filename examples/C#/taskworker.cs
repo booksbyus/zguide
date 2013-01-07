@@ -12,22 +12,23 @@
 using System;
 using System.Text;
 using System.Threading;
-using ZMQ;
+using ZeroMQ;
 
-namespace ZMQGuide {
+namespace zguide.taskworker {
     class Program {
         static void Main(string[] args) {
             //  Prepare our context
-            using (Context context = new Context(1)) {
+            using (ZmqContext context = ZmqContext.Create())
+            {
                 //  Sockets to send and receive messages on
-                using (Socket receiver = context.Socket(SocketType.PULL),
-                    sender = context.Socket(SocketType.PUSH)) {
+                using (ZmqSocket receiver = context.CreateSocket(SocketType.PULL),
+                    sender = context.CreateSocket(SocketType.PUSH)) {
                     receiver.Connect("tcp://localhost:5557");
                     sender.Connect("tcp://localhost:5558");
 
                     //  Process tasks forever
                     while (true) {
-                        string message = receiver.Recv(Encoding.Unicode);
+                        string message = receiver.Receive(Encoding.Unicode);
                         //  Simple progress indicator for the viewer
                         Console.Clear();
                         Console.WriteLine("{0}.", message);

@@ -13,21 +13,21 @@ namespace Client
     {
         //
         //  Task worker
-        //  Connects PULL socket to tcp://localhost:5557
-        //  Collects workloads from ventilator via that socket
-        //  Connects PUSH socket to tcp://localhost:5558
-        //  Sends results to sink via that socket
+        //  Connects PULL ZmqSocket to tcp://localhost:5557
+        //  Collects workloads from ventilator via that ZmqSocket
+        //  Connects PUSH ZmqSocket to tcp://localhost:5558
+        //  Sends results to sink via that ZmqSocket
         //
         public static void Start()
         {
-            using (var context = new ZMQ.Context(1))
+            using (var ZmqContext = new ZMQ.ZmqContext(1))
             {
-                //  Socket to receive messages on
-                var receiver = context.Socket(ZMQ.PULL);
+                //  ZmqSocket to receive messages on
+                var receiver = context.CreateSocket(ZMQ.PULL);
                 receiver.Connect("tcp://localhost:5557");
 
-                //  Socket to send messages to
-                var sender = context.Socket(ZMQ.PUSH);
+                //  ZmqSocket to send messages to
+                var sender = context.CreateSocket(ZMQ.PUSH);
                 sender.Connect("tcp://localhost:5558");
 
                 //  Process tasks forever

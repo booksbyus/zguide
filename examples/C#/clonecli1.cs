@@ -9,20 +9,20 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using ZMQ;
+using ZeroMQ;
 
-namespace ZMQGuide
+namespace zguide.clonecli1
 {
     internal class Program
     {
         public static void Main(string[] args)
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (var subscriber = context.Socket(SocketType.SUB))
+                using (var subscriber = context.CreateSocket(SocketType.SUB))
                 {
                     subscriber.Connect("tcp://localhost:5556");
-                    subscriber.Subscribe(string.Empty, Encoding.Unicode);
+                    subscriber.Subscribe(Encoding.Unicode.GetBytes(string.Empty));
 
                     var interrupted = false;
                     var sequence = 0L;
@@ -36,7 +36,7 @@ namespace ZMQGuide
 
                         try
                         {
-                            kvmsg = KvMsg.Recv(subscriber);
+                            kvmsg = KvMsg.Receive(subscriber);
                             Console.WriteLine("Received {0}", kvmsg);
                         }
                         catch (System.Exception)

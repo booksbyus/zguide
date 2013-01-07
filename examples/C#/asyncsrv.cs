@@ -12,9 +12,10 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
-using ZMQ;
+using ZeroMQ;
+using zguide;
 
-namespace ZMQGuide
+namespace zguide.asycnsrv
 {
     internal class Program
     {
@@ -42,29 +43,31 @@ namespace ZMQGuide
         //  run several client tasks in parallel, each with a different random ID.
         public static void ClientTask()
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket client = context.Socket(SocketType.DEALER))
+                using (ZmqSocket client = context.CreateSocket(SocketType.DEALER))
                 {
                     //  Generate printable identity for the client
                     ZHelpers.SetID(client, Encoding.Unicode);
-                    string identity = client.IdentityToString(Encoding.Unicode);
+                    string identity = Encoding.Unicode.GetString(client.Identity);
                     client.Connect("tcp://localhost:5570");
 
-                    client.PollInHandler += (socket, revents) =>
+                    client.ReceiveReady += (s, e) =>
                     {
-                        var zmsg = new ZMessage(socket);
+                        var zmsg = new ZMessage(e.Socket);
                         Console.WriteLine("{0} : {1}", identity, zmsg.BodyToString());
                     };
 
                     int requestNumber = 0;
+
+                    var poller = new Poller(new List<ZmqSocket> { client });
 
                     while (true)
                     {
                         //  Tick once per second, pulling in arriving messages
                         for (int centitick = 0; centitick < 100; centitick++)
                         {
-                            Context.Poller(new List<Socket>(new[] { client }), 10000);
+                            poller.Poll(TimeSpan.FromMilliseconds(10000));
                         }
                         var zmsg = new ZMessage("");
                         zmsg.StringToBody(String.Format("request: {0}", ++requestNumber));
@@ -83,9 +86,9 @@ namespace ZMQGuide
         private static void ServerTask()
         {
             var workers = new List<Thread>(5);
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket frontend = context.Socket(SocketType.ROUTER), backend = context.Socket(SocketType.DEALER))
+                using (ZmqSocket frontend = context.CreateSocket(SocketType.ROUTER), backend = context.CreateSocket(SocketType.DEALER))
                 {
                     frontend.Bind("tcp://*:5570");
                     backend.Bind("inproc://backend");
@@ -97,23 +100,23 @@ namespace ZMQGuide
                     }
 
                     //  Switch messages between frontend and backend
-                    frontend.PollInHandler += (socket, revents) =>
+                    frontend.ReceiveReady += (s, e) =>
                     {
-                        var zmsg = new ZMessage(socket);
+                        var zmsg = new ZMessage(e.Socket);
                         zmsg.Send(backend);
                     };
 
-                    backend.PollInHandler += (socket, revents) =>
+                    backend.ReceiveReady += (s, e) =>
                     {
-                        var zmsg = new ZMessage(socket);
+                        var zmsg = new ZMessage(e.Socket);
                         zmsg.Send(frontend);
                     };
 
-                    var sockets = new List<Socket> {frontend, backend};
+                    var poller = new Poller(new List<ZmqSocket> {frontend, backend});
 
                     while (true)
                     {
-                        Context.Poller(sockets);
+                        poller.Poll();
                     }
                 }
             }
@@ -124,7 +127,7 @@ namespace ZMQGuide
         private static void ServerWorker(object context)
         {
             var randomizer = new Random(DateTime.Now.Millisecond);
-            using (Socket worker = ((Context)context).Socket(SocketType.DEALER))
+            using (ZmqSocket worker = ((ZmqContext)context).CreateSocket(SocketType.DEALER))
             {
                 worker.Connect("inproc://backend");
 

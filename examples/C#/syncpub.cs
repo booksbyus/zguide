@@ -8,17 +8,17 @@
 using System;
 using System.Text;
 using System.Threading;
-using ZMQ;
+using ZeroMQ;
 
-namespace ZMQGuide
+namespace zguide.syncpub
 {
     internal class Program
     {
         public static void Main(string[] args)
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket publisher = context.Socket(SocketType.PUB), syncService = context.Socket(SocketType.REP))
+                using (ZmqSocket publisher = context.CreateSocket(SocketType.PUB), syncService = context.CreateSocket(SocketType.REP))
                 {
                     publisher.Bind("tcp://*:5561");
                     syncService.Bind("tcp://*:5562");
@@ -27,7 +27,7 @@ namespace ZMQGuide
                     const int subscribersToWaitFor = 10;
                     for (int count = 0; count < subscribersToWaitFor; count++)
                     {
-                        syncService.Recv();
+                        syncService.Receive(Encoding.Unicode);
                         syncService.Send("", Encoding.Unicode);
                     }
 

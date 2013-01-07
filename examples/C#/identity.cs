@@ -6,17 +6,18 @@
 //  Email:      michael.compton@littleedge.co.uk, ptomasroos@gmail.com
 
 using System.Text;
-using ZMQ;
+using ZeroMQ;
+using zguide;
 
-namespace ZMQGuide
+namespace zguide.identity
 {
     internal class Program
     {
         public static void Main(string[] args)
         {
-            using (var context = new Context())
+            using (var context = ZmqContext.Create())
             {
-                using (Socket sink = context.Socket(SocketType.ROUTER), anonymous = context.Socket(SocketType.REQ), identified = context.Socket(SocketType.REQ))
+                using (ZmqSocket sink = context.CreateSocket(SocketType.ROUTER), anonymous = context.CreateSocket(SocketType.REQ), identified = context.CreateSocket(SocketType.REQ))
                 {
                     sink.Bind("inproc://example");
 
@@ -26,7 +27,7 @@ namespace ZMQGuide
                     ZHelpers.Dump(sink, Encoding.Unicode);
 
                     //  Then set the identity ourselves
-                    identified.StringToIdentity("PEER2", Encoding.Unicode);
+                    identified.Identity = Encoding.Unicode.GetBytes("PEER2");
                     identified.Connect("inproc://example");
                     identified.Send("ROUTER socket uses REQ's socket identity", Encoding.Unicode);
                     ZHelpers.Dump(sink, Encoding.Unicode);

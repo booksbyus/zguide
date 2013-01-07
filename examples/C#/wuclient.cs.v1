@@ -13,16 +13,16 @@ namespace Client
     {
         //
         //  Weather update client
-        //  Connects SUB socket to tcp://localhost:5556
+        //  Connects SUB ZmqSocket to tcp://localhost:5556
         //  Collects weather updates and finds avg temp in zipcode
         //
         public static void Main()
         {
-            using (var context = new ZMQ.Context(1))
+            using (var ZmqContext = new ZMQ.ZmqContext(1))
             {
-                //  Socket to talk to server
+                //  ZmqSocket to talk to server
                 Console.WriteLine("Collecting updates from weather server...");
-                var subscriber = context.Socket(ZMQ.SUB);
+                var subscriber = context.CreateSocket(ZMQ.SUB);
                 subscriber.Connect("tcp://localhost:5556");
 
                 //  Subscribe to zipcode NYC, 10001

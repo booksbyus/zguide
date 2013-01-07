@@ -9,11 +9,11 @@
 
 using System;
 using System.Text;
-using ZMQ;
+using ZeroMQ;
 
-namespace ZMQGuide 
+namespace zguide.wuclient
 {
-    internal class Program 
+    internal class Program
     {
         public static void Main(string[] args) {
             Console.WriteLine("Collecting updates from weather server...");
@@ -24,11 +24,11 @@ namespace ZMQGuide
             if (args.Length > 0)
                 zipcode = args[1] + " ";
 
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket subscriber = context.Socket(SocketType.SUB))
+                using (ZmqSocket subscriber = context.CreateSocket(SocketType.SUB))
                 {
-                    subscriber.Subscribe(zipcode, Encoding.Unicode);
+                    subscriber.Subscribe(Encoding.Unicode.GetBytes(zipcode));
                     subscriber.Connect("tcp://localhost:5556");
 
                     const int updatesToCollect = 100;
@@ -36,7 +36,7 @@ namespace ZMQGuide
 
                     for (int updateNumber = 0; updateNumber < updatesToCollect; updateNumber++)
                     {
-                        string update = subscriber.Recv(Encoding.Unicode);
+                        string update = subscriber.Receive(Encoding.Unicode);
                         totalTemperature += Convert.ToInt32(update.Split()[1]);
                     }
 

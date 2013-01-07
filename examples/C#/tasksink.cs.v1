@@ -13,14 +13,14 @@ namespace Sink
     {
         //
         //  Task sink
-        //  Binds PULL socket to tcp://localhost:5558
-        //  Collects results from workers via that socket
+        //  Binds PULL ZmqSocket to tcp://localhost:5558
+        //  Collects results from workers via that ZmqSocket
         //
         static void Main(string[] args)
         {
-            using (var context = new ZMQ.Context(1))
+            using (var ZmqContext = new ZMQ.ZmqContext(1))
             {
-                var receiver = context.Socket(ZMQ.PULL);
+                var receiver = context.CreateSocket(ZMQ.PULL);
                 receiver.Bind("tcp://*:5558");
 
                 //  Wait for start of batch

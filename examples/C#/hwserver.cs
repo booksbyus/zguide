@@ -10,17 +10,17 @@
 using System;
 using System.Text;
 using System.Threading;
-using ZMQ;
+using ZeroMQ;
 
-namespace ZMQGuide 
+namespace zguide.hwserver
 {
-    internal class Program 
+    internal class Program
     {
         public static void Main(string[] args)
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket replyer = context.Socket(SocketType.REP))
+                using (ZmqSocket replyer = context.CreateSocket(SocketType.REP))
                 {
                     replyer.Bind("tcp://*:5555");
 
@@ -28,7 +28,7 @@ namespace ZMQGuide
 
                     while (true)
                     {
-                        string message = replyer.Recv(Encoding.Unicode);
+                        string message = replyer.Receive(Encoding.Unicode);
                         Console.WriteLine("Received request: {0}", message);
 
                         // Simulate work, by sleeping

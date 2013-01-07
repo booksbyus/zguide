@@ -13,19 +13,20 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using ZMQ;
+using ZeroMQ;
 using System.Threading;
+using zguide;
 
-namespace ZMQGuide
+namespace zguide.lbbroker2
 {
     internal class Program
     {
 
         private static void ClientTask()
         {
-            using (var ctx = new Context(1))
+            using (var ctx = ZmqContext.Create())
             {
-                using (var client = ctx.Socket(SocketType.REQ))
+                using (var client = ctx.CreateSocket(SocketType.REQ))
                 {
                     ZHelpers.SetID(client, Encoding.Unicode);
                     client.Connect("tcp://localhost:5555");
@@ -34,7 +35,7 @@ namespace ZMQGuide
                     {
                         //  Send request, get repl
                         client.Send("HELLO", Encoding.Unicode);
-                        string reply = client.Recv(Encoding.Unicode);
+                        string reply = client.Receive(Encoding.Unicode);
 
                         if (string.IsNullOrEmpty(reply))
                         {
@@ -56,9 +57,9 @@ namespace ZMQGuide
             var clients = new List<Thread>();
 
             //  Prepare our context and sockets
-            using (var ctx = new Context(1))
+            using (var ctx = ZmqContext.Create())
             {
-                using (Socket frontend = ctx.Socket(SocketType.ROUTER), backend = ctx.Socket(SocketType.ROUTER))
+                using (ZmqSocket frontend = ctx.CreateSocket(SocketType.ROUTER), backend = ctx.CreateSocket(SocketType.ROUTER))
                 {
                     frontend.Bind("tcp://*:5555");
                     backend.Bind("tcp://*:5556");
@@ -86,9 +87,9 @@ namespace ZMQGuide
                     var workerQueue = new Queue<byte[]>();
 
                     //  Handle worker activity on backend
-                    backend.PollInHandler += (socket, revents) =>
+                    backend.ReceiveReady += (socket, revents) =>
                                                  {
-                                                     var zmsg = new ZMessage(socket);
+                                                     var zmsg = new ZMessage(revents.Socket);
                                                      //  Use worker address for LRU routing
                                                      workerQueue.Enqueue(zmsg.Unwrap());
 
@@ -99,20 +100,24 @@ namespace ZMQGuide
                                                      }
                                                  };
 
-                    frontend.PollInHandler += (socket, revents) =>
+                    frontend.ReceiveReady += (socket, revents) =>
                                                   {
                                                       //  Now get next client request, route to next worker
                                                       //  Dequeue and drop the next worker address
-                                                      var zmsg = new ZMessage(socket);
+                                                      var zmsg = new ZMessage(revents.Socket);
                                                       zmsg.Wrap(workerQueue.Dequeue(), new byte[0]);
                                                       zmsg.Send(backend);
                                                   };
 
+                    var poller = new Poller(new List<ZmqSocket>{ frontend, backend });
+
                     while (true)
                     {
-                        int rc = Context.Poller(workerQueue.Count > 0
-                                           ? new List<Socket>(new Socket[] {frontend, backend})
-                                           : new List<Socket>(new Socket[] {backend}));
+                        //int rc = context.Poller(workerQueue.Count > 0
+                        //                   ? new List<ZmqSocket>(new ZmqSocket[] {frontend, backend})
+                        //                   : new List<ZmqSocket>(new ZmqSocket[] {backend}));
+
+                        int rc = poller.Poll();
 
                         if (rc == -1)
                         {
@@ -126,9 +131,9 @@ namespace ZMQGuide
 
         private static void WorkerTask()
         {
-            using (var ctx = new Context(1))
+            using (var ctx = ZmqContext.Create())
             {
-                using (var worker = ctx.Socket(SocketType.REQ))
+                using (var worker = ctx.CreateSocket(SocketType.REQ))
                 {
                     ZHelpers.SetID(worker, Encoding.Unicode);
                     worker.Connect("tcp://localhost:5556");

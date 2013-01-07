@@ -7,11 +7,12 @@
 //  Email:      ptomasroos@gmail.com
 
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading;
-using ZMQ;
+using ZeroMQ;
 
-namespace ZMQGuide
+namespace zguide.lpclient
 {
     internal class Program
     {
@@ -23,21 +24,21 @@ namespace ZMQGuide
         private static bool expectReply = true;
         private static int retriesLeft = requestRetries;
 
-        private static Socket CreateServerSocket(Context context)
+        private static ZmqSocket CreateServerSocket(ZmqContext context)
         {
             Console.WriteLine("Connecting to server...");
 
-            var client = context.Socket(SocketType.REQ);
+            var client = context.CreateSocket(SocketType.REQ);
             client.Connect(serverEndpoint);
-            client.Linger = 0;
-            client.PollInHandler += PollInHandler;
+            client.Linger = TimeSpan.Zero;
+            client.ReceiveReady += PollInHandler;
 
             return client;
         }
 
         public static void Main(string[] args)
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
                 var client = CreateServerSocket(context);
 
@@ -50,7 +51,8 @@ namespace ZMQGuide
 
                     while (expectReply)
                     {
-                        int count = Context.Poller(requestTimeout * 1000, client);
+                        var poller = new Poller(new List<ZmqSocket> { client });
+                        int count = poller.Poll(TimeSpan.FromMilliseconds(requestTimeout * 1000));
 
                         if (count == 0)
                         {
@@ -75,9 +77,9 @@ namespace ZMQGuide
             }
         }
 
-        private static void PollInHandler(Socket socket, IOMultiPlex revents)
+        private static void PollInHandler(object sender, SocketEventArgs e)
         {
-            var reply = socket.Recv(Encoding.Unicode);
+            var reply = e.Socket.Receive(Encoding.Unicode);
 
             if (Int32.Parse(reply) == sequence)
             {
