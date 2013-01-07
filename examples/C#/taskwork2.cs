@@ -12,45 +12,46 @@
 //  Email:      Mark.Kharitonov@shunra.co.il, ptomasroos@gmail.com
 
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading;
-using ZMQ;
+using ZeroMQ;
+using ZeroMQ.Interop;
 
-namespace ZMQGuide
+namespace zguide.taskwork2
 {
     internal class Program
     {
         public static void Main(string[] args)
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket receiver = context.Socket(SocketType.PULL), sender = context.Socket(SocketType.PUSH), controller = context.Socket(SocketType.SUB))
+                using (ZmqSocket receiver = context.CreateSocket(SocketType.PULL), sender = context.CreateSocket(SocketType.PUSH), controller = context.CreateSocket(SocketType.SUB))
                 {
                     receiver.Connect("tcp://localhost:5557");
                     sender.Connect("tcp://localhost:5558");
                     controller.Connect("tcp://localhost:5559");
-                    controller.Subscribe(string.Empty, Encoding.Unicode);
+                    controller.SubscribeAll();
 
                     bool run = true;
 
-                    var items = new PollItem[2];
-                    items[0] = receiver.CreatePollItem(IOMultiPlex.POLLIN);
-                    items[0].PollInHandler += (socket, revents) => ReceiverPollInHandler(socket, sender);
-                    items[1] = controller.CreatePollItem(IOMultiPlex.POLLIN);
-                    items[1].PollInHandler += delegate { run = false; };
+                    var poller = new Poller(new List<ZmqSocket> { receiver, controller });
+
+                    receiver.ReceiveReady += (s, e) => ReceiverPollInHandler(e.Socket, sender);
+                    controller.ReceiveReady += delegate { run = false; };
 
                     //  Process tasks as long as the controller does not signal the end.
                     while (run)
                     {
-                        context.Poll(items);
+                        poller.Poll();
                     }
                 }
             }
         }
 
-        private static void ReceiverPollInHandler(Socket receiver, Socket sender)
+        private static void ReceiverPollInHandler(ZmqSocket receiver, ZmqSocket sender)
         {
-            string task = receiver.Recv(Encoding.Unicode);
+            string task = receiver.Receive(Encoding.Unicode);
 
             //  Simple progress indicator for the viewer;
             Console.WriteLine("{0}.", task);

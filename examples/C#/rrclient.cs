@@ -9,17 +9,17 @@
 
 using System;
 using System.Text;
-using ZMQ;
+using ZeroMQ;
 
-namespace ZMQGuide
+namespace zguide.rrclient
 {
     internal class Program
     {
         public static void Main(string[] args)
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket socket = context.Socket(SocketType.REQ))
+                using (ZmqSocket socket = context.CreateSocket(SocketType.REQ))
                 {
                     socket.Connect("tcp://localhost:5559");
 
@@ -27,7 +27,7 @@ namespace ZMQGuide
                     for (int requestNumber = 0; requestNumber < requestsToSend; requestNumber++)
                     {
                         socket.Send("Hello", Encoding.Unicode);
-                        string message = socket.Recv(Encoding.Unicode);
+                        string message = socket.Receive(Encoding.Unicode);
                         Console.WriteLine("Received reply: " + message);
                     }
                 }

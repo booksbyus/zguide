@@ -6,9 +6,10 @@
 //  Email:      michael.compton@littleedge.co.uk
 
 using System;
-using ZMQ;
+using ZeroMQ;
+using zguide;
 
-namespace ZMQGuide 
+namespace zguide.version
 {
     internal class Program 
     {

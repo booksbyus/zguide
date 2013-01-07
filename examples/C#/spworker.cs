@@ -8,27 +8,27 @@
 
 using System;
 using System.Text;
-using ZMQ;
-using ZMQ.ZMQExt;
+using ZeroMQ;
+using zguide;
 
-namespace Worker
+namespace zguide.spworker
 {
-    class Worker
+    class Program
     {
         private const string LRU_READY = "READY";
 
         static void Main(string[] args)
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (var worker = context.Socket(SocketType.REQ))
+                using (var worker = context.CreateSocket(SocketType.REQ))
                 {
                     var randomizer = new Random(DateTime.Now.Millisecond);
                     var identity = ZHelpers.SetID(worker, Encoding.Unicode);
                     worker.Connect("tcp://localhost:5556");
 
                     Console.WriteLine("I: {0} worker ready", identity);
-                    worker.Send("READY");
+                    worker.Send("READY", Encoding.Unicode);
 
                     var cycles = 0;
                     while (true)

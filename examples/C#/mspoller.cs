@@ -8,50 +8,50 @@
 //  Email:      michael.compton@littleedge.co.uk, ptomasroos@gmail.com
 
 using System;
+using System.Collections.Generic;
 using System.Text;
-using ZMQ;
+using ZeroMQ;
 
-namespace ZMQGuide
+namespace zguide.mspoller
 {
     internal class Program
     {
         public static void Main(string[] args)
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
                 //  Connect to task ventilator and weather server
-                using (Socket receiver = context.Socket(SocketType.PULL), subscriber = context.Socket(SocketType.SUB))
+                using (ZmqSocket receiver = context.CreateSocket(SocketType.PULL), subscriber = context.CreateSocket(SocketType.SUB))
                 {
                     receiver.Connect("tcp://localhost:5557");
                     subscriber.Connect("tcp://localhost:5556");
-                    subscriber.Subscribe("10001 ", Encoding.Unicode);
+                    subscriber.Subscribe(Encoding.Unicode.GetBytes("10001 "));
 
-                    var items = new PollItem[2];
-                    items[0] = receiver.CreatePollItem(IOMultiPlex.POLLIN);
-                    items[0].PollInHandler += ReceiverPollInHandler;
-                    items[1] = subscriber.CreatePollItem(IOMultiPlex.POLLIN);
-                    items[1].PollInHandler += SubscriberPollInHandler;
+                    receiver.ReceiveReady += ReceiverPollInHandler;
+                    subscriber.ReceiveReady += SubscriberPollInHandler;
+
+                    var poller = new Poller(new List<ZmqSocket> {  });
                     
                     //  Process messages from both sockets
                     while (true)
                     {
-                        context.Poll(items, -1);
+                        poller.Poll();
                     }
                 }
             }
         }
 
         // Task Processing event
-        public static void ReceiverPollInHandler(Socket socket, IOMultiPlex revents)
+        public static void ReceiverPollInHandler(object sender, SocketEventArgs e)
         {
-            socket.Recv();
+            e.Socket.Receive(Encoding.Unicode);
             Console.WriteLine("Process Task");
         }
 
         // Weather server event
-        public static void SubscriberPollInHandler(Socket socket, IOMultiPlex revents)
+        public static void SubscriberPollInHandler(object sender, SocketEventArgs e)
         {
-            socket.Recv();
+            e.Socket.Receive(Encoding.Unicode);
             Console.WriteLine("Process Weather");
         }
     }

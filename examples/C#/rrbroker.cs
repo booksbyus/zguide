@@ -6,62 +6,65 @@
 //  Email:      michael.compton@littleedge.co.uk, ptomasroos@gmail.com
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
-using ZMQ;
+using ZeroMQ;
+using ZeroMQ.Interop;
 
-namespace ZMQGuide
+namespace zguide.rrbroker
 {
     internal class Program
     {
         public static void Main(string[] args)
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket frontend = context.Socket(SocketType.ROUTER), backend = context.Socket(SocketType.DEALER))
+                using (ZmqSocket frontend = context.CreateSocket(SocketType.ROUTER), backend = context.CreateSocket(SocketType.DEALER))
                 {
                     frontend.Bind("tcp://*:5559");
                     backend.Bind("tcp://*:5560");
 
-                    var pollItems = new PollItem[2];
-                    pollItems[0] = frontend.CreatePollItem(IOMultiPlex.POLLIN);
-                    pollItems[0].PollInHandler += (socket, revents) => FrontendPollInHandler(socket, backend);
-                    pollItems[1] = backend.CreatePollItem(IOMultiPlex.POLLIN);
-                    pollItems[1].PollInHandler += (socket, revents) => BackendPollInHandler(socket, frontend);
+                    frontend.ReceiveReady += (sender, e) => FrontendPollInHandler(e.Socket, backend);
+                    backend.ReceiveReady += (sender, e) => BackendPollInHandler(e.Socket, backend);
+
+                    var poller = new Poller(new List<ZmqSocket> { frontend, backend });
 
                     while (true)
                     {
-                        context.Poll(pollItems, -1);
+                        poller.Poll();
                     }
                 }
             }
         }
 
-        private static void FrontendPollInHandler(Socket frontend, Socket backend)
+        private static void FrontendPollInHandler(ZmqSocket frontend, ZmqSocket backend)
         {
             RelayMessage(frontend, backend);
         }
 
-        private static void BackendPollInHandler(Socket backend, Socket frontend)
+        private static void BackendPollInHandler(ZmqSocket backend, ZmqSocket frontend)
         {
             RelayMessage(backend, frontend);
         }
 
-        private static void RelayMessage(Socket source, Socket destination)
+        private static void RelayMessage(ZmqSocket source, ZmqSocket destination)
         {
             bool hasMore = true;
             while (hasMore)
             {
                 // side effect warning!
-                // note! that this uses Recv mode that gets a byte[], the router c# implementation 
+                // note! that this uses Receive mode that gets a byte[], the router c# implementation 
                 // doesnt work if you get a string message instead of the byte[] i would prefer the solution thats commented.
                 // but the router doesnt seem to be able to handle the response back to the client
-                //string message = source.Recv(Encoding.Unicode);
+                //string message = source.Receive(Encoding.Unicode);
                 //hasMore = source.RcvMore;
                 //destination.Send(message, Encoding.Unicode, hasMore ? SendRecvOpt.SNDMORE : SendRecvOpt.NONE);
 
-                byte[] message = source.Recv();
-                hasMore = source.RcvMore;
-                destination.Send(message, hasMore ? SendRecvOpt.SNDMORE : SendRecvOpt.NONE);
+                byte[] message = new byte[0];
+                source.Receive(message);
+                hasMore = source.ReceiveMore;
+                destination.Send(message, message.Length, hasMore ? SocketFlags.SendMore : SocketFlags.None);
             }
         }
     }

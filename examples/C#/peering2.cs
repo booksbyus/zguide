@@ -16,9 +16,10 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
-using ZMQ;
+using ZeroMQ;
+using ZeroMQ.Interop;
 
-namespace ZMQGuide
+namespace zguide.peering2
 {
     internal class Program
     {
@@ -41,10 +42,10 @@ namespace ZMQGuide
             var myself = args[0];
             Console.WriteLine("Hello, I am " + myself);
 
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket cloudfe = context.Socket(SocketType.ROUTER), cloudbe = context.Socket(SocketType.ROUTER),
-                    localfe = context.Socket(SocketType.ROUTER), localbe = context.Socket(SocketType.ROUTER))
+                using (ZmqSocket cloudfe = context.CreateSocket(SocketType.ROUTER), cloudbe = context.CreateSocket(SocketType.ROUTER),
+                    localfe = context.CreateSocket(SocketType.ROUTER), localbe = context.CreateSocket(SocketType.ROUTER))
                 {
                     cloudFeAddress = "tcp://127.0.0.1:" + myself;
                     cloudfe.Identity = Encoding.Unicode.GetBytes(myself);
@@ -86,11 +87,11 @@ namespace ZMQGuide
                     var localfeReady = false;
                     var cloudfeReady = false;
 
-                    var backends = new PollItem[2];
-                    backends[0] = localbe.CreatePollItem(IOMultiPlex.POLLIN);
-                    backends[0].PollInHandler += (socket, revents) =>
+                    var backends = new Poller();
+
+                    localbe.ReceiveReady += (socket, revents) =>
                                                      {
-                                                         var zmsg = new ZMessage(socket);
+                                                         var zmsg = new ZMessage(revents.Socket);
 
                                                          //  Use worker address for LRU routing
                                                          workerQueue.Enqueue(zmsg.Unwrap());
@@ -101,25 +102,23 @@ namespace ZMQGuide
                                                          }
                                                      };
 
-                    backends[1] = cloudbe.CreatePollItem(IOMultiPlex.POLLIN);
-                    backends[1].PollInHandler += (socket, revents) =>
+
+                    cloudbe.ReceiveReady += (socket, revents) =>
                     {
-                        var zmsg = new ZMessage(socket);
+                        var zmsg = new ZMessage(revents.Socket);
                         //  We don't use peer broker address for anything
                         zmsg.Unwrap();
 
                         SendReply(zmsg, cloudfe, localfe);
                     };
 
-                    var frontends = new PollItem[2];
-                    frontends[0] = cloudfe.CreatePollItem(IOMultiPlex.POLLIN);
-                    frontends[0].PollInHandler += (socket, revents) =>
+                    var frontends = new Poller();
+                    cloudfe.ReceiveReady += (socket, revents) =>
                                                     {
                                                         cloudfeReady = true;
                                                     };
 
-                    frontends[1] = localfe.CreatePollItem(IOMultiPlex.POLLIN);
-                    frontends[1].PollInHandler += (socket, revents) =>
+                    localfe.ReceiveReady += (socket, revents) =>
                                                      {
                                                          localfeReady = true;
                                                      };
@@ -128,14 +127,14 @@ namespace ZMQGuide
                     while (true)
                     {
                         var timeout = (workerQueue.Count > 0 ? 1000000 : -1);
-                        var rc = Context.Poller(backends, timeout);
+                        var rc = backends.Poll(TimeSpan.FromMilliseconds(timeout));
 
                         if (rc == -1)
                             break; // Interrupted
 
                         while (workerQueue.Count > 0)
                         {
-                            Context.Poller(frontends, 0);
+                            frontends.Poll(TimeSpan.Zero);
                             bool reRoutable;
 
                             ZMessage msg;
@@ -176,7 +175,7 @@ namespace ZMQGuide
             }
         }
 
-        private static void SendReply(ZMessage msg, Socket cloudfe, Socket localfe)
+        private static void SendReply(ZMessage msg, ZmqSocket cloudfe, ZmqSocket localfe)
         {
             var address = Encoding.Unicode.GetString(msg.Address);
             //  Route reply to cloud if it's addressed to a broker
@@ -195,9 +194,9 @@ namespace ZMQGuide
 
         private static void WorkerTask()
         {
-            using (var ctx = new Context(1))
+            using (var ctx = ZmqContext.Create())
             {
-                using (var worker = ctx.Socket(SocketType.REQ))
+                using (var worker = ctx.CreateSocket(SocketType.REQ))
                 {
                     ZHelpers.SetID(worker, Encoding.Unicode);
                     worker.Connect(localBeAddress);
@@ -223,9 +222,9 @@ namespace ZMQGuide
 
         private static void ClientTask()
         {
-            using (var ctx = new Context(1))
+            using (var ctx = ZmqContext.Create())
             {
-                using (var client = ctx.Socket(SocketType.REQ))
+                using (var client = ctx.CreateSocket(SocketType.REQ))
                 {
                     ZHelpers.SetID(client, Encoding.Unicode);
                     client.Connect(localFeAddress);
@@ -233,7 +232,7 @@ namespace ZMQGuide
                     while (true)
                     {
                         client.Send("HELLO", Encoding.Unicode);
-                        string reply = client.Recv(Encoding.Unicode);
+                        string reply = client.Receive(Encoding.Unicode);
 
                         if (string.IsNullOrEmpty(reply))
                         {

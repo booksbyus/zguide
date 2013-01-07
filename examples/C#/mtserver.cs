@@ -7,43 +7,38 @@
 
 using System.Text;
 using System.Threading;
-using ZMQ;
+using ZeroMQ;
 
-namespace ZMQGuide
+namespace zguide.mtserver
 {
     internal class Program
     {
         public static void Main(string[] args)
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket clients = context.Socket(SocketType.ROUTER), workers = context.Socket(SocketType.DEALER))
-                {
-                    clients.Bind("tcp://*:5555");
-                    workers.Bind("inproc://workers"); // FYI, inproc requires that bind is performed before connect
 
+                using (var queue = new ZeroMQ.Devices.QueueDevice(context, "tcp://*:5555", "inproc://workers"))
+                {
                     var workerThreads = new Thread[5];
                     for (int threadId = 0; threadId < workerThreads.Length; threadId++)
                     {
                         workerThreads[threadId] = new Thread(WorkerRoutine);
                         workerThreads[threadId].Start(context);
                     }
-
-                    //  Connect work threads to client threads via a queue
-                    //  Devices will be depricated from 3.x
-                    Socket.Device.Queue(clients, workers);
                 }
+
             }
         }
 
         private static void WorkerRoutine(object context)
         {
-            Socket receiver = ((Context)context).Socket(SocketType.REP);
+            ZmqSocket receiver = ((ZmqContext)context).CreateSocket(SocketType.REP);
             receiver.Connect("inproc://workers");
 
             while (true)
             {
-                string message = receiver.Recv(Encoding.Unicode);
+                string message = receiver.Receive(Encoding.Unicode);
 
                 Thread.Sleep(1000); //  Simulate 'work'
                 

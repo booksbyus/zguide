@@ -11,19 +11,19 @@
 using System;
 using System.Text;
 using System.Threading;
-using ZMQ;
+using ZeroMQ;
 
-namespace ZMQGuide
+namespace zguide.lpserver
 {
     internal class Program
     {
         public static void Main(string[] args)
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
                 var randomizer = new Random(DateTime.Now.Millisecond);
 
-                using (var server = context.Socket(SocketType.REP))
+                using (var server = context.CreateSocket(SocketType.REP))
                 {
                     server.Bind("tcp://*:5555");
 
@@ -31,7 +31,7 @@ namespace ZMQGuide
 
                     while (true)
                     {
-                        var request = server.Recv(Encoding.Unicode);
+                        var request = server.Receive(Encoding.Unicode);
                         cycles++;
 
                         if (cycles > 3 && randomizer.Next(2) == 0)

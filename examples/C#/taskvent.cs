@@ -9,17 +9,17 @@
 
 using System;
 using System.Text;
-using ZMQ;
+using ZeroMQ;
 
-namespace ZMQGuide 
+namespace zguide.taskvent
 {
-    internal class Program 
+    internal class Program
     {
         public static void Main(string[] args)
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket sender = context.Socket(SocketType.PUSH))
+                using (ZmqSocket sender = context.CreateSocket(SocketType.PUSH))
                 {
                     sender.Bind("tcp://*:5557");
 

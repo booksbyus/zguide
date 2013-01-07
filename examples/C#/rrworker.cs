@@ -9,23 +9,23 @@
 
 using System;
 using System.Text;
-using ZMQ;
+using ZeroMQ;
 
-namespace ZMQGuide
+namespace zguide.rrworker
 {
     internal class Program
     {
         public static void Main(string[] args)
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket socket = context.Socket(SocketType.REP))
+                using (ZmqSocket socket = context.CreateSocket(SocketType.REP))
                 {
                     socket.Connect("tcp://localhost:5560");
 
                     while (true)
                     {
-                        string message = socket.Recv(Encoding.Unicode);
+                        string message = socket.Receive(Encoding.Unicode);
                         Console.WriteLine("Received request: " + message);
                         socket.Send("World", Encoding.Unicode);
                     }

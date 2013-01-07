@@ -8,30 +8,30 @@
 using System;
 using System.Text;
 using System.Threading;
-using ZMQ;
+using ZeroMQ;
 
-namespace ZMQGuide
+namespace zguide.syncsub
 {
     internal class Program
     {
         public static void Main(string[] args)
         {
-            using (var context = new Context(1))
+            using (var context = ZmqContext.Create())
             {
-                using (Socket subscriber = context.Socket(SocketType.SUB), syncClient = context.Socket(SocketType.REQ))
+                using (ZmqSocket subscriber = context.CreateSocket(SocketType.SUB), syncClient = context.CreateSocket(SocketType.REQ))
                 {
                     subscriber.Connect("tcp://localhost:5561");
-                    subscriber.Subscribe("", Encoding.Unicode);
+                    subscriber.Subscribe(Encoding.Unicode.GetBytes(string.Empty));
 
                     syncClient.Connect("tcp://localhost:5562");
 
                     //  - send a synchronization request
                     syncClient.Send("", Encoding.Unicode);
                     //  - wait for synchronization reply
-                    syncClient.Recv();
+                    syncClient.Receive(Encoding.Unicode);
 
                     int receivedUpdates = 0;
-                    while (!subscriber.Recv(Encoding.Unicode).Equals("END"))
+                    while (!subscriber.Receive(Encoding.Unicode).Equals("END"))
                     {
                         receivedUpdates++;
                     }
