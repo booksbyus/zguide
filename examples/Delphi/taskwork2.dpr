@@ -2,6 +2,7 @@ program taskwork2;
 //
 //  Task worker - design 2
 //  Adds pub-sub flow to receive and respond to kill signal
+//  @author Varga Balázs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 
@@ -15,13 +16,9 @@ var
   receiver,
   sender,
   controller: TZMQSocket;
-  s: String;
+  frame: TZMQFrame;
   poller: TZMQPoller;
-  pr: TZMQPollResult;
-  i,pc: Integer;
-  b: Boolean;
 begin
-  b := True;
   context := TZMQContext.Create;
 
   //  Socket to receive messages on
@@ -32,37 +29,41 @@ begin
   sender := Context.Socket( stPush );
   sender.connect( 'tcp://localhost:5558' );
 
+  //  Socket for control input
   controller := Context.Socket( stSub );
   controller.connect( 'tcp://localhost:5559' );
   controller.subscribe('');
 
-  poller := TZMQPoller.Create;
-  poller.regist( receiver, [pePollIn] );
-  poller.regist( controller, [pePollIn] );
+  //  Process messages from receiver and controller
+  poller := TZMQPoller.Create( true );
+  poller.register( receiver, [pePollIn] );
+  poller.register( controller, [pePollIn] );
 
-  //  Process tasks forever
-  while b do
+
+   //  Process messages from both sockets
+  while true do
   begin
-    pc := poller.poll;
-    for i := 0 to pc - 1 do
+    poller.poll;
+    if pePollIn in poller.PollItem[0].revents then
     begin
-      pr := poller.pollResult[i];
-      if pr.socket = receiver then
-      begin
-        receiver.recv( s );
-        //  Simple progress indicator for the viewer
-        Writeln( s );
+      frame := TZMQFrame.create;
+      receiver.recv( frame );
 
-        //  Do the work
-        sleep( StrToInt( s ) );
+      //  Do the work
+      sleep( StrToInt( frame.asUtf8String ) );
+      frame.Free;
 
-        //  Send results to sink
-        sender.send('');
+      //  Send results to sink
+      sender.send('');
 
-      end else
-      if pr.socket = controller then
-        b := False;
+      //  Simple progress indicator for the viewer
+      writeln('.');
     end;
+
+    //  Any waiting controller command acts as 'KILL'
+    if pePollIn in poller.PollItem[1].revents then
+      break; //  Exit loop
+
   end;
   receiver.Free;
   sender.Free;

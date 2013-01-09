@@ -1,6 +1,7 @@
 program rrbroker;
 //
 //  Simple request-reply broker
+//  @author Varga Balázs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 
@@ -14,11 +15,8 @@ var
   frontend,
   backend: TZMQSocket;
   poller: TZMQPoller;
-  msg: TZMQMessage;
+  msg: TZMQFrame;
   more: Boolean;
-  i,pc: Integer;
-  pollResult: TZMQPollResult;
-  otherSocket: TZMQSocket;
 
 begin
   //  Prepare our context and sockets
@@ -29,38 +27,41 @@ begin
   backend.bind( 'tcp://*:5560' );
 
   //  Initialize poll set
-  poller := TZMQPoller.Create;
-  poller.regist( frontend, [pePollIn] );
-  poller.regist( backend, [pePollIn] );
+  poller := TZMQPoller.Create( true );
+  poller.register( frontend, [pePollIn] );
+  poller.register( backend, [pePollIn] );
 
   //  Switch messages between sockets
   while True do
   begin
-    pc := poller.poll;
-    for i := 0 to pc - 1 do
+    poller.poll;
+    more := true;
+    if pePollIn in poller.PollItem[0].revents then
+    while more do
     begin
-      pollResult := poller.pollResult[i];
-      more := True;
-      if pollResult.socket = frontend then
-        otherSocket := backend
+      //  Process all parts of the message
+      msg := TZMQFrame.Create;
+      frontend.recv( msg );
+      more := frontend.rcvMore;
+      if more then
+        backend.send( msg, [sfSndMore] )
       else
-        otherSocket := frontend;
-
-      if pePollIn in pollResult.revents then
-      while more do
-      begin
-        //  Process all parts of the message
-        msg := TZMQMessage.Create;
-        pollResult.socket.recv( msg );
-        more := pollResult.socket.rcvMore;
-        if more then
-          otherSocket.send( msg, [sfSndMore] )
-        else
-          otherSocket.send( msg, [] );
-       msg.Free;
-      end;
-
+        backend.send( msg, [] );
     end;
+
+    if pePollIn in poller.PollItem[1].revents then
+    while more do
+    begin
+      //  Process all parts of the message
+      msg := TZMQFrame.Create;
+      backend.recv( msg );
+      more := backend.rcvMore;
+      if more then
+        frontend.send( msg, [sfSndMore] )
+      else
+        frontend.send( msg, [] );
+    end;
+
   end;
   //  We never get here but clean up anyhow
   poller.Free;

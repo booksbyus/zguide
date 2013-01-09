@@ -3,6 +3,7 @@ program wuserver;
 //  Weather update server
 //  Binds PUB socket to tcp://*:5556
 //  Publishes random weather updates
+//  @author Varga Balázs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 
@@ -23,8 +24,10 @@ begin
   context := TZMQContext.create;
   publisher := Context.Socket( stPub );
   publisher.bind( 'tcp://*:5556' );
-//  publisher.bind( 'ipc://weather.ipc' );
-
+  {$ifdef unix}
+  publisher.bind( 'ipc://weather.ipc' );
+  {$endif}
+  
   Randomize;
   while True do
   begin

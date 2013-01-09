@@ -3,17 +3,19 @@ program hwserverapi;
 //  Hello World server in Delphi
 //  Binds REP socket to tcp://*:5555
 //  Expects "Hello" from client, replies with "World"
+//  @author Varga Balázs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 
 uses
-  SysUtils,
-  zmqapi;
+    SysUtils
+  , zmqapi
+  ;
 
 var
   context: TZMQContext;
   socket: TZMQSocket;
-  sMsg: String;
+  sMsg: Utf8String;
 
 begin
   //  Prepare our context and socket

@@ -2,6 +2,7 @@ program mspoller;
 //
 //  Reading from multiple sockets
 //  This version uses zmq_poll()
+//  @author Varga Balázs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 
@@ -15,9 +16,9 @@ var
   receiver,
   subscriber: TZMQSocket;
   i,pc: Integer;
-  task: TZMQMessage;
+  task: TZMQFrame;
   poller: TZMQPoller;
-  pollResult: TZMQPollResult;
+  pollResult: TZMQPollItem;
 begin
   //  Prepare our context and sockets
   context := TZMQContext.Create;
@@ -32,22 +33,28 @@ begin
   subscriber.subscribe( '10001' );
 
   //  Initialize poll set
-  poller := TZMQPoller.Create;
-  poller.regist( receiver, [pePollIn] );
-  poller.regist( subscriber, [pePollIn] );
+  poller := TZMQPoller.Create( true );
+  poller.Register( receiver, [pePollIn] );
+  poller.Register( subscriber, [pePollIn] );
+
+  task := nil;
 
   //  Process messages from both sockets
   while True do
   begin
-    task := TZMQMessage.create;
     pc := poller.poll;
-    for i := 0 to pc - 1 do
+    if pePollIn in poller.PollItem[0].revents then
     begin
-      pollResult := poller.pollResult[i];
-      if pePollIn in pollResult.revents then
-        pollResult.socket.recv( task );
+      receiver.recv( task );
+      // Process task
+      FreeAndNil( task );
     end;
-    task.Free;
+    if pePollIn in poller.PollItem[1].revents then
+    begin
+      subscriber.recv( task );
+      // Process task
+      FreeAndNil( task );
+    end;
   end;
   //  We never get here
   poller.Free;

@@ -3,6 +3,7 @@ program wuclient;
 //  Weather update client
 //  Connects SUB socket to tcp://localhost:5556
 //  Collects weather updates and finds avg temp in zipcode
+//  @author Varga Balázs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 
@@ -18,27 +19,31 @@ const
 var
   context: TZMQContext;
   subscriber: TZMQSocket;
-
   filter: String;
-  update_nbr: Integer;
-  total_temp: Integer = 0;
-
-  s: String;
+  i, total_temp: Integer;
+  s: Utf8String;
   tsl: TStringList;
 begin
   context := TZMQContext.Create;
 
   //  Socket to talk to server
-  Writeln ( 'Collecting updates from weather server' );
+  Writeln ( 'Collecting updates from weather server...' );
   subscriber := Context.Socket( stSub );
   subscriber.connect( 'tcp://localhost:5556' );
 
-  filter := '10001';
+  //  Subscribe to zipcode, default is NYC, 10001
+  if ParamCount > 0 then
+    filter := ParamStr( 1 )
+  else
+    filter := '10001';
+
   subscriber.subscribe( filter );
   tsl := TStringList.Create;
   tsl.Delimiter := ' ';
 
-  for update_nbr := 0 to update_count - 1 do
+  total_temp := 0;
+  //  Process 100 updates
+  for i := 0 to update_count - 1 do
   begin
     subscriber.recv( s );
     tsl.Clear;

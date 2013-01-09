@@ -2,6 +2,7 @@ program msgqueue;
 //
 //  Simple message queuing broker
 //  Same as request-reply broker but using QUEUE device
+//  @author Varga Balázs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 
@@ -26,10 +27,10 @@ begin
   backend := Context.Socket( stDealer );
   backend.bind( 'tcp://*:5560' );
 
-  //  Start built-in device
-  ZMQDevice( dQueue, frontend, backend );
+  //  Start the proxy
+  ZMQProxy( frontend, backend, nil );
 
-  //  We never get here
+  //  We never get here...
   frontend.Free;
   backend.Free;
   context.Free;
