@@ -1,4 +1,4 @@
-//  Clone client Model Five
+//  Clone client - Model Five
 
 //  Lets us build this source without creating a library
 #include "kvmsg.c"
@@ -60,7 +60,7 @@ int main (void)
             else
                 kvmsg_destroy (&kvmsg);
         }
-        //  If we timed-out, generate a random kvmsg
+        //  If we timed out, generate a random kvmsg
         if (zclock_time () >= alarm) {
             kvmsg_t *kvmsg = kvmsg_new (0);
             kvmsg_fmt_key  (kvmsg, "%s%d", SUBTREE, randof (10000));

@@ -38,7 +38,7 @@ int main (void)
     byte buffer [PING_MSG_SIZE];
     
     //  .split main ping loop
-    //  We use zmq_poll to wait for activity on the UDP socket, since
+    //  We use {{zmq_poll}} to wait for activity on the UDP socket, because
     //  this function works on non-0MQ file handles. We send a beacon
     //  once a second, and we collect and report beacons that come in
     //  from other nodes:

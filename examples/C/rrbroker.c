@@ -45,7 +45,7 @@ int main (void)
             }
         }
     }
-    //  We never get here but clean up anyhow
+    //  We never get here, but clean up anyhow
     zmq_close (frontend);
     zmq_close (backend);
     zmq_ctx_destroy (context);

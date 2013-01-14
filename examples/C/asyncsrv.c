@@ -1,6 +1,6 @@
 //  Asynchronous client-to-server (DEALER to ROUTER)
 //
-//  While this example runs in a single process, that is just to make
+//  While this example runs in a single process, that is to make
 //  it easier to start and stop the example. Each task has its own
 //  context and conceptually acts as a separate process.
 
@@ -105,7 +105,7 @@ server_worker (void *args, zctx_t *ctx, void *pipe)
     }
 }
 
-//  The main thread simply starts several clients, and a server, and then
+//  The main thread simply starts several clients and a server, and then
 //  waits for the server to finish.
 
 int main (void)

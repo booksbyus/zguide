@@ -12,12 +12,12 @@
 
 //  .split API structure
 //  This API works in two halves, a common pattern for APIs that need to
-//  run in the background. One half is an front-end object our application
-//  creates and works with; the other half is a back-end "agent" that runs
-//  in a background thread. The front-end talks to the back-end over an
+//  run in the background. One half is an frontend object our application
+//  creates and works with; the other half is a backend "agent" that runs
+//  in a background thread. The frontend talks to the backend over an
 //  inproc pipe socket:
 
-//  Structure of our front-end class
+//  Structure of our frontend class
 
 struct _flcliapi_t {
     zctx_t *ctx;        //  Our context wrapper
@@ -56,11 +56,11 @@ flcliapi_destroy (flcliapi_t **self_p)
 }
 
 //  .split connect method
-//  To implement the connect method, the front-end object sends a multi-part
-//  message to the back-end agent. The first part is a string "CONNECT", and
+//  To implement the connect method, the frontend object sends a multipart
+//  message to the backend agent. The first part is a string "CONNECT", and
 //  the second part is the endpoint. It waits 100msec for the connection to
 //  come up, which isn't pretty, but saves us from sending all requests to a
-//  single server, at start-up time:
+//  single server, at startup time:
 
 void
 flcliapi_connect (flcliapi_t *self, char *endpoint)
@@ -75,8 +75,8 @@ flcliapi_connect (flcliapi_t *self, char *endpoint)
 }
 
 //  .split request method
-//  To implement the request method, the front-end object sends a message
-//  to the back-end, specifying a command "REQUEST" and the request message:
+//  To implement the request method, the frontend object sends a message
+//  to the backend, specifying a command "REQUEST" and the request message:
 
 zmsg_t *
 flcliapi_request (flcliapi_t *self, zmsg_t **request_p)
@@ -96,8 +96,8 @@ flcliapi_request (flcliapi_t *self, zmsg_t **request_p)
     return reply;
 }
 
-//  .split back-end agent
-//  Here we see the back-end agent. It runs as an attached thread, talking
+//  .split backend agent
+//  Here we see the backend agent. It runs as an attached thread, talking
 //  to its parent over a pipe socket. It is a fairly complex piece of work
 //  so we'll break it down into pieces. First, the agent manages a set of
 //  servers, using our familiar class approach:
@@ -158,7 +158,7 @@ server_tickless (const char *key, void *server, void *arg)
     return 0;
 }
 
-//  .split back-end agent class
+//  .split backend agent class
 //  We build the agent as a class that's capable of processing messages
 //  coming in from its various sockets:
 
@@ -204,8 +204,8 @@ agent_destroy (agent_t **self_p)
 }
 
 //  .split control messages
-//  The control_message method processes one message from our front-end
-//  class (it's going to be CONNECT or REQUEST):
+//  This method processes one message from our frontend class
+//  (it's going to be CONNECT or REQUEST):
 
 //  Callback when we remove server from agent 'servers' hash table
 
@@ -253,7 +253,7 @@ agent_control_message (agent_t *self)
 }
 
 //  .split router messages
-//  The router_message method processes one message from a connected
+//  This method processes one message from a connected
 //  server:
 
 void
@@ -285,8 +285,8 @@ agent_router_message (agent_t *self)
         zmsg_destroy (&reply);
 }
 
-//  .split back-end agent implementation
-//  Finally here's the agent task itself, which polls its two sockets
+//  .split backend agent implementation
+//  Finally, here's the agent task itself, which polls its two sockets
 //  and processes incoming messages:
 
 static void

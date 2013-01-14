@@ -127,8 +127,8 @@ kvmsg_destroy (kvmsg_t **self_p)
 }
 
 //  .split recv method
-//  The recv method reads a key-value message from socket, and returns a new
-//  kvmsg instance:
+//  This method reads a key-value message from the socket and returns a 
+//  new {{kvmsg}} instance:
 
 kvmsg_t *
 kvmsg_recv (void *socket)
@@ -186,7 +186,7 @@ kvmsg_send (kvmsg_t *self, void *socket)
 //  .until
 
 //  .split dup method
-//  The dup method duplicates a kvmsg instance, returns the new instance:
+//  This method duplicates a {{kvmsg}} instance, returns the new instance:
 
 kvmsg_t *
 kvmsg_dup (kvmsg_t *self)
@@ -358,7 +358,7 @@ kvmsg_size (kvmsg_t *self)
 //  .until
 
 //  .split UUID methods
-//  These methods get/set the UUID for the key-value message:
+//  These methods get and set the UUID for the key-value message:
 
 byte *
 kvmsg_uuid (kvmsg_t *self)
@@ -371,7 +371,7 @@ kvmsg_uuid (kvmsg_t *self)
         return NULL;
 }
 
-//  Sets the UUID to a random generated value
+//  Sets the UUID to a randomly generated value
 void
 kvmsg_set_uuid (kvmsg_t *self)
 {
@@ -387,7 +387,7 @@ kvmsg_set_uuid (kvmsg_t *self)
 }
 
 //  .split property methods
-//  These methods get/set a specified message property:
+//  These methods get and set a specified message property:
 
 //  Get message property, return "" if no such property is defined.
 char *
@@ -442,9 +442,9 @@ kvmsg_set_prop (kvmsg_t *self, char *name, char *format, ...)
 }
 
 //  .split store method
-//  The store method stores the key-value message into a hash map, unless
-//  the key and value are both null. It nullifies the kvmsg reference so
-//  that the object is owned by the hash map, not the caller:
+//  This method stores the key-value message into a hash map, unless
+//  the key and value are both null. It nullifies the {{kvmsg}} reference
+//  so that the object is owned by the hash map, not the caller:
 
 void
 kvmsg_store (kvmsg_t **self_p, zhash_t *hash)
@@ -468,7 +468,7 @@ kvmsg_store (kvmsg_t **self_p, zhash_t *hash)
 }
 
 //  .split dump method
-//  The dump method extends the kvsimple implementation with support for
+//  This method extends the {{kvsimple}} implementation with support for
 //  message properties:
 
 void
@@ -507,8 +507,8 @@ kvmsg_dump (kvmsg_t *self)
 //  .until
 
 //  .split test method
-//  The selftest method is the same as in kvsimple with added support
-//  for the uuid and property features of kvmsg:
+//  This method is the same as in {{kvsimple}} with added support
+//  for the uuid and property features of {{kvmsg}}:
 
 int
 kvmsg_test (int verbose)

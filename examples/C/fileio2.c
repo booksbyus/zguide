@@ -44,7 +44,7 @@ free_chunk (void *data, void *arg)
 
 //  .split File server thread
 //  The server thread waits for a chunk request from a client,
-//  reads that chunk and sends it back to the client:
+//  reads that chunk, and sends it back to the client:
 
 static void
 server_thread (void *args, zctx_t *ctx, void *pipe)

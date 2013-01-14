@@ -18,9 +18,9 @@ struct _clone_t {
 static void clone_agent (void *args, zctx_t *ctx, void *pipe);
 
 //  .split constructor and destructor
-//  Constructor and destructor for the clone class. Note that we create
-//  a context specifically for the pipe that connects our frontend to the
-//  backend agent:
+//  Here are the constructor and destructor for the clone class. Note that
+//  we create a context specifically for the pipe that connects our
+//  frontend to the backend agent:
 
 clone_t *
 clone_new (void)
@@ -48,7 +48,7 @@ clone_destroy (clone_t **self_p)
 
 //  .split subtree method
 //  Specify subtree for snapshot and updates, which we must do before
-//  connecting to a server since the subtree specification is sent as
+//  connecting to a server as the subtree specification is sent as the
 //  first command to the server. Sends a [SUBTREE][subtree] command to
 //  the agent:
 
@@ -96,7 +96,7 @@ clone_set (clone_t *self, char *key, char *value, int ttl)
 }
 
 //  .split get method
-//  Look-up value in distributed hash table. Sends [GET][key] to the agent and
+//  Look up value in distributed hash table. Sends [GET][key] to the agent and
 //  waits for a value response. If there is no value available, will eventually
 //  return NULL:
 
@@ -120,7 +120,7 @@ clone_get (clone_t *self, char *key)
 }
 
 //  .split working with servers
-//  The back-end agent manages a set of servers, which we implement using
+//  The backend agent manages a set of servers, which we implement using
 //  our simple class model:
 
 typedef struct {
@@ -161,10 +161,10 @@ server_destroy (server_t **self_p)
     }
 }
 
-//  .split back-end agent class
-//  Here is the implementation of the back-end agent itself:
+//  .split backend agent class
+//  Here is the implementation of the backend agent itself:
 
-//  Number of servers we will talk to
+//  Number of servers to which we will talk to
 #define SERVER_MAX      2
 
 //  Server considered dead if silent for this long
@@ -218,7 +218,7 @@ agent_destroy (agent_t **self_p)
 }
 
 //  .split handling a control message
-//  Here we handle the different control messages from the front-end;
+//  Here we handle the different control messages from the frontend;
 //  SUBTREE, CONNECT, SET, and GET:
 
 static int
@@ -287,9 +287,9 @@ agent_control_message (agent_t *self)
     return 0;
 }
 
-//  .split back-end agent
+//  .split backend agent
 //  The asynchronous agent manages a server pool and handles the
-//  request/reply dialog when the application asks for it:
+//  request-reply dialog when the application asks for it:
 
 static void
 clone_agent (void *args, zctx_t *ctx, void *pipe)

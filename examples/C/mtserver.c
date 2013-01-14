@@ -43,7 +43,7 @@ int main (void)
     //  Connect work threads to client threads via a queue proxy
     zmq_proxy (clients, workers, NULL);
 
-    //  We never get here but clean up anyhow
+    //  We never get here, but clean up anyhow
     zmq_close (clients);
     zmq_close (workers);
     zmq_ctx_destroy (context);

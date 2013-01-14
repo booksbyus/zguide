@@ -34,7 +34,7 @@ int main (void)
             //  .split main body of client
             //  We use a Lazy Pirate strategy in the client. If there's no
             //  reply within our timeout, we close the socket and try again.
-            //  In Binary Star, it's the client vote which decides which
+            //  In Binary Star, it's the client vote that decides which
             //  server is primary; the client must therefore try to connect
             //  to each server in turn:
             

@@ -2,7 +2,7 @@
 .bookmark sockets-and-patterns
 + Sockets and Patterns
 
-In [#basics] we took 0MQ for a drive, with some basic examples of the main 0MQ patterns: request-reply, pub-sub, and pipeline. In this chapter we're going to get our hands dirty and start to learn how to use these tools in real programs.
+In [#basics] we took 0MQ for a drive, with some basic examples of the main 0MQ patterns: request-reply, pub-sub, and pipeline. In this chapter, we're going to get our hands dirty and start to learn how to use these tools in real programs.
 
 We'll cover:
 
@@ -10,24 +10,24 @@ We'll cover:
 * How to send and receive messages on sockets.
 * How to build your apps around 0MQ's asynchronous I/O model.
 * How to handle multiple sockets in one thread.
-* How to handle fatal and non-fatal errors properly.
+* How to handle fatal and nonfatal errors properly.
 * How to handle interrupt signals like Ctrl-C.
-* How to shutdown a 0MQ application cleanly.
+* How to shut down a 0MQ application cleanly.
 * How to check a 0MQ application for memory leaks.
-* How to send and receive multi-part messages.
+* How to send and receive multipart messages.
 * How to forward messages across networks.
 * How to build a simple message queuing broker.
 * How to write multithreaded applications with 0MQ.
 * How to use 0MQ to signal between threads.
 * How to use 0MQ to coordinate a network of nodes.
 * How to create and use message envelopes for pub-sub.
-* Using the high-water mark (HWM) to protect against memory overflows.
+* Using the HWM (high-water mark) to protect against memory overflows.
 
 ++ The Socket API
 
-To be perfectly honest, 0MQ does a kind of switch-and-bait on you. Which we don't apologize for, it's for your own good and hurts us more than it hurts you. It presents a familiar socket-based API, which requires great effort for us to hide a bunch of message-processing engines. However, the result will slowly fix your world-view about how to design and write distributed software.
+To be perfectly honest, 0MQ does a kind of switch-and-bait on you, for which we we don't apologize. It's for your own good and it hurts us more than it hurts you. 0MQ presents a familiar socket-based API, which requires great effort for us to hide a bunch of message-processing engines. However, the result will slowly fix your world view about how to design and write distributed software.
 
-Sockets are the de-facto standard API for network programming, as well as being useful for stopping your eyes from falling onto your cheeks. One thing that makes 0MQ especially tasty to developers is that it uses sockets and messages instead of some other arbitrary set of concepts. Kudos to Martin Sustrik for pulling this off. It turns "Message Oriented Middleware", a phrase guaranteed to send the whole room off to Catatonia, into "Extra Spicy Sockets!" which leaves us with a strange craving for pizza, and a desire to know more.
+Sockets are the de facto standard API for network programming, as well as being useful for stopping your eyes from falling onto your cheeks. One thing that makes 0MQ especially tasty to developers is that it uses sockets and messages instead of some other arbitrary set of concepts. Kudos to Martin Sustrik for pulling this off. It turns "Message Oriented Middleware", a phrase guaranteed to send the whole room off to Catatonia, into "Extra Spicy Sockets!", which leaves us with a strange craving for pizza and a desire to know more.
 
 Like a favorite dish, 0MQ sockets are easy to digest. Sockets have a life in four parts, just like BSD sockets:
 
@@ -39,29 +39,29 @@ Like a favorite dish, 0MQ sockets are easy to digest. Sockets have a life in fou
 
 * Using the sockets to carry data by writing and receiving messages on them (see {{zmq_send[3]}}, {{zmq_recv[3]}}).
 
-Note that sockets are always void pointers, and messages (which we'll come to very soon) are structures. So in C you pass sockets as-such, but you pass addresses of messages in all functions that work with messages, like {{zmq_send[3]}} and {{zmq_recv[3]}}. As a mnemonic, realize that "in 0MQ all your sockets are belong to us", but messages are things you actually own in your code.
+Note that sockets are always void pointers, and messages (which we'll come to very soon) are structures. So in C you pass sockets as-such, but you pass addresses of messages in all functions that work with messages, like {{zmq_send[3]}} and {{zmq_recv[3]}}. As a mnemonic, realize that "in 0MQ, all your sockets are belong to us", but messages are things you actually own in your code.
 
-Creating, destroying, and configuring sockets works as you'd expect for any object. But remember that 0MQ is an asynchronous, elastic fabric. This has some impact on how we plug sockets into the network topology, and how we use the sockets after that.
+Creating, destroying, and configuring sockets works as you'd expect for any object. But remember that 0MQ is an asynchronous, elastic fabric. This has some impact on how we plug sockets into the network topology and how we use the sockets after that.
 
-+++ Plugging Sockets Into the Topology
++++ Plugging Sockets into the Topology
 
-To create a connection between two nodes you use {{zmq_bind[3]}} in one node, and {{zmq_connect[3]}} in the other.  As a general rule of thumb, the node which does {{zmq_bind[3]}} is a "server", sitting on a well-known network address, and the node which does {{zmq_connect[3]}} is a "client", with unknown or arbitrary network addresses. Thus we say that we "bind a socket to an endpoint" and "connect a socket to an endpoint", the endpoint being that well-known network address.
+To create a connection between two nodes, you use {{zmq_bind[3]}} in one node and {{zmq_connect[3]}} in the other.  As a general rule of thumb, the node that does {{zmq_bind[3]}} is a "server", sitting on a well-known network address, and the node which does {{zmq_connect[3]}} is a "client", with unknown or arbitrary network addresses. Thus we say that we "bind a socket to an endpoint" and "connect a socket to an endpoint", the endpoint being that well-known network address.
 
 0MQ connections are somewhat different from classic TCP connections. The main notable differences are:
 
-* They go across an arbitrary transport ({{inproc}}, {{ipc}}, {{tcp}}, {{pgm}} or {{epgm}}). See {{zmq_inproc[7]}}, {{zmq_ipc[7]}}, {{zmq_tcp[7]}}, {{zmq_pgm[7]}}, and {{zmq_epgm[7]}}.
+* They go across an arbitrary transport ({{inproc}}, {{ipc}}, {{tcp}}, {{pgm}}, or {{epgm}}). See {{zmq_inproc[7]}}, {{zmq_ipc[7]}}, {{zmq_tcp[7]}}, {{zmq_pgm[7]}}, and {{zmq_epgm[7]}}.
 
 * One socket may have many outgoing and many incoming connections.
 
 * There is no {{zmq_accept}}() method. When a socket is bound to an endpoint it automatically starts accepting connections.
 
-* The network connection itself happens in the background, and 0MQ will automatically re-connect if the network connection is broken (e.g. if the peer disappears and then comes back).
+* The network connection itself happens in the background, and 0MQ will automatically reconnect if the network connection is broken (e.g., if the peer disappears and then comes back).
 
 * Your application code cannot work with these connections directly; they are encapsulated under the socket.
 
-Many architectures follow some kind of client-server model, where the server is the component that is most static, and the clients are the components that are most dynamic, i.e. they come and go the most. There are sometimes issues of addressing: servers will be visible to clients, but not necessarily vice-versa. So mostly it's obvious which node should be doing {{zmq_bind[3]}} (the server) and which should be doing {{zmq_connect[3]}} (the client). It also depends on the kind of sockets you're using, with some exceptions for unusual network architectures. We'll look at socket types later.
+Many architectures follow some kind of client/server model, where the server is the component that is most static, and the clients are the components that are most dynamic, i.e., they come and go the most. There are sometimes issues of addressing: servers will be visible to clients, but not necessarily vice versa. So mostly it's obvious which node should be doing {{zmq_bind[3]}} (the server) and which should be doing {{zmq_connect[3]}} (the client). It also depends on the kind of sockets you're using, with some exceptions for unusual network architectures. We'll look at socket types later.
 
-Now, imagine we start the client //before// we start the server. In traditional networking we get a big red Fail flag. But 0MQ lets us start and stop pieces arbitrarily. As soon as the client node does {{zmq_connect[3]}} the connection exists and that node can start to write messages to the socket. At some stage (hopefully before messages queue up so much that they start to get discarded, or the client blocks), the server comes alive, does a {{zmq_bind[3]}} and 0MQ starts to deliver messages.
+Now, imagine we start the client //before// we start the server. In traditional networking, we get a big red Fail flag. But 0MQ lets us start and stop pieces arbitrarily. As soon as the client node does {{zmq_connect[3]}}, the connection exists and that node can start to write messages to the socket. At some stage (hopefully before messages queue up so much that they start to get discarded, or the client blocks), the server comes alive, does a {{zmq_bind[3]}}, and 0MQ starts to deliver messages.
 
 A server node can bind to many endpoints (that is, a combination of protocol and address) and it can do this using a single socket. This means it will accept connections across different transports:
 
@@ -71,17 +71,17 @@ zmq_bind (socket, "tcp://*:9999");
 zmq_bind (socket, "inproc://somename");
 [[/code]]
 
-With most transports you cannot bind to the same endpoint twice, unlike for example in UDP. The {{ipc}} transport does however let one process bind to an endpoint already used by a first process. It's meant to allow a process to recover after a crash.
+With most transports, you cannot bind to the same endpoint twice, unlike for example in UDP. The {{ipc}} transport does, however, let one process bind to an endpoint already used by a first process. It's meant to allow a process to recover after a crash.
 
-Although 0MQ tries to be neutral about which side binds, and which side connects, there are differences. We'll see these in more detail later. The upshot is that you should usually think in terms of "servers" as static parts of your topology, that bind to more-or-less fixed endpoints, and "clients" as dynamic parts that come and go and connect to these endpoints. Then, design your application around this model. The chances that it will "just work" are much better like that.
+Although 0MQ tries to be neutral about which side binds and which side connects, there are differences. We'll see these in more detail later. The upshot is that you should usually think in terms of "servers" as static parts of your topology that bind to more or less fixed endpoints, and "clients" as dynamic parts that come and go and connect to these endpoints. Then, design your application around this model. The chances that it will "just work" are much better like that.
 
-Sockets have types. The socket type defines the semantics of the socket, its policies for routing messages inwards and outwards, queuing, etc. You can connect certain types of socket together, e.g. a publisher socket and a subscriber socket. Sockets work together in "messaging patterns". We'll look at this in more detail later.
+Sockets have types. The socket type defines the semantics of the socket, its policies for routing messages inwards and outwards, queuing, etc. You can connect certain types of socket together, e.g., a publisher socket and a subscriber socket. Sockets work together in "messaging patterns". We'll look at this in more detail later.
 
 It's the ability to connect sockets in these different ways that gives 0MQ its basic power as a message queuing system. There are layers on top of this, such as proxies, which we'll get to later. But essentially, with 0MQ you define your network architecture by plugging pieces together like a child's construction toy.
 
 +++ Sending and Receiving Messages
 
-0MQ's I/O model is different enough from the classic TCP model[figure] that you will need time to get your head around it.
+To send and receive messages you use the {{zmq_msg_send[3]}} and {{zmq_msg_recv[3]}} methods. The names are conventional, but 0MQ's I/O model is different enough from the classic TCP model[figure] that you will need time to get your head around it.
 
 [[code type="textdiagram" title="TCP sockets are 1 to 1"]]
 #------------#
@@ -105,7 +105,7 @@ Let's look at the main differences between TCP sockets and 0MQ sockets when it c
 
 * 0MQ sockets carry messages, like UDP, rather than a stream of bytes as TCP does. A 0MQ message is length-specified binary data. We'll come to messages shortly, their design is optimized for performance and so a little tricky.
 
-* 0MQ sockets do their I/O in a background thread. This means that messages arrive in local input queues, and are sent from local output queues, no matter what your application is busy doing.
+* 0MQ sockets do their I/O in a background thread. This means that messages arrive in local input queues and are sent from local output queues, no matter what your application is busy doing.
 
 * 0MQ sockets have one-to-N routing behavior built-in, according to the socket type.
 
@@ -113,39 +113,39 @@ The {{zmq_send[3]}} method does not actually send the message to the socket conn
 
 +++ Unicast Transports
 
-0MQ provides a set of unicast transports ({{inproc}}, {{ipc}}, and {{tcp}}) and multicast transports (epgm, pgm). Multicast is an advanced technique that we'll come to later. Don't even start using it unless you know that your fanout ratios will make 1-to-N unicast impossible.
+0MQ provides a set of unicast transports ({{inproc}}, {{ipc}}, and {{tcp}}) and multicast transports (epgm, pgm). Multicast is an advanced technique that we'll come to later. Don't even start using it unless you know that your fan-out ratios will make 1-to-N unicast impossible.
 
-For most common cases, use **{{tcp}}**, which is a //disconnected TCP// transport. It is elastic, portable, and fast enough for most cases. We call this 'disconnected' because 0MQ's {{tcp}} transport doesn't require that the endpoint exists before you connect to it. Clients and servers can connect and bind at any time, can go and come back, and it remains transparent to applications.
+For most common cases, use **{{tcp}}**, which is a //disconnected TCP// transport. It is elastic, portable, and fast enough for most cases. We call this disconnected because 0MQ's {{tcp}} transport doesn't require that the endpoint exists before you connect to it. Clients and servers can connect and bind at any time, can go and come back, and it remains transparent to applications.
 
-The inter-process {{ipc}} transport is disconnected, like {{tcp}}. It has one limitation: it does not yet work on Windows. By convention we use endpoint names with an ".ipc" extension to avoid potential conflict with other file names. On UNIX systems, if you use {{ipc}} endpoints you need to create these with appropriate permissions otherwise they may not be shareable between processes running under different user IDs. You must also make sure all processes can access the files, e.g. by running in the same working directory.
+The inter-process {{ipc}} transport is disconnected, like {{tcp}}. It has one limitation: it does not yet work on Windows. By convention we use endpoint names with an ".ipc" extension to avoid potential conflict with other file names. On UNIX systems, if you use {{ipc}} endpoints you need to create these with appropriate permissions otherwise they may not be shareable between processes running under different user IDs. You must also make sure all processes can access the files, e.g., by running in the same working directory.
 
-The inter-thread transport, **{{inproc}}**, is a connected signaling transport. It is much faster than {{tcp}} or {{ipc}}. This transport has a specific limitation compared to {{ipc}} and {{tcp}}: **the server must issue a bind before any client issues a connect**. This is something future versions of 0MQ may fix, but at present this defines you use {{inproc}} sockets. We create and bind one socket, start the child threads, which create and connect the other sockets.
+The inter-thread transport, **{{inproc}}**, is a connected signaling transport. It is much faster than {{tcp}} or {{ipc}}. This transport has a specific limitation compared to {{tpc}} and {{icp}}: **the server must issue a bind before any client issues a connect**. This is something future versions of 0MQ may fix, but at present this defines how you use {{inproc}} sockets. We create and bind one socket and start the child threads, which create and connect the other sockets.
 
 +++ 0MQ is Not a Neutral Carrier
 
-A common question that newcomers to 0MQ ask (it's one I asked myself) is, "how do I write an XYZ server in 0MQ?" For example, "how do I write an HTTP server in 0MQ?" The implication is that if we use normal sockets to carry HTTP requests and responses, we should be able to use 0MQ sockets to do the same, only much faster and better.
+A common question that newcomers to 0MQ ask (it's one I've asked myself) is, "how do I write an XYZ server in 0MQ?" For example, "how do I write an HTTP server in 0MQ?" The implication is that if we use normal sockets to carry HTTP requests and responses, we should be able to use 0MQ sockets to do the same, only much faster and better.
 
-The answer used to be "this is not how it works". 0MQ is not a neutral carrier, it imposes a framing on the transport protocols it uses. This framing is not compatible with existing protocols, which tend to use their own framing. For example, compare an HTTP request, and a 0MQ request, both over TCP/IP.
+The answer used to be "this is not how it works". 0MQ is not a neutral carrier, it imposes a framing on the transport protocols it uses. This framing is not compatible with existing protocols, which tend to use their own framing. For example, compare an HTTP request and a 0MQ request, both over TCP/IP.
 
-[[code type="textdiagram" title="HTTP On the Wire"]]
+[[code type="textdiagram" title="HTTP on the Wire"]]
 #----------------+----+----+----+----#
 | GET /index.html| 13 | 10 | 13 | 10 |
 #----------------+----+----+----+----#
 [[/code]]
 
-The HTTP request uses CR-LF as its simplest framing delimiter[figure], whereas 0MQ uses a length-specified frame[figure]. So you could write a HTTP-like protocol using 0MQ, using for example the request-reply socket pattern. But it would not be HTTP.
+The HTTP request uses CR-LF as its simplest framing delimiter[figure], whereas 0MQ uses a length-specified frame[figure]. So you could write an HTTP-like protocol using 0MQ, using for example the request-reply socket pattern. But it would not be HTTP.
 
-[[code type="textdiagram" title="0MQ On the Wire"]]
+[[code type="textdiagram" title="0MQ on the Wire"]]
 #---+---+---+---+---+---#
 | 5 | H | E | L | L | O |
 #---+---+---+---+---+---#
 [[/code]]
 
-Since 0MQ/3.3, however, the {{ZMQ_ROUTER_RAW}} socket option lets you read and write TCP bytes without the 0MQ framing. Hardeep Singh contributed this change so that he could connect to Telnet servers from his 0MQ application. This is still, at time of writing, somewhat experimental, but it shows how 0MQ keeps evolving to solve new problems. Maybe the next patch will be yours.
+Since v3.3, however, 0MQ has a socket option called {{ZMQ_ROUTER_RAW}} that lets you read and write data without the 0MQ framing. You could use this to read and write proper HTTP requests and responses. Hardeep Singh contributed this change so that he could connect to Telnet servers from his 0MQ application. At time of writing this is still somewhat experimental, but it shows how 0MQ keeps evolving to solve new problems. Maybe the next patch will be yours.
 
 +++ I/O Threads
 
-We said that 0MQ does I/O in a background thread. One I/O thread (for all sockets) is sufficient for all but the most extreme applications. When you create a new context it starts with one I/O thread. The general rule of thumb is to allow one I/O thread per gigabyte of data in or out per second. To raise the number of I/O threads, use the {{zmq_ctx_set[3]}} call //before// creating any sockets:
+We said that 0MQ does I/O in a background thread. One I/O thread (for all sockets) is sufficient for all but the most extreme applications. When you create a new context, it starts with one I/O thread. The general rule of thumb is to allow one I/O thread per gigabyte of data in or out per second. To raise the number of I/O threads, use the {{zmq_ctx_set[3]}} call //before// creating any sockets:
 
 [[code type="fragment" name="iothreads"]]
 int io_threads = 4;
@@ -154,19 +154,19 @@ zmq_ctx_set (context, ZMQ_IO_THREADS, io_threads);
 assert (zmq_ctx_get (context, ZMQ_IO_THREADS) == io_threads);
 [[/code]]
 
-We've seen that one socket can handle many (dozens, thousands of) connections at once. This has a fundamental impact on how you write applications. A traditional networked application has one process or one thread per remote connection, and that process or thread handles one socket. 0MQ lets you collapse this entire structure into a single process, and then break it up as necessary for scaling.
+We've seen that one socket can handle dozens, even thousands of connections at once. This has a fundamental impact on how you write applications. A traditional networked application has one process or one thread per remote connection, and that process or thread handles one socket. 0MQ lets you collapse this entire structure into a single process and then break it up as necessary for scaling.
 
-If you are using 0MQ for inter-thread communications only, i.e. a multithreaded application that does no external socket I/O, you can set the I/O threads to zero. It's not a significant optimization though, more of a curiosity.
+If you are using 0MQ for inter-thread communications only (i.e., a multithreaded application that does no external socket I/O) you can set the I/O threads to zero. It's not a significant optimization though, more of a curiosity.
 
 ++ Messaging Patterns
 
-Underneath the brown paper wrapping of 0MQ's socket API lies the world of messaging patterns. If you have a background in enterprise messaging, or know UDP well, these will be vaguely familiar. But to most 0MQ newcomers they are a surprise, we're so used to the TCP paradigm where a socket maps one-to-one to another node.
+Underneath the brown paper wrapping of 0MQ's socket API lies the world of messaging patterns. If you have a background in enterprise messaging, or know UDP well, these will be vaguely familiar. But to most 0MQ newcomers, they are a surprise. We're so used to the TCP paradigm where a socket maps one-to-one to another node.
 
 Let's recap briefly what 0MQ does for you. It delivers blobs of data (messages) to nodes, quickly and efficiently. You can map nodes to threads, processes, or nodes. 0MQ gives your applications a single socket API to work with, no matter what the actual transport (like in-process, inter-process, TCP, or multicast). It automatically reconnects to peers as they come and go. It queues messages at both sender and receiver, as needed. It manages these queues carefully to ensure processes don't run out of memory, overflowing to disk when appropriate. It handles socket errors. It does all I/O in background threads. It uses lock-free techniques for talking between nodes, so there are never locks, waits, semaphores, or deadlocks.
 
 But cutting through that, it routes and queues messages according to precise recipes called //patterns//. It is these patterns that provide 0MQ's intelligence. They encapsulate our hard-earned experience of the best ways to distribute data and work. 0MQ's patterns are hard-coded but future versions may allow user-definable patterns.
 
-0MQ patterns are implemented by pairs of sockets with matching types. In other words, to understand 0MQ patterns you need to understand socket types and how they work together. Mostly this just takes study, there is little that is obvious at this level.
+0MQ patterns are implemented by pairs of sockets with matching types. In other words, to understand 0MQ patterns you need to understand socket types and how they work together. Mostly, this just takes study; there is little that is obvious at this level.
 
 The built-in core 0MQ patterns are:
 
@@ -174,9 +174,9 @@ The built-in core 0MQ patterns are:
 
 * **Pub-sub**, which connects a set of publishers to a set of subscribers. This is a data distribution pattern.
 
-* **Pipeline**, which connects nodes in a fan-out / fan-in pattern that can have multiple steps, and loops. This is a parallel task distribution and collection pattern.
+* **Pipeline**, which connects nodes in a fan-out/fan-in pattern that can have multiple steps and loops. This is a parallel task distribution and collection pattern.
 
-* **Exclusive pair**, which connects two sockets exclusively. This is a pattern for connecting two threads in a process, not to be confused with 'normal' pairs of sockets.
+* **Exclusive pair**, which connects two sockets exclusively. This is a pattern for connecting two threads in a process, not to be confused with "normal" pairs of sockets.
 
 We looked at the first three of these in [#basics], and we'll see the exclusive pair pattern later in this chapter. The {{zmq_socket[3]}} man page is fairly clear about the patterns, it's worth reading several times until it starts to make sense. These are the socket combinations that are valid for a connect-bind pair (either side can bind):
 
@@ -190,15 +190,15 @@ We looked at the first three of these in [#basics], and we'll see the exclusive 
 * PUSH and PULL
 * PAIR and PAIR
 
-You'll also see references to XPUB and XSUB sockets, which we'll come to later (they're like raw versions of PUB and SUB). Any other combination will produce undocumented and unreliable results and future versions of 0MQ will probably return errors if you try them. You can and will of course bridge other socket types //via code//, i.e. read from one socket type and write to another.
+You'll also see references to XPUB and XSUB sockets, which we'll come to later (they're like raw versions of PUB and SUB). Any other combination will produce undocumented and unreliable results, and future versions of 0MQ will probably return errors if you try them. You can and will, of course, bridge other socket types via code, i.e., read from one socket type and write to another.
 
-+++ High-level Messaging Patterns
++++ High-Level Messaging Patterns
 
-These four core patterns are cooked-in to 0MQ. They are part of the 0MQ API, implemented in the core C++ library, and guaranteed to be available in all fine retail stores.
+These four core patterns are cooked into 0MQ. They are part of the 0MQ API, implemented in the core C++ library, and are guaranteed to be available in all fine retail stores.
 
-On top, we add //high-level messaging patterns//. We build these high-level patterns on top of 0MQ and implement them in whatever language we're using for our application. They are not part of the core library, do not come with the 0MQ package, and exist in their own space, as part of the 0MQ community. For example the Majordomo pattern, which we explore in [#reliable-request-reply], sits in the GitHub Majordomo project in the ZeroMQ organization.
+On top of those, we add //high-level messaging patterns//. We build these high-level patterns on top of 0MQ and implement them in whatever language we're using for our application. They are not part of the core library, do not come with the 0MQ package, and exist in their own space as part of the 0MQ community. For example the Majordomo pattern, which we explore in [#reliable-request-reply], sits in the GitHub Majordomo project in the ZeroMQ organization.
 
-One of the things we aim to provide you with this book are a set of such high-level patterns, both small (how to handle messages sanely) to large (how to make a reliable pub-sub architecture).
+One of the things we aim to provide you with in this book are a set of such high-level patterns, both small (how to handle messages sanely) and large (how to make a reliable pub-sub architecture).
 
 +++ Working with Messages
 
@@ -211,19 +211,19 @@ The libzmq core library has in fact two APIs to send and receive messages. The {
 * Work with message properties: {{zmq_msg_get[3]}}, {{zmq_msg_set[3]}}.
 * Message manipulation: {{zmq_msg_copy[3]}}, {{zmq_msg_move[3]}}.
 
-On the wire, 0MQ messages are blobs of any size from zero upwards, fitting in memory. You do your own serialization using protocol buffers, msgpack, JSON, or whatever else your applications need to speak. It's wise to choose a data representation that is portable, but you can make your own decisions about trade-offs.
+On the wire, 0MQ messages are blobs of any size from zero upwards that fit in memory. You do your own serialization using protocol buffers, msgpack, JSON, or whatever else your applications need to speak. It's wise to choose a data representation that is portable, but you can make your own decisions about trade-offs.
 
 In memory, 0MQ messages are {{zmq_msg_t}} structures (or classes depending on your language). Here are the basic ground rules for using 0MQ messages in C:
 
 * You create and pass around {{zmq_msg_t}} objects, not blocks of data.
 
-* To read a message you use {{zmq_msg_init[3]}} to create an empty message, and then you pass that to {{zmq_msg_recv[3]}}.
+* To read a message, you use {{zmq_msg_init[3]}} to create an empty message, and then you pass that to {{zmq_msg_recv[3]}}.
 
 * To write a message from new data, you use {{zmq_msg_init_size[3]}} to create a message and at the same time allocate a block of data of some size. You then fill that data using {{memcpy}}, and pass the message to {{zmq_msg_send[3]}}.
 
-* To release (not destroy) a message you call {{zmq_msg_close[3]}}. This drops a reference, and eventually 0MQ will destroy the message.
+* To release (not destroy) a message, you call {{zmq_msg_close[3]}}. This drops a reference, and eventually 0MQ will destroy the message.
 
-* To access the message content you use {{zmq_msg_data[3]}}. To know how much data the message contains, use {{zmq_msg_size[3]}}.
+* To access the message content, you use {{zmq_msg_data[3]}}. To know how much data the message contains, use {{zmq_msg_size[3]}}.
 
 * Do not use {{zmq_msg_move[3]}}, {{zmq_msg_copy[3]}}, or {{zmq_msg_init_data[3]}} unless you read the man pages and know precisely why you need these.
 
@@ -231,37 +231,37 @@ In memory, 0MQ messages are {{zmq_msg_t}} structures (or classes depending on yo
 
 * These rules don't apply if you use {{zmq_send[3]}} and {{zmq_recv[3]}}, to which you pass byte arrays, not message structures.
 
-If you want to send the same message more than once, and it's sizable, create a second message, initialize it using {{zmq_msg_init[3]}} and then use {{zmq_msg_copy[3]}} to create a copy of the first message. This does not copy the data but copies a reference. You can then send the message twice (or more, if you create more copies) and the message will only be finally destroyed when the last copy is sent or closed.
+If you want to send the same message more than once, and it's sizable, create a second message, initialize it using {{zmq_msg_init[3]}}, and then use {{zmq_msg_copy[3]}} to create a copy of the first message. This does not copy the data but copies a reference. You can then send the message twice (or more, if you create more copies) and the message will only be finally destroyed when the last copy is sent or closed.
 
-0MQ also supports //multi-part// messages, which let you send or receive a list of frames as a single on-the-wire message. This is widely used in real applications and we'll look at that later in this chapter and in [#advanced-request-reply].
+0MQ also supports //multipart// messages, which let you send or receive a list of frames as a single on-the-wire message. This is widely used in real applications and we'll look at that later in this chapter and in [#advanced-request-reply].
 
 Frames (also called "message parts" in the 0MQ reference manual pages) are the basic wire format for 0MQ messages. A frame is a length-specified block of data. The length can be zero upwards. If you've done any TCP programming you'll appreciate why frames are a useful answer to the question "how much data am I supposed to read of this network socket now?"
 
-There is a wire-level [http://rfc.zeromq.org/spec:15 protocol called ZMTP] that defines how 0MQ reads and writes frames on a TCP connection. If you're interested in how this works, the spec is quite short, just a few pages.
+There is a wire-level [http://rfc.zeromq.org/spec:15 protocol called ZMTP] that defines how 0MQ reads and writes frames on a TCP connection. If you're interested in how this works, the spec is quite short.
 
-Originally, a 0MQ message was one frame, like UDP. We later extended this with "multi-part" messages, which are quite simply series of frames with a "more" bit set to one, followed by one with that bit set to zero. The 0MQ API then lets you write messages with a "more" flag, and when you read messages, lets you check if there's "more".
+Originally, a 0MQ message was one frame, like UDP. We later extended this with multipart messages, which are quite simply series of frames with a "more" bit set to one, followed by one with that bit set to zero. The 0MQ API then lets you write messages with a "more" flag and when you read messages, it lets you check if there's "more".
 
-In the low-level 0MQ API and the reference manual, therefore, there's some fuzziness about messages vs. frames. So here's a useful lexicon:
+In the low-level 0MQ API and the reference manual, therefore, there's some fuzziness about messages versus frames. So here's a useful lexicon:
 
 * A message can be one or more parts.
 * These parts are also called "frames".
-* Each part is a zmq_msg_t object.
+* Each part is a {{zmq_msg_t}} object.
 * You send and receive each part separately, in the low-level API.
-* Higher-level APIs provide wrappers to send entire multi-part messages.
+* Higher-level APIs provide wrappers to send entire multipart messages.
 
 Some other things that are worth knowing about messages:
 
-* You may send zero-length messages, e.g. for sending a signal from one thread to another.
+* You may send zero-length messages, e.g., for sending a signal from one thread to another.
 
 * 0MQ guarantees to deliver all the parts (one or more) for a message, or none of them.
 
-* 0MQ does not send the message (single, or multi-part) right away but at some indeterminate later time. A multi-part message must therefore fit in memory.
+* 0MQ does not send the message (single or multipart) right away, but at some indeterminate later time. A multipart message must therefore fit in memory.
 
-* A message (single, or multi-part) must fit in memory. If you want to send files of arbitrary sizes, you should break them into pieces and send each piece as separate single-part messages. //Using multi-part data will not reduce memory consumption.//
+* A message (single or multipart) must fit in memory. If you want to send files of arbitrary sizes, you should break them into pieces and send each piece as separate single-part messages. //Using multipart data will not reduce memory consumption.//
 
 * You must call {{zmq_msg_close[3]}} when finished with a received message, in languages that don't automatically destroy objects when a scope closes. You don't call this method after sending a message.
 
-And to be repetitive, do not use {{zmq_msg_init_data[3]}} yet. This is a zero-copy method and guaranteed to create trouble for you. There are far more important things to learn about 0MQ before you start to worry about shaving off microseconds.
+And to be repetitive, do not use {{zmq_msg_init_data[3]}} yet. This is a zero-copy method and is guaranteed to create trouble for you. There are far more important things to learn about 0MQ before you start to worry about shaving off microseconds.
 
 This rich API can be tiresome to work with. The methods are optimized for performance, not simplicity. If you start using these you will almost definitely get them wrong until you've read the man pages with some care. So one of the main jobs of a good language binding is to wrap this API up in classes that are easier to use.
 
@@ -269,20 +269,20 @@ This rich API can be tiresome to work with. The methods are optimized for perfor
 
 In all the examples so far, the main loop of most examples has been:
 
-# wait for message on socket
-# process message
-# repeat
+# Wait for message on socket.
+# Process message.
+# Repeat.
 
-What if we want to read from multiple endpoints at the same time? The simplest way is to connect one socket to all the endpoints and get 0MQ to do the fan-in for us. This is legal if the remote endpoints are in the same pattern but it would be wrong to e.g. connect a PULL socket to a PUB endpoint.
+What if we want to read from multiple endpoints at the same time? The simplest way is to connect one socket to all the endpoints and get 0MQ to do the fan-in for us. This is legal if the remote endpoints are in the same pattern, but it would be wrong to connect a PULL socket to a PUB endpoint.
 
-To actually read from multiple sockets at once, use {{zmq_poll[3]}}. An even better way might be to wrap {{zmq_poll[3]}} in a framework that turns it into a nice event-driven //reactor//, but it's significantly more work than we want to cover here.
+To actually read from multiple sockets all at once, use {{zmq_poll[3]}}. An even better way might be to wrap {{zmq_poll[3]}} in a framework that turns it into a nice event-driven //reactor//, but it's significantly more work than we want to cover here.
 
-Let's start with a dirty hack, partly for the fun of not doing it right, but mainly because it lets me show you how to do non-blocking socket reads. Here is a simple example of reading from two sockets using non-blocking reads. This rather confused program acts both as a subscriber to weather updates, and a worker for parallel tasks:
+Let's start with a dirty hack, partly for the fun of not doing it right, but mainly because it lets me show you how to do nonblocking socket reads. Here is a simple example of reading from two sockets using nonblocking reads. This rather confused program acts both as a subscriber to weather updates, and a worker for parallel tasks:
 
 [[code type="example" title="Multiple socket reader" name="msreader"]]
 [[/code]]
 
-The cost of this approach is some additional latency on the first message (the sleep at the end of the loop, when there are no waiting messages to process). This would be a problem in applications where sub-millisecond latency was vital. Also, you need to check the documentation for nanosleep() or whatever function you use to make sure it does not busy-loop.
+The cost of this approach is some additional latency on the first message (the sleep at the end of the loop, when there are no waiting messages to process). This would be a problem in applications where submillisecond latency was vital. Also, you need to check the documentation for nanosleep() or whatever function you use to make sure it does not busy-loop.
 
 You can treat the sockets fairly by reading first from one, then the second rather than prioritizing them as we did in this example.
 
@@ -302,15 +302,15 @@ typedef struct {
 } zmq_pollitem_t;
 [[/code]]
 
-+++ Multi-part Messages
++++ Multipart Messages
 
-0MQ lets us compose a message out of several frames, giving us a "multi-part message". Realistic applications use multi-part messages heavily, both for wrapping messages with address information, and for simple serialization. We'll look at reply envelopes later.
+0MQ lets us compose a message out of several frames, giving us a "multipart message". Realistic applications use multipart messages heavily, both for wrapping messages with address information and for simple serialization. We'll look at reply envelopes later.
 
-What we'll learn now is simply how to blindly and safely read and write multi-part messages in any application (such as a proxy) that needs to forward messages without inspecting them.
+What we'll learn now is simply how to blindly and safely read and write multipart messages in any application (such as a proxy) that needs to forward messages without inspecting them.
 
-When you work with multi-part messages, each part is a {{zmq_msg}} item. E.g. if you are sending a message with five parts, you must construct, send, and destroy five {{zmq_msg}} items. You can do this in advance (and store the {{zmq_msg}} items in an array or other structure), or as you send them, one by one.
+When you work with multipart messages, each part is a {{zmq_msg}} item. E.g., if you are sending a message with five parts, you must construct, send, and destroy five {{zmq_msg}} items. You can do this in advance (and store the {{zmq_msg}} items in an array or other structure), or as you send them, one-by-one.
 
-Here is how we send the frames in a multi-part message (we receive each frame into a message object):
+Here is how we send the frames in a multipart message (we receive each frame into a message object):
 
 [[code type="fragment" name="sendmore"]]
 zmq_msg_send (socket, &message, ZMQ_SNDMORE);
@@ -320,7 +320,7 @@ zmq_msg_send (socket, &message, ZMQ_SNDMORE);
 zmq_msg_send (socket, &message, 0);
 [[/code]]
 
-Here is how we receive and process all the parts in a message, be it single part or multi-part:
+Here is how we receive and process all the parts in a message, be it single part or multipart:
 
 [[code type="fragment" name="recvmore"]]
 while (1) {
@@ -335,9 +335,9 @@ while (1) {
 }
 [[/code]]
 
-Some things to know about multi-part messages:
+Some things to know about multipart messages:
 
-* When you send a multi-part message, the first part (and all following parts) are only actually sent on the wire when you send the final part.
+* When you send a multipart message, the first part (and all following parts) are only actually sent on the wire when you send the final part.
 * If you are using {{zmq_poll[3]}}, when you receive the first part of a message, all the rest has also arrived.
 * You will receive all parts of a message, or none at all.
 * Each part of a message is a separate {{zmq_msg}} item.
@@ -347,9 +347,9 @@ Some things to know about multi-part messages:
 
 +++ Intermediaries and Proxies
 
-0MQ aims for decentralized intelligence but that doesn't mean your network is empty space in the middle. It's filled with message-aware infrastructure and quite often, we build that infrastructure with 0MQ. The 0MQ plumbing can range from tiny pipes to full-blown service-oriented brokers. The messaging industry calls this "intermediation", meaning that the stuff in the middle deals with either side. In 0MQ we call these proxies, queues, forwarders, device, or brokers, depending on the context.
+0MQ aims for decentralized intelligence, but that doesn't mean your network is empty space in the middle. It's filled with message-aware infrastructure and quite often, we build that infrastructure with 0MQ. The 0MQ plumbing can range from tiny pipes to full-blown service-oriented brokers. The messaging industry calls this //intermediation//, meaning that the stuff in the middle deals with either side. In 0MQ, we call these proxies, queues, forwarders, device, or brokers, depending on the context.
 
-This pattern is extremely common in the real world and is why our societies and economies are filled with intermediaries who have no other real function than to reduce the complexity and scaling costs of larger networks. Real-world intermediaries are typically called wholesalers, distributors, managers, etc.
+This pattern is extremely common in the real world and is why our societies and economies are filled with intermediaries who have no other real function than to reduce the complexity and scaling costs of larger networks. Real-world intermediaries are typically called wholesalers, distributors, managers, and so on.
 
 +++ The Dynamic Discovery Problem
 
@@ -357,7 +357,7 @@ One of the problems you will hit as you design larger distributed architectures 
 
 There are several solutions to dynamic discovery. The simplest is to entirely avoid it by hard-coding (or configuring) the network architecture so discovery is done by hand. That is, when you add a new piece, you reconfigure the network to know about it.
 
-[[code type="textdiagram" title="Small-scale Pub-Sub Network"]]
+[[code type="textdiagram" title="Small-Scale Pub-Sub Network"]]
                  #-----------#
                  | Publisher |
                  +-----------+
@@ -378,7 +378,7 @@ There are several solutions to dynamic discovery. The simplest is to entirely av
 #------------#   #------------#   #------------#
 [[/code]]
 
-In practice this leads to increasingly fragile and hard-to-manage architectures. Let's say you have one publisher and a hundred subscribers. You connect each subscriber to the publisher by configuring a publisher endpoint in each subscriber. That's easy[figure]. Subscribers are dynamic, the publisher is static. Now say you add more publishers. Suddenly it's not so easy any more. If you continue to connect each subscriber to each publisher, the cost of avoiding dynamic discovery gets higher and higher.
+In practice, this leads to increasingly fragile and unwieldy architectures. Let's say you have one publisher and a hundred subscribers. You connect each subscriber to the publisher by configuring a publisher endpoint in each subscriber. That's easy[figure]. Subscribers are dynamic; the publisher is static. Now say you add more publishers. Suddenly, it's not so easy any more. If you continue to connect each subscriber to each publisher, the cost of avoiding dynamic discovery gets higher and higher.
 
 [[code type="textdiagram" title="Pub-Sub Network with a Proxy"]]
 #------------#   #------------#   #------------#
@@ -410,16 +410,11 @@ In practice this leads to increasingly fragile and hard-to-manage architectures.
 #------------#   #------------#   #------------#
 [[/code]]
 
-[[code type="example" title="Multi-threaded publisher using proxy " name="multipub"]]
-[[/code]]
-[[code type="example" title="Subscriber using proxy " name="sub"]]
-[[/code]]
+There are quite a few answers to this, but the very simplest answer is to add an intermediary; that is, a static point in the network to which all other nodes connect. In classic messaging, this is the job of the message broker. 0MQ doesn't come with a message broker as such, but it lets us build intermediaries quite easily.
 
-There are quite a few answers to this but the very simplest answer is to add an intermediary, that is, a static point in the network to which all other nodes connect. In classic messaging, this is the job of the "message broker". 0MQ doesn't come with a message broker as such, but it lets us build intermediaries quite easily.
+You might wonder, if all networks eventually get large enough to need intermediaries, why don't we simply have a message broker in place for all applications? For beginners, it's a fair compromise. Just always use a star topology, forget about performance, and things will usually work. However, message brokers are greedy things; in their role as central intermediaries, they become too complex, too stateful, and eventually a problem.
 
-You might wonder, if all networks eventually get large enough to need intermediaries, why don't we simply have a message broker in place for all applications? For beginners, it's a fair compromise. Just always use a star topology, forget about performance, and things will usually work. However message brokers are greedy things; in their role as central intermediaries, they become too complex, too stateful, and eventually a problem.
-
-It's better to think of intermediaries as simple stateless message switches. A good analogy is an HTTP proxy; it's there but doesn't have any special role. Adding a pub-sub proxy solves the dynamic discovery problem in our example. We set the proxy in the "middle" of the network[figure]. The proxy opens an XSUB socket, an XPUB socket, and binds each to well-known IP addresses and ports. Then all other processes connect to the proxy, instead of to each other. It becomes trivial to add more subscribers or publishers.
+It's better to think of intermediaries as simple stateless message switches. A good analogy is an HTTP proxy; it's there, but doesn't have any special role. Adding a pub-sub proxy solves the dynamic discovery problem in our example. We set the proxy in the "middle" of the network[figure]. The proxy opens an XSUB socket, an XPUB socket, and binds each to well-known IP addresses and ports. Then, all other processes connect to the proxy, instead of to each other. It becomes trivial to add more subscribers or publishers.
 
 [[code type="textdiagram" title="Extended Pub-Sub"]]
 #---------#   #---------#   #---------#
@@ -443,11 +438,11 @@ It's better to think of intermediaries as simple stateless message switches. A g
 #---------#   #---------#   #---------#
 [[/code]]
 
-We need XPUB and XSUB sockets because 0MQ does subscription forwarding from subscribers to publishers. XSUB and XPUB are exactly like SUB and PUB except they expose subscriptions as special messages. The proxy has to forward these subscription messages from subscriber side to publisher side, by reading them from the XPUB socket and writing them to the XSUB socket. This is the main use-case for XSUB and XPUB[figure].
+We need XPUB and XSUB sockets because 0MQ does subscription forwarding from subscribers to publishers. XSUB and XPUB are exactly like SUB and PUB except they expose subscriptions as special messages. The proxy has to forward these subscription messages from subscriber side to publisher side, by reading them from the XPUB socket and writing them to the XSUB socket. This is the main use case for XSUB and XPUB[figure].
 
 +++ Shared Queue (DEALER and ROUTER sockets)
 
-In the Hello World client-server application we have one client that talks to one service. However in real cases we usually need to allow multiple services as well as multiple clients. This lets us scale up the power of the service (many threads or processes or nodes rather than just one). The only constraint is that services must be stateless, all state being in the request or in some shared storage such as a database.
+In the Hello World client/server application, we have one client that talks to one service. However, in real cases we usually need to allow multiple services as well as multiple clients. This lets us scale up the power of the service (many threads or processes or nodes rather than just one). The only constraint is that services must be stateless, all state being in the request or in some shared storage such as a database.
 
 [[code type="textdiagram" title="Request Distribution"]]
              #-----------#
@@ -471,19 +466,19 @@ In the Hello World client-server application we have one client that talks to on
 #---------#   #---------#   #---------#
 [[/code]]
 
-There are two ways to connect multiple clients to multiple servers. The brute-force way is to connect each client socket to multiple service endpoints. One client socket can connect to multiple service sockets, and the REQ socket will then distribute requests among these services. Let's say you connect a client socket to three service endpoints, A, B, and C. The client makes requests R1, R2, R3, R4. R1 and R4 go to service A, R2 goes to B, and R3 goes to service C[figure].
+There are two ways to connect multiple clients to multiple servers. The brute force way is to connect each client socket to multiple service endpoints. One client socket can connect to multiple service sockets, and the REQ socket will then distribute requests among these services. Let's say you connect a client socket to three service endpoints; A, B, and C. The client makes requests R1, R2, R3, R4. R1 and R4 go to service A, R2 goes to B, and R3 goes to service C[figure].
 
 This design lets you add more clients cheaply. You can also add more services. Each client will distribute its requests to the services. But each client has to know the service topology. If you have 100 clients and then you decide to add three more services, you need to reconfigure and restart 100 clients in order for the clients to know about the three new services.
 
-That's clearly not the kind of thing we want to be doing at 3am when our supercomputing cluster has run out of resources and we desperately need to add a couple of hundred new service nodes. Too many static pieces are like liquid concrete: knowledge is distributed and the more static pieces you have, the more effort it is to change the topology. What we want is something sitting in between clients and services that centralizes all knowledge of the topology. Ideally, we should be able to add and remove services or clients at any time without touching any other part of the topology.
+That's clearly not the kind of thing we want to be doing at 3 a.m. when our supercomputing cluster has run out of resources and we desperately need to add a couple of hundred of new service nodes. Too many static pieces are like liquid concrete: knowledge is distributed and the more static pieces you have, the more effort it is to change the topology. What we want is something sitting in between clients and services that centralizes all knowledge of the topology. Ideally, we should be able to add and remove services or clients at any time without touching any other part of the topology.
 
-So we'll write a little message queuing broker that gives us this flexibility. The broker binds to two endpoints, a frontend for clients and a backend for services. It then uses {{zmq_poll[3]}} to monitor these two sockets for activity and when it has some, it shuttles messages between its two sockets. It doesn't actually manage any queues explicitly -- 0MQ does that automatically on each socket.
+So we'll write a little message queuing broker that gives us this flexibility. The broker binds to two endpoints, a frontend for clients and a backend for services. It then uses {{zmq_poll[3]}} to monitor these two sockets for activity and when it has some, it shuttles messages between its two sockets. It doesn't actually manage any queues explicitly--0MQ does that automatically on each socket.
 
-When you use REQ to talk to REP you get a strictly synchronous request-reply dialog. The client sends a request. The service reads the request and sends a reply. The client then reads the reply. If either the client or the service try to do anything else (e.g. sending two requests in a row without waiting for a response) they will get an error.
+When you use REQ to talk to REP, you get a strictly synchronous request-reply dialog. The client sends a request. The service reads the request and sends a reply. The client then reads the reply. If either the client or the service try to do anything else (e.g., sending two requests in a row without waiting for a response), they will get an error.
 
-But our broker has to be non-blocking. Obviously we can use {{zmq_poll[3]}} to wait for activity on either socket, but we can't use REP and REQ.
+But our broker has to be nonblocking. Obviously, we can use {{zmq_poll[3]}} to wait for activity on either socket, but we can't use REP and REQ.
 
-[[code type="textdiagram" title="Extended Request-reply"]]
+[[code type="textdiagram" title="Extended Request-Reply"]]
 #---------#   #---------#   #---------#
 |   REQ   |   |   REQ   |   |   REQ   |
 '----+----'   '----+----'   '----+----'
@@ -506,9 +501,9 @@ But our broker has to be non-blocking. Obviously we can use {{zmq_poll[3]}} to w
 #---------#   #---------#   #---------#
 [[/code]]
 
-Luckily there are two sockets called DEALER and ROUTER that let you do non-blocking request-response. You'll see in [#advanced-request-reply] how DEALER and ROUTER sockets let you build all kinds of asynchronous request-reply flows. For now, we're just going to see how DEALER and ROUTER let us extend REQ-REP across an intermediary, that is, our little broker.
+Luckily, there are two sockets called DEALER and ROUTER that let you do nonblocking request-response. You'll see in [#advanced-request-reply] how DEALER and ROUTER sockets let you build all kinds of asynchronous request-reply flows. For now, we're just going to see how DEALER and ROUTER let us extend REQ-REP across an intermediary, that is, our little broker.
 
-In this simple extended request-reply pattern, REQ talks to ROUTER and DEALER talks to REP. In between the DEALER and ROUTER we have to have code (like our broker) that pulls messages off the one socket and shoves them onto the other[figure].
+In this simple extended request-reply pattern, REQ talks to ROUTER and DEALER talks to REP. In between the DEALER and ROUTER, we have to have code (like our broker) that pulls messages off the one socket and shoves them onto the other[figure].
 
 The request-reply broker binds to two endpoints, one for clients to connect to (the frontend socket) and one for workers to connect to (the backend). To test this broker, you will want to change your workers so they connect to the backend socket. Here is a client that shows what I mean:
 
@@ -520,12 +515,12 @@ Here is the worker:
 [[code type="example" title="Request-reply worker" name="rrworker"]]
 [[/code]]
 
-And here is the broker, which properly handles multi-part messages:
+And here is the broker, which properly handles multipart messages:
 
 [[code type="example" title="Request-reply broker" name="rrbroker"]]
 [[/code]]
 
-[[code type="textdiagram" title="Request-reply Broker"]]
+[[code type="textdiagram" title="Request-Reply Broker"]]
 #---------#   #---------#   #---------#
 | Client  |   | Client  |   | Client  |
 +---------+   +---------+   +---------+
@@ -554,26 +549,26 @@ And here is the broker, which properly handles multi-part messages:
 #---------#   #---------#   #---------#
 [[/code]]
 
-Using a request-reply broker makes your client-server architectures easier to scale since clients don't see workers, and workers don't see clients. The only static node is the broker in the middle[figure].
+Using a request-reply broker makes your client/server architectures easier to scale because clients don't see workers, and workers don't see clients. The only static node is the broker in the middle[figure].
 
-+++ 0MQ's Built-in Proxy Function
++++ 0MQ's Built-In Proxy Function
 
-It turns out that the core loop in the previous section's rrbroker is very useful, and reusable. It lets us build pub-sub forwarders and shared queues and other little intermediaries, with very little effort. 0MQ wraps this up in a single method, {{zmq_proxy[3]}}:
+It turns out that the core loop in the previous section's {{rrbroker}} is very useful, and reusable. It lets us build pub-sub forwarders and shared queues and other little intermediaries with very little effort. 0MQ wraps this up in a single method, {{zmq_proxy[3]}}:
 
 [[code type="fragment" name="proxy"]]
 zmq_proxy (frontend, backend, capture);
 [[/code]]
 
-The two (or three sockets, if we want to capture data) must be properly connected, bound, configured. When we call the {{zmq_proxy}} method it's exactly like starting the main loop of rrbroker. Let's rewrite the request-reply broker to call {{zmq_proxy}}, and re-badge this as an expensive-sounding "message queue" (people have charged houses for code that did less):
+The two (or three sockets, if we want to capture data) must be properly connected, bound, and configured. When we call the {{zmq_proxy}}, method it's exactly like starting the main loop of {{rrbroker}}. Let's rewrite the request-reply broker to call {{zmq_proxy}}, and re-badge this as an expensive-sounding "message queue" (people have charged houses for code that did less):
 
 [[code type="example" title="Message queue broker" name="msgqueue"]]
 [[/code]]
 
-If you're like most 0MQ users, at this stage your mind is starting to think, "what kind of evil stuff can I do if I plug random socket types into the proxy?"  The short answer is: try it and work out what is happening. In practice you would usually stick to ROUTER/DEALER, XSUB/XPUB, or PULL/PUSH.
+If you're like most 0MQ users, at this stage your mind is starting to think, "What kind of evil stuff can I do if I plug random socket types into the proxy?"  The short answer is: try it and work out what is happening. In practice, you would usually stick to ROUTER/DEALER, XSUB/XPUB, or PULL/PUSH.
 
 +++ Transport Bridging
 
-A frequent request from 0MQ users is "how do I connect my 0MQ network with technology X?" where X is some other networking or messaging technology.
+A frequent request from 0MQ users is, "How do I connect my 0MQ network with technology X?" where X is some other networking or messaging technology.
 
 [[code type="textdiagram" title="Pub-Sub Forwarder Proxy"]]
                #-----------#
@@ -608,24 +603,24 @@ A frequent request from 0MQ users is "how do I connect my 0MQ network with techn
                        #----------#   #----------#
 [[/code]]
 
-The simple answer is to build a "bridge". A bridge is a small application that speaks one protocol at one socket, and converts to/from a second protocol at another socket. A protocol interpreter, if you like. A common bridging problem in 0MQ is to bridge two transports or networks.
+The simple answer is to build a //bridge//. A bridge is a small application that speaks one protocol at one socket, and converts to/from a second protocol at another socket. A protocol interpreter, if you like. A common bridging problem in 0MQ is to bridge two transports or networks.
 
-As an example, we're going to write a little proxy that sits in between a publisher and a set of subscribers, bridging two networks. The frontend socket (SUB) faces the internal network, where the weather server is sitting, and the backend (PUB) faces subscribers on the external network. It subscribes to the weather service on the frontend socket, and republishes its data on the backend socket.
+As an example, we're going to write a little proxy that sits in between a publisher and a set of subscribers, bridging two networks. The frontend socket (SUB) faces the internal network where the weather server is sitting, and the backend (PUB) faces subscribers on the external network. It subscribes to the weather service on the frontend socket, and republishes its data on the backend socket.
 
 [[code type="example" title="Weather update proxy" name="wuproxy"]]
 [[/code]]
 
-It looks very similar to the earlier proxy example but the key part is that the frontend and backend sockets are on two different networks[figure]. We can use this model for example to connect a multicast network ({{pgm}} transport) to a {{tcp}} publisher.
+It looks very similar to the earlier proxy example, but the key part is that the frontend and backend sockets are on two different networks[figure]. We can use this model for example to connect a multicast network ({{pgm}} transport) to a {{tcp}} publisher.
 
 ++ Handling Errors and ETERM
 
 0MQ's error handling philosophy is a mix of fail-fast and resilience. Processes, we believe, should be as vulnerable as possible to internal errors, and as robust as possible against external attacks and errors. To give an analogy, a living cell will self-destruct if it detects a single internal error, yet it will resist attack from the outside by all means possible.
 
-Assertions, which pepper the 0MQ code, are absolutely vital to robust code, they just have to be on the right side of the cellular wall. And there should be such a wall. If it is unclear whether a fault is internal or external, that is a design flaw to be fixed. In C/C++, assertions stop the application immediately with an error. In other languages you may get exceptions or halts.
+Assertions, which pepper the 0MQ code, are absolutely vital to robust code; they just have to be on the right side of the cellular wall. And there should be such a wall. If it is unclear whether a fault is internal or external, that is a design flaw to be fixed. In C/C++, assertions stop the application immediately with an error. In other languages, you may get exceptions or halts.
 
-When 0MQ detects an external fault it returns an error to the calling code. In some rare cases it drops messages silently, if there is no obvious strategy for recovering from the error.
+When 0MQ detects an external fault it returns an error to the calling code. In some rare cases, it drops messages silently if there is no obvious strategy for recovering from the error.
 
-In most of the C examples we've seen so far there's been no error handling. **Real code should do error handling on every single 0MQ call**. If you're using a language binding other than C, the binding may handle errors for you. In C you do need to do this yourself. There are some simple rules, starting with POSIX conventions:
+In most of the C examples we've seen so far there's been no error handling. **Real code should do error handling on every single 0MQ call**. If you're using a language binding other than C, the binding may handle errors for you. In C, you do need to do this yourself. There are some simple rules, starting with POSIX conventions:
 
 * Methods that create objects return NULL if they fail.
 * Methods that process data may return the number of bytes processed, or -1 on an error or failure.
@@ -647,13 +642,13 @@ if (rc == -1) {
 }
 [[/code]]
 
-There are two main exceptional conditions that you should handle as non-fatal:
+There are two main exceptional conditions that you should handle as nonfatal:
 
-* When your code receives a message with the {{ZMQ_DONTWAIT}} option and there is no waiting data. 0MQ will return -1 and set {{errno}} to {{EAGAIN}}.
+* When your code receives a message with the {{ZMQ_DONTWAIT}} option and there is no waiting data, 0MQ will return -1 and set {{errno}} to {{EAGAIN}}.
 
-* When one thread calls {{zmq_ctx_destroy[3]}}, and other threads are still doing blocking work. The {{zmq_ctx_destroy[3]}} call closes the context and all blocking calls exit with -1, and errno set to {{ETERM}}.
+* When one thread calls {{zmq_ctx_destroy[3]}}, and other threads are still doing blocking work, the {{zmq_ctx_destroy[3]}} call closes the context and all blocking calls exit with -1, and {{errno}} set to {{ETERM}}.
 
-In C/C++, asserts can be removed entirely in optimized code, so don't make the mistake of wrapping the whole 0MQ call in an assert(). It looks neat, then the optimizer removes all the asserts and the calls you want to make, and your application breaks in impressive ways.
+In C/C++, asserts can be removed entirely in optimized code, so don't make the mistake of wrapping the whole 0MQ call in an {{assert()}}. It looks neat; then the optimizer removes all the asserts and the calls you want to make, and your application breaks in impressive ways.
 
 [[code type="textdiagram" title="Parallel Pipeline with Kill Signaling"]]
              #-------------#
@@ -690,13 +685,13 @@ In C/C++, asserts can be removed entirely in optimized code, so don't make the m
                '-------------'
 [[/code]]
 
-Let's see how to shut down a process cleanly. We'll take the parallel pipeline example from the previous section. If we've started a whole lot of workers in the background, we now want to kill them when the batch is finished. Let's do this by sending a kill message to the workers. The best place to do this is the sink, since it really knows when the batch is done.
+Let's see how to shut down a process cleanly. We'll take the parallel pipeline example from the previous section. If we've started a whole lot of workers in the background, we now want to kill them when the batch is finished. Let's do this by sending a kill message to the workers. The best place to do this is the sink because it really knows when the batch is done.
 
 How do we connect the sink to the workers? The PUSH/PULL sockets are one-way only. We could switch to another socket type, or we could mix multiple socket flows. Let's try the latter: using a pub-sub model to send kill messages to the workers[figure]:
 
 * The sink creates a PUB socket on a new endpoint.
 * Workers bind their input socket to this endpoint.
-* When the sink detects the end of the batch it sends a kill to its PUB socket.
+* When the sink detects the end of the batch, it sends a kill to its PUB socket.
 * When a worker detects this kill message, it exits.
 
 It doesn't take much new code in the sink:
@@ -709,26 +704,26 @@ zmq_bind (control, "tcp://*:5559");
 s_send (controller, "KILL");
 [[/code]]
 
-Here is the worker process, which manages two sockets (a PULL socket getting tasks, and a SUB socket getting control commands) using the {{zmq_poll[3]}} technique we saw earlier:
+Here is the worker process, which manages two sockets (a PULL socket getting tasks, and a SUB socket getting control commands), using the {{zmq_poll[3]}} technique we saw earlier:
 
 [[code type="example" title="Parallel task worker with kill signaling" name="taskwork2"]]
 [[/code]]
 
-Here is the modified sink application. When it's finished collecting results it broadcasts a kill message to all workers:
+Here is the modified sink application. When it's finished collecting results, it broadcasts a kill message to all workers:
 
 [[code type="example" title="Parallel task sink with kill signaling" name="tasksink2"]]
 [[/code]]
 
 ++ Handling Interrupt Signals
 
-Realistic applications need to shut down cleanly when interrupted with Ctrl-C or another signal such as SIGTERM. By default, these simply kill the process, meaning messages won't be flushed, files won't be closed cleanly, etc.
+Realistic applications need to shut down cleanly when interrupted with Ctrl-C or another signal such as SIGTERM. By default, these simply kill the process, meaning messages won't be flushed, files won't be closed cleanly, and so on.
 
 Here is how we handle a signal in various languages:
 
 [[code type="example" title="Handling Ctrl-C cleanly" name="interrupt"]]
 [[/code]]
 
-The program provides {{s_catch_signals()}}, which traps Ctrl-C ({{SIGINT}}) and {{SIGTERM}}. When either of these signals arrive, the {{s_catch_signals()}} handler sets the global variable {{s_interrupted}}. Thanks to your signal handler, your application will not die automatically. Instead, you have a chance to clean up and exit gracefully. You have to now explicitly check for an interrupt, and handle it properly. Do this by calling {{s_catch_signals()}} (copy this from {{interrupt.c}}) at the start of your main code. This sets-up the signal handling. The interrupt will affect 0MQ calls as follows:
+The program provides {{s_catch_signals()}}, which traps Ctrl-C ({{SIGINT}}) and {{SIGTERM}}. When either of these signals arrive, the {{s_catch_signals()}} handler sets the global variable {{s_interrupted}}. Thanks to your signal handler, your application will not die automatically. Instead, you have a chance to clean up and exit gracefully. You have to now explicitly check for an interrupt and handle it properly. Do this by calling {{s_catch_signals()}} (copy this from {{interrupt.c}}) at the start of your main code. This sets up the signal handling. The interrupt will affect 0MQ calls as follows:
 
 * If your code is blocking in a blocking call (sending a message, receiving a message, or polling), then when a signal arrives, the call will return with {{EINTR}}.
 * Wrappers like {{s_recv()}} return NULL if they are interrupted.
@@ -748,13 +743,13 @@ while (!s_interrupted) {
 zmq_close (client);
 [[/code]]
 
-If you call {{s_catch_signals()}} and don't test for interrupts, the your application will become immune to Ctrl-C and SIGTERM, which may be useful, but is usually not.
+If you call {{s_catch_signals()}} and don't test for interrupts, then your application will become immune to Ctrl-C and SIGTERM, which may be useful, but is usually not.
 
 ++ Detecting Memory Leaks
 
 Any long-running application has to manage memory correctly, or eventually it'll use up all available memory and crash. If you use a language that handles this automatically for you, congratulations. If you program in C or C++ or any other language where you're responsible for memory management, here's a short tutorial on using valgrind, which among other things will report on any leaks your programs have.
 
-* To install valgrind, e.g. on Ubuntu or Debian, issue this command:
+* To install valgrind, e.g., on Ubuntu or Debian, issue this command:
 
 [[code]]
 sudo apt-get install valgrind
@@ -781,7 +776,7 @@ sudo apt-get install valgrind
 
 * Fix your applications to exit cleanly after Ctrl-C. For any application that exits by itself, that's not needed, but for long-running applications, this is essential, otherwise valgrind will complain about all currently allocated memory.
 
-* Build your application with -DDEBUG, if it's not your default setting. That ensures valgrind can tell you exactly where memory is being leaked.
+* Build your application with {{-DDEBUG}} if it's not your default setting. That ensures valgrind can tell you exactly where memory is being leaked.
 
 * Finally, run valgrind thus:
 
@@ -797,17 +792,17 @@ And after fixing any errors it reported, you should get the pleasant message:
 
 ++ Multithreading with 0MQ
 
-0MQ is perhaps the nicest way ever to write multithreaded (MT) applications. Whereas as 0MQ sockets require some readjustment if you are used to traditional sockets, 0MQ multithreading will take everything you know about writing MT applications, throw it into a heap in the garden, pour gasoline over it, and set it alight. It's a rare book that deserves burning, but most books on concurrent programming do.
+0MQ is perhaps the nicest way ever to write multithreaded (MT) applications. Whereas 0MQ sockets require some readjustment if you are used to traditional sockets, 0MQ multithreading will take everything you know about writing MT applications, throw it into a heap in the garden, pour gasoline over it, and set it alight. It's a rare book that deserves burning, but most books on concurrent programming do.
 
-To make utterly perfect MT programs (and I mean that literally) **we don't need mutexes, locks, or any other form of inter-thread communication except messages sent across 0MQ sockets.**
+To make utterly perfect MT programs (and I mean that literally), **we don't need mutexes, locks, or any other form of inter-thread communication except messages sent across 0MQ sockets.**
 
-By "perfect" MT programs I mean code that's easy to write and understand, that works with the same design approach in any programming language, and on any operating system, and that scales across any number of CPUs with zero wait states and no point of diminishing returns.
+By "perfect MT programs", I mean code that's easy to write and understand, that works with the same design approach in any programming language, and on any operating system, and that scales across any number of CPUs with zero wait states and no point of diminishing returns.
 
-If you've spent years learning tricks to make your MT code work at all, let alone rapidly, with locks and semaphores and critical sections, you will be disgusted when you realize it was all for nothing. If there's one lesson we've learned from 30+ years of concurrent programming it is: //just don't share state//. It's like two drunkards trying to share a beer. It doesn't matter if they're good buddies. Sooner or later they're going to get into a fight. And the more drunkards you add to the table, the more they fight each other over the beer. The tragic majority of MT applications look like drunken bar fights.
+If you've spent years learning tricks to make your MT code work at all, let alone rapidly, with locks and semaphores and critical sections, you will be disgusted when you realize it was all for nothing. If there's one lesson we've learned from 30+ years of concurrent programming, it is: //just don't share state//. It's like two drunkards trying to share a beer. It doesn't matter if they're good buddies. Sooner or later, they're going to get into a fight. And the more drunkards you add to the table, the more they fight each other over the beer. The tragic majority of MT applications look like drunken bar fights.
 
 The list of weird problems that you need to fight as you write classic shared-state MT code would be hilarious if it didn't translate directly into stress and risk, as code that seems to work suddenly fails under pressure. A large firm with world-beating experience in buggy code released its list of "11 Likely Problems In Your Multithreaded Code", which covers forgotten synchronization, incorrect granularity, read and write tearing, lock-free reordering, lock convoys, two-step dance, and priority inversion.
 
-Yeah, we also counted seven problems, not eleven. That's not the point though. The point is, do you really want that code running the power grid or stock market to start getting two-step lock convoys at 3pm on a busy Thursday? Who cares what the terms actually mean. This is not what turned us on to programming, fighting ever more complex side-effects with ever more complex hacks.
+Yeah, we counted seven problems, not eleven. That's not the point though. The point is, do you really want that code running the power grid or stock market to start getting two-step lock convoys at 3 p.m. on a busy Thursday? Who cares what the terms actually mean? This is not what turned us on to programming, fighting ever more complex side effects with ever more complex hacks.
 
 Some widely used models, despite being the basis for entire industries, are fundamentally broken, and shared state concurrency is one of them. Code that wants to scale without limit does it like the Internet does, by sending messages and sharing nothing except a common contempt for broken programming models.
 
@@ -819,9 +814,9 @@ You should follow some rules to write happy multithreaded code with 0MQ:
 
 * Create one 0MQ context at the start of your process, and pass that to all threads that you want to connect via {{inproc}} sockets.
 
-* Use 'attached' threads to create structure within your application, and connect these to their parent threads using PAIR sockets over {{inproc}}. The pattern is: bind parent socket, then create child thread which connects its socket.
+* Use //attached// threads to create structure within your application, and connect these to their parent threads using PAIR sockets over {{inproc}}. The pattern is: bind parent socket, then create child thread which connects its socket.
 
-* Use 'detached' threads to simulate independent tasks, with their own contexts. Connect these over {{tcp}}. Later you can move these to stand-alone processes without changing the code significantly.
+* Use //detached// threads to simulate independent tasks, with their own contexts. Connect these over {{tcp}}. Later you can move these to stand-alone processes without changing the code significantly.
 
 * All interaction between threads happens as 0MQ messages, which you can define more or less formally.
 
@@ -829,13 +824,13 @@ You should follow some rules to write happy multithreaded code with 0MQ:
 
 If you need to start more than one proxy in an application, for example, you will want to run each in their own thread. It is easy to make the error of creating the proxy frontend and backend sockets in one thread, and then passing the sockets to the proxy in another thread. This may appear to work at first but will fail randomly in real use. Remember: //Do not use or close sockets except in the thread that created them.//
 
-If you follow these rules, you can quite easily build elegant multithreaded applications, and later split off threads into separate processes, as you need to. Application logic can sit in threads, processes, nodes: whatever your scale needs.
+If you follow these rules, you can quite easily build elegant multithreaded applications, and later split off threads into separate processes as you need to. Application logic can sit in threads, processes, or nodes: whatever your scale needs.
 
-0MQ uses native OS threads rather than virtual "green" threads. The advantage is that you don't need to learn any new threading API, and that 0MQ threads map cleanly to your operating system. You can use standard tools like Intel's ThreadChecker to see what your application is doing. The disadvantages are that native threading APIs are not always portable, and that if you have a huge number of threads (thousands), some operating systems will get stressed.
+0MQ uses native OS threads rather than virtual "green" threads. The advantage is that you don't need to learn any new threading API, and that 0MQ threads map cleanly to your operating system. You can use standard tools like Intel's ThreadChecker to see what your application is doing. The disadvantages are that native threading APIs are not always portable, and that if you have a huge number of threads (in the thousands), some operating systems will get stressed.
 
-Let's see how this works in practice. We'll turn our old Hello World server into something more capable. The original server ran in a single thread. If the work per request is low, that's fine: one ØMQ thread can run at full speed on a CPU core, with no waits, doing an awful lot of work. But realistic servers have to do non-trivial work per request. A single core may not be enough when 10,000 clients hit the server all at once. So a realistic server will start multiple worker threads. It then accepts requests as fast as it can, and distributes these to its worker threads. The worker threads grind through the work, and eventually send their replies back.
+Let's see how this works in practice. We'll turn our old Hello World server into something more capable. The original server ran in a single thread. If the work per request is low, that's fine: one ØMQ thread can run at full speed on a CPU core, with no waits, doing an awful lot of work. But realistic servers have to do nontrivial work per request. A single core may not be enough when 10,000 clients hit the server all at once. So a realistic server will start multiple worker threads. It then accepts requests as fast as it can and distributes these to its worker threads. The worker threads grind through the work and eventually send their replies back.
 
-You can of course do all this using a proxy broker and external worker processes, but often it's easier to start one process that gobbles up sixteen cores than sixteen processes, each gobbling up one core. Further, running workers as threads will cut out a network hop, latency, and network traffic.
+You can, of course, do all this using a proxy broker and external worker processes, but often it's easier to start one process that gobbles up sixteen cores than sixteen processes, each gobbling up one core. Further, running workers as threads will cut out a network hop, latency, and network traffic.
 
 The MT version of the Hello World service basically collapses the broker and workers into a single process:
 
@@ -888,13 +883,13 @@ All the code should be recognizable to you by now. How it works:
 
 Note that creating threads is not portable in most programming languages. The POSIX library is pthreads, but on Windows you have to use a different API. In our example, the {{pthread_create}} call starts up a new thread running the {{worker_routine}} function we defined. We'll see in [#advanced-request-reply] how to wrap this in a portable API.
 
-Here the 'work' is just a one-second pause. We could do anything in the workers, including talking to other nodes. This is what the MT server looks like in terms of ØMQ sockets and nodes. Note how the request-reply chain is {{REQ-ROUTER-queue-DEALER-REP}}[figure].
+Here the "work" is just a one-second pause. We could do anything in the workers, including talking to other nodes. This is what the MT server looks like in terms of ØMQ sockets and nodes. Note how the request-reply chain is {{REQ-ROUTER-queue-DEALER-REP}}[figure].
 
-++ Signaling between Threads (PAIR sockets)
+++ Signaling Between Threads (PAIR Sockets)
 
-When you start making multithreaded applications with 0MQ, you'll encounter the question of how to coordinate your threads. Though you might be tempted to insert 'sleep' statements, or use multithreading techniques such as semaphores or mutexes, **the only mechanism that you should use are 0MQ messages**. Remember the story of The Drunkards and the Beer Bottle.
+When you start making multithreaded applications with 0MQ, you'll encounter the question of how to coordinate your threads. Though you might be tempted to insert "sleep" statements, or use multithreading techniques such as semaphores or mutexes, **the only mechanism that you should use are 0MQ messages**. Remember the story of The Drunkards and The Beer Bottle.
 
-Let's make three threads that signal each other when they are ready[figure]. In this example we use PAIR sockets over the {{inproc}} transport:
+Let's make three threads that signal each other when they are ready[figure]. In this example, we use PAIR sockets over the {{inproc}} transport:
 
 [[code type="example" title="Multithreaded relay" name="mtrelay"]]
 [[/code]]
@@ -931,24 +926,24 @@ Let's make three threads that signal each other when they are ready[figure]. In 
 This is a classic pattern for multithreading with 0MQ:
 
 # Two threads communicate over {{inproc}}, using a shared context.
-# The parent thread creates one socket, binds it to an inproc:// endpoint, and //then// starts the child thread, passing the context to it.
-# The child thread creates the second socket, connects it to that inproc:// endpoint, and //then// signals to the parent thread that it's ready.
+# The parent thread creates one socket, binds it to an {{inproc://}} endpoint, and //then// starts the child thread, passing the context to it.
+# The child thread creates the second socket, connects it to that {{inproc://}} endpoint, and //then// signals to the parent thread that it's ready.
 
-Note that multithreading code using this pattern is not scalable out to processes. If you use {{inproc}} and socket pairs, you are building a tightly-bound application, i.e. one where your threads are structurally interdependent. Do this when low latency is really vital. The other design pattern is a loosely-bound application, where threads have their own context and communicate over {{ipc}} or {{tcp}}. You can easily break loosely-bound threads into separate processes.
+Note that multithreading code using this pattern is not scalable out to processes. If you use {{inproc}} and socket pairs, you are building a tightly-bound application, i.e., one where your threads are structurally interdependent. Do this when low latency is really vital. The other design pattern is a loosely bound application, where threads have their own context and communicate over {{ipc}} or {{tcp}}. You can easily break loosely bound threads into separate processes.
 
-This is the first time we've shown an example using PAIR sockets. Why use PAIR? Other socket combinations might seem to work but they all have side-effects that could interfere with signaling:
+This is the first time we've shown an example using PAIR sockets. Why use PAIR? Other socket combinations might seem to work, but they all have side effects that could interfere with signaling:
 
-* You can use PUSH for the sender and PULL for the receiver. This looks simple and will work, but remember that PUSH will distribute messages to all available receivers. If you by accident start two receivers (e.g. you already have one running and you start a second), you'll "lose" half of your signals. PAIR has the advantage of refusing more than one connection; the pair is //exclusive//.
+* You can use PUSH for the sender and PULL for the receiver. This looks simple and will work, but remember that PUSH will distribute messages to all available receivers. If you by accident start two receivers (e.g., you already have one running and you start a second), you'll "lose" half of your signals. PAIR has the advantage of refusing more than one connection; the pair is //exclusive//.
 
-* You can use DEALER for the sender and ROUTER for the receiver. ROUTER however wraps your message in an "envelope", meaning your zero-size signal turns into a multi-part message. If you don't care about the data, and treat anything as a valid signal, and if you don't read more than once from the socket, that won't matter. If however you decide to send real data, you will suddenly find ROUTER providing you with "wrong" messages. DEALER also distributes outgoing messages, giving the same risk as PUSH.
+* You can use DEALER for the sender and ROUTER for the receiver. ROUTER, however, wraps your message in an "envelope", meaning your zero-size signal turns into a multipart message. If you don't care about the data and treat anything as a valid signal, and if you don't read more than once from the socket, that won't matter. If, however, you decide to send real data, you will suddenly find ROUTER providing you with "wrong" messages. DEALER also distributes outgoing messages, giving the same risk as PUSH.
 
-* You can use PUB for the sender and SUB for the receiver. This will correctly deliver your messages exactly as you sent them and PUB does not distribute as PUSH or DEALER do. However you need to configure the subscriber with an empty subscription, which is annoying. Worse, the reliability of the PUB-SUB link is timing dependent and messages can get lost if the SUB socket is connecting while the PUB socket is sending its messages.
+* You can use PUB for the sender and SUB for the receiver. This will correctly deliver your messages exactly as you sent them and PUB does not distribute as PUSH or DEALER do. However, you need to configure the subscriber with an empty subscription, which is annoying.
 
 For these reasons, PAIR makes the best choice for coordination between pairs of threads.
 
 ++ Node Coordination
 
-When you want to coordinate a set of nodes on a network, PAIR sockets won't work well any more. This is one of the few areas where the strategies for threads and nodes are different. Principally nodes come and go whereas threads (unless they are 'detatched' threads imitating nodes) are static. PAIR sockets do not automatically reconnect if the remote node goes away and comes back.
+When you want to coordinate a set of nodes on a network, PAIR sockets won't work well any more. This is one of the few areas where the strategies for threads and nodes are different. Principally, nodes come and go whereas threads are usually static. PAIR sockets do not automatically reconnect if the remote node goes away and comes back.
 
 [[code type="textdiagram" title="Pub-Sub Synchronization"]]
 #------------#
@@ -977,7 +972,7 @@ This is how the application will work:
 
 * When the publisher has all subscribers connected, it starts to publish data.
 
-In this case we'll use a REQ-REP socket flow to synchronize subscribers and publisher[figure]. Here is the publisher:
+In this case, we'll use a REQ-REP socket flow to synchronize subscribers and publisher[figure]. Here is the publisher:
 
 [[code type="example" title="Synchronized publisher" name="syncpub"]]
 [[/code]]
@@ -1010,7 +1005,7 @@ Received 1000000 updates
 Received 1000000 updates
 [[/code]]
 
-We can't assume that the SUB connect will be finished by the time the REQ/REP dialog is complete. There are no guarantees that outbound connects will finish in any order whatsoever, if you're using any transport except {{inproc}}. So, the example does a brute-force sleep of one second between subscribing, and sending the REQ/REP synchronization.
+We can't assume that the SUB connect will be finished by the time the REQ/REP dialog is complete. There are no guarantees that outbound connects will finish in any order whatsoever, if you're using any transport except {{inproc}}. So, the example does a brute force sleep of one second between subscribing, and sending the REQ/REP synchronization.
 
 A more robust model could be:
 
@@ -1018,13 +1013,13 @@ A more robust model could be:
 * Subscribers connect SUB socket and when they receive a Hello message they tell the publisher via a REQ/REP socket pair.
 * When the publisher has had all the necessary confirmations, it starts to send real data.
 
-++ Zero Copy
+++ Zero-Copy
 
-0MQ's message API lets you can send and receive messages directly from and to application buffers without copying data. We call "zero-copy", and it can improve performance in some applications.
+0MQ's message API lets you can send and receive messages directly from and to application buffers without copying data. We call //zero-copy//, and it can improve performance in some applications.
 
 You should think about using zero-copy in the specific case where you are sending large blocks of memory (thousands of bytes), at a high frequency. For short messages, or for lower message rates, using zero-copy will make your code messier and more complex with no measurable benefit. Like all optimizations, use this when you know it helps, and //measure// before and after.
 
-To do zero-copy you use {{zmq_msg_init_data[3]}} to create a message that refers to a block of data already allocated with {{malloc()}} or some other allocator, and then you pass that to {{zmq_msg_send[3]}}. When you create the message you also pass a function that 0MQ will call to free the block of data, when it has finished sending the message. This is the simplest example, assuming 'buffer' is a block of 1000 bytes allocated on the heap:
+To do zero-copy, you use {{zmq_msg_init_data[3]}} to create a message that refers to a block of data already allocated with {{malloc()}} or some other allocator, and then you pass that to {{zmq_msg_send[3]}}. When you create the message, you also pass a function that 0MQ will call to free the block of data, when it has finished sending the message. This is the simplest example, assuming {{buffer}} is a block of 1,000 bytes allocated on the heap:
 
 [[code type="fragment" name="zerocopy"]]
 void my_free (void *data, void *hint) {
@@ -1036,15 +1031,15 @@ zmq_msg_init_data (&message, buffer, 1000, my_free, NULL);
 zmq_msg_send (socket, &message, 0);
 [[/code]]
 
-Note that you don't call {{zmq_msg_close[3]}} after sending a message - libzmq will do this automatically when it's actually done sending the message.
+Note that you don't call {{zmq_msg_close[3]}} after sending a message--libzmq will do this automatically when it's actually done sending the message.
 
-There is no way to do zero-copy on receive: 0MQ delivers you a buffer that you can store as long as you wish but it will not write data directly into application buffers.
+There is no way to do zero-copy on receive: 0MQ delivers you a buffer that you can store as long as you wish, but it will not write data directly into application buffers.
 
-On writing, 0MQ's multi-part messages work nicely together with zero-copy. In traditional messaging you need to marshal different buffers together into one buffer that you can send. That means copying data. With 0MQ, you can send multiple buffers coming from different sources as individual message frames. Send each field as a length-delimited frame. To the application it looks like a series of send and recv calls. But internally the multiple parts get written to the network and read back with single system calls, so it's very efficient.
+On writing, 0MQ's multipart messages work nicely together with zero-copy. In traditional messaging, you need to marshal different buffers together into one buffer that you can send. That means copying data. With 0MQ, you can send multiple buffers coming from different sources as individual message frames. Send each field as a length-delimited frame. To the application, it looks like a series of send and receive calls. But internally, the multiple parts get written to the network and read back with single system calls, so it's very efficient.
 
 ++ Pub-Sub Message Envelopes
 
-In the pub-sub pattern we can split the key into a separate message frame that we call an "envelope"[figure]. If you want to use pub-sub envelopes, make them yourself. It's optional, and in previous pub-sub examples we didn't do this. Using a pub-sub envelope is a little more work for simple cases but it's cleaner especially for real cases, where the key and the data are naturally separate things.
+In the pub-sub pattern, we can split the key into a separate message frame that we call an //envelope//[figure]. If you want to use pub-sub envelopes, make them yourself. It's optional, and in previous pub-sub examples we didn't do this. Using a pub-sub envelope is a little more work for simple cases, but it's cleaner especially for real cases, where the key and the data are naturally separate things.
 
 [[code type="textdiagram" title="Pub-Sub Envelope with Separate Key"]]
           #--------#
@@ -1054,7 +1049,7 @@ Frame 2   | Data   |   Actual message body
           #--------#
 [[/code]]
 
-Recall that subscriptions do a prefix match. That is, "all messages starting with XYZ". The obvious question is: how to delimit keys from data so that the prefix match doesn't accidentally match data. The best answer is to use an envelope, since the match won't cross a frame boundary. Here is a minimalist example of how pub-sub envelopes look in code. This publisher sends messages of two types, A and B.
+Recall that subscriptions do a prefix match. That is, they look for "all messages starting with XYZ". The obvious question is: how to delimit keys from data so that the prefix match doesn't accidentally match data. The best answer is to use an envelope because the match won't cross a frame boundary. Here is a minimalist example of how pub-sub envelopes look in code. This publisher sends messages of two types, A and B.
 
 The envelope holds the message type:
 
@@ -1085,31 +1080,31 @@ Frame 3   | Data    |   Actual message body
           #---------#
 [[/code]]
 
-This example shows that the subscription filter rejects or accepts the entire multi-part message (key plus data). You won't get part of a multi-part message, ever. If you subscribe to multiple publishers and you want to know their address so that you can send them data via another socket (and this is a typical use-case), create a three-part message[figure].
+This example shows that the subscription filter rejects or accepts the entire multipart message (key plus data). You won't get part of a multipart message, ever. If you subscribe to multiple publishers and you want to know their address so that you can send them data via another socket (and this is a typical use case), create a three-part message[figure].
 
-++ High Water Marks
+++ High-Water Marks
 
-When you can send messages rapidly from process to process, you soon discover that memory is a precious resource, and one that can be trivially filled up. A few seconds of delay somewhere in a process can turn into a backlog that blows up a server, unless you understand the problem and take precautions.
+When you can send messages rapidly from process to process, you soon discover that memory is a precious resource, and one that can be trivially filled up. A few seconds of delay somewhere in a process can turn into a backlog that blows up a server unless you understand the problem and take precautions.
 
 The problem is this: imagine you have process A sending messages at high frequency to process B, which is processing them. Suddenly B gets very busy (garbage collection, CPU overload, whatever), and can't process the messages for a short period. It could be a few seconds for some heavy garbage collection, or it could be much longer, if there's a more serious problem. What happens to the messages that process A is still trying to send frantically? Some will sit in B's network buffers. Some will sit on the Ethernet wire itself. Some will sit in A's network buffers. And the rest will accumulate in A's memory, as rapidly as the application behind A sends them. If you don't take some precaution, A can easily run out of memory and crash.
 
 It is a consistent, classic problem with message brokers. What makes it hurt more is that it's B's fault, superficially, and B is typically a user-written application which A has no control over.
 
-What are the answers? One is to pass the problem upstream. A is getting the messages from somewhere else. So tell that process, "stop!" And so on. This is called "flow control". It sounds plausible, but what if you're sending out a Twitter feed? Do you tell the whole world to stop tweeting while B gets its act together?
+What are the answers? One is to pass the problem upstream. A is getting the messages from somewhere else. So tell that process, "Stop!" And so on. This is called //flow control//. It sounds plausible, but what if you're sending out a Twitter feed? Do you tell the whole world to stop tweeting while B gets its act together?
 
-Flow control works in some cases but in others. The transport layer can't tell the application layer to "stop" any more than a subway system can tell a large business, "please keep your staff at work another half an hour, I'm too busy". The answer for messaging is to set limits on the size of buffers, and then when we reach those limits, take some sensible action. In some cases (not for a subway system, though), the answer is to throw away messages. In a others, the best strategy to wait.
+Flow control works in some cases, but not in others. The transport layer can't tell the application layer to "stop" any more than a subway system can tell a large business, "please keep your staff at work for another half an hour. I'm too busy". The answer for messaging is to set limits on the size of buffers, and then when we reach those limits, to take some sensible action. In some cases (not for a subway system, though), the answer is to throw away messages. In a others, the best strategy is to wait.
 
-0MQ uses the concept of "high water mark" or HWM to define the capacity of its internal pipes. Each connection out of a socket or into a socket has its own pipe, and high-water mark for sending, and/or receiving, depending on the socket type. Some sockets (PUB, PUSH) only have send buffers. Some (SUB, PULL, REQ, REP) only have receive buffers. Some (DEALER, ROUTER, PAIR) have both send and receive buffers.
+0MQ uses the concept of HWM (high-water mark) to define the capacity of its internal pipes. Each connection out of a socket or into a socket has its own pipe, and HWM for sending, and/or receiving, depending on the socket type. Some sockets (PUB, PUSH) only have send buffers. Some (SUB, PULL, REQ, REP) only have receive buffers. Some (DEALER, ROUTER, PAIR) have both send and receive buffers.
 
-In 0MQ/2.x the HWM was infinite by default. This was easy but also typically fatal for high-volume publishers. In 0MQ/3.x it's set to 1,000 by default, which is more sensible. If you're still using 0MQ/2.x you should always set a HWM on your sockets, be it 1,000 to match 0MQ/3.x or another figure that takes into account your message sizes and expected subscriber performance.
+In 0MQ v2.x, the HWM was infinite by default. This was easy but also typically fatal for high-volume publishers. In 0MQ v3.x, it's set to 1,000 by default, which is more sensible. If you're still using 0MQ v2.x, you should always set a HWM on your sockets, be it 1,000 to match 0MQ v3.x or another figure that takes into account your message sizes and expected subscriber performance.
 
-When your socket reaches its high-water mark, it will either block or drop data depending on the socket type. PUB and ROUTER sockets will drop data if they reach their high-water mark, while other socket types will block. Over the {{inproc}} transport, the sender and receiver share the same buffers, so the real HWM is the sum of the HWM set by both sides.
+When your socket reaches its HWM, it will either block or drop data depending on the socket type. PUB and ROUTER sockets will drop data if they reach their HWM, while other socket types will block. Over the {{inproc}} transport, the sender and receiver share the same buffers, so the real HWM is the sum of the HWM set by both sides.
 
-Lastly, the high-water marks are not exact; while you may get //up to// 1,000 messages by default, the real buffer size may be much lower (as little as half), due to the way libzmq implements its queues.
+Lastly, the HWMs are not exact; while you may get //up to// 1,000 messages by default, the real buffer size may be much lower (as little as half), due to the way libzmq implements its queues.
 
 ++ Missing Message Problem Solver
 
-As you build applications with 0MQ you will come across this problem more than once: losing messages that you expect to receive. We have put together a diagram[figure] that walks through the most common causes for this.
+As you build applications with 0MQ, you will come across this problem more than once: losing messages that you expect to receive. We have put together a diagram[figure] that walks through the most common causes for this.
 
 [[code type="textdiagram" title="Missing Message Problem Solver"]]
 .---------------.        .---------------.        .----------------.
@@ -1134,7 +1129,7 @@ As you build applications with 0MQ you will come across this problem more than o
          v          '------------------------'  '------------------'
 .-----------------.      .----------------.                          
 |  Are you using  +--.   | First PULL can |       .---------------.
-|  PUSH sockets?  |  '-->| grab many msgs |       | Use the load- |
+|  PUSH sockets?  |  '-->| grab many msgs |       | Use the load  |
 '--------+--------' Yes  | while others   +--.    | balancing     |
          | No            | are still busy |  '--->| pattern and   |
          v               | connecting     |       | ROUTER/DEALER |
@@ -1174,15 +1169,15 @@ As you build applications with 0MQ you will come across this problem more than o
 
 Here's a summary of what the graphic says:
 
-* On SUB sockets, set a subscription using {{zmq_setsockopt[3]}} with {{ZMQ_SUBSCRIBE}}, or you won't get messages. Since you subscribe to messages by prefix, if you subscribe to "" (an empty subscription), you will get everything.
+* On SUB sockets, set a subscription using {{zmq_setsockopt[3]}} with {{ZMQ_SUBSCRIBE}}, or you won't get messages. Because you subscribe to messages by prefix, if you subscribe to "" (an empty subscription), you will get everything.
 
-* If you start the SUB socket (i.e. establish a connection to a PUB socket) //after// the PUB socket has started sending out data, you will lose whatever it published before the connection was made. If this is a problem, set-up your architecture so the SUB socket starts first, then the PUB socket starts publishing.
+* If you start the SUB socket (i.e., establish a connection to a PUB socket) //after// the PUB socket has started sending out data, you will lose whatever it published before the connection was made. If this is a problem, set up your architecture so the SUB socket starts first, then the PUB socket starts publishing.
 
 * Even if you synchronize a SUB and PUB socket, you may still lose messages. It's due to the fact that internal queues aren't created until a connection is actually created. If you can switch the bind/connect direction so the SUB socket binds, and the PUB socket connects, you may find it works more as you'd expect.
 
 * If you're using REP and REQ sockets, and you're not sticking to the synchronous send/recv/send/recv order, 0MQ will report errors, which you might ignore. Then, it would look like you're losing messages. If you use REQ or REP, stick to the send/recv order, and always, in real code, check for errors on 0MQ calls.
 
-* If you're using PUSH sockets, you'll find that the first PULL socket to connect will grab an unfair share of messages. The accurate rotation of messages only happens when all PULL sockets are successfully connected, which can take some milliseconds. As an alternative to PUSH/PULL, for lower data rates, consider using ROUTER/DEALER and the load-balancer pattern.
+* If you're using PUSH sockets, you'll find that the first PULL socket to connect will grab an unfair share of messages. The accurate rotation of messages only happens when all PULL sockets are successfully connected, which can take some milliseconds. As an alternative to PUSH/PULL, for lower data rates, consider using ROUTER/DEALER and the load balancing pattern.
 
 * If you're sharing sockets across threads, don't. It will lead to random weirdness, and crashes.
 

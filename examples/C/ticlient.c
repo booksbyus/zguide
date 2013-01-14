@@ -1,7 +1,7 @@
 //  Titanic client example
 //  Implements client side of http://rfc.zeromq.org/spec:9
 
-//  Lets us build this source without creating a library
+//  Lets build this source without creating a library
 #include "mdcliapi.c"
 
 //  Calls a TSP service
@@ -32,7 +32,7 @@ s_service_call (mdcli_t *session, char *service, zmsg_t **request_p)
         exit (EXIT_SUCCESS);    //  Interrupted or failed
 
     zmsg_destroy (&reply);
-    return NULL;        //  Didn't succeed, don't care why not
+    return NULL;        //  Didn't succeed; don't care why not
 }
 
 //  .split main task

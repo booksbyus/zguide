@@ -1,4 +1,4 @@
-//  Clone client Model Three
+//  Clone client - Model Three
 
 //  Lets us build this source without creating a library
 #include "kvsimple.c"
@@ -35,7 +35,7 @@ int main (void)
         kvmsg_store (&kvmsg, kvmap);
     }
     //  .split processing state updates
-    //  Now we wait for updates from the server, and every so often, we
+    //  Now we wait for updates from the server and every so often, we
     //  send a random key-value update to the server:
     
     int64_t alarm = zclock_time () + 1000;
@@ -62,7 +62,7 @@ int main (void)
             else
                 kvmsg_destroy (&kvmsg);
         }
-        //  If we timed-out, generate a random kvmsg
+        //  If we timed out, generate a random kvmsg
         if (zclock_time () >= alarm) {
             kvmsg_t *kvmsg = kvmsg_new (0);
             kvmsg_fmt_key  (kvmsg, "%d", randof (10000));

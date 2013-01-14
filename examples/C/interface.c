@@ -21,8 +21,8 @@ static void
 
 //  .split constructor and destructor
 //  Here are the constructor and destructor for the interface class.
-//  Note that the class has barely any properties, it is just an excuse
-//  to start the background thread, and a wrapper around zmsg_recv():
+//  Note that the class has barely any properties; it is just an excuse
+//  to start the background thread and a wrapper around {{zmsg_recv}}:
 
 interface_t *
 interface_new (void)
@@ -50,7 +50,7 @@ interface_destroy (interface_t **self_p)
 
 //  .split receive message
 //  Here we wait for a message from the interface. This returns
-//  us a zmsg_t object, or NULL if interrupted:
+//  us a {{zmsg_t}} object, or NULL if interrupted:
 
 static zmsg_t *
 interface_recv (interface_t *self)
@@ -156,8 +156,8 @@ peer_freefn (void *argument)
 }
 
 //  .split agent class
-//  This structure holds the context for our agent, so we can
-//  pass that around cleanly to methods which need it:
+//  This structure holds the context for our agent so we can
+//  pass that around cleanly to methods that need it:
 
 typedef struct {
     zctx_t *ctx;                //  CZMQ context
@@ -168,8 +168,8 @@ typedef struct {
 } agent_t;
 
 //  .split agent constructor and destructor
-//  Now the constructor and destructor for our agent. Each interface
-//  has one agent object, which implements its background thread:
+//  Now we create the constructor and destructor for our agent. Each 
+//  interface has one agent object, which implements its background thread:
 
 static agent_t *
 agent_new (zctx_t *ctx, void *pipe)
@@ -197,7 +197,7 @@ agent_destroy (agent_t **self_p)
 }
 
 //  .skip
-//  Here we handle the different control messages from the front-end.
+//  Here we handle the different control messages from the frontend.
 
 static int
 agent_control_message (agent_t *self)
@@ -254,8 +254,8 @@ agent_handle_beacon (agent_t *self)
 }
 
 //  .split reap peers
-//  This method checks one peer item for expiry; if the peer hasn't
-//  sent us anything by now, it's 'dead' and we can delete it:
+//  This method checks one peer item for expiration; if the peer hasn't
+//  sent us anything by now, it's "dead" and we can delete it:
 
 static int
 agent_reap_peer (const char *key, void *item, void *argument)
@@ -272,9 +272,9 @@ agent_reap_peer (const char *key, void *item, void *argument)
 }
 
 //  .split agent main loop
-//  This is the main loop for the background agent. It uses zmq_poll
-//  to monitor the front-end pipe (commands from the API) and the
-//  back-end UDP handle (beacons):
+//  This is the main loop for the background agent. It uses {{zmq_poll}}
+//  to monitor the frontend pipe (commands from the API) and the
+//  backend UDP handle (beacons):
 
 static void
 interface_agent (void *args, zctx_t *ctx, void *pipe)

@@ -117,7 +117,7 @@ int main (int argc, char *argv [])
         zthread_new (client_task, NULL);
 
     //  .split request-reply handling
-    //  Here we handle the request-reply flow. We're using load-balancing
+    //  Here, we handle the request-reply flow. We're using load-balancing
     //  to poll workers at all times, and clients only when there are one 
     //  or more workers available.
 
@@ -131,7 +131,7 @@ int main (int argc, char *argv [])
             { localbe, 0, ZMQ_POLLIN, 0 },
             { cloudbe, 0, ZMQ_POLLIN, 0 }
         };
-        //  If we have no workers anyhow, wait indefinitely
+        //  If we have no workers, wait indefinitely
         int rc = zmq_poll (backends, 2,
             capacity? 1000 * ZMQ_POLL_MSEC: -1);
         if (rc == -1)
@@ -178,7 +178,7 @@ int main (int argc, char *argv [])
         //  Now we route as many client requests as we have worker capacity
         //  for. We may reroute requests from our local frontend, but not from 
         //  the cloud frontend. We reroute randomly now, just to test things
-        //  out. In the next version we'll do this properly by calculating
+        //  out. In the next version, we'll do this properly by calculating
         //  cloud capacity:
 
         while (capacity) {

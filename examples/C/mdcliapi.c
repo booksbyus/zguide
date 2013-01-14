@@ -28,7 +28,7 @@ void s_mdcli_connect_to_broker (mdcli_t *self)
 }
 
 //  .split constructor and destructor
-//  Here we have the constructor and destructor for our mdcli class:
+//  Here we have the constructor and destructor for our class:
 
 //  Constructor
 
@@ -65,7 +65,7 @@ mdcli_destroy (mdcli_t **self_p)
 
 //  .split configure retry behavior
 //  These are the class methods. We can set the request timeout and number
-//  of retry attempts, before sending requests:
+//  of retry attempts before sending requests:
 
 //  Set request timeout
 
@@ -86,9 +86,9 @@ mdcli_set_retries (mdcli_t *self, int retries)
 }
 
 //  .split send request and wait for reply
-//  Here is the send method. It sends a request to the broker and gets a
-//  reply even if it has to retry several times. It takes ownership of the
-//  request message, and destroys it when sent. It returns the reply
+//  Here is the {{send}} method. It sends a request to the broker and gets
+//  a reply even if it has to retry several times. It takes ownership of 
+//  the request message, and destroys it when sent. It returns the reply
 //  message, or NULL if there was no reply after multiple attempts:
 
 zmsg_t *
@@ -116,9 +116,9 @@ mdcli_send (mdcli_t *self, char *service, zmsg_t **request_p)
             { self->client, 0, ZMQ_POLLIN, 0 }
         };
         //  .split body of send 
-        //  On any blocking call, libzmq will return -1 if there was
-        //  an error; we could in theory check for different error codes
-        //  but in practice it's OK to assume it was EINTR (Ctrl-C):
+        //  On any blocking call, {{libzmq}} will return -1 if there was
+        //  an error; we could in theory check for different error codes,
+        //  but in practice it's OK to assume it was {{EINTR}} (Ctrl-C):
         
         int rc = zmq_poll (items, 1, self->timeout * ZMQ_POLL_MSEC);
         if (rc == -1)

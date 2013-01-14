@@ -115,9 +115,9 @@ int s_handle_backend (zloop_t *loop, zmq_pollitem_t *poller, void *arg)
 }
 
 //  .split main task
-//  And the main task now sets-up child tasks, then starts its reactor.
+//  And the main task now sets up child tasks, then starts its reactor.
 //  If you press Ctrl-C, the reactor exits and the main task shuts down.
-//  Since the reactor is a CZMQ class, this example may not translate
+//  Because the reactor is a CZMQ class, this example may not translate
 //  into all languages equally well.
 
 int main (void)

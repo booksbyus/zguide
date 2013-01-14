@@ -56,9 +56,9 @@ int main (int argc, char *argv [])
 }
 
 //  .split class implementation
-//  Here is the flclient class implementation. Each instance has a context,
-//  a DEALER socket it uses to talk to the servers, a counter of how many
-//  servers it's connected to, and a request sequence number:
+//  Here is the {{flclient}} class implementation. Each instance has a 
+//  context, a DEALER socket it uses to talk to the servers, a counter 
+//  of how many servers it's connected to, and a request sequence number:
 
 struct _flclient_t {
     zctx_t *ctx;        //  Our context wrapper
@@ -106,9 +106,9 @@ flclient_connect (flclient_t *self, char *endpoint)
 }
 
 //  .split request method
-//  The request method does the hard work. It sends a request to all
+//  This method does the hard work. It sends a request to all
 //  connected servers in parallel (for this to work, all connections
-//  have to be successful and completed by this time). It then waits
+//  must be successful and completed by this time). It then waits
 //  for a single successful reply, and returns that to the caller.
 //  Any other replies are just dropped:
 

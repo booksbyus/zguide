@@ -17,6 +17,11 @@ Chapter 5:
 * bridging
 
 
+
+
+
+
+
 ==1742== Syscall param write(buf) points to uninitialised byte(s)
 ==1742==    at 0x5372100: __write_nocancel (syscall-template.S:82)
 ==1742==    by 0x5306312: _IO_file_write@@GLIBC_2.2.5 (fileops.c:1289)

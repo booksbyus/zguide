@@ -64,7 +64,7 @@ typedef struct {
     char *id_string;            //  Identity of worker as string
     zframe_t *identity;         //  Identity frame for routing
     service_t *service;         //  Owning service, if known
-    int64_t expiry;             //  Expires at unless heartbeat
+    int64_t expiry;             //  When worker expires, if no heartbeat
 } worker_t;
 
 static worker_t *
@@ -114,7 +114,7 @@ s_broker_destroy (broker_t **self_p)
 }
 
 //  .split broker bind method
-//  The bind method binds the broker instance to an endpoint. We can call
+//  This method binds the broker instance to an endpoint. We can call
 //  this multiple times. Note that MDP uses a single socket for both clients 
 //  and workers:
 
@@ -126,7 +126,7 @@ s_broker_bind (broker_t *self, char *endpoint)
 }
 
 //  .split broker worker_msg method
-//  The worker_msg method processes one READY, REPLY, HEARTBEAT or
+//  This method processes one READY, REPLY, HEARTBEAT, or
 //  DISCONNECT message sent to the broker by a worker:
 
 static void
@@ -159,7 +159,7 @@ s_broker_worker_msg (broker_t *self, zframe_t *sender, zmsg_t *msg)
     else
     if (zframe_streq (command, MDPW_REPLY)) {
         if (worker_ready) {
-            //  Remove & save client return envelope and insert the
+            //  Remove and save client return envelope and insert the
             //  protocol header and service name, then rewrap envelope.
             zframe_t *client = zmsg_unwrap (msg);
             zmsg_pushstr (msg, worker->service->name);
@@ -235,11 +235,11 @@ s_broker_client_msg (broker_t *self, zframe_t *sender, zmsg_t *msg)
 }
 
 //  .split broker purge method
-//  The purge method deletes any idle workers that haven't pinged us in a
-//  while. We hold workers from oldest to most recent, so we can stop
+//  This method deletes any idle workers that haven't pinged us in a
+//  while. We hold workers from oldest to most recent so we can stop
 //  scanning whenever we find a live worker. This means we'll mainly stop
 //  at the first worker, which is essential when we have large numbers of
-//  workers (since we call this method in our critical path):
+//  workers (we call this method in our critical path):
 
 static void
 s_broker_purge (broker_t *self)
@@ -260,7 +260,7 @@ s_broker_purge (broker_t *self)
 //  .split service methods
 //  Here is the implementation of the methods that work on a service:
 
-//  Lazy constructor that locates a service by name, or creates a new
+//  Lazy constructor that locates a service by name or creates a new
 //  service if there is no service already with that name.
 
 static service_t *
@@ -306,7 +306,7 @@ s_service_destroy (void *argument)
 }
 
 //  .split service dispatch method
-//  The dispatch method sends requests to waiting workers:
+//  This method sends requests to waiting workers:
 
 static void
 s_service_dispatch (service_t *self, zmsg_t *msg)
@@ -356,7 +356,7 @@ s_worker_require (broker_t *self, zframe_t *identity)
     return worker;
 }
 
-//  The delete method deletes the current worker.
+//  This method deletes the current worker.
 
 static void
 s_worker_delete (worker_t *self, int disconnect)
@@ -387,7 +387,7 @@ s_worker_destroy (void *argument)
 }
 
 //  .split worker send method
-//  The send method formats and sends a command to a worker. The caller may
+//  This method formats and sends a command to a worker. The caller may
 //  also provide a command option, and a message payload:
 
 static void
@@ -426,8 +426,8 @@ s_worker_waiting (worker_t *self)
 }
 
 //  .split main task
-//  Finally here is the main task. We create a new broker instance and
-//  then processes messages on the broker socket:
+//  Finally, here is the main task. We create a new broker instance and
+//  then process messages on the broker socket:
 
 int main (int argc, char *argv [])
 {

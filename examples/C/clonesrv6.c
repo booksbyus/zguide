@@ -42,14 +42,14 @@ typedef struct {
 
 //  .split main task setup
 //  The main task parses the command line to decide whether to start
-//  as primary or backup server. We're using the Binary Star pattern
+//  as a primary or backup server. We're using the Binary Star pattern
 //  for reliability. This interconnects the two servers so they can
-//  agree on which is primary, and which is backup. To allow the two
-//  servers to run on the same box, we use different ports for primary
-//  and backup. Ports 5003/5004 are used to interconnect the servers.
-//  Ports 5556/5566 are used to receive voting events (snapshot requests
-//  in the clone pattern). Ports 5557/5567 are used by the publisher,
-//  and ports 5558/5568 by the collector:
+//  agree on which one is primary and which one is backup. To allow the
+//  two servers to run on the same box, we use different ports for 
+//  primary and backup. Ports 5003/5004 are used to interconnect the 
+//  servers. Ports 5556/5566 are used to receive voting events (snapshot 
+//  requests in the clone pattern). Ports 5557/5567 are used by the 
+//  publisher, and ports 5558/5568 are used by the collector:
 
 int main (int argc, char *argv [])
 {
@@ -102,9 +102,9 @@ int main (int argc, char *argv [])
                      "tcp://localhost:%d", self->peer + 1);
 
     //  .split main task body
-    //  After we've set-up our sockets we register our binary star
+    //  After we've setup our sockets, we register our binary star
     //  event handlers, and then start the bstar reactor. This finishes
-    //  when the user presses Ctrl-C, or the process receives a SIGINT
+    //  when the user presses Ctrl-C or when the process receives a SIGINT
     //  interrupt:
 
     //  Register state change handlers
@@ -117,7 +117,7 @@ int main (int argc, char *argv [])
     zloop_timer  (bstar_zloop (self->bstar), 1000, 0, s_flush_ttl, self);
     zloop_timer  (bstar_zloop (self->bstar), 1000, 0, s_send_hugz, self);
 
-    //  Start the Bstar reactor
+    //  Start the bstar reactor
     bstar_start (self->bstar);
 
     //  Interrupted, so shut down
@@ -200,10 +200,10 @@ s_snapshots (zloop_t *loop, zmq_pollitem_t *poller, void *args)
 //  .until
 
 //  .split collect updates
-//  The collector is more complex than in the clonesrv5 example since how
-//  process updates depends on whether we're active or passive. The active
-//  applies them immediately to its kvmap, whereas the passive queues them
-//  as pending:
+//  The collector is more complex than in the clonesrv5 example because the 
+//  way it processes updates depends on whether we're active or passive. 
+//  The active applies them immediately to its kvmap, whereas the passive 
+//  queues them as pending:
 
 //  If message was already on pending list, remove it and return TRUE,
 //  else return FALSE.
@@ -306,7 +306,7 @@ s_send_hugz (zloop_t *loop, zmq_pollitem_t *poller, void *args)
 //  .split handling state changes
 //  When we switch from passive to active, we apply our pending list so that
 //  our kvmap is up-to-date. When we switch to passive, we wipe our kvmap
-//  and grab a new snapshot from the active:
+//  and grab a new snapshot from the active server:
 
 static int
 s_new_active (zloop_t *loop, zmq_pollitem_t *unused, void *args)

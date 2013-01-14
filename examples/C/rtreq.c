@@ -36,7 +36,7 @@ worker_task (void *args)
 }
 
 //  .split main task
-//  While this example runs in a single process, that is just to make
+//  While this example runs in a single process, that is only to make
 //  it easier to start and stop the example. Each thread has its own
 //  context and conceptually acts as a separate process.
 

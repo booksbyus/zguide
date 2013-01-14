@@ -19,7 +19,7 @@ int main (void)
         free (address);
         free (contents);
     }
-    //  We never get here but clean up anyhow
+    //  We never get here, but clean up anyhow
     zmq_close (subscriber);
     zmq_ctx_destroy (context);
     return 0;

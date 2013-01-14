@@ -71,8 +71,8 @@ kvmsg_destroy (kvmsg_t **self_p)
 }
 
 //  .split recv method
-//  The recv method reads a key-value message from socket, and returns a new
-//  kvmsg instance:
+//  This method reads a key-value message from socket, and returns a new
+//  {{kvmsg}} instance:
 
 kvmsg_t *
 kvmsg_recv (void *socket)
@@ -102,7 +102,7 @@ kvmsg_recv (void *socket)
 }
 
 //  .split send method
-//  The send method sends a multi-frame key-value message to a socket:
+//  This method sends a multiframe key-value message to a socket:
 
 void
 kvmsg_send (kvmsg_t *self, void *socket)
@@ -217,7 +217,7 @@ kvmsg_set_sequence (kvmsg_t *self, int64_t sequence)
 }
 
 //  .split message body methods
-//  These methods let the caller get and set the message body, as a
+//  These methods let the caller get and set the message body as a
 //  fixed string and as a printf formatted string:
 
 byte *
@@ -256,7 +256,8 @@ kvmsg_fmt_body (kvmsg_t *self, char *format, ...)
 }
 
 //  .split size method
-//  The size method returns the body size of the last-read message, if any:
+//  This method returns the body size of the most recently read message,
+//  if any exists:
 
 size_t
 kvmsg_size (kvmsg_t *self)
@@ -269,9 +270,9 @@ kvmsg_size (kvmsg_t *self)
 }
 
 //  .split store method
-//  The store method stores the key-value message into a hash map, unless
-//  the key and value are both null. It nullifies the kvmsg reference so
-//  that the object is owned by the hash map, not the caller:
+//  This method stores the key-value message into a hash map, unless
+//  the key and value are both null. It nullifies the {{kvmsg}} reference
+//  so that the object is owned by the hash map, not the caller:
 
 void
 kvmsg_store (kvmsg_t **self_p, zhash_t *hash)
@@ -290,8 +291,8 @@ kvmsg_store (kvmsg_t **self_p, zhash_t *hash)
 }
 
 //  .split dump method
-//  The dump method prints the key-value message to stderr,
-//  for debugging and tracing:
+//  This method prints the key-value message to stderr for
+//  debugging and tracing:
 
 void
 kvmsg_dump (kvmsg_t *self)

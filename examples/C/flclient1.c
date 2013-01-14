@@ -28,7 +28,7 @@ s_try_request (zctx_t *ctx, char *endpoint, zmsg_t *request)
 
 //  .split client task
 //  The client uses a Lazy Pirate strategy if it only has one server to talk
-//  to. If it has 2 or more servers to talk to, it will try each server just
+//  to. If it has two or more servers to talk to, it will try each server just
 //  once:
 
 int main (int argc, char *argv [])

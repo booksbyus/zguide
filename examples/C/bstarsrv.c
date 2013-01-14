@@ -27,14 +27,14 @@ typedef struct {
     int64_t peer_expiry;        //  When peer is considered 'dead'
 } bstar_t;
 
-//  We send state information every this often
+//  We send state information this often
 //  If peer doesn't respond in two heartbeats, it is 'dead'
 #define HEARTBEAT 1000          //  In msecs
 
 //  .split Binary Star state machine
 //  The heart of the Binary Star design is its finite-state machine (FSM).
 //  The FSM runs one event at a time. We apply an event to the current state,
-//  which checks if the event is accepted, and if so sets a new state:
+//  which checks if the event is accepted, and if so, sets a new state:
 
 static Bool
 s_state_machine (bstar_t *fsm)
@@ -192,7 +192,7 @@ int main (int argc, char *argv [])
                 break;          //  Error, so exit
             fsm.peer_expiry = zclock_time () + 2 * HEARTBEAT;
         }
-        //  If we timed-out, send state to peer
+        //  If we timed out, send state to peer
         if (zclock_time () >= send_state_at) {
             char message [2];
             sprintf (message, "%d", fsm.state);

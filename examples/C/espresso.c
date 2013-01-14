@@ -46,7 +46,7 @@ publisher_thread (void *args, zctx_t *ctx, void *pipe)
 
 //  .split listener thread
 //  The listener receives all messages flowing through the proxy, on its
-//  pipe. In CZMQ, the pipe is a pair of ZMQ_PAIR sockets that connects
+//  pipe. In CZMQ, the pipe is a pair of ZMQ_PAIR sockets that connect
 //  attached child threads. In other languages your mileage may vary:
 
 static void

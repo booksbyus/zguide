@@ -47,9 +47,9 @@ s_reply_filename (char *uuid) {
 }
 
 //  .split Titanic request service
-//  The "titanic.request" task waits for requests to this service. It writes 
+//  The {{titanic.request}} task waits for requests to this service. It writes
 //  each request to disk and returns a UUID to the client. The client picks
-//  up the reply asynchronously using the "titanic.reply" service:
+//  up the reply asynchronously using the {{titanic.reply}} service:
 
 static void
 titanic_request (void *args, zctx_t *ctx, void *pipe)
@@ -94,9 +94,9 @@ titanic_request (void *args, zctx_t *ctx, void *pipe)
 }
 
 //  .split Titanic reply service
-//  The "titanic.reply" task checks if there's a reply for the specified
-//  request (by UUID), and returns a 200 OK, 300 Pending, or 400 Unknown
-//  accordingly:
+//  The {{titanic.reply}} task checks if there's a reply for the specified
+//  request (by UUID), and returns a 200 (OK), 300 (Pending), or 400
+//  (Unknown) accordingly:
 
 static void *
 titanic_reply (void *context)
@@ -137,9 +137,9 @@ titanic_reply (void *context)
 }
 
 //  .split Titanic close task
-//  The "titanic.close" task removes any waiting replies for the request
-//  (specified by UUID). It's idempotent, so safe to call more than once
-//  in a row:
+//  The {{titanic.close}} task removes any waiting replies for the request
+//  (specified by UUID). It's idempotent, so it is safe to call more than
+//  once in a row:
 
 static void *
 titanic_close (void *context)
@@ -173,10 +173,10 @@ titanic_close (void *context)
 //  .split worker task
 //  This is the main thread for the Titanic worker. It starts three child
 //  threads; for the request, reply, and close services. It then dispatches
-//  requests to workers using a simple brute-force disk queue. It receives
-//  request UUIDs from the titanic.request service, saves these to a disk
+//  requests to workers using a simple brute force disk queue. It receives
+//  request UUIDs from the {{titanic.request}} service, saves these to a disk
 //  file, and then throws each request at MDP workers until it gets a
-//  response:
+//  response.
 
 static int s_service_success (char *uuid);
 
@@ -211,7 +211,7 @@ int main (int argc, char *argv [])
             free (uuid);
             zmsg_destroy (&msg);
         }
-        //  Brute-force dispatcher
+        //  Brute force dispatcher
         char entry [] = "?.......:.......:.......:.......:";
         FILE *file = fopen (TITANIC_DIR "/queue", "r+");
         while (file && fread (entry, 33, 1, file) == 1) {
@@ -239,8 +239,8 @@ int main (int argc, char *argv [])
 }
 
 //  .split try to call a service
-//  Here we first check if the requested MDP service is defined or not,
-//  using a MMI lookup to the Majordomo broker. If the service exists
+//  Here, we first check if the requested MDP service is defined or not,
+//  using a MMI lookup to the Majordomo broker. If the service exists,
 //  we send a request and wait for a reply using the conventional MDP
 //  client API. This is not meant to be fast, just very simple:
 

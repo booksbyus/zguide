@@ -46,7 +46,7 @@ int main (void)
             free (topic);
         }
         //  .split handle subscriptions
-        //  When we get a new subscription we pull data from the cache:
+        //  When we get a new subscription, we pull data from the cache:
         if (items [1].revents & ZMQ_POLLIN) {
             zframe_t *frame = zframe_recv (backend);
             if (!frame)

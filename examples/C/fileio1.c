@@ -50,7 +50,7 @@ server_thread (void *args, zctx_t *ctx, void *pipe)
 
     void *router = zsocket_new (ctx, ZMQ_ROUTER);
     //  Default HWM is 1000, which will drop messages here
-    //  since we send more than 1,000 chunks of test data,
+    //  because we send more than 1,000 chunks of test data,
     //  so set an infinite HWM as a simple, stupid solution:
     zsocket_set_hwm (router, 0);
     zsocket_bind (router, "tcp://*:6000");

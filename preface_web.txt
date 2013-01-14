@@ -13,7 +13,7 @@ The Guide is originally [/page:all in C], but also in [/php:all PHP], [/py:all P
 
 ++ 0MQ in a Hundred Words
 
-0MQ (also seen as ZeroMQ, 0\MQ, zmq) looks like an embeddable networking library but acts like a concurrency framework. It gives you sockets that carry atomic messages across various transports like in-process, inter-process, TCP, and multicast. You can connect sockets N-to-N with patterns like fanout, pub-sub, task distribution, and request-reply. It's fast enough to be the fabric for clustered products. Its asynchronous I/O model gives you scalable multicore applications, built as asynchronous message-processing tasks. It has a score of language APIs and runs on most operating systems. 0MQ is from [http://www.imatix.com iMatix] and is LGPLv3 open source.
+0MQ (also known as ZeroMQ, 0\MQ, or zmq) looks like an embeddable networking library but acts like a concurrency framework. It gives you sockets that carry atomic messages across various transports like in-process, inter-process, TCP, and multicast. You can connect sockets N-to-N with patterns like fan-out, pub-sub, task distribution, and request-reply. It's fast enough to be the fabric for clustered products. Its asynchronous I/O model gives you scalable multicore applications, built as asynchronous message-processing tasks. It has a score of language APIs and runs on most operating systems. 0MQ is from [http://www.imatix.com iMatix] and is LGPLv3 open source.
 
 ++ How It Began
 
@@ -41,7 +41,7 @@ We took a normal TCP socket, injected it with a mix of radioactive isotopes stol
 
 The Ø in 0MQ is all about tradeoffs. On the one hand this strange name lowers 0MQ's visibility on Google and Twitter. On the other hand it annoys the heck out of some Danish folk who write us things like "ØMG røtfl", and "Ø is not a funny looking zero!" and "//Rødgrød med Fløde!//", which is apparently an insult that means "may your neighbours be the direct descendants of Grendel!"  Seems like a fair trade.
 
-Originally the zero in 0MQ was meant as "zero broker" and (as close to) "zero latency" (as possible). In the meantime it has come to cover different goals: zero administration, zero cost, zero waste. More generally, "zero" refers to the culture of minimalism that permeates the project. We add power by removing complexity rather than exposing new functionality.
+Originally the zero in 0MQ was meant as "zero broker" and (as close to) "zero latency" (as possible). Since then, it has come to encompass different goals: zero administration, zero cost, zero waste. More generally, "zero" refers to the culture of minimalism that permeates the project. We add power by removing complexity rather than by exposing new functionality.
 
 ++ Audience
 

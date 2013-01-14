@@ -10,7 +10,7 @@
 #define DEQUEUE(q) memmove (&(q)[0], &(q)[1], sizeof (q) - sizeof (q [0]))
 
 //  Basic request-reply client using REQ socket
-//  Since s_send and s_recv can't handle 0MQ binary identities we
+//  Because s_send and s_recv can't handle 0MQ binary identities, we
 //  set a printable text identity to allow routing.
 //
 static void *
@@ -36,7 +36,7 @@ client_task (void *args)
 //  it easier to start and stop the example. Each thread has its own
 //  context and conceptually acts as a separate process.
 //  This is the worker task, using a REQ socket to do load-balancing.
-//  Since s_send and s_recv can't handle 0MQ binary identities we
+//  Because s_send and s_recv can't handle 0MQ binary identities, we
 //  set a printable text identity to allow routing.
 
 static void *
@@ -52,7 +52,7 @@ worker_task (void *args)
 
     while (1) {
         //  Read and save all frames until we get an empty frame
-        //  In this example there is only 1 but it could be more
+        //  In this example there is only 1, but there could be more
         char *identity = s_recv (worker);
         char *empty = s_recv (worker);
         assert (*empty == 0);
@@ -78,7 +78,7 @@ worker_task (void *args)
 //  routes requests between the two layers. Workers signal READY when
 //  they start; after that we treat them as ready when they reply with
 //  a response back to a client. The load-balancing data structure is 
-// just a queue of next available workers.
+//  just a queue of next available workers.
 
 int main (void)
 {
@@ -105,9 +105,9 @@ int main (void)
     //  the backend in all cases, and polls the frontend only when there are
     //  one or more workers ready. This is a neat way to use 0MQ's own queues
     //  to hold messages we're not ready to process yet. When we get a client
-    //  reply, we pop the next available worker, and send the request to it,
+    //  reply, we pop the next available worker and send the request to it,
     //  including the originating client identity. When a worker replies, we
-    //  re-queue that worker, and we forward the reply to the original client,
+    //  requeue that worker and forward the reply to the original client
     //  using the reply envelope.
 
     //  Queue of available workers

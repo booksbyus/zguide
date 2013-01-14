@@ -1,4 +1,4 @@
-//  Clone server Model Five
+//  Clone server - Model Five
 
 //  Lets us build this source without creating a library
 #include "kvmsg.c"
@@ -148,7 +148,7 @@ s_collector (zloop_t *loop, zmq_pollitem_t *poller, void *args)
 }
 
 //  .split flush ephemeral values
-//  At regular intervals we flush ephemeral values that have expired. This
+//  At regular intervals, we flush ephemeral values that have expired. This
 //  could be slow on very large data sets:
 
 //  If key-value pair has expired, delete it and publish the

@@ -59,7 +59,7 @@ worker_task (void *args)
 }
 
 //  .split broker task
-//  Here is the broker task. It uses the zmq_proxy function to switch
+//  Here is the broker task. It uses the {{zmq_proxy}} function to switch
 //  messages between frontend and backend:
 
 static void *

@@ -6,7 +6,7 @@
 #define NBR_WORKERS 5
 #define WORKER_READY   "\001"      //  Signals worker is ready
 
-//  Our own name; in practice this would be configured per node
+//  Our own name; in practice, this would be configured per node
 static char *self;
 
 //  .split client task
@@ -63,8 +63,8 @@ client_task (void *args)
 
 //  .split worker task
 //  This is the worker task, which uses a REQ socket to plug into the
-//  load-balancer. It's the same stub worker task you've seen in other
-//  examples:
+//  load-balancer. It's the same stub worker task that you've seen in 
+//  other examples:
 
 static void *
 worker_task (void *args)
@@ -92,7 +92,7 @@ worker_task (void *args)
 }
 
 //  .split main task
-//  The main task begins by setting-up all its sockets. The local frontend
+//  The main task begins by setting up all its sockets. The local frontend
 //  talks to clients, and our local backend talks to workers. The cloud
 //  frontend talks to peer brokers as if they were clients, and the cloud
 //  backend talks to peer brokers as if they were workers. The state
@@ -169,10 +169,10 @@ int main (int argc, char *argv [])
     zlist_t *workers = zlist_new ();
 
     //  .split main loop
-    //  The main loop has two parts. First we poll workers and our two service
+    //  The main loop has two parts. First, we poll workers and our two service
     //  sockets (statefe and monitor), in any case. If we have no ready workers,
-    //  there's no point in looking at incoming requests. These can remain on
-    //  their internal 0MQ queues:
+    //  then there's no point in looking at incoming requests. These can remain 
+    //  on their internal 0MQ queues:
 
     while (true) {
         zmq_pollitem_t primary [] = {
@@ -227,7 +227,7 @@ int main (int argc, char *argv [])
             zmsg_send (&msg, localfe);
 
         //  .split handle state messages
-        //  If we have input messages on our statefe or monitor sockets we
+        //  If we have input messages on our statefe or monitor sockets, we
         //  can process these immediately:
 
         if (primary [2].revents & ZMQ_POLLIN) {
@@ -244,7 +244,7 @@ int main (int argc, char *argv [])
         }
         //  .split route client requests
         //  Now route as many clients requests as we can handle. If we have
-        //  local capacity we poll both localfe and cloudfe. If we have cloud
+        //  local capacity, we poll both localfe and cloudfe. If we have cloud
         //  capacity only, we poll just localfe. We route any request locally
         //  if we can, else we route to the cloud.
 
@@ -281,7 +281,7 @@ int main (int argc, char *argv [])
             }
         }
         //  .split broadcast capacity
-        //  We broadcast capacity messages to other peers; to reduce chatter
+        //  We broadcast capacity messages to other peers; to reduce chatter,
         //  we do this only if our capacity changed.
 
         if (local_capacity != previous) {

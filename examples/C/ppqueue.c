@@ -10,7 +10,7 @@
 
 //  .split worker class structure
 //  Here we define the worker class; a structure and a set of functions that
-//  as constructor, destructor, and methods on worker objects:
+//  act as constructor, destructor, and methods on worker objects:
 
 typedef struct {
     zframe_t *identity;         //  Identity of worker
@@ -157,8 +157,8 @@ int main (void)
             zmsg_send (&msg, backend);
         }
         //  .split handle heartbeating
-        //  We handle heartbeating after any socket activity. First we send
-        //  heartbeats to any idle workers if it's time. Then we purge any
+        //  We handle heartbeating after any socket activity. First, we send
+        //  heartbeats to any idle workers if it's time. Then, we purge any
         //  dead workers:
         if (zclock_time () >= heartbeat_at) {
             worker_t *worker = (worker_t *) zlist_first (workers);

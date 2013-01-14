@@ -32,7 +32,7 @@ struct _mdwrk_t {
 
 //  .split utility functions
 //  We have two utility functions; to send a message to the broker and
-//  to (re-)connect to the broker:
+//  to (re)connect to the broker:
 
 //  Send message to broker
 //  If no msg is provided, creates one internally
@@ -137,9 +137,9 @@ mdwrk_set_reconnect (mdwrk_t *self, int reconnect)
 }
 
 //  .split recv method
-//  This is the recv method; it's a little misnamed since it first sends
+//  This is the {{recv}} method; it's a little misnamed because it first sends
 //  any reply and then waits for a new request. If you have a better name
-//  for this, let me know:
+//  for this, let me know.
 
 //  Send reply, if any, to broker and wait for next request.
 
@@ -195,6 +195,7 @@ mdwrk_recv (mdwrk_t *self, zmsg_t **reply_p)
                 //  .split process message
                 //  Here is where we actually have a message to process; we
                 //  return it to the caller application:
+                
                 return msg;     //  We have a request to process
             }
             else

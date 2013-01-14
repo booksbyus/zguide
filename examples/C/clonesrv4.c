@@ -1,4 +1,4 @@
-//  Clone server Model Four
+//  Clone server - Model Four
 
 //  Lets us build this source without creating a library
 #include "kvsimple.c"

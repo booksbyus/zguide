@@ -199,9 +199,9 @@ int s_voter_ready (zloop_t *loop, zmq_pollitem_t *poller, void *arg)
 
 //  .until
 //  .split constructor
-//  This is the constructor for our bstar class. We have to tell it whether
-//  we're primary or backup server, and our local and remote endpoints to
-//  bind and connect to:
+//  This is the constructor for our {{bstar}} class. We have to tell it 
+//  whether we're primary or backup server, as well as our local and 
+//  remote endpoints to bind and connect to:
 
 bstar_t *
 bstar_new (int primary, char *local, char *remote)
@@ -249,7 +249,7 @@ bstar_destroy (bstar_t **self_p)
 }
 
 //  .split zloop method
-//  The zloop method returns the underlying zloop reactor, so we can add
+//  This method returns the underlying zloop reactor, so we can add
 //  additional timers and readers:
 
 zloop_t *
@@ -259,10 +259,10 @@ bstar_zloop (bstar_t *self)
 }
 
 //  .split voter method
-//  The voter method registers a client voter socket. Messages received
+//  This method registers a client voter socket. Messages received
 //  on this socket provide the CLIENT_REQUEST events for the Binary Star
 //  FSM and are passed to the provided application handler. We require
-//  exactly one voter per bstar instance:
+//  exactly one voter per {{bstar}} instance:
 
 int
 bstar_voter (bstar_t *self, char *endpoint, int type, zloop_fn handler,

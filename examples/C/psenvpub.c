@@ -18,7 +18,7 @@ int main (void)
         s_send (publisher, "We would like to see this");
         sleep (1);
     }
-    //  We never get here but clean up anyhow
+    //  We never get here, but clean up anyhow
     zmq_close (publisher);
     zmq_ctx_destroy (context);
     return 0;
