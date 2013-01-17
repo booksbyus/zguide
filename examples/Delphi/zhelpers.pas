@@ -9,6 +9,7 @@ uses
   ;
 
 procedure s_dump( socket: TZMQSocket );
+function s_random( len: Integer ): Utf8String;
 procedure s_set_id( socket: TZMQSocket );
 
 // for threadSafe logging to the console.
@@ -19,7 +20,7 @@ implementation
 
 uses
   Windows;
-  
+
 var
   cs: TRTLCriticalSection;
 
@@ -73,9 +74,7 @@ begin
   end;
 end;
 
-//  Set simple random printable identity on socket
-//
-procedure s_set_id( socket: TZMQSocket );
+function s_random( len: Integer ): Utf8String;
 const
   Chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ';
 var
@@ -83,10 +82,16 @@ var
   i: integer;
 begin
   Randomize;
-  S := '';
-  for i := 1 to 10 do
-    S := S + Chars[Random(Length(Chars)) + 1];
-  socket.Identity := s;
+  result := '';
+  for i := 1 to len do
+    result := result + Chars[Random(Length(Chars)) + 1];
+end;
+
+//  Set simple random printable identity on socket
+//
+procedure s_set_id( socket: TZMQSocket );
+begin
+  socket.Identity := s_random( 10 );
 end;
 
 initialization

@@ -13,7 +13,7 @@ uses
 
 var
   self,
-  peer: String;
+  peer: Utf8String;
   ctx: TZMQContext;
   statebe,
   statefe: TZMQSocket;
@@ -21,6 +21,7 @@ var
   poller: TZMQPoller;
   peer_name,
   available: Utf8String;
+
 begin
   //  First argument is this broker's name
   //  Other arguments are our peers' names
@@ -71,7 +72,7 @@ begin
     rc := poller.poll( 1000 );
 
     //  Handle incoming status messages
-    if rc > 0 then
+    if pePollIn in poller.PollItem[0].revents then
     //if pePollIn in poller.PollItem[0].events then
     begin
       statefe.recv( peer_name );
