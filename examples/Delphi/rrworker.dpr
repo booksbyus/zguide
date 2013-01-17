@@ -3,6 +3,7 @@ program rrserver;
 //  Hello World server
 //  Connects REP socket to tcp://*:5560
 //  Expects "Hello" from client, replies with "World"
+//  @author Varga Balázs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 
@@ -14,7 +15,7 @@ uses
 var
   context: TZMQContext;
   responder: TZMQSocket;
-  s: String;
+  s: Utf8String;
 begin
   context := TZMQContext.Create;
 

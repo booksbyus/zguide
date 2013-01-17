@@ -3,12 +3,14 @@ program taskvent;
 //  Task ventilator
 //  Binds PUSH socket to tcp://localhost:5557
 //  Sends batch of tasks to workers via that socket
+//  @author Varga Balázs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 
 uses
     SysUtils
-  , zmqapi;
+  , zmqapi
+  ;
 
 const
   task_count = 100;
@@ -18,7 +20,7 @@ var
   sender,
   sink: TZMQSocket;
   s: String;
-  task_nbr,
+  i,
   total_msec,
   workload: Integer;
 
@@ -34,8 +36,8 @@ begin
   sink.connect( 'tcp://localhost:5558' );
 
   Write( 'Press Enter when the workers are ready: ' );
-  Readln( s ); // if you remove, no sync..
-  Writeln( 'Sending tasks to workers' );
+  Readln( s );
+  Writeln( 'Sending tasks to workers...' );
 
   //  The first message is "0" and signals start of batch
   sink.send( '0' );
@@ -44,8 +46,8 @@ begin
   randomize;
 
   //  Send 100 tasks
-  total_msec := 0;     //  Total expected cost in msecs
-  for task_nbr := 0 to task_count - 1 do
+  total_msec := 0; //  Total expected cost in msecs
+  for i := 0 to task_count - 1 do
   begin
     //  Random workload from 1 to 100msecs
     workload := Random( 100 ) + 1;
@@ -55,9 +57,9 @@ begin
     sender.send( s );
   end;
   Writeln( Format( 'Total expected cost: %d msec', [total_msec] ) );
-  sleep(1);              //  Give 0MQ time to deliver
+  sleep(1000); //  Give 0MQ time to deliver
 
   sink.Free;
-  Sender.Free;
+  sender.Free;
   Context.Free;
 end.

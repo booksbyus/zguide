@@ -3,6 +3,7 @@ program tasksink;
 //  Task sink
 //  Binds PULL socket to tcp://localhost:5558
 //  Collects results from workers via that socket
+//  @author Varga Balázs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 
@@ -17,9 +18,9 @@ const
 var
   context: TZMQContext;
   receiver: TZMQSocket;
-  s: String;
+  s: Utf8String;
 
-  task_nbr: Integer;
+  i: Integer;
   fFrequency,
   fstart,
   fStop : Int64;
@@ -37,10 +38,10 @@ begin
   QueryPerformanceCounter( fStart );
 
   //  Process 100 confirmations
-  for task_nbr := 0 to task_count - 1 do
+  for i := 0 to task_count - 1 do
   begin
     receiver.recv( s );
-    if ((task_nbr / 10) * 10 = task_nbr) then
+    if ((i / 10) * 10 = i) then
       Write( ':' )
     else
       Write( '.' );
@@ -52,5 +53,4 @@ begin
 
   receiver.Free;
   context.Free;
-
  end.

@@ -3,6 +3,7 @@ program hwclient;
 //  Hello World client
 //  Connects REQ socket to tcp://localhost:5555
 //  Sends "Hello" to server, expects "World" back
+//  @author Varga Balázs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 
@@ -15,7 +16,7 @@ var
   context: TZMQContext;
   requester: TZMQSocket;
   i: Integer;
-  sMsg: String;
+  sMsg: Utf8String;
 begin
   context := TZMQContext.Create;
 
@@ -33,6 +34,7 @@ begin
     Writeln( Format( 'Received %s %d', [ sMsg, i ] ) );
   end;
 
+  sleep(2000);
   requester.Free;
   context.Free;
 end.

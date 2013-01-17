@@ -1,6 +1,7 @@
 program mtserver;
 //
 //  Multithreaded Hello World server
+//  @author Varga Balázs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 
@@ -12,7 +13,7 @@ uses
 procedure worker_routine( lcontext: TZMQContext );
 var
   receiver: TZMQSocket;
-  s: String;
+  s: Utf8String;
 begin
   //  Socket to talk to dispatcher
   receiver := lContext.Socket( stRep );
@@ -23,7 +24,7 @@ begin
     receiver.recv( s );
     Writeln( Format( 'Received request: [%s]', [s] ) );
     //  Do some 'work'
-    sleep (1);
+    sleep (1000);
     //  Send reply back to client
     receiver.send( 'World' );
   end;
@@ -49,11 +50,10 @@ begin
 
   //  Launch pool of worker threads
   for i := 0 to 4 do
-  begin
     BeginThread( nil, 0, @worker_routine, context, 0, tid );
-  end;
+
   //  Connect work threads to client threads via a queue
-  ZMQDevice( dQueue, clients, workers );
+  ZMQProxy( clients, workers, nil );
 
   //  We never get here but clean up anyhow
   clients.Free;

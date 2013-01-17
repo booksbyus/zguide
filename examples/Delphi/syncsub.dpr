@@ -1,6 +1,7 @@
 program syncsub;
 //
 //  Synchronized subscriber
+//  @author Varga Balázs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 
@@ -13,18 +14,19 @@ var
   context: TZMQContext;
   subscriber,
   syncclient: TZMQSocket;
-  str: String;
+  str: Utf8String;
   i: Integer;
 begin
   context := TZMQContext.Create;
 
   //  First, connect our subscriber socket
   subscriber := Context.Socket( stSub );
+  subscriber.RcvHWM := 1000001;
   subscriber.connect( 'tcp://localhost:5561' );
   subscriber.Subscribe( '' );
 
-  //  0MQ is so fast, we need to wait a while
-  sleep (1);
+  //  0MQ is so fast, we need to wait a while...
+  sleep (1000);
 
   //  Second, synchronize with publisher
   syncclient := Context.Socket( stReq );

@@ -3,6 +3,7 @@ program rrclient;
 //  Hello World client
 //  Connects REQ socket to tcp://localhost:5559
 //  Sends "Hello" to server, expects "World" back
+//  @author Varga Balázs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 
@@ -15,7 +16,7 @@ var
   context: TZMQContext;
   requester: TZMQSocket;
   i: Integer;
-  s: String;
+  s: Utf8String;
 begin
   context := TZMQContext.Create;
 
