@@ -2,6 +2,7 @@ program tasksink2;
 //
 //  Task sink - design 2
 //  Adds pub-sub flow to send kill signal to workers
+//  @author Varga Balázs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 
@@ -17,7 +18,7 @@ var
   context: TZMQContext;
   receiver,
   controller: TZMQSocket;
-  s: String;
+  s: Utf8String;
 
   task_nbr: Integer;
   fFrequency,
@@ -55,8 +56,11 @@ begin
     ((MSecsPerSec * (fStop - fStart)) div fFrequency) ]) );
 
   controller.send( 'KILL' );
+
+  //  Finished
+  sleep(1000); //  Give 0MQ time to deliver
+
   receiver.Free;
   controller.Free;
   context.Free;
-
 end.

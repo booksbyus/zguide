@@ -5,6 +5,7 @@ program taskwork;
 //  Collects workloads from ventilator via that socket
 //  Connects PUSH socket to tcp://localhost:5558
 //  Sends results to sink via that socket
+//  @author Varga Balázs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 
@@ -17,7 +18,7 @@ var
   context: TZMQContext;
   receiver,
   sender: TZMQSocket;
-  s: String;
+  s: Utf8String;
 begin
   context := TZMQContext.Create;
 

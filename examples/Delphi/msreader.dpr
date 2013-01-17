@@ -2,6 +2,7 @@ program msreader;
 //
 //  Reading from multiple sockets
 //  This version uses a simple recv loop
+//  @author Varga Balázs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 
@@ -14,19 +15,21 @@ var
   context: TZMQContext;
   receiver,
   subscriber: TZMQSocket;
-  rc: Boolean;
+  rc: Integer;
   task,
-  update: TZMQMessage;
+  update: TZMQFrame;
 begin
   //  Prepare our context and sockets
   context := TZMQContext.Create;
 
   //  Connect to task ventilator
   receiver := Context.Socket( stPull );
+  receiver.RaiseEAgain := false;
   receiver.connect( 'tcp://localhost:5557' );
 
   //  Connect to weather server
   subscriber := Context.Socket( stSub );
+  subscriber.RaiseEAgain := false;
   subscriber.connect( 'tcp://localhost:5556' );
   subscriber.subscribe( '10001' );
 
@@ -36,34 +39,24 @@ begin
   begin
     //  Process any waiting tasks
     repeat
-      task := TZMQMessage.create;
-      try
-        receiver.recv( task, [rfNoBlock] );
-        rc := true;
-      except
-        rc := False;
-      end;
-      if rc then
+      task := TZMQFrame.create;
+      rc := receiver.recv( task, [rfDontWait] );
+      if rc <> -1 then
       begin
         //  process task
       end;
       task.Free;
-    until rc;
+    until rc = -1;
     //  Process any waiting weather updates
     repeat
-      update := TZMQMessage.Create;
-      Try
-        subscriber.recv( update, [rfNoBlock] );
-        rc := true;
-      except
-        rc := False;
-      end;
-      if rc then
+      update := TZMQFrame.Create;
+      rc := subscriber.recv( update, [rfDontWait] );
+      if rc <> -1 then
       begin
         //  process weather update
       end;
       update.Free;
-    until rc;
+    until rc = -1;
     //  No activity, so sleep for 1 msec
     sleep (1);
   end;

@@ -1,6 +1,7 @@
 program syncpub;
 //
 //  Synchronized publisher
+//  @author Varga Balázs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 
@@ -9,6 +10,7 @@ uses
   , zmqApi
   ;
 
+//  We wait for 10 subscribers
 const
   SUBSCRIBERS_EXPECTED = 2;
 
@@ -17,14 +19,14 @@ var
   publisher,
   syncservice: TZMQSocket;
   subscribers: Integer;
-  str: String;
+  str: Utf8String;
   i: Integer;
 begin
-  //  We wait for 10 subscribers
   context := TZMQContext.create;
 
   //  Socket to talk to clients
   publisher := Context.Socket( stPub );
+  publisher.setSndHWM( 1000001 );
   publisher.bind( 'tcp://*:5561' );
 
   //  Socket to receive signals
@@ -49,7 +51,6 @@ begin
     publisher.send( 'Rhubarb' );
 
   publisher.send( 'END' );
-
   publisher.Free;
   syncservice.Free;
   context.Free;

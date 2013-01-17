@@ -1,6 +1,7 @@
 program mtrelay;
 //
 //  Multithreaded relay
+//  @author Varga Balázs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 
@@ -25,7 +26,7 @@ procedure step2( lcontext: TZMQContext );
 var
   receiver,
   xmitter: TZMQSocket;
-  s: String;
+  s: Utf8String;
   tid: Cardinal;
 begin
   //  Bind inproc socket before starting step1
@@ -49,7 +50,7 @@ var
   context: TZMQContext;
   receiver: TZMQSocket;
   tid: Cardinal;
-  s: String;
+  s: Utf8String;
 begin
   context := TZMQContext.Create;
 
