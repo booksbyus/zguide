@@ -74,9 +74,12 @@ The REQ-REP socket pair is in lockstep. The client issues {{zmq_send[3]}} and th
 [[code type="example" title="Hello World server" name="hwserver" language="C++"]]
 [[/code]]
 
-You can see that the 0MQ API is similar in C and C++. In a language like PHP, we can hide even more and the code becomes even easier to read:
+You can see that the 0MQ API is similar in C and C++. In a language like PHP or Java, we can hide even more and the code becomes even easier to read:
 
 [[code type="example" title="Hello World server" name="hwserver" language="PHP"]]
+[[/code]]
+
+[[code type="example" title="Hello World server" name="hwserver" language="Java"]]
 [[/code]]
 
 Here's the client code:

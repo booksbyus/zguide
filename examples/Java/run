@@ -1,0 +1,24 @@
+#! /bin/sh
+#
+#   Examples build helper
+#   Syntax: build all | clean
+#
+#   This controls whether we get debug or release builds
+test -z "$BOOM_MODEL" && BOOM_MODEL=debug
+VERSION="0.3.0-SNAPSHOT"
+JEROMQ="jeromq-$VERSION.jar"
+CLASSPATH=".:$JEROMQ"
+
+JZMQ_VERSION="2.1.0-SNAPSHOT"  ## This has to be updated when the lastest version is updated 
+JZMQ="jzmq-$JZMQ_VERSION.jar"
+JZMQ_CLASSPATH=".:$JZMQ"
+
+if [ /$1/ = /jzmq/ ]; then
+    echo "$1 with jzmq"
+    java -Djava.library.path=/usr/local/lib -cp $JZMQ_CLASSPATH $2
+elif [ -f $1.class ]; then
+    echo "$1 with jeromq"
+    java -cp $CLASSPATH $1
+else
+    echo "compile java file first"
+fi
