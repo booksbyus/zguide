@@ -410,6 +410,11 @@ In practice this leads to increasingly fragile and hard-to-manage architectures.
 #------------#   #------------#   #------------#
 [[/code]]
 
+[[code type="example" title="Multi-threaded publisher using proxy " name="multipub"]]
+[[/code]]
+[[code type="example" title="Subscriber using proxy " name="sub"]]
+[[/code]]
+
 There are quite a few answers to this but the very simplest answer is to add an intermediary, that is, a static point in the network to which all other nodes connect. In classic messaging, this is the job of the "message broker". 0MQ doesn't come with a message broker as such, but it lets us build intermediaries quite easily.
 
 You might wonder, if all networks eventually get large enough to need intermediaries, why don't we simply have a message broker in place for all applications? For beginners, it's a fair compromise. Just always use a star topology, forget about performance, and things will usually work. However message brokers are greedy things; in their role as central intermediaries, they become too complex, too stateful, and eventually a problem.
