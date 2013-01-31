@@ -3,45 +3,41 @@
 //  Binds REP socket to tcp://*:5555
 //  Expects "Hello" from client, replies with "World"
 //
-//  Naveen Chawla <naveen.chwl@gmail.com>
-//
+
 import org.zeromq.ZMQ;
 
-public class hwserver {
-    public static void main(String[] args) {
+public class hwserver{
+
+    public static void main (String[] args) throws Exception{
         //  Prepare our context and socket
         ZMQ.Context context = ZMQ.context(1);
         ZMQ.Socket socket = context.socket(ZMQ.REP);
+
+        System.out.println("Binding hello world server");
         socket.bind ("tcp://*:5555");
 
-        while (true) {
-            byte[] request;
+        while (!Thread.currentThread ().isInterrupted ()) {
 
-            //  Wait for next request from client
-            //  We will wait for a 0-terminated string (C string) from the client,
-            //  so that this server also works with The Guide's C and C++ "Hello World" clients
-            request = socket.recv (0);
-            //  In order to display the 0-terminated string as a String,
-            //  we omit the last byte from request
-            System.out.println ("Received request: [" +
-            new String(request,0,request.length-1)  //  Creates a String from request, minus the last byte
-            + "]");
+            // Wait for next request from client
+            byte[] reply = socket.recv(0);
+            System.out.println("Received " + reply.length );
+            System.out.println("Received " + ": [" + new String(reply) + "]");
 
-            //  Do some 'work'
-            try {
-                Thread.sleep (1000);
-            }
-            catch(InterruptedException e){
-                e.printStackTrace();
-            }
+            Thread.sleep(1000);
+            //  Create a "Hello" message.
+            //  Ensure that the last byte of our "Hello" message is 0 because
+            //  our "Hello World" server is expecting a 0-terminated string:
+            String requestString = "Hello" ;
+            byte[] request = requestString.getBytes();
+            //request[request.length-1]=0; //Sets the last byte to 0
+            // Send the message
+            System.out.println("Sending response " + requestString );
+            socket.send(request, 0);
 
-            //  Send reply back to client
-            //  We will send a 0-terminated string (C string) back to the client,
-            //  so that this server also works with The Guide's C and C++ "Hello World" clients
-            String replyString = "World" + " ";
-            byte[] reply = replyString.getBytes();
-            reply[reply.length-1]=0; //Sets the last byte of the reply to 0
-            socket.send(reply, 0);
+            //  Get the reply.
         }
+        
+        socket.close();
+        context.term();
     }
 }

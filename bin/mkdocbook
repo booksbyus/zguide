@@ -26,7 +26,8 @@ $cutoff = 60;
           'Haxe' => 'haxe',
           'Lua' => 'lua',
           'PHP' => 'php',
-          'Python' => 'python' );
+          'Python' => 'python',
+          'Java' => 'java');
           
 #   File extensions - copied from mkwikidot 
 %extension = ('Ada' => 'ada',
