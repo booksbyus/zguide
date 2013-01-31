@@ -1,0 +1,49 @@
+#! /bin/sh
+#
+#   Examples build helper
+#   Syntax: build all | clean
+#
+#   This controls whether we get debug or release builds
+test -z "$BOOM_MODEL" && BOOM_MODEL=debug
+VERSION="0.3.0-SNAPSHOT"
+JEROMQ="jeromq-$VERSION.jar"
+CLASSPATH=".:$JEROMQ"
+
+JZMQ_VERSION="2.1.0-SNAPSHOT"  ## This has to be updated when the lastest version is updated 
+JZMQ="jzmq-$JZMQ_VERSION.jar"
+JZMQ_CLASSPATH=".:$JZMQ"
+
+if [ ! -f $JEROMQ ]; then
+    wget -O $JEROMQ --no-check-certificate \
+        "https://oss.sonatype.org/service/local/artifact/maven/redirect?r=snapshots&g=org.jeromq&a=jeromq&v=$VERSION&e=jar"
+fi
+if [ ! -f $JZMQ ]; then
+    wget -O $JZMQ --no-check-certificate \
+        "https://oss.sonatype.org/service/local/artifact/maven/redirect?r=snapshots&g=org.zeromq&a=jzmq&v=$JZMQ_VERSION&e=jar"
+fi
+
+if [ /$1/ = /all/ ]; then
+    echo "Building Java examples..."
+    for MAIN in `egrep -l "main \(" *.java`; do
+        echo "$MAIN"
+        javac -cp $CLASSPATH $MAIN
+    done
+elif [ /$1/ = /jzmq/ ]; then
+    rm -f *.class 
+    echo "Building JZMQ Java examples..."
+    for MAIN in `egrep -l "main \(" *.java`; do
+        echo "$MAIN"
+        javac -cp $JZMQ_CLASSPATH $MAIN
+    done
+elif [ /$1/ = /clean/ ]; then
+    echo "Cleaning Java examples directory..."
+    rm -f *.class 
+    for MAIN in `egrep -l "main \(" *.java`; do
+        rm -f `basename $MAIN .java`
+    done
+elif [ -f $1.java ]; then
+    echo "Compiling $1.java"
+    javac -cp $CLASSPATH $1.java
+else
+    echo "syntax: build all | jzmq | clean"
+fi
