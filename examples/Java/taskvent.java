@@ -24,7 +24,7 @@ public class taskvent {
         System.out.println("Sending tasks to workers\n");
 
         //  The first message is "0" and signals start of batch
-        sink.send("0".getBytes(), 0);
+        sink.send("0", 0);
 
         //  Initialize random number generator
         Random srandom = new Random(System.currentTimeMillis());
@@ -39,7 +39,7 @@ public class taskvent {
             total_msec += workload;
             System.out.print(workload + ".");
             String string = String.format("%d", workload);
-            sender.send(string.getBytes(), 0);
+            sender.send(string, 0);
         }
         System.out.println("Total expected cost: " + total_msec + " msec");
         Thread.sleep(1000);              //  Give 0MQ time to deliver

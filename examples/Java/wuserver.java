@@ -27,7 +27,7 @@ public class wuserver {
 
             //  Send message to all subscribers
             String update = String.format("%05d %d %d", zipcode, temperature, relhumidity);
-            publisher.send(update.getBytes(), 0);
+            publisher.send(update, 0);
         }
 
         publisher.close ();

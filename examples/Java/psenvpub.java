@@ -1,25 +1,27 @@
 import org.zeromq.ZMQ;
+import org.zeromq.ZMQ.Context;
+import org.zeromq.ZMQ.Socket;
 
 /**
- * @author Faruk Akgul
- * @email faakgul@gmail.com
+ * Pubsub envelope publisher
  */
 
 public class psenvpub {
 
-  public static void main(String[] args) throws InterruptedException {
-    // Prepare our context and publisher
-    ZMQ.Context context = ZMQ.context(1);
-    ZMQ.Socket publisher = context.socket(ZMQ.PUB);
+    public static void main (String[] args) throws Exception {
+        // Prepare our context and publisher
+        Context context = ZMQ.context(1);
+        Socket publisher = context.socket(ZMQ.PUB);
 
-    publisher.bind("tcp://*:5563");
-    while (true) {
-      // Write two messages, each with an envelope and content
-      publisher.send("A".getBytes(), ZMQ.SNDMORE);
-      publisher.send("We don't want to see this".getBytes(), 0);
-      publisher.send("B".getBytes(), ZMQ.SNDMORE);
-      publisher.send("We would like to see this".getBytes(), 0);
-      Thread.sleep(1000);
+        publisher.bind("tcp://*:5563");
+        while (!Thread.currentThread ().isInterrupted ()) {
+            // Write two messages, each with an envelope and content
+            publisher.sendMore ("A");
+            publisher.send ("We don't want to see this");
+            publisher.sendMore ("B");
+            publisher.send("We would like to see this");
+        }
+        publisher.close ();
+        context.term ();
     }
-  }
 }

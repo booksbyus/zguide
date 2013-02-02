@@ -9,7 +9,7 @@ VERSION="0.3.0-SNAPSHOT"
 JEROMQ="jeromq-$VERSION.jar"
 CLASSPATH=".:$JEROMQ"
 
-JZMQ_VERSION="2.1.0-SNAPSHOT"  ## This has to be updated when the lastest version is updated 
+JZMQ_VERSION="2.1.0-SNAPSHOT"
 JZMQ="jzmq-$JZMQ_VERSION.jar"
 JZMQ_CLASSPATH=".:$JZMQ"
 
@@ -19,7 +19,7 @@ if [ ! -f $JEROMQ ]; then
 fi
 if [ ! -f $JZMQ ]; then
     wget -O $JZMQ --no-check-certificate \
-        "https://oss.sonatype.org/service/local/artifact/maven/redirect?r=snapshots&g=org.zeromq&a=jzmq&v=$JZMQ_VERSION&e=jar"
+        "http://amuraru.github.com/zeromq-maven/repository/releases/org/zeromq/jzmq/$JZMQ_VERSION/$JZMQ"
 fi
 
 if [ /$1/ = /all/ ]; then
