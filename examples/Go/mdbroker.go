@@ -31,27 +31,27 @@ type Broker interface {
 }
 
 type mdWorker struct {
-    identity string
-    address []byte
-    expiry time.Time
-    service *mdService
+    identity string     //  Hex Identity of worker
+    address []byte      //  Address to route to
+    expiry time.Time    //  Expires at this point, unless heartbeat
+    service *mdService  //  Owning service, if known
 }
 
 type mdService struct {
     broker Broker
     name string
-    requests [][][]byte
-    waiting *ZList
+    requests [][][]byte //  List of client requests
+    waiting *ZList      //  List of waiting workers
 }
 
 type mdBroker struct {
-    context zmq.Context
-    heartbeatAt time.Time
-    services map[string]*mdService
-    socket zmq.Socket
-    waiting *ZList
-    workers map[string]*mdWorker
-    verbose bool
+    context zmq.Context             //  Context
+    heartbeatAt time.Time           //  When to send HEARTBEAT
+    services map[string]*mdService  //  Known services
+    socket zmq.Socket               //  Socket for clients & workers
+    waiting *ZList                  //  Idle workers
+    workers map[string]*mdWorker    //  Known workers
+    verbose bool                    //  Print activity to stdout
 }
 
 func NewBroker(endpoint string, verbose bool) Broker {
