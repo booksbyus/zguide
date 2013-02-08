@@ -71,8 +71,11 @@ func NewBroker(endpoint string, verbose bool) Broker {
     }
 }
 
+//  Deletes worker from all data structures, and deletes worker.
 func (self *mdBroker) deleteWorker(worker *mdWorker, disconnect bool) {
-    if worker == nil { panic("Nil worker") }
+    if worker == nil {
+        panic("Nil worker")
+    }
 
     if disconnect {
         self.sendToWorker(worker, MDPW_DISCONNECT, nil, nil)
@@ -85,8 +88,12 @@ func (self *mdBroker) deleteWorker(worker *mdWorker, disconnect bool) {
     delete(self.workers, worker.identity)
 }
 
+//  Dispatch requests to waiting workers as possible
 func (self *mdBroker) dispatch(service *mdService, msg [][]byte) {
-    if service == nil { panic("Nil service") }
+    if service == nil {
+        panic("Nil service")
+    }
+    //  Queue message if any
     if len(msg) != 0 {
         service.requests = append(service.requests, msg)
     }
@@ -100,9 +107,14 @@ func (self *mdBroker) dispatch(service *mdService, msg [][]byte) {
     }
 }
 
+// Process a request coming from a client.
 func (self *mdBroker) processClient(sender []byte, msg [][]byte) {
-    if len(msg) < 2 { panic("Invalid msg") }
+    //  Service name + body
+    if len(msg) < 2 {
+        panic("Invalid msg")
+    }
     service := msg[0]
+    //  Set reply return address to client sender
     msg = append([][]byte{sender, nil}, msg[1:]...)
     if string(service[:4]) == INTERNAL_SERVICE_PREFIX {
         self.serviceInternal(service, msg)
@@ -111,8 +123,12 @@ func (self *mdBroker) processClient(sender []byte, msg [][]byte) {
     }
 }
 
+//  Process message sent to us by a worker.
 func (self *mdBroker) processWorker(sender []byte, msg [][]byte) {
-    if len(msg) < 1 { panic("Invalid msg") }
+    //  At least, command
+    if len(msg) < 1 {
+        panic("Invalid msg")
+    }
 
     command, msg := msg[0], msg[1:]
     identity := hex.EncodeToString(sender)
@@ -131,16 +147,23 @@ func (self *mdBroker) processWorker(sender []byte, msg [][]byte) {
 
     switch string(command) {
     case MDPW_READY:
-        if len(msg) < 1 { panic("Invalid msg") }
+        //  At least, a service name
+        if len(msg) < 1 {
+            panic("Invalid msg")
+        }
         service := msg[0]
+        //  Not first command in session or Reserved service name
         if workerReady || string(service[:4]) == INTERNAL_SERVICE_PREFIX {
             self.deleteWorker(worker, true)
         } else {
+            //  Attach worker to service and mark as idle
             worker.service = self.requireService(string(service))
             self.workerWaiting(worker)
         }
     case MDPW_REPLY:
         if workerReady {
+            //  Remove & save client return envelope and insert the
+            //  protocol header and service name, then rewrap envelope.
             client := msg[0]
             msg = append([][]byte{client, nil, []byte(MDPC_CLIENT), []byte(worker.service.name)}, msg[2:]...)
             self.socket.SendMultipart(msg, 0)
@@ -162,6 +185,8 @@ func (self *mdBroker) processWorker(sender []byte, msg [][]byte) {
     }
 }
 
+//  Look for & kill expired workers.
+//  Workers are oldest to most recent, so we stop at the first alive worker.
 func (self *mdBroker) purgeWorkers() {
     now := time.Now()
     for elem := self.waiting.Front(); elem != nil; elem = self.waiting.Front() {
@@ -173,8 +198,11 @@ func (self *mdBroker) purgeWorkers() {
     }
 }
 
+//  Locates the service (creates if necessary).
 func(self *mdBroker) requireService(name string) *mdService {
-    if len(name) == 0 { panic("Invalid service name") }
+    if len(name) == 0 {
+        panic("Invalid service name")
+    }
     service, ok := self.services[name];
     if !ok {
         service = &mdService{
@@ -186,7 +214,10 @@ func(self *mdBroker) requireService(name string) *mdService {
     return service
 }
 
+//  Send message to worker.
+//  If message is provided, sends that message.
 func (self *mdBroker) sendToWorker(worker *mdWorker, command string, option []byte, msg [][]byte) {
+    //  Stack routing and protocol envelopes to start of message and routing envelope
     if len(option) > 0 {
         msg = append([][]byte{option}, msg...)
     }
@@ -199,6 +230,7 @@ func (self *mdBroker) sendToWorker(worker *mdWorker, command string, option []by
     self.socket.SendMultipart(msg, 0)
 }
 
+//  Handle internal service according to 8/MMI specification
 func (self *mdBroker) serviceInternal(service []byte, msg [][]byte) {
     returncode := "501"
     if string(service) == "mmi.service" {
@@ -210,11 +242,14 @@ func (self *mdBroker) serviceInternal(service []byte, msg [][]byte) {
         }
     }
     msg[len(msg)-1] = []byte(returncode)
+    //  insert the protocol header and service name after the routing envelope
     msg = append(append(msg[2:], []byte(MDPC_CLIENT), service), msg[3:]...)
     self.socket.SendMultipart(msg, 0)
 }
 
+//  This worker is now waiting for work.
 func (self *mdBroker) workerWaiting(worker *mdWorker) {
+    //  Queue to broker and service waiting lists
     self.waiting.PushBack(worker)
     worker.service.waiting.PushBack(worker)
     worker.expiry = time.Now().Add(HEARTBEAT_EXPIRY)
@@ -228,6 +263,7 @@ func (self *mdBroker) Close() {
     self.context.Close()
 }
 
+//  Main broker working loop
 func (self *mdBroker) Run() {
     for {
         items := zmq.PollItems{
@@ -236,7 +272,7 @@ func (self *mdBroker) Run() {
 
         _, err := zmq.Poll(items, HEARTBEAT_INTERVAL.Nanoseconds()/1e3)
         if err != nil {
-            panic(err)
+            panic(err)      //  Interrupted
         }
 
         if item := items[0]; item.REvents&zmq.POLLIN != 0 {
