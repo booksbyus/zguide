@@ -6,4 +6,6 @@ To run the examples:
 
   go run hwserver.go  # etc
 
+Or multiple files in some cases:
 
+  go run mdp.go zhelpers.go mdbroker.go [-v]  # etc
