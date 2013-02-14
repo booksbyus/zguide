@@ -2,42 +2,32 @@ import org.zeromq.ZMQ;
 import org.zeromq.ZMQ.Context;
 import org.zeromq.ZMQ.Socket;
 
-/**
- * Hello World server
- * Connects REP socket to tcp://*:5560
- * Expects "Hello" from client, replies with "World"
- * 
- * Christophe Huntzinger <chuntzin_at_wanadoo.fr>
- */
-public class rrserver{
-	public static void main (String[] args) {
-		Context context = ZMQ.context(1);
+//  Hello World worker
+//  Connects REP socket to tcp://*:5560
+//  Expects "Hello" from client, replies with "World"
+public class rrworker
+{
+    public static void main (String[] args) throws Exception {
+        Context context = ZMQ.context (1);
 
-		//  Socket to talk to clients
-		Socket responder  = context.socket(ZMQ.REP);
-		responder.connect("tcp://localhost:5560");
-		
-		System.out.println("launch and connect server.");
+        //  Socket to talk to server
+        Socket responder = context.socket (ZMQ.REP);
+        responder.connect ("tcp://localhost:5560");
 
-		while (!Thread.currentThread().isInterrupted()) {
-			//  Wait for next request from client
-			byte[] request = responder.recv(0);
-			String string = new String(request);
-			System.out.println("Received request: ["+string+"].");
+        while (!Thread.currentThread ().isInterrupted ()) {
+            //  Wait for next request from client
+            String string = responder.recvStr (0);
+            System.out.printf ("Received request: [%s]\n", string);
 
-			//  Do some 'work'
-			try {
-				Thread.sleep(1);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
+            //  Do some 'work'
+            Thread.sleep (1000);
 
-			//  Send reply back to client
-			responder.send("World".getBytes(), 0);
-		}
-		
-		//  We never get here but clean up anyhow
-		responder.close();
-		context.term();
-	}
+            //  Send reply back to client
+            responder.send ("World");
+        }
+
+        //  We never get here but clean up anyhow
+        responder.close();
+        context.term();
+    }
 }

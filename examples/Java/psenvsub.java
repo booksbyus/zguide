@@ -1,26 +1,29 @@
 import org.zeromq.ZMQ;
+import org.zeromq.ZMQ.Context;
+import org.zeromq.ZMQ.Socket;
 
 /**
- * @author Faruk Akgul
- * @email faakgul@gmail.com
+ * Pubsub envelope subscriber
  */
 
 public class psenvsub {
 
-  public static void main(String[] args) {
+    public static void main (String[] args) {
 
-    // Prepare our context and subscriber
-    ZMQ.Context context = ZMQ.context(1);
-    ZMQ.Socket subscriber = context.socket(ZMQ.SUB);
+        // Prepare our context and subscriber
+        Context context = ZMQ.context(1);
+        Socket subscriber = context.socket(ZMQ.SUB);
 
-    subscriber.connect("tcp://localhost:5563");
-    subscriber.subscribe("B".getBytes());
-    while (true) {
-      // Read envelope with address
-      String address = new String(subscriber.recv(0));
-      // Read message contents
-      String contents = new String(subscriber.recv(0));
-      System.out.println(address + " : " + contents);
+        subscriber.connect("tcp://localhost:5563");
+        subscriber.subscribe("B".getBytes());
+        while (!Thread.currentThread ().isInterrupted ()) {
+            // Read envelope with address
+            String address = subscriber.recvStr ();
+            // Read message contents
+            String contents = subscriber.recvStr ();
+            System.out.println(address + " : " + contents);
+        }
+        subscriber.close ();
+        context.term ();
     }
-  }
 }
