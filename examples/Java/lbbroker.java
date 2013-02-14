@@ -1,187 +1,185 @@
-/**
- * @author Mariusz Ryndzionek
- * @email  mryndzionek@gmail.com
- *
- *	Least-recently used (LRU) queue device
- *	Clients and workers are shown here in-process
- *
- *	While this example runs in a single process, that is just to make
- *	it easier to start and stop the example. Each thread has its own
- *	context and conceptually acts as a separate process.
- *  
- **/
-
 import java.util.LinkedList;
 import java.util.Queue;
-import java.util.Random;
 
 import org.zeromq.ZMQ;
 import org.zeromq.ZMQ.Context;
 import org.zeromq.ZMQ.Poller;
 import org.zeromq.ZMQ.Socket;
 
-class ClientThread extends Thread
-{
-	public void run()
-	{
-		Context context = ZMQ.context(1);
+public class lbbroker {
 
-		//  Prepare our context and sockets
-		Socket client  = context.socket(ZMQ.REQ);
+    private static final int NBR_CLIENTS = 10;
+    private static final int NBR_WORKERS = 3;
 
-		//  Initialize random number generator
-		Random srandom = new Random(System.nanoTime());
-		String id = String.format("%04x-%04x", srandom.nextInt(0x10000)+1,srandom.nextInt(0x10000)+1);
-		client.setIdentity(id.getBytes());
+    /**
+     * Basic request-reply client using REQ socket
+     */
+    private static class ClientTask extends Thread
+    {
+        public void run()
+        {
+            Context context = ZMQ.context(1);
 
-		client.connect("ipc://frontend.ipc");
+            //  Prepare our context and sockets
+            Socket client  = context.socket(ZMQ.REQ);
+            ZHelper.setId (client);     //  Set a printable identity
 
-		//  Send request, get reply
-		client.send("HELLO".getBytes(), 0);
-		String reply = new String(client.recv(0));
-		System.out.println("Client: " + reply);
+            client.connect("ipc://frontend.ipc");
 
-	}
-}
+            //  Send request, get reply
+            client.send("HELLO");
+            String reply = client.recvStr ();
+            System.out.println("Client: " + reply);
 
-class WorkerThread extends Thread
-{
-	public void run()
-	{
-		Context context = ZMQ.context(1);
+            client.close();
+            context.term();
+        }
+    }
 
-		//  Prepare our context and sockets
-		Socket worker  = context.socket(ZMQ.REQ);
+    /**
+     * While this example runs in a single process, that is just to make
+     * it easier to start and stop the example. Each thread has its own
+     * context and conceptually acts as a separate process.
+     * This is the worker task, using a REQ socket to do load-balancing.
+     */
+    private static class WorkerTask extends Thread
+    {
+        public void run()
+        {
+            Context context = ZMQ.context(1);
+            //  Prepare our context and sockets
+            Socket worker  = context.socket(ZMQ.REQ);
+            ZHelper.setId (worker);     //  Set a printable identity
 
-		//  Initialize random number generator
-		Random srandom = new Random(System.nanoTime());
-		String id = String.format("%04x-%04x", srandom.nextInt(0x10000)+1,srandom.nextInt(0x10000)+1);
-		worker.setIdentity(id.getBytes());	//  Makes tracing easier
+            worker.connect("ipc://backend.ipc");
 
-		worker.connect("ipc://backend.ipc");
+            //  Tell backend we're ready for work
+            worker.send("READY");
 
-		//  Tell backend we're ready for work
-		worker.send("READY".getBytes(), 0);
+            while(!Thread.currentThread ().isInterrupted ())
+            {
+                String address = worker.recvStr ();
+                String empty = worker.recvStr ();
+                assert (empty.length() == 0);
 
-		while(true)
-		{
-			String address = new String(worker.recv(0));
-			String empty = new String(worker.recv(0));
-			assert empty.length()==0 | true;
+                //  Get request, send reply
+                String request = worker.recvStr ();
+                System.out.println("Worker: " + request);
 
-			//  Get request, send reply
-			String request = new String(worker.recv(0));
-			System.out.println("Worker: " + request);
+                worker.sendMore (address);
+                worker.sendMore ("");
+                worker.send("OK");
+            }
+            worker.close ();
+            context.term ();
+        }
+    }
 
-			worker.send(address.getBytes(), ZMQ.SNDMORE);
-			worker.send("".getBytes(), ZMQ.SNDMORE);
-			worker.send("OK".getBytes(), 0);
-		}
+    /**
+     * This is the main task. It starts the clients and workers, and then
+     * routes requests between the two layers. Workers signal READY when
+     * they start; after that we treat them as ready when they reply with
+     * a response back to a client. The load-balancing data structure is
+     * just a queue of next available workers.
+     */
+    public static void main (String[] args) {
+        Context context = ZMQ.context(1);
+        //  Prepare our context and sockets
+        Socket frontend  = context.socket(ZMQ.ROUTER);
+        Socket backend  = context.socket(ZMQ.ROUTER);
+        frontend.bind("ipc://frontend.ipc");
+        backend.bind("ipc://backend.ipc");
 
-	}
-}
+        int clientNbr;
+        for (clientNbr = 0; clientNbr < NBR_CLIENTS; clientNbr++)
+            new ClientTask().start();
 
-public class lruqueue {
+        for (int workerNbr = 0; workerNbr < NBR_WORKERS; workerNbr++)
+            new WorkerTask().start();
 
-	public static void main(String[] args) {
-		Context context = ZMQ.context(1);
+        //  Here is the main loop for the least-recently-used queue. It has two
+        //  sockets; a frontend for clients and a backend for workers. It polls
+        //  the backend in all cases, and polls the frontend only when there are
+        //  one or more workers ready. This is a neat way to use 0MQ's own queues
+        //  to hold messages we're not ready to process yet. When we get a client
+        //  reply, we pop the next available worker, and send the request to it,
+        //  including the originating client identity. When a worker replies, we
+        //  re-queue that worker, and we forward the reply to the original client,
+        //  using the reply envelope.
 
-		//  Prepare our context and sockets
-		Socket frontend  = context.socket(ZMQ.ROUTER);
-		Socket backend  = context.socket(ZMQ.ROUTER);
-		frontend.bind("ipc://frontend.ipc");
-		backend.bind("ipc://backend.ipc");
+        //  Queue of available workers
+        Queue<String> workerQueue = new LinkedList<String>();
 
-		int client_nbr;
-		for (client_nbr = 0; client_nbr < 10; client_nbr++)
-			new ClientThread().start();
+        while (!Thread.currentThread().isInterrupted()) {
 
-		int worker_nbr;
-		for (worker_nbr = 0; worker_nbr < 3; worker_nbr++)
-			new WorkerThread().start();
+            //  Initialize poll set
+            Poller items = new Poller (2);
 
-		//  Logic of LRU loop
-		//  - Poll backend always, frontend only if 1+ worker ready
-		//  - If worker replies, queue worker as ready and forward reply
-		//    to client if necessary
-		//  - If client requests, pop next worker and send request to it
-		//
-		//  A very simple queue structure with known max size
-		Queue<String> worker_queue = new LinkedList<String>();
+            //  Always poll for worker activity on backend
+            items.register(backend, Poller.POLLIN);
 
+            //  Poll front-end only if we have available workers
+            if(workerQueue.size() > 0)
+                items.register(frontend, Poller.POLLIN);
 
-		while (!Thread.currentThread().isInterrupted()) {
+            if (items.poll() < 0)
+                break;
 
-			//  Initialize poll set
-			Poller items = context.poller(2);
+            //  Handle worker activity on backend
+            if (items.pollin(0)) {
 
-			//  Always poll for worker activity on backend
-			items.register(backend, Poller.POLLIN);
+                //  Queue worker address for LRU routing
+                workerQueue.add (backend.recvStr ());
 
-			//  Poll front-end only if we have available workers
-			if(worker_queue.size()>0)
-				items.register(frontend, Poller.POLLIN);
+                //  Second frame is empty
+                String empty = backend.recvStr ();
+                assert (empty.length() == 0);
 
-			items.poll();
+                //  Third frame is READY or else a client reply address
+                String clientAddr = backend.recvStr ();
 
-			//  Handle worker activity on backend
-			if (items.pollin(0)) {
+                //  If client reply, send rest back to frontend
+                if (!clientAddr.equals("READY")) {
 
-				//  Queue worker address for LRU routing
-				worker_queue.add(new String(backend.recv(0)));
+                    empty = backend.recvStr ();
+                    assert (empty.length() == 0);
 
-				//  Second frame is empty
-				String empty = new String(backend.recv(0));
-				assert empty.length()==0 | true;
+                    String reply = backend.recvStr ();
+                    frontend.sendMore(clientAddr);
+                    frontend.sendMore("");
+                    frontend.send(reply);
 
-				//  Third frame is READY or else a client reply address
-				String client_addr = new String(backend.recv(0));
+                    if (--clientNbr == 0)
+                        break;
+                }
 
-				//  If client reply, send rest back to frontend
-				if (!client_addr.equals("READY")) {
+            }
 
-					empty = new String(backend.recv(0));
-					assert empty.length()==0 | true;
+            if (items.pollin(1)) {
+                //  Now get next client request, route to LRU worker
+                //  Client request is [address][empty][request]
+                String clientAddr = frontend.recvStr ();
 
-					String reply = new String(backend.recv(0));
-					frontend.send(client_addr.getBytes(), ZMQ.SNDMORE);
-					frontend.send("".getBytes(), ZMQ.SNDMORE);
-					frontend.send(reply.getBytes(), 0);
+                String empty = frontend.recvStr ();
+                assert (empty.length() == 0);
 
-					if (--client_nbr == 0)
-						break;
-				}
+                String request = frontend.recvStr ();
 
-			}
+                String workerAddr = workerQueue.poll();
 
-			if (items.pollin(1)) {
-				//  Now get next client request, route to LRU worker
-				//  Client request is [address][empty][request]
-				String client_addr = new String(frontend.recv(0));
+                backend.sendMore (workerAddr);
+                backend.sendMore ("");
+                backend.sendMore (clientAddr );
+                backend.sendMore ("");
+                backend.send (request);
 
-				String empty = new String(frontend.recv(0));
-				assert empty.length()==0 | true;
+            }
+        }
 
-				String request = new String(frontend.recv(0));
+        frontend.close();
+        backend.close();
+        context.term();
 
-				String worker_addr = worker_queue.poll();//worker_queue [0];
-
-				backend.send(worker_addr.getBytes(), ZMQ.SNDMORE);
-				backend.send("".getBytes(), ZMQ.SNDMORE);
-				backend.send(client_addr.getBytes(), ZMQ.SNDMORE);
-				backend.send("".getBytes(), ZMQ.SNDMORE);
-				backend.send(request.getBytes(), 0);
-
-			}
-
-		}
-
-		frontend.close();
-		backend.close();
-		context.term();
-
-		System.exit(0);
-
-	}
+    }
 
 }

@@ -3,44 +3,41 @@ import org.zeromq.ZMQ.Context;
 import org.zeromq.ZMQ.Socket;
 
 /**
- * Synchronized subscriber.
- *
- * Christophe Huntzinger <chuntzin_at_wanadoo.fr>
- *
- */
+* Synchronized subscriber.
+*/
 public class syncsub{
-	public static void main (String[] args) {
-		Context context = ZMQ.context(1);
 
-		//  First, connect our subscriber socket
-		Socket subscriber = context.socket(ZMQ.SUB);
-		subscriber.connect("tcp://localhost:5561");
-		subscriber.subscribe("".getBytes());
+    public static void main (String[] args) {
+        Context context = ZMQ.context(1);
 
-		//  Second, synchronize with publisher
-		Socket syncclient = context.socket(ZMQ.REQ);
-		syncclient.connect("tcp://localhost:5562");
+        //  First, connect our subscriber socket
+        Socket subscriber = context.socket(ZMQ.SUB);
+        subscriber.connect("tcp://localhost:5561");
+        subscriber.subscribe("".getBytes());
 
-		//  - send a synchronization request
-		syncclient.send("".getBytes(), 0);
+        //  Second, synchronize with publisher
+        Socket syncclient = context.socket(ZMQ.REQ);
+        syncclient.connect("tcp://localhost:5562");
 
-		//  - wait for synchronization reply
-		byte[] value = syncclient.recv(0);
+        //  - send a synchronization request
+        syncclient.send("".getBytes(), 0);
 
-		//  Third, get our updates and report how many we got
-		int update_nbr = 0;
-		while (true) {
-			byte[] stringValue = subscriber.recv(0);
-			String string  = new String(stringValue);
-			if (string.equals("END")) {
-				break;
-			}
-			update_nbr++;
-		}
-		System.out.println("Received "+update_nbr+" updates.");
+        //  - wait for synchronization reply
+        syncclient.recv(0);
 
-		subscriber.close();
-		syncclient.close();
-		context.term();
-	}
+        //  Third, get our updates and report how many we got
+        int update_nbr = 0;
+        while (true) {
+            String string = subscriber.recvStr(0);
+            if (string.equals("END")) {
+                break;
+            }
+            update_nbr++;
+        }
+        System.out.println("Received " + update_nbr + " updates.");
+
+        subscriber.close();
+        syncclient.close();
+        context.term();
+    }
 }

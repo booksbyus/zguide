@@ -7,7 +7,7 @@ import java.util.Random;
 /**
  * ROUTER-TO-REQ example
  */
-public class rtdealer
+public class rtreq
 {
     private static Random rand = new Random();
     private static final int NBR_WORKERS = 10;
@@ -18,7 +18,7 @@ public class rtdealer
         public void run() {
 
             Context context = ZMQ.context(1);
-            Socket worker = context.socket(ZMQ.DEALER);
+            Socket worker = context.socket(ZMQ.REQ);
             ZHelper.setId (worker);  //  Set a printable identity
 
             worker.connect("tcp://localhost:5671");
@@ -26,11 +26,9 @@ public class rtdealer
             int total = 0;
             while (true) {
                 //  Tell the broker we're ready for work
-                worker.sendMore ("");
                 worker.send ("Hi Boss");
 
                 //  Get workload from broker, until finished
-                worker.recvStr ();   //  Envelope delimiter
                 String workload = worker.recvStr ();
                 boolean finished = workload.equals ("Fired!");
                 if (finished) {
@@ -74,8 +72,8 @@ public class rtdealer
             //  Next message gives us least recently used worker
             String identity = broker.recvStr ();
             broker.sendMore (identity);
-            broker.recv (0);     //  Envelope delimiter
-            broker.recv (0);     //  Response from worker
+            broker.recvStr ();     //  Envelope delimiter
+            broker.recvStr ();     //  Response from worker
             broker.sendMore ("");
 
             //  Encourage workers until it's time to fire them

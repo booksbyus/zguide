@@ -9,7 +9,7 @@ VERSION="0.3.0-SNAPSHOT"
 JEROMQ="jeromq-$VERSION.jar"
 CLASSPATH=".:$JEROMQ"
 
-JZMQ_VERSION="2.1.0-SNAPSHOT"  ## This has to be updated when the lastest version is updated 
+JZMQ_VERSION="2.1.1-SNAPSHOT"
 JZMQ="jzmq-$JZMQ_VERSION.jar"
 JZMQ_CLASSPATH=".:$JZMQ"
 
@@ -31,7 +31,7 @@ if [ /$1/ = /all/ ]; then
 elif [ /$1/ = /jzmq/ ]; then
     rm -f *.class 
     echo "Building JZMQ Java examples..."
-    for MAIN in `egrep -l "main \(" *.java`; do
+    for MAIN in `egrep -l "main ?\(" *.java`; do
         echo "$MAIN"
         javac -cp $JZMQ_CLASSPATH $MAIN
     done

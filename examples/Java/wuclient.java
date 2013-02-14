@@ -25,7 +25,7 @@ public class wuclient {
         long total_temp = 0;
         for (update_nbr = 0; update_nbr < 100; update_nbr++) {
             //  Use trim to remove the tailing '0' character
-            String string = new String(subscriber.recv(0)).trim();
+            String string = subscriber.recvStr(0).trim();
 
             StringTokenizer sscanf = new StringTokenizer(string, " ");
             int zipcode = Integer.valueOf(sscanf.nextToken());

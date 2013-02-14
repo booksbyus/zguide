@@ -148,7 +148,7 @@ Since 0MQ/3.3, however, the {{ZMQ_ROUTER_RAW}} socket option lets you read and w
 We said that 0MQ does I/O in a background thread. One I/O thread (for all sockets) is sufficient for all but the most extreme applications. When you create a new context it starts with one I/O thread. The general rule of thumb is to allow one I/O thread per gigabyte of data in or out per second. To raise the number of I/O threads, use the {{zmq_ctx_set[3]}} call //before// creating any sockets:
 
 [[code type="fragment" name="iothreads"]]
-int io-threads = 4;
+int io_threads = 4;
 void *context = zmq_ctx_new ();
 zmq_ctx_set (context, ZMQ_IO_THREADS, io_threads);
 assert (zmq_ctx_get (context, ZMQ_IO_THREADS) == io_threads);
