@@ -19,7 +19,7 @@ public class mspoller {
         subscriber.subscribe("10001 ".getBytes());
 
         //  Initialize poll set
-        ZMQ.Poller items = context.poller(2);
+        ZMQ.Poller items = new ZMQ.Poller (2);
         items.register(receiver, ZMQ.Poller.POLLIN);
         items.register(subscriber, ZMQ.Poller.POLLIN);
 

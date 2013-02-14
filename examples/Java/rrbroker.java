@@ -21,7 +21,7 @@ public class rrbroker{
         System.out.println("launch and connect broker.");
 
         //  Initialize poll set
-        Poller items = context.poller(2);
+        Poller items = new Poller (2);
         items.register(frontend, Poller.POLLIN);
         items.register(backend, Poller.POLLIN);
 

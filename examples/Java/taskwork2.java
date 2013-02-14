@@ -19,7 +19,7 @@ public class taskwork2 {
         controller.connect("tcp://localhost:5559");
         controller.subscribe("".getBytes());
 
-        ZMQ.Poller items = context.poller(2);
+        ZMQ.Poller items = new ZMQ.Poller (2);
         items.register(receiver, ZMQ.Poller.POLLIN);
         items.register(controller, ZMQ.Poller.POLLIN);
 

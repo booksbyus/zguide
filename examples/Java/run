@@ -9,16 +9,21 @@ VERSION="0.3.0-SNAPSHOT"
 JEROMQ="jeromq-$VERSION.jar"
 CLASSPATH=".:$JEROMQ"
 
-JZMQ_VERSION="2.1.0-SNAPSHOT"  ## This has to be updated when the lastest version is updated 
+JZMQ_VERSION="2.1.1-SNAPSHOT"  ## This has to be updated when the lastest version is updated 
 JZMQ="jzmq-$JZMQ_VERSION.jar"
 JZMQ_CLASSPATH=".:$JZMQ"
 
 if [ /$1/ = /jzmq/ ]; then
-    echo "$1 with jzmq"
-    java -Djava.library.path=/usr/local/lib -cp $JZMQ_CLASSPATH $2
+    shift
+    CLS=$1
+    echo "$CLS with jzmq"
+    shift
+    java -Djava.library.path=/usr/local/lib -cp $JZMQ_CLASSPATH $CLS "$@"
 elif [ -f $1.class ]; then
-    echo "$1 with jeromq"
-    java -cp $CLASSPATH $1
+    CLS=$1
+    echo "$CLS with jeromq"
+    shift
+    java -cp $CLASSPATH $CLS "$@"
 else
     echo "compile java file first"
 fi
