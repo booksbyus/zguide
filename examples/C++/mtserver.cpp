@@ -49,7 +49,7 @@ int main ()
         pthread_create (&worker, NULL, worker_routine, (void *) &context);
     }
     //  Connect work threads to client threads via a queue
-    zmq::device (ZMQ_QUEUE, clients, workers);
+    zmq::proxy (clients, workers, NULL);
     return 0;
 }
     
