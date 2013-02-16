@@ -28,7 +28,7 @@ while True:
     # Process any waiting tasks
     while True:
         try:
-            rc = receiver.recv(zmq.NOBLOCK)
+            rc = receiver.recv(zmq.DONTWAIT)
         except zmq.ZMQError:
             break
         # process task
@@ -36,7 +36,7 @@ while True:
     # Process any waiting weather updates
     while True:
         try:
-            rc = subscriber.recv(zmq.NOBLOCK)
+            rc = subscriber.recv(zmq.DONTWAIT)
         except zmq.ZMQError:
             break
         # process weather update

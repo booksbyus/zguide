@@ -25,7 +25,7 @@ counter = 0
 signal.signal(signal.SIGINT, signal_handler)
 while True:
     try:
-        message = socket.recv(zmq.NOBLOCK)
+        message = socket.recv(zmq.DONTWAIT)
     except zmq.ZMQError:
         pass
     counter += 1
