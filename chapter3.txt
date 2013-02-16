@@ -238,7 +238,7 @@ The common thread in this valid vs. invalid breakdown is that a 0MQ socket conne
 
 +++ Identities and Addresses
 
-The //identity// concept in 0MQ refers specifically to ROUTER sockets and how they identity the connections they have to other sockets. More broadly, identities are used as addresses in the reply envelope. In most cases the identity is arbitrary and local to the ROUTER socket: it's a lookup key in a hash table. Independently, a peer can have an address that is physical (a network endpoint like "tcp://192.168.55.117:5670") or logical (a UUID or email address or other unique key).
+The //identity// concept in 0MQ refers specifically to ROUTER sockets and how they identify the connections they have to other sockets. More broadly, identities are used as addresses in the reply envelope. In most cases the identity is arbitrary and local to the ROUTER socket: it's a lookup key in a hash table. Independently, a peer can have an address that is physical (a network endpoint like "tcp://192.168.55.117:5670") or logical (a UUID or email address or other unique key).
 
 An application that uses a ROUTER socket to talk to specific peers can convert a logical address to an identity if it has built the necessary hash table. Since ROUTER sockets only announce the identity of a connection (to a specific peer) when that peer sends a message, you can only really reply to a message, not spontaneously talk to a peer.
 
@@ -532,7 +532,7 @@ The challenge of making a good API affects all languages, though my specific use
 
 +++ Features of a Higher-Level API
 
-My solution is to use three fairly natural and obvious concepts: //string// (already the basis for our {{s_send} and {{s_recv}}) helpers, //frame// (a message frame), and //message// (a list of one or more frames). Here is the worker code, rewritten onto an API using these concepts:
+My solution is to use three fairly natural and obvious concepts: //string// (already the basis for our {{s_send}} and {{s_recv}}) helpers, //frame// (a message frame), and //message// (a list of one or more frames). Here is the worker code, rewritten onto an API using these concepts:
 
 [[code type="fragment" name="highreader"]]
 while (true) {
