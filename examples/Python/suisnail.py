@@ -55,7 +55,7 @@ def publisher(pipe):
         # Send current clock (secs) to subscribers
         pub.send(str(time.time()))
         try:
-            signal = pipe.recv(zmq.NOBLOCK)
+            signal = pipe.recv(zmq.DONTWAIT)
         except zmq.ZMQError as e:
             if e.errno == zmq.EAGAIN:
                 # nothing to recv
