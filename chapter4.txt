@@ -19,7 +19,7 @@ Most people who speak of "reliability" don't really know what they mean. We can 
 
 * Application code is the worst offender. It can crash and exit, freeze and stop responding to input, run too slowly for its input, exhaust all memory, etc.
 
-* System code--like brokers we write using 0MQ--can die for the same reasons as application code. System code //should// be more reliable than application code but it can still crash and burn, and especially run out of memory if it tries to queue messages for slow clients.
+* System code --like brokers we write using 0MQ-- can die for the same reasons as application code. System code //should// be more reliable than application code but it can still crash and burn, and especially run out of memory if it tries to queue messages for slow clients.
 
 * Message queues can overflow, typically in system code that has learned to deal brutally with slow clients. When a queue overflows, it starts to discard messages. So we get "lost" messages.
 
@@ -136,7 +136,7 @@ The client sequences each message and checks that replies come back exactly in o
 
 The client uses a REQ socket, and does the brute-force close/reopen because REQ sockets impose that strict send/receive cycle. You might be tempted to use a DEALER instead, but it would not be a good decision. First, it would mean emulating the secret sauce that REQ does with envelopes (if you've forgotten what that is, it's a good sign you don't want to have to do it). Second, it would mean potentially getting back replies that you didn't expect.
 
-Handling failures only at the client works when we have a set of clients talking to a single server. It can handle a server crash, but only if recovery means restarting that same server. If there's a permanent error--e.g., a dead power supply on the server hardware--this approach won't work. Since the application code in servers is usually the biggest source of failures in any architecture, depending on a single server is not a great idea.
+Handling failures only at the client works when we have a set of clients talking to a single server. It can handle a server crash, but only if recovery means restarting that same server. If there's a permanent error --e.g., a dead power supply on the server hardware-- this approach won't work. Since the application code in servers is usually the biggest source of failures in any architecture, depending on a single server is not a great idea.
 
 So, pros and cons:
 
@@ -149,7 +149,7 @@ So, pros and cons:
 
 Our second approach extends the Lazy Pirate pattern with a queue proxy that lets us talk, transparently, to multiple servers, which we can more accurately call "workers". We'll develop this in stages, starting with a minimal working model, the Simple Pirate pattern.
 
-In all these Pirate patterns, workers are stateless. If the application requires some shared state--e.g., a shared database--we don't know about it as we design our messaging framework. Having a queue proxy means workers can come and go without clients knowing anything about it. If one worker dies, another takes over. This is a nice, simple topology with only one real weakness, namely the central queue itself, which can become a problem to manage, and a single point of failure.
+In all these Pirate patterns, workers are stateless. If the application requires some shared state --e.g., a shared database-- we don't know about it as we design our messaging framework. Having a queue proxy means workers can come and go without clients knowing anything about it. If one worker dies, another takes over. This is a nice, simple topology with only one real weakness, namely the central queue itself, which can become a problem to manage, and a single point of failure.
 
 [[code type="textdiagram" title="The Simple Pirate Pattern"]]
 #-----------#   #-----------#   #-----------#
@@ -487,7 +487,7 @@ Notes on this code:
 
 * The APIs don't do any error reporting. If something isn't as expected, they raise an assertion (or exception depending on the language). This is ideal for a reference implementation, so any protocol errors show immediately. For real applications, the API should be robust against invalid messages.
 
-You might wonder why the worker API is manually closing its socket and opening a new one, when 0MQ will automatically reconnect a socket if the peer disappears and comes back. Look back at the Simple Pirate and Paranoid Pirate workers to understand. Although 0MQ will automatically reconnect workers, if the broker dies and comes back up, this isn't sufficient to re-register the workers with the broker. There are at least two solutions I know of. The simplest, which we use here, is for the worker to monitor the connection using heartbeats, and if it decides the broker is dead, to close its socket and starts afresh with a new socket. The alternative is for the broker to challenge unknown workers--when it gets a heartbeat from the worker--and ask them to re-register. That would require protocol support.
+You might wonder why the worker API is manually closing its socket and opening a new one, when 0MQ will automatically reconnect a socket if the peer disappears and comes back. Look back at the Simple Pirate and Paranoid Pirate workers to understand. Although 0MQ will automatically reconnect workers, if the broker dies and comes back up, this isn't sufficient to re-register the workers with the broker. There are at least two solutions I know of. The simplest, which we use here, is for the worker to monitor the connection using heartbeats, and if it decides the broker is dead, to close its socket and starts afresh with a new socket. The alternative is for the broker to challenge unknown workers --when it gets a heartbeat from the worker-- and ask them to re-register. That would require protocol support.
 
 Now let's design the Majordomo broker. Its core structure is a set of queues, one per service. We will create these queues as workers appear (we could delete them as workers disappear but forget that for now, it gets complex). Additionally, we keep a queue of workers per service.
 
@@ -557,7 +557,7 @@ The differences are:
 * The {{send}} method is asynchronous and returns immediately after sending. The caller can thus send a number of messages before getting a response.
 * The {{recv}} method waits for (with a timeout) one response and returns that to the caller.
 
-And here's the corresponding client test program, which sends 100,000 messages and then receives 100,00 back:
+And here's the corresponding client test program, which sends 100,000 messages and then receives 100,000 back:
 
 [[code type="example" title="Majordomo client application" name="mdclient2"]]
 [[/code]]
