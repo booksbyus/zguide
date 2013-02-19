@@ -8,6 +8,7 @@
 using System.Text;
 using System.Threading;
 using ZeroMQ;
+using ZeroMQ.Devices;
 
 namespace zguide.mtserver
 {
@@ -18,14 +19,16 @@ namespace zguide.mtserver
             using (var context = ZmqContext.Create())
             {
 
-                using (var queue = new ZeroMQ.Devices.QueueDevice(context, "tcp://*:5555", "inproc://workers"))
+                using (var queue = new ZeroMQ.Devices.QueueDevice(context, "tcp://*:5555", "inproc://workers", DeviceMode.Blocking))
                 {
+                    queue.Initialize();
                     var workerThreads = new Thread[5];
                     for (int threadId = 0; threadId < workerThreads.Length; threadId++)
                     {
                         workerThreads[threadId] = new Thread(WorkerRoutine);
                         workerThreads[threadId].Start(context);
                     }
+                    queue.Start();
                 }
 
             }
