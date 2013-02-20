@@ -48,8 +48,7 @@ namespace zguide.asycnsrv
                 using (ZmqSocket client = context.CreateSocket(SocketType.DEALER))
                 {
                     //  Generate printable identity for the client
-                    ZHelpers.SetID(client, Encoding.Unicode);
-                    string identity = Encoding.Unicode.GetString(client.Identity);
+                    string identity = ZHelpers.SetID(client, Encoding.Unicode);
                     client.Connect("tcp://localhost:5570");
 
                     client.ReceiveReady += (s, e) =>
@@ -67,7 +66,7 @@ namespace zguide.asycnsrv
                         //  Tick once per second, pulling in arriving messages
                         for (int centitick = 0; centitick < 100; centitick++)
                         {
-                            poller.Poll(TimeSpan.FromMilliseconds(10000));
+                            poller.Poll(TimeSpan.FromMilliseconds(10));
                         }
                         var zmsg = new ZMessage("");
                         zmsg.StringToBody(String.Format("request: {0}", ++requestNumber));
