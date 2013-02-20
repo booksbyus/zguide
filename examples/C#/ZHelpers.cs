@@ -31,7 +31,9 @@ namespace zguide
 
         public static string SetID(ZmqSocket client, Encoding unicode)
         {
-            throw new NotImplementedException();
+            var str = client.GetHashCode().ToString();
+            client.Identity = unicode.GetBytes(str);
+            return str;
         }
 
         public static bool Version()
