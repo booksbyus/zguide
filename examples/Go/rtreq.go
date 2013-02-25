@@ -1,5 +1,5 @@
 //
-//  Custom routing Router to Mama (ROUTER to REQ)
+//  ROUTER-to-REQ example
 //
 
 package main
@@ -30,39 +30,39 @@ func workerTask() {
 	worker, _ := context.NewSocket(zmq.REQ)
 	worker.SetSockOptString(zmq.IDENTITY, randomString())
 
-	worker.Connect("ipc://routing.ipc")
+	worker.Connect("tcp://localhost:5671")
 	defer worker.Close()
 
-	var total int
+	total := 0
 	for {
-		err := worker.Send([]byte("ready"), 0)
+		err := worker.Send([]byte("Hi Boss"), 0)
 		if err != nil {
 			print(err)
 		}
-		data, _ := worker.Recv(0)
-		if string(data) == "END" {
+		workload, _ := worker.Recv(0)
+		if string(workload) == "Fired!" {
 			id, _ := worker.GetSockOptString(zmq.IDENTITY)
-			fmt.Printf("Processed: %2d tasks (%s)\n", total, id)
+			fmt.Printf("Completed: %d tasks (%s)\n", total, id)
 			break
 		}
-		total += 1
 
+		total += 1
 		msec := rand.Intn(1000)
 		time.Sleep(time.Duration(msec) * time.Millisecond)
 	}
 }
 
 //  While this example runs in a single process, that is just to make
-//  it easier to start and stop the example. Each thread has its own
+//  it easier to start and stop the example. Each goroutine has its own
 //  context and conceptually acts as a separate process.
 
 func main() {
 	context, _ := zmq.NewContext()
 	defer context.Close()
 
-	client, _ := context.NewSocket(zmq.ROUTER)
-	defer client.Close()
-	client.Bind("ipc://routing.ipc")
+	broker, _ := context.NewSocket(zmq.ROUTER)
+	defer broker.Close()
+	broker.Bind("tcp://*:5671")
 
 	rand.Seed(time.Now().Unix())
 
@@ -70,23 +70,25 @@ func main() {
 		go workerTask()
 	}
 
-	for i := 0; i < NBR_WORKERS*10; i++ {
-		//  LRU worker is next waiting in queue
-		parts, err := client.RecvMultipart(0)
-		if err != nil {
-			print(err)
-		}
-		address := parts[0]
-		client.SendMultipart([][]byte{address, []byte(""), []byte("This is the workload")}, 0)
-	}
+	end_time := time.Now().Unix() + 5
+	workers_fired := 0
 
-	//  Now ask mamas to shut down and report their results
-	for i := 0; i < NBR_WORKERS; i++ {
-		parts, err := client.RecvMultipart(0)
+	for {
+		//  Next message gives us least recently used worker
+		parts, err := broker.RecvMultipart(0)
 		if err != nil {
 			print(err)
 		}
-		address := parts[0]
-		client.SendMultipart([][]byte{address, []byte(""), []byte("END")}, 0)
+		identity := parts[0]
+		now := time.Now().Unix()
+		if now < end_time {
+			broker.SendMultipart([][]byte{identity, []byte(""), []byte("Work harder")}, 0)
+		} else {
+			broker.SendMultipart([][]byte{identity, []byte(""), []byte("Fired!")}, 0)
+			workers_fired++
+			if workers_fired == NBR_WORKERS {
+				break
+			}
+		}
 	}
 }

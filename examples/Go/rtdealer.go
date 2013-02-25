@@ -1,90 +1,93 @@
 //
-//  Custom routing Router to Dealer
+// ROUTER-to-DEALER example
 //
-//  We have two workers, here we copy the code, normally these would
-//  run on different boxes…
-//
-
 package main
 
 import (
 	"fmt"
 	zmq "github.com/alecthomas/gozmq"
 	"math/rand"
+	"strings"
 	"time"
 )
 
-func workerTaskB() {
+const NBR_WORKERS int = 10
+
+func randomString() string {
+	source := "abcdefghijklmnopqrstuvwxyz"
+	target := make([]string, 20)
+	for i := 0; i < 20; i++ {
+		target[i] = string(source[rand.Intn(len(source))])
+	}
+	return strings.Join(target, "")
+}
+
+func worker_task() {
 	context, _ := zmq.NewContext()
 	defer context.Close()
 
 	worker, _ := context.NewSocket(zmq.DEALER)
 	defer worker.Close()
-	worker.SetSockOptString(zmq.IDENTITY, "B")
-	worker.Connect("ipc://routing.ipc")
+	worker.SetSockOptString(zmq.IDENTITY, randomString())
+	worker.Connect("tcp://localhost:5671")
 
-	var total int
+	total := 0
 	for {
-		//  We receive one part, with the workload
-		request, _ := worker.Recv(0)
-		if string(request) == "END" {
-			fmt.Printf("B received: %d\n", total)
+		//  Tell the broker we're ready for work
+		worker.SendMultipart([][]byte{[]byte(""), []byte("Hi Boss")}, 0)
+
+		//  Get workload from broker, until finished
+		parts, _ := worker.RecvMultipart(0)
+		workload := parts[1]
+		if string(workload) == "Fired!" {
+			id, _ := worker.GetSockOptString(zmq.IDENTITY)
+			fmt.Printf("Completed: %d tasks (%s)\n", total, id)
 			break
 		}
 		total++
+
+		//  Do some random work
+		time.Sleep(time.Duration(rand.Intn(500)) * time.Millisecond)
 	}
 }
 
-func workerTaskA() {
-	context, _ := zmq.NewContext()
-	defer context.Close()
-
-	worker, _ := context.NewSocket(zmq.DEALER)
-	defer worker.Close()
-	worker.SetSockOptString(zmq.IDENTITY, "A")
-	worker.Connect("ipc://routing.ipc")
-
-	var total int
-	for {
-		//  We receive one part, with the workload
-		request, _ := worker.Recv(0)
-		if string(request) == "END" {
-			fmt.Printf("A received: %d\n", total)
-			break
-		}
-		total++
-	}
-}
+//  While this example runs in a single process, that is just to make
+//  it easier to start and stop the example. Each thread has its own
+//  context and conceptually acts as a separate process.
 
 func main() {
 	context, _ := zmq.NewContext()
 	defer context.Close()
-	client, _ := context.NewSocket(zmq.ROUTER)
-	defer client.Close()
-	client.Bind("ipc://routing.ipc")
 
-	go workerTaskA()
-	go workerTaskB()
+	broker, _ := context.NewSocket(zmq.ROUTER)
+	defer broker.Close()
+	broker.Bind("tcp://*:5671")
 
-	//  Wait for threads to connect, since otherwise the messages
-	//  we send won't be routable.
-	time.Sleep(time.Second)
-
-	//  Send 10 tasks scattered to A twice as often as B
 	rand.Seed(time.Now().Unix())
-	for i := 0; i < 10; i++ {
-		parts := make([][]byte, 0)
-		if rand.Intn(10) < 3 {
-			parts = append(parts, []byte("A"))
-		} else {
-			parts = append(parts, []byte("B"))
-		}
-		parts = append(parts, []byte("This is the workload"))
-		err := client.SendMultipart(parts, 0)
+
+	for i := 0; i < NBR_WORKERS; i++ {
+		go worker_task()
+	}
+
+	end_time := time.Now().Unix() + 5
+	workers_fired := 0
+
+	for {
+		//  Next message gives us least recently used worker
+		parts, err := broker.RecvMultipart(0)
 		if err != nil {
-			fmt.Println(err)
+			print(err)
+		}
+		identity := parts[0]
+		now := time.Now().Unix()
+		if now < end_time {
+			broker.SendMultipart([][]byte{identity, []byte(""), []byte("Work harder")}, 0)
+		} else {
+			broker.SendMultipart([][]byte{identity, []byte(""), []byte("Fired!")}, 0)
+			workers_fired++
+			if workers_fired == NBR_WORKERS {
+				break
+			}
 		}
 	}
-	client.SendMultipart([][]byte{[]byte("A"), []byte("END")}, 0)
-	client.SendMultipart([][]byte{[]byte("B"), []byte("END")}, 0)
 }
