@@ -202,7 +202,7 @@ One of the things we aim to provide you with in this book are a set of such high
 
 +++ Working with Messages
 
-The libzmq core library has in fact two APIs to send and receive messages. The {{zmq_send[3]}} and {{zmq_recv[3]}} methods that we've already seen and used are simple one-liners. We will use these often, but {{zmq_recv[3]}} is bad at dealing with arbitrary message sizes: it truncates messages to whatever buffer size you provide. So there's a second API that works with zmq_msg_t structures, with a richer but more difficult API:
+The {{libzmq}} core library has in fact two APIs to send and receive messages. The {{zmq_send[3]}} and {{zmq_recv[3]}} methods that we've already seen and used are simple one-liners. We will use these often, but {{zmq_recv[3]}} is bad at dealing with arbitrary message sizes: it truncates messages to whatever buffer size you provide. So there's a second API that works with zmq_msg_t structures, with a richer but more difficult API:
 
 * Initialise a message: {{zmq_msg_init[3]}}, {{zmq_msg_init_size[3]}}, {{zmq_msg_init_data[3]}}.
 * Sending and receiving a message: {{zmq_msg_send[3]}}, {{zmq_msg_recv[3]}}.
@@ -716,7 +716,7 @@ Here is the modified sink application. When it's finished collecting results, it
 
 ++ Handling Interrupt Signals
 
-Realistic applications need to shut down cleanly when interrupted with Ctrl-C or another signal such as SIGTERM. By default, these simply kill the process, meaning messages won't be flushed, files won't be closed cleanly, and so on.
+Realistic applications need to shut down cleanly when interrupted with Ctrl-C or another signal such as {{SIGTERM}}. By default, these simply kill the process, meaning messages won't be flushed, files won't be closed cleanly, and so on.
 
 Here is how we handle a signal in various languages:
 
@@ -743,7 +743,7 @@ while (!s_interrupted) {
 zmq_close (client);
 [[/code]]
 
-If you call {{s_catch_signals()}} and don't test for interrupts, then your application will become immune to Ctrl-C and SIGTERM, which may be useful, but is usually not.
+If you call {{s_catch_signals()}} and don't test for interrupts, then your application will become immune to Ctrl-C and {{SIGTERM}}, which may be useful, but is usually not.
 
 ++ Detecting Memory Leaks
 
@@ -1031,7 +1031,7 @@ zmq_msg_init_data (&message, buffer, 1000, my_free, NULL);
 zmq_msg_send (socket, &message, 0);
 [[/code]]
 
-Note that you don't call {{zmq_msg_close[3]}} after sending a message--libzmq will do this automatically when it's actually done sending the message.
+Note that you don't call {{zmq_msg_close[3]}} after sending a message--{{libzmq}} will do this automatically when it's actually done sending the message.
 
 There is no way to do zero-copy on receive: 0MQ delivers you a buffer that you can store as long as you wish, but it will not write data directly into application buffers.
 
@@ -1070,6 +1070,8 @@ When you run the two programs, the subscriber should show you this:
 ...
 [[/code]]
 
+This example shows that the subscription filter rejects or accepts the entire multipart message (key plus data). You won't get part of a multipart message, ever. If you subscribe to multiple publishers and you want to know their address so that you can send them data via another socket (and this is a typical use case), create a three-part message[figure].
+
 [[code type="textdiagram" title="Pub-Sub Envelope with Sender Address"]]
           #---------#
 Frame 1   | Key     |   Subscription key
@@ -1079,8 +1081,6 @@ Frame 2   | Address |   Address of publisher
 Frame 3   | Data    |   Actual message body
           #---------#
 [[/code]]
-
-This example shows that the subscription filter rejects or accepts the entire multipart message (key plus data). You won't get part of a multipart message, ever. If you subscribe to multiple publishers and you want to know their address so that you can send them data via another socket (and this is a typical use case), create a three-part message[figure].
 
 ++ High-Water Marks
 
@@ -1100,7 +1100,7 @@ In 0MQ v2.x, the HWM was infinite by default. This was easy but also typically f
 
 When your socket reaches its HWM, it will either block or drop data depending on the socket type. PUB and ROUTER sockets will drop data if they reach their HWM, while other socket types will block. Over the {{inproc}} transport, the sender and receiver share the same buffers, so the real HWM is the sum of the HWM set by both sides.
 
-Lastly, the HWMs are not exact; while you may get //up to// 1,000 messages by default, the real buffer size may be much lower (as little as half), due to the way libzmq implements its queues.
+Lastly, the HWMs are not exact; while you may get //up to// 1,000 messages by default, the real buffer size may be much lower (as little as half), due to the way {{libzmq}} implements its queues.
 
 ++ Missing Message Problem Solver
 

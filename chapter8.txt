@@ -386,7 +386,7 @@ The name and slogan first. The trademarks of the 21st century are domain names. 
 
 I'm somewhat shy about pushing new projects into the 0MQ community too aggressively, and normally would start a project in either my personal account or the iMatix organization. But we've learned that moving projects after they become popular is counterproductive. My predictions of a future filled with moving pieces are either valid or wrong. If this chapter is valid, we might as well launch this as a 0MQ project from the start. If it's wrong, we can delete the repository later or let it sink to the bottom of a long list of forgotten starts.
 
-Start with the basics. The protocol (UDP and 0MQ/TCP) will be ZRE (ZeroMQ Realtime Exchange protocol) and the project will be Zyre. I need a second maintainer, so I invite my friend Dong Min (the Korean hacker behind JeroMQ, a pure-Java 0MQ stack) to join. He's been working on very similar ideas so is enthusiastic. We discuss this and we get the idea of building Zyre on top of JeroMQ, as well as on top of CZMQ and libzmq. This would make it a lot easier to run Zyre on Android. It would also give us two fully separate implementations from the start, which is always a good thing for a protocol.
+Start with the basics. The protocol (UDP and 0MQ/TCP) will be ZRE (ZeroMQ Realtime Exchange protocol) and the project will be Zyre. I need a second maintainer, so I invite my friend Dong Min (the Korean hacker behind JeroMQ, a pure-Java 0MQ stack) to join. He's been working on very similar ideas so is enthusiastic. We discuss this and we get the idea of building Zyre on top of JeroMQ, as well as on top of CZMQ and {{libzmq}}. This would make it a lot easier to run Zyre on Android. It would also give us two fully separate implementations from the start, which is always a good thing for a protocol.
 
 So we take the FileMQ project I built in [#advanced-architecture] as a template for a new GitHub project. The GNU autoconf tools are quite decent, but have a painful syntax. It's easiest to copy existing project files and modify them. The FileMQ project builds a library, has test tools, license files, man pages, and so on. It's not too large so it's a good starting point.
 
@@ -815,7 +815,7 @@ You'll also see that there's no risk of confusion, no way for commands from two 
 
 When you are satisfied that this works, we're ready to move on. This version is tagged in the repository as v0.3.0 and you can [https://github.com/zeromq/zyre/tags download the tarball] if you want to check what the code looked like at this stage.
 
-Note that doing heavy simulation of lots of nodes will probably cause your process to run out of file handles, giving an assertion failure in libzmq. I raised the per-process limit to 30,000 by running (on my Linux box):
+Note that doing heavy simulation of lots of nodes will probably cause your process to run out of file handles, giving an assertion failure in {{libzmq}}. I raised the per-process limit to 30,000 by running (on my Linux box):
 
 [[code]]
 ulimit -n 30000
