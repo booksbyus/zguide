@@ -37,7 +37,6 @@ int main (void)
 
     //  Send kill signal to workers
     s_send (controller, "KILL");
-    sleep (1);              //  Give 0MQ time to deliver
 
     zmq_close (receiver);
     zmq_close (controller);
