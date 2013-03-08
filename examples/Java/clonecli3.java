@@ -13,8 +13,8 @@ import org.zeromq.ZMQ.Socket;
  * @author Danish Shrestha <dshrestha06@gmail.com>
  *
  */
-public class CloneClient3 {
-	private static Map<String, KVSimple> kvMap = new HashMap<String, KVSimple>();
+public class clonecli3 {
+	private static Map<String, kvsimple> kvMap = new HashMap<String, kvsimple>();
 	private static AtomicLong sequence = new AtomicLong();
 
 	public void run() {
@@ -34,9 +34,9 @@ public class CloneClient3 {
 
 		// get state snapshot
 		snapshot.send("ICANHAZ?".getBytes(), 0);
-		KVSimple kvMsg = null;
+		kvsimple kvMsg = null;
 		while (true) {
-			kvMsg = KVSimple.recv(snapshot);
+			kvMsg = kvsimple.recv(snapshot);
 			sequence.set(kvMsg.getSequence());
 			if ("KTHXBAI".equalsIgnoreCase(kvMsg.getKey())) {
 				System.out.println("Received snapshot = " + kvMsg.getSequence());
@@ -44,7 +44,7 @@ public class CloneClient3 {
 			}
 
 			System.out.println("receiving " + kvMsg.getSequence());
-			CloneClient3.kvMap.put(kvMsg.getKey(), kvMsg);
+			clonecli3.kvMap.put(kvMsg.getKey(), kvMsg);
 		}
 
 		Poller poller = ctx.poller();
@@ -58,12 +58,12 @@ public class CloneClient3 {
 			poller.poll(Math.max(0, alarm - System.currentTimeMillis()));
 
 			if (poller.pollin(0)) {
-				kvMsg = KVSimple.recv(subscriber);
+				kvMsg = kvsimple.recv(subscriber);
 				if (kvMsg != null) {
 					if (kvMsg.getSequence() > sequence.get()) {
 						sequence.set(kvMsg.getSequence());
 						System.out.println("receiving " + sequence);
-						CloneClient3.kvMap.put(kvMsg.getKey(), kvMsg);
+						clonecli3.kvMap.put(kvMsg.getKey(), kvMsg);
 					}
 				}
 			}
@@ -76,7 +76,7 @@ public class CloneClient3 {
 				ByteBuffer b = ByteBuffer.allocate(4);
 				b.asIntBuffer().put(body);
 
-				KVSimple kvUpdateMsg = new KVSimple(key + "", 0, b.array());
+				kvsimple kvUpdateMsg = new kvsimple(key + "", 0, b.array());
 				kvUpdateMsg.send(push);
 				alarm = System.currentTimeMillis() + 5000;
 			}
@@ -84,6 +84,6 @@ public class CloneClient3 {
 	}
 
 	public static void main(String[] args) {
-		new CloneClient3().run();
+		new clonecli3().run();
 	}
 }

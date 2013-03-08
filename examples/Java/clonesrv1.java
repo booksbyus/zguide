@@ -11,7 +11,7 @@ import org.zeromq.ZMQ.Socket;
  * @author Danish Shrestha <dshrestha06@gmail.com>
  *
  */
-public class CloneServer1 {
+public class clonesrv1 {
 	private static AtomicLong sequence = new AtomicLong();
 
 	public void run() {
@@ -35,7 +35,7 @@ public class CloneServer1 {
 			ByteBuffer b = ByteBuffer.allocate(4);
 			b.asIntBuffer().put(body);
 
-			KVSimple kvMsg = new KVSimple(key + "", currentSequenceNumber,
+			kvsimple kvMsg = new kvsimple(key + "", currentSequenceNumber,
 					b.array());
 			kvMsg.send(publisher);
 			System.out.println("sending " + kvMsg);
@@ -44,6 +44,6 @@ public class CloneServer1 {
 	}
 
 	public static void main(String[] args) {
-		new CloneServer1().run();
+		new clonesrv1().run();
 	}
 }
