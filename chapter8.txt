@@ -74,8 +74,6 @@ Right now, streaming a movie from your phone to your TV is considered "leading e
 
 To get more serious, why is our digital society in the hands of central points that are monitored, censored, logged, used to track who we talk to, collect evidence against us, and then shut down when the authorities decide we have too much free speech? The loss of privacy we're living through is only a problem when it's one-sided, but then the problem is calamitous. A truly wireless world would bypass all central censorship. It's how the Internet was designed, and it's quite feasible, technically (which is the best kind of feasible).
 
-+++++ "Why, in 2012, and to get more serious," -> "To get more serious, why"
-
 +++ Some Physics
 
 Naive developers of distributed software treat the network as infinitely fast and perfectly reliable. While this is approximately true for simple applications over Ethernet, WiFi rapidly proves the difference between magical thinking and science. That is, WiFi breaks so easily and dramatically under stress that I sometimes wonder how anyone would dare use it for real work. The ceiling moves up as WiFi gets better, but never fast enough to stop us hitting it.
@@ -122,15 +120,158 @@ The technological evolution of wireless networking is best described as "slow an
 
 ++ Discovery
 
+Discovery is an essential part of network programming and a first-class problem for 0MQ developers. Every {{zmq_connect ()}} call provides an endpoint string, and that has to come from somewhere. The examples we've seen so far don't do discovery: the endpoints they connect to are hard-coded as strings in the code. While this is fine for example code, it's not ideal for real applications. Networks don't behave that nicely. Things change, and it's how well we handle change that defines our long-term success.
+
++++ Service Discovery
+
+Let's start with definitions. Network discovery is finding out what other peers are on the network. Service discovery is learning what those peers can do for us. Wikipedia defines a "network service" as "a service that is hosted on a computer network", and "service" as "a set of related software functionalities that can be reused for different purposes, together with the policies that should control its usage". It's not very helpful. Is Facebook a network service?
+
+In fact the concept of "network service" has changed over time. The number of moving pieces keeps doubling every 18-24 months, breaking old conceptual models and pushing for ever simpler, more scalable ones. A service is, for me, a system-level application that other programs can talk to. A network service is one accessible remotely (as compared to, e.g., the "grep" command, which is a command-line service).
+
+In the classic BSD socket model, a service maps 1-to-1 to a network port. A computer system offers a number of services like "FTP", and "HTTP", each with assigned ports. The BSD API has functions like {{getservbyname}} to map a service name to a port number. So a classic service maps to a network endpoint: if you know a server's IP address and then you can find its FTP service, if that is running.
+
+In modern messaging, however, services don't map 1-to-1 to endpoints. One endpoint can lead to many services, and services can move around over time, between ports, or even between systems. Where is my cloud storage today? In a realistic large distributed application, therefore, we need some kind of service discovery mechanism.
+
+There are many ways to do this and I won't try to provide an exhaustive list. However there are a few classic patterns:
+
+* We can force the old 1-to-1 mapping from endpoint to service, and simply state up-front that a certain TCP port number represents a certain service. Our protocol then should let us check this ("Are the first 4 bytes of the request 'HTTP'?").
+
+* We can bootstrap one service off another; connecting to a well-known endpoint and service, asking for the "real" service, and getting an endpoint back in return. This gives us a service lookup service. If the lookup service allows it, services can then move around as long as they update their location.
+
+* We can proxy one service through another, so that a well-known endpoint and service will provide other services indirectly (i.e. by forwarding messages to them). This is for instance how our Majordomo service-oriented broker works.
+
+* We can exchange lists of known services and endpoints, that change over time, using a gossip approach or a centralized approach (like the Clone pattern), so that each node in a distributed network can build-up an eventually consistent map of the whole network.
+
+* We can create further abstract layers in between network endpoints and services, e.g. assigning each node a unique identifier, so we get a "network of nodes" where each node may offer some services, and may appear on random network endpoints.
+
+* We can discover services opportunistically, e.g. by connecting to endpoints and then asking them what services they offer. "Hi, do you offer a shared printer? If so, what's the make and model?"
+
+There's no "right answer". The range of options is huge, and changes over time as the scale of our networks grows. In some networks the knowledge of what services run where can literally become political power. 0MQ imposes no specific model but makes it easy to design and build the ones that suit us best. However, to build service discovery, we must start by solving network discovery.
+
++++ Network Discovery
+
+Here is a list of the the solutions I know for network discovery:
+
+* //Use hard-coded endpoint strings//, i.e., fixed IP addresses and agreed ports. This worked in internal networks a decade ago when there were a few "big servers" and they were so important they got static IP addresses. These days however it's no use except in examples or for in-process work (threads are the new Big Iron). You can make it hurt a little less by using DNS but this is still painful for anyone who's not also doing system administration as a side-job.
+
+* //Get endpoint strings from configuration files//. This shoves name resolution into user space, which hurts less than DNS but that's like saying a punch in the face hurts less than a kick in the groin. You now get a nonb-trivial management problem. Who updates the configuration files, and when? Where do they live? Do we install a distributed management tool like Salt Stack?
+
+* //Use a message broker//. You still need a hard-coded or configured endpoint string to connect to the broker, but this approach reduces the number of different endpoints in the network to one. That makes a real impact, and broker-based networks do scale nicely. However, brokers are single points of failure, and they bring their own set of worries about management and performance.
+
+* //Use an addressing broker//. In other words use a central service to mediate address information (like a dynamic DNS setup) but allow nodes to send each other messages directly. It's a good model but still creates a point of failure and management costs.
+
+* //Use helper libraries, like ZeroConf//, that provide DNS services without any centralized infrastructure. It's a good answer for certain applications but your mileage will vary. Helper libraries aren't zero cost: they make it more complex to build the software, they have their own restrictions, and they aren't necessarily portable.
+
+* //Build system-level discovery// by sending out ARP or ICMP ECHO packets and then querying every node that responds. You can query through a TCP connection, for example, or by sending UDP messages. Some products do this, like the Eye-Fi wireless card.
+
+* //Do user-level brute-force discovery// by trying to connect to every single address in the network segment. You can do this trivially in 0MQ since it handles connections in the background. You don't even need multiple threads. It's brutal but fun, and works very well in demos and workshops. However it doesn't scale, and annoys decent-thinking engineers.
+
+* //Roll your own UDP-based discovery protocol//. Lots of people do this (I counted about 80 questions on this topic on StackOverflow). UDP works well for this and it's technically clear. But it's technically tricky to get right, to the point where any developer doing this the first few times will get it dramatically wrong.
+
+* //Gossip discovery protocols//. A fully-interconnected network is quite effective for smaller numbers of nodes (say, up to 100 or 200). For large numbers of nodes, we need some kind of gossip protocol. That is, where the nodes we can reasonable discover (say, on the same segment as us), tell us about nodes that are further away. Gossip protocols go beyond what we need these days with 0MQ, but will likely be more common in the future. One example of a wide-area gossip model is mesh networking.
+
++++ The Use Case
+
+Let's define our use case more explicitly. After all, all these different approaches have worked and still work to some extent. What interests me as architect is the future, and finding designs that can continue to work for more than a few years. This means identifying long term trends. Our use case isn't here and now, it's ten or twenty years from today.
+
+Here are the long term trends I see in distributed applications:
+
+* //The overall number of moving pieces keeps increasing//. My estimate is that it doubles every 24 months, but how fast it increases matters less than the fact that we keep adding more and more nodes to our networks. They're not just boxes but also processes and threads. The driver here is cost, [http://softwareandsilicon.com/ which keeps falling]. In a decade, the average teenager will carry 30-50 devices, all the time.
+
+* //Control shifts away from the center//. Possibly data too, though we're still far from understanding how to build simple decentralized information stores. In any case, the star topology is slowly dying and being replaced by clouds of clouds. In the future there's going to be much more traffic within a local environment (home, office, school, bar) than between remote nodes and the center. The maths here are simple: remote communications cost more, run more slowly and are less natural than close-range communications. It's more accurate both technically and socially to share a holiday video with your friend over local WiFi than via Facebook.
+
+* //Networks are increasingly collaborative, less controlled//. This means people bringing their own devices and expecting them to work seamlessly. The Web showed one way to make this work but we're reaching the limits of what the Web can do, as we start to exceed the average of one device per person.
+
+* //The cost of connecting a new node to a network must fall proportionally//, if the network is to scale. This means reducing the amount of configuration a node needs: less pre-shared state, less context. Again, the Web solved this problem but at the cost of centralization. We want the same plug and play experience but without a central agency.
+
+In a world of trillions of nodes, the ones you talk to most are the ones closest to you. This is how it works in the real world and it's the sanest way of scaling large-scale architectures. Groups of nodes, logically or physically close, connected by bridges to other groups of nodes. A local group will be anything from half-a-dozen nodes to a few thousand nodes.
+
+So we have two basic use cases:
+
+* **Discovery for proximity networks**, that is, a set of nodes that find themselves close to each other. We can define "close to each other" as being "on the same network segment". It's not going to be true in all cases but it's true enough to be a useful place to start.
+
+* **Discovery across wide area networks**, that is, bridging of proximity networks together. We sometimes call this "federation". There are many ways to do federation but it's complex and something to cover elsewhere. For now, let's assume we do federation using a centralized broker or service.
+
+So we are left with the problem of proximity networking. I want to just plug things into the network and have them talking to each other. Whether they're tablets in a school or a bunch of servers in a cloud, the less upfront agreement and coordination, the cheaper it is to scale. So configuration files and brokers and any kind of centralized service are all out.
+
+I also want to allow any number of applications on a box, both because that's how the real world works (people download apps), and so that I can simulate large networks on my laptop. Upfront simulation is the only way I know to be sure a system will work when it's loaded in real-life. You'd be surprised how engineers just hope things will work. "Oh, I'm sure that bridge will stay up when we open it to traffic". If you haven't simulated and fixed the three most likely failures, they'll still be there on opening day.
+
+Running multiple instances of a service on the same machine - without upfront coordination - means we have to use ephemeral ports, i.e., ports assigned randomly for services. Ephemeral ports rule out brute-force TCP discovery and any DNS solution including ZeroConf.
+
+Finally, discovery has to happen in user space because the apps we're building will be running on random boxes that we do not necessarily own and control. For example, other people's mobile devices. So any discovery that needs root permissions is excluded. This rules out ARP and ICMP and once again ZeroConf since that also needs root permissions for the service parts.
+
++++ Technical Requirements
+
+Let's recap the requirements:
+
+* //The simplest possible solution that works//. There are so many edge cases in ad-hoc networks that every extra feature or functionality becomes a risk.
+
+* //Supports ephemeral ports//, so that we can run realistic simulations. If the only way to test is to use real devices, it becomes impossibly expensive and slow to run tests.
+
+* //No root access needed//, it must run 100% in user space. We want to ship fully-packaged applications onto devices like mobile phones that we don't own and where root access isn't available.
+
+* //Invisible to system administrators//, so we do not need their help to run our applications. Whatever technique we use should be friendly to the network and available by default.
+
+* //Zero configuration// apart from installing the applications themselves. Asking the users to do any configuration is giving them an excuse to not use the applications.
+
+* //Fully portable// to all modern operating systems. We can't assume we'll be running on any specific OS. We can't assume any support from the operating system except standard user-space networking. We can assume 0MQ and CZMQ are available.
+
+* //Friendly to WiFi networks// with up to 100-150 participants. This means keeping messages small and being aware of how WiFi networks scale and how they break under pressure.
+
+* //Protocol-neutral//, i.e., our beaconing should not impose any specific discovery protocol. I'll explain what this means a little later.
+
+* //Easy to re-implement in any given language//. Sure, we have a nice C implementation, but if it takes too long to re-implement in another language, that excludes large chunks of the 0MQ community. So, again, simple.
+
+* //Fast response time//. By this, I mean a new node should be visible to its peers in a very short time, a second or two at most. Networks change shape rapidly. It's OK to take longer, even 30 seconds, to realize a peer has disappeared.
+
+From the list of possible solutions I collected, the only option that isn't disqualified for one or more reasons is to build our own UDP-based discovery stack. It's a little disappointing that after so many decades of research into network discovery, this is where we end up. But the history of computing does seem to go from complex to simple, so maybe it's normal.
+
++++ A Self-Healing P2P Network in 30 Seconds
+
+I mentioned brute-force discovery. Let's see how that works. One nice thing about software is to brute-force your way through the learning experience. As long as we're happy to throw away work, we can learn rapidly simply by trying things that may seem insane from the safety of the armchair.
+
+I'll explain a brute-force discovery approach for 0MQ that emerged from a workshop in 2012. It is remarkably simple and stupid: connect to every IP address in the room. If your network segment is 192.168.55.x, for instance, you do this:
+
+[[code]]
+connect to tcp://192.168.55.1:9000
+connect to tcp://192.168.55.2:9000
+connect to tcp://192.168.55.3:9000
+...
+connect to tcp://192.168.55.254:9000
+[[/code]]
+
+Which in 0MQ-speak looks like this:
+
+[[code type="fragment" name="brute-force discovery"]]
+int address;
+for (address = 1; address < 255; address++)
+    zsocket_connect (listener, "tcp://192.168.55.%d:9000", address);
+[[/code]]
+
+The stupid part is where we assume that connecting to ourselves is fine, where we assume that all peers are on the same network segment, where we waste file handles as if they were free. Luckily these assumptions are often totally accurate. At least, often enough to let us do fun things.
+
+The loop works because 0MQ connect calls are //asynchronous and opportunistic//. They lie in the shadows like hungry cats, waiting patiently to pounce on any innocent mouse that dared start up a service on port 9000. It's simple, effective, and worked first time.
+
+It gets better: as peers leave and join the network, they'll automatically reconnect. We've designed a self-healing peer to peer network, in 30 seconds and three lines of code.
+
+It won't work for real cases though. Poorer operating systems tend to run out of file handles, and networks tend to be more complex than one segment. And if one node squats a couple of hundred file handles, large-scale simulations (with many nodes on one box or in one process) are out of the question.
+
+Still, let's see how far we can go with this approach before we throw it out. Here's a tiny decentralized chat program that lets you talk to anyone else on the same network segment. The code has two threads: a listener and a broadcaster. The listener creates a SUB socket and does the brute-force connection to all peers in the network. The broadcaster accepts input from the console and sends it on a PUB socket:
+
+[[code type="example" title="Decentralized Chat" name="dechat"]]
+[[/code]]
+
+The {{dechat}} program needs to know the current IP address, the interface, and an alias. We could get these in code from the operating system, but that's grunky non-portable code. So we provide this information on the command line:
+
+[[code]]
+dechat 192.168.55.122 eth0 Joe
+[[/code]]
+
++++ Preemptive Discovery over Raw Sockets
+
 One of the great things about short-range wireless is the proximity. WiFi maps closely to the physical space, which maps closely to how we naturally organize. In fact, the Internet is quite abstract and this confuses a lot of people who kind of "get it" but in fact don't really. With WiFi, we have technical connectivity that is potentially super-tangible. You see what you get and you get what you see. Tangible means easy to understand and that should mean love from users instead of the typical frustration and seething hatred.
 
 Proximity is the key. We have a bunch of WiFi radios in a room, happily beaconing to each other. For lots of applications, it makes sense that they can find each other and start chatting without any user input. After all, most real world data isn't private, it's just highly localized.
-
-As a first step towards 0MQ-based proximity networking, let's look at how to do discovery. There exist libraries that do this. I don't like them. They seem too complex, too specific, and from a prehistoric era before people realized that distributed computing could be //fundamentally simple//.
-
-+++++ "They seem too complex and too specific and somehow to date from a prehistoric era" -> "They seem too complex, too specific, and from a prehistoric era"
-
-+++ Preemptive Discovery over Raw Sockets
 
 I'm in a hotel room in Gangnam, Seoul, with a 4G wireless hotspot, a Linux laptop, and an couple of Android phones. The phones and laptop are talking to the hotspot. The {{ifconfig}} command says my IP address is 192.168.1.2. Let me try some {{ping}} commands. DHCP servers tend to dish out addresses in sequence, so my phones are probably close by, numerically speaking:
 
@@ -186,8 +327,6 @@ PING 192.168.1.4 (192.168.1.4) 56(84) bytes of data.
 
 And that is it. Now, {{ping}} uses raw IP sockets to send {{ICMP_ECHO}} messages. The useful thing about {{ICMP_ECHO}} is that it gets a response from any IP stack that has not deliberately had echo switched off. That's still a common practice on corporate websites who fear the old "ping of death" exploit where malformed messages could crash the machine.
 
-+++++ {{ICMP_ECHO}} in teletype (8 instances)
-
 I call this //preemptive discovery// because it doesn't take any cooperation from the device. We don't rely on any cooperation from the phones to see them sitting there; as long as they're not actively ignoring us, we can see them.
 
 You might ask why this is useful. We don't know that the peers responding to {{ICMP_ECHO}} run 0MQ, that they are interested in talking to us, that they have any services we can use, or even what kind of device they are. However, knowing that there's //something// on address 192.168.1.3 is already useful. We also know how far away the device is, relatively, we know how many devices are on the network, and we know the rough state of the network (as in, good, poor, or terrible).
@@ -195,8 +334,6 @@ You might ask why this is useful. We don't know that the peers responding to {{I
 It isn't even hard to create {{ICMP_ECHO}} messages and send them. A few dozen lines of code, and we could use 0MQ multithreading to do this in parallel for addresses stretching out above and below our own IP address. Could be kind of fun.
 
 However, sadly, there's a fatal flaw in my idea of using {{ICMP_ECHO}} to discover devices. To open a raw IP socket requires root privileges on a POSIX box. It stops rogue programs getting data meant for others. We can get the power to open raw sockets on Linux by giving sudo privileges to our command (ping has the so-called //sticky bit// set). On a mobile OS like Android, it requires root access, i.e., rooting the phone or tablet. That's out of the question for most people and so {{ICMP_ECHO}} is out of reach for most devices.
-
-+++++ "sticky bit" in italic, no quotes
 
 //Expletive deleted!// Let's try something in user space. The next step most people take is UDP multicast or broadcast. Let's follow that trail.
 
@@ -278,13 +415,7 @@ We'll stick with stupid and simple for now. There's always time to make it more 
 
 So we can discover nodes on the WiFi network, as long as they're sending out beacons as we expect. So I try to test with two processes. But when I run udpping2 twice, the second instance complains "'Address already in use' on bind" and exits. Oh, right. UDP and TCP both return an error if you try to bind two different sockets to the same port. This is right. The semantics of two readers on one socket would be weird to say the least. Odd/even bytes? You get all the 1s, I get all the 0's?
 
-+++++ ""'Address already in use' on bind"" -> "Address already in use" (the quoting was correct but confusing)
-
 However, a quick check of stackoverflow.com and some memory of a socket option called {{SO_REUSEADDR}} turns up gold. If I use that, I can bind several processes to the same UDP port, and they will all receive any message arriving on that port. It's almost as if the guys who designed this were reading my mind! (That's way more plausible than the chance that I may be reinventing the wheel.)
-
-+++++ "stackoverflow" -> "stackoverflow.com"
-+++++ "SO_REUSEADDR" -> teletype
-+++++ "SO_REUSADDR" -> SO_REUSEADDR
 
 A quick test shows that {{SO_REUSEADDR}} works as promised. This is great because the next thing I want to do is design an API and then start dozens of nodes to see them discovering each other. It would be really cumbersome to have to test each node on a separate device. And when we get to testing how real traffic behaves on a large, flaky network, the two alternatives are simulation or temporary insanity.
 
@@ -351,19 +482,13 @@ As we will also see later, we have to treat any input from a node, not just UDP 
 
 So we have discovery and presence working over UDP IPv4 broadcasts. It's not ideal, but it works for the local networks we have today. However we can't use UDP for real work, not without additional work to make it reliable. There's a joke about UDP but sometimes you'll get it, and sometimes you won't.
 
-+++++ "There's a joke about UDP but sometimes you'll get it, and sometimes you won't." -> This is the joke
-
 We'll stick to TCP for all one-to-one messaging. There is one more use case for UDP after discovery, which is multicast file distribution. I'll explain why and how, then shelve that for another day. The why is simple: what we call "social networks" is just augmented culture. We create culture by sharing, and this means more and more sharing works that we make or remix. Photos, documents, contracts, tweets. The clouds of devices we're aiming towards do more of this, not less.
 
 Now, there are two principal patterns for sharing content. One is the pub-sub pattern where one node sends out content to a set of other nodes simultaneously. Second is the "late joiner" pattern, where a node arrives somewhat later and wants to catch up to the conversation. We can deal with the late joiner using TCP unicast. But doing TCP unicast to a group of clients at the same time has some disadvantages. First, it can be slower than multicast. Second, it's unfair because some will get the content before others.
 
-+++++ "One is the "pubsub" pattern" -> "One is the pub-sub pattern"
-
 Before you jump off to design a UDP multicast protocol, realize that it's not a simple calculation. When you send a multicast packet, the WiFi access point uses a low bit rate to ensure that even the furthest devices will get it safely. Most normal APs don't do the obvious optimization, which is to measure the distance of the furthest device and use that bit rate. Instead, they just use a fixed value. So if you have a few devices close to the AP, multicast will be insanely slow. But if you have a roomful of devices which all want to get the next chapter of the textbook, multicast can be insanely effective.
 
 The curves cross at about 6-12 devices depending on the network. In theory, you could measure the curves in real time and create an adaptive protocol. That would be cool but probably too hard for even the smartest of us.
-
-+++++ "The curves cross around" -> "The curves cross at about"
 
 If you do sit down and sketch out a UDP multicast protocol, realize that you need a channel for recovery, to get lost packets. You'd probably want to do this over TCP, using 0MQ. For now, however, we'll forget about multicast UDP and assume all traffic goes over TCP.
 
@@ -380,9 +505,7 @@ At this stage, however, the code is growing larger than an example should be, so
 * Two maintainers
 * A first bootstrap version
 
-The name and slogan first. The trademarks of the 21st century are domain names. So the first thing I do when spinning off a project is to look for a domain name that might work. Quite randomly, one of our old mobile projects was called "Zyre" and I have the domain names for it. The full name is a backronym: the ZeroMQ Realtime Exchange framework.
-
-+++++ "So, that's the full name: ... framework" -> delete this sentence entirely
+The name and slogan first. The trademarks of the 21st century are domain names. So the first thing I do when spinning off a project is to look for a domain name that might work. Quite randomly, one of our old messaging projects was called "Zyre" and I have the domain name for it. The full name is a backronym: the ZeroMQ Realtime Exchange framework.
 
 I'm somewhat shy about pushing new projects into the 0MQ community too aggressively, and normally would start a project in either my personal account or the iMatix organization. But we've learned that moving projects after they become popular is counterproductive. My predictions of a future filled with moving pieces are either valid or wrong. If this chapter is valid, we might as well launch this as a 0MQ project from the start. If it's wrong, we can delete the repository later or let it sink to the bottom of a long list of forgotten starts.
 
@@ -501,8 +624,6 @@ Developers who study 0MQ and then try to create N-to-N connections between sets 
 
 Experience teaches us that ROUTER-to-ROUTER is particularly difficult to use successfully. At a minimum, one peer must bind and one must connect, meaning the architecture is not symmetrical. But also because you simply can't tell when you are allowed to safely send a message to a peer. It's a Catch-22: you can talk to a peer after it's talked to you, but the peer can't talk to you until you've talked to it. One side or the other will be losing messages and thus has to retry, which means the peers cannot be equal.
 
-+++++ "My conclusion after trying several times from different angles is that ROUTER-to-ROUTER does not work. And the 0MQ reference manual does not allow it when it discusses ROUTER sockets in {{zmq_socket[3]}}." -> "Experience teaches us that ROUTER-to-ROUTER is particularly difficult to use successfully."
-
 I'm going to explain the Harmony pattern, which solves this problem, and which we use in Zyre.
 
 We want a guarantee that when a peer "appears" on our network, we can talk to it safely without 0MQ dropping messages. For this, we have to use a DEALER or PUSH socket that //connects out to the peer// so that even if that connection takes some non-zero time, there is immediately a pipe and 0MQ will accept outgoing messages.
@@ -519,9 +640,6 @@ And so the Harmony pattern comes down to these components:
 * Writing to the peer's DEALER socket.
 
 The next problem is that discovery isn't neatly synchronized. We can get the first beacon from a peer //after// we start to receive messages from it. A message comes in on the ROUTER socket and has a nice UUID attached to it, but no physical IP address and port. We have to force discovery over TCP. To do this, our first command to any new peer to which we connect is an {{OHAI}} command with our IP address and port. This ensure that the receiver connects back to us before trying to send us any command.
-
-+++++ "has a nice UUID attached to it. But no physical IP address and port" -> "has a nice UUID attached to it, but no physical IP address and port"
-+++++ OHAI -> teletype (multiple cases)
 
 Here it is, broken down into steps:
 
@@ -551,16 +669,11 @@ This gives us a set of states for each peer, though at this stage the code doesn
 * Peer seems quiet (no activity in some time, so we send a {{HUGZ}} command)
 * Peer has disappeared (no reply to our {{HUGZ}} commands, so we destroy peer)
 
-+++++ HUGZ in teletype
-
 There's one remaining scenario we didn't address in the code at this stage. It's possible for a peer to change IP addresses and ports without actually triggering a disappearance event. For example, if the user switches off WiFi and then switches it back on, the access point can assign the peer a new IP address. We'll need to handle a disappeared WiFi interface on our node by unbinding the ROUTER socket and rebinding it when we can. Because this is not central to the design now, I decide to log an issue on the GitHub tracker and leave it for a rainy day.
 
 ++ Group Messaging
 
 Group messaging is a common and very useful pattern. The concept is simple: instead of talking to a single node, you talk to a "group" of nodes. The group is just a name, a string that you agree on in the application. It's precisely like using the pub-sub prefixes in PUB and SUB sockets. In fact, the only reason I say "group messaging" and not "pub-sub" is to prevent confusion, because we're not going to use PUB-SUB sockets for this.
-
-+++++ "PUB/SUB sockets" -> "PUB-SUB sockets"
-+++++ "PUB/SUB would almost work" -> "PUB-SUB sockets would almost work"
 
 PUB-SUB sockets would almost work. But we've just done such a lot of work to solve the late joiner problem. Applications are inevitably going to wait for peers to arrive before sending messages to groups, so we have to build on the Harmony pattern rather than start again beside it.
 
@@ -581,28 +694,17 @@ This gives us some new protocol commands:
 
 Plus, we add a {{groups}} field to the first command we send (renamed from {{OHAI}} to {{HELLO}} at this point because I need a larger lexicon of command verbs).
 
-+++++ "a 'groups' field" -> teletype, no quotes around "group"
-+++++ JOIN and LEAVE in teletype
-+++++ HELLO in teletype
-
 Lastly, let's add a way for peers to double-check the accuracy of their group data. The risk is that we miss one of the above messages. Though we are using Harmony to avoid the typical message loss at startup, it's worth being paranoid. For now, all we need is a way to detect such a failure. We'll deal with recovery later, if the problem actually happens.
 
 I'll use the UDP beacon for this. What we want is a rolling counter that simply tells how many join and leave operations ("transitions") there have been for a node. It starts at 0 and increments for each group we join or leave. We can use a minimal 1-byte value because that will catch all failures except the astronomically rare "we lost precisely 256 messages in a row" failure (this is the one that hits during the first demo). We will also put the transitions counter into the {{JOIN}}, {{LEAVE}}, and {{HELLO}} commands. And to try to provoke the problem, we'll test by joining/leaving several hundred groups with a high-water mark set to 10 or so.
 
 It's time to choose verbs for the group messaging. We need a command that means "talk to one peer" and one that means "talk to many peers". After some attempts, my best choices are {{WHISPER}} and {{SHOUT}}, and this is what the code uses. The {{SHOUT}} command needs to tell the user the group name, as well as the sender peer.
 
-+++++ "Time to choose verbs" -> "It's time to choose verbs"
-+++++ WHISPER and SHOUT in teletype, no quotes
-
 Because groups are like pub-sub, you might be tempted to use this to broadcast the {{JOIN}} and {{LEAVE}} commands as well, perhaps by creating a "global" group that all nodes join. My advice is to keep groups purely as user-space concepts for two reasons. First, how do you join the global group if you need the global group to send out a {{JOIN}} command? Second, it creates special cases (reserved names) which are messy.
-
-+++++ "'reserved names'" -> no quotes at all
 
 It's simpler just to send {{JOIN}}s and {{LEAVE}}s explicitly to all connected peers, period.
 
 I'm not going to work through the implementation of group messaging in detail because it's fairly pedantic and not too exciting. The data structures for group and peer management aren't optimal, but they're workable. We use the following:
-
-+++++ "We need:" -> "We use the following:"
 
 * A list of groups for our interface, which we can send to new peers in a {{HELLO}} command;
 * A hash of groups for other peers, which we update with information from {{HELLO}}, {{JOIN}}, and {{LEAVE}} commands;
@@ -613,6 +715,8 @@ At this stage, I'm starting to get pretty happy with the binary serialization (o
 This version is tagged in the repository as v0.2.0 and you can [https://github.com/zeromq/zyre/tags download the tarball] if you want to check what the code looked like at this stage.
 
 ++ Testing and Simulation
+
+When you build a product out of pieces, and this includes a distributed framework like Zyre, the only way to know that it will work properly in real life is to simulate real activity on each piece.
 
 +++ On Assertions
 
@@ -628,8 +732,6 @@ The faster you can prove code incorrect, the faster and more accurately you can 
 
 So the Zyre code base is scattered with assertions, and particularly a couple on the code that deals with the state of peers. This is the hardest aspect to get right: peers need to track each other and exchange state accurately or things stop working. The algorithms depend on asynchronous messages flying around and I'm pretty sure the initial design has flaws. It always does.
 
-+++++ "They always do." -> "It always does."
-
 And as I test the original Zyre code by starting and stopping instances of {{zre_ping}} by hand, every so often I get an assertion failure. Running by hand doesn't reproduce these often enough, so let's make a proper tester tool.
 
 +++ On Up-Front Testing
@@ -642,13 +744,7 @@ One of these teams, a firm specializing in industrial automation, built ticket m
 
 A year later, there was a second factory, and the same story. By this time the client, was getting impatient. So when they came to the third and largest factory, a year later, we jumped up and said, "please let us make the kiosks and the software and everything".
 
-+++++ "So when... and everything"." -> add, "The client gratefully said "yes" and gave us a blank check to do this right."
-+++++ "So we made" -> "We made"
-
 We made a detailed design for the software and hardware and found suppliers for all the pieces. It took us three months to search the Internet for each component (in those days, the Internet was a lot slower), and another two months to get them assembled into stainless-steel bricks each weighing about twenty kilos. These bricks were two feet square and eight inches deep, with a large flat-screen panel behind unbreakable glass, and two connectors: one for power, one for Ethernet. You loaded up the paper bin with enough for six months, then screwed the brick into a housing, and it automatically booted, found its DNS server, loaded its Linux OS and then application software. It connected to the real server, and showed the main menu. You got access to the configuration screens by swiping a special badge and then entering a code.
-
-+++++ "search the Internet for each component" -> "search the Internet for each component (in those days, the Internet was a lot slower)"
-+++++ "These bricks were 60cm square and 20cm deep" -> "These bricks were two feet square and eight inches deep"
 
 The software was portable so we could test that as we wrote it, and as we collected the pieces from our suppliers we kept one of each so we had a disassembled kiosk to play with. When we got our finished kiosks, they all worked immediately. We shipped them to the client, who plugged them into their housing, switched them on, and went to business. We spent a week or so on-site, and in ten years, one kiosk broke (the screen died, and was replaced).
 
@@ -658,12 +754,7 @@ Lesson is, test upfront so that when you plug the thing in, you know precisely h
 
 During manual testing, I did hit an assertion rarely. It then disappeared. Because I don't believe in magic, I know that meant the code was still wrong somewhere. So, the next step was heavy-duty testing of the Zyre v0.2.0 code to try to break its assertions, and get a good idea of how it will behave in the field.
 
-+++++ "that means the code is still wrong somewhere" -> "that meant the code was still wrong somewhere" (tense)
-+++++ "So, next step... in the field" -> "So, the next step was heavy-duty testing of the Zyre v0.2.0 code to try to break its assertions, and get a good idea of how it would behave in the field."
-
 We packaged the discovery and messaging functionality as an //interface// object that the main program creates, works with, and then destroys. We don't use any global variables. This makes it easy to start large numbers of interfaces and simulate real activity, all within one process. And if there's one thing we've learned from writing lots of examples, it's that 0MQ's ability to orchestrate multiple threads in a single process is //much// easier to work with than multiple processes.
-
-+++++ "an interface object" -> italics, no quotes around "interface"
 
 The first version of the tester consists of a main thread that starts and stops a set of child threads, each running one interface, each with a ROUTER, DEALER, and UDP socket (R, D, and U in the diagram)[figure].
 
@@ -750,8 +841,6 @@ int main (int argc, char *argv [])
 
 Note that we maintain a //pipe// to each child thread (CZMQ creates the pipe automatically when we use the {{zthread_fork}} method). It's via this pipe that we tell child threads to stop when it's time for them to leave. The child threads do the following (I'm switching to pseudo-code for clarity):
 
-+++++ "we maintain a pipe" -> italics, no quotes around "pipe"
-
 [[code]]
 create an interface
 while true:
@@ -779,13 +868,9 @@ Yes, we broke the code. Several times, in fact. This was satisfying. I'll work t
 
 Getting nodes to agree on consistent group status was the most difficult. Every node needs to track the group membership of the whole network, as I already explained in the section "Group Messaging". Group messaging is a pub-sub pattern. {{JOIN}}s and {{LEAVE}}s are analogous to subscribe and unsubscribe messages. It's essential that none of these ever get lost, or we'll find nodes dropping randomly off groups.
 
-+++++ "analogous to 'subscribe' and 'unsubscribe' messages" -> no quotes at all around "subscribe" and "unsubscribe"
-
 So each node counts the total number of {{JOIN}}s and {{LEAVE}}s it's ever done, and broadcasts this status (as 1-byte rolling counter) in its UDP beacon. Other nodes pick up the status, compare it to their own calculations, and if there's a difference, the code asserts.
 
 The first problem was that UDP beacons get delayed randomly, so they're useless for carrying the status. When a beacons arrives late, the status is inaccurate and we get a //false negative//. To fix this, we moved the status information into the {{JOIN}} and {{LEAVE}} commands. We also added it to the {{HELLO}} command. The logic then becomes:
-
-+++++ "false negative" in italics, no quotes
 
 * Get initial status for a peer from its {{HELLO}} command.
 * When getting a {{JOIN}} or {{LEAVE}} from a peer, increment the status counter.
@@ -794,12 +879,7 @@ The first problem was that UDP beacons get delayed randomly, so they're useless 
 
 Next problem we got was that messages were arriving unexpectedly on new connections. The Harmony pattern connects, then sends {{HELLO}} as the first command. This means the receiving peer should always get {{HELLO}} as the first command from a new peer. We were seeing {{PING}}, {{JOIN}}, and other commands arriving.
 
-+++++ "We were seeing PING, JOIN, and other commands arriving." -> "Instead, we were seeing PING, JOIN, and other commands arriving first."
-+++++ PING in teletype
-
 This turned out to be due to CZMQ's ephemeral port logic. An ephemeral port is just a dynamically assigned port that a service can get rather than asking for a fixed port number. A POSIX system usually assigns ephemeral ports in the range 0xC000 to 0xFFFF. CZMQ's logic is to look for a free port in this range, bind to that, and return the port number to the caller.
-
-+++++ "calller" -> "caller"
 
 This sounds fine, until you get one node stopping and another node starting close together, and the new node getting the port number of the old node. Remember that 0MQ tries to re-establish a broken connection. So when the first node stopped, its peers would retry to connect. When the new node appears on that same port, suddenly all the peers connect to it and start chatting like they're old buddies.
 
@@ -865,8 +945,6 @@ Resource temporarily unavailable
 
 The next step is to decide what a reasonable high-water mark would be for a peer. Zyre is meant for human interactions; that is, applications that chat at a low frequency, such as two games or a shared drawing program. I'd expect a hundred messages per second to be quite a lot. Our "peer is really dead" timeout is 10 seconds. So a high-water mark of 1,000 seems fair.
 
-+++++ "Next step is to decide" -> "The next step is to decide"
-
 Rather than set a fixed HWM or use the default (which randomly also happens to be 1,000), we calculate it as 100 * the timeout. Here's how we configure a new DEALER socket for a peer:
 
 [[code type="fragment" name="zyre-peer-new-socket"]]
@@ -888,8 +966,6 @@ zsocket_connect (self->mailbox, "tcp://%s", endpoint);
 [[/code]]
 
 And finally, what do we do when we get an {{EAGAIN}} on a peer? We don't need to go through all the work of destroying the peer because the interface will do this automatically if it doesn't get any message from the peer within the expiration timeout. Just dropping the last message seems very weak; it will give the receiving peer gaps.
-
-+++++ {{EAGAIN}} in teletype
 
 I'd prefer a more brutal response. Brutal is good because it forces the design to a "good" or "bad" decision rather than a fuzzy "should work but to be honest there are a lot of edge cases so let's worry about it later". Destroy the socket, disconnect the peer, and stop sending anything to it. The peer will eventually have to reconnect and re-initialize any state. It's kind of an assertion that 100 messages a second is enough for anyone. So, in the {{zre_peer_send}} method:
 
@@ -1002,16 +1078,11 @@ Making this first version was fairly simple and took half a day. Here are the pi
 * We wrote a simple logger application that manages the SUB socket and sets the {{X-ZRELOG}} header.
 * We send our own headers when we send a {{HELLO}} command.
 
-+++++ "X-ZRELOG" in teletype
 This version is tagged in the Zyre repository as v0.4.0 and you can [https://github.com/zeromq/zyre/tags download the tarball] if you want to see what the code looked like at this stage.
-
-+++++ "check what" -> "see what" (not just "see")
 
 At this stage, the log message is just a string. We'll make more professionally structured log data in a little while.
 
 First, a note on dynamic ports. In the {{zre_tester}} app that we use for testing, we create and destroy interfaces aggressively. One consequence is that a new interface can easily reuse a port that was just freed by another application. If there's a 0MQ socket somewhere trying to connect this port, the results can be hilarious.
-
-+++++ "zre_tester" in teletype
 
 Here's the scenario I had, which caused a few minutes' confusion. The logger was running on a dynamic port:
 
@@ -1131,8 +1202,6 @@ Each node is going to be a file publisher and a file subscriber. We bind the pub
 
 We need to ensure that each node has its own directory for sending and receiving files (the outbox and the inbox). Again, it's so we can run multiple nodes on one box. Because we already have a unique ID per node, we just use that in the directory name.
 
-+++++ "'outbox' and 'inbox'" -> no quotes at all here
-
 Here's how we set up the FileMQ API when we create a new interface:
 
 [[code type="fragment" name="filemq-outbox"]]
@@ -1159,8 +1228,6 @@ fmq_client_subscribe (self->fmq_client, "/");
 
 And when we process a {{HELLO}} command, we check for the {{X-FILEMQ}} header field:
 
-+++++ X-FILEMQ in teletype
-
 [[code type="fragment" name="filemq-connect"]]
 //  If peer is a FileMQ publisher, connect to it
 char *publisher = zre_msg_headers_string (msg, "X-FILEMQ", NULL);
@@ -1174,8 +1241,6 @@ The last thing is to expose content distribution in the Zyre API. We need two th
 * A way for the interface to tell the application, "We received this file".
 
 In theory, the application can publish a file just by creating a symbolic link in the outbox directory, but as we're using a hidden outbox, this is a little difficult. So we add an API method {{publish}}:
-
-+++++ "we add an API method 'publish'" -> "we add an API method zre_interface_publish", teletype around "zre_interface_publish"
 
 [[code type="fragment" name="publish-file"]]
 //  Publish file into virtual space
@@ -1192,8 +1257,6 @@ zre_interface_publish (zre_interface_t *self,
 The API passes this to the interface thread, which creates the file in the outbox directory so that the FileMQ server will pick it up and broadcast it. We could literally copy file data into this directory, but because FileMQ supports symbolic links, we use that instead. The file has a ".ln" extension and contains one line, which contains the actual pathname.
 
 Finally, how do we notify the recipient that a file has arrived? The FileMQ {{fmq_client}} API has a message, "DELIVER", for this, so all we have to do in {{zre_interface}} is grab this message from the {{fmq_client}} API and pass it on to our own API:
-
-+++++ "fmq_client" should be in teletype IMO (as with all code names)
 
 [[code type="fragment" name="forward-deliver"]]
 zmsg_t *msg = fmq_client_recv (fmq_client_handle (self->fmq_client));
@@ -1318,11 +1381,7 @@ Zyre isn't finished. Like many of the projects in this book, it's an ice breaker
 
 * High-level APIs: the message-based API that Zyre offers now is usable but still rather more complex than I'd like for average developers. If there's one target we absolutely cannot miss, it's raw //simplicity//. This means we should build high-level APIs, in lots of languages, which hide all the messaging, and which come down to simple methods like start, join/leave group, get message, publish file, stop.
 
-+++++ "This means high-level APIs in lots of languages, which hide all the messaging and come down to simple methods:" -> "This means we should build high-level APIs, in lots of languages, which hide all the messaging, and which come down to simple methods like"
-
 * Security: how do we build a fully decentralized security system? We might be able to leverage public key infrastructure for some work, but that requires that nodes have their own Internet access, which isn't guaranteed. The answer is, as far as we can tell, to use any existing secure peer-to-peer link (TLS, BlueTooth, perhaps NFC) to exchange a session key and use a symmetric cipher. Symmetric ciphers have their advantages and disadvantages.
-
-+++++ "a session key, a symmetric cipher" -> "a session key and use a symmetric cipher"
 
 * Nomadic content: how do I, as a user, manage my content across multiple devices? The Zyre + FileMQ combination might help, for local network use, but I'd like to be able to do this across the Internet as well. Are there cloud services I could use? Is there something I could make using 0MQ?
 

@@ -236,6 +236,8 @@ The common thread in this valid versus invalid breakdown is that a 0MQ socket co
 
 ++ Exploring ROUTER Sockets
 
+Let's look at ROUTER sockets a little closer. We've already seen how they work by routing individual messages to specific connections. I'll explain in more detail how we identify those connections, and what a ROUTER socket does when it can't send a message.
+
 +++ Identities and Addresses
 
 The //identity// concept in 0MQ refers specifically to ROUTER sockets and how they identify the connections they have to other sockets. More broadly, identities are used as addresses in the reply envelope. In most cases, the identity is arbitrary and local to the ROUTER socket: it's a lookup key in a hash table. Independently, a peer can have an address that is physical (a network endpoint like "tcp://192.168.55.117:5670") or logical (a UUID or email address or other unique key).
@@ -460,8 +462,6 @@ Now let's look at the load balancing algorithm. It requires that both clients an
 You should now see that you can reuse and extend the load balancing algorithm with variations based on the information the worker provides in its initial "ready" message. For example, workers might start up and do a performance self test, then tell the broker how fast they are. The broker can then choose the fastest available worker rather than the oldest.
 
 ++ A High-Level API for 0MQ
-
-+++ Making a Detour
 
 We're going to push request-reply onto the stack and open a different area, which is the 0MQ API itself. There's a reason for this detour: as we write more complex examples, the low-level 0MQ API starts to look increasingly clumsy. Look at the core of the worker thread from our load balancing broker:
 

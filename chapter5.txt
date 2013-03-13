@@ -656,7 +656,7 @@ Roughly, there are two ways to design a complex protocol such as this one. One w
 
 The second way to make such a protocol is to use a single socket pair for everything. In this case, I'd have used ROUTER for the server and DEALER for the clients, and then done everything over that connection. It makes for a more complex protocol but at least the complexity is all in one place. In [#advanced-architecture] we'll look at an example of a protocol done over a ROUTER-DEALER combination.
 
-Let's look at CHP in more detail now. Note that "SHOULD", "MUST" and "MAY" are key words we use in protocol specifications to indicate requirement levels.
+Let's take a look at the CHP specification. Note that "SHOULD", "MUST" and "MAY" are key words we use in protocol specifications to indicate requirement levels.
 
 **Goals**
 

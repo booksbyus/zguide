@@ -759,7 +759,7 @@ To test this, start {{mdbroker}} and {{titanic}}, and then run {{ticlient}}. Now
 Some notes about this code:
 
 * Note that some loops start by sending, others by receiving messages. This is because Titanic acts both as a client and a worker in different roles.
-* We send requests only to services that appear to be running, using MMI. This works as well as the MMI implementation in the broker.
+* The Titanic broker uses the MMI service discovery protocol to send requests only to services that appear to be running. Since the MMI implementation in our little Majordomo broker is quite poor, this won't work all the time.
 * We use an inproc connection to send new request data from the {{titanic.request}} service through to the main dispatcher. This saves the dispatcher from having to scan the disk directory, load all request files, and sort them by date/time.
 
 The important thing about this example is not performance (which, although I haven't tested it, is surely terrible), but how well it implements the reliability contract. To try it, start the mdbroker and titanic programs. Then start the ticlient, and then start the mdworker echo service. You can run all four of these using the {{-v}} option to do verbose activity tracing. You can stop and restart any piece //except the client// and nothing will get lost.
