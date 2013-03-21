@@ -7,11 +7,11 @@
 package main
 
 import (
-  "fmt"
-  zmq "github.com/alecthomas/gozmq"
+	"fmt"
+	zmq "github.com/alecthomas/gozmq"
 )
 
 func main() {
-  major, minor, patch := zmq.Version()
-  fmt.Printf("Current 0MQ version is %d.%d.%d\n", major, minor, patch)
+	major, minor, patch := zmq.Version()
+	fmt.Printf("Current 0MQ version is %d.%d.%d\n", major, minor, patch)
 }

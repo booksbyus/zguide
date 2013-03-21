@@ -8,25 +8,25 @@
 
 package main
 
-import(
-    "fmt"
-    "os"
+import (
+	"fmt"
+	"os"
 )
 
 func main() {
-    verbose := len(os.Args) >= 2 && os.Args[1] == "-v"
+	verbose := len(os.Args) >= 2 && os.Args[1] == "-v"
 
-    client := NewClient("tcp://localhost:5555", verbose)
-    defer client.Close()
+	client := NewClient("tcp://localhost:5555", verbose)
+	defer client.Close()
 
-    count := 0
-    for ; count < 1e5; count ++ {
-        request := [][]byte{[]byte("Hello world")}
-        reply := client.Send([]byte("echo"), request)
-        if len(reply) == 0 {
-            break
-        }
-    }
+	count := 0
+	for ; count < 1e5; count++ {
+		request := [][]byte{[]byte("Hello world")}
+		reply := client.Send([]byte("echo"), request)
+		if len(reply) == 0 {
+			break
+		}
+	}
 
-    fmt.Printf("%d requests/replies processed\n", count)
+	fmt.Printf("%d requests/replies processed\n", count)
 }
