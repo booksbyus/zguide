@@ -6,22 +6,21 @@
 //
 //  Author: iano <scaly.iano@gmail.com>
 
-
 package main
 
 import (
-    "os"
+	"os"
 )
 
 func main() {
-    verbose := len(os.Args) >= 2 && os.Args[1] == "-v"
+	verbose := len(os.Args) >= 2 && os.Args[1] == "-v"
 
-    worker := NewWorker("tcp://localhost:5555", "echo", verbose)
-    for reply := [][]byte{};; {
-        request := worker.Recv(reply)
-        if len(request) == 0 {
-            break
-        }
-        reply = request
-    }
+	worker := NewWorker("tcp://localhost:5555", "echo", verbose)
+	for reply := [][]byte{}; ; {
+		request := worker.Recv(reply)
+		if len(request) == 0 {
+			break
+		}
+		reply = request
+	}
 }
