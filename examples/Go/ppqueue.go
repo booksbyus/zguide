@@ -13,7 +13,6 @@ import (
 )
 
 const (
-	HEARTBEAT_LIVENESS = 3           //  3-5 is reasonable
 	HEARTBEAT_INTERVAL = time.Second //  time.Duration
 
 	//  Paranoid Pirate Protocol constants
@@ -21,13 +20,13 @@ const (
 	PPP_HEARTBEAT = "\002" //  Signals worker heartbeat
 )
 
-type Worker struct {
+type PPWorker struct {
 	address []byte    //  Address of worker
 	expiry  time.Time //  Expires at this time
 }
 
-func NewWorker(address []byte) *Worker {
-	return &Worker{
+func NewPPWorker(address []byte) *PPWorker {
+	return &PPWorker{
 		address: address,
 		expiry:  time.Now().Add(HEARTBEAT_LIVENESS * HEARTBEAT_INTERVAL),
 	}
@@ -49,14 +48,14 @@ func (workers *WorkerQueue) Len() int {
 
 func (workers *WorkerQueue) Next() []byte {
 	elem := workers.queue.Back()
-	worker, _ := elem.Value.(*Worker)
+	worker, _ := elem.Value.(*PPWorker)
 	workers.queue.Remove(elem)
 	return worker.address
 }
 
-func (workers *WorkerQueue) Ready(worker *Worker) {
+func (workers *WorkerQueue) Ready(worker *PPWorker) {
 	for elem := workers.queue.Front(); elem != nil; elem = elem.Next() {
-		if w, _ := elem.Value.(*Worker); string(w.address) == string(worker.address) {
+		if w, _ := elem.Value.(*PPWorker); string(w.address) == string(worker.address) {
 			workers.queue.Remove(elem)
 			break
 		}
@@ -67,7 +66,7 @@ func (workers *WorkerQueue) Ready(worker *Worker) {
 func (workers *WorkerQueue) Purge() {
 	now := time.Now()
 	for elem := workers.queue.Front(); elem != nil; elem = workers.queue.Front() {
-		if w, _ := elem.Value.(*Worker); w.expiry.After(now) {
+		if w, _ := elem.Value.(*PPWorker); w.expiry.After(now) {
 			break
 		}
 		workers.queue.Remove(elem)
@@ -97,9 +96,9 @@ func main() {
 
 		//  Poll frontend only if we have available workers
 		if workers.Len() > 0 {
-			zmq.Poll(items, HEARTBEAT_INTERVAL.Nanoseconds()/1e3)
+			zmq.Poll(items, HEARTBEAT_INTERVAL)
 		} else {
-			zmq.Poll(items[:1], HEARTBEAT_INTERVAL.Nanoseconds()/1e3)
+			zmq.Poll(items[:1], HEARTBEAT_INTERVAL)
 		}
 
 		//  Handle worker activity on backend
@@ -109,15 +108,15 @@ func main() {
 				panic(err) //  Interrupted
 			}
 			address := frames[0]
-			workers.Ready(NewWorker(address))
+			workers.Ready(NewPPWorker(address))
 
 			//  Validate control message, or return reply to client
 			if msg := frames[1:]; len(msg) == 1 {
 				switch status := string(msg[0]); status {
 				case PPP_READY:
-					fmt.Println("I: Worker ready")
+					fmt.Println("I: PPWorker ready")
 				case PPP_HEARTBEAT:
-					fmt.Println("I: Worker heartbeat")
+					fmt.Println("I: PPWorker heartbeat")
 				default:
 					fmt.Println("E: Invalid message from worker: ", msg)
 				}
@@ -142,7 +141,7 @@ func main() {
 		//  dead workers:
 		if heartbeatAt.Before(time.Now()) {
 			for elem := workers.queue.Front(); elem != nil; elem = elem.Next() {
-				w, _ := elem.Value.(*Worker)
+				w, _ := elem.Value.(*PPWorker)
 				msg := [][]byte{w.address, []byte(PPP_HEARTBEAT)}
 				backend.SendMultipart(msg, 0)
 			}

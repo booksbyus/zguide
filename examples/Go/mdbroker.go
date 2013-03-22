@@ -20,7 +20,6 @@ import (
 
 const (
 	INTERNAL_SERVICE_PREFIX = "mmi."
-	HEARTBEAT_LIVENESS      = 3
 	HEARTBEAT_INTERVAL      = 2500 * time.Millisecond
 	HEARTBEAT_EXPIRY        = HEARTBEAT_INTERVAL * HEARTBEAT_LIVENESS
 )
@@ -30,7 +29,7 @@ type Broker interface {
 	Run()
 }
 
-type mdWorker struct {
+type mdbWorker struct {
 	identity string     //  Hex Identity of worker
 	address  []byte     //  Address to route to
 	expiry   time.Time  //  Expires at this point, unless heartbeat
@@ -50,7 +49,7 @@ type mdBroker struct {
 	services    map[string]*mdService //  Known services
 	socket      zmq.Socket            //  Socket for clients & workers
 	waiting     *ZList                //  Idle workers
-	workers     map[string]*mdWorker  //  Known workers
+	workers     map[string]*mdbWorker //  Known workers
 	verbose     bool                  //  Print activity to stdout
 }
 
@@ -66,13 +65,13 @@ func NewBroker(endpoint string, verbose bool) Broker {
 		services:    make(map[string]*mdService),
 		socket:      socket,
 		waiting:     NewList(),
-		workers:     make(map[string]*mdWorker),
+		workers:     make(map[string]*mdbWorker),
 		verbose:     verbose,
 	}
 }
 
 //  Deletes worker from all data structures, and deletes worker.
-func (self *mdBroker) deleteWorker(worker *mdWorker, disconnect bool) {
+func (self *mdBroker) deleteWorker(worker *mdbWorker, disconnect bool) {
 	if worker == nil {
 		panic("Nil worker")
 	}
@@ -102,7 +101,7 @@ func (self *mdBroker) dispatch(service *mdService, msg [][]byte) {
 		msg, service.requests = service.requests[0], service.requests[1:]
 		elem := service.waiting.Pop()
 		self.waiting.Remove(elem)
-		worker, _ := elem.Value.(*mdWorker)
+		worker, _ := elem.Value.(*mdbWorker)
 		self.sendToWorker(worker, MDPW_REQUEST, nil, msg)
 	}
 }
@@ -134,7 +133,7 @@ func (self *mdBroker) processWorker(sender []byte, msg [][]byte) {
 	identity := hex.EncodeToString(sender)
 	worker, workerReady := self.workers[identity]
 	if !workerReady {
-		worker = &mdWorker{
+		worker = &mdbWorker{
 			identity: identity,
 			address:  sender,
 			expiry:   time.Now().Add(HEARTBEAT_EXPIRY),
@@ -190,7 +189,7 @@ func (self *mdBroker) processWorker(sender []byte, msg [][]byte) {
 func (self *mdBroker) purgeWorkers() {
 	now := time.Now()
 	for elem := self.waiting.Front(); elem != nil; elem = self.waiting.Front() {
-		worker, _ := elem.Value.(*mdWorker)
+		worker, _ := elem.Value.(*mdbWorker)
 		if worker.expiry.After(now) {
 			break
 		}
@@ -216,7 +215,7 @@ func (self *mdBroker) requireService(name string) *mdService {
 
 //  Send message to worker.
 //  If message is provided, sends that message.
-func (self *mdBroker) sendToWorker(worker *mdWorker, command string, option []byte, msg [][]byte) {
+func (self *mdBroker) sendToWorker(worker *mdbWorker, command string, option []byte, msg [][]byte) {
 	//  Stack routing and protocol envelopes to start of message and routing envelope
 	if len(option) > 0 {
 		msg = append([][]byte{option}, msg...)
@@ -248,7 +247,7 @@ func (self *mdBroker) serviceInternal(service []byte, msg [][]byte) {
 }
 
 //  This worker is now waiting for work.
-func (self *mdBroker) workerWaiting(worker *mdWorker) {
+func (self *mdBroker) workerWaiting(worker *mdbWorker) {
 	//  Queue to broker and service waiting lists
 	self.waiting.PushBack(worker)
 	worker.service.waiting.PushBack(worker)
@@ -270,7 +269,7 @@ func (self *mdBroker) Run() {
 			zmq.PollItem{Socket: self.socket, Events: zmq.POLLIN},
 		}
 
-		_, err := zmq.Poll(items, HEARTBEAT_INTERVAL.Nanoseconds()/1e3)
+		_, err := zmq.Poll(items, HEARTBEAT_INTERVAL)
 		if err != nil {
 			panic(err) //  Interrupted
 		}
@@ -299,7 +298,7 @@ func (self *mdBroker) Run() {
 		if self.heartbeatAt.Before(time.Now()) {
 			self.purgeWorkers()
 			for elem := self.waiting.Front(); elem != nil; elem = elem.Next() {
-				worker, _ := elem.Value.(*mdWorker)
+				worker, _ := elem.Value.(*mdbWorker)
 				self.sendToWorker(worker, MDPW_HEARTBEAT, nil, nil)
 			}
 			self.heartbeatAt = time.Now().Add(HEARTBEAT_INTERVAL)
