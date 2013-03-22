@@ -12,10 +12,6 @@ import (
 	"time"
 )
 
-const (
-	HEARTBEAT_LIVENESS = 3 //  3-5 is reasonable
-)
-
 type Worker interface {
 	Close()
 	Recv([][]byte) [][]byte
@@ -109,7 +105,7 @@ func (self *mdWorker) Recv(reply [][]byte) (msg [][]byte) {
 			zmq.PollItem{Socket: self.worker, Events: zmq.POLLIN},
 		}
 
-		_, err := zmq.Poll(items, self.heartbeat.Nanoseconds()/1e3)
+		_, err := zmq.Poll(items, self.heartbeat)
 		if err != nil {
 			panic(err) //  Interrupted
 		}

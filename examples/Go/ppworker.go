@@ -13,7 +13,6 @@ import (
 )
 
 const (
-	HEARTBEAT_LIVENESS = 3           //  3-5 is reasonable
 	HEARTBEAT_INTERVAL = time.Second //  time.Duration
 
 	INTERVAL_INIT = time.Second      //  Initial reconnect
@@ -61,7 +60,7 @@ func main() {
 			zmq.PollItem{Socket: worker, Events: zmq.POLLIN},
 		}
 
-		zmq.Poll(items, HEARTBEAT_INTERVAL.Nanoseconds()/1e3)
+		zmq.Poll(items, HEARTBEAT_INTERVAL)
 
 		if items[0].REvents&zmq.POLLIN != 0 {
 			frames, err := worker.RecvMultipart(0)
