@@ -1,11 +1,6 @@
-Examples in Go 
+Examples in Go
+
+Use 'build all' to build all examples
+Use 'build hwserver' to build just hwserver (or any example)
+
 See LICENSE in examples directory
-
-
-To run the examples:
-
-  go run hwserver.go  # etc
-
-Or multiple files in some cases:
-
-  go run mdp.go zhelpers.go mdbroker.go [-v]  # etc

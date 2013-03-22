@@ -10,6 +10,10 @@ import (
 	"reflect"
 )
 
+const (
+	HEARTBEAT_LIVENESS = 3 //  3-5 is reasonable
+)
+
 //  Golang implementation of zlist in C
 type ZList struct {
 	list.List

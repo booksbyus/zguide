@@ -75,7 +75,7 @@ func (self *mdClient) Send(service []byte, request [][]byte) (reply [][]byte) {
 			zmq.PollItem{Socket: self.client, Events: zmq.POLLIN},
 		}
 
-		_, err := zmq.Poll(items, self.timeout.Nanoseconds()/1e3)
+		_, err := zmq.Poll(items, self.timeout)
 		if err != nil {
 			panic(err) //  Interrupted
 		}
