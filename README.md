@@ -1,3 +1,4 @@
+I will add Visual Studio 2010 build to this project and make sure the examples work on Windows.
 
 <A name="toc1-4" title="ØMQ - The Guide" />
 ØMQ - The Guide
