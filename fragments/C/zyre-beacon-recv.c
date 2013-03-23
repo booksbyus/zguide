@@ -1,6 +1,7 @@
 //  Get beacon frame from network
 beacon_t beacon;
-ssize_t size = zre_udp_recv (self->udp, (byte *) &beacon, sizeof (beacon_t));
+ssize_t size = zre_udp_recv (self->udp,
+    (byte *) &beacon, sizeof (beacon_t));
 
 //  Basic validation on the frame
 if (size != sizeof (beacon_t)

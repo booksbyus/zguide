@@ -5,29 +5,25 @@
 | connect |  | connect |  |  bind   |
 '---------'  '---------'  '---------'
   request      request       state
-     |            |            |
-     '-.          |          .-'
-       |          |          |
+     \            |            /
+      \           |           /
        v          v          v
    .---------+---------+---------.
    |  bind   |  bind   | connect |
    +---------+---------+---------+
-   | localfe | cloudfe | statefe |     Frontends
-   | ROUTER  | ROUTER  |   SUB   |     (incoming)
+   | localfe | cloudfe | statefe |   Frontends
+   | ROUTER  | ROUTER  |   SUB   |   (incoming)
    +---------+---------+---------+
-   |                             |
    |           Broker            |
-   |                             |
    +---------+---------+---------+
-   | ROUTER  | ROUTER  |   PUB   |     Backends
-   | localbe | cloudbe | statebe |     (outgoing)
+   | ROUTER  | ROUTER  |   PUB   |   Backends
+   | localbe | cloudbe | statebe |   (outgoing)
    +---------+---------+---------+
    |  bind   | connect |  bind   |
    '---------+---------+---------'
-     request    request     state
-       |          |          |
-     .-'          |          '-.
-     |            |            |
+     request    request   state
+       /          |          \
+      /           |           \
      v            v            v
 .---------.  .---------.  .---------.
 | connect |  |  bind   |  | connect |

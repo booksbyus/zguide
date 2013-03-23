@@ -1,5 +1,5 @@
 void
-fmq_server_publish (fmq_server_t *self, const char *location, const char *alias)
+fmq_server_publish (fmq_server_t *self, char *location, char *alias)
 {
     assert (self);
     assert (location);

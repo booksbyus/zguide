@@ -267,6 +267,10 @@ while (<>) {
     }
     else {
         #   Normal text
+        #   Replace double hyphens with em dashes
+        while (/(--)/) {
+            $_ = "$`—$'";
+        }
         writeln ($_);
     }
 }

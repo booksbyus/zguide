@@ -862,7 +862,7 @@ A useful thing about state machines is that you can read them state by state. Ea
 
 In a 0MQ protocol server, we have a state machine instance //per client//. That sounds complex but it isn't, as we'll see. We describe our first state, {{Start}}, as having one valid event: {{OHAI}}. We check the user's credentials and then arrive in the Authenticated state[figure].
 
-[[code type="textdiagram" title="The "Start" State"]]
+[[code type="textdiagram" title="The Start State"]]
 .-------------------.
 | Start             |
 '-+-----------------'
@@ -875,7 +875,7 @@ In a 0MQ protocol server, we have a state machine instance //per client//. That 
 
 The {{Check Credentials}} action produces either an {{ok}} or an {{error}} event. It's in the Authenticated state that we handle these two possible events by sending an appropriate reply back to the client[figure]. If authentication failed, we return to the {{Start}} state where the client can try again.
 
-[[code type="textdiagram" title="The "Authenticated" State"]]
+[[code type="textdiagram" title="The Authenticated State"]]
 .-------------------.
 | Authenticated     |
 '-+-----------------'
@@ -893,7 +893,7 @@ The {{Check Credentials}} action produces either an {{ok}} or an {{error}} event
 
 When authentication has succeeded, we arrive in the Ready state. Here we have three possible events: an ICANHAZ or HUGZ message from the client, or a heartbeat timer event[figure].
 
-[[code type="textdiagram" title="The "Ready" State"]]
+[[code type="textdiagram" title="The Ready State"]]
 .-------------------.
 | Ready             |
 '-+-----------------'

@@ -2,14 +2,13 @@
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
   "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <!-- Created with ASCIIToSVG (http://9vx.org/~dho/a2s/) -->
-<svg width="405px" height="544px" version="1.1"
+<svg width="405px" height="512px" version="1.1"
   xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   <defs>
     <filter id="dsFilter" width="150%" height="150%">
       <feOffset result="offOut" in="SourceGraphic" dx="3" dy="3"/>
       <feColorMatrix result="matrixOut" in="offOut" type="matrix" values="0.2 0 0 0 0 0 0.2 0 0 0 0 0 0.2 0 0 0 0 0 1 0"/>
-      <feGaussianBlur result="blurOut" in="matrixOut" stdDeviation="3"/>
-      <feBlend in="SourceGraphic" in2="blurOut" mode="normal"/>
+      <feBlend in="SourceGraphic" in2="matrixOut" mode="normal"/>
     </filter>
     <marker id="iPointer"
       viewBox="0 0 10 10" refX="5" refY="5" 
@@ -28,127 +27,127 @@
   </defs><g id="boxes" stroke="black" stroke-width="2" fill="none" >
 <g id="group0">
 	<path id="path0" filter="url(#dsFilter)" fill="#fff" d="M 4.5 8 L 112.5 8 L 112.5 94 Q 112.5 104 102.5 104 L 14.5 104 Q 4.5 104 4.5 94 Z" />
-	<text x="26.1" y="28.8" id="text0" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Client </text>
+	<text x="26.1" y="28.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Client </text>
 
-	<text x="35.1" y="60.8" id="text0" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Retry </text>
+	<text x="35.1" y="60.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Retry </text>
 
-	<text x="44.1" y="92.8" id="text0" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >REQ </text>
+	<text x="44.1" y="92.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >REQ </text>
 
 </g>
 <g id="group2">
 	<path id="path2" filter="url(#dsFilter)" fill="#fff" d="M 148.5 8 L 256.5 8 L 256.5 94 Q 256.5 104 246.5 104 L 158.5 104 Q 148.5 104 148.5 94 Z" />
-	<text x="170.1" y="28.8" id="text2" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Client </text>
+	<text x="170.1" y="28.8" id="text2" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Client </text>
 
-	<text x="179.1" y="60.8" id="text2" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Retry </text>
+	<text x="179.1" y="60.8" id="text2" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Retry </text>
 
-	<text x="188.1" y="92.8" id="text2" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >REQ </text>
+	<text x="188.1" y="92.8" id="text2" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >REQ </text>
 
 </g>
 <g id="group4">
 	<path id="path4" filter="url(#dsFilter)" fill="#fff" d="M 292.5 8 L 400.5 8 L 400.5 94 Q 400.5 104 390.5 104 L 302.5 104 Q 292.5 104 292.5 94 Z" />
-	<text x="314.1" y="28.8" id="text4" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Client </text>
+	<text x="314.1" y="28.8" id="text4" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Client </text>
 
-	<text x="323.1" y="60.8" id="text4" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Retry </text>
+	<text x="323.1" y="60.8" id="text4" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Retry </text>
 
-	<text x="332.1" y="92.8" id="text4" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >REQ </text>
-
-</g>
-<g id="group27">
-	<path id="path27" filter="url(#dsFilter)" fill="#fff" d="M 148.5 210 Q 148.5 200 158.5 200 L 246.5 200 Q 256.5 200 256.5 210 L 256.5 318 Q 256.5 328 246.5 328 L 158.5 328 Q 148.5 328 148.5 318 Z" />
-	<text x="170.1" y="220.8" id="text27" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >ROUTER </text>
-
-	<text x="179.1" y="252.8" id="text27" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Queue </text>
-
-	<text x="161.1" y="284.8" id="text27" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Heartbeat </text>
-
-	<text x="170.1" y="316.8" id="text27" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >ROUTER </text>
+	<text x="332.1" y="92.8" id="text4" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >REQ </text>
 
 </g>
-<g id="group40">
-	<path id="path40" filter="url(#dsFilter)" fill="#fff" d="M 4.5 434 Q 4.5 424 14.5 424 L 102.5 424 Q 112.5 424 112.5 434 L 112.5 520 L 4.5 520 Z" />
-	<text x="26.1" y="444.8" id="text40" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >DEALER </text>
+<g id="group30">
+	<path id="path30" filter="url(#dsFilter)" fill="#fff" d="M 148.5 194 Q 148.5 184 158.5 184 L 246.5 184 Q 256.5 184 256.5 194 L 256.5 302 Q 256.5 312 246.5 312 L 158.5 312 Q 148.5 312 148.5 302 Z" />
+	<text x="170.1" y="204.8" id="text30" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >ROUTER </text>
 
-	<text x="17.1" y="476.8" id="text40" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Heartbeat </text>
+	<text x="179.1" y="236.8" id="text30" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Queue </text>
 
-	<text x="35.1" y="508.8" id="text40" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Worker </text>
+	<text x="161.1" y="268.8" id="text30" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Heartbeat </text>
 
-</g>
-<g id="group42">
-	<path id="path42" filter="url(#dsFilter)" fill="#fff" d="M 148.5 434 Q 148.5 424 158.5 424 L 246.5 424 Q 256.5 424 256.5 434 L 256.5 520 L 148.5 520 Z" />
-	<text x="170.1" y="444.8" id="text42" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >DEALER </text>
-
-	<text x="161.1" y="476.8" id="text42" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Heartbeat </text>
-
-	<text x="179.1" y="508.8" id="text42" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Worker </text>
+	<text x="170.1" y="300.8" id="text30" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >ROUTER </text>
 
 </g>
-<g id="group44">
-	<path id="path44" filter="url(#dsFilter)" fill="#fff" d="M 292.5 434 Q 292.5 424 302.5 424 L 390.5 424 Q 400.5 424 400.5 434 L 400.5 520 L 292.5 520 Z" />
-	<text x="314.1" y="444.8" id="text44" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >DEALER </text>
+<g id="group43">
+	<path id="path43" filter="url(#dsFilter)" fill="#fff" d="M 4.5 402 Q 4.5 392 14.5 392 L 102.5 392 Q 112.5 392 112.5 402 L 112.5 488 L 4.5 488 Z" />
+	<text x="26.1" y="412.8" id="text43" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >DEALER </text>
 
-	<text x="305.1" y="476.8" id="text44" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Heartbeat </text>
+	<text x="17.1" y="444.8" id="text43" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Heartbeat </text>
 
-	<text x="323.1" y="508.8" id="text44" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Worker </text>
+	<text x="35.1" y="476.8" id="text43" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Worker </text>
+
+</g>
+<g id="group46">
+	<path id="path46" filter="url(#dsFilter)" fill="#fff" d="M 148.5 402 Q 148.5 392 158.5 392 L 246.5 392 Q 256.5 392 256.5 402 L 256.5 488 L 148.5 488 Z" />
+	<text x="170.1" y="412.8" id="text46" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >DEALER </text>
+
+	<text x="161.1" y="444.8" id="text46" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Heartbeat </text>
+
+	<text x="179.1" y="476.8" id="text46" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Worker </text>
+
+</g>
+<g id="group49">
+	<path id="path49" filter="url(#dsFilter)" fill="#fff" d="M 292.5 402 Q 292.5 392 302.5 392 L 390.5 392 Q 400.5 392 400.5 402 L 400.5 488 L 292.5 488 Z" />
+	<text x="314.1" y="412.8" id="text49" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >DEALER </text>
+
+	<text x="305.1" y="444.8" id="text49" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Heartbeat </text>
+
+	<text x="323.1" y="476.8" id="text49" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Worker </text>
 
 </g>
 </g>
 <g id="lines" stroke="black" stroke-width="2" fill="none" >
-<g id="group66">
-	<path id="path66" d="M 4.5 40 L 112.5 40 " />
+<g id="group72">
+	<path id="path72" d="M 4.5 40 L 112.5 40 " />
 </g>
-<g id="group69">
-	<path id="path69" d="M 4.5 72 L 112.5 72 " />
+<g id="group75">
+	<path id="path75" d="M 4.5 72 L 112.5 72 " />
 </g>
-<g id="group94">
-	<path id="path94" d="M 4.5 456 L 112.5 456 " />
+<g id="group98">
+	<path id="path98" d="M 4.5 424 L 112.5 424 " />
 </g>
-<g id="group97">
-	<path id="path97" d="M 4.5 488 L 112.5 488 " />
+<g id="group101">
+	<path id="path101" d="M 4.5 456 L 112.5 456 " />
 </g>
-<g id="group279">
-	<path id="path279" marker-start="url(#iPointer)" marker-end="url(#Pointer)" d="M 58.5 120 L 58.5 142 Q 58.5 152 68.5 152 L 202.5 152 L 336.5 152 Q 346.5 152 346.5 142 L 346.5 120 " />
+<g id="group272">
+	<path id="path272" d="M 58.5 104 L 58.5 126 Q 58.5 136 68.5 136 L 202.5 136 L 336.5 136 Q 346.5 136 346.5 126 L 346.5 104 " />
 </g>
-<g id="group297">
-	<path id="path297" marker-start="url(#iPointer)" marker-end="url(#Pointer)" d="M 58.5 408 L 58.5 386 Q 58.5 376 68.5 376 L 202.5 376 L 336.5 376 Q 346.5 376 346.5 386 L 346.5 408 " />
+<g id="group291">
+	<path id="path291" d="M 58.5 392 L 58.5 370 Q 58.5 360 68.5 360 L 202.5 360 L 336.5 360 Q 346.5 360 346.5 370 L 346.5 392 " />
 </g>
-<g id="group614">
-	<path id="path614" d="M 148.5 40 L 256.5 40 " />
+<g id="group590">
+	<path id="path590" d="M 148.5 40 L 256.5 40 " />
 </g>
-<g id="group617">
-	<path id="path617" d="M 148.5 72 L 256.5 72 " />
+<g id="group593">
+	<path id="path593" d="M 148.5 72 L 256.5 72 " />
 </g>
-<g id="group628">
-	<path id="path628" d="M 148.5 232 L 256.5 232 " />
+<g id="group603">
+	<path id="path603" d="M 148.5 216 L 256.5 216 " />
 </g>
-<g id="group631">
-	<path id="path631" d="M 148.5 264 L 256.5 264 " />
+<g id="group606">
+	<path id="path606" d="M 148.5 248 L 256.5 248 " />
 </g>
-<g id="group634">
-	<path id="path634" d="M 148.5 296 L 256.5 296 " />
+<g id="group609">
+	<path id="path609" d="M 148.5 280 L 256.5 280 " />
 </g>
-<g id="group645">
-	<path id="path645" d="M 148.5 456 L 256.5 456 " />
+<g id="group619">
+	<path id="path619" d="M 148.5 424 L 256.5 424 " />
 </g>
-<g id="group648">
-	<path id="path648" d="M 148.5 488 L 256.5 488 " />
+<g id="group622">
+	<path id="path622" d="M 148.5 456 L 256.5 456 " />
 </g>
-<g id="group830">
-	<path id="path830" marker-start="url(#iPointer)" marker-end="url(#Pointer)" d="M 202.5 120 L 202.5 152 L 202.5 184 " />
+<g id="group793">
+	<path id="path793" marker-end="url(#Pointer)" d="M 202.5 104 L 202.5 136 L 202.5 168 " />
 </g>
-<g id="group844">
-	<path id="path844" marker-start="url(#iPointer)" marker-end="url(#Pointer)" d="M 202.5 344 L 202.5 376 L 202.5 408 " />
+<g id="group808">
+	<path id="path808" marker-start="url(#iPointer)" d="M 202.5 328 L 202.5 360 L 202.5 392 " />
 </g>
-<g id="group1165">
-	<path id="path1165" d="M 292.5 40 L 400.5 40 " />
+<g id="group1110">
+	<path id="path1110" d="M 292.5 40 L 400.5 40 " />
 </g>
-<g id="group1168">
-	<path id="path1168" d="M 292.5 72 L 400.5 72 " />
+<g id="group1113">
+	<path id="path1113" d="M 292.5 72 L 400.5 72 " />
 </g>
-<g id="group1193">
-	<path id="path1193" d="M 292.5 456 L 400.5 456 " />
+<g id="group1136">
+	<path id="path1136" d="M 292.5 424 L 400.5 424 " />
 </g>
-<g id="group1196">
-	<path id="path1196" d="M 292.5 488 L 400.5 488 " />
+<g id="group1139">
+	<path id="path1139" d="M 292.5 456 L 400.5 456 " />
 </g>
 </g>
 <g id="text" fill="black" style="font-family:LMMono10,monospace;font-size:15.2px" >

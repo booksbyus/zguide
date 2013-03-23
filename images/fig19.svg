@@ -2,14 +2,13 @@
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
   "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <!-- Created with ASCIIToSVG (http://9vx.org/~dho/a2s/) -->
-<svg width="450px" height="576px" version="1.1"
+<svg width="450px" height="528px" version="1.1"
   xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   <defs>
     <filter id="dsFilter" width="150%" height="150%">
       <feOffset result="offOut" in="SourceGraphic" dx="3" dy="3"/>
       <feColorMatrix result="matrixOut" in="offOut" type="matrix" values="0.2 0 0 0 0 0 0.2 0 0 0 0 0 0.2 0 0 0 0 0 1 0"/>
-      <feGaussianBlur result="blurOut" in="matrixOut" stdDeviation="3"/>
-      <feBlend in="SourceGraphic" in2="blurOut" mode="normal"/>
+      <feBlend in="SourceGraphic" in2="matrixOut" mode="normal"/>
     </filter>
     <marker id="iPointer"
       viewBox="0 0 10 10" refX="5" refY="5" 
@@ -28,152 +27,131 @@
   </defs><g id="boxes" stroke="black" stroke-width="2" fill="none" >
 <g id="group0">
 	<path id="path0" filter="url(#dsFilter)" fill="#fff" d="M 121.5 8 L 247.5 8 L 247.5 62 Q 247.5 72 237.5 72 L 131.5 72 Q 121.5 72 121.5 62 Z" />
-	<text x="143.1" y="28.8" id="text0" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Ventilator </text>
+	<text x="143.1" y="28.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Ventilator </text>
 
-	<text x="161.1" y="60.8" id="text0" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >PUSH </text>
+	<text x="161.1" y="60.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >PUSH </text>
 
 </g>
 <g id="group14">
-	<path id="path14" filter="url(#dsFilter)" fill="#fff" d="M 4.5 226 Q 4.5 216 14.5 216 L 111.5 216 Q 121.5 216 121.5 226 L 121.5 302 Q 121.5 312 111.5 312 L 14.5 312 Q 4.5 312 4.5 302 Z" />
-	<text x="17.1" y="236.8" id="text14" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >PULL </text>
+	<path id="path14" filter="url(#dsFilter)" fill="#fff" d="M 4.5 210 Q 4.5 200 14.5 200 L 111.5 200 Q 121.5 200 121.5 210 L 121.5 286 Q 121.5 296 111.5 296 L 14.5 296 Q 4.5 296 4.5 286 Z" />
+	<text x="17.1" y="220.8" id="text14" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >PULL </text>
 
-	<text x="80.1" y="236.8" id="text14" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >SUB </text>
+	<text x="80.1" y="220.8" id="text14" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >SUB </text>
 
-	<text x="35.1" y="268.8" id="text14" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Worker </text>
+	<text x="35.1" y="252.8" id="text14" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Worker </text>
 
-	<text x="44.1" y="300.8" id="text14" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >PUSH </text>
+	<text x="44.1" y="284.8" id="text14" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >PUSH </text>
 
 </g>
 <g id="group17">
-	<path id="path17" filter="url(#dsFilter)" fill="#fff" d="M 148.5 226 Q 148.5 216 158.5 216 L 255.5 216 Q 265.5 216 265.5 226 L 265.5 302 Q 265.5 312 255.5 312 L 158.5 312 Q 148.5 312 148.5 302 Z" />
-	<text x="161.1" y="236.8" id="text17" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >PULL </text>
+	<path id="path17" filter="url(#dsFilter)" fill="#fff" d="M 148.5 210 Q 148.5 200 158.5 200 L 255.5 200 Q 265.5 200 265.5 210 L 265.5 286 Q 265.5 296 255.5 296 L 158.5 296 Q 148.5 296 148.5 286 Z" />
+	<text x="161.1" y="220.8" id="text17" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >PULL </text>
 
-	<text x="224.1" y="236.8" id="text17" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >SUB </text>
+	<text x="224.1" y="220.8" id="text17" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >SUB </text>
 
-	<text x="179.1" y="268.8" id="text17" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Worker </text>
+	<text x="179.1" y="252.8" id="text17" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Worker </text>
 
-	<text x="188.1" y="300.8" id="text17" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >PUSH </text>
+	<text x="188.1" y="284.8" id="text17" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >PUSH </text>
 
 </g>
 <g id="group20">
-	<path id="path20" filter="url(#dsFilter)" fill="#fff" d="M 292.5 226 Q 292.5 216 302.5 216 L 399.5 216 Q 409.5 216 409.5 226 L 409.5 302 Q 409.5 312 399.5 312 L 302.5 312 Q 292.5 312 292.5 302 Z" />
-	<text x="305.1" y="236.8" id="text20" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >PULL </text>
+	<path id="path20" filter="url(#dsFilter)" fill="#fff" d="M 292.5 210 Q 292.5 200 302.5 200 L 399.5 200 Q 409.5 200 409.5 210 L 409.5 286 Q 409.5 296 399.5 296 L 302.5 296 Q 292.5 296 292.5 286 Z" />
+	<text x="305.1" y="220.8" id="text20" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >PULL </text>
 
-	<text x="368.1" y="236.8" id="text20" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >SUB </text>
+	<text x="368.1" y="220.8" id="text20" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >SUB </text>
 
-	<text x="323.1" y="268.8" id="text20" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Worker </text>
+	<text x="323.1" y="252.8" id="text20" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Worker </text>
 
-	<text x="332.1" y="300.8" id="text20" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >PUSH </text>
+	<text x="332.1" y="284.8" id="text20" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >PUSH </text>
 
 </g>
 <g id="group50">
-	<path id="path50" filter="url(#dsFilter)" fill="#fff" d="M 139.5 466 Q 139.5 456 149.5 456 L 255.5 456 Q 265.5 456 265.5 466 L 265.5 542 Q 265.5 552 255.5 552 L 149.5 552 Q 139.5 552 139.5 542 Z" />
-	<text x="179.1" y="476.8" id="text50" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >PULL </text>
+	<path id="path50" filter="url(#dsFilter)" fill="#fff" d="M 139.5 418 Q 139.5 408 149.5 408 L 255.5 408 Q 265.5 408 265.5 418 L 265.5 494 Q 265.5 504 255.5 504 L 149.5 504 Q 139.5 504 139.5 494 Z" />
+	<text x="179.1" y="428.8" id="text50" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >PULL </text>
 
-	<text x="179.1" y="508.8" id="text50" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Sink </text>
+	<text x="179.1" y="460.8" id="text50" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Sink </text>
 
-	<text x="188.1" y="540.8" id="text50" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >PUB </text>
+	<text x="188.1" y="492.8" id="text50" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >PUB </text>
 
 </g>
 </g>
 <g id="lines" stroke="black" stroke-width="2" fill="none" >
-<g id="group75">
-	<path id="path75" d="M 4.5 248 L 67.5 248 L 121.5 248 " />
+<g id="group74">
+	<path id="path74" d="M 4.5 232 L 67.5 232 L 121.5 232 " />
 </g>
-<g id="group78">
-	<path id="path78" d="M 4.5 280 L 121.5 280 " />
+<g id="group77">
+	<path id="path77" d="M 4.5 264 L 121.5 264 " />
 </g>
-<g id="group215">
-	<path id="path215" d="M 40.5 152 L 40.5 130 Q 40.5 120 50.5 120 L 184.5 120 L 318.5 120 Q 328.5 120 328.5 130 L 328.5 168 " />
+<g id="group205">
+	<path id="path205" marker-start="url(#iPointer)" marker-end="url(#Pointer)" d="M 40.5 184 L 40.5 130 Q 40.5 120 50.5 120 L 184.5 120 L 318.5 120 Q 328.5 120 328.5 130 L 328.5 184 " />
 </g>
-<g id="group218">
-	<path id="path218" marker-start="url(#iPointer)" d="M 40.5 200 L 40.5 168 " />
+<g id="group278">
+	<path id="path278" d="M 58.5 296 L 58.5 318 Q 58.5 328 68.5 328 L 202.5 328 L 336.5 328 Q 346.5 328 346.5 318 L 346.5 296 " />
 </g>
-<g id="group297">
-	<path id="path297" d="M 58.5 312 L 58.5 344 " />
+<g id="group306">
+	<path id="path306" d="M 67.5 200 L 67.5 232 " />
 </g>
-<g id="group301">
-	<path id="path301" d="M 58.5 360 L 58.5 366 Q 58.5 376 68.5 376 L 202.5 376 L 336.5 376 Q 346.5 376 346.5 366 L 346.5 344 " />
+<g id="group405">
+	<path id="path405" stroke-dasharray="5 5" marker-start="url(#iPointer)" d="M 94.5 184 L 94.5 162 Q 94.5 152 104.5 152 L 184.5 152 " />
 </g>
-<g id="group328">
-	<path id="path328" d="M 67.5 216 L 67.5 248 " />
+<g id="group495">
+	<path id="path495" d="M 121.5 40 L 247.5 40 " />
 </g>
-<g id="group436">
-	<path id="path436" stroke-dasharray="5 5" marker-start="url(#iPointer)" d="M 94.5 200 L 94.5 162 Q 94.5 152 104.5 152 L 184.5 152 " />
+<g id="group587">
+	<path id="path587" d="M 139.5 440 L 265.5 440 " />
 </g>
-<g id="group534">
-	<path id="path534" d="M 121.5 40 L 247.5 40 " />
+<g id="group590">
+	<path id="path590" d="M 139.5 472 L 265.5 472 L 265.5 488 L 265.5 494 Q 265.5 504 255.5 504 " />
 </g>
-<g id="group635">
-	<path id="path635" d="M 139.5 488 L 265.5 488 " />
+<g id="group609">
+	<path id="path609" d="M 148.5 232 L 211.5 232 L 265.5 232 " />
 </g>
-<g id="group638">
-	<path id="path638" d="M 139.5 520 L 265.5 520 L 265.5 536 L 265.5 542 Q 265.5 552 255.5 552 " />
+<g id="group612">
+	<path id="path612" d="M 148.5 264 L 265.5 264 " />
 </g>
-<g id="group658">
-	<path id="path658" d="M 148.5 248 L 211.5 248 L 265.5 248 " />
+<g id="group735">
+	<path id="path735" d="M 184.5 104 L 184.5 120 L 184.5 152 " />
 </g>
-<g id="group661">
-	<path id="path661" d="M 148.5 280 L 265.5 280 " />
+<g id="group740">
+	<path id="path740" marker-start="url(#iPointer)" d="M 184.5 184 L 184.5 152 " />
 </g>
-<g id="group795">
-	<path id="path795" d="M 184.5 104 L 184.5 120 L 184.5 152 " />
+<g id="group771">
+	<path id="path771" stroke-dasharray="5 5" d="M 193.5 152 L 238.5 152 L 328.5 152 " />
 </g>
-<g id="group801">
-	<path id="path801" marker-start="url(#iPointer)" d="M 184.5 200 L 184.5 168 " />
+<g id="group813">
+	<path id="path813" d="M 202.5 296 L 202.5 328 L 202.5 360 " />
 </g>
-<g id="group834">
-	<path id="path834" stroke-dasharray="5 5" d="M 193.5 152 L 238.5 152 L 328.5 152 " />
+<g id="group820">
+	<path id="path820" marker-start="url(#iPointer)" d="M 202.5 392 L 202.5 360 " />
 </g>
-<g id="group880">
-	<path id="path880" d="M 202.5 312 L 202.5 344 " />
+<g id="group841">
+	<path id="path841" d="M 211.5 200 L 211.5 232 " />
 </g>
-<g id="group884">
-	<path id="path884" d="M 202.5 360 L 202.5 376 L 202.5 408 " />
+<g id="group938">
+	<path id="path938" marker-end="url(#Pointer)" d="M 238.5 152 L 238.5 184 " />
 </g>
-<g id="group889">
-	<path id="path889" marker-start="url(#iPointer)" d="M 202.5 440 L 202.5 408 " />
+<g id="group1059">
+	<path id="path1059" stroke-dasharray="5 5" d="M 265.5 488 L 310.5 488 " />
 </g>
-<g id="group911">
-	<path id="path911" d="M 211.5 216 L 211.5 248 " />
+<g id="group1143">
+	<path id="path1143" d="M 292.5 232 L 355.5 232 L 409.5 232 " />
 </g>
-<g id="group1016">
-	<path id="path1016" marker-end="url(#Pointer)" d="M 238.5 152 L 238.5 200 " />
+<g id="group1146">
+	<path id="path1146" d="M 292.5 264 L 409.5 264 " />
 </g>
-<g id="group1149">
-	<path id="path1149" stroke-dasharray="5 5" d="M 265.5 536 L 310.5 536 " />
+<g id="group1305">
+	<path id="path1305" stroke-dasharray="5 5" d="M 337.5 152 L 382.5 152 L 435.5 152 Q 445.5 152 445.5 162 L 445.5 478 Q 445.5 488 435.5 488 L 400.5 488 " />
 </g>
-<g id="group1240">
-	<path id="path1240" d="M 292.5 248 L 355.5 248 L 409.5 248 " />
+<g id="group1374">
+	<path id="path1374" d="M 355.5 200 L 355.5 232 " />
 </g>
-<g id="group1243">
-	<path id="path1243" d="M 292.5 280 L 409.5 280 " />
-</g>
-<g id="group1383">
-	<path id="path1383" marker-start="url(#iPointer)" d="M 328.5 200 L 328.5 168 " />
-</g>
-<g id="group1416">
-	<path id="path1416" stroke-dasharray="5 5" d="M 337.5 152 L 382.5 152 L 435.5 152 Q 445.5 152 445.5 162 L 445.5 526 Q 445.5 536 435.5 536 L 400.5 536 " />
-</g>
-<g id="group1462">
-	<path id="path1462" d="M 346.5 312 L 346.5 344 " />
-</g>
-<g id="group1493">
-	<path id="path1493" d="M 355.5 216 L 355.5 248 " />
-</g>
-<g id="group1598">
-	<path id="path1598" marker-end="url(#Pointer)" d="M 382.5 152 L 382.5 200 " />
+<g id="group1471">
+	<path id="path1471" marker-end="url(#Pointer)" d="M 382.5 152 L 382.5 184 " />
 </g>
 </g>
 <g id="text" fill="black" style="font-family:LMMono10,monospace;font-size:15.2px" >
 <text x="161.1" y="92.8" id="text2" fill="#000" >tasks</text>
-<text x="17.1" y="172.8" id="text3" fill="#000" >task </text>
-<text x="161.1" y="172.8" id="text4" fill="#000" >task </text>
-<text x="314.1" y="172.8" id="text5" fill="#000" >task </text>
-<text x="35.1" y="348.8" id="text18" fill="#000" >result </text>
-<text x="179.1" y="348.8" id="text19" fill="#000" >result </text>
-<text x="323.1" y="348.8" id="text20" fill="#000" >result </text>
-<text x="170.1" y="412.8" id="text21" fill="#000" >results </text>
-<text x="305.1" y="540.8" id="text25" fill="#000" >KILL signal </text>
+<text x="170.1" y="364.8" id="text15" fill="#000" >results </text>
+<text x="305.1" y="492.8" id="text19" fill="#000" >KILL signal </text>
 </g>
 </svg>

@@ -242,7 +242,7 @@ connect to tcp://192.168.55.254:9000
 
 Which in 0MQ-speak looks like this:
 
-[[code type="fragment" name="brute-force discovery"]]
+[[code type="fragment" name="brute-force-discovery"]]
 int address;
 for (address = 1; address < 255; address++)
     zsocket_connect (listener, "tcp://192.168.55.%d:9000", address);

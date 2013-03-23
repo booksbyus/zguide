@@ -1,7 +1,7 @@
 //  Create new outgoing socket (drop any messages in transit)
 self->mailbox = zsocket_new (self->ctx, ZMQ_DEALER);
 
-//  Set our caller 'From' identity so that receiving node knows
+//  Set our caller "From" identity so that receiving node knows
 //  who each message came from.
 zsocket_set_identity (self->mailbox, reply_to);
 

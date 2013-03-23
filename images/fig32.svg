@@ -8,8 +8,7 @@
     <filter id="dsFilter" width="150%" height="150%">
       <feOffset result="offOut" in="SourceGraphic" dx="3" dy="3"/>
       <feColorMatrix result="matrixOut" in="offOut" type="matrix" values="0.2 0 0 0 0 0 0.2 0 0 0 0 0 0.2 0 0 0 0 0 1 0"/>
-      <feGaussianBlur result="blurOut" in="matrixOut" stdDeviation="3"/>
-      <feBlend in="SourceGraphic" in2="blurOut" mode="normal"/>
+      <feBlend in="SourceGraphic" in2="matrixOut" mode="normal"/>
     </filter>
     <marker id="iPointer"
       viewBox="0 0 10 10" refX="5" refY="5" 
@@ -28,53 +27,53 @@
   </defs><g id="boxes" stroke="black" stroke-width="2" fill="none" >
 <g id="group0">
 	<path id="path0" filter="url(#dsFilter)" fill="#fff" d="M 4.5 8 L 85.5 8 L 85.5 62 Q 85.5 72 75.5 72 L 14.5 72 Q 4.5 72 4.5 62 Z" />
-	<text x="17.1" y="28.8" id="text0" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Client </text>
+	<text x="17.1" y="28.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Client </text>
 
-	<text x="26.1" y="60.8" id="text0" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >REQ </text>
+	<text x="26.1" y="60.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >REQ </text>
 
 </g>
 <g id="group2">
 	<path id="path2" filter="url(#dsFilter)" fill="#fff" d="M 112.5 8 L 193.5 8 L 193.5 62 Q 193.5 72 183.5 72 L 122.5 72 Q 112.5 72 112.5 62 Z" />
-	<text x="125.1" y="28.8" id="text2" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Client </text>
+	<text x="125.1" y="28.8" id="text2" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Client </text>
 
-	<text x="134.1" y="60.8" id="text2" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >REQ </text>
+	<text x="134.1" y="60.8" id="text2" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >REQ </text>
 
 </g>
 <g id="group4">
 	<path id="path4" filter="url(#dsFilter)" fill="#fff" d="M 220.5 8 L 301.5 8 L 301.5 62 Q 301.5 72 291.5 72 L 230.5 72 Q 220.5 72 220.5 62 Z" />
-	<text x="233.1" y="28.8" id="text4" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Client </text>
+	<text x="233.1" y="28.8" id="text4" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Client </text>
 
-	<text x="242.1" y="60.8" id="text4" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >REQ </text>
+	<text x="242.1" y="60.8" id="text4" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >REQ </text>
 
 </g>
 <g id="group24">
 	<path id="path24" filter="url(#dsFilter)" fill="#fff" d="M 112.5 146 Q 112.5 136 122.5 136 L 183.5 136 Q 193.5 136 193.5 146 L 193.5 222 Q 193.5 232 183.5 232 L 122.5 232 Q 112.5 232 112.5 222 Z" />
-	<text x="125.1" y="156.8" id="text24" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >ROUTER </text>
+	<text x="125.1" y="156.8" id="text24" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >ROUTER </text>
 
-	<text x="125.1" y="188.8" id="text24" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Proxy </text>
+	<text x="125.1" y="188.8" id="text24" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Proxy </text>
 
-	<text x="125.1" y="220.8" id="text24" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >ROUTER </text>
+	<text x="125.1" y="220.8" id="text24" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >ROUTER </text>
 
 </g>
 <g id="group37">
 	<path id="path37" filter="url(#dsFilter)" fill="#fff" d="M 4.5 306 Q 4.5 296 14.5 296 L 75.5 296 Q 85.5 296 85.5 306 L 85.5 360 L 4.5 360 Z" />
-	<text x="26.1" y="316.8" id="text37" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >REQ </text>
+	<text x="26.1" y="316.8" id="text37" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >REQ </text>
 
-	<text x="17.1" y="348.8" id="text37" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Worker </text>
+	<text x="17.1" y="348.8" id="text37" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Worker </text>
 
 </g>
 <g id="group40">
 	<path id="path40" filter="url(#dsFilter)" fill="#fff" d="M 112.5 306 Q 112.5 296 122.5 296 L 183.5 296 Q 193.5 296 193.5 306 L 193.5 360 L 112.5 360 Z" />
-	<text x="134.1" y="316.8" id="text40" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >REQ </text>
+	<text x="134.1" y="316.8" id="text40" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >REQ </text>
 
-	<text x="125.1" y="348.8" id="text40" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Worker </text>
+	<text x="125.1" y="348.8" id="text40" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Worker </text>
 
 </g>
 <g id="group43">
 	<path id="path43" filter="url(#dsFilter)" fill="#fff" d="M 220.5 306 Q 220.5 296 230.5 296 L 291.5 296 Q 301.5 296 301.5 306 L 301.5 360 L 220.5 360 Z" />
-	<text x="242.1" y="316.8" id="text43" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >REQ </text>
+	<text x="242.1" y="316.8" id="text43" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >REQ </text>
 
-	<text x="233.1" y="348.8" id="text43" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Worker </text>
+	<text x="233.1" y="348.8" id="text43" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Worker </text>
 
 </g>
 </g>
@@ -118,7 +117,7 @@
 </g>
 <g id="text" fill="black" style="font-family:LMMono10,monospace;font-size:15.2px" >
 <text x="215.1" y="156.8" id="text7" fill="#000" >Frontend</text>
-<text x="215.1" y="188.8" id="text9" fill="#000" >Load-balancer</text>
+<text x="215.1" y="188.8" id="text9" fill="#000" >Load balancer</text>
 <text x="215.1" y="220.8" id="text11" fill="#000" >Backend</text>
 </g>
 </svg>

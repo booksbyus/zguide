@@ -8,8 +8,7 @@
     <filter id="dsFilter" width="150%" height="150%">
       <feOffset result="offOut" in="SourceGraphic" dx="3" dy="3"/>
       <feColorMatrix result="matrixOut" in="offOut" type="matrix" values="0.2 0 0 0 0 0 0.2 0 0 0 0 0 0.2 0 0 0 0 0 1 0"/>
-      <feGaussianBlur result="blurOut" in="matrixOut" stdDeviation="3"/>
-      <feBlend in="SourceGraphic" in2="blurOut" mode="normal"/>
+      <feBlend in="SourceGraphic" in2="matrixOut" mode="normal"/>
     </filter>
     <marker id="iPointer"
       viewBox="0 0 10 10" refX="5" refY="5" 
@@ -28,20 +27,20 @@
   </defs><g id="boxes" stroke="black" stroke-width="2" fill="none" >
 <g id="group0">
 	<path id="path0" filter="url(#dsFilter)" fill="#fff" d="M 4.5 8 L 175.5 8 L 175.5 40 L 4.5 40 Z" />
-	<text x="17.1" y="28.8" id="text0" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Z</text>
+	<text x="17.1" y="28.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Z</text>
 
-	<text x="53.1" y="28.8" id="text0" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >R</text>
+	<text x="53.1" y="28.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >R</text>
 
-	<text x="89.1" y="28.8" id="text0" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >E</text>
+	<text x="89.1" y="28.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >E</text>
 
-	<text x="125.1" y="28.8" id="text0" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >%x01 </text>
+	<text x="125.1" y="28.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >%x01 </text>
 
 </g>
 <g id="group5">
 	<path id="path5" filter="url(#dsFilter)" fill="#fff" d="M 202.5 8 L 328.5 8 L 328.5 40 L 202.5 40 Z" />
-	<text x="215.1" y="28.8" id="text5" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >UUID </text>
+	<text x="215.1" y="28.8" id="text5" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >UUID </text>
 
-	<text x="278.1" y="28.8" id="text5" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >port </text>
+	<text x="278.1" y="28.8" id="text5" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >port </text>
 
 </g>
 </g>

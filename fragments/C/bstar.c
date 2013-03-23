@@ -1,5 +1,5 @@
 //  Create a new Binary Star instance, using local (bind) and
-//  remote (connect) endpoints to set-up the server peering.
+//  remote (connect) endpoints to set up the server peering.
 bstar_t *bstar_new (int primary, char *local, char *remote);
 
 //  Destroy a Binary Star instance
@@ -17,6 +17,6 @@ int bstar_voter (bstar_t *self, char *endpoint, int type,
 void bstar_new_active (bstar_t *self, zloop_fn handler, void *arg);
 void bstar_new_passive (bstar_t *self, zloop_fn handler, void *arg);
 
-//  Start the reactor, ends if a callback function returns -1, or the
-//  process received SIGINT or SIGTERM.
+//  Start the reactor, which ends if a callback function returns -1, 
+//  or the process received SIGINT or SIGTERM.
 int bstar_start (bstar_t *self);

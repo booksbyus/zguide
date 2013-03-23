@@ -21,11 +21,13 @@ int main (int argc, char *argv [])
             zstr_send (pipes [index], "STOP");
             zsocket_destroy (ctx, pipes [index]);
             pipes [index] = NULL;
-            zclock_log ("I: Stopped interface (%d running)", --nbr_interfaces);
+            zclock_log ("I: Stopped interface (%d running)",
+                --nbr_interfaces);
         }
         else {
             pipes [index] = zthread_fork (ctx, interface_task, NULL);
-            zclock_log ("I: Started interface (%d running)", ++nbr_interfaces);
+            zclock_log ("I: Started interface (%d running)",
+                ++nbr_interfaces);
         }
         //  Sleep ~750 msecs randomly so we smooth out activity
         zclock_sleep (randof (500) + 500);

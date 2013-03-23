@@ -1,6 +1,5 @@
 while (true) {
-    //  Read and save all frames until we get an empty frame
-    //  In this example there is only 1 but it could be more
+    //  Get one address frame and empty delimiter
     char *address = s_recv (worker);
     char *empty = s_recv (worker);
     assert (*empty == 0);

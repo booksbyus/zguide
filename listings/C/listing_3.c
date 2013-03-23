@@ -1,14 +1,13 @@
 //  Receive 0MQ string from socket and convert into C string
+//  Chops string at 255 chars, if it's longer
 static char *
 s_recv (void *socket) {
-    zmq_msg_t message;
-    zmq_msg_init (&message);
-    int size = zmq_msg_recv (&message, socket, 0);
+    char buffer [256];
+    int size = zmq_recv (socket, buffer, 255, 0);
     if (size == -1)
         return NULL;
-    char *string = malloc (size + 1);
-    memcpy (string, zmq_msg_data (&message), size);
-    zmq_msg_close (&message);
-    string [size] = 0;
-    return (string);
+    if (size > 255)
+        size = 255;
+    buffer [size] = 0;
+    return strdup (buffer);
 }

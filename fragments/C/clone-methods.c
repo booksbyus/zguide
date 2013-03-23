@@ -21,8 +21,3 @@ void
 //  Get a value from the shared hashmap
 char *
     clone_get (clone_t *self, char *key);
-[[/clone]]
-
-So here is Model Six of the clone client, which has now become just a thin shell using the clone class:
-
-[[code type="example" title="Clone client, Model Six" name="clonecli6"]]
