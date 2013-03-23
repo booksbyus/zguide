@@ -2,7 +2,7 @@ program msreader;
 //
 //  Reading from multiple sockets
 //  This version uses a simple recv loop
-//  @author Varga Balázs <bb.varga@gmail.com>
+//  @author Varga Balazs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 

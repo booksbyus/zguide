@@ -3,7 +3,7 @@ program spworker;
 //  Simple Pirate worker
 //  Connects REQ socket to tcp://*:5556
 //  Implements worker part of load-balancing
-//  @author Varga Balázs <bb.varga@gmail.com>
+//  @author Varga Balazs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 

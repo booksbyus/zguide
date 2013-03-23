@@ -3,7 +3,7 @@ program tasksink;
 //  Task sink
 //  Binds PULL socket to tcp://localhost:5558
 //  Collects results from workers via that socket
-//  @author Varga Balázs <bb.varga@gmail.com>
+//  @author Varga Balazs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 

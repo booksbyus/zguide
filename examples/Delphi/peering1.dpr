@@ -2,7 +2,7 @@ program peering1;
 //
 //  Broker peering simulation (part 1)
 //  Prototypes the state flow
-//  @author Varga Balázs <bb.varga@gmail.com>
+//  @author Varga Balazs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 

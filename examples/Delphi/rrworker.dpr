@@ -3,7 +3,7 @@ program rrserver;
 //  Hello World server
 //  Connects REP socket to tcp://*:5560
 //  Expects "Hello" from client, replies with "World"
-//  @author Varga Balázs <bb.varga@gmail.com>
+//  @author Varga Balazs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 

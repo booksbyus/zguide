@@ -5,7 +5,7 @@ program lpserver;
 //  Like hwserver except:
 //   - echoes request as-is
 //   - randomly runs slowly, or exits to simulate a crash.
-//  @author Varga Balázs <bb.varga@gmail.com>
+//  @author Varga Balazs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 

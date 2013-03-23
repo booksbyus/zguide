@@ -3,7 +3,7 @@ program lpclient;
 //  Lazy Pirate client
 //  Use zmq_poll to do a safe request-reply
 //  To run, start lpserver and then randomly kill/restart it
-//  @author Varga Balázs <bb.varga@gmail.com>
+//  @author Varga Balazs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 

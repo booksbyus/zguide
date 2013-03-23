@@ -3,7 +3,7 @@ program wuserver;
 //  Weather update server
 //  Binds PUB socket to tcp://*:5556
 //  Publishes random weather updates
-//  @author Varga Balázs <bb.varga@gmail.com>
+//  @author Varga Balazs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 

@@ -1,7 +1,7 @@
 program syncsub;
 //
 //  Synchronized subscriber
-//  @author Varga Balázs <bb.varga@gmail.com>
+//  @author Varga Balazs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 

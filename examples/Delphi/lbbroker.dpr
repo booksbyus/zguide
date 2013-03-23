@@ -2,7 +2,7 @@ program lbbroker;
 //
 //  Load-balancing broker
 //  Clients and workers are shown here in-process
-//  @author Varga Balázs <bb.varga@gmail.com>
+//  @author Varga Balazs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 

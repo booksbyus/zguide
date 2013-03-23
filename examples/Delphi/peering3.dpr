@@ -2,7 +2,7 @@ program peering3;
 //
 //  Broker peering simulation (part 3)
 //  Prototypes the full flow of status and tasks
-//  @author Varga Balázs <bb.varga@gmail.com>
+//  @author Varga Balazs <bb.varga@gmail.com>
 //
 
 {$APPTYPE CONSOLE}

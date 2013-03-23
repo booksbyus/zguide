@@ -1,7 +1,7 @@
 program version;
 //
 //  Report 0MQ version
-//  @author Varga Balázs <bb.varga@gmail.com>
+//  @author Varga Balazs <bb.varga@gmail.com>
 //
 
 {$APPTYPE CONSOLE}

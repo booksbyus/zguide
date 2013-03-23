@@ -5,7 +5,7 @@ program taskwork;
 //  Collects workloads from ventilator via that socket
 //  Connects PUSH socket to tcp://localhost:5558
 //  Sends results to sink via that socket
-//  @author Varga Balázs <bb.varga@gmail.com>
+//  @author Varga Balazs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 

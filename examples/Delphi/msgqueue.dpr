@@ -2,7 +2,7 @@ program msgqueue;
 //
 //  Simple message queuing broker
 //  Same as request-reply broker but using QUEUE device
-//  @author Varga Balázs <bb.varga@gmail.com>
+//  @author Varga Balazs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 

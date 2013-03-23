@@ -3,7 +3,7 @@ program wuclient;
 //  Weather update client
 //  Connects SUB socket to tcp://localhost:5556
 //  Collects weather updates and finds avg temp in zipcode
-//  @author Varga Balázs <bb.varga@gmail.com>
+//  @author Varga Balazs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 

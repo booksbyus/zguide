@@ -1,7 +1,7 @@
 program mtserver;
 //
 //  Multithreaded Hello World server
-//  @author Varga Balázs <bb.varga@gmail.com>
+//  @author Varga Balazs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 

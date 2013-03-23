@@ -1,7 +1,7 @@
 program interrupt;
 //
 //  Shows how to handle Ctrl-C
-//  @author Varga Balázs <bb.varga@gmail.com>
+//  @author Varga Balazs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 

@@ -2,7 +2,7 @@ program mspoller;
 //
 //  Reading from multiple sockets
 //  This version uses zmq_poll()
-//  @author Varga Balázs <bb.varga@gmail.com>
+//  @author Varga Balazs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 

@@ -2,7 +2,7 @@ program peering2;
 //
 //  Broker peering simulation (part 2)
 //  Prototypes the request-reply flow
-//  @author Varga Balázs <bb.varga@gmail.com>
+//  @author Varga Balazs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 

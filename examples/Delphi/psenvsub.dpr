@@ -1,7 +1,7 @@
 program psenvsub;
 //
 //  Pubsub envelope subscriber
-//  @author Varga Balázs <bb.varga@gmail.com>
+//  @author Varga Balazs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 

@@ -1,7 +1,7 @@
 program mtrelay;
 //
 //  Multithreaded relay
-//  @author Varga Balázs <bb.varga@gmail.com>
+//  @author Varga Balazs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 

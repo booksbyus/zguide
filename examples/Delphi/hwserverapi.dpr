@@ -3,7 +3,7 @@ program hwserverapi;
 //  Hello World server in Delphi
 //  Binds REP socket to tcp://*:5555
 //  Expects "Hello" from client, replies with "World"
-//  @author Varga Balázs <bb.varga@gmail.com>
+//  @author Varga Balazs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 

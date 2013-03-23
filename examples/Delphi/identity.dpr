@@ -2,7 +2,7 @@ program identity;
 //
 //  Demonstrate identities as used by the request-reply pattern.  Run this
 //  program by itself.
-//  @author Varga Balázs <bb.varga@gmail.com>
+//  @author Varga Balazs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 

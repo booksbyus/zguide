@@ -3,7 +3,7 @@ program hwclient;
 //  Hello World client
 //  Connects REQ socket to tcp://localhost:5555
 //  Sends "Hello" to server, expects "World" back
-//  @author Varga Balázs <bb.varga@gmail.com>
+//  @author Varga Balazs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 

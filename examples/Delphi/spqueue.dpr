@@ -3,7 +3,7 @@ program spqueue;
 //  Simple Pirate broker
 //  This is identical to load-balancing pattern, with no reliability
 //  mechanisms. It depends on the client for recovery. Runs forever.
-//  @author Varga Balázs <bb.varga@gmail.com>
+//  @author Varga Balazs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 

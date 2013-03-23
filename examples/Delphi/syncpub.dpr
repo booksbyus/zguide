@@ -1,7 +1,7 @@
 program syncpub;
 //
 //  Synchronized publisher
-//  @author Varga Balázs <bb.varga@gmail.com>
+//  @author Varga Balazs <bb.varga@gmail.com>
 //
 {$APPTYPE CONSOLE}
 
