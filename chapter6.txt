@@ -10,7 +10,7 @@ It's hard to overemphasize the power and persistence of a working open source co
 
 To really benefit from 0MQ, you need to understand the community. At some point down the road you'll want to submit a patch, an issue, or an add-on. You might want to ask someone for help. You will probably want to bet a part of your business on 0MQ, and when I tell you that the community is much, much more important than the company that backs the product, even though I'm CEO of that company, this should be significant.
 
-In this chapter I'm going to look at our community from several angles and conclude by explaining in detail our contract for collaboration, which [http://rfc.zeromq.org/spec:16 we call "C4"]. You should find the discussion useful for your own work. We've also adapted the 0MQ C4 process for closed source projects with good success.
+In this chapter I'm going to look at our community from several angles and conclude by explaining in detail our contract for collaboration, which [http://rfc.zeromq.org/spec:22 we call "C4"]. You should find the discussion useful for your own work. We've also adapted the 0MQ C4 process for closed source projects with good success.
 
 We'll cover:
 
@@ -137,7 +137,7 @@ If you do these things well, your community will be smart but more importantly, 
 
 How much up-front agreement do two people need to work together on something? In most organizations, a lot. But you can bring this cost down to near-zero, and then people can collaborate without having ever met, done a phone conference, meeting, or business trip to discuss Roles and Responsibilities over way too many bottles of cheap Korean rice wine.
 
-You need well-written rules that are designed by cynical people like me to force strangers into mutually beneficial collaboration instead of conflict. The GPL is a good start. GitHub and its fork/merge strategy is a good follow-up. And then you want something like our [http://rfc.zeromq.org/spec:16 C4 rulebook] to control how work actually happens.
+You need well-written rules that are designed by cynical people like me to force strangers into mutually beneficial collaboration instead of conflict. The GPL is a good start. GitHub and its fork/merge strategy is a good follow-up. And then you want something like our [http://rfc.zeromq.org/spec:22 C4 rulebook] to control how work actually happens.
 
 C4 (which I now use for every new open source project) has detailed and tested answers to a lot of common mistakes people make, such as the sin of working offline in a corner with others "because it's faster". Transparency is essential to get trust, which is essential to get scale. By forcing every single change through a single transparent process, you build real trust in the results.
 
@@ -173,7 +173,7 @@ The best answer I can find is a mix of two things. One, the GPL and its guarante
 
 ++ The 0MQ Process: C4
 
-When we say 0MQ we sometimes mean {{libzmq}}, the core library. In early 2012, we synthesized the {{libzmq}} process into a formal protocol for collaboration that we called the [http://rfc.zeromq.org/spec:16 Collective Code Construction Contract], or C4. You can see this as a layer above the GPL. In fact {{libzmq}} doesn't quite stick to C4 because for historic reasons we use Jira instead of the GitHub issue tracker. Apart from that, these are our rules, and I'll explain the reasoning behind each one.
+When we say 0MQ we sometimes mean {{libzmq}}, the core library. In early 2012, we synthesized the {{libzmq}} process into a formal protocol for collaboration that we called the [http://rfc.zeromq.org/spec:22 Collective Code Construction Contract], or C4. You can see this as a layer above the GPL. In fact {{libzmq}} doesn't quite stick to C4 because for historic reasons we use Jira instead of the GitHub issue tracker. Apart from that, these are our rules, and I'll explain the reasoning behind each one.
 
 C4 is an evolution of the GitHub [http://help.github.com/send-pull-requests/ Fork + Pull Model]. You may get the feeling I'm a fan of git and GitHub. This would be accurate: these two tools have made such a positive impact on our work over the last years, especially when it comes to building community.
 
@@ -304,9 +304,9 @@ One of the big changes we made with C4 was simply to ban, outright, this kind of
 
 This rule has two effects. The first is that it forces people to make minimal solutions because they cannot simply import swathes of existing code. In the cases where I've seen this happen to projects, it's always bad unless the imported code is very cleanly separated. The second is that it avoids license arguments. You write the patch, you are allowed to publish it as LGPL, and we can merge it back in. But you find a 200-line code fragment on the web, and try to paste that, we'll refuse.
 
-> A patch MUST compile cleanly on at least the most important target platforms.
+> A patch MUST compile cleanly and pass project self-tests on at least the principle target platform.
 
-This is probably asking a lot because most contributors have only one platform on which to work.
+For cross-platform projects, it is fair to ask that the patch works on the development box used by the contributor.
 
 > A "Correct Patch" is one that satisfies the above requirements.
 
@@ -413,17 +413,13 @@ I'll come to branches soon. In short (or "tl;dr", as they say on the webs), bran
 
 It's free software. No one has a monopoly on it. If you think the maintainers aren't producing stable releases right, fork the repository and do it yourself. Forking isn't a failure, it's an essential tool for competition. You can't do this with branches, which means a branch-based release policy gives the project maintainers a monopoly. And that's bad because they'll become lazier and more arrogant than if real competition is chasing their heels.
 
-> Maintainers of the stabilization project SHALL maintain it through pull requests which MAY cherry-pick patches from the forked project.
+> A stabilization project SHOULD be maintained by the same process as the main project.
 
-Perhaps the C4 process should just say that stabilization projects have maintainers and contributors like any project. That's all this rule means.
+Stabilization projects have maintainers and contributors like any project. In practice we usually cherry pick patches from the main project to the stabilization project, but that's just a convenience.
 
 > A patch to a repository declared "stable" SHALL be accompanied by a reproducible test case.
 
 Beware of a one-size-fits-all process. New code does not need the same paranoia as code that people are trusting for production use. In the normal development process, we did not mention test cases. There's a reason for this. While I love testable patches, many changes aren't easily or at all testable. However, to stabilize a code base you want to fix only serious bugs, and you want to be 100% sure every change is accurate. This means before and after tests for every change.
-
-> A stabilization repository SHOULD progress through these phases: "unstable", "candidate", "stable", and then "legacy". That is, the default behavior of stabilization repositories is to die.
-
-This may be too detailed. The key point here is that these forked stabilization repositories all die in the end, as master continues to evolve and be forked off for production releases.
 
 +++ Evolution of Public Contracts
 
@@ -466,6 +462,24 @@ Ah, yes, the joy when 0MQ v3.x renamed the top-used API functions ({{zmq_send[3]
 > When old names are removed, their implementations MUST provoke an exception (assertion) if used by applications.
 
 I've not tested this rule to be certain it makes sense. Perhaps what it means is "if you can't provoke a compile error because the API is dynamic, provoke an assertion".
+
++++ Project Administration
+
+> The project founders SHALL act as Administrators to manage the set of project Maintainers.
+
+Someone needs to administer the project, and it makes sense that the original founders start this ball rolling.
+
+> The Administrators SHALL ensure their own succession over time by promoting the most effective Maintainers.
+
+At the same time, as founder of a project you really want to get out of the way before you become over-attached to it. Promoting the most active and consistent maintainers is good for everyone.
+
+> A new Contributor who makes a correct patch SHALL be invited to become a Maintainer.
+
+I met Felix Geisendörfer in Lyons in 2012 at the [http://www.mix-it.fr Mix-IT conference] where I presented Social Architecture and one thing that came out of this was Felix's now famous [http://felixge.de/2013/03/11/the-pull-request-hack.html Pull Request Hack]. It fits elegantly into C4 and solves the problem of maintainers dropping out over time.
+
+> Administrators MAY remove Maintainers who are inactive for an extended period of time, or who repeatedly fail to apply this process accurately.
+
+This was Ian Barber's suggestion: we need a way to crop inactive maintainers. Originally maintainers were self-elected but that makes it hard to drop troublemakers (who are rare, but not unknown).
 
 C4 is not perfect. Few things are. The process for changing it (Digistan's COSS) is a little outdated now: it relies on a single-editor workflow with the ability to fork, but not merge. This seems to work but it could be better to use C4 for protocols like C4.
 
