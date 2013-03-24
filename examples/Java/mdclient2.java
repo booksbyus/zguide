@@ -4,9 +4,8 @@ import org.zeromq.ZMsg;
  * Majordomo Protocol client example, asynchronous. Uses the mdcli API to hide
  * all MDP aspects
  * 
- * @author Arkadiusz Orzechowski <aorzecho@gmail.com>
- * 
  */
+
 public class mdclient2 {
 
     public static void main(String[] args) {

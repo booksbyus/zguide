@@ -1,135 +1,152 @@
-/**
- *  Paranoid Pirate worker
- *
- *  @author Arkadiusz Orzechowski <aorzecho@gmail.com>
- */
-import java.util.Arrays;
 import java.util.Random;
 
 import org.zeromq.ZContext;
 import org.zeromq.ZFrame;
 import org.zeromq.ZMQ;
+import org.zeromq.ZMQ.PollItem;
+import org.zeromq.ZMQ.Socket;
 import org.zeromq.ZMsg;
 
+//
+// Paranoid Pirate worker
+//
 public class ppworker {
 
-    private static final int HEARTBEAT_LIVENESS = 3; // 3-5 is reasonable
-    private static final int HEARTBEAT_INTERVAL = 1000; // msecs
-    private static final int INTERVAL_INIT = 1000; // Initial reconnect
-    private static final int INTERVAL_MAX = 32000; // After exponential backoff
+    private final static int HEARTBEAT_LIVENESS = 3 ;      //  3-5 is reasonable
+    private final static int HEARTBEAT_INTERVAL = 1000;    //  msecs
+    private final static int INTERVAL_INIT      = 1000;    //  Initial reconnect
+    private final static int INTERVAL_MAX      = 32000;    //  After exponential backoff
 
-    // Paranoid Pirate Protocol constants
-    private static final byte[] PPP_READY = { 1 }; // Signals worker is ready
-    private static final byte[] PPP_HEARTBEAT = { 2 }; // Signals worker
-                                                       // heartbeat
+    //  Paranoid Pirate Protocol constants
+    private final static String PPP_READY     =   "\001" ;     //  Signals worker is ready
+    private final static String PPP_HEARTBEAT =   "\002" ;     //  Signals worker heartbeat
+    
+    //  Helper function that returns a new configured socket
+    //  connected to the Paranoid Pirate queue
+    
+    private static Socket worker_socket(ZContext ctx) {
+        Socket worker = ctx.createSocket(ZMQ.DEALER);
+        worker.connect( "tcp://localhost:5556");
 
-    private static final ZFrame heartbeatFrame = new ZFrame(PPP_HEARTBEAT);
+        //  Tell queue we're ready for work
+        System.out.println ("I: worker ready\n");
+        ZFrame frame = new ZFrame (PPP_READY);
+        frame.send( worker, 0);
 
-    private static ZMQ.Socket connectWorker(ZContext context) {
-        ZMQ.Socket worker = context.createSocket(ZMQ.DEALER);
-        // Set random identity to make tracing easier
-        Random rand = new Random();
-        String id = String.format("%04x-%04x", rand.nextInt(0x10001),
-                rand.nextInt(0x10001));
-        worker.setIdentity(id.getBytes());
-        worker.connect("tcp://localhost:5556");
-
-        // Tell the queue we're ready for work
-        System.out.printf("I: worker ready\n");
-        worker.send(PPP_READY, 0);
         return worker;
     }
-
-    /**
-     * Do the job, simulate problems if cycle>5
-     */
-    private static boolean doTheWork(int cycle) {
-        final Random rand = new Random();
-        try {
-            if (cycle > 3 && rand.nextInt(6) == 0) {
-                System.out.printf("I: simulating a crash\n");
-                return false;
-            } else if (cycle > 3 && rand.nextInt(6) == 0) {
-                System.out.printf("I: simulating CPU overload\n");
-                Thread.sleep(3000);
-            }
-            System.out.printf("I: normal reply\n");
-            // Do some 'work'
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        return true;
-    }
-
+    
+    //  We have a single task, which implements the worker side of the
+    //  Paranoid Pirate Protocol (PPP). The interesting parts here are
+    //  the heartbeating, which lets the worker detect if the queue has
+    //  died, and vice-versa:
+    
     public static void main(String[] args) {
-        // Prepare our context and socket
-        ZContext context = new ZContext();
-        ZMQ.Socket worker = connectWorker(context);
+        ZContext ctx = new ZContext ();
+        Socket worker = worker_socket (ctx);
 
-        // If liveness hits zero, queue is considered disconnected
+        //  If liveness hits zero, queue is considered disconnected
         int liveness = HEARTBEAT_LIVENESS;
         int interval = INTERVAL_INIT;
 
-        // Send out heartbeats at regular intervals
-        long heartbeatAt = System.currentTimeMillis() + HEARTBEAT_INTERVAL;
+        //  Send out heartbeats at regular intervals
+        long heartbeat_at = System.currentTimeMillis() + HEARTBEAT_INTERVAL;
 
+        Random rand = new Random(System.nanoTime());
         int cycles = 0;
-        while (!Thread.currentThread().isInterrupted()) {
+        while (true) {
+            PollItem items [] = { new PollItem( worker,  ZMQ.Poller.POLLIN ) };
+            int rc = ZMQ.poll (items, HEARTBEAT_INTERVAL );
+            if (rc == -1)
+                break;              //  Interrupted
 
-            ZMQ.Poller items = context.getContext().poller();
-            items.register(worker, ZMQ.Poller.POLLIN);
-
-            if (items.poll(HEARTBEAT_INTERVAL * 1000) == -1)
-                break; // Interrupted
-
-            if (items.pollin(0)) {
+            if (items [0].isReadable()) {
+                //  Get message
+                //  - 3-part envelope + content -> request
+                //  - 1-part HEARTBEAT -> heartbeat
                 ZMsg msg = ZMsg.recvMsg(worker);
                 if (msg == null)
-                    break; // Interrupted
+                    break;          //  Interrupted
 
-                if (msg.size() == 3) { // serving a client request
-                    if (!doTheWork(cycles++))
-                        break; // crashed
-                    liveness = HEARTBEAT_LIVENESS;
-                    msg.send(worker);
-                } else if (msg.size() == 1) { // heartbeat
-                    ZFrame frame = msg.getFirst();
-                    if (Arrays.equals(frame.getData(), PPP_HEARTBEAT)) {
-                        liveness = HEARTBEAT_LIVENESS;
-                    } else {
-                        System.out.printf("E: invalid message (%s)\n",
-                                frame.toString());
+                //  To test the robustness of the queue implementation we //
+                //  simulate various typical problems, such as the worker
+                //  crashing, or running very slowly. We do this after a few
+                //  cycles so that the architecture can get up and running
+                //  first:
+                if (msg.size() == 3) {
+                    cycles++;
+                    if (cycles > 3 && rand.nextInt(5) == 0) {
+                        System.out.println ("I: simulating a crash\n");
+                        msg.destroy();
+                        msg = null;
+                        break;
                     }
-                    frame.destroy();
-                } else {
-                    System.out.printf("E: invalid message (%s)\n",
-                            msg.toString());
+                    else
+                    if (cycles > 3 && rand.nextInt (5) == 0) {
+                        System.out.println ("I: simulating CPU overload\n");
+                        try {
+                            Thread.sleep (3000);
+                        } catch (InterruptedException e) {
+                            break;
+                        }
+                    }
+                    System.out.println ("I: normal reply\n");
+                    msg.send( worker);
+                    liveness = HEARTBEAT_LIVENESS;
+                    try {
+                        Thread.sleep (1000);
+                    } catch (InterruptedException e) {
+                        break;
+                    }              //  Do some heavy work
+                }
+                else
+                //  When we get a heartbeat message from the queue, it means the
+                //  queue was (recently) alive, so reset our liveness indicator:
+                if (msg.size() == 1) {
+                    ZFrame frame = msg.getFirst();
+                    if (PPP_HEARTBEAT.equals(new String(frame.getData())))
+                        liveness = HEARTBEAT_LIVENESS;
+                    else {
+                        System.out.println ("E: invalid message\n");
+                        msg.dump(System.out);
+                    }
+                    msg.destroy();
+                }
+                else {
+                    System.out.println ("E: invalid message\n");
+                    msg.dump(System.out);
                 }
                 interval = INTERVAL_INIT;
-            } else if (--liveness == 0) {
-                System.out.printf("W: heartbeat failure, can't reach queue\n");
-                System.out.printf("W: reconnecting in %d msec...\n", interval);
+            }
+            else
+            //  If the queue hasn't sent us heartbeats in a while, destroy the
+            //  socket and reconnect. This is the simplest most brutal way of
+            //  discarding any messages we might have sent in the meantime://
+            if (--liveness == 0) {
+                System.out.println ("W: heartbeat failure, can't reach queue\n");
+                System.out.println (String.format("W: reconnecting in %zd msec\n", interval));
                 try {
                     Thread.sleep(interval);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
+
                 if (interval < INTERVAL_MAX)
                     interval *= 2;
-                context.destroySocket(worker);
-                worker = connectWorker(context);
+                ctx.destroySocket(worker);
+                worker = worker_socket (ctx);
                 liveness = HEARTBEAT_LIVENESS;
             }
-            // Send heartbeat to queue if it's time
-            if (System.currentTimeMillis() > heartbeatAt) {
-                heartbeatAt = System.currentTimeMillis() + HEARTBEAT_INTERVAL;
-                System.out.printf("I: worker heartbeat\n");
-                heartbeatFrame.sendAndKeep(worker);
+
+            //  Send heartbeat to queue if it's time
+            if (System.currentTimeMillis() > heartbeat_at) {
+                heartbeat_at = System.currentTimeMillis() + HEARTBEAT_INTERVAL;
+                System.out.println ("I: worker heartbeat\n");
+                ZFrame frame = new ZFrame (PPP_HEARTBEAT);
+                frame.send(worker, 0);
             }
         }
-        // cleanup
-        context.destroy();
+        ctx.destroy();
     }
 
 }

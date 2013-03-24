@@ -1,7 +1,4 @@
 /**
- * (c) 2011 Arkadiusz Orzechowski
- *
- * This file is part of ZGuide
  *
  * ZGuide is free software; you can redistribute it and/or modify it under
  * the terms of the Lesser GNU General Public License as published by
@@ -16,6 +13,7 @@
  * You should have received a copy of the Lesser GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 import java.util.Formatter;
 
 import org.zeromq.ZContext;
@@ -26,8 +24,6 @@ import org.zeromq.ZMsg;
 /**
  * Majordomo Protocol Client API, asynchronous Java version. Implements the
  * MDP/Worker spec at http://rfc.zeromq.org/spec:7.
- * 
- * @author Arkadiusz Orzechowski <aorzecho@gmail.com>
  */
 public class mdcliapi2 {
 
@@ -75,7 +71,7 @@ public class mdcliapi2 {
         ZMsg reply = null;
 
         // Poll socket for a reply, with timeout
-        ZMQ.Poller items = ctx.getContext().poller();
+        ZMQ.Poller items = new ZMQ.Poller(1);
         items.register(client, ZMQ.Poller.POLLIN);
         if (items.poll(timeout * 1000) == -1)
             return null; // Interrupted

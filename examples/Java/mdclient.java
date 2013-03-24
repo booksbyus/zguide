@@ -1,11 +1,8 @@
 import org.zeromq.ZMsg;
 
 /**
- * Majordomo Protocol client example. Uses the mdcli API to hide all MDP aspects
- * 
- * @author Arkadiusz Orzechowski <aorzecho@gmail.com>
- * 
- */
+* Majordomo Protocol client example. Uses the mdcli API to hide all MDP aspects
+*/
 public class mdclient {
 
     public static void main(String[] args) {

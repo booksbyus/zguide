@@ -1,21 +1,21 @@
 /**
- * (c) 2011 Arkadiusz Orzechowski
- *
- * This file is part of ZGuide
- *
- * ZGuide is free software; you can redistribute it and/or modify it under
- * the terms of the Lesser GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * ZGuide is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * Lesser GNU General Public License for more details.
- *
- * You should have received a copy of the Lesser GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+* (c) 2011 Arkadiusz Orzechowski
+*
+* This file is part of ZGuide
+*
+* ZGuide is free software; you can redistribute it and/or modify it under
+* the terms of the Lesser GNU General Public License as published by
+* the Free Software Foundation; either version 3 of the License, or
+* (at your option) any later version.
+*
+* ZGuide is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* Lesser GNU General Public License for more details.
+*
+* You should have received a copy of the Lesser GNU General Public License
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Formatter;
@@ -28,11 +28,9 @@ import org.zeromq.ZMQ;
 import org.zeromq.ZMsg;
 
 /**
- *  Majordomo Protocol broker
- *  A minimal implementation of http://rfc.zeromq.org/spec:7 and spec:8
- *
- *  @author Arkadiusz Orzechowski <aorzecho@gmail.com>
- */
+*  Majordomo Protocol broker
+*  A minimal implementation of http://rfc.zeromq.org/spec:7 and spec:8
+*/
 public class mdbroker {
 
     // We'd normally pull these from config data
@@ -121,9 +119,9 @@ public class mdbroker {
      */
     public void mediate() {
         while (!Thread.currentThread().isInterrupted()) {
-            ZMQ.Poller items = ctx.getContext().poller();
+            ZMQ.Poller items = new ZMQ.Poller(1);
             items.register(socket, ZMQ.Poller.POLLIN);
-            if (items.poll(HEARTBEAT_INTERVAL * 1000) == -1)
+            if (items.poll(HEARTBEAT_INTERVAL) == -1)
                 break; // Interrupted
             if (items.pollin(0)) {
                 ZMsg msg = ZMsg.recvMsg(socket);
