@@ -1,11 +1,9 @@
 import org.zeromq.ZMsg;
 
 /**
- * Majordomo Protocol worker example. Uses the mdwrk API to hide all MDP aspects
- * 
- * @author Arkadiusz Orzechowski <aorzecho@gmail.com>
- * 
- */
+* Majordomo Protocol worker example. Uses the mdwrk API to hide all MDP aspects
+*
+*/
 public class mdworker {
 
     /**
@@ -20,7 +18,7 @@ public class mdworker {
             ZMsg request = workerSession.receive(reply);
             if (request == null)
                 break; //Interrupted
-            reply = request; //  Echo is complex... :-)
+            reply = request; //  Echo is complex :-)
         }
         workerSession.destroy();
     }

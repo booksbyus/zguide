@@ -1,12 +1,12 @@
-import java.util.Random;
-
 import org.zeromq.ZContext;
 import org.zeromq.ZFrame;
 import org.zeromq.ZMQ;
-import org.zeromq.ZMQ.Poller;
-import org.zeromq.ZMsg;
 import org.zeromq.ZMQ.PollItem;
 import org.zeromq.ZMQ.Socket;
+import org.zeromq.ZMsg;
+import org.zeromq.ZMQ.Poller;
+
+import java.util.Random;
 
 //
 //Asynchronous client-to-server (DEALER to ROUTER)
@@ -26,11 +26,9 @@ public class asyncsrv
 
     private static Random rand = new Random(System.nanoTime());
 
-    private static class client_task implements Runnable
-    {
+    private static class client_task implements Runnable {
 
-        public void run()
-        {
+        public void run() {
             ZContext ctx = new ZContext();
             Socket client = ctx.createSocket(ZMQ.DEALER);
 
@@ -64,10 +62,8 @@ public class asyncsrv
     //one request at a time but one client can talk to multiple workers at
     //once.
 
-    private static class server_task implements Runnable
-    {
-        public void run()
-        {
+    private static class server_task implements Runnable {
+        public void run() {
             ZContext ctx = new ZContext();
 
             //  Frontend socket talks to clients over TCP
@@ -92,17 +88,14 @@ public class asyncsrv
     //Each worker task works on one request at a time and sends a random number
     //of replies back, with random delays between replies:
 
-    private static class server_worker implements Runnable
-    {
+    private static class server_worker implements Runnable {
         private ZContext ctx;
 
-        public server_worker(ZContext ctx)
-        {
+        public server_worker(ZContext ctx) {
             this.ctx = ctx;
         }
 
-        public void run()
-        {
+        public void run() {
             Socket worker = ctx.createSocket(ZMQ.DEALER);
             worker.connect("inproc://backend");
 
@@ -135,8 +128,7 @@ public class asyncsrv
     //The main thread simply starts several clients, and a server, and then
     //waits for the server to finish.
 
-    public static void main(String[] args) throws Exception
-    {
+    public static void main(String[] args) throws Exception {
         ZContext ctx = new ZContext();
         new Thread(new client_task()).start();
         new Thread(new client_task()).start();
