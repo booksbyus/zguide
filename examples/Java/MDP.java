@@ -1,6 +1,4 @@
 /**
- * (c) 2011 Arkadiusz Orzechowski
- *
  * This file is part of ZGuide
  *
  * ZGuide is free software; you can redistribute it and/or modify it under
@@ -22,8 +20,6 @@ import org.zeromq.ZFrame;
 
 /**
  * Majordomo Protocol definitions, Java version
- * 
- * @author Arkadiusz Orzechowski <aorzecho@gmail.com>
  */
 public enum MDP {
 

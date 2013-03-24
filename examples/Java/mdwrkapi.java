@@ -1,21 +1,19 @@
 /**
- * (c) 2011 Arkadiusz Orzechowski
- *
- * This file is part of ZGuide
- *
- * ZGuide is free software; you can redistribute it and/or modify it under
- * the terms of the Lesser GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * ZGuide is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * Lesser GNU General Public License for more details.
- *
- * You should have received a copy of the Lesser GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+* This file is part of ZGuide
+*
+* ZGuide is free software; you can redistribute it and/or modify it under
+* the terms of the Lesser GNU General Public License as published by
+* the Free Software Foundation; either version 3 of the License, or
+* (at your option) any later version.
+*
+* ZGuide is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* Lesser GNU General Public License for more details.
+*
+* You should have received a copy of the Lesser GNU General Public License
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 import java.util.Formatter;
 
 import org.zeromq.ZContext;
@@ -24,11 +22,9 @@ import org.zeromq.ZMQ;
 import org.zeromq.ZMsg;
 
 /**
- * Majordomo Protocol Client API, Java version Implements the MDP/Worker spec at
- * http://rfc.zeromq.org/spec:7.
- * 
- * @author Arkadiusz Orzechowski <aorzecho@gmail.com>
- */
+* Majordomo Protocol Client API, Java version Implements the MDP/Worker spec at
+* http://rfc.zeromq.org/spec:7.
+*/
 public class mdwrkapi {
 
     private static final int HEARTBEAT_LIVENESS = 3; // 3-5 is reasonable
@@ -65,7 +61,7 @@ public class mdwrkapi {
 
     /**
      * Send message to broker If no msg is provided, creates one internally
-     * 
+     *
      * @param command
      * @param option
      * @param msg
@@ -98,7 +94,7 @@ public class mdwrkapi {
         worker = ctx.createSocket(ZMQ.DEALER);
         worker.connect(broker);
         if (verbose)
-            log.format("I: connecting to broker at %s...\n", broker);
+            log.format("I: connecting to broker at %s\n", broker);
 
         // Register service with broker
         sendToBroker(MDP.W_READY, service, null);
@@ -127,9 +123,9 @@ public class mdwrkapi {
 
         while (!Thread.currentThread().isInterrupted()) {
             // Poll socket for a reply, with timeout
-            ZMQ.Poller items = ctx.getContext().poller();
+            ZMQ.Poller items = new ZMQ.Poller(1);
             items.register(worker, ZMQ.Poller.POLLIN);
-            if (items.poll(timeout * 1000) == -1)
+            if (items.poll(timeout) == -1)
                 break; // Interrupted
 
             if (items.pollin(0)) {
@@ -155,7 +151,7 @@ public class mdwrkapi {
                 ZFrame command = msg.pop();
                 if (MDP.W_REQUEST.frameEquals(command)) {
                     // We should pop and save as many addresses as there are
-                    // up to a null part, but for now, just save one...
+                    // up to a null part, but for now, just save one
                     replyTo = msg.unwrap();
                     command.destroy();
                     return msg; // We have a request to process
@@ -171,7 +167,7 @@ public class mdwrkapi {
                 msg.destroy();
             } else if (--liveness == 0) {
                 if (verbose)
-                    log.format("W: disconnected from broker - retrying...\n");
+                    log.format("W: disconnected from broker - retrying\n");
                 try {
                     Thread.sleep(reconnect);
                 } catch (InterruptedException e) {
@@ -190,7 +186,7 @@ public class mdwrkapi {
 
         }
         if (Thread.currentThread().isInterrupted())
-            log.format("W: interrupt received, killing worker...\n");
+            log.format("W: interrupt received, killing worker\n");
         return null;
     }
 

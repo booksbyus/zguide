@@ -1,21 +1,19 @@
 /**
- * (c) 2011 Arkadiusz Orzechowski
- *
- * This file is part of ZGuide
- *
- * ZGuide is free software; you can redistribute it and/or modify it under
- * the terms of the Lesser GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * ZGuide is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * Lesser GNU General Public License for more details.
- *
- * You should have received a copy of the Lesser GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+* This file is part of ZGuide
+*
+* ZGuide is free software; you can redistribute it and/or modify it under
+* the terms of the Lesser GNU General Public License as published by
+* the Free Software Foundation; either version 3 of the License, or
+* (at your option) any later version.
+*
+* ZGuide is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* Lesser GNU General Public License for more details.
+*
+* You should have received a copy of the Lesser GNU General Public License
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 import java.util.Formatter;
 
 import org.zeromq.ZContext;
@@ -24,11 +22,10 @@ import org.zeromq.ZMQ;
 import org.zeromq.ZMsg;
 
 /**
- * Majordomo Protocol Client API, Java version Implements the MDP/Worker spec at
- * http://rfc.zeromq.org/spec:7.
- * 
- * @author Arkadiusz Orzechowski <aorzecho@gmail.com>
- */
+* Majordomo Protocol Client API, Java version Implements the MDP/Worker spec at
+* http://rfc.zeromq.org/spec:7.
+*
+*/
 public class mdcliapi {
 
     private String broker;
@@ -72,14 +69,14 @@ public class mdcliapi {
         client = ctx.createSocket(ZMQ.REQ);
         client.connect(broker);
         if (verbose)
-            log.format("I: connecting to broker at %s...\n", broker);
+            log.format("I: connecting to broker at %s\n", broker);
     }
 
     /**
      * Send request to broker and get reply by hook or crook Takes ownership of
      * request message and destroys it when sent. Returns the reply message or
      * NULL if there was no reply.
-     * 
+     *
      * @param service
      * @param request
      * @return
@@ -100,9 +97,9 @@ public class mdcliapi {
             request.duplicate().send(client);
 
             // Poll socket for a reply, with timeout
-            ZMQ.Poller items = ctx.getContext().poller();
+            ZMQ.Poller items = new ZMQ.Poller(1);
             items.register(client, ZMQ.Poller.POLLIN);
-            if (items.poll(timeout * 1000) == -1)
+            if (items.poll(timeout) == -1)
                 break; // Interrupted
 
             if (items.pollin(0)) {
@@ -130,7 +127,7 @@ public class mdcliapi {
                     log.format("W: permanent error, abandoning\n");
                     break;
                 }
-                log.format("W: no reply, reconnecting...\n");
+                log.format("W: no reply, reconnecting\n");
                 reconnectToBroker();
             }
         }
