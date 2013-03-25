@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cpp.hwclient", "cpp.hwclient\cpp.hwclient.vcxproj", "{5CA938CA-C8A4-4025-8097-642554984967}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cpp.hwserver", "cpp.hwserver\cpp.hwserver.vcxproj", "{B5A91C3D-77D1-4C7A-8AD6-83EDBF253B1A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5CA938CA-C8A4-4025-8097-642554984967}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5CA938CA-C8A4-4025-8097-642554984967}.Debug|Win32.Build.0 = Debug|Win32
+		{5CA938CA-C8A4-4025-8097-642554984967}.Release|Win32.ActiveCfg = Release|Win32
+		{5CA938CA-C8A4-4025-8097-642554984967}.Release|Win32.Build.0 = Release|Win32
+		{B5A91C3D-77D1-4C7A-8AD6-83EDBF253B1A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{B5A91C3D-77D1-4C7A-8AD6-83EDBF253B1A}.Debug|Win32.Build.0 = Debug|Win32
+		{B5A91C3D-77D1-4C7A-8AD6-83EDBF253B1A}.Release|Win32.ActiveCfg = Release|Win32
+		{B5A91C3D-77D1-4C7A-8AD6-83EDBF253B1A}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
