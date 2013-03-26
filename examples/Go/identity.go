@@ -10,7 +10,7 @@ import (
 	zmq "github.com/alecthomas/gozmq"
 )
 
-func dump(sink zmq.Socket) {
+func dump(sink *zmq.Socket) {
 	parts, err := sink.RecvMultipart(0)
 	if err != nil {
 		fmt.Println(err)
