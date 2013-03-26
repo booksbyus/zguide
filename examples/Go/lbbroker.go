@@ -26,7 +26,7 @@ func randomString() string {
 	return strings.Join(target, "")
 }
 
-func set_id(socket zmq.Socket) {
+func set_id(socket *zmq.Socket) {
 	socket.SetSockOptString(zmq.IDENTITY, randomString())
 }
 

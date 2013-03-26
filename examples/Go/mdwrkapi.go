@@ -19,10 +19,10 @@ type Worker interface {
 
 type mdWorker struct {
 	broker  string
-	context zmq.Context
+	context *zmq.Context
 	service string
 	verbose bool
-	worker  zmq.Socket
+	worker  *zmq.Socket
 
 	heartbeat   time.Duration
 	heartbeatAt time.Time
