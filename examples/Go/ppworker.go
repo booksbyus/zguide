@@ -26,7 +26,7 @@ const (
 //  Helper function that returns a new configured socket
 //  connected to the Paranoid Pirate queue
 
-func WorkerSocket(context zmq.Context) zmq.Socket {
+func WorkerSocket(context *zmq.Context) *zmq.Socket {
 	worker, _ := context.NewSocket(zmq.DEALER)
 	worker.Connect("tcp://localhost:5556")
 

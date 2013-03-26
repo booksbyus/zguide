@@ -19,8 +19,8 @@ type Client interface {
 
 type mdClient struct {
 	broker  string
-	client  zmq.Socket
-	context zmq.Context
+	client  *zmq.Socket
+	context *zmq.Context
 	retries int
 	timeout time.Duration
 	verbose bool

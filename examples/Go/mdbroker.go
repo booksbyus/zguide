@@ -44,10 +44,10 @@ type mdService struct {
 }
 
 type mdBroker struct {
-	context     zmq.Context           //  Context
+	context     *zmq.Context          //  Context
 	heartbeatAt time.Time             //  When to send HEARTBEAT
 	services    map[string]*mdService //  Known services
-	socket      zmq.Socket            //  Socket for clients & workers
+	socket      *zmq.Socket           //  Socket for clients & workers
 	waiting     *ZList                //  Idle workers
 	workers     map[string]*mdbWorker //  Known workers
 	verbose     bool                  //  Print activity to stdout
