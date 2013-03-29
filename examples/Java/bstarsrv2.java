@@ -59,7 +59,7 @@ public class bstarsrv2
         else
         if (argv.length == 1 && argv[0].equals("-b")) {
             System.out.printf("I: Backup passive, waiting for primary (active)\n");
-            bs = new bstar(true, "tcp://*:5004", "tcp://localhost:5003");
+            bs = new bstar(false, "tcp://*:5004", "tcp://localhost:5003");
             bs.voter ("tcp://*:5002", ZMQ.ROUTER, Echo, null);
         }
         else {
