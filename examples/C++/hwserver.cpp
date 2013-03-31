@@ -28,7 +28,7 @@ int main () {
         //  Do some 'work'
 #ifndef _WIN32
     	sleep(1);
-else
+#else
 	Sleep (1);
 #endif
 
