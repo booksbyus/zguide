@@ -27,7 +27,7 @@ func randomString() string {
 }
 
 func set_id(socket *zmq.Socket) {
-	socket.SetSockOptString(zmq.IDENTITY, randomString())
+	socket.SetIdentity(randomString())
 }
 
 func client_task() {
