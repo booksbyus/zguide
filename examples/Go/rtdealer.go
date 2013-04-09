@@ -28,7 +28,7 @@ func worker_task() {
 
 	worker, _ := context.NewSocket(zmq.DEALER)
 	defer worker.Close()
-	worker.SetSockOptString(zmq.IDENTITY, randomString())
+	worker.SetIdentity(randomString())
 	worker.Connect("tcp://localhost:5671")
 
 	total := 0
@@ -40,7 +40,7 @@ func worker_task() {
 		parts, _ := worker.RecvMultipart(0)
 		workload := parts[1]
 		if string(workload) == "Fired!" {
-			id, _ := worker.GetSockOptString(zmq.IDENTITY)
+			id, _ := worker.Identity()
 			fmt.Printf("Completed: %d tasks (%s)\n", total, id)
 			break
 		}

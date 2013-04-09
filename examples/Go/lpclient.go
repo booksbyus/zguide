@@ -63,13 +63,13 @@ func main() {
 				}
 			} else if retriesLeft--; retriesLeft == 0 {
 				fmt.Println("E: Server seems to be offline, abandoning")
-				client.SetSockOptInt(zmq.LINGER, 0)
+				client.SetLinger(0)
 				client.Close()
 				break
 			} else {
 				fmt.Println("W: No response from server, retrying...")
 				//  Old socket is confused; close it and open a new one
-				client.SetSockOptInt(zmq.LINGER, 0)
+				client.SetLinger(0)
 				client.Close()
 				client, _ = context.NewSocket(zmq.REQ)
 				client.Connect(SERVER_ENDPOINT)

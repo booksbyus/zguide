@@ -41,7 +41,7 @@ func client_task() {
 	identity := "Client-" + randomString()
 
 	client, _ := context.NewSocket(zmq.DEALER)
-	client.SetSockOptString(zmq.IDENTITY, identity)
+	client.SetIdentity(identity)
 	client.Connect("ipc://frontend.ipc")
 	defer client.Close()
 

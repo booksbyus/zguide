@@ -62,7 +62,7 @@ func main() {
 		print(err)
 	}
 	defer identified.Close()
-	identified.SetSockOptString(zmq.IDENTITY, "PEER2")
+	identified.SetIdentity("PEER2")
 	identified.Connect("inproc://example")
 	identified.Send([]byte("ROUTER socket uses REQ's socket identity"), zmq.NOBLOCK)
 

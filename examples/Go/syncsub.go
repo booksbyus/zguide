@@ -18,7 +18,7 @@ func main() {
 	subscriber, _ := context.NewSocket(zmq.SUB)
 	defer subscriber.Close()
 	subscriber.Connect("tcp://localhost:5561")
-	subscriber.SetSockOptString(zmq.SUBSCRIBE, "")
+	subscriber.SetSubscribe("")
 
 	//  0MQ is so fast, we need to wait a while...
 	time.Sleep(time.Second)
