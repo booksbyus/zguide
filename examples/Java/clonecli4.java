@@ -1,19 +1,24 @@
+import org.zeromq.ZContext;
+import org.zeromq.ZMQ;
+import org.zeromq.ZMQ.Poller;
+import org.zeromq.ZMQ.Socket;
+
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.zeromq.ZContext;
-import org.zeromq.ZMQ;
-import org.zeromq.ZMQ.Poller;
-import org.zeromq.ZMQ.Socket;
 /**
- * Clone client Model Three
- * @author Danish Shrestha <dshrestha06@gmail.com>
+ * Clone client Model Four
  *
  */
-public class clonecli3 {
+public class clonecli4
+{
+    //  This client is identical to clonecli3 except for where we
+    //  handles subtrees.
+    private final static String SUBTREE  = "/client/";
+
 	private static Map<String, kvsimple> kvMap = new HashMap<String, kvsimple>();
 
 	public void run() {
@@ -22,16 +27,18 @@ public class clonecli3 {
 		snapshot.connect("tcp://localhost:5556");
 
 		Socket subscriber = ctx.createSocket(ZMQ.SUB);
-		subscriber.connect("tcp://localhost:5557");
-		subscriber.subscribe("".getBytes());
+        subscriber.connect("tcp://localhost:5557");
+        subscriber.subscribe(SUBTREE.getBytes());
 
 		Socket push = ctx.createSocket(ZMQ.PUSH);
 		push.connect("tcp://localhost:5558");
 
 		// get state snapshot
+		snapshot.sendMore("ICANHAZ?");
+        snapshot.send(SUBTREE);
         long sequence = 0;
-        snapshot.send("ICANHAZ?".getBytes(), 0);
-		while (true) {
+
+        while (true) {
             kvsimple kvMsg = kvsimple.recv(snapshot);
             if (kvMsg == null)
                 break;      //  Interrupted
@@ -43,10 +50,10 @@ public class clonecli3 {
 			}
 
 			System.out.println("receiving " + kvMsg.getSequence());
-			clonecli3.kvMap.put(kvMsg.getKey(), kvMsg);
+			clonecli4.kvMap.put(kvMsg.getKey(), kvMsg);
 		}
 
-		Poller poller = new ZMQ.Poller(1);
+		Poller poller = new Poller(1);
 		poller.register(subscriber);
 
 		Random random = new Random();
@@ -65,18 +72,18 @@ public class clonecli3 {
                 if (kvMsg.getSequence() > sequence) {
                     sequence = kvMsg.getSequence();
                     System.out.println("receiving " + sequence);
-                    clonecli3.kvMap.put(kvMsg.getKey(), kvMsg);
+                    clonecli4.kvMap.put(kvMsg.getKey(), kvMsg);
                 }
 			}
 
 			if (System.currentTimeMillis() >= alarm) {
-				int key = random.nextInt(10000);
+				String key = String.format("%s%d", SUBTREE, random.nextInt(10000));
 				int body = random.nextInt(1000000);
 
 				ByteBuffer b = ByteBuffer.allocate(4);
 				b.asIntBuffer().put(body);
 
-				kvsimple kvUpdateMsg = new kvsimple(key + "", 0, b.array());
+				kvsimple kvUpdateMsg = new kvsimple(key, 0, b.array());
 				kvUpdateMsg.send(push);
 				alarm = System.currentTimeMillis() + 1000;
 			}
@@ -85,6 +92,6 @@ public class clonecli3 {
 	}
 
 	public static void main(String[] args) {
-		new clonecli3().run();
+		new clonecli4().run();
 	}
 }
