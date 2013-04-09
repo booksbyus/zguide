@@ -11,7 +11,7 @@ import org.zeromq.ZMQ.Socket;
  */
 public class kvsimple {
 	private final String key;
-	private final long sequence;
+	private long sequence;
 	private final byte[] body;
 
 	public kvsimple(String key, long sequence, byte[] body) {
@@ -28,7 +28,12 @@ public class kvsimple {
 		return sequence;
 	}
 
-	public byte[] getBody() {
+    public void setSequence(long sequence)
+    {
+        this.sequence = sequence;
+    }
+
+    public byte[] getBody() {
 		return body;
 	}
 
@@ -44,9 +49,17 @@ public class kvsimple {
 	}
 
 	public static kvsimple recv(Socket updates) {
-		String key = new String(updates.recv(0));
-		Long sequence = ByteBuffer.wrap(updates.recv(0)).getLong();
+        byte [] data = updates.recv(0);
+        if (data == null || !updates.hasReceiveMore())
+            return null;
+		String key = new String(data);
+        data = updates.recv(0);
+        if (data == null || !updates.hasReceiveMore())
+            return null;
+		Long sequence = ByteBuffer.wrap(data).getLong();
 		byte[] body = updates.recv(0);
+        if (body == null || updates.hasReceiveMore())
+            return null;
 
 		return new kvsimple(key, sequence, body);
 	}

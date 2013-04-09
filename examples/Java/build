@@ -28,6 +28,9 @@ if [ /$1/ = /all/ ]; then
         echo "$MAIN"
         javac -cp $CLASSPATH $MAIN
     done
+elif [ /$1/ = /jzmq/ -a -f $2.java ]; then
+    echo "Compiling JZMQ $2.java"
+    javac -cp $JZMQ_CLASSPATH $2.java
 elif [ /$1/ = /jzmq/ ]; then
     rm -f *.class 
     echo "Building JZMQ Java examples..."
