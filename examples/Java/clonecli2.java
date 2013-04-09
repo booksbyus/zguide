@@ -14,25 +14,24 @@ import org.zeromq.ZMQ.Socket;
  */
 public class clonecli2 {
 	private static Map<String, kvsimple> kvMap = new HashMap<String, kvsimple>();
-	private static AtomicLong sequence = new AtomicLong();
 
 	public void run() {
 		Context ctx = ZMQ.context(1);
-		Socket snapshot = ctx.socket(ZMQ.XREQ);
-		snapshot.setLinger(0);
+		Socket snapshot = ctx.socket(ZMQ.DEALER);
 		snapshot.connect("tcp://localhost:5556");
 
 		Socket subscriber = ctx.socket(ZMQ.SUB);
-		subscriber.setLinger(0);
 		subscriber.connect("tcp://localhost:5557");
 		subscriber.subscribe("".getBytes());
 
 		// get state snapshot
 		snapshot.send("ICANHAZ?".getBytes(), 0);
-		kvsimple kvMsg = null;
+        long sequence = 0;
 		while (true) {
-			kvMsg = kvsimple.recv(snapshot);
-			sequence.set(kvMsg.getSequence());
+            kvsimple kvMsg = kvsimple.recv(snapshot);
+            if (kvMsg == null)
+                break;
+			sequence = kvMsg.getSequence();
 			if ("KTHXBAI".equalsIgnoreCase(kvMsg.getKey())) {
 				System.out.println("Received snapshot = " + kvMsg.getSequence());
 				break; // done
@@ -44,16 +43,16 @@ public class clonecli2 {
 
 		// now apply pending updates, discard out-of-sequence messages
 		while (true) {
-			kvMsg = null;
-			kvMsg = kvsimple.recv(subscriber);
+            kvsimple kvMsg = kvsimple.recv(subscriber);
 
-			if (kvMsg != null) {
-				if (kvMsg.getSequence() > sequence.get()) {
-					sequence.set(kvMsg.getSequence());
-					System.out.println("receiving " + sequence);
-					clonecli2.kvMap.put(kvMsg.getKey(), kvMsg);
-				}
-			}
+            if (kvMsg == null)
+                break;
+
+            if (kvMsg.getSequence() > sequence) {
+                sequence = kvMsg.getSequence();
+                System.out.println("receiving " + sequence);
+                clonecli2.kvMap.put(kvMsg.getKey(), kvMsg);
+            }
 		}
 	}
 
