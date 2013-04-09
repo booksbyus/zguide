@@ -24,7 +24,7 @@ func main() {
 	backend.Bind("tcp://*:8100")
 
 	// Subscribe on everything
-	frontend.SetSockOptString(zmq.SUBSCRIBE, "")
+	frontend.SetSubscribe("")
 
 	// Shunt messages out to our own subscribers
 	for {

@@ -28,7 +28,7 @@ func workerTask() {
 	defer context.Close()
 
 	worker, _ := context.NewSocket(zmq.REQ)
-	worker.SetSockOptString(zmq.IDENTITY, randomString())
+	worker.SetIdentity(randomString())
 
 	worker.Connect("tcp://localhost:5671")
 	defer worker.Close()
@@ -41,7 +41,7 @@ func workerTask() {
 		}
 		workload, _ := worker.Recv(0)
 		if string(workload) == "Fired!" {
-			id, _ := worker.GetSockOptString(zmq.IDENTITY)
+			id, _ := worker.Identity()
 			fmt.Printf("Completed: %d tasks (%s)\n", total, id)
 			break
 		}

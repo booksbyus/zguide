@@ -23,7 +23,7 @@ func main() {
 	subscriber, _ := context.NewSocket(zmq.SUB)
 	defer subscriber.Close()
 	subscriber.Connect("tcp://localhost:5556")
-	subscriber.SetSockOptString(zmq.SUBSCRIBE, "10001")
+	subscriber.SetSubscribe("10001")
 
 	pi := zmq.PollItems{
 		zmq.PollItem{Socket: receiver, zmq.Events: zmq.POLLIN},

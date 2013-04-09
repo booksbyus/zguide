@@ -27,7 +27,7 @@ func main() {
 	src := rand.NewSource(time.Now().UnixNano())
 	random := rand.New(src)
 	identity := fmt.Sprintf("%04X-%04X", random.Intn(0x10000), random.Intn(0x10000))
-	worker.SetSockOptString(zmq.IDENTITY, identity)
+	worker.SetIdentity(identity)
 	worker.Connect("tcp://localhost:5556")
 
 	//  Tell broker we're ready for work

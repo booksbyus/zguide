@@ -15,7 +15,7 @@ func main() {
 	subscriber, _ := context.NewSocket(zmq.SUB)
 	defer subscriber.Close()
 	subscriber.Connect("tcp://localhost:5563")
-	subscriber.SetSockOptString(zmq.SUBSCRIBE, "B")
+	subscriber.SetSubscribe("B")
 
 	for {
 		address, _ := subscriber.Recv(0)

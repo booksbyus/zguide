@@ -32,7 +32,7 @@ func main() {
 
 	//  Subscribe to just one zipcode (whitefish MT 59937) 
 	fmt.Printf("Collecting updates from weather server for %s…\n", filter)
-	socket.SetSockOptString(zmq.SUBSCRIBE, filter)
+	socket.SetSubscribe(filter)
 	socket.Connect("tcp://localhost:5556")
 
 	for i := 0; i < 101; i++ {

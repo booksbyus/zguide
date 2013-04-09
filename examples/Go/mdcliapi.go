@@ -45,7 +45,7 @@ func (self *mdClient) reconnect() {
 	}
 
 	self.client, _ = self.context.NewSocket(zmq.REQ)
-	self.client.SetSockOptInt(zmq.LINGER, 0)
+	self.client.SetLinger(0)
 	self.client.Connect(self.broker)
 	if self.verbose {
 		log.Printf("I: connecting to broker at %s...\n", self.broker)

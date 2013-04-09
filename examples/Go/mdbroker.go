@@ -56,7 +56,7 @@ type mdBroker struct {
 func NewBroker(endpoint string, verbose bool) Broker {
 	context, _ := zmq.NewContext()
 	socket, _ := context.NewSocket(zmq.ROUTER)
-	socket.SetSockOptInt(zmq.LINGER, 0)
+	socket.SetLinger(0)
 	socket.Bind(endpoint)
 	log.Printf("I: MDP broker/0.1.1 is active at %s\n", endpoint)
 	return &mdBroker{

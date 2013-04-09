@@ -24,7 +24,7 @@ func main() {
 	subscriber, _ := context.NewSocket(zmq.SUB)
 	defer subscriber.Close()
 	subscriber.Connect("tcp://localhost:5556")
-	subscriber.SetSockOptString(zmq.SUBSCRIBE, "10001")
+	subscriber.SetSubscribe("10001")
 
 	//  Process messages from both sockets
 	//  We prioritize traffic from the task ventilator
