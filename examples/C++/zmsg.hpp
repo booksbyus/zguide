@@ -104,6 +104,7 @@ public:
          if (message.size() == 17 && ((unsigned char *)message.data())[0] == 0) {
             char *uuidstr = encode_uuid((unsigned char*) message.data());
             push_back(uuidstr);
+            delete[] uuidstr;
          }
          else {
             data[message.size()] = 0;
