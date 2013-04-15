@@ -283,7 +283,7 @@ def main():
         primary = False
     else:
         print "Usage: clonesrv6.py { -p | -b }"
-        SystemExit(1)
+        sys.exit(1)
     clone = CloneServer(primary)
     clone.start()
 
