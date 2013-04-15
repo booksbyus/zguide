@@ -50,10 +50,12 @@ class KVMsg(object):
         return self.properties.get(k, default)
 
     def store(self, dikt):
-        """Store me in a dict if I have anything to store"""
-        # this seems weird to check, but it's what the C example does
+        """Store me in a dict if I have anything to store 
+        else delete me from the dict."""
         if self.key is not None and self.body is not None:
             dikt[self.key] = self
+        elif self.key in dikt:
+            del dikt[self.key]
 
     def send(self, socket):
         """Send key-value message to socket; any empty frames are sent as such."""
