@@ -155,7 +155,8 @@ class CloneAgent(object):
 
             # Send key-value pair on to server
             kvmsg = KVMsg(0, key=key, body=value)
-            kvmsg["ttl"] = ttl
+            if ttl:
+                kvmsg["ttl"] = ttl
             kvmsg.send(self.publisher)
         elif command == "GET":
             key = msg[0]
