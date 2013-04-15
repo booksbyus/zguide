@@ -151,17 +151,17 @@ class CloneAgent(object):
         elif command == "SET":
             key,value,sttl = msg
             ttl = int(sttl)
-            self.kvmap[key] = value
 
             # Send key-value pair on to server
             kvmsg = KVMsg(0, key=key, body=value)
+            kvmsg.store(self.kvmap)
             if ttl:
                 kvmsg["ttl"] = ttl
             kvmsg.send(self.publisher)
         elif command == "GET":
             key = msg[0]
-            value = self.kvmap.get(key, '')
-            self.pipe.send(value)
+            value = self.kvmap.get(key)
+            self.pipe.send(value.body if value else '')
 
 
 # ---------------------------------------------------------------------
