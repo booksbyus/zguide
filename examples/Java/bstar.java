@@ -194,7 +194,6 @@ public class bstar
         public int handle(ZLoop loop, PollItem item, Object arg)
         {
             bstar self = (bstar) arg;
-            System.out.println(String.format("sending %s %d", self.state, self.state.ordinal()));
             self.statepub.send(String.format("%d", self.state.ordinal()));
             return 0;
         }
@@ -208,9 +207,6 @@ public class bstar
         {
             bstar self = (bstar) arg;
             String state = item.getSocket().recvStr();
-
-            System.out.println(String.format("recv %s", state));
-
             if (state != null) {
                 self.event = Event.values()[Integer.parseInt(state)];
                 self.updatePeerExpiry();
@@ -299,7 +295,7 @@ public class bstar
 
     //  .split register state-change handlers
     //  Register handlers to be called each time there's a state change:
-    public void newAction(IZLoopHandler handler, Object arg)
+    public void newActive(IZLoopHandler handler, Object arg)
     {
         activeFn = handler;
         activeArg = arg;
