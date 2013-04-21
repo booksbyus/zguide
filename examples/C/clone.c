@@ -146,6 +146,7 @@ server_new (zctx_t *ctx, char *address, int port, char *subtree)
     self->subscriber = zsocket_new (ctx, ZMQ_SUB);
     zsocket_connect (self->subscriber, "%s:%d", address, port + 1);
     zsockopt_set_subscribe (self->subscriber, subtree);
+    zsockopt_set_subscribe (self->subscriber, "HUGZ");
     return self;
 }
 
@@ -332,7 +333,7 @@ clone_agent (void *args, zctx_t *ctx, void *pipe)
                 
             case STATE_ACTIVE:
                 //  In this state we read from subscriber and we expect
-                //  the server to give hugz, else we fail over.
+                //  the server to give HUGZ, else we fail over.
                 poll_set [1].socket = server->subscriber;
                 break;
         }
@@ -379,7 +380,7 @@ clone_agent (void *args, zctx_t *ctx, void *pipe)
             }
             else
             if (self->state == STATE_ACTIVE) {
-                //  Discard out-of-sequence updates, incl. hugz
+                //  Discard out-of-sequence updates, incl. HUGZ
                 if (kvmsg_sequence (kvmsg) > self->sequence) {
                     self->sequence = kvmsg_sequence (kvmsg);
                     kvmsg_store (&kvmsg, self->kvmap);
@@ -393,7 +394,7 @@ clone_agent (void *args, zctx_t *ctx, void *pipe)
         }
         else {
             //  Server has died, failover to next
-            zclock_log ("I: server at %s:%d didn't give hugz",
+            zclock_log ("I: server at %s:%d didn't give HUGZ",
                     server->address, server->port);
             self->cur_server = (self->cur_server + 1) % self->nbr_servers;
             self->state = STATE_INITIAL;
