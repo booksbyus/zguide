@@ -25,10 +25,10 @@ int main (void)
                 //  Process all parts of the message
                 zmq_msg_init (&message);
                 zmq_msg_recv (&message, frontend, 0);
-                zmq_msg_send (&message, backend,
-                    zmq_msg_more (&message)? ZMQ_SNDMORE: 0);
+                int more = zmq_msg_more (&message);
+                zmq_msg_send (&message, backend, more? ZMQ_SNDMORE: 0);
                 zmq_msg_close (&message);
-                if (!zmq_msg_more (&message))
+                if (!more)
                     break;      //  Last message part
             }
         }
@@ -37,10 +37,10 @@ int main (void)
                 //  Process all parts of the message
                 zmq_msg_init (&message);
                 zmq_msg_recv (&message, backend, 0);
-                zmq_msg_send (&message, frontend,
-                    zmq_msg_more (&message)? ZMQ_SNDMORE: 0);
+                int more = zmq_msg_more (&message);
+                zmq_msg_send (&message, frontend, more? ZMQ_SNDMORE: 0);
                 zmq_msg_close (&message);
-                if (!zmq_msg_more (&message))
+                if (!more)
                     break;      //  Last message part
             }
         }
