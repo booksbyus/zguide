@@ -31,12 +31,12 @@ func main() {
 
 		switch {
 		case toPoll[0].REvents&zmq.POLLIN != 0:
-			message, _ := toPoll[0].Socket.Recv(0)
-			backend.Send(message, 0)
+			parts, _ := frontend.RecvMultipart(0)
+			backend.SendMultipart(parts, 0)
 
 		case toPoll[1].REvents&zmq.POLLIN != 0:
-			message, _ := toPoll[1].Socket.Recv(0)
-			frontend.Send(message, 0)
+			parts, _ := backend.RecvMultipart(0)
+			frontend.SendMultipart(parts, 0)
 		}
 	}
 }
