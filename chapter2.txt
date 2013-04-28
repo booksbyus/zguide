@@ -1112,7 +1112,7 @@ As you build applications with 0MQ, you will come across this problem more than 
 | getting every |    .-->| subscription  +------->| you have to    |
 | message?      |    |   | for messages? | No     | subscribe to   |
 '--------+------'    |   '-------+-------'        | get messages   |
-         | Yes       |           |                '----------------'
+         | Yes       |           | Yes            '----------------'
          v           |           v
 .----------------.   |   .----------------.        .---------------.
 | Are you losing |   |   | Do you start   |        | Start all SUB |
