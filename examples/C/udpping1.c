@@ -57,7 +57,7 @@ int main (void)
         //  Someone answered our ping
         if (pollitems [0].revents & ZMQ_POLLIN) {
             struct sockaddr_in si_that;
-            socklen_t si_len;
+            socklen_t si_len = sizeof (struct sockaddr_in);
             ssize_t size = recvfrom (fd, buffer, PING_MSG_SIZE, 0,
                                      &si_that, &si_len);
             if (size == -1)

@@ -313,11 +313,11 @@ When you work with multipart messages, each part is a {{zmq_msg}} item. E.g., if
 Here is how we send the frames in a multipart message (we receive each frame into a message object):
 
 [[code type="fragment" name="sendmore"]]
-zmq_msg_send (socket, &message, ZMQ_SNDMORE);
+zmq_msg_send (&message, socket, ZMQ_SNDMORE);
 ...
-zmq_msg_send (socket, &message, ZMQ_SNDMORE);
+zmq_msg_send (&message, socket, ZMQ_SNDMORE);
 ...
-zmq_msg_send (socket, &message, 0);
+zmq_msg_send (&message, socket, 0);
 [[/code]]
 
 Here is how we receive and process all the parts in a message, be it single part or multipart:
@@ -326,7 +326,7 @@ Here is how we receive and process all the parts in a message, be it single part
 while (1) {
     zmq_msg_t message;
     zmq_msg_init (&message);
-    zmq_msg_recv (socket, &message, 0);
+    zmq_msg_recv (&message, socket, 0);
     //  Process the message frame
     ...
     zmq_msg_close (&message);
@@ -1028,7 +1028,7 @@ void my_free (void *data, void *hint) {
 //  Send message from buffer, which we allocate and 0MQ will free for us
 zmq_msg_t message;
 zmq_msg_init_data (&message, buffer, 1000, my_free, NULL);
-zmq_msg_send (socket, &message, 0);
+zmq_msg_send (&message, socket, 0);
 [[/code]]
 
 Note that you don't call {{zmq_msg_close[3]}} after sending a message--{{libzmq}} will do this automatically when it's actually done sending the message.

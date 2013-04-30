@@ -38,7 +38,7 @@ void bstar_new_master (bstar_t *self, zloop_fn handler, void *arg);
 void bstar_new_slave (bstar_t *self, zloop_fn handler, void *arg);
 
 //  Enable/disable verbose tracing
-void bstar_set_verbose (bstar_t *self, Bool verbose);
+void bstar_set_verbose (bstar_t *self, bool verbose);
 
 //  Start the reactor, ends if a callback function returns -1, or the
 //  process received SIGINT or SIGTERM.

@@ -262,7 +262,7 @@ s_service_success (char *uuid)
     char *service_name = zframe_strdup (service);
 
     //  Create MDP client session with short timeout
-    mdcli_t *client = mdcli_new ("tcp://localhost:5555", FALSE);
+    mdcli_t *client = mdcli_new ("tcp://localhost:5555", false);
     mdcli_set_timeout (client, 1000);  //  1 sec
     mdcli_set_retries (client, 1);     //  only 1 retry
 

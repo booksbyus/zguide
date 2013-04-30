@@ -36,10 +36,10 @@ typedef struct {
 //  The FSM runs one event at a time. We apply an event to the current state,
 //  which checks if the event is accepted, and if so, sets a new state:
 
-static Bool
+static bool
 s_state_machine (bstar_t *fsm)
 {
-    Bool exception = FALSE;
+    bool exception = false;
     
     //  These are the PRIMARY and BACKUP states; we're waiting to become
     //  ACTIVE or PASSIVE depending on events we get from our peer:
@@ -64,7 +64,7 @@ s_state_machine (bstar_t *fsm)
         else
         //  Reject client connections when acting as backup
         if (fsm->event == CLIENT_REQUEST)
-            exception = TRUE;
+            exception = true;
     }
     else
     //  .split active and passive states
@@ -74,7 +74,7 @@ s_state_machine (bstar_t *fsm)
         if (fsm->event == PEER_ACTIVE) {
             //  Two actives would mean split-brain
             printf ("E: fatal error - dual actives, aborting\n");
-            exception = TRUE;
+            exception = true;
         }
     }
     else
@@ -96,7 +96,7 @@ s_state_machine (bstar_t *fsm)
         if (fsm->event == PEER_PASSIVE) {
             //  Two passives would mean cluster would be non-responsive
             printf ("E: fatal error - dual passives, aborting\n");
-            exception = TRUE;
+            exception = true;
         }
         else
         if (fsm->event == CLIENT_REQUEST) {
@@ -110,7 +110,7 @@ s_state_machine (bstar_t *fsm)
             }
             else
                 //  If peer is alive, reject connections
-                exception = TRUE;
+                exception = true;
         }
     }
     return exception;
@@ -177,7 +177,7 @@ int main (int argc, char *argv [])
             //  Have a client request
             zmsg_t *msg = zmsg_recv (frontend);
             fsm.event = CLIENT_REQUEST;
-            if (s_state_machine (&fsm) == FALSE)
+            if (s_state_machine (&fsm) == false)
                 //  Answer client by echoing request back
                 zmsg_send (&msg, frontend);
             else

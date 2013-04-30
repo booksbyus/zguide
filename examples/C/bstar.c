@@ -300,7 +300,7 @@ bstar_new_passive (bstar_t *self, zloop_fn handler, void *arg)
 //  .split enable/disable tracing
 //  Enable/disable verbose tracing, for debugging:
 
-void bstar_set_verbose (bstar_t *self, Bool verbose)
+void bstar_set_verbose (bstar_t *self, bool verbose)
 {
     zloop_set_verbose (self->loop, verbose);
 }
