@@ -1015,7 +1015,7 @@ A more robust model could be:
 
 ++ Zero-Copy
 
-0MQ's message API lets you can send and receive messages directly from and to application buffers without copying data. We call //zero-copy//, and it can improve performance in some applications.
+0MQ's message API lets you send and receive messages directly from and to application buffers without copying data. We call //zero-copy//, and it can improve performance in some applications.
 
 You should think about using zero-copy in the specific case where you are sending large blocks of memory (thousands of bytes), at a high frequency. For short messages, or for lower message rates, using zero-copy will make your code messier and more complex with no measurable benefit. Like all optimizations, use this when you know it helps, and //measure// before and after.
 
