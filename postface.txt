@@ -126,7 +126,7 @@ Which works as follows:
 
 * We use the custom mkdocbook Perl program on the input files to produce a DocBook output.
 * We push the DocBook format through docbook2ps and ps2pdf to create clean PDFs in each language.
-* We push the DocBook format though db2epub to create Epub books and in each language.
+* We push the DocBook format through db2epub to create Epub books and in each language.
 * We upload the PDFs to the public wiki using the Wikidot API.
 
 When creating a community project, it's important to lower the "change latency", which is the time it takes for people to see their work live or, at least, to see that you've accepted their pull request. If that is more than a day or two, you've often lost your contributor's interest.
