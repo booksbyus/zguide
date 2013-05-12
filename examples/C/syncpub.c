@@ -11,6 +11,9 @@ int main (void)
     void *publisher = zmq_socket (context, ZMQ_PUB);
     zmq_bind (publisher, "tcp://*:5561");
 
+    int sndhwm = 1000000;
+    zmq_setsockopt (publisher, ZMQ_SNDHWM, &sndhwm, sizeof (int));
+
     //  Socket to receive signals
     void *syncservice = zmq_socket (context, ZMQ_REP);
     zmq_bind (syncservice, "tcp://*:5562");
