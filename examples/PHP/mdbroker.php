@@ -228,10 +228,10 @@ class mdbroker
         }
 
         if (isset($worker->service)) {
-            worker_remove_from_array($worker, $worker->service->waiting);
+            $this->worker_remove_from_array($worker, $worker->service->waiting);
             $worker->service->workers--;
         }
-        worker_remove_from_array($worker, $this->waiting);
+        $this->worker_remove_from_array($worker, $this->waiting);
         unset($this->workers[$worker->identity]);
     }
 
