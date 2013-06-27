@@ -643,11 +643,11 @@ The next problem is that discovery isn't neatly synchronized. We can get the fir
 
 Here it is, broken down into steps:
 
-* If we receive a UDP beacon, we connect to the peer.
+* If we receive a UDP beacon from a new peer, we connect to the peer through a DEALER socket.
 * We read messages from our ROUTER socket, and each message comes with the UUID of the sender.
 * If it's an {{OHAI}} message, we connect back to that peer if not already connected to it.
 * If it's any other message, we //must// already be connected to the peer (a good place for an assertion).
-* We send messages to each peer using a dedicated per-peer DEALER socket, which //must// be connected.
+* We send messages to each peer using the per-peer DEALER socket, which //must// be connected.
 * When we connect to a peer, we also tell our application that the peer exists.
 * Every time we get a message from a peer, we treat that as a heartbeat (it's alive).
 

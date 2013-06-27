@@ -342,6 +342,10 @@ This rule has two effects. The first is that it forces people to make minimal so
 
 For cross-platform projects, it is fair to ask that the patch works on the development box used by the contributor.
 
+> A patch commit message SHOULD consist of a single short (less than 50 character) line summarizing the change, optionally followed by a blank line and then a more thorough description. 
+
+This is a good format for commit messages that fits into email (the first line becomes the subject, and the rest becomes the email body).
+
 > A "Correct Patch" is one that satisfies the above requirements.
 
 Just in case it wasn't clear, we're back to legalese and definitions.
@@ -473,7 +477,7 @@ This rule is mainly here because people asked for it. I've no real love for it, 
 
 Now, the real thing is that public contracts //do change//. It's not about not changing them. It's about changing them safely. This means educating (especially protocol) designers to create that space up-front.
 
-> A patch that modifies a Public Contract SHOULD not break existing applications unless there is prior consensus on the value of doing this.
+> A patch that modifies a stable Public Contract SHOULD not break existing applications unless there is overriding consensus on the value of doing this.
 
 Sometimes the patch is fixing a bad API that no one is using. It's a freedom we need, but it should be based on consensus, not one person's dogma. However, making random changes "just because" is not good. In 0MQ v3.x, did we benefit from renaming {{ZMQ_NOBLOCK}} to {{ZMQ_DONTWAIT}}? Sure, it's closer to the POSIX socket {{recv()}} call, but is that worth breaking thousands of applications? No one ever reported it as an issue. To misquote Stallman: "your freedom to create an ideal world stops one inch from my application."
 
@@ -841,9 +845,9 @@ The main lessons of COD are also simple, but hard for experts to swallow. They a
 
 * Engineers and designers love to make stuff and decoration, and this inevitably leads to complexity. It is crucial to have a "stop mechanism", a way to set short, hard deadlines that force people to make smaller, simpler answers to just the most crucial problems.
 
-+++ Simplicity-Oriented Design
++++ Simplicity Oriented Design
 
-Finally, we come to the rare but precious //Simplicity-Oriented Design//, or SOD. This process starts with a realization: we do not know what we have to make until after we start making it. Coming up with ideas or large-scale designs isn't just wasteful, it's a direct hindrance to designing the truly accurate solutions. The really juicy problems are hidden like far valleys, and any activity except active scouting creates a fog that hides those distant valleys. You need to keep mobile, pack light, and move fast.
+Finally, we come to the rare but precious //Simplicity Oriented Design//, or SOD. This process starts with a realization: we do not know what we have to make until after we start making it. Coming up with ideas or large-scale designs isn't just wasteful, it's a direct hindrance to designing the truly accurate solutions. The really juicy problems are hidden like far valleys, and any activity except active scouting creates a fog that hides those distant valleys. You need to keep mobile, pack light, and move fast.
 
 SOD works as follows:
 
