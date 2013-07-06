@@ -19,23 +19,23 @@ import Control.Concurrent (threadDelay)
 
 main :: IO ()
 main = 
-  runZMQ $ do
-    -- connect a receiver to the ventilator
-    receiver <- socket Pull
-    connect receiver "tcp://localhost:5557"
+    runZMQ $ do
+        -- connect a receiver to the ventilator
+        receiver <- socket Pull
+        connect receiver "tcp://localhost:5557"
 
-    -- connect a sender to the sink
-    sender <- socket Push
-    connect sender "tcp://localhost:5558"
-      
-    liftIO $ hSetBuffering stdout NoBuffering
-    forever $ do
-      message <- unpack <$> receive receiver
-      -- Simple progress indicator for the viewer
-      liftIO $ putStr $ message ++ "."
+        -- connect a sender to the sink
+        sender <- socket Push
+        connect sender "tcp://localhost:5558"
+          
+        liftIO $ hSetBuffering stdout NoBuffering
+        forever $ do
+            message <- unpack <$> receive receiver
+            -- Simple progress indicator for the viewer
+            liftIO $ putStr $ message ++ "."
 
-      -- Do the "work"
-      liftIO $ threadDelay (read message * 1000)
-       
-      -- Send results to sink
-      send sender [] empty
+            -- Do the "work"
+            liftIO $ threadDelay (read message * 1000)
+                   
+            -- Send results to sink
+            send sender [] empty
