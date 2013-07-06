@@ -9,30 +9,33 @@
 
 module Main where
 
-import System.ZMQ
+import System.ZMQ3.Monadic (runZMQ, socket, connect, send, receive, Pull(..), Push(..), liftIO)
 import Control.Monad (forever)
 import Data.ByteString.Char8 (unpack, empty)
-import System.Random (randomRIO)
 import Control.Applicative ((<$>))
 import System.IO (hSetBuffering, stdout, BufferMode(..))
 import Control.Concurrent (threadDelay)
 
 
 main :: IO ()
-main = withContext 1 $ \context -> do  
-  withSocket context Pull $ \receiver -> do
+main = 
+  runZMQ $ do
+    -- connect a receiver to the ventilator
+    receiver <- socket Pull
     connect receiver "tcp://localhost:5557"
-    withSocket context Push $ \sender -> do    
-      connect sender "tcp://localhost:5558"
-      
-      hSetBuffering stdout NoBuffering
-      forever $ do
-        message <- unpack <$> receive receiver []
-        -- Simple progress indicator for the viewer
-        putStr $ message ++ "."
 
-        -- Do the "work"
-        threadDelay (read message * 1000)
+    -- connect a sender to the sink
+    sender <- socket Push
+    connect sender "tcp://localhost:5558"
+      
+    liftIO $ hSetBuffering stdout NoBuffering
+    forever $ do
+      message <- unpack <$> receive receiver
+      -- Simple progress indicator for the viewer
+      liftIO $ putStr $ message ++ "."
+
+      -- Do the "work"
+      liftIO $ threadDelay (read message * 1000)
        
-        -- Send results to sink
-        send sender empty []
+      -- Send results to sink
+      send sender [] empty
