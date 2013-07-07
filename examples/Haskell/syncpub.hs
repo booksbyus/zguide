@@ -1,25 +1,32 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Main where
 
-import System.ZMQ
-import Data.ByteString.Char8 (pack)
-import Control.Monad (replicateM_) 
+import System.ZMQ3.Monadic (runZMQ, socket, bind, receive, send, Pub(..), Rep(..))
+import Control.Monad (replicateM_, unless) 
     
 subscribersExpected :: Int
 subscribersExpected = 2
     
 main :: IO ()
-main = withContext 1 $ \context -> do
-    withSocket context Pub $ \publisher -> do
+main = 
+    runZMQ $ do
+        
+        publisher <- socket Pub
         bind publisher "tcp://*:5561"
-        withSocket context Rep $ \syncservice -> do
-            bind syncservice "tcp://*:5562"
-            getSubs 0 syncservice
-            replicateM_ 1000000 $ send publisher (pack "Rhubarb") []
-            send publisher (pack "END") []
-            
-getSubs :: Int -> Socket a -> IO ()        
-getSubs num sock | num >= subscribersExpected = return ()
-                 | otherwise = do
-                     msg <- receive sock []
-                     send sock (pack "") []
-                     getSubs (num + 1) sock
+
+        syncservice <- socket Rep
+        bind syncservice "tcp://*:5562"
+        
+        -- Get synchronization from subscribers
+        sync syncservice
+        
+        replicateM_ 1000000 $ send publisher [] "Rhubarb"
+        
+        send publisher [] "END"
+
+    where
+        sync = loop 0 where
+               loop num sock = unless (num >= subscribersExpected) $ do
+                    receive sock
+                    send sock [] ""
+                    loop (num + 1) sock
