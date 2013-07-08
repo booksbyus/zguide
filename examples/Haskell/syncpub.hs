@@ -1,11 +1,16 @@
 {-# LANGUAGE OverloadedStrings #-}
+-- |
+-- Node coordination Publisher
+-- 
 module Main where
 
-import System.ZMQ3.Monadic (runZMQ, socket, bind, receive, send, Pub(..), Rep(..))
+import System.ZMQ3.Monadic (runZMQ, socket, bind, receive, send, Pub(..), Rep(..), liftIO)
 import Control.Monad (replicateM_, unless) 
-    
+import System.IO (hSetBuffering, stdout, BufferMode(..))
+import Control.Concurrent (threadDelay)
+
 subscribersExpected :: Int
-subscribersExpected = 2
+subscribersExpected = 5 
     
 main :: IO ()
 main = 
@@ -17,11 +22,15 @@ main =
         syncservice <- socket Rep
         bind syncservice "tcp://*:5562"
         
-        -- Get synchronization from subscribers
+
+        liftIO $ hSetBuffering stdout NoBuffering
+        liftIO $ putStrLn "[Publisher] Get synchronization from subscribers"
         sync syncservice
         
-        replicateM_ 1000000 $ send publisher [] "Rhubarb"
+        liftIO $ putStrLn "[Publisher] Send updates to subscribers"
+        replicateM_ 5000 $ send publisher [] "Rhubarb"
         
+        liftIO $ putStrLn "[Publisher] Send termination signal"
         send publisher [] "END"
 
     where
