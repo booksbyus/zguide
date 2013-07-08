@@ -1,12 +1,16 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Main where
 
-import System.ZMQ
-import ZHelpers (setId)
+import System.ZMQ3.Monadic (ZMQ, Socket, runZMQ, socket, connect, bind, receive, send, Router(..), Req(..), Flag(SendMore), liftIO)
 
-import Control.Concurrent (forkIO, threadDelay)
+import Control.Concurrent (threadDelay, forkIO)
 import Control.Concurrent.MVar (withMVar, newMVar, MVar)
 import Data.ByteString.Char8 (pack, unpack)
-import Control.Monad (replicateM_)
+import Control.Monad (replicateM_, unless)
+import ZHelpers (setId)
+import Text.Printf
+import Data.Time.Clock
+import System.Random
 
 nbrWorkers :: Int
 nbrWorkers = 10
@@ -15,39 +19,66 @@ nbrWorkers = 10
 -- for the stdout handle, otherwise we will get jumbled text. We don't 
 -- use the lock for anything zeroMQ related, just output to screen.
 
-workerThread :: Context -> MVar () -> IO ()
-workerThread ctx lock = withSocket ctx Req $ \worker -> do
-    setId worker
-    connect worker "ipc://routing.ipc"
-    let work_func val = do
-        send worker (pack "ready") []
-        workload <- receive worker []
-        if unpack workload == "END"
-            then withMVar lock $ \_ -> putStrLn $ "Processed: " ++ show val ++ " tasks"
-            else work_func (val+1)
-    work_func 0
+workerThread :: MVar () -> IO ()
+workerThread lock = 
+    runZMQ $ do
+        worker <- socket Req
+        setId worker
+        connect worker "ipc://routing.ipc"
+        work worker
+
+        where
+            work = loop 0 where
+                loop val sock = do
+                    send sock [] (pack "ready")
+                    workload <- receive sock
+                    if unpack workload == "Fired!"
+                        then liftIO $ withMVar lock $ \_ -> printf "Completed: %d tasks\n" (val::Int)
+                        else do
+                            rand <- liftIO $ getStdRandom (randomR (500 :: Int, 5000))
+                            liftIO $ threadDelay rand
+                            loop (val+1) sock
     
 main :: IO ()
-main = withContext 1 $ \context -> do
-    withSocket context XRep $ \client -> do
+main = 
+    runZMQ $ do
+        client <- socket Router
         bind client "ipc://routing.ipc"
         
         -- We only Need the MVar For Printing the Output (so output doesn't become interleaved)
-        -- The alternative is to Make an ipc channel, but that distracts from the example.
-        lock <- newMVar ()
-        
-        replicateM_ nbrWorkers (forkIO (workerThread context lock))
+        -- The alternative is to Make an ipc channel, but that distracts from the example
+        -- or to 'NoBuffering' 'stdin'
+        lock <- liftIO $ newMVar ()
 
-        let generalProc a = do
-            address <- receive client []
-            empty <- receive client []
-            ready <- receive client []
-            
-            send client address [SndMore]
-            send client (pack "") [SndMore]
-            send client (pack a) []
+        liftIO $ replicateM_ nbrWorkers (forkIO $ workerThread lock)
 
-        replicateM_ (nbrWorkers * 10) (generalProc "This is the workload")
-        replicateM_ nbrWorkers (generalProc "END")
+        start <- liftIO $ getCurrentTime
+        sendWork client start
 
-        threadDelay $ 1 * 1000 * 1000
+        -- you need to give some time to the workers so they can exit properly
+        liftIO $ threadDelay $ 1 * 1000 * 1000
+
+    where
+        sendWork :: Socket z Router -> UTCTime -> ZMQ z ()
+        sendWork = loop nbrWorkers where
+            loop c sock start = unless (c <= 0) $ do
+                -- Next message is the leaset recently used worker
+                identity <- receive sock
+                send sock [SendMore] identity
+                -- Envelope delimiter
+                receive sock
+                -- Ready signal from worker
+                receive sock
+
+                -- Send delimiter
+                send sock [SendMore] ""
+                -- Send Work unless time is up
+                now <- liftIO $ getCurrentTime
+                if (c /= nbrWorkers || diffUTCTime now start > 5)
+                then do
+                    send sock [] "Fired!"
+                    loop (c-1) sock start 
+                else do
+                    send sock [] "Work harder"
+                    loop c sock start 
+             
