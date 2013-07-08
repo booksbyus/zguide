@@ -7,6 +7,8 @@ module Main where
 import System.ZMQ3.Monadic (runZMQ, socket, setSendHighWM, bind, receive, send, Pub(..), Rep(..), restrict, liftIO)
 import Control.Monad (replicateM_, unless) 
 import System.IO (hSetBuffering, stdout, BufferMode(..))
+import Data.ByteString.Char8 (unpack)
+import Text.Printf
 
 subscribersExpected = 10 
 nbOfUpdate = 10000 
@@ -24,7 +26,6 @@ main =
         syncservice <- socket Rep
         bind syncservice "tcp://*:5562"
         
-
         liftIO $ hSetBuffering stdout NoBuffering
         liftIO $ putStrLn "[Publisher] Get synchronization from subscribers"
         sync syncservice
@@ -38,6 +39,6 @@ main =
     where
         sync = loop 0 where
                loop num sock = unless (num >= subscribersExpected) $ do
-                    receive sock
+                    receive sock >>= \msg -> liftIO $ printf "[Publisher receives] %s\n" (unpack msg)
                     send sock [] ""
                     loop (num + 1) sock

@@ -25,12 +25,11 @@ main =
         syncclient <- socket Req
         connect syncclient "tcp://localhost:5562"
 
-        liftIO $ putStrLn "[Subscriber] Send a synchronization request"
-        send syncclient [] ""
-        liftIO $ putStrLn "[Subscriber] Wait for reply"
+        send syncclient [] "synchronization request from subscriber"
+        -- wait for synchronization reply
         receive syncclient
         
-        liftIO $ putStrLn "[Subscriber] Get update on the pub/sub channel"
+        -- get update on the pub/sub channel"
         nbr <- countUpdates subscriber
         liftIO $ printf "[Subscriber] Received %d updates\n" (nbr ::Int)
 
