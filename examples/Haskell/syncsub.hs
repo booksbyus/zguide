@@ -40,4 +40,4 @@ main =
                 msg <- receive sock
                 if unpack msg == "END"
                 then return val 
-                else loop(val + 1) sock
+                else do loop(val + 1) sock
