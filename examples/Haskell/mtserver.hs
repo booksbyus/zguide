@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 -- |
 -- Multithreaded Hello World server in Haskell
 -- 
@@ -5,34 +6,36 @@
 
 module Main where
 
-import System.ZMQ
+import System.ZMQ3.Monadic
 import Control.Monad (forever, replicateM_)
-import Data.ByteString.Char8 (pack, unpack)
-import Control.Concurrent (threadDelay, forkIO)
+import Data.ByteString.Char8 (unpack)
+import Control.Concurrent (threadDelay)
+import Text.Printf
 
-worker :: Context -> IO ()
-worker context = do
-  withSocket context Rep $ \receiver -> do
-    connect receiver "inproc://workers"
-    forever $ do
-      message <- receive receiver []
-      putStrLn $ unwords ["Received request:", unpack message]    
-      -- Simulate doing some 'work' for 1 second
-      threadDelay (1 * 1000 * 1000)  
-      send receiver reply []
-  where reply = pack "World"
 
 main :: IO ()
-main = withContext 1 $ \context -> do  
-  -- Socket to talk to clients
-  withSocket context XRep $ \clients -> do
-    bind clients "tcp://*:5555"
+main =
+    runZMQ $ do
+        -- Socket to talk to clients
+        clients <- socket Router
+        bind clients "tcp://*:5555"
     
-    -- Socket to talk to workers
-    withSocket context XReq $ \workers -> do
-      bind workers "inproc://workers"
+        -- Socket to talk to workers
+        workers <- socket Dealer
+        bind workers "inproc://workers"
       
-      replicateM_ 5 $ forkIO (worker context)
+        -- using inproc (inter-thread) we expect to share the same context
+        replicateM_ 5 (async worker)
         
-      -- Connect work threads to client threads via a queue
-      device Queue clients workers
+        -- Connect work threads to client threads via a queue
+        proxy clients workers Nothing
+
+worker :: ZMQ z ()
+worker = do
+    receiver <- socket Rep
+    connect receiver "inproc://workers"
+    forever $ do
+      receive receiver >>= liftIO . printf "Received request:%s\n" . unpack    
+      -- Simulate doing some 'work' for 1 second
+      liftIO $ threadDelay (1 * 1000 * 1000)  
+      send receiver [] "World"
