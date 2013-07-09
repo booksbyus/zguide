@@ -55,7 +55,7 @@ main =
         start <- liftIO $ getCurrentTime
         sendWork client start
 
-        -- you need to give some time to the workers so they can exit properly
+        -- You need to give some time to the workers so they can exit properly
         liftIO $ threadDelay $ 1 * 1000 * 1000
 
     where
@@ -80,5 +80,4 @@ main =
                     loop (c-1) sock start 
                 else do
                     send sock [] "Work harder"
-                    loop c sock start 
-             
+                    loop c sock start
