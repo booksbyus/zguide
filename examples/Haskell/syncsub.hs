@@ -5,7 +5,7 @@
 module Main where
     
 
-import System.ZMQ3.Monadic (runZMQ, socket, connect, receive, send, subscribe, Sub(..), Req(..), liftIO)
+import System.ZMQ3.Monadic (ZMQ, Socket, runZMQ, socket, connect, receive, send, subscribe, Sub(..), Req(..), liftIO)
 import Data.ByteString.Char8 (unpack)
 import Control.Concurrent (threadDelay)
 import Text.Printf
@@ -30,10 +30,11 @@ main =
         receive syncclient
         
         -- get update on the pub/sub channel"
-        nbr <- countUpdates subscriber
-        liftIO $ printf "[Subscriber] Received %d updates\n" (nbr ::Int)
+        countUpdates subscriber >>= liftIO . printf "[Subscriber] Received %d updates\n"
+
 
     where
+        countUpdates :: Socket z Sub -> ZMQ z (Int) 
         countUpdates = loop 0 where
             loop val sock = do
                 msg <- receive sock
