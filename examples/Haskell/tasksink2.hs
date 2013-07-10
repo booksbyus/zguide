@@ -16,7 +16,7 @@ import Data.Time.Clock (getCurrentTime, diffUTCTime)
 main :: IO ()
 main = do
 
-    hSetBuffering stdout NoBuffering
+
 
     runZMQ $ do
 
@@ -31,7 +31,7 @@ main = do
         
         -- Start our clock now
         startTime <- liftIO $ getCurrentTime
-
+        liftIO $ hSetBuffering stdout NoBuffering
         -- Process 100 confirmations    
         forM_ [1..100] $ \i -> do
             receive receiver
