@@ -11,6 +11,7 @@ import Numeric (showHex)
 import Data.ByteString.Char8 (pack, unpack)
 import Data.Char (ord)
 import Text.Printf (printf)
+import System.Random
 import qualified Data.ByteString as B
 
 
@@ -28,13 +29,13 @@ dumpSock sock = fmap reverse (receiveMulti sock) >>= liftIO . dumpMsg
 
 -- In General Since We use Randomness, You should Pass in
 -- an StdGen, but for simplicity we just use newStdGen
---setId :: Socket a -> IO ()
---setId sock = do
---    gen <- newStdGen
---    let (val1, gen') = randomR (0 :: Int, 65536) gen
---    let (val2, gen'') = randomR (0 :: Int, 65536) gen'
---    let string_id = show val1 ++ show val2
---    setOption sock (Identity string_id)
+setId :: Socket z t -> ZMQ z ()
+setId sock = do
+    gen <- liftIO $ newStdGen
+    let (val1, gen') = randomR (0 :: Int, 65536) gen
+    let (val2, _) = randomR (0 :: Int, 65536) gen'
+    let string_id = show val1 ++ show val2
+    setIdentity (restrict $ pack string_id) sock
 
 --zpipe :: Context -> (Socket Pair -> Socket Pair -> IO a) -> IO a
 --zpipe ctx func = withSocket ctx Pair $ \sock_a -> do
