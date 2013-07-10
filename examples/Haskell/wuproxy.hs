@@ -25,7 +25,7 @@ main =
         forever $ shunt frontend backend
 
     where
-        -- this implementation is a example
+        -- this implementation is an example
         -- it works but it is quite slow
         -- Use the proxy function in real situation
         shunt from to = do
