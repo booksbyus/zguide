@@ -1,56 +1,89 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Main where
+
+import System.ZMQ3.Monadic (ZMQ, Socket, runZMQ, socket, connect, bind, receive, send, Router(..), Dealer(..), Flag(SendMore), liftIO)
+
+import Control.Concurrent (threadDelay, forkIO)
+import Control.Concurrent.MVar (withMVar, newMVar, MVar)
+import Data.ByteString.Char8 (unpack)
+import Control.Monad (replicateM_, unless)
+import ZHelpers (setId)
+import Text.Printf
+import Data.Time.Clock
+import System.Random
+
+nbrWorkers :: Int
+nbrWorkers = 10
+
+-- In general, although locks are an antipattern in ZeroMQ, we need a lock
+-- for the stdout handle, otherwise we will get jumbled text. We don't 
+-- use the lock for anything zeroMQ related, just output to screen.
+
+workerThread :: MVar () -> IO ()
+workerThread lock = 
+    runZMQ $ do
+        worker <- socket Dealer
+        setId worker
+        connect worker "ipc://routing.ipc"
+        
+        work worker
+
+        where
+            work = loop 0 where
+                loop val sock = do
+                    -- Send an empty frame manually
+                    -- Unlike the Request socket, the Dealer does not it automatically
+                    send sock [SendMore] ""
+                    send sock [] "Ready"
+                    -- unlike the Request socket we need to read the empty frame
+                    receive sock
+                    workload <- receive sock
+                    if unpack workload == "Fired!"
+                    then liftIO $ withMVar lock $ \_ -> printf "Completed: %d tasks\n" (val::Int)
+                    else do
+                        rand <- liftIO $ getStdRandom (randomR (500 :: Int, 5000))
+                        liftIO $ threadDelay rand
+                        loop (val+1) sock
     
-import System.ZMQ
-import Control.Concurrent (forkIO, threadDelay)
-import Data.ByteString.Char8 (pack, unpack)
-import System.Random (newStdGen, randomR, StdGen)
-import Control.Monad (foldM_)
-
-workerTaskA :: Context -> IO ()
-workerTaskA ctx = withSocket ctx XReq $ \worker -> do
-    setOption worker (Identity "A")
-    connect worker "ipc://routing.ipc"
-    recv_func 0 worker where
-        recv_func val sock = do
-            res <- receive sock []
-            if unpack res == "END" then putStrLn ("A received: " ++ show val)
-                else recv_func (val+1) sock
-        
-workerTaskB :: Context -> IO ()
-workerTaskB ctx = withSocket ctx XReq $ \worker -> do
-    setOption worker (Identity "B")
-    connect worker "ipc://routing.ipc"
-    recv_func 0 worker where
-        recv_func val sock = do
-            res <- receive sock []
-            if unpack res == "END" then putStrLn ("B received: " ++ show val)
-                else recv_func (val+1) sock
-
 main :: IO ()
-main = withContext 1 $ \context -> do
-    withSocket context XRep $ \client -> do
+main = 
+    runZMQ $ do
+        client <- socket Router
         bind client "ipc://routing.ipc"
-        forkIO (workerTaskA context)
-        forkIO (workerTaskB context)
-        threadDelay $ 1 * 1000 * 1000
+        
+        -- We only Need the MVar For Printing the Output (so output doesn't become interleaved)
+        -- The alternative is to Make an ipc channel, but that distracts from the example
+        -- Another alternative is to 'NoBuffering' 'stdin' and press Ctr-C manually
+        lock <- liftIO $ newMVar ()
 
-        gen <- newStdGen
-        
-        let func g _i = do
-            let (val, g') = randomR (0, 2) g :: (Int, StdGen)
-            if val > 0
-                then send client (pack "A") [SndMore]
-                else send client (pack "B") [SndMore]
-            send client (pack "This is the workload") []
-            return g'
-            
-        foldM_ func gen [1..10]
-                
-        send client (pack "A") [SndMore]
-        send client (pack "END") []
-        
-        send client (pack "B") [SndMore]
-        send client (pack "END") []
-        
-        -- Give 0MQ/2.0.x time to flush output
-        threadDelay $ 1 * 1000 * 1000
+        liftIO $ replicateM_ nbrWorkers (forkIO $ workerThread lock)
+
+        start <- liftIO $ getCurrentTime
+        sendWork client start
+
+        -- You need to give some time to the workers so they can exit properly
+        liftIO $ threadDelay $ 1 * 1000 * 1000
+
+    where
+        sendWork :: Socket z Router -> UTCTime -> ZMQ z ()
+        sendWork = loop nbrWorkers where
+            loop c sock start = unless (c <= 0) $ do
+                -- Next message is the leaset recently used worker
+                identity <- receive sock
+                send sock [SendMore] identity
+                -- Envelope delimiter
+                receive sock
+                -- Ready signal from worker
+                receive sock
+
+                -- Send delimiter
+                send sock [SendMore] ""
+                -- Send Work unless time is up
+                now <- liftIO $ getCurrentTime
+                if (c /= nbrWorkers || diffUTCTime now start > 5)
+                then do
+                    send sock [] "Fired!"
+                    loop (c-1) sock start 
+                else do
+                    send sock [] "Work harder"
+                    loop c sock start

@@ -1,10 +1,13 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Main where
 
-import System.ZMQ
+import System.ZMQ3.Monadic
 
-import Control.Concurrent (forkIO, threadDelay)
+import Control.Concurrent (threadDelay)
 import Data.ByteString.Char8 (pack, unpack)
 import Control.Monad (forM_, forever, when)
+import Control.Applicative ((<$>))
+import Text.Printf
 
 nbrClients :: Int
 nbrClients = 10
@@ -12,108 +15,118 @@ nbrClients = 10
 nbrWorkers :: Int
 nbrWorkers = 3
 
-workerThread :: Show a => String -> Context -> a -> IO ()
-workerThread url ctx i = withSocket ctx Req $ \socket -> do
-    let identity = "Worker-" ++ show i
-    setOption socket (Identity identity)
-    connect socket url
-    send socket (pack "READY") []
-    
+workerThread :: Show a => a -> ZMQ z ()
+workerThread i = do
+    sock <- socket Req
+    let ident = "Worker-" ++ show i
+    setIdentity (restrict $ pack ident) sock
+    connect sock "inproc://workers"
+    send sock [] "READY" 
+
     forever $ do
-        address <- receive socket []
-        empty <- receive socket []
-        request <- fmap unpack $ receive socket []
+        address <- receive sock
+        receive sock -- empty frame
+        receive sock >>= liftIO . printf "%s : %s\n" ident . unpack
+         
+        send sock [SendMore] address 
+        send sock [SendMore] ""
+        send sock [] "OK"
     
-        putStrLn $ identity ++ ": " ++ request
+
+clientThread :: Show a => a -> ZMQ z ()
+clientThread i = do
+    sock <- socket Req
+    let ident = "Client-" ++ show i
+    setIdentity (restrict $ pack ident) sock
+    connect sock "inproc://clients"
+
+    send sock [] "HELLO" 
+    receive sock >>= liftIO . printf "%s : %s\n" ident . unpack
+
+
+processBackend :: (Receiver r, Sender s) => Int -> [String] -> Int -> Socket z r -> Socket z s -> [Event] -> ZMQ z (Int, [String], Int, Bool)
+processBackend avail_workers workers_list client_nbr backend frontend evts 
+    | In `elem` evts = do
+        -- first frame is the worker id
+        worker_id <- unpack <$> receive backend
+        when (avail_workers >= nbrWorkers) $ error ""
+
+        -- second frame is an empty frame
+        empty <- unpack <$> receive backend
+        when (empty /= "") $ error ""
         
-        send socket address [SndMore]
-        send socket (pack "") [SndMore]
-        send socket (pack "OK") []
-    
-
-clientThread :: Show a => String -> Context -> a -> IO ()
-clientThread url ctx i = withSocket ctx Req $ \socket -> do
-    let identity = "Client-" ++ show i
-    setOption socket (Identity identity)
-    connect socket url
-    
-    send socket (pack "HELLO") []
-    reply <- fmap unpack $ receive socket []
-    
-    putStrLn $ identity ++ ": " ++ reply
-
-
--- Eventually we can Put all of this in a Single Data Type
-backendFunc :: PollEvent -> Int -> [String] -> Int -> Socket a -> Socket b -> IO (Int, [String], Int)
-backendFunc None a b c _ _ = return (a, b, c)
-backendFunc In avail_workers workers_list client_nbr backend frontend = do 
-    worker_addr <- receive backend []
-    when (avail_workers >= nbrWorkers) $ error ""
-
-    empty <- fmap unpack $ receive backend []
-    when (empty /= "") $ error ""
-    
-    let avail' = avail_workers + 1
-    let work_list = workers_list ++ [show avail']
-    
-    client_addr <- fmap unpack $ receive backend []
-    if client_addr == "READY"
-        then return (avail', work_list, client_nbr)
+        let avail' = avail_workers + 1
+        let work_list = workers_list ++ [worker_id]
+        
+        -- the third frame is "READY" or a client reply id
+        client_id <- unpack <$> receive backend
+        if client_id == "READY"
+        then do
+            return (avail', work_list, client_nbr, True)
         else do
-            empty' <- fmap unpack $ receive backend []
+            -- the fourth frame is the empty delimiter
+            empty' <- unpack <$> receive backend
             when (empty' /= "") $ error ""
+            -- the fifth frame is the client message
+            reply <- receive backend
         
-            reply <- receive backend []
-        
-            send frontend (pack client_addr) [SndMore]
-            send frontend (pack "") [SndMore]
-            send frontend reply []
-            return (avail', work_list, client_nbr - 1)
+            send frontend [SendMore] (pack client_id) 
+            send frontend [SendMore] ""
+            send frontend [] reply
+            return (avail', work_list, client_nbr - 1, True)
+
+    | otherwise = return (avail_workers, workers_list, client_nbr, False)
 
 
-frontendFunc :: PollEvent -> Int -> [String] -> Int -> Socket a -> Socket b -> IO (Int, [String])
-frontendFunc None a b _ _ _ = return (a, b)
-frontendFunc In 0 b _ _ _ = return (0, b)
-frontendFunc In avail_workers workers_list client_nbr frontend backend = do
-    client_addr <- receive frontend []
-    empty <- fmap unpack $ receive frontend []
-    when (empty /= "") $ error ""
-    request <- receive frontend []
-    
-    let worker_id = head workers_list 
-    
-    send backend (pack $ show worker_id) [SndMore]
-    send backend (pack "") [SndMore]
-    send backend client_addr [SndMore]
-    send backend (pack "") [SndMore]
-    send backend request []
-    
-    return (avail_workers - 1, tail workers_list)
-    
 
-lruQueueFunc :: Int -> [String] -> Int -> Socket a -> Socket a1 -> IO ()
-lruQueueFunc avail_workers workers_list client_nbr backend frontend = do
-    [S backend' res1, S frontend' res2] <- poll [S backend In, S frontend In] (-1)
-    (avail_workers', workers_list', client_nbr') <- backendFunc res1 avail_workers workers_list client_nbr backend frontend
-    
-    when (client_nbr' > 0) $ do
-        (avail_workers'', workers_list'') <- frontendFunc res2 avail_workers' workers_list' client_nbr' frontend backend
-        lruQueueFunc avail_workers'' workers_list'' client_nbr' backend frontend
-     
+processFrontend :: (Receiver r, Sender s) => Int -> [String] -> Socket z r -> Socket z s -> [Event] -> ZMQ z (Int, [String])
+processFrontend avail_workers workers_list frontend backend  evts 
+    | In `elem` evts = do
+            client_id <- receive frontend
+            empty <- unpack <$> receive frontend
+            when (empty /= "") $ error ""
+            request <- receive frontend
+            
+            send backend [SendMore] (pack $ head workers_list) 
+            send backend [SendMore] ""
+            send backend [SendMore] client_id
+            send backend [SendMore] ""
+            send backend [] request
+            return (avail_workers - 1, tail workers_list)
+
+    | otherwise = return (avail_workers, workers_list)
+
+
+ 
 
 main :: IO ()
 main = do
-    let url_worker = "inproc://workers"
-        url_client = "inproc://clients"
-        client_nbr = nbrClients
         
-    withContext 1 $ \context -> do
-        withSocket context XRep $ \frontend -> do
-            bind frontend url_client
-            withSocket context XRep $ \backend -> do
-                bind backend url_worker
-                forM_ [1..nbrWorkers] $ \i -> forkIO (workerThread url_worker context i)
-                forM_ [1..nbrClients] $ \i -> forkIO (clientThread url_client context i)
-                lruQueueFunc 0 [] client_nbr backend frontend
-                threadDelay $ 1 * 1000 * 1000
+    runZMQ $ do
+
+        frontend <- socket Router
+        bind frontend "inproc://clients"
+        backend <- socket Router
+        bind backend "inproc://workers"
+
+        forM_ [1..nbrWorkers] $ \i -> async (workerThread i)
+        forM_ [1..nbrClients] $ \i -> async (clientThread i)
+
+        lruQueue backend frontend
+        
+        liftIO $ threadDelay $ 1 * 1000 * 1000
+    
+    where
+
+        lruQueue = loop 0 [] nbrClients where
+            loop avail_workers workers_list client_nbr backend frontend  = do
                 
+                [evtsB, evtsF] <- poll (-1) [Sock backend [In] Nothing, Sock frontend [In] Nothing]
+                
+                (avail_workers', workers_list', client_nbr', processed) <- processBackend avail_workers workers_list client_nbr backend frontend evtsB
+                when (client_nbr > 0) $ do
+                    if processed
+                    then do 
+                        (avail_workers'', workers_list'') <- processFrontend avail_workers' workers_list' frontend backend evtsF 
+                        loop avail_workers'' workers_list'' client_nbr' backend frontend
+                    else loop avail_workers' workers_list' client_nbr' backend frontend
