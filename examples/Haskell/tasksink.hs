@@ -7,29 +7,28 @@
 
 module Main where
 
-import System.ZMQ
+import System.ZMQ3.Monadic(runZMQ, socket, bind, receive, Pull(..), liftIO)
 import Control.Monad (forM_)
-import System.Random (randomRIO)
 import System.IO (hSetBuffering, stdout, BufferMode(..))
 import Data.Time.Clock (getCurrentTime, diffUTCTime)
 
 main :: IO ()
-main = withContext 1 $ \context -> do  
-  withSocket context Pull $ \receiver -> do
-    bind receiver "tcp://*:5558"
-    -- Wait for start of batch
-    _ <- receive receiver []
-    
-    -- Start our clock now
-    startTime <- getCurrentTime
-                    
-    -- Process 100 confirmations
-    hSetBuffering stdout NoBuffering
-    forM_ [1..100] $ \i -> do
-      _ <- receive receiver []
-      putStr $ if i `mod` 10 == 0 then ":" else "."
-      
-    endTime <- getCurrentTime
-    let elapsedTime = diffUTCTime endTime startTime
-        elapsedMsec = elapsedTime * 1000
-    putStrLn $ unwords ["Total elapsed time:", show elapsedMsec, "msecs"]
+main = do
+    runZMQ $ do
+        receiver <- socket Pull
+        bind receiver "tcp://*:5558"
+        -- Wait for start of batch
+        receive receiver
+        -- Start our clock now
+        startTime <- liftIO $ getCurrentTime
+        liftIO $ hSetBuffering stdout NoBuffering
+
+        -- Process 100 confirmations    
+        forM_ [1..100] $ \i -> do
+            receive receiver
+            liftIO $ putStr $ if i `mod` 10 == 0 then ":" else "."
+          
+        endTime <- liftIO $ getCurrentTime
+        let elapsedTime = diffUTCTime endTime startTime
+            elapsedMsec = elapsedTime * 1000
+        liftIO $ putStrLn $ unwords ["Total elapsed time:", show elapsedMsec, "msecs"]

@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 -- |
 -- Weather broadcast server in Haskell
 -- Binds PUB socket to tcp://*:5556
@@ -7,21 +8,21 @@
 
 module Main where
 
-import System.ZMQ
+import System.ZMQ3.Monadic
 import Control.Monad (forever)
 import Data.ByteString.Char8 (pack)
 import System.Random (randomRIO)
 
 main :: IO ()
-main = withContext 1 $ \context -> do  
-  withSocket context Pub $ \publisher -> do
+main =  runZMQ $ do
+    publisher <- socket Pub 
     bind publisher "tcp://*:5556"
     bind publisher "ipc://weather.ipc"
   
     forever $ do
-      zipcode <- randomRIO (0, 100000) :: IO Int
-      temperature <- randomRIO (-80, 135) :: IO Int
-      humidity <- randomRIO (10, 60) :: IO Int
+        zipcode <- liftIO $ (randomRIO (0, 100000) :: IO Int)
+        temperature <- liftIO $ (randomRIO (-80, 135) :: IO Int)
+        humidity <- liftIO $ (randomRIO (10, 60) :: IO Int)
       
-      let update = pack $ unwords [show zipcode, show temperature, show humidity]
-      send publisher update []
+        let update = pack $ unwords [show zipcode, show temperature, show humidity]
+        send publisher [] update

@@ -1,66 +1,75 @@
 module Main where
 
-import System.ZMQ
+import System.ZMQ3.Monadic
 import ZHelpers (setId)
-import Control.Concurrent (forkIO, threadDelay)
+import Control.Concurrent (threadDelay)
 import Data.ByteString.Char8 (pack, unpack)
-import Control.Monad (forever, forM_, when, replicateM_)
+import Control.Monad (forever, forM_, when, unless, replicateM_)
 import System.Random (newStdGen, randomR, StdGen)
 
-clientTask :: Context -> IO ()
-clientTask ctx = withSocket ctx XReq $ \client -> do
+clientTask :: ZMQ z ()
+clientTask = do
+    client <- socket Dealer
     setId client
     connect client "tcp://localhost:5570"
     forever $ do
-        forM_ [0..5] $ \centitick -> do
-            [S client' status] <- poll [S client In] 1000
-            when (status == In) $ do
-                msg <- receive client []
-                putStrLn "Client"
-        putStrLn "Req Sent"
-        send client (pack "request") []
-        
-serverTask :: Context -> IO ()
-serverTask ctx = withSocket ctx XRep $ \frontend -> do
-    bind frontend "tcp://*:5570"
-    withSocket ctx XReq $ \backend -> do
-        bind backend "inproc://backend"
-        replicateM_ 5 (forkIO $ serverWorker ctx)
-        [S frontend' res1, S backend' res2] <- poll [S frontend In, S backend In] (-1)
-        when (res1 == In) $ do
-            _id <- receive frontend []
-            msg <- receive frontend []
-            print "Sending"
-            send backend _id [SndMore]
-            send backend msg []
-                        
-        when (res2 /= In) $ do
-            _id <- receive backend []
-            msg <- receive backend []
-            print "Sending"
-            send frontend _id [SndMore]
-            send frontend msg []
+        forM_ [0..100] $ \centitick -> do
+            [evts] <- poll 10 [Sock client [In] Nothing]
+            when (In `elem` evts) $ do
+                receive client >>= \msg -> liftIO $ putStrLn $ unwords ["Client received", (unpack msg), "back from worker"]
+        liftIO $ putStrLn "Req Sent"
+        send client [] (pack "request")
 
-serverWorker :: Context -> IO ()
-serverWorker ctx = withSocket ctx XReq $ \worker -> do
+        
+serverTask :: ZMQ z ()
+serverTask =  do
+
+    frontend <- socket Router
+    bind frontend "tcp://*:5570"
+    backend <- socket Dealer
+    bind backend "inproc://backend"
+    
+    replicateM_ 5 $ async serverWorker
+
+    -- proxy does not work here ?
+    forever $ pollEvt frontend backend
+
+    where
+        pollEvt frontend backend = do 
+            [evtsF, evtsB] <- poll (-1) [Sock frontend [In] Nothing, Sock backend [In] Nothing] 
+            
+            when (In `elem` evtsF) $ do
+                receive frontend >>= send backend [SendMore]
+                receive frontend >>= send backend []
+                            
+            unless (In `elem` evtsB) $ do
+                receive backend >>= send frontend  [SendMore]
+                receive backend >>= send frontend []
+
+
+
+serverWorker :: ZMQ z ()
+serverWorker = do
+    worker <- socket Dealer
     connect worker "inproc://backend"
-    putStrLn "Worker Started"
+    liftIO $ putStrLn "Worker Started"        
     forever $ do
-        _id <- receive worker []
-        msg <- receive worker []
-        putStrLn "Worker Received Data"
-        gen <- newStdGen
-        let (val, gen') = randomR (0,5) gen :: (Int, StdGen)
+        _id <- receive worker
+        msg <- receive worker
+        liftIO $ putStrLn "Worker Received Data"
+        gen <- liftIO $ newStdGen
+        let (val, _) = randomR (0,5) gen :: (Int, StdGen)
         forM_ [1..val] $ \i -> do
-            threadDelay $ 1 * 1000 * 1000
-            send worker _id [SndMore]
-            send worker msg []
+            liftIO $ threadDelay $ 1 * 1000 * 1000
+            send worker [SendMore] _id
+            send worker [] msg
 
 main :: IO ()
-main = withContext 1 $ \context -> do
-    forkIO (clientTask context)
-    forkIO (clientTask context)
-    forkIO (clientTask context)
-    forkIO (serverTask context)
-    
-    threadDelay $ 5 * 1000 * 1000
+main = 
+    runZMQ $ do
+        async clientTask
+        async clientTask
+        async clientTask
+        async serverTask
+        
+        liftIO $ threadDelay $ 5 * 1000 * 1000

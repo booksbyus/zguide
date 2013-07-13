@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 -- |
 -- Weather broadcast server in Haskell
 -- Binds SUB socket to tcp://localhost:5556
@@ -7,11 +8,10 @@
 
 module Main where
 
-import System.ZMQ
+import System.ZMQ3.Monadic
 import Control.Monad (replicateM)
-import Data.ByteString.Char8 (unpack)
+import Data.ByteString.Char8 (unpack, pack)
 import System.Environment (getArgs)
-import Data.String.Utils (splitWs)
 
 main :: IO ()
 main = do    
@@ -20,15 +20,15 @@ main = do
         [zipcode] -> zipcode
         _ -> "10001"
       
-  withContext 1 $ \context -> do    
-    withSocket context Sub $ \subscriber -> do
+  runZMQ $ do
+      subscriber <- socket Sub
       connect subscriber "tcp://localhost:5556"
-      subscribe subscriber zipcode
+      subscribe subscriber (pack zipcode)
             
       temperatures <- replicateM 5 $ do
-        update <- receive subscriber []
-        let [zipcode, temperature, humidity] = map read $ splitWs $ unpack update
-        return temperature
+          update <- receive subscriber
+          let [zipcode, temperature, humidity] = map read $ words $ unpack update
+          return temperature
       
       let avgTemp = fromIntegral (sum temperatures) / fromIntegral (length temperatures)
-      putStrLn $ unwords ["Average temperature for zipcode", zipcode, "was", show avgTemp]
+      liftIO $ putStrLn $ unwords ["Average temperature for zipcode", zipcode, "was", show avgTemp]

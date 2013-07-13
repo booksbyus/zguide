@@ -1,32 +1,33 @@
+{-# LANGUAGE OverloadedStrings #-}
 -- |
 -- Multiple socket poller in Haskell
 -- This version uses poll
 --
--- Translated to Haskell by Sebastian Nowicki <sebnow@gmail.com>
+-- Originally translated to Haskell by Sebastian Nowicki <sebnow@gmail.com>
 
 module Main where
 
-import Control.Monad (forever)
-import Data.ByteString.Char8 (ByteString)
-import System.ZMQ
+import Control.Monad (forever, when)
+import Data.ByteString.Char8 (unpack)
+import System.ZMQ3
+import Control.Applicative ((<$>))
 
 main :: IO ()
-main = withContext 1 $ \context -> do
-    withSocket context Pull $ \receiver -> do
-        connect receiver "tcp://localhost:5557"
-        withSocket context Sub $ \subscriber -> do
+main = 
+    withContext $ \ctx ->
+        withSocket ctx Pull $ \receiver ->
+        withSocket ctx Sub $ \subscriber -> do
+            connect receiver "tcp://localhost:5557"
+            setIdentity (restrict "vent receiver") receiver
             connect subscriber "tcp://localhost:5556"
             subscribe subscriber "10001"
             forever $ do
-                putStrLn "Processing"
-                poll [S receiver In, S subscriber In] (-1) >>= mapM_ (\(S s _) -> handleSocket s)
+                poll (-1) [Sock receiver [In] (Just $ processEvts receiver), Sock subscriber [In] (Just $ processEvts subscriber)]
 
-handleSocket :: Socket a -> IO ()
-handleSocket socket = do
-    msg <- receive socket []
-    processMessage msg
-    return ()
-
-processMessage :: (Monad m) => ByteString -> m ()
-processMessage _ = return ()
+processEvts :: (Receiver a) => Socket a -> [Event] -> IO ()
+processEvts sock evts = do
+    when (In `elem` evts) $ do
+        msg <- unpack <$> receive sock
+        ident <- unpack <$> identity sock
+        putStrLn $ unwords $ ["Processing ", ident, msg]
 

@@ -1,29 +1,34 @@
+{-# LANGUAGE OverloadedStrings #-}
 -- |
--- Hello World server in Haskell
--- Binds REP socket to tcp://*:5560
+-- A worker that simulates some work with a timeout
+-- And send back "World"
+-- Connect REP socket to tcp://*:5560
 -- Expects "Hello" from client, replies with "World"
 -- 
--- Translated to Haskell by ERDI Gergo http://gergo.erdi.hu/
+-- Originally translated to Haskell by ERDI Gergo http://gergo.erdi.hu/
 
 module Main where
 
-import System.ZMQ
+import System.ZMQ3.Monadic (runZMQ, socket, connect, send, receive, Rep(..), liftIO)
 import Control.Monad (forever)
-import Data.ByteString.Char8 (pack, unpack)
+import Data.ByteString.Char8 (unpack)
 import Control.Concurrent (threadDelay)
+import Text.Printf
 
 main :: IO ()
-main = withContext 1 $ \context -> do  
-  withSocket context Rep $ \responder -> do
-    connect responder "tcp://localhost:5560"
+main = 
+    runZMQ $ do
+        responder <- socket Rep
+        connect responder "tcp://localhost:5560"
   
-    forever $ do
-      message <- receive responder []
-      putStrLn $ unwords ["Received request:", unpack message]    
-    
-      -- Simulate doing some 'work' for 1 second
-      threadDelay (1 * 1000 * 1000)
+        forever $ do
+            receive responder >>= liftIO . printf "Received request: [%s]\n" . unpack
+            -- Simulate doing some 'work' for 1 second
+            liftIO $ threadDelay (1 * 1000 * 1000)
+            send responder [] "World"       
+        
+        
 
-      send responder reply []
-      
-  where reply = pack "World"
+
+
+    
