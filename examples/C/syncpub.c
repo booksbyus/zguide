@@ -9,10 +9,11 @@ int main (void)
 
     //  Socket to talk to clients
     void *publisher = zmq_socket (context, ZMQ_PUB);
-    zmq_bind (publisher, "tcp://*:5561");
 
     int sndhwm = 1100000;
     zmq_setsockopt (publisher, ZMQ_SNDHWM, &sndhwm, sizeof (int));
+
+    zmq_bind (publisher, "tcp://*:5561");
 
     //  Socket to receive signals
     void *syncservice = zmq_socket (context, ZMQ_REP);
