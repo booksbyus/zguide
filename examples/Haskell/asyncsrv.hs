@@ -1,29 +1,30 @@
 module Main where
 
 import System.ZMQ3.Monadic
-import ZHelpers (setId)
+import ZHelpers (setRandomIdentity)
 import Control.Concurrent (threadDelay)
 import Data.ByteString.Char8 (pack, unpack)
-import Control.Monad (forever, forM_, when, unless, replicateM_)
-import System.Random (newStdGen, randomR, StdGen)
+import Control.Monad (forever, forM_, replicateM_)
+import System.Random (randomRIO)
 
-clientTask :: ZMQ z ()
-clientTask = do
+clientTask :: String -> ZMQ z ()
+clientTask ident = do
     client <- socket Dealer
-    setId client
+    setRandomIdentity client
     connect client "tcp://localhost:5570"
-    forever $ do
-        forM_ [0..100] $ \centitick -> do
-            [evts] <- poll 10 [Sock client [In] Nothing]
-            when (In `elem` evts) $ do
-                receive client >>= \msg -> liftIO $ putStrLn $ unwords ["Client received", (unpack msg), "back from worker"]
-        liftIO $ putStrLn "Req Sent"
-        send client [] (pack "request")
+    forM_ [1..] $ \i -> do -- (long enough) forever
+        -- tick one per second, pulling in arriving messages
+        forM_ [0..100] $ \_ -> 
+            poll 10 -- timeout of 10 ms
+                [Sock client [In] -- wait for incoming event 
+                $ Just $ -- if it happens do
+                    \_ -> receive client >>= \msg -> liftIO $ putStrLn $ unwords ["Client", ident, "has received back from worker its msg \"", (unpack msg), "\""]] 
+              
+        send client [] (pack $ unwords ["Client", ident, "sends request", show i])
 
-        
+            
 serverTask :: ZMQ z ()
 serverTask =  do
-
     frontend <- socket Router
     bind frontend "tcp://*:5570"
     backend <- socket Dealer
@@ -31,21 +32,7 @@ serverTask =  do
     
     replicateM_ 5 $ async serverWorker
 
-    -- proxy does not work here ?
-    forever $ pollEvt frontend backend
-
-    where
-        pollEvt frontend backend = do 
-            [evtsF, evtsB] <- poll (-1) [Sock frontend [In] Nothing, Sock backend [In] Nothing] 
-            
-            when (In `elem` evtsF) $ do
-                receive frontend >>= send backend [SendMore]
-                receive frontend >>= send backend []
-                            
-            unless (In `elem` evtsB) $ do
-                receive backend >>= send frontend  [SendMore]
-                receive backend >>= send frontend []
-
+    proxy frontend backend Nothing
 
 
 serverWorker :: ZMQ z ()
@@ -53,23 +40,25 @@ serverWorker = do
     worker <- socket Dealer
     connect worker "inproc://backend"
     liftIO $ putStrLn "Worker Started"        
-    forever $ do
-        _id <- receive worker
-        msg <- receive worker
-        liftIO $ putStrLn "Worker Received Data"
-        gen <- liftIO $ newStdGen
-        let (val, _) = randomR (0,5) gen :: (Int, StdGen)
-        forM_ [1..val] $ \i -> do
-            liftIO $ threadDelay $ 1 * 1000 * 1000
-            send worker [SendMore] _id
-            send worker [] msg
+    forever $ -- receive both ident and msg and send back the msg to the ident client.
+        receive worker >>= \ident -> receive worker >>= \msg -> sendback worker msg ident
+
+    where
+         -- send back to client 0 to 4 times max
+        sendback worker msg ident  = do
+            resentNb <- liftIO $ randomRIO (0, 4)
+            timeoutMsec <- liftIO $ randomRIO (1, 1000) 
+            forM_ [0::Int ..resentNb] $ \_ -> do
+                liftIO $ threadDelay $ timeoutMsec * 1000
+                send worker [SendMore] ident
+                send worker [] msg
 
 main :: IO ()
 main = 
     runZMQ $ do
-        async clientTask
-        async clientTask
-        async clientTask
+        async $ clientTask "A"
+        async $ clientTask "B"
+        async $ clientTask "C"
         async serverTask
         
         liftIO $ threadDelay $ 5 * 1000 * 1000

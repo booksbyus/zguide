@@ -5,9 +5,9 @@ import System.ZMQ3.Monadic (ZMQ, Socket, runZMQ, socket, connect, bind, receive,
 
 import Control.Concurrent (threadDelay, forkIO)
 import Control.Concurrent.MVar (withMVar, newMVar, MVar)
-import Data.ByteString.Char8 (pack, unpack)
+import Data.ByteString.Char8 (unpack)
 import Control.Monad (replicateM_, unless)
-import ZHelpers (setId)
+import ZHelpers (setRandomIdentity)
 import Text.Printf
 import Data.Time.Clock
 import System.Random
@@ -23,21 +23,21 @@ workerThread :: MVar () -> IO ()
 workerThread lock = 
     runZMQ $ do
         worker <- socket Req
-        setId worker
+        setRandomIdentity worker
         connect worker "ipc://routing.ipc"
         work worker
 
         where
             work = loop 0 where
                 loop val sock = do
-                    send sock [] (pack "ready")
+                    send sock [] "ready"
                     workload <- receive sock
                     if unpack workload == "Fired!"
-                        then liftIO $ withMVar lock $ \_ -> printf "Completed: %d tasks\n" (val::Int)
-                        else do
-                            rand <- liftIO $ getStdRandom (randomR (500 :: Int, 5000))
-                            liftIO $ threadDelay rand
-                            loop (val+1) sock
+                    then liftIO $ withMVar lock $ \_ -> printf "Completed: %d tasks\n" (val::Int)
+                    else do
+                        rand <- liftIO $ getStdRandom (randomR (500::Int, 5000))
+                        liftIO $ threadDelay rand
+                        loop (val+1) sock
     
 main :: IO ()
 main = 
@@ -45,7 +45,7 @@ main =
         client <- socket Router
         bind client "ipc://routing.ipc"
         
-        -- We only Need the MVar For Printing the Output (so output doesn't become interleaved)
+        -- We only need MVar for printing the output (so output doesn't become interleaved)
         -- The alternative is to Make an ipc channel, but that distracts from the example
         -- or to 'NoBuffering' 'stdin'
         lock <- liftIO $ newMVar ()
@@ -53,14 +53,14 @@ main =
         liftIO $ replicateM_ nbrWorkers (forkIO $ workerThread lock)
 
         start <- liftIO $ getCurrentTime
-        sendWork client start
+        clientTask client start
 
         -- You need to give some time to the workers so they can exit properly
         liftIO $ threadDelay $ 1 * 1000 * 1000
 
     where
-        sendWork :: Socket z Router -> UTCTime -> ZMQ z ()
-        sendWork = loop nbrWorkers where
+        clientTask :: Socket z Router -> UTCTime -> ZMQ z ()
+        clientTask = loop nbrWorkers where
             loop c sock start = unless (c <= 0) $ do
                 -- Next message is the leaset recently used worker
                 identity <- receive sock

@@ -14,15 +14,16 @@ import Data.ByteString.Char8 (pack)
 import System.Random (randomRIO)
 
 main :: IO ()
-main =  runZMQ $ do
-    publisher <- socket Pub 
-    bind publisher "tcp://*:5556"
-    bind publisher "ipc://weather.ipc"
-  
-    forever $ do
-        zipcode <- liftIO $ (randomRIO (0, 100000) :: IO Int)
-        temperature <- liftIO $ (randomRIO (-80, 135) :: IO Int)
-        humidity <- liftIO $ (randomRIO (10, 60) :: IO Int)
-      
-        let update = pack $ unwords [show zipcode, show temperature, show humidity]
-        send publisher [] update
+main =
+	runZMQ $ do
+
+	    publisher <- socket Pub
+	    bind publisher "tcp://*:5556"
+	    bind publisher "ipc://weather.ipc"
+
+	    forever $ do
+	        zipcode <- liftIO $ randomRIO (0::Int, 100000)
+	        temperature <- liftIO $ randomRIO (-80::Int, 135)
+	        humidity <- liftIO $ randomRIO (10::Int, 60)
+	        let update = pack $ unwords [show zipcode, show temperature, show humidity]
+	        send publisher [] update
