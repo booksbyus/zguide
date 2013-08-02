@@ -7,7 +7,7 @@ import Control.Concurrent (threadDelay, forkIO)
 import Control.Concurrent.MVar (withMVar, newMVar, MVar)
 import Data.ByteString.Char8 (unpack)
 import Control.Monad (replicateM_, unless)
-import ZHelpers (setId)
+import ZHelpers (setRandomIdentity)
 import Text.Printf
 import Data.Time.Clock
 import System.Random
@@ -23,7 +23,7 @@ workerThread :: MVar () -> IO ()
 workerThread lock = 
     runZMQ $ do
         worker <- socket Dealer
-        setId worker
+        setRandomIdentity worker
         connect worker "ipc://routing.ipc"
         
         work worker

@@ -3,7 +3,6 @@
 -- Binds REP socket to tcp://*:5555
 -- Expects "Hello" from client, replies with "World"
 -- 
--- Translated to Haskell by ERDI Gergo http://gergo.erdi.hu/
 
 module Main where
 
@@ -19,12 +18,11 @@ main =
         repSocket <- socket Rep
         bind repSocket "tcp://*:5555"
   
-        liftIO $ putStrLn "Entering main loop"
         forever $ do
-            message <- receive repSocket 
-            liftIO $ putStrLn $ unwords ["Received request:", unpack message]    
+            msg <- receive repSocket
+            (liftIO.putStrLn.unwords) ["Received request:", unpack msg]
 
             -- Simulate doing some 'work' for 1 second
             liftIO $ threadDelay (1 * 1000 * 1000)
 
-            send repSocket [] (pack "World") 
+            send repSocket [] (pack "World")
