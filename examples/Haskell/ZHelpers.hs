@@ -29,13 +29,18 @@ dumpSock sock = fmap reverse (receiveMulti sock) >>= liftIO . dumpMsg
 
 -- In General Since We use Randomness, You should Pass in
 -- an StdGen, but for simplicity we just use newStdGen
-setId :: Socket z t -> ZMQ z ()
-setId sock = do
+setRandomIdentity :: Socket z t -> ZMQ z ()
+setRandomIdentity sock = (liftIO $ genUniqueId) >>= (\ident -> setIdentity (restrict $ pack ident) sock)
+
+
+-- You probably want to use a ext lib to generate random unique id in production code
+genUniqueId :: IO (String)
+genUniqueId = do
     gen <- liftIO $ newStdGen
     let (val1, gen') = randomR (0 :: Int, 65536) gen
     let (val2, _) = randomR (0 :: Int, 65536) gen'
-    let string_id = show val1 ++ show val2
-    setIdentity (restrict $ pack string_id) sock
+    return $ show val1 ++ show val2
+
 
 --zpipe :: Context -> (Socket Pair -> Socket Pair -> IO a) -> IO a
 --zpipe ctx func = withSocket ctx Pair $ \sock_a -> do

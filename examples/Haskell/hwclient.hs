@@ -3,7 +3,7 @@
 -- Binds REQ socket to tcp://localhost:5555
 -- Sends "Hello" to server, expects "World" back
 -- 
--- Translated to Haskell by ERDI Gergo http://gergo.erdi.hu/
+-- Originally translated to Haskell by ERDI Gergo http://gergo.erdi.hu/
 
 module Main where
 
