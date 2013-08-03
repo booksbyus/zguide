@@ -1,7 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
+-- |
+-- Load balancing broker (p.96)
+-- (Clients) [REQ] >-> (frontend) ROUTER (Proxy) ROUTER (backend) >-> [REQ] (Workers)
+-- Clients and workers are shown here in-process
+-- Compile with -threaded
+
 module Main where
 
-import System.ZMQ3.Monadic
+import System.ZMQ4.Monadic
 
 import Control.Concurrent (threadDelay)
 import Data.ByteString.Char8 (pack, unpack)
@@ -40,68 +46,83 @@ clientThread i = do
     setIdentity (restrict $ pack ident) sock
     connect sock "inproc://clients"
 
-    send sock [] "HELLO" 
-    receive sock >>= liftIO . printf "%s : %s\n" ident . unpack
+    send sock [] "GO"
+    msg <- receive sock
+    liftIO $ printf "%s : %s\n" ident (unpack msg)
 
 
-processBackend :: (Receiver r, Sender s) => Int -> [String] -> Int -> Socket z r -> Socket z s -> [Event] -> ZMQ z (Int, [String], Int, Bool)
-processBackend avail_workers workers_list client_nbr backend frontend evts 
-    | In `elem` evts = do
-        -- first frame is the worker id
-        worker_id <- unpack <$> receive backend
-        when (avail_workers >= nbrWorkers) $ error ""
+-- | Handle worker activity on backend
+processBackend :: (Receiver r, Sender s) => [String] -> Int ->  Socket z r -> Socket z s -> [Event] -> ZMQ z ([String], Int)
+processBackend  availableWorkers clientCount backend frontend evts
+    -- A msg can be received without bloking
+    | In `elem` evts = do 
+        -- the msg comes from a worker: first frame is the worker id
+        workerId <- unpack <$> receive backend
 
-        -- second frame is an empty frame
         empty <- unpack <$> receive backend
-        when (empty /= "") $ error ""
+        when (empty /= "") $ error "The second frame should be empty"
+    
+        let workerQueue = availableWorkers ++ [workerId]
         
-        let avail' = avail_workers + 1
-        let work_list = workers_list ++ [worker_id]
-        
-        -- the third frame is "READY" or a client reply id
-        client_id <- unpack <$> receive backend
-        if client_id == "READY"
-        then do
-            return (avail', work_list, client_nbr, True)
-        else do
-            -- the fourth frame is the empty delimiter
-            empty' <- unpack <$> receive backend
-            when (empty' /= "") $ error ""
-            -- the fifth frame is the client message
-            reply <- receive backend
-        
-            send frontend [SendMore] (pack client_id) 
-            send frontend [SendMore] ""
-            send frontend [] reply
-            return (avail', work_list, client_nbr - 1, True)
+        -- the third frame is the msg "READY" from a  or a client reply id
+        msg <- unpack <$> receive backend
+        if msg == "READY"
+            then 
+                return (workerQueue, clientCount)
+            else do
+                empty' <- unpack <$> receive backend
+                when (empty' /= "") $ error "The fourth frame should be an empty delimiter"
+                -- the fifth frame is the client message
+                reply <- receive backend
+                -- send back an acknowledge msg to the client (msg is the clientId)
+                send frontend [SendMore] (pack msg) 
+                send frontend [SendMore] ""
+                send frontend [] reply
+                -- decrement clientCount to mark a job done
+                return (workerQueue, clientCount - 1)
 
-    | otherwise = return (avail_workers, workers_list, client_nbr, False)
+    | otherwise = return (availableWorkers, clientCount)
 
 
 
-processFrontend :: (Receiver r, Sender s) => Int -> [String] -> Socket z r -> Socket z s -> [Event] -> ZMQ z (Int, [String])
-processFrontend avail_workers workers_list frontend backend  evts 
+processFrontend :: (Receiver r, Sender s) => [String] -> Socket z r -> Socket z s -> [Event] -> ZMQ z [String]
+processFrontend  availableWorkers frontend backend  evts 
     | In `elem` evts = do
-            client_id <- receive frontend
+            clientId <- receive frontend
             empty <- unpack <$> receive frontend
-            when (empty /= "") $ error ""
+            when (empty /= "") $ error "The second frame should be empty"
             request <- receive frontend
             
-            send backend [SendMore] (pack $ head workers_list) 
+            send backend [SendMore] (pack $ head availableWorkers) 
             send backend [SendMore] ""
-            send backend [SendMore] client_id
+            send backend [SendMore] clientId
             send backend [SendMore] ""
             send backend [] request
-            return (avail_workers - 1, tail workers_list)
+            return (tail availableWorkers)
 
-    | otherwise = return (avail_workers, workers_list)
+    | otherwise = return availableWorkers
 
 
  
+lruQueue :: Socket z Router -> Socket z Router -> ZMQ z ()
+lruQueue backend frontend =
+    -- start with an empty list of available workers
+    loop [] nbrClients
+    where
+        loop availableWorkers clientCount  = do
+            [evtsB, evtsF] <- poll (-1) [Sock backend [In] Nothing, Sock frontend [In] Nothing]
+            -- (always) poll for workers activity
+            (availableWorkers', clientCount') <- processBackend availableWorkers clientCount backend frontend evtsB
+            when (clientCount' > 0) $ 
+                --  Poll frontend only if we have available workers
+                if not (null availableWorkers')
+                    then do
+                        availableWorkers'' <- processFrontend  availableWorkers' frontend backend evtsF 
+                        loop availableWorkers'' clientCount'
+                    else loop availableWorkers' clientCount'
 
 main :: IO ()
-main = do
-        
+main = 
     runZMQ $ do
 
         frontend <- socket Router
@@ -113,20 +134,5 @@ main = do
         forM_ [1..nbrClients] $ \i -> async (clientThread i)
 
         lruQueue backend frontend
-        
         liftIO $ threadDelay $ 1 * 1000 * 1000
-    
-    where
-
-        lruQueue = loop 0 [] nbrClients where
-            loop avail_workers workers_list client_nbr backend frontend  = do
-                
-                [evtsB, evtsF] <- poll (-1) [Sock backend [In] Nothing, Sock frontend [In] Nothing]
-                
-                (avail_workers', workers_list', client_nbr', processed) <- processBackend avail_workers workers_list client_nbr backend frontend evtsB
-                when (client_nbr > 0) $ do
-                    if processed
-                    then do 
-                        (avail_workers'', workers_list'') <- processFrontend avail_workers' workers_list' frontend backend evtsF 
-                        loop avail_workers'' workers_list'' client_nbr' backend frontend
-                    else loop avail_workers' workers_list' client_nbr' backend frontend
+        

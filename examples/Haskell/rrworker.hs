@@ -5,11 +5,10 @@
 -- Connect REP socket to tcp://*:5560
 -- Expects "Hello" from client, replies with "World"
 -- 
--- Originally translated to Haskell by ERDI Gergo http://gergo.erdi.hu/
 
 module Main where
 
-import System.ZMQ3.Monadic (runZMQ, socket, connect, send, receive, Rep(..), liftIO)
+import System.ZMQ4.Monadic
 import Control.Monad (forever)
 import Data.ByteString.Char8 (unpack)
 import Control.Concurrent (threadDelay)

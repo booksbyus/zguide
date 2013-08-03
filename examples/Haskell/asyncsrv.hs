@@ -1,11 +1,16 @@
+-- |
+-- Asynchronous client-to-server (DEALER to ROUTER) p.111
+-- Compile with -threaded
+
 module Main where
 
-import System.ZMQ3.Monadic
+import System.ZMQ4.Monadic
 import ZHelpers (setRandomIdentity)
 import Control.Concurrent (threadDelay)
 import Data.ByteString.Char8 (pack, unpack)
 import Control.Monad (forever, forM_, replicateM_)
 import System.Random (randomRIO)
+import Text.Printf
 
 clientTask :: String -> ZMQ z ()
 clientTask ident = do
@@ -18,7 +23,7 @@ clientTask ident = do
             poll 10 -- timeout of 10 ms
                 [Sock client [In] -- wait for incoming event 
                 $ Just $ -- if it happens do
-                    \_ -> receive client >>= \msg -> liftIO $ putStrLn $ unwords ["Client", ident, "has received back from worker its msg \"", (unpack msg), "\""]] 
+                    \_ -> receive client >>= liftIO . printf "Client %s has received back from worker its msg \"%s\"\n" ident . unpack ] 
               
         send client [] (pack $ unwords ["Client", ident, "sends request", show i])
 

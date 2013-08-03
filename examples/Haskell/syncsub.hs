@@ -1,11 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 -- |
--- Node coordination Subscriber
--- 
+-- Node coordination Subscriber (p.72)
+-- Run as much sub as necessary (see syncpub subscribersExpected) 
+
 module Main where
     
 
-import System.ZMQ3.Monadic (ZMQ, Socket, runZMQ, socket, connect, receive, send, subscribe, Sub(..), Req(..), liftIO)
+import System.ZMQ4.Monadic
 import Data.ByteString.Char8 (unpack)
 import Control.Concurrent (threadDelay)
 import Text.Printf
@@ -34,10 +35,10 @@ main =
 
 
     where
-        countUpdates :: Socket z Sub -> ZMQ z (Int) 
+        countUpdates :: Socket z Sub -> ZMQ z Int 
         countUpdates = loop 0 where
             loop val sock = do
                 msg <- receive sock
                 if unpack msg == "END"
                 then return val 
-                else do loop(val + 1) sock
+                else loop(val + 1) sock

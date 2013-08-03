@@ -1,7 +1,6 @@
 module Main where
 
-import System.ZMQ3.Monadic
-import Control.Monad (forever)    
+import System.ZMQ4.Monadic
 
 main :: IO ()
 main = 
@@ -10,4 +9,5 @@ main =
         bind frontend "tcp://*:5559"
         backend <- socket Dealer
         bind backend "tcp://*:5560"
+        
         proxy frontend backend Nothing

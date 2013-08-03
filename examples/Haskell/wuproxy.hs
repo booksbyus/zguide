@@ -6,7 +6,7 @@
 
 module Main where
 
-import System.ZMQ3.Monadic (runZMQ, socket, connect, bind, receive, send, moreToReceive, subscribe, Sub(..), Pub(..), Flag(SendMore), liftIO)
+import System.ZMQ4.Monadic
 import Control.Monad (forever)
 
 main :: IO ()

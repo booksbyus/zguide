@@ -1,6 +1,6 @@
 module Main where
 
-import System.ZMQ3 (version)
+import System.ZMQ4 (version)
 import Text.Printf (printf)
 
 main :: IO ()

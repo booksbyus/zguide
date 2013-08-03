@@ -1,0 +1,217 @@
+Name: zguide-examples-haskell
+Version: 1.0.0
+Cabal-Version: >=1.10
+Build-Type: Simple
+License: BSD3
+License-File: LICENSE
+Copyright: 2014 Pierre Radermecker
+Author: Pierre Radermecker
+Maintainer: PierreR@pi3r.com
+Bug-Reports: https://github.com/PierreR/zguide
+Tested-With: GHC == 7.6.3
+Synopsis: ZMQ haskell example
+Description: 
+Category: 
+Source-Repository head
+    Type: git
+    Location: https://github.com/PierreR/zguide
+
+executable version
+  default-language: Haskell2010
+  main-is:  version.hs
+  build-depends:  base >= 4,
+                  zeromq4-haskell  >= 0.1
+
+executable hwclient
+  default-language: Haskell2010
+  main-is:  hwclient.hs
+  build-depends:  base >= 4,
+                  bytestring,
+                  zeromq4-haskell  >= 0.1
+
+executable hwserver
+  default-language: Haskell2010
+  main-is:  hwserver.hs
+  build-depends:  base >= 4,
+                  bytestring,
+                  zeromq4-haskell  >= 0.1
+
+executable wuserver
+  default-language: Haskell2010
+  main-is:  wuserver.hs
+  build-depends:  base >= 4,
+                  bytestring,
+                  random,
+                  zeromq4-haskell  >= 0.1
+executable mspoller
+  default-language: Haskell2010
+  main-is:  mspoller.hs
+  build-depends:  base >= 4,
+                  bytestring,
+                  zeromq4-haskell  >= 0.1
+executable wuclient
+  default-language: Haskell2010
+  main-is:  wuclient.hs
+  build-depends:  base >= 4,
+                  bytestring,
+                  foldl >= 1.0,
+                  zeromq4-haskell  >= 0.1
+                  
+executable wuproxy
+  default-language: Haskell2010
+  main-is:  wuproxy.hs
+  build-depends:  base >= 4,
+                  bytestring,
+                  zeromq4-haskell >= 0.1
+
+executable identity
+  default-language: Haskell2010
+  main-is:  identity.hs
+  other-modules: ZHelpers
+  build-depends:  base >= 4,
+                  bytestring,
+                  random,
+                  zeromq4-haskell  >= 0.1
+
+executable taskvent
+  default-language: Haskell2010
+  main-is:  taskvent.hs
+  build-depends:  base >= 4,
+                  bytestring,
+                  random,
+                  zeromq4-haskell  >= 0.1
+executable taskwork
+  default-language: Haskell2010
+  main-is:  taskwork.hs
+  build-depends:  base >= 4,
+                  bytestring,
+                  zeromq4-haskell  >= 0.1
+executable taskwork2
+  default-language: Haskell2010
+  main-is:  taskwork2.hs
+  build-depends:  base >= 4,
+                  bytestring,
+                  zeromq4-haskell  >= 0.1
+executable tasksink
+ default-language: Haskell2010
+ main-is:  tasksink.hs
+ build-depends:  base >= 4,
+                 bytestring,
+                 time,
+                 zeromq4-haskell  >= 0.1
+executable tasksink2
+ default-language: Haskell2010
+ main-is:  tasksink2.hs
+ build-depends:  base >= 4,
+                 bytestring,
+                 time,
+                 zeromq4-haskell  >= 0.1                                   
+
+executable rrclient
+  default-language: Haskell2010
+  main-is:  rrclient.hs
+  build-depends:  base >= 4,
+                  bytestring,
+                  zeromq4-haskell  >= 0.1
+executable rrbroker
+  default-language: Haskell2010
+  main-is:  rrbroker.hs
+  build-depends:  base >= 4,
+                  bytestring,
+                  zeromq4-haskell  >= 0.1
+executable msgqueue
+  default-language: Haskell2010
+  main-is:  msgqueue.hs
+  build-depends:  base >= 4,
+                  zeromq4-haskell  >= 0.1
+executable rrworker
+  default-language: Haskell2010
+  main-is:  rrworker.hs
+  build-depends:  base >= 4,
+                  bytestring,
+                  zeromq4-haskell  >= 0.1
+
+executable interrupt
+  default-language: Haskell2010
+  main-is:  interrupt.hs
+  build-depends:  base >= 4,
+                  bytestring,
+                  unix,
+                  zeromq4-haskell  >= 0.1
+
+executable mtserver
+  default-language: Haskell2010
+  main-is:  mtserver.hs
+  build-depends:  base >= 4,
+                  bytestring,
+                  random,
+                  zeromq4-haskell  >= 0.1
+  GHC-Options: -threaded
+
+executable mtrelay
+  default-language: Haskell2010
+  main-is:  mtrelay.hs
+  build-depends:  base >= 4,
+                  bytestring,
+                  zeromq4-haskell  >= 0.1
+
+executable syncpub
+  default-language: Haskell2010
+  main-is:  syncpub.hs
+  build-depends:  base >= 4,
+                  bytestring,
+                  zeromq4-haskell  >= 0.1
+executable syncsub
+  default-language: Haskell2010
+  main-is:  syncsub.hs
+  build-depends:  base >= 4,
+                  bytestring,
+                  zeromq4-haskell  >= 0.1
+
+executable psenvpub
+  default-language: Haskell2010
+  main-is:  psenvpub.hs
+  build-depends:  base >= 4,
+                  bytestring,
+                  zeromq4-haskell  >= 0.1
+executable psenvsub
+  default-language: Haskell2010
+  main-is:  psenvsub.hs
+  build-depends:  base >= 4,
+                  bytestring,
+                  zeromq4-haskell  >= 0.1
+
+executable rtreq
+  default-language: Haskell2010
+  main-is:  rtreq.hs
+  build-depends:  base >= 4,
+                  bytestring,
+                  random,
+                  time,
+                  zeromq4-haskell  >= 0.1
+
+executable rtdealer
+  default-language: Haskell2010
+  main-is:  rtdealer.hs
+  build-depends:  base >= 4,
+                  bytestring,
+                  random,
+                  time,
+                  zeromq4-haskell  >= 0.1
+
+executable lbbroker
+  default-language: Haskell2010
+  main-is:  lbbroker.hs
+  build-depends:  base >= 4,
+                  bytestring,
+                  zeromq4-haskell  >= 0.1
+  GHC-Options: -threaded
+
+executable asyncsrv
+  default-language: Haskell2010
+  main-is:  asyncsrv.hs
+  build-depends:  base >= 4,
+                  bytestring,
+                  random,
+                  zeromq4-haskell  >= 0.1
+  GHC-Options: -threaded

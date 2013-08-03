@@ -1,7 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
+-- |
+-- Router broker and DEALER workers (p.94)
+
 module Main where
 
-import System.ZMQ3.Monadic (ZMQ, Socket, runZMQ, socket, connect, bind, receive, send, Router(..), Dealer(..), Flag(SendMore), liftIO)
+import System.ZMQ4.Monadic
 
 import Control.Concurrent (threadDelay, forkIO)
 import Control.Concurrent.MVar (withMVar, newMVar, MVar)
@@ -58,7 +61,7 @@ main =
 
         liftIO $ replicateM_ nbrWorkers (forkIO $ workerThread lock)
 
-        start <- liftIO $ getCurrentTime
+        start <- liftIO getCurrentTime
         sendWork client start
 
         -- You need to give some time to the workers so they can exit properly
@@ -69,8 +72,8 @@ main =
         sendWork = loop nbrWorkers where
             loop c sock start = unless (c <= 0) $ do
                 -- Next message is the leaset recently used worker
-                identity <- receive sock
-                send sock [SendMore] identity
+                ident <- receive sock
+                send sock [SendMore] ident
                 -- Envelope delimiter
                 receive sock
                 -- Ready signal from worker
@@ -79,11 +82,11 @@ main =
                 -- Send delimiter
                 send sock [SendMore] ""
                 -- Send Work unless time is up
-                now <- liftIO $ getCurrentTime
-                if (c /= nbrWorkers || diffUTCTime now start > 5)
-                then do
-                    send sock [] "Fired!"
-                    loop (c-1) sock start 
-                else do
-                    send sock [] "Work harder"
-                    loop c sock start
+                now <- liftIO getCurrentTime
+                if c /= nbrWorkers || diffUTCTime now start > 5
+                    then do
+                        send sock [] "Fired!"
+                        loop (c-1) sock start 
+                    else do
+                        send sock [] "Work harder"
+                        loop c sock start

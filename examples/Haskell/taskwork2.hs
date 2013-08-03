@@ -1,19 +1,23 @@
 {-# LANGUAGE OverloadedStrings #-}
+-- |
+-- Task worker - design 2 (p.58)
+-- Add pub-sub flow to receive and respond to kill signal
+
 module Main where
 
-import System.ZMQ3
+import System.ZMQ4
 import Data.ByteString.Char8 (unpack, empty)
 import System.IO (hSetBuffering, stdout, BufferMode(..))
 import Control.Concurrent (threadDelay)
 import Control.Applicative ((<$>))
-import Control.Monad (when)
+import Control.Monad (when, unless)
 
 main :: IO ()
 main =
-    withContext $ \context -> 
-        withSocket context Pull $ \receiver ->
-        withSocket context Push $ \sender -> 
-        withSocket context Sub $ \controller -> do
+    withContext $ \ctx -> 
+        withSocket ctx Pull $ \receiver ->
+        withSocket ctx Push $ \sender -> 
+        withSocket ctx Sub $ \controller -> do
             connect receiver "tcp://localhost:5557"
             connect sender "tcp://localhost:5558"
             connect controller "tcp://localhost:5559"
@@ -33,10 +37,9 @@ main =
             -- Simple progress indicator for the viewer
             putStr $ msg ++ "."
             -- Do the "work"
-            threadDelay (read msg * 1000)           
+            threadDelay (read msg * 1000)
             -- Send results to sink
             send sock_to_send [] empty
 
-        if (In `elem` b)
-        then return()
-        else pollContinuously sock_recv sock_to_send ctr
+        unless (In `elem` b) $
+             pollContinuously sock_recv sock_to_send ctr

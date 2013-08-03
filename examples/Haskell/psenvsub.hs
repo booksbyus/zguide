@@ -1,10 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 -- |
--- Pub/Sub envelope subscriber
+-- Pub/Sub envelope subscriber (p.76)
 -- 
 module Main where
     
-import System.ZMQ3.Monadic (runZMQ, socket, connect, subscribe, receive, moreToReceive, Sub(..), liftIO)
+import System.ZMQ4.Monadic
 import Data.ByteString.Char8 (unpack)
 import Control.Monad (when)
 import Text.Printf
@@ -15,14 +15,17 @@ main =
         subscriber <- socket Sub
         connect subscriber "tcp://localhost:5563"
         subscribe subscriber "B"
-        -- read envelope with address
-        receive subscriber >>= \addr -> liftIO $ printf "Address is %s\n" (unpack addr)
-        --  loop contents
+
+        -- start listening for pub messages
         loop subscriber
+
     where
         loop subscriber = do
+            -- read envelope with address
+            receive subscriber >>= \addr -> liftIO $ printf "Address is %s\n" (unpack addr) 
+            -- read message content
             more <- moreToReceive subscriber
             when more $ do
                 contents <- receive subscriber 
                 liftIO $ putStrLn (unpack contents)
-                loop subscriber
+            loop subscriber

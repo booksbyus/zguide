@@ -1,10 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 -- |
--- Pub/Sub envelope publisher
+-- Pub/Sub envelope publisher p.75
 -- 
 module Main where
 
-import System.ZMQ3.Monadic (runZMQ, socket, bind, send, Pub(..), Flag(SendMore), liftIO)
+import System.ZMQ4.Monadic
 import Control.Concurrent (threadDelay)
 import Control.Monad (forever)
 
