@@ -33,11 +33,13 @@
 #include <string>
 #include <sstream>
 
+#if (!defined(__WINDOWS__))
 #include <sys/time.h>
 #include <unistd.h>
+#include <pthread.h>
+#endif
 #include <time.h>
 #include <assert.h>
-#include <pthread.h>
 #include <stdlib.h>        // random()  RAND_MAX
 #include <stdio.h>
 #include <stdarg.h>
@@ -51,7 +53,11 @@
 #endif
 
 //  Provide random number from 0..(num-1)
+#if (!defined(__WINDOWS__))
 #define within(num) (int) ((float) (num) * random () / (RAND_MAX + 1.0))
+#else
+#define within(num) (int) ((float) (num) * rand () / (RAND_MAX + 1.0))
+#endif
 
 //  Receive 0MQ string from socket and convert into string
 static std::string
@@ -226,12 +232,14 @@ static void s_signal_handler (int signal_value)
 
 static void s_catch_signals ()
 {
+#if (!defined(__WINDOWS__))
     struct sigaction action;
     action.sa_handler = s_signal_handler;
     action.sa_flags = 0;
     sigemptyset (&action.sa_mask);
     sigaction (SIGINT, &action, NULL);
     sigaction (SIGTERM, &action, NULL);
+#endif
 }
 
 #endif
