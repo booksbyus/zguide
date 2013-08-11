@@ -33,11 +33,13 @@
 #include <string>
 #include <sstream>
 
+#if (!defined(__WINDOWS__))
 #include <sys/time.h>
 #include <unistd.h>
+#include <pthread.h>
+#endif
 #include <time.h>
 #include <assert.h>
-#include <pthread.h>
 #include <stdlib.h>        // random()  RAND_MAX
 #include <stdio.h>
 #include <stdarg.h>
