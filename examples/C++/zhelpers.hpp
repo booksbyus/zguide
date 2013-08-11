@@ -53,7 +53,11 @@
 #endif
 
 //  Provide random number from 0..(num-1)
+#if (!defined(__WINDOWS__))
 #define within(num) (int) ((float) (num) * random () / (RAND_MAX + 1.0))
+#else
+#define within(num) (int) ((float) (num) * rand () / (RAND_MAX + 1.0))
+#endif
 
 //  Receive 0MQ string from socket and convert into string
 static std::string
