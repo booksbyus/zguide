@@ -1,21 +1,11 @@
-(ns rrclient
-  (:refer-clojure :exclude [send])
-  (:require [zhelpers :as mq]))
-
-;;                                             
-;; Hello World client                           
-;; Connects REQ socket to tcp://localhost:5559  
-;; Sends "Hello" to server, expects "World" back
-;;
+(ns zguide.rrclient
+  (:require [zeromq.zmq :as zmq]))
 
 (defn -main []
-  (let [ctx (mq/context 1)
-        requester (mq/socket ctx mq/req)]
-    (mq/connect requester "tcp://localhost:5559")
-    (dotimes [i 10]
-      (mq/send requester "Hello\u0000")
-      (let [string (mq/recv-str requester)]
-        (println (format "Received reply %d %s" i string))))
-    (.close requester)
-    (.term ctx)))
-
+  (let [context (zmq/zcontext)]
+    (with-open [requester (doto (zmq/socket context :req)
+                            (zmq/connect "tcp://127.0.0.1:5559"))]
+      (dotimes [i 10]
+        (zmq/send-str requester "Hello")
+        (let [string (zmq/receive-str requester)]
+          (printf "Received reply %d [%s]\n" i string))))))
