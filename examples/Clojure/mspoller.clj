@@ -1,36 +1,26 @@
-(ns mspoller
-  (:refer-clojure :exclude [send])
-  (:require [zhelpers :as mq])
-  (:import [org.zeromq ZMQ$Poller]))
-
-;;
 ;; Reading from multiple sockets
 ;; This version uses zmq_poll()
-;;
-;; Isaiah Peng <issaria@gmail.com>
-;;
+
+(ns zguide.mspoller
+  (:require [zeromq.zmq :as zmq]))
 
 (defn -main []
-  (let [ctx (mq/context 1)
-        receiver (mq/socket ctx mq/pull)
-        subscriber (mq/socket ctx mq/sub)
-        items (.poller ctx 2)]
-    ;; Connect to task ventilator
-    (mq/connect receiver "tcp://localhost:5557")
-    ;; Connect to weather server
-    (mq/connect subscriber "tcp://localhost:5556")
-    (mq/subscribe subscriber "10001 ")
-    ;; Initialize poll set
-    (.register items receiver ZMQ$Poller/POLLIN)
-    (.register items subscriber ZMQ$Poller/POLLIN)
-    ;; Process messages from both sockets
-    (while true
-      (.poll items)
-      (if (.pollin items 0)
-        ;; Process task
-        (let [task (mq/recv-str receiver)]
-          (println (format "task: %s" task))))
-      (if (.pollin items 1)
-        ;; Process weather update
-        (let [weather (mq/recv-str subscriber)]
-          (println (format "weather: %s" weather)))))))
+  (let [context (zmq/zcontext)
+        poller (zmq/poller context 2)]
+    (with-open [receiver (doto (zmq/socket context :pull)
+                           (zmq/connect "tcp://127.0.0.1:5557"))
+                subscriber (doto (zmq/socket context :sub)
+                             (zmq/connect "tcp://127.0.0.1:5556")
+                             (zmq/subscribe "10001"))]
+      (zmq/register poller receiver :pollin)
+      (zmq/register poller subscriber :pollin)
+      (while (not (.. Thread currentThread isInterrupted))
+        (zmq/poll poller)
+        (when (zmq/check-poller poller 0 :pollin)
+          (let [msg (zmq/receive receiver)]
+            ;; Process task
+            ))
+        (when (zmq/check-poller poller 1 :pollin)
+          (let [msg (zmq/receive subscriber)]
+            ;; Process weather update
+            ))))))
