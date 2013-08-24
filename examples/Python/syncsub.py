@@ -11,7 +11,7 @@ def main():
     # First, connect our subscriber socket
     subscriber = context.socket(zmq.SUB)
     subscriber.connect('tcp://localhost:5561')
-    subscriber.setsockopt(zmq.SUBSCRIBE, "")
+    subscriber.setsockopt(zmq.SUBSCRIBE, b'')
 
     time.sleep(1)
 
@@ -20,7 +20,7 @@ def main():
     syncclient.connect('tcp://localhost:5562')
 
     # send a synchronization request
-    syncclient.send('')
+    syncclient.send(b'')
 
     # wait for synchronization reply
     syncclient.recv()
@@ -29,11 +29,11 @@ def main():
     nbr = 0
     while True:
         msg = subscriber.recv()
-        if msg == 'END':
+        if msg == b'END':
             break
         nbr += 1
 
-    print 'Received %d updates' % nbr
+    print ('Received %d updates' % nbr)
 
 if __name__ == '__main__':
     main()

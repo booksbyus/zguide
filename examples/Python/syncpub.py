@@ -23,15 +23,15 @@ def main():
         # wait for synchronization request
         msg = syncservice.recv()
         # send synchronization reply
-        syncservice.send('')
+        syncservice.send(b'')
         subscribers += 1
-        print "+1 subscriber"
+        print ("+1 subscriber")
 
     # Now broadcast exactly 1M updates followed by END
     for i in range(1000000):
-        publisher.send('Rhubarb');
+        publisher.send(b'Rhubarb')
 
-    publisher.send('END')
+    publisher.send(b'END')
 
 if __name__ == '__main__':
     main()
