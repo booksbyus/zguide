@@ -11,6 +11,8 @@ def main():
 
     # Socket to talk to clients
     publisher = context.socket(zmq.PUB)
+    # set SNDHWM, so we don't drop messages for slow subscribers
+    publisher.sndhwm = 1100000
     publisher.bind('tcp://*:5561')
 
     # Socket to receive signals
