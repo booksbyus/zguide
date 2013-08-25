@@ -24,7 +24,7 @@ s_worker_new (zframe_t *identity)
 {
     worker_t *self = (worker_t *) zmalloc (sizeof (worker_t));
     self->identity = identity;
-    self->id_string = zframe_strdup (identity);
+    self->id_string = zframe_strhex (identity);
     self->expiry = zclock_time ()
                  + HEARTBEAT_INTERVAL * HEARTBEAT_LIVENESS;
     return self;
