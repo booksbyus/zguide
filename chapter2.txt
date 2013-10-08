@@ -35,7 +35,7 @@ Like a favorite dish, 0MQ sockets are easy to digest. Sockets have a life in fou
 
 * Configuring sockets by setting options on them and checking them if necessary (see {{zmq_setsockopt[3]}}, {{zmq_getsockopt[3]}}).
 
-* Plugging sockets onto the network topology by creating 0MQ connections to and from them (see {{zmq_bind[3]}}, {{zmq_connect[3]}}).
+* Plugging sockets into the network topology by creating 0MQ connections to and from them (see {{zmq_bind[3]}}, {{zmq_connect[3]}}).
 
 * Using the sockets to carry data by writing and receiving messages on them (see {{zmq_send[3]}}, {{zmq_recv[3]}}).
 
@@ -103,7 +103,7 @@ To send and receive messages you use the {{zmq_msg_send[3]}} and {{zmq_msg_recv[
 
 Let's look at the main differences between TCP sockets and 0MQ sockets when it comes to working with data:
 
-* 0MQ sockets carry messages, like UDP, rather than a stream of bytes as TCP does. A 0MQ message is length-specified binary data. We'll come to messages shortly, their design is optimized for performance and so a little tricky.
+* 0MQ sockets carry messages, like UDP, rather than a stream of bytes as TCP does. A 0MQ message is length-specified binary data. We'll come to messages shortly; their design is optimized for performance and so a little tricky.
 
 * 0MQ sockets do their I/O in a background thread. This means that messages arrive in local input queues and are sent from local output queues, no matter what your application is busy doing.
 
@@ -125,7 +125,7 @@ The inter-thread transport, **{{inproc}}**, is a connected signaling transport. 
 
 A common question that newcomers to 0MQ ask (it's one I've asked myself) is, "how do I write an XYZ server in 0MQ?" For example, "how do I write an HTTP server in 0MQ?" The implication is that if we use normal sockets to carry HTTP requests and responses, we should be able to use 0MQ sockets to do the same, only much faster and better.
 
-The answer used to be "this is not how it works". 0MQ is not a neutral carrier, it imposes a framing on the transport protocols it uses. This framing is not compatible with existing protocols, which tend to use their own framing. For example, compare an HTTP request and a 0MQ request, both over TCP/IP.
+The answer used to be "this is not how it works". 0MQ is not a neutral carrier: it imposes a framing on the transport protocols it uses. This framing is not compatible with existing protocols, which tend to use their own framing. For example, compare an HTTP request and a 0MQ request, both over TCP/IP.
 
 [[code type="textdiagram" title="HTTP on the Wire"]]
 #----------------+----+----+----+----#
@@ -178,7 +178,7 @@ The built-in core 0MQ patterns are:
 
 * **Exclusive pair**, which connects two sockets exclusively. This is a pattern for connecting two threads in a process, not to be confused with "normal" pairs of sockets.
 
-We looked at the first three of these in [#basics], and we'll see the exclusive pair pattern later in this chapter. The {{zmq_socket[3]}} man page is fairly clear about the patterns, it's worth reading several times until it starts to make sense. These are the socket combinations that are valid for a connect-bind pair (either side can bind):
+We looked at the first three of these in [#basics], and we'll see the exclusive pair pattern later in this chapter. The {{zmq_socket[3]}} man page is fairly clear about the patterns -- it's worth reading several times until it starts to make sense. These are the socket combinations that are valid for a connect-bind pair (either side can bind):
 
 * PUB and SUB
 * REQ and REP
@@ -353,7 +353,7 @@ This pattern is extremely common in the real world and is why our societies and 
 
 +++ The Dynamic Discovery Problem
 
-One of the problems you will hit as you design larger distributed architectures is discovery. That is, how do pieces know about each other? It's especially difficult if pieces come and go, thus we can call this the "dynamic discovery problem".
+One of the problems you will hit as you design larger distributed architectures is discovery. That is, how do pieces know about each other? It's especially difficult if pieces come and go, so we call this the "dynamic discovery problem".
 
 There are several solutions to dynamic discovery. The simplest is to entirely avoid it by hard-coding (or configuring) the network architecture so discovery is done by hand. That is, when you add a new piece, you reconfigure the network to know about it.
 
@@ -559,7 +559,7 @@ It turns out that the core loop in the previous section's {{rrbroker}} is very u
 zmq_proxy (frontend, backend, capture);
 [[/code]]
 
-The two (or three sockets, if we want to capture data) must be properly connected, bound, and configured. When we call the {{zmq_proxy}}, method it's exactly like starting the main loop of {{rrbroker}}. Let's rewrite the request-reply broker to call {{zmq_proxy}}, and re-badge this as an expensive-sounding "message queue" (people have charged houses for code that did less):
+The two (or three sockets, if we want to capture data) must be properly connected, bound, and configured. When we call the {{zmq_proxy}} method, it's exactly like starting the main loop of {{rrbroker}}. Let's rewrite the request-reply broker to call {{zmq_proxy}}, and re-badge this as an expensive-sounding "message queue" (people have charged houses for code that did less):
 
 [[code type="example" title="Message queue broker" name="msgqueue"]]
 [[/code]]
@@ -1015,7 +1015,7 @@ A more robust model could be:
 
 ++ Zero-Copy
 
-0MQ's message API lets you can send and receive messages directly from and to application buffers without copying data. We call //zero-copy//, and it can improve performance in some applications.
+0MQ's message API lets you can send and receive messages directly from and to application buffers without copying data. We call this //zero-copy//, and it can improve performance in some applications.
 
 You should think about using zero-copy in the specific case where you are sending large blocks of memory (thousands of bytes), at a high frequency. For short messages, or for lower message rates, using zero-copy will make your code messier and more complex with no measurable benefit. Like all optimizations, use this when you know it helps, and //measure// before and after.
 
