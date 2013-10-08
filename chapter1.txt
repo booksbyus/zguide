@@ -280,7 +280,7 @@ As a final example (you are surely getting tired of juicy code and want to delve
 * A set of workers that process tasks
 * A sink that collects results back from the worker processes
 
-In reality, workers run on superfast boxes, perhaps using GPUs (graphic processing units) to do the hard math. Here is the ventilator. It generates 100 tasks, each one is a message telling the worker to sleep for some number of milliseconds:
+In reality, workers run on superfast boxes, perhaps using GPUs (graphic processing units) to do the hard math. Here is the ventilator. It generates 100 tasks, each a message telling the worker to sleep for some number of milliseconds:
 
 [[code type="example" title="Parallel task ventilator" name="taskvent"]]
 [[/code]]
@@ -361,7 +361,7 @@ Memory leaks are one thing, but 0MQ is quite finicky about how you exit an appli
 
 The 0MQ objects we need to worry about are messages, sockets, and contexts. Luckily it's quite simple, at least in simple programs:
 
-* Use {{zmq_send[3]}} and {{zmq_recv[3]}} when you can, it avoids the need to work with zmq_msg_t objects.
+* Use {{zmq_send[3]}} and {{zmq_recv[3]}} when you can, as it avoids the need to work with zmq_msg_t objects.
 
 * If you do use {{zmq_msg_recv[3]}}, always release the received message as soon as you're done with it, by calling {{zmq_msg_close[3]}}.
 
@@ -491,7 +491,7 @@ Specifically:
 
 * It delivers whole messages exactly as they were sent, using a simple framing on the wire. If you write a 10k message, you will receive a 10k message.
 
-* It does not impose any format on messages. They are blobs of zero to gigabytes large. When you want to represent data you choose some other product on top, such as msgpack, Google's protocol buffers, and others.
+* It does not impose any format on messages. They are blobs from zero to gigabytes large. When you want to represent data you choose some other product on top, such as msgpack, Google's protocol buffers, and others.
 
 * It handles network errors intelligently, by retrying automatically in cases where it makes sense.
 

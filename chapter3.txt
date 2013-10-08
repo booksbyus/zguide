@@ -17,7 +17,7 @@ We'll cover:
 
 ++ The Request-Reply Mechanisms
 
-We already looked briefly at multipart messages. Let's now look at a major use case, which is //reply message envelopes//. An envelope is a way of safely packaging up data with an address, without touching the data itself. By separating reply addresses into an envelope we make it possible to write general purpose intermediaries such as APIs and proxies that create, read, and remove addresses no matter what the message payload or structure.
+We already looked briefly at multipart messages. Let's now look at a major use case, which is //reply message envelopes//. An envelope is a way of safely packaging up data with an address, without touching the data itself. By separating reply addresses into an envelope we make it possible to write general purpose intermediaries such as APIs and proxies that create, read, and remove addresses no matter what the message payload or structure is.
 
 In the request-reply pattern, the envelope holds the return address for replies. It is how a 0MQ network with no state can create round-trip request-reply dialogs.
 
@@ -87,7 +87,7 @@ As a historical note, 0MQ v2.2 and earlier use UUIDs as identities, and 0MQ v3.0
 
 Identies are a difficult concept to understand, but it's essential if you want to become a 0MQ expert. The ROUTER socket //invents// a random identity for each connection with which it works. If there are three REQ sockets connected to a ROUTER socket, it will invent three random identities, one for each REQ socket.
 
-So if we continue our worked example, let's say the REQ socket has a 3-byte identity {{ABC"}}. Internally, this means the ROUTER socket keeps a hash table where it can search for {{ABC}} and find the TCP connection for the REQ socket.
+So if we continue our worked example, let's say the REQ socket has a 3-byte identity {{ABC}}. Internally, this means the ROUTER socket keeps a hash table where it can search for {{ABC}} and find the TCP connection for the REQ socket.
 
 When we receive the message off the ROUTER socket, we get three frames[figure].
 
@@ -183,7 +183,7 @@ We've already covered a REQ client talking to a REP server but let's take one as
 
 Now, let's replace the REQ client with a DEALER. This gives us an asynchronous client that can talk to multiple REP servers. If we rewrote the "Hello World" client using DEALER, we'd be able to send off any number of "Hello" requests without waiting for replies.
 
-When we use a DEALER to talk to a REP socket, we //must// accurately emulate the envelope that the REQ socket would have sent, otherwise the REP socket will discard the message as invalid. So, to send a message, we:
+When we use a DEALER to talk to a REP socket, we //must// accurately emulate the envelope that the REQ socket would have sent, or the REP socket will discard the message as invalid. So, to send a message, we:
 
 * Send an empty message frame with the MORE flag set; then
 * Send the message body.
