@@ -769,7 +769,7 @@ There are a few corollaries to this:
 
 * //The size and diversity of the community is a key factor.// Larger, more diverse communities collect more relevant problems, and solve them more accurately, and do this faster, than a small expert group.
 
-So, when we trust the solitary experts, we see classic errors: focus on ideas, not problems; focus on the wrong problems; misjudgments about the value of solving problems; not using one's own work; and in many other ways to misjudgments of the real market.
+So, when we trust the solitary experts, they make classic mistakes. They focus on ideas, not problems. They focus on the wrong problems. They make misjudgments about the value of solving problems. They don't use their own work.
 
 Can we turn the above theory into a reusable process? In late 2011, I started documenting C4 and similar contracts, and using them both in 0MQ and in closed source projects. The underlying process is something I call "Simplicity Oriented Design", or SOD. This is a reproducible way of developing simple and elegant products. It organizes people into flexible supply chains that are able to navigate a problem landscape rapidly and cheaply. They do this by building, testing, and keeping or discarding minimal plausible solutions, called "patches". Living products consist of long series of patches, applied one atop the other.
 

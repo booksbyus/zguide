@@ -609,6 +609,11 @@ Here is the load balancing broker rewritten once again, this time to use {{zloop
 
 Getting applications to properly shut down when you send them Ctrl-C can be tricky. If you use the {{zctx}} class it'll automatically set up signal handling, but your code still has to cooperate. You must break any loop if {{zmq_poll}} returns -1 or if any of the {{zstr_recv}}, {{zframe_recv}}, or {{zmsg_recv}} methods return NULL. If you have nested loops, it can be useful to make the outer ones conditional on {{!zctx_interrupted}}.
 
+If you're using child threads, they won't receive the interrupt. To tell them to shutdown, you can either:
+
+* Destroy the context, if they are sharing the same context, in which case any blocking calls they are waiting on will end with ETERM.
+* Send them shutdown messages, if they are using their own contexts. For this you'll need some socket plumbing.
+
 ++ The Asynchronous Client/Server Pattern
 
 In the ROUTER to DEALER example, we saw a 1-to-N use case where one server talks asynchronously to multiple workers. We can turn this upside down to get a very useful N-to-1 architecture where various clients talk to a single server, and do this asynchronously[figure].
