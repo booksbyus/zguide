@@ -8,8 +8,7 @@
     <filter id="dsFilter" width="150%" height="150%">
       <feOffset result="offOut" in="SourceGraphic" dx="3" dy="3"/>
       <feColorMatrix result="matrixOut" in="offOut" type="matrix" values="0.2 0 0 0 0 0 0.2 0 0 0 0 0 0.2 0 0 0 0 0 1 0"/>
-      <feGaussianBlur result="blurOut" in="matrixOut" stdDeviation="3"/>
-      <feBlend in="SourceGraphic" in2="blurOut" mode="normal"/>
+      <feBlend in="SourceGraphic" in2="matrixOut" mode="normal"/>
     </filter>
     <marker id="iPointer"
       viewBox="0 0 10 10" refX="5" refY="5" 
@@ -28,12 +27,12 @@
   </defs><g id="boxes" stroke="black" stroke-width="2" fill="none" >
 <g id="group0">
 	<path id="path0" filter="url(#dsFilter)" fill="#fff" d="M 4.5 18 Q 4.5 8 14.5 8 L 111.5 8 Q 121.5 8 121.5 18 L 121.5 62 Q 121.5 72 111.5 72 L 14.5 72 Q 4.5 72 4.5 62 Z" />
-	<text x="17.1" y="44.8" id="text0" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >TCP socket </text>
+	<text x="17.1" y="44.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >TCP socket </text>
 
 </g>
 <g id="group2">
 	<path id="path2" filter="url(#dsFilter)" fill="#fff" d="M 202.5 18 Q 202.5 8 212.5 8 L 327.5 8 Q 337.5 8 337.5 18 L 337.5 94 Q 337.5 104 327.5 104 L 212.5 104 Q 202.5 104 202.5 94 Z" />
-	<text x="224.1" y="60.8" id="text2" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >0MQ socket </text>
+	<text x="224.1" y="60.8" id="text2" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >0MQ socket </text>
 
 </g>
 </g>

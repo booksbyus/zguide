@@ -8,8 +8,7 @@
     <filter id="dsFilter" width="150%" height="150%">
       <feOffset result="offOut" in="SourceGraphic" dx="3" dy="3"/>
       <feColorMatrix result="matrixOut" in="offOut" type="matrix" values="0.2 0 0 0 0 0 0.2 0 0 0 0 0 0.2 0 0 0 0 0 1 0"/>
-      <feGaussianBlur result="blurOut" in="matrixOut" stdDeviation="3"/>
-      <feBlend in="SourceGraphic" in2="blurOut" mode="normal"/>
+      <feBlend in="SourceGraphic" in2="matrixOut" mode="normal"/>
     </filter>
     <marker id="iPointer"
       viewBox="0 0 10 10" refX="5" refY="5" 
@@ -28,17 +27,17 @@
   </defs><g id="boxes" stroke="black" stroke-width="2" fill="none" >
 <g id="group0">
 	<path id="path0" filter="url(#dsFilter)" fill="#fff" d="M 13.5 8 L 121.5 8 L 121.5 72 L 13.5 72 Z" />
-	<text x="35.1" y="44.8" id="text0" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Initial </text>
+	<text x="35.1" y="44.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Initial </text>
 
 </g>
 <g id="group9">
 	<path id="path9" filter="url(#dsFilter)" fill="#fff" d="M 13.5 152 L 121.5 152 L 121.5 216 L 13.5 216 Z" />
-	<text x="35.1" y="188.8" id="text9" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Syncing </text>
+	<text x="35.1" y="188.8" id="text9" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Syncing </text>
 
 </g>
 <g id="group20">
 	<path id="path20" filter="url(#dsFilter)" fill="#fff" d="M 13.5 296 L 121.5 296 L 121.5 360 L 13.5 360 Z" />
-	<text x="35.1" y="332.8" id="text20" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Active </text>
+	<text x="35.1" y="332.8" id="text20" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Active </text>
 
 </g>
 </g>

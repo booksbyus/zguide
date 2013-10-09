@@ -8,8 +8,7 @@
     <filter id="dsFilter" width="150%" height="150%">
       <feOffset result="offOut" in="SourceGraphic" dx="3" dy="3"/>
       <feColorMatrix result="matrixOut" in="offOut" type="matrix" values="0.2 0 0 0 0 0 0.2 0 0 0 0 0 0.2 0 0 0 0 0 1 0"/>
-      <feGaussianBlur result="blurOut" in="matrixOut" stdDeviation="3"/>
-      <feBlend in="SourceGraphic" in2="blurOut" mode="normal"/>
+      <feBlend in="SourceGraphic" in2="matrixOut" mode="normal"/>
     </filter>
     <marker id="iPointer"
       viewBox="0 0 10 10" refX="5" refY="5" 
@@ -28,32 +27,32 @@
   </defs><g id="boxes" stroke="black" stroke-width="2" fill="none" >
 <g id="group0">
 	<path id="path0" filter="url(#dsFilter)" fill="#fff" d="M 4.5 8 L 112.5 8 L 112.5 30 Q 112.5 40 102.5 40 L 14.5 40 Q 4.5 40 4.5 30 Z" />
-	<text x="26.1" y="28.8" id="text0" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Client </text>
+	<text x="26.1" y="28.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Client </text>
 
 </g>
 <g id="group2">
 	<path id="path2" filter="url(#dsFilter)" fill="#fff" d="M 148.5 8 L 256.5 8 L 256.5 30 Q 256.5 40 246.5 40 L 158.5 40 Q 148.5 40 148.5 30 Z" />
-	<text x="170.1" y="28.8" id="text2" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Client </text>
+	<text x="170.1" y="28.8" id="text2" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Client </text>
 
 </g>
 <g id="group4">
 	<path id="path4" filter="url(#dsFilter)" fill="#fff" d="M 292.5 8 L 400.5 8 L 400.5 30 Q 400.5 40 390.5 40 L 302.5 40 Q 292.5 40 292.5 30 Z" />
-	<text x="314.1" y="28.8" id="text4" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Client </text>
+	<text x="314.1" y="28.8" id="text4" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Client </text>
 
 </g>
 <g id="group15">
 	<path id="path15" filter="url(#dsFilter)" fill="#fff" d="M 4.5 178 Q 4.5 168 14.5 168 L 102.5 168 Q 112.5 168 112.5 178 L 112.5 200 L 4.5 200 Z" />
-	<text x="26.1" y="188.8" id="text15" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Server </text>
+	<text x="26.1" y="188.8" id="text15" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Server </text>
 
 </g>
 <g id="group17">
 	<path id="path17" filter="url(#dsFilter)" fill="#fff" d="M 148.5 178 Q 148.5 168 158.5 168 L 246.5 168 Q 256.5 168 256.5 178 L 256.5 200 L 148.5 200 Z" />
-	<text x="170.1" y="188.8" id="text17" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Server </text>
+	<text x="170.1" y="188.8" id="text17" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Server </text>
 
 </g>
 <g id="group19">
 	<path id="path19" filter="url(#dsFilter)" fill="#fff" d="M 292.5 178 Q 292.5 168 302.5 168 L 390.5 168 Q 400.5 168 400.5 178 L 400.5 200 L 292.5 200 Z" />
-	<text x="314.1" y="188.8" id="text19" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Server </text>
+	<text x="314.1" y="188.8" id="text19" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Server </text>
 
 </g>
 </g>

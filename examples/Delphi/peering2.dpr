@@ -154,7 +154,7 @@ begin
   localbe.bind( Format( 'tcp://127.0.0.1:1%s', [self] ) );
   {$endif}
 
-  //  Get user to tell us when we can start…
+  //  Get user to tell us when we can start
   Writeln( 'Press Enter when all brokers are started: ');
   Readln( s );
 

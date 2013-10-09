@@ -8,8 +8,7 @@
     <filter id="dsFilter" width="150%" height="150%">
       <feOffset result="offOut" in="SourceGraphic" dx="3" dy="3"/>
       <feColorMatrix result="matrixOut" in="offOut" type="matrix" values="0.2 0 0 0 0 0 0.2 0 0 0 0 0 0.2 0 0 0 0 0 1 0"/>
-      <feGaussianBlur result="blurOut" in="matrixOut" stdDeviation="3"/>
-      <feBlend in="SourceGraphic" in2="blurOut" mode="normal"/>
+      <feBlend in="SourceGraphic" in2="matrixOut" mode="normal"/>
     </filter>
     <marker id="iPointer"
       viewBox="0 0 10 10" refX="5" refY="5" 
@@ -28,53 +27,53 @@
   </defs><g id="boxes" stroke="black" stroke-width="2" fill="none" >
 <g id="group0">
 	<path id="path0" filter="url(#dsFilter)" fill="#fff" d="M 4.5 8 L 121.5 8 L 121.5 62 Q 121.5 72 111.5 72 L 14.5 72 Q 4.5 72 4.5 62 Z" />
-	<text x="17.1" y="28.8" id="text0" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Publisher </text>
+	<text x="17.1" y="28.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Publisher </text>
 
-	<text x="44.1" y="60.8" id="text0" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >PUB </text>
+	<text x="44.1" y="60.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >PUB </text>
 
 </g>
 <g id="group2">
 	<path id="path2" filter="url(#dsFilter)" fill="#fff" d="M 157.5 8 L 274.5 8 L 274.5 62 Q 274.5 72 264.5 72 L 167.5 72 Q 157.5 72 157.5 62 Z" />
-	<text x="170.1" y="28.8" id="text2" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Publisher </text>
+	<text x="170.1" y="28.8" id="text2" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Publisher </text>
 
-	<text x="197.1" y="60.8" id="text2" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >PUB </text>
+	<text x="197.1" y="60.8" id="text2" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >PUB </text>
 
 </g>
 <g id="group4">
 	<path id="path4" filter="url(#dsFilter)" fill="#fff" d="M 310.5 8 L 427.5 8 L 427.5 62 Q 427.5 72 417.5 72 L 320.5 72 Q 310.5 72 310.5 62 Z" />
-	<text x="323.1" y="28.8" id="text4" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Publisher </text>
+	<text x="323.1" y="28.8" id="text4" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Publisher </text>
 
-	<text x="350.1" y="60.8" id="text4" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >PUB </text>
+	<text x="350.1" y="60.8" id="text4" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >PUB </text>
 
 </g>
 <g id="group21">
 	<path id="path21" filter="url(#dsFilter)" fill="#fff" d="M 157.5 178 Q 157.5 168 167.5 168 L 264.5 168 Q 274.5 168 274.5 178 L 274.5 254 Q 274.5 264 264.5 264 L 167.5 264 Q 157.5 264 157.5 254 Z" />
-	<text x="197.1" y="188.8" id="text21" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >XSUB </text>
+	<text x="197.1" y="188.8" id="text21" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >XSUB </text>
 
-	<text x="188.1" y="220.8" id="text21" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Proxy </text>
+	<text x="188.1" y="220.8" id="text21" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Proxy </text>
 
-	<text x="197.1" y="252.8" id="text21" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >XPUB </text>
+	<text x="197.1" y="252.8" id="text21" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >XPUB </text>
 
 </g>
 <g id="group32">
 	<path id="path32" filter="url(#dsFilter)" fill="#fff" d="M 4.5 370 Q 4.5 360 14.5 360 L 111.5 360 Q 121.5 360 121.5 370 L 121.5 424 L 4.5 424 Z" />
-	<text x="44.1" y="380.8" id="text32" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >SUB </text>
+	<text x="44.1" y="380.8" id="text32" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >SUB </text>
 
-	<text x="17.1" y="412.8" id="text32" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Subscriber </text>
+	<text x="17.1" y="412.8" id="text32" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Subscriber </text>
 
 </g>
 <g id="group34">
 	<path id="path34" filter="url(#dsFilter)" fill="#fff" d="M 157.5 370 Q 157.5 360 167.5 360 L 264.5 360 Q 274.5 360 274.5 370 L 274.5 424 L 157.5 424 Z" />
-	<text x="197.1" y="380.8" id="text34" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >SUB </text>
+	<text x="197.1" y="380.8" id="text34" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >SUB </text>
 
-	<text x="170.1" y="412.8" id="text34" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Subscriber </text>
+	<text x="170.1" y="412.8" id="text34" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Subscriber </text>
 
 </g>
 <g id="group36">
 	<path id="path36" filter="url(#dsFilter)" fill="#fff" d="M 310.5 370 Q 310.5 360 320.5 360 L 417.5 360 Q 427.5 360 427.5 370 L 427.5 424 L 310.5 424 Z" />
-	<text x="350.1" y="380.8" id="text36" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >SUB </text>
+	<text x="350.1" y="380.8" id="text36" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >SUB </text>
 
-	<text x="323.1" y="412.8" id="text36" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Subscriber </text>
+	<text x="323.1" y="412.8" id="text36" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Subscriber </text>
 
 </g>
 </g>

@@ -1,5 +1,5 @@
-zmq_msg_send (socket, &message, ZMQ_SNDMORE);
+zmq_msg_send (&message, socket, ZMQ_SNDMORE);
 ...
-zmq_msg_send (socket, &message, ZMQ_SNDMORE);
+zmq_msg_send (&message, socket, ZMQ_SNDMORE);
 ...
-zmq_msg_send (socket, &message, 0);
+zmq_msg_send (&message, socket, 0);

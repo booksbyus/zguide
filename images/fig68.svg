@@ -8,8 +8,7 @@
     <filter id="dsFilter" width="150%" height="150%">
       <feOffset result="offOut" in="SourceGraphic" dx="3" dy="3"/>
       <feColorMatrix result="matrixOut" in="offOut" type="matrix" values="0.2 0 0 0 0 0 0.2 0 0 0 0 0 0.2 0 0 0 0 0 1 0"/>
-      <feGaussianBlur result="blurOut" in="matrixOut" stdDeviation="3"/>
-      <feBlend in="SourceGraphic" in2="blurOut" mode="normal"/>
+      <feBlend in="SourceGraphic" in2="matrixOut" mode="normal"/>
     </filter>
     <marker id="iPointer"
       viewBox="0 0 10 10" refX="5" refY="5" 
@@ -28,81 +27,81 @@
   </defs><g id="boxes" stroke="black" stroke-width="2" fill="none" >
 <g id="group0">
 	<path id="path0" filter="url(#dsFilter)" fill="#fff" d="M 220.5 8 L 319.5 8 L 319.5 56 L 220.5 56 Z" />
-	<text x="251.1" y="28.8" id="text0" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Main </text>
+	<text x="251.1" y="28.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Main </text>
 
-	<text x="242.1" y="44.8" id="text0" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >thread </text>
+	<text x="242.1" y="44.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >thread </text>
 
 </g>
 <g id="group10">
 	<path id="path10" filter="url(#dsFilter)" fill="#fff" d="M 4.5 152 L 112.5 152 L 112.5 200 L 4.5 200 Z" />
-	<text x="26.1" y="172.8" id="text10" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Child </text>
+	<text x="26.1" y="172.8" id="text10" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Child </text>
 
-	<text x="26.1" y="188.8" id="text10" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >thread </text>
+	<text x="26.1" y="188.8" id="text10" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >thread </text>
 
 </g>
 <g id="group12">
 	<path id="path12" filter="url(#dsFilter)" fill="#fff" d="M 148.5 152 L 256.5 152 L 256.5 200 L 148.5 200 Z" />
-	<text x="170.1" y="172.8" id="text12" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Child </text>
+	<text x="170.1" y="172.8" id="text12" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Child </text>
 
-	<text x="170.1" y="188.8" id="text12" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >thread </text>
+	<text x="170.1" y="188.8" id="text12" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >thread </text>
 
 </g>
 <g id="group14">
 	<path id="path14" filter="url(#dsFilter)" fill="#fff" d="M 292.5 152 L 400.5 152 L 400.5 200 L 292.5 200 Z" />
-	<text x="314.1" y="172.8" id="text14" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Child </text>
+	<text x="314.1" y="172.8" id="text14" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Child </text>
 
-	<text x="314.1" y="188.8" id="text14" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >thread </text>
+	<text x="314.1" y="188.8" id="text14" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >thread </text>
 
 </g>
 <g id="group16">
 	<path id="path16" filter="url(#dsFilter)" fill="#fff" d="M 436.5 152 L 544.5 152 L 544.5 200 L 436.5 200 Z" />
-	<text x="458.1" y="172.8" id="text16" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Child </text>
+	<text x="458.1" y="172.8" id="text16" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Child </text>
 
-	<text x="458.1" y="188.8" id="text16" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >thread </text>
+	<text x="458.1" y="188.8" id="text16" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >thread </text>
 
 </g>
 <g id="group30">
 	<path id="path30" filter="url(#dsFilter)" fill="#fff" d="M 4.5 248 L 112.5 248 L 112.5 312 L 4.5 312 Z" />
-	<text x="17.1" y="268.8" id="text30" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Interface </text>
+	<text x="17.1" y="268.8" id="text30" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Interface </text>
 
-	<text x="17.1" y="300.8" id="text30" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >R</text>
+	<text x="17.1" y="300.8" id="text30" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >R</text>
 
-	<text x="53.1" y="300.8" id="text30" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >D</text>
+	<text x="53.1" y="300.8" id="text30" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >D</text>
 
-	<text x="89.1" y="300.8" id="text30" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >U</text>
+	<text x="89.1" y="300.8" id="text30" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >U</text>
 
 </g>
 <g id="group32">
 	<path id="path32" filter="url(#dsFilter)" fill="#fff" d="M 148.5 248 L 256.5 248 L 256.5 312 L 148.5 312 Z" />
-	<text x="161.1" y="268.8" id="text32" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Interface </text>
+	<text x="161.1" y="268.8" id="text32" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Interface </text>
 
-	<text x="161.1" y="300.8" id="text32" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >R</text>
+	<text x="161.1" y="300.8" id="text32" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >R</text>
 
-	<text x="197.1" y="300.8" id="text32" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >D</text>
+	<text x="197.1" y="300.8" id="text32" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >D</text>
 
-	<text x="233.1" y="300.8" id="text32" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >U</text>
+	<text x="233.1" y="300.8" id="text32" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >U</text>
 
 </g>
 <g id="group34">
 	<path id="path34" filter="url(#dsFilter)" fill="#fff" d="M 292.5 248 L 400.5 248 L 400.5 312 L 292.5 312 Z" />
-	<text x="305.1" y="268.8" id="text34" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Interface </text>
+	<text x="305.1" y="268.8" id="text34" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Interface </text>
 
-	<text x="305.1" y="300.8" id="text34" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >R</text>
+	<text x="305.1" y="300.8" id="text34" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >R</text>
 
-	<text x="341.1" y="300.8" id="text34" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >D</text>
+	<text x="341.1" y="300.8" id="text34" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >D</text>
 
-	<text x="377.1" y="300.8" id="text34" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >U</text>
+	<text x="377.1" y="300.8" id="text34" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >U</text>
 
 </g>
 <g id="group36">
 	<path id="path36" filter="url(#dsFilter)" fill="#fff" d="M 436.5 248 L 544.5 248 L 544.5 312 L 436.5 312 Z" />
-	<text x="449.1" y="268.8" id="text36" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Interface </text>
+	<text x="449.1" y="268.8" id="text36" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Interface </text>
 
-	<text x="449.1" y="300.8" id="text36" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >R</text>
+	<text x="449.1" y="300.8" id="text36" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >R</text>
 
-	<text x="485.1" y="300.8" id="text36" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >D</text>
+	<text x="485.1" y="300.8" id="text36" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >D</text>
 
-	<text x="521.1" y="300.8" id="text36" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >U</text>
+	<text x="521.1" y="300.8" id="text36" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >U</text>
 
 </g>
 </g>

@@ -8,8 +8,7 @@
     <filter id="dsFilter" width="150%" height="150%">
       <feOffset result="offOut" in="SourceGraphic" dx="3" dy="3"/>
       <feColorMatrix result="matrixOut" in="offOut" type="matrix" values="0.2 0 0 0 0 0 0.2 0 0 0 0 0 0.2 0 0 0 0 0 1 0"/>
-      <feGaussianBlur result="blurOut" in="matrixOut" stdDeviation="3"/>
-      <feBlend in="SourceGraphic" in2="blurOut" mode="normal"/>
+      <feBlend in="SourceGraphic" in2="matrixOut" mode="normal"/>
     </filter>
     <marker id="iPointer"
       viewBox="0 0 10 10" refX="5" refY="5" 
@@ -28,28 +27,28 @@
   </defs><g id="boxes" stroke="black" stroke-width="2" fill="none" >
 <g id="group0">
 	<path id="path0" filter="url(#dsFilter)" fill="#fff" d="M 85.5 8 L 220.5 8 L 220.5 126 Q 220.5 136 210.5 136 L 95.5 136 Q 85.5 136 85.5 126 Z" />
-	<text x="116.1" y="28.8" id="text0" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Calling </text>
+	<text x="116.1" y="28.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Calling </text>
 
-	<text x="98.1" y="44.8" id="text0" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Application </text>
+	<text x="98.1" y="44.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Application </text>
 
-	<text x="107.1" y="76.8" id="text0" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Frontend </text>
+	<text x="107.1" y="76.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Frontend </text>
 
-	<text x="116.1" y="92.8" id="text0" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Object </text>
+	<text x="116.1" y="92.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Object </text>
 
-	<text x="125.1" y="124.8" id="text0" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >PAIR </text>
+	<text x="125.1" y="124.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >PAIR </text>
 
 </g>
 <g id="group11">
 	<path id="path11" filter="url(#dsFilter)" fill="#fff" d="M 85.5 210 Q 85.5 200 95.5 200 L 210.5 200 Q 220.5 200 220.5 210 L 220.5 312 L 85.5 312 Z" />
-	<text x="125.1" y="220.8" id="text11" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >PAIR </text>
+	<text x="125.1" y="220.8" id="text11" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >PAIR </text>
 
-	<text x="116.1" y="252.8" id="text11" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Backend </text>
+	<text x="116.1" y="252.8" id="text11" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Backend </text>
 
-	<text x="125.1" y="268.8" id="text11" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >Agent </text>
+	<text x="125.1" y="268.8" id="text11" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Agent </text>
 
-	<text x="98.1" y="300.8" id="text11" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >DEALER </text>
+	<text x="98.1" y="300.8" id="text11" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >DEALER </text>
 
-	<text x="179.1" y="300.8" id="text11" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >SUB </text>
+	<text x="179.1" y="300.8" id="text11" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >SUB </text>
 
 </g>
 </g>

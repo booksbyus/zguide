@@ -8,8 +8,7 @@
     <filter id="dsFilter" width="150%" height="150%">
       <feOffset result="offOut" in="SourceGraphic" dx="3" dy="3"/>
       <feColorMatrix result="matrixOut" in="offOut" type="matrix" values="0.2 0 0 0 0 0 0.2 0 0 0 0 0 0.2 0 0 0 0 0 1 0"/>
-      <feGaussianBlur result="blurOut" in="matrixOut" stdDeviation="3"/>
-      <feBlend in="SourceGraphic" in2="blurOut" mode="normal"/>
+      <feBlend in="SourceGraphic" in2="matrixOut" mode="normal"/>
     </filter>
     <marker id="iPointer"
       viewBox="0 0 10 10" refX="5" refY="5" 
@@ -28,41 +27,41 @@
   </defs><g id="boxes" stroke="black" stroke-width="2" fill="none" >
 <g id="group0">
 	<path id="path0" filter="url(#dsFilter)" fill="#fff" d="M 4.5 8 L 94.5 8 L 94.5 30 Q 94.5 40 84.5 40 L 14.5 40 Q 4.5 40 4.5 30 Z" />
-	<text x="35.1" y="28.8" id="text0" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >PUB </text>
+	<text x="35.1" y="28.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >PUB </text>
 
 </g>
 <g id="group2">
 	<path id="path2" filter="url(#dsFilter)" fill="#fff" d="M 130.5 8 L 220.5 8 L 220.5 30 Q 220.5 40 210.5 40 L 140.5 40 Q 130.5 40 130.5 30 Z" />
-	<text x="161.1" y="28.8" id="text2" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >PUB </text>
+	<text x="161.1" y="28.8" id="text2" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >PUB </text>
 
 </g>
 <g id="group4">
 	<path id="path4" filter="url(#dsFilter)" fill="#fff" d="M 256.5 8 L 346.5 8 L 346.5 30 Q 346.5 40 336.5 40 L 266.5 40 Q 256.5 40 256.5 30 Z" />
-	<text x="287.1" y="28.8" id="text4" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >PUB </text>
+	<text x="287.1" y="28.8" id="text4" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >PUB </text>
 
 </g>
 <g id="group18">
 	<path id="path18" filter="url(#dsFilter)" fill="#fff" d="M 121.5 114 Q 121.5 104 131.5 104 L 219.5 104 Q 229.5 104 229.5 114 L 229.5 190 Q 229.5 200 219.5 200 L 131.5 200 Q 121.5 200 121.5 190 Z" />
-	<text x="152.1" y="124.8" id="text18" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >XSUB </text>
+	<text x="152.1" y="124.8" id="text18" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >XSUB </text>
 
-	<text x="152.1" y="156.8" id="text18" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >code </text>
+	<text x="152.1" y="156.8" id="text18" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >code </text>
 
-	<text x="152.1" y="188.8" id="text18" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >XPUB </text>
+	<text x="152.1" y="188.8" id="text18" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >XPUB </text>
 
 </g>
 <g id="group31">
 	<path id="path31" filter="url(#dsFilter)" fill="#fff" d="M 4.5 274 Q 4.5 264 14.5 264 L 84.5 264 Q 94.5 264 94.5 274 L 94.5 296 L 4.5 296 Z" />
-	<text x="35.1" y="284.8" id="text31" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >SUB </text>
+	<text x="35.1" y="284.8" id="text31" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >SUB </text>
 
 </g>
 <g id="group34">
 	<path id="path34" filter="url(#dsFilter)" fill="#fff" d="M 130.5 274 Q 130.5 264 140.5 264 L 210.5 264 Q 220.5 264 220.5 274 L 220.5 296 L 130.5 296 Z" />
-	<text x="161.1" y="284.8" id="text34" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >SUB </text>
+	<text x="161.1" y="284.8" id="text34" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >SUB </text>
 
 </g>
 <g id="group37">
 	<path id="path37" filter="url(#dsFilter)" fill="#fff" d="M 256.5 274 Q 256.5 264 266.5 264 L 336.5 264 Q 346.5 264 346.5 274 L 346.5 296 L 256.5 296 Z" />
-	<text x="287.1" y="284.8" id="text37" fill="#000" stroke="none" style="font-family:Consolas,Monaco,Anonymous Pro,Anonymous,Bitstream Sans Mono,monospace;font-size:15.2px" >SUB </text>
+	<text x="287.1" y="284.8" id="text37" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >SUB </text>
 
 </g>
 </g>

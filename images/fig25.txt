@@ -3,7 +3,7 @@
 | getting every |    .-->| subscription  +------->| you have to    |
 | message?      |    |   | for messages? | No     | subscribe to   |
 '--------+------'    |   '-------+-------'        | get messages   |
-         | Yes       |           |                '----------------'
+         | Yes       |           | Yes            '----------------'
          v           |           v
 .----------------.   |   .----------------.        .---------------.
 | Are you losing |   |   | Do you start   |        | Start all SUB |
