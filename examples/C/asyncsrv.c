@@ -20,7 +20,7 @@ client_task (void *args)
     //  Set random identity to make tracing easier
     char identity [10];
     sprintf (identity, "%04X-%04X", randof (0x10000), randof (0x10000));
-    zsockopt_set_identity (client, identity);
+    zsocket_set_identity (client, identity);
     zsocket_connect (client, "tcp://localhost:5570");
 
     zmq_pollitem_t items [] = { { client, 0, ZMQ_POLLIN, 0 } };

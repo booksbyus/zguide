@@ -91,13 +91,13 @@ int main (int argc, char *argv [])
     //  Set up our clone server sockets
     self->publisher = zsocket_new (self->ctx, ZMQ_PUB);
     self->collector = zsocket_new (self->ctx, ZMQ_SUB);
-    zsockopt_set_subscribe (self->collector, "");
+    zsocket_set_subscribe (self->collector, "");
     zsocket_bind (self->publisher, "tcp://*:%d", self->port + 1);
     zsocket_bind (self->collector, "tcp://*:%d", self->port + 2);
 
     //  Set up our own clone client interface to peer
     self->subscriber = zsocket_new (self->ctx, ZMQ_SUB);
-    zsockopt_set_subscribe (self->subscriber, "");
+    zsocket_set_subscribe (self->subscriber, "");
     zsocket_connect (self->subscriber,
                      "tcp://localhost:%d", self->peer + 1);
 

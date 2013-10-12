@@ -24,7 +24,7 @@ int main (int argc, char *argv [])
     
     //  Connect statefe to all peers
     void *statefe = zsocket_new (ctx, ZMQ_SUB);
-    zsockopt_set_subscribe (statefe, "");
+    zsocket_set_subscribe (statefe, "");
     int argn;
     for (argn = 2; argn < argc; argn++) {
         char *peer = argv [argn];

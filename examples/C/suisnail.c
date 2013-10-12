@@ -14,7 +14,7 @@ subscriber (void *args, zctx_t *ctx, void *pipe)
 {
     //  Subscribe to everything
     void *subscriber = zsocket_new (ctx, ZMQ_SUB);
-    zsockopt_set_subscribe (subscriber, "");
+    zsocket_set_subscribe (subscriber, "");
     zsocket_connect (subscriber, "tcp://localhost:5556");
 
     //  Get and process messages

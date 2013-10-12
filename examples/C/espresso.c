@@ -12,8 +12,8 @@ subscriber_thread (void *args, zctx_t *ctx, void *pipe)
     //  Subscribe to "A" and "B"
     void *subscriber = zsocket_new (ctx, ZMQ_SUB);
     zsocket_connect (subscriber, "tcp://localhost:6001");
-    zsockopt_set_subscribe (subscriber, "A");
-    zsockopt_set_subscribe (subscriber, "B");
+    zsocket_set_subscribe (subscriber, "A");
+    zsocket_set_subscribe (subscriber, "B");
 
     int count = 0;
     while (count < 5) {

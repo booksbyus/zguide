@@ -48,11 +48,6 @@ client_thread (void *args, zctx_t *ctx, void *pipe)
 //  that we set the HWM on the server's ROUTER socket to PIPELINE
 //  to act as a sanity check.
 //  .skip
-static void
-free_chunk (void *data, void *arg)
-{
-    free (data);
-}
 
 //  The server thread waits for a chunk request from a client,
 //  reads that chunk and sends it back to the client:
@@ -95,8 +90,7 @@ server_thread (void *args, zctx_t *ctx, void *pipe)
 
         //  Send resulting chunk to client
         size_t size = fread (data, 1, chunksz, file);
-        zframe_t *chunk = zframe_new_zero_copy (
-            data, size, free_chunk, NULL);
+        zframe_t *chunk = zframe_new (data, size);
         zframe_send (&identity, router, ZFRAME_MORE);
         zframe_send (&chunk, router, 0);
     }

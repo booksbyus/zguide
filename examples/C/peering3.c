@@ -122,12 +122,12 @@ int main (int argc, char *argv [])
 
     //  Bind cloud frontend to endpoint
     void *cloudfe = zsocket_new (ctx, ZMQ_ROUTER);
-    zsockopt_set_identity (cloudfe, self);
+    zsocket_set_identity (cloudfe, self);
     zsocket_bind (cloudfe, "ipc://%s-cloud.ipc", self);
     
     //  Connect cloud backend to all peers
     void *cloudbe = zsocket_new (ctx, ZMQ_ROUTER);
-    zsockopt_set_identity (cloudbe, self);
+    zsocket_set_identity (cloudbe, self);
     int argn;
     for (argn = 2; argn < argc; argn++) {
         char *peer = argv [argn];
@@ -140,7 +140,7 @@ int main (int argc, char *argv [])
 
     //  Connect state frontend to all peers
     void *statefe = zsocket_new (ctx, ZMQ_SUB);
-    zsockopt_set_subscribe (statefe, "");
+    zsocket_set_subscribe (statefe, "");
     for (argn = 2; argn < argc; argn++) {
         char *peer = argv [argn];
         printf ("I: connecting to state backend at '%s'\n", peer);

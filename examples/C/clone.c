@@ -145,8 +145,8 @@ server_new (zctx_t *ctx, char *address, int port, char *subtree)
     zsocket_connect (self->snapshot, "%s:%d", address, port);
     self->subscriber = zsocket_new (ctx, ZMQ_SUB);
     zsocket_connect (self->subscriber, "%s:%d", address, port + 1);
-    zsockopt_set_subscribe (self->subscriber, subtree);
-    zsockopt_set_subscribe (self->subscriber, "HUGZ");
+    zsocket_set_subscribe (self->subscriber, subtree);
+    zsocket_set_subscribe (self->subscriber, "HUGZ");
     return self;
 }
 
