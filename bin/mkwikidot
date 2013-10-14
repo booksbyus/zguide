@@ -12,7 +12,7 @@
 #   Images are stored in the github repository at
 #   https://github.com/imatix/zguide
 #
-use Digest::SHA1 qw(sha1_hex);
+use Digest::SHA qw(sha1_hex);
 
 @languages = ('Ada', 'Basic', 'C', 'C++', 'C#', 'Clojure', 'CL', 'Delphi', 'Erlang', 
               'F#', 'Felix', 'Go', 'Haskell', 'Haxe', 'Java', 'Lua', 'Node.js', 
