@@ -697,8 +697,8 @@ How do we connect the sink to the workers? The PUSH/PULL sockets are one-way onl
 It doesn't take much new code in the sink:
 
 [[code type="fragment" name="killsignal"]]
-void *control = zmq_socket (context, ZMQ_PUB);
-zmq_bind (control, "tcp://*:5559");
+void *controller = zmq_socket (context, ZMQ_PUB);
+zmq_bind (controller, "tcp://*:5559");
 ...
 //  Send kill signal to workers
 s_send (controller, "KILL");
