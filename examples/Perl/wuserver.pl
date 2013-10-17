@@ -16,8 +16,9 @@ use strict;
 use warnings;
 use 5.10.0;
 
-use ZMQ::LibZMQ2;
+use ZMQ::LibZMQ3;
 use ZMQ::Constants qw(ZMQ_PUB);
+use zhelpers;
 
 sub within {
     my ($upper) = @_;
@@ -41,5 +42,5 @@ while (1) {
 
     # Send message to all subscribers
     my $update = sprintf('%05d %d %d', $zipcode, $temperature, $relhumidity);
-    zmq_send($publisher, $update);
+    s_send($publisher, $update);
 }

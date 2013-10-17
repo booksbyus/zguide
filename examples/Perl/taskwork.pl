@@ -22,13 +22,13 @@ use 5.10.0;
 
 use IO::Handle;
 
-use ZMQ::LibZMQ2;
+use ZMQ::LibZMQ3;
 use ZMQ::Constants qw(ZMQ_PULL ZMQ_PUSH);
-use Time::HiRes qw/nanosleep/;
 use English qw/-no_match_vars/;
+use zhelpers;
 
-use constant NSECS_PER_MSEC => 1000000;
 
+my $MAX_MSGSIZE = 255;
 my $context = zmq_init();
 
 # Socket to receive messages on
@@ -41,14 +41,13 @@ zmq_connect($sender, 'tcp://localhost:5558');
 
 # Process tasks forever
 while (1) {
-    my $string = zmq_msg_data(zmq_recv($receiver));
-    my $time = $string * NSECS_PER_MSEC;
+    my $string = s_recv($receiver);
     # Simple progress indicator for the viewer
     STDOUT->printflush("$string.");
 
     # Do the work
-    nanosleep $time;
+    s_sleep($string);
 
     # Send results to sink
-    zmq_send($sender, '');
+    s_send($sender, '');
 }
