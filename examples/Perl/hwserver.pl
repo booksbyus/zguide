@@ -31,12 +31,6 @@ while (1) {
     # Wait for the next request from client
     my $message;
     my $size = zmq_recv($responder, $message, $MAX_MSGLEN);
-    if ($size == -1) {
-        die "Error in zmq_recv: $!";
-    }
-    if ($size > $MAX_MSGLEN) {
-        die "Got message too long for what I expected";
-    }
     my $request = substr($message, 0, $size);
     say 'Received request: ['. $request .']';
 

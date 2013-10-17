@@ -33,12 +33,6 @@ for my $request_nbr (0..9) {
     zmq_send($requester, 'Hello');
     my $message;
     my $size = zmq_recv($requester, $message, $MAX_MSGLEN);
-    if ($size == -1) {
-        die "Error in zmq_recv: $!";
-    }
-    if ($size > $MAX_MSGLEN) {
-        die "Got message too long for what I expected";
-    }
     my $reply = substr($message, 0, $size);
     say "Received reply $request_nbr: [". $reply .']';
 }
