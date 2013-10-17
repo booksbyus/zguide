@@ -10,11 +10,11 @@
 
 int main (int argc, char *argv [])
 {
-    Bool verbose;
+    bool verbose;
     if (argc == 2 && streq (argv [1], "-v"))
-        verbose = TRUE;
+        verbose = true;
     else
-        verbose = FALSE;
+        verbose = false;
 
     printf ("Running self tests...\n");
     mdp_worker_test (verbose);

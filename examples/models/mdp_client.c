@@ -67,7 +67,7 @@ mdp_client_recv (void *socket)
     mdp_client_t *self = mdp_client_new ();
     
     //  If we're reading from a ROUTER socket, get address
-    if (zsockopt_type (socket) == ZMQ_ROUTER) {
+    if (zsocket_type (socket) == ZMQ_ROUTER) {
         self->address = zmsg_pop (msg);
         if (!self->address)
             goto empty;         //  Interrupted
@@ -118,7 +118,7 @@ mdp_client_send (mdp_client_t **self_p, void *socket)
 
     //  If we're sending to a ROUTER, we send the address first
     zmsg_t *msg = zmsg_new ();
-    if (zsockopt_type (socket) == ZMQ_ROUTER) {
+    if (zsocket_type (socket) == ZMQ_ROUTER) {
         assert (self->address);
         zmsg_add (msg, self->address);
         self->address = NULL;       //  Owned by msg now

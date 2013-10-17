@@ -102,14 +102,16 @@ typedef enum {
 } event_t;
 
 //  Names for animation
-char *s_state_name [] = {
+static char *
+s_state_name [] = {
     "stopped",
     "start",
     "authenticated",
     "ready"
 };
 
-char *s_event_name [] = {
+static char *
+s_event_name [] = {
     "",
     "OHAI",
     "ok",
