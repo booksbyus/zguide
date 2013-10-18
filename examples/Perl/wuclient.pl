@@ -20,7 +20,6 @@ use ZMQ::LibZMQ3;
 use ZMQ::Constants qw(ZMQ_SUB ZMQ_SUBSCRIBE);
 use zhelpers;
 
-my $MAX_MSGLEN = 255;
 my $context = zmq_init();
 
 # Socket to talk to server
