@@ -16,8 +16,9 @@ use strict;
 use warnings;
 use 5.10.0;
 
-use ZMQ::LibZMQ2;
+use ZMQ::LibZMQ3;
 use ZMQ::Constants qw(ZMQ_REP);
+use zhelpers;
 
 my $context = zmq_init();
 
@@ -27,12 +28,12 @@ zmq_connect($responder, 'tcp://localhost:5560');
 
 while (1) {
     # Wait for next request from client
-    my $string = zmq_msg_data(zmq_recv($responder));
+    my $string = s_recv($responder);
     say "Received request: [$string]";
 
     # Do some 'work'
     sleep (1);
 
     # Send reply back to client
-    zmq_send($responder, 'World');
+    s_send($responder, 'World');
 }
