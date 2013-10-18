@@ -16,11 +16,10 @@ use 5.10.0;
 
 use IO::Handle;
 
-use ZMQ::LibZMQ2;
+use ZMQ::LibZMQ3;
 use ZMQ::Constants qw(ZMQ_PULL ZMQ_PUSH ZMQ_SUB ZMQ_SUBSCRIBE ZMQ_POLLIN);
-use Time::HiRes qw/nanosleep/;
+use zhelpers;
 
-use constant NSECS_PER_MSEC => 1_000_000;
 
 my $context = zmq_init();
 
@@ -44,16 +43,13 @@ my @poller = (
         socket  => $receiver,
         events  => ZMQ_POLLIN,
         callback => sub {
-            my $message = zmq_recv($receiver);
-
-            # Process task
-            my $workload = zmq_msg_data($message) * NSECS_PER_MSEC;
+            my $workload = s_recv($receiver);
 
             # Do the work
-            nanosleep $workload;
+            s_sleep($workload);
 
             # Send results to sink
-            zmq_send($sender);
+            s_send($sender, '');
 
             # Simple progress indicator for the viewer
             STDOUT->printflush('.');

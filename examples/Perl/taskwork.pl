@@ -28,7 +28,6 @@ use English qw/-no_match_vars/;
 use zhelpers;
 
 
-my $MAX_MSGSIZE = 255;
 my $context = zmq_init();
 
 # Socket to receive messages on
@@ -43,7 +42,7 @@ zmq_connect($sender, 'tcp://localhost:5558');
 while (1) {
     my $string = s_recv($receiver);
     # Simple progress indicator for the viewer
-    STDOUT->printflush("$string.");
+    STDOUT->printflush(".");
 
     # Do the work
     s_sleep($string);
