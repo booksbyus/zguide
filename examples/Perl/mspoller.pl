@@ -14,7 +14,7 @@ use strict;
 use warnings;
 use 5.10.0;
 
-use ZMQ::LibZMQ2;
+use ZMQ::LibZMQ3;
 use ZMQ::Constants qw(ZMQ_PULL ZMQ_SUB ZMQ_SUBSCRIBE ZMQ_POLLIN);
 
 my $context = zmq_init();
