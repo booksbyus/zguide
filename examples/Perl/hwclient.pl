@@ -16,8 +16,10 @@ use strict;
 use warnings;
 use 5.10.0;
 
-use ZMQ::LibZMQ2;
+use ZMQ::LibZMQ3;
 use ZMQ::Constants qw(ZMQ_REQ);
+
+my $MAX_MSGLEN = 255;
 
 my $context = zmq_init();
 
@@ -29,6 +31,8 @@ zmq_connect($requester, 'tcp://localhost:5555');
 for my $request_nbr (0..9) {
     say "Sending request $request_nbr...";
     zmq_send($requester, 'Hello');
-    my $reply = zmq_recv($requester);
-    say "Received reply $request_nbr: [". zmq_msg_data($reply) .']';
+    my $message;
+    my $size = zmq_recv($requester, $message, $MAX_MSGLEN);
+    my $reply = substr($message, 0, $size);
+    say "Received reply $request_nbr: [". $reply .']';
 }

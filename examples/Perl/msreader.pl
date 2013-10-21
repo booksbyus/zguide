@@ -14,11 +14,11 @@ use strict;
 use warnings;
 use 5.10.0;
 
-use ZMQ::LibZMQ2;
-use ZMQ::Constants qw(ZMQ_PULL ZMQ_SUB ZMQ_SUBSCRIBE ZMQ_NOBLOCK);
-use Time::HiRes qw/nanosleep/;
+use ZMQ::LibZMQ3;
+use ZMQ::Constants qw(ZMQ_PULL ZMQ_SUB ZMQ_SUBSCRIBE ZMQ_DONTWAIT);
+use zhelpers;
 
-use constant NSECS_PER_MSEC => 1_000_000;
+use constant MAX_MSGLEN => 255;
 
 # Prepare our context and sockets
 my $context = zmq_init();
@@ -30,21 +30,33 @@ zmq_connect($receiver, 'tcp://localhost:5557');
 # Connect to weather server
 my $subscriber = zmq_socket($context, ZMQ_SUB);
 zmq_connect($subscriber, 'tcp://localhost:5556');
-zmq_setsockopt($subscriber, ZMQ_SUBSCRIBE, '10001 ');
+zmq_setsockopt($subscriber, ZMQ_SUBSCRIBE, '10001');
 
 # Process messages from both sockets
 # We prioritize traffic from the task ventilator
 while (1) {
     # Process any waiting tasks
     while (1) {
-        my $task = zmq_recv($receiver, ZMQ_NOBLOCK);
-        last unless defined $task;
+        my $buf;
+        my $size = zmq_recv($receiver, $buf, MAX_MSGLEN, ZMQ_DONTWAIT);
+        if ($size != -1) {
+            warn "Process task";
+        }
+        else {
+            last;
+        }
     }
     # Process any waiting weather updates
     while (1) {
-        my $update = zmq_recv($subscriber, ZMQ_NOBLOCK);
-        last unless defined $update;
+        my $buf;
+        my $size = zmq_recv($subscriber, $buf, MAX_MSGLEN, ZMQ_DONTWAIT);
+        if ($size != -1) {
+            warn "Process weather update";
+        }
+        else {
+            last;
+        }
     }
     # No activity, so sleep for 1 msec
-    nanosleep NSECS_PER_MSEC;
+    s_sleep(1);
 }

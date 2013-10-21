@@ -13,8 +13,9 @@ use warnings;
 use 5.10.0;
 use threads;
 
-use ZMQ::LibZMQ2;
+use ZMQ::LibZMQ3;
 use ZMQ::Constants qw(ZMQ_REP ZMQ_ROUTER ZMQ_DEALER ZMQ_QUEUE);
+use zhelpers;
 
 sub worker_routine {
     my ($context) = @_;
@@ -24,12 +25,12 @@ sub worker_routine {
     zmq_connect($receiver, 'inproc://workers');
 
     while (1) {
-        my $string = zmq_msg_data(zmq_recv($receiver));
+        my $string = s_recv($receiver);
         say "Received request: [$string]";
         # Do some 'work'
         sleep (1);
         # Send reply back to client
-        zmq_send($receiver, 'World');
+        s_send($receiver, 'World');
     }
 }
 

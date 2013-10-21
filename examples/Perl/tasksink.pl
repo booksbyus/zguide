@@ -16,10 +16,11 @@ use strict;
 use warnings;
 use 5.10.0;
 
-use ZMQ::LibZMQ2;
+use ZMQ::LibZMQ3;
 use ZMQ::Constants qw(ZMQ_PULL);
 use Time::HiRes qw/time/;
 use English qw/-no_match_vars/;
+use zhelpers;
 
 use constant MSECS_PER_SEC => 1000;
 
@@ -31,14 +32,14 @@ my $receiver = zmq_socket($context, ZMQ_PULL);
 zmq_bind($receiver, 'tcp://*:5558');
 
 # Wait for start of batch
-zmq_recv($receiver);
+s_recv($receiver);
 
 # Start our clock now
 my $tstart = time;
 
 # Process 100 confirmations
 for my $task_nbr (0 .. 99) {
-    zmq_recv($receiver);
+    s_recv($receiver);
     use integer;
     if (($task_nbr / 10) * 10 == $task_nbr) {
         print ':';

@@ -12,8 +12,9 @@ use strict;
 use warnings;
 use 5.10.0;
 
-use ZMQ::LibZMQ2;
+use ZMQ::LibZMQ3;
 use ZMQ::Constants qw(ZMQ_SUB ZMQ_SUBSCRIBE);
+use zhelpers;
 
 # Prepare our context and subscriber
 my $context = zmq_init();
@@ -23,8 +24,8 @@ zmq_setsockopt($subscriber, ZMQ_SUBSCRIBE, 'B');
 
 while (1) {
     # Read envelope with address
-    my $address = zmq_msg_data(zmq_recv($subscriber));
+    my $address = s_recv($subscriber);
     # Read message contents
-    my $contents = zmq_msg_data(zmq_recv($subscriber));
+    my $contents = s_recv($subscriber);
     say "[$address] $contents";
 }

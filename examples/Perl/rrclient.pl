@@ -16,8 +16,9 @@ use strict;
 use warnings;
 use 5.10.0;
 
-use ZMQ::LibZMQ2;
+use ZMQ::LibZMQ3;
 use ZMQ::Constants qw(ZMQ_REQ);
+use zhelpers;
 
 my $context = zmq_init();
 
@@ -26,7 +27,7 @@ my $requester = zmq_socket($context, ZMQ_REQ);
 zmq_connect($requester, 'tcp://localhost:5559');
 
 for my $request_nbr (0 .. 9) {
-    zmq_send($requester, 'Hello');
-    my $string = zmq_msg_data(zmq_recv($requester));
+    s_send($requester, 'Hello');
+    my $string = s_recv($requester);
     say "Received reply $request_nbr [$string]";
 }

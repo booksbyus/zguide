@@ -3,10 +3,6 @@
 
 Multithreaded relay
 
-NOTE:  As of v0.09, ZeroMQ does not allow us to pass sockets around so as to
-retain compatibility with ligzmq-2.0.  This example is therefore not a precise
-rendition of the official, libzmq-2.1-exploiting C example.
-
 Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
 
 =cut
@@ -16,44 +12,49 @@ use warnings;
 use 5.10.0;
 use threads;
 
-use ZeroMQ qw/:all/;
+use ZMQ::LibZMQ3;
+use ZMQ::Constants qw(ZMQ_PAIR);
+use zhelpers;
 
 sub step1 {
     my ($context) = @_;
 
-    my $socket = $context->socket(ZMQ_PAIR);
-    $socket->connect('inproc://step2');
+    # Connect to step2 and tell it we're ready
+    my $xmitter = zmq_socket($context, ZMQ_PAIR);
+    zmq_connect($xmitter, 'inproc://step2');
+    say 'Step 1 ready, signaling step 2';
+    s_send($xmitter, '');
 
-    # Signal downstream to step 2
-    $socket->send('');
     return;
 }
 
 sub step2 {
     my ($context) = @_;
 
-    my $socket = $context->socket(ZMQ_PAIR);
-    $socket->connect('inproc://step3');
-
-    my $receiver = $context->socket(ZMQ_PAIR);
-    $receiver->bind('inproc://step2');
+    # Bind inproc socket before starting step1
+    my $receiver = zmq_socket($context, ZMQ_PAIR);
+    zmq_bind($receiver, 'inproc://step2');
     threads->create('step1', $context)->detach();
 
     # Wait for signal
-    $receiver->recv();
+    s_recv($receiver);
 
-    # Signal downstream to step 3
-    $socket->send('');
+    # Connect to step3 and tell it we're ready
+    my $xmitter = zmq_socket($context, ZMQ_PAIR);
+    zmq_connect($xmitter, 'inproc://step3');
+    say 'Step 2 ready, signaling step 3';
+    s_send($xmitter, '');
+
     return;
 }
 
-my $context = ZeroMQ::Context->new();
+my $context = zmq_init();
 
-my $receiver = $context->socket(ZMQ_PAIR);
-$receiver->bind('inproc://step3');
+my $receiver = zmq_socket($context, ZMQ_PAIR);
+zmq_bind($receiver, 'inproc://step3');
 threads->create('step2', $context)->detach();
 
 # Wait for signal
-$receiver->recv();
+s_recv($receiver);
 
 say 'Test successful!';

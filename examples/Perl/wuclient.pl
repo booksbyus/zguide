@@ -16,8 +16,9 @@ use strict;
 use warnings;
 use 5.10.0;
 
-use ZMQ::LibZMQ2;
+use ZMQ::LibZMQ3;
 use ZMQ::Constants qw(ZMQ_SUB ZMQ_SUBSCRIBE);
+use zhelpers;
 
 my $context = zmq_init();
 
@@ -34,7 +35,7 @@ zmq_setsockopt($subscriber, ZMQ_SUBSCRIBE, $filter);
 my $total_temp = 0;
 my $update_count = 100;
 for (1 .. $update_count) {
-    my $string = zmq_msg_data(zmq_recv($subscriber));
+    my $string = s_recv($subscriber);
     my ($zipcode, $temperature, $relhumidity) = split(/ /, $string);
     $total_temp += $temperature;
 }

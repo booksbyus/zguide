@@ -12,7 +12,7 @@ use strict;
 use warnings;
 use 5.10.0;
 
-use ZMQ::LibZMQ2;
+use ZMQ::LibZMQ3;
 use ZMQ::Constants qw(ZMQ_ROUTER ZMQ_DEALER ZMQ_POLLIN ZMQ_RCVMORE ZMQ_SNDMORE);
 
 # Prepare our context and sockets
@@ -30,9 +30,9 @@ my @poll = (
         callback => sub {
             while (1) {
                 # Process all parts of the message
-                my $message = zmq_recv($frontend);
+                my $message = zmq_recvmsg($frontend);
                 my $more = zmq_getsockopt($frontend, ZMQ_RCVMORE);
-                zmq_send($backend, $message, $more ? ZMQ_SNDMORE : 0);
+                zmq_sendmsg($backend, $message, $more ? ZMQ_SNDMORE : 0);
                 last unless $more;
             }
         }
@@ -42,9 +42,9 @@ my @poll = (
         callback => sub {
             while (1) {
                 # Process all parts of the message
-                my $message = zmq_recv($backend);
+                my $message = zmq_recvmsg($backend);
                 my $more = zmq_getsockopt($backend, ZMQ_RCVMORE);
-                zmq_send($frontend, $message, $more ? ZMQ_SNDMORE : 0);
+                zmq_sendmsg($frontend, $message, $more ? ZMQ_SNDMORE : 0);
                 last unless $more;
             }
         }

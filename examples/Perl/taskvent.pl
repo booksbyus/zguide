@@ -16,8 +16,9 @@ use strict;
 use warnings;
 use 5.10.0;
 
-use ZMQ::LibZMQ2;
+use ZMQ::LibZMQ3;
 use ZMQ::Constants qw(ZMQ_PUSH);
+use zhelpers;
 
 sub within {
     my ($upper) = @_;
@@ -36,7 +37,7 @@ print 'Press Enter when the workers are ready: ';
 say 'Sending tasks to workers...';
 
 # The first message is "0" and signals start of batch
-zmq_send($sender, '0');
+s_send($sender, '0');
 
 # Send 100 tasks
 my $total_msec = 0;     # Total expected cost in msecs
@@ -44,7 +45,7 @@ for (1 .. 100) {
     # Random workload from 1 to 100msecs
     my $workload = within(100);
     $total_msec += $workload;
-    zmq_send($sender, $workload);
+    s_send($sender, $workload);
 }
 say "Total expected cost: $total_msec msec";
 sleep (1);              # Give 0MQ time to deliver

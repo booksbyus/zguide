@@ -11,7 +11,7 @@ Original Author: Sonia Hamilton <sonia@snowfrog.net>
 use strict;
 use warnings;
 
-use ZMQ::LibZMQ2;
+use ZMQ::LibZMQ3;
 
-my ($major, $minor, $patch) = ZMQ::LibZMQ2::zmq_version();
+my ($major, $minor, $patch) = ZMQ::LibZMQ3::zmq_version();
 print ("Current 0MQ version is $major.$minor.$patch\n");

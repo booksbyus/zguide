@@ -14,7 +14,7 @@ use strict;
 use warnings;
 use 5.10.0;
 
-use ZMQ::LibZMQ2;
+use ZMQ::LibZMQ3;
 use ZMQ::Constants qw(ZMQ_DEALER ZMQ_ROUTER ZMQ_QUEUE);
 
 my $context = zmq_init();
