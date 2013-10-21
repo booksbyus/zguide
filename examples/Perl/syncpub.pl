@@ -12,8 +12,10 @@ use strict;
 use warnings;
 use 5.10.0;
 
-use ZMQ::LibZMQ2;
+use ZMQ::LibZMQ3;
 use ZMQ::Constants qw(ZMQ_PUB ZMQ_REP);
+use zhelpers;
+
 
 # We wait for 10 subscribers
 use constant SUBSCRIBERS_EXPECTED => 10;
@@ -31,12 +33,12 @@ zmq_bind($syncservice, 'tcp://*:5562');
 # Get synchronization from subscribers
 for (1 .. SUBSCRIBERS_EXPECTED) {
     # - wait for synchronization request
-    zmq_recv($syncservice);
+    s_recv($syncservice);
     # - send synchronization reply
-    zmq_send($syncservice, '');
+    s_send($syncservice, '');
 }
 # Now broadcast exactly 1M updates followed by END
 for (1 .. 1_000_000) {
-    zmq_send($publisher, 'Rhubarb');
+    s_send($publisher, 'Rhubarb');
 }
-zmq_send($publisher, 'END');
+s_send($publisher, 'END');

@@ -12,8 +12,9 @@ use strict;
 use warnings;
 use 5.10.0;
 
-use ZMQ::LibZMQ2;
+use ZMQ::LibZMQ3;
 use ZMQ::Constants qw(ZMQ_SUB ZMQ_SUBSCRIBE ZMQ_REQ);
+use zhelpers;
 
 my $context = zmq_init();
 
@@ -30,15 +31,15 @@ my $syncclient = zmq_socket($context, ZMQ_REQ);
 zmq_connect($syncclient, 'tcp://localhost:5562');
 
 # - send a synchronization request
-zmq_send($syncclient, '');
+s_send($syncclient, '');
 
 # - wait for synchronization reply
-zmq_recv($syncclient);
+s_recv($syncclient);
 
 # Third, get our updates and report how many we got
 my $update_nbr = 0;
 while (1) {
-    my $string = zmq_msg_data(zmq_recv($subscriber));
+    my $string = s_recv($subscriber);
     last if $string eq 'END';
     $update_nbr++;
 }
