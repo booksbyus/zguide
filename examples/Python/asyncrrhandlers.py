@@ -109,6 +109,7 @@ class Server(threading.Thread):
         backend.close()
         context.term()
 
+
 class RequestHandler(threading.Thread):
     def __init__(self, context, id, msg):
         """
