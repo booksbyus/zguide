@@ -26,8 +26,8 @@ func main() {
 	subscriber.SetSubscribe("10001")
 
 	pi := zmq.PollItems{
-		zmq.PollItem{Socket: receiver, zmq.Events: zmq.POLLIN},
-		zmq.PollItem{Socket: subscriber, zmq.Events: zmq.POLLIN},
+		zmq.PollItem{Socket: receiver, Events: zmq.POLLIN},
+		zmq.PollItem{Socket: subscriber, Events: zmq.POLLIN},
 	}
 
 	//  Process messages from both sockets
