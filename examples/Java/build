@@ -24,7 +24,7 @@ fi
 
 if [ /$1/ = /all/ ]; then
     echo "Building Java examples..."
-    for MAIN in `egrep -l "main \(" *.java`; do
+    for MAIN in `egrep -l "main ?\(" *.java`; do
         echo "$MAIN"
         javac -cp $CLASSPATH $MAIN
     done
@@ -41,7 +41,7 @@ elif [ /$1/ = /jzmq/ ]; then
 elif [ /$1/ = /clean/ ]; then
     echo "Cleaning Java examples directory..."
     rm -f *.class 
-    for MAIN in `egrep -l "main \(" *.java`; do
+    for MAIN in `egrep -l "main ?\(" *.java`; do
         rm -f `basename $MAIN .java`
     done
 elif [ -f $1.java ]; then
