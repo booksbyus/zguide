@@ -8,7 +8,7 @@
 #
 #   By Pieter Hintjens, free for remixing without conditions.
 #
-use Digest::SHA1 qw(sha1_hex);
+use Digest::SHA qw(sha1_hex);
 
 #   Language for the examples
 $source = $ENV {'BOOK_LANG'} || "C";
