@@ -10,6 +10,7 @@ import sys
 import time
 import zmq
 
+
 context = zmq.Context()
 
 # Socket to receive messages on

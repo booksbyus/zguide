@@ -8,6 +8,7 @@ import sys
 import time
 import zmq
 
+
 context = zmq.Context()
 
 # Socket to receive messages on
@@ -28,6 +29,7 @@ for task_nbr in range(100):
         sys.stdout.write(':')
     else:
         sys.stdout.write('.')
+    sys.stdout.flush()
 
 # Calculate and report duration of batch
 tend = time.time()
