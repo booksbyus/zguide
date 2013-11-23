@@ -17,9 +17,9 @@ public class hwserver{
         while (!Thread.currentThread ().isInterrupted ()) {
             byte[] reply = socket.recv(0);
             System.out.println("Received Hello");
+            Thread.sleep(1000); //  Do some 'work'
             String request = "World" ;
             socket.send(request.getBytes (), 0);
-            Thread.sleep(1000); //  Do some 'work'
         }
         socket.close();
         context.term();
