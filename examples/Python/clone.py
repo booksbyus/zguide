@@ -51,7 +51,7 @@ class Clone(object):
     @subtree.setter
     def subtree(self, subtree):
         """Sends [SUBTREE][subtree] to the agent"""
-        self._subtree = None
+        self._subtree = subtree
         self.pipe.send_multipart(["SUBTREE", subtree])
 
     def connect(self, address, port):
