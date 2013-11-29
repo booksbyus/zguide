@@ -4,7 +4,7 @@
    Binds REP socket to tcp://*:5555
    Expects "Hello" from client, replies with "World"
 |#
-(require (planet jaymccarthy/zeromq))
+(require net/zmq)
 
 (define ctxt (context 1))
 (define sock (socket ctxt 'REP))
@@ -12,7 +12,7 @@
 
 (let loop ()
   (define message (socket-recv! sock))
-  (printf "Received request: ~a" message)
+  (printf "Received request: ~a\n" message)
   (sleep 1)
   (socket-send! sock #"World")
   (loop))

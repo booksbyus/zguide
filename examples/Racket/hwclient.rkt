@@ -4,7 +4,7 @@
 #   Connects REQ socket to tcp://localhost:5555
 #   Sends "Hello" to server, expects "World" back
 |#
-(require (planet jaymccarthy/zeromq))
+(require net/zmq)
 
 ;  Prepare our context and sockets
 (define ctxt (context 1))

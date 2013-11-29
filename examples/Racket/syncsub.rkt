@@ -2,7 +2,7 @@
 #|
 #  Synchronized subscriber
 |#
-(require (planet jaymccarthy/zeromq))
+(require net/zmq)
 
 (define ctxt (context 1))
 

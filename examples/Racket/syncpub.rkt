@@ -2,7 +2,7 @@
 #|
 #  Synchronized publisher
 |#
-(require (planet jaymccarthy/zeromq))
+(require net/zmq)
 
 ;  We wait for 2 subscribers
 (define SUBSCRIBERS_EXPECTED 2)

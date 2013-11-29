@@ -1,2 +1,7 @@
 Examples in Racket
 See LICENSE in examples directory
+
+These examples require the installation of the 'zeromq' package from
+Planet 2. It is installed with:
+
+   raco pkg install zeromq
