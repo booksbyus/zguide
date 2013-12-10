@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 #
 # Simple message queuing broke
 # Same as request-reply broker but using QUEUE device

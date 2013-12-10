@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 # Majordomo Protocol client example. Uses the mdcliapi2 API to hide all MDP aspects
 #
 # Author : Tom van Leeuwen <tom@vleeuwen.eu>

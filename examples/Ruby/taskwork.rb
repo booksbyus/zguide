@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 #
 #   Task worker in Ruby
 #   Connects PULL socket to tcp://localhost:5557

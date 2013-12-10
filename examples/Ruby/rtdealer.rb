@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 # Custom routing Router to Dealer.
 # Ruby version, based on the C version from
 # http://zguide.zeromq.org/chapter:all#toc45

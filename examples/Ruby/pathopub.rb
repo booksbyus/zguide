@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 #
 # Pathological publisher
 # Sends out 1,000 topics and then one random update per second

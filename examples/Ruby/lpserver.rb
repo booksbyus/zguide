@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
 
 # Author: Han Holl <han.holl@pobox.com>
 

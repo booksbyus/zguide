@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 #
 #
 #   Identity check in Ruby

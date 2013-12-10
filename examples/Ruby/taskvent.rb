@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 #
 #   Task ventilator in Ruby
 #   Binds PUSH socket to tcp://localhost:5557

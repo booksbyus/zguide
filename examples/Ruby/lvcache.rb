@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 #
 # Last value cache
 # Uses XPUB subscription messages to re-send data

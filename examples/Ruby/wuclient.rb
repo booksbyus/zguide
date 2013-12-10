@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 #
 # Weather update client in Ruby
 # Connects SUB socket to tcp://localhost:5556

@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 # 
 # Weather proxy device
 #

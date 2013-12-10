@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 #
 # Task sink in C
 # Binds PULL socket to tcp://localhost:5558

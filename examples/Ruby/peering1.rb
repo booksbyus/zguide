@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 # Broker peering simulation (part 1)
 # Prototypes the state flow
 #

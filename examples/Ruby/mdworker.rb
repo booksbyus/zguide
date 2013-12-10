@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 # Majordomo Protocol worker example.
 #
 # Author: Tom van Leeuwen <tom@vleeuwen.eu>

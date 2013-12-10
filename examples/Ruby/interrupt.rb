@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 # Shows how to handle Ctrl-C
 require 'ffi-rzmq'
 

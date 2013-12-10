@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 # Asynchronous client-to-server (DEALER to ROUTER)
 
 require 'rubygems'
