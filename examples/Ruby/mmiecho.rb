@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 # MMI echo query example. Uses the mdcliapi2 API to hide all MDP aspects
 #
 # Author : Tom van Leeuwen <tom@vleeuwen.eu>

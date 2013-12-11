@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 #
 # Pathological subscriber
 # Subscribes to one random topic and prints received messages

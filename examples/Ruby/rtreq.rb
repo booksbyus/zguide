@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 # Custom routing Router to Mama (ROUTER to REQ)
 # Ruby version, based on the C version.
 #

@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 #
 # Multithreaded Hello World server
 #

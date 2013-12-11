@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 #
 # Task sink - design 2
 # Adds pub-sub flow to send kill signal to workers

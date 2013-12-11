@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 #
 #  Report 0MQ version
 #

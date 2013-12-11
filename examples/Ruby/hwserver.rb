@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 # author: Bill Desmarais bill@witsaid.com
 # this code is licenced under the MIT/X11 licence.
 

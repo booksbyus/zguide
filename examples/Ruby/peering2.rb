@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 # Broker peering simulation (part 2)
 # Prototypes the request-reply flow
 #

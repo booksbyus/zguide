@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 # author: Oleg Sidorov <4pcbr> i4pcbr@gmail.com
 # this code is licenced under the MIT/X11 licence.
 #

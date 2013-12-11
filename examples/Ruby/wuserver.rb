@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 #
 # Weather update server in Ruby
 # Binds PUB socket to tcp://*:5556

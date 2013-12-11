@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 # Majordomo Protocol Worker API, Ruby version
 #
 # Implements the MDP/Worker spec at http:#rfc.zeromq.org/spec:7.

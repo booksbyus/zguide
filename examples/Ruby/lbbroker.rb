@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 # Load-balancing broker
 # Clients and workers are shown here in-process
 

@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 # Titanic service
 #
 # Implements server side of http:#rfc.zeromq.org/spec:9
