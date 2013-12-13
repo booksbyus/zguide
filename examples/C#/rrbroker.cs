@@ -26,7 +26,7 @@ namespace zguide.rrbroker
                     backend.Bind("tcp://*:5560");
 
                     frontend.ReceiveReady += (sender, e) => FrontendPollInHandler(e.Socket, backend);
-                    backend.ReceiveReady += (sender, e) => BackendPollInHandler(e.Socket, backend);
+                    backend.ReceiveReady += (sender, e) => BackendPollInHandler(e.Socket, frontend);
 
                     var poller = new Poller(new List<ZmqSocket> { frontend, backend });
 
@@ -61,10 +61,10 @@ namespace zguide.rrbroker
                 //hasMore = source.RcvMore;
                 //destination.Send(message, Encoding.Unicode, hasMore ? SendRecvOpt.SNDMORE : SendRecvOpt.NONE);
 
-                byte[] message = new byte[0];
-                source.Receive(message);
+                int bytesReceived;
+                byte[] message = source.Receive(null, out bytesReceived);
                 hasMore = source.ReceiveMore;
-                destination.Send(message, message.Length, hasMore ? SocketFlags.SendMore : SocketFlags.None);
+                destination.Send(message, bytesReceived, hasMore ? SocketFlags.SendMore : SocketFlags.None);
             }
         }
     }
