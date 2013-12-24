@@ -5,26 +5,13 @@
 use 5.011;
 use strict;
 use warnings;
-use threads;
-
-use ZMQ::LibZMQ3;
-use ZMQ::Constants qw(:all); # separate module
-
-## ZMQx::Class and perl threading don't mix
-## ZMQ::CZMQ is still alpha at best.
-
-#!/usr/bin/env perl
-
-use 5.011;
-use strict;
-use warnings;
 
 BEGIN {
     $ENV{ PERL_ZMQ_BACKEND } = 'ZMQ::LibZMQ3';
 }
 
-use ZMQ::LibZMQ3;
 use ZMQ;
+use ZMQ::LibZMQ3;
 use ZMQ::Constants qw(:all);
 
 use threads;
@@ -87,8 +74,6 @@ sub worker_thread {
     say "$id sending READY";
     $rv = $socket->sendmsg(READY());
     assert($rv);
-    
-    my ($addr,$delim,$data) = (ZMQ::Message->new(),ZMQ::Message->new(),ZMQ::Message->new());
 
     while(1){
         say "$id waiting...";
