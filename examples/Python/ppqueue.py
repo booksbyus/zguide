@@ -35,9 +35,8 @@ class WorkerQueue(object):
         t = time.time()
         expired = []
         for address,worker in self.queue.iteritems():
-            if t < worker.expiry:  # Worker is alive
-                break
-            expired.append(address)
+            if t > worker.expiry:  # Worker expired
+                expired.append(address)
         for address in expired:
             print "W: Idle worker expired: %s" % address
             self.queue.pop(address, None)
