@@ -85,7 +85,7 @@ The {{zmq_socket[3]}} man page describes it thus:
 
 As a historical note, 0MQ v2.2 and earlier use UUIDs as identities, and 0MQ v3.0 and later use short integers. There's some impact on network performance, but only when you use multiple proxy hops, which is rare. Mostly the change was to simplify building {{libzmq}} by removing the dependency on a UUID library.
 
-Identies are a difficult concept to understand, but it's essential if you want to become a 0MQ expert. The ROUTER socket //invents// a random identity for each connection with which it works. If there are three REQ sockets connected to a ROUTER socket, it will invent three random identities, one for each REQ socket.
+Identities are a difficult concept to understand, but it's essential if you want to become a 0MQ expert. The ROUTER socket //invents// a random identity for each connection with which it works. If there are three REQ sockets connected to a ROUTER socket, it will invent three random identities, one for each REQ socket.
 
 So if we continue our worked example, let's say the REQ socket has a 3-byte identity {{ABC}}. Internally, this means the ROUTER socket keeps a hash table where it can search for {{ABC}} and find the TCP connection for the REQ socket.
 
