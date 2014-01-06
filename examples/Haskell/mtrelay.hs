@@ -1,11 +1,10 @@
 -- |
--- Multithreaded relay in Haskell
+-- Multithreaded relay (p.68)
 -- 
--- Originally translated to Haskell by ERDI Gergo http://gergo.erdi.hu/
 
 module Main where
 
-import System.ZMQ3.Monadic (ZMQ, runZMQ, socket, Pair(..), bind, connect, receive, send, async, liftIO)
+import System.ZMQ4.Monadic 
 
 import Data.ByteString.Char8 (pack, unpack)
 

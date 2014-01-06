@@ -1,15 +1,15 @@
 {-# LANGUAGE OverloadedStrings #-}
 -- |
--- Multiple socket poller in Haskell
+-- Multiple socket poller in Haskell (p.43)
 -- This version uses poll
 --
--- Originally translated to Haskell by Sebastian Nowicki <sebnow@gmail.com>
+-- Test it with `wuserver.hs`
 
 module Main where
 
 import Control.Monad (forever, when)
 import Data.ByteString.Char8 (unpack)
-import System.ZMQ3
+import System.ZMQ4
 import Control.Applicative ((<$>))
 
 main :: IO ()
@@ -21,13 +21,13 @@ main =
             setIdentity (restrict "vent receiver") receiver
             connect subscriber "tcp://localhost:5556"
             subscribe subscriber "10001"
-            forever $ do
+            forever $
                 poll (-1) [Sock receiver [In] (Just $ processEvts receiver), Sock subscriber [In] (Just $ processEvts subscriber)]
 
 processEvts :: (Receiver a) => Socket a -> [Event] -> IO ()
-processEvts sock evts = do
+processEvts sock evts = 
     when (In `elem` evts) $ do
         msg <- unpack <$> receive sock
         ident <- unpack <$> identity sock
-        putStrLn $ unwords $ ["Processing ", ident, msg]
+        putStrLn $ unwords ["Processing ", ident, msg]
 

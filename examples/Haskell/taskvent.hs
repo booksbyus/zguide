@@ -1,13 +1,13 @@
 -- |
--- Task ventilator
+-- Task ventilator (p.17)
 -- Binds PUSH socket to tcp://*:5557
 -- Sends batch of tasks to workers via that socket
 -- 
--- Translated to Haskell by ERDI Gergo http://gergo.erdi.hu/
+-- You need `taskwork.hs` as workers and `tasksink.hs` as sink 
 
 module Main where
 
-import System.ZMQ3.Monadic(runZMQ, socket, bind, connect, send, Push(..), liftIO)
+import System.ZMQ4.Monadic(runZMQ, socket, bind, connect, send, Push(..), liftIO)
 import Control.Monad (replicateM)
 import Data.ByteString.Char8 (pack)
 import System.Random (randomRIO)
@@ -32,7 +32,7 @@ main =
 
             -- Send 100 tasks, calculate total workload
             workload <- sum <$> replicateM 100 (do
-                workload' <- liftIO $ (randomRIO (1, 100) :: IO Int)
+                workload' <- liftIO (randomRIO (1, 100) :: IO Int)
                 send sender [] (pack $ show workload') 
                 return workload')
               

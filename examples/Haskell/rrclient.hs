@@ -1,14 +1,15 @@
 {-# LANGUAGE OverloadedStrings #-}
 -- |
--- Hello World client in Haskell
+-- Request/Reply Hello World with broker (p.50) 
 -- Binds REQ socket to tcp://localhost:5559
 -- Sends "Hello" to server, expects "World" back
 -- 
--- Originally translated to Haskell by ERDI Gergo http://gergo.erdi.hu/
+-- Use with `rrbroker.hs` and `rrworker.hs`
+-- You need to start the broker first !
 
 module Main where
 
-import System.ZMQ3.Monadic (runZMQ, socket, connect, send, receive, Req(..), liftIO)
+import System.ZMQ4.Monadic 
 import Control.Monad (forM_)
 import Data.ByteString.Char8 (unpack)
 import Text.Printf

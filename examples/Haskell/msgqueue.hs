@@ -1,12 +1,12 @@
 -- |
--- Simple message queuing broker in Haskell
+-- Simple message queuing broker (p.53)
 -- Same as request-reply broker but using QUEUE device
 -- 
--- Orginally translated to Haskell by ERDI Gergo http://gergo.erdi.hu/
+-- Use it with `rrclient.hs` and `rrworker.hs`
 
 module Main where
 
-import System.ZMQ3
+import System.ZMQ4
 
 main :: IO ()
 main = 

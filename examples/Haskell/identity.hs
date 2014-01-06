@@ -1,9 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
-import System.ZMQ3.Monadic
+import System.ZMQ4.Monadic
 import ZHelpers (dumpSock)
-
 
 main :: IO ()
 main =

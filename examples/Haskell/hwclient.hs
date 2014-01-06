@@ -7,7 +7,7 @@
 
 module Main where
 
-import System.ZMQ3.Monadic
+import System.ZMQ4.Monadic
 import Control.Monad (forM_)
 import Data.ByteString.Char8 (pack, unpack)
 

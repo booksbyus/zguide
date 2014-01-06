@@ -1,18 +1,30 @@
 {-# LANGUAGE OverloadedStrings #-}
 -- |
--- Node coordination Publisher
+-- Node coordination Publisher p.71
 -- 
+-- To test this example, you have to fire as much 'syncsub' as expected. 
+
 module Main where
 
-import System.ZMQ3.Monadic (runZMQ, socket, setSendHighWM, bind, receive, send, Pub(..), Rep(..), restrict, liftIO)
+import System.ZMQ4.Monadic 
 import Control.Monad (replicateM_, unless) 
 import System.IO (hSetBuffering, stdout, BufferMode(..))
 import Data.ByteString.Char8 (unpack)
 import Text.Printf
 
-subscribersExpected = 10 
-nbOfUpdate = 10000 
-    
+subscribersExpected = 4 
+nbOfUpdate = 10000
+
+-- | Wait for the expected subscribers to signal their presence.
+sync :: Socket z Rep -> ZMQ z ()
+sync = loop 0
+    where
+       loop num sock =
+            unless (num >= subscribersExpected) $ do
+                receive sock >>= \msg -> liftIO $ printf "[Publisher receives] %s\n" (unpack msg)
+                send sock [] ""
+                loop (num + 1) sock
+
 main :: IO ()
 main = 
     runZMQ $ do
@@ -23,6 +35,7 @@ main =
         setSendHighWM (restrict nbOfUpdate) publisher
         bind publisher "tcp://*:5561"
 
+        -- socket to receive signals
         syncservice <- socket Rep
         bind syncservice "tcp://*:5562"
         
@@ -35,10 +48,3 @@ main =
 
         liftIO $ putStrLn "[Publisher] Send termination signal"
         send publisher [] "END"
-
-    where
-        sync = loop 0 where
-               loop num sock = unless (num >= subscribersExpected) $ do
-                    receive sock >>= \msg -> liftIO $ printf "[Publisher receives] %s\n" (unpack msg)
-                    send sock [] ""
-                    loop (num + 1) sock

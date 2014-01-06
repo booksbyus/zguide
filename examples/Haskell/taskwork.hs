@@ -1,15 +1,14 @@
 -- |
--- Task worker
+-- Task worker (p.18)
 -- Connects PULL socket to tcp://localhost:5557
--- Collects workloads from ventilator via that socket
+-- Collects workloads from ventilator via that socket (see `taskvent.hs`)
 -- Connects PUSH socket to tcp://localhost:5558
--- Sends results to sink via that socket
+-- Sends results to sink via that socket (see `tasksink.hs`)
 -- 
--- Translated to Haskell by ERDI Gergo http://gergo.erdi.hu/
 
 module Main where
 
-import System.ZMQ3.Monadic (runZMQ, socket, connect, send, receive, Pull(..), Push(..), liftIO)
+import System.ZMQ4.Monadic 
 import Control.Monad (forever)
 import Data.ByteString.Char8 (unpack, empty)
 import Control.Applicative ((<$>))

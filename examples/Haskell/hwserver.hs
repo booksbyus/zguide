@@ -6,7 +6,7 @@
 
 module Main where
 
-import System.ZMQ3.Monadic
+import System.ZMQ4.Monadic
 import Control.Monad (forever)
 import Data.ByteString.Char8 (pack, unpack)
 import Control.Concurrent (threadDelay)
