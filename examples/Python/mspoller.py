@@ -18,7 +18,7 @@ receiver.connect("tcp://localhost:5557")
 # Connect to weather server
 subscriber = context.socket(zmq.SUB)
 subscriber.connect("tcp://localhost:5556")
-subscriber.setsockopt(zmq.SUBSCRIBE, "10001")
+subscriber.setsockopt(zmq.SUBSCRIBE, b"10001")
 
 # Initialize poll set
 poller = zmq.Poller()
@@ -27,12 +27,15 @@ poller.register(subscriber, zmq.POLLIN)
 
 # Process messages from both sockets
 while True:
-    socks = dict(poller.poll())
+    try:
+        socks = dict(poller.poll())
+    except KeyboardInterrupt:
+        break
 
-    if receiver in socks and socks[receiver] == zmq.POLLIN:
+    if receiver in socks:
         message = receiver.recv()
         # process task
 
-    if subscriber in socks and socks[subscriber] == zmq.POLLIN:
+    if subscriber in socks:
         message = subscriber.recv()
         # process weather update

@@ -1,14 +1,14 @@
 #
 #   Shows how to handle Ctrl-C
 #
-import zmq
 import signal
+import time
+import zmq
 
 interrupted = False
 
 def signal_handler(signum, frame):
-    global interrupted
-    interrupted = True
+    print("W: custom interrupt handler called.")
 
 context = zmq.Context()
 socket = context.socket(zmq.REP)
@@ -18,17 +18,12 @@ socket.bind("tcp://*:5558")
 try:
     socket.recv()
 except KeyboardInterrupt:
-    print "W: interrupt received, proceeding..."
+    print("W: interrupt received, proceeding...")
 
-# or you can use a custom handler
-counter = 0
+# or you can use a custom handler,
+# in which case recv will fail with EINTR
 signal.signal(signal.SIGINT, signal_handler)
-while True:
-    try:
-        message = socket.recv(zmq.DONTWAIT)
-    except zmq.ZMQError:
-        pass
-    counter += 1
-    if interrupted:
-        print "W: interrupt received, killing server..."
-        break
+try:
+    message = socket.recv()
+except zmq.ZMQError as e:
+    print("W: recv failed with: %s" % e)

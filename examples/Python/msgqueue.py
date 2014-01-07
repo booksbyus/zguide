@@ -13,7 +13,7 @@ import zmq
 def main():
     """ main method """
 
-    context = zmq.Context(1)
+    context = zmq.Context()
 
     # Socket facing clients
     frontend = context.socket(zmq.ROUTER)
