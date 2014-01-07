@@ -14,7 +14,7 @@ socket.bind("tcp://*:5556")
 
 while True:
     zipcode = randrange(1, 100000)
-    temperature = randrange(1, 215) - 80
-    relhumidity = randrange(1, 50) + 10
+    temperature = randrange(-80, 135)
+    relhumidity = randrange(10, 60)
 
-    socket.send("%d %d %d" % (zipcode, temperature, relhumidity))
+    socket.send_string("%i %i %i" % (zipcode, temperature, relhumidity))
