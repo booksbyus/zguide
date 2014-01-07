@@ -17,12 +17,12 @@ sink.bind("inproc://example")
 # First allow 0MQ to set the identity
 anonymous = context.socket(zmq.DEALER)
 anonymous.connect("inproc://example")
-anonymous.send("ROUTER uses a generated UUID")
+anonymous.send(b"ROUTER uses a generated UUID")
 zhelpers.dump(sink)
 
 # Then set the identity ourselves
 identified = context.socket(zmq.DEALER)
-identified.setsockopt(zmq.IDENTITY, "PEER2")
+identified.setsockopt(zmq.IDENTITY, b"PEER2")
 identified.connect("inproc://example")
-identified.send("ROUTER socket uses REQ's socket identity")
+identified.send(b"ROUTER socket uses REQ's socket identity")
 zhelpers.dump(sink)

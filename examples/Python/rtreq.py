@@ -16,7 +16,8 @@ import zhelpers
 NBR_WORKERS = 10
 
 
-def worker_thread(context):
+def worker_thread(context=None):
+    context = context or zmq.Context.instance()
     worker = context.socket(zmq.REQ)
 
     # We use a string identity for ease here
@@ -26,45 +27,43 @@ def worker_thread(context):
     total = 0
     while True:
         # Tell the router we're ready for work
-        worker.send("ready")
+        worker.send(b"ready")
 
         # Get workload from router, until finished
         workload = worker.recv()
-        finished = workload == "END"
+        finished = workload == b"END"
         if finished:
-            print "Processed: %d tasks" % total
+            print("Processed: %d tasks" % total)
             break
         total += 1
 
         # Do some random work
-        time.sleep(random.random() / 10 + 10 ** -9)
+        time.sleep(0.1 * random.random())
 
 
-context = zmq.Context()
+context = zmq.Context.instance()
 client = context.socket(zmq.ROUTER)
 client.bind("ipc://routing.ipc")
 
-for _ in xrange(NBR_WORKERS):
-    Thread(target=worker_thread, args=(context,)).start()
+for _ in range(NBR_WORKERS):
+    Thread(target=worker_thread).start()
 
-for _ in xrange(NBR_WORKERS * 10):
+for _ in range(NBR_WORKERS * 10):
     # LRU worker is next waiting in the queue
-    address = client.recv()
-    empty = client.recv()
-    ready = client.recv()
-
-    client.send(address, zmq.SNDMORE)
-    client.send("", zmq.SNDMORE)
-    client.send("This is the workload")
+    address, empty, ready = client.recv_multipart()
+    
+    client.send_multipart([
+        address,
+        b'',
+        b'This is the workload',
+    ])
 
 # Now ask mama to shut down and report their results
-for _ in xrange(NBR_WORKERS):
-    address = client.recv()
-    empty = client.recv()
-    ready = client.recv()
+for _ in range(NBR_WORKERS):
+    address, empty, ready = client.recv_multipart()
+    client.send_multipart([
+        address,
+        b'',
+        b'END',
+    ])
 
-    client.send(address, zmq.SNDMORE)
-    client.send("", zmq.SNDMORE)
-    client.send("END")
-
-time.sleep(1)  # Give 0MQ/2.0.x time to flush output

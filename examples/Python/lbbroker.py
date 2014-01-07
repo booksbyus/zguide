@@ -6,6 +6,7 @@
    Author: Guillaume Aubert (gaubert) <guillaume(dot)aubert(at)gmail(dot)com>
 
 """
+from __future__ import print_function
 
 import threading
 import time
@@ -19,14 +20,13 @@ def worker_thread(worker_url, context, i):
 
     socket = context.socket(zmq.REQ)
 
-    identity = "Worker-%d" % (i)
-
-    socket.setsockopt(zmq.IDENTITY, identity) #set worker identity
+    # Set the worker identity
+    socket.identity = (u"Worker-%d" % (i)).encode('ascii')
 
     socket.connect(worker_url)
 
     # Tell the borker we are ready for work
-    socket.send("READY")
+    socket.send(b"READY")
 
     try:
         while True:
@@ -35,18 +35,15 @@ def worker_thread(worker_url, context, i):
             empty = socket.recv()
             request = socket.recv()
 
-            print("%s: %s\n" %(identity, request))
+            print("%s: %s\n" % (socket.identity.decode('ascii'), request.decode('ascii')), end='')
 
             socket.send(address, zmq.SNDMORE)
-            socket.send("", zmq.SNDMORE)
-            socket.send("OK")
+            socket.send(b"", zmq.SNDMORE)
+            socket.send(b"OK")
 
-    except zmq.ZMQError, zerr:
+    except zmq.ContextTerminated:
         # context terminated so quit silently
-        if zerr.strerror == 'Context was terminated':
-            return
-        else:
-            raise zerr
+        return
 
 
 def client_thread(client_url, context, i):
@@ -54,19 +51,15 @@ def client_thread(client_url, context, i):
 
     socket = context.socket(zmq.REQ)
 
-    identity = "Client-%d" % (i)
-
-    socket.setsockopt(zmq.IDENTITY, identity) #Set client identity. Makes tracing easier
+    socket.identity = (u"Client-%d" % (i)).encode('ascii')
 
     socket.connect(client_url)
 
     #  Send request, get reply
-    socket.send("HELLO")
+    socket.send(b"HELLO")
     reply = socket.recv()
 
-    print("%s: %s\n" % (identity, reply))
-
-    return
+    print("%s: %s\n" % (socket.identity.decode('ascii'), reply.decode('ascii')), end='')
 
 
 def main():
@@ -77,7 +70,7 @@ def main():
     client_nbr = NBR_CLIENTS
 
     # Prepare our context and sockets
-    context = zmq.Context(1)
+    context = zmq.Context()
     frontend = context.socket(zmq.ROUTER)
     frontend.bind(url_client)
     backend = context.socket(zmq.ROUTER)
@@ -131,22 +124,22 @@ def main():
 
             #   Second frame is empty
             empty = backend.recv()
-            assert empty == ""
+            assert empty == b""
 
             # Third frame is READY or else a client reply address
             client_addr = backend.recv()
 
             # If client reply, send rest back to frontend
-            if client_addr != "READY":
+            if client_addr != b"READY":
 
                 # Following frame is empty
                 empty = backend.recv()
-                assert empty == ""
+                assert empty == b""
 
                 reply = backend.recv()
 
                 frontend.send(client_addr, zmq.SNDMORE)
-                frontend.send("", zmq.SNDMORE)
+                frontend.send(b"", zmq.SNDMORE)
                 frontend.send(reply)
 
                 client_nbr -= 1
@@ -163,7 +156,7 @@ def main():
                 client_addr = frontend.recv()
 
                 empty = frontend.recv()
-                assert empty == ""
+                assert empty == b""
 
                 request = frontend.recv()
 
@@ -172,16 +165,13 @@ def main():
                 worker_id = workers_list.pop()
 
                 backend.send(worker_id, zmq.SNDMORE)
-                backend.send("", zmq.SNDMORE)
+                backend.send(b"", zmq.SNDMORE)
                 backend.send(client_addr, zmq.SNDMORE)
-                backend.send("", zmq.SNDMORE)
+                backend.send(b"", zmq.SNDMORE)
                 backend.send(request)
 
 
-
-
-    #out of infinite loop: do some housekeeping
-    time.sleep (1)
+    # Out of infinite loop: do some housekeeping
 
     frontend.close()
     backend.close()
