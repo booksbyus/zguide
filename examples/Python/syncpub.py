@@ -27,7 +27,7 @@ def main():
         # send synchronization reply
         syncservice.send(b'')
         subscribers += 1
-        print ("+1 subscriber")
+        print("+1 subscriber (%i/%i)" % (subscribers, SUBSCRIBERS_EXPECTED))
 
     # Now broadcast exactly 1M updates followed by END
     for i in range(1000000):

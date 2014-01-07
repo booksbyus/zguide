@@ -13,7 +13,7 @@ import zmq
 
 
 def main(myself, others):
-    print "Hello, I am", myself
+    print("Hello, I am %s" % myself)
 
     context = zmq.Context()
 
@@ -22,13 +22,13 @@ def main(myself, others):
 
     # State Front-End
     statefe = context.socket(zmq.SUB)
-    statefe.setsockopt(zmq.SUBSCRIBE, '')
+    statefe.setsockopt(zmq.SUBSCRIBE, b'')
 
-    bind_address = "ipc://%s-state.ipc" % myself
+    bind_address = u"ipc://%s-state.ipc" % myself
     statebe.bind(bind_address)
 
     for other in others:
-        statefe.connect("ipc://%s-state.ipc" % other)
+        statefe.connect(u"ipc://%s-state.ipc" % other)
         time.sleep(1.0)
 
     poller = zmq.Poller()
@@ -39,16 +39,16 @@ def main(myself, others):
 ########## Solution with poll() ##########
         socks = dict(poller.poll(1000))
 
-        try:
-            # Handle incoming status message
-            if socks[statefe] == zmq.POLLIN:
-                msg = statefe.recv_multipart()
-                print 'Received:', msg
+        # Handle incoming status message
+        if socks.get(statefe) == zmq.POLLIN:
+            msg = statefe.recv_multipart()
+            print('%s Received: %s' % (myself, msg))
 
-        except KeyError:
+        else:
             # Send our address and a random value
             # for worker availability
-            msg = [bind_address, str(random.randrange(1, 10))]
+            msg = [bind_address, (u'%i' % random.randrange(1, 10))]
+            msg = [ m.encode('ascii') for m in msg]
             statebe.send_multipart(msg)
 ##################################
 
@@ -67,13 +67,10 @@ def main(myself, others):
 #            statebe.send_multipart(msg)
 ##################################
 
-    poller.unregister(statefe)
-    time.sleep(1.0)
-
 
 if __name__ == '__main__':
     if len(sys.argv) >= 2:
         main(myself=sys.argv[1], others=sys.argv[2:])
     else:
-        print "Usage: peering.py <myself> <peer_1> ... <peer_N>"
+        print("Usage: peering.py <myself> <peer_1> ... <peer_N>")
         sys.exit(1)

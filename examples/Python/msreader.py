@@ -19,7 +19,7 @@ receiver.connect("tcp://localhost:5557")
 # Connect to weather server
 subscriber = context.socket(zmq.SUB)
 subscriber.connect("tcp://localhost:5556")
-subscriber.setsockopt(zmq.SUBSCRIBE, "10001")
+subscriber.setsockopt(zmq.SUBSCRIBE, b"10001")
 
 # Process messages from both sockets
 # We prioritize traffic from the task ventilator
@@ -28,16 +28,16 @@ while True:
     # Process any waiting tasks
     while True:
         try:
-            rc = receiver.recv(zmq.DONTWAIT)
-        except zmq.ZMQError:
+            msg = receiver.recv(zmq.DONTWAIT)
+        except zmq.Again:
             break
         # process task
 
     # Process any waiting weather updates
     while True:
         try:
-            rc = subscriber.recv(zmq.DONTWAIT)
-        except zmq.ZMQError:
+            msg = subscriber.recv(zmq.DONTWAIT)
+        except zmq.Again:
             break
         # process weather update
 

@@ -33,4 +33,4 @@ while True:
     time.sleep(int(s)*0.001)
 
     # Send results to sink
-    sender.send('')
+    sender.send(b'')

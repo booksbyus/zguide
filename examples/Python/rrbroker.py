@@ -21,17 +21,9 @@ while True:
     socks = dict(poller.poll())
 
     if socks.get(frontend) == zmq.POLLIN:
-        message = frontend.recv()
-        more = frontend.getsockopt(zmq.RCVMORE)
-        if more:
-            backend.send(message, zmq.SNDMORE)
-        else:
-            backend.send(message)
+        message = frontend.recv_multipart()
+        backend.send_multipart(message)
 
     if socks.get(backend) == zmq.POLLIN:
-        message = backend.recv()
-        more = backend.getsockopt(zmq.RCVMORE)
-        if more:
-            frontend.send(message, zmq.SNDMORE)
-        else:
-            frontend.send(message)
+        message = backend.recv_multipart()
+        frontend.send_multipart(message)

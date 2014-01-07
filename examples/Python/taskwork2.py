@@ -23,7 +23,7 @@ sender.connect("tcp://localhost:5558")
 # Socket for control input
 controller = context.socket(zmq.SUB)
 controller.connect("tcp://localhost:5559")
-controller.setsockopt(zmq.SUBSCRIBE, "")
+controller.setsockopt(zmq.SUBSCRIBE, b"")
 
 # Process messages from receiver and controller
 poller = zmq.Poller()
@@ -34,7 +34,7 @@ while True:
     socks = dict(poller.poll())
 
     if socks.get(receiver) == zmq.POLLIN:
-        message = receiver.recv()
+        message = receiver.recv_string()
 
         # Process task
         workload = int(message)  # Workload in msecs
@@ -43,7 +43,7 @@ while True:
         time.sleep(workload / 1000.0)
 
         # Send results to sink
-        sender.send(message)
+        sender.send_string(message)
 
         # Simple progress indicator for the viewer
         sys.stdout.write(".")

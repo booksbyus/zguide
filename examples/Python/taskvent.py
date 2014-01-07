@@ -8,6 +8,12 @@ import zmq
 import random
 import time
 
+try:
+    raw_input
+except NameError:
+    # Python 3
+    raw_input = input
+
 context = zmq.Context()
 
 # Socket to send messages on
@@ -18,12 +24,12 @@ sender.bind("tcp://*:5557")
 sink = context.socket(zmq.PUSH)
 sink.connect("tcp://localhost:5558")
 
-print "Press Enter when the workers are ready: "
+print("Press Enter when the workers are ready: ")
 _ = raw_input()
-print "Sending tasks to workers..."
+print("Sending tasks to workers...")
 
 # The first message is "0" and signals start of batch
-sink.send('0')
+sink.send(b'0')
 
 # Initialize random number generator
 random.seed()
@@ -36,9 +42,9 @@ for task_nbr in range(100):
     workload = random.randint(1, 100)
     total_msec += workload
 
-    sender.send(str(workload))
+    sender.send_string(u'%i' % workload)
 
-print "Total expected cost: %s msec" % total_msec
+print("Total expected cost: %s msec" % total_msec)
 
 # Give 0MQ time to deliver
 time.sleep(1)

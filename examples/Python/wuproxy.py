@@ -15,14 +15,10 @@ backend = context.socket(zmq.PUB)
 backend.bind("tcp://10.1.1.0:8100")
 
 # Subscribe on everything
-frontend.setsockopt(zmq.SUBSCRIBE, '')
+frontend.setsockopt(zmq.SUBSCRIBE, b'')
 
 # Shunt messages out to our own subscribers
 while True:
     # Process all parts of the message
-    message = frontend.recv()
-    more = frontend.getsockopt(zmq.RCVMORE)
-    if more:
-        backend.send(message, zmq.SNDMORE)
-    else:
-        backend.send(message)  # last message part
+    message = frontend.recv_multipart()
+    backend.send_multipart(message)

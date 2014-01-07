@@ -1,37 +1,43 @@
+
 import zmq
+import sys
 import threading
 import time
-from random import choice
+from random import randint, random
 
 __author__ = "Felipe Cruz <felipecruz@loogica.net>"
 __license__ = "MIT/X11"
 
+def tprint(msg):
+    """like print, but won't get newlines confused with multiple threads"""
+    sys.stdout.write(msg + '\n')
+    sys.stdout.flush()
+
 class ClientTask(threading.Thread):
     """ClientTask"""
-    def __init__(self):
+    def __init__(self, id):
+        self.id = id
         threading.Thread.__init__ (self)
 
     def run(self):
         context = zmq.Context()
         socket = context.socket(zmq.DEALER)
-        identity = 'worker-%d' % (choice([0,1,2,3,4,5,6,7,8,9]))
-        socket.setsockopt(zmq.IDENTITY, identity )
+        identity = u'worker-%d' % self.id
+        socket.identity = identity.encode('ascii')
         socket.connect('tcp://localhost:5570')
-        print 'Client %s started' % (identity)
+        print('Client %s started' % (identity))
         poll = zmq.Poller()
         poll.register(socket, zmq.POLLIN)
         reqs = 0
         while True:
-            for i in xrange(5):
+            reqs = reqs + 1
+            print('Req #%d sent..' % (reqs))
+            socket.send_string(u'request #%d' % (reqs))
+            for i in range(5):
                 sockets = dict(poll.poll(1000))
                 if socket in sockets:
-                    if sockets[socket] == zmq.POLLIN:
-                        msg = socket.recv()
-                        print 'Client %s received: %s\n' % (identity, msg)
-                        del msg
-            reqs = reqs + 1
-            print 'Req #%d sent..' % (reqs)
-            socket.send('request #%d' % (reqs))
+                    msg = socket.recv()
+                    tprint('Client %s received: %s' % (identity, msg))
 
         socket.close()
         context.term()
@@ -50,7 +56,7 @@ class ServerTask(threading.Thread):
         backend.bind('inproc://backend')
 
         workers = []
-        for i in xrange(5):
+        for i in range(5):
             worker = ServerWorker(context)
             worker.start()
             workers.append(worker)
@@ -62,19 +68,13 @@ class ServerTask(threading.Thread):
         while True:
             sockets = dict(poll.poll())
             if frontend in sockets:
-                if sockets[frontend] == zmq.POLLIN:
-                    _id = frontend.recv()
-                    msg = frontend.recv()
-                    print 'Server received %s id %s\n' % (msg, _id)
-                    backend.send(_id, zmq.SNDMORE)
-                    backend.send(msg)
+                ident, msg = frontend.recv_multipart()
+                tprint('Server received %s id %s' % (msg, ident))
+                backend.send_multipart([ident, msg])
             if backend in sockets:
-                if sockets[backend] == zmq.POLLIN:
-                    _id = backend.recv()
-                    msg = backend.recv()
-                    print 'Sending to frontend %s id %s\n' % (msg, _id)
-                    frontend.send(_id, zmq.SNDMORE)
-                    frontend.send(msg)
+                ident, msg = backend.recv_multipart()
+                tprint('Sending to frontend %s id %s' % (msg, ident))
+                frontend.send_multipart([ident, msg])
 
         frontend.close()
         backend.close()
@@ -89,18 +89,14 @@ class ServerWorker(threading.Thread):
     def run(self):
         worker = self.context.socket(zmq.DEALER)
         worker.connect('inproc://backend')
-        print 'Worker started'
+        tprint('Worker started')
         while True:
-            _id = worker.recv()
-            msg = worker.recv()
-            print 'Worker received %s from %s' % (msg, _id)
-            replies = choice(xrange(5))
-            for i in xrange(replies):
-                time.sleep(1/choice(range(1,10)))
-                worker.send(_id, zmq.SNDMORE)
-                worker.send(msg)
-
-            del msg
+            ident, msg = worker.recv_multipart()
+            tprint('Worker received %s from %s' % (msg, ident))
+            replies = randint(0,4)
+            for i in range(replies):
+                time.sleep(1. / (randint(1,10)))
+                worker.send_multipart([ident, msg])
 
         worker.close()
 
@@ -109,8 +105,8 @@ def main():
     """main function"""
     server = ServerTask()
     server.start()
-    for i in xrange(3):
-        client = ClientTask()
+    for i in range(3):
+        client = ClientTask(i)
         client.start()
 
     server.join()

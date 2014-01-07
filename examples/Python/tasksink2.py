@@ -27,7 +27,7 @@ receiver.recv()
 tstart = time.time()
 
 # Process 100 confirmiations
-for task_nbr in xrange(100):
+for task_nbr in range(100):
     receiver.recv()
     if task_nbr % 10 == 0:
         sys.stdout.write(":")
@@ -39,10 +39,10 @@ for task_nbr in xrange(100):
 tend = time.time()
 tdiff = tend - tstart
 total_msec = tdiff * 1000
-print "Total elapsed time: %d msec" % total_msec
+print("Total elapsed time: %d msec" % total_msec)
 
 # Send kill signal to workers
-controller.send("KILL")
+controller.send(b"KILL")
 
 # Finished
 time.sleep(1)  # Give 0MQ time to deliver

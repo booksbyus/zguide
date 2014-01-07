@@ -23,52 +23,49 @@ NBR_CLIENTS = 10
 NBR_WORKERS = 3
 
 def worker_thread(worker_url, i):
-    """Worker using REQ socket to do LRU routing"""
-    context = zmq.Context()
+    """ Worker using REQ socket to do LRU routing """
+    context = zmq.Context.instance()
+
     socket = context.socket(zmq.REQ)
 
-    identity = "Worker-%d" % (i)
-
-    socket.setsockopt(zmq.IDENTITY, identity) #set worker identity
+    # set worker identity
+    socket.identity = (u"Worker-%d" % (i)).encode('ascii')
 
     socket.connect(worker_url)
 
-    # Tell the server we are ready for work
-    socket.send("READY")
+    # Tell the borker we are ready for work
+    socket.send(b"READY")
 
     try:
         while True:
-
+            
             address, empty, request = socket.recv_multipart()
 
-            print "%s: %s\n" % (identity, request),
+            print("%s: %s\n" % (socket.identity.decode('ascii'), request.decode('ascii')), end='')
+            
+            socket.send_multipart([address, b'', b'OK'])
 
-            socket.send_multipart([address, '', 'OK'])
-
-    except zmq.ZMQError, zerr:
+    except zmq.ContextTerminated:
         # context terminated so quit silently
-        if zerr.strerror == 'Context was terminated':
-            return
-        else:
-            raise zerr
+        return
 
 
 def client_thread(client_url, i):
-    """Basic request-reply client using REQ socket"""
-    context = zmq.Context()
+    """ Basic request-reply client using REQ socket """
+    context = zmq.Context.instance()
+
     socket = context.socket(zmq.REQ)
-
-    identity = "Client-%d" % (i)
-
-    socket.setsockopt(zmq.IDENTITY, identity) #Set client identity. Makes tracing easier
+    
+    # Set client identity. Makes tracing easier
+    socket.identity = (u"Client-%d" % (i)).encode('ascii')
 
     socket.connect(client_url)
 
     #  Send request, get reply
-    socket.send("HELLO")
+    socket.send(b"HELLO")
     reply = socket.recv()
 
-    print "%s: %s\n" % (identity, reply),
+    print("%s: %s\n" % (socket.identity.decode('ascii'), reply.decode('ascii')), end='')
 
 
 class LRUQueue(object):
@@ -96,17 +93,17 @@ class LRUQueue(object):
         self.workers.append(worker_addr)
 
         #   Second frame is empty
-        assert empty == ""
+        assert empty == b""
 
         # Third frame is READY or else a client reply address
         # If client reply, send rest back to frontend
-        if client_addr != "READY":
+        if client_addr != b"READY":
             empty, reply = msg[3:]
 
             # Following frame is empty
-            assert empty == ""
+            assert empty == b""
 
-            self.frontend.send_multipart([client_addr, '', reply])
+            self.frontend.send_multipart([client_addr, b'', reply])
 
             self.client_nbr -= 1
 
@@ -123,13 +120,13 @@ class LRUQueue(object):
         # Client request is [address][empty][request]
         client_addr, empty, request = msg
 
-        assert empty == ""
+        assert empty == b""
 
         #  Dequeue and drop the next worker address
         self.available_workers -= 1
         worker_id = self.workers.pop()
 
-        self.backend.send_multipart([worker_id, '', client_addr, '', request])
+        self.backend.send_multipart([worker_id, b'', client_addr, b'', request])
         if self.available_workers == 0:
             # stop receiving until workers become available again
             self.frontend.stop_on_recv()

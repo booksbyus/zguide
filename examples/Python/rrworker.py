@@ -11,5 +11,5 @@ socket.connect("tcp://localhost:5560")
 
 while True:
     message = socket.recv()
-    print "Received request: ", message
-    socket.send("World")
+    print("Received request: %s" % message)
+    socket.send(b"World")
