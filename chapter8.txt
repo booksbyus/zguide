@@ -176,7 +176,7 @@ Let's define our use case more explicitly. After all, all these different approa
 
 Here are the long term trends I see in distributed applications:
 
-* //The overall number of moving pieces keeps increasing//. My estimate is that it doubles every 24 months, but how fast it increases matters less than the fact that we keep adding more and more nodes to our networks. They're not just boxes but also processes and threads. The driver here is cost, [http://softwareandsilicon.com/ which keeps falling]. In a decade, the average teenager will carry 30-50 devices, all the time.
+* //The overall number of moving pieces keeps increasing//. My estimate is that it doubles every 24 months, but how fast it increases matters less than the fact that we keep adding more and more nodes to our networks. They're not just boxes but also processes and threads. The driver here is cost, [http://cultureandempire.com/ which keeps falling]. In a decade, the average teenager will carry 30-50 devices, all the time.
 
 * //Control shifts away from the center//. Possibly data too, though we're still far from understanding how to build simple decentralized information stores. In any case, the star topology is slowly dying and being replaced by clouds of clouds. In the future there's going to be much more traffic within a local environment (home, office, school, bar) than between remote nodes and the center. The maths here are simple: remote communications cost more, run more slowly and are less natural than close-range communications. It's more accurate both technically and socially to share a holiday video with your friend over local WiFi than via Facebook.
 

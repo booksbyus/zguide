@@ -57,7 +57,7 @@ But gambling with hundreds of millions of others' money isn't for everyone. For 
 
 The brilliant and visionary Eben Moglen once said, roughly, that a free software license is the contract on which a community builds. When I heard this, about ten years ago, the idea came to me--//Can we deliberately grow free software communities//?
 
-Ten years later, the answer is "yes", and there is almost a science to it. I say "almost" because we don't yet have enough evidence of people doing this deliberately with a documented, reproducible process. It is what I'm trying to do with [http://softwareandsilicon.com/chapter:2#toc5 Social Architecture]. 0MQ came after Wikidot, after the [http://www.digistan.org Digital Standards Organization] (Digistan) and after the [http://www.ffii.org Foundation for a Free Information Infrastructure] (aka the FFII, an NGO that fights against software patents). This all came after a lot of less successful community projects like Xitami and Libero. My main takeaway from a long career of projects of every conceivable format is: if you want to build truly large-scale and long-lasting software, aim to build a free software community.
+Ten years later, the answer is "yes", and there is almost a science to it. I say "almost" because we don't yet have enough evidence of people doing this deliberately with a documented, reproducible process. It is what I'm trying to do with [http://cultureandempire.com/cande.html#/4/6 Social Architecture]. 0MQ came after Wikidot, after the [http://www.digistan.org Digital Standards Organization] (Digistan) and after the [http://www.ffii.org Foundation for a Free Information Infrastructure] (aka the FFII, an NGO that fights against software patents). This all came after a lot of less successful community projects like Xitami and Libero. My main takeaway from a long career of projects of every conceivable format is: if you want to build truly large-scale and long-lasting software, aim to build a free software community.
 
 +++ Psychology of Software Architecture
 
@@ -207,7 +207,7 @@ The best answer I can find is a mix of two things. One, the GPL and its guarante
 
 ++ The 0MQ Process: C4
 
-When we say 0MQ we sometimes mean {{libzmq}}, the core library. In early 2012, we synthesized the {{libzmq}} process into a formal protocol for collaboration that we called the [http://rfc.zeromq.org/spec:22 Collective Code Construction Contract], or C4. You can see this as a layer above the GPL. In fact {{libzmq}} doesn't quite stick to C4 because for historic reasons we use Jira instead of the GitHub issue tracker. Apart from that, these are our rules, and I'll explain the reasoning behind each one.
+When we say 0MQ we sometimes mean {{libzmq}}, the core library. In early 2012, we synthesized the {{libzmq}} process into a formal protocol for collaboration that we called the [http://rfc.zeromq.org/spec:22 Collective Code Construction Contract], or C4. You can see this as a layer above the GPL. These are our rules, and I'll explain the reasoning behind each one.
 
 C4 is an evolution of the GitHub [http://help.github.com/send-pull-requests/ Fork + Pull Model]. You may get the feeling I'm a fan of git and GitHub. This would be accurate: these two tools have made such a positive impact on our work over the last years, especially when it comes to building community.
 
