@@ -17,6 +17,4 @@
       (mq/send publisher "We don't want to see this.\u0000")
       (mq/send publisher "B\u0000" mq/sndmore)
       (mq/send publisher "We would like to see this.\u0000")
-      (Thread/sleep 1000))
-    (.close publisher)
-    (.term ctx)))
+      (Thread/sleep 1000))))
