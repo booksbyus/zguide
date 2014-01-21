@@ -22,7 +22,7 @@
       ;; - send synchronization reply
       (mq/send syncservice "\u0000"))
     ;; Now broadcast exactly 1M updates followed by END
-    (println "Broadicasting messages")
+    (println "Broadcasting messages")
     (dotimes [i 1000000]
       (mq/send publisher "Rhubarb\u0000"))
     (mq/send publisher "END\u0000")
