@@ -54,7 +54,7 @@ int main (int argc, char *argv [])
         else {
             //  Send random values for worker availability
             zstr_sendm (statebe, self);
-            zstr_send  (statebe, "%d", randof (10));
+            zstr_sendf (statebe, "%d", randof (10));
         }
     }
     zctx_destroy (&ctx);
