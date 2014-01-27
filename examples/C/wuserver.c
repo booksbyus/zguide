@@ -11,8 +11,6 @@ int main (void)
     void *publisher = zmq_socket (context, ZMQ_PUB);
     int rc = zmq_bind (publisher, "tcp://*:5556");
     assert (rc == 0);
-    rc = zmq_bind (publisher, "ipc://weather.ipc");
-    assert (rc == 0);
 
     //  Initialize random number generator
     srandom ((unsigned) time (NULL));
