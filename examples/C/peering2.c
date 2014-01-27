@@ -116,6 +116,7 @@ int main (int argc, char *argv [])
     for (client_nbr = 0; client_nbr < NBR_CLIENTS; client_nbr++)
         zthread_new (client_task, NULL);
 
+    // Interesting part
     //  .split request-reply handling
     //  Here, we handle the request-reply flow. We're using load-balancing
     //  to poll workers at all times, and clients only when there are one 
