@@ -37,9 +37,9 @@ Like a favorite dish, 0MQ sockets are easy to digest. Sockets have a life in fou
 
 * Plugging sockets into the network topology by creating 0MQ connections to and from them (see {{zmq_bind[3]}}, {{zmq_connect[3]}}).
 
-* Using the sockets to carry data by writing and receiving messages on them (see {{zmq_send[3]}}, {{zmq_recv[3]}}).
+* Using the sockets to carry data by writing and receiving messages on them (see {{zmq_msg_send[3]}}, {{zmq_msg_recv[3]}}).
 
-Note that sockets are always void pointers, and messages (which we'll come to very soon) are structures. So in C you pass sockets as-such, but you pass addresses of messages in all functions that work with messages, like {{zmq_send[3]}} and {{zmq_recv[3]}}. As a mnemonic, realize that "in 0MQ, all your sockets are belong to us", but messages are things you actually own in your code.
+Note that sockets are always void pointers, and messages (which we'll come to very soon) are structures. So in C you pass sockets as-such, but you pass addresses of messages in all functions that work with messages, like {{zmq_msg_send[3]}} and {{zmq_msg_recv[3]}}. As a mnemonic, realize that "in 0MQ, all your sockets are belong to us", but messages are things you actually own in your code.
 
 Creating, destroying, and configuring sockets works as you'd expect for any object. But remember that 0MQ is an asynchronous, elastic fabric. This has some impact on how we plug sockets into the network topology and how we use the sockets after that.
 
