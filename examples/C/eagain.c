@@ -13,7 +13,7 @@ int main (void) {
     int count;
     for (count = 0; count < 10; count++) {
         printf ("Sending message %d\n", count);
-        int rc = zstr_send (mailbox, "message %d", count);
+        int rc = zstr_sendf (mailbox, "message %d", count);
         if (rc == -1) {
             printf ("%s\n", strerror (errno));
             break;

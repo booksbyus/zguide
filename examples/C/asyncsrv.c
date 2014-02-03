@@ -36,7 +36,7 @@ client_task (void *args)
                 zmsg_destroy (&msg);
             }
         }
-        zstr_send (client, "request #%d", ++request_nbr);
+        zstr_sendf (client, "request #%d", ++request_nbr);
     }
     zctx_destroy (&ctx);
     return NULL;

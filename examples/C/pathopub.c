@@ -18,14 +18,14 @@ int main (int argc, char *argv [])
     //  Send out all 1,000 topic messages
     int topic_nbr;
     for (topic_nbr = 0; topic_nbr < 1000; topic_nbr++) {
-        zstr_sendm (publisher, "%03d", topic_nbr);
+        zstr_sendfm (publisher, "%03d", topic_nbr);
         zstr_send (publisher, "Save Roger");
     }
     //  Send one random update per second
     srandom ((unsigned) time (NULL));
     while (!zctx_interrupted) {
         sleep (1);
-        zstr_sendm (publisher, "%03d", randof (1000));
+        zstr_sendfm (publisher, "%03d", randof (1000));
         zstr_send (publisher, "Off with his head!");
     }
     zctx_destroy (&context);

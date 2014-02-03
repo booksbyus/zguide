@@ -13,9 +13,9 @@ static int
 static int
     s_collector   (zloop_t *loop, zmq_pollitem_t *poller, void *args);
 static int
-    s_flush_ttl   (zloop_t *loop, zmq_pollitem_t *poller, void *args);
+    s_flush_ttl   (zloop_t *loop, int timer_id, void *args);
 static int
-    s_send_hugz   (zloop_t *loop, zmq_pollitem_t *poller, void *args);
+    s_send_hugz   (zloop_t *loop, int timer_id, void *args);
 static int
     s_new_active  (zloop_t *loop, zmq_pollitem_t *poller, void *args);
 static int
@@ -275,7 +275,7 @@ s_flush_single (const char *key, void *data, void *args)
 }
 
 static int
-s_flush_ttl (zloop_t *loop, zmq_pollitem_t *poller, void *args)
+s_flush_ttl (zloop_t *loop, int timer_id, void *args)
 {
     clonesrv_t *self = (clonesrv_t *) args;
     if (self->kvmap)
@@ -290,7 +290,7 @@ s_flush_ttl (zloop_t *loop, zmq_pollitem_t *poller, void *args)
 //  server, which will become active:
 
 static int
-s_send_hugz (zloop_t *loop, zmq_pollitem_t *poller, void *args)
+s_send_hugz (zloop_t *loop, int timer_id, void *args)
 {
     clonesrv_t *self = (clonesrv_t *) args;
 

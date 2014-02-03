@@ -19,8 +19,8 @@ client_thread (void *args, zctx_t *ctx, void *pipe)
     while (true) {
         //  Ask for next chunk
         zstr_sendm (dealer, "fetch");
-        zstr_sendm (dealer, "%ld", total);
-        zstr_send  (dealer, "%ld", CHUNK_SIZE);
+        zstr_sendfm (dealer, "%ld", total);
+        zstr_sendf (dealer, "%ld", CHUNK_SIZE);
         
         zframe_t *chunk = zframe_recv (dealer);
         if (!chunk)

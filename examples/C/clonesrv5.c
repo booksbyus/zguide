@@ -6,7 +6,7 @@
 //  zloop reactor handlers
 static int s_snapshots (zloop_t *loop, zmq_pollitem_t *poller, void *args);
 static int s_collector (zloop_t *loop, zmq_pollitem_t *poller, void *args);
-static int s_flush_ttl (zloop_t *loop, zmq_pollitem_t *poller, void *args);
+static int s_flush_ttl (zloop_t *loop, int timer_id, void *args);
 
 //  Our server is defined by these properties
 typedef struct {
@@ -172,7 +172,7 @@ s_flush_single (const char *key, void *data, void *args)
 }
 
 static int
-s_flush_ttl (zloop_t *loop, zmq_pollitem_t *poller, void *args)
+s_flush_ttl (zloop_t *loop, int timer_id, void *args)
 {
     clonesrv_t *self = (clonesrv_t *) args;
     if (self->kvmap)

@@ -41,7 +41,7 @@ int main (int argc, char *argv [])
         char message [1024];
         if (!fgets (message, 1024, stdin))
             break;
-        zstr_send (broadcaster, "%s: %s", argv [3], message);
+        zstr_sendf (broadcaster, "%s: %s", argv [3], message);
     }
     zctx_destroy (&ctx);
     return 0;
