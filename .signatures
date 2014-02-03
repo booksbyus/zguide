@@ -2,7 +2,6 @@
 2f4fd01e3b5ea68f3441672498b9baaeaa18b554 examples/Racket/rrworker.rkt
 3dd24a89abc142240e9d1866c0dd1793f6525eca examples/CL/rrclient.lisp
 59a2c84f7fcdcadbca5d22cb1c590081d3103d6d examples/Python/udpping3.py
-cc60a0090360f79ce04636c4b68ef084d3401db7 examples/Haskell/interrupt.hs
 2b7d9e0bebc3b4d7435ce6832aa31757db86cf3a examples/Lua/rrbroker.lua
 174d1391cc48e181a848dc26e0e81780c8c1be1f examples/Tcl/mdworker.tcl
 15807412876d207a7b744b378ec0d830c05e8c92 examples/Tcl/msgqueue.tcl
@@ -40,8 +39,7 @@ d737104b56d7f8ebf71728e4f3d1f9715ec7def0 examples/Java/mmiecho.java
 d8151daee7a7511e25f09ba2e2b24dc4b463e91d examples/Ruby/wuclient.rb
 e9ebbb45c8fa1afda697b20fa9b0784ccec16cdd examples/C/mdbroker.c
 fab8aaf90d4de5ca9173ce346a3ebd0f76ffe3fa examples/C#/mspoller.cs
-603ab94ba3c9e9052f986446eb33b90742b33266 examples/Ruby/lvcache.rb
-e6981411339bc4434b1351eaa9ca909b3dbd3738 fragments/C/track.c
+464b6a6a45e0aae6414c723e0d0f19e704066481 examples/Ruby/lvcache.rb
 fb48e0bae67b1862306797745204a0452bbc6c35 examples/C/flclient1.c
 8ab483e5750df7b0a3e6838d24cefef2b7185edb examples/Java/spworker.java
 66c18b7c9301454706948a48eecb1110de6b8c4f examples/Objective-C/tasksink.m
@@ -136,9 +134,9 @@ b55d6909f384e41673a0ac08c2fc383af38378d3 examples/Haxe/tasksink2.hx
 fcaa2075ec4c14f4600ada8b5a2437968456c4fd examples/C/rrworker.c
 c2e5818c670b5999a3a1de96b1080932df2ec612 examples/Felix/wuclient.flx
 944b1f6aec4e513e135d2ea4ef4e4aded05f08f3 examples/Go/wuserver.go
-7635d56efdcffb6a8fe31d87956d9a47b0fae589 examples/Ruby/psenvsub.rb
 ddfc2281b409a383f380b8bbd2ef8b63916740e3 examples/Clojure/tasksink2.clj
 757c637e8ce0b9cdedceab28224d7081baef0172 examples/Tcl/rtdealer.tcl
+5bb1eb89982e5a4e17af75fa6962a6baa6c75e22 examples/Python/syncpub.py
 d50c97ecd4fdfc0c982323734e4f7a3554366b0b fragments/C/endpoint-hashing.c
 26287c2b15a784510f8abba0e565a185bc50dcad examples/Java/peering3.java
 a3c78d15e03ff754a35ad2d4d9c5129bd6e0781b examples/Erlang/syncsub.es
@@ -165,7 +163,6 @@ e45acbb3cdc6b0b38765d7161eeba598e6c67799 examples/Python/mdcliapi.py
 a0f206b68544e1567e09962c50664e82e065be43 examples/Tcl/titanic.tcl
 bd2eaf51ea62a85a2a5a881e0874587575b31041 examples/Java/bstar.java
 b2fa9f4b530ed5e87eaa8fa3523f038f89569805 images/fig19.txt
-2c92b992bc7fc3b9e6a2390ba2ceb8383f93e14b examples/Ruby/lbbroker.rb
 de06a806184a6e30ede579ad0bb769f3a223fb68 examples/Perl/syncpub.pl
 2e02b93739686e4d09b20ffb383799513c66209d examples/Node.js/version.js
 e87190cc269079528b7bfb14d8cbef18383a83dc examples/Scala/wuclient.scala
@@ -177,13 +174,7 @@ aeff9494e8da40b5418007b8416331afd8859dc1 examples/Q/identity.q
 97172663ee4af7c63ce0e7e662874125c4e99b62 examples/CL/wuproxy.lisp
 1e3f4efadd93de801c25c5ae8a0d2cd51fd96834 examples/Python/clonecli3.py
 35f0f5b397ddec7b54708bac0d4beae3253e5be2 examples/F#/mtserver.fsx
-a68a7345b221ce1ad2c55631ca9c6b7d4f2840ff examples/Python/wuclient.py
-3e031c7e12aa6cfff05976e0a2e00899a452ce98 examples/Racket/rrclient.rkt
-d6d70ca5c3eb2c4f9d8522b601f7bf55c6caa209 examples/F#/peering1.fsx
-c669774b3e00101d8f9d2a5ced7bfdc39e9c13b4 examples/PHP/interrupt.php
-96345e287880281f1b84ce15fab9ad4882afac4a examples/Java/lbbroker2.java
-65f1be2b52d988782fe07ffc188266e85eaa710a examples/Perl/msgqueue.pl
-9b177699c79b45447c15aa2c9f0baada6b1999ed examples/Racket/hwclient.rkt
+b04812e4484f019cdb81789928a16d454c2e87aa examples/Racket/rrclient.rkt
 a8472aa17701e600ed2069846a9b1e79eb7e0d93 examples/PHP/wuproxy.php
 e30bb9c17138a5525355a9cf108e8497e4fd6c26 examples/Tcl/mdcliapi.tcl
 926cfad0f935909928965a0ad72ce4dd87fd759a examples/Clojure/msgqueue.clj
@@ -404,8 +395,8 @@ ab7c64e6af958b5ee4c9fd665fa3ee8180b95eb2 examples/Go/lbbroker.go
 6cb2a6cbbae18c5edeb323ea367e19a7a09866ba examples/Ruby/mdwrkapi.rb
 ef9136628f5af5723a2e29a702db5730c2602462 examples/Scala/version.scala
 de6b3e92d19b0e971bfd5eb3191e167d5329eea6 examples/C/udpping2.c
-70b335b807ca7bf9ffd8cff13effa7af5e2ec636 examples/CL/taskwork2.lisp
 587ddc20486b8a8bbecbf9f827990413a0202276 examples/Scala/psenvsub.scala
+70b335b807ca7bf9ffd8cff13effa7af5e2ec636 examples/CL/taskwork2.lisp
 9a14d89ee3133939587623501482a371bc01b44f examples/Objective-C/tasksink2.m
 4a4f4e2f4f754147cbf7a0ab70473641baa0eb33 examples/Tcl/peering2.tcl
 7b5dac82a4ac491a5bd39b7da26b5e1940b6adee images/fig32.txt
@@ -428,7 +419,6 @@ c29f21ff0d1fb6a9ee98814df7be5788f3d8592e fragments/C/zyre-beacon-send.c
 abb8ce37b7d3a289074f71f803b65ae28f9829f8 examples/Tcl/clonesrv4.tcl
 2520d1cabf0172062f0c4b6a87145e6b5b399e44 examples/Lua/flserver1.lua
 89e13f078c635c5e0065956a079fa9771a24cf07 examples/Tcl/mdbroker.tcl
-4af311808112a5120e831860d11c26b2557c0753 examples/Python/wuserver.py
 cf0ae0c61431641b75f967fa773614ff66cc4b8b examples/CL/rrbroker.lisp
 42b9e6234bb6905654685c2f9d399daa5d502ba2 examples/C/ticlient.c
 63dc8e3cd0857ac80bcf6772705947bc023e61a2 examples/Ruby/taskvent.rb
@@ -437,7 +427,6 @@ e9b3b9ee9af8678996034bb90960ee813c9ca223 examples/Ruby/peering2.rb
 e6b2e32fbb696e90a3ab2fab1207abdce434cfef examples/Ruby/mdclient2.rb
 d0ef704671a09dfe6ae70f6cff8411785038ffba examples/Java/tasksink2.java
 17e459c9891d231d8cf52d9ca1bfa777dfe67e5d examples/Lua/syncsub.lua
-6cdd40de05599e4bf2d066aa232cb054f8129ba6 examples/Ruby/mmiecho.rb
 5e357f35b556cfaf8741439e277f32306d7ab526 examples/Python/clone.py
 014919f68d6ec5a501157ef55a2dc4b2fe1c4110 examples/Tcl/bstarcli.tcl
 6297f5a2429dab80f2a7e6612314a2b43217ae31 images/fig42.txt
@@ -457,7 +446,6 @@ c783245aa6532b1ce2074fbca34ba097f5b85626 examples/Python/mtserver.py
 f784a820d2323927533a5a9bdf68fce03f0d7c87 images/fig22.txt
 e13bd7a009d1317ba51281f3f0bb2e70431be099 examples/C/rrclient.c
 a64321fd57eb6457d6b022f4cd500224ddd39cfe examples/Q/hwclient.q
-b772ebf5ae921e4ea104021c108be09301122791 examples/Python/tasksink.py
 525134463432ced524d2093c4d278c57a4710727 examples/Delphi/wuserver.dpr
 1716689f30998ccb496c34022e5910d7fd8f8d70 examples/Java/msgqueue.java
 bdb7605cb2247e66b2f459e59f200ed1edf7309d examples/C/clonecli3.c
@@ -470,7 +458,6 @@ dd154b1823b1d0c1973878e75eb555a1b39b22a1 examples/Erlang/wuclient.es
 52f6c50f023069cc74ab39f8a7f3688ee05bfc51 images/fig63.txt
 cbc63ea63ed6ce80ae4b4eece6a1798a0ad0f362 examples/Java/clonesrv2.java
 b42abea6a313d78ccdf7d3789123a30de8c43c25 examples/C/flserver3.c
-ac017506bf3fb0bc69b342a1c08b7af18922087c examples/Python/hwclient.py
 8e2ed5629b3c96271549e1bfc95b10706254d757 examples/Java/flserver2.java
 f5d703809e7a577231e35f969b3354042a035537 examples/Haxe/rtdealer.hx
 026df16d4e0a52c63cb4e1c4392df6f359775b4c examples/Scala/taskwork2.scala
@@ -533,9 +520,9 @@ a3d31e1155e1e94a2f94f4511f8b159376120390 examples/PHP/psenvsub.php
 f9b0162f2b35fac0e376713f2e3a8022632b62fd examples/Tcl/bstarsrv2.tcl
 d01070edf3b90d3a4476d7a4001ab13be72e3144 images/fig30.txt
 61040e57d715f8c3eda6cdce492816fafa060ec1 examples/PHP/mdcliapi2.php
+ff11336f83d4775a39d3e77e2e83ba813da03873 examples/C/eagain.c
 9aa75f775de177fe937c603fd4038acda1f61301 examples/C++/psenvpub.cpp
 ae49804afca1123975717706669b1ea7c37a2494 examples/Haxe/mdclient2.hx
-ff11336f83d4775a39d3e77e2e83ba813da03873 examples/C/eagain.c
 4f6b02addf92602f48cec666d6ad781107005587 examples/Objective-C/wuserver.m
 bde4c8de6a498cb01b13077939246438f2bea09e examples/Tcl/clonesrv5.tcl
 cd189e6187770398345581eb07420f74adf97416 images/fig12.txt
@@ -576,12 +563,10 @@ e2bb5adf503f613cf52d4c6f78c31f4678592522 examples/C#/clonecli1.cs
 e6b9b1a9aa818ea53f147962ffb33ccd7df37c21 examples/Tcl/spworker.tcl
 9fe6b368ed6176ec6b813a001275162bac222ec3 examples/Delphi/rtdealer.dpr
 3ff83c4148fb4e4423f42c1fdf6b7e8196b3ed41 examples/Java/flclient1.java
-7fb8490751f5e11ede97b6ebd9bfa7de1e2b4c85 examples/Ruby/psenvpub.rb
 abf89204ea9a06221532aa245cd54a777110c027 examples/Tcl/clonecli3.tcl
 5d4d9d06c392dc5877db27425d0d3d600d6a0117 examples/C++/rtreq.cpp
 d89583bf0ecc6284bea5eb764b875be3bc38836e examples/Haxe/peering1.hx
 3ac80c081724489f74eebff8bf53c67ad801bae2 examples/C#/tasksink.cs
-bd5af62b96626a9b4490740c13b2baa3f0095819 examples/Python/taskwork.py
 e1ba004366f0920d8e20ac9e419cabb9c38607df examples/Delphi/taskvent.dpr
 3f371b66af875367f92cce6ef2ad569069510548 listings/C/listing_3.c
 fac1a99357d1f4a909df0a1b729831f053782955 examples/Delphi/mtrelay.dpr
@@ -600,6 +585,7 @@ da0678d5e95eb79bce037b5a942a21a7e5ad5e67 examples/Felix/hwclient.flx
 a7d19cbf1ab02b4badaa2e7e8e59d55508af2a39 examples/Erlang/tasksink.es
 f08af18ec337598fb3dadc873a1c451eca443129 examples/Java/suisnail.java
 da4f91e4b7fde4f2de478da6e0357358175412b4 examples/Erlang/psenvpub.es
+5b633b979d3d289da7905faa9cd42b6148f71f96 examples/Java/suisnail.java
 6094db7eeabe82bd65264d74086cad4aefd57859 examples/Objective-C/msreader.m
 4d33d2fe83d7f2b506e02c3e6bbd1789888ba4aa images/fig40.txt
 42d6bed5c5411d1491da880c1e65ab5eb014db69 examples/Node.js/wuclient.js
@@ -613,6 +599,7 @@ c97cecdd704a37a8dd7c8b557343b44cf14e37f1 examples/Python/clonesrv6.py
 628203f68759322dbc36e87effb0732bec1aba34 examples/Go/mdwrkapi.go
 b6afce51dee1f0bca28ed872f5cb7fe68d1c27bf examples/Python/dechat.py
 37fec12dbdcedf2da599e88d3aee12ca54a28d40 examples/C++/rrclient.cpp
+b6afce51dee1f0bca28ed872f5cb7fe68d1c27bf examples/Python/dechat.py
 9dab739f561e816c12002bfd6a3bfde46e1df976 examples/Scala/syncpub.scala
 05cee87881deb0470871ee37c3c28f79848d8667 examples/C++/msreader.cpp
 d87aaf766aa463af25f9eeaeb14e1b9aaeebfda3 examples/C/flserver2.c
@@ -620,8 +607,8 @@ d87aaf766aa463af25f9eeaeb14e1b9aaeebfda3 examples/C/flserver2.c
 d8582e3fb3e2f71c88c178f7de1637eeb9fb6f39 examples/F#/mspoller.fsx
 605467ed0920b734207dad970d90b81ff0b2cd15 examples/Tcl/bstarsrv.tcl
 85a8b4a3021d5790aac15654d7ee6fafd5bad83c examples/Java/wuclient.java
-867179f96e9adc0ab601eaa3797850f8ae62d991 images/fig45.txt
 41cf357ad67c29439494576d8d6713d0cfd983e3 fragments/C/zyre-beacon.c
+867179f96e9adc0ab601eaa3797850f8ae62d991 images/fig45.txt
 2adc3d160708690759ef393cde9094d6249212c1 examples/C++/wuserver.cpp
 4b7c444789cb4d87d9f5e7fe095c447ae6be27e4 examples/Scala/peering2.scala
 81db8dedb39e8bc6dff203e2ce168100ea9455cc examples/C/mmiecho.c
@@ -657,7 +644,6 @@ f0ae5d4e4022e59e3d5feef0a5e9d6e61bb3f00c examples/Java/titanic.java
 4e1b9431eeaef286a9be29b33dc6a2cb5efce264 examples/C/clonecli4.c
 7c7e58807a90575c13f04910411a90df916f9108 examples/Java/taskvent.java
 670708b0fbae6ffef28f048eaa69722da95cbe72 examples/Tcl/taskwork2.tcl
-6b637b0ad7838b7784878471599b24d64105698b examples/Java/hwserver.java
 a0325006d0a5013b9771ff85f2895d0d051fcab6 examples/Scala/hwclient.scala
 7d7616b7442f351c698232f31637f163ca580916 examples/Ruby/rrclient.rb
 03f92c355e10b3464c75e9c3b201c21ea6ec681c examples/Ruby/mdcliapi2.rb
@@ -801,9 +787,8 @@ c416903da6d1ee6cb2ac35379d11eba5c3c8e7a4 examples/Lua/mdcliapi.lua
 223024a5402ade184eddf55db02bbe15bc8bfb4f examples/CL/mspoller.lisp
 c601630483aa8163c164cc05654c93e1ec4238c6 examples/Python/mmiecho.py
 911ddf23851f9190af1a2a3901025aac7cf5ad96 examples/Delphi/lpclient.dpr
-8aa4b0bcbf4a6ad58ccff0bbb23dcc556cd748e2 examples/Scala/tasksink.scala
 04b62bdeaeb81b021a26f0a9a1b5d05e65809b0d images/fig67.txt
-acd021c800e8567f2269b530da7be2b254505cca examples/Racket/peering1.rkt
+8aa4b0bcbf4a6ad58ccff0bbb23dcc556cd748e2 examples/Scala/tasksink.scala
 26a59bb7b3c4811ac826bfb2d2474d6aa67c0471 examples/C#/kvsimple.cs
 bccd2903912a0ee9327147df46c2f2ee4af4eb7d examples/PHP/msgqueue.php
 7cd942169f9e19b33d41873f80dca8d24befd4df examples/C++/rrbroker.cpp
@@ -921,7 +906,6 @@ acf30149127fac9ca2c198a2f5569406f46d05c8 examples/Tcl/clonecli1.tcl
 c30fac20cf35bc9d585597d0a7ecc7ef05793c46 examples/PHP/wuserver.php
 eed0719e9abdd3903c9d60f7e4f283d1babec888 examples/CL/mtrelay.lisp
 35c0339dd1cfca45a7f07bffc3aaac9211fb25eb examples/Perl/wuclient.pl
-3e3205a9f7d16c95b885f3be9deba6c83f57683c examples/Python/lbbroker.py
 6b1f7beb0f36a2c37ad3f14ea9ec5e98249202a1 examples/Perl/tasksink2.pl
 ae475a12b99273599a214d56bf703775ff140768 fragments/C/interrupt.c
 f747cd04574a3729903cdfdf48a0de7a4de2b8bf examples/Delphi/msreader.dpr
@@ -1046,4 +1030,7 @@ ac1156ba2f953b3997550affe245164d50925024 examples/PHP/lbbroker2.php
 65c84a8c035104110f09a6d719e1d97285c724f4 examples/C/rtdealer.c
 3505522b83dc283a63a9ce5654cd9d7071612314 images/fig4.txt
 98913d674c40172faadc26833ee49e6b298c507c fragments/C/proxy.c
+86f6a9e7dd463ad949bf40a167919a0b5043d1c3 examples/Go/mspoller.go
+137b6c7febf66d98368b9e26338deeb8f856e292 examples/Java/ppworker.java
+7377682230bfb1631480a93cd27cadacaeb4f1e3 examples/Python/psenvpub.py
 8e4e30e4e224edd0c4a78420a6ddb3c0589e1cfb images/fig26.txt
