@@ -46,7 +46,7 @@ func client_task() {
 	defer client.Close()
 
 	items := zmq.PollItems{
-		zmq.PollItem{Socket: client, zmq.Events: zmq.POLLIN},
+		zmq.PollItem{Socket: client, Events: zmq.POLLIN},
 	}
 
 	reqs := 0
@@ -100,8 +100,8 @@ func server_task() {
 
 	//  Connect backend to frontend via a proxy
 	items := zmq.PollItems{
-		zmq.PollItem{Socket: frontend, zmq.Events: zmq.POLLIN},
-		zmq.PollItem{Socket: backend, zmq.Events: zmq.POLLIN},
+		zmq.PollItem{Socket: frontend, Events: zmq.POLLIN},
+		zmq.PollItem{Socket: backend, Events: zmq.POLLIN},
 	}
 
 	for {

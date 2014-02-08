@@ -122,8 +122,8 @@ func main() {
 
 	for {
 		items := zmq.PollItems{
-			zmq.PollItem{Socket: backend, zmq.Events: zmq.POLLIN},
-			zmq.PollItem{Socket: frontend, zmq.Events: zmq.POLLIN},
+			zmq.PollItem{Socket: backend, Events: zmq.POLLIN},
+			zmq.PollItem{Socket: frontend, Events: zmq.POLLIN},
 		}
 
 		//  Poll frontend only if we have available workers

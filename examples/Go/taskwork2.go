@@ -36,8 +36,8 @@ func main() {
 	controller.SetSubscribe("")
 
 	items := zmq.PollItems{
-		zmq.PollItem{Socket: receiver, zmq.Events: zmq.POLLIN},
-		zmq.PollItem{Socket: controller, zmq.Events: zmq.POLLIN},
+		zmq.PollItem{Socket: receiver, Events: zmq.POLLIN},
+		zmq.PollItem{Socket: controller, Events: zmq.POLLIN},
 	}
 
 	//  Process tasks forever
