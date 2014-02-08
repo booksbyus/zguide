@@ -22,8 +22,8 @@ func main() {
 
 	// Initialize poll set
 	toPoll := zmq.PollItems{
-		zmq.PollItem{Socket: frontend, zmq.Events: zmq.POLLIN},
-		zmq.PollItem{Socket: backend, zmq.Events: zmq.POLLIN},
+		zmq.PollItem{Socket: frontend, Events: zmq.POLLIN},
+		zmq.PollItem{Socket: backend, Events: zmq.POLLIN},
 	}
 
 	for {
