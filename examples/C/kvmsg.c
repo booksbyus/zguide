@@ -7,7 +7,7 @@
 //  Keys are short strings
 #define KVMSG_KEY_MAX   255
 
-//  Message is formatted on wire as 4 frames:
+//  Message is formatted on wire as 5 frames:
 //  frame 0: key (0MQ string)
 //  frame 1: sequence (8 bytes, network order)
 //  frame 2: uuid (blob, 16 bytes)
