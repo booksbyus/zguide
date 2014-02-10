@@ -35,7 +35,7 @@ package provide KVSimple 1.0
 #  Keys are short strings
 set KVMSG_KEY_MAX   255
 
-#  Message is formatted on wire as 4 frames:
+#  Message is formatted on wire as 3 frames:
 #  frame 0: key (0MQ string)
 #  frame 1: sequence (8 bytes, network order)
 #  frame 2: body (blob)
