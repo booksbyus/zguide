@@ -94,7 +94,7 @@ func main() {
 			interval = INTERVAL_INIT
 		} else if liveness--; liveness == 0 {
 			fmt.Println("W: Heartbeat failure, can't reach queue")
-			fmt.Printf("W: Reconnecting in %0.2fs...", interval)
+			fmt.Printf("W: Reconnecting in %ds...\n", interval/time.Second)
 			time.Sleep(interval)
 
 			if interval < INTERVAL_MAX {
