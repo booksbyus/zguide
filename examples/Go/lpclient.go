@@ -11,10 +11,11 @@ import (
 	"fmt"
 	zmq "github.com/alecthomas/gozmq"
 	"strconv"
+	"time"
 )
 
 const (
-	REQUEST_TIMEOUT = 2500 * 1000
+	REQUEST_TIMEOUT = time.Duration(2500) * time.Millisecond
 	REQUEST_RETRIES = 3
 	SERVER_ENDPOINT = "tcp://localhost:5555"
 )
