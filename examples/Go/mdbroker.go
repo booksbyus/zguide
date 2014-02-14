@@ -242,7 +242,7 @@ func (self *mdBroker) serviceInternal(service []byte, msg [][]byte) {
 	}
 	msg[len(msg)-1] = []byte(returncode)
 	//  insert the protocol header and service name after the routing envelope
-	msg = append(append(msg[2:], []byte(MDPC_CLIENT), service), msg[3:]...)
+	msg = append([][]byte{msg[0], nil, []byte(MDPC_CLIENT), service}, msg[2:]...)
 	self.socket.SendMultipart(msg, 0)
 }
 
