@@ -10,9 +10,11 @@ import zmq
 
 from bstar import BinaryStar
 
+
 def echo(socket, msg):
     """Echo service"""
     socket.send_multipart(msg)
+
 
 def main():
     # Arguments can be either of:
@@ -25,7 +27,7 @@ def main():
         star = BinaryStar(False, "tcp://*:5004", "tcp://localhost:5003")
         star.register_voter("tcp://*:5002", zmq.ROUTER, echo)
     else:
-        print ("Usage: bstarsrv2.py { -p | -b }\n")
+        print("Usage: bstarsrv2.py { -p | -b }\n")
         return
 
     star.start()
