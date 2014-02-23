@@ -34,23 +34,17 @@ class FSMError(Exception):
 
 
 class BinaryStar(object):
-    ctx = None              # Our private context
-    loop = None             # Reactor loop
-    statepub = None         # State publisher
-    statesub = None         # State subscriber
-    state = None            # Current state
-    event = None            # Current event
-    peer_expiry = 0         # When peer is considered 'dead'
-    voter_callback = None   # Voting socket handler
-    master_callback = None  # Call when become master
-    slave_callback = None   # Call when become slave
-    heartbeat = None        # PeriodicCallback for
-
     def __init__(self, primary, local, remote):
         # initialize the Binary Star
-        self.ctx = zmq.Context()
-        self.loop = IOLoop.instance()
+        self.ctx = zmq.Context()  # Our private context
+        self.loop = IOLoop.instance()  # Reactor loop
         self.state = STATE_PRIMARY if primary else STATE_BACKUP
+
+        self.event = None  # Current event
+        self.peer_expiry = 0  # When peer is considered 'dead'
+        self.voter_callback = None  # Voting socket handler
+        self.master_callback = None  # Call when become master
+        self.slave_callback = None  # Call when become slave
 
         # Create publisher for state going to peer
         self.statepub = self.ctx.socket(zmq.PUB)
