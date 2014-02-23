@@ -10,9 +10,11 @@ import zmq
 
 from bstar import BinaryStar
 
+
 def echo(socket, msg):
     """Echo service"""
     socket.send_multipart(msg)
+
 
 def main():
     # Arguments can be either of:

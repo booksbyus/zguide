@@ -65,7 +65,7 @@ def run_fsm(fsm):
         msg, state = res
     else:
         return
-    if state == False:
+    if state is False:
         raise BStarException(msg)
     elif msg == CLIENT_REQUEST:
         assert fsm.peer_expiry > 0
