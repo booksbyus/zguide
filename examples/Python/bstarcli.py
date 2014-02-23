@@ -17,32 +17,32 @@ def main():
 
     sequence = 0
     while True:
-        client.send("%s" % sequence)
+        client.send_string("%s" % sequence)
 
         expect_reply = True
         while expect_reply:
             socks = dict(poller.poll(REQUEST_TIMEOUT))
             if socks.get(client) == zmq.POLLIN:
-                reply = client.recv()
+                reply = client.recv_string()
                 if int(reply) == sequence:
-                    print "I: server replied OK (%s)" % reply
+                    print("I: server replied OK (%s)" % reply)
                     expect_reply = False
                     sequence += 1
                     sleep(1)
                 else:
-                    print "E: malformed reply from server: %s" % reply
+                    print("E: malformed reply from server: %s" % reply)
             else:
-                print "W: no response from server, failing over"
+                print("W: no response from server, failing over")
                 sleep(SETTLE_DELAY / 1000)
                 poller.unregister(client)
                 client.close()
                 server_nbr = (server_nbr + 1) % 2
-                print "I: connecting to server at %s.." % server[server_nbr]
+                print("I: connecting to server at %s.." % server[server_nbr])
                 client = ctx.socket(zmq.REQ)
                 poller.register(client, zmq.POLLIN)
                 # reconnect and resend request
                 client.connect(server[server_nbr])
-                client.send("%s" % sequence)
+                client.send_string("%s" % sequence)
 
 if __name__ == '__main__':
     main()
