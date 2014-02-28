@@ -16,10 +16,14 @@
   (println "Collecting updates from weather server…")
   (let [filter (or (first args) "10001")
         context (zmq/zcontext)]
-    (with-open [subscriber (doto (zmq/socket context :sub)
-                             (zmq/connect "tcp://127.0.0.1:5556")
-                             (zmq/subscribe filter))]
-      (let [times 10
-            temps (repeatedly times (partial message->temperature subscriber))
-            avg (int (/ (apply + temps) (count temps)))]
-        (printf "Average temperature for zipcode '%s' was %d\n" filter avg)))))
+    (let [subscriber (doto (zmq/socket context :sub)
+                       (zmq/connect "tcp://127.0.0.1:5556")
+                       (zmq/subscribe filter))]
+    (try
+        (let [times 10
+              temps (repeatedly times (partial message->temperature subscriber))
+              avg (int (/ (apply + temps) (count temps)))]
+          (printf "Average temperature for zipcode '%s' was %d\n" filter avg))
+    (finally (.destroySocket context subscriber) ;; close hangs the process
+            (.destroy context))))))
+    
