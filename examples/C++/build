@@ -4,7 +4,7 @@
 #   Syntax: build all | clean
 #
 #   Note: may fail with g++/4.0.x, then
-#   build examples using 'g++ -o filename -lzmq filename.cpp'
+#   build examples using 'g++ -o filename filename.cpp -lzmq'
 #
 ZMQOPTS='-lzmq'
 if pkg-config libzmq --exists; then
