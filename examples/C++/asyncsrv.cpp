@@ -41,7 +41,7 @@ public:
                 for (int i = 0; i < 100; ++i) {
                     // 10 milliseconds
                     zmq::poll(items, 1, 10);
-                    if (items[0].revents && ZMQ_POLLIN) {
+                    if (items[0].revents & ZMQ_POLLIN) {
                         printf("\n%s ", identity);
                         s_dump(client_socket_);
                     }
