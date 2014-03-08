@@ -275,7 +275,7 @@ agent_control_message (agent_t *self)
     if (streq (command, "GET")) {
         char *key = zmsg_popstr (msg);
         kvmsg_t *kvmsg = (kvmsg_t *) zhash_lookup (self->kvmap, key);
-        char *value = (char *) kvmsg_body (kvmsg);
+        char *value = kvmsg? (char *) kvmsg_body (kvmsg): NULL;
         if (value)
             zstr_send (self->pipe, value);
         else
