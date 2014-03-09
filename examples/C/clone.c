@@ -276,8 +276,14 @@ agent_control_message (agent_t *self)
         char *key = zmsg_popstr (msg);
         kvmsg_t *kvmsg = (kvmsg_t *) zhash_lookup (self->kvmap, key);
         char *value = kvmsg? (char *) kvmsg_body (kvmsg): NULL;
-        if (value)
-            zstr_send (self->pipe, value);
+        if (value){
+            int size = kvmsg_size(kvmsg);
+            char *string = malloc (size + 1);
+            memcpy (string, value, size);
+            string [size] = 0;
+            zstr_send (self->pipe, string);
+            free(string);
+        }
         else
             zstr_send (self->pipe, "");
         free (key);
