@@ -275,15 +275,9 @@ agent_control_message (agent_t *self)
     if (streq (command, "GET")) {
         char *key = zmsg_popstr (msg);
         kvmsg_t *kvmsg = (kvmsg_t *) zhash_lookup (self->kvmap, key);
-        char *value = kvmsg? (char *) kvmsg_body (kvmsg): NULL;
-        if (value){
-            int size = kvmsg_size(kvmsg);
-            char *string = malloc (size + 1);
-            memcpy (string, value, size);
-            string [size] = 0;
-            zstr_send (self->pipe, string);
-            free(string);
-        }
+        byte *value = kvmsg? kvmsg_body (kvmsg): NULL;
+        if (value)
+            zmq_send (self->pipe, value, kvmsg_size (kvmsg), 0);
         else
             zstr_send (self->pipe, "");
         free (key);
