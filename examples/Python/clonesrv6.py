@@ -144,7 +144,7 @@ class CloneServer(object):
             kvmsg.send(self.publisher)
             ttl = kvmsg.get('ttl')
             if ttl:
-                kvmsg['ttl'] = time.time() + ttl
+                kvmsg['ttl'] = time.time() + int(ttl)
             kvmsg.store(self.kvmap)
             logging.info("I: publishing update=%d", self.sequence)
         else:
@@ -259,7 +259,7 @@ class CloneServer(object):
         # update integer ttl -> timestamp
         ttl = kvmsg.get('ttl')
         if ttl is not None:
-            kvmsg['ttl'] = time.time() + ttl
+            kvmsg['ttl'] = time.time() + int(ttl)
 
         if kvmsg.key != "HUGZ":
             if not self.was_pending(kvmsg):
