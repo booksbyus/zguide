@@ -132,7 +132,7 @@ class CloneAgent(object):
         self.kvmap = {}
         self.subtree = ''
         self.state = STATE_INITIAL
-        self.publisher = ctx.socket(zmq.PUSH)
+        self.publisher = ctx.socket(zmq.PUB)
         self.router = ctx.socket(zmq.ROUTER)
         self.servers = []
 
