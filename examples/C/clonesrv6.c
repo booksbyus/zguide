@@ -76,7 +76,7 @@ int main (int argc, char *argv [])
         self->primary = false;
     }
     else {
-        printf ("Usage: clonesrv4 { -p | -b }\n");
+        printf ("Usage: clonesrv6 { -p | -b }\n");
         free (self);
         exit (0);
     }

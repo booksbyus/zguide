@@ -258,8 +258,6 @@ agent_control_message (agent_t *self)
         char *key = zmsg_popstr (msg);
         char *value = zmsg_popstr (msg);
         char *ttl = zmsg_popstr (msg);
-        zhash_update (self->kvmap, key, (byte *) value);
-        zhash_freefn (self->kvmap, key, free);
 
         //  Send key-value pair on to server
         kvmsg_t *kvmsg = kvmsg_new (0);
@@ -268,20 +266,21 @@ agent_control_message (agent_t *self)
         kvmsg_fmt_body (kvmsg, "%s", value);
         kvmsg_set_prop (kvmsg, "ttl", ttl);
         kvmsg_send     (kvmsg, self->publisher);
-        kvmsg_destroy (&kvmsg);
+        kvmsg_store    (&kvmsg, self->kvmap);
+        free (key);
+        free (value);
         free (ttl);
-        free (key);             //  Value is owned by hash table
     }
     else
     if (streq (command, "GET")) {
         char *key = zmsg_popstr (msg);
-        char *value = zhash_lookup (self->kvmap, key);
+        kvmsg_t *kvmsg = (kvmsg_t *) zhash_lookup (self->kvmap, key);
+        byte *value = kvmsg? kvmsg_body (kvmsg): NULL;
         if (value)
-            zstr_send (self->pipe, value);
+            zmq_send (self->pipe, value, kvmsg_size (kvmsg), 0);
         else
             zstr_send (self->pipe, "");
         free (key);
-        free (value);
     }
     free (command);
     zmsg_destroy (&msg);
