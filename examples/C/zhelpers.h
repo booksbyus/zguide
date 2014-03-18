@@ -22,7 +22,6 @@
 #include <unistd.h>
 #include <assert.h>
 #include <signal.h>
-#include <uuid/uuid.h>
 
 //  Version checking, and patch up missing constants to match 2.1
 #if ZMQ_VERSION_MAJOR == 2
