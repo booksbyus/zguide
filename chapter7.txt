@@ -1579,7 +1579,7 @@ int main (int argc, char *argv [])
 }
 [[/code]]
 
-Note how we work with physical paths in this tool. The server publishes the physical path {{/home/ph/Music}} and maps this to the virtual path {{/}}. The client subscribes to {{/}} and receives all files in {{/media/3230-6364/MUSIC"". I could use any structure within the server directory, and it would be copied faithfully to the client's inbox. Note the API method {{    fmq_client_set_resync ()}}, which causes a server-to-client synchronization.
+Note how we work with physical paths in this tool. The server publishes the physical path {{/home/ph/Music}} and maps this to the virtual path {{/}}. The client subscribes to {{/}} and receives all files in {{/media/3230-6364/MUSIC}}. I could use any structure within the server directory, and it would be copied faithfully to the client's inbox. Note the API method {{fmq_client_set_resync()}}, which causes a server-to-client synchronization.
 
 ++ Getting an Official Port Number
 
