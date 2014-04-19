@@ -150,7 +150,7 @@ There's no "right answer". The range of options is huge, and changes over time a
 
 +++ Network Discovery
 
-Here is a list of the the solutions I know for network discovery:
+Here is a list of the solutions I know for network discovery:
 
 * //Use hard-coded endpoint strings//, i.e., fixed IP addresses and agreed ports. This worked in internal networks a decade ago when there were a few "big servers" and they were so important they got static IP addresses. These days however it's no use except in examples or for in-process work (threads are the new Big Iron). You can make it hurt a little less by using DNS but this is still painful for anyone who's not also doing system administration as a side-job.
 
