@@ -801,7 +801,7 @@ What we've made is clearly not yet a real file transfer protocol, but it proves 
 
 * The ability to fetch a set of files in one go, otherwise the protocol becomes inefficient for large sets of small files.
 
-* Confirmation from the client when it's fully received a file, to recover from chunks that might be lost of the client disconnects unexpectedly.
+* Confirmation from the client when it's fully received a file, to recover from chunks that might be lost if the client disconnects unexpectedly.
 
 So far, our semantic has been "fetch"; that is, the recipient knows (somehow) that they need a specific file, so they ask for it. The knowledge of which files exist and where they are is then passed out-of-band (e.g., in HTTP, by links in the HTML page).
 
@@ -1579,7 +1579,7 @@ int main (int argc, char *argv [])
 }
 [[/code]]
 
-Note how we work with physical paths in this tool. The server publishes the physical path {{/home/ph/Music}} and maps this to the virtual path {{/}}. The client subscribes to {{/}} and receives all files in {{/media/3230-6364/MUSIC"". I could use any structure within the server directory, and it would be copied faithfully to the client's inbox. Note the API method {{    fmq_client_set_resync ()}}, which causes a server-to-client synchronization.
+Note how we work with physical paths in this tool. The server publishes the physical path {{/home/ph/Music}} and maps this to the virtual path {{/}}. The client subscribes to {{/}} and receives all files in {{/media/3230-6364/MUSIC}}. I could use any structure within the server directory, and it would be copied faithfully to the client's inbox. Note the API method {{fmq_client_set_resync()}}, which causes a server-to-client synchronization.
 
 ++ Getting an Official Port Number
 

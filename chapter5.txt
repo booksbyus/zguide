@@ -345,7 +345,7 @@ Here is the {{kvmsg}} class, in the simplest form that works for now:
 [[code type="example" title="Key-value message class" name="kvsimple"]]
 [[/code]]
 
-Later, we'll make a more sophisticated {{kvmsg}} class that will work in in real applications.
+Later, we'll make a more sophisticated {{kvmsg}} class that will work in real applications.
 
 Both the server and client maintain hash tables, but this first model only works properly if we start all clients before the server and the clients never crash. That's very artificial.
 

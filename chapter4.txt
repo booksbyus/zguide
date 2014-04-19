@@ -48,7 +48,7 @@ Let's take them one-by-one:
 
 * Pipeline: if a worker dies (while working), the ventilator doesn't know about it. Pipelines, like the grinding gears of time, only work in one direction. But the downstream collector can detect that one task didn't get done, and send a message back to the ventilator saying, "hey, resend task 324!" If the ventilator or collector dies, whatever upstream client originally sent the work batch can get tired of waiting and resend the whole lot. It's not elegant, but system code should really not die often enough to matter.
 
-In this chapter we'll focus on just on request-reply, which is the low-hanging fruit of reliable messaging.
+In this chapter we'll focus just on request-reply, which is the low-hanging fruit of reliable messaging.
 
 The basic request-reply pattern (a REQ client socket doing a blocking send/receive to a REP server socket) scores low on handling the most common types of failure. If the server crashes while processing the request, the client just hangs forever. If the network loses the request or the reply, the client hangs forever.
 

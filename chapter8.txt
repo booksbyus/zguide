@@ -12,7 +12,7 @@ And this is the world we're targeting with 0MQ. When we talk of "scale", we don'
 
 These clouds of tiny machines talk to each other, all the time, over short-range wireless links using the Internet Protocol. They create mesh networks, pass information and tasks around like nervous signals. They augment our memory, vision, every aspect of our communications, and physical functions. And it's 0MQ that powers their conversations and events and exchanges of work and information.
 
-Now, to make even a thin imitation of this come true today, we need to solve a set of technical problems. These include: How do peers discover each other? How do they talk to existing networks like the Web? How do they protect the information they carry? How do we track and monitor them, to get some idea of what theyre doing? Then we need to do what most engineers forget about: package this solution into a framework that is dead easy for ordinary developers to use.
+Now, to make even a thin imitation of this come true today, we need to solve a set of technical problems. These include: How do peers discover each other? How do they talk to existing networks like the Web? How do they protect the information they carry? How do we track and monitor them, to get some idea of what they're doing? Then we need to do what most engineers forget about: package this solution into a framework that is dead easy for ordinary developers to use.
 
 This is what we'll attempt in this chapter: to build a framework for distributed applications as an API, protocols, and implementations. It's not a small challenge but I've claimed often that 0MQ makes such problems simple, so let's see if that's still true.
 
@@ -150,7 +150,7 @@ There's no "right answer". The range of options is huge, and changes over time a
 
 +++ Network Discovery
 
-Here is a list of the the solutions I know for network discovery:
+Here is a list of the solutions I know for network discovery:
 
 * //Use hard-coded endpoint strings//, i.e., fixed IP addresses and agreed ports. This worked in internal networks a decade ago when there were a few "big servers" and they were so important they got static IP addresses. These days however it's no use except in examples or for in-process work (threads are the new Big Iron). You can make it hurt a little less by using DNS but this is still painful for anyone who's not also doing system administration as a side-job.
 

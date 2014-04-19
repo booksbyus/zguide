@@ -47,7 +47,7 @@ iMatix, my firm, plays a specific role in the community. We own the trademarks a
 
 It is not a charity exercise. 0MQ is a for-profit project, and a very profitable one. The profits are widely distributed among all those who invest in it. It's really that simple: take the time to become an expert in 0MQ, or build something useful on top of 0MQ, and you'll find your value as an individual, or team, or company increasing. iMatix enjoys the same benefits as everyone else in the community. It's win-win to everyone except our competitors, who find themselves facing a threat they can't beat and can't really escape. 0MQ dominates the future world of massively distributed software.
 
-My firm doesn't just have the community's back--we also built the community. This was deliberate work; in the original 0MQ white paper from 2007, there were two projects. One was technical, how to make a better messaging system. The second was how to build a community that could take the software to through to dominant success. Software dies, but community survives.
+My firm doesn't just have the community's back--we also built the community. This was deliberate work; in the original 0MQ white paper from 2007, there were two projects. One was technical, how to make a better messaging system. The second was how to build a community that could take the software to dominant success. Software dies, but community survives.
 
 ++ How to Make Really Large Architectures
 
@@ -639,7 +639,7 @@ The response from many in the 0MQ community was shock and horror. People felt we
 
 People have gotten used to the "multiple repositories" approach in ZeroMQ and we've started using that in other projects quite successfully. My own opinion is that history will judge git branches and patterns like git-flow as a complex solution to imaginary problems inherited from the days of Subversion and monolithic repositories.
 
-More profoundly, and perhaps this is why the majority seems to be "wrong": I think the the branches versus forks argument is really a deeper design versus evolve argument about how to make software optimally. I'll address that deeper argument in the next section. For now, I'll try to be scientific about my irrational hatred of branches, by looking at a number of criteria, and comparing branches and forks in each one.
+More profoundly, and perhaps this is why the majority seems to be "wrong": I think the branches versus forks argument is really a deeper design versus evolve argument about how to make software optimally. I'll address that deeper argument in the next section. For now, I'll try to be scientific about my irrational hatred of branches, by looking at a number of criteria, and comparing branches and forks in each one.
 
 +++ Simplicity Versus Complexity
 
@@ -983,7 +983,7 @@ The Flash Mob comes together in space and time as needed, then disperses as soon
 
 //Pain is not, generally, a Good Sign.//
 
-The Canary Watcher measures the quality of an organization by the their own pain level, and the observed pain levels of those with whom he works. He brings new participants into existing organizations so they can express the raw pain of the innocent. He may use alcohol to get others to verbalize their pain points. He asks others, and himself, "Are you happy in this process, and if not, why not?" When an organization causes pain in himself or others, he treats that as a problem to be fixed. People should feel joy in their work.
+The Canary Watcher measures the quality of an organization by their own pain level, and the observed pain levels of those with whom he works. He brings new participants into existing organizations so they can express the raw pain of the innocent. He may use alcohol to get others to verbalize their pain points. He asks others, and himself, "Are you happy in this process, and if not, why not?" When an organization causes pain in himself or others, he treats that as a problem to be fixed. People should feel joy in their work.
 
 +++ The Hangman
 
