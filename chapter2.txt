@@ -119,7 +119,7 @@ For most common cases, use **{{tcp}}**, which is a //disconnected TCP// transpor
 
 The inter-process {{ipc}} transport is disconnected, like {{tcp}}. It has one limitation: it does not yet work on Windows. By convention we use endpoint names with an ".ipc" extension to avoid potential conflict with other file names. On UNIX systems, if you use {{ipc}} endpoints you need to create these with appropriate permissions otherwise they may not be shareable between processes running under different user IDs. You must also make sure all processes can access the files, e.g., by running in the same working directory.
 
-The inter-thread transport, **{{inproc}}**, is a connected signaling transport. It is much faster than {{tcp}} or {{ipc}}. This transport has a specific limitation compared to {{tpc}} and {{icp}}: **the server must issue a bind before any client issues a connect**. This is something future versions of 0MQ may fix, but at present this defines how you use {{inproc}} sockets. We create and bind one socket and start the child threads, which create and connect the other sockets.
+The inter-thread transport, **{{inproc}}**, is a connected signaling transport. It is much faster than {{tcp}} or {{ipc}}. This transport has a specific limitation compared to {{tcp}} and {{ipc}}: **the server must issue a bind before any client issues a connect**. This is something future versions of 0MQ may fix, but at present this defines how you use {{inproc}} sockets. We create and bind one socket and start the child threads, which create and connect the other sockets.
 
 +++ 0MQ is Not a Neutral Carrier
 
