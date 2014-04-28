@@ -119,7 +119,7 @@ function server_worker()
         for ($reply = 0; $reply < $replies; $reply++) {
             //  Sleep for some fraction of a second
             usleep(rand(0,1000) + 1);
-            $zmsg->send(Zmsg::NOCLEAR);
+            $zmsg->send(false);
         }
 
     }

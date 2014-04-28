@@ -30,7 +30,7 @@
    @author Ian Barber <ian(dot)barber(at)gmail(dot)com>
 */
 
-class zmsg
+class Zmsg
 {
     /**
      * Store the parts of the message
