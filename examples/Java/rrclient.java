@@ -9,7 +9,7 @@ import org.zeromq.ZMQ.Socket;
 */
 public class rrclient{
 
-    public static void main (String[] args) {
+    public static void main(String[] args) {
         Context context = ZMQ.context(1);
 
         //  Socket to talk to server
@@ -20,7 +20,7 @@ public class rrclient{
 
         for (int request_nbr = 0; request_nbr < 10; request_nbr++) {
             requester.send("Hello", 0);
-            String reply = requester.recvStr (0);
+            String reply = requester.recvStr(0);
             System.out.println("Received reply " + request_nbr + " [" + reply + "]");
         }
         
