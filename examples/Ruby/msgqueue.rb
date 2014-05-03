@@ -19,4 +19,4 @@ backend = context.socket(ZMQ::DEALER)
 backend.bind('tcp://*:5560')
 
 # Start built-in device
-poller = ZMQ::Device.new(ZMQ::QUEUE,frontend,backend)
+poller = ZMQ::Device.new(frontend,backend)
