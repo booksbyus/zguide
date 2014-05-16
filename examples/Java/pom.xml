@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    
+    <groupId>com.imatix.zguide</groupId>
+    <artifactId>zguide-java-examples</artifactId>
+    <version>1.0</version>
+    <packaging>jar</packaging>
+    <description>A POM to build ZeroMQ Examples in Java via Maven</description>
+
+	<dependencies>
+	    <!-- JeroMQ Pure Java implementation of libzmq (https://github.com/zeromq/jeromq) -->
+		<dependency>
+			<groupId>org.zeromq</groupId>
+			<artifactId>jeromq</artifactId>
+			<version>0.3.0</version>
+			<!-- More recent <version>0.3.4</version> -->
+		</dependency>
+		<!-- Java binding for 0MQ (http://www.zeromq.org) -->
+		<dependency>
+			<groupId>org.zeromq</groupId>
+			<artifactId>jzmq</artifactId>
+			<version>2.1.1</version>
+			<!-- More recent <version>3.0.1</version> -->
+		</dependency>
+	</dependencies>
+	
+	<!-- ZGuide Java source is in default directory. Maven standard is src/main/java. -->
+	<!-- Honor ZGuide location. Look for classes in Maven standard target/classes. -->
+	<build>
+		<sourceDirectory>.</sourceDirectory>
+	</build>
+</project>
