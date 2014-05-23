@@ -94,27 +94,33 @@ sub lp_send {
     return;
 }
 
-$context = zmq_init();
+sub main {
+    $context = zmq_init();
 
-say 'I: connecting to server...';
-req_connect;
+    say 'I: connecting to server...';
+    req_connect;
 
-my $sequence = 0;
+    my $sequence = 0;
 
-while (not $interrupted) {
+    while (not $interrupted) {
 
-     my $request = ++$sequence;
-     my $reply = lp_send($request);
-     last unless $reply;
+        my $request = ++$sequence;
+        my $reply = lp_send($request);
+        last unless $reply;
 
-     if ($reply == $request) {
-         say "I: server replied ok [$reply]";
-     } else {
-         say "E: malformed reply from server: '$reply'";
-     }
+        if ($reply == $request) {
+            say "I: server replied ok [$reply]";
+        } else {
+            say "E: malformed reply from server: '$reply'";
+        }
+    }
+
+    zmq_close($socket);
+    zmq_ctx_destroy($context);
+
+    return;
 }
 
-zmq_close($socket);
-zmq_ctx_destroy($context);
+main();
 
 exit 0;
