@@ -153,7 +153,8 @@ int main (void)
             zmsg_t *msg = zmsg_recv (frontend);
             if (!msg)
                 break;          //  Interrupted
-            zmsg_push (msg, s_workers_next (workers));
+            zframe_t *identity = s_workers_next (workers); 
+            zmsg_prepend (msg, &identity);
             zmsg_send (&msg, backend);
         }
         //  .split handle heartbeating

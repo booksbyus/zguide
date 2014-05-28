@@ -223,7 +223,7 @@ s_broker_client_msg (broker_t *self, zframe_t *sender, zmsg_t *msg)
         //  Remove & save client return envelope and insert the
         //  protocol header and service name, then rewrap envelope.
         zframe_t *client = zmsg_unwrap (msg);
-        zmsg_push (msg, zframe_dup (service_frame));
+        zmsg_prepend (msg, &service_frame);
         zmsg_pushstr (msg, MDPC_CLIENT);
         zmsg_wrap (msg, client);
         zmsg_send (&msg, self->socket);

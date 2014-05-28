@@ -38,7 +38,7 @@ int main (int argc, char *argv [])
             zmsg_addstr (reply, "OK");
         }
         zmsg_destroy (&request);
-        zmsg_push (reply, identity);
+        zmsg_prepend (reply, &identity);
         if (verbose && reply)
             zmsg_dump (reply);
         zmsg_send (&reply, server);
