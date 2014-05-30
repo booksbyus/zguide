@@ -103,8 +103,7 @@ s_dump (void *socket)
         }
         printf ("\n");
 
-        int more;        //  Multipart detection
-        more = 0;
+        int more = 0;   //  Multipart detection
         size_t more_size = sizeof (more);
         zmq_getsockopt (socket, ZMQ_RCVMORE, &more, &more_size);
         zmq_msg_close (&message);
