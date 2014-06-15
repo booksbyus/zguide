@@ -1,0 +1,19 @@
+#! /bin/sh
+#
+#   Examples build helper
+#   Syntax: build all | clean
+
+OCAMLBUILD="ocamlbuild -j 0 -use-ocamlfind -tag package(ZMQ),debug,annot"
+
+if [ /$1/ = /all/ ]; then
+    echo "Building all examples... $(echo *.ml | sed s/\.ml//g)"
+    $OCAMLBUILD $(echo *.ml | sed s/\.ml/\.native/g)
+elif [ /$1/ = /clean/ ]; then
+    echo "Cleaning examples directory..."
+    $OCAMLBUILD -clean
+elif [ -f $1.ml ]; then
+    echo "$1"
+    $OCAMLBUILD $1.native
+else
+    echo "syntax: build all | clean"
+fi
