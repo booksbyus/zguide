@@ -17,6 +17,7 @@ $backend = $context->getSocket(ZMQ::SOCKET_DEALER);
 $backend->bind("tcp://*:5560");
 
 //  Start built-in device
-new ZMQDevice($frontend, $backend);
+$device = new ZMQDevice($frontend, $backend);
+$device->run();
 
 //  We never get here...
