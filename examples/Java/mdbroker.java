@@ -246,7 +246,7 @@ public class mdbroker {
         }
         if (worker.service != null)
             worker.service.waiting.remove(worker);
-        workers.remove(worker);
+        workers.remove(worker.identity);
         worker.address.destroy();
     }
 
