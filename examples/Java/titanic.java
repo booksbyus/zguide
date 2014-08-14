@@ -319,7 +319,9 @@ public class titanic
         ZMsg mmiReply = client.send("mmi.service", mmiRequest);
         boolean serviceOK = (mmiReply != null
                 && mmiReply.getFirst().toString().equals("200"));
-        mmiReply.destroy();
+        
+        if(mmiReply != null)
+            mmiReply.destroy();
 
         boolean result = false;
         if (serviceOK) {
@@ -341,8 +343,9 @@ public class titanic
                     }
                 }
                 result = true;
+                reply.destroy();
             }
-            reply.destroy();;
+            
         }
         else
             request.destroy();

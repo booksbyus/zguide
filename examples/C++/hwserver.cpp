@@ -10,6 +10,8 @@
 #include <unistd.h>
 #else
 #include <windows.h>
+
+#define sleep(n)	Sleep(n)
 #endif
 
 int main () {
@@ -26,11 +28,7 @@ int main () {
         std::cout << "Received Hello" << std::endl;
 
         //  Do some 'work'
-#ifndef _WIN32
     	sleep(1);
-#else
-	Sleep (1);
-#endif
 
         //  Send reply back to client
         zmq::message_t reply (5);
