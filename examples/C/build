@@ -10,11 +10,15 @@ ZMQOPTS='-lzmq -lczmq'
 if pkg-config libzmq --exists; then
   ZMQOPTS=$(pkg-config --libs --cflags libczmq)
 fi
+
+CCLIBS="$CCLIBS $ZMQOPTS"
+export CCLIBS
+
 if [ /$1/ = /all/ ]; then
     echo "Building C examples..."
     for MAIN in `egrep -l "main \(" *.c`; do
         echo "$MAIN"
-        ./c -l $ZMQOPTS -q $MAIN
+        ./c -l -q $MAIN
     done
 elif [ /$1/ = /clean/ ]; then
     echo "Cleaning C examples directory..."
@@ -24,7 +28,7 @@ elif [ /$1/ = /clean/ ]; then
     done
 elif [ -f $1.c ]; then
     echo "$1"
-    ./c -l $ZMQOPTS -q $1
+    ./c -l -q $1
 else
     echo "syntax: build all | clean"
 fi
