@@ -126,7 +126,7 @@ class MDCli
             $msg = new Zmsg($this->client);
             $msg->recv();
             if ($this->verbose) {
-                echo "I: received reply:", $request->__toString(), PHP_EOL;
+                echo "I: received reply:", $msg->__toString(), PHP_EOL;
             }
             //  Don't try to handle errors, just assert noisily
             assert ($msg->parts() >= 4);
