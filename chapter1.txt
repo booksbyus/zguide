@@ -4,7 +4,7 @@
 
 ++ Fixing the World
 
-How to explain 0MQ? Some of us start by saying all the wonderful things it does. //It's sockets on steroids. It's like mailboxes with routing. It's fast!//  Others try to share their moment of enlightenment, that zap-pow-kaboom satori paradigm-shift moment when it all became obvious. //Things just become simpler. Complexity goes away. It opens the mind.//  Others try to explain by comparison. //It's smaller, simpler, but still looks familiar.//  Personally, I like to remember why we made 0MQ at all, because that's most likely where you, the reader, still are today.
+How to explain ZeroMQ? Some of us start by saying all the wonderful things it does. //It's sockets on steroids. It's like mailboxes with routing. It's fast!//  Others try to share their moment of enlightenment, that zap-pow-kaboom satori paradigm-shift moment when it all became obvious. //Things just become simpler. Complexity goes away. It opens the mind.//  Others try to explain by comparison. //It's smaller, simpler, but still looks familiar.//  Personally, I like to remember why we made ZeroMQ at all, because that's most likely where you, the reader, still are today.
 
 Programming is science dressed up as art because most of us don't understand the physics of software and it's rarely, if ever, taught. The physics of software is not algorithms, data structures, languages and abstractions. These are just tools we make, use, throw away. The real physics of software is the physics of people--specifically, our limitations when it comes to complexity, and our desire to work together to solve large problems in pieces. This is the science of programming: make building blocks that people can understand and use //easily//, and people will work together to solve the very largest problems.
 
@@ -28,7 +28,7 @@ It sounds ridiculously simple. And maybe it is. That's kind of the whole point.
 
 ++ Starting Assumptions
 
-We assume you are using at least version 3.2 of 0MQ. We assume you are using a Linux box or something similar. We assume you can read C code, more or less, as that's the default language for the examples. We assume that when we write constants like PUSH or SUBSCRIBE, you can imagine they are really called {{ZMQ_PUSH}} or {{ZMQ_SUBSCRIBE}} if the programming language needs it.
+We assume you are using at least version 3.2 of ZeroMQ. We assume you are using a Linux box or something similar. We assume you can read C code, more or less, as that's the default language for the examples. We assume that when we write constants like PUSH or SUBSCRIBE, you can imagine they are really called {{ZMQ_PUSH}} or {{ZMQ_SUBSCRIBE}} if the programming language needs it.
 
 ++ Getting the Examples
 
@@ -42,7 +42,7 @@ Next, browse the examples subdirectory. You'll find examples by language. If the
 
 ++ Ask and Ye Shall Receive
 
-So let's start with some code. We start of course with a Hello World example. We'll make a client and a server. The client sends "Hello" to the server, which replies with "World"[figure]. Here's the server in C, which opens a 0MQ socket on port 5555, reads requests on it, and replies with "World" to each request:
+So let's start with some code. We start of course with a Hello World example. We'll make a client and a server. The client sends "Hello" to the server, which replies with "World"[figure]. Here's the server in C, which opens a ZeroMQ socket on port 5555, reads requests on it, and replies with "World" to each request:
 
 [[code type="example" title="Hello World server" name="hwserver" language="C"]]
 [[/code]]
@@ -67,12 +67,12 @@ Hello |    | World
 
 The REQ-REP socket pair is in lockstep. The client issues {{zmq_send[3]}} and then {{zmq_recv[3]}}, in a loop (or once if that's all it needs). Doing any other sequence (e.g., sending two messages in a row) will result in a return code of -1 from the {{send}} or {{recv}} call. Similarly, the service issues {{zmq_recv[3]}} and then {{zmq_send[3]}} in that order, as often as it needs to.
 
-0MQ uses C as its reference language and this is the main language we'll use for examples. If you're reading this online, the link below the example takes you to translations into other programming languages. Let's compare the same server in C++:
+ZeroMQ uses C as its reference language and this is the main language we'll use for examples. If you're reading this online, the link below the example takes you to translations into other programming languages. Let's compare the same server in C++:
 
 [[code type="example" title="Hello World server" name="hwserver" language="C++"]]
 [[/code]]
 
-You can see that the 0MQ API is similar in C and C++. In a language like PHP or Java, we can hide even more and the code becomes even easier to read:
+You can see that the ZeroMQ API is similar in C and C++. In a language like PHP or Java, we can hide even more and the code becomes even easier to read:
 
 [[code type="example" title="Hello World server" name="hwserver" language="PHP"]]
 [[/code]]
@@ -85,17 +85,17 @@ Here's the client code:
 [[code type="example" title="Hello World client" name="hwclient"]]
 [[/code]]
 
-Now this looks too simple to be realistic, but 0MQ sockets have, as we already learned, superpowers. You could throw thousands of clients at this server, all at once, and it would continue to work happily and quickly. For fun, try starting the client and //then// starting the server, see how it all still works, then think for a second what this means.
+Now this looks too simple to be realistic, but ZeroMQ sockets have, as we already learned, superpowers. You could throw thousands of clients at this server, all at once, and it would continue to work happily and quickly. For fun, try starting the client and //then// starting the server, see how it all still works, then think for a second what this means.
 
-Let us explain briefly what these two programs are actually doing. They create a 0MQ context to work with, and a socket. Don't worry what the words mean. You'll pick it up. The server binds its REP (reply) socket to port 5555. The server waits for a request in a loop, and responds each time with a reply. The client sends a request and reads the reply back from the server.
+Let us explain briefly what these two programs are actually doing. They create a ZeroMQ context to work with, and a socket. Don't worry what the words mean. You'll pick it up. The server binds its REP (reply) socket to port 5555. The server waits for a request in a loop, and responds each time with a reply. The client sends a request and reads the reply back from the server.
 
 If you kill the server (Ctrl-C) and restart it, the client won't recover properly. Recovering from crashing processes isn't quite that easy. Making a reliable request-reply flow is complex enough that we won't cover it until [#reliable-request-reply].
 
-There is a lot happening behind the scenes but what matters to us programmers is how short and sweet the code is, and how often it doesn't crash, even under a heavy load. This is the request-reply pattern, probably the simplest way to use 0MQ. It maps to RPC and the classic client/server model.
+There is a lot happening behind the scenes but what matters to us programmers is how short and sweet the code is, and how often it doesn't crash, even under a heavy load. This is the request-reply pattern, probably the simplest way to use ZeroMQ. It maps to RPC and the classic client/server model.
 
 ++ A Minor Note on Strings
 
-0MQ doesn't know anything about the data you send except its size in bytes. That means you are responsible for formatting it safely so that applications can read it back. Doing this for objects and complex data types is a job for specialized libraries like Protocol Buffers. But even for strings, you need to take care.
+ZeroMQ doesn't know anything about the data you send except its size in bytes. That means you are responsible for formatting it safely so that applications can read it back. Doing this for objects and complex data types is a job for specialized libraries like Protocol Buffers. But even for strings, you need to take care.
 
 In C and some other languages, strings are terminated with a null byte. We could send a string like "HELLO" with that extra null byte:
 
@@ -111,7 +111,7 @@ socket.send ("Hello")
 
 Then what goes onto the wire is a length (one byte for shorter strings) and the string contents as individual characters[figure].
 
-[[code type="textdiagram" title="A 0MQ string"]]
+[[code type="textdiagram" title="A ZeroMQ string"]]
 #-----#  #-----+-----+-----+-----+-----#
 |  5  |  |  H  |  e  |  l  |  l  |  o  |
 #-----#  #-----+-----+-----+-----+-----#
@@ -119,14 +119,14 @@ Then what goes onto the wire is a length (one byte for shorter strings) and the 
 
 And if you read this from a C program, you will get something that looks like a string, and might by accident act like a string (if by luck the five bytes find themselves followed by an innocently lurking null), but isn't a proper string. When your client and server don't agree on the string format, you will get weird results.
 
-When you receive string data from 0MQ in C, you simply cannot trust that it's safely terminated. Every single time you read a string, you should allocate a new buffer with space for an extra byte, copy the string, and terminate it properly with a null.
+When you receive string data from ZeroMQ in C, you simply cannot trust that it's safely terminated. Every single time you read a string, you should allocate a new buffer with space for an extra byte, copy the string, and terminate it properly with a null.
 
-So let's establish the rule that **0MQ strings are length-specified and are sent on the wire //without// a trailing null**. In the simplest case (and we'll do this in our examples), a 0MQ string maps neatly to a 0MQ message frame, which looks like the above figure--a length and some bytes.
+So let's establish the rule that **ZeroMQ strings are length-specified and are sent on the wire //without// a trailing null**. In the simplest case (and we'll do this in our examples), a ZeroMQ string maps neatly to a ZeroMQ message frame, which looks like the above figure--a length and some bytes.
 
-Here is what we need to do, in C, to receive a 0MQ string and deliver it to the application as a valid C string:
+Here is what we need to do, in C, to receive a ZeroMQ string and deliver it to the application as a valid C string:
 
 [[code language="C"]]
-//  Receive 0MQ string from socket and convert into C string
+//  Receive ZeroMQ string from socket and convert into C string
 //  Chops string at 255 chars, if it's longer
 static char *
 s_recv (void *socket) {
@@ -141,17 +141,17 @@ s_recv (void *socket) {
 }
 [[/code]]
 
-This makes a handy helper function and in the spirit of making things we can reuse profitably, let's write a similar {{s_send}} function that sends strings in the correct 0MQ format, and package this into a header file we can reuse.
+This makes a handy helper function and in the spirit of making things we can reuse profitably, let's write a similar {{s_send}} function that sends strings in the correct ZeroMQ format, and package this into a header file we can reuse.
 
-The result is {{zhelpers.h}}, which lets us write sweeter and shorter 0MQ applications in C. It is a fairly long source, and only fun for C developers, so [https://github.com/imatix/zguide/blob/master/examples/C/zhelpers.h read it at leisure].
+The result is {{zhelpers.h}}, which lets us write sweeter and shorter ZeroMQ applications in C. It is a fairly long source, and only fun for C developers, so [https://github.com/imatix/zguide/blob/master/examples/C/zhelpers.h read it at leisure].
 
 ++ Version Reporting
 
-0MQ does come in several versions and quite often, if you hit a problem, it'll be something that's been fixed in a later version. So it's a useful trick to know //exactly// what version of 0MQ you're actually linking with.
+ZeroMQ does come in several versions and quite often, if you hit a problem, it'll be something that's been fixed in a later version. So it's a useful trick to know //exactly// what version of ZeroMQ you're actually linking with.
 
 Here is a tiny program that does that:
 
-[[code type="example" title="0MQ version reporting" name="version"]]
+[[code type="example" title="ZeroMQ version reporting" name="version"]]
 [[/code]]
 
 ++ Getting the Message Out
@@ -199,18 +199,18 @@ Note that when you use a SUB socket you **must** set a subscription using {{zmq_
 
 The PUB-SUB socket pair is asynchronous. The client does {{zmq_recv[3]}}, in a loop (or once if that's all it needs). Trying to send a message to a SUB socket will cause an error. Similarly, the service does {{zmq_send[3]}} as often as it needs to, but must not do {{zmq_recv[3]}} on a PUB socket.
 
-In theory with 0MQ sockets, it does not matter which end connects and which end binds. However, in practice there are undocumented differences that I'll come to later. For now, bind the PUB and connect the SUB, unless your network design makes that impossible.
+In theory with ZeroMQ sockets, it does not matter which end connects and which end binds. However, in practice there are undocumented differences that I'll come to later. For now, bind the PUB and connect the SUB, unless your network design makes that impossible.
 
 There is one more important thing to know about PUB-SUB sockets: you do not know precisely when a subscriber starts to get messages. Even if you start a subscriber, wait a while, and then start the publisher, **the subscriber will always miss the first messages that the publisher sends**. This is because as the subscriber connects to the publisher (something that takes a small but non-zero time), the publisher may already be sending messages out.
 
-This "slow joiner" symptom hits enough people often enough that we're going to explain it in detail. Remember that 0MQ does asynchronous I/O, i.e., in the background. Say you have two nodes doing this, in this order:
+This "slow joiner" symptom hits enough people often enough that we're going to explain it in detail. Remember that ZeroMQ does asynchronous I/O, i.e., in the background. Say you have two nodes doing this, in this order:
 
 * Subscriber connects to an endpoint and receives and counts messages.
 * Publisher binds to an endpoint and immediately sends 1,000 messages.
 
 Then the subscriber will most likely not receive anything. You'll blink, check that you set a correct filter and try again, and the subscriber will still not receive anything.
 
-Making a TCP connection involves to and from handshaking that takes several milliseconds depending on your network and the number of hops between peers. In that time, 0MQ can send many messages. For sake of argument assume it takes 5 msecs to establish a connection, and that same link can handle 1M messages per second. During the 5 msecs that the subscriber is connecting to the publisher, it takes the publisher only 1 msec to send out those 1K messages.
+Making a TCP connection involves to and from handshaking that takes several milliseconds depending on your network and the number of hops between peers. In that time, ZeroMQ can send many messages. For sake of argument assume it takes 5 msecs to establish a connection, and that same link can handle 1M messages per second. During the 5 msecs that the subscriber is connecting to the publisher, it takes the publisher only 1 msec to send out those 1K messages.
 
 In [#sockets-and-patterns] we'll explain how to synchronize a publisher and subscribers so that you don't start to publish data until the subscribers really are connected and ready. There is a simple and stupid way to delay the publisher, which is to sleep. Don't do this in a real application, though, because it is extremely fragile as well as inelegant and slow. Use sleeps to prove to yourself what's happening, and then wait for [#sockets-and-patterns] to see how to do this right.
 
@@ -226,7 +226,7 @@ Some points about the publish-subscribe (pub-sub) pattern:
 
 * If you're using TCP and a subscriber is slow, messages will queue up on the publisher. We'll look at how to protect publishers against this using the "high-water mark" later.
 
-* From 0MQ v3.x, filtering happens at the publisher side when using a connected protocol ({{tcp://}} or {{ipc://}}). Using the {{epgm://}} protocol, filtering happens at the subscriber side. In 0MQ v2.x, all filtering happened at the subscriber side.
+* From ZeroMQ v3.x, filtering happens at the publisher side when using a connected protocol ({{tcp://}} or {{ipc://}}). Using the {{epgm://}} protocol, filtering happens at the subscriber side. In ZeroMQ v2.x, all filtering happened at the subscriber side.
 
 This is how long it takes to receive and filter 10M messages on my laptop, which is an 2011-era Intel i5, decent but nothing special:
 
@@ -305,7 +305,7 @@ Let's look at some aspects of this code in more detail:
 
 * The workers connect upstream to the ventilator, and downstream to the sink. This means you can add workers arbitrarily. If the workers bound to their endpoints, you would need (a) more endpoints and (b) to modify the ventilator and/or the sink each time you added a worker. We say that the ventilator and sink are //stable// parts of our architecture and the workers are //dynamic// parts of it.
 
-* We have to synchronize the start of the batch with all workers being up and running. This is a fairly common gotcha in 0MQ and there is no easy solution. The {{zmq_connect}} method takes a certain time. So when a set of workers connect to the ventilator, the first one to successfully connect will get a whole load of messages in that short time while the others are also connecting. If you don't synchronize the start of the batch somehow, the system won't run in parallel at all. Try removing the wait in the ventilator, and see what happens.
+* We have to synchronize the start of the batch with all workers being up and running. This is a fairly common gotcha in ZeroMQ and there is no easy solution. The {{zmq_connect}} method takes a certain time. So when a set of workers connect to the ventilator, the first one to successfully connect will get a whole load of messages in that short time while the others are also connecting. If you don't synchronize the start of the batch somehow, the system won't run in parallel at all. Try removing the wait in the ventilator, and see what happens.
 
 * The ventilator's PUSH socket distributes tasks to workers (assuming they are all connected //before// the batch starts going out) evenly. This is called //load balancing// and it's something we'll look at again in more detail.
 
@@ -331,23 +331,23 @@ Let's look at some aspects of this code in more detail:
 
 The pipeline pattern also exhibits the "slow joiner" syndrome, leading to accusations that PUSH sockets don't load balance properly. If you are using PUSH and PULL, and one of your workers gets way more messages than the others, it's because that PULL socket has joined faster than the others, and grabs a lot of messages before the others manage to connect. If you want proper load balancing, you probably want to look at the load balancing pattern in [#advanced-request-reply].
 
-++ Programming with 0MQ
+++ Programming with ZeroMQ
 
-Having seen some examples, you must be eager to start using 0MQ in some apps. Before you start that, take a deep breath, chillax, and reflect on some basic advice that will save you much stress and confusion.
+Having seen some examples, you must be eager to start using ZeroMQ in some apps. Before you start that, take a deep breath, chillax, and reflect on some basic advice that will save you much stress and confusion.
 
-* Learn 0MQ step-by-step. It's just one simple API, but it hides a world of possibilities. Take the possibilities slowly and master each one.
+* Learn ZeroMQ step-by-step. It's just one simple API, but it hides a world of possibilities. Take the possibilities slowly and master each one.
 
 * Write nice code. Ugly code hides problems and makes it hard for others to help you. You might get used to meaningless variable names, but people reading your code won't. Use names that are real words, that say something other than "I'm too careless to tell you what this variable is really for". Use consistent indentation and clean layout. Write nice code and your world will be more comfortable.
 
-* Test what you make as you make it. When your program doesn't work, you should know what five lines are to blame. This is especially true when you do 0MQ magic, which just //won't// work the first few times you try it.
+* Test what you make as you make it. When your program doesn't work, you should know what five lines are to blame. This is especially true when you do ZeroMQ magic, which just //won't// work the first few times you try it.
 
-* When you find that things don't work as expected, break your code into pieces, test each one, see which one is not working. 0MQ lets you make essentially modular code; use that to your advantage.
+* When you find that things don't work as expected, break your code into pieces, test each one, see which one is not working. ZeroMQ lets you make essentially modular code; use that to your advantage.
 
 * Make abstractions (classes, methods, whatever) as you need them. If you copy/paste a lot of code, you're going to copy/paste errors, too.
 
 +++ Getting the Context Right
 
-0MQ applications always start by creating a //context//, and then using that for creating sockets. In C, it's the {{zmq_ctx_new[3]}} call. You should create and use exactly one context in your process. Technically, the context is the container for all sockets in a single process, and acts as the transport for {{inproc}} sockets, which are the fastest way to connect threads in one process. If at runtime a process has two contexts, these are like separate 0MQ instances. If that's explicitly what you want, OK, but otherwise remember:
+ZeroMQ applications always start by creating a //context//, and then using that for creating sockets. In C, it's the {{zmq_ctx_new[3]}} call. You should create and use exactly one context in your process. Technically, the context is the container for all sockets in a single process, and acts as the transport for {{inproc}} sockets, which are the fastest way to connect threads in one process. If at runtime a process has two contexts, these are like separate ZeroMQ instances. If that's explicitly what you want, OK, but otherwise remember:
 
 **Do one {{zmq_ctx_new[3]}} at the start of your main line code, and one {{zmq_ctx_destroy[3]}} at the end.**
 
@@ -355,11 +355,11 @@ If you're using the {{fork()}} system call, each process needs its own context. 
 
 +++ Making a Clean Exit
 
-Classy programmers share the same motto as classy hit men: always clean-up when you finish the job. When you use 0MQ in a language like Python, stuff gets automatically freed for you. But when using C, you have to carefully free objects when you're finished with them or else you get memory leaks, unstable applications, and generally bad karma.
+Classy programmers share the same motto as classy hit men: always clean-up when you finish the job. When you use ZeroMQ in a language like Python, stuff gets automatically freed for you. But when using C, you have to carefully free objects when you're finished with them or else you get memory leaks, unstable applications, and generally bad karma.
 
-Memory leaks are one thing, but 0MQ is quite finicky about how you exit an application. The reasons are technical and painful, but the upshot is that if you leave any sockets open, the {{zmq_ctx_destroy[3]}} function will hang forever. And even if you close all sockets, {{zmq_ctx_destroy[3]}} will by default wait forever if there are pending connects or sends unless you set the LINGER to zero on those sockets before closing them.
+Memory leaks are one thing, but ZeroMQ is quite finicky about how you exit an application. The reasons are technical and painful, but the upshot is that if you leave any sockets open, the {{zmq_ctx_destroy[3]}} function will hang forever. And even if you close all sockets, {{zmq_ctx_destroy[3]}} will by default wait forever if there are pending connects or sends unless you set the LINGER to zero on those sockets before closing them.
 
-The 0MQ objects we need to worry about are messages, sockets, and contexts. Luckily it's quite simple, at least in simple programs:
+The ZeroMQ objects we need to worry about are messages, sockets, and contexts. Luckily it's quite simple, at least in simple programs:
 
 * Use {{zmq_send[3]}} and {{zmq_recv[3]}} when you can, as it avoids the need to work with zmq_msg_t objects.
 
@@ -371,7 +371,7 @@ The 0MQ objects we need to worry about are messages, sockets, and contexts. Luck
 
 This is at least the case for C development. In a language with automatic object destruction, sockets and contexts will be destroyed as you leave the scope. If you use exceptions you'll have to do the clean-up in something like a "final" block, the same as for any resource.
 
-If you're doing multithreaded work, it gets rather more complex than this. We'll get to multithreading in the next chapter, but because some of you will, despite warnings, try to run before you can safely walk, below is the quick and dirty guide to making a clean exit in a //multithreaded// 0MQ application.
+If you're doing multithreaded work, it gets rather more complex than this. We'll get to multithreading in the next chapter, but because some of you will, despite warnings, try to run before you can safely walk, below is the quick and dirty guide to making a clean exit in a //multithreaded// ZeroMQ application.
 
 First, do not try to use the same socket from multiple threads. Please don't explain why you think this would be excellent fun, just please don't do it. Next, you need to shut down each socket that has ongoing requests. The proper way is to set a low LINGER value (1 second), and then close the socket. If your language binding doesn't do this for you automatically when you destroy a context, I'd suggest sending a patch.
 
@@ -379,9 +379,9 @@ Finally, destroy the context. This will cause any blocking receives or polls or 
 
 Voila! It's complex and painful enough that any language binding author worth his or her salt will do this automatically and make the socket closing dance unnecessary.
 
-++ Why We Needed 0MQ
+++ Why We Needed ZeroMQ
 
-Now that you've seen 0MQ in action, let's go back to the "why".
+Now that you've seen ZeroMQ in action, let's go back to the "why".
 
 Many applications these days consist of components that stretch across some kind of network, either a LAN or the Internet. So many application developers end up doing some kind of messaging. Some developers use message queuing products, but most of the time they do it themselves, using TCP or UDP. These protocols are not hard to use, but there is a great difference between sending a few bytes from A to B, and doing messaging in any kind of reliable way.
 
@@ -469,17 +469,17 @@ So small to medium application developers are trapped. Either they avoid network
 
 What we need is something that does the job of messaging, but does it in such a simple and cheap way that it can work in any application, with close to zero cost. It should be a library which you just link, without any other dependencies. No additional moving pieces, so no additional risk. It should run on any OS and work with any programming language.
 
-And this is 0MQ: an efficient, embeddable library that solves most of the problems an application needs to become nicely elastic across a network, without much cost.
+And this is ZeroMQ: an efficient, embeddable library that solves most of the problems an application needs to become nicely elastic across a network, without much cost.
 
 Specifically:
 
-* It handles I/O asynchronously, in background threads. These communicate with application threads using lock-free data structures, so concurrent 0MQ applications need no locks, semaphores, or other wait states.
+* It handles I/O asynchronously, in background threads. These communicate with application threads using lock-free data structures, so concurrent ZeroMQ applications need no locks, semaphores, or other wait states.
 
-* Components can come and go dynamically and 0MQ will automatically reconnect. This means you can start components in any order. You can create "service-oriented architectures" (SOAs) where services can join and leave the network at any time.
+* Components can come and go dynamically and ZeroMQ will automatically reconnect. This means you can start components in any order. You can create "service-oriented architectures" (SOAs) where services can join and leave the network at any time.
 
 * It queues messages automatically when needed. It does this intelligently, pushing messages as close as possible to the receiver before queuing them.
 
-* It has ways of dealing with over-full queues (called "high water mark"). When a queue is full, 0MQ automatically blocks senders, or throws away messages, depending on the kind of messaging you are doing (the so-called "pattern").
+* It has ways of dealing with over-full queues (called "high water mark"). When a queue is full, ZeroMQ automatically blocks senders, or throws away messages, depending on the kind of messaging you are doing (the so-called "pattern").
 
 * It lets your applications talk to each other over arbitrary transports: TCP, multicast, in-process, inter-process. You don't need to change your code to use a different transport.
 
@@ -495,13 +495,13 @@ Specifically:
 
 * It handles network errors intelligently, by retrying automatically in cases where it makes sense.
 
-* It reduces your carbon footprint. Doing more with less CPU means your boxes use less power, and you can keep your old boxes in use for longer. Al Gore would love 0MQ.
+* It reduces your carbon footprint. Doing more with less CPU means your boxes use less power, and you can keep your old boxes in use for longer. Al Gore would love ZeroMQ.
 
-Actually 0MQ does rather more than this. It has a subversive effect on how you develop network-capable applications. Superficially, it's a socket-inspired API on which you do {{zmq_recv[3]}} and {{zmq_send[3]}}. But message processing rapidly becomes the central loop, and your application soon breaks down into a set of message processing tasks. It is elegant and natural. And it scales: each of these tasks maps to a node, and the nodes talk to each other across arbitrary transports. Two nodes in one process (node is a thread), two nodes on one box (node is a process), or two nodes on one network (node is a box)--it's all the same, with no application code changes.
+Actually ZeroMQ does rather more than this. It has a subversive effect on how you develop network-capable applications. Superficially, it's a socket-inspired API on which you do {{zmq_recv[3]}} and {{zmq_send[3]}}. But message processing rapidly becomes the central loop, and your application soon breaks down into a set of message processing tasks. It is elegant and natural. And it scales: each of these tasks maps to a node, and the nodes talk to each other across arbitrary transports. Two nodes in one process (node is a thread), two nodes on one box (node is a process), or two nodes on one network (node is a box)--it's all the same, with no application code changes.
 
 ++ Socket Scalability
 
-Let's see 0MQ's scalability in action. Here is a shell script that starts the weather server and then a bunch of clients in parallel:
+Let's see ZeroMQ's scalability in action. Here is a shell script that starts the weather server and then a bunch of clients in parallel:
 
 [[code]]
 wuserver &
@@ -524,9 +524,9 @@ PID  USER  PR  NI  VIRT  RES  SHR S %CPU %MEM   TIME+  COMMAND
 7967  ph   20   0 33072 1740 1372 S    5  0.0  0:00.35 wuclient
 [[/code]]
 
-Let's think for a second about what is happening here. The weather server has a single socket, and yet here we have it sending data to five clients in parallel. We could have thousands of concurrent clients. The server application doesn't see them, doesn't talk to them directly. So the 0MQ socket is acting like a little server, silently accepting client requests and shoving data out to them as fast as the network can handle it. And it's a multithreaded server, squeezing more juice out of your CPU.
+Let's think for a second about what is happening here. The weather server has a single socket, and yet here we have it sending data to five clients in parallel. We could have thousands of concurrent clients. The server application doesn't see them, doesn't talk to them directly. So the ZeroMQ socket is acting like a little server, silently accepting client requests and shoving data out to them as fast as the network can handle it. And it's a multithreaded server, squeezing more juice out of your CPU.
 
-++ Upgrading from 0MQ v2.2 to 0MQ v3.2
+++ Upgrading from ZeroMQ v2.2 to ZeroMQ v3.2
 
 +++ Compatible Changes
 
@@ -534,7 +534,7 @@ These changes don't impact existing application code directly:
 
 * Pub-sub filtering is now done at the publisher side instead of subscriber side. This improves performance significantly in many pub-sub use cases. You can mix v3.2 and v2.1/v2.2 publishers and subscribers safely.
 
-* 0MQ v3.2 has many new API methods ({{zmq_disconnect[3]}}, {{zmq_unbind[3]}}, {{zmq_monitor[3]}}, {{zmq_ctx_set[3]}}, etc.)
+* ZeroMQ v3.2 has many new API methods ({{zmq_disconnect[3]}}, {{zmq_unbind[3]}}, {{zmq_monitor[3]}}, {{zmq_ctx_set[3]}}, etc.)
 
 +++ Incompatible Changes
 
@@ -578,10 +578,10 @@ For applications that want to run on both v2.x and v3.2, such as language bindin
 
 Traditional network programming is built on the general assumption that one socket talks to one connection, one peer. There are multicast protocols, but these are exotic. When we assume "one socket = one connection", we scale our architectures in certain ways. We create threads of logic where each thread work with one socket, one peer. We place intelligence and state in these threads.
 
-In the 0MQ universe, sockets are doorways to fast little background communications engines that manage a whole set of connections automagically for you. You can't see, work with, open, close, or attach state to these connections. Whether you use blocking send or receive, or poll, all you can talk to is the socket, not the connections it manages for you. The connections are private and invisible, and this is the key to 0MQ's scalability.
+In the ZeroMQ universe, sockets are doorways to fast little background communications engines that manage a whole set of connections automagically for you. You can't see, work with, open, close, or attach state to these connections. Whether you use blocking send or receive, or poll, all you can talk to is the socket, not the connections it manages for you. The connections are private and invisible, and this is the key to ZeroMQ's scalability.
 
-This is because your code, talking to a socket, can then handle any number of connections across whatever network protocols are around, without change. A messaging pattern sitting in 0MQ scales more cheaply than a messaging pattern sitting in your application code.
+This is because your code, talking to a socket, can then handle any number of connections across whatever network protocols are around, without change. A messaging pattern sitting in ZeroMQ scales more cheaply than a messaging pattern sitting in your application code.
 
 So the general assumption no longer applies. As you read the code examples, your brain will try to map them to what you know. You will read "socket" and think "ah, that represents a connection to another node". That is wrong. You will read "thread" and your brain will again think, "ah, a thread represents a connection to another node", and again your brain will be wrong.
 
-If you're reading this Guide for the first time, realize that until you actually write 0MQ code for a day or two (and maybe three or four days), you may feel confused, especially by how simple 0MQ makes things for you, and you may try to impose that general assumption on 0MQ, and it won't work. And then you will experience your moment of enlightenment and trust, that //zap-pow-kaboom// satori paradigm-shift moment when it all becomes clear.
+If you're reading this Guide for the first time, realize that until you actually write ZeroMQ code for a day or two (and maybe three or four days), you may feel confused, especially by how simple ZeroMQ makes things for you, and you may try to impose that general assumption on ZeroMQ, and it won't work. And then you will experience your moment of enlightenment and trust, that //zap-pow-kaboom// satori paradigm-shift moment when it all becomes clear.

@@ -1,53 +1,53 @@
 .output chapter6.wd
 .bookmark the-community
-+ The 0MQ Community
++ The ZeroMQ Community
 
-People sometimes ask me what's so special about 0MQ. My standard answer is that 0MQ is arguably the best answer we have to the vexing question of "How do we make the distributed software that the 21st century demands?" But more than that, 0MQ is special because of its community. This is ultimately what separates the wolves from the sheep.
+People sometimes ask me what's so special about ZeroMQ. My standard answer is that ZeroMQ is arguably the best answer we have to the vexing question of "How do we make the distributed software that the 21st century demands?" But more than that, ZeroMQ is special because of its community. This is ultimately what separates the wolves from the sheep.
 
-There are three main open source patterns. The first is the large firm dumping code to break the market for others. This is the Apache Foundation model. The second is tiny teams or small firms building their dream. This is the most common open source model, which can be very successful commercially. The last is aggressive and diverse communities that swarm over a problem landscape. This is the Linux model, and the one to which we aspire with 0MQ.
+There are three main open source patterns. The first is the large firm dumping code to break the market for others. This is the Apache Foundation model. The second is tiny teams or small firms building their dream. This is the most common open source model, which can be very successful commercially. The last is aggressive and diverse communities that swarm over a problem landscape. This is the Linux model, and the one to which we aspire with ZeroMQ.
 
 It's hard to overemphasize the power and persistence of a working open source community. There really does not seem to be a better way of making software for the long term. Not only does the community choose the best problems to solve, it solves them minimally, carefully, and it then looks after these answers for years, decades, until they're no longer relevant, and then it quietly puts them away.
 
-To really benefit from 0MQ, you need to understand the community. At some point down the road you'll want to submit a patch, an issue, or an add-on. You might want to ask someone for help. You will probably want to bet a part of your business on 0MQ, and when I tell you that the community is much, much more important than the company that backs the product, even though I'm CEO of that company, this should be significant.
+To really benefit from ZeroMQ, you need to understand the community. At some point down the road you'll want to submit a patch, an issue, or an add-on. You might want to ask someone for help. You will probably want to bet a part of your business on ZeroMQ, and when I tell you that the community is much, much more important than the company that backs the product, even though I'm CEO of that company, this should be significant.
 
-In this chapter I'm going to look at our community from several angles and conclude by explaining in detail our contract for collaboration, which [http://rfc.zeromq.org/spec:22 we call "C4"]. You should find the discussion useful for your own work. We've also adapted the 0MQ C4 process for closed source projects with good success.
+In this chapter I'm going to look at our community from several angles and conclude by explaining in detail our contract for collaboration, which [http://rfc.zeromq.org/spec:22 we call "C4"]. You should find the discussion useful for your own work. We've also adapted the ZeroMQ C4 process for closed source projects with good success.
 
 We'll cover:
 
-* The rough structure of 0MQ as a set of projects
+* The rough structure of ZeroMQ as a set of projects
 * What "software architecture" is really about
 * Why we use the LGPL and not the BSD license
-* How we designed and grew the 0MQ community
-* The business that backs 0MQ
-* Who owns the 0MQ source code
-* How to make and submit a patch to 0MQ
-* Who controls what patches actually go into 0MQ
+* How we designed and grew the ZeroMQ community
+* The business that backs ZeroMQ
+* Who owns the ZeroMQ source code
+* How to make and submit a patch to ZeroMQ
+* Who controls what patches actually go into ZeroMQ
 * How we guarantee compatibility with old code
 * Why we don't use public git branches
-* Who decides on the 0MQ road map
+* Who decides on the ZeroMQ road map
 * A worked example of a change to {{libzmq}}
 
-++ Architecture of the 0MQ Community
+++ Architecture of the ZeroMQ Community
 
-You know that 0MQ is an LGPL-licensed project. In fact it's a collection of projects, built around the core library, {{libzmq}}. I'll visualize these projects as an expanding galaxy:
+You know that ZeroMQ is an LGPL-licensed project. In fact it's a collection of projects, built around the core library, {{libzmq}}. I'll visualize these projects as an expanding galaxy:
 
-* At the core, {{libzmq}} is the 0MQ core library. It's written in C++, with a low-level C API. The code is nasty, mainly because it's highly optimized but also because it's written in C++, a language that lends itself to subtle and deep nastiness. Martin Sustrik wrote the bulk of this code. Today it has dozens of people who maintain different parts of it.
+* At the core, {{libzmq}} is the ZeroMQ core library. It's written in C++, with a low-level C API. The code is nasty, mainly because it's highly optimized but also because it's written in C++, a language that lends itself to subtle and deep nastiness. Martin Sustrik wrote the bulk of this code. Today it has dozens of people who maintain different parts of it.
 
-* Around {{libzmq}}, there are about 50 //bindings//. These are individual projects that create higher-level APIs for 0MQ, or at least map the low-level API into other languages. The bindings vary in quality from experimental to utterly awesome. Probably the most impressive binding is [https://github.com/zeromq/pyzmq PyZMQ], which was one of the first community projects on top of 0MQ. If you are a binding author, you should really study PyZMQ and aspire to making your code and community as great.
+* Around {{libzmq}}, there are about 50 //bindings//. These are individual projects that create higher-level APIs for ZeroMQ, or at least map the low-level API into other languages. The bindings vary in quality from experimental to utterly awesome. Probably the most impressive binding is [https://github.com/zeromq/pyzmq PyZMQ], which was one of the first community projects on top of ZeroMQ. If you are a binding author, you should really study PyZMQ and aspire to making your code and community as great.
 
 * A lot of languages have multiple bindings (Erlang, Ruby, C#, at least) written by different people over time, or taking varying approaches. We don't regulate these in any way. There are no "official" bindings. You vote by using one or the other, contributing to it, or ignoring it.
 
 * There are a series of reimplementations of {{libzmq}}, starting with JeroMQ, a full Java translation of the library, which is now the basis for NetMQ, a C# stack. These native stacks offer similar or identical APIs, and speak the same protocol (ZMTP) as {{libzmq}}.
 
-* On top of the bindings are a lot of projects that use 0MQ or build on it. See the "Labs" page on the wiki for a long list of projects and proto-projects that use 0MQ in some way. There are frameworks, web servers like Mongrel2, brokers like Majordomo, and enterprise open source tools like Storm.
+* On top of the bindings are a lot of projects that use ZeroMQ or build on it. See the "Labs" page on the wiki for a long list of projects and proto-projects that use ZeroMQ in some way. There are frameworks, web servers like Mongrel2, brokers like Majordomo, and enterprise open source tools like Storm.
 
-{{Libzmq}}, most of the bindings, and some of the outer projects sit in the [https://github.com/organizations/zeromq 0MQ community "organization"] on GitHub. This organization is "run" by a group consisting of the most senior binding authors. There's very little to run as it's almost all self-managing and there's zero conflict these days.
+{{Libzmq}}, most of the bindings, and some of the outer projects sit in the [https://github.com/organizations/zeromq ZeroMQ community "organization"] on GitHub. This organization is "run" by a group consisting of the most senior binding authors. There's very little to run as it's almost all self-managing and there's zero conflict these days.
 
-iMatix, my firm, plays a specific role in the community. We own the trademarks and enforce them discretely in order to make sure that if you download a package calling itself "ZeroMQ", you can trust what you are getting. People have on rare occasion tried to hijack the name, maybe believing that "free software" means there is no property at stake and no one willing to defend it. One thing you'll understand from this chapter is how seriously we take the process behind our software (and I mean "us" as a community, not a company). iMatix backs the community by enforcing that process on anything calling itself "ZeroMQ" or "0MQ". We also put money and time into the software and packaging for reasons I'll explain later.
+iMatix, my firm, plays a specific role in the community. We own the trademarks and enforce them discretely in order to make sure that if you download a package calling itself "ZeroMQ", you can trust what you are getting. People have on rare occasion tried to hijack the name, maybe believing that "free software" means there is no property at stake and no one willing to defend it. One thing you'll understand from this chapter is how seriously we take the process behind our software (and I mean "us" as a community, not a company). iMatix backs the community by enforcing that process on anything calling itself "ZeroMQ" or "ZeroMQ". We also put money and time into the software and packaging for reasons I'll explain later.
 
-It is not a charity exercise. 0MQ is a for-profit project, and a very profitable one. The profits are widely distributed among all those who invest in it. It's really that simple: take the time to become an expert in 0MQ, or build something useful on top of 0MQ, and you'll find your value as an individual, or team, or company increasing. iMatix enjoys the same benefits as everyone else in the community. It's win-win to everyone except our competitors, who find themselves facing a threat they can't beat and can't really escape. 0MQ dominates the future world of massively distributed software.
+It is not a charity exercise. ZeroMQ is a for-profit project, and a very profitable one. The profits are widely distributed among all those who invest in it. It's really that simple: take the time to become an expert in ZeroMQ, or build something useful on top of ZeroMQ, and you'll find your value as an individual, or team, or company increasing. iMatix enjoys the same benefits as everyone else in the community. It's win-win to everyone except our competitors, who find themselves facing a threat they can't beat and can't really escape. ZeroMQ dominates the future world of massively distributed software.
 
-My firm doesn't just have the community's back--we also built the community. This was deliberate work; in the original 0MQ white paper from 2007, there were two projects. One was technical, how to make a better messaging system. The second was how to build a community that could take the software to dominant success. Software dies, but community survives.
+My firm doesn't just have the community's back--we also built the community. This was deliberate work; in the original ZeroMQ white paper from 2007, there were two projects. One was technical, how to make a better messaging system. The second was how to build a community that could take the software to dominant success. Software dies, but community survives.
 
 ++ How to Make Really Large Architectures
 
@@ -57,7 +57,7 @@ But gambling with hundreds of millions of others' money isn't for everyone. For 
 
 The brilliant and visionary Eben Moglen once said, roughly, that a free software license is the contract on which a community builds. When I heard this, about ten years ago, the idea came to me--//Can we deliberately grow free software communities//?
 
-Ten years later, the answer is "yes", and there is almost a science to it. I say "almost" because we don't yet have enough evidence of people doing this deliberately with a documented, reproducible process. It is what I'm trying to do with [http://cultureandempire.com/cande.html#/4/6 Social Architecture]. 0MQ came after Wikidot, after the [http://www.digistan.org Digital Standards Organization] (Digistan) and after the [http://www.ffii.org Foundation for a Free Information Infrastructure] (aka the FFII, an NGO that fights against software patents). This all came after a lot of less successful community projects like Xitami and Libero. My main takeaway from a long career of projects of every conceivable format is: if you want to build truly large-scale and long-lasting software, aim to build a free software community.
+Ten years later, the answer is "yes", and there is almost a science to it. I say "almost" because we don't yet have enough evidence of people doing this deliberately with a documented, reproducible process. It is what I'm trying to do with [http://cultureandempire.com/cande.html#/4/6 Social Architecture]. ZeroMQ came after Wikidot, after the [http://www.digistan.org Digital Standards Organization] (Digistan) and after the [http://www.ffii.org Foundation for a Free Information Infrastructure] (aka the FFII, an NGO that fights against software patents). This all came after a lot of less successful community projects like Xitami and Libero. My main takeaway from a long career of projects of every conceivable format is: if you want to build truly large-scale and long-lasting software, aim to build a free software community.
 
 +++ Psychology of Software Architecture
 
@@ -65,11 +65,11 @@ Dirkjan Ochtman pointed me to [http://en.wikipedia.org/wiki/Software_architectur
 
 Architecture is the art and science of making large artificial structures for human use. If there is one thing I've learned and applied successfully in 30 years of making larger and larger software systems, it is this: //software is about people//. Large structures in themselves are meaningless. It's how they function for //human use// that matters. And in software, human use starts with the programmers who make the software itself.
 
-The core problems in software architecture are driven by human psychology, not technology. There are many ways our psychology affects our work. I could point to the way teams seem to get stupider as they get larger or when they have to work across larger distances. Does that mean the smaller the team, the more effective? How then does a large global community like 0MQ manage to work successfully?
+The core problems in software architecture are driven by human psychology, not technology. There are many ways our psychology affects our work. I could point to the way teams seem to get stupider as they get larger or when they have to work across larger distances. Does that mean the smaller the team, the more effective? How then does a large global community like ZeroMQ manage to work successfully?
 
-The 0MQ community wasn't accidental. It was a deliberate design, my contribution to the early days when the code came out of a cellar in Bratislava. The design was based on my pet science of "Social Architecture", which [http://en.wikipedia.org/wiki/Social_architecture Wikipedia defines] as "the conscious design of an environment that encourages a desired range of social behaviors leading towards some goal or set of goals." I define this as more specifically as "the process, and the product, of planning, designing, and growing an online community."
+The ZeroMQ community wasn't accidental. It was a deliberate design, my contribution to the early days when the code came out of a cellar in Bratislava. The design was based on my pet science of "Social Architecture", which [http://en.wikipedia.org/wiki/Social_architecture Wikipedia defines] as "the conscious design of an environment that encourages a desired range of social behaviors leading towards some goal or set of goals." I define this as more specifically as "the process, and the product, of planning, designing, and growing an online community."
 
-One of the tenets of Social Architecture is that //how we organize// is more significant than //who we are//. The same group, organized differently, can produce wholly different results. We are like peers in a 0MQ network, and our communication patterns have a dramatic impact on our performance. Ordinary people, well connected, can far outperform a team of experts using poor patterns. If you're the architect of a larger 0MQ application, you're going to have to help others find the right patterns for working together. Do this right, and your project can succeed. Do it wrong, and your project will fail.
+One of the tenets of Social Architecture is that //how we organize// is more significant than //who we are//. The same group, organized differently, can produce wholly different results. We are like peers in a ZeroMQ network, and our communication patterns have a dramatic impact on our performance. Ordinary people, well connected, can far outperform a team of experts using poor patterns. If you're the architect of a larger ZeroMQ application, you're going to have to help others find the right patterns for working together. Do this right, and your project can succeed. Do it wrong, and your project will fail.
 
 The two most important psychological elements are that we're really bad at understanding complexity and that we are so good at working together to divide and conquer large problems. We're highly social apes, and kind of smart, but only in the right kind of crowd.
 
@@ -147,11 +147,11 @@ BSD is like food. It literally (and I mean that metaphorically) whispers "eat me
 
 For us small businesses who aim our investments like precious bullets, leaking work and effort is unacceptable. Breaking the market is great, but we cannot afford to subsidize our competitors. The BSD networking stack ended up putting Windows on the Internet. We cannot afford battles with those we should naturally be allies with. We cannot afford to make fundamental business errors because in the end, that means we have to fire people.
 
-It comes down to behavioral economics and game theory. //The license we choose modifies the economics of those who use our work//. In the software industry, there are friends, foes, and food. BSD makes most people see us as lunch. Closed source makes most people see us as enemies (do you //like// paying people for software?) GPL, however, makes most people, with the exception of the Patricks of the world, our allies. Any fork of 0MQ is license compatible with 0MQ, to the point where we //encourage// forks as a valuable tool for experimentation. Yes, it can be weird to see someone try to run off with the ball but here's the secret, //I can get it back any time I want.//
+It comes down to behavioral economics and game theory. //The license we choose modifies the economics of those who use our work//. In the software industry, there are friends, foes, and food. BSD makes most people see us as lunch. Closed source makes most people see us as enemies (do you //like// paying people for software?) GPL, however, makes most people, with the exception of the Patricks of the world, our allies. Any fork of ZeroMQ is license compatible with ZeroMQ, to the point where we //encourage// forks as a valuable tool for experimentation. Yes, it can be weird to see someone try to run off with the ball but here's the secret, //I can get it back any time I want.//
 
 +++ The Process
 
-If you've accepted my thesis up to now, great! Now, I'll explain the rough process by which we actually build an open source community. This was how we built or grew or gently steered the 0MQ community into existence.
+If you've accepted my thesis up to now, great! Now, I'll explain the rough process by which we actually build an open source community. This was how we built or grew or gently steered the ZeroMQ community into existence.
 
 Your goal as leader of a community is to motivate people to get out there and explore; to ensure they can do so safely and without disturbing others; to reward them when they make successful discoveries; and to ensure they share their knowledge with everyone else (and not because we ask them, not because they feel generous, but because it's The Law).
 
@@ -159,7 +159,7 @@ It is an iterative process. You make a small product, at your own cost, but in p
 
 +++ Crazy, Beautiful, and Easy
 
-You need a goal that's crazy and simple enough to get people out of bed in the morning. Your community has to attract the very best people and that demands something special. With 0MQ, we said we were going to make "the Fastest. Messaging. Ever.", which qualifies as a good motivator. If we'd said, we're going to make "a smart transport layer that'll connect your moving pieces cheaply and flexibly across your enterprise", we'd have failed.
+You need a goal that's crazy and simple enough to get people out of bed in the morning. Your community has to attract the very best people and that demands something special. With ZeroMQ, we said we were going to make "the Fastest. Messaging. Ever.", which qualifies as a good motivator. If we'd said, we're going to make "a smart transport layer that'll connect your moving pieces cheaply and flexibly across your enterprise", we'd have failed.
 
 Then your work must be beautiful, immediately useful, and attractive. Your contributors are users who want to explore just a little beyond where they are now. Make it simple, elegant, and brutally clean. The experience when people run or use your work should be an emotional one. They should //feel// something, and if you accurately solved even just one big problem that until then they didn't quite realize they faced, you'll have a small part of their soul.
 
@@ -187,27 +187,27 @@ To do this requires infinite free space. Thankfully, GitHub solved this problem 
 
 You cannot scale a single project with many owners like you can scale a collection of many small projects, each with fewer owners. When we embrace forks, a person can become an "owner" with a single click. Now they just have to convince others to join by demonstrating their unique value.
 
-So in 0MQ, we aimed to make it easy to write bindings on top of the core library, and we stopped trying to make those bindings ourselves. This created space for others to make those, become their owners, and get that credit.
+So in ZeroMQ, we aimed to make it easy to write bindings on top of the core library, and we stopped trying to make those bindings ourselves. This created space for others to make those, become their owners, and get that credit.
 
 +++ Care and Feeding
 
-I wish a community could be 100% self-steering, and perhaps one day this will work, but today it's not the case. We're very close with 0MQ, but from my experience a community needs four types of care and feeding:
+I wish a community could be 100% self-steering, and perhaps one day this will work, but today it's not the case. We're very close with ZeroMQ, but from my experience a community needs four types of care and feeding:
 
 * First, simply because most people are too nice, we need some kind of symbolic leadership or owners who provide ultimate authority in case of conflict. Usually it's the founders of the community. I've seen it work with self-elected groups of "elders", but old men like to talk a lot. I've seen communities split over the question "who is in charge?", and setting up legal entities with boards and such seems to make arguments over control worse, not better. Maybe because there seems to be more to fight over. One of the real benefits of free software is that it's always remixable, so instead of fighting over a pie, one simply forks the pie.
 
-* Second, communities need living rules, and thus they need a lawyer able to formulate and write these down. Rules are critical; when done right, they remove friction. When done wrong, or neglected, we see real friction and argument that can drive away the nice majority, leaving the argumentative core in charge of the burning house. One thing I've tried to do with the 0MQ and previous communities is create reusable rules, which perhaps means we don't need lawyers as much.
+* Second, communities need living rules, and thus they need a lawyer able to formulate and write these down. Rules are critical; when done right, they remove friction. When done wrong, or neglected, we see real friction and argument that can drive away the nice majority, leaving the argumentative core in charge of the burning house. One thing I've tried to do with the ZeroMQ and previous communities is create reusable rules, which perhaps means we don't need lawyers as much.
 
-* Thirdly, communities need some kind of financial backing. This is the jagged rock that breaks most ships. If you starve a community, it becomes more creative but the core contributors burn out. If you pour too much money into it, you attract the professionals, who never say "no", and the community loses its diversity and creativity. If you create a fund for people to share, they will fight (bitterly) over it. With 0MQ, we (iMatix) spend our time and money on marketing and packaging (like this book), and the basic care, like bug fixes, releases, and websites.
+* Thirdly, communities need some kind of financial backing. This is the jagged rock that breaks most ships. If you starve a community, it becomes more creative but the core contributors burn out. If you pour too much money into it, you attract the professionals, who never say "no", and the community loses its diversity and creativity. If you create a fund for people to share, they will fight (bitterly) over it. With ZeroMQ, we (iMatix) spend our time and money on marketing and packaging (like this book), and the basic care, like bug fixes, releases, and websites.
 
-* Lastly, sales and commercial mediation are important. There is a natural market between expert contributors and customers, but both are somewhat incompetent at talking to each other. Customers assume that support is free or very cheap because the software is free. Contributors are shy at asking a fair rate for their work. It makes for a difficult market. A growing part of my work and my firm's profits is simply connecting 0MQ users who want help with experts from the community able to provide it, and ensuring both sides are happy with the results.
+* Lastly, sales and commercial mediation are important. There is a natural market between expert contributors and customers, but both are somewhat incompetent at talking to each other. Customers assume that support is free or very cheap because the software is free. Contributors are shy at asking a fair rate for their work. It makes for a difficult market. A growing part of my work and my firm's profits is simply connecting ZeroMQ users who want help with experts from the community able to provide it, and ensuring both sides are happy with the results.
 
 I've seen communities of brilliant people with noble goals dying because the founders got some or all of these four things wrong. The core problem is that you can't expect consistently great leadership from any one company, person, or group. What works today often won't work tomorrow, yet structures become more solid, not more flexible, over time.
 
 The best answer I can find is a mix of two things. One, the GPL and its guarantee of remixability. No matter how bad the authority, no matter how much they try to privatize and capture the community's work, if it's GPL licensed, that work can walk away and find a better authority. Before you say, "all open source offers this," think it through. I can kill a BSD-licensed project by hiring the core contributors and not releasing any new patches. But even with a billion of dollars, I //cannot// kill a GPL-licensed project. Two, the philosophical anarchist model of authority, which is that we choose it, it does not own us.
 
-++ The 0MQ Process: C4
+++ The ZeroMQ Process: C4
 
-When we say 0MQ we sometimes mean {{libzmq}}, the core library. In early 2012, we synthesized the {{libzmq}} process into a formal protocol for collaboration that we called the [http://rfc.zeromq.org/spec:22 Collective Code Construction Contract], or C4. You can see this as a layer above the GPL. These are our rules, and I'll explain the reasoning behind each one.
+When we say ZeroMQ we sometimes mean {{libzmq}}, the core library. In early 2012, we synthesized the {{libzmq}} process into a formal protocol for collaboration that we called the [http://rfc.zeromq.org/spec:22 Collective Code Construction Contract], or C4. You can see this as a layer above the GPL. These are our rules, and I'll explain the reasoning behind each one.
 
 C4 is an evolution of the GitHub [http://help.github.com/send-pull-requests/ Fork + Pull Model]. You may get the feeling I'm a fan of git and GitHub. This would be accurate: these two tools have made such a positive impact on our work over the last years, especially when it comes to building community.
 
@@ -225,9 +225,9 @@ It's easy to use C4: just host your project on GitHub, get one other person to j
 
 > C4 is meant to provide a reusable optimal collaboration model for open source software projects.
 
-The short term reason for writing C4 was to end arguments over the {{libzmq}} contribution process. The dissenters went off elsewhere. [https://github.com/zeromq/libzmq/graphs/contributors The 0MQ community blossomed] smoothly and easily, as I'd predicted. Most people were surprised, but gratified. There's been no real criticisms of C4 except its branching policy, which I'll come to later as it deserves its own discussion.
+The short term reason for writing C4 was to end arguments over the {{libzmq}} contribution process. The dissenters went off elsewhere. [https://github.com/zeromq/libzmq/graphs/contributors The ZeroMQ community blossomed] smoothly and easily, as I'd predicted. Most people were surprised, but gratified. There's been no real criticisms of C4 except its branching policy, which I'll come to later as it deserves its own discussion.
 
-There's a reason I'm reviewing history here: as founder of a community, you are asking people to invest in your property, trademark, and branding. In return, and this is what we do with 0MQ, you can use that branding to set a bar for quality. When you download a product labeled "0MQ", you know that it's been produced to certain standards. It's a basic rule of quality: write down your process; otherwise you cannot improve it. Our processes aren't perfect, nor can they ever be. But any flaw in them can be fixed, and tested.
+There's a reason I'm reviewing history here: as founder of a community, you are asking people to invest in your property, trademark, and branding. In return, and this is what we do with ZeroMQ, you can use that branding to set a bar for quality. When you download a product labeled "ZeroMQ", you know that it's been produced to certain standards. It's a basic rule of quality: write down your process; otherwise you cannot improve it. Our processes aren't perfect, nor can they ever be. But any flaw in them can be fixed, and tested.
 
 Making C4 reusable is therefore really important. To learn more about the best possible process, we need to get results from the widest range of projects.
 
@@ -254,7 +254,7 @@ Curious observation: people who thrive in complex situations like to create comp
 
 > To enforce collective ownership of the project, which increases economic incentive to Contributors and reduces the risk of hijack by hostile entities.
 
-Ultimately, we're economic creatures, and the sense that "we own this, and our work can never be used against us" makes it much easier for people to invest in an open source project like 0MQ. And it can't be just a feeling, it has to be real. There are a number of aspects to making collective ownership work, we'll see these one-by-one as we go through C4.
+Ultimately, we're economic creatures, and the sense that "we own this, and our work can never be used against us" makes it much easier for people to invest in an open source project like ZeroMQ. And it can't be just a feeling, it has to be real. There are a number of aspects to making collective ownership work, we'll see these one-by-one as we go through C4.
 
 +++ Preliminaries
 
@@ -282,7 +282,7 @@ Now we move on to definitions of the parties, and the splitting of roles that sa
 > Contributors SHALL NOT have commit access to the repository unless they are also Maintainers.
 > Maintainers SHALL have commit access to the repository.
 
-What we wanted to avoid was people pushing their changes directly to master. This was the biggest source of trouble in {{libzmq}} historically: large masses of raw code that took months or years to fully stabilize. We eventually followed other 0MQ projects like PyZMQ in using pull requests. We went further, and stipulated that //all// changes had to follow the same path. No exceptions for "special people".
+What we wanted to avoid was people pushing their changes directly to master. This was the biggest source of trouble in {{libzmq}} historically: large masses of raw code that took months or years to fully stabilize. We eventually followed other ZeroMQ projects like PyZMQ in using pull requests. We went further, and stipulated that //all// changes had to follow the same path. No exceptions for "special people".
 
 > Everyone, without distinction or discrimination, SHALL have an equal right to become a Contributor under the terms of this contract.
 
@@ -302,7 +302,7 @@ This removes the need for any specific license or contribution agreement for pat
 
 > All patches are owned by their authors. There SHALL NOT be any copyright assignment process.
 
-Here we come to the key reason people trust their investments in 0MQ: it's logistically impossible to buy the copyrights to create a closed source competitor to 0MQ. iMatix can't do this either. And the more people that send patches, the harder it becomes. 0MQ isn't just free and open today--this specific rule means it will remain so forever. Note that it's not the case in all GPL projects, many of which still ask for copyright transfer back to the maintainers.
+Here we come to the key reason people trust their investments in ZeroMQ: it's logistically impossible to buy the copyrights to create a closed source competitor to ZeroMQ. iMatix can't do this either. And the more people that send patches, the harder it becomes. ZeroMQ isn't just free and open today--this specific rule means it will remain so forever. Note that it's not the case in all GPL projects, many of which still ask for copyright transfer back to the maintainers.
 
 > The project SHALL be owned collectively by all its Contributors.
 
@@ -330,7 +330,7 @@ This is just sanity. I've spent time cleaning up other peoples' patches because 
 
 > A patch MUST adhere to the "Evolution of Public Contracts" guidelines defined below.
 
-Ah, the pain, the pain. I'm not speaking of the time at age eight when I stepped on a plank with a 4-inch nail protruding from it. That was relatively OK. I'm speaking of 2010-2011 when we had multiple parallel releases of 0MQ, each with different //incompatible// APIs or wire protocols. It was an exercise in bad rules, pointlessly enforced, that still hurts us today. The rule was, "If you change the API or protocol, you SHALL create a new major version". Give me the nail through the foot; that hurt less.
+Ah, the pain, the pain. I'm not speaking of the time at age eight when I stepped on a plank with a 4-inch nail protruding from it. That was relatively OK. I'm speaking of 2010-2011 when we had multiple parallel releases of ZeroMQ, each with different //incompatible// APIs or wire protocols. It was an exercise in bad rules, pointlessly enforced, that still hurts us today. The rule was, "If you change the API or protocol, you SHALL create a new major version". Give me the nail through the foot; that hurt less.
 
 One of the big changes we made with C4 was simply to ban, outright, this kind of sanctioned sabotage. Amazingly, it's not even hard. We just don't allow the breaking of existing public contracts, period, unless everyone agrees, in which case no period. As Linus Torvalds famously put it on 23 December 2012, "WE DO NOT BREAK USERSPACE!"
 
@@ -356,7 +356,7 @@ In this section, we aim to describe the actual development process, step-by-step
 
 > Change on the project SHALL be governed by the pattern of accurately identifying problems and applying minimal, accurate solutions to these problems.
 
-This is a unapologetic ramming through of thirty years' software design experience. It's a profoundly simple approach to design: make minimal, accurate solutions to real problems, nothing more or less. In 0MQ, we don't have feature requests. Treating new features the same as bugs confuses some newcomers. But this process works, and not just in open source. Enunciating the problem we're trying to solve, with every single change, is key to deciding whether the change is worth making or not.
+This is a unapologetic ramming through of thirty years' software design experience. It's a profoundly simple approach to design: make minimal, accurate solutions to real problems, nothing more or less. In ZeroMQ, we don't have feature requests. Treating new features the same as bugs confuses some newcomers. But this process works, and not just in open source. Enunciating the problem we're trying to solve, with every single change, is key to deciding whether the change is worth making or not.
 
 > To initiate changes, a user SHALL log an issue on the project Platform issue tracker.
 
@@ -376,7 +376,7 @@ There are several reasons for not logging ideas, suggestions, or feature request
 
 > Thus, the release history of the project SHALL be a list of meaningful issues logged and solved.
 
-I'd love the GitHub issue tracker to simply list all the issues we solved in each release. Today we still have to write that by hand. If one puts the issue number in each commit, and if one uses the GitHub issue tracker, which we sadly don't yet do for 0MQ, this release history is easier to produce mechanically.
+I'd love the GitHub issue tracker to simply list all the issues we solved in each release. Today we still have to write that by hand. If one puts the issue number in each commit, and if one uses the GitHub issue tracker, which we sadly don't yet do for ZeroMQ, this release history is easier to produce mechanically.
 
 > To work on an issue, a Contributor SHALL fork the project repository and then work on their forked repository.
 
@@ -463,7 +463,7 @@ Beware of a one-size-fits-all process. New code does not need the same paranoia 
 
 By "public contracts", I mean APIs and protocols. Up until the end of 2011, {{libzmq}}'s naturally happy state was marred by broken promises and broken contracts. We stopped making promises (aka "road maps") for {{libzmq}} completely, and our dominant theory of change is now that it emerges carefully and accurately over time. At a 2012 Chicago meetup, Garrett Smith and Chuck Remes called this the "drunken stumble to greatness", which is how I think of it now.
 
-We stopped breaking public contracts simply by banning the practice. Before then it had been "OK" (as in we did it and everyone complained bitterly, and we ignored them) to break the API or protocol so long as we changed the major version number. Sounds fine, until you get 0MQ v2.0, v3.0, and v4.0 all in development at the same time, and not speaking to each other.
+We stopped breaking public contracts simply by banning the practice. Before then it had been "OK" (as in we did it and everyone complained bitterly, and we ignored them) to break the API or protocol so long as we changed the major version number. Sounds fine, until you get ZeroMQ v2.0, v3.0, and v4.0 all in development at the same time, and not speaking to each other.
 
 > All Public Contracts (APIs or protocols) SHOULD be documented.
 
@@ -471,7 +471,7 @@ You'd think this was a given for professional software engineers but no, it's no
 
 > All Public Contracts SHALL use Semantic Versioning.
 
-This rule is mainly here because people asked for it. I've no real love for it, as Semantic Versioning is what led to the so-called "Why does 0MQ not speak to itself?!" debacle. I've never seen the problem that this solved. Something about runtime validation of library versions, or some-such.
+This rule is mainly here because people asked for it. I've no real love for it, as Semantic Versioning is what led to the so-called "Why does ZeroMQ not speak to itself?!" debacle. I've never seen the problem that this solved. Something about runtime validation of library versions, or some-such.
 
 > All Public Contracts SHOULD have space for extensibility and experimentation.
 
@@ -479,11 +479,11 @@ Now, the real thing is that public contracts //do change//. It's not about not c
 
 > A patch that modifies a stable Public Contract SHOULD not break existing applications unless there is overriding consensus on the value of doing this.
 
-Sometimes the patch is fixing a bad API that no one is using. It's a freedom we need, but it should be based on consensus, not one person's dogma. However, making random changes "just because" is not good. In 0MQ v3.x, did we benefit from renaming {{ZMQ_NOBLOCK}} to {{ZMQ_DONTWAIT}}? Sure, it's closer to the POSIX socket {{recv()}} call, but is that worth breaking thousands of applications? No one ever reported it as an issue. To misquote Stallman: "your freedom to create an ideal world stops one inch from my application."
+Sometimes the patch is fixing a bad API that no one is using. It's a freedom we need, but it should be based on consensus, not one person's dogma. However, making random changes "just because" is not good. In ZeroMQ v3.x, did we benefit from renaming {{ZMQ_NOBLOCK}} to {{ZMQ_DONTWAIT}}? Sure, it's closer to the POSIX socket {{recv()}} call, but is that worth breaking thousands of applications? No one ever reported it as an issue. To misquote Stallman: "your freedom to create an ideal world stops one inch from my application."
 
 > A patch that introduces new features to a Public Contract SHOULD do so using new names.
 
-We had the experience in 0MQ once or twice of new features using old names (or worse, using names that were //still in use// elsewhere). 0MQ v3.0 had a newly introduced "ROUTER" socket that was totally different from the existing ROUTER socket in 2.x. Dear lord, you should be face-palming, why? The reason: apparently, even smart people sometimes need regulation to stop them doing silly things.
+We had the experience in ZeroMQ once or twice of new features using old names (or worse, using names that were //still in use// elsewhere). ZeroMQ v3.0 had a newly introduced "ROUTER" socket that was totally different from the existing ROUTER socket in 2.x. Dear lord, you should be face-palming, why? The reason: apparently, even smart people sometimes need regulation to stop them doing silly things.
 
 > Old names SHOULD be deprecated in a systematic fashion by marking new names as "experimental" until they are stable, then marking the old names as "deprecated".
 
@@ -495,7 +495,7 @@ In theory this gives applications time to move onto stable new contracts without
 
 > Old names SHALL NOT be reused by new features.
 
-Ah, yes, the joy when 0MQ v3.x renamed the top-used API functions ({{zmq_send[3]}} and {{zmq_recv[3]}}) and then recycled the old names for new methods that were utterly incompatible (and which I suspect few people actually use). You should be slapping yourself in confusion again, but really, this is what happened and I was as guilty as anyone. After all, we did change the version number! The only benefit of that experience was to get this rule.
+Ah, yes, the joy when ZeroMQ v3.x renamed the top-used API functions ({{zmq_send[3]}} and {{zmq_recv[3]}}) and then recycled the old names for new methods that were utterly incompatible (and which I suspect few people actually use). You should be slapping yourself in confusion again, but really, this is what happened and I was as guilty as anyone. After all, we did change the version number! The only benefit of that experience was to get this rule.
 
 > When old names are removed, their implementations MUST provoke an exception (assertion) if used by applications.
 
@@ -633,9 +633,9 @@ Here is a section of C4 that might have shocked you when you first read it:
 
 To be clear, it's //public branches in shared repositories// that I'm talking about. Using branches for private work, e.g., to work on different issues, appears to work well enough, though it's more complexity than I personally enjoy. To channel Stallman again: "your freedom to create complexity ends one inch from our shared workspace."
 
-Like the rest of C4, the rules on branches are not accidental. They came from our experience making 0MQ, starting when Martin Sustrik and I rethought how to make stable releases. We both love and appreciate simplicity (some people seem to have a remarkable tolerance for complexity). We chatted for a while... I asked him, "I'm going to start making a stable release. Would it be OK for me to make a branch in the git you're working in?" Martin didn't like the idea. "OK, if I fork the repository, I can move patches from your repo to that one". That felt much better to both of us.
+Like the rest of C4, the rules on branches are not accidental. They came from our experience making ZeroMQ, starting when Martin Sustrik and I rethought how to make stable releases. We both love and appreciate simplicity (some people seem to have a remarkable tolerance for complexity). We chatted for a while... I asked him, "I'm going to start making a stable release. Would it be OK for me to make a branch in the git you're working in?" Martin didn't like the idea. "OK, if I fork the repository, I can move patches from your repo to that one". That felt much better to both of us.
 
-The response from many in the 0MQ community was shock and horror. People felt we were being lazy and making contributors work harder to find the "right" repository. Still, this seemed simple, and indeed it worked smoothly. The best part was that we each worked as we wanted to. Whereas before, the 0MQ repository had felt horribly complex (and it wasn't even anything like git-flow), this felt simple. And it worked. The only downside was that we lost a single unified history. Now, perhaps historians will feel robbed, but I honestly can't see that the historical minutiae of who changed what, when, including every branch and experiment, are worth any significant pain or friction.
+The response from many in the ZeroMQ community was shock and horror. People felt we were being lazy and making contributors work harder to find the "right" repository. Still, this seemed simple, and indeed it worked smoothly. The best part was that we each worked as we wanted to. Whereas before, the ZeroMQ repository had felt horribly complex (and it wasn't even anything like git-flow), this felt simple. And it worked. The only downside was that we lost a single unified history. Now, perhaps historians will feel robbed, but I honestly can't see that the historical minutiae of who changed what, when, including every branch and experiment, are worth any significant pain or friction.
 
 People have gotten used to the "multiple repositories" approach in ZeroMQ and we've started using that in other projects quite successfully. My own opinion is that history will judge git branches and patterns like git-flow as a complex solution to imaginary problems inherited from the days of Subversion and monolithic repositories.
 
@@ -669,13 +669,13 @@ Branches demand more perfection from developers because mistakes potentially aff
 
 //The less need for up-front coordination, the better.//
 
-You can do a hostile fork. You cannot do a hostile branch. Branches depend on up-front coordination, which is expensive and fragile. One person can veto the desires of a whole group. For example in the 0MQ community we were unable to agree on a git branching model for a year. We solved that by using forking instead. The problem went away.
+You can do a hostile fork. You cannot do a hostile branch. Branches depend on up-front coordination, which is expensive and fragile. One person can veto the desires of a whole group. For example in the ZeroMQ community we were unable to agree on a git branching model for a year. We solved that by using forking instead. The problem went away.
 
 +++ Scalability
 
 //The more you can scale a project, the better.//
 
-The strong assumption in all branch strategies is that the repository //is// the project. But there is a limit to how many people you can get to agree to work together in one repository. As I explained, the cost of up-front coordination can become fatal. A more realistic project scales by allowing anyone to start their own repositories, and ensuring these can work together. A project like 0MQ has dozens of repositories. Forking looks more scalable than branching.
+The strong assumption in all branch strategies is that the repository //is// the project. But there is a limit to how many people you can get to agree to work together in one repository. As I explained, the cost of up-front coordination can become fatal. A more realistic project scales by allowing anyone to start their own repositories, and ensuring these can work together. A project like ZeroMQ has dozens of repositories. Forking looks more scalable than branching.
 
 +++ Surprise and Expectations
 
@@ -727,19 +727,19 @@ The second man reflected for a while, then spoke. "One evening me and a friend g
 
 The first engineer was silent. "Funny thing," he said, "my bridge was demolished about ten years after we built it. Turns out it was built in the wrong place and no one wanted to use it. Some guys had thrown a rope across the gorge, a few miles further downstream, and that's where everyone went."
 
-+++ How 0MQ Lost Its Road Map
++++ How ZeroMQ Lost Its Road Map
 
-Presenting 0MQ at the Mix-IT conference in Lyon in early 2012, I was asked several times for the "road map". My answer was: there is no road map any longer. We had road maps, and we deleted them. Instead of a few experts trying to lay out the next steps, we were allowing this to happen organically. The audience didn't really like my answer. So un-French.
+Presenting ZeroMQ at the Mix-IT conference in Lyon in early 2012, I was asked several times for the "road map". My answer was: there is no road map any longer. We had road maps, and we deleted them. Instead of a few experts trying to lay out the next steps, we were allowing this to happen organically. The audience didn't really like my answer. So un-French.
 
-However, the history of 0MQ makes it quite clear why road maps were problematic. In the beginning, we had a small team making the library, with few contributors, and no documented road map. As 0MQ grew more popular and we switched to more contributors, users asked for road maps. So we collected our plans together and tried to organize them into releases. Here, we wrote, is what will come in the next release.
+However, the history of ZeroMQ makes it quite clear why road maps were problematic. In the beginning, we had a small team making the library, with few contributors, and no documented road map. As ZeroMQ grew more popular and we switched to more contributors, users asked for road maps. So we collected our plans together and tried to organize them into releases. Here, we wrote, is what will come in the next release.
 
 As we rolled out releases, we hit the problem that it's very easy to promise stuff, and rather harder to make it as planned. For one thing, much of the work was voluntary, and it's not clear how you force volunteers to commit to a road map. But also, priorities can shift dramatically over time. So we were making promises we could not keep, and the real deliveries didn't match the road maps.
 
 The second problem was that by defining the road map, we in effect claimed territory, making it harder for others to participate. People do prefer to contribute to changes they believe were their idea. Writing down a list of things to do turns contribution into a chore rather than an opportunity.
 
-Finally, we saw changes in 0MQ that were quite traumatic, and the road maps didn't help with this, despite a lot of discussion and effort to "do it right". Examples of this were incompatible changes in APIs and protocols. It was quite clear that we needed a different approach for defining the change process.
+Finally, we saw changes in ZeroMQ that were quite traumatic, and the road maps didn't help with this, despite a lot of discussion and effort to "do it right". Examples of this were incompatible changes in APIs and protocols. It was quite clear that we needed a different approach for defining the change process.
 
-Software engineers don't like the notion that powerful, effective solutions can come into existence without an intelligent designer actively thinking things through. And yet no one in that room in Lyon would have questioned evolution. A strange irony, and one I wanted to explore further as it underpins the direction the 0MQ community has taken since the start of 2012.
+Software engineers don't like the notion that powerful, effective solutions can come into existence without an intelligent designer actively thinking things through. And yet no one in that room in Lyon would have questioned evolution. A strange irony, and one I wanted to explore further as it underpins the direction the ZeroMQ community has taken since the start of 2012.
 
 In the dominant theory of innovation, brilliant individuals reflect on large problem sets and then carefully and precisely create a solution. Sometimes they will have "eureka" moments where they "get" brilliantly simple answers to whole large problem sets. The inventor, and the process of invention are rare, precious, and can command a monopoly. History is full of such heroic individuals. We owe them our modern world.
 
@@ -771,9 +771,9 @@ There are a few corollaries to this:
 
 So, when we trust the solitary experts, they make classic mistakes. They focus on ideas, not problems. They focus on the wrong problems. They make misjudgments about the value of solving problems. They don't use their own work.
 
-Can we turn the above theory into a reusable process? In late 2011, I started documenting C4 and similar contracts, and using them both in 0MQ and in closed source projects. The underlying process is something I call "Simplicity Oriented Design", or SOD. This is a reproducible way of developing simple and elegant products. It organizes people into flexible supply chains that are able to navigate a problem landscape rapidly and cheaply. They do this by building, testing, and keeping or discarding minimal plausible solutions, called "patches". Living products consist of long series of patches, applied one atop the other.
+Can we turn the above theory into a reusable process? In late 2011, I started documenting C4 and similar contracts, and using them both in ZeroMQ and in closed source projects. The underlying process is something I call "Simplicity Oriented Design", or SOD. This is a reproducible way of developing simple and elegant products. It organizes people into flexible supply chains that are able to navigate a problem landscape rapidly and cheaply. They do this by building, testing, and keeping or discarding minimal plausible solutions, called "patches". Living products consist of long series of patches, applied one atop the other.
 
-SOD is relevant first because it's how we evolve 0MQ. It's also the basis for the design process we will use in [#advanced-architecture] to develop larger-scale 0MQ applications. Of course, you can use any software architecture methodology with 0MQ.
+SOD is relevant first because it's how we evolve ZeroMQ. It's also the basis for the design process we will use in [#advanced-architecture] to develop larger-scale ZeroMQ applications. Of course, you can use any software architecture methodology with ZeroMQ.
 
 To best understand how we ended up with SOD, let's look at the alternatives.
 
@@ -883,7 +883,7 @@ In an open source setting, we do this work in public. There's no "let's open the
 
 ++ Burnout
 
-The 0MQ community has been and still is heavily dependent on pro bono individual efforts. I'd like to think that everyone was compensated in some way for their contributions, and I believe that with 0MQ, contributing means gaining expertise in an extraordinarily valuable technology, which leads to improved professional options.
+The ZeroMQ community has been and still is heavily dependent on pro bono individual efforts. I'd like to think that everyone was compensated in some way for their contributions, and I believe that with ZeroMQ, contributing means gaining expertise in an extraordinarily valuable technology, which leads to improved professional options.
 
 However, not all projects will be so lucky and if you work with or in open source, you should understand the risk of burnout that volunteers face. This applies to all pro bono communities. In this section, I'll explain what causes burnout, how to recognize it, how to prevent it, and (if it happens) how to try to treat it. Disclaimer: I'm not a psychiatrist and this article is based on my own experiences of working in pro bono contexts for the last 20 years, including free software projects, and NGOs such as the [http://www.ffii.org FFII].
 

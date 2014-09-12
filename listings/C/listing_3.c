@@ -1,4 +1,4 @@
-//  Receive 0MQ string from socket and convert into C string
+//  Receive ZeroMQ string from socket and convert into C string
 //  Chops string at 255 chars, if it's longer
 static char *
 s_recv (void *socket) {

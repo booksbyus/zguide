@@ -1,12 +1,12 @@
 .output chapter7.wd
 .bookmark advanced-architecture
-+ Advanced Architecture using 0MQ
++ Advanced Architecture using ZeroMQ
 
-One of the effects of using 0MQ at large scale is that because we can build distributed architectures so much faster than before, the limitations of our software engineering processes become more visible. Mistakes in slow motion are often harder to see (or rather, easier to rationalize away).
+One of the effects of using ZeroMQ at large scale is that because we can build distributed architectures so much faster than before, the limitations of our software engineering processes become more visible. Mistakes in slow motion are often harder to see (or rather, easier to rationalize away).
 
-My experience when teaching 0MQ to groups of engineers is that it's rarely sufficient to just explain how 0MQ works and then just expect them to start building successful products. Like any technology that removes friction, 0MQ opens the door to big blunders. If 0MQ is the ACME rocket-propelled shoe of distributed software development, a lot of us are like Wile E. Coyote, slamming full speed into the proverbial desert cliff.
+My experience when teaching ZeroMQ to groups of engineers is that it's rarely sufficient to just explain how ZeroMQ works and then just expect them to start building successful products. Like any technology that removes friction, ZeroMQ opens the door to big blunders. If ZeroMQ is the ACME rocket-propelled shoe of distributed software development, a lot of us are like Wile E. Coyote, slamming full speed into the proverbial desert cliff.
 
-We saw in [#the-community] that 0MQ itself uses a formal process for changes. One reason we built this process, over some years, was to stop the repeated cliff-slamming that happened in the library itself.
+We saw in [#the-community] that ZeroMQ itself uses a formal process for changes. One reason we built this process, over some years, was to stop the repeated cliff-slamming that happened in the library itself.
 
 Partly, it's about slowing down and partially, it's about ensuring that when you move fast, you go--and this is essential Dear Reader--in the //right direction//. It's my standard interview riddle: what's the rarest property of any software system, the absolute hardest thing to get right, the lack of which causes the slow or fast death of the vast majority of projects? The answer is not code quality, funding, performance, or even (though it's a close answer), popularity. The answer is //accuracy//.
 
@@ -17,29 +17,29 @@ This chapter will tackle these challenges, starting with a basic reappraisal of 
 We'll cover the following juicy topics:
 
 * How to go from idea to working prototype safely (the MOPED pattern)
-* Different ways to serialize your data as 0MQ messages
+* Different ways to serialize your data as ZeroMQ messages
 * How to code-generate binary serialization codecs
 * How to build custom code generators using the GSL tool
 * How to write and license a protocol specification
-* How to build fast restartable file transfer over 0MQ
+* How to build fast restartable file transfer over ZeroMQ
 * How to use credit-based flow control for nonblocking transfers
 * How to build protocol servers and clients as state machines
-* How to make a secure protocol over 0MQ
+* How to make a secure protocol over ZeroMQ
 * A large-scale file publishing system (FileMQ)
 
 ++ Message-Oriented Pattern for Elastic Design
 
-I'll introduce Message-Oriented Pattern for Elastic Design (MOPED), a software engineering pattern for 0MQ architectures. It was either "MOPED" or "BIKE", the Backronym-Induced Kinetic Effect. That's short for "BICICLE", the Backronym-Inflated See if I Care Less Effect. In life, one learns to go with the least embarrassing choice.
+I'll introduce Message-Oriented Pattern for Elastic Design (MOPED), a software engineering pattern for ZeroMQ architectures. It was either "MOPED" or "BIKE", the Backronym-Induced Kinetic Effect. That's short for "BICICLE", the Backronym-Inflated See if I Care Less Effect. In life, one learns to go with the least embarrassing choice.
 
 If you've read this book carefully, you'll have seen MOPED in action already. The development of Majordomo in [#reliable-request-reply] is a near-perfect case. But cute names are worth a thousand words.
 
 The goal of MOPED is to define a process by which we can take a rough use case for a new distributed application, and go from "Hello World" to fully-working prototype in any language in under a week.
 
-Using MOPED, you grow, more than build, a working 0MQ architecture from the ground-up with minimal risk of failure. By focusing on the contracts rather than the implementations, you avoid the risk of premature optimization. By driving the design process through ultra-short test-based cycles, you can be more certain that what you have works before you add more.
+Using MOPED, you grow, more than build, a working ZeroMQ architecture from the ground-up with minimal risk of failure. By focusing on the contracts rather than the implementations, you avoid the risk of premature optimization. By driving the design process through ultra-short test-based cycles, you can be more certain that what you have works before you add more.
 
 We can turn this into five real steps:
 
-* Step 1: internalize the 0MQ semantics.
+* Step 1: internalize the ZeroMQ semantics.
 * Step 2: draw a rough architecture.
 * Step 3: decide on the contracts.
 * Step 4: make a minimal end-to-end solution.
@@ -47,9 +47,9 @@ We can turn this into five real steps:
 
 +++ Step 1: Internalize the Semantics
 
-You must learn and digest 0MQ's "language", that is, the socket patterns and how they work. The only way to learn a language is to use it. There's no way to avoid this investment, no tapes you can play while you sleep, no chips you can plug in to magically become smarter. Read this book from the start, work through the code examples in whatever language you prefer, understand what's going on, and (most importantly) write some examples yourself and then throw them away.
+You must learn and digest ZeroMQ's "language", that is, the socket patterns and how they work. The only way to learn a language is to use it. There's no way to avoid this investment, no tapes you can play while you sleep, no chips you can plug in to magically become smarter. Read this book from the start, work through the code examples in whatever language you prefer, understand what's going on, and (most importantly) write some examples yourself and then throw them away.
 
-At a certain point, you'll feel a clicking noise in your brain. Maybe you'll have a weird chili-induced dream where little 0MQ tasks run around trying to eat you alive. Maybe you'll just think "aaahh, so //that's// what it means!" If we did our work right, it should take two to three days. However long it takes, until you start thinking in terms of 0MQ sockets and patterns, you're not ready for step 2.
+At a certain point, you'll feel a clicking noise in your brain. Maybe you'll have a weird chili-induced dream where little ZeroMQ tasks run around trying to eat you alive. Maybe you'll just think "aaahh, so //that's// what it means!" If we did our work right, it should take two to three days. However long it takes, until you start thinking in terms of ZeroMQ sockets and patterns, you're not ready for step 2.
 
 +++ Step 2: Draw a Rough Architecture
 
@@ -59,7 +59,7 @@ You don't need to get it right, and you don't need to make it complete. What you
 
 Start by choosing the core problem that you are going to solve. Ignore anything that's not essential to that problem: you will add it in later. The problem should be an end-to-end problem: the rope across the gorge.
 
-For example, a client asked us to make a supercomputing cluster with 0MQ. Clients create bundles of work, which are sent to a broker that distributes them to workers (running on fast graphics processors), collects the results back, and returns them to the client.
+For example, a client asked us to make a supercomputing cluster with ZeroMQ. Clients create bundles of work, which are sent to a broker that distributes them to workers (running on fast graphics processors), collects the results back, and returns them to the client.
 
 The rope across the gorge is one client talking to a broker talking to one worker. We draw three boxes: client, broker, worker. We draw arrows from box to box showing the request flowing one way and the response flowing back. It's just like the many diagrams we saw in earlier chapters.
 
@@ -69,13 +69,13 @@ Be minimalistic. Your goal is not to define a //real// architecture, but to thro
 
 A good software architecture depends on contracts, and the more explicit they are, the better things scale. You don't care //how// things happen; you only care about the results. If I send an email, I don't care how it arrives at its destination, as long as the contract is respected. The email contract is: it arrives within a few minutes, no-one modifies it, and it doesn't get lost.
 
-And to build a large system that works well, you must focus on the contracts before the implementations. It may sound obvious but all too often, people forget or ignore this, or are just too shy to impose themselves. I wish I could say 0MQ had done this properly, but for years our public contracts were second-rate afterthoughts instead of primary in-your-face pieces of work.
+And to build a large system that works well, you must focus on the contracts before the implementations. It may sound obvious but all too often, people forget or ignore this, or are just too shy to impose themselves. I wish I could say ZeroMQ had done this properly, but for years our public contracts were second-rate afterthoughts instead of primary in-your-face pieces of work.
 
 So what is a contract in a distributed system? There are, in my experience, two types of contract:
 
 * The APIs to client applications. Remember the Psychological Elements. The APIs need to be as absolutely //simple//, //consistent//, and //familiar// as possible. Yes, you can generate API documentation from code, but you must first design it, and designing an API is often hard.
 
-* The protocols that connect the pieces. It sounds like rocket science, but it's really just a simple trick, and one that 0MQ makes particularly easy. In fact they're so simple to write, and need so little bureaucracy that I call them //unprotocols//.
+* The protocols that connect the pieces. It sounds like rocket science, but it's really just a simple trick, and one that ZeroMQ makes particularly easy. In fact they're so simple to write, and need so little bureaucracy that I call them //unprotocols//.
 
 You write minimal contracts that are mostly just place markers. Most messages and most API methods will be missing or empty. You also want to write down any known technical requirements in terms of throughput, latency, reliability, and so on. These are the criteria on which you will accept or reject any particular piece of work.
 
@@ -85,7 +85,7 @@ The goal is to test out the overall architecture as rapidly as possible. Make sk
 
 If you design an API wearing the hat of the person who implements it, you'll start to think of performance, features, options, and so on. You'll make it more complex, more irregular, and more surprising than it should be. But, and here's the trick (it's a cheap one, was big in Japan): if you design an API while wearing the hat of the person who has to actually write apps that use it, you use all that laziness and fear to your advantage.
 
-Write down the protocols on a wiki or shared document in such a way that you can explain every command clearly without too much detail. Strip off any real functionality, because it will only create inertia that makes it harder to move stuff around. You can always add weight. Don't spend effort defining formal message structures: pass the minimum around in the simplest possible fashion using 0MQ's multipart framing.
+Write down the protocols on a wiki or shared document in such a way that you can explain every command clearly without too much detail. Strip off any real functionality, because it will only create inertia that makes it harder to move stuff around. You can always add weight. Don't spend effort defining formal message structures: pass the minimum around in the simplest possible fashion using ZeroMQ's multipart framing.
 
 Our goal is to get the simplest test case working, without any avoidable functionality. Everything you can chop off the list of things to do, you chop. Ignore the groans from colleagues and bosses. I'll repeat this once again: you can //always// add functionality, that's relatively easy. But aim to keep the overall weight to a minimum.
 
@@ -107,7 +107,7 @@ Now, I've nothing personal against committees. The useless folk need a place to 
 
 It used to be, decades ago, when the Internet was a young modest thing, that protocols were short and sweet. They weren't even "standards", but "requests for comments", which is as modest as you can get. It's been one of my goals since we started iMatix in 1995 to find a way for ordinary people like me to write small, accurate protocols without the overhead of the committees.
 
-Now, 0MQ does appear to provide a living, successful protocol abstraction layer with its "we'll carry multipart messages over random transports" way of working. Because 0MQ deals silently with framing, connections, and routing, it's surprisingly easy to write full protocol specs on top of 0MQ, and in [#reliable-request-reply] and [#advanced-pub-sub] I showed how to do this.
+Now, ZeroMQ does appear to provide a living, successful protocol abstraction layer with its "we'll carry multipart messages over random transports" way of working. Because ZeroMQ deals silently with framing, connections, and routing, it's surprisingly easy to write full protocol specs on top of ZeroMQ, and in [#reliable-request-reply] and [#advanced-pub-sub] I showed how to do this.
 
 Somewhere around mid-2007, I kicked off the Digital Standards Organization to define new simpler ways of producing little standards, protocols, and specifications. In my defense, it was a quiet summer. At the time, I wrote that a new specification should take [http://www.digistan.org/spec:1 "minutes to explain, hours to design, days to write, weeks to prove, months to become mature, and years to replace."]
 
@@ -118,7 +118,7 @@ In 2010, we started calling such little specifications //unprotocols//, which so
 Writing contracts is perhaps the most difficult part of large-scale architecture. With unprotocols, we remove as much of the unnecessary friction as possible. What remains is still a hard set of problems to solve. A good contract (be it an API, a protocol, or a rental agreement) has to be simple, unambiguous, technically sound, and easy to enforce.
 
 Like any technical skill, it's something you have to learn and practice. There are a series of specifications on the
-[http://rfc.zeromq.org 0MQ RFC site], which are worth reading and using them as a basis for your own specifications when you find yourself in need.
+[http://rfc.zeromq.org ZeroMQ RFC site], which are worth reading and using them as a basis for your own specifications when you find yourself in need.
 
 I'll try to summarize my experience as a protocol writer:
 
@@ -144,7 +144,7 @@ I'll try to summarize my experience as a protocol writer:
 
 And above all, //write it down//. Code is not a specification. The point about a written specification is that no matter how weak it is, it can be systematically improved. By writing down a specification, you will also spot inconsistencies and gray areas that are impossible to see in code.
 
-If this sounds hard, don't worry too much. One of the less obvious benefits of using 0MQ is that it cuts the effort necessary to write a protocol spec by perhaps 90% or more because it already handles framing, routing, queuing, and so on. This means that you can experiment rapidly, make mistakes cheaply, and thus learn rapidly.
+If this sounds hard, don't worry too much. One of the less obvious benefits of using ZeroMQ is that it cuts the effort necessary to write a protocol spec by perhaps 90% or more because it already handles framing, routing, queuing, and so on. This means that you can experiment rapidly, make mistakes cheaply, and thus learn rapidly.
 
 +++ How to Write Unprotocols
 
@@ -277,9 +277,9 @@ It's perhaps the main reason so many older protocols and APIs are so complex: th
 
 A good protocol or API abstraction encapsulates natural patterns of use, and gives them name and properties that are predictable and regular. It chooses sensible defaults so that the main use cases can be specified minimally. It aims to be simple for the simple cases, and expressive for the rarer complex cases. It does not make any statements or assumptions about the internal implementation unless that is absolutely needed for interoperability.
 
-+++ 0MQ Framing
++++ ZeroMQ Framing
 
-The simplest and most widely used serialization format for 0MQ applications is 0MQ's own multipart framing. For example, here is how the [http://rfc.zeromq.org/spec:7 Majordomo Protocol] defines a request:
+The simplest and most widely used serialization format for ZeroMQ applications is ZeroMQ's own multipart framing. For example, here is how the [http://rfc.zeromq.org/spec:7 Majordomo Protocol] defines a request:
 
 [[code]]
 Frame 0: Empty frame
@@ -292,7 +292,7 @@ Frames 5+: Request body (opaque binary)
 
 To read and write this in code is easy, but this is a classic example of a control flow (the whole of MDP is really, as it's a chatty request-reply protocol). When we came to improve MDP for the second version, we had to change this framing. Excellent, we broke all existing implementations!
 
-Backwards compatibility is hard, but using 0MQ framing for control flows //does not help//. Here's how I should have designed this protocol if I'd followed my own advice (and I'll fix this in the next version). It's split into a Cheap part and a Nasty part, and uses the 0MQ framing to separate these:
+Backwards compatibility is hard, but using ZeroMQ framing for control flows //does not help//. Here's how I should have designed this protocol if I'd followed my own advice (and I'll fix this in the next version). It's split into a Cheap part and a Nasty part, and uses the ZeroMQ framing to separate these:
 
 [[code]]
 Frame 0: "MDP/2.0" for protocol name and version
@@ -646,13 +646,13 @@ So if you do use GSL and want to create open communities around your work, here 
 * Introduce gradually into a project.
 * Put the generated code into your repositories.
 
-We're already using GSL in some projects around 0MQ. For example, the high-level C binding, CZMQ, uses GSL to generate the socket options class ({{zsockopt}}). A 300-line code generator turns 78 lines of XML model into 1,500 lines of perfect, but really boring code. That's a good win.
+We're already using GSL in some projects around ZeroMQ. For example, the high-level C binding, CZMQ, uses GSL to generate the socket options class ({{zsockopt}}). A 300-line code generator turns 78 lines of XML model into 1,500 lines of perfect, but really boring code. That's a good win.
 
 ++ Transferring Files
 
 Let's take a break from the lecturing and get back to our first love and the reason for doing all of this: code.
 
-"How do I send a file?" is a common question on the 0MQ mailing lists. This should not be surprising, because file transfer is perhaps the oldest and most obvious type of messaging. Sending files around networks has lots of use cases apart from annoying the copyright cartels. 0MQ is very good out of the box at sending events and tasks, but less good at sending files.
+"How do I send a file?" is a common question on the ZeroMQ mailing lists. This should not be surprising, because file transfer is perhaps the oldest and most obvious type of messaging. Sending files around networks has lots of use cases apart from annoying the copyright cartels. ZeroMQ is very good out of the box at sending events and tasks, but less good at sending files.
 
 I've promised, for a year or two, to write a proper explanation. Here's a gratuitous piece of information to brighten your morning: the word "proper" comes from the archaic French //propre//, which means "clean". The dark age English common folk, not being familiar with hot water and soap, changed the word to mean "foreign" or "upper-class", as in "that's proper food!", but later the word came to mean just "real", as in "that's a proper mess you've gotten us into!"
 
@@ -660,7 +660,7 @@ So, file transfer. There are several reasons you can't just pick up a random fil
 
 Finally, after all this, if you build a proper file server, you'll notice that simply sending massive amounts of data to lots of clients creates that situation we like to call, in the technical parlance, "server went belly-up due to all available heap memory being eaten by a poorly designed application". A proper file transfer protocol needs to pay attention to memory use.
 
-We'll solve these problems properly, one-by-one, which should hopefully get us to a good and proper file transfer protocol running over 0MQ. First, let's generate a 1GB test file with random data (real power-of-two-giga-like-Von-Neumman-intended, not the fake silicon ones the memory industry likes to sell):
+We'll solve these problems properly, one-by-one, which should hopefully get us to a good and proper file transfer protocol running over ZeroMQ. First, let's generate a 1GB test file with random data (real power-of-two-giga-like-Von-Neumman-intended, not the fake silicon ones the memory industry likes to sell):
 
 [[code]]
 dd if=/dev/urandom of=testdata bs=1M count=1024
@@ -685,7 +685,7 @@ Here's our first cut at the code, where the client asks for the test data and th
 
 It's pretty simple, but we already run into a problem: if we send too much data to the ROUTER socket, we can easily overflow it. The simple but stupid solution is to put an infinite high-water mark on the socket. It's stupid because we now have no protection against exhausting the server's memory. Yet without an infinite HWM, we risk losing chunks of large files.
 
-Try this: set the HWM to 1,000 (in 0MQ v3.x this is the default) and then reduce the chunk size to 100K so we send 10K chunks in one go. Run the test, and you'll see it never finishes. As the {{zmq_socket[3]}} man page says with cheerful brutality, for the ROUTER socket: "ZMQ_HWM option action: Drop".
+Try this: set the HWM to 1,000 (in ZeroMQ v3.x this is the default) and then reduce the chunk size to 100K so we send 10K chunks in one go. Run the test, and you'll see it never finishes. As the {{zmq_socket[3]}} man page says with cheerful brutality, for the ROUTER socket: "ZMQ_HWM option action: Drop".
 
 We have to control the amount of data the server sends up-front. There's no point in it sending more than the network can handle. Let's try sending one chunk at a time. In this version of the protocol, the client will explicitly say, "Give me chunk N", and the server will fetch that specific chunk from disk and send it.
 
@@ -714,7 +714,7 @@ sys     0m2.136s
 
 There are two valuable lessons here. First, while request-reply is easy, it's also too slow for high-volume data flows. Paying that 300 microseconds once would be fine. Paying it for every single chunk isn't acceptable, particularly on real networks with latencies of perhaps 1,000 times higher.
 
-The second point is something I've said before but will repeat: it's incredibly easy to experiment, measure, and improve a protocol over 0MQ. And when the cost of something comes way down, you can afford a lot more of it. Do learn to develop and prove your protocols in isolation: I've seen teams waste time trying to improve poorly designed protocols that are too deeply embedded in applications to be easily testable or fixable.
+The second point is something I've said before but will repeat: it's incredibly easy to experiment, measure, and improve a protocol over ZeroMQ. And when the cost of something comes way down, you can afford a lot more of it. Do learn to develop and prove your protocols in isolation: I've seen teams waste time trying to improve poorly designed protocols that are too deeply embedded in applications to be easily testable or fixable.
 
 Our model two file transfer protocol isn't so bad, apart from performance:
 
@@ -729,7 +729,7 @@ If we just didn't have to do a request for each chunk, it'd be a usable protocol
 
 * The server could send chunks without any chatter from the client but with a slight delay between each send, so that it would send chunks only as fast as the network could handle them. This would require the server to know what's happening at the network layer, which sounds like hard work. It also breaks layering horribly. And what happens if the network is really fast, but the client itself is slow? Where are chunks queued then?
 
-* The server could try to spy on the sending queue, i.e., see how full it is, and send only when the queue isn't full. Well, 0MQ doesn't allow that because it doesn't work, for the same reason as throttling doesn't work. The server and network may be more than fast enough, but the client may be a slow little device.
+* The server could try to spy on the sending queue, i.e., see how full it is, and send only when the queue isn't full. Well, ZeroMQ doesn't allow that because it doesn't work, for the same reason as throttling doesn't work. The server and network may be more than fast enough, but the client may be a slow little device.
 
 * We could modify {{libzmq}} to take some other action on reaching HWM. Perhaps it could block? That would mean that a single slow client would block the whole server, so no thank you. Maybe it could return an error to the caller? Then the server could do something smart like... well, there isn't really anything it could do that's any better than dropping the message.
 
@@ -776,7 +776,7 @@ Here's the third model of our file transfer test-bench, with pipelining. The cli
 [[code type="example" title="File transfer test, model 3" name="fileio3"]]
 [[/code]]
 
-That tweak gives us full control over the end-to-end pipeline including all network buffers and 0MQ queues at sender and receiver. We ensure the pipeline is always filled with data while never growing beyond a predefined limit. More than that, the client decides exactly when to send "credit" to the sender. It could be when it receives a chunk, or when it has fully processed a chunk. And this happens asynchronously, with no significant performance cost.
+That tweak gives us full control over the end-to-end pipeline including all network buffers and ZeroMQ queues at sender and receiver. We ensure the pipeline is always filled with data while never growing beyond a predefined limit. More than that, the client decides exactly when to send "credit" to the sender. It could be when it receives a chunk, or when it has fully processed a chunk. And this happens asynchronously, with no significant performance cost.
 
 In the third model, I chose a pipeline size of 10 messages (each message is a chunk). This will cost a maximum of 2.5MB memory per client. So with 1GB of memory we can handle at least 400 clients. We can try to calculate the ideal pipeline size. It takes about 0.7 seconds to send the 1GB file, which is about 160 microseconds for a chunk. A round trip is 300 microseconds, so the pipeline needs to be at least 3-5 chunks to keep the server busy. In practice, I still got performance spikes with a pipeline of 5 chunks, probably because the credit messages sometimes get delayed by outgoing data. So at 10 chunks, it works consistently.
 
@@ -824,7 +824,7 @@ And this gives us "credit-based flow control", which effectively removes the nee
 
 Software engineers tend to think of (finite) state machines as a kind of intermediary interpreter. That is, you take a regular language and compile that into a state machine, then execute the state machine. The state machine itself is rarely visible to the developer: it's an internal representation--optimized, compressed, and bizarre.
 
-However, it turns out that state machines are also valuable as a first-class modeling languages for protocol handlers, e.g., 0MQ clients and servers. 0MQ makes it rather easy to design protocols, but we've never defined a good pattern for writing those clients and servers properly.
+However, it turns out that state machines are also valuable as a first-class modeling languages for protocol handlers, e.g., ZeroMQ clients and servers. ZeroMQ makes it rather easy to design protocols, but we've never defined a good pattern for writing those clients and servers properly.
 
 A protocol has at least two levels:
 
@@ -841,7 +841,7 @@ The thing about Libero's model was that it was readable. That is, you described 
 
 Libero was charmingly good at its job, fluent in many languages, and modestly popular given the enigmatic nature of state machines. We used Libero in anger in dozens of large distributed applications, one of which was finally switched off in 2011 after 20 years of operation. State-machine driven code construction worked so well that it's somewhat impressive that this approach never hit the mainstream of software engineering.
 
-So in this section I'm going to explain Libero's model, and demonstrate how to use it to generate 0MQ clients and servers. We'll use GSL again, but like I said, the principles are general and you can put together code generators using any scripting language.
+So in this section I'm going to explain Libero's model, and demonstrate how to use it to generate ZeroMQ clients and servers. We'll use GSL again, but like I said, the principles are general and you can put together code generators using any scripting language.
 
 As a worked example, let's see how to carry-on a stateful dialog with a peer on a ROUTER socket. We'll develop the server using a state machine (and the client by hand). We have a simple protocol that I'll call "NOM". I'm using the oh-so-very-serious [http://unprotocols.org/blog:2 keywords for unprotocols] proposal:
 
@@ -860,7 +860,7 @@ I've not found a quick way to explain the true nature of state machine programmi
 
 A useful thing about state machines is that you can read them state by state. Each state has a unique descriptive name and one or more //events//, which we list in any order. For each event, we perform zero or more //actions// and we then move to a //next state// (or stay in the same state).
 
-In a 0MQ protocol server, we have a state machine instance //per client//. That sounds complex but it isn't, as we'll see. We describe our first state, {{Start}}, as having one valid event: {{OHAI}}. We check the user's credentials and then arrive in the Authenticated state[figure].
+In a ZeroMQ protocol server, we have a state machine instance //per client//. That sounds complex but it isn't, as we'll see. We describe our first state, {{Start}}, as having one valid event: {{OHAI}}. We check the user's credentials and then arrive in the Authenticated state[figure].
 
 [[code type="textdiagram" title="The Start State"]]
 .-------------------.
@@ -1107,7 +1107,7 @@ In the Libero state machine model, there are a few more concepts that we've not 
 
 ++ Authentication Using SASL
 
-When we designed AMQP in 2007, we chose the [http://en.wikipedia.org/wiki/Simple_Authentication_and_Security_Layer Simple Authentication and Security Layer] (SASL) for the authentication layer, one of the ideas we took from the [http://www.rfc-editor.org/rfc/rfc3080.txt BEEP protocol framework]. SASL looks complex at first, but it's actually simple and fits neatly into a 0MQ-based protocol. What I especially like about SASL is that it's scalable. You can start with anonymous access or plain text authentication and no security, and grow to more secure mechanisms over time without changing your protocol.
+When we designed AMQP in 2007, we chose the [http://en.wikipedia.org/wiki/Simple_Authentication_and_Security_Layer Simple Authentication and Security Layer] (SASL) for the authentication layer, one of the ideas we took from the [http://www.rfc-editor.org/rfc/rfc3080.txt BEEP protocol framework]. SASL looks complex at first, but it's actually simple and fits neatly into a ZeroMQ-based protocol. What I especially like about SASL is that it's scalable. You can start with anonymous access or plain text authentication and no security, and grow to more secure mechanisms over time without changing your protocol.
 
 I'm not going to give a deep explanation now because we'll see SASL in action somewhat later. But I'll explain the principle so you're already somewhat prepared.
 
@@ -1148,7 +1148,7 @@ Let's put all these techniques together into a file distribution system that I'l
 
 +++ Why make FileMQ?
 
-Why make a file distribution system? I already explained how to send large files over 0MQ, and it's really quite simple. But if you want to make messaging accessible to a million times more people than can use 0MQ, you need another kind of API. An API that my five-year old son can understand. An API that is universal, requires no programming, and works with just about every single application.
+Why make a file distribution system? I already explained how to send large files over ZeroMQ, and it's really quite simple. But if you want to make messaging accessible to a million times more people than can use ZeroMQ, you need another kind of API. An API that my five-year old son can understand. An API that is universal, requires no programming, and works with just about every single application.
 
 Yes, I'm talking about the file system. It's the DropBox pattern: chuck your files somewhere and they get magically copied somewhere else when the network connects again.
 
@@ -1221,11 +1221,11 @@ version         = %x01
 ORLY            = signature %x02 mechanisms challenge
 mechanisms      = size 1*mechanism
 mechanism       = string
-challenge       = *OCTET        ; 0MQ frame
+challenge       = *OCTET        ; ZeroMQ frame
 
 ;   The client responds with SASL authentication information
 YARLY           = %signature x03 mechanism response
-response        = *OCTET        ; 0MQ frame
+response        = *OCTET        ; ZeroMQ frame
 
 ;   The server grants the client access
 OHAI-OK         = signature %x04
@@ -1276,7 +1276,7 @@ S:SRSLY         = signature %x80 reason
 S:RTFM          = signature %x81 reason
 [[/code]]
 
-FILEMQ lives on the [http://rfc.zeromq.org/spec:19 0MQ unprotocols website] and has a registered TCP port with IANA (the Internet Assigned Numbers Authority), which is port 5670.
+FILEMQ lives on the [http://rfc.zeromq.org/spec:19 ZeroMQ unprotocols website] and has a registered TCP port with IANA (the Internet Assigned Numbers Authority), which is port 5670.
 
 +++ Building and Trying FileMQ
 
@@ -1323,7 +1323,7 @@ Although I wrote FileMQ in C, it's easy to map to other languages. It is quite a
 
 * {{fmq_sasl}}: encodes and decodes a SASL challenge. I only implemented the PLAIN mechanism, which is enough to prove the concept.
 
-* {{fmq_chunk}}: works with variable sized blobs. Not as efficient as 0MQ's messages but they do less weirdness and so are easier to understand. The chunk class has methods to read and write chunks from disk.
+* {{fmq_chunk}}: works with variable sized blobs. Not as efficient as ZeroMQ's messages but they do less weirdness and so are easier to understand. The chunk class has methods to read and write chunks from disk.
 
 * {{fmq_file}}: works with files, which may or may not exist on disk. Gives you information about a file (like size), lets you read and write to files, remove files, check if a file exists, and check if a file is "stable" (more on that later).
 
@@ -1345,7 +1345,7 @@ The public API consists of two classes (as we sketched earlier):
 
 * {{fmq_server}}: provides the server API, with methods to bind to a port, configure the server, and publish a path.
 
-These classes provide an //multithreaded API//, a model we've used a few times now. When you create an API instance (i.e., {{fmq_server_new()}} or {{fmq_client_new()}}), this method kicks off a background thread that does the real work, i.e., runs the server or the client. The other API methods then talk to this thread over 0MQ sockets (a //pipe// consisting of two PAIR sockets over inproc://).
+These classes provide an //multithreaded API//, a model we've used a few times now. When you create an API instance (i.e., {{fmq_server_new()}} or {{fmq_client_new()}}), this method kicks off a background thread that does the real work, i.e., runs the server or the client. The other API methods then talk to this thread over ZeroMQ sockets (a //pipe// consisting of two PAIR sockets over inproc://).
 
 If I was a keen young developer eager to use FileMQ in another language, I'd probably spend a happy weekend writing a binding for this public API, then stick it in a subdirectory of the filemq project called, say, {{bindings/}}, and make a pull request.
 
@@ -1381,7 +1381,7 @@ The hardest part of making FileMQ wasn't implementing the protocol, but maintain
 
 So I'll go through some of the design aspects:
 
-* The client detects if the server has died by the lack of heartbeats ({{HUGZ}}) coming from the server. It then restarts its dialog by sending an {{OHAI}}. There's no timeout on the {{OHAI}} because the 0MQ DEALER socket will queue an outgoing message indefinitely.
+* The client detects if the server has died by the lack of heartbeats ({{HUGZ}}) coming from the server. It then restarts its dialog by sending an {{OHAI}}. There's no timeout on the {{OHAI}} because the ZeroMQ DEALER socket will queue an outgoing message indefinitely.
 
 * If a client stops replying with ({{HUGZ-OK}}) to the heartbeats that the server sends, the server concludes that the client has died and deletes all state for the client including its subscriptions.
 
@@ -1415,7 +1415,7 @@ fmq_server_publish (server, "./fmqroot/logs", "/logs");
 fmq_server_bind (server, "tcp://*:5670");
 [[/code]]
 
-We do use a specific format for the config files, which is [http://rfc.zeromq.org/spec:4 ZPL], a minimalist syntax that we started using for 0MQ "devices" a few years ago, but which works well for any server:
+We do use a specific format for the config files, which is [http://rfc.zeromq.org/spec:4 ZPL], a minimalist syntax that we started using for ZeroMQ "devices" a few years ago, but which works well for any server:
 
 [[code]]
 #   Configure server for plain access
@@ -1485,7 +1485,7 @@ Because we've collected all operations on files in a single class ({{fmq_file}})
 
 As it stands now, FileMQ has one major remaining problem: it provides no way for clients to recover from failures. The scenario is that a client, connected to a server, starts to receive files and then disconnects for some reason. The network may be too slow, or breaks. The client may be on a laptop which is shut down, then resumed. The WiFi may be disconnected. As we move to a more mobile world (see [#moving-pieces]) this use case becomes more and more frequent. In some ways it's becoming a dominant use case.
 
-In the classic 0MQ pub-sub pattern, there are two strong underlying assumptions, both of which are usually wrong in FileMQ's real world. First, that data expires very rapidly so that there's no interest in asking from old data. Second, that networks are stable and rarely break (so it's better to invest more in improving the infrastructure and less in addressing recovery).
+In the classic ZeroMQ pub-sub pattern, there are two strong underlying assumptions, both of which are usually wrong in FileMQ's real world. First, that data expires very rapidly so that there's no interest in asking from old data. Second, that networks are stable and rarely break (so it's better to invest more in improving the infrastructure and less in addressing recovery).
 
 Take any FileMQ use case and you'll see that if the client disconnects and reconnects, then it should get anything it missed. A further improvement would be to recover from partial failures, like HTTP and FTP do. But one thing at a time.
 
@@ -1591,7 +1591,7 @@ If you aim to make a public protocol of any importance, such as FILEMQ, you're g
 
 * Document your protocol clearly, as IANA will want a specification of how you intend to use the port. It does not have to be a fully-formed protocol specification, but must be solid enough to pass expert review.
 
-* Decide what transport protocols you want: UDP, TCP, SCTP, and so on. With 0MQ you will usually only want TCP.
+* Decide what transport protocols you want: UDP, TCP, SCTP, and so on. With ZeroMQ you will usually only want TCP.
 
 * Fill in the application on iana.org, providing all the necessary information.
 

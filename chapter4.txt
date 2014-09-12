@@ -2,9 +2,9 @@
 .bookmark reliable-request-reply
 + Reliable Request-Reply Patterns
 
-[#advanced-request-reply] covered advanced uses of 0MQ's request-reply pattern with working examples. This chapter looks at the general question of reliability and builds a set of reliable messaging patterns on top of 0MQ's core request-reply pattern.
+[#advanced-request-reply] covered advanced uses of ZeroMQ's request-reply pattern with working examples. This chapter looks at the general question of reliability and builds a set of reliable messaging patterns on top of ZeroMQ's core request-reply pattern.
 
-In this chapter, we focus heavily on user-space request-reply //patterns//, reusable models that help you design your own 0MQ architectures:
+In this chapter, we focus heavily on user-space request-reply //patterns//, reusable models that help you design your own ZeroMQ architectures:
 
 * The //Lazy Pirate// pattern: reliable request-reply from the client side
 * The //Simple Pirate// pattern: reliable request-reply using load balancing
@@ -16,15 +16,15 @@ In this chapter, we focus heavily on user-space request-reply //patterns//, reus
 
 ++ What is "Reliability"?
 
-Most people who speak of "reliability" don't really know what they mean. We can only define reliability in terms of failure. That is, if we can handle a certain set of well-defined and understood failures, then we are reliable with respect to those failures. No more, no less. So let's look at the possible causes of failure in a distributed 0MQ application, in roughly descending order of probability:
+Most people who speak of "reliability" don't really know what they mean. We can only define reliability in terms of failure. That is, if we can handle a certain set of well-defined and understood failures, then we are reliable with respect to those failures. No more, no less. So let's look at the possible causes of failure in a distributed ZeroMQ application, in roughly descending order of probability:
 
 * Application code is the worst offender. It can crash and exit, freeze and stop responding to input, run too slowly for its input, exhaust all memory, and so on.
 
-* System code--such as brokers we write using 0MQ--can die for the same reasons as application code. System code //should// be more reliable than application code, but it can still crash and burn, and especially run out of memory if it tries to queue messages for slow clients.
+* System code--such as brokers we write using ZeroMQ--can die for the same reasons as application code. System code //should// be more reliable than application code, but it can still crash and burn, and especially run out of memory if it tries to queue messages for slow clients.
 
 * Message queues can overflow, typically in system code that has learned to deal brutally with slow clients. When a queue overflows, it starts to discard messages. So we get "lost" messages.
 
-* Networks can fail (e.g., WiFi gets switched off or goes out of range). 0MQ will automatically reconnect in such cases, but in the meantime, messages may get lost.
+* Networks can fail (e.g., WiFi gets switched off or goes out of range). ZeroMQ will automatically reconnect in such cases, but in the meantime, messages may get lost.
 
 * Hardware can fail and take with it all the processes running on that box.
 
@@ -38,7 +38,7 @@ Because the first five cases in the above list cover 99.9% of real world require
 
 ++ Designing Reliability
 
-So to make things brutally simple, reliability is "keeping things working properly when code freezes or crashes", a situation we'll shorten to "dies". However, the things we want to keep working properly are more complex than just messages. We need to take each core 0MQ messaging pattern and see how to make it work (if we can) even when code dies.
+So to make things brutally simple, reliability is "keeping things working properly when code freezes or crashes", a situation we'll shorten to "dies". However, the things we want to keep working properly are more complex than just messages. We need to take each core ZeroMQ messaging pattern and see how to make it work (if we can) even when code dies.
 
 Let's take them one-by-one:
 
@@ -52,7 +52,7 @@ In this chapter we'll focus just on request-reply, which is the low-hanging frui
 
 The basic request-reply pattern (a REQ client socket doing a blocking send/receive to a REP server socket) scores low on handling the most common types of failure. If the server crashes while processing the request, the client just hangs forever. If the network loses the request or the reply, the client hangs forever.
 
-Request-reply is still much better than TCP, thanks to 0MQ's ability to reconnect peers silently, to load balance messages, and so on. But it's still not good enough for real work. The only case where you can really trust the basic request-reply pattern is between two threads in the same process where there's no network or separate server process to die.
+Request-reply is still much better than TCP, thanks to ZeroMQ's ability to reconnect peers silently, to load balance messages, and so on. But it's still not good enough for real work. The only case where you can really trust the basic request-reply pattern is between two threads in the same process where there's no network or separate server process to die.
 
 However, with a little extra work, this humble pattern becomes a good basis for real work across a distributed network, and we get a set of reliable request-reply (RRR) patterns that I like to call the //Pirate// patterns (you'll eventually get the joke, I hope).
 
@@ -143,7 +143,7 @@ So, pros and cons:
 
 * Pro: simple to understand and implement.
 * Pro: works easily with existing client and server application code.
-* Pro: 0MQ automatically retries the actual reconnection until it works.
+* Pro: ZeroMQ automatically retries the actual reconnection until it works.
 * Con: doesn't failover to backup or alternate servers.
 
 ++ Basic Reliable Queuing (Simple Pirate Pattern)
@@ -183,7 +183,7 @@ In all these Pirate patterns, workers are stateless. If the application requires
 #-----------#   #-----------#   #-----------#
 [[/code]]
 
-The basis for the queue proxy is the load balancing broker from [#advanced-request-reply]. What is the very //minimum// we need to do to handle dead or blocked workers? Turns out, it's surprisingly little. We already have a retry mechanism in the client. So using the load balancing pattern will work pretty well. This fits with 0MQ's philosophy that we can extend a peer-to-peer pattern like request-reply by plugging naive proxies in the middle[figure].
+The basis for the queue proxy is the load balancing broker from [#advanced-request-reply]. What is the very //minimum// we need to do to handle dead or blocked workers? Turns out, it's surprisingly little. We already have a retry mechanism in the client. So using the load balancing pattern will work pretty well. This fits with ZeroMQ's philosophy that we can extend a peer-to-peer pattern like request-reply by plugging naive proxies in the middle[figure].
 
 We don't need a special client; we're still using the Lazy Pirate client. Here is the queue, which is identical to the main task of the load balancing broker:
 
@@ -235,7 +235,7 @@ To test this, start a handful of workers, a Lazy Pirate client, and the queue, i
 
 The Simple Pirate Queue pattern works pretty well, especially because it's just a combination of two existing patterns. Still, it does have some weaknesses:
 
-* It's not robust in the face of a queue crash and restart. The client will recover, but the workers won't. While 0MQ will reconnect workers' sockets automatically, as far as the newly started queue is concerned, the workers haven't signaled ready, so don't exist. To fix this, we have to do heartbeating from queue to worker so that the worker can detect when the queue has gone away.
+* It's not robust in the face of a queue crash and restart. The client will recover, but the workers won't. While ZeroMQ will reconnect workers' sockets automatically, as far as the newly started queue is concerned, the workers haven't signaled ready, so don't exist. To fix this, we have to do heartbeating from queue to worker so that the worker can detect when the queue has gone away.
 
 * The queue does not detect worker failure, so if a worker dies while idle, the queue can't remove it from its worker queue until the queue sends it a request. The client waits and retries for nothing. It's not a critical problem, but it's not nice. To make this work properly, we do heartbeating from worker to queue, so that the queue can detect a lost worker at any stage.
 
@@ -276,15 +276,15 @@ You should see the workers die one-by-one as they simulate a crash, and the clie
 
 ++ Heartbeating
 
-Heartbeating solves the problem of knowing whether a peer is alive or dead. This is not an issue specific to 0MQ. TCP has a long timeout (30 minutes or so), that means that it can be impossible to know whether a peer has died, been disconnected, or gone on a weekend to Prague with a case of vodka, a redhead, and a large expense account.
+Heartbeating solves the problem of knowing whether a peer is alive or dead. This is not an issue specific to ZeroMQ. TCP has a long timeout (30 minutes or so), that means that it can be impossible to know whether a peer has died, been disconnected, or gone on a weekend to Prague with a case of vodka, a redhead, and a large expense account.
 
 It's is not easy to get heartbeating right. When writing the Paranoid Pirate examples, it took about five hours to get the heartbeating working properly. The rest of the request-reply chain took perhaps ten minutes. It is especially easy to create "false failures", i.e., when peers decide that they are disconnected because the heartbeats aren't sent properly.
 
-We'll look at the three main answers people use for heartbeating with 0MQ.
+We'll look at the three main answers people use for heartbeating with ZeroMQ.
 
 +++ Shrugging It Off
 
-The most common approach is to do no heartbeating at all and hope for the best. Many if not most 0MQ applications do this. 0MQ encourages this by hiding peers in many cases. What problems does this approach cause?
+The most common approach is to do no heartbeating at all and hope for the best. Many if not most ZeroMQ applications do this. ZeroMQ encourages this by hiding peers in many cases. What problems does this approach cause?
 
 * When we use a ROUTER socket in an application that tracks peers, as peers disconnect and reconnect, the application will leak memory (resources that the application holds for each peer) and get slower and slower.
 
@@ -399,7 +399,7 @@ It's fun to experiment without specifications, but that's not a sensible basis f
 
 Lack of contracts is a sure sign of a disposable application. So let's write a contract for this protocol. How do we do that?
 
-There's a wiki at [http://rfc.zeromq.org rfc.zeromq.org] that we made especially as a home for public 0MQ contracts.
+There's a wiki at [http://rfc.zeromq.org rfc.zeromq.org] that we made especially as a home for public ZeroMQ contracts.
 To create a new specification, register on the wiki if needed, and follow the instructions. It's fairly straightforward, though writing technical texts is not everyone's cup of tea.
 
 It took me about fifteen minutes to draft the new [http://rfc.zeromq.org/spec:6 Pirate Pattern Protocol]. It's not a big specification, but it does capture enough to act as the basis for arguments ("your queue isn't PPP compatible; please fix it!").
@@ -488,7 +488,7 @@ Here are some things to note about the worker API code:
 
 * The APIs don't do any error reporting. If something isn't as expected, they raise an assertion (or exception depending on the language). This is ideal for a reference implementation, so any protocol errors show immediately. For real applications, the API should be robust against invalid messages.
 
-You might wonder why the worker API is manually closing its socket and opening a new one, when 0MQ will automatically reconnect a socket if the peer disappears and comes back. Look back at the Simple Pirate and Paranoid Pirate workers to understand. Although 0MQ will automatically reconnect workers if the broker dies and comes back up, this isn't sufficient to re-register the workers with the broker. I know of at least two solutions. The simplest, which we use here, is for the worker to monitor the connection using heartbeats, and if it decides the broker is dead, to close its socket and start afresh with a new socket. The alternative is for the broker to challenge unknown workers when it gets a heartbeat from the worker and ask them to re-register. That would require protocol support.
+You might wonder why the worker API is manually closing its socket and opening a new one, when ZeroMQ will automatically reconnect a socket if the peer disappears and comes back. Look back at the Simple Pirate and Paranoid Pirate workers to understand. Although ZeroMQ will automatically reconnect workers if the broker dies and comes back up, this isn't sufficient to re-register the workers with the broker. I know of at least two solutions. The simplest, which we use here, is for the worker to monitor the connection using heartbeats, and if it decides the broker is dead, to close its socket and start afresh with a new socket. The alternative is for the broker to challenge unknown workers when it gets a heartbeat from the worker and ask them to re-register. That would require protocol support.
 
 Now let's design the Majordomo broker. Its core structure is a set of queues, one per service. We will create these queues as workers appear (we could delete them as workers disappear, but forget that for now because it gets complex). Additionally, we keep a queue of workers per service.
 
@@ -501,7 +501,7 @@ This is by far the most complex example we've seen. It's almost 500 lines of cod
 
 Here are some things to note about the broker code:
 
-* The Majordomo Protocol lets us handle both clients and workers on a single socket. This is nicer for those deploying and managing the broker: it just sits on one 0MQ endpoint rather than the two that most proxies need.
+* The Majordomo Protocol lets us handle both clients and workers on a single socket. This is nicer for those deploying and managing the broker: it just sits on one ZeroMQ endpoint rather than the two that most proxies need.
 
 * The broker implements all of MDP/0.1 properly (as far as I know), including disconnection if the broker sends invalid commands, heartbeating, and the rest.
 
@@ -515,7 +515,7 @@ We later improved and extended the protocol and the Majordomo implementation, wh
 
 ++ Asynchronous Majordomo Pattern
 
-The Majordomo implementation in the previous section is simple and stupid. The client is just the original Simple Pirate, wrapped up in a sexy API. When I fire up a client, broker, and worker on a test box, it can process 100,000 requests in about 14 seconds. That is partially due to the code, which cheerfully copies message frames around as if CPU cycles were free. But the real problem is that we're doing network round-trips. 0MQ disables [http://en.wikipedia.org/wiki/Nagles_algorithm Nagle's algorithm], but round-tripping is still slow.
+The Majordomo implementation in the previous section is simple and stupid. The client is just the original Simple Pirate, wrapped up in a sexy API. When I fire up a client, broker, and worker on a test box, it can process 100,000 requests in about 14 seconds. That is partially due to the code, which cheerfully copies message frames around as if CPU cycles were free. But the real problem is that we're doing network round-trips. ZeroMQ disables [http://en.wikipedia.org/wiki/Nagles_algorithm Nagle's algorithm], but round-tripping is still slow.
 
 Theory is great in theory, but in practice, practice is better. Let's measure the actual cost of round-tripping with a simple test program. This sends a bunch of messages, first waiting for a reply to each message, and second as a batch, reading all the replies back as a batch. Both approaches do the same work, but they give very different results. We mock up a client, broker, and worker:
 
@@ -738,7 +738,7 @@ Before we jump off and write yet another formal specification (fun, fun!), let's
 * {{titanic.reply}}: fetch a reply, if available, for a given request UUID.
 * {{titanic.close}}: confirm that a reply has been stored and processed.
 
-We'll just make a multithreaded worker, which as we've seen from our multithreading experience with 0MQ, is trivial. However, let's first sketch what Titanic would look like in terms of 0MQ messages and frames. This gives us the [http://rfc.zeromq.org/spec:9 Titanic Service Protocol (TSP)].
+We'll just make a multithreaded worker, which as we've seen from our multithreading experience with ZeroMQ, is trivial. However, let's first sketch what Titanic would look like in terms of ZeroMQ messages and frames. This gives us the [http://rfc.zeromq.org/spec:9 Titanic Service Protocol (TSP)].
 
 Using TSP is clearly more work for client applications than accessing a service directly via MDP. Here's the shortest robust "echo" client example:
 
@@ -1043,13 +1043,13 @@ This gives us the following short main program for the server:
 
 ++ Brokerless Reliability (Freelance Pattern)
 
-It might seem ironic to focus so much on broker-based reliability, when we often explain 0MQ as "brokerless messaging". However, in messaging, as in real life, the middleman is both a burden and a benefit. In practice, most messaging architectures benefit from a mix of distributed and brokered messaging. You get the best results when you can decide freely what trade-offs you want to make. This is why I can drive twenty minutes to a wholesaler to buy five cases of wine for a party, but I can also walk ten minutes to a corner store to buy one bottle for a dinner. Our highly context-sensitive relative valuations of time, energy, and cost are essential to the real world economy. And they are essential to an optimal message-based architecture.
+It might seem ironic to focus so much on broker-based reliability, when we often explain ZeroMQ as "brokerless messaging". However, in messaging, as in real life, the middleman is both a burden and a benefit. In practice, most messaging architectures benefit from a mix of distributed and brokered messaging. You get the best results when you can decide freely what trade-offs you want to make. This is why I can drive twenty minutes to a wholesaler to buy five cases of wine for a party, but I can also walk ten minutes to a corner store to buy one bottle for a dinner. Our highly context-sensitive relative valuations of time, energy, and cost are essential to the real world economy. And they are essential to an optimal message-based architecture.
 
-This is why 0MQ does not //impose// a broker-centric architecture, though it does give you the tools to build brokers, aka //proxies//, and we've built a dozen or so different ones so far, just for practice.
+This is why ZeroMQ does not //impose// a broker-centric architecture, though it does give you the tools to build brokers, aka //proxies//, and we've built a dozen or so different ones so far, just for practice.
 
-So we'll end this chapter by deconstructing the broker-based reliability we've built so far, and turning it back into a distributed peer-to-peer architecture I call the Freelance pattern. Our use case will be a name resolution service. This is a common problem with 0MQ architectures: how do we know the endpoint to connect to? Hard-coding TCP/IP addresses in code is insanely fragile. Using configuration files creates an administration nightmare. Imagine if you had to hand-configure your web browser, on every PC or mobile phone you used, to realize that "google.com" was "74.125.230.82".
+So we'll end this chapter by deconstructing the broker-based reliability we've built so far, and turning it back into a distributed peer-to-peer architecture I call the Freelance pattern. Our use case will be a name resolution service. This is a common problem with ZeroMQ architectures: how do we know the endpoint to connect to? Hard-coding TCP/IP addresses in code is insanely fragile. Using configuration files creates an administration nightmare. Imagine if you had to hand-configure your web browser, on every PC or mobile phone you used, to realize that "google.com" was "74.125.230.82".
 
-A 0MQ name service (and we'll make a simple implementation) must do the following:
+A ZeroMQ name service (and we'll make a simple implementation) must do the following:
 
 * Resolve a logical name into at least a bind endpoint, and a connect endpoint. A realistic name service would provide multiple bind endpoints, and possibly multiple connect endpoints as well.
 
@@ -1127,7 +1127,7 @@ Let's switch our client to using a DEALER socket. Our goal here is to make sure 
 * We wait for the first reply, and take that.
 * We ignore any other replies.
 
-What will happen in practice is that when all servers are running, 0MQ will distribute the requests so that each server gets one request and sends one reply. When any server is offline and disconnected, 0MQ will distribute the requests to the remaining servers. So a server may in some cases get the same request more than once.
+What will happen in practice is that when all servers are running, ZeroMQ will distribute the requests so that each server gets one request and sends one reply. When any server is offline and disconnected, ZeroMQ will distribute the requests to the remaining servers. So a server may in some cases get the same request more than once.
 
 What's more annoying for the client is that we'll get multiple replies back, but there's no guarantee we'll get a precise number of replies. Requests and replies can get lost (e.g., if the server crashes while processing a request).
 
@@ -1145,7 +1145,7 @@ Then start the client, specifying the connect endpoints as arguments:
 
 Here are some things to note about the client implementation:
 
-* The client is structured as a nice little class-based API that hides the dirty work of creating 0MQ contexts and sockets and talking to the server. That is, if a shotgun blast to the midriff can be called "talking".
+* The client is structured as a nice little class-based API that hides the dirty work of creating ZeroMQ contexts and sockets and talking to the server. That is, if a shotgun blast to the midriff can be called "talking".
 
 * The client will abandon the chase if it can't find //any// responsive server within a few seconds.
 
@@ -1171,7 +1171,7 @@ But doing ROUTER to ROUTER between two anonymous sockets (which haven't set an i
 
 Rather than invent yet another concept to manage, we'll use the connection endpoint as identity. This is a unique string on which both sides can agree without more prior knowledge than they already have for the shotgun model. It's a sneaky and effective way to connect two ROUTER sockets.
 
-Remember how 0MQ identities work. The server ROUTER socket sets an identity before it binds its socket. When a client connects, they do a little handshake to exchange identities, before either side sends a real message. The client ROUTER socket, having not set an identity, sends a null identity to the server. The server generates a random UUID to designate the client for its own use. The server sends its identity (which we've agreed is going to be an endpoint string) to the client.
+Remember how ZeroMQ identities work. The server ROUTER socket sets an identity before it binds its socket. When a client connects, they do a little handshake to exchange identities, before either side sends a real message. The client ROUTER socket, having not set an identity, sends a null identity to the server. The server generates a random UUID to designate the client for its own use. The server sends its identity (which we've agreed is going to be an endpoint string) to the client.
 
 This means that our client can route a message to the server (i.e., send on its ROUTER socket, specifying the server endpoint as identity) as soon as the connection is established. That's not //immediately// after doing a {{zmq_connect[3]}}, but some random time thereafter. Herein lies one problem: we don't know when the server will actually be available and complete its connection handshake. If the server is online, it could be after a few milliseconds. If the server is down and the sysadmin is out to lunch, it could be an hour from now.
 
@@ -1198,7 +1198,7 @@ And here, almost as complex and large as the Majordomo broker, is the client API
 
 This API implementation is fairly sophisticated and uses a couple of techniques that we've not seen before.
 
-* **Multithreaded API**: the client API consists of two parts, a synchronous {{flcliapi}} class that runs in the application thread, and an asynchronous //agent// class that runs as a background thread. Remember how 0MQ makes it easy to create multithreaded apps. The flcliapi and agent classes talk to each other with messages over an {{inproc}} socket. All 0MQ aspects (such as creating and destroying a context) are hidden in the API. The agent in effect acts like a mini-broker, talking to servers in the background, so that when we make a request, it can make a best effort to reach a server it believes is available.
+* **Multithreaded API**: the client API consists of two parts, a synchronous {{flcliapi}} class that runs in the application thread, and an asynchronous //agent// class that runs as a background thread. Remember how ZeroMQ makes it easy to create multithreaded apps. The flcliapi and agent classes talk to each other with messages over an {{inproc}} socket. All ZeroMQ aspects (such as creating and destroying a context) are hidden in the API. The agent in effect acts like a mini-broker, talking to servers in the background, so that when we make a request, it can make a best effort to reach a server it believes is available.
 
 * **Tickless poll timer**: in previous poll loops we always used a fixed tick interval, e.g., 1 second, which is simple enough but not excellent on power-sensitive clients (such as notebooks or mobile phones), where waking the CPU costs power. For fun, and to help save the planet, the agent uses a //tickless timer//, which calculates the poll delay based on the next timeout we're expecting. A proper implementation would keep an ordered list of timeouts. We just check all timeouts and calculate the poll delay until the next one.
 

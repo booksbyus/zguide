@@ -2,7 +2,7 @@
 .bookmark advanced-pub-sub
 + Advanced Pub-Sub Patterns
 
-In [#advanced-request-reply] and [#reliable-request-reply] we looked at advanced use of 0MQ's request-reply pattern. If you managed to digest all that, congratulations. In this chapter we'll focus on publish-subscribe and extend 0MQ's core pub-sub pattern with higher-level patterns for performance, reliability, state distribution, and monitoring.
+In [#advanced-request-reply] and [#reliable-request-reply] we looked at advanced use of ZeroMQ's request-reply pattern. If you managed to digest all that, congratulations. In this chapter we'll focus on publish-subscribe and extend ZeroMQ's core pub-sub pattern with higher-level patterns for performance, reliability, state distribution, and monitoring.
 
 We'll cover:
 
@@ -16,7 +16,7 @@ We'll cover:
 
 ++ Pros and Cons of Pub-Sub
 
-0MQ's low-level patterns have their different characters. Pub-sub addresses an old messaging problem, which is //multicast// or //group messaging//. It has that unique mix of meticulous simplicity and brutal indifference that characterizes 0MQ. It's worth understanding the trade-offs that pub-sub makes, how these benefit us, and how we can work around them if needed.
+ZeroMQ's low-level patterns have their different characters. Pub-sub addresses an old messaging problem, which is //multicast// or //group messaging//. It has that unique mix of meticulous simplicity and brutal indifference that characterizes ZeroMQ. It's worth understanding the trade-offs that pub-sub makes, how these benefit us, and how we can work around them if needed.
 
 First, PUB sends each message to "all of many", whereas PUSH and DEALER rotate messages to "one of many". You cannot simply replace PUSH with PUB or vice versa and hope that things will work. This bears repeating because people seem to quite often suggest doing this.
 
@@ -34,7 +34,7 @@ When we remove back-chatter, our overall message flow becomes //much// simpler, 
 
 * Publishers can't tell when subscribers have disappeared due to processes crashing, networks breaking, and so on.
 
-The downside is that we actually need all of these if we want to do reliable multicast. The 0MQ pub-sub pattern will lose messages arbitrarily when a subscriber is connecting, when a network failure occurs, or just if the subscriber or network can't keep up with the publisher.
+The downside is that we actually need all of these if we want to do reliable multicast. The ZeroMQ pub-sub pattern will lose messages arbitrarily when a subscriber is connecting, when a network failure occurs, or just if the subscriber or network can't keep up with the publisher.
 
 The upside is that there are many use cases where //almost// reliable multicast is just fine. When we need this back-chatter, we can either switch to using ROUTER-DEALER (which I tend to do for most normal volume cases), or we can add a separate channel for synchronization (we'll see an example of this later in this chapter).
 
@@ -49,9 +49,9 @@ As we did for request-reply, let's define //reliability// in terms of what can g
 * Networks can become overloaded and drop data (specifically, for PGM).
 * Networks can become too slow, so publisher-side queues overflow and publishers crash.
 
-A lot more can go wrong but these are the typical failures we see in a realistic system. Since v3.x, 0MQ forces default limits on its internal buffers (the so-called high-water mark or HWM), so publisher crashes are rarer unless you deliberately set the HWM to infinite.
+A lot more can go wrong but these are the typical failures we see in a realistic system. Since v3.x, ZeroMQ forces default limits on its internal buffers (the so-called high-water mark or HWM), so publisher crashes are rarer unless you deliberately set the HWM to infinite.
 
-All of these failure cases have answers, though not always simple ones. Reliability requires complexity that most of us don't need, most of the time, which is why 0MQ doesn't attempt to provide it out of the box (even if there was one global design for reliability, which there isn't).
+All of these failure cases have answers, though not always simple ones. Reliability requires complexity that most of us don't need, most of the time, which is why ZeroMQ doesn't attempt to provide it out of the box (even if there was one global design for reliability, which there isn't).
 
 ++ Pub-Sub Tracing (Espresso Pattern)
 
@@ -82,7 +82,7 @@ This shows neatly how the publisher socket stops sending data when there are no 
 
 ++ Last Value Caching
 
-If you've used commercial pub-sub systems, you may be used to some features that are missing in the fast and cheerful 0MQ pub-sub model. One of these is //last value caching// (LVC). This solves the problem of how a new subscriber catches up when it joins the network. The theory is that publishers get notified when a new subscriber joins and subscribes to some specific topics. The publisher can then rebroadcast the last message for those topics.
+If you've used commercial pub-sub systems, you may be used to some features that are missing in the fast and cheerful ZeroMQ pub-sub model. One of these is //last value caching// (LVC). This solves the problem of how a new subscriber catches up when it joins the network. The theory is that publishers get notified when a new subscriber joins and subscribes to some specific topics. The publisher can then rebroadcast the last message for those topics.
 
 I've already explained why publishers don't get notified when there are new subscribers, because in large pub-sub systems, the volumes of data make it pretty much impossible. To make really large-scale pub-sub networks, you need a protocol like PGM that exploits an upscale Ethernet switch's ability to multicast data to thousands of subscribers. Trying to do a TCP unicast from the publisher to each of thousands of subscribers just doesn't scale. You get weird spikes, unfair distribution (some subscribers getting the message before others), network congestion, and general unhappiness.
 
@@ -90,7 +90,7 @@ PGM is a one-way protocol: the publisher sends a message to a multicast address 
 
 However, in a lower-volume network with a few dozen subscribers and a limited number of topics, we can use TCP and then the XSUB and XPUB sockets //do// talk to each other as we just saw in the Espresso pattern.
 
-Can we make an LVC using 0MQ? The answer is yes, if we make a proxy that sits between the publisher and subscribers; an analog for the PGM switch, but one we can program ourselves.
+Can we make an LVC using ZeroMQ? The answer is yes, if we make a proxy that sits between the publisher and subscribers; an analog for the PGM switch, but one we can program ourselves.
 
 I'll start by making a publisher and subscriber that highlight the worst case scenario. This publisher is pathological. It starts by immediately sending messages to each of a thousand topics, and then it sends one update a second to a random topic. A subscriber connects, and subscribes to a topic. Without LVC, a subscriber would have to wait an average of 500 seconds to get any data. To add some drama, let's pretend there's an escaped convict called Gregor threatening to rip the head off Roger the toy bunny if we can't fix that 8.3 minutes' delay.
 
@@ -141,11 +141,11 @@ How do we handle a slow subscriber? The ideal fix is to make the subscriber fast
 
 * **Queue messages on the publisher**. This is what Gmail does when I don't read my email for a couple of hours. But in high-volume messaging, pushing queues upstream has the thrilling but unprofitable result of making publishers run out of memory and crash--especially if there are lots of subscribers and it's not possible to flush to disk for performance reasons.
 
-* **Queue messages on the subscriber**. This is much better, and it's what 0MQ does by default if the network can keep up with things. If anyone's going to run out of memory and crash, it'll be the subscriber rather than the publisher, which is fair. This is perfect for "peaky" streams where a subscriber can't keep up for a while, but can catch up when the stream slows down. However, it's no answer to a subscriber that's simply too slow in general.
+* **Queue messages on the subscriber**. This is much better, and it's what ZeroMQ does by default if the network can keep up with things. If anyone's going to run out of memory and crash, it'll be the subscriber rather than the publisher, which is fair. This is perfect for "peaky" streams where a subscriber can't keep up for a while, but can catch up when the stream slows down. However, it's no answer to a subscriber that's simply too slow in general.
 
-* **Stop queuing new messages after a while**. This is what Gmail does when my mailbox overflows its precious gigabytes of space. New messages just get rejected or dropped. This is a great strategy from the perspective of the publisher, and it's what 0MQ does when the publisher sets a HWM. However, it still doesn't help us fix the slow subscriber. Now we just get gaps in our message stream.
+* **Stop queuing new messages after a while**. This is what Gmail does when my mailbox overflows its precious gigabytes of space. New messages just get rejected or dropped. This is a great strategy from the perspective of the publisher, and it's what ZeroMQ does when the publisher sets a HWM. However, it still doesn't help us fix the slow subscriber. Now we just get gaps in our message stream.
 
-* **Punish slow subscribers with disconnect**. This is what Hotmail (remember that?) did when I didn't log in for two weeks, which is why I was on my fifteenth Hotmail account when it hit me that there was perhaps a better way. It's a nice brutal strategy that forces subscribers to sit up and pay attention and would be ideal, but 0MQ doesn't do this, and there's no way to layer it on top because subscribers are invisible to publisher applications.
+* **Punish slow subscribers with disconnect**. This is what Hotmail (remember that?) did when I didn't log in for two weeks, which is why I was on my fifteenth Hotmail account when it hit me that there was perhaps a better way. It's a nice brutal strategy that forces subscribers to sit up and pay attention and would be ideal, but ZeroMQ doesn't do this, and there's no way to layer it on top because subscribers are invisible to publisher applications.
 
 None of these classic strategies fit, so we need to get creative. Rather than disconnect the publisher, let's convince the subscriber to kill itself. This is the Suicidal Snail pattern. When a subscriber detects that it's running too slowly (where "too slowly" is presumably a configured option that really means "so slowly that if you ever get here, shout really loudly because I need to know, so I can fix this!"), it croaks and dies.
 
@@ -201,7 +201,7 @@ Now lets look at one way to make our subscribers faster. A common use case for p
 '----------------------------------------'
 [[/code]]
 
-Let's imagine our feed has an average of 100,000 100-byte messages a second. That's a typical rate, after filtering market data we don't need to send on to subscribers. Now we decide to record a day's data (maybe 250 GB in 8 hours), and then replay it to a simulation network, i.e., a small group of subscribers. While 100K messages a second is easy for a 0MQ application, we want to replay it //much faster//.
+Let's imagine our feed has an average of 100,000 100-byte messages a second. That's a typical rate, after filtering market data we don't need to send on to subscribers. Now we decide to record a day's data (maybe 250 GB in 8 hours), and then replay it to a simulation network, i.e., a small group of subscribers. While 100K messages a second is easy for a ZeroMQ application, we want to replay it //much faster//.
 
 So we set up our architecture with a bunch of boxes--one for the publisher and one for each subscriber. These are well-specified boxes--eight cores, twelve for the publisher.
 
@@ -211,9 +211,9 @@ And as we pump data into our subscribers, we notice two things:
 
 # We're hitting a ceiling, at both publisher and subscriber, to around 6M messages a second, even after careful optimization and TCP tuning.
 
-The first thing we have to do is break our subscriber into a multithreaded design so that we can do work with messages in one set of threads, while reading messages in another. Typically, we don't want to process every message the same way. Rather, the subscriber will filter some messages, perhaps by prefix key. When a message matches some criteria, the subscriber will call a worker to deal with it. In 0MQ terms, this means sending the message to a worker thread.
+The first thing we have to do is break our subscriber into a multithreaded design so that we can do work with messages in one set of threads, while reading messages in another. Typically, we don't want to process every message the same way. Rather, the subscriber will filter some messages, perhaps by prefix key. When a message matches some criteria, the subscriber will call a worker to deal with it. In ZeroMQ terms, this means sending the message to a worker thread.
 
-So the subscriber looks something like a queue device. We could use various sockets to connect the subscriber and workers. If we assume one-way traffic and workers that are all identical, we can use PUSH and PULL and delegate all the routing work to 0MQ[figure]. This is the simplest and fastest approach.
+So the subscriber looks something like a queue device. We could use various sockets to connect the subscriber and workers. If we assume one-way traffic and workers that are all identical, we can use PUSH and PULL and delegate all the routing work to ZeroMQ[figure]. This is the simplest and fastest approach.
 
 The subscriber talks to the publisher over TCP or PGM. The subscriber talks to its workers, which are all in the same process, over {{inproc://}}.
 
@@ -250,7 +250,7 @@ Now to break that ceiling. The subscriber thread hits 100% of CPU and because it
 
 The approach used by many high-performance products, which works here, is //sharding//. Using sharding, we split the work into parallel and independent streams, such as half of the topic keys in one stream, and half in another. We could use many streams, but performance won't scale unless we have free cores. So let's see how to shard into two streams[figure].
 
-With two streams, working at full speed, we would configure 0MQ as follows:
+With two streams, working at full speed, we would configure ZeroMQ as follows:
 
 * Two I/O threads, rather than one.
 * Two network interfaces (NIC), one per subscriber.
@@ -330,7 +330,7 @@ And here is the client:
 
 Here are some things to note about this first model:
 
-* All the hard work is done in a {{kvmsg}} class. This class works with key-value message objects, which are multipart 0MQ messages structured as three frames: a key (a 0MQ string), a sequence number (64-bit value, in network byte order), and a binary body (holds everything else).
+* All the hard work is done in a {{kvmsg}} class. This class works with key-value message objects, which are multipart ZeroMQ messages structured as three frames: a key (a ZeroMQ string), a sequence number (64-bit value, in network byte order), and a binary body (holds everything else).
 
 * The server generates messages with a randomized 4-digit key, which lets us simulate a large but not enormous hash table (10K entries).
 
@@ -382,13 +382,13 @@ So we will do the synchronization in the client, as follows:
 
 * The client first subscribes to updates and then makes a state request. This guarantees that the state is going to be newer than the oldest update it has.
 
-* The client waits for the server to reply with state, and meanwhile queues all updates. It does this simply by not reading them: 0MQ keeps them queued on the socket queue.
+* The client waits for the server to reply with state, and meanwhile queues all updates. It does this simply by not reading them: ZeroMQ keeps them queued on the socket queue.
 
 * When the client receives its state update, it begins once again to read updates. However, it discards any updates that are older than the state update. So if the state update includes updates up to 200, the client will discard updates up to 201.
 
 * The client then applies updates to its own state snapshot.
 
-It's a simple model that exploits 0MQ's own internal queues. Here's the server:
+It's a simple model that exploits ZeroMQ's own internal queues. Here's the server:
 
 [[code type="example" title="Clone server, Model Two" name="clonesrv2"]]
 [[/code]]
@@ -496,7 +496,7 @@ The usual abstraction for ephemeral values is to attach them to a //session//, a
 
 A good design principle that I use whenever possible is to //not invent concepts that are not absolutely essential//. If we have very large numbers of ephemeral values, sessions will offer better performance. If we use a handful of ephemeral values, it's fine to set a TTL on each one. If we use masses of ephemeral values, it's more efficient to attach them to sessions and expire them in bulk. This isn't a problem we face at this stage, and may never face, so sessions go out the window.
 
-Now we will implement ephemeral values. First, we need a way to encode the TTL in the key-value message. We could add a frame. The problem with using 0MQ frames for properties is that each time we want to add a new property, we have to change the message structure. It breaks compatibility. So let's add a properties frame to the message, and write the code to let us get and put property values.
+Now we will implement ephemeral values. First, we need a way to encode the TTL in the key-value message. We could add a frame. The problem with using ZeroMQ frames for properties is that each time we want to add a new property, we have to change the message structure. It breaks compatibility. So let's add a properties frame to the message, and write the code to let us get and put property values.
 
 Next, we need a way to say, "delete this value". Up until now, servers and clients have always blindly inserted or updated new values into their hash table. We'll say that if the value is empty, that means "delete this key".
 
@@ -644,7 +644,7 @@ This model is only a few hundred lines of code, but it took quite a while to get
 
 The reactor-based design removes a lot of the grunt work from the code, and what remains is simpler and easier to understand. We reuse the bstar reactor from [#reliable-request-reply]. The whole server runs as one thread, so there's no inter-thread weirdness going on--just a structure pointer ({{self}}) passed around to all handlers, which can do their thing happily. One nice side effect of using reactors is that the code, being less tightly integrated into a poll loop, is much easier to reuse. Large chunks of Model Six are taken from Model Five.
 
-I built it piece by piece, and got each piece working //properly// before going onto the next one. Because there are four or five main socket flows, that meant quite a lot of debugging and testing. I debugged just by dumping messages to the console. Don't use classic debuggers to step through 0MQ applications; you need to see the message flows to make any sense of what is going on.
+I built it piece by piece, and got each piece working //properly// before going onto the next one. Because there are four or five main socket flows, that meant quite a lot of debugging and testing. I debugged just by dumping messages to the console. Don't use classic debuggers to step through ZeroMQ applications; you need to see the message flows to make any sense of what is going on.
 
 For testing, I always try to use Valgrind, which catches memory leaks and invalid memory accesses. In C, this is a major concern, as you can't delegate to a garbage collector. Using proper and consistent abstractions like kvmsg and CZMQ helps enormously.
 
@@ -660,7 +660,7 @@ Let's take a look at the CHP specification. Note that "SHOULD", "MUST" and "MAY"
 
 **Goals**
 
-CHP is meant to provide a basis for reliable pub-sub across a cluster of clients connected over a 0MQ network. It defines a "hashmap" abstraction consisting of key-value pairs. Any client can modify any key-value pair at any time, and changes are propagated to all clients. A client can join the network at any time.
+CHP is meant to provide a basis for reliable pub-sub across a cluster of clients connected over a ZeroMQ network. It defines a "hashmap" abstraction consisting of key-value pairs. Any client can modify any key-value pair at any time, and changes are propagated to all clients. A client can join the network at any time.
 
 **Architecture**
 
@@ -670,18 +670,18 @@ CHP connects a set of client applications and a set of servers. Clients connect 
 
 The server MUST open three ports as follows:
 
-* A SNAPSHOT port (0MQ ROUTER socket) at port number P.
-* A PUBLISHER port (0MQ PUB socket) at port number P + 1.
-* A COLLECTOR port (0MQ SUB socket) at port number P + 2.
+* A SNAPSHOT port (ZeroMQ ROUTER socket) at port number P.
+* A PUBLISHER port (ZeroMQ PUB socket) at port number P + 1.
+* A COLLECTOR port (ZeroMQ SUB socket) at port number P + 2.
 
 The client SHOULD open at least two connections:
 
-* A SNAPSHOT connection (0MQ DEALER socket) to port number P.
-* A SUBSCRIBER connection (0MQ SUB socket) to port number P + 1.
+* A SNAPSHOT connection (ZeroMQ DEALER socket) to port number P.
+* A SUBSCRIBER connection (ZeroMQ SUB socket) to port number P + 1.
 
 The client MAY open a third connection, if it wants to update the hashmap:
 
-* A PUBLISHER connection (0MQ PUB socket) to port number P + 2.
+* A PUBLISHER connection (ZeroMQ PUB socket) to port number P + 2.
 
 This extra frame is not shown in the commands explained below.
 
@@ -696,14 +696,14 @@ Frame 0: "ICANHAZ?"
 Frame 1: subtree specification
 [[/code]]
 
-Both frames are 0MQ strings. The subtree specification MAY be empty. If not empty, it consists of a slash followed by one or more path segments, ending in a slash.
+Both frames are ZeroMQ strings. The subtree specification MAY be empty. If not empty, it consists of a slash followed by one or more path segments, ending in a slash.
 
-The server MUST respond to a ICANHAZ command by sending zero or more KVSYNC commands to its snapshot port, followed with a KTHXBAI command. The server MUST prefix each command with the identity of the client, as provided by 0MQ with the ICANHAZ command. The KVSYNC command specifies a single key-value pair as follows:
+The server MUST respond to a ICANHAZ command by sending zero or more KVSYNC commands to its snapshot port, followed with a KTHXBAI command. The server MUST prefix each command with the identity of the client, as provided by ZeroMQ with the ICANHAZ command. The KVSYNC command specifies a single key-value pair as follows:
 
 [[code]]
 KVSYNC command
 -----------------------------------
-Frame 0: key, as 0MQ string
+Frame 0: key, as ZeroMQ string
 Frame 1: sequence number, 8 bytes in network order
 Frame 2: <empty>
 Frame 3: <empty>
@@ -735,10 +735,10 @@ When the server has an update for its hashmap it MUST broadcast this on its publ
 [[code]]
 KVPUB command
 -----------------------------------
-Frame 0: key, as 0MQ string
+Frame 0: key, as ZeroMQ string
 Frame 1: sequence number, 8 bytes in network order
 Frame 2: UUID, 16 bytes
-Frame 3: properties, as 0MQ string
+Frame 3: properties, as ZeroMQ string
 Frame 4: value, as blob
 [[/code]]
 
@@ -769,10 +769,10 @@ When the client has an update for its hashmap, it MAY send this to the server vi
 [[code]]
 KVSET command
 -----------------------------------
-Frame 0: key, as 0MQ string
+Frame 0: key, as ZeroMQ string
 Frame 1: sequence number, 8 bytes in network order
 Frame 2: UUID, 16 bytes
-Frame 3: properties, as 0MQ string
+Frame 3: properties, as ZeroMQ string
 Frame 4: value, as blob
 [[/code]]
 
@@ -804,7 +804,7 @@ CHP does not implement any authentication, access control, or encryption mechani
 
 +++ Building a Multithreaded Stack and API
 
-The client stack we've used so far isn't smart enough to handle this protocol properly. As soon as we start doing heartbeats, we need a client stack that can run in a background thread. In the Freelance pattern at the end of [#reliable-request-reply] we used a multithreaded API but didn't explain it in detail. It turns out that multithreaded APIs are quite useful when you start to make more complex 0MQ protocols like CHP.
+The client stack we've used so far isn't smart enough to handle this protocol properly. As soon as we start doing heartbeats, we need a client stack that can run in a background thread. In the Freelance pattern at the end of [#reliable-request-reply] we used a multithreaded API but didn't explain it in detail. It turns out that multithreaded APIs are quite useful when you start to make more complex ZeroMQ protocols like CHP.
 
 [[code type="textdiagram" title="Multithreaded API"]]
          #--------------#
@@ -842,7 +842,7 @@ The multithreaded APIs that we see in this book all take the same form:
 
 * The background thread starts an //agent// that is essentially a {{zmq_poll}} loop reading from the pipe socket and any other sockets (here, the DEALER and SUB sockets).
 
-* The main application thread and the background thread now communicate only via 0MQ messages. By convention, the frontend sends string commands so that each method on the class turns into a message sent to the backend agent, like this:
+* The main application thread and the background thread now communicate only via ZeroMQ messages. By convention, the frontend sends string commands so that each method on the class turns into a message sent to the backend agent, like this:
 
 [[code type="fragment" name="connect-command"]]
 void
@@ -863,7 +863,7 @@ clone_connect (clone_t *self, char *address, char *service)
 
 * We may want to expose the frontend pipe socket handle to allow the class to be integrated into further poll loops. Otherwise any {{recv}} method would block the application.
 
-The clone class has the same structure as the {{flcliapi}} class from [#reliable-request-reply] and adds the logic from the last model of the Clone client. Without 0MQ, this kind of multithreaded API design would be weeks of really hard work. With 0MQ, it was a day or two of work.
+The clone class has the same structure as the {{flcliapi}} class from [#reliable-request-reply] and adds the logic from the last model of the Clone client. Without ZeroMQ, this kind of multithreaded API design would be weeks of really hard work. With ZeroMQ, it was a day or two of work.
 
 The actual API methods for the clone class are quite simple:
 
@@ -904,7 +904,7 @@ Note the connect method, which specifies one server endpoint. Under the hood, we
 * The server updates publisher (PUB) is at port P + 1.
 * The server updates subscriber (SUB) is at port P + 2.
 
-So we can fold the three connections into one logical operation (which we implement as three separate 0MQ connect calls).
+So we can fold the three connections into one logical operation (which we implement as three separate ZeroMQ connect calls).
 
 Let's end with the source code for the clone stack. This is a complex piece of code, but easier to understand when you break it into the frontend object class and the backend agent. The frontend sends string commands ("SUBTREE", "CONNECT", "SET", "GET") to the agent, which handles these commands as well as talking to the server(s). Here is the agent's logic:
 

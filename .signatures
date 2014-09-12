@@ -62,8 +62,8 @@ cf6fc64851754d7eab3a990f5f11d1c3533e7ece examples/PHP/tasksink2.php
 7b18169a34b846dd2c4f7b15f616eae947358234 images/fig33.txt
 a151c97a69b15bfab5cbc0fb8b0a7fec8a6a7421 examples/Python/rrclient.py
 d35e584a8d149636b431cdfc37aceb2a58216d7a examples/PHP/lpclient.php
-bccbdf4e1045c7334a4d2c971a8858869290d464 examples/Haxe/tripping.hx
 ad548452afddc01daee4bdb98975c4a59c9f707d examples/Clojure/mtserver.clj
+bccbdf4e1045c7334a4d2c971a8858869290d464 examples/Haxe/tripping.hx
 507669400f73bb174a7413edbd8da59f1a531d09 images/fig52.txt
 6d8cfa13a8038b19871b24ab7ea880579d7f981a examples/Objective-C/taskwork2.m
 b02005487696f2e75f5fe6ebc2a9d6f34d425425 examples/Erlang/hwclient.es
@@ -71,8 +71,8 @@ b02005487696f2e75f5fe6ebc2a9d6f34d425425 examples/Erlang/hwclient.es
 8d65609f4c5a245f18abdf39ea5f17378ebe7949 examples/Python/clonecli1.py
 4a39ab9dcffe45ee068128e8bb2b79071c654c70 images/fig34.txt
 19950526a70c9d6d69aa49e26410278a76a2c7b9 examples/Python/mdcliapi2.py
-c4f984ca3fd0836e51ae3c44acf1c59693d9a49b examples/Java/lpclient.java
 cf8e44bdf40922b87e624ec63cf75f26daeb5013 examples/C++/mtserver.cpp
+c4f984ca3fd0836e51ae3c44acf1c59693d9a49b examples/Java/lpclient.java
 de6b96976aef6fa6bd09587b9ba8e22b0571e34f examples/Java/tripping.java
 9be4c569c06b33a23d0a02abaf4f69088c39bcae examples/Java/ticlient.java
 1880621497ad0dad51f5e7aad9d4c81058d18239 examples/Java/version.java
@@ -135,8 +135,8 @@ fcaa2075ec4c14f4600ada8b5a2437968456c4fd examples/C/rrworker.c
 c2e5818c670b5999a3a1de96b1080932df2ec612 examples/Felix/wuclient.flx
 944b1f6aec4e513e135d2ea4ef4e4aded05f08f3 examples/Go/wuserver.go
 ddfc2281b409a383f380b8bbd2ef8b63916740e3 examples/Clojure/tasksink2.clj
-757c637e8ce0b9cdedceab28224d7081baef0172 examples/Tcl/rtdealer.tcl
 5bb1eb89982e5a4e17af75fa6962a6baa6c75e22 examples/Python/syncpub.py
+757c637e8ce0b9cdedceab28224d7081baef0172 examples/Tcl/rtdealer.tcl
 d50c97ecd4fdfc0c982323734e4f7a3554366b0b fragments/C/endpoint-hashing.c
 26287c2b15a784510f8abba0e565a185bc50dcad examples/Java/peering3.java
 a3c78d15e03ff754a35ad2d4d9c5129bd6e0781b examples/Erlang/syncsub.es
@@ -583,9 +583,8 @@ da0678d5e95eb79bce037b5a942a21a7e5ad5e67 examples/Felix/hwclient.flx
 26a5f9476938c83e5fe30338c1742615d0f78868 examples/Clojure/rrbroker.clj
 699b532c440dbd6963ecdd8d913e015f2a5033f4 examples/Lua/mdbroker.lua
 a7d19cbf1ab02b4badaa2e7e8e59d55508af2a39 examples/Erlang/tasksink.es
-f08af18ec337598fb3dadc873a1c451eca443129 examples/Java/suisnail.java
-da4f91e4b7fde4f2de478da6e0357358175412b4 examples/Erlang/psenvpub.es
 5b633b979d3d289da7905faa9cd42b6148f71f96 examples/Java/suisnail.java
+da4f91e4b7fde4f2de478da6e0357358175412b4 examples/Erlang/psenvpub.es
 6094db7eeabe82bd65264d74086cad4aefd57859 examples/Objective-C/msreader.m
 4d33d2fe83d7f2b506e02c3e6bbd1789888ba4aa images/fig40.txt
 42d6bed5c5411d1491da880c1e65ab5eb014db69 examples/Node.js/wuclient.js
@@ -599,7 +598,6 @@ c97cecdd704a37a8dd7c8b557343b44cf14e37f1 examples/Python/clonesrv6.py
 628203f68759322dbc36e87effb0732bec1aba34 examples/Go/mdwrkapi.go
 b6afce51dee1f0bca28ed872f5cb7fe68d1c27bf examples/Python/dechat.py
 37fec12dbdcedf2da599e88d3aee12ca54a28d40 examples/C++/rrclient.cpp
-b6afce51dee1f0bca28ed872f5cb7fe68d1c27bf examples/Python/dechat.py
 9dab739f561e816c12002bfd6a3bfde46e1df976 examples/Scala/syncpub.scala
 05cee87881deb0470871ee37c3c28f79848d8667 examples/C++/msreader.cpp
 d87aaf766aa463af25f9eeaeb14e1b9aaeebfda3 examples/C/flserver2.c
@@ -1024,13 +1022,13 @@ af3d72a3dd615769775249428cb4326cd626fdf8 fragments/C/zyre-listener.c
 5f8efad2a8476391e8c779b30842fcf4ad049aa7 examples/F#/hwclient.fsx
 1a8c84cde8bc82946c6ccd643ba4e34e7329949c examples/Tcl/mmiecho.tcl
 513a5190bea8aef397ddc21748abd992a9b82e84 examples/F#/lbbroker.fsx
-a9aaa1bbc4fcc045ca68181f0d6aeb83d6d08520 examples/Haxe/lbbroker2.hx
 dbea6f88e76f7b5406b5b616e427a7c844ecc160 fragments/C/kvsetttl.c
+a9aaa1bbc4fcc045ca68181f0d6aeb83d6d08520 examples/Haxe/lbbroker2.hx
 ac1156ba2f953b3997550affe245164d50925024 examples/PHP/lbbroker2.php
 65c84a8c035104110f09a6d719e1d97285c724f4 examples/C/rtdealer.c
 3505522b83dc283a63a9ce5654cd9d7071612314 images/fig4.txt
 98913d674c40172faadc26833ee49e6b298c507c fragments/C/proxy.c
-86f6a9e7dd463ad949bf40a167919a0b5043d1c3 examples/Go/mspoller.go
 137b6c7febf66d98368b9e26338deeb8f856e292 examples/Java/ppworker.java
+86f6a9e7dd463ad949bf40a167919a0b5043d1c3 examples/Go/mspoller.go
 7377682230bfb1631480a93cd27cadacaeb4f1e3 examples/Python/psenvpub.py
 8e4e30e4e224edd0c4a78420a6ddb3c0589e1cfb images/fig26.txt

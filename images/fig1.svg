@@ -30,11 +30,6 @@
 	<text x="17.1" y="44.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >TCP socket </text>
 
 </g>
-<g id="group2">
-	<path id="path2" filter="url(#dsFilter)" fill="#fff" d="M 202.5 18 Q 202.5 8 212.5 8 L 327.5 8 Q 337.5 8 337.5 18 L 337.5 94 Q 337.5 104 327.5 104 L 212.5 104 Q 202.5 104 202.5 94 Z" />
-	<text x="224.1" y="60.8" id="text2" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >0MQ socket </text>
-
-</g>
 </g>
 <g id="lines" stroke="black" stroke-width="2" fill="none" >
 <g id="group48">
@@ -49,14 +44,19 @@
 <g id="group221">
 	<path id="path221" marker-end="url(#Pointer)" d="M 121.5 40 L 193.5 40 " />
 </g>
+<g id="group606">
+	<path id="path606" d="M 337.5 40 L 337.5 18 Q 337.5 8 327.5 8 L 212.5 8 Q 202.5 8 202.5 18 L 202.5 94 Q 202.5 104 212.5 104 L 327.5 104 Q 337.5 104 337.5 94 L 337.5 56 " />
+</g>
 </g>
 <g id="text" fill="black" style="font-family:LMMono10,monospace;font-size:15.2px" >
 <text x="350.1" y="44.8" id="text1" fill="#000" >ZAP!</text>
 <text x="134.1" y="60.8" id="text2" fill="#000" >BOOM! </text>
-<text x="359.1" y="76.8" id="text4" fill="#000" >POW!!</text>
-<text x="206.1" y="156.8" id="text5" fill="#000" >Spandex</text>
-<text x="206.1" y="188.8" id="text6" fill="#000" >Cosmic rays</text>
-<text x="8.1" y="220.8" id="text8" fill="#000" >Illegal radioisotopes from</text>
-<text x="8.1" y="236.8" id="text9" fill="#000" >secret Soviet atomic city</text>
+<text x="224.1" y="60.8" id="text3" fill="#000" >ZeroMQ socket </text>
+<text x="359.1" y="60.8" id="text4" fill="#000" >|</text>
+<text x="359.1" y="76.8" id="text5" fill="#000" >POW!!</text>
+<text x="206.1" y="156.8" id="text6" fill="#000" >Spandex</text>
+<text x="206.1" y="188.8" id="text7" fill="#000" >Cosmic rays</text>
+<text x="8.1" y="220.8" id="text9" fill="#000" >Illegal radioisotopes from</text>
+<text x="8.1" y="236.8" id="text10" fill="#000" >secret Soviet atomic city</text>
 </g>
 </svg>
