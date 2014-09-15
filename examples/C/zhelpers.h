@@ -10,6 +10,10 @@
 
 //  Include a bunch of headers that we will need in the examples
 
+#if (defined (WIN32))
+#   include <windows.h>
+#endif
+
 #include <zmq.h>
 
 #include <stdint.h>
@@ -17,12 +21,8 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
-
-#if (defined (WIN32))
-#   include <time.h>
-#else
-#   include <sys/time.h>
-#endif
+#include <time.h>
+#include <sys/time.h>
 
 #include <assert.h>
 #include <signal.h>
