@@ -23,13 +23,13 @@ sendClient :: Int -> Socket z Rep -> ZMQ z ()
 sendClient cycles server = do
     req <- receive server
 
-    if (cycles > 3)
-    then do
-        chance <- liftIO $ randomRIO (0::Int, 3)
-        when (chance == 0) $ liftIO crash
-    else do
-        chance <- liftIO $ randomRIO (0::Int, 3)
-        when (chance == 0) $ liftIO overload
+    chance <- liftIO $ randomRIO (0::Int, 3)
+    when (cycles > 3 && chance == 0) $ do
+        liftIO crash
+
+    chance' <- liftIO $ randomRIO (0::Int, 3)
+    when (cycles > 3 && chance' == 0) $ do
+        iftIO overload
 
     liftIO $ putStrLn $ "I: normal request " ++ (unpack req)
     liftIO $ threadDelay $ 1 * 1000 * 1000
