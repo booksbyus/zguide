@@ -232,10 +232,9 @@ main = do
         forM_ [1..clientNum] $ async . clientTask self
 
         -- Request reply flow
-        forever $
-            clientWorkerPoll
-                localBack
-                cloudBack
-                localFront
-                cloudFront
-                peers
+        clientWorkerPoll
+            localBack
+            cloudBack
+            localFront
+            cloudFront
+            peers
