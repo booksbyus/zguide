@@ -23,7 +23,6 @@ bytes, $(field.:))
 (printable string)
 .       elsif type = "frame"
 (opaque binary)
-.           index += 1
 .       else
 .           echo "E: unknown field type: $(type)"
 .       endif
