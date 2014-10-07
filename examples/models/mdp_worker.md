@@ -15,7 +15,7 @@ frames:
 * Frame 2: "MDPW01" (6 bytes, Protocol identifier)
 * Frame 3: 0x02 (1 byte, REQUEST)
 * Frame 4: Client address (opaque binary)
-* Frame 6: Request body (opaque binary)
+* Frame 5: Request body (opaque binary)
 
 A REPLY command consists of a multi-part message of 5
 frames:
@@ -24,7 +24,7 @@ frames:
 * Frame 2: "MDPW01" (6 bytes, Protocol identifier)
 * Frame 3: 0x03 (1 byte, REPLY)
 * Frame 4: Client address (opaque binary)
-* Frame 6: Request body (opaque binary)
+* Frame 5: Request body (opaque binary)
 
 A HEARBEAT command consists of a multi-part message of 3
 frames:
