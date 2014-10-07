@@ -238,3 +238,17 @@ executable peering2
                   transformers,
                   zeromq4-haskell  >= 0.1
   GHC-Options: -threaded
+
+executable peering3
+  default-language: Haskell2010
+  main-is:  peering3.hs
+  build-depends:  base >= 4,
+                  bytestring,
+                  random,
+                  semigroups,
+                  bytestring,
+                  containers,
+                  transformers,
+                  attoparsec,
+                  zeromq4-haskell  >= 0.1
+  GHC-Options: -threaded
