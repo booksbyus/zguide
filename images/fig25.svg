@@ -2,7 +2,7 @@
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
   "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <!-- Created with ASCIIToSVG (http://9vx.org/~dho/a2s/) -->
-<svg width="621px" height="944px" version="1.1"
+<svg width="630px" height="944px" version="1.1"
   xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   <defs>
     <filter id="dsFilter" width="150%" height="150%">
@@ -154,26 +154,6 @@
 	<text x="26.1" y="476.8" id="text68" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >all methods? </text>
 
 </g>
-<g id="group76">
-	<path id="path76" filter="url(#dsFilter)" fill="#fff" d="M 238.5 466 Q 238.5 456 248.5 456 L 381.5 456 Q 391.5 456 391.5 466 L 391.5 494 Q 391.5 504 381.5 504 L 248.5 504 Q 238.5 504 238.5 494 Z" />
-	<text x="251.1" y="476.8" id="text76" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Check each 0MQ </text>
-
-	<text x="251.1" y="492.8" id="text76" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >method call </text>
-
-</g>
-<g id="group78">
-	<path id="path78" filter="url(#dsFilter)" fill="#fff" d="M 427.5 482 Q 427.5 472 437.5 472 L 588.5 472 Q 598.5 472 598.5 482 L 598.5 558 Q 598.5 568 588.5 568 L 437.5 568 Q 427.5 568 427.5 558 Z" />
-	<text x="440.1" y="492.8" id="text78" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Use sockets only </text>
-
-	<text x="440.1" y="508.8" id="text78" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >in their owning </text>
-
-	<text x="440.1" y="524.8" id="text78" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >threads unless </text>
-
-	<text x="440.1" y="540.8" id="text78" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >you know about </text>
-
-	<text x="440.1" y="556.8" id="text78" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >memory barriers </text>
-
-</g>
 <g id="group86">
 	<path id="path86" filter="url(#dsFilter)" fill="#fff" d="M 4.5 546 Q 4.5 536 14.5 536 L 156.5 536 Q 166.5 536 166.5 546 L 166.5 590 Q 166.5 600 156.5 600 L 14.5 600 Q 4.5 600 4.5 590 Z" />
 	<text x="17.1" y="556.8" id="text86" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Are you using a </text>
@@ -181,19 +161,6 @@
 	<text x="17.1" y="572.8" id="text86" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >socket in more </text>
 
 	<text x="17.1" y="588.8" id="text86" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >than 1 thread? </text>
-
-</g>
-<g id="group102">
-	<path id="path102" filter="url(#dsFilter)" fill="#fff" d="M 454.5 610 Q 454.5 600 464.5 600 L 588.5 600 Q 598.5 600 598.5 610 L 598.5 686 Q 598.5 696 588.5 696 L 464.5 696 Q 454.5 696 454.5 686 Z" />
-	<text x="467.1" y="620.8" id="text102" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >To use inproc </text>
-
-	<text x="467.1" y="636.8" id="text102" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >your sockets </text>
-
-	<text x="467.1" y="652.8" id="text102" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >must be in </text>
-
-	<text x="467.1" y="668.8" id="text102" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >the same </text>
-
-	<text x="467.1" y="684.8" id="text102" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >0MQ context </text>
 
 </g>
 <g id="group104">
@@ -228,32 +195,6 @@
 	<text x="26.1" y="780.8" id="text122" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Are you using </text>
 
 	<text x="17.1" y="796.8" id="text122" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >ROUTER sockets? </text>
-
-</g>
-<g id="group131">
-	<path id="path131" filter="url(#dsFilter)" fill="#fff" d="M 238.5 834 Q 238.5 824 248.5 824 L 381.5 824 Q 391.5 824 391.5 834 L 391.5 910 Q 391.5 920 381.5 920 L 248.5 920 Q 238.5 920 238.5 910 Z" />
-	<text x="251.1" y="844.8" id="text131" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Check that the </text>
-
-	<text x="251.1" y="860.8" id="text131" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >reply address </text>
-
-	<text x="251.1" y="876.8" id="text131" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >is valid. 0MQ </text>
-
-	<text x="251.1" y="892.8" id="text131" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >drops messages </text>
-
-	<text x="251.1" y="908.8" id="text131" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >it can't route </text>
-
-</g>
-<g id="group133">
-	<path id="path133" filter="url(#dsFilter)" fill="#fff" d="M 445.5 834 Q 445.5 824 455.5 824 L 552.5 824 Q 562.5 824 562.5 834 L 562.5 910 Q 562.5 920 552.5 920 L 455.5 920 Q 445.5 920 445.5 910 Z" />
-	<text x="458.1" y="844.8" id="text133" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >If you use </text>
-
-	<text x="458.1" y="860.8" id="text133" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >identities </text>
-
-	<text x="458.1" y="876.8" id="text133" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >set them </text>
-
-	<text x="458.1" y="892.8" id="text133" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >before you </text>
-
-	<text x="458.1" y="908.8" id="text133" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >connect </text>
 
 </g>
 <g id="group135">
@@ -330,11 +271,35 @@
 <g id="group2668">
 	<path id="path2668" marker-end="url(#Pointer)" d="M 382.5 376 L 399.5 376 Q 409.5 376 409.5 386 L 409.5 382 Q 409.5 392 419.5 392 L 445.5 392 " />
 </g>
+<g id="group2735">
+	<path id="path2735" d="M 391.5 488 L 391.5 494 Q 391.5 504 381.5 504 L 248.5 504 Q 238.5 504 238.5 494 L 238.5 466 Q 238.5 456 248.5 456 L 381.5 456 Q 391.5 456 391.5 466 " />
+</g>
 <g id="group2745">
 	<path id="path2745" marker-end="url(#Pointer)" d="M 391.5 648 L 445.5 648 " />
 </g>
-<g id="group2760">
-	<path id="path2760" marker-end="url(#Pointer)" d="M 391.5 872 L 436.5 872 " />
+<g id="group2759">
+	<path id="path2759" d="M 391.5 856 L 391.5 834 Q 391.5 824 381.5 824 L 248.5 824 Q 238.5 824 238.5 834 L 238.5 910 Q 238.5 920 248.5 920 L 381.5 920 Q 391.5 920 391.5 910 L 391.5 872 " />
+</g>
+<g id="group2937">
+	<path id="path2937" marker-end="url(#Pointer)" d="M 418.5 872 L 463.5 872 " />
+</g>
+<g id="group2973">
+	<path id="path2973" d="M 427.5 488 L 427.5 558 Q 427.5 568 437.5 568 L 588.5 568 Q 598.5 568 598.5 558 L 598.5 472 " />
+</g>
+<g id="group3114">
+	<path id="path3114" d="M 445.5 856 L 445.5 834 Q 445.5 824 455.5 824 L 552.5 824 Q 562.5 824 562.5 834 L 562.5 872 " />
+</g>
+<g id="group3116">
+	<path id="path3116" d="M 445.5 888 L 445.5 910 Q 445.5 920 455.5 920 L 552.5 920 Q 562.5 920 562.5 910 L 562.5 872 " />
+</g>
+<g id="group3149">
+	<path id="path3149" d="M 454.5 472 L 598.5 472 " />
+</g>
+<g id="group4106">
+	<path id="path4106" d="M 598.5 664 L 598.5 610 Q 598.5 600 588.5 600 L 464.5 600 Q 454.5 600 454.5 610 L 454.5 686 Q 454.5 696 464.5 696 L 588.5 696 Q 598.5 696 598.5 686 " />
+</g>
+<g id="group4153">
+	<path id="path4153" d="M 607.5 472 L 615.5 472 Q 625.5 472 625.5 462 " />
 </g>
 </g>
 <g id="text" fill="black" style="font-family:LMMono10,monospace;font-size:15.2px" >
@@ -350,14 +315,39 @@
 <text x="179.1" y="380.8" id="text44" fill="#000" >Yes </text>
 <text x="98.1" y="396.8" id="text47" fill="#000" >No </text>
 <text x="179.1" y="444.8" id="text54" fill="#000" >No </text>
+<text x="251.1" y="476.8" id="text57" fill="#000" >Check each ZeroMQ | </text>
+<text x="251.1" y="492.8" id="text58" fill="#000" >method call </text>
+<text x="440.1" y="492.8" id="text59" fill="#000" >Use sockets only </text>
 <text x="98.1" y="508.8" id="text60" fill="#000" >Yes </text>
+<text x="440.1" y="508.8" id="text61" fill="#000" >in their owning </text>
+<text x="440.1" y="524.8" id="text62" fill="#000" >threads unless </text>
+<text x="440.1" y="540.8" id="text63" fill="#000" >you know about </text>
+<text x="440.1" y="556.8" id="text65" fill="#000" >memory barriers </text>
 <text x="179.1" y="588.8" id="text68" fill="#000" >Yes </text>
 <text x="98.1" y="620.8" id="text69" fill="#000" >No </text>
+<text x="467.1" y="620.8" id="text70" fill="#000" >To use inproc </text>
+<text x="467.1" y="636.8" id="text72" fill="#000" >your sockets </text>
+<text x="467.1" y="652.8" id="text74" fill="#000" >must be in </text>
 <text x="395.1" y="668.8" id="text77" fill="#000" >Yes </text>
-<text x="161.1" y="700.8" id="text82" fill="#000" >Yes </text>
-<text x="332.1" y="700.8" id="text83" fill="#000" >No </text>
-<text x="98.1" y="732.8" id="text84" fill="#000" >No </text>
-<text x="179.1" y="780.8" id="text88" fill="#000" >Yes </text>
-<text x="98.1" y="828.8" id="text91" fill="#000" >No </text>
+<text x="467.1" y="668.8" id="text78" fill="#000" >the same </text>
+<text x="467.1" y="684.8" id="text80" fill="#000" >ZeroMQ context </text>
+<text x="620.1" y="684.8" id="text81" fill="#000" >|</text>
+<text x="161.1" y="700.8" id="text83" fill="#000" >Yes </text>
+<text x="332.1" y="700.8" id="text84" fill="#000" >No </text>
+<text x="98.1" y="732.8" id="text85" fill="#000" >No </text>
+<text x="179.1" y="780.8" id="text89" fill="#000" >Yes </text>
+<text x="98.1" y="828.8" id="text92" fill="#000" >No </text>
+<text x="251.1" y="844.8" id="text93" fill="#000" >Check that the </text>
+<text x="458.1" y="844.8" id="text94" fill="#000" >If you use </text>
+<text x="251.1" y="860.8" id="text95" fill="#000" >reply address </text>
+<text x="458.1" y="860.8" id="text96" fill="#000" >identities </text>
+<text x="251.1" y="876.8" id="text98" fill="#000" >is valid. ZeroMQ </text>
+<text x="467.1" y="876.8" id="text99" fill="#000" >|</text>
+<text x="485.1" y="876.8" id="text100" fill="#000" >set them </text>
+<text x="584.1" y="876.8" id="text101" fill="#000" >|</text>
+<text x="251.1" y="892.8" id="text103" fill="#000" >drops messages </text>
+<text x="458.1" y="892.8" id="text104" fill="#000" >before you </text>
+<text x="251.1" y="908.8" id="text106" fill="#000" >it can't route </text>
+<text x="458.1" y="908.8" id="text107" fill="#000" >connect </text>
 </g>
 </svg>
