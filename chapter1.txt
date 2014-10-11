@@ -226,7 +226,7 @@ Some points about the publish-subscribe (pub-sub) pattern:
 
 * If you're using TCP and a subscriber is slow, messages will queue up on the publisher. We'll look at how to protect publishers against this using the "high-water mark" later.
 
-* From ZeroMQ v3.x, filtering happens at the publisher side when using a connected protocol ({{tcp://}} or {{ipc://}}). Using the {{epgm://}} protocol, filtering happens at the subscriber side. In ZeroMQ v2.x, all filtering happened at the subscriber side.
+* From ZeroMQ v3.x, filtering happens at the publisher side when using a connected protocol ({{tcp:@<//>@}} or {{ipc:@<//>@}}). Using the {{epgm:@<//>@}} protocol, filtering happens at the subscriber side. In ZeroMQ v2.x, all filtering happened at the subscriber side.
 
 This is how long it takes to receive and filter 10M messages on my laptop, which is an 2011-era Intel i5, decent but nothing special:
 
