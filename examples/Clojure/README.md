@@ -54,5 +54,5 @@ Once everything is set up, you can run examples using lein:
 lein ex <example-name> [args]
 ```
 
-**Note:** when running several processes (eg server and client), it should of
-course be possible to run one using `lein ex` while running the other using `lein jex`.
+**Caveat:** when running several processes (eg server and client), it should of
+course be possible to run one using `lein ex` while running the other using `lein jex`. However, there are some subtle differences between jeromq and libzmq (e.g. "ipc://") that prohibit successful interop in some cases (see jeromq readme).
