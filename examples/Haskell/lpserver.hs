@@ -29,7 +29,7 @@ sendClient cycles server = do
 
     chance' <- liftIO $ randomRIO (0::Int, 3)
     when (cycles > 3 && chance' == 0) $ do
-        iftIO overload
+        liftIO overload
 
     liftIO $ putStrLn $ "I: normal request " ++ (unpack req)
     liftIO $ threadDelay $ 1 * 1000 * 1000
