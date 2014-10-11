@@ -1,6 +1,10 @@
 (defproject zguide "1.0.0-SNAPSHOT"
-  :source-path "../Clojure/"
+  :source-paths ["."]
   :description "0MQ zguide in Clojure"
-  :dependencies [[org.clojure/clojure "1.4.0"]
-                 [org.zmq/zmq "2.1.0"]
-                 ])
+  :dependencies [[org.clojure/clojure "1.6.0"]
+                 [org.zeromq/cljzmq "0.1.4"]]
+  :profiles {:jeromq {:dependencies [[org.zeromq/jeromq "0.3.4"]]
+                      :exclusions [jzmq]}}
+  :jvm-opts ["-Djava.library.path=/usr/lib/:/usr/local/lib"]
+  :aliases {"ex" ["run" "-m"]
+            "jex" ["with-profile" "jeromq" "run" "-m"]})
