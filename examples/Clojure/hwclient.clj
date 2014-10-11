@@ -2,7 +2,7 @@
 ;; Connects REQ socket to tcp://localhost:5555
 ;; Sends "Hello" to server, expects "World" back
 
-(ns zguide.hwclient
+(ns hwclient
   (:require [zeromq.zmq :as zmq]))
 
 (defn -main []

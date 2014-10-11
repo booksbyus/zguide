@@ -1,6 +1,6 @@
 ;; Simple request-reply broker
 
-(ns zguide.rrbroker
+(ns rrbroker
   (:require [zeromq
              [device :as dev]
              [zmq :as zmq]]))

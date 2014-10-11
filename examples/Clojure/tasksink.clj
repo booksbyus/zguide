@@ -1,7 +1,7 @@
 ;; Binds PULL socket to tcp://localhost:5558
 ;; Collects results from workers via that socket
 
-(ns zguide.tasksink
+(ns tasksink
   (:require [zeromq.zmq :as zmq]))
 
 (defn -main []

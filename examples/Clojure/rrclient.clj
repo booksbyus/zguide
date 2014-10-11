@@ -1,4 +1,4 @@
-(ns zguide.rrclient
+(ns rrclient
   (:require [zeromq.zmq :as zmq]))
 
 (defn -main []

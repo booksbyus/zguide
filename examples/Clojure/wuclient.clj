@@ -2,7 +2,7 @@
 ;; Connects SUB socket to tcp://localhost:5556
 ;; Collects weather updates and finds avg temp in zipcode
 
-(ns zguide.wuclient
+(ns wuclient
   (:require [zeromq.zmq :as zmq]
             [clojure.string :as str]))
 
