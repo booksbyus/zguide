@@ -215,7 +215,7 @@ The first thing we have to do is break our subscriber into a multithreaded desig
 
 So the subscriber looks something like a queue device. We could use various sockets to connect the subscriber and workers. If we assume one-way traffic and workers that are all identical, we can use PUSH and PULL and delegate all the routing work to ZeroMQ[figure]. This is the simplest and fastest approach.
 
-The subscriber talks to the publisher over TCP or PGM. The subscriber talks to its workers, which are all in the same process, over {{inproc://}}.
+The subscriber talks to the publisher over TCP or PGM. The subscriber talks to its workers, which are all in the same process, over {{inproc:@<//>@}}.
 
 [[code type="textdiagram" title="Mad Black Box Pattern"]]
                #-----------#
@@ -400,7 +400,7 @@ And here is the client:
 
 Here are some things to note about these two programs:
 
-* The server uses two tasks. One thread produces the updates (randomly) and sends these to the main PUB socket, while the other thread handles state requests on the ROUTER socket. The two communicate across PAIR sockets over an {{inproc://}} connection.
+* The server uses two tasks. One thread produces the updates (randomly) and sends these to the main PUB socket, while the other thread handles state requests on the ROUTER socket. The two communicate across PAIR sockets over an {{inproc:@<//>@}} connection.
 
 * The client is really simple. In C, it consists of about fifty lines of code. A lot of the heavy lifting is done in the {{kvmsg}} class. Even so, the basic Clone pattern is easier to implement than it seemed at first.
 
