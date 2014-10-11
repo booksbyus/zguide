@@ -2,7 +2,7 @@
 ;; Connects REP socket to tcp://*:5560
 ;; Expects "Hello" from client, replies with "World"
 
-(ns zguide.rrworker
+(ns rrworker
   (:require [zeromq.zmq :as zmq]))
 
 (defn -main []

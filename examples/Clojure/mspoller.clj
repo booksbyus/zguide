@@ -1,7 +1,7 @@
 ;; Reading from multiple sockets
 ;; This version uses zmq_poll()
 
-(ns zguide.mspoller
+(ns mspoller
   (:require [zeromq.zmq :as zmq]))
 
 (defn -main []

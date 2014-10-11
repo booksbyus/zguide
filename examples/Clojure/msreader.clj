@@ -1,7 +1,7 @@
 ;; Reading from multiple sockets
 ;; This version uses a simple recv loop
 
-(ns zguide.msreader
+(ns msreader
   (:require [zeromq.zmq :as zmq]))
 
 (defn -main []

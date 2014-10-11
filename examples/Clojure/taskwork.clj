@@ -3,7 +3,7 @@
 ;; Connects PUSH socket to tcp://localhost:5558
 ;; Sends results to sink via that socket
 
-(ns zguide.taskwork
+(ns taskwork
   (:require [zeromq.zmq :as zmq]))
 
 (defn -main []

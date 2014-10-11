@@ -1,7 +1,7 @@
 ;; Simple message queuing broker
 ;; Same as request-reply broker but using QUEUE device
 
-(ns zguide.msgqueue
+(ns msgqueue
   (:require [zeromq
              [device :as device]
              [zmq :as zmq]]))
