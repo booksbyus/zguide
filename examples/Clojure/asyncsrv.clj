@@ -1,8 +1,7 @@
 (ns asyncsrv
-  (:refer-clojure :exclude [send])
-  (:require [zhelpers :as mq])
-  (:import (org.zeromq ZMQ$Poller)
-           (java.util Random)))
+  (:require [zeromq [zmq :as zmq]
+                    [device :as zmqd]])
+  (:import  [java.util Random]))
 
 ;;
 ;; Asynchronous client-to-server (DEALER to ROUTER)
@@ -10,83 +9,82 @@
 ;; While this example runs in a single process, that is just to make
 ;; it easier to start and stop the example. Each task has its own
 ;; context and conceptually acts as a separate process.
-;;
-;; Isaiah Peng <issaria@gmail.com>
 
 ;; Accept a request and reply with the same text a random number of
 ;; times, with random delays between replies.
 
-(defrecord ServerWorker []
+(defrecord ServerWorker [ctx]
   Runnable
   (run [this]
-    (let [ctx (mq/context 1)
-          srandom (Random. (System/currentTimeMillis))
-          worker (mq/socket ctx mq/dealer)]
-      (mq/connect worker "inproc://backend")
-      ;; The DEALER socket gives us the address envelope and message
-      (let [msg (-> worker mq/recv-all last String.)]
-        (dotimes [i (.nextInt srandom 5)]
-          (Thread/sleep (* 1000 (.nextInt srandom 0)))
-          (mq/send worker msg))))))
+    (let [srandom (Random. (System/currentTimeMillis))
+          worker (doto (zmq/socket ctx :dealer)
+                   (zmq/connect "inproc://backend"))]
+      (while true
+        ;; The DEALER socket gives us the address envelope and message
+        (let [[identity content] (zmq/receive-all worker)]
+          ;; Send 0..4 replies back
+          (dotimes [i (.nextInt srandom 5)]
+            ;; Sleep for some fraction of a second
+            (Thread/sleep (inc (.nextInt srandom 1000)))
+            (zmq/send worker identity zmq/send-more)
+            (zmq/send worker content)))))))
 
-;; ---------------------------------------------------------------------
+
 ;; This is our client task
 ;; It connects to the server, and then sends a request once per second
 ;; It collects responses as they arrive, and it prints them out. We will
 ;; run several client tasks in parallel, each with a different random ID.
 
-(defrecord ClientTask [n]
+(defrecord ClientTask []
   Runnable
   (run [this]
-    (let [ctx (mq/context 1)
-          client (mq/socket ctx mq/dealer)
-          poller (.poller ctx 1)
+    (let [ctx (zmq/context 1)
+          ;; Set random identity to make tracing easier
+          random (Random.)
+          identity (format "%04X-%04X"
+                           (.nextInt random 0x10000)
+                           (.nextInt random 0x10000))
+          client (doto (zmq/socket ctx :dealer)
+                   (zmq/set-identity (.getBytes identity))
+                   (zmq/connect "tcp://localhost:5570"))
+          poller (doto (zmq/poller ctx 1)
+                   (zmq/register client :pollin))
           request-nbr (atom 0)]
-      (mq/set-id client n)
-      (mq/connect client "tcp://localhost:5570")
-      (.register poller client ZMQ$Poller/POLLIN)
       (while true
-        (dotimes [i 100]
-          (.poll poller 10000)
-          (if (.pollin poller 0)
-            (println (format "%s: %s" (-> client .getIdentity String.) (-> client (mq/recv-all 0) last))))
-          (swap! request-nbr inc)
-          (mq/send client (format "request: %d" @request-nbr)))))))
+        ;; Tick once per second, pulling in arriving messages
+        (dotimes [_ 100]
+          (zmq/poll poller 10)
+          (when (zmq/check-poller poller 0 :pollin)
+            (println (format "%s: %s"
+                             identity
+                             (zmq/receive-str client)))))
+        (zmq/send-str client (format "request: %d" (swap! request-nbr inc)))))))
 
 (defrecord ServerTask []
   Runnable
   (run [this]
-    (let [ctx (mq/context 1)
-          frontend (mq/socket ctx mq/router)
-          backend (mq/socket ctx mq/dealer)]
-      ;; Frontend socket talks to clients over tcp
-      (mq/bind frontend "tcp://*:5570")
-      ;; Backend socket talks to workers over inproc
-      (mq/bind backend "inproc://backend")
-      ;; Launch pool of worker threads, precise number is not critical
-      (dotimes [i 5]
-        (-> (ServerWorker.) Thread. .start))
-      ;;  Connect backend to frontend via a queue device
-      ;;  We could do this:
-      ;;  zmq_device (ZMQ_QUEUE, frontend, backend);
-      ;;  But doing it ourselves means we can debug this more easily
-      ;; 
-      ;;  Switch messages between frontend and backend
-      (let [poller (.poller ctx 2)]
-        (.register poller frontend ZMQ$Poller/POLLIN)
-        (.register poller backend ZMQ$Poller/POLLIN)
-        (while true
-          (.poll poller)
-          (if (.pollin poller 0)
-            (let [msg (-> frontend (mq/recv-all 0) last String.)]
-              (println (format "Request from client: %s" msg))
-              (mq/send backend msg)))
-          (if (.pollin poller 1)
-            (let [msg (-> backend (mq/recv-all 0) last String.)]
-              (println (format "Reply from worker: %s" msg))
-              (mq/send frontend msg))))))))
+    (let [ctx (zmq/context 1)
+          ;; Frontend socket talks to clients over TCP
+          frontend (doto (zmq/socket ctx :router)
+                     (zmq/bind "tcp://*:5570"))
+          ;; Backend socket talks to workers over inproc
+          backend (doto (zmq/socket ctx :dealer)
+                    (zmq/bind "inproc://backend"))]
 
+      ;; Launch pool of worker threads, precise number is not critical
+      (dotimes [_ 5]
+        (-> (->ServerWorker ctx) Thread. .start))
+
+      ;; Connect backend to frontend via a proxy
+      (zmqd/proxy ctx frontend backend)
+
+      (zmq/destroy ctx))))
+
+;; The main thread simply starts several clients and a server, and then
+;; waits for the server to finish
 (defn -main []
-  (dotimes [i 3]
-    (-> i ClientTask. Thread. .start))
-  (-> (ServerTask.) Thread. .start))
+  (dotimes [_ 3]
+    (-> (ClientTask.) Thread. .start))
+  (-> (ServerTask.) Thread. .start)
+  (Thread/sleep 5000) ;; Run for 5 seconds then quit
+  (System/exit 0))
