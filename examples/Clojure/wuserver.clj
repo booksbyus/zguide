@@ -2,7 +2,7 @@
 ;; Binds PUB socket to tcp://*:5556
 ;; Publishes random weather updates
 
-(ns zguide.wuserver
+(ns wuserver
   (:require [zeromq.zmq :as zmq]))
 
 (defn -main []

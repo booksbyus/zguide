@@ -2,7 +2,7 @@
 ;; Binds REP socket to tcp://*:5555
 ;; Expects "Hello" from client, replies with "World"
 
-(ns zguide.hwserver
+(ns hwserver
   (:require [zeromq.zmq :as zmq]))
 
 (defn -main []

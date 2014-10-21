@@ -926,8 +926,8 @@ Let's make three threads that signal each other when they are ready[figure]. In 
 This is a classic pattern for multithreading with ZeroMQ:
 
 # Two threads communicate over {{inproc}}, using a shared context.
-# The parent thread creates one socket, binds it to an {{inproc://}} endpoint, and //then// starts the child thread, passing the context to it.
-# The child thread creates the second socket, connects it to that {{inproc://}} endpoint, and //then// signals to the parent thread that it's ready.
+# The parent thread creates one socket, binds it to an {{inproc:@<//>@}} endpoint, and //then// starts the child thread, passing the context to it.
+# The child thread creates the second socket, connects it to that {{inproc:@<//>@}} endpoint, and //then// signals to the parent thread that it's ready.
 
 Note that multithreading code using this pattern is not scalable out to processes. If you use {{inproc}} and socket pairs, you are building a tightly-bound application, i.e., one where your threads are structurally interdependent. Do this when low latency is really vital. The other design pattern is a loosely bound application, where threads have their own context and communicate over {{ipc}} or {{tcp}}. You can easily break loosely bound threads into separate processes.
 
