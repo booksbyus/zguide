@@ -71,6 +71,8 @@ executable identity
   build-depends:  base >= 4,
                   bytestring,
                   random,
+                  time,
+                  old-locale,
                   zeromq4-haskell  >= 0.1
 
 executable taskvent
@@ -188,6 +190,8 @@ executable rtreq
                   bytestring,
                   random,
                   time,
+                  time,
+                  old-locale,
                   zeromq4-haskell  >= 0.1
 
 executable rtdealer
@@ -197,6 +201,7 @@ executable rtdealer
                   bytestring,
                   random,
                   time,
+                  old-locale,
                   zeromq4-haskell  >= 0.1
 
 executable lbbroker
@@ -213,6 +218,8 @@ executable asyncsrv
   build-depends:  base >= 4,
                   bytestring,
                   random,
+                  time,
+                  old-locale,
                   zeromq4-haskell  >= 0.1
   GHC-Options: -threaded
 
@@ -286,5 +293,31 @@ executable spworker
   build-depends:  base >= 4,
                   random,
                   bytestring,
+                  time,
+                  old-locale,
+                  zeromq4-haskell  >= 0.1
+  GHC-Options: -threaded
+
+executable ppqueue
+  default-language: Haskell2010
+  main-is: ppqueue.hs
+  build-depends:  base >= 4,
+                  random,
+                  semigroups,
+                  bytestring,
+                  time,
+                  old-locale,
+                  zeromq4-haskell  >= 0.1
+  GHC-Options: -threaded
+
+executable ppworker
+  default-language: Haskell2010
+  main-is: ppworker.hs
+  other-modules: ZHelpers
+  build-depends:  base >= 4,
+                  random,
+                  bytestring,
+                  time,
+                  old-locale,
                   zeromq4-haskell  >= 0.1
   GHC-Options: -threaded
