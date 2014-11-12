@@ -8,7 +8,7 @@ test -z "$BOOM_MODEL" && BOOM_MODEL=debug
 
 ZMQOPTS='-lzmq -lczmq'
 if pkg-config libzmq --exists; then
-  ZMQOPTS=$(pkg-config --libs --cflags libzmq)
+  ZMQOPTS=$(pkg-config --libs --cflags libczmq libzmq)
 fi
 
 CCLIBS="$CCLIBS $ZMQOPTS"
