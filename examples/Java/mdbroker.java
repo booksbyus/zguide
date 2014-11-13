@@ -20,6 +20,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Formatter;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.zeromq.ZContext;
@@ -326,12 +327,15 @@ public class mdbroker {
      * stop at the first alive worker.
      */
     public synchronized void purgeWorkers() {
-        for (Worker w = waiting.peekFirst(); w != null
-                && w.expiry < System.currentTimeMillis(); w = waiting
-                .peekFirst()) {
-            log.format("I: deleting expired worker: %s\n", w.identity);
-            deleteWorker(waiting.pollFirst(), false);
-        }
+	Iterator<Worker> iterator = waiting.iterator();
+	while(iterator.hasNext()){
+		Worker w = iterator.next();
+		if (w.expiry < System.currentTimeMillis()){
+			iterator.remove();
+			log.format("I: deleting expired worker: %s\n", w.identity);
+			deleteWorker(w, false);
+		}
+	}
     }
 
     /**
