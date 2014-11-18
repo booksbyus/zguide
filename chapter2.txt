@@ -182,8 +182,8 @@ We looked at the first three of these in [#basics], and we'll see the exclusive 
 
 * PUB and SUB
 * REQ and REP
-* REQ and ROUTER
-* DEALER and REP
+* REQ and ROUTER (take care, REQ inserts an extra null frame)
+* DEALER and REP (take care, REP assumes a null frame)
 * DEALER and ROUTER
 * DEALER and DEALER
 * ROUTER and ROUTER
