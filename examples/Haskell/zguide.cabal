@@ -118,7 +118,8 @@ executable rrbroker
   main-is:  rrbroker.hs
   build-depends:  base >= 4,
                   bytestring,
-                  zeromq4-haskell  >= 0.1
+                  zeromq4-haskell  >= 0.1,
+                  semigroups
 executable msgqueue
   default-language: Haskell2010
   main-is:  msgqueue.hs
