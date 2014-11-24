@@ -61,11 +61,9 @@ public:
        for(size_t i = 0; i < m_requests.size(); i++) {
            delete m_requests[i];
        }
-       m_requests.clear();
        for(size_t i = 0; i < m_waiting.size(); i++) {
            delete m_waiting[i];
        }
-       m_waiting.clear();
    }
 
 private:
@@ -102,9 +100,6 @@ public:
    virtual
    ~broker ()
    {
-       m_services.clear();
-       m_workers.clear();
-       m_waiting.clear();
    }
 
    //  ---------------------------------------------------------------------
