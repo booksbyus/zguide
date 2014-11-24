@@ -206,10 +206,9 @@ public:
 
        //  Remove & save client return envelope and insert the
        //  protocol header and service name, then rewrap envelope.
-       char *client = msg->unwrap();
+	   std::string client = msg->unwrap();
        msg->wrap(MDPC_CLIENT, service_name.c_str());
-       msg->wrap(client, "");
-       delete client;
+       msg->wrap(client.c_str(), "");
        msg->send (*m_socket);
    }
 
