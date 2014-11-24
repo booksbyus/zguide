@@ -9,6 +9,8 @@
 
 #include <map>
 #include <vector>
+#include <deque>
+#include <list>
 
 //  We'd normally pull these from config data
 
@@ -61,15 +63,12 @@ public:
        for(size_t i = 0; i < m_requests.size(); i++) {
            delete m_requests[i];
        }
-       for(size_t i = 0; i < m_waiting.size(); i++) {
-           delete m_waiting[i];
-       }
    }
 
 private:
     std::string m_name;             //  Service name
-    std::vector<zmsg*> m_requests;   //  List of client requests
-    std::vector<worker*> m_waiting;  //  List of waiting workers
+    std::deque<zmsg*> m_requests;   //  List of client requests
+    std::list<worker*> m_waiting;  //  List of waiting workers
     size_t m_workers;               //  How many workers we have
 
     service(std::string name)
@@ -100,6 +99,10 @@ public:
    virtual
    ~broker ()
    {
+	   while (! m_services.empty())
+           delete m_services.begin()->second;
+	   while (! m_workers.empty())
+           delete m_workers.begin()->second;
    }
 
    //  ---------------------------------------------------------------------
@@ -170,19 +173,26 @@ public:
        }
 
        purge_workers ();
-       while (srv->m_waiting.size()>0 && srv->m_requests.size()>0)
+       while (! srv->m_waiting.empty() && ! srv->m_requests.empty())
        {
-           worker *wrk = srv->m_waiting.size() ? srv->m_waiting.front() : 0;
-           srv->m_waiting.erase(srv->m_waiting.begin());
-           zmsg *msg = srv->m_requests.size() ? srv->m_requests.front() : 0;
-           srv->m_requests.erase(srv->m_requests.begin());
-           worker_send (wrk, (char*)MDPW_REQUEST, "", msg);
+		   // Choose the most recently seen idle worker; others might be about to expire
+		   std::list<worker*>::iterator wrk = srv->m_waiting.begin();
+		   std::list<worker*>::iterator next = wrk;
+		   for (++next; next != srv->m_waiting.end(); ++next)
+		   {
+			   if ((*next)->m_expiry > (*wrk)->m_expiry)
+				   wrk = next;
+		   }
+		   
+           zmsg *msg = srv->m_requests.front();
+           srv->m_requests.pop_front();
+           worker_send (*wrk, (char*)MDPW_REQUEST, "", msg);
        	   for(std::vector<worker*>::iterator it = m_waiting.begin(); it != m_waiting.end(); it++) {
-              if (*it == wrk) {
+              if (*it == *wrk) {
                  it = m_waiting.erase(it)-1;
               }
            }
-
+		   srv->m_waiting.erase(wrk);
            delete msg;
        }
    }
@@ -245,11 +255,15 @@ public:
        }
 
        if (wrk->m_service) {
-           for(std::vector<worker*>::iterator it = wrk->m_service->m_waiting.begin();
-                 it != wrk->m_service->m_waiting.end(); it++) {
+           for(std::list<worker*>::iterator it = wrk->m_service->m_waiting.begin();
+                 it != wrk->m_service->m_waiting.end();) {
               if (*it == wrk) {
-                 it = wrk->m_service->m_waiting.erase(it)-1;
+                 it = wrk->m_service->m_waiting.erase(it);
               }
+			  else
+			  {
+                 ++it;
+			  }
            }
            wrk->m_service->m_workers--;
        }
@@ -366,6 +380,7 @@ public:
        m_waiting.push_back(worker);
        worker->m_service->m_waiting.push_back(worker);
        worker->m_expiry = s_clock () + HEARTBEAT_EXPIRY;
+	   // Attempt to process outstanding requests
        service_dispatch (worker->m_service, 0);
    }
 
