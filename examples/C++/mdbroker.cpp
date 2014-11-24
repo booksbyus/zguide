@@ -32,15 +32,6 @@ public:
    {
    }
 
-   //  ---------------------------------------------------------------------
-   //  Return 1 if worker has expired and must be deleted
-
-   bool
-   expired ()
-   {
-       return m_expiry < s_clock ();
-   }
-
 private:
     std::string m_identity;   //  Address of worker
     service * m_service;      //  Owning service, if known
@@ -134,17 +125,20 @@ public:
    void
    purge_workers ()
    {
-       worker * wrk = m_waiting.size()>0 ? m_waiting.front() : 0;
-       while (wrk) {
-           if (!wrk->expired ()) {
-               break;              //  Worker is alive, we're done here
+	   int64_t now = s_clock();
+       for (size_t i = 0; i < m_waiting.size();)
+	   {
+		   worker* wrk = m_waiting[i];
+           if (wrk->m_expiry > now)
+		   {
+			   ++i;
+               continue;
            }
            if (m_verbose) {
                s_console ("I: deleting expired worker: %s",
                      wrk->m_identity.c_str());
            }
            worker_delete (wrk, 0);
-           wrk = m_waiting.size()>0 ? m_waiting.front() : 0;
        }
    }
 
