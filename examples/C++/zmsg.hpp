@@ -82,7 +82,7 @@ public:
    }
 
    void set_part(size_t part_nbr, unsigned char *data) {
-       if (part_nbr < m_part_data.size() && part_nbr >= 0) {
+       if (part_nbr < m_part_data.size()) {
            m_part_data[part_nbr] = data;
        }
    }
