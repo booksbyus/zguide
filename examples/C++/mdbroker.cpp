@@ -409,7 +409,7 @@ public:
       while (!s_interrupted) {
           zmq::pollitem_t items [] = {
               { *m_socket,  0, ZMQ_POLLIN, 0 } };
-          zmq::poll (items, 1, HEARTBEAT_INTERVAL * 1000);
+          zmq::poll (items, 1, HEARTBEAT_INTERVAL);
 
           //  Process next input message, if any
           if (items [0].revents & ZMQ_POLLIN) {
@@ -470,7 +470,7 @@ int main (int argc, char *argv [])
 {
     int verbose = (argc > 1 && strcmp (argv [1], "-v") == 0);
 
-    s_version_assert (2, 1);
+    s_version_assert (4, 0);
     s_catch_signals ();
     broker brk(verbose);
     brk.bind ("tcp://*:5555");

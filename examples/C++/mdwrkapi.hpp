@@ -47,7 +47,7 @@ public:
 
     mdwrk (std::string broker, std::string service, int verbose)
     {
-        s_version_assert (2, 1);
+        s_version_assert (4, 0);
 
         m_broker = broker;
         m_service = service;
@@ -161,7 +161,7 @@ public:
         while (!s_interrupted) {
             zmq::pollitem_t items [] = {
                 { *m_worker,  0, ZMQ_POLLIN, 0 } };
-            zmq::poll (items, 1, m_heartbeat * 1000);
+            zmq::poll (items, 1, m_heartbeat);
 
             if (items [0].revents & ZMQ_POLLIN) {
                 zmsg *msg = new zmsg(*m_worker);
