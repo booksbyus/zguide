@@ -162,6 +162,7 @@ class mdbroker
         while (count($service->waiting) && count($service->requests)) {
             $worker = array_shift($service->waiting);
             $msg = array_shift($service->requests);
+            $this->worker_remove_from_array($worker, $this->waiting);
             $this->worker_send($worker, MDPW_REQUEST, NULL, $msg);
         }
     }
@@ -228,19 +229,30 @@ class mdbroker
         }
 
         if (isset($worker->service)) {
-            $this->worker_remove_from_array($worker, $worker->service->waiting);
+            $sw = $this->worker_remove_from_array($worker, $worker->service->waiting)
+        } else {
+            $sw = null;
+        }
+        
+        $w = $this->worker_remove_from_array($worker, $this->waiting);
+        
+        if ($sw || $w && $sw === false) {
             $worker->service->workers--;
         }
-        $this->worker_remove_from_array($worker, $this->waiting);
+        
         unset($this->workers[$worker->identity]);
     }
 
     private function worker_remove_from_array($worker, &$array)
     {
         $index = array_search($worker, $array);
+        
         if ($index !== false) {
             unset($array[$index]);
+            return true;
         }
+        
+        return false;
     }
 
     /**
