@@ -37,7 +37,6 @@ struct worker
 //  This defines a single service
 struct service
 {
-
    ~service ()
    {
        for(size_t i = 0; i < m_requests.size(); i++) {
@@ -78,9 +77,9 @@ public:
    virtual
    ~broker ()
    {
-	   while (! m_services.empty())
+       while (! m_services.empty())
            delete m_services.begin()->second;
-	   while (! m_workers.empty())
+       while (! m_workers.empty())
            delete m_workers.begin()->second;
    }
 
@@ -104,13 +103,13 @@ private:
    void
    purge_workers ()
    {
-	   int64_t now = s_clock();
+       int64_t now = s_clock();
        for (size_t i = 0; i < m_waiting.size();)
-	   {
-		   worker* wrk = m_waiting[i];
+       {
+           worker* wrk = m_waiting[i];
            if (wrk->m_expiry > now)
-		   {
-			   ++i;
+           {
+               ++i;
                continue;
            }
            if (m_verbose) {
@@ -156,14 +155,14 @@ private:
        purge_workers ();
        while (! srv->m_waiting.empty() && ! srv->m_requests.empty())
        {
-		   // Choose the most recently seen idle worker; others might be about to expire
-		   std::list<worker*>::iterator wrk = srv->m_waiting.begin();
-		   std::list<worker*>::iterator next = wrk;
-		   for (++next; next != srv->m_waiting.end(); ++next)
-		   {
-			   if ((*next)->m_expiry > (*wrk)->m_expiry)
-				   wrk = next;
-		   }
+           // Choose the most recently seen idle worker; others might be about to expire
+           std::list<worker*>::iterator wrk = srv->m_waiting.begin();
+           std::list<worker*>::iterator next = wrk;
+           for (++next; next != srv->m_waiting.end(); ++next)
+           {
+              if ((*next)->m_expiry > (*wrk)->m_expiry)
+                 wrk = next;
+           }
 		   
            zmsg *msg = srv->m_requests.front();
            srv->m_requests.pop_front();
@@ -173,7 +172,7 @@ private:
                  it = m_waiting.erase(it)-1;
               }
            }
-		   srv->m_waiting.erase(wrk);
+           srv->m_waiting.erase(wrk);
            delete msg;
        }
    }
@@ -197,7 +196,7 @@ private:
 
        //  Remove & save client return envelope and insert the
        //  protocol header and service name, then rewrap envelope.
-	   std::string client = msg->unwrap();
+       std::string client = msg->unwrap();
        msg->wrap(MDPC_CLIENT, service_name.c_str());
        msg->wrap(client.c_str(), "");
        msg->send (*m_socket);
@@ -241,10 +240,9 @@ private:
               if (*it == wrk) {
                  it = wrk->m_service->m_waiting.erase(it);
               }
-			  else
-			  {
+              else {
                  ++it;
-			  }
+              }
            }
            wrk->m_service->m_workers--;
        }
@@ -361,7 +359,7 @@ private:
        m_waiting.push_back(worker);
        worker->m_service->m_waiting.push_back(worker);
        worker->m_expiry = s_clock () + HEARTBEAT_EXPIRY;
-	   // Attempt to process outstanding requests
+       // Attempt to process outstanding requests
        service_dispatch (worker->m_service, 0);
    }
 

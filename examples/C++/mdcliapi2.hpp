@@ -80,7 +80,7 @@ public:
        m_client = new zmq::socket_t (*m_context, ZMQ_DEALER);
        int linger = 0;
        m_client->setsockopt (ZMQ_LINGER, &linger, sizeof (linger));
-	   s_set_id(*m_client);
+       s_set_id(*m_client);
        m_client->connect (m_broker.c_str());
        if (m_verbose)
            s_console ("I: connecting to broker at %s...", m_broker.c_str());
