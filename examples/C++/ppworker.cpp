@@ -39,7 +39,7 @@ s_worker_socket (zmq::context_t &context) {
 
 int main (void)
 {
-    s_version_assert (2, 1);
+    s_version_assert (4, 0);
     srandom ((unsigned) time (NULL));
 
     zmq::context_t context (1);
@@ -55,7 +55,7 @@ int main (void)
     int cycles = 0;
     while (1) {
         zmq::pollitem_t items [] = { { *worker,  0, ZMQ_POLLIN, 0 } };
-        zmq::poll (items, 1, HEARTBEAT_INTERVAL * 1000);
+        zmq::poll (items, 1, HEARTBEAT_INTERVAL);
 
         if (items [0].revents & ZMQ_POLLIN) {
             //  Get message

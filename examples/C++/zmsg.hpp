@@ -82,7 +82,7 @@ public:
    }
 
    void set_part(size_t part_nbr, unsigned char *data) {
-       if (part_nbr < m_part_data.size() && part_nbr >= 0) {
+       if (part_nbr < m_part_data.size()) {
            m_part_data[part_nbr] = data;
        }
    }
@@ -270,11 +270,11 @@ public:
       push_front((char*)address);
    }
 
-   char * unwrap() {
+   std::string unwrap() {
       if (m_part_data.size() == 0) {
          return NULL;
       }
-      char *addr = (char*)pop_front().c_str();
+      std::string addr = (char*)pop_front().c_str();
       if (address() && *address() == 0) {
          pop_front();
       }

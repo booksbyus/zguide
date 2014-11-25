@@ -93,7 +93,7 @@ s_queue_purge (std::vector<worker_t> &queue)
 
 int main (void)
 {
-    s_version_assert (2, 1);
+    s_version_assert (4, 0);
 
     //  Prepare our context and sockets
     zmq::context_t context(1);
@@ -115,9 +115,9 @@ int main (void)
         };
         //  Poll frontend only if we have available workers
         if (queue.size()) {
-            zmq::poll (items, 2, HEARTBEAT_INTERVAL * 1000);
+            zmq::poll (items, 2, HEARTBEAT_INTERVAL);
         } else {
-            zmq::poll (items, 1, HEARTBEAT_INTERVAL * 1000);
+            zmq::poll (items, 1, HEARTBEAT_INTERVAL);
         }
 
         //  Handle worker activity on backend

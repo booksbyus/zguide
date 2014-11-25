@@ -45,7 +45,7 @@ public:
 
    mdcli (std::string broker, int verbose)
    {
-       s_version_assert (2, 1);
+       s_version_assert (4, 0);
 
        m_broker = broker;
        m_context = new zmq::context_t (1);
@@ -80,6 +80,7 @@ public:
        m_client = new zmq::socket_t (*m_context, ZMQ_DEALER);
        int linger = 0;
        m_client->setsockopt (ZMQ_LINGER, &linger, sizeof (linger));
+       s_set_id(*m_client);
        m_client->connect (m_broker.c_str());
        if (m_verbose)
            s_console ("I: connecting to broker at %s...", m_broker.c_str());
@@ -132,7 +133,7 @@ public:
    {
        //  Poll socket for a reply, with timeout
        zmq::pollitem_t items [] = { { *m_client, 0, ZMQ_POLLIN, 0 } };
-       zmq::poll (items, 1, m_timeout * 1000);
+       zmq::poll (items, 1, m_timeout);
 
        //  If we got a reply, process it
        if (items [0].revents & ZMQ_POLLIN) {
