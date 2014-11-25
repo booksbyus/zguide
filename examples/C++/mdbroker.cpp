@@ -18,29 +18,15 @@
 #define HEARTBEAT_INTERVAL  2500    //  msecs
 #define HEARTBEAT_EXPIRY    HEARTBEAT_INTERVAL * HEARTBEAT_LIVENESS
 
-class service;
-class broker;
+struct service;
 
 //  This defines one worker, idle or active
-class worker {
-   friend class broker;
-public:
-   //  ---------------------------------------------------------------------
-   //  Destroy worker object, called when worker is removed from
-   //  broker->workers.
-
-   virtual
-   ~worker ()
-   {
-   }
-
-private:
+struct worker
+{
     std::string m_identity;   //  Address of worker
     service * m_service;      //  Owning service, if known
     int64_t m_expiry;         //  Expires at unless heartbeat
 
-    //  ---------------------------------------------------------------------
-    //  Constructor is private, only used from broker
     worker(std::string identity, service * service = 0, int64_t expiry = 0) {
        m_identity = identity;
        m_service = service;
@@ -49,15 +35,9 @@ private:
 };
 
 //  This defines a single service
-class service {
-public:
-   friend class broker;
+struct service
+{
 
-   //  ---------------------------------------------------------------------
-   //  Destroy service object, called when service is removed from
-   //  broker->services.
-
-   virtual
    ~service ()
    {
        for(size_t i = 0; i < m_requests.size(); i++) {
@@ -65,7 +45,6 @@ public:
        }
    }
 
-private:
     std::string m_name;             //  Service name
     std::deque<zmsg*> m_requests;   //  List of client requests
     std::list<worker*> m_waiting;  //  List of waiting workers
@@ -116,6 +95,8 @@ public:
        m_socket->bind(m_endpoint.c_str());
        s_console ("I: MDP broker/0.1.1 is active at %s", endpoint.c_str());
    }
+	
+private:
 
    //  ---------------------------------------------------------------------
    //  Delete any idle workers that haven't pinged us in a while.
@@ -405,6 +386,8 @@ public:
            service_dispatch (srv, msg);
        }
    }
+	
+public:
 
    //  Get and process messages forever or until interrupted
    void
