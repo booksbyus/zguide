@@ -71,6 +71,8 @@ executable identity
   build-depends:  base >= 4,
                   bytestring,
                   random,
+                  time,
+                  old-locale,
                   zeromq4-haskell  >= 0.1
 
 executable taskvent
@@ -189,6 +191,8 @@ executable rtreq
                   bytestring,
                   random,
                   time,
+                  time,
+                  old-locale,
                   zeromq4-haskell  >= 0.1
 
 executable rtdealer
@@ -198,6 +202,7 @@ executable rtdealer
                   bytestring,
                   random,
                   time,
+                  old-locale,
                   zeromq4-haskell  >= 0.1
 
 executable lbbroker
@@ -214,6 +219,8 @@ executable asyncsrv
   build-depends:  base >= 4,
                   bytestring,
                   random,
+                  time,
+                  old-locale,
                   zeromq4-haskell  >= 0.1
   GHC-Options: -threaded
 
@@ -251,5 +258,67 @@ executable peering3
                   containers,
                   transformers,
                   attoparsec,
+                  zeromq4-haskell  >= 0.1
+  GHC-Options: -threaded
+
+executable lpclient
+  default-language: Haskell2010
+  main-is: lpclient.hs
+  build-depends:  base >= 4,
+                  random,
+                  bytestring,
+                  zeromq4-haskell  >= 0.1
+  GHC-Options: -threaded
+
+executable lpserver
+  default-language: Haskell2010
+  main-is: lpserver.hs
+  build-depends:  base >= 3,
+                  bytestring,
+                  random,
+                  zeromq4-haskell  >= 0.1
+  GHC-Options: -threaded
+
+executable spqueue
+  default-language: Haskell2010
+  main-is: spqueue.hs
+  build-depends:  base >= 4,
+                  bytestring,
+                  zeromq4-haskell  >= 0.1
+  GHC-Options: -threaded
+
+executable spworker
+  default-language: Haskell2010
+  main-is: spworker.hs
+  other-modules: ZHelpers
+  build-depends:  base >= 4,
+                  random,
+                  bytestring,
+                  time,
+                  old-locale,
+                  zeromq4-haskell  >= 0.1
+  GHC-Options: -threaded
+
+executable ppqueue
+  default-language: Haskell2010
+  main-is: ppqueue.hs
+  build-depends:  base >= 4,
+                  random,
+                  semigroups,
+                  bytestring,
+                  time,
+                  old-locale,
+                  zeromq4-haskell  >= 0.1
+  GHC-Options: -threaded
+
+executable ppworker
+  default-language: Haskell2010
+  main-is: ppworker.hs
+  other-modules: ZHelpers
+  build-depends:  base >= 4,
+                  random,
+                  bytestring,
+                  time,
+                  old-locale,
                   zeromq4-haskell  >= 0.1
   GHC-Options: -threaded
