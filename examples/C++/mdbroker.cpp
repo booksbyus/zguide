@@ -78,9 +78,15 @@ public:
    ~broker ()
    {
        while (! m_services.empty())
+       {
            delete m_services.begin()->second;
+           m_services.erase(m_services.begin());
+       }
        while (! m_workers.empty())
+       {
            delete m_workers.begin()->second;
+           m_workers.erase(m_workers.begin());
+       }
    }
 
    //  ---------------------------------------------------------------------
