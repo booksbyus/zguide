@@ -134,13 +134,13 @@ executable rrworker
                   bytestring,
                   zeromq4-haskell  >= 0.1
 
---executable interrupt
---  default-language: Haskell2010
---  main-is:  interrupt.hs
---  build-depends:  base >= 4,
---                  bytestring,
---                  unix,
---                  zeromq4-haskell  >= 0.1
+executable interrupt
+  default-language: Haskell2010
+  main-is:  interrupt.hs
+  build-depends:  base >= 4,
+                  bytestring,
+                  unix,
+                  zeromq4-haskell  >= 0.1
 
 executable mtserver
   default-language: Haskell2010
