@@ -322,3 +322,49 @@ executable ppworker
                   old-locale,
                   zeromq4-haskell  >= 0.1
   GHC-Options: -threaded
+
+executable mdbroker
+  default-language: Haskell2010
+  main-is: mdbroker.hs
+  other-modules: ZHelpers,
+                 MDPDef
+  build-depends:  base >= 4,
+                  random,
+                  bytestring,
+                  time,
+                  old-locale,
+                  containers,
+                  transformers,
+                  semigroups,
+                  zeromq4-haskell >= 0.1
+  GHC-Options: -threaded
+
+executable mdworker
+  default-language: Haskell2010
+  main-is: mdworker.hs
+  other-modules: ZHelpers,
+                 MDPDef,
+                 MDWorkerAPI
+  build-depends:  base >= 4,
+                  time,
+                  random,
+                  bytestring,
+                  old-locale,
+                  semigroups,
+                  zeromq4-haskell >= 0.1
+  GHC-Options: -threaded
+
+executable mdclient
+  default-language: Haskell2010
+  main-is: mdclient.hs
+  other-modules: ZHelpers,
+                 MDPDef,
+                 MDClientAPI
+  build-depends:  base >= 4,
+                  time,
+                  random,
+                  bytestring,
+                  old-locale,
+                  semigroups,
+                  zeromq4-haskell >= 0.1
+  GHC-Options: -threaded
