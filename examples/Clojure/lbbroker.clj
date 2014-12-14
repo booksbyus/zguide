@@ -1,99 +1,100 @@
-(ns lruqueue
-  (:refer-clojure :exclude [send])
-  (:require [zhelpers :as mq])
-  (:import [org.zeromq ZMQ$Poller]))
+(ns lbbroker
+  (:require [zeromq.zmq :as zmq]))
 
-;;                                                   
-;; Least-recently used (LRU) queue device              
-;; Clients and workers are shown here in-process       
-;;                                                     
+;;
+;; Least-recently used (LRU) queue device
+;; Clients and workers are shown here in-process
+;;
 ;; While this example runs in a single process, that is just to make
 ;; it easier to start and stop the example. Each thread has its own
 ;; context and conceptually acts as a separate process.
 ;;
-;; Isaiah Peng <issaria@gmail.com>
-;;
 
-(defrecord Client [n]
-  Runnable
-  (run [this]
-    (let [cntx (mq/context 1)
-          client (mq/socket cntx mq/req)]
-      (mq/set-id client n)
-      (mq/connect client "ipc://frontend.ipc")
-      (mq/send client "HELLO")
-      (println (format "Client: %s" (mq/recv-str client)))
+(defn client [n]
+  (fn []
+    (let [ctx (zmq/context 1)
+          client (zmq/socket ctx :req)]
+      (zmq/set-identity client (-> n str .getBytes))
+      (zmq/connect client "ipc://frontend.ipc")
+      (zmq/send-str client "HELLO")
+      (println "Client:" (zmq/receive-str client))
       (.close client)
-      (.term cntx))))
+      (.term ctx))))
 
-(defrecord Worker [n]
-  Runnable
-  (run [this]
-    (let [cnt (mq/context 1)
-          worker (mq/socket cnt mq/req)]
-      (mq/set-id worker n)
-      (mq/connect worker "ipc://backend.ipc")
-      (mq/send worker "READY")
+(defn worker [n]
+  (fn []
+    (let [ctx (zmq/context 1)
+          worker (zmq/socket ctx :req)]
+      (zmq/set-identity worker (-> n str .getBytes))
+      (zmq/connect worker "ipc://backend.ipc")
+      (zmq/send-str worker "READY")
       (while true
-        (let [address (mq/recv-str worker)
-              _ (mq/recv worker)
-              request (mq/recv-str worker)]
-          (println (format "Worker: %s" request))
-          (mq/send-more worker address)
-          (mq/send-more worker "")
-          (mq/send worker "OK")))
+        (let [identity (zmq/receive-str worker)
+              _ (zmq/receive worker)
+              request (zmq/receive-str worker)]
+          (println "Worker:" request)
+          (zmq/send-str worker identity zmq/send-more)
+          (zmq/send-str worker "" zmq/send-more)
+          (zmq/send-str worker "OK")))
       (.close worker)
-      (.term cnt))))
+      (.term ctx))))
 
 (def worker-nbr 3)
 (def client-nbr 10)
 
 (defn -main []
-  (let [ctx (mq/context 1)
-        frontend (mq/socket ctx mq/router)
-        backend (mq/socket ctx mq/router)]
-    (mq/bind frontend "ipc://frontend.ipc")
-    (mq/bind backend "ipc://backend.ipc")
+  (let [ctx (zmq/context 1)
+        frontend (zmq/socket ctx :router)
+        backend (zmq/socket ctx :router)]
+    (zmq/bind frontend "ipc://frontend.ipc")
+    (zmq/bind backend "ipc://backend.ipc")
     (dotimes [i client-nbr]
-      (-> i Client. Thread. .start))
+      (doto (Thread. (client i))
+        (.setDaemon true)
+        .start))
     (dotimes [i worker-nbr]
-      (-> i Worker. Thread. .start)
-      ;; Logic of LRU loop
-      ;; - Poll backend always, frontend only if 1+ worker ready
-      ;; - If worker replies, queue worker as ready and forward reply
-      ;; to client if necessary
-      ;; - If client requests, pop next worker and send request to it
-      ;;
-      ;; Queue of available workers
-      (let [available-workers (atom 0)
-            worker-queue (atom clojure.lang.PersistentQueue/EMPTY)
-            items (.poller ctx 2)]
-        (while (not (.isInterrupted (Thread/currentThread)))
-          (dotimes [i client-nbr]
-            (.register items backend ZMQ$Poller/POLLIN)
-            (.register items frontend ZMQ$Poller/POLLIN)
-            (.poll items)
-            ;; Handle worker activity on background
-            (if (.pollin items 0)
-              ;; Queue worker address for LRU routing
-              (swap! worker-queue #(conj % (mq/recv-str backend)))
-              (let [_ (mq/recv backend) client-addr (mq/recv-str backend)]
-                (if (not= "READY" client-addr)
-                  (let [_ (mq/recv backend) reply (mq/recv-str backend)]
-                    (mq/send-more frontend client-addr)
-                    (mq/send-more frontend "")
-                    (mq/send frontend reply)))))
-            (if (.pollin items 1)
-              (let [client-addr (mq/recv-str frontend)
-                    _ (mq/recv frontend)
-                    request (mq/recv-str frontend)
-                    worker-addr (peek @worker-queue)]
-                (swap! worker-queue pop)
-                (mq/send-more backend worker-addr)
-                (mq/send-more backend "")
-                (mq/send-more backend client-addr)
-                (mq/send-more backend "")
-                (mq/send backend request)))))
-        (.close frontend)
-        (.close backend)
-        (.term ctx)))))
+      (doto (Thread. (worker i))
+        (.setDaemon true)
+        .start))
+    ;; Logic of LRU loop
+    ;; - Poll backend always, frontend only if 1+ worker ready
+    ;; - If worker replies, queue worker as ready and forward reply
+    ;; to client if necessary
+    ;; - If client requests, pop next worker and send request to it
+    (let [clients-left (atom client-nbr)
+          worker-queue (atom clojure.lang.PersistentQueue/EMPTY)]
+      (while (and (not (.isInterrupted (Thread/currentThread)))
+                  (> @clients-left 0))
+        (let [items (zmq/poller ctx)
+              backend-index (zmq/register items backend :pollin)
+              frontend-index (if-not (empty? @worker-queue)
+                               (zmq/register items frontend :pollin))]
+          (zmq/poll items -1)
+          ;; Handle worker activity on background
+          (if (zmq/check-poller items backend-index :pollin)
+            ;; Queue worker address for LRU routing
+            (let [worker-id (zmq/receive-str backend)
+                  _ (zmq/receive-str backend)
+                  client-id (zmq/receive-str backend)]
+              (swap! worker-queue conj worker-id)
+              (if (not= "READY" client-id)
+                (let [_ (zmq/receive backend)
+                      reply (zmq/receive-str backend)]
+                  (zmq/send-str frontend client-id zmq/send-more)
+                  (zmq/send-str frontend "" zmq/send-more)
+                  (zmq/send-str frontend reply)
+                  (swap! clients-left dec)))))
+          (if (and frontend-index (zmq/check-poller items frontend-index :pollin))
+            (let [client-id (zmq/receive-str frontend)
+                  _ (zmq/receive frontend)
+                  request (zmq/receive-str frontend)
+                  worker-id (peek @worker-queue)]
+              (swap! worker-queue pop)
+              (zmq/send-str backend worker-id zmq/send-more)
+              (zmq/send-str backend "" zmq/send-more)
+              (zmq/send-str backend client-id zmq/send-more)
+              (zmq/send-str backend "" zmq/send-more)
+              (zmq/send-str backend request))))))
+    (.close frontend)
+    (.close backend)
+    (.term ctx)))
