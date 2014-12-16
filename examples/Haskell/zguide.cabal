@@ -368,3 +368,12 @@ executable mdclient
                   semigroups,
                   zeromq4-haskell >= 0.1
   GHC-Options: -threaded
+
+executable tripping
+  default-language: Haskell2010
+  main-is: tripping.hs
+  build-depends:  base >= 4,
+                  time,
+                  bytestring,
+                  zeromq4-haskell >= 0.1
+  GHC-Options: -threaded
