@@ -23,23 +23,20 @@
 (defn retry-send [ctx client value request-retries]
   (zmq/send-str client value)
   (match (try-read ctx client)
-         [:error] (retry-send ctx client value request-retries)
+         [:error] (recur ctx client value request-retries)
          [:resp resp]
          (cond
           (nil? resp) (recur ctx client value request-retries)
           (= resp value) (do
                            (println (format "I: server replied OK (%s)" value))
                            client)
-          :else (println (format "E: malformed reply from server: %s" value)))
-         [:timeout] (do
-                      (if (> request-retries 0)
-                        (do
-                          (println "W: no response from server, retrying...")
+          :else (do (println (format "E: malformed reply from server: %s" value))
+                    nil))
+         [:timeout] (if (> request-retries 0)
+                      (do (println "W: no response from server, retrying...")
                           (recur ctx (new-client ctx) value (dec request-retries)))
-                        (do (println "E: server seems to be offline, abandoning")
-                            nil)))))
-
-
+                      (do (println "E: server seems to be offline, abandoning")
+                          nil))))
 
 (defn -main []
   (let [ctx (zmq/zcontext)]
