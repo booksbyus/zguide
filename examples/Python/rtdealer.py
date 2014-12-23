@@ -62,7 +62,7 @@ time.sleep(1)
 # Send 10 tasks scattered to A twice as often as B
 for _ in range(10):
     # Send two message parts, first the address...
-    ident = random.choice([b'A', b'B'])
+    ident = random.choice([b'A', b'A', b'B'])
     # And then the workload
     work = b"This is the workload"
     client.send_multipart([ident, work])
