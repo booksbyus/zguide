@@ -2,7 +2,7 @@
 .bookmark reliable-request-reply
 + Reliable Request-Reply Patterns
 
-[php:chapter3#advanced-request-reply|Chapter 3 - Advanced Request-Reply Patters] covered advanced uses of ZeroMQ's request-reply pattern with working examples. This chapter looks at the general question of reliability and builds a set of reliable messaging patterns on top of ZeroMQ's core request-reply pattern.
+[#advanced-request-reply] covered advanced uses of ZeroMQ's request-reply pattern with working examples. This chapter looks at the general question of reliability and builds a set of reliable messaging patterns on top of ZeroMQ's core request-reply pattern.
 
 In this chapter, we focus heavily on user-space request-reply //patterns//, reusable models that help you design your own ZeroMQ architectures:
 
@@ -183,7 +183,7 @@ In all these Pirate patterns, workers are stateless. If the application requires
 #-----------#   #-----------#   #-----------#
 [[/code]]
 
-The basis for the queue proxy is the load balancing broker from [php:chapter3#advanced-request-reply|Chapter 3 - Advanced Request-Reply Patters]. What is the very //minimum// we need to do to handle dead or blocked workers? Turns out, it's surprisingly little. We already have a retry mechanism in the client. So using the load balancing pattern will work pretty well. This fits with ZeroMQ's philosophy that we can extend a peer-to-peer pattern like request-reply by plugging naive proxies in the middle[figure].
+The basis for the queue proxy is the load balancing broker from [#advanced-request-reply]. What is the very //minimum// we need to do to handle dead or blocked workers? Turns out, it's surprisingly little. We already have a retry mechanism in the client. So using the load balancing pattern will work pretty well. This fits with ZeroMQ's philosophy that we can extend a peer-to-peer pattern like request-reply by plugging naive proxies in the middle[figure].
 
 We don't need a special client; we're still using the Lazy Pirate client. Here is the queue, which is identical to the main task of the load balancing broker:
 
@@ -241,7 +241,7 @@ The Simple Pirate Queue pattern works pretty well, especially because it's just 
 
 We'll fix these in a properly pedantic Paranoid Pirate Pattern.
 
-We previously used a REQ socket for the worker. For the Paranoid Pirate worker, we'll switch to a DEALER socket[figure]. This has the advantage of letting us send and receive messages at any time, rather than the lock-step send/receive that REQ imposes. The downside of DEALER is that we have to do our own envelope management (re-read [php:chapter3#advanced-request-reply|Chapter 3 - Advanced Request-Reply Patters] for background on this concept).
+We previously used a REQ socket for the worker. For the Paranoid Pirate worker, we'll switch to a DEALER socket[figure]. This has the advantage of letting us send and receive messages at any time, rather than the lock-step send/receive that REQ imposes. The downside of DEALER is that we have to do our own envelope management (re-read [#advanced-request-reply] for background on this concept).
 
 We're still using the Lazy Pirate client. Here is the Paranoid Pirate queue proxy:
 
