@@ -2,7 +2,7 @@
 .bookmark advanced-pub-sub
 + Advanced Pub-Sub Patterns
 
-In [#advanced-request-reply] and [#reliable-request-reply] we looked at advanced use of ZeroMQ's request-reply pattern. If you managed to digest all that, congratulations. In this chapter we'll focus on publish-subscribe and extend ZeroMQ's core pub-sub pattern with higher-level patterns for performance, reliability, state distribution, and monitoring.
+In [php:chapter3#advanced-request-reply|Chapter 3 - Advanced Request-Reply Patters] and [php:chapter4#reliable-request-reply|Chapter 4 - Reliable Request-Reply Patterns] we looked at advanced use of ZeroMQ's request-reply pattern. If you managed to digest all that, congratulations. In this chapter we'll focus on publish-subscribe and extend ZeroMQ's core pub-sub pattern with higher-level patterns for performance, reliability, state distribution, and monitoring.
 
 We'll cover:
 
@@ -55,7 +55,7 @@ All of these failure cases have answers, though not always simple ones. Reliabil
 
 ++ Pub-Sub Tracing (Espresso Pattern)
 
-Let's start this chapter by looking at a way to trace pub-sub networks. In [#sockets-and-patterns] we saw a simple proxy that used these to do transport bridging. The {{zmq_proxy[3]}} method has three arguments: a //frontend// and //backend// socket that it bridges together, and a //capture// socket to which it will send all messages.
+Let's start this chapter by looking at a way to trace pub-sub networks. In [php:chapter2#sockets-and-patterns|Chapter 2 - Sockets and Patterns] we saw a simple proxy that used these to do transport bridging. The {{zmq_proxy[3]}} method has three arguments: a //frontend// and //backend// socket that it bridges together, and a //capture// socket to which it will send all messages.
 
 The code is deceptively simple:
 
@@ -131,7 +131,7 @@ And now run as many instances of the subscriber as you want to try, each time co
 
 Each subscriber happily reports "Save Roger", and Gregor the Escaped Convict slinks back to his seat for dinner and a nice cup of hot milk, which is all he really wanted in the first place.
 
-One note: by default, the XPUB socket does not report duplicate subscriptions, which is what you want when you're naively connecting an XPUB to an XSUB. Our example sneakily gets around this by using random topics so the chance of it not working is one in a million. In a real LVC proxy, you'll want to use the {{ZMQ_XPUB_VERBOSE}} option that we implement in [#the-community] as an exercise.
+One note: by default, the XPUB socket does not report duplicate subscriptions, which is what you want when you're naively connecting an XPUB to an XSUB. Our example sneakily gets around this by using random topics so the chance of it not working is one in a million. In a real LVC proxy, you'll want to use the {{ZMQ_XPUB_VERBOSE}} option that we implement in [php:chapter6#the-community]|Chapter 6 - The ZeroMQ Community] as an exercise.
 
 ++ Slow Subscriber Detection (Suicidal Snail Pattern)
 
@@ -283,7 +283,7 @@ A first decision we have to make is whether we work with a central server or not
 
 * Conceptually, a central server is simpler to understand because networks are not naturally symmetrical. With a central server, we avoid all questions of discovery, bind versus connect, and so on.
 
-* Generally, a fully-distributed architecture is technically more challenging but ends up with simpler protocols. That is, each node must act as server and client in the right way, which is delicate. When done right, the results are simpler than using a central server. We saw this in the Freelance pattern in [#reliable-request-reply].
+* Generally, a fully-distributed architecture is technically more challenging but ends up with simpler protocols. That is, each node must act as server and client in the right way, which is delicate. When done right, the results are simpler than using a central server. We saw this in the Freelance pattern in [php:chapter4#reliable-request-reply|Chapter 4 - Reliable Request-Reply Patterns].
 
 * A central server will become a bottleneck in high-volume use cases. If handling scale in the order of millions of messages a second is required, we should aim for decentralization right away.
 
@@ -295,7 +295,7 @@ So, for the Clone pattern we'll work with a //server// that publishes state upda
 
 We'll develop Clone in stages, solving one problem at a time. First, let's look at how to update a shared state across a set of clients. We need to decide how to represent our state, as well as the updates. The simplest plausible format is a key-value store, where one key-value pair represents an atomic unit of change in the shared state.
 
-We have a simple pub-sub example in [#basics], the weather server and client. Let's change the server to send key-value pairs, and the client to store these in a hash table. This lets us send updates from one server to a set of clients using the classic pub-sub model[figure].
+We have a simple pub-sub example in [php:chapter1#basics|Chapter 1 - The Basics], the weather server and client. Let's change the server to send key-value pairs, and the client to store these in a hash table. This lets us send updates from one server to a set of clients using the classic pub-sub model[figure].
 
 An update is either a new key-value pair, a modified value for an existing key, or a deleted key. We can assume for now that the whole store fits in memory and that applications access it by key, such as by using a hash table or dictionary. For larger stores and some kind of persistence we'd probably store the state in a database, but that's not relevant here.
 
@@ -540,7 +540,7 @@ What we want is a way for the server to recover from being killed, or crashing. 
 
 * The server process or machine gets disconnected from the network, e.g., a switch dies or a datacenter gets knocked out. It may come back at some point, but in the meantime clients need an alternate server.
 
-Our first step is to add a second server. We can use the Binary Star pattern from [#reliable-request-reply] to organize these into primary and backup. Binary Star is a reactor, so it's useful that we already refactored the last server model into a reactor style.
+Our first step is to add a second server. We can use the Binary Star pattern from [php:chapter4#reliable-request-reply|Chapter 4 - Reliable Request-Reply Patterns] to organize these into primary and backup. Binary Star is a reactor, so it's useful that we already refactored the last server model into a reactor style.
 
 We need to ensure that updates are not lost if the primary server crashes. The simplest technique is to send them to both servers. The backup server can then act as a client, and keep its state synchronized by receiving updates as all clients do. It'll also get new updates from clients. It can't yet store these in its hash table, but it can hold onto them for a while.
 
@@ -642,7 +642,7 @@ Here is the sixth and last model of the Clone server:
 
 This model is only a few hundred lines of code, but it took quite a while to get working. To be accurate, building Model Six took about a full week of "Sweet god, this is just too complex for an example" hacking. We've assembled pretty much everything and the kitchen sink into this small application. We have failover, ephemeral values, subtrees, and so on. What surprised me was that the up-front design was pretty accurate. Still the details of writing and debugging so many socket flows is quite challenging.
 
-The reactor-based design removes a lot of the grunt work from the code, and what remains is simpler and easier to understand. We reuse the bstar reactor from [#reliable-request-reply]. The whole server runs as one thread, so there's no inter-thread weirdness going on--just a structure pointer ({{self}}) passed around to all handlers, which can do their thing happily. One nice side effect of using reactors is that the code, being less tightly integrated into a poll loop, is much easier to reuse. Large chunks of Model Six are taken from Model Five.
+The reactor-based design removes a lot of the grunt work from the code, and what remains is simpler and easier to understand. We reuse the bstar reactor from [php:chapter4#reliable-request-reply|Chapter 4 - Reliable Request-Reply Patterns]. The whole server runs as one thread, so there's no inter-thread weirdness going on--just a structure pointer ({{self}}) passed around to all handlers, which can do their thing happily. One nice side effect of using reactors is that the code, being less tightly integrated into a poll loop, is much easier to reuse. Large chunks of Model Six are taken from Model Five.
 
 I built it piece by piece, and got each piece working //properly// before going onto the next one. Because there are four or five main socket flows, that meant quite a lot of debugging and testing. I debugged just by dumping messages to the console. Don't use classic debuggers to step through ZeroMQ applications; you need to see the message flows to make any sense of what is going on.
 
@@ -654,7 +654,7 @@ While the server is pretty much a mashup of the previous model plus the Binary S
 
 Roughly, there are two ways to design a complex protocol such as this one. One way is to separate each flow into its own set of sockets. This is the approach we used here. The advantage is that each flow is simple and clean. The disadvantage is that managing multiple socket flows at once can be quite complex. Using a reactor makes it simpler, but still, it makes a lot of moving pieces that have to fit together correctly.
 
-The second way to make such a protocol is to use a single socket pair for everything. In this case, I'd have used ROUTER for the server and DEALER for the clients, and then done everything over that connection. It makes for a more complex protocol but at least the complexity is all in one place. In [#advanced-architecture] we'll look at an example of a protocol done over a ROUTER-DEALER combination.
+The second way to make such a protocol is to use a single socket pair for everything. In this case, I'd have used ROUTER for the server and DEALER for the clients, and then done everything over that connection. It makes for a more complex protocol but at least the complexity is all in one place. In [php:chapter7#advanced-architecture]|Chapter 7 - Advanced Architecture using ZeroMQ] we'll look at an example of a protocol done over a ROUTER-DEALER combination.
 
 Let's take a look at the CHP specification. Note that "SHOULD", "MUST" and "MAY" are key words we use in protocol specifications to indicate requirement levels.
 
@@ -804,7 +804,7 @@ CHP does not implement any authentication, access control, or encryption mechani
 
 +++ Building a Multithreaded Stack and API
 
-The client stack we've used so far isn't smart enough to handle this protocol properly. As soon as we start doing heartbeats, we need a client stack that can run in a background thread. In the Freelance pattern at the end of [#reliable-request-reply] we used a multithreaded API but didn't explain it in detail. It turns out that multithreaded APIs are quite useful when you start to make more complex ZeroMQ protocols like CHP.
+The client stack we've used so far isn't smart enough to handle this protocol properly. As soon as we start doing heartbeats, we need a client stack that can run in a background thread. In the Freelance pattern at the end of [php:chapter4#reliable-request-reply|Chapter 4 - Reliable Request-Reply Patterns] we used a multithreaded API but didn't explain it in detail. It turns out that multithreaded APIs are quite useful when you start to make more complex ZeroMQ protocols like CHP.
 
 [[code type="textdiagram" title="Multithreaded API"]]
          #--------------#
@@ -863,7 +863,7 @@ clone_connect (clone_t *self, char *address, char *service)
 
 * We may want to expose the frontend pipe socket handle to allow the class to be integrated into further poll loops. Otherwise any {{recv}} method would block the application.
 
-The clone class has the same structure as the {{flcliapi}} class from [#reliable-request-reply] and adds the logic from the last model of the Clone client. Without ZeroMQ, this kind of multithreaded API design would be weeks of really hard work. With ZeroMQ, it was a day or two of work.
+The clone class has the same structure as the {{flcliapi}} class from [php:chapter4#reliable-request-reply|Chapter 4 - Reliable Request-Reply Patterns] and adds the logic from the last model of the Clone client. Without ZeroMQ, this kind of multithreaded API design would be weeks of really hard work. With ZeroMQ, it was a day or two of work.
 
 The actual API methods for the clone class are quite simple:
 
