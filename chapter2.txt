@@ -196,7 +196,7 @@ You'll also see references to XPUB and XSUB sockets, which we'll come to later (
 
 These four core patterns are cooked into ZeroMQ. They are part of the ZeroMQ API, implemented in the core C++ library, and are guaranteed to be available in all fine retail stores.
 
-On top of those, we add //high-level messaging patterns//. We build these high-level patterns on top of ZeroMQ and implement them in whatever language we're using for our application. They are not part of the core library, do not come with the ZeroMQ package, and exist in their own space as part of the ZeroMQ community. For example the Majordomo pattern, which we explore in [php:chapter4#reliable-request-reply]|Chapter 4 - Reliable Request-Reply Patterns], sits in the GitHub Majordomo project in the ZeroMQ organization.
+On top of those, we add //high-level messaging patterns//. We build these high-level patterns on top of ZeroMQ and implement them in whatever language we're using for our application. They are not part of the core library, do not come with the ZeroMQ package, and exist in their own space as part of the ZeroMQ community. For example the Majordomo pattern, which we explore in [php:chapter4#reliable-request-reply|Chapter 4 - Reliable Request-Reply Patterns], sits in the GitHub Majordomo project in the ZeroMQ organization.
 
 One of the things we aim to provide you with in this book are a set of such high-level patterns, both small (how to handle messages sanely) and large (how to make a reliable pub-sub architecture).
 
