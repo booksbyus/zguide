@@ -13,7 +13,7 @@ public class pathopub
         ZContext context = new ZContext();
         Socket publisher = context.createSocket(ZMQ.PUB);
         if (args.length == 1)
-            publisher.connect(args[0]);
+            publisher.bind(args[0]);
         else
             publisher.bind("tcp://*:5556");
 

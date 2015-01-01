@@ -14,7 +14,7 @@ def main(url=None):
     ctx = zmq.Context.instance()
     publisher = ctx.socket(zmq.PUB)
     if url:
-        publisher.connect(url)
+        publisher.bind(url)
     else:
         publisher.bind("tcp://*:5556")
     # Ensure subscriber connection has time to complete

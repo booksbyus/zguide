@@ -8,7 +8,7 @@ int main (int argc, char *argv [])
     zctx_t *context = zctx_new ();
     void *publisher = zsocket_new (context, ZMQ_PUB);
     if (argc == 2)
-        zsocket_connect (publisher, argv [1]);
+        zsocket_bind (publisher, argv [1]);
     else
         zsocket_bind (publisher, "tcp://*:5556");
 
