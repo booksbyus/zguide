@@ -11,7 +11,7 @@ TOPIC_COUNT = 1_000
 
 publisher = context.socket(ZMQ::PUB)
 if ARGV[0]
-  publisher.connect(ARGV[0])
+  publisher.bind(ARGV[0])
 else
   publisher.bind("tcp://*:5556")
 end
