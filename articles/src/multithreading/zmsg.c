@@ -230,7 +230,7 @@ zmsg_recv (void *socket)
 
         zmq_msg_close (&message);
 
-        int64_t more;
+        int more;
         size_t more_size = sizeof (more);
         zmq_getsockopt (socket, ZMQ_RCVMORE, &more, &more_size);
         if (!more)
