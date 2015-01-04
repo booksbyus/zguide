@@ -110,7 +110,7 @@ public:
             data[message.size()] = 0;
             push_back((char *)data.c_str());
          }
-         int64_t more = 0;
+         int more = 0;
          size_t more_size = sizeof(more);
          socket.getsockopt(ZMQ_RCVMORE, &more, &more_size);
          if (!more) {

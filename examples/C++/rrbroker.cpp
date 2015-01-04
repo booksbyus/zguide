@@ -26,7 +26,7 @@ int main (int argc, char *argv[])
     //  Switch messages between sockets
     while (1) {
         zmq::message_t message;
-        int64_t more;           //  Multipart detection
+        int more;               //  Multipart detection
 
         zmq::poll (&items [0], 2, -1);
         

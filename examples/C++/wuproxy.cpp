@@ -25,7 +25,7 @@ int main (int argc, char *argv[])
     while (1) {
         while (1) {
             zmq::message_t message;
-            int64_t more;
+            int more;
             size_t more_size = sizeof (more);
 
             //  Process all parts of the message
