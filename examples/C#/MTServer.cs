@@ -14,14 +14,14 @@ namespace ZeroMQ.Test
 		{
 			using (var context = ZContext.Create())
 			using (var clients = ZSocket.Create(context, ZSocketType.ROUTER))
-			using (var workers = ZSocket.Create(context, ZSocketType.DEALER)) {
-
+			using (var workers = ZSocket.Create(context, ZSocketType.DEALER))
+			{
 				clients.Bind("tcp://*:5555");
-
 				workers.Bind("inproc://workers");
 
 				int i = 0;
-				for (; i < 5; ++i) {
+				for (; i < 5; ++i)
+				{
 					var thread = new Thread(() => MTServer_Worker(context));
 					thread.Start();
 				}
@@ -32,11 +32,14 @@ namespace ZeroMQ.Test
 		
 		static void MTServer_Worker(ZContext context) 
 		{
-			using (var server = ZSocket.Create(context, ZSocketType.REP)) {
+			using (var server = ZSocket.Create(context, ZSocketType.REP))
+			{
 				server.Connect("inproc://workers");
 
-				while (true) {
-					using (ZFrame frame = server.ReceiveFrame()) {
+				while (true)
+				{
+					using (ZFrame frame = server.ReceiveFrame())
+					{
 						Console.Write("Received: {0}", frame.ReadString());
 
 						Thread.Sleep(1);
@@ -47,7 +50,6 @@ namespace ZeroMQ.Test
 					}
 				}
 			}
-
 		}
 	}
 }

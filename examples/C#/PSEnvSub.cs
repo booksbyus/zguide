@@ -13,14 +13,14 @@ namespace ZeroMQ.Test
 		public static void PSEnvSub(IDictionary<string, string> dict, string[] args)
 		{
 			using (var context = ZContext.Create())
-			using (var subscriber = ZSocket.Create(context, ZSocketType.SUB)) {
-
+			using (var subscriber = ZSocket.Create(context, ZSocketType.SUB))
+			{
 				subscriber.Connect("tcp://127.0.0.1:5563");
 				subscriber.Subscribe(Encoding.UTF8.GetBytes("B"));
 
-				while (true) 
+				while (true)
 				{
-					using (ZMessage message = subscriber.ReceiveMessage()) 
+					using (ZMessage message = subscriber.ReceiveMessage())
 					{
 						string address = message[0].ReadString();
 						string contents = message[1].ReadString();

@@ -5,7 +5,6 @@ using System.Text;
 using System.Threading;
 
 using ZeroMQ;
-using ZeroMQ.lib;
 
 namespace ZeroMQ.Test
 {
@@ -15,13 +14,13 @@ namespace ZeroMQ.Test
 		{
 			using (var context = ZContext.Create())
 			using (var receiver = ZSocket.Create(context, ZSocketType.PULL))
-			using (var sink = ZSocket.Create(context, ZSocketType.PUSH)) {
-
+			using (var sink = ZSocket.Create(context, ZSocketType.PUSH))
+			{
 				receiver.Connect("tcp://127.0.0.1:5557");
-
 				sink.Connect("tcp://127.0.0.1:5558");
 
-				while (true) {
+				while (true)
+				{
 					var replyBytes = new byte[4];
 					receiver.Receive(replyBytes, 0, replyBytes.Length);
 					int workload = BitConverter.ToInt32(replyBytes, 0);

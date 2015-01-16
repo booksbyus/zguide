@@ -6,7 +6,6 @@ using System.Text;
 using System.Threading;
 
 using ZeroMQ;
-using ZeroMQ.lib;
 
 namespace ZeroMQ.Test
 {
@@ -15,8 +14,8 @@ namespace ZeroMQ.Test
 		public static void TaskSink(IDictionary<string, string> dict, string[] args)
 		{
 			using (var context = ZContext.Create())
-			using (var sink = ZSocket.Create(context, ZSocketType.PULL)) {
-
+			using (var sink = ZSocket.Create(context, ZSocketType.PULL))
+			{
 				sink.Bind("tcp://*:5558");
 
 				sink.ReceiveFrame();
@@ -25,7 +24,8 @@ namespace ZeroMQ.Test
 				stopwatch.Start();
 
 				int i = 0;
-				for (; i < 100; ++i) {
+				for (; i < 100; ++i)
+				{
 					sink.ReceiveFrame();
 
 					if ((i / 10) * 10 == i)

@@ -14,8 +14,8 @@ namespace ZeroMQ.Test
 		{
 			using (var context = ZContext.Create())
 			using (var subscriber = ZSocket.Create(context, ZSocketType.SUB))
-			using (var syncclient = ZSocket.Create(context, ZSocketType.REQ)) {
-
+			using (var syncclient = ZSocket.Create(context, ZSocketType.REQ))
+			{
 				subscriber.Connect("tcp://127.0.0.1:5561");
 				subscriber.SubscribeAll();
 
@@ -25,9 +25,12 @@ namespace ZeroMQ.Test
 				syncclient.ReceiveFrame();
 
 				int i = 0;
-				while (true) {
-					using (ZFrame frame = subscriber.ReceiveFrame()) {
-						if (frame.ReadString() == "END") {
+				while (true)
+				{
+					using (ZFrame frame = subscriber.ReceiveFrame())
+					{
+						if (frame.ReadString() == "END")
+						{
 							break;
 						}
 						++i;

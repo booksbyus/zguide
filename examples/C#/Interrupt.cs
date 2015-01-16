@@ -13,20 +13,27 @@ namespace ZeroMQ.Test
 		public static void Interrupt(IDictionary<string, string> dict, string[] args)
 		{
 			using (var context = ZContext.Create())
-			using (var responder = ZSocket.Create(context, ZSocketType.REP)) {
+			using (var responder = ZSocket.Create(context, ZSocketType.REP))
+			{
 
-				var thread = new Thread(() => {
-					Console.CancelKeyPress += (sender, e) => {
+				var thread = new Thread(() =>
+				{
+					Console.CancelKeyPress += (sender, e) =>
+					{
 						// e.Cancel = false;
 						context.Terminate();
 					};
-					while (true) {
-						if (Console.KeyAvailable) {
+					while (true)
+					{
+						if (Console.KeyAvailable)
+						{
 							ConsoleKeyInfo info = Console.ReadKey(true);
-							if (info.Modifiers == ConsoleModifiers.Control && info.Key == ConsoleKey.C) {
+							if (info.Modifiers == ConsoleModifiers.Control && info.Key == ConsoleKey.C)
+							{
 								break;
 							} 
-							if (info.Key == ConsoleKey.Escape) {
+							if (info.Key == ConsoleKey.Escape)
+							{
 								context.Terminate();
 								break;
 							}
@@ -37,28 +44,30 @@ namespace ZeroMQ.Test
 				thread.Start();
 				thread.Join(64);
 
-
 				responder.Bind("tcp://*:5555");
 
 				ZError error;
 				ZFrame request;
-				while (true) {
-
+				while (true)
+				{
 					if (null == (request = responder.ReceiveFrame(out error)))
 					{
-						if (error == ZError.ETERM) {
+						if (error == ZError.ETERM)
+						{
 							Console.WriteLine("Terminating, you have pressed ESC.");
 							break;
 						}
 						throw new ZException(error);
 					}
 
-					using (request) {
+					using (request)
+					{
 						string respondText = "Hello";
 						Console.WriteLine("Received: {0}!", respondText, request.ReadString());
 
 						Console.Write("Sending {0}... ", respondText);
-						using (var response = ZFrame.Create(respondText)) {
+						using (var response = ZFrame.Create(respondText))
+						{
 							responder.SendFrame(response);
 						}
 					}

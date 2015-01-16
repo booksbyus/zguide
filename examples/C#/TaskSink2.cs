@@ -6,7 +6,6 @@ using System.Text;
 using System.Threading;
 
 using ZeroMQ;
-using ZeroMQ.lib;
 
 namespace ZeroMQ.Test
 {
@@ -16,8 +15,8 @@ namespace ZeroMQ.Test
 		{
 			using (var context = ZContext.Create())
 			using (var receiver = ZSocket.Create(context, ZSocketType.PULL))
-			using (var controller = ZSocket.Create(context, ZSocketType.PUB)) {
-
+			using (var controller = ZSocket.Create(context, ZSocketType.PUB))
+			{
 				receiver.Bind("tcp://*:5558");
 				controller.Bind("tcp://*:5559");
 
@@ -27,7 +26,8 @@ namespace ZeroMQ.Test
 				stopwatch.Start();
 
 				int i = 0;
-				for (; i < 100; ++i) {
+				for (; i < 100; ++i)
+				{
 					receiver.ReceiveFrame();
 
 					if ((i / 10) * 10 == i)

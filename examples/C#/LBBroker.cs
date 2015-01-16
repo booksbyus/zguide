@@ -33,7 +33,7 @@ namespace ZeroMQ.Test
 				{
 					request.Add(ZFrame.Create("Hello"));
 
-                    // Send request
+					// Send request
 					client.SendMessage(request);
 				}
 
@@ -69,39 +69,39 @@ namespace ZeroMQ.Test
 					worker.SendFrame(ready);
 				}
 
-                ZError error;
-                ZMessage request;
+				ZError error;
+				ZMessage request;
 
 				while (true)
 				{
 					// Get request
-                    if (null == (request = worker.ReceiveMessage(out error)))
-                    {
-                        // We are using "out error",
-                        // to NOT throw a ZException ETERM
-                        if (error == ZError.ETERM)
-                            break;
+					if (null == (request = worker.ReceiveMessage(out error)))
+					{
+						// We are using "out error",
+						// to NOT throw a ZException ETERM
+						if (error == ZError.ETERM)
+							break;
 
-                        throw new ZException(error);
-                    }
+						throw new ZException(error);
+					}
 
-                    using (request)
-                    {
-                        string worker_id = request[0].ReadString();
+					using (request)
+					{
+						string worker_id = request[0].ReadString();
 
-                        string requestText = request[2].ReadString();
-                        Console.WriteLine("WORKER{0}: {1}", i, requestText);
+						string requestText = request[2].ReadString();
+						Console.WriteLine("WORKER{0}: {1}", i, requestText);
 
-                        // Send reply
-                        using (var commit = new ZMessage())
-                        {
-                            commit.Add(ZFrame.Create(worker_id));
-                            commit.Add(ZFrame.Create(string.Empty));
-                            commit.Add(ZFrame.Create("OK"));
+						// Send reply
+						using (var commit = new ZMessage())
+						{
+							commit.Add(ZFrame.Create(worker_id));
+							commit.Add(ZFrame.Create(string.Empty));
+							commit.Add(ZFrame.Create("OK"));
 
-                            worker.SendMessage(commit);
-                        }
-                    }
+							worker.SendMessage(commit);
+						}
+					}
 				}
 			}
 		}
@@ -146,7 +146,7 @@ namespace ZeroMQ.Test
 				// requeue that worker and forward the reply to the original client
 				// using the reply envelope.
 
-                // Queue of available workers
+				// Queue of available workers
 				var worker_queue = new List<string>();
 
 				var pollers = new ZPollItem[]
@@ -155,14 +155,14 @@ namespace ZeroMQ.Test
 					ZPollItem.CreateReceiver(frontend)
 				};
 
-                ZError error;
-                ZMessage incoming;
+				ZError error;
+				ZMessage incoming;
 
 				while (true)
 				{
 					if (pollers[0].PollIn(out incoming, out error, TimeSpan.FromMilliseconds(64)))
 					{
-                        // Handle worker activity on backend
+						// Handle worker activity on backend
 
 						// incoming[0] is worker_id
 						string worker_id = incoming[0].ReadString();
@@ -187,15 +187,15 @@ namespace ZeroMQ.Test
 								outgoing.Add(ZFrame.Create(string.Empty));
 								outgoing.Add(ZFrame.Create(reply));
 
-                                // Send
+								// Send
 								frontend.SendMessage(outgoing);
 							}
 
-                            if (--clients == 0)
-                            {
-                                // break the while (true) when all clients said Hello
-                                break;
-                            }
+							if (--clients == 0)
+							{
+								// break the while (true) when all clients said Hello
+								break;
+							}
 						}
 					}
 					if (worker_queue.Count > 0)
@@ -204,7 +204,7 @@ namespace ZeroMQ.Test
 
 						if (pollers[1].PollIn(out incoming, out error, TimeSpan.FromMilliseconds(64)))
 						{
-                            // Here is how we handle a client request
+							// Here is how we handle a client request
 
 							// incoming[0] is client_id
 							string client_id = incoming[0].ReadString();
@@ -222,11 +222,11 @@ namespace ZeroMQ.Test
 								outgoing.Add(ZFrame.Create(string.Empty));
 								outgoing.Add(ZFrame.Create(requestText));
 
-                                // Send
+								// Send
 								backend.SendMessage(outgoing);
 							}
 
-                            // Dequeue the next worker identity
+							// Dequeue the next worker identity
 							worker_queue.RemoveAt(0);
 						}
 					}

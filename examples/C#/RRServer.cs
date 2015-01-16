@@ -13,13 +13,13 @@ namespace ZeroMQ.Test
 		public static void RRServer(IDictionary<string, string> dict, string[] args)
 		{
 			using (var context = ZContext.Create())
-			using (var responder = ZSocket.Create(context, ZSocketType.REP)) {
-
+			using (var responder = ZSocket.Create(context, ZSocketType.REP))
+			{
 				responder.Connect("tcp://127.0.0.1:5560");
 
-				while (true) {
-
-					using (ZFrame request = responder.ReceiveFrame()) 
+				while (true)
+				{
+					using (ZFrame request = responder.ReceiveFrame())
 					{
 						Console.Write("Received {0}, ", request.ReadString());
 					}
@@ -28,11 +28,10 @@ namespace ZeroMQ.Test
 
 					string replyText = "World";
 					Console.WriteLine("Sending {0}... ", replyText);
-					using (var reply = ZFrame.Create(replyText)) 
+					using (var reply = ZFrame.Create(replyText))
 					{
 						responder.SendFrame(reply);
 					}
-
 				}
 			}
 		}

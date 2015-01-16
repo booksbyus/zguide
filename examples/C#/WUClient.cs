@@ -5,7 +5,6 @@ using System.Text;
 using System.Threading;
 
 using ZeroMQ;
-using ZeroMQ.lib;
 
 namespace ZeroMQ.Test
 {
@@ -14,8 +13,8 @@ namespace ZeroMQ.Test
 		public static void WUClient(IDictionary<string, string> dict, string[] args)
 		{
 			using (var context = ZContext.Create())
-			using (var subscriber = ZSocket.Create(context, ZSocketType.SUB)) {
-
+			using (var subscriber = ZSocket.Create(context, ZSocketType.SUB))
+			{
 				subscriber.Connect("tcp://127.0.0.1:5556");
 
 				string zipCode = "72622";
@@ -23,9 +22,11 @@ namespace ZeroMQ.Test
 
 				int i = 0;
 				long total_temperature = 0;
-				for (; i < 100; ++i) {
+				for (; i < 100; ++i)
+				{
 
-					using (var replyFrame = subscriber.ReceiveFrame()) {
+					using (var replyFrame = subscriber.ReceiveFrame())
+					{
 						string reply = replyFrame.ReadString();
 
 						Console.WriteLine(reply);

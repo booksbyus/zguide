@@ -15,25 +15,27 @@ namespace ZeroMQ.Test
 			using (var context = ZContext.Create())
 			using (var receiver = ZSocket.Create(context, ZSocketType.PULL))
 			using (var sender = ZSocket.Create(context, ZSocketType.PUSH))
-			using (var controller = ZSocket.Create(context, ZSocketType.SUB)) {
-
+			using (var controller = ZSocket.Create(context, ZSocketType.SUB))
+			{
 				receiver.Connect("tcp://127.0.0.1:5557");
-
 				sender.Connect("tcp://127.0.0.1:5558");
 
 				controller.Connect("tcp://127.0.0.1:5559");
 				controller.SubscribeAll();
 
-				var pollers = new ZPollItem[] {
+				var pollers = new ZPollItem[]
+				{
 					ZPollItem.CreateReceiver(receiver),
 					ZPollItem.CreateReceiver(controller)
 				};
 
 				ZError error;
 				ZMessage message;
-				while (true) {
+				while (true)
+				{
 
-					if (pollers[0].PollIn(out message, out error, TimeSpan.FromMilliseconds(64))) {
+					if (pollers[0].PollIn(out message, out error, TimeSpan.FromMilliseconds(64)))
+					{
 
 						int workload = message.ReadInt32();
 						Console.WriteLine("{0}.", workload);
@@ -41,7 +43,8 @@ namespace ZeroMQ.Test
 
 						sender.Send(new byte[0], 0, 0);
 					}
-					if (pollers[1].PollIn(out message, out error, TimeSpan.FromMilliseconds(64))) {
+					if (pollers[1].PollIn(out message, out error, TimeSpan.FromMilliseconds(64)))
+					{
 						break;
 					}
 				}

@@ -14,10 +14,9 @@ namespace ZeroMQ.Test
 		{
 			using (var context = ZContext.Create())
 			using (var frontend = ZSocket.Create(context, ZSocketType.ROUTER))
-			using (var backend = ZSocket.Create(context, ZSocketType.DEALER)) {
-
+			using (var backend = ZSocket.Create(context, ZSocketType.DEALER))
+			{
 				frontend.Bind("tcp://*:5559");
-
 				backend.Bind("tcp://*:5560");
 
 				ZContext.Proxy(frontend, backend);
