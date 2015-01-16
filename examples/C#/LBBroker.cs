@@ -46,12 +46,9 @@ namespace ZeroMQ.Test
 		}
 
 		// While this example runs in a single process, that is just to make
-		// it easier to start and stop the example. Each thread has its own
+		// it easier to start and stop the example. Each thread may have its own
 		// context and conceptually acts as a separate process.
 		// This is the worker task, using a REQ socket to do load-balancing.
-		// Because s_send and s_recv can't handle 0MQ binary identities, we
-		// set a printable text identity to allow routing.
-
 		static void LBBroker_Worker(ZContext context, int i)
 		{
 			// Create socket

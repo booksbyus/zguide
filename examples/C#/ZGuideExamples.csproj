@@ -18,7 +18,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Externalconsole>true</Externalconsole>
-    <Commandlineparameters>LBBroker</Commandlineparameters>
+    <Commandlineparameters>AsyncSrv</Commandlineparameters>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>full</DebugType>
@@ -63,6 +63,7 @@
     <Compile Include="RTReq.cs" />
     <Compile Include="RTDealer.cs" />
     <Compile Include="LBBroker.cs" />
+    <Compile Include="AsyncSrv.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
