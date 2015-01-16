@@ -29,11 +29,11 @@ namespace ZeroMQ.Test
 				// Connect
 				client.Connect("inproc://frontend");
 
-				// Send request
 				using (var request = new ZMessage())
 				{
 					request.Add(ZFrame.Create("Hello"));
 
+                    // Send request
 					client.SendMessage(request);
 				}
 
@@ -69,27 +69,39 @@ namespace ZeroMQ.Test
 					worker.SendFrame(ready);
 				}
 
+                ZError error;
+                ZMessage request;
+
 				while (true)
 				{
-
 					// Get request
-					using (ZMessage work = worker.ReceiveMessage())
-					{
-						string worker_id = work[0].ReadString();
+                    if (null == (request = worker.ReceiveMessage(out error)))
+                    {
+                        // We are using "out error",
+                        // to NOT throw a ZException ETERM
+                        if (error == ZError.ETERM)
+                            break;
 
-						string workerText = work[2].ReadString();
-						Console.WriteLine("WORKER{0}: {1}", i, workerText);
+                        throw new ZException(error);
+                    }
 
-						// Send reply
-						using (var commit = new ZMessage())
-						{
-							commit.Add(ZFrame.Create(worker_id));
-							commit.Add(ZFrame.Create(string.Empty));
-							commit.Add(ZFrame.Create("OK"));
+                    using (request)
+                    {
+                        string worker_id = request[0].ReadString();
 
-							worker.SendMessage(commit);
-						}
-					}
+                        string requestText = request[2].ReadString();
+                        Console.WriteLine("WORKER{0}: {1}", i, requestText);
+
+                        // Send reply
+                        using (var commit = new ZMessage())
+                        {
+                            commit.Add(ZFrame.Create(worker_id));
+                            commit.Add(ZFrame.Create(string.Empty));
+                            commit.Add(ZFrame.Create("OK"));
+
+                            worker.SendMessage(commit);
+                        }
+                    }
 				}
 			}
 		}
@@ -134,23 +146,24 @@ namespace ZeroMQ.Test
 				// requeue that worker and forward the reply to the original client
 				// using the reply envelope.
 
-				// Queue of available workers
-
-				ZError error;
-				ZMessage incoming;
-				// int avaliable_workers = 0;
+                // Queue of available workers
 				var worker_queue = new List<string>();
+
 				var pollers = new ZPollItem[]
 				{
 					ZPollItem.CreateReceiver(backend),
 					ZPollItem.CreateReceiver(frontend)
 				};
 
+                ZError error;
+                ZMessage incoming;
+
 				while (true)
 				{
-					// Handle worker activity on backend
 					if (pollers[0].PollIn(out incoming, out error, TimeSpan.FromMilliseconds(64)))
 					{
+                        // Handle worker activity on backend
+
 						// incoming[0] is worker_id
 						string worker_id = incoming[0].ReadString();
 						// Queue worker identity for load-balancing
@@ -174,11 +187,15 @@ namespace ZeroMQ.Test
 								outgoing.Add(ZFrame.Create(string.Empty));
 								outgoing.Add(ZFrame.Create(reply));
 
+                                // Send
 								frontend.SendMessage(outgoing);
 							}
 
-							if (--clients == 0)
-								break;
+                            if (--clients == 0)
+                            {
+                                // break the while (true) when all clients said Hello
+                                break;
+                            }
 						}
 					}
 					if (worker_queue.Count > 0)
@@ -187,6 +204,8 @@ namespace ZeroMQ.Test
 
 						if (pollers[1].PollIn(out incoming, out error, TimeSpan.FromMilliseconds(64)))
 						{
+                            // Here is how we handle a client request
+
 							// incoming[0] is client_id
 							string client_id = incoming[0].ReadString();
 
@@ -203,9 +222,11 @@ namespace ZeroMQ.Test
 								outgoing.Add(ZFrame.Create(string.Empty));
 								outgoing.Add(ZFrame.Create(requestText));
 
+                                // Send
 								backend.SendMessage(outgoing);
 							}
 
+                            // Dequeue the next worker identity
 							worker_queue.RemoveAt(0);
 						}
 					}
