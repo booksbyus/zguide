@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{EF3A0578-42E7-42D2-9D1D-1DF526FE97AB}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>ZGuideExamples</RootNamespace>
+    <AssemblyName>ZGuideExamples</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug</OutputPath>
+    <DefineConstants>DEBUG;</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Externalconsole>true</Externalconsole>
+    <Commandlineparameters>LBBroker</Commandlineparameters>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>full</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Externalconsole>true</Externalconsole>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="ProgramRunner.cs" />
+    <Compile Include="HWClient.cs" />
+    <Compile Include="HWServer.cs" />
+    <Compile Include="MSPoller.cs" />
+    <Compile Include="MSReader.cs" />
+    <Compile Include="RRBroker.cs" />
+    <Compile Include="RRClient.cs" />
+    <Compile Include="RRServer.cs" />
+    <Compile Include="TaskSink.cs" />
+    <Compile Include="TaskVent.cs" />
+    <Compile Include="TaskWork.cs" />
+    <Compile Include="Version.cs" />
+    <Compile Include="WUClient.cs" />
+    <Compile Include="WUServer.cs" />
+    <Compile Include="TaskWork2.cs" />
+    <Compile Include="TaskSink2.cs" />
+    <Compile Include="Interrupt.cs" />
+    <Compile Include="MTServer.cs" />
+    <Compile Include="MsgQueue.cs" />
+    <Compile Include="WUProxy.cs" />
+    <Compile Include="MTRelay.cs" />
+    <Compile Include="SyncPub.cs" />
+    <Compile Include="SyncSub.cs" />
+    <Compile Include="PSEnvPub.cs" />
+    <Compile Include="PSEnvSub.cs" />
+    <Compile Include="Identity.cs" />
+    <Compile Include="RTReq.cs" />
+    <Compile Include="RTDealer.cs" />
+    <Compile Include="LBBroker.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\ZeroApp-Network\clrzmq\ZeroMQ.mono.csproj">
+      <Project>{6FFD872F-A4A4-4EFA-9B4D-4342BA6CF250}</Project>
+      <Name>ZeroMQ.mono</Name>
+    </ProjectReference>
+  </ItemGroup>
+</Project>
