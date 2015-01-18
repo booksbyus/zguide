@@ -110,8 +110,8 @@ namespace ZeroMQ.Test
 			//
 			if (args == null || args.Length < 3)
 			{
-				Console.WriteLine("Usage: {0} Peering2 Hello World ReceiverOne", AppDomain.CurrentDomain.FriendlyName);
-				Console.WriteLine("       {0} Peering2 Message ReceiverOne World", AppDomain.CurrentDomain.FriendlyName);
+				Console.WriteLine("Usage: {0} Peering2 Hello Me You", AppDomain.CurrentDomain.FriendlyName);
+				Console.WriteLine("       {0} Peering2 Message You Me", AppDomain.CurrentDomain.FriendlyName);
 				return;
 			}
 
