@@ -18,7 +18,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Externalconsole>true</Externalconsole>
-    <Commandlineparameters>AsyncSrv</Commandlineparameters>
+    <Commandlineparameters>Peering2 World Receiver0</Commandlineparameters>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>full</DebugType>
@@ -64,6 +64,8 @@
     <Compile Include="RTDealer.cs" />
     <Compile Include="LBBroker.cs" />
     <Compile Include="AsyncSrv.cs" />
+    <Compile Include="Peering1.cs" />
+    <Compile Include="Peering2.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
