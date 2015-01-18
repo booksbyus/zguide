@@ -16,7 +16,7 @@ namespace ZeroMQ.Test
 		// Broker peering simulation (part 2)
 		// Prototypes the request-reply flow
 
-		static void Peering2_ClientTask(ZContext context, int i, string name) 
+		static void Peering2_ClientTask(ZContext context, int i, string name, string message) 
 		{
 			// The client task does a request-reply dialog
 			// using a standard synchronous REQ socket
@@ -33,7 +33,7 @@ namespace ZeroMQ.Test
 					// Send
 					using (var outgoing = new ZMessage())
 					{
-						outgoing.Add(ZFrame.Create("Hello"));
+						outgoing.Add(ZFrame.Create(message));
 
 						client.SendMessage(outgoing);
 					}
@@ -108,14 +108,19 @@ namespace ZeroMQ.Test
 			// First argument is this broker's name
 			// Other arguments are our peers' names
 			//
-			if (args == null || args.Length < 2)
+			if (args == null || args.Length < 3)
 			{
-				Console.WriteLine("Usage: {0} Peering2 World Receiver0", AppDomain.CurrentDomain.FriendlyName);
-				Console.WriteLine("       {0} Peering2 Receiver0 World", AppDomain.CurrentDomain.FriendlyName);
+				Console.WriteLine("Usage: {0} Peering2 Hello World ReceiverOne", AppDomain.CurrentDomain.FriendlyName);
+				Console.WriteLine("       {0} Peering2 Message ReceiverOne World", AppDomain.CurrentDomain.FriendlyName);
 				return;
 			}
-			string name = args[0];
+
+			string message = args[0];
+
+			string name = args[1];
 			Console.WriteLine("I: preparing broker as {0}", name);
+
+			ZError error;
 
 			using (var context = ZContext.Create())
 			using (var cloudFrontend = ZSocket.Create(context, ZSocketType.ROUTER))
@@ -129,7 +134,7 @@ namespace ZeroMQ.Test
 
 				// Connect cloud backend to all peers
 				cloudBackend.Identity = Encoding.UTF8.GetBytes(name);
-				for (int i = 1; i < args.Length; ++i)
+				for (int i = 2; i < args.Length; ++i)
 				{
 					string peer = args[i];
 					Console.WriteLine("I: connecting to cloud frontend at {0}", peer);
@@ -153,7 +158,7 @@ namespace ZeroMQ.Test
 				// Start local clients
 				for (int i = 0; i < Peering2_Clients; ++i)
 				{
-					int j = i; new Thread(() => Peering2_ClientTask(context, j, name)).Start();
+					int j = i; new Thread(() => Peering2_ClientTask(context, j, name, message)).Start();
 				}
 
 				// Here, we handle the request-reply flow. We're using load-balancing
@@ -168,7 +173,6 @@ namespace ZeroMQ.Test
 					ZPollItem.CreateReceiver(cloudBackend)
 				};
 
-				ZError error;
 				ZMessage incoming;
 				TimeSpan wait;
 
@@ -214,7 +218,7 @@ namespace ZeroMQ.Test
 						// Route reply to cloud if it's addressed to a broker
 						string identity = incoming[0].ReadString();
 
-						for (int i = 1; i < args.Length; ++i)
+						for (int i = 2; i < args.Length; ++i)
 						{
 							if (identity == args[i])
 							{
@@ -282,7 +286,7 @@ namespace ZeroMQ.Test
 							{
 								// Route to random broker peer
 
-								int peer = rnd.Next(args.Length - 1) + 1;
+								int peer = rnd.Next(args.Length - 2) + 2;
 
 								using (var outgoing = new ZMessage())
 								{
