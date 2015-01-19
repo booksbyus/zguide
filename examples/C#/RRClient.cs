@@ -22,7 +22,7 @@ namespace ZeroMQ.Test
 					string requestText = "Hello";
 
 					Console.Write("Sending {0}... ", requestText);
-					using (var request = ZFrame.Create(requestText))
+					using (var request = ZFrame.From(requestText))
 					{
 						requester.SendFrame(request);
 					}

@@ -21,14 +21,14 @@ namespace ZeroMQ.Test
 				{
 					using (var message = new ZMessage())
 					{
-						message.Add(ZFrame.Create("A"));
-						message.Add(ZFrame.Create("We don't want to see this"));
+						message.Add(ZFrame.From("A"));
+						message.Add(ZFrame.From("We don't want to see this"));
 						publisher.SendMessage(message);
 					}
 					using (var message = new ZMessage())
 					{
-						message.Add(ZFrame.Create("B"));
-						message.Add(ZFrame.Create("We would like to see this"));
+						message.Add(ZFrame.From("B"));
+						message.Add(ZFrame.From("We would like to see this"));
 						publisher.SendMessage(message);
 					}
 					Thread.Sleep(1);

@@ -46,7 +46,7 @@ namespace ZeroMQ.Test
 
 						string replyText = "World";
 						Console.WriteLine(", Sending: {0}", replyText);
-						server.SendFrame(ZFrame.Create(replyText));
+						server.SendFrame(ZFrame.From(replyText));
 					}
 				}
 			}

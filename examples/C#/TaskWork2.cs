@@ -37,7 +37,7 @@ namespace ZeroMQ.Test
 					if (pollers[0].PollIn(out message, out error, TimeSpan.FromMilliseconds(64)))
 					{
 
-						int workload = message.ReadInt32();
+						int workload = message[0].ReadInt32();
 						Console.WriteLine("{0}.", workload);
 						Thread.Sleep(workload);
 

@@ -31,7 +31,7 @@ namespace ZeroMQ.Test
 
 				using (var request = new ZMessage())
 				{
-					request.Add(ZFrame.Create("Hello"));
+					request.Add(ZFrame.From("Hello"));
 
 					// Send request
 					client.SendMessage(request);
@@ -61,7 +61,7 @@ namespace ZeroMQ.Test
 				worker.Connect("inproc://backend");
 
 				// Tell broker we're ready for work
-				using (var ready = ZFrame.Create("READY"))
+				using (var ready = ZFrame.From("READY"))
 				{
 					worker.SendFrame(ready);
 				}
@@ -92,9 +92,9 @@ namespace ZeroMQ.Test
 						// Send reply
 						using (var commit = new ZMessage())
 						{
-							commit.Add(ZFrame.Create(worker_id));
-							commit.Add(ZFrame.Create(string.Empty));
-							commit.Add(ZFrame.Create("OK"));
+							commit.Add(ZFrame.From(worker_id));
+							commit.Add(ZFrame.From(string.Empty));
+							commit.Add(ZFrame.From("OK"));
 
 							worker.SendMessage(commit);
 						}
@@ -180,9 +180,9 @@ namespace ZeroMQ.Test
 
 							using (var outgoing = new ZMessage())
 							{
-								outgoing.Add(ZFrame.Create(client_id));
-								outgoing.Add(ZFrame.Create(string.Empty));
-								outgoing.Add(ZFrame.Create(reply));
+								outgoing.Add(ZFrame.From(client_id));
+								outgoing.Add(ZFrame.From(string.Empty));
+								outgoing.Add(ZFrame.From(reply));
 
 								// Send
 								frontend.SendMessage(outgoing);
@@ -213,11 +213,11 @@ namespace ZeroMQ.Test
 
 							using (var outgoing = new ZMessage())
 							{
-								outgoing.Add(ZFrame.Create(worker_queue[0]));
-								outgoing.Add(ZFrame.Create(string.Empty));
-								outgoing.Add(ZFrame.Create(client_id));
-								outgoing.Add(ZFrame.Create(string.Empty));
-								outgoing.Add(ZFrame.Create(requestText));
+								outgoing.Add(ZFrame.From(worker_queue[0]));
+								outgoing.Add(ZFrame.From(string.Empty));
+								outgoing.Add(ZFrame.From(client_id));
+								outgoing.Add(ZFrame.From(string.Empty));
+								outgoing.Add(ZFrame.From(requestText));
 
 								// Send
 								backend.SendMessage(outgoing);

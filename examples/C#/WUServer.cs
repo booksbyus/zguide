@@ -26,7 +26,7 @@ namespace ZeroMQ.Test
 					int temperature = rnd.Next(-55, +45);
 
 					var update = string.Format("{0:D5} {1}", zipcode, temperature);
-					using (var updateFrame = ZFrame.Create(update))
+					using (var updateFrame = ZFrame.From(update))
 					{
 						publisher.SendFrame(updateFrame);
 					}

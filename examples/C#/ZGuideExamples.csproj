@@ -66,6 +66,10 @@
     <Compile Include="AsyncSrv.cs" />
     <Compile Include="Peering1.cs" />
     <Compile Include="Peering2.cs" />
+    <Compile Include="LPClient.cs" />
+    <Compile Include="LPServer.cs" />
+    <Compile Include="SPQueue.cs" />
+    <Compile Include="SPWorker.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
