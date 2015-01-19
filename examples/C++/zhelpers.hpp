@@ -33,7 +33,7 @@
 #include <string>
 #include <sstream>
 
-#if (!defined(__WINDOWS__))
+#if (!defined(_WIN32))
 #include <sys/time.h>
 #include <unistd.h>
 #include <pthread.h>
@@ -46,14 +46,14 @@
 #include <signal.h>
 
 //  Bring Windows MSVC up to C99 scratch
-#if (defined (__WINDOWS__))
+#if (defined (_WIN32))
     typedef unsigned long ulong;
     typedef unsigned int  uint;
     typedef __int64 int64_t;
 #endif
 
 //  Provide random number from 0..(num-1)
-#if (!defined(__WINDOWS__))
+#if (!defined(_WIN32))
 #define within(num) (int) ((float) (num) * random () / (RAND_MAX + 1.0))
 #else
 #define within(num) (int) ((float) (num) * rand () / (RAND_MAX + 1.0))
@@ -175,7 +175,7 @@ s_version_assert (int want_major, int want_minor)
 static int64_t
 s_clock (void)
 {
-#if (defined (__WINDOWS__))
+#if (defined (_WIN32))
     SYSTEMTIME st;
     GetSystemTime (&st);
     return (int64_t) st.wSecond * 1000 + st.wMilliseconds;
@@ -190,7 +190,7 @@ s_clock (void)
 static void
 s_sleep (int msecs)
 {
-#if (defined (__WINDOWS__))
+#if (defined (_WIN32))
     Sleep (msecs);
 #else
     struct timespec t;
@@ -232,7 +232,7 @@ static void s_signal_handler (int signal_value)
 
 static void s_catch_signals ()
 {
-#if (!defined(__WINDOWS__))
+#if (!defined(_WIN32))
     struct sigaction action;
     action.sa_handler = s_signal_handler;
     action.sa_flags = 0;
