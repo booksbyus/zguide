@@ -13,7 +13,9 @@ namespace ZeroMQ.Test
 		public static void PPQueue(IDictionary<string, string> dict, string[] args)
 		{
 
-			// Simple Pirate broker
+			throw new NotImplementedException();
+
+			/* Simple Pirate broker
 			// This is identical to load-balancing pattern, with no reliability
 			// mechanisms. It depends on the client for recovery. Runs forever.
 
@@ -25,7 +27,7 @@ namespace ZeroMQ.Test
 				backend.Bind("tcp://*:5556");
 
 
-			}
+			} /**/
 		}
 	}
 }
