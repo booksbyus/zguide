@@ -33,7 +33,7 @@ namespace ZeroMQ.Test
 
 				using (var outgoing = new ZFrame("READY"))
 				{
-					worker.SendFrame(outgoing);
+					worker.Send(outgoing);
 				}
 
 				int cycles = 0;
@@ -70,7 +70,7 @@ namespace ZeroMQ.Test
 						Thread.Sleep(1); // Do some heavy work
 
 						// Send message back
-						worker.SendMessage(incoming);
+						worker.Send(incoming);
 					}
 				}
 

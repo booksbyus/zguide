@@ -24,7 +24,7 @@ namespace ZeroMQ.Test
 					Console.Write("Sending {0}... ", requestText);
 					using (var request = new ZFrame(requestText))
 					{
-						requester.SendFrame(request);
+						requester.Send(request);
 					}
 
 					using (ZFrame reply = requester.ReceiveFrame())

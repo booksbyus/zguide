@@ -55,7 +55,7 @@ namespace ZeroMQ.Test
 
 						Console.WriteLine("I: normal request ({0})", incoming[0].ReadInt32());
 						Thread.Sleep(1); // Do some heavy work
-						responder.SendMessage(incoming);
+						responder.Send(incoming);
 					}
 				}
 			}

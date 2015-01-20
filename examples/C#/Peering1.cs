@@ -68,7 +68,7 @@ namespace ZeroMQ.Test
 								outputNumber.Write(rnd.Next(10));
 								output.Add(outputNumber);
 
-								backend.SendMessage(output);
+								backend.Send(output);
 							}
 
 							continue;

@@ -72,7 +72,7 @@ namespace ZeroMQ.Test
 								outgoing.Add(incoming[4]);
 
 								// Send
-								frontend.SendMessage(outgoing);
+								frontend.Send(outgoing);
 							}
 						}
 					}
@@ -116,7 +116,7 @@ namespace ZeroMQ.Test
 								outgoing.Add(incoming[2]);
 
 								// Send
-								backend.SendMessage(outgoing);
+								backend.Send(outgoing);
 							}
 						}
 						else

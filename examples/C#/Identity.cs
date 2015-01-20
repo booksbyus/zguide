@@ -20,7 +20,7 @@ namespace ZeroMQ.Test
 				using (var anonymous = ZSocket.Create(context, ZSocketType.REQ))
 				{
 					anonymous.Connect("inproc://example");
-					anonymous.SendFrame(new ZFrame("ROUTER uses REQ's generated UUID"));
+					anonymous.Send(new ZFrame("ROUTER uses REQ's generated UUID"));
 				}
 				Identity_Dump(sink);
 
@@ -28,7 +28,7 @@ namespace ZeroMQ.Test
 				{
 					identified.Identity = Encoding.UTF8.GetBytes("PEER2");
 					identified.Connect("inproc://example");
-					identified.SendFrame(new ZFrame("ROUTER uses REQ's socket identity"));
+					identified.Send(new ZFrame("ROUTER uses REQ's socket identity"));
 				}
 				Identity_Dump(sink);
 			}

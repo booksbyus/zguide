@@ -22,7 +22,7 @@ namespace ZeroMQ.Test
 				while (true)
 				{
 					var replyBytes = new byte[4];
-					receiver.Receive(replyBytes, 0, replyBytes.Length);
+					receiver.ReceiveBytes(replyBytes, 0, replyBytes.Length);
 					int workload = BitConverter.ToInt32(replyBytes, 0);
 					Console.WriteLine("{0}.", workload);
 					Thread.Sleep(workload);

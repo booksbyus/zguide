@@ -35,7 +35,7 @@ namespace ZeroMQ.Test
 					{
 						outgoing.Add(new ZFrame(message));
 
-						client.SendMessage(outgoing);
+						client.Send(outgoing);
 					}
 
 					// Receive
@@ -67,7 +67,7 @@ namespace ZeroMQ.Test
 				worker.Connect("tcp://127.0.0.1:" + Peering2_GetPort(name) + 2);
 
 				// Tell broker we're ready for work
-				worker.SendFrame(new ZFrame("READY"));
+				worker.Send(new ZFrame("READY"));
 
 				// Process messages as they arrive
 				ZError error;
@@ -94,7 +94,7 @@ namespace ZeroMQ.Test
 						{
 							outgoing.Add(new ZFrame("OK"));
 
-							worker.SendMessage(outgoing);
+							worker.Send(outgoing);
 						}
 					}
 				}
@@ -223,7 +223,7 @@ namespace ZeroMQ.Test
 							if (identity == args[i])
 							{
 								using (incoming)
-									cloudFrontend.SendMessage(incoming);
+									cloudFrontend.Send(incoming);
 
 								incoming = null;
 							}
@@ -234,7 +234,7 @@ namespace ZeroMQ.Test
 					if (incoming != null)
 					{
 						using (incoming)
-							localFrontend.SendMessage(incoming);
+							localFrontend.Send(incoming);
 
 						incoming = null;
 					}
@@ -294,7 +294,7 @@ namespace ZeroMQ.Test
 									outgoing.Add(new ZFrame());
 									outgoing.Add(new ZFrame(incoming[2].ReadString()));
 
-									cloudBackend.SendMessage(outgoing);
+									cloudBackend.Send(outgoing);
 								}
 							}
 							else
@@ -309,7 +309,7 @@ namespace ZeroMQ.Test
 									outgoing.Add(new ZFrame());
 									outgoing.Add(new ZFrame(incoming[2].ReadString()));
 
-									localBackend.SendMessage(outgoing);
+									localBackend.Send(outgoing);
 								}
 							}
 						}

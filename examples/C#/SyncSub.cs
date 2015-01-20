@@ -21,7 +21,7 @@ namespace ZeroMQ.Test
 
 				syncclient.Connect("tcp://127.0.0.1:5562");
 
-				syncclient.SendFrame(new ZFrame(string.Empty));
+				syncclient.Send(new ZFrame(string.Empty));
 				syncclient.ReceiveFrame();
 
 				int i = 0;

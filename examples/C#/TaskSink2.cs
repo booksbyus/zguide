@@ -39,7 +39,7 @@ namespace ZeroMQ.Test
 				stopwatch.Stop();
 				Console.WriteLine("Total elapsed time: {0} ms", stopwatch.ElapsedMilliseconds);
 
-				controller.SendFrame(new ZFrame("KILL"));
+				controller.Send(new ZFrame("KILL"));
 			}
 		}
 	}

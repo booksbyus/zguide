@@ -67,7 +67,7 @@ namespace ZeroMQ.Test
 						outgoing.Add(new ZFrame());
 						outgoing.Add(new ZFrame("request " + (++requests)));
 
-						if (!client.SendMessage(outgoing, out error))
+						if (!client.Send(outgoing, out error))
 						{
 							if (error == ZError.ETERM)
 							{
@@ -154,7 +154,7 @@ namespace ZeroMQ.Test
 								response.Add(new ZFrame(identity));
 								response.Add(new ZFrame(content));
 
-								if (!worker.SendMessage(response, out error))
+								if (!worker.Send(response, out error))
 								{
 									if (error == ZError.ETERM)
 										return;

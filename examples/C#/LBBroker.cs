@@ -34,7 +34,7 @@ namespace ZeroMQ.Test
 					request.Add(new ZFrame("Hello"));
 
 					// Send request
-					client.SendMessage(request);
+					client.Send(request);
 				}
 
 				// Receive reply
@@ -63,7 +63,7 @@ namespace ZeroMQ.Test
 				// Tell broker we're ready for work
 				using (var ready = new ZFrame("READY"))
 				{
-					worker.SendFrame(ready);
+					worker.Send(ready);
 				}
 
 				ZError error;
@@ -96,7 +96,7 @@ namespace ZeroMQ.Test
 							commit.Add(new ZFrame());
 							commit.Add(new ZFrame("OK"));
 
-							worker.SendMessage(commit);
+							worker.Send(commit);
 						}
 					}
 				}
@@ -185,7 +185,7 @@ namespace ZeroMQ.Test
 								outgoing.Add(new ZFrame(reply));
 
 								// Send
-								frontend.SendMessage(outgoing);
+								frontend.Send(outgoing);
 							}
 
 							if (--clients == 0)
@@ -220,7 +220,7 @@ namespace ZeroMQ.Test
 								outgoing.Add(new ZFrame(requestText));
 
 								// Send
-								backend.SendMessage(outgoing);
+								backend.Send(outgoing);
 							}
 
 							// Dequeue the next worker identity

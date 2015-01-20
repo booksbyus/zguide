@@ -31,11 +31,11 @@ namespace ZeroMQ.Test
 				{
 					if (pollers[0].PollIn(out message, out error, TimeSpan.FromMilliseconds(64)))
 					{
-						backend.SendMessage(message, out error);
+						backend.Send(message, out error);
 					}
 					if (pollers[1].PollIn(out message, out error, TimeSpan.FromMilliseconds(64)))
 					{
-						frontend.SendMessage(message, out error);
+						frontend.Send(message, out error);
 					}
 				}
 			}

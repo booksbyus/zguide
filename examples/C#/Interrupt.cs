@@ -68,7 +68,7 @@ namespace ZeroMQ.Test
 						Console.Write("Sending {0}... ", respondText);
 						using (var response = new ZFrame(respondText))
 						{
-							responder.SendFrame(response);
+							responder.Send(response);
 						}
 					}
 				}

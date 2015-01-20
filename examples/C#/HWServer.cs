@@ -19,15 +19,15 @@ namespace ZeroMQ.Test
 
 				while (true)
 				{
-
 					using (ZFrame request = responder.ReceiveFrame())
 					{
-						Console.WriteLine("Received {0}", request);
+						Console.WriteLine("Received {0}", request.ReadString());
+
 						Thread.Sleep(1);
 
 						using (ZFrame reply = new ZFrame("World"))
 						{
-							responder.SendFrame(reply);
+							responder.Send(reply);
 						}
 					}
 				}

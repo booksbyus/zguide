@@ -41,7 +41,7 @@ namespace ZeroMQ.Test
 						{
 							outgoing.Write(++sequence);
 
-							requester.SendFrame(outgoing);
+							requester.Send(outgoing);
 						}
 
 						ZError error;

@@ -30,7 +30,7 @@ namespace ZeroMQ.Test
 					Console.WriteLine("Sending {0}... ", replyText);
 					using (var reply = new ZFrame(replyText))
 					{
-						responder.SendFrame(reply);
+						responder.Send(reply);
 					}
 				}
 			}
