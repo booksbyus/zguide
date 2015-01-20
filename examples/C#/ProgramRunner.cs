@@ -17,7 +17,7 @@ namespace ZeroMQ.Test
 
 
 			// REAL
-			var fields = typeof(Program).GetFields(BindingFlags.Public | BindingFlags.Static).OrderBy(field => field.Name);
+			var fields = typeof(Program).GetFields(BindingFlags.Public | BindingFlags.Static).OrderBy(field => field.Name).ToList();
 
 			int leaveOut = 0;
 			var dict = new Dictionary<string, string>();
@@ -54,7 +54,7 @@ namespace ZeroMQ.Test
 			int returnMain = 0;
 			string command = (args == null || args.Length == 0) ? "help" : args[0 + leaveOut].ToLower();
 
-			var methods = typeof(Program).GetMethods(BindingFlags.Public | BindingFlags.Static).OrderBy(method => method.Name);
+			var methods = typeof(Program).GetMethods(BindingFlags.Public | BindingFlags.Static).OrderBy(method => method.Name).ToList();
 			if (command != "help")
 			{
 
@@ -87,14 +87,17 @@ namespace ZeroMQ.Test
 			}
 
 			Console.WriteLine();
-			Console.WriteLine("Usage: ./" + AppDomain.CurrentDomain.FriendlyName + " [--option=++] [--option=tcp://192.168.1.1:8080] <command> World Edward Ulrich");
+			Console.WriteLine("Usage: ./" + AppDomain.CurrentDomain.FriendlyName + " [--option=++] [--option=tcp://192.168.1.1:8080] <command> World Me You");
 
-			Console.WriteLine();
-			Console.WriteLine("Available [option]s:");
-			Console.WriteLine();
-			foreach (FieldInfo field in fields)
+			if (fields.Count > 0)
 			{
-				Console.WriteLine("  --{0}", field.Name);
+				Console.WriteLine();
+				Console.WriteLine("Available [option]s:");
+				Console.WriteLine();
+				foreach (FieldInfo field in fields)
+				{
+					Console.WriteLine("  --{0}", field.Name);
+				}
 			}
 
 			Console.WriteLine();
