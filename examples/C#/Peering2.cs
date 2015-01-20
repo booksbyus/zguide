@@ -176,12 +176,12 @@ namespace ZeroMQ.Test
 
 				ZError error;
 				ZMessage incoming;
-				TimeSpan wait;
+				TimeSpan? wait;
 
 				while (true)
 				{
 					// If we have no workers, wait indefinitely
-					wait = workers.Count > 0 ? TimeSpan.FromMilliseconds(1000) : TimeSpan.Zero;
+					wait = workers.Count > 0 ? (TimeSpan?)TimeSpan.FromMilliseconds(1000) : null;
 
 					// Poll localBackend
 					if (backends[0].PollIn(out incoming, out error, wait))
@@ -228,6 +228,7 @@ namespace ZeroMQ.Test
 									cloudFrontend.Send(incoming);
 
 								incoming = null;
+								break;
 							}
 						}
 					}
