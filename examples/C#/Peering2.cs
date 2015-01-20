@@ -23,7 +23,10 @@ namespace ZeroMQ.Test
 
 			using (var client = ZSocket.Create(context, ZSocketType.REQ))
 			{
-				client.Identity = Encoding.UTF8.GetBytes(name);
+				// Set printable identity
+				client.IdentityString = name;
+
+				// Connect
 				client.Connect("tcp://127.0.0.1:" + Peering2_GetPort(name) + 1);
 
 				ZError error;
@@ -60,7 +63,10 @@ namespace ZeroMQ.Test
 
 			using (var worker = ZSocket.Create(context, ZSocketType.REQ))
 			{
-				worker.Identity = Encoding.UTF8.GetBytes(name);
+				// Set printable identity
+				worker.IdentityString = name;
+
+				// Conntect
 				worker.Connect("tcp://127.0.0.1:" + Peering2_GetPort(name) + 2);
 
 				// Tell broker we're ready for work
@@ -130,11 +136,11 @@ namespace ZeroMQ.Test
 			using (var localBackend = ZSocket.Create(context, ZSocketType.ROUTER))
 			{
 				// Bind cloud frontend to endpoint
-				cloudFrontend.Identity = Encoding.UTF8.GetBytes(name);
+				cloudFrontend.IdentityString = name;
 				cloudFrontend.Bind("tcp://127.0.0.1:" + Peering2_GetPort(name) + 0);
 
 				// Connect cloud backend to all peers
-				cloudBackend.Identity = Encoding.UTF8.GetBytes(name);
+				cloudBackend.IdentityString = name;
 				for (int i = 2; i < args.Length; ++i)
 				{
 					string peer = args[i];
@@ -326,7 +332,6 @@ namespace ZeroMQ.Test
 							}
 						}
 					}
-
 				}
 			}
 		}
