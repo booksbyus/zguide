@@ -39,7 +39,7 @@ namespace ZeroMQ.Test
 						// We send a request, then we work to get a reply
 						using (var outgoing = new ZFrame(4))
 						{
-							outgoing.WriteInt32(++sequence);
+							outgoing.Write(++sequence);
 
 							requester.SendFrame(outgoing);
 						}

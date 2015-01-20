@@ -65,7 +65,7 @@ namespace ZeroMQ.Test
 								output.Add(new ZFrame(self));
 
 								var outputNumber = new ZFrame(4);
-								outputNumber.WriteInt32(rnd.Next(10));
+								outputNumber.Write(rnd.Next(10));
 								output.Add(outputNumber);
 
 								backend.SendMessage(output);
