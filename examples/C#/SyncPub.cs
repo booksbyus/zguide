@@ -30,7 +30,7 @@ namespace ZeroMQ.Test
 
 					syncservice.ReceiveFrame();
 
-					syncservice.SendFrame(ZFrame.From(string.Empty));
+					syncservice.SendFrame(new ZFrame());
 					++subscribers;
 				}
 
@@ -38,9 +38,9 @@ namespace ZeroMQ.Test
 				int i = 0;
 				for (; i < 1000000; ++i)
 				{
-					publisher.SendFrame(ZFrame.From("Rhubarb"));
+					publisher.SendFrame(new ZFrame("Rhubarb"));
 				}
-				publisher.SendFrame(ZFrame.From("END"));
+				publisher.SendFrame(new ZFrame("END"));
 			}
 		}
 	}

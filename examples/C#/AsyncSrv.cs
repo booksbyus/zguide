@@ -63,9 +63,9 @@ namespace ZeroMQ.Test
 					}
 					using (var outgoing = new ZMessage())
 					{
-						outgoing.Add(ZFrame.From(client.Identity, 0, client.Identity.Length));
-						outgoing.Add(ZFrame.From(string.Empty));
-						outgoing.Add(ZFrame.From("request " + (++requests)));
+						outgoing.Add(new ZFrame(client.Identity, 0, client.Identity.Length));
+						outgoing.Add(new ZFrame());
+						outgoing.Add(new ZFrame("request " + (++requests)));
 
 						if (!client.SendMessage(outgoing, out error))
 						{
@@ -151,8 +151,8 @@ namespace ZeroMQ.Test
 
 							using (var response = new ZMessage())
 							{
-								response.Add(ZFrame.From(identity));
-								response.Add(ZFrame.From(content));
+								response.Add(new ZFrame(identity));
+								response.Add(new ZFrame(content));
 
 								if (!worker.SendMessage(response, out error))
 								{

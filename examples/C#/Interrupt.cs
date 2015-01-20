@@ -66,7 +66,7 @@ namespace ZeroMQ.Test
 						Console.WriteLine("Received: {0}!", respondText, request.ReadString());
 
 						Console.Write("Sending {0}... ", respondText);
-						using (var response = ZFrame.From(respondText))
+						using (var response = new ZFrame(respondText))
 						{
 							responder.SendFrame(response);
 						}

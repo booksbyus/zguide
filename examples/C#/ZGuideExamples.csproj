@@ -70,6 +70,7 @@
     <Compile Include="LPServer.cs" />
     <Compile Include="SPQueue.cs" />
     <Compile Include="SPWorker.cs" />
+    <Compile Include="PPQueue.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

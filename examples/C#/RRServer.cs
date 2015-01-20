@@ -28,7 +28,7 @@ namespace ZeroMQ.Test
 
 					string replyText = "World";
 					Console.WriteLine("Sending {0}... ", replyText);
-					using (var reply = ZFrame.From(replyText))
+					using (var reply = new ZFrame(replyText))
 					{
 						responder.SendFrame(reply);
 					}

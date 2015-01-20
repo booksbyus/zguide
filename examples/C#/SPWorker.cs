@@ -31,7 +31,7 @@ namespace ZeroMQ.Test
 
 				Console.WriteLine("I: ({0}) worker ready", name);
 
-				using (var outgoing = ZFrame.From("READY"))
+				using (var outgoing = new ZFrame("READY"))
 				{
 					worker.SendFrame(outgoing);
 				}

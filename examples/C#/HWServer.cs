@@ -25,7 +25,7 @@ namespace ZeroMQ.Test
 						Console.WriteLine("Received {0}", request);
 						Thread.Sleep(1);
 
-						using (ZFrame reply = ZFrame.From("World"))
+						using (ZFrame reply = new ZFrame("World"))
 						{
 							responder.SendFrame(reply);
 						}

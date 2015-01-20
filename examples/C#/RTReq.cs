@@ -35,15 +35,15 @@ namespace ZeroMQ.Test
 					using (ZMessage identity = broker.ReceiveMessage())
 					{
 						broker.SendFrameMore(identity[0]);
-						broker.SendFrameMore(ZFrame.From(string.Empty));
+						broker.SendFrameMore(new ZFrame(string.Empty));
 
 						if (stopwatch.Elapsed < TimeSpan.FromSeconds(5))
 						{
-							broker.SendFrame(ZFrame.From("Work harder!"));
+							broker.SendFrame(new ZFrame("Work harder!"));
 						}
 						else
 						{
-							broker.SendFrame(ZFrame.From("Fired!"));
+							broker.SendFrame(new ZFrame("Fired!"));
 							if (++workers_fired == RTReq_Workers)
 							{
 								break;
@@ -65,7 +65,7 @@ namespace ZeroMQ.Test
 				int total = 0;
 				while (true)
 				{
-					worker.SendFrame(ZFrame.From("Hi Boss"));
+					worker.SendFrame(new ZFrame("Hi Boss"));
 
 					bool finished;
 					using (ZFrame frame = worker.ReceiveFrame())

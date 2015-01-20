@@ -37,7 +37,7 @@ namespace ZeroMQ.Test
 					while (retries_left > 0)
 					{
 						// We send a request, then we work to get a reply
-						using (var outgoing = ZFrame.Create(4))
+						using (var outgoing = new ZFrame(4))
 						{
 							outgoing.WriteInt32(++sequence);
 

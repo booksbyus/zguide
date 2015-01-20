@@ -42,7 +42,7 @@ namespace ZeroMQ.Test
 				xmitter.Connect("inproc://step3");
 
 				Console.WriteLine("Step 2 ready, signaling step 3");
-				xmitter.SendFrame(ZFrame.From("READY"));
+				xmitter.SendFrame(new ZFrame("READY"));
 			}
 		}
 
@@ -54,7 +54,7 @@ namespace ZeroMQ.Test
 				xmitter.Connect("inproc://step2");
 
 				Console.WriteLine("Step 1 ready, signaling step 2");
-				xmitter.SendFrame(ZFrame.From("READY"));
+				xmitter.SendFrame(new ZFrame("READY"));
 			}
 		}
 

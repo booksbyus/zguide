@@ -67,8 +67,8 @@ namespace ZeroMQ.Test
 
 							using (var outgoing = new ZMessage())
 							{
-								outgoing.Add(ZFrame.From(client_id));
-								outgoing.Add(ZFrame.Create(0));
+								outgoing.Add(new ZFrame(client_id));
+								outgoing.Add(new ZFrame(0));
 								outgoing.Add(incoming[4]);
 
 								// Send
@@ -109,10 +109,10 @@ namespace ZeroMQ.Test
 
 							using (var outgoing = new ZMessage())
 							{
-								outgoing.Add(ZFrame.From(worker_id));
-								outgoing.Add(ZFrame.Create(0));
-								outgoing.Add(ZFrame.From(client_id));
-								outgoing.Add(ZFrame.Create(0));
+								outgoing.Add(new ZFrame(worker_id));
+								outgoing.Add(new ZFrame());
+								outgoing.Add(new ZFrame(client_id));
+								outgoing.Add(new ZFrame());
 								outgoing.Add(incoming[2]);
 
 								// Send
