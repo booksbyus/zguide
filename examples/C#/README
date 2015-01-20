@@ -1,2 +1,0 @@
-Examples in C#
-See LICENSE in examples directory
