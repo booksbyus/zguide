@@ -3,7 +3,7 @@ ZeroMQ Examples in C#
 
 Hello! I've made some new examples for C#.
 
-You can open the `ZGuideExamples.csproj` in VisualC# on Windows or in MonoDevelop on Linux.
+You can open the `ZGuideExamples.csproj` in VisualC# on Windows or in MonoDevelop on Linux.  
 Add a Reference to the project [`/zeromq/clrzmq4`](http://github.com/zeromq/clrzmq4) (or the release ZeroMQ.dll).
 
 Now compile the project and run `./ZGuideExamples.exe` !
