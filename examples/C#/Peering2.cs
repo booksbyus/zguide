@@ -31,16 +31,14 @@ namespace ZeroMQ.Test
 				while (true)
 				{
 					// Send
-					using (var outgoing = new ZMessage())
+					using (var outgoing = new ZFrame(message))
 					{
-						outgoing.Add(new ZFrame(message));
-
 						client.Send(outgoing);
 					}
 
 					// Receive
-					ZMessage incoming;
-					if (null == (incoming = client.ReceiveMessage(out error)))
+					ZFrame incoming;
+					if (null == (incoming = client.ReceiveFrame(out error)))
 					{
 						if (error == ZError.ETERM)
 							return;	// Interrupted
@@ -50,8 +48,8 @@ namespace ZeroMQ.Test
 
 					using (incoming)
 					{
-						// Do
-						Console.WriteLine("Client {0}: {1}", name, incoming[0].ReadString());
+						// Do some heavy work
+						Console.WriteLine("Client {0}: {1}", name, incoming.ReadString());
 					}
 				}
 			}
@@ -71,11 +69,11 @@ namespace ZeroMQ.Test
 
 				// Process messages as they arrive
 				ZError error;
-				ZMessage incoming;
+				ZFrame incoming;
 				while (true)
 				{
 					// Receive
-					if (null == (incoming = worker.ReceiveMessage(out error)))
+					if (null == (incoming = worker.ReceiveFrame(out error)))
 					{
 						if (error == ZError.ETERM)
 							return;	// Interrupted
@@ -84,16 +82,14 @@ namespace ZeroMQ.Test
 					}
 					using (incoming)
 					{
-						Console.WriteLine("Worker {0}: {1}", name, incoming[0].ReadString());
+						Console.WriteLine("Worker {0}: {1}", name, incoming.ReadString());
 
-						// Work
+						// Do some heavy work
 						Thread.Sleep(1);
 
 						// Send
-						using (var outgoing = new ZMessage())
+						using (var outgoing = new ZFrame("OK"))
 						{
-							outgoing.Add(new ZFrame("OK"));
-
 							worker.Send(outgoing);
 						}
 					}
@@ -110,17 +106,22 @@ namespace ZeroMQ.Test
 			//
 			if (args == null || args.Length < 3)
 			{
-				Console.WriteLine("Usage: {0} Peering2 Hello Me You", AppDomain.CurrentDomain.FriendlyName);
-				Console.WriteLine("       {0} Peering2 Message You Me", AppDomain.CurrentDomain.FriendlyName);
-				return;
+				if (args != null && args.Length == 1)
+				{
+					args = new string[] { args[0], "Me", "You" };
+				}
+				else
+				{
+					Console.WriteLine("Usage: {0} Peering2 Hello Me You", AppDomain.CurrentDomain.FriendlyName);
+					Console.WriteLine("       {0} Peering2 Message You Me", AppDomain.CurrentDomain.FriendlyName);
+					return;
+				}
 			}
 
 			string message = args[0];
 
 			string name = args[1];
 			Console.WriteLine("I: preparing broker as {0}", name);
-
-			ZError error;
 
 			using (var context = ZContext.Create())
 			using (var cloudFrontend = ZSocket.Create(context, ZSocketType.ROUTER))
@@ -173,6 +174,7 @@ namespace ZeroMQ.Test
 					ZPollItem.CreateReceiver(cloudBackend)
 				};
 
+				ZError error;
 				ZMessage incoming;
 				TimeSpan wait;
 
@@ -292,7 +294,7 @@ namespace ZeroMQ.Test
 								{
 									outgoing.Add(new ZFrame(args[peer]));
 									outgoing.Add(new ZFrame());
-									outgoing.Add(new ZFrame(incoming[2].ReadString()));
+									outgoing.Add(incoming[2]);
 
 									cloudBackend.Send(outgoing);
 								}
@@ -307,7 +309,7 @@ namespace ZeroMQ.Test
 								{
 									outgoing.Add(new ZFrame(peer));
 									outgoing.Add(new ZFrame());
-									outgoing.Add(new ZFrame(incoming[2].ReadString()));
+									outgoing.Add(incoming[2]);
 
 									localBackend.Send(outgoing);
 								}
