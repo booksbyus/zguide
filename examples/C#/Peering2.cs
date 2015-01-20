@@ -282,10 +282,10 @@ namespace ZeroMQ.Test
 
 						using (incoming)
 						{
-							// If reroutable, send to cloud 20% of the time
+							// If reroutable, send to cloud 25% of the time
 							// Here we'd normally use cloud status information
 							//
-							if (reroutable == 1 && rnd.Next(5) == 0)
+							if (reroutable == 1 && rnd.Next(4) == 0)
 							{
 								// Route to random broker peer
 
