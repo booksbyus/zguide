@@ -37,15 +37,15 @@ namespace ZeroMQ.Test
 					}
 
 					// Receive
-					ZFrame incoming;
-					if (null == (incoming = client.ReceiveFrame(out error)))
+					ZFrame incoming = client.ReceiveFrame(out error);
+
+					if (incoming == null)
 					{
 						if (error == ZError.ETERM)
 							return;	// Interrupted
 
 						throw new ZException(error);
 					}
-
 					using (incoming)
 					{
 						Console.WriteLine("Client {0}: {1}", name, incoming.ReadString());
@@ -68,11 +68,12 @@ namespace ZeroMQ.Test
 
 				// Process messages as they arrive
 				ZError error;
-				ZFrame incoming;
 				while (true)
 				{
 					// Receive
-					if (null == (incoming = worker.ReceiveFrame(out error)))
+					ZFrame incoming = worker.ReceiveFrame(out error);
+
+					if (incoming == null)
 					{
 						if (error == ZError.ETERM)
 							return;	// Interrupted
