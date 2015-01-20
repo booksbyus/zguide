@@ -290,7 +290,7 @@ namespace ZeroMQ.Test
 
 								int peer = rnd.Next(args.Length - 2) + 2;
 
-								incoming.ReplaceAt(0, args[peer]);
+								incoming.ReplaceAt(0, new ZFrame(args[peer]));
 
 								/* using (var outgoing = new ZMessage())
 								{
@@ -310,7 +310,7 @@ namespace ZeroMQ.Test
 								string peer = workers[0];
 
 								workers.RemoveAt(0);
-								incoming.ReplaceAt(0, peer);
+								incoming.ReplaceAt(0, new ZFrame(peer));
 
 								/* using (var outgoing = new ZMessage())
 								{
