@@ -48,7 +48,6 @@ namespace ZeroMQ.Test
 
 					using (incoming)
 					{
-						// Do some heavy work
 						Console.WriteLine("Client {0}: {1}", name, incoming.ReadString());
 					}
 				}
