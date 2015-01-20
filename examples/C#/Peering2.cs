@@ -290,29 +290,38 @@ namespace ZeroMQ.Test
 
 								int peer = rnd.Next(args.Length - 2) + 2;
 
-								using (var outgoing = new ZMessage())
+								incoming.ReplaceAt(0, args[peer]);
+
+								/* using (var outgoing = new ZMessage())
 								{
 									outgoing.Add(new ZFrame(args[peer]));
 									outgoing.Add(new ZFrame());
 									outgoing.Add(incoming[2]);
 
 									cloudBackend.Send(outgoing);
-								}
+								} /**/
+
+								cloudBackend.Send(incoming);
 							}
 							else
 							{
 								// Route to local broker peer
-								string peer = workers[0];
-								workers.RemoveAt(0);
 
-								using (var outgoing = new ZMessage())
+								string peer = workers[0];
+
+								workers.RemoveAt(0);
+								incoming.ReplaceAt(0, peer);
+
+								/* using (var outgoing = new ZMessage())
 								{
 									outgoing.Add(new ZFrame(peer));
 									outgoing.Add(new ZFrame());
 									outgoing.Add(incoming[2]);
 
 									localBackend.Send(outgoing);
-								}
+								} /**/
+
+								localBackend.Send(incoming);
 							}
 						}
 					}
