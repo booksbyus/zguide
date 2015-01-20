@@ -48,8 +48,6 @@ Available <command>s:
     TaskVent
     TaskWork
     TaskWork2
-    ToHexBytes
-    ToHexString
     Version
     WUClient
     WUProxy
