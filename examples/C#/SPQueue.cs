@@ -68,7 +68,7 @@ namespace ZeroMQ.Test
 							using (var outgoing = new ZMessage())
 							{
 								outgoing.Add(new ZFrame(client_id));
-								outgoing.Add(new ZFrame(0));
+								outgoing.Add(new ZFrame());
 								outgoing.Add(incoming[4]);
 
 								// Send

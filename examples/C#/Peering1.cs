@@ -64,7 +64,7 @@ namespace ZeroMQ.Test
 							{
 								output.Add(new ZFrame(self));
 
-								var outputNumber = new ZFrame(4);
+								var outputNumber = ZFrame.Create(4);
 								outputNumber.Write(rnd.Next(10));
 								output.Add(outputNumber);
 
