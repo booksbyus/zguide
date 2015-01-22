@@ -35,12 +35,8 @@ namespace ZeroMQ.Test
 			}
 
 			// Tell queue we're ready for work
-			using (var outgoing = new ZMessage())
+			using (var outgoing = new ZFrame(PPP_READY))
 			{
-				// outgoing.Add(new ZFrame(name));
-				// outgoing.Add(new ZFrame());
-				outgoing.Add(new ZFrame(PPP_READY));
-
 				worker.Send(outgoing);
 			}
 
@@ -91,8 +87,6 @@ namespace ZeroMQ.Test
 							// - 1-part HEARTBEAT -> heartbeat
 							using (incoming)
 							{
-								// incoming.RemoveAt(0);
-
 								// To test the robustness of the queue implementation we
 								// simulate various typical problems, such as the worker
 								// crashing or running very slowly. We do this after a few
@@ -116,9 +110,7 @@ namespace ZeroMQ.Test
 
 									Thread.Sleep(1);	// Do some heavy work
 
-									// incoming.Prepend(new ZFrame());
-
-									Console_WriteZMessage(incoming, "I: sending reply");
+									Console.WriteLine("I: sending reply");
 									worker.Send(incoming);
 
 									liveness = PPP_HEARTBEAT_LIVENESS;
@@ -192,12 +184,8 @@ namespace ZeroMQ.Test
 							heartbeat_at = DateTime.UtcNow + PPP_HEARTBEAT_INTERVAL;
 
 							Console.WriteLine("I:   sending heartbeat");
-							using (var outgoing = new ZMessage()) 
+							using (var outgoing = new ZFrame(PPP_HEARTBEAT))
 							{
-								// outgoing.Add(new ZFrame(name));
-								// outgoing.Add(new ZFrame());
-								outgoing.Add(new ZFrame(PPP_HEARTBEAT));
-
 								worker.Send(outgoing);
 							}
 						}

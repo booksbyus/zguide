@@ -213,8 +213,6 @@ namespace ZeroMQ.Test
 								worker.Identity.CopyZeroTo(workerIdentity);
 								outgoing.Add(workerIdentity);
 
-								// outgoing.Add(new ZFrame());
-
 								outgoing.Add(new ZFrame(PPP_HEARTBEAT));
 
 								Console.WriteLine("I:   sending heartbeat ({0})", worker.IdentityString);
