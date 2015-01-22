@@ -30,7 +30,7 @@ namespace ZeroMQ.Test
 				// Connect
 				client.Connect("tcp://localhost:5570");
 
-				var poller = ZPollItem.CreateReceiver(client);
+				var poll = ZPollItem.CreateReceiver();
 
 				int requests = 0;
 				ZError error;
@@ -41,7 +41,7 @@ namespace ZeroMQ.Test
 					// Tick once per second, pulling in arriving messages
 					for (int centitick = 0; centitick < 100; ++centitick)
 					{
-						if (!poller.PollIn(out incoming, out error, TimeSpan.FromMilliseconds(10)))
+						if (!client.PollIn(poll, out incoming, out error, TimeSpan.FromMilliseconds(10)))
 						{
 							if (error == ZError.EAGAIN)
 							{

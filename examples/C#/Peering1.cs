@@ -46,15 +46,15 @@ namespace ZeroMQ.Test
 				// status messages back from peers. The zmq_poll timeout defines
 				// our own heartbeat:
 
-				var poller = ZPollItem.CreateReceiver(frontend);
 				ZError error;
 				ZMessage incoming;
+				var poll = ZPollItem.CreateReceiver();
 				var rnd = new Random();
 
 				while (true)
 				{
 					// Poll for activity, or 1 second timeout
-					if (!poller.PollIn(out incoming, out error, TimeSpan.FromSeconds(1)))
+					if (!frontend.PollIn(poll, out incoming, out error, TimeSpan.FromSeconds(1)))
 					{
 						if (error == ZError.EAGAIN)
 						{

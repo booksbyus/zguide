@@ -146,18 +146,14 @@ namespace ZeroMQ.Test
 				// Queue of available workers
 				var worker_queue = new List<string>();
 
-				var pollers = new ZPollItem[]
-				{
-					ZPollItem.CreateReceiver(backend),
-					ZPollItem.CreateReceiver(frontend)
-				};
+				var poll = ZPollItem.CreateReceiver();
 
 				ZError error;
 				ZMessage incoming;
 
 				while (true)
 				{
-					if (pollers[0].PollIn(out incoming, out error, TimeSpan.FromMilliseconds(64)))
+					if (backend.PollIn(poll, out incoming, out error, TimeSpan.FromMilliseconds(64)))
 					{
 						// Handle worker activity on backend
 
@@ -199,7 +195,7 @@ namespace ZeroMQ.Test
 					{
 						// Poll frontend only if we have available workers
 
-						if (pollers[1].PollIn(out incoming, out error, TimeSpan.FromMilliseconds(64)))
+						if (frontend.PollIn(poll, out incoming, out error, TimeSpan.FromMilliseconds(64)))
 						{
 							// Here is how we handle a client request
 

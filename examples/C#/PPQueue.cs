@@ -101,7 +101,7 @@ namespace ZeroMQ.Test
 	static partial class Program
 	{
 		public const int PPP_HEARTBEAT_LIVENESS = 5; // 3-5 is reasonable
-		public static readonly TimeSpan PPP_HEARTBEAT_INTERVAL = TimeSpan.FromMilliseconds(1000);
+		public static readonly TimeSpan PPP_HEARTBEAT_INTERVAL = TimeSpan.FromMilliseconds(512);
 
 		public const string PPP_READY = "READY";
 		public const string PPP_HEARTBEAT = "HEARTBEAT";
@@ -122,18 +122,14 @@ namespace ZeroMQ.Test
 				DateTime heartbeat_at = DateTime.UtcNow + PPP_HEARTBEAT_INTERVAL;
 
 				// Create a Receiver ZPollItem (ZMQ_POLLIN)
-				var poll = new ZPollItem[]
-				{
-					ZPollItem.CreateReceiver(backend),
-					ZPollItem.CreateReceiver(frontend)
-				};
+				var poll = ZPollItem.CreateReceiver();
 
 				ZError error;
 				ZMessage incoming;
 				while (true)
 				{
 					// Handle worker activity on backend
-					if (poll[0].PollIn(out incoming, out error, PPP_HEARTBEAT_INTERVAL))
+					if (backend.PollIn(poll, out incoming, out error, PPP_HEARTBEAT_INTERVAL))
 					{
 						using (incoming)
 						{
@@ -178,7 +174,7 @@ namespace ZeroMQ.Test
 					if (workers.Count > 0)
 					{
 						// Poll frontend only if we have available workers
-						if (poll[1].PollIn(out incoming, out error, PPP_HEARTBEAT_INTERVAL))
+						if (frontend.PollIn(poll, out incoming, out error, PPP_HEARTBEAT_INTERVAL))
 						{
 							// Now get next client request, route to next worker
 							using (incoming)

@@ -21,7 +21,7 @@ namespace ZeroMQ.Test
 		public const int PPP_INTERVAL_INIT = 1000;
 		public const int PPP_INTERVAL_MAX = 32000;
 
-		public static ZSocket PPWorker_CreateZSocket(ZContext context, string name, out ZPollItem pollItem, out ZError error)
+		public static ZSocket PPWorker_CreateZSocket(ZContext context, string name, out ZError error)
 		{
 			// Helper function that returns a new configured socket
 			// connected to the Paranoid Pirate queue
@@ -31,7 +31,6 @@ namespace ZeroMQ.Test
 
 			if (!worker.Connect("tcp://127.0.0.1:5556", out error))
 			{
-				pollItem = null;
 				return null;	// Interrupted
 			}
 
@@ -44,8 +43,6 @@ namespace ZeroMQ.Test
 
 				worker.Send(outgoing);
 			}
-
-			pollItem = ZPollItem.CreateReceiver(worker);
 
 			Console.WriteLine("I:        worker ready");
 			return worker;
@@ -65,8 +62,7 @@ namespace ZeroMQ.Test
 				ZSocket worker = null;
 				try // using (worker)
 				{
-					ZPollItem pollItem;
-					if (null == (worker = PPWorker_CreateZSocket(context, name, out pollItem, out error)))
+					if (null == (worker = PPWorker_CreateZSocket(context, name, out error)))
 					{
 						if (error == ZError.ETERM)
 							return;	// Interrupted
@@ -82,11 +78,13 @@ namespace ZeroMQ.Test
 
 					ZMessage incoming;
 					int cycles = 0;
+					var poll = ZPollItem.CreateReceiver();
+
 					while (true)
 					{
 						var rnd = new Random();
 
-						if (pollItem.PollIn(out incoming, out error, PPP_HEARTBEAT_INTERVAL))
+						if (worker.PollIn(poll, out incoming, out error, PPP_HEARTBEAT_INTERVAL))
 						{
 							// Get message
 							// - 3-part envelope + content -> request
@@ -174,7 +172,7 @@ namespace ZeroMQ.Test
 							}
 
 							worker.Dispose();
-							if (null == (worker = PPWorker_CreateZSocket(context, name, out pollItem, out error)))
+							if (null == (worker = PPWorker_CreateZSocket(context, name, out error)))
 							{
 								if (error == ZError.ETERM)
 									return;	// Interrupted

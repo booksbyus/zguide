@@ -13,7 +13,7 @@ namespace ZeroMQ.Test
 		static TimeSpan LPClient_RequestTimeout = TimeSpan.FromMilliseconds(2500);
 		static int LPClient_RequestRetries = 3;
 
-		static ZSocket LPClient_CreateZSocket(ZContext context, string name, out ZPollItem pollItem, out ZError error)
+		static ZSocket LPClient_CreateZSocket(ZContext context, string name, out ZError error)
 		{
 			// Helper function that returns a new configured socket
 			// connected to the Lazy Pirate queue
@@ -23,11 +23,8 @@ namespace ZeroMQ.Test
 
 			if (!requester.Connect("tcp://127.0.0.1:5555", out error))
 			{
-				pollItem = null;
 				return null;
 			}
-
-			pollItem = ZPollItem.CreateReceiver(requester);
 			return requester;
 		}
 
@@ -50,8 +47,7 @@ namespace ZeroMQ.Test
 				ZSocket requester = null;
 				try { // using (requester)
 
-					ZPollItem pollItem;
-					if (null == (requester = LPClient_CreateZSocket(context, name, out pollItem, out error)))
+					if (null == (requester = LPClient_CreateZSocket(context, name, out error)))
 					{
 						if (error == ZError.ETERM)
 							return;	// Interrupted
@@ -60,6 +56,8 @@ namespace ZeroMQ.Test
 
 					int sequence = 0;
 					int retries_left = LPClient_RequestRetries;
+					var poll = ZPollItem.CreateReceiver();
+
 					while (retries_left > 0)
 					{
 						// We send a request, then we work to get a reply
@@ -70,8 +68,7 @@ namespace ZeroMQ.Test
 						}
 
 						ZMessage incoming;
-						int expect_reply = 1;
-						while (expect_reply > 0)
+						while (true)
 						{
 							// Here we process a server reply and exit our loop
 							// if the reply is valid.
@@ -81,7 +78,7 @@ namespace ZeroMQ.Test
 							// before finally abandoning:
 
 							// Poll socket for a reply, with timeout
-							if (pollItem.PollIn(out incoming, out error, LPClient_RequestTimeout))
+							if (requester.PollIn(poll, out incoming, out error, LPClient_RequestTimeout))
 							{
 								using (incoming)
 								{
@@ -91,7 +88,7 @@ namespace ZeroMQ.Test
 									{
 										Console.WriteLine("I: server replied OK ({0})", incoming_sequence);
 										retries_left = LPClient_RequestRetries;
-										expect_reply = 0;
+										break;
 									}
 									else {
 										Console_WriteZMessage(incoming, "E: malformed reply from server");
@@ -112,7 +109,7 @@ namespace ZeroMQ.Test
 
 									// Old socket is confused; close it and open a new one
 									requester.Dispose();
-									if (null == (requester = LPClient_CreateZSocket(context, name, out pollItem, out error)))
+									if (null == (requester = LPClient_CreateZSocket(context, name, out error)))
 									{
 										if (error == ZError.ETERM)
 											return;	// Interrupted

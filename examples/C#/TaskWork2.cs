@@ -23,27 +23,22 @@ namespace ZeroMQ.Test
 				controller.Connect("tcp://127.0.0.1:5559");
 				controller.SubscribeAll();
 
-				var pollers = new ZPollItem[]
-				{
-					ZPollItem.CreateReceiver(receiver),
-					ZPollItem.CreateReceiver(controller)
-				};
+				var poll = ZPollItem.CreateReceiver();
 
 				ZError error;
 				ZMessage message;
 				while (true)
 				{
 
-					if (pollers[0].PollIn(out message, out error, TimeSpan.FromMilliseconds(64)))
+					if (receiver.PollIn(poll, out message, out error, TimeSpan.FromMilliseconds(64)))
 					{
-
 						int workload = message[0].ReadInt32();
 						Console.WriteLine("{0}.", workload);
 						Thread.Sleep(workload);
 
 						sender.Send(new byte[0], 0, 0);
 					}
-					if (pollers[1].PollIn(out message, out error, TimeSpan.FromMilliseconds(64)))
+					if (controller.PollIn(poll, out message, out error, TimeSpan.FromMilliseconds(64)))
 					{
 						break;
 					}
