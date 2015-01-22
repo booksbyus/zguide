@@ -21,26 +21,33 @@ namespace ZeroMQ.Test
 		public const int PPP_INTERVAL_INIT = 1000;
 		public const int PPP_INTERVAL_MAX = 32000;
 
-		public static ZSocket PPWorker_CreateSocket(ZContext context, string name)
+		public static ZSocket PPWorker_CreateZSocket(ZContext context, string name, out ZPollItem pollItem, out ZError error)
 		{
 			// Helper function that returns a new configured socket
 			// connected to the Paranoid Pirate queue
 
 			var worker = ZSocket.Create(context, ZSocketType.DEALER);
 			worker.IdentityString = name;
-			worker.Connect("tcp://127.0.0.1:5556");
+
+			if (!worker.Connect("tcp://127.0.0.1:5556", out error))
+			{
+				pollItem = null;
+				return null;	// Interrupted
+			}
 
 			// Tell queue we're ready for work
 			using (var outgoing = new ZMessage())
 			{
 				// outgoing.Add(new ZFrame(name));
-				outgoing.Add(new ZFrame());
+				// outgoing.Add(new ZFrame());
 				outgoing.Add(new ZFrame(PPP_READY));
 
 				worker.Send(outgoing);
 			}
-			Console.WriteLine("I: worker ready");
 
+			pollItem = ZPollItem.CreateReceiver(worker);
+
+			Console.WriteLine("I: worker ready");
 			return worker;
 		}
 
@@ -52,12 +59,19 @@ namespace ZeroMQ.Test
 			}
 			string name = args[0];
 
+			ZError error;
 			using (var context = ZContext.Create())
 			{
 				ZSocket worker = null;
 				try // using (worker)
 				{
-					worker = PPWorker_CreateSocket(context, name);
+					ZPollItem pollItem;
+					if (null == (worker = PPWorker_CreateZSocket(context, name, out pollItem, out error)))
+					{
+						if (error == ZError.ETERM)
+							return;	// Interrupted
+						throw new ZException(error);
+					}
 
 					// If liveness hits zero, queue is considered disconnected
 					int liveness = PPP_HEARTBEAT_LIVENESS;
@@ -66,16 +80,13 @@ namespace ZeroMQ.Test
 					// Send out heartbeats at regular intervals
 					DateTime heartbeat_at = DateTime.UtcNow + PPP_HEARTBEAT_INTERVAL;
 
-					ZError error;
 					ZMessage incoming;
-
-					var poll = ZPollItem.CreateReceiver(worker);
-
 					int cycles = 0;
-					var rnd = new Random();
 					while (true)
 					{
-						if (poll.PollIn(out incoming, out error, PPP_HEARTBEAT_INTERVAL))
+						var rnd = new Random();
+
+						if (pollItem.PollIn(out incoming, out error, PPP_HEARTBEAT_INTERVAL))
 						{
 							// Get message
 							// - 3-part envelope + content -> request
@@ -84,7 +95,7 @@ namespace ZeroMQ.Test
 							{
 								incoming.RemoveAt(0);
 
-								// To test the robustness of the queue implementation we //
+								// To test the robustness of the queue implementation we
 								// simulate various typical problems, such as the worker
 								// crashing or running very slowly. We do this after a few
 								// cycles so that the architecture can get up and running
@@ -97,7 +108,7 @@ namespace ZeroMQ.Test
 										Console.WriteLine("I: simulating a crash");
 										return;
 									}
-									if (cycles > 3 && rnd.Next(5) == 0)
+									if (cycles > 3 && rnd.Next(3) == 0)
 									{
 										Console.WriteLine("I: simulating CPU overload");
 										Thread.Sleep(300);
@@ -105,16 +116,9 @@ namespace ZeroMQ.Test
 
 									Thread.Sleep(1);	// Do some heavy work
 
-									incoming.Prepend(new ZFrame());
+									// incoming.Prepend(new ZFrame());
 
-									Console.WriteLine("I: reply: {0}, {1}, {2}, {3}, {4}, {5}",
-										incoming.Count > 0 ? incoming[0].ReadString() : null,
-										incoming.Count > 1 ? incoming[1].ReadString() : null,
-										incoming.Count > 2 ? incoming[2].ReadString() : null,
-										incoming.Count > 3 ? incoming[3].ReadString() : null,
-										incoming.Count > 4 ? incoming[4].ReadString() : null,
-										incoming.Count > 5 ? incoming[5].ReadString() : null
-									);
+									Console_WriteZMessage(incoming, "I: reply");
 									worker.Send(incoming);
 
 									liveness = PPP_HEARTBEAT_LIVENESS;
@@ -128,22 +132,17 @@ namespace ZeroMQ.Test
 
 									if (identity == PPP_HEARTBEAT)
 									{
-										Console.WriteLine("I: heartbeating");
+										Console.WriteLine("I: receiving heartbeat");
 										liveness = PPP_HEARTBEAT_LIVENESS;
 									}
 									else
 									{
-										Console.WriteLine("E: invalid message: {0}", identity);
+										Console_WriteZMessage(incoming, "E: invalid message");
 									}
 								}
 								else
 								{
-									Console.WriteLine("E: invalid message: {0}, {1}, {2}, {3}",
-										incoming.Count > 0 ? incoming[0].ReadString() : null, 
-										incoming.Count > 1 ? incoming[1].ReadString() : null,
-										incoming.Count > 2 ? incoming[2].ReadString() : null,
-										incoming.Count > 3 ? incoming[3].ReadString() : null
-									);
+									Console_WriteZMessage(incoming, "E: invalid message");
 								}
 							}
 							interval = PPP_INTERVAL_INIT;
@@ -169,11 +168,18 @@ namespace ZeroMQ.Test
 							{
 								interval *= 2;
 							}
-							else 
-								return;
+							else {
+								Console.WriteLine("E: interrupted");
+								break;
+							}
 
 							worker.Dispose();
-							worker = PPWorker_CreateSocket(context, name);
+							if (null == (worker = PPWorker_CreateZSocket(context, name, out pollItem, out error)))
+							{
+								if (error == ZError.ETERM)
+									return;	// Interrupted
+								throw new ZException(error);
+							}
 							liveness = PPP_HEARTBEAT_LIVENESS;
 						}
 						// Send heartbeat to queue if it's time
@@ -184,7 +190,7 @@ namespace ZeroMQ.Test
 							using (var outgoing = new ZMessage()) 
 							{
 								// outgoing.Add(new ZFrame(name));
-								outgoing.Add(new ZFrame());
+								// outgoing.Add(new ZFrame());
 								outgoing.Add(new ZFrame(PPP_HEARTBEAT));
 
 								worker.Send(outgoing);

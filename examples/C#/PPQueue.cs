@@ -70,14 +70,6 @@ namespace ZeroMQ.Test
 		{
 			public static void Ready(this IList<Worker> workers, Worker worker) 
 			{
-				var old = workers.FirstOrDefault(
-					w => worker.IdentityString == w.IdentityString
-				);
-				if (old != null)
-				{
-					workers.Remove(old);
-					old.Dispose();
-				}
 				workers.Add(worker);
 			}
 
@@ -120,11 +112,11 @@ namespace ZeroMQ.Test
 		public static void PPQueue(IDictionary<string, string> dict, string[] args)
 		{
 			using (var context = ZContext.Create())
-			using (var frontend = ZSocket.Create(context, ZSocketType.ROUTER))
 			using (var backend = ZSocket.Create(context, ZSocketType.ROUTER))
+			using (var frontend = ZSocket.Create(context, ZSocketType.ROUTER))
 			{
-				frontend.Bind("tcp://*:5555");
 				backend.Bind("tcp://*:5556");
+				frontend.Bind("tcp://*:5555");
 
 				// List of available workers
 				var workers = new List<Worker>();
@@ -132,8 +124,8 @@ namespace ZeroMQ.Test
 				// Send out heartbeats at regular intervals
 				DateTime heartbeat_at = DateTime.UtcNow + PPP_HEARTBEAT_INTERVAL;
 
-				// Create a Receiver poll
-				var pollers = new ZPollItem[]
+				// Create a Receiver ZPollItem (ZMQ_POLLIN)
+				var poll = new ZPollItem[]
 				{
 					ZPollItem.CreateReceiver(backend),
 					ZPollItem.CreateReceiver(frontend)
@@ -141,11 +133,10 @@ namespace ZeroMQ.Test
 
 				ZError error;
 				ZMessage incoming;
-
 				while (true)
 				{
 					// Handle worker activity on backend
-					if (pollers[0].PollIn(out incoming, out error, PPP_HEARTBEAT_INTERVAL))
+					if (poll[0].PollIn(out incoming, out error, PPP_HEARTBEAT_INTERVAL))
 					{
 						using (incoming)
 						{
@@ -160,19 +151,20 @@ namespace ZeroMQ.Test
 								string message = incoming[0].ReadString();
 								if (message == PPP_READY)
 								{
-									Console.WriteLine("I: worker ready");
+									Console.WriteLine("I: worker ready ({0})", worker.IdentityString);
 								}
 								else if (message == PPP_HEARTBEAT)
 								{
-									Console.WriteLine("I: worker heartbeat");
+									Console.WriteLine("I: receiving worker heartbeat ({0})", worker.IdentityString);
 								}
 								else
 								{
-									Console.WriteLine("E: invalid message from worker: {0}", message);
+									Console_WriteZMessage(incoming, "E: invalid message from worker ({0})", worker.IdentityString);
 								}
 							}
 							else
 							{
+								Console.WriteLine("I: [backend sending to frontend] ({0})", worker.IdentityString);
 								frontend.Send(incoming);
 							}
 						}
@@ -185,18 +177,19 @@ namespace ZeroMQ.Test
 							throw new ZException(error);
 					}
 
-					// Handle worker activity on frontend
+					// Handle client activity on frontend
 					if (workers.Count > 0)
 					{
 						// Poll frontend only if we have available workers
-						if (pollers[1].PollIn(out incoming, out error, PPP_HEARTBEAT_INTERVAL))
+						if (poll[1].PollIn(out incoming, out error, PPP_HEARTBEAT_INTERVAL))
 						{
 							// Now get next client request, route to next worker
 							using (incoming)
 							{
-								incoming.Wrap(workers.Next());
+								ZFrame workerIdentity = workers.Next();
+								incoming.Wrap(workerIdentity);
 
-								Console.WriteLine("I: route to next worker");
+								Console.WriteLine("I: route to next worker [frontend send to backend] ({0})", workerIdentity.ReadString());
 								backend.Send(incoming);
 							}
 						}
@@ -222,6 +215,7 @@ namespace ZeroMQ.Test
 								outgoing.Add(new ZFrame());
 								outgoing.Add(new ZFrame(PPP_HEARTBEAT));
 
+								Console.WriteLine("I: sending heartbeat ({0})", worker.IdentityString);
 								backend.Send(outgoing);
 							}
 						}
