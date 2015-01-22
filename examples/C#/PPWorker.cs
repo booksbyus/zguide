@@ -84,7 +84,7 @@ namespace ZeroMQ.Test
 					{
 						var rnd = new Random();
 
-						if (worker.PollIn(poll, out incoming, out error, PPP_HEARTBEAT_INTERVAL))
+						if (worker.PollIn(poll, out incoming, out error, PPP_TICK))
 						{
 							// Get message
 							// - 3-part envelope + content -> request
@@ -100,6 +100,8 @@ namespace ZeroMQ.Test
 								// first:
 								if (incoming.Count >= 3)
 								{
+									Console_WriteZMessage(incoming, "I: receiving reply");
+
 									cycles++;
 									if (cycles > 3 && rnd.Next(5) == 0)
 									{
@@ -116,7 +118,7 @@ namespace ZeroMQ.Test
 
 									// incoming.Prepend(new ZFrame());
 
-									Console_WriteZMessage(incoming, "I: reply");
+									Console_WriteZMessage(incoming, "I: sending reply");
 									worker.Send(incoming);
 
 									liveness = PPP_HEARTBEAT_LIVENESS;
@@ -148,42 +150,47 @@ namespace ZeroMQ.Test
 						else
 						{
 							if (error == ZError.ETERM)
-								return;
+								break;	// Interrupted
 							if (error != ZError.EAGAIN)
 								throw new ZException(error);
 						}
 
-						// If the queue hasn't sent us heartbeats in a while, destroy the
-						// socket and reconnect. This is the simplest most brutal way of
-						// discarding any messages we might have sent in the meantime:
-						if (--liveness == 0)
+						if (error == ZError.EAGAIN)
 						{
-							Console.WriteLine("W: heartbeat failure, can't reach queue");
-							Console.WriteLine("W: reconnecting in {0} ms", interval);
-							Thread.Sleep(interval);
-
-							if (interval < PPP_INTERVAL_MAX)
+							// If the queue hasn't sent us heartbeats in a while, destroy the
+							// socket and reconnect. This is the simplest most brutal way of
+							// discarding any messages we might have sent in the meantime:
+							if (--liveness == 0)
 							{
-								interval *= 2;
-							}
-							else {
-								Console.WriteLine("E: interrupted");
-								break;
-							}
+								Console.WriteLine("W: heartbeat failure, can't reach queue");
+								Console.WriteLine("W: reconnecting in {0} ms", interval);
+								Thread.Sleep(interval);
 
-							worker.Dispose();
-							if (null == (worker = PPWorker_CreateZSocket(context, name, out error)))
-							{
-								if (error == ZError.ETERM)
-									return;	// Interrupted
-								throw new ZException(error);
+								if (interval < PPP_INTERVAL_MAX)
+								{
+									interval *= 2;
+								}
+								else {
+									Console.WriteLine("E: interrupted");
+									break;
+								}
+
+								worker.Dispose();
+								if (null == (worker = PPWorker_CreateZSocket(context, name, out error)))
+								{
+									if (error == ZError.ETERM)
+										break;	// Interrupted
+									throw new ZException(error);
+								}
+								liveness = PPP_HEARTBEAT_LIVENESS;
 							}
-							liveness = PPP_HEARTBEAT_LIVENESS;
 						}
+
 						// Send heartbeat to queue if it's time
 						if (DateTime.UtcNow > heartbeat_at) 
 						{
 							heartbeat_at = DateTime.UtcNow + PPP_HEARTBEAT_INTERVAL;
+
 							Console.WriteLine("I:   sending heartbeat");
 							using (var outgoing = new ZMessage()) 
 							{

@@ -10,7 +10,7 @@ namespace ZeroMQ.Test
 {
 	static partial class Program
 	{
-		static TimeSpan LPClient_RequestTimeout = TimeSpan.FromMilliseconds(2500);
+		static TimeSpan LPClient_RequestTimeout = TimeSpan.FromMilliseconds(2000);
 		static int LPClient_RequestRetries = 3;
 
 		static ZSocket LPClient_CreateZSocket(ZContext context, string name, out ZError error)
