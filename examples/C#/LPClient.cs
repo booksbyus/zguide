@@ -50,18 +50,18 @@ namespace ZeroMQ.Test
 				ZSocket requester = null;
 				try { // using (requester)
 
+					ZPollItem pollItem;
+					if (null == (requester = LPClient_CreateZSocket(context, name, out pollItem, out error)))
+					{
+						if (error == ZError.ETERM)
+							return;	// Interrupted
+						throw new ZException(error);
+					}
+
 					int sequence = 0;
 					int retries_left = LPClient_RequestRetries;
 					while (retries_left > 0)
 					{
-						ZPollItem pollItem;
-						if (null == (requester = LPClient_CreateZSocket(context, name, out pollItem, out error)))
-						{
-							if (error == ZError.ETERM)
-								return;	// Interrupted
-							throw new ZException(error);
-						}
-
 						// We send a request, then we work to get a reply
 						using (var outgoing = ZFrame.Create(4))
 						{
@@ -70,7 +70,8 @@ namespace ZeroMQ.Test
 						}
 
 						ZMessage incoming;
-						while (true)
+						int expect_reply = 1;
+						while (expect_reply > 0)
 						{
 							// Here we process a server reply and exit our loop
 							// if the reply is valid.
@@ -86,11 +87,15 @@ namespace ZeroMQ.Test
 								{
 									// We got a reply from the server
 									int incoming_sequence = incoming[0].ReadInt32();
-									Console.WriteLine("I: server replied OK ({0})", incoming_sequence);
-
-									// Request the next one
-									retries_left = LPClient_RequestRetries;
-									break;
+									if (sequence == incoming_sequence) 
+									{
+										Console.WriteLine("I: server replied OK ({0})", incoming_sequence);
+										retries_left = LPClient_RequestRetries;
+										expect_reply = 0;
+									}
+									else {
+										Console_WriteZMessage(incoming, "E: malformed reply from server");
+									}
 								}
 							}
 							else 
@@ -102,13 +107,27 @@ namespace ZeroMQ.Test
 										Console.WriteLine("E: server seems to be offline, abandoning");
 										return;
 									}
+
 									Console.WriteLine("W: no response from server, retrying...");
 
 									// Old socket is confused; close it and open a new one
 									requester.Dispose();
-									requester = null;
+									if (null == (requester = LPClient_CreateZSocket(context, name, out pollItem, out error)))
+									{
+										if (error == ZError.ETERM)
+											return;	// Interrupted
+										throw new ZException(error);
+									}
+									Console.WriteLine("I: reconnected");
 
-									break; // Send request again, on new socket
+									// Send request again, on new socket
+									using (var outgoing = ZFrame.Create(4))
+									{
+										outgoing.Write(sequence);
+										requester.Send(outgoing);
+									}
+
+									continue;
 								}
 
 								if (error == ZError.ETERM)

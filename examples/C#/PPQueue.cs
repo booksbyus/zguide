@@ -100,14 +100,11 @@ namespace ZeroMQ.Test
 
 	static partial class Program
 	{
-
-		// 3-5 is reasonable
-		public static readonly int PPP_HEARTBEAT_LIVENESS = 5;
+		public const int PPP_HEARTBEAT_LIVENESS = 5; // 3-5 is reasonable
 		public static readonly TimeSpan PPP_HEARTBEAT_INTERVAL = TimeSpan.FromMilliseconds(1000);
 
 		public const string PPP_READY = "READY";
 		public const string PPP_HEARTBEAT = "HEARTBEAT";
-
 
 		public static void PPQueue(IDictionary<string, string> dict, string[] args)
 		{
@@ -151,11 +148,11 @@ namespace ZeroMQ.Test
 								string message = incoming[0].ReadString();
 								if (message == PPP_READY)
 								{
-									Console.WriteLine("I: worker ready ({0})", worker.IdentityString);
+									Console.WriteLine("I:        worker ready ({0})", worker.IdentityString);
 								}
 								else if (message == PPP_HEARTBEAT)
 								{
-									Console.WriteLine("I: receiving worker heartbeat ({0})", worker.IdentityString);
+									Console.WriteLine("I: receiving heartbeat ({0})", worker.IdentityString);
 								}
 								else
 								{
@@ -164,7 +161,7 @@ namespace ZeroMQ.Test
 							}
 							else
 							{
-								Console.WriteLine("I: [backend sending to frontend] ({0})", worker.IdentityString);
+								Console_WriteZMessage(incoming, "I: [backend sending to frontend] ({0})", worker.IdentityString);
 								frontend.Send(incoming);
 							}
 						}
@@ -187,9 +184,10 @@ namespace ZeroMQ.Test
 							using (incoming)
 							{
 								ZFrame workerIdentity = workers.Next();
-								incoming.Wrap(workerIdentity);
+								incoming.Prepend(workerIdentity);
 
-								Console.WriteLine("I: route to next worker [frontend send to backend] ({0})", workerIdentity.ReadString());
+								Console_WriteZMessage(incoming, "I: [frontend sending to backend] ({0})", workerIdentity.ReadString());
+								// Console.WriteLine("I: route to next worker [frontend send to backend] ({0})", workerIdentity.ReadString());
 								backend.Send(incoming);
 							}
 						}
@@ -212,10 +210,10 @@ namespace ZeroMQ.Test
 							using (var outgoing = new ZMessage())
 							{
 								outgoing.Add(worker.Identity);
-								outgoing.Add(new ZFrame());
+								// outgoing.Add(new ZFrame());
 								outgoing.Add(new ZFrame(PPP_HEARTBEAT));
 
-								Console.WriteLine("I: sending heartbeat ({0})", worker.IdentityString);
+								Console.WriteLine("I:   sending heartbeat ({0})", worker.IdentityString);
 								backend.Send(outgoing);
 							}
 						}

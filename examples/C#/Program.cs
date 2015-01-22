@@ -9,10 +9,12 @@ using ZeroMQ;
 namespace ZeroMQ.Test
 {
 	static partial class Program
-	{ 
+	{
 		static void Console_WriteZMessage(ZMessage message, string format, params object[] data) 
 		{
-			var list = new List<string>();
+			var list = new List<object>();
+			list.AddRange(data);
+
 			var renderer = new StringBuilder();
 			for (int i = 0, c = message.Count; i < c; ++i)
 			{

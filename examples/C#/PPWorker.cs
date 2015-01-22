@@ -27,7 +27,7 @@ namespace ZeroMQ.Test
 			// connected to the Paranoid Pirate queue
 
 			var worker = ZSocket.Create(context, ZSocketType.DEALER);
-			worker.IdentityString = name;
+			// worker.IdentityString = name;
 
 			if (!worker.Connect("tcp://127.0.0.1:5556", out error))
 			{
@@ -47,7 +47,7 @@ namespace ZeroMQ.Test
 
 			pollItem = ZPollItem.CreateReceiver(worker);
 
-			Console.WriteLine("I: worker ready");
+			Console.WriteLine("I:        worker ready");
 			return worker;
 		}
 
@@ -93,7 +93,7 @@ namespace ZeroMQ.Test
 							// - 1-part HEARTBEAT -> heartbeat
 							using (incoming)
 							{
-								incoming.RemoveAt(0);
+								// incoming.RemoveAt(0);
 
 								// To test the robustness of the queue implementation we
 								// simulate various typical problems, such as the worker
@@ -111,7 +111,7 @@ namespace ZeroMQ.Test
 									if (cycles > 3 && rnd.Next(3) == 0)
 									{
 										Console.WriteLine("I: simulating CPU overload");
-										Thread.Sleep(300);
+										Thread.Sleep(100);
 									}
 
 									Thread.Sleep(1);	// Do some heavy work
@@ -186,7 +186,7 @@ namespace ZeroMQ.Test
 						if (DateTime.UtcNow > heartbeat_at) 
 						{
 							heartbeat_at = DateTime.UtcNow + PPP_HEARTBEAT_INTERVAL;
-							Console.WriteLine("I: sending worker heartbeat");
+							Console.WriteLine("I:   sending heartbeat");
 							using (var outgoing = new ZMessage()) 
 							{
 								// outgoing.Add(new ZFrame(name));
