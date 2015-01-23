@@ -18,20 +18,25 @@ namespace ZeroMQ.Test
 			// Authors: Pieter Hintjens, Uli Riehm
 			//
 
+			// Create
 			using (var context = ZContext.Create())
 			using (var responder = ZSocket.Create(context, ZSocketType.REP))
 			{
+				// Bind
 				responder.Bind("tcp://*:5555");
 
 				while (true)
 				{
+					// Receive
 					using (ZFrame request = responder.ReceiveFrame())
 					{
 						Console.WriteLine("Received {0}", request.ReadString());
 
+						// Do some work
 						Thread.Sleep(1);
 
-						using (ZFrame reply = new ZFrame("World"))
+						// Send
+						using (var reply = new ZFrame("World"))
 						{
 							responder.Send(reply);
 						}

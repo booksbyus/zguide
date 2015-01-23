@@ -20,6 +20,12 @@ namespace ZeroMQ.Test
 			// Authors: Pieter Hintjens, Uli Riehm
 			//
 
+			if (args == null || args.Length == 0)
+			{
+				args = new string[] { "World" };
+			}
+			string name = args[0];
+
 			// Socket to talk to clients
 			using (var context = ZContext.Create())
 			using (var responder = ZSocket.Create(context, ZSocketType.REP))
@@ -31,16 +37,15 @@ namespace ZeroMQ.Test
 					// Wait for next request from client
 					using (ZFrame request = responder.ReceiveFrame())
 					{
-						Console.Write("Received {0}, ", request.ReadString());
+						Console.Write("{0} ", request.ReadString());
 					}
 
 					// Do some 'work'
 					Thread.Sleep(1);
 
 					// Send reply back to client
-					string replyText = "World";
-					Console.WriteLine("Sending {0}... ", replyText);
-					using (var reply = new ZFrame(replyText))
+					Console.WriteLine("{0}... ", name);
+					using (var reply = new ZFrame(name))
 					{
 						responder.Send(reply);
 					}

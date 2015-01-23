@@ -36,8 +36,12 @@ namespace ZeroMQ.Test
 				{
 					if (frontend.PollIn(poll, out message, out error, TimeSpan.FromMilliseconds(64)))
 					{
-						// Process all parts of the message
-						backend.Send(message);
+						using (message)
+						{
+							// Process all parts of the message
+							Console_WriteZMessage(message, "frontend");
+							backend.Send(message);
+						}
 					}
 					else
 					{
@@ -50,6 +54,7 @@ namespace ZeroMQ.Test
 					if (backend.PollIn(poll, out message, out error, TimeSpan.FromMilliseconds(64)))
 					{
 						// Process all parts of the message
+						Console_WriteZMessage(message, " backend");
 						frontend.Send(message);
 					}
 					else

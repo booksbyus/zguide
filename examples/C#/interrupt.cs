@@ -21,14 +21,14 @@ namespace ZeroMQ.Test
 			using (var context = ZContext.Create())
 			using (var responder = ZSocket.Create(context, ZSocketType.REP))
 			{
+				Console.CancelKeyPress += (sender, e) =>
+				{
+					// e.Cancel = false;
+					context.Terminate();
+				};
 
 				var thread = new Thread(() =>
 				{
-					Console.CancelKeyPress += (sender, e) =>
-					{
-						// e.Cancel = false;
-						context.Terminate();
-					};
 					while (true)
 					{
 						if (Console.KeyAvailable)
@@ -49,6 +49,7 @@ namespace ZeroMQ.Test
 				});
 				thread.Start();
 				thread.Join(64);
+
 
 				responder.Bind("tcp://*:5555");
 
@@ -74,7 +75,15 @@ namespace ZeroMQ.Test
 						Console.Write("Sending {0}... ", respondText);
 						using (var response = new ZFrame(respondText))
 						{
-							responder.Send(response);
+							if (!responder.Send(response, out error))
+							{
+								if (error == ZError.ETERM)
+								{
+									Console.WriteLine("Terminating, you have pressed ESC.");
+									break;
+								}
+								throw new ZException(error);
+							}
 						}
 					}
 				}
