@@ -12,6 +12,13 @@ namespace ZeroMQ.Test
 	{
 		public static void MTRelay(IDictionary<string, string> dict, string[] args)
 		{
+			//
+			// Multithreaded relay
+			//
+			// Authors: Pieter Hintjens, Uli Riehm
+			//
+
+			// Bind inproc socket before starting step2
 			using (var context = ZContext.Create())
 			using (var receiver = ZSocket.Create(context, ZSocketType.PAIR))
 			{
@@ -20,6 +27,7 @@ namespace ZeroMQ.Test
 				var thread = new Thread(() => MTRelay_step2(context));
 				thread.Start();
 
+				// Wait for signal
 				receiver.ReceiveFrame();
 
 				Console.WriteLine("Test successful!");
@@ -28,6 +36,7 @@ namespace ZeroMQ.Test
 
 		static void MTRelay_step2(ZContext context)
 		{
+			// Bind inproc socket before starting step1
 			using (var receiver = ZSocket.Create(context, ZSocketType.PAIR))
 			{
 				receiver.Bind("inproc://step2");
@@ -35,8 +44,11 @@ namespace ZeroMQ.Test
 				var thread = new Thread(() => MTRelay_step1(context));
 				thread.Start();
 
+				// Wait for signal and pass it on
 				receiver.ReceiveFrame();
 			}
+
+			// Connect to step3 and tell it we're ready
 			using (var xmitter = ZSocket.Create(context, ZSocketType.PAIR))
 			{
 				xmitter.Connect("inproc://step3");
@@ -48,9 +60,9 @@ namespace ZeroMQ.Test
 
 		static void MTRelay_step1(ZContext context) 
 		{
+			// Connect to step2 and tell it we're ready
 			using (var xmitter = ZSocket.Create(context, ZSocketType.PAIR))
 			{
-
 				xmitter.Connect("inproc://step2");
 
 				Console.WriteLine("Step 1 ready, signaling step 2");

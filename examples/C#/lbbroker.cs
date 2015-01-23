@@ -11,8 +11,16 @@ namespace ZeroMQ.Test
 {
 	static partial class Program
 	{
+		//
 		// Load-balancing broker in C#
-		// Clients and workers are shown here in-process
+		//
+		// Clients and workers are shown here in-process.
+		// While this example runs in a single process, that is just to make
+		// it easier to start and stop the example. Each thread may have its own
+		// context and conceptually acts as a separate process.
+		//
+		// Authors: Pieter Hintjens, Uli Riehm
+		//
 
 		static int LBBroker_Clients = 10;
 		static int LBBroker_Workers = 3;
@@ -45,12 +53,10 @@ namespace ZeroMQ.Test
 			}
 		}
 
-		// While this example runs in a single process, that is just to make
-		// it easier to start and stop the example. Each thread may have its own
-		// context and conceptually acts as a separate process.
-		// This is the worker task, using a REQ socket to do load-balancing.
 		static void LBBroker_Worker(ZContext context, int i)
 		{
+			// This is the worker task, using a REQ socket to do load-balancing.
+
 			// Create socket
 			using (var worker = ZSocket.Create(context, ZSocketType.REQ))
 			{
@@ -103,14 +109,14 @@ namespace ZeroMQ.Test
 			}
 		}
 
-		// This is the main task. It starts the clients and workers, and then
-		// routes requests between the two layers. Workers signal READY when
-		// they start; after that we treat them as ready when they reply with
-		// a response back to a client. The load-balancing data structure is
-		// just a queue of next available workers.
-
 		public static void LBBroker(IDictionary<string, string> dict, string[] args)
 		{
+			// This is the main task. It starts the clients and workers, and then
+			// routes requests between the two layers. Workers signal READY when
+			// they start; after that we treat them as ready when they reply with
+			// a response back to a client. The load-balancing data structure is
+			// just a queue of next available workers.
+
 			// Prepare our context and sockets
 			using (var context = ZContext.Create())
 			using (var frontend = ZSocket.Create(context, ZSocketType.ROUTER))

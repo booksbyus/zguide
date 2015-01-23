@@ -12,6 +12,16 @@ namespace ZeroMQ.Test
 	{
 		public static void TaskVent(IDictionary<string, string> dict, string[] args)
 		{
+			//
+			// Task ventilator
+			// Binds PUSH socket to tcp://localhost:5557
+			// Sends batch of tasks to workers via that socket
+			//
+			// Authors: Pieter Hintjens, Uli Riehm
+			//
+
+			// Socket to send messages on and
+			// Socket to send start of batch message on
 			using (var context = ZContext.Create())
 			using (var sender = ZSocket.Create(context, ZSocketType.PUSH))
 			using (var sink = ZSocket.Create(context, ZSocketType.PUSH))
@@ -23,16 +33,22 @@ namespace ZeroMQ.Test
 				Console.ReadKey(true);
 				Console.WriteLine("Sending tasks to workers...");
 
+				// The first message is "0" and signals start of batch
 				sink.Send(new byte[] { 0x00 }, 0, 1);
 
-				int i = 0;
-				long total_msec = 0;
+				// Initialize random number generator
 				var rnd = new Random();
+
+				// Send 100 tasks
+				int i = 0;
+				long total_msec = 0;	// Total expected cost in msecs
 				for (; i < 100; ++i)
 				{
+					// Random workload from 1 to 100msecs
 					int workload = rnd.Next(100) + 1;
 					total_msec += workload;
 					byte[] action = BitConverter.GetBytes(workload);
+
 					Console.WriteLine("{0}", workload);
 					sender.Send(action, 0, action.Length);
 				}

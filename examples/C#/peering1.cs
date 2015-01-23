@@ -10,8 +10,13 @@ namespace ZeroMQ.Test
 {
 	static partial class Program
 	{
+		//
 		// Broker peering simulation (part 1)
 		// Prototypes the state flow
+		//
+		// Authors: Pieter Hintjens, Uli Riehm
+		//
+
 		public static void Peering1(IDictionary<string, string> dict, string[] args)
 		{
 			// First argument is this broker's name

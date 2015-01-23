@@ -12,6 +12,14 @@ namespace ZeroMQ.Test
 	{
 		public static void MTServer(IDictionary<string, string> dict, string[] args)
 		{
+			//
+			// Multithreaded Hello World server
+			//
+			// Authors: Pieter Hintjens, Uli Riehm
+			//
+
+			// Socket to talk to clients and
+			// Socket to talk to workers
 			using (var context = ZContext.Create())
 			using (var clients = ZSocket.Create(context, ZSocketType.ROUTER))
 			using (var workers = ZSocket.Create(context, ZSocketType.DEALER))
@@ -19,19 +27,21 @@ namespace ZeroMQ.Test
 				clients.Bind("tcp://*:5555");
 				workers.Bind("inproc://workers");
 
-				int i = 0;
-				for (; i < 5; ++i)
+				// Launch pool of worker threads
+				for (int i = 0; i < 5; ++i)
 				{
 					var thread = new Thread(() => MTServer_Worker(context));
 					thread.Start();
 				}
 
+				// Connect work threads to client threads via a queue proxy
 				ZContext.Proxy(clients, workers);
 			}
 		}
 		
 		static void MTServer_Worker(ZContext context) 
 		{
+			// Socket to talk to dispatcher
 			using (var server = ZSocket.Create(context, ZSocketType.REP))
 			{
 				server.Connect("inproc://workers");
@@ -42,8 +52,10 @@ namespace ZeroMQ.Test
 					{
 						Console.Write("Received: {0}", frame.ReadString());
 
+						// Do some 'work'
 						Thread.Sleep(1);
 
+						// Send reply back to client
 						string replyText = "World";
 						Console.WriteLine(", Sending: {0}", replyText);
 						server.Send(new ZFrame(replyText));

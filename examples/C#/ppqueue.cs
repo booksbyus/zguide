@@ -10,7 +10,11 @@ namespace ZeroMQ.Test
 {
 	using PP;
 
+	//
 	// Paranoid Pirate queue
+	//
+	// Authors: Pieter Hintjens, Uli Riehm
+	//
 
 	// Here we define the worker class; a structure and a set of functions that
 	// act as constructor, destructor, and methods on worker objects:

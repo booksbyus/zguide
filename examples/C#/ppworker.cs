@@ -8,12 +8,16 @@ using ZeroMQ;
 
 namespace ZeroMQ.Test
 {
+	//
 	// Paranoid Pirate worker
-
+	//
 	// We have a single task that implements the worker side of the
 	// Paranoid Pirate Protocol (PPP). The interesting parts here are
 	// the heartbeating, which lets the worker detect if the queue has
 	// died, and vice versa:
+	//
+	// Authors: Pieter Hintjens, Uli Riehm
+	//
 
 	static partial class Program
 	{

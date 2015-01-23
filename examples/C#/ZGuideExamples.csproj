@@ -56,7 +56,6 @@
     <Compile Include="psenvsub.cs" />
     <Compile Include="rrbroker.cs" />
     <Compile Include="rrclient.cs" />
-    <Compile Include="rrserver.cs" />
     <Compile Include="rtdealer.cs" />
     <Compile Include="rtreq.cs" />
     <Compile Include="spqueue.cs" />
@@ -72,6 +71,7 @@
     <Compile Include="wuclient.cs" />
     <Compile Include="wuproxy.cs" />
     <Compile Include="wuserver.cs" />
+    <Compile Include="rrworker.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

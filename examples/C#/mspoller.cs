@@ -12,17 +12,27 @@ namespace ZeroMQ.Test
 	{
 		public static void MSPoller(IDictionary<string, string> dict, string[] args)
 		{
+			//
+			// Reading from multiple sockets
+			// This version uses zmq_poll()
+			//
+			// Authors: Pieter Hintjens, Uli Riehm
+			//
+
 			using (var context = ZContext.Create())
 			using (var receiver = ZSocket.Create(context, ZSocketType.PULL))
 			using (var subscriber = ZSocket.Create(context, ZSocketType.SUB))
 			{
+				// Connect to task ventilator
 				receiver.Connect("tcp://127.0.0.1:5557");
 
+				// Connect to weather server
 				subscriber.Connect("tcp://127.0.0.1:5556");
-				subscriber.SetOption(ZSocketOption.SUBSCRIBE, "72622 ");
+				subscriber.SetOption(ZSocketOption.SUBSCRIBE, "10001 ");
 
 				var poll = ZPollItem.CreateReceiver();
 
+				// Process messages from both sockets
 				ZError error;
 				ZMessage msg;
 				while (true)
@@ -31,9 +41,24 @@ namespace ZeroMQ.Test
 					{
 						// Process task
 					}
+					else
+					{
+						if (error == ZError.ETERM)
+							return;	// Interrupted
+						if (error != ZError.EAGAIN)
+							throw new ZException(error);
+					}
+
 					if (subscriber.PollIn(poll, out msg, out error, TimeSpan.FromMilliseconds(64)))
 					{
 						// Process weather update
+					}
+					else
+					{
+						if (error == ZError.ETERM)
+							return;	// Interrupted
+						if (error != ZError.EAGAIN)
+							throw new ZException(error);
 					}
 				}
 			}

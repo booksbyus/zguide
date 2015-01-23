@@ -12,9 +12,13 @@ namespace ZeroMQ.Test
 	{
 		public static void SPQueue(IDictionary<string, string> dict, string[] args)
 		{
+			//
 			// Simple Pirate broker
 			// This is identical to load-balancing pattern, with no reliability
 			// mechanisms. It depends on the client for recovery. Runs forever.
+			//
+			// Authors: Pieter Hintjens, Uli Riehm
+			//
 
 			using (var context = ZContext.Create())
 			using (var frontend = ZSocket.Create(context, ZSocketType.ROUTER))
@@ -25,7 +29,6 @@ namespace ZeroMQ.Test
 
 				// Queue of available workers
 				var worker_queue = new List<string>();
-
 
 				ZError error;
 				ZMessage incoming;

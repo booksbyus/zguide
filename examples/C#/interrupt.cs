@@ -12,6 +12,12 @@ namespace ZeroMQ.Test
 	{
 		public static void Interrupt(IDictionary<string, string> dict, string[] args)
 		{
+			//
+			// Interrupt
+			//
+			// Authors: Pieter Hintjens, Uli Riehm
+			//
+
 			using (var context = ZContext.Create())
 			using (var responder = ZSocket.Create(context, ZSocketType.REP))
 			{

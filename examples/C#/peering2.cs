@@ -10,11 +10,15 @@ namespace ZeroMQ.Test
 {
 	static partial class Program
 	{
-		static int Peering2_Clients = 10;
-		static int Peering2_Workers = 3;
-
+		//
 		// Broker peering simulation (part 2)
 		// Prototypes the request-reply flow
+		//
+		// Authors: Pieter Hintjens, Uli Riehm
+		//
+
+		static int Peering2_Clients = 10;
+		static int Peering2_Workers = 3;
 
 		static void Peering2_ClientTask(ZContext context, int i, string name, string message) 
 		{
@@ -66,7 +70,7 @@ namespace ZeroMQ.Test
 				// Set printable identity
 				worker.IdentityString = name;
 
-				// Conntect
+				// Connect
 				worker.Connect("tcp://127.0.0.1:" + Peering2_GetPort(name) + 2);
 
 				// Tell broker we're ready for work

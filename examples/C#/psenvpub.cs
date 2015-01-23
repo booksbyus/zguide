@@ -12,6 +12,13 @@ namespace ZeroMQ.Test
 	{
 		public static void PSEnvPub(IDictionary<string, string> dict, string[] args)
 		{
+			//
+			// Pubsub envelope publisher
+			//
+			// Authors: Pieter Hintjens, Uli Riehm
+			//
+
+			// Prepare our context and publisher
 			using (var context = ZContext.Create())
 			using (var publisher = ZSocket.Create(context, ZSocketType.PUB))
 			{
@@ -19,6 +26,7 @@ namespace ZeroMQ.Test
 
 				while (true)
 				{
+					// Write two messages, each with an envelope and content
 					using (var message = new ZMessage())
 					{
 						message.Add(new ZFrame("A"));

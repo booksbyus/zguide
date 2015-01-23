@@ -13,6 +13,12 @@ namespace ZeroMQ.Test
 	{
 		public static void Version(IDictionary<string, string> dict, string[] args)
 		{
+			//
+			// Report 0MQ version
+			//
+			// Authors: Pieter Hintjens, Uli Riehm
+			//
+
 			// Console.WriteLine(zmq.Version);
 
 			int major, minor, patch;
