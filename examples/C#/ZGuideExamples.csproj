@@ -72,6 +72,8 @@
     <Compile Include="wuproxy.cs" />
     <Compile Include="wuserver.cs" />
     <Compile Include="rrworker.cs" />
+    <Compile Include="flserver1.cs" />
+    <Compile Include="flclient1.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
