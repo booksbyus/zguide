@@ -10,11 +10,15 @@ namespace ZeroMQ.Test
 {
 	static partial class Program
 	{
+		//
 		// Lazy Pirate server
 		// Binds REP socket to tcp://*:5555
 		// Like hwserver except:
 		// - echoes request as-is
 		// - randomly runs slowly, or exits to simulate a crash.
+		//
+		// Authors: Pieter Hintjens, Uli Riehm
+		//
 
 		public static void LPServer(IDictionary<string, string> dict, string[] args)
 		{

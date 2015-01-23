@@ -12,19 +12,29 @@ namespace ZeroMQ.Test
 	{
 		public static void WUClient(IDictionary<string, string> dict, string[] args)
 		{
+			//
+			// Weather update client
+			// Connects SUB socket to tcp://localhost:5556
+			// Collects weather updates and finds avg temp in zipcode
+			//
+			// Authors: Pieter Hintjens, Uli Riehm
+			//
+
+			// Socket to talk to server
 			using (var context = ZContext.Create())
 			using (var subscriber = ZSocket.Create(context, ZSocketType.SUB))
 			{
 				subscriber.Connect("tcp://127.0.0.1:5556");
 
-				string zipCode = "72622";
+				// Subscribe to zipcode, default is NYC, 10001
+				string zipCode = "10001";
 				subscriber.Subscribe(Encoding.UTF8.GetBytes(zipCode));
 
+				// Process 100 updates
 				int i = 0;
 				long total_temperature = 0;
 				for (; i < 100; ++i)
 				{
-
 					using (var replyFrame = subscriber.ReceiveFrame())
 					{
 						string reply = replyFrame.ReadString();

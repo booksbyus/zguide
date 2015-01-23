@@ -12,6 +12,12 @@ namespace ZeroMQ.Test
 	{
 		public static void HWClient(IDictionary<string, string> dict, string[] args)
 		{
+			//
+			// Hello World client
+			//
+			// Authors: Pieter Hintjens, Uli Riehm
+			//
+
 			using (var context = ZContext.Create())
 			using (var requester = ZSocket.Create(context, ZSocketType.REQ)) {
 

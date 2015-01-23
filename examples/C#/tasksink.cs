@@ -13,18 +13,29 @@ namespace ZeroMQ.Test
 	{
 		public static void TaskSink(IDictionary<string, string> dict, string[] args)
 		{
+			//
+			// Task sink
+			// Binds PULL socket to tcp://localhost:5558
+			// Collects results from workers via that socket
+			//
+			// Authors: Pieter Hintjens, Uli Riehm
+			//
+
+			// Prepare our context and socket
 			using (var context = ZContext.Create())
 			using (var sink = ZSocket.Create(context, ZSocketType.PULL))
 			{
 				sink.Bind("tcp://*:5558");
 
+				// Wait for start of batch
 				sink.ReceiveFrame();
 
+				// Start our clock now
 				var stopwatch = new Stopwatch();
 				stopwatch.Start();
 
-				int i = 0;
-				for (; i < 100; ++i)
+				// Process 100 confirmations
+				for (int i = 0; i < 100; ++i)
 				{
 					sink.ReceiveFrame();
 
@@ -34,6 +45,7 @@ namespace ZeroMQ.Test
 						Console.Write(".");
 				}
 
+				// Calculate and report duration of batch
 				stopwatch.Stop();
 				Console.WriteLine("Total elapsed time: {0} ms", stopwatch.ElapsedMilliseconds);
 			}

@@ -15,6 +15,16 @@ namespace ZeroMQ.Test
 
 		public static void RTReq(IDictionary<string, string> dict, string[] args)
 		{
+			//
+			// ROUTER-to-REQ example
+			//
+			// While this example runs in a single process, that is only to make
+			// it easier to start and stop the example. Each thread has its own
+			// context and conceptually acts as a separate process.
+			//
+			// Authors: Pieter Hintjens, Uli Riehm
+			//
+
 			using (var context = ZContext.Create())
 			using (var broker = ZSocket.Create(context, ZSocketType.ROUTER))
 			{
@@ -29,14 +39,17 @@ namespace ZeroMQ.Test
 				var stopwatch = new Stopwatch();
 				stopwatch.Start();
 
+				// Run for five seconds and then tell workers to end
 				int workers_fired = 0;
 				while (true)
 				{
+					// Next message gives us least recently used worker
 					using (ZMessage identity = broker.ReceiveMessage())
 					{
 						broker.SendMore(identity[0]);
-						broker.SendMore(new ZFrame(string.Empty));
+						broker.SendMore(new ZFrame());
 
+						// Encourage workers until it's time to fire them
 						if (stopwatch.Elapsed < TimeSpan.FromSeconds(5))
 						{
 							broker.Send(new ZFrame("Work harder!"));
@@ -59,23 +72,28 @@ namespace ZeroMQ.Test
 			using (var context = ZContext.Create())
 			using (var worker = ZSocket.Create(context, ZSocketType.REQ))
 			{
-				worker.Identity = Encoding.UTF8.GetBytes("PEER" + i);
+				worker.IdentityString = "PEER" + i;	// Set a printable identity
 				worker.Connect("tcp://127.0.0.1:5671");
 
 				int total = 0;
 				while (true)
 				{
+					// Tell the broker we're ready for work
 					worker.Send(new ZFrame("Hi Boss"));
 
+					// Get workload from broker, until finished
 					bool finished;
 					using (ZFrame frame = worker.ReceiveFrame())
 					{
 						finished = (frame.ReadString() == "Fired!");
 					}
 					if (finished)
+					{
 						break;
-
+					}
 					total++;
+
+					// Do some random work
 					Thread.Sleep(1);
 				}
 

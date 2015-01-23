@@ -12,6 +12,15 @@ namespace ZeroMQ.Test
 	{
 		public static void RRClient(IDictionary<string, string> dict, string[] args)
 		{
+			//
+			// Hello World client
+			// Connects REQ socket to tcp://localhost:5559
+			// Sends "Hello" to server, expects "World" back
+			//
+			// Authors: Pieter Hintjens, Uli Riehm
+			//
+
+			// Socket to talk to server
 			using (var context = ZContext.Create())
 			using (var requester = ZSocket.Create(context, ZSocketType.REQ))
 			{

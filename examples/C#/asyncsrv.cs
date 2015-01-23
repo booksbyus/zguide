@@ -10,19 +10,23 @@ namespace ZeroMQ.Test
 {
 	static partial class Program
 	{
-		// Asynchronous client-to-server (DEALER to ROUTER)
-		//
-		// While this example runs in a single process, that is to make
-		// it easier to start and stop the example. Each task has its own
-		// context and conceptually acts as a separate process.
-
-
-		// This is our client task
-		// It connects to the server, and then sends a request once per second
-		// It collects responses as they arrive, and it prints them out. We will
-		// run several client tasks in parallel, each with a different random ID.
 		static void AsyncSrv_Client(ZContext context, int i) 
 		{
+			//
+			// Asynchronous client-to-server (DEALER to ROUTER)
+			//
+			// While this example runs in a single process, that is to make
+			// it easier to start and stop the example. Each task has its own
+			// context and conceptually acts as a separate process.
+			//
+			// Authors: Pieter Hintjens, Uli Riehm
+			//
+
+			// This is our client task
+			// It connects to the server, and then sends a request once per second
+			// It collects responses as they arrive, and it prints them out. We will
+			// run several client tasks in parallel, each with a different random ID.
+
 			using (var client = ZSocket.Create(context, ZSocketType.DEALER))
 			{
 				// Set identity to make tracing easier

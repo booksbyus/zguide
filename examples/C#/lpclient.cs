@@ -10,6 +10,14 @@ namespace ZeroMQ.Test
 {
 	static partial class Program
 	{
+		//
+		// Lazy Pirate client
+		// Use zmq_poll (pollItem.PollIn) to do a safe request-reply
+		// To run, start lpserver and then randomly kill/restart it
+		//
+		// Authors: Pieter Hintjens, Uli Riehm
+		//
+
 		static TimeSpan LPClient_RequestTimeout = TimeSpan.FromMilliseconds(2000);
 		static int LPClient_RequestRetries = 3;
 
@@ -30,10 +38,6 @@ namespace ZeroMQ.Test
 
 		public static void LPClient(IDictionary<string, string> dict, string[] args)
 		{
-			// Lazy Pirate client
-			// Use zmq_poll (pollItem.PollIn) to do a safe request-reply
-			// To run, start lpserver and then randomly kill/restart it
-
 			if (args == null || args.Length < 1)
 			{
 				args = new string[] { "People" };

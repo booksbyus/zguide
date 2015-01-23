@@ -12,16 +12,20 @@ namespace ZeroMQ.Test
 	{
 		public static void SPWorker(IDictionary<string, string> dict, string[] args)
 		{
+			//
+			// Simple Pirate worker
+			// Connects REQ socket to tcp://localhost:5556
+			// Implements worker part of load-balancing
+			//
+			// Authors: Pieter Hintjens, Uli Riehm
+			//
+
 			var rnd = new Random();
 			if (args == null || args.Length < 1)
 			{
 				args = new string[] { "World" + rnd.Next() };
 			}
 			string name = args[0];
-
-			// Simple Pirate worker
-			// Connects REQ socket to tcp://localhost:5556
-			// Implements worker part of load-balancing
 
 			using (var context = ZContext.Create())
 			using (var worker = ZSocket.Create(context, ZSocketType.REQ))

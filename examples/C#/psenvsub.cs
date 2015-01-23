@@ -12,6 +12,13 @@ namespace ZeroMQ.Test
 	{
 		public static void PSEnvSub(IDictionary<string, string> dict, string[] args)
 		{
+			//
+			// Pubsub envelope subscriber
+			//
+			// Authors: Pieter Hintjens, Uli Riehm
+			//
+
+			// Prepare our context and subscriber
 			using (var context = ZContext.Create())
 			using (var subscriber = ZSocket.Create(context, ZSocketType.SUB))
 			{
@@ -22,11 +29,14 @@ namespace ZeroMQ.Test
 				{
 					using (ZMessage message = subscriber.ReceiveMessage())
 					{
+						// Read envelope with address
 						string address = message[0].ReadString();
+
+						// Read message contents
 						string contents = message[1].ReadString();
+
 						Console.WriteLine("[{0}] {1}", address, contents);
 					}
-					Thread.Sleep(1);
 				}
 			}
 		}

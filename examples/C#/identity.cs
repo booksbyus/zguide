@@ -12,36 +12,39 @@ namespace ZeroMQ.Test
 	{
 		public static void Identity(IDictionary<string, string> dict, string[] args)
 		{
+			//
+			// Demonstrate request-reply identities
+			//
+			// Authors: Pieter Hintjens, Uli Riehm
+			//
+
 			using (var context = ZContext.Create())
 			using (var sink = ZSocket.Create(context, ZSocketType.ROUTER))
 			{
 				sink.Bind("inproc://example");
 
+				// First allow 0MQ to set the identity
 				using (var anonymous = ZSocket.Create(context, ZSocketType.REQ))
 				{
 					anonymous.Connect("inproc://example");
 					anonymous.Send(new ZFrame("ROUTER uses REQ's generated UUID"));
 				}
-				Identity_Dump(sink);
+				using (ZMessage msg = sink.ReceiveMessage())
+				{
+					Console_WriteZMessage(msg, "---");
+				}
 
+				// Then set the identity ourselves
 				using (var identified = ZSocket.Create(context, ZSocketType.REQ))
 				{
-					identified.Identity = Encoding.UTF8.GetBytes("PEER2");
+					identified.IdentityString = "PEER2";
 					identified.Connect("inproc://example");
 					identified.Send(new ZFrame("ROUTER uses REQ's socket identity"));
 				}
-				Identity_Dump(sink);
-			}
-		}
-
-		static void Identity_Dump(ZSocket sink)
-		{
-			using (ZMessage msg = sink.ReceiveMessage())
-			{
-				Console.WriteLine("---");
-				Console.WriteLine("[0] {0}", msg[0].ReadString());
-				Console.WriteLine("[1] {0}", msg[1].ReadString());
-				Console.WriteLine("[2] {0}", msg[2].ReadString());
+				using (ZMessage msg = sink.ReceiveMessage())
+				{
+					Console_WriteZMessage(msg, "---");
+				}
 			}
 		}
 	}

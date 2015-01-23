@@ -8,20 +8,22 @@ using ZeroMQ;
 
 namespace ZeroMQ.Test
 {
-	// Paranoid Pirate worker
+	using PP;
 
+	//
+	// Paranoid Pirate worker
+	//
 	// We have a single task that implements the worker side of the
 	// Paranoid Pirate Protocol (PPP). The interesting parts here are
 	// the heartbeating, which lets the worker detect if the queue has
 	// died, and vice versa:
+	//
+	// Authors: Pieter Hintjens, Uli Riehm
+	//
 
 	static partial class Program
 	{
-
-		public const int PPP_INTERVAL_INIT = 1000;
-		public const int PPP_INTERVAL_MAX = 32000;
-
-		public static ZSocket PPWorker_CreateZSocket(ZContext context, string name, out ZError error)
+		static ZSocket PPWorker_CreateZSocket(ZContext context, string name, out ZError error)
 		{
 			// Helper function that returns a new configured socket
 			// connected to the Paranoid Pirate queue
@@ -35,7 +37,7 @@ namespace ZeroMQ.Test
 			}
 
 			// Tell queue we're ready for work
-			using (var outgoing = new ZFrame(PPP_READY))
+			using (var outgoing = new ZFrame(Worker.PPP_READY))
 			{
 				worker.Send(outgoing);
 			}
@@ -66,11 +68,11 @@ namespace ZeroMQ.Test
 					}
 
 					// If liveness hits zero, queue is considered disconnected
-					int liveness = PPP_HEARTBEAT_LIVENESS;
-					int interval = PPP_INTERVAL_INIT;
+					int liveness = Worker.PPP_HEARTBEAT_LIVENESS;
+					int interval = Worker.PPP_INTERVAL_INIT;
 
 					// Send out heartbeats at regular intervals
-					DateTime heartbeat_at = DateTime.UtcNow + PPP_HEARTBEAT_INTERVAL;
+					DateTime heartbeat_at = DateTime.UtcNow + Worker.PPP_HEARTBEAT_INTERVAL;
 
 					ZMessage incoming;
 					int cycles = 0;
@@ -80,7 +82,7 @@ namespace ZeroMQ.Test
 					{
 						var rnd = new Random();
 
-						if (worker.PollIn(poll, out incoming, out error, PPP_TICK))
+						if (worker.PollIn(poll, out incoming, out error, Worker.PPP_TICK))
 						{
 							// Get message
 							// - 3-part envelope + content -> request
@@ -113,7 +115,7 @@ namespace ZeroMQ.Test
 									Console.WriteLine("I: sending reply");
 									worker.Send(incoming);
 
-									liveness = PPP_HEARTBEAT_LIVENESS;
+									liveness = Worker.PPP_HEARTBEAT_LIVENESS;
 								}
 								// When we get a heartbeat message from the queue, it means the
 								// queue was (recently) alive, so we must reset our liveness
@@ -122,10 +124,10 @@ namespace ZeroMQ.Test
 								{
 									string identity = incoming[0].ReadString();
 
-									if (identity == PPP_HEARTBEAT)
+									if (identity == Worker.PPP_HEARTBEAT)
 									{
 										Console.WriteLine("I: receiving heartbeat");
-										liveness = PPP_HEARTBEAT_LIVENESS;
+										liveness = Worker.PPP_HEARTBEAT_LIVENESS;
 									}
 									else
 									{
@@ -137,7 +139,7 @@ namespace ZeroMQ.Test
 									Console_WriteZMessage(incoming, "E: invalid message");
 								}
 							}
-							interval = PPP_INTERVAL_INIT;
+							interval = Worker.PPP_INTERVAL_INIT;
 						}
 						else
 						{
@@ -158,7 +160,7 @@ namespace ZeroMQ.Test
 								Console.WriteLine("W: reconnecting in {0} ms", interval);
 								Thread.Sleep(interval);
 
-								if (interval < PPP_INTERVAL_MAX)
+								if (interval < Worker.PPP_INTERVAL_MAX)
 								{
 									interval *= 2;
 								}
@@ -174,17 +176,17 @@ namespace ZeroMQ.Test
 										break;	// Interrupted
 									throw new ZException(error);
 								}
-								liveness = PPP_HEARTBEAT_LIVENESS;
+								liveness = Worker.PPP_HEARTBEAT_LIVENESS;
 							}
 						}
 
 						// Send heartbeat to queue if it's time
 						if (DateTime.UtcNow > heartbeat_at) 
 						{
-							heartbeat_at = DateTime.UtcNow + PPP_HEARTBEAT_INTERVAL;
+							heartbeat_at = DateTime.UtcNow + Worker.PPP_HEARTBEAT_INTERVAL;
 
 							Console.WriteLine("I:   sending heartbeat");
-							using (var outgoing = new ZFrame(PPP_HEARTBEAT))
+							using (var outgoing = new ZFrame(Worker.PPP_HEARTBEAT))
 							{
 								worker.Send(outgoing);
 							}
