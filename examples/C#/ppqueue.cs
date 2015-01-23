@@ -216,10 +216,7 @@ namespace ZeroMQ.Test
 						{
 							using (var outgoing = new ZMessage())
 							{
-								var workerIdentity = ZFrame.Create((int)worker.Identity.Length);
-								worker.Identity.CopyZeroTo(workerIdentity);
-								outgoing.Add(workerIdentity);
-
+								outgoing.Add(ZFrame.CopyFrom(worker.Identity));
 								outgoing.Add(new ZFrame(Worker.PPP_HEARTBEAT));
 
 								Console.WriteLine("I:   sending heartbeat ({0})", worker.IdentityString);
@@ -228,7 +225,6 @@ namespace ZeroMQ.Test
 						}
 					}
 					workers.Purge();
-
 				}
 
 				// When we're done, clean up properly
