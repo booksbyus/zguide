@@ -19,21 +19,17 @@ namespace ZeroMQ.Test
 				frontend.Bind("tcp://*:5559");
 				backend.Bind("tcp://*:5560");
 
-				var pollers = new ZPollItem[]
-				{
-					ZPollItem.CreateReceiver(frontend),
-					ZPollItem.CreateReceiver(backend)
-				};
+				var poll = ZPollItem.CreateReceiver();
 
 				ZError error;
 				ZMessage message;
 				while (true)
 				{
-					if (pollers[0].PollIn(out message, out error, TimeSpan.FromMilliseconds(64)))
+					if (frontend.PollIn(poll, out message, out error, TimeSpan.FromMilliseconds(64)))
 					{
 						backend.Send(message, out error);
 					}
-					if (pollers[1].PollIn(out message, out error, TimeSpan.FromMilliseconds(64)))
+					if (backend.PollIn(poll, out message, out error, TimeSpan.FromMilliseconds(64)))
 					{
 						frontend.Send(message, out error);
 					}

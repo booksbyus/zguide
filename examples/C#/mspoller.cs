@@ -21,21 +21,17 @@ namespace ZeroMQ.Test
 				subscriber.Connect("tcp://127.0.0.1:5556");
 				subscriber.SetOption(ZSocketOption.SUBSCRIBE, "72622 ");
 
-				var pollers = new ZPollItem[]
-				{
-					ZPollItem.CreateReceiver(receiver),
-					ZPollItem.CreateReceiver(subscriber)
-				};
+				var poll = ZPollItem.CreateReceiver();
 
 				ZError error;
 				ZMessage msg;
 				while (true)
 				{
-					if (pollers[0].PollIn(out msg, out error, TimeSpan.FromMilliseconds(64)))
+					if (receiver.PollIn(poll, out msg, out error, TimeSpan.FromMilliseconds(64)))
 					{
 						// Process task
 					}
-					if (pollers[1].PollIn(out msg, out error, TimeSpan.FromMilliseconds(64)))
+					if (subscriber.PollIn(poll, out msg, out error, TimeSpan.FromMilliseconds(64)))
 					{
 						// Process weather update
 					}

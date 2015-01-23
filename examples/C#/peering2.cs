@@ -174,15 +174,11 @@ namespace ZeroMQ.Test
 
 				// Least recently used queue of available workers
 				var workers = new List<string>();
-				var backends = new ZPollItem[]
-				{
-					ZPollItem.CreateReceiver(localBackend),
-					ZPollItem.CreateReceiver(cloudBackend)
-				};
 
 				ZError error;
 				ZMessage incoming;
 				TimeSpan? wait;
+				var poll = ZPollItem.CreateReceiver();
 
 				while (true)
 				{
@@ -190,7 +186,7 @@ namespace ZeroMQ.Test
 					wait = workers.Count > 0 ? (TimeSpan?)TimeSpan.FromMilliseconds(1000) : null;
 
 					// Poll localBackend
-					if (backends[0].PollIn(out incoming, out error, wait))
+					if (localBackend.PollIn(poll, out incoming, out error, wait))
 					{
 						// Handle reply from local worker
 						string identity = incoming[0].ReadString();
@@ -204,7 +200,7 @@ namespace ZeroMQ.Test
 							incoming = null;
 						}
 					}
-					else if (error == ZError.EAGAIN && backends[1].PollIn(out incoming, out error, wait))
+					else if (error == ZError.EAGAIN && cloudBackend.PollIn(poll, out incoming, out error, wait))
 					{
 						// We don't use peer broker identity for anything
 
@@ -254,11 +250,6 @@ namespace ZeroMQ.Test
 					// out. In the next version, we'll do this properly by calculating
 					// cloud capacity://
 
-					var frontends = new ZPollItem[]
-					{
-						ZPollItem.CreateReceiver(localFrontend),
-						ZPollItem.CreateReceiver(cloudFrontend)
-					};
 					var rnd = new Random();
 
 					while (workers.Count > 0)
@@ -267,11 +258,11 @@ namespace ZeroMQ.Test
 
 						// We'll do peer brokers first, to prevent starvation
 
-						if (frontends[1].PollIn(out incoming, out error, TimeSpan.FromMilliseconds(64)))
+						if (localFrontend.PollIn(poll, out incoming, out error, TimeSpan.FromMilliseconds(64)))
 						{
 							reroutable = 0;
 						}
-						else if (error == ZError.EAGAIN && frontends[0].PollIn(out incoming, out error, TimeSpan.FromMilliseconds(64)))
+						else if (error == ZError.EAGAIN && cloudFrontend.PollIn(poll, out incoming, out error, TimeSpan.FromMilliseconds(64)))
 						{
 							reroutable = 1;
 						}
