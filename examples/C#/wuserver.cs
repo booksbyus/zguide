@@ -25,7 +25,6 @@ namespace ZeroMQ.Test
 			using (var publisher = ZSocket.Create(context, ZSocketType.PUB))
 			{
 				publisher.Bind("tcp://*:5556");
-				// publisher.Bind("epgm://eth0,224.0.0.0:5556");
 
 				// Initialize random number generator
 				var rnd = new Random();

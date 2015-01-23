@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading;
+using System.Net;
 
 using ZeroMQ;
 
@@ -25,15 +24,19 @@ namespace ZeroMQ.Test
 			using (var subscriber = ZSocket.Create(context, ZSocketType.SUB))
 			{
 				subscriber.Connect("tcp://127.0.0.1:5556");
+				foreach (IPAddress address in WUProxy_GetPublicIPs())
+				{
+					subscriber.Connect(string.Format("epgm://{0};239.192.1.1:8100", address));
+				}
 
 				// Subscribe to zipcode, default is NYC, 10001
 				string zipCode = "10001";
-				subscriber.Subscribe(Encoding.UTF8.GetBytes(zipCode));
+				subscriber.Subscribe(zipCode);
 
-				// Process 100 updates
+				// Process 10 updates
 				int i = 0;
 				long total_temperature = 0;
-				for (; i < 100; ++i)
+				for (; i < 10; ++i)
 				{
 					using (var replyFrame = subscriber.ReceiveFrame())
 					{
