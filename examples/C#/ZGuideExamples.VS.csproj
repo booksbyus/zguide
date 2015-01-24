@@ -1,0 +1,97 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{05FECAEC-EB42-4160-99E7-CA0480D7FAA5}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>ZeroMQ.Test</RootNamespace>
+    <AssemblyName>ZGuideExamples</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <PlatformTarget>x86</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <PlatformTarget>x86</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="asyncsrv.cs" />
+    <Compile Include="flclient1.cs" />
+    <Compile Include="flserver1.cs" />
+    <Compile Include="hwclient.cs" />
+    <Compile Include="hwserver.cs" />
+    <Compile Include="identity.cs" />
+    <Compile Include="interrupt.cs" />
+    <Compile Include="lbbroker.cs" />
+    <Compile Include="lpclient.cs" />
+    <Compile Include="lpserver.cs" />
+    <Compile Include="msgqueue.cs" />
+    <Compile Include="mspoller.cs" />
+    <Compile Include="msreader.cs" />
+    <Compile Include="mtrelay.cs" />
+    <Compile Include="mtserver.cs" />
+    <Compile Include="peering1.cs" />
+    <Compile Include="peering2.cs" />
+    <Compile Include="ppqueue.cs" />
+    <Compile Include="ppworker.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="ProgramRunner.cs" />
+    <Compile Include="psenvpub.cs" />
+    <Compile Include="psenvsub.cs" />
+    <Compile Include="rrbroker.cs" />
+    <Compile Include="rrclient.cs" />
+    <Compile Include="rrworker.cs" />
+    <Compile Include="rtdealer.cs" />
+    <Compile Include="rtreq.cs" />
+    <Compile Include="spqueue.cs" />
+    <Compile Include="spworker.cs" />
+    <Compile Include="syncpub.cs" />
+    <Compile Include="syncsub.cs" />
+    <Compile Include="tasksink.cs" />
+    <Compile Include="tasksink2.cs" />
+    <Compile Include="taskvent.cs" />
+    <Compile Include="taskwork.cs" />
+    <Compile Include="taskwork2.cs" />
+    <Compile Include="version.cs" />
+    <Compile Include="wuclient.cs" />
+    <Compile Include="wuproxy.cs" />
+    <Compile Include="wuserver.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\ZeroApp-Network\ZeroMQ\ZeroMQ.VS.csproj">
+      <Project>{6FFD872F-A4A4-4EFA-9B4D-4342BA6CF250}</Project>
+      <Name>ZeroMQ.VS</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
