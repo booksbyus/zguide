@@ -18,24 +18,28 @@ namespace ZeroMQ.Test
 			// Authors: Pieter Hintjens, Uli Riehm
 			//
 
+			// Create
 			using (var context = ZContext.Create())
-			using (var requester = ZSocket.Create(context, ZSocketType.REQ)) {
-
+			using (var requester = ZSocket.Create(context, ZSocketType.REQ))
+			{
+				// Connect
 				requester.Connect("tcp://127.0.0.1:5555");
 
-				for (var n = 0; n < 10; ++n) {
-
+				for (int n = 0; n < 10; ++n)
+				{
 					string requestText = "Hello";
+					Console.Write("Sending {0}...", requestText);
 
-					Console.Write("Sending {0}... ", requestText);
+					// Send
 					using (var request = new ZFrame(requestText)) 
 					{
 						requester.Send(request);
 					}
 
+					// Receive
 					using (ZFrame reply = requester.ReceiveFrame()) 
 					{
-						Console.WriteLine("Received: {0} {1}!", requestText, reply.ReadString());
+						Console.WriteLine(" Received: {0} {1}!", requestText, reply.ReadString());
 					}
 				}
 			}

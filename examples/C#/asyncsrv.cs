@@ -34,12 +34,11 @@ namespace ZeroMQ.Test
 				// Connect
 				client.Connect("tcp://localhost:5570");
 
+				ZError error;
+				ZMessage incoming;
 				var poll = ZPollItem.CreateReceiver();
 
 				int requests = 0;
-				ZError error;
-				ZMessage incoming;
-
 				while (true)
 				{
 					// Tick once per second, pulling in arriving messages
@@ -53,10 +52,7 @@ namespace ZeroMQ.Test
 								continue;
 							}
 							if (error == ZError.ETERM)
-							{
-								return;
-							}
-
+								return;	// Interrupted
 							throw new ZException(error);
 						}
 						using (incoming)
@@ -67,16 +63,13 @@ namespace ZeroMQ.Test
 					}
 					using (var outgoing = new ZMessage())
 					{
-						outgoing.Add(new ZFrame(client.Identity, 0, client.Identity.Length));
-						outgoing.Add(new ZFrame());
+						outgoing.Add(new ZFrame(client.Identity));
 						outgoing.Add(new ZFrame("request " + (++requests)));
 
 						if (!client.Send(outgoing, out error))
 						{
 							if (error == ZError.ETERM)
-							{
-								return;
-							}
+								return;	// Interrupted
 							throw new ZException(error);
 						}
 					}
@@ -84,13 +77,14 @@ namespace ZeroMQ.Test
 			}
 		}
 
-		// This is our server task.
-		// It uses the multithreaded server model to deal requests out to a pool
-		// of workers and route replies back to clients. One worker can handle
-		// one request at a time but one client can talk to multiple workers at
-		// once.
 		static void AsyncSrv_ServerTask(ZContext context) 
 		{
+			// This is our server task.
+			// It uses the multithreaded server model to deal requests out to a pool
+			// of workers and route replies back to clients. One worker can handle
+			// one request at a time but one client can talk to multiple workers at
+			// once.
+
 			using (var frontend = ZSocket.Create(context, ZSocketType.ROUTER))
 			using (var backend = ZSocket.Create(context, ZSocketType.DEALER))
 			{
@@ -105,46 +99,43 @@ namespace ZeroMQ.Test
 					int j = i; new Thread(() => AsyncSrv_ServerWorker(context, j)).Start();
 				}
 
-				ZError error;
-
 				// Connect backend to frontend via a proxy
+				ZError error;
 				if (!ZContext.Proxy(frontend, backend, out error))
 				{
 					if (error == ZError.ETERM)
-						return;
-
+						return;	// Interrupted
 					throw new ZException(error);
 				}
 			}
 		}
 
-		// Each worker task works on one request at a time and sends a random number
-		// of replies back, with random delays between replies:
 		static void AsyncSrv_ServerWorker(ZContext context, int i) 
 		{
+			// Each worker task works on one request at a time and sends a random number
+			// of replies back, with random delays between replies:
+
 			using (var worker = ZSocket.Create(context, ZSocketType.DEALER))
 			{
 				worker.Connect("inproc://backend");
 
 				ZError error;
+				ZMessage request;
 				var rnd = new Random();
 
 				while (true)
 				{
-					ZMessage request;
 					if (null == (request = worker.ReceiveMessage(out error)))
 					{
 						if (error == ZError.ETERM)
-							return;
-
+							return;	// Interrupted
 						throw new ZException(error);
 					}
-
 					using (request)
 					{
 						// The DEALER socket gives us the reply envelope and message
-						string identity = request[0].ReadString();
-						string content = request[1].ReadString();
+						string identity = request[1].ReadString();
+						string content = request[2].ReadString();
 
 						// Send 0..4 replies back
 						int replies = rnd.Next(5);
@@ -161,8 +152,7 @@ namespace ZeroMQ.Test
 								if (!worker.Send(response, out error))
 								{
 									if (error == ZError.ETERM)
-										return;
-
+										return;	// Interrupted
 									throw new ZException(error);
 								}
 							}
@@ -172,10 +162,11 @@ namespace ZeroMQ.Test
 			}
 		}
 
-		// The main thread simply starts several clients and a server, and then
-		// waits for the server to finish.
 		public static void AsyncSrv(IDictionary<string, string> dict, string[] args)
 		{
+			// The main thread simply starts several clients and a server, and then
+			// waits for the server to finish.
+
 			using (var context = ZContext.Create())
 			{
 				for (int i = 0; i < 5; ++i)

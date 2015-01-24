@@ -77,11 +77,10 @@ namespace ZeroMQ.Test
 					ZMessage incoming;
 					int cycles = 0;
 					var poll = ZPollItem.CreateReceiver();
+					var rnd = new Random();
 
 					while (true)
 					{
-						var rnd = new Random();
-
 						if (worker.PollIn(poll, out incoming, out error, Worker.PPP_TICK))
 						{
 							// Get message

@@ -24,14 +24,15 @@ namespace ZeroMQ.Test
 			using (var context = ZContext.Create())
 			using (var publisher = ZSocket.Create(context, ZSocketType.PUB))
 			{
-				publisher.Bind("tcp://*:5556");
-				// publisher.Bind("epgm://eth0,224.0.0.0:5556");
+				string address = "tcp://*:5556";
+				Console.WriteLine("I: Connecting to {0}", address);
+				publisher.Bind(address);
+
+				// Initialize random number generator
+				var rnd = new Random();
 
 				while (true)
 				{
-					// Initialize random number generator
-					var rnd = new Random();
-
 					// Get values that will fool the boss
 					int zipcode = rnd.Next(99999);
 					int temperature = rnd.Next(-55, +45);

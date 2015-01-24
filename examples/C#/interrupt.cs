@@ -18,65 +18,79 @@ namespace ZeroMQ.Test
 			// Authors: Pieter Hintjens, Uli Riehm
 			//
 
+			if (args == null || args.Length == 0)
+			{
+				args = new string[] { "World" };
+			}
+
+			string name = args[0];
+
 			using (var context = ZContext.Create())
 			using (var responder = ZSocket.Create(context, ZSocketType.REP))
 			{
-
-				var thread = new Thread(() =>
+				Console.CancelKeyPress += (sender, e) =>
 				{
-					Console.CancelKeyPress += (sender, e) =>
-					{
-						// e.Cancel = false;
-						context.Terminate();
-					};
-					while (true)
-					{
-						if (Console.KeyAvailable)
-						{
-							ConsoleKeyInfo info = Console.ReadKey(true);
-							if (info.Modifiers == ConsoleModifiers.Control && info.Key == ConsoleKey.C)
-							{
-								break;
-							} 
-							if (info.Key == ConsoleKey.Escape)
-							{
-								context.Terminate();
-								break;
-							}
-						}
-						Thread.Sleep(1);
-					}
-				});
-				thread.Start();
-				thread.Join(64);
+					e.Cancel = false;
+					context.Terminate();
+				};
 
 				responder.Bind("tcp://*:5555");
 
-				ZError error;
+				var error = ZError.None;
 				ZFrame request;
 				while (true)
 				{
-					if (null == (request = responder.ReceiveFrame(out error)))
+					/* if (Console.KeyAvailable)
 					{
-						if (error == ZError.ETERM)
+						ConsoleKeyInfo info = Console.ReadKey(true);
+						if (info.Modifiers == ConsoleModifiers.Control && info.Key == ConsoleKey.C)
 						{
-							Console.WriteLine("Terminating, you have pressed ESC.");
-							break;
+							context.Terminate();
 						}
+						if (info.Key == ConsoleKey.Escape)
+						{
+							context.Terminate();
+						}
+					} /**/
+
+					if (null == (request = responder.ReceiveFrame(/* ZSocketFlags.DontWait, */ out error)))
+					{
+						/* if (error == ZError.EAGAIN)
+						{
+							error = ZError.None;
+							Thread.Sleep(1);
+
+							continue;
+						} /**/
+						if (error == ZError.ETERM)
+							break;	// Interrupted
 						throw new ZException(error);
 					}
 
 					using (request)
 					{
-						string respondText = "Hello";
-						Console.WriteLine("Received: {0}!", respondText, request.ReadString());
+						Console.Write("Received: {0}!", request.ReadString());
 
-						Console.Write("Sending {0}... ", respondText);
-						using (var response = new ZFrame(respondText))
+						Console.WriteLine(" Sending {0}... ", name);
+						using (var response = new ZFrame(name))
 						{
-							responder.Send(response);
+							if (!responder.Send(response, out error))
+							{
+								if (error == ZError.ETERM)
+									break;	// Interrupted
+								throw new ZException(error);
+							}
 						}
 					}
+				}
+
+				if (error == ZError.ETERM)
+				{
+					Console.WriteLine("Terminating, you have pressed CTRL+C.");
+				}
+				else
+				{
+					throw new ZException(error);
 				}
 			}
 		}

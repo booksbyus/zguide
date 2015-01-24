@@ -3,7 +3,7 @@ ZeroMQ Examples in C#
 
 Hello! I've made some new examples for C#.
 
-You can open the `ZGuideExamples.csproj` in VisualC# on Windows or in MonoDevelop on Linux.  
+You can open the `ZGuideExamples.*.csproj` in Visual C# on Windows or in MonoDevelop on Linux.  
 Add a Reference to the project [`/zeromq/clrzmq4`](http://github.com/zeromq/clrzmq4) (or the release ZeroMQ.dll).
 
 Now compile the project and run `./ZGuideExamples.exe` !
@@ -14,6 +14,8 @@ Usage: ./ZGuideExamples.exe [--option=++] [--option=tcp://192.168.1.1:8080] <com
 Available <command>s:
 
     AsyncSrv
+    FLClient1
+    FLServer1
     HWClient
     HWServer
     Identity
@@ -29,11 +31,12 @@ Available <command>s:
     Peering1
     Peering2
     PPQueue
+    PPWorker
     PSEnvPub
     PSEnvSub
     RRBroker
     RRClient
-    RRServer
+    RRWorker
     RTDealer
     RTReq
     SPQueue
@@ -49,5 +52,4 @@ Available <command>s:
     WUClient
     WUProxy
     WUServer
-
 ```
