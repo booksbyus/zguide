@@ -26,14 +26,11 @@ namespace ZeroMQ.Test
 			{
 				new Thread(() => Espresso_Publisher(context)).Start();
 				new Thread(() => Espresso_Subscriber(context)).Start();
+				new Thread(() => Espresso_Listener(context)).Start();
 
 				subscriber.Connect("tcp://127.0.0.1:6000");
-
 				publisher.Bind("tcp://*:6001");
-
 				listener.Bind("inproc://listener");
-
-				new Thread(() => Espresso_Listener(context)).Start();
 
 				ZError error;
 				if (!ZContext.Proxy(subscriber, publisher, listener, out error))
