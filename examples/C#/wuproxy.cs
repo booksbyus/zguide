@@ -40,8 +40,9 @@ namespace ZeroMQ.Test
 					Console.WriteLine("I: Binding on {0}", epgmAddress);
 					backend.Bind(epgmAddress);
 				}
-				using (var subscription = new ZFrame())
+				using (var subscription = ZFrame.Create(1))
 				{
+					subscription.Write(new byte[] { 0x1 }, 0, 1);
 					backend.Send(subscription);
 				}
 
