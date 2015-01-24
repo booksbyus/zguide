@@ -23,47 +23,42 @@ namespace ZeroMQ.Test
 			{
 				Console.CancelKeyPress += (sender, e) =>
 				{
-					// e.Cancel = false;
-					context.Terminate();
+					e.Cancel = false;
+					// context.Terminate();
 				};
-
-				var thread = new Thread(() =>
-				{
-					while (true)
-					{
-						if (Console.KeyAvailable)
-						{
-							ConsoleKeyInfo info = Console.ReadKey(true);
-							if (info.Modifiers == ConsoleModifiers.Control && info.Key == ConsoleKey.C)
-							{
-								break;
-							} 
-							if (info.Key == ConsoleKey.Escape)
-							{
-								context.Terminate();
-								break;
-							}
-						}
-						Thread.Sleep(1);
-					}
-				});
-				thread.Start();
-				thread.Join(64);
-
 
 				responder.Bind("tcp://*:5555");
 
-				ZError error;
+				var error = ZError.None;
 				ZFrame request;
 				while (true)
 				{
-					if (null == (request = responder.ReceiveFrame(out error)))
+					if (Console.KeyAvailable)
 					{
-						if (error == ZError.ETERM)
+						ConsoleKeyInfo info = Console.ReadKey(true);
+						if (info.Modifiers == ConsoleModifiers.Control && info.Key == ConsoleKey.C)
 						{
-							Console.WriteLine("Terminating, you have pressed ESC.");
-							break;
+							// error = ZError.ETERM;
+							// break;
+							context.Terminate();
+						} 
+						if (info.Key == ConsoleKey.Escape)
+						{
+							context.Terminate();
 						}
+					}
+
+					if (null == (request = responder.ReceiveFrame(ZSocketFlags.DontWait, out error)))
+					{
+						if (error == ZError.EAGAIN)
+						{
+							error = ZError.None;
+							Thread.Sleep(1);
+
+							continue;
+						}
+						if (error == ZError.ETERM)
+							break;	// Interrupted
 						throw new ZException(error);
 					}
 
@@ -78,14 +73,20 @@ namespace ZeroMQ.Test
 							if (!responder.Send(response, out error))
 							{
 								if (error == ZError.ETERM)
-								{
-									Console.WriteLine("Terminating, you have pressed ESC.");
-									break;
-								}
+									break;	// Interrupted
 								throw new ZException(error);
 							}
 						}
 					}
+				}
+
+				if (error == ZError.ETERM)
+				{
+					Console.WriteLine("Terminating, you have pressed ESC.");
+				}
+				else
+				{
+					throw new ZException(error);
 				}
 			}
 		}
