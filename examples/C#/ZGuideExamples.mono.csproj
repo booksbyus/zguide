@@ -74,6 +74,7 @@
     <Compile Include="rrworker.cs" />
     <Compile Include="flserver1.cs" />
     <Compile Include="flclient1.cs" />
+    <Compile Include="espresso.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
