@@ -18,28 +18,38 @@ namespace ZeroMQ.Test
 			//
 			// Authors: Pieter Hintjens, Uli Riehm
 			//
-			if (args == null || args.Length == 0)
+			if (args.Length < 2)
 			{
-				args = new string[] { "10001", "tcp://127.0.0.1:5556" };
+				Console.WriteLine();
+				Console.WriteLine("Usage: ./{0} WUClient [ZipCode] [Endpoint]", AppDomain.CurrentDomain.FriendlyName);
+				Console.WriteLine();
+				Console.WriteLine("    ZipCode   The zip code to subscribe. Default is NYC, 10001");
+				Console.WriteLine("    Endpoint  Where the WUClient should connect to.");
+				Console.WriteLine("              Default: tcp://127.0.0.1:5556");
+				Console.WriteLine();
+				if (args.Length < 1)
+					args = new string[] { "10001", "tcp://127.0.0.1:5556" };
+				else
+					args = new string[] { args[0], "tcp://127.0.0.1:5556" };
 			}
-
-			// Subscribe to zipcode, default is NYC, 10001
-			string zipCode = args[0];
-
-			string connect_to = args[0];
 
 			// Socket to talk to server
 			using (var context = ZContext.Create())
 			using (var subscriber = ZSocket.Create(context, ZSocketType.SUB))
 			{
-				Console.WriteLine("I: connecting to localhost...");
+				string connect_to = args[1];
+				Console.WriteLine("I: connecting to {0}...", connect_to);
 				subscriber.Connect(connect_to);
+
 				foreach (IPAddress address in WUProxy_GetPublicIPs())
 				{
-					Console.WriteLine("I: connecting to {0}...", address);
-					subscriber.Connect(string.Format("epgm://{0};239.192.1.1:8100", address));
+					var epgmAddress = string.Format("epgm://{0};239.192.1.1:8100", address);
+					Console.WriteLine("I: connecting to {0}...", epgmAddress);
+					subscriber.Connect(epgmAddress);
 				}
 
+				// Subscribe to zipcode, default is NYC, 10001
+				string zipCode = args[0];
 				Console.WriteLine("I: Subscribing to zip code {0}...", zipCode);
 				subscriber.Subscribe(zipCode);
 
@@ -56,7 +66,7 @@ namespace ZeroMQ.Test
 						total_temperature += Convert.ToInt64(reply.Split(' ')[1]);
 					}
 				}
-				Console.WriteLine("Average temperature for zipcode '{0}' was {1}°.", zipCode, (total_temperature / i));
+				Console.WriteLine("Average temperature for zipcode '{0}' was {1}°", zipCode, (total_temperature / i));
 			}
 		}
 	}

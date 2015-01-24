@@ -20,6 +20,11 @@ namespace ZeroMQ.Test
 
 			if (args == null || args.Length == 0)
 			{
+				Console.WriteLine();
+				Console.WriteLine("Usage: ./{0} HWServer [Name]", AppDomain.CurrentDomain.FriendlyName);
+				Console.WriteLine();
+				Console.WriteLine("    Name   Your name. Default: World");
+				Console.WriteLine();
 				args = new string[] { "World" };
 			}
 
