@@ -18,6 +18,13 @@ namespace ZeroMQ.Test
 			// Authors: Pieter Hintjens, Uli Riehm
 			//
 
+			if (args == null || args.Length == 0)
+			{
+				args = new string[] { "World" };
+			}
+
+			string name = args[0];
+
 			using (var context = ZContext.Create())
 			using (var responder = ZSocket.Create(context, ZSocketType.REP))
 			{
@@ -64,11 +71,10 @@ namespace ZeroMQ.Test
 
 					using (request)
 					{
-						string respondText = "Hello";
-						Console.WriteLine("Received: {0}!", respondText, request.ReadString());
+						Console.Write("Received: {0}!", request.ReadString());
 
-						Console.Write("Sending {0}... ", respondText);
-						using (var response = new ZFrame(respondText))
+						Console.WriteLine(" Sending {0}... ", name);
+						using (var response = new ZFrame(name))
 						{
 							if (!responder.Send(response, out error))
 							{

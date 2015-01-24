@@ -28,7 +28,7 @@ namespace ZeroMQ.Test
 				for (int n = 0; n < 10; ++n)
 				{
 					string requestText = "Hello";
-					Console.Write("Sending {0}... ", requestText);
+					Console.Write("Sending {0}...", requestText);
 
 					// Send
 					using (var request = new ZFrame(requestText)) 
@@ -39,7 +39,7 @@ namespace ZeroMQ.Test
 					// Receive
 					using (ZFrame reply = requester.ReceiveFrame()) 
 					{
-						Console.WriteLine("Received: {0} {1}!", requestText, reply.ReadString());
+						Console.WriteLine(" Received: {0} {1}!", requestText, reply.ReadString());
 					}
 				}
 			}

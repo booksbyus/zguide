@@ -18,6 +18,13 @@ namespace ZeroMQ.Test
 			// Authors: Pieter Hintjens, Uli Riehm
 			//
 
+			if (args == null || args.Length == 0)
+			{
+				args = new string[] { "World" };
+			}
+
+			string name = args[0];
+
 			// Create
 			using (var context = ZContext.Create())
 			using (var responder = ZSocket.Create(context, ZSocketType.REP))
@@ -36,7 +43,7 @@ namespace ZeroMQ.Test
 						Thread.Sleep(1);
 
 						// Send
-						using (var reply = new ZFrame("World"))
+						using (var reply = new ZFrame(name))
 						{
 							responder.Send(reply);
 						}
