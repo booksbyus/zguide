@@ -18,19 +18,27 @@ namespace ZeroMQ.Test
 			//
 			// Authors: Pieter Hintjens, Uli Riehm
 			//
+			if (args == null || args.Length == 0)
+			{
+				args = new string[] { "10001" };
+			}
+
+			// Subscribe to zipcode, default is NYC, 10001
+			string zipCode = args[0];
 
 			// Socket to talk to server
 			using (var context = ZContext.Create())
 			using (var subscriber = ZSocket.Create(context, ZSocketType.SUB))
 			{
+				Console.WriteLine("I: connecting to localhost...");
 				subscriber.Connect("tcp://127.0.0.1:5556");
 				foreach (IPAddress address in WUProxy_GetPublicIPs())
 				{
+					Console.WriteLine("I: connecting to {0}...", address);
 					subscriber.Connect(string.Format("epgm://{0};239.192.1.1:8100", address));
 				}
 
-				// Subscribe to zipcode, default is NYC, 10001
-				string zipCode = "10001";
+				Console.WriteLine("I: Subscribing to {0}...", zipCode);
 				subscriber.Subscribe(zipCode);
 
 				// Process 10 updates
