@@ -63,8 +63,7 @@ namespace ZeroMQ.Test
 					}
 					using (var outgoing = new ZMessage())
 					{
-						outgoing.Add(new ZFrame(client.Identity, 0, client.Identity.Length));
-						outgoing.Add(new ZFrame());
+						outgoing.Add(new ZFrame(client.Identity));
 						outgoing.Add(new ZFrame("request " + (++requests)));
 
 						if (!client.Send(outgoing, out error))
@@ -135,8 +134,8 @@ namespace ZeroMQ.Test
 					using (request)
 					{
 						// The DEALER socket gives us the reply envelope and message
-						string identity = request[0].ReadString();
-						string content = request[1].ReadString();
+						string identity = request[1].ReadString();
+						string content = request[2].ReadString();
 
 						// Send 0..4 replies back
 						int replies = rnd.Next(5);
