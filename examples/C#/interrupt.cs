@@ -31,7 +31,7 @@ namespace ZeroMQ.Test
 				Console.CancelKeyPress += (sender, e) =>
 				{
 					e.Cancel = false;
-					// context.Terminate();
+					context.Terminate();
 				};
 
 				responder.Bind("tcp://*:5555");
@@ -40,20 +40,18 @@ namespace ZeroMQ.Test
 				ZFrame request;
 				while (true)
 				{
-					if (Console.KeyAvailable)
+					/* if (Console.KeyAvailable)
 					{
 						ConsoleKeyInfo info = Console.ReadKey(true);
 						if (info.Modifiers == ConsoleModifiers.Control && info.Key == ConsoleKey.C)
 						{
-							// error = ZError.ETERM;
-							// break;
 							context.Terminate();
-						} 
+						}
 						if (info.Key == ConsoleKey.Escape)
 						{
 							context.Terminate();
 						}
-					}
+					} /**/
 
 					if (null == (request = responder.ReceiveFrame(ZSocketFlags.DontWait, out error)))
 					{
@@ -88,7 +86,7 @@ namespace ZeroMQ.Test
 
 				if (error == ZError.ETERM)
 				{
-					Console.WriteLine("Terminating, you have pressed ESC.");
+					Console.WriteLine("Terminating, you have pressed CTRL+C.");
 				}
 				else
 				{
