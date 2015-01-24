@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Threading;
 
 using ZeroMQ;
 
@@ -29,8 +30,13 @@ namespace ZeroMQ.Test
 				// Backend is our public endpoint for subscribers
 				foreach (IPAddress address in WUProxy_GetPublicIPs())
 				{
+					Console.WriteLine("I: Binding on {0}", address);
 					backend.Bind(string.Format("tcp://{0}:8100", address));
 					backend.Bind(string.Format("epgm://{0};239.192.1.1:8100", address));
+				}
+				using (var subscription = new ZFrame())
+				{
+					backend.Send(subscription);
 				}
 
 				// Run the proxy until the user interrupts us
