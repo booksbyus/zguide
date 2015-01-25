@@ -32,11 +32,7 @@ namespace ZeroMQ.Test
 				{
 					e.Cancel = true;
 
-					ZError _error;
-					if (!context.Shutdown(out _error))
-					{
-						Console.WriteLine(_error);
-					} /**/
+					context.Shutdown();
 				};
 
 				responder.Bind("tcp://*:5555");
