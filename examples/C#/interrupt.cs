@@ -28,11 +28,9 @@ namespace ZeroMQ.Test
 			using (var context = ZContext.Create())
 			using (var responder = ZSocket.Create(context, ZSocketType.REP))
 			{
-				Console.CancelKeyPress += (sender, e) =>
-				{
-					e.Cancel = true;
-
-					context.Shutdown();
+				Console.CancelKeyPress += (s, ea) => 
+				{ 
+					context.Shutdown(); 
 				};
 
 				responder.Bind("tcp://*:5555");
