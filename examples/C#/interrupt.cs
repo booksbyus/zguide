@@ -91,7 +91,7 @@ namespace ZeroMQ.Test
 
 				if (error == ZError.ETERM)
 				{
-					Console.WriteLine("Terminating, you have pressed CTRL+C.");
+					Console.WriteLine("Terminated! You have pressed CTRL+C or ESC.");
 					return;
 				}
 				throw new ZException(error);
