@@ -63,7 +63,7 @@ namespace ZeroMQ.Test
 						if (error == ZError.EAGAIN)
 						{
 							error = ZError.None;
-							Thread.Sleep(64);
+							Thread.Sleep(512);	// See also the much slower reaction
 
 							continue;
 						} /**/
