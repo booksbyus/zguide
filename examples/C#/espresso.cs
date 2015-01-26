@@ -117,7 +117,7 @@ namespace ZeroMQ.Test
 					{
 						using (frame)
 						{
-							byte first = frame.ReadByte();
+							byte first = frame.ReadAsByte();
 
 							var rest = new byte[9];
 							frame.Read(rest, 0, rest.Length);
