@@ -18,7 +18,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Externalconsole>true</Externalconsole>
-    <Commandlineparameters>Interrupt</Commandlineparameters>
+    <Commandlineparameters>FLClient2 tcp://127.0.0.1:7000</Commandlineparameters>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>full</DebugType>
@@ -75,6 +75,8 @@
     <Compile Include="flserver1.cs" />
     <Compile Include="flclient1.cs" />
     <Compile Include="espresso.cs" />
+    <Compile Include="flserver2.cs" />
+    <Compile Include="flclient2.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
