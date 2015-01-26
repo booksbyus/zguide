@@ -30,6 +30,7 @@ namespace ZeroMQ.Test
 			{
 				Console.CancelKeyPress += (s, ea) => 
 				{ 
+					ea.Cancel = true;
 					context.Shutdown(); 
 				};
 
