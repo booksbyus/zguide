@@ -46,6 +46,7 @@ namespace ZeroMQ.Test
 
 				context = ZContext.Create();
 				socket = ZSocket.Create(context, ZSocketType.DEALER);
+				socket.Linger = GLOBAL_TIMEOUT;
 			}
 
 			public void Dispose()
@@ -113,7 +114,7 @@ namespace ZeroMQ.Test
 					var poll = ZPollItem.CreateReceiver();
 					while (endtime > DateTime.UtcNow)
 					{
-						if (this.socket.PollIn(poll, out reply, out error, TimeSpan.FromMilliseconds(64)))
+						if (this.socket.PollIn(poll, out reply, out error, endtime - DateTime.UtcNow))
 						{
 							// Reply is [empty][sequence][OK]
 							if (reply.Count < 3)
