@@ -49,6 +49,11 @@ namespace ZeroMQ.Test
 				socket.Linger = GLOBAL_TIMEOUT;
 			}
 
+			~FLClient() 
+			{
+				Dispose(false);
+			}
+
 			public void Dispose()
 			{
 				GC.SuppressFinalize(this);

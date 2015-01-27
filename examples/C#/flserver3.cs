@@ -10,7 +10,6 @@ namespace ZeroMQ.Test
 {
 	static partial class Program
 	{
-
 		public static bool Verbose;
 
 		public static void FLServer3(IDictionary<string, string> dict, string[] args)
