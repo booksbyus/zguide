@@ -79,6 +79,7 @@
     <Compile Include="flclient2.cs" />
     <Compile Include="flserver3.cs" />
     <Compile Include="flcliapi.cs" />
+    <Compile Include="flclient3.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
