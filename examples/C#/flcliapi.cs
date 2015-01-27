@@ -110,7 +110,7 @@ namespace ZeroMQ.Test
 				return reply;
 			}
 
-			public void Agent(CancellationTokenSource cancellus, object[] args, ZSocket backend)
+			public void Agent(CancellationToken cancellus, object[] args, ZSocket backend)
 			{
 				// Finally, here's the agent task itself, which polls its two sockets
 				// and processes incoming messages:
