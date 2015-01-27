@@ -45,7 +45,20 @@ namespace ZeroMQ.Test
 						FieldInfo keyField = fields.Where(field => string.Equals(field.Name, key.Substring(2), StringComparison.OrdinalIgnoreCase)).FirstOrDefault();
 						if (keyField != null)
 						{
-							keyField.SetValue(null, value);
+							if (keyField.FieldType == typeof(string))
+							{
+								keyField.SetValue(null, value);
+							}
+							else if (keyField.FieldType == typeof(bool))
+							{
+								bool equalsTrue = (value == null || value == string.Empty);
+								if (!equalsTrue)
+									equalsTrue = string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
+								if (!equalsTrue)
+									equalsTrue = string.Equals(value, "+", StringComparison.OrdinalIgnoreCase);
+
+								keyField.SetValue(null, equalsTrue);
+							}
 						}
 					}
 				}

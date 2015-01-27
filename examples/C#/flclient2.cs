@@ -170,10 +170,10 @@ namespace ZeroMQ.Test
 				}
 
 				// Send a bunch of name resolution 'requests', measure time
-				int requests = 10000;
+				int requests = 0;
 				DateTime starttime = DateTime.UtcNow;
 				var error = ZError.None;
-				while (requests-- > 0)
+				while (++requests < 10000)
 				{
 					var outgoing = new ZMessage();
 					outgoing.Add(new ZFrame("random name"));
@@ -193,7 +193,7 @@ namespace ZeroMQ.Test
 				}
 				else
 				{
-					Console.WriteLine("Average round trip cost: {0} ms", (DateTime.UtcNow - starttime));
+					Console.WriteLine("Average round trip cost: {0} ms", (DateTime.UtcNow - starttime).Milliseconds / requests);
 				}
 			}
 		}

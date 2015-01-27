@@ -77,6 +77,8 @@
     <Compile Include="espresso.cs" />
     <Compile Include="flserver2.cs" />
     <Compile Include="flclient2.cs" />
+    <Compile Include="flserver3.cs" />
+    <Compile Include="flcliapi.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
