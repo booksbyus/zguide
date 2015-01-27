@@ -58,10 +58,13 @@
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="asyncsrv.cs" />
     <Compile Include="espresso.cs" />
+    <Compile Include="flcliapi.cs" />
     <Compile Include="flclient1.cs" />
     <Compile Include="flclient2.cs" />
+    <Compile Include="flclient3.cs" />
     <Compile Include="flserver1.cs" />
     <Compile Include="flserver2.cs" />
+    <Compile Include="flserver3.cs" />
     <Compile Include="hwclient.cs" />
     <Compile Include="hwserver.cs" />
     <Compile Include="identity.cs" />
