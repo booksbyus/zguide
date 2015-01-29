@@ -18,9 +18,6 @@ namespace ZeroMQ.Test
 			var renderer = new StringBuilder();
 			for (int i = 0, c = message.Count; i < c; ++i)
 			{
-				ZFrame frame = message[i];
-				frame.Position = 0;
-
 				if (i == 0)
 				{
 					renderer.Append(format);
@@ -34,14 +31,13 @@ namespace ZeroMQ.Test
 				renderer.Append(i + data.Length);
 				renderer.Append("}");
 
+				ZFrame frame = message[i];
+				frame.Position = 0;
 				if (frame.Length == 0)
-				{
 					list.Add("0");
-				}
 				else
-				{
 					list.Add(frame.ReadString());
-				}
+				frame.Position = 0;
 			}
 
 			Console.WriteLine(renderer.ToString(), list.ToArray());

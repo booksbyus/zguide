@@ -18,17 +18,17 @@ namespace ZeroMQ.Test
 			//
 			// Authors: Pieter Hintjens, Uli Riehm
 			//
-			if (args.Length < 2)
+			if (args == null || args.Length < 2)
 			{
 				Console.WriteLine();
 				Console.WriteLine("Usage: ./{0} WUClient [ZipCode] [Endpoint]", AppDomain.CurrentDomain.FriendlyName);
 				Console.WriteLine();
-				Console.WriteLine("    ZipCode   The zip code to subscribe. Default is NYC, 10001");
+				Console.WriteLine("    ZipCode   The zip code to subscribe. Default is Nürtingen, 72622");
 				Console.WriteLine("    Endpoint  Where the WUClient should connect to.");
 				Console.WriteLine("              Default: tcp://127.0.0.1:5556");
 				Console.WriteLine();
 				if (args.Length < 1)
-					args = new string[] { "10001", "tcp://127.0.0.1:5556" };
+					args = new string[] { "72622", "tcp://127.0.0.1:5556" };
 				else
 					args = new string[] { args[0], "tcp://127.0.0.1:5556" };
 			}
