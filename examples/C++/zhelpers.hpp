@@ -176,9 +176,13 @@ static int64_t
 s_clock (void)
 {
 #if (defined (_WIN32))
-    SYSTEMTIME st;
-    GetSystemTime (&st);
-    return (int64_t) st.wSecond * 1000 + st.wMilliseconds;
+	FILETIME fileTime;
+	GetSystemTimeAsFileTime(&fileTime);
+	unsigned __int64 largeInt = fileTime.dwHighDateTime;
+	largeInt <<= 32;
+	largeInt |= fileTime.dwLowDateTime;
+	largeInt /= 10000; // FILETIME is in units of 100 nanoseconds
+	return (int64_t)largeInt;
 #else
     struct timeval tv;
     gettimeofday (&tv, NULL);
