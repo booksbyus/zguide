@@ -8,62 +8,70 @@ using ZeroMQ;
 
 namespace ZeroMQ.Test
 {
-	using FLCli;
-
-	//
-	// flcliapi class - Freelance Pattern agent class
-	// Implements the Freelance Protocol at http://rfc.zeromq.org/spec:10
-	//
-	// Authors: Pieter Hintjens, Uli Riehm
-	//
-
-	// This API works in two halves, a common pattern for APIs that need to
-	// run in the background. One half is an frontend object our application
-	// creates and works with; the other half is a backend "agent" that runs
-	// in a background thread. The frontend talks to the backend over an
-	// inproc pipe socket:
-
-	namespace FLCli
+	namespace FLCliApi
 	{
-		public class FLCliApi : IDisposable
+		//
+		// flcliapi class - Freelance Pattern agent class
+		// Implements the Freelance Protocol at http://rfc.zeromq.org/spec:10
+		//
+		// Authors: Pieter Hintjens, Uli Riehm
+		//
+
+		// This API works in two halves, a common pattern for APIs that need to
+		// run in the background. One half is an frontend object our application
+		// creates and works with; the other half is a backend "agent" that runs
+		// in a background thread. The frontend talks to the backend over an
+		// inproc pipe socket:
+
+		public class FreelanceClient : IDisposable
 		{
-			// Our context wrapper
+			// Here we see the backend agent. It runs as an attached thread, talking
+			// to its parent over a pipe socket. It is a fairly complex piece of work
+			// so we'll break it down into pieces.
+
+			// Our context
 			ZContext context;
 
-			ZActor actor;
-
 			// Pipe through to flcliapi agent
-			ZSocket pipe;
+			public ZActor Actor { get; protected set; }
 
-			public FLCliApi()
+			public FreelanceClient()
 			{
-				context = ZContext.Create();
+				// Constructor
+				this.context = ZContext.Create();
 
-				actor = ZActor.Create(context, this.Agent);
-				actor.Start();
-
-				pipe = actor.Frontend;
+				this.Actor = new ZActor(this.context, FreelanceClient.Agent);
+				this.Actor.Start();
 			}
 
-			~FLCliApi() 
+			~FreelanceClient() 
 			{
-				Dispose(false);
+				this.Dispose(false);
 			}
 
 			public void Dispose()
 			{
 				GC.SuppressFinalize(this);
-				Dispose(true);
+				this.Dispose(true);
 			}
 
 			protected void Dispose(bool disposing)
 			{
 				if (disposing)
 				{
-					if (context != null)
+					// Destructor
+
+					if (this.Actor != null)
 					{
-						context.Dispose();
-						context = null;
+						this.Actor.Dispose();
+						this.Actor = null;
+					}
+					if (this.context != null)
+					{
+						// Do context.Dispose()
+
+						this.context.Dispose();
+						this.context = null;
 					}
 				}
 			}
@@ -81,10 +89,10 @@ namespace ZeroMQ.Test
 					message.Add(new ZFrame("CONNECT"));
 					message.Add(new ZFrame(endpoint));
 
-					pipe.Send(message);
+					this.Actor.Frontend.Send(message);
 				}
 
-				Thread.Sleep(100);	// Allow connection to come up
+				Thread.Sleep(64);	// Allow connection to come up
 			}
 
 			public ZMessage Request(ZMessage request)
@@ -93,24 +101,27 @@ namespace ZeroMQ.Test
 				// to the backend, specifying a command "REQUEST" and the request message:
 
 				request.Prepend(new ZFrame("REQUEST"));
-				pipe.Send(request);
 
-				ZMessage reply = pipe.ReceiveMessage();
+				this.Actor.Frontend.Send(request);
 
-				using (ZFrame statusFrame = reply.Pop())
+				ZMessage reply;
+				ZError error;
+				if (null != (reply = this.Actor.Frontend.ReceiveMessage(out error))) 
 				{
-					string status = statusFrame.ReadString();
-					if (status == "FAILED")
+					using (ZFrame statusFrame = reply.Pop())
 					{
-						reply.Dispose();
-						reply = null;
+						string status = statusFrame.ReadString();
+						if (status == "FAILED")
+						{
+							reply.Dispose();
+							reply = null;
+						}
 					}
 				}
-
 				return reply;
 			}
 
-			public void Agent(CancellationToken cancellus, object[] args, ZSocket backend)
+			public static void Agent(ZContext context, ZSocket backend, CancellationToken cancellus, object[] args)
 			{
 				// Finally, here's the agent task itself, which polls its two sockets
 				// and processes incoming messages:
@@ -121,19 +132,12 @@ namespace ZeroMQ.Test
 
 					while (!cancellus.IsCancellationRequested)
 					{
-						// Calculate tickless timer, up to 1 hour
-						var tickless = DateTime.UtcNow + TimeSpan.FromMinutes(1);
-
-						if (agent.request != null && tickless > agent.expires)
-							tickless = agent.expires;
-
-						foreach (Server server in agent.servers)
-							server.Tickless(ref tickless);
-
-						ZError error;
 						ZMessage msg;
+						ZError error;
 
-						if (agent.pipe.PollIn(p, out msg, out error, tickless - DateTime.UtcNow))
+						// Poll the control message
+
+						if (agent.Pipe.PollIn(p, out msg, out error, TimeSpan.FromMilliseconds(64)))
 						{
 							using (msg)
 							{
@@ -148,7 +152,9 @@ namespace ZeroMQ.Test
 								throw new ZException(error);
 						}
 
-						if (agent.router.PollIn(p, out msg, out error, tickless - DateTime.UtcNow))
+						// Poll the router message
+
+						if (agent.Router.PollIn(p, out msg, out error, TimeSpan.FromMilliseconds(64)))
 						{
 							using (msg)
 							{
@@ -163,38 +169,39 @@ namespace ZeroMQ.Test
 								throw new ZException(error);
 						}
 
-						if (agent.request != null)
+						if (agent.Request != null)
 						{
 							// If we're processing a request, dispatch to next server
 
-							if (DateTime.UtcNow >= agent.expires)
+							if (DateTime.UtcNow >= agent.Expires)
 							{
 								// Request expired, kill it
 								using (var outgoing = new ZFrame("FAILED"))
 								{
-									agent.pipe.Send(outgoing);
+									agent.Pipe.Send(outgoing);
 								}
 
-								agent.request.Dispose();
-								agent.request = null;
+								agent.Request.Dispose();
+								agent.Request = null;
 							}
 							else
 							{
 								// Find server to talk to, remove any expired ones
-								foreach (Server server in agent.actives.ToList())
+								foreach (Server server in agent.Actives.ToList())
 								{
-									if (DateTime.UtcNow >= server.expires)
+									if (DateTime.UtcNow >= server.Expires)
 									{
-										agent.actives.Remove(server);
-										server.alive = false;
+										agent.Actives.Remove(server);
+										server.Alive = false;
 									}
 									else
 									{
-										using (var request = agent.request.Duplicate())
+										// Copy the Request, Push the Endpoint and send on Router
+										using (var request = agent.Request.Duplicate())
 										{
-											request.Prepend(new ZFrame(server.endpoint));
+											request.Prepend(new ZFrame(server.Endpoint));
 
-											agent.router.Send(request);
+											agent.Router.Send(request);
 											break;
 										}
 									}
@@ -204,9 +211,9 @@ namespace ZeroMQ.Test
 
 						// Disconnect and delete any expired servers
 						// Send heartbeats to idle servers if needed
-						foreach (Server server in agent.servers)
+						foreach (Server server in agent.Servers)
 						{
-							server.Ping(agent.router);
+							server.Ping(agent.Router);
 						}
 					}
 				}
@@ -222,75 +229,87 @@ namespace ZeroMQ.Test
 
 			// Simple class for one background agent
 
-			// Own context
-			ZContext context;
-
 			// Socket to talk back to application
-			public ZSocket pipe;
+			public ZSocket Pipe;
 
 			// Socket to talk to servers
-			public ZSocket router;
+			public ZSocket Router;
 
 			// Servers we've connected to
-			public HashSet<Server> servers;
+			public HashSet<Server> Servers;
 
 			// Servers we know are alive
-			public List<Server> actives;
+			public List<Server> Actives;
 
 			// Number of requests ever sent
 			int sequence;
 
 			// Current request if any
-			public ZMessage request;
+			public ZMessage Request;
 
 			// Current reply if any
-			ZMessage reply;
+			// ZMessage reply;
 
 			// Timeout for request/reply
-			public DateTime expires;
+			public DateTime Expires;
 
 			public Agent(ZContext context, ZSocket pipe)
+				: this (context, default(string), pipe)
 			{
-				this.context = context;
-				this.pipe = pipe;
+				var rnd = new Random();
+				this.Router.IdentityString = "CLIENT" + rnd.Next();
+			}
 
-				this.router = ZSocket.Create(context, ZSocketType.ROUTER);
-				this.servers = new HashSet<Server>();
-				this.actives = new List<Server>();
+			public Agent(ZContext context, string name, ZSocket pipe)
+			{
+				// Constructor
+				this.Pipe = pipe;
+
+				this.Router = ZSocket.Create(context, ZSocketType.ROUTER);
+				if (name != null)
+				{
+					this.Router.IdentityString = name;
+				}
+
+				this.Servers = new HashSet<Server>();
+				this.Actives = new List<Server>();
 			}
 
 			~Agent() 
 			{
-				Dispose(false);
+				this.Dispose(false);
 			}
 
 			public void Dispose()
 			{
 				GC.SuppressFinalize(this);
-				Dispose(true);
+				this.Dispose(true);
 			}
 
 			protected void Dispose(bool disposing)
 			{
 				if (disposing)
 				{
-					this.servers = null;
-					this.actives = null;
+					// Destructor
 
-					if (request != null)
+					this.Servers = null;
+					this.Actives = null;
+
+					if (this.Request != null)
 					{
-						request.Dispose();
-						request = null;
+						this.Request.Dispose();
+						this.Request = null;
 					}
-					if (reply != null)
+					/* if (this.reply != null)
 					{
-						reply.Dispose();
-						reply = null;
-					}
-					if (context != null)
+						this.reply.Dispose();
+						this.reply = null;
+					} */
+
+					if (this.Router != null)
 					{
-						context.Dispose();
-						context = null;
+						this.Router.Dispose();
+						this.Router = null;
 					}
 				}
 			}
@@ -300,22 +319,26 @@ namespace ZeroMQ.Test
 				// This method processes one message from our frontend class
 				// (it's going to be CONNECT or REQUEST):
 
-				string command = msg[0].ReadString();
+				string command;
+				using (var commandFrame = msg.Pop())
+				{
+					command = commandFrame.ReadString();
+				}
 
 				if (command == "CONNECT")
 				{
-					string endpoint = msg[1].ReadString();
+					string endpoint = msg[0].ReadString();
 					Console.WriteLine("I: connecting to {0}...", endpoint);
 
-					router.Connect(endpoint);
+					Router.Connect(endpoint);
 
 					var server = new Server(endpoint);
-					servers.Add(server);
-					actives.Add(server);
+					this.Servers.Add(server);
+					this.Actives.Add(server);
 				}
 				else if (command == "REQUEST")
 				{
-					if (request != null)
+					if (this.Request != null)
 					{
 						// Strict request-reply cycle
 						throw new InvalidOperationException();
@@ -325,10 +348,10 @@ namespace ZeroMQ.Test
 					msg.Prepend(new ZFrame(++sequence));
 
 					// Take ownership of request message
-					request = msg.Duplicate();
+					this.Request = msg.Duplicate();
 
 					// Request expires after global timeout
-					expires = DateTime.UtcNow + GLOBAL_TIMEOUT;
+					this.Expires = DateTime.UtcNow + GLOBAL_TIMEOUT;
 				}
 			}
 
@@ -338,29 +361,33 @@ namespace ZeroMQ.Test
 				// server:
 
 				// Frame 0 is server that replied
-				string endpoint = reply[0].ReadString();
-
-				Server server = servers.Single(s => s.endpoint == endpoint);
-				if (!server.alive)
+				string endpoint;
+				using (var endpointFrame = reply.Pop())
 				{
-					actives.Add(server);
-					server.alive = true;
+					endpoint = endpointFrame.ReadString();
 				}
-				server.pingAt = DateTime.UtcNow + Server.PING_INTERVAL;
-				server.expires = DateTime.UtcNow + Server.SERVER_TTL;
+
+				Server server = this.Servers.Single(s => s.Endpoint == endpoint);
+				if (!server.Alive)
+				{
+					this.Actives.Add(server);
+					server.Refresh(true);
+				}
 
 				// Frame 1 may be sequence number for reply
-				int sequence = reply[1].ReadInt32();
+				int sequence;
+				using (var sequenceFrame = reply.Pop())
+				{
+					sequence = sequenceFrame.ReadInt32();
+				}
 				if (sequence == this.sequence)
 				{
-					reply.RemoveAt(0);
-					reply.RemoveAt(0);
 					reply.Prepend(new ZFrame("OK"));
 
-					pipe.Send(reply);
+					this.Pipe.Send(reply);
 
-					request.Dispose();
-					request = null;
+					this.Request.Dispose();
+					this.Request = null;
 				}
 			}
 		}
@@ -371,53 +398,50 @@ namespace ZeroMQ.Test
 
 			public static readonly TimeSpan SERVER_TTL = TimeSpan.FromMilliseconds(6000);
 
-			// Here we see the backend agent. It runs as an attached thread, talking
-			// to its parent over a pipe socket. It is a fairly complex piece of work
-			// so we'll break it down into pieces. First, the agent manages a set of
-			// servers, using our familiar class approach:
-
 			// Simple class for one server we talk to
 
 			// Server identity/endpoint
-			public string endpoint;
+			public string Endpoint { get; protected set; }
 
-			// 1 if known to be alive
-			public bool alive;
+			// true if known to be alive
+			public bool Alive { get; set; }
 
 			// Next ping at this time
-			public DateTime pingAt;
+			public DateTime PingAt { get; protected set; }
 
 			// Expires at this time
-			public DateTime expires;
+			public DateTime Expires { get; protected set; }
 
 			public Server(string endpoint)
 			{
-				this.endpoint = endpoint;
-				// this.alive = false;
-				this.pingAt = DateTime.UtcNow + PING_INTERVAL;
-				this.expires = DateTime.UtcNow + SERVER_TTL;
+				this.Endpoint = endpoint;
+				this.Refresh(true);
+			}
+
+			public void Refresh(bool alive)
+			{
+				this.Alive = alive;
+				if (alive)
+				{
+					this.PingAt = DateTime.UtcNow + PING_INTERVAL;
+					this.Expires = DateTime.UtcNow + SERVER_TTL;
+				}
 			}
 
 			public void Ping(ZSocket socket)
 			{
-				if (DateTime.UtcNow >= pingAt)
+				if (DateTime.UtcNow >= PingAt)
 				{
 					using (var outgoing = new ZMessage())
 					{
-						outgoing.Add(new ZFrame(endpoint));
+						outgoing.Add(new ZFrame(Endpoint));
 						outgoing.Add(new ZFrame("PING"));
 
 						socket.Send(outgoing);
 					}
 
-					pingAt = DateTime.UtcNow + PING_INTERVAL;
+					this.PingAt = DateTime.UtcNow + PING_INTERVAL;
 				}
-			}
-
-			public void Tickless(ref DateTime tickless)
-			{
-				if (tickless > pingAt)
-					tickless = pingAt;
 			}
 		}
 	}

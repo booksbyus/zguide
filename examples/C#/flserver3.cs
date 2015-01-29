@@ -10,8 +10,6 @@ namespace ZeroMQ.Test
 {
 	static partial class Program
 	{
-		public static bool Verbose;
-
 		public static void FLServer3(IDictionary<string, string> dict, string[] args)
 		{
 			//
@@ -23,7 +21,7 @@ namespace ZeroMQ.Test
 
 			if (args == null || args.Length < 1)
 			{
-				Console.WriteLine("I: syntax: [--verbose] {0} FLServer3", AppDomain.CurrentDomain.FriendlyName);
+				Console.WriteLine("I: syntax: {0} FLServer3", AppDomain.CurrentDomain.FriendlyName);
 			}
 
 			// Prepare server socket with predictable identity
@@ -33,6 +31,12 @@ namespace ZeroMQ.Test
 			using (var context = ZContext.Create())
 			using (var server = ZSocket.Create(context, ZSocketType.ROUTER))
 			{
+				Console.CancelKeyPress += (s, ea) =>
+				{
+					ea.Cancel = true;
+					context.Shutdown();
+				};
+
 				server.IdentityString = connect_endpoint;
 				server.Bind(bind_endpoint);
 				Console.WriteLine("I: service is ready as {0}", bind_endpoint);
@@ -53,7 +57,7 @@ namespace ZeroMQ.Test
 
 						using (request)
 						{
-							if (Verbose) Console_WriteZMessage(request, "Receiving");
+							Console_WriteZMessage(request, "Receiving");
 
 							// Frame 0: identity of client
 							// Frame 1: PING, or client control frame
@@ -76,17 +80,14 @@ namespace ZeroMQ.Test
 							}
 						}
 
-						using (identity)
-						{
-							response.Prepend(identity);
+						response.Prepend(identity);
 
-							if (Verbose) Console_WriteZMessage(response, "Sending");
-							if (!server.Send(response, out error))
-							{
-								if (error == ZError.ETERM)
-									break;	// Interrupted
-								throw new ZException(error);
-							}
+						Console_WriteZMessage(response, "Sending  ");
+						if (!server.Send(response, out error))
+						{
+							if (error == ZError.ETERM)
+								break;	// Interrupted
+							throw new ZException(error);
 						}
 					}
 				}
