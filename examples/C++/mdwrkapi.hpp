@@ -214,9 +214,9 @@ public:
                 connect_to_broker ();
             }
             //  Send HEARTBEAT if it's time
-            if (s_clock () > m_heartbeat_at) {
+            if (s_clock () >= m_heartbeat_at) {
                 send_to_broker ((char*)MDPW_HEARTBEAT, "", NULL);
-                m_heartbeat_at = s_clock () + m_heartbeat;
+                m_heartbeat_at += m_heartbeat;
             }
         }
         if (s_interrupted)
