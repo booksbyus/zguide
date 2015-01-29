@@ -8,7 +8,7 @@
 #include "mdp.h"
 
 #include <map>
-#include <vector>
+#include <set>
 #include <deque>
 #include <list>
 
@@ -68,7 +68,6 @@ public:
        m_context = new zmq::context_t(1);
        m_socket = new zmq::socket_t(*m_context, ZMQ_ROUTER);
        m_verbose = verbose;
-       m_heartbeat_at = s_clock () + HEARTBEAT_INTERVAL;
    }
 
    //  ---------------------------------------------------------------------
@@ -109,20 +108,20 @@ private:
    void
    purge_workers ()
    {
+       std::deque<worker*> toCull;
        int64_t now = s_clock();
-       for (size_t i = 0; i < m_waiting.size();)
+       for (std::set<worker*>::iterator wrk = m_waiting.begin(); wrk != m_waiting.end(); ++wrk)
        {
-           worker* wrk = m_waiting[i];
-           if (wrk->m_expiry > now)
-           {
-               ++i;
-               continue;
-           }
+           if ((*wrk)->m_expiry <= now)
+               toCull.push_back(*wrk);
+	   }
+       for (std::deque<worker*>::iterator wrk = toCull.begin(); wrk != toCull.end(); ++wrk)
+	   {
            if (m_verbose) {
                s_console ("I: deleting expired worker: %s",
-                     wrk->m_identity.c_str());
+                     (*wrk)->m_identity.c_str());
            }
-           worker_delete (wrk, 0);
+           worker_delete(*wrk, 0);
        }
    }
 
@@ -173,11 +172,7 @@ private:
            zmsg *msg = srv->m_requests.front();
            srv->m_requests.pop_front();
            worker_send (*wrk, (char*)MDPW_REQUEST, "", msg);
-       	   for(std::vector<worker*>::iterator it = m_waiting.begin(); it != m_waiting.end(); it++) {
-              if (*it == *wrk) {
-                 it = m_waiting.erase(it)-1;
-              }
-           }
+           m_waiting.erase(*wrk);
            srv->m_waiting.erase(wrk);
            delete msg;
        }
@@ -252,11 +247,7 @@ private:
            }
            wrk->m_service->m_workers--;
        }
-       for(std::vector<worker*>::iterator it = m_waiting.begin(); it != m_waiting.end(); it++) {
-          if (*it == wrk) {
-             it = m_waiting.erase(it)-1;
-          }
-       }
+       m_waiting.erase(wrk);
        //  This implicitly calls the worker destructor
        m_workers.erase(wrk->m_identity);
        delete wrk;
@@ -362,7 +353,7 @@ private:
    {
        assert (worker);
        //  Queue to broker and service waiting lists
-       m_waiting.push_back(worker);
+       m_waiting.insert(worker);
        worker->m_service->m_waiting.push_back(worker);
        worker->m_expiry = s_clock () + HEARTBEAT_EXPIRY;
        // Attempt to process outstanding requests
@@ -396,10 +387,15 @@ public:
    //  Get and process messages forever or until interrupted
    void
    start_brokering() {
+      int64_t now = s_clock();
+      int64_t heartbeat_at = now + HEARTBEAT_INTERVAL;
       while (!s_interrupted) {
           zmq::pollitem_t items [] = {
               { *m_socket,  0, ZMQ_POLLIN, 0 } };
-          zmq::poll (items, 1, HEARTBEAT_INTERVAL);
+          int64_t timeout = heartbeat_at - now;
+          if (timeout < 0)
+              timeout = 0;
+          zmq::poll (items, 1, (long)timeout);
 
           //  Process next input message, if any
           if (items [0].revents & ZMQ_POLLIN) {
@@ -430,13 +426,15 @@ public:
           }
           //  Disconnect and delete any expired workers
           //  Send heartbeats to idle workers if needed
-          if (s_clock () > m_heartbeat_at) {
+          now = s_clock();
+          if (now >= heartbeat_at) {
               purge_workers ();
-              for (std::vector<worker*>::iterator it = m_waiting.begin();
+              for (std::set<worker*>::iterator it = m_waiting.begin();
                     it != m_waiting.end() && (*it)!=0; it++) {
                   worker_send (*it, (char*)MDPW_HEARTBEAT, "", NULL);
               }
-              m_heartbeat_at = s_clock () + HEARTBEAT_INTERVAL;
+              heartbeat_at += HEARTBEAT_INTERVAL;
+              now = s_clock();
           }
       }
    }
@@ -448,8 +446,7 @@ private:
     std::string m_endpoint;                      //  Broker binds to this endpoint
     std::map<std::string, service*> m_services;  //  Hash of known services
     std::map<std::string, worker*> m_workers;    //  Hash of known workers
-    std::vector<worker*> m_waiting;              //  List of waiting workers
-    int64_t m_heartbeat_at;                     //  When to send HEARTBEAT
+    std::set<worker*> m_waiting;              //  List of waiting workers
 };
 
 
