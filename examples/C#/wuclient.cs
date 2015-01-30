@@ -24,7 +24,7 @@ namespace ZeroMQ.Test
 				Console.WriteLine("Usage: ./{0} WUClient [ZipCode] [Endpoint]", AppDomain.CurrentDomain.FriendlyName);
 				Console.WriteLine();
 				Console.WriteLine("    ZipCode   The zip code to subscribe. Default is Nürtingen, 72622");
-				Console.WriteLine("    Endpoint  Where the WUClient should connect to.");
+				Console.WriteLine("    Endpoint  Where WUClient should connect to.");
 				Console.WriteLine("              Default: tcp://127.0.0.1:5556");
 				Console.WriteLine();
 				if (args.Length < 1)
@@ -48,7 +48,7 @@ namespace ZeroMQ.Test
 					subscriber.Connect(epgmAddress);
 				}
 
-				// Subscribe to zipcode, default is NYC, 10001
+				// Subscribe to zipcode
 				string zipCode = args[0];
 				Console.WriteLine("I: Subscribing to zip code {0}...", zipCode);
 				subscriber.Subscribe(zipCode);
