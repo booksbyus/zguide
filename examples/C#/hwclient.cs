@@ -15,7 +15,7 @@ namespace ZeroMQ.Test
 			//
 			// Hello World client
 			//
-			// Authors: Pieter Hintjens, Uli Riehm
+			// Authors: Uli Riehm
 			//
 
 			// Create

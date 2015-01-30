@@ -16,7 +16,7 @@ namespace ZeroMQ.Test
 			// Reading from multiple sockets
 			// This version uses zmq_poll()
 			//
-			// Authors: Pieter Hintjens, Uli Riehm
+			// Authors: Uli Riehm
 			//
 
 			using (var context = ZContext.Create())

@@ -15,7 +15,7 @@ namespace ZeroMQ.Test
 			//
 			// Simple request-reply broker
 			//
-			// Authors: Pieter Hintjens, Uli Riehm
+			// Authors: Uli Riehm
 			//
 
 			// Prepare our context and sockets

@@ -15,7 +15,7 @@ namespace ZeroMQ.Test
 			//
 			// Hello World server
 			//
-			// Authors: Pieter Hintjens, Uli Riehm
+			// Authors: Uli Riehm
 			//
 
 			if (args == null || args.Length == 0)

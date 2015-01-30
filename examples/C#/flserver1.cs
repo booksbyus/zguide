@@ -16,7 +16,7 @@ namespace ZeroMQ.Test
 			// Freelance server - Model 1
 			// Trivial echo service
 			//
-			// Authors: Pieter Hintjens, Uli Riehm
+			// Authors: Uli Riehm
 			//
 
 			if (args == null || args.Length < 1)

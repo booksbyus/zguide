@@ -13,7 +13,7 @@ namespace ZeroMQ.Test
 	//
 	// Paranoid Pirate queue
 	//
-	// Authors: Pieter Hintjens, Uli Riehm
+	// Authors: Uli Riehm
 	//
 
 	// Here we define the worker class; a structure and a set of functions that

@@ -17,7 +17,7 @@ namespace ZeroMQ.Test
 			// Binds PUB socket to tcp://*:5556
 			// Publishes random weather updates
 			//
-			// Authors: Pieter Hintjens, Uli Riehm
+			// Authors: Uli Riehm
 			//
 
 			// Prepare our context and publisher

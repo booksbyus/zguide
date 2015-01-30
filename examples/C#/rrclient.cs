@@ -17,7 +17,7 @@ namespace ZeroMQ.Test
 			// Connects REQ socket to tcp://localhost:5559
 			// Sends "Hello" to server, expects "World" back
 			//
-			// Authors: Pieter Hintjens, Uli Riehm
+			// Authors: Uli Riehm
 			//
 
 			// Socket to talk to server

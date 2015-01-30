@@ -15,7 +15,7 @@ namespace ZeroMQ.Test
 			//
 			// Pubsub envelope publisher
 			//
-			// Authors: Pieter Hintjens, Uli Riehm
+			// Authors: Uli Riehm
 			//
 
 			// Prepare our context and publisher

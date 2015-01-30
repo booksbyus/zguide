@@ -16,7 +16,7 @@ namespace ZeroMQ.Test
 			// Connects SUB socket to tcp://localhost:5556
 			// Collects weather updates and finds avg temp in zipcode
 			//
-			// Authors: Pieter Hintjens, Uli Riehm
+			// Authors: Uli Riehm
 			//
 			if (args == null || args.Length < 2)
 			{

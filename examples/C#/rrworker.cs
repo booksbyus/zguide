@@ -17,7 +17,7 @@ namespace ZeroMQ.Test
 			// Connects REP socket to tcp://localhost:5560
 			// Expects "Hello" from client, replies with "World"
 			//
-			// Authors: Pieter Hintjens, Uli Riehm
+			// Authors: Uli Riehm
 			//
 
 			if (args == null || args.Length == 0)

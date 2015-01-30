@@ -16,7 +16,7 @@ namespace ZeroMQ.Test
 			// Reading from multiple sockets
 			// This version uses a simple recv loop
 			//
-			// Authors: Pieter Hintjens, Uli Riehm
+			// Authors: Uli Riehm
 			//
 
 			using (var context = ZContext.Create())

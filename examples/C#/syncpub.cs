@@ -17,7 +17,7 @@ namespace ZeroMQ.Test
 			//
 			// Synchronized publisher
 			//
-			// Authors: Pieter Hintjens, Uli Riehm
+			// Authors: Uli Riehm
 			//
 
 			// Socket to talk to clients and
