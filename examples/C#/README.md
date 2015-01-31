@@ -12,105 +12,94 @@ Now compile the project and run `./ZGuideExamples.exe` !
 Usage: ./ZGuideExamples.exe [--option=++] [--option=tcp://192.168.1.1:8080] <command> World Me You
 ```
 
-Available Examples:
-
-- HWServer, HWClient
+HWServer, HWClient
+-
 
 ```
 	Usage: ./ZGuideExamples.exe HWClient
-```
 
-```
 	Usage: ./ZGuideExamples.exe HWServer [Name]
 
         Name   Your name. Default: World
 ```
 
-- version
+Version
+-
 
 ```
 	Usage: ./ZGuideExamples.exe Version
 ```
 
-- wuserver, wuclient, wuproxy
+WUServer, WUClient, WUProxy
+-
 
 ```
 	Usage: ./ZGuideExamples.exe WUServer
-```
 
-```
 	Usage: ./ZGuideExamples.exe WUClient [ZipCode] [Endpoint]
 
         ZipCode   The zip code to subscribe. Default is 72622 Nürtingen
 	    Endpoint  Where WUClient should connect to.
 	              Default is tcp://127.0.0.1:5556
-```
 
-```
 	Usage: ./ZGuideExamples.exe WUProxy
 ```
 
-- taskvent, taskwork, tasksink
+TaskVent, TaskWork, TaskSink
+-
 
 ```
 	Usage: ./ZGuideExamples.exe TaskVent
-```
 
-```
 	Usage: ./ZGuideExamples.exe TaskWork
-```
 
-```
 	Usage: ./ZGuideExamples.exe TaskSink
 ```
 
-- msreader, mspoller
+MSReader, MSPoller
+-
 
 ```
 	Usage: ./ZGuideExamples.exe MSReader
-```
 
-```
 	Usage: ./ZGuideExamples.exe MSPoller
 ```
 
-- rrclient, rrworker, rrbroker
+RRClient, RRWorker, RRBroker
+-
 
 ```
 	Usage: ./ZGuideExamples.exe RRClient
-```
 
-```
 	Usage: ./ZGuideExamples.exe RRWorker [Name] [Endpoint]
 
         Name      Your Name
 	    Endpoint  Where RRClient should connect to.
 	              Default is tcp://127.0.0.1:5559
-```
 
-```
 	Usage: ./ZGuideExamples.exe RRBroker
 ```
 
-- msgqueue
+MsgQueue
+-
 
 ```
 	Usage: ./ZGuideExamples.exe msgqueue
 ```
 
-- taskwork2, tasksink2
+TaskWork2, TaskSink2
+-
 
 Use with TaskVent.
 
 ```
 	Usage: ./ZGuideExamples.exe TaskWork2
-```
 
-```
 	Usage: ./ZGuideExamples.exe TaskSink2
 ```
 
-- interrupt
+Interrupt
+-
 
 Use with HWClient.
 
@@ -118,7 +107,8 @@ Use with HWClient.
 	Usage: ./ZGuideExamples.exe Interrupt
 ```
 
-- mtserver, mtrelay
+MTServer, MTRelay
+-
 
 ```
 	Usage: ./ZGuideExamples.exe MTServer
@@ -126,7 +116,8 @@ Use with HWClient.
 	Usage: ./ZGuideExamples.exe MTRelay
 ```
 
-- syncpub, syncsub
+SyncPub, SyncSub
+-
 
 ```
 	Usage: ./ZGuideExamples.exe SyncPub
@@ -134,7 +125,8 @@ Use with HWClient.
 	Usage: ./ZGuideExamples.exe SyncSub
 ```
 
-- psenvpub, psenvsub
+PSEnvPub, PSEnvSub
+-
 
 ```
 	Usage: ./ZGuideExamples.exe PSEnvPub
@@ -142,13 +134,15 @@ Use with HWClient.
 	Usage: ./ZGuideExamples.exe PSEnvSub
 ```
 
-- identity
+Identity
+-
 
 ```
 	Usage: ./ZGuideExamples.exe Identity
 ```
 
-- rtreq, rtdealer
+RTReq, RTDealer
+-
 
 ```
 	Usage: ./ZGuideExamples.exe RTReq
@@ -156,19 +150,22 @@ Use with HWClient.
 	Usage: ./ZGuideExamples.exe RTDealer
 ```
 
-- lbbroker
+LBBroker
+-
 
 ```
 	Usage: ./ZGuideExamples.exe LBBroker
 ```
 
-- asyncsrv
+AsyncSrv
+-
 
 ```
 	Usage: ./ZGuideExamples.exe AsyncSrv
 ```
 
-- peering1, peering2
+Peering1, Peering2
+-
 
 ```
 	Usage: ./ZGuideExamples.exe Peering1 World Receiver0
@@ -177,7 +174,8 @@ Use with HWClient.
 	Usage: ./ZGuideExamples.exe Peering2
 ```
 
-- lpclient, lpserver
+LPClient, LPServer
+-
 
 ```
 	Usage: ./ZGuideExamples.exe LPClient [Name]
@@ -187,7 +185,8 @@ Use with HWClient.
 	Usage: ./ZGuideExamples.exe LPServer
 ```
 
-- spqueue, spworker
+SPQueue, SPWorker
+-
 
 ```
 	Usage: ./ZGuideExamples.exe SPQueue
@@ -195,7 +194,8 @@ Use with HWClient.
 	Usage: ./ZGuideExamples.exe SPWorker
 ```
 
-- ppqueue, ppworker
+PPQueue, PPWorker
+-
 
 ```
 	Usage: ./ZGuideExamples.exe PPQueue
@@ -205,7 +205,8 @@ Use with HWClient.
         Name   Your name. Default: World
 ```
 
-- flserver1, flclient1
+FLServer1, FLClient1
+-
 
 ```
 	Usage: ./ZGuideExamples.exe FLServer1 [Endpoint]
@@ -219,7 +220,8 @@ Use with HWClient.
 	              Default is tcp://127.0.0.1:7780
 ```
 
-- flserver2, flclient2
+FLServer2, FLClient2
+-
 
 ```
 	Usage: ./ZGuideExamples.exe FLServer2 [Endpoint]
@@ -233,7 +235,8 @@ Use with HWClient.
 	              Default is tcp://127.0.0.1:7780
 ```
 
-- flserver3, flclient3, flcliapi
+FLServer3, FLClient3, FLCliApi
+-
 
 Have a look on the FLCliApi.FreelanceClient!
 
@@ -247,13 +250,15 @@ Have a look on the FLCliApi.FreelanceClient!
 	              Default: tcp://127.0.0.1:5555
 ```
 
-- espresso
+Espresso
+-
 
 ```
 	Usage: ./ZGuideExamples.exe Espresso
 ```
 
-- pathopub, pathosub, lvcache
+PathoPub, PathoSub, LVCache
+-
 
 ```
 	Usage: ./ZGuideExamples.exe PathoPub [Endpoint]
@@ -271,13 +276,15 @@ Have a look on the FLCliApi.FreelanceClient!
         The LVCache is binding on tcp://*:5557 and tcp://*.5558
 ```
 
-- suisnail
+SuiSnail
+-
 
 ```
 	Usage: ./ZGuideExamples.exe SuiSnail
 ```
 
-- eagain
+EAgain
+-
 
 ```
 	Usage: ./ZGuideExamples.exe EAgain
