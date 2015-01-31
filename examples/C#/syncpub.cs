@@ -17,7 +17,7 @@ namespace ZeroMQ.Test
 			//
 			// Synchronized publisher
 			//
-			// Authors: Uli Riehm
+			// Author: metadings (uli.riehm@metadea.de)
 			//
 
 			// Socket to talk to clients and

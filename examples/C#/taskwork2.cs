@@ -16,7 +16,7 @@ namespace ZeroMQ.Test
 			// Task worker - design 2
 			// Adds pub-sub flow to receive and respond to kill signal
 			//
-			// Authors: Uli Riehm
+			// Author: metadings (uli.riehm@metadea.de)
 			//
 
 			// Socket to receive messages on,

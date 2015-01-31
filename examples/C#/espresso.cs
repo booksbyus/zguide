@@ -16,7 +16,7 @@ namespace ZeroMQ.Test
 			// Espresso Pattern
 			// This shows how to capture data using a pub-sub proxy
 			//
-			// Authors: Uli Riehm
+			// Author: metadings (uli.riehm@metadea.de)
 			//
 
 			using (var context = ZContext.Create())

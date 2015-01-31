@@ -14,7 +14,7 @@ namespace ZeroMQ.Test
 		// Broker peering simulation (part 2)
 		// Prototypes the request-reply flow
 		//
-		// Authors: Uli Riehm
+		// Author: metadings (uli.riehm@metadea.de)
 		//
 
 		static int Peering2_Clients = 10;

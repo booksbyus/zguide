@@ -16,7 +16,7 @@ namespace ZeroMQ.Test
 			// Freelance server - Model 2
 			// Does some work, replies OK, with message sequencing
 			//
-			// Authors: Uli Riehm
+			// Author: metadings (uli.riehm@metadea.de)
 			//
 
 			if (args == null || args.Length < 1)

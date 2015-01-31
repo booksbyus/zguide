@@ -15,7 +15,7 @@ namespace ZeroMQ.Test
 			//
 			// Multithreaded Hello World server
 			//
-			// Authors: Uli Riehm
+			// Author: metadings (uli.riehm@metadea.de)
 			//
 
 			// Socket to talk to clients and

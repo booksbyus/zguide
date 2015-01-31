@@ -18,7 +18,7 @@ namespace ZeroMQ.Test
 	// the heartbeating, which lets the worker detect if the queue has
 	// died, and vice versa:
 	//
-	// Authors: Uli Riehm
+	// Author: metadings (uli.riehm@metadea.de)
 	//
 
 	static partial class Program

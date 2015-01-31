@@ -14,7 +14,7 @@ namespace ZeroMQ.Test
 		// flcliapi class - Freelance Pattern agent class
 		// Implements the Freelance Protocol at http://rfc.zeromq.org/spec:10
 		//
-		// Authors: Uli Riehm
+		// Author: metadings (uli.riehm@metadea.de)
 		//
 
 		// This API works in two halves, a common pattern for APIs that need to

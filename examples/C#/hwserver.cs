@@ -15,7 +15,7 @@ namespace ZeroMQ.Test
 			//
 			// Hello World server
 			//
-			// Authors: Uli Riehm
+			// Author: metadings (uli.riehm@metadea.de)
 			//
 
 			if (args == null || args.Length == 0)

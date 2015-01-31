@@ -19,7 +19,7 @@ namespace ZeroMQ.Test
 		// it easier to start and stop the example. Each thread may have its own
 		// context and conceptually acts as a separate process.
 		//
-		// Authors: Uli Riehm
+		// Author: metadings (uli.riehm@metadea.de)
 		//
 
 		static int LBBroker_Clients = 10;
