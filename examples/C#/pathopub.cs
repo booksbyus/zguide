@@ -16,7 +16,7 @@ namespace ZeroMQ.Test
 			// Pathological publisher
 			// Sends out 1,000 topics and then one random update per second
 			//
-			// Authors: Uli Riehm
+			// Author: metadings (uli.riehm@metadea.de)
 			//
 
 			if (args == null || args.Length < 1)

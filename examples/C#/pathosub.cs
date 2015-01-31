@@ -16,7 +16,7 @@ namespace ZeroMQ.Test
 			// Pathological subscriber
 			// Subscribes to one random topic and prints received messages
 			//
-			// Authors: Uli Riehm
+			// Author: metadings (uli.riehm@metadea.de)
 			//
 
 			if (args == null || args.Length < 1)

@@ -72,11 +72,14 @@
     <Compile Include="lbbroker.cs" />
     <Compile Include="lpclient.cs" />
     <Compile Include="lpserver.cs" />
+    <Compile Include="lvcache.cs" />
     <Compile Include="msgqueue.cs" />
     <Compile Include="mspoller.cs" />
     <Compile Include="msreader.cs" />
     <Compile Include="mtrelay.cs" />
     <Compile Include="mtserver.cs" />
+    <Compile Include="pathopub.cs" />
+    <Compile Include="pathosub.cs" />
     <Compile Include="peering1.cs" />
     <Compile Include="peering2.cs" />
     <Compile Include="ppqueue.cs" />
