@@ -1,4 +1,4 @@
-ZeroMQ Examples in C#
+# ZeroMQ Examples in C#
 ---
 
 Hello! I've made some new examples for C#.
@@ -12,8 +12,7 @@ Now compile the project and run `./ZGuideExamples.exe` !
 Usage: ./ZGuideExamples.exe [--option=++] [--option=tcp://192.168.1.1:8080] <command> World Me You
 ```
 
-HWServer, HWClient
--
+### HWServer, HWClient
 
 ```
 	Usage: ./ZGuideExamples.exe HWClient
@@ -23,15 +22,13 @@ HWServer, HWClient
         Name   Your name. Default: World
 ```
 
-Version
--
+### Version
 
 ```
 	Usage: ./ZGuideExamples.exe Version
 ```
 
-WUServer, WUClient, WUProxy
--
+### WUServer, WUClient, WUProxy
 
 ```
 	Usage: ./ZGuideExamples.exe WUServer
@@ -45,8 +42,7 @@ WUServer, WUClient, WUProxy
 	Usage: ./ZGuideExamples.exe WUProxy
 ```
 
-TaskVent, TaskWork, TaskSink
--
+### TaskVent, TaskWork, TaskSink
 
 ```
 	Usage: ./ZGuideExamples.exe TaskVent
@@ -56,8 +52,7 @@ TaskVent, TaskWork, TaskSink
 	Usage: ./ZGuideExamples.exe TaskSink
 ```
 
-MSReader, MSPoller
--
+### MSReader, MSPoller
 
 ```
 	Usage: ./ZGuideExamples.exe MSReader
@@ -65,8 +60,7 @@ MSReader, MSPoller
 	Usage: ./ZGuideExamples.exe MSPoller
 ```
 
-RRClient, RRWorker, RRBroker
--
+### RRClient, RRWorker, RRBroker
 
 ```
 	Usage: ./ZGuideExamples.exe RRClient
@@ -80,15 +74,13 @@ RRClient, RRWorker, RRBroker
 	Usage: ./ZGuideExamples.exe RRBroker
 ```
 
-MsgQueue
--
+### MsgQueue
 
 ```
 	Usage: ./ZGuideExamples.exe msgqueue
 ```
 
-TaskWork2, TaskSink2
--
+### TaskWork2, TaskSink2
 
 Use with TaskVent.
 
@@ -98,8 +90,7 @@ Use with TaskVent.
 	Usage: ./ZGuideExamples.exe TaskSink2
 ```
 
-Interrupt
--
+### Interrupt
 
 Use with HWClient.
 
@@ -107,8 +98,7 @@ Use with HWClient.
 	Usage: ./ZGuideExamples.exe Interrupt
 ```
 
-MTServer, MTRelay
--
+### MTServer, MTRelay
 
 ```
 	Usage: ./ZGuideExamples.exe MTServer
@@ -116,8 +106,7 @@ MTServer, MTRelay
 	Usage: ./ZGuideExamples.exe MTRelay
 ```
 
-SyncPub, SyncSub
--
+### SyncPub, SyncSub
 
 ```
 	Usage: ./ZGuideExamples.exe SyncPub
@@ -125,8 +114,7 @@ SyncPub, SyncSub
 	Usage: ./ZGuideExamples.exe SyncSub
 ```
 
-PSEnvPub, PSEnvSub
--
+### PSEnvPub, PSEnvSub
 
 ```
 	Usage: ./ZGuideExamples.exe PSEnvPub
@@ -134,15 +122,13 @@ PSEnvPub, PSEnvSub
 	Usage: ./ZGuideExamples.exe PSEnvSub
 ```
 
-Identity
--
+### Identity
 
 ```
 	Usage: ./ZGuideExamples.exe Identity
 ```
 
-RTReq, RTDealer
--
+### RTReq, RTDealer
 
 ```
 	Usage: ./ZGuideExamples.exe RTReq
@@ -150,22 +136,19 @@ RTReq, RTDealer
 	Usage: ./ZGuideExamples.exe RTDealer
 ```
 
-LBBroker
--
+### LBBroker
 
 ```
 	Usage: ./ZGuideExamples.exe LBBroker
 ```
 
-AsyncSrv
--
+### AsyncSrv
 
 ```
 	Usage: ./ZGuideExamples.exe AsyncSrv
 ```
 
-Peering1, Peering2
--
+### Peering1, Peering2
 
 ```
 	Usage: ./ZGuideExamples.exe Peering1 World Receiver0
@@ -174,8 +157,7 @@ Peering1, Peering2
 	Usage: ./ZGuideExamples.exe Peering2
 ```
 
-LPClient, LPServer
--
+### LPClient, LPServer
 
 ```
 	Usage: ./ZGuideExamples.exe LPClient [Name]
@@ -185,8 +167,7 @@ LPClient, LPServer
 	Usage: ./ZGuideExamples.exe LPServer
 ```
 
-SPQueue, SPWorker
--
+### SPQueue, SPWorker
 
 ```
 	Usage: ./ZGuideExamples.exe SPQueue
@@ -194,8 +175,7 @@ SPQueue, SPWorker
 	Usage: ./ZGuideExamples.exe SPWorker
 ```
 
-PPQueue, PPWorker
--
+### PPQueue, PPWorker
 
 ```
 	Usage: ./ZGuideExamples.exe PPQueue
@@ -205,8 +185,7 @@ PPQueue, PPWorker
         Name   Your name. Default: World
 ```
 
-FLServer1, FLClient1
--
+### FLServer1, FLClient1
 
 ```
 	Usage: ./ZGuideExamples.exe FLServer1 [Endpoint]
@@ -220,8 +199,7 @@ FLServer1, FLClient1
 	              Default is tcp://127.0.0.1:7780
 ```
 
-FLServer2, FLClient2
--
+### FLServer2, FLClient2
 
 ```
 	Usage: ./ZGuideExamples.exe FLServer2 [Endpoint]
@@ -235,10 +213,9 @@ FLServer2, FLClient2
 	              Default is tcp://127.0.0.1:7780
 ```
 
-FLServer3, FLClient3, FLCliApi
--
+### FLServer3, FLClient3, FLCliApi
 
-Have a look on the FLCliApi.FreelanceClient!
+Have a look on the [FLCliApi.FreelanceClient](https://github.com/metadings/zguide/blob/master/examples/C%23/flcliapi.cs)!
 
 ```
 	Usage: ./ZGuideExamples.exe FLServer3
@@ -250,15 +227,13 @@ Have a look on the FLCliApi.FreelanceClient!
 	              Default: tcp://127.0.0.1:5555
 ```
 
-Espresso
--
+### Espresso
 
 ```
 	Usage: ./ZGuideExamples.exe Espresso
 ```
 
-PathoPub, PathoSub, LVCache
--
+### PathoPub, PathoSub, LVCache
 
 ```
 	Usage: ./ZGuideExamples.exe PathoPub [Endpoint]
@@ -276,15 +251,13 @@ PathoPub, PathoSub, LVCache
         The LVCache is binding on tcp://*:5557 and tcp://*.5558
 ```
 
-SuiSnail
--
+### SuiSnail
 
 ```
 	Usage: ./ZGuideExamples.exe SuiSnail
 ```
 
-EAgain
--
+### EAgain
 
 ```
 	Usage: ./ZGuideExamples.exe EAgain
