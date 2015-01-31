@@ -118,7 +118,7 @@ namespace ZeroMQ.Test
 				return reply;
 			}
 
-			public static void Agent(ZContext context, ZSocket backend, CancellationToken cancellus, object[] args)
+			public static void Agent(ZContext context, ZSocket backend, CancellationTokenSource cancellor, object[] args)
 			{
 				// Finally, here's the agent task itself, which polls its two sockets
 				// and processes incoming messages:
@@ -127,7 +127,7 @@ namespace ZeroMQ.Test
 				{
 					var p = ZPollItem.CreateReceiver();
 
-					while (!cancellus.IsCancellationRequested)
+					while (!cancellor.IsCancellationRequested)
 					{
 						ZMessage msg;
 						ZError error;
