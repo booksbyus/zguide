@@ -24,7 +24,7 @@ namespace ZeroMQ.Test
 				Console.WriteLine();
 				Console.WriteLine("Usage: ./{0} WUClient [ZipCode] [Endpoint]", AppDomain.CurrentDomain.FriendlyName);
 				Console.WriteLine();
-				Console.WriteLine("    ZipCode   The zip code to subscribe. Default is Nürtingen, 72622");
+				Console.WriteLine("    ZipCode   The zip code to subscribe. Default is 72622 Nürtingen");
 				Console.WriteLine("    Endpoint  Where WUClient should connect to.");
 				Console.WriteLine("              Default: tcp://127.0.0.1:5556");
 				Console.WriteLine();
@@ -39,13 +39,13 @@ namespace ZeroMQ.Test
 			using (var subscriber = ZSocket.Create(context, ZSocketType.SUB))
 			{
 				string connect_to = args[1];
-				Console.WriteLine("I: connecting to {0}...", connect_to);
+				Console.WriteLine("I: Connecting to {0}...", connect_to);
 				subscriber.Connect(connect_to);
 
 				foreach (IPAddress address in WUProxy_GetPublicIPs())
 				{
 					var epgmAddress = string.Format("epgm://{0};239.192.1.1:8100", address);
-					Console.WriteLine("I: connecting to {0}...", epgmAddress);
+					Console.WriteLine("I: Connecting to {0}...", epgmAddress);
 					subscriber.Connect(epgmAddress);
 				}
 
@@ -57,7 +57,7 @@ namespace ZeroMQ.Test
 				// Process 10 updates
 				int i = 0;
 				long total_temperature = 0;
-				for (; i < 10; ++i)
+				for (; i < 20; ++i)
 				{
 					using (var replyFrame = subscriber.ReceiveFrame())
 					{
