@@ -201,7 +201,7 @@ namespace ZeroMQ.Test
 					Console.WriteLine("E: name service not available, aborted.");
 
 				else
-					Console.WriteLine("Average round trip cost: {0} ms", (DateTime.UtcNow - starttime).Milliseconds / requests);
+					Console.WriteLine("Average round trip cost: {0} ms", (DateTime.UtcNow - starttime).TotalMilliseconds / requests);
 
 			}
 		}
