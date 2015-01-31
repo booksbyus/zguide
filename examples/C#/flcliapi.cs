@@ -427,6 +427,11 @@ namespace ZeroMQ.Test
 					this.PingAt = DateTime.UtcNow + PING_INTERVAL;
 				}
 			}
+
+			public override int GetHashCode()
+			{
+				return Endpoint.GetHashCode();
+			}
 		}
 	}
 }
