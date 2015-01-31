@@ -24,8 +24,13 @@ namespace ZeroMQ.Test
 
 			if (args == null || args.Length < 1)
 			{
-				Console.WriteLine("I: syntax: {0} FLClient1 [endpoint]", AppDomain.CurrentDomain.FriendlyName);
-				return;
+				Console.WriteLine();
+				Console.WriteLine("Usage: ./{0} FLClient1 [Endpoint]", AppDomain.CurrentDomain.FriendlyName);
+				Console.WriteLine();
+				Console.WriteLine("    Endpoint  Where FLClient1 should connect to.");
+				Console.WriteLine("              Default is tcp://127.0.0.1:7780");
+				Console.WriteLine();
+				args = new string[] { "tcp://127.0.0.1:7780" };
 			}
 
 			// The client uses a Lazy Pirate strategy if it only has one server to talk

@@ -19,11 +19,6 @@ namespace ZeroMQ.Test
 			// Author: metadings
 			//
 
-			if (args == null || args.Length < 1)
-			{
-				Console.WriteLine("I: syntax: {0} FLServer3", AppDomain.CurrentDomain.FriendlyName);
-			}
-
 			// Prepare server socket with predictable identity
 			string bind_endpoint = "tcp://*:5555";
 			string connect_endpoint = "tcp://127.0.0.1:5555";

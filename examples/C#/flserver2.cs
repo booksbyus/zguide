@@ -21,8 +21,13 @@ namespace ZeroMQ.Test
 
 			if (args == null || args.Length < 1)
 			{
-				Console.WriteLine("I: syntax: {0} FLServer2 [endpoint]", AppDomain.CurrentDomain.FriendlyName);
-				return;
+				Console.WriteLine();
+				Console.WriteLine("Usage: ./{0} FLServer2 [Endpoint]", AppDomain.CurrentDomain.FriendlyName);
+				Console.WriteLine();
+				Console.WriteLine("    Endpoint  Where FLServer2 should bind on.");
+				Console.WriteLine("              Default is tcp://127.0.0.1:7781");
+				Console.WriteLine();
+				args = new string[] { "tcp://127.0.0.1:7781" };
 			}
 
 			string endpoint = args[0];

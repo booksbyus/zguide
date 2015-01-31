@@ -40,6 +40,11 @@ namespace ZeroMQ.Test
 		{
 			if (args == null || args.Length < 1)
 			{
+				Console.WriteLine();
+				Console.WriteLine("Usage: ./{0} LPClient [Name]", AppDomain.CurrentDomain.FriendlyName);
+				Console.WriteLine();
+				Console.WriteLine("    Name   Your name. Default: People");
+				Console.WriteLine();
 				args = new string[] { "People" };
 			}
 
