@@ -15,7 +15,7 @@ namespace ZeroMQ.Test
 			//
 			// Pubsub envelope publisher
 			//
-			// Author: metadings (uli.riehm@metadea.de)
+			// Author: metadings
 			//
 
 			// Prepare our context and publisher

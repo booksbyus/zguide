@@ -17,7 +17,7 @@ namespace ZeroMQ.Test
 			// Connects REQ socket to tcp://localhost:5559
 			// Sends "Hello" to server, expects "World" back
 			//
-			// Author: metadings (uli.riehm@metadea.de)
+			// Author: metadings
 			//
 
 			// Socket to talk to server

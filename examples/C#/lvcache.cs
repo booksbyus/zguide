@@ -16,7 +16,7 @@ namespace ZeroMQ.Test
 			// Last value cache
 			// Uses XPUB subscription messages to re-send data
 			//
-			// Author: metadings (uli.riehm@metadea.de)
+			// Author: metadings
 			//
 
 			using (var context = ZContext.Create())

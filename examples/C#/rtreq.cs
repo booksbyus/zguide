@@ -22,7 +22,7 @@ namespace ZeroMQ.Test
 			// it easier to start and stop the example. Each thread has its own
 			// context and conceptually acts as a separate process.
 			//
-			// Author: metadings (uli.riehm@metadea.de)
+			// Author: metadings
 			//
 
 			using (var context = ZContext.Create())

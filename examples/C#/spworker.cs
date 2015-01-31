@@ -17,7 +17,7 @@ namespace ZeroMQ.Test
 			// Connects REQ socket to tcp://localhost:5556
 			// Implements worker part of load-balancing
 			//
-			// Author: metadings (uli.riehm@metadea.de)
+			// Author: metadings
 			//
 
 			var rnd = new Random();

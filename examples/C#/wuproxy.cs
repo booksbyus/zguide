@@ -17,7 +17,7 @@ namespace ZeroMQ.Test
 			//
 			// Weather proxy device
 			//
-			// Author: metadings (uli.riehm@metadea.de)
+			// Author: metadings
 			//
 
 			using (var context = ZContext.Create())

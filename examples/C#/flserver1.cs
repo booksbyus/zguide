@@ -16,7 +16,7 @@ namespace ZeroMQ.Test
 			// Freelance server - Model 1
 			// Trivial echo service
 			//
-			// Author: metadings (uli.riehm@metadea.de)
+			// Author: metadings
 			//
 
 			if (args == null || args.Length < 1)

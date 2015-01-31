@@ -15,7 +15,7 @@ namespace ZeroMQ.Test
 			//
 			// Simple request-reply broker
 			//
-			// Author: metadings (uli.riehm@metadea.de)
+			// Author: metadings
 			//
 
 			// Prepare our context and sockets

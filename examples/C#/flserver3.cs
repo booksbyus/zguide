@@ -16,7 +16,7 @@ namespace ZeroMQ.Test
 			// Freelance server - Model 3
 			// Uses an ROUTER/ROUTER socket but just one thread
 			//
-			// Author: metadings (uli.riehm@metadea.de)
+			// Author: metadings
 			//
 
 			if (args == null || args.Length < 1)

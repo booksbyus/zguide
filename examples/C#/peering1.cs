@@ -14,7 +14,7 @@ namespace ZeroMQ.Test
 		// Broker peering simulation (part 1)
 		// Prototypes the state flow
 		//
-		// Author: metadings (uli.riehm@metadea.de)
+		// Author: metadings
 		//
 
 		public static void Peering1(IDictionary<string, string> dict, string[] args)

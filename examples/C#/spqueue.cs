@@ -17,7 +17,7 @@ namespace ZeroMQ.Test
 			// This is identical to load-balancing pattern, with no reliability
 			// mechanisms. It depends on the client for recovery. Runs forever.
 			//
-			// Author: metadings (uli.riehm@metadea.de)
+			// Author: metadings
 			//
 
 			using (var context = ZContext.Create())

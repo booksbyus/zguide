@@ -18,7 +18,7 @@ namespace ZeroMQ.Test
 			// Binds PULL socket to tcp://localhost:5558
 			// Collects results from workers via that socket
 			//
-			// Author: metadings (uli.riehm@metadea.de)
+			// Author: metadings
 			//
 
 			// Prepare our context and socket

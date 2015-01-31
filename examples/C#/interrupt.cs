@@ -15,7 +15,7 @@ namespace ZeroMQ.Test
 			//
 			// Interrupt
 			//
-			// Author: metadings (uli.riehm@metadea.de)
+			// Author: metadings
 			//
 
 			if (args == null || args.Length == 0)

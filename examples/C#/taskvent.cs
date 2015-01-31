@@ -17,7 +17,7 @@ namespace ZeroMQ.Test
 			// Binds PUSH socket to tcp://localhost:5557
 			// Sends batch of tasks to workers via that socket
 			//
-			// Author: metadings (uli.riehm@metadea.de)
+			// Author: metadings
 			//
 
 			// Socket to send messages on and

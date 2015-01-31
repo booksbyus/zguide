@@ -19,7 +19,7 @@ namespace ZeroMQ.Test
 			// Connects PUSH socket to tcp://localhost:5558
 			// Sends results to sink via that socket
 			//
-			// Author: metadings (uli.riehm@metadea.de)
+			// Author: metadings
 			//
 
 			// Socket to receive messages on and

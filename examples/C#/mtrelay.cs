@@ -15,7 +15,7 @@ namespace ZeroMQ.Test
 			//
 			// Multithreaded relay
 			//
-			// Author: metadings (uli.riehm@metadea.de)
+			// Author: metadings
 			//
 
 			// Bind inproc socket before starting step2

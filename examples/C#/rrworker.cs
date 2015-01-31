@@ -17,7 +17,7 @@ namespace ZeroMQ.Test
 			// Connects REP socket to tcp://localhost:5560
 			// Expects "Hello" from client, replies with "World"
 			//
-			// Author: metadings (uli.riehm@metadea.de)
+			// Author: metadings
 			//
 
 			if (args == null || args.Length < 2)

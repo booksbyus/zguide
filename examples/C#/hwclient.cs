@@ -15,7 +15,7 @@ namespace ZeroMQ.Test
 			//
 			// Hello World client
 			//
-			// Author: metadings (uli.riehm@metadea.de)
+			// Author: metadings
 			//
 
 			// Create

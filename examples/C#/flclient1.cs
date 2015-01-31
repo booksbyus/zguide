@@ -19,7 +19,7 @@ namespace ZeroMQ.Test
 			// Freelance client - Model 1
 			// Uses REQ socket to query one or more services
 			//
-			// Author: metadings (uli.riehm@metadea.de)
+			// Author: metadings
 			//
 
 			if (args == null || args.Length < 1)

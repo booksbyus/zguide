@@ -17,7 +17,7 @@ namespace ZeroMQ.Test
 			// Task sink - design 2
 			// Adds pub-sub flow to send kill signal to workers
 			//
-			// Author: metadings (uli.riehm@metadea.de)
+			// Author: metadings
 			//
 
 			// Socket to receive messages on and

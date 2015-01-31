@@ -17,7 +17,7 @@ namespace ZeroMQ.Test
 		// - echoes request as-is
 		// - randomly runs slowly, or exits to simulate a crash.
 		//
-		// Author: metadings (uli.riehm@metadea.de)
+		// Author: metadings
 		//
 
 		public static void LPServer(IDictionary<string, string> dict, string[] args)

@@ -16,7 +16,7 @@ namespace ZeroMQ.Test
 			// Simple message queuing broker
 			// Same as request-reply broker but using QUEUE device
 			//
-			// Author: metadings (uli.riehm@metadea.de)
+			// Author: metadings
 			//
 
 			// Socket facing clients and

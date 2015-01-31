@@ -15,7 +15,7 @@ namespace ZeroMQ.Test
 		// Use zmq_poll (pollItem.PollIn) to do a safe request-reply
 		// To run, start lpserver and then randomly kill/restart it
 		//
-		// Author: metadings (uli.riehm@metadea.de)
+		// Author: metadings
 		//
 
 		static TimeSpan LPClient_RequestTimeout = TimeSpan.FromMilliseconds(2000);

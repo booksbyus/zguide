@@ -16,7 +16,7 @@ namespace ZeroMQ.Test
 			//
 			// Report 0MQ version
 			//
-			// Author: metadings (uli.riehm@metadea.de)
+			// Author: metadings
 			//
 
 			// Console.WriteLine(zmq.Version);

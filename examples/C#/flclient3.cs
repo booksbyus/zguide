@@ -20,7 +20,7 @@ namespace ZeroMQ.Test
 			// Freelance client - Model 3
 			// Uses FLCliApi.FreelanceClient class to encapsulate Freelance pattern
 			//
-			// Author: metadings (uli.riehm@metadea.de)
+			// Author: metadings
 			//
 			if (args == null || args.Length < 2)
 			{

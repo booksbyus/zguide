@@ -14,7 +14,7 @@ namespace ZeroMQ.Test
 	// Freelance client - Model 2
 	// Uses DEALER socket to blast one or more services
 	//
-	// Author: metadings (uli.riehm@metadea.de)
+	// Author: metadings
 	//
 
 	namespace FLClient2
