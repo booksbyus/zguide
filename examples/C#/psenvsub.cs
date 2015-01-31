@@ -23,7 +23,7 @@ namespace ZeroMQ.Test
 			using (var subscriber = ZSocket.Create(context, ZSocketType.SUB))
 			{
 				subscriber.Connect("tcp://127.0.0.1:5563");
-				subscriber.Subscribe(Encoding.UTF8.GetBytes("B"));
+				subscriber.Subscribe("B");
 
 				while (true)
 				{

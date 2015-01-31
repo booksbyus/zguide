@@ -10,7 +10,7 @@ namespace ZeroMQ.Test
 {
 	static partial class Program
 	{
-		const int SyncPub_SubscribersExpected = 10;	// We wait for 10 subscribers
+		const int SyncPub_SubscribersExpected = 3;	// We wait for 3 subscribers
 
 		public static void SyncPub(IDictionary<string, string> dict, string[] args)
 		{
@@ -32,24 +32,25 @@ namespace ZeroMQ.Test
 				syncservice.Bind("tcp://*:5562");
 
 				// Get synchronization from subscribers
-				Console.WriteLine("Waiting for subscribers");
-				int subscribers = 0;
-				while (subscribers < SyncPub_SubscribersExpected)
+				int subscribers = SyncPub_SubscribersExpected;
+				do
 				{
+					Console.WriteLine("Waiting for {0} subscriber" + (subscribers > 1 ? "s" : string.Empty) + "...", subscribers);
+
 					// - wait for synchronization request
 					syncservice.ReceiveFrame();
 
 					// - send synchronization reply
 					syncservice.Send(new ZFrame());
-					++subscribers;
-				}
+				} 
+				while (--subscribers > 0);
 
-				// Now broadcast exactly 1M updates followed by END
-				Console.WriteLine("Broadcasting messages");
-				for (int i = 0; i < 1000000; ++i)
+				// Now broadcast exactly 20 updates followed by END
+				Console.WriteLine("Broadcasting messages:");
+				for (int i = 0; i < 20; ++i)
 				{
-					Console.WriteLine("Sending...");
-					publisher.Send(new ZFrame("Rhubarb"));
+					Console.WriteLine("Sending {0}...", i);
+					publisher.Send(new ZFrame(i));
 				}
 				publisher.Send(new ZFrame("END"));
 			}
