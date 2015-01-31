@@ -15,7 +15,7 @@ namespace ZeroMQ.Test
 			//
 			// Demonstrate request-reply identities
 			//
-			// Authors: Pieter Hintjens, Uli Riehm
+			// Author: metadings
 			//
 
 			using (var context = ZContext.Create())

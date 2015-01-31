@@ -17,7 +17,7 @@ namespace ZeroMQ.Test
 			// Binds PUB socket to tcp://*:5556
 			// Publishes random weather updates
 			//
-			// Authors: Pieter Hintjens, Uli Riehm
+			// Author: metadings
 			//
 
 			// Prepare our context and publisher
@@ -25,7 +25,7 @@ namespace ZeroMQ.Test
 			using (var publisher = ZSocket.Create(context, ZSocketType.PUB))
 			{
 				string address = "tcp://*:5556";
-				Console.WriteLine("I: Connecting to {0}", address);
+				Console.WriteLine("I: Publisher.Bind'ing on {0}", address);
 				publisher.Bind(address);
 
 				// Initialize random number generator

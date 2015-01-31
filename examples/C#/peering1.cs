@@ -14,7 +14,7 @@ namespace ZeroMQ.Test
 		// Broker peering simulation (part 1)
 		// Prototypes the state flow
 		//
-		// Authors: Pieter Hintjens, Uli Riehm
+		// Author: metadings
 		//
 
 		public static void Peering1(IDictionary<string, string> dict, string[] args)
@@ -24,8 +24,10 @@ namespace ZeroMQ.Test
 			//
 			if (args == null || args.Length < 2)
 			{
+				Console.WriteLine();
 				Console.WriteLine("Usage: {0} Peering1 World Receiver0", AppDomain.CurrentDomain.FriendlyName);
 				Console.WriteLine("       {0} Peering1 Receiver0 World", AppDomain.CurrentDomain.FriendlyName);
+				Console.WriteLine();
 				return;
 			}
 			string self = args[0];
@@ -36,7 +38,7 @@ namespace ZeroMQ.Test
 			using (var frontend = ZSocket.Create(context, ZSocketType.SUB))
 			{
 				// Bind backend to endpoint
-				backend.Bind("tcp://127.0.0.1:" + Peering1_Hash(self));
+				backend.Bind("tcp://127.0.0.1:" + Peering1_GetPort(self));
 
 				// Connect frontend to all peers
 				frontend.SubscribeAll();
@@ -44,7 +46,7 @@ namespace ZeroMQ.Test
 				{
 					string peer = args[i];
 					Console.WriteLine("I: connecting to state backend at {0}", peer);
-					frontend.Connect("tcp://127.0.0.1:" + Peering1_Hash(peer));
+					frontend.Connect("tcp://127.0.0.1:" + Peering1_GetPort(peer));
 				}
 
 				// The main loop sends out status messages to peers, and collects
@@ -93,9 +95,9 @@ namespace ZeroMQ.Test
 			}
 		}
 
-		static Int16 Peering1_Hash(string name) 
+		static Int16 Peering1_GetPort(string name)
 		{
-			var hash = (Int16)(name.GetHashCode());
+			var hash = (Int16)name[0];
 			if (hash < 1024)
 			{
 				hash += 1024;

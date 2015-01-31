@@ -16,16 +16,17 @@ namespace ZeroMQ.Test
 			// Connects SUB socket to tcp://localhost:5556
 			// Collects weather updates and finds avg temp in zipcode
 			//
-			// Authors: Pieter Hintjens, Uli Riehm
+			// Author: metadings
 			//
+
 			if (args == null || args.Length < 2)
 			{
 				Console.WriteLine();
 				Console.WriteLine("Usage: ./{0} WUClient [ZipCode] [Endpoint]", AppDomain.CurrentDomain.FriendlyName);
 				Console.WriteLine();
-				Console.WriteLine("    ZipCode   The zip code to subscribe. Default is Nürtingen, 72622");
-				Console.WriteLine("    Endpoint  Where the WUClient should connect to.");
-				Console.WriteLine("              Default: tcp://127.0.0.1:5556");
+				Console.WriteLine("    ZipCode   The zip code to subscribe. Default is 72622 Nürtingen");
+				Console.WriteLine("    Endpoint  Where WUClient should connect to.");
+				Console.WriteLine("              Default is tcp://127.0.0.1:5556");
 				Console.WriteLine();
 				if (args.Length < 1)
 					args = new string[] { "72622", "tcp://127.0.0.1:5556" };
@@ -38,17 +39,17 @@ namespace ZeroMQ.Test
 			using (var subscriber = ZSocket.Create(context, ZSocketType.SUB))
 			{
 				string connect_to = args[1];
-				Console.WriteLine("I: connecting to {0}...", connect_to);
+				Console.WriteLine("I: Connecting to {0}...", connect_to);
 				subscriber.Connect(connect_to);
 
 				foreach (IPAddress address in WUProxy_GetPublicIPs())
 				{
 					var epgmAddress = string.Format("epgm://{0};239.192.1.1:8100", address);
-					Console.WriteLine("I: connecting to {0}...", epgmAddress);
+					Console.WriteLine("I: Connecting to {0}...", epgmAddress);
 					subscriber.Connect(epgmAddress);
 				}
 
-				// Subscribe to zipcode, default is NYC, 10001
+				// Subscribe to zipcode
 				string zipCode = args[0];
 				Console.WriteLine("I: Subscribing to zip code {0}...", zipCode);
 				subscriber.Subscribe(zipCode);
@@ -56,7 +57,7 @@ namespace ZeroMQ.Test
 				// Process 10 updates
 				int i = 0;
 				long total_temperature = 0;
-				for (; i < 10; ++i)
+				for (; i < 20; ++i)
 				{
 					using (var replyFrame = subscriber.ReceiveFrame())
 					{

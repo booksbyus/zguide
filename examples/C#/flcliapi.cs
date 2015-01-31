@@ -14,7 +14,7 @@ namespace ZeroMQ.Test
 		// flcliapi class - Freelance Pattern agent class
 		// Implements the Freelance Protocol at http://rfc.zeromq.org/spec:10
 		//
-		// Authors: Pieter Hintjens, Uli Riehm
+		// Author: metadings
 		//
 
 		// This API works in two halves, a common pattern for APIs that need to
@@ -108,20 +108,17 @@ namespace ZeroMQ.Test
 				ZError error;
 				if (null != (reply = this.Actor.Frontend.ReceiveMessage(out error))) 
 				{
-					using (ZFrame statusFrame = reply.Pop())
+					string status = reply.PopString();
+					if (status == "FAILED")
 					{
-						string status = statusFrame.ReadString();
-						if (status == "FAILED")
-						{
-							reply.Dispose();
-							reply = null;
-						}
+						reply.Dispose();
+						reply = null;
 					}
 				}
 				return reply;
 			}
 
-			public static void Agent(ZContext context, ZSocket backend, CancellationToken cancellus, object[] args)
+			public static void Agent(ZContext context, ZSocket backend, CancellationTokenSource cancellor, object[] args)
 			{
 				// Finally, here's the agent task itself, which polls its two sockets
 				// and processes incoming messages:
@@ -130,7 +127,7 @@ namespace ZeroMQ.Test
 				{
 					var p = ZPollItem.CreateReceiver();
 
-					while (!cancellus.IsCancellationRequested)
+					while (!cancellor.IsCancellationRequested)
 					{
 						ZMessage msg;
 						ZError error;
@@ -319,15 +316,11 @@ namespace ZeroMQ.Test
 				// This method processes one message from our frontend class
 				// (it's going to be CONNECT or REQUEST):
 
-				string command;
-				using (var commandFrame = msg.Pop())
-				{
-					command = commandFrame.ReadString();
-				}
+				string command = msg.PopString();
 
 				if (command == "CONNECT")
 				{
-					string endpoint = msg[0].ReadString();
+					string endpoint = msg.PopString();
 					Console.WriteLine("I: connecting to {0}...", endpoint);
 
 					Router.Connect(endpoint);
@@ -361,12 +354,7 @@ namespace ZeroMQ.Test
 				// server:
 
 				// Frame 0 is server that replied
-				string endpoint;
-				using (var endpointFrame = reply.Pop())
-				{
-					endpoint = endpointFrame.ReadString();
-				}
-
+				string endpoint = reply.PopString();
 				Server server = this.Servers.Single(s => s.Endpoint == endpoint);
 				if (!server.Alive)
 				{
@@ -375,11 +363,7 @@ namespace ZeroMQ.Test
 				}
 
 				// Frame 1 may be sequence number for reply
-				int sequence;
-				using (var sequenceFrame = reply.Pop())
-				{
-					sequence = sequenceFrame.ReadInt32();
-				}
+				int sequence = reply.PopInt32();
 				if (sequence == this.sequence)
 				{
 					reply.Prepend(new ZFrame("OK"));

@@ -16,13 +16,8 @@ namespace ZeroMQ.Test
 			// Freelance server - Model 3
 			// Uses an ROUTER/ROUTER socket but just one thread
 			//
-			// Authors: Pieter Hintjens, Uli Riehm
+			// Author: metadings
 			//
-
-			if (args == null || args.Length < 1)
-			{
-				Console.WriteLine("I: syntax: {0} FLServer3", AppDomain.CurrentDomain.FriendlyName);
-			}
 
 			// Prepare server socket with predictable identity
 			string bind_endpoint = "tcp://*:5555";

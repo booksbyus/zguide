@@ -80,6 +80,11 @@
     <Compile Include="flserver3.cs" />
     <Compile Include="flcliapi.cs" />
     <Compile Include="flclient3.cs" />
+    <Compile Include="pathopub.cs" />
+    <Compile Include="pathosub.cs" />
+    <Compile Include="lvcache.cs" />
+    <Compile Include="suisnail.cs" />
+    <Compile Include="eagain.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

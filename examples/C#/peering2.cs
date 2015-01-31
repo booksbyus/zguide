@@ -14,7 +14,7 @@ namespace ZeroMQ.Test
 		// Broker peering simulation (part 2)
 		// Prototypes the request-reply flow
 		//
-		// Authors: Pieter Hintjens, Uli Riehm
+		// Author: metadings
 		//
 
 		static int Peering2_Clients = 10;
@@ -333,7 +333,7 @@ namespace ZeroMQ.Test
 
 		static Int16 Peering2_GetPort(string name) 
 		{
-			var hash = (Int16)(name.GetHashCode());
+			var hash = (Int16)name[0];
 			if (hash < 1024)
 			{
 				hash += 1024;

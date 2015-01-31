@@ -15,7 +15,7 @@ namespace ZeroMQ.Test
 			//
 			// Synchronized subscriber
 			//
-			// Authors: Pieter Hintjens, Uli Riehm
+			// Author: metadings
 			//
 
 			using (var context = ZContext.Create())
@@ -33,7 +33,7 @@ namespace ZeroMQ.Test
 				syncclient.Connect("tcp://127.0.0.1:5562");
 
 				// - send a synchronization request
-				syncclient.Send(new ZFrame(string.Empty));
+				syncclient.Send(new ZFrame());
 
 				// - wait for synchronization reply
 				syncclient.ReceiveFrame();
@@ -44,14 +44,19 @@ namespace ZeroMQ.Test
 				{
 					using (ZFrame frame = subscriber.ReceiveFrame())
 					{
-						if (frame.ReadString() == "END")
+						string text = frame.ReadString();
+						if (text == "END")
 						{
 							break;
 						}
+
+						frame.Position = 0;
+						Console.WriteLine("Receiving {0}...", frame.ReadInt32());
+
 						++i;
 					}
 				}
-				Console.WriteLine("Received {0} updates", i);
+				Console.WriteLine("Received {0} updates.", i);
 			}
 		}
 	}

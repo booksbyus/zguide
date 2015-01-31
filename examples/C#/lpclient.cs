@@ -15,7 +15,7 @@ namespace ZeroMQ.Test
 		// Use zmq_poll (pollItem.PollIn) to do a safe request-reply
 		// To run, start lpserver and then randomly kill/restart it
 		//
-		// Authors: Pieter Hintjens, Uli Riehm
+		// Author: metadings
 		//
 
 		static TimeSpan LPClient_RequestTimeout = TimeSpan.FromMilliseconds(2000);
@@ -40,16 +40,22 @@ namespace ZeroMQ.Test
 		{
 			if (args == null || args.Length < 1)
 			{
+				Console.WriteLine();
+				Console.WriteLine("Usage: ./{0} LPClient [Name]", AppDomain.CurrentDomain.FriendlyName);
+				Console.WriteLine();
+				Console.WriteLine("    Name   Your name. Default: People");
+				Console.WriteLine();
 				args = new string[] { "People" };
 			}
 
 			string name = args[0];
 
-			ZError error;
-			using (var context = ZContext.Create())
-			{
-				ZSocket requester = null;
-				try { // using (requester)
+			ZSocket requester = null;
+			try { // using (requester)
+
+				using (var context = ZContext.Create())
+				{
+					ZError error;
 
 					if (null == (requester = LPClient_CreateZSocket(context, name, out error)))
 					{
@@ -106,7 +112,7 @@ namespace ZeroMQ.Test
 									if (--retries_left == 0)
 									{
 										Console.WriteLine("E: server seems to be offline, abandoning");
-										return;
+										break;
 									}
 
 									Console.WriteLine("W: no response from server, retrying...");
@@ -119,6 +125,7 @@ namespace ZeroMQ.Test
 											return;	// Interrupted
 										throw new ZException(error);
 									}
+
 									Console.WriteLine("I: reconnected");
 
 									// Send request again, on new socket
@@ -132,20 +139,19 @@ namespace ZeroMQ.Test
 								}
 
 								if (error == ZError.ETERM)
-									return;
-
+									return;	// Interrupted
 								throw new ZException(error);
 							}
 						}
 					}
 				}
-				finally 
+			}
+			finally
+			{
+				if (requester != null)
 				{
-					if (requester != null)
-					{
-						requester.Dispose();
-						requester = null;
-					}
+					requester.Dispose();
+					requester = null;
 				}
 			}
 		}

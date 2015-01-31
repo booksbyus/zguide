@@ -14,7 +14,7 @@ namespace ZeroMQ.Test
 	// Freelance client - Model 2
 	// Uses DEALER socket to blast one or more services
 	//
-	// Authors: Pieter Hintjens, Uli Riehm
+	// Author: metadings
 	//
 
 	namespace FLClient2
@@ -161,8 +161,13 @@ namespace ZeroMQ.Test
 		{
 			if (args == null || args.Length < 1)
 			{
-				Console.WriteLine("I: syntax: {0} FLClient2 [endpoint] ...", AppDomain.CurrentDomain.FriendlyName);
-				return;
+				Console.WriteLine();
+				Console.WriteLine("Usage: ./{0} FLClient2 [Endpoint] ...", AppDomain.CurrentDomain.FriendlyName);
+				Console.WriteLine();
+				Console.WriteLine("    Endpoint  Where FLClient2 should connect to.");
+				Console.WriteLine("              Default is tcp://127.0.0.1:7781");
+				Console.WriteLine();
+				args = new string[] { "tcp://127.0.0.1:7781" };
 			}
 
 			// Create new freelance client object
@@ -196,7 +201,7 @@ namespace ZeroMQ.Test
 					Console.WriteLine("E: name service not available, aborted.");
 
 				else
-					Console.WriteLine("Average round trip cost: {0} ms", (DateTime.UtcNow - starttime).Milliseconds / requests);
+					Console.WriteLine("Average round trip cost: {0} ms", (DateTime.UtcNow - starttime).TotalMilliseconds / requests);
 
 			}
 		}

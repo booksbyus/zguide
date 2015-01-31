@@ -17,7 +17,7 @@ namespace ZeroMQ.Test
 		// - echoes request as-is
 		// - randomly runs slowly, or exits to simulate a crash.
 		//
-		// Authors: Pieter Hintjens, Uli Riehm
+		// Author: metadings
 		//
 
 		public static void LPServer(IDictionary<string, string> dict, string[] args)
@@ -37,8 +37,7 @@ namespace ZeroMQ.Test
 					if (null == (incoming = responder.ReceiveMessage(out error)))
 					{
 						if (error == ZError.ETERM)
-							return;
-
+							return;	// Interrupted
 						throw new ZException(error);
 					}
 					using (incoming)
@@ -46,19 +45,21 @@ namespace ZeroMQ.Test
 						++cycles;
 
 						// Simulate various problems, after a few cycles
-						if (cycles > 3 && rnd.Next(3) == 0)
+						if (cycles > 16 && rnd.Next(16) == 0)
 						{
 							Console.WriteLine("I: simulating a crash");
 							break;
 						}
-						else if (cycles > 3 && rnd.Next(3) == 0)
+						else if (cycles > 4 && rnd.Next(4) == 0)
 						{
 							Console.WriteLine("I: simulating CPU overload");
-							Thread.Sleep(2);
+							Thread.Sleep(1000);
 						}
 
 						Console.WriteLine("I: normal request ({0})", incoming[0].ReadInt32());
+
 						Thread.Sleep(1); // Do some heavy work
+
 						responder.Send(incoming);
 					}
 				}

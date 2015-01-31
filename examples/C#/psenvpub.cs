@@ -15,13 +15,14 @@ namespace ZeroMQ.Test
 			//
 			// Pubsub envelope publisher
 			//
-			// Authors: Pieter Hintjens, Uli Riehm
+			// Author: metadings
 			//
 
 			// Prepare our context and publisher
 			using (var context = ZContext.Create())
 			using (var publisher = ZSocket.Create(context, ZSocketType.PUB))
 			{
+				publisher.Linger = TimeSpan.Zero;
 				publisher.Bind("tcp://*:5563");
 
 				while (true)
@@ -39,7 +40,7 @@ namespace ZeroMQ.Test
 						message.Add(new ZFrame("We would like to see this"));
 						publisher.Send(message);
 					}
-					Thread.Sleep(1);
+					Thread.Sleep(1000);
 				}
 			}
 		}

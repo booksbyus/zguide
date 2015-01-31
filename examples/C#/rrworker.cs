@@ -17,20 +17,33 @@ namespace ZeroMQ.Test
 			// Connects REP socket to tcp://localhost:5560
 			// Expects "Hello" from client, replies with "World"
 			//
-			// Authors: Pieter Hintjens, Uli Riehm
+			// Author: metadings
 			//
 
-			if (args == null || args.Length == 0)
+			if (args == null || args.Length < 2)
 			{
-				args = new string[] { "World" };
+				Console.WriteLine();
+				Console.WriteLine("Usage: ./{0} RRWorker [Name] [Endpoint]", AppDomain.CurrentDomain.FriendlyName);
+				Console.WriteLine();
+				Console.WriteLine("    Name      Your Name");
+				Console.WriteLine("    Endpoint  Where RRWorker should connect to.");
+				Console.WriteLine("              Default is tcp://127.0.0.1:5560");
+				Console.WriteLine();
+				if (args.Length < 1)
+					args = new string[] { "World", "tcp://127.0.0.1:5560" };
+				else
+					args = new string[] { args[0], "tcp://127.0.0.1:5560" };
 			}
+
 			string name = args[0];
+
+			string endpoint = args[1];
 
 			// Socket to talk to clients
 			using (var context = ZContext.Create())
 			using (var responder = ZSocket.Create(context, ZSocketType.REP))
 			{
-				responder.Connect("tcp://127.0.0.1:5560");
+				responder.Connect(endpoint);
 
 				while (true)
 				{

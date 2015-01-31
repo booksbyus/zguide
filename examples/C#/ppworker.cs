@@ -18,7 +18,7 @@ namespace ZeroMQ.Test
 	// the heartbeating, which lets the worker detect if the queue has
 	// died, and vice versa:
 	//
-	// Authors: Pieter Hintjens, Uli Riehm
+	// Author: metadings
 	//
 
 	static partial class Program
@@ -29,7 +29,7 @@ namespace ZeroMQ.Test
 			// connected to the Paranoid Pirate queue
 
 			var worker = ZSocket.Create(context, ZSocketType.DEALER);
-			// worker.IdentityString = name;
+			worker.IdentityString = name;
 
 			if (!worker.Connect("tcp://127.0.0.1:5556", out error))
 			{
@@ -50,6 +50,11 @@ namespace ZeroMQ.Test
 		{
 			if (args == null || args.Length == 0)
 			{
+				Console.WriteLine();
+				Console.WriteLine("Usage: ./{0} PPWorker [Name]", AppDomain.CurrentDomain.FriendlyName);
+				Console.WriteLine();
+				Console.WriteLine("    Name   Your name. Default: World");
+				Console.WriteLine();
 				args = new string[] { "World" };
 			}
 			string name = args[0];

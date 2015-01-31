@@ -15,10 +15,10 @@ namespace ZeroMQ.Test
 			//
 			// Hello World server
 			//
-			// Authors: Pieter Hintjens, Uli Riehm
+			// Author: metadings
 			//
 
-			if (args == null || args.Length == 0)
+			if (args == null || args.Length < 1)
 			{
 				Console.WriteLine();
 				Console.WriteLine("Usage: ./{0} HWServer [Name]", AppDomain.CurrentDomain.FriendlyName);

@@ -2,20 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Serialization;
 using System.Threading;
 
 namespace ZeroMQ.Test
 {
 	static class ProgramRunner
 	{
-
 		static int Main(string[] args)
 		{
-			// HACK
-			// Program.Start(args);
-			// return 0;
-
-
 			// REAL
 			var fields = typeof(Program).GetFields(BindingFlags.Public | BindingFlags.Static).OrderBy(field => field.Name).ToList();
 
@@ -148,7 +143,7 @@ namespace ZeroMQ.Test
 			}
 			catch (TException te)
 			{
-				if (te.InnerException == null)
+				/* if (te.InnerException == null)
 					throw;
 
 				Exception innerException = te.InnerException;
@@ -156,8 +151,24 @@ namespace ZeroMQ.Test
 				var savestack = (ThreadStart)Delegate.CreateDelegate(typeof(ThreadStart), innerException, "InternalPreserveStackTrace", false, false);
 				if (savestack != null) savestack();
 
-				throw innerException; // -- now we can re-throw without trashing the stack
+				throw innerException; // -- now we can re-throw without trashing the stack /**/
+
+				PreserveStackTrace(te);
+				throw te;
 			}
+		}
+
+		static void PreserveStackTrace(Exception e)
+		{
+			var ctx = new StreamingContext(StreamingContextStates.CrossAppDomain);
+			var mgr = new ObjectManager(null, ctx);
+			var si = new SerializationInfo(e.GetType(), new FormatterConverter());
+
+			e.GetObjectData(si, ctx);
+			mgr.RegisterObject(e, 1, si); // prepare for SetObjectData
+			mgr.DoFixups(); // ObjectManager calls SetObjectData
+
+			// voila, e is unmodified save for _remoteStackTraceString
 		}
 
 	}

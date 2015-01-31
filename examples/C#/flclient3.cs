@@ -20,15 +20,15 @@ namespace ZeroMQ.Test
 			// Freelance client - Model 3
 			// Uses FLCliApi.FreelanceClient class to encapsulate Freelance pattern
 			//
-			// Authors: Pieter Hintjens, Uli Riehm
+			// Author: metadings
 			//
-			if (args == null || args.Length < 1)
+			if (args == null || args.Length < 2)
 			{
 				Console.WriteLine();
 				Console.WriteLine("Usage: ./{0} FLClient3 [Name] [Endpoint]", AppDomain.CurrentDomain.FriendlyName);
 				Console.WriteLine();
 				Console.WriteLine("    Name      Your Name");
-				Console.WriteLine("    Endpoint  Where the FLClient3 should connect to.");
+				Console.WriteLine("    Endpoint  Where FLClient3 should connect to.");
 				Console.WriteLine("              Default: tcp://127.0.0.1:5555");
 				Console.WriteLine();
 				if (args.Length < 1)

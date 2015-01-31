@@ -19,7 +19,7 @@ namespace ZeroMQ.Test
 		// it easier to start and stop the example. Each thread may have its own
 		// context and conceptually acts as a separate process.
 		//
-		// Authors: Pieter Hintjens, Uli Riehm
+		// Author: metadings
 		//
 
 		static int LBBroker_Clients = 10;
@@ -32,7 +32,7 @@ namespace ZeroMQ.Test
 			using (var client = ZSocket.Create(context, ZSocketType.REQ))
 			{
 				// Set a printable identity
-				client.Identity = Encoding.UTF8.GetBytes("CLIENT" + i);
+				client.IdentityString = "CLIENT" + i;
 
 				// Connect
 				client.Connect("inproc://frontend");
@@ -61,7 +61,7 @@ namespace ZeroMQ.Test
 			using (var worker = ZSocket.Create(context, ZSocketType.REQ))
 			{
 				// Set a printable identity
-				worker.Identity = Encoding.UTF8.GetBytes("WORKER" + i);
+				worker.IdentityString = "WORKER" + i;
 
 				// Connect
 				worker.Connect("inproc://backend");
@@ -152,10 +152,9 @@ namespace ZeroMQ.Test
 				// Queue of available workers
 				var worker_queue = new List<string>();
 
-				var poll = ZPollItem.CreateReceiver();
-
-				ZError error;
 				ZMessage incoming;
+				ZError error;
+				var poll = ZPollItem.CreateReceiver();
 
 				while (true)
 				{

@@ -16,13 +16,18 @@ namespace ZeroMQ.Test
 			// Freelance server - Model 1
 			// Trivial echo service
 			//
-			// Authors: Pieter Hintjens, Uli Riehm
+			// Author: metadings
 			//
 
 			if (args == null || args.Length < 1)
 			{
-				Console.WriteLine("I: syntax: {0} FLServer1 [endpoint]", AppDomain.CurrentDomain.FriendlyName);
-				return;
+				Console.WriteLine();
+				Console.WriteLine("Usage: ./{0} FLServer1 [Endpoint]", AppDomain.CurrentDomain.FriendlyName);
+				Console.WriteLine();
+				Console.WriteLine("    Endpoint  Where FLServer1 should bind on.");
+				Console.WriteLine("              Default is tcp://127.0.0.1:7780");
+				Console.WriteLine();
+				args = new string[] { "tcp://127.0.0.1:7780" };
 			}
 
 			using (var context = ZContext.Create())
