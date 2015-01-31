@@ -166,7 +166,7 @@ namespace ZeroMQ.Test
 							}
 							else
 							{
-								Console_WriteZMessage(incoming, "I: [backend sending to frontend] ({0})", worker.IdentityString);
+								if (Verbose) Console_WriteZMessage(incoming, "I: [backend sending to frontend] ({0})", worker.IdentityString);
 								frontend.Send(incoming);
 							}
 						}
@@ -191,8 +191,7 @@ namespace ZeroMQ.Test
 								ZFrame workerIdentity = workers.Next();
 								incoming.Prepend(workerIdentity);
 
-								Console_WriteZMessage(incoming, "I: [frontend sending to backend] ({0})", workerIdentity.ReadString());
-								// Console.WriteLine("I: route to next worker [frontend send to backend] ({0})", workerIdentity.ReadString());
+								if (Verbose) Console_WriteZMessage(incoming, "I: [frontend sending to backend] ({0})", workerIdentity.ReadString());
 								backend.Send(incoming);
 							}
 						}

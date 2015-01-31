@@ -48,6 +48,7 @@ namespace ZeroMQ.Test
 				Console.WriteLine("Broadcasting messages");
 				for (int i = 0; i < 1000000; ++i)
 				{
+					Console.WriteLine("Sending...");
 					publisher.Send(new ZFrame("Rhubarb"));
 				}
 				publisher.Send(new ZFrame("END"));

@@ -333,7 +333,7 @@ namespace ZeroMQ.Test
 
 		static Int16 Peering2_GetPort(string name) 
 		{
-			var hash = (Int16)(name.GetHashCode());
+			var hash = (Int16)name[0];
 			if (hash < 1024)
 			{
 				hash += 1024;

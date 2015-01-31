@@ -29,7 +29,7 @@ namespace ZeroMQ.Test
 			// connected to the Paranoid Pirate queue
 
 			var worker = ZSocket.Create(context, ZSocketType.DEALER);
-			// worker.IdentityString = name;
+			worker.IdentityString = name;
 
 			if (!worker.Connect("tcp://127.0.0.1:5556", out error))
 			{

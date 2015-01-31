@@ -45,11 +45,12 @@ namespace ZeroMQ.Test
 
 			string name = args[0];
 
-			ZError error;
-			using (var context = ZContext.Create())
-			{
-				ZSocket requester = null;
-				try { // using (requester)
+			ZSocket requester = null;
+			try { // using (requester)
+
+				using (var context = ZContext.Create())
+				{
+					ZError error;
 
 					if (null == (requester = LPClient_CreateZSocket(context, name, out error)))
 					{
@@ -106,7 +107,7 @@ namespace ZeroMQ.Test
 									if (--retries_left == 0)
 									{
 										Console.WriteLine("E: server seems to be offline, abandoning");
-										return;
+										break;
 									}
 
 									Console.WriteLine("W: no response from server, retrying...");
@@ -119,6 +120,7 @@ namespace ZeroMQ.Test
 											return;	// Interrupted
 										throw new ZException(error);
 									}
+
 									Console.WriteLine("I: reconnected");
 
 									// Send request again, on new socket
@@ -132,20 +134,19 @@ namespace ZeroMQ.Test
 								}
 
 								if (error == ZError.ETERM)
-									return;
-
+									return;	// Interrupted
 								throw new ZException(error);
 							}
 						}
 					}
 				}
-				finally 
+			}
+			finally
+			{
+				if (requester != null)
 				{
-					if (requester != null)
-					{
-						requester.Dispose();
-						requester = null;
-					}
+					requester.Dispose();
+					requester = null;
 				}
 			}
 		}

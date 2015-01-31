@@ -48,6 +48,7 @@ namespace ZeroMQ.Test
 						{
 							break;
 						}
+						Console.WriteLine("Receiving...");
 						++i;
 					}
 				}

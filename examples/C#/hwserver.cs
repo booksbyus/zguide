@@ -18,7 +18,7 @@ namespace ZeroMQ.Test
 			// Author: metadings (uli.riehm@metadea.de)
 			//
 
-			if (args == null || args.Length == 0)
+			if (args == null || args.Length < 1)
 			{
 				Console.WriteLine();
 				Console.WriteLine("Usage: ./{0} HWServer [Name]", AppDomain.CurrentDomain.FriendlyName);

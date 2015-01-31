@@ -44,14 +44,19 @@ namespace ZeroMQ.Test
 
 		static void Console_WriteZMessage(ZMessage message, string format, params object[] data)
 		{
+			Console_WriteZMessage(0, message, format, data);
+		}
+
+		static void Console_WriteZMessage(int messagesNotToRead, ZMessage message, string format, params object[] data)
+		{
 			var renderer = new StringBuilder();
 
 			var list = new List<object>(data);
 
-			for (int i = 0, c = message.Count; i < c; ++i)
+			for (int i = messagesNotToRead, c = message.Count; i < c; ++i)
 			{
 				// here the renderer
-				if (i == 0)
+				if (i == messagesNotToRead)
 				{
 					renderer.Append(format);
 					renderer.Append(": ");
@@ -61,7 +66,7 @@ namespace ZeroMQ.Test
 					renderer.Append(", ");
 				}
 				renderer.Append("{");
-				renderer.Append( i + data.Length );
+				renderer.Append( (i - messagesNotToRead) + data.Length );
 				renderer.Append("}");
 
 				// now the message
