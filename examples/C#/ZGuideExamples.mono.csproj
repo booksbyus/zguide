@@ -84,6 +84,7 @@
     <Compile Include="pathosub.cs" />
     <Compile Include="lvcache.cs" />
     <Compile Include="suisnail.cs" />
+    <Compile Include="eagain.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
