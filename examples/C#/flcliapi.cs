@@ -38,7 +38,7 @@ namespace ZeroMQ.Test
 			public FreelanceClient()
 			{
 				// Constructor
-				this.context = ZContext.Create();
+				this.context = new ZContext();
 
 				this.Actor = new ZActor(this.context, FreelanceClient.Agent);
 				this.Actor.Start();
@@ -323,7 +323,7 @@ namespace ZeroMQ.Test
 					string endpoint = msg.PopString();
 					Console.WriteLine("I: connecting to {0}...", endpoint);
 
-					Router.Connect(endpoint);
+					this.Router.Connect(endpoint);
 
 					var server = new Server(endpoint);
 					this.Servers.Add(server);
