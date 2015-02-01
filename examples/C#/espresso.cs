@@ -124,6 +124,16 @@ namespace ZeroMQ.Test
 							frame.Read(rest, 0, rest.Length);
 
 							Console.WriteLine("{0} {1}", (char)first, rest.ToHexString());
+
+							if (first == 0x01)
+							{
+								// Subscribe
+							}
+							else if (first == 0x00)
+							{
+								// Unsubscribe
+								context.Shutdown();
+							}
 						}
 					}
 					else
