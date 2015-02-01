@@ -44,7 +44,7 @@ Next, browse the examples subdirectory. You'll find examples by language. If the
 
 So let's start with some code. We start of course with a Hello World example. We'll make a client and a server. The client sends "Hello" to the server, which replies with "World"[figure]. Here's the server in C, which opens a ZeroMQ socket on port 5555, reads requests on it, and replies with "World" to each request:
 
-[[code type="example" title="Hello World server" name="hwserver" language="C"]]
+[[code type="example" title="Hello World server" name="hwserver"]]
 [[/code]]
 
 [[code type="textdiagram" title="Request-Reply"]]
