@@ -19,9 +19,9 @@ namespace ZeroMQ.Test
 			// Author: metadings
 			//
 
-			using (var context = ZContext.Create())
-			using (var frontend = ZSocket.Create(context, ZSocketType.SUB))
-			using (var backend = ZSocket.Create(context, ZSocketType.XPUB))
+			using (var context = new ZContext())
+			using (var frontend = new ZSocket(context, ZSocketType.SUB))
+			using (var backend = new ZSocket(context, ZSocketType.XPUB))
 			{
 				// Subscribe to every single topic from publisher
 				frontend.Bind("tcp://*:5557");

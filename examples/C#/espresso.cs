@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Security.Cryptography;
 
 using ZeroMQ;
 
@@ -19,10 +20,10 @@ namespace ZeroMQ.Test
 			// Author: metadings
 			//
 
-			using (var context = ZContext.Create())
-			using (var subscriber = ZSocket.Create(context, ZSocketType.XSUB))
-			using (var publisher = ZSocket.Create(context, ZSocketType.XPUB))
-			using (var listener = ZSocket.Create(context, ZSocketType.PAIR))
+			using (var context = new ZContext())
+			using (var subscriber = new ZSocket(context, ZSocketType.XSUB))
+			using (var publisher = new ZSocket(context, ZSocketType.XPUB))
+			using (var listener = new ZSocket(context, ZSocketType.PAIR))
 			{
 				new Thread(() => Espresso_Publisher(context)).Start();
 				new Thread(() => Espresso_Subscriber(context)).Start();
@@ -46,12 +47,12 @@ namespace ZeroMQ.Test
 		{
 			// The publisher sends random messages starting with A-J:
 
-			using (var publisher = ZSocket.Create(context, ZSocketType.PUB))
+			using (var publisher = new ZSocket(context, ZSocketType.PUB))
 			{
 				publisher.Bind("tcp://*:6000");
 
 				ZError error;
-				var hash = new System.Security.Cryptography.RNGCryptoServiceProvider();
+				var hash = new RNGCryptoServiceProvider();
 
 				while (true)
 				{
@@ -75,7 +76,7 @@ namespace ZeroMQ.Test
 			// The subscriber thread requests messages starting with
 			// A and B, then reads and counts incoming messages.
 
-			using (var subscriber = ZSocket.Create(context, ZSocketType.SUB))
+			using (var subscriber = new ZSocket(context, ZSocketType.SUB))
 			{
 				subscriber.Connect("tcp://127.0.0.1:6001");
 				subscriber.Subscribe("A");
@@ -105,7 +106,7 @@ namespace ZeroMQ.Test
 			// pipe. In CZMQ, the pipe is a pair of ZMQ_PAIR sockets that connect
 			// attached child threads. In other languages your mileage may vary:
 
-			using (var listener = ZSocket.Create(context, ZSocketType.PAIR))
+			using (var listener = new ZSocket(context, ZSocketType.PAIR))
 			{
 				listener.Connect("inproc://listener");
 
@@ -123,6 +124,16 @@ namespace ZeroMQ.Test
 							frame.Read(rest, 0, rest.Length);
 
 							Console.WriteLine("{0} {1}", (char)first, rest.ToHexString());
+
+							if (first == 0x01)
+							{
+								// Subscribe
+							}
+							else if (first == 0x00)
+							{
+								// Unsubscribe
+								context.Shutdown();
+							}
 						}
 					}
 					else

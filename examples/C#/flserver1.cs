@@ -30,8 +30,8 @@ namespace ZeroMQ.Test
 				args = new string[] { "tcp://127.0.0.1:7780" };
 			}
 
-			using (var context = ZContext.Create())
-			using (var server = ZSocket.Create(context, ZSocketType.REP)) 
+			using (var context = new ZContext())
+			using (var server = new ZSocket(context, ZSocketType.REP)) 
 			{
 				server.Bind(args[0]);
 

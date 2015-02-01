@@ -20,9 +20,9 @@ namespace ZeroMQ.Test
 
 			// Socket to talk to clients and
 			// Socket to talk to workers
-			using (var context = ZContext.Create())
-			using (var clients = ZSocket.Create(context, ZSocketType.ROUTER))
-			using (var workers = ZSocket.Create(context, ZSocketType.DEALER))
+			using (var context = new ZContext())
+			using (var clients = new ZSocket(context, ZSocketType.ROUTER))
+			using (var workers = new ZSocket(context, ZSocketType.DEALER))
 			{
 				clients.Bind("tcp://*:5555");
 				workers.Bind("inproc://workers");
@@ -42,7 +42,7 @@ namespace ZeroMQ.Test
 		static void MTServer_Worker(ZContext context) 
 		{
 			// Socket to talk to dispatcher
-			using (var server = ZSocket.Create(context, ZSocketType.REP))
+			using (var server = new ZSocket(context, ZSocketType.REP))
 			{
 				server.Connect("inproc://workers");
 

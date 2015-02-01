@@ -18,13 +18,13 @@ namespace ZeroMQ.Test
 			// Author: metadings
 			//
 
-			using (var context = ZContext.Create())
-			using (var sink = ZSocket.Create(context, ZSocketType.ROUTER))
+			using (var context = new ZContext())
+			using (var sink = new ZSocket(context, ZSocketType.ROUTER))
 			{
 				sink.Bind("inproc://example");
 
 				// First allow 0MQ to set the identity
-				using (var anonymous = ZSocket.Create(context, ZSocketType.REQ))
+				using (var anonymous = new ZSocket(context, ZSocketType.REQ))
 				{
 					anonymous.Connect("inproc://example");
 					anonymous.Send(new ZFrame("ROUTER uses REQ's generated UUID"));
@@ -35,7 +35,7 @@ namespace ZeroMQ.Test
 				}
 
 				// Then set the identity ourselves
-				using (var identified = ZSocket.Create(context, ZSocketType.REQ))
+				using (var identified = new ZSocket(context, ZSocketType.REQ))
 				{
 					identified.IdentityString = "PEER2";
 					identified.Connect("inproc://example");

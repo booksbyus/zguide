@@ -19,8 +19,8 @@ namespace ZeroMQ.Test
 			//
 
 			// Prepare our context and subscriber
-			using (var context = ZContext.Create())
-			using (var subscriber = ZSocket.Create(context, ZSocketType.SUB))
+			using (var context = new ZContext())
+			using (var subscriber = new ZSocket(context, ZSocketType.SUB))
 			{
 				subscriber.Connect("tcp://127.0.0.1:5563");
 				subscriber.Subscribe("B");

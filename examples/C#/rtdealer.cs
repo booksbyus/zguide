@@ -25,8 +25,8 @@ namespace ZeroMQ.Test
 			// Author: metadings
 			//
 
-			using (var context = ZContext.Create())
-			using (var broker = ZSocket.Create(context, ZSocketType.ROUTER))
+			using (var context = new ZContext())
+			using (var broker = new ZSocket(context, ZSocketType.ROUTER))
 			{
 				broker.Bind("tcp://*:5671");
 
@@ -69,8 +69,8 @@ namespace ZeroMQ.Test
 
 		static void RTDealer_Worker(int i) 
 		{
-			using (var context = ZContext.Create())
-			using (var worker = ZSocket.Create(context, ZSocketType.DEALER))
+			using (var context = new ZContext())
+			using (var worker = new ZSocket(context, ZSocketType.DEALER))
 			{
 				worker.IdentityString = "PEER" + i;	// Set a printable identity
 				worker.Connect("tcp://127.0.0.1:5671");

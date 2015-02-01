@@ -38,7 +38,7 @@ namespace ZeroMQ.Test
 			public FreelanceClient()
 			{
 				// Constructor
-				this.context = ZContext.Create();
+				this.context = new ZContext();
 
 				this.Actor = new ZActor(this.context, FreelanceClient.Agent);
 				this.Actor.Start();
@@ -262,7 +262,7 @@ namespace ZeroMQ.Test
 				// Constructor
 				this.Pipe = pipe;
 
-				this.Router = ZSocket.Create(context, ZSocketType.ROUTER);
+				this.Router = new ZSocket(context, ZSocketType.ROUTER);
 				if (name != null)
 				{
 					this.Router.IdentityString = name;
@@ -323,7 +323,7 @@ namespace ZeroMQ.Test
 					string endpoint = msg.PopString();
 					Console.WriteLine("I: connecting to {0}...", endpoint);
 
-					Router.Connect(endpoint);
+					this.Router.Connect(endpoint);
 
 					var server = new Server(endpoint);
 					this.Servers.Add(server);
@@ -426,6 +426,11 @@ namespace ZeroMQ.Test
 
 					this.PingAt = DateTime.UtcNow + PING_INTERVAL;
 				}
+			}
+
+			public override int GetHashCode()
+			{
+				return Endpoint.GetHashCode();
 			}
 		}
 	}

@@ -22,9 +22,9 @@ namespace ZeroMQ.Test
 
 			// Socket to receive messages on and
 			// Socket for worker control
-			using (var context = ZContext.Create())
-			using (var receiver = ZSocket.Create(context, ZSocketType.PULL))
-			using (var controller = ZSocket.Create(context, ZSocketType.PUB))
+			using (var context = new ZContext())
+			using (var receiver = new ZSocket(context, ZSocketType.PULL))
+			using (var controller = new ZSocket(context, ZSocketType.PUB))
 			{
 				receiver.Bind("tcp://*:5558");
 				controller.Bind("tcp://*:5559");

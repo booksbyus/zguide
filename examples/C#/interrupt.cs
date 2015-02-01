@@ -25,8 +25,8 @@ namespace ZeroMQ.Test
 
 			string name = args[0];
 
-			using (var context = ZContext.Create())
-			using (var responder = ZSocket.Create(context, ZSocketType.REP))
+			using (var context = new ZContext())
+			using (var responder = new ZSocket(context, ZSocketType.REP))
 			{
 				Console.CancelKeyPress += (s, ea) => 
 				{ 
@@ -58,7 +58,7 @@ namespace ZeroMQ.Test
 						if (error == ZError.EAGAIN)
 						{
 							error = ZError.None;
-							Thread.Sleep(512);	// See also the much slower reaction
+							Thread.Sleep(1);
 
 							continue;
 						} /**/
@@ -70,6 +70,8 @@ namespace ZeroMQ.Test
 					using (request)
 					{
 						Console.Write("Received: {0}!", request.ReadString());
+
+						Thread.Sleep(512);	// See also the much slower reaction
 
 						Console.WriteLine(" Sending {0}... ", name);
 						using (var response = new ZFrame(name))

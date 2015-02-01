@@ -26,7 +26,7 @@ namespace ZeroMQ.Test
 			// Helper function that returns a new configured socket
 			// connected to the Lazy Pirate queue
 
-			var requester = ZSocket.Create(context, ZSocketType.REQ);
+			var requester = new ZSocket(context, ZSocketType.REQ);
 			requester.IdentityString = name;
 
 			if (!requester.Connect("tcp://127.0.0.1:5555", out error))
@@ -53,7 +53,7 @@ namespace ZeroMQ.Test
 			ZSocket requester = null;
 			try { // using (requester)
 
-				using (var context = ZContext.Create())
+				using (var context = new ZContext())
 				{
 					ZError error;
 

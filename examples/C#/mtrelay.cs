@@ -19,8 +19,8 @@ namespace ZeroMQ.Test
 			//
 
 			// Bind inproc socket before starting step2
-			using (var context = ZContext.Create())
-			using (var receiver = ZSocket.Create(context, ZSocketType.PAIR))
+			using (var context = new ZContext())
+			using (var receiver = new ZSocket(context, ZSocketType.PAIR))
 			{
 				receiver.Bind("inproc://step3");
 
@@ -37,7 +37,7 @@ namespace ZeroMQ.Test
 		static void MTRelay_step2(ZContext context)
 		{
 			// Bind inproc socket before starting step1
-			using (var receiver = ZSocket.Create(context, ZSocketType.PAIR))
+			using (var receiver = new ZSocket(context, ZSocketType.PAIR))
 			{
 				receiver.Bind("inproc://step2");
 
@@ -49,7 +49,7 @@ namespace ZeroMQ.Test
 			}
 
 			// Connect to step3 and tell it we're ready
-			using (var xmitter = ZSocket.Create(context, ZSocketType.PAIR))
+			using (var xmitter = new ZSocket(context, ZSocketType.PAIR))
 			{
 				xmitter.Connect("inproc://step3");
 
@@ -61,7 +61,7 @@ namespace ZeroMQ.Test
 		static void MTRelay_step1(ZContext context) 
 		{
 			// Connect to step2 and tell it we're ready
-			using (var xmitter = ZSocket.Create(context, ZSocketType.PAIR))
+			using (var xmitter = new ZSocket(context, ZSocketType.PAIR))
 			{
 				xmitter.Connect("inproc://step2");
 

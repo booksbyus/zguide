@@ -28,7 +28,7 @@ namespace ZeroMQ.Test
 			// Helper function that returns a new configured socket
 			// connected to the Paranoid Pirate queue
 
-			var worker = ZSocket.Create(context, ZSocketType.DEALER);
+			var worker = new ZSocket(context, ZSocketType.DEALER);
 			worker.IdentityString = name;
 
 			if (!worker.Connect("tcp://127.0.0.1:5556", out error))
@@ -60,7 +60,7 @@ namespace ZeroMQ.Test
 			string name = args[0];
 
 			ZError error;
-			using (var context = ZContext.Create())
+			using (var context = new ZContext())
 			{
 				ZSocket worker = null;
 				try // using (worker)

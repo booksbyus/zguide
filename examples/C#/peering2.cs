@@ -25,7 +25,7 @@ namespace ZeroMQ.Test
 			// The client task does a request-reply dialog
 			// using a standard synchronous REQ socket
 
-			using (var client = ZSocket.Create(context, ZSocketType.REQ))
+			using (var client = new ZSocket(context, ZSocketType.REQ))
 			{
 				// Set printable identity
 				client.IdentityString = name;
@@ -65,7 +65,7 @@ namespace ZeroMQ.Test
 		{
 			// The worker task plugs into the load-balancer using a REQ socket
 
-			using (var worker = ZSocket.Create(context, ZSocketType.REQ))
+			using (var worker = new ZSocket(context, ZSocketType.REQ))
 			{
 				// Set printable identity
 				worker.IdentityString = name;
@@ -133,11 +133,11 @@ namespace ZeroMQ.Test
 			string name = args[1];
 			Console.WriteLine("I: preparing broker as {0}", name);
 
-			using (var context = ZContext.Create())
-			using (var cloudFrontend = ZSocket.Create(context, ZSocketType.ROUTER))
-			using (var cloudBackend = ZSocket.Create(context, ZSocketType.ROUTER))
-			using (var localFrontend = ZSocket.Create(context, ZSocketType.ROUTER))
-			using (var localBackend = ZSocket.Create(context, ZSocketType.ROUTER))
+			using (var context = new ZContext())
+			using (var cloudFrontend = new ZSocket(context, ZSocketType.ROUTER))
+			using (var cloudBackend = new ZSocket(context, ZSocketType.ROUTER))
+			using (var localFrontend = new ZSocket(context, ZSocketType.ROUTER))
+			using (var localBackend = new ZSocket(context, ZSocketType.ROUTER))
 			{
 				// Bind cloud frontend to endpoint
 				cloudFrontend.IdentityString = name;

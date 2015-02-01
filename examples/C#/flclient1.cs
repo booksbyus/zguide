@@ -37,7 +37,7 @@ namespace ZeroMQ.Test
 			// to. If it has two or more servers to talk to, it will try each server just
 			// once:
 
-			using (var context = ZContext.Create())
+			using (var context = new ZContext())
 			using (var request = new ZFrame("Hello World"))
 			{
 				ZFrame reply = null;
@@ -83,7 +83,7 @@ namespace ZeroMQ.Test
 		{
 			Console.WriteLine("I: trying echo service at {0}...", endpoint);
 
-			using (var client = ZSocket.Create(context, ZSocketType.REQ))
+			using (var client = new ZSocket(context, ZSocketType.REQ))
 			{
 				client.Connect(endpoint);
 

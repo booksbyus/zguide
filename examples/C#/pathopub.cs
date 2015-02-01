@@ -30,8 +30,8 @@ namespace ZeroMQ.Test
 				args = new string[] { null };
 			}
 
-			using (var context = ZContext.Create())
-			using (var publisher = ZSocket.Create(context, ZSocketType.PUB))
+			using (var context = new ZContext())
+			using (var publisher = new ZSocket(context, ZSocketType.PUB))
 			{
 				if (args[0] != null)
 				{

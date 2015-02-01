@@ -20,9 +20,9 @@ namespace ZeroMQ.Test
 			// Author: metadings
 			//
 
-			using (var context = ZContext.Create())
-			using (var frontend = ZSocket.Create(context, ZSocketType.XSUB))
-			using (var backend = ZSocket.Create(context, ZSocketType.XPUB))
+			using (var context = new ZContext())
+			using (var frontend = new ZSocket(context, ZSocketType.XSUB))
+			using (var backend = new ZSocket(context, ZSocketType.XPUB))
 			{
 				// Frontend is where the weather server sits
 				string localhost = "tcp://127.0.0.1:5556";

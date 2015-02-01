@@ -35,8 +35,8 @@ namespace ZeroMQ.Test
 			}
 
 			// Socket to talk to server
-			using (var context = ZContext.Create())
-			using (var subscriber = ZSocket.Create(context, ZSocketType.SUB))
+			using (var context = new ZContext())
+			using (var subscriber = new ZSocket(context, ZSocketType.SUB))
 			{
 				string connect_to = args[1];
 				Console.WriteLine("I: Connecting to {0}...", connect_to);

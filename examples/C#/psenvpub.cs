@@ -19,8 +19,8 @@ namespace ZeroMQ.Test
 			//
 
 			// Prepare our context and publisher
-			using (var context = ZContext.Create())
-			using (var publisher = ZSocket.Create(context, ZSocketType.PUB))
+			using (var context = new ZContext())
+			using (var publisher = new ZSocket(context, ZSocketType.PUB))
 			{
 				publisher.Linger = TimeSpan.Zero;
 				publisher.Bind("tcp://*:5563");

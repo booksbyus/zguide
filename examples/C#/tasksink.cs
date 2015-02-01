@@ -22,8 +22,8 @@ namespace ZeroMQ.Test
 			//
 
 			// Prepare our context and socket
-			using (var context = ZContext.Create())
-			using (var sink = ZSocket.Create(context, ZSocketType.PULL))
+			using (var context = new ZContext())
+			using (var sink = new ZSocket(context, ZSocketType.PULL))
 			{
 				sink.Bind("tcp://*:5558");
 

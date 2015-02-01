@@ -18,8 +18,8 @@ namespace ZeroMQ.Test
 			// Author: metadings
 			//
 
-			using (var context = ZContext.Create())
-			using (var mailbox = ZSocket.Create(context, ZSocketType.DEALER))
+			using (var context = new ZContext())
+			using (var mailbox = new ZSocket(context, ZSocketType.DEALER))
 			{
 				mailbox.SendHighWatermark = 4;
 				mailbox.SendTimeout = TimeSpan.Zero;

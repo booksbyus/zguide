@@ -20,9 +20,9 @@ namespace ZeroMQ.Test
 			// Author: metadings
 			//
 
-			using (var context = ZContext.Create())
-			using (var frontend = ZSocket.Create(context, ZSocketType.ROUTER))
-			using (var backend = ZSocket.Create(context, ZSocketType.ROUTER))
+			using (var context = new ZContext())
+			using (var frontend = new ZSocket(context, ZSocketType.ROUTER))
+			using (var backend = new ZSocket(context, ZSocketType.ROUTER))
 			{
 				frontend.Bind("tcp://*:5555");
 				backend.Bind("tcp://*:5556");

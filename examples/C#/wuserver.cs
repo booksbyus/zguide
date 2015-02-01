@@ -21,8 +21,8 @@ namespace ZeroMQ.Test
 			//
 
 			// Prepare our context and publisher
-			using (var context = ZContext.Create())
-			using (var publisher = ZSocket.Create(context, ZSocketType.PUB))
+			using (var context = new ZContext())
+			using (var publisher = new ZSocket(context, ZSocketType.PUB))
 			{
 				string address = "tcp://*:5556";
 				Console.WriteLine("I: Publisher.Bind'ing on {0}", address);

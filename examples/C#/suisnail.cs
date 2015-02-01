@@ -25,7 +25,7 @@ namespace ZeroMQ.Test
 			// simulate doing too much work. If a message is more than one second
 			// late, it croaks.
 
-			using (var subscriber = ZSocket.Create(context, ZSocketType.SUB))
+			using (var subscriber = new ZSocket(context, ZSocketType.SUB))
 			{
 				// Subscribe to everything
 				subscriber.SubscribeAll();
@@ -70,7 +70,7 @@ namespace ZeroMQ.Test
 			// This is our publisher task. It publishes a time-stamped message to its
 			// PUB socket every millisecond:
 
-			using (var publisher = ZSocket.Create(context, ZSocketType.PUB))
+			using (var publisher = new ZSocket(context, ZSocketType.PUB))
 			{
 				// Prepare publisher
 				publisher.Bind("tcp://*:5556");
@@ -112,7 +112,7 @@ namespace ZeroMQ.Test
 			// The main task simply starts a client and a server, and then
 			// waits for the client to signal that it has died:
 
-			using (var context = ZContext.Create())
+			using (var context = new ZContext())
 			using (var pubpipe = new ZActor(context, SuiSnail_Publisher))
 			using (var subpipe = new ZActor(context, SuiSnail_Subscriber))
 			{
