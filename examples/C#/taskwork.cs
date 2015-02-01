@@ -24,9 +24,9 @@ namespace ZeroMQ.Test
 
 			// Socket to receive messages on and
 			// Socket to send messages to
-			using (var context = ZContext.Create())
-			using (var receiver = ZSocket.Create(context, ZSocketType.PULL))
-			using (var sink = ZSocket.Create(context, ZSocketType.PUSH))
+			using (var context = new ZContext())
+			using (var receiver = new ZSocket(context, ZSocketType.PULL))
+			using (var sink = new ZSocket(context, ZSocketType.PUSH))
 			{
 				receiver.Connect("tcp://127.0.0.1:5557");
 				sink.Connect("tcp://127.0.0.1:5558");

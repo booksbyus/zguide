@@ -22,9 +22,9 @@ namespace ZeroMQ.Test
 
 			// Socket to send messages on and
 			// Socket to send start of batch message on
-			using (var context = ZContext.Create())
-			using (var sender = ZSocket.Create(context, ZSocketType.PUSH))
-			using (var sink = ZSocket.Create(context, ZSocketType.PUSH))
+			using (var context = new ZContext())
+			using (var sender = new ZSocket(context, ZSocketType.PUSH))
+			using (var sink = new ZSocket(context, ZSocketType.PUSH))
 			{
 				sender.Bind("tcp://*:5557");
 				sink.Connect("tcp://127.0.0.1:5558");

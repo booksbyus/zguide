@@ -40,8 +40,8 @@ namespace ZeroMQ.Test
 			string endpoint = args[1];
 
 			// Socket to talk to clients
-			using (var context = ZContext.Create())
-			using (var responder = ZSocket.Create(context, ZSocketType.REP))
+			using (var context = new ZContext())
+			using (var responder = new ZSocket(context, ZSocketType.REP))
 			{
 				responder.Connect(endpoint);
 

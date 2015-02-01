@@ -27,8 +27,8 @@ namespace ZeroMQ.Test
 			}
 			string name = args[0];
 
-			using (var context = ZContext.Create())
-			using (var worker = ZSocket.Create(context, ZSocketType.REQ))
+			using (var context = new ZContext())
+			using (var worker = new ZSocket(context, ZSocketType.REQ))
 			{
 				worker.Identity = Encoding.UTF8.GetBytes(name);
 				worker.Connect("tcp://127.0.0.1:5556");

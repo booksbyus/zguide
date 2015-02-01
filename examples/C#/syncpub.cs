@@ -22,9 +22,9 @@ namespace ZeroMQ.Test
 
 			// Socket to talk to clients and
 			// Socket to receive signals
-			using (var context = ZContext.Create())
-			using (var publisher = ZSocket.Create(context, ZSocketType.PUB))
-			using (var syncservice = ZSocket.Create(context, ZSocketType.REP))
+			using (var context = new ZContext())
+			using (var publisher = new ZSocket(context, ZSocketType.PUB))
+			using (var syncservice = new ZSocket(context, ZSocketType.REP))
 			{
 				publisher.SendHighWatermark = 1100000;
 				publisher.Bind("tcp://*:5561");

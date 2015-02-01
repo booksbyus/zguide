@@ -22,8 +22,8 @@ namespace ZeroMQ.Test
 
 		public static void LPServer(IDictionary<string, string> dict, string[] args)
 		{
-			using (var context = ZContext.Create())
-			using (var responder = ZSocket.Create(context, ZSocketType.REP))
+			using (var context = new ZContext())
+			using (var responder = new ZSocket(context, ZSocketType.REP))
 			{
 				responder.Bind("tcp://*:5555");
 

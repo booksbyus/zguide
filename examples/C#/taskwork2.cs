@@ -22,10 +22,10 @@ namespace ZeroMQ.Test
 			// Socket to receive messages on,
 			// Socket to send messages to and
 			// Socket for control input
-			using (var context = ZContext.Create())
-			using (var receiver = ZSocket.Create(context, ZSocketType.PULL))
-			using (var sender = ZSocket.Create(context, ZSocketType.PUSH))
-			using (var controller = ZSocket.Create(context, ZSocketType.SUB))
+			using (var context = new ZContext())
+			using (var receiver = new ZSocket(context, ZSocketType.PULL))
+			using (var sender = new ZSocket(context, ZSocketType.PUSH))
+			using (var controller = new ZSocket(context, ZSocketType.SUB))
 			{
 				receiver.Connect("tcp://127.0.0.1:5557");
 				sender.Connect("tcp://127.0.0.1:5558");

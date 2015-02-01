@@ -27,7 +27,7 @@ namespace ZeroMQ.Test
 			// It collects responses as they arrive, and it prints them out. We will
 			// run several client tasks in parallel, each with a different random ID.
 
-			using (var client = ZSocket.Create(context, ZSocketType.DEALER))
+			using (var client = new ZSocket(context, ZSocketType.DEALER))
 			{
 				// Set identity to make tracing easier
 				client.Identity = Encoding.UTF8.GetBytes("CLIENT" + i);
@@ -85,8 +85,8 @@ namespace ZeroMQ.Test
 			// one request at a time but one client can talk to multiple workers at
 			// once.
 
-			using (var frontend = ZSocket.Create(context, ZSocketType.ROUTER))
-			using (var backend = ZSocket.Create(context, ZSocketType.DEALER))
+			using (var frontend = new ZSocket(context, ZSocketType.ROUTER))
+			using (var backend = new ZSocket(context, ZSocketType.DEALER))
 			{
 				// Frontend socket talks to clients over TCP
 				frontend.Bind("tcp://*:5570");
@@ -115,7 +115,7 @@ namespace ZeroMQ.Test
 			// Each worker task works on one request at a time and sends a random number
 			// of replies back, with random delays between replies:
 
-			using (var worker = ZSocket.Create(context, ZSocketType.DEALER))
+			using (var worker = new ZSocket(context, ZSocketType.DEALER))
 			{
 				worker.Connect("inproc://backend");
 
@@ -167,7 +167,7 @@ namespace ZeroMQ.Test
 			// The main thread simply starts several clients and a server, and then
 			// waits for the server to finish.
 
-			using (var context = ZContext.Create())
+			using (var context = new ZContext())
 			{
 				for (int i = 0; i < 5; ++i)
 				{

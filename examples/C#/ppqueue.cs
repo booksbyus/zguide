@@ -117,9 +117,9 @@ namespace ZeroMQ.Test
 	{
 		public static void PPQueue(IDictionary<string, string> dict, string[] args)
 		{
-			using (var context = ZContext.Create())
-			using (var backend = ZSocket.Create(context, ZSocketType.ROUTER))
-			using (var frontend = ZSocket.Create(context, ZSocketType.ROUTER))
+			using (var context = new ZContext())
+			using (var backend = new ZSocket(context, ZSocketType.ROUTER))
+			using (var frontend = new ZSocket(context, ZSocketType.ROUTER))
 			{
 				backend.Bind("tcp://*:5556");
 				frontend.Bind("tcp://*:5555");

@@ -32,8 +32,8 @@ namespace ZeroMQ.Test
 
 			string endpoint = args[0];
 
-			using (var context = ZContext.Create())
-			using (var server = ZSocket.Create(context, ZSocketType.REP))
+			using (var context = new ZContext())
+			using (var server = new ZSocket(context, ZSocketType.REP))
 			{
 				server.Bind(endpoint);
 				Console.WriteLine("I: server is ready as {0}", endpoint);

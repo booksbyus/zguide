@@ -44,8 +44,8 @@ namespace ZeroMQ.Test
 			{
 				// Constructor
 
-				context = ZContext.Create();
-				socket = ZSocket.Create(context, ZSocketType.DEALER);
+				context = new ZContext();
+				socket = new ZSocket(context, ZSocketType.DEALER);
 				socket.Linger = GLOBAL_TIMEOUT;
 			}
 

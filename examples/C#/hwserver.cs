@@ -31,8 +31,8 @@ namespace ZeroMQ.Test
 			string name = args[0];
 
 			// Create
-			using (var context = ZContext.Create())
-			using (var responder = ZSocket.Create(context, ZSocketType.REP))
+			using (var context = new ZContext())
+			using (var responder = new ZSocket(context, ZSocketType.REP))
 			{
 				// Bind
 				responder.Bind("tcp://*:5555");

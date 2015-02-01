@@ -21,8 +21,8 @@ namespace ZeroMQ.Test
 			//
 
 			// Socket to talk to server
-			using (var context = ZContext.Create())
-			using (var requester = ZSocket.Create(context, ZSocketType.REQ))
+			using (var context = new ZContext())
+			using (var requester = new ZSocket(context, ZSocketType.REQ))
 			{
 				requester.Connect("tcp://127.0.0.1:5559");
 

@@ -29,7 +29,7 @@ namespace ZeroMQ.Test
 		static void LBBroker_Client(ZContext context, int i)
 		{
 			// Create a socket
-			using (var client = ZSocket.Create(context, ZSocketType.REQ))
+			using (var client = new ZSocket(context, ZSocketType.REQ))
 			{
 				// Set a printable identity
 				client.IdentityString = "CLIENT" + i;
@@ -58,7 +58,7 @@ namespace ZeroMQ.Test
 			// This is the worker task, using a REQ socket to do load-balancing.
 
 			// Create socket
-			using (var worker = ZSocket.Create(context, ZSocketType.REQ))
+			using (var worker = new ZSocket(context, ZSocketType.REQ))
 			{
 				// Set a printable identity
 				worker.IdentityString = "WORKER" + i;
@@ -118,9 +118,9 @@ namespace ZeroMQ.Test
 			// just a queue of next available workers.
 
 			// Prepare our context and sockets
-			using (var context = ZContext.Create())
-			using (var frontend = ZSocket.Create(context, ZSocketType.ROUTER))
-			using (var backend = ZSocket.Create(context, ZSocketType.ROUTER))
+			using (var context = new ZContext())
+			using (var frontend = new ZSocket(context, ZSocketType.ROUTER))
+			using (var backend = new ZSocket(context, ZSocketType.ROUTER))
 			{
 				// Bind
 				frontend.Bind("inproc://frontend");

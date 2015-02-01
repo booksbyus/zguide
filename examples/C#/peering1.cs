@@ -33,9 +33,9 @@ namespace ZeroMQ.Test
 			string self = args[0];
 			Console.WriteLine("I: preparing broker as {0}", self);
 
-			using (var context = ZContext.Create())
-			using (var backend = ZSocket.Create(context, ZSocketType.PUB))
-			using (var frontend = ZSocket.Create(context, ZSocketType.SUB))
+			using (var context = new ZContext())
+			using (var backend = new ZSocket(context, ZSocketType.PUB))
+			using (var frontend = new ZSocket(context, ZSocketType.SUB))
 			{
 				// Bind backend to endpoint
 				backend.Bind("tcp://127.0.0.1:" + Peering1_GetPort(self));

@@ -25,8 +25,8 @@ namespace ZeroMQ.Test
 
 			string name = args[0];
 
-			using (var context = ZContext.Create())
-			using (var responder = ZSocket.Create(context, ZSocketType.REP))
+			using (var context = new ZContext())
+			using (var responder = new ZSocket(context, ZSocketType.REP))
 			{
 				Console.CancelKeyPress += (s, ea) => 
 				{ 

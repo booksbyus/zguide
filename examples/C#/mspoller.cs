@@ -19,9 +19,9 @@ namespace ZeroMQ.Test
 			// Author: metadings
 			//
 
-			using (var context = ZContext.Create())
-			using (var receiver = ZSocket.Create(context, ZSocketType.PULL))
-			using (var subscriber = ZSocket.Create(context, ZSocketType.SUB))
+			using (var context = new ZContext())
+			using (var receiver = new ZSocket(context, ZSocketType.PULL))
+			using (var subscriber = new ZSocket(context, ZSocketType.SUB))
 			{
 				// Connect to task ventilator
 				receiver.Connect("tcp://127.0.0.1:5557");

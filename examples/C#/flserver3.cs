@@ -23,8 +23,8 @@ namespace ZeroMQ.Test
 			string bind_endpoint = "tcp://*:5555";
 			string connect_endpoint = "tcp://127.0.0.1:5555";
 
-			using (var context = ZContext.Create())
-			using (var server = ZSocket.Create(context, ZSocketType.ROUTER))
+			using (var context = new ZContext())
+			using (var server = new ZSocket(context, ZSocketType.ROUTER))
 			{
 				Console.CancelKeyPress += (s, ea) =>
 				{
