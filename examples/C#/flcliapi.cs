@@ -262,7 +262,7 @@ namespace ZeroMQ.Test
 				// Constructor
 				this.Pipe = pipe;
 
-				this.Router = ZSocket.Create(context, ZSocketType.ROUTER);
+				this.Router = new ZSocket(context, ZSocketType.ROUTER);
 				if (name != null)
 				{
 					this.Router.IdentityString = name;
