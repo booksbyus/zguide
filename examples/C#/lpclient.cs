@@ -28,7 +28,7 @@ namespace ZeroMQ.Test
 
 			var requester = new ZSocket(context, ZSocketType.REQ);
 			requester.IdentityString = name;
-			// requester.Linger = TimeSpan.FromMilliseconds(1);
+			requester.Linger = TimeSpan.FromMilliseconds(1);
 
 			if (!requester.Connect("tcp://127.0.0.1:5555", out error))
 			{
@@ -130,10 +130,7 @@ namespace ZeroMQ.Test
 									if (null == (requester = LPClient_CreateZSocket(context, name, out error)))
 									{
 										if (error == ZError.ETERM)
-										{
-											retries_left = 0;
-											break;	// Interrupted
-										}
+											return;	// Interrupted
 										throw new ZException(error);
 									}
 
@@ -146,10 +143,7 @@ namespace ZeroMQ.Test
 										if (!requester.Send(outgoing, out error))
 										{
 											if (error == ZError.ETERM)
-											{
-												retries_left = 0;
-												break;	// Interrupted
-											}
+												return;	// Interrupted
 											throw new ZException(error);
 										}
 									}
@@ -158,10 +152,7 @@ namespace ZeroMQ.Test
 								}
 
 								if (error == ZError.ETERM)
-								{
-									retries_left = 0;
-									break;	// Interrupted
-								}
+									return;	// Interrupted
 								throw new ZException(error);
 							}
 						}
