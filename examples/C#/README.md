@@ -97,7 +97,9 @@ Use with TaskVent.
 Use with HWClient.
 
 ```
-	Usage: ./ZGuideExamples.exe Interrupt
+	Usage: ./ZGuideExamples.exe Interrupt [Name]
+
+        Name      Your Name
 ```
 
 #### [MTServer](https://github.com/metadings/zguide/blob/master/examples/C%23/mtserver.cs), [MTRelay](https://github.com/metadings/zguide/blob/master/examples/C%23/mtrelay.cs)
@@ -126,12 +128,8 @@ Use with HWClient.
 
 #### [Identity](https://github.com/metadings/zguide/blob/master/examples/C%23/identity.cs)
 
-Use with HWClient.
-
 ```
-	Usage: ./ZGuideExamples.exe Identity [Name]
-
-        Name      Your Name
+	Usage: ./ZGuideExamples.exe Identity
 ```
 
 #### [RTReq](https://github.com/metadings/zguide/blob/master/examples/C%23/rtreq.cs), [RTDealer](https://github.com/metadings/zguide/blob/master/examples/C%23/rtdealer.cs)
