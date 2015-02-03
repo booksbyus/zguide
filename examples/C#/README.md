@@ -76,8 +76,10 @@ Usage: ./ZGuideExamples.exe [--option=++] [--option=tcp://192.168.1.1:8080] <com
 
 #### [MsgQueue](https://github.com/metadings/zguide/blob/master/examples/C%23/msgqueue.cs)
 
+Use with RRServer and RRClient.
+
 ```
-	Usage: ./ZGuideExamples.exe msgqueue
+	Usage: ./ZGuideExamples.exe MsgQueue
 ```
 
 #### [TaskWork2](https://github.com/metadings/zguide/blob/master/examples/C%23/taskwork2.cs), [TaskSink2](https://github.com/metadings/zguide/blob/master/examples/C%23/tasksink2.cs)
@@ -124,8 +126,12 @@ Use with HWClient.
 
 #### [Identity](https://github.com/metadings/zguide/blob/master/examples/C%23/identity.cs)
 
+Use with HWClient.
+
 ```
-	Usage: ./ZGuideExamples.exe Identity
+	Usage: ./ZGuideExamples.exe Identity [Name]
+
+        Name      Your Name
 ```
 
 #### [RTReq](https://github.com/metadings/zguide/blob/master/examples/C%23/rtreq.cs), [RTDealer](https://github.com/metadings/zguide/blob/master/examples/C%23/rtdealer.cs)
@@ -154,7 +160,8 @@ Use with HWClient.
 	Usage: ./ZGuideExamples.exe Peering1 World Receiver0
 				                Peering1 Receiver0 World
 
-	Usage: ./ZGuideExamples.exe Peering2
+	Usage: ./ZGuideExamples.exe Peering2 World Receiver0
+				                Peering2 Receiver0 World
 ```
 
 #### [LPClient](https://github.com/metadings/zguide/blob/master/examples/C%23/lpclient.cs), [LPServer](https://github.com/metadings/zguide/blob/master/examples/C%23/lpserver.cs)
@@ -205,12 +212,12 @@ Use with HWClient.
 	Usage: ./ZGuideExamples.exe FLServer2 [Endpoint]
 
 	    Endpoint  Where FLServer2 should bind on.
-	              Default is tcp://127.0.0.1:7780
+	              Default is tcp://127.0.0.1:7781
 
 	Usage: ./ZGuideExamples.exe FLClient2 [Endpoint] ...
 
 	    Endpoint  Where FLClient2 should connect to.
-	              Default is tcp://127.0.0.1:7780
+	              Default is tcp://127.0.0.1:7781
 ```
 
 #### [FLServer3](https://github.com/metadings/zguide/blob/master/examples/C%23/flserver3.cs), [FLClient3](https://github.com/metadings/zguide/blob/master/examples/C%23/flclient3.cs), [FLCliApi.FreelanceClient](https://github.com/metadings/zguide/blob/master/examples/C%23/flcliapi.cs)
