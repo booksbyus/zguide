@@ -28,6 +28,7 @@ namespace ZeroMQ.Test
 
 			var requester = new ZSocket(context, ZSocketType.REQ);
 			requester.IdentityString = name;
+			// requester.Linger = TimeSpan.FromMilliseconds(1);
 
 			if (!requester.Connect("tcp://127.0.0.1:5555", out error))
 			{
@@ -50,11 +51,12 @@ namespace ZeroMQ.Test
 
 			string name = args[0];
 
-			ZSocket requester = null;
-			try { // using (requester)
+			using (var context = new ZContext())
+			{
+				ZSocket requester = null;
+				try
+				{ // using (requester)
 
-				using (var context = new ZContext())
-				{
 					ZError error;
 
 					if (null == (requester = LPClient_CreateZSocket(context, name, out error)))
@@ -74,7 +76,12 @@ namespace ZeroMQ.Test
 						using (var outgoing = ZFrame.Create(4))
 						{
 							outgoing.Write(++sequence);
-							requester.Send(outgoing);
+							if (!requester.Send(outgoing, out error))
+							{
+								if (error == ZError.ETERM)
+									return;	// Interrupted
+								throw new ZException(error);
+							}
 						}
 
 						ZMessage incoming;
@@ -94,18 +101,19 @@ namespace ZeroMQ.Test
 								{
 									// We got a reply from the server
 									int incoming_sequence = incoming[0].ReadInt32();
-									if (sequence == incoming_sequence) 
+									if (sequence == incoming_sequence)
 									{
 										Console.WriteLine("I: server replied OK ({0})", incoming_sequence);
 										retries_left = LPClient_RequestRetries;
 										break;
 									}
-									else {
+									else
+									{
 										Console_WriteZMessage(incoming, "E: malformed reply from server");
 									}
 								}
 							}
-							else 
+							else
 							{
 								if (error == ZError.EAGAIN)
 								{
@@ -122,7 +130,10 @@ namespace ZeroMQ.Test
 									if (null == (requester = LPClient_CreateZSocket(context, name, out error)))
 									{
 										if (error == ZError.ETERM)
-											return;	// Interrupted
+										{
+											retries_left = 0;
+											break;	// Interrupted
+										}
 										throw new ZException(error);
 									}
 
@@ -132,26 +143,37 @@ namespace ZeroMQ.Test
 									using (var outgoing = ZFrame.Create(4))
 									{
 										outgoing.Write(sequence);
-										requester.Send(outgoing);
+										if (!requester.Send(outgoing, out error))
+										{
+											if (error == ZError.ETERM)
+											{
+												retries_left = 0;
+												break;	// Interrupted
+											}
+											throw new ZException(error);
+										}
 									}
 
 									continue;
 								}
 
 								if (error == ZError.ETERM)
-									return;	// Interrupted
+								{
+									retries_left = 0;
+									break;	// Interrupted
+								}
 								throw new ZException(error);
 							}
 						}
 					}
 				}
-			}
-			finally
-			{
-				if (requester != null)
+				finally
 				{
-					requester.Dispose();
-					requester = null;
+					if (requester != null)
+					{
+						requester.Dispose();
+						requester = null;
+					}
 				}
 			}
 		}

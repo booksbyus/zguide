@@ -176,6 +176,8 @@ Use with HWClient.
 
 #### [SPQueue](https://github.com/metadings/zguide/blob/master/examples/C%23/spqueue.cs), [SPWorker](https://github.com/metadings/zguide/blob/master/examples/C%23/spworker.cs)
 
+Use with LPClient.
+
 ```
 	Usage: ./ZGuideExamples.exe SPQueue
 
@@ -183,6 +185,8 @@ Use with HWClient.
 ```
 
 #### [PPQueue](https://github.com/metadings/zguide/blob/master/examples/C%23/ppqueue.cs), [PPWorker](https://github.com/metadings/zguide/blob/master/examples/C%23/ppworker.cs)
+
+Use with LPClient.
 
 ```
 	Usage: ./ZGuideExamples.exe PPQueue
