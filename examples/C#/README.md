@@ -3,8 +3,7 @@ ZeroMQ Examples in C#
 
 Hello! I've made some new examples for C#.
 
-Also read: [ZeroMQ - The Guide](http://zguide.zeromq.org/page:all)
-Current version: [ZeroMQ - The Guide Examples](https://github.com/metadings/zguide/tree/master/examples/C%23/)
+Also read: [ZeroMQ - The Guide](http://zguide.zeromq.org/page:all). Current version: [ZeroMQ - The Guide Examples](https://github.com/metadings/zguide/tree/master/examples/C%23/).
 
 You can open the `ZGuideExamples.*.csproj` in Visual C# on Windows or in MonoDevelop on Linux.  
 Add a Reference to the project [`/zeromq/clrzmq4`](http://github.com/zeromq/clrzmq4) (or the release ZeroMQ.dll).
@@ -224,7 +223,7 @@ Use with HWClient.
 #### [FLServer3](https://github.com/metadings/zguide/blob/master/examples/C%23/flserver3.cs), [FLClient3](https://github.com/metadings/zguide/blob/master/examples/C%23/flclient3.cs), [FLCliApi.FreelanceClient](https://github.com/metadings/zguide/blob/master/examples/C%23/flcliapi.cs)
 
 ```
-	Usage: ./ZGuideExamples.exe FLServer3
+	Usage: ./ZGuideExamples.exe [--verbose] FLServer3
 
 	Usage: ./ZGuideExamples.exe FLClient3 [Name] [Endpoint]
 
