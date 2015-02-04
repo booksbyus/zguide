@@ -122,7 +122,7 @@ namespace ZeroMQ.Test
 				subpipe.Frontend.ReceiveFrame();
 				pubpipe.Frontend.Send(new ZFrame("break"));
 
-				Thread.Sleep(100);
+				Thread.Sleep(5000);
 			}
 		}
 	}

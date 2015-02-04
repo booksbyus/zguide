@@ -52,7 +52,7 @@ namespace ZeroMQ.Test
 
 						using (request)
 						{
-							Console_WriteZMessage(request, "Receiving");
+							if (Verbose) Console_WriteZMessage(request, "Receiving");
 
 							// Frame 0: identity of client
 							// Frame 1: PING, or client control frame
@@ -77,7 +77,7 @@ namespace ZeroMQ.Test
 
 						response.Prepend(identity);
 
-						Console_WriteZMessage(response, "Sending  ");
+						if (Verbose) Console_WriteZMessage(response, "Sending  ");
 						if (!server.Send(response, out error))
 						{
 							if (error == ZError.ETERM)

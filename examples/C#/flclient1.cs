@@ -10,7 +10,8 @@ namespace ZeroMQ.Test
 {
 	static partial class Program
 	{
-		static readonly TimeSpan FLClient1_REQUEST_TIMEOUT = TimeSpan.FromMilliseconds(1000);
+		static readonly TimeSpan FLClient1_REQUEST_TIMEOUT = TimeSpan.FromMilliseconds(2500);
+
 		static int FLClient1_MAX_RETRIES = 3;	// Before we abandon
 
 		public static void FLClient1(IDictionary<string, string> dict, string[] args)
