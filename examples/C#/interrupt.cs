@@ -51,17 +51,15 @@ namespace ZeroMQ.Test
 						{
 							context.Shutdown();
 						}
-					} /**/
+					}
 
 					if (null == (request = responder.ReceiveFrame(ZSocketFlags.DontWait, out error)))
 					{
 						if (error == ZError.EAGAIN)
 						{
-							error = ZError.None;
 							Thread.Sleep(1);
-
 							continue;
-						} /**/
+						}
 						if (error == ZError.ETERM)
 							break;	// Interrupted
 						throw new ZException(error);

@@ -65,8 +65,6 @@ namespace ZeroMQ.Test
 					{
 						if (error == ZError.EAGAIN)
 						{
-							error = ZError.None;
-
 							using (var output = new ZMessage())
 							{
 								output.Add(new ZFrame(self));

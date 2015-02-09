@@ -38,10 +38,10 @@ namespace ZeroMQ.Test
 			}
 		}
 		
-		static void MTServer_Worker(ZContext context) 
+		static void MTServer_Worker(ZContext ctx) 
 		{
 			// Socket to talk to dispatcher
-			using (var server = new ZSocket(context, ZSocketType.REP))
+			using (var server = new ZSocket(ctx, ZSocketType.REP))
 			{
 				server.Connect("inproc://workers");
 

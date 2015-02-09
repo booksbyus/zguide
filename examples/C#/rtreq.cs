@@ -82,15 +82,15 @@ namespace ZeroMQ.Test
 					worker.Send(new ZFrame("Hi Boss"));
 
 					// Get workload from broker, until finished
-					bool finished;
 					using (ZFrame frame = worker.ReceiveFrame())
 					{
-						finished = (frame.ReadString() == "Fired!");
+						bool finished = (frame.ReadString() == "Fired!");
+						if (finished)
+						{
+							break;
+						}
 					}
-					if (finished)
-					{
-						break;
-					}
+
 					total++;
 
 					// Do some random work

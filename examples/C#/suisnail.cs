@@ -91,9 +91,7 @@ namespace ZeroMQ.Test
 					{
 						if (error == ZError.EAGAIN)
 						{
-							error = ZError.None;
 							Thread.Sleep(1);	// wait 1 ms
-
 							continue;
 						}
 						if (error == ZError.ETERM)
