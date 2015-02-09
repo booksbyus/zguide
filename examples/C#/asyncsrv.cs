@@ -173,10 +173,12 @@ namespace ZeroMQ.Test
 				{
 					int j = i; new Thread(() => AsyncSrv_Client(context, j)).Start();
 				}
-				new Thread(() => AsyncSrv_ServerTask(context)).Start();
+				
+				var server = new Thread(() => AsyncSrv_ServerTask(context));
+				server.Start();
 
-				// Run for 5 seconds then quit
-				Thread.Sleep(5 * 1000);
+				// Join the server thread to quit
+				server.Join();
 			}
 		}
 	}
