@@ -53,6 +53,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="ZeroMQ, Version=4.1.0.384, Culture=neutral, PublicKeyToken=4a9630883fd6c563, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\ZeroApp-Network\ZeroMQ\bin\Release\ZeroMQ.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
@@ -108,12 +112,6 @@
     <Compile Include="wuclient.cs" />
     <Compile Include="wuproxy.cs" />
     <Compile Include="wuserver.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\ZeroApp-Network\ZeroMQ\ZeroMQ.VS.csproj">
-      <Project>{6FFD872F-A4A4-4EFA-9B4D-4342BA6CF250}</Project>
-      <Name>ZeroMQ.VS</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.0,Profile=Client">
