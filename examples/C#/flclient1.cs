@@ -95,7 +95,6 @@ namespace Examples
 				}
 
 				var poll = ZPollItem.CreateReceiver();
-
 				ZError error;
 				ZMessage incoming;
 
