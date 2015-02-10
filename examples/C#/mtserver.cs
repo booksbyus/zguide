@@ -20,9 +20,9 @@ namespace ZeroMQ.Test
 
 			// Socket to talk to clients and
 			// Socket to talk to workers
-			using (var context = new ZContext())
-			using (var clients = new ZSocket(context, ZSocketType.ROUTER))
-			using (var workers = new ZSocket(context, ZSocketType.DEALER))
+			using (var ctx = new ZContext())
+			using (var clients = new ZSocket(ctx, ZSocketType.ROUTER))
+			using (var workers = new ZSocket(ctx, ZSocketType.DEALER))
 			{
 				clients.Bind("tcp://*:5555");
 				workers.Bind("inproc://workers");
@@ -30,8 +30,7 @@ namespace ZeroMQ.Test
 				// Launch pool of worker threads
 				for (int i = 0; i < 5; ++i)
 				{
-					var thread = new Thread(() => MTServer_Worker(context));
-					thread.Start();
+					new Thread(() => MTServer_Worker(ctx)).Start();
 				}
 
 				// Connect work threads to client threads via a queue proxy
@@ -39,10 +38,10 @@ namespace ZeroMQ.Test
 			}
 		}
 		
-		static void MTServer_Worker(ZContext context) 
+		static void MTServer_Worker(ZContext ctx) 
 		{
 			// Socket to talk to dispatcher
-			using (var server = new ZSocket(context, ZSocketType.REP))
+			using (var server = new ZSocket(ctx, ZSocketType.REP))
 			{
 				server.Connect("inproc://workers");
 
