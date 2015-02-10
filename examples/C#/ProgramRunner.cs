@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using System.Threading;
 
-namespace ZeroMQ.Test
+namespace Examples
 {
 	static class ProgramRunner
 	{

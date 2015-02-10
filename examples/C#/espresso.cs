@@ -7,7 +7,7 @@ using System.Security.Cryptography;
 
 using ZeroMQ;
 
-namespace ZeroMQ.Test
+namespace Examples
 {
 	static partial class Program
 	{

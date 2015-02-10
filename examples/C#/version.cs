@@ -7,7 +7,7 @@ using System.Threading;
 using ZeroMQ;
 using ZeroMQ.lib;
 
-namespace ZeroMQ.Test
+namespace Examples
 {
 	static partial class Program
 	{
