@@ -32,7 +32,7 @@ namespace ZeroMQ.Test
 				// Set identity to make tracing easier
 				client.Identity = Encoding.UTF8.GetBytes("CLIENT" + i);
 				// Connect
-				client.Connect("tcp://localhost:5570");
+				client.Connect("tcp://127.0.0.1:5570");
 
 				ZError error;
 				ZMessage incoming;
