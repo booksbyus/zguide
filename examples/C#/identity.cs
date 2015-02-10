@@ -31,7 +31,7 @@ namespace Examples
 				}
 				using (ZMessage msg = sink.ReceiveMessage())
 				{
-					Console_WriteZMessage(msg, "---");
+					Console_WriteZMessage("---", msg);
 				}
 
 				// Then set the identity ourselves
@@ -43,7 +43,7 @@ namespace Examples
 				}
 				using (ZMessage msg = sink.ReceiveMessage())
 				{
-					Console_WriteZMessage(msg, "---");
+					Console_WriteZMessage("---", msg);
 				}
 			}
 		}

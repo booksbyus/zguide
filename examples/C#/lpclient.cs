@@ -109,7 +109,7 @@ namespace Examples
 									}
 									else
 									{
-										Console_WriteZMessage(incoming, "E: malformed reply from server");
+										Console_WriteZMessage("E: malformed reply from server", incoming);
 									}
 								}
 							}
