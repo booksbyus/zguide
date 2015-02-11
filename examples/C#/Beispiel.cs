@@ -36,7 +36,7 @@ namespace Examples
 					Console.WriteLine( Client(ctx, arg) );
 				}
 
-				// Shutdown the Server
+				// Shutdown the ZContext
 				// ctx.Shutdown();
 				// Thread.Sleep(1);
 
