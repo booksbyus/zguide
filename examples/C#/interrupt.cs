@@ -25,6 +25,8 @@ namespace Examples
 
 			string name = args[0];
 
+			var error = default(ZError);
+
 			using (var context = new ZContext())
 			using (var responder = new ZSocket(context, ZSocketType.REP))
 			{
@@ -36,8 +38,8 @@ namespace Examples
 
 				responder.Bind("tcp://*:5555");
 
-				var error = ZError.None;
 				ZFrame request;
+
 				while (true)
 				{
 					if (Console.KeyAvailable)
@@ -72,14 +74,12 @@ namespace Examples
 						Thread.Sleep(512);	// See also the much slower reaction
 
 						Console.WriteLine(" Sending {0}... ", name);
-						using (var response = new ZFrame(name))
+
+						if (!responder.Send(new ZFrame(name), out error))
 						{
-							if (!responder.Send(response, out error))
-							{
-								if (error == ZError.ETERM)
-									break;	// Interrupted
-								throw new ZException(error);
-							}
+							if (error == ZError.ETERM)
+								break;	// Interrupted
+							throw new ZException(error);
 						}
 					}
 				}
