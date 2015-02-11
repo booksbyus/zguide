@@ -11,7 +11,7 @@ namespace Examples
 		public static void Beispiel(IDictionary<string, string> dict, string[] args)
 		{
 			//
-			// Simple REQ <=> REP
+			// Simple REQ-REP
 			//
 			// Author: metadings
 			//
