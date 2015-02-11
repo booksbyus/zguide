@@ -45,11 +45,12 @@ $interval = INTERVAL_INIT;
 //  Send out heartbeats at regular intervals
 $heartbeat_at = microtime(true) + HEARTBEAT_INTERVAL;
 $read = $write = array();
-$poll = new ZMQPoll();
-$poll->add($worker, ZMQ::POLL_IN);
 
 $cycles = 0;
 while (true) {
+    $poll = new ZMQPoll();
+    $poll->add($worker, ZMQ::POLL_IN);
+
     $events = $poll->poll($read, $write, HEARTBEAT_INTERVAL * 1000);
 
     if ($events) {
@@ -82,7 +83,7 @@ while (true) {
     } elseif (--$liveness == 0) {
         printf ("W: (%s) heartbeat failure, can't reach queue%s", $identity, PHP_EOL);
         printf ("W: (%s) reconnecting in %d msec...%s", $identity, $interval, PHP_EOL);
-        usleep ($interval * 1000 * 1000);
+        usleep ($interval * 1000);
 
         if ($interval < INTERVAL_MAX) {
             $interval *= 2;
