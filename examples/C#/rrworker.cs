@@ -29,10 +29,11 @@ namespace Examples
 				Console.WriteLine("    Endpoint  Where RRWorker should connect to.");
 				Console.WriteLine("              Default is tcp://127.0.0.1:5560");
 				Console.WriteLine();
-				if (args.Length < 1)
+				if (args.Length < 1) {
 					args = new string[] { "World", "tcp://127.0.0.1:5560" };
-				else
+				} else {
 					args = new string[] { args[0], "tcp://127.0.0.1:5560" };
+				}
 			}
 
 			string name = args[0];
@@ -51,16 +52,13 @@ namespace Examples
 					using (ZFrame request = responder.ReceiveFrame())
 					{
 						Console.Write("{0} ", request.ReadString());
-					}
 
-					// Do some 'work'
-					Thread.Sleep(1);
+						// Do some 'work'
+						Thread.Sleep(1);
 
-					// Send reply back to client
-					Console.WriteLine("{0}... ", name);
-					using (var reply = new ZFrame(name))
-					{
-						responder.Send(reply);
+						// Send reply back to client
+						Console.WriteLine("{0}... ", name);
+						responder.Send(new ZFrame(name));
 					}
 				}
 			}

@@ -36,12 +36,9 @@ namespace Examples
 				{
 					if (frontend.PollIn(poll, out message, out error, TimeSpan.FromMilliseconds(64)))
 					{
-						using (message)
-						{
-							// Process all parts of the message
-							Console_WriteZMessage("frontend", 2, message);
-							backend.Send(message);
-						}
+						// Process all parts of the message
+						Console_WriteZMessage("frontend", 2, message);
+						backend.Send(message);
 					}
 					else
 					{
