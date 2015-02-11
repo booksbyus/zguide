@@ -31,7 +31,7 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="ZeroMQ">
-      <HintPath>..\..\..\ZeroApp-Network\clrzmq\bin\Release\ZeroMQ.dll</HintPath>
+      <HintPath>..\..\..\ZeroApp-Network\clrzmq\bin\Debug\ZeroMQ.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -89,6 +89,7 @@
     <Compile Include="suisnail.cs" />
     <Compile Include="eagain.cs" />
     <Compile Include="Beispiel.cs" />
+    <Compile Include="Z85Encode.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
