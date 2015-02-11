@@ -6,7 +6,7 @@ using System.Threading;
 
 using ZeroMQ;
 
-namespace ZeroMQ.Test
+namespace Examples
 {
 	static partial class Program
 	{
@@ -40,10 +40,8 @@ namespace ZeroMQ.Test
 								Console.WriteLine(new ZException(error));
 								break;
 
-								/* Usually, when reaching EAGAIN you would do
-								error = ZError.None; // = default(ZError); // = null;
+								/* Usually when reaching EAGAIN, I would do
 								Thread.Sleep(1);
-
 								continue; /**/
 							}
 							if (error == ZError.ETERM)

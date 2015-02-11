@@ -6,7 +6,7 @@ using System.Threading;
 
 using ZeroMQ;
 
-namespace ZeroMQ.Test
+namespace Examples
 {
 	static partial class Program
 	{
@@ -31,7 +31,7 @@ namespace ZeroMQ.Test
 				}
 				using (ZMessage msg = sink.ReceiveMessage())
 				{
-					Console_WriteZMessage(msg, "---");
+					Console_WriteZMessage("---", msg);
 				}
 
 				// Then set the identity ourselves
@@ -43,7 +43,7 @@ namespace ZeroMQ.Test
 				}
 				using (ZMessage msg = sink.ReceiveMessage())
 				{
-					Console_WriteZMessage(msg, "---");
+					Console_WriteZMessage("---", msg);
 				}
 			}
 		}

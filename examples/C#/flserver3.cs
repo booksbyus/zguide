@@ -6,7 +6,7 @@ using System.Threading;
 
 using ZeroMQ;
 
-namespace ZeroMQ.Test
+namespace Examples
 {
 	static partial class Program
 	{
@@ -52,7 +52,7 @@ namespace ZeroMQ.Test
 
 						using (request)
 						{
-							if (Verbose) Console_WriteZMessage(request, "Receiving");
+							if (Verbose) Console_WriteZMessage("Receiving", request);
 
 							// Frame 0: identity of client
 							// Frame 1: PING, or client control frame
@@ -77,7 +77,7 @@ namespace ZeroMQ.Test
 
 						response.Prepend(identity);
 
-						if (Verbose) Console_WriteZMessage(response, "Sending  ");
+						if (Verbose) Console_WriteZMessage("Sending  ", response);
 						if (!server.Send(response, out error))
 						{
 							if (error == ZError.ETERM)

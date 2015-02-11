@@ -6,7 +6,7 @@ using System.Threading;
 
 using ZeroMQ;
 
-namespace ZeroMQ.Test
+namespace Examples
 {
 	using PP;
 
@@ -161,12 +161,12 @@ namespace ZeroMQ.Test
 								}
 								else
 								{
-									Console_WriteZMessage(incoming, "E: invalid message from worker");
+									Console_WriteZMessage("E: invalid message from worker", incoming);
 								}
 							}
 							else
 							{
-								if (Verbose) Console_WriteZMessage(incoming, "I: [backend sending to frontend] ({0})", worker.IdentityString);
+								if (Verbose) Console_WriteZMessage("I: [backend sending to frontend] ({0})", incoming, worker.IdentityString);
 								frontend.Send(incoming);
 							}
 						}
@@ -191,7 +191,7 @@ namespace ZeroMQ.Test
 								ZFrame workerIdentity = workers.Next();
 								incoming.Prepend(workerIdentity);
 
-								if (Verbose) Console_WriteZMessage(incoming, "I: [frontend sending to backend] ({0})", workerIdentity.ReadString());
+								if (Verbose) Console_WriteZMessage("I: [frontend sending to backend] ({0})", incoming, workerIdentity.ReadString());
 								backend.Send(incoming);
 							}
 						}

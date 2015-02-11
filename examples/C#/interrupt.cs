@@ -6,7 +6,7 @@ using System.Threading;
 
 using ZeroMQ;
 
-namespace ZeroMQ.Test
+namespace Examples
 {
 	static partial class Program
 	{
@@ -25,6 +25,8 @@ namespace ZeroMQ.Test
 
 			string name = args[0];
 
+			var error = default(ZError);
+
 			using (var context = new ZContext())
 			using (var responder = new ZSocket(context, ZSocketType.REP))
 			{
@@ -36,8 +38,8 @@ namespace ZeroMQ.Test
 
 				responder.Bind("tcp://*:5555");
 
-				var error = ZError.None;
 				ZFrame request;
+
 				while (true)
 				{
 					if (Console.KeyAvailable)
@@ -51,17 +53,15 @@ namespace ZeroMQ.Test
 						{
 							context.Shutdown();
 						}
-					} /**/
+					}
 
 					if (null == (request = responder.ReceiveFrame(ZSocketFlags.DontWait, out error)))
 					{
 						if (error == ZError.EAGAIN)
 						{
-							error = ZError.None;
 							Thread.Sleep(1);
-
 							continue;
-						} /**/
+						}
 						if (error == ZError.ETERM)
 							break;	// Interrupted
 						throw new ZException(error);
@@ -74,14 +74,12 @@ namespace ZeroMQ.Test
 						Thread.Sleep(512);	// See also the much slower reaction
 
 						Console.WriteLine(" Sending {0}... ", name);
-						using (var response = new ZFrame(name))
+
+						if (!responder.Send(new ZFrame(name), out error))
 						{
-							if (!responder.Send(response, out error))
-							{
-								if (error == ZError.ETERM)
-									break;	// Interrupted
-								throw new ZException(error);
-							}
+							if (error == ZError.ETERM)
+								break;	// Interrupted
+							throw new ZException(error);
 						}
 					}
 				}

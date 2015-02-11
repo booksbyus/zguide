@@ -6,7 +6,7 @@ using System.Threading;
 
 using ZeroMQ;
 
-namespace ZeroMQ.Test
+namespace Examples
 {
 	static partial class Program
 	{
@@ -95,7 +95,6 @@ namespace ZeroMQ.Test
 				}
 
 				var poll = ZPollItem.CreateReceiver();
-
 				ZError error;
 				ZMessage incoming;
 

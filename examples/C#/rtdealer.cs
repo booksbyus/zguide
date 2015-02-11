@@ -7,7 +7,7 @@ using System.Threading;
 
 using ZeroMQ;
 
-namespace ZeroMQ.Test
+namespace Examples
 {
 	static partial class Program
 	{
@@ -32,8 +32,7 @@ namespace ZeroMQ.Test
 
 				for (int i = 0; i < RTDealer_Workers; ++i)
 				{
-					int j = i;
-					new Thread(() => RTDealer_Worker(j)).Start();
+					int j = i; new Thread(() => RTDealer_Worker(j)).Start();
 				}
 
 				var stopwatch = new Stopwatch();
@@ -84,14 +83,14 @@ namespace ZeroMQ.Test
 					worker.Send(new ZFrame("Hi Boss"));	
 
 					// Get workload from broker, until finished
-					bool finished;
 					using (ZMessage msg = worker.ReceiveMessage())
 					{
-						finished = (msg[2].ReadString() == "Fired!");
-					}
-					if (finished)
-					{
-						break;
+						bool finished = (msg[2].ReadString() == "Fired!");
+
+						if (finished)
+						{
+							break;
+						}
 					}
 
 					total++;

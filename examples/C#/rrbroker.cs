@@ -6,7 +6,7 @@ using System.Threading;
 
 using ZeroMQ;
 
-namespace ZeroMQ.Test
+namespace Examples
 {
 	static partial class Program
 	{
@@ -19,9 +19,9 @@ namespace ZeroMQ.Test
 			//
 
 			// Prepare our context and sockets
-			using (var context = new ZContext())
-			using (var frontend = new ZSocket(context, ZSocketType.ROUTER))
-			using (var backend = new ZSocket(context, ZSocketType.DEALER))
+			using (var ctx = new ZContext())
+			using (var frontend = new ZSocket(ctx, ZSocketType.ROUTER))
+			using (var backend = new ZSocket(ctx, ZSocketType.DEALER))
 			{
 				frontend.Bind("tcp://*:5559");
 				backend.Bind("tcp://*:5560");
@@ -36,12 +36,9 @@ namespace ZeroMQ.Test
 				{
 					if (frontend.PollIn(poll, out message, out error, TimeSpan.FromMilliseconds(64)))
 					{
-						using (message)
-						{
-							// Process all parts of the message
-							Console_WriteZMessage(2, message, "frontend");
-							backend.Send(message);
-						}
+						// Process all parts of the message
+						Console_WriteZMessage("frontend", 2, message);
+						backend.Send(message);
 					}
 					else
 					{
@@ -54,7 +51,7 @@ namespace ZeroMQ.Test
 					if (backend.PollIn(poll, out message, out error, TimeSpan.FromMilliseconds(64)))
 					{
 						// Process all parts of the message
-						Console_WriteZMessage(2, message, " backend");
+						Console_WriteZMessage(" backend", 2, message);
 						frontend.Send(message);
 					}
 					else

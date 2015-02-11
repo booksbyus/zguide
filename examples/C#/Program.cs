@@ -6,7 +6,7 @@ using System.Threading;
 
 using ZeroMQ;
 
-namespace ZeroMQ.Test
+namespace Examples
 {
 	static partial class Program
 	{
@@ -14,7 +14,7 @@ namespace ZeroMQ.Test
 
 		public static bool Verbose = false;
 
-		static void Console_WriteZFrame(ZFrame frame, string format, params object[] data)
+		static void Console_WriteZFrame(string format, ZFrame frame, params object[] data)
 		{
 			var renderer = new StringBuilder();
 
@@ -42,12 +42,12 @@ namespace ZeroMQ.Test
 			Console.WriteLine(renderer.ToString(), list.ToArray());
 		}
 
-		static void Console_WriteZMessage(ZMessage message, string format, params object[] data)
+		static void Console_WriteZMessage(string format, ZMessage message, params object[] data)
 		{
-			Console_WriteZMessage(0, message, format, data);
+			Console_WriteZMessage(format, 0, message, data);
 		}
 
-		static void Console_WriteZMessage(int messagesNotToRead, ZMessage message, string format, params object[] data)
+		static void Console_WriteZMessage(string format, int messagesNotToRead, ZMessage message, params object[] data)
 		{
 			var renderer = new StringBuilder();
 

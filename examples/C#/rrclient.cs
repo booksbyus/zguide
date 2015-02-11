@@ -6,7 +6,7 @@ using System.Threading;
 
 using ZeroMQ;
 
-namespace ZeroMQ.Test
+namespace Examples
 {
 	static partial class Program
 	{
@@ -28,10 +28,7 @@ namespace ZeroMQ.Test
 
 				for (int n = 0; n < 10; ++n)
 				{
-					using (var request = new ZFrame("Hello"))
-					{
-						requester.Send(request);
-					}
+					requester.Send(new ZFrame("Hello"));
 
 					using (ZFrame reply = requester.ReceiveFrame())
 					{

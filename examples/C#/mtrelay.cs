@@ -6,7 +6,7 @@ using System.Threading;
 
 using ZeroMQ;
 
-namespace ZeroMQ.Test
+namespace Examples
 {
 	static partial class Program
 	{
@@ -19,13 +19,12 @@ namespace ZeroMQ.Test
 			//
 
 			// Bind inproc socket before starting step2
-			using (var context = new ZContext())
-			using (var receiver = new ZSocket(context, ZSocketType.PAIR))
+			using (var ctx = new ZContext())
+			using (var receiver = new ZSocket(ctx, ZSocketType.PAIR))
 			{
 				receiver.Bind("inproc://step3");
 
-				var thread = new Thread(() => MTRelay_step2(context));
-				thread.Start();
+				new Thread(() => MTRelay_step2(ctx)).Start();
 
 				// Wait for signal
 				receiver.ReceiveFrame();
@@ -34,22 +33,21 @@ namespace ZeroMQ.Test
 			}
 		}
 
-		static void MTRelay_step2(ZContext context)
+		static void MTRelay_step2(ZContext ctx)
 		{
 			// Bind inproc socket before starting step1
-			using (var receiver = new ZSocket(context, ZSocketType.PAIR))
+			using (var receiver = new ZSocket(ctx, ZSocketType.PAIR))
 			{
 				receiver.Bind("inproc://step2");
 
-				var thread = new Thread(() => MTRelay_step1(context));
-				thread.Start();
+				new Thread(() => MTRelay_step1(ctx)).Start();
 
 				// Wait for signal and pass it on
 				receiver.ReceiveFrame();
 			}
 
 			// Connect to step3 and tell it we're ready
-			using (var xmitter = new ZSocket(context, ZSocketType.PAIR))
+			using (var xmitter = new ZSocket(ctx, ZSocketType.PAIR))
 			{
 				xmitter.Connect("inproc://step3");
 
@@ -58,10 +56,10 @@ namespace ZeroMQ.Test
 			}
 		}
 
-		static void MTRelay_step1(ZContext context) 
+		static void MTRelay_step1(ZContext ctx) 
 		{
 			// Connect to step2 and tell it we're ready
-			using (var xmitter = new ZSocket(context, ZSocketType.PAIR))
+			using (var xmitter = new ZSocket(ctx, ZSocketType.PAIR))
 			{
 				xmitter.Connect("inproc://step2");
 

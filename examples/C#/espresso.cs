@@ -7,7 +7,7 @@ using System.Security.Cryptography;
 
 using ZeroMQ;
 
-namespace ZeroMQ.Test
+namespace Examples
 {
 	static partial class Program
 	{
@@ -52,12 +52,12 @@ namespace ZeroMQ.Test
 				publisher.Bind("tcp://*:6000");
 
 				ZError error;
-				var hash = new RNGCryptoServiceProvider();
 
 				while (true)
 				{
 					var bytes = new byte[5];
-					hash.GetBytes(bytes);
+
+					using (var hash = new RNGCryptoServiceProvider()) hash.GetBytes(bytes);
 
 					if (!publisher.Send(bytes, 0, bytes.Length, ZSocketFlags.None, out error))
 					{
@@ -66,7 +66,7 @@ namespace ZeroMQ.Test
 						throw new ZException(error);
 					}
 
-					Thread.Sleep(20);
+					Thread.Sleep(64);
 				}
 			}
 		}

@@ -7,7 +7,7 @@ using System.Threading;
 
 using ZeroMQ;
 
-namespace ZeroMQ.Test
+namespace Examples
 {
 	using FLCliApi;		// Lets us build this source without creating a library
 

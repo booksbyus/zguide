@@ -6,7 +6,7 @@ using System.Threading;
 
 using ZeroMQ;
 
-namespace ZeroMQ.Test
+namespace Examples
 {
 	static partial class Program
 	{
@@ -32,7 +32,7 @@ namespace ZeroMQ.Test
 				// Set identity to make tracing easier
 				client.Identity = Encoding.UTF8.GetBytes("CLIENT" + i);
 				// Connect
-				client.Connect("tcp://localhost:5570");
+				client.Connect("tcp://127.0.0.1:5570");
 
 				ZError error;
 				ZMessage incoming;
@@ -48,7 +48,7 @@ namespace ZeroMQ.Test
 						{
 							if (error == ZError.EAGAIN)
 							{
-								error = ZError.None;
+								Thread.Sleep(1);
 								continue;
 							}
 							if (error == ZError.ETERM)

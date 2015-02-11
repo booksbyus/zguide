@@ -6,7 +6,7 @@ using System.Threading;
 
 using ZeroMQ;
 
-namespace ZeroMQ.Test
+namespace Examples
 {
 	using PP;
 
@@ -100,7 +100,7 @@ namespace ZeroMQ.Test
 								// first:
 								if (incoming.Count >= 3)
 								{
-									Console_WriteZMessage(incoming, "I: receiving reply");
+									Console_WriteZMessage("I: receiving reply", incoming);
 
 									cycles++;
 									if (cycles > 3 && rnd.Next(5) == 0)
@@ -135,12 +135,12 @@ namespace ZeroMQ.Test
 									}
 									else
 									{
-										Console_WriteZMessage(incoming, "E: invalid message");
+										Console_WriteZMessage("E: invalid message", incoming);
 									}
 								}
 								else
 								{
-									Console_WriteZMessage(incoming, "E: invalid message");
+									Console_WriteZMessage("E: invalid message", incoming);
 								}
 							}
 							interval = Worker.PPP_INTERVAL_INIT;
