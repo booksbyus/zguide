@@ -39,7 +39,7 @@ namespace Examples
 						using (message)
 						{
 							// Process all parts of the message
-							Console_WriteZMessage(2, message, "frontend");
+							Console_WriteZMessage("frontend", 2, message);
 							backend.Send(message);
 						}
 					}
@@ -54,7 +54,7 @@ namespace Examples
 					if (backend.PollIn(poll, out message, out error, TimeSpan.FromMilliseconds(64)))
 					{
 						// Process all parts of the message
-						Console_WriteZMessage(2, message, " backend");
+						Console_WriteZMessage(" backend", 2, message);
 						frontend.Send(message);
 					}
 					else

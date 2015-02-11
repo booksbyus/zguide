@@ -44,10 +44,10 @@ namespace Examples
 
 		static void Console_WriteZMessage(string format, ZMessage message, params object[] data)
 		{
-			Console_WriteZMessage(0, message, format, data);
+			Console_WriteZMessage(format, 0, message, data);
 		}
 
-		static void Console_WriteZMessage(int messagesNotToRead, ZMessage message, string format, params object[] data)
+		static void Console_WriteZMessage(string format, int messagesNotToRead, ZMessage message, params object[] data)
 		{
 			var renderer = new StringBuilder();
 
