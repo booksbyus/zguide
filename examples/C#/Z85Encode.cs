@@ -37,7 +37,7 @@ namespace Examples
 
 			string txt = args[0];
 			string decoded = Z85.Decode(txt);
-			Console.WriteLine(decoded);
+			Console.WriteLine("{0}: {1}", txt, decoded);
 		}
 	}
 }
