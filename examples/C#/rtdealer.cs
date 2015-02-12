@@ -76,7 +76,6 @@ namespace Examples
 				worker.Connect("tcp://127.0.0.1:5671");
 
 				int total = 0;
-
 				while (true)
 				{
 					// Tell the broker we're ready for work
@@ -98,7 +97,7 @@ namespace Examples
 					total++;
 
 					// Do some random work
-					Thread.Sleep(64);
+					Thread.Sleep(1);
 				}
 
 				Console.WriteLine("Completed: PEER{0}, {1} tasks", i, total);
