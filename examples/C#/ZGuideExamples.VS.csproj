@@ -53,14 +53,15 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="ZeroMQ, Version=4.1.0.384, Culture=neutral, PublicKeyToken=4a9630883fd6c563, processorArchitecture=MSIL">
+    <Reference Include="ZeroMQ, Version=4.1.0.7528, Culture=neutral, PublicKeyToken=4a9630883fd6c563, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\ZeroApp-Network\ZeroMQ\bin\Release\ZeroMQ.dll</HintPath>
+      <HintPath>..\..\..\ZeroApp-Network\ZeroMQ\bin\Debug\ZeroMQ.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="asyncsrv.cs" />
+    <Compile Include="Beispiel.cs" />
     <Compile Include="eagain.cs" />
     <Compile Include="espresso.cs" />
     <Compile Include="flcliapi.cs" />
@@ -112,6 +113,7 @@
     <Compile Include="wuclient.cs" />
     <Compile Include="wuproxy.cs" />
     <Compile Include="wuserver.cs" />
+    <Compile Include="Z85Encode.cs" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.0,Profile=Client">
@@ -134,6 +136,9 @@
       <ProductName>Windows Installer 3.1</ProductName>
       <Install>true</Install>
     </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
