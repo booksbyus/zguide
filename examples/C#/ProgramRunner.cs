@@ -143,8 +143,8 @@ namespace Examples
 			}
 			catch (TException te)
 			{
-				/* if (te.InnerException == null)
-					throw;
+				if (te.InnerException == null)
+					throw te;
 
 				Exception innerException = te.InnerException;
 
@@ -153,8 +153,8 @@ namespace Examples
 
 				throw innerException; // -- now we can re-throw without trashing the stack /**/
 
-				PreserveStackTrace(te);
-				throw te;
+				// PreserveStackTrace(te);
+				// throw te;
 			}
 		}
 

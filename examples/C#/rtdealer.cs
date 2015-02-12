@@ -56,6 +56,7 @@ namespace Examples
 						else
 						{
 							broker.Send(new ZFrame("Fired!"));
+
 							if (++workers_fired == RTDealer_Workers)
 							{
 								break;
@@ -75,17 +76,18 @@ namespace Examples
 				worker.Connect("tcp://127.0.0.1:5671");
 
 				int total = 0;
+
 				while (true)
 				{
 					// Tell the broker we're ready for work
-					worker.SendMore(new ZFrame(worker.Identity));
+					worker.SendMore(new ZFrame(worker.Identity));	
 					worker.SendMore(new ZFrame());
 					worker.Send(new ZFrame("Hi Boss"));	
 
 					// Get workload from broker, until finished
 					using (ZMessage msg = worker.ReceiveMessage())
 					{
-						bool finished = (msg[2].ReadString() == "Fired!");
+						bool finished = (msg.Count > 2 && msg[2].ReadString() == "Fired!");
 
 						if (finished)
 						{
@@ -96,7 +98,7 @@ namespace Examples
 					total++;
 
 					// Do some random work
-					Thread.Sleep(1);
+					Thread.Sleep(64);
 				}
 
 				Console.WriteLine("Completed: PEER{0}, {1} tasks", i, total);
