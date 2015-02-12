@@ -87,7 +87,7 @@ namespace Examples
 					// Get workload from broker, until finished
 					using (ZMessage msg = worker.ReceiveMessage())
 					{
-						bool finished = (msg.Count > 2 && msg[2].ReadString() == "Fired!");
+						bool finished = (msg[1].ReadString() == "Fired!");
 
 						if (finished)
 						{
