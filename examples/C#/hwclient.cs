@@ -23,7 +23,7 @@ namespace Examples
 				Console.WriteLine();
 				Console.WriteLine("Usage: ./{0} HWClient [Endpoint]", AppDomain.CurrentDomain.FriendlyName);
 				Console.WriteLine();
-				Console.WriteLine("    Endpoint  Where WUClient should connect to.");
+				Console.WriteLine("    Endpoint  Where HWClient should connect to.");
 				Console.WriteLine("              Default is tcp://127.0.0.1:5555");
 				Console.WriteLine();
 				args = new string[] { "tcp://127.0.0.1:5555" };
