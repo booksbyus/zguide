@@ -46,7 +46,7 @@ namespace Examples
 			return worker;
 		}
 
-		public static void PPWorker(IDictionary<string, string> dict, string[] args)
+		public static void PPWorker(string[] args)
 		{
 			if (args == null || args.Length == 0)
 			{

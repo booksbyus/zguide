@@ -162,7 +162,7 @@ namespace Examples
 			}
 		}
 
-		public static void AsyncSrv(IDictionary<string, string> dict, string[] args)
+		public static void AsyncSrv(string[] args)
 		{
 			// The main thread simply starts several clients and a server, and then
 			// waits for the server to finish.

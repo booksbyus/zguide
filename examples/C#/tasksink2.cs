@@ -11,7 +11,7 @@ namespace Examples
 {
 	static partial class Program
 	{
-		public static void TaskSink2(IDictionary<string, string> dict, string[] args)
+		public static void TaskSink2(string[] args)
 		{
 			//
 			// Task sink - design 2

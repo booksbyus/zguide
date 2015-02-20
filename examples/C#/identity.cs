@@ -10,7 +10,7 @@ namespace Examples
 {
 	static partial class Program
 	{
-		public static void Identity(IDictionary<string, string> dict, string[] args)
+		public static void Identity(string[] args)
 		{
 			//
 			// Demonstrate request-reply identities

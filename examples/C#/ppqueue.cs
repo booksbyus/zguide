@@ -115,7 +115,7 @@ namespace Examples
 
 	static partial class Program
 	{
-		public static void PPQueue(IDictionary<string, string> dict, string[] args)
+		public static void PPQueue(string[] args)
 		{
 			using (var context = new ZContext())
 			using (var backend = new ZSocket(context, ZSocketType.ROUTER))

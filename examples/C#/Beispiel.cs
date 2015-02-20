@@ -8,7 +8,7 @@ namespace Examples
 {
 	public partial class Program
 	{
-		public static void Beispiel(IDictionary<string, string> dict, string[] args)
+		public static void Beispiel(string[] args)
 		{
 			//
 			// Simple REQ-REP

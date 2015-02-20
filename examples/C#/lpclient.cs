@@ -37,7 +37,7 @@ namespace Examples
 			return requester;
 		}
 
-		public static void LPClient(IDictionary<string, string> dict, string[] args)
+		public static void LPClient(string[] args)
 		{
 			if (args == null || args.Length < 1)
 			{

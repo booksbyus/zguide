@@ -13,7 +13,7 @@ namespace Examples
 	{
 		static int RTReq_Workers = 10;
 
-		public static void RTReq(IDictionary<string, string> dict, string[] args)
+		public static void RTReq(string[] args)
 		{
 			//
 			// ROUTER-to-REQ example

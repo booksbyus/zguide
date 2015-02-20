@@ -10,7 +10,7 @@ namespace Examples
 {
 	static partial class Program
 	{
-		public static void SyncSub(IDictionary<string, string> dict, string[] args)
+		public static void SyncSub(string[] args)
 		{
 			//
 			// Synchronized subscriber

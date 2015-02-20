@@ -10,7 +10,7 @@ namespace Examples
 {
 	static partial class Program
 	{
-		public static void TaskVent(IDictionary<string, string> dict, string[] args)
+		public static void TaskVent(string[] args)
 		{
 			//
 			// Task ventilator

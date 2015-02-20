@@ -12,7 +12,7 @@ namespace Examples
 {
 	static partial class Program
 	{
-		public static void WUProxy(IDictionary<string, string> dict, string[] args)
+		public static void WUProxy(string[] args)
 		{
 			//
 			// Weather proxy device

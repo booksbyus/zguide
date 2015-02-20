@@ -10,7 +10,7 @@ namespace Examples
 {
 	static partial class Program
 	{
-		public static void HWClient(IDictionary<string, string> dict, string[] args)
+		public static void HWClient(string[] args)
 		{
 			//
 			// Hello World client

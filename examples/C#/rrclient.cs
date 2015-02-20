@@ -10,7 +10,7 @@ namespace Examples
 {
 	static partial class Program
 	{
-		public static void RRClient(IDictionary<string, string> dict, string[] args)
+		public static void RRClient(string[] args)
 		{
 			//
 			// Hello World client

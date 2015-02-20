@@ -70,16 +70,35 @@ namespace Examples
 				if (method != null)
 				{
 
+					ParameterInfo[] methodParameters = method.GetParameters();
+
+					object[] parameters;
+
+					if (methodParameters.Length == 2)
+					{
+						parameters = new object[] { 
+							dict,
+							args.Skip(1 + leaveOut).ToArray() /* string[] args */
+						};
+					}
+					else if (methodParameters.Length == 1)
+					{
+						parameters = new object[] { 
+							args.Skip(1 + leaveOut).ToArray() /* string[] args */
+						};
+					}
+					else
+					{
+						throw new InvalidOperationException();
+					}
+
 					// INFO: Invoking the Sample by "the Delegate.Invoke" makes it hard to debug!
 					// Using DebugInvoke
 					object result
 						= DebugStackTrace<TargetInvocationException>.Invoke(
 							method,
 							null,
-							new object[] { 
-                                dict,
-							    args.Skip(1 + leaveOut).ToArray() /* string[] args */
-					        });
+							parameters);
 
 					if (method.ReturnType == typeof(bool) && true == (bool)result)
 					{

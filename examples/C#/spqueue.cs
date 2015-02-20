@@ -10,7 +10,7 @@ namespace Examples
 {
 	static partial class Program
 	{
-		public static void SPQueue(IDictionary<string, string> dict, string[] args)
+		public static void SPQueue(string[] args)
 		{
 			//
 			// Simple Pirate broker

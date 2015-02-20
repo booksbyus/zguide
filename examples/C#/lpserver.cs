@@ -20,7 +20,7 @@ namespace Examples
 		// Author: metadings
 		//
 
-		public static void LPServer(IDictionary<string, string> dict, string[] args)
+		public static void LPServer(string[] args)
 		{
 			using (var context = new ZContext())
 			using (var responder = new ZSocket(context, ZSocketType.REP))

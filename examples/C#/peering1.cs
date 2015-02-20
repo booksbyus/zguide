@@ -17,7 +17,7 @@ namespace Examples
 		// Author: metadings
 		//
 
-		public static void Peering1(IDictionary<string, string> dict, string[] args)
+		public static void Peering1(string[] args)
 		{
 			// First argument is this broker's name
 			// Other arguments are our peers' names

@@ -11,7 +11,7 @@ namespace Examples
 {
 	static partial class Program
 	{
-		public static void Version(IDictionary<string, string> dict, string[] args)
+		public static void Version(string[] args)
 		{
 			//
 			// Report 0MQ version

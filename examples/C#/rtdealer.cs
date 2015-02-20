@@ -13,7 +13,7 @@ namespace Examples
 	{
 		static int RTDealer_Workers = 10;
 
-		public static void RTDealer(IDictionary<string, string> dict, string[] args)
+		public static void RTDealer(string[] args)
 		{
 			//
 			// ROUTER-to-DEALER example

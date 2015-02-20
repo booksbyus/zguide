@@ -10,7 +10,7 @@ namespace Examples
 {
 	static partial class Program
 	{
-		public static void PathoSub(IDictionary<string, string> dict, string[] args)
+		public static void PathoSub(string[] args)
 		{
 			//
 			// Pathological subscriber

@@ -10,7 +10,7 @@ namespace Examples
 {
 	static partial class Program
 	{
-		public static void Interrupt(IDictionary<string, string> dict, string[] args)
+		public static void Interrupt(string[] args)
 		{
 			//
 			// Interrupt
