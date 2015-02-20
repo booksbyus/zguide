@@ -10,7 +10,7 @@ namespace Examples
 {
 	static partial class Program
 	{
-		public static void RRBroker(IDictionary<string, string> dict, string[] args)
+		public static void RRBroker(string[] args)
 		{
 			//
 			// Simple request-reply broker

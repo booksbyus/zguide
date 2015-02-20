@@ -10,7 +10,7 @@ namespace Examples
 {
 	static partial class Program
 	{
-		public static void EAgain(IDictionary<string, string> dict, string[] args)
+		public static void EAgain(string[] args)
 		{
 			//
 			// Shows how to provoke EAGAIN when reaching HWM

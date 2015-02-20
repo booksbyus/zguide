@@ -10,7 +10,7 @@ namespace Examples
 {
 	static partial class Program
 	{
-		public static void PSEnvSub(IDictionary<string, string> dict, string[] args)
+		public static void PSEnvSub(string[] args)
 		{
 			//
 			// Pubsub envelope subscriber

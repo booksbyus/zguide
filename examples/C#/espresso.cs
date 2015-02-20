@@ -11,7 +11,7 @@ namespace Examples
 {
 	static partial class Program
 	{
-		public static void Espresso(IDictionary<string, string> dict, string[] args)
+		public static void Espresso(string[] args)
 		{
 			//
 			// Espresso Pattern

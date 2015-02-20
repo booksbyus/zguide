@@ -10,7 +10,7 @@ namespace Examples
 {
 	static partial class Program
 	{
-		public static void FLServer1(IDictionary<string, string> dict, string[] args)
+		public static void FLServer1(string[] args)
 		{
 			//
 			// Freelance server - Model 1

@@ -18,7 +18,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Externalconsole>true</Externalconsole>
-    <Commandlineparameters>FLClient2 tcp://127.0.0.1:7000</Commandlineparameters>
+    <Commandlineparameters>RTDealer</Commandlineparameters>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>full</DebugType>
@@ -88,7 +88,6 @@
     <Compile Include="lvcache.cs" />
     <Compile Include="suisnail.cs" />
     <Compile Include="eagain.cs" />
-    <Compile Include="Beispiel.cs" />
     <Compile Include="Z85Encode.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

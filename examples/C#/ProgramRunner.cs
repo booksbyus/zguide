@@ -70,16 +70,35 @@ namespace Examples
 				if (method != null)
 				{
 
+					ParameterInfo[] methodParameters = method.GetParameters();
+
+					object[] parameters;
+
+					if (methodParameters.Length == 2)
+					{
+						parameters = new object[] { 
+							dict,
+							args.Skip(1 + leaveOut).ToArray() /* string[] args */
+						};
+					}
+					else if (methodParameters.Length == 1)
+					{
+						parameters = new object[] { 
+							args.Skip(1 + leaveOut).ToArray() /* string[] args */
+						};
+					}
+					else
+					{
+						throw new InvalidOperationException();
+					}
+
 					// INFO: Invoking the Sample by "the Delegate.Invoke" makes it hard to debug!
 					// Using DebugInvoke
 					object result
 						= DebugStackTrace<TargetInvocationException>.Invoke(
 							method,
 							null,
-							new object[] { 
-                                dict,
-							    args.Skip(1 + leaveOut).ToArray() /* string[] args */
-					        });
+							parameters);
 
 					if (method.ReturnType == typeof(bool) && true == (bool)result)
 					{
@@ -143,8 +162,8 @@ namespace Examples
 			}
 			catch (TException te)
 			{
-				/* if (te.InnerException == null)
-					throw;
+				if (te.InnerException == null)
+					throw te;
 
 				Exception innerException = te.InnerException;
 
@@ -153,11 +172,12 @@ namespace Examples
 
 				throw innerException; // -- now we can re-throw without trashing the stack /**/
 
-				PreserveStackTrace(te);
-				throw te;
+				// PreserveStackTrace(te);
+				// throw te;
 			}
 		}
 
+		// http://stackoverflow.com/a/2085377/1352471 (Anton Tykhyy on In C#, how can I rethrow InnerException without losing stack trace?)
 		static void PreserveStackTrace(Exception e)
 		{
 			var ctx = new StreamingContext(StreamingContextStates.CrossAppDomain);

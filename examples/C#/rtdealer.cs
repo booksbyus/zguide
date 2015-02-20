@@ -13,7 +13,7 @@ namespace Examples
 	{
 		static int RTDealer_Workers = 10;
 
-		public static void RTDealer(IDictionary<string, string> dict, string[] args)
+		public static void RTDealer(string[] args)
 		{
 			//
 			// ROUTER-to-DEALER example
@@ -56,6 +56,7 @@ namespace Examples
 						else
 						{
 							broker.Send(new ZFrame("Fired!"));
+
 							if (++workers_fired == RTDealer_Workers)
 							{
 								break;
@@ -78,14 +79,14 @@ namespace Examples
 				while (true)
 				{
 					// Tell the broker we're ready for work
-					worker.SendMore(new ZFrame(worker.Identity));
+					worker.SendMore(new ZFrame(worker.Identity));	
 					worker.SendMore(new ZFrame());
 					worker.Send(new ZFrame("Hi Boss"));	
 
 					// Get workload from broker, until finished
 					using (ZMessage msg = worker.ReceiveMessage())
 					{
-						bool finished = (msg[2].ReadString() == "Fired!");
+						bool finished = (msg[1].ReadString() == "Fired!");
 
 						if (finished)
 						{

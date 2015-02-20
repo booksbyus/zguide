@@ -105,7 +105,7 @@ namespace Examples
 			}
 		}
 
-		public static void SuiSnail(IDictionary<string, string> dict, string[] args)
+		public static void SuiSnail(string[] args)
 		{
 			// The main task simply starts a client and a server, and then
 			// waits for the client to signal that it has died:

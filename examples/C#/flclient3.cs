@@ -14,7 +14,7 @@ namespace Examples
 	static partial class Program
 	{
 
-		public static void FLClient3(IDictionary<string, string> dict, string[] args)
+		public static void FLClient3(string[] args)
 		{
 			//
 			// Freelance client - Model 3

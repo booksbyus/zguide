@@ -10,7 +10,7 @@ namespace Examples
 {
 	static partial class Program
 	{
-		public static void TaskWork(IDictionary<string, string> dict, string[] args)
+		public static void TaskWork(string[] args)
 		{
 			//
 			// Task worker

@@ -10,7 +10,7 @@ namespace Examples
 {
 	static partial class Program
 	{
-		public static void HWClient(IDictionary<string, string> dict, string[] args)
+		public static void HWClient(string[] args)
 		{
 			//
 			// Hello World client
@@ -18,12 +18,25 @@ namespace Examples
 			// Author: metadings
 			//
 
+			if (args == null || args.Length < 1)
+			{
+				Console.WriteLine();
+				Console.WriteLine("Usage: ./{0} HWClient [Endpoint]", AppDomain.CurrentDomain.FriendlyName);
+				Console.WriteLine();
+				Console.WriteLine("    Endpoint  Where HWClient should connect to.");
+				Console.WriteLine("              Default is tcp://127.0.0.1:5555");
+				Console.WriteLine();
+				args = new string[] { "tcp://127.0.0.1:5555" };
+			}
+
+			string endpoint = args[0];
+
 			// Create
 			using (var context = new ZContext())
 			using (var requester = new ZSocket(context, ZSocketType.REQ))
 			{
 				// Connect
-				requester.Connect("tcp://127.0.0.1:5555");
+				requester.Connect(endpoint);
 
 				for (int n = 0; n < 10; ++n)
 				{
@@ -31,10 +44,7 @@ namespace Examples
 					Console.Write("Sending {0}...", requestText);
 
 					// Send
-					using (var request = new ZFrame(requestText)) 
-					{
-						requester.Send(request);
-					}
+					requester.Send(new ZFrame(requestText));
 
 					// Receive
 					using (ZFrame reply = requester.ReceiveFrame()) 

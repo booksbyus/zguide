@@ -13,7 +13,7 @@ namespace Examples
 	{
 		static int RTReq_Workers = 10;
 
-		public static void RTReq(IDictionary<string, string> dict, string[] args)
+		public static void RTReq(string[] args)
 		{
 			//
 			// ROUTER-to-REQ example
@@ -32,8 +32,7 @@ namespace Examples
 
 				for (int i = 0; i < RTReq_Workers; ++i)
 				{
-					int j = i;
-					new Thread(() => RTReq_Worker(j)).Start();
+					int j = i; new Thread(() => RTReq_Worker(j)).Start();
 				}
 
 				var stopwatch = new Stopwatch();
@@ -57,6 +56,7 @@ namespace Examples
 						else
 						{
 							broker.Send(new ZFrame("Fired!"));
+
 							if (++workers_fired == RTReq_Workers)
 							{
 								break;

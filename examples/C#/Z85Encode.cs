@@ -8,7 +8,7 @@ namespace Examples
 {
 	public partial class Program
 	{
-		public static void Z85Encode(IDictionary<string, string> dict, string[] args)
+		public static void Z85Encode(string[] args)
 		{
 			//
 			// Author: metadings
@@ -24,7 +24,7 @@ namespace Examples
 			Console.WriteLine("{0}: {1}", txt, encoded);
 		}
 
-		public static void Z85Decode(IDictionary<string, string> dict, string[] args)
+		public static void Z85Decode(string[] args)
 		{
 			//
 			// Author: metadings

@@ -109,7 +109,7 @@ namespace Examples
 
 		// The main task begins by setting-up its frontend and backend sockets
 		// and then starting its client and worker tasks:
-		public static void Peering2(IDictionary<string, string> dict, string[] args)
+		public static void Peering2(string[] args)
 		{
 			// First argument is this broker's name
 			// Other arguments are our peers' names

@@ -10,7 +10,7 @@ namespace Examples
 {
 	static partial class Program
 	{
-		public static void MTServer(IDictionary<string, string> dict, string[] args)
+		public static void MTServer(string[] args)
 		{
 			//
 			// Multithreaded Hello World server

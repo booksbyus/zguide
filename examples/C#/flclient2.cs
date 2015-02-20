@@ -157,7 +157,7 @@ namespace Examples
 
 	static partial class Program
 	{
-		public static void FLClient2(IDictionary<string, string> dict, string[] args)
+		public static void FLClient2(string[] args)
 		{
 			if (args == null || args.Length < 1)
 			{

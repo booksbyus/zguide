@@ -14,7 +14,7 @@ namespace Examples
 
 		static int FLClient1_MAX_RETRIES = 3;	// Before we abandon
 
-		public static void FLClient1(IDictionary<string, string> dict, string[] args)
+		public static void FLClient1(string[] args)
 		{
 			//
 			// Freelance client - Model 1

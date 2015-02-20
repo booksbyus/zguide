@@ -10,7 +10,7 @@ namespace Examples
 {
 	static partial class Program
 	{
-		public static void LVCache(IDictionary<string, string> dict, string[] args)
+		public static void LVCache(string[] args)
 		{
 			//
 			// Last value cache

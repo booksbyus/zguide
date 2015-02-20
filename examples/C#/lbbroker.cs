@@ -109,7 +109,7 @@ namespace Examples
 			}
 		}
 
-		public static void LBBroker(IDictionary<string, string> dict, string[] args)
+		public static void LBBroker(string[] args)
 		{
 			// This is the main task. It starts the clients and workers, and then
 			// routes requests between the two layers. Workers signal READY when

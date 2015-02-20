@@ -10,7 +10,7 @@ namespace Examples
 {
 	static partial class Program
 	{
-		public static void SPWorker(IDictionary<string, string> dict, string[] args)
+		public static void SPWorker(string[] args)
 		{
 			//
 			// Simple Pirate worker

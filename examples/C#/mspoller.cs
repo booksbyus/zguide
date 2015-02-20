@@ -10,7 +10,7 @@ namespace Examples
 {
 	static partial class Program
 	{
-		public static void MSPoller(IDictionary<string, string> dict, string[] args)
+		public static void MSPoller(string[] args)
 		{
 			//
 			// Reading from multiple sockets

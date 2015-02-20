@@ -12,7 +12,7 @@ namespace Examples
 	{
 		const int SyncPub_SubscribersExpected = 3;	// We wait for 3 subscribers
 
-		public static void SyncPub(IDictionary<string, string> dict, string[] args)
+		public static void SyncPub(string[] args)
 		{
 			//
 			// Synchronized publisher

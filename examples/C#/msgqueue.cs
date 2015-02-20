@@ -10,7 +10,7 @@ namespace Examples
 {
 	static partial class Program
 	{
-		public static void MsgQueue(IDictionary<string, string> dict, string[] args)
+		public static void MsgQueue(string[] args)
 		{
 			//
 			// Simple message queuing broker
