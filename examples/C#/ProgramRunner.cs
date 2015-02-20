@@ -177,6 +177,7 @@ namespace Examples
 			}
 		}
 
+		// http://stackoverflow.com/a/2085377/1352471 (Anton Tykhyy on In C#, how can I rethrow InnerException without losing stack trace?)
 		static void PreserveStackTrace(Exception e)
 		{
 			var ctx = new StreamingContext(StreamingContextStates.CrossAppDomain);
