@@ -30,6 +30,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="ZeroMQ">
+      <HintPath>..\..\..\ZeroApp-Network\clrzmq\bin\Debug\ZeroMQ.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Program.cs" />
@@ -91,11 +94,5 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
     <None Include="README.md" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\ZeroApp-Network\clrzmq\ZeroMQ.mono.csproj">
-      <Project>{6FFD872F-A4A4-4EFA-9B4D-4342BA6CF250}</Project>
-      <Name>ZeroMQ.mono</Name>
-    </ProjectReference>
   </ItemGroup>
 </Project>
