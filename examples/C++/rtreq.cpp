@@ -15,7 +15,13 @@ worker_thread (void *arg) {
     
     //  We use a string identity for ease here
     s_set_id (worker);
+    
+    // "ipc" doesn't yet work on windows.
+#if (defined(_WIN32))
+    worker.connect("tcp://localhost:5671");
+#else
     worker.connect("ipc://routing.ipc");
+#endif
 
     int total = 0;
     while (1) {
@@ -41,7 +47,13 @@ worker_thread (void *arg) {
 int main () {
     zmq::context_t context(1);
     zmq::socket_t client (context, ZMQ_ROUTER);
+    
+    // "ipc" doesn't yet work on windows.
+#if (defined(_WIN32))
+    client.bind("tcp://*:5671");
+#else
     client.bind("ipc://routing.ipc");
+#endif
 
     int worker_nbr;
     for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++) {
