@@ -7,14 +7,27 @@
 
 #define NBR_WORKERS 10
 
+// We can not call s_set_id from multiple threads, so define a new one for this example.
+// See issue #521.
+static std::string
+set_identity(zmq::socket_t & socket, int id)
+{
+    std::stringstream ss;
+    ss << std::hex << std::uppercase
+        << std::setw(4) << std::setfill('0') << id;
+    socket.setsockopt(ZMQ_IDENTITY, ss.str().c_str(), ss.str().length());
+    return ss.str();
+}
+
 static void *
 worker_thread (void *arg) {
-
-    zmq::context_t * context = (zmq::context_t *)arg;
-    zmq::socket_t worker (*context, ZMQ_REQ);
+    int id = (int)arg;
+    
+    zmq::context_t context(1);
+    zmq::socket_t worker (context, ZMQ_REQ);
     
     //  We use a string identity for ease here
-    s_set_id (worker);
+    set_identity(worker, id); // See issue #521.
     
     // "ipc" doesn't yet work on windows.
 #if (defined(_WIN32))
@@ -58,7 +71,7 @@ int main () {
     int worker_nbr;
     for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++) {
         pthread_t worker;
-        pthread_create (&worker, NULL, worker_thread, &context);
+        pthread_create (&worker, NULL, worker_thread, (void *)worker_nbr);
     }
     int task_nbr;
     for (task_nbr = 0; task_nbr < NBR_WORKERS * 10; task_nbr++) {
@@ -89,6 +102,6 @@ int main () {
         s_sendmore (client, "");
         s_send (client, "END");
     }
-    sleep (1);              //  Give 0MQ/2.0.x time to flush output
+    s_sleep (1);              //  Give 0MQ/2.0.x time to flush output
     return 0;
 }
