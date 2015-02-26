@@ -2,14 +2,27 @@
 
 #include "zhelpers.h"
 #include <pthread.h>
+
 #define NBR_WORKERS 10
+
+// We can not call s_set_id from multiple threads, so define a new one for this example.
+// See issue #521.
+static void
+set_identity(void *socket, int id)
+{
+    char identity[10];
+    sprintf(identity, "%04X", id);
+    zmq_setsockopt(socket, ZMQ_IDENTITY, identity, strlen(identity));
+}
 
 static void *
 worker_task (void *args)
 {
+    int id = (int)args;
+    
     void *context = zmq_ctx_new ();
     void *worker = zmq_socket (context, ZMQ_REQ);
-    s_set_id (worker);          //  Set a printable identity
+    set_identity(worker, id);          //  Set a printable identity. See issue #521.
     zmq_connect (worker, "tcp://localhost:5671");
 
     int total = 0;
@@ -51,7 +64,7 @@ int main (void)
     int worker_nbr;
     for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++) {
         pthread_t worker;
-        pthread_create (&worker, NULL, worker_task, NULL);
+        pthread_create (&worker, NULL, worker_task, (void *)worker_nbr);
     }
     //  Run for five seconds and then tell workers to end
     int64_t end_time = s_clock () + 5000;
