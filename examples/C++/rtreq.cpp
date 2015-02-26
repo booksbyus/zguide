@@ -3,14 +3,18 @@
 //
 // Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
 
+// g++ -pthread -lzmq -std=c++0x rtreq.cpp -o rtreq.out
+
 #include "zhelpers.hpp"
+
+#include <cstdint>
 
 #define NBR_WORKERS 10
 
 // We can not call s_set_id from multiple threads, so define a new one for this example.
 // See issue #521.
 static std::string
-set_identity(zmq::socket_t & socket, int id)
+set_identity(zmq::socket_t & socket, std::intptr_t id)
 {
     std::stringstream ss;
     ss << std::hex << std::uppercase
@@ -21,7 +25,7 @@ set_identity(zmq::socket_t & socket, int id)
 
 static void *
 worker_thread (void *arg) {
-    int id = (int)arg;
+    intptr_t id = (intptr_t)arg;
     
     zmq::context_t context(1);
     zmq::socket_t worker (context, ZMQ_REQ);
