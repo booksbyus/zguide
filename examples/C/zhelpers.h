@@ -112,7 +112,10 @@ s_dump (void *socket)
 }
 
 //  Set simple random printable identity on socket
-//
+//  Caution:
+//    DO NOT call s_set_id from multiple threads on MS Windows since s_set_id
+//    will call rand() on MS Windows. rand(), however, is not reentrant or 
+//    thread-safe. See issue #521.
 static void
 s_set_id (void *socket)
 {

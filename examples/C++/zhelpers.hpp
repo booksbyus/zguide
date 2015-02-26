@@ -135,7 +135,10 @@ s_dump (zmq::socket_t & socket)
 }
 
 //  Set simple random printable identity on socket
-//
+//  Caution:
+//    DO NOT call s_set_id from multiple threads on MS Windows since s_set_id
+//    will call rand() on MS Windows. rand(), however, is not reentrant or 
+//    thread-safe. See issue #521.
 inline std::string
 s_set_id (zmq::socket_t & socket)
 {
