@@ -52,12 +52,16 @@
     typedef __int64 int64_t;
 #endif
 
-//  Provide random number from 0..(num-1)
-#if (!defined(_WIN32))
-#define within(num) (int) ((float) (num) * random () / (RAND_MAX + 1.0))
-#else
-#define within(num) (int) ((float) (num) * rand () / (RAND_MAX + 1.0))
+//  On some version of Windows, POSIX subsystem is not installed by default.
+//  So define srandom and random ourself.
+//  
+#if (defined (WIN32))
+#   define srandom srand
+#   define random rand
 #endif
+
+//  Provide random number from 0..(num-1)
+#define within(num) (int) ((float) (num) * random () / (RAND_MAX + 1.0))
 
 //  Receive 0MQ string from socket and convert into string
 static std::string
