@@ -26,18 +26,13 @@
 
 //  Include a bunch of headers that we will need in the examples
 
-#include <zmq.hpp>
+#include <zmq.hpp> // https://github.com/zeromq/cppzmq
 
 #include <iostream>
 #include <iomanip>
 #include <string>
 #include <sstream>
 
-#if (!defined(_WIN32))
-#include <sys/time.h>
-#include <unistd.h>
-#include <pthread.h>
-#endif
 #include <time.h>
 #include <assert.h>
 #include <stdlib.h>        // random()  RAND_MAX
@@ -45,8 +40,13 @@
 #include <stdarg.h>
 #include <signal.h>
 
+#if (!defined(WIN32))
+#   include <sys/time.h>
+#   include <unistd.h>
+#endif
+
 //  Bring Windows MSVC up to C99 scratch
-#if (defined (_WIN32))
+#if (defined (WIN32))
     typedef unsigned long ulong;
     typedef unsigned int  uint;
     typedef __int64 int64_t;
@@ -138,11 +138,12 @@ s_dump (zmq::socket_t & socket)
     }
 }
 
+#if (!defined (WIN32))
 //  Set simple random printable identity on socket
 //  Caution:
-//    DO NOT call s_set_id from multiple threads on MS Windows since s_set_id
-//    will call rand() on MS Windows. rand(), however, is not reentrant or 
-//    thread-safe. See issue #521.
+//    DO NOT call this version of s_set_id from multiple threads on MS Windows
+//    since s_set_id will call rand() on MS Windows. rand(), however, is not 
+//    reentrant or thread-safe. See issue #521.
 inline std::string
 s_set_id (zmq::socket_t & socket)
 {
@@ -153,6 +154,18 @@ s_set_id (zmq::socket_t & socket)
     socket.setsockopt(ZMQ_IDENTITY, ss.str().c_str(), ss.str().length());
     return ss.str();
 }
+#else
+// Fix #521
+inline std::string
+s_set_id(zmq::socket_t & socket, intptr_t id)
+{
+    std::stringstream ss;
+    ss << std::hex << std::uppercase
+        << std::setw(4) << std::setfill('0') << id;
+    socket.setsockopt(ZMQ_IDENTITY, ss.str().c_str(), ss.str().length());
+    return ss.str();
+}
+#endif
 
 //  Report 0MQ version number
 //
@@ -182,7 +195,7 @@ s_version_assert (int want_major, int want_minor)
 static int64_t
 s_clock (void)
 {
-#if (defined (_WIN32))
+#if (defined (WIN32))
 	FILETIME fileTime;
 	GetSystemTimeAsFileTime(&fileTime);
 	unsigned __int64 largeInt = fileTime.dwHighDateTime;
@@ -201,7 +214,7 @@ s_clock (void)
 static void
 s_sleep (int msecs)
 {
-#if (defined (_WIN32))
+#if (defined (WIN32))
     Sleep (msecs);
 #else
     struct timespec t;
@@ -243,7 +256,7 @@ static void s_signal_handler (int signal_value)
 
 static void s_catch_signals ()
 {
-#if (!defined(_WIN32))
+#if (!defined(WIN32))
     struct sigaction action;
     action.sa_handler = s_signal_handler;
     action.sa_flags = 0;
