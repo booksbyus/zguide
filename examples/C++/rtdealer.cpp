@@ -31,7 +31,7 @@ worker_task(void *args)
         std::string workload = s_recv(worker);
         //  .skip
         if ("Fired!" == workload) {
-            std::cout << "Completed: " << total << "tasks" << std::endl;
+            std::cout << "Completed: " << total << " tasks" << std::endl;
             break;
         }
         total++;
