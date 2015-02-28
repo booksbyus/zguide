@@ -10,22 +10,24 @@
 
 //  Include a bunch of headers that we will need in the examples
 
-#if (defined (WIN32))
-#   include <windows.h>
-#endif
-
 #include <zmq.h>
-
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
-#include <time.h>
-#include <sys/time.h>
 
 #include <assert.h>
 #include <signal.h>
+#include <stdarg.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+#if (!defined (WIN32))
+#   include <sys/time.h>
+#endif
+
+#if (defined (WIN32))
+#   include <windows.h>
+#endif
 
 //  Version checking, and patch up missing constants to match 2.1
 #if ZMQ_VERSION_MAJOR == 2
@@ -111,11 +113,12 @@ s_dump (void *socket)
     }
 }
 
+#if (!defined (WIN32))
 //  Set simple random printable identity on socket
 //  Caution:
-//    DO NOT call s_set_id from multiple threads on MS Windows since s_set_id
-//    will call rand() on MS Windows. rand(), however, is not reentrant or 
-//    thread-safe. See issue #521.
+//    DO NOT call this version of s_set_id from multiple threads on MS Windows
+//    since s_set_id will call rand() on MS Windows. rand(), however, is not 
+//    reentrant or thread-safe. See issue #521.
 static void
 s_set_id (void *socket)
 {
@@ -123,7 +126,16 @@ s_set_id (void *socket)
     sprintf (identity, "%04X-%04X", randof (0x10000), randof (0x10000));
     zmq_setsockopt (socket, ZMQ_IDENTITY, identity, strlen (identity));
 }
-
+#else
+//  Fix #521 for MS Windows.
+static void
+s_set_id(void *socket, intptr_t id)
+{
+    char identity [10];
+    sprintf(identity, "%04X", (int)id);
+    zmq_setsockopt(socket, ZMQ_IDENTITY, identity, strlen(identity));
+}
+#endif
 
 //  Sleep for a number of milliseconds
 static void

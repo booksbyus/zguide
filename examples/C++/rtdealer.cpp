@@ -4,20 +4,7 @@
 // Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
 
 #include "zhelpers.hpp"
-#include <cstdint>
 #include <pthread.h>
-
-#if (defined (WIN32)) // Fix #521
-static std::string
-set_identity(zmq::socket_t &socket, std::intptr_t id)
-{
-    std::stringstream ss;
-    ss << std::hex << std::uppercase
-        << std::setw(4) << std::setfill('0') << id;
-    socket.setsockopt(ZMQ_IDENTITY, ss.str().c_str(), ss.str().length());
-    return ss.str();
-}
-#endif
 
 static void *
 worker_task(void *args)
@@ -25,8 +12,8 @@ worker_task(void *args)
     zmq::context_t context(1);
     zmq::socket_t worker(context, ZMQ_DEALER);
 
-#if (defined (WIN32)) // Fix #521
-    set_identity(worker, (std::intptr_t)args);
+#if (defined (WIN32))
+    s_set_id(worker, (intptr_t)args);
 #else
     s_set_id(worker);          //  Set a printable identity
 #endif
@@ -70,7 +57,7 @@ int main() {
     const int NBR_WORKERS = 10;
     pthread_t workers[NBR_WORKERS];
     for (int worker_nbr = 0; worker_nbr < NBR_WORKERS; ++worker_nbr) {
-        pthread_create(workers + worker_nbr, NULL, worker_task, (void *)(std::intptr_t)worker_nbr);
+        pthread_create(workers + worker_nbr, NULL, worker_task, (void *)(intptr_t)worker_nbr);
     }
 
 
