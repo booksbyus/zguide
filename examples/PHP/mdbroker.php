@@ -139,6 +139,7 @@ class mdbroker
             $service->name = $name;
             $service->requests = array();
             $service->waiting = array();
+            $service->workers = 0;
             $this->services[$name] = $service;
         }
 
