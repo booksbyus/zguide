@@ -229,7 +229,7 @@ class mdbroker
         }
 
         if (isset($worker->service)) {
-            $sw = $this->worker_remove_from_array($worker, $worker->service->waiting)
+            $sw = $this->worker_remove_from_array($worker, $worker->service->waiting);
         } else {
             $sw = null;
         }
