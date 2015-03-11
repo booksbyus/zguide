@@ -132,7 +132,8 @@ class MajorDomoWorker(object):
                     # up to a null part, but for now, just save one...
                     self.reply_to = msg.pop(0)
                     # pop empty
-                    assert msg.pop(0) == ''
+                    empty = msg.pop(0)
+                    assert empty == ''
 
                     return msg # We have a request to process
                 elif command == MDP.W_HEARTBEAT:
