@@ -12,6 +12,7 @@ public class syncsub{
 
         //  First, connect our subscriber socket
         Socket subscriber = context.socket(ZMQ.SUB);
+        subscriber.setRcvHWM(0);
         subscriber.connect("tcp://localhost:5561");
         subscriber.subscribe("".getBytes());
 
