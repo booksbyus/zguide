@@ -39,8 +39,8 @@
          | No             .----------------.      | To use inproc |
          v                | Do you call    |      | your sockets  |
 .---------------.   .---->| zmq_ctx_new    +----->| must be in    |
-| Are you using |   |     | twice or more? |Yes   | the same      |
-| the inproc:// +---'     '--------+-------'      | 0MQ context   |
+| Are you using |   |     | twice or more? |Yes   | the same 0MQ  |
+| the inproc:// +---'     '--------+-------'      | context       |
 | transport?    | Yes              | No           '---------------'
 '--------+------'                  v                              
          | No             .-----------------.
