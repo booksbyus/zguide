@@ -1140,8 +1140,8 @@ As you build applications with ZeroMQ, you will come across this problem more th
 '--------+--------'   '-->| method call    |   | Use sockets only |
          | Yes            '----------------'   | in their owning  |
          v                                     | threads unless   |
-.-----------------.      .---.         .------>| you know about   |
-| Are you using a |      |   |      .--'       | memory barriers  |
+.-----------------.      .---.      .--------->| you know about   |
+| Are you using a |      |   |      |          | memory barriers  |
 | socket in more  +------'   |      |          '------------------'
 | than 1 thread?  | Yes      '------'         
 '--------+--------'                               .---------------.
