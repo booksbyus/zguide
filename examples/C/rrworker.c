@@ -3,6 +3,7 @@
 //  Expects "Hello" from client, replies with "World"
 
 #include "zhelpers.h"
+#include <unistd.h>
 
 int main (void) 
 {
