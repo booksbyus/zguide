@@ -27,7 +27,7 @@
 .-----------------.      '----------------'       | sockets       |
 |  Do you check   | No                            '---------------'
 | return codes on +---.   .----------------.
-|  all methods?   |   |   | Check each ZeroMQ |   .------------------.
+|  all methods?   |   |   | Check each 0MQ |   .------------------.
 '--------+--------'   '-->| method call    |   | Use sockets only |
          | Yes            '----------------'   | in their owning  |
          v                                     | threads unless   |
@@ -40,7 +40,7 @@
          v                | Do you call    |      | your sockets  |
 .---------------.   .---->| zmq_ctx_new    +----->| must be in    |
 | Are you using |   |     | twice or more? |Yes   | the same      |
-| the inproc:// +---'     '--------+-------'      | ZeroMQ context   |
+| the inproc:// +---'     '--------+-------'      | 0MQ context   |
 | transport?    | Yes              | No           '---------------'
 '--------+------'                  v                              
          | No             .-----------------.
@@ -52,7 +52,7 @@
          | No         |   .----------------.     .------------.
          v            |   | Check that the |     | If you use |
 .----------------.    |   | reply address  |     | identities |
-| Make a minimal |    '-->| is valid. ZeroMQ  +---->| set them   |
+| Make a minimal |    '-->| is valid. 0MQ  +---->| set them   |
 | test case, ask |        | drops messages |     | before you |
 | on IRC channel |        | it can't route |     | connect    |
 '----------------'        '----------------'     '------------'
