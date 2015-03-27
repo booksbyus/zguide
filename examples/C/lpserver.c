@@ -5,6 +5,7 @@
 //   - randomly runs slowly, or exits to simulate a crash.
 
 #include "zhelpers.h"
+#include <unistd.h>
 
 int main (void)
 {
