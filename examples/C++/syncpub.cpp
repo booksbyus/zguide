@@ -14,6 +14,10 @@ int main () {
 
     //  Socket to talk to clients
     zmq::socket_t publisher (context, ZMQ_PUB);
+
+    int sndhwm = 0;
+    publisher.setsockopt (ZMQ_SNDHWM, &sndhwm, sizeof (sndhwm));
+
     publisher.bind("tcp://*:5561");
 
     //  Socket to receive signals
