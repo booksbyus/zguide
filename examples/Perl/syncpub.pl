@@ -24,6 +24,7 @@ my $context = zmq_init();
 
 # Socket to talk to clients
 my $publisher = zmq_socket($context, ZMQ_PUB);
+zmq_setsockopt($publisher, ZMQ_SNDHWM, 0);
 zmq_bind($publisher, 'tcp://*:5561');
 
 # Socket to receive signals

@@ -14,6 +14,7 @@ context = ZMQ::Context.new
 
 # Socket to talk to clients
 publisher = context.socket(ZMQ::PUB)
+publisher.setsockopt(ZMQ::SNDHWM, 0);
 publisher.bind("tcp://*:5561")
 
 # Socket to receive signals
