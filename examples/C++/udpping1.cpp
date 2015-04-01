@@ -59,7 +59,7 @@ void listener()
     }
     #endif // _WIN32
 
-    //  Create UDP socket
+    // Create UDP socket
     SOCKET fdSocket;
     fdSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (fdSocket == INVALID_SOCKET)
@@ -73,7 +73,7 @@ void listener()
     saListen.sin_port = htons(PING_PORT_NUMBER);
     saListen.sin_addr.s_addr = htonl(INADDR_ANY);
 
-    //  Bind the socket
+    // Bind the socket
     nResult = bind(fdSocket, (sockaddr*)&saListen, sizeof(saListen));
     if (nResult != NO_ERROR)
     {
@@ -82,11 +82,11 @@ void listener()
 
     while (!g_threadInterupted)
     {
-        //  Poll socket for a message
+        // Poll socket for a message
         zmq::pollitem_t items[] = {{NULL, fdSocket, ZMQ_POLLIN, 0}};
         zmq::poll(&items[0], 1, SOCKET_POLL_TIMEOUT);
 
-        //  If we get a message, print the contents
+        // If we get a message, print the contents
         if (items[0].revents & ZMQ_POLLIN)
         {
             char recvBuf[PING_MSG_SIZE] = {0};
@@ -110,7 +110,7 @@ void listener()
 }
 
 /**
-* Run broadcast and listen in seperate threads
+* Main function starts a listener thread and then sends out 5 broadcast pings
 */
 int main()
 {
@@ -139,7 +139,7 @@ int main()
         }
         #endif // _WIN32
 
-        //  Create UDP socket
+        // Create UDP socket
         SOCKET fdSocket;
         fdSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
         if (fdSocket == INVALID_SOCKET)
@@ -147,7 +147,7 @@ int main()
             ERROR_OUT("broadcast : socket creation failed");
         }
 
-        //  Ask operating system to let us do broadcasts from socket
+        // Ask operating system to let us do broadcasts from socket
         nResult = setsockopt(fdSocket, SOL_SOCKET, SO_BROADCAST, (char *)&nOptOnVal, nOptLen);
         if (nResult != NO_ERROR)
         {
@@ -160,7 +160,7 @@ int main()
         saBroadcast.sin_port = htons(PING_PORT_NUMBER);
         saBroadcast.sin_addr.s_addr = htonl(INADDR_BROADCAST);
 
-        //  Broadcast 5 beacon messages
+        // Broadcast 5 beacon messages
         for (int i = 0; i < 5; i++)
         {
             char buffer[PING_MSG_SIZE] = {0};
