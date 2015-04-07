@@ -23,7 +23,7 @@ while (true) {
         //  Process all parts of the message
         $message = $frontend->recv();
         $more = $frontend->getSockOpt(ZMQ::SOCKOPT_RCVMORE);
-        $backend->send($message, $more ? ZMQ::SOCKOPT_SNDMORE : 0);
+        $backend->send($message, $more ? ZMQ::MODE_SNDMORE : 0);
         if (!$more) {
             break; // Last message part
         }
