@@ -32,7 +32,7 @@ int main () {
 
         //  Send reply back to client
         zmq::message_t reply (5);
-        memcpy ((void *) reply.data (), "World", 5);
+        memcpy (reply.data (), "World", 5);
         socket.send (reply);
     }
     return 0;
