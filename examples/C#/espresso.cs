@@ -87,7 +87,8 @@ namespace Examples
 				while (count < 5)
 				{
 					var bytes = new byte[10];
-					if (!subscriber.ReceiveBytes(bytes, 0, bytes.Length, ZSocketFlags.None, out error))
+					int bytesLength;
+					if (-1 == (bytesLength = subscriber.ReceiveBytes(bytes, 0, bytes.Length, ZSocketFlags.None, out error)))
 					{
 						if (error == ZError.ETERM)
 							return;	// Interrupted
