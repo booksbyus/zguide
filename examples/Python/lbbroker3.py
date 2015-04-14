@@ -8,10 +8,12 @@
    context and conceptually acts as a separate process.
 
    Author: Min RK <benjaminrk(at)gmail(dot)com>
-   Adapted from lruqueue.py by Guillaume Aubert (gaubert) <guillaume(dot)aubert(at)gmail(dot)com>
+   Adapted from lruqueue.py by
+           Guillaume Aubert (gaubert) <guillaume(dot)aubert(at)gmail(dot)com>
 
 """
 
+from __future__ import print_function
 import threading
 import time
 import zmq
@@ -21,6 +23,7 @@ from zmq.eventloop.zmqstream import ZMQStream
 
 NBR_CLIENTS = 10
 NBR_WORKERS = 3
+
 
 def worker_thread(worker_url, i):
     """ Worker using REQ socket to do LRU routing """
@@ -33,16 +36,17 @@ def worker_thread(worker_url, i):
 
     socket.connect(worker_url)
 
-    # Tell the borker we are ready for work
+    # Tell the broker we are ready for work
     socket.send(b"READY")
 
     try:
         while True:
-            
+
             address, empty, request = socket.recv_multipart()
 
-            print("%s: %s\n" % (socket.identity.decode('ascii'), request.decode('ascii')), end='')
-            
+            print("%s: %s\n" % (socket.identity.decode('ascii'),
+                                request.decode('ascii')), end='')
+
             socket.send_multipart([address, b'', b'OK'])
 
     except zmq.ContextTerminated:
@@ -55,7 +59,7 @@ def client_thread(client_url, i):
     context = zmq.Context.instance()
 
     socket = context.socket(zmq.REQ)
-    
+
     # Set client identity. Makes tracing easier
     socket.identity = (u"Client-%d" % (i)).encode('ascii')
 
@@ -65,7 +69,8 @@ def client_thread(client_url, i):
     socket.send(b"HELLO")
     reply = socket.recv()
 
-    print("%s: %s\n" % (socket.identity.decode('ascii'), reply.decode('ascii')), end='')
+    print("%s: %s\n" % (socket.identity.decode('ascii'),
+                        reply.decode('ascii')), end='')
 
 
 class LRUQueue(object):
@@ -109,7 +114,7 @@ class LRUQueue(object):
 
             if self.client_nbr == 0:
                 # Exit after N messages
-                self.loop.add_timeout(time.time()+1, self.loop.stop)
+                self.loop.add_timeout(time.time() + 1, self.loop.stop)
 
         if self.available_workers == 1:
             # on first recv, start accepting frontend messages
@@ -131,6 +136,7 @@ class LRUQueue(object):
             # stop receiving until workers become available again
             self.frontend.stop_on_recv()
 
+
 def main():
     """main method"""
 
@@ -151,7 +157,8 @@ def main():
         thread.start()
 
     for i in range(NBR_CLIENTS):
-        thread_c = threading.Thread(target=client_thread, args=(url_client, i, ))
+        thread_c = threading.Thread(target=client_thread,
+                                    args=(url_client, i, ))
         thread_c.daemon = True
         thread_c.start()
 
