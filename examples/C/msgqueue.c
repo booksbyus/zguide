@@ -1,5 +1,5 @@
 //  Simple message queuing broker
-//  Same as request-reply broker but using QUEUE device
+//  Same as request-reply broker but using shared queue proxy
 
 #include "zhelpers.h"
 

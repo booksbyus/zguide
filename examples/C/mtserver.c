@@ -2,6 +2,7 @@
 
 #include "zhelpers.h"
 #include <pthread.h>
+#include <unistd.h>
 
 static void *
 worker_routine (void *context) {

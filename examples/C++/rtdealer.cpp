@@ -4,85 +4,90 @@
 // Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
 
 #include "zhelpers.hpp"
+#include <pthread.h>
 
-//  We have two workers, here we copy the code, normally these would
-//  run on different boxes...
-//
-void *worker_a (void *arg) {
-	
-	zmq::context_t * context = (zmq::context_t *)arg;
-    zmq::socket_t worker (*context, ZMQ_DEALER);
-    worker.setsockopt( ZMQ_IDENTITY, "A", 1);
-    worker.connect("ipc://routing.ipc");
-
-    int total = 0;
-    while (1) {
-        //  We receive one part, with the workload
-        std::string request = s_recv (worker);
-        int finished = (request.compare("END") == 0);
-        if (finished) {
-            std::cout <<"A received: " << total << std::endl;
-            break;
-        }
-        total++;
-    }
-    return (NULL);
-}
-
-void *worker_b (void *arg) {
-	
-	zmq::context_t * context = (zmq::context_t *)arg;
-    zmq::socket_t worker (*context, ZMQ_DEALER);
-    worker.setsockopt( ZMQ_IDENTITY, "B", 1);
-    worker.connect("ipc://routing.ipc");
-
-    int total = 0;
-    while (1) {
-        //  We receive one part, with the workload
-        std::string request = s_recv (worker);
-        int finished = (request.compare("END") == 0);
-        if (finished) {
-            std::cout <<"B received: " << total << std::endl;
-            break;
-        }
-        total++;
-    }
-    return (NULL);
-}
-
-int main () {
-
+static void *
+worker_task(void *args)
+{
     zmq::context_t context(1);
+    zmq::socket_t worker(context, ZMQ_DEALER);
 
-    zmq::socket_t client (context, ZMQ_ROUTER);
-    client.bind("ipc://routing.ipc");
+#if (defined (WIN32))
+    s_set_id(worker, (intptr_t)args);
+#else
+    s_set_id(worker);          //  Set a printable identity
+#endif
 
-    pthread_t worker;
-    pthread_create (&worker, NULL, worker_a, &context);
-    pthread_create (&worker, NULL, worker_b, &context);
+    worker.connect("tcp://localhost:5671");
 
-    //  Wait for threads to stabilize
-    sleep (1);
+    int total = 0;
+    while (1) {
+        //  Tell the broker we're ready for work
+        s_sendmore(worker, "");
+        s_send(worker, "Hi Boss");
 
-    //  Send 10 tasks scattered to A twice as often as B
-    int task_nbr;
-    srandom ((unsigned) time (NULL));
-    for (task_nbr = 0; task_nbr < 10; task_nbr++) {
-        //  Send two message parts, first the address...
-        if (within (3) > 0)
-            s_sendmore (client, "A");
-        else
-            s_sendmore (client, "B");
+        //  Get workload from broker, until finished
+        s_recv(worker);     //  Envelope delimiter
+        std::string workload = s_recv(worker);
+        //  .skip
+        if ("Fired!" == workload) {
+            std::cout << "Completed: " << total << " tasks" << std::endl;
+            break;
+        }
+        total++;
 
-        //  And then the workload
-        s_send (client, "This is the workload");
+        //  Do some random work
+        s_sleep(within(500) + 1);
     }
-    s_sendmore (client, "A");
-    s_send     (client, "END");
 
-    s_sendmore (client, "B");
-    s_send     (client, "END");
+    return NULL;
+}
 
-    sleep (1);              //  Give 0MQ/2.0.x time to flush output
+//  .split main task
+//  While this example runs in a single process, that is just to make
+//  it easier to start and stop the example. Each thread has its own
+//  context and conceptually acts as a separate process.
+int main() {
+    zmq::context_t context(1);
+    zmq::socket_t broker(context, ZMQ_ROUTER);
+
+    broker.bind("tcp://*:5671");
+    srandom((unsigned)time(NULL));
+
+    const int NBR_WORKERS = 10;
+    pthread_t workers[NBR_WORKERS];
+    for (int worker_nbr = 0; worker_nbr < NBR_WORKERS; ++worker_nbr) {
+        pthread_create(workers + worker_nbr, NULL, worker_task, (void *)(intptr_t)worker_nbr);
+    }
+
+
+    //  Run for five seconds and then tell workers to end
+    int64_t end_time = s_clock() + 5000;
+    int workers_fired = 0;
+    while (1) {
+        //  Next message gives us least recently used worker
+        std::string identity = s_recv(broker);
+        {
+            s_recv(broker);     //  Envelope delimiter
+            s_recv(broker);     //  Response from worker
+        }
+
+        s_sendmore(broker, identity);
+        s_sendmore(broker, "");
+
+        //  Encourage workers until it's time to fire them
+        if (s_clock() < end_time)
+            s_send(broker, "Work harder");
+        else {
+            s_send(broker, "Fired!");
+            if (++workers_fired == NBR_WORKERS)
+                break;
+        }
+    }
+
+    for (int worker_nbr = 0; worker_nbr < NBR_WORKERS; ++worker_nbr) {
+        pthread_join(workers[worker_nbr], NULL);
+    }
+
     return 0;
 }

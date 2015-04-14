@@ -2,6 +2,7 @@
 //  Note that the zhelpers.h file also provides s_sendmore
 
 #include "zhelpers.h"
+#include <unistd.h>
 
 int main (void)
 {

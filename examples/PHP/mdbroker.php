@@ -139,6 +139,7 @@ class mdbroker
             $service->name = $name;
             $service->requests = array();
             $service->waiting = array();
+            $service->workers = 0;
             $this->services[$name] = $service;
         }
 
@@ -229,7 +230,7 @@ class mdbroker
         }
 
         if (isset($worker->service)) {
-            $sw = $this->worker_remove_from_array($worker, $worker->service->waiting)
+            $sw = $this->worker_remove_from_array($worker, $worker->service->waiting);
         } else {
             $sw = null;
         }

@@ -80,6 +80,12 @@ You can see that the ZeroMQ API is similar in C and C++. In a language like PHP 
 [[code type="example" title="Hello World server" name="hwserver" language="Java"]]
 [[/code]]
 
+
+The server in other languages:
+
+[[code type="example" title="Hello World server" name="hwserver"]]
+[[/code]]
+
 Here's the client code:
 
 [[code type="example" title="Hello World client" name="hwclient"]]
@@ -349,9 +355,9 @@ Having seen some examples, you must be eager to start using ZeroMQ in some apps.
 
 ZeroMQ applications always start by creating a //context//, and then using that for creating sockets. In C, it's the {{zmq_ctx_new[3]}} call. You should create and use exactly one context in your process. Technically, the context is the container for all sockets in a single process, and acts as the transport for {{inproc}} sockets, which are the fastest way to connect threads in one process. If at runtime a process has two contexts, these are like separate ZeroMQ instances. If that's explicitly what you want, OK, but otherwise remember:
 
-**Do one {{zmq_ctx_new[3]}} at the start of your main line code, and one {{zmq_ctx_destroy[3]}} at the end.**
+**Call {{zmq_ctx_new[3]}} once at the start of a process, and {{zmq_ctx_destroy[3]}} once at the end.**
 
-If you're using the {{fork()}} system call, each process needs its own context. If you do {{zmq_ctx_new[3]}} in the main process before calling {{fork()}}, the child processes get their own contexts. In general, you want to do the interesting stuff in the child processes and just manage these from the parent process.
+If you're using the {{fork()}} system call, do {{zmq_ctx_new[3]}} //after// the fork and at the beginning of the child process code. In general, you want to do interesting (ZeroMQ) stuff in the children, and boring process management in the parent.
 
 +++ Making a Clean Exit
 

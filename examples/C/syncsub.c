@@ -1,6 +1,7 @@
 //  Synchronized subscriber
 
 #include "zhelpers.h"
+#include <unistd.h>
 
 int main (void)
 {

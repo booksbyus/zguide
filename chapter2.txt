@@ -182,8 +182,8 @@ We looked at the first three of these in [#basics], and we'll see the exclusive 
 
 * PUB and SUB
 * REQ and REP
-* REQ and ROUTER
-* DEALER and REP
+* REQ and ROUTER (take care, REQ inserts an extra null frame)
+* DEALER and REP (take care, REP assumes a null frame)
 * DEALER and ROUTER
 * DEALER and DEALER
 * ROUTER and ROUTER
@@ -1136,20 +1136,20 @@ As you build applications with ZeroMQ, you will come across this problem more th
 .-----------------.      '----------------'       | sockets       |
 |  Do you check   | No                            '---------------'
 | return codes on +---.   .----------------.
-|  all methods?   |   |   | Check each ZeroMQ |   .------------------.
+|  all methods?   |   |   | Check each 0MQ |   .------------------.
 '--------+--------'   '-->| method call    |   | Use sockets only |
          | Yes            '----------------'   | in their owning  |
          v                                     | threads unless   |
-.-----------------.      .---.         .------>| you know about   |
-| Are you using a |      |   |      .--'       | memory barriers  |
+.-----------------.      .---.      .--------->| you know about   |
+| Are you using a |      |   |      |          | memory barriers  |
 | socket in more  +------'   |      |          '------------------'
 | than 1 thread?  | Yes      '------'         
 '--------+--------'                               .---------------.
          | No             .----------------.      | To use inproc |
          v                | Do you call    |      | your sockets  |
 .---------------.   .---->| zmq_ctx_new    +----->| must be in    |
-| Are you using |   |     | twice or more? |Yes   | the same      |
-| the inproc:// +---'     '--------+-------'      | ZeroMQ context   |
+| Are you using |   |     | twice or more? |Yes   | the same 0MQ  |
+| the inproc:// +---'     '--------+-------'      | context       |
 | transport?    | Yes              | No           '---------------'
 '--------+------'                  v                              
          | No             .-----------------.
@@ -1161,7 +1161,7 @@ As you build applications with ZeroMQ, you will come across this problem more th
          | No         |   .----------------.     .------------.
          v            |   | Check that the |     | If you use |
 .----------------.    |   | reply address  |     | identities |
-| Make a minimal |    '-->| is valid. ZeroMQ  +---->| set them   |
+| Make a minimal |    '-->| is valid. 0MQ  +---->| set them   |
 | test case, ask |        | drops messages |     | before you |
 | on IRC channel |        | it can't route |     | connect    |
 '----------------'        '----------------'     '------------'
