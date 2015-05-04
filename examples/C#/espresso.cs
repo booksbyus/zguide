@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using System.Security.Cryptography;
 
 using ZeroMQ;
 
@@ -56,17 +55,19 @@ namespace Examples
 				while (true)
 				{
 					var bytes = new byte[5];
+					using (var rng = new System.Security.Cryptography.RNGCryptoServiceProvider())
+					{
+						rng.GetBytes(bytes);
+					}
 
-					using (var hash = new RNGCryptoServiceProvider()) hash.GetBytes(bytes);
-
-					if (!publisher.Send(bytes, 0, bytes.Length, ZSocketFlags.None, out error))
+					if (!publisher.SendBytes(bytes, 0, bytes.Length, ZSocketFlags.None, out error))
 					{
 						if (error == ZError.ETERM)
 							return;	// Interrupted
 						throw new ZException(error);
 					}
 
-					Thread.Sleep(64);
+					Thread.Sleep(1);
 				}
 			}
 		}
@@ -94,6 +95,7 @@ namespace Examples
 							return;	// Interrupted
 						throw new ZException(error);
 					}
+
 					++count;
 				}
 
