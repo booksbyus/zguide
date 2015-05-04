@@ -60,8 +60,7 @@ namespace Examples
 						rng.GetBytes(bytes);
 					}
 
-					int bytesLength;
-					if (-1 == (bytesLength = publisher.SendBytes(bytes, 0, bytes.Length, ZSocketFlags.None, out error)))
+					if (!publisher.SendBytes(bytes, 0, bytes.Length, ZSocketFlags.None, out error))
 					{
 						if (error == ZError.ETERM)
 							return;	// Interrupted
