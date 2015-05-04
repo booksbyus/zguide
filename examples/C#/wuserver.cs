@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading;
 
@@ -27,6 +28,13 @@ namespace Examples
 				string address = "tcp://*:5556";
 				Console.WriteLine("I: Publisher.Bind'ing on {0}", address);
 				publisher.Bind(address);
+
+				/* foreach (IPAddress localAddress in WUProxy_GetPublicIPs())
+				{
+					var epgmAddress = string.Format("epgm://{0};239.192.1.1:8100", localAddress);
+					Console.WriteLine("I: Publisher.Bind'ing on {0}...", epgmAddress);
+					publisher.Bind(epgmAddress);
+				} */
 
 				// Initialize random number generator
 				var rnd = new Random();
