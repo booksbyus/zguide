@@ -25,12 +25,12 @@ namespace Examples
 				subscriber.Connect("tcp://127.0.0.1:5563");
 				subscriber.Subscribe("B");
 
-				int subscribing = 0;
+				int subscribed = 0;
 				while (true)
 				{
 					using (ZMessage message = subscriber.ReceiveMessage())
 					{
-						subscribing++;
+						subscribed++;
 
 						// Read envelope with address
 						string address = message[0].ReadString();
@@ -38,7 +38,7 @@ namespace Examples
 						// Read message contents
 						string contents = message[1].ReadString();
 
-						Console.WriteLine("{0}. [{1}] {2}", subscribing, address, contents);
+						Console.WriteLine("{0}. [{1}] {2}", subscribed, address, contents);
 					}
 				}
 			}

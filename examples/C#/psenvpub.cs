@@ -25,29 +25,32 @@ namespace Examples
 				publisher.Linger = TimeSpan.Zero;
 				publisher.Bind("tcp://*:5563");
 
-				int publishing = 0;
+				int published = 0;
 				while (true)
 				{
-					publishing++;
-
 					// Write two messages, each with an envelope and content
+
 					using (var message = new ZMessage())
 					{
-						message.Add(new ZFrame("A"));
-						message.Add(new ZFrame(string.Format(" is {0}: we don't like to see this", publishing)));
+						published++;
+						message.Add(new ZFrame(string.Format("A {0}", published)));
+						message.Add(new ZFrame(string.Format(" We don't like to see this.")));
+						Thread.Sleep(1000);
 
 						Console_WriteZMessage("Publishing ", message);
 						publisher.Send(message);
 					}
+
 					using (var message = new ZMessage())
 					{
-						message.Add(new ZFrame("B"));
-						message.Add(new ZFrame(string.Format(" is {0}: WE do like to see this", publishing)));
+						published++;
+						message.Add(new ZFrame(string.Format("B {0}", published)));
+						message.Add(new ZFrame(string.Format(" We do like to see this.")));
+						Thread.Sleep(1000);
 
 						Console_WriteZMessage("Publishing ", message);
 						publisher.Send(message);
 					}
-					Thread.Sleep(1000);
 				}
 			}
 		}
