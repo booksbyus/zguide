@@ -45,6 +45,7 @@ int main (int argc, char *argv[])
         total_msec += workload;
 
         message.rebuild(10);
+        memset(message.data(), '\0', 10);
         sprintf ((char *) message.data(), "%d", workload);
         sender.send(message);
     }

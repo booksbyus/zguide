@@ -471,9 +471,9 @@ for i in $*; do
     if [ "$LINKUP" = "yes" ]; then
         TRACE="Linking $FILENAME"
         if [ "$USECPP" = "no" ]; then
-            COMMAND="$CCNAME $CCOPTS $FILENAME.o -o $FILENAME"
+            COMMAND="$CCNAME -o $FILENAME $FILENAME.o $CCOPTS"
         else
-            COMMAND="$CCPLUS $CCOPTS $FILENAME.opp -o $FILENAME"
+            COMMAND="$CCPLUS -o $FILENAME $FILENAME.opp $CCOPTS"
         fi
         case "$LINKTYPE" in
             gnu)
