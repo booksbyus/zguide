@@ -2,33 +2,31 @@
 // Hello World Zeromq server
 //
 // Author: Aaron Raddon   github.com/araddon
-// Requires: http://github.com/alecthomas/gozmq
+// Ported to goczmq by Michael Guldan github.com/michaelcoyote
+// Requires: http://github.com/zeromq/goczmq
 //
 package main
 
 import (
-	"fmt"
-	zmq "github.com/alecthomas/gozmq"
+	zmq "github.com/zeromq/goczmq"
 	"time"
 )
 
 func main() {
-	context, _ := zmq.NewContext()
-	socket, _ := context.NewSocket(zmq.REP)
-	defer context.Close()
-	defer socket.Close()
+	socket := zmq.NewSock(zmq.Rep)
+	defer socket.Destroy()
 	socket.Bind("tcp://*:5555")
 
 	// Wait for messages
 	for {
-		msg, _ := socket.Recv(0)
-		println("Received ", string(msg))
+		msg, _ := socket.RecvMessage()
+		println("Received ", string(msg[0]))
 
 		// do some fake "work"
 		time.Sleep(time.Second)
 
 		// send reply back to client
-		reply := fmt.Sprintf("World")
-		socket.Send([]byte(reply), 0)
+		reply := []byte("World")
+		socket.SendMessage([][]byte{reply})
 	}
 }
