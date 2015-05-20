@@ -15,7 +15,7 @@ println("Collecting updates from weather server...")
 ZMQ.connect(socket, "tcp://localhost:5556")
 
 # Subscribe to zipcode, default is NYC, 10001
-zip_filter = length(ARGS[1]) > 1 ? int(ARGS[1]) : 10001
+zip_filter = length(ARGS) > 0 ? int(ARGS[1]) : 10001
 
 ZMQ.set_subscribe(socket, string(zip_filter))
 
