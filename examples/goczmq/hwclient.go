@@ -9,11 +9,11 @@ package main
 
 import (
 	"fmt"
-	zmq "github.com/zeromq/goczmq"
+	goczmq "github.com/zeromq/goczmq"
 )
 
 func main() {
-	socket := zmq.NewSock(zmq.Req)
+	socket := goczmq.NewSock(goczmq.Req)
 	defer socket.Destroy()
 
 	fmt.Printf("Connecting to hello world server...")

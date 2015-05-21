@@ -8,12 +8,12 @@
 package main
 
 import (
-	zmq "github.com/zeromq/goczmq"
+	goczmq "github.com/zeromq/goczmq"
 	"time"
 )
 
 func main() {
-	socket := zmq.NewSock(zmq.Rep)
+	socket := goczmq.NewSock(goczmq.Rep)
 	defer socket.Destroy()
 	socket.Bind("tcp://*:5555")
 
