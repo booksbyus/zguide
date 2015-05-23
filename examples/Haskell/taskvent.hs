@@ -1,41 +1,41 @@
--- |
--- Task ventilator (p.17)
--- Binds PUSH socket to tcp://*:5557
--- Sends batch of tasks to workers via that socket
--- 
--- You need `taskwork.hs` as workers and `tasksink.hs` as sink 
+{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+
+--  Task ventilator
+--  Binds PUSH socket to tcp://localhost:5557
+--  Sends batch of tasks to workers via that socket
 
 module Main where
 
-import System.ZMQ4.Monadic(runZMQ, socket, bind, connect, send, Push(..), liftIO)
-import Control.Monad (replicateM)
-import Data.ByteString.Char8 (pack)
-import System.Random (randomRIO)
-import Control.Applicative ((<$>))
-import System.IO (hFlush, stdout)
-import Control.Concurrent (threadDelay)
+import           Control.Monad
+import qualified Data.ByteString.Char8 as BS
+import           System.ZMQ4.Monadic
+import           System.Random
 
 main :: IO ()
-main = 
-      runZMQ $ do 
-            sender <- socket Push 
-            bind sender "tcp://*:5557"
+main = runZMQ $ do
+    -- Socket to send messages on
+    sender <- socket Push
+    bind sender "tcp://*:5557"
 
-            sink <- socket Push
-            connect sink "tcp://localhost:5558"
+    -- Socket to send start of batch message on
+    sink <- socket Push
+    connect sink "tcp://localhost:5558"
 
-            liftIO $ putStr "Press Enter when the workers are ready:" >> hFlush stdout
-            liftIO $ getLine >> putStrLn "Sending tasks to workers..."
+    liftIO $ do
+        putStrLn "Press Enter when the workers are ready: "
+        _ <- getLine
+        putStrLn "Sending tasks to workers..."
 
-                 --  The first message is "0" and signals start of batch
-            send sink [] (pack "0")
+    -- The first message is "0" and signals start of batch
+    send sink [] "0"
 
-            -- Send 100 tasks, calculate total workload
-            workload <- sum <$> replicateM 100 (do
-                workload' <- liftIO (randomRIO (1, 100) :: IO Int)
-                send sender [] (pack $ show workload') 
-                return workload')
-              
-            liftIO $ putStrLn $ unwords ["Total expected cost:", show workload, "msecs"]
-            -- Give 0MQ time to deliver
-            liftIO $ threadDelay $ 1 * 1000 * 1000
+    -- Send 100 tasks
+    total_msec <- fmap sum $
+        replicateM 100 $ do
+            -- Random workload from 1 to 100msecs
+            workload :: Int <- liftIO $ randomRIO (1, 100)
+            send sender [] $ BS.pack (show workload)
+            return workload
+
+    liftIO . putStrLn $ "Total expected cost: " ++ show total_msec ++ " msec"
