@@ -35,7 +35,7 @@ main = runZMQ $ do
             let [_, temperature :: Int, _] = map read . words . BS.unpack $ string
             return temperature
 
-    liftIO . putStrLn $
+    liftIO $
         printf "Average temperature for zipcode '%s' was %dF"
                (BS.unpack filter)
                (temperature `div` 100)
