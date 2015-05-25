@@ -1,38 +1,18 @@
-{-# LANGUAGE OverloadedStrings #-}
--- |
--- Weather proxy device in Haskell
--- 
--- Originally translated to Haskell by ERDI Gergo http://gergo.erdi.hu/
+--  Weather proxy device
 
 module Main where
 
 import System.ZMQ4.Monadic
-import Control.Monad (forever)
 
 main :: IO ()
-main =
-    runZMQ $ do
-        frontend <- socket Sub
-        connect frontend "tcp://localhost:5556"
-        -- Subscribe on everything
-        subscribe frontend ""
-    
-        -- This is our public endpoint for subscribers
-        backend <- socket Pub
-        bind backend "tcp://*:8100"
-      
-        -- Shunt messages out to our own subscribers
-        forever $ shunt frontend backend
+main = runZMQ $ do
+    -- This is where the weather service sits
+    frontend <- socket XSub
+    connect frontend "tcp://192.168.55.210:5556"
 
-    where
-        -- this implementation is an example
-        -- it works but it is quite slow
-        -- Use the proxy function in real situation
-        shunt from to = do
-                    msg <- receive from
-                    more <- moreToReceive from
-                    if more
-                    then send to [SendMore] msg
-                    else send to [] msg
+    -- This is our public endpoint for subscribers
+    backend <- socket XPub
+    bind backend "tcp://10.1.1.0:8100"
 
-
+    -- Run the proxy until the user interrupts us
+    proxy frontend backend Nothing
