@@ -1,35 +1,36 @@
 //
-// Task sink
-// Binds PULL socket to tcp://localhost:5558
-// Collects results from workers via that socket
+//   Task sink
+//   Binds PULL socket to tcp://localhost:5558
+//   Collects results from workers via that socket
+//   Initial Commit in examples/Go by Aaron Raddon
+//   Ported to goczmq by Michael Guldan github.com/michaelcoyote
+//   Requires: http://github.com/zeromq/goczmq
 //
 package main
 
 import (
 	"fmt"
-	zmq "github.com/alecthomas/gozmq"
+	goczmq "github.com/zeromq/goczmq"
 	"time"
 )
 
 func main() {
-	context, _ := zmq.NewContext()
-	defer context.Close()
 
 	//  Socket to receive messages on
-	receiver, _ := context.NewSocket(zmq.PULL)
-	defer receiver.Close()
+	receiver := goczmq.NewSock(goczmq.Pull)
+	defer receiver.Destroy()
 	receiver.Bind("tcp://*:5558")
 
 	//  Wait for start of batch
-	msgbytes, _ := receiver.Recv(0)
-	fmt.Println("Received Start Msg ", string(msgbytes))
+	msgbytes, _ := receiver.RecvMessage()
+	fmt.Println("Received Start Msg ", string(msgbytes[0]))
 
 	//  Start our clock now
 	start_time := time.Now().UnixNano()
 
 	//  Process 100 confirmations
 	for i := 0; i < 100; i++ {
-		msgbytes, _ = receiver.Recv(0)
+		msgbytes, _ = receiver.RecvMessage()
 		fmt.Print(".")
 	}
 
