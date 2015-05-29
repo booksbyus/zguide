@@ -1,29 +1,30 @@
 //
-// Task ventilator
-// Binds PUSH socket to tcp://localhost:5557
-// Sends batch of tasks to workers via that socket
+//   Task ventilator
+//   Binds PUSH socket to tcp://localhost:5557
+//   Sends batch of tasks to workers via that socket
+//   Initial Commit in examples/Go bay Aaron Raddon
+//   Ported to goczmq by Michael Guldan github.com/michaelcoyote
+//   Requires: http://github.com/zeromq/goczmq
 //
 package main
 
 import (
 	"fmt"
-	zmq "github.com/alecthomas/gozmq"
+	goczmq "github.com/zeromq/goczmq"
 	"math/rand"
 	"time"
 )
 
 func main() {
-	context, _ := zmq.NewContext()
-	defer context.Close()
 
 	// Socket to send messages On
-	sender, _ := context.NewSocket(zmq.PUSH)
-	defer sender.Close()
+	sender := goczmq.NewSock(goczmq.Push)
+	defer sender.Destroy()
 	sender.Bind("tcp://*:5557")
 
 	//  Socket to send start of batch message on
-	sink, _ := context.NewSocket(zmq.PUSH)
-	defer sink.Close()
+	sink := goczmq.NewSock(goczmq.Push)
+	defer sink.Destroy()
 	sink.Connect("tcp://localhost:5558")
 
 	fmt.Print("Press Enter when the workers are ready: ")
@@ -33,7 +34,7 @@ func main() {
 
 	fmt.Println("Sending tasks to workers…")
 
-	sink.Send([]byte("0"), 0)
+	sink.SendMessage([][]byte{[]byte("0")})
 
 	// Seed the random number generator
 	rand.Seed(time.Now().UnixNano())
@@ -43,8 +44,8 @@ func main() {
 	for i := 0; i < 100; i++ {
 		workload := rand.Intn(100)
 		total_msec += workload
-		msg := fmt.Sprintf("%d", workload)
-		sender.Send([]byte(msg), 0)
+		msg := []byte(fmt.Sprintf("%d", workload))
+		sender.SendMessage([][]byte{msg})
 	}
 
 	fmt.Printf("Total expected cost: %d msec\n", total_msec)
