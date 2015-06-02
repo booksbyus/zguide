@@ -11,13 +11,13 @@ We took a normal TCP socket, injected it with a mix of radioactive isotopes stol
 ++ The Zen of Zero
 
 [[code type="textdiagram" title="A terrible accident..."]]
-.------------.        .--------------.
-|            |        |              |
-| TCP socket +------->|              | ZAP!
-|            | BOOM!  |  ZeroMQ socket  |
-'------------'        |              |  POW!!
-  ^    ^    ^         |              |
-  |    |    |         '--------------'
+.------------.        .-------------.
+|            |        |             |
+| TCP socket +------->|   ZeroMQ    | ZAP!
+|            | BOOM!  |             |
+'------------'        |   Socket    |  POW!!
+  ^    ^    ^         |             |
+  |    |    |         '-------------'
   |    |    |
   |    |    |
   |    |    '--------- Spandex
