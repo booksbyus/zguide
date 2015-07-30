@@ -83,7 +83,7 @@ The {{zmq_socket[3]}} man page describes it thus:
 
 > When receiving messages a ZMQ_ROUTER socket shall prepend a message part containing the identity of the originating peer to the message before passing it to the application. Messages received are fair-queued from among all connected peers. When sending messages a ZMQ_ROUTER socket shall remove the first part of the message and use it to determine the identity of the peer the message shall be routed to.
 
-As a historical note, ZeroMQ v2.2 and earlier use UUIDs as identities, and ZeroMQ v3.0 and later use short integers. There's some impact on network performance, but only when you use multiple proxy hops, which is rare. Mostly the change was to simplify building {{libzmq}} by removing the dependency on a UUID library.
+As a historical note, ZeroMQ v2.2 and earlier use UUIDs as identities. ZeroMQ v3.0 and later generate a 5 byte identity by default (0 + a random 32bit integer). There's some impact on network performance, but only when you use multiple proxy hops, which is rare. Mostly the change was to simplify building {{libzmq}} by removing the dependency on a UUID library.
 
 Identities are a difficult concept to understand, but it's essential if you want to become a ZeroMQ expert. The ROUTER socket //invents// a random identity for each connection with which it works. If there are three REQ sockets connected to a ROUTER socket, it will invent three random identities, one for each REQ socket.
 
