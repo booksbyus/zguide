@@ -12,7 +12,7 @@ main(_) ->
     %% First allow 0MQ to set the identity
     {ok, Anonymous} = erlzmq:socket(Context, req),
     ok = erlzmq:connect(Anonymous, "inproc://example"),
-    ok = erlzmq:send(Anonymous, <<"ROUTER uses a generated UUID">>),
+    ok = erlzmq:send(Anonymous, <<"ROUTER uses a generated 5 byte identity">>),
     erlzmq_util:dump(Sink),
 
     %% Then set the identity ourselves

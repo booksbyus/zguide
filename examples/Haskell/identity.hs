@@ -13,7 +13,7 @@ main =
 
         anonymous <- socket Req
         connect anonymous "inproc://example"
-        send anonymous [] "ROUTER uses a generated UUID" 
+        send anonymous [] "ROUTER uses a generated 5 byte identity" 
 
         dumpSock sink
 

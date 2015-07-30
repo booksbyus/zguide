@@ -19,7 +19,7 @@ let main () =
   // first allow 0MQ to set the identity
   use anonymous = req context
   "inproc://example" |> connect anonymous
-  "ROUTER uses a generated UUID" |> s_send anonymous
+  "ROUTER uses a generated 5 byte identity" |> s_send anonymous
   s_dump sink
 
   // then set the identity ourselves

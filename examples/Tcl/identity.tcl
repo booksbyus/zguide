@@ -13,7 +13,7 @@ sink bind "inproc://example"
 # First allow 0MQ to set the identity
 zmq socket anonymous context REQ
 anonymous connect "inproc://example"
-anonymous send "ROUTER uses a generated UUID"
+anonymous send "ROUTER uses a generated 5 byte identity"
 puts "--------------------------------------------------"
 puts [join [sink dump] \n]
 

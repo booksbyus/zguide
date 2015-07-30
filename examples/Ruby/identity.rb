@@ -17,7 +17,7 @@ sink.bind(uri)
 # 0MQ will set the identity here
 anonymous = context.socket(ZMQ::DEALER)
 anonymous.connect(uri)
-anon_message = ZMQ::Message.new("Router uses a generated UUID")
+anon_message = ZMQ::Message.new("ROUTER uses a generated 5 byte identity")
 anonymous.sendmsg(anon_message)
 s_dump(sink)
 

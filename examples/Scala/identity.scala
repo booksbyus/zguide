@@ -15,7 +15,7 @@ object identity {
 
 	val anonymous = context.socket(ZMQ.REQ)
 	anonymous.connect("inproc://example")
-	anonymous.send("ROUTER uses a generated UUID".getBytes,0)
+	anonymous.send("ROUTER uses a generated 5 byte identity".getBytes,0)
 	dump(sink)
 
 	val identified = context.socket(ZMQ.REQ)

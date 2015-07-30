@@ -26,7 +26,7 @@ begin
   //  First allow 0MQ to set the identity
   anonymous := context.Socket( stReq );
   anonymous.connect( 'inproc://example' );
-  anonymous.send( 'ROUTER uses a generated UUID' );
+  anonymous.send( 'ROUTER uses a generated 5 byte identity' );
   s_dump( sink );
 
   //  Then set the identity ourself
