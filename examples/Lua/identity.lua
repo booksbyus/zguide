@@ -16,7 +16,7 @@ sink:bind("inproc://example")
 --  First allow 0MQ to set the identity
 local anonymous = context:socket(zmq.REQ)
 anonymous:connect("inproc://example")
-anonymous:send("ROUTER uses a generated UUID")
+anonymous:send("ROUTER uses a generated 5 byte identity")
 s_dump(sink)
 
 --  Then set the identity ourselves

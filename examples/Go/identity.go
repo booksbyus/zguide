@@ -49,7 +49,7 @@ func main() {
 		fmt.Println(err)
 	}
 	anonymous.Connect("inproc://example")
-	err = anonymous.Send([]byte("ROUTER uses a generated UUID"), 0)
+	err = anonymous.Send([]byte("ROUTER uses a generated 5 byte identity"), 0)
 	if err != nil {
 		fmt.Println(err)
 	}

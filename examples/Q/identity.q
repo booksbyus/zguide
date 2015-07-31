@@ -7,7 +7,7 @@ port:zsocket.bind[sink; `inproc://example]
 anonymous:zsocket.new[ctx; zmq`REQ]
 zsocket.connect[anonymous; `inproc://example]
 m0:zmsg.new[]
-zmsg.push[m0; zframe.new["ROUTER uses a generated UUID"]]
+zmsg.push[m0; zframe.new["ROUTER uses a generated 5 byte identity"]]
 zmsg.send[m0; anonymous]
 zmsg.dump[zmsg.recv[sink]]
 //  Then set the identity ourselves

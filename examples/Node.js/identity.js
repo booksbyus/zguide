@@ -11,7 +11,7 @@ sink.on("message", zhelpers.dumpFrames);
 //  First allow 0MQ to set the identity
 var anonymous = zmq.socket("req");
 anonymous.connect("inproc://example");
-anonymous.send("ROUTER uses generated UUID");
+anonymous.send("ROUTER uses generated 5 byte identity");
 
 //  Then set the identity ourselves
 var identified = zmq.socket("req");

@@ -17,7 +17,7 @@ sink.bind("inproc://example")
 # First allow 0MQ to set the identity
 anonymous = context.socket(zmq.DEALER)
 anonymous.connect("inproc://example")
-anonymous.send(b"ROUTER uses a generated UUID")
+anonymous.send(b"ROUTER uses a generated 5 byte identity")
 zhelpers.dump(sink)
 
 # Then set the identity ourselves

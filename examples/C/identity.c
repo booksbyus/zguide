@@ -11,7 +11,7 @@ int main (void)
     //  First allow 0MQ to set the identity
     void *anonymous = zmq_socket (context, ZMQ_REQ);
     zmq_connect (anonymous, "inproc://example");
-    s_send (anonymous, "ROUTER uses a generated UUID");
+    s_send (anonymous, "ROUTER uses a generated 5 byte identity");
     s_dump (sink);
 
     //  Then set the identity ourselves
