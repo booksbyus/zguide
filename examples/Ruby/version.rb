@@ -7,4 +7,6 @@
 require 'rubygems'
 require 'ffi-rzmq'
 
-puts "Current 0MQ version is %d.%d.%d\n" % ZMQ::Util.version
+version = LibZMQ.version
+puts "Current 0MQ version is %d.%d.%d\n" \
+    % [version[:major], version[:minor], version[:patch]]
