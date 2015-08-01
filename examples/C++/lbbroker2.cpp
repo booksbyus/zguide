@@ -1,7 +1,10 @@
+// 2015-05-12T11:55+08:00
 //  Load-balancing broker
 //  Demonstrates use of the CZMQ API
 
 #include "czmq.h"
+
+#include <iostream>
 
 #define NBR_CLIENTS 10
 #define NBR_WORKERS 3
@@ -25,7 +28,7 @@ client_task(void *args)
 	zstr_send(client, "HELLO");
 	char *reply = zstr_recv(client);
 	if (reply) {
-		printf("Client: %s\n", reply);
+		std::cout << "Client: " << reply << std::endl;
 		free(reply);
 	}
 
@@ -52,7 +55,7 @@ worker_task(void *args)
 	zframe_send(&frame, worker, 0);
 
 	//  Process messages as they arrive
-	while (true) {
+	while (1) {
 		zmsg_t *msg = zmsg_recv(worker);
 		if (!msg)
 			break;              //  Interrupted
@@ -98,7 +101,7 @@ int main(void)
 	//  Here is the main loop for the load balancer. It works the same way
 	//  as the previous example, but is a lot shorter because CZMQ gives
 	//  us an API that does more with fewer calls:
-	while (true) {
+	while (1) {
 		zmq_pollitem_t items[] = {
 				{ backend, 0, ZMQ_POLLIN, 0 },
 				{ frontend, 0, ZMQ_POLLIN, 0 }

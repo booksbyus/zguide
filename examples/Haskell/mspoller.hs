@@ -1,33 +1,34 @@
 {-# LANGUAGE OverloadedStrings #-}
--- |
--- Multiple socket poller in Haskell (p.43)
--- This version uses poll
---
--- Test it with `wuserver.hs`
+
+--  Reading from multiple sockets
+--  This version uses zmq_poll()
 
 module Main where
 
-import Control.Monad (forever, when)
-import Data.ByteString.Char8 (unpack)
-import System.ZMQ4
-import Control.Applicative ((<$>))
+import Control.Monad
+import System.ZMQ4.Monadic
 
 main :: IO ()
-main = 
-    withContext $ \ctx ->
-        withSocket ctx Pull $ \receiver ->
-        withSocket ctx Sub $ \subscriber -> do
-            connect receiver "tcp://localhost:5557"
-            setIdentity (restrict "vent receiver") receiver
-            connect subscriber "tcp://localhost:5556"
-            subscribe subscriber "10001"
-            forever $
-                poll (-1) [Sock receiver [In] (Just $ processEvts receiver), Sock subscriber [In] (Just $ processEvts subscriber)]
+main = runZMQ $ do
+    -- Connect to task ventilator
+    receiver <- socket Pull
+    connect receiver "tcp://localhost:5557"
 
-processEvts :: (Receiver a) => Socket a -> [Event] -> IO ()
-processEvts sock evts = 
-    when (In `elem` evts) $ do
-        msg <- unpack <$> receive sock
-        ident <- unpack <$> identity sock
-        putStrLn $ unwords ["Processing ", ident, msg]
+    -- Connect to weather server
+    subscriber <- socket Sub
+    connect subscriber "tcp://localhost:5556"
+    subscribe subscriber "10001 "
 
+    -- Process messages from both sockets
+    forever $
+        poll (-1) [ Sock receiver   [In] (Just receiver_callback)
+                  , Sock subscriber [In] (Just subscriber_callback)
+                  ]
+  where
+    -- Process task
+    receiver_callback :: [Event] -> ZMQ z ()
+    receiver_callback _ = return ()
+
+    -- Process weather update
+    subscriber_callback :: [Event] -> ZMQ z ()
+    subscriber_callback _ = return ()

@@ -1,45 +1,46 @@
 {-# LANGUAGE OverloadedStrings #-}
--- |
--- Task worker - design 2 (p.58)
--- Add pub-sub flow to receive and respond to kill signal
+
+--  Task worker - design 2
+--  Adds pub-sub flow to receive and respond to kill signal
 
 module Main where
 
-import System.ZMQ4
-import Data.ByteString.Char8 (unpack, empty)
-import System.IO (hSetBuffering, stdout, BufferMode(..))
-import Control.Concurrent (threadDelay)
-import Control.Applicative ((<$>))
-import Control.Monad (when, unless)
+import           Control.Concurrent
+import           Control.Monad
+import qualified Data.ByteString.Char8 as BS
+import           Data.Function
+import           System.IO
+import           System.ZMQ4.Monadic
+import           Text.Printf
 
 main :: IO ()
-main =
-    withContext $ \ctx -> 
-        withSocket ctx Pull $ \receiver ->
-        withSocket ctx Push $ \sender -> 
-        withSocket ctx Sub $ \controller -> do
-            connect receiver "tcp://localhost:5557"
-            connect sender "tcp://localhost:5558"
-            connect controller "tcp://localhost:5559"
-            subscribe controller ""
-            hSetBuffering stdout NoBuffering
-            pollContinuously receiver sender controller
+main = runZMQ $ do
+    -- Socket to receive messages on
+    receiver <- socket Pull
+    connect receiver "tcp://localhost:5557"
 
-    where
+    -- Socket to send messages to
+    sender <- socket Push
+    connect sender "tcp://localhost:5558"
 
-    pollContinuously ::  (Receiver r, Sender s) => Socket r -> Socket s -> Socket c -> IO ()
-    pollContinuously sock_recv sock_to_send ctr  = do
+    controller <- socket Sub
+    connect controller "tcp://localhost:5559"
+    subscribe controller ""
 
-        [a, b] <- poll (-1) [Sock sock_recv [In] Nothing, Sock ctr [In] Nothing] 
+    liftIO $ hSetBuffering stdout NoBuffering
 
-        when (In `elem` a) $ do
-            msg <- unpack <$> receive sock_recv
-            -- Simple progress indicator for the viewer
-            putStr $ msg ++ "."
-            -- Do the "work"
-            threadDelay (read msg * 1000)
-            -- Send results to sink
-            send sock_to_send [] empty
+    fix $ \loop -> do
+        [receiver_events, controller_events] <-
+            poll (-1) [ Sock receiver   [In] Nothing
+                      , Sock controller [In] Nothing
+                      ]
 
-        unless (In `elem` b) $
-             pollContinuously sock_recv sock_to_send ctr
+        when (receiver_events /= []) $ do
+            string <- BS.unpack <$> receive receiver
+            liftIO $ printf "%s." string              -- Show the progress
+            liftIO $ threadDelay (read string * 1000) -- Do the work
+            send sender [] ""                         -- Send results to sink
+
+        -- Any waiting controller command acts as 'KILL'
+        unless (controller_events /= [])
+            loop

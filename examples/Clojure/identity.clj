@@ -16,7 +16,7 @@
         identified (mq/socket ctx mq/req)]
     (mq/bind sink "inproc://example")
     (mq/connect anonymous "inproc://example")
-    (mq/send anonymous "ROUTER uses a generated UUID\u0000")
+    (mq/send anonymous "ROUTER uses a generated 5 byte identity\u0000")
     (mq/dump sink)
     (mq/identify identified "PEER2")
     (mq/connect identified "inproc://example")

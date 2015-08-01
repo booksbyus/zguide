@@ -25,7 +25,7 @@ client_thread (void *args, zctx_t *ctx, void *pipe)
             //  Ask for next chunk
             zstr_sendm  (dealer, "fetch");
             zstr_sendfm (dealer, "%ld", offset);
-            zstr_sendf  (dealer, "%d", CHUNK_SIZE);
+            zstr_sendf  (dealer, "%ld", (long) CHUNK_SIZE);
             offset += CHUNK_SIZE;
             credit--;
         }

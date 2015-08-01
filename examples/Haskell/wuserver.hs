@@ -1,28 +1,29 @@
-{-# LANGUAGE OverloadedStrings #-}
--- |
--- Weather broadcast server in Haskell
--- Binds PUB socket to tcp://*:5556
--- Publishes random weather updates
--- 
+{-# LANGUAGE ScopedTypeVariables #-}
+
+--  Weather update server
+--  Binds PUB socket to tcp://*:5556
+--  Publishes random weather updates
 
 module Main where
 
-import System.ZMQ4.Monadic
-import Control.Monad (forever)
-import Data.ByteString.Char8 (pack)
-import System.Random (randomRIO)
+import           Control.Monad
+import qualified Data.ByteString.Char8 as BS
+import           System.Random
+import           System.ZMQ4.Monadic
+import           Text.Printf
 
 main :: IO ()
-main =
-	runZMQ $ do
+main = runZMQ $ do
+    -- Prepare our publisher
+    publisher <- socket Pub
+    bind publisher "tcp://*:5556"
 
-	    publisher <- socket Pub
-	    bind publisher "tcp://*:5556"
-	    bind publisher "ipc://weather.ipc"
+    forever $ do
+        -- Get values that will fool the boss
+        zipcode     :: Int <- liftIO $ randomRIO (0, 100000)
+        temperature :: Int <- liftIO $ randomRIO (-30, 135)
+        relhumidity :: Int <- liftIO $ randomRIO (10, 60)
 
-	    forever $ do
-	        zipcode <- liftIO $ randomRIO (0::Int, 100000)
-	        temperature <- liftIO $ randomRIO (-80::Int, 135)
-	        humidity <- liftIO $ randomRIO (10::Int, 60)
-	        let update = pack $ unwords [show zipcode, show temperature, show humidity]
-	        send publisher [] update
+        -- Send message to all subscribers
+        let update = printf "%05d %d %d" zipcode temperature relhumidity
+        send publisher [] (BS.pack update)

@@ -1,0 +1,22 @@
+#! /bin/sh
+#
+#   Examples build helper
+#   Syntax: build all | clean
+#
+if [ /$1/ = /all/ ]; then
+    echo "Building Go examples..."
+    for MAIN in `egrep -l "^func main\(" *.go`; do
+        echo "$MAIN"
+        go build $MAIN `egrep -L "^func main\(" *.go`
+    done
+elif [ /$1/ = /clean/ ]; then
+    echo "Cleaning Go examples directory..."
+    for MAIN in `egrep -l "^func main\(" *.go`; do
+        rm -f `basename $MAIN .go`
+    done
+elif [ -f $1.go ]; then
+    echo "$1"
+    go build $1.go `egrep -L "^func main\(" *.go`
+else
+    echo "syntax: build all | clean"
+fi

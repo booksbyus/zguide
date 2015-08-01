@@ -1,21 +1,22 @@
+{-# LANGUAGE OverloadedLists   #-}
 {-# LANGUAGE OverloadedStrings #-}
--- |
--- Pub/Sub envelope publisher p.75
--- 
+
+--  Pubsub envelope publisher
+
 module Main where
 
+import Control.Concurrent
+import Control.Monad
 import System.ZMQ4.Monadic
-import Control.Concurrent (threadDelay)
-import Control.Monad (forever)
 
 main :: IO ()
-main = 
-    runZMQ $ do
-        publisher <- socket Pub
-        bind publisher "tcp://*:5563"
-        forever $ do
-            send publisher [SendMore] "A"
-            send publisher [] "We don't want to see this"
-            send publisher [SendMore] "B" 
-            send publisher [] "We would like to see this" 
-            liftIO $ threadDelay $ 1 * 1000 * 1000
+main = runZMQ $ do
+    -- Prepare our publisher
+    publisher <- socket Pub
+    bind publisher "tcp://*:5563"
+
+    forever $ do
+        -- Write two messages, each with an envelope and content
+        sendMulti publisher ["A", "We don't want to see this"]
+        sendMulti publisher ["B", "We would like to see this"]
+        liftIO $ threadDelay 1000000

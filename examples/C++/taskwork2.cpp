@@ -5,7 +5,7 @@
 // Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
 
 #include "zhelpers.hpp"
-
+#include <string>
 
 int main (int argc, char *argv[])
 {
@@ -39,8 +39,9 @@ int main (int argc, char *argv[])
 
             //  Process task
             int workload;           //  Workload in msecs
-            
-            std::istringstream iss(static_cast<char*>(message.data()));
+           
+            std::string sdata(static_cast<char*>(message.data()), message.size());
+            std::istringstream iss(sdata);
             iss >> workload;
 
             //  Do the work

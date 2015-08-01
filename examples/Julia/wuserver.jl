@@ -12,14 +12,13 @@ context = Context()
 socket = Socket(context, PUB)
 ZMQ.bind(socket, "tcp://*:5556")
 
+
 while true
-    zipcode = rand(1:10000)
+    zipcode = @sprintf("%05d",rand(1:99999))
     temperature = rand(-80:135)
     relhumidity = rand(10:60)
-
     ZMQ.send(socket, "$zipcode $temperature $relhumidity")
 end
 
-# classy hit men always clean up when finish the job.
 ZMQ.close(socket)
 ZMQ.close(context)

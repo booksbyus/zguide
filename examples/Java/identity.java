@@ -17,7 +17,7 @@ public class identity {
         Socket anonymous = context.socket(ZMQ.REQ);
 
         anonymous.connect("inproc://example");
-        anonymous.send ("ROUTER uses a generated UUID",0);
+        anonymous.send ("ROUTER uses a generated 5 byte identity",0);
         ZHelper.dump (sink);
 
         //  Then set the identity ourself

@@ -3,12 +3,9 @@
 #   Examples build helper
 #   Syntax: build all | clean
 #
-#   Note: may fail with g++/4.0.x, then
-#   build examples using 'g++ -o filename filename.cpp -lzmq'
-#
-ZMQOPTS='-lzmq'
+ZMQOPTS='-lzmq -std=c++11'
 if pkg-config libzmq --exists; then
-  ZMQOPTS=$(pkg-config libzmq --cflags --libs)
+    ZMQOPTS="$(pkg-config libzmq --cflags --libs) -std=c++11"
 fi
 if [ /$1/ = /all/ ]; then
     echo "Building C++ examples..."

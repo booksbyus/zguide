@@ -20,7 +20,7 @@ zmq_bind($sink, "inproc://example");
 # First allow 0MQ to set the identity
 my $anonymous = zmq_socket($context, ZMQ_REQ);
 zmq_connect($anonymous, "inproc://example");
-zmq_send($anonymous, "ROUTER uses a generated UUID", -1);
+zmq_send($anonymous, "ROUTER uses a generated 5 byte identity", -1);
 s_dump($sink);
 
 # Then set the identity ourselves

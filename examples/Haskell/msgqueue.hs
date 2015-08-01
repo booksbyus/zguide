@@ -1,19 +1,19 @@
--- |
--- Simple message queuing broker (p.53)
--- Same as request-reply broker but using QUEUE device
---
--- Use it with `rrclient.hs` and `rrworker.hs`
+--  Simple message queuing broker
+--  Same as request-reply broker but using shared queue proxy
 
 module Main where
 
-import System.ZMQ4
+import System.ZMQ4.Monadic
 
 main :: IO ()
-main =
-    withContext $ \ctx ->
-        withSocket ctx Router $ \frontend ->
-        withSocket ctx Dealer $ \backend -> do
+main = runZMQ $ do
+    -- Socket facing clients
+    frontend <- socket Router
+    bind frontend "tcp://*:5559"
 
-        bind frontend "tcp://*:5559"
-        bind backend "tcp://*:5560"
-        proxy frontend backend Nothing
+    backend <- socket Dealer
+    bind backend "tcp://*:5560"
+
+    -- Start the proxy
+    proxy frontend backend Nothing
+

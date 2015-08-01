@@ -17,7 +17,7 @@ int main () {
     zmq::socket_t anonymous(context, ZMQ_REQ);
     anonymous.connect( "inproc://example");
 
-    s_send (anonymous, "ROUTER uses a generated UUID");
+    s_send (anonymous, "ROUTER uses a generated 5 byte identity");
     s_dump (sink);
 
     //  Then set the identity ourselves

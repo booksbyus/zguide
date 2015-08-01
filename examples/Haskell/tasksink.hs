@@ -1,33 +1,34 @@
--- |
--- Task sink
--- Binds PULL socket to tcp://localhost:5558
--- Collects results from workers via that socket
--- 
+--  Task sink
+--  Binds PULL socket to tcp://localhost:5558
+--  Collects results from workers via that socket
 
 module Main where
 
+import Control.Monad
+import Data.Time.Clock
+import System.IO
 import System.ZMQ4.Monadic
-import Control.Monad (forM_)
-import System.IO (hSetBuffering, stdout, BufferMode(..))
-import Data.Time.Clock (getCurrentTime, diffUTCTime)
 
 main :: IO ()
-main = 
-    runZMQ $ do
-        receiver <- socket Pull
-        bind receiver "tcp://*:5558"
-        -- Wait for start of batch
-        receive receiver
-        -- Start our clock now
-        startTime <- liftIO getCurrentTime
-        liftIO $ hSetBuffering stdout NoBuffering
+main = runZMQ $ do
+    -- Prepare our socket
+    receiver <- socket Pull
+    bind receiver "tcp://*:5558"
 
-        -- Process 100 confirmations    
-        forM_ [1..100] $ \i -> do
-            receive receiver
-            liftIO $ putStr $ if i `mod` 10 == 0 then ":" else "."
-          
-        endTime <- liftIO getCurrentTime
-        let elapsedTime = diffUTCTime endTime startTime
-            elapsedMsec = elapsedTime * 1000
-        liftIO $ putStrLn $ unwords ["Total elapsed time:", show elapsedMsec, "msecs"]
+    -- Wait for start of batch
+    _ <- receive receiver
+
+    -- Start our clock now
+    start_time <- liftIO getCurrentTime
+
+    -- Process 100 confirmations
+    liftIO $ hSetBuffering stdout NoBuffering
+    forM_ [1..100] $ \i -> do
+        _ <- receive receiver
+        if i `mod` 10 == 0
+            then liftIO $ putStr ":"
+            else liftIO $ putStr "."
+
+    -- Calculate and report duration of batch
+    end_time <- liftIO getCurrentTime
+    liftIO . putStrLn $ "Total elapsed time: " ++ show (diffUTCTime end_time start_time * 1000) ++ " msec"

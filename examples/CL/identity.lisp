@@ -23,7 +23,7 @@
       ;; First allow 0MQ to set the identity
       (zmq:with-socket (anonymous context zmq:req)
         (zmq:connect anonymous "inproc://example")
-        (send-text anonymous "ROUTER uses a generated UUID")
+        (send-text anonymous "ROUTER uses a generated 5 byte identity")
         (dump-socket sink)
 
         ;; Then set the identity ourselves
