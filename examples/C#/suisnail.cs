@@ -120,7 +120,8 @@ namespace Examples
 				subpipe.Frontend.ReceiveFrame();
 				pubpipe.Frontend.Send(new ZFrame("break"));
 
-				Thread.Sleep(5000);
+				// wait for the Thread (you'll see how fast it is)
+				pubpipe.Join(5000);
 			}
 		}
 	}
