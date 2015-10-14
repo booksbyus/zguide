@@ -10,8 +10,14 @@ from random import randint
 
 import zmq
 
+def socket_set_hwm(socket, hwm=-1):
+    """libzmq 2/3/4 compatible sethwm"""
+    try:
+        socket.sndhwm = socket.rcvhwm = hwm
+    except AttributeError:
+        socket.hwm = hwm
 
-# 
+
 def dump(msg_or_socket):
     """Receives all message parts from socket, printing each frame neatly"""
     if isinstance(msg_or_socket, zmq.Socket):
