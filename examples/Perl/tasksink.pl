@@ -6,6 +6,8 @@ use strict;
 use warnings;
 use v5.10;
 
+use Time::HiRes qw(time);
+
 $| = 1; # autoflush stdout after each print
 
 use ZMQ::FFI;
