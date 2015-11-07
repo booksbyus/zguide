@@ -1,178 +1,163 @@
-#!/usr/bin/env perl
+# Load-balancing broker
+# Clients and workers are shown here in-process
 
-# wesyoung.me / csirtgadgets.org
-
-use 5.011;
 use strict;
 use warnings;
-
-BEGIN {
-    $ENV{ PERL_ZMQ_BACKEND } = 'ZMQ::LibZMQ3';
-}
-
-use ZMQ;
-use ZMQ::LibZMQ3;
-use ZMQ::Constants qw(:all);
+use v5.10;
 
 use threads;
 
-use Carp::Assert;
+use ZMQ::FFI;
+use ZMQ::FFI::Constants qw(ZMQ_REQ ZMQ_ROUTER);
 
-use constant NBR_CLIENTS    => 7;
-use constant NBR_WORKERS    => 2;
-use constant READY          => "\001";
+use AnyEvent;
+use EV;
 
-use constant BACKEND_URL   => 'ipc://backend.ipc';
-use constant FRONTEND_URL  => 'ipc://frontend.ipc';
+my $NBR_CLIENTS = 10;
+my $NBR_WORKERS = 3;
 
-main();
+# Basic request-reply client using REQ socket
 
-sub client_thread {
-    my $i   = shift;
- 
-    my $id = 'Client-'.$i; 
-    
-    my $ctx = ZMQ::Context->new();
-    my $socket = $ctx->socket(ZMQ_REQ);
-    
-    my $rv = $socket->setsockopt(ZMQ_IDENTITY,$id);
-    assert($rv == 0, 'setting socket options');
-    
-    $rv     = $socket->connect(FRONTEND_URL());
-    assert($rv == 0, 'connecting client...');
-    
-    my $reply;
-    while(1){
-        say "id sending Hello";
-        $rv = $socket->sendmsg('HELLO');
-        assert($rv == 5, 'sending hello');
-        
-        say "$id waiting for reply...";
-        $reply = $socket->recvmsg();
-        
-        assert($reply);
-        
-        say "$id got a reply";
-        
+sub client_task {
+    my ($client_nbr) = @_;
+
+    my $context = ZMQ::FFI->new();
+    my $client = $context->socket(ZMQ_REQ);
+
+    $client->set_identity("client-$client_nbr");
+    $client->connect('ipc://frontend.ipc');
+
+    # Send request, get reply
+    $client->send("HELLO");
+    my $reply = $client->recv();
+    say "Client: $reply";
+}
+
+# While this example runs in a single process, that is just to make
+# it easier to start and stop the example. Each client_thread has its own
+# context and conceptually acts as a separate process.
+# This is the worker task, using a REQ socket to do load-balancing.
+
+sub worker_task {
+    my ($worker_nbr) = @_;
+
+    my $context = ZMQ::FFI->new();
+    my $worker = $context->socket(ZMQ_REQ);
+
+    $worker->set_identity("worker-$worker_nbr");
+    $worker->connect('ipc://backend.ipc');
+
+    # Tell broker we're ready for work
+    $worker->send('READY');
+
+    while (1) {
+        # Read and save all frames, including empty frame and request
+        # This example has only one frame before the empty one,
+        # but there could be more
+        my ($identity, $empty, $request) = $worker->recv_multipart();
+        say "Worker: $request";
+
+        # Send reply
+        $worker->send_multipart([$identity, '', 'OK']);
     }
 }
 
-sub worker_thread {
-    my $i   = shift;
+# This is the main task. It starts the clients and workers, and then
+# routes requests between the two layers. Workers signal READY when
+# they start; after that we treat them as ready when they reply with
+# a response back to a client. The load-balancing data structure is
+# just a queue of next available workers.
 
-    my $id = 'Worker-'.$i;
+# Prepare our context and sockets
+my $context = ZMQ::FFI->new();
+my $frontend = $context->socket(ZMQ_ROUTER);
+my $backend = $context->socket(ZMQ_ROUTER);
 
-    my $ctx     = ZMQ::Context->new();
-    my $socket  = $ctx->socket(ZMQ_REQ);
-    
-    my $rv      = $socket->setsockopt(ZMQ_IDENTITY,$id);
-    assert($rv == 0);
-    
-    $rv         = $socket->connect(BACKEND_URL());
-    assert($rv == 0,'connecting to backend');
-    
-    say "$id sending READY";
-    $rv = $socket->sendmsg(READY());
-    assert($rv);
+$frontend->bind('ipc://frontend.ipc');
+$backend->bind('ipc://backend.ipc');
 
-    while(1){
-        say "$id waiting...";
-        
-        my @msg = $socket->recv_multipart();
-        
-        say "$id got: ".$msg[2]->data();
-        
-        say "$id sending OK";
-        
-        $socket->send_multipart([ $msg[0]->data(), '', 'OK' ]);
-    }
-  
+my @client_thr;
+my $client_nbr;
+for (1..$NBR_CLIENTS) {
+    push @client_thr, threads->create('client_task', ++$client_nbr);
 }
 
-sub main {
-    say 'starting main...';
-    
-    my $client_nbr  = NBR_CLIENTS();
-    
-    my $ctx         = ZMQ::Context->new();
-    my $frontend    = $ctx->socket(ZMQ_ROUTER);
-    my $backend     = $ctx->socket(ZMQ_ROUTER);
-    
-    my $rv  = $frontend->bind(FRONTEND_URL());
-    assert($rv == 0);
-    
-    $rv     = $backend->bind(BACKEND_URL());
-    assert($rv == 0);
-    
-    my @threads;
-    foreach my $t (1 .. NBR_WORKERS()){
-        say 'starting worker: '.$t;
-        push(@threads,threads->create('worker_thread',$t));
-    }
-
-    foreach my $t (1 .. NBR_CLIENTS()){
-        say 'starting client: '.$t;
-        push(@threads,threads->create('client_thread',$t));
-    }
-    my @workers;
-
-    my ($w_addr,$delim,$c_addr,$data);
-    my $items = [
-        {
-            events      => ZMQ_POLLIN,
-            socket      => $frontend->{'_socket'},
-            callback    => sub {
-                if($#workers > -1){
-                    say 'frontend...';
-                    
-                    my @msg = $frontend->recv_multipart();
-                    assert($#msg);
-                    
-                    $backend->send_multipart([ 
-                        pop(@workers),
-                        '', 
-                        $msg[0]->data(),
-                        '', 
-                        $msg[2]->data()
-                    ]);
-                }
-            },
-        },
-        {
-            events      => ZMQ_POLLIN,
-            socket      => $backend->{'_socket'},
-            callback    => sub {
-                say 'backend...';
- 
-                my @msg = $backend->recv_multipart();
-                assert($#msg);
-                
-                assert($#workers < NBR_WORKERS());
-                
-                $w_addr = $msg[0]->data();
-                push(@workers,$w_addr);
-                
-                $delim = $msg[1]->data();
-                assert($delim eq '');
-                
-                $c_addr = $msg[2]->data();
-
-                if($c_addr ne READY()){
-                    $delim = $msg[3]->data();
-                    assert ($delim eq '');
-                    
-                    $data = $msg[4]->data();
-
-                    say 'sending '.$data.' to '.$c_addr;
-                    $frontend->send_multipart([ $c_addr, '', $data ]);
-
-                } else {
-                    say 'worker checking in: '.$w_addr;
-                }
-            },
-        },
-    ];
-    while(1){ zmq_poll($items); select undef,undef,undef,0.025; }
- 
-    $_->join() for(@threads);
+for my $worker_nbr (1..$NBR_WORKERS) {
+    threads->create('worker_task', $worker_nbr)->detach();
 }
+
+# Here is the main loop for the least-recently-used queue. It has two
+# sockets; a frontend for clients and a backend for workers. It polls
+# the backend in all cases, and polls the frontend only when there are
+# one or more workers ready. This is a neat way to use 0MQ's own queues
+# to hold messages we're not ready to process yet. When we get a client
+# reply, we pop the next available worker and send the request to it,
+# including the originating client identity. When a worker replies, we
+# requeue that worker and forward the reply to the original client
+# using the reply envelope.
+
+# Queue of available workers
+my @workers;
+
+# Only poll for requests from backend until workers are available
+my $worker_poller = AE::io $backend->get_fd, 0, \&poll_backend;
+my $client_poller;
+
+# Start the loop
+EV::run;
+
+# Give client threads time to flush final output after main loop finishes
+$_->join() for @client_thr;
+
+sub poll_backend {
+    while ($backend->has_pollin) {
+        # Handle worker activity on backend
+
+        my $worker_id = $backend->recv();
+        if (!@workers) {
+            # Poll for clients now that a worker is available
+            $client_poller = AE::io $frontend->get_fd, 0, \&poll_frontend;
+        }
+
+        # Queue worker identity for load-balancing
+        push @workers, $worker_id;
+
+        # Second frame is empty
+        $backend->recv();
+
+        # Third frame is READY or else a client reply identity
+        my $client_id = $backend->recv();
+
+        # If client reply, send rest back to frontend
+        if ($client_id ne 'READY') {
+            my ($empty, $reply) = $backend->recv_multipart();
+            $frontend->send_multipart([$client_id, '', $reply]);
+            --$client_nbr;
+        }
+
+        if ($client_nbr == 0) {
+            # End the loop after N messages
+            EV::break;
+        }
+    }
+}
+
+sub poll_frontend {
+    while ($frontend->has_pollin) {
+        if (!@workers) {
+            # Stop polling clients until more workers becomes available
+            undef $client_poller;
+            return;
+        }
+
+        # Here is how we handle a client request:
+        # Get next client request, route to last-used worker
+        my ($client_id, $empty, $request) = $frontend->recv_multipart();
+
+        my $worker_id = shift @workers;
+        $backend->send_multipart(
+            [$worker_id, '', $client_id, '', $request]
+        );
+    }
+}
+
