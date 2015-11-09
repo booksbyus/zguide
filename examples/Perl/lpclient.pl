@@ -1,126 +1,78 @@
-#!/usr/bin/perl
-=pod
-
-    Lazy Pirate client
-
-    Use zmq_poll to do a safe request-reply
-
-    To run, start lpserver and then randomly kill/restart it
-
-Author: Michael Gray (mjg17)
-
-=cut
+# Lazy Pirate client in Perl
+# Use poll to do a safe request-reply
+# To run, start lpserver.pl then randomly kill/restart it
 
 use strict;
 use warnings;
-use 5.010;
+use v5.10;
 
-use ZMQ::LibZMQ3;
-use ZMQ::Constants qw(ZMQ_REQ ZMQ_LINGER ZMQ_POLLIN);
+use ZMQ::FFI;
+use ZMQ::FFI::Constants qw(ZMQ_REQ);
 
-use sigtrap qw/handler signal_handler normal-signals/;
+use EV;
 
-my $REQUEST_TIMEOUT = 2500;
-my $REQUEST_RETRIES =    3;
+my $REQUEST_TIMEOUT = 2500; # msecs
+my $REQUEST_RETRIES = 3;    # Before we abandon
 my $SERVER_ENDPOINT = 'tcp://localhost:5555';
 
-my $MAX_MSGLEN = 255;
+my $ctx = ZMQ::FFI->new();
+say 'I: connecting to server...';
+my $client = $ctx->socket(ZMQ_REQ);
+$client->connect($SERVER_ENDPOINT);
 
-my $interrupted = 0;
-sub signal_handler {
-    $interrupted = 1;
-    say 'W: Interrupt received';
-    return;
-}
+my $sequence = 0;
+my $retries_left = $REQUEST_RETRIES;
 
-my ($context, $socket);         # globals for simplicity
+REQUEST_LOOP:
+while ($retries_left) {
+    # We send a request, then we work to get a reply
+    my $request = ++$sequence;
+    $client->send($request);
 
-# Socket to talk to server
-sub req_connect {
-    $socket = zmq_socket($context, ZMQ_REQ);
-    zmq_setsockopt($socket, ZMQ_LINGER, 0); # so we can exit without hanging
-    zmq_connect($socket, $SERVER_ENDPOINT);
-    return;
-}
+    my $expect_reply = 1;
 
-sub lp_send {
-    my ($request) = @_;
+    RETRY_LOOP:
+    while ($expect_reply) {
+        # Poll socket for a reply, with timeout
+        EV::once $client->get_fd, EV::READ, $REQUEST_TIMEOUT / 1000, sub {
+            my ($revents) = @_;
 
-  RETRY: foreach my $attempt (1..$REQUEST_RETRIES) {
+            # Here we process a server reply and exit our loop if the
+            # reply is valid. If we didn't get a reply we close the client
+            # socket and resend the request. We try a number of times
+            # before finally abandoning:
 
-      zmq_send($socket, $request);
+            if ($revents == EV::READ) {
+                while ($client->has_pollin) {
+                    # We got a reply from the server, must match sequence
+                    my $reply = $client->recv();
 
-      # Poll socket for a reply, with timeout
-      my $reply_msg;
-      my $pollitem = {
-          socket   => $socket,
-          events   => ZMQ_POLLIN,
-          callback => sub {
-              $reply_msg = zmq_recvmsg($socket);
-              return;
-          },
-      };
-      my @prv = zmq_poll([ $pollitem ], $REQUEST_TIMEOUT);
-      if (@prv and $prv[0] and $reply_msg) {
-          # Success
-          my $reply = zmq_msg_data($reply_msg);
-          return $reply;
-      }
+                    if ($reply == $sequence) {
+                        say "I: server replied OK ($reply)";
+                        $retries_left = $REQUEST_RETRIES;
+                        $expect_reply = 0;
+                    }
+                    else {
+                        say "E: malformed reply from server: $reply";
+                    }
+                }
+            }
+            elsif (--$retries_left == 0) {
+                say 'E: server seems to be offline, abandoning';
+            }
+            else {
+                say "W: no response from server, retrying...";
+                # Old socket is confused; close it and open a new one
+                $client->close;
+                say "reconnecting to server...";
+                $client = $ctx->socket(ZMQ_REQ);
+                $client->connect($SERVER_ENDPOINT);
+                # Send request again, on new socket
+                $client->send($request);
+            }
+        };
 
-      # Work out what went wrong
-      unless (@prv) {
-          # interrupted, or error
-          return if $interrupted;
-          say "E: zmq_poll, '$!'";
-          next RETRY;
-      }
-      if ($prv[0]) {
-          # zmq_poll succeeded but zmq_recvmsg didn't (unlikely?)
-          say "E: zmq_recvmsg, '$!'";
-          next RETRY;
-      }
-      say 'W: timeout waiting for reply';
-      # so continue...
-
-  } continue {
-      say 'W: no response from server, retrying...';
-      #  Old socket is confused; close it and open a new one
-      zmq_close($socket);
-      say 'I: reconnecting to server...';
-      req_connect;
-  }
-
-    say 'E: server seems to be offline, abandoning';
-    return;
-}
-
-sub main {
-    $context = zmq_init();
-
-    say 'I: connecting to server...';
-    req_connect;
-
-    my $sequence = 0;
-
-    while (not $interrupted) {
-
-        my $request = ++$sequence;
-        my $reply = lp_send($request);
-        last unless $reply;
-
-        if ($reply == $request) {
-            say "I: server replied ok [$reply]";
-        } else {
-            say "E: malformed reply from server: '$reply'";
-        }
+        last RETRY_LOOP if $retries_left == 0;
+        EV::run;
     }
-
-    zmq_close($socket);
-    zmq_ctx_destroy($context);
-
-    return;
 }
-
-main();
-
-exit 0;

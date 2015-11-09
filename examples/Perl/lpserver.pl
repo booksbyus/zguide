@@ -1,56 +1,37 @@
-#!/usr/bin/perl
-=pod
-
-Lazy Pirate server
-
-Like hwserver except:
- - echoes request as-is
- - randomly runs slowly, or exits to simulate a crash.
-
-Author: Michael Gray (mjg17)
-See hwserver.pl for original authors.
-
-=cut
+# Lazy Pirate server in Perl
+# Binds REQ socket to tcp://*:5555
+# Like hwserver except:
+#  - echoes request as-is
+#  - randomly runs slowly, or exits to simulate a crash.
 
 use strict;
 use warnings;
-use 5.010;
+use v5.10;
 
-use ZMQ::LibZMQ3;
-use ZMQ::Constants qw(ZMQ_REP);
+use ZMQ::FFI;
+use ZMQ::FFI::Constants qw(ZMQ_REP);
 
-my $MAX_MSGLEN = 255;
-
-my $context = zmq_init();
-
-# Socket to talk to clients
-my $responder = zmq_socket($context, ZMQ_REP);
-zmq_bind($responder, 'tcp://*:5555');
+my $context = ZMQ::FFI->new();
+my $server = $context->socket(ZMQ_REP);
+$server->bind('tcp://*:5555');
 
 my $cycles = 0;
+
+SERVER_LOOP:
 while (1) {
-    # Wait for the next request from client
-    my $message;
-    my $size = zmq_recv($responder, $message, $MAX_MSGLEN);
-    my $request = substr($message, 0, $size);
+    my $request = $server->recv();
     $cycles++;
 
     # Simulate various problems, after a few cycles
-    if ($cycles > 6 and int(rand(7)) == 0) {
-        say 'I: simulating a crash';
-        last;
+    if ($cycles > 3 && int(rand(3)) == 0) {
+        say "I: simulating a crash";
+        last SERVER_LOOP;
     }
-    elsif ($cycles > 3 and int(rand(4)) == 0) {
-        say 'I: simulating CPU overload';
-        sleep (2);
+    elsif ($cycles > 3 && int(rand(3)) == 0) {
+        say "I: simulating CPU overload";
+        sleep 2;
     }
-    say 'I: normal request: ['. $request .']';
-
-    # Do some 'work'
-    sleep (1);
-
-    # Send reply back to client
-    zmq_send($responder, $request);
+    say "I: normal request ($request)";
+    sleep 1; # Do some heavy work
+    $server->send($request);
 }
-
-exit;
