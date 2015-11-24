@@ -78,6 +78,12 @@
     <Compile Include="lpclient.cs" />
     <Compile Include="lpserver.cs" />
     <Compile Include="lvcache.cs" />
+    <Compile Include="mdbroker.cs" />
+    <Compile Include="mdcliapi.cs" />
+    <Compile Include="mdclient.cs" />
+    <Compile Include="mdp.cs" />
+    <Compile Include="mdworker.cs" />
+    <Compile Include="mdwrkapi.cs" />
     <Compile Include="msgqueue.cs" />
     <Compile Include="mspoller.cs" />
     <Compile Include="msreader.cs" />
