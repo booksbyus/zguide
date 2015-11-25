@@ -272,3 +272,21 @@ Use with LPClient.
 	Usage: ./ZGuideExamples.exe EAgain
 ```
 
+#### [MDBroker](https://github.com/metadings/zguide/blob/master/examples/C%23/mdbroker.cs), [MDWorker](https://github.com/metadings/zguide/blob/master/examples/C%23/mdworker.cs), [MDClient](https://github.com/metadings/zguide/blob/master/examples/C%23/mdclient.cs)
+
+```
+	Usage: ./ZGuideExamples.exe MDBroker [-v] [--verbose]
+
+	    -v 		Verbose mode activated
+	            Default verbose is deactivated
+				
+	Usage: ./ZGuideExamples.exe MDWorker [-v] [--verbose]
+
+	    -v 		Verbose mode activated
+	            Default verbose is deactivated
+				
+	Usage: ./ZGuideExamples.exe MDClient [-v] [--verbose]
+
+	    -v 		Verbose mode activated
+	            Default verbose is deactivated
+```
