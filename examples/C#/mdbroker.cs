@@ -132,65 +132,62 @@ namespace Examples
                 }
                 Worker worker = RequireWorker(sender);
                 using (msg)
+                using (command)
                 {
-                    using (command)
+                    if (command.StrHexEq(MdpCommon.MdpwCmd.READY))
                     {
-                        
-                        if (command.StrHexEq(MdpCommon.MdpwCmd.READY))
-                        {
-                            if (isWorkerReady)
-                                // Not first command in session
-                                worker.Delete(true);
-                            else if (command.Length >= 4
-                                     && command.ToString().StartsWith("mmi."))
-                                // Reserd servicee name
-                                worker.Delete(true);
-                            else
-                            {
-                                // Attach worker to service and mark as idle
-                                using (ZFrame serviceFrame = msg.Pop())
-                                {
-                                    worker.Service = RequireService(serviceFrame);
-                                    worker.Service.Workers++;
-                                    worker.Waiting();
-                                }
-                            }
-                        }
-                        else if (command.StrHexEq(MdpCommon.MdpwCmd.REPLY))
-                        {
-                            if (isWorkerReady)
-                            {
-                                //  Remove and save client return envelope and insert the
-                                //  protocol header and service name, then rewrap envelope.
-                                ZFrame client = msg.Unwrap();
-                                msg.Prepend(new ZFrame(worker.Service.Name));
-                                msg.Prepend(new ZFrame(MdpCommon.MDPC_CLIENT));
-                                msg.Wrap(client);
-                                Socket.Send(msg);
-                                worker.Waiting();
-                            }
-                            else
-                            {
-                                worker.Delete(true);
-                            }
-                        }
-                        else if (command.StrHexEq(MdpCommon.MdpwCmd.HEARTBEAT))
-                        {
-                            if (isWorkerReady)
-                            {
-                                worker.Expiry = DateTime.UtcNow + MdpCommon.HEARTBEAT_EXPIRY;
-                            }
-                            else
-                            {
-                                worker.Delete(true);
-                            }
-                        }
-                        else if (command.StrHexEq(MdpCommon.MdpwCmd.DISCONNECT))
-                            worker.Delete(false);
+                        if (isWorkerReady)
+                            // Not first command in session
+                            worker.Delete(true);
+                        else if (command.Length >= 4
+                              && command.ToString().StartsWith("mmi."))
+                            // Reserd servicee name
+                            worker.Delete(true);
                         else
                         {
-                            msg.DumpZmsg("E: invalid input message");
+                            // Attach worker to service and mark as idle
+                            using (ZFrame serviceFrame = msg.Pop())
+                            {
+                                worker.Service = RequireService(serviceFrame);
+                                worker.Service.Workers++;
+                                worker.Waiting();
+                            }
                         }
+                    }
+                    else if (command.StrHexEq(MdpCommon.MdpwCmd.REPLY))
+                    {
+                        if (isWorkerReady)
+                        {
+                            //  Remove and save client return envelope and insert the
+                            //  protocol header and service name, then rewrap envelope.
+                            ZFrame client = msg.Unwrap();
+                            msg.Prepend(new ZFrame(worker.Service.Name));
+                            msg.Prepend(new ZFrame(MdpCommon.MDPC_CLIENT));
+                            msg.Wrap(client);
+                            Socket.Send(msg);
+                            worker.Waiting();
+                        }
+                        else
+                        {
+                            worker.Delete(true);
+                        }
+                    }
+                    else if (command.StrHexEq(MdpCommon.MdpwCmd.HEARTBEAT))
+                    {
+                        if (isWorkerReady)
+                        {
+                            worker.Expiry = DateTime.UtcNow + MdpCommon.HEARTBEAT_EXPIRY;
+                        }
+                        else
+                        {
+                            worker.Delete(true);
+                        }
+                    }
+                    else if (command.StrHexEq(MdpCommon.MdpwCmd.DISCONNECT))
+                        worker.Delete(false);
+                    else
+                    {
+                        msg.DumpZmsg("E: invalid input message");
                     }
                 }
             }
@@ -222,25 +219,18 @@ namespace Examples
                             returnCode = Services.ContainsKey(name) 
                                          && Services[name].Workers > 0
                                             ? "200"
-                                            : "400";
+                                            : "404";
                         }
                         else
                             returnCode = "501";
 
-                        using (var resetableFrame = msg.Pop())
-                        {
-                            msg.Prepend(new ZFrame(returnCode));
-                        }
-
-                        //ToDo check c implementation
-                        throw new NotImplementedException("ToDo: fix this section, never tested. contains errors mmi services never called with the mdclient/mdbroker/mdworker examples");
-                        //## following code has some errors
-
-                        //  Remove & save client return envelope and insert the
-                        //  protocol header and Service name, then rewrap envelope.
-                        ZFrame client = msg.Unwrap();
+                        var client = msg.Unwrap();
+                        
+                        msg.Clear();
+                        msg.Add(new ZFrame(returnCode));
                         msg.Prepend(serviceFrame);
                         msg.Prepend(new ZFrame(MdpCommon.MDPC_CLIENT));
+
                         msg.Wrap(client);
                         Socket.Send(msg);
                     }
