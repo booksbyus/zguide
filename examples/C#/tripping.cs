@@ -9,13 +9,6 @@ using ZeroMQ;
 
 namespace Examples
 {
-    public static class TrippingCommon
-    {
-        // Before we abandon 
-        public const int MAX_RETRIES = 3;
-        public static readonly TimeSpan REQUEST_TIMEOUT = TimeSpan.FromMilliseconds(1000);
-    }
-
     static partial class Program
     {
         //  Round-trip demonstrator
@@ -55,7 +48,7 @@ namespace Examples
         {
             using (ZSocket client = new ZSocket(ctx, ZSocketType.DEALER))
             {
-                client.Connect("tcp://localhost:5565");
+                client.Connect("tcp://localhost:5555");
                 "Setting up test...".DumpString();
                 Thread.Sleep(100);
 
@@ -80,18 +73,15 @@ namespace Examples
 
                 "Asynchronous round-trip test...".DumpString();
                 sw.Restart();
-                for (requests = 0; requests < 100000; requests++)
-                    using (var outgoing = new ZFrame("h"))
+                // sending 100000 requests => often ends in eagain exception in ZContext.Proxy!!
+                for (requests = 0; requests < 1000; requests++)
+                    using (var outgoing = new ZFrame("hello"))
                         client.SendFrame(outgoing);
 
-                for (requests = 0; requests < 100000; requests++)
-                {
+                for (requests = 0; requests < 1000; requests++)
                     using (var reply = client.ReceiveFrame())
-                    {
                         if (Verbose)
                             reply.ToString().DumpString();
-                    }
-                }
                 sw.Stop();
                 " {0} calls - {1} ms => {2} calls / second".DumpString(requests, sw.ElapsedMilliseconds, requests * 1000 / sw.ElapsedMilliseconds);
                 using (var outgoing = new ZFrame("done"))
@@ -106,7 +96,7 @@ namespace Examples
         {
             using (var worker = new ZSocket(ctx, ZSocketType.DEALER))
             {
-                worker.Connect("tcp://localhost:5566");
+                worker.Connect("tcp://localhost:5556");
 
                 while (true)
                 {
@@ -130,8 +120,8 @@ namespace Examples
             using (var frontend = new ZSocket(ctx, ZSocketType.DEALER))
             using (var backend = new ZSocket(ctx, ZSocketType.DEALER))
             {
-                frontend.Bind("tcp://*:5565");
-                backend.Bind("tcp://*:5566");
+                frontend.Bind("tcp://*:5555");
+                backend.Bind("tcp://*:5556");
 
                 ZError error;
                 if (!ZContext.Proxy(frontend, backend, out error))
