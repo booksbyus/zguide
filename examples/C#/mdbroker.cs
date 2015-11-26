@@ -102,13 +102,6 @@ namespace Examples
                     _context.Shutdown();
             }
 
-            /*
-            static void s_broker_bind(broker_t* self, char* endpoint);
-            static void s_broker_worker_msg(broker_t* self, zframe_t* sender, zmsg_t* msg);
-            static void s_broker_client_msg(broker_t* self, zframe_t* sender, zmsg_t* msg);
-            static void s_broker_purge(broker_t* self);
-            */
-
             //  .split broker bind method
             //  This method binds the broker instance to an endpoint. We can call
             //  this multiple times. Note that MDP uses a single Socket for both clients 
@@ -286,7 +279,6 @@ namespace Examples
 
             //  Lazy constructor that locates a service by name or creates a new
             //  service if there is no service already with that name.
-
             public Service RequireService(ZFrame serviceFrame)
             {
                 if(serviceFrame == null)
@@ -317,7 +309,6 @@ namespace Examples
 
             //  Lazy constructor that locates a worker by identity, or creates a new
             //  worker if there is no worker already with that identity.
-
             public Worker RequireWorker(ZFrame identity)
             {
                 if (identity == null)
@@ -469,7 +460,6 @@ namespace Examples
                     {}
                 }
             }
-
 
             public void Delete(bool disconnect)
             {
