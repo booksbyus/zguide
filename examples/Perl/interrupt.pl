@@ -1,31 +1,37 @@
-# Shows how to handle Ctrl-C (SIGINT) and SIGTERM in Perl
+#!/usr/bin/perl
+=pod
+
+Handle Ctrl-C
+
+Author: Klaas Nijkes
+
+=cut
 
 use strict;
 use warnings;
-use v5.10;
+use 5.10.0;
 
-use Errno qw(EINTR);
+use ZMQ::LibZMQ3;
+use ZMQ::Constants qw(ZMQ_REP);
 
-use ZMQ::FFI;
-use ZMQ::FFI::Constants qw(ZMQ_REP);
+my $MAX_MSGLEN = 255;
 
-my $interrupted;
+my $interrupted = 0;
+$SIG{'INT'} = \&intHandler;
 
-$SIG{INT}  = sub { $interrupted = 1; };
-$SIG{TERM} = sub { $interrupted = 1; };
-
-my $context = ZMQ::FFI->new();
-my $socket  = $context->socket(ZMQ_REP);
-
-$socket->bind('tcp://*:5558');
-$socket->die_on_error(0);
-
-while (!$interrupted) {
-    $socket->recv();
-
-    if ($socket->last_errno != EINTR) {
-        die $socket->last_strerror;
-    }
+sub intHandler {
+	$interrupted = 1;
 }
 
-warn "interrupt received, killing server...";
+my $context = zmq_init();
+my $receiver = zmq_socket($context, ZMQ_REP);
+zmq_connect($receiver, "tcp://*:5558");
+
+while (1) {
+	my $message;
+	my $len = zmq_recv($receiver, $message, $MAX_MSGLEN);
+	if ($len < 0 && $interrupted) {
+		say "Interrupt received, bailing out..";
+		last;
+	}
+}

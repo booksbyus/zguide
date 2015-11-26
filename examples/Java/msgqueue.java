@@ -4,7 +4,7 @@ import org.zeromq.ZMQ.Socket;
 
 /**
 * Simple message queuing broker
-* Same as request-reply broker but using shared queue proxy.
+* Same as request-reply broker but using QUEUE device.
 */
 public class msgqueue{
 

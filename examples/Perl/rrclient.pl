@@ -1,22 +1,33 @@
-# Hello world client in Perl
-# Connects REQ socket to tcp://localhost:5559
-# Sends "Hello" to server, expects "World" back
+#!/usr/bin/perl
+=pod
+
+Hello World client
+
+Connects REQ socket to tcp://localhost:5559
+
+Sends "Hello" to server, expects "World" back
+
+Author: Daisuke Maki (lestrrat)
+Original version Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
+
+=cut
 
 use strict;
 use warnings;
-use v5.10;
+use 5.10.0;
 
-use ZMQ::FFI;
-use ZMQ::FFI::Constants qw(ZMQ_REQ);
+use ZMQ::LibZMQ3;
+use ZMQ::Constants qw(ZMQ_REQ);
+use zhelpers;
 
-my $context = ZMQ::FFI->new();
+my $context = zmq_init();
 
 # Socket to talk to server
-my $requester = $context->socket(ZMQ_REQ);
-$requester->connect('tcp://localhost:5559');
+my $requester = zmq_socket($context, ZMQ_REQ);
+zmq_connect($requester, 'tcp://localhost:5559');
 
-for my $request_nbr (1..10) {
-    $requester->send("Hello");
-    my $string = $requester->recv();
+for my $request_nbr (0 .. 9) {
+    s_send($requester, 'Hello');
+    my $string = s_recv($requester);
     say "Received reply $request_nbr [$string]";
 }

@@ -61,7 +61,20 @@ class ServerTask(threading.Thread):
             worker.start()
             workers.append(worker)
 
-        zmq.proxy(frontend, backend)
+        poll = zmq.Poller()
+        poll.register(frontend, zmq.POLLIN)
+        poll.register(backend,  zmq.POLLIN)
+
+        while True:
+            sockets = dict(poll.poll())
+            if frontend in sockets:
+                ident, msg = frontend.recv_multipart()
+                tprint('Server received %s id %s' % (msg, ident))
+                backend.send_multipart([ident, msg])
+            if backend in sockets:
+                ident, msg = backend.recv_multipart()
+                tprint('Sending to frontend %s id %s' % (msg, ident))
+                frontend.send_multipart([ident, msg])
 
         frontend.close()
         backend.close()

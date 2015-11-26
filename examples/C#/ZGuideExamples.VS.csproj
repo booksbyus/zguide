@@ -79,7 +79,9 @@
     <Compile Include="lpserver.cs" />
     <Compile Include="lvcache.cs" />
     <Compile Include="mdbroker.cs" />
+    <Compile Include="mdcliapi2.cs" />
     <Compile Include="mdcliapi.cs" />
+    <Compile Include="mdclient2.cs" />
     <Compile Include="mdclient.cs" />
     <Compile Include="mdp.cs" />
     <Compile Include="mdworker.cs" />
@@ -114,6 +116,8 @@
     <Compile Include="taskvent.cs" />
     <Compile Include="taskwork.cs" />
     <Compile Include="taskwork2.cs" />
+    <Compile Include="mmiecho.cs" />
+    <Compile Include="tripping.cs" />
     <Compile Include="version.cs" />
     <Compile Include="wuclient.cs" />
     <Compile Include="wuproxy.cs" />

@@ -1,75 +1,81 @@
-# ROUTER-to-REQ in Perl
+#!/usr/bin/perl
+=pod
+
+Router-to-request example
+
+Author: Klaas Nijkes
+
+=cut
 
 use strict;
 use warnings;
-use v5.10;
+use 5.10.0;
 
+use ZMQ::LibZMQ3;
+use ZMQ::Constants qw(ZMQ_ROUTER ZMQ_REQ ZMQ_IDENTITY);
+
+use zhelpers;
 use threads;
-use Time::HiRes qw(usleep);
-
-use ZMQ::FFI;
-use ZMQ::FFI::Constants qw(ZMQ_REQ ZMQ_ROUTER);
 
 my $NBR_WORKERS = 10;
 
-sub worker_task {
-
-    my $context = ZMQ::FFI->new();
-    my $worker = $context->socket(ZMQ_REQ);
-
-    $worker->set_identity(Time::HiRes::time());
-    $worker->connect('tcp://localhost:5671');
-
+sub workerTask {
+    my $context = zmq_init();
+    my $worker = zmq_socket($context, ZMQ_REQ);
+    zmq_connect($worker, "tcp://localhost:5671");
     my $total = 0;
-    WORKER_LOOP:
     while (1) {
         # Tell the broker we're ready for work
-        $worker->send('Hi Boss');
+        s_send($worker, "Hi boss!");
 
         # Get workload from broker, until finished
-        my $workload = $worker->recv();
-        my $finished = $workload eq "Fired!";
-        if ($finished) {
+        my $workload = s_recv($worker);
+        if ($workload && $workload eq 'Fired!') {
             say "Completed $total tasks";
-            last WORKER_LOOP;
+            last;
         }
         $total++;
 
         # Do some random work
-        usleep int(rand(500_000)) + 1;
+        s_sleep(rand(500));
     }
+    zmq_close($worker);
+    zmq_term($context);
+    threads->exit;
 }
 
-# While this example runs in a single process, that is only to make
+my $context = zmq_init();
+my $broker = zmq_socket($context, ZMQ_ROUTER);
+zmq_bind($broker, "tcp://*:5671");
+
+# While this example runs in a single process, that is just to make
 # it easier to start and stop the example. Each thread has its own
 # context and conceptually acts as a separate process.
-
-my $context = ZMQ::FFI->new();
-my $broker = $context->socket(ZMQ_ROUTER);
-
-$broker->bind('tcp://*:5671');
-
-for my $worker_nbr (1..$NBR_WORKERS) {
-    threads->create('worker_task')->detach();
+for (1 .. $NBR_WORKERS) {
+    threads->create(\&workerTask)->detach();
 }
 
 # Run for five seconds and then tell workers to end
-my $end_time = time() + 5;
-my $workers_fired = 0;
-
-BROKER_LOOP:
+my $endTime = time() + 5;
+my $workersFired = 0;
 while (1) {
     # Next message gives us least recently used worker
-    my ($identity, $delimiter, $response) = $broker->recv_multipart();
+    my $identity = s_recv($broker);
+    s_sendmore($broker, $identity);
+    s_recv($broker); # Envelope
+    s_recv($broker); # Response from worker
+    s_sendmore($broker, "");
 
     # Encourage workers until it's time to fire them
-    if ( time() < $end_time ) {
-        $broker->send_multipart([$identity, '', 'Work harder']);
-    }
-    else {
-        $broker->send_multipart([$identity, '', 'Fired!']);
-        if ( ++$workers_fired == $NBR_WORKERS) {
-            last BROKER_LOOP;
-        }
+    if (time() < $endTime) {
+        s_send($broker, 'Work harder');
+    } else {
+        s_send($broker, 'Fired!');
+        last if (++$workersFired == $NBR_WORKERS);
     }
 }
+
+zmq_close($broker);
+zmq_term($context);
+
+exit(0);

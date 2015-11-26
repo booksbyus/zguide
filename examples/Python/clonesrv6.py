@@ -142,7 +142,7 @@ class CloneServer(object):
             self.sequence += 1
             kvmsg.sequence = self.sequence
             kvmsg.send(self.publisher)
-            ttl = float(kvmsg.get('ttl', 0))
+            ttl = int(kvmsg.get('ttl'))
             if ttl:
                 kvmsg['ttl'] = time.time() + ttl
             kvmsg.store(self.kvmap)
@@ -175,7 +175,7 @@ class CloneServer(object):
     def flush_single(self, kvmsg):
         """If key-value pair has expired, delete it and publish the fact
         to listening clients."""
-        ttl = float(kvmsg.get('ttl', 0))
+        ttl = int(kvmsg.get('ttl'))
         if ttl and ttl <= time.time():
             kvmsg.body = ""
             self.sequence += 1
@@ -256,9 +256,9 @@ class CloneServer(object):
 
         # Find and remove update off pending list
         kvmsg = KVMsg.from_msg(msg)
-        # update float ttl -> timestamp
-        ttl = float(kvmsg.get('ttl', 0))
-        if ttl:
+        # update integer ttl -> timestamp
+        ttl = int(kvmsg.get('ttl'))
+        if ttl is not None:
             kvmsg['ttl'] = time.time() + ttl
 
         if kvmsg.key != "HUGZ":

@@ -113,7 +113,7 @@ namespace Examples
             public ZMessage Send(string service, ZMessage request, CancellationTokenSource cancellor)
             {
                 if (request == null)
-                    throw new NotImplementedException();
+                    throw new InvalidOperationException();
 
                 //  Prefix request with protocol frames
                 //  Frame 1: "MDPCxy" (six bytes, MDP/Client x.y)
@@ -200,7 +200,6 @@ namespace Examples
                 request.Dispose();
                 return null;
             }
-
         }
     }
 }

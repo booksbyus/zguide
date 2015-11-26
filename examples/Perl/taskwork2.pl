@@ -1,50 +1,71 @@
-# Task worker - design 2 in Perl
-# Adds pub-sub flow to receive and respond to kill signal
+#!/usr/bin/perl
+=pod
+
+Task worker - design 2
+
+Adds pub-sub flow to receive and respond to kill signal
+
+Author: Daisuke Maki (lestrrat)
+Original Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
+
+=cut
 
 use strict;
 use warnings;
-use v5.10;
+use 5.10.0;
 
-$| = 1; # autoflush stdout after each print
+use IO::Handle;
 
-use ZMQ::FFI;
-use ZMQ::FFI::Constants qw(ZMQ_PULL ZMQ_PUSH ZMQ_SUB);
+use ZMQ::LibZMQ3;
+use ZMQ::Constants qw(ZMQ_PULL ZMQ_PUSH ZMQ_SUB ZMQ_SUBSCRIBE ZMQ_POLLIN);
+use zhelpers;
 
-use Time::HiRes qw(usleep);
-use AnyEvent;
-use EV;
+
+my $context = zmq_init();
 
 # Socket to receive messages on
-my $context = ZMQ::FFI->new();
-my $receiver = $context->socket(ZMQ_PULL);
-$receiver->connect('tcp://localhost:5557');
+my $receiver = zmq_socket($context, ZMQ_PULL);
+zmq_connect($receiver, 'tcp://localhost:5557');
 
 # Socket to send messages to
-my $sender = $context->socket(ZMQ_PUSH);
-$sender->connect('tcp://localhost:5558');
+my $sender = zmq_socket($context, ZMQ_PUSH);
+zmq_connect($sender, 'tcp://localhost:5558');
 
 # Socket for control input
-my $controller = $context->socket(ZMQ_SUB);
-$controller->connect('tcp://localhost:5559');
-$controller->subscribe('');
+my $controller = zmq_socket($context, ZMQ_SUB);
+zmq_connect($controller, 'tcp://localhost:5559');
+zmq_setsockopt($controller, ZMQ_SUBSCRIBE, '');
 
-# Process messages from either socket
+# Process messages from receiver and controller
+my $loop = 1;
+my @poller = (
+    {
+        socket  => $receiver,
+        events  => ZMQ_POLLIN,
+        callback => sub {
+            my $workload = s_recv($receiver);
 
-my $receiver_poller = AE::io $receiver->get_fd, 0, sub {
-    while ($receiver->has_pollin) {
-        my $string = $receiver->recv();
+            # Do the work
+            s_sleep($workload);
 
-        print "$string.";    # Show progress
-        usleep $string*1000; # Do the work
-        $sender->send('');   # Send results to sink
-    }
-};
+            # Send results to sink
+            s_send($sender, '');
 
-# Any controller command acts as 'KILL'
-my $controller_poller = AE::io $controller->get_fd, 0, sub {
-    if ($controller->has_pollin) {
-        EV::break; # Exit loop
-    }
-};
+            # Simple progress indicator for the viewer
+            STDOUT->printflush('.');
+        }
+    }, {
+        socket  => $controller,
+        events  => ZMQ_POLLIN,
+        callback => sub {
+            # Any waiting controller command acts as 'KILL'
+            $loop = 0;
+        }
+    },
+);
 
-EV::run;
+# Process messages from both sockets
+while ($loop) {
+    zmq_poll(\@poller);
+}
+# Finished

@@ -10,10 +10,6 @@
 #include <stdlib.h>
 #include <time.h>
 
-#if (defined (WIN32))
-#include <zhelpers.hpp>
-#endif
-
 #define within(num) (int) ((float) num * random () / (RAND_MAX + 1.0))
 
 int main () {
@@ -22,7 +18,7 @@ int main () {
     zmq::context_t context (1);
     zmq::socket_t publisher (context, ZMQ_PUB);
     publisher.bind("tcp://*:5556");
-    publisher.bind("ipc://weather.ipc");				// Not usable on Windows.
+    publisher.bind("ipc://weather.ipc");
 
     //  Initialize random number generator
     srandom ((unsigned) time (NULL));

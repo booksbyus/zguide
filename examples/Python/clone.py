@@ -103,7 +103,6 @@ class CloneServer(object):
         self.snapshot.connect("%s:%i" % (address,port))
         self.subscriber = ctx.socket(zmq.SUB)
         self.subscriber.setsockopt(zmq.SUBSCRIBE, subtree)
-        self.subscriber.setsockopt(zmq.SUBSCRIBE, b'HUGZ')
         self.subscriber.connect("%s:%i" % (address,port+1))
         self.subscriber.linger = 0
 
@@ -163,8 +162,6 @@ class CloneAgent(object):
             key = msg[0]
             value = self.kvmap.get(key)
             self.pipe.send(value.body if value else '')
-        elif command == "SUBTREE":
-            self.subtree = msg[0]
 
 
 # ---------------------------------------------------------------------
