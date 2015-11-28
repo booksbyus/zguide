@@ -57,6 +57,7 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\ZeroApp-Network\ZeroMQ\bin\Debug\ZeroMQ.dll</HintPath>
     </Reference>
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
@@ -86,6 +87,7 @@
     <Compile Include="mdp.cs" />
     <Compile Include="mdworker.cs" />
     <Compile Include="mdwrkapi.cs" />
+    <Compile Include="ticlient.cs" />
     <Compile Include="msgqueue.cs" />
     <Compile Include="mspoller.cs" />
     <Compile Include="msreader.cs" />
@@ -117,6 +119,7 @@
     <Compile Include="taskwork.cs" />
     <Compile Include="taskwork2.cs" />
     <Compile Include="mmiecho.cs" />
+    <Compile Include="titanic.cs" />
     <Compile Include="tripping.cs" />
     <Compile Include="version.cs" />
     <Compile Include="wuclient.cs" />
