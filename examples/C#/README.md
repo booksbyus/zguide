@@ -290,3 +290,89 @@ Use with LPClient.
 	    -v 		Verbose mode activated
 	            Default verbose is deactivated
 ```
+
+#### [MDClient2](https://github.com/metadings/zguide/blob/master/examples/C%23/mdclient2.cs), [MDCliApi2.MajordomoClient](https://github.com/metadings/zguide/blob/master/examples/C%23/mdcliapi2.cs)
+
+```
+	Usage: ./ZGuideExamples.exe MDBroker [-v] [--verbose]
+
+	    -v 		Verbose mode activated
+	            Default verbose is deactivated
+				
+	Usage: ./ZGuideExamples.exe MDWorker [-v] [--verbose]
+
+	    -v 		Verbose mode activated
+	            Default verbose is deactivated
+				
+	Usage: ./ZGuideExamples.exe MDClient2 [-v] [--verbose]
+
+	    -v 		Verbose mode activated
+	            Default verbose is deactivated
+```
+
+#### [Tripping](https://github.com/metadings/zguide/blob/master/examples/C%23/tripping.cs)
+
+```
+	Usage: ./ZGuideExamples.exe Tripping
+```
+
+#### [MMIEcho](https://github.com/metadings/zguide/blob/master/examples/C%23/mmiecho.cs)
+
+```
+	Usage: ./ZGuideExamples.exe MDBroker [-v] [--verbose]
+
+	    -v 		Verbose mode activated
+	            Default verbose is deactivated
+				
+	Usage: ./ZGuideExamples.exe MMIECHO [-v] [--verbose]
+
+	    -v 		Verbose mode activated
+	            Default verbose is deactivated
+
+    ---
+
+	Usage: ./ZGuideExamples.exe MDBroker [-v] [--verbose]
+
+	    -v 		Verbose mode activated
+	            Default verbose is deactivated
+				
+	Usage: ./ZGuideExamples.exe MDWorker [-v] [--verbose]
+
+	    -v 		Verbose mode activated
+	            Default verbose is deactivated
+				
+	Usage: ./ZGuideExamples.exe MMIECHO [-v] [--verbose]
+
+	    -v 		Verbose mode activated
+	            Default verbose is deactivated
+```
+
+#### [titanic](https://github.com/metadings/zguide/blob/master/examples/C%23/titanic.cs), [ticlient](https://github.com/metadings/zguide/blob/master/examples/C%23/ticlient.cs)
+
+```
+	Usage: ./ZGuideExamples.exe MDBroker [-v] [--verbose]
+
+	    -v 		Verbose mode activated
+	            Default verbose is deactivated
+
+	Usage: ./ZGuideExamples.exe MDWorker [-v] [--verbose]
+
+	    -v 		Verbose mode activated
+	            Default verbose is deactivated
+
+	Usage: ./ZGuideExamples.exe Titanic [-v] [--verbose]
+
+	    -v 		Verbose mode activated
+	            Default verbose is deactivated
+		-vd     Verbosedeep mode activated. 
+				- Default verbosedeep is deactivated
+				- activates automatically verbose mode
+				- Msgdump messes up cuz of 3 parallel workers
+
+	Usage: ./ZGuideExamples.exe TiClient [-v||--verbose]
+
+		-v 		Verbose mode activated
+	            Default verbose is deactivated
+
+```
+
