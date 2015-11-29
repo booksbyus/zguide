@@ -24,7 +24,7 @@ namespace Examples
                 cts.Cancel();
             };
 
-            using (MajordomoWorker session = new MajordomoWorker("tcp://localhost:5555", "echo", verbose))
+            using (MajordomoWorker session = new MajordomoWorker("tcp://127.0.0.1:5555", "echo", verbose))
             {
                 ZMessage reply = null;
                 while (true)

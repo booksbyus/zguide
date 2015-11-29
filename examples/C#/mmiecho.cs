@@ -28,7 +28,7 @@ namespace Examples
                 cancellor.Cancel();
             };
 
-            using (MajordomoClient session = new MajordomoClient("tcp://localhost:5555", verbose))
+            using (MajordomoClient session = new MajordomoClient("tcp://127.0.0.1:5555", verbose))
             {
                 ZMessage request  = new ZMessage();
                 request.Add(new ZFrame("echo"));

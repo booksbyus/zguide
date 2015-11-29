@@ -98,7 +98,7 @@ namespace Examples
         //  up the reply asynchronously using the {{titanic.reply}} service:
         private static void Titanic_Request(ZContext ctx, ZSocket backendpipe, CancellationTokenSource cancellor, object[] args)
         {
-            using (MajordomoWorker worker = new MajordomoWorker("tcp://localhost:5555", "titanic.request", (bool)args[0]))
+            using (MajordomoWorker worker = new MajordomoWorker("tcp://127.0.0.1:5555", "titanic.request", (bool)args[0]))
             {
                 ZMessage reply = null;
                 while (true)
@@ -144,7 +144,7 @@ namespace Examples
         //  (Unknown) accordingly:
         private static void Titanic_Reply(ZContext context, CancellationTokenSource cts, bool verbose)
         {
-            using (var worker = new MajordomoWorker("tcp://localhost:5555", "titanic.reply", verbose))
+            using (var worker = new MajordomoWorker("tcp://127.0.0.1:5555", "titanic.reply", verbose))
             {
                 ZMessage reply = null;
                 while (true)
@@ -180,7 +180,7 @@ namespace Examples
         //  once in a row:
         private static void Titanic_Close(ZContext context, CancellationTokenSource cts, bool verbose)
         {
-            using (var worker = new MajordomoWorker("tcp://localhost:5555", "titanic.close", verbose))
+            using (var worker = new MajordomoWorker("tcp://127.0.0.1:5555", "titanic.close", verbose))
             {
                 ZMessage reply = null;
                 while (true)
@@ -224,7 +224,7 @@ namespace Examples
             bool res = false; 
 
             // Create MDP client session with short timeout
-            using (var client = new MajordomoClient("tcp://localhost:5555", false)) 
+            using (var client = new MajordomoClient("tcp://127.0.0.1:5555", false)) 
             {
                 client.Set_Timeout(1000); // 1sec
                 client.Set_Retries(1);    // only 1 retry

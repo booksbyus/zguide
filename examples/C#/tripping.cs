@@ -48,7 +48,7 @@ namespace Examples
         {
             using (ZSocket client = new ZSocket(ctx, ZSocketType.DEALER))
             {
-                client.Connect("tcp://localhost:5555");
+                client.Connect("tcp://127.0.0.1:5555");
                 "Setting up test...".DumpString();
                 Thread.Sleep(100);
 
@@ -96,7 +96,7 @@ namespace Examples
         {
             using (var worker = new ZSocket(ctx, ZSocketType.DEALER))
             {
-                worker.Connect("tcp://localhost:5556");
+                worker.Connect("tcp://127.0.0.1:5556");
 
                 while (true)
                 {
