@@ -41,9 +41,6 @@ function mkone {
         echo "Uploading $BOOK-$2.epub to $SITE:$PAGE..."
         bin/wdattach $SITE $PAGE $BOOK-$2.epub
     fi
-    sed -e "s/width=\"4.8in\"//g" < ebook.xml > fbook.xml
-    asciidoctor-fopub/fopub fbook.xml
-    mv fbook.pdf $BOOK-$2-fop.pdf
 }
 
 mkone C         c
@@ -51,4 +48,3 @@ mkone Haxe      hx
 mkone Lua       lua
 mkone Python    py
 mkone PHP       php
-mkone Java      java
