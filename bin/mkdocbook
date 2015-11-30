@@ -216,12 +216,13 @@ while (<>) {
         close_list ();
         $title = $1;
         $name = $2;
+        $line = $.;
         $language = $4 || $source;
         $lexer = $lexer {$language};
         $ext = $extension {$language};
         $filename = "examples/$language/$name.$ext";
 
-        writeln ("<example id=\"$name-$ext\">");
+        writeln ("<example id=\"$name-$ext-$line\">");
         writeln ("<title>$title ($name.$ext)</title>");
         writeln ("<programlisting language=\"$lexer\">");
         
