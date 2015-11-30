@@ -1,4 +1,0 @@
-#! /bin/bash
-
-RELEASE_FILENAME=zguide-`git rev-parse --short HEAD`.zip
-zip $RELEASE_FILENAME *.pdf *.epub
