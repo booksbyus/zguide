@@ -601,6 +601,9 @@ sub expand_symbols {
     #   Translate email addresses
     s/\<([\w\.]+@[\w\.]+)\>/<email>$1<\/email>/g;
 
+    #   Escape the wikidot escape sequences
+    s/@\<\/\/\>@/\/\//g;
+
     #   Translate character styles
     s/([^:])\/\/([^\/]+)\/\//$1<emphasis>$2<\/emphasis>/g;
     s/\*\*([^*]+)\*\*/<emphasis role="bold">$1<\/emphasis>/g;
