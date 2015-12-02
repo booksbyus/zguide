@@ -17,10 +17,6 @@ namespace Examples
 		//  main when it's ready.
 		public static void Tripping(string[] args)
 		{
-			bool verbose = (args.Any(e => e.ToLower().Equals("-v")
-										  || e.ToLower().Equals("--verbose")));
-			Console.WriteLine("Verbose: {0}", verbose);
-
 			CancellationTokenSource cancellor = new CancellationTokenSource();
 			Console.CancelKeyPress += (s, ea) =>
 			{
@@ -29,16 +25,19 @@ namespace Examples
 			};
 
 			using (ZContext ctx = new ZContext())
+			using (var client = new ZActor(ctx, Tripping_ClientTask))
 			{
-				using (var client = new ZActor(ctx, Tripping_ClientTask))
-				{
-					(new Thread(() => Tripping_WorkerTask(ctx))).Start();
-					(new Thread(() => Tripping_BrokerTask(ctx))).Start();
-					client.Start();
-					using (var signal = client.Frontend.ReceiveFrame())
-						if (verbose)
-							signal.ToString().DumpString();
-				}
+				(new Thread(() => Tripping_WorkerTask(ctx))).Start();
+				(new Thread(() => Tripping_BrokerTask(ctx))).Start();
+					
+				"Setting up test...".DumpString();
+				Thread.Sleep(1000);
+
+				client.Start();
+
+				using (var signal = client.Frontend.ReceiveFrame())
+					if (Verbose)
+						signal.ToString().DumpString();
 			}
 		}
 
@@ -49,13 +48,12 @@ namespace Examples
 			using (ZSocket client = new ZSocket(ctx, ZSocketType.DEALER))
 			{
 				client.Connect("tcp://127.0.0.1:5555");
-				"Setting up test...".DumpString();
-				Thread.Sleep(100);
 
-				int requests;
 				"Synchronous round-trip test...".DumpString();
 				var start = DateTime.Now;
 				Stopwatch sw = Stopwatch.StartNew();
+
+				int requests;
 				for (requests = 0; requests < 10000; requests++)
 				{
 					using (var outgoing = new ZFrame("hello"))
@@ -68,24 +66,26 @@ namespace Examples
 						}
 					}
 				}
+
 				sw.Stop();
 				" {0} calls - {1} ms => {2} calls / second".DumpString(requests, sw.ElapsedMilliseconds, requests * 1000 / sw.ElapsedMilliseconds);
 
 				"Asynchronous round-trip test...".DumpString();
 				sw.Restart();
-				// sending 100000 requests => often ends in eagain exception in ZContext.Proxy!!
+
+				// sending 100000 requests => often ends in eagain exception in ZContext.Proxy about the ~79000 request!!
 				for (requests = 0; requests < 1000; requests++)
-					using (var outgoing = new ZFrame("hello"))
-						client.SendFrame(outgoing);
+					client.SendFrame(new ZFrame("hello"));
 
 				for (requests = 0; requests < 1000; requests++)
 					using (var reply = client.ReceiveFrame())
 						if (Verbose)
 							reply.ToString().DumpString();
+
 				sw.Stop();
 				" {0} calls - {1} ms => {2} calls / second".DumpString(requests, sw.ElapsedMilliseconds, requests * 1000 / sw.ElapsedMilliseconds);
-				using (var outgoing = new ZFrame("done"))
-					pipe.SendFrame(outgoing);
+
+				pipe.SendFrame(new ZFrame("done"));
 			}
 		}
 
@@ -100,14 +100,19 @@ namespace Examples
 
 				while (true)
 				{
+					ZMessage msg; 
 					ZError error;
-					ZMessage msg = worker.ReceiveMessage(out error);
-					if (error == null && worker.Send(msg, out error))
-						continue;
-					// errorhandling, context terminated or sth else
-					if (error.Equals(ZError.ETERM))
-						return; // Interrupted
-					throw new ZException(error);
+					if (null == (msg = worker.ReceiveMessage(out error)))
+					{
+						if (error == ZError.ETERM)
+							return; // Interrupted
+						throw new ZException(error);
+					}
+					
+					// do some "work"
+					// don't Thread.Yield(); 
+
+					worker.Send(msg);
 				}
 			}
 		}
@@ -126,7 +131,7 @@ namespace Examples
 				ZError error;
 				if (!ZContext.Proxy(frontend, backend, out error))
 				{
-					if (Equals(error, ZError.ETERM))
+					if (error == ZError.ETERM)
 						return; // Interrupted
 					throw new ZException(error);
 				}
