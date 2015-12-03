@@ -74,23 +74,32 @@ namespace Examples
 		/// <param name="zmsg"></param>
 		/// <param name="format"></param>
 		/// <param name="args"></param>
-		public static void DumpZmsg(this ZMessage zmsg, string format, params object[] args)
+		public static void DumpZmsg(this ZMessage zmsg, string format = null, params object[] args)
 		{
-			format.DumpString(args);
+			if (!string.IsNullOrWhiteSpace(format))
+				format.DumpString(args);
 			using (var dmsg = zmsg.Duplicate())
 				foreach (var zfrm in dmsg)
 				{
-					byte[] data = zfrm.Read();
-					long size = zfrm.Length;
-
-					// Dump the message as text or binary
-					bool isText = true;
-					for (int i = 0; i < size; i++)
-						if (data[i] < 32 || data[i] > 127)
-							isText = false;
-					string datastr = isText ? Encoding.UTF8.GetString(data) : data.ToHexString();
-					"\tD: [{0,3:D3}]:{1}".DumpString(size, datastr);
+					zfrm.DumpZfrm();
 				}
+		}
+
+		public static void DumpZfrm(this ZFrame zfrm, string format = null, params object[] args)
+		{
+			if(!string.IsNullOrWhiteSpace(format))
+				format.DumpString(args);
+
+			byte[] data = zfrm.Read();
+			long size = zfrm.Length;
+
+			// Dump the message as text or binary
+			bool isText = true;
+			for (int i = 0; i < size; i++)
+				if (data[i] < 32 || data[i] > 127)
+					isText = false;
+			string datastr = isText ? Encoding.UTF8.GetString(data) : data.ToHexString();
+			"\tD: [{0,3:D3}]:{1}".DumpString(size, datastr);
 		}
 	}
 
