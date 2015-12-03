@@ -11,7 +11,7 @@ namespace Examples
 		//  mdcliapi class - Majordomo Protocol Client API
 		//  Implements the MDP/Worker spec at http://rfc.zeromq.org/spec:7.
 		//
-		// Author: metadings
+		// Author: chubbson
 		//
 
 		public class MajordomoClient : IDisposable
