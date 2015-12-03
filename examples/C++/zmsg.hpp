@@ -68,7 +68,6 @@ public:
             std::cout << "E: " << error.what() << std::endl;
             return false;
          }
-         ustring data = (unsigned char*) message.data();
          //std::cerr << "recv: \"" << (unsigned char*) message.data() << "\", size " << message.size() << std::endl;
          if (message.size() == 17 && ((unsigned char *)message.data())[0] == 0) {
             char *uuidstr = encode_uuid((unsigned char*) message.data());
@@ -76,13 +75,9 @@ public:
             delete[] uuidstr;
          }
          else {
-            data[message.size()] = 0;
-            push_back((char *)data.c_str());
+            m_part_data.push_back(ustring((unsigned char*) message.data(), message.size()));
          }
-         int more = 0;
-         size_t more_size = sizeof(more);
-         socket.getsockopt(ZMQ_RCVMORE, &more, &more_size);
-         if (!more) {
+         if (!message.more()) {
             break;
          }
       }
