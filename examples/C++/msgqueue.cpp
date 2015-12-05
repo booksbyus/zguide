@@ -17,9 +17,9 @@ int main (int argc, char *argv[])
 
     //  Socket facing services
     zmq::socket_t backend (context, ZMQ_DEALER);
-    zmq_bind (backend, "tcp://*:5560");
+    backend.bind("tcp://*:5560");
 
-    //  Start built-in device
-    zmq_device (ZMQ_QUEUE, frontend, backend);
+    //  Start the proxy
+    zmq::proxy(frontend, backend, nullptr);
     return 0;
 }
