@@ -1,46 +1,38 @@
-#!/usr/bin/perl
-=pod
-
-Synchronized subscriber
-
-Author: Daisuke Maki (lestrrat)
-Original version Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
-
-=cut
+# Synchronized subscriber in Perl
 
 use strict;
 use warnings;
-use 5.10.0;
+use v5.10;
 
-use ZMQ::LibZMQ3;
-use ZMQ::Constants qw(ZMQ_SUB ZMQ_SUBSCRIBE ZMQ_REQ);
-use zhelpers;
+use ZMQ::FFI;
+use ZMQ::FFI::Constants qw(ZMQ_SUB ZMQ_REQ ZMQ_RCVHWM);
 
-my $context = zmq_init();
+my $context = ZMQ::FFI->new();
 
 # First, connect our subscriber socket
-my $subscriber = zmq_socket($context, ZMQ_SUB);
-zmq_connect($subscriber, 'tcp://localhost:5561');
-zmq_setsockopt($subscriber, ZMQ_SUBSCRIBE, '');
+my $subscriber = $context->socket(ZMQ_SUB);
+$subscriber->set(ZMQ_RCVHWM, 'int', 0);
+$subscriber->connect('tcp://localhost:5561');
+$subscriber->subscribe('');
 
 # 0MQ is so fast, we need to wait a while...
-sleep (1);
+sleep 3;
 
 # Second, synchronize with publisher
-my $syncclient = zmq_socket($context, ZMQ_REQ);
-zmq_connect($syncclient, 'tcp://localhost:5562');
+my $syncclient = $context->socket(ZMQ_REQ);
+$syncclient->connect('tcp://localhost:5562');
 
-# - send a synchronization request
-s_send($syncclient, '');
+# send a synchronization request
+$syncclient->send('');
 
-# - wait for synchronization reply
-s_recv($syncclient);
+# wait for synchronization reply
+$syncclient->recv();
 
 # Third, get our updates and report how many we got
 my $update_nbr = 0;
 while (1) {
-    my $string = s_recv($subscriber);
-    last if $string eq 'END';
+    last if $subscriber->recv() eq "END";
     $update_nbr++;
 }
+
 say "Received $update_nbr updates";

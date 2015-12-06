@@ -1,63 +1,47 @@
-#!/usr/bin/perl
-=pod
-
-Task sink - design 2
-
-Adds pub-sub flow to send kill signal to workers
-
-Author: Daisuke Maki (lestrrat)
-Original version Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
-=cut
+# Task sink - design 2 in Perl
+# Adds pub-sub flow to send kill signal to workers
 
 use strict;
 use warnings;
-use 5.10.0;
+use v5.10;
 
-use ZMQ::LibZMQ3;
-use ZMQ::Constants qw(ZMQ_PULL ZMQ_PUB);
-use Time::HiRes qw/time/;
-use English qw/-no_match_vars/;
-use zhelpers;
+use Time::HiRes qw(time);
 
-use constant MSECS_PER_SEC => 1000;
+$| = 1; # autoflush stdout after each print
 
-local $| = 1;
-
-my $context = zmq_init();
+use ZMQ::FFI;
+use ZMQ::FFI::Constants qw(ZMQ_PULL ZMQ_PUB);
 
 # Socket to receive messages on
-my $receiver = zmq_socket($context, ZMQ_PULL);
-zmq_bind($receiver, 'tcp://*:5558');
+my $context = ZMQ::FFI->new();
+my $receiver = $context->socket(ZMQ_PULL);
+$receiver->bind('tcp://*:5558');
 
 # Socket for worker control
-my $controller = zmq_socket($context, ZMQ_PUB);
-zmq_bind($controller, 'tcp://*:5559');
+my $controller = $context->socket(ZMQ_PUB);
+$controller->bind('tcp://*:5559');
 
 # Wait for start of batch
-s_recv($receiver);
+my $string = $receiver->recv();
 
 # Start our clock now
-my $tstart = time;
+my $start_time = time();
 
 # Process 100 confirmations
-for my $task_nbr (0 .. 99) {
-    s_recv($receiver);
-    use integer;
-    if (($task_nbr / 10) * 10 == $task_nbr) {
-        print ':';
-    } else {
-        print '.';
+for my $task_nbr (1..100) {
+    $receiver->recv();
+
+    if ( ($task_nbr % 10) == 0 ) {
+        print ":";
+    }
+    else {
+        print ".";
     }
 }
-# Calculate and report duration of batch
-my $tend = time;
 
-my $tdiff = $tend - $tstart;
-my $total_msec = $tdiff * MSECS_PER_SEC;
-say "Total elapsed time: $total_msec msec";
+# Calculate and report duration of batch
+printf "Total elapsed time: %d msec\n",
+    (time() - $start_time) * 1000;
 
 # Send kill signal to workers
-s_send($controller, 'KILL');
-
-# Finished
-sleep (1);              # Give 0MQ time to deliver
+$controller->send("KILL");

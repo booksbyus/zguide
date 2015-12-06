@@ -1,60 +1,57 @@
-#!/usr/bin/perl
-=pod
-
-Multithreaded relay
-
-Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
-
-=cut
+# Multithreaded relay in Perl
 
 use strict;
 use warnings;
-use 5.10.0;
-use threads;
+use v5.10;
 
-use ZMQ::LibZMQ3;
-use ZMQ::Constants qw(ZMQ_PAIR);
-use zhelpers;
+use ZMQ::FFI;
+use ZMQ::FFI::Constants qw(ZMQ_PAIR);
+
+use threads;
 
 sub step1 {
     my ($context) = @_;
 
     # Connect to step2 and tell it we're ready
-    my $xmitter = zmq_socket($context, ZMQ_PAIR);
-    zmq_connect($xmitter, 'inproc://step2');
-    say 'Step 1 ready, signaling step 2';
-    s_send($xmitter, '');
+    my $xmitter = $context->socket(ZMQ_PAIR);
+    $xmitter->connect('inproc://step2');
 
-    return;
+    say "Step 1 ready, signaling step 2";
+
+    $xmitter->send("READY");
 }
 
 sub step2 {
     my ($context) = @_;
 
     # Bind inproc socket before starting step1
-    my $receiver = zmq_socket($context, ZMQ_PAIR);
-    zmq_bind($receiver, 'inproc://step2');
-    threads->create('step1', $context)->detach();
+    my $receiver = $context->socket(ZMQ_PAIR);
+    $receiver->bind('inproc://step2');
 
-    # Wait for signal
-    s_recv($receiver);
+    threads->create('step1', $context)
+           ->detach();
+
+    # Wait for signal and pass it on
+    my $string = $receiver->recv();
 
     # Connect to step3 and tell it we're ready
-    my $xmitter = zmq_socket($context, ZMQ_PAIR);
-    zmq_connect($xmitter, 'inproc://step3');
-    say 'Step 2 ready, signaling step 3';
-    s_send($xmitter, '');
+    my $xmitter = $context->socket(ZMQ_PAIR);
+    $xmitter->connect('inproc://step3');
 
-    return;
+    say "Step 2 ready, signaling step 3";
+    $xmitter->send("READY");
 }
 
-my $context = zmq_init();
+my $context = ZMQ::FFI->new();
 
-my $receiver = zmq_socket($context, ZMQ_PAIR);
-zmq_bind($receiver, 'inproc://step3');
-threads->create('step2', $context)->detach();
+# Bind inproc socket before starting step2
+my $receiver = $context->socket(ZMQ_PAIR);
+$receiver->bind('inproc://step3');
+
+threads->create('step2', $context)
+       ->detach();
 
 # Wait for signal
-s_recv($receiver);
+$receiver->recv();
 
-say 'Test successful!';
+say "Test successful!";
