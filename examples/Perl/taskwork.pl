@@ -1,52 +1,35 @@
-#!/usr/bin/perl
-=pod
-
-Task worker
-
-Connects PULL socket to tcp://localhost:5557
-
-Collects workloads from ventilator via that socket
-
-Connects PUSH socket to tcp://localhost:5558
-
-Sends results to sink via that socket
-
-Author: Daisuke Maki (lestrrat)
-Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
-
-=cut
+# Task worker in Perl
+# Connects PULL socket to tcp://localhost:5557
+# Collects workloads from ventilator via that socket
+# Connects PUSH socket to tcp://localhost:5558
+# Sends results to sink via that socket
 
 use strict;
 use warnings;
-use 5.10.0;
 
-use IO::Handle;
+$| = 1; # autoflush stdout after each print
 
-use ZMQ::LibZMQ3;
-use ZMQ::Constants qw(ZMQ_PULL ZMQ_PUSH);
-use English qw/-no_match_vars/;
-use zhelpers;
+use Time::HiRes qw(usleep);
 
+use ZMQ::FFI;
+use ZMQ::FFI::Constants qw(ZMQ_PUSH ZMQ_PULL);
 
-my $context = zmq_init();
+my $context = ZMQ::FFI->new();
 
 # Socket to receive messages on
-my $receiver = zmq_socket($context, ZMQ_PULL);
-zmq_connect($receiver, 'tcp://localhost:5557');
+my $receiver = $context->socket(ZMQ_PULL);
+$receiver->connect('tcp://localhost:5557');
 
-# Socket to send messages to
-my $sender = zmq_socket($context, ZMQ_PUSH);
-zmq_connect($sender, 'tcp://localhost:5558');
+# Socket to send messages on
+my $sender = $context->socket(ZMQ_PUSH);
+$sender->connect('tcp://localhost:5558');
 
 # Process tasks forever
+my $string;
 while (1) {
-    my $string = s_recv($receiver);
-    # Simple progress indicator for the viewer
-    STDOUT->printflush(".");
+    $string = $receiver->recv();
 
-    # Do the work
-    s_sleep($string);
-
-    # Send results to sink
-    s_send($sender, '');
+    print "$string.";    # Show progress
+    usleep $string*1000; # Do the work
+    $sender->send("");   # Send results to sink
 }

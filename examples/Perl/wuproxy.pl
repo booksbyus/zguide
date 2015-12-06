@@ -1,28 +1,21 @@
-#!/usr/bin/perl
-=pod
-
-Weather proxy device
-
-Author: Daisuke Maki (lestrrat)
-Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
-
-=cut
+# Weather proxy device in Perl
 
 use strict;
 use warnings;
-use 5.10.0;
+use v5.10;
 
-use ZMQ::LibZMQ3;
-use ZMQ::Constants qw(ZMQ_SUB ZMQ_PUB);
+use ZMQ::FFI;
+use ZMQ::FFI::Constants qw(ZMQ_XSUB ZMQ_XPUB);
 
-my $context = zmq_init();
+my $context = ZMQ::FFI->new();
 
 # This is where the weather server sits
-my $frontend = zmq_socket($context, ZMQ_SUB);
-zmq_connect($frontend, 'tcp://192.168.55.210:5556');
+my $frontend = $context->socket(ZMQ_XSUB);
+$frontend->connect('tcp://192.168.55.210:5556');
 
-# This is our public endpoint for subscribers
-my $backend = zmq_socket($context, ZMQ_PUB);
-zmq_bind($backend, 'tcp://10.1.1.0:8100');
+# This is our public endpoing fro subscribers
+my $backend = $context->socket(ZMQ_XPUB);
+$backend->bind('tcp://10.1.1.0:8100');
 
-zmq_proxy($frontend, $backend);
+# Run the proxy until the user interrupts us
+$context->proxy($frontend, $backend);

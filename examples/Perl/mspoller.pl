@@ -1,49 +1,38 @@
-#!/usr/bin/perl
-=pod
-
-Reading from multiple sockets
-
-This version uses zmq_poll()
-
-Author: Daisuke Maki (lestrrat)
-Original version Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
-
-=cut
+# Reading from multiple sockets in Perl
+# This version uses AnyEvent to poll the sockets
 
 use strict;
 use warnings;
-use 5.10.0;
+use v5.10;
 
-use ZMQ::LibZMQ3;
-use ZMQ::Constants qw(ZMQ_PULL ZMQ_SUB ZMQ_SUBSCRIBE ZMQ_POLLIN);
+use ZMQ::FFI;
+use ZMQ::FFI::Constants qw(ZMQ_PULL ZMQ_SUB);
 
-my $context = zmq_init();
+use AnyEvent;
+use EV;
 
-# Connect to task ventilator
-my $receiver = zmq_socket($context, ZMQ_PULL);
-zmq_connect($receiver, 'tcp://localhost:5557');
+# Connect to the task ventilator
+my $context = ZMQ::FFI->new();
+my $receiver = $context->socket(ZMQ_PULL);
+$receiver->connect('tcp://localhost:5557');
 
 # Connect to weather server
-my $subscriber = zmq_socket($context, ZMQ_SUB);
-zmq_connect($subscriber, 'tcp://localhost:5556');
-zmq_setsockopt($subscriber, ZMQ_SUBSCRIBE, '10001');
+my $subscriber = $context->socket(ZMQ_SUB);
+$subscriber->connect('tcp://localhost:5556');
+$subscriber->subscribe('10001');
 
-while (1) {
-# Process messages from both sockets
-    zmq_poll([
-        {
-            socket  => $receiver,
-            events  => ZMQ_POLLIN,
-            callback => sub {
-                warn "Process task";
-            }
-        }, {
-            socket  => $subscriber,
-            events  => ZMQ_POLLIN,
-            callback => sub {
-                warn "Process weather update";
-            }
-        },
-    ]);
-}
-# We never get here
+my $pull_poller = AE::io $receiver->get_fd, 0, sub {
+    while ($receiver->has_pollin) {
+        my $msg = $receiver->recv();
+        # Process task
+    }
+};
+
+my $sub_poller = AE::io $subscriber->get_fd, 0, sub {
+    while ($subscriber->has_pollin) {
+        my $msg = $subscriber->recv();
+        # Process weather update
+    }
+};
+
+EV::run;
