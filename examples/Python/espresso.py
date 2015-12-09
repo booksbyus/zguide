@@ -39,7 +39,7 @@ def subscriber_thread():
     print ("Subscriber received %d messages" % count)
 
 
-# .split publisher thread
+# publisher thread
 # The publisher sends random messages starting with A-J:
 
 def publisher_thread():
@@ -60,7 +60,7 @@ def publisher_thread():
         time.sleep(0.1)         # Wait for 1/10th second
 
 
-# .split listener thread
+# listener thread
 # The listener receives all messages flowing through the proxy, on its
 # pipe. Here, the pipe is a pair of ZMQ_PAIR sockets that connects
 # attached child threads via inproc. In other languages your mileage may vary:
@@ -76,7 +76,7 @@ def listener_thread (pipe):
                 break           # Interrupted
 
 
-# .split main thread
+# main thread
 # The main task starts the subscriber and publisher, and then sets
 # itself up as a listening proxy. The listener runs as a child thread:
 
