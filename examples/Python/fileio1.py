@@ -37,7 +37,7 @@ def client_thread(ctx, pipe):
     print ("%i chunks received, %i bytes" % (chunks, total))
     pipe.send(b"OK")
 
-# .split File server thread
+# File server thread
 # The server thread reads the file from disk in chunks, and sends
 # each chunk to the client as a separate message. We only have one
 # test file, so open that once and then serve it out as needed:
@@ -73,7 +73,7 @@ def server_thread(ctx):
             if not data:
                 break
 
-# .split File main thread
+# File main thread
 # The main task starts the client and server threads; it's easier
 # to test this as a single process with threads, than as multiple
 # processes:

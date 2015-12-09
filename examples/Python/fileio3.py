@@ -45,7 +45,7 @@ def client_thread(ctx, pipe):
     print ("%i chunks received, %i bytes" % (chunks, total))
     pipe.send(b"OK")
 
-# .split File server thread
+# File server thread
 # The server thread waits for a chunk request from a client,
 # reads that chunk and sends it back to the client:
 

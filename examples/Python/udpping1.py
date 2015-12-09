@@ -26,7 +26,7 @@ def main():
     # Bind UDP socket to local port so we can receive pings
     sock.bind(('', PING_PORT_NUMBER))
 
-    # .split main ping loop
+    # main ping loop
     # We use zmq_poll to wait for activity on the UDP socket, since
     # this function works on non-0MQ file handles. We send a beacon
     # once a second, and we collect and report beacons that come in
