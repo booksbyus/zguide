@@ -1,7 +1,7 @@
-# File Transfer model #3
+# File Transfer model #2
 #
-# In which the client requests each chunk individually, using
-# command pipelining to give us a credit-based flow control.
+# In which the client requests each chunk individually, thus
+# eliminating server queue overflows, but at a cost in speed.
 
 import os
 from threading import Thread
@@ -11,22 +11,30 @@ import zmq
 from zhelpers import socket_set_hwm, zpipe
 
 CHUNK_SIZE = 250000
+PIPELINE = 10
 
 def client_thread(ctx, pipe):
     dealer = ctx.socket(zmq.DEALER)
-    socket_set_hwm(dealer, 1)
+    socket_set_hwm(dealer, PIPELINE)
     dealer.connect("tcp://127.0.0.1:6000")
 
-    total = 0       # Total bytes received
-    chunks = 0      # Total chunks received
+    credit = PIPELINE   # Up to PIPELINE chunks in transit
+
+    total = 0           # Total bytes received
+    chunks = 0          # Total chunks received
+    offset = 0          # Offset of next chunk request
 
     while True:
-        # ask for next chunk
-        dealer.send_multipart([
-            b"fetch",
-            b"%i" % total,
-            b"%i" % CHUNK_SIZE
-        ])
+        while credit:
+            # ask for next chunk
+            dealer.send_multipart([
+                b"fetch",
+                b"%i" % total,
+                b"%i" % CHUNK_SIZE,
+            ])
+
+            offset += CHUNK_SIZE
+            credit -= 1
 
         try:
             chunk = dealer.recv()
@@ -37,6 +45,7 @@ def client_thread(ctx, pipe):
                 raise
 
         chunks += 1
+        credit += 1
         size = len(chunk)
         total += size
         if size < CHUNK_SIZE:
@@ -45,15 +54,16 @@ def client_thread(ctx, pipe):
     print ("%i chunks received, %i bytes" % (chunks, total))
     pipe.send(b"OK")
 
-# File server thread
-# The server thread waits for a chunk request from a client,
-# reads that chunk and sends it back to the client:
+# The rest of the code is exactly the same as in model 2, except
+# that we set the HWM on the server's ROUTER socket to PIPELINE
+# to act as a sanity check.
+# .skip
 
 def server_thread(ctx):
     file = open("testdata", "r")
 
     router = ctx.socket(zmq.ROUTER)
-
+    socket_set_hwm(router, PIPELINE)
     router.bind("tcp://*:6000")
 
     while True:
