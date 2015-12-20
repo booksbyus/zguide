@@ -27,7 +27,7 @@ def pipe(ctx):
 
 class Interface(object):
     """Interface class.
-    
+
     Just starts a UDP ping agent in a background thread."""
     ctx = None      # Our context
     pipe = None     # Pipe through to agent
@@ -37,18 +37,19 @@ class Interface(object):
         p0, p1 = pipe(self.ctx)
         self.agent = InterfaceAgent(self.ctx, p1)
         self.agent_thread = Thread(target=self.agent.start)
+        self.agent_thread.start()
         self.pipe = p0
-        
+
     def stop(self):
         self.pipe.close()
         self.agent.stop()
         self.ctx.term()
-    
+
     def recv(self):
         """receive a message from our interface"""
         return self.pipe.recv_multipart()
-    
-    
+
+
 # =====================================================================
 # Asynchronous part, works in the background
 
@@ -58,17 +59,17 @@ PEER_EXPIRY         = 5.0  # Five seconds and it's gone
 UUID_BYTES          = 32
 
 class Peer(object):
-    
+
     uuid = None
     expires_at = None
-    
+
     def __init__(self, uuid):
         self.uuid = uuid
         self.is_alive()
-    
+
     def is_alive(self):
         """Reset the peers expiry time
-        
+
         Call this method whenever we get any activity from a peer.
         """
         self.expires_at = time.time() + PEER_EXPIRY
@@ -78,7 +79,7 @@ class InterfaceAgent(object):
     """This structure holds the context for our agent so we can
     pass that around cleanly to methods that need it
     """
-    
+
     ctx = None                 # ZMQ context
     pipe = None                # Pipe back to application
     udp = None                 # UDP object
@@ -95,17 +96,17 @@ class InterfaceAgent(object):
         self.udp = udplib.UDP(PING_PORT_NUMBER)
         self.uuid = uuid.uuid4().hex.encode('utf8')
         self.peers = {}
-    
+
     def stop(self):
         self.pipe.close()
         self.loop.stop()
-    
+
     def __del__(self):
         try:
             self.stop()
         except:
             pass
-    
+
     def start(self):
         loop = self.loop
         loop.add_handler(self.udp.handle.fileno(), self.handle_beacon, loop.READ)
@@ -116,7 +117,7 @@ class InterfaceAgent(object):
         pc = PeriodicCallback(self.reap_peers, PING_INTERVAL * 1000, loop)
         pc.start()
         loop.start()
-    
+
     def send_ping(self, *a, **kw):
         try:
             self.udp.send(self.uuid)
@@ -126,7 +127,7 @@ class InterfaceAgent(object):
     def control_message(self, event):
         """Here we handle the different control messages from the frontend."""
         print("control message: %s", msg)
-    
+
     def handle_beacon(self, fd, event):
         uuid = self.udp.recv(UUID_BYTES)
         if uuid in self.peers:
@@ -134,11 +135,12 @@ class InterfaceAgent(object):
         else:
             self.peers[uuid] = Peer(uuid)
             self.pipe.send_multipart([b'JOINED', uuid])
-    
+
     def reap_peers(self):
         now = time.time()
         for peer in list(self.peers.values()):
             if peer.expires_at < now:
                 print("reaping %s" % peer.uuid, peer.expires_at, now)
                 self.peers.pop(peer.uuid)
-    
+                self.pipe.send_multipart([b'LEFT', peer.uuid])
+
