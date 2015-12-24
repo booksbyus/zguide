@@ -1,0 +1,31 @@
+#! /bin/bash
+#
+#   Prints the names of all examples in a chapter
+#
+
+set -e
+
+check_script="$(basename ${BASH_SOURCE[0]})"
+zguide_dir="$(dirname ${BASH_SOURCE[0]})/.."
+
+if [[ $# < 1 ]]
+then
+    echo "usage: $check_script <chapter>"
+    echo "e.g. $check_script 3"
+    exit 1
+fi
+
+chapter=$1
+chfile="$zguide_dir/chapter${chapter}.txt"
+
+if [ ! -f "$chfile" ]
+then
+    echo "No chapter file found for chapter '$chapter'" 1>&2
+    exit 1
+fi
+
+grep 'type="example"' $chfile | \
+    perl -nE \
+      'my @ex=/name="([^"]+)"/;push @ex,/title="([^"]+)"/;say join "=", @ex' \
+      | uniq
+

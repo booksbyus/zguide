@@ -1,0 +1,61 @@
+#! /bin/bash
+#
+#   Prints missing examples for a given language and chapter
+#
+
+set -e
+
+check_script="$(basename ${BASH_SOURCE[0]})"
+zguide_dir="$(dirname ${BASH_SOURCE[0]})/.."
+
+if [[ $# < 2 ]]
+then
+    echo "usage: $check_script <lang> <chapter>"
+    echo "e.g. $check_script Perl 3"
+    exit 1
+fi
+
+lang=$1
+chapter=$2
+
+langdir="$zguide_dir/examples/$lang"
+chfile="$zguide_dir/chapter${chapter}.txt"
+
+if [ ! -d "$langdir" ]
+then
+    echo "No examples found for language '$lang'" 1>&2
+    exit 1
+fi
+
+if [ ! -f "$chfile" ]
+then
+    echo "No chapter file found for chapter '$chapter'" 1>&2
+    exit 1
+fi
+
+examplelist=$($zguide_dir/bin/list-examples $chapter)
+missing=0
+
+IFS=$'\n'
+for ex in $examplelist
+do
+    unset IFS
+
+    examplefile="$(cut -d= -f1 <<< $ex)"
+    examplename="$(cut -d= -f2 <<< $ex)"
+    examplepath="$zguide_dir/examples/$lang/${examplefile}"
+
+    if [[ -z "$(ls ${examplepath}.* 2>/dev/null)" ]]
+    then
+        printf "Missing %-12s %s\n" "$examplefile:" "$examplename" 1>&2
+        missing=1
+    fi
+done
+
+if [ $missing -eq 1 ]
+then
+    exit 1
+else
+    echo "OK" 1>&2
+    exit 0
+fi
