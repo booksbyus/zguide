@@ -1,7 +1,7 @@
 """
 
    Simple message queuing broker
-   Same as request-reply broker but using QUEUE device
+   Same as request-reply broker but using ``zmq.proxy``
 
    Author: Guillaume Aubert (gaubert) <guillaume(dot)aubert(at)gmail(dot)com>
 
@@ -9,6 +9,7 @@
 
 
 import zmq
+
 
 def main():
     """ main method """
@@ -23,13 +24,12 @@ def main():
     backend  = context.socket(zmq.DEALER)
     backend.bind("tcp://*:5560")
 
-    zmq.device(zmq.QUEUE, frontend, backend)
+    zmq.proxy(frontend, backend)
 
     # We never get here...
     frontend.close()
     backend.close()
     context.term()
-
 
 
 if __name__ == "__main__":
