@@ -22,8 +22,8 @@ HEARTBEAT_LIVENESS = 3     # 3..5 is reasonable
 HEARTBEAT_INTERVAL = 1.0   # Seconds
 
 #  Paranoid Pirate Protocol constants
-PPP_READY = "\x01"      # Signals worker is ready
-PPP_HEARTBEAT = "\x02"  # Signals worker heartbeat
+PPP_READY = b"\x01"      # Signals worker is ready
+PPP_HEARTBEAT = b"\x02"  # Signals worker heartbeat
 FRONT_END_ADDRESS = 'tcp://*:5555'
 BACK_END_ADDRESS = 'tcp://*:5556'
 

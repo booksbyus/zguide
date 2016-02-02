@@ -7,15 +7,16 @@ synopsis:
     Modified for async/ioloop: Dave Kuhlman <dkuhlman(at)davekuhlman(dot)org>
 usage:
     python mtserver.py
+notes:
+    To test this, start this process, then start one or more instances
+    of the hwclient.py process.
 """
 
 
-# from __future__ import print_function
 import sys
-from functools import partial
+import asyncio
 import zmq
 from zmq.asyncio import Context, Poller, ZMQEventLoop
-import asyncio
 
 
 Ctx = Context()
@@ -23,7 +24,7 @@ Url_worker = "inproc://workers"
 Url_client = "tcp://*:5555"
 
 
-DEBUG = True
+DEBUG = False
 
 
 def printdbg(*args):
@@ -31,8 +32,13 @@ def printdbg(*args):
         print(*args)
 
 
-@asyncio.coroutine
-def worker_routine(ident):
+def hello_world(loop):
+    print('Hello World')
+    loop.stop()
+
+
+# @asyncio.coroutine
+def run_worker(ident):
     """Worker routine"""
     # Socket to talk to dispatcher
     socket = Ctx.socket(zmq.REP)
@@ -53,7 +59,7 @@ def worker_routine(ident):
 
 
 @asyncio.coroutine
-def run(loop):
+def run_server(loop):
     """Server routine"""
     # Prepare our context and sockets
     # Socket to talk to clients
@@ -64,11 +70,11 @@ def run(loop):
     # Start the workers
     # Caution: Do *not* use lambda to create the function call to the worker.
     #     lambda does not work correctly inside a for-statement.
+    tasks = []
     for idx in range(5):
         ident = 'worker {}'.format(idx)
-        #loop.call_soon(partial(worker_routine, ident))
-        yield from worker_routine(ident)
-    print('(run) started worker routines')
+        task = asyncio.ensure_future(run_worker(ident))
+        tasks.append(task)
     poller = Poller()
     poller.register(clients, zmq.POLLIN)
     poller.register(workers, zmq.POLLIN)
@@ -94,7 +100,11 @@ def run(loop):
                 message))
             yield from clients.send_multipart([client, b'', message])
             printdbg('(run) sent message to clients: {}'.format(message))
-    loop.stop()
+
+
+@asyncio.coroutine
+def run(loop):
+    yield from run_server(loop)
 
 
 def main():
@@ -104,11 +114,12 @@ def main():
     try:
         loop = ZMQEventLoop()
         asyncio.set_event_loop(loop)
+        # Schedule a call to hello_world()
         loop.run_until_complete(run(loop))
-        loop.close()
     except KeyboardInterrupt:
         print('\nFinished (interrupted)')
 
 
 if __name__ == "__main__":
+    #import pdb; pdb.set_trace()
     main()

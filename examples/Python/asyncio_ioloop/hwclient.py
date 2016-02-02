@@ -16,7 +16,6 @@ notes:
 """
 
 
-# from __future__ import print_function
 import sys
 import zmq
 from zmq.asyncio import Context, Poller, ZMQEventLoop

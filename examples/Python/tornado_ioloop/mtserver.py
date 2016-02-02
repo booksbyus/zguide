@@ -24,7 +24,7 @@ Url_worker = "inproc://workers"
 Url_client = "tcp://*:5555"
 
 
-DEBUG = False
+DEBUG = True
 
 
 def printdbg(*args):

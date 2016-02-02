@@ -44,7 +44,7 @@ def run():
 
 def main():
     args = sys.argv[1:]
-    if len(args) != 1:
+    if len(args) != 0:
         sys.exit(__doc__)
     try:
         loop = IOLoop.current()
