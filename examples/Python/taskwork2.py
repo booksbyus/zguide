@@ -52,3 +52,9 @@ while True:
     # Any waiting controller command acts as 'KILL'
     if socks.get(controller) == zmq.POLLIN:
         break
+
+# Finished
+receiver.close()
+sender.close()
+controller.close()
+context.term()
