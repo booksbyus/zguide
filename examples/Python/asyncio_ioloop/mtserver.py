@@ -37,7 +37,6 @@ def hello_world(loop):
     loop.stop()
 
 
-# @asyncio.coroutine
 def run_worker(ident):
     """Worker routine"""
     # Socket to talk to dispatcher
@@ -58,7 +57,6 @@ def run_worker(ident):
         printdbg('(worker_routine) sent message: {}'.format(message))
 
 
-@asyncio.coroutine
 def run_server(loop):
     """Server routine"""
     # Prepare our context and sockets
@@ -68,8 +66,6 @@ def run_server(loop):
     workers = Ctx.socket(zmq.DEALER)
     workers.bind(Url_worker)
     # Start the workers
-    # Caution: Do *not* use lambda to create the function call to the worker.
-    #     lambda does not work correctly inside a for-statement.
     tasks = []
     for idx in range(5):
         ident = 'worker {}'.format(idx)
@@ -114,7 +110,6 @@ def main():
     try:
         loop = ZMQEventLoop()
         asyncio.set_event_loop(loop)
-        # Schedule a call to hello_world()
         loop.run_until_complete(run(loop))
     except KeyboardInterrupt:
         print('\nFinished (interrupted)')
