@@ -5,17 +5,15 @@ synopsis:
     Create in-process clients and workers.
     Implement a "proxy" to pass messages from clients to workers and back.
     Original author: "Felipe Cruz <felipecruz@loogica.net>"
-    Modified for tornado/ioloop: Dave Kuhlman <dkuhlman(at)davekuhlman(dot)org>
+    Modified for async/ioloop: Dave Kuhlman <dkuhlman(at)davekuhlman(dot)org>
 usage:
     python asyncsrv.py
 """
 
 import sys
-from functools import partial
 import zmq
-from zmq.eventloop.future import Context, Poller
-from zmq.eventloop.ioloop import IOLoop
-from tornado import gen
+from zmq.asyncio import Context, Poller, ZMQEventLoop
+import asyncio
 
 __author__ = "Felipe Cruz <felipecruz@loogica.net>"
 __license__ = "MIT/X11"
@@ -38,7 +36,7 @@ class Client(object):
         self.context = context
         self.id = id
 
-    @gen.coroutine
+    @asyncio.coroutine
     def run_client(self):
         socket = self.context.socket(zmq.REQ)
         identity = u'client-%d' % self.id
@@ -49,13 +47,17 @@ class Client(object):
             reqs = reqs + 1
             msg = 'request # {}.{}'.format(self.id, reqs)
             msg = msg.encode('utf-8')
-            yield socket.send(msg)
+            printdbg('Client {} before sending request: {}'.format(
+                self.id, reqs))
+            yield from socket.send(msg)
             print('Client {} sent request: {}'.format(self.id, reqs))
-            msg = yield socket.recv()
+            msg = yield from socket.recv()
             print('Client %s received: %s' % (identity, msg))
-            yield gen.sleep(1)
+            yield from asyncio.sleep(1)
+            printdbg('(run_client) client {} after sleep'.format(self.id))
         #socket.close()
         #context.term()
+        printdbg('(run_client) client {} exiting'.format(self.id))
 
 
 class Server(object):
@@ -64,30 +66,34 @@ class Server(object):
         self.loop = loop
         self.context = context
 
-    @gen.coroutine
     def run_server(self):
         printdbg('(Server.run) starting')
+        tasks = []
         frontend = self.context.socket(zmq.ROUTER)
         frontend.bind(FRONTEND_ADDR)
         backend = self.context.socket(zmq.DEALER)
         backend.bind(BACKEND_ADDR)
-        self.loop.add_callback(partial(run_proxy, frontend, backend))
+        task = asyncio.ensure_future(run_proxy(frontend, backend))
+        tasks.append(task)
         printdbg('(Server.run) started proxy')
-        yield gen.sleep(0.1)
         # Start up the workers.
         for idx in range(5):
-            #ident = 'worker {}'.format(idx, self.context)
             worker = Worker(self.context, idx)
-            self.loop.add_callback(worker.run_worker)
+            task = asyncio.ensure_future(worker.run_worker())
+            tasks.append(task)
             printdbg('(Server.run) started worker {}'.format(idx))
-        yield gen.sleep(0.1)
         # Start up the clients.
         clients = [Client(self.context, idx) for idx in range(3)]
-        yield [client.run_client() for client in clients]
+        tasks += [
+            asyncio.ensure_future(client.run_client()) for
+            client in clients
+        ]
+        printdbg('(run_server) tasks: {}'.format(tasks))
         printdbg('(Server.run) after starting clients')
         #frontend.close()
         #backend.close()
         #self.context.term()
+        return tasks
 
 
 class Worker(object):
@@ -96,47 +102,48 @@ class Worker(object):
         self.context = context
         self.idx = idx
 
-    @gen.coroutine
+    @asyncio.coroutine
     def run_worker(self):
         worker = self.context.socket(zmq.DEALER)
         worker.connect(BACKEND_ADDR)
         print('Worker {} started'.format(self.idx))
         while True:
-            ident, part2, msg = yield worker.recv_multipart()
+            ident, part2, msg = yield from worker.recv_multipart()
             print('Worker %s received %s from %s' % (self.idx, msg, ident))
-            yield gen.sleep(0.5)
-            yield worker.send_multipart([ident, part2, msg])
+            yield from asyncio.sleep(0.5)
+            yield from worker.send_multipart([ident, part2, msg])
         worker.close()
 
 
-@gen.coroutine
+@asyncio.coroutine
 def run_proxy(socket_from, socket_to):
     poller = Poller()
     poller.register(socket_from, zmq.POLLIN)
     poller.register(socket_to, zmq.POLLIN)
     printdbg('(run_proxy) started')
     while True:
-        events = yield poller.poll()
+        events = yield from poller.poll()
         events = dict(events)
         if socket_from in events:
-            msg = yield socket_from.recv_multipart()
+            msg = yield from socket_from.recv_multipart()
             printdbg('(run_proxy) received from frontend -- msg: {}'.format(
                 msg))
-            yield socket_to.send_multipart(msg)
+            yield from socket_to.send_multipart(msg)
             printdbg('(run_proxy) sent to backend -- msg: {}'.format(msg))
         elif socket_to in events:
-            msg = yield socket_to.recv_multipart()
+            msg = yield from socket_to.recv_multipart()
             printdbg('(run_proxy) received from backend -- msg: {}'.format(
                 msg))
-            yield socket_from.send_multipart(msg)
+            yield from socket_from.send_multipart(msg)
             printdbg('(run_proxy) sent to frontend -- msg: {}'.format(msg))
 
 
-@gen.coroutine
 def run(loop):
+    printdbg('(run) starting')
     context = Context()
     server = Server(loop, context)
-    yield server.run_server()
+    tasks = server.run_server()
+    loop.run_until_complete(asyncio.wait(tasks))
     printdbg('(run) finished')
 
 
@@ -147,11 +154,11 @@ def main():
     if len(args) != 0:
         sys.exit(__doc__)
     try:
-        loop = IOLoop.current()
-        loop.run_sync(partial(run, loop))
-        print('(main) after starting run()')
-        #loop.add_callback(lambda: run())
-        #loop.start()
+        loop = ZMQEventLoop()
+        asyncio.set_event_loop(loop)
+        printdbg('(main) before starting run()')
+        run(loop)
+        printdbg('(main) after starting run()')
     except KeyboardInterrupt:
         print('\nFinished (interrupted)')
 

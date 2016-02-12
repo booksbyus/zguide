@@ -5,7 +5,7 @@ synopsis:
     Hello World server in Python.
     Binds REP socket to Url.
     Expects b"Hello" from client, replies with b"World".
-    Modified for async/ioloop: Dave Kuhlman <dkuhlman(at)davekuhlman(dot)org>
+    Modified for tornado/ioloop: Dave Kuhlman <dkuhlman(at)davekuhlman(dot)org>
 usage:
     python hwserver.py
 """
