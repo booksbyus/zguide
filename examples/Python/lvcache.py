@@ -8,7 +8,7 @@ import zmq
 def main():
     ctx = zmq.Context.instance()
     frontend = ctx.socket(zmq.SUB)
-    frontend.bind("tcp://*:5557")
+    frontend.connect("tcp://*:5557")
     backend = ctx.socket(zmq.XPUB)
     backend.bind("tcp://*:5558")
 
