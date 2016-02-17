@@ -42,7 +42,6 @@ def run_client(context, zipcode):
     return result
 
 
-# @asyncio.coroutine
 def run(loop, zipcodes):
     context = Context()
     tasks = [
