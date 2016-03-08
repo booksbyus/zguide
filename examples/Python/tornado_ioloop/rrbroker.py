@@ -13,8 +13,8 @@ notes:
 """
 
 import sys
-import zmq
 from functools import partial
+import zmq
 from zmq.eventloop.future import Context, Poller
 from zmq.eventloop.ioloop import IOLoop
 from tornado import gen
@@ -37,12 +37,10 @@ def run_broker(context):
     while True:
         socks = yield poller.poll()
         socks = dict(socks)
-
         if socks.get(frontend) == zmq.POLLIN:
             message = yield frontend.recv_multipart()
             print('received from frontend: {}'.format(message))
             yield backend.send_multipart(message)
-
         if socks.get(backend) == zmq.POLLIN:
             message = yield backend.recv_multipart()
             print('received from backend: {}'.format(message))

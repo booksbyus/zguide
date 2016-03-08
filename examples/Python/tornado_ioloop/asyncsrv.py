@@ -150,8 +150,6 @@ def main():
         loop = IOLoop.current()
         loop.run_sync(partial(run, loop))
         print('(main) after starting run()')
-        #loop.add_callback(lambda: run())
-        #loop.start()
     except KeyboardInterrupt:
         print('\nFinished (interrupted)')
 

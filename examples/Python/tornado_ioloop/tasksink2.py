@@ -24,17 +24,13 @@ def run_sink(context):
     # Socket to receive messages on
     receiver = context.socket(zmq.PULL)
     receiver.bind("tcp://*:5558")
-
     # Socket for worker control
     controller = context.socket(zmq.PUB)
     controller.bind("tcp://*:5559")
-
     # Wait for start of batch
     yield receiver.recv()
-
     # Start our clock now
     tstart = time.time()
-
     # Process 100 confirmiations
     for task_nbr in range(100):
         yield receiver.recv()
@@ -43,16 +39,13 @@ def run_sink(context):
         else:
             sys.stdout.write(".")
         sys.stdout.flush()
-
     # Calculate and report duration of batch
     tend = time.time()
     tdiff = tend - tstart
     total_msec = tdiff * 1000
     print("Total elapsed time: %d msec" % total_msec)
-
     # Send kill signal to workers
     yield controller.send(b"KILL")
-
     # Finished
     #receiver.close()
     #controller.close()
