@@ -19,7 +19,7 @@ notes:
 # from __future__ import print_function
 import sys
 import zmq
-from zmq.eventloop.future import Context, Poller
+from zmq.eventloop.future import Context
 from zmq.eventloop.ioloop import IOLoop
 from tornado import gen
 
@@ -31,20 +31,19 @@ Ctx = Context()
 @gen.coroutine
 def run(ident):
     #  Socket to talk to server
-    print("Connecting to hello world server.  Ctrl-C to exit early.\n")
+    print(("Client {} connecting to hello world server.  " +
+          "Ctrl-C to exit early.").format(ident))
     socket = Ctx.socket(zmq.REQ)
     socket.connect(Url)
-    poller = Poller()
-    poller.register(socket, zmq.POLLOUT)
     #  Do multiple requests, waiting each time for a response
     for request in range(10):
         message = '{} Hello {}'.format(ident, request)
         message = message.encode('utf-8')
-        print("Sending message: {}".format(message))
+        print("Client {} sending message: {}".format(ident, message))
         yield socket.send(message)
         #  Get the reply.
         message = yield socket.recv()
-        print("Received reply: {}".format(message))
+        print("Client {} received reply: {}".format(ident, message))
     print('exiting')
     raise gen.Return('nothing')
 

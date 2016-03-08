@@ -7,7 +7,7 @@ These example files:
 
 - Use the Python 3 asyncio library.
 
-- Have been modified to satisfy the ``flake8`` syntax and style checker .
+- Have been modified to satisfy the ``flake8`` syntax and style checker.
 
 
 

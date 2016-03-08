@@ -12,7 +12,7 @@ usage:
 
 import sys
 import zmq
-from zmq.eventloop.future import Context, Poller
+from zmq.eventloop.future import Context
 from zmq.eventloop.ioloop import IOLoop
 from tornado import gen
 
@@ -26,8 +26,6 @@ def run():
     print("Getting ready for hello world client.  Ctrl-C to exit.\n")
     socket = Ctx.socket(zmq.REP)
     socket.bind(Url)
-    poller = Poller()
-    poller.register(socket, zmq.POLLIN)
     while True:
         #  Wait for next request from client
         message = yield socket.recv()

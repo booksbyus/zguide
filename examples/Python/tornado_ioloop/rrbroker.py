@@ -27,12 +27,10 @@ def run_broker(context):
     backend = context.socket(zmq.DEALER)
     frontend.bind("tcp://*:5559")
     backend.bind("tcp://*:5560")
-
     # Initialize poll set
     poller = Poller()
     poller.register(frontend, zmq.POLLIN)
     poller.register(backend, zmq.POLLIN)
-
     # Switch messages between sockets
     while True:
         socks = yield poller.poll()

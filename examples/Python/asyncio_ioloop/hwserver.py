@@ -12,7 +12,7 @@ usage:
 
 import sys
 import zmq
-from zmq.asyncio import Context, Poller, ZMQEventLoop
+from zmq.asyncio import Context, ZMQEventLoop
 import asyncio
 
 
@@ -25,13 +25,11 @@ def run():
     print("Getting ready for hello world client.  Ctrl-C to exit.\n")
     socket = Ctx.socket(zmq.REP)
     socket.bind(Url)
-    poller = Poller()
-    poller.register(socket, zmq.POLLIN)
     while True:
         #  Wait for next request from client
         message = yield from socket.recv()
         print("Received request: {}".format(message))
-        #  Do some 'work'
+        #  Do some "work"
         yield from asyncio.sleep(1)
         #  Send reply back to client
         message = message.decode('utf-8')
