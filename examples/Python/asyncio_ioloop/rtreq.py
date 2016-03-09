@@ -4,7 +4,7 @@
 synopsis:
     Custom routing Router to Mama (ROUTER to REQ)
     Author: Jeremy Avnet (brainsik) <spork(dash)zmq(at)theory(dot)org>
-    Modified for tornado/ioloop: Dave Kuhlman <dkuhlman(at)davekuhlman(dot)org>
+    Modified for async/ioloop: Dave Kuhlman <dkuhlman(at)davekuhlman(dot)org>
 usage:
     python rtreq.py
 """
@@ -12,16 +12,14 @@ usage:
 import sys
 import random
 import zmq
-from functools import partial
-from zmq.eventloop.future import Context
-from zmq.eventloop.ioloop import IOLoop
-from tornado import gen
 import zhelpers
+from zmq.asyncio import Context, ZMQEventLoop
+import asyncio
 
 NBR_WORKERS = 10
 
 
-@gen.coroutine
+@asyncio.coroutine
 def worker_task(id, context=None):
     context = context or Context.instance()
     worker = context.socket(zmq.REQ)
@@ -31,50 +29,52 @@ def worker_task(id, context=None):
     total = 0
     while True:
         # Tell the router we're ready for work
-        yield worker.send(b"ready")
+        yield from worker.send(b"ready")
         # Get workload from router, until finished
-        workload = yield worker.recv()
-        #print('(worker {}) received: {}'.format(id, workload))
+        workload = yield from worker.recv()
+        #print('worker {} received: {}'.format(id, workload))
         finished = workload == b"END"
         if finished:
             print("worker %d processed: %d tasks" % (id, total))
             break
         total += 1
         # Do some random work
-        yield gen.sleep(0.1 * random.random())
-    raise gen.Return(('worker {}'.format(id), total))
+        yield from asyncio.sleep(0.1 * random.random())
+    return ('worker {}'.format(id), total)
 
 
-@gen.coroutine
+@asyncio.coroutine
 def requestor(client):
     for _ in range(NBR_WORKERS * 10):
         # LRU worker is next waiting in the queue
-        address, empty, ready = yield client.recv_multipart()
-        yield client.send_multipart([
+        address, empty, ready = yield from client.recv_multipart()
+        yield from client.send_multipart([
             address,
             b'',
             b'This is the workload',
         ])
     # Now ask mama to shut down and report their results
     for _ in range(NBR_WORKERS):
-        address, empty, ready = yield client.recv_multipart()
-        yield client.send_multipart([
+        address, empty, ready = yield from client.recv_multipart()
+        yield from client.send_multipart([
             address,
             b'',
             b'END',
         ])
-    raise gen.Return(('requestor', 'finished'))
+    return ('requestor', 'finished')
 
 
-@gen.coroutine
 def run(loop):
     context = Context.instance()
     client = context.socket(zmq.ROUTER)
     client.bind("tcp://*:5671")
-    responses = yield [
-        worker_task(idx) for idx in range(NBR_WORKERS)
-    ] + [requestor(client)]
-    print('responses: {}'.format(responses))
+    tasks = [
+        asyncio.ensure_future(worker_task(idx)) for idx in range(NBR_WORKERS)
+    ]
+    tasks.append(asyncio.ensure_future(requestor(client)))
+    loop.run_until_complete(asyncio.wait(tasks))
+    for task in tasks:
+        print('result: {}'.format(task.result()))
 
 
 def main():
@@ -82,9 +82,9 @@ def main():
     if len(args) != 0:
         sys.exit(__doc__)
     try:
-        loop = IOLoop.current()
-        loop.run_sync(partial(run, loop))
-        print('(main) exiting')
+        loop = ZMQEventLoop()
+        asyncio.set_event_loop(loop)
+        run(loop)
     except KeyboardInterrupt:
         print('\nFinished (interrupted)')
         sys.exit(0)
@@ -93,4 +93,3 @@ def main():
 if __name__ == '__main__':
     main()
     print('(program) finished')
-    sys.exit('aborting')
