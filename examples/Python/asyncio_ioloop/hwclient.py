@@ -18,7 +18,7 @@ notes:
 
 import sys
 import zmq
-from zmq.asyncio import Context, Poller, ZMQEventLoop
+from zmq.asyncio import Context, ZMQEventLoop
 import asyncio
 
 
@@ -29,20 +29,19 @@ Ctx = Context()
 @asyncio.coroutine
 def run(ident):
     #  Socket to talk to server
-    print("Connecting to hello world server.  Ctrl-C to exit early.\n")
+    print(("Client {} connecting to hello world server.  " +
+          "Ctrl-C to exit early.").format(ident))
     socket = Ctx.socket(zmq.REQ)
     socket.connect(Url)
-    poller = Poller()
-    poller.register(socket, zmq.POLLOUT)
     #  Do multiple requests, waiting each time for a response
     for request in range(10):
         message = '{} Hello {}'.format(ident, request)
         message = message.encode('utf-8')
-        print("Sending message: {}".format(message))
+        print("Client {} sending message: {}".format(ident, message))
         yield from socket.send(message)
         #  Get the reply.
         message = yield from socket.recv()
-        print("Received reply: {}".format(message))
+        print("Client {} received reply: {}".format(ident, message))
     print('exiting')
     return 'nothing'
 

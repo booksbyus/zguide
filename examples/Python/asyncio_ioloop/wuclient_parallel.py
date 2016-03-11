@@ -3,7 +3,7 @@
 """
 synopsis:
     Weather update client.  Run clients in parallel.
-    Connects SUB socket to tcp://localhost:5556
+    Connects SUB socket to SERVER_ADDRESS.
     Collects weather updates and finds avg temp in zipcode
     Runs multiple requestors in parallel.
     Modified for async/ioloop: Dave Kuhlman <dkuhlman(at)davekuhlman(dot)org>
@@ -42,7 +42,6 @@ def run_client(context, zipcode):
     return result
 
 
-# @asyncio.coroutine
 def run(loop, zipcodes):
     context = Context()
     tasks = [
