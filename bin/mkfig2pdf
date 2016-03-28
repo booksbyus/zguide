@@ -1,0 +1,24 @@
+#! /bin/bash
+#
+#   Generates a PDF and landscape PDF from a figure file
+#   Not used in this project currently, but left as a sample for future users
+#
+export FIG=$1
+echo "Converting fig$FIG.txt to SVG..."
+a2s -iimages/fig$FIG.txt -oimages/fig$FIG.svg 2> /dev/null
+rasterizer -d images images/fig$FIG.svg 2>/dev/null
+inkscape -f images/fig$FIG.svg -E images/fig$FIG.eps 2> /dev/null
+
+echo "Converting fig$FIG.txt to PDF..."
+gs \
+ -o images/fig$FIG.pdf \
+ -sDEVICE=pdfwrite \
+ -sPAPERSIZE=a3 \
+ -dPDFFitPage \
+ -dCompatibilityLevel=1.4 \
+  images/fig$FIG.eps 2> /dev/null
+
+
+echo "Converting fig$FIG.txt to Landscape PDF..."
+gs -dBATCH -dNOPAUSE -sOutputFile=images/fig0_landscape.pdf -sDEVICE=pdfwrite -c "<< /PageSize [1450 650]  >> setpagedevice" -dPDFFitPage -f images/fig0.eps 2> /dev/null
+

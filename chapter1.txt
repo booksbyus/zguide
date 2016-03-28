@@ -255,7 +255,7 @@ sys     0m0.008s
             |    PUSH     |
             '------+------'
                    |
-                 tasks
+                   | tasks
                    |
       .------------+-------------.
       |            |             |
@@ -270,7 +270,7 @@ sys     0m0.008s
       |            |             |
       '------------+-------------'
                    |
-                results
+                   | results
                    |
                    v
             .-------------.
@@ -322,12 +322,12 @@ Let's look at some aspects of this code in more detail:
 |  PUSH   |   |  PUSH   |   |  PUSH   |
 '----+----'   '----+----'   '----+----'
      |             |             |
- R1, R2, R3       R4           R5, R6
+  R1,| R2, R3      | R4       R5,| R6
      |             |             |
      '-------------+-------------'
                    |
-             fair-queuing
-         R1, R4, R5, R2, R6, R3
+               fair| queuing
+        R1, R4, R5,| R2, R6, R3
                    |
                    v
             .-------------.
@@ -429,7 +429,7 @@ It turns out that building reusable messaging systems is really difficult, which
 '------------'
       ^
       |
-     TCP
+      | TCP
       |
       v
 .------------.
