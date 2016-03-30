@@ -179,7 +179,7 @@ Now lets look at one way to make our subscribers faster. A common use case for p
                |    PUB    |
                '-----+-----'
                      |
-.------------------- | ------------------.
+.--------------------|-------------------.
 :                    |          Fast box :
 :                    v                   :
 :              .-----------.             :
@@ -232,7 +232,7 @@ The subscriber talks to the publisher over TCP or PGM. The subscriber talks to i
 :              +-----+-----+             :
 :              | Subscriber|             :
 :              +-----+-----+             :
-:              | PUSH|PUSH |             :
+:              |PUSH | PUSH|             :
 :              '--+--+--+--'             :
 :                 |     |                :
 :      .----------+-.   '--------.       :
@@ -316,8 +316,8 @@ And here is the client:
           |    PUB    |
           '-----+-----'
                 |
-             updates
                 |
+                |updates
     .-----------+-----------.
     |           |           |
     v           v           v
@@ -365,8 +365,8 @@ To make this work, we have to solve a problem of timing. Getting a state snapsho
                    '--+--+--------'
                       |      ^
                       |      | state request
-                   updates   '------------------.
-                      |                         |
+                      |      '------------------.
+                      | updates                 |
    .------------------+-------------------.     |
    |                  |                   |     |
    |                  |                   |     |
@@ -434,8 +434,8 @@ There are a few strategies for obtaining consistency when changes happen in mult
                   |       |        | state update
                   |       |        '----------.
                   |       | state request     |
-               updates    '-----------.       |
-                  |                   |       |
+                  |       '-----------.       |
+                  | updates           |       |
    .--------------+------------.      |       |
    |                           |      |       |
    |      ^       ^            |      |       |
@@ -562,24 +562,24 @@ So, Model Six introduces the following changes over Model Five:
  |  Initial  |<-------------------.  |
  |           |                    |  |
  #-----+-----#                    |  |
-Request|snapshot                  |  |
-       |   .----------------.     |  |
-       |   |                |     |  |
-       v   v                |     |  |
- #-----------#              |     |  |
- |           +-INPUT--------'     |  |
- |  Syncing  | Store snapshot     |  |
- |           +-SILENCE------------'  |
- #-----+-----# Failover to next      |
-    KTHXBAI                          |
-       |   .----------------.        |
-       |   |                |        |
-       v   v                |        |
- #-----------#              |        |
- |           +-INPUT--------'        |
- |  Active   | Store update          |
- |           +-SILENCE---------------'
- #-----------# Failover to next
+Request| snapshot                 |  |
+       |   .-------------------.  |  |
+       |   |                   |  |  |
+       v   v                   |  |  |
+ #-----------#                 |  |  |
+ |           +- INPUT----------'  |  |
+ |  Syncing  |  Store snapshot    |  |
+ |           +- SILENCE-----------'  |
+ #-----+-----#  Failover to next     |
+     KTHXBAI                         |
+       |   .-------------------.     |
+       |   |                   |     |
+       v   v                   |     |
+ #-----------#                 |     |
+ |           +- INPUT----------'     |
+ |  Active   |  Store update         |
+ |           +- SILENCE--------------'
+ #-----------#  Failover to next
 [[/code]]
 
 It's useful to design the client logic as a finite state machine. The client cycles through three states:

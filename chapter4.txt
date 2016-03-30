@@ -688,8 +688,8 @@ There are many ways to make a persistent request-reply architecture. We'll aim f
       ^               ^               ^
       |               |               |
       '---------------+---------------'
-Titanic,              |         "Titanic,
-give me coffee"       |          give me tea"
+"Titanic,             |         "Titanic,
+ give me coffee"      |          give me tea"
                       v                                
                 .-----------.     #---------#     .-------.
                 |           |     |         |     |       |
@@ -975,7 +975,8 @@ Note that the servers use PUB-SUB sockets for state exchange. No other socket co
 
 [[code type="textdiagram" title="Binary Star Finite State Machine"]]
     Start .-----------------------.   .----------.               Start
-      |   |Client Request         |   |    Client|Request          |
+          |                       |   |          |                   
+      |   |Client Request         |   |    Client| Request         |
       v   |                       v   v          |                 v
 .---------+-.                 .-----------.      |           .-----------.
 |           | Peer Backup     |           +------'           |           |
@@ -983,15 +984,15 @@ Note that the servers use PUB-SUB sockets for state exchange. No other socket co
 |           |         .------>|           |<-----.        |  |           |
 '-----+-----'         |       '-----+-----'      |        |  '-----+-----'
       |               |             |            |        |        |
-  Peer|Active         |         Peer|Active      |        |    Peer|Active
+  Peer| Active        |         Peer| Active     |        |    Peer| Active
       |               |             v            |        |        |
       |               |       .-----------.      |        |        |
       |               |       |           |      |        |        |
-      |           Peer|Backup |  Error!   |  Peer|Primary |        |
+      |           Peer| Backup|  Error!   |  Peer| Primary|        |
       |               |       |           |      |        |        |
       |               |       '-----------'      |        |        |
       |               |             ^            |        |        |
-      |               |         Peer|Passive     |  Client|Vote    |
+      |               |         Peer| Passive    |  Client| Vote   |
       |               |             |            |        |        |
       |               |       .-----+-----.      |        |        |
       |               |       |           +------'        |        |
