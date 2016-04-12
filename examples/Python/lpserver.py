@@ -7,6 +7,7 @@
 #
 #   Author: Daniel Lundin <dln(at)eintr(dot)org>
 #
+from __future__ import print_function
 
 from random import randint
 import time
@@ -23,13 +24,13 @@ while True:
 
     # Simulate various problems, after a few cycles
     if cycles > 3 and randint(0, 3) == 0:
-        print "I: Simulating a crash"
+        print("I: Simulating a crash")
         break
     elif cycles > 3 and randint(0, 3) == 0:
-        print "I: Simulating CPU overload"
+        print("I: Simulating CPU overload")
         time.sleep(2)
 
-    print "I: Normal request (%s)" % request
+    print("I: Normal request (%s)" % request)
     time.sleep(1) # Do some heavy work
     server.send(request)
 
