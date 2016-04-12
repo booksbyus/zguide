@@ -5,8 +5,8 @@
 #
 #   Author: Daniel Lundin <dln(at)eintr(dot)org>
 #
+from __future__ import print_function
 
-import sys
 import zmq
 
 REQUEST_TIMEOUT = 2500
@@ -15,7 +15,7 @@ SERVER_ENDPOINT = "tcp://localhost:5555"
 
 context = zmq.Context(1)
 
-print "I: Connecting to server..."
+print("I: Connecting to server...")
 client = context.socket(zmq.REQ)
 client.connect(SERVER_ENDPOINT)
 
@@ -26,8 +26,8 @@ sequence = 0
 retries_left = REQUEST_RETRIES
 while retries_left:
     sequence += 1
-    request = str(sequence)
-    print "I: Sending (%s)" % request
+    request = str(sequence).encode()
+    print("I: Sending (%s)" % request)
     client.send(request)
 
     expect_reply = True
@@ -38,23 +38,23 @@ while retries_left:
             if not reply:
                 break
             if int(reply) == sequence:
-                print "I: Server replied OK (%s)" % reply
+                print("I: Server replied OK (%s)" % reply)
                 retries_left = REQUEST_RETRIES
                 expect_reply = False
             else:
-                print "E: Malformed reply from server: %s" % reply
+                print("E: Malformed reply from server: %s" % reply)
 
         else:
-            print "W: No response from server, retrying..."
+            print("W: No response from server, retrying...")
             # Socket is confused. Close and remove it.
             client.setsockopt(zmq.LINGER, 0)
             client.close()
             poll.unregister(client)
             retries_left -= 1
             if retries_left == 0:
-                print "E: Server seems to be offline, abandoning"
+                print("E: Server seems to be offline, abandoning")
                 break
-            print "I: Reconnecting and resending (%s)" % request
+            print("I: Reconnecting and resending (%s)" % request)
             # Create new connection
             client = context.socket(zmq.REQ)
             client.connect(SERVER_ENDPOINT)
