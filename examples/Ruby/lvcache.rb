@@ -8,7 +8,7 @@ require 'ffi-rzmq'
 context = ZMQ::Context.new
 
 frontend = context.socket(ZMQ::SUB)
-frontend.bind("tcp://*:5557")
+frontend.connect("tcp://*:5557")
 backend = context.socket(ZMQ::XPUB)
 backend.bind("tcp://*:5558")
 
