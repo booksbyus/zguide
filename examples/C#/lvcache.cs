@@ -24,7 +24,7 @@ namespace Examples
 			using (var backend = new ZSocket(context, ZSocketType.XPUB))
 			{
 				// Subscribe to every single topic from publisher
-				frontend.Bind("tcp://*:5557");
+				frontend.Connect("tcp://*:5557");
 				frontend.SubscribeAll();
 
 				backend.Bind("tcp://*:5558");
