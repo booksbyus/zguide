@@ -3,7 +3,7 @@ ZeroMQ Examples in C#
 
 Hello! I've made some new examples for C#.
 
-Also read: [ZeroMQ - The Guide](http://zguide.zeromq.org/page:all). Current version: [ZeroMQ - The Guide Examples](https://github.com/metadings/zguide/tree/master/examples/C%23/).
+Also read: [ZeroMQ - The Guide](http://zguide.zeromq.org/cs:all). Current version: [ZeroMQ - The Guide Examples](https://github.com/metadings/zguide/tree/master/examples/C%23/).
 
 You can open the `ZGuideExamples.*.csproj` in Visual C# on Windows or in MonoDevelop on Linux.  
 Add a Reference to the project [`/zeromq/clrzmq4`](http://github.com/zeromq/clrzmq4) (or the release ZeroMQ.dll).
@@ -12,6 +12,11 @@ Now compile the project and run `./ZGuideExamples.exe` !
 
 ```
 Usage: ./ZGuideExamples.exe [--option=++] [--option=tcp://192.168.1.1:8080] <command> World Me You
+
+Available [option]s:
+
+  --Verbose
+
 ```
 
 #### [HWServer](https://github.com/metadings/zguide/blob/master/examples/C%23/hwserver.cs), [HWClient](https://github.com/metadings/zguide/blob/master/examples/C%23/hwclient.cs)
@@ -254,6 +259,14 @@ Use with LPClient.
 
 	    Endpoint  Where PathoSub should connect to.
 	              Default is tcp://127.0.0.1:5556
+
+Usually, you would use LVCache using PathoPub and PathoSub.
+Use the following commands in three open /bin/bash Tabs,
+or use the following commands in three open Windows cmd.exe:
+
+	./ZGuideExamples.exe LVCache
+	./ZGuideExamples.exe PathoPub tcp://127.0.0.1:5557
+	./ZGuideExamples.exe PathoSub tcp://127.0.0.1:5558
 
 	Usage: ./ZGuideExamples.exe LVCache
 
