@@ -256,17 +256,6 @@ namespace Examples
 		//  Implements server side of http://rfc.zeromq.org/spec:9
 		public static void Titanic(string[] args)
 		{
-			bool verbosedeep =
-						   (args.Any(e => e.ToLower().Equals("-vd")
-										  || e.ToLower().Equals("--verbosedeep")));
-
-
-			bool verbose = verbosedeep || (args.Any(e => e.ToLower().Equals("-v")
-													  || e.ToLower().Equals("--verbose")));
-
-			Console.WriteLine("Verbose: {0}", verbose);
-			Console.WriteLine("Verbosedeep: {0}", verbosedeep);
-
 			CancellationTokenSource cancellor = new CancellationTokenSource();
 			Console.CancelKeyPress += (s, ea) =>
 			{
@@ -275,10 +264,10 @@ namespace Examples
 			};
 
 			ZContext ctx = new ZContext();
-			using (var requestPipe = new ZActor(ctx, Titanic_Request, verbosedeep))
+			using (var requestPipe = new ZActor(ctx, Titanic_Request, Verbose))
 			{
-				(new Thread(() => Titanic_Reply(ctx, cancellor, verbosedeep))).Start();
-				(new Thread(() => Titanic_Close(ctx, cancellor, verbosedeep))).Start();
+				(new Thread(() => Titanic_Reply(ctx, cancellor, Verbose))).Start();
+				(new Thread(() => Titanic_Close(ctx, cancellor, Verbose))).Start();
 				////////////////////
 				/// HINT: Use requestPipe.Start instead of requestPipe.Start(cancellor) 
 				/// => with cancellor consturctor needed frontent pipe will not be initializes!!
@@ -344,7 +333,7 @@ namespace Examples
 								if (line.StartsWith("-"))
 								{
 									var uuid = Guid.Parse(line.Substring(1, Guid.NewGuid().ToString().Length));
-									if (verbose)
+									if (Verbose)
 										"I: processing request {0}".DumpString(uuid);
 									if (Titanic_ServiceSuccess(uuid, cancellor))
 									{

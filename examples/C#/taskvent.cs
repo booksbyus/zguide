@@ -14,7 +14,7 @@ namespace Examples
 		{
 			//
 			// Task ventilator
-			// Binds PUSH socket to tcp://localhost:5557
+			// Binds PUSH socket to tcp://127.0.0.1:5557
 			// Sends batch of tasks to workers via that socket
 			//
 			// Author: metadings

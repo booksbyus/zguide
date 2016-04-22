@@ -17,10 +17,6 @@ namespace Examples
         //  main when it's ready.
         public static void Tripping(string[] args)
         {
-            bool verbose = (args.Any(e => e.ToLower().Equals("-v")
-                                          || e.ToLower().Equals("--verbose")));
-            Console.WriteLine("Verbose: {0}", verbose);
-
             CancellationTokenSource cancellor = new CancellationTokenSource();
             Console.CancelKeyPress += (s, ea) =>
             {
@@ -36,7 +32,7 @@ namespace Examples
                     (new Thread(() => Tripping_BrokerTask(ctx))).Start();
                     client.Start();
                     using (var signal = client.Frontend.ReceiveFrame())
-                        if (verbose)
+                        if (Verbose)
                             signal.ToString().DumpString();
                 }
             }
@@ -48,7 +44,7 @@ namespace Examples
         {
             using (ZSocket client = new ZSocket(ctx, ZSocketType.DEALER))
             {
-                client.Connect("tcp://localhost:5555");
+                client.Connect("tcp://127.0.0.1:5555");
                 "Setting up test...".DumpString();
                 Thread.Sleep(100);
 
@@ -96,7 +92,7 @@ namespace Examples
         {
             using (var worker = new ZSocket(ctx, ZSocketType.DEALER))
             {
-                worker.Connect("tcp://localhost:5556");
+                worker.Connect("tcp://127.0.0.1:5556");
 
                 while (true)
                 {

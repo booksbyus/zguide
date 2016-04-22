@@ -14,7 +14,7 @@ namespace Examples
 		{
 			//
 			// Hello World client
-			// Connects REQ socket to tcp://localhost:5559
+			// Connects REQ socket to tcp://127.0.0.1:5559
 			// Sends "Hello" to server, expects "World" back
 			//
 			// Author: metadings

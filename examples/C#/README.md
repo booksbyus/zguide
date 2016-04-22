@@ -3,7 +3,7 @@ ZeroMQ Examples in C#
 
 Hello! I've made some new examples for C#.
 
-Also read: [ZeroMQ - The Guide](http://zguide.zeromq.org/page:all). Current version: [ZeroMQ - The Guide Examples](https://github.com/metadings/zguide/tree/master/examples/C%23/).
+Also read: [ZeroMQ - The Guide](http://zguide.zeromq.org/cs:all). Current version: [ZeroMQ - The Guide Examples](https://github.com/metadings/zguide/tree/master/examples/C%23/).
 
 You can open the `ZGuideExamples.*.csproj` in Visual C# on Windows or in MonoDevelop on Linux.  
 Add a Reference to the project [`/zeromq/clrzmq4`](http://github.com/zeromq/clrzmq4) (or the release ZeroMQ.dll).
@@ -11,7 +11,12 @@ Add a Reference to the project [`/zeromq/clrzmq4`](http://github.com/zeromq/clrz
 Now compile the project and run `./ZGuideExamples.exe` !
 
 ```
-Usage: ./ZGuideExamples.exe [--option=++] [--option=tcp://192.168.1.1:8080] <command> World Me You
+Usage: ./ZGuideExamples.exe [--option] <command> World
+
+Available [option]s:
+
+  --Verbose
+
 ```
 
 #### [HWServer](https://github.com/metadings/zguide/blob/master/examples/C%23/hwserver.cs), [HWClient](https://github.com/metadings/zguide/blob/master/examples/C%23/hwclient.cs)
@@ -258,6 +263,14 @@ Use with LPClient.
 	Usage: ./ZGuideExamples.exe LVCache
 
         The LVCache is binding on tcp://*:5557 and tcp://*.5558
+
+	Usually, you would use LVCache using PathoPub and PathoSub.
+	Use the following commands in three open /bin/bash Tabs,
+	or use the following commands in three open Windows cmd.exe:
+
+	./ZGuideExamples.exe LVCache
+	./ZGuideExamples.exe PathoPub tcp://127.0.0.1:5557
+	./ZGuideExamples.exe PathoSub tcp://127.0.0.1:5558
 ```
 
 #### [SuiSnail](https://github.com/metadings/zguide/blob/master/examples/C%23/suisnail.cs)
@@ -275,39 +288,21 @@ Use with LPClient.
 #### [MDBroker](https://github.com/metadings/zguide/blob/master/examples/C%23/mdbroker.cs), [MDWorker](https://github.com/metadings/zguide/blob/master/examples/C%23/mdworker.cs), [MDClient](https://github.com/metadings/zguide/blob/master/examples/C%23/mdclient.cs)
 
 ```
-	Usage: ./ZGuideExamples.exe MDBroker [-v] [--verbose]
-
-	    -v 		Verbose mode activated
-	            Default verbose is deactivated
+	Usage: ./ZGuideExamples.exe [--verbose] MDBroker
 				
-	Usage: ./ZGuideExamples.exe MDWorker [-v] [--verbose]
-
-	    -v 		Verbose mode activated
-	            Default verbose is deactivated
+	Usage: ./ZGuideExamples.exe [--verbose] MDWorker
 				
-	Usage: ./ZGuideExamples.exe MDClient [-v] [--verbose]
-
-	    -v 		Verbose mode activated
-	            Default verbose is deactivated
+	Usage: ./ZGuideExamples.exe [--verbose] MDClient
 ```
 
 #### [MDClient2](https://github.com/metadings/zguide/blob/master/examples/C%23/mdclient2.cs), [MDCliApi2.MajordomoClient](https://github.com/metadings/zguide/blob/master/examples/C%23/mdcliapi2.cs)
 
 ```
-	Usage: ./ZGuideExamples.exe MDBroker [-v] [--verbose]
-
-	    -v 		Verbose mode activated
-	            Default verbose is deactivated
+	Usage: ./ZGuideExamples.exe [--verbose] MDBroker
 				
-	Usage: ./ZGuideExamples.exe MDWorker [-v] [--verbose]
-
-	    -v 		Verbose mode activated
-	            Default verbose is deactivated
+	Usage: ./ZGuideExamples.exe [--verbose] MDWorker
 				
-	Usage: ./ZGuideExamples.exe MDClient2 [-v] [--verbose]
-
-	    -v 		Verbose mode activated
-	            Default verbose is deactivated
+	Usage: ./ZGuideExamples.exe [--verbose] MDClient2
 ```
 
 #### [Tripping](https://github.com/metadings/zguide/blob/master/examples/C%23/tripping.cs)
@@ -319,60 +314,29 @@ Use with LPClient.
 #### [MMIEcho](https://github.com/metadings/zguide/blob/master/examples/C%23/mmiecho.cs)
 
 ```
-	Usage: ./ZGuideExamples.exe MDBroker [-v] [--verbose]
-
-	    -v 		Verbose mode activated
-	            Default verbose is deactivated
+	Usage: ./ZGuideExamples.exe [--verbose] MDBroker
 				
-	Usage: ./ZGuideExamples.exe MMIECHO [-v] [--verbose]
-
-	    -v 		Verbose mode activated
-	            Default verbose is deactivated
+	Usage: ./ZGuideExamples.exe [--verbose] MMIECHO
 
     ---
 
-	Usage: ./ZGuideExamples.exe MDBroker [-v] [--verbose]
-
-	    -v 		Verbose mode activated
-	            Default verbose is deactivated
+	Usage: ./ZGuideExamples.exe [--verbose] MDBroker
 				
-	Usage: ./ZGuideExamples.exe MDWorker [-v] [--verbose]
-
-	    -v 		Verbose mode activated
-	            Default verbose is deactivated
+	Usage: ./ZGuideExamples.exe [--verbose] MDWorker
 				
-	Usage: ./ZGuideExamples.exe MMIECHO [-v] [--verbose]
-
-	    -v 		Verbose mode activated
-	            Default verbose is deactivated
+	Usage: ./ZGuideExamples.exe [--verbose] MMIECHO
 ```
 
 #### [titanic](https://github.com/metadings/zguide/blob/master/examples/C%23/titanic.cs), [ticlient](https://github.com/metadings/zguide/blob/master/examples/C%23/ticlient.cs)
 
 ```
-	Usage: ./ZGuideExamples.exe MDBroker [-v] [--verbose]
+	Usage: ./ZGuideExamples.exe [--verbose] MDBroker
 
-	    -v 		Verbose mode activated
-	            Default verbose is deactivated
+	Usage: ./ZGuideExamples.exe [--verbose] MDWorker
 
-	Usage: ./ZGuideExamples.exe MDWorker [-v] [--verbose]
+	Usage: ./ZGuideExamples.exe [--verbose] Titanic
 
-	    -v 		Verbose mode activated
-	            Default verbose is deactivated
-
-	Usage: ./ZGuideExamples.exe Titanic [-v] [--verbose]
-
-	    -v 		Verbose mode activated
-	            Default verbose is deactivated
-		-vd     Verbosedeep mode activated. 
-				- Default verbosedeep is deactivated
-				- activates automatically verbose mode
-				- Msgdump messes up cuz of 3 parallel workers
-
-	Usage: ./ZGuideExamples.exe TiClient [-v||--verbose]
-
-		-v 		Verbose mode activated
-	            Default verbose is deactivated
+	Usage: ./ZGuideExamples.exe [--verbose] TiClient
 
 ```
 

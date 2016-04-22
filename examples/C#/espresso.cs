@@ -54,13 +54,15 @@ namespace Examples
 
 				while (true)
 				{
-					var bytes = new byte[5];
+					var frame = ZFrame.Create(8);
+					var bytes = new byte[8];
 					using (var rng = new System.Security.Cryptography.RNGCryptoServiceProvider())
 					{
 						rng.GetBytes(bytes);
 					}
-
-					if (!publisher.SendBytes(bytes, 0, bytes.Length, ZSocketFlags.None, out error))
+					frame.Write(bytes, 0, 8);
+					
+					if (!publisher.SendFrame(frame, out error))
 					{
 						if (error == ZError.ETERM)
 							return;	// Interrupted
@@ -84,12 +86,11 @@ namespace Examples
 				subscriber.Subscribe("B");
 
 				ZError error;
+				ZFrame frame;
 				int count = 0;
 				while (count < 5)
 				{
-					var bytes = new byte[10];
-					int bytesLength;
-					if (-1 == (bytesLength = subscriber.ReceiveBytes(bytes, 0, bytes.Length, ZSocketFlags.None, out error)))
+					if (null == (frame = subscriber.ReceiveFrame(out error)))
 					{
 						if (error == ZError.ETERM)
 							return;	// Interrupted

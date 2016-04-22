@@ -17,10 +17,6 @@ namespace Examples
         //  MMI echo query example
         public static void MMIEcho(string[] args)
         {
-            bool verbose = (args.Any(e => e.ToLower().Equals("-v")
-                                          || e.ToLower().Equals("--verbose")));
-            Console.WriteLine("Verbose: {0}", verbose);
-
             CancellationTokenSource cancellor = new CancellationTokenSource();
             Console.CancelKeyPress += (s, ea) =>
             {
@@ -28,7 +24,7 @@ namespace Examples
                 cancellor.Cancel();
             };
 
-            using (MajordomoClient session = new MajordomoClient("tcp://localhost:5555", verbose))
+            using (MajordomoClient session = new MajordomoClient("tcp://127.0.0.1:5555", Verbose))
             {
                 ZMessage request  = new ZMessage();
                 request.Add(new ZFrame("echo"));
