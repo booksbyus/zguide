@@ -14,9 +14,9 @@ namespace Examples
 		{
 			//
 			// Task worker
-			// Connects PULL socket to tcp://localhost:5557
+			// Connects PULL socket to tcp://127.0.0.1:5557
 			// Collects workloads from ventilator via that socket
-			// Connects PUSH socket to tcp://localhost:5558
+			// Connects PUSH socket to tcp://127.0.0.1:5558
 			// Sends results to sink via that socket
 			//
 			// Author: metadings

@@ -512,10 +512,6 @@ namespace Examples
         //  then process messages on the broker Socket:
         public static void MDBroker(string[] args)
         {
-            bool verbose = (args.Any(e => e.ToLower().Equals("-v")
-                                       || e.ToLower().Equals("--verbose")));
-            Console.WriteLine("Verbose: {0}", verbose);
-
             CancellationTokenSource cancellor = new CancellationTokenSource();
             Console.CancelKeyPress += (s, ea) =>
             {
@@ -523,7 +519,7 @@ namespace Examples
                 cancellor.Cancel();
             };
 
-            using (Broker broker = new Broker(verbose))
+            using (Broker broker = new Broker(Verbose))
             {
                 broker.Bind("tcp://*:5555");
                 // Get and process messages forever or until interrupted
@@ -538,7 +534,7 @@ namespace Examples
                     ZError error;
                     if (broker.Socket.PollIn(p, out msg, out error, MdpCommon.HEARTBEAT_INTERVAL))
                     {
-                        if (verbose)
+                        if (Verbose)
                             msg.DumpZmsg("I: received message:");
 
                         using (ZFrame sender = msg.Pop())

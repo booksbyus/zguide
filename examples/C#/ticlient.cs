@@ -22,10 +22,6 @@ namespace Examples
 
 		public static void TIClient(string[] args)
 		{
-			bool verbose = (args.Any(e => e.ToLower().Equals("-v")
-										  || e.ToLower().Equals("--verbose")));
-			Console.WriteLine("Verbose: {0}", verbose);
-
 			CancellationTokenSource cancellor = new CancellationTokenSource();
 			Console.CancelKeyPress += (s, ea) =>
 			{
@@ -33,7 +29,7 @@ namespace Examples
 				cancellor.Cancel();
 			};
 
-			using (MajordomoClient session = new MajordomoClient("tcp://127.0.0.1:5555", verbose))
+			using (MajordomoClient session = new MajordomoClient("tcp://127.0.0.1:5555", Verbose))
 			{
 				//  1. Send 'echo' request to Titanic
 				ZMessage request = new ZMessage();

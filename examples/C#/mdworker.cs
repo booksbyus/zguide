@@ -13,10 +13,6 @@ namespace Examples
 		//  Uses the mdwrk API to hide all MDP aspects
 		public static void MDWorker(string[] args)
 		{
-			bool verbose = (args.Any(e => e.ToLower().Equals("-v")
-									   || e.ToLower().Equals("--verbose")));
-			Console.WriteLine("Verbose: {0}", verbose);
-
 			CancellationTokenSource cts = new CancellationTokenSource();
 			Console.CancelKeyPress += (s, ea) =>
 			{
@@ -24,7 +20,7 @@ namespace Examples
 				cts.Cancel();
 			};
 
-			using (MajordomoWorker session = new MajordomoWorker("tcp://127.0.0.1:5555", "echo", verbose))
+			using (MajordomoWorker session = new MajordomoWorker("tcp://127.0.0.1:5555", "echo", Verbose))
 			{
 				ZMessage reply = null;
 				while (true)

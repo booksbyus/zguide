@@ -12,10 +12,6 @@ namespace Examples
         //  Uses the mdcli API to hide all MDP aspects
         public static void MDClient2(string[] args)
         {
-            bool verbose = (args.Any(e => e.ToLower().Equals("-v")
-                                       || e.ToLower().Equals("--verbose")));
-            Console.WriteLine("Verbose: {0}", verbose);
-
             CancellationTokenSource cts = new CancellationTokenSource();
             Console.CancelKeyPress += (s, ea) =>
             {
@@ -23,7 +19,7 @@ namespace Examples
                 cts.Cancel();
             };
 
-            using (MajordomoClient session = new MajordomoClient("tcp://localhost:5555", verbose))
+            using (MajordomoClient session = new MajordomoClient("tcp://127.0.0.1:5555", Verbose))
             {
                 int count;
                 for (count = 0; count < 100000 && !cts.IsCancellationRequested; count++)
