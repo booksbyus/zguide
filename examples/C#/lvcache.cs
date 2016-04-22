@@ -8,7 +8,7 @@ using ZeroMQ;
 
 namespace Examples
 {
-	static partial class Progam
+	static partial class Program
 	{
 		public static void LVCache(string[] args)
 		{
