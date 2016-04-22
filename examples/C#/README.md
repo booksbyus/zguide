@@ -260,18 +260,17 @@ Use with LPClient.
 	    Endpoint  Where PathoSub should connect to.
 	              Default is tcp://127.0.0.1:5556
 
-```
-Usually, you would use LVCache using PathoPub and PathoSub.
-Use the following commands in three open /bin/bash Tabs,
-or use the following commands in three open Windows cmd.exe:
-```
-	./ZGuideExamples.exe LVCache
-	./ZGuideExamples.exe PathoPub tcp://127.0.0.1:5557
-	./ZGuideExamples.exe PathoSub tcp://127.0.0.1:5558
-
 	Usage: ./ZGuideExamples.exe LVCache
 
         The LVCache is binding on tcp://*:5557 and tcp://*.5558
+
+	Usually, you would use LVCache using PathoPub and PathoSub.
+	Use the following commands in three open /bin/bash Tabs,
+	or use the following commands in three open Windows cmd.exe:
+
+	./ZGuideExamples.exe LVCache
+	./ZGuideExamples.exe PathoPub tcp://127.0.0.1:5557
+	./ZGuideExamples.exe PathoSub tcp://127.0.0.1:5558
 ```
 
 #### [SuiSnail](https://github.com/metadings/zguide/blob/master/examples/C%23/suisnail.cs)
