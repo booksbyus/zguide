@@ -114,7 +114,7 @@ namespace Examples
 			}
 
 			Console.WriteLine();
-			Console.WriteLine("Usage: ./" + AppDomain.CurrentDomain.FriendlyName + " [--option=++] [--option=tcp://192.168.1.1:8080] <command> World Me You");
+			Console.WriteLine("Usage: ./" + AppDomain.CurrentDomain.FriendlyName + " [--option] <command> World");
 
 			if (fields.Count > 0)
 			{

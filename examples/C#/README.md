@@ -11,7 +11,7 @@ Add a Reference to the project [`/zeromq/clrzmq4`](http://github.com/zeromq/clrz
 Now compile the project and run `./ZGuideExamples.exe` !
 
 ```
-Usage: ./ZGuideExamples.exe [--option=++] [--option=tcp://192.168.1.1:8080] <command> World Me You
+Usage: ./ZGuideExamples.exe [--option] <command> World
 
 Available [option]s:
 
