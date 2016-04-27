@@ -14,19 +14,19 @@ import zmq
 # zmq.jsonapi ensures bytes, instead of unicode:
 
 def encode_properties(properties_dict):
-    prop_s = ""
+    prop_s = b""
     for key, value in properties_dict.items():
-        prop_s += "%s=%s\n" % (key, value)
+        prop_s += b"%s=%s\n" % (key, value)
     return prop_s
 
 
 def decode_properties(prop_s):
     prop = {}
-    line_array = prop_s.split("\n")
+    line_array = prop_s.split(b"\n")
 
     for line in line_array:
         try:
-            key, value = line.split("=")
+            key, value = line.split(b"=")
             prop[key] = value
         except ValueError as e:
             #Catch empty line
@@ -79,9 +79,9 @@ class KVMsg(object):
 
     def send(self, socket):
         """Send key-value message to socket; any empty frames are sent as such."""
-        key = '' if self.key is None else self.key
+        key = b'' if self.key is None else self.key
         seq_s = struct.pack('!q', self.sequence)
-        body = '' if self.body is None else self.body
+        body = b'' if self.body is None else self.body
         prop_s = encode_properties(self.properties)
         socket.send_multipart([ key, seq_s, self.uuid, prop_s, body ])
 
@@ -103,7 +103,7 @@ class KVMsg(object):
     def __repr__(self):
         if self.body is None:
             size = 0
-            data='NULL'
+            data=b'NULL'
         else:
             size = len(self.body)
             data = repr(self.body)
@@ -120,12 +120,12 @@ class KVMsg(object):
         
     
     def dump(self):
-        print >> sys.stderr, "<<", str(self), ">>"
+        print("<<", str(self), ">>", file=sys.stderr)
 # ---------------------------------------------------------------------
 # Runs self test of class
 
 def test_kvmsg (verbose):
-    print " * kvmsg: ",
+    print(" * kvmsg: ", end='')
 
     # Prepare our context and sockets
     ctx = zmq.Context()
@@ -137,8 +137,8 @@ def test_kvmsg (verbose):
     kvmap = {}
     # Test send and receive of simple message
     kvmsg = KVMsg(1)
-    kvmsg.key = "key"
-    kvmsg.body = "body"
+    kvmsg.key = b"key"
+    kvmsg.body = b"body"
     if verbose:
         kvmsg.dump()
     kvmsg.send(output)
@@ -147,17 +147,17 @@ def test_kvmsg (verbose):
     kvmsg2 = KVMsg.recv(input)
     if verbose:
         kvmsg2.dump()
-    assert kvmsg2.key == "key"
+    assert kvmsg2.key == b"key"
     kvmsg2.store(kvmap)
 
     assert len(kvmap) == 1 # shouldn't be different
 
     # test send/recv with properties:
-    kvmsg = KVMsg(2, key="key", body="body")
-    kvmsg["prop1"] = "value1"
-    kvmsg["prop2"] = "value2"
-    kvmsg["prop3"] = "value3"
-    assert kvmsg["prop1"] == "value1"
+    kvmsg = KVMsg(2, key=b"key", body=b"body")
+    kvmsg[b"prop1"] = b"value1"
+    kvmsg[b"prop2"] = b"value2"
+    kvmsg[b"prop3"] = b"value3"
+    assert kvmsg[b"prop1"] == b"value1"
     if verbose:
         kvmsg.dump()
     kvmsg.send(output)
@@ -168,9 +168,9 @@ def test_kvmsg (verbose):
     assert kvmsg2.key == kvmsg.key
     assert kvmsg2.body == kvmsg.body
     assert kvmsg2.properties == kvmsg.properties
-    assert kvmsg2["prop2"] == kvmsg["prop2"]
+    assert kvmsg2[b"prop2"] == kvmsg[b"prop2"]
 
-    print "OK"
+    print("OK")
 
 if __name__ == '__main__':
     test_kvmsg('-v' in sys.argv)
