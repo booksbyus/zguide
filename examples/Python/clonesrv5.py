@@ -81,8 +81,8 @@ class CloneServer(object):
 
     def handle_snapshot(self, msg):
         """snapshot requests"""
-        if len(msg) != 3 or msg[1] != "ICANHAZ?":
-            print "E: bad request, aborting"
+        if len(msg) != 3 or msg[1] != b"ICANHAZ?":
+            print("E: bad request, aborting")
             dump(msg)
             self.loop.stop()
             return
@@ -99,7 +99,7 @@ class CloneServer(object):
             logging.info("I: Sending state shapshot=%d" % self.sequence)
             self.snapshot.send(identity, zmq.SNDMORE)
             kvmsg = KVMsg(self.sequence)
-            kvmsg.key = "KTHXBAI"
+            kvmsg.key = b"KTHXBAI"
             kvmsg.body = subtree
             kvmsg.send(self.snapshot)
 
@@ -109,23 +109,24 @@ class CloneServer(object):
         self.sequence += 1
         kvmsg.sequence = self.sequence
         kvmsg.send(self.publisher)
-        ttl = float(kvmsg.get('ttl', 0))
+        ttl = float(kvmsg.get(b'ttl', 0))
         if ttl:
-            kvmsg['ttl'] = time.time() + ttl
+            kvmsg[b'ttl'] = b'%f' % (time.time() + ttl)
         kvmsg.store(self.kvmap)
         logging.info("I: publishing update=%d", self.sequence)
 
     def flush_ttl(self):
         """Purge ephemeral values that have expired"""
-        for key,kvmsg in self.kvmap.items():
+        for key,kvmsg in list(self.kvmap.items()):
+            # used list() to exhaust the iterator before deleting from the dict
             self.flush_single(kvmsg)
 
     def flush_single(self, kvmsg):
         """If key-value pair has expired, delete it and publish the fact
         to listening clients."""
-        ttl = float(kvmsg.get('ttl', 0))
+        ttl = float(kvmsg.get(b'ttl', 0))
         if ttl and ttl <= time.time():
-            kvmsg.body = ""
+            kvmsg.body = b""
             self.sequence += 1
             kvmsg.sequence = self.sequence
             kvmsg.send(self.publisher)
