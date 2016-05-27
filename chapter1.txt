@@ -562,7 +562,7 @@ These are the main areas of impact on applications and language bindings:
 
 +++ Suggested Shim Macros
 
-For applications that want to run on both v2.x and v3.2, such as language bindings, our advice is to emulate c3.2 as far as possible. Here are C macro definitions that help your C/C++ code to work across both versions (taken from [http://czmq.zeromq.org CZMQ]):
+For applications that want to run on both v2.x and v3.2, such as language bindings, our advice is to emulate v3.2 as far as possible. Here are C macro definitions that help your C/C++ code to work across both versions (taken from [http://czmq.zeromq.org CZMQ]):
 
 [[code type="fragment" name="upgrade-shim"]]
 #ifndef ZMQ_DONTWAIT
