@@ -28,10 +28,10 @@ while (true) {
 
     //  Simulate various problems, after a few cycles
     if ($cycles > 3 && rand(0, 3) == 0) {
-        echo "I: (%s) simulating a crash", $identity, PHP_EOL;
+        printf ("I: (%s) simulating a crash%s", $identity, PHP_EOL);
         break;
     } elseif ($cycles > 3 && rand(0, 3) == 0) {
-        echo "I: (%s) simulating CPU overload", $identity, PHP_EOL;
+        printf ("I: (%s) simulating CPU overload%s", $identity, PHP_EOL);
         sleep(5);
     }
     printf ("I: (%s) normal reply - %s%s", $identity, $zmsg->body(), PHP_EOL);
