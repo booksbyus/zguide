@@ -131,14 +131,14 @@ namespace Examples
 			Console.WriteLine("Available <command>s:");
 			Console.WriteLine();
 
-			foreach (MethodInfo meth in methods)
+			foreach (MethodInfo method in methods)
 			{
-				if (meth.Name == "Main")
+				if (method.Name == "Main")
 					continue;
-				if (0 < meth.GetCustomAttributes(typeof(System.Runtime.CompilerServices.CompilerGeneratedAttribute), true).Length)
+				if (0 < method.GetCustomAttributes(typeof(System.Runtime.CompilerServices.CompilerGeneratedAttribute), true).Length)
 					continue;
 
-				Console.WriteLine("    {0}", meth.Name);
+				Console.WriteLine("    {0}", method.Name);
 			}
 
 			Console.WriteLine();
