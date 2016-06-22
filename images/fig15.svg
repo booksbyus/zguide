@@ -64,11 +64,8 @@
 <g id="group43">
 	<path id="path43" d="M 4.5 248 L 94.5 248 " />
 </g>
-<g id="group138">
-	<path id="path138" d="M 49.5 152 L 49.5 146 Q 49.5 136 59.5 136 L 175.5 136 L 291.5 136 Q 301.5 136 301.5 146 L 301.5 168 " />
-</g>
 <g id="group141">
-	<path id="path141" marker-start="url(#iPointer)" d="M 49.5 200 L 49.5 168 " />
+	<path id="path141" marker-start="url(#iPointer)" marker-end="url(#Pointer)" d="M 49.5 200 L 49.5 146 Q 49.5 136 59.5 136 L 175.5 136 L 291.5 136 Q 301.5 136 301.5 146 L 301.5 200 " />
 </g>
 <g id="group291">
 	<path id="path291" d="M 121.5 40 L 229.5 40 " />
@@ -77,25 +74,18 @@
 	<path id="path325" d="M 130.5 248 L 220.5 248 " />
 </g>
 <g id="group415">
-	<path id="path415" d="M 175.5 72 L 175.5 104 " />
-</g>
-<g id="group419">
-	<path id="path419" d="M 175.5 120 L 175.5 136 L 175.5 168 " />
-</g>
-<g id="group424">
-	<path id="path424" marker-start="url(#iPointer)" d="M 175.5 200 L 175.5 168 " />
+	<path id="path415" marker-end="url(#Pointer)" d="M 175.5 72 L 175.5 136 L 175.5 200 " />
 </g>
 <g id="group607">
 	<path id="path607" d="M 256.5 248 L 346.5 248 " />
 </g>
-<g id="group705">
-	<path id="path705" marker-start="url(#iPointer)" d="M 301.5 200 L 301.5 168 " />
-</g>
 </g>
 <g id="text" fill="black" style="font-family:LMMono10,monospace;font-size:15.2px" >
-<text x="116.1" y="108.8" id="text2" fill="#000" >R1, R2, R3, R4</text>
-<text x="17.1" y="172.8" id="text3" fill="#000" >R1, R4 </text>
-<text x="170.1" y="172.8" id="text4" fill="#000" >R2 </text>
-<text x="296.1" y="172.8" id="text5" fill="#000" >R3</text>
+<text x="107.1" y="108.8" id="text2" fill="#000" >R1, R2, </text>
+<text x="188.1" y="108.8" id="text3" fill="#000" >R3, R4</text>
+<text x="8.1" y="172.8" id="text4" fill="#000" >R1, </text>
+<text x="62.1" y="172.8" id="text5" fill="#000" >R4 </text>
+<text x="188.1" y="172.8" id="text6" fill="#000" >R2 </text>
+<text x="314.1" y="172.8" id="text7" fill="#000" >R3</text>
 </g>
 </svg>

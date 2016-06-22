@@ -1,5 +1,6 @@
     Start .-----------------------.   .----------.               Start
-      |   |Client Request         |   |    Client|Request          |
+          |                       |   |          |                   
+      |   |Client Request         |   |    Client| Request         |
       v   |                       v   v          |                 v
 .---------+-.                 .-----------.      |           .-----------.
 |           | Peer Backup     |           +------'           |           |
@@ -7,15 +8,15 @@
 |           |         .------>|           |<-----.        |  |           |
 '-----+-----'         |       '-----+-----'      |        |  '-----+-----'
       |               |             |            |        |        |
-  Peer|Active         |         Peer|Active      |        |    Peer|Active
+  Peer| Active        |         Peer| Active     |        |    Peer| Active
       |               |             v            |        |        |
       |               |       .-----------.      |        |        |
       |               |       |           |      |        |        |
-      |           Peer|Backup |  Error!   |  Peer|Primary |        |
+      |           Peer| Backup|  Error!   |  Peer| Primary|        |
       |               |       |           |      |        |        |
       |               |       '-----------'      |        |        |
       |               |             ^            |        |        |
-      |               |         Peer|Passive     |  Client|Vote    |
+      |               |         Peer| Passive    |  Client| Vote   |
       |               |             |            |        |        |
       |               |       .-----+-----.      |        |        |
       |               |       |           +------'        |        |
