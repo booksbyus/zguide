@@ -56,7 +56,7 @@ s_recv (void *socket) {
     if (size > 255)
         size = 255;
     buffer [size] = 0;
-    return strdup (buffer);
+    return strndup (buffer, sizeof(buffer) - 1);
 }
 
 //  Convert C string to 0MQ string and send to socket
