@@ -69,12 +69,11 @@ namespace Examples
 
                 "Asynchronous round-trip test...".DumpString();
                 sw.Restart();
-                // sending 100000 requests => often ends in eagain exception in ZContext.Proxy!!
-                for (requests = 0; requests < 1000; requests++)
+                for (requests = 0; requests < 100000; requests++)
                     using (var outgoing = new ZFrame("hello"))
                         client.SendFrame(outgoing);
 
-                for (requests = 0; requests < 1000; requests++)
+                for (requests = 0; requests < 100000; requests++)
                     using (var reply = client.ReceiveFrame())
                         if (Verbose)
                             reply.ToString().DumpString();

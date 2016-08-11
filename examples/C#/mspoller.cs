@@ -30,28 +30,24 @@ namespace Examples
 				subscriber.Connect("tcp://127.0.0.1:5556");
 				subscriber.SetOption(ZSocketOption.SUBSCRIBE, "10001 ");
 
-				var poll = ZPollItem.CreateReceiver();
+				var sockets = new ZSocket[] { receiver, subscriber };
+				var polls = new ZPollItem[] { ZPollItem.CreateReceiver(), ZPollItem.CreateReceiver() };
 
 				// Process messages from both sockets
 				ZError error;
-				ZMessage msg;
+				ZMessage[] msg;
 				while (true)
 				{
-					if (receiver.PollIn(poll, out msg, out error, TimeSpan.FromMilliseconds(64)))
+					if (sockets.PollIn(polls, out msg, out error, TimeSpan.FromMilliseconds(64)))
 					{
-						// Process task
-					}
-					else
-					{
-						if (error == ZError.ETERM)
-							return;	// Interrupted
-						if (error != ZError.EAGAIN)
-							throw new ZException(error);
-					}
-
-					if (subscriber.PollIn(poll, out msg, out error, TimeSpan.FromMilliseconds(64)))
-					{
-						// Process weather update
+						if (msg[0] != null)
+						{
+							// Process task
+						}
+						if (msg[1] != null)
+						{
+							// Process weather update
+						}
 					}
 					else
 					{

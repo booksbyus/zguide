@@ -36,28 +36,38 @@ namespace Examples
 				ZFrame frame;
 				while (true)
 				{
-					if (null != (frame = receiver.ReceiveFrame(ZSocketFlags.DontWait, out error)))
+					while (true)
 					{
-						// Process task
-					}
-					else
-					{
-						if (error == ZError.ETERM)
-							return;	// Interrupted
-						if (error != ZError.EAGAIN)
-							throw new ZException(error);
+						if (null != (frame = receiver.ReceiveFrame(ZSocketFlags.DontWait, out error)))
+						{
+							// Process task
+						}
+						else
+						{
+							if (error == ZError.ETERM)
+								return;	// Interrupted
+							if (error != ZError.EAGAIN)
+								throw new ZException(error);
+
+							break;
+						}
 					}
 
-					if (null != (frame = subscriber.ReceiveFrame(ZSocketFlags.DontWait, out error)))
+					while (true)
 					{
-						// Process weather update
-					}
-					else
-					{
-						if (error == ZError.ETERM)
-							return;	// Interrupted
-						if (error != ZError.EAGAIN)
-							throw new ZException(error);
+						if (null != (frame = subscriber.ReceiveFrame(ZSocketFlags.DontWait, out error)))
+						{
+							// Process weather update
+						}
+						else
+						{
+							if (error == ZError.ETERM)
+								return;	// Interrupted
+							if (error != ZError.EAGAIN)
+								throw new ZException(error);
+
+							break;
+						}
 					}
 
 					// No activity, so sleep for 1 msec

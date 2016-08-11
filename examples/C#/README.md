@@ -308,7 +308,7 @@ Use with LPClient.
 #### [Tripping](https://github.com/metadings/zguide/blob/master/examples/C%23/tripping.cs)
 
 ```
-	Usage: ./ZGuideExamples.exe Tripping
+	Usage: ./ZGuideExamples.exe [--verbose] Tripping
 ```
 
 #### [MMIEcho](https://github.com/metadings/zguide/blob/master/examples/C%23/mmiecho.cs)
