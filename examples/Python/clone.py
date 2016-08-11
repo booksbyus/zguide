@@ -52,19 +52,19 @@ class Clone(object):
     def subtree(self, subtree):
         """Sends [SUBTREE][subtree] to the agent"""
         self._subtree = subtree
-        self.pipe.send_multipart(["SUBTREE", subtree])
+        self.pipe.send_multipart([b"SUBTREE", subtree])
 
     def connect(self, address, port):
         """Connect to new server endpoint
         Sends [CONNECT][address][port] to the agent
         """
-        self.pipe.send_multipart(["CONNECT", address, str(port)])
+        self.pipe.send_multipart([b"CONNECT", (address.encode() if isinstance(address, str) else address), b'%d' % port])
 
     def set(self, key, value, ttl=0):
         """Set new value in distributed hash table
         Sends [SET][key][value][ttl] to the agent
         """
-        self.pipe.send_multipart(["SET", key, value, str(ttl)])
+        self.pipe.send_multipart([b"SET", key, value, b'%i' % ttl])
 
     def get(self, key):
         """Lookup value in distributed hash table
@@ -72,7 +72,7 @@ class Clone(object):
         If there is no clone available, will eventually return None.
         """
 
-        self.pipe.send_multipart(["GET", key])
+        self.pipe.send_multipart([b"GET", key])
         try:
             reply = self.pipe.recv_multipart()
         except KeyboardInterrupt:
@@ -100,11 +100,11 @@ class CloneServer(object):
         self.port = port
         self.snapshot = ctx.socket(zmq.DEALER)
         self.snapshot.linger = 0
-        self.snapshot.connect("%s:%i" % (address,port))
+        self.snapshot.connect("%s:%i" % (address.decode(),port))
         self.subscriber = ctx.socket(zmq.SUB)
         self.subscriber.setsockopt(zmq.SUBSCRIBE, subtree)
         self.subscriber.setsockopt(zmq.SUBSCRIBE, b'HUGZ')
-        self.subscriber.connect("%s:%i" % (address,port+1))
+        self.subscriber.connect("%s:%i" % (address.decode(),port+1))
         self.subscriber.linger = 0
 
 
@@ -141,15 +141,15 @@ class CloneAgent(object):
         msg = self.pipe.recv_multipart()
         command = msg.pop(0)
 
-        if command == "CONNECT":
+        if command == b"CONNECT":
             address = msg.pop(0)
             port = int(msg.pop(0))
             if len(self.servers) < SERVER_MAX:
                 self.servers.append(CloneServer(self.ctx, address, port, self.subtree))
-                self.publisher.connect("%s:%i" % (address,port+2))
+                self.publisher.connect("%s:%i" % (address.decode(),port+2))
             else:
                 logging.error("E: too many servers (max. %i)", SERVER_MAX)
-        elif command == "SET":
+        elif command == b"SET":
             key,value,sttl = msg
             ttl = int(sttl)
 
@@ -157,13 +157,13 @@ class CloneAgent(object):
             kvmsg = KVMsg(0, key=key, body=value)
             kvmsg.store(self.kvmap)
             if ttl:
-                kvmsg["ttl"] = ttl
+                kvmsg[b"ttl"] = sttl
             kvmsg.send(self.publisher)
-        elif command == "GET":
+        elif command == b"GET":
             key = msg[0]
             value = self.kvmap.get(key)
             self.pipe.send(value.body if value else '')
-        elif command == "SUBTREE":
+        elif command == b"SUBTREE":
             self.subtree = msg[0]
 
 
@@ -189,7 +189,7 @@ def clone_agent(ctx, pipe):
                 logging.info ("I: waiting for server at %s:%d...",
                     server.address, server.port)
                 if (server.requests < 2):
-                    server.snapshot.send_multipart(["ICANHAZ?", agent.subtree])
+                    server.snapshot.send_multipart([b"ICANHAZ?", agent.subtree])
                     server.requests += 1
                 server.expiry = time.time() + SERVER_TTL
                 agent.state = STATE_SYNCING
@@ -228,7 +228,7 @@ def clone_agent(ctx, pipe):
             if (agent.state == STATE_SYNCING):
                 # Store in snapshot until we're finished
                 server.requests = 0
-                if kvmsg.key == "KTHXBAI":
+                if kvmsg.key == b"KTHXBAI":
                     agent.sequence = kvmsg.sequence
                     agent.state = STATE_ACTIVE
                     logging.info ("I: received from %s:%d snapshot=%d",

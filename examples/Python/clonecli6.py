@@ -15,15 +15,15 @@ SUBTREE = "/client/"
 def main():
     # Create and connect clone
     clone = Clone()
-    clone.subtree = SUBTREE
+    clone.subtree = SUBTREE.encode()
     clone.connect("tcp://localhost", 5556)
     clone.connect("tcp://localhost", 5566)
 
     try:
         while True:
             # Distribute as key-value message
-            key = "%d" % random.randint(1,10000)
-            value = "%d" % random.randint(1,1000000)
+            key = b"%d" % random.randint(1,10000)
+            value = b"%d" % random.randint(1,1000000)
             clone.set(key, value, random.randint(0,30))
             time.sleep(1)
     except KeyboardInterrupt:

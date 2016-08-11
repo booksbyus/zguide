@@ -22,7 +22,6 @@ s = receiver.recv()
 tstart = time.time()
 
 # Process 100 confirmations
-total_msec = 0
 for task_nbr in range(100):
     s = receiver.recv()
     if task_nbr % 10 == 0:

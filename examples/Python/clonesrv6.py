@@ -108,7 +108,7 @@ class CloneServer(object):
 
     def handle_snapshot(self, socket, msg):
         """snapshot requests"""
-        if msg[1] != "ICANHAZ?" or len(msg) != 3:
+        if msg[1] != b"ICANHAZ?" or len(msg) != 3:
             logging.error("E: bad request, aborting")
             dump(msg)
             self.bstar.loop.stop()
@@ -127,7 +127,7 @@ class CloneServer(object):
             logging.info("I: Sending state shapshot=%d" % self.sequence)
             socket.send(identity, zmq.SNDMORE)
             kvmsg = KVMsg(self.sequence)
-            kvmsg.key = "KTHXBAI"
+            kvmsg.key = b"KTHXBAI"
             kvmsg.body = subtree
             kvmsg.send(socket)
 
@@ -142,9 +142,9 @@ class CloneServer(object):
             self.sequence += 1
             kvmsg.sequence = self.sequence
             kvmsg.send(self.publisher)
-            ttl = float(kvmsg.get('ttl', 0))
+            ttl = float(kvmsg.get(b'ttl', 0))
             if ttl:
-                kvmsg['ttl'] = time.time() + ttl
+                kvmsg[b'ttl'] = b'%f' % (time.time() + ttl)
             kvmsg.store(self.kvmap)
             logging.info("I: publishing update=%d", self.sequence)
         else:
@@ -169,17 +169,18 @@ class CloneServer(object):
     def flush_ttl(self):
         """Purge ephemeral values that have expired"""
         if self.kvmap:
-            for key,kvmsg in self.kvmap.items():
+            for key,kvmsg in list(self.kvmap.items()):
                 self.flush_single(kvmsg)
 
     def flush_single(self, kvmsg):
         """If key-value pair has expired, delete it and publish the fact
         to listening clients."""
-        ttl = float(kvmsg.get('ttl', 0))
+        ttl = float(kvmsg.get(b'ttl', 0))
         if ttl and ttl <= time.time():
-            kvmsg.body = ""
+            kvmsg.body = b""
             self.sequence += 1
             kvmsg.sequence = self.sequence
+            logging.info("I: preparing to publish delete=%s", kvmsg.properties)
             kvmsg.send(self.publisher)
             del self.kvmap[kvmsg.key]
             logging.info("I: publishing delete=%d", self.sequence)
@@ -187,8 +188,8 @@ class CloneServer(object):
     def send_hugz(self):
         """Send hugz to anyone listening on the publisher socket"""
         kvmsg = KVMsg(self.sequence)
-        kvmsg.key = "HUGZ"
-        kvmsg.body = ""
+        kvmsg.key = b"HUGZ"
+        kvmsg.body = b""
         kvmsg.send(self.publisher)
 
     # ---------------------------------------------------------------------
@@ -239,7 +240,7 @@ class CloneServer(object):
 
             logging.info ("I: asking for snapshot from: tcp://localhost:%d",
                         self.peer)
-            snapshot.send_multipart(["ICANHAZ?", ''])
+            snapshot.send_multipart([b"ICANHAZ?", b''])
             while True:
                 try:
                     kvmsg = KVMsg.recv(snapshot)
@@ -247,7 +248,7 @@ class CloneServer(object):
                     # Interrupted
                     self.bstar.loop.stop()
                     return
-                if kvmsg.key == "KTHXBAI":
+                if kvmsg.key == b"KTHXBAI":
                     self.sequence = kvmsg.sequence
                     break          # Done
                 kvmsg.store(self.kvmap)
@@ -257,11 +258,11 @@ class CloneServer(object):
         # Find and remove update off pending list
         kvmsg = KVMsg.from_msg(msg)
         # update float ttl -> timestamp
-        ttl = float(kvmsg.get('ttl', 0))
+        ttl = float(kvmsg.get(b'ttl', 0))
         if ttl:
-            kvmsg['ttl'] = time.time() + ttl
+            kvmsg[b'ttl'] = b'%f' % (time.time() + ttl)
 
-        if kvmsg.key != "HUGZ":
+        if kvmsg.key != b"HUGZ":
             if not self.was_pending(kvmsg):
                 # If master update came before client update, flip it
                 # around, store master update (with sequence) on pending
@@ -282,7 +283,7 @@ def main():
     elif '-b' in sys.argv:
         primary = False
     else:
-        print "Usage: clonesrv6.py { -p | -b }"
+        print("Usage: clonesrv6.py { -p | -b }")
         sys.exit(1)
     clone = CloneServer(primary)
     clone.start()

@@ -31,5 +31,5 @@ for update_nbr in range(5):
     total_temp += int(temperature)
 
 print("Average temperature for zipcode '%s' was %dF" % (
-      zip_filter, total_temp / update_nbr)
+      zip_filter, total_temp / (update_nbr+1))
 )
