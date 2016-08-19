@@ -40,8 +40,10 @@ It sounds ridiculously simple. And maybe it is. That's kind of the whole point.
 이는 터무니 없이 간단하게 들릴 것이다. 그리고 어쩌면 이는 전부일 것이다.
 
 ++ Starting Assumptions
+++ 가정의 시작
 
 We assume you are using at least version 3.2 of ZeroMQ. We assume you are using a Linux box or something similar. We assume you can read C code, more or less, as that's the default language for the examples. We assume that when we write constants like PUSH or SUBSCRIBE, you can imagine they are really called {{ZMQ_PUSH}} or {{ZMQ_SUBSCRIBE}} if the programming language needs it.
+우리는 당신이 최소한 3.2 버전 이상의 ZeroMQ를 사용하고 리눅스 장비나 일부 이와 유사한 것을 사용하는 중이라고 가정한다. 또한 당신이 예제를 위한 기본 언어인 C 코드를 읽을 수 있다고도 가정한다. 또한 우리가 PUSH나 SUBSCRIBE와 같은 상수를 사용할 때 프로그래밍 언어에 따라 실제로는 이것을 {{ZMQ_PUSH}}나 {{ZMQ_SUBSCRIBE}}라고 부르는 것을 떠올릴 수 있다고 가정한다.
 
 ++ Getting the Examples
 
