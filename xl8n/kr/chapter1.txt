@@ -46,14 +46,17 @@ We assume you are using at least version 3.2 of ZeroMQ. We assume you are using 
 우리는 당신이 최소한 3.2 버전 이상의 ZeroMQ를 사용하고 리눅스 장비나 일부 이와 유사한 것을 사용하는 중이라고 가정한다. 또한 당신이 예제를 위한 기본 언어인 C 코드를 읽을 수 있다고도 가정한다. 또한 우리가 PUSH나 SUBSCRIBE와 같은 상수를 사용할 때 프로그래밍 언어에 따라 실제로는 이것을 {{ZMQ_PUSH}}나 {{ZMQ_SUBSCRIBE}}라고 부르는 것을 떠올릴 수 있다고 가정한다.
 
 ++ Getting the Examples
+++ 예제 얻기
 
 The examples live in a public [https://github.com/imatix/zguide GitHub repository]. The simplest way to get all the examples is to clone this repository:
+이 예제들은 공개 [https://github.com/imatix/zguide GitHub 저장소] 에 있다. 모든 예제를 가져오는 가장 간단한 방법은 이 저장소를 복제하는 것이다.
 
 [[code]]
 git clone --depth=1 https://github.com/imatix/zguide.git
 [[/code]]
 
 Next, browse the examples subdirectory. You'll find examples by language. If there are examples missing in a language you use, you're encouraged to [http://zguide.zeromq.org/main:translate submit a translation]. This is how this text became so useful, thanks to the work of many people. All examples are licensed under MIT/X11.
+다음으로, 이 예제들의 하위 디렉터리를 살펴보자. 당신은 언어별 예제들을 찾을 수 있을 것이다. 당신이 사용하는 언어로 된 예제들이 없다면, [http://zguide.zeromq.org/main:translate 변환된 예제를 제출하는 것]을 권한다. 이는 어떻게 많은 사람들의 작업 덕분에 이 텍스트가 유용하게 되었는가이다. 모든 예제들은 MIT/X11 라이센스 하에 허가된다.
 
 ++ Ask and Ye Shall Receive
 
