@@ -95,6 +95,7 @@ ZeroMQ는 기준 언어로서 C를 사용하고 우리가 예제들에서 사용
 [[/code]]
 
 You can see that the ZeroMQ API is similar in C and C++. In a language like PHP or Java, we can hide even more and the code becomes even easier to read:
+당신은 C와 C++에서 ZeroMQ API가 유사하다는 것을 볼 수 있다. PHP나 Java와 같은 언어에서, 우리는 코드를 더욱 읽기 쉽게 만들기 위해서 더 많은 것들을 은닉화할 수 있다.
 
 [[code type="example" title="Hello World server" name="hwserver" language="PHP"]]
 [[/code]]
@@ -104,24 +105,31 @@ You can see that the ZeroMQ API is similar in C and C++. In a language like PHP 
 
 
 The server in other languages:
+다른 언어들에서의 서버 코드
 
 [[code type="example" title="Hello World server" name="hwserver"]]
 [[/code]]
 
 Here's the client code:
+아래는 클라이언트 코드:
 
 [[code type="example" title="Hello World client" name="hwclient"]]
 [[/code]]
 
 Now this looks too simple to be realistic, but ZeroMQ sockets have, as we already learned, superpowers. You could throw thousands of clients at this server, all at once, and it would continue to work happily and quickly. For fun, try starting the client and //then// starting the server, see how it all still works, then think for a second what this means.
+이건 실제적으로 너무 쉽게 보이지만, 우리가 벌써 배운 것과 같이 ZeroMQ 소켓들은 강력한 힘을 가진다. 당신은 수천의 클라이언트들이 이 서버에 한꺼번에 요청하도록 할 수 있고, 이것은 적절하고 빠르게 작업을 계속할 수 있을 것이다. 재미를 위해서 클라이언트를 시작하고, //그 후에// 서버를 시작해보자. 이제 어떻게 모든 것들이 여전히 동작하는지 지켜본 후에 이게 의미하는 바를 잠깐 생각해보자.
 
 Let us explain briefly what these two programs are actually doing. They create a ZeroMQ context to work with, and a socket. Don't worry what the words mean. You'll pick it up. The server binds its REP (reply) socket to port 5555. The server waits for a request in a loop, and responds each time with a reply. The client sends a request and reads the reply back from the server.
+이 두 프로그램의 실제 동작을 간단히 설명해보자. 그들은 동작을 위한 ZeroMQ 컨텍스트와 소켓을 하나 만든다. 이 말이 무엇을 의미하는지는 신경쓰지 말자. 당신은 이것을 얻게될 것이다. 서버는 자신의 REP(응답) 소켓을 5555번 포트와 묶는다. 서버는 반복 내에서 요청을 대기하고, 응답에 대하여 때마다 응답한다. 클라이언트는 요청을 보내고 서버로부터 돌아오는 응답을 읽는다.
 
 If you kill the server (Ctrl-C) and restart it, the client won't recover properly. Recovering from crashing processes isn't quite that easy. Making a reliable request-reply flow is complex enough that we won't cover it until [#reliable-request-reply].
+당신이 서버를 죽이고 (Ctrl-C) 재시작 한다면, 클라이언트는 정확하게 복구되지 않을 것이다. 깨진 프로세스로부터 복구를 하는 것은 그리 쉬운 일이 아니다. 신뢰있는 요청-응답 흐름을 만드는 것은 우리가 이를 [#reliable-request-reply]까지는 다룰 수 없을 만큼 충분히 복잡하다.
 
 There is a lot happening behind the scenes but what matters to us programmers is how short and sweet the code is, and how often it doesn't crash, even under a heavy load. This is the request-reply pattern, probably the simplest way to use ZeroMQ. It maps to RPC and the classic client/server model.
+무대 뒤에서는 많은 일들이 일어나지만 우리의 프로그래머들이 걱정할 것은 어떻게 짧고 친절한 코드를 만드는지, 그리고 고부하 상태에서 얼마동안 크래시가 발행하지 않는지이다. 이것은 요청-응답 패턴이고, 아마도 ZeroMQ를 사용하는 가장 쉬운 방법일 것이다. ZeroMQ는 RPC와 고전적인 클라이언트/서버 모델을 사상시킨다.
 
 ++ A Minor Note on Strings
+++ 문자열에 대한 소견
 
 ZeroMQ doesn't know anything about the data you send except its size in bytes. That means you are responsible for formatting it safely so that applications can read it back. Doing this for objects and complex data types is a job for specialized libraries like Protocol Buffers. But even for strings, you need to take care.
 
