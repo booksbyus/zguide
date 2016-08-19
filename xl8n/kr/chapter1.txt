@@ -59,8 +59,10 @@ Next, browse the examples subdirectory. You'll find examples by language. If the
 다음으로, 이 예제들의 하위 디렉터리를 살펴보자. 당신은 언어별 예제들을 찾을 수 있을 것이다. 당신이 사용하는 언어로 된 예제들이 없다면, [http://zguide.zeromq.org/main:translate 변환된 예제를 제출하는 것]을 권한다. 이는 어떻게 많은 사람들의 작업 덕분에 이 텍스트가 유용하게 되었는가이다. 모든 예제들은 MIT/X11 라이센스 하에 허가된다.
 
 ++ Ask and Ye Shall Receive
+++ 구하라 그리하면 얻을 것이다.
 
 So let's start with some code. We start of course with a Hello World example. We'll make a client and a server. The client sends "Hello" to the server, which replies with "World"[figure]. Here's the server in C, which opens a ZeroMQ socket on port 5555, reads requests on it, and replies with "World" to each request:
+이제 작은 코드와 함께 시작해보자. 우리는 Hello World 예제로 코스를 시작한다. 우리는 하나의 클라이언트와 하나의 서버를 만들 것이다. 이 클라이언트는 "Hello"를 서버로 보내고, "World"[figure]를 응답을 받는다.
 
 [[code type="example" title="Hello World server" name="hwserver"]]
 [[/code]]
@@ -84,8 +86,10 @@ Hello |    | World
 [[/code]]
 
 The REQ-REP socket pair is in lockstep. The client issues {{zmq_send[3]}} and then {{zmq_recv[3]}}, in a loop (or once if that's all it needs). Doing any other sequence (e.g., sending two messages in a row) will result in a return code of -1 from the {{send}} or {{recv}} call. Similarly, the service issues {{zmq_recv[3]}} and then {{zmq_send[3]}} in that order, as often as it needs to.
+REQ-REP 소켓 쌍은 동일한 방식이다. 클라이언트는 한 반복문 내에서 (혹은 필요한 것이 한번 뿐이라면) {{zmq_sned[3]}}을 호출한 뒤에 {{zmq_recv[3]}}을 호출한다. 아무 다른 시퀀스를 수행하는 것 (예를 들어, 한번에 두 개의 메시지를 보내는 것) 은 {{send}} 혹은 {{recv}} 호출로부터 -1의 반환 코드를 얻게될 것이다. 이와 유사하게, 서비스는 필요할 때마다 순서대로 {{zmq_recv[3]}}, {{zmq_send[3]}}을 호출한다.
 
 ZeroMQ uses C as its reference language and this is the main language we'll use for examples. If you're reading this online, the link below the example takes you to translations into other programming languages. Let's compare the same server in C++:
+ZeroMQ는 기준 언어로서 C를 사용하고 우리가 예제들에서 사용할 주 언어다. 당신이 온라인으로 이걸 읽고 있다면, 아래 예제의 링크는 다른 언어로 변환된 예제를 제공한다. 같은 서버 코드를 C++과 비교해보자.
 
 [[code type="example" title="Hello World server" name="hwserver" language="C++"]]
 [[/code]]
