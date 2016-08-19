@@ -13,7 +13,7 @@ namespace Examples
 		{
 			//
 			// Weather update client
-			// Connects SUB socket to tcp://localhost:5556
+			// Connects SUB socket to tcp://127.0.0.1:5556
 			// Collects weather updates and finds avg temp in zipcode
 			//
 			// Author: metadings

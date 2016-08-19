@@ -255,7 +255,7 @@ sys     0m0.008s
             |    PUSH     |
             '------+------'
                    |
-                 tasks
+                   | tasks
                    |
       .------------+-------------.
       |            |             |
@@ -270,7 +270,7 @@ sys     0m0.008s
       |            |             |
       '------------+-------------'
                    |
-                results
+                   | results
                    |
                    v
             .-------------.
@@ -322,12 +322,12 @@ Let's look at some aspects of this code in more detail:
 |  PUSH   |   |  PUSH   |   |  PUSH   |
 '----+----'   '----+----'   '----+----'
      |             |             |
- R1, R2, R3       R4           R5, R6
+  R1,| R2, R3      | R4       R5,| R6
      |             |             |
      '-------------+-------------'
                    |
-             fair-queuing
-         R1, R4, R5, R2, R6, R3
+               fair| queuing
+        R1, R4, R5,| R2, R6, R3
                    |
                    v
             .-------------.
@@ -429,7 +429,7 @@ It turns out that building reusable messaging systems is really difficult, which
 '------------'
       ^
       |
-     TCP
+      | TCP
       |
       v
 .------------.
@@ -562,7 +562,7 @@ These are the main areas of impact on applications and language bindings:
 
 +++ Suggested Shim Macros
 
-For applications that want to run on both v2.x and v3.2, such as language bindings, our advice is to emulate c3.2 as far as possible. Here are C macro definitions that help your C/C++ code to work across both versions (taken from [http://czmq.zeromq.org CZMQ]):
+For applications that want to run on both v2.x and v3.2, such as language bindings, our advice is to emulate v3.2 as far as possible. Here are C macro definitions that help your C/C++ code to work across both versions (taken from [http://czmq.zeromq.org CZMQ]):
 
 [[code type="fragment" name="upgrade-shim"]]
 #ifndef ZMQ_DONTWAIT

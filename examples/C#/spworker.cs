@@ -14,7 +14,7 @@ namespace Examples
 		{
 			//
 			// Simple Pirate worker
-			// Connects REQ socket to tcp://localhost:5556
+			// Connects REQ socket to tcp://127.0.0.1:5556
 			// Implements worker part of load-balancing
 			//
 			// Author: metadings

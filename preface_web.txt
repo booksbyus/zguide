@@ -20,13 +20,13 @@ ZeroMQ (also known as 0MQ, 0\MQ, or zmq) looks like an embeddable networking lib
 We took a normal TCP socket, injected it with a mix of radioactive isotopes stolen from a secret Soviet atomic research project, bombarded it with 1950-era cosmic rays, and put it into the hands of a drug-addled comic book author with a badly-disguised fetish for bulging muscles clad in spandex[figure]. Yes, ZeroMQ sockets are the world-saving superheroes of the networking world.
 
 [[code type="textdiagram" title="A terrible accident..."]]
-.------------.        .-------------.
-|            |        |             |
-| TCP socket +------->|   ZeroMQ    | ZAP!
-|            | BOOM!  |             |
-'------------'        |   Socket    |  POW!!
-  ^    ^    ^         |             |
-  |    |    |         '-------------'
+.------------.        .------------.
+|            |        |            |
+| TCP socket +------->|   ZeroMQ   | ZAP!
+|            | BOOM!  |            |
+'------------'        |   Socket   |  POW!!
+  ^    ^    ^         |            |
+  |    |    |         '------------'
   |    |    |
   |    |    |
   |    |    '--------- Spandex

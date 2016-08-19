@@ -216,12 +216,13 @@ while (<>) {
         close_list ();
         $title = $1;
         $name = $2;
+        $line = $.;
         $language = $4 || $source;
         $lexer = $lexer {$language};
         $ext = $extension {$language};
         $filename = "examples/$language/$name.$ext";
 
-        writeln ("<example id=\"$name-$ext\">");
+        writeln ("<example id=\"$name-$ext-$line\">");
         writeln ("<title>$title ($name.$ext)</title>");
         writeln ("<programlisting language=\"$lexer\">");
         
@@ -600,6 +601,9 @@ sub expand_symbols {
     
     #   Translate email addresses
     s/\<([\w\.]+@[\w\.]+)\>/<email>$1<\/email>/g;
+
+    #   Escape the wikidot escape sequences
+    s/@\<\/\/\>@/\/\//g;
 
     #   Translate character styles
     s/([^:])\/\/([^\/]+)\/\//$1<emphasis>$2<\/emphasis>/g;

@@ -30,8 +30,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Xml" />
     <Reference Include="ZeroMQ">
-      <HintPath>..\..\..\ZeroApp-Network\clrzmq\bin\Debug\ZeroMQ.dll</HintPath>
+      <HintPath>..\clrzmq4\bin\Debug\ZeroMQ.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -89,6 +90,18 @@
     <Compile Include="suisnail.cs" />
     <Compile Include="eagain.cs" />
     <Compile Include="Z85Encode.cs" />
+    <Compile Include="ticlient.cs" />
+    <Compile Include="titanic.cs" />
+    <Compile Include="tripping.cs" />
+    <Compile Include="mdbroker.cs" />
+    <Compile Include="mdcliapi.cs" />
+    <Compile Include="mdcliapi2.cs" />
+    <Compile Include="mdclient.cs" />
+    <Compile Include="mdclient2.cs" />
+    <Compile Include="mdp.cs" />
+    <Compile Include="mdworker.cs" />
+    <Compile Include="mdwrkapi.cs" />
+    <Compile Include="mmiecho.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

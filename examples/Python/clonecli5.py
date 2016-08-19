@@ -22,7 +22,7 @@ def main():
     snapshot.connect("tcp://localhost:5556")
     subscriber = ctx.socket(zmq.SUB)
     subscriber.linger = 0
-    subscriber.setsockopt(zmq.SUBSCRIBE, SUBTREE)
+    subscriber.setsockopt(zmq.SUBSCRIBE, SUBTREE.encode())
     subscriber.connect("tcp://localhost:5557")
     publisher = ctx.socket(zmq.PUSH)
     publisher.linger = 0
@@ -33,7 +33,7 @@ def main():
 
     # Get state snapshot
     sequence = 0
-    snapshot.send_multipart(["ICANHAZ?", SUBTREE])
+    snapshot.send_multipart(["ICANHAZ?", SUBTREE.encode()])
     while True:
         try:
             kvmsg = KVMsg.recv(snapshot)
@@ -41,9 +41,9 @@ def main():
             raise
             return          # Interrupted
 
-        if kvmsg.key == "KTHXBAI":
+        if kvmsg.key == b"KTHXBAI":
             sequence = kvmsg.sequence
-            print "I: Received snapshot=%d" % sequence
+            print("I: Received snapshot=%d" % sequence)
             break          # Done
         kvmsg.store(kvmap)
 
@@ -66,19 +66,19 @@ def main():
                 sequence = kvmsg.sequence
                 kvmsg.store(kvmap)
                 action = "update" if kvmsg.body else "delete"
-                print "I: received %s=%d" % (action, sequence)
+                print("I: received %s=%d" % (action, sequence))
 
         # If we timed-out, generate a random kvmsg
         if time.time() >= alarm:
             kvmsg = KVMsg(0)
-            kvmsg.key = SUBTREE + "%d" % random.randint(1,10000)
-            kvmsg.body = "%d" % random.randint(1,1000000)
-            kvmsg['ttl'] = random.randint(0,30)
+            kvmsg.key = SUBTREE + b"%d" % random.randint(1,10000)
+            kvmsg.body = b"%d" % random.randint(1,1000000)
+            kvmsg[b'ttl'] = random.randint(0,30)
             kvmsg.send(publisher)
             kvmsg.store(kvmap)
             alarm = time.time() + 1.
 
-    print " Interrupted\n%d messages in" % sequence
+    print(" Interrupted\n%d messages in" % sequence)
 
 if __name__ == '__main__':
     main()

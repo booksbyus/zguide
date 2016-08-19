@@ -2,7 +2,7 @@
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
   "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <!-- Created with ASCIIToSVG (http://9vx.org/~dho/a2s/) -->
-<svg width="126px" height="240px" version="1.1"
+<svg width="135px" height="240px" version="1.1"
   xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   <defs>
     <filter id="dsFilter" width="150%" height="150%">
@@ -52,10 +52,7 @@
 	<path id="path31" d="M 4.5 184 L 58.5 184 L 121.5 184 " />
 </g>
 <g id="group70">
-	<path id="path70" d="M 31.5 72 L 31.5 104 " />
-</g>
-<g id="group75">
-	<path id="path75" marker-start="url(#iPointer)" d="M 31.5 136 L 31.5 104 " />
+	<path id="path70" marker-end="url(#Pointer)" d="M 31.5 72 L 31.5 136 " />
 </g>
 <g id="group114">
 	<path id="path114" d="M 58.5 40 L 58.5 72 " />
@@ -64,21 +61,15 @@
 	<path id="path122" d="M 58.5 152 L 58.5 184 " />
 </g>
 <g id="group149">
-	<path id="path149" marker-start="url(#iPointer)" d="M 76.5 88 L 76.5 120 " />
-</g>
-<g id="group152">
-	<path id="path152" d="M 76.5 136 L 76.5 152 " />
+	<path id="path149" marker-start="url(#iPointer)" d="M 76.5 88 L 76.5 152 " />
 </g>
 <g id="group193">
-	<path id="path193" d="M 103.5 72 L 103.5 104 " />
-</g>
-<g id="group198">
-	<path id="path198" marker-start="url(#iPointer)" d="M 103.5 136 L 103.5 104 " />
+	<path id="path193" marker-end="url(#Pointer)" d="M 103.5 72 L 103.5 136 " />
 </g>
 </g>
 <g id="text" fill="black" style="font-family:LMMono10,monospace;font-size:15.2px" >
-<text x="17.1" y="108.8" id="text3" fill="#000" >(3) </text>
-<text x="89.1" y="108.8" id="text4" fill="#000" >(2)</text>
-<text x="62.1" y="124.8" id="text5" fill="#000" >(1) </text>
+<text x="-0.9" y="108.8" id="text3" fill="#000" >(3) </text>
+<text x="44.1" y="108.8" id="text4" fill="#000" >(1) </text>
+<text x="107.1" y="108.8" id="text5" fill="#000" >(2)</text>
 </g>
 </svg>

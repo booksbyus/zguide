@@ -5,11 +5,6 @@ import signal
 import time
 import zmq
 
-interrupted = False
-
-def signal_handler(signum, frame):
-    print("W: custom interrupt handler called.")
-
 context = zmq.Context()
 socket = context.socket(zmq.REP)
 socket.bind("tcp://*:5558")
@@ -18,12 +13,9 @@ socket.bind("tcp://*:5558")
 try:
     socket.recv()
 except KeyboardInterrupt:
-    print("W: interrupt received, proceeding...")
+    print("W: interrupt received, stopping...")
+finally:
+    # clean up
+    socket.close()
+    context.term()
 
-# or you can use a custom handler,
-# in which case recv will fail with EINTR
-signal.signal(signal.SIGINT, signal_handler)
-try:
-    message = socket.recv()
-except zmq.ZMQError as e:
-    print("W: recv failed with: %s" % e)

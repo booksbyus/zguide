@@ -7,7 +7,7 @@ int main (void)
 {
     zctx_t *context = zctx_new ();
     void *frontend = zsocket_new (context, ZMQ_SUB);
-    zsocket_bind (frontend, "tcp://*:5557");
+    zsocket_connect (frontend, "tcp://*:5557");
     void *backend = zsocket_new (context, ZMQ_XPUB);
     zsocket_bind (backend, "tcp://*:5558");
 

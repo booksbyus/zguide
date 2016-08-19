@@ -1,38 +1,27 @@
-#!/usr/bin/perl
-=pod
-
-Identity example
-
-Author: Klaas Nijkes
-
-=cut
+# Demonstrate request-reply identities in Perl
 
 use strict;
 use warnings;
-use 5.10.0;
+use v5.10;
+
+use ZMQ::FFI;
+use ZMQ::FFI::Constants qw(ZMQ_ROUTER ZMQ_REQ ZMQ_IDENTITY);
 
 use zhelpers;
 
-my $context = zmq_init();
-my $sink = zmq_socket($context, ZMQ_ROUTER);
-zmq_bind($sink, "inproc://example");
+my $context = ZMQ::FFI->new();
+my $sink = $context->socket(ZMQ_ROUTER);
+$sink->bind('inproc://example');
 
 # First allow 0MQ to set the identity
-my $anonymous = zmq_socket($context, ZMQ_REQ);
-zmq_connect($anonymous, "inproc://example");
-zmq_send($anonymous, "ROUTER uses a generated 5 byte identity", -1);
-s_dump($sink);
+my $anonymous = $context->socket(ZMQ_REQ);
+$anonymous->connect('inproc://example');
+$anonymous->send('ROUTER uses a generated 5 byte identity');
+zhelpers::dump($sink);
 
 # Then set the identity ourselves
-my $identified = zmq_socket($context, ZMQ_REQ);
-zmq_setsockopt($identified, ZMQ_IDENTITY, "PEER2");
-zmq_connect($identified, "inproc://example");
-zmq_send($identified, "ROUTER socket uses REQ's socket identity");
-s_dump($sink);
-
-zmq_close($sink);
-zmq_close($anonymous);
-zmq_close($identified);
-zmq_term($context);
-
-exit(0);
+my $identified = $context->socket(ZMQ_REQ);
+$identified->set_identity('PEER2');
+$identified->connect('inproc://example');
+$identified->send("ROUTER socket uses REQ's socket identity");
+zhelpers::dump($sink);

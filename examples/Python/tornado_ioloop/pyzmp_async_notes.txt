@@ -1,0 +1,38 @@
+= pyzmq, tornado, async notes
+
+== Guidance
+
+Follow the patterns.  A reasonable approach to developing an
+application built on ZeroMQ is: (1) identify a pattern that fits the
+need; (2) copy and follow the example code from "The ZeroMQ guide"
+for that pattern.
+
+Bytes vs. strings -- Remember that ZeroMQ wants to send/receive
+bytes, not unicode strings.
+
+
+== mtserver.py
+
+I need to figure out how to distribute messages across a set of
+workers.  Update: mtserver.py now handles that.
+
+
+== Behaviors
+
+=== Req/Rep
+
+=== Pub/Sub
+
+=== Lazy pirate
+
+Simulating a crash -- To successfully unbind a socket and rebind it
+to the same address, we need to delay after the unbind.  I used
+"yield gen.sleep(2)".  If we don't, we get the "Address already in
+use error".
+
+=== Simple pirate
+
+
+
+
+// vim:ft=asciidoc:

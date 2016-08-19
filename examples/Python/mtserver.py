@@ -9,6 +9,7 @@ import time
 import threading
 import zmq
 
+
 def worker_routine(worker_url, context=None):
     """Worker routine"""
     context = context or zmq.Context.instance()
@@ -28,6 +29,7 @@ def worker_routine(worker_url, context=None):
 
         #send reply back to client
         socket.send(b"World")
+
 
 def main():
     """Server routine"""
@@ -51,13 +53,12 @@ def main():
         thread = threading.Thread(target=worker_routine, args=(url_worker,))
         thread.start()
 
-    zmq.device(zmq.QUEUE, clients, workers)
+    zmq.proxy(clients, workers)
 
     # We never get here but clean up anyhow
     clients.close()
     workers.close()
     context.term()
-
 
 
 if __name__ == "__main__":

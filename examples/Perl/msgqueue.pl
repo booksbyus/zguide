@@ -1,33 +1,24 @@
-#!/usr/bin/perl
-=pod
-
-Simple message queuing broker
-
-Same as request-reply broker but using QUEUE device
-
-Author: Daisuke Maki (lestrrat)
-Original version Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
-
-=cut
+# Simple message queuing broker in Perl
+# Same as request-reply broker but using shared queue proxy
 
 use strict;
 use warnings;
-use 5.10.0;
+use v5.10;
 
-use ZMQ::LibZMQ3;
-use ZMQ::Constants qw(ZMQ_DEALER ZMQ_ROUTER ZMQ_QUEUE);
+use ZMQ::FFI;
+use ZMQ::FFI::Constants qw(ZMQ_ROUTER ZMQ_DEALER);
 
-my $context = zmq_init();
+my $context = ZMQ::FFI->new();
 
 # Socket facing clients
-my $frontend = zmq_socket($context, ZMQ_ROUTER);
-zmq_bind($frontend, 'tcp://*:5559');
+my $frontend = $context->socket(ZMQ_ROUTER);
+$frontend->bind('tcp://*:5559');
 
 # Socket facing services
-my $backend = zmq_socket($context, ZMQ_DEALER);
-zmq_bind($backend, 'tcp://*:5560');
+my $backend = $context->socket(ZMQ_DEALER);
+$backend->bind('tcp://*:5560');
 
-# Start built-in device
-zmq_device(ZMQ_QUEUE, $frontend, $backend);
+# Start the proxy
+$context->proxy($frontend, $backend);
 
 # We never get here...

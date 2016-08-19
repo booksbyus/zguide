@@ -8,7 +8,7 @@ import zmq
 def main():
     ctx = zmq.Context.instance()
     frontend = ctx.socket(zmq.SUB)
-    frontend.bind("tcp://*:5557")
+    frontend.connect("tcp://*:5557")
     backend = ctx.socket(zmq.XPUB)
     backend.bind("tcp://*:5558")
 
@@ -18,7 +18,7 @@ def main():
     # Store last instance of each topic in a cache
     cache = {}
 
-    # .split main poll loop
+    # main poll loop
     # We route topic updates from frontend to backend, and
     # we handle subscriptions by sending whatever we cached,
     # if anything:
@@ -40,7 +40,7 @@ def main():
             cache[topic] = current
             backend.send_multipart(msg)
 
-        # .split handle subscriptions
+        # handle subscriptions
         # When we get a new subscription we pull data from the cache:
         if backend in events:
             event = backend.recv()

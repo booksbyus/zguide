@@ -15,7 +15,7 @@ public class lvcache
     {
         ZContext context = new ZContext();
         Socket frontend = context.createSocket(ZMQ.SUB);
-        frontend.bind("tcp://*:5557");
+        frontend.connect("tcp://*:5557");
         Socket backend = context.createSocket(ZMQ.XPUB);
         backend.bind("tcp://*:5558");
 

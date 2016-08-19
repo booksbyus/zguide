@@ -820,7 +820,7 @@ Let's explore Idea #1. In this model, we have workers connecting to both brokers
             | ROUTER |              :  | ROUTER |
             '---+----'              :  '---+----'
                 |                   :      |
-      .---------+-+-----------+------------'
+      .---------+-+-----------+-----+------'
       |         | |           |     :
     .-+---------+-+---------. |     :
     | |         | |         | |     :
@@ -845,7 +845,7 @@ So, idea #2 then. We interconnect the brokers and don't touch the clients or wor
   |      |      |      :      |      |      |
   |      |      |      :      |      |      |
 #-+------+------+-#    :    #-+------+------+-#
-|     Broker      |<------->|     Broker      |
+|     Broker      |<---+--->|     Broker      |
 #-+------+------+-#    :    #-+------+------+-#
   |      |      |      :      |      |      |
   |      |      |      :      |      |      |
@@ -881,20 +881,21 @@ The simplest interconnect is //federation//, in which brokers simulate clients a
 [[code type="textdiagram" title="Cross-connected Brokers in Federation Model"]]
      Cluster 1          :         Cluster 2
                         :
-                        :
 .---.  .---.            :            .---.  .---.
 | C |  | C |            :            | C |  | C |
-'-+-'  '-+-'    .----.  :  .----.    '-+-'  '-+-'
-  |      |      |    |  :  |    |      |      |
-  |      |      |    |  :  |    |      |      |
-#-+------+------+-#  |  :  |  #-+------+------+-#
-|     Broker      |  |  :  |  |     Broker      |
-#-+------+--------#  |  :  |  #--------+------+-#
-  |      |      ^    |  :  |    ^      |      |
-  |      |      |    |  :  |    |      |      |
-.-+-.  .-+-.    |    '----------'    .-+-.  .-+-.
-| W |  | W |    |       :  |         | W |  | W |
-'---'  '---'    '----------'         '---'  '---'
+'-+-'  '-+-'    .----.  :  .====.    '-+-'  '-+-'
+  |      |      |    |  :  :    |      |      |
+  |      |      |    |  :  :    |      |      |
+#-+------+------+-#  |  :  :  #-+------+------+-#
+|     Broker      |  |  :  :  |     Broker      |
+#-+------+--------#  |  :  :  #--------+------+-#
+  |      |      ^    |  :  :    ^      |      |
+  |      |      :    |  :  :    |      |      |
+.-+-.  .-+-.    :    '--+--+----'    .-+-.  .-+-.
+| W |  | W |    :       :  :         | W |  | W |
+'---'  '---'    :       :  :         '---'  '---'
+                '=======+=='
+                        :
                         :
 [[/code]]
 
@@ -940,7 +941,7 @@ You might be thinking that this is a lot of work for some names. Why not call th
 | connect |  | connect |  |  bind   |
 '---------'  '---------'  '---------'
   request      request       state
-     \            |            /
+     \            |            
       \           |           /
        v          v          v
    .---------+---------+---------.
@@ -957,7 +958,7 @@ You might be thinking that this is a lot of work for some names. Why not call th
    |  bind   | connect |  bind   |
    '---------+---------+---------'
      request    request   state
-       /          |          \
+                  |          \
       /           |           \
      v            v            v
 .---------.  .---------.  .---------.
@@ -982,7 +983,7 @@ Because each socket flow has its own little traps for the unwary, we will test t
            |  bind   |
            '---------'
               state
-                /
+                
                /
               v
 .--------+---------.
@@ -1070,7 +1071,7 @@ Let's now prototype the flow of tasks via the local and cloud sockets[figure]. T
    |  bind   | connect |   |
    '---------+---------+---'
      request    request
-       /          |
+                  |
       /           |
      v            v
 .---------.  .---------.

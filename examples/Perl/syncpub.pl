@@ -1,45 +1,45 @@
-#!/usr/bin/perl
-=pod
-
-Synchronized publisher
-
-Author: Daisuke Maki (lestrrat)
-Original version Author: Alexander D'Archangel (darksuji) <darksuji(at)gmail(dot)com>
-
-=cut
+# Synchronized publisher in Perl
 
 use strict;
 use warnings;
-use 5.10.0;
+use v5.10;
 
-use ZMQ::LibZMQ3;
-use ZMQ::Constants qw(ZMQ_PUB ZMQ_REP);
-use zhelpers;
+use ZMQ::FFI;
+use ZMQ::FFI::Constants qw(ZMQ_PUB ZMQ_REP ZMQ_SNDHWM);
 
+my $SUBSCRIBERS_EXPECTED = 10; # We wait for 10 subscribers
 
-# We wait for 10 subscribers
-use constant SUBSCRIBERS_EXPECTED => 10;
-
-my $context = zmq_init();
+my $context = ZMQ::FFI->new();
 
 # Socket to talk to clients
-my $publisher = zmq_socket($context, ZMQ_PUB);
-zmq_setsockopt($publisher, ZMQ_SNDHWM, 0);
-zmq_bind($publisher, 'tcp://*:5561');
+my $publisher = $context->socket(ZMQ_PUB);
+$publisher->set(ZMQ_SNDHWM, 'int', 0);
+$publisher->set_linger(-1);
+$publisher->bind('tcp://*:5561');
 
 # Socket to receive signals
-my $syncservice = zmq_socket($context, ZMQ_REP);
-zmq_bind($syncservice, 'tcp://*:5562');
+my $syncservice = $context->socket(ZMQ_REP);
+$syncservice->bind('tcp://*:5562');
 
 # Get synchronization from subscribers
-for (1 .. SUBSCRIBERS_EXPECTED) {
-    # - wait for synchronization request
-    s_recv($syncservice);
-    # - send synchronization reply
-    s_send($syncservice, '');
+say "Waiting for subscribers";
+
+for my $subscribers (1..$SUBSCRIBERS_EXPECTED) {
+    # wait for synchronization request
+    $syncservice->recv();
+
+    # send synchronization reply
+    $syncservice->send('');
+
+    say "+1 subscriber ($subscribers/$SUBSCRIBERS_EXPECTED)";
 }
+
 # Now broadcast exactly 1M updates followed by END
-for (1 .. 1_000_000) {
-    s_send($publisher, 'Rhubarb');
+say "Broadcasting messages";
+
+for (1..1_000_000) {
+    $publisher->send("Rhubarb");
 }
-s_send($publisher, 'END');
+
+$publisher->send("END");
+say "Done";

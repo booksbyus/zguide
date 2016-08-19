@@ -3,21 +3,21 @@
  |  Initial  |<-------------------.  |
  |           |                    |  |
  #-----+-----#                    |  |
-Request|snapshot                  |  |
-       |   .----------------.     |  |
-       |   |                |     |  |
-       v   v                |     |  |
- #-----------#              |     |  |
- |           +-INPUT--------'     |  |
- |  Syncing  | Store snapshot     |  |
- |           +-SILENCE------------'  |
- #-----+-----# Failover to next      |
-    KTHXBAI                          |
-       |   .----------------.        |
-       |   |                |        |
-       v   v                |        |
- #-----------#              |        |
- |           +-INPUT--------'        |
- |  Active   | Store update          |
- |           +-SILENCE---------------'
- #-----------# Failover to next
+Request| snapshot                 |  |
+       |   .-------------------.  |  |
+       |   |                   |  |  |
+       v   v                   |  |  |
+ #-----------#                 |  |  |
+ |           +- INPUT----------'  |  |
+ |  Syncing  |  Store snapshot    |  |
+ |           +- SILENCE-----------'  |
+ #-----+-----#  Failover to next     |
+     KTHXBAI                         |
+       |   .-------------------.     |
+       |   |                   |     |
+       v   v                   |     |
+ #-----------#                 |     |
+ |           +- INPUT----------'     |
+ |  Active   |  Store update         |
+ |           +- SILENCE--------------'
+ #-----------#  Failover to next

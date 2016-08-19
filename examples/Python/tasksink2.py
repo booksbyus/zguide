@@ -45,4 +45,6 @@ print("Total elapsed time: %d msec" % total_msec)
 controller.send(b"KILL")
 
 # Finished
-time.sleep(1)  # Give 0MQ time to deliver
+receiver.close()
+controller.close()
+context.term()
