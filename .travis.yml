@@ -1,0 +1,7 @@
+sudo: false
+
+notifications:
+  email: false
+
+script:
+  - ./examples/build all
