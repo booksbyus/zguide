@@ -1,7 +1,27 @@
 sudo: false
 
+addons:
+  apt:
+    packages:
+      - dblatex
+      - ditaa
+      - doc-base
+      - docbook
+      - docbook-dsssl
+      - docbook-utils
+      - docbook-xml
+      - docbook-xsl
+      - docbook2odf
+      - ghostscript
+      - libbatik-java
+      - pstoedit
+      - python-pygments
+
 notifications:
   email: false
 
 script:
+  # Create examples
   - ./examples/build all
+    # Build guide
+  - ./bin/buildguide
