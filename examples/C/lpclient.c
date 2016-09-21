@@ -33,7 +33,7 @@ int main (void)
 
             //  .split process server reply
             //  Here we process a server reply and exit our loop if the
-            //  reply is valid. If we didn't a reply we close the client
+            //  reply is valid. If we didn't receive a reply we close the client
             //  socket and resend the request. We try a number of times
             //  before finally abandoning:
             
