@@ -23,7 +23,7 @@ int main (void)
     for (task_nbr = 0; task_nbr < 100; task_nbr++) {
         char *string = s_recv (receiver);
         free (string);
-        if ((task_nbr / 10) * 10 == task_nbr)
+        if (task_nbr % 10 == 0)
             printf (":");
         else
             printf (".");
