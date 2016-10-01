@@ -31,7 +31,7 @@ int main (int argc, char *argv[])
     for (task_nbr = 0; task_nbr < 100; task_nbr++) {
 
         receiver.recv(&message);
-        if ((task_nbr / 10) * 10 == task_nbr)
+        if (task_nbr % 10 == 0)
             std::cout << ":" << std::flush;
         else
             std::cout << "." << std::flush;

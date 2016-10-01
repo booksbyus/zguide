@@ -30,7 +30,7 @@ int main (int argc, char *argv[])
     for (task_nbr = 0; task_nbr < 100; task_nbr++) {
         s_recv (receiver);
 		
-        if ((task_nbr / 10) * 10 == task_nbr)
+        if (task_nbr % 10 == 0)
             std::cout << ":" ;
         else
             std::cout << "." ;
