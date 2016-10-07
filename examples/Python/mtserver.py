@@ -51,6 +51,7 @@ def main():
     # Launch pool of worker threads
     for i in range(5):
         thread = threading.Thread(target=worker_routine, args=(url_worker,))
+        thread.daemon = True
         thread.start()
 
     zmq.proxy(clients, workers)
