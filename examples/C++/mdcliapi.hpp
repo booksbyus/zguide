@@ -47,6 +47,7 @@ public:
            delete m_client;
        }
        m_client = new zmq::socket_t (*m_context, ZMQ_REQ);
+       s_set_id(*m_client);
        int linger = 0;
        m_client->setsockopt(ZMQ_LINGER, &linger, sizeof (linger));
        //zmq_setsockopt (client, ZMQ_LINGER, &linger, sizeof (linger));
