@@ -52,6 +52,7 @@ s_recv (void *socket) {
     int size = zmq_recv (socket, buffer, 255, 0);
     if (size == -1)
         return NULL;
+    buffer[size] = '\0';
     return strndup (buffer, sizeof(buffer) - 1);
     // remember that the strdup family of functions use malloc/alloc for space for the new string.  It must be manually
     // freed when you are done with it.  Failure to do so will allow a heap attack.
