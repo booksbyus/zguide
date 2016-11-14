@@ -10,7 +10,7 @@
 #include <functional>
 
 #include <zmq.hpp>
-#include <zhelpers.hpp>
+#include "zhelpers.hpp"
 
 
 //  This is our client task class.
