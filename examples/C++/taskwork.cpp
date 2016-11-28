@@ -42,7 +42,7 @@ int main (int argc, char *argv[])
         sender.send(message);
 
         //  Simple progress indicator for the viewer
-		std::cout << "." << std::flush;
+        std::cout << "." << std::flush;
     }
     return 0;
 }

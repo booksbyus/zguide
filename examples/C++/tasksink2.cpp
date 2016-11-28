@@ -19,8 +19,8 @@ int main (int argc, char *argv[])
     controller.bind("tcp://*:5559");
 
     //  Wait for start of batch
-	s_recv (receiver);
-	
+    s_recv (receiver);
+
     //  Start our clock now
     struct timeval tstart;
     gettimeofday (&tstart, NULL);
@@ -29,7 +29,7 @@ int main (int argc, char *argv[])
     int task_nbr;
     for (task_nbr = 0; task_nbr < 100; task_nbr++) {
         s_recv (receiver);
-		
+
         if (task_nbr % 10 == 0)
             std::cout << ":" ;
         else
@@ -49,7 +49,7 @@ int main (int argc, char *argv[])
     }
     int total_msec = tdiff.tv_sec * 1000 + tdiff.tv_usec / 1000;
     std::cout << "\nTotal elapsed time: " << total_msec 
-    		<< " msec\n" << std::endl;
+            << " msec\n" << std::endl;
 
     //  Send kill signal to workers
     s_send (controller, "KILL");

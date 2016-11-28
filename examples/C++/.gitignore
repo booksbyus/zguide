@@ -2,12 +2,14 @@ core
 *.lst
 *.opp
 
+asyncsrv
 durapub
 durapub2
 durasub
 hwclient
 hwserver
 identity
+interrupt
 lpclient
 lpserver
 lruqueue
@@ -27,6 +29,7 @@ psenvsub
 rrbroker
 rrclient
 rrserver
+rrworker
 rtdealer
 rtmama
 rtpapa
