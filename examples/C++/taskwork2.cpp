@@ -22,7 +22,7 @@ int main (int argc, char *argv[])
     //  Socket for control input
     zmq::socket_t controller (context, ZMQ_SUB);
     controller.connect("tcp://localhost:5559");
-   	controller.setsockopt(ZMQ_SUBSCRIBE, "", 0);
+    controller.setsockopt(ZMQ_SUBSCRIBE, "", 0);
 
     //  Process messages from receiver and controller
     zmq::pollitem_t items [] = {
@@ -35,7 +35,7 @@ int main (int argc, char *argv[])
         zmq::poll (&items [0], 2, -1);
         
         if (items [0].revents & ZMQ_POLLIN) {
-			receiver.recv(&message);
+            receiver.recv(&message);
 
             //  Process task
             int workload;           //  Workload in msecs
@@ -56,11 +56,10 @@ int main (int argc, char *argv[])
 
         }
         //  Any waiting controller command acts as 'KILL'
-        if (items [1].revents & ZMQ_POLLIN)
-        {
+        if (items [1].revents & ZMQ_POLLIN) {
         	std::cout << std::endl;
             break;                      //  Exit loop
-    	}
+        }
     }
     //  Finished
     return 0;
