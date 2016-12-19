@@ -1,4 +1,19 @@
-import ZMQ
+#!/usr/bin/env julia
+
+# Reading from multiple sockets
+
+# The ZMQ.jl wrapper implements ZMQ.recv as a blocking function. Nonblocking i/o
+# in Julia is typically done using coroutines (Tasks).
+# The @async macro puts its enclosed expression in a Task. When the macro is
+# executed, its Task gets scheduled and execution continues immediately to
+# whatever follows the macro.
+
+# Note: the msreader example in the zguide is presented as a "dirty hack"
+# using the ZMQ_DONTWAIT and EAGAIN codes. Since the ZMQ.jl wrapper API
+# does not expose DONTWAIT directly, this example skips the hack and instead
+# provides an efficient solution.
+
+using ZMQ
 
 # Prepare our context and sockets
 context = ZMQ.Context()
@@ -12,41 +27,20 @@ subscriber = Socket(context,ZMQ.SUB)
 ZMQ.connect(subscriber,"tcp://localhost:5556")
 ZMQ.set_subscribe(subscriber, "10001")
 
-# Process messages from both sockets
-# We prioritize traffic from the task ventilator
-
-
-# this is a literal translation, which is wrong.
-# Trying to figure out how to get nonblocking behavior from recv
-# also poll is not yet implemented?
 while true
 
     # Process any waiting tasks
-    while true
-        try
-            msg = receiver.recv(zmq.DONTWAIT)
-        catch er
-            if isa(er,zmq.Again)
-                break
-            end
-            # process task
-        end
+    @async begin
+        msg = unsafe_string(ZMQ.recv(receiver))
+        println(msg)
     end
 
     # Process any waiting weather updates
-    while true
-        try
-            msg = subscriber.recv(zmq.DONTWAIT)
-        catch er
-            if isa(er,zmq.Again)
-                break
-            end
-        end
+    @async begin
+        msg = unsafe_string(ZMQ.recv(subscriber))
+        println(msg)
     end
-    # process weather update
 
-    # No activity, so sleep for 1 msec
-    time.sleep(0.001)
-    
+    # Sleep for 1 msec
+    sleep(0.001)
 end
-
