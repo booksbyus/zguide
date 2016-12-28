@@ -1,6 +1,6 @@
 // Weather proxy device in Node.js
 
-var zmq      = require('zmq')
+var zmq      = require('zeromq')
   , frontend = zmq.socket('sub')
   , backend  = zmq.socket('pub');
 

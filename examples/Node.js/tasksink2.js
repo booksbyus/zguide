@@ -1,7 +1,7 @@
 // Task sink in Node.js, design 2
 // Adds a pub-sub flow to send kill signal to workers
 
-var zmq        = require('zmq')
+var zmq        = require('zeromq')
   , receiver   = zmq.socket('pull')
   , controller = zmq.socket('pub');
 

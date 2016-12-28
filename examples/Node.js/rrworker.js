@@ -2,7 +2,7 @@
 // Connects REP socket to tcp://*:5560
 // Expects "Hello" from client, replies with "World"
 
-var zmq = require('zmq')
+var zmq = require('zeromq')
   , responder = zmq.socket('rep');
 
 responder.connect('tcp://localhost:5560');

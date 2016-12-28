@@ -2,7 +2,7 @@
 // connects SUB socket to tcp://localhost:5556
 // collects weather updates and finds avg temp in zipcode
 
-var zmq = require('zmq');
+var zmq = require('zeromq');
 
 console.log("Collecting updates from weather server...");
 

@@ -1,6 +1,6 @@
 // Show how to handle Ctrl+C in Node.js
 
-var zmq = require('zmq')
+var zmq = require('zeromq')
   , socket = zmq.createSocket('rep');
 
 socket.on('message', function(buf) {

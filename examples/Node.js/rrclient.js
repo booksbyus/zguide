@@ -2,7 +2,7 @@
 // Connects REQ socket to tcp://localhost:5559
 // Sends "Hello" to server, expects "World" back
 
-var zmq       = require('zmq')
+var zmq       = require('zeromq')
   , requester = zmq.socket('req');
 
 requester.connect('tcp://localhost:5559');

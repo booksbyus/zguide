@@ -1,6 +1,6 @@
 // Simple request-reply broker in Node.js
 
-var zmq      = require('zmq')
+var zmq      = require('zeromq')
   , frontend = zmq.socket('router')
   , backend  = zmq.socket('dealer');
 

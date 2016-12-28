@@ -2,7 +2,7 @@
 // Binds REP socket to tcp://*:5555
 // Expects "Hello" from client, replies with "world"
 
-var zmq = require('zmq');
+var zmq = require('zeromq');
 
 // socket to talk to clients
 var responder = zmq.socket('rep');

@@ -1,7 +1,7 @@
 //  Broker peering simulation (part 1)
 //  Prototypes the state flow
 
-var zmq = require('zmq')
+var zmq = require('zeromq')
   , util = require('util');
 
 if (process.argv.length < 3) {

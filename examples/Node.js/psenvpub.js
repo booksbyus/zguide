@@ -1,4 +1,4 @@
-var zmq = require('zmq')
+var zmq = require('zeromq')
 var publisher = zmq.socket('pub')
 
 publisher.bind('tcp://*:5563', function(err) {

@@ -1,7 +1,7 @@
 // Reading from multiple sockets.
 // This version listens for emitted 'message' events.
 
-var zmq = require('zmq')
+var zmq = require('zeromq')
 
 // Connect to task ventilator
 var receiver = zmq.socket('pull')

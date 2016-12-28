@@ -1,4 +1,4 @@
-var zmq = require('zmq');
+var zmq = require('zeromq');
 
 var WORKERS_NUM = 10;
 var router = zmq.socket('router');
