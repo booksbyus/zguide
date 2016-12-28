@@ -53,7 +53,13 @@ s_recv (void *socket) {
     if (size == -1)
         return NULL;
     buffer[size] = '\0';
+
+#if (defined (WIN32))
+    return strdup (buffer);
+#else
     return strndup (buffer, sizeof(buffer) - 1);
+#endif
+
     // remember that the strdup family of functions use malloc/alloc for space for the new string.  It must be manually
     // freed when you are done with it.  Failure to do so will allow a heap attack.
 }
