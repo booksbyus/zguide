@@ -1,5 +1,5 @@
 cluster = require('cluster')
-  , zmq = require('zmq')
+  , zmq = require('zeromq')
   , backAddr = 'tcp://127.0.0.1:12345'
   , frontAddr = 'tcp://127.0.0.1:12346'
   , clients = 10

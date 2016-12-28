@@ -2,7 +2,7 @@
 // Connects REQ socket to tcp://localhost:5555
 // Sends "Hello" to server.
 
-var zmq = require('zmq');
+var zmq = require('zeromq');
 
 // socket to talk to server
 console.log("Connecting to hello world server...");

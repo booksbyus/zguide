@@ -1,4 +1,4 @@
-var zmq = require('zmq')
+var zmq = require('zeromq')
 var subscriber = zmq.socket('sub')
 var client = zmq.socket('req')
 

@@ -1,6 +1,6 @@
 //  Demonstrate request-reply identities
 
-var zmq = require("zmq"),
+var zmq = require('zeromq'),
     zhelpers = require('./zhelpers');
 
 var sink = zmq.socket("router");

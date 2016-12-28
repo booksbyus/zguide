@@ -1,7 +1,7 @@
 'use strict';
 
 var cluster = require('cluster')
-  , zmq = require('zmq');
+  , zmq = require('zeromq');
 
 var NBR_WORKERS = 3;
 

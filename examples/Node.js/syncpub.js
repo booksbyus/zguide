@@ -1,4 +1,4 @@
-var zmq = require('zmq')
+var zmq = require('zeromq')
 var publisher = zmq.socket('pub')
 var server = zmq.socket('rep')
 var pending = 0

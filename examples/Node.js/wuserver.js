@@ -2,7 +2,7 @@
 // Binds PUB socket to tcp://*:5556
 // Publishes random weather updates
 
-var zmq = require('zmq')
+var zmq = require('zeromq')
   , publisher = zmq.socket('pub');
 
 publisher.bindSync("tcp://*:5556");
