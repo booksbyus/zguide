@@ -2,7 +2,6 @@ import org.zeromq.*;
 import org.zeromq.ZMQ.Poller;
 import org.zeromq.ZMQ.Socket;
 import org.zeromq.ZThread.IDetachedRunnable;
-import sun.security.provider.SystemSigner;
 
 import java.util.Arrays;
 import java.util.LinkedList;
