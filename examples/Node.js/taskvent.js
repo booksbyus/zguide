@@ -4,7 +4,7 @@
 
 var zmq = require('zeromq');
 process.stdin.resume();
-require('tty').setRawMode(true);
+process.stdin.setRawMode(true);
 
 // Socket to send messages on
 var sender = zmq.socket('push');
