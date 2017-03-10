@@ -650,7 +650,7 @@ For testing, I always try to use Valgrind, which catches memory leaks and invali
 
 +++ The Clustered Hashmap Protocol
 
-While the server is pretty much a mashup of the previous model plus the Binary Star pattern, the client is quite a lot more complex. But before we get to that, let's look at the final protocol. I've written this up as a specification on the ZeroMQ RFC website as the [http://rfc.zeromq.org/spec:12 Clustered Hashmap Protocol].
+While the server is pretty much a mashup of the previous model plus the Binary Star pattern, the client is quite a lot more complex. But before we get to that, let's look at the final protocol. I've written this up as a specification on the ZeroMQ RFC website as the [https://rfc.zeromq.org/12/ Clustered Hashmap Protocol].
 
 Roughly, there are two ways to design a complex protocol such as this one. One way is to separate each flow into its own set of sockets. This is the approach we used here. The advantage is that each flow is simple and clean. The disadvantage is that managing multiple socket flows at once can be quite complex. Using a reactor makes it simpler, but still, it makes a lot of moving pieces that have to fit together correctly.
 
