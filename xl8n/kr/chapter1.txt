@@ -4,7 +4,7 @@
 + 기초
 
 ++ Fixing the World
-++ 세상을 변화시키다
+++ 세상을 구원하다
 
 How to explain ZeroMQ? Some of us start by saying all the wonderful things it does. //It's sockets on steroids. It's like mailboxes with routing. It's fast!//  Others try to share their moment of enlightenment, that zap-pow-kaboom satori paradigm-shift moment when it all became obvious. //Things just become simpler. Complexity goes away. It opens the mind.//  Others try to explain by comparison. //It's smaller, simpler, but still looks familiar.//  Personally, I like to remember why we made ZeroMQ at all, because that's most likely where you, the reader, still are today.
 어떻게 ZeroMQ를 설명해야 할까? 우리 중의 몇몇은 ZeroMQ가 하는 모든 놀라운 것들을 말함으로써 이를 시작한다. //ZeroMQ의 소켓은 스테로이드를 사용한다. 라우팅을 하는 메일박스와 같으며, 빠르다!// 또 다른 이들은 ZeroMQ에 대해 분명한 지식이 생뎠을 때 그들이 직관적으로 번뜩하고는 기존과 다른 패러다임 전환을 깨우쳤던 순간을 공유하려고 한다. //상황은 매우 간단해지고, 복잡함은 어느새 멀리 사라진다. 그리고 마음을 열게 된다.// 또 어떤 이들은 비교를 통해 설명을 하려고 한다. //이는 매우 작고 단순해보이지만 여전히 친숙하게 보여진다.// 지금와서도 나는 개인적으로 왜 우리가 ZeroMQ를 만들었는지에 대한 것들이 당신과 같이 이 글을 읽는 독자들로부터 나온 것들이라고 생각하기 때문에 가능한 그 이유를 모두 기억하고 싶다.
@@ -680,36 +680,52 @@ Let's think for a second about what is happening here. The weather server has a 
 여기에서 무슨 일이 일어난 것인지를 잠깐 생각해보자. 기상 서버는 단일 소켓을 가지고 있음에도 다섯 클라이언트들에게 병렬적으로 데이터를 전송하고 있다. 동시에 동작하는 몇 천개의 클라이언트가 있을 수도 있다. 이 서버 애플리케이션은 이들을 볼 수 없고, 직접적으로 이들과 통신할 수 없다. ZeroMQ 소켓은 작은 서버와 같이 동작하고 있고, 조용히 클라이언트 요청을 받아 들여서 네트워크가 처리할 수 있는 만큼 빠르게 이를 내보내고 있다. 또한 이 서버는 다중 스레드 서버이고, CPU에서 더 많은 주스를 쥐어 짜내고 있다.
 
 ++ Upgrading from ZeroMQ v2.2 to ZeroMQ v3.2
+++ ZeroMQ v2.2에서 ZeroMQ v3.2로 판올림
 
 +++ Compatible Changes
++++ 호환되는 변경 사항들
 
 These changes don't impact existing application code directly:
+다음과 같은 변경 사항들은 기존의 애플리케이션에 직접적으로 영향을 미치지 않는다.
 
 * Pub-sub filtering is now done at the publisher side instead of subscriber side. This improves performance significantly in many pub-sub use cases. You can mix v3.2 and v2.1/v2.2 publishers and subscribers safely.
+* 발행-구독 필터링은 구독자 대신에 발행자 측에서 이루어진다. 이는 다수의 발행-구독 용례에서 상당한 성능 향상이 이루어진다. 당신은 v3.2와 v2.1/2.2 발행자/구독자를 안전하게 혼용할 수 있다.
 
 * ZeroMQ v3.2 has many new API methods ({{zmq_disconnect[3]}}, {{zmq_unbind[3]}}, {{zmq_monitor[3]}}, {{zmq_ctx_set[3]}}, etc.)
+* ZeroMQ v3.2는 다수의 신규 API 메서드를 갖는다. ({{zmq_disconnect[3]}}, {{zmq_unbind[3]}}, {{zmq_monitor[3]}}, {{zmq_ctx_set[3]}}, 기타 등등)
 
 +++ Incompatible Changes
++++ 호환되지 않는 변경 사항들
 
 These are the main areas of impact on applications and language bindings:
+다음과 같은 변경 사항들은 언어 바인딩과 애플리케이션에 주요한 영향을 미친다.
 
 * Changed send/recv methods: {{zmq_send[3]}} and {{zmq_recv[3]}} have a different, simpler interface, and the old functionality is now provided by {{zmq_msg_send[3]}} and {{zmq_msg_recv[3]}}. Symptom: compile errors. Solution: fix up your code.
+* 변경된 송/수신 메서드: {{zmq_send[3]}}과 {{zmq_recv[3]}}은 더 단순한 인터페이스와 차이점을 가지고, 이전의 기능들은 {{zmq_msg_send[3]}}과 {{zmq_msg_recv[3]}}으로 제공된다. 증상: 컴파일 오류들. 해결법: 코드를 고쳐라.
 
 * These two methods return positive values on success, and -1 on error. In v2.x they always returned zero on success. Symptom: apparent errors when things actually work fine. Solution: test strictly for return code = -1, not non-zero.
+* 다음 두 메서드들은 성공할 경우 양수를, 오류일 경우에 -1을 반환한다. v2.x에서 이들은 성공할 경우 항상 0을 반환했다. 증상: 정상적으로 동작했을 때 오류. 해결법: 반환 코드가 0이 아닐 경우가 아니라 -1인 경우에 대한 엄격한 검사.
 
 * {{zmq_poll[3]}} now waits for milliseconds, not microseconds. Symptom: application stops responding (in fact responds 1000 times slower). Solution: use the {{ZMQ_POLL_MSEC}} macro defined below, in all {{zmq_poll}} calls.
+* {{zmq_poll[3]}}은 마이크로초 단위가 아니라 밀리초 단위로 대기한다. 증상: 애플리케이션이 응답을 멈추는 것 (실제로는 1000배 정도 느려진다). 해결법: 모든 {{zmq_poll}} 호출에서 아래의 {{ZMQ_POLL_MSEC}} 매크로 정의를 사용한다.
 
 * {{ZMQ_NOBLOCK}} is now called {{ZMQ_DONTWAIT}}. Symptom: compile failures on the {{ZMQ_NOBLOCK}} macro.
+* {{ZMQ_NOBLOCK}}은 이제 {{ZMQ_DONTWAIT}}를 호출한다. 증상: {{ZMQ_NOBLOCK}} 매크로에 대한 컴파일 오류들.
 
 * The {{ZMQ_HWM}} socket option is now broken into {{ZMQ_SNDHWM}} and {{ZMQ_RCVHWM}}.  Symptom: compile failures on the {{ZMQ_HWM}} macro.
+* {{ZMQ_HWM}} 소켓 옵션은 {{ZMQ_SNDHWM}}과 {{ZMQ_RCVHWM}}으로 분리된다.  증상: {{ZMQ_HWM}} 매크로에 대한 컴파일 오류.
 
 * Most but not all {{zmq_getsockopt[3]}} options are now integer values. Symptom: runtime error returns on {{zmq_setsockopt}} and {{zmq_getsockopt}}.
+* 대부분의 {{zmq_getsockopt[3]}} 옵션들은 이제 정수 값이다. 증상: {{zmq_setsockopt}}와 {{zmq_getsockopt}} 상에서 실행 시간 오류가 발생한다.
 
 * The {{ZMQ_SWAP}} option has been removed. Symptom: compile failures on {{ZMQ_SWAP}}. Solution: redesign any code that uses this functionality.
+* {{ZMQ_SWAP}} 옵션은 제거됐다. 증상: {{ZMQ_SWWAP}}에 대한 컴파일 오류. 해결: 이 기능을 사용하는 모든 코드를 다시 설계한다.
 
 +++ Suggested Shim Macros
++++ 제안된 핵심 매크로들
 
 For applications that want to run on both v2.x and v3.2, such as language bindings, our advice is to emulate c3.2 as far as possible. Here are C macro definitions that help your C/C++ code to work across both versions (taken from [http://czmq.zeromq.org CZMQ]):
+v2.x와 v3.2에서 모두 동작하기 위한 애플리케이션, 언어 바인딩을 위한 조언은 가능한 v3.2를 에뮬레이트하는 것이다. 당신의 C/C++ 코드가 두 버전들 모두에서 동작하는 것을 돕기 위한 C 매크로 정의들이 있다. ([http://czmq.zeromq.org CZMQ]로부터 얻어진):
 
 [[code type="fragment" name="upgrade-shim"]]
 #ifndef ZMQ_DONTWAIT
@@ -728,13 +744,19 @@ For applications that want to run on both v2.x and v3.2, such as language bindin
 [[/code]]
 
 ++ Warning: Unstable Paradigms!
+++ 경고: 불안정한 체계!
 
 Traditional network programming is built on the general assumption that one socket talks to one connection, one peer. There are multicast protocols, but these are exotic. When we assume "one socket = one connection", we scale our architectures in certain ways. We create threads of logic where each thread work with one socket, one peer. We place intelligence and state in these threads.
+전통적인 네트워크 프로그래밍은 하나의 소켓이 하나의 연결 상에서 하나의 피어와 통신한다는 일반적인 가정 위에서 만들어졌다. 여기에는 멀티캐스트 프로토콜들이 있지만 이국적이다. "한 소켓 = 한 연결"을 가정할 때, 우리는 아키텍처를 특정한 방법을 통해 확장한다. 우리는 하나의 소켓, 하나의 피어와 동작하는 각 스레드를 만들고 이러한 스레드에 정보와 상태를 배치한다.
 
 In the ZeroMQ universe, sockets are doorways to fast little background communications engines that manage a whole set of connections automagically for you. You can't see, work with, open, close, or attach state to these connections. Whether you use blocking send or receive, or poll, all you can talk to is the socket, not the connections it manages for you. The connections are private and invisible, and this is the key to ZeroMQ's scalability.
+ZeroMQ 우주에서, 소켓은 모든 연결의 집합을 관리하는 작고 빠른 백그라운드 통신 엔진으로 향하는 출입구다. 당신은 이것을 보거나, 열기, 닫기 혹은 이러한 연결에 상태를 결합하는 등의 작업할 수 없다. 블록킹 송신이나 수신, 혹은 폴링이든 간에 대화가 가능한 것은 소켓이며, 이것을 관리하기 위한 연결이 아니다. 연결은 사적이고 보여지지 않는다. 그리고 이것은 ZeroMQ 확장성의 핵심 요소다.
 
 This is because your code, talking to a socket, can then handle any number of connections across whatever network protocols are around, without change. A messaging pattern sitting in ZeroMQ scales more cheaply than a messaging pattern sitting in your application code.
+이는 소켓과 통신하는 코드가 네트워크 프로토콜이나 코드의 변경 없이 다수의 여견을ㄹ 처리할 수 있기 때문이다. ZeroMQ 내의 메시징 패턴은 애플리케이션 코드 내에 있는 메시징 패턴 코드보다 더욱 저렴하게 확장할 수 있다.
 
 So the general assumption no longer applies. As you read the code examples, your brain will try to map them to what you know. You will read "socket" and think "ah, that represents a connection to another node". That is wrong. You will read "thread" and your brain will again think, "ah, a thread represents a connection to another node", and again your brain will be wrong.
+따라서 일반적인 가정은 더 이상 통용되지 않는다. 코드 예제를 읽음에 따라, 당신의 뇌는 알고 있던 것들에 사상시키려고 할 것이다. 당신은 "소켓"을 읽고 "아, 다른 노드와의 연결을 나타내는 구나"라고 생각할 것이다. 이건 잘못된 것이다. "스레드"를 읽고, 당신의 뇌는 "아, 스레드는 다른 노드와의 연결을 나타내는 구나"라고 다시 생각할 것이고, 마찬가지로 당신의 뇌는 잘못된 것이다.
 
 If you're reading this Guide for the first time, realize that until you actually write ZeroMQ code for a day or two (and maybe three or four days), you may feel confused, especially by how simple ZeroMQ makes things for you, and you may try to impose that general assumption on ZeroMQ, and it won't work. And then you will experience your moment of enlightenment and trust, that //zap-pow-kaboom// satori paradigm-shift moment when it all becomes clear.
+처음으로 이 안내서를 읽고 있는 중이라면, 하루 이틀(사나흘이 될 수도) 정도 ZeroMQ 코드를 실제로 작성해보면서 앞선 말들을 깨닫게 된다. 아마도 혼란스러움을 느낄 것이고, 특히 어떻게 ZeroMQ가 단순하게 원하는 것을 만들 수 있는지에 있어서 일반적인 가정을 ZeroMQ에 도입하길 시도할 것이고, 그것은 동작하지 않을 것이다. 그리고 나서 모든 것이 뚜렷해지는 //zap-pow-kaboom// satori 패러다임-전환이 일어나는 신뢰와 깨우침의 순간을 경험하게 될 것이다.
