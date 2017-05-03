@@ -649,8 +649,10 @@ Actually ZeroMQ does rather more than this. It has a subversive effect on how yo
 실제로 ZeroMQ가 하는 것은 이것보다 더 많다. ZeroMQ는 당신이 어떻게 네트워크 가능한 소프트웨어를 개발하는가에 있어서 불온한 영향을 가진다. 표면적으로는 {{zmq_recv[3]}}와 {{zmq_send[3]}}을 하는 소켓-직관적인 API이다. 하지만 메시지 처리를 빠르게 중심이 되는 루프가 될 것이고, 당신의 애플리케이션은 곧 일련의 메시지 처리 작업으로 나뉘어진다. 이건 자연스럽고 훌륭한 것이다. 이것은 확장한다: 각 작업들은 노드로 사상되고, 이 노드들은 임의의 통신 방법을 거쳐 각기 다른 노드들과 통신한다. 한 프로세스 내의 두 노드(여기에서 노드는 하나의 스레드다), 한 머신 내의 두 노드(여기에서 노드는 프로세스다), 한 네트워크 내에서 두 노드(여기에서 노드는 머신이다)--애플리케이션 코드가 바뀌지 않는다면 이것은 항상 같다.
 
 ++ Socket Scalability
+++ 소켓 확장성
 
 Let's see ZeroMQ's scalability in action. Here is a shell script that starts the weather server and then a bunch of clients in parallel:
+ZeroMQ의 확장성을 실제로 보자. 여기에 한 기상 서버와 병렬로 동작하는 클라이언트 무리가 있다.
 
 [[code]]
 wuserver &
@@ -662,6 +664,7 @@ wuclient 56789 &
 [[/code]]
 
 As the clients run, we take a look at the active processes using the {{top}} command', and we see something like (on a 4-core box):
+클라이언트가 동작함으로써, 우리는 {{top}} 명령을 사용하여 동작 중인 프로세스들을 볼 수 있으며 다음과 같은 것들을 볼 수 있다. (4코어 머신에서):
 
 [[code]]
 PID  USER  PR  NI  VIRT  RES  SHR S %CPU %MEM   TIME+  COMMAND
@@ -674,6 +677,7 @@ PID  USER  PR  NI  VIRT  RES  SHR S %CPU %MEM   TIME+  COMMAND
 [[/code]]
 
 Let's think for a second about what is happening here. The weather server has a single socket, and yet here we have it sending data to five clients in parallel. We could have thousands of concurrent clients. The server application doesn't see them, doesn't talk to them directly. So the ZeroMQ socket is acting like a little server, silently accepting client requests and shoving data out to them as fast as the network can handle it. And it's a multithreaded server, squeezing more juice out of your CPU.
+여기에서 무슨 일이 일어난 것인지를 잠깐 생각해보자. 기상 서버는 단일 소켓을 가지고 있음에도 다섯 클라이언트들에게 병렬적으로 데이터를 전송하고 있다. 동시에 동작하는 몇 천개의 클라이언트가 있을 수도 있다. 이 서버 애플리케이션은 이들을 볼 수 없고, 직접적으로 이들과 통신할 수 없다. ZeroMQ 소켓은 작은 서버와 같이 동작하고 있고, 조용히 클라이언트 요청을 받아 들여서 네트워크가 처리할 수 있는 만큼 빠르게 이를 내보내고 있다. 또한 이 서버는 다중 스레드 서버이고, CPU에서 더 많은 주스를 쥐어 짜내고 있다.
 
 ++ Upgrading from ZeroMQ v2.2 to ZeroMQ v3.2
 
