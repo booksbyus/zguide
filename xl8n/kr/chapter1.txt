@@ -744,7 +744,7 @@ v2.x와 v3.2에서 모두 동작하기 위한 애플리케이션, 언어 바인�
 [[/code]]
 
 ++ Warning: Unstable Paradigms!
-++ 경고: 불안정한 체계!
+++ 경고: 불안정한 패러다임!
 
 Traditional network programming is built on the general assumption that one socket talks to one connection, one peer. There are multicast protocols, but these are exotic. When we assume "one socket = one connection", we scale our architectures in certain ways. We create threads of logic where each thread work with one socket, one peer. We place intelligence and state in these threads.
 전통적인 네트워크 프로그래밍은 하나의 소켓이 하나의 연결 상에서 하나의 피어와 통신한다는 일반적인 가정 위에서 만들어졌다. 여기에는 멀티캐스트 프로토콜들이 있지만 이국적이다. "한 소켓 = 한 연결"을 가정할 때, 우리는 아키텍처를 특정한 방법을 통해 확장한다. 우리는 하나의 소켓, 하나의 피어와 동작하는 각 스레드를 만들고 이러한 스레드에 정보와 상태를 배치한다.
