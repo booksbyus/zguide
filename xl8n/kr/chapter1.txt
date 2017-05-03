@@ -56,7 +56,7 @@ git clone --depth=1 https://github.com/imatix/zguide.git
 [[/code]]
 
 Next, browse the examples subdirectory. You'll find examples by language. If there are examples missing in a language you use, you're encouraged to [http://zguide.zeromq.org/main:translate submit a translation]. This is how this text became so useful, thanks to the work of many people. All examples are licensed under MIT/X11.
-다음으로, 이 예제들의 하위 디렉터리를 살펴보자. 당신은 언어별 예제들을 찾을 수 있을 것이다. 당신이 사용하는 언어로 된 예제들이 없다면, [http://zguide.zeromq.org/main:translate 변환된 예제를 제출하는 것]을 권한다. 이는 어떻게 많은 사람들의 작업 덕분에 이 텍스트가 유용하게 되었는가이다. 모든 예제들은 MIT/X11 라이센스 하에 허가된다.
+다음으로, 이 예제들의 하위 디렉터리를 살펴보자. 당신은 언어별 예제들을 찾을 수 있을 것이다. 당신이 사용하는 언어로 된 예제들이 없다면, [http://zguide.zeromq.org/main:translate 변환된 예제를 제출하는 것]을 권한다. 이것이 어떻게 많은 사람들의 작업 덕분에 이 텍스트가 유용하게 되었는가의 이유다. 모든 예제들은 MIT/X11 라이센스 하에 허가된다.
 
 ++ Ask and Ye Shall Receive
 ++ 구하라 그리하면 얻을 것이다.
@@ -86,10 +86,10 @@ Hello |    | World
 [[/code]]
 
 The REQ-REP socket pair is in lockstep. The client issues {{zmq_send[3]}} and then {{zmq_recv[3]}}, in a loop (or once if that's all it needs). Doing any other sequence (e.g., sending two messages in a row) will result in a return code of -1 from the {{send}} or {{recv}} call. Similarly, the service issues {{zmq_recv[3]}} and then {{zmq_send[3]}} in that order, as often as it needs to.
-REQ-REP 소켓 쌍은 동일한 방식이다. 클라이언트는 한 반복문 내에서 (혹은 필요한 것이 한번 뿐이라면) {{zmq_sned[3]}}을 호출한 뒤에 {{zmq_recv[3]}}을 호출한다. 아무 다른 시퀀스를 수행하는 것 (예를 들어, 한번에 두 개의 메시지를 보내는 것) 은 {{send}} 혹은 {{recv}} 호출로부터 -1의 반환 코드를 얻게될 것이다. 이와 유사하게, 서비스는 필요할 때마다 순서대로 {{zmq_recv[3]}}, {{zmq_send[3]}}을 호출한다.
+REQ-REP 소켓 쌍은 발을 맞추어 가는 방식이다. 클라이언트는 한 반복문 내에서 {{zmq_sned[3]}}을 호출한 뒤에 {{zmq_recv[3]}}을 호출한다 (혹은 필요하다면 한번만). 다른 시퀀스를 수행하는 것 (예를 들어, 한번에 두 개의 메시지를 보내는 것) 은 {{send}} 혹은 {{recv}} 호출로부터 -1의 반환 코드를 얻게될 것이다. 이와 유사하게, 서비스는 필요할 때마다 순서대로 {{zmq_recv[3]}}, {{zmq_send[3]}}을 호출한다.
 
 ZeroMQ uses C as its reference language and this is the main language we'll use for examples. If you're reading this online, the link below the example takes you to translations into other programming languages. Let's compare the same server in C++:
-ZeroMQ는 기준 언어로서 C를 사용하고 우리가 예제들에서 사용할 주 언어다. 당신이 온라인으로 이걸 읽고 있다면, 아래 예제의 링크는 다른 언어로 변환된 예제를 제공한다. 같은 서버 코드를 C++과 비교해보자.
+ZeroMQ는 그 레퍼런스 언어로서 C를 사용하고 우리가 예제들에서 사용할 주 언어다. 당신이 온라인으로 이걸 읽고 있다면, 아래 예제의 링크는 다른 언어로 변환된 예제를 제공한다. 같은 서버 코드를 C++과 비교해보자.
 
 [[code type="example" title="Hello World server" name="hwserver" language="C++"]]
 [[/code]]
@@ -111,28 +111,28 @@ The server in other languages:
 [[/code]]
 
 Here's the client code:
-아래는 클라이언트 코드:
+클라이언트 코드:
 
 [[code type="example" title="Hello World client" name="hwclient"]]
 [[/code]]
 
 Now this looks too simple to be realistic, but ZeroMQ sockets have, as we already learned, superpowers. You could throw thousands of clients at this server, all at once, and it would continue to work happily and quickly. For fun, try starting the client and //then// starting the server, see how it all still works, then think for a second what this means.
-이건 실제적으로 너무 쉽게 보이지만, 우리가 벌써 배운 것과 같이 ZeroMQ 소켓들은 강력한 힘을 가진다. 당신은 수천의 클라이언트들이 이 서버에 한꺼번에 요청하도록 할 수 있고, 이것은 적절하고 빠르게 작업을 계속할 수 있을 것이다. 재미를 위해서 클라이언트를 시작하고, //그 후에// 서버를 시작해보자. 이제 어떻게 모든 것들이 여전히 동작하는지 지켜본 후에 이게 의미하는 바를 잠깐 생각해보자.
+실질적으로 매우 쉽게 보이지만, ZeroMQ 소켓들은 앞서 배운 것과 같이 강력한 힘을 가진다. 수천의 클라이언트들이 이 서버에 한꺼번에 요청하도록 할 수 있고, 빠르고 행복하게 작업을 계속할 수 있을 것이다. 재미로써 클라이언트를 먼저 시작하고, //그 후에// 서버를 시작해보자. 이제 모두 여전히 동작하는지 지켜본 후에 이게 의미하는 바를 잠깐 생각해보자.
 
 Let us explain briefly what these two programs are actually doing. They create a ZeroMQ context to work with, and a socket. Don't worry what the words mean. You'll pick it up. The server binds its REP (reply) socket to port 5555. The server waits for a request in a loop, and responds each time with a reply. The client sends a request and reads the reply back from the server.
-이 두 프로그램의 실제 동작을 간단히 설명해보자. 그들은 동작을 위한 ZeroMQ 컨텍스트와 소켓을 하나 만든다. 이 말이 무엇을 의미하는지는 신경쓰지 말자. 당신은 이것을 얻게될 것이다. 서버는 자신의 REP(응답) 소켓을 5555번 포트와 묶는다. 서버는 반복 내에서 요청을 대기하고, 응답에 대하여 때마다 응답한다. 클라이언트는 요청을 보내고 서버로부터 돌아오는 응답을 읽는다.
+이 두 프로그램의 실제 동작을 간단히 설명해보자. 이들은 동작을 위한 ZeroMQ 컨텍스트와 소켓을 하나 만든다. 이 말이 무엇을 의미하는지는 곧 알게될 테니 신경쓰지 말자. 서버는 자신의 REP(응답) 소켓을 5555번 포트와 묶는다. 서버는 루프 내에서 요청을 대기하고, 요청이 올 때마다 응답한다. 클라이언트는 요청을 보내고 서버로부터 돌아오는 응답을 읽는다.
 
 If you kill the server (Ctrl-C) and restart it, the client won't recover properly. Recovering from crashing processes isn't quite that easy. Making a reliable request-reply flow is complex enough that we won't cover it until [#reliable-request-reply].
-당신이 서버를 죽이고 (Ctrl-C) 재시작 한다면, 클라이언트는 정확하게 복구되지 않을 것이다. 깨진 프로세스로부터 복구를 하는 것은 그리 쉬운 일이 아니다. 신뢰있는 요청-응답 흐름을 만드는 것은 우리가 이를 [#reliable-request-reply]까지는 다룰 수 없을 만큼 충분히 복잡하다.
+서버를 죽이고 (Ctrl-C) 재시작 한다면, 클라이언트는 정상적으로 복구되지 않을 것이다. 깨진 프로세스로부터 복구를 하는 것은 그리 쉬운 일이 아니다. 신뢰성 있는 요청-응답 흐름을 만드는 것은 우리가 [#reliable-request-reply]를 배우기 까지는 다룰 수 없을 정도로 복잡하다.
 
 There is a lot happening behind the scenes but what matters to us programmers is how short and sweet the code is, and how often it doesn't crash, even under a heavy load. This is the request-reply pattern, probably the simplest way to use ZeroMQ. It maps to RPC and the classic client/server model.
-무대 뒤에서는 많은 일들이 일어나지만 우리의 프로그래머들이 걱정할 것은 어떻게 짧고 친절한 코드를 만드는지, 그리고 고부하 상태에서 얼마동안 크래시가 발행하지 않는지이다. 이것은 요청-응답 패턴이고, 아마도 ZeroMQ를 사용하는 가장 쉬운 방법일 것이다. ZeroMQ는 RPC와 고전적인 클라이언트/서버 모델을 사상시킨다.
+무대 뒤에서 많은 일들이 일어나지만 프로그래머들이 걱정할 것은 어떻게 짧고 친절한 코드를 만드는지, 그리고 고부하 상태에서 얼마동안 문제가 발생하지 않는지이다. 이것은 요청-응답 패턴이고, 아마도 ZeroMQ를 사용하는 가장 쉬운 방법일 것이다. ZeroMQ는 RPC와 고전적인 클라이언트/서버 모델을 사상시킨다.
 
 ++ A Minor Note on Strings
 ++ 문자열에 대한 소견
 
 ZeroMQ doesn't know anything about the data you send except its size in bytes. That means you are responsible for formatting it safely so that applications can read it back. Doing this for objects and complex data types is a job for specialized libraries like Protocol Buffers. But even for strings, you need to take care.
-ZeroMQ는 당신이 보내려는 데이터의 바이트 크기에 대하여 어떤 것도 알지 못한다. 이는 애플리케이션이 이것을 읽어들일 수 있도록 하기 위해 데이터를 안전하게 포맷팅할 책임이 당신에게 있다는 것이다. 객체와 복잡한 데이터 유형을 포맷팅하는 것은 프로토콜 버퍼처럼 특수화된 라이브러리들의 역할이다. 하지만 심지어 문자열에 대해서, 이를 주의할 필요가 있다.
+ZeroMQ는 당신이 보내려는 데이터의 바이트 크기에 대하여 어떤 것도 알지 못한다. 이는 애플리케이션이 데이터를 읽어들일 수 있도록 하기 위해 안전하게 포맷팅할 책임이 당신에게 있다는 것이다. 객체와 복잡한 데이터 유형을 포맷팅하는 것은 프로토콜 버퍼처럼 특수화된 라이브러리들의 역할이다. 하지만 문자열이라고 해도 주의할 필요는 있다.
 
 In C and some other languages, strings are terminated with a null byte. We could send a string like "HELLO" with that extra null byte:
 C와 몇몇 다른 언어들에서, 문자열은 널(\0) 바이트로 끝난다. 우리는 "HELLO"와 같은 문자열을 여분의 널 바이트와 함께 보내야 한다.
@@ -142,14 +142,14 @@ zmq_send (requester, "Hello", 6, 0);
 [[/code]]
 
 However, if you send a string from another language, it probably will not include that null byte. For example, when we send that same string in Python, we do this:
-하지만, 당신이 다른 언어에서부터 문자열을 보내려고 한다면, 이는 아마도 이러한 널 바이트를 포함하지 않을 것이고, 당신이 파이썬에서 같은 문자열을 보낼 때 우리는 이렇게 할 것이다.
+하지만, 다른 언어에서부터 문자열을 보내려고 한다면 널 바이트를 포함하지 않을 수도 있다. 예를 들어서 파이썬에서 동일한 문자열을 보낼 때 우리는 이렇게 할 것이다.
 
 [[code language="Python"]]
 socket.send ("Hello")
 [[/code]]
 
 Then what goes onto the wire is a length (one byte for shorter strings) and the string contents as individual characters[figure].
-그리고 나서 통신 상에 올라가는 것은 길이(가장 짧은 문자열 대해 한 바이트로)와 개별 문자열들의 문자열 내용이다[figure].
+그리고 나서 회선에 올라가는 것은 길이(가장 짧은 문자열 대한 1바이트)와 개별 문자열들의 문자열 내용이다[figure].
 
 [[code type="textdiagram" title="A ZeroMQ string"]]
 #-----#  #-----+-----+-----+-----+-----#
@@ -158,13 +158,13 @@ Then what goes onto the wire is a length (one byte for shorter strings) and the 
 [[/code]]
 
 And if you read this from a C program, you will get something that looks like a string, and might by accident act like a string (if by luck the five bytes find themselves followed by an innocently lurking null), but isn't a proper string. When your client and server don't agree on the string format, you will get weird results.
-그리고 당신이 C 프로그램으로부터 이것을 읽을 수 있다면, 당신은 보이는 것과 같은 문자열을 얻을 것이며, 실수로 문자열처럼 행동할 수도 있다(운좋게도 그들 중에서 무의식적으로 숨어있는 널 바이트가 뒤따르는 5바이트를 찾는다면), 하지만 이는 적절한 문자열은 아니다. 당신의 클라이언트와 서버가 문자열 포맷을 허용하지 않는다면 이상한 결과를 얻게될 것이다.
+그리고 C 프로그램으로부터 이것을 읽는다면, 보이는 것과 같은 문자열을 얻을 것이며, 어쩌다보면 정상적인 문자열처럼 동작할 수도 있다 (운좋게도 무의식적으로 숨어있는 널 바이트가 뒤따르는 5바이트를 찾는다면), 하지만 이는 적절한 문자열은 아니다. 클라이언트와 서버가 문자열 포맷을 허용하지 않는다면 이상한 결과를 얻게될 것이다.
 
 When you receive string data from ZeroMQ in C, you simply cannot trust that it's safely terminated. Every single time you read a string, you should allocate a new buffer with space for an extra byte, copy the string, and terminate it properly with a null.
 C에서 ZeroMQ로부터 문자열 데이터를 수신한다면, 그것이 안전하게 종료되었다는 것을 신뢰할 수 없다. 문자열을 읽을 경우에는 항상 여분의 바이트에 대한 공간을 포함하는 새로운 버퍼를 할당하고, 문자열을 복사하고, 이것이 정확히 널로 끝나도록 할 필요가 있다.
 
 So let's establish the rule that **ZeroMQ strings are length-specified and are sent on the wire //without// a trailing null**. In the simplest case (and we'll do this in our examples), a ZeroMQ string maps neatly to a ZeroMQ message frame, which looks like the above figure--a length and some bytes.
-**ZeroMQ 문자열은 지정-길이이며, 널을 붙이지 않고 통신 상에 송신된다**는 규칙을 명확히 하자. 가장 단순한 경우 (우리는 이 경우를 예제에서 살펴볼 것이다.), 하나의 ZeroMQ 문자열은 하나의 ZeroMQ 메시지 프레임과 깔끔하게 사상되고, 이것은 위에 있는 그림에서 본 것과 같다.
+**ZeroMQ 문자열은 지정된 길이를 가지며, 널을 붙이지 않고 회선 상에 송신된다**는 규칙을 명확히 하자. 가장 단순한 경우 (우리는 이 경우를 예제에서 살펴볼 것이다.), 하나의 ZeroMQ 문자열은 하나의 ZeroMQ 메시지 프레임과 깔끔하게 사상되고, 이것은 위에 있는 그림에서 본 것과 같다.
 
 Here is what we need to do, in C, to receive a ZeroMQ string and deliver it to the application as a valid C string:
 여기 ZeroMQ 문자열을 수신하고 유효한 C 문자열로 애플리케이션에 발송하기 위해 필요한 C 코드가 있다.
@@ -189,13 +189,13 @@ This makes a handy helper function and in the spirit of making things we can reu
 이것은 재사용성 측면에서 유익한 도움 함수를 만든다. 이제 이와 유사하게 정확한 ZeroMQ 포맷으로 문자열을 송신하는 {{s_send}} 함수를 만들고, 이것을 우리가 재사용할 수 있는 헤더 파일 내에 패키징 해보자.
 
 The result is {{zhelpers.h}}, which lets us write sweeter and shorter ZeroMQ applications in C. It is a fairly long source, and only fun for C developers, so [https://github.com/imatix/zguide/blob/master/examples/C/zhelpers.h read it at leisure].
-그 결과는 우리가 C에서 달콤하고 짧은 ZeroMQ 애플리케이션을 작성할 수 있도록 하는 {{zhelpers.h}}이다. 이것은 꽤나 긴 소스이고 C 개발자들에게만 재미있게 느껴질 것이다. 그래서 [https://github.com/imatix/zguide/blob/master/examples/C/zhelpers.h 이것을 한가할 때 읽는다].
+그 결과물은 우리가 C에서 달콤하고 짧은 ZeroMQ 애플리케이션을 작성할 수 있도록 하는 {{zhelpers.h}}이다. 이건 꽤나 긴 소스이고 C 개발자들에게만 재미있게 느껴질 것이다. 그러니 [https://github.com/imatix/zguide/blob/master/examples/C/zhelpers.h 한가할 때에나 읽어보도록 하자].
 
 ++ Version Reporting
 ++ 버전 리포팅
 
 ZeroMQ does come in several versions and quite often, if you hit a problem, it'll be something that's been fixed in a later version. So it's a useful trick to know //exactly// what version of ZeroMQ you're actually linking with.
-ZeroMQ는 여러 버전들로 제공되고, 문제가 발생하면 차후 버전에서 수정될 것이다. 따라서 당신이 실제로 링킹하는 ZeroMQ의 버전이 무엇인지 아는 것은 유용합니다.
+ZeroMQ는 여러 버전들로 제공되고, 문제가 발생하면 차후 버전에서 수정될 것이다. 따라서 당신이 실제로 링킹하는 ZeroMQ의 버전이 무엇인지 아는 것이 유용하다.
 
 Here is a tiny program that does that:
 여기에 이와 같은 것을 수행하는 작은 프로그램이 있다.
