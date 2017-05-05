@@ -195,7 +195,7 @@ The result is {{zhelpers.h}}, which lets us write sweeter and shorter ZeroMQ app
 ++ 버전 리포팅
 
 ZeroMQ does come in several versions and quite often, if you hit a problem, it'll be something that's been fixed in a later version. So it's a useful trick to know //exactly// what version of ZeroMQ you're actually linking with.
-ZeroMQ는 여러 버전들로 제공되고, 문제가 발생하면 차후 버전에서 수정될 것이다. 따라서 당신이 실제로 링킹하는 ZeroMQ의 버전이 무엇인지 아는 것이 유용하다.
+ZeroMQ는 여러 버전들로 제공되고, 문제가 발생하면 차후 버전에서 수정될 것이다. 따라서 자신이 실제로 링킹하는 ZeroMQ의 버전이 무엇인지 아는 것이 유용하다.
 
 Here is a tiny program that does that:
 여기에 이와 같은 것을 수행하는 작은 프로그램이 있다.
@@ -250,19 +250,19 @@ Here is the client application, which listens to the stream of updates and grabs
 [[/code]]
 
 Note that when you use a SUB socket you **must** set a subscription using {{zmq_setsockopt[3]}} and SUBSCRIBE, as in this code. If you don't set any subscription, you won't get any messages. It's a common mistake for beginners. The subscriber can set many subscriptions, which are added together. That is, if an update matches ANY subscription, the subscriber receives it. The subscriber can also cancel specific subscriptions. A subscription is often, but not necessarily a printable string. See {{zmq_setsockopt[3]}} for how this works.
-참고로 SUB 소켓을 사용할 때에는 이 코드와 마찬가지로 {{zmq_setsockopt[3]}}과 SUBSCRIBE를 사용하여 구독을 설정해야만 한다. 구독에 대한 설정을 하지 않는다면, 어떤 메시지도 가져올 수 없을 것이다. 이는 초보자들이 흔히 하는 실수다. 구독자는 여러 구독을 함께 추가하여 설정할 수 있다. 다시 말해서, 갱신 정보가 어떤 구독 설정과 일치한다면, 구독자는 그것을 수신할 수 있다. 또한 구독자는 지정된 구독 설정을 취소할 수도 있다. 구독은 출력 가능할 문자열일 수는 있지만 항상 그래야 하는 것은 아니다.
+참고로 SUB 소켓을 사용할 때에는 이 코드와 마찬가지로 {{zmq_setsockopt[3]}}과 SUBSCRIBE를 사용하여 구독을 설정해야만 한다. 구독에 대한 설정을 하지 않는다면, 어떤 메시지도 가져올 수 없을 것이다. 이는 초보자들이 흔히 하는 실수다. 구독자는 여러 구독을 함께 추가하여 설정할 수 있다. 다시 말해서, 갱신 정보가 어떤 구독 설정과 일치한다면, 구독자는 그 정보를 수신할 수 있다. 또한 구독자는 지정된 구독 설정을 취소할 수도 있다. 출력 가능할 문자열로 구독 식별자를 설정할 수 있지만 항상 그래야 하는 것은 아니다.
 
 The PUB-SUB socket pair is asynchronous. The client does {{zmq_recv[3]}}, in a loop (or once if that's all it needs). Trying to send a message to a SUB socket will cause an error. Similarly, the service does {{zmq_send[3]}} as often as it needs to, but must not do {{zmq_recv[3]}} on a PUB socket.
-PUB-SUB 소켓 쌍은 비동기적이다. 클라이언트는 루프 내에서 (혹은 필요하다면 한번만) {{zmq_recv[3]}}을 수행한다. SUB 소켓으로 송신을 시도하는 것은 오류를 일으킬 것이다. 유사하게, 서비스도 마찬가지로 필요에 따라 {{zmq_send[3]}}를 수행하지만, PUB 소켓 상에서 {{zmq_recv[3]}}을 수행하면 안된다.
+PUB-SUB 소켓 쌍은 비동기적이다. 클라이언트는 루프 내에서 (혹은 필요하다면 한번만) {{zmq_recv[3]}}을 수행한다. SUB 소켓으로 송신을 시도하는 것은 오류를 일으킬 것이다. 유사하게, 이 서비스도 마찬가지로 필요에 따라 {{zmq_send[3]}}를 수행하지만, PUB 소켓 상에서 {{zmq_recv[3]}}을 수행하면 안된다.
 
 In theory with ZeroMQ sockets, it does not matter which end connects and which end binds. However, in practice there are undocumented differences that I'll come to later. For now, bind the PUB and connect the SUB, unless your network design makes that impossible.
-이론적으로 ZeroMQ 소켓은 어떤 것이 연결되고 어떤 것이 바인드되는 지에 대해 신경 쓸 필요가 없다. 하지만, 실제로는 문서화되지 않은 차이점들이 있는데, 이는 차후에 볼 것이다. 지금은 네트워크 디자인이 불가능한 경우가 아닌 이상은 PUB를 바인드하고 SUB를 연결한다.
+이론적으로 ZeroMQ 소켓은 어떤 것이 연결되고 어떤 것이 바인드되는 지에 대해 신경 쓸 필요가 없다. 하지만, 실제로는 문서화되지 않은 차이점들이 있는데, 이는 차후에 볼 것이다. 지금은 네트워크 설계 상으로 불가능한 경우가 아닌 이상은 PUB를 바인드하고 SUB를 연결한다.
 
 There is one more important thing to know about PUB-SUB sockets: you do not know precisely when a subscriber starts to get messages. Even if you start a subscriber, wait a while, and then start the publisher, **the subscriber will always miss the first messages that the publisher sends**. This is because as the subscriber connects to the publisher (something that takes a small but non-zero time), the publisher may already be sending messages out.
-PUB-SUB 소켓들에 대해 알아야 할 중요한 것이 하나가 더 있다: 당신은 구독자가 메시지들을 언제 가져오는지를 정확하게 알지 못한다. 구독자를 시작하고 잠시 기다리고 나서 발행자를 시작했더라도, **구독자는 발행자가 보내는 첫번째 메시지들을 항상 놓칠 것이다**. 이것은 구독자가 발행자에 연결하면 (작지만 0이 아닌 시간이 걸림), 발행자는 이미 메시지들을 보내는 중일 수도 있기 때문이다.
+PUB-SUB 소켓들에 대해 알아야 할 중요한 것이 하나가 더 있다: 구독자가 메시지들을 언제 가져오는지를 정확하게 알지 못한다. 구독자를 시작하고 잠시 기다리고 나서 발행자를 시작했더라도, **구독자는 발행자가 보내는 첫번째 메시지들을 항상 놓칠 것이다**. 이것은 구독자가 발행자에 연결하면 (작지만 0이 아닌 시간이 걸림), 발행자는 이미 메시지들을 보내는 중일 수도 있기 때문이다.
 
 This "slow joiner" symptom hits enough people often enough that we're going to explain it in detail. Remember that ZeroMQ does asynchronous I/O, i.e., in the background. Say you have two nodes doing this, in this order:
-이러한 "느린 참가자" 증상은 우리가 이것을 상세하게 설명할 정도로 사람들이 빈번하게 겪는다. ZeroMQ가 백그라운드에서 비동기 입출력을 한다는 것을 기억하자. 아래와 같은 순서로 작업을 수행하는 두 노드가 있다고 가정해보자.
+이러한 "느린 참가자" 증상은 이 증상을 상세하게 설명할 정도로 사람들이 빈번하게 겪는 것이다. ZeroMQ가 백그라운드에서 비동기 입출력을 한다는 것을 기억하자. 아래와 같은 순서로 작업을 수행하는 두 노드가 있다고 가정해보자.
 
 * Subscriber connects to an endpoint and receives and counts messages.
 * Publisher binds to an endpoint and immediately sends 1,000 messages.
@@ -270,19 +270,19 @@ This "slow joiner" symptom hits enough people often enough that we're going to e
 * 발행자는 종단점에 바인드하여 즉시 1,000개의 메시지들을 송신한다.
 
 Then the subscriber will most likely not receive anything. You'll blink, check that you set a correct filter and try again, and the subscriber will still not receive anything.
-그리고 나서 구독자는 아무 것도 수신하지 않을 것이다. 당신은 눈을 깜박거릴 것이고, 정확한 필터를 설정했는지 확인하고 다시 시도할 것이다. 그리고 구독자는 여전히 아무 것도 수신하지 않을 것이다.
+그리고 나서 구독자는 아무 것도 수신하지 않을 것이다. 당신은 눈을 꿈뻑거릴 것이고, 정확한 필터를 설정했는지 확인하고 다시 시도할 것이다. 그래도 여전히 구독자는 아무 것도 수신하지 않을 것이다.
 
 Making a TCP connection involves to and from handshaking that takes several milliseconds depending on your network and the number of hops between peers. In that time, ZeroMQ can send many messages. For sake of argument assume it takes 5 msecs to establish a connection, and that same link can handle 1M messages per second. During the 5 msecs that the subscriber is connecting to the publisher, it takes the publisher only 1 msec to send out those 1K messages.
-TCP 연결을 만드는 것은 네트워크와 피어들 사이가 몇 홉(hop)인지에 따라 몇 밀리 초가 소요되는 핸드셰이킹을 수반한다. 이 때, ZeroMQ는 다량의 메시지들을 송신할 수 있다. 논증을 위해서 연결을 확립하는데 5 밀리 초가 소요되고,동일한 연결이 초당 1M 개의 메시지를 처리할 수 있다고 가정하자. 구독자가 발행자에 연결하는 5 밀리 초 동안에, 발행자가 1K 개의 메시지들을 보내는 것에는 단 1 밀리 초가 소요된다.
+TCP 연결을 만드는 것은 네트워크와 피어들 사이가 몇 홉(hop)인지에 따라 몇 밀리 초가 소요되는 핸드셰이킹을 수반한다. 이 때, ZeroMQ는 다량의 메시지들을 송신할 수 있다. 논증을 위해서 연결을 확립하는데 5 밀리 초가 소요되고, 동일한 연결이 초당 1M 개의 메시지를 처리할 수 있다고 가정해보자. 구독자가 발행자에 연결하는 5 밀리 초 동안에, 발행자가 1K 개의 메시지들을 보내는 것에는 단 1 밀리 초가 소요된다.
 
 In [#sockets-and-patterns] we'll explain how to synchronize a publisher and subscribers so that you don't start to publish data until the subscribers really are connected and ready. There is a simple and stupid way to delay the publisher, which is to sleep. Don't do this in a real application, though, because it is extremely fragile as well as inelegant and slow. Use sleeps to prove to yourself what's happening, and then wait for [#sockets-and-patterns] to see how to do this right.
-[#sockets-and-patterns]에서 우리는 구독자들이 실제로 연결하여 준비가 완료되기 전까지 데이터를 발행하지 않도록 하기 위해서 어떻게 발행자와 구독자들을 동기화하는지를 설명할 것이다. 발행자를 지연시키기 위한 간단하고 어리석은 방법으로 sleep이 있다. 하지만 매우 느리고 취약하기 때문에 실제 애플리케이션에서는 이런 방법을 사용하지 않도록 해야 한다.
+[#sockets-and-patterns]에서 우리는 구독자들이 실제로 연결하여 준비가 완료되기 전까지 데이터를 발행하지 않도록 하기 위해서 어떻게 발행자와 구독자들을 동기화하는지를 설명할 것이다. 발행자를 지연시키기 위한 간단하고 멍청한 방법으로 sleep이 있다. 하지만 매우 느리고 취약하기 때문에 실제 애플리케이션에서는 이런 방법을 사용하지 않도록 해야 한다.
 
 The alternative to synchronization is to simply assume that the published data stream is infinite and has no start and no end. One also assumes that the subscriber doesn't care what transpired before it started up. This is how we built our weather client example.
 동기화의 대안은 단순히 발행되는 데이터 스트림이 시작과 끝이 없으며 무한하다고 가정하는 것이다. 또 하나는 구독자가 시작되기 이전에 무엇이 일어났는지를 신경쓰지 않는다는 가정이다. 이 두 가정이 날씨 클라이언트 예제를 작성한 방법이다.
 
 So the client subscribes to its chosen zip code and collects 100 updates for that zip code. That means about ten million updates from the server, if zip codes are randomly distributed. You can start the client, and then the server, and the client will keep working. You can stop and restart the server as often as you like, and the client will keep working. When the client has collected its hundred updates, it calculates the average, prints it, and exits.
-따라서 클라이언트는 선택한 우편 번호를 구독하고 그에 대한 100개의 갱신을 수집한다. 이는 우편 번호가 무작위로 배포되는 경우 서버로부터 천만 건의 갱신이 발생함을 뜻한다. 당신은 클라이언트를 시작하고 나서 서버를 시작하고, 클라이언트는 계속 작업을 수행할 것이다. 당신은 원할 때 서버를 중지하고 재시작할 수 있고, 클라이언트는 계속 동작할 것이다. 클라이언트가 1000건의 갱신을 수집한 시점에 평균을 계산하여 출력하고 종료한다.
+따라서 클라이언트는 선택한 우편 번호를 구독하고 그에 대한 100개의 갱신을 수집한다. 이는 무작위로 분산된 우편 번호에 대해 서버로부터 천만 건의 갱신이 발생함을 뜻한다. 당신은 클라이언트를 시작하고 나서 서버를 시작하고, 클라이언트는 계속 작업을 수행할 것이다. 원한다면 서버를 중지하고 재시작할 수 있고, 클라이언트는 계속 동작할 것이다. 클라이언트가 1000건의 갱신을 수집한 시점에 평균을 계산하여 출력하고 종료한다.
 
 Some points about the publish-subscribe (pub-sub) pattern:
 발행-구독(pub-sub) 패턴에 대한 몇 가지 사항:
@@ -291,16 +291,16 @@ Some points about the publish-subscribe (pub-sub) pattern:
 * 구독자는 하나 이상의 발행자 각각에 대해 연결 호출을 사용하여 연결할 수 있다. 데이터는 그 뒤에 도착하고 단일 발행자가 다른 발행자들을 누락시키지 않게 하기 위해서 인터리브된다("공정 큐잉").
 
 * If a publisher has no connected subscribers, then it will simply drop all messages.
-* 발행자에 연결된 구독자들이 없다면, 모든 메시지들을 버릴 것이다.
+* 발행자에 연결된 구독자들이 없다면, 발행자는 모든 메시지들을 버릴 것이다.
 
 * If you're using TCP and a subscriber is slow, messages will queue up on the publisher. We'll look at how to protect publishers against this using the "high-water mark" later.
 * TCP를 사용하고 구독자가 느리다면, 메시지들은 발행자 상에서 큐잉될 것이다. "최고 수위선"을 사용하여 발행자들을 보호하는 방법에 대하여 나중에 살펴볼 것이다.
 
 * From ZeroMQ v3.x, filtering happens at the publisher side when using a connected protocol ({{tcp:@<//>@}} or {{ipc:@<//>@}}). Using the {{epgm:@<//>@}} protocol, filtering happens at the subscriber side. In ZeroMQ v2.x, all filtering happened at the subscriber side.
-* ZeroMQ v3.x부터, 연결 지향 프로토콜({{tcp:@<//>@}}나 {{ipc:@<//>@}})을 사용할 때 필터링은 발행자 측에서 이루어진다. {{epgm:@<//>@}} 프로토콜을 사용할 때에는 구독자 측에서 필터링이 이루어진다. ZeroMQ v2.x에서는 모든 필터링이 구독자 측에서 이루어진다.
+* ZeroMQ v3.x부터, 연결 지향 프로토콜({{tcp:@<//>@}}나 {{ipc:@<//>@}})을 사용할 때의 메시지 필터링은 발행자 측에서 이루어진다. {{epgm:@<//>@}} 프로토콜을 사용할 때에는 구독자 측에서 필터링이 이루어진다. ZeroMQ v2.x에서는 모든 필터링이 구독자 측에서 이루어진다.
 
 This is how long it takes to receive and filter 10M messages on my laptop, which is an 2011-era Intel i5, decent but nothing special:
-다음은 2011년도 인텔 i5의 괜찮은 편이지만 특별할 것은 없는 내 랩탑에서 10M 개의 메시지들을 수신하고 필터링하는데 걸리는 시간이다.
+다음은 2011년 인텔 i5의 무난한 성능의 내 랩탑에서 10M 개의 메시지들을 수신하고 필터링하는데 걸리는 시간이다.
 
 [[code]]
 $ time wuclient
@@ -348,36 +348,36 @@ sys     0m0.008s
 [[/code]]
 
 As a final example (you are surely getting tired of juicy code and want to delve back into philological discussions about comparative abstractive norms), let's do a little supercomputing. Then coffee. Our supercomputing application is a fairly typical parallel processing model[figure]. We have:
-마지막 예제에 따라 (당신은 물렁한 코드에 질려서 비교적 추상적인 표준에 대한 언어학적 논의로 돌아가고 싶어하고 있을 것이다), 작은 슈퍼컴퓨팅을 해보자. 커피와 함께. 우리의 슈퍼컴퓨팅 애플리케이션은 매우 전형적인 병렬 처리 모델[figure]이다. 이것은 다음과 같은 것을 갖는다.
+마지막 예제에 따라 (당신은 물렁한 코드에 질려서 비교적 추상적인 표준에 대한 언어학적 논의로 돌아가고 싶어하고 있을 것이다), 작게나마 커피와 함께 슈퍼 컴퓨팅을 해보자. 우리의 슈퍼컴퓨팅 애플리케이션은 매우 전형적인 병렬 처리 모델[figure]이다. 이것은 다음과 같은 것을 갖는다.
 
 * A ventilator that produces tasks that can be done in parallel
 * A set of workers that process tasks
 * A sink that collects results back from the worker processes
 
-* 병렬로 수행될 수 있늑 작업들을 생산하는 ventilator
-* 작업들을 처리하는 worker들
-* 작업자 프로세스들로부터 결과를 수집하는 sink
+* 병렬로 수행될 수 있늑 작업들을 생산하는 선별자(ventilator)
+* 작업들을 처리하는 작업자(worker)
+* 작업자 프로세스들로부터 결과를 수집하는 동기자(sink)
 
 In reality, workers run on superfast boxes, perhaps using GPUs (graphic processing units) to do the hard math. Here is the ventilator. It generates 100 tasks, each a message telling the worker to sleep for some number of milliseconds:
-실제로, worker들은 GPU(그래픽 연산 장치)와 같은 무거운 연산을 하기 위한 초고속 장비에서 실행된다. ventilator를 보자. 이 녀석은 100개의 작업들을 생성하고, worker에게 몇 밀리 초 동안 휴면하기 위한 각 메시지를 보낸다.
+실제로, 작업자들은 GPU(그래픽 연산 장치)와 같은 무거운 연산을 하기 위한 초고속 장비에서 실행된다. 선별자를 보자. 이 녀석은 100개의 작업들을 생성하고, 작업자에게 몇 밀리 초 동안 휴면하기 위한 각 메시지를 보낸다.
 
 [[code type="example" title="Parallel task ventilator" name="taskvent"]]
 [[/code]]
 
 Here is the worker application. It receives a message, sleeps for that number of seconds, and then signals that it's finished:
-worker 애플리케이션을 보자. 하나의 메시지를 수신하고, 해당 초 동안 휴면한 뒤에 완료됐음을 알린다.
+작업자 애플리케이션을 보자. 하나의 메시지를 수신하고, 해당 초 동안 휴면한 뒤에 완료됐음을 알린다.
 
 [[code type="example" title="Parallel task worker" name="taskwork"]]
 [[/code]]
 
 Here is the sink application. It collects the 100 tasks, then calculates how long the overall processing took, so we can confirm that the workers really were running in parallel if there are more than one of them:
-sink 애플리케이션을 보자. 100개의 작업들을 수집하고 나서 전체 처리에 얼마나 소요됐는지를 계산함으로써 우리는 worker들이 하나 이상이 존재한다면 그들이 실제로 병렬적으로 수행되었는지 확인할 수 있다.
+동기자 애플리케이션을 보자. 100개의 작업들을 수집하고 나서 전체 처리에 얼마나 소요됐는지를 계산함으로써 우리는 작업자들이 하나 이상이 존재한다면 그들이 실제로 병렬적으로 수행되었는지 확인할 수 있다.
 
 [[code type="example" title="Parallel task sink" name="tasksink"]]
 [[/code]]
 
 The average cost of a batch is 5 seconds. When we start 1, 2, or 4 workers we get results like this from the sink:
-한 일괄 작업의 평균 비용은 5초다. 1, 2 또는 4개의 worker들을 시작했을 때, sink로부터 다음과 같은 결과를 얻게 된다.
+한 일괄 작업의 평균 비용은 5초다. 1, 2 또는 4개의 작업자들을 시작했을 때, 동기자로부터 다음과 같은 결과를 얻게 된다.
 
 * 1 worker: total elapsed time: 5034 msecs.
 * 2 workers: total elapsed time: 2421 msecs.
@@ -387,16 +387,16 @@ Let's look at some aspects of this code in more detail:
 이 코드의 몇 가지 측면을 자세하게 확인해보자:
 
 * The workers connect upstream to the ventilator, and downstream to the sink. This means you can add workers arbitrarily. If the workers bound to their endpoints, you would need (a) more endpoints and (b) to modify the ventilator and/or the sink each time you added a worker. We say that the ventilator and sink are //stable// parts of our architecture and the workers are //dynamic// parts of it.
-* worker들은 ventilator의 업스트림에 연결하고, sink의 다운스트림에 연결한다. 이는 임의로 worker들을 추가할 수 있다는 것을 뜻한다. worker들이 종점에 바인드됐다면, (a) 많은 종점들과 (b) worker를 추가할 때마다 ventilator 혹은(그리고) sink를 수정할 필요가 있을 것이다. 우리는 이 아키텍처에서 ventilator와 sink가 //정적인// 부분이며, worker들은 //동적인// 부분이라고 말한다.
+* 작업자들은 선별자의 업스트림에 연결하고, 동기자의 다운스트림에 연결한다. 이는 임의로 작업자들을 추가할 수 있다는 것을 뜻한다. 작업자들이 종점에 바인드됐다면, (a) 많은 종점들과 (b) 작업자를 추가할 때마다 선별자 혹은(그리고) 동기자를 수정할 필요가 있을 것이다. 우리는 이 아키텍처에서 선별자와 동기자가 //정적인// 부분이며, 작업자들은 //동적인// 부분이라고 말한다.
 
 * We have to synchronize the start of the batch with all workers being up and running. This is a fairly common gotcha in ZeroMQ and there is no easy solution. The {{zmq_connect}} method takes a certain time. So when a set of workers connect to the ventilator, the first one to successfully connect will get a whole load of messages in that short time while the others are also connecting. If you don't synchronize the start of the batch somehow, the system won't run in parallel at all. Try removing the wait in the ventilator, and see what happens.
-* 배치 작업의 시작을 모든 동작 중인 worker들과 함께 동기화 해야 한다. 이것은 ZeroMQ에서 꽤나 흔한 잡일이고, 여기엔 쉬운 해결책이 없다. {{zmq_connect}} 메서드는 일정 시간이 소요된다. 그래서 worker들이 ventilator에 연결할 때, 성공적으로 연결된 첫번째 worker는 다른 worker들이 연결되는 짧은 시간 동안 모든 메시지들의 부하를 부담하게 된다. 어떤 식으로든 일괄 작업의 시작을 동기화하지 않으면 시스템은 모두를 병렬적으로 수행할 수 없을 것이다. ventilator에서의 대기를 제거하고 어떤 일이 일어나는지 확인해보자.
+* 배치 작업의 시작을 모든 동작 중인 작업자들과 함께 동기화 해야 한다. 이것은 ZeroMQ에서 꽤나 흔한 잡일이고, 여기엔 쉬운 해결책이 없다. {{zmq_connect}} 메서드는 일정 시간이 소요된다. 그래서 작업자들이 선별자에 연결할 때, 성공적으로 연결된 첫번째 작업자는 다른 작업자들이 연결되는 짧은 시간 동안 모든 메시지들의 부하를 부담하게 된다. 어떤 식으로든 일괄 작업의 시작을 동기화하지 않으면 시스템은 모두를 병렬적으로 수행할 수 없을 것이다. 선별자에서의 대기를 제거하고 어떤 일이 일어나는지 확인해보자.
 
 * The ventilator's PUSH socket distributes tasks to workers (assuming they are all connected //before// the batch starts going out) evenly. This is called //load balancing// and it's something we'll look at again in more detail.
-* ventilator들의 PUSH 소켓은 작업들을 worker들에게 균등하게 분배한다 (배치를 시작하기 //전에// 모든 worker들이 연결됐다고 가정하고). 이를 //부하 분산//이라고 부르고 자세한 것은 다음에 볼 것이다.
+* 선별자들의 PUSH 소켓은 작업들을 작업자들에게 균등하게 분배한다 (배치를 시작하기 //전에// 모든 작업자들이 연결됐다고 가정하고). 이를 //부하 분산//이라고 부르고 자세한 것은 다음에 볼 것이다.
 
 * The sink's PULL socket collects results from workers evenly. This is called //fair-queuing//[figure].
-* sink의 PULL 소켓은 worker들로부터 결과를 균등하게 수집한다. 이것은 //공정-큐잉//이라고 부른다[figure].
+* 동기자의 PULL 소켓은 작업자들로부터 결과를 균등하게 수집한다. 이것을 //공정-큐잉//이라고 부른다[figure].
 
 [[code type="textdiagram" title="Fair Queuing"]]
 #---------#   #---------#   #---------#
@@ -417,7 +417,7 @@ Let's look at some aspects of this code in more detail:
 [[/code]]
 
 The pipeline pattern also exhibits the "slow joiner" syndrome, leading to accusations that PUSH sockets don't load balance properly. If you are using PUSH and PULL, and one of your workers gets way more messages than the others, it's because that PULL socket has joined faster than the others, and grabs a lot of messages before the others manage to connect. If you want proper load balancing, you probably want to look at the load balancing pattern in [#advanced-request-reply].
-또한 파이프라인 패턴은 "느린 참여자" 증상을 보여주고, PUSH 소켓이 적절히 부하 분산을 하지 못하는 문제를 유발한다. PUSH와 PULL 소켓을 사용하는 중이라면, worker들 중 하나는 다른 worker들보다 많은 메시지를 얻게 되고, 이는 PULL 소켓이 다른 worker들보다 상대적으로 빠르게 참여되서 더 많은 메시지를 가져오는 이유다. 적절한 부하 분산을 하고 싶다면, [#advanced-request-reply]의 부하 분산 패턴을 보길 권한다.
+또한 파이프라인 패턴은 "느린 참여자" 증상을 보여주고, PUSH 소켓이 적절히 부하 분산을 하지 못하는 문제를 유발한다. PUSH와 PULL 소켓을 사용하는 중이라면, worker들 중 하나는 다른 작업자들보다 많은 메시지를 얻게 되고, 이는 PULL 소켓이 다른 작업자들보다 상대적으로 빠르게 참여되서 더 많은 메시지를 가져오는 이유다. 적절한 부하 분산을 하고 싶다면, [#advanced-request-reply]의 부하 분산 패턴을 보길 권한다.
 
 ++ Programming with ZeroMQ
 ++ ZeroMQ와 프로그래밍
