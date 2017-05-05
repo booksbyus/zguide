@@ -444,22 +444,22 @@ Having seen some examples, you must be eager to start using ZeroMQ in some apps.
 +++ 컨텍스트 바르게 얻기
 
 ZeroMQ applications always start by creating a //context//, and then using that for creating sockets. In C, it's the {{zmq_ctx_new[3]}} call. You should create and use exactly one context in your process. Technically, the context is the container for all sockets in a single process, and acts as the transport for {{inproc}} sockets, which are the fastest way to connect threads in one process. If at runtime a process has two contexts, these are like separate ZeroMQ instances. If that's explicitly what you want, OK, but otherwise remember:
-ZeroMQ 애플리케이션들은 항상 //컨텍스트//를 만드는 것으로 시작하고, 소켓들을 만들기 위해 이를 사용한다. C에서, 이것은 {{zmq_ctx_new[3]}} 호출이다. 당신은 프로세스 내에서 정확히 하나의 컨텍스트를 만들어서 사용해야 한다. 기술적으로, 컨텍스트는 단일 프로세스 내에서의 모든 소켓들을 위한 컨테이너이고, 한 프로세스 내의 스레드들을 연결하는 가장 빠른 방법이기도 한 {{inproc}} 소켓들을 위한 전송 수단으로서 동작한다. 실행 시간에 한 프로세스가 두 개의 컨텍스트들을 가지게 된다면, 이들은 별개의 ZeroMQ 인스턴스들로 분리된 것처럼 된다. 당신이 이를 의도한 것이라면 상관 없지만, 이것만큼은 기억해야 한다:
+ZeroMQ 애플리케이션들은 항상 //컨텍스트//를 만드는 것으로 시작하고, 소켓들을 만들기 위해 이를 사용한다. C에서는 {{zmq_ctx_new[3]}} 호출이다. 프로세스 내에서 정확히 하나의 컨텍스트를 만들어서 사용해야 한다. 기술적으로, 컨텍스트는 단일 프로세스 내에서의 모든 소켓들을 위한 컨테이너이고, 한 프로세스 내의 스레드들을 연결하는 가장 빠른 방법이기도 한 {{inproc}} 소켓들을 위한 전송 수단으로서 동작한다. 실행 시간에 한 프로세스가 두 개의 컨텍스트들을 가지게 된다면, 이들은 별개의 ZeroMQ 인스턴스들로 분리된 것처럼 된다. 이런 동작을 의도한 것이라면 상관 없지만, 이것만큼은 기억해야 한다:
 
 **Call {{zmq_ctx_new[3]}} once at the start of a process, and {{zmq_ctx_destroy[3]}} once at the end.**
 **프로세스가 시작할 때 {{zmq_ctx_new[3]}}를 한번 호출하고, 종료될 때에 {{zmq_ctx_destroy[3]}}을 한번 호출해라.**
 
 If you're using the {{fork()}} system call, do {{zmq_ctx_new[3]}} //after// the fork and at the beginning of the child process code. In general, you want to do interesting (ZeroMQ) stuff in the children, and boring process management in the parent.
-{{fork()}} 시스템 콜을 사용하는 중이라면, 프로세스 복제가 //끝난 후에// 자식 프로세스 코드의 시작 지점에서 {{zmq_ctx_new[3]}}를 호출해라. 일반적으로는 자식 프로세스 내에서 흥미로운 것(ZeroMQ)을 하고 싶을 것이고, 따분한 것들을 부모 프로세스에서 관리한다.
+{{fork()}} 시스템 콜을 사용하는 중이라면, 프로세스 복제가 //끝난 후에// 자식 프로세스 코드의 시작 지점에서 {{zmq_ctx_new[3]}}를 호출해라. 일반적으로는 자식 프로세스 내에서 흥미로운 것(ZeroMQ)을 하고, 따분한 것들을 부모 프로세스에서 관리하고 싶을 것이다.
 
 +++ Making a Clean Exit
 +++ 깔끔한 종료
 
 Classy programmers share the same motto as classy hit men: always clean-up when you finish the job. When you use ZeroMQ in a language like Python, stuff gets automatically freed for you. But when using C, you have to carefully free objects when you're finished with them or else you get memory leaks, unstable applications, and generally bad karma.
-능숙한 프로그래머들은 그에 맞는 모토를 공유한다.: 항상 작업을 마칠 때 청소를 한다. 파이썬과 같은 언어에서 ZeroMQ를 쓸 때, 사용된 자원들은 자동으로 할당이 해제된다. 하지만 C를 사용할 때에는, 작업을 마칠 때 객체들을 할당 해제하는 것에 주의를 기울여야 한다. 그렇지 않으면 메모리 누수, 불안정한 애플리케이션과 같은 일반적인 악업을 쌓게 된다.
+능숙한 프로그래머들은 그에 맞는 모토를 공유한다.: 항상 작업을 마칠 때 청소를 한다. 파이썬과 같은 언어에서 ZeroMQ를 쓸 때, 사용된 자원들은 자동으로 할당이 해제된다. 하지만 C를 사용할 때에는, 작업을 마칠 때 객체들을 할당 해제하는 것에 주의를 기울여야 한다. 그렇지 않으면 메모리 누수, 불안정한 애플리케이션과 같은 악업을 쌓게 된다.
 
 Memory leaks are one thing, but ZeroMQ is quite finicky about how you exit an application. The reasons are technical and painful, but the upshot is that if you leave any sockets open, the {{zmq_ctx_destroy[3]}} function will hang forever. And even if you close all sockets, {{zmq_ctx_destroy[3]}} will by default wait forever if there are pending connects or sends unless you set the LINGER to zero on those sockets before closing them.
-메모리 누수도 이러한 악업의 한 가지이지만, ZeroMQ는 애플리케이션을 종료하는 방법에 있어서 매우 까탈스러운 편이다. 그 이유는 소켓을 열어두면 {{zmq_ctx_destroy[3]}} 함수가 영원히 멈추게 되는 것이다. 그리고 모든 소켓을 닫았을 지라도, {{zmq_ctx_destroy[3]}}는 연결이나 소켓들을 닫기 전에 LINGER를 0으로 설정하지 않은 상태에서의 송신이 지연 중이라면 영원히 기다리는 것이 기본 동작이다.
+메모리 누수도 이러한 악업의 한 가지이지만, ZeroMQ는 애플리케이션을 종료하는 방법에 있어서 매우 까탈스러운 편이다. 그 이유는 소켓을 열어두면 {{zmq_ctx_destroy[3]}} 함수가 영원히 멈추게 되기 때문이다. 그리고 모든 소켓을 닫았을 지라도, {{zmq_ctx_destroy[3]}}는 LINGER를 0으로 설정하지 않은 상태에서의 송신이 지연 중이라면 영원히 연결이나 소켓들을 닫히길 기다리는 것이 기본 동작이다.
 
 The ZeroMQ objects we need to worry about are messages, sockets, and contexts. Luckily it's quite simple, at least in simple programs:
 우리가 걱정해야 할 ZeroMQ 객체들에는 메시지, 소켓, 컨텍스트가 있다. 다행히도 이들은 꽤나 단순하다. 적어도 단순한 프로그램 내에서는:
@@ -471,22 +471,22 @@ The ZeroMQ objects we need to worry about are messages, sockets, and contexts. L
 * {{zmq_msg_recv[3]}}을 사용한다면, 항상 수신한 메시지를 다 사용한 즉시 {{zmq_msg_close[3]}}을 호출하여 해제하라.
 
 * If you are opening and closing a lot of sockets, that's probably a sign that you need to redesign your application. In some cases socket handles won't be freed until you destroy the context.
-* 많은 수의 소켓들을 열거나 닫는 중이라면, 당신의 애플리케이션을 다시 설계할 필요가 있다는 신호일 수도 있다. 어떤 경우에는 컨텍스트를 파기하기 전까지는 소켓 핸들을 할당 해제할 수 없을 것이다.
+* 많은 수의 소켓들을 열거나 닫는 중이라면, 애플리케이션을 다시 설계할 필요가 있다는 신호일 수도 있다. 어떤 경우에는 컨텍스트를 파기하기 전까지는 소켓 핸들을 할당 해제할 수 없을 것이다.
 
 * When you exit the program, close your sockets and then call {{zmq_ctx_destroy[3]}}. This destroys the context.
-* 프로그램을 종료할 때, 소켓들을 닫고 나서 {{zmq_ctx_destroy[3]}}을 호출하라. 이는 컨텍스트를 파기한다.
+* 프로그램을 종료할 때, 소켓들을 닫고 나서 {{zmq_ctx_destroy[3]}}을 호출하라. 이 함수는 컨텍스트를 소멸시킨다.
 
 This is at least the case for C development. In a language with automatic object destruction, sockets and contexts will be destroyed as you leave the scope. If you use exceptions you'll have to do the clean-up in something like a "final" block, the same as for any resource.
 이것은 적어도 C 개발에서의 경우다. 자동 객체 소멸을 제공하는 언어에서는, 소켓과 컨텍스트는 해당 스코프를 벗어날 때에 소멸될 것이다. 예외 처리를 사용한다면 "final"과 같은 블록에서 반드시 모든 자원에 대한 청소를 해야할 것이다.
 
 If you're doing multithreaded work, it gets rather more complex than this. We'll get to multithreading in the next chapter, but because some of you will, despite warnings, try to run before you can safely walk, below is the quick and dirty guide to making a clean exit in a //multithreaded// ZeroMQ application.
-다중 스레드 환경에서 작업을 한다면, 훨씬 복잡해진다. 우리는 다음 장에서 다중 스레딩을 처리하는 방법을 알아볼 것이지만, 일부는 이러한 것을 할 것이기에 경고에도 불구하고 안전하게 사용할 수 있기 전에 이를 해볼 것이다. 아래는 //다중 스레드// ZeroMQ 애플리케이션을 깔끔하게 종료하는 빠르고 지저분한 안내다.
+다중 스레드 환경에서 작업을 한다면, 훨씬 복잡해진다. 우리는 다음 장에서 다중 스레딩을 처리하는 방법을 알아볼 것이지만, 일부는 이러한 것을 할 것이기에 경고에도 불구하고 안전하게 사용할 수 있기 전에 이를 해볼 것이다. 아래는 //다중 스레드// ZeroMQ 애플리케이션을 깔끔하게 종료하는 빠르고 지저분한 지침이다.
 
 First, do not try to use the same socket from multiple threads. Please don't explain why you think this would be excellent fun, just please don't do it. Next, you need to shut down each socket that has ongoing requests. The proper way is to set a low LINGER value (1 second), and then close the socket. If your language binding doesn't do this for you automatically when you destroy a context, I'd suggest sending a patch.
-첫째로, 여러 스레드들에서 같은 소켓을 사용하지 않도록 한다. 왜 이렇게 하는 것이 훌륭한 재미인지 생각한다고 설명하려고 하지 말고, 그냥 하지 말라. 다음은, 진행 중인 요청이 있는 소켓을 종료할 필요가 있다. 적합한 방법은 LINGER 값을 낮게(1초) 설정하고, 소켓을 닫는 것이다. 당신이 사용 중인 언어의 ZeroMQ 바인딩이 컨텍스트를 파기할 때 자동으로 이런 일을 해주지 않는다면, 패치를 보내줄 것을 제안하고 싶다.
+첫째로, 여러 스레드들에서 같은 소켓을 사용하지 않도록 한다. 왜 자신은 이렇게 하는 것이 훌륭한지 생각한다고 설명하려고 하지 말고, 그냥 하지 마라. 다음은, 진행 중인 요청이 있는 소켓을 종료할 필요가 있다. 적합한 방법은 LINGER 값을 낮게(1초) 설정하고, 소켓을 닫는 것이다. 사용 중인 언어의 ZeroMQ 바인딩이 컨텍스트를 파기할 때 자동으로 이런 일을 해주지 않는다면, 패치를 보내줄 것을 제안하고 싶다.
 
 Finally, destroy the context. This will cause any blocking receives or polls or sends in attached threads (i.e., which share the same context) to return with an error. Catch that error, and then set linger on, and close sockets in //that// thread, and exit. Do not destroy the same context twice. The {{zmq_ctx_destroy}} in the main thread will block until all sockets it knows about are safely closed.
-끝으로, 컨텍스트를 파기하라. 이는 부착된 스레드들(다시 말해서, 같은 컨텍스트를 공유하는)에서 블록 중인 모든 수신 혹은 폴링 혹은 송신을 오류와 함께 반환하도록 한다. 이러한 오류를 잡아내고 나서 linger를 설정하고, //해당되는// 스레드 내에서 소켓들을 닫은 후에 종료한다. 같은 컨텍스트를 두번 파기하지 마라. 메인 스레드 내의 {{zmq_ctx_destroy}}는 그 컨텍스트가 알고 있는 모든 소켓들이 안전하게 닫히기 전에는 블록할 것이다.
+끝으로, 컨텍스트를 소멸시켜라. 이는 부착된 스레드들(다시 말해서, 같은 컨텍스트를 공유하는)에서 블록 중인 모든 수신 혹은 폴링 혹은 송신을 오류와 함께 반환하도록 한다. 이러한 오류를 잡아내고 나서 linger를 설정하고, //해당되는// 스레드 내에서 소켓들을 닫은 후에 종료한다. 같은 컨텍스트를 두번 소멸시키지 마라. 메인 스레드 내의 {{zmq_ctx_destroy}}는 그 컨텍스트가 알고 있는 모든 소켓들이 안전하게 닫히기 전에는 블록할 것이다.
 
 Voila! It's complex and painful enough that any language binding author worth his or her salt will do this automatically and make the socket closing dance unnecessary.
 어떤가! 언어 바인딩 작성자가 이러한 작업을 자동으로 하고 불필요한 소켓을 닫도록 만들어야 할 정도로 복잡하고 고통스럽다는 것을 알 수 있다.
