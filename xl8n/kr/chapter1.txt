@@ -498,7 +498,7 @@ Now that you've seen ZeroMQ in action, let's go back to the "why".
 이젠 ZeroMQ를 실제로 보았기 때문에, "왜"로 돌아가보자.
 
 Many applications these days consist of components that stretch across some kind of network, either a LAN or the Internet. So many application developers end up doing some kind of messaging. Some developers use message queuing products, but most of the time they do it themselves, using TCP or UDP. These protocols are not hard to use, but there is a great difference between sending a few bytes from A to B, and doing messaging in any kind of reliable way.
-오늘날 많은 애플리케이션들은 LAN 혹은 인터넷의 다양한 네트워크를 거쳐서 확장되는 컴포넌트들로 구성되어 있다. 그래서 많은 애플리케이션 개발자들은 메시징 같은 것들을 사용하는 것에 다다랐다. 어떠 개발자들은 메시지 큐잉 제품을 사용하지만 이를 사용함에 있어서 대부분의 시간은 TCP 혹은 UDP를 사용하는 것이다. 이러한 프로토콜들은 사용하기에 어럽지는 않지만 A로부터 B에게 적은 바이트들은 보내는 것과 신뢰성 있게 메시징을 하는 것에 큰 차이가 있다.
+오늘날 많은 애플리케이션들은 LAN 혹은 인터넷의 다양한 네트워크를 거쳐서 확장되는 컴포넌트들로 구성되어 있다. 그래서 많은 애플리케이션 개발자들은 메시징 같은 것들을 사용하는 것에 다다랐다. 어떤 개발자들은 메시지 큐잉 제품을 사용하지만 이를 사용함에 있어서 대부분의 시간을 TCP 혹은 UDP를 사용하는 작업에 보낸다. 이러한 프로토콜들은 사용하기에 어럽지는 않지만 A로부터 B에게 적은 바이트들은 보내는 것과 신뢰성 있게 메시징을 하는 것에 있어서 큰 차이가 있다.
 
 Let's look at the typical problems we face when we start to connect pieces using raw TCP. Any reusable messaging layer would need to solve all or most of these:
 raw TCP를 사용하여 연결하는 부분을 시작할 때 직면할 수 있는 일반적인 문제들을 살펴보자. 모든 재사용 가능한 메시징 계층은 다음과 같은 것들이 모두 혹은 대부분이 필요할 것이다.
@@ -510,7 +510,7 @@ raw TCP를 사용하여 연결하는 부분을 시작할 때 직면할 수 있�
 * 동적 컴포넌트들은 어떻게 처리할 것인지, 다시 말해서, 일시적으로 이들이 분리될 수 있는가? 컴포넌트들을 형식적인 "클라이언트"와 "서버"로 나누고 서버가 사라질 수 없도록 강제할 것인가? 서버와 서버를 연결하길 원한다면? 몇 초 안에 재연결을 시도하길 원한다면?
 
 * How do we represent a message on the wire? How do we frame data so it's easy to write and read, safe from buffer overflows, efficient for small messages, yet adequate for the very largest videos of dancing cats wearing party hats?
-* 어떻게 메시지를 통신 상에서 표현할 것인가? 버퍼 오버플로우로부터 안전하고, 작은 크기의 메시지에는 효과적이지만 파티 모자를 쓰고 있는 춤추는 고양이의 큰 동영상에 적합하도록 데이터 쓰기/읽기가 쉬운 프레임을 구성할 방법은?
+* 어떻게 메시지를 통신 상에서 표현할 것인가? 버퍼 오버플로우로부터 안전하고, 작은 크기의 메시지에는 효과적이지만 파티 모자를 쓰고 있는 춤추는 고양이가 나오는 큰 크기의 동영상에 적합하도록 데이터 쓰기/읽기가 쉬운 프레임을 구성할 방법은?
 
 * How do we handle messages that we can't deliver immediately? Particularly, if we're waiting for a component to come back online? Do we discard messages, put them into a database, or into a memory queue?
 * 즉시 전달할 수 없는 메시지들은 어떻게 처리할 것인가? 특히, 어떤 컴포넌트가 온라인 상태로 돌아오길 기다리는 중이라면? 이 메시지들은 버릴까? 데이터베이스나 메모리 큐에 저장할까?
@@ -537,13 +537,13 @@ raw TCP를 사용하여 연결하는 부분을 시작할 때 직면할 수 있�
 * 어떻게 네트워크 오류를 처리할 것인가? 기다렸다가 재시도하거나, 무시해버리거나, 취소해버릴 것인가?
 
 Take a typical open source project like [http://hadoop.apache.org/zookeeper/ Hadoop Zookeeper] and read the C API code in {{[http://github.com/apache/zookeeper/blob/trunk/src/c/src/zookeeper.c src/c/src/zookeeper.c]}}. When I read this code, in January 2013, it was 4,200 lines of mystery and in there is an undocumented, client/server network communication protocol. I see it's efficient because it uses {{poll}} instead of {{select}}. But really, Zookeeper should be using a generic messaging layer and an explicitly documented wire level protocol. It is incredibly wasteful for teams to be building this particular wheel over and over.
-[http://hadoop.apache.org/zookeeper/ Hadoop Zookeeper]와 같은 전형적인 오픈 소스 프로젝트를 내려 받아 {{[http://github.com/apache/zookeeper/blob/trunk/src/c/src/zookeeper.c src/c/src/zookeeper.c]}}에 있는 C API 코드를 읽어보자. 이 코드를 읽을 때는 2013년 1월인데, 4,200 줄의 미스테리로 되어 있었고, 문서화가 되어 있지 않고, 클라이언트/서버 네트워크 통신 프로토콜로 되어 있다. {{select}} 대신에 {{poll}}을 사용하기 때문에 효율적이라고 생각하지만 실제로는 ZooKeeper는 범용의 메시징 계층과 명시적으로 문서화된 전송 수준 프로토콜에서만 사용되야 한다. 팀이 바퀴를 반복해서 만드는 것은 믿기 힘들 정도로 소모적인 일이다.
+[http://hadoop.apache.org/zookeeper/ Hadoop Zookeeper]와 같은 전형적인 오픈 소스 프로젝트를 내려 받아 {{[http://github.com/apache/zookeeper/blob/trunk/src/c/src/zookeeper.c src/c/src/zookeeper.c]}}에 있는 C API 코드를 읽어보자. 이 코드를 읽을 때는 2013년 1월인데, 4,200 줄의 미스테리로 되어 있었고, 문서화가 되어 있지 않으며, 클라이언트/서버 네트워크 통신 프로토콜로 되어 있다. 개인적으로는 {{select}} 대신에 {{poll}}을 사용하기 때문에 효율적이라고 생각하지만 실제로 ZooKeeper는 범용의 메시징 계층과 명시적으로 문서화된 전송 수준 프로토콜에서만 사용되야 한다. 팀이 바퀴를 반복해서 만드는 것은 믿기 힘들 정도로 소모적인 일이다.
 
 But how to make a reusable messaging layer? Why, when so many projects need this technology, are people still doing it the hard way by driving TCP sockets in their code, and solving the problems in that long list over and over[figure]?
-그렇지만 재사용성 있는 메시지 계층은 어떻게 만들 것인가? 왜, 언제 많은 프로젝트들이 이 기술을 필요로 하고, 그 코드에 TCP 소켓을 제어하는 어려운 방법으로 이러한 것들을 하고 있고, 위의 목록[figure]에 있는 문제들을 해결하고 있을까?
+그렇지만 재사용성 있는 메시지 계층은 어떻게 만들 것인가? 왜, 언제, 많은 프로젝트들이 이 기술을 필요로 하고, 그 코드에 TCP 소켓을 제어하는 어려운 방법으로 이러한 것들을 하고 있고, 위의 목록[figure]에 있는 문제들을 해결하고 있을까?
 
 It turns out that building reusable messaging systems is really difficult, which is why few FOSS projects ever tried, and why commercial messaging products are complex, expensive, inflexible, and brittle. In 2006, iMatix designed [http://www.amqp.org AMQP] which started to give FOSS developers perhaps the first reusable recipe for a messaging system. AMQP works better than many other designs, [http://www.imatix.com/articles:whats-wrong-with-amqp but remains relatively complex, expensive, and brittle]. It takes weeks to learn to use, and months to create stable architectures that don't crash when things get hairy.
-재사용성 있는 메시징 시스템을 만드는 것은 매우 어렵고, 일부 FOSS 프로젝트들이 이를 왜 시도하지 않았는지, 그리고 왜 상업 메시징 제품들이 복잡하고, 비싸고, 유연하지 못하고, 불안정한지 밝혀졌다. 2006년에, iMatix는 FOSS 개발자들에게 제공된 첫 재사용성 있는 메시징 시스템일 수도 있는 [http://www.amqp.org AMQP]를 설계했다. AMQP는 많은 다른 설계들보다 잘 동작하지만 [http://www.imatix.com/articles:whats-wrong-with-amqp 상대적인 복잡성, 고비용, 불안정의 문제가 남아있다]. 이것은 사용해보기 위해서는 몇 주의 학습을, 문제가 발생하지 않는 안정적인 아키텍처를 만들기 위해서는 몇 개월이 걸린다.
+재사용성 있는 메시징 시스템을 만드는 것은 매우 어렵고, 일부 FOSS 프로젝트들이 이를 왜 시도하지 않았는지, 그리고 왜 상업 메시징 제품들이 복잡하고, 비싸고, 유연하지 못하고, 불안정한지 밝혀졌다. 2006년에, iMatix는 FOSS 개발자들에게 제공된 첫 재사용성 있는 메시징 시스템일 수도 있는 [http://www.amqp.org AMQP]를 설계했다. AMQP는 많은 다른 설계들보다 잘 동작하지만 [http://www.imatix.com/articles:whats-wrong-with-amqp 상대적인 복잡성, 고비용, 불안정의 문제가 남아있다]. 이를 사용해보기 위해서는 몇 주의 학습을, 문제가 발생하지 않는 안정적인 아키텍처를 만들기 위해서는 몇 개월이 걸린다.
 
 [[code type="textdiagram" title="Messaging as it Starts"]]
 .------------.
@@ -564,7 +564,7 @@ It turns out that building reusable messaging systems is really difficult, which
 [[/code]]
 
 Most messaging projects, like AMQP, that try to solve this long list of problems in a reusable way do so by inventing a new concept, the "broker", that does addressing, routing, and queuing. This results in a client/server protocol or a set of APIs on top of some undocumented protocol that allows applications to speak to this broker. Brokers are an excellent thing in reducing the complexity of large networks. But adding broker-based messaging to a product like Zookeeper would make it worse, not better. It would mean adding an additional big box, and a new single point of failure. A broker rapidly becomes a bottleneck and a new risk to manage. If the software supports it, we can add a second, third, and fourth broker and make some failover scheme. People do this. It creates more moving pieces, more complexity, and more things to break.
-AMQP와 같은 대부분의 메시징 제품은 접속, 라우팅, 큐잉을 하는 "브로커"라는 새로운 컨셉을 사용하는 재사용성 있는 방법으로 이러한 긴 문제들의 목록을 해결하려고 한다. 그 결과는 클라이언트/서버 프로토콜이거나 애플리케이션이 비공식적인 프로토콜 상에서 이 브로커와 동작하는 API 집합이 된다. 브로커는 대규모 네트워크의 복잡성을 감소시켜주기에 뛰어나지만, 제품에 Zookeeper와 같은 브로커 기반의 메시징을 추가하는 것은 오히려 악영향을 가져올 수도 있다. 이는 커다란 박스를 추가해서 새로운 단일 결함 지점을 만드는 것을 의미한다. 브로커는 빠르게 병목 지점이 되고 새로운 관리 위험을 낳는다. 해당 소프트웨어가 장애 극복 기능을 지원한다면 두번째, 세번째, 그리고 네번째 브로커를 추가할 수 있다. 보통은 그렇게 한다. 이는 더 많은 동적인 부분들을 만들고, 더 큰 복잡성, 그리고 더 많은 결함을 만들어낸다.
+AMQP와 같은 대부분의 메시징 제품은 접속, 라우팅, 큐잉을 하는 "브로커"라는 새로운 컨셉을 사용하는 재사용성 있는 방법으로 이러한 긴 문제 목록을 해결하려고 한다. 그 결과는 클라이언트/서버 프로토콜이거나 애플리케이션이 비공식적인 프로토콜 상에서 이 브로커와 동작하는 API 집합이 된다. 브로커는 대규모 네트워크의 복잡성을 감소시켜주기에 뛰어나지만, 제품에 Zookeeper와 같은 브로커 기반의 메시징을 추가하는 것은 오히려 악영향을 가져올 수도 있다. 이는 커다란 박스를 추가해서 새로운 단일 결함 지점을 만드는 것을 의미한다. 브로커는 빠르게 병목 지점이 되고 새로운 관리 위험을 낳는다. 해당 소프트웨어가 장애 극복 기능을 지원한다면 두번째, 세번째, 그리고 네번째 브로커를 추가할 수 있고, 보통은 그렇게 한다. 이는 더 많은 동적인 부분들을 만들고, 더 큰 복잡성, 그리고 더 많은 결함을 만들어낸다.
 
 And a broker-centric setup needs its own operations team. You literally need to watch the brokers day and night, and beat them with a stick when they start misbehaving. You need boxes, and you need backup boxes, and you need people to manage those boxes. It is only worth doing for large applications with many moving pieces, built by several teams of people over several years.
 또한 브로커 중심 구축은 이를 위한 운용 팀이 필요하다. 당신은 말 그대로 낮이고 밤이고 브로커들을 감시를 하고, 이 팀이 실수를 했을 때마다 매를 들어야 할 필요가 있다. 이러한 브로커 박스가 필요하다면, 백업 박스가 필요하고, 이 박스들을 관리하기 위한 사람들이 필요하다. 이러한 것은 수년에 걸쳐 여러 팀으로 구성된 많은 동적인 부분으로 이루어진 대형 애플리케이션을 위해서나 가치가 있다.
@@ -598,28 +598,28 @@ And a broker-centric setup needs its own operations team. You literally need to 
 [[/code]]
 
 So small to medium application developers are trapped. Either they avoid network programming and make monolithic applications that do not scale. Or they jump into network programming and make brittle, complex applications that are hard to maintain. Or they bet on a messaging product, and end up with scalable applications that depend on expensive, easily broken technology. There has been no really good choice, which is maybe why messaging is largely stuck in the last century and stirs strong emotions: negative ones for users, gleeful joy for those selling support and licenses[figure].
-따라서 중소 규모 애플리케이션 개발자들이 네트워크 프로그래밍을 회피하고 확장되지 않는 모놀리딕 애플리케이션을 만들도록 하거나 네트워크 프로그래밍을 하더라도 불안정하고, 유지하기 어려운 복잡한 애플리케이션을 만들도록 혹은 메시징 제품을 비난하게 해서 결과적으로 확장성 있는 애플리케이션들이 비싸고, 무너지기 쉬운 기술이라고 믿는 함정에 빠지게 한다. 최상의 선택은 없었다. 어쩌면 다음과 같은 것들이 메시징이 지난 세기에 벽에 가로 막혀 있고 격한 감정을 불려 일으켰는지에 대한 이유일 수 있다: 사용자에 대해 부정적인 것들, 지원과 라이선스를 판매하는 이들을 위한 즐거움[figure].
+따라서 중소 규모 애플리케이션 개발자들이 네트워크 프로그래밍을 회피하고 확장되지 않는 모놀리딕 애플리케이션을 만들도록 하거나 이들이 네트워크 프로그래밍을 하더라도 불안정하고, 유지하기 어려운 복잡한 애플리케이션을 만들도록 혹은 메시징 제품을 비난하게 해서 결과적으로 확장성 있는 애플리케이션들이 비싸고, 무너지기 쉬운 기술이라고 믿는 함정에 빠지게 한다. 최상의 선택은 없었다. 어쩌면 다음과 같은 것들이 메시징이 지난 세기에 높은 벽에 가로 막혀있을 뿐만 아니라 사용자들에게 격한 감정을 불려 일으켰는지에 대한 이유일 수 있다: 사용자에 대해 부정적인 것들, 지원과 라이선스를 판매하는 이들을 위한 즐거움[figure].
 
 What we need is something that does the job of messaging, but does it in such a simple and cheap way that it can work in any application, with close to zero cost. It should be a library which you just link, without any other dependencies. No additional moving pieces, so no additional risk. It should run on any OS and work with any programming language.
-우리에게 필요한 것은 메시징을 하기 위해서 간단하지만 비용이 거의 들지 않게 우리 애플리케이션에서 동작하게 하는 것이다. 이러한 것을 위해서는 연결만 해주면 되는 라이브러리이고, 다른 어떤 의존성도 없어야 한다. 부가적인 동적 요소가 없으면 추가 위험도 따르지 않는다. 또한 어떤 운영 체제나 어떤 프로그래밍 인어에서도 동작해야 한다.
+우리에게 필요한 것은 메시징을 하기 위해서 간단하지만 비용이 거의 들지 않게 우리 애플리케이션에서 동작하게 하는 것이다. 이러한 것을 위해서는 연결만 해주면 되는 라이브러리이면서 다른 어떤 의존성도 없어야 한다. 부가적인 동적 요소가 없으면 추가 위험도 따르지 않는다. 또한 어떤 운영 체제나 어떤 프로그래밍 언어에서도 동작해야 한다.
 
 And this is ZeroMQ: an efficient, embeddable library that solves most of the problems an application needs to become nicely elastic across a network, without much cost.
-그리고 그게 바로 ZeroMQ다: 많은 비용 없이 네트워크 상에서 신축성이 뛰어날 필요가 있는 애플리케이션의 대부분의 문제를 해결하는 효율적이고, 내장 가능한 라이브러리
+그리고 그게 바로 ZeroMQ다: 저비용으로 네트워크 상에서 뛰어난 신축성이 필요한 애플리케이션이 겪는 대부분의 문제를 해결하는 효율적이고, 내장 가능한 라이브러리
 
 Specifically:
 강점:
 
 * It handles I/O asynchronously, in background threads. These communicate with application threads using lock-free data structures, so concurrent ZeroMQ applications need no locks, semaphores, or other wait states.
-* I/O를 백그라운드 스레드들 내에서 비동기적으로 처리한다. 잠금이 없는 데이터 구조들을 사용하여 애플리케이션 스레드들이 통신을 하고, 따라서 병행 ZeroMQ 애플리케이션들은 잠금, 세마포어 혹은 대기 상태가 필요하지 않다.
+* I/O를 백그라운드 스레드들 내에서 비동기적으로 처리한다. 잠금이 없는 데이터 구조들을 사용하여 애플리케이션 스레드들이 통신을 하고, 따라서 동시성을 갖는 ZeroMQ 애플리케이션들은 잠금, 세마포어 혹은 대기 상태가 필요하지 않다.
 
 * Components can come and go dynamically and ZeroMQ will automatically reconnect. This means you can start components in any order. You can create "service-oriented architectures" (SOAs) where services can join and leave the network at any time.
-* 컴포넌트들은 동적으로 연결하거나 해제할 수 있고, ZeroMQ는 자동으로 재연결할 것이다. 이는 어떤 순서로든지 컴포넌트들을 시작할 수 있음을 의미한다. 당신은 언제든지 네트워크에 참여하거나 탈퇴할 수 있는 "서비스-지향 아키텍처" (SOAs)를 만들 수 있다.
+* 컴포넌트들을 동적으로 연결하거나 해제할 수 있고, ZeroMQ는 이를 자동으로 재연결할 것이다. 이는 컴포넌트들을 아무런 순서로든지 시작할 수 있음을 의미한다. 당신은 언제든지 네트워크에 참여하거나 탈퇴할 수 있는 "서비스-지향 아키텍처" (SOAs)를 만들 수 있다.
 
 * It queues messages automatically when needed. It does this intelligently, pushing messages as close as possible to the receiver before queuing them.
 * 필요할 때 자동으로 메시지들을 큐잉한다. ZeroMQ는 큐에 넣기 전에 가능한 한 수신자에 가깝도록 지능적으로 처리한다.
 
 * It has ways of dealing with over-full queues (called "high water mark"). When a queue is full, ZeroMQ automatically blocks senders, or throws away messages, depending on the kind of messaging you are doing (the so-called "pattern").
-* 큐가 가득차는 경우에 대한 방법("최고 수위"라고 불리는)을 가지고 있다. 큐가 가득찰 때, ZeroMQ는 당신이 정한 방법(소위 "패턴"이라고 부르는)의 종류에 따라 자동으로 송신자를 블록하거나 메시지들을 버린다.
+* 큐가 가득차는 경우에 대한 방법("최고 수위선"이라고 불리는)을 가지고 있다. 큐가 가득찰 때, ZeroMQ는 당신이 정한 방법(소위 "패턴"이라고 부르는)의 종류에 따라 자동으로 송신자를 블록하거나 메시지들을 버린다.
 
 * It lets your applications talk to each other over arbitrary transports: TCP, multicast, in-process, inter-process. You don't need to change your code to use a different transport.
 * 각기 다른 임의의 송수신 방법을 통해 애플리케이션이 통신하도록 한다: TCP, 멀티캐스트, 프로세스 내부, 프로세스 간. 다른 송수신 방법에 따라 코드를 바꿀 필요가 없다.
@@ -637,16 +637,16 @@ Specifically:
 * 통신 상에서 간단한 프레임화를 사용하여 송신했던 모든 메시지들을 정확하게 배달한다. 10k개의 메시지를 보냈다면, 10k개의 메시지를 받을 것이다.
 
 * It does not impose any format on messages. They are blobs from zero to gigabytes large. When you want to represent data you choose some other product on top, such as msgpack, Google's protocol buffers, and others.
-* 메시지들의 포맷을 강제하지 않는다. 메시지는 0에서부터 수 기가바이트까지의 바이너리 객체다. 데이터를 포맷팅하려면 msgpack, 구글의 프로토콜 버퍼와 같은 다른 제품을 선택한다.
+* 메시지 형식을 강제하지 않는다. 메시지는 0에서부터 수 기가바이트까지의 바이너리 객체다. 데이터를 포맷팅하려면 msgpack, 구글의 프로토콜 버퍼와 같은 다른 제품을 선택한다.
 
 * It handles network errors intelligently, by retrying automatically in cases where it makes sense.
 * 필요한 경우라면 자동으로 재시도를 함으로써 네트워크 오류를 지능적으로 처리한다.
 
 * It reduces your carbon footprint. Doing more with less CPU means your boxes use less power, and you can keep your old boxes in use for longer. Al Gore would love ZeroMQ.
-* 탄소 발자국을 감소시킨다. 더 적게 CPU를 사용한다는 것은 당신의 머신이 더 적은 전력을 사용하고, 오래된 머신을 더 길게 사용할 수 있음을 의미한다. 앨 고어(Al Gore)는 ZeroMQ를 반길 것이다.
+* 탄소 발자국을 감소시킨다. 더 적게 CPU를 사용한다는 것은 당신의 머신이 더 적은 전력을 사용하고, 오래된 머신을 더 길게 사용할 수 있음을 의미한다. 환경 문제에 관심이 많았고 미국의 부통령을 지냈던 앨 고어(Al Gore)는 ZeroMQ를 좋아할 수도 있다.
 
 Actually ZeroMQ does rather more than this. It has a subversive effect on how you develop network-capable applications. Superficially, it's a socket-inspired API on which you do {{zmq_recv[3]}} and {{zmq_send[3]}}. But message processing rapidly becomes the central loop, and your application soon breaks down into a set of message processing tasks. It is elegant and natural. And it scales: each of these tasks maps to a node, and the nodes talk to each other across arbitrary transports. Two nodes in one process (node is a thread), two nodes on one box (node is a process), or two nodes on one network (node is a box)--it's all the same, with no application code changes.
-실제로 ZeroMQ가 하는 것은 이것보다 더 많다. ZeroMQ는 당신이 어떻게 네트워크 가능한 소프트웨어를 개발하는가에 있어서 불온한 영향을 가진다. 표면적으로는 {{zmq_recv[3]}}와 {{zmq_send[3]}}을 하는 소켓-직관적인 API이다. 하지만 메시지 처리를 빠르게 중심이 되는 루프가 될 것이고, 당신의 애플리케이션은 곧 일련의 메시지 처리 작업으로 나뉘어진다. 이건 자연스럽고 훌륭한 것이다. 이것은 확장한다: 각 작업들은 노드로 사상되고, 이 노드들은 임의의 통신 방법을 거쳐 각기 다른 노드들과 통신한다. 한 프로세스 내의 두 노드(여기에서 노드는 하나의 스레드다), 한 머신 내의 두 노드(여기에서 노드는 프로세스다), 한 네트워크 내에서 두 노드(여기에서 노드는 머신이다)--애플리케이션 코드가 바뀌지 않는다면 이것은 항상 같다.
+실제로 ZeroMQ가 하는 것은 이것보다 더 많다. ZeroMQ는 어떻게 네트워크 가능한 소프트웨어를 개발하는가에 있어서 불온한 영향을 가진다. 표면적으로는 {{zmq_recv[3]}}와 {{zmq_send[3]}}을 하는 소켓-직관적인 API이다. 하지만 메시지 처리를 빠르게 중심이 되는 루프가 될 것이고, 애플리케이션은 곧 일련의 메시지 처리 작업들로 나뉘어진다. 이건 자연스럽고 훌륭한 것이다. 이렇게 나뉘어진 애플리케이션은 확장한다: 각 작업들은 노드로 사상되고, 이 노드들은 임의의 통신 방법을 거쳐 각기 다른 노드들과 통신한다. 한 프로세스 내의 두 노드(여기에서 노드는 하나의 스레드다), 한 머신 내의 두 노드(여기에서 노드는 프로세스다), 한 네트워크 내에서 두 노드(여기에서 노드는 머신이다)--애플리케이션 코드가 바뀌지 않는다면 이것은 항상 같다.
 
 ++ Socket Scalability
 ++ 소켓 확장성
