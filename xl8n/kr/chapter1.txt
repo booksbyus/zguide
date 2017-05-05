@@ -7,7 +7,7 @@
 ++ 세상을 구원하다
 
 How to explain ZeroMQ? Some of us start by saying all the wonderful things it does. //It's sockets on steroids. It's like mailboxes with routing. It's fast!//  Others try to share their moment of enlightenment, that zap-pow-kaboom satori paradigm-shift moment when it all became obvious. //Things just become simpler. Complexity goes away. It opens the mind.//  Others try to explain by comparison. //It's smaller, simpler, but still looks familiar.//  Personally, I like to remember why we made ZeroMQ at all, because that's most likely where you, the reader, still are today.
-어떻게 ZeroMQ를 설명해야 할까? 우리 중의 몇몇은 ZeroMQ가 하는 모든 놀라운 것들을 말함으로써 이를 시작한다. //ZeroMQ의 소켓은 스테로이드를 복용한다. 라우팅을 하는 우편함과 같으며, 빠르다!// 또 다른 이들은 ZeroMQ에 대해 직관적으로 번뜩하고는 기존과 다른 패러다임 전환을 깨우쳐서 모든 것이 명료해졌던 순간을 공유하려고 한다. //상황은 매우 간단해지고, 복잡함은 어느새 멀리 사라진다. 그리고 마음을 열게 된다.// 또 어떤 이들은 비교를 통해 설명을 하려고 한다. //매우 작고 단순해보이지만 친숙하게 보여진다.// 지금와서도 나는 개인적으로 우리가 왜 ZeroMQ를 만들었는지에 대한 이유가 당신과 같이 이 글을 읽는 독자들로부터 나온 것들이라고 생각하기 때문에 가능한 그 것들을 모두 기억하고 싶다.
+어떻게 ZeroMQ를 설명해야 할까? 우리 중의 몇몇은 ZeroMQ가 하는 모든 놀라운 것들을 말함으로써 이를 시작한다. //ZeroMQ의 소켓은 스테로이드를 복용한 소켓이다. 라우팅을 하는 우편함과 같으며, 빠르다!// 또 다른 이들은 ZeroMQ에 대해 직관적으로 번뜩하고는 기존과 다른 패러다임 전환을 깨우쳐서 모든 것이 명료해졌던 순간을 공유하려고 한다. //상황은 매우 간단해지고, 복잡함은 어느새 멀리 사라진다. 그리고 마음을 열게 된다.// 또 어떤 이들은 비교를 통해 설명을 하려고 한다. //매우 작고 단순해보이지만 친숙하게 보여진다.// 지금와서도 나는 개인적으로 우리가 왜 ZeroMQ를 만들었는지에 대한 이유가 당신과 같이 이 글을 읽는 독자들로부터 나온 것들이라고 생각하기 때문에 가능한 그 것들을 모두 기억하고 싶다.
 
 Programming is science dressed up as art because most of us don't understand the physics of software and it's rarely, if ever, taught. The physics of software is not algorithms, data structures, languages and abstractions. These are just tools we make, use, throw away. The real physics of software is the physics of people--specifically, our limitations when it comes to complexity, and our desire to work together to solve large problems in pieces. This is the science of programming: make building blocks that people can understand and use //easily//, and people will work together to solve the very largest problems.
 프로그래밍은 예술로 치장한 과학이다. 이는 우리 대부분이 소프트웨어 물리학에 대해 학습한 적이 있다고 하더라도 그 이해가 부족하기 때문이다. 소프트웨어 물리학은 알고리즘이나 자료 구조, 언어와 관념이 아니다. 이는 단지 우리가 만돌고, 사용하고, 버리는 도구들일 뿐이다. 진짜 소프트웨어 물리학은 사람 간의 물리학이다.--특히, 복잡성에서 오는 제약들과 큰 문제들을 잘게 나누어 함께 해결하길 원하는 경우다. 이는 프로그래밍의 과학이다: 사람들이 //쉽게// 이해하고 사용할 수 있는 빌딩 블록을 만들어라. 사람들은 거대한 문제들을 해결하기 위해 함께 일할 것이다.
@@ -510,7 +510,7 @@ raw TCP를 사용하여 연결하는 부분을 시작할 때 직면할 수 있�
 * 동적 컴포넌트들은 어떻게 처리할 것인지, 다시 말해서, 일시적으로 이들이 분리될 수 있는가? 컴포넌트들을 형식적인 "클라이언트"와 "서버"로 나누고 서버가 사라질 수 없도록 강제할 것인가? 서버와 서버를 연결하길 원한다면? 몇 초 안에 재연결을 시도하길 원한다면?
 
 * How do we represent a message on the wire? How do we frame data so it's easy to write and read, safe from buffer overflows, efficient for small messages, yet adequate for the very largest videos of dancing cats wearing party hats?
-* 어떻게 메시지를 통신 상에서 표현할 것인가? 버퍼 오버플로우로부터 안전하고, 작은 크기의 메시지에는 효과적이지만 파티 모자를 쓰고 있는 춤추는 고양이가 나오는 큰 크기의 동영상에 적합하도록 데이터 쓰기/읽기가 쉬운 프레임을 구성할 방법은?
+* 어떻게 회선 상의 메시지를 표현할 것인가? 버퍼 오버플로우로부터 안전하고, 작은 크기의 메시지에는 효과적이지만 파티 모자를 쓰고 있는 춤추는 고양이가 나오는 큰 크기의 동영상에 적합하도록 데이터 쓰기/읽기가 쉬운 프레임을 구성할 방법은?
 
 * How do we handle messages that we can't deliver immediately? Particularly, if we're waiting for a component to come back online? Do we discard messages, put them into a database, or into a memory queue?
 * 즉시 전달할 수 없는 메시지들은 어떻게 처리할 것인가? 특히, 어떤 컴포넌트가 온라인 상태로 돌아오길 기다리는 중이라면? 이 메시지들은 버릴까? 데이터베이스나 메모리 큐에 저장할까?
@@ -537,7 +537,7 @@ raw TCP를 사용하여 연결하는 부분을 시작할 때 직면할 수 있�
 * 어떻게 네트워크 오류를 처리할 것인가? 기다렸다가 재시도하거나, 무시해버리거나, 취소해버릴 것인가?
 
 Take a typical open source project like [http://hadoop.apache.org/zookeeper/ Hadoop Zookeeper] and read the C API code in {{[http://github.com/apache/zookeeper/blob/trunk/src/c/src/zookeeper.c src/c/src/zookeeper.c]}}. When I read this code, in January 2013, it was 4,200 lines of mystery and in there is an undocumented, client/server network communication protocol. I see it's efficient because it uses {{poll}} instead of {{select}}. But really, Zookeeper should be using a generic messaging layer and an explicitly documented wire level protocol. It is incredibly wasteful for teams to be building this particular wheel over and over.
-[http://hadoop.apache.org/zookeeper/ Hadoop Zookeeper]와 같은 전형적인 오픈 소스 프로젝트를 내려 받아 {{[http://github.com/apache/zookeeper/blob/trunk/src/c/src/zookeeper.c src/c/src/zookeeper.c]}}에 있는 C API 코드를 읽어보자. 이 코드를 읽을 때는 2013년 1월인데, 4,200 줄의 미스테리로 되어 있었고, 문서화가 되어 있지 않으며, 클라이언트/서버 네트워크 통신 프로토콜로 되어 있다. 개인적으로는 {{select}} 대신에 {{poll}}을 사용하기 때문에 효율적이라고 생각하지만 실제로 ZooKeeper는 범용의 메시징 계층과 명시적으로 문서화된 전송 수준 프로토콜에서만 사용되야 한다. 팀이 바퀴를 반복해서 만드는 것은 믿기 힘들 정도로 소모적인 일이다.
+[http://hadoop.apache.org/zookeeper/ Hadoop Zookeeper]와 같은 전형적인 오픈 소스 프로젝트를 내려 받아 {{[http://github.com/apache/zookeeper/blob/trunk/src/c/src/zookeeper.c src/c/src/zookeeper.c]}}에 있는 C API 코드를 읽어보자. 이 코드를 읽을 때는 2013년 1월인데, 4,200 줄의 미스테리로 되어 있었고, 문서화가 되어 있지 않으며, 클라이언트/서버 네트워크 통신 프로토콜로 되어 있다. 개인적으로는 {{select}} 대신에 {{poll}}을 사용하기 때문에 효율적이라고 생각하지만 실제로 ZooKeeper는 범용의 메시징 계층과 명시적으로 문서화된 통신 수준 프로토콜에서만 사용되야 한다. 팀이 바퀴를 반복해서 만드는 것은 믿기 힘들 정도로 소모적인 일이다.
 
 But how to make a reusable messaging layer? Why, when so many projects need this technology, are people still doing it the hard way by driving TCP sockets in their code, and solving the problems in that long list over and over[figure]?
 그렇지만 재사용성 있는 메시지 계층은 어떻게 만들 것인가? 왜, 언제, 많은 프로젝트들이 이 기술을 필요로 하고, 그 코드에 TCP 소켓을 제어하는 어려운 방법으로 이러한 것들을 하고 있고, 위의 목록[figure]에 있는 문제들을 해결하고 있을까?
@@ -747,16 +747,16 @@ v2.x와 v3.2에서 모두 동작하기 위한 애플리케이션, 언어 바인�
 ++ 경고: 불안정한 패러다임!
 
 Traditional network programming is built on the general assumption that one socket talks to one connection, one peer. There are multicast protocols, but these are exotic. When we assume "one socket = one connection", we scale our architectures in certain ways. We create threads of logic where each thread work with one socket, one peer. We place intelligence and state in these threads.
-전통적인 네트워크 프로그래밍은 하나의 소켓이 하나의 연결 상에서 하나의 피어와 통신한다는 일반적인 가정 위에서 만들어졌다. 여기에는 멀티캐스트 프로토콜들이 있지만 이국적이다. "한 소켓 = 한 연결"을 가정할 때, 우리는 아키텍처를 특정한 방법을 통해 확장한다. 우리는 하나의 소켓, 하나의 피어와 동작하는 각 스레드를 만들고 이러한 스레드에 정보와 상태를 배치한다.
+전통적인 네트워크 프로그래밍은 하나의 소켓이 하나의 연결 상에서 하나의 피어와 통신한다는 일반적인 가정 위에서 만들어졌다. 여기에는 멀티캐스트 프로토콜들이 있지만 이국적이다. 우리가 "한 소켓 = 한 연결"을 가정할 때에는 우리의 아키텍처를 특정한 방법을 통해 확장한다. 우리는 하나의 소켓, 하나의 피어와 동작하는 각 스레드를 만들고 이러한 스레드에 정보와 상태를 여기에 둔다.
 
 In the ZeroMQ universe, sockets are doorways to fast little background communications engines that manage a whole set of connections automagically for you. You can't see, work with, open, close, or attach state to these connections. Whether you use blocking send or receive, or poll, all you can talk to is the socket, not the connections it manages for you. The connections are private and invisible, and this is the key to ZeroMQ's scalability.
-ZeroMQ 우주에서, 소켓은 모든 연결의 집합을 관리하는 작고 빠른 백그라운드 통신 엔진으로 향하는 출입구다. 당신은 이것을 보거나, 열기, 닫기 혹은 이러한 연결에 상태를 결합하는 등의 작업할 수 없다. 블록킹 송신이나 수신, 혹은 폴링이든 간에 대화가 가능한 것은 소켓이며, 이것을 관리하기 위한 연결이 아니다. 연결은 사적이고 보여지지 않는다. 그리고 이것은 ZeroMQ 확장성의 핵심 요소다.
+ZeroMQ 우주에서, 소켓은 모든 연결의 집합을 관리하는 작고 빠른 백그라운드 통신 엔진으로 향하는 출입구다. 당신은 이것을 보거나, 열기, 닫기 혹은 이러한 연결에 상태를 결합하는 등의 작업할 수 없다. 블록킹 송신이나 수신, 혹은 폴링이든 간에 대화가 가능한 것은 소켓이지 이것을 관리하기 위한 연결이 아니다. 연결은 비공개적이고 보여지지 않는다. 그리고 이게 바로 ZeroMQ 확장성의 핵심 요소다.
 
 This is because your code, talking to a socket, can then handle any number of connections across whatever network protocols are around, without change. A messaging pattern sitting in ZeroMQ scales more cheaply than a messaging pattern sitting in your application code.
-이는 소켓과 통신하는 코드가 네트워크 프로토콜이나 코드의 변경 없이 다수의 여견을ㄹ 처리할 수 있기 때문이다. ZeroMQ 내의 메시징 패턴은 애플리케이션 코드 내에 있는 메시징 패턴 코드보다 더욱 저렴하게 확장할 수 있다.
+이는 소켓과 통신하는 코드가 네트워크 프로토콜이나 코드의 변경 없이 다수의 연결을 처리할 수 있기 때문이다. ZeroMQ 내의 메시징 패턴은 애플리케이션 코드 내에 있는 메시징 패턴 코드보다 더욱 저렴하게 확장할 수 있다.
 
 So the general assumption no longer applies. As you read the code examples, your brain will try to map them to what you know. You will read "socket" and think "ah, that represents a connection to another node". That is wrong. You will read "thread" and your brain will again think, "ah, a thread represents a connection to another node", and again your brain will be wrong.
-따라서 일반적인 가정은 더 이상 통용되지 않는다. 코드 예제를 읽음에 따라, 당신의 뇌는 알고 있던 것들에 사상시키려고 할 것이다. 당신은 "소켓"을 읽고 "아, 다른 노드와의 연결을 나타내는 구나"라고 생각할 것이다. 이건 잘못된 것이다. "스레드"를 읽고, 당신의 뇌는 "아, 스레드는 다른 노드와의 연결을 나타내는 구나"라고 다시 생각할 것이고, 마찬가지로 당신의 뇌는 잘못된 것이다.
+따라서 일반적인 가정은 더 이상 통용되지 않는다. 코드 예제를 읽음에 따라, 당신의 뇌는 이들을 기존에 알고 있던 것들에 사상시키려고 할 것이다. 당신은 "소켓"을 읽고 "아, 다른 노드와의 연결을 나타내는 구나"라고 생각할 것이다. 이건 잘못된 것이다. "스레드"를 읽고, 당신의 뇌는 "아, 스레드는 다른 노드와의 연결을 나타내는 구나"라고 다시 생각할 것이고, 마찬가지로 당신의 뇌가 잘못된 것이다.
 
 If you're reading this Guide for the first time, realize that until you actually write ZeroMQ code for a day or two (and maybe three or four days), you may feel confused, especially by how simple ZeroMQ makes things for you, and you may try to impose that general assumption on ZeroMQ, and it won't work. And then you will experience your moment of enlightenment and trust, that //zap-pow-kaboom// satori paradigm-shift moment when it all becomes clear.
-처음으로 이 안내서를 읽고 있는 중이라면, 하루 이틀(사나흘이 될 수도) 정도 ZeroMQ 코드를 실제로 작성해보면서 앞선 말들을 깨닫게 된다. 아마도 혼란스러움을 느낄 것이고, 특히 어떻게 ZeroMQ가 단순하게 원하는 것을 만들 수 있는지에 있어서 일반적인 가정을 ZeroMQ에 도입하길 시도할 것이고, 그것은 동작하지 않을 것이다. 그리고 나서 모든 것이 뚜렷해지는 //zap-pow-kaboom// satori 패러다임-전환이 일어나는 신뢰와 깨우침의 순간을 경험하게 될 것이다.
+처음으로 이 안내서를 읽고 있는 중이라면, 하루 이틀(사나흘이 될 수도) 정도 ZeroMQ 코드를 실제로 작성해보면서 앞선 말들을 깨닫게 된다. 아마도 혼란스러움을 느낄 것이고, 특히 어떻게 ZeroMQ가 단순하게 원하는 것을 만들 수 있는지에 있어서 일반적인 가정을 ZeroMQ에 도입하길 시도할 것이고, 그것은 동작하지 않을 것이다. 그리고 나서 직관적으로 번뜩하고는 기존과 다른 패러다임 전환을 깨우쳐서 모든 것이 명료해지는 순간을 경험하게 될 것이다.
