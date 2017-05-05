@@ -426,16 +426,16 @@ Having seen some examples, you must be eager to start using ZeroMQ in some apps.
 앞선 몇 가지의 예제를 보았을 때, 당신은 애플리케이션에서 ZeroMQ를 사용하고 싶을 것이다. 시작하기에 앞서, 숨을 깊게 들이 쉬어 긴장을 풀고 몇몇 기본적인 충고들을 되새기는 것이 스트레스와 혼란을 줄여줄 것이다.
 
 * Learn ZeroMQ step-by-step. It's just one simple API, but it hides a world of possibilities. Take the possibilities slowly and master each one.
-* ZeroMQ를 단계 별로 알아보자. 단지 하나의 단순한 API일 뿐이지만 가능성의 세계를 숨긴다. 이 가능성을 천천히 취하고 각각을 습득하면 된다.
+* ZeroMQ를 단계 별로 배우자. 단지 하나의 단순한 API일 뿐이지만 가능성의 세계를 숨긴다. 조심스레 이 가능성을 갖고 각각을 하나씩 습득하자.
 
 * Write nice code. Ugly code hides problems and makes it hard for others to help you. You might get used to meaningless variable names, but people reading your code won't. Use names that are real words, that say something other than "I'm too careless to tell you what this variable is really for". Use consistent indentation and clean layout. Write nice code and your world will be more comfortable.
-* 훌륭한 코드를 작성하자. 추한 코드는 문제들을 숨겨서 다른 이들이 당신을 돕는 것을 어렵게 만든다. 당신은 의미 없는 변수 이름에 익숙해질 수도 있지만 사람들은 당신의 코드를 읽지 안을 것이다. 실제 단어인 이름들을 사용해라. 이는 다른 사람들에게 "저는 이 변수가 실제로 무엇을 위한 것인지 당신에게 말하기 위해 많이 신경을 썼어요."라는 말을 대신한다. 일관성 있는 들여쓰기와 깔끔한 레이아웃을 사용해라. 좋은 코드를 작성하면 당신의 세상이 좀 더 편해질 것이다.
+* 훌륭한 코드를 작성하자. 추한 코드는 문제들을 숨겨서 다른 이들이 당신을 돕는 것을 어렵게 만든다. 당신은 의미 없는 변수 이름에 익숙해졌을 수도 있지만 이러한 코드는 사람들 읽지 않을 것이다. 실제 단어인 이름들을 사용해라. 이는 다른 사람들에게 "저는 이 변수가 실제로 무엇을 위한 것인지 당신에게 말하기 위해 많이 신경 썼어요."라는 말을 대신한다. 일관성 있는 들여쓰기와 깔끔한 레이아웃을 사용하라. 좋은 코드를 작성하면 당신의 세상이 좀 더 편해질 것이다.
 
 * Test what you make as you make it. When your program doesn't work, you should know what five lines are to blame. This is especially true when you do ZeroMQ magic, which just //won't// work the first few times you try it.
-* 당신이 만드는 것을 만들면서 검수해라. 당신의 프로그램이 동작하지 안을 때, 문제가 되는 다섯 줄을 알아야 한다. 이것은 당신이 ZeroMQ라는 마법을 쓸 때 특히나 정답이며, 당신이 이것을 할 때 단지 처음 몇 번만 동작하지 //않을// 것이다.
+* 만드는 과정에서 검수해라. 당신의 프로그램이 동작하지 않을 때, 문제가 되는 다섯 줄을 알아야 한다. 이렇게 하는 것은 ZeroMQ라는 마법을 쓸 때의 정답이며, 이 과정에서 단지 처음 몇 번만 동작하지 //않을// 것이다.
 
 * When you find that things don't work as expected, break your code into pieces, test each one, see which one is not working. ZeroMQ lets you make essentially modular code; use that to your advantage.
-* 당신이 기대한 대로 동작하지 않는 것을 찾을 때, 코드를 조각으로 나누고, 각각을 검수하고, 어떤 것이 동작하지 않는 지를 확인해라. ZeroMQ는 당신이 필수불가결하게 모듈식의 코드를 작성하도록 한다; 이것을 당신에게 유리하게 사용하자.
+* 기대한 대로 동작하지 않는 것을 찾을 때, 코드를 조각으로 나누고, 각각을 검수하고, 어떤 것이 동작하지 않는 지를 확인해라. ZeroMQ는 필수불가결하게 모듈식의 코드를 작성하도록 한다; 이것을 유리하게 사용하자.
 
 * Make abstractions (classes, methods, whatever) as you need them. If you copy/paste a lot of code, you're going to copy/paste errors, too.
 * 필요에 따라 추상화를 해라. 많은 코드를 복사/붙여넣기를 한다면, 그만큼의 오류들을 복사/붙여넣기하는 것이다.
