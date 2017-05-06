@@ -7,37 +7,37 @@
 ++ 세상을 구원하다
 
 How to explain ZeroMQ? Some of us start by saying all the wonderful things it does. //It's sockets on steroids. It's like mailboxes with routing. It's fast!//  Others try to share their moment of enlightenment, that zap-pow-kaboom satori paradigm-shift moment when it all became obvious. //Things just become simpler. Complexity goes away. It opens the mind.//  Others try to explain by comparison. //It's smaller, simpler, but still looks familiar.//  Personally, I like to remember why we made ZeroMQ at all, because that's most likely where you, the reader, still are today.
-어떻게 ZeroMQ를 설명해야 할까? 우리 중의 몇몇은 ZeroMQ가 하는 모든 놀라운 것들을 말함으로써 이를 시작한다. //ZeroMQ의 소켓은 스테로이드를 복용한 소켓이다. 라우팅을 하는 우편함과 같으며, 빠르다!// 또 다른 이들은 ZeroMQ에 대해 직관적으로 번뜩하고는 기존과 다른 패러다임 전환을 깨우쳐서 모든 것이 명료해졌던 순간을 공유하려고 한다. //상황은 매우 간단해지고, 복잡함은 어느새 멀리 사라진다. 그리고 마음을 열게 된다.// 또 어떤 이들은 비교를 통해 설명을 하려고 한다. //매우 작고 단순해보이지만 친숙하게 보여진다.// 지금와서도 나는 개인적으로 우리가 왜 ZeroMQ를 만들었는지에 대한 이유가 당신과 같이 이 글을 읽는 독자들로부터 나온 것들이라고 생각하기 때문에 가능한 그 것들을 모두 기억하고 싶다.
+어떻게 ZeroMQ를 설명해야 할까? 우리 중의 몇몇은 ZeroMQ가 하는 모든 놀라운 것들을 말함으로써 이를 시작한다. //ZeroMQ의 소켓은 스테로이드를 복용한 소켓이다. 라우팅을 하는 우편함과 같으며, 빠르다!// 또 다른 이들은 ZeroMQ에 대해 직관적으로 번뜩하고는 기존과 다른 패러다임 전환을 깨우쳐서 모든 것이 명료해졌던 순간을 공유하려고 한다. //상황은 매우 간단해지고, 복잡함은 어느새 멀리 사라진다. 그리고 마음을 열게 된다.// 또 어떤 이들은 비교를 통해 설명을 하려고 한다. //매우 작고 단순해 보이지만 친숙하게 보여진다.// 지금와서도 나는 개인적으로 우리가 왜 ZeroMQ를 만들었는지에 대한 이유가 당신과 같이 이 글을 읽는 독자들로부터 나온 것들이라고 생각하기 때문에 가능한 그 것들을 모두 기억하고 싶다.
 
 Programming is science dressed up as art because most of us don't understand the physics of software and it's rarely, if ever, taught. The physics of software is not algorithms, data structures, languages and abstractions. These are just tools we make, use, throw away. The real physics of software is the physics of people--specifically, our limitations when it comes to complexity, and our desire to work together to solve large problems in pieces. This is the science of programming: make building blocks that people can understand and use //easily//, and people will work together to solve the very largest problems.
-프로그래밍은 예술로 치장한 과학이다. 이는 우리 대부분이 소프트웨어 물리학에 대해 학습한 적이 있다고 하더라도 그 이해가 부족하기 때문이다. 소프트웨어 물리학은 알고리즘이나 자료 구조, 언어와 관념이 아니다. 이는 단지 우리가 만돌고, 사용하고, 버리는 도구들일 뿐이다. 진짜 소프트웨어 물리학은 사람 간의 물리학이다.--특히, 복잡성에서 오는 제약들과 큰 문제들을 잘게 나누어 함께 해결하길 원하는 경우다. 이는 프로그래밍의 과학이다: 사람들이 //쉽게// 이해하고 사용할 수 있는 빌딩 블록을 만들어라. 사람들은 거대한 문제들을 해결하기 위해 함께 일할 것이다.
+프로그래밍은 예술을 빙자한 과학이다. 우리 대부분이 소프트웨어 물리학에 대해 학습한 적이 있다고 하더라도 그 이해가 부족하기 때문이다. 소프트웨어 물리학은 알고리즘이나 자료 구조, 언어와 관념이 아니다. 이는 단지 우리가 만돌고, 사용하고, 버리는 도구들일 뿐이다. 진정한 소프트웨어 물리학은 사람 간의 물리학이다.--특히, 복잡성에서 오는 제약 사항들을 마주했을 때 우리는 큰 문제들을 작은 부분으로 나누어 함께 해결하길 원한다. 사람들이 //쉽게// 이해하고 사용할 수 있는 빌딩 블록을 만들고 사람들은 거대한 문제들을 해결하기 위해 함께 일하는 것. 이것이 프로그래밍의 과학이다.
 
 We live in a connected world, and modern software has to navigate this world. So the building blocks for tomorrow's very largest solutions are connected and massively parallel. It's not enough for code to be "strong and silent" any more. Code has to talk to code. Code has to be chatty, sociable, well-connected. Code has to run like the human brain, trillions of individual neurons firing off messages to each other, a massively parallel network with no central control, no single point of failure, yet able to solve immensely difficult problems. And it's no accident that the future of code looks like the human brain, because the endpoints of every network are, at some level, human brains.
-우리는 연결된 세상에 살고, 현대 소프트웨어는 이 세상을 항해해야 한다. 그래서 오늘날의 매우 큰 솔루션들을 위한 빌딩 블록들은 연결되어 있고 엄청나게 병렬적이다. 이는 더 이상 "강하고 조용한" 코드라기에는 충분하지 않다. 코드는 코드로 통해야 한다. 코드는 수다스럽고, 사교적이고, 잘 연결되어야 한다. 코드는 사람의 두뇌와 같이 중앙 제어가 없는 병렬 네트워크에서 아무런 단일 결함 지점이 없으면서도, 크고 어려운 문제를 해결할 수 있는, 서로가 서로에게 메시지를 전달하는 수조 개의 개별적인 뉴런들과 갈이 움직여야 한다. 그리고 어떤 수준에서는 모든 네트워크의 종착점은 사람의 두뇌이기 때문에 미래의 코드가 이와 갈이 보여지는 것은 전혀 이상한 일이 아니다.
+우리는 연결된 세상에 살고 있고, 현대 소프트웨어는 이 세상을 항해해야 한다. 그래서 오늘날의 매우 큰 솔루션들을 위한 빌딩 블록들은 연결되어 있고 대규모로 병렬화되어 있다. 이는 더 이상 "강하고 조용한" 코드라기에는 충분하지 않다. 코드는 코드로 통해야 한다. 코드는 수다스럽고, 사교적이고, 잘 연결되어야 한다. 코드는 사람의 두뇌와 같이 중앙 제어가 없는 병렬 네트워크에서 아무런 단일 결함 지점이 없으면서도, 크고 어려운 문제를 해결할 수 있는, 서로가 서로에게 메시지를 전달하는 수조 개의 개별적인 뉴런들과 갈이 움직여야 한다. 그리고 어떤 관점에서는 모든 네트워크의 종착점은 사람의 두뇌이기 때문에 미래의 코드가 이와 갈이 보여지는 것은 전혀 이상한 일이 아니다.
 
 If you've done any work with threads, protocols, or networks, you'll realize this is pretty much impossible. It's a dream. Even connecting a few programs across a few sockets is plain nasty when you start to handle real life situations. Trillions? The cost would be unimaginable. Connecting computers is so difficult that software and services to do this is a multi-billion dollar business.
-당신이 스레드나 프로토콜 혹은 네트워크 작업을 해본 적이 있다면, 이러한 것들이 아름다울 수 없다는 것을 깨닫게 될 것이다. 그건 그냥 꿈이다. 심지어 현실에서 몇몇 프로그램들을 소켓들을 통해 연결하는 상황을 제어하는 일을 시작할 때조차도 이는 매우 괴로운 일이다. 수조? 그 비용은 상상조차 할 수도 없다. 컴퓨터들을 연결하는 것은 소프트웨어와 서비스들을 연결하는 것이고, 이는 수십억불의 사업이기 때문에 매우 어려운 일이다.
+스레드나 프로토콜 혹은 네트워크 작업을 해본 적이 있다면, 이러한 것들이 아름다울 수 없다는 것을 깨닫게 될 것이다. 그건 그냥 꿈이다. 심지어 현실에서 몇몇 프로그램들을 소켓을 통해 연결해서 제어하는 일을 시작할 때조차도 이는 매우 괴로운 일이다. 수조? 그 비용은 상상조차 할 수도 없다. 컴퓨터들을 연결하는 것은 소프트웨어와 서비스들을 연결하는 것이고, 이는 수십억불의 사업이기 때문에 매우 어려운 일이다.
 
 So we live in a world where the wiring is years ahead of our ability to use it. We had a software crisis in the 1980s, when leading software engineers like Fred Brooks believed [http://en.wikipedia.org/wiki/No_Silver_Bullet there was no "Silver Bullet"] to "promise even one order of magnitude of improvement in productivity, reliability, or simplicity".
 우리는 통신망이 우리가 이를 사용하는 능력보다 몇년은 앞서가 있는 세계에서 살고 있다. 우리에겐 Fred Brooks와 같이 "생산성, 신뢰성, 혹은 단순성 면에서의 한 승수만큼의 향상을 약속하는" [http://en.wikipedia.org/wiki/No_Silver_Bullet "은탄환"은 없다]고 생각했던 소프트웨어 엔지니어들이 이끄는 1980년대에 소프트웨어 위기가 있었다.
 
 Brooks missed free and open source software, which solved that crisis, enabling us to share knowledge efficiently. Today we face another software crisis, but it's one we don't talk about much. Only the largest, richest firms can afford to create connected applications. There is a cloud, but it's proprietary. Our data and our knowledge is disappearing from our personal computers into clouds that we cannot access and with which we cannot compete. Who owns our social networks? It is like the mainframe-PC revolution in reverse.
-Brooks는 우리의 지식을 효율적으로 공유함으로써 이러한 위기를 풀어내었던 자유/오픈 소스 소프트웨어를 간과했다. 오늘날 우리는 또 다른 소프트웨어 위기에 직면했지만, 우리는 이에 대해 더 이상 이야기 하지 않는다. 그저 부유한 대기업들이나 이러한 연결된 애플리케이션들을 만들 여유가 있다. 클라우드가 있지만 이는 독점적이다. 우리의 자료와 지식은 우리의 개인 컴퓨터로부터 나타나지 않고 접근할 수도, 우리끼리 경쟁할 수도 없는 클라우드로 들어간다. 누가 우리가 사용하는 사회 연결망을 가지고 있는가? 이는 바로 시대 역설적이게도 메인프레임 컴퓨터다.
+Brooks는 우리의 지식을 효율적으로 공유함으로써 이러한 위기를 풀어내었던 자유/오픈 소스 소프트웨어를 간과했다. 오늘날 우리는 또 다른 소프트웨어 위기에 직면했지만, 우리는 이에 대해 더 이상 이야기 하지 않는다. 그저 부유한 대기업들이나 이러한 연결된 애플리케이션들을 만들 여유가 있다. 클라우드가 있지만 이는 독점적이다. 우리의 자료와 지식은 우리의 개인 컴퓨터로부터 나타나지 않고 접근할 수도, 우리끼리 경쟁할 수도 없는 클라우드로 들어간다. 누가 우리가 사용하는 사회 연결망을 가지고 있을까? 시대 역설적이게도 그건 바로 메인프레임 컴퓨터다.
 
 We can leave the political philosophy [http://cultureandempire.com for another book]. The point is that while the Internet offers the potential of massively connected code, the reality is that this is out of reach for most of us, and so large interesting problems (in health, education, economics, transport, and so on) remain unsolved because there is no way to connect the code, and thus no way to connect the brains that could work together to solve these problems.
-우리는 정치적 철학 [http://cultureandempire.com for another book]에서 벗어날 수 있다. 핵심은 인터넷이 수많은 연결된 코드의 잠재력을 제공한다는 것이고, 현실은 그 대부분이 우리 손에 닿지 않으며, 이로 인해 코드를 연결할 수 있는 방법이 없고, 그렇게 매우 큰 문제들 (건강, 교육, 환경, 물류 그리고 기타 등등) 을 해결하기 위해 함께 일할 수 있는 두뇌들이 연결될 수 있는 방법이 없기 때문에 이러한 문제들이 해결되지 않는 채 남아있다는 점이다.
+우리는 정치적 철학이 담긴 [http://cultureandempire.com 또 다른 책]을 남길 수 있다. 핵심은 인터넷이 수많은 연결된 코드의 잠재력을 제공한다는 것이고, 현실은 그 대부분이 우리 손에 닿지 않으며, 이로 인해 코드를 연결할 수 있는 방법이 없고, 그렇게 매우 큰 문제들 (건강, 교육, 환경, 물류 그리고 기타 등등) 을 해결하기 위해 함께 일할 수 있는 두뇌들이 연결될 수 있는 방법이 없기 때문에 이러한 문제들이 해결되지 않는 채 남아있다는 점이다.
 
 There have been many attempts to solve the challenge of connected code. There are thousands of IETF specifications, each solving part of the puzzle. For application developers, HTTP is perhaps the one solution to have been simple enough to work, but it arguably makes the problem worse by encouraging developers and architects to think in terms of big servers and thin, stupid clients.
 연결된 코드들의 도전을 해결하기 위한 많은 시도들이 있어왔다. 그 퍼즐의 각 부분들을 해결하는 수천의 IETF 명세들이 있었다. HTTP는 애플리케이션 개발자에게 있어 이를 위한 충분히 단순한 해결책일 수도 있다. 허나 단언컨데, 이러한 명세는 개발자들과 아키텍트들이 대형 서버와 가볍고 멍청한 클라이언트의 관점에서 생각하도록 장려하기 때문에 문제를 더 악화시킬 뿐이다.
 
 So today people are still connecting applications using raw UDP and TCP, proprietary protocols, HTTP, and Websockets. It remains painful, slow, hard to scale, and essentially centralized. Distributed P2P architectures are mostly for play, not work. How many applications use Skype or Bittorrent to exchange data?
-오늘날 사람들은 여전히 raw UDP와 TCP, 독점 프로토콜, HTTP, 그리고 웹소켓을 사용하여 애플리케이션들을 연결하고 있다. 이는 고통스럽고, 느리고, 유연하기 어렵고, 필수불가결한 중앙화를 남긴다. 분산 P2P 아키텍처는 대부분 놀이를 위한 것이지 일하기 위한 것이 아니다. 얼마나 많은 애플리케이션들이 데이터를 교환하기 위해 스카이프나 비트토렌트를 사용하는가?
+오늘날 사람들은 여전히 raw UDP와 TCP, 독점 프로토콜, HTTP, 그리고 웹소켓을 사용하여 애플리케이션들을 연결하고 있다. 이는 고통스럽고, 느리고, 유연하기 어렵기에 본질적으로 중앙 집중화가 이루어진다. 분산 P2P 아키텍처는 대부분 놀이를 위한 것이지 일하기 위한 것이 아니다. 얼마나 많은 애플리케이션들이 데이터를 교환하기 위해 스카이프나 비트토렌트를 사용하는가?
 
 Which brings us back to the science of programming. To fix the world, we needed to do two things. One, to solve the general problem of "how to connect any code to any code, anywhere". Two, to wrap that up in the simplest possible building blocks that people could understand and use //easily//.
-우리를 프로그래밍의 과학으로 돌아가게 이끄는 것. 세계를 고치기 위해서, 우리는 2가지가 필요하다. 첫째, "어떻게 모든 코드를 모든 코드에, 모든 곳에서 연결할 것인가"의 일반적인 문제를 해결하기 위한 것. 둘째, 가능한 한 가장 간단하게 사람들이 이해할 수 있고, 사용하기 //쉬운// 빌딩 블록들을 만드는 것이다.
+우리를 프로그래밍의 과학으로 돌아가게 이끄는 것. 세계를 구원하기 위해서, 우리는 2가지가 필요하다. 첫째, "어떻게 모든 코드를 모든 코드에, 모든 곳에서 연결할 것인가"의 일반적인 문제를 해결하기 위한 것. 둘째, 가능한 한 가장 간단하게 사람들이 이해할 수 있고, 사용하기 //쉬운// 빌딩 블록들을 만드는 것이다.
 
 It sounds ridiculously simple. And maybe it is. That's kind of the whole point.
-터무니 없이 간단하게 들리겠지만 아마 이게 전부일 것이다.
+터무니 없이 간단하게 들리겠지만 아마도 이 말이 핵심일 것이다.
 
 ++ Starting Assumptions
 ++ 가정의 시작
@@ -62,7 +62,7 @@ Next, browse the examples subdirectory. You'll find examples by language. If the
 ++ 구하라 그리하면 얻을 것이다.
 
 So let's start with some code. We start of course with a Hello World example. We'll make a client and a server. The client sends "Hello" to the server, which replies with "World"[figure]. Here's the server in C, which opens a ZeroMQ socket on port 5555, reads requests on it, and replies with "World" to each request:
-이제 작은 코드와 함께 시작해보자. 우리는 Hello World 예제로 코스를 시작한다. 우리는 하나의 클라이언트와 하나의 서버를 만들 것이다. 이 클라이언트는 "Hello"를 서버로 보내고, "World"[figure]를 응답을 받는다.
+이제 몇 가지 코드와 함께 시작해보자. 우리는 Hello World 예제로 코스를 시작한다. 우리는 하나의 클라이언트와 하나의 서버를 만들 것이다. 이 클라이언트는 "Hello"를 서버로 보내고, "World"[figure]를 응답을 받는다. 서버는 C로 되었고, 5555번 포트에 대해 ZeroMQ 소켓을 열여서 요청을 읽은 후에 각 요청에 대해 "World"로 응답한다.
 
 [[code type="example" title="Hello World server" name="hwserver"]]
 [[/code]]
@@ -86,7 +86,7 @@ Hello |    | World
 [[/code]]
 
 The REQ-REP socket pair is in lockstep. The client issues {{zmq_send[3]}} and then {{zmq_recv[3]}}, in a loop (or once if that's all it needs). Doing any other sequence (e.g., sending two messages in a row) will result in a return code of -1 from the {{send}} or {{recv}} call. Similarly, the service issues {{zmq_recv[3]}} and then {{zmq_send[3]}} in that order, as often as it needs to.
-REQ-REP 소켓 쌍은 발을 맞추어 가는 방식이다. 클라이언트는 한 반복문 내에서 {{zmq_sned[3]}}을 호출한 뒤에 {{zmq_recv[3]}}을 호출한다 (혹은 필요하다면 한번만). 다른 시퀀스를 수행하는 것 (예를 들어, 한번에 두 개의 메시지를 보내는 것) 은 {{send}} 혹은 {{recv}} 호출로부터 -1의 반환 코드를 얻게될 것이다. 이와 유사하게, 서비스는 필요할 때마다 순서대로 {{zmq_recv[3]}}, {{zmq_send[3]}}을 호출한다.
+REQ-REP 소켓 쌍은 서로가 발을 맞추어 가는 방식이다. 클라이언트는 한 반복문 내에서 {{zmq_send[3]}}을 호출한 뒤에 {{zmq_recv[3]}}을 호출한다 (혹은 필요하다면 한번만). 다른 시퀀스를 수행하는 것 (예를 들어, 한번에 두 개의 메시지를 보내는 것) 은 {{send}} 혹은 {{recv}} 호출로부터 -1의 반환 코드를 얻게될 것이다. 이와 유사하게, 서비스는 필요할 때마다 순서대로 {{zmq_recv[3]}}, {{zmq_send[3]}}을 호출한다.
 
 ZeroMQ uses C as its reference language and this is the main language we'll use for examples. If you're reading this online, the link below the example takes you to translations into other programming languages. Let's compare the same server in C++:
 ZeroMQ는 그 레퍼런스 언어로서 C를 사용하고 우리가 예제들에서 사용할 주 언어다. 당신이 온라인으로 이걸 읽고 있다면, 아래 예제의 링크는 다른 언어로 변환된 예제를 제공한다. 같은 서버 코드를 C++과 비교해보자.
@@ -95,7 +95,7 @@ ZeroMQ는 그 레퍼런스 언어로서 C를 사용하고 우리가 예제들에
 [[/code]]
 
 You can see that the ZeroMQ API is similar in C and C++. In a language like PHP or Java, we can hide even more and the code becomes even easier to read:
-당신은 C와 C++에서 ZeroMQ API가 유사하다는 것을 볼 수 있다. PHP나 Java와 같은 언어에서, 우리는 코드를 더욱 읽기 쉽게 만들기 위해서 더 많은 것들을 은닉화할 수 있다.
+당신은 C와 C++에서 ZeroMQ API가 유사하다는 것을 볼 수 있다. PHP나 Java와 같은 언어에서, 우리는 코드를 더 읽기 쉽게 만들기 위해서 더 많은 것들을 은닉화할 수 있다.
 
 [[code type="example" title="Hello World server" name="hwserver" language="PHP"]]
 [[/code]]
@@ -105,7 +105,7 @@ You can see that the ZeroMQ API is similar in C and C++. In a language like PHP 
 
 
 The server in other languages:
-다른 언어들에서의 서버 코드
+다른 언어들에서의 서버 코드:
 
 [[code type="example" title="Hello World server" name="hwserver"]]
 [[/code]]
@@ -117,16 +117,16 @@ Here's the client code:
 [[/code]]
 
 Now this looks too simple to be realistic, but ZeroMQ sockets have, as we already learned, superpowers. You could throw thousands of clients at this server, all at once, and it would continue to work happily and quickly. For fun, try starting the client and //then// starting the server, see how it all still works, then think for a second what this means.
-실질적으로 매우 쉽게 보이지만, ZeroMQ 소켓들은 앞서 배운 것과 같이 강력한 힘을 가진다. 수천의 클라이언트들이 이 서버에 한꺼번에 요청하도록 할 수 있고, 빠르고 행복하게 작업을 계속할 수 있을 것이다. 재미로써 클라이언트를 먼저 시작하고, //그 후에// 서버를 시작해보자. 이제 모두 여전히 동작하는지 지켜본 후에 이게 의미하는 바를 잠깐 생각해보자.
+실질적으로 매우 쉽게 보이지만, ZeroMQ 소켓들은 앞서 배운 것과 같이 강력한 힘을 가진다. 수천의 클라이언트들이 이 서버에 한꺼번에 요청해도 빠르고 안정적으로 동작할 것이다. 재미삼아 클라이언트를 먼저 시작하고, //그 후에// 서버를 시작해보자. 이제 모두 여전히 동작하는지 지켜본 후에 이게 의미하는 바를 잠깐 생각해보자.
 
 Let us explain briefly what these two programs are actually doing. They create a ZeroMQ context to work with, and a socket. Don't worry what the words mean. You'll pick it up. The server binds its REP (reply) socket to port 5555. The server waits for a request in a loop, and responds each time with a reply. The client sends a request and reads the reply back from the server.
-이 두 프로그램의 실제 동작을 간단히 설명해보자. 이들은 동작을 위한 ZeroMQ 컨텍스트와 소켓을 하나 만든다. 이 말이 무엇을 의미하는지는 곧 알게될 테니 신경쓰지 말자. 서버는 자신의 REP(응답) 소켓을 5555번 포트와 묶는다. 서버는 루프 내에서 요청을 대기하고, 요청이 올 때마다 응답한다. 클라이언트는 요청을 보내고 서버로부터 돌아오는 응답을 읽는다.
+이 두 프로그램이 실제로 어떻게 동작하는지를 간단히 설명해보고자 한다. 이들은 동작을 위한 ZeroMQ 컨텍스트와 소켓을 하나 만든다. 이 말이 무엇을 의미하는지는 곧 알게될 테니 신경쓰지 말자. 서버는 자신의 REP(응답) 소켓을 5555번 포트와 묶는다. 서버는 루프 내에서 요청을 대기하고, 요청이 올 때마다 응답한다. 클라이언트는 요청을 보내고 서버로부터 돌아오는 응답을 읽는다.
 
 If you kill the server (Ctrl-C) and restart it, the client won't recover properly. Recovering from crashing processes isn't quite that easy. Making a reliable request-reply flow is complex enough that we won't cover it until [#reliable-request-reply].
 서버를 죽이고 (Ctrl-C) 재시작 한다면, 클라이언트는 정상적으로 복구되지 않을 것이다. 깨진 프로세스로부터 복구를 하는 것은 그리 쉬운 일이 아니다. 신뢰성 있는 요청-응답 흐름을 만드는 것은 우리가 [#reliable-request-reply]를 배우기 까지는 다룰 수 없을 정도로 복잡하다.
 
 There is a lot happening behind the scenes but what matters to us programmers is how short and sweet the code is, and how often it doesn't crash, even under a heavy load. This is the request-reply pattern, probably the simplest way to use ZeroMQ. It maps to RPC and the classic client/server model.
-무대 뒤에서 많은 일들이 일어나지만 프로그래머들이 걱정할 것은 어떻게 짧고 친절한 코드를 만드는지, 그리고 고부하 상태에서 얼마동안 문제가 발생하지 않는지이다. 이것은 요청-응답 패턴이고, 아마도 ZeroMQ를 사용하는 가장 쉬운 방법일 것이다. ZeroMQ는 RPC와 고전적인 클라이언트/서버 모델을 사상시킨다.
+무대 뒤에서 많은 일들이 일어나지만 프로그래머들이 걱정할 것은 어떻게 짧고 친절한 코드를 만드는지, 그리고 고부하 상태에서 얼마동안 문제가 발생하지 않는지이다. 이것은 요청-응답 패턴이고, 아마 ZeroMQ를 사용하는 가장 쉬운 방법일 것이다. ZeroMQ는 RPC나 고전적인 클라이언트/서버 모델에 해당된다.
 
 ++ A Minor Note on Strings
 ++ 문자열에 대한 소견
@@ -135,14 +135,14 @@ ZeroMQ doesn't know anything about the data you send except its size in bytes. T
 ZeroMQ는 당신이 보내려는 데이터의 바이트 크기에 대하여 어떤 것도 알지 못한다. 이는 애플리케이션이 데이터를 읽어들일 수 있도록 하기 위해 안전하게 포맷팅할 책임이 당신에게 있다는 것이다. 객체와 복잡한 데이터 유형을 포맷팅하는 것은 프로토콜 버퍼처럼 특수화된 라이브러리들의 역할이다. 하지만 문자열이라고 해도 주의할 필요는 있다.
 
 In C and some other languages, strings are terminated with a null byte. We could send a string like "HELLO" with that extra null byte:
-C와 몇몇 다른 언어들에서, 문자열은 널(\0) 바이트로 끝난다. 우리는 "HELLO"와 같은 문자열을 여분의 널 바이트와 함께 보내야 한다.
+C와 몇몇 다른 언어들에서, 문자열은 널(\0) 바이트로 끝난다. 우리는 "HELLO"와 같은 문자열을 여분의 널 바이트와 함께 보내야 한다:
 
 [[code language="C"]]
 zmq_send (requester, "Hello", 6, 0);
 [[/code]]
 
 However, if you send a string from another language, it probably will not include that null byte. For example, when we send that same string in Python, we do this:
-하지만, 다른 언어에서부터 문자열을 보내려고 한다면 널 바이트를 포함하지 않을 수도 있다. 예를 들어서 파이썬에서 동일한 문자열을 보낼 때 우리는 이렇게 할 것이다.
+하지만, 다른 언어에서부터 문자열을 보내려고 한다면 널 바이트를 포함하지 않을 수도 있다. 예를 들어서 파이썬에서 동일한 문자열을 보낼 때 우리는 이렇게 할 것이다:
 
 [[code language="Python"]]
 socket.send ("Hello")
