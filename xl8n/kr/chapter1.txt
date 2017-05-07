@@ -1,0 +1,762 @@
+.output chapter1.wd
+.bookmark basics
++ Basics
++ 기초
+
+++ Fixing the World
+++ 세상을 구원하다
+
+How to explain ZeroMQ? Some of us start by saying all the wonderful things it does. //It's sockets on steroids. It's like mailboxes with routing. It's fast!//  Others try to share their moment of enlightenment, that zap-pow-kaboom satori paradigm-shift moment when it all became obvious. //Things just become simpler. Complexity goes away. It opens the mind.//  Others try to explain by comparison. //It's smaller, simpler, but still looks familiar.//  Personally, I like to remember why we made ZeroMQ at all, because that's most likely where you, the reader, still are today.
+어떻게 ZeroMQ를 설명해야 할까? 우리 중의 몇몇은 ZeroMQ가 하는 모든 놀라운 것들을 말함으로써 이를 시작한다. //ZeroMQ의 소켓은 스테로이드를 복용한 소켓이다. 라우팅을 하는 우편함과 같으며, 빠르다!// 또 다른 이들은 ZeroMQ에 대해 직관적으로 번뜩하고는 기존과 다른 패러다임 전환을 깨우쳐서 모든 것이 명료해졌던 순간을 공유하려고 한다. //상황은 매우 간단해지고, 복잡함은 어느새 멀리 사라진다. 그리고 마음을 열게 된다.// 또 어떤 이들은 비교를 통해 설명을 하려고 한다. //매우 작고 단순해 보이지만 친숙하게 보여진다.// 지금와서도 나는 개인적으로 우리가 왜 ZeroMQ를 만들었는지에 대한 이유가 당신과 같이 이 글을 읽는 독자들로부터 나온 것들이라고 생각하기 때문에 가능한 그 것들을 모두 기억하고 싶다.
+
+Programming is science dressed up as art because most of us don't understand the physics of software and it's rarely, if ever, taught. The physics of software is not algorithms, data structures, languages and abstractions. These are just tools we make, use, throw away. The real physics of software is the physics of people--specifically, our limitations when it comes to complexity, and our desire to work together to solve large problems in pieces. This is the science of programming: make building blocks that people can understand and use //easily//, and people will work together to solve the very largest problems.
+프로그래밍은 예술을 빙자한 과학이다. 우리 대부분이 소프트웨어 물리학에 대해 학습한 적이 있다고 하더라도 그 이해가 부족하기 때문이다. 소프트웨어 물리학은 알고리즘이나 자료 구조, 언어와 관념이 아니다. 이는 단지 우리가 만돌고, 사용하고, 버리는 도구들일 뿐이다. 진정한 소프트웨어 물리학은 사람 간의 물리학이다.--특히, 복잡성에서 오는 제약 사항들을 마주했을 때 우리는 큰 문제들을 작은 부분으로 나누어 함께 해결하길 원한다. 사람들이 //쉽게// 이해하고 사용할 수 있는 빌딩 블록을 만들고 사람들은 거대한 문제들을 해결하기 위해 함께 일하는 것. 이것이 프로그래밍의 과학이다.
+
+We live in a connected world, and modern software has to navigate this world. So the building blocks for tomorrow's very largest solutions are connected and massively parallel. It's not enough for code to be "strong and silent" any more. Code has to talk to code. Code has to be chatty, sociable, well-connected. Code has to run like the human brain, trillions of individual neurons firing off messages to each other, a massively parallel network with no central control, no single point of failure, yet able to solve immensely difficult problems. And it's no accident that the future of code looks like the human brain, because the endpoints of every network are, at some level, human brains.
+우리는 연결된 세상에 살고 있고, 현대 소프트웨어는 이 세상을 항해해야 한다. 그래서 오늘날의 매우 큰 솔루션들을 위한 빌딩 블록들은 연결되어 있고 대규모로 병렬화되어 있다. 이는 더 이상 "강하고 조용한" 코드라기에는 충분하지 않다. 코드는 코드로 통해야 한다. 코드는 수다스럽고, 사교적이고, 잘 연결되어야 한다. 코드는 사람의 두뇌와 같이 중앙 제어가 없는 병렬 네트워크에서 아무런 단일 결함 지점이 없으면서도, 크고 어려운 문제를 해결할 수 있는, 서로가 서로에게 메시지를 전달하는 수조 개의 개별적인 뉴런들과 갈이 움직여야 한다. 그리고 어떤 관점에서는 모든 네트워크의 종착점은 사람의 두뇌이기 때문에 미래의 코드가 이와 갈이 보여지는 것은 전혀 이상한 일이 아니다.
+
+If you've done any work with threads, protocols, or networks, you'll realize this is pretty much impossible. It's a dream. Even connecting a few programs across a few sockets is plain nasty when you start to handle real life situations. Trillions? The cost would be unimaginable. Connecting computers is so difficult that software and services to do this is a multi-billion dollar business.
+스레드나 프로토콜 혹은 네트워크 작업을 해본 적이 있다면, 이러한 것들이 아름다울 수 없다는 것을 깨닫게 될 것이다. 그건 그냥 꿈이다. 심지어 현실에서 몇몇 프로그램들을 소켓을 통해 연결해서 제어하는 일을 시작할 때조차도 이는 매우 괴로운 일이다. 수조? 그 비용은 상상조차 할 수도 없다. 컴퓨터들을 연결하는 것은 소프트웨어와 서비스들을 연결하는 것이고, 이는 수십억불의 사업이기 때문에 매우 어려운 일이다.
+
+So we live in a world where the wiring is years ahead of our ability to use it. We had a software crisis in the 1980s, when leading software engineers like Fred Brooks believed [http://en.wikipedia.org/wiki/No_Silver_Bullet there was no "Silver Bullet"] to "promise even one order of magnitude of improvement in productivity, reliability, or simplicity".
+우리는 통신망이 우리가 이를 사용하는 능력보다 몇년은 앞서가 있는 세계에서 살고 있다. 우리에겐 Fred Brooks와 같이 "생산성, 신뢰성, 혹은 단순성 면에서의 한 승수만큼의 향상을 약속하는" [http://en.wikipedia.org/wiki/No_Silver_Bullet "은탄환"은 없다]고 생각했던 소프트웨어 엔지니어들이 이끄는 1980년대에 소프트웨어 위기가 있었다.
+
+Brooks missed free and open source software, which solved that crisis, enabling us to share knowledge efficiently. Today we face another software crisis, but it's one we don't talk about much. Only the largest, richest firms can afford to create connected applications. There is a cloud, but it's proprietary. Our data and our knowledge is disappearing from our personal computers into clouds that we cannot access and with which we cannot compete. Who owns our social networks? It is like the mainframe-PC revolution in reverse.
+Brooks는 우리의 지식을 효율적으로 공유함으로써 이러한 위기를 풀어내었던 자유/오픈 소스 소프트웨어를 간과했다. 오늘날 우리는 또 다른 소프트웨어 위기에 직면했지만, 우리는 이에 대해 더 이상 이야기 하지 않는다. 그저 부유한 대기업들이나 이러한 연결된 애플리케이션들을 만들 여유가 있다. 클라우드가 있지만 이는 독점적이다. 우리의 자료와 지식은 우리의 개인 컴퓨터로부터 나타나지 않고 접근할 수도, 우리끼리 경쟁할 수도 없는 클라우드로 들어간다. 누가 우리가 사용하는 사회 연결망을 가지고 있을까? 시대 역설적이게도 그건 바로 메인프레임 컴퓨터다.
+
+We can leave the political philosophy [http://cultureandempire.com for another book]. The point is that while the Internet offers the potential of massively connected code, the reality is that this is out of reach for most of us, and so large interesting problems (in health, education, economics, transport, and so on) remain unsolved because there is no way to connect the code, and thus no way to connect the brains that could work together to solve these problems.
+우리는 정치적 철학이 담긴 [http://cultureandempire.com 또 다른 책]을 남길 수 있다. 핵심은 인터넷이 수많은 연결된 코드의 잠재력을 제공한다는 것이고, 현실은 그 대부분이 우리 손에 닿지 않으며, 이로 인해 코드를 연결할 수 있는 방법이 없고, 그렇게 매우 큰 문제들 (건강, 교육, 환경, 물류 그리고 기타 등등) 을 해결하기 위해 함께 일할 수 있는 두뇌들이 연결될 수 있는 방법이 없기 때문에 이러한 문제들이 해결되지 않는 채 남아있다는 점이다.
+
+There have been many attempts to solve the challenge of connected code. There are thousands of IETF specifications, each solving part of the puzzle. For application developers, HTTP is perhaps the one solution to have been simple enough to work, but it arguably makes the problem worse by encouraging developers and architects to think in terms of big servers and thin, stupid clients.
+연결된 코드들의 도전을 해결하기 위한 많은 시도들이 있어왔다. 그 퍼즐의 각 부분들을 해결하는 수천의 IETF 명세들이 있었다. HTTP는 애플리케이션 개발자에게 있어 이를 위한 충분히 단순한 해결책일 수도 있다. 허나 단언컨데, 이러한 명세는 개발자들과 아키텍트들이 대형 서버와 가볍고 멍청한 클라이언트의 관점에서 생각하도록 장려하기 때문에 문제를 더 악화시킬 뿐이다.
+
+So today people are still connecting applications using raw UDP and TCP, proprietary protocols, HTTP, and Websockets. It remains painful, slow, hard to scale, and essentially centralized. Distributed P2P architectures are mostly for play, not work. How many applications use Skype or Bittorrent to exchange data?
+오늘날 사람들은 여전히 raw UDP와 TCP, 독점 프로토콜, HTTP, 그리고 웹소켓을 사용하여 애플리케이션들을 연결하고 있다. 이는 고통스럽고, 느리고, 유연하기 어렵기에 본질적으로 중앙 집중화가 이루어진다. 분산 P2P 아키텍처는 대부분 놀이를 위한 것이지 일하기 위한 것이 아니다. 얼마나 많은 애플리케이션들이 데이터를 교환하기 위해 스카이프나 비트토렌트를 사용하는가?
+
+Which brings us back to the science of programming. To fix the world, we needed to do two things. One, to solve the general problem of "how to connect any code to any code, anywhere". Two, to wrap that up in the simplest possible building blocks that people could understand and use //easily//.
+우리를 프로그래밍의 과학으로 돌아가게 이끄는 것. 세계를 구원하기 위해서, 우리는 2가지가 필요하다. 첫째, "어떻게 모든 코드를 모든 코드에, 모든 곳에서 연결할 것인가"의 일반적인 문제를 해결하기 위한 것. 둘째, 가능한 한 가장 간단하게 사람들이 이해할 수 있고, 사용하기 //쉬운// 빌딩 블록들을 만드는 것이다.
+
+It sounds ridiculously simple. And maybe it is. That's kind of the whole point.
+터무니 없이 간단하게 들리겠지만 아마도 이 말이 핵심일 것이다.
+
+++ Starting Assumptions
+++ 가정의 시작
+
+We assume you are using at least version 3.2 of ZeroMQ. We assume you are using a Linux box or something similar. We assume you can read C code, more or less, as that's the default language for the examples. We assume that when we write constants like PUSH or SUBSCRIBE, you can imagine they are really called {{ZMQ_PUSH}} or {{ZMQ_SUBSCRIBE}} if the programming language needs it.
+우리는 당신이 최소한 3.2 버전 이상의 ZeroMQ를 사용하고 리눅스 장비나 일부 이와 유사한 것을 사용하는 중이라고 가정한다. 또한 당신이 예제를 위한 기본 언어인 C 코드를 읽을 수 있다고도 가정한다. 또한 우리가 PUSH나 SUBSCRIBE와 같은 상수를 사용할 때 프로그래밍 언어에 따라 실제로는 이것을 {{ZMQ_PUSH}}나 {{ZMQ_SUBSCRIBE}}라고 부르는 것을 떠올릴 수 있다고 가정한다.
+
+++ Getting the Examples
+++ 예제 얻기
+
+The examples live in a public [https://github.com/imatix/zguide GitHub repository]. The simplest way to get all the examples is to clone this repository:
+이 예제들은 공개 [https://github.com/imatix/zguide GitHub 저장소] 에 있다. 모든 예제를 가져오는 가장 간단한 방법은 이 저장소를 복제하는 것이다.
+
+[[code]]
+git clone --depth=1 https://github.com/imatix/zguide.git
+[[/code]]
+
+Next, browse the examples subdirectory. You'll find examples by language. If there are examples missing in a language you use, you're encouraged to [http://zguide.zeromq.org/main:translate submit a translation]. This is how this text became so useful, thanks to the work of many people. All examples are licensed under MIT/X11.
+다음으로, 이 예제들의 하위 디렉터리를 살펴보자. 당신은 언어별 예제들을 찾을 수 있을 것이다. 당신이 사용하는 언어로 된 예제들이 없다면, [http://zguide.zeromq.org/main:translate 변환된 예제를 제출하는 것]을 권한다. 이것이 어떻게 많은 사람들의 작업 덕분에 이 텍스트가 유용하게 되었는가의 이유다. 모든 예제들은 MIT/X11 라이센스 하에 허가된다.
+
+++ Ask and Ye Shall Receive
+++ 구하라 그리하면 얻을 것이다.
+
+So let's start with some code. We start of course with a Hello World example. We'll make a client and a server. The client sends "Hello" to the server, which replies with "World"[figure]. Here's the server in C, which opens a ZeroMQ socket on port 5555, reads requests on it, and replies with "World" to each request:
+이제 몇 가지 코드와 함께 시작해보자. 우리는 Hello World 예제로 코스를 시작한다. 우리는 하나의 클라이언트와 하나의 서버를 만들 것이다. 이 클라이언트는 "Hello"를 서버로 보내고, "World"[figure]를 응답을 받는다. 서버는 C로 되었고, 5555번 포트에 대해 ZeroMQ 소켓을 열여서 요청을 읽은 후에 각 요청에 대해 "World"로 응답한다.
+
+[[code type="example" title="Hello World server" name="hwserver"]]
+[[/code]]
+
+[[code type="textdiagram" title="Request-Reply"]]
+  #------------#
+  |   Client   |
+  +------------+
+  |    REQ     |
+  '---+--------'
+      |    ^
+      |    |
+Hello |    | World
+      |    |
+      v    |
+  .--------+---.
+  |    REP     |
+  +------------+
+  |   Server   |
+  #------------#
+[[/code]]
+
+The REQ-REP socket pair is in lockstep. The client issues {{zmq_send[3]}} and then {{zmq_recv[3]}}, in a loop (or once if that's all it needs). Doing any other sequence (e.g., sending two messages in a row) will result in a return code of -1 from the {{send}} or {{recv}} call. Similarly, the service issues {{zmq_recv[3]}} and then {{zmq_send[3]}} in that order, as often as it needs to.
+REQ-REP 소켓 쌍은 서로가 발을 맞추어 가는 방식이다. 클라이언트는 한 반복문 내에서 {{zmq_send[3]}}을 호출한 뒤에 {{zmq_recv[3]}}을 호출한다 (혹은 필요하다면 한번만). 다른 시퀀스를 수행하는 것 (예를 들어, 한번에 두 개의 메시지를 보내는 것) 은 {{send}} 혹은 {{recv}} 호출로부터 -1의 반환 코드를 얻게될 것이다. 이와 유사하게, 서비스는 필요할 때마다 순서대로 {{zmq_recv[3]}}, {{zmq_send[3]}}을 호출한다.
+
+ZeroMQ uses C as its reference language and this is the main language we'll use for examples. If you're reading this online, the link below the example takes you to translations into other programming languages. Let's compare the same server in C++:
+ZeroMQ는 그 레퍼런스 언어로서 C를 사용하고 우리가 예제들에서 사용할 주 언어다. 당신이 온라인으로 이걸 읽고 있다면, 아래 예제의 링크는 다른 언어로 변환된 예제를 제공한다. 같은 서버 코드를 C++과 비교해보자.
+
+[[code type="example" title="Hello World server" name="hwserver" language="C++"]]
+[[/code]]
+
+You can see that the ZeroMQ API is similar in C and C++. In a language like PHP or Java, we can hide even more and the code becomes even easier to read:
+당신은 C와 C++에서 ZeroMQ API가 유사하다는 것을 볼 수 있다. PHP나 Java와 같은 언어에서, 우리는 코드를 더 읽기 쉽게 만들기 위해서 더 많은 것들을 은닉화할 수 있다.
+
+[[code type="example" title="Hello World server" name="hwserver" language="PHP"]]
+[[/code]]
+
+[[code type="example" title="Hello World server" name="hwserver" language="Java"]]
+[[/code]]
+
+
+The server in other languages:
+다른 언어들에서의 서버 코드:
+
+[[code type="example" title="Hello World server" name="hwserver"]]
+[[/code]]
+
+Here's the client code:
+클라이언트 코드:
+
+[[code type="example" title="Hello World client" name="hwclient"]]
+[[/code]]
+
+Now this looks too simple to be realistic, but ZeroMQ sockets have, as we already learned, superpowers. You could throw thousands of clients at this server, all at once, and it would continue to work happily and quickly. For fun, try starting the client and //then// starting the server, see how it all still works, then think for a second what this means.
+실질적으로 매우 쉽게 보이지만, ZeroMQ 소켓들은 앞서 배운 것과 같이 강력한 힘을 가진다. 수천의 클라이언트들이 이 서버에 한꺼번에 요청해도 빠르고 안정적으로 동작할 것이다. 재미삼아 클라이언트를 먼저 시작하고, //그 후에// 서버를 시작해보자. 이제 모두 여전히 동작하는지 지켜본 후에 이게 의미하는 바를 잠깐 생각해보자.
+
+Let us explain briefly what these two programs are actually doing. They create a ZeroMQ context to work with, and a socket. Don't worry what the words mean. You'll pick it up. The server binds its REP (reply) socket to port 5555. The server waits for a request in a loop, and responds each time with a reply. The client sends a request and reads the reply back from the server.
+이 두 프로그램이 실제로 어떻게 동작하는지를 간단히 설명해보고자 한다. 이들은 동작을 위한 ZeroMQ 컨텍스트와 소켓을 하나 만든다. 이 말이 무엇을 의미하는지는 곧 알게될 테니 신경쓰지 말자. 서버는 자신의 REP(응답) 소켓을 5555번 포트와 묶는다. 서버는 루프 내에서 요청을 대기하고, 요청이 올 때마다 응답한다. 클라이언트는 요청을 보내고 서버로부터 돌아오는 응답을 읽는다.
+
+If you kill the server (Ctrl-C) and restart it, the client won't recover properly. Recovering from crashing processes isn't quite that easy. Making a reliable request-reply flow is complex enough that we won't cover it until [#reliable-request-reply].
+서버를 죽이고 (Ctrl-C) 재시작 한다면, 클라이언트는 정상적으로 복구되지 않을 것이다. 깨진 프로세스로부터 복구를 하는 것은 그리 쉬운 일이 아니다. 신뢰성 있는 요청-응답 흐름을 만드는 것은 우리가 [#reliable-request-reply]를 배우기 까지는 다룰 수 없을 정도로 복잡하다.
+
+There is a lot happening behind the scenes but what matters to us programmers is how short and sweet the code is, and how often it doesn't crash, even under a heavy load. This is the request-reply pattern, probably the simplest way to use ZeroMQ. It maps to RPC and the classic client/server model.
+무대 뒤에서 많은 일들이 일어나지만 프로그래머들이 걱정할 것은 어떻게 짧고 친절한 코드를 만드는지, 그리고 고부하 상태에서 얼마동안 문제가 발생하지 않는지이다. 이것은 요청-응답 패턴이고, 아마 ZeroMQ를 사용하는 가장 쉬운 방법일 것이다. ZeroMQ는 RPC나 고전적인 클라이언트/서버 모델에 해당된다.
+
+++ A Minor Note on Strings
+++ 문자열에 대한 소견
+
+ZeroMQ doesn't know anything about the data you send except its size in bytes. That means you are responsible for formatting it safely so that applications can read it back. Doing this for objects and complex data types is a job for specialized libraries like Protocol Buffers. But even for strings, you need to take care.
+ZeroMQ는 당신이 보내려는 데이터의 바이트 크기에 대하여 어떤 것도 알지 못한다. 이는 애플리케이션이 데이터를 읽어들일 수 있도록 하기 위해 안전하게 포맷팅할 책임이 당신에게 있다는 것이다. 객체와 복잡한 데이터 유형을 포맷팅하는 것은 프로토콜 버퍼처럼 특수화된 라이브러리들의 역할이다. 하지만 문자열이라고 해도 주의할 필요는 있다.
+
+In C and some other languages, strings are terminated with a null byte. We could send a string like "HELLO" with that extra null byte:
+C와 몇몇 다른 언어들에서, 문자열은 널(\0) 바이트로 끝난다. 우리는 "HELLO"와 같은 문자열을 여분의 널 바이트와 함께 보내야 한다:
+
+[[code language="C"]]
+zmq_send (requester, "Hello", 6, 0);
+[[/code]]
+
+However, if you send a string from another language, it probably will not include that null byte. For example, when we send that same string in Python, we do this:
+하지만, 다른 언어에서부터 문자열을 보내려고 한다면 널 바이트를 포함하지 않을 수도 있다. 예를 들어서 파이썬에서 동일한 문자열을 보낼 때 우리는 이렇게 할 것이다:
+
+[[code language="Python"]]
+socket.send ("Hello")
+[[/code]]
+
+Then what goes onto the wire is a length (one byte for shorter strings) and the string contents as individual characters[figure].
+그리고 나서 회선에 올라가는 것은 길이(가장 짧은 문자열 대한 1바이트)와 개별 문자열들의 문자열 내용이다[figure].
+
+[[code type="textdiagram" title="A ZeroMQ string"]]
+#-----#  #-----+-----+-----+-----+-----#
+|  5  |  |  H  |  e  |  l  |  l  |  o  |
+#-----#  #-----+-----+-----+-----+-----#
+[[/code]]
+
+And if you read this from a C program, you will get something that looks like a string, and might by accident act like a string (if by luck the five bytes find themselves followed by an innocently lurking null), but isn't a proper string. When your client and server don't agree on the string format, you will get weird results.
+그리고 C 프로그램으로부터 이것을 읽는다면, 보이는 것과 같은 문자열을 얻을 것이며, 어쩌다보면 정상적인 문자열처럼 동작할 수도 있다 (운좋게도 무의식적으로 숨어있는 널 바이트가 뒤따르는 5바이트를 찾는다면), 하지만 이는 적절한 문자열은 아니다. 클라이언트와 서버가 문자열 포맷을 허용하지 않는다면 이상한 결과를 얻게될 것이다.
+
+When you receive string data from ZeroMQ in C, you simply cannot trust that it's safely terminated. Every single time you read a string, you should allocate a new buffer with space for an extra byte, copy the string, and terminate it properly with a null.
+C에서 ZeroMQ로부터 문자열 데이터를 수신한다면, 그것이 안전하게 종료되었다는 것을 신뢰할 수 없다. 문자열을 읽을 경우에는 항상 여분의 바이트에 대한 공간을 포함하는 새로운 버퍼를 할당하고, 문자열을 복사하고, 이것이 정확히 널로 끝나도록 할 필요가 있다.
+
+So let's establish the rule that **ZeroMQ strings are length-specified and are sent on the wire //without// a trailing null**. In the simplest case (and we'll do this in our examples), a ZeroMQ string maps neatly to a ZeroMQ message frame, which looks like the above figure--a length and some bytes.
+**ZeroMQ 문자열은 지정된 길이를 가지며, 널을 붙이지 않고 회선 상에 송신된다**는 규칙을 명확히 하자. 가장 단순한 경우 (우리는 이 경우를 예제에서 살펴볼 것이다.), 하나의 ZeroMQ 문자열은 하나의 ZeroMQ 메시지 프레임과 깔끔하게 사상되고, 이것은 위에 있는 그림에서 본 것과 같다.
+
+Here is what we need to do, in C, to receive a ZeroMQ string and deliver it to the application as a valid C string:
+여기 ZeroMQ 문자열을 수신하고 유효한 C 문자열로 애플리케이션에 발송하기 위해 필요한 C 코드가 있다.
+
+[[code language="C"]]
+//  Receive ZeroMQ string from socket and convert into C string
+//  Chops string at 255 chars, if it's longer
+static char *
+s_recv (void *socket) {
+    char buffer [256];
+    int size = zmq_recv (socket, buffer, 255, 0);
+    if (size == -1)
+        return NULL;
+    if (size > 255)
+        size = 255;
+    buffer [size] = 0;
+    return strdup (buffer);
+}
+[[/code]]
+
+This makes a handy helper function and in the spirit of making things we can reuse profitably, let's write a similar {{s_send}} function that sends strings in the correct ZeroMQ format, and package this into a header file we can reuse.
+이것은 재사용성 측면에서 유익한 도움 함수를 만든다. 이제 이와 유사하게 정확한 ZeroMQ 포맷으로 문자열을 송신하는 {{s_send}} 함수를 만들고, 이것을 우리가 재사용할 수 있는 헤더 파일 내에 패키징 해보자.
+
+The result is {{zhelpers.h}}, which lets us write sweeter and shorter ZeroMQ applications in C. It is a fairly long source, and only fun for C developers, so [https://github.com/imatix/zguide/blob/master/examples/C/zhelpers.h read it at leisure].
+그 결과물은 우리가 C에서 달콤하고 짧은 ZeroMQ 애플리케이션을 작성할 수 있도록 하는 {{zhelpers.h}}이다. 이건 꽤나 긴 소스이고 C 개발자들에게만 재미있게 느껴질 것이다. 그러니 [https://github.com/imatix/zguide/blob/master/examples/C/zhelpers.h 한가할 때에나 읽어보도록 하자].
+
+++ Version Reporting
+++ 버전 리포팅
+
+ZeroMQ does come in several versions and quite often, if you hit a problem, it'll be something that's been fixed in a later version. So it's a useful trick to know //exactly// what version of ZeroMQ you're actually linking with.
+ZeroMQ는 여러 버전들로 제공되고, 문제가 발생하면 차후 버전에서 수정될 것이다. 따라서 자신이 실제로 링킹하는 ZeroMQ의 버전이 무엇인지 아는 것이 유용하다.
+
+Here is a tiny program that does that:
+여기에 이와 같은 것을 수행하는 작은 프로그램이 있다.
+
+[[code type="example" title="ZeroMQ version reporting" name="version"]]
+[[/code]]
+
+++ Getting the Message Out
+++ 메시지 가져오기
+
+The second classic pattern is one-way data distribution, in which a server pushes updates to a set of clients. Let's see an example that pushes out weather updates consisting of a zip code, temperature, and relative humidity. We'll generate random values, just like the real weather stations do.
+두번째 고전적인 패턴은 한 서버가 여러 클라이언트들에게 갱신을 전달하는 단방향 데이터 분산이다. 우편 번호, 기온, 그리고 상대 습도로 구성된 정보를 전달하는 예제를 보자. 이 예제에서 우리는 실제 기상 관측소처럼 임의 값들을 만들어낼 것이다.
+
+Here's the server. We'll use port 5556 for this application:
+다음은 서버 애플리케이션이다. 우리는 이 애플리케이션을 위해서 5556번 포트를 사용할 것이다.
+
+[[code type="example" title="Weather update server" name="wuserver"]]
+[[/code]]
+
+There's no start and no end to this stream of updates, it's like a never ending broadcast[figure].
+이 서버는 무중단 브로드캐스팅처럼 갱신된 정보의 스트림에 대한 시작과 종료가 없다[figure].
+
+Here is the client application, which listens to the stream of updates and grabs anything to do with a specified zip code, by default New York City because that's a great place to start any adventure:
+다음은 지정된 우편번호를 갖는 모든 갱신된 정보의 스트림을 청취하는 클라이언트 애플리케이션이다. 기본값으로는 모험을 시작하기에 좋은 장소인 뉴욕이다.
+
+[[code type="example" title="Weather update client" name="wuclient"]]
+[[/code]]
+
+[[code type="textdiagram" title="Publish-Subscribe"]]
+               #-------------#
+               |  Publisher  |
+               +-------------+
+               |     PUB     |
+               '-------------'
+                    bind
+                      |
+                      |
+                   updates
+                      |
+      .---------------+---------------.
+      |               |               |
+   updates         updates         updates
+      |               |               |
+      |               |               |
+      v               v               v
+   connect         connect         connect
+.------------.  .------------.  .------------.
+|    SUB     |  |    SUB     |  |    SUB     |
++------------+  +------------+  +------------+
+| Subscriber |  | Subscriber |  | Subscriber |
+#------------#  #------------#  #------------#
+[[/code]]
+
+Note that when you use a SUB socket you **must** set a subscription using {{zmq_setsockopt[3]}} and SUBSCRIBE, as in this code. If you don't set any subscription, you won't get any messages. It's a common mistake for beginners. The subscriber can set many subscriptions, which are added together. That is, if an update matches ANY subscription, the subscriber receives it. The subscriber can also cancel specific subscriptions. A subscription is often, but not necessarily a printable string. See {{zmq_setsockopt[3]}} for how this works.
+참고로 SUB 소켓을 사용할 때에는 이 코드와 마찬가지로 {{zmq_setsockopt[3]}}과 SUBSCRIBE를 사용하여 구독을 설정해야만 한다. 구독에 대한 설정을 하지 않는다면, 어떤 메시지도 가져올 수 없을 것이다. 이는 초보자들이 흔히 하는 실수다. 구독자는 여러 구독을 함께 추가하여 설정할 수 있다. 다시 말해서, 갱신 정보가 어떤 구독 설정과 일치한다면, 구독자는 그 정보를 수신할 수 있다. 또한 구독자는 지정된 구독 설정을 취소할 수도 있다. 출력 가능할 문자열로 구독 식별자를 설정할 수 있지만 항상 그래야 하는 것은 아니다.
+
+The PUB-SUB socket pair is asynchronous. The client does {{zmq_recv[3]}}, in a loop (or once if that's all it needs). Trying to send a message to a SUB socket will cause an error. Similarly, the service does {{zmq_send[3]}} as often as it needs to, but must not do {{zmq_recv[3]}} on a PUB socket.
+PUB-SUB 소켓 쌍은 비동기적이다. 클라이언트는 루프 내에서 (혹은 필요하다면 한번만) {{zmq_recv[3]}}을 수행한다. SUB 소켓으로 송신을 시도하는 것은 오류를 일으킬 것이다. 유사하게, 이 서비스도 마찬가지로 필요에 따라 {{zmq_send[3]}}를 수행하지만, PUB 소켓 상에서 {{zmq_recv[3]}}을 수행하면 안된다.
+
+In theory with ZeroMQ sockets, it does not matter which end connects and which end binds. However, in practice there are undocumented differences that I'll come to later. For now, bind the PUB and connect the SUB, unless your network design makes that impossible.
+이론적으로 ZeroMQ 소켓은 어떤 것이 연결되고 어떤 것이 바인드되는 지에 대해 신경 쓸 필요가 없다. 하지만, 실제로는 문서화되지 않은 차이점들이 있는데, 이는 차후에 볼 것이다. 지금은 네트워크 설계 상으로 불가능한 경우가 아닌 이상은 PUB를 바인드하고 SUB를 연결한다.
+
+There is one more important thing to know about PUB-SUB sockets: you do not know precisely when a subscriber starts to get messages. Even if you start a subscriber, wait a while, and then start the publisher, **the subscriber will always miss the first messages that the publisher sends**. This is because as the subscriber connects to the publisher (something that takes a small but non-zero time), the publisher may already be sending messages out.
+PUB-SUB 소켓들에 대해 알아야 할 중요한 것이 하나가 더 있다: 구독자가 메시지들을 언제 가져오는지를 정확하게 알지 못한다. 구독자를 시작하고 잠시 기다리고 나서 발행자를 시작했더라도, **구독자는 발행자가 보내는 첫번째 메시지들을 항상 놓칠 것이다**. 이것은 구독자가 발행자에 연결하면 (작지만 0이 아닌 시간이 걸림), 발행자는 이미 메시지들을 보내는 중일 수도 있기 때문이다.
+
+This "slow joiner" symptom hits enough people often enough that we're going to explain it in detail. Remember that ZeroMQ does asynchronous I/O, i.e., in the background. Say you have two nodes doing this, in this order:
+이러한 "느린 참가자" 증상은 이 증상을 상세하게 설명할 정도로 사람들이 빈번하게 겪는 것이다. ZeroMQ가 백그라운드에서 비동기 입출력을 한다는 것을 기억하자. 아래와 같은 순서로 작업을 수행하는 두 노드가 있다고 가정해보자.
+
+* Subscriber connects to an endpoint and receives and counts messages.
+* Publisher binds to an endpoint and immediately sends 1,000 messages.
+* 구독자는 종단점에 연결하여 메시지들을 수신하고 그 개수를 센다.
+* 발행자는 종단점에 바인드하여 즉시 1,000개의 메시지들을 송신한다.
+
+Then the subscriber will most likely not receive anything. You'll blink, check that you set a correct filter and try again, and the subscriber will still not receive anything.
+그리고 나서 구독자는 아무 것도 수신하지 않을 것이다. 당신은 눈을 꿈뻑거릴 것이고, 정확한 필터를 설정했는지 확인하고 다시 시도할 것이다. 그래도 여전히 구독자는 아무 것도 수신하지 않을 것이다.
+
+Making a TCP connection involves to and from handshaking that takes several milliseconds depending on your network and the number of hops between peers. In that time, ZeroMQ can send many messages. For sake of argument assume it takes 5 msecs to establish a connection, and that same link can handle 1M messages per second. During the 5 msecs that the subscriber is connecting to the publisher, it takes the publisher only 1 msec to send out those 1K messages.
+TCP 연결을 만드는 것은 네트워크와 피어들 사이가 몇 홉(hop)인지에 따라 몇 밀리 초가 소요되는 핸드셰이킹을 수반한다. 이 때, ZeroMQ는 다량의 메시지들을 송신할 수 있다. 논증을 위해서 연결을 확립하는데 5 밀리 초가 소요되고, 동일한 연결이 초당 1M 개의 메시지를 처리할 수 있다고 가정해보자. 구독자가 발행자에 연결하는 5 밀리 초 동안에, 발행자가 1K 개의 메시지들을 보내는 것에는 단 1 밀리 초가 소요된다.
+
+In [#sockets-and-patterns] we'll explain how to synchronize a publisher and subscribers so that you don't start to publish data until the subscribers really are connected and ready. There is a simple and stupid way to delay the publisher, which is to sleep. Don't do this in a real application, though, because it is extremely fragile as well as inelegant and slow. Use sleeps to prove to yourself what's happening, and then wait for [#sockets-and-patterns] to see how to do this right.
+[#sockets-and-patterns]에서 우리는 구독자들이 실제로 연결하여 준비가 완료되기 전까지 데이터를 발행하지 않도록 하기 위해서 어떻게 발행자와 구독자들을 동기화하는지를 설명할 것이다. 발행자를 지연시키기 위한 간단하고 멍청한 방법으로 sleep이 있다. 하지만 매우 느리고 취약하기 때문에 실제 애플리케이션에서는 이런 방법을 사용하지 않도록 해야 한다.
+
+The alternative to synchronization is to simply assume that the published data stream is infinite and has no start and no end. One also assumes that the subscriber doesn't care what transpired before it started up. This is how we built our weather client example.
+동기화의 대안은 단순히 발행되는 데이터 스트림이 시작과 끝이 없으며 무한하다고 가정하는 것이다. 또 하나는 구독자가 시작되기 이전에 무엇이 일어났는지를 신경쓰지 않는다는 가정이다. 이 두 가정이 날씨 클라이언트 예제를 작성한 방법이다.
+
+So the client subscribes to its chosen zip code and collects 100 updates for that zip code. That means about ten million updates from the server, if zip codes are randomly distributed. You can start the client, and then the server, and the client will keep working. You can stop and restart the server as often as you like, and the client will keep working. When the client has collected its hundred updates, it calculates the average, prints it, and exits.
+따라서 클라이언트는 선택한 우편 번호를 구독하고 그에 대한 100개의 갱신을 수집한다. 이는 무작위로 분산된 우편 번호에 대해 서버로부터 천만 건의 갱신이 발생함을 뜻한다. 당신은 클라이언트를 시작하고 나서 서버를 시작하고, 클라이언트는 계속 작업을 수행할 것이다. 원한다면 서버를 중지하고 재시작할 수 있고, 클라이언트는 계속 동작할 것이다. 클라이언트가 1000건의 갱신을 수집한 시점에 평균을 계산하여 출력하고 종료한다.
+
+Some points about the publish-subscribe (pub-sub) pattern:
+발행-구독(pub-sub) 패턴에 대한 몇 가지 사항:
+
+* A subscriber can connect to more than one publisher, using one connect call each time. Data will then arrive and be interleaved ("fair-queued") so that no single publisher drowns out the others.
+* 구독자는 하나 이상의 발행자 각각에 대해 연결 호출을 사용하여 연결할 수 있다. 데이터는 그 뒤에 도착하고 단일 발행자가 다른 발행자들을 누락시키지 않게 하기 위해서 인터리브된다("공정 큐잉").
+
+* If a publisher has no connected subscribers, then it will simply drop all messages.
+* 발행자에 연결된 구독자들이 없다면, 발행자는 모든 메시지들을 버릴 것이다.
+
+* If you're using TCP and a subscriber is slow, messages will queue up on the publisher. We'll look at how to protect publishers against this using the "high-water mark" later.
+* TCP를 사용하고 구독자가 느리다면, 메시지들은 발행자 상에서 큐잉될 것이다. "최고 수위선"을 사용하여 발행자들을 보호하는 방법에 대하여 나중에 살펴볼 것이다.
+
+* From ZeroMQ v3.x, filtering happens at the publisher side when using a connected protocol ({{tcp:@<//>@}} or {{ipc:@<//>@}}). Using the {{epgm:@<//>@}} protocol, filtering happens at the subscriber side. In ZeroMQ v2.x, all filtering happened at the subscriber side.
+* ZeroMQ v3.x부터, 연결 지향 프로토콜({{tcp:@<//>@}}나 {{ipc:@<//>@}})을 사용할 때의 메시지 필터링은 발행자 측에서 이루어진다. {{epgm:@<//>@}} 프로토콜을 사용할 때에는 구독자 측에서 필터링이 이루어진다. ZeroMQ v2.x에서는 모든 필터링이 구독자 측에서 이루어진다.
+
+This is how long it takes to receive and filter 10M messages on my laptop, which is an 2011-era Intel i5, decent but nothing special:
+다음은 2011년 인텔 i5의 무난한 성능의 내 랩탑에서 10M 개의 메시지들을 수신하고 필터링하는데 걸리는 시간이다.
+
+[[code]]
+$ time wuclient
+Collecting updates from weather server...
+Average temperature for zipcode '10001 ' was 28F
+
+real    0m4.470s
+user    0m0.000s
+sys     0m0.008s
+[[/code]]
+
+++ Divide and Conquer
+++ 분할 정복
+
+[[code type="textdiagram" title="Parallel Pipeline"]]
+            #-------------#
+            |  Ventilator |
+            +-------------+
+            |    PUSH     |
+            '------+------'
+                   |
+                 tasks
+                   |
+      .------------+-------------.
+      |            |             |
+      v            v             v
+.----------.  .----------.  .----------.
+|   PULL   |  |   PULL   |  |   PULL   |
++----------+  +----------+  +----------+
+|  Worker  |  |  Worker  |  |  Worker  |
++----------+  +----------+  +----------+
+|   PUSH   |  |   PUSH   |  |   PUSH   |
+'----+-----'  '----+-----'  '----+-----'
+      |            |             |
+      '------------+-------------'
+                   |
+                results
+                   |
+                   v
+            .-------------.
+            |    PULL     |
+            +-------------+
+            |    Sink     |
+            #-------------#
+[[/code]]
+
+As a final example (you are surely getting tired of juicy code and want to delve back into philological discussions about comparative abstractive norms), let's do a little supercomputing. Then coffee. Our supercomputing application is a fairly typical parallel processing model[figure]. We have:
+마지막 예제에 따라 (당신은 물렁한 코드에 질려서 비교적 추상적인 표준에 대한 언어학적 논의로 돌아가고 싶어하고 있을 것이다), 작게나마 커피와 함께 슈퍼 컴퓨팅을 해보자. 우리의 슈퍼컴퓨팅 애플리케이션은 매우 전형적인 병렬 처리 모델[figure]이다. 이것은 다음과 같은 것을 갖는다.
+
+* A ventilator that produces tasks that can be done in parallel
+* A set of workers that process tasks
+* A sink that collects results back from the worker processes
+
+* 병렬로 수행될 수 있늑 작업들을 생산하는 선별자(ventilator)
+* 작업들을 처리하는 작업자(worker)
+* 작업자 프로세스들로부터 결과를 수집하는 동기자(sink)
+
+In reality, workers run on superfast boxes, perhaps using GPUs (graphic processing units) to do the hard math. Here is the ventilator. It generates 100 tasks, each a message telling the worker to sleep for some number of milliseconds:
+실제로, 작업자들은 GPU(그래픽 연산 장치)와 같은 무거운 연산을 하기 위한 초고속 장비에서 실행된다. 선별자를 보자. 이 녀석은 100개의 작업들을 생성하고, 작업자에게 몇 밀리 초 동안 휴면하기 위한 각 메시지를 보낸다.
+
+[[code type="example" title="Parallel task ventilator" name="taskvent"]]
+[[/code]]
+
+Here is the worker application. It receives a message, sleeps for that number of seconds, and then signals that it's finished:
+작업자 애플리케이션을 보자. 하나의 메시지를 수신하고, 해당 초 동안 휴면한 뒤에 완료됐음을 알린다.
+
+[[code type="example" title="Parallel task worker" name="taskwork"]]
+[[/code]]
+
+Here is the sink application. It collects the 100 tasks, then calculates how long the overall processing took, so we can confirm that the workers really were running in parallel if there are more than one of them:
+동기자 애플리케이션을 보자. 100개의 작업들을 수집하고 나서 전체 처리에 얼마나 소요됐는지를 계산함으로써 우리는 작업자들이 하나 이상이 존재한다면 그들이 실제로 병렬적으로 수행되었는지 확인할 수 있다.
+
+[[code type="example" title="Parallel task sink" name="tasksink"]]
+[[/code]]
+
+The average cost of a batch is 5 seconds. When we start 1, 2, or 4 workers we get results like this from the sink:
+한 일괄 작업의 평균 비용은 5초다. 1, 2 또는 4개의 작업자들을 시작했을 때, 동기자로부터 다음과 같은 결과를 얻게 된다.
+
+* 1 worker: total elapsed time: 5034 msecs.
+* 2 workers: total elapsed time: 2421 msecs.
+* 4 workers: total elapsed time: 1018 msecs.
+
+Let's look at some aspects of this code in more detail:
+이 코드의 몇 가지 측면을 자세하게 확인해보자:
+
+* The workers connect upstream to the ventilator, and downstream to the sink. This means you can add workers arbitrarily. If the workers bound to their endpoints, you would need (a) more endpoints and (b) to modify the ventilator and/or the sink each time you added a worker. We say that the ventilator and sink are //stable// parts of our architecture and the workers are //dynamic// parts of it.
+* 작업자들은 선별자의 업스트림에 연결하고, 동기자의 다운스트림에 연결한다. 이는 임의로 작업자들을 추가할 수 있다는 것을 뜻한다. 작업자들이 종점에 바인드됐다면, (a) 많은 종점들과 (b) 작업자를 추가할 때마다 선별자 혹은(그리고) 동기자를 수정할 필요가 있을 것이다. 우리는 이 아키텍처에서 선별자와 동기자가 //정적인// 부분이며, 작업자들은 //동적인// 부분이라고 말한다.
+
+* We have to synchronize the start of the batch with all workers being up and running. This is a fairly common gotcha in ZeroMQ and there is no easy solution. The {{zmq_connect}} method takes a certain time. So when a set of workers connect to the ventilator, the first one to successfully connect will get a whole load of messages in that short time while the others are also connecting. If you don't synchronize the start of the batch somehow, the system won't run in parallel at all. Try removing the wait in the ventilator, and see what happens.
+* 배치 작업의 시작을 모든 동작 중인 작업자들과 함께 동기화 해야 한다. 이것은 ZeroMQ에서 꽤나 흔한 잡일이고, 여기엔 쉬운 해결책이 없다. {{zmq_connect}} 메서드는 일정 시간이 소요된다. 그래서 작업자들이 선별자에 연결할 때, 성공적으로 연결된 첫번째 작업자는 다른 작업자들이 연결되는 짧은 시간 동안 모든 메시지들의 부하를 부담하게 된다. 어떤 식으로든 일괄 작업의 시작을 동기화하지 않으면 시스템은 모두를 병렬적으로 수행할 수 없을 것이다. 선별자에서의 대기를 제거하고 어떤 일이 일어나는지 확인해보자.
+
+* The ventilator's PUSH socket distributes tasks to workers (assuming they are all connected //before// the batch starts going out) evenly. This is called //load balancing// and it's something we'll look at again in more detail.
+* 선별자들의 PUSH 소켓은 작업들을 작업자들에게 균등하게 분배한다 (배치를 시작하기 //전에// 모든 작업자들이 연결됐다고 가정하고). 이를 //부하 분산//이라고 부르고 자세한 것은 다음에 볼 것이다.
+
+* The sink's PULL socket collects results from workers evenly. This is called //fair-queuing//[figure].
+* 동기자의 PULL 소켓은 작업자들로부터 결과를 균등하게 수집한다. 이것을 //공정-큐잉//이라고 부른다[figure].
+
+[[code type="textdiagram" title="Fair Queuing"]]
+#---------#   #---------#   #---------#
+|  PUSH   |   |  PUSH   |   |  PUSH   |
+'----+----'   '----+----'   '----+----'
+     |             |             |
+ R1, R2, R3       R4           R5, R6
+     |             |             |
+     '-------------+-------------'
+                   |
+               공정-큐잉
+         R1, R4, R5, R2, R6, R3
+                   |
+                   v
+            .-------------.
+            |     PULL    |
+            #-------------#
+[[/code]]
+
+The pipeline pattern also exhibits the "slow joiner" syndrome, leading to accusations that PUSH sockets don't load balance properly. If you are using PUSH and PULL, and one of your workers gets way more messages than the others, it's because that PULL socket has joined faster than the others, and grabs a lot of messages before the others manage to connect. If you want proper load balancing, you probably want to look at the load balancing pattern in [#advanced-request-reply].
+또한 파이프라인 패턴은 "느린 참여자" 증상을 보여주고, PUSH 소켓이 적절히 부하 분산을 하지 못하는 문제를 유발한다. PUSH와 PULL 소켓을 사용하는 중이라면, worker들 중 하나는 다른 작업자들보다 많은 메시지를 얻게 되고, 이는 PULL 소켓이 다른 작업자들보다 상대적으로 빠르게 참여되서 더 많은 메시지를 가져오는 이유다. 적절한 부하 분산을 하고 싶다면, [#advanced-request-reply]의 부하 분산 패턴을 보길 권한다.
+
+++ Programming with ZeroMQ
+++ ZeroMQ와 프로그래밍
+
+Having seen some examples, you must be eager to start using ZeroMQ in some apps. Before you start that, take a deep breath, chillax, and reflect on some basic advice that will save you much stress and confusion.
+앞선 몇 가지의 예제를 보았을 때, 당신은 애플리케이션에서 ZeroMQ를 사용하고 싶을 것이다. 시작하기에 앞서, 숨을 깊게 들이 쉬어 긴장을 풀고 몇몇 기본적인 충고들을 되새기는 것이 스트레스와 혼란을 줄여줄 것이다.
+
+* Learn ZeroMQ step-by-step. It's just one simple API, but it hides a world of possibilities. Take the possibilities slowly and master each one.
+* ZeroMQ를 단계 별로 배우자. 단지 하나의 단순한 API일 뿐이지만 가능성의 세계를 숨긴다. 조심스레 이 가능성을 갖고 각각을 하나씩 습득하자.
+
+* Write nice code. Ugly code hides problems and makes it hard for others to help you. You might get used to meaningless variable names, but people reading your code won't. Use names that are real words, that say something other than "I'm too careless to tell you what this variable is really for". Use consistent indentation and clean layout. Write nice code and your world will be more comfortable.
+* 훌륭한 코드를 작성하자. 추한 코드는 문제들을 숨겨서 다른 이들이 당신을 돕는 것을 어렵게 만든다. 당신은 의미 없는 변수 이름에 익숙해졌을 수도 있지만 이러한 코드는 사람들 읽지 않을 것이다. 실제 단어인 이름들을 사용해라. 이는 다른 사람들에게 "저는 이 변수가 실제로 무엇을 위한 것인지 당신에게 말하기 위해 많이 신경 썼어요."라는 말을 대신한다. 일관성 있는 들여쓰기와 깔끔한 레이아웃을 사용하라. 좋은 코드를 작성하면 당신의 세상이 좀 더 편해질 것이다.
+
+* Test what you make as you make it. When your program doesn't work, you should know what five lines are to blame. This is especially true when you do ZeroMQ magic, which just //won't// work the first few times you try it.
+* 만드는 과정에서 검수해라. 당신의 프로그램이 동작하지 않을 때, 문제가 되는 다섯 줄을 알아야 한다. 이렇게 하는 것은 ZeroMQ라는 마법을 쓸 때의 정답이며, 이 과정에서 단지 처음 몇 번만 동작하지 //않을// 것이다.
+
+* When you find that things don't work as expected, break your code into pieces, test each one, see which one is not working. ZeroMQ lets you make essentially modular code; use that to your advantage.
+* 기대한 대로 동작하지 않는 것을 찾을 때, 코드를 조각으로 나누고, 각각을 검수하고, 어떤 것이 동작하지 않는 지를 확인해라. ZeroMQ는 필수불가결하게 모듈식의 코드를 작성하도록 한다; 이것을 유리하게 사용하자.
+
+* Make abstractions (classes, methods, whatever) as you need them. If you copy/paste a lot of code, you're going to copy/paste errors, too.
+* 필요에 따라 추상화를 해라. 많은 코드를 복사/붙여넣기를 한다면, 그만큼의 오류들을 복사/붙여넣기하는 것이다.
+
++++ Getting the Context Right
++++ 컨텍스트 바르게 얻기
+
+ZeroMQ applications always start by creating a //context//, and then using that for creating sockets. In C, it's the {{zmq_ctx_new[3]}} call. You should create and use exactly one context in your process. Technically, the context is the container for all sockets in a single process, and acts as the transport for {{inproc}} sockets, which are the fastest way to connect threads in one process. If at runtime a process has two contexts, these are like separate ZeroMQ instances. If that's explicitly what you want, OK, but otherwise remember:
+ZeroMQ 애플리케이션들은 항상 //컨텍스트//를 만드는 것으로 시작하고, 소켓들을 만들기 위해 이를 사용한다. C에서는 {{zmq_ctx_new[3]}} 호출이다. 프로세스 내에서 정확히 하나의 컨텍스트를 만들어서 사용해야 한다. 기술적으로, 컨텍스트는 단일 프로세스 내에서의 모든 소켓들을 위한 컨테이너이고, 한 프로세스 내의 스레드들을 연결하는 가장 빠른 방법이기도 한 {{inproc}} 소켓들을 위한 전송 수단으로서 동작한다. 실행 시간에 한 프로세스가 두 개의 컨텍스트들을 가지게 된다면, 이들은 별개의 ZeroMQ 인스턴스들로 분리된 것처럼 된다. 이런 동작을 의도한 것이라면 상관 없지만, 이것만큼은 기억해야 한다:
+
+**Call {{zmq_ctx_new[3]}} once at the start of a process, and {{zmq_ctx_destroy[3]}} once at the end.**
+**프로세스가 시작할 때 {{zmq_ctx_new[3]}}를 한번 호출하고, 종료될 때에 {{zmq_ctx_destroy[3]}}을 한번 호출해라.**
+
+If you're using the {{fork()}} system call, do {{zmq_ctx_new[3]}} //after// the fork and at the beginning of the child process code. In general, you want to do interesting (ZeroMQ) stuff in the children, and boring process management in the parent.
+{{fork()}} 시스템 콜을 사용하는 중이라면, 프로세스 복제가 //끝난 후에// 자식 프로세스 코드의 시작 지점에서 {{zmq_ctx_new[3]}}를 호출해라. 일반적으로는 자식 프로세스 내에서 흥미로운 것(ZeroMQ)을 하고, 따분한 것들을 부모 프로세스에서 관리하고 싶을 것이다.
+
++++ Making a Clean Exit
++++ 깔끔한 종료
+
+Classy programmers share the same motto as classy hit men: always clean-up when you finish the job. When you use ZeroMQ in a language like Python, stuff gets automatically freed for you. But when using C, you have to carefully free objects when you're finished with them or else you get memory leaks, unstable applications, and generally bad karma.
+능숙한 프로그래머들은 그에 맞는 모토를 공유한다.: 항상 작업을 마칠 때 청소를 한다. 파이썬과 같은 언어에서 ZeroMQ를 쓸 때, 사용된 자원들은 자동으로 할당이 해제된다. 하지만 C를 사용할 때에는, 작업을 마칠 때 객체들을 할당 해제하는 것에 주의를 기울여야 한다. 그렇지 않으면 메모리 누수, 불안정한 애플리케이션과 같은 악업을 쌓게 된다.
+
+Memory leaks are one thing, but ZeroMQ is quite finicky about how you exit an application. The reasons are technical and painful, but the upshot is that if you leave any sockets open, the {{zmq_ctx_destroy[3]}} function will hang forever. And even if you close all sockets, {{zmq_ctx_destroy[3]}} will by default wait forever if there are pending connects or sends unless you set the LINGER to zero on those sockets before closing them.
+메모리 누수도 이러한 악업의 한 가지이지만, ZeroMQ는 애플리케이션을 종료하는 방법에 있어서 매우 까탈스러운 편이다. 그 이유는 소켓을 열어두면 {{zmq_ctx_destroy[3]}} 함수가 영원히 멈추게 되기 때문이다. 그리고 모든 소켓을 닫았을 지라도, {{zmq_ctx_destroy[3]}}는 LINGER를 0으로 설정하지 않은 상태에서의 송신이 지연 중이라면 영원히 연결이나 소켓들을 닫히길 기다리는 것이 기본 동작이다.
+
+The ZeroMQ objects we need to worry about are messages, sockets, and contexts. Luckily it's quite simple, at least in simple programs:
+우리가 걱정해야 할 ZeroMQ 객체들에는 메시지, 소켓, 컨텍스트가 있다. 다행히도 이들은 꽤나 단순하다. 적어도 단순한 프로그램 내에서는:
+
+* Use {{zmq_send[3]}} and {{zmq_recv[3]}} when you can, as it avoids the need to work with zmq_msg_t objects.
+* 가능한 {{zmq_send[3]}}와 {{zmq_recv[3]}}를 사용하라. 이들은 zmq_msg_t 객체와 동작할 필요성을 피할 수 있다.
+
+* If you do use {{zmq_msg_recv[3]}}, always release the received message as soon as you're done with it, by calling {{zmq_msg_close[3]}}.
+* {{zmq_msg_recv[3]}}을 사용한다면, 항상 수신한 메시지를 다 사용한 즉시 {{zmq_msg_close[3]}}을 호출하여 해제하라.
+
+* If you are opening and closing a lot of sockets, that's probably a sign that you need to redesign your application. In some cases socket handles won't be freed until you destroy the context.
+* 많은 수의 소켓들을 열거나 닫는 중이라면, 애플리케이션을 다시 설계할 필요가 있다는 신호일 수도 있다. 어떤 경우에는 컨텍스트를 파기하기 전까지는 소켓 핸들을 할당 해제할 수 없을 것이다.
+
+* When you exit the program, close your sockets and then call {{zmq_ctx_destroy[3]}}. This destroys the context.
+* 프로그램을 종료할 때, 소켓들을 닫고 나서 {{zmq_ctx_destroy[3]}}을 호출하라. 이 함수는 컨텍스트를 소멸시킨다.
+
+This is at least the case for C development. In a language with automatic object destruction, sockets and contexts will be destroyed as you leave the scope. If you use exceptions you'll have to do the clean-up in something like a "final" block, the same as for any resource.
+이것은 적어도 C 개발에서의 경우다. 자동 객체 소멸을 제공하는 언어에서는, 소켓과 컨텍스트는 해당 스코프를 벗어날 때에 소멸될 것이다. 예외 처리를 사용한다면 "final"과 같은 블록에서 반드시 모든 자원에 대한 청소를 해야할 것이다.
+
+If you're doing multithreaded work, it gets rather more complex than this. We'll get to multithreading in the next chapter, but because some of you will, despite warnings, try to run before you can safely walk, below is the quick and dirty guide to making a clean exit in a //multithreaded// ZeroMQ application.
+다중 스레드 환경에서 작업을 한다면, 훨씬 복잡해진다. 우리는 다음 장에서 다중 스레딩을 처리하는 방법을 알아볼 것이지만, 일부는 이러한 것을 할 것이기에 경고에도 불구하고 안전하게 사용할 수 있기 전에 이를 해볼 것이다. 아래는 //다중 스레드// ZeroMQ 애플리케이션을 깔끔하게 종료하는 빠르고 지저분한 지침이다.
+
+First, do not try to use the same socket from multiple threads. Please don't explain why you think this would be excellent fun, just please don't do it. Next, you need to shut down each socket that has ongoing requests. The proper way is to set a low LINGER value (1 second), and then close the socket. If your language binding doesn't do this for you automatically when you destroy a context, I'd suggest sending a patch.
+첫째로, 여러 스레드들에서 같은 소켓을 사용하지 않도록 한다. 왜 자신은 이렇게 하는 것이 훌륭한지 생각한다고 설명하려고 하지 말고, 그냥 하지 마라. 다음은, 진행 중인 요청이 있는 소켓을 종료할 필요가 있다. 적합한 방법은 LINGER 값을 낮게(1초) 설정하고, 소켓을 닫는 것이다. 사용 중인 언어의 ZeroMQ 바인딩이 컨텍스트를 파기할 때 자동으로 이런 일을 해주지 않는다면, 패치를 보내줄 것을 제안하고 싶다.
+
+Finally, destroy the context. This will cause any blocking receives or polls or sends in attached threads (i.e., which share the same context) to return with an error. Catch that error, and then set linger on, and close sockets in //that// thread, and exit. Do not destroy the same context twice. The {{zmq_ctx_destroy}} in the main thread will block until all sockets it knows about are safely closed.
+끝으로, 컨텍스트를 소멸시켜라. 이는 부착된 스레드들(다시 말해서, 같은 컨텍스트를 공유하는)에서 블록 중인 모든 수신 혹은 폴링 혹은 송신을 오류와 함께 반환하도록 한다. 이러한 오류를 잡아내고 나서 linger를 설정하고, //해당되는// 스레드 내에서 소켓들을 닫은 후에 종료한다. 같은 컨텍스트를 두번 소멸시키지 마라. 메인 스레드 내의 {{zmq_ctx_destroy}}는 그 컨텍스트가 알고 있는 모든 소켓들이 안전하게 닫히기 전에는 블록할 것이다.
+
+Voila! It's complex and painful enough that any language binding author worth his or her salt will do this automatically and make the socket closing dance unnecessary.
+어떤가! 언어 바인딩 작성자가 이러한 작업을 자동으로 하고 불필요한 소켓을 닫도록 만들어야 할 정도로 복잡하고 고통스럽다는 것을 알 수 있다.
+
+++ Why We Needed ZeroMQ
+++ 왜 ZeroMQ가 필요한가
+
+Now that you've seen ZeroMQ in action, let's go back to the "why".
+이젠 ZeroMQ를 실제로 보았기 때문에, "왜"로 돌아가보자.
+
+Many applications these days consist of components that stretch across some kind of network, either a LAN or the Internet. So many application developers end up doing some kind of messaging. Some developers use message queuing products, but most of the time they do it themselves, using TCP or UDP. These protocols are not hard to use, but there is a great difference between sending a few bytes from A to B, and doing messaging in any kind of reliable way.
+오늘날 많은 애플리케이션들은 LAN 혹은 인터넷의 다양한 네트워크를 거쳐서 확장되는 컴포넌트들로 구성되어 있다. 그래서 많은 애플리케이션 개발자들은 메시징 같은 것들을 사용하는 것에 다다랐다. 어떤 개발자들은 메시지 큐잉 제품을 사용하지만 이를 사용함에 있어서 대부분의 시간을 TCP 혹은 UDP를 사용하는 작업에 보낸다. 이러한 프로토콜들은 사용하기에 어럽지는 않지만 A로부터 B에게 적은 바이트들은 보내는 것과 신뢰성 있게 메시징을 하는 것에 있어서 큰 차이가 있다.
+
+Let's look at the typical problems we face when we start to connect pieces using raw TCP. Any reusable messaging layer would need to solve all or most of these:
+raw TCP를 사용하여 연결하는 부분을 시작할 때 직면할 수 있는 일반적인 문제들을 살펴보자. 모든 재사용 가능한 메시징 계층은 다음과 같은 것들이 모두 혹은 대부분이 필요할 것이다.
+
+* How do we handle I/O? Does our application block, or do we handle I/O in the background? This is a key design decision. Blocking I/O creates architectures that do not scale well. But background I/O can be very hard to do right.
+* 어떻게 I/O를 처리할 것인가? 애플리케이션을 블록할 것인가 혹은 I/O를 백그라운드에서 처리할 것인가? 이것은 설계 결정의 핵심적인 것이다. 블록킹 I/O는 확장성이 떨어지는 아키텍처를 만든다. 하지만 백그라운드 I/O는 제대로 만들기가 어렵다.
+
+* How do we handle dynamic components, i.e., pieces that go away temporarily? Do we formally split components into "clients" and "servers" and mandate that servers cannot disappear? What then if we want to connect servers to servers? Do we try to reconnect every few seconds?
+* 동적 컴포넌트들은 어떻게 처리할 것인지, 다시 말해서, 일시적으로 이들이 분리될 수 있는가? 컴포넌트들을 형식적인 "클라이언트"와 "서버"로 나누고 서버가 사라질 수 없도록 강제할 것인가? 서버와 서버를 연결하길 원한다면? 몇 초 안에 재연결을 시도하길 원한다면?
+
+* How do we represent a message on the wire? How do we frame data so it's easy to write and read, safe from buffer overflows, efficient for small messages, yet adequate for the very largest videos of dancing cats wearing party hats?
+* 어떻게 회선 상의 메시지를 표현할 것인가? 버퍼 오버플로우로부터 안전하고, 작은 크기의 메시지에는 효과적이지만 파티 모자를 쓰고 있는 춤추는 고양이가 나오는 큰 크기의 동영상에 적합하도록 데이터 쓰기/읽기가 쉬운 프레임을 구성할 방법은?
+
+* How do we handle messages that we can't deliver immediately? Particularly, if we're waiting for a component to come back online? Do we discard messages, put them into a database, or into a memory queue?
+* 즉시 전달할 수 없는 메시지들은 어떻게 처리할 것인가? 특히, 어떤 컴포넌트가 온라인 상태로 돌아오길 기다리는 중이라면? 이 메시지들은 버릴까? 데이터베이스나 메모리 큐에 저장할까?
+
+* Where do we store message queues? What happens if the component reading from a queue is very slow and causes our queues to build up? What's our strategy then?
+* 어디에 메시지 큐들을 저장할 것인가? 컴포넌트가 큐를 읽는 작업이 매우 느리고 큐를 점점 커지게 한다면? 이후에 우리의 전략은?
+
+* How do we handle lost messages? Do we wait for fresh data, request a resend, or do we build some kind of reliability layer that ensures messages cannot be lost? What if that layer itself crashes?
+* 잃어버린 메시지들을 어떻게 처리할 것인가? 새로운 데이터들을 기다리거나, 재송신을 요청하거나 혹은 메시지들을 잃어버릴 수가 없는 신뢰 계층을 만들 것인가? 이 계층 자체가 무너진다면?
+
+* What if we need to use a different network transport. Say, multicast instead of TCP unicast? Or IPv6? Do we need to rewrite the applications, or is the transport abstracted in some layer?
+* 다른 방식의 네트워크 전송을 사용할 필요가 있다면? 말하자면, TCP 유니캐스트 대신에 멀티캐스트? 혹은 IPv6? 애플리케이션을 다시 작성하거나 특정 계층을 추상화하는 전송을 다시 작성할 필요가 있을까?
+
+* How do we route messages? Can we send the same message to multiple peers? Can we send replies back to an original requester?
+* 메시지들을 어떻게 라우팅할 것인가? 같은 메시지를 여러 대상에게 전송할 수 있을까? 원래의 요청자에게 응답을 보낼 수 있을까?
+
+* How do we write an API for another language? Do we re-implement a wire-level protocol or do we repackage a library? If the former, how can we guarantee efficient and stable stacks? If the latter, how can we guarantee interoperability?
+* 다른 언어를 위한 API를 어떻게 작성할 것인가? 통신 수준의 프로토콜을 다시 구현하거나 라이브러리를 다시 패키징할 것인가? 전자라면, 효율적이고 안정적인 스택을 어떻게 보장할 것인가? 후자라면, 상호 운용성을 어떻게 보장할 것인가?
+
+* How do we represent data so that it can be read between different architectures? Do we enforce a particular encoding for data types? How far is this the job of the messaging system rather than a higher layer?
+* 어떻게 데이터가 이기종의 아키텍처들 사이에서 읽혀질 수 있도록 표현할 것인가? 데이터 유형에 대한 특정 인코딩을 강제할 수 있는가? 어디까지가 메시징 시스템의 역할이고 상위 계층의 역할인가?
+
+* How do we handle network errors? Do we wait and retry, ignore them silently, or abort?
+* 어떻게 네트워크 오류를 처리할 것인가? 기다렸다가 재시도하거나, 무시해버리거나, 취소해버릴 것인가?
+
+Take a typical open source project like [http://hadoop.apache.org/zookeeper/ Hadoop Zookeeper] and read the C API code in {{[http://github.com/apache/zookeeper/blob/trunk/src/c/src/zookeeper.c src/c/src/zookeeper.c]}}. When I read this code, in January 2013, it was 4,200 lines of mystery and in there is an undocumented, client/server network communication protocol. I see it's efficient because it uses {{poll}} instead of {{select}}. But really, Zookeeper should be using a generic messaging layer and an explicitly documented wire level protocol. It is incredibly wasteful for teams to be building this particular wheel over and over.
+[http://hadoop.apache.org/zookeeper/ Hadoop Zookeeper]와 같은 전형적인 오픈 소스 프로젝트를 내려 받아 {{[http://github.com/apache/zookeeper/blob/trunk/src/c/src/zookeeper.c src/c/src/zookeeper.c]}}에 있는 C API 코드를 읽어보자. 이 코드를 읽을 때는 2013년 1월인데, 4,200 줄의 미스테리로 되어 있었고, 문서화가 되어 있지 않으며, 클라이언트/서버 네트워크 통신 프로토콜로 되어 있다. 개인적으로는 {{select}} 대신에 {{poll}}을 사용하기 때문에 효율적이라고 생각하지만 실제로 ZooKeeper는 범용의 메시징 계층과 명시적으로 문서화된 통신 수준 프로토콜에서만 사용되야 한다. 팀이 바퀴를 반복해서 만드는 것은 믿기 힘들 정도로 소모적인 일이다.
+
+But how to make a reusable messaging layer? Why, when so many projects need this technology, are people still doing it the hard way by driving TCP sockets in their code, and solving the problems in that long list over and over[figure]?
+그렇지만 재사용성 있는 메시지 계층은 어떻게 만들 것인가? 왜, 언제, 많은 프로젝트들이 이 기술을 필요로 하고, 그 코드에 TCP 소켓을 제어하는 어려운 방법으로 이러한 것들을 하고 있고, 위의 목록[figure]에 있는 문제들을 해결하고 있을까?
+
+It turns out that building reusable messaging systems is really difficult, which is why few FOSS projects ever tried, and why commercial messaging products are complex, expensive, inflexible, and brittle. In 2006, iMatix designed [http://www.amqp.org AMQP] which started to give FOSS developers perhaps the first reusable recipe for a messaging system. AMQP works better than many other designs, [http://www.imatix.com/articles:whats-wrong-with-amqp but remains relatively complex, expensive, and brittle]. It takes weeks to learn to use, and months to create stable architectures that don't crash when things get hairy.
+재사용성 있는 메시징 시스템을 만드는 것은 매우 어렵고, 일부 FOSS 프로젝트들이 이를 왜 시도하지 않았는지, 그리고 왜 상업 메시징 제품들이 복잡하고, 비싸고, 유연하지 못하고, 불안정한지 밝혀졌다. 2006년에, iMatix는 FOSS 개발자들에게 제공된 첫 재사용성 있는 메시징 시스템일 수도 있는 [http://www.amqp.org AMQP]를 설계했다. AMQP는 많은 다른 설계들보다 잘 동작하지만 [http://www.imatix.com/articles:whats-wrong-with-amqp 상대적인 복잡성, 고비용, 불안정의 문제가 남아있다]. 이를 사용해보기 위해서는 몇 주의 학습을, 문제가 발생하지 않는 안정적인 아키텍처를 만들기 위해서는 몇 개월이 걸린다.
+
+[[code type="textdiagram" title="Messaging as it Starts"]]
+.------------.
+|            |
+|  Piece A   |
+|            |
+'------------'
+      ^
+      |
+     TCP
+      |
+      v
+.------------.
+|            |
+|  Piece B   |
+|            |
+'------------'
+[[/code]]
+
+Most messaging projects, like AMQP, that try to solve this long list of problems in a reusable way do so by inventing a new concept, the "broker", that does addressing, routing, and queuing. This results in a client/server protocol or a set of APIs on top of some undocumented protocol that allows applications to speak to this broker. Brokers are an excellent thing in reducing the complexity of large networks. But adding broker-based messaging to a product like Zookeeper would make it worse, not better. It would mean adding an additional big box, and a new single point of failure. A broker rapidly becomes a bottleneck and a new risk to manage. If the software supports it, we can add a second, third, and fourth broker and make some failover scheme. People do this. It creates more moving pieces, more complexity, and more things to break.
+AMQP와 같은 대부분의 메시징 제품은 접속, 라우팅, 큐잉을 하는 "브로커"라는 새로운 컨셉을 사용하는 재사용성 있는 방법으로 이러한 긴 문제 목록을 해결하려고 한다. 그 결과는 클라이언트/서버 프로토콜이거나 애플리케이션이 비공식적인 프로토콜 상에서 이 브로커와 동작하는 API 집합이 된다. 브로커는 대규모 네트워크의 복잡성을 감소시켜주기에 뛰어나지만, 제품에 Zookeeper와 같은 브로커 기반의 메시징을 추가하는 것은 오히려 악영향을 가져올 수도 있다. 이는 커다란 박스를 추가해서 새로운 단일 결함 지점을 만드는 것을 의미한다. 브로커는 빠르게 병목 지점이 되고 새로운 관리 위험을 낳는다. 해당 소프트웨어가 장애 극복 기능을 지원한다면 두번째, 세번째, 그리고 네번째 브로커를 추가할 수 있고, 보통은 그렇게 한다. 이는 더 많은 동적인 부분들을 만들고, 더 큰 복잡성, 그리고 더 많은 결함을 만들어낸다.
+
+And a broker-centric setup needs its own operations team. You literally need to watch the brokers day and night, and beat them with a stick when they start misbehaving. You need boxes, and you need backup boxes, and you need people to manage those boxes. It is only worth doing for large applications with many moving pieces, built by several teams of people over several years.
+또한 브로커 중심 구축은 이를 위한 운용 팀이 필요하다. 당신은 말 그대로 낮이고 밤이고 브로커들을 감시를 하고, 이 팀이 실수를 했을 때마다 매를 들어야 할 필요가 있다. 이러한 브로커 박스가 필요하다면, 백업 박스가 필요하고, 이 박스들을 관리하기 위한 사람들이 필요하다. 이러한 것은 수년에 걸쳐 여러 팀으로 구성된 많은 동적인 부분으로 이루어진 대형 애플리케이션을 위해서나 가치가 있다.
+
+[[code type="textdiagram" title="Messaging as it Becomes"]]
+        .---.             .---.
+.---.   |   |   .---.  ^  |   |
+|   +-->|   |<--|   |  |  |   |
+|   |   '---'   |   |  |  '-+-'
+'-+-'           '-+-'  |    |
+  |               ^    |    |
+  |       .-------+----+----'
+  |       |       |    |
+  '-------+-------+----+--.
+          |       |    |  |
+  .-------+-------+----+--+-----.
+  |       v       |       v     |
+.-+-.   .---.     |     .---.   |
+|   |   |   |   .-+-.   |   |-->|
+|   +-->|   +-->|   +-->|   |   |
+'---'   '---'   |   |   '---'   |
+          ^     '-+-'     ^     |
+          |       |       |     |
+  .-------+-------+-------'     |
+  |       |       |             |
+  v     .-+-.     v     .---.   |
+.---.   |   |   .---.   |   |   |
+|   |<--|   |<--|   |<--|   |<--'
+|   |   '---'   |   |   '---'
+'---'           '---'
+[[/code]]
+
+So small to medium application developers are trapped. Either they avoid network programming and make monolithic applications that do not scale. Or they jump into network programming and make brittle, complex applications that are hard to maintain. Or they bet on a messaging product, and end up with scalable applications that depend on expensive, easily broken technology. There has been no really good choice, which is maybe why messaging is largely stuck in the last century and stirs strong emotions: negative ones for users, gleeful joy for those selling support and licenses[figure].
+따라서 중소 규모 애플리케이션 개발자들이 네트워크 프로그래밍을 회피하고 확장되지 않는 모놀리딕 애플리케이션을 만들도록 하거나 이들이 네트워크 프로그래밍을 하더라도 불안정하고, 유지하기 어려운 복잡한 애플리케이션을 만들도록 혹은 메시징 제품을 비난하게 해서 결과적으로 확장성 있는 애플리케이션들이 비싸고, 무너지기 쉬운 기술이라고 믿는 함정에 빠지게 한다. 최상의 선택은 없었다. 어쩌면 다음과 같은 것들이 메시징이 지난 세기에 높은 벽에 가로 막혀있을 뿐만 아니라 사용자들에게 격한 감정을 불려 일으켰는지에 대한 이유일 수 있다: 사용자에 대해 부정적인 것들, 지원과 라이선스를 판매하는 이들을 위한 즐거움[figure].
+
+What we need is something that does the job of messaging, but does it in such a simple and cheap way that it can work in any application, with close to zero cost. It should be a library which you just link, without any other dependencies. No additional moving pieces, so no additional risk. It should run on any OS and work with any programming language.
+우리에게 필요한 것은 메시징을 하기 위해서 간단하지만 비용이 거의 들지 않게 우리 애플리케이션에서 동작하게 하는 것이다. 이러한 것을 위해서는 연결만 해주면 되는 라이브러리이면서 다른 어떤 의존성도 없어야 한다. 부가적인 동적 요소가 없으면 추가 위험도 따르지 않는다. 또한 어떤 운영 체제나 어떤 프로그래밍 언어에서도 동작해야 한다.
+
+And this is ZeroMQ: an efficient, embeddable library that solves most of the problems an application needs to become nicely elastic across a network, without much cost.
+그리고 그게 바로 ZeroMQ다: 저비용으로 네트워크 상에서 뛰어난 신축성이 필요한 애플리케이션이 겪는 대부분의 문제를 해결하는 효율적이고, 내장 가능한 라이브러리
+
+Specifically:
+강점:
+
+* It handles I/O asynchronously, in background threads. These communicate with application threads using lock-free data structures, so concurrent ZeroMQ applications need no locks, semaphores, or other wait states.
+* I/O를 백그라운드 스레드들 내에서 비동기적으로 처리한다. 잠금이 없는 데이터 구조들을 사용하여 애플리케이션 스레드들이 통신을 하고, 따라서 동시성을 갖는 ZeroMQ 애플리케이션들은 잠금, 세마포어 혹은 대기 상태가 필요하지 않다.
+
+* Components can come and go dynamically and ZeroMQ will automatically reconnect. This means you can start components in any order. You can create "service-oriented architectures" (SOAs) where services can join and leave the network at any time.
+* 컴포넌트들을 동적으로 연결하거나 해제할 수 있고, ZeroMQ는 이를 자동으로 재연결할 것이다. 이는 컴포넌트들을 아무런 순서로든지 시작할 수 있음을 의미한다. 당신은 언제든지 네트워크에 참여하거나 탈퇴할 수 있는 "서비스-지향 아키텍처" (SOAs)를 만들 수 있다.
+
+* It queues messages automatically when needed. It does this intelligently, pushing messages as close as possible to the receiver before queuing them.
+* 필요할 때 자동으로 메시지들을 큐잉한다. ZeroMQ는 큐에 넣기 전에 가능한 한 수신자에 가깝도록 지능적으로 처리한다.
+
+* It has ways of dealing with over-full queues (called "high water mark"). When a queue is full, ZeroMQ automatically blocks senders, or throws away messages, depending on the kind of messaging you are doing (the so-called "pattern").
+* 큐가 가득차는 경우에 대한 방법("최고 수위선"이라고 불리는)을 가지고 있다. 큐가 가득찰 때, ZeroMQ는 당신이 정한 방법(소위 "패턴"이라고 부르는)의 종류에 따라 자동으로 송신자를 블록하거나 메시지들을 버린다.
+
+* It lets your applications talk to each other over arbitrary transports: TCP, multicast, in-process, inter-process. You don't need to change your code to use a different transport.
+* 각기 다른 임의의 송수신 방법을 통해 애플리케이션이 통신하도록 한다: TCP, 멀티캐스트, 프로세스 내부, 프로세스 간. 다른 송수신 방법에 따라 코드를 바꿀 필요가 없다.
+
+* It handles slow/blocked readers safely, using different strategies that depend on the messaging pattern.
+* 메시징 패턴에 따라 다른 전략을 사용하여 느리거나 블록된 수신자들을 안전하게 처리한다.
+
+* It lets you route messages using a variety of patterns such as request-reply and pub-sub. These patterns are how you create the topology, the structure of your network.
+* 요청-응답 그리고 발행-구독과 같은 다양한 패턴들을 사용하여 메시지들을 라우팅한다. 이러한 패턴들은 당신의 네트워크의 토폴로지와 구조를 어떻게 만들 것인가에 대한 것이다.
+
+* It lets you create proxies to queue, forward, or capture messages with a single call. Proxies can reduce the interconnection complexity of a network.
+* 단일 호출을 통해 메시지들을 큐, 전달, 혹은 캡처하는 프록시를 만들 수 있다. 이 프록시는 네트워크의 상호 연결 복잡도를 감소시킬 수 있다.
+
+* It delivers whole messages exactly as they were sent, using a simple framing on the wire. If you write a 10k message, you will receive a 10k message.
+* 통신 상에서 간단한 프레임화를 사용하여 송신했던 모든 메시지들을 정확하게 배달한다. 10k개의 메시지를 보냈다면, 10k개의 메시지를 받을 것이다.
+
+* It does not impose any format on messages. They are blobs from zero to gigabytes large. When you want to represent data you choose some other product on top, such as msgpack, Google's protocol buffers, and others.
+* 메시지 형식을 강제하지 않는다. 메시지는 0에서부터 수 기가바이트까지의 바이너리 객체다. 데이터를 포맷팅하려면 msgpack, 구글의 프로토콜 버퍼와 같은 다른 제품을 선택한다.
+
+* It handles network errors intelligently, by retrying automatically in cases where it makes sense.
+* 필요한 경우라면 자동으로 재시도를 함으로써 네트워크 오류를 지능적으로 처리한다.
+
+* It reduces your carbon footprint. Doing more with less CPU means your boxes use less power, and you can keep your old boxes in use for longer. Al Gore would love ZeroMQ.
+* 탄소 발자국을 감소시킨다. 더 적게 CPU를 사용한다는 것은 당신의 머신이 더 적은 전력을 사용하고, 오래된 머신을 더 길게 사용할 수 있음을 의미한다. 환경 문제에 관심이 많았고 미국의 부통령을 지냈던 앨 고어(Al Gore)는 ZeroMQ를 좋아할 수도 있다.
+
+Actually ZeroMQ does rather more than this. It has a subversive effect on how you develop network-capable applications. Superficially, it's a socket-inspired API on which you do {{zmq_recv[3]}} and {{zmq_send[3]}}. But message processing rapidly becomes the central loop, and your application soon breaks down into a set of message processing tasks. It is elegant and natural. And it scales: each of these tasks maps to a node, and the nodes talk to each other across arbitrary transports. Two nodes in one process (node is a thread), two nodes on one box (node is a process), or two nodes on one network (node is a box)--it's all the same, with no application code changes.
+실제로 ZeroMQ가 하는 것은 이것보다 더 많다. ZeroMQ는 어떻게 네트워크 가능한 소프트웨어를 개발하는가에 있어서 불온한 영향을 가진다. 표면적으로는 {{zmq_recv[3]}}와 {{zmq_send[3]}}을 하는 소켓-직관적인 API이다. 하지만 메시지 처리를 빠르게 중심이 되는 루프가 될 것이고, 애플리케이션은 곧 일련의 메시지 처리 작업들로 나뉘어진다. 이건 자연스럽고 훌륭한 것이다. 이렇게 나뉘어진 애플리케이션은 확장한다: 각 작업들은 노드로 사상되고, 이 노드들은 임의의 통신 방법을 거쳐 각기 다른 노드들과 통신한다. 한 프로세스 내의 두 노드(여기에서 노드는 하나의 스레드다), 한 머신 내의 두 노드(여기에서 노드는 프로세스다), 한 네트워크 내에서 두 노드(여기에서 노드는 머신이다)--애플리케이션 코드가 바뀌지 않는다면 이것은 항상 같다.
+
+++ Socket Scalability
+++ 소켓 확장성
+
+Let's see ZeroMQ's scalability in action. Here is a shell script that starts the weather server and then a bunch of clients in parallel:
+ZeroMQ의 확장성을 실제로 보자. 여기에 한 기상 서버와 병렬로 동작하는 클라이언트 무리가 있다.
+
+[[code]]
+wuserver &
+wuclient 12345 &
+wuclient 23456 &
+wuclient 34567 &
+wuclient 45678 &
+wuclient 56789 &
+[[/code]]
+
+As the clients run, we take a look at the active processes using the {{top}} command', and we see something like (on a 4-core box):
+클라이언트가 동작함으로써, 우리는 {{top}} 명령을 사용하여 동작 중인 프로세스들을 볼 수 있으며 다음과 같은 것들을 볼 수 있다. (4코어 머신에서):
+
+[[code]]
+PID  USER  PR  NI  VIRT  RES  SHR S %CPU %MEM   TIME+  COMMAND
+7136  ph   20   0 1040m 959m 1156 R  157 12.0 16:25.47 wuserver
+7966  ph   20   0 98608 1804 1372 S   33  0.0  0:03.94 wuclient
+7963  ph   20   0 33116 1748 1372 S   14  0.0  0:00.76 wuclient
+7965  ph   20   0 33116 1784 1372 S    6  0.0  0:00.47 wuclient
+7964  ph   20   0 33116 1788 1372 S    5  0.0  0:00.25 wuclient
+7967  ph   20   0 33072 1740 1372 S    5  0.0  0:00.35 wuclient
+[[/code]]
+
+Let's think for a second about what is happening here. The weather server has a single socket, and yet here we have it sending data to five clients in parallel. We could have thousands of concurrent clients. The server application doesn't see them, doesn't talk to them directly. So the ZeroMQ socket is acting like a little server, silently accepting client requests and shoving data out to them as fast as the network can handle it. And it's a multithreaded server, squeezing more juice out of your CPU.
+여기에서 무슨 일이 일어난 것인지를 잠깐 생각해보자. 기상 서버는 단일 소켓을 가지고 있음에도 다섯 클라이언트들에게 병렬적으로 데이터를 전송하고 있다. 동시에 동작하는 몇 천개의 클라이언트가 있을 수도 있다. 이 서버 애플리케이션은 이들을 볼 수 없고, 직접적으로 이들과 통신할 수 없다. ZeroMQ 소켓은 작은 서버와 같이 동작하고 있고, 조용히 클라이언트 요청을 받아 들여서 네트워크가 처리할 수 있는 만큼 빠르게 이를 내보내고 있다. 또한 이 서버는 다중 스레드 서버이고, CPU에서 더 많은 주스를 쥐어 짜내고 있다.
+
+++ Upgrading from ZeroMQ v2.2 to ZeroMQ v3.2
+++ ZeroMQ v2.2에서 ZeroMQ v3.2로 판올림
+
++++ Compatible Changes
++++ 호환되는 변경 사항들
+
+These changes don't impact existing application code directly:
+다음과 같은 변경 사항들은 기존의 애플리케이션에 직접적으로 영향을 미치지 않는다.
+
+* Pub-sub filtering is now done at the publisher side instead of subscriber side. This improves performance significantly in many pub-sub use cases. You can mix v3.2 and v2.1/v2.2 publishers and subscribers safely.
+* 발행-구독 필터링은 구독자 대신에 발행자 측에서 이루어진다. 이는 다수의 발행-구독 용례에서 상당한 성능 향상이 이루어진다. 당신은 v3.2와 v2.1/2.2 발행자/구독자를 안전하게 혼용할 수 있다.
+
+* ZeroMQ v3.2 has many new API methods ({{zmq_disconnect[3]}}, {{zmq_unbind[3]}}, {{zmq_monitor[3]}}, {{zmq_ctx_set[3]}}, etc.)
+* ZeroMQ v3.2는 다수의 신규 API 메서드를 갖는다. ({{zmq_disconnect[3]}}, {{zmq_unbind[3]}}, {{zmq_monitor[3]}}, {{zmq_ctx_set[3]}}, 기타 등등)
+
++++ Incompatible Changes
++++ 호환되지 않는 변경 사항들
+
+These are the main areas of impact on applications and language bindings:
+다음과 같은 변경 사항들은 언어 바인딩과 애플리케이션에 주요한 영향을 미친다.
+
+* Changed send/recv methods: {{zmq_send[3]}} and {{zmq_recv[3]}} have a different, simpler interface, and the old functionality is now provided by {{zmq_msg_send[3]}} and {{zmq_msg_recv[3]}}. Symptom: compile errors. Solution: fix up your code.
+* 변경된 송/수신 메서드: {{zmq_send[3]}}과 {{zmq_recv[3]}}은 더 단순한 인터페이스와 차이점을 가지고, 이전의 기능들은 {{zmq_msg_send[3]}}과 {{zmq_msg_recv[3]}}으로 제공된다. 증상: 컴파일 오류들. 해결법: 코드를 고쳐라.
+
+* These two methods return positive values on success, and -1 on error. In v2.x they always returned zero on success. Symptom: apparent errors when things actually work fine. Solution: test strictly for return code = -1, not non-zero.
+* 다음 두 메서드들은 성공할 경우 양수를, 오류일 경우에 -1을 반환한다. v2.x에서 이들은 성공할 경우 항상 0을 반환했다. 증상: 정상적으로 동작했을 때 오류. 해결법: 반환 코드가 0이 아닐 경우가 아니라 -1인 경우에 대한 엄격한 검사.
+
+* {{zmq_poll[3]}} now waits for milliseconds, not microseconds. Symptom: application stops responding (in fact responds 1000 times slower). Solution: use the {{ZMQ_POLL_MSEC}} macro defined below, in all {{zmq_poll}} calls.
+* {{zmq_poll[3]}}은 마이크로초 단위가 아니라 밀리초 단위로 대기한다. 증상: 애플리케이션이 응답을 멈추는 것 (실제로는 1000배 정도 느려진다). 해결법: 모든 {{zmq_poll}} 호출에서 아래의 {{ZMQ_POLL_MSEC}} 매크로 정의를 사용한다.
+
+* {{ZMQ_NOBLOCK}} is now called {{ZMQ_DONTWAIT}}. Symptom: compile failures on the {{ZMQ_NOBLOCK}} macro.
+* {{ZMQ_NOBLOCK}}은 이제 {{ZMQ_DONTWAIT}}를 호출한다. 증상: {{ZMQ_NOBLOCK}} 매크로에 대한 컴파일 오류들.
+
+* The {{ZMQ_HWM}} socket option is now broken into {{ZMQ_SNDHWM}} and {{ZMQ_RCVHWM}}.  Symptom: compile failures on the {{ZMQ_HWM}} macro.
+* {{ZMQ_HWM}} 소켓 옵션은 {{ZMQ_SNDHWM}}과 {{ZMQ_RCVHWM}}으로 분리된다.  증상: {{ZMQ_HWM}} 매크로에 대한 컴파일 오류.
+
+* Most but not all {{zmq_getsockopt[3]}} options are now integer values. Symptom: runtime error returns on {{zmq_setsockopt}} and {{zmq_getsockopt}}.
+* 대부분의 {{zmq_getsockopt[3]}} 옵션들은 이제 정수 값이다. 증상: {{zmq_setsockopt}}와 {{zmq_getsockopt}} 상에서 실행 시간 오류가 발생한다.
+
+* The {{ZMQ_SWAP}} option has been removed. Symptom: compile failures on {{ZMQ_SWAP}}. Solution: redesign any code that uses this functionality.
+* {{ZMQ_SWAP}} 옵션은 제거됐다. 증상: {{ZMQ_SWWAP}}에 대한 컴파일 오류. 해결: 이 기능을 사용하는 모든 코드를 다시 설계한다.
+
++++ Suggested Shim Macros
++++ 제안된 핵심 매크로들
+
+For applications that want to run on both v2.x and v3.2, such as language bindings, our advice is to emulate c3.2 as far as possible. Here are C macro definitions that help your C/C++ code to work across both versions (taken from [http://czmq.zeromq.org CZMQ]):
+v2.x와 v3.2에서 모두 동작하기 위한 애플리케이션, 언어 바인딩을 위한 조언은 가능한 v3.2를 에뮬레이트하는 것이다. 당신의 C/C++ 코드가 두 버전들 모두에서 동작하는 것을 돕기 위한 C 매크로 정의들이 있다. ([http://czmq.zeromq.org CZMQ]로부터 얻어진):
+
+[[code type="fragment" name="upgrade-shim"]]
+#ifndef ZMQ_DONTWAIT
+#   define ZMQ_DONTWAIT     ZMQ_NOBLOCK
+#endif
+#if ZMQ_VERSION_MAJOR == 2
+#   define zmq_msg_send(msg,sock,opt) zmq_send (sock, msg, opt)
+#   define zmq_msg_recv(msg,sock,opt) zmq_recv (sock, msg, opt)
+#   define zmq_ctx_destroy(context) zmq_term(context)
+#   define ZMQ_POLL_MSEC    1000        //  zmq_poll is usec
+#   define ZMQ_SNDHWM ZMQ_HWM
+#   define ZMQ_RCVHWM ZMQ_HWM
+#elif ZMQ_VERSION_MAJOR == 3
+#   define ZMQ_POLL_MSEC    1           //  zmq_poll is msec
+#endif
+[[/code]]
+
+++ Warning: Unstable Paradigms!
+++ 경고: 불안정한 패러다임!
+
+Traditional network programming is built on the general assumption that one socket talks to one connection, one peer. There are multicast protocols, but these are exotic. When we assume "one socket = one connection", we scale our architectures in certain ways. We create threads of logic where each thread work with one socket, one peer. We place intelligence and state in these threads.
+전통적인 네트워크 프로그래밍은 하나의 소켓이 하나의 연결 상에서 하나의 피어와 통신한다는 일반적인 가정 위에서 만들어졌다. 여기에는 멀티캐스트 프로토콜들이 있지만 이국적이다. 우리가 "한 소켓 = 한 연결"을 가정할 때에는 우리의 아키텍처를 특정한 방법을 통해 확장한다. 우리는 하나의 소켓, 하나의 피어와 동작하는 각 스레드를 만들고 이러한 스레드에 정보와 상태를 여기에 둔다.
+
+In the ZeroMQ universe, sockets are doorways to fast little background communications engines that manage a whole set of connections automagically for you. You can't see, work with, open, close, or attach state to these connections. Whether you use blocking send or receive, or poll, all you can talk to is the socket, not the connections it manages for you. The connections are private and invisible, and this is the key to ZeroMQ's scalability.
+ZeroMQ 우주에서, 소켓은 모든 연결의 집합을 관리하는 작고 빠른 백그라운드 통신 엔진으로 향하는 출입구다. 당신은 이것을 보거나, 열기, 닫기 혹은 이러한 연결에 상태를 결합하는 등의 작업할 수 없다. 블록킹 송신이나 수신, 혹은 폴링이든 간에 대화가 가능한 것은 소켓이지 이것을 관리하기 위한 연결이 아니다. 연결은 비공개적이고 보여지지 않는다. 그리고 이게 바로 ZeroMQ 확장성의 핵심 요소다.
+
+This is because your code, talking to a socket, can then handle any number of connections across whatever network protocols are around, without change. A messaging pattern sitting in ZeroMQ scales more cheaply than a messaging pattern sitting in your application code.
+이는 소켓과 통신하는 코드가 네트워크 프로토콜이나 코드의 변경 없이 다수의 연결을 처리할 수 있기 때문이다. ZeroMQ 내의 메시징 패턴은 애플리케이션 코드 내에 있는 메시징 패턴 코드보다 더욱 저렴하게 확장할 수 있다.
+
+So the general assumption no longer applies. As you read the code examples, your brain will try to map them to what you know. You will read "socket" and think "ah, that represents a connection to another node". That is wrong. You will read "thread" and your brain will again think, "ah, a thread represents a connection to another node", and again your brain will be wrong.
+따라서 일반적인 가정은 더 이상 통용되지 않는다. 코드 예제를 읽음에 따라, 당신의 뇌는 이들을 기존에 알고 있던 것들에 사상시키려고 할 것이다. 당신은 "소켓"을 읽고 "아, 다른 노드와의 연결을 나타내는 구나"라고 생각할 것이다. 이건 잘못된 것이다. "스레드"를 읽고, 당신의 뇌는 "아, 스레드는 다른 노드와의 연결을 나타내는 구나"라고 다시 생각할 것이고, 마찬가지로 당신의 뇌가 잘못된 것이다.
+
+If you're reading this Guide for the first time, realize that until you actually write ZeroMQ code for a day or two (and maybe three or four days), you may feel confused, especially by how simple ZeroMQ makes things for you, and you may try to impose that general assumption on ZeroMQ, and it won't work. And then you will experience your moment of enlightenment and trust, that //zap-pow-kaboom// satori paradigm-shift moment when it all becomes clear.
+처음으로 이 안내서를 읽고 있는 중이라면, 하루 이틀(사나흘이 될 수도) 정도 ZeroMQ 코드를 실제로 작성해보면서 앞선 말들을 깨닫게 된다. 아마도 혼란스러움을 느낄 것이고, 특히 어떻게 ZeroMQ가 단순하게 원하는 것을 만들 수 있는지에 있어서 일반적인 가정을 ZeroMQ에 도입하길 시도할 것이고, 그것은 동작하지 않을 것이다. 그리고 나서 직관적으로 번뜩하고는 기존과 다른 패러다임 전환을 깨우쳐서 모든 것이 명료해지는 순간을 경험하게 될 것이다.
