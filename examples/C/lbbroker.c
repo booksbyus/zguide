@@ -123,7 +123,7 @@ int main(void)
     //  the backend in all cases, and polls the frontend only when there are
     //  one or more workers ready. This is a neat way to use 0MQ's own queues
     //  to hold messages we're not ready to process yet. When we get a client
-    //  reply, we pop the next available worker and send the request to it,
+    //  request, we pop the next available worker and send the request to it,
     //  including the originating client identity. When a worker replies, we
     //  requeue that worker and forward the reply to the original client
     //  using the reply envelope.
