@@ -692,7 +692,7 @@ Let's see how to shut down a process cleanly. We'll take the parallel pipeline e
 How do we connect the sink to the workers? The PUSH/PULL sockets are one-way only. We could switch to another socket type, or we could mix multiple socket flows. Let's try the latter: using a pub-sub model to send kill messages to the workers[figure]:
 
 * The sink creates a PUB socket on a new endpoint.
-* Workers bind their input socket to this endpoint.
+* Workers connect their input socket to this endpoint.
 * When the sink detects the end of the batch, it sends a kill to its PUB socket.
 * When a worker detects this kill message, it exits.
 
