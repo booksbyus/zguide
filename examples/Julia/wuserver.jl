@@ -18,6 +18,7 @@ while true
     temperature = rand(-80:135)
     relhumidity = rand(10:60)
     ZMQ.send(socket, "$zipcode $temperature $relhumidity")
+    yield()
 end
 
 ZMQ.close(socket)
