@@ -24,12 +24,12 @@ update_nbr = 5
 
 total_temp = 0
 for update in [1:update_nbr]
-    message = bytestring(ZMQ.recv(socket))
+    message = unsafe_string(ZMQ.recv(socket))
     zipcode, temperature, relhumidity = split(message)
-    total_temp += int(temperature)
+    total_temp += parse(temperature)
 end
 
-avg_temp = int(total_temp / update_nbr)
+avg_temp = total_temp / update_nbr
 
 println("Average temperature for zipcode $zip_filter was $(avg_temp)F")
 
