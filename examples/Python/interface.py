@@ -126,7 +126,7 @@ class InterfaceAgent(object):
 
     def control_message(self, event):
         """Here we handle the different control messages from the frontend."""
-        print("control message: %s", msg)
+        print("control message: %s"%event)
 
     def handle_beacon(self, fd, event):
         uuid = self.udp.recv(UUID_BYTES)
