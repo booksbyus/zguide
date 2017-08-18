@@ -1,4 +1,3 @@
-{-# LANGUAGE OverloadedLists   #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Main where
@@ -57,9 +56,9 @@ workerTask self i = do
 
 -- | This is similar to zframe_reset(zmsg_last (msg), ..) in czmq.
 replaceLast :: a -> [a] -> NonEmpty a
-replaceLast y (_:[]) = [y]
+replaceLast y (_:[]) = y :| []
 replaceLast y (x:xs) = x <| replaceLast y xs
-replaceLast y _ = [y]
+replaceLast y [] = y :| []
 
 -- | Connect a peer using the connectString function
 connectPeer :: Socket z t -> String -> String -> ZMQ z ()
@@ -177,7 +176,7 @@ clientWorkerPoll
         case worker of
             Nothing -> workerLoop newWorkers
             Just w -> do
-                sendMulti localBack ([w, ""] <> N.fromList msg)
+                sendMulti localBack $ w :| [""] ++ msg
                 return newWorkers
 
     oneSec = 1000

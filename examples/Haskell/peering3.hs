@@ -1,4 +1,3 @@
-{-# LANGUAGE OverloadedLists   #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Main where
@@ -222,13 +221,13 @@ clientWorkerPoll
                 let (worker, newWorkers) = popWorker (viewl workers)
                 case worker of
                     Nothing -> return ()
-                    Just w -> sendMulti localBack ([w, ""] <> N.fromList msg)
+                    Just w -> sendMulti localBack $ w :| [""] <> msg
                 return newWorkers
 
         -- We broadcast capacity messages to other peers; to reduce chatter,
         -- we do this only if our capacity changed.
         when (S.length oldWorkers /= S.length newWorkers) $
-            sendMulti stateBack [C.pack self, C.pack . show . S.length $ newWorkers]
+            sendMulti stateBack $ C.pack self :| [C.pack . show . S.length $ newWorkers]
 
         workerLoop oldWorkers newWorkers cloudCapacity
 
