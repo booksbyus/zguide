@@ -94,7 +94,7 @@ int main (void)
         if (items [1].revents & ZMQ_POLLIN) {
             char buffer [255];
             // Use non-blocking so we can continue to check self-pipe via zmq_poll
-            rc = zmq_recv (socket, buffer, 255, ZMQ_NOBLOCK);
+            rc = zmq_recv (socket, buffer, 255, ZMQ_DONTWAIT);
             if (rc < 0) {
                 if (errno == EAGAIN) { continue; }
                 if (errno == EINTR) { continue; }
