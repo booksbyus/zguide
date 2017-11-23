@@ -5,7 +5,7 @@
 import time
 
 from random import randint
-from string import uppercase
+from string import ascii_uppercase as uppercase
 from threading import Thread
 
 import zmq
@@ -51,7 +51,7 @@ def publisher_thread():
     while True:
         string = "%s-%05d" % (uppercase[randint(0,10)], randint(0,100000))
         try:
-            publisher.send(string)
+            publisher.send(string.encode('utf-8'))
         except zmq.ZMQError as e:
             if e.errno == zmq.ETERM:
                 break           # Interrupted
@@ -101,7 +101,7 @@ def main ():
     l_thread.start()
 
     try:
-        monitored_queue(subscriber, publisher, pipe[0], 'pub', 'sub')
+        monitored_queue(subscriber, publisher, pipe[0], b'pub', b'sub')
     except KeyboardInterrupt:
         print ("Interrupted")
 
