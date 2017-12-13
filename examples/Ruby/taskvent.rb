@@ -15,12 +15,16 @@ context = ZMQ::Context.new(1)
 sender = context.socket(ZMQ::PUSH)
 sender.bind("tcp://*:5557")
 
+# Socket to start of batch message on
+sink = context.socket(ZMQ::PUSH)
+sink.connect("tcp://localhost:5558")
+
 puts "Press enter when the workers are ready..."
 $stdin.read(1)
 puts "Sending tasks to workers..."
 
 # The first message is "0" and signals start of batch
-sender.send_string('0')
+sink.send_string('0')
 
 # Send 100 tasks
 total_msec = 0  # Total expected cost in msecs
