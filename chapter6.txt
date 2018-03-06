@@ -209,7 +209,7 @@ The best answer I can find is a mix of two things. One, the GPL and its guarante
 
 When we say ZeroMQ we sometimes mean {{libzmq}}, the core library. In early 2012, we synthesized the {{libzmq}} process into a formal protocol for collaboration that we called the [http://rfc.zeromq.org/spec:22 Collective Code Construction Contract], or C4. You can see this as a layer above the GPL. These are our rules, and I'll explain the reasoning behind each one.
 
-C4 is an evolution of the GitHub [http://help.github.com/send-pull-requests/ Fork + Pull Model]. You may get the feeling I'm a fan of git and GitHub. This would be accurate: these two tools have made such a positive impact on our work over the last years, especially when it comes to building community.
+C4 is an evolution of the GitHub [https://help.github.com/articles/about-pull-requests/ Fork + Pull Model]. You may get the feeling I'm a fan of git and GitHub. This would be accurate: these two tools have made such a positive impact on our work over the last years, especially when it comes to building community.
 
 +++ Language
 
