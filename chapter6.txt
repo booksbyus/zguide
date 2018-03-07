@@ -523,7 +523,7 @@ C4 is not perfect. Few things are. The process for changing it (Digistan's COSS)
 
 ++ A Real-Life Example
 
-In [http://lists.zeromq.org/pipermail/zeromq-dev/2012-October/018838.html this email thread], Dan Goes asks how to make a publisher that knows when a new client subscribes, and sends out previous matching messages. It's a standard pub-sub technique called "last value caching". Now over a 1-way transport like pgm (where subscribers literally send no packets back to publishers), this can't be done. But over TCP, it can, if we use an XPUB socket and if that socket didn't cleverly filter out duplicate subscriptions to reduce upstream traffic.
+In [https://lists.zeromq.org/pipermail/zeromq-dev/2012-October/018470.html this email thread], Dan Goes asks how to make a publisher that knows when a new client subscribes, and sends out previous matching messages. It's a standard pub-sub technique called "last value caching". Now over a 1-way transport like pgm (where subscribers literally send no packets back to publishers), this can't be done. But over TCP, it can, if we use an XPUB socket and if that socket didn't cleverly filter out duplicate subscriptions to reduce upstream traffic.
 
 Though I'm not an expert contributor to {{libzmq}}, this seems like a fun problem to solve. How hard could it be? I start by forking the {{libzmq}} repository to my own GitHub account and then clone it to my laptop, where I build it:
 
