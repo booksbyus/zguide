@@ -11,7 +11,7 @@ public class flclient3
     public static void main (String[] argv)
     {
         //  Create new freelance client object
-        flcliapi client = new flcliapi();
+        Flcliapi client = new Flcliapi();
 
         //  Connect to several endpoints
         client.connect("tcp://localhost:5555");
