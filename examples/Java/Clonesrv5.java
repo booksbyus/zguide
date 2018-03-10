@@ -11,10 +11,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 //  Clone server - Model Five
-public class clonesrv5
+public class Clonesrv5
 {
     private ZContext ctx;               //  Context wrapper
-    private Map<String, kvmsg> kvmap;   //  Key-value store
+    private Map<String, Kvmsg> kvmap;   //  Key-value store
     private ZLoop loop;                 //  zloop reactor
     private int port;                   //  Main port we're working on
     private long sequence;              //  How many updates we're at
@@ -31,7 +31,7 @@ public class clonesrv5
         @Override
         public int handle(ZLoop loop, PollItem item, Object arg)
         {
-            clonesrv5 srv = (clonesrv5) arg;
+            Clonesrv5 srv = (Clonesrv5) arg;
             Socket socket = item.getSocket();
 
             byte[] identity = socket.recv();
@@ -47,14 +47,14 @@ public class clonesrv5
 
                 if (subtree != null) {
                     //  Send state socket to client
-                    for (Entry<String, kvmsg> entry: srv.kvmap.entrySet()) {
+                    for (Entry<String, Kvmsg> entry: srv.kvmap.entrySet()) {
                         sendSingle(entry.getValue(), identity, subtree, socket);
                     }
 
                     //  Now send END message with getSequence number
                     System.out.printf("I: sending shapshot=%d\n", srv.sequence);
                     socket.send(identity, ZMQ.SNDMORE);
-                    kvmsg kvmsg = new kvmsg(srv.sequence);
+                    Kvmsg kvmsg = new Kvmsg(srv.sequence);
                     kvmsg.setKey("KTHXBAI");
                     kvmsg.setBody(subtree.getBytes());
                     kvmsg.send(socket);
@@ -73,10 +73,10 @@ public class clonesrv5
         @Override
         public int handle(ZLoop loop, PollItem item, Object arg)
         {
-            clonesrv5 srv = (clonesrv5) arg;
+            Clonesrv5 srv = (Clonesrv5) arg;
             Socket socket = item.getSocket();
 
-            kvmsg msg = kvmsg.recv(socket);
+            Kvmsg msg = Kvmsg.recv(socket);
             if (msg != null) {
                 msg.setSequence(++srv.sequence);
                 msg.send(srv.publisher);
@@ -97,9 +97,9 @@ public class clonesrv5
         @Override
         public int handle(ZLoop loop, PollItem item, Object arg)
         {
-            clonesrv5 srv = (clonesrv5) arg;
+            Clonesrv5 srv = (Clonesrv5) arg;
             if (srv.kvmap != null) {
-                for (kvmsg msg: new ArrayList<kvmsg>(srv.kvmap.values())) {
+                for (Kvmsg msg: new ArrayList<Kvmsg>(srv.kvmap.values())) {
                     srv.flushSingle(msg);
                 }
             }
@@ -107,15 +107,15 @@ public class clonesrv5
         }
     }
 
-    public clonesrv5 ()
+    public Clonesrv5()
     {
         port = 5556;
         ctx = new ZContext();
-        kvmap = new HashMap<String, kvmsg>();
+        kvmap = new HashMap<String, Kvmsg>();
         loop = new ZLoop();
         loop.verbose(false);
 
-        //  Set up our clone server sockets
+        //  Set up our Clone server sockets
         snapshot  = ctx.createSocket(ZMQ.ROUTER);
         snapshot.bind(String.format("tcp://*:%d", port));
         publisher = ctx.createSocket(ZMQ.PUB);
@@ -139,7 +139,7 @@ public class clonesrv5
     }
 
     //  We call this function for each getKey-value pair in our hash table
-    private static void sendSingle(kvmsg msg, byte[] identity, String subtree, Socket socket)
+    private static void sendSingle(Kvmsg msg, byte[] identity, String subtree, Socket socket)
     {
         if (subtree.equals(msg.getKey())) {
             socket.send (identity,    //  Choose recipient
@@ -154,7 +154,7 @@ public class clonesrv5
 
     //  If getKey-value pair has expired, delete it and publish the
     //  fact to listening clients.
-    private void flushSingle(kvmsg msg)
+    private void flushSingle(Kvmsg msg)
     {
         long ttl = Long.parseLong(msg.getProp("ttl"));
         if (ttl > 0 && System.currentTimeMillis() >= ttl) {
@@ -168,7 +168,7 @@ public class clonesrv5
 
     public static void main(String[] args)
     {
-        clonesrv5 srv = new clonesrv5();
+        Clonesrv5 srv = new Clonesrv5();
         srv.run();
     }
 }

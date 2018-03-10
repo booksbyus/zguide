@@ -5,7 +5,7 @@ import org.zeromq.ZMQ.Socket;
 /**
 * Synchronized subscriber.
 */
-public class syncsub{
+public class Syncsub {
 
     public static void main (String[] args) {
         Context context = ZMQ.context(1);

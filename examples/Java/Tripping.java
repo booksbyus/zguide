@@ -8,7 +8,7 @@ import org.zeromq.ZMsg;
 * Round-trip demonstrator. Broker, Worker and Client are mocked as separate
 * threads.
 */
-public class tripping {
+public class Tripping {
 
     static class Broker implements Runnable {
         @Override

@@ -7,7 +7,7 @@
 import org.zeromq.ZMQ;
 import org.zeromq.ZMQException;
 
-public class interrupt {
+public class Interrupt {
    public static void main (String[] args) {
       //  Prepare our context and socket
       final ZMQ.Context context = ZMQ.context(1);
@@ -35,7 +35,7 @@ public class interrupt {
       Runtime.getRuntime().addShutdownHook(new Thread() {
          @Override
          public void run() {
-            System.out.println("W: interrupt received, killing server...");
+            System.out.println("W: Interrupt received, killing server...");
             context.term();
             try {
                zmqThread.interrupt();

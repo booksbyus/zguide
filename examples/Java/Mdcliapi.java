@@ -10,7 +10,7 @@ import org.zeromq.ZMsg;
 * http://rfc.zeromq.org/spec:7.
 *
 */
-public class mdcliapi {
+public class Mdcliapi {
 
     private String broker;
     private ZContext ctx;
@@ -36,7 +36,7 @@ public class mdcliapi {
         this.retries = retries;
     }
 
-    public mdcliapi(String broker, boolean verbose) {
+    public Mdcliapi(String broker, boolean verbose) {
         this.broker = broker;
         this.verbose = verbose;
         ctx = new ZContext();

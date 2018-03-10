@@ -11,9 +11,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-//  flcliapi class - Freelance Pattern agent class
+//  Flcliapi class - Freelance Pattern agent class
 //  Implements the Freelance Protocol at http://rfc.zeromq.org/spec:10
-public class flcliapi
+public class Flcliapi
 {
     //  If not a single service replies within this time, give up
     private static final int GLOBAL_TIMEOUT = 2500;
@@ -31,9 +31,9 @@ public class flcliapi
 
     //  Structure of our frontend class
     private ZContext ctx;        //  Our context wrapper
-    private Socket pipe;         //  Pipe through to flcliapi agent
+    private Socket pipe;         //  Pipe through to Flcliapi agent
 
-    public flcliapi()
+    public Flcliapi()
     {
         ctx = new ZContext();
         FreelanceAgent agent = new FreelanceAgent();
@@ -90,7 +90,7 @@ public class flcliapi
     //  Simple class for one server we talk to
     private static class Server
     {
-        private String endpoint;        //  Server identity/endpoint
+        private String endpoint;        //  Server Identity/endpoint
         private boolean alive;          //  1 if known to be alive
         private long pingAt;            //  Next ping at this time
         private long expires;           //  Expires at this time

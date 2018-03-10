@@ -6,7 +6,7 @@
 
 import org.zeromq.ZMQ;
 
-public class hwserver {
+public class Hwserver {
 
     public static void main(String[] args) throws Exception {
         ZMQ.Context context = ZMQ.context(1);

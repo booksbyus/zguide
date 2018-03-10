@@ -4,14 +4,14 @@ import org.zeromq.ZMsg;
 * Majordomo Protocol worker example. Uses the mdwrk API to hide all MDP aspects
 *
 */
-public class mdworker {
+public class Mdworker {
 
     /**
      * @param args
      */
     public static void main(String[] args) {
         boolean verbose = (args.length > 0 && "-v".equals(args[0]));
-        mdwrkapi workerSession = new mdwrkapi("tcp://localhost:5555", "echo", verbose);
+        Mdwrkapi workerSession = new Mdwrkapi("tcp://localhost:5555", "echo", verbose);
 
         ZMsg reply = null;
         while (!Thread.currentThread().isInterrupted()) {

@@ -6,7 +6,7 @@ import java.util.Random;
 
 //  Pathological publisher
 //  Sends out 1,000 topics and then one random update per second
-public class pathopub
+public class Pathopub
 {
     public static void main(String[] args) throws Exception
     {

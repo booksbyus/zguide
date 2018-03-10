@@ -9,7 +9,7 @@ import java.util.Random;
 
 //  Espresso Pattern
 //  This shows how to capture data using a pub-sub proxy
-public class espresso
+public class Espresso
 {
     //  The subscriber thread requests messages starting with
     //  A and B, then reads and counts incoming messages.

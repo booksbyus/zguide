@@ -5,7 +5,7 @@ import org.zeromq.ZMQ.Socket;
 /**
 * Weather proxy device.
 */
-public class wuproxy{
+public class Wuproxy {
 
     public static void main (String[] args) {
         //  Prepare our context and sockets

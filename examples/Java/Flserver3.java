@@ -6,14 +6,14 @@ import org.zeromq.ZMsg;
 
 //  Freelance server - Model 3
 //  Uses an ROUTER/ROUTER socket but just one thread
-public class flserver3
+public class Flserver3
 {
     public static void main(String[] args)
     {
         boolean verbose = (args.length > 0 && args[0].equals("-v"));
 
         ZContext ctx = new ZContext();
-        //  Prepare server socket with predictable identity
+        //  Prepare server socket with predictable Identity
         String bindEndpoint = "tcp://*:5555";
         String connectEndpoint = "tcp://localhost:5555";
         Socket server = ctx.createSocket(ZMQ.ROUTER);
@@ -29,7 +29,7 @@ public class flserver3
             if (request == null)
                 break;          //  Interrupted
 
-            //  Frame 0: identity of client
+            //  Frame 0: Identity of client
             //  Frame 1: PING, or client control frame
             //  Frame 2: request body
             ZFrame identity = request.pop();

@@ -11,7 +11,7 @@ import org.zeromq.ZMsg;
 // Connects REQ socket to tcp://*:5556
 // Implements worker part of load-balancing queueing
 //
-public class spworker
+public class Spworker
 {
 
     private final static String WORKER_READY = "\001";      //  Signals worker is ready
@@ -21,7 +21,7 @@ public class spworker
         ZContext ctx = new ZContext();
         Socket worker = ctx.createSocket(ZMQ.REQ);
 
-        //  Set random identity to make tracing easier
+        //  Set random Identity to make tracing easier
         Random rand = new Random(System.nanoTime());
         String identity = String.format("%04X-%04X", rand.nextInt(0x10000), rand.nextInt(0x10000));
         worker.setIdentity(identity.getBytes());

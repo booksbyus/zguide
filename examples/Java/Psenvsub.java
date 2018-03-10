@@ -6,7 +6,7 @@ import org.zeromq.ZMQ.Socket;
  * Pubsub envelope subscriber
  */
 
-public class psenvsub {
+public class Psenvsub {
 
     public static void main (String[] args) {
 

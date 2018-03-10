@@ -5,8 +5,8 @@ import org.zeromq.ZMQ.Socket;
 import org.zeromq.ZMsg;
 
 //  Freelance client - Model 3
-//  Uses flcliapi class to encapsulate Freelance pattern
-public class flclient3
+//  Uses Flcliapi class to encapsulate Freelance pattern
+public class Flclient3
 {
     public static void main (String[] argv)
     {

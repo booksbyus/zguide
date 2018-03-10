@@ -14,7 +14,7 @@ import org.zeromq.ZThread.IAttachedRunnable;
  */
 
 
-public class suisnail
+public class Suisnail
 {
     private static final long MAX_ALLOWED_DELAY = 1000; //  msecs
     private static Random rand = new Random(System.currentTimeMillis());

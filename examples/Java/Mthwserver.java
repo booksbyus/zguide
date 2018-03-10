@@ -7,7 +7,7 @@ import org.zeromq.ZMQ;
 import org.zeromq.ZMQ.Context;
 import org.zeromq.ZMQQueue;
 
-public class mthwserver {
+public class Mthwserver {
 	
 	private static final class WorkerThread extends Thread {
 		

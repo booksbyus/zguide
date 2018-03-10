@@ -4,7 +4,7 @@ import org.zeromq.ZMQ;
  *  Task worker - design 2
  *  Adds pub-sub flow to receive and respond to kill signal
  */
-public class taskwork2 {
+public class Taskwork2 {
 
     public static void main (String[] args) throws InterruptedException {
         ZMQ.Context context = ZMQ.context(1);

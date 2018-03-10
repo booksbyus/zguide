@@ -4,7 +4,7 @@ import org.zeromq.ZMQ;
 //  Reading from multiple sockets in Java
 //  This version uses a simple recv loop
 //
-public class msreader {
+public class Msreader {
 
     public static void main (String[] args) throws Exception {
         //  Prepare our context and sockets

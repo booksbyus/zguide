@@ -11,9 +11,9 @@ import java.util.Map.Entry;
 /**
  * Clone server Model Four
  */
-public class clonesrv4
+public class Clonesrv4
 {
-    private static Map<String, kvsimple> kvMap = new LinkedHashMap<String, kvsimple>();
+    private static Map<String, Kvsimple> kvMap = new LinkedHashMap<String, Kvsimple>();
 
     public void run() {
 
@@ -39,12 +39,12 @@ public class clonesrv4
 
             // apply state updates from main thread
             if (poller.pollin(0)) {
-                kvsimple kvMsg = kvsimple.recv(collector);
+                Kvsimple kvMsg = Kvsimple.recv(collector);
                 if (kvMsg == null)  //  Interrupted
                     break;
                 kvMsg.setSequence(++sequence);
                 kvMsg.send(publisher);
-                clonesrv4.kvMap.put(kvMsg.getKey(), kvMsg);
+                Clonesrv4.kvMap.put(kvMsg.getKey(), kvMsg);
                 System.out.printf("I: publishing update %5d\n", sequence);
             }
 
@@ -66,10 +66,10 @@ public class clonesrv4
                 String subtree = snapshot.recvStr();
 
 
-                Iterator<Entry<String, kvsimple>> iter = kvMap.entrySet().iterator();
+                Iterator<Entry<String, Kvsimple>> iter = kvMap.entrySet().iterator();
                 while (iter.hasNext()) {
-                    Entry<String, kvsimple> entry = iter.next();
-                    kvsimple msg = entry.getValue();
+                    Entry<String, Kvsimple> entry = iter.next();
+                    Kvsimple msg = entry.getValue();
                     System.out.println("Sending message " + entry.getValue().getSequence());
                     this.sendMessage(msg, identity, subtree, snapshot);
                 }
@@ -77,7 +77,7 @@ public class clonesrv4
                 // now send end message with sequence number
                 System.out.println("Sending state snapshot = " + sequence);
                 snapshot.send(identity, ZMQ.SNDMORE);
-                kvsimple message = new kvsimple("KTHXBAI", sequence, "".getBytes());
+                Kvsimple message = new Kvsimple("KTHXBAI", sequence, "".getBytes());
                 message.send(snapshot);
             }
         }
@@ -85,13 +85,13 @@ public class clonesrv4
         ctx.destroy();
     }
 
-    private void sendMessage(kvsimple msg, byte[] identity, String subtree, Socket snapshot) {
+    private void sendMessage(Kvsimple msg, byte[] identity, String subtree, Socket snapshot) {
         snapshot.send(identity, ZMQ.SNDMORE);
         snapshot.send(subtree, ZMQ.SNDMORE);
         msg.send(snapshot);
     }
 
 	public static void main(String[] args) {
-		new clonesrv4().run();
+		new Clonesrv4().run();
 	}
 }

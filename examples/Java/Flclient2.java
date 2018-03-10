@@ -12,7 +12,7 @@ import org.zeromq.ZMsg;
 
 //  Freelance client - Model 2
 //  Uses DEALER socket to blast one or more services
-public class flclient2
+public class Flclient2
 {
     //  If not a single service replies within this time, give up
     private static final int GLOBAL_TIMEOUT = 2500;
@@ -26,7 +26,7 @@ public class flclient2
     private int servers;         //  How many servers we have connected to
     private int sequence;        //  Number of requests ever sent
 
-    public flclient2()
+    public Flclient2()
     {
         ctx = new ZContext();
         socket = ctx.createSocket(ZMQ.DEALER);
@@ -83,12 +83,12 @@ public class flclient2
     public static void main (String[] argv)
     {
         if (argv.length == 0) {
-            System.out.printf ("I: syntax: flclient2 <endpoint> ...\n");
+            System.out.printf ("I: syntax: Flclient2 <endpoint> ...\n");
             System.exit(0);
         }
 
         //  Create new freelance client object
-        flclient2 client = new flclient2();
+        Flclient2 client = new Flclient2();
 
         //  Connect to each endpoint
         int argn;

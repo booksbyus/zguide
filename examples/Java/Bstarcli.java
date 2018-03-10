@@ -5,7 +5,7 @@ import org.zeromq.ZMQ.Socket;
 
 //  Binary Star client proof-of-concept implementation. This client does no
 //  real work; it just demonstrates the Binary Star failover model.
-public class bstarcli
+public class Bstarcli
 {
     private static final long REQUEST_TIMEOUT = 1000;    //  msecs
     private static final long SETTLE_DELAY = 2000;       //  Before failing over

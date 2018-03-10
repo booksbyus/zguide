@@ -6,11 +6,11 @@ import org.zeromq.ZMsg;
  * @author Arkadiusz Orzechowski <aorzecho@gmail.com>
  * 
  */
-public class mmiecho {
+public class Mmiecho {
 
     public static void main(String[] args) {
         boolean verbose = (args.length > 0 && "-v".equals(args[0]));
-        mdcliapi clientSession = new mdcliapi("tcp://localhost:5555", verbose);
+        Mdcliapi clientSession = new Mdcliapi("tcp://localhost:5555", verbose);
 
         ZMsg request = new ZMsg();
 

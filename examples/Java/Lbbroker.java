@@ -6,7 +6,7 @@ import org.zeromq.ZMQ.Context;
 import org.zeromq.ZMQ.Poller;
 import org.zeromq.ZMQ.Socket;
 
-public class lbbroker {
+public class Lbbroker {
 
     private static final int NBR_CLIENTS = 10;
     private static final int NBR_WORKERS = 3;

@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Queue;
 
-public class lbbroker2
+public class Lbbroker2
 {
     private static final int NBR_CLIENTS = 10;
     private static final int NBR_WORKERS = 3;
@@ -25,7 +25,7 @@ public class lbbroker2
 
             //  Prepare our context and sockets
             Socket client  = context.createSocket (ZMQ.REQ);
-            ZHelper.setId (client);     //  Set a printable identity
+            ZHelper.setId (client);     //  Set a printable Identity
 
             client.connect("ipc://frontend.ipc");
 
@@ -50,7 +50,7 @@ public class lbbroker2
 
             //  Prepare our context and sockets
             Socket worker  = context.createSocket (ZMQ.REQ);
-            ZHelper.setId (worker);     //  Set a printable identity
+            ZHelper.setId (worker);     //  Set a printable Identity
 
             worker.connect("ipc://backend.ipc");
 
@@ -73,7 +73,7 @@ public class lbbroker2
 
     /**
      * This is the main task. This has the identical functionality to
-     * the previous lbbroker example but uses higher level classes to start child threads
+     * the previous Lbbroker example but uses higher level classes to start child threads
      * to hold the list of workers, and to read and send messages:
      */
     public static void main (String[] args) {

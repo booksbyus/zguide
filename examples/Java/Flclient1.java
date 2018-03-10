@@ -6,7 +6,7 @@ import org.zeromq.ZMsg;
 
 //  Freelance client - Model 1
 //  Uses REQ socket to query one or more services
-public class flclient1
+public class Flclient1
 {
     private static final int REQUEST_TIMEOUT = 1000;
     private static final int MAX_RETRIES = 3;       //  Before we abandon
@@ -44,7 +44,7 @@ public class flclient1
 
         int endpoints = argv.length;
         if (endpoints == 0)
-            System.out.printf ("I: syntax: flclient1 <endpoint> ...\n");
+            System.out.printf ("I: syntax: Flclient1 <endpoint> ...\n");
         else
         if (endpoints == 1) {
             //  For one endpoint, we retry N times

@@ -6,7 +6,7 @@ import java.util.Random;
 
 //  Pathological subscriber
 //  Subscribes to one random topic and prints received messages
-public class pathosub
+public class Pathosub
 {
     public static void main(String[] args)
     {

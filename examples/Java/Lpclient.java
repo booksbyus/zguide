@@ -7,10 +7,10 @@ import org.zeromq.ZMQ.Socket;
 //
 // Lazy Pirate client
 // Use zmq_poll to do a safe request-reply
-// To run, start lpserver and then randomly kill/restart it
+// To run, start Lpserver and then randomly kill/restart it
 //
 
-public class lpclient
+public class Lpclient
 {
 
     private final static int REQUEST_TIMEOUT = 2500;    //  msecs, (> 1000!)

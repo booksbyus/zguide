@@ -12,7 +12,7 @@ import org.zeromq.ZMsg;
 // Paranoid Pirate queue
 //
 
-public class ppqueue {
+public class Ppqueue {
 
     private final static int HEARTBEAT_LIVENESS = 3;       //  3-5 is reasonable
     private final static int HEARTBEAT_INTERVAL =  1000;    //  msecs
@@ -26,7 +26,7 @@ public class ppqueue {
     
     private static class Worker {
         ZFrame address;          //  Address of worker
-        String identity;             //  Printable identity
+        String identity;             //  Printable Identity
         long expiry;             //  Expires at this time
         
         protected Worker(ZFrame address) {

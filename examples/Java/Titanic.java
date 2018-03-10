@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.UUID;
 
-public class titanic
+public class Titanic
 {
     //  Return a new UUID as a printable character string
     //  Caller must free returned string when finished with it
@@ -32,7 +32,7 @@ public class titanic
         return UUID.randomUUID().toString();
     }
 
-    private static final String TITANIC_DIR  = ".titanic";
+    private static final String TITANIC_DIR  = ".Titanic";
 
     //  Returns freshly allocated request filename for given UUID
     private static String requestFilename(String uuid) {
@@ -47,9 +47,9 @@ public class titanic
     }
 
     //  .split Titanic request service
-    //  The {{titanic.request}} task waits for requests to this service. It writes
+    //  The {{Titanic.request}} task waits for requests to this service. It writes
     //  each request to disk and returns a UUID to the client. The client picks
-    //  up the reply asynchronously using the {{titanic.reply}} service:
+    //  up the reply asynchronously using the {{Titanic.reply}} service:
 
     static class TitanicRequest implements IAttachedRunnable
     {
@@ -57,8 +57,8 @@ public class titanic
         @Override
         public void run(Object[] args, ZContext ctx, Socket pipe)
         {
-            mdwrkapi worker = new mdwrkapi(
-                    "tcp://localhost:5555", "titanic.request", false);
+            Mdwrkapi worker = new Mdwrkapi(
+                    "tcp://localhost:5555", "Titanic.request", false);
             ZMsg reply = null;
 
             while (true) {
@@ -104,7 +104,7 @@ public class titanic
         }
     }
     //  .split Titanic reply service
-    //  The {{titanic.reply}} task checks if there's a reply for the specified
+    //  The {{Titanic.reply}} task checks if there's a reply for the specified
     //  request (by UUID), and returns a 200 (OK), 300 (Pending), or 400
     //  (Unknown) accordingly:
 
@@ -114,8 +114,8 @@ public class titanic
         @Override
         public void run(Object[] args)
         {
-            mdwrkapi worker = new mdwrkapi(
-                    "tcp://localhost:5555", "titanic.reply", false);
+            Mdwrkapi worker = new Mdwrkapi(
+                    "tcp://localhost:5555", "Titanic.reply", false);
             ZMsg reply = null;
 
             while (true) {
@@ -157,7 +157,7 @@ public class titanic
     }
 
     //  .split Titanic close task
-    //  The {{titanic.close}} task removes any waiting replies for the request
+    //  The {{Titanic.close}} task removes any waiting replies for the request
     //  (specified by UUID). It's idempotent, so it is safe to call more than
     //  once in a row:
     static class TitanicClose implements IDetachedRunnable
@@ -165,8 +165,8 @@ public class titanic
         @Override
         public void run(Object[] args)
         {
-            mdwrkapi worker = new mdwrkapi(
-                    "tcp://localhost:5555", "titanic.close", false);
+            Mdwrkapi worker = new Mdwrkapi(
+                    "tcp://localhost:5555", "Titanic.close", false);
             ZMsg reply = null;
 
             while (true) {
@@ -192,7 +192,7 @@ public class titanic
     //  This is the main thread for the Titanic worker. It starts three child
     //  threads; for the request, reply, and close services. It then dispatches
     //  requests to workers using a simple brute force disk queue. It receives
-    //  request UUIDs from the {{titanic.request}} service, saves these to a disk
+    //  request UUIDs from the {{Titanic.request}} service, saves these to a disk
     //  file, and then throws each request at MDP workers until it gets a
     //  response.
 
@@ -309,7 +309,7 @@ public class titanic
         String serviceName = service.toString();
 
         //  Create MDP client session with short timeout
-        mdcliapi client = new mdcliapi("tcp://localhost:5555", false);
+        Mdcliapi client = new Mdcliapi("tcp://localhost:5555", false);
         client.setTimeout(1000);  //  1 sec
         client.setRetries(1);     //  only 1 retry
 

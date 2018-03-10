@@ -6,11 +6,11 @@ import org.zeromq.ZMsg;
  * 
  */
 
-public class mdclient2 {
+public class Mdclient2 {
 
     public static void main(String[] args) {
         boolean verbose = (args.length > 0 && "-v".equals(args[0]));
-        mdcliapi2 clientSession = new mdcliapi2("tcp://localhost:5555", verbose);
+        Mdcliapi2 clientSession = new Mdcliapi2("tcp://localhost:5555", verbose);
 
         int count;
         for (count = 0; count < 100000; count++) {

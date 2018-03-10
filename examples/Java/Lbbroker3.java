@@ -17,7 +17,7 @@ import java.util.Queue;
  *
  * The client and worker tasks are identical from the previous example.
  */
-public class lbbroker3
+public class Lbbroker3
 {
     private static final int NBR_CLIENTS = 10;
     private static final int NBR_WORKERS = 3;

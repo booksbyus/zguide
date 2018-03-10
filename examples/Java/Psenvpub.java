@@ -6,7 +6,7 @@ import org.zeromq.ZMQ.Socket;
  * Pubsub envelope publisher
  */
 
-public class psenvpub {
+public class Psenvpub {
 
     public static void main (String[] args) throws Exception {
         // Prepare our context and publisher

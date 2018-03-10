@@ -5,7 +5,7 @@ import org.zeromq.ZMQ.Socket;
 /**
  * Multithreaded relay
  */
-public class mtrelay{
+public class Mtrelay {
 
     private static class Step1 extends Thread
     {

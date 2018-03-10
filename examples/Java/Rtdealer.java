@@ -7,7 +7,7 @@ import java.util.Random;
 /**
  * ROUTER-TO-REQ example
  */
-public class rtdealer
+public class Rtdealer
 {
     private static Random rand = new Random();
     private static final int NBR_WORKERS = 10;
@@ -19,7 +19,7 @@ public class rtdealer
 
             Context context = ZMQ.context(1);
             Socket worker = context.socket(ZMQ.DEALER);
-            ZHelper.setId(worker);  //  Set a printable identity
+            ZHelper.setId(worker);  //  Set a printable Identity
 
             worker.connect("tcp://localhost:5671");
 

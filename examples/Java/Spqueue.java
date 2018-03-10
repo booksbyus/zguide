@@ -13,7 +13,7 @@ import org.zeromq.ZMsg;
 // This is identical to the LRU pattern, with no reliability mechanisms
 // at all. It depends on the client for recovery. Runs forever.
 //
-public class spqueue {
+public class Spqueue {
 
     private final static String WORKER_READY  = "\001";      //  Signals worker is ready
     public static void main(String[] args) {

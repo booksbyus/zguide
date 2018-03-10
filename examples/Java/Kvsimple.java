@@ -9,15 +9,15 @@ import org.zeromq.ZMQ.Socket;
  * @author Danish Shrestha <dshrestha06@gmail.com>
  *
  */
-public class kvsimple {
+public class Kvsimple {
 	private final String key;
 	private long sequence;
 	private final byte[] body;
 
-	public kvsimple(String key, long sequence, byte[] body) {
+	public Kvsimple(String key, long sequence, byte[] body) {
 		this.key = key;
 		this.sequence = sequence;
-		this.body = body; // clone if needed
+		this.body = body; // Clone if needed
 	}
 
 	public String getKey() {
@@ -48,7 +48,7 @@ public class kvsimple {
 		publisher.send(body, 0);
 	}
 
-	public static kvsimple recv(Socket updates) {
+	public static Kvsimple recv(Socket updates) {
         byte [] data = updates.recv(0);
         if (data == null || !updates.hasReceiveMore())
             return null;
@@ -61,12 +61,12 @@ public class kvsimple {
         if (body == null || updates.hasReceiveMore())
             return null;
 
-		return new kvsimple(key, sequence, body);
+		return new Kvsimple(key, sequence, body);
 	}
 
 	@Override
 	public String toString() {
-		return "kvsimple [key=" + key + ", sequence=" + sequence + ", body=" + Arrays.toString(body) + "]";
+		return "Kvsimple [key=" + key + ", sequence=" + sequence + ", body=" + Arrays.toString(body) + "]";
 	}
 
 	@Override
@@ -87,7 +87,7 @@ public class kvsimple {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		kvsimple other = (kvsimple) obj;
+		Kvsimple other = (Kvsimple) obj;
 		if (!Arrays.equals(body, other.body))
 			return false;
 		if (key == null) {

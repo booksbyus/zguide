@@ -2,7 +2,6 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
@@ -13,8 +12,8 @@ import org.zeromq.ZMQ.Socket;
  * @author Danish Shrestha <dshrestha06@gmail.com>
  *
  */
-public class clonecli3 {
-	private static Map<String, kvsimple> kvMap = new HashMap<String, kvsimple>();
+public class Clonecli3 {
+	private static Map<String, Kvsimple> kvMap = new HashMap<String, Kvsimple>();
 
 	public void run() {
 		ZContext ctx = new ZContext();
@@ -32,7 +31,7 @@ public class clonecli3 {
         long sequence = 0;
         snapshot.send("ICANHAZ?".getBytes(), 0);
 		while (true) {
-            kvsimple kvMsg = kvsimple.recv(snapshot);
+            Kvsimple kvMsg = Kvsimple.recv(snapshot);
             if (kvMsg == null)
                 break;      //  Interrupted
 
@@ -43,7 +42,7 @@ public class clonecli3 {
 			}
 
 			System.out.println("receiving " + kvMsg.getSequence());
-			clonecli3.kvMap.put(kvMsg.getKey(), kvMsg);
+			Clonecli3.kvMap.put(kvMsg.getKey(), kvMsg);
 		}
 
 		Poller poller = new ZMQ.Poller(1);
@@ -59,13 +58,13 @@ public class clonecli3 {
                 break;              //  Context has been shut down
 
 			if (poller.pollin(0)) {
-                kvsimple kvMsg = kvsimple.recv(subscriber);
+                Kvsimple kvMsg = Kvsimple.recv(subscriber);
                 if (kvMsg == null)
                     break;      //  Interrupted
                 if (kvMsg.getSequence() > sequence) {
                     sequence = kvMsg.getSequence();
                     System.out.println("receiving " + sequence);
-                    clonecli3.kvMap.put(kvMsg.getKey(), kvMsg);
+                    Clonecli3.kvMap.put(kvMsg.getKey(), kvMsg);
                 }
 			}
 
@@ -76,7 +75,7 @@ public class clonecli3 {
 				ByteBuffer b = ByteBuffer.allocate(4);
 				b.asIntBuffer().put(body);
 
-				kvsimple kvUpdateMsg = new kvsimple(key + "", 0, b.array());
+				Kvsimple kvUpdateMsg = new Kvsimple(key + "", 0, b.array());
 				kvUpdateMsg.send(push);
 				alarm = System.currentTimeMillis() + 1000;
 			}
@@ -85,6 +84,6 @@ public class clonecli3 {
 	}
 
 	public static void main(String[] args) {
-		new clonecli3().run();
+		new Clonecli3().run();
 	}
 }

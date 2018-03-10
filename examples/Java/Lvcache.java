@@ -9,7 +9,7 @@ import java.util.Map;
 
 //  Last value cache
 //  Uses XPUB subscription messages to re-send data
-public class lvcache
+public class Lvcache
 {
     public static void main(String[] args)
     {

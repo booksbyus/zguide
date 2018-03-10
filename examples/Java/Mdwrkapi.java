@@ -9,7 +9,7 @@ import org.zeromq.ZMsg;
 * Majordomo Protocol Client API, Java version Implements the MDP/Worker spec at
 * http://rfc.zeromq.org/spec:7.
 */
-public class mdwrkapi {
+public class Mdwrkapi {
 
     private static final int HEARTBEAT_LIVENESS = 3; // 3-5 is reasonable
 
@@ -33,7 +33,7 @@ public class mdwrkapi {
     // Return address, if any
     private ZFrame replyTo;
 
-    public mdwrkapi(String broker, String service, boolean verbose) {
+    public Mdwrkapi(String broker, String service, boolean verbose) {
         assert (broker != null);
         assert (service != null);
         this.broker = broker;
@@ -170,7 +170,7 @@ public class mdwrkapi {
 
         }
         if (Thread.currentThread().isInterrupted())
-            log.format("W: interrupt received, killing worker\n");
+            log.format("W: Interrupt received, killing worker\n");
         return null;
     }
 

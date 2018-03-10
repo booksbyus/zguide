@@ -10,8 +10,8 @@ import org.zeromq.ZMQ.PollItem;
 import org.zeromq.ZMQ.Socket;
 import org.zeromq.ZMsg;
 
-//  bstar class - Binary Star reactor
-public class bstar
+//  Bstar class - Binary Star reactor
+public class Bstar
 {
     //  States we can be in at any point in time
     enum State {
@@ -172,7 +172,7 @@ public class bstar
         @Override
         public int handle(ZLoop loop, PollItem item, Object arg)
         {
-            bstar self = (bstar) arg;
+            Bstar self = (Bstar) arg;
             self.statepub.send(String.format("%d", self.state.ordinal()));
             return 0;
         }
@@ -184,7 +184,7 @@ public class bstar
         @Override
         public int handle(ZLoop loop, PollItem item, Object arg)
         {
-            bstar self = (bstar) arg;
+            Bstar self = (Bstar) arg;
             String state = item.getSocket().recvStr();
             if (state != null) {
                 self.event = Event.values()[Integer.parseInt(state)];
@@ -200,7 +200,7 @@ public class bstar
         @Override
         public int handle(ZLoop loop, PollItem item, Object arg)
         {
-            bstar self = (bstar) arg;
+            Bstar self = (Bstar) arg;
             //  If server can accept input now, call appl handler
             self.event = Event.CLIENT_REQUEST;
             if (self.execute())
@@ -216,10 +216,10 @@ public class bstar
 
     //  .until
     //  .split constructor
-    //  This is the constructor for our {{bstar}} class. We have to tell it
+    //  This is the constructor for our {{Bstar}} class. We have to tell it
     //  whether we're primary or backup server, as well as our local and
     //  remote endpoints to bind and connect to:
-    public bstar(boolean primary, String local, String remote) {
+    public Bstar(boolean primary, String local, String remote) {
         //  Initialize the Binary Star
         ctx = new ZContext();
         loop = new ZLoop();
@@ -241,7 +241,7 @@ public class bstar
     }
 
     //  .split destructor
-    //  The destructor shuts down the bstar reactor:
+    //  The destructor shuts down the Bstar reactor:
     public void destroy()
     {
         loop.destroy();
@@ -260,7 +260,7 @@ public class bstar
     //  This method registers a client voter socket. Messages received
     //  on this socket provide the CLIENT_REQUEST events for the Binary Star
     //  FSM and are passed to the provided application handler. We require
-    //  exactly one voter per {{bstar}} instance:
+    //  exactly one voter per {{Bstar}} instance:
     public int voter(String endpoint, int type, IZLoopHandler handler, Object arg)
     {
         //  Hold actual handler+arg so we can call this later

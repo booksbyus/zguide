@@ -5,7 +5,7 @@ import org.zeromq.ZMQ.Socket;
 /**
  * Demonstrate identities as used by the request-reply pattern.
  */
-public class identity {
+public class Identity {
 
     public static void main (String[] args) throws InterruptedException {
 
@@ -13,18 +13,18 @@ public class identity {
         Socket sink = context.socket(ZMQ.ROUTER);
         sink.bind("inproc://example");
 
-        //  First allow 0MQ to set the identity, [00] + random 4byte
+        //  First allow 0MQ to set the Identity, [00] + random 4byte
         Socket anonymous = context.socket(ZMQ.REQ);
 
         anonymous.connect("inproc://example");
-        anonymous.send ("ROUTER uses a generated 5 byte identity",0);
+        anonymous.send ("ROUTER uses a generated 5 byte Identity",0);
         ZHelper.dump (sink);
 
-        //  Then set the identity ourself
+        //  Then set the Identity ourself
         Socket identified = context.socket(ZMQ.REQ);
         identified.setIdentity("PEER2".getBytes ());
         identified.connect ("inproc://example");
-        identified.send("ROUTER uses REQ's socket identity", 0);
+        identified.send("ROUTER uses REQ's socket Identity", 0);
         ZHelper.dump (sink);
 
         sink.close ();

@@ -5,7 +5,7 @@ import org.zeromq.ZMQ.Socket;
 /**
  * Multi threaded Hello World server
  */
-public class mtserver {
+public class Mtserver {
 
     private static class Worker extends Thread
     {

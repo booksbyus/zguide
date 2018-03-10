@@ -6,12 +6,12 @@ import org.zeromq.ZMsg;
 
 //  Freelance server - Model 2
 //  Does some work, replies OK, with message sequencing
-public class flserver2
+public class Flserver2
 {
     public static void main(String[] args)
     {
         if (args.length < 1) {
-            System.out.printf("I: syntax: flserver2 <endpoint>\n");
+            System.out.printf("I: syntax: Flserver2 <endpoint>\n");
             System.exit(0);
         }
         ZContext ctx = new ZContext();

@@ -7,7 +7,7 @@ import org.zeromq.ZMQ.Socket;
 * Connects REQ socket to tcp://localhost:5559
 * Sends "Hello" to server, expects "World" back
 */
-public class rrclient{
+public class Rrclient {
 
     public static void main(String[] args) {
         Context context = ZMQ.context(1);

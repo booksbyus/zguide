@@ -7,7 +7,7 @@ import org.zeromq.ZMQ.Socket;
 * Simple request-reply broker
 *
 */
-public class rrbroker{
+public class Rrbroker {
 
     public static void main (String[] args) {
         //  Prepare our context and sockets

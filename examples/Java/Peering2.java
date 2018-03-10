@@ -13,7 +13,7 @@ import org.zeromq.ZMsg;
 //  Broker peering simulation (part 2)
 //  Prototypes the request-reply flow
 
-public class peering2
+public class Peering2
 {
 
     private static final int NBR_CLIENTS = 10;
@@ -88,7 +88,7 @@ public class peering2
         //  Other arguments are our peers' names
         //
         if (argv.length < 1) {
-            System.out.println("syntax: peering2 me {you}");
+            System.out.println("syntax: Peering2 me {you}");
             System.exit(-1);
         }
         self = argv[0];

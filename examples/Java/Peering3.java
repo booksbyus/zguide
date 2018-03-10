@@ -12,7 +12,7 @@ import org.zeromq.ZMsg;
 //  Broker peering simulation (part 3)
 //  Prototypes the full flow of status and tasks
 
-public class peering3
+public class Peering3
 {
 
     private static final int NBR_CLIENTS = 10;
@@ -126,7 +126,7 @@ public class peering3
         //  Other arguments are our peers' names
         //
         if (argv.length < 1) {
-            System.out.println("syntax: peering3 me {you}");
+            System.out.println("syntax: Peering3 me {you}");
             System.exit(-1);
         }
         self = argv[0];

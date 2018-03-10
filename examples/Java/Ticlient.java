@@ -8,10 +8,10 @@
 import org.zeromq.ZFrame;
 import org.zeromq.ZMsg;
 
-public class ticlient
+public class Ticlient
 {
     static ZMsg
-    serviceCall (mdcliapi session, String service, ZMsg request)
+    serviceCall (Mdcliapi session, String service, ZMsg request)
     {
         ZMsg reply = session.send(service, request);
         if (reply != null) {
@@ -34,14 +34,14 @@ public class ticlient
     public static void main (String[] args) throws Exception
     {
         boolean verbose = (args.length > 0 && args[0].equals("-v"));
-        mdcliapi session = new mdcliapi("tcp://localhost:5555", verbose);
+        Mdcliapi session = new Mdcliapi("tcp://localhost:5555", verbose);
 
         //  1. Send 'echo' request to Titanic
         ZMsg request = new ZMsg();
         request.add("echo");
         request.add("Hello world");
         ZMsg reply = serviceCall(
-                session, "titanic.request", request);
+                session, "Titanic.request", request);
 
         ZFrame uuid = null;
         if (reply != null) {
@@ -55,7 +55,7 @@ public class ticlient
             request = new ZMsg();
             request.add(uuid.duplicate());
             reply = serviceCall(
-                    session, "titanic.reply", request);
+                    session, "Titanic.reply", request);
 
             if (reply != null) {
                 String replyString = reply.getLast().toString();
@@ -65,7 +65,7 @@ public class ticlient
                 //  3. Close request
                 request = new ZMsg();
                 request.add(uuid.duplicate());
-                reply = serviceCall(session, "titanic.close", request);
+                reply = serviceCall(session, "Titanic.close", request);
                 reply.destroy();
                 break;
             }

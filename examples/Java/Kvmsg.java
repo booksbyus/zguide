@@ -9,7 +9,7 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.UUID;
 
-public class kvmsg
+public class Kvmsg
 {
     //  Keys are short strings
     private static final int KVMSG_KEY_MAX  = 255;
@@ -72,8 +72,8 @@ public class kvmsg
     //  .split constructor and destructor
     //  Here are the constructor and destructor for the class:
 
-    //  Constructor, takes a getSequence number for the new kvmsg instance:
-    public kvmsg(long sequence)
+    //  Constructor, takes a getSequence number for the new Kvmsg instance:
+    public Kvmsg(long sequence)
     {
         props = new Properties();
         setSequence(sequence);
@@ -85,13 +85,13 @@ public class kvmsg
 
     //  .split recv method
     //  This method reads a getKey-value message from the socket and returns a
-    //  new {{kvmsg}} instance:
-    public static kvmsg recv(Socket socket)
+    //  new {{Kvmsg}} instance:
+    public static Kvmsg recv(Socket socket)
     {
-        //  This method is almost unchanged from kvsimple
+        //  This method is almost unchanged from Kvsimple
         //  .skip
         assert (socket != null);
-        kvmsg self = new kvmsg(0);
+        Kvmsg self = new Kvmsg(0);
 
         //  Read all frames off the wire, reject if bogus
         int frameNbr;
@@ -119,7 +119,7 @@ public class kvmsg
         assert (socket != null);
 
         encodeProps();
-        //  The rest of the method is unchanged from kvsimple
+        //  The rest of the method is unchanged from Kvsimple
         //  .skip
         int frameNbr;
         for (frameNbr = 0; frameNbr < KVMSG_FRAMES; frameNbr++) {
@@ -133,10 +133,10 @@ public class kvmsg
     //  .until
 
     //  .split dup method
-    //  This method duplicates a {{kvmsg}} instance, returns the new instance:
-    public kvmsg dup()
+    //  This method duplicates a {{Kvmsg}} instance, returns the new instance:
+    public Kvmsg dup()
     {
-        kvmsg kvmsg = new kvmsg(0);
+        Kvmsg kvmsg = new Kvmsg(0);
         int frameNbr;
         for (frameNbr = 0; frameNbr < KVMSG_FRAMES; frameNbr++) {
             if (present[frameNbr]) {
@@ -150,7 +150,7 @@ public class kvmsg
         kvmsg.props.putAll(props);
         return kvmsg;
     }
-    //  The getKey, getSequence, body, and size methods are the same as in kvsimple.
+    //  The getKey, getSequence, body, and size methods are the same as in Kvsimple.
     //  .skip
 
     //  Return getKey from last read message, if any, else NULL
@@ -285,10 +285,10 @@ public class kvmsg
 
     //  .split store method
     //  This method stores the getKey-value message into a hash map, unless
-    //  the getKey and value are both null. It nullifies the {{kvmsg}} reference
+    //  the getKey and value are both null. It nullifies the {{Kvmsg}} reference
     //  so that the object is owned by the hash map, not the caller:
 
-    public void store(Map<String, kvmsg> hash)
+    public void store(Map<String, Kvmsg> hash)
     {
         if (size() > 0) {
             if (present[FRAME_KEY] && present[FRAME_BODY]) {
@@ -299,7 +299,7 @@ public class kvmsg
     }
 
     //  .split dump method
-    //  This method extends the {{kvsimple}} implementation with support for
+    //  This method extends the {{Kvsimple}} implementation with support for
     //  message properties:
 
     public void dump()
@@ -325,11 +325,11 @@ public class kvmsg
     //  .until
 
     //  .split test method
-    //  This method is the same as in {{kvsimple}} with added support
-    //  for the uuid and property features of {{kvmsg}}:
+    //  This method is the same as in {{Kvsimple}} with added support
+    //  for the uuid and property features of {{Kvmsg}}:
     public void test(boolean verbose)
     {
-        System.out.printf(" * kvmsg: ");
+        System.out.printf(" * Kvmsg: ");
 
         //  Prepare our context and sockets
         ZContext ctx = new ZContext();
@@ -338,11 +338,11 @@ public class kvmsg
         Socket input = ctx.createSocket(ZMQ.DEALER);
         input.connect("ipc://kvmsg_selftest.ipc");
 
-        Map<String,kvmsg> kvmap = new HashMap<String, kvmsg>();
+        Map<String, Kvmsg> kvmap = new HashMap<String, Kvmsg>();
 
         //  .until
         //  Test send and receive of simple message
-        kvmsg kvmsg = new kvmsg(1);
+        Kvmsg kvmsg = new Kvmsg(1);
         kvmsg.setKey("getKey");
         kvmsg.setUUID();
         kvmsg.setBody("body".getBytes());
@@ -358,7 +358,7 @@ public class kvmsg
         kvmsg.store(kvmap);
 
         //  Test send and receive of message with properties
-        kvmsg = new kvmsg(2);
+        kvmsg = new Kvmsg(2);
         kvmsg.setProp("prop1", "value1");
         kvmsg.setProp("prop2", "value1");
         kvmsg.setProp("prop2", "value2");

@@ -7,11 +7,11 @@ import org.zeromq.ZMQ.Socket;
 //
 // Lazy Pirate server
 // Binds REQ socket to tcp://*:5555
-// Like hwserver except:
+// Like Hwserver except:
 //  - echoes request as-is
 //  - randomly runs slowly, or exits to simulate a crash.
 //
-public class lpserver
+public class Lpserver
 {
 
     public static void main(String[] argv) throws Exception

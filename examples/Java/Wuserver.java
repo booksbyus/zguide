@@ -6,7 +6,7 @@ import org.zeromq.ZMQ;
 //  Binds PUB socket to tcp://*:5556
 //  Publishes random weather updates
 //
-public class wuserver {
+public class Wuserver {
 
     public static void main (String[] args) throws Exception {
         //  Prepare our context and publisher

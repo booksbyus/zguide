@@ -6,7 +6,7 @@ import org.zeromq.ZMQ.Socket;
 * Simple message queuing broker
 * Same as request-reply broker but using shared queue proxy.
 */
-public class msgqueue{
+public class Msgqueue {
 
     public static void main (String[] args) {
         //  Prepare our context and sockets

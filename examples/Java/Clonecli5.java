@@ -3,7 +3,6 @@ import org.zeromq.ZMQ;
 import org.zeromq.ZMQ.Poller;
 import org.zeromq.ZMQ.Socket;
 
-import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -12,9 +11,9 @@ import java.util.Random;
  * Clone client Model Five
  *
  */
-public class clonecli5
+public class Clonecli5
 {
-    //  This client is identical to clonecli3 except for where we
+    //  This client is identical to Clonecli3 except for where we
     //  handles subtrees.
     private final static String SUBTREE  = "/client/";
 
@@ -31,7 +30,7 @@ public class clonecli5
 		Socket publisher = ctx.createSocket(ZMQ.PUSH);
 		publisher.connect("tcp://localhost:5558");
 
-        Map<String, kvmsg> kvMap = new HashMap<String, kvmsg>();
+        Map<String, Kvmsg> kvMap = new HashMap<String, Kvmsg>();
 
         // get state snapshot
 		snapshot.sendMore("ICANHAZ?");
@@ -39,7 +38,7 @@ public class clonecli5
         long sequence = 0;
 
         while (true) {
-            kvmsg kvMsg = kvmsg.recv(snapshot);
+            Kvmsg kvMsg = Kvmsg.recv(snapshot);
             if (kvMsg == null)
                 break;      //  Interrupted
 
@@ -68,7 +67,7 @@ public class clonecli5
                 break;              //  Context has been shut down
 
 			if (poller.pollin(0)) {
-                kvmsg kvMsg = kvmsg.recv(subscriber);
+                Kvmsg kvMsg = Kvmsg.recv(subscriber);
                 if (kvMsg == null)
                     break;      //  Interrupted
 
@@ -81,7 +80,7 @@ public class clonecli5
 			}
 
 			if (System.currentTimeMillis() >= alarm) {
-				kvmsg kvMsg = new kvmsg(0);
+				Kvmsg kvMsg = new Kvmsg(0);
                 kvMsg.fmtKey("%s%d", SUBTREE, random.nextInt(10000));
                 kvMsg.fmtBody("%d", random.nextInt(1000000));
                 kvMsg.setProp("ttl", "%d", random.nextInt(30));
@@ -95,6 +94,6 @@ public class clonecli5
 	}
 
 	public static void main(String[] args) {
-		new clonecli5().run();
+		new Clonecli5().run();
 	}
 }

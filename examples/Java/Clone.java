@@ -10,16 +10,16 @@ import org.zeromq.ZThread.IAttachedRunnable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class clone
+public class Clone
 {
     private ZContext ctx;                //  Our context wrapper
-    private Socket pipe;                 //  Pipe through to clone agent
+    private Socket pipe;                 //  Pipe through to Clone agent
 
     //  .split constructor and destructor
-    //  Here are the constructor and destructor for the clone class. Note that
+    //  Here are the constructor and destructor for the Clone class. Note that
     //  we create a context specifically for the pipe that connects our
     //  frontend to the backend agent:
-    public clone()
+    public Clone()
     {
         ctx = new ZContext();
         pipe = ZThread.fork(ctx, new CloneAgent());
@@ -140,7 +140,7 @@ public class clone
         private int nbrServers;              //  0 to SERVER_MAX
         private int state;                   //  Current state
         private int curServer;               //  If active, server 0 or 1
-        private long sequence;               //  Last kvmsg processed
+        private long sequence;               //  Last Kvmsg processed
         private Socket publisher;            //  Outgoing updates
 
         protected Agent (ZContext ctx, Socket pipe)
@@ -199,7 +199,7 @@ public class clone
                 kvmap.put(key, value);
 
                 //  Send key-value pair on to server
-                kvmsg kvmsg = new kvmsg(0);
+                Kvmsg kvmsg = new Kvmsg(0);
                 kvmsg.setKey(key);
                 kvmsg.setUUID();
                 kvmsg.fmtBody("%s", value);
@@ -289,7 +289,7 @@ public class clone
                 }
                 else
                 if (pollItems[1].isReadable()) {
-                    kvmsg msg = kvmsg.recv(pollItems[1].getSocket());
+                    Kvmsg msg = Kvmsg.recv(pollItems[1].getSocket());
                     if (msg == null)
                         break;          //  Interrupted
 

@@ -13,18 +13,18 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 //  Clone server - Model Six
-public class clonesrv6
+public class Clonesrv6
 {
     private ZContext ctx;               //  Context wrapper
-    private Map<String, kvmsg> kvmap;   //  Key-value store
-    private bstar bStar;                //  Bstar reactor core
+    private Map<String, Kvmsg> kvmap;   //  Key-value store
+    private Bstar bStar;                //  Bstar reactor core
     private long sequence;              //  How many updates we're at
     private int port;                   //  Main port we're working on
     private int peer;                   //  Main port of our peer
     private Socket publisher;           //  Publish updates and hugz
     private Socket collector;           //  Collect updates from clients
     private Socket subscriber;          //  Get updates from peer
-    private List<kvmsg> pending;       //  Pending updates from clients
+    private List<Kvmsg> pending;       //  Pending updates from clients
     private boolean primary;            //  TRUE if we're primary
     private boolean active;             //  TRUE if we're active
     private boolean passive;            //  TRUE if we're passive
@@ -34,7 +34,7 @@ public class clonesrv6
         @Override
         public int handle(ZLoop loop, PollItem item, Object arg)
         {
-            clonesrv6 srv = (clonesrv6) arg;
+            Clonesrv6 srv = (Clonesrv6) arg;
             Socket socket = item.getSocket();
 
             byte[] identity = socket.recv();
@@ -50,14 +50,14 @@ public class clonesrv6
 
                 if (subtree != null) {
                     //  Send state socket to client
-                    for (Entry<String, kvmsg> entry: srv.kvmap.entrySet()) {
+                    for (Entry<String, Kvmsg> entry: srv.kvmap.entrySet()) {
                         sendSingle(entry.getValue(), identity, subtree, socket);
                     }
 
                     //  Now send END message with getSequence number
                     System.out.printf("I: sending shapshot=%d\n", srv.sequence);
                     socket.send(identity, ZMQ.SNDMORE);
-                    kvmsg kvmsg = new kvmsg(srv.sequence);
+                    Kvmsg kvmsg = new Kvmsg(srv.sequence);
                     kvmsg.setKey("KTHXBAI");
                     kvmsg.setBody(subtree.getBytes());
                     kvmsg.send(socket);
@@ -73,10 +73,10 @@ public class clonesrv6
         @Override
         public int handle(ZLoop loop, PollItem item, Object arg)
         {
-            clonesrv6 srv = (clonesrv6) arg;
+            Clonesrv6 srv = (Clonesrv6) arg;
             Socket socket = item.getSocket();
 
-            kvmsg msg = kvmsg.recv(socket);
+            Kvmsg msg = Kvmsg.recv(socket);
             if (msg != null) {
                 msg.setSequence(++srv.sequence);
                 msg.send(srv.publisher);
@@ -109,9 +109,9 @@ public class clonesrv6
         @Override
         public int handle(ZLoop loop, PollItem item, Object arg)
         {
-            clonesrv6 srv = (clonesrv6) arg;
+            Clonesrv6 srv = (Clonesrv6) arg;
 
-            kvmsg msg = new kvmsg(srv.sequence);
+            Kvmsg msg = new Kvmsg(srv.sequence);
             msg.setKey("HUGZ");
             msg.setBody("".getBytes());
             msg.send(srv.publisher);
@@ -126,9 +126,9 @@ public class clonesrv6
         @Override
         public int handle(ZLoop loop, PollItem item, Object arg)
         {
-            clonesrv6 srv = (clonesrv6) arg;
+            Clonesrv6 srv = (Clonesrv6) arg;
             if (srv.kvmap != null) {
-                for (kvmsg msg: new ArrayList<kvmsg>(srv.kvmap.values())) {
+                for (Kvmsg msg: new ArrayList<Kvmsg>(srv.kvmap.values())) {
                     srv.flushSingle(msg);
                 }
             }
@@ -145,7 +145,7 @@ public class clonesrv6
         @Override
         public int handle(ZLoop loop, PollItem item, Object arg)
         {
-            clonesrv6 srv = (clonesrv6) arg;
+            Clonesrv6 srv = (Clonesrv6) arg;
 
             srv.active = true;
             srv.passive = false;
@@ -155,7 +155,7 @@ public class clonesrv6
             srv.bStar.zloop().removePoller(poller);
 
             //  Apply pending list to own hash table
-            for (kvmsg msg: srv.pending) {
+            for (Kvmsg msg: srv.pending) {
                 msg.setSequence(++srv.sequence);
                 msg.send(srv.publisher);
                 msg.store(srv.kvmap);
@@ -171,10 +171,10 @@ public class clonesrv6
         @Override
         public int handle(ZLoop loop, PollItem item, Object arg)
         {
-            clonesrv6 srv = (clonesrv6) arg;
+            Clonesrv6 srv = (Clonesrv6) arg;
 
             if (srv.kvmap != null) {
-                for (kvmsg msg: srv.kvmap.values())
+                for (Kvmsg msg: srv.kvmap.values())
                     msg.destroy();
             }
             srv.active = false;
@@ -195,12 +195,12 @@ public class clonesrv6
         @Override
         public int handle(ZLoop loop, PollItem item, Object arg)
         {
-            clonesrv6 srv = (clonesrv6) arg;
+            Clonesrv6 srv = (Clonesrv6) arg;
             Socket socket = item.getSocket();
 
             //  Get state snapshot if necessary
             if (srv.kvmap == null) {
-                srv.kvmap = new HashMap<String, kvmsg>();
+                srv.kvmap = new HashMap<String, Kvmsg>();
                 Socket snapshot = srv.ctx.createSocket(ZMQ.DEALER);
                 snapshot.connect(String.format("tcp://localhost:%d", srv.peer));
 
@@ -210,7 +210,7 @@ public class clonesrv6
                 snapshot.send(""); // blank subtree to get all
 
                 while (true) {
-                    kvmsg msg = kvmsg.recv(snapshot);
+                    Kvmsg msg = Kvmsg.recv(snapshot);
                     if (msg == null)
                         break;          //  Interrupted
                     if (msg.getKey().equals("KTHXBAI")) {
@@ -226,7 +226,7 @@ public class clonesrv6
             }
 
             //  Find and remove update off pending list
-            kvmsg msg = kvmsg.recv(item.getSocket());
+            Kvmsg msg = Kvmsg.recv(item.getSocket());
             if (msg == null)
                 return 0;
 
@@ -250,10 +250,10 @@ public class clonesrv6
         }
     }
 
-    public clonesrv6(boolean primary)
+    public Clonesrv6(boolean primary)
     {
         if (primary) {
-            bStar = new bstar(true, "tcp://*:5003",
+            bStar = new Bstar(true, "tcp://*:5003",
                 "tcp://localhost:5004");
             bStar.voter("tcp://*:5556",
                 ZMQ.ROUTER, new Snapshots(), this);
@@ -262,7 +262,7 @@ public class clonesrv6
             peer = 5566;
             this.primary = true;
         } else {
-            bStar = new bstar(false, "tcp://*:5004",
+            bStar = new Bstar(false, "tcp://*:5004",
                     "tcp://localhost:5003");
             bStar.voter("tcp://*:5566",
                     ZMQ.ROUTER, new Snapshots(), this);
@@ -274,20 +274,20 @@ public class clonesrv6
 
         //  Primary server will become first active
         if (primary)
-            kvmap = new HashMap<String, kvmsg>();
+            kvmap = new HashMap<String, Kvmsg>();
 
         ctx = new ZContext();
-        pending = new ArrayList<kvmsg>();
+        pending = new ArrayList<Kvmsg>();
         bStar.setVerbose(true);
 
-        //  Set up our clone server sockets
+        //  Set up our Clone server sockets
         publisher = ctx.createSocket(ZMQ.PUB);
         collector = ctx.createSocket(ZMQ.SUB);
         collector.subscribe("".getBytes());
         publisher.bind(String.format("tcp://*:%d", port + 1));
         collector.bind(String.format("tcp://*:%d", port+2));
 
-        //  Set up our own clone client interface to peer
+        //  Set up our own Clone client interface to peer
         subscriber = ctx.createSocket(ZMQ.SUB);
         subscriber.subscribe("".getBytes());
         subscriber.connect(String.format("tcp://localhost:%d", peer + 1));
@@ -295,39 +295,39 @@ public class clonesrv6
 
     //  .split main task body
     //  After we've setup our sockets, we register our binary star
-    //  event handlers, and then start the bstar reactor. This finishes
+    //  event handlers, and then start the Bstar reactor. This finishes
     //  when the user presses Ctrl-C or when the process receives a SIGINT
-    //  interrupt:
+    //  Interrupt:
     public void run()
     {
         //  Register state change handlers
         bStar.newActive(new NewActive(), this);
         bStar.newPassive(new NewPassive(), this);
 
-        //  Register our other handlers with the bstar reactor
+        //  Register our other handlers with the Bstar reactor
         PollItem poller = new PollItem(collector, ZMQ.Poller.POLLIN);
 
         bStar.zloop().addPoller(poller, new Collector(), this);
         bStar.zloop().addTimer(1000, 0, new FlushTTL(), this);
         bStar.zloop().addTimer(1000, 0, new SendHugz(), this);
 
-        //  Start the bstar reactor
+        //  Start the Bstar reactor
         bStar.start();
 
         //  Interrupted, so shut down
-        for (kvmsg value: pending)
+        for (Kvmsg value: pending)
             value.destroy();
 
         bStar.destroy();
-        for (kvmsg value: kvmap.values())
+        for (Kvmsg value: kvmap.values())
             value.destroy();
 
         ctx.destroy();
     }
 
     //  Send one state snapshot key-value pair to a socket
-    //  Hash item data is our kvmsg object, ready to send
-    private static void sendSingle(kvmsg msg, byte[] identity, String subtree, Socket socket)
+    //  Hash item data is our Kvmsg object, ready to send
+    private static void sendSingle(Kvmsg msg, byte[] identity, String subtree, Socket socket)
     {
         if (msg.getKey().startsWith(subtree)) {
             socket.send (identity,    //  Choose recipient
@@ -336,16 +336,16 @@ public class clonesrv6
         }
     }
 
-    //  The collector is more complex than in the clonesrv5 example because the
+    //  The collector is more complex than in the Clonesrv5 example because the
     //  way it processes updates depends on whether we're active or passive.
     //  The active applies them immediately to its kvmap, whereas the passive
     //  queues them as pending:
 
     //  If message was already on pending list, remove it and return TRUE,
     //  else return FALSE.
-    boolean wasPending (kvmsg msg)
+    boolean wasPending (Kvmsg msg)
     {
-        Iterator<kvmsg> it = pending.iterator();
+        Iterator<Kvmsg> it = pending.iterator();
         while (it.hasNext()) {
             if (msg.UUID().equals(it.next().UUID())) {
                 it.remove();
@@ -358,11 +358,11 @@ public class clonesrv6
 
 
     //  We purge ephemeral values using exactly the same code as in
-    //  the previous clonesrv5 example.
+    //  the previous Clonesrv5 example.
     //  .skip
     //  If key-value pair has expired, delete it and publish the
     //  fact to listening clients.
-    private void flushSingle(kvmsg msg)
+    private void flushSingle(Kvmsg msg)
     {
         long ttl = Long.parseLong(msg.getProp("ttl"));
         if (ttl > 0 && System.currentTimeMillis() >= ttl) {
@@ -382,18 +382,18 @@ public class clonesrv6
     //  two servers to run on the same box, we use different ports for
     //  primary and backup. Ports 5003/5004 are used to interconnect the
     //  servers. Ports 5556/5566 are used to receive voting events (snapshot
-    //  requests in the clone pattern). Ports 5557/5567 are used by the
+    //  requests in the Clone pattern). Ports 5557/5567 are used by the
     //  publisher, and ports 5558/5568 are used by the collector:
     public static void main(String[] args)
     {
-        clonesrv6 srv = null;
+        Clonesrv6 srv = null;
 
         if (args.length == 1 && "-p".equals(args[0])) {
-            srv = new clonesrv6(true);
+            srv = new Clonesrv6(true);
         } else if (args.length == 1 && "-b".equals(args[0])) {
-            srv = new clonesrv6(false);
+            srv = new Clonesrv6(false);
         } else {
-            System.out.printf("Usage: clonesrv4 { -p | -b }\n");
+            System.out.printf("Usage: Clonesrv4 { -p | -b }\n");
             System.exit(0);
         }
         srv.run();

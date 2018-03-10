@@ -10,7 +10,7 @@ import org.zeromq.ZMQ.Socket;
 //Prototypes the state flow
 //
 
-public class peering1
+public class Peering1
 {
 
     public static void main(String[] argv)
@@ -19,7 +19,7 @@ public class peering1
         //  Other arguments are our peers' names
         //
         if (argv.length < 1) {
-            System.out.println("syntax: peering1 me {you}\n");
+            System.out.println("syntax: Peering1 me {you}\n");
             System.exit(-1);
         }
         String self = argv[0];

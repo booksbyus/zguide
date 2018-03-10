@@ -16,7 +16,7 @@ import java.util.Random;
 //context and conceptually acts as a separate process.
 
 
-public class asyncsrv
+public class Asyncsrv
 {
     //---------------------------------------------------------------------
     //This is our client task
@@ -32,7 +32,7 @@ public class asyncsrv
             ZContext ctx = new ZContext();
             Socket client = ctx.createSocket(ZMQ.DEALER);
 
-            //  Set random identity to make tracing easier
+            //  Set random Identity to make tracing easier
             String identity = String.format("%04X-%04X", rand.nextInt(), rand.nextInt());
             client.setIdentity(identity.getBytes());
             client.connect("tcp://localhost:5570");

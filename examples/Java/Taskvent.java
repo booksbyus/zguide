@@ -6,7 +6,7 @@ import org.zeromq.ZMQ;
 //  Binds PUSH socket to tcp://localhost:5557
 //  Sends batch of tasks to workers via that socket
 //
-public class taskvent {
+public class Taskvent {
 
     public static void main (String[] args) throws Exception {
         ZMQ.Context context = ZMQ.context(1);
