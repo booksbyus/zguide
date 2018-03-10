@@ -16,15 +16,16 @@ public class Fileio1 {
   private static final int CHUNK_SIZE = 250000;
 
   //  The main task starts the client and server threads; it's easier
-//  to test this as a single process with threads, than as multiple
-//  processes:
+  //  to test this as a single process with threads, than as multiple
+  //  processes:
   public static void main(String[] args) {
     ZContext ctx = new ZContext();
     //  Start child threads
     ZThread.fork(ctx, new Server());
     Socket client = ZThread.fork(ctx, new Client());
+    //  Loop until client tells us it's done
     client.recvStr();
-
+    //  Kill server thread
     ctx.destroy();
   }
 
@@ -36,8 +37,8 @@ public class Fileio1 {
       Socket dealer = zContext.createSocket(ZMQ.DEALER);
       dealer.connect("tcp://127.0.0.1:6000");
       dealer.send("fetch");
-      long total = 0;//  Total bytes received
-      long chunks = 0;//  Total chunks received
+      long total = 0;   //  Total bytes received
+      long chunks = 0;  //  Total chunks received
 
       while (true) {
         ZFrame frame = ZFrame.recvFrame(dealer);
@@ -46,13 +47,15 @@ public class Fileio1 {
         frame.destroy();
         total += size;
         if (size == 0)
-          break;              //  Whole file received
+          break;   //  Whole file received
       }
       System.out.printf("%d chunks received, %d bytes\n", chunks, total);
       pipe.send("OK");
     }
   }
-
+  //  The server thread reads the file from disk in chunks, and sends
+  //  each chunk to the client as a separate message. We only have one
+  //  test file, so open that once and then serve it out as needed:
   static class Server implements ZThread.IAttachedRunnable {
 
     @Override
@@ -82,6 +85,7 @@ public class Fileio1 {
           e.printStackTrace();
           break;
         }
+
         //  Second frame is "fetch" command
         String command = router.recvStr();
         assert ("fetch".equals(command));
@@ -101,7 +105,7 @@ public class Fileio1 {
           identity.send(router, ZMQ.SNDMORE);
           chunk.sendAndDestroy(router, 0);
           if (size <= 0)
-            break;          //  Always end with a zero-size frame
+            break;    //  Always end with a zero-size frame
         }
         identity.destroy();
       }
