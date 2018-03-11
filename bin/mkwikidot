@@ -505,7 +505,7 @@ sub expand_symbols {
     }
     #   Translate figure references
     s/\[figure\]//g;
-    
+
     #   Translate man page references
     s/zmq_([\w_]+)\[.\]/[http:\/\/api.zeromq.org\/3-2:zmq_$1 zmq_$1()]/g;
     return $_;

@@ -35,7 +35,7 @@ function mkone {
         chapter7.txt \
         chapter8.txt \
         postface.txt
-    
+
     echo "[[include $3:preface]]"   > all.wd
     echo "[[include $3:chapter1]]" >> all.wd
     echo "[[include $3:chapter2]]" >> all.wd
@@ -46,7 +46,7 @@ function mkone {
     echo "[[include $3:chapter7]]" >> all.wd
     echo "[[include $3:chapter8]]" >> all.wd
     echo "[[include $3:postface]]" >> all.wd
-    
+
     upload $3 preface  "Preface"
     upload $3 chapter1 "Chapter One"
     upload $3 chapter2 "Chapter Two"
@@ -64,6 +64,7 @@ function mkone {
 mkone C      online page
 mkone Haxe   online hx
 mkone Lua    online lua
+mkone Java   online java
 mkone Python online py
 mkone PHP    online php
 mkone C#     online cs
