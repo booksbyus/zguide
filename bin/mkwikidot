@@ -358,6 +358,10 @@ sub process_one_language {
             writeln ("[[/>]]");
         }
         else {
+            if ($name ne ucfirst($name)) {
+                # Check if filename is capitalized
+                return process_one_language ($directory, ucfirst($name), $language, $title, $inline);
+            }
             $missing = "$missing | " if $missing;
             $missing = "$missing$language";
         }
