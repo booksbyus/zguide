@@ -1,338 +1,338 @@
-The-Extended-Reply-Envelope The Extended Reply Envelope
-The-Rolling-Stone The Rolling Stone
-Making-a-Detour Making a Detour
-Upgrading-from-ZeroMQ-v-to-ZeroMQ-v Upgrading from ZeroMQ v2.2 to ZeroMQ v3.2
-Prototyping-the-Local-and-Cloud-Flows Prototyping the Local and Cloud Flows
-File-Stability File Stability
-How-to-Make-Really-Large-Architectures How to Make Really Large Architectures
-State-Machines State Machines
-Design-Notes Design Notes
-The-Socket-API The Socket API
-Service-Oriented-Reliable-Queuing-Majordomo-Pattern Service-Oriented Reliable Queuing (Majordomo Pattern)
-Representing-State-as-Key-Value-Pairs Representing State as Key-Value Pairs
--MQ-s-Built-in-Proxy-Function 0MQ's Built-in Proxy Function
-Centralized-Versus-Decentralized Centralized Versus Decentralized
-Step-Decide-on-the-Contracts Step 3: Decide on the Contracts
-Signaling-Between-Threads-PAIR-Sockets Signaling Between Threads (PAIR Sockets)
-Zero-Copy Zero-Copy
-Ephemeral-Values Ephemeral Values
-Ask-and-Ye-Shall-Receive Ask and Ye Shall Receive
-The-Mindful-General The Mindful General
-Model-Two-Brutal-Shotgun-Massacre Model Two: Brutal Shotgun Massacre
-Model-One-Simple-Retry-and-Failover Model One: Simple Retry and Failover
-Working-with-Subtrees Working with Subtrees
-The-Pirate-Gang The Pirate Gang
-A-Minor-Note-on-Strings A Minor Note on Strings
-Chapter-The-MQ-Community Chapter 6 - The 0MQ Community
-Pros-and-Cons-of-Publish-Subscribe Pros and Cons of Publish-Subscribe
-The-Provocateur The Provocateur
--MQ-s-Built-In-Proxy-Function 0MQ's Built-In Proxy Function
-Building-a-Multithreaded-Stack-and-API Building a Multithreaded Stack and API
-Plugging-Sockets-into-the-Topology Plugging Sockets into the Topology
-Slow-Subscriber-Detection-Suicidal-Snail-Pattern Slow Subscriber Detection (Suicidal Snail Pattern)
-More-about-UDP More about UDP
-Signaling-between-Threads-PAIR-sockets Signaling between Threads (PAIR sockets)
-Last-Value-Caching Last Value Caching
-Multithreading-with-ZeroMQ Multithreading with ZeroMQ
-Shrugging-It-Off Shrugging It Off
-Part-Software-Engineering-using-MQ Part 2 - Software Engineering using 0MQ
-the-community Chapter 6 - The ZeroMQ Community
-Missing-Message-Problem-Solver Missing Message Problem Solver
-Using-a-Reactor Using a Reactor
-Serializing-Your-Data Serializing Your Data
-Licensing Licensing
-The-Contract The Contract
-Client-Side-Reliability-Lazy-Pirate-Pattern Client-Side Reliability (Lazy Pirate Pattern)
-Identities-and-Addresses Identities and Addresses
-Goals Goals
-One-Way-Heartbeats One-Way Heartbeats
-Features-of-a-Higher-Level-API Features of a Higher-Level API
-Chapter-Advanced-Request-Reply-Patterns Chapter 3 - Advanced Request-Reply Patterns
-The-DEALER-to-ROUTER-Combination The DEALER to ROUTER Combination
-advanced-request-reply Chapter 3 - Advanced Request-Reply Patterns
-Writing-the-Unprotocol Writing the Unprotocol
-Designing-Reliability Designing Reliability
-The-Load-balancing-Pattern The Load-balancing Pattern
-Large-scale-File-Publishing-FileMQ Large-scale File Publishing - FileMQ
-Economics-of-Participation Economics of Participation
-Language Language
-The-Hangman The Hangman
-Cooperative-Discovery-using-UDP-Broadcasts Cooperative Discovery using UDP Broadcasts
-How-to-Write-Unprotocols How to Write Unprotocols
-Example-Zyre-Application Example Zyre Application
-The-Clustered-Hashmap-Protocol The Clustered Hashmap Protocol
-Handling-Interrupt-Signals Handling Interrupt Signals
-Why-make-FileMQ Why make FileMQ?
-A-High-Level-API-for-MQ A High-Level API for 0MQ
-Scalability Scalability
-Visibility Visibility
-The-Constant-Gardener The Constant Gardener
-Sending-and-Receiving-Messages Sending and Receiving Messages
-Working-with-Messages Working with Messages
-Binary-Logging-Protocol Binary Logging Protocol
-Why-We-Needed-MQ Why We Needed 0MQ
-The-Asynchronous-Client-Server-Pattern The Asynchronous Client/Server Pattern
-Upfront-Coordination Upfront Coordination
-Chapter-Reliable-Request-Reply-Patterns Chapter 4 - Reliable Request-Reply Patterns
-Symbolic-Links Symbolic Links
-Preliminaries Preliminaries
-Why-Mesh-Isn-t-Here-Yet Why Mesh Isn't Here Yet
-basics Chapter 1 - Basics
+Chapter-Advanced-Architecture-using-MQ Chapter 7 - Advanced Architecture using 0MQ
+How-ZeroMQ-Lost-Its-Road-Map How ZeroMQ Lost Its Road Map
+The-MQ-Process-C The 0MQ Process: C4
+Preventing-Split-Brain-Syndrome Preventing Split-Brain Syndrome
+Starting-Assumptions Starting Assumptions
 ROUTER-Error-Handling ROUTER Error Handling
-Using-ABNF Using ABNF
-Brokerless-Reliability-Freelance-Pattern Brokerless Reliability (Freelance Pattern)
-The-Dynamic-Discovery-Problem The Dynamic Discovery Problem
-Network-Discovery Network Discovery
-The-Load-Balancing-Pattern The Load Balancing Pattern
-Plugging-Sockets-Into-the-Topology Plugging Sockets Into the Topology
-Incompatible-Changes Incompatible Changes
-Getting-an-Out-of-Band-Snapshot Getting an Out-of-Band Snapshot
-Compatible-Changes Compatible Changes
-Centralized-vs-Decentralized Centralized vs. Decentralized
-Multipart-Messages Multipart Messages
-Asynchronous-Majordomo-Pattern Asynchronous Majordomo Pattern
-Initial-Design-Cut-the-API Initial Design Cut: the API
-Discovery Discovery
-Node-Coordination Node Coordination
-Chapter-Advanced-Publish-Subscribe-Patterns Chapter 5 - Advanced Publish-Subscribe Patterns
-Fixing-the-World Fixing the World
-High-level-Messaging-Patterns High-level Messaging Patterns
-Architecture-of-the-ZeroMQ-Community Architecture of the ZeroMQ Community
-Michael-Jakl-s-Story Michael Jakl's Story
-Pub-Sub-Message-Envelopes Pub-Sub Message Envelopes
-Authentication-Using-SASL Authentication Using SASL
-Dealing-with-Blocked-Peers Dealing with Blocked Peers
-Removing-Friction Removing Friction
-Test-Use-Case-The-Track-Tool Test Use Case: The Track Tool
-ZeroMQ-in-a-Hundred-Words ZeroMQ in a Hundred Words
-What-is-Reliability What is "Reliability"?
-Designing-the-API Designing the API
-Pub-sub-Tracing-Espresso-Pattern Pub-sub Tracing (Espresso Pattern)
-Upgrading-from-MQ-v-to-MQ-v Upgrading from 0MQ v2.2 to 0MQ v3.2
-High-availability-Pair-Binary-Star-Pattern High-availability Pair (Binary Star Pattern)
-Step-Internalize-the-Semantics Step 1: Internalize the Semantics
-Establishing-the-Details Establishing the Details
-The-Zyre-Tester The Zyre Tester
-Multi-part-Messages Multi-part Messages
-Step-Draw-a-Rough-Architecture Step 2: Draw a Rough Architecture
-Intermediaries-and-Proxies Intermediaries and Proxies
-The-Earth-and-Sky The Earth and Sky
-Preface Preface
-Unicast-Transports Unicast Transports
-Surprise-and-Expectations Surprise and Expectations
-Configuration Configuration
-Design-for-The-Real-World Design for The Real World
-Tales-from-Out-There Tales from Out There
+Chapter-Sockets-and-Patterns Chapter 2 - Sockets and Patterns
+How-This-Book-Happened How This Book Happened
+Detecting-Disappearances Detecting Disappearances
+Up-front-Coordination Up-front Coordination
+Evolution-of-Public-Contracts Evolution of Public Contracts
+Binary-Star-Reactor Binary Star Reactor
+The-Contract The Contract
+Crazy-Beautiful-and-Easy Crazy, Beautiful, and Easy
+Shrugging-It-Off Shrugging It Off
+The-Importance-of-Contracts The Importance of Contracts
+Transport-Bridging Transport Bridging
+Git-Branches-Considered-Harmful Git Branches Considered Harmful
+Content-Distribution Content Distribution
+The-Flash-Mob The Flash Mob
+On-Up-front-Testing On Up-front Testing
 On-Up-Front-Testing On Up-Front Testing
-Simplicity-Versus-Complexity Simplicity Versus Complexity
+High-availability-Pair-Binary-Star-Pattern High-availability Pair (Binary Star Pattern)
+How-to-Make-Really-Large-Architectures How to Make Really Large Architectures
+Conclusions Conclusions
+Development-Process Development Process
+How-to-Write-Unprotocols How to Write Unprotocols
+High-speed-Subscribers-Black-Box-Pattern High-speed Subscribers (Black Box Pattern)
+High-level-Messaging-Patterns High-level Messaging Patterns
+Why-make-FileMQ Why make FileMQ?
+The-Process The Process
+The-Tale-of-Two-Bridges The Tale of Two Bridges
+The-Rolling-Stone The Rolling Stone
+Distributed-Logging-and-Monitoring Distributed Logging and Monitoring
+Using-ABNF Using ABNF
+Hand-written-Binary-Serialization Hand-written Binary Serialization
+The-Use-Case The Use Case
+Signaling-between-Threads-PAIR-sockets Signaling between Threads (PAIR sockets)
+Designing-for-Innovation Designing for Innovation
+Some-Physics Some Physics
+How-MQ-Lost-its-Road-map How 0MQ Lost its Road-map
+Stranger-meet-Stranger Stranger, meet Stranger
+Divide-and-Conquer Divide and Conquer
+A-High-Level-API-for-MQ A High-Level API for 0MQ
+Client-Side-Reliability-Lazy-Pirate-Pattern Client-Side Reliability (Lazy Pirate Pattern)
+Dealing-with-Blocked-Peers Dealing with Blocked Peers
+Authentication-Using-SASL Authentication Using SASL
+Step-Internalize-the-Semantics Step 1: Internalize the Semantics
+Signaling-Between-Threads-PAIR-Sockets Signaling Between Threads (PAIR Sockets)
+Part-Software-Engineering-using-MQ Part 2 - Software Engineering using 0MQ
+Idempotent-Services Idempotent Services
+Basic-Reliable-Queuing-Simple-Pirate-Pattern Basic Reliable Queuing (Simple Pirate Pattern)
+Code-Generation Code Generation
+The-Clustered-Hashmap-Protocol The Clustered Hashmap Protocol
+Rob-Gagnon-s-Story Rob Gagnon's Story
+Handwritten-Binary-Serialization Handwritten Binary Serialization
+Licensing-and-Ownership Licensing and Ownership
+Multithreading-with-ZeroMQ Multithreading with ZeroMQ
+Client-side-Reliability-Lazy-Pirate-Pattern Client-side Reliability (Lazy Pirate Pattern)
+Warning-Unstable-Paradigms Warning: Unstable Paradigms!
+Multi-part-Messages Multi-part Messages
+ROUTER-Broker-and-REQ-Workers ROUTER Broker and REQ Workers
+Compatible-Changes Compatible Changes
+Error-Handling Error Handling
+Guarantees-of-Isolation Guarantees of Isolation
+Model-One-Simple-Retry-and-Failover Model One: Simple Retry and Failover
+-MQ-in-a-Hundred-Words 0MQ in a Hundred Words
+Using-a-Reactor Using a Reactor
+The-ZeroMQ-Process-C The ZeroMQ Process: C4
+Design-Notes Design Notes
+Messaging-Patterns Messaging Patterns
+Contracts-and-Protocols Contracts and Protocols
+Identities-and-Addresses Identities and Addresses
+Why-Mesh-isn-t-Here-Yet Why Mesh isn't Here Yet
+The-Simple-Reply-Envelope The Simple Reply Envelope
+Node-Coordination Node Coordination
+Service-Discovery Service Discovery
+Plugging-Sockets-Into-the-Topology Plugging Sockets Into the Topology
+Robust-Reliable-Queuing-Paranoid-Pirate-Pattern Robust Reliable Queuing (Paranoid Pirate Pattern)
+Infinite-Property Infinite Property
+Protocols-Without-The-Goats Protocols Without The Goats
+Technical-Requirements Technical Requirements
+True-Peer-Connectivity-Harmony-Pattern True Peer Connectivity (Harmony Pattern)
+Testing-and-Simulation Testing and Simulation
+Service-Oriented-Reliable-Queuing-Majordomo-Pattern Service-Oriented Reliable Queuing (Majordomo Pattern)
+Disconnected-Reliability-Titanic-Pattern Disconnected Reliability (Titanic Pattern)
 Chapter-Basics Chapter 1 - Basics
-Putting-it-All-Together Putting it All Together
+Asynchronous-Majordomo-Pattern Asynchronous Majordomo Pattern
+Group-Messaging Group Messaging
+The-Cheap-or-Nasty-Pattern The Cheap or Nasty Pattern
+Cooperative-Discovery-using-UDP-Broadcasts Cooperative Discovery using UDP Broadcasts
+Learning-Curve Learning Curve
+Robustness-in-Conflict Robustness in Conflict
+Initial-Design-Cut-the-API Initial Design Cut: the API
+Multiple-Nodes-on-One-Device Multiple Nodes on One Device
+postface Postface
+Serializing-Your-Data Serializing Your Data
+Chapter-Advanced-Pub-Sub-Patterns Chapter 5 - Advanced Pub-Sub Patterns
+Discovery Discovery
+What-is-Reliability What is "Reliability"?
+The-Social-Engineer The Social Engineer
+How-It-Began How It Began
+Step-Write-a-Minimal-End-to-End-Solution Step 4: Write a Minimal End-to-End Solution
+The-Mindful-General The Mindful General
+advanced-request-reply Chapter 3 - Advanced Request-Reply Patterns
+Why-We-Needed-MQ Why We Needed 0MQ
+Audience Audience
+Care-and-Feeding Care and Feeding
+Pub-Sub-Message-Envelopes Pub-Sub Message Envelopes
+The-Open-Door The Open Door
+How-the-Guide-Happened How the Guide Happened
+Scaling-to-Multiple-Clusters Scaling to Multiple Clusters
+Why-use-the-GPLv-for-Public-Specifications Why use the GPLv3 for Public Specifications?
+Designing-the-API Designing the API
+Making-a-Clean-Exit Making a Clean Exit
+basics Chapter 1 - Basics
+Designing-Reliability Designing Reliability
+Patch-Requirements Patch Requirements
+Creating-Stable-Releases Creating Stable Releases
+What-s-the-Current-Status What's the Current Status?
+Tom-van-Leeuwen-s-Story Tom van Leeuwen's Story
+One-Way-Heartbeats One-Way Heartbeats
+Establishing-the-Details Establishing the Details
+Audience-for-This-Book Audience for This Book
+Trash-Oriented-Design Trash-Oriented Design
+Point-to-point-Messaging Point-to-point Messaging
+the-community Chapter 6 - The ZeroMQ Community
+Cooperative-Discovery-Using-UDP-Broadcasts Cooperative Discovery Using UDP Broadcasts
+ROUTER-Broker-and-DEALER-Workers ROUTER Broker and DEALER Workers
+Chapter-Advanced-Request-Reply-Patterns Chapter 3 - Advanced Request-Reply Patterns
+Centralized-Versus-Decentralized Centralized Versus Decentralized
+The-Dynamic-Discovery-Problem The Dynamic Discovery Problem
+A-Load-Balancing-Message-Broker A Load Balancing Message Broker
+Contracts-Are-Hard Contracts Are Hard
+On-Assertions On Assertions
+Exploring-ROUTER-Sockets Exploring ROUTER Sockets
+Internal-Architecture Internal Architecture
+Project-Administration Project Administration
+Authentication-using-SASL Authentication using SASL
+Part-Learning-to-Work-with-MQ Part 1 - Learning to Work with 0MQ
+Handling-Interrupt-Signals Handling Interrupt Signals
+The-Lazy-Perfectionist The Lazy Perfectionist
+The-Extended-Reply-Envelope The Extended Reply Envelope
+Ping-Pong-Heartbeats Ping-Pong Heartbeats
+Tracing-Activity Tracing Activity
+Building-and-Trying-FileMQ Building and Trying FileMQ
+Binary-Star-Implementation Binary Star Implementation
+Sending-and-Receiving-Messages Sending and Receiving Messages
+Heartbeating Heartbeating
+Pub-sub-Tracing-Espresso-Pattern Pub-sub Tracing (Espresso Pattern)
+Unprotocols Unprotocols
+Republishing-Updates-from-Clients Republishing Updates from Clients
+What-s-This-Good-For What's This Good For?
+Plugging-Sockets-into-the-Topology Plugging Sockets into the Topology
+Working-with-Subtrees Working with Subtrees
+ZeroMQ-Framing ZeroMQ Framing
+Multithreading-with-MQ Multithreading with 0MQ
+A-Self-Healing-P-P-Network-in-Seconds A Self-Healing P2P Network in 30 Seconds
+Why-Mesh-Isn-t-Here-Yet Why Mesh Isn't Here Yet
+Getting-the-Examples Getting the Examples
+Surprise-and-Expectations Surprise and Expectations
+Model-Three-Complex-and-Nasty Model Three: Complex and Nasty
+A-High-Level-API-for-ZeroMQ A High-Level API for ZeroMQ
+Step-Draw-a-Rough-Architecture Step 2: Draw a Rough Architecture
+The-Mystic The Mystic
+Zero-Copy Zero-Copy
+The-Laughing-Clown The Laughing Clown
+The-Pirate-Gang The Pirate Gang
+Getting-the-Message-Out Getting the Message Out
+A-Minor-Note-on-Strings A Minor Note on Strings
+Simplicity-Versus-Complexity Simplicity Versus Complexity
+Federation-vs-Peering Federation vs. Peering
+Acknowledgements Acknowledgements
+UDP-Beacon-Framing UDP Beacon Framing
+Large-scale-File-Publishing-FileMQ Large-scale File Publishing - FileMQ
+Brokerless-Reliability-Freelance-Pattern Brokerless Reliability (Freelance Pattern)
+Intermediaries-and-Proxies Intermediaries and Proxies
+Tales-from-Out-There Tales from Out There
+Upgrading-from-ZeroMQ-v-to-ZeroMQ-v Upgrading from ZeroMQ v2.2 to ZeroMQ v3.2
+File-Stability File Stability
+ZeroMQ-s-Built-In-Proxy-Function ZeroMQ's Built-In Proxy Function
+The-Load-balancing-Pattern The Load-balancing Pattern
+Chapter-A-Framework-for-Distributed-Computing Chapter 8 - A Framework for Distributed Computing
+advanced-pub-sub Chapter 5 - Advanced Pub-Sub Patterns
 Version-Reporting Version Reporting
+Detecting-Memory-Leaks Detecting Memory Leaks
+Complexity-Oriented-Design Complexity-Oriented Design
+A-Plausible-Minimal-Implementation A Plausible Minimal Implementation
+Socket-Scalability Socket Scalability
+The-Naming-Ceremony The Naming Ceremony
+Getting-the-Context-Right Getting the Context Right
+-MQ-Framing 0MQ Framing
+Economics-of-Participation Economics of Participation
+Patterns-for-Success Patterns for Success
+Request-Reply-Combinations Request-Reply Combinations
+State-Machines State Machines
+Building-a-Multithreaded-Stack-and-API Building a Multithreaded Stack and API
+Delivery-Notifications Delivery Notifications
+Serialization-Languages Serialization Languages
+Upfront-Coordination Upfront Coordination
+Getting-an-Out-of-Band-Snapshot Getting an Out-of-Band Snapshot
+Adding-the-Binary-Star-Pattern-for-Reliability Adding the Binary Star Pattern for Reliability
+Missing-Message-Problem-Solver Missing Message Problem Solver
+The-DEALER-to-REP-Combination The DEALER to REP Combination
+Invalid-Combinations Invalid Combinations
+Representing-State-as-Key-Value-Pairs Representing State as Key-Value Pairs
+reliable-request-reply Chapter 4 - Reliable Request-Reply Patterns
+Licensing Licensing
+Spinning-Off-a-Library-Project Spinning Off a Library Project
+Fixing-the-World Fixing the World
+sockets-and-patterns Chapter 2 - Sockets and Patterns
+advanced-architecture Chapter 7 - Advanced Architecture using ZeroMQ
+Recovery-and-Late-Joiners Recovery and Late Joiners
+Serializing-your-Data Serializing your Data
+The-REQ-to-ROUTER-Combination The REQ to ROUTER Combination
+Detailed-Requirements Detailed Requirements
+Prototyping-the-State-Flow Prototyping the State Flow
+High-Water-Marks High-Water Marks
+Prototyping-the-Local-and-Cloud-Flows Prototyping the Local and Cloud Flows
+Chapter-Advanced-Publish-Subscribe-Patterns Chapter 5 - Advanced Publish-Subscribe Patterns
+Chapter-Advanced-Architecture-using-ZeroMQ Chapter 7 - Advanced Architecture using ZeroMQ
+How-MQ-Lost-Its-Road-Map How 0MQ Lost Its Road Map
+The-Earth-and-Sky The Earth and Sky
+Pub-Sub-Tracing-Espresso-Pattern Pub-Sub Tracing (Espresso Pattern)
+The-CZMQ-High-Level-API The CZMQ High-Level API
+Michael-Jakl-s-Story Michael Jakl's Story
+Architecture-of-the-MQ-Community Architecture of the 0MQ Community
+Programming-with-ZeroMQ Programming with ZeroMQ
+Working-with-Messages Working with Messages
+Scalability Scalability
+Getting-an-Official-Port-Number Getting an Official Port Number
+Suggested-Shim-Macros Suggested Shim Macros
+Reliable-Publish-Subscribe-Clone-Pattern Reliable Publish-Subscribe (Clone Pattern)
+Ephemeral-Values Ephemeral Values
+Public-API Public API
+Making-a-Detour Making a Detour
+The-ROUTER-to-ROUTER-Combination The ROUTER to ROUTER Combination
+Using-Sockets-to-Carry-Data Using Sockets to Carry Data
+-MQ-s-Built-In-Proxy-Function 0MQ's Built-In Proxy Function
+More-About-UDP More About UDP
+The-Provocateur The Provocateur
+The-REQ-to-REP-Combination The REQ to REP Combination
+Preface Preface
+High-Level-Messaging-Patterns High-Level Messaging Patterns
+Slow-Subscriber-Detection-Suicidal-Snail-Pattern Slow Subscriber Detection (Suicidal Snail Pattern)
+Getting-an-Out-of-band-Snapshot Getting an Out-of-band Snapshot
+Model-Two-Brutal-Shotgun-Massacre Model Two: Brutal Shotgun Massacre
+Conclusion Conclusion
+Example-Zyre-Application Example Zyre Application
+moving-pieces Chapter 8 - A Framework for Distributed Computing
+Worked-Example-Inter-Broker-Routing Worked Example: Inter-Broker Routing
+Writing-the-Unprotocol Writing the Unprotocol
+Step-Solve-One-Problem-and-Repeat Step 5: Solve One Problem and Repeat
+The-Load-Balancing-Pattern The Load Balancing Pattern
+Shared-Queue-DEALER-and-ROUTER-sockets Shared Queue (DEALER and ROUTER sockets)
+The-Zyre-Tester The Zyre Tester
+Pros-and-Cons-of-Publish-Subscribe Pros and Cons of Publish-Subscribe
+Message-Oriented-Pattern-for-Elastic-Design Message-Oriented Pattern for Elastic Design
+Preemptive-Discovery-over-Raw-Sockets Preemptive Discovery over Raw Sockets
+Architecture-of-the-ZeroMQ-Community Architecture of the ZeroMQ Community
+Last-Value-Caching Last Value Caching
+High-Speed-Subscribers-Black-Box-Pattern High-Speed Subscribers (Black Box Pattern)
+Why-We-Needed-ZeroMQ Why We Needed ZeroMQ
+Contracts-are-Hard Contracts are Hard
+-MQ-s-Built-in-Proxy-Function 0MQ's Built-in Proxy Function
+Cost-of-Failure Cost of Failure
+Incompatible-Changes Incompatible Changes
+Multipart-Messages Multipart Messages
+Postface Postface
+The-Request-Reply-Mechanisms The Request-Reply Mechanisms
+Preliminaries Preliminaries
+Test-Use-Case-The-Track-Tool Test Use Case: The Track Tool
+Vadim-Shalts-s-Story Vadim Shalts's Story
+Spinning-off-a-Library-Project Spinning off a Library Project
+Unicast-Transports Unicast Transports
+Heartbeating-for-Paranoid-Pirate Heartbeating for Paranoid Pirate
+Pros-and-Cons-of-Pub-Sub Pros and Cons of Pub-Sub
+Serialization-Libraries Serialization Libraries
+Change-Latency Change Latency
+The-Secret-Life-of-WiFi The Secret Life of WiFi
+Step-Decide-on-the-Contracts Step 3: Decide on the Contracts
+Handling-Errors-and-ETERM Handling Errors and ETERM
+The-Zen-of-Zero The Zen of Zero
 Simplicity-vs-Complexity Simplicity vs. Complexity
 Recap-of-Request-Reply-Sockets Recap of Request-Reply Sockets
-A-Real-Life-Example A Real-Life Example
-Shared-Queue-DEALER-and-ROUTER-sockets Shared Queue (DEALER and ROUTER sockets)
-ZeroMQ-Framing ZeroMQ Framing
-Authentication-using-SASL Authentication using SASL
-postface Postface
-Federation-Versus-Peering Federation Versus Peering
-Contracts-are-Hard Contracts are Hard
-ROUTER-Broker-and-REQ-Workers ROUTER Broker and REQ Workers
-Messaging-Patterns Messaging Patterns
-Test-Use-Case-The-track-tool Test Use-Case - The 'track' tool
-Getting-the-Examples Getting the Examples
-Serialization-Libraries Serialization Libraries
-High-Water-Marks High-Water Marks
-advanced-pub-sub Chapter 5 - Advanced Pub-Sub Patterns
-Preemptive-Discovery-over-Raw-Sockets Preemptive Discovery over Raw Sockets
-Conclusion Conclusion
-Heartbeating Heartbeating
-Architecture-of-a-Single-Cluster Architecture of a Single Cluster
-Handwritten-Binary-Serialization Handwritten Binary Serialization
-Socket-Scalability Socket Scalability
-On-Up-front-Testing On Up-front Testing
-ZeroMQ-s-Built-In-Proxy-Function ZeroMQ's Built-In Proxy Function
-Chapter-The-ZeroMQ-Community Chapter 6 - The ZeroMQ Community
-Preventing-Split-Brain-Syndrome Preventing Split-Brain Syndrome
-The-Simple-Reply-Envelope The Simple Reply Envelope
-Binary-Star-Reactor Binary Star Reactor
--MQ-Framing 0MQ Framing
-Audience Audience
-Cooperative-Discovery-Using-UDP-Broadcasts Cooperative Discovery Using UDP Broadcasts
-High-Level-Messaging-Patterns High-Level Messaging Patterns
-How-It-Began How It Began
-Patch-Requirements Patch Requirements
-True-Peer-Connectivity-Harmony-Pattern True Peer Connectivity (Harmony Pattern)
-Protocols-Without-The-Goats Protocols Without The Goats
-A-Load-Balancing-Message-Broker A Load Balancing Message Broker
-What-s-the-Current-Status What's the Current Status?
-Suggested-Shim-Macros Suggested Shim Macros
-Step-Write-a-Minimal-End-to-End-Solution Step 4: Write a Minimal End-to-End Solution
-The-Use-Case The Use Case
-The-Historian The Historian
-The-CZMQ-High-Level-API The CZMQ High-Level API
-The-Canary-Watcher The Canary Watcher
-Serialization-Languages Serialization Languages
-Content-Distribution Content Distribution
-The-ROUTER-to-ROUTER-Combination The ROUTER to ROUTER Combination
-Warning-Unstable-Paradigms Warning: Unstable Paradigms!
-A-Self-Healing-P-P-Network-in-Seconds A Self-Healing P2P Network in 30 Seconds
-Pros-and-Cons-of-Pub-Sub Pros and Cons of Pub-Sub
-Heartbeating-for-Paranoid-Pirate Heartbeating for Paranoid Pirate
-Binary-Star-Implementation Binary Star Implementation
-The-REQ-to-ROUTER-Combination The REQ to ROUTER Combination
-The-Naming-Ceremony The Naming Ceremony
-Evolution-of-Public-Contracts Evolution of Public Contracts
-Getting-the-Message-Out Getting the Message Out
-More-About-UDP More About UDP
-Model-Three-Complex-and-Nasty Model Three: Complex and Nasty
-Crazy-Beautiful-and-Easy Crazy, Beautiful, and Easy
-Acknowledgements Acknowledgements
-What-s-This-Good-For What's This Good For?
-Republishing-Updates-from-Clients Republishing Updates from Clients
-The-DEALER-to-REP-Combination The DEALER to REP Combination
-Pub-Sub-Tracing-Espresso-Pattern Pub-Sub Tracing (Espresso Pattern)
-Making-a-Clean-Exit Making a Clean Exit
-Chapter-Advanced-Architecture-using-MQ Chapter 7 - Advanced Architecture using 0MQ
-Disconnected-Reliability-Titanic-Pattern Disconnected Reliability (Titanic Pattern)
-Infinite-Property Infinite Property
-Building-and-Trying-FileMQ Building and Trying FileMQ
-Abstraction-Level Abstraction Level
-The-Zen-of-Zero The Zen of Zero
-Robust-Reliable-Queuing-Paranoid-Pirate-Pattern Robust Reliable Queuing (Paranoid Pirate Pattern)
-Architecture-of-the-MQ-Community Architecture of the 0MQ Community
-Designing-for-Innovation Designing for Innovation
-Handling-Errors-and-ETERM Handling Errors and ETERM
-Guarantees-of-Isolation Guarantees of Isolation
-Hand-written-Binary-Serialization Hand-written Binary Serialization
-Recovery-and-Late-Joiners Recovery and Late Joiners
-Stranger-meet-Stranger Stranger, meet Stranger
-Robustness-in-Conflict Robustness in Conflict
-Federation-vs-Peering Federation vs. Peering
-High-speed-Subscribers-Black-Box-Pattern High-speed Subscribers (Black Box Pattern)
--MQ-in-a-Hundred-Words 0MQ in a Hundred Words
-Creating-Stable-Releases Creating Stable Releases
-Transferring-Files Transferring Files
-Chapter-A-Framework-for-Distributed-Computing Chapter 8 - A Framework for Distributed Computing
-Multithreading-with-MQ Multithreading with 0MQ
-Prototyping-the-State-Flow Prototyping the State Flow
-sockets-and-patterns Chapter 2 - Sockets and Patterns
-Detecting-Disappearances Detecting Disappearances
-Spinning-off-a-Library-Project Spinning off a Library Project
-Idempotent-Services Idempotent Services
-Public-API Public API
-The-Benevolent-Tyrant The Benevolent Tyrant
-Initial-Design-Cut-the-Protocol Initial Design Cut: the Protocol
-Code-Generation Code Generation
-The-Flash-Mob The Flash Mob
-Eat-Me Eat Me
-Using-Sockets-to-Carry-Data Using Sockets to Carry Data
-Testing-and-Simulation Testing and Simulation
-Transport-Bridging Transport Bridging
-Basic-Reliable-Queuing-Simple-Pirate-Pattern Basic Reliable Queuing (Simple Pirate Pattern)
-advanced-architecture Chapter 7 - Advanced Architecture using ZeroMQ
-Cost-of-Failure Cost of Failure
-The-MQ-Process-C The 0MQ Process: C4
-High-Speed-Subscribers-Black-Box-Pattern High-Speed Subscribers (Black Box Pattern)
-A-Plausible-Minimal-Implementation A Plausible Minimal Implementation
-Why-Unprotocols Why Unprotocols?
-Why-We-Needed-ZeroMQ Why We Needed ZeroMQ
--MQ-is-Not-a-Neutral-Carrier 0MQ is Not a Neutral Carrier
-Chapter-Advanced-Architecture-using-ZeroMQ Chapter 7 - Advanced Architecture using ZeroMQ
-Psychology-of-Software-Architecture Psychology of Software Architecture
-ROUTER-Broker-and-DEALER-Workers ROUTER Broker and DEALER Workers
-Chapter-Sockets-and-Patterns Chapter 2 - Sockets and Patterns
-How-MQ-Lost-its-Road-map How 0MQ Lost its Road-map
-Simplicity-Oriented-Design Simplicity Oriented Design
-The-Lazy-Perfectionist The Lazy Perfectionist
-A-High-Level-API-for-ZeroMQ A High-Level API for ZeroMQ
-Detecting-Memory-Leaks Detecting Memory Leaks
-How-This-Book-Happened How This Book Happened
-Burnout Burnout
-Conclusions Conclusions
-Service-Discovery Service Discovery
-Chapter-Advanced-Pub-Sub-Patterns Chapter 5 - Advanced Pub-Sub Patterns
-The-Secret-Life-of-WiFi The Secret Life of WiFi
-Reliable-Pub-Sub-Clone-Pattern Reliable Pub-Sub (Clone Pattern)
-Error-Handling Error Handling
-Vadim-Shalts-s-Story Vadim Shalts's Story
-Exploring-ROUTER-Sockets Exploring ROUTER Sockets
-Adding-the-Binary-Star-Pattern-for-Reliability Adding the Binary Star Pattern for Reliability
-Request-Reply-Combinations Request-Reply Combinations
-Step-Solve-One-Problem-and-Repeat Step 5: Solve One Problem and Repeat
 Programming-with-MQ Programming with 0MQ
-Spinning-Off-a-Library-Project Spinning Off a Library Project
-Point-to-Point-Messaging Point-to-Point Messaging
-Contracts-Are-Hard Contracts Are Hard
-The-Request-Reply-Mechanisms The Request-Reply Mechanisms
-The-Mystic The Mystic
-Multiple-Nodes-on-One-Device Multiple Nodes on One Device
-Protocol-Assertions Protocol Assertions
-Rob-Gagnon-s-Story Rob Gagnon's Story
-High-Availability-Pair-Binary-Star-Pattern High-Availability Pair (Binary Star Pattern)
-Getting-an-Official-Port-Number Getting an Official Port Number
-Change-Latency Change Latency
-Internal-Architecture Internal Architecture
-Getting-an-Out-of-band-Snapshot Getting an Out-of-band Snapshot
-UDP-Beacon-Framing UDP Beacon Framing
-Development-Process Development Process
-Divide-and-Conquer Divide and Conquer
-Upgrading-from-MQ-to-MQ Upgrading from 0MQ/2.2 to 0MQ/3.2
-Patterns-for-Success Patterns for Success
-Trash-Oriented-Design Trash-Oriented Design
-The-Tale-of-Two-Bridges The Tale of Two Bridges
-Serializing-your-Data Serializing your Data
-Audience-for-This-Book Audience for This Book
-Unprotocols Unprotocols
-Tom-van-Leeuwen-s-Story Tom van Leeuwen's Story
-Scaling-to-Multiple-Clusters Scaling to Multiple Clusters
-How-ZeroMQ-Lost-Its-Road-Map How ZeroMQ Lost Its Road Map
-The-DEALER-to-DEALER-Combination The DEALER to DEALER Combination
-Group-Messaging Group Messaging
-Licensing-and-Ownership Licensing and Ownership
-reliable-request-reply Chapter 4 - Reliable Request-Reply Patterns
-The-Importance-of-Contracts The Importance of Contracts
-Detailed-Requirements Detailed Requirements
-Contracts-and-Protocols Contracts and Protocols
-Stranger-Meet-Stranger Stranger, Meet Stranger
-ZeroMQ-is-Not-a-Neutral-Carrier ZeroMQ is Not a Neutral Carrier
-Why-use-the-GPLv-for-Public-Specifications Why use the GPLv3 for Public Specifications?
-I-O-Threads I/O Threads
-Why-Mesh-isn-t-Here-Yet Why Mesh isn't Here Yet
-The-Process The Process
-Learning-Curve Learning Curve
-Up-front-Coordination Up-front Coordination
-Worked-Example-Inter-Broker-Routing Worked Example: Inter-Broker Routing
-How-the-Guide-Happened How the Guide Happened
-Handling-Multiple-Sockets Handling Multiple Sockets
-Starting-Assumptions Starting Assumptions
-Point-to-point-Messaging Point-to-point Messaging
-Programming-with-ZeroMQ Programming with ZeroMQ
-Care-and-Feeding Care and Feeding
-Some-Physics Some Physics
-moving-pieces Chapter 8 - A Framework for Distributed Computing
-Distributed-Logging-and-Monitoring Distributed Logging and Monitoring
-Git-Branches-Considered-Harmful Git Branches Considered Harmful
-Tracing-Activity Tracing Activity
-On-Assertions On Assertions
-The-Open-Door The Open Door
-The-Social-Engineer The Social Engineer
-The-Cheap-or-Nasty-Pattern The Cheap or Nasty Pattern
 Large-Scale-File-Publishing-FileMQ Large-Scale File Publishing: FileMQ
-Technical-Requirements Technical Requirements
-Part-Learning-to-Work-with-MQ Part 1 - Learning to Work with 0MQ
+Centralized-vs-Decentralized Centralized vs. Decentralized
+The-Benevolent-Tyrant The Benevolent Tyrant
+Design-for-The-Real-World Design for The Real World
+The-DEALER-to-DEALER-Combination The DEALER to DEALER Combination
+Network-Discovery Network Discovery
+Abstraction-Level Abstraction Level
+Stranger-Meet-Stranger Stranger, Meet Stranger
+I-O-Threads I/O Threads
+The-Canary-Watcher The Canary Watcher
+The-Constant-Gardener The Constant Gardener
+Chapter-Reliable-Request-Reply-Patterns Chapter 4 - Reliable Request-Reply Patterns
+The-DEALER-to-ROUTER-Combination The DEALER to ROUTER Combination
+Handling-Multiple-Sockets Handling Multiple Sockets
+Psychology-of-Software-Architecture Psychology of Software Architecture
+Point-to-Point-Messaging Point-to-Point Messaging
+Eat-Me Eat Me
+Configuration Configuration
+The-Asynchronous-Client-Server-Pattern The Asynchronous Client/Server Pattern
+ZeroMQ-is-Not-a-Neutral-Carrier ZeroMQ is Not a Neutral Carrier
+-MQ-is-Not-a-Neutral-Carrier 0MQ is Not a Neutral Carrier
+Transferring-Files Transferring Files
+Features-of-a-Higher-Level-API Features of a Higher-Level API
+Visibility Visibility
 Test-Results Test Results
-Delivery-Notifications Delivery Notifications
-The-Laughing-Clown The Laughing Clown
-Invalid-Combinations Invalid Combinations
-The-ZeroMQ-Process-C The ZeroMQ Process: C4
-Ping-Pong-Heartbeats Ping-Pong Heartbeats
-Message-Oriented-Pattern-for-Elastic-Design Message-Oriented Pattern for Elastic Design
-How-MQ-Lost-Its-Road-Map How 0MQ Lost Its Road Map
-Project-Administration Project Administration
-Complexity-Oriented-Design Complexity-Oriented Design
-Client-side-Reliability-Lazy-Pirate-Pattern Client-side Reliability (Lazy Pirate Pattern)
-Postface Postface
-Getting-the-Context-Right Getting the Context Right
-Reliable-Publish-Subscribe-Clone-Pattern Reliable Publish-Subscribe (Clone Pattern)
-The-REQ-to-REP-Combination The REQ to REP Combination
+Upgrading-from-MQ-to-MQ Upgrading from 0MQ/2.2 to 0MQ/3.2
+Protocol-Assertions Protocol Assertions
+Upgrading-from-MQ-v-to-MQ-v Upgrading from 0MQ v2.2 to 0MQ v3.2
+Federation-Versus-Peering Federation Versus Peering
+Language Language
+Chapter-The-ZeroMQ-Community Chapter 6 - The ZeroMQ Community
+Test-Use-Case-The-track-tool Test Use-Case - The 'track' tool
+Architecture-of-a-Single-Cluster Architecture of a Single Cluster
+Removing-Friction Removing Friction
+Simplicity-Oriented-Design Simplicity Oriented Design
+High-Availability-Pair-Binary-Star-Pattern High-Availability Pair (Binary Star Pattern)
+Reliable-Pub-Sub-Clone-Pattern Reliable Pub-Sub (Clone Pattern)
+The-Historian The Historian
+Putting-it-All-Together Putting it All Together
+Burnout Burnout
+ZeroMQ-in-a-Hundred-Words ZeroMQ in a Hundred Words
+A-Real-Life-Example A Real-Life Example
+Chapter-The-MQ-Community Chapter 6 - The 0MQ Community
+More-about-UDP More about UDP
+Why-Unprotocols Why Unprotocols?
+The-Socket-API The Socket API
+The-Hangman The Hangman
+Ask-and-Ye-Shall-Receive Ask and Ye Shall Receive
+Goals Goals
+Symbolic-Links Symbolic Links
+Binary-Logging-Protocol Binary Logging Protocol
+Initial-Design-Cut-the-Protocol Initial Design Cut: the Protocol
