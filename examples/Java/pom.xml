@@ -31,5 +31,15 @@
 	<!-- Honor ZGuide location. Look for classes in Maven standard target/classes. -->
 	<build>
 		<sourceDirectory>.</sourceDirectory>
+			<plugins>
+					<plugin>
+							<groupId>org.apache.maven.plugins</groupId>
+							<artifactId>maven-compiler-plugin</artifactId>
+							<configuration>
+									<source>1.7</source>
+									<target>1.7</target>
+							</configuration>
+					</plugin>
+			</plugins>
 	</build>
 </project>
