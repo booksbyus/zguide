@@ -43,8 +43,11 @@ do
 
     examplefile="$(cut -d= -f1 <<< $ex)"
     examplename="$(cut -d= -f2 <<< $ex)"
+    if [ "$lang" == "Java" ]
+    then
+        examplefile="${examplefile^}"
+    fi
     examplepath="$zguide_dir/examples/$lang/${examplefile}"
-
     if [[ -z "$(ls ${examplepath}.* 2>/dev/null)" ]]
     then
         printf "Missing %-12s %s\n" "$examplefile:" "$examplename" 1>&2
