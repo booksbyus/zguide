@@ -22,5 +22,5 @@ script:
 - export PATH=$PATH:./bin/asciitosvg/
 - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then bash ./bin/buildguide; fi
 env:
-- secure: bLqGyMc4vXlEgPUI2LltLw+2FcJ+esaVNR9xhU7MHOxNXnYwcyZ4FdikIG80VgqWzpousn2Er37N/9dehT4CriYY4xgQPYoF3twr4VX9EFXsrgmtRYJNzGcZSlclzip6bMgu4UwMcYIoQymdOKdJrw6RTKc/Ub/ZA11j+q8dnok=
-- secure: Ndpkc7aJTqh9Cr2HWhDL1+oCwawtoH0cG6lEoICwJznFIreUrPYTviEBBgqje/QJIUoYoODGsG3pziCy5ATW3PyCutHByv7gXXnB0Ce3Bet5jvCbJ8fMylMd3vx2ihSA/LZG1dSODdDBgwHTwGZa5+hhBJivPqN9kKqFgoKzRaQ=
+  global:
+    - secure: "IT/2HxHCMwKukSlkv9b2b9J+5YtSM1xmVW0K4eMbnbDICiFHYNXvaVxqzE/rQ7MGNgFiwnwixix+2nbBSOpB2ZqnUeGWdTsxtAuBm+FJ7aXRPZ6vr/q/5VhiXa21WB6U7hqTwAwrWZDhEZFoatAApWEhAj/q5399QzAxD+2Mi9M="
