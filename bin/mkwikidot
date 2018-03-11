@@ -14,9 +14,9 @@
 #
 use Digest::SHA qw(sha1_hex);
 
-@languages = ('Ada', 'Basic', 'C', 'C++', 'C#', 'Clojure', 'CL', 'Delphi', 'Erlang', 
-              'F#', 'Felix', 'Go', 'Haskell', 'Haxe', 'Java', 'Lua', 'Node.js', 
-              'Objective-C', 'ooc', 'Perl', 'PHP', 'Python', 'Q', 'Racket', 
+@languages = ('Ada', 'Basic', 'C', 'C++', 'C#', 'Clojure', 'CL', 'Delphi', 'Erlang',
+              'F#', 'Felix', 'Go', 'Haskell', 'Haxe', 'Java', 'Lua', 'Node.js',
+              'Objective-C', 'ooc', 'Perl', 'PHP', 'Python', 'Q', 'Racket',
               'Ruby', 'Scala', 'Tcl');
 
 #   File extensions for each language
@@ -343,7 +343,7 @@ sub process_one_language {
             system ("bin/bb2wd tempfile.bb >.wdtemp/$language/$name.wd");
             system ("rm tempfile.$ext tempfile.bb");
             print UPLOAD "cd .wdtemp/$language\n";
-            print UPLOAD "    wdput zguide $ext $name \"$title in $language\"\n";
+            print UPLOAD "    ../../bin/wdput zguide $ext $name \"$title in $language\"\n";
             print UPLOAD "    rm $name.wd\n";
             print UPLOAD "cd ../..\n";
             signature_update ($filename);
