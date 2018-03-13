@@ -333,7 +333,7 @@ namespace Examples
 
 		static Int16 Peering2_GetPort(string name) 
 		{
-			var hash = (Int16)name[0];
+			var hash = (Int16)name.GetHashCode();
 			if (hash < 1024)
 			{
 				hash += 1024;
