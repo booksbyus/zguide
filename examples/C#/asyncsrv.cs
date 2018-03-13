@@ -58,7 +58,7 @@ namespace Examples
 						using (incoming)
 						{
 							string messageText = incoming[0].ReadString();
-							Console.WriteLine("[CLIENT{0}] {1}", i, messageText);
+							Console.WriteLine("[CLIENT{0}] {1}", centitick, messageText);
 						}
 					}
 					using (var outgoing = new ZMessage())
