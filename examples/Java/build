@@ -9,7 +9,7 @@ VERSION="0.3.0-SNAPSHOT"
 JEROMQ="jeromq-$VERSION.jar"
 CLASSPATH=".:$JEROMQ"
 
-JZMQ_VERSION="2.1.1-SNAPSHOT"
+JZMQ_VERSION="3.1.0"
 JZMQ="jzmq-$JZMQ_VERSION.jar"
 JZMQ_CLASSPATH=".:$JZMQ"
 
@@ -19,7 +19,7 @@ if [ ! -f $JEROMQ ]; then
 fi
 if [ ! -f $JZMQ ]; then
     wget -O $JZMQ --no-check-certificate \
-        "https://oss.sonatype.org/service/local/artifact/maven/redirect?r=snapshots&g=org.zeromq&a=jzmq&v=$JZMQ_VERSION&e=jar"
+        "http://repo1.maven.org/maven2/org/zeromq/jzmq/$JZMQ_VERSION/jzmq-$JZMQ_VERSION.jar"
 fi
 
 if [ /$1/ = /all/ ]; then
