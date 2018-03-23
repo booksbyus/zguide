@@ -1,6 +1,6 @@
-/**
-***Hello World server
-REP bind to tcp://*:5555
+/*
+**Hello World server
+REP socket bind to tcp://*:5555
 expect receive"Hello"，use "World" to responsd
 */
 
