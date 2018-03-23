@@ -1,5 +1,5 @@
-/**
-***Hello World client
+/*
+**Hello World client
 DEALER socket connect to tcp://localhost:5555
 send "Hello" to server，expect receive "World"
 */
