@@ -27,14 +27,10 @@ int main (void)
         printf("[recv] frame2 = %s\n", frame2);
         assert(frame2[0] == 0);
         free(frame2);
-        //the 3rd frame received also is identity frame
+        //the 3rd frame received is data frame
         char *frame3=s_recv(responder);
         printf("[recv] frame3 = %s\n", frame3);
         free(frame3);
-        //the 4th frame received is data frame
-        char *frame4=s_recv(responder);
-        printf("[recv] frame4 = %s\n", frame4);
-        free(frame4);
 
         sleep (1);   //Do some work
 
