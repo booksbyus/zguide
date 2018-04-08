@@ -19,8 +19,8 @@ int main (void)
 	{
         printf ("Sending request msg: Hello NO=%d...\n", request_nbr+1);
 		//send request msg
-        s_send(requester, "");
-        s_send(requester, "Hello");
+        s_sendmore(requester, "");   //send empty delimiter frame
+        s_send(requester, "Hello");  //send data frame
 		//recv reply msg
         char *empty=s_recv(requester);
         assert(empty[0]  == 0);
