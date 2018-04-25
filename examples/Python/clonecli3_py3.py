@@ -1,4 +1,4 @@
-# coding=utf-8 
+# coding=utf-8
 """
 Clone client Model Three
 Author: Min RK <benjaminrk@gmail.com

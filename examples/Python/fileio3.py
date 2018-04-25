@@ -3,6 +3,7 @@
 # In which the client requests each chunk individually, thus
 # eliminating server queue overflows, but at a cost in speed.
 
+from __future__ import print_function
 import os
 from threading import Thread
 
@@ -60,7 +61,7 @@ def client_thread(ctx, pipe):
 # .skip
 
 def server_thread(ctx):
-    file = open("testdata", "r")
+    file = open("testdata", "rb")
 
     router = ctx.socket(zmq.ROUTER)
     socket_set_hwm(router, PIPELINE)
@@ -107,7 +108,7 @@ def main():
 
     # loop until client tells us it's done
     try:
-        print a.recv()
+        print (a.recv())
     except KeyboardInterrupt:
         pass
     del a,b

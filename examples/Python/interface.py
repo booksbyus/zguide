@@ -143,4 +143,3 @@ class InterfaceAgent(object):
                 print("reaping %s" % peer.uuid, peer.expires_at, now)
                 self.peers.pop(peer.uuid)
                 self.pipe.send_multipart([b'LEFT', peer.uuid])
-

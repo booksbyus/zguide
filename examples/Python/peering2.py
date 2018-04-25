@@ -88,8 +88,8 @@ def main(myself, peers):
     for peer in peers:
         tprint("I: connecting to cloud frontend at %s" % peer)
         cloudbe.connect("ipc://%s-cloud.ipc" % peer)
-    
-    
+
+
     if not isinstance(peers[0], bytes):
         peers = [peer.encode('ascii') for peer in peers]
 

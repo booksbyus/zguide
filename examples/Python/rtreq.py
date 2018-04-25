@@ -51,7 +51,7 @@ for _ in range(NBR_WORKERS):
 for _ in range(NBR_WORKERS * 10):
     # LRU worker is next waiting in the queue
     address, empty, ready = client.recv_multipart()
-    
+
     client.send_multipart([
         address,
         b'',
@@ -66,4 +66,3 @@ for _ in range(NBR_WORKERS):
         b'',
         b'END',
     ])
-

@@ -3,6 +3,7 @@
 #  In which the server sends the entire file to the client in
 #  large chunks with no attempt at flow control.
 
+from __future__ import print_function
 from threading import Thread
 
 import zmq
@@ -44,7 +45,7 @@ def client_thread(ctx, pipe):
 
 
 def server_thread(ctx):
-    file = open("testdata", "r")
+    file = open("testdata", "rb")
 
     router = ctx.socket(zmq.ROUTER)
 
@@ -91,7 +92,7 @@ def main():
 
     # loop until client tells us it's done
     try:
-        print a.recv()
+        print (a.recv())
     except KeyboardInterrupt:
         pass
     del a,b

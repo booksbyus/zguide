@@ -8,7 +8,7 @@ def main():
     mailbox.sndhwm = 4
     mailbox.sndtimeo = 0
     mailbox.connect("tcp://localhost:9876")
-    
+
     for count in range(10):
         print("Sending message %i" % count)
         try:
@@ -16,7 +16,7 @@ def main():
         except zmq.Again as e:
             print(e)
             break
-    
+
     ctx.destroy(linger=0)
 
 if __name__ == '__main__':
