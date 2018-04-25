@@ -3,6 +3,7 @@
 # In which the client requests each chunk individually, using
 # command pipelining to give us a credit-based flow control.
 
+from __future__ import print_function
 import os
 from threading import Thread
 
@@ -50,7 +51,7 @@ def client_thread(ctx, pipe):
 # reads that chunk and sends it back to the client:
 
 def server_thread(ctx):
-    file = open("testdata", "r")
+    file = open("testdata", "rb")
 
     router = ctx.socket(zmq.ROUTER)
 
@@ -97,7 +98,7 @@ def main():
 
     # loop until client tells us it's done
     try:
-        print a.recv()
+        print (a.recv())
     except KeyboardInterrupt:
         pass
     del a,b
