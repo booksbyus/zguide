@@ -18,4 +18,3 @@ finally:
     # clean up
     socket.close()
     context.term()
-

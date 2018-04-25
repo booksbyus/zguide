@@ -70,7 +70,7 @@ class KVMsg(object):
         return self.properties.get(k, default)
 
     def store(self, dikt):
-        """Store me in a dict if I have anything to store 
+        """Store me in a dict if I have anything to store
         else delete me from the dict."""
         if self.key is not None and self.body is not None:
             dikt[self.key] = self
@@ -99,7 +99,7 @@ class KVMsg(object):
         body = body if body else None
         prop = decode_properties(prop_s)
         return cls(seq, uuid=uuid, key=key, properties=prop, body=body)
-    
+
     def __repr__(self):
         if self.body is None:
             size = 0
@@ -107,7 +107,7 @@ class KVMsg(object):
         else:
             size = len(self.body)
             data = repr(self.body)
-        
+
         mstr = "[seq:{seq}][key:{key}][size:{size}][props:{props}][data:{data}]".format(
             seq=self.sequence,
             # uuid=hexlify(self.uuid),
@@ -117,8 +117,8 @@ class KVMsg(object):
             data=data,
         )
         return mstr
-        
-    
+
+
     def dump(self):
         print("<<", str(self), ">>", file=sys.stderr)
 # ---------------------------------------------------------------------
