@@ -30,7 +30,7 @@ def client_thread(ctx, pipe):
             # ask for next chunk
             dealer.send_multipart([
                 b"fetch",
-                b"%i" % total,
+                b"%i" % offset,
                 b"%i" % CHUNK_SIZE,
             ])
 
