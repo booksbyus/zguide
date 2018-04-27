@@ -1,12 +1,18 @@
 """Decentralized chat example"""
+try:
+    raw_input
+except NameError:
+    raw_input = input
 
 import argparse
 import os
 from threading import Thread
 
-from netifaces import interfaces, ifaddresses, AF_INET # dependency, not in stdlib
+# dependency, not in stdlib
+from netifaces import interfaces, ifaddresses, AF_INET
 
 import zmq
+
 
 def listen(masked):
     """listen for messages
@@ -29,15 +35,16 @@ def listen(masked):
         except (KeyboardInterrupt, zmq.ContextTerminated):
             break
 
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("interface", type=str, help="the network interface",
-        choices=interfaces(),
-    )
+                        choices=interfaces(),
+                        )
     parser.add_argument("user", type=str, default=os.environ['USER'],
-        nargs='?',
-        help="Your username",
-    )
+                        nargs='?',
+                        help="Your username",
+                        )
     args = parser.parse_args()
     inet = ifaddresses(args.interface)[AF_INET]
     addr = inet[0]['addr']
@@ -59,6 +66,7 @@ def main():
             break
     bcast.close(linger=0)
     ctx.term()
+
 
 if __name__ == '__main__':
     main()
