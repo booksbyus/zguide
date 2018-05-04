@@ -3,10 +3,11 @@ Suicidal Snail
 
 Author: Min RK <benjaminrk@gmail.com>
 """
-
+from __future__ import print_function
 import sys
 import threading
 import time
+from pickle import dumps, loads
 import random
 
 import zmq
@@ -25,20 +26,20 @@ def subscriber(pipe):
     # Subscribe to everything
     ctx = zmq.Context.instance()
     sub = ctx.socket(zmq.SUB)
-    sub.setsockopt(zmq.SUBSCRIBE, '')
+    sub.setsockopt(zmq.SUBSCRIBE, b'')
     sub.connect("tcp://localhost:5556")
 
     # Get and process messages
     while True:
-        clock = float(sub.recv())
+        clock = loads(sub.recv())
         # Suicide snail logic
         if (time.time() - clock > MAX_ALLOWED_DELAY):
-            print >> sys.stderr, "E: subscriber cannot keep up, aborting\n",
+            print("E: subscriber cannot keep up, aborting", file=sys.stderr)
             break
 
         # Work for 1 msec plus some random additional time
         time.sleep(1e-3 * (1+2*random.random()))
-    pipe.send("gone and died")
+    pipe.send(b"gone and died")
 
 
 # ---------------------------------------------------------------------
@@ -53,7 +54,7 @@ def publisher(pipe):
 
     while True:
         # Send current clock (secs) to subscribers
-        pub.send(str(time.time()))
+        pub.send(dumps(time.time()))
         try:
             signal = pipe.recv(zmq.DONTWAIT)
         except zmq.ZMQError as e:
@@ -85,7 +86,7 @@ def main():
     # wait for sub to finish
     sub_pipe.recv()
     # tell pub to halt
-    pub_pipe.send("break")
+    pub_pipe.send(b"break")
     time.sleep(0.1)
 
 if __name__ == '__main__':
