@@ -1,4 +1,4 @@
-package com.imatix.zguide.ex1_1;
+package com.imatix.zguide.ex1_4;
 
 import org.zeromq.ZMQ.Context;
 import org.zeromq.ZMQ.Socket;

@@ -11,5 +11,6 @@ public class ZConstants {
     public static class URL {
 
         public static final String TCP = "tcp://*:5555";
+        public static final String INPROC = "inproc://%s";
     }
 }
