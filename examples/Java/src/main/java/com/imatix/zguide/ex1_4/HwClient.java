@@ -1,9 +1,8 @@
-package com.imatix.zguide.ex1_1;
+package com.imatix.zguide.ex1_4;
 
 import org.zeromq.ZMQ.Context;
 import org.zeromq.ZMQ.Socket;
 
-import java.util.Arrays;
 import java.util.stream.IntStream;
 
 import static com.imatix.zguide.commons.ZConstants.URL.TCP;
@@ -27,12 +26,12 @@ public class HwClient {
         Socket requester = context.socket(REQ);
         requester.connect(TCP);
         IntStream.range(0, 10)
-                .forEach(reqNum -> {
-                    System.out.println(format("Sending Hello %s", reqNum));
-                    requester.send("Hello".getBytes(), 0);
-                    byte[] reply = requester.recv(0);
-                    System.out.println(format("Received %s : %s", Arrays.toString(reply), reqNum));
-                });
+        .forEach(reqNum -> {
+            System.out.println(format("Sending Hello %s", reqNum));
+            requester.send("Hello".getBytes(), 0);
+            byte[] reply = requester.recv(0);
+            System.out.println(format("Received %s : %s", new String(reply), reqNum));
+        });
         requester.close();
         context.term();
     }
