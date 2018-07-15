@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.IntStream;
 
-import static com.imatix.zguide.commons.ZConstants.URL.INPROC;
 import static java.lang.String.format;
 import static org.zeromq.ZMQ.PAIR;
 
@@ -50,7 +49,7 @@ public class ZHelper {
         socket2.setLinger(0);
         socket2.setHWM(1);
 
-        String iface = format(INPROC, new BigInteger(130, RAND).toString(32));
+        String iface = String.format(ZConstants.URL.INPROC, new BigInteger(130, RAND).toString(32));
         socket1.bind(iface);
         socket2.connect(iface);
         return Arrays.asList(socket1, socket2);
