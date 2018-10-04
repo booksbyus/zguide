@@ -26,7 +26,7 @@ def subscriber_thread():
     subscriber.setsockopt(zmq.SUBSCRIBE, b"B")
 
     count = 0
-    while True:
+    while count < 5:
         try:
             msg = subscriber.recv_multipart()
         except zmq.ZMQError as e:
