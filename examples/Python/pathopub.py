@@ -36,7 +36,7 @@ def main(url=None):
                 b"Off with his head!",
             ])
         except KeyboardInterrupt:
-            print "interrupted"
+            print ("interrupted")
             break
 
 if __name__ == '__main__':
