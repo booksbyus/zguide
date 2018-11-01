@@ -1,11 +1,17 @@
 extern crate zmq;
 
+use std::thread;
+use std::time::Duration;
+
 fn main() {
     let context = zmq::Context::new();
 
     let subscriber = context.socket(zmq::SUB).unwrap();
     assert!(subscriber.connect("tcp://localhost:5562").is_ok());
     assert!(subscriber.set_subscribe(b"").is_ok());
+
+    thread::sleep(Duration::from_secs(1));
+
     // socket that receives messages
     let sync_client = context.socket(zmq::REQ).unwrap();
     sync_client.connect("tcp://localhost:5561").unwrap();

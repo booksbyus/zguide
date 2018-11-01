@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 echo "Starting publisher..."
 ./target/release/syncpub &
-sleep 1
 echo "Starting subscribers..."
 for ((a=0; a<10; a++)); do
     ./target/release/syncsub &
