@@ -1,4 +1,23 @@
 Examples in Rust
 See LICENSE in examples directory
 
-add zmq = "0.8" into Cargo.toml's [dependencies]
+## Building
+
+To build the binaries:
+
+```
+   cargo build --release --all
+```
+
+The `interrupt.rs` example is omitted from the Cargo file to allow the remaining binaries to be built to the stable
+channel.
+
+
+## Running
+
+Binaries will sit in `target/release`. To run, e.g. the 'version' example:
+
+```
+$ ./target/release/version
+Current 0MQ version is 4.2.5
+```

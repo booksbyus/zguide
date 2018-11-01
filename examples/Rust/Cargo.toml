@@ -1,0 +1,96 @@
+[package]
+name = "rust-examples"
+version = "0.1.0"
+authors = ["CjS77 <cayle.sharrock@gmail.com>"]
+
+[[bin]]
+path = "./hwclient.rs"
+name = "hwclient"
+
+[[bin]]
+path = "./hwserver.rs"
+name = "hwserver"
+
+[[bin]]
+path = "./msgqueue.rs"
+name = "msgqueue"
+
+[[bin]]
+path = "./mspoller.rs"
+name = "mspoller"
+
+[[bin]]
+path = "./msreader.rs"
+name = "msreader"
+
+[[bin]]
+path = "./mtrelay.rs"
+name = "mtrelay"
+
+[[bin]]
+path = "./mtserver.rs"
+name = "mtserver"
+
+[[bin]]
+path = "./psenvpub.rs"
+name = "psenvpub"
+
+[[bin]]
+path = "./psenvsub.rs"
+name = "psenvsub"
+
+[[bin]]
+path = "./rrbroker.rs"
+name = "rrbroker"
+
+[[bin]]
+path = "./rrclient.rs"
+name = "rrclient"
+
+[[bin]]
+path = "./rrworker.rs"
+name = "rrworker"
+
+[[bin]]
+path = "./syncpub.rs"
+name = "syncpub"
+
+[[bin]]
+path = "./syncsub.rs"
+name = "syncsub"
+
+[[bin]]
+path = "./tasksink.rs"
+name = "tasksink"
+
+[[bin]]
+path = "./taskvent.rs"
+name = "taskvent"
+
+[[bin]]
+path = "./taskwork.rs"
+name = "taskwork"
+
+[[bin]]
+path = "./taskwork2.rs"
+name = "taskwork2"
+
+[[bin]]
+path = "./version.rs"
+name = "version"
+
+[[bin]]
+path = "./wuclient.rs"
+name = "wuclient"
+
+[[bin]]
+path = "./wuproxy.rs"
+name = "wuproxy"
+
+[[bin]]
+path = "./wuserver.rs"
+name = "wuserver"
+
+[dependencies]
+zmq = "0.8"
+rand = "0.4"
