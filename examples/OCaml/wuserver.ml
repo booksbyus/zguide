@@ -4,7 +4,7 @@
   Publishes random weather updates
 *)
 
-open ZMQ
+open Zmq
 open Helpers
 
 let () =

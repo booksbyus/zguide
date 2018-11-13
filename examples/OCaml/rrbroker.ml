@@ -1,6 +1,6 @@
 (* Simple request-reply broker *)
 
-open ZMQ
+open Zmq
 open Helpers
 
 let () =

@@ -1,6 +1,6 @@
 (** Hello World client *)
 
-open ZMQ
+open Zmq
 open Helpers
 
 let () =

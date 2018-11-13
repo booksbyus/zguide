@@ -3,7 +3,7 @@
 #   Examples build helper
 #   Syntax: build all | clean
 
-OCAMLBUILD="ocamlbuild -j 0 -use-ocamlfind -tag package(ZMQ),debug,annot"
+OCAMLBUILD="ocamlbuild -j 0 -use-ocamlfind -tag package(zmq),debug,annot"
 
 if [ /$1/ = /all/ ]; then
     echo "Building all examples... $(echo *.ml | sed s/\.ml//g)"

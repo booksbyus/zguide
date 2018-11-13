@@ -2,7 +2,7 @@
  * Task worker - design 2
  * Adds pub-sub flow to receive and respond to kill signal
  *)
-open ZMQ
+open Zmq
 open Helpers
 
 let () =

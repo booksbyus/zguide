@@ -1,5 +1,5 @@
 
-open ZMQ
+open Zmq
 
 let (@@) f x = f x
 let (|>) x f = f x

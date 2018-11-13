@@ -6,7 +6,7 @@
   Sends results to sink via that socket
 *)
 
-open ZMQ
+open Zmq
 open Helpers
 
 let () =
