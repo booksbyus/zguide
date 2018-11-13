@@ -3,7 +3,7 @@
  * Connects REP socket to tcp://*:5560
  * Expects "Hello" from client, replies with "World"
  *)
-open ZMQ
+open Zmq
 open Helpers
 
 let () =

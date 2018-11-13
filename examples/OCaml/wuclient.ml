@@ -4,7 +4,7 @@
   Collects weather updates and finds avg temp in zipcode
 *)
 
-open ZMQ
+open Zmq
 open Helpers
 
 let () =

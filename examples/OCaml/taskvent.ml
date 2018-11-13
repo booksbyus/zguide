@@ -4,7 +4,7 @@
   Sends batch of tasks to workers via that socket
 *)
 
-open ZMQ
+open Zmq
 open Helpers
 
 let () =
