@@ -201,6 +201,7 @@ private:
        msg->wrap(MDPC_CLIENT, service_name.c_str());
        msg->wrap(client.c_str(), "");
        msg->send (*m_socket);
+       delete msg;
    }
 
    //  ---------------------------------------------------------------------
