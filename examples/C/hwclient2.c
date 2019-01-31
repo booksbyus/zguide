@@ -41,7 +41,7 @@ int main (void)
 		}
 		//if the first part you received is not empty part,discard the whole ZMQ msg
 		else{
-			printf("Discard the ZMQ message!\n",buffer);
+			printf("Discard the ZMQ message!\n");
 		}
 	}
 	zmq_close(requester);
