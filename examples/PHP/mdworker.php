@@ -12,7 +12,7 @@ $verbose = $_SERVER['argc'] > 1 && $_SERVER['argv'][1] == "-v";
 
 $mdwrk = new Mdwrk("tcp://localhost:5555", "echo", $verbose);
 
-$reply = NULL;
+$reply = null;
 while (true) {
     $request = $mdwrk->recv($reply);
     $reply = $request;      //  Echo is complex... :-)
