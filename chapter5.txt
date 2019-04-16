@@ -342,7 +342,7 @@ Here are some things to note about this first model:
 
 Here is the {{kvmsg}} class, in the simplest form that works for now:
 
-[[code type="example" title="Key-value message class" name="kvsimple"]]
+[[code type="example" title="Key-value message class" name="kvmsg"]]
 [[/code]]
 
 Later, we'll make a more sophisticated {{kvmsg}} class that will work in real applications.
