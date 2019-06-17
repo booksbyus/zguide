@@ -419,6 +419,17 @@ sub writesrc {
     s/&/&amp;/g;
     s/</&lt;/g;
     s/>/&gt;/g;
+    #   Non SQML characters
+    s/ / /g; # Space like unicode to space
+    s/…/&#8230;/g;
+    s/‘/&#8216;/g;
+    s/’/&#8217;/g;
+    s/‚/&#8218;/g;
+    s/“/&#8220;/g;
+    s/”/&#8221;/g;
+    s/„/&#8222;/g;
+    s/–/&#8211;/g;
+    s/™/&#8482;/g;
     print OUTPUT "$_\n";
 }
 
