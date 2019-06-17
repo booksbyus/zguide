@@ -7,7 +7,6 @@ while (true) {
 
     char empty [1];
     int empty_size = zmq_recv (worker, empty, 1, 0);
-    zmq_recv (worker, &empty, 0);
     assert (empty_size <= 0);
     if (empty_size == -1)
         break;
