@@ -342,7 +342,7 @@ Here are some things to note about this first model:
 
 Here is the {{kvmsg}} class, in the simplest form that works for now:
 
-[[code type="example" title="Key-value message class" name="kvmsg"]]
+[[code type="example" title="Key-value message class" name="kvsimple"]] [[/code]]
 [[/code]]
 
 Later, we'll make a more sophisticated {{kvmsg}} class that will work in real applications.
@@ -351,7 +351,7 @@ Both the server and client maintain hash tables, but this first model only works
 
 +++ Getting an Out-of-Band Snapshot
 
-So now we have our second problem: how to deal with late-joining clients or clients that crash and then restart. 
+So now we have our second problem: how to deal with late-joining clients or clients that crash and then restart.
 
 In order to allow a late (or recovering) client to catch up with a server, it has to get a snapshot of the server's state. Just as we've reduced "message" to mean "a sequenced key-value pair", we can reduce "state" to mean "a hash table". To get the server state, a client opens a DEALER socket and asks for it explicitly[figure].
 
