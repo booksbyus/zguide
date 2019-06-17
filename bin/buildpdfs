@@ -31,7 +31,7 @@ function mkone {
         echo "Uploading $BOOK-$2.pdf to $SITE:$PAGE..."
         bin/wdattach $SITE $PAGE $BOOK-$2.pdf
     fi
-    
+
     # Produce and upload EPUB
     sed -e "s/\.eps/\.png/g" \
         -e "s/format=\"EPS\"/format=\"PNG\"/g" < book.xml > ebook.xml
@@ -46,5 +46,7 @@ function mkone {
 mkone C         c
 mkone Haxe      hx
 mkone Lua       lua
+mkone Java      java
 mkone Python    py
 mkone PHP       php
+mkone C#        cs

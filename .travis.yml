@@ -21,6 +21,7 @@ script:
 - "./examples/build all"
 - export PATH=$PATH:./bin/asciitosvg/
 - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then bash ./bin/buildguide; fi
+- if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then bash ./bin/buildpdfs; fi
 env:
   global:
     - secure: "IT/2HxHCMwKukSlkv9b2b9J+5YtSM1xmVW0K4eMbnbDICiFHYNXvaVxqzE/rQ7MGNgFiwnwixix+2nbBSOpB2ZqnUeGWdTsxtAuBm+FJ7aXRPZ6vr/q/5VhiXa21WB6U7hqTwAwrWZDhEZFoatAApWEhAj/q5399QzAxD+2Mi9M="
