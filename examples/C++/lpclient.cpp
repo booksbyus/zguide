@@ -41,7 +41,8 @@ int main () {
         bool expect_reply = true;
         while (expect_reply) {
             //  Poll socket for a reply, with timeout
-            zmq::pollitem_t items[] = { { *client, 0, ZMQ_POLLIN, 0 } };
+            zmq::pollitem_t items[] = {
+                { static_cast<void*>(*client), 0, ZMQ_POLLIN, 0 } };
             zmq::poll (&items[0], 1, REQUEST_TIMEOUT);
 
             //  If we got a reply, process it

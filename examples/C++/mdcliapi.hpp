@@ -107,7 +107,7 @@ public:
            while (!s_interrupted) {
                //  Poll socket for a reply, with timeout
                zmq::pollitem_t items [] = {
-                   { *m_client, 0, ZMQ_POLLIN, 0 } };
+                   { static_cast<void*>(*m_client), 0, ZMQ_POLLIN, 0 } };
                zmq::poll (items, 1, m_timeout);
 
                //  If we got a reply, process it

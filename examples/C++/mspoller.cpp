@@ -22,8 +22,8 @@ int main (int argc, char *argv[])
 
     //  Initialize poll set
     zmq::pollitem_t items [] = {
-        { receiver, 0, ZMQ_POLLIN, 0 },
-        { subscriber, 0, ZMQ_POLLIN, 0 }
+        { static_cast<void*>(receiver), 0, ZMQ_POLLIN, 0 },
+        { static_cast<void*>(subscriber), 0, ZMQ_POLLIN, 0 }
     };
     //  Process messages from both sockets
     while (1) {

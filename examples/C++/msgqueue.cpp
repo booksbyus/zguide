@@ -20,6 +20,8 @@ int main (int argc, char *argv[])
     backend.bind("tcp://*:5560");
 
     //  Start the proxy
-    zmq::proxy(frontend, backend, nullptr);
+    zmq::proxy(static_cast<void*>(frontend),
+               static_cast<void*>(backend),
+               nullptr);
     return 0;
 }

@@ -102,11 +102,12 @@ public:
    recv ()
    {
        //  Poll socket for a reply, with timeout
-       zmq::pollitem_t items [] = { { *m_client, 0, ZMQ_POLLIN, 0 } };
+       zmq::pollitem_t items[] = {
+           { static_cast<void*>(*m_client), 0, ZMQ_POLLIN, 0 } };
        zmq::poll (items, 1, m_timeout);
 
        //  If we got a reply, process it
-       if (items [0].revents & ZMQ_POLLIN) {
+       if (items[0].revents & ZMQ_POLLIN) {
            zmsg *msg = new zmsg (*m_client);
            if (m_verbose) {
                s_console ("I: received reply:");

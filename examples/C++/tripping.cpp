@@ -73,8 +73,8 @@ broker_task (void *args)
 
     //  Initialize poll set
     zmq::pollitem_t items [] = {
-        { frontend, 0, ZMQ_POLLIN, 0 },
-        { backend,  0, ZMQ_POLLIN, 0 }
+        { static_cast<void*>(frontend), 0, ZMQ_POLLIN, 0 },
+        { static_cast<void*>(backend), 0, ZMQ_POLLIN, 0 }
     };
     while (1) {
         zmq::poll (items, 2, -1);
