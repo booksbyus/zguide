@@ -131,11 +131,11 @@ public:
         m_expect_reply = true;
 
         while (!s_interrupted) {
-            zmq::pollitem_t items [] = {
-                { *m_worker,  0, ZMQ_POLLIN, 0 } };
+            zmq::pollitem_t items[] = {
+                { static_cast<void*>(*m_worker),  0, ZMQ_POLLIN, 0 } };
             zmq::poll (items, 1, m_heartbeat);
 
-            if (items [0].revents & ZMQ_POLLIN) {
+            if (items[0].revents & ZMQ_POLLIN) {
                 zmsg *msg = new zmsg(*m_worker);
                 if (m_verbose) {
                     s_console ("I: received message from broker:");

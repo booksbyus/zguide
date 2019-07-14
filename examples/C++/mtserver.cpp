@@ -49,7 +49,9 @@ int main ()
         pthread_create (&worker, NULL, worker_routine, (void *) &context);
     }
     //  Connect work threads to client threads via a queue
-    zmq::proxy (clients, workers, NULL);
+    zmq::proxy (static_cast<void*>(clients),
+                static_cast<void*>(workers),
+                nullptr);
     return 0;
 }
     

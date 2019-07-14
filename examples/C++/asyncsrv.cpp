@@ -34,7 +34,8 @@ public:
         client_socket_.setsockopt(ZMQ_IDENTITY, identity, strlen(identity));
         client_socket_.connect("tcp://localhost:5570");
 
-        zmq::pollitem_t items[] = {{client_socket_, 0, ZMQ_POLLIN, 0}};
+        zmq::pollitem_t items[] = {
+            { static_cast<void*>(client_socket_), 0, ZMQ_POLLIN, 0 } };
         int request_nbr = 0;
         try {
             while (true) {
@@ -137,7 +138,9 @@ public:
 
 
         try {
-            zmq::proxy(frontend_, backend_, nullptr);
+            zmq::proxy(static_cast<void*>(frontend_),
+                       static_cast<void*>(backend_),
+                       nullptr);
         }
         catch (std::exception &e) {}
 

@@ -20,8 +20,8 @@ int main ()
     std::unordered_map<std::string, std::string> cache_map;
 
     zmq::pollitem_t items[2] = {
-        {frontend, 0, ZMQ_POLLIN, 0},
-        {backend, 0, ZMQ_POLLIN,  0}
+        { static_cast<void*>(frontend), 0, ZMQ_POLLIN, 0 },
+        { static_cast<void*>(backend), 0, ZMQ_POLLIN, 0 }
     };
 
     //  .split main poll loop
@@ -49,7 +49,7 @@ int main ()
 
         //  .split handle subscriptions
         //  When we get a new subscription, we pull data from the cache:
-        if (items [1].revents & ZMQ_POLLIN) {
+        if (items[1].revents & ZMQ_POLLIN) {
             zmq::message_t msg;
 
             backend.recv(&msg);

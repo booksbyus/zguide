@@ -54,7 +54,8 @@ int main (void)
 
     int cycles = 0;
     while (1) {
-        zmq::pollitem_t items [] = { { *worker,  0, ZMQ_POLLIN, 0 } };
+        zmq::pollitem_t items[] = {
+            {static_cast<void*>(*worker), 0, ZMQ_POLLIN, 0 } };
         zmq::poll (items, 1, HEARTBEAT_INTERVAL);
 
         if (items [0].revents & ZMQ_POLLIN) {
