@@ -10,6 +10,9 @@ process.stdin.setRawMode(true);
 var sender = zmq.socket('push');
 sender.bindSync("tcp://*:5557");
 
+var sink = zmq.socket('push');
+sink.connect('tcp://localhost:5558');
+
 var i          = 0
   , total_msec = 0;
 
@@ -17,7 +20,7 @@ function work() {
   console.log("Sending tasks to workers...");
 
   // The first message is "0" and signals start of batch
-  sender.send("0");
+  sink.send("0");
 
   // send 100 tasks
   while (i < 100) {
@@ -28,6 +31,7 @@ function work() {
     i++;
   }
   console.log("Total expected cost:", total_msec, "msec");
+  sink.close();
   sender.close();
   process.exit();
 };
