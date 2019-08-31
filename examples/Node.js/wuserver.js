@@ -9,10 +9,7 @@ publisher.bindSync("tcp://*:5556");
 publisher.bindSync("ipc://weather.ipc");
 
 function zeropad(num) {
-  while (num.length < 5) {
-    num = "0" + num;
-  }
-  return num;
+  return num.toString().padStart(5, "0");
 };
 
 function rand(upper, extra) {
@@ -25,6 +22,6 @@ while (true) {
   var zipcode     = rand(100000)
     , temperature = rand(215, -80)
     , relhumidity = rand(50, 10)
-    , update      = zeropad(zipcode.toString()) + ' ' + temperature + ' ' + relhumidity;
+    , update      = `${zeropad(zipcode)} ${temperature} ${relhumidity}`;
   publisher.send(update);
 }
