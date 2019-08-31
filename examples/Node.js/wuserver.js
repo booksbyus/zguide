@@ -22,6 +22,6 @@ while (true) {
   var zipcode     = rand(100000)
     , temperature = rand(215, -80)
     , relhumidity = rand(50, 10)
-    , update      = zeropad(zipcode) + ' ' + temperature + ' ' + relhumidity;
+    , update      = `${zeropad(zipcode)} ${temperature} ${relhumidity}`;
   publisher.send(update);
 }
