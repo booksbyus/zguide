@@ -14,7 +14,7 @@ int main (int argc, char *argv [])
     assert (rc == 0);
 
     //  Subscribe to zipcode, default is NYC, 10001
-    char *filter = (argc > 1)? argv [1]: "10001 ";
+    const char *filter = (argc > 1)? argv [1]: "10001 ";
     rc = zmq_setsockopt (subscriber, ZMQ_SUBSCRIBE,
                          filter, strlen (filter));
     assert (rc == 0);
