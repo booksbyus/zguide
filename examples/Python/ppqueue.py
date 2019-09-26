@@ -13,8 +13,8 @@ HEARTBEAT_LIVENESS = 3     # 3..5 is reasonable
 HEARTBEAT_INTERVAL = 1.0   # Seconds
 
 #  Paranoid Pirate Protocol constants
-PPP_READY = "\x01"      # Signals worker is ready
-PPP_HEARTBEAT = "\x02"  # Signals worker heartbeat
+PPP_READY = b"\x01"      # Signals worker is ready
+PPP_HEARTBEAT = b"\x02"  # Signals worker heartbeat
 
 
 class Worker(object):
@@ -34,11 +34,11 @@ class WorkerQueue(object):
         """Look for & kill expired workers."""
         t = time.time()
         expired = []
-        for address,worker in self.queue.iteritems():
+        for address, worker in self.queue.items():
             if t > worker.expiry:  # Worker expired
                 expired.append(address)
         for address in expired:
-            print "W: Idle worker expired: %s" % address
+            print("W: Idle worker expired: %s" % address)
             self.queue.pop(address, None)
 
     def next(self):
@@ -84,7 +84,7 @@ while True:
         msg = frames[1:]
         if len(msg) == 1:
             if msg[0] not in (PPP_READY, PPP_HEARTBEAT):
-                print "E: Invalid message from worker: %s" % msg
+                print("E: Invalid message from worker: %s" % msg)
         else:
             frontend.send_multipart(msg)
 
