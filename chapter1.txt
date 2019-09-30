@@ -202,7 +202,7 @@ Here is the client application, which listens to the stream of updates and grabs
 #------------#  #------------#  #------------#
 [[/code]]
 
-Note that when you use a SUB socket you **must** set a subscription using {{zmq_setsockopt[3]}} and SUBSCRIBE, as in this code. If you don't set any subscription, you won't get any messages. It's a common mistake for beginners. The subscriber can set many subscriptions, which are added together. That is, if an update matches ANY subscription, the subscriber receives it. The subscriber can also cancel specific subscriptions. A subscription is often, but not necessarily a printable string. See {{zmq_setsockopt[3]}} for how this works.
+Note that when you use a SUB socket you **must** set a subscription using {{zmq_setsockopt[3]}} and SUBSCRIBE, as in this code. If you don't set any subscription, you won't get any messages. It's a common mistake for beginners. The subscriber can set many subscriptions, which are added together. That is, if an update matches ANY subscription, the subscriber receives it. The subscriber can also cancel specific subscriptions. A subscription is often, but not always, a printable string. See {{zmq_setsockopt[3]}} for how this works.
 
 The PUB-SUB socket pair is asynchronous. The client does {{zmq_recv[3]}}, in a loop (or once if that's all it needs). Trying to send a message to a SUB socket will cause an error. Similarly, the service does {{zmq_send[3]}} as often as it needs to, but must not do {{zmq_recv[3]}} on a PUB socket.
 
