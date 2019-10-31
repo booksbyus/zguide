@@ -51,5 +51,5 @@ while True:
     if socks.get(frontend) == zmq.POLLIN:
         #  Get client request, route to first available worker
         msg = frontend.recv_multipart()
-        request = [workers.pop(0), ''] + msg
+        request = [workers.pop(0), ''.encode()] + msg
         backend.send_multipart(request)
