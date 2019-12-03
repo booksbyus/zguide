@@ -91,6 +91,10 @@ def server_thread(ctx):
 
         # Send resulting chunk to client
         router.send_multipart([identity, data])
+        
+        # Break when all data is read
+        if not data:
+            break
 
 # The main task is just the same as in the first model.
 # .skip
