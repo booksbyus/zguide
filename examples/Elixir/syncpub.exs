@@ -8,7 +8,6 @@ defmodule Syncpub do
 
   defmacrop erlconst_SUBSCRIBERS_EXPECTED() do
     quote do
-      #10
       2
     end
   end
@@ -20,7 +19,7 @@ defmodule Syncpub do
     :ok = :erlzmq.bind(publisher, 'tcp://*:5561')
     {:ok, syncservice} = :erlzmq.socket(context, :rep)
     :ok = :erlzmq.bind(syncservice, 'tcp://*:5562')
-    :io.format('Waiting for subscribers~n')
+    :io.format('Waiting for subscribers.  Please start 2 subscribers.~n')
     sync_subscribers(syncservice, erlconst_SUBSCRIBERS_EXPECTED())
     :io.format('Broadcasting messages~n')
     broadcast(publisher, 1000000)

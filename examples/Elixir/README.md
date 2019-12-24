@@ -29,17 +29,17 @@ $ elixir wuserver.exs
 The files marked "converted" seem to run as expected.
 
 ```
-asyncsrv.exs
+asyncsrv.exs -- uses unknown module erlzmq_device
 hwclient.exs -- converted
 hwserver.exs -- converted
-identity.exs -- converted
+identity.exs -- converted (but, uses unknown module erlzmq_device)
 interrupt.exs -- converted
 lbbroker.exs -- converted
-msgqueue.exs
+msgqueue.exs -- uses unknown module erlzmq_device
 mspoller.exs -- converted.  Note: Run wuserver.exs.
 msreader.exs -- converted.  Note: Run wuserver.exs.
 mtrelay.exs
-mtserver.exs -- uses erlzmq_device
+mtserver.exs -- uses unknown module erlzmq_device
 psenvpub.exs -- converted
 psenvsub.exs -- converted
 rrbroker.exs -- converted
@@ -66,3 +66,5 @@ Notes:
   (endpoint) to "localhost".  This seemed to happen, for example, in
   `rrworker.exs` and `rrclient.exs`.
 
+* Several examples use modules `erlzmq_device` or `erlzmq_util`.  I
+  was not able to find implementations of these.
