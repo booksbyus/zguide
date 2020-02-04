@@ -14,9 +14,9 @@
 #
 use Digest::SHA qw(sha1_hex);
 
-@languages = ('Ada', 'Basic', 'C', 'C++', 'C#', 'Clojure', 'CL', 'Delphi', 'Erlang',
-              'F#', 'Felix', 'Go', 'Haskell', 'Haxe', 'Java', 'Lua', 'Node.js',
-              'Objective-C', 'ooc', 'Perl', 'PHP', 'Python', 'Q', 'Racket',
+@languages = ('Ada', 'Basic', 'C', 'C++', 'C#', 'Clojure', 'CL', 'Delphi',
+              'Elixir', 'Erlang', 'F#', 'Felix', 'Go', 'Haskell', 'Haxe', 'Java', 'Lua',
+              'Node.js', 'Objective-C', 'ooc', 'Perl', 'PHP', 'Python', 'Q', 'Racket',
               'Ruby', 'Scala', 'Tcl');
 
 #   File extensions for each language
@@ -29,6 +29,7 @@ use Digest::SHA qw(sha1_hex);
               'Clojure' => 'clj',
               'Delphi' => 'dpr',
               'Erlang' => 'es',
+              'Elixir' => 'exs',
               'F#' => 'fsx',
               'Felix' => 'flx',
               'Go' => 'go',
