@@ -13,9 +13,9 @@ def main():
     client = MajorDomoClient("tcp://localhost:5555", verbose)
     count = 0
     while count < 100000:
-        request = "Hello world"
+        request = b"Hello world"
         try:
-            reply = client.send("echo", request)
+            reply = client.send(b"echo", request)
         except KeyboardInterrupt:
             break
         else:
@@ -23,7 +23,7 @@ def main():
             if reply is None:
                 break
         count += 1
-    print "%i requests/replies processed" % count
+    print ("%i requests/replies processed" % count)
 
 if __name__ == '__main__':
     main()

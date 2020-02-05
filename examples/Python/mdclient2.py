@@ -12,12 +12,12 @@ def main():
     verbose = '-v' in sys.argv
     client = MajorDomoClient("tcp://localhost:5555", verbose)
     requests = 100000
-    for i in xrange(requests):
-        request = "Hello world"
+    for i in range(requests):
+        request = b"Hello world"
         try:
-            client.send("echo", request)
+            client.send(b"echo", request)
         except KeyboardInterrupt:
-            print "send interrupted, aborting"
+            print ("send interrupted, aborting")
             return
 
     count = 0
@@ -31,7 +31,7 @@ def main():
             if reply is None:
                 break
         count += 1
-    print "%i requests/replies processed" % count
+    print ("%i requests/replies processed" % count)
 
 if __name__ == '__main__':
     main()

@@ -15,35 +15,35 @@ from zhelpers import zpipe
 
 def client_task (ctx, pipe):
     client = ctx.socket(zmq.DEALER)
-    client.identity = 'C'
+    client.identity = b'C'
     client.connect("tcp://localhost:5555")
 
-    print "Setting up test...\n",
+    print ("Setting up test...")
     time.sleep(0.1)
 
-    print "Synchronous round-trip test...\n",
+    print ("Synchronous round-trip test...")
     start = time.time()
     requests = 10000
-    for r in xrange(requests):
-        client.send("hello")
+    for r in range(requests):
+        client.send(b"hello")
         client.recv()
-    print " %d calls/second\n" % (requests / (time.time()-start)),
+    print (" %d calls/second" % (requests / (time.time()-start)))
 
-    print "Asynchronous round-trip test...\n",
+    print ("Asynchronous round-trip test...")
     start = time.time()
-    for r in xrange(requests):
-        client.send("hello")
-    for r in xrange(requests):
+    for r in range(requests):
+        client.send(b"hello")
+    for r in range(requests):
         client.recv()
-    print " %d calls/second\n" % (requests / (time.time()-start)),
+    print (" %d calls/second" % (requests / (time.time()-start)))
 
     # signal done:
-    pipe.send("done")
+    pipe.send(b"done")
 
 def worker_task():
     ctx = zmq.Context()
     worker = ctx.socket(zmq.DEALER)
-    worker.identity = 'W'
+    worker.identity = b'W'
     worker.connect("tcp://localhost:5556")
 
     while True:
@@ -72,11 +72,11 @@ def broker_task():
 
         if frontend in items:
             msg = frontend.recv_multipart()
-            msg[0] = 'W'
+            msg[0] = b'W'
             backend.send_multipart(msg)
         if backend in items:
             msg = backend.recv_multipart()
-            msg[0] = 'C'
+            msg[0] = b'C'
             frontend.send_multipart(msg)
 
 def main():

@@ -18,13 +18,13 @@ def service_call (session, service, request):
     reply = session.send(service, request)
     if reply:
         status = reply.pop(0)
-        if status == "200":
+        if status == b"200":
             return reply
-        elif status == "400":
-            print "E: client fatal error, aborting"
+        elif status == b"400":
+            print ("E: client fatal error 400, aborting")
             sys.exit (1)
-        elif status == "500":
-            print "E: server fatal error, aborting"
+        elif status == b"500":
+            print ("E: server fatal error 500, aborting")
             sys.exit (1)
     else:
         sys.exit (0);    #  Interrupted or failed
@@ -34,31 +34,31 @@ def main():
     session = MajorDomoClient("tcp://localhost:5555", verbose)
 
     #  1. Send 'echo' request to Titanic
-    request = ["echo", "Hello world"]
-    reply = service_call(session, "titanic.request", request)
+    request = [b"echo", b"Hello world"]
+    reply = service_call(session, b"titanic.request", request)
 
     uuid = None
 
     if reply:
         uuid = reply.pop(0)
-        print "I: request UUID ", uuid
+        print ("I: request UUID ", uuid)
 
     #  2. Wait until we get a reply
     while True:
         time.sleep (.1)
         request = [uuid]
-        reply = service_call (session, "titanic.reply", request)
+        reply = service_call (session, b"titanic.reply", request)
 
         if reply:
             reply_string = reply[-1]
-            print "Reply:", reply_string
+            print ("I: reply:", reply_string)
 
             #  3. Close request
             request = [uuid]
-            reply = service_call (session, "titanic.close", request)
+            reply = service_call (session, b"titanic.close", request)
             break
         else:
-            print "I: no reply yet, trying again..."
+            print ("I: no reply yet, trying again...")
             time.sleep(5)     #  Try again in 5 seconds
     return 0
 

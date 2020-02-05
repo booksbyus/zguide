@@ -30,8 +30,9 @@ class MajorDomoClient(object):
         self.verbose = verbose
         self.ctx = zmq.Context()
         self.poller = zmq.Poller()
-        logging.basicConfig(format="%(asctime)s %(message)s", datefmt="%Y-%m-%d %H:%M:%S",
-                level=logging.INFO)
+        logging.basicConfig(format="%(asctime)s %(message)s",
+                            datefmt="%Y-%m-%d %H:%M:%S",
+                            level=logging.INFO)
         self.reconnect_to_broker()
 
 
@@ -58,7 +59,7 @@ class MajorDomoClient(object):
         # Frame 1: "MDPCxy" (six bytes, MDP/Client x.y)
         # Frame 2: Service name (printable string)
 
-        request = ['', MDP.C_CLIENT, service] + request
+        request = [b'', MDP.C_CLIENT, service] + request
         if self.verbose:
             logging.warn("I: send request to '%s' service: ", service)
             dump(request)
