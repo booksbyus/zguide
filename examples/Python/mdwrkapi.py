@@ -46,8 +46,9 @@ class MajorDomoWorker(object):
         self.verbose = verbose
         self.ctx = zmq.Context()
         self.poller = zmq.Poller()
-        logging.basicConfig(format="%(asctime)s %(message)s", datefmt="%Y-%m-%d %H:%M:%S",
-                level=logging.INFO)
+        logging.basicConfig(format="%(asctime)s %(message)s",
+                            datefmt="%Y-%m-%d %H:%M:%S",
+                            level=logging.INFO)
         self.reconnect_to_broker()
 
 
@@ -84,7 +85,7 @@ class MajorDomoWorker(object):
         if option:
             msg = [option] + msg
 
-        msg = ['', MDP.W_WORKER, command] + msg
+        msg = [b'', MDP.W_WORKER, command] + msg
         if self.verbose:
             logging.info("I: sending %s to broker", command)
             dump(msg)
@@ -98,7 +99,7 @@ class MajorDomoWorker(object):
 
         if reply is not None:
             assert self.reply_to is not None
-            reply = [self.reply_to, ''] + reply
+            reply = [self.reply_to, b''] + reply
             self.send_to_broker(MDP.W_REPLY, msg=reply)
 
         self.expect_reply = True
@@ -121,7 +122,7 @@ class MajorDomoWorker(object):
                 assert len(msg) >= 3
 
                 empty = msg.pop(0)
-                assert empty == ''
+                assert empty == b''
 
                 header = msg.pop(0)
                 assert header == MDP.W_WORKER
@@ -133,7 +134,7 @@ class MajorDomoWorker(object):
                     self.reply_to = msg.pop(0)
                     # pop empty
                     empty = msg.pop(0)
-                    assert empty == ''
+                    assert empty == b''
 
                     return msg # We have a request to process
                 elif command == MDP.W_HEARTBEAT:

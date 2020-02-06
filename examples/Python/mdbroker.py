@@ -47,7 +47,7 @@ class MajorDomoBroker(object):
     """
 
     # We'd normally pull these from config data
-    INTERNAL_SERVICE_PREFIX = "mmi."
+    INTERNAL_SERVICE_PREFIX = b"mmi."
     HEARTBEAT_LIVENESS = 3 # 3-5 is reasonable
     HEARTBEAT_INTERVAL = 2500 # msecs
     HEARTBEAT_EXPIRY = HEARTBEAT_INTERVAL * HEARTBEAT_LIVENESS
@@ -80,8 +80,9 @@ class MajorDomoBroker(object):
         self.socket.linger = 0
         self.poller = zmq.Poller()
         self.poller.register(self.socket, zmq.POLLIN)
-        logging.basicConfig(format="%(asctime)s %(message)s", datefmt="%Y-%m-%d %H:%M:%S",
-                level=logging.INFO)
+        logging.basicConfig(format="%(asctime)s %(message)s",
+                            datefmt="%Y-%m-%d %H:%M:%S",
+                            level=logging.INFO)
 
 
 
@@ -102,7 +103,7 @@ class MajorDomoBroker(object):
 
                 sender = msg.pop(0)
                 empty = msg.pop(0)
-                assert empty == ''
+                assert empty == b''
                 header = msg.pop(0)
 
                 if (MDP.C_CLIENT == header):
@@ -128,7 +129,7 @@ class MajorDomoBroker(object):
         assert len(msg) >= 2 # Service name + body
         service = msg.pop(0)
         # Set reply return address to client sender
-        msg = [sender,''] + msg
+        msg = [sender, b''] + msg
         if service.startswith(self.INTERNAL_SERVICE_PREFIX):
             self.service_internal(service, msg)
         else:
@@ -162,7 +163,7 @@ class MajorDomoBroker(object):
                 # protocol header and service name, then rewrap envelope.
                 client = msg.pop(0)
                 empty = msg.pop(0) # ?
-                msg = [client, '', MDP.C_CLIENT, worker.service.name] + msg
+                msg = [client, b'', MDP.C_CLIENT, worker.service.name] + msg
                 self.socket.send_multipart(msg)
                 self.worker_waiting(worker)
             else:
@@ -223,10 +224,10 @@ class MajorDomoBroker(object):
 
     def service_internal(self, service, msg):
         """Handle internal service according to 8/MMI specification"""
-        returncode = "501"
-        if "mmi.service" == service:
+        returncode = b"501"
+        if b"mmi.service" == service:
             name = msg[-1]
-            returncode = "200" if name in self.services else "404"
+            returncode = b"200" if name in self.services else b"404"
         msg[-1] = returncode
 
         # insert the protocol header and service name after the routing envelope ([client, ''])
@@ -290,7 +291,7 @@ class MajorDomoBroker(object):
         # and routing envelope
         if option is not None:
             msg = [option] + msg
-        msg = [worker.address, '', MDP.W_WORKER, command] + msg
+        msg = [worker.address, b'', MDP.W_WORKER, command] + msg
 
         if self.verbose:
             logging.info("I: sending %r to worker", command)
