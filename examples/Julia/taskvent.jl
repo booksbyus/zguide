@@ -12,7 +12,7 @@ context = Context()
 sender = Socket(context, PUSH)
 ZMQ.bind(sender, "tcp://*:5557")
 
-# Socket with direct access to the sink: used to syncronize start of batch
+# Socket with direct access to the sink: used to synchronize start of batch
 sink = Socket(context, PUSH)
 ZMQ.connect(sink, "tcp://localhost:5558")
 
