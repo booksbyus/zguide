@@ -152,6 +152,10 @@ This makes a handy helper function and in the spirit of making things we can reu
 
 The result is {{zhelpers.h}}, which lets us write sweeter and shorter ZeroMQ applications in C. It is a fairly long source, and only fun for C developers, so [https://github.com/imatix/zguide/blob/master/examples/C/zhelpers.h read it at leisure].
 
+++ A Note on the Naming Convention
+
+The prefix {{s_}} used in {{zhelpers.h}} and the examples which follow in this guide is an indicator for static methods or variables.
+
 ++ Version Reporting
 
 ZeroMQ does come in several versions and quite often, if you hit a problem, it'll be something that's been fixed in a later version. So it's a useful trick to know //exactly// what version of ZeroMQ you're actually linking with.
