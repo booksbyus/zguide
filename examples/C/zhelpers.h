@@ -48,11 +48,12 @@
 //  is being terminated.
 static char *
 s_recv (void *socket) {
-    char buffer [256];
-    int size = zmq_recv (socket, buffer, 255, 0);
+    enum { cap = 256 };
+    char buffer [cap];
+    int size = zmq_recv (socket, buffer, cap - 1, 0);
     if (size == -1)
         return NULL;
-    buffer[size] = '\0';
+    buffer[size < cap ? size : cap - 1] = '\0';
 
 #if (defined (WIN32))
     return strdup (buffer);
