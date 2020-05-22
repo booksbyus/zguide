@@ -6,7 +6,7 @@
 #include <signal.h>
 #include <zmq.hpp>
 
-static int s_interrupted = 0;
+static volatile int s_interrupted = 0;
 static void s_signal_handler (int signal_value)
 {
     s_interrupted = 1;
