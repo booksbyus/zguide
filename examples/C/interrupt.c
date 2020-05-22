@@ -54,15 +54,17 @@ int main (void)
         perror("Creating self-pipe");
         exit(1);
     }
-    int flags = fcntl(pipefds[0], F_GETFL, 0);
-    if (flags < 0) {
-        perror ("fcntl(F_GETFL)");
-        exit(1);
-    }
-    rc = fcntl (pipefds[0], F_SETFL, flags | O_NONBLOCK);
-    if (rc != 0) {
-        perror ("fcntl(F_SETFL)");
-        exit(1);
+    for (int i = 0; i < 2; i++) {
+        int flags = fcntl(pipefds[i], F_GETFL, 0);
+        if (flags < 0) {
+            perror ("fcntl(F_GETFL)");
+            exit(1);
+        }
+        rc = fcntl (pipefds[i], F_SETFL, flags | O_NONBLOCK);
+        if (rc != 0) {
+            perror ("fcntl(F_SETFL)");
+            exit(1);
+        }
     }
 
     s_catch_signals (pipefds[1]);
