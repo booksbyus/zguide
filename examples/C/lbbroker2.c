@@ -9,16 +9,17 @@
 
 //  Basic request-reply client using REQ socket
 //
-static void *
-client_task(void *args)
+static void
+client_task(zsock_t *pipe, void *args)
 {
-	zctx_t *ctx = zctx_new();
-	void *client = zsocket_new(ctx, ZMQ_REQ);
+	// Signal caller zactor has started
+	zsock_signal(pipe, 0);
+	zsock_t *client = zsock_new(ZMQ_REQ);
 
 #if (defined (WIN32))
-	zsocket_connect(client, "tcp://localhost:5672"); // frontend
+	zsock_connect(client, "tcp://localhost:5672"); // frontend
 #else
-	zsocket_connect(client, "ipc://frontend.ipc");
+	zsock_connect(client, "ipc://frontend.ipc");
 #endif
 
 	//  Send request, get reply
@@ -29,30 +30,36 @@ client_task(void *args)
 		free(reply);
 	}
 
-	zctx_destroy(&ctx);
-	return NULL;
+	zsock_destroy(&client);
 }
 
 //  Worker using REQ socket to do load-balancing
 //
-static void *
-worker_task(void *args)
+static void
+worker_task(zsock_t *pipe, void *args)
 {
-	zctx_t *ctx = zctx_new();
-	void *worker = zsocket_new(ctx, ZMQ_REQ);
+	// Signal caller zactor has started
+	zsock_signal(pipe, 0);
+	zsock_t *worker = zsock_new(ZMQ_REQ);
 
 #if (defined (WIN32))
-	zsocket_connect(worker, "tcp://localhost:5673"); // backend
+	zsock_connect(worker, "tcp://localhost:5673"); // backend
 #else
-	zsocket_connect(worker, "ipc://backend.ipc");
+	zsock_connect(worker, "ipc://backend.ipc");
 #endif
 
-	//  Tell broker we're ready for work
+    //  Tell broker we're ready for work
 	zframe_t *frame = zframe_new(WORKER_READY, strlen(WORKER_READY));
 	zframe_send(&frame, worker, 0);
 
 	//  Process messages as they arrive
+	zpoller_t *poll = zpoller_new(pipe, worker, NULL);
 	while (true) {
+		zsock_t *ready = zpoller_wait(poll, -1);
+		if (ready == pipe)
+            break;              //  Done
+
+		assert(ready == worker);
 		zmsg_t *msg = zmsg_recv(worker);
 		if (!msg)
 			break;              //  Interrupted
@@ -60,8 +67,14 @@ worker_task(void *args)
 		zframe_reset(zmsg_last(msg), "OK", 2);
 		zmsg_send(&msg, worker);
 	}
-	zctx_destroy(&ctx);
-	return NULL;
+
+	if (frame)
+		zframe_destroy(&frame);
+	zsock_destroy(&worker);
+	zpoller_destroy(&poll);
+
+	// Signal done
+	zsock_signal(pipe, 0);
 }
 
 //  .split main task
@@ -71,25 +84,27 @@ worker_task(void *args)
 
 int main(void)
 {
-	zctx_t *ctx = zctx_new();
-	void *frontend = zsocket_new(ctx, ZMQ_ROUTER);
-	void *backend = zsocket_new(ctx, ZMQ_ROUTER);
+	zsock_t *frontend = zsock_new(ZMQ_ROUTER);
+	zsock_t *backend = zsock_new(ZMQ_ROUTER);
 
 	// IPC doesn't yet work on MS Windows.
 #if (defined (WIN32))
-	zsocket_bind(frontend, "tcp://*:5672");
-	zsocket_bind(backend, "tcp://*:5673");
+	zsock_bind(frontend, "tcp://*:5672");
+	zsock_bind(backend, "tcp://*:5673");
 #else
-	zsocket_bind(frontend, "ipc://frontend.ipc");
-	zsocket_bind(backend, "ipc://backend.ipc");
+	zsock_bind(frontend, "ipc://frontend.ipc");
+	zsock_bind(backend, "ipc://backend.ipc");
 #endif
+
+	int actor_nbr = 0;
+	zactor_t *actors[NBR_CLIENTS + NBR_WORKERS];
 
 	int client_nbr;
 	for (client_nbr = 0; client_nbr < NBR_CLIENTS; client_nbr++)
-		zthread_new(client_task, NULL);
+		actors[actor_nbr++] = zactor_new(client_task, NULL);
 	int worker_nbr;
 	for (worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++)
-		zthread_new(worker_task, NULL);
+		actors[actor_nbr++] = zactor_new(worker_task, NULL);
 
 	//  Queue of available workers
 	zlist_t *workers = zlist_new();
@@ -98,18 +113,17 @@ int main(void)
 	//  Here is the main loop for the load balancer. It works the same way
 	//  as the previous example, but is a lot shorter because CZMQ gives
 	//  us an API that does more with fewer calls:
+	zpoller_t *poll1 = zpoller_new(backend, NULL);
+	zpoller_t *poll2 = zpoller_new(backend, frontend, NULL);
 	while (true) {
-		zmq_pollitem_t items[] = {
-				{ backend, 0, ZMQ_POLLIN, 0 },
-				{ frontend, 0, ZMQ_POLLIN, 0 }
-		};
 		//  Poll frontend only if we have available workers
-		int rc = zmq_poll(items, zlist_size(workers) ? 2 : 1, -1);
-		if (rc == -1)
+		zpoller_t *poll = zlist_size(workers) ? poll2 : poll1;
+		zsock_t *ready = zpoller_wait(poll, -1);
+		if (ready == NULL)
 			break;              //  Interrupted
 
-		//  Handle worker activity on backend
-		if (items[0].revents & ZMQ_POLLIN) {
+		//	Handle worker activity on backend
+		if (ready == backend) {
 			//  Use worker identity for load-balancing
 			zmsg_t *msg = zmsg_recv(backend);
 			if (!msg)
@@ -136,7 +150,7 @@ int main(void)
 					break; // Exit after N messages
 			}
 		}
-		if (items[1].revents & ZMQ_POLLIN) {
+		else if (ready == frontend) {
 			//  Get client request, route to first available worker
 			zmsg_t *msg = zmsg_recv(frontend);
 			if (msg) {
@@ -158,6 +172,14 @@ int main(void)
 		zframe_destroy(&frame);
 	}
 	zlist_destroy(&workers);
-	zctx_destroy(&ctx);
+
+	for (actor_nbr = 0; actor_nbr < NBR_CLIENTS + NBR_WORKERS; actor_nbr++) {
+		zactor_destroy(&actors[actor_nbr]);
+	}
+
+	zpoller_destroy(&poll1);
+	zpoller_destroy(&poll2);
+	zsock_destroy(&frontend);
+	zsock_destroy(&backend);
 	return 0;
 }
