@@ -8,6 +8,7 @@ s_recv (void *socket) {
         return NULL;
     if (size > 255)
         size = 255;
-    buffer [size] = 0;
+    buffer [size] = \0;
+    /* use strndup(buffer, sizeof(buffer)-1) in *nix */
     return strdup (buffer);
 }
