@@ -36,16 +36,16 @@ function mkone {
         chapter8.txt \
         postface.txt
 
-    echo "[[include $3:preface]]"   > all.wd
-    echo "[[include $3:chapter1]]" >> all.wd
-    echo "[[include $3:chapter2]]" >> all.wd
-    echo "[[include $3:chapter3]]" >> all.wd
-    echo "[[include $3:chapter4]]" >> all.wd
-    echo "[[include $3:chapter5]]" >> all.wd
-    echo "[[include $3:chapter6]]" >> all.wd
-    echo "[[include $3:chapter7]]" >> all.wd
-    echo "[[include $3:chapter8]]" >> all.wd
-    echo "[[include $3:postface]]" >> all.wd
+    echo "[[[$3:preface | Preface]]]"   > all.wd
+    echo "[[[$3:chapter1 | Chapter 1 - Basics]]]" >> all.wd
+    echo "[[[$3:chapter2 | Chapter 2 - Sockets and Patterns]]]" >> all.wd
+    echo "[[[$3:chapter3 | Chapter 3 - Advanced Request-Reply Patterns]]]" >> all.wd
+    echo "[[[$3:chapter4 | Chapter 4 - Reliable Request-Reply Patterns]]]" >> all.wd
+    echo "[[[$3:chapter5 | Chapter 5 - Advanced Pub-Sub Patterns]]]" >> all.wd
+    echo "[[[$3:chapter6 | Chapter 6 - The ZeroMQ Community]]]" >> all.wd
+    echo "[[[$3:chapter7 | Chapter 7 - Advanced Architecture using ZeroMQ]]]" >> all.wd
+    echo "[[[$3:chapter8 | Chapter 8 - A Framework for Distributed Computing]]]" >> all.wd
+    echo "[[[$3:postface | Postface]]]" >> all.wd
 
     upload $3 preface  "Preface"
     upload $3 chapter1 "Chapter One"
