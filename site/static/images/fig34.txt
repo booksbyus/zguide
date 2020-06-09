@@ -1,0 +1,7 @@
+          #---+--------#
+Frame 1   | 6 | CLIENT |   Client address
+          #---#--------#
+Frame 2   | 0 |            Empty delimiter frame
+          #---#-------#
+Frame 3   | 5 | Hello |    Data frame
+          #---+-------#

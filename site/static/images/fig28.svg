@@ -1,0 +1,64 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Created with ASCIIToSVG (http://9vx.org/~dho/a2s/) -->
+<svg width="441px" height="128px" version="1.1"
+  xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <filter id="dsFilter" width="150%" height="150%">
+      <feOffset result="offOut" in="SourceGraphic" dx="3" dy="3"/>
+      <feColorMatrix result="matrixOut" in="offOut" type="matrix" values="0.2 0 0 0 0 0 0.2 0 0 0 0 0 0.2 0 0 0 0 0 1 0"/>
+      <feBlend in="SourceGraphic" in2="matrixOut" mode="normal"/>
+    </filter>
+    <marker id="iPointer"
+      viewBox="0 0 10 10" refX="5" refY="5" 
+      markerUnits="strokeWidth"
+      markerWidth="8" markerHeight="7"
+      orient="auto">
+      <path d="M 10 0 L 10 10 L 0 5 z" />
+    </marker>
+    <marker id="Pointer"
+      viewBox="0 0 10 10" refX="5" refY="5" 
+      markerUnits="strokeWidth"
+      markerWidth="8" markerHeight="7"
+      orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" />
+    </marker>
+  </defs><g id="boxes" stroke="black" stroke-width="2" fill="none" >
+<g id="group0">
+	<path id="path0" filter="url(#dsFilter)" fill="#fff" d="M 94.5 8 L 184.5 8 L 184.5 40 L 130.5 40 L 94.5 40 Z" />
+	<text x="107.1" y="28.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >3</text>
+
+	<text x="143.1" y="28.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >ABC </text>
+
+</g>
+<g id="group3">
+	<path id="path3" filter="url(#dsFilter)" fill="#fff" d="M 94.5 40 L 130.5 40 L 130.5 72 L 94.5 72 Z" />
+	<text x="107.1" y="60.8" id="text3" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >0</text>
+
+</g>
+<g id="group6">
+	<path id="path6" filter="url(#dsFilter)" fill="#fff" d="M 94.5 72 L 130.5 72 L 202.5 72 L 202.5 104 L 94.5 104 Z" />
+	<text x="107.1" y="92.8" id="text6" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >5</text>
+
+	<text x="143.1" y="92.8" id="text6" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Hello </text>
+
+</g>
+</g>
+<g id="lines" stroke="black" stroke-width="2" fill="none" >
+<g id="group124">
+	<path id="path124" d="M 130.5 8 L 130.5 40 " />
+</g>
+<g id="group129">
+	<path id="path129" d="M 130.5 72 L 130.5 104 " />
+</g>
+</g>
+<g id="text" fill="black" style="font-family:LMMono10,monospace;font-size:15.2px" >
+<text x="-0.9" y="28.8" id="text0" fill="#000" >Frame 1 </text>
+<text x="242.1" y="28.8" id="text3" fill="#000" >Identity of connection</text>
+<text x="-0.9" y="60.8" id="text4" fill="#000" >Frame 2 </text>
+<text x="242.1" y="60.8" id="text6" fill="#000" >Empty delimiter frame</text>
+<text x="-0.9" y="92.8" id="text7" fill="#000" >Frame 3 </text>
+<text x="242.1" y="92.8" id="text10" fill="#000" >Data frame</text>
+</g>
+</svg>

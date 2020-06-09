@@ -1,0 +1,33 @@
+#---------#  #---------#
+| Client  |  | Broker  |
+|         |  | cloudbe |
++---------+  +---------+
+| connect |  | connect |
+'---------'  '---------'
+  request      request
+     \            |
+      \           |
+       v          v
+   .---------+---------+---.
+   |  bind   |  bind   |   |
+   +---------+---------+   |
+   | localfe | cloudfe |   |
+   | ROUTER  | ROUTER  |   |
+   +---------+---------+---+
+   |         Broker        |
+   +---------+---------+---+
+   | ROUTER  | ROUTER  |   |
+   | localbe | cloudbe |   |
+   +---------+---------+   |
+   |  bind   | connect |   |
+   '---------+---------+---'
+     request    request
+                  |
+      /           |
+     v            v
+.---------.  .---------.
+| connect |  |  bind   |
++---------+  +---------+
+|         |  | cloudfe |
+| Worker  |  | Broker  |
+#---------#  #---------#

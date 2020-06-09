@@ -1,0 +1,30 @@
+| Language | Translations (91 in total) ||
+|--|--|--|
+| Ada |   0 |   0% |
+| Basic |   0 |   0% |
+| C |  91 | 100% |
+| C++ |  47 |  51% |
+| C# |  62 |  68% |
+| Clojure |  34 |  37% |
+| CL |  28 |  30% |
+| Delphi |  38 |  41% |
+| Elixir |  30 |  32% |
+| Erlang |  30 |  32% |
+| F# |  32 |  35% |
+| Felix |  11 |  12% |
+| Go |  46 |  50% |
+| Haskell |  42 |  46% |
+| Haxe |  53 |  58% |
+| Java |  91 | 100% |
+| Lua |  53 |  58% |
+| Node.js |  29 |  31% |
+| Objective-C |  13 |  14% |
+| ooc |   0 |   0% |
+| Perl |  31 |  34% |
+| PHP |  56 |  61% |
+| Python |  91 | 100% |
+| Q |   8 |   8% |
+| Racket |  10 |  10% |
+| Ruby |  48 |  52% |
+| Scala |  33 |  36% |
+| Tcl |  70 |  76% |

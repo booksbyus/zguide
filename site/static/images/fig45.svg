@@ -1,0 +1,100 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Created with ASCIIToSVG (http://9vx.org/~dho/a2s/) -->
+<svg width="198px" height="544px" version="1.1"
+  xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <filter id="dsFilter" width="150%" height="150%">
+      <feOffset result="offOut" in="SourceGraphic" dx="3" dy="3"/>
+      <feColorMatrix result="matrixOut" in="offOut" type="matrix" values="0.2 0 0 0 0 0 0.2 0 0 0 0 0 0.2 0 0 0 0 0 1 0"/>
+      <feBlend in="SourceGraphic" in2="matrixOut" mode="normal"/>
+    </filter>
+    <marker id="iPointer"
+      viewBox="0 0 10 10" refX="5" refY="5" 
+      markerUnits="strokeWidth"
+      markerWidth="8" markerHeight="7"
+      orient="auto">
+      <path d="M 10 0 L 10 10 L 0 5 z" />
+    </marker>
+    <marker id="Pointer"
+      viewBox="0 0 10 10" refX="5" refY="5" 
+      markerUnits="strokeWidth"
+      markerWidth="8" markerHeight="7"
+      orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" />
+    </marker>
+  </defs><g id="boxes" stroke="black" stroke-width="2" fill="none" >
+<g id="group0">
+	<path id="path0" filter="url(#dsFilter)" fill="#fff" d="M 103.5 8 L 193.5 8 L 193.5 78 Q 193.5 88 183.5 88 L 113.5 88 Q 103.5 88 103.5 78 Z" />
+	<text x="116.1" y="28.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Broker </text>
+
+	<text x="116.1" y="44.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >statebe </text>
+
+	<text x="125.1" y="76.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >bind </text>
+
+</g>
+<g id="group6">
+	<path id="path6" filter="url(#dsFilter)" fill="#fff" d="M 4.5 178 Q 4.5 168 14.5 168 L 165.5 168 Q 175.5 168 175.5 178 L 175.5 350 Q 175.5 360 165.5 360 L 14.5 360 Q 4.5 360 4.5 350 Z" />
+	<text x="98.1" y="188.8" id="text6" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >connect </text>
+
+	<text x="98.1" y="220.8" id="text6" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >statefe </text>
+
+	<text x="116.1" y="236.8" id="text6" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >SUB </text>
+
+	<text x="53.1" y="268.8" id="text6" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Broker </text>
+
+	<text x="116.1" y="300.8" id="text6" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >PUB </text>
+
+	<text x="98.1" y="316.8" id="text6" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >statebe </text>
+
+	<text x="107.1" y="348.8" id="text6" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >bind </text>
+
+</g>
+<g id="group22">
+	<path id="path22" filter="url(#dsFilter)" fill="#fff" d="M 103.5 450 Q 103.5 440 113.5 440 L 183.5 440 Q 193.5 440 193.5 450 L 193.5 520 L 103.5 520 Z" />
+	<text x="116.1" y="460.8" id="text22" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >connect </text>
+
+	<text x="116.1" y="492.8" id="text22" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >statefe </text>
+
+	<text x="116.1" y="508.8" id="text22" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Broker </text>
+
+</g>
+</g>
+<g id="lines" stroke="black" stroke-width="2" fill="none" >
+<g id="group43">
+	<path id="path43" d="M 4.5 248 L 85.5 248 L 175.5 248 " />
+</g>
+<g id="group46">
+	<path id="path46" d="M 4.5 280 L 85.5 280 L 175.5 280 " />
+</g>
+<g id="group346">
+	<path id="path346" d="M 85.5 168 L 85.5 200 L 85.5 248 " />
+</g>
+<g id="group349">
+	<path id="path349" d="M 85.5 200 L 175.5 200 " />
+</g>
+<g id="group355">
+	<path id="path355" d="M 85.5 280 L 85.5 328 L 85.5 360 " />
+</g>
+<g id="group359">
+	<path id="path359" d="M 85.5 328 L 175.5 328 " />
+</g>
+<g id="group411">
+	<path id="path411" d="M 103.5 56 L 193.5 56 " />
+</g>
+<g id="group438">
+	<path id="path438" d="M 103.5 472 L 193.5 472 " />
+</g>
+<g id="group521">
+	<path id="path521" marker-start="url(#iPointer)" d="M 130.5 152 L 148.5 120 " />
+</g>
+<g id="group536">
+	<path id="path536" marker-end="url(#Pointer)" d="M 130.5 392 L 148.5 424 " />
+</g>
+</g>
+<g id="text" fill="black" style="font-family:LMMono10,monospace;font-size:15.2px" >
+<text x="125.1" y="108.8" id="text3" fill="#000" >state</text>
+<text x="107.1" y="380.8" id="text11" fill="#000" >state</text>
+</g>
+</svg>

@@ -1,0 +1,410 @@
+#! /usr/bin/perl
+#
+#   Builds markdown from supplied text
+#
+#   Note: if you change the Markdown parsing, also change mkgitbook.
+
+use feature 'say';
+bookmarks_load ();
+
+#   Autoflush output to console
+$| = 1;
+$breaks = "none";
+$FIGNO = 1;
+$INDEX = 1;
+$examples = 0;
+
+@languages = ('Ada', 'Basic', 'C', 'C++', 'C#', 'Clojure', 'CL', 'Delphi',
+              'Elixir', 'Erlang', 'F#', 'Felix', 'Go', 'Haskell', 'Haxe', 'Java', 'Lua',
+              'Node.js', 'Objective-C', 'ooc', 'Perl', 'PHP', 'Python', 'Q', 'Racket',
+              'Ruby', 'Scala', 'Tcl');
+
+#   File extensions for each language
+%extension = ('Ada' => 'ada',
+              'Basic' => 'bas',
+              'C' => 'c',
+              'C++' => 'cpp',
+              'C#' => 'cs',
+              'CL' => 'lisp',
+              'Clojure' => 'clj',
+              'Delphi' => 'dpr',
+              'Erlang' => 'es',
+              'Elixir' => 'exs',
+              'F#' => 'fsx',
+              'Felix' => 'flx',
+              'Go' => 'go',
+              'Haskell' => 'hs',
+              'Haxe' => 'hx',
+              'Java' => 'java',
+              'Lua' => 'lua',
+              'Node.js' => 'js',
+              'Objective-C' => 'm',
+              'ooc' => 'ooc',
+              'Perl' => 'pl',
+              'PHP' => 'php',
+              'Python' => 'py',
+              'Q' => 'q',
+              'Racket' => 'rkt',
+              'Ruby' => 'rb',
+              'Scala' => 'scala',
+              'Tcl' => 'tcl' );
+
+while (<>) {
+    chop while /\s$/;
+    if (/^\#/) {
+        #   Comment
+    }
+    elsif (/(\S+)=(.*)/) {
+        #   Symbol definition
+        $symbols {$1} = $2;
+        if ($1 eq "FILENAME") {
+            open OUTPUT, ">$2.md";
+        }
+        elsif ($1 eq "BREAKS") {
+            $breaks = $2;
+        }
+    }
+    elsif (/(\S+)/) {
+        #   Source file to include
+        process_source ($1);
+    }
+}
+bookmarks_save ();
+
+#   Language Scoreboard
+die "Can't create scoreboard.md: $!"
+    unless open (SCOREBOARD, '>', "site/content/scoreboard.md");
+print (SCOREBOARD "| Language | Translations ($examples in total) ||\n");
+print (SCOREBOARD "|--|--|--|\n");
+foreach $language (@languages) {
+    printf (SCOREBOARD "| %s | %3d | %3d%% |\n",
+        $language,
+        $translations {$language},
+        ($translations {$language} * 100) / $examples);
+}
+close (SCOREBOARD);
+
+close (OUTPUT);
+exit (0);
+
+sub process_source {
+    local ($filename) = @_;
+    print "Processing $filename...\n";
+    die "Can't read $filename: $!"
+        unless open (FILE, $filename);
+
+    while (<FILE>) {
+        chop while /\s$/;
+        if (/^\/\/ kate/) {
+            #   Kate hint
+        }
+        elsif (/^\./) {
+            #   Process directive
+            if (/^\.set\s+(\w+)=(.*)/) {
+                $symbols {$1} = $2;
+            }
+            elsif (/^\.\-/) {
+                #   Comment, ignore
+            }
+            elsif (/^\.end/) {
+                last;
+            }
+            elsif (/^\.bookmark\s+(\w.*)/) {
+                $anchor = $1;
+            }
+            elsif (/^\.output\s+(\w.*)\..*/) {
+                # ignore
+				$current_file = "site/content/docs/$1.md";
+                open OUTPUT, '>', $current_file;
+            }
+            else {
+                print "Illegal directive $_ at line $.\n";
+            }
+        }
+        elsif (/^\+\s+Preface/) {
+			write_prepend ("---\nweight: 0\n---\n\n");
+            writeln ("# Preface");
+        }
+        elsif (/^\+\s+Postface/) {
+			write_prepend ("---\nweight: 999\n---\n\n");
+            writeln ("# Postface");
+        }
+        elsif (/^\+\s+Appendix: (.*)$/) {
+            $bookmarks {$anchor} = $1 if $anchor;
+            $documents {$anchor} = $symbols {TITLE};
+            writeln ("# Appendix: $1");
+        }
+        elsif (/^\+\s+(.*)$/) {
+            $bookmarks {$anchor} = $1 if $anchor;
+            $documents {$anchor} = $symbols {TITLE};
+            $chapter++;
+			write_prepend ("---\nweight: $chapter\ntitle: $1\n---\n\n");
+            if ($breaks eq "chapter") {
+                writeln ("# Chapter $chapter. $1");
+                $INDEX++;
+            }
+            else {
+                writeln ("# $1");
+            }
+        }
+        elsif (/^\+\+\s+(.*)$/) {
+            writeln ("## $1");
+        }
+        elsif (/^\+\+\+\s+(.*)$/) {
+            writeln ("### $1");
+        }
+        elsif (/^\*\s+(.*)$/) {      #   Bulleted lists
+            writeln ("* $1");
+        }
+        elsif (/^#\s+(.*)$/) {      #   Numbered lists
+            writeln ("1. $1");
+        }
+        elsif (/\|\|/) {            #   Table layouts
+            s/\|\|/|/g;
+            writeln ($_);
+        }
+        elsif (/^```/) {            #   Console text
+            writeln ($_);
+            while (<FILE>) {
+                chop while /\s$/;
+                writeln ($_, false);
+                last if /^```/;
+            }
+        }
+		#   Code blocks
+        elsif (/\[\[code([^\]]*)\]\]/) {
+			$x = $1;
+			%attributes=();
+			while ($x =~ /(?: ?(\w+)="([^"]*)")/g) {
+				$attributes{$1}=$2;
+			}
+
+			# Handle example, fragment and textdiagram
+			if (exists $attributes{"type"}) {
+                if ($attributes{"type"} eq "textdiagram") {
+                    $attributes{"name"}="fig$FIGNO.png";
+                    $attributes{"figno"}="$FIGNO";
+                    $FIGNO++;
+                }
+				writef ('{{< '.$attributes{"type"});
+				writef (' name="'.$attributes{"name"}.'"') if exists $attributes{"name"};
+				writef (' figno="'.$attributes{"figno"}.'"') if exists $attributes{"figno"};
+				writef (' title="'.$attributes{"title"}.'"') if exists $attributes{"title"};
+				writef (' language="'.$attributes{"language"}.'"') if exists $attributes{"language"};
+				writeln (" >}}");
+
+				$hasContent = 0;
+				while (<FILE>) {
+					chop while /\s$/;
+					last if /\[\[\/code\]\]/;
+					writeln ($_, false);
+					$hasContent = 1;
+				}
+				writef  ("{{< /".$attributes{"type"}) if $hasContent;
+				writeln (" >}}") if $hasContent;
+
+                if ($attributes{"type"} eq "example" && !defined ($attributes{"language"})) {
+                    foreach $language (@languages) {
+                        $filename = "$attributes{'name'}.$extension{$language}";
+                        $filepath = "./examples/$language/$filename";
+                        if (-e $filepath) {
+                            $translations {$language} += 1;
+                        }
+                    }
+                    $examples++;
+                }
+			}
+            #  Process plain code block
+			else {
+				writeln ("```".$attributes{"language"});
+				while (<FILE>) {
+					chop while /\s$/;
+					last if /\[\[\/code\]\]/;
+					writeln ($_, false);
+				}
+				writeln ("```");
+			}
+        }
+        elsif (/\[\[code/) {
+            print "E: unparsed code block: $_\n";
+        }
+        else {
+            writeln ($_);
+        }
+    }
+    writeln ("");
+}
+
+#   Writes $_ to OUTPUT after expanding all symbols
+sub writef {
+    local ($_, $expand) = @_;     #   Argument is symbol name
+    if (!defined ($expand)) {
+        $_ = expand_symbols ($_);
+    }
+
+    $_ = translate_symbols ($_);
+
+    print OUTPUT "$_";
+}
+
+sub writeln {
+    local ($_, $expand) = @_;     #   Argument is symbol name
+    if (!defined ($expand)) {
+        $_ = expand_symbols ($_);
+    }
+
+    $_ = translate_symbols ($_);
+
+    print OUTPUT "$_\n";
+}
+
+sub write_prepend {
+	local ($_) = @_;
+	close (OUTPUT);
+
+	my $new_filename = 'tmp.txt';
+	my $old_filename = $current_file;
+	open my $new, '>', $new_filename or die "$new_filename: $!";
+	open my $old, '<', $old_filename or die "$old_filename: $!";
+	print {$new} $_;
+	print {$new} $_ while <$old>;
+	close $new;
+	close $old;
+	rename $new_filename, $old_filename or die "rename: $!";
+
+	open OUTPUT, '>>', $current_file;
+}
+
+#
+#   Translate symbols, hyperlinks, etc
+#
+sub translate_symbols {
+    local ($_) = @_;
+
+    #   Translate bookmark references
+    while (/\[#(\S+)\]/) {
+        print "Undefined bookmark: $1\n"
+            unless defined ($bookmarks {$1});
+        $_ = "$`“$bookmarks{$1}”$'";
+    }
+
+    #   Translate figure references
+    s/\[figure\]//g;
+
+    #   Translate character styles
+    s/(^|[^:])\/\/(.*?)\/\//$1*$2*/g;       #  Italics
+    s/\*\*([^*]+)\*\*/**$1**/g;             #  Bold
+    s/\{\{([^{]+)\}\}/<tt>$1<\/tt>/g;       #  Teletype
+
+    #   Translate man page references
+    s/zmq_([\w_]+)\[.\]/[http:\/\/api.zeromq.org\/3-2:zmq_$1 zmq_$1()]/g;
+
+    #   Translate wikidot links
+    s/\[([^ ]+) ([^\]]+)\]/[$2]($1)/g;
+
+    return $_;
+}
+
+#   Expand symbols, hyperlinks, etc
+#
+sub expand_symbols {
+    local ($_) = @_;
+    local ($before,
+           $match,
+           $after,
+           $expr);
+
+    return unless ($_);                 #   Quit if input string is empty
+
+    #   Replace 0MQs
+    $_ = zmq_symbol ($_);
+
+    #   Recursively expand symbols like this (and in this order):
+    #   $(xxx)          value of variable
+    #   $(xxx?zzz)      value of variable, or zzz if undefined
+    #   %(text?zzz)     value of environment variable, or zzz if undef
+    for (;;) {
+        #   Force expansion from end of string first, so things like
+        #   $(xxx?$(yyy)) work properly.
+        if (/[\$%]\(/ || /\!([a-z_]+)\s*\(/i) {
+            $before = $`;
+            $match  = $&;
+            $after  = expand_symbols ($');
+            $_ = $before.$match.$after;
+        }
+        #   $(xxx)
+        if (/\$\(([A-Za-z0-9-_\.]+)\)/) {
+            $_ = $`.&valueof ($1).$';
+        }
+        #   $(xxx?zzz)
+        elsif (/\$\(([A-Za-z0-9-_\.]+)\?([^)\$]*)\)/) {
+            $_ = $`.&valueof ($1, $2).$';
+        }
+        #   %(text)
+        elsif (/\%\(([^\)]+)\)/) {
+            $_ = $`.$ENV {$1}.$';
+        }
+        #   %(text?zzz)
+        elsif (/\%\(([^\)]+)\?([^)\$]*)\)/) {
+            $_ = $`.($ENV {$1}? $ENV {$1}: $2).$';
+        }
+        else {
+            last;
+        }
+    }
+    return $_;
+}
+
+#   Translate 0MQ into ØMQ and 0\MQ into 0MQ
+sub zmq_symbol {
+    local ($_) = @_;
+
+    s/0MQ/ØMQ/g;
+    s/0\\MQ/0MQ/g;
+    return $_;
+}
+
+#   Subroutine returns the value of the specified symbol; it issues a
+#   warning message and returns 'UNDEF' if the symbol is not defined
+#   and the default value is empty.
+#
+sub valueof {
+    local ($symbol, $default) = @_;     #   Argument is symbol name
+    local ($return);                    #   Returned value
+    local ($langed_symbol);             #   Language-dependent symbol
+
+    if (defined ($symbols {$symbol})) {
+        $return = $symbols {$symbol};
+        return $return;
+    }
+    elsif (defined ($default)) {
+        return ($default);
+    }
+    print ("E: undefined symbol \"$symbol\"");
+    $symbols {$symbol} = "UNDEF";
+    return $symbols {$symbol};
+}
+
+#   Load bookmarks
+sub bookmarks_load {
+    if (open (BOOKMARKS, "site/.bookmarks")) {
+        while (<BOOKMARKS>) {
+            chop;
+            if (/(\S+)\s+(.+)\|(.+)/) {
+                $bookmarks {$1} = $2;
+                $documents {$1} = $3;
+            }
+        }
+        close (BOOKMARKS);
+    }
+}
+
+#   Save bookmarks
+sub bookmarks_save {
+    if (open (BOOKMARKS, ">site/.bookmarks")) {
+        foreach $bookmark (keys %bookmarks) {
+            print BOOKMARKS "$bookmark $bookmarks{$bookmark}|$documents{$bookmark}\n";
+        }
+        close (BOOKMARKS);
+    }
+}

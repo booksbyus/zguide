@@ -1,0 +1,41 @@
+{{ $s := .Site}}
+{{ $name := .Get "name" }}
+{{ $title := .Get "title" }}
+{{ $languages := .Site.Data.languages }}
+{{ $languagesWithExample := slice }}
+{{ $languagesWithoutExample := slice }}
+{{ range $languages }}
+  {{ $languageName := .name }}
+  {{ $languageExtension := .extension }}
+  {{ $examplePath := printf "/content/examples/%s/%s.%s" $languageName $name $languageExtension | safeURL }}
+  <details class="example" data-language="{{ $languageName }}" style="display: none">
+    <summary>{{ $name }}: {{ $title }} in {{ $languageName }}</summary>
+      {{ if fileExists $examplePath }}
+        {{ $languagesWithExample = $languagesWithExample | append . }}
+          <div class="markdown-inner">
+            {{ highlight (readFile $examplePath) $languageName "" }}
+          </div>
+          <div class="book-footer" style="padding: 0">
+              <a class="flex align-center" href="{{ $s.Params.BookRepo }}/edit/master/{{ printf "/examples/%s/%s.%s" $languageName $name $languageExtension | safeURL }}" target="_blank" rel="noopener">
+              <img src="{{ "svg/edit.svg" | relURL }}" class="book-icon" alt="Edit" />
+              <span>Edit this example</span>
+            </a>
+          </div>
+      {{ else }}
+        {{ $languagesWithoutExample = $languagesWithoutExample | append . }}
+          <div class="markdown-inner">
+              The example <strong>{{ $name }}</strong> is missing in <strong>{{ .name }}</strong>:
+              <a href="/translate">Contribute Translation</a>
+          </div>
+      {{ end }}
+    </summary>
+  </details>
+{{ end }}
+{{ range $languagesWithExample }}
+  <a class="lang-toggle" data-language="{{ .name }}" style="cursor: pointer;">{{ .name }}</a> |
+{{ end }}
+<a href="/translate">
+  {{ range $i, $e := $languagesWithoutExample }}
+    {{ .name }}{{if ne (add $i 1) (len $languagesWithoutExample) }} |{{end}}
+  {{ end }}
+</a>

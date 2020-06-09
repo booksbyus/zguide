@@ -1,0 +1,13 @@
+{{ $p := .Page }}
+{{ $dummy := .Inner }}
+{{ $name := .Get "name" }}
+{{ $figno := .Get "figno" }}
+{{ $title := .Get "title" }}
+<figure style="margin: 0rem 0;">
+    <figcaption style="margin: 1em 0">
+        <strong>Figure {{ $figno }} - {{ $title }}</strong>
+    </figcaption>
+    <div style="padding: 1em; text-align: center;">
+        <img  src="/images/{{ $name }}">
+    </div>
+</figure>

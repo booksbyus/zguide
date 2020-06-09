@@ -1,0 +1,91 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Created with ASCIIToSVG (http://9vx.org/~dho/a2s/) -->
+<svg width="351px" height="320px" version="1.1"
+  xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <filter id="dsFilter" width="150%" height="150%">
+      <feOffset result="offOut" in="SourceGraphic" dx="3" dy="3"/>
+      <feColorMatrix result="matrixOut" in="offOut" type="matrix" values="0.2 0 0 0 0 0 0.2 0 0 0 0 0 0.2 0 0 0 0 0 1 0"/>
+      <feBlend in="SourceGraphic" in2="matrixOut" mode="normal"/>
+    </filter>
+    <marker id="iPointer"
+      viewBox="0 0 10 10" refX="5" refY="5" 
+      markerUnits="strokeWidth"
+      markerWidth="8" markerHeight="7"
+      orient="auto">
+      <path d="M 10 0 L 10 10 L 0 5 z" />
+    </marker>
+    <marker id="Pointer"
+      viewBox="0 0 10 10" refX="5" refY="5" 
+      markerUnits="strokeWidth"
+      markerWidth="8" markerHeight="7"
+      orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" />
+    </marker>
+  </defs><g id="boxes" stroke="black" stroke-width="2" fill="none" >
+<g id="group0">
+	<path id="path0" filter="url(#dsFilter)" fill="#fff" d="M 121.5 8 L 229.5 8 L 229.5 62 Q 229.5 72 219.5 72 L 131.5 72 Q 121.5 72 121.5 62 Z" />
+	<text x="143.1" y="28.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Client </text>
+
+	<text x="161.1" y="60.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >REQ </text>
+
+</g>
+<g id="group10">
+	<path id="path10" filter="url(#dsFilter)" fill="#fff" d="M 4.5 226 Q 4.5 216 14.5 216 L 84.5 216 Q 94.5 216 94.5 226 L 94.5 296 L 4.5 296 Z" />
+	<text x="35.1" y="236.8" id="text10" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >REP </text>
+
+	<text x="17.1" y="268.8" id="text10" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Service </text>
+
+	<text x="44.1" y="284.8" id="text10" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >A</text>
+
+</g>
+<g id="group12">
+	<path id="path12" filter="url(#dsFilter)" fill="#fff" d="M 130.5 226 Q 130.5 216 140.5 216 L 210.5 216 Q 220.5 216 220.5 226 L 220.5 296 L 130.5 296 Z" />
+	<text x="161.1" y="236.8" id="text12" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >REP </text>
+
+	<text x="143.1" y="268.8" id="text12" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Service </text>
+
+	<text x="170.1" y="284.8" id="text12" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >B</text>
+
+</g>
+<g id="group14">
+	<path id="path14" filter="url(#dsFilter)" fill="#fff" d="M 256.5 226 Q 256.5 216 266.5 216 L 336.5 216 Q 346.5 216 346.5 226 L 346.5 296 L 256.5 296 Z" />
+	<text x="287.1" y="236.8" id="text14" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >REP </text>
+
+	<text x="269.1" y="268.8" id="text14" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Service </text>
+
+	<text x="296.1" y="284.8" id="text14" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >C</text>
+
+</g>
+</g>
+<g id="lines" stroke="black" stroke-width="2" fill="none" >
+<g id="group43">
+	<path id="path43" d="M 4.5 248 L 94.5 248 " />
+</g>
+<g id="group141">
+	<path id="path141" marker-start="url(#iPointer)" marker-end="url(#Pointer)" d="M 49.5 200 L 49.5 146 Q 49.5 136 59.5 136 L 175.5 136 L 291.5 136 Q 301.5 136 301.5 146 L 301.5 200 " />
+</g>
+<g id="group291">
+	<path id="path291" d="M 121.5 40 L 229.5 40 " />
+</g>
+<g id="group325">
+	<path id="path325" d="M 130.5 248 L 220.5 248 " />
+</g>
+<g id="group415">
+	<path id="path415" marker-end="url(#Pointer)" d="M 175.5 72 L 175.5 136 L 175.5 200 " />
+</g>
+<g id="group607">
+	<path id="path607" d="M 256.5 248 L 346.5 248 " />
+</g>
+</g>
+<g id="text" fill="black" style="font-family:LMMono10,monospace;font-size:15.2px" >
+<text x="107.1" y="108.8" id="text2" fill="#000" >R1, R2, </text>
+<text x="188.1" y="108.8" id="text3" fill="#000" >R3, R4</text>
+<text x="8.1" y="172.8" id="text4" fill="#000" >R1, </text>
+<text x="62.1" y="172.8" id="text5" fill="#000" >R4 </text>
+<text x="188.1" y="172.8" id="text6" fill="#000" >R2 </text>
+<text x="314.1" y="172.8" id="text7" fill="#000" >R3</text>
+</g>
+</svg>

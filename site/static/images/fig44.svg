@@ -1,0 +1,194 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Created with ASCIIToSVG (http://9vx.org/~dho/a2s/) -->
+<svg width="423px" height="544px" version="1.1"
+  xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <filter id="dsFilter" width="150%" height="150%">
+      <feOffset result="offOut" in="SourceGraphic" dx="3" dy="3"/>
+      <feColorMatrix result="matrixOut" in="offOut" type="matrix" values="0.2 0 0 0 0 0 0.2 0 0 0 0 0 0.2 0 0 0 0 0 1 0"/>
+      <feBlend in="SourceGraphic" in2="matrixOut" mode="normal"/>
+    </filter>
+    <marker id="iPointer"
+      viewBox="0 0 10 10" refX="5" refY="5" 
+      markerUnits="strokeWidth"
+      markerWidth="8" markerHeight="7"
+      orient="auto">
+      <path d="M 10 0 L 10 10 L 0 5 z" />
+    </marker>
+    <marker id="Pointer"
+      viewBox="0 0 10 10" refX="5" refY="5" 
+      markerUnits="strokeWidth"
+      markerWidth="8" markerHeight="7"
+      orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" />
+    </marker>
+  </defs><g id="boxes" stroke="black" stroke-width="2" fill="none" >
+<g id="group0">
+	<path id="path0" filter="url(#dsFilter)" fill="#fff" d="M 4.5 8 L 94.5 8 L 94.5 78 Q 94.5 88 84.5 88 L 14.5 88 Q 4.5 88 4.5 78 Z" />
+	<text x="17.1" y="28.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Client </text>
+
+	<text x="17.1" y="76.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >connect </text>
+
+</g>
+<g id="group2">
+	<path id="path2" filter="url(#dsFilter)" fill="#fff" d="M 121.5 8 L 211.5 8 L 211.5 78 Q 211.5 88 201.5 88 L 131.5 88 Q 121.5 88 121.5 78 Z" />
+	<text x="134.1" y="28.8" id="text2" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Broker </text>
+
+	<text x="134.1" y="44.8" id="text2" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >cloudbe </text>
+
+	<text x="134.1" y="76.8" id="text2" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >connect </text>
+
+</g>
+<g id="group4">
+	<path id="path4" filter="url(#dsFilter)" fill="#fff" d="M 238.5 8 L 328.5 8 L 328.5 78 Q 328.5 88 318.5 88 L 248.5 88 Q 238.5 88 238.5 78 Z" />
+	<text x="251.1" y="28.8" id="text4" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Broker </text>
+
+	<text x="251.1" y="44.8" id="text4" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >statebe </text>
+
+	<text x="260.1" y="76.8" id="text4" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >bind </text>
+
+</g>
+<g id="group18">
+	<path id="path18" filter="url(#dsFilter)" fill="#fff" d="M 31.5 178 Q 31.5 168 41.5 168 L 291.5 168 Q 301.5 168 301.5 178 L 301.5 350 Q 301.5 360 291.5 360 L 41.5 360 Q 31.5 360 31.5 350 Z" />
+	<text x="53.1" y="188.8" id="text18" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >bind </text>
+
+	<text x="143.1" y="188.8" id="text18" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >bind </text>
+
+	<text x="224.1" y="188.8" id="text18" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >connect </text>
+
+	<text x="44.1" y="220.8" id="text18" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >localfe </text>
+
+	<text x="134.1" y="220.8" id="text18" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >cloudfe </text>
+
+	<text x="224.1" y="220.8" id="text18" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >statefe </text>
+
+	<text x="44.1" y="236.8" id="text18" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >ROUTER </text>
+
+	<text x="134.1" y="236.8" id="text18" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >ROUTER </text>
+
+	<text x="242.1" y="236.8" id="text18" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >SUB </text>
+
+	<text x="134.1" y="268.8" id="text18" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Broker </text>
+
+	<text x="44.1" y="300.8" id="text18" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >ROUTER </text>
+
+	<text x="134.1" y="300.8" id="text18" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >ROUTER </text>
+
+	<text x="242.1" y="300.8" id="text18" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >PUB </text>
+
+	<text x="44.1" y="316.8" id="text18" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >localbe </text>
+
+	<text x="134.1" y="316.8" id="text18" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >cloudbe </text>
+
+	<text x="224.1" y="316.8" id="text18" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >statebe </text>
+
+	<text x="53.1" y="348.8" id="text18" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >bind </text>
+
+	<text x="134.1" y="348.8" id="text18" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >connect </text>
+
+	<text x="233.1" y="348.8" id="text18" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >bind </text>
+
+</g>
+<g id="group42">
+	<path id="path42" filter="url(#dsFilter)" fill="#fff" d="M 4.5 450 Q 4.5 440 14.5 440 L 84.5 440 Q 94.5 440 94.5 450 L 94.5 520 L 4.5 520 Z" />
+	<text x="17.1" y="460.8" id="text42" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >connect </text>
+
+	<text x="17.1" y="492.8" id="text42" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Worker </text>
+
+</g>
+<g id="group44">
+	<path id="path44" filter="url(#dsFilter)" fill="#fff" d="M 121.5 450 Q 121.5 440 131.5 440 L 201.5 440 Q 211.5 440 211.5 450 L 211.5 520 L 121.5 520 Z" />
+	<text x="143.1" y="460.8" id="text44" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >bind </text>
+
+	<text x="134.1" y="492.8" id="text44" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Broker </text>
+
+	<text x="134.1" y="508.8" id="text44" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >cloudfe </text>
+
+</g>
+<g id="group46">
+	<path id="path46" filter="url(#dsFilter)" fill="#fff" d="M 238.5 450 Q 238.5 440 248.5 440 L 318.5 440 Q 328.5 440 328.5 450 L 328.5 520 L 238.5 520 Z" />
+	<text x="251.1" y="460.8" id="text46" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >connect </text>
+
+	<text x="251.1" y="492.8" id="text46" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Broker </text>
+
+	<text x="251.1" y="508.8" id="text46" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >statefe </text>
+
+</g>
+</g>
+<g id="lines" stroke="black" stroke-width="2" fill="none" >
+<g id="group63">
+	<path id="path63" d="M 4.5 56 L 94.5 56 " />
+</g>
+<g id="group90">
+	<path id="path90" d="M 4.5 472 L 94.5 472 " />
+</g>
+<g id="group176">
+	<path id="path176" d="M 31.5 200 L 121.5 200 L 211.5 200 L 301.5 200 " />
+</g>
+<g id="group180">
+	<path id="path180" d="M 31.5 248 L 121.5 248 L 211.5 248 L 301.5 248 " />
+</g>
+<g id="group183">
+	<path id="path183" d="M 31.5 280 L 121.5 280 L 211.5 280 L 301.5 280 " />
+</g>
+<g id="group187">
+	<path id="path187" d="M 31.5 328 L 121.5 328 L 211.5 328 L 301.5 328 " />
+</g>
+<g id="group243">
+	<path id="path243" marker-end="url(#Pointer)" d="M 49.5 120 L 67.5 152 " />
+</g>
+<g id="group262">
+	<path id="path262" marker-start="url(#iPointer)" d="M 49.5 424 L 67.5 392 " />
+</g>
+<g id="group511">
+	<path id="path511" d="M 121.5 56 L 211.5 56 " />
+</g>
+<g id="group519">
+	<path id="path519" d="M 121.5 168 L 121.5 200 L 121.5 248 " />
+</g>
+<g id="group527">
+	<path id="path527" d="M 121.5 280 L 121.5 328 L 121.5 360 " />
+</g>
+<g id="group540">
+	<path id="path540" d="M 121.5 472 L 211.5 472 " />
+</g>
+<g id="group689">
+	<path id="path689" marker-end="url(#Pointer)" d="M 166.5 120 L 166.5 152 " />
+</g>
+<g id="group706">
+	<path id="path706" marker-end="url(#Pointer)" d="M 166.5 392 L 166.5 424 " />
+</g>
+<g id="group862">
+	<path id="path862" d="M 211.5 168 L 211.5 200 L 211.5 248 " />
+</g>
+<g id="group870">
+	<path id="path870" d="M 211.5 280 L 211.5 328 L 211.5 360 " />
+</g>
+<g id="group959">
+	<path id="path959" d="M 238.5 56 L 328.5 56 " />
+</g>
+<g id="group986">
+	<path id="path986" d="M 238.5 472 L 328.5 472 " />
+</g>
+<g id="group1069">
+	<path id="path1069" marker-start="url(#iPointer)" d="M 265.5 152 L 283.5 120 " />
+</g>
+<g id="group1084">
+	<path id="path1084" marker-end="url(#Pointer)" d="M 265.5 392 L 283.5 424 " />
+</g>
+</g>
+<g id="text" fill="black" style="font-family:LMMono10,monospace;font-size:15.2px" >
+<text x="17.1" y="108.8" id="text8" fill="#000" >request </text>
+<text x="134.1" y="108.8" id="text9" fill="#000" >request </text>
+<text x="260.1" y="108.8" id="text10" fill="#000" >state</text>
+<text x="332.1" y="220.8" id="text17" fill="#000" >Frontends</text>
+<text x="332.1" y="236.8" id="text21" fill="#000" >(incoming)</text>
+<text x="332.1" y="300.8" id="text26" fill="#000" >Backends</text>
+<text x="332.1" y="316.8" id="text30" fill="#000" >(outgoing)</text>
+<text x="44.1" y="380.8" id="text34" fill="#000" >request </text>
+<text x="143.1" y="380.8" id="text35" fill="#000" >request </text>
+<text x="233.1" y="380.8" id="text36" fill="#000" >state</text>
+</g>
+</svg>

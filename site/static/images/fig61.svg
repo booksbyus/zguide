@@ -1,0 +1,89 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Created with ASCIIToSVG (http://9vx.org/~dho/a2s/) -->
+<svg width="342px" height="384px" version="1.1"
+  xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <filter id="dsFilter" width="150%" height="150%">
+      <feOffset result="offOut" in="SourceGraphic" dx="3" dy="3"/>
+      <feColorMatrix result="matrixOut" in="offOut" type="matrix" values="0.2 0 0 0 0 0 0.2 0 0 0 0 0 0.2 0 0 0 0 0 1 0"/>
+      <feBlend in="SourceGraphic" in2="matrixOut" mode="normal"/>
+    </filter>
+    <marker id="iPointer"
+      viewBox="0 0 10 10" refX="5" refY="5" 
+      markerUnits="strokeWidth"
+      markerWidth="8" markerHeight="7"
+      orient="auto">
+      <path d="M 10 0 L 10 10 L 0 5 z" />
+    </marker>
+    <marker id="Pointer"
+      viewBox="0 0 10 10" refX="5" refY="5" 
+      markerUnits="strokeWidth"
+      markerWidth="8" markerHeight="7"
+      orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" />
+    </marker>
+  </defs><g id="boxes" stroke="black" stroke-width="2" fill="none" >
+<g id="group0">
+	<path id="path0" filter="url(#dsFilter)" fill="#fff" d="M 13.5 8 L 121.5 8 L 121.5 72 L 13.5 72 Z" />
+	<text x="35.1" y="44.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Initial </text>
+
+</g>
+<g id="group9">
+	<path id="path9" filter="url(#dsFilter)" fill="#fff" d="M 13.5 152 L 121.5 152 L 121.5 216 L 13.5 216 Z" />
+	<text x="35.1" y="188.8" id="text9" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Syncing </text>
+
+</g>
+<g id="group20">
+	<path id="path20" filter="url(#dsFilter)" fill="#fff" d="M 13.5 296 L 121.5 296 L 121.5 360 L 13.5 360 Z" />
+	<text x="35.1" y="332.8" id="text20" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Active </text>
+
+</g>
+</g>
+<g id="lines" stroke="black" stroke-width="2" fill="none" >
+<g id="group200">
+	<path id="path200" marker-end="url(#Pointer)" d="M 67.5 72 L 67.5 136 " />
+</g>
+<g id="group212">
+	<path id="path212" marker-end="url(#Pointer)" d="M 67.5 248 L 67.5 280 " />
+</g>
+<g id="group301">
+	<path id="path301" marker-start="url(#iPointer)" d="M 103.5 136 L 103.5 114 Q 103.5 104 113.5 104 L 273.5 104 Q 283.5 104 283.5 114 L 283.5 158 Q 283.5 168 273.5 168 L 184.5 168 " />
+</g>
+<g id="group310">
+	<path id="path310" marker-start="url(#iPointer)" d="M 103.5 280 L 103.5 258 Q 103.5 248 113.5 248 L 273.5 248 Q 283.5 248 283.5 258 L 283.5 302 Q 283.5 312 273.5 312 L 184.5 312 " />
+</g>
+<g id="group351">
+	<path id="path351" d="M 121.5 168 L 139.5 168 " />
+</g>
+<g id="group354">
+	<path id="path354" d="M 121.5 200 L 139.5 200 " />
+</g>
+<g id="group362">
+	<path id="path362" d="M 121.5 312 L 139.5 312 " />
+</g>
+<g id="group365">
+	<path id="path365" d="M 121.5 344 L 139.5 344 " />
+</g>
+<g id="group370">
+	<path id="path370" marker-start="url(#iPointer)" d="M 130.5 24 L 327.5 24 Q 337.5 24 337.5 34 L 337.5 334 Q 337.5 344 327.5 344 L 202.5 344 " />
+</g>
+<g id="group371">
+	<path id="path371" marker-start="url(#iPointer)" d="M 130.5 40 L 300.5 40 Q 310.5 40 310.5 50 L 310.5 190 Q 310.5 200 300.5 200 L 202.5 200 " />
+</g>
+</g>
+<g id="text" fill="black" style="font-family:LMMono10,monospace;font-size:15.2px" >
+<text x="-0.9" y="92.8" id="text1" fill="#000" >Request </text>
+<text x="80.1" y="92.8" id="text2" fill="#000" >snapshot </text>
+<text x="143.1" y="172.8" id="text3" fill="#000" >INPUT </text>
+<text x="143.1" y="188.8" id="text5" fill="#000" >Store snapshot </text>
+<text x="143.1" y="204.8" id="text6" fill="#000" >SILENCE </text>
+<text x="143.1" y="220.8" id="text7" fill="#000" >Failover to next </text>
+<text x="44.1" y="236.8" id="text8" fill="#000" >KTHXBAI </text>
+<text x="143.1" y="316.8" id="text9" fill="#000" >INPUT </text>
+<text x="143.1" y="332.8" id="text11" fill="#000" >Store update </text>
+<text x="143.1" y="348.8" id="text12" fill="#000" >SILENCE </text>
+<text x="143.1" y="364.8" id="text13" fill="#000" >Failover to next</text>
+</g>
+</svg>
