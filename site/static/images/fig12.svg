@@ -1,0 +1,84 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Created with ASCIIToSVG (http://9vx.org/~dho/a2s/) -->
+<svg width="432px" height="304px" version="1.1"
+  xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <filter id="dsFilter" width="150%" height="150%">
+      <feOffset result="offOut" in="SourceGraphic" dx="3" dy="3"/>
+      <feColorMatrix result="matrixOut" in="offOut" type="matrix" values="0.2 0 0 0 0 0 0.2 0 0 0 0 0 0.2 0 0 0 0 0 1 0"/>
+      <feBlend in="SourceGraphic" in2="matrixOut" mode="normal"/>
+    </filter>
+    <marker id="iPointer"
+      viewBox="0 0 10 10" refX="5" refY="5" 
+      markerUnits="strokeWidth"
+      markerWidth="8" markerHeight="7"
+      orient="auto">
+      <path d="M 10 0 L 10 10 L 0 5 z" />
+    </marker>
+    <marker id="Pointer"
+      viewBox="0 0 10 10" refX="5" refY="5" 
+      markerUnits="strokeWidth"
+      markerWidth="8" markerHeight="7"
+      orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" />
+    </marker>
+  </defs><g id="boxes" stroke="black" stroke-width="2" fill="none" >
+<g id="group0">
+	<path id="path0" filter="url(#dsFilter)" fill="#fff" d="M 157.5 8 L 265.5 8 L 265.5 62 Q 265.5 72 255.5 72 L 167.5 72 Q 157.5 72 157.5 62 Z" />
+	<text x="170.1" y="28.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Publisher </text>
+
+	<text x="197.1" y="60.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >PUB </text>
+
+</g>
+<g id="group12">
+	<path id="path12" filter="url(#dsFilter)" fill="#fff" d="M 4.5 226 Q 4.5 216 14.5 216 L 111.5 216 Q 121.5 216 121.5 226 L 121.5 280 L 4.5 280 Z" />
+	<text x="44.1" y="236.8" id="text12" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >SUB </text>
+
+	<text x="17.1" y="268.8" id="text12" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Subscriber </text>
+
+</g>
+<g id="group14">
+	<path id="path14" filter="url(#dsFilter)" fill="#fff" d="M 157.5 226 Q 157.5 216 167.5 216 L 264.5 216 Q 274.5 216 274.5 226 L 274.5 280 L 157.5 280 Z" />
+	<text x="197.1" y="236.8" id="text14" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >SUB </text>
+
+	<text x="170.1" y="268.8" id="text14" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Subscriber </text>
+
+</g>
+<g id="group16">
+	<path id="path16" filter="url(#dsFilter)" fill="#fff" d="M 310.5 226 Q 310.5 216 320.5 216 L 417.5 216 Q 427.5 216 427.5 226 L 427.5 280 L 310.5 280 Z" />
+	<text x="350.1" y="236.8" id="text16" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >SUB </text>
+
+	<text x="323.1" y="268.8" id="text16" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Subscriber </text>
+
+</g>
+</g>
+<g id="lines" stroke="black" stroke-width="2" fill="none" >
+<g id="group45">
+	<path id="path45" d="M 4.5 248 L 121.5 248 " />
+</g>
+<g id="group156">
+	<path id="path156" d="M 58.5 184 L 58.5 162 Q 58.5 152 68.5 152 L 211.5 152 L 354.5 152 Q 364.5 152 364.5 162 L 364.5 200 " />
+</g>
+<g id="group356">
+	<path id="path356" d="M 157.5 40 L 265.5 40 " />
+</g>
+<g id="group370">
+	<path id="path370" d="M 157.5 248 L 274.5 248 " />
+</g>
+<g id="group477">
+	<path id="path477" d="M 211.5 120 L 211.5 152 L 211.5 200 " />
+</g>
+<g id="group694">
+	<path id="path694" d="M 310.5 248 L 427.5 248 " />
+</g>
+</g>
+<g id="text" fill="black" style="font-family:LMMono10,monospace;font-size:15.2px" >
+<text x="188.1" y="92.8" id="text2" fill="#000" >bind</text>
+<text x="98.1" y="108.8" id="text3" fill="#000" >tcp://192.168.55.210:5556</text>
+<text x="26.1" y="204.8" id="text4" fill="#000" >connect </text>
+<text x="188.1" y="204.8" id="text5" fill="#000" >connect </text>
+<text x="341.1" y="204.8" id="text6" fill="#000" >connect</text>
+</g>
+</svg>

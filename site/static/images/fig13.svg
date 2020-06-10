@@ -1,0 +1,128 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Created with ASCIIToSVG (http://9vx.org/~dho/a2s/) -->
+<svg width="432px" height="448px" version="1.1"
+  xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <filter id="dsFilter" width="150%" height="150%">
+      <feOffset result="offOut" in="SourceGraphic" dx="3" dy="3"/>
+      <feColorMatrix result="matrixOut" in="offOut" type="matrix" values="0.2 0 0 0 0 0 0.2 0 0 0 0 0 0.2 0 0 0 0 0 1 0"/>
+      <feBlend in="SourceGraphic" in2="matrixOut" mode="normal"/>
+    </filter>
+    <marker id="iPointer"
+      viewBox="0 0 10 10" refX="5" refY="5" 
+      markerUnits="strokeWidth"
+      markerWidth="8" markerHeight="7"
+      orient="auto">
+      <path d="M 10 0 L 10 10 L 0 5 z" />
+    </marker>
+    <marker id="Pointer"
+      viewBox="0 0 10 10" refX="5" refY="5" 
+      markerUnits="strokeWidth"
+      markerWidth="8" markerHeight="7"
+      orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" />
+    </marker>
+  </defs><g id="boxes" stroke="black" stroke-width="2" fill="none" >
+<g id="group0">
+	<path id="path0" filter="url(#dsFilter)" fill="#fff" d="M 4.5 8 L 121.5 8 L 121.5 62 Q 121.5 72 111.5 72 L 14.5 72 Q 4.5 72 4.5 62 Z" />
+	<text x="17.1" y="28.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Publisher </text>
+
+	<text x="44.1" y="60.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >PUB </text>
+
+</g>
+<g id="group2">
+	<path id="path2" filter="url(#dsFilter)" fill="#fff" d="M 157.5 8 L 274.5 8 L 274.5 62 Q 274.5 72 264.5 72 L 167.5 72 Q 157.5 72 157.5 62 Z" />
+	<text x="170.1" y="28.8" id="text2" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Publisher </text>
+
+	<text x="197.1" y="60.8" id="text2" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >PUB </text>
+
+</g>
+<g id="group4">
+	<path id="path4" filter="url(#dsFilter)" fill="#fff" d="M 310.5 8 L 427.5 8 L 427.5 62 Q 427.5 72 417.5 72 L 320.5 72 Q 310.5 72 310.5 62 Z" />
+	<text x="323.1" y="28.8" id="text4" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Publisher </text>
+
+	<text x="350.1" y="60.8" id="text4" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >PUB </text>
+
+</g>
+<g id="group21">
+	<path id="path21" filter="url(#dsFilter)" fill="#fff" d="M 157.5 178 Q 157.5 168 167.5 168 L 264.5 168 Q 274.5 168 274.5 178 L 274.5 254 Q 274.5 264 264.5 264 L 167.5 264 Q 157.5 264 157.5 254 Z" />
+	<text x="197.1" y="188.8" id="text21" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >XSUB </text>
+
+	<text x="188.1" y="220.8" id="text21" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Proxy </text>
+
+	<text x="197.1" y="252.8" id="text21" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >XPUB </text>
+
+</g>
+<g id="group32">
+	<path id="path32" filter="url(#dsFilter)" fill="#fff" d="M 4.5 370 Q 4.5 360 14.5 360 L 111.5 360 Q 121.5 360 121.5 370 L 121.5 424 L 4.5 424 Z" />
+	<text x="44.1" y="380.8" id="text32" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >SUB </text>
+
+	<text x="17.1" y="412.8" id="text32" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Subscriber </text>
+
+</g>
+<g id="group34">
+	<path id="path34" filter="url(#dsFilter)" fill="#fff" d="M 157.5 370 Q 157.5 360 167.5 360 L 264.5 360 Q 274.5 360 274.5 370 L 274.5 424 L 157.5 424 Z" />
+	<text x="197.1" y="380.8" id="text34" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >SUB </text>
+
+	<text x="170.1" y="412.8" id="text34" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Subscriber </text>
+
+</g>
+<g id="group36">
+	<path id="path36" filter="url(#dsFilter)" fill="#fff" d="M 310.5 370 Q 310.5 360 320.5 360 L 417.5 360 Q 427.5 360 427.5 370 L 427.5 424 L 310.5 424 Z" />
+	<text x="350.1" y="380.8" id="text36" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >SUB </text>
+
+	<text x="323.1" y="412.8" id="text36" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Subscriber </text>
+
+</g>
+</g>
+<g id="lines" stroke="black" stroke-width="2" fill="none" >
+<g id="group52">
+	<path id="path52" d="M 4.5 40 L 121.5 40 " />
+</g>
+<g id="group75">
+	<path id="path75" d="M 4.5 392 L 121.5 392 " />
+</g>
+<g id="group226">
+	<path id="path226" d="M 58.5 104 L 58.5 110 Q 58.5 120 68.5 120 L 211.5 120 L 354.5 120 Q 364.5 120 364.5 110 L 364.5 88 " />
+</g>
+<g id="group240">
+	<path id="path240" d="M 58.5 328 L 58.5 322 Q 58.5 312 68.5 312 L 211.5 312 L 354.5 312 Q 364.5 312 364.5 322 L 364.5 344 " />
+</g>
+<g id="group530">
+	<path id="path530" d="M 157.5 40 L 274.5 40 " />
+</g>
+<g id="group541">
+	<path id="path541" d="M 157.5 200 L 274.5 200 " />
+</g>
+<g id="group544">
+	<path id="path544" d="M 157.5 232 L 274.5 232 " />
+</g>
+<g id="group555">
+	<path id="path555" d="M 157.5 392 L 274.5 392 " />
+</g>
+<g id="group706">
+	<path id="path706" d="M 211.5 104 L 211.5 120 L 211.5 152 " />
+</g>
+<g id="group718">
+	<path id="path718" d="M 211.5 296 L 211.5 312 L 211.5 344 " />
+</g>
+<g id="group1010">
+	<path id="path1010" d="M 310.5 40 L 427.5 40 " />
+</g>
+<g id="group1033">
+	<path id="path1033" d="M 310.5 392 L 427.5 392 " />
+</g>
+</g>
+<g id="text" fill="black" style="font-family:LMMono10,monospace;font-size:15.2px" >
+<text x="26.1" y="92.8" id="text6" fill="#000" >connect </text>
+<text x="179.1" y="92.8" id="text7" fill="#000" >connect </text>
+<text x="332.1" y="92.8" id="text8" fill="#000" >connect</text>
+<text x="197.1" y="156.8" id="text9" fill="#000" >bind</text>
+<text x="197.1" y="284.8" id="text13" fill="#000" >bind</text>
+<text x="26.1" y="348.8" id="text14" fill="#000" >connect </text>
+<text x="188.1" y="348.8" id="text15" fill="#000" >connect </text>
+<text x="341.1" y="348.8" id="text16" fill="#000" >connect</text>
+</g>
+</svg>

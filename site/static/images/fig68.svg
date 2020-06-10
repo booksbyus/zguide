@@ -1,0 +1,172 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Created with ASCIIToSVG (http://9vx.org/~dho/a2s/) -->
+<svg width="549px" height="336px" version="1.1"
+  xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <filter id="dsFilter" width="150%" height="150%">
+      <feOffset result="offOut" in="SourceGraphic" dx="3" dy="3"/>
+      <feColorMatrix result="matrixOut" in="offOut" type="matrix" values="0.2 0 0 0 0 0 0.2 0 0 0 0 0 0.2 0 0 0 0 0 1 0"/>
+      <feBlend in="SourceGraphic" in2="matrixOut" mode="normal"/>
+    </filter>
+    <marker id="iPointer"
+      viewBox="0 0 10 10" refX="5" refY="5" 
+      markerUnits="strokeWidth"
+      markerWidth="8" markerHeight="7"
+      orient="auto">
+      <path d="M 10 0 L 10 10 L 0 5 z" />
+    </marker>
+    <marker id="Pointer"
+      viewBox="0 0 10 10" refX="5" refY="5" 
+      markerUnits="strokeWidth"
+      markerWidth="8" markerHeight="7"
+      orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" />
+    </marker>
+  </defs><g id="boxes" stroke="black" stroke-width="2" fill="none" >
+<g id="group0">
+	<path id="path0" filter="url(#dsFilter)" fill="#fff" d="M 220.5 8 L 319.5 8 L 319.5 56 L 220.5 56 Z" />
+	<text x="251.1" y="28.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Main </text>
+
+	<text x="242.1" y="44.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >thread </text>
+
+</g>
+<g id="group10">
+	<path id="path10" filter="url(#dsFilter)" fill="#fff" d="M 4.5 152 L 112.5 152 L 112.5 200 L 4.5 200 Z" />
+	<text x="26.1" y="172.8" id="text10" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Child </text>
+
+	<text x="26.1" y="188.8" id="text10" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >thread </text>
+
+</g>
+<g id="group12">
+	<path id="path12" filter="url(#dsFilter)" fill="#fff" d="M 148.5 152 L 256.5 152 L 256.5 200 L 148.5 200 Z" />
+	<text x="170.1" y="172.8" id="text12" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Child </text>
+
+	<text x="170.1" y="188.8" id="text12" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >thread </text>
+
+</g>
+<g id="group14">
+	<path id="path14" filter="url(#dsFilter)" fill="#fff" d="M 292.5 152 L 400.5 152 L 400.5 200 L 292.5 200 Z" />
+	<text x="314.1" y="172.8" id="text14" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Child </text>
+
+	<text x="314.1" y="188.8" id="text14" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >thread </text>
+
+</g>
+<g id="group16">
+	<path id="path16" filter="url(#dsFilter)" fill="#fff" d="M 436.5 152 L 544.5 152 L 544.5 200 L 436.5 200 Z" />
+	<text x="458.1" y="172.8" id="text16" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Child </text>
+
+	<text x="458.1" y="188.8" id="text16" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >thread </text>
+
+</g>
+<g id="group30">
+	<path id="path30" filter="url(#dsFilter)" fill="#fff" d="M 4.5 248 L 112.5 248 L 112.5 312 L 4.5 312 Z" />
+	<text x="17.1" y="268.8" id="text30" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Interface </text>
+
+	<text x="17.1" y="300.8" id="text30" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >R</text>
+
+	<text x="53.1" y="300.8" id="text30" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >D</text>
+
+	<text x="89.1" y="300.8" id="text30" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >U</text>
+
+</g>
+<g id="group32">
+	<path id="path32" filter="url(#dsFilter)" fill="#fff" d="M 148.5 248 L 256.5 248 L 256.5 312 L 148.5 312 Z" />
+	<text x="161.1" y="268.8" id="text32" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Interface </text>
+
+	<text x="161.1" y="300.8" id="text32" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >R</text>
+
+	<text x="197.1" y="300.8" id="text32" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >D</text>
+
+	<text x="233.1" y="300.8" id="text32" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >U</text>
+
+</g>
+<g id="group34">
+	<path id="path34" filter="url(#dsFilter)" fill="#fff" d="M 292.5 248 L 400.5 248 L 400.5 312 L 292.5 312 Z" />
+	<text x="305.1" y="268.8" id="text34" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Interface </text>
+
+	<text x="305.1" y="300.8" id="text34" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >R</text>
+
+	<text x="341.1" y="300.8" id="text34" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >D</text>
+
+	<text x="377.1" y="300.8" id="text34" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >U</text>
+
+</g>
+<g id="group36">
+	<path id="path36" filter="url(#dsFilter)" fill="#fff" d="M 436.5 248 L 544.5 248 L 544.5 312 L 436.5 312 Z" />
+	<text x="449.1" y="268.8" id="text36" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Interface </text>
+
+	<text x="449.1" y="300.8" id="text36" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >R</text>
+
+	<text x="485.1" y="300.8" id="text36" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >D</text>
+
+	<text x="521.1" y="300.8" id="text36" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >U</text>
+
+</g>
+</g>
+<g id="lines" stroke="black" stroke-width="2" fill="none" >
+<g id="group87">
+	<path id="path87" d="M 4.5 280 L 40.5 280 L 76.5 280 L 112.5 280 " />
+</g>
+<g id="group172">
+	<path id="path172" d="M 40.5 280 L 40.5 312 " />
+</g>
+<g id="group206">
+	<path id="path206" marker-start="url(#iPointer)" marker-end="url(#Pointer)" d="M 58.5 136 L 58.5 114 Q 58.5 104 68.5 104 L 202.5 104 L 274.5 104 L 346.5 104 L 480.5 104 Q 490.5 104 490.5 114 L 490.5 136 " />
+</g>
+<g id="group210">
+	<path id="path210" marker-end="url(#Pointer)" d="M 58.5 200 L 58.5 232 " />
+</g>
+<g id="group258">
+	<path id="path258" d="M 76.5 280 L 76.5 312 " />
+</g>
+<g id="group427">
+	<path id="path427" d="M 148.5 280 L 184.5 280 L 220.5 280 L 256.5 280 " />
+</g>
+<g id="group512">
+	<path id="path512" d="M 184.5 280 L 184.5 312 " />
+</g>
+<g id="group544">
+	<path id="path544" marker-end="url(#Pointer)" d="M 202.5 104 L 202.5 136 " />
+</g>
+<g id="group551">
+	<path id="path551" marker-end="url(#Pointer)" d="M 202.5 200 L 202.5 232 " />
+</g>
+<g id="group599">
+	<path id="path599" d="M 220.5 280 L 220.5 312 " />
+</g>
+<g id="group712">
+	<path id="path712" d="M 274.5 56 L 274.5 104 " />
+</g>
+<g id="group769">
+	<path id="path769" d="M 292.5 280 L 328.5 280 L 364.5 280 L 400.5 280 " />
+</g>
+<g id="group854">
+	<path id="path854" d="M 328.5 280 L 328.5 312 " />
+</g>
+<g id="group886">
+	<path id="path886" marker-end="url(#Pointer)" d="M 346.5 104 L 346.5 136 " />
+</g>
+<g id="group893">
+	<path id="path893" marker-end="url(#Pointer)" d="M 346.5 200 L 346.5 232 " />
+</g>
+<g id="group941">
+	<path id="path941" d="M 364.5 280 L 364.5 312 " />
+</g>
+<g id="group1110">
+	<path id="path1110" d="M 436.5 280 L 472.5 280 L 508.5 280 L 544.5 280 " />
+</g>
+<g id="group1195">
+	<path id="path1195" d="M 472.5 280 L 472.5 312 " />
+</g>
+<g id="group1233">
+	<path id="path1233" marker-end="url(#Pointer)" d="M 490.5 200 L 490.5 232 " />
+</g>
+<g id="group1281">
+	<path id="path1281" d="M 508.5 280 L 508.5 312 " />
+</g>
+</g>
+<g id="text" fill="black" style="font-family:LMMono10,monospace;font-size:15.2px" >
+</g>
+</svg>

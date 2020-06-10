@@ -1,0 +1,72 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Created with ASCIIToSVG (http://9vx.org/~dho/a2s/) -->
+<svg width="522px" height="224px" version="1.1"
+  xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <filter id="dsFilter" width="150%" height="150%">
+      <feOffset result="offOut" in="SourceGraphic" dx="3" dy="3"/>
+      <feColorMatrix result="matrixOut" in="offOut" type="matrix" values="0.2 0 0 0 0 0 0.2 0 0 0 0 0 0.2 0 0 0 0 0 1 0"/>
+      <feBlend in="SourceGraphic" in2="matrixOut" mode="normal"/>
+    </filter>
+    <marker id="iPointer"
+      viewBox="0 0 10 10" refX="5" refY="5" 
+      markerUnits="strokeWidth"
+      markerWidth="8" markerHeight="7"
+      orient="auto">
+      <path d="M 10 0 L 10 10 L 0 5 z" />
+    </marker>
+    <marker id="Pointer"
+      viewBox="0 0 10 10" refX="5" refY="5" 
+      markerUnits="strokeWidth"
+      markerWidth="8" markerHeight="7"
+      orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" />
+    </marker>
+  </defs><g id="boxes" stroke="black" stroke-width="2" fill="none" >
+<g id="group0">
+	<path id="path0" filter="url(#dsFilter)" fill="#fff" d="M 4.5 18 Q 4.5 8 14.5 8 L 174.5 8 Q 184.5 8 184.5 18 L 184.5 30 Q 184.5 40 174.5 40 L 14.5 40 Q 4.5 40 4.5 30 Z" />
+	<text x="17.1" y="28.8" id="text0" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Authenticated </text>
+
+</g>
+<g id="group5">
+	<path id="path5" filter="url(#dsFilter)" fill="#fff" d="M 22.5 72 L 148.5 72 L 148.5 104 L 22.5 104 Z" />
+	<text x="35.1" y="92.8" id="text5" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >ok </text>
+
+</g>
+<g id="group7">
+	<path id="path7" filter="url(#dsFilter)" fill="#fff" d="M 337.5 82 Q 337.5 72 347.5 72 L 507.5 72 Q 517.5 72 517.5 82 L 517.5 94 Q 517.5 104 507.5 104 L 347.5 104 Q 337.5 104 337.5 94 Z" />
+	<text x="350.1" y="92.8" id="text7" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Ready </text>
+
+</g>
+<g id="group14">
+	<path id="path14" filter="url(#dsFilter)" fill="#fff" d="M 22.5 152 L 148.5 152 L 148.5 184 L 22.5 184 Z" />
+	<text x="35.1" y="172.8" id="text14" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >error </text>
+
+</g>
+<g id="group16">
+	<path id="path16" filter="url(#dsFilter)" fill="#fff" d="M 337.5 162 Q 337.5 152 347.5 152 L 507.5 152 Q 517.5 152 517.5 162 L 517.5 174 Q 517.5 184 507.5 184 L 347.5 184 Q 337.5 184 337.5 174 Z" />
+	<text x="350.1" y="172.8" id="text16" fill="#000" stroke="none" style="font-family:LMMono10,monospace;font-size:15.2px" >Start </text>
+
+</g>
+</g>
+<g id="lines" stroke="black" stroke-width="2" fill="none" >
+<g id="group53">
+	<path id="path53" d="M 22.5 40 L 22.5 72 " />
+</g>
+<g id="group58">
+	<path id="path58" d="M 22.5 104 L 22.5 152 " />
+</g>
+<g id="group254">
+	<path id="path254" marker-end="url(#Pointer)" d="M 148.5 88 L 328.5 88 " />
+</g>
+<g id="group260">
+	<path id="path260" marker-end="url(#Pointer)" d="M 148.5 168 L 328.5 168 " />
+</g>
+</g>
+<g id="text" fill="black" style="font-family:LMMono10,monospace;font-size:15.2px" >
+<text x="170.1" y="124.8" id="text3" fill="#000" >Send OHAI-OK</text>
+<text x="170.1" y="204.8" id="text6" fill="#000" >Send WTF</text>
+</g>
+</svg>

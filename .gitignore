@@ -11,7 +11,7 @@ node_modules
 .DS_Store
 *~
 ebook.xml
-book
+/book
 book.ps
 book.xml
 book.tex
@@ -19,3 +19,6 @@ upload.sh
 changes.txt
 *.swp
 testdata*
+
+site/resources/*
+site/public/*

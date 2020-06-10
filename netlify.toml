@@ -1,0 +1,348 @@
+[build]
+publish = "site/public"
+command = "make production-build"
+
+[build.environment]
+HUGO_VERSION = "0.72.0"
+
+[context.deploy-preview]
+command = "make preview-build"
+
+[context.branch-deploy]
+command = "make preview-build"
+
+# Page redirects
+[[redirects]]
+from = "/page:all"
+to = "/"
+force = true
+
+[[redirects]]
+from = "/page:preface"
+to = "/docs/preface"
+force = true
+
+[[redirects]]
+from = "/page:chapter1"
+to = "/docs/chapter1"
+force = true
+
+[[redirects]]
+from = "/page:chapter2"
+to = "/docs/chapter2"
+force = true
+
+[[redirects]]
+from = "/page:chapter3"
+to = "/docs/chapter3"
+force = true
+
+[[redirects]]
+from = "/page:chapter4"
+to = "/docs/chapter4"
+force = true
+
+[[redirects]]
+from = "/page:chapter5"
+to = "/docs/chapter5"
+force = true
+
+[[redirects]]
+from = "/page:chapter6"
+to = "/docs/chapter6"
+force = true
+
+[[redirects]]
+from = "/page:chapter7"
+to = "/docs/chapter7"
+force = true
+
+[[redirects]]
+from = "/page:chapter8"
+to = "/docs/chapter8"
+force = true
+
+[[redirects]]
+from = "/page:postface"
+to = "/docs/postface"
+force = true
+
+# Java redirects
+[[redirects]]
+from = "/java:all"
+to = "/"
+force = true
+
+[[redirects]]
+from = "/java:preface"
+to = "/docs/preface"
+force = true
+
+[[redirects]]
+from = "/java:chapter1"
+to = "/docs/chapter1"
+force = true
+
+[[redirects]]
+from = "/java:chapter2"
+to = "/docs/chapter2"
+force = true
+
+[[redirects]]
+from = "/java:chapter3"
+to = "/docs/chapter3"
+force = true
+
+[[redirects]]
+from = "/java:chapter4"
+to = "/docs/chapter4"
+force = true
+
+[[redirects]]
+from = "/java:chapter5"
+to = "/docs/chapter5"
+force = true
+
+[[redirects]]
+from = "/java:chapter6"
+to = "/docs/chapter6"
+force = true
+
+[[redirects]]
+from = "/java:chapter7"
+to = "/docs/chapter7"
+force = true
+
+[[redirects]]
+from = "/java:chapter8"
+to = "/docs/chapter8"
+force = true
+
+[[redirects]]
+from = "/java:postface"
+to = "/docs/postface"
+force = true
+
+# PHP redirects
+[[redirects]]
+from = "/php:all"
+to = "/"
+force = true
+
+[[redirects]]
+from = "/php:preface"
+to = "/docs/preface"
+force = true
+
+[[redirects]]
+from = "/php:chapter1"
+to = "/docs/chapter1"
+force = true
+
+[[redirects]]
+from = "/php:chapter2"
+to = "/docs/chapter2"
+force = true
+
+[[redirects]]
+from = "/php:chapter3"
+to = "/docs/chapter3"
+force = true
+
+[[redirects]]
+from = "/php:chapter4"
+to = "/docs/chapter4"
+force = true
+
+[[redirects]]
+from = "/php:chapter5"
+to = "/docs/chapter5"
+force = true
+
+[[redirects]]
+from = "/php:chapter6"
+to = "/docs/chapter6"
+force = true
+
+[[redirects]]
+from = "/php:chapter7"
+to = "/docs/chapter7"
+force = true
+
+[[redirects]]
+from = "/php:chapter8"
+to = "/docs/chapter8"
+force = true
+
+[[redirects]]
+from = "/php:postface"
+to = "/docs/postface"
+force = true
+
+# Lua redirects
+[[redirects]]
+from = "/lua:all"
+to = "/"
+force = true
+
+[[redirects]]
+from = "/lua:preface"
+to = "/docs/preface"
+force = true
+
+[[redirects]]
+from = "/lua:chapter1"
+to = "/docs/chapter1"
+force = true
+
+[[redirects]]
+from = "/lua:chapter2"
+to = "/docs/chapter2"
+force = true
+
+[[redirects]]
+from = "/lua:chapter3"
+to = "/docs/chapter3"
+force = true
+
+[[redirects]]
+from = "/lua:chapter4"
+to = "/docs/chapter4"
+force = true
+
+[[redirects]]
+from = "/lua:chapter5"
+to = "/docs/chapter5"
+force = true
+
+[[redirects]]
+from = "/lua:chapter6"
+to = "/docs/chapter6"
+force = true
+
+[[redirects]]
+from = "/lua:chapter7"
+to = "/docs/chapter7"
+force = true
+
+[[redirects]]
+from = "/lua:chapter8"
+to = "/docs/chapter8"
+force = true
+
+[[redirects]]
+from = "/lua:postface"
+to = "/docs/postface"
+force = true
+
+# Python redirects
+[[redirects]]
+from = "/py:all"
+to = "/"
+force = true
+
+[[redirects]]
+from = "/py:preface"
+to = "/docs/preface"
+force = true
+
+[[redirects]]
+from = "/py:chapter1"
+to = "/docs/chapter1"
+force = true
+
+[[redirects]]
+from = "/py:chapter2"
+to = "/docs/chapter2"
+force = true
+
+[[redirects]]
+from = "/py:chapter3"
+to = "/docs/chapter3"
+force = true
+
+[[redirects]]
+from = "/py:chapter4"
+to = "/docs/chapter4"
+force = true
+
+[[redirects]]
+from = "/py:chapter5"
+to = "/docs/chapter5"
+force = true
+
+[[redirects]]
+from = "/py:chapter6"
+to = "/docs/chapter6"
+force = true
+
+[[redirects]]
+from = "/py:chapter7"
+to = "/docs/chapter7"
+force = true
+
+[[redirects]]
+from = "/py:chapter8"
+to = "/docs/chapter8"
+force = true
+
+[[redirects]]
+from = "/py:postface"
+to = "/docs/postface"
+force = true
+
+# Haxe redirects
+[[redirects]]
+from = "/hx:all"
+to = "/"
+force = true
+
+[[redirects]]
+from = "/hx:preface"
+to = "/docs/preface"
+force = true
+
+[[redirects]]
+from = "/hx:chapter1"
+to = "/docs/chapter1"
+force = true
+
+[[redirects]]
+from = "/hx:chapter2"
+to = "/docs/chapter2"
+force = true
+
+[[redirects]]
+from = "/hx:chapter3"
+to = "/docs/chapter3"
+force = true
+
+[[redirects]]
+from = "/hx:chapter4"
+to = "/docs/chapter4"
+force = true
+
+[[redirects]]
+from = "/hx:chapter5"
+to = "/docs/chapter5"
+force = true
+
+[[redirects]]
+from = "/hx:chapter6"
+to = "/docs/chapter6"
+force = true
+
+[[redirects]]
+from = "/hx:chapter7"
+to = "/docs/chapter7"
+force = true
+
+[[redirects]]
+from = "/hx:chapter8"
+to = "/docs/chapter8"
+force = true
+
+[[redirects]]
+from = "/hx:postface"
+to = "/docs/postface"
+force = true

@@ -1,0 +1,7 @@
+          #---+-----#
+Frame 1   | 3 | ABC |      Identity of connection
+          #---#-----#
+Frame 2   | 0 |            Empty delimiter frame
+          #---#-------#
+Frame 3   | 5 | Hello |    Data frame
+          #---+-------#
