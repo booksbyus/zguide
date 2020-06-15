@@ -5,7 +5,9 @@
 #
 #   Author: Daniel Lundin <dln(at)eintr(dot)org>
 #
+import itertools
 import logging
+import sys
 import zmq
 
 logging.basicConfig(level=logging.INFO)
@@ -20,33 +22,28 @@ logging.info("Connecting to server…")
 client = context.socket(zmq.REQ)
 client.connect(SERVER_ENDPOINT)
 
-sequence = 0
-retries_left = REQUEST_RETRIES
-while retries_left > 0:
-    sequence += 1
+for sequence in itertools.count():
     request = str(sequence).encode()
     logging.info("Sending (%s)", request)
     client.send(request)
 
-    while True:
+    for retry_count in range(REQUEST_RETRIES):
         if client.poll(REQUEST_TIMEOUT) == zmq.POLLIN:
             reply = client.recv()
             if int(reply) == sequence:
                 logging.info("Server replied OK (%s)", reply)
-                retries_left = REQUEST_RETRIES
+                break
             else:
                 logging.error("Malformed reply from server: %s", reply)
-
-            break
+                continue
 
         logging.warning("No response from server, retrying…")
         # Socket is confused. Close and remove it.
         client.setsockopt(zmq.LINGER, 0)
         client.close()
-        retries_left -= 1
-        if retries_left == 0:
+        if retry_count == (REQUEST_RETRIES - 1):
             logging.error("Server seems to be offline, abandoning")
-            break
+            sys.exit()
 
         logging.info("Reconnecting and resending (%s)", request)
         # Create new connection
