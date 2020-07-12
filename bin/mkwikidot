@@ -15,7 +15,7 @@
 use Digest::SHA qw(sha1_hex);
 
 @languages = ('Ada', 'Basic', 'C', 'C++', 'C#', 'Clojure', 'CL', 'Delphi',
-              'Elixir', 'Erlang', 'F#', 'Felix', 'Go', 'Haskell', 'Haxe', 'Java', 'Lua',
+              'Elixir', 'Erlang', 'F#', 'Felix', 'Go', 'Haskell', 'Haxe', 'Java', 'Julia', 'Lua',
               'Node.js', 'Objective-C', 'ooc', 'Perl', 'PHP', 'Python', 'Q', 'Racket',
               'Ruby', 'Scala', 'Tcl');
 
@@ -36,6 +36,7 @@ use Digest::SHA qw(sha1_hex);
               'Haskell' => 'hs',
               'Haxe' => 'hx',
               'Java' => 'java',
+              'Julia' => 'jl',
               'Lua' => 'lua',
               'Node.js' => 'js',
               'Objective-C' => 'm',
