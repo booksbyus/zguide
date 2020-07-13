@@ -17,16 +17,17 @@ ZMQ.connect(socket, "tcp://localhost:5556")
 # Subscribe to zipcode, default is NYC, 10001
 zip_filter = length(ARGS) > 0 ? int(ARGS[1]) : 10001
 
-ZMQ.set_subscribe(socket, string(zip_filter))
+ZMQ.subscribe(socket, string(zip_filter))
 
 # Process 5 updates
 update_nbr = 5
 
 total_temp = 0
-for update in [1:update_nbr]
+for update in 1:update_nbr
+    global total_temp
     message = unsafe_string(ZMQ.recv(socket))
     zipcode, temperature, relhumidity = split(message)
-    total_temp += parse(temperature)
+    total_temp += parse(Int, temperature)
 end
 
 avg_temp = total_temp / update_nbr
