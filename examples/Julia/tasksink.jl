@@ -7,35 +7,36 @@
 #
 
 using ZMQ
+using Dates
 
 context = Context()
 
 # Socket to receive messages on
 receiver = Socket(context, PULL)
-ZMQ.bind(receiver, "tcp://*:5558")
+bind(receiver, "tcp://*:5558")
 
 # Wait for start of batch
-s = ZMQ.recv(receiver)
+s = recv(receiver)
 
 # Start our tic toc clock
-tic()
+tstart = now()
 
 # Process 100 confirmations
-total_msec = 0
-for task_nbr in [1:100]
-    s = ZMQ.recv(receiver)
+for task_nbr in 1:100
+    s = recv(receiver)
     if task_nbr % 10 == 0
-        write(STDOUT, ":")
+        write(stdout, ":")
     else
-        write(STDOUT, ".")
+        write(stdout, ".")
     end
-    flush(STDOUT)
+    flush(stdout)
 end
 
 # Calculate and report duration of batch
-tend = toq()
-println("\nTotal elapsed time: $(tend * 1000) msec")
+tend = now()
+elapsed = tend - tstart
+println("\nTotal elapsed time: $(elapsed * 1000) msec")
 
 # Making a clean exit.
-ZMQ.close(receiver)
-ZMQ.close(context)
+close(receiver)
+close(context)

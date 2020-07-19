@@ -10,16 +10,16 @@ using ZMQ
 
 context = Context()
 socket = Socket(context, PUB)
-ZMQ.bind(socket, "tcp://*:5556")
-
+bind(socket, "tcp://*:5556")
 
 while true
-    zipcode = @sprintf("%05d",rand(1:99999))
+    zipcode = rand(10000:99999)
     temperature = rand(-80:135)
     relhumidity = rand(10:60)
-    ZMQ.send(socket, "$zipcode $temperature $relhumidity")
+    message = "$zipcode $temperature $relhumidity"
+    send(socket, message)
     yield()
 end
 
-ZMQ.close(socket)
-ZMQ.close(context)
+close(socket)
+close(context)
