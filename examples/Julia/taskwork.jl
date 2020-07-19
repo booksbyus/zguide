@@ -14,23 +14,26 @@ context = Context()
 
 # Socket to receive messages on
 receiver = Socket(context, PULL)
-ZMQ.connect(receiver, "tcp://localhost:5557")
+connect(receiver, "tcp://localhost:5557")
 
 # Socket to send messages to
 sender = Socket(context, PUSH)
-ZMQ.connect(sender, "tcp://localhost:5558")
+connect(sender, "tcp://localhost:5558")
 
 # Process tasks forever
 while true
-    s = bytestring(ZMQ.recv(receiver))
+    s = recv(receiver, String)
     
     # Simple progress indicator for the viewer
-    write(STDOUT, ".")
-    flush(STDOUT)
+    write(stdout, ".")
+    flush(stdout)
     
     # Do the work
-    sleep(int(s)*0.001)
+    sleep(parse(Int, s) * 0.001)
 
     # Send results to sink
-    ZMQ.send(sender, b"")
+    send(sender, 0x00)
 end
+
+close(sender)
+close(receiver)
