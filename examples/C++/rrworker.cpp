@@ -3,7 +3,6 @@
 //   Connects REP socket to tcp://localhost:5560
 //   Expects "Hello" from client, replies with "World"
 //
-// Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
 
 
 #include "zhelpers.hpp"

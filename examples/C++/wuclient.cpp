@@ -3,8 +3,7 @@
 //  Connects SUB socket to tcp://localhost:5556
 //  Collects weather updates and finds avg temp in zipcode
 //
-//  Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
-//
+
 #include <zmq.hpp>
 #include <iostream>
 #include <sstream>

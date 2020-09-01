@@ -1,7 +1,6 @@
 //
 //  Custom routing Router to Mama (ROUTER to REQ)
 //
-// Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
 
 #include "zhelpers.hpp"
 #include <pthread.h>

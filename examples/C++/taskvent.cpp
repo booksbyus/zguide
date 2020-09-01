@@ -3,8 +3,7 @@
 //  Binds PUSH socket to tcp://localhost:5557
 //  Sends batch of tasks to workers via that socket
 //
-//  Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
-//
+
 #include <zmq.hpp>
 #include <stdlib.h>
 #include <stdio.h>

@@ -3,8 +3,7 @@
 //  Binds PULL socket to tcp://localhost:5558
 //  Collects results from workers via that socket
 //
-//  Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
-//
+
 #include <zmq.hpp>
 #include <time.h>
 #include <sys/time.h>

@@ -2,7 +2,6 @@
 //  Reading from multiple sockets in C++
 //  This version uses a simple recv loop
 //
-// Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
 
 
 #include "zhelpers.hpp"

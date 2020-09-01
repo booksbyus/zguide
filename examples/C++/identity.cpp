@@ -2,7 +2,6 @@
 //  Demonstrate identities as used by the request-reply pattern.  Run this
 //  program by itself.
 //
-// Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
 
 #include <zmq.hpp>
 #include "zhelpers.hpp"
