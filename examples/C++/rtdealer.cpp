@@ -1,7 +1,6 @@
 //
 //  Custom routing Router to Dealer
 //
-// Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
 
 #include "zhelpers.hpp"
 #include <pthread.h>

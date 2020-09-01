@@ -2,7 +2,6 @@
 //  Reading from multiple sockets in C++
 //  This version uses zmq_poll()
 //
-// Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
 
 #include "zhelpers.hpp"
 

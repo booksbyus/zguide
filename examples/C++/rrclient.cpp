@@ -2,8 +2,6 @@
 //   Connects REQ socket to tcp://localhost:5559
 //   Sends "Hello" to server, expects "World" back
 //
-// Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
-
 
 #include "zhelpers.hpp"
  

@@ -5,8 +5,7 @@
 //  Connects PUSH socket to tcp://localhost:5558
 //  Sends results to sink via that socket
 //
-//  Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
-//
+
 #include "zhelpers.hpp"
 #include <string>
 

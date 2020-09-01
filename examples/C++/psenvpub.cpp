@@ -2,7 +2,6 @@
 //  Pubsub envelope publisher
 //  Note that the zhelpers.h file also provides s_sendmore
 //
-// Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
 
 #include "zhelpers.hpp"
 

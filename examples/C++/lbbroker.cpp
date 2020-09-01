@@ -1,7 +1,6 @@
 //  Least-recently used (LRU) queue device
 //  Clients and workers are shown here in-process
 //
-// Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
 
 #include "zhelpers.hpp"
 #include <pthread.h>

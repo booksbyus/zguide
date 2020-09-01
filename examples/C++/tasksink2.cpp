@@ -2,7 +2,6 @@
 //  Task sink in C++ - design 2
 //  Adds pub-sub flow to send kill signal to workers
 //
-// Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
 
 #include "zhelpers.hpp"
 

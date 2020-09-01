@@ -3,8 +3,6 @@
 //  Binds PUB socket to tcp://*:5556
 //  Publishes random weather updates
 //
-//  Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
-//
 #include <zmq.hpp>
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,8 +1,6 @@
 //
 //  Simple request-reply broker in C++
 //
-// Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
-
 
 #include "zhelpers.hpp"
 

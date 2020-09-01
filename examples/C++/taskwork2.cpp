@@ -2,7 +2,6 @@
 //  Task worker in C++ - design 2
 //  Adds pub-sub flow to receive and respond to kill signal
 //
-// Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
 
 #include "zhelpers.hpp"
 #include <string>
