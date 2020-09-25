@@ -3,7 +3,7 @@ weight: 1
 title: '1. Basics'
 ---
 
-# Chapter 1 - Basics {#Chapter-Basics}
+# Chapter 1 - Basics {#basics}
 
 ## Fixing the World {#Fixing-the-World}
 

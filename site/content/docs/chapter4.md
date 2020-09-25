@@ -3,7 +3,7 @@ weight: 4
 title: '4. Reliable Request-Reply Patterns'
 ---
 
-# Chapter 4 - Reliable Request-Reply Patterns {#Chapter-Reliable-Request-Reply-Patterns}
+# Chapter 4 - Reliable Request-Reply Patterns {#reliable-request-reply}
 
 [Chapter 3 - Advanced Request-Reply Patterns](chapter3#advanced-request-reply) covered advanced uses of ZeroMQ's request-reply pattern with working examples. This chapter looks at the general question of reliability and builds a set of reliable messaging patterns on top of ZeroMQ's core request-reply pattern.
 

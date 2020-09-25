@@ -144,17 +144,20 @@ sub process_source {
                 $chapter++;
                 $header = "Chapter $chapter - $header";
             }
-            $anchor = $header;
+
+            if ($bookmark) {
+                $anchor = $bookmark;
+                $bookmark = "";
+            }
+            else {
+                $anchor = $header;
+            }
             $anchor =~ s/[^a-zA-Z]/-/g;
             $anchor =~ s/\-+/-/g;
             $anchor =~ s/\-$//;
             $bookmarks {$anchor} = $header if $anchor;
             $documents {$anchor} = "chapter$chapter";
-            if ($bookmark) {
-                $bookmarks {$bookmark} = $header;
-                $documents {$bookmark} = "chapter$chapter";
-                $bookmark = "";
-            }
+
             if ($level eq "+") {
                 write_prepend ("---\nweight: $chapter\ntitle: '$chapter. $title'\n---\n\n");
                 writeln ("# $header {#$anchor}");
@@ -164,6 +167,9 @@ sub process_source {
             }
             elsif ($level eq "+++") {
                 writeln ("### $header {#$anchor}");
+            }
+            elsif ($level eq "++++") {
+                writeln ("#### $header {#$anchor}");
             }
         }
         elsif (/^\*\s+(.*)$/) {      #   Bulleted lists
@@ -415,7 +421,7 @@ sub bookmarks_load {
 #   Save bookmarks
 sub bookmarks_save {
     if (open (BOOKMARKS, ">site/.bookmarks")) {
-        foreach $bookmark (keys %bookmarks) {
+        foreach $bookmark (sort keys %bookmarks) {
             print BOOKMARKS "$bookmark $bookmarks{$bookmark}|$documents{$bookmark}\n";
         }
         close (BOOKMARKS);

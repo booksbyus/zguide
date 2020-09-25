@@ -3,7 +3,7 @@ weight: 8
 title: '8. A Framework for Distributed Computing'
 ---
 
-# Chapter 8 - A Framework for Distributed Computing {#Chapter-A-Framework-for-Distributed-Computing}
+# Chapter 8 - A Framework for Distributed Computing {#moving-pieces}
 
 We've gone though a journey of understanding ZeroMQ in its many aspects. By now you may have started to build your own products using the techniques I explained, as well as others you've figured out yourself. You will start to face questions about how to make these products work in the real world.
 

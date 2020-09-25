@@ -3,7 +3,7 @@ weight: 5
 title: '5. Advanced Pub-Sub Patterns'
 ---
 
-# Chapter 5 - Advanced Pub-Sub Patterns {#Chapter-Advanced-Pub-Sub-Patterns}
+# Chapter 5 - Advanced Pub-Sub Patterns {#advanced-pub-sub}
 
 In [Chapter 3 - Advanced Request-Reply Patterns](chapter3#advanced-request-reply) and [Chapter 4 - Reliable Request-Reply Patterns](chapter4#reliable-request-reply) we looked at advanced use of ZeroMQ's request-reply pattern. If you managed to digest all that, congratulations. In this chapter we'll focus on publish-subscribe and extend ZeroMQ's core pub-sub pattern with higher-level patterns for performance, reliability, state distribution, and monitoring.
 

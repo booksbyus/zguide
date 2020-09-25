@@ -3,7 +3,7 @@ weight: 6
 title: '6. The ZeroMQ Community'
 ---
 
-# Chapter 6 - The ZeroMQ Community {#Chapter-The-ZeroMQ-Community}
+# Chapter 6 - The ZeroMQ Community {#the-community}
 
 People sometimes ask me what's so special about ZeroMQ. My standard answer is that ZeroMQ is arguably the best answer we have to the vexing question of "How do we make the distributed software that the 21st century demands?" But more than that, ZeroMQ is special because of its community. This is ultimately what separates the wolves from the sheep.
 

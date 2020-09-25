@@ -3,7 +3,7 @@ weight: 7
 title: '7. Advanced Architecture using ZeroMQ'
 ---
 
-# Chapter 7 - Advanced Architecture using ZeroMQ {#Chapter-Advanced-Architecture-using-ZeroMQ}
+# Chapter 7 - Advanced Architecture using ZeroMQ {#advanced-architecture}
 
 One of the effects of using ZeroMQ at large scale is that because we can build distributed architectures so much faster than before, the limitations of our software engineering processes become more visible. Mistakes in slow motion are often harder to see (or rather, easier to rationalize away).
 

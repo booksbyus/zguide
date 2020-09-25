@@ -3,7 +3,7 @@ weight: 2
 title: '2. Sockets and Patterns'
 ---
 
-# Chapter 2 - Sockets and Patterns {#Chapter-Sockets-and-Patterns}
+# Chapter 2 - Sockets and Patterns {#sockets-and-patterns}
 
 In [Chapter 1 - Basics](chapter1#basics) we took ZeroMQ for a drive, with some basic examples of the main ZeroMQ patterns: request-reply, pub-sub, and pipeline. In this chapter, we're going to get our hands dirty and start to learn how to use these tools in real programs.
 

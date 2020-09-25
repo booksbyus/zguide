@@ -3,7 +3,7 @@ weight: 3
 title: '3. Advanced Request-Reply Patterns'
 ---
 
-# Chapter 3 - Advanced Request-Reply Patterns {#Chapter-Advanced-Request-Reply-Patterns}
+# Chapter 3 - Advanced Request-Reply Patterns {#advanced-request-reply}
 
 In [Chapter 2 - Sockets and Patterns](chapter2#sockets-and-patterns) we worked through the basics of using ZeroMQ by developing a series of small applications, each time exploring new aspects of ZeroMQ. We'll continue this approach in this chapter as we explore advanced patterns built on top of ZeroMQ's core request-reply pattern.
 
