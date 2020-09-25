@@ -1,11 +1,11 @@
 ---
 weight: 3
-title: Advanced Request-Reply Patterns
+title: '3. Advanced Request-Reply Patterns'
 ---
 
-# Advanced Request-Reply Patterns
+# Chapter 3 - Advanced Request-Reply Patterns
 
-In “Sockets and Patterns” we worked through the basics of using ZeroMQ by developing a series of small applications, each time exploring new aspects of ZeroMQ. We'll continue this approach in this chapter as we explore advanced patterns built on top of ZeroMQ's core request-reply pattern.
+In [Chapter 2 - Sockets and Patterns](chapter2#sockets-and-patterns) we worked through the basics of using ZeroMQ by developing a series of small applications, each time exploring new aspects of ZeroMQ. We'll continue this approach in this chapter as we explore advanced patterns built on top of ZeroMQ's core request-reply pattern.
 
 We'll cover:
 
@@ -48,7 +48,7 @@ If you spy on the network data flowing between <tt>hwclient</tt> and <tt>hwserve
 
 ### The Extended Reply Envelope
 
-Now let's extend the REQ-REP pair with a ROUTER-DEALER proxy in the middle and see how this affects the reply envelope. This is the *extended request-reply pattern* we already saw in “Sockets and Patterns”. We can, in fact, insert any number of proxy steps. The mechanics are the same.
+Now let's extend the REQ-REP pair with a ROUTER-DEALER proxy in the middle and see how this affects the reply envelope. This is the *extended request-reply pattern* we already saw in [Chapter 2 - Sockets and Patterns](chapter2#sockets-and-patterns). We can, in fact, insert any number of proxy steps. The mechanics are the same.
 
 {{< textdiagram name="fig27.png" figno="27" title="Extended Request-Reply Pattern" >}}
 #-------#     #-------#
@@ -134,7 +134,7 @@ The REQ socket picks this message up, and checks that the first frame is the emp
 
 ### What's This Good For?
 
-To be honest, the use cases for strict request-reply or extended request-reply are somewhat limited. For one thing, there's no easy way to recover from common failures like the server crashing due to buggy application code. We'll see more about this in “Reliable Request-Reply Patterns”. However once you grasp the way these four sockets deal with envelopes, and how they talk to each other, you can do very useful things. We saw how ROUTER uses the reply envelope to decide which client REQ socket to route a reply back to. Now let's express this another way:
+To be honest, the use cases for strict request-reply or extended request-reply are somewhat limited. For one thing, there's no easy way to recover from common failures like the server crashing due to buggy application code. We'll see more about this in [Chapter 4 - Reliable Request-Reply Patterns](chapter4#reliable-request-reply). However once you grasp the way these four sockets deal with envelopes, and how they talk to each other, you can do very useful things. We saw how ROUTER uses the reply envelope to decide which client REQ socket to route a reply back to. Now let's express this another way:
 
 * Each time ROUTER gives you a message, it tells you what peer that came from, as an identity.
 * You can use this with a hash table (with the identity as key) to track new peers as they arrive.
@@ -198,7 +198,7 @@ And when we receive a message, we:
 
 ### The REQ to ROUTER Combination
 
-In the same way that we can replace REQ with DEALER, we can replace REP with ROUTER. This gives us an asynchronous server that can talk to multiple REQ clients at the same time. If we rewrote the "Hello World" server using ROUTER, we'd be able to process any number of "Hello" requests in parallel. We saw this in the “Sockets and Patterns” <tt>mtserver</tt> example.
+In the same way that we can replace REQ with DEALER, we can replace REP with ROUTER. This gives us an asynchronous server that can talk to multiple REQ clients at the same time. If we rewrote the "Hello World" server using ROUTER, we'd be able to process any number of "Hello" requests in parallel. We saw this in the [Chapter 2 - Sockets and Patterns](chapter2#sockets-and-patterns) <tt>mtserver</tt> example.
 
 We can use ROUTER in two distinct ways:
 
@@ -221,7 +221,7 @@ When you replace a REP with a DEALER, your worker can suddenly go full asynchron
 
 ### The ROUTER to ROUTER Combination
 
-This sounds perfect for N-to-N connections, but it's the most difficult combination to use. You should avoid it until you are well advanced with ZeroMQ. We'll see one example it in the Freelance pattern in “Reliable Request-Reply Patterns”, and an alternative DEALER to ROUTER design for peer-to-peer work in “A Framework for Distributed Computing”.
+This sounds perfect for N-to-N connections, but it's the most difficult combination to use. You should avoid it until you are well advanced with ZeroMQ. We'll see one example it in the Freelance pattern in [Chapter 4 - Reliable Request-Reply Patterns](chapter4#reliable-request-reply), and an alternative DEALER to ROUTER design for peer-to-peer work in [Chapter 8 - A Framework for Distributed Computing](chapter8#moving-pieces).
 
 ### Invalid Combinations
 
@@ -339,7 +339,7 @@ Anywhere you can use REQ, you can use DEALER. There are two specific differences
 * The REQ socket always sends an empty delimiter frame before any data frames; the DEALER does not.
 * The REQ socket will send only one message before it receives a reply; the DEALER is fully asynchronous.
 
-The synchronous versus asynchronous behavior has no effect on our example because we're doing strict request-reply. It is more relevant when we address recovering from failures, which we'll come to in “Reliable Request-Reply Patterns”.
+The synchronous versus asynchronous behavior has no effect on our example because we're doing strict request-reply. It is more relevant when we address recovering from failures, which we'll come to in [Chapter 4 - Reliable Request-Reply Patterns](chapter4#reliable-request-reply).
 
 Now let's look at exactly the same example but with the REQ socket replaced by a DEALER socket:
 

@@ -1,9 +1,9 @@
 ---
 weight: 6
-title: The ZeroMQ Community
+title: '6. The ZeroMQ Community'
 ---
 
-# The ZeroMQ Community
+# Chapter 6 - The ZeroMQ Community
 
 People sometimes ask me what's so special about ZeroMQ. My standard answer is that ZeroMQ is arguably the best answer we have to the vexing question of "How do we make the distributed software that the 21st century demands?" But more than that, ZeroMQ is special because of its community. This is ultimately what separates the wolves from the sheep.
 
@@ -776,7 +776,7 @@ So, when we trust the solitary experts, they make classic mistakes. They focus o
 
 Can we turn the above theory into a reusable process? In late 2011, I started documenting C4 and similar contracts, and using them both in ZeroMQ and in closed source projects. The underlying process is something I call "Simplicity Oriented Design", or SOD. This is a reproducible way of developing simple and elegant products. It organizes people into flexible supply chains that are able to navigate a problem landscape rapidly and cheaply. They do this by building, testing, and keeping or discarding minimal plausible solutions, called "patches". Living products consist of long series of patches, applied one atop the other.
 
-SOD is relevant first because it's how we evolve ZeroMQ. It's also the basis for the design process we will use in “Advanced Architecture using ZeroMQ” to develop larger-scale ZeroMQ applications. Of course, you can use any software architecture methodology with ZeroMQ.
+SOD is relevant first because it's how we evolve ZeroMQ. It's also the basis for the design process we will use in [Chapter 7 - Advanced Architecture using ZeroMQ](chapter7#advanced-architecture) to develop larger-scale ZeroMQ applications. Of course, you can use any software architecture methodology with ZeroMQ.
 
 To best understand how we ended up with SOD, let's look at the alternatives.
 

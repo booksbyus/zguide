@@ -1,9 +1,9 @@
 ---
 weight: 1
-title: Basics
+title: '1. Basics'
 ---
 
-# Basics
+# Chapter 1 - Basics
 
 ## Fixing the World
 
@@ -92,7 +92,7 @@ Now this looks too simple to be realistic, but ZeroMQ sockets have, as we alread
 
 Let us explain briefly what these two programs are actually doing. They create a ZeroMQ context to work with, and a socket. Don't worry what the words mean. You'll pick it up. The server binds its REP (reply) socket to port 5555. The server waits for a request in a loop, and responds each time with a reply. The client sends a request and reads the reply back from the server.
 
-If you kill the server (Ctrl-C) and restart it, the client won't recover properly. Recovering from crashing processes isn't quite that easy. Making a reliable request-reply flow is complex enough that we won't cover it until “Reliable Request-Reply Patterns”.
+If you kill the server (Ctrl-C) and restart it, the client won't recover properly. Recovering from crashing processes isn't quite that easy. Making a reliable request-reply flow is complex enough that we won't cover it until [Chapter 4 - Reliable Request-Reply Patterns](chapter4#reliable-request-reply).
 
 There is a lot happening behind the scenes but what matters to us programmers is how short and sweet the code is, and how often it doesn't crash, even under a heavy load. This is the request-reply pattern, probably the simplest way to use ZeroMQ. It maps to RPC and the classic client/server model.
 
@@ -217,7 +217,7 @@ Then the subscriber will most likely not receive anything. You'll blink, check t
 
 Making a TCP connection involves to and from handshaking that takes several milliseconds depending on your network and the number of hops between peers. In that time, ZeroMQ can send many messages. For sake of argument assume it takes 5 msecs to establish a connection, and that same link can handle 1M messages per second. During the 5 msecs that the subscriber is connecting to the publisher, it takes the publisher only 1 msec to send out those 1K messages.
 
-In “Sockets and Patterns” we'll explain how to synchronize a publisher and subscribers so that you don't start to publish data until the subscribers really are connected and ready. There is a simple and stupid way to delay the publisher, which is to sleep. Don't do this in a real application, though, because it is extremely fragile as well as inelegant and slow. Use sleeps to prove to yourself what's happening, and then wait for “Sockets and Patterns” to see how to do this right.
+In [Chapter 2 - Sockets and Patterns](chapter2#sockets-and-patterns) we'll explain how to synchronize a publisher and subscribers so that you don't start to publish data until the subscribers really are connected and ready. There is a simple and stupid way to delay the publisher, which is to sleep. Don't do this in a real application, though, because it is extremely fragile as well as inelegant and slow. Use sleeps to prove to yourself what's happening, and then wait for [Chapter 2 - Sockets and Patterns](chapter2#sockets-and-patterns) to see how to do this right.
 
 The alternative to synchronization is to simply assume that the published data stream is infinite and has no start and no end. One also assumes that the subscriber doesn't care what transpired before it started up. This is how we built our weather client example.
 
@@ -331,7 +331,7 @@ Let's look at some aspects of this code in more detail:
             #-------------#
 {{< /textdiagram >}}
 
-The pipeline pattern also exhibits the "slow joiner" syndrome, leading to accusations that PUSH sockets don't load balance properly. If you are using PUSH and PULL, and one of your workers gets way more messages than the others, it's because that PULL socket has joined faster than the others, and grabs a lot of messages before the others manage to connect. If you want proper load balancing, you probably want to look at the load balancing pattern in “Advanced Request-Reply Patterns”.
+The pipeline pattern also exhibits the "slow joiner" syndrome, leading to accusations that PUSH sockets don't load balance properly. If you are using PUSH and PULL, and one of your workers gets way more messages than the others, it's because that PULL socket has joined faster than the others, and grabs a lot of messages before the others manage to connect. If you want proper load balancing, you probably want to look at the load balancing pattern in [Chapter 3 - Advanced Request-Reply Patterns](chapter3#advanced-request-reply).
 
 ## Programming with ZeroMQ
 
@@ -411,11 +411,11 @@ Let's look at the typical problems we face when we start to connect pieces using
 
 * How do we handle network errors? Do we wait and retry, ignore them silently, or abort?
 
-Take a typical open source project like [Hadoop Zookeeper](http://hadoop.apache.org/zookeeper/) and read the C API code in <tt>[src/c/src/zookeeper.c](http://github.com/apache/zookeeper/blob/trunk/src/c/src/zookeeper.c)</tt>. When I read this code, in January 2013, it was 4,200 lines of mystery and in there is an undocumented, client/server network communication protocol. I see it's efficient because it uses <tt>poll</tt> instead of <tt>select</tt>. But really, Zookeeper should be using a generic messaging layer and an explicitly documented wire level protocol. It is incredibly wasteful for teams to be building this particular wheel over and over.
+Take a typical open source project like [Hadoop Zookeeper](https://zookeeper.apache.org/) and read the C API code in <tt>[src/c/src/zookeeper.c](http://github.com/apache/zookeeper/blob/trunk/src/c/src/zookeeper.c)</tt>. When I read this code, in January 2013, it was 4,200 lines of mystery and in there is an undocumented, client/server network communication protocol. I see it's efficient because it uses <tt>poll</tt> instead of <tt>select</tt>. But really, Zookeeper should be using a generic messaging layer and an explicitly documented wire level protocol. It is incredibly wasteful for teams to be building this particular wheel over and over.
 
 But how to make a reusable messaging layer? Why, when so many projects need this technology, are people still doing it the hard way by driving TCP sockets in their code, and solving the problems in that long list over and over?
 
-It turns out that building reusable messaging systems is really difficult, which is why few FOSS projects ever tried, and why commercial messaging products are complex, expensive, inflexible, and brittle. In 2006, iMatix designed [AMQP](http://www.amqp.org) which started to give FOSS developers perhaps the first reusable recipe for a messaging system. AMQP works better than many other designs, [but remains relatively complex, expensive, and brittle](http://www.imatix.com/articles:whats-wrong-with-amqp). It takes weeks to learn to use, and months to create stable architectures that don't crash when things get hairy.
+It turns out that building reusable messaging systems is really difficult, which is why few FOSS projects ever tried, and why commercial messaging products are complex, expensive, inflexible, and brittle. In 2006, iMatix designed [AMQP](http://www.amqp.org) which started to give FOSS developers perhaps the first reusable recipe for a messaging system. AMQP works better than many other designs, [but remains relatively complex, expensive, and brittle](https://web.archive.org/web/20190620095529/www.imatix.com/articles:whats-wrong-with-amqp). It takes weeks to learn to use, and months to create stable architectures that don't crash when things get hairy.
 
 {{< textdiagram name="fig7.png" figno="7" title="Messaging as it Starts" >}}
 .------------.

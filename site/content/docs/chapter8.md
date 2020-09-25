@@ -1,9 +1,9 @@
 ---
 weight: 8
-title: A Framework for Distributed Computing
+title: '8. A Framework for Distributed Computing'
 ---
 
-# A Framework for Distributed Computing
+# Chapter 8 - A Framework for Distributed Computing
 
 We've gone though a journey of understanding ZeroMQ in its many aspects. By now you may have started to build your own products using the techniques I explained, as well as others you've figured out yourself. You will start to face questions about how to make these products work in the real world.
 
@@ -57,7 +57,7 @@ If we can solve these problems reasonably well, and the further problems that wi
 
 You should have guessed from my rhetorical questions that there are two broad directions in which we can go. One is to centralize everything. The other is to distribute everything. I'm going to bet on decentralization. If you want centralization, you don't really need ZeroMQ; there are other options you can use.
 
-So very roughly, here's the story. One, the number of moving pieces increases exponentially over time (doubles every 24 months). Two, these pieces stop using wires because dragging cables everywhere gets *really* boring. Three, future applications run across clusters of these pieces using the Benevolent Tyrant pattern from “The ZeroMQ Community”. Four, today it's really difficult, nay still rather impossible, to build such applications. Five, let's make it cheap and easy using all the techniques and tools we've built up. Six, partay!
+So very roughly, here's the story. One, the number of moving pieces increases exponentially over time (doubles every 24 months). Two, these pieces stop using wires because dragging cables everywhere gets *really* boring. Three, future applications run across clusters of these pieces using the Benevolent Tyrant pattern from [Chapter 6 - The ZeroMQ Community](chapter6#the-community). Four, today it's really difficult, nay still rather impossible, to build such applications. Five, let's make it cheap and easy using all the techniques and tools we've built up. Six, partay!
 
 ## The Secret Life of WiFi
 
@@ -492,7 +492,7 @@ If you do sit down and sketch out a UDP multicast protocol, realize that you nee
 
 ## Spinning Off a Library Project
 
-At this stage, however, the code is growing larger than an example should be, so it's time to create a proper GitHub project. It's a rule: build your projects in public view, and tell people about them as you go so your marketing and community building starts on Day 1. I'll walk through what this involves. I explained in “The ZeroMQ Community” about growing communities around projects. We need a few things:
+At this stage, however, the code is growing larger than an example should be, so it's time to create a proper GitHub project. It's a rule: build your projects in public view, and tell people about them as you go so your marketing and community building starts on Day 1. I'll walk through what this involves. I explained in [Chapter 6 - The ZeroMQ Community](chapter6#the-community) about growing communities around projects. We need a few things:
 
 * A name
 * A slogan
@@ -509,7 +509,7 @@ I'm somewhat shy about pushing new projects into the ZeroMQ community too aggres
 
 Start with the basics. The protocol (UDP and ZeroMQ/TCP) will be ZRE (ZeroMQ Realtime Exchange protocol) and the project will be Zyre. I need a second maintainer, so I invite my friend Dong Min (the Korean hacker behind JeroMQ, a pure-Java ZeroMQ stack) to join. He's been working on very similar ideas so is enthusiastic. We discuss this and we get the idea of building Zyre on top of JeroMQ, as well as on top of CZMQ and <tt>libzmq</tt>. This would make it a lot easier to run Zyre on Android. It would also give us two fully separate implementations from the start, which is always a good thing for a protocol.
 
-So we take the FileMQ project I built in “Advanced Architecture using ZeroMQ” as a template for a new GitHub project. The GNU autoconf tools are quite decent, but have a painful syntax. It's easiest to copy existing project files and modify them. The FileMQ project builds a library, has test tools, license files, man pages, and so on. It's not too large so it's a good starting point.
+So we take the FileMQ project I built in [Chapter 7 - Advanced Architecture using ZeroMQ](chapter7#advanced-architecture) as a template for a new GitHub project. The GNU autoconf tools are quite decent, but have a painful syntax. It's easiest to copy existing project files and modify them. The FileMQ project builds a library, has test tools, license files, man pages, and so on. It's not too large so it's a good starting point.
 
 I put together a README to summarize the goals of the project and point to C4. The issue tracker is enabled by default on new GitHub projects, so once we've pushed the UDP ping code as a first version, we're ready to go. However, it's always good to recruit more maintainers, so I create an issue "Call for maintainers" that says:
 
@@ -708,7 +708,7 @@ I'm not going to work through the implementation of group messaging in detail be
 * A hash of groups for other peers, which we update with information from <tt>HELLO</tt>, <tt>JOIN</tt>, and <tt>LEAVE</tt> commands;
 * A hash of peers for each group, which we update with the same three commands.
 
-At this stage, I'm starting to get pretty happy with the binary serialization (our codec generator from “Advanced Architecture using ZeroMQ”), which handles lists and dictionaries as well as strings and integers.
+At this stage, I'm starting to get pretty happy with the binary serialization (our codec generator from [Chapter 7 - Advanced Architecture using ZeroMQ](chapter7#advanced-architecture)), which handles lists and dictionaries as well as strings and integers.
 
 This version is tagged in the repository as v0.2.0 and you can [download the tarball](https://github.com/zeromq/zyre/tags) if you want to check what the code looked like at this stage.
 
@@ -1193,7 +1193,7 @@ As usual, we'll aim for the very simplest plausible solution and then improve th
 * Zyre will distribute that file to all peers, both those that are on the network at that time, and those that arrive later.
 * Each time an interface receives a file it tells its application, "Here is this file".
 
-We might eventually want more discrimination, e.g., publishing to specific groups. We can add that later if it's needed. In “Advanced Architecture using ZeroMQ” we developed a file distribution system (FileMQ) designed to be plugged into ZeroMQ applications. So let's use that.
+We might eventually want more discrimination, e.g., publishing to specific groups. We can add that later if it's needed. In [Chapter 7 - Advanced Architecture using ZeroMQ](chapter7#advanced-architecture) we developed a file distribution system (FileMQ) designed to be plugged into ZeroMQ applications. So let's use that.
 
 Each node is going to be a file publisher and a file subscriber. We bind the publisher to an ephemeral port (if we use the standard FileMQ port 5670, we can't run multiple interfaces on one box), and we broadcast the publisher's endpoint in the <tt>HELLO</tt> message, as we did for the log collector. This lets us interconnect all nodes so that all subscribers talk to all publishers.
 

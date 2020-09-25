@@ -16,6 +16,7 @@
 | Haskell |  42 |  46% |
 | Haxe |  53 |  58% |
 | Java |  91 | 100% |
+| Julia |  10 |  10% |
 | Lua |  53 |  58% |
 | Node.js |  29 |  31% |
 | Objective-C |  13 |  14% |

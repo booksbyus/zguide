@@ -1,15 +1,15 @@
 ---
 weight: 7
-title: Advanced Architecture using ZeroMQ
+title: '7. Advanced Architecture using ZeroMQ'
 ---
 
-# Advanced Architecture using ZeroMQ
+# Chapter 7 - Advanced Architecture using ZeroMQ
 
 One of the effects of using ZeroMQ at large scale is that because we can build distributed architectures so much faster than before, the limitations of our software engineering processes become more visible. Mistakes in slow motion are often harder to see (or rather, easier to rationalize away).
 
 My experience when teaching ZeroMQ to groups of engineers is that it's rarely sufficient to just explain how ZeroMQ works and then just expect them to start building successful products. Like any technology that removes friction, ZeroMQ opens the door to big blunders. If ZeroMQ is the ACME rocket-propelled shoe of distributed software development, a lot of us are like Wile E. Coyote, slamming full speed into the proverbial desert cliff.
 
-We saw in “The ZeroMQ Community” that ZeroMQ itself uses a formal process for changes. One reason we built this process, over some years, was to stop the repeated cliff-slamming that happened in the library itself.
+We saw in [Chapter 6 - The ZeroMQ Community](chapter6#the-community) that ZeroMQ itself uses a formal process for changes. One reason we built this process, over some years, was to stop the repeated cliff-slamming that happened in the library itself.
 
 Partly, it's about slowing down and partially, it's about ensuring that when you move fast, you go--and this is essential Dear Reader--in the *right direction*. It's my standard interview riddle: what's the rarest property of any software system, the absolute hardest thing to get right, the lack of which causes the slow or fast death of the vast majority of projects? The answer is not code quality, funding, performance, or even (though it's a close answer), popularity. The answer is *accuracy*.
 
@@ -34,7 +34,7 @@ We'll cover the following juicy topics:
 
 I'll introduce Message-Oriented Pattern for Elastic Design (MOPED), a software engineering pattern for ZeroMQ architectures. It was either "MOPED" or "BIKE", the Backronym-Induced Kinetic Effect. That's short for "BICICLE", the Backronym-Inflated See if I Care Less Effect. In life, one learns to go with the least embarrassing choice.
 
-If you've read this book carefully, you'll have seen MOPED in action already. The development of Majordomo in “Reliable Request-Reply Patterns” is a near-perfect case. But cute names are worth a thousand words.
+If you've read this book carefully, you'll have seen MOPED in action already. The development of Majordomo in [Chapter 4 - Reliable Request-Reply Patterns](chapter4#reliable-request-reply) is a near-perfect case. But cute names are worth a thousand words.
 
 The goal of MOPED is to define a process by which we can take a rough use case for a new distributed application, and go from "Hello World" to fully-working prototype in any language in under a week.
 
@@ -110,9 +110,9 @@ Now, I've nothing personal against committees. The useless folk need a place to 
 
 It used to be, decades ago, when the Internet was a young modest thing, that protocols were short and sweet. They weren't even "standards", but "requests for comments", which is as modest as you can get. It's been one of my goals since we started iMatix in 1995 to find a way for ordinary people like me to write small, accurate protocols without the overhead of the committees.
 
-Now, ZeroMQ does appear to provide a living, successful protocol abstraction layer with its "we'll carry multipart messages over random transports" way of working. Because ZeroMQ deals silently with framing, connections, and routing, it's surprisingly easy to write full protocol specs on top of ZeroMQ, and in “Reliable Request-Reply Patterns” and “Advanced Pub-Sub Patterns” I showed how to do this.
+Now, ZeroMQ does appear to provide a living, successful protocol abstraction layer with its "we'll carry multipart messages over random transports" way of working. Because ZeroMQ deals silently with framing, connections, and routing, it's surprisingly easy to write full protocol specs on top of ZeroMQ, and in [Chapter 4 - Reliable Request-Reply Patterns](chapter4#reliable-request-reply) and [Chapter 5 - Advanced Pub-Sub Patterns](chapter5#advanced-pub-sub) I showed how to do this.
 
-Somewhere around mid-2007, I kicked off the Digital Standards Organization to define new simpler ways of producing little standards, protocols, and specifications. In my defense, it was a quiet summer. At the time, I wrote that a new specification should take ["minutes to explain, hours to design, days to write, weeks to prove, months to become mature, and years to replace."](http://www.digistan.org/spec:1)
+Somewhere around mid-2007, I kicked off the Digital Standards Organization to define new simpler ways of producing little standards, protocols, and specifications. In my defense, it was a quiet summer. At the time, I wrote that a new specification should take [http://www.digistan.org/spec:1 "minutes to explain, hours to design, days to write, weeks to prove, months to become mature, and years to replace."]
 
 In 2010, we started calling such little specifications *unprotocols*, which some people might mistake for a dastardly plan for world domination by a shadowy international organization, but which really just means "protocols without the goats".
 
@@ -421,11 +421,11 @@ What if I told you of a way to build custom IDL generators cheaply and quickly? 
 
 At iMatix, until a few years ago, we used code generation to build ever larger and more ambitious systems until we decided the technology (GSL) was too dangerous for common use, and we sealed the archive and locked it with heavy chains in a deep dungeon. We actually posted it on GitHub. If you want to try the examples that are coming up, grab [the repository](https://github.com/imatix/gsl) and build yourself a <tt>gsl</tt> command. Typing "make" in the src subdirectory should do it (and if you're that guy who loves Windows, I'm sure you'll send a patch with project files).
 
-This section isn't really about GSL at all, but about a useful and little-known trick that's useful for ambitious architects who want to scale themselves, as well as their work. Once you learn the trick, you can whip up your own code generators in a short time. The code generators most software engineers know about come with a single hard-coded model. For instance, Ragel "compiles executable finite state machines from regular languages", i.e., Ragel's model is a regular language. This certainly works for a good set of problems, but it's far from universal. How do you describe an API in Ragel? Or a project makefile? Or even a finite-state machine like the one we used to design the Binary Star pattern in “Reliable Request-Reply Patterns”?
+This section isn't really about GSL at all, but about a useful and little-known trick that's useful for ambitious architects who want to scale themselves, as well as their work. Once you learn the trick, you can whip up your own code generators in a short time. The code generators most software engineers know about come with a single hard-coded model. For instance, Ragel "compiles executable finite state machines from regular languages", i.e., Ragel's model is a regular language. This certainly works for a good set of problems, but it's far from universal. How do you describe an API in Ragel? Or a project makefile? Or even a finite-state machine like the one we used to design the Binary Star pattern in [Chapter 4 - Reliable Request-Reply Patterns](chapter4#reliable-request-reply)?
 
 All these would benefit from code generation, but there's no universal model. So the trick is to design your own models as you need them, and then make code generators as cheap compilers for that model. You need some experience in how to make good models, and you need a technology that makes it cheap to build custom code generators. A scripting language, like Perl and Python, is a good option. However, we actually built GSL specifically for this, and that's what I prefer.
 
-Let's take a simple example that ties into what we already know. We'll see more extensive examples later, because I really do believe that code generation is crucial knowledge for large-scale work. In “Reliable Request-Reply Patterns”, we developed the [Majordomo Protocol (MDP)](http://rfc.zeromq.org/spec:7), and wrote clients, brokers, and workers for that. Now could we generate those pieces mechanically, by building our own interface description language and code generators?
+Let's take a simple example that ties into what we already know. We'll see more extensive examples later, because I really do believe that code generation is crucial knowledge for large-scale work. In [Chapter 4 - Reliable Request-Reply Patterns](chapter4#reliable-request-reply), we developed the [Majordomo Protocol (MDP)](http://rfc.zeromq.org/spec:7), and wrote clients, brokers, and workers for that. Now could we generate those pieces mechanically, by building our own interface description language and code generators?
 
 When we write a GSL model, we can use *any* semantics we like, in other words we can invent domain-specific languages on the spot. I'll invent a couple--see if you can guess what they represent:
 
@@ -1303,7 +1303,7 @@ I use track for things like updating my MP3 player mounted as a USB drive. As I 
 
 ### Internal Architecture
 
-To build FileMQ I used a lot of code generation, possibly too much for a tutorial. However the code generators are all reusable in other stacks and will be important for our final project in “A Framework for Distributed Computing”. They are an evolution of the set we saw earlier:
+To build FileMQ I used a lot of code generation, possibly too much for a tutorial. However the code generators are all reusable in other stacks and will be important for our final project in [Chapter 8 - A Framework for Distributed Computing](chapter8#moving-pieces). They are an evolution of the set we saw earlier:
 
 * <tt>codec_c.gsl</tt>: generates a message codec for a given protocol.
 * <tt>server_c.gsl</tt>: generates a server class for a protocol and state machine.
@@ -1483,7 +1483,7 @@ Because we've collected all operations on files in a single class (<tt>fmq_file<
 
 ### Recovery and Late Joiners
 
-As it stands now, FileMQ has one major remaining problem: it provides no way for clients to recover from failures. The scenario is that a client, connected to a server, starts to receive files and then disconnects for some reason. The network may be too slow, or breaks. The client may be on a laptop which is shut down, then resumed. The WiFi may be disconnected. As we move to a more mobile world (see “A Framework for Distributed Computing”) this use case becomes more and more frequent. In some ways it's becoming a dominant use case.
+As it stands now, FileMQ has one major remaining problem: it provides no way for clients to recover from failures. The scenario is that a client, connected to a server, starts to receive files and then disconnects for some reason. The network may be too slow, or breaks. The client may be on a laptop which is shut down, then resumed. The WiFi may be disconnected. As we move to a more mobile world (see [Chapter 8 - A Framework for Distributed Computing](chapter8#moving-pieces)) this use case becomes more and more frequent. In some ways it's becoming a dominant use case.
 
 In the classic ZeroMQ pub-sub pattern, there are two strong underlying assumptions, both of which are usually wrong in FileMQ's real world. First, that data expires very rapidly so that there's no interest in asking from old data. Second, that networks are stable and rarely break (so it's better to invest more in improving the infrastructure and less in addressing recovery).
 

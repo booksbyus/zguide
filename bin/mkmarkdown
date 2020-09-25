@@ -71,6 +71,7 @@ while (<>) {
     }
 }
 bookmarks_save ();
+redirect_rules ();
 
 #   Language Scoreboard
 die "Can't create scoreboard.md: $!"
@@ -112,10 +113,11 @@ sub process_source {
             }
             elsif (/^\.bookmark\s+(\w.*)/) {
                 $anchor = $1;
+                $bookmark = $1
             }
             elsif (/^\.output\s+(\w.*)\..*/) {
                 # ignore
-				$current_file = "site/content/docs/$1.md";
+                $current_file = "site/content/docs/$1.md";
                 open OUTPUT, '>', $current_file;
             }
             else {
@@ -123,11 +125,11 @@ sub process_source {
             }
         }
         elsif (/^\+\s+Preface/) {
-			write_prepend ("---\nweight: 0\n---\n\n");
+            write_prepend ("---\nweight: 0\n---\n\n");
             writeln ("# Preface");
         }
         elsif (/^\+\s+Postface/) {
-			write_prepend ("---\nweight: 999\n---\n\n");
+            write_prepend ("---\nweight: 999\n---\n\n");
             writeln ("# Postface");
         }
         elsif (/^\+\s+Appendix: (.*)$/) {
@@ -135,24 +137,35 @@ sub process_source {
             $documents {$anchor} = $symbols {TITLE};
             writeln ("# Appendix: $1");
         }
-        elsif (/^\+\s+(.*)$/) {
-            $bookmarks {$anchor} = $1 if $anchor;
-            $documents {$anchor} = $symbols {TITLE};
-            $chapter++;
-			write_prepend ("---\nweight: $chapter\ntitle: $1\n---\n\n");
-            if ($breaks eq "chapter") {
-                writeln ("# Chapter $chapter. $1");
-                $INDEX++;
+        elsif (/^([\+]+)\s+(.*)$/) {
+            $level = $1;
+            $header = $2;
+            $title = $header;
+            if ($level eq "+" && $header ne "Preface" && $header ne "Postface") {
+                $chapter++;
+                $header = "Chapter $chapter - $header";
             }
-            else {
-                writeln ("# $1");
+            $anchor = $header;
+            $anchor =~ s/[^a-zA-Z]/-/g;
+            $anchor =~ s/\-+/-/g;
+            $anchor =~ s/\-$//;
+            $bookmarks {$anchor} = $header if $anchor;
+            $documents {$anchor} = "chapter$chapter";
+            if ($bookmark) {
+                $bookmarks {$bookmark} = $header;
+                $documents {$bookmark} = "chapter$chapter";
+                $bookmark = "";
             }
-        }
-        elsif (/^\+\+\s+(.*)$/) {
-            writeln ("## $1");
-        }
-        elsif (/^\+\+\+\s+(.*)$/) {
-            writeln ("### $1");
+            if ($level eq "+") {
+                write_prepend ("---\nweight: $chapter\ntitle: '$chapter. $title'\n---\n\n");
+                writeln ("# $header");
+            }
+            elsif ($level eq "++") {
+                writeln ("## $header");
+            }
+            elsif ($level eq "+++") {
+                writeln ("### $header");
+            }
         }
         elsif (/^\*\s+(.*)$/) {      #   Bulleted lists
             writeln ("* $1");
@@ -172,37 +185,37 @@ sub process_source {
                 last if /^```/;
             }
         }
-		#   Code blocks
+        #   Code blocks
         elsif (/\[\[code([^\]]*)\]\]/) {
-			$x = $1;
-			%attributes=();
-			while ($x =~ /(?: ?(\w+)="([^"]*)")/g) {
-				$attributes{$1}=$2;
-			}
+            $x = $1;
+            %attributes=();
+            while ($x =~ /(?: ?(\w+)="([^"]*)")/g) {
+                $attributes{$1}=$2;
+            }
 
-			# Handle example, fragment and textdiagram
-			if (exists $attributes{"type"}) {
+            # Handle example, fragment and textdiagram
+            if (exists $attributes{"type"}) {
                 if ($attributes{"type"} eq "textdiagram") {
                     $attributes{"name"}="fig$FIGNO.png";
                     $attributes{"figno"}="$FIGNO";
                     $FIGNO++;
                 }
-				writef ('{{< '.$attributes{"type"});
-				writef (' name="'.$attributes{"name"}.'"') if exists $attributes{"name"};
-				writef (' figno="'.$attributes{"figno"}.'"') if exists $attributes{"figno"};
-				writef (' title="'.$attributes{"title"}.'"') if exists $attributes{"title"};
-				writef (' language="'.$attributes{"language"}.'"') if exists $attributes{"language"};
-				writeln (" >}}");
+                writef ('{{< '.$attributes{"type"});
+                writef (' name="'.$attributes{"name"}.'"') if exists $attributes{"name"};
+                writef (' figno="'.$attributes{"figno"}.'"') if exists $attributes{"figno"};
+                writef (' title="'.$attributes{"title"}.'"') if exists $attributes{"title"};
+                writef (' language="'.$attributes{"language"}.'"') if exists $attributes{"language"};
+                writeln (" >}}");
 
-				$hasContent = 0;
-				while (<FILE>) {
-					chop while /\s$/;
-					last if /\[\[\/code\]\]/;
-					writeln ($_, false);
-					$hasContent = 1;
-				}
-				writef  ("{{< /".$attributes{"type"}) if $hasContent;
-				writeln (" >}}") if $hasContent;
+                $hasContent = 0;
+                while (<FILE>) {
+                    chop while /\s$/;
+                    last if /\[\[\/code\]\]/;
+                    writeln ($_, false);
+                    $hasContent = 1;
+                }
+                writef  ("{{< /".$attributes{"type"}) if $hasContent;
+                writeln (" >}}") if $hasContent;
 
                 if ($attributes{"type"} eq "example" && !defined ($attributes{"language"})) {
                     foreach $language (@languages) {
@@ -214,17 +227,17 @@ sub process_source {
                     }
                     $examples++;
                 }
-			}
+            }
             #  Process plain code block
-			else {
-				writeln ("```".$attributes{"language"});
-				while (<FILE>) {
-					chop while /\s$/;
-					last if /\[\[\/code\]\]/;
-					writeln ($_, false);
-				}
-				writeln ("```");
-			}
+            else {
+                writeln ("```".$attributes{"language"});
+                while (<FILE>) {
+                    chop while /\s$/;
+                    last if /\[\[\/code\]\]/;
+                    writeln ($_, false);
+                }
+                writeln ("```");
+            }
         }
         elsif (/\[\[code/) {
             print "E: unparsed code block: $_\n";
@@ -260,20 +273,20 @@ sub writeln {
 }
 
 sub write_prepend {
-	local ($_) = @_;
-	close (OUTPUT);
+    local ($_) = @_;
+    close (OUTPUT);
 
-	my $new_filename = 'tmp.txt';
-	my $old_filename = $current_file;
-	open my $new, '>', $new_filename or die "$new_filename: $!";
-	open my $old, '<', $old_filename or die "$old_filename: $!";
-	print {$new} $_;
-	print {$new} $_ while <$old>;
-	close $new;
-	close $old;
-	rename $new_filename, $old_filename or die "rename: $!";
+    my $new_filename = 'tmp.txt';
+    my $old_filename = $current_file;
+    open my $new, '>', $new_filename or die "$new_filename: $!";
+    open my $old, '<', $old_filename or die "$old_filename: $!";
+    print {$new} $_;
+    print {$new} $_ while <$old>;
+    close $new;
+    close $old;
+    rename $new_filename, $old_filename or die "rename: $!";
 
-	open OUTPUT, '>>', $current_file;
+    open OUTPUT, '>>', $current_file;
 }
 
 #
@@ -286,7 +299,7 @@ sub translate_symbols {
     while (/\[#(\S+)\]/) {
         print "Undefined bookmark: $1\n"
             unless defined ($bookmarks {$1});
-        $_ = "$`“$bookmarks{$1}”$'";
+        $_ = "$`\[$bookmarks{$1}\]($documents{$1}#$1)$'";
     }
 
     #   Translate figure references
@@ -301,7 +314,7 @@ sub translate_symbols {
     s/zmq_([\w_]+)\[.\]/[http:\/\/api.zeromq.org\/3-2:zmq_$1 zmq_$1()]/g;
 
     #   Translate wikidot links
-    s/\[([^ ]+) ([^\]]+)\]/[$2]($1)/g;
+    s/\[([^ ]+) ([^\]]+)\]([^\(])/[$2]($1)$3/g;
 
     return $_;
 }
@@ -408,4 +421,39 @@ sub bookmarks_save {
         }
         close (BOOKMARKS);
     }
+}
+
+sub redirect_rules {
+    open INPUT,  "<netlify.toml" or die "Can't read old file: $!";
+    open OUTPUT, '>temp.toml' or die "Can't write new file: $!";
+
+    $doPrint = 1;
+    while( <INPUT> ) {
+        if (/# bookmark redirects end/) {
+            $doPrint = 1;
+        }
+
+        if ($doPrint eq 1) {
+            print OUTPUT "$_";
+        }
+
+        if (/# bookmark redirects start/) {
+            $doPrint = 0;
+            if (open (BOOKMARKS, "site/.bookmarks")) {
+                while (<BOOKMARKS>) {
+                    if (/(\S+)\s+(.+)\|(.+)/) {
+                        $bookmarkLc = lc $1;
+                        print OUTPUT "[[redirects]]\n";
+                        print OUTPUT "from = \"/page:$3#$1\"\n";
+                        print OUTPUT "to = \"/docs/$3#$bookmarkLc\"\n";
+                        print OUTPUT "force = true\n\n";
+                    }
+                }
+            }
+        }
+    }
+
+    close $OUTPUT;
+    close $INPUT;
+    rename "temp.toml", "netlify.toml";
 }
