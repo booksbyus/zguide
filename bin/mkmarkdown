@@ -71,7 +71,6 @@ while (<>) {
     }
 }
 bookmarks_save ();
-redirect_rules ();
 
 #   Language Scoreboard
 die "Can't create scoreboard.md: $!"
@@ -158,13 +157,13 @@ sub process_source {
             }
             if ($level eq "+") {
                 write_prepend ("---\nweight: $chapter\ntitle: '$chapter. $title'\n---\n\n");
-                writeln ("# $header");
+                writeln ("# $header {#$anchor}");
             }
             elsif ($level eq "++") {
-                writeln ("## $header");
+                writeln ("## $header {#$anchor}");
             }
             elsif ($level eq "+++") {
-                writeln ("### $header");
+                writeln ("### $header {#$anchor}");
             }
         }
         elsif (/^\*\s+(.*)$/) {      #   Bulleted lists
@@ -421,39 +420,4 @@ sub bookmarks_save {
         }
         close (BOOKMARKS);
     }
-}
-
-sub redirect_rules {
-    open INPUT,  "<netlify.toml" or die "Can't read old file: $!";
-    open OUTPUT, '>temp.toml' or die "Can't write new file: $!";
-
-    $doPrint = 1;
-    while( <INPUT> ) {
-        if (/# bookmark redirects end/) {
-            $doPrint = 1;
-        }
-
-        if ($doPrint eq 1) {
-            print OUTPUT "$_";
-        }
-
-        if (/# bookmark redirects start/) {
-            $doPrint = 0;
-            if (open (BOOKMARKS, "site/.bookmarks")) {
-                while (<BOOKMARKS>) {
-                    if (/(\S+)\s+(.+)\|(.+)/) {
-                        $bookmarkLc = lc $1;
-                        print OUTPUT "[[redirects]]\n";
-                        print OUTPUT "from = \"/page:$3#$1\"\n";
-                        print OUTPUT "to = \"/docs/$3#$bookmarkLc\"\n";
-                        print OUTPUT "force = true\n\n";
-                    }
-                }
-            }
-        }
-    }
-
-    close $OUTPUT;
-    close $INPUT;
-    rename "temp.toml", "netlify.toml";
 }

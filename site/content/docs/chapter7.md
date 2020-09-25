@@ -3,7 +3,7 @@ weight: 7
 title: '7. Advanced Architecture using ZeroMQ'
 ---
 
-# Chapter 7 - Advanced Architecture using ZeroMQ
+# Chapter 7 - Advanced Architecture using ZeroMQ {#Chapter-Advanced-Architecture-using-ZeroMQ}
 
 One of the effects of using ZeroMQ at large scale is that because we can build distributed architectures so much faster than before, the limitations of our software engineering processes become more visible. Mistakes in slow motion are often harder to see (or rather, easier to rationalize away).
 
@@ -30,7 +30,7 @@ We'll cover the following juicy topics:
 * How to make a secure protocol over ZeroMQ
 * A large-scale file publishing system (FileMQ)
 
-## Message-Oriented Pattern for Elastic Design
+## Message-Oriented Pattern for Elastic Design {#Message-Oriented-Pattern-for-Elastic-Design}
 
 I'll introduce Message-Oriented Pattern for Elastic Design (MOPED), a software engineering pattern for ZeroMQ architectures. It was either "MOPED" or "BIKE", the Backronym-Induced Kinetic Effect. That's short for "BICICLE", the Backronym-Inflated See if I Care Less Effect. In life, one learns to go with the least embarrassing choice.
 
@@ -48,13 +48,13 @@ We can turn this into five real steps:
 * Step 4: make a minimal end-to-end solution.
 * Step 5: solve one problem and repeat.
 
-### Step 1: Internalize the Semantics
+### Step 1: Internalize the Semantics {#Step-Internalize-the-Semantics}
 
 You must learn and digest ZeroMQ's "language", that is, the socket patterns and how they work. The only way to learn a language is to use it. There's no way to avoid this investment, no tapes you can play while you sleep, no chips you can plug in to magically become smarter. Read this book from the start, work through the code examples in whatever language you prefer, understand what's going on, and (most importantly) write some examples yourself and then throw them away.
 
 At a certain point, you'll feel a clicking noise in your brain. Maybe you'll have a weird chili-induced dream where little ZeroMQ tasks run around trying to eat you alive. Maybe you'll just think "aaahh, so *that's* what it means!" If we did our work right, it should take two to three days. However long it takes, until you start thinking in terms of ZeroMQ sockets and patterns, you're not ready for step 2.
 
-### Step 2: Draw a Rough Architecture
+### Step 2: Draw a Rough Architecture {#Step-Draw-a-Rough-Architecture}
 
 From my experience, it's essential to be able to draw the core of your architecture. It helps others understand what you are thinking, and it also helps you think through your ideas. There is really no better way to design a good architecture than to explain your ideas to your colleagues, using a whiteboard.
 
@@ -68,7 +68,7 @@ The rope across the gorge is one client talking to a broker talking to one worke
 
 Be minimalistic. Your goal is not to define a *real* architecture, but to throw a rope across the gorge to bootstrap your process. We make the architecture successfully more complete and realistic over time: e.g., adding multiple workers, adding client and worker APIs, handling failures, and so on.
 
-### Step 3: Decide on the Contracts
+### Step 3: Decide on the Contracts {#Step-Decide-on-the-Contracts}
 
 A good software architecture depends on contracts, and the more explicit they are, the better things scale. You don't care *how* things happen; you only care about the results. If I send an email, I don't care how it arrives at its destination, as long as the contract is respected. The email contract is: it arrives within a few minutes, no-one modifies it, and it doesn't get lost.
 
@@ -82,7 +82,7 @@ So what is a contract in a distributed system? There are, in my experience, two 
 
 You write minimal contracts that are mostly just place markers. Most messages and most API methods will be missing or empty. You also want to write down any known technical requirements in terms of throughput, latency, reliability, and so on. These are the criteria on which you will accept or reject any particular piece of work.
 
-### Step 4: Write a Minimal End-to-End Solution
+### Step 4: Write a Minimal End-to-End Solution {#Step-Write-a-Minimal-End-to-End-Solution}
 
 The goal is to test out the overall architecture as rapidly as possible. Make skeleton applications that call the APIs, and skeleton stacks that implement both sides of every protocol. You want to get a working end-to-end "Hello World" as soon as you can. You want to be able to test code as you write it, so that you can weed out the broken assumptions and inevitable errors you make. Do not go off and spend six months writing a test suite! Instead, make a minimal bare-bones application that uses our still-hypothetical API.
 
@@ -92,7 +92,7 @@ Write down the protocols on a wiki or shared document in such a way that you can
 
 Our goal is to get the simplest test case working, without any avoidable functionality. Everything you can chop off the list of things to do, you chop. Ignore the groans from colleagues and bosses. I'll repeat this once again: you can *always* add functionality, that's relatively easy. But aim to keep the overall weight to a minimum.
 
-### Step 5: Solve One Problem and Repeat
+### Step 5: Solve One Problem and Repeat {#Step-Solve-One-Problem-and-Repeat}
 
 You're now in the happy cycle of issue-driven development where you can start to solve tangible problems instead of adding features. Write issues that each state a clear problem, and propose a solution. As you design the API, keep in mind your standards for names, consistency, and behavior. Writing these down in prose often helps keep them sane.
 
@@ -100,9 +100,9 @@ From here, every single change you make to the architecture and code can be prov
 
 Now you go through the whole cycle (extending the test case, fixing the API, updating the protocol, and extending the code, as needed), taking problems one at a time and testing the solutions individually. It should take about 10-30 minutes for each cycle, with the occasional spike due to random confusion.
 
-## Unprotocols
+## Unprotocols {#Unprotocols}
 
-### Protocols Without The Goats
+### Protocols Without The Goats {#Protocols-Without-The-Goats}
 
 When this man thinks of protocols, this man thinks of massive documents written by committees, over years. This man thinks of the IETF, W3C, ISO, Oasis, regulatory capture, FRAND patent license disputes, and soon after, this man thinks of retirement to a nice little farm in northern Bolivia up in the mountains where the only other needlessly stubborn beings are the goats chewing up the coffee plants.
 
@@ -116,7 +116,7 @@ Somewhere around mid-2007, I kicked off the Digital Standards Organization to de
 
 In 2010, we started calling such little specifications *unprotocols*, which some people might mistake for a dastardly plan for world domination by a shadowy international organization, but which really just means "protocols without the goats".
 
-### Contracts Are Hard
+### Contracts Are Hard {#Contracts-Are-Hard}
 
 Writing contracts is perhaps the most difficult part of large-scale architecture. With unprotocols, we remove as much of the unnecessary friction as possible. What remains is still a hard set of problems to solve. A good contract (be it an API, a protocol, or a rental agreement) has to be simple, unambiguous, technically sound, and easy to enforce.
 
@@ -149,7 +149,7 @@ And above all, *write it down*. Code is not a specification. The point about a w
 
 If this sounds hard, don't worry too much. One of the less obvious benefits of using ZeroMQ is that it cuts the effort necessary to write a protocol spec by perhaps 90% or more because it already handles framing, routing, queuing, and so on. This means that you can experiment rapidly, make mistakes cheaply, and thus learn rapidly.
 
-### How to Write Unprotocols
+### How to Write Unprotocols {#How-to-Write-Unprotocols}
 
 When you start to write an unprotocol specification document, stick to a consistent structure so that your readers know what to expect. Here is the structure I use:
 
@@ -176,7 +176,7 @@ Here are some key points about unprotocols:
 
 * Use a market-driven life cycle process like [Digistan's COSS](http://www.digistan.org/spec:1) so that people place the right weight on your specs as they mature (or don't).
 
-### Why use the GPLv3 for Public Specifications?
+### Why use the GPLv3 for Public Specifications? {#Why-use-the-GPLv-for-Public-Specifications}
 
 The license you choose is particularly crucial for public specifications. Traditionally, protocols are published under custom licenses, where the authors own the text and derived works are forbidden. This sounds great (after all, who wants to see a protocol forked?), but it's in fact highly risky. A protocol committee is vulnerable to capture, and if the protocol is important and valuable, the incentive for capture grows.
 
@@ -188,7 +188,7 @@ When you contribute to an open source project, you really want to know your hard
 
 When you implement a GPLv3 specification, your applications are of course yours, and licensed any way you like. But you can be certain of two things. One, that specification will *never* be embraced and extended into proprietary forms. Any derived forms of the specification must also be GPLv3. Two, no one who ever implements or uses the protocol will ever launch a patent attack on anything it covers, nor can they add their patented technology to it without granting the world a free license.
 
-### Using ABNF
+### Using ABNF {#Using-ABNF}
 
 My advice when writing protocol specs is to learn and use a formal grammar. It's just less hassle than allowing others to interpret what you mean, and then recover from the inevitable false assumptions. The target of your grammar is other people, engineers, not compilers.
 
@@ -213,7 +213,7 @@ use-peering     = C:ICANHAZ
 
 I've actually used these keywords (<tt>OHAI</tt>, <tt>WTF</tt>) in commercial projects. They make developers giggly and happy. They confuse management. They're good in first drafts that you want to throw away later.
 
-### The Cheap or Nasty Pattern
+### The Cheap or Nasty Pattern {#The-Cheap-or-Nasty-Pattern}
 
 There is a general lesson I've learned over a couple of decades of writing protocols small and large. I call this the *Cheap or Nasty* pattern: you can often split your work into two aspects or layers and solve these separately--one using a "cheap" approach, the other using a "nasty" approach.
 
@@ -257,7 +257,7 @@ A Nasty parser is something you write by hand, which writes or reads bits, bytes
 
 Cheap or Nasty isn't a universal pattern; not all protocols have this dichotomy. Also, how you use Cheap or Nasty will depend on the situation. In some cases, it can be two parts of a single protocol. In other cases, it can be two protocols, one layered on top of the other.
 
-### Error Handling
+### Error Handling {#Error-Handling}
 
 Using Cheap or Nasty makes error handling rather simpler. You have two kinds of commands and two ways to signal errors:
 
@@ -266,11 +266,11 @@ Using Cheap or Nasty makes error handling rather simpler. You have two kinds of 
 
 It's usually good to distinguish a few kinds of errors, but as always keep it minimal and add only what you need.
 
-## Serializing Your Data
+## Serializing Your Data {#Serializing-Your-Data}
 
 When we start to design a protocol, one of the first questions we face is how we encode data on the wire. There is no universal answer. There are a half-dozen different ways to serialize data, each with pros and cons. We'll explore some of these.
 
-### Abstraction Level
+### Abstraction Level {#Abstraction-Level}
 
 Before looking at how to put data onto the wire, it's worth asking what data we actually want to exchange between applications. If we don't use any abstraction, we literally serialize and deserialize our internal state. That is, the objects and structures we use to implement our functionality.
 
@@ -280,7 +280,7 @@ It's perhaps the main reason so many older protocols and APIs are so complex: th
 
 A good protocol or API abstraction encapsulates natural patterns of use, and gives them name and properties that are predictable and regular. It chooses sensible defaults so that the main use cases can be specified minimally. It aims to be simple for the simple cases, and expressive for the rarer complex cases. It does not make any statements or assumptions about the internal implementation unless that is absolutely needed for interoperability.
 
-### ZeroMQ Framing
+### ZeroMQ Framing {#ZeroMQ-Framing}
 
 The simplest and most widely used serialization format for ZeroMQ applications is ZeroMQ's own multipart framing. For example, here is how the [Majordomo Protocol](http://rfc.zeromq.org/spec:7) defines a request:
 
@@ -305,7 +305,7 @@ Frame 2: command body
 
 Where we'd expect to parse the command header in the various intermediaries (client API, broker, and worker API), and pass the command body untouched from application to application.
 
-### Serialization Languages
+### Serialization Languages {#Serialization-Languages}
 
 Serialization languages have their fashions. XML used to be big as in popular, then it got big as in over-engineered, and then it fell into the hands of "Enterprise Information Architects" and it's not been seen alive since. Today's XML is the epitome of "somewhere in that mess is a small, elegant language trying to escape".
 
@@ -345,7 +345,7 @@ However, it's not all roses. While modern scripting languages support JSON and X
 
 So you can drive your choice according to the languages for which you're aiming. If your universe is a scripting language, then go for JSON. If you are aiming to build protocols for wider system use, keep things simple for C developers and stick to HTTP-style headers.
 
-### Serialization Libraries
+### Serialization Libraries {#Serialization-Libraries}
 
 The <tt>msgpack.org</tt> site says:
 
@@ -385,7 +385,7 @@ message Person {
 
 It works, but in most practical cases wins you little over a serialization language backed by decent specifications written by hand or produced mechanically (we'll come to this). The price you'll pay is an extra dependency and quite probably, worse overall performance than if you used Cheap or Nasty.
 
-### Handwritten Binary Serialization
+### Handwritten Binary Serialization {#Handwritten-Binary-Serialization}
 
 As you'll gather from this book, my preferred language for systems programming is C (upgraded to C99, with a constructor/destructor API model and generic containers). There are two reasons I like this modernized C language. First, I'm too weak-minded to learn a big language like C++. Life just seems filled with more interesting things to understand. Second, I find that this specific level of manual control lets me produce better results, faster.
 
@@ -413,7 +413,7 @@ Here are some of the techniques we use to make our codecs better:
 
 * *Be ready to break the rules.* Do you really need to encode integers in big-endian network byte order? x86 and ARM account for almost all modern CPUs, yet use little-endian (ARM is actually bi-endian but Android, like Windows and iOS, is little-endian).
 
-### Code Generation
+### Code Generation {#Code-Generation}
 
 Reading the previous two sections, you might have wondered, "could I write my own IDL generator that was better than a general purpose one?" If this thought wandered into your mind, it probably left pretty soon after, chased by dark calculations about how much work that actually involved.
 
@@ -651,7 +651,7 @@ So if you do use GSL and want to create open communities around your work, here 
 
 We're already using GSL in some projects around ZeroMQ. For example, the high-level C binding, CZMQ, uses GSL to generate the socket options class (<tt>zsockopt</tt>). A 300-line code generator turns 78 lines of XML model into 1,500 lines of perfect, but really boring code. That's a good win.
 
-## Transferring Files
+## Transferring Files {#Transferring-Files}
 
 Let's take a break from the lecturing and get back to our first love and the reason for doing all of this: code.
 
@@ -820,7 +820,7 @@ To make this work (and we will, my dear readers), we need to be a little more ex
 
 And this gives us "credit-based flow control", which effectively removes the need for high-water marks, and any risk of memory overflow.
 
-## State Machines
+## State Machines {#State-Machines}
 
 Software engineers tend to think of (finite) state machines as a kind of intermediary interpreter. That is, you take a regular language and compile that into a state machine, then execute the state machine. The state machine itself is rarely visible to the developer: it's an internal representation--optimized, compressed, and bizarre.
 
@@ -1105,7 +1105,7 @@ In the Libero state machine model, there are a few more concepts that we've not 
 * Exceptions, which lets us write terser state machines. When an action raises an exception, further processing on the event stops. The state machine can then define how to handle exception events.
 * The <tt>Defaults</tt> state, where we can define default handling for events (especially useful for exception events).
 
-## Authentication Using SASL
+## Authentication Using SASL {#Authentication-Using-SASL}
 
 When we designed AMQP in 2007, we chose the [Simple Authentication and Security Layer](http://en.wikipedia.org/wiki/Simple_Authentication_and_Security_Layer) (SASL) for the authentication layer, one of the ideas we took from the [BEEP protocol framework](http://www.rfc-editor.org/rfc/rfc3080.txt). SASL looks complex at first, but it's actually simple and fits neatly into a ZeroMQ-based protocol. What I especially like about SASL is that it's scalable. You can start with anonymous access or plain text authentication and no security, and grow to more secure mechanisms over time without changing your protocol.
 
@@ -1142,11 +1142,11 @@ Where ORLY and YARLY contain a string (a list of mechanisms in ORLY, one mechani
 
 The SASL [RFC](http://tools.ietf.org/html/rfc4422) goes into detail about other features (that we don't need), the kinds of ways SASL could be attacked, and so on.
 
-## Large-Scale File Publishing: FileMQ
+## Large-Scale File Publishing: FileMQ {#Large-Scale-File-Publishing-FileMQ}
 
 Let's put all these techniques together into a file distribution system that I'll call FileMQ. This is going to be a real product, living on [GitHub](https://github.com/zeromq/filemq). What we'll make here is a first version of FileMQ, as a training tool. If the concept works, the real thing may eventually get its own book.
 
-### Why make FileMQ?
+### Why make FileMQ? {#Why-make-FileMQ}
 
 Why make a file distribution system? I already explained how to send large files over ZeroMQ, and it's really quite simple. But if you want to make messaging accessible to a million times more people than can use ZeroMQ, you need another kind of API. An API that my five-year old son can understand. An API that is universal, requires no programming, and works with just about every single application.
 
@@ -1160,7 +1160,7 @@ I want to use it to back up photos from my mobile phone to my laptop over WiFi. 
 
 A visionary idea, isn't it? Well, ideas are cheap. The hard part is making this, and making it simple.
 
-### Initial Design Cut: the API
+### Initial Design Cut: the API {#Initial-Design-Cut-the-API}
 
 Here's the way I see the first design. FileMQ has to be distributed, which means that every node can be a server and a client at the same time. But I don't want the protocol to be symmetrical, because that seems forced. We have a natural flow of files from point A to point B, where A is the "server" and B is the "client". If files flow back the other way, then we have two flows. FileMQ is not yet directory synchronization protocol, but we'll bring it quite close.
 
@@ -1186,7 +1186,7 @@ fmq_client_destroy (&client);
 
 If we wrap this C API in other languages, we can easily script FileMQ, embed it applications, port it to smartphones, and so on.
 
-### Initial Design Cut: the Protocol
+### Initial Design Cut: the Protocol {#Initial-Design-Cut-the-Protocol}
 
 The full name for the protocol is the "File Message Queuing Protocol", or FILEMQ in uppercase to distinguish it from the software. To start with, we write down the protocol as an ABNF grammar. Our grammar starts with the flow of commands between the client and server. You should recognize these as a combination of the various techniques we've seen already:
 
@@ -1278,7 +1278,7 @@ S:RTFM          = signature %x81 reason
 
 FILEMQ lives on the [ZeroMQ unprotocols website](http://rfc.zeromq.org/spec:19) and has a registered TCP port with IANA (the Internet Assigned Numbers Authority), which is port 5670.
 
-### Building and Trying FileMQ
+### Building and Trying FileMQ {#Building-and-Trying-FileMQ}
 
 The FileMQ stack is [on GitHub](https://github.com/zeromq/filemq). It works like a classic C/C++ project:
 
@@ -1301,7 +1301,7 @@ And open two file navigator windows, one into <tt>src/fmqroot/send</tt> and one 
 
 I use track for things like updating my MP3 player mounted as a USB drive. As I add or remove files in my laptop's Music folder, the same changes happen on the MP3 player. FILEMQ isn't a full replication protocol yet, but we'll fix that later.
 
-### Internal Architecture
+### Internal Architecture {#Internal-Architecture}
 
 To build FileMQ I used a lot of code generation, possibly too much for a tutorial. However the code generators are all reusable in other stacks and will be important for our final project in [Chapter 8 - A Framework for Distributed Computing](chapter8#moving-pieces). They are an evolution of the set we saw earlier:
 
@@ -1337,7 +1337,7 @@ Every class has a test method, and the main development cycle is "edit, test". T
 
 You should, really, be able to read the source code and rapidly understand what these classes are doing. If you can't read the code happily, tell me. If you want to port the FileMQ implementation into other languages, start by forking the whole repository and later we'll see if it's possible to do this in one overall repo.
 
-### Public API
+### Public API {#Public-API}
 
 The public API consists of two classes (as we sketched earlier):
 
@@ -1375,7 +1375,7 @@ fmq_server_publish (fmq_server_t *self, char *location, char *alias)
 }
 {{< /fragment >}}
 
-### Design Notes
+### Design Notes {#Design-Notes}
 
 The hardest part of making FileMQ wasn't implementing the protocol, but maintaining accurate state internally. An FTP or HTTP server is essentially stateless. But a publish/subscribe server *has* to maintain subscriptions, at least.
 
@@ -1393,7 +1393,7 @@ So I'll go through some of the design aspects:
 
 * Clients can reconnect at any point; if the client sends <tt>OHAI</tt>, that signals the end of any previous conversation and the start of a new one. I might one day make subscriptions durable on the server, so they survive a disconnection. The client stack, after reconnecting, replays any subscriptions the caller application already made.
 
-### Configuration
+### Configuration {#Configuration}
 
 I've built several large server products, like the Xitami web server that was popular in the late 90's, and the [OpenAMQ messaging server](http://www.openamq.org). Getting configuration easy and obvious was a large part of making these servers fun to use.
 
@@ -1445,7 +1445,7 @@ security
 
 One cute thing (which seems useful) the generated server code does is to parse this config file (when you use the <tt>fmq_server_configure()</tt> method) and execute any section that matches an API method. Thus the <tt>publish</tt> section works as a <tt>fmq_server_publish()</tt> method.
 
-### File Stability
+### File Stability {#File-Stability}
 
 It is quite common to poll a directory for changes and then do something "interesting" with new files. But as one process is writing to a file, other processes have no idea when the file has been fully written. One solution is to add a second "indicator" file that we create after creating the first file. This is intrusive, however.
 
@@ -1453,7 +1453,7 @@ There is a neater way, which is to detect when a file is "stable", i.e., no one 
 
 For this to work, and this is a requirement for any application hoping to use FileMQ successfully, do not buffer more than a second's worth of data in memory before writing. If you use very large block sizes, the file may look stable when it's not.
 
-### Delivery Notifications
+### Delivery Notifications {#Delivery-Notifications}
 
 One of the nice things about the multithreaded API model we're using is that it's essentially message based. This makes it ideal for returning events back to the caller. A more conventional API approach would be to use callbacks. But callbacks that cross thread boundaries are somewhat delicate. Here's how the client sends a message back when it has received a complete file:
 
@@ -1465,7 +1465,7 @@ zstr_sendf (self->pipe, "%s/%s", inbox, filename);
 
 We can now add a _recv() method to the API that waits for events back from the client. It makes a clean style for the caller: create the client object, configure it, and then receive and process any events it returns.
 
-### Symbolic Links
+### Symbolic Links {#Symbolic-Links}
 
 While using a staging area is a nice, simple API, it also creates costs for senders. If I already have a 2GB video file on a camera, and want to send it via FileMQ, the current implementation asks that I copy it to a staging area before it will be sent to subscribers.
 
@@ -1481,7 +1481,7 @@ This doesn't affect the protocol in any way; it's an optimization in the server 
 
 Because we've collected all operations on files in a single class (<tt>fmq_file</tt>), it's a clean change. When we create a new file object, we check if it's a symbolic link and then all read-only actions (get file size, read file) operate on the target file, not the link.
 
-### Recovery and Late Joiners
+### Recovery and Late Joiners {#Recovery-and-Late-Joiners}
 
 As it stands now, FileMQ has one major remaining problem: it provides no way for clients to recover from failures. The scenario is that a client, connected to a server, starts to receive files and then disconnects for some reason. The network may be too slow, or breaks. The client may be on a laptop which is shut down, then resumed. The WiFi may be disconnected. As we move to a more mobile world (see [Chapter 8 - A Framework for Distributed Computing](chapter8#moving-pieces)) this use case becomes more and more frequent. In some ways it's becoming a dominant use case.
 
@@ -1527,7 +1527,7 @@ ICANHAZ:
 
 Although we don't do this in FileMQ, the server can use the cache information to help the client catch up with deletions that it missed. To do this, it would have to log deletions, and then compare this log with the client cache when a client subscribes.
 
-### Test Use Case: The Track Tool
+### Test Use Case: The Track Tool {#Test-Use-Case-The-Track-Tool}
 
 To properly test something like FileMQ we need a test case that plays with live data. One of my sysadmin tasks is to manage the MP3 tracks on my music player, which is, by the way, a Sansa Clip reflashed with Rock Box, which I highly recommend. As I download tracks into my Music folder, I want to copy these to my player, and as I find tracks that annoy me, I delete them in the Music folder and want those gone from my player too.
 
@@ -1581,7 +1581,7 @@ int main (int argc, char *argv [])
 
 Note how we work with physical paths in this tool. The server publishes the physical path <tt>/home/ph/Music</tt> and maps this to the virtual path <tt>/</tt>. The client subscribes to <tt>/</tt> and receives all files in <tt>/media/3230-6364/MUSIC</tt>. I could use any structure within the server directory, and it would be copied faithfully to the client's inbox. Note the API method <tt>fmq_client_set_resync()</tt>, which causes a server-to-client synchronization.
 
-## Getting an Official Port Number
+## Getting an Official Port Number {#Getting-an-Official-Port-Number}
 
 We've been using port 5670 in the examples for FILEMQ. Unlike all the previous examples in this book, this port isn't arbitrary but [was assigned](http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt) by the Internet [Assigned Numbers Authority (IANA)](http://www.iana.org), which "is responsible for the global coordination of the DNS Root, IP addressing, and other Internet protocol resources".
 

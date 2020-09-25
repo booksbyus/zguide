@@ -3,7 +3,7 @@ weight: 2
 title: '2. Sockets and Patterns'
 ---
 
-# Chapter 2 - Sockets and Patterns
+# Chapter 2 - Sockets and Patterns {#Chapter-Sockets-and-Patterns}
 
 In [Chapter 1 - Basics](chapter1#basics) we took ZeroMQ for a drive, with some basic examples of the main ZeroMQ patterns: request-reply, pub-sub, and pipeline. In this chapter, we're going to get our hands dirty and start to learn how to use these tools in real programs.
 
@@ -26,7 +26,7 @@ We'll cover:
 * How to create and use message envelopes for pub-sub.
 * Using the HWM (high-water mark) to protect against memory overflows.
 
-## The Socket API
+## The Socket API {#The-Socket-API}
 
 To be perfectly honest, ZeroMQ does a kind of switch-and-bait on you, for which we don't apologize. It's for your own good and it hurts us more than it hurts you. ZeroMQ presents a familiar socket-based API, which requires great effort for us to hide a bunch of message-processing engines. However, the result will slowly fix your world view about how to design and write distributed software.
 
@@ -46,7 +46,7 @@ Note that sockets are always void pointers, and messages (which we'll come to ve
 
 Creating, destroying, and configuring sockets works as you'd expect for any object. But remember that ZeroMQ is an asynchronous, elastic fabric. This has some impact on how we plug sockets into the network topology and how we use the sockets after that.
 
-### Plugging Sockets into the Topology
+### Plugging Sockets into the Topology {#Plugging-Sockets-into-the-Topology}
 
 To create a connection between two nodes, you use <tt>[zmq_bind()](http://api.zeromq.org/3-2:zmq_bind)</tt> in one node and <tt>[zmq_connect()](http://api.zeromq.org/3-2:zmq_connect)</tt> in the other.  As a general rule of thumb, the node that does <tt>[zmq_bind()](http://api.zeromq.org/3-2:zmq_bind)</tt> is a "server", sitting on a well-known network address, and the node which does <tt>[zmq_connect()](http://api.zeromq.org/3-2:zmq_connect)</tt> is a "client", with unknown or arbitrary network addresses. Thus we say that we "bind a socket to an endpoint" and "connect a socket to an endpoint", the endpoint being that well-known network address.
 
@@ -82,7 +82,7 @@ Sockets have types. The socket type defines the semantics of the socket, its pol
 
 It's the ability to connect sockets in these different ways that gives ZeroMQ its basic power as a message queuing system. There are layers on top of this, such as proxies, which we'll get to later. But essentially, with ZeroMQ you define your network architecture by plugging pieces together like a child's construction toy.
 
-### Sending and Receiving Messages
+### Sending and Receiving Messages {#Sending-and-Receiving-Messages}
 
 To send and receive messages you use the <tt>[zmq_msg_send()](http://api.zeromq.org/3-2:zmq_msg_send)</tt> and <tt>[zmq_msg_recv()](http://api.zeromq.org/3-2:zmq_msg_recv)</tt> methods. The names are conventional, but ZeroMQ's I/O model is different enough from the classic TCP model that you will need time to get your head around it.
 
@@ -114,7 +114,7 @@ Let's look at the main differences between TCP sockets and ZeroMQ sockets when i
 
 The <tt>[zmq_send()](http://api.zeromq.org/3-2:zmq_send)</tt> method does not actually send the message to the socket connection(s). It queues the message so that the I/O thread can send it asynchronously. It does not block except in some exception cases. So the message is not necessarily sent when <tt>[zmq_send()](http://api.zeromq.org/3-2:zmq_send)</tt> returns to your application.
 
-### Unicast Transports
+### Unicast Transports {#Unicast-Transports}
 
 ZeroMQ provides a set of unicast transports (<tt>inproc</tt>, <tt>ipc</tt>, and <tt>tcp</tt>) and multicast transports (epgm, pgm). Multicast is an advanced technique that we'll come to later. Don't even start using it unless you know that your fan-out ratios will make 1-to-N unicast impossible.
 
@@ -124,7 +124,7 @@ The inter-process <tt>ipc</tt> transport is disconnected, like <tt>tcp</tt>. It 
 
 The inter-thread transport, **<tt>inproc</tt>**, is a connected signaling transport. It is much faster than <tt>tcp</tt> or <tt>ipc</tt>. This transport has a specific limitation compared to <tt>tcp</tt> and <tt>ipc</tt>: **the server must issue a bind before any client issues a connect**. This is something future versions of ZeroMQ may fix, but at present this defines how you use <tt>inproc</tt> sockets. We create and bind one socket and start the child threads, which create and connect the other sockets.
 
-### ZeroMQ is Not a Neutral Carrier
+### ZeroMQ is Not a Neutral Carrier {#ZeroMQ-is-Not-a-Neutral-Carrier}
 
 A common question that newcomers to ZeroMQ ask (it's one I've asked myself) is, "how do I write an XYZ server in ZeroMQ?" For example, "how do I write an HTTP server in ZeroMQ?" The implication is that if we use normal sockets to carry HTTP requests and responses, we should be able to use ZeroMQ sockets to do the same, only much faster and better.
 
@@ -146,7 +146,7 @@ The HTTP request uses CR-LF as its simplest framing delimiter, whereas ZeroMQ us
 
 Since v3.3, however, ZeroMQ has a socket option called <tt>ZMQ_ROUTER_RAW</tt> that lets you read and write data without the ZeroMQ framing. You could use this to read and write proper HTTP requests and responses. Hardeep Singh contributed this change so that he could connect to Telnet servers from his ZeroMQ application. At time of writing this is still somewhat experimental, but it shows how ZeroMQ keeps evolving to solve new problems. Maybe the next patch will be yours.
 
-### I/O Threads
+### I/O Threads {#I-O-Threads}
 
 We said that ZeroMQ does I/O in a background thread. One I/O thread (for all sockets) is sufficient for all but the most extreme applications. When you create a new context, it starts with one I/O thread. The general rule of thumb is to allow one I/O thread per gigabyte of data in or out per second. To raise the number of I/O threads, use the <tt>[zmq_ctx_set()](http://api.zeromq.org/3-2:zmq_ctx_set)</tt> call *before* creating any sockets:
 
@@ -161,7 +161,7 @@ We've seen that one socket can handle dozens, even thousands of connections at o
 
 If you are using ZeroMQ for inter-thread communications only (i.e., a multithreaded application that does no external socket I/O) you can set the I/O threads to zero. It's not a significant optimization though, more of a curiosity.
 
-## Messaging Patterns
+## Messaging Patterns {#Messaging-Patterns}
 
 Underneath the brown paper wrapping of ZeroMQ's socket API lies the world of messaging patterns. If you have a background in enterprise messaging, or know UDP well, these will be vaguely familiar. But to most ZeroMQ newcomers, they are a surprise. We're so used to the TCP paradigm where a socket maps one-to-one to another node.
 
@@ -195,7 +195,7 @@ We looked at the first three of these in [Chapter 1 - Basics](chapter1#basics), 
 
 You'll also see references to XPUB and XSUB sockets, which we'll come to later (they're like raw versions of PUB and SUB). Any other combination will produce undocumented and unreliable results, and future versions of ZeroMQ will probably return errors if you try them. You can and will, of course, bridge other socket types via code, i.e., read from one socket type and write to another.
 
-### High-Level Messaging Patterns
+### High-Level Messaging Patterns {#High-Level-Messaging-Patterns}
 
 These four core patterns are cooked into ZeroMQ. They are part of the ZeroMQ API, implemented in the core C++ library, and are guaranteed to be available in all fine retail stores.
 
@@ -203,7 +203,7 @@ On top of those, we add *high-level messaging patterns*. We build these high-lev
 
 One of the things we aim to provide you with in this book are a set of such high-level patterns, both small (how to handle messages sanely) and large (how to make a reliable pub-sub architecture).
 
-### Working with Messages
+### Working with Messages {#Working-with-Messages}
 
 The <tt>libzmq</tt> core library has in fact two APIs to send and receive messages. The <tt>[zmq_send()](http://api.zeromq.org/3-2:zmq_send)</tt> and <tt>[zmq_recv()](http://api.zeromq.org/3-2:zmq_recv)</tt> methods that we've already seen and used are simple one-liners. We will use these often, but <tt>[zmq_recv()](http://api.zeromq.org/3-2:zmq_recv)</tt> is bad at dealing with arbitrary message sizes: it truncates messages to whatever buffer size you provide. So there's a second API that works with zmq_msg_t structures, with a richer but more difficult API:
 
@@ -268,7 +268,7 @@ And to be repetitive, do not use <tt>[zmq_msg_init_data()](http://api.zeromq.org
 
 This rich API can be tiresome to work with. The methods are optimized for performance, not simplicity. If you start using these you will almost definitely get them wrong until you've read the man pages with some care. So one of the main jobs of a good language binding is to wrap this API up in classes that are easier to use.
 
-### Handling Multiple Sockets
+### Handling Multiple Sockets {#Handling-Multiple-Sockets}
 
 In all the examples so far, the main loop of most examples has been:
 
@@ -303,7 +303,7 @@ typedef struct {
 } zmq_pollitem_t;
 ```
 
-### Multipart Messages
+### Multipart Messages {#Multipart-Messages}
 
 ZeroMQ lets us compose a message out of several frames, giving us a "multipart message". Realistic applications use multipart messages heavily, both for wrapping messages with address information and for simple serialization. We'll look at reply envelopes later.
 
@@ -346,13 +346,13 @@ Some things to know about multipart messages:
 * On sending, ZeroMQ queues message frames in memory until the last is received, then sends them all.
 * There is no way to cancel a partially sent message, except by closing the socket.
 
-### Intermediaries and Proxies
+### Intermediaries and Proxies {#Intermediaries-and-Proxies}
 
 ZeroMQ aims for decentralized intelligence, but that doesn't mean your network is empty space in the middle. It's filled with message-aware infrastructure and quite often, we build that infrastructure with ZeroMQ. The ZeroMQ plumbing can range from tiny pipes to full-blown service-oriented brokers. The messaging industry calls this *intermediation*, meaning that the stuff in the middle deals with either side. In ZeroMQ, we call these proxies, queues, forwarders, device, or brokers, depending on the context.
 
 This pattern is extremely common in the real world and is why our societies and economies are filled with intermediaries who have no other real function than to reduce the complexity and scaling costs of larger networks. Real-world intermediaries are typically called wholesalers, distributors, managers, and so on.
 
-### The Dynamic Discovery Problem
+### The Dynamic Discovery Problem {#The-Dynamic-Discovery-Problem}
 
 One of the problems you will hit as you design larger distributed architectures is discovery. That is, how do pieces know about each other? It's especially difficult if pieces come and go, so we call this the "dynamic discovery problem".
 
@@ -441,7 +441,7 @@ It's better to think of intermediaries as simple stateless message switches. A g
 
 We need XPUB and XSUB sockets because ZeroMQ does subscription forwarding from subscribers to publishers. XSUB and XPUB are exactly like SUB and PUB except they expose subscriptions as special messages. The proxy has to forward these subscription messages from subscriber side to publisher side, by reading them from the XPUB socket and writing them to the XSUB socket. This is the main use case for XSUB and XPUB.
 
-### Shared Queue (DEALER and ROUTER sockets)
+### Shared Queue (DEALER and ROUTER sockets) {#Shared-Queue-DEALER-and-ROUTER-sockets}
 
 In the Hello World client/server application, we have one client that talks to one service. However, in real cases we usually need to allow multiple services as well as multiple clients. This lets us scale up the power of the service (many threads or processes or nodes rather than just one). The only constraint is that services must be stateless, all state being in the request or in some shared storage such as a database.
 
@@ -549,7 +549,7 @@ And here is the broker, which properly handles multipart messages:
 
 Using a request-reply broker makes your client/server architectures easier to scale because clients don't see workers, and workers don't see clients. The only static node is the broker in the middle.
 
-### ZeroMQ's Built-In Proxy Function
+### ZeroMQ's Built-In Proxy Function {#ZeroMQ-s-Built-In-Proxy-Function}
 
 It turns out that the core loop in the previous section's <tt>rrbroker</tt> is very useful, and reusable. It lets us build pub-sub forwarders and shared queues and other little intermediaries with very little effort. ZeroMQ wraps this up in a single method, <tt>[zmq_proxy()](http://api.zeromq.org/3-2:zmq_proxy)</tt>:
 
@@ -563,7 +563,7 @@ The two (or three sockets, if we want to capture data) must be properly connecte
 
 If you're like most ZeroMQ users, at this stage your mind is starting to think, "What kind of evil stuff can I do if I plug random socket types into the proxy?"  The short answer is: try it and work out what is happening. In practice, you would usually stick to ROUTER/DEALER, XSUB/XPUB, or PULL/PUSH.
 
-### Transport Bridging
+### Transport Bridging {#Transport-Bridging}
 
 A frequent request from ZeroMQ users is, "How do I connect my ZeroMQ network with technology X?" where X is some other networking or messaging technology.
 
@@ -609,7 +609,7 @@ As an example, we're going to write a little proxy that sits in between a publis
 
 It looks very similar to the earlier proxy example, but the key part is that the frontend and backend sockets are on two different networks. We can use this model for example to connect a multicast network (<tt>pgm</tt> transport) to a <tt>tcp</tt> publisher.
 
-## Handling Errors and ETERM
+## Handling Errors and ETERM {#Handling-Errors-and-ETERM}
 
 ZeroMQ's error handling philosophy is a mix of fail-fast and resilience. Processes, we believe, should be as vulnerable as possible to internal errors, and as robust as possible against external attacks and errors. To give an analogy, a living cell will self-destruct if it detects a single internal error, yet it will resist attack from the outside by all means possible.
 
@@ -710,7 +710,7 @@ Here is the modified sink application. When it's finished collecting results, it
 
 {{< example name="tasksink2" title="Parallel task sink with kill signaling" >}}
 
-## Handling Interrupt Signals
+## Handling Interrupt Signals {#Handling-Interrupt-Signals}
 
 Realistic applications need to shut down cleanly when interrupted with Ctrl-C or another signal such as <tt>SIGTERM</tt>. By default, these simply kill the process, meaning messages won't be flushed, files won't be closed cleanly, and so on.
 
@@ -740,7 +740,7 @@ zmq_close (client);
 
 If you call <tt>s_catch_signals()</tt> and don't test for interrupts, then your application will become immune to Ctrl-C and <tt>SIGTERM</tt>, which may be useful, but is usually not.
 
-## Detecting Memory Leaks
+## Detecting Memory Leaks {#Detecting-Memory-Leaks}
 
 Any long-running application has to manage memory correctly, or eventually it'll use up all available memory and crash. If you use a language that handles this automatically for you, congratulations. If you program in C or C++ or any other language where you're responsible for memory management, here's a short tutorial on using valgrind, which among other things will report on any leaks your programs have.
 
@@ -785,7 +785,7 @@ And after fixing any errors it reported, you should get the pleasant message:
 ==30536== ERROR SUMMARY: 0 errors from 0 contexts...
 ```
 
-## Multithreading with ZeroMQ
+## Multithreading with ZeroMQ {#Multithreading-with-ZeroMQ}
 
 ZeroMQ is perhaps the nicest way ever to write multithreaded (MT) applications. Whereas ZeroMQ sockets require some readjustment if you are used to traditional sockets, ZeroMQ multithreading will take everything you know about writing MT applications, throw it into a heap in the garden, pour gasoline over it, and set it alight. It's a rare book that deserves burning, but most books on concurrent programming do.
 
@@ -879,7 +879,7 @@ Note that creating threads is not portable in most programming languages. The PO
 
 Here the "work" is just a one-second pause. We could do anything in the workers, including talking to other nodes. This is what the MT server looks like in terms of ØMQ sockets and nodes. Note how the request-reply chain is <tt>REQ-ROUTER-queue-DEALER-REP</tt>.
 
-## Signaling Between Threads (PAIR Sockets)
+## Signaling Between Threads (PAIR Sockets) {#Signaling-Between-Threads-PAIR-Sockets}
 
 When you start making multithreaded applications with ZeroMQ, you'll encounter the question of how to coordinate your threads. Though you might be tempted to insert "sleep" statements, or use multithreading techniques such as semaphores or mutexes, **the only mechanism that you should use are ZeroMQ messages**. Remember the story of The Drunkards and The Beer Bottle.
 
@@ -934,7 +934,7 @@ This is the first time we've shown an example using PAIR sockets. Why use PAIR? 
 
 For these reasons, PAIR makes the best choice for coordination between pairs of threads.
 
-## Node Coordination
+## Node Coordination {#Node-Coordination}
 
 When you want to coordinate a set of nodes on a network, PAIR sockets won't work well any more. This is one of the few areas where the strategies for threads and nodes are different. Principally, nodes come and go whereas threads are usually static. PAIR sockets do not automatically reconnect if the remote node goes away and comes back.
 
@@ -1004,7 +1004,7 @@ A more robust model could be:
 * Subscribers connect SUB socket and when they receive a Hello message they tell the publisher via a REQ/REP socket pair.
 * When the publisher has had all the necessary confirmations, it starts to send real data.
 
-## Zero-Copy
+## Zero-Copy {#Zero-Copy}
 
 ZeroMQ's message API lets you send and receive messages directly from and to application buffers without copying data. We call this *zero-copy*, and it can improve performance in some applications.
 
@@ -1028,7 +1028,7 @@ There is no way to do zero-copy on receive: ZeroMQ delivers you a buffer that yo
 
 On writing, ZeroMQ's multipart messages work nicely together with zero-copy. In traditional messaging, you need to marshal different buffers together into one buffer that you can send. That means copying data. With ZeroMQ, you can send multiple buffers coming from different sources as individual message frames. Send each field as a length-delimited frame. To the application, it looks like a series of send and receive calls. But internally, the multiple parts get written to the network and read back with single system calls, so it's very efficient.
 
-## Pub-Sub Message Envelopes
+## Pub-Sub Message Envelopes {#Pub-Sub-Message-Envelopes}
 
 In the pub-sub pattern, we can split the key into a separate message frame that we call an *envelope*. If you want to use pub-sub envelopes, make them yourself. It's optional, and in previous pub-sub examples we didn't do this. Using a pub-sub envelope is a little more work for simple cases, but it's cleaner especially for real cases, where the key and the data are naturally separate things.
 
@@ -1071,7 +1071,7 @@ Frame 3   | Data    |   Actual message body
           #---------#
 {{< /textdiagram >}}
 
-## High-Water Marks
+## High-Water Marks {#High-Water-Marks}
 
 When you can send messages rapidly from process to process, you soon discover that memory is a precious resource, and one that can be trivially filled up. A few seconds of delay somewhere in a process can turn into a backlog that blows up a server unless you understand the problem and take precautions.
 
@@ -1091,7 +1091,7 @@ When your socket reaches its HWM, it will either block or drop data depending on
 
 Lastly, the HWMs are not exact; while you may get *up to* 1,000 messages by default, the real buffer size may be much lower (as little as half), due to the way <tt>libzmq</tt> implements its queues.
 
-## Missing Message Problem Solver
+## Missing Message Problem Solver {#Missing-Message-Problem-Solver}
 
 As you build applications with ZeroMQ, you will come across this problem more than once: losing messages that you expect to receive. We have put together a diagram that walks through the most common causes for this.
 

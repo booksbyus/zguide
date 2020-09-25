@@ -3,9 +3,9 @@ weight: 1
 title: '1. Basics'
 ---
 
-# Chapter 1 - Basics
+# Chapter 1 - Basics {#Chapter-Basics}
 
-## Fixing the World
+## Fixing the World {#Fixing-the-World}
 
 How to explain ZeroMQ? Some of us start by saying all the wonderful things it does. *It's sockets on steroids. It's like mailboxes with routing. It's fast!*  Others try to share their moment of enlightenment, that zap-pow-kaboom satori paradigm-shift moment when it all became obvious. *Things just become simpler. Complexity goes away. It opens the mind.*  Others try to explain by comparison. *It's smaller, simpler, but still looks familiar.*  Personally, I like to remember why we made ZeroMQ at all, because that's most likely where you, the reader, still are today.
 
@@ -29,11 +29,11 @@ Which brings us back to the science of programming. To fix the world, we needed 
 
 It sounds ridiculously simple. And maybe it is. That's kind of the whole point.
 
-## Starting Assumptions
+## Starting Assumptions {#Starting-Assumptions}
 
 We assume you are using at least version 3.2 of ZeroMQ. We assume you are using a Linux box or something similar. We assume you can read C code, more or less, as that's the default language for the examples. We assume that when we write constants like PUSH or SUBSCRIBE, you can imagine they are really called <tt>ZMQ_PUSH</tt> or <tt>ZMQ_SUBSCRIBE</tt> if the programming language needs it.
 
-## Getting the Examples
+## Getting the Examples {#Getting-the-Examples}
 
 The examples live in a public [GitHub repository](https://github.com/imatix/zguide). The simplest way to get all the examples is to clone this repository:
 
@@ -43,7 +43,7 @@ git clone --depth=1 https://github.com/imatix/zguide.git
 
 Next, browse the examples subdirectory. You'll find examples by language. If there are examples missing in a language you use, you're encouraged to [submit a translation](http://zguide.zeromq.org/main:translate). This is how this text became so useful, thanks to the work of many people. All examples are licensed under MIT/X11.
 
-## Ask and Ye Shall Receive
+## Ask and Ye Shall Receive {#Ask-and-Ye-Shall-Receive}
 
 So let's start with some code. We start of course with a Hello World example. We'll make a client and a server. The client sends "Hello" to the server, which replies with "World". Here's the server in C, which opens a ZeroMQ socket on port 5555, reads requests on it, and replies with "World" to each request:
 
@@ -96,7 +96,7 @@ If you kill the server (Ctrl-C) and restart it, the client won't recover properl
 
 There is a lot happening behind the scenes but what matters to us programmers is how short and sweet the code is, and how often it doesn't crash, even under a heavy load. This is the request-reply pattern, probably the simplest way to use ZeroMQ. It maps to RPC and the classic client/server model.
 
-## A Minor Note on Strings
+## A Minor Note on Strings {#A-Minor-Note-on-Strings}
 
 ZeroMQ doesn't know anything about the data you send except its size in bytes. That means you are responsible for formatting it safely so that applications can read it back. Doing this for objects and complex data types is a job for specialized libraries like Protocol Buffers. But even for strings, you need to take care.
 
@@ -149,11 +149,11 @@ This makes a handy helper function and in the spirit of making things we can reu
 
 The result is <tt>zhelpers.h</tt>, which lets us write sweeter and shorter ZeroMQ applications in C. It is a fairly long source, and only fun for C developers, so [read it at leisure](https://github.com/imatix/zguide/blob/master/examples/C/zhelpers.h).
 
-## A Note on the Naming Convention
+## A Note on the Naming Convention {#A-Note-on-the-Naming-Convention}
 
 The prefix <tt>s_</tt> used in <tt>zhelpers.h</tt> and the examples which follow in this guide is an indicator for static methods or variables.
 
-## Version Reporting
+## Version Reporting {#Version-Reporting}
 
 ZeroMQ does come in several versions and quite often, if you hit a problem, it'll be something that's been fixed in a later version. So it's a useful trick to know *exactly* what version of ZeroMQ you're actually linking with.
 
@@ -161,7 +161,7 @@ Here is a tiny program that does that:
 
 {{< example name="version" title="ZeroMQ version reporting" >}}
 
-## Getting the Message Out
+## Getting the Message Out {#Getting-the-Message-Out}
 
 The second classic pattern is one-way data distribution, in which a server pushes updates to a set of clients. Let's see an example that pushes out weather updates consisting of a zip code, temperature, and relative humidity. We'll generate random values, just like the real weather stations do.
 
@@ -245,7 +245,7 @@ user    0m0.000s
 sys     0m0.008s
 ```
 
-## Divide and Conquer
+## Divide and Conquer {#Divide-and-Conquer}
 
 {{< textdiagram name="fig5.png" figno="5" title="Parallel Pipeline" >}}
             #-------------#
@@ -333,7 +333,7 @@ Let's look at some aspects of this code in more detail:
 
 The pipeline pattern also exhibits the "slow joiner" syndrome, leading to accusations that PUSH sockets don't load balance properly. If you are using PUSH and PULL, and one of your workers gets way more messages than the others, it's because that PULL socket has joined faster than the others, and grabs a lot of messages before the others manage to connect. If you want proper load balancing, you probably want to look at the load balancing pattern in [Chapter 3 - Advanced Request-Reply Patterns](chapter3#advanced-request-reply).
 
-## Programming with ZeroMQ
+## Programming with ZeroMQ {#Programming-with-ZeroMQ}
 
 Having seen some examples, you must be eager to start using ZeroMQ in some apps. Before you start that, take a deep breath, chillax, and reflect on some basic advice that will save you much stress and confusion.
 
@@ -347,7 +347,7 @@ Having seen some examples, you must be eager to start using ZeroMQ in some apps.
 
 * Make abstractions (classes, methods, whatever) as you need them. If you copy/paste a lot of code, you're going to copy/paste errors, too.
 
-### Getting the Context Right
+### Getting the Context Right {#Getting-the-Context-Right}
 
 ZeroMQ applications always start by creating a *context*, and then using that for creating sockets. In C, it's the <tt>[zmq_ctx_new()](http://api.zeromq.org/3-2:zmq_ctx_new)</tt> call. You should create and use exactly one context in your process. Technically, the context is the container for all sockets in a single process, and acts as the transport for <tt>inproc</tt> sockets, which are the fastest way to connect threads in one process. If at runtime a process has two contexts, these are like separate ZeroMQ instances. If that's explicitly what you want, OK, but otherwise remember:
 
@@ -355,7 +355,7 @@ ZeroMQ applications always start by creating a *context*, and then using that fo
 
 If you're using the <tt>fork()</tt> system call, do <tt>[zmq_ctx_new()](http://api.zeromq.org/3-2:zmq_ctx_new)</tt> *after* the fork and at the beginning of the child process code. In general, you want to do interesting (ZeroMQ) stuff in the children, and boring process management in the parent.
 
-### Making a Clean Exit
+### Making a Clean Exit {#Making-a-Clean-Exit}
 
 Classy programmers share the same motto as classy hit men: always clean-up when you finish the job. When you use ZeroMQ in a language like Python, stuff gets automatically freed for you. But when using C, you have to carefully free objects when you're finished with them or else you get memory leaks, unstable applications, and generally bad karma.
 
@@ -381,7 +381,7 @@ Finally, destroy the context. This will cause any blocking receives or polls or 
 
 Voila! It's complex and painful enough that any language binding author worth his or her salt will do this automatically and make the socket closing dance unnecessary.
 
-## Why We Needed ZeroMQ
+## Why We Needed ZeroMQ {#Why-We-Needed-ZeroMQ}
 
 Now that you've seen ZeroMQ in action, let's go back to the "why".
 
@@ -501,7 +501,7 @@ Specifically:
 
 Actually ZeroMQ does rather more than this. It has a subversive effect on how you develop network-capable applications. Superficially, it's a socket-inspired API on which you do <tt>[zmq_recv()](http://api.zeromq.org/3-2:zmq_recv)</tt> and <tt>[zmq_send()](http://api.zeromq.org/3-2:zmq_send)</tt>. But message processing rapidly becomes the central loop, and your application soon breaks down into a set of message processing tasks. It is elegant and natural. And it scales: each of these tasks maps to a node, and the nodes talk to each other across arbitrary transports. Two nodes in one process (node is a thread), two nodes on one box (node is a process), or two nodes on one network (node is a box)--it's all the same, with no application code changes.
 
-## Socket Scalability
+## Socket Scalability {#Socket-Scalability}
 
 Let's see ZeroMQ's scalability in action. Here is a shell script that starts the weather server and then a bunch of clients in parallel:
 
@@ -528,9 +528,9 @@ PID  USER  PR  NI  VIRT  RES  SHR S %CPU %MEM   TIME+  COMMAND
 
 Let's think for a second about what is happening here. The weather server has a single socket, and yet here we have it sending data to five clients in parallel. We could have thousands of concurrent clients. The server application doesn't see them, doesn't talk to them directly. So the ZeroMQ socket is acting like a little server, silently accepting client requests and shoving data out to them as fast as the network can handle it. And it's a multithreaded server, squeezing more juice out of your CPU.
 
-## Upgrading from ZeroMQ v2.2 to ZeroMQ v3.2
+## Upgrading from ZeroMQ v2.2 to ZeroMQ v3.2 {#Upgrading-from-ZeroMQ-v-to-ZeroMQ-v}
 
-### Compatible Changes
+### Compatible Changes {#Compatible-Changes}
 
 These changes don't impact existing application code directly:
 
@@ -538,7 +538,7 @@ These changes don't impact existing application code directly:
 
 * ZeroMQ v3.2 has many new API methods (<tt>[zmq_disconnect()](http://api.zeromq.org/3-2:zmq_disconnect)</tt>, <tt>[zmq_unbind()](http://api.zeromq.org/3-2:zmq_unbind)</tt>, <tt>[zmq_monitor()](http://api.zeromq.org/3-2:zmq_monitor)</tt>, <tt>[zmq_ctx_set()](http://api.zeromq.org/3-2:zmq_ctx_set)</tt>, etc.)
 
-### Incompatible Changes
+### Incompatible Changes {#Incompatible-Changes}
 
 These are the main areas of impact on applications and language bindings:
 
@@ -556,7 +556,7 @@ These are the main areas of impact on applications and language bindings:
 
 * The <tt>ZMQ_SWAP</tt> option has been removed. Symptom: compile failures on <tt>ZMQ_SWAP</tt>. Solution: redesign any code that uses this functionality.
 
-### Suggested Shim Macros
+### Suggested Shim Macros {#Suggested-Shim-Macros}
 
 For applications that want to run on both v2.x and v3.2, such as language bindings, our advice is to emulate v3.2 as far as possible. Here are C macro definitions that help your C/C++ code to work across both versions (taken from [CZMQ](http://czmq.zeromq.org)):
 
@@ -576,7 +576,7 @@ For applications that want to run on both v2.x and v3.2, such as language bindin
 #endif
 {{< /fragment >}}
 
-## Warning: Unstable Paradigms!
+## Warning: Unstable Paradigms! {#Warning-Unstable-Paradigms}
 
 Traditional network programming is built on the general assumption that one socket talks to one connection, one peer. There are multicast protocols, but these are exotic. When we assume "one socket = one connection", we scale our architectures in certain ways. We create threads of logic where each thread work with one socket, one peer. We place intelligence and state in these threads.
 

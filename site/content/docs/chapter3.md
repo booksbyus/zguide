@@ -3,7 +3,7 @@ weight: 3
 title: '3. Advanced Request-Reply Patterns'
 ---
 
-# Chapter 3 - Advanced Request-Reply Patterns
+# Chapter 3 - Advanced Request-Reply Patterns {#Chapter-Advanced-Request-Reply-Patterns}
 
 In [Chapter 2 - Sockets and Patterns](chapter2#sockets-and-patterns) we worked through the basics of using ZeroMQ by developing a series of small applications, each time exploring new aspects of ZeroMQ. We'll continue this approach in this chapter as we explore advanced patterns built on top of ZeroMQ's core request-reply pattern.
 
@@ -18,7 +18,7 @@ We'll cover:
 * Building an asynchronous request-reply server
 * A detailed inter-broker routing example
 
-## The Request-Reply Mechanisms
+## The Request-Reply Mechanisms {#The-Request-Reply-Mechanisms}
 
 We already looked briefly at multipart messages. Let's now look at a major use case, which is *reply message envelopes*. An envelope is a way of safely packaging up data with an address, without touching the data itself. By separating reply addresses into an envelope we make it possible to write general purpose intermediaries such as APIs and proxies that create, read, and remove addresses no matter what the message payload or structure is.
 
@@ -26,7 +26,7 @@ In the request-reply pattern, the envelope holds the return address for replies.
 
 When you use REQ and REP sockets you don't even see envelopes; these sockets deal with them automatically. But for most of the interesting request-reply patterns, you'll want to understand envelopes and particularly ROUTER sockets. We'll work through this step-by-step.
 
-### The Simple Reply Envelope
+### The Simple Reply Envelope {#The-Simple-Reply-Envelope}
 
 A request-reply exchange consists of a *request* message, and an eventual *reply* message. In the simple request-reply pattern, there's one reply for each request. In more advanced patterns, requests and replies can flow asynchronously. However, the reply envelope always works the same way.
 
@@ -46,7 +46,7 @@ The REP socket does the matching work: it strips off the envelope, up to and inc
 
 If you spy on the network data flowing between <tt>hwclient</tt> and <tt>hwserver</tt>, this is what you'll see: every request and every reply is in fact two frames, an empty frame and then the body. It doesn't seem to make much sense for a simple REQ-REP dialog. However you'll see the reason when we explore how ROUTER and DEALER handle envelopes.
 
-### The Extended Reply Envelope
+### The Extended Reply Envelope {#The-Extended-Reply-Envelope}
 
 Now let's extend the REQ-REP pair with a ROUTER-DEALER proxy in the middle and see how this affects the reply envelope. This is the *extended request-reply pattern* we already saw in [Chapter 2 - Sockets and Patterns](chapter2#sockets-and-patterns). We can, in fact, insert any number of proxy steps. The mechanics are the same.
 
@@ -132,7 +132,7 @@ Frame 2   | 5 | World |    Data frame
 
 The REQ socket picks this message up, and checks that the first frame is the empty delimiter, which it is. The REQ socket discards that frame and passes "World" to the calling application, which prints it out to the amazement of the younger us looking at ZeroMQ for the first time.
 
-### What's This Good For?
+### What's This Good For? {#What-s-This-Good-For}
 
 To be honest, the use cases for strict request-reply or extended request-reply are somewhat limited. For one thing, there's no easy way to recover from common failures like the server crashing due to buggy application code. We'll see more about this in [Chapter 4 - Reliable Request-Reply Patterns](chapter4#reliable-request-reply). However once you grasp the way these four sockets deal with envelopes, and how they talk to each other, you can do very useful things. We saw how ROUTER uses the reply envelope to decide which client REQ socket to route a reply back to. Now let's express this another way:
 
@@ -142,7 +142,7 @@ To be honest, the use cases for strict request-reply or extended request-reply a
 
 ROUTER sockets don't care about the whole envelope. They don't know anything about the empty delimiter. All they care about is that one identity frame that lets them figure out which connection to send a message to.
 
-### Recap of Request-Reply Sockets
+### Recap of Request-Reply Sockets {#Recap-of-Request-Reply-Sockets}
 
 Let's recap this:
 
@@ -154,7 +154,7 @@ Let's recap this:
 
 * The ROUTER socket is oblivious to the reply envelope, like DEALER. It creates identities for its connections, and passes these identities to the caller as a first frame in any received message. Conversely, when the caller sends a message, it uses the first message frame as an identity to look up the connection to send to. ROUTERS are asynchronous.
 
-## Request-Reply Combinations
+## Request-Reply Combinations {#Request-Reply-Combinations}
 
 We have four request-reply sockets, each with a certain behavior. We've seen how they connect in simple and extended request-reply patterns. But these sockets are building blocks that you can use to solve many problems.
 
@@ -178,11 +178,11 @@ Here are some tips for remembering the semantics. DEALER is like an asynchronous
 
 Think of REQ and DEALER sockets as "clients" and REP and ROUTER sockets as "servers". Mostly, you'll want to bind REP and ROUTER sockets, and connect REQ and DEALER sockets to them. It's not always going to be this simple, but it is a clean and memorable place to start.
 
-### The REQ to REP Combination
+### The REQ to REP Combination {#The-REQ-to-REP-Combination}
 
 We've already covered a REQ client talking to a REP server but let's take one aspect: the REQ client *must* initiate the message flow. A REP server cannot talk to a REQ client that hasn't first sent it a request. Technically, it's not even possible, and the API also returns an <tt>EFSM</tt> error if you try it.
 
-### The DEALER to REP Combination
+### The DEALER to REP Combination {#The-DEALER-to-REP-Combination}
 
 Now, let's replace the REQ client with a DEALER. This gives us an asynchronous client that can talk to multiple REP servers. If we rewrote the "Hello World" client using DEALER, we'd be able to send off any number of "Hello" requests without waiting for replies.
 
@@ -196,7 +196,7 @@ And when we receive a message, we:
 * Receive the first frame and if it's not empty, discard the whole message;
 * Receive the next frame and pass that to the application.
 
-### The REQ to ROUTER Combination
+### The REQ to ROUTER Combination {#The-REQ-to-ROUTER-Combination}
 
 In the same way that we can replace REQ with DEALER, we can replace REP with ROUTER. This gives us an asynchronous server that can talk to multiple REQ clients at the same time. If we rewrote the "Hello World" server using ROUTER, we'd be able to process any number of "Hello" requests in parallel. We saw this in the [Chapter 2 - Sockets and Patterns](chapter2#sockets-and-patterns) <tt>mtserver</tt> example.
 
@@ -207,23 +207,23 @@ We can use ROUTER in two distinct ways:
 
 In the first case, the ROUTER simply reads all frames, including the artificial identity frame, and passes them on blindly. In the second case the ROUTER *must* know the format of the reply envelope it's being sent. As the other peer is a REQ socket, the ROUTER gets the identity frame, an empty frame, and then the data frame.
 
-### The DEALER to ROUTER Combination
+### The DEALER to ROUTER Combination {#The-DEALER-to-ROUTER-Combination}
 
 Now we can switch out both REQ and REP with DEALER and ROUTER to get the most powerful socket combination, which is DEALER talking to ROUTER. It gives us asynchronous clients talking to asynchronous servers, where both sides have full control over the message formats.
 
 Because both DEALER and ROUTER can work with arbitrary message formats, if you hope to use these safely, you have to become a little bit of a protocol designer. At the very least you must decide whether you wish to emulate the REQ/REP reply envelope. It depends on whether you actually need to send replies or not.
 
-### The DEALER to DEALER Combination
+### The DEALER to DEALER Combination {#The-DEALER-to-DEALER-Combination}
 
 You can swap a REP with a ROUTER, but you can also swap a REP with a DEALER, if the DEALER is talking to one and only one peer.
 
 When you replace a REP with a DEALER, your worker can suddenly go full asynchronous, sending any number of replies back. The cost is that you have to manage the reply envelopes yourself, and get them right, or nothing at all will work. We'll see a worked example later. Let's just say for now that DEALER to DEALER is one of the trickier patterns to get right, and happily it's rare that we need it.
 
-### The ROUTER to ROUTER Combination
+### The ROUTER to ROUTER Combination {#The-ROUTER-to-ROUTER-Combination}
 
 This sounds perfect for N-to-N connections, but it's the most difficult combination to use. You should avoid it until you are well advanced with ZeroMQ. We'll see one example it in the Freelance pattern in [Chapter 4 - Reliable Request-Reply Patterns](chapter4#reliable-request-reply), and an alternative DEALER to ROUTER design for peer-to-peer work in [Chapter 8 - A Framework for Distributed Computing](chapter8#moving-pieces).
 
-### Invalid Combinations
+### Invalid Combinations {#Invalid-Combinations}
 
 Mostly, trying to connect clients to clients, or servers to servers is a bad idea and won't work. However, rather than give general vague warnings, I'll explain in detail:
 
@@ -237,11 +237,11 @@ Mostly, trying to connect clients to clients, or servers to servers is a bad ide
 
 The common thread in this valid versus invalid breakdown is that a ZeroMQ socket connection is always biased towards one peer that binds to an endpoint, and another that connects to that. Further, that which side binds and which side connects is not arbitrary, but follows natural patterns. The side which we expect to "be there" binds: it'll be a server, a broker, a publisher, a collector. The side that "comes and goes" connects: it'll be clients and workers. Remembering this will help you design better ZeroMQ architectures.
 
-## Exploring ROUTER Sockets
+## Exploring ROUTER Sockets {#Exploring-ROUTER-Sockets}
 
 Let's look at ROUTER sockets a little closer. We've already seen how they work by routing individual messages to specific connections. I'll explain in more detail how we identify those connections, and what a ROUTER socket does when it can't send a message.
 
-### Identities and Addresses
+### Identities and Addresses {#Identities-and-Addresses}
 
 The *identity* concept in ZeroMQ refers specifically to ROUTER sockets and how they identify the connections they have to other sockets. More broadly, identities are used as addresses in the reply envelope. In most cases, the identity is arbitrary and local to the ROUTER socket: it's a lookup key in a hash table. Independently, a peer can have an address that is physical (a network endpoint like "tcp://192.168.55.117:5670") or logical (a UUID or email address or other unique key).
 
@@ -273,13 +273,13 @@ Here is what the program prints:
 [038] ROUTER uses REQ's socket identity
 ```
 
-### ROUTER Error Handling
+### ROUTER Error Handling {#ROUTER-Error-Handling}
 
 ROUTER sockets do have a somewhat brutal way of dealing with messages they can't send anywhere: they drop them silently. It's an attitude that makes sense in working code, but it makes debugging hard. The "send identity as first frame" approach is tricky enough that we often get this wrong when we're learning, and the ROUTER's stony silence when we mess up isn't very constructive.
 
 Since ZeroMQ v3.2 there's a socket option you can set to catch this error: <tt>ZMQ_ROUTER_MANDATORY</tt>. Set that on the ROUTER socket and then when you provide an unroutable identity on a send call, the socket will signal an <tt>EHOSTUNREACH</tt> error.
 
-## The Load Balancing Pattern
+## The Load Balancing Pattern {#The-Load-Balancing-Pattern}
 
 Now let's look at some code. We'll see how to connect a ROUTER socket to a REQ socket, and then to a DEALER socket. These two examples follow the same logic, which is a *load balancing* pattern. This pattern is our first exposure to using the ROUTER socket for deliberate routing, rather than simply acting as a reply channel.
 
@@ -299,7 +299,7 @@ The solution is really simple, in fact: workers send a "ready" message when they
 
 It's a twist on request-reply because the task is sent with the reply, and any response for the task is sent as a new request. The following code examples should make it clearer.
 
-### ROUTER Broker and REQ Workers
+### ROUTER Broker and REQ Workers {#ROUTER-Broker-and-REQ-Workers}
 
 Here is an example of the load balancing pattern using a ROUTER broker talking to a set of REQ workers:
 
@@ -332,7 +332,7 @@ Frame 3   | n | ...    |    Data frame
           #---+--------#
 {{< /textdiagram >}}
 
-### ROUTER Broker and DEALER Workers
+### ROUTER Broker and DEALER Workers {#ROUTER-Broker-and-DEALER-Workers}
 
 Anywhere you can use REQ, you can use DEALER. There are two specific differences:
 
@@ -351,7 +351,7 @@ However, remember the reason for that empty delimiter frame: it's to allow multi
 
 If we never need to pass the message along to a REP socket, we can simply drop the empty delimiter frame at both sides, which makes things simpler. This is usually the design I use for pure DEALER to ROUTER protocols.
 
-### A Load Balancing Message Broker
+### A Load Balancing Message Broker {#A-Load-Balancing-Message-Broker}
 
 The previous example is half-complete. It can manage a set of workers with dummy requests and replies, but it has no way to talk to clients. If we add a second *frontend* ROUTER socket that accepts client requests, and turn our example into a proxy that can switch messages from frontend to backend, we get a useful and reusable tiny load balancing message broker.
 
@@ -460,7 +460,7 @@ Now let's look at the load balancing algorithm. It requires that both clients an
 
 You should now see that you can reuse and extend the load balancing algorithm with variations based on the information the worker provides in its initial "ready" message. For example, workers might start up and do a performance self test, then tell the broker how fast they are. The broker can then choose the fastest available worker rather than the oldest.
 
-## A High-Level API for ZeroMQ
+## A High-Level API for ZeroMQ {#A-High-Level-API-for-ZeroMQ}
 
 We're going to push request-reply onto the stack and open a different area, which is the ZeroMQ API itself. There's a reason for this detour: as we write more complex examples, the low-level ZeroMQ API starts to look increasingly clumsy. Look at the core of the worker thread from our load balancing broker:
 
@@ -524,7 +524,7 @@ Making a good message API is fairly difficult. We have a problem of terminology:
 
 The challenge of making a good API affects all languages, though my specific use case is C. Whatever language you use, think about how you could contribute to your language binding to make it as good (or better) than the C binding I'm going to describe.
 
-### Features of a Higher-Level API
+### Features of a Higher-Level API {#Features-of-a-Higher-Level-API}
 
 My solution is to use three fairly natural and obvious concepts: *string* (already the basis for our <tt>s_send</tt> and <tt>s_recv</tt>) helpers, *frame* (a message frame), and *message* (a list of one or more frames). Here is the worker code, rewritten onto an API using these concepts:
 
@@ -550,7 +550,7 @@ Cutting the amount of code we need to read and write complex messages is great: 
 
 * *Proper handling of Ctrl-C.* We already saw how to catch an interrupt. It would be useful if this happened in all applications.
 
-### The CZMQ High-Level API
+### The CZMQ High-Level API {#The-CZMQ-High-Level-API}
 
 Turning this wish list into reality for the C language gives us [CZMQ](http://zero.mq/c), a ZeroMQ language binding for C. This high-level binding, in fact, developed out of earlier versions of the examples. It combines nicer semantics for working with ZeroMQ with some portability layers, and (importantly for C, but less for other languages) containers like hashes and lists. CZMQ also uses an elegant object model that leads to frankly lovely code.
 
@@ -610,7 +610,7 @@ If you're using child threads, they won't receive the interrupt. To tell them to
 * Destroy the context, if they are sharing the same context, in which case any blocking calls they are waiting on will end with ETERM.
 * Send them shutdown messages, if they are using their own contexts. For this you'll need some socket plumbing.
 
-## The Asynchronous Client/Server Pattern
+## The Asynchronous Client/Server Pattern {#The-Asynchronous-Client-Server-Pattern}
 
 In the ROUTER to DEALER example, we saw a 1-to-N use case where one server talks asynchronously to multiple workers. We can turn this upside down to get a very useful N-to-1 architecture where various clients talk to a single server, and do this asynchronously.
 
@@ -709,11 +709,11 @@ We cheat in the above example by keeping state only for a very short time (the t
 
 * Detect a stopped heartbeat. If there's no request from a client within, say, two seconds, the server can detect this and destroy any state it's holding for that client.
 
-## Worked Example: Inter-Broker Routing
+## Worked Example: Inter-Broker Routing {#Worked-Example-Inter-Broker-Routing}
 
 Let's take everything we've seen so far, and scale things up to a real application. We'll build this step-by-step over several iterations. Our best client calls us urgently and asks for a design of a large cloud computing facility. He has this vision of a cloud that spans many data centers, each a cluster of clients and workers, and that works together as a whole. Because we're smart enough to know that practice always beats theory, we propose to make a working simulation using ZeroMQ. Our client, eager to lock down the budget before his own boss changes his mind, and having read great things about ZeroMQ on Twitter, agrees.
 
-### Establishing the Details
+### Establishing the Details {#Establishing-the-Details}
 
 Several espressos later, we want to jump into writing code, but a little voice tells us to get more details before making a sensational solution to entirely the wrong problem. "What kind of work is the cloud doing?", we ask.
 
@@ -741,7 +741,7 @@ So we do a little calculation and see that this will work nicely over plain TCP.
 
 It's a straightforward problem that requires no exotic hardware or protocols, just some clever routing algorithms and careful design. We start by designing one cluster (one data center) and then we figure out how to connect clusters together.
 
-### Architecture of a Single Cluster
+### Architecture of a Single Cluster {#Architecture-of-a-Single-Cluster}
 
 Workers and clients are synchronous. We want to use the load balancing pattern to route tasks to workers. Workers are all identical; our facility has no notion of different services. Workers are anonymous; clients never address them directly. We make no attempt here to provide guaranteed delivery, retry, and so on.
 
@@ -774,7 +774,7 @@ For reasons we already examined, clients and workers won't speak to each other d
 #--------#  #--------#  #--------#
 {{< /textdiagram >}}
 
-### Scaling to Multiple Clusters
+### Scaling to Multiple Clusters {#Scaling-to-Multiple-Clusters}
 
 Now we scale this out to more than one cluster. Each cluster has a set of clients and workers, and a broker that joins these together.
 
@@ -867,7 +867,7 @@ We know the basic model well by now:
 * The REQ worker (REQ) threads process workloads and return the results to the broker (ROUTER).
 * The broker queues and distributes workloads using the load balancing pattern.
 
-### Federation Versus Peering
+### Federation Versus Peering {#Federation-Versus-Peering}
 
 There are several possible ways to interconnect brokers. What we want is to be able to tell other brokers, "we have capacity", and then receive multiple tasks. We also need to be able to tell other brokers, "stop, we're full". It doesn't need to be perfect; sometimes we may accept jobs we can't process immediately, then we'll do them as soon as possible.
 
@@ -906,7 +906,7 @@ Instead of federation, let's look at a *peering* approach in which brokers are e
 
 And there is also the flow of information between a broker and its local clients and workers.
 
-### The Naming Ceremony
+### The Naming Ceremony {#The-Naming-Ceremony}
 
 Three flows x two sockets for each flow = six sockets that we have to manage in the broker.  Choosing good names is vital to keeping a multisocket juggling act reasonably coherent in our minds. Sockets *do* something and what they do should form the basis for their names. It's about being able to read the code several weeks later on a cold Monday morning before coffee, and not feel any pain.
 
@@ -966,7 +966,7 @@ You might be thinking that this is a lot of work for some names. Why not call th
 
 Note that we connect the cloudbe in each broker to the cloudfe in every other broker, and likewise we connect the statebe in each broker to the statefe in every other broker.
 
-### Prototyping the State Flow
+### Prototyping the State Flow {#Prototyping-the-State-Flow}
 
 Because each socket flow has its own little traps for the unwary, we will test them in real code one-by-one, rather than try to throw the whole lot into code in one go. When we're happy with each flow, we can put them together into a full program. We'll start with the state flow.
 
@@ -1036,7 +1036,7 @@ In real life, we'd not send out state messages at regular intervals, but rather 
 
 If we wanted to send state messages at precise intervals, we'd create a child thread and open the <tt>statebe</tt> socket in that thread. We'd then send irregular state updates to that child thread from our main thread and allow the child thread to conflate them into regular outgoing messages. This is more work than we need here.
 
-### Prototyping the Local and Cloud Flows
+### Prototyping the Local and Cloud Flows {#Prototyping-the-Local-and-Cloud-Flows}
 
 Let's now prototype the flow of tasks via the local and cloud sockets. This code pulls requests from clients and then distributes them to local workers and cloud peers on a random basis.
 
@@ -1113,7 +1113,7 @@ Some comments on this code:
 
 You can satisfy yourself that the code works by watching it run forever. If there were any misrouted messages, clients would end up blocking, and the brokers would stop printing trace information. You can prove that by killing either of the brokers. The other broker tries to send requests to the cloud, and one-by-one its clients block, waiting for an answer.
 
-### Putting it All Together
+### Putting it All Together {#Putting-it-All-Together}
 
 Let's put this together into a single package. As before, we'll run an entire cluster as one process. We're going to take the two previous examples and merge them into one properly working design that lets you simulate any number of clusters.
 

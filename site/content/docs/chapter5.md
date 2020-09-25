@@ -3,7 +3,7 @@ weight: 5
 title: '5. Advanced Pub-Sub Patterns'
 ---
 
-# Chapter 5 - Advanced Pub-Sub Patterns
+# Chapter 5 - Advanced Pub-Sub Patterns {#Chapter-Advanced-Pub-Sub-Patterns}
 
 In [Chapter 3 - Advanced Request-Reply Patterns](chapter3#advanced-request-reply) and [Chapter 4 - Reliable Request-Reply Patterns](chapter4#reliable-request-reply) we looked at advanced use of ZeroMQ's request-reply pattern. If you managed to digest all that, congratulations. In this chapter we'll focus on publish-subscribe and extend ZeroMQ's core pub-sub pattern with higher-level patterns for performance, reliability, state distribution, and monitoring.
 
@@ -17,7 +17,7 @@ We'll cover:
 * How to use reactors to simplify complex servers
 * How to use the Binary Star pattern to add failover to a server
 
-## Pros and Cons of Pub-Sub
+## Pros and Cons of Pub-Sub {#Pros-and-Cons-of-Pub-Sub}
 
 ZeroMQ's low-level patterns have their different characters. Pub-sub addresses an old messaging problem, which is *multicast* or *group messaging*. It has that unique mix of meticulous simplicity and brutal indifference that characterizes ZeroMQ. It's worth understanding the trade-offs that pub-sub makes, how these benefit us, and how we can work around them if needed.
 
@@ -56,7 +56,7 @@ A lot more can go wrong but these are the typical failures we see in a realistic
 
 All of these failure cases have answers, though not always simple ones. Reliability requires complexity that most of us don't need, most of the time, which is why ZeroMQ doesn't attempt to provide it out of the box (even if there was one global design for reliability, which there isn't).
 
-## Pub-Sub Tracing (Espresso Pattern)
+## Pub-Sub Tracing (Espresso Pattern) {#Pub-Sub-Tracing-Espresso-Pattern}
 
 Let's start this chapter by looking at a way to trace pub-sub networks. In [Chapter 2 - Sockets and Patterns](chapter2#sockets-and-patterns) we saw a simple proxy that used these to do transport bridging. The <tt>[zmq_proxy()](http://api.zeromq.org/3-2:zmq_proxy)</tt> method has three arguments: a *frontend* and *backend* socket that it bridges together, and a *capture* socket to which it will send all messages.
 
@@ -82,7 +82,7 @@ The subscriber thread subscribes to "A" and "B", receives five messages, and the
 
 This shows neatly how the publisher socket stops sending data when there are no subscribers for it. The publisher thread is still sending messages. The socket just drops them silently.
 
-## Last Value Caching
+## Last Value Caching {#Last-Value-Caching}
 
 If you've used commercial pub-sub systems, you may be used to some features that are missing in the fast and cheerful ZeroMQ pub-sub model. One of these is *last value caching* (LVC). This solves the problem of how a new subscriber catches up when it joins the network. The theory is that publishers get notified when a new subscriber joins and subscribes to some specific topics. The publisher can then rebroadcast the last message for those topics.
 
@@ -132,7 +132,7 @@ Each subscriber happily reports "Save Roger", and Gregor the Escaped Convict sli
 
 One note: by default, the XPUB socket does not report duplicate subscriptions, which is what you want when you're naively connecting an XPUB to an XSUB. Our example sneakily gets around this by using random topics so the chance of it not working is one in a million. In a real LVC proxy, you'll want to use the <tt>ZMQ_XPUB_VERBOSE</tt> option that we implement in [Chapter 6 - The ZeroMQ Community](chapter6#the-community) as an exercise.
 
-## Slow Subscriber Detection (Suicidal Snail Pattern)
+## Slow Subscriber Detection (Suicidal Snail Pattern) {#Slow-Subscriber-Detection-Suicidal-Snail-Pattern}
 
 A common problem you will hit when using the pub-sub pattern in real life is the slow subscriber. In an ideal world, we stream data at full speed from publishers to subscribers. In reality, subscriber applications are often written in interpreted languages, or just do a lot of work, or are just badly written, to the extent that they can't keep up with publishers.
 
@@ -166,7 +166,7 @@ Here are some things to note about the Suicidal Snail example:
 
 * The example has subscriber and publisher in a single process as two threads. In reality, they would be separate processes. Using threads is just convenient for the demonstration.
 
-## High-Speed Subscribers (Black Box Pattern)
+## High-Speed Subscribers (Black Box Pattern) {#High-Speed-Subscribers-Black-Box-Pattern}
 
 Now lets look at one way to make our subscribers faster. A common use case for pub-sub is distributing large data streams like market data coming from stock exchanges. A typical setup would have a publisher connected to a stock exchange, taking price quotes, and sending them out to a number of subscribers. If there are a handful of subscribers, we could use TCP. If we have a larger number of subscribers, we'd probably use reliable multicast, i.e., PGM.
 
@@ -260,7 +260,7 @@ With two streams, working at full speed, we would configure ZeroMQ as follows:
 
 Ideally, we want to match the number of fully-loaded threads in our architecture with the number of cores. When threads start to fight for cores and CPU cycles, the cost of adding more threads outweighs the benefits. There would be no benefit, for example, in creating more I/O threads.
 
-## Reliable Pub-Sub (Clone Pattern)
+## Reliable Pub-Sub (Clone Pattern) {#Reliable-Pub-Sub-Clone-Pattern}
 
 As a larger worked example, we'll take the problem of making a reliable pub-sub architecture. We'll develop this in stages. The goal is to allow a set of applications to share some common state. Here are our technical challenges:
 
@@ -275,7 +275,7 @@ Let's say that updates are reasonably low-volume. We don't have real time goals.
 * Some game state shared by a group of players.
 * Exchange rate data that is updated in real time and available to applications.
 
-### Centralized Versus Decentralized
+### Centralized Versus Decentralized {#Centralized-Versus-Decentralized}
 
 A first decision we have to make is whether we work with a central server or not. It makes a big difference in the resulting design. The trade-offs are these:
 
@@ -289,7 +289,7 @@ A first decision we have to make is whether we work with a central server or not
 
 So, for the Clone pattern we'll work with a *server* that publishes state updates and a set of *clients* that represent applications.
 
-### Representing State as Key-Value Pairs
+### Representing State as Key-Value Pairs {#Representing-State-as-Key-Value-Pairs}
 
 We'll develop Clone in stages, solving one problem at a time. First, let's look at how to update a shared state across a set of clients. We need to decide how to represent our state, as well as the updates. The simplest plausible format is a key-value store, where one key-value pair represents an atomic unit of change in the shared state.
 
@@ -344,7 +344,7 @@ Later, we'll make a more sophisticated <tt>kvmsg</tt> class that will work in re
 
 Both the server and client maintain hash tables, but this first model only works properly if we start all clients before the server and the clients never crash. That's very artificial.
 
-### Getting an Out-of-Band Snapshot
+### Getting an Out-of-Band Snapshot {#Getting-an-Out-of-Band-Snapshot}
 
 So now we have our second problem: how to deal with late-joining clients or clients that crash and then restart.
 
@@ -403,7 +403,7 @@ Here are some things to note about these two programs:
 
 Right now, these two programs don't do anything real, but they correctly synchronize state. It's a neat example of how to mix different patterns: PAIR-PAIR, PUB-SUB, and ROUTER-DEALER.
 
-### Republishing Updates from Clients
+### Republishing Updates from Clients {#Republishing-Updates-from-Clients}
 
 In our second model, changes to the key-value store came from the server itself. This is a centralized model that is useful, for example if we have a central configuration file we want to distribute, with local caching on each node. A more interesting model takes updates from clients, not the server. The server thus becomes a stateless broker. This gives us some benefits:
 
@@ -456,7 +456,7 @@ Here are some things to note about this third design:
 
 * The client uses a simple tickless timer to send a random update to the server once a second. In a real implementation, we would drive updates from application code.
 
-### Working with Subtrees
+### Working with Subtrees {#Working-with-Subtrees}
 
 As we grow the number of clients, the size of our shared store will also grow. It stops being reasonable to send everything to every client. This is the classic story with pub-sub: when you have a very small number of clients, you can send every message to all clients. As you grow the architecture, this becomes inefficient. Clients specialize in different areas.
 
@@ -477,7 +477,7 @@ And here is the corresponding client:
 
 {{< example name="clonecli4" title="Clone client, Model Four" >}}
 
-### Ephemeral Values
+### Ephemeral Values {#Ephemeral-Values}
 
 An ephemeral value is one that expires automatically unless regularly refreshed. If you think of Clone being used for a registration service, then ephemeral values would let you do dynamic values. A node joins the network, publishes its address, and refreshes this regularly. If the node dies, its address eventually gets removed.
 
@@ -499,7 +499,7 @@ The Model Five client is almost identical to Model Four. It uses the full <tt>kv
 kvmsg_set_prop (kvmsg, "ttl", "%d", randof (30));
 {{< /fragment >}}
 
-### Using a Reactor
+### Using a Reactor {#Using-a-Reactor}
 
 Until now, we have used a poll loop in the server. In this next model of the server, we switch to using a reactor. In C, we use CZMQ's <tt>zloop</tt> class. Using a reactor makes the code more verbose, but easier to understand and build out because each piece of the server is handled by a separate reactor handler.
 
@@ -513,7 +513,7 @@ There are three reactor handlers:
 
 {{< example name="clonesrv5" title="Clone server, Model Five" >}}
 
-### Adding the Binary Star Pattern for Reliability
+### Adding the Binary Star Pattern for Reliability {#Adding-the-Binary-Star-Pattern-for-Reliability}
 
 The Clone models we've explored up to now have been relatively simple. Now we're going to get into unpleasantly complex territory, which has me getting up for another espresso. You should appreciate that making "reliable" messaging is complex enough that you always need to ask, "Do we actually need this?" before jumping into it. If you can get away with unreliable or with "good enough" reliability, you can make a huge win in terms of cost and complexity. Sure, you may lose some data now and then. It is often a good trade-off. Having said, that, and... sips... because the espresso is really good, let's jump in.
 
@@ -634,7 +634,7 @@ I built it piece by piece, and got each piece working *properly* before going on
 
 For testing, I always try to use Valgrind, which catches memory leaks and invalid memory accesses. In C, this is a major concern, as you can't delegate to a garbage collector. Using proper and consistent abstractions like kvmsg and CZMQ helps enormously.
 
-### The Clustered Hashmap Protocol
+### The Clustered Hashmap Protocol {#The-Clustered-Hashmap-Protocol}
 
 While the server is pretty much a mashup of the previous model plus the Binary Star pattern, the client is quite a lot more complex. But before we get to that, let's look at the final protocol. I've written this up as a specification on the ZeroMQ RFC website as the [Clustered Hashmap Protocol](http://rfc.zeromq.org/spec:12).
 
@@ -788,7 +788,7 @@ CHP is designed to be scalable to large numbers (thousands) of clients, limited 
 
 CHP does not implement any authentication, access control, or encryption mechanisms and should not be used in any deployment where these are required.
 
-### Building a Multithreaded Stack and API
+### Building a Multithreaded Stack and API {#Building-a-Multithreaded-Stack-and-API}
 
 The client stack we've used so far isn't smart enough to handle this protocol properly. As soon as we start doing heartbeats, we need a client stack that can run in a background thread. In the Freelance pattern at the end of [Chapter 4 - Reliable Request-Reply Patterns](chapter4#reliable-request-reply) we used a multithreaded API but didn't explain it in detail. It turns out that multithreaded APIs are quite useful when you start to make more complex ZeroMQ protocols like CHP.
 

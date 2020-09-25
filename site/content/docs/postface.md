@@ -4,17 +4,17 @@ weight: 999
 
 # Postface
 
-## Tales from Out There
+## Tales from Out There {#Tales-from-Out-There}
 
 I asked some of the contributors to this book to tell us what they were doing with ZeroMQ. Here are their stories.
 
-### Rob Gagnon's Story
+### Rob Gagnon's Story {#Rob-Gagnon-s-Story}
 
 "We use ZeroMQ to assist in aggregating thousands of events occurring every minute across our global network of telecommunications servers so that we can accurately report and monitor for situations that require our attention. ZeroMQ made the development of the system not only easier, but faster to develop and more robust and fault-tolerant than we had originally planned in our original design.
 
 "We're able to easily add and remove clients from the network without the loss of any message. If we need to enhance the server portion of our system, we can stop and restart it as well without having to worry about stopping all of the clients first. The built-in buffering of ZeroMQ makes this all possible."
 
-### Tom van Leeuwen's Story
+### Tom van Leeuwen's Story {#Tom-van-Leeuwen-s-Story}
 
 "I was looking at creating some kind of service bus connecting all kinds of services together. There were already some products that implemented a broker, but they did not have the functionality I needed. By accident, I stumbled upon ZeroMQ, which is awesome. It's very lightweight, lean, simple and easy to follow because the guide is very complete and reads very well. I've actually implemented the Titanic pattern and the Majordomo broker with some additions (client/worker authentication and workers sending a catalog explaining what they provide and how they should be addressed).
 
@@ -22,13 +22,13 @@ I asked some of the contributors to this book to tell us what they were doing wi
 
 "ZeroMQ is very easy to understand and if you spend a day with the guide, you'll have good knowledge of how it works. I'm a network engineer, not a software developer, but managed to create a very nice solution for our automation needs! ZeroMQ: Thank you very much!"
 
-### Michael Jakl's Story
+### Michael Jakl's Story {#Michael-Jakl-s-Story}
 
 "We use ZeroMQ for distributing millions of documents per day in our distributed processing pipeline. We started out with big message queuing brokers that had their own respective issues and problems. In the quest of simplifying our architecture, we chose ZeroMQ to do the wiring. So far it had a huge impact in how our architecture scales and how easy it is to change and move the components. The plethora of language bindings lets us choose the right tool for the job without sacrificing interoperability in our system. We don't use a lot of sockets (less than 10 in our whole application), but that's all we needed to split a huge monolithic application into small independent parts.
 
 "All in all, ZeroMQ lets me keep my sanity and helps my customers stay within budget."
 
-### Vadim Shalts's Story
+### Vadim Shalts's Story {#Vadim-Shalts-s-Story}
 
 "I am team leader in the company ActForex, which develops software for financial markets. Due to the nature of our domain, we need to process large volumes of prices quickly. In addition, it's extremely critical to minimize latency in processing orders and prices. Achieving a high throughput is not enough. Everything must be handled in a soft real time with a predictable ultra low latency per price. The system consists of multiple components exchanging messages. Each price can take a lot of processing stages, each of which increases total latency. As a consequence, low and predictable latency of messaging between components becomes a key factor of our architecture.
 
@@ -36,7 +36,7 @@ I asked some of the contributors to this book to tell us what they were doing wi
 
 "I can decidedly recommend ZeroMQ for solutions where low latency is important."
 
-## How This Book Happened
+## How This Book Happened {#How-This-Book-Happened}
 
 When I set out to write a ZeroMQ book, we were still debating the pros and cons of forks and pull requests in the ZeroMQ community. Today, for what it's worth, this argument seems settled: the "liberal" policy that we adopted for <tt>libzmq</tt> in early 2012 broke our dependency on a single prime author, and opened the floor to dozens of new contributors. More profoundly, it allowed us to move to a gently organic evolutionary model that was very different from the older forced-march model.
 
@@ -79,7 +79,7 @@ And this particular example (<tt>rrbroker</tt>) exists in C#, C++, CL, Clojure, 
 
 But what this collection of translations says most profoundly is this: the language you choose is a detail, even a distraction. The power of ZeroMQ lies in the patterns it gives you and lets you build, and these transcend the comings and goings of languages. My goal as a software and social architect is to build structures that can last generations. There seems no point in aiming for mere decades.
 
-## Removing Friction
+## Removing Friction {#Removing-Friction}
 
 I'll explain the technical tool chain we used in terms of the friction we removed. In this book we're telling a story and the goal is to reach as many people as possible, as cheaply and smoothly as we can.
 
@@ -133,7 +133,7 @@ Which works as follows:
 
 When creating a community project, it's important to lower the "change latency", which is the time it takes for people to see their work live or, at least, to see that you've accepted their pull request. If that is more than a day or two, you've often lost your contributor's interest.
 
-## Licensing
+## Licensing {#Licensing}
 
 I want people to reuse this text in their own work: in presentations, articles, and even other books. However, the deal is that if they remix my work, others can remix theirs. I'd like credit, and have no argument against others making money from their remixes. Thus, the text is licensed under cc-by-sa.
 
