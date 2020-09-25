@@ -12,6 +12,1420 @@ command = "make preview-build"
 command = "make preview-build"
 
 # Page redirects
+
+# bookmark redirects start
+[[redirects]]
+from = "/page:chapter3#The-CZMQ-High-Level-API"
+to = "/docs/chapter3#the-czmq-high-level-api"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#The-Tale-of-Two-Bridges"
+to = "/docs/chapter6#the-tale-of-two-bridges"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#How-to-Make-Really-Large-Architectures"
+to = "/docs/chapter6#how-to-make-really-large-architectures"
+force = true
+
+[[redirects]]
+from = "/page:chapter2#Node-Coordination"
+to = "/docs/chapter2#node-coordination"
+force = true
+
+[[redirects]]
+from = "/page:chapter3#Request-Reply-Combinations"
+to = "/docs/chapter3#request-reply-combinations"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#The-Importance-of-Contracts"
+to = "/docs/chapter6#the-importance-of-contracts"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#Trash-Oriented-Design"
+to = "/docs/chapter6#trash-oriented-design"
+force = true
+
+[[redirects]]
+from = "/page:chapter4#Detailed-Requirements"
+to = "/docs/chapter4#detailed-requirements"
+force = true
+
+[[redirects]]
+from = "/page:chapter2#Detecting-Memory-Leaks"
+to = "/docs/chapter2#detecting-memory-leaks"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#Simplicity-Versus-Complexity"
+to = "/docs/chapter6#simplicity-versus-complexity"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#How-to-Write-Unprotocols"
+to = "/docs/chapter7#how-to-write-unprotocols"
+force = true
+
+[[redirects]]
+from = "/page:chapter5#Chapter-Advanced-Pub-Sub-Patterns"
+to = "/docs/chapter5#chapter-advanced-pub-sub-patterns"
+force = true
+
+[[redirects]]
+from = "/page:chapter3#Federation-Versus-Peering"
+to = "/docs/chapter3#federation-versus-peering"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#The-Provocateur"
+to = "/docs/chapter6#the-provocateur"
+force = true
+
+[[redirects]]
+from = "/page:chapter3#The-DEALER-to-ROUTER-Combination"
+to = "/docs/chapter3#the-dealer-to-router-combination"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#Step-Draw-a-Rough-Architecture"
+to = "/docs/chapter7#step-draw-a-rough-architecture"
+force = true
+
+[[redirects]]
+from = "/page:chapter4#Brokerless-Reliability-Freelance-Pattern"
+to = "/docs/chapter4#brokerless-reliability-freelance-pattern"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#Test-Results"
+to = "/docs/chapter8#test-results"
+force = true
+
+[[redirects]]
+from = "/page:chapter3#Architecture-of-a-Single-Cluster"
+to = "/docs/chapter3#architecture-of-a-single-cluster"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#Goals"
+to = "/docs/chapter6#goals"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#Infinite-Property"
+to = "/docs/chapter6#infinite-property"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#Visibility"
+to = "/docs/chapter6#visibility"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#Serializing-Your-Data"
+to = "/docs/chapter7#serializing-your-data"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#Up-front-Coordination"
+to = "/docs/chapter6#up-front-coordination"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#Testing-and-Simulation"
+to = "/docs/chapter8#testing-and-simulation"
+force = true
+
+[[redirects]]
+from = "/page:chapter5#The-Clustered-Hashmap-Protocol"
+to = "/docs/chapter5#the-clustered-hashmap-protocol"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#Why-make-FileMQ"
+to = "/docs/chapter7#why-make-filemq"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#Simplicity-Oriented-Design"
+to = "/docs/chapter6#simplicity-oriented-design"
+force = true
+
+[[redirects]]
+from = "/page:chapter1#Suggested-Shim-Macros"
+to = "/docs/chapter1#suggested-shim-macros"
+force = true
+
+[[redirects]]
+from = "/page:chapter4#Binary-Star-Reactor"
+to = "/docs/chapter4#binary-star-reactor"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#Writing-the-Unprotocol"
+to = "/docs/chapter8#writing-the-unprotocol"
+force = true
+
+[[redirects]]
+from = "/page:chapter3#ROUTER-Error-Handling"
+to = "/docs/chapter3#router-error-handling"
+force = true
+
+[[redirects]]
+from = "/page:chapter3#Establishing-the-Details"
+to = "/docs/chapter3#establishing-the-details"
+force = true
+
+[[redirects]]
+from = "/page:chapter5#Centralized-Versus-Decentralized"
+to = "/docs/chapter5#centralized-versus-decentralized"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#Step-Decide-on-the-Contracts"
+to = "/docs/chapter7#step-decide-on-the-contracts"
+force = true
+
+[[redirects]]
+from = "/page:chapter4#High-Availability-Pair-Binary-Star-Pattern"
+to = "/docs/chapter4#high-availability-pair-binary-star-pattern"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#Binary-Logging-Protocol"
+to = "/docs/chapter8#binary-logging-protocol"
+force = true
+
+[[redirects]]
+from = "/page:chapter4#Ping-Pong-Heartbeats"
+to = "/docs/chapter4#ping-pong-heartbeats"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#The-Process"
+to = "/docs/chapter6#the-process"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#Service-Discovery"
+to = "/docs/chapter8#service-discovery"
+force = true
+
+[[redirects]]
+from = "/page:chapter2#Shared-Queue-DEALER-and-ROUTER-sockets"
+to = "/docs/chapter2#shared-queue-dealer-and-router-sockets"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#Chapter-A-Framework-for-Distributed-Computing"
+to = "/docs/chapter8#chapter-a-framework-for-distributed-computing"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#Dealing-with-Blocked-Peers"
+to = "/docs/chapter8#dealing-with-blocked-peers"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#Delivery-Notifications"
+to = "/docs/chapter7#delivery-notifications"
+force = true
+
+[[redirects]]
+from = "/page:chapter3#The-REQ-to-REP-Combination"
+to = "/docs/chapter3#the-req-to-rep-combination"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#The-Pirate-Gang"
+to = "/docs/chapter6#the-pirate-gang"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#Project-Administration"
+to = "/docs/chapter6#project-administration"
+force = true
+
+[[redirects]]
+from = "/page:chapter4#What-is-Reliability"
+to = "/docs/chapter4#what-is-reliability"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#Vadim-Shalts-s-Story"
+to = "/docs/chapter8#vadim-shalts-s-story"
+force = true
+
+[[redirects]]
+from = "/page:chapter5#Working-with-Subtrees"
+to = "/docs/chapter5#working-with-subtrees"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#Distributed-Logging-and-Monitoring"
+to = "/docs/chapter8#distributed-logging-and-monitoring"
+force = true
+
+[[redirects]]
+from = "/page:chapter3#The-DEALER-to-DEALER-Combination"
+to = "/docs/chapter3#the-dealer-to-dealer-combination"
+force = true
+
+[[redirects]]
+from = "/page:chapter3#Invalid-Combinations"
+to = "/docs/chapter3#invalid-combinations"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#Tales-from-Out-There"
+to = "/docs/chapter8#tales-from-out-there"
+force = true
+
+[[redirects]]
+from = "/page:chapter4#One-Way-Heartbeats"
+to = "/docs/chapter4#one-way-heartbeats"
+force = true
+
+[[redirects]]
+from = "/page:chapter3#The-Extended-Reply-Envelope"
+to = "/docs/chapter3#the-extended-reply-envelope"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#Handwritten-Binary-Serialization"
+to = "/docs/chapter7#handwritten-binary-serialization"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#Burnout"
+to = "/docs/chapter6#burnout"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#Detecting-Disappearances"
+to = "/docs/chapter8#detecting-disappearances"
+force = true
+
+[[redirects]]
+from = "/page:chapter2#Messaging-Patterns"
+to = "/docs/chapter2#messaging-patterns"
+force = true
+
+[[redirects]]
+from = "/page:chapter#Acknowledgements"
+to = "/docs/chapter#acknowledgements"
+force = true
+
+[[redirects]]
+from = "/page:chapter4#Idempotent-Services"
+to = "/docs/chapter4#idempotent-services"
+force = true
+
+[[redirects]]
+from = "/page:chapter3#Recap-of-Request-Reply-Sockets"
+to = "/docs/chapter3#recap-of-request-reply-sockets"
+force = true
+
+[[redirects]]
+from = "/page:chapter4#Disconnected-Reliability-Titanic-Pattern"
+to = "/docs/chapter4#disconnected-reliability-titanic-pattern"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#Tracing-Activity"
+to = "/docs/chapter8#tracing-activity"
+force = true
+
+[[redirects]]
+from = "/page:chapter4#Shrugging-It-Off"
+to = "/docs/chapter4#shrugging-it-off"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#The-Zyre-Tester"
+to = "/docs/chapter8#the-zyre-tester"
+force = true
+
+[[redirects]]
+from = "/page:chapter4#Contracts-and-Protocols"
+to = "/docs/chapter4#contracts-and-protocols"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#Surprise-and-Expectations"
+to = "/docs/chapter6#surprise-and-expectations"
+force = true
+
+[[redirects]]
+from = "/page:chapter1#Getting-the-Examples"
+to = "/docs/chapter1#getting-the-examples"
+force = true
+
+[[redirects]]
+from = "/page:chapter4#reliable-request-reply"
+to = "/docs/chapter4#reliable-request-reply"
+force = true
+
+[[redirects]]
+from = "/page:chapter3#Features-of-a-Higher-Level-API"
+to = "/docs/chapter3#features-of-a-higher-level-api"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#Design-for-The-Real-World"
+to = "/docs/chapter8#design-for-the-real-world"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#Authentication-Using-SASL"
+to = "/docs/chapter7#authentication-using-sasl"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#The-Constant-Gardener"
+to = "/docs/chapter6#the-constant-gardener"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#Discovery"
+to = "/docs/chapter8#discovery"
+force = true
+
+[[redirects]]
+from = "/page:chapter2#ZeroMQ-is-Not-a-Neutral-Carrier"
+to = "/docs/chapter2#zeromq-is-not-a-neutral-carrier"
+force = true
+
+[[redirects]]
+from = "/page:chapter1#A-Note-on-the-Naming-Convention"
+to = "/docs/chapter1#a-note-on-the-naming-convention"
+force = true
+
+[[redirects]]
+from = "/page:chapter3#ROUTER-Broker-and-REQ-Workers"
+to = "/docs/chapter3#router-broker-and-req-workers"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#The-Social-Engineer"
+to = "/docs/chapter6#the-social-engineer"
+force = true
+
+[[redirects]]
+from = "/page:chapter2#sockets-and-patterns"
+to = "/docs/chapter2#sockets-and-patterns"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#Protocols-Without-The-Goats"
+to = "/docs/chapter7#protocols-without-the-goats"
+force = true
+
+[[redirects]]
+from = "/page:chapter1#Upgrading-from-ZeroMQ-v-to-ZeroMQ-v"
+to = "/docs/chapter1#upgrading-from-zeromq-v-to-zeromq-v"
+force = true
+
+[[redirects]]
+from = "/page:chapter2#Unicast-Transports"
+to = "/docs/chapter2#unicast-transports"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#Recovery-and-Late-Joiners"
+to = "/docs/chapter7#recovery-and-late-joiners"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#Designing-for-Innovation"
+to = "/docs/chapter6#designing-for-innovation"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#Serialization-Languages"
+to = "/docs/chapter7#serialization-languages"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#A-Plausible-Minimal-Implementation"
+to = "/docs/chapter8#a-plausible-minimal-implementation"
+force = true
+
+[[redirects]]
+from = "/page:chapter3#The-REQ-to-ROUTER-Combination"
+to = "/docs/chapter3#the-req-to-router-combination"
+force = true
+
+[[redirects]]
+from = "/page:chapter1#A-Minor-Note-on-Strings"
+to = "/docs/chapter1#a-minor-note-on-strings"
+force = true
+
+[[redirects]]
+from = "/page:chapter4#Model-One-Simple-Retry-and-Failover"
+to = "/docs/chapter4#model-one-simple-retry-and-failover"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#State-Machines"
+to = "/docs/chapter7#state-machines"
+force = true
+
+[[redirects]]
+from = "/page:chapter1#Programming-with-ZeroMQ"
+to = "/docs/chapter1#programming-with-zeromq"
+force = true
+
+[[redirects]]
+from = "/page:chapter5#Getting-an-Out-of-Band-Snapshot"
+to = "/docs/chapter5#getting-an-out-of-band-snapshot"
+force = true
+
+[[redirects]]
+from = "/page:chapter4#Client-Side-Reliability-Lazy-Pirate-Pattern"
+to = "/docs/chapter4#client-side-reliability-lazy-pirate-pattern"
+force = true
+
+[[redirects]]
+from = "/page:chapter5#Ephemeral-Values"
+to = "/docs/chapter5#ephemeral-values"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#Technical-Requirements"
+to = "/docs/chapter8#technical-requirements"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#Michael-Jakl-s-Story"
+to = "/docs/chapter8#michael-jakl-s-story"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#The-Earth-and-Sky"
+to = "/docs/chapter6#the-earth-and-sky"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#The-Flash-Mob"
+to = "/docs/chapter6#the-flash-mob"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#Removing-Friction"
+to = "/docs/chapter8#removing-friction"
+force = true
+
+[[redirects]]
+from = "/page:chapter2#High-Level-Messaging-Patterns"
+to = "/docs/chapter2#high-level-messaging-patterns"
+force = true
+
+[[redirects]]
+from = "/page:chapter5#Adding-the-Binary-Star-Pattern-for-Reliability"
+to = "/docs/chapter5#adding-the-binary-star-pattern-for-reliability"
+force = true
+
+[[redirects]]
+from = "/page:chapter3#Scaling-to-Multiple-Clusters"
+to = "/docs/chapter3#scaling-to-multiple-clusters"
+force = true
+
+[[redirects]]
+from = "/page:chapter1#Warning-Unstable-Paradigms"
+to = "/docs/chapter1#warning-unstable-paradigms"
+force = true
+
+[[redirects]]
+from = "/page:chapter5#Using-a-Reactor"
+to = "/docs/chapter5#using-a-reactor"
+force = true
+
+[[redirects]]
+from = "/page:chapter2#High-Water-Marks"
+to = "/docs/chapter2#high-water-marks"
+force = true
+
+[[redirects]]
+from = "/page:chapter3#advanced-request-reply"
+to = "/docs/chapter3#advanced-request-reply"
+force = true
+
+[[redirects]]
+from = "/page:chapter2#The-Socket-API"
+to = "/docs/chapter2#the-socket-api"
+force = true
+
+[[redirects]]
+from = "/page:chapter5#Representing-State-as-Key-Value-Pairs"
+to = "/docs/chapter5#representing-state-as-key-value-pairs"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#Design-Notes"
+to = "/docs/chapter7#design-notes"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#Learning-Curve"
+to = "/docs/chapter6#learning-curve"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#UDP-Beacon-Framing"
+to = "/docs/chapter8#udp-beacon-framing"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#Example-Zyre-Application"
+to = "/docs/chapter8#example-zyre-application"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#A-Self-Healing-P-P-Network-in-Seconds"
+to = "/docs/chapter8#a-self-healing-p-p-network-in-seconds"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#Patterns-for-Success"
+to = "/docs/chapter6#patterns-for-success"
+force = true
+
+[[redirects]]
+from = "/page:chapter1#Starting-Assumptions"
+to = "/docs/chapter1#starting-assumptions"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#Care-and-Feeding"
+to = "/docs/chapter6#care-and-feeding"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#Building-and-Trying-FileMQ"
+to = "/docs/chapter7#building-and-trying-filemq"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#Cooperative-Discovery-Using-UDP-Broadcasts"
+to = "/docs/chapter8#cooperative-discovery-using-udp-broadcasts"
+force = true
+
+[[redirects]]
+from = "/page:chapter1#Getting-the-Message-Out"
+to = "/docs/chapter1#getting-the-message-out"
+force = true
+
+[[redirects]]
+from = "/page:chapter#Audience"
+to = "/docs/chapter#audience"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#Git-Branches-Considered-Harmful"
+to = "/docs/chapter6#git-branches-considered-harmful"
+force = true
+
+[[redirects]]
+from = "/page:chapter3#Exploring-ROUTER-Sockets"
+to = "/docs/chapter3#exploring-router-sockets"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#Psychology-of-Software-Architecture"
+to = "/docs/chapter6#psychology-of-software-architecture"
+force = true
+
+[[redirects]]
+from = "/page:chapter4#Basic-Reliable-Queuing-Simple-Pirate-Pattern"
+to = "/docs/chapter4#basic-reliable-queuing-simple-pirate-pattern"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#Change-Latency"
+to = "/docs/chapter6#change-latency"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#advanced-architecture"
+to = "/docs/chapter7#advanced-architecture"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#What-s-the-Current-Status"
+to = "/docs/chapter8#what-s-the-current-status"
+force = true
+
+[[redirects]]
+from = "/page:chapter2#Handling-Errors-and-ETERM"
+to = "/docs/chapter2#handling-errors-and-eterm"
+force = true
+
+[[redirects]]
+from = "/page:chapter4#Preventing-Split-Brain-Syndrome"
+to = "/docs/chapter4#preventing-split-brain-syndrome"
+force = true
+
+[[redirects]]
+from = "/page:chapter1#Getting-the-Context-Right"
+to = "/docs/chapter1#getting-the-context-right"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#True-Peer-Connectivity-Harmony-Pattern"
+to = "/docs/chapter8#true-peer-connectivity-harmony-pattern"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#Eat-Me"
+to = "/docs/chapter6#eat-me"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#Cost-of-Failure"
+to = "/docs/chapter6#cost-of-failure"
+force = true
+
+[[redirects]]
+from = "/page:chapter4#Service-Oriented-Reliable-Queuing-Majordomo-Pattern"
+to = "/docs/chapter4#service-oriented-reliable-queuing-majordomo-pattern"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#The-Mystic"
+to = "/docs/chapter6#the-mystic"
+force = true
+
+[[redirects]]
+from = "/page:chapter3#The-Simple-Reply-Envelope"
+to = "/docs/chapter3#the-simple-reply-envelope"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#Rob-Gagnon-s-Story"
+to = "/docs/chapter8#rob-gagnon-s-story"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#Multiple-Nodes-on-One-Device"
+to = "/docs/chapter8#multiple-nodes-on-one-device"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#File-Stability"
+to = "/docs/chapter7#file-stability"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#Serialization-Libraries"
+to = "/docs/chapter7#serialization-libraries"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#How-ZeroMQ-Lost-Its-Road-Map"
+to = "/docs/chapter6#how-zeromq-lost-its-road-map"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#Configuration"
+to = "/docs/chapter7#configuration"
+force = true
+
+[[redirects]]
+from = "/page:chapter4#Robust-Reliable-Queuing-Paranoid-Pirate-Pattern"
+to = "/docs/chapter4#robust-reliable-queuing-paranoid-pirate-pattern"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#The-Open-Door"
+to = "/docs/chapter6#the-open-door"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#Designing-the-API"
+to = "/docs/chapter8#designing-the-api"
+force = true
+
+[[redirects]]
+from = "/page:chapter3#Putting-it-All-Together"
+to = "/docs/chapter3#putting-it-all-together"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#Unprotocols"
+to = "/docs/chapter7#unprotocols"
+force = true
+
+[[redirects]]
+from = "/page:chapter2#Zero-Copy"
+to = "/docs/chapter2#zero-copy"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#Economics-of-Participation"
+to = "/docs/chapter6#economics-of-participation"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#A-Real-Life-Example"
+to = "/docs/chapter6#a-real-life-example"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#Code-Generation"
+to = "/docs/chapter7#code-generation"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#The-Use-Case"
+to = "/docs/chapter8#the-use-case"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#Guarantees-of-Isolation"
+to = "/docs/chapter6#guarantees-of-isolation"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#The-Canary-Watcher"
+to = "/docs/chapter6#the-canary-watcher"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#Public-API"
+to = "/docs/chapter7#public-api"
+force = true
+
+[[redirects]]
+from = "/page:chapter#The-Zen-of-Zero"
+to = "/docs/chapter#the-zen-of-zero"
+force = true
+
+[[redirects]]
+from = "/page:chapter1#Version-Reporting"
+to = "/docs/chapter1#version-reporting"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#Stranger-Meet-Stranger"
+to = "/docs/chapter6#stranger-meet-stranger"
+force = true
+
+[[redirects]]
+from = "/page:chapter4#Binary-Star-Implementation"
+to = "/docs/chapter4#binary-star-implementation"
+force = true
+
+[[redirects]]
+from = "/page:chapter4#Chapter-Reliable-Request-Reply-Patterns"
+to = "/docs/chapter4#chapter-reliable-request-reply-patterns"
+force = true
+
+[[redirects]]
+from = "/page:chapter2#I-O-Threads"
+to = "/docs/chapter2#i-o-threads"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#The-Secret-Life-of-WiFi"
+to = "/docs/chapter8#the-secret-life-of-wifi"
+force = true
+
+[[redirects]]
+from = "/page:chapter2#ZeroMQ-s-Built-In-Proxy-Function"
+to = "/docs/chapter2#zeromq-s-built-in-proxy-function"
+force = true
+
+[[redirects]]
+from = "/page:chapter1#Why-We-Needed-ZeroMQ"
+to = "/docs/chapter1#why-we-needed-zeromq"
+force = true
+
+[[redirects]]
+from = "/page:chapter#ZeroMQ-in-a-Hundred-Words"
+to = "/docs/chapter#zeromq-in-a-hundred-words"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#moving-pieces"
+to = "/docs/chapter8#moving-pieces"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#The-Laughing-Clown"
+to = "/docs/chapter6#the-laughing-clown"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#Abstraction-Level"
+to = "/docs/chapter7#abstraction-level"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#Chapter-The-ZeroMQ-Community"
+to = "/docs/chapter6#chapter-the-zeromq-community"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#The-Benevolent-Tyrant"
+to = "/docs/chapter6#the-benevolent-tyrant"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#Content-Distribution"
+to = "/docs/chapter8#content-distribution"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#Licensing"
+to = "/docs/chapter8#licensing"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#Internal-Architecture"
+to = "/docs/chapter7#internal-architecture"
+force = true
+
+[[redirects]]
+from = "/page:chapter3#The-ROUTER-to-ROUTER-Combination"
+to = "/docs/chapter3#the-router-to-router-combination"
+force = true
+
+[[redirects]]
+from = "/page:chapter5#Pros-and-Cons-of-Pub-Sub"
+to = "/docs/chapter5#pros-and-cons-of-pub-sub"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#Licensing-and-Ownership"
+to = "/docs/chapter6#licensing-and-ownership"
+force = true
+
+[[redirects]]
+from = "/page:chapter3#The-Request-Reply-Mechanisms"
+to = "/docs/chapter3#the-request-reply-mechanisms"
+force = true
+
+[[redirects]]
+from = "/page:chapter2#Transport-Bridging"
+to = "/docs/chapter2#transport-bridging"
+force = true
+
+[[redirects]]
+from = "/page:chapter3#A-Load-Balancing-Message-Broker"
+to = "/docs/chapter3#a-load-balancing-message-broker"
+force = true
+
+[[redirects]]
+from = "/page:chapter3#The-Asynchronous-Client-Server-Pattern"
+to = "/docs/chapter3#the-asynchronous-client-server-pattern"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#Some-Physics"
+to = "/docs/chapter8#some-physics"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#Step-Write-a-Minimal-End-to-End-Solution"
+to = "/docs/chapter7#step-write-a-minimal-end-to-end-solution"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#Chapter-Advanced-Architecture-using-ZeroMQ"
+to = "/docs/chapter7#chapter-advanced-architecture-using-zeromq"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#Symbolic-Links"
+to = "/docs/chapter7#symbolic-links"
+force = true
+
+[[redirects]]
+from = "/page:chapter2#The-Dynamic-Discovery-Problem"
+to = "/docs/chapter2#the-dynamic-discovery-problem"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#The-Mindful-General"
+to = "/docs/chapter6#the-mindful-general"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#Message-Oriented-Pattern-for-Elastic-Design"
+to = "/docs/chapter7#message-oriented-pattern-for-elastic-design"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#Preliminaries"
+to = "/docs/chapter6#preliminaries"
+force = true
+
+[[redirects]]
+from = "/page:chapter4#Heartbeating"
+to = "/docs/chapter4#heartbeating"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#Patch-Requirements"
+to = "/docs/chapter6#patch-requirements"
+force = true
+
+[[redirects]]
+from = "/page:chapter4#Heartbeating-for-Paranoid-Pirate"
+to = "/docs/chapter4#heartbeating-for-paranoid-pirate"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#Step-Internalize-the-Semantics"
+to = "/docs/chapter7#step-internalize-the-semantics"
+force = true
+
+[[redirects]]
+from = "/page:chapter3#The-Naming-Ceremony"
+to = "/docs/chapter3#the-naming-ceremony"
+force = true
+
+[[redirects]]
+from = "/page:chapter2#Working-with-Messages"
+to = "/docs/chapter2#working-with-messages"
+force = true
+
+[[redirects]]
+from = "/page:chapter3#The-Load-Balancing-Pattern"
+to = "/docs/chapter3#the-load-balancing-pattern"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#Why-use-the-GPLv-for-Public-Specifications"
+to = "/docs/chapter7#why-use-the-gplv-for-public-specifications"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#Language"
+to = "/docs/chapter6#language"
+force = true
+
+[[redirects]]
+from = "/page:chapter2#Multithreading-with-ZeroMQ"
+to = "/docs/chapter2#multithreading-with-zeromq"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#Tom-van-Leeuwen-s-Story"
+to = "/docs/chapter8#tom-van-leeuwen-s-story"
+force = true
+
+[[redirects]]
+from = "/page:chapter5#Republishing-Updates-from-Clients"
+to = "/docs/chapter5#republishing-updates-from-clients"
+force = true
+
+[[redirects]]
+from = "/page:chapter2#Handling-Multiple-Sockets"
+to = "/docs/chapter2#handling-multiple-sockets"
+force = true
+
+[[redirects]]
+from = "/page:chapter3#The-DEALER-to-REP-Combination"
+to = "/docs/chapter3#the-dealer-to-rep-combination"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#Protocol-Assertions"
+to = "/docs/chapter8#protocol-assertions"
+force = true
+
+[[redirects]]
+from = "/page:chapter#How-It-Began"
+to = "/docs/chapter#how-it-began"
+force = true
+
+[[redirects]]
+from = "/page:chapter2#Pub-Sub-Message-Envelopes"
+to = "/docs/chapter2#pub-sub-message-envelopes"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#The-Hangman"
+to = "/docs/chapter6#the-hangman"
+force = true
+
+[[redirects]]
+from = "/page:chapter1#basics"
+to = "/docs/chapter1#basics"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#Why-Mesh-Isn-t-Here-Yet"
+to = "/docs/chapter8#why-mesh-isn-t-here-yet"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#Crazy-Beautiful-and-Easy"
+to = "/docs/chapter6#crazy-beautiful-and-easy"
+force = true
+
+[[redirects]]
+from = "/page:chapter3#Prototyping-the-State-Flow"
+to = "/docs/chapter3#prototyping-the-state-flow"
+force = true
+
+[[redirects]]
+from = "/page:chapter1#Ask-and-Ye-Shall-Receive"
+to = "/docs/chapter1#ask-and-ye-shall-receive"
+force = true
+
+[[redirects]]
+from = "/page:chapter1#Fixing-the-World"
+to = "/docs/chapter1#fixing-the-world"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#the-community"
+to = "/docs/chapter6#the-community"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#postface"
+to = "/docs/chapter8#postface"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#Spinning-Off-a-Library-Project"
+to = "/docs/chapter8#spinning-off-a-library-project"
+force = true
+
+[[redirects]]
+from = "/page:chapter2#Multipart-Messages"
+to = "/docs/chapter2#multipart-messages"
+force = true
+
+[[redirects]]
+from = "/page:chapter1#Incompatible-Changes"
+to = "/docs/chapter1#incompatible-changes"
+force = true
+
+[[redirects]]
+from = "/page:chapter3#Prototyping-the-Local-and-Cloud-Flows"
+to = "/docs/chapter3#prototyping-the-local-and-cloud-flows"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#Getting-an-Official-Port-Number"
+to = "/docs/chapter7#getting-an-official-port-number"
+force = true
+
+[[redirects]]
+from = "/page:chapter5#Reliable-Pub-Sub-Clone-Pattern"
+to = "/docs/chapter5#reliable-pub-sub-clone-pattern"
+force = true
+
+[[redirects]]
+from = "/page:chapter4#Model-Three-Complex-and-Nasty"
+to = "/docs/chapter4#model-three-complex-and-nasty"
+force = true
+
+[[redirects]]
+from = "/page:chapter1#Socket-Scalability"
+to = "/docs/chapter1#socket-scalability"
+force = true
+
+[[redirects]]
+from = "/page:chapter5#Pub-Sub-Tracing-Espresso-Pattern"
+to = "/docs/chapter5#pub-sub-tracing-espresso-pattern"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#Conclusions"
+to = "/docs/chapter8#conclusions"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#The-ZeroMQ-Process-C"
+to = "/docs/chapter6#the-zeromq-process-c"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#Preemptive-Discovery-over-Raw-Sockets"
+to = "/docs/chapter8#preemptive-discovery-over-raw-sockets"
+force = true
+
+[[redirects]]
+from = "/page:chapter1#Chapter-Basics"
+to = "/docs/chapter1#chapter-basics"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#Network-Discovery"
+to = "/docs/chapter8#network-discovery"
+force = true
+
+[[redirects]]
+from = "/page:chapter5#Slow-Subscriber-Detection-Suicidal-Snail-Pattern"
+to = "/docs/chapter5#slow-subscriber-detection-suicidal-snail-pattern"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#Architecture-of-the-ZeroMQ-Community"
+to = "/docs/chapter6#architecture-of-the-zeromq-community"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#Contracts-Are-Hard"
+to = "/docs/chapter7#contracts-are-hard"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#Large-Scale-File-Publishing-FileMQ"
+to = "/docs/chapter7#large-scale-file-publishing-filemq"
+force = true
+
+[[redirects]]
+from = "/page:chapter3#Worked-Example-Inter-Broker-Routing"
+to = "/docs/chapter3#worked-example-inter-broker-routing"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#On-Up-Front-Testing"
+to = "/docs/chapter8#on-up-front-testing"
+force = true
+
+[[redirects]]
+from = "/page:chapter4#Model-Two-Brutal-Shotgun-Massacre"
+to = "/docs/chapter4#model-two-brutal-shotgun-massacre"
+force = true
+
+[[redirects]]
+from = "/page:chapter4#Designing-Reliability"
+to = "/docs/chapter4#designing-reliability"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#ZeroMQ-Framing"
+to = "/docs/chapter7#zeromq-framing"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#Initial-Design-Cut-the-API"
+to = "/docs/chapter7#initial-design-cut-the-api"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#Scalability"
+to = "/docs/chapter6#scalability"
+force = true
+
+[[redirects]]
+from = "/page:chapter3#Identities-and-Addresses"
+to = "/docs/chapter3#identities-and-addresses"
+force = true
+
+[[redirects]]
+from = "/page:chapter4#Conclusion"
+to = "/docs/chapter4#conclusion"
+force = true
+
+[[redirects]]
+from = "/page:chapter5#High-Speed-Subscribers-Black-Box-Pattern"
+to = "/docs/chapter5#high-speed-subscribers-black-box-pattern"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#Evolution-of-Public-Contracts"
+to = "/docs/chapter6#evolution-of-public-contracts"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#Development-Process"
+to = "/docs/chapter6#development-process"
+force = true
+
+[[redirects]]
+from = "/page:chapter3#A-High-Level-API-for-ZeroMQ"
+to = "/docs/chapter3#a-high-level-api-for-zeromq"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#On-Assertions"
+to = "/docs/chapter8#on-assertions"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#Using-ABNF"
+to = "/docs/chapter7#using-abnf"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#Transferring-Files"
+to = "/docs/chapter7#transferring-files"
+force = true
+
+[[redirects]]
+from = "/page:chapter2#Chapter-Sockets-and-Patterns"
+to = "/docs/chapter2#chapter-sockets-and-patterns"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#Complexity-Oriented-Design"
+to = "/docs/chapter6#complexity-oriented-design"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#The-Rolling-Stone"
+to = "/docs/chapter6#the-rolling-stone"
+force = true
+
+[[redirects]]
+from = "/page:chapter2#Signaling-Between-Threads-PAIR-Sockets"
+to = "/docs/chapter2#signaling-between-threads-pair-sockets"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#Robustness-in-Conflict"
+to = "/docs/chapter6#robustness-in-conflict"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#Point-to-Point-Messaging"
+to = "/docs/chapter8#point-to-point-messaging"
+force = true
+
+[[redirects]]
+from = "/page:chapter1#Compatible-Changes"
+to = "/docs/chapter1#compatible-changes"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#The-Historian"
+to = "/docs/chapter6#the-historian"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#Group-Messaging"
+to = "/docs/chapter8#group-messaging"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#The-Lazy-Perfectionist"
+to = "/docs/chapter6#the-lazy-perfectionist"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#Initial-Design-Cut-the-Protocol"
+to = "/docs/chapter7#initial-design-cut-the-protocol"
+force = true
+
+[[redirects]]
+from = "/page:chapter5#Last-Value-Caching"
+to = "/docs/chapter5#last-value-caching"
+force = true
+
+[[redirects]]
+from = "/page:chapter3#Chapter-Advanced-Request-Reply-Patterns"
+to = "/docs/chapter3#chapter-advanced-request-reply-patterns"
+force = true
+
+[[redirects]]
+from = "/page:chapter4#Asynchronous-Majordomo-Pattern"
+to = "/docs/chapter4#asynchronous-majordomo-pattern"
+force = true
+
+[[redirects]]
+from = "/page:chapter6#Creating-Stable-Releases"
+to = "/docs/chapter6#creating-stable-releases"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#Step-Solve-One-Problem-and-Repeat"
+to = "/docs/chapter7#step-solve-one-problem-and-repeat"
+force = true
+
+[[redirects]]
+from = "/page:chapter5#advanced-pub-sub"
+to = "/docs/chapter5#advanced-pub-sub"
+force = true
+
+[[redirects]]
+from = "/page:chapter5#Building-a-Multithreaded-Stack-and-API"
+to = "/docs/chapter5#building-a-multithreaded-stack-and-api"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#Test-Use-Case-The-Track-Tool"
+to = "/docs/chapter7#test-use-case-the-track-tool"
+force = true
+
+[[redirects]]
+from = "/page:chapter2#Intermediaries-and-Proxies"
+to = "/docs/chapter2#intermediaries-and-proxies"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#Error-Handling"
+to = "/docs/chapter7#error-handling"
+force = true
+
+[[redirects]]
+from = "/page:chapter7#The-Cheap-or-Nasty-Pattern"
+to = "/docs/chapter7#the-cheap-or-nasty-pattern"
+force = true
+
+[[redirects]]
+from = "/page:chapter3#ROUTER-Broker-and-DEALER-Workers"
+to = "/docs/chapter3#router-broker-and-dealer-workers"
+force = true
+
+[[redirects]]
+from = "/page:chapter3#What-s-This-Good-For"
+to = "/docs/chapter3#what-s-this-good-for"
+force = true
+
+[[redirects]]
+from = "/page:chapter2#Plugging-Sockets-into-the-Topology"
+to = "/docs/chapter2#plugging-sockets-into-the-topology"
+force = true
+
+[[redirects]]
+from = "/page:chapter2#Sending-and-Receiving-Messages"
+to = "/docs/chapter2#sending-and-receiving-messages"
+force = true
+
+[[redirects]]
+from = "/page:chapter2#Missing-Message-Problem-Solver"
+to = "/docs/chapter2#missing-message-problem-solver"
+force = true
+
+[[redirects]]
+from = "/page:chapter1#Divide-and-Conquer"
+to = "/docs/chapter1#divide-and-conquer"
+force = true
+
+[[redirects]]
+from = "/page:chapter1#Making-a-Clean-Exit"
+to = "/docs/chapter1#making-a-clean-exit"
+force = true
+
+[[redirects]]
+from = "/page:chapter2#Handling-Interrupt-Signals"
+to = "/docs/chapter2#handling-interrupt-signals"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#More-About-UDP"
+to = "/docs/chapter8#more-about-udp"
+force = true
+
+[[redirects]]
+from = "/page:chapter8#How-This-Book-Happened"
+to = "/docs/chapter8#how-this-book-happened"
+force = true
+
+# bookmark redirects end
+
 [[redirects]]
 from = "/page:all"
 to = "/"
@@ -346,1416 +1760,3 @@ force = true
 from = "/hx:postface"
 to = "/docs/postface"
 force = true
-
-# bookmark redirects start
-[[redirects]]
-from = "/page:chapter7#Step-Internalize-the-Semantics"
-to = "/docs/chapter7#step-internalize-the-semantics"
-force = true
-
-[[redirects]]
-from = "/page:chapter5#Last-Value-Caching"
-to = "/docs/chapter5#last-value-caching"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#Economics-of-Participation"
-to = "/docs/chapter6#economics-of-participation"
-force = true
-
-[[redirects]]
-from = "/page:chapter1#Upgrading-from-ZeroMQ-v-to-ZeroMQ-v"
-to = "/docs/chapter1#upgrading-from-zeromq-v-to-zeromq-v"
-force = true
-
-[[redirects]]
-from = "/page:chapter4#Asynchronous-Majordomo-Pattern"
-to = "/docs/chapter4#asynchronous-majordomo-pattern"
-force = true
-
-[[redirects]]
-from = "/page:chapter3#The-REQ-to-REP-Combination"
-to = "/docs/chapter3#the-req-to-rep-combination"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#Stranger-Meet-Stranger"
-to = "/docs/chapter6#stranger-meet-stranger"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#Chapter-Advanced-Architecture-using-ZeroMQ"
-to = "/docs/chapter7#chapter-advanced-architecture-using-zeromq"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#Up-front-Coordination"
-to = "/docs/chapter6#up-front-coordination"
-force = true
-
-[[redirects]]
-from = "/page:chapter1#Socket-Scalability"
-to = "/docs/chapter1#socket-scalability"
-force = true
-
-[[redirects]]
-from = "/page:chapter2#Node-Coordination"
-to = "/docs/chapter2#node-coordination"
-force = true
-
-[[redirects]]
-from = "/page:chapter3#Putting-it-All-Together"
-to = "/docs/chapter3#putting-it-all-together"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#Chapter-A-Framework-for-Distributed-Computing"
-to = "/docs/chapter8#chapter-a-framework-for-distributed-computing"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#The-Historian"
-to = "/docs/chapter6#the-historian"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#Group-Messaging"
-to = "/docs/chapter8#group-messaging"
-force = true
-
-[[redirects]]
-from = "/page:chapter5#Building-a-Multithreaded-Stack-and-API"
-to = "/docs/chapter5#building-a-multithreaded-stack-and-api"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#Crazy-Beautiful-and-Easy"
-to = "/docs/chapter6#crazy-beautiful-and-easy"
-force = true
-
-[[redirects]]
-from = "/page:chapter4#Brokerless-Reliability-Freelance-Pattern"
-to = "/docs/chapter4#brokerless-reliability-freelance-pattern"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#Architecture-of-the-ZeroMQ-Community"
-to = "/docs/chapter6#architecture-of-the-zeromq-community"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#ZeroMQ-Framing"
-to = "/docs/chapter7#zeromq-framing"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#Trash-Oriented-Design"
-to = "/docs/chapter6#trash-oriented-design"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#Building-and-Trying-FileMQ"
-to = "/docs/chapter7#building-and-trying-filemq"
-force = true
-
-[[redirects]]
-from = "/page:chapter1#Getting-the-Message-Out"
-to = "/docs/chapter1#getting-the-message-out"
-force = true
-
-[[redirects]]
-from = "/page:chapter1#Chapter-Basics"
-to = "/docs/chapter1#chapter-basics"
-force = true
-
-[[redirects]]
-from = "/page:chapter5#High-Speed-Subscribers-Black-Box-Pattern"
-to = "/docs/chapter5#high-speed-subscribers-black-box-pattern"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#Cost-of-Failure"
-to = "/docs/chapter6#cost-of-failure"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#How-This-Book-Happened"
-to = "/docs/chapter8#how-this-book-happened"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#The-ZeroMQ-Process-C"
-to = "/docs/chapter6#the-zeromq-process-c"
-force = true
-
-[[redirects]]
-from = "/page:chapter5#The-Clustered-Hashmap-Protocol"
-to = "/docs/chapter5#the-clustered-hashmap-protocol"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#postface"
-to = "/docs/chapter8#postface"
-force = true
-
-[[redirects]]
-from = "/page:chapter2#Zero-Copy"
-to = "/docs/chapter2#zero-copy"
-force = true
-
-[[redirects]]
-from = "/page:chapter5#Getting-an-Out-of-Band-Snapshot"
-to = "/docs/chapter5#getting-an-out-of-band-snapshot"
-force = true
-
-[[redirects]]
-from = "/page:chapter3#Architecture-of-a-Single-Cluster"
-to = "/docs/chapter3#architecture-of-a-single-cluster"
-force = true
-
-[[redirects]]
-from = "/page:chapter4#One-Way-Heartbeats"
-to = "/docs/chapter4#one-way-heartbeats"
-force = true
-
-[[redirects]]
-from = "/page:chapter#ZeroMQ-in-a-Hundred-Words"
-to = "/docs/chapter#zeromq-in-a-hundred-words"
-force = true
-
-[[redirects]]
-from = "/page:chapter3#Establishing-the-Details"
-to = "/docs/chapter3#establishing-the-details"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#Some-Physics"
-to = "/docs/chapter8#some-physics"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#Handwritten-Binary-Serialization"
-to = "/docs/chapter7#handwritten-binary-serialization"
-force = true
-
-[[redirects]]
-from = "/page:chapter4#Robust-Reliable-Queuing-Paranoid-Pirate-Pattern"
-to = "/docs/chapter4#robust-reliable-queuing-paranoid-pirate-pattern"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#On-Assertions"
-to = "/docs/chapter8#on-assertions"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#Design-Notes"
-to = "/docs/chapter7#design-notes"
-force = true
-
-[[redirects]]
-from = "/page:chapter2#Unicast-Transports"
-to = "/docs/chapter2#unicast-transports"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#Authentication-Using-SASL"
-to = "/docs/chapter7#authentication-using-sasl"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#Rob-Gagnon-s-Story"
-to = "/docs/chapter8#rob-gagnon-s-story"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#A-Self-Healing-P-P-Network-in-Seconds"
-to = "/docs/chapter8#a-self-healing-p-p-network-in-seconds"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#Contracts-Are-Hard"
-to = "/docs/chapter7#contracts-are-hard"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#Discovery"
-to = "/docs/chapter8#discovery"
-force = true
-
-[[redirects]]
-from = "/page:chapter3#Identities-and-Addresses"
-to = "/docs/chapter3#identities-and-addresses"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#Network-Discovery"
-to = "/docs/chapter8#network-discovery"
-force = true
-
-[[redirects]]
-from = "/page:chapter4#Ping-Pong-Heartbeats"
-to = "/docs/chapter4#ping-pong-heartbeats"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#The-Importance-of-Contracts"
-to = "/docs/chapter6#the-importance-of-contracts"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#Eat-Me"
-to = "/docs/chapter6#eat-me"
-force = true
-
-[[redirects]]
-from = "/page:chapter1#Version-Reporting"
-to = "/docs/chapter1#version-reporting"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#Simplicity-Oriented-Design"
-to = "/docs/chapter6#simplicity-oriented-design"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#More-About-UDP"
-to = "/docs/chapter8#more-about-udp"
-force = true
-
-[[redirects]]
-from = "/page:chapter1#Making-a-Clean-Exit"
-to = "/docs/chapter1#making-a-clean-exit"
-force = true
-
-[[redirects]]
-from = "/page:chapter3#The-DEALER-to-ROUTER-Combination"
-to = "/docs/chapter3#the-dealer-to-router-combination"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#Visibility"
-to = "/docs/chapter6#visibility"
-force = true
-
-[[redirects]]
-from = "/page:chapter4#Idempotent-Services"
-to = "/docs/chapter4#idempotent-services"
-force = true
-
-[[redirects]]
-from = "/page:chapter1#Incompatible-Changes"
-to = "/docs/chapter1#incompatible-changes"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#Testing-and-Simulation"
-to = "/docs/chapter8#testing-and-simulation"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#Step-Draw-a-Rough-Architecture"
-to = "/docs/chapter7#step-draw-a-rough-architecture"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#Designing-the-API"
-to = "/docs/chapter8#designing-the-api"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#The-Lazy-Perfectionist"
-to = "/docs/chapter6#the-lazy-perfectionist"
-force = true
-
-[[redirects]]
-from = "/page:chapter3#The-CZMQ-High-Level-API"
-to = "/docs/chapter3#the-czmq-high-level-api"
-force = true
-
-[[redirects]]
-from = "/page:chapter2#Messaging-Patterns"
-to = "/docs/chapter2#messaging-patterns"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#Michael-Jakl-s-Story"
-to = "/docs/chapter8#michael-jakl-s-story"
-force = true
-
-[[redirects]]
-from = "/page:chapter1#Why-We-Needed-ZeroMQ"
-to = "/docs/chapter1#why-we-needed-zeromq"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#The-Mystic"
-to = "/docs/chapter6#the-mystic"
-force = true
-
-[[redirects]]
-from = "/page:chapter4#Designing-Reliability"
-to = "/docs/chapter4#designing-reliability"
-force = true
-
-[[redirects]]
-from = "/page:chapter2#ZeroMQ-s-Built-In-Proxy-Function"
-to = "/docs/chapter2#zeromq-s-built-in-proxy-function"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#Burnout"
-to = "/docs/chapter6#burnout"
-force = true
-
-[[redirects]]
-from = "/page:chapter3#The-Load-Balancing-Pattern"
-to = "/docs/chapter3#the-load-balancing-pattern"
-force = true
-
-[[redirects]]
-from = "/page:chapter2#I-O-Threads"
-to = "/docs/chapter2#i-o-threads"
-force = true
-
-[[redirects]]
-from = "/page:chapter5#Representing-State-as-Key-Value-Pairs"
-to = "/docs/chapter5#representing-state-as-key-value-pairs"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#Example-Zyre-Application"
-to = "/docs/chapter8#example-zyre-application"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#Message-Oriented-Pattern-for-Elastic-Design"
-to = "/docs/chapter7#message-oriented-pattern-for-elastic-design"
-force = true
-
-[[redirects]]
-from = "/page:chapter4#High-Availability-Pair-Binary-Star-Pattern"
-to = "/docs/chapter4#high-availability-pair-binary-star-pattern"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#The-Process"
-to = "/docs/chapter6#the-process"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#Getting-an-Official-Port-Number"
-to = "/docs/chapter7#getting-an-official-port-number"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#How-to-Write-Unprotocols"
-to = "/docs/chapter7#how-to-write-unprotocols"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#A-Real-Life-Example"
-to = "/docs/chapter6#a-real-life-example"
-force = true
-
-[[redirects]]
-from = "/page:chapter4#Binary-Star-Reactor"
-to = "/docs/chapter4#binary-star-reactor"
-force = true
-
-[[redirects]]
-from = "/page:chapter3#The-REQ-to-ROUTER-Combination"
-to = "/docs/chapter3#the-req-to-router-combination"
-force = true
-
-[[redirects]]
-from = "/page:chapter4#Contracts-and-Protocols"
-to = "/docs/chapter4#contracts-and-protocols"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#The-Hangman"
-to = "/docs/chapter6#the-hangman"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#Robustness-in-Conflict"
-to = "/docs/chapter6#robustness-in-conflict"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#Goals"
-to = "/docs/chapter6#goals"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#True-Peer-Connectivity-Harmony-Pattern"
-to = "/docs/chapter8#true-peer-connectivity-harmony-pattern"
-force = true
-
-[[redirects]]
-from = "/page:chapter2#Handling-Interrupt-Signals"
-to = "/docs/chapter2#handling-interrupt-signals"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#advanced-architecture"
-to = "/docs/chapter7#advanced-architecture"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#Care-and-Feeding"
-to = "/docs/chapter6#care-and-feeding"
-force = true
-
-[[redirects]]
-from = "/page:chapter2#Intermediaries-and-Proxies"
-to = "/docs/chapter2#intermediaries-and-proxies"
-force = true
-
-[[redirects]]
-from = "/page:chapter3#Chapter-Advanced-Request-Reply-Patterns"
-to = "/docs/chapter3#chapter-advanced-request-reply-patterns"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#A-Plausible-Minimal-Implementation"
-to = "/docs/chapter8#a-plausible-minimal-implementation"
-force = true
-
-[[redirects]]
-from = "/page:chapter4#Conclusion"
-to = "/docs/chapter4#conclusion"
-force = true
-
-[[redirects]]
-from = "/page:chapter2#High-Level-Messaging-Patterns"
-to = "/docs/chapter2#high-level-messaging-patterns"
-force = true
-
-[[redirects]]
-from = "/page:chapter3#Prototyping-the-Local-and-Cloud-Flows"
-to = "/docs/chapter3#prototyping-the-local-and-cloud-flows"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#Step-Solve-One-Problem-and-Repeat"
-to = "/docs/chapter7#step-solve-one-problem-and-repeat"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#Project-Administration"
-to = "/docs/chapter6#project-administration"
-force = true
-
-[[redirects]]
-from = "/page:chapter4#Model-Two-Brutal-Shotgun-Massacre"
-to = "/docs/chapter4#model-two-brutal-shotgun-massacre"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#Tom-van-Leeuwen-s-Story"
-to = "/docs/chapter8#tom-van-leeuwen-s-story"
-force = true
-
-[[redirects]]
-from = "/page:chapter5#Using-a-Reactor"
-to = "/docs/chapter5#using-a-reactor"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#Psychology-of-Software-Architecture"
-to = "/docs/chapter6#psychology-of-software-architecture"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#Code-Generation"
-to = "/docs/chapter7#code-generation"
-force = true
-
-[[redirects]]
-from = "/page:chapter2#sockets-and-patterns"
-to = "/docs/chapter2#sockets-and-patterns"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#Patterns-for-Success"
-to = "/docs/chapter6#patterns-for-success"
-force = true
-
-[[redirects]]
-from = "/page:chapter3#The-DEALER-to-REP-Combination"
-to = "/docs/chapter3#the-dealer-to-rep-combination"
-force = true
-
-[[redirects]]
-from = "/page:chapter4#Binary-Star-Implementation"
-to = "/docs/chapter4#binary-star-implementation"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#Configuration"
-to = "/docs/chapter7#configuration"
-force = true
-
-[[redirects]]
-from = "/page:chapter2#Sending-and-Receiving-Messages"
-to = "/docs/chapter2#sending-and-receiving-messages"
-force = true
-
-[[redirects]]
-from = "/page:chapter2#Detecting-Memory-Leaks"
-to = "/docs/chapter2#detecting-memory-leaks"
-force = true
-
-[[redirects]]
-from = "/page:chapter3#Request-Reply-Combinations"
-to = "/docs/chapter3#request-reply-combinations"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#Step-Decide-on-the-Contracts"
-to = "/docs/chapter7#step-decide-on-the-contracts"
-force = true
-
-[[redirects]]
-from = "/page:chapter3#What-s-This-Good-For"
-to = "/docs/chapter3#what-s-this-good-for"
-force = true
-
-[[redirects]]
-from = "/page:chapter3#The-ROUTER-to-ROUTER-Combination"
-to = "/docs/chapter3#the-router-to-router-combination"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#Delivery-Notifications"
-to = "/docs/chapter7#delivery-notifications"
-force = true
-
-[[redirects]]
-from = "/page:chapter1#Getting-the-Context-Right"
-to = "/docs/chapter1#getting-the-context-right"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#Using-ABNF"
-to = "/docs/chapter7#using-abnf"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#Scalability"
-to = "/docs/chapter6#scalability"
-force = true
-
-[[redirects]]
-from = "/page:chapter5#advanced-pub-sub"
-to = "/docs/chapter5#advanced-pub-sub"
-force = true
-
-[[redirects]]
-from = "/page:chapter#The-Zen-of-Zero"
-to = "/docs/chapter#the-zen-of-zero"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#Protocol-Assertions"
-to = "/docs/chapter8#protocol-assertions"
-force = true
-
-[[redirects]]
-from = "/page:chapter2#High-Water-Marks"
-to = "/docs/chapter2#high-water-marks"
-force = true
-
-[[redirects]]
-from = "/page:chapter3#Worked-Example-Inter-Broker-Routing"
-to = "/docs/chapter3#worked-example-inter-broker-routing"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#The-Rolling-Stone"
-to = "/docs/chapter6#the-rolling-stone"
-force = true
-
-[[redirects]]
-from = "/page:chapter3#Federation-Versus-Peering"
-to = "/docs/chapter3#federation-versus-peering"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#Preliminaries"
-to = "/docs/chapter6#preliminaries"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#Surprise-and-Expectations"
-to = "/docs/chapter6#surprise-and-expectations"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#Why-Mesh-Isn-t-Here-Yet"
-to = "/docs/chapter8#why-mesh-isn-t-here-yet"
-force = true
-
-[[redirects]]
-from = "/page:chapter3#Prototyping-the-State-Flow"
-to = "/docs/chapter3#prototyping-the-state-flow"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#Conclusions"
-to = "/docs/chapter8#conclusions"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#Multiple-Nodes-on-One-Device"
-to = "/docs/chapter8#multiple-nodes-on-one-device"
-force = true
-
-[[redirects]]
-from = "/page:chapter#How-It-Began"
-to = "/docs/chapter#how-it-began"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#Service-Discovery"
-to = "/docs/chapter8#service-discovery"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#Abstraction-Level"
-to = "/docs/chapter7#abstraction-level"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#The-Cheap-or-Nasty-Pattern"
-to = "/docs/chapter7#the-cheap-or-nasty-pattern"
-force = true
-
-[[redirects]]
-from = "/page:chapter2#Transport-Bridging"
-to = "/docs/chapter2#transport-bridging"
-force = true
-
-[[redirects]]
-from = "/page:chapter3#The-Extended-Reply-Envelope"
-to = "/docs/chapter3#the-extended-reply-envelope"
-force = true
-
-[[redirects]]
-from = "/page:chapter4#Chapter-Reliable-Request-Reply-Patterns"
-to = "/docs/chapter4#chapter-reliable-request-reply-patterns"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#Serializing-Your-Data"
-to = "/docs/chapter7#serializing-your-data"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#Designing-for-Innovation"
-to = "/docs/chapter6#designing-for-innovation"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#Content-Distribution"
-to = "/docs/chapter8#content-distribution"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#Preemptive-Discovery-over-Raw-Sockets"
-to = "/docs/chapter8#preemptive-discovery-over-raw-sockets"
-force = true
-
-[[redirects]]
-from = "/page:chapter3#Recap-of-Request-Reply-Sockets"
-to = "/docs/chapter3#recap-of-request-reply-sockets"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#Binary-Logging-Protocol"
-to = "/docs/chapter8#binary-logging-protocol"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#Simplicity-Versus-Complexity"
-to = "/docs/chapter6#simplicity-versus-complexity"
-force = true
-
-[[redirects]]
-from = "/page:chapter2#The-Dynamic-Discovery-Problem"
-to = "/docs/chapter2#the-dynamic-discovery-problem"
-force = true
-
-[[redirects]]
-from = "/page:chapter4#Heartbeating-for-Paranoid-Pirate"
-to = "/docs/chapter4#heartbeating-for-paranoid-pirate"
-force = true
-
-[[redirects]]
-from = "/page:chapter3#The-DEALER-to-DEALER-Combination"
-to = "/docs/chapter3#the-dealer-to-dealer-combination"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#Cooperative-Discovery-Using-UDP-Broadcasts"
-to = "/docs/chapter8#cooperative-discovery-using-udp-broadcasts"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#Licensing"
-to = "/docs/chapter8#licensing"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#Technical-Requirements"
-to = "/docs/chapter8#technical-requirements"
-force = true
-
-[[redirects]]
-from = "/page:chapter1#Fixing-the-World"
-to = "/docs/chapter1#fixing-the-world"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#The-Constant-Gardener"
-to = "/docs/chapter6#the-constant-gardener"
-force = true
-
-[[redirects]]
-from = "/page:chapter3#ROUTER-Broker-and-REQ-Workers"
-to = "/docs/chapter3#router-broker-and-req-workers"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#The-Use-Case"
-to = "/docs/chapter8#the-use-case"
-force = true
-
-[[redirects]]
-from = "/page:chapter4#Client-Side-Reliability-Lazy-Pirate-Pattern"
-to = "/docs/chapter4#client-side-reliability-lazy-pirate-pattern"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#Error-Handling"
-to = "/docs/chapter7#error-handling"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#Test-Use-Case-The-Track-Tool"
-to = "/docs/chapter7#test-use-case-the-track-tool"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#The-Mindful-General"
-to = "/docs/chapter6#the-mindful-general"
-force = true
-
-[[redirects]]
-from = "/page:chapter4#What-is-Reliability"
-to = "/docs/chapter4#what-is-reliability"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#The-Secret-Life-of-WiFi"
-to = "/docs/chapter8#the-secret-life-of-wifi"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#How-to-Make-Really-Large-Architectures"
-to = "/docs/chapter6#how-to-make-really-large-architectures"
-force = true
-
-[[redirects]]
-from = "/page:chapter1#Starting-Assumptions"
-to = "/docs/chapter1#starting-assumptions"
-force = true
-
-[[redirects]]
-from = "/page:chapter2#Multithreading-with-ZeroMQ"
-to = "/docs/chapter2#multithreading-with-zeromq"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#Why-make-FileMQ"
-to = "/docs/chapter7#why-make-filemq"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#Serialization-Libraries"
-to = "/docs/chapter7#serialization-libraries"
-force = true
-
-[[redirects]]
-from = "/page:chapter1#A-Note-on-the-Naming-Convention"
-to = "/docs/chapter1#a-note-on-the-naming-convention"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#Change-Latency"
-to = "/docs/chapter6#change-latency"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#The-Provocateur"
-to = "/docs/chapter6#the-provocateur"
-force = true
-
-[[redirects]]
-from = "/page:chapter4#Preventing-Split-Brain-Syndrome"
-to = "/docs/chapter4#preventing-split-brain-syndrome"
-force = true
-
-[[redirects]]
-from = "/page:chapter3#The-Asynchronous-Client-Server-Pattern"
-to = "/docs/chapter3#the-asynchronous-client-server-pattern"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#Language"
-to = "/docs/chapter6#language"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#The-Canary-Watcher"
-to = "/docs/chapter6#the-canary-watcher"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#Recovery-and-Late-Joiners"
-to = "/docs/chapter7#recovery-and-late-joiners"
-force = true
-
-[[redirects]]
-from = "/page:chapter1#Getting-the-Examples"
-to = "/docs/chapter1#getting-the-examples"
-force = true
-
-[[redirects]]
-from = "/page:chapter2#Missing-Message-Problem-Solver"
-to = "/docs/chapter2#missing-message-problem-solver"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#The-Social-Engineer"
-to = "/docs/chapter6#the-social-engineer"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#Dealing-with-Blocked-Peers"
-to = "/docs/chapter8#dealing-with-blocked-peers"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#Learning-Curve"
-to = "/docs/chapter6#learning-curve"
-force = true
-
-[[redirects]]
-from = "/page:chapter#Audience"
-to = "/docs/chapter#audience"
-force = true
-
-[[redirects]]
-from = "/page:chapter3#The-Simple-Reply-Envelope"
-to = "/docs/chapter3#the-simple-reply-envelope"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#The-Pirate-Gang"
-to = "/docs/chapter6#the-pirate-gang"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#UDP-Beacon-Framing"
-to = "/docs/chapter8#udp-beacon-framing"
-force = true
-
-[[redirects]]
-from = "/page:chapter2#Pub-Sub-Message-Envelopes"
-to = "/docs/chapter2#pub-sub-message-envelopes"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#Public-API"
-to = "/docs/chapter7#public-api"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#Initial-Design-Cut-the-Protocol"
-to = "/docs/chapter7#initial-design-cut-the-protocol"
-force = true
-
-[[redirects]]
-from = "/page:chapter2#ZeroMQ-is-Not-a-Neutral-Carrier"
-to = "/docs/chapter2#zeromq-is-not-a-neutral-carrier"
-force = true
-
-[[redirects]]
-from = "/page:chapter4#reliable-request-reply"
-to = "/docs/chapter4#reliable-request-reply"
-force = true
-
-[[redirects]]
-from = "/page:chapter3#advanced-request-reply"
-to = "/docs/chapter3#advanced-request-reply"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#Step-Write-a-Minimal-End-to-End-Solution"
-to = "/docs/chapter7#step-write-a-minimal-end-to-end-solution"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#Complexity-Oriented-Design"
-to = "/docs/chapter6#complexity-oriented-design"
-force = true
-
-[[redirects]]
-from = "/page:chapter3#ROUTER-Error-Handling"
-to = "/docs/chapter3#router-error-handling"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#Why-use-the-GPLv-for-Public-Specifications"
-to = "/docs/chapter7#why-use-the-gplv-for-public-specifications"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#Guarantees-of-Isolation"
-to = "/docs/chapter6#guarantees-of-isolation"
-force = true
-
-[[redirects]]
-from = "/page:chapter1#basics"
-to = "/docs/chapter1#basics"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#Infinite-Property"
-to = "/docs/chapter6#infinite-property"
-force = true
-
-[[redirects]]
-from = "/page:chapter4#Heartbeating"
-to = "/docs/chapter4#heartbeating"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#Unprotocols"
-to = "/docs/chapter7#unprotocols"
-force = true
-
-[[redirects]]
-from = "/page:chapter#Acknowledgements"
-to = "/docs/chapter#acknowledgements"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#The-Tale-of-Two-Bridges"
-to = "/docs/chapter6#the-tale-of-two-bridges"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#The-Earth-and-Sky"
-to = "/docs/chapter6#the-earth-and-sky"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#Test-Results"
-to = "/docs/chapter8#test-results"
-force = true
-
-[[redirects]]
-from = "/page:chapter2#Handling-Errors-and-ETERM"
-to = "/docs/chapter2#handling-errors-and-eterm"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#Large-Scale-File-Publishing-FileMQ"
-to = "/docs/chapter7#large-scale-file-publishing-filemq"
-force = true
-
-[[redirects]]
-from = "/page:chapter2#The-Socket-API"
-to = "/docs/chapter2#the-socket-api"
-force = true
-
-[[redirects]]
-from = "/page:chapter4#Detailed-Requirements"
-to = "/docs/chapter4#detailed-requirements"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#Transferring-Files"
-to = "/docs/chapter7#transferring-files"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#the-community"
-to = "/docs/chapter6#the-community"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#Detecting-Disappearances"
-to = "/docs/chapter8#detecting-disappearances"
-force = true
-
-[[redirects]]
-from = "/page:chapter5#Republishing-Updates-from-Clients"
-to = "/docs/chapter5#republishing-updates-from-clients"
-force = true
-
-[[redirects]]
-from = "/page:chapter3#The-Request-Reply-Mechanisms"
-to = "/docs/chapter3#the-request-reply-mechanisms"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#The-Zyre-Tester"
-to = "/docs/chapter8#the-zyre-tester"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#Serialization-Languages"
-to = "/docs/chapter7#serialization-languages"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#What-s-the-Current-Status"
-to = "/docs/chapter8#what-s-the-current-status"
-force = true
-
-[[redirects]]
-from = "/page:chapter3#The-Naming-Ceremony"
-to = "/docs/chapter3#the-naming-ceremony"
-force = true
-
-[[redirects]]
-from = "/page:chapter3#Features-of-a-Higher-Level-API"
-to = "/docs/chapter3#features-of-a-higher-level-api"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#How-ZeroMQ-Lost-Its-Road-Map"
-to = "/docs/chapter6#how-zeromq-lost-its-road-map"
-force = true
-
-[[redirects]]
-from = "/page:chapter4#Shrugging-It-Off"
-to = "/docs/chapter4#shrugging-it-off"
-force = true
-
-[[redirects]]
-from = "/page:chapter1#Suggested-Shim-Macros"
-to = "/docs/chapter1#suggested-shim-macros"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#Evolution-of-Public-Contracts"
-to = "/docs/chapter6#evolution-of-public-contracts"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#The-Open-Door"
-to = "/docs/chapter6#the-open-door"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#moving-pieces"
-to = "/docs/chapter8#moving-pieces"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#File-Stability"
-to = "/docs/chapter7#file-stability"
-force = true
-
-[[redirects]]
-from = "/page:chapter2#Signaling-Between-Threads-PAIR-Sockets"
-to = "/docs/chapter2#signaling-between-threads-pair-sockets"
-force = true
-
-[[redirects]]
-from = "/page:chapter2#Shared-Queue-DEALER-and-ROUTER-sockets"
-to = "/docs/chapter2#shared-queue-dealer-and-router-sockets"
-force = true
-
-[[redirects]]
-from = "/page:chapter1#Programming-with-ZeroMQ"
-to = "/docs/chapter1#programming-with-zeromq"
-force = true
-
-[[redirects]]
-from = "/page:chapter1#A-Minor-Note-on-Strings"
-to = "/docs/chapter1#a-minor-note-on-strings"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#The-Flash-Mob"
-to = "/docs/chapter6#the-flash-mob"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#Git-Branches-Considered-Harmful"
-to = "/docs/chapter6#git-branches-considered-harmful"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#Development-Process"
-to = "/docs/chapter6#development-process"
-force = true
-
-[[redirects]]
-from = "/page:chapter5#Working-with-Subtrees"
-to = "/docs/chapter5#working-with-subtrees"
-force = true
-
-[[redirects]]
-from = "/page:chapter5#Chapter-Advanced-Pub-Sub-Patterns"
-to = "/docs/chapter5#chapter-advanced-pub-sub-patterns"
-force = true
-
-[[redirects]]
-from = "/page:chapter1#Warning-Unstable-Paradigms"
-to = "/docs/chapter1#warning-unstable-paradigms"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#Initial-Design-Cut-the-API"
-to = "/docs/chapter7#initial-design-cut-the-api"
-force = true
-
-[[redirects]]
-from = "/page:chapter5#Pub-Sub-Tracing-Espresso-Pattern"
-to = "/docs/chapter5#pub-sub-tracing-espresso-pattern"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#Protocols-Without-The-Goats"
-to = "/docs/chapter7#protocols-without-the-goats"
-force = true
-
-[[redirects]]
-from = "/page:chapter5#Centralized-Versus-Decentralized"
-to = "/docs/chapter5#centralized-versus-decentralized"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#Removing-Friction"
-to = "/docs/chapter8#removing-friction"
-force = true
-
-[[redirects]]
-from = "/page:chapter3#ROUTER-Broker-and-DEALER-Workers"
-to = "/docs/chapter3#router-broker-and-dealer-workers"
-force = true
-
-[[redirects]]
-from = "/page:chapter5#Slow-Subscriber-Detection-Suicidal-Snail-Pattern"
-to = "/docs/chapter5#slow-subscriber-detection-suicidal-snail-pattern"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#Design-for-The-Real-World"
-to = "/docs/chapter8#design-for-the-real-world"
-force = true
-
-[[redirects]]
-from = "/page:chapter5#Reliable-Pub-Sub-Clone-Pattern"
-to = "/docs/chapter5#reliable-pub-sub-clone-pattern"
-force = true
-
-[[redirects]]
-from = "/page:chapter3#Scaling-to-Multiple-Clusters"
-to = "/docs/chapter3#scaling-to-multiple-clusters"
-force = true
-
-[[redirects]]
-from = "/page:chapter4#Service-Oriented-Reliable-Queuing-Majordomo-Pattern"
-to = "/docs/chapter4#service-oriented-reliable-queuing-majordomo-pattern"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#Tales-from-Out-There"
-to = "/docs/chapter8#tales-from-out-there"
-force = true
-
-[[redirects]]
-from = "/page:chapter3#A-High-Level-API-for-ZeroMQ"
-to = "/docs/chapter3#a-high-level-api-for-zeromq"
-force = true
-
-[[redirects]]
-from = "/page:chapter5#Pros-and-Cons-of-Pub-Sub"
-to = "/docs/chapter5#pros-and-cons-of-pub-sub"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#Chapter-The-ZeroMQ-Community"
-to = "/docs/chapter6#chapter-the-zeromq-community"
-force = true
-
-[[redirects]]
-from = "/page:chapter2#Chapter-Sockets-and-Patterns"
-to = "/docs/chapter2#chapter-sockets-and-patterns"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#Tracing-Activity"
-to = "/docs/chapter8#tracing-activity"
-force = true
-
-[[redirects]]
-from = "/page:chapter1#Divide-and-Conquer"
-to = "/docs/chapter1#divide-and-conquer"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#Creating-Stable-Releases"
-to = "/docs/chapter6#creating-stable-releases"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#Writing-the-Unprotocol"
-to = "/docs/chapter8#writing-the-unprotocol"
-force = true
-
-[[redirects]]
-from = "/page:chapter4#Disconnected-Reliability-Titanic-Pattern"
-to = "/docs/chapter4#disconnected-reliability-titanic-pattern"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#Symbolic-Links"
-to = "/docs/chapter7#symbolic-links"
-force = true
-
-[[redirects]]
-from = "/page:chapter4#Model-One-Simple-Retry-and-Failover"
-to = "/docs/chapter4#model-one-simple-retry-and-failover"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#Vadim-Shalts-s-Story"
-to = "/docs/chapter8#vadim-shalts-s-story"
-force = true
-
-[[redirects]]
-from = "/page:chapter2#Working-with-Messages"
-to = "/docs/chapter2#working-with-messages"
-force = true
-
-[[redirects]]
-from = "/page:chapter5#Adding-the-Binary-Star-Pattern-for-Reliability"
-to = "/docs/chapter5#adding-the-binary-star-pattern-for-reliability"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#Internal-Architecture"
-to = "/docs/chapter7#internal-architecture"
-force = true
-
-[[redirects]]
-from = "/page:chapter3#Invalid-Combinations"
-to = "/docs/chapter3#invalid-combinations"
-force = true
-
-[[redirects]]
-from = "/page:chapter2#Multipart-Messages"
-to = "/docs/chapter2#multipart-messages"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#Spinning-Off-a-Library-Project"
-to = "/docs/chapter8#spinning-off-a-library-project"
-force = true
-
-[[redirects]]
-from = "/page:chapter1#Compatible-Changes"
-to = "/docs/chapter1#compatible-changes"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#The-Benevolent-Tyrant"
-to = "/docs/chapter6#the-benevolent-tyrant"
-force = true
-
-[[redirects]]
-from = "/page:chapter5#Ephemeral-Values"
-to = "/docs/chapter5#ephemeral-values"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#Licensing-and-Ownership"
-to = "/docs/chapter6#licensing-and-ownership"
-force = true
-
-[[redirects]]
-from = "/page:chapter3#A-Load-Balancing-Message-Broker"
-to = "/docs/chapter3#a-load-balancing-message-broker"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#On-Up-Front-Testing"
-to = "/docs/chapter8#on-up-front-testing"
-force = true
-
-[[redirects]]
-from = "/page:chapter4#Model-Three-Complex-and-Nasty"
-to = "/docs/chapter4#model-three-complex-and-nasty"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#Distributed-Logging-and-Monitoring"
-to = "/docs/chapter8#distributed-logging-and-monitoring"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#The-Laughing-Clown"
-to = "/docs/chapter6#the-laughing-clown"
-force = true
-
-[[redirects]]
-from = "/page:chapter7#State-Machines"
-to = "/docs/chapter7#state-machines"
-force = true
-
-[[redirects]]
-from = "/page:chapter2#Plugging-Sockets-into-the-Topology"
-to = "/docs/chapter2#plugging-sockets-into-the-topology"
-force = true
-
-[[redirects]]
-from = "/page:chapter8#Point-to-Point-Messaging"
-to = "/docs/chapter8#point-to-point-messaging"
-force = true
-
-[[redirects]]
-from = "/page:chapter3#Exploring-ROUTER-Sockets"
-to = "/docs/chapter3#exploring-router-sockets"
-force = true
-
-[[redirects]]
-from = "/page:chapter2#Handling-Multiple-Sockets"
-to = "/docs/chapter2#handling-multiple-sockets"
-force = true
-
-[[redirects]]
-from = "/page:chapter6#Patch-Requirements"
-to = "/docs/chapter6#patch-requirements"
-force = true
-
-[[redirects]]
-from = "/page:chapter1#Ask-and-Ye-Shall-Receive"
-to = "/docs/chapter1#ask-and-ye-shall-receive"
-force = true
-
-[[redirects]]
-from = "/page:chapter4#Basic-Reliable-Queuing-Simple-Pirate-Pattern"
-to = "/docs/chapter4#basic-reliable-queuing-simple-pirate-pattern"
-force = true
-
-# bookmark redirects end
