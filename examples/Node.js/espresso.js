@@ -1,24 +1,19 @@
 /**
 *  Pub-Sub Tracing (Espresso Pattern) 
 *  explained in
-*  https://zguide.zeromq.org/docs/chapter5/
-*  
-*
-*
+*  https://zguide.zeromq.org/docs/chapter5
 */
-
 
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.runListenerThread = exports.runPubThread = exports.runSubThread = void 0;
 
-const zmq = require("zeromq");
-const publisher = new zmq.Publisher;
-const pubKeypair = zmq.curveKeyPair();
-const publicKey = pubKeypair.publicKey;
+const zmq = require("zeromq"),
+      publisher = new zmq.Publisher,
+      pubKeypair = zmq.curveKeyPair(),
+      publicKey = pubKeypair.publicKey;
 
 var interrupted = false;
-
 
 function getRandomInt(max) {
     return Math.floor(Math.random() * Math.floor(max));
@@ -56,8 +51,6 @@ async function runSubThread() {
         }
     }
 }
-
-
 
 //Run the Publisher Thread!
 async function runPubThread() {
