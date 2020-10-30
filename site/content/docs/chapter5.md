@@ -62,7 +62,7 @@ Let's start this chapter by looking at a way to trace pub-sub networks. In [Chap
 
 The code is deceptively simple:
 
-{{< example name="espresso" title="Espresso Pattern" >}}
+{{< examples name="espresso" title="Espresso Pattern" >}}
 
 Espresso works by creating a listener thread that reads a PAIR socket and prints anything it gets. That PAIR socket is one end of a pipe; the other end (another PAIR) is the socket we pass to <tt>[zmq_proxy()](http://api.zeromq.org/3-2:zmq_proxy)</tt>. In practice, you'd filter interesting messages to get the essence of what you want to track (hence the name of the pattern).
 
@@ -98,11 +98,11 @@ I'll start by making a publisher and subscriber that highlight the worst case sc
 
 Here's the publisher code. Note that it has the command line option to connect to some address, but otherwise binds to an endpoint. We'll use this later to connect to our last value cache:
 
-{{< example name="pathopub" title="Pathologic Publisher" >}}
+{{< examples name="pathopub" title="Pathologic Publisher" >}}
 
 And here's the subscriber:
 
-{{< example name="pathosub" title="Pathologic Subscriber" >}}
+{{< examples name="pathosub" title="Pathologic Subscriber" >}}
 
 Try building and running these: first the subscriber, then the publisher. You'll see the subscriber reports getting "Save Roger" as you'd expect:
 
@@ -113,7 +113,7 @@ Try building and running these: first the subscriber, then the publisher. You'll
 
 It's when you run a second subscriber that you understand Roger's predicament. You have to leave it an awful long time before it reports getting any data. So, here's our last value cache. As I promised, it's a proxy that binds to two sockets and then handles messages on both:
 
-{{< example name="lvcache" title="Last Value Caching Proxy" >}}
+{{< examples name="lvcache" title="Last Value Caching Proxy" >}}
 
 Now, run the proxy, and then the publisher:
 
@@ -158,7 +158,7 @@ The Suicide Snail pattern works especially when subscribers have their own clien
 
 Here is a minimal example of a Suicidal Snail:
 
-{{< example name="suisnail" title="Suicidal Snail" >}}
+{{< examples name="suisnail" title="Suicidal Snail" >}}
 
 Here are some things to note about the Suicidal Snail example:
 
@@ -299,11 +299,11 @@ An update is either a new key-value pair, a modified value for an existing key, 
 
 This is the server:
 
-{{< example name="clonesrv1" title="Clone server, Model One" >}}
+{{< examples name="clonesrv1" title="Clone server, Model One" >}}
 
 And here is the client:
 
-{{< example name="clonecli1" title="Clone client, Model One" >}}
+{{< examples name="clonecli1" title="Clone client, Model One" >}}
 
 {{< textdiagram name="fig58.png" figno="58" title="Publishing State Updates" >}}
           #-----------#
@@ -338,7 +338,7 @@ Here are some things to note about this first model:
 
 Here is the <tt>kvmsg</tt> class, in the simplest form that works for now:
 
-{{< example name="kvsimple" title="Key-value message class" >}}
+{{< examples name="kvsimple" title="Key-value message class" >}}
 
 Later, we'll make a more sophisticated <tt>kvmsg</tt> class that will work in real applications.
 
@@ -385,11 +385,11 @@ So we will do the synchronization in the client, as follows:
 
 It's a simple model that exploits ZeroMQ's own internal queues. Here's the server:
 
-{{< example name="clonesrv2" title="Clone server, Model Two" >}}
+{{< examples name="clonesrv2" title="Clone server, Model Two" >}}
 
 And here is the client:
 
-{{< example name="clonecli2" title="Clone client, Model Two" >}}
+{{< examples name="clonecli2" title="Clone client, Model Two" >}}
 
 Here are some things to note about these two programs:
 
@@ -444,11 +444,11 @@ By mediating all changes, the server can also add a unique sequence number to al
 
 We'll now generate state updates in the client. Here's the server:
 
-{{< example name="clonesrv3" title="Clone server, Model Three" >}}
+{{< examples name="clonesrv3" title="Clone server, Model Three" >}}
 
 And here is the client:
 
-{{< example name="clonecli3" title="Clone client, Model Three" >}}
+{{< examples name="clonecli3" title="Clone client, Model Three" >}}
 
 Here are some things to note about this third design:
 
@@ -471,11 +471,11 @@ We'll use the path hierarchy, and extend our client and server so that a client 
 
 Here's the server implementing subtrees, a small variation on Model Three:
 
-{{< example name="clonesrv4" title="Clone server, Model Four" >}}
+{{< examples name="clonesrv4" title="Clone server, Model Four" >}}
 
 And here is the corresponding client:
 
-{{< example name="clonecli4" title="Clone client, Model Four" >}}
+{{< examples name="clonecli4" title="Clone client, Model Four" >}}
 
 ### Ephemeral Values {#Ephemeral-Values}
 
@@ -491,7 +491,7 @@ Next, we need a way to say, "delete this value". Up until now, servers and clien
 
 Here's a more complete version of the <tt>kvmsg</tt> class, which implements the properties frame (and adds a UUID frame, which we'll need later on). It also handles empty values by deleting the key from the hash, if necessary:
 
-{{< example name="kvmsg" title="Key-value message class: full" >}}
+{{< examples name="kvmsg" title="Key-value message class: full" >}}
 
 The Model Five client is almost identical to Model Four. It uses the full <tt>kvmsg</tt> class now, and sets a randomized <tt>ttl</tt> property (measured in seconds) on each message:
 
@@ -511,7 +511,7 @@ There are three reactor handlers:
 * One to handle incoming updates from clients, coming on the PULL socket;
 * One to expire ephemeral values that have passed their TTL.
 
-{{< example name="clonesrv5" title="Clone server, Model Five" >}}
+{{< examples name="clonesrv5" title="Clone server, Model Five" >}}
 
 ### Adding the Binary Star Pattern for Reliability {#Adding-the-Binary-Star-Pattern-for-Reliability}
 
@@ -624,7 +624,7 @@ Thus the architecture for our high-availability server pair using the Binary Sta
 
 Here is the sixth and last model of the Clone server:
 
-{{< example name="clonesrv6" title="Clone server, Model Six" >}}
+{{< examples name="clonesrv6" title="Clone server, Model Six" >}}
 
 This model is only a few hundred lines of code, but it took quite a while to get working. To be accurate, building Model Six took about a full week of "Sweet god, this is just too complex for an example" hacking. We've assembled pretty much everything and the kitchen sink into this small application. We have failover, ephemeral values, subtrees, and so on. What surprised me was that the up-front design was pretty accurate. Still the details of writing and debugging so many socket flows is quite challenging.
 
@@ -881,7 +881,7 @@ char *
 
 So here is Model Six of the clone client, which has now become just a thin shell using the clone class:
 
-{{< example name="clonecli6" title="Clone client, Model Six" >}}
+{{< examples name="clonecli6" title="Clone client, Model Six" >}}
 
 Note the connect method, which specifies one server endpoint. Under the hood, we're in fact talking to three ports. However, as the CHP protocol says, the three ports are on consecutive port numbers:
 
@@ -904,5 +904,5 @@ Let's end with the source code for the clone stack. This is a complex piece of c
 
 And here is the actual clone class implementation:
 
-{{< example name="clone" title="Clone class" >}}
+{{< examples name="clone" title="Clone class" >}}
 

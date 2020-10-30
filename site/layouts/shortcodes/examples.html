@@ -1,15 +1,17 @@
 {{ $s := .Site}}
 {{ $name := .Get "name" }}
 {{ $title := .Get "title" }}
-{{ $language := .Get "language" }}
 {{ $languages := .Site.Data.languages }}
-{{ range where $languages "name" $language }}
+{{ $languagesWithExample := slice }}
+{{ $languagesWithoutExample := slice }}
+{{ range $languages }}
   {{ $languageName := .name }}
   {{ $languageExtension := .extension }}
   {{ $examplePath := printf "/content/examples/%s/%s.%s" $languageName $name $languageExtension | safeURL }}
-  <details open>
+  <details class="example" data-language="{{ $languageName }}" style="display: none">
     <summary>{{ $name }}: {{ $title }} in {{ $languageName }}</summary>
       {{ if fileExists $examplePath }}
+        {{ $languagesWithExample = $languagesWithExample | append . }}
           <div class="markdown-inner">
             {{ highlight (readFile $examplePath) $languageName "" }}
           </div>
@@ -20,6 +22,7 @@
             </a>
           </div>
       {{ else }}
+        {{ $languagesWithoutExample = $languagesWithoutExample | append . }}
           <div class="markdown-inner">
               The example <strong>{{ $name }}</strong> is missing in <strong>{{ .name }}</strong>:
               <a href="/translate">Contribute Translation</a>
@@ -27,5 +30,12 @@
       {{ end }}
     </summary>
   </details>
-  <br/>
 {{ end }}
+{{ range $languagesWithExample }}
+  <a class="lang-toggle" data-language="{{ .name }}" style="cursor: pointer;">{{ .name }}</a> |
+{{ end }}
+<a href="/translate">
+  {{ range $i, $e := $languagesWithoutExample }}
+    {{ .name }}{{if ne (add $i 1) (len $languagesWithoutExample) }} |{{end}}
+  {{ end }}
+</a>

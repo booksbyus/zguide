@@ -81,11 +81,11 @@ If you try to use a REQ socket in anything other than a strict send/receive fash
 
 The pretty good brute force solution is to close and reopen the REQ socket after an error:
 
-{{< example name="lpclient" title="Lazy Pirate client" >}}
+{{< examples name="lpclient" title="Lazy Pirate client" >}}
 
 Run this together with the matching server:
 
-{{< example name="lpserver" title="Lazy Pirate server" >}}
+{{< examples name="lpserver" title="Lazy Pirate server" >}}
 
 {{< textdiagram name="fig47.png" figno="47" title="The Lazy Pirate Pattern" >}}
 #-----------#   #-----------#   #-----------#
@@ -188,11 +188,11 @@ The basis for the queue proxy is the load balancing broker from [Chapter 3 - Adv
 
 We don't need a special client; we're still using the Lazy Pirate client. Here is the queue, which is identical to the main task of the load balancing broker:
 
-{{< example name="spqueue" title="Simple Pirate queue" >}}
+{{< examples name="spqueue" title="Simple Pirate queue" >}}
 
 Here is the worker, which takes the Lazy Pirate server and adapts it for the load balancing pattern (using the REQ "ready" signaling):
 
-{{< example name="spworker" title="Simple Pirate worker" >}}
+{{< examples name="spworker" title="Simple Pirate worker" >}}
 
 To test this, start a handful of workers, a Lazy Pirate client, and the queue, in any order. You'll see that the workers eventually all crash and burn, and the client retries and then gives up. The queue never stops, and you can restart workers and clients ad nauseam. This model works with any number of clients and workers.
 
@@ -244,13 +244,13 @@ We previously used a REQ socket for the worker. For the Paranoid Pirate worker, 
 
 We're still using the Lazy Pirate client. Here is the Paranoid Pirate queue proxy:
 
-{{< example name="ppqueue" title="Paranoid Pirate queue" >}}
+{{< examples name="ppqueue" title="Paranoid Pirate queue" >}}
 
 The queue extends the load balancing pattern with heartbeating of workers. Heartbeating is one of those "simple" things that can be difficult to get right. I'll explain more about that in a second.
 
 Here is the Paranoid Pirate worker:
 
-{{< example name="ppworker" title="Paranoid Pirate worker" >}}
+{{< examples name="ppworker" title="Paranoid Pirate worker" >}}
 
 Some comments about this example:
 
@@ -459,19 +459,19 @@ It's more or less symmetrical, but the worker dialog is a little different. The 
 
 The client and worker APIs were fairly simple to construct because they're heavily based on the Paranoid Pirate code we already developed. Here is the client API:
 
-{{< example name="mdcliapi" title="Majordomo client API" >}}
+{{< examples name="mdcliapi" title="Majordomo client API" >}}
 
 Let's see how the client API looks in action, with an example test program that does 100K request-reply cycles:
 
-{{< example name="mdclient" title="Majordomo client application" >}}
+{{< examples name="mdclient" title="Majordomo client application" >}}
 
 And here is the worker API:
 
-{{< example name="mdwrkapi" title="Majordomo worker API" >}}
+{{< examples name="mdwrkapi" title="Majordomo worker API" >}}
 
 Let's see how the worker API looks in action, with an example test program that implements an echo service:
 
-{{< example name="mdworker" title="Majordomo worker application" >}}
+{{< examples name="mdworker" title="Majordomo worker application" >}}
 
 Here are some things to note about the worker API code:
 
@@ -487,7 +487,7 @@ Now let's design the Majordomo broker. Its core structure is a set of queues, on
 
 And here is the broker:
 
-{{< example name="mdbroker" title="Majordomo broker" >}}
+{{< examples name="mdbroker" title="Majordomo broker" >}}
 
 This is by far the most complex example we've seen. It's almost 500 lines of code. To write this and make it somewhat robust took two days. However, this is still a short piece of code for a full service-oriented broker.
 
@@ -511,7 +511,7 @@ The Majordomo implementation in the previous section is simple and stupid. The c
 
 Theory is great in theory, but in practice, practice is better. Let's measure the actual cost of round-tripping with a simple test program. This sends a bunch of messages, first waiting for a reply to each message, and second as a batch, reading all the replies back as a batch. Both approaches do the same work, but they give very different results. We mock up a client, broker, and worker:
 
-{{< example name="tripping" title="Round-trip demonstrator" >}}
+{{< examples name="tripping" title="Round-trip demonstrator" >}}
 
 On my development box, this program says:
 
@@ -538,7 +538,7 @@ zmsg_t  *mdcli_recv    (mdcli_t *self);
 
 It's literally a few minutes' work to refactor the synchronous client API to become asynchronous:
 
-{{< example name="mdcliapi2" title="Majordomo asynchronous client API" >}}
+{{< examples name="mdcliapi2" title="Majordomo asynchronous client API" >}}
 
 The differences are:
 
@@ -550,7 +550,7 @@ The differences are:
 
 And here's the corresponding client test program, which sends 100,000 messages and then receives 100,000 back:
 
-{{< example name="mdclient2" title="Majordomo client application" >}}
+{{< examples name="mdclient2" title="Majordomo client application" >}}
 
 The broker and worker are unchanged because we've not modified the protocol at all. We see an immediate improvement in performance. Here's the synchronous client chugging through 100K request-reply cycles:
 
@@ -615,7 +615,7 @@ So here's a small RFC that layers this on top of MDP: [the Majordomo Management 
 
 Here's how we use the service discovery in an application:
 
-{{< example name="mmiecho" title="Service discovery over Majordomo" >}}
+{{< examples name="mmiecho" title="Service discovery over Majordomo" >}}
 
 Try this with and without a worker running, and you should see the little program report "200" or "404" accordingly. The implementation of MMI in our example broker is flimsy. For example, if a worker disappears, services remain "present". In practice, a broker should remove services that have no workers after some configurable timeout.
 
@@ -730,7 +730,7 @@ We'll just make a multithreaded worker, which as we've seen from our multithread
 
 Using TSP is clearly more work for client applications than accessing a service directly via MDP. Here's the shortest robust "echo" client example:
 
-{{< example name="ticlient" title="Titanic client example" >}}
+{{< examples name="ticlient" title="Titanic client example" >}}
 
 Of course this can be, and should be, wrapped up in some kind of framework or API. It's not healthy to ask average application developers to learn the full details of messaging: it hurts their brains, costs time, and offers too many ways to make buggy complexity. Additionally, it makes it hard to add intelligence.
 
@@ -738,7 +738,7 @@ For example, this client blocks on each request whereas in a real application, w
 
 Here's the Titanic implementation. This server handles the three services using three threads, as proposed. It does full persistence to disk using the most brutal approach possible: one file per message. It's so simple, it's scary. The only complex part is that it keeps a separate queue of all requests, to avoid reading the directory over and over:
 
-{{< example name="titanic" title="Titanic broker example" >}}
+{{< examples name="titanic" title="Titanic broker example" >}}
 
 To test this, start <tt>mdbroker</tt> and <tt>titanic</tt>, and then run <tt>ticlient</tt>. Now start <tt>mdworker</tt> arbitrarily, and you should see the client getting a response and exiting happily.
 
@@ -937,11 +937,11 @@ A suitably paranoid network configuration would use two private cluster intercon
 
 Without further ado, here is a proof-of-concept implementation of the Binary Star server. The primary and backup servers run the same code, you choose their roles when you run the code:
 
-{{< example name="bstarsrv" title="Binary Star server" >}}
+{{< examples name="bstarsrv" title="Binary Star server" >}}
 
 And here is the client:
 
-{{< example name="bstarcli" title="Binary Star client" >}}
+{{< examples name="bstarcli" title="Binary Star client" >}}
 
 To test Binary Star, start the servers and client in any order:
 
@@ -1018,11 +1018,11 @@ int bstar_start (bstar_t *self);
 
 And here is the class implementation:
 
-{{< example name="bstar" title="Binary Star core class" >}}
+{{< examples name="bstar" title="Binary Star core class" >}}
 
 This gives us the following short main program for the server:
 
-{{< example name="bstarsrv2" title="Binary Star server, using core class" >}}
+{{< examples name="bstarsrv2" title="Binary Star server, using core class" >}}
 
 ## Brokerless Reliability (Freelance Pattern) {#Brokerless-Reliability-Freelance-Pattern}
 
@@ -1076,11 +1076,11 @@ So our menu appears to offer: simple, brutal, complex, or nasty. Let's start wit
 
 Start one or several servers first, specifying a bind endpoint as the argument:
 
-{{< example name="flserver1" title="Freelance server, Model One" >}}
+{{< examples name="flserver1" title="Freelance server, Model One" >}}
 
 Then start the client, specifying one or more connect endpoints as arguments:
 
-{{< example name="flclient1" title="Freelance client, Model One" >}}
+{{< examples name="flclient1" title="Freelance client, Model One" >}}
 
 A sample run is:
 
@@ -1116,11 +1116,11 @@ So we have to number requests and ignore any replies that don't match the reques
 
 Start one or more servers, specifying a bind endpoint each time:
 
-{{< example name="flserver2" title="Freelance server, Model Two" >}}
+{{< examples name="flserver2" title="Freelance server, Model Two" >}}
 
 Then start the client, specifying the connect endpoints as arguments:
 
-{{< example name="flclient2" title="Freelance client, Model Two" >}}
+{{< examples name="flclient2" title="Freelance client, Model Two" >}}
 
 Here are some things to note about the client implementation:
 
@@ -1162,15 +1162,15 @@ This brings us to the realm of protocols again, so here's a [short spec that def
 
 It is short and sweet to implement as a server. Here's our echo server, Model Three, now speaking FLP:
 
-{{< example name="flserver3" title="Freelance server, Model Three" >}}
+{{< examples name="flserver3" title="Freelance server, Model Three" >}}
 
 The Freelance client, however, has gotten large. For clarity, it's split into an example application and a class that does the hard work. Here's the top-level application:
 
-{{< example name="flclient3" title="Freelance client, Model Three" >}}
+{{< examples name="flclient3" title="Freelance client, Model Three" >}}
 
 And here, almost as complex and large as the Majordomo broker, is the client API class:
 
-{{< example name="flcliapi" title="Freelance client API" >}}
+{{< examples name="flcliapi" title="Freelance client API" >}}
 
 This API implementation is fairly sophisticated and uses a couple of techniques that we've not seen before.
 

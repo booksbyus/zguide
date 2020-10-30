@@ -258,7 +258,7 @@ This is true even if you flip the rules and make the ROUTER connect to the peer 
 
 Here is a simple example of two peers that connect to a ROUTER socket, one that imposes a logical address "PEER2":
 
-{{< example name="identity" title="Identity check" >}}
+{{< examples name="identity" title="Identity check" >}}
 
 Here is what the program prints:
 
@@ -303,7 +303,7 @@ It's a twist on request-reply because the task is sent with the reply, and any r
 
 Here is an example of the load balancing pattern using a ROUTER broker talking to a set of REQ workers:
 
-{{< example name="rtreq" title="ROUTER-to-REQ" >}}
+{{< examples name="rtreq" title="ROUTER-to-REQ" >}}
 
 The example runs for five seconds and then each worker prints how many tasks they handled. If the routing worked, we'd expect a fair distribution of work:
 
@@ -343,7 +343,7 @@ The synchronous versus asynchronous behavior has no effect on our example becaus
 
 Now let's look at exactly the same example but with the REQ socket replaced by a DEALER socket:
 
-{{< example name="rtdealer" title="ROUTER-to-DEALER" >}}
+{{< examples name="rtdealer" title="ROUTER-to-DEALER" >}}
 
 The code is almost identical except that the worker uses a DEALER socket, and reads and writes that empty frame before the data frame. This is the approach I use when I want to keep compatibility with REQ workers.
 
@@ -392,7 +392,7 @@ This broker does the following:
 
 The broker code is fairly long, but worth understanding:
 
-{{< example name="lbbroker" title="Load balancing broker" >}}
+{{< examples name="lbbroker" title="Load balancing broker" >}}
 
 The difficult part of this program is (a) the envelopes that each socket reads and writes, and (b) the load balancing algorithm. We'll take these in turn, starting with the message envelope formats.
 
@@ -556,7 +556,7 @@ Turning this wish list into reality for the C language gives us [CZMQ](http://ze
 
 Here is the load balancing broker rewritten to use a higher-level API (CZMQ for the C case):
 
-{{< example name="lbbroker2" title="Load balancing broker using high-level API" >}}
+{{< examples name="lbbroker2" title="Load balancing broker using high-level API" >}}
 
 One thing CZMQ provides is clean interrupt handling. This means that Ctrl-C will cause any blocking ZeroMQ call to exit with a return code -1 and errno set to <tt>EINTR</tt>. The high-level recv methods will return NULL in such cases. So, you can cleanly exit a loop like this:
 
@@ -601,7 +601,7 @@ The actual handling of messages sits inside dedicated functions or methods. You 
 
 Here is the load balancing broker rewritten once again, this time to use <tt>zloop</tt>:
 
-{{< example name="lbbroker3" title="Load balancing broker using zloop" >}}
+{{< examples name="lbbroker3" title="Load balancing broker using zloop" >}}
 
 Getting applications to properly shut down when you send them Ctrl-C can be tricky. If you use the <tt>zctx</tt> class it'll automatically set up signal handling, but your code still has to cooperate. You must break any loop if <tt>zmq_poll</tt> returns -1 or if any of the <tt>zstr_recv</tt>, <tt>zframe_recv</tt>, or <tt>zmsg_recv</tt> methods return NULL. If you have nested loops, it can be useful to make the outer ones conditional on <tt>!zctx_interrupted</tt>.
 
@@ -641,7 +641,7 @@ Here's how it works:
 
 Here's code that shows how this works:
 
-{{< example name="asyncsrv" title="Asynchronous client/server" >}}
+{{< examples name="asyncsrv" title="Asynchronous client/server" >}}
 
 The example runs in one process, with multiple threads simulating a real multiprocess architecture. When you run the example, you'll see three clients (each with a random ID), printing out the replies they get from the server. Look carefully and you'll see each client task gets 0 or more replies per request.
 
@@ -1008,7 +1008,7 @@ Because each socket flow has its own little traps for the unwary, we will test t
 
 Here is how this works in code:
 
-{{< example name="peering1" title="Prototype state flow" >}}
+{{< examples name="peering1" title="Prototype state flow" >}}
 
 Notes about this code:
 
@@ -1096,7 +1096,7 @@ We use broker identities to route messages between brokers. Each broker has a na
 
 Here is how this works in code. The interesting part starts around the comment "Interesting part".
 
-{{< example name="peering2" title="Prototype local and cloud flow" >}}
+{{< examples name="peering2" title="Prototype local and cloud flow" >}}
 
 Run this by, for instance, starting two instances of the broker in two windows:
 
@@ -1119,7 +1119,7 @@ Let's put this together into a single package. As before, we'll run an entire cl
 
 This code is the size of both previous prototypes together, at 270 LoC. That's pretty good for a simulation of a cluster that includes clients and workers and cloud workload distribution. Here is the code:
 
-{{< example name="peering3" title="Full cluster simulation" >}}
+{{< examples name="peering3" title="Full cluster simulation" >}}
 
 It's a nontrivial program and took about a day to get working. These are the highlights:
 

@@ -47,7 +47,7 @@ Next, browse the examples subdirectory. You'll find examples by language. If the
 
 So let's start with some code. We start of course with a Hello World example. We'll make a client and a server. The client sends "Hello" to the server, which replies with "World". Here's the server in C, which opens a ZeroMQ socket on port 5555, reads requests on it, and replies with "World" to each request:
 
-{{< example name="hwserver" title="Hello World server" >}}
+{{< examples name="hwserver" title="Hello World server" >}}
 
 {{< textdiagram name="fig2.png" figno="2" title="Request-Reply" >}}
   #------------#
@@ -82,11 +82,11 @@ You can see that the ZeroMQ API is similar in C and C++. In a language like PHP 
 
 The server in other languages:
 
-{{< example name="hwserver" title="Hello World server" >}}
+{{< examples name="hwserver" title="Hello World server" >}}
 
 Here's the client code:
 
-{{< example name="hwclient" title="Hello World client" >}}
+{{< examples name="hwclient" title="Hello World client" >}}
 
 Now this looks too simple to be realistic, but ZeroMQ sockets have, as we already learned, superpowers. You could throw thousands of clients at this server, all at once, and it would continue to work happily and quickly. For fun, try starting the client and *then* starting the server, see how it all still works, then think for a second what this means.
 
@@ -159,7 +159,7 @@ ZeroMQ does come in several versions and quite often, if you hit a problem, it'l
 
 Here is a tiny program that does that:
 
-{{< example name="version" title="ZeroMQ version reporting" >}}
+{{< examples name="version" title="ZeroMQ version reporting" >}}
 
 ## Getting the Message Out {#Getting-the-Message-Out}
 
@@ -167,13 +167,13 @@ The second classic pattern is one-way data distribution, in which a server pushe
 
 Here's the server. We'll use port 5556 for this application:
 
-{{< example name="wuserver" title="Weather update server" >}}
+{{< examples name="wuserver" title="Weather update server" >}}
 
 There's no start and no end to this stream of updates, it's like a never ending broadcast.
 
 Here is the client application, which listens to the stream of updates and grabs anything to do with a specified zip code, by default New York City because that's a great place to start any adventure:
 
-{{< example name="wuclient" title="Weather update client" >}}
+{{< examples name="wuclient" title="Weather update client" >}}
 
 {{< textdiagram name="fig4.png" figno="4" title="Publish-Subscribe" >}}
                #-------------#
@@ -287,15 +287,15 @@ As a final example (you are surely getting tired of juicy code and want to delve
 
 In reality, workers run on superfast boxes, perhaps using GPUs (graphic processing units) to do the hard math. Here is the ventilator. It generates 100 tasks, each a message telling the worker to sleep for some number of milliseconds:
 
-{{< example name="taskvent" title="Parallel task ventilator" >}}
+{{< examples name="taskvent" title="Parallel task ventilator" >}}
 
 Here is the worker application. It receives a message, sleeps for that number of seconds, and then signals that it's finished:
 
-{{< example name="taskwork" title="Parallel task worker" >}}
+{{< examples name="taskwork" title="Parallel task worker" >}}
 
 Here is the sink application. It collects the 100 tasks, then calculates how long the overall processing took, so we can confirm that the workers really were running in parallel if there are more than one of them:
 
-{{< example name="tasksink" title="Parallel task sink" >}}
+{{< examples name="tasksink" title="Parallel task sink" >}}
 
 The average cost of a batch is 5 seconds. When we start 1, 2, or 4 workers we get results like this from the sink:
 

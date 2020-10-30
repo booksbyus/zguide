@@ -282,7 +282,7 @@ To actually read from multiple sockets all at once, use <tt>[zmq_poll()](http://
 
 Let's start with a dirty hack, partly for the fun of not doing it right, but mainly because it lets me show you how to do nonblocking socket reads. Here is a simple example of reading from two sockets using nonblocking reads. This rather confused program acts both as a subscriber to weather updates, and a worker for parallel tasks:
 
-{{< example name="msreader" title="Multiple socket reader" >}}
+{{< examples name="msreader" title="Multiple socket reader" >}}
 
 The cost of this approach is some additional latency on the first message (the sleep at the end of the loop, when there are no waiting messages to process). This would be a problem in applications where submillisecond latency was vital. Also, you need to check the documentation for nanosleep() or whatever function you use to make sure it does not busy-loop.
 
@@ -290,7 +290,7 @@ You can treat the sockets fairly by reading first from one, then the second rath
 
 Now let's see the same senseless little application done right, using <tt>[zmq_poll()](http://api.zeromq.org/3-2:zmq_poll)</tt>:
 
-{{< example name="mspoller" title="Multiple socket poller" >}}
+{{< examples name="mspoller" title="Multiple socket poller" >}}
 
 The items structure has these four members:
 
@@ -508,15 +508,15 @@ In this simple extended request-reply pattern, REQ talks to ROUTER and DEALER ta
 
 The request-reply broker binds to two endpoints, one for clients to connect to (the frontend socket) and one for workers to connect to (the backend). To test this broker, you will want to change your workers so they connect to the backend socket. Here is a client that shows what I mean:
 
-{{< example name="rrclient" title="Request-reply client" >}}
+{{< examples name="rrclient" title="Request-reply client" >}}
 
 Here is the worker:
 
-{{< example name="rrworker" title="Request-reply worker" >}}
+{{< examples name="rrworker" title="Request-reply worker" >}}
 
 And here is the broker, which properly handles multipart messages:
 
-{{< example name="rrbroker" title="Request-reply broker" >}}
+{{< examples name="rrbroker" title="Request-reply broker" >}}
 
 {{< textdiagram name="fig17.png" figno="17" title="Request-Reply Broker" >}}
 #---------#   #---------#   #---------#
@@ -559,7 +559,7 @@ zmq_proxy (frontend, backend, capture);
 
 The two (or three sockets, if we want to capture data) must be properly connected, bound, and configured. When we call the <tt>zmq_proxy</tt> method, it's exactly like starting the main loop of <tt>rrbroker</tt>. Let's rewrite the request-reply broker to call <tt>zmq_proxy</tt>, and re-badge this as an expensive-sounding "message queue" (people have charged houses for code that did less):
 
-{{< example name="msgqueue" title="Message queue broker" >}}
+{{< examples name="msgqueue" title="Message queue broker" >}}
 
 If you're like most ZeroMQ users, at this stage your mind is starting to think, "What kind of evil stuff can I do if I plug random socket types into the proxy?"  The short answer is: try it and work out what is happening. In practice, you would usually stick to ROUTER/DEALER, XSUB/XPUB, or PULL/PUSH.
 
@@ -605,7 +605,7 @@ The simple answer is to build a *bridge*. A bridge is a small application that s
 
 As an example, we're going to write a little proxy that sits in between a publisher and a set of subscribers, bridging two networks. The frontend socket (SUB) faces the internal network where the weather server is sitting, and the backend (PUB) faces subscribers on the external network. It subscribes to the weather service on the frontend socket, and republishes its data on the backend socket.
 
-{{< example name="wuproxy" title="Weather update proxy" >}}
+{{< examples name="wuproxy" title="Weather update proxy" >}}
 
 It looks very similar to the earlier proxy example, but the key part is that the frontend and backend sockets are on two different networks. We can use this model for example to connect a multicast network (<tt>pgm</tt> transport) to a <tt>tcp</tt> publisher.
 
@@ -704,11 +704,11 @@ s_send (controller, "KILL");
 
 Here is the worker process, which manages two sockets (a PULL socket getting tasks, and a SUB socket getting control commands), using the <tt>[zmq_poll()](http://api.zeromq.org/3-2:zmq_poll)</tt> technique we saw earlier:
 
-{{< example name="taskwork2" title="Parallel task worker with kill signaling" >}}
+{{< examples name="taskwork2" title="Parallel task worker with kill signaling" >}}
 
 Here is the modified sink application. When it's finished collecting results, it broadcasts a kill message to all workers:
 
-{{< example name="tasksink2" title="Parallel task sink with kill signaling" >}}
+{{< examples name="tasksink2" title="Parallel task sink with kill signaling" >}}
 
 ## Handling Interrupt Signals {#Handling-Interrupt-Signals}
 
@@ -716,7 +716,7 @@ Realistic applications need to shut down cleanly when interrupted with Ctrl-C or
 
 Here is how we handle a signal in various languages:
 
-{{< example name="interrupt" title="Handling Ctrl-C cleanly" >}}
+{{< examples name="interrupt" title="Handling Ctrl-C cleanly" >}}
 
 The program provides <tt>s_catch_signals()</tt>, which traps Ctrl-C (<tt>SIGINT</tt>) and <tt>SIGTERM</tt>. When either of these signals arrive, the <tt>s_catch_signals()</tt> handler sets the global variable <tt>s_interrupted</tt>. Thanks to your signal handler, your application will not die automatically. Instead, you have a chance to clean up and exit gracefully. You have to now explicitly check for an interrupt and handle it properly. Do this by calling <tt>s_catch_signals()</tt> (copy this from <tt>interrupt.c</tt>) at the start of your main code. This sets up the signal handling. The interrupt will affect ZeroMQ calls as follows:
 
@@ -829,7 +829,7 @@ You can, of course, do all this using a proxy broker and external worker process
 
 The MT version of the Hello World service basically collapses the broker and workers into a single process:
 
-{{< example name="mtserver" title="Multithreaded service" >}}
+{{< examples name="mtserver" title="Multithreaded service" >}}
 
 {{< textdiagram name="fig20.png" figno="20" title="Multithreaded Server" >}}
                #------------#
@@ -885,7 +885,7 @@ When you start making multithreaded applications with ZeroMQ, you'll encounter t
 
 Let's make three threads that signal each other when they are ready. In this example, we use PAIR sockets over the <tt>inproc</tt> transport:
 
-{{< example name="mtrelay" title="Multithreaded relay" >}}
+{{< examples name="mtrelay" title="Multithreaded relay" >}}
 
 {{< textdiagram name="fig21.png" figno="21" title="The Relay Race" >}}
 #------------#
@@ -967,11 +967,11 @@ This is how the application will work:
 
 In this case, we'll use a REQ-REP socket flow to synchronize subscribers and publisher. Here is the publisher:
 
-{{< example name="syncpub" title="Synchronized publisher" >}}
+{{< examples name="syncpub" title="Synchronized publisher" >}}
 
 And here is the subscriber:
 
-{{< example name="syncsub" title="Synchronized subscriber" >}}
+{{< examples name="syncsub" title="Synchronized subscriber" >}}
 
 This Bash shell script will start ten subscribers and then the publisher:
 
@@ -1044,11 +1044,11 @@ Subscriptions do a prefix match. That is, they look for "all messages starting w
 
 The envelope holds the message type:
 
-{{< example name="psenvpub" title="Pub-Sub envelope publisher" >}}
+{{< examples name="psenvpub" title="Pub-Sub envelope publisher" >}}
 
 The subscriber wants only messages of type B:
 
-{{< example name="psenvsub" title="Pub-Sub envelope subscriber" >}}
+{{< examples name="psenvsub" title="Pub-Sub envelope subscriber" >}}
 
 When you run the two programs, the subscriber should show you this:
 

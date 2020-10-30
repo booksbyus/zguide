@@ -18,7 +18,7 @@
 | Java |  91 | 100% |
 | Julia |  10 |  10% |
 | Lua |  53 |  58% |
-| Node.js |  29 |  31% |
+| Node.js |  30 |  32% |
 | Objective-C |  13 |  14% |
 | ooc |   0 |   0% |
 | Perl |  31 |  34% |

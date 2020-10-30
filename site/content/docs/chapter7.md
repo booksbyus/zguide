@@ -683,7 +683,7 @@ The 4-figure precision is misleading; expect variations of 25% either way. This 
 
 Here's our first cut at the code, where the client asks for the test data and the server just sends it, without stopping for breath, as a series of messages, where each message holds one *chunk*:
 
-{{< example name="fileio1" title="File transfer test, model 1" >}}
+{{< examples name="fileio1" title="File transfer test, model 1" >}}
 
 It's pretty simple, but we already run into a problem: if we send too much data to the ROUTER socket, we can easily overflow it. The simple but stupid solution is to put an infinite high-water mark on the socket. It's stupid because we now have no protection against exhausting the server's memory. Yet without an infinite HWM, we risk losing chunks of large files.
 
@@ -693,7 +693,7 @@ We have to control the amount of data the server sends up-front. There's no poin
 
 Here's the improved second model, where the client asks for one chunk at a time, and the server only sends one chunk for each request it gets from the client:
 
-{{< example name="fileio2" title="File transfer test, model 2" >}}
+{{< examples name="fileio2" title="File transfer test, model 2" >}}
 
 It is much slower now, because of the to-and-fro chatting between client and server. We pay about 300 microseconds for each request-reply round-trip, on a local loop connection (client and server on the same box). It doesn't sound like much but it adds up quickly:
 
@@ -774,7 +774,7 @@ It looks suspiciously similar. In fact, it's identical except that we send multi
 
 Here's the third model of our file transfer test-bench, with pipelining. The client sends a number of requests ahead (the "credit") and then each time it processes an incoming chunk, it sends one more credit. The server will never send more chunks than the client has asked for:
 
-{{< example name="fileio3" title="File transfer test, model 3" >}}
+{{< examples name="fileio3" title="File transfer test, model 3" >}}
 
 That tweak gives us full control over the end-to-end pipeline including all network buffers and ZeroMQ queues at sender and receiver. We ensure the pipeline is always filled with data while never growing beyond a predefined limit. More than that, the client decides exactly when to send "credit" to the sender. It could be when it receives a chunk, or when it has fully processed a chunk. And this happens asynchronously, with no significant performance cost.
 

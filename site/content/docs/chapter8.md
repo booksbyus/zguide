@@ -261,7 +261,7 @@ It won't work for real cases though. Poorer operating systems tend to run out of
 
 Still, let's see how far we can go with this approach before we throw it out. Here's a tiny decentralized chat program that lets you talk to anyone else on the same network segment. The code has two threads: a listener and a broadcaster. The listener creates a SUB socket and does the brute-force connection to all peers in the network. The broadcaster accepts input from the console and sends it on a PUB socket:
 
-{{< example name="dechat" title="Decentralized Chat" >}}
+{{< examples name="dechat" title="Decentralized Chat" >}}
 
 The <tt>dechat</tt> program needs to know the current IP address, the interface, and an alias. We could get these in code from the operating system, but that's grunky non-portable code. So we provide this information on the command line:
 
@@ -347,7 +347,7 @@ If you've never used UDP, you'll discover it's quite a nice protocol. In some wa
 
 Here is a minimal ping program that uses UDP instead of <tt>ICMP_ECHO</tt>:
 
-{{< example name="udpping1" title="UDP discovery, model 1" >}}
+{{< examples name="udpping1" title="UDP discovery, model 1" >}}
 
 This code uses a single socket to broadcast 1-byte messages and receive anything that other nodes are broadcasting. When I run it, it shows just one node, which is itself:
 
@@ -401,7 +401,7 @@ static ssize_t
 
 Here is the refactored UDP ping program that calls this library, which is much cleaner and nicer:
 
-{{< example name="udpping2" title="UDP discovery, model 2" >}}
+{{< examples name="udpping2" title="UDP discovery, model 2" >}}
 
 The library, <tt>udplib</tt>, hides a lot of the unpleasant code (which will become uglier as we make this work on more systems). I'm not going to print that code here. You can read it [in the repository](https://github.com/imatix/zguide/blob/master/examples/C/udplib.c).
 
@@ -451,11 +451,11 @@ This seems like a clean API design. How about the internals?
 
 The third iteration of the UDP ping program is even simpler and more beautiful than the second. The main body, in C, is just ten lines of code.
 
-{{< example name="udpping3" title="UDP discovery, model 3" >}}
+{{< examples name="udpping3" title="UDP discovery, model 3" >}}
 
 The interface code should be familiar if you've studied how we make multithreaded API classes:
 
-{{< example name="interface" title="UDP ping interface" >}}
+{{< examples name="interface" title="UDP ping interface" >}}
 
 When I run this in two windows, it reports one peer joining the network. I kill that peer and a few seconds later, it tells me the peer left:
 
@@ -927,7 +927,7 @@ A third option is to use a nonblocking send. This is nicer and it's the solution
 
 Therefore the first step is to prove to ourselves that we can turn the normal blocking DEALER socket into a nonblocking socket. This example creates a normal DEALER socket, connects it to some endpoint (so that there's an outgoing pipe and the socket will accept messages), sets the high-water mark to four, and then sets the send timeout to zero:
 
-{{< example name="eagain" title="Checking EAGAIN on DEALER socket" >}}
+{{< examples name="eagain" title="Checking EAGAIN on DEALER socket" >}}
 
 When we run this, we send four messages successfully (they go nowhere, the socket just queues them), and then we get a nice <tt>EAGAIN</tt> error:
 

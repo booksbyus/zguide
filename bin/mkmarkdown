@@ -205,6 +205,11 @@ sub process_source {
                     $attributes{"figno"}="$FIGNO";
                     $FIGNO++;
                 }
+
+                if ($attributes{"type"} eq "example" && !defined ($attributes{"language"})) {
+                    $attributes{"type"} = "examples"
+                }
+
                 writef ('{{< '.$attributes{"type"});
                 writef (' name="'.$attributes{"name"}.'"') if exists $attributes{"name"};
                 writef (' figno="'.$attributes{"figno"}.'"') if exists $attributes{"figno"};
@@ -222,7 +227,7 @@ sub process_source {
                 writef  ("{{< /".$attributes{"type"}) if $hasContent;
                 writeln (" >}}") if $hasContent;
 
-                if ($attributes{"type"} eq "example" && !defined ($attributes{"language"})) {
+                if ($attributes{"type"} eq "examples") {
                     foreach $language (@languages) {
                         $filename = "$attributes{'name'}.$extension{$language}";
                         $filepath = "./examples/$language/$filename";
