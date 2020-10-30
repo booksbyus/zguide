@@ -15,12 +15,12 @@ println("Connecting to hello world server...")
 socket = Socket(context, REQ)
 ZMQ.connect(socket, "tcp://localhost:5555")
 
-for request in [1:10]
+for request in 1:10
     println("Sending request $request ...")
     ZMQ.send(socket, "Hello")
 
     # Get the reply.
-    message = bytestring(ZMQ.recv(socket))
+    message = String(ZMQ.recv(socket))
     println("Received reply $request [ $message ]")
 end
 

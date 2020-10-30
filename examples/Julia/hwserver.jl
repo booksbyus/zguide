@@ -14,7 +14,7 @@ ZMQ.bind(socket, "tcp://*:5555")
 
 while true
     # Wait for next request from client
-    message = bytestring(ZMQ.recv(socket))
+    message = String(ZMQ.recv(socket))
     println("Received request: $message")
 
     # Do some 'work'
