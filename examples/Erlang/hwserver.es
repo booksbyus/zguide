@@ -14,7 +14,7 @@ main(_) ->
 
     loop(Responder),
 
-    %% We never get here, but it we did, this is how we end
+    %% We never get here, but if we did, this is how we end
     ok = erlzmq:close(Responder),
     ok = erlzmq:term(Context).
 
