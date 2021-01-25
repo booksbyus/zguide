@@ -25,7 +25,7 @@ public class identity
 
             //  Then set the identity ourself
             Socket identified = context.createSocket(SocketType.REQ);
-            identified.setIdentity("Hello".getBytes(ZMQ.CHARSET));
+            identified.setIdentity("PEER2".getBytes(ZMQ.CHARSET));
             identified.connect("inproc://example");
             identified.send("ROUTER socket uses REQ's socket identity", 0);
             ZHelper.dump(sink);
