@@ -32,9 +32,12 @@ int main (int argc, char *argv[])
             while (1) {
                 //  Process all parts of the message
                 frontend.recv(&message);
+                // frontend.recv(message, zmq::recv_flags::none); // new syntax
                 size_t more_size = sizeof (more);
                 frontend.getsockopt(ZMQ_RCVMORE, &more, &more_size);
                 backend.send(message, more? ZMQ_SNDMORE: 0);
+                // more = frontend.get(zmq::sockopt::rcvmore); // new syntax
+                // backend.send(message, more? zmq::send_flags::sndmore : zmq::send_flags::none);
                 
                 if (!more)
                     break;      //  Last message part
@@ -47,6 +50,9 @@ int main (int argc, char *argv[])
                 size_t more_size = sizeof (more);
                 backend.getsockopt(ZMQ_RCVMORE, &more, &more_size);
                 frontend.send(message, more? ZMQ_SNDMORE: 0);
+                // more = backend.get(zmq::sockopt::rcvmore); // new syntax
+                //frontend.send(message, more? zmq::send_flags::sndmore : zmq::send_flags::none);
+
                 if (!more)
                     break;      //  Last message part
             }
