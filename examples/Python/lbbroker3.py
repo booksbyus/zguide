@@ -78,6 +78,7 @@ class LRUQueue(object):
 
     def __init__(self, backend_socket, frontend_socket):
         self.available_workers = 0
+        self.is_workers_ready = False
         self.workers = []
         self.client_nbr = NBR_CLIENTS
 
@@ -95,6 +96,7 @@ class LRUQueue(object):
 
         # add worker back to the list of workers
         self.available_workers += 1
+        self.is_workers_ready = True
         self.workers.append(worker_addr)
 
         #   Second frame is empty
@@ -116,8 +118,8 @@ class LRUQueue(object):
                 # Exit after N messages
                 self.loop.add_timeout(time.time() + 1, self.loop.stop)
 
-        if self.available_workers == 1:
-            # on first recv, start accepting frontend messages
+        if self.is_workers_ready:
+            # when atleast 1 worker is ready, start accepting frontend messages
             self.frontend.on_recv(self.handle_frontend)
 
     def handle_frontend(self, msg):
@@ -134,6 +136,7 @@ class LRUQueue(object):
         self.backend.send_multipart([worker_id, b'', client_addr, b'', request])
         if self.available_workers == 0:
             # stop receiving until workers become available again
+            self.is_workers_ready = False
             self.frontend.stop_on_recv()
 
 
