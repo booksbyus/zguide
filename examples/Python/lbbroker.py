@@ -67,6 +67,7 @@ def main():
 
     # Initialize main loop state
     count = NBR_CLIENTS
+    backend_ready = False
     workers = []
     poller = zmq.Poller()
     # Only poll for requests from backend until workers are available
@@ -79,10 +80,11 @@ def main():
             # Handle worker activity on the backend
             request = backend.recv_multipart()
             worker, empty, client = request[:3]
-            if not workers:
-                # Poll for clients now that a worker is available
-                poller.register(frontend, zmq.POLLIN)
             workers.append(worker)
+            if workers and not backend_ready:
+                # Poll for clients now that a worker is available and backend was not ready
+                poller.register(frontend, zmq.POLLIN)
+                backend_ready = True
             if client != b"READY" and len(request) > 3:
                 # If client reply, send rest back to frontend
                 empty, reply = request[3:]
@@ -97,8 +99,9 @@ def main():
             worker = workers.pop(0)
             backend.send_multipart([worker, b"", client, b"", request])
             if not workers:
-                # Don't poll clients if no workers are available
+                # Don't poll clients if no workers are available and set backend_ready flag to false
                 poller.unregister(frontend)
+                backend_ready = False
 
     # Clean up
     backend.close()
