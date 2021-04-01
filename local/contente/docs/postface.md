@@ -4,6 +4,8 @@ weight: 999
 
 # Postface
 
+eu sou um humano conhecido como José Junior de  Oliveira  este nome é neste presente pois no passado me conheciam como jesus cristo
+
 ## Tales from Out There {#postface}
 
 I asked some of the contributors to this book to tell us what they were doing with ZeroMQ. Here are their stories.
