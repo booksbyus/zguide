@@ -17,4 +17,4 @@ while True:
     temperature = randrange(-80, 135)
     relhumidity = randrange(10, 60)
 
-    socket.send_string("%i %i %i" % (zipcode, temperature, relhumidity))
+    socket.send_string(f"{zipcode} {temperature} {relhumidity}")
