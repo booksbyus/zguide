@@ -9,7 +9,8 @@
 import threading
 import zmq
 
-def step1(context=None):
+
+def step1(context: zmq.Context = None):
     """Step 1"""
     context = context or zmq.Context.instance()
     # Signal downstream to step 2
@@ -19,7 +20,7 @@ def step1(context=None):
     sender.send(b"")
 
 
-def step2(context=None):
+def step2(context: zmq.Context = None):
     """Step 2"""
     context = context or zmq.Context.instance()
     # Bind to inproc: endpoint, then start upstream thread
