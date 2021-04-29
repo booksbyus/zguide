@@ -20,4 +20,4 @@ while True:
     time.sleep(1)
 
     #  Send reply back to client
-    socket.send(b"World")
+    socket.send_string("World")
