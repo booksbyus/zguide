@@ -11,7 +11,7 @@ socket = context.socket(zmq.REQ)
 socket.connect("tcp://localhost:5559")
 
 #  Do 10 requests, waiting each time for a response
-for request in range(1,11):
+for request in range(1, 11):
     socket.send(b"Hello")
     message = socket.recv()
-    print("Received reply %s [%s]" % (request, message))
+    print(f"Received reply {request} [{message}]")
