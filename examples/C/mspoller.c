@@ -15,13 +15,14 @@ int main (void)
     zmq_connect (subscriber, "tcp://localhost:5556");
     zmq_setsockopt (subscriber, ZMQ_SUBSCRIBE, "10001 ", 6);
 
+    zmq_pollitem_t items [] = {
+        { receiver,   0, ZMQ_POLLIN, 0 },
+        { subscriber, 0, ZMQ_POLLIN, 0 }
+    };
     //  Process messages from both sockets
     while (1) {
         char msg [256];
-        zmq_pollitem_t items [] = {
-            { receiver,   0, ZMQ_POLLIN, 0 },
-            { subscriber, 0, ZMQ_POLLIN, 0 }
-        };
+
         zmq_poll (items, 2, -1);
         if (items [0].revents & ZMQ_POLLIN) {
             int size = zmq_recv (receiver, msg, 255, 0);
