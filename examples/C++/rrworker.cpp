@@ -25,7 +25,7 @@ int main (int argc, char *argv[])
         sleep (1);
         
         //  Send reply back to client
-		s_send (responder, "World");
+		s_send (responder, std::string("World"));
 		
 	}
 }
