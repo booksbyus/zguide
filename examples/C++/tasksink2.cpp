@@ -51,7 +51,7 @@ int main (int argc, char *argv[])
             << " msec\n" << std::endl;
 
     //  Send kill signal to workers
-    s_send (controller, "KILL");
+    s_send (controller, std::string("KILL"));
 
     //  Finished
     sleep (1);              //  Give 0MQ time to deliver
