@@ -14,7 +14,7 @@ int main (int argc, char *argv[])
  
 	for( int request = 0 ; request < 10 ; request++) {
 		
-		s_send (requester, "Hello");
+		s_send (requester, std::string("Hello"));
         std::string string = s_recv (requester);
 		
 		std::cout << "Received reply " << request 
