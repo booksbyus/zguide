@@ -25,10 +25,10 @@ public class hwserver
                     "Received " + ": [" + new String(reply, ZMQ.CHARSET) + "]"
                 );
 
+                Thread.sleep(1000); //  Do some 'work'
+
                 String response = "world";
                 socket.send(response.getBytes(ZMQ.CHARSET), 0);
-
-                Thread.sleep(1000); //  Do some 'work'
             }
         }
     }
