@@ -21,7 +21,7 @@ The text of "ØMQ - The Guide" is copyright (c) 2009-2012 Pieter Hintjens, and i
 Contributions
 -------------
 
-All contributions to the Guide example source code is governed by the [C4 process](http://rfc.zeromq.org/spec:16).
+All contributions to the Guide example source code is governed by the [C4 process](https://rfc.zeromq.org/spec/42/).
 
 <A name="toc2-46" title="Thanks" />
 Thanks
