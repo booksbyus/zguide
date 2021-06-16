@@ -8,11 +8,12 @@
 import time
 import zmq
 
+
 def main():
     """main method"""
 
     # Prepare our context and publisher
-    context   = zmq.Context()
+    context = zmq.Context()
     publisher = context.socket(zmq.PUB)
     publisher.bind("tcp://*:5563")
 

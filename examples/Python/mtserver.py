@@ -10,24 +10,23 @@ import threading
 import zmq
 
 
-def worker_routine(worker_url, context=None):
+def worker_routine(worker_url: str,
+                   context: zmq.Context = None):
     """Worker routine"""
     context = context or zmq.Context.instance()
+
     # Socket to talk to dispatcher
     socket = context.socket(zmq.REP)
-
     socket.connect(worker_url)
 
     while True:
+        string = socket.recv()
+        print(f"Received request: [ {string} ]")
 
-        string  = socket.recv()
-
-        print("Received request: [ %s ]" % (string))
-
-        # do some 'work'
+        # Do some 'work'
         time.sleep(1)
 
-        #send reply back to client
+        # Send reply back to client
         socket.send(b"World")
 
 
