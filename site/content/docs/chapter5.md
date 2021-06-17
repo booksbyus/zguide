@@ -58,13 +58,13 @@ All of these failure cases have answers, though not always simple ones. Reliabil
 
 ## Pub-Sub Tracing (Espresso Pattern) {#Pub-Sub-Tracing-Espresso-Pattern}
 
-Let's start this chapter by looking at a way to trace pub-sub networks. In [Chapter 2 - Sockets and Patterns](chapter2#sockets-and-patterns) we saw a simple proxy that used these to do transport bridging. The <tt>[zmq_proxy()](http://api.zeromq.org/3-2:zmq_proxy)</tt> method has three arguments: a *frontend* and *backend* socket that it bridges together, and a *capture* socket to which it will send all messages.
+Let's start this chapter by looking at a way to trace pub-sub networks. In [Chapter 2 - Sockets and Patterns](chapter2#sockets-and-patterns) we saw a simple proxy that used these to do transport bridging. The <tt>[zmq_proxy()](http://api.zeromq.org/master:zmq_proxy)</tt> method has three arguments: a *frontend* and *backend* socket that it bridges together, and a *capture* socket to which it will send all messages.
 
 The code is deceptively simple:
 
 {{< examples name="espresso" title="Espresso Pattern" >}}
 
-Espresso works by creating a listener thread that reads a PAIR socket and prints anything it gets. That PAIR socket is one end of a pipe; the other end (another PAIR) is the socket we pass to <tt>[zmq_proxy()](http://api.zeromq.org/3-2:zmq_proxy)</tt>. In practice, you'd filter interesting messages to get the essence of what you want to track (hence the name of the pattern).
+Espresso works by creating a listener thread that reads a PAIR socket and prints anything it gets. That PAIR socket is one end of a pipe; the other end (another PAIR) is the socket we pass to <tt>[zmq_proxy()](http://api.zeromq.org/master:zmq_proxy)</tt>. In practice, you'd filter interesting messages to get the essence of what you want to track (hence the name of the pattern).
 
 The subscriber thread subscribes to "A" and "B", receives five messages, and then destroys its socket. When you run the example, the listener prints two subscription messages, five data messages, two unsubscribe messages, and then silence:
 

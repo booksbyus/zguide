@@ -498,7 +498,7 @@ In theory this gives applications time to move onto stable new contracts without
 
 > Old names SHALL NOT be reused by new features.
 
-Ah, yes, the joy when ZeroMQ v3.x renamed the top-used API functions (<tt>[zmq_send()](http://api.zeromq.org/3-2:zmq_send)</tt> and <tt>[zmq_recv()](http://api.zeromq.org/3-2:zmq_recv)</tt>) and then recycled the old names for new methods that were utterly incompatible (and which I suspect few people actually use). You should be slapping yourself in confusion again, but really, this is what happened and I was as guilty as anyone. After all, we did change the version number! The only benefit of that experience was to get this rule.
+Ah, yes, the joy when ZeroMQ v3.x renamed the top-used API functions (<tt>[zmq_send()](http://api.zeromq.org/master:zmq_send)</tt> and <tt>[zmq_recv()](http://api.zeromq.org/master:zmq_recv)</tt>) and then recycled the old names for new methods that were utterly incompatible (and which I suspect few people actually use). You should be slapping yourself in confusion again, but really, this is what happened and I was as guilty as anyone. After all, we did change the version number! The only benefit of that experience was to get this rule.
 
 > When old names are removed, their implementations MUST provoke an exception (assertion) if used by applications.
 

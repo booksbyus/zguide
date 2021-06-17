@@ -67,7 +67,7 @@ Hello |    | World
   #------------#
 {{< /textdiagram >}}
 
-The REQ-REP socket pair is in lockstep. The client issues <tt>[zmq_send()](http://api.zeromq.org/3-2:zmq_send)</tt> and then <tt>[zmq_recv()](http://api.zeromq.org/3-2:zmq_recv)</tt>, in a loop (or once if that's all it needs). Doing any other sequence (e.g., sending two messages in a row) will result in a return code of -1 from the <tt>send</tt> or <tt>recv</tt> call. Similarly, the service issues <tt>[zmq_recv()](http://api.zeromq.org/3-2:zmq_recv)</tt> and then <tt>[zmq_send()](http://api.zeromq.org/3-2:zmq_send)</tt> in that order, as often as it needs to.
+The REQ-REP socket pair is in lockstep. The client issues <tt>[zmq_send()](http://api.zeromq.org/master:zmq_send)</tt> and then <tt>[zmq_recv()](http://api.zeromq.org/master:zmq_recv)</tt>, in a loop (or once if that's all it needs). Doing any other sequence (e.g., sending two messages in a row) will result in a return code of -1 from the <tt>send</tt> or <tt>recv</tt> call. Similarly, the service issues <tt>[zmq_recv()](http://api.zeromq.org/master:zmq_recv)</tt> and then <tt>[zmq_send()](http://api.zeromq.org/master:zmq_send)</tt> in that order, as often as it needs to.
 
 ZeroMQ uses C as its reference language and this is the main language we'll use for examples. If you're reading this online, the link below the example takes you to translations into other programming languages. Let's compare the same server in C++:
 
@@ -200,9 +200,9 @@ Here is the client application, which listens to the stream of updates and grabs
 #------------#  #------------#  #------------#
 {{< /textdiagram >}}
 
-Note that when you use a SUB socket you **must** set a subscription using <tt>[zmq_setsockopt()](http://api.zeromq.org/3-2:zmq_setsockopt)</tt> and SUBSCRIBE, as in this code. If you don't set any subscription, you won't get any messages. It's a common mistake for beginners. The subscriber can set many subscriptions, which are added together. That is, if an update matches ANY subscription, the subscriber receives it. The subscriber can also cancel specific subscriptions. A subscription is often, but not always, a printable string. See <tt>[zmq_setsockopt()](http://api.zeromq.org/3-2:zmq_setsockopt)</tt> for how this works.
+Note that when you use a SUB socket you **must** set a subscription using <tt>[zmq_setsockopt()](http://api.zeromq.org/master:zmq_setsockopt)</tt> and SUBSCRIBE, as in this code. If you don't set any subscription, you won't get any messages. It's a common mistake for beginners. The subscriber can set many subscriptions, which are added together. That is, if an update matches ANY subscription, the subscriber receives it. The subscriber can also cancel specific subscriptions. A subscription is often, but not always, a printable string. See <tt>[zmq_setsockopt()](http://api.zeromq.org/master:zmq_setsockopt)</tt> for how this works.
 
-The PUB-SUB socket pair is asynchronous. The client does <tt>[zmq_recv()](http://api.zeromq.org/3-2:zmq_recv)</tt>, in a loop (or once if that's all it needs). Trying to send a message to a SUB socket will cause an error. Similarly, the service does <tt>[zmq_send()](http://api.zeromq.org/3-2:zmq_send)</tt> as often as it needs to, but must not do <tt>[zmq_recv()](http://api.zeromq.org/3-2:zmq_recv)</tt> on a PUB socket.
+The PUB-SUB socket pair is asynchronous. The client does <tt>[zmq_recv()](http://api.zeromq.org/master:zmq_recv)</tt>, in a loop (or once if that's all it needs). Trying to send a message to a SUB socket will cause an error. Similarly, the service does <tt>[zmq_send()](http://api.zeromq.org/master:zmq_send)</tt> as often as it needs to, but must not do <tt>[zmq_recv()](http://api.zeromq.org/master:zmq_recv)</tt> on a PUB socket.
 
 In theory with ZeroMQ sockets, it does not matter which end connects and which end binds. However, in practice there are undocumented differences that I'll come to later. For now, bind the PUB and connect the SUB, unless your network design makes that impossible.
 
@@ -349,27 +349,27 @@ Having seen some examples, you must be eager to start using ZeroMQ in some apps.
 
 ### Getting the Context Right {#Getting-the-Context-Right}
 
-ZeroMQ applications always start by creating a *context*, and then using that for creating sockets. In C, it's the <tt>[zmq_ctx_new()](http://api.zeromq.org/3-2:zmq_ctx_new)</tt> call. You should create and use exactly one context in your process. Technically, the context is the container for all sockets in a single process, and acts as the transport for <tt>inproc</tt> sockets, which are the fastest way to connect threads in one process. If at runtime a process has two contexts, these are like separate ZeroMQ instances. If that's explicitly what you want, OK, but otherwise remember:
+ZeroMQ applications always start by creating a *context*, and then using that for creating sockets. In C, it's the <tt>[zmq_ctx_new()](http://api.zeromq.org/master:zmq_ctx_new)</tt> call. You should create and use exactly one context in your process. Technically, the context is the container for all sockets in a single process, and acts as the transport for <tt>inproc</tt> sockets, which are the fastest way to connect threads in one process. If at runtime a process has two contexts, these are like separate ZeroMQ instances. If that's explicitly what you want, OK, but otherwise remember:
 
-**Call <tt>[zmq_ctx_new()](http://api.zeromq.org/3-2:zmq_ctx_new)</tt> once at the start of a process, and <tt>[zmq_ctx_destroy()](http://api.zeromq.org/3-2:zmq_ctx_destroy)</tt> once at the end.**
+**Call <tt>[zmq_ctx_new()](http://api.zeromq.org/master:zmq_ctx_new)</tt> once at the start of a process, and <tt>[zmq_ctx_destroy()](http://api.zeromq.org/master:zmq_ctx_destroy)</tt> once at the end.**
 
-If you're using the <tt>fork()</tt> system call, do <tt>[zmq_ctx_new()](http://api.zeromq.org/3-2:zmq_ctx_new)</tt> *after* the fork and at the beginning of the child process code. In general, you want to do interesting (ZeroMQ) stuff in the children, and boring process management in the parent.
+If you're using the <tt>fork()</tt> system call, do <tt>[zmq_ctx_new()](http://api.zeromq.org/master:zmq_ctx_new)</tt> *after* the fork and at the beginning of the child process code. In general, you want to do interesting (ZeroMQ) stuff in the children, and boring process management in the parent.
 
 ### Making a Clean Exit {#Making-a-Clean-Exit}
 
 Classy programmers share the same motto as classy hit men: always clean-up when you finish the job. When you use ZeroMQ in a language like Python, stuff gets automatically freed for you. But when using C, you have to carefully free objects when you're finished with them or else you get memory leaks, unstable applications, and generally bad karma.
 
-Memory leaks are one thing, but ZeroMQ is quite finicky about how you exit an application. The reasons are technical and painful, but the upshot is that if you leave any sockets open, the <tt>[zmq_ctx_destroy()](http://api.zeromq.org/3-2:zmq_ctx_destroy)</tt> function will hang forever. And even if you close all sockets, <tt>[zmq_ctx_destroy()](http://api.zeromq.org/3-2:zmq_ctx_destroy)</tt> will by default wait forever if there are pending connects or sends unless you set the LINGER to zero on those sockets before closing them.
+Memory leaks are one thing, but ZeroMQ is quite finicky about how you exit an application. The reasons are technical and painful, but the upshot is that if you leave any sockets open, the <tt>[zmq_ctx_destroy()](http://api.zeromq.org/master:zmq_ctx_destroy)</tt> function will hang forever. And even if you close all sockets, <tt>[zmq_ctx_destroy()](http://api.zeromq.org/master:zmq_ctx_destroy)</tt> will by default wait forever if there are pending connects or sends unless you set the LINGER to zero on those sockets before closing them.
 
 The ZeroMQ objects we need to worry about are messages, sockets, and contexts. Luckily it's quite simple, at least in simple programs:
 
-* Use <tt>[zmq_send()](http://api.zeromq.org/3-2:zmq_send)</tt> and <tt>[zmq_recv()](http://api.zeromq.org/3-2:zmq_recv)</tt> when you can, as it avoids the need to work with zmq_msg_t objects.
+* Use <tt>[zmq_send()](http://api.zeromq.org/master:zmq_send)</tt> and <tt>[zmq_recv()](http://api.zeromq.org/master:zmq_recv)</tt> when you can, as it avoids the need to work with zmq_msg_t objects.
 
-* If you do use <tt>[zmq_msg_recv()](http://api.zeromq.org/3-2:zmq_msg_recv)</tt>, always release the received message as soon as you're done with it, by calling <tt>[zmq_msg_close()](http://api.zeromq.org/3-2:zmq_msg_close)</tt>.
+* If you do use <tt>[zmq_msg_recv()](http://api.zeromq.org/master:zmq_msg_recv)</tt>, always release the received message as soon as you're done with it, by calling <tt>[zmq_msg_close()](http://api.zeromq.org/master:zmq_msg_close)</tt>.
 
 * If you are opening and closing a lot of sockets, that's probably a sign that you need to redesign your application. In some cases socket handles won't be freed until you destroy the context.
 
-* When you exit the program, close your sockets and then call <tt>[zmq_ctx_destroy()](http://api.zeromq.org/3-2:zmq_ctx_destroy)</tt>. This destroys the context.
+* When you exit the program, close your sockets and then call <tt>[zmq_ctx_destroy()](http://api.zeromq.org/master:zmq_ctx_destroy)</tt>. This destroys the context.
 
 This is at least the case for C development. In a language with automatic object destruction, sockets and contexts will be destroyed as you leave the scope. If you use exceptions you'll have to do the clean-up in something like a "final" block, the same as for any resource.
 
@@ -499,7 +499,7 @@ Specifically:
 
 * It reduces your carbon footprint. Doing more with less CPU means your boxes use less power, and you can keep your old boxes in use for longer. Al Gore would love ZeroMQ.
 
-Actually ZeroMQ does rather more than this. It has a subversive effect on how you develop network-capable applications. Superficially, it's a socket-inspired API on which you do <tt>[zmq_recv()](http://api.zeromq.org/3-2:zmq_recv)</tt> and <tt>[zmq_send()](http://api.zeromq.org/3-2:zmq_send)</tt>. But message processing rapidly becomes the central loop, and your application soon breaks down into a set of message processing tasks. It is elegant and natural. And it scales: each of these tasks maps to a node, and the nodes talk to each other across arbitrary transports. Two nodes in one process (node is a thread), two nodes on one box (node is a process), or two nodes on one network (node is a box)--it's all the same, with no application code changes.
+Actually ZeroMQ does rather more than this. It has a subversive effect on how you develop network-capable applications. Superficially, it's a socket-inspired API on which you do <tt>[zmq_recv()](http://api.zeromq.org/master:zmq_recv)</tt> and <tt>[zmq_send()](http://api.zeromq.org/master:zmq_send)</tt>. But message processing rapidly becomes the central loop, and your application soon breaks down into a set of message processing tasks. It is elegant and natural. And it scales: each of these tasks maps to a node, and the nodes talk to each other across arbitrary transports. Two nodes in one process (node is a thread), two nodes on one box (node is a process), or two nodes on one network (node is a box)--it's all the same, with no application code changes.
 
 ## Socket Scalability {#Socket-Scalability}
 
@@ -536,23 +536,23 @@ These changes don't impact existing application code directly:
 
 * Pub-sub filtering is now done at the publisher side instead of subscriber side. This improves performance significantly in many pub-sub use cases. You can mix v3.2 and v2.1/v2.2 publishers and subscribers safely.
 
-* ZeroMQ v3.2 has many new API methods (<tt>[zmq_disconnect()](http://api.zeromq.org/3-2:zmq_disconnect)</tt>, <tt>[zmq_unbind()](http://api.zeromq.org/3-2:zmq_unbind)</tt>, <tt>[zmq_monitor()](http://api.zeromq.org/3-2:zmq_monitor)</tt>, <tt>[zmq_ctx_set()](http://api.zeromq.org/3-2:zmq_ctx_set)</tt>, etc.)
+* ZeroMQ v3.2 has many new API methods (<tt>[zmq_disconnect()](http://api.zeromq.org/master:zmq_disconnect)</tt>, <tt>[zmq_unbind()](http://api.zeromq.org/master:zmq_unbind)</tt>, <tt>[zmq_monitor()](http://api.zeromq.org/master:zmq_monitor)</tt>, <tt>[zmq_ctx_set()](http://api.zeromq.org/master:zmq_ctx_set)</tt>, etc.)
 
 ### Incompatible Changes {#Incompatible-Changes}
 
 These are the main areas of impact on applications and language bindings:
 
-* Changed send/recv methods: <tt>[zmq_send()](http://api.zeromq.org/3-2:zmq_send)</tt> and <tt>[zmq_recv()](http://api.zeromq.org/3-2:zmq_recv)</tt> have a different, simpler interface, and the old functionality is now provided by <tt>[zmq_msg_send()](http://api.zeromq.org/3-2:zmq_msg_send)</tt> and <tt>[zmq_msg_recv()](http://api.zeromq.org/3-2:zmq_msg_recv)</tt>. Symptom: compile errors. Solution: fix up your code.
+* Changed send/recv methods: <tt>[zmq_send()](http://api.zeromq.org/master:zmq_send)</tt> and <tt>[zmq_recv()](http://api.zeromq.org/master:zmq_recv)</tt> have a different, simpler interface, and the old functionality is now provided by <tt>[zmq_msg_send()](http://api.zeromq.org/master:zmq_msg_send)</tt> and <tt>[zmq_msg_recv()](http://api.zeromq.org/master:zmq_msg_recv)</tt>. Symptom: compile errors. Solution: fix up your code.
 
 * These two methods return positive values on success, and -1 on error. In v2.x they always returned zero on success. Symptom: apparent errors when things actually work fine. Solution: test strictly for return code = -1, not non-zero.
 
-* <tt>[zmq_poll()](http://api.zeromq.org/3-2:zmq_poll)</tt> now waits for milliseconds, not microseconds. Symptom: application stops responding (in fact responds 1000 times slower). Solution: use the <tt>ZMQ_POLL_MSEC</tt> macro defined below, in all <tt>zmq_poll</tt> calls.
+* <tt>[zmq_poll()](http://api.zeromq.org/master:zmq_poll)</tt> now waits for milliseconds, not microseconds. Symptom: application stops responding (in fact responds 1000 times slower). Solution: use the <tt>ZMQ_POLL_MSEC</tt> macro defined below, in all <tt>zmq_poll</tt> calls.
 
 * <tt>ZMQ_NOBLOCK</tt> is now called <tt>ZMQ_DONTWAIT</tt>. Symptom: compile failures on the <tt>ZMQ_NOBLOCK</tt> macro.
 
 * The <tt>ZMQ_HWM</tt> socket option is now broken into <tt>ZMQ_SNDHWM</tt> and <tt>ZMQ_RCVHWM</tt>.  Symptom: compile failures on the <tt>ZMQ_HWM</tt> macro.
 
-* Most but not all <tt>[zmq_getsockopt()](http://api.zeromq.org/3-2:zmq_getsockopt)</tt> options are now integer values. Symptom: runtime error returns on <tt>zmq_setsockopt</tt> and <tt>zmq_getsockopt</tt>.
+* Most but not all <tt>[zmq_getsockopt()](http://api.zeromq.org/master:zmq_getsockopt)</tt> options are now integer values. Symptom: runtime error returns on <tt>zmq_setsockopt</tt> and <tt>zmq_getsockopt</tt>.
 
 * The <tt>ZMQ_SWAP</tt> option has been removed. Symptom: compile failures on <tt>ZMQ_SWAP</tt>. Solution: redesign any code that uses this functionality.
 
