@@ -34,25 +34,25 @@ Sockets are the de facto standard API for network programming, as well as being 
 
 Like a favorite dish, ZeroMQ sockets are easy to digest. Sockets have a life in four parts, just like BSD sockets:
 
-* Creating and destroying sockets, which go together to form a karmic circle of socket life (see <tt>[zmq_socket()](http://api.zeromq.org/master:zmq_socket)</tt>, <tt>[zmq_close()](http://api.zeromq.org/3-2:zmq_close)</tt>).
+* Creating and destroying sockets, which go together to form a karmic circle of socket life (see <tt>[zmq_socket()](http://api.zeromq.org/master:zmq_socket)</tt>, <tt>[zmq_close()](http://api.zeromq.org/master:zmq_close)</tt>).
 
-* Configuring sockets by setting options on them and checking them if necessary (see <tt>[zmq_setsockopt()](http://api.zeromq.org/3-2:zmq_setsockopt)</tt>, <tt>[zmq_getsockopt()](http://api.zeromq.org/3-2:zmq_getsockopt)</tt>).
+* Configuring sockets by setting options on them and checking them if necessary (see <tt>[zmq_setsockopt()](http://api.zeromq.org/master:zmq_setsockopt)</tt>, <tt>[zmq_getsockopt()](http://api.zeromq.org/master:zmq_getsockopt)</tt>).
 
-* Plugging sockets into the network topology by creating ZeroMQ connections to and from them (see <tt>[zmq_bind()](http://api.zeromq.org/3-2:zmq_bind)</tt>, <tt>[zmq_connect()](http://api.zeromq.org/3-2:zmq_connect)</tt>).
+* Plugging sockets into the network topology by creating ZeroMQ connections to and from them (see <tt>[zmq_bind()](http://api.zeromq.org/master:zmq_bind)</tt>, <tt>[zmq_connect()](http://api.zeromq.org/master:zmq_connect)</tt>).
 
-* Using the sockets to carry data by writing and receiving messages on them (see <tt>[zmq_msg_send()](http://api.zeromq.org/3-2:zmq_msg_send)</tt>, <tt>[zmq_msg_recv()](http://api.zeromq.org/3-2:zmq_msg_recv)</tt>).
+* Using the sockets to carry data by writing and receiving messages on them (see <tt>[zmq_msg_send()](http://api.zeromq.org/master:zmq_msg_send)</tt>, <tt>[zmq_msg_recv()](http://api.zeromq.org/master:zmq_msg_recv)</tt>).
 
-Note that sockets are always void pointers, and messages (which we'll come to very soon) are structures. So in C you pass sockets as-such, but you pass addresses of messages in all functions that work with messages, like <tt>[zmq_msg_send()](http://api.zeromq.org/3-2:zmq_msg_send)</tt> and <tt>[zmq_msg_recv()](http://api.zeromq.org/3-2:zmq_msg_recv)</tt>. As a mnemonic, realize that "in ZeroMQ, all your sockets are belong to us", but messages are things you actually own in your code.
+Note that sockets are always void pointers, and messages (which we'll come to very soon) are structures. So in C you pass sockets as-such, but you pass addresses of messages in all functions that work with messages, like <tt>[zmq_msg_send()](http://api.zeromq.org/master:zmq_msg_send)</tt> and <tt>[zmq_msg_recv()](http://api.zeromq.org/master:zmq_msg_recv)</tt>. As a mnemonic, realize that "in ZeroMQ, all your sockets are belong to us", but messages are things you actually own in your code.
 
 Creating, destroying, and configuring sockets works as you'd expect for any object. But remember that ZeroMQ is an asynchronous, elastic fabric. This has some impact on how we plug sockets into the network topology and how we use the sockets after that.
 
 ### Plugging Sockets into the Topology {#Plugging-Sockets-into-the-Topology}
 
-To create a connection between two nodes, you use <tt>[zmq_bind()](http://api.zeromq.org/3-2:zmq_bind)</tt> in one node and <tt>[zmq_connect()](http://api.zeromq.org/3-2:zmq_connect)</tt> in the other.  As a general rule of thumb, the node that does <tt>[zmq_bind()](http://api.zeromq.org/3-2:zmq_bind)</tt> is a "server", sitting on a well-known network address, and the node which does <tt>[zmq_connect()](http://api.zeromq.org/3-2:zmq_connect)</tt> is a "client", with unknown or arbitrary network addresses. Thus we say that we "bind a socket to an endpoint" and "connect a socket to an endpoint", the endpoint being that well-known network address.
+To create a connection between two nodes, you use <tt>[zmq_bind()](http://api.zeromq.org/master:zmq_bind)</tt> in one node and <tt>[zmq_connect()](http://api.zeromq.org/master:zmq_connect)</tt> in the other.  As a general rule of thumb, the node that does <tt>[zmq_bind()](http://api.zeromq.org/master:zmq_bind)</tt> is a "server", sitting on a well-known network address, and the node which does <tt>[zmq_connect()](http://api.zeromq.org/master:zmq_connect)</tt> is a "client", with unknown or arbitrary network addresses. Thus we say that we "bind a socket to an endpoint" and "connect a socket to an endpoint", the endpoint being that well-known network address.
 
 ZeroMQ connections are somewhat different from classic TCP connections. The main notable differences are:
 
-* They go across an arbitrary transport (<tt>inproc</tt>, <tt>ipc</tt>, <tt>tcp</tt>, <tt>pgm</tt>, or <tt>epgm</tt>). See <tt>[zmq_inproc()](http://api.zeromq.org/3-2:zmq_inproc)</tt>, <tt>[zmq_ipc()](http://api.zeromq.org/3-2:zmq_ipc)</tt>, <tt>[zmq_tcp()](http://api.zeromq.org/3-2:zmq_tcp)</tt>, <tt>[zmq_pgm()](http://api.zeromq.org/3-2:zmq_pgm)</tt>, and <tt>[zmq_epgm()](http://api.zeromq.org/3-2:zmq_epgm)</tt>.
+* They go across an arbitrary transport (<tt>inproc</tt>, <tt>ipc</tt>, <tt>tcp</tt>, <tt>pgm</tt>, or <tt>epgm</tt>). See <tt>[zmq_inproc()](http://api.zeromq.org/master:zmq_inproc)</tt>, <tt>[zmq_ipc()](http://api.zeromq.org/master:zmq_ipc)</tt>, <tt>[zmq_tcp()](http://api.zeromq.org/master:zmq_tcp)</tt>, <tt>[zmq_pgm()](http://api.zeromq.org/master:zmq_pgm)</tt>, and <tt>[zmq_epgm()](http://api.zeromq.org/master:zmq_epgm)</tt>.
 
 * One socket may have many outgoing and many incoming connections.
 
@@ -62,9 +62,9 @@ ZeroMQ connections are somewhat different from classic TCP connections. The main
 
 * Your application code cannot work with these connections directly; they are encapsulated under the socket.
 
-Many architectures follow some kind of client/server model, where the server is the component that is most static, and the clients are the components that are most dynamic, i.e., they come and go the most. There are sometimes issues of addressing: servers will be visible to clients, but not necessarily vice versa. So mostly it's obvious which node should be doing <tt>[zmq_bind()](http://api.zeromq.org/3-2:zmq_bind)</tt> (the server) and which should be doing <tt>[zmq_connect()](http://api.zeromq.org/3-2:zmq_connect)</tt> (the client). It also depends on the kind of sockets you're using, with some exceptions for unusual network architectures. We'll look at socket types later.
+Many architectures follow some kind of client/server model, where the server is the component that is most static, and the clients are the components that are most dynamic, i.e., they come and go the most. There are sometimes issues of addressing: servers will be visible to clients, but not necessarily vice versa. So mostly it's obvious which node should be doing <tt>[zmq_bind()](http://api.zeromq.org/master:zmq_bind)</tt> (the server) and which should be doing <tt>[zmq_connect()](http://api.zeromq.org/master:zmq_connect)</tt> (the client). It also depends on the kind of sockets you're using, with some exceptions for unusual network architectures. We'll look at socket types later.
 
-Now, imagine we start the client *before* we start the server. In traditional networking, we get a big red Fail flag. But ZeroMQ lets us start and stop pieces arbitrarily. As soon as the client node does <tt>[zmq_connect()](http://api.zeromq.org/3-2:zmq_connect)</tt>, the connection exists and that node can start to write messages to the socket. At some stage (hopefully before messages queue up so much that they start to get discarded, or the client blocks), the server comes alive, does a <tt>[zmq_bind()](http://api.zeromq.org/3-2:zmq_bind)</tt>, and ZeroMQ starts to deliver messages.
+Now, imagine we start the client *before* we start the server. In traditional networking, we get a big red Fail flag. But ZeroMQ lets us start and stop pieces arbitrarily. As soon as the client node does <tt>[zmq_connect()](http://api.zeromq.org/master:zmq_connect)</tt>, the connection exists and that node can start to write messages to the socket. At some stage (hopefully before messages queue up so much that they start to get discarded, or the client blocks), the server comes alive, does a <tt>[zmq_bind()](http://api.zeromq.org/master:zmq_bind)</tt>, and ZeroMQ starts to deliver messages.
 
 A server node can bind to many endpoints (that is, a combination of protocol and address) and it can do this using a single socket. This means it will accept connections across different transports:
 
@@ -84,7 +84,7 @@ It's the ability to connect sockets in these different ways that gives ZeroMQ it
 
 ### Sending and Receiving Messages {#Sending-and-Receiving-Messages}
 
-To send and receive messages you use the <tt>[zmq_msg_send()](http://api.zeromq.org/3-2:zmq_msg_send)</tt> and <tt>[zmq_msg_recv()](http://api.zeromq.org/3-2:zmq_msg_recv)</tt> methods. The names are conventional, but ZeroMQ's I/O model is different enough from the classic TCP model that you will need time to get your head around it.
+To send and receive messages you use the <tt>[zmq_msg_send()](http://api.zeromq.org/master:zmq_msg_send)</tt> and <tt>[zmq_msg_recv()](http://api.zeromq.org/master:zmq_msg_recv)</tt> methods. The names are conventional, but ZeroMQ's I/O model is different enough from the classic TCP model that you will need time to get your head around it.
 
 {{< textdiagram name="fig9.png" figno="9" title="TCP sockets are 1 to 1" >}}
 #------------#
@@ -112,7 +112,7 @@ Let's look at the main differences between TCP sockets and ZeroMQ sockets when i
 
 * ZeroMQ sockets have one-to-N routing behavior built-in, according to the socket type.
 
-The <tt>[zmq_send()](http://api.zeromq.org/3-2:zmq_send)</tt> method does not actually send the message to the socket connection(s). It queues the message so that the I/O thread can send it asynchronously. It does not block except in some exception cases. So the message is not necessarily sent when <tt>[zmq_send()](http://api.zeromq.org/3-2:zmq_send)</tt> returns to your application.
+The <tt>[zmq_send()](http://api.zeromq.org/master:zmq_send)</tt> method does not actually send the message to the socket connection(s). It queues the message so that the I/O thread can send it asynchronously. It does not block except in some exception cases. So the message is not necessarily sent when <tt>[zmq_send()](http://api.zeromq.org/master:zmq_send)</tt> returns to your application.
 
 ### Unicast Transports {#Unicast-Transports}
 
@@ -148,7 +148,7 @@ Since v3.3, however, ZeroMQ has a socket option called <tt>ZMQ_ROUTER_RAW</tt> t
 
 ### I/O Threads {#I-O-Threads}
 
-We said that ZeroMQ does I/O in a background thread. One I/O thread (for all sockets) is sufficient for all but the most extreme applications. When you create a new context, it starts with one I/O thread. The general rule of thumb is to allow one I/O thread per gigabyte of data in or out per second. To raise the number of I/O threads, use the <tt>[zmq_ctx_set()](http://api.zeromq.org/3-2:zmq_ctx_set)</tt> call *before* creating any sockets:
+We said that ZeroMQ does I/O in a background thread. One I/O thread (for all sockets) is sufficient for all but the most extreme applications. When you create a new context, it starts with one I/O thread. The general rule of thumb is to allow one I/O thread per gigabyte of data in or out per second. To raise the number of I/O threads, use the <tt>[zmq_ctx_set()](http://api.zeromq.org/master:zmq_ctx_set)</tt> call *before* creating any sockets:
 
 {{< fragment name="iothreads" >}}
 int io_threads = 4;
@@ -181,7 +181,7 @@ The built-in core ZeroMQ patterns are:
 
 * **Exclusive pair**, which connects two sockets exclusively. This is a pattern for connecting two threads in a process, not to be confused with "normal" pairs of sockets.
 
-We looked at the first three of these in [Chapter 1 - Basics](chapter1#basics), and we'll see the exclusive pair pattern later in this chapter. The <tt>[zmq_socket()](http://api.zeromq.org/3-2:zmq_socket)</tt> man page is fairly clear about the patterns -- it's worth reading several times until it starts to make sense. These are the socket combinations that are valid for a connect-bind pair (either side can bind):
+We looked at the first three of these in [Chapter 1 - Basics](chapter1#basics), and we'll see the exclusive pair pattern later in this chapter. The <tt>[zmq_socket()](http://api.zeromq.org/master:zmq_socket)</tt> man page is fairly clear about the patterns -- it's worth reading several times until it starts to make sense. These are the socket combinations that are valid for a connect-bind pair (either side can bind):
 
 * PUB and SUB
 * REQ and REP
@@ -205,14 +205,14 @@ One of the things we aim to provide you with in this book are a set of such high
 
 ### Working with Messages {#Working-with-Messages}
 
-The <tt>libzmq</tt> core library has in fact two APIs to send and receive messages. The <tt>[zmq_send()](http://api.zeromq.org/3-2:zmq_send)</tt> and <tt>[zmq_recv()](http://api.zeromq.org/3-2:zmq_recv)</tt> methods that we've already seen and used are simple one-liners. We will use these often, but <tt>[zmq_recv()](http://api.zeromq.org/3-2:zmq_recv)</tt> is bad at dealing with arbitrary message sizes: it truncates messages to whatever buffer size you provide. So there's a second API that works with zmq_msg_t structures, with a richer but more difficult API:
+The <tt>libzmq</tt> core library has in fact two APIs to send and receive messages. The <tt>[zmq_send()](http://api.zeromq.org/master:zmq_send)</tt> and <tt>[zmq_recv()](http://api.zeromq.org/master:zmq_recv)</tt> methods that we've already seen and used are simple one-liners. We will use these often, but <tt>[zmq_recv()](http://api.zeromq.org/master:zmq_recv)</tt> is bad at dealing with arbitrary message sizes: it truncates messages to whatever buffer size you provide. So there's a second API that works with zmq_msg_t structures, with a richer but more difficult API:
 
-* Initialise a message: <tt>[zmq_msg_init()](http://api.zeromq.org/3-2:zmq_msg_init)</tt>, <tt>[zmq_msg_init_size()](http://api.zeromq.org/3-2:zmq_msg_init_size)</tt>, <tt>[zmq_msg_init_data()](http://api.zeromq.org/3-2:zmq_msg_init_data)</tt>.
-* Sending and receiving a message: <tt>[zmq_msg_send()](http://api.zeromq.org/3-2:zmq_msg_send)</tt>, <tt>[zmq_msg_recv()](http://api.zeromq.org/3-2:zmq_msg_recv)</tt>.
-* Release a message: <tt>[zmq_msg_close()](http://api.zeromq.org/3-2:zmq_msg_close)</tt>.
-* Access message content: <tt>[zmq_msg_data()](http://api.zeromq.org/3-2:zmq_msg_data)</tt>, <tt>[zmq_msg_size()](http://api.zeromq.org/3-2:zmq_msg_size)</tt>, <tt>[zmq_msg_more()](http://api.zeromq.org/3-2:zmq_msg_more)</tt>.
-* Work with message properties: <tt>[zmq_msg_get()](http://api.zeromq.org/3-2:zmq_msg_get)</tt>, <tt>[zmq_msg_set()](http://api.zeromq.org/3-2:zmq_msg_set)</tt>.
-* Message manipulation: <tt>[zmq_msg_copy()](http://api.zeromq.org/3-2:zmq_msg_copy)</tt>, <tt>[zmq_msg_move()](http://api.zeromq.org/3-2:zmq_msg_move)</tt>.
+* Initialise a message: <tt>[zmq_msg_init()](http://api.zeromq.org/master:zmq_msg_init)</tt>, <tt>[zmq_msg_init_size()](http://api.zeromq.org/master:zmq_msg_init_size)</tt>, <tt>[zmq_msg_init_data()](http://api.zeromq.org/master:zmq_msg_init_data)</tt>.
+* Sending and receiving a message: <tt>[zmq_msg_send()](http://api.zeromq.org/master:zmq_msg_send)</tt>, <tt>[zmq_msg_recv()](http://api.zeromq.org/master:zmq_msg_recv)</tt>.
+* Release a message: <tt>[zmq_msg_close()](http://api.zeromq.org/master:zmq_msg_close)</tt>.
+* Access message content: <tt>[zmq_msg_data()](http://api.zeromq.org/master:zmq_msg_data)</tt>, <tt>[zmq_msg_size()](http://api.zeromq.org/master:zmq_msg_size)</tt>, <tt>[zmq_msg_more()](http://api.zeromq.org/master:zmq_msg_more)</tt>.
+* Work with message properties: <tt>[zmq_msg_get()](http://api.zeromq.org/master:zmq_msg_get)</tt>, <tt>[zmq_msg_set()](http://api.zeromq.org/master:zmq_msg_set)</tt>.
+* Message manipulation: <tt>[zmq_msg_copy()](http://api.zeromq.org/master:zmq_msg_copy)</tt>, <tt>[zmq_msg_move()](http://api.zeromq.org/master:zmq_msg_move)</tt>.
 
 On the wire, ZeroMQ messages are blobs of any size from zero upwards that fit in memory. You do your own serialization using protocol buffers, msgpack, JSON, or whatever else your applications need to speak. It's wise to choose a data representation that is portable, but you can make your own decisions about trade-offs.
 
@@ -220,21 +220,21 @@ In memory, ZeroMQ messages are <tt>zmq_msg_t</tt> structures (or classes dependi
 
 * You create and pass around <tt>zmq_msg_t</tt> objects, not blocks of data.
 
-* To read a message, you use <tt>[zmq_msg_init()](http://api.zeromq.org/3-2:zmq_msg_init)</tt> to create an empty message, and then you pass that to <tt>[zmq_msg_recv()](http://api.zeromq.org/3-2:zmq_msg_recv)</tt>.
+* To read a message, you use <tt>[zmq_msg_init()](http://api.zeromq.org/master:zmq_msg_init)</tt> to create an empty message, and then you pass that to <tt>[zmq_msg_recv()](http://api.zeromq.org/master:zmq_msg_recv)</tt>.
 
-* To write a message from new data, you use <tt>[zmq_msg_init_size()](http://api.zeromq.org/3-2:zmq_msg_init_size)</tt> to create a message and at the same time allocate a block of data of some size. You then fill that data using <tt>memcpy</tt>, and pass the message to <tt>[zmq_msg_send()](http://api.zeromq.org/3-2:zmq_msg_send)</tt>.
+* To write a message from new data, you use <tt>[zmq_msg_init_size()](http://api.zeromq.org/master:zmq_msg_init_size)</tt> to create a message and at the same time allocate a block of data of some size. You then fill that data using <tt>memcpy</tt>, and pass the message to <tt>[zmq_msg_send()](http://api.zeromq.org/master:zmq_msg_send)</tt>.
 
-* To release (not destroy) a message, you call <tt>[zmq_msg_close()](http://api.zeromq.org/3-2:zmq_msg_close)</tt>. This drops a reference, and eventually ZeroMQ will destroy the message.
+* To release (not destroy) a message, you call <tt>[zmq_msg_close()](http://api.zeromq.org/master:zmq_msg_close)</tt>. This drops a reference, and eventually ZeroMQ will destroy the message.
 
-* To access the message content, you use <tt>[zmq_msg_data()](http://api.zeromq.org/3-2:zmq_msg_data)</tt>. To know how much data the message contains, use <tt>[zmq_msg_size()](http://api.zeromq.org/3-2:zmq_msg_size)</tt>.
+* To access the message content, you use <tt>[zmq_msg_data()](http://api.zeromq.org/master:zmq_msg_data)</tt>. To know how much data the message contains, use <tt>[zmq_msg_size()](http://api.zeromq.org/master:zmq_msg_size)</tt>.
 
-* Do not use <tt>[zmq_msg_move()](http://api.zeromq.org/3-2:zmq_msg_move)</tt>, <tt>[zmq_msg_copy()](http://api.zeromq.org/3-2:zmq_msg_copy)</tt>, or <tt>[zmq_msg_init_data()](http://api.zeromq.org/3-2:zmq_msg_init_data)</tt> unless you read the man pages and know precisely why you need these.
+* Do not use <tt>[zmq_msg_move()](http://api.zeromq.org/master:zmq_msg_move)</tt>, <tt>[zmq_msg_copy()](http://api.zeromq.org/master:zmq_msg_copy)</tt>, or <tt>[zmq_msg_init_data()](http://api.zeromq.org/master:zmq_msg_init_data)</tt> unless you read the man pages and know precisely why you need these.
 
-* After you pass a message to <tt>[zmq_msg_send()](http://api.zeromq.org/3-2:zmq_msg_send)</tt>, ØMQ will clear the message, i.e., set the size to zero. You cannot send the same message twice, and you cannot access the message data after sending it.
+* After you pass a message to <tt>[zmq_msg_send()](http://api.zeromq.org/master:zmq_msg_send)</tt>, ØMQ will clear the message, i.e., set the size to zero. You cannot send the same message twice, and you cannot access the message data after sending it.
 
-* These rules don't apply if you use <tt>[zmq_send()](http://api.zeromq.org/3-2:zmq_send)</tt> and <tt>[zmq_recv()](http://api.zeromq.org/3-2:zmq_recv)</tt>, to which you pass byte arrays, not message structures.
+* These rules don't apply if you use <tt>[zmq_send()](http://api.zeromq.org/master:zmq_send)</tt> and <tt>[zmq_recv()](http://api.zeromq.org/master:zmq_recv)</tt>, to which you pass byte arrays, not message structures.
 
-If you want to send the same message more than once, and it's sizable, create a second message, initialize it using <tt>[zmq_msg_init()](http://api.zeromq.org/3-2:zmq_msg_init)</tt>, and then use <tt>[zmq_msg_copy()](http://api.zeromq.org/3-2:zmq_msg_copy)</tt> to create a copy of the first message. This does not copy the data but copies a reference. You can then send the message twice (or more, if you create more copies) and the message will only be finally destroyed when the last copy is sent or closed.
+If you want to send the same message more than once, and it's sizable, create a second message, initialize it using <tt>[zmq_msg_init()](http://api.zeromq.org/master:zmq_msg_init)</tt>, and then use <tt>[zmq_msg_copy()](http://api.zeromq.org/master:zmq_msg_copy)</tt> to create a copy of the first message. This does not copy the data but copies a reference. You can then send the message twice (or more, if you create more copies) and the message will only be finally destroyed when the last copy is sent or closed.
 
 ZeroMQ also supports *multipart* messages, which let you send or receive a list of frames as a single on-the-wire message. This is widely used in real applications and we'll look at that later in this chapter and in [Chapter 3 - Advanced Request-Reply Patterns](chapter3#advanced-request-reply).
 
@@ -262,9 +262,9 @@ Some other things that are worth knowing about messages:
 
 * A message (single or multipart) must fit in memory. If you want to send files of arbitrary sizes, you should break them into pieces and send each piece as separate single-part messages. *Using multipart data will not reduce memory consumption.*
 
-* You must call <tt>[zmq_msg_close()](http://api.zeromq.org/3-2:zmq_msg_close)</tt> when finished with a received message, in languages that don't automatically destroy objects when a scope closes. You don't call this method after sending a message.
+* You must call <tt>[zmq_msg_close()](http://api.zeromq.org/master:zmq_msg_close)</tt> when finished with a received message, in languages that don't automatically destroy objects when a scope closes. You don't call this method after sending a message.
 
-And to be repetitive, do not use <tt>[zmq_msg_init_data()](http://api.zeromq.org/3-2:zmq_msg_init_data)</tt> yet. This is a zero-copy method and is guaranteed to create trouble for you. There are far more important things to learn about ZeroMQ before you start to worry about shaving off microseconds.
+And to be repetitive, do not use <tt>[zmq_msg_init_data()](http://api.zeromq.org/master:zmq_msg_init_data)</tt> yet. This is a zero-copy method and is guaranteed to create trouble for you. There are far more important things to learn about ZeroMQ before you start to worry about shaving off microseconds.
 
 This rich API can be tiresome to work with. The methods are optimized for performance, not simplicity. If you start using these you will almost definitely get them wrong until you've read the man pages with some care. So one of the main jobs of a good language binding is to wrap this API up in classes that are easier to use.
 
@@ -278,7 +278,7 @@ In all the examples so far, the main loop of most examples has been:
 
 What if we want to read from multiple endpoints at the same time? The simplest way is to connect one socket to all the endpoints and get ZeroMQ to do the fan-in for us. This is legal if the remote endpoints are in the same pattern, but it would be wrong to connect a PULL socket to a PUB endpoint.
 
-To actually read from multiple sockets all at once, use <tt>[zmq_poll()](http://api.zeromq.org/3-2:zmq_poll)</tt>. An even better way might be to wrap <tt>[zmq_poll()](http://api.zeromq.org/3-2:zmq_poll)</tt> in a framework that turns it into a nice event-driven *reactor*, but it's significantly more work than we want to cover here.
+To actually read from multiple sockets all at once, use <tt>[zmq_poll()](http://api.zeromq.org/master:zmq_poll)</tt>. An even better way might be to wrap <tt>[zmq_poll()](http://api.zeromq.org/master:zmq_poll)</tt> in a framework that turns it into a nice event-driven *reactor*, but it's significantly more work than we want to cover here.
 
 Let's start with a dirty hack, partly for the fun of not doing it right, but mainly because it lets me show you how to do nonblocking socket reads. Here is a simple example of reading from two sockets using nonblocking reads. This rather confused program acts both as a subscriber to weather updates, and a worker for parallel tasks:
 
@@ -288,7 +288,7 @@ The cost of this approach is some additional latency on the first message (the s
 
 You can treat the sockets fairly by reading first from one, then the second rather than prioritizing them as we did in this example.
 
-Now let's see the same senseless little application done right, using <tt>[zmq_poll()](http://api.zeromq.org/3-2:zmq_poll)</tt>:
+Now let's see the same senseless little application done right, using <tt>[zmq_poll()](http://api.zeromq.org/master:zmq_poll)</tt>:
 
 {{< examples name="mspoller" title="Multiple socket poller" >}}
 
@@ -339,7 +339,7 @@ while (1) {
 Some things to know about multipart messages:
 
 * When you send a multipart message, the first part (and all following parts) are only actually sent on the wire when you send the final part.
-* If you are using <tt>[zmq_poll()](http://api.zeromq.org/3-2:zmq_poll)</tt>, when you receive the first part of a message, all the rest has also arrived.
+* If you are using <tt>[zmq_poll()](http://api.zeromq.org/master:zmq_poll)</tt>, when you receive the first part of a message, all the rest has also arrived.
 * You will receive all parts of a message, or none at all.
 * Each part of a message is a separate <tt>zmq_msg</tt> item.
 * You will receive all parts of a message whether or not you check the more property.
@@ -473,11 +473,11 @@ This design lets you add more clients cheaply. You can also add more services. E
 
 That's clearly not the kind of thing we want to be doing at 3 a.m. when our supercomputing cluster has run out of resources and we desperately need to add a couple of hundred of new service nodes. Too many static pieces are like liquid concrete: knowledge is distributed and the more static pieces you have, the more effort it is to change the topology. What we want is something sitting in between clients and services that centralizes all knowledge of the topology. Ideally, we should be able to add and remove services or clients at any time without touching any other part of the topology.
 
-So we'll write a little message queuing broker that gives us this flexibility. The broker binds to two endpoints, a frontend for clients and a backend for services. It then uses <tt>[zmq_poll()](http://api.zeromq.org/3-2:zmq_poll)</tt> to monitor these two sockets for activity and when it has some, it shuttles messages between its two sockets. It doesn't actually manage any queues explicitly--ZeroMQ does that automatically on each socket.
+So we'll write a little message queuing broker that gives us this flexibility. The broker binds to two endpoints, a frontend for clients and a backend for services. It then uses <tt>[zmq_poll()](http://api.zeromq.org/master:zmq_poll)</tt> to monitor these two sockets for activity and when it has some, it shuttles messages between its two sockets. It doesn't actually manage any queues explicitly--ZeroMQ does that automatically on each socket.
 
 When you use REQ to talk to REP, you get a strictly synchronous request-reply dialog. The client sends a request. The service reads the request and sends a reply. The client then reads the reply. If either the client or the service try to do anything else (e.g., sending two requests in a row without waiting for a response), they will get an error.
 
-But our broker has to be nonblocking. Obviously, we can use <tt>[zmq_poll()](http://api.zeromq.org/3-2:zmq_poll)</tt> to wait for activity on either socket, but we can't use REP and REQ.
+But our broker has to be nonblocking. Obviously, we can use <tt>[zmq_poll()](http://api.zeromq.org/master:zmq_poll)</tt> to wait for activity on either socket, but we can't use REP and REQ.
 
 {{< textdiagram name="fig16.png" figno="16" title="Extended Request-Reply" >}}
 #---------#   #---------#   #---------#
@@ -551,7 +551,7 @@ Using a request-reply broker makes your client/server architectures easier to sc
 
 ### ZeroMQ's Built-In Proxy Function {#ZeroMQ-s-Built-In-Proxy-Function}
 
-It turns out that the core loop in the previous section's <tt>rrbroker</tt> is very useful, and reusable. It lets us build pub-sub forwarders and shared queues and other little intermediaries with very little effort. ZeroMQ wraps this up in a single method, <tt>[zmq_proxy()](http://api.zeromq.org/3-2:zmq_proxy)</tt>:
+It turns out that the core loop in the previous section's <tt>rrbroker</tt> is very useful, and reusable. It lets us build pub-sub forwarders and shared queues and other little intermediaries with very little effort. ZeroMQ wraps this up in a single method, <tt>[zmq_proxy()](http://api.zeromq.org/master:zmq_proxy)</tt>:
 
 {{< fragment name="proxy" >}}
 zmq_proxy (frontend, backend, capture);
@@ -622,8 +622,8 @@ In most of the C examples we've seen so far there's been no error handling. **Re
 * Methods that create objects return NULL if they fail.
 * Methods that process data may return the number of bytes processed, or -1 on an error or failure.
 * Other methods return 0 on success and -1 on an error or failure.
-* The error code is provided in <tt>errno</tt> or <tt>[zmq_errno()](http://api.zeromq.org/3-2:zmq_errno)</tt>.
-* A descriptive error text for logging is provided by <tt>[zmq_strerror()](http://api.zeromq.org/3-2:zmq_strerror)</tt>.
+* The error code is provided in <tt>errno</tt> or <tt>[zmq_errno()](http://api.zeromq.org/master:zmq_errno)</tt>.
+* A descriptive error text for logging is provided by <tt>[zmq_strerror()](http://api.zeromq.org/master:zmq_strerror)</tt>.
 
 For example:
 
@@ -643,7 +643,7 @@ There are two main exceptional conditions that you should handle as nonfatal:
 
 * When your code receives a message with the <tt>ZMQ_DONTWAIT</tt> option and there is no waiting data, ZeroMQ will return -1 and set <tt>errno</tt> to <tt>EAGAIN</tt>.
 
-* When one thread calls <tt>[zmq_ctx_destroy()](http://api.zeromq.org/3-2:zmq_ctx_destroy)</tt>, and other threads are still doing blocking work, the <tt>[zmq_ctx_destroy()](http://api.zeromq.org/3-2:zmq_ctx_destroy)</tt> call closes the context and all blocking calls exit with -1, and <tt>errno</tt> set to <tt>ETERM</tt>.
+* When one thread calls <tt>[zmq_ctx_destroy()](http://api.zeromq.org/master:zmq_ctx_destroy)</tt>, and other threads are still doing blocking work, the <tt>[zmq_ctx_destroy()](http://api.zeromq.org/master:zmq_ctx_destroy)</tt> call closes the context and all blocking calls exit with -1, and <tt>errno</tt> set to <tt>ETERM</tt>.
 
 In C/C++, asserts can be removed entirely in optimized code, so don't make the mistake of wrapping the whole ZeroMQ call in an <tt>assert()</tt>. It looks neat; then the optimizer removes all the asserts and the calls you want to make, and your application breaks in impressive ways.
 
@@ -702,7 +702,7 @@ zmq_bind (controller, "tcp://*:5559");
 s_send (controller, "KILL");
 {{< /fragment >}}
 
-Here is the worker process, which manages two sockets (a PULL socket getting tasks, and a SUB socket getting control commands), using the <tt>[zmq_poll()](http://api.zeromq.org/3-2:zmq_poll)</tt> technique we saw earlier:
+Here is the worker process, which manages two sockets (a PULL socket getting tasks, and a SUB socket getting control commands), using the <tt>[zmq_poll()](http://api.zeromq.org/master:zmq_poll)</tt> technique we saw earlier:
 
 {{< examples name="taskwork2" title="Parallel task worker with kill signaling" >}}
 
@@ -1010,7 +1010,7 @@ ZeroMQ's message API lets you send and receive messages directly from and to app
 
 You should think about using zero-copy in the specific case where you are sending large blocks of memory (thousands of bytes), at a high frequency. For short messages, or for lower message rates, using zero-copy will make your code messier and more complex with no measurable benefit. Like all optimizations, use this when you know it helps, and *measure* before and after.
 
-To do zero-copy, you use <tt>[zmq_msg_init_data()](http://api.zeromq.org/3-2:zmq_msg_init_data)</tt> to create a message that refers to a block of data already allocated with <tt>malloc()</tt> or some other allocator, and then you pass that to <tt>[zmq_msg_send()](http://api.zeromq.org/3-2:zmq_msg_send)</tt>. When you create the message, you also pass a function that ZeroMQ will call to free the block of data, when it has finished sending the message. This is the simplest example, assuming <tt>buffer</tt> is a block of 1,000 bytes allocated on the heap:
+To do zero-copy, you use <tt>[zmq_msg_init_data()](http://api.zeromq.org/master:zmq_msg_init_data)</tt> to create a message that refers to a block of data already allocated with <tt>malloc()</tt> or some other allocator, and then you pass that to <tt>[zmq_msg_send()](http://api.zeromq.org/master:zmq_msg_send)</tt>. When you create the message, you also pass a function that ZeroMQ will call to free the block of data, when it has finished sending the message. This is the simplest example, assuming <tt>buffer</tt> is a block of 1,000 bytes allocated on the heap:
 
 {{< fragment name="zerocopy" >}}
 void my_free (void *data, void *hint) {
@@ -1022,7 +1022,7 @@ zmq_msg_init_data (&message, buffer, 1000, my_free, NULL);
 zmq_msg_send (&message, socket, 0);
 {{< /fragment >}}
 
-Note that you don't call <tt>[zmq_msg_close()](http://api.zeromq.org/3-2:zmq_msg_close)</tt> after sending a message--<tt>libzmq</tt> will do this automatically when it's actually done sending the message.
+Note that you don't call <tt>[zmq_msg_close()](http://api.zeromq.org/master:zmq_msg_close)</tt> after sending a message--<tt>libzmq</tt> will do this automatically when it's actually done sending the message.
 
 There is no way to do zero-copy on receive: ZeroMQ delivers you a buffer that you can store as long as you wish, but it will not write data directly into application buffers.
 
@@ -1158,7 +1158,7 @@ As you build applications with ZeroMQ, you will come across this problem more th
 
 Here's a summary of what the graphic says:
 
-* On SUB sockets, set a subscription using <tt>[zmq_setsockopt()](http://api.zeromq.org/3-2:zmq_setsockopt)</tt> with <tt>ZMQ_SUBSCRIBE</tt>, or you won't get messages. Because you subscribe to messages by prefix, if you subscribe to "" (an empty subscription), you will get everything.
+* On SUB sockets, set a subscription using <tt>[zmq_setsockopt()](http://api.zeromq.org/master:zmq_setsockopt)</tt> with <tt>ZMQ_SUBSCRIBE</tt>, or you won't get messages. Because you subscribe to messages by prefix, if you subscribe to "" (an empty subscription), you will get everything.
 
 * If you start the SUB socket (i.e., establish a connection to a PUB socket) *after* the PUB socket has started sending out data, you will lose whatever it published before the connection was made. If this is a problem, set up your architecture so the SUB socket starts first, then the PUB socket starts publishing.
 

@@ -687,7 +687,7 @@ Here's our first cut at the code, where the client asks for the test data and th
 
 It's pretty simple, but we already run into a problem: if we send too much data to the ROUTER socket, we can easily overflow it. The simple but stupid solution is to put an infinite high-water mark on the socket. It's stupid because we now have no protection against exhausting the server's memory. Yet without an infinite HWM, we risk losing chunks of large files.
 
-Try this: set the HWM to 1,000 (in ZeroMQ v3.x this is the default) and then reduce the chunk size to 100K so we send 10K chunks in one go. Run the test, and you'll see it never finishes. As the <tt>[zmq_socket()](http://api.zeromq.org/3-2:zmq_socket)</tt> man page says with cheerful brutality, for the ROUTER socket: "ZMQ_HWM option action: Drop".
+Try this: set the HWM to 1,000 (in ZeroMQ v3.x this is the default) and then reduce the chunk size to 100K so we send 10K chunks in one go. Run the test, and you'll see it never finishes. As the <tt>[zmq_socket()](http://api.zeromq.org/master:zmq_socket)</tt> man page says with cheerful brutality, for the ROUTER socket: "ZMQ_HWM option action: Drop".
 
 We have to control the amount of data the server sends up-front. There's no point in it sending more than the network can handle. Let's try sending one chunk at a time. In this version of the protocol, the client will explicitly say, "Give me chunk N", and the server will fetch that specific chunk from disk and send it.
 

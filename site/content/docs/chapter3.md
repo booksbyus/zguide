@@ -82,7 +82,7 @@ while true:
 
 The ROUTER socket, unlike other sockets, tracks every connection it has, and tells the caller about these. The way it tells the caller is to stick the connection *identity* in front of each message received. An identity, sometimes called an *address*, is just a binary string with no meaning except "this is a unique handle to the connection". Then, when you send a message via a ROUTER socket, you first send an identity frame.
 
-The <tt>[zmq_socket()](http://api.zeromq.org/3-2:zmq_socket)</tt> man page describes it thus:
+The <tt>[zmq_socket()](http://api.zeromq.org/master:zmq_socket)</tt> man page describes it thus:
 
 > When receiving messages a ZMQ_ROUTER socket shall prepend a message part containing the identity of the originating peer to the message before passing it to the application. Messages received are fair-queued from among all connected peers. When sending messages a ZMQ_ROUTER socket shall remove the first part of the message and use it to determine the identity of the peer the message shall be routed to.
 
@@ -546,7 +546,7 @@ Cutting the amount of code we need to read and write complex messages is great: 
 
 * *Portable clocks.* Even getting the time to a millisecond resolution, or sleeping for some milliseconds, is not portable. Realistic ZeroMQ applications need portable clocks, so our API should provide them.
 
-* *A reactor to replace <tt>[zmq_poll()](http://api.zeromq.org/3-2:zmq_poll)</tt>.* The poll loop is simple, but clumsy. Writing a lot of these, we end up doing the same work over and over: calculating timers, and calling code when sockets are ready. A simple reactor with socket readers and timers would save a lot of repeated work.
+* *A reactor to replace <tt>[zmq_poll()](http://api.zeromq.org/master:zmq_poll)</tt>.* The poll loop is simple, but clumsy. Writing a lot of these, we end up doing the same work over and over: calculating timers, and calling code when sockets are ready. A simple reactor with socket readers and timers would save a lot of repeated work.
 
 * *Proper handling of Ctrl-C.* We already saw how to catch an interrupt. It would be useful if this happened in all applications.
 
@@ -572,21 +572,21 @@ while (true) {
 }
 {{< /fragment >}}
 
-Or, if you're calling <tt>[zmq_poll()](http://api.zeromq.org/3-2:zmq_poll)</tt>, test on the return code:
+Or, if you're calling <tt>[zmq_poll()](http://api.zeromq.org/master:zmq_poll)</tt>, test on the return code:
 
 {{< fragment name="polling" >}}
 if (zmq_poll (items, 2, 1000 * 1000) == -1)
     break;              //  Interrupted
 {{< /fragment >}}
 
-The previous example still uses <tt>[zmq_poll()](http://api.zeromq.org/3-2:zmq_poll)</tt>. So how about reactors? The CZMQ <tt>zloop</tt> reactor is simple but functional. It lets you:
+The previous example still uses <tt>[zmq_poll()](http://api.zeromq.org/master:zmq_poll)</tt>. So how about reactors? The CZMQ <tt>zloop</tt> reactor is simple but functional. It lets you:
 
 * Set a reader on any socket, i.e., code that is called whenever the socket has input.
 * Cancel a reader on a socket.
 * Set a timer that goes off once or multiple times at specific intervals.
 * Cancel a timer.
 
-<tt>zloop</tt> of course uses <tt>[zmq_poll()](http://api.zeromq.org/3-2:zmq_poll)</tt> internally. It rebuilds its poll set each time you add or remove readers, and it calculates the poll timeout to match the next timer. Then, it calls the reader and timer handlers for each socket and timer that need attention.
+<tt>zloop</tt> of course uses <tt>[zmq_poll()](http://api.zeromq.org/master:zmq_poll)</tt> internally. It rebuilds its poll set each time you add or remove readers, and it calculates the poll timeout to match the next timer. Then, it calls the reader and timer handlers for each socket and timer that need attention.
 
 When we use a reactor pattern, our code turns inside out. The main logic looks like this:
 
@@ -597,7 +597,7 @@ zloop_start (reactor);
 zloop_destroy (&reactor);
 {{< /fragment >}}
 
-The actual handling of messages sits inside dedicated functions or methods. You may not like the style--it's a matter of taste. What it does help with is mixing timers and socket activity. In the rest of this text, we'll use <tt>[zmq_poll()](http://api.zeromq.org/3-2:zmq_poll)</tt> in simpler cases, and <tt>zloop</tt> in more complex examples.
+The actual handling of messages sits inside dedicated functions or methods. You may not like the style--it's a matter of taste. What it does help with is mixing timers and socket activity. In the rest of this text, we'll use <tt>[zmq_poll()](http://api.zeromq.org/master:zmq_poll)</tt> in simpler cases, and <tt>zloop</tt> in more complex examples.
 
 Here is the load balancing broker rewritten once again, this time to use <tt>zloop</tt>:
 
@@ -647,9 +647,9 @@ The example runs in one process, with multiple threads simulating a real multipr
 
 Some comments on this code:
 
-* The clients send a request once per second, and get zero or more replies back. To make this work using <tt>[zmq_poll()](http://api.zeromq.org/3-2:zmq_poll)</tt>, we can't simply poll with a 1-second timeout, or we'd end up sending a new request only one second *after we received the last reply*. So we poll at a high frequency (100 times at 1/100th of a second per poll), which is approximately accurate.
+* The clients send a request once per second, and get zero or more replies back. To make this work using <tt>[zmq_poll()](http://api.zeromq.org/master:zmq_poll)</tt>, we can't simply poll with a 1-second timeout, or we'd end up sending a new request only one second *after we received the last reply*. So we poll at a high frequency (100 times at 1/100th of a second per poll), which is approximately accurate.
 
-* The server uses a pool of worker threads, each processing one request synchronously. It connects these to its frontend socket using an internal queue. It connects the frontend and backend sockets using a <tt>[zmq_proxy()](http://api.zeromq.org/3-2:zmq_proxy)</tt> call.
+* The server uses a pool of worker threads, each processing one request synchronously. It connects these to its frontend socket using an internal queue. It connects the frontend and backend sockets using a <tt>[zmq_proxy()](http://api.zeromq.org/master:zmq_proxy)</tt> call.
 
 {{< textdiagram name="fig38.png" figno="38" title="Detail of Asynchronous Server" >}}
    #---------#   #---------#   #---------#
@@ -1014,7 +1014,7 @@ Notes about this code:
 
 * Each broker has an identity that we use to construct <tt>ipc</tt> endpoint names. A real broker would need to work with TCP and a more sophisticated configuration scheme. We'll look at such schemes later in this book, but for now, using generated <tt>ipc</tt> names lets us ignore the problem of where to get TCP/IP addresses or names.
 
-* We use a <tt>[zmq_poll()](http://api.zeromq.org/3-2:zmq_poll)</tt> loop as the core of the program. This processes incoming messages and sends out state messages. We send a state message *only* if we did not get any incoming messages *and* we waited for a second. If we send out a state message each time we get one in, we'll get message storms.
+* We use a <tt>[zmq_poll()](http://api.zeromq.org/master:zmq_poll)</tt> loop as the core of the program. This processes incoming messages and sends out state messages. We send a state message *only* if we did not get any incoming messages *and* we waited for a second. If we send out a state message each time we get one in, we'll get message storms.
 
 * We use a two-part pub-sub message consisting of sender address and data. Note that we will need to know the address of the publisher in order to send it tasks, and the only way is to send this explicitly as a part of the message.
 

@@ -513,7 +513,7 @@ sub expand_symbols {
     s/\[figure\]//g;
 
     #   Translate man page references
-    s/zmq_([\w_]+)\[.\]/[http:\/\/api.zeromq.org\/3-2:zmq_$1 zmq_$1()]/g;
+    s/zmq_([\w_]+)\[.\]/[http:\/\/api.zeromq.org\/master:zmq_$1 zmq_$1()]/g;
     return $_;
 }
 
