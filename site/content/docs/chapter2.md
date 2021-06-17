@@ -34,7 +34,7 @@ Sockets are the de facto standard API for network programming, as well as being 
 
 Like a favorite dish, ZeroMQ sockets are easy to digest. Sockets have a life in four parts, just like BSD sockets:
 
-* Creating and destroying sockets, which go together to form a karmic circle of socket life (see <tt>[zmq_socket()](http://api.zeromq.org/3-2:zmq_socket)</tt>, <tt>[zmq_close()](http://api.zeromq.org/3-2:zmq_close)</tt>).
+* Creating and destroying sockets, which go together to form a karmic circle of socket life (see <tt>[zmq_socket()](http://api.zeromq.org/master:zmq_socket)</tt>, <tt>[zmq_close()](http://api.zeromq.org/3-2:zmq_close)</tt>).
 
 * Configuring sockets by setting options on them and checking them if necessary (see <tt>[zmq_setsockopt()](http://api.zeromq.org/3-2:zmq_setsockopt)</tt>, <tt>[zmq_getsockopt()](http://api.zeromq.org/3-2:zmq_getsockopt)</tt>).
 
