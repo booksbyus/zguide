@@ -33,6 +33,7 @@ for sequence in itertools.count():
             reply = client.recv()
             if int(reply) == sequence:
                 logging.info("Server replied OK (%s)", reply)
+                retries_left = REQUEST_RETRIES
                 break
             else:
                 logging.error("Malformed reply from server: %s", reply)
