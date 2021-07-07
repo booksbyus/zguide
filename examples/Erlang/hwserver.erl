@@ -2,6 +2,7 @@
 -export([main/0]).
 
 %% Starts a local hello server.
+%% Binds to tcp://localhost:5555
 
 main() ->
     application:start(chumak),
