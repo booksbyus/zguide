@@ -606,7 +606,7 @@ A frequent request from ZeroMQ users is, "How do I connect my ZeroMQ network wit
 
 The simple answer is to build a //bridge//. A bridge is a small application that speaks one protocol at one socket, and converts to/from a second protocol at another socket. A protocol interpreter, if you like. A common bridging problem in ZeroMQ is to bridge two transports or networks.
 
-As an example, we're going to write a little proxy that sits in between a publisher and a set of subscribers, bridging two networks. The frontend socket (SUB) faces the internal network where the weather server is sitting, and the backend (PUB) faces subscribers on the external network. It subscribes to the weather service on the frontend socket, and republishes its data on the backend socket.
+As an example, we're going to write a little proxy that sits in between a publisher and a set of subscribers, bridging two networks. The frontend socket (XSUB) faces the internal network where the weather server is sitting, and the backend (XPUB) faces subscribers on the external network. It subscribes to the weather service on the frontend socket, and republishes its data on the backend socket.
 
 [[code type="example" title="Weather update proxy" name="wuproxy"]]
 [[/code]]
