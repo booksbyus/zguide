@@ -392,7 +392,7 @@ public:
       int64_t heartbeat_at = now + HEARTBEAT_INTERVAL;
       while (!s_interrupted) {
           zmq::pollitem_t items [] = {
-              { static_cast<void*>(*m_socket), 0, ZMQ_POLLIN, 0} };
+              { *m_socket, 0, ZMQ_POLLIN, 0} };
           int64_t timeout = heartbeat_at - now;
           if (timeout < 0)
               timeout = 0;

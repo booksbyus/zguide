@@ -110,8 +110,8 @@ int main (void)
 
     while (1) {
         zmq::pollitem_t items [] = {
-            { static_cast<void*>(backend), 0, ZMQ_POLLIN, 0 },
-            { static_cast<void*>(frontend), 0, ZMQ_POLLIN, 0 }
+            { backend, 0, ZMQ_POLLIN, 0 },
+            { frontend, 0, ZMQ_POLLIN, 0 }
         };
         //  Poll frontend only if we have available workers
         if (queue.size()) {

@@ -17,8 +17,8 @@ int main (int argc, char *argv[])
 
     //  Initialize poll set
     zmq::pollitem_t items [] = {
-        { static_cast<void*>(frontend), 0, ZMQ_POLLIN, 0 },
-        { static_cast<void*>(backend), 0, ZMQ_POLLIN, 0 }
+        { frontend, 0, ZMQ_POLLIN, 0 },
+        { backend, 0, ZMQ_POLLIN, 0 }
     };
     
     //  Switch messages between sockets

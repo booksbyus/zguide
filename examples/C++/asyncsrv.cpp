@@ -35,7 +35,7 @@ public:
         client_socket_.connect("tcp://localhost:5570");
 
         zmq::pollitem_t items[] = {
-            { static_cast<void*>(client_socket_), 0, ZMQ_POLLIN, 0 } };
+            { client_socket_, 0, ZMQ_POLLIN, 0 } };
         int request_nbr = 0;
         try {
             while (true) {

@@ -25,8 +25,8 @@ int main (int argc, char *argv[])
 
     //  Process messages from receiver and controller
     zmq::pollitem_t items [] = {
-        { static_cast<void*>(receiver), 0, ZMQ_POLLIN, 0 },
-        { static_cast<void*>(controller), 0, ZMQ_POLLIN, 0 }
+        { receiver, 0, ZMQ_POLLIN, 0 },
+        { controller, 0, ZMQ_POLLIN, 0 }
     };
     //  Process messages from both sockets
     while (1) {

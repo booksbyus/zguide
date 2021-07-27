@@ -105,10 +105,10 @@ int main(int argc, char *argv[])
 
         //  Initialize poll set
         zmq::pollitem_t items[] = {
-            //  Always poll for worker activity on backend
-                { static_cast<void*>(backend), 0, ZMQ_POLLIN, 0 },
+                //  Always poll for worker activity on backend
+                { backend, 0, ZMQ_POLLIN, 0 },
                 //  Poll front-end only if we have available workers
-                { static_cast<void*>(frontend), 0, ZMQ_POLLIN, 0 }
+                { frontend, 0, ZMQ_POLLIN, 0 }
         };
         if (worker_queue.size())
             zmq::poll(&items[0], 2, -1);
