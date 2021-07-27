@@ -132,7 +132,7 @@ public:
 
         while (!s_interrupted) {
             zmq::pollitem_t items[] = {
-                { static_cast<void*>(*m_worker),  0, ZMQ_POLLIN, 0 } };
+                { *m_worker,  0, ZMQ_POLLIN, 0 } };
             zmq::poll (items, 1, m_heartbeat);
 
             if (items[0].revents & ZMQ_POLLIN) {
