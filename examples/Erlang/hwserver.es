@@ -1,13 +1,12 @@
--module(hwserver).
--export([main/0]).
+#! /usr/bin/env escript
 
 %% Starts a local hello server.
 %% Binds to tcp://localhost:5555
 
-main() ->
+main(_Args) ->
     application:start(chumak),
     {ok, Socket} = chumak:socket(rep, "my-rep"),
-    {ok, Pid} = chumak:bind(Socket, tcp, "localhost", 5555),
+    {ok, _Pid} = chumak:bind(Socket, tcp, "localhost", 5555),
     loop(Socket).
 
 loop(Socket) ->
