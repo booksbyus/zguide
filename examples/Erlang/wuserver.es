@@ -5,28 +5,28 @@
 %% Publishes random weather updates
 %%
 
-main(_) ->
-    %% Prepare our context and publisher
-    {ok, Context} = erlzmq:context(),
-    {ok, Publisher} = erlzmq:socket(Context, pub),
-    ok = erlzmq:bind(Publisher, "tcp://*:5556"),
+main(_Args) ->
+    application:start(chumak),
+    {ok, Publisher} = chumak:socket(pub),
 
-    loop(Publisher),
+    case chumak:bind(Publisher, tcp, "localhost", 5556) of
+        {ok, _BindPid} ->
+            io:format("Binding OK with Pid: ~p\n", [Publisher]);
+        {error, Reason} ->
+            io:format("Connection Failed for this reason: ~p\n", [Reason]);
+        X ->
+            io:format("Unhandled reply for bind ~p \n", [X])
+    end,
+    loop(Publisher).
 
-    %% We never get here
-    ok = erlzmq:close(Publisher),
-    ok = erlzmq:term(Context).
 
 loop(Publisher) ->
-    %% Get values that will fool the boss
-    Zipcode = random:uniform(100000),
-    Temperature = random:uniform(215) - 80,
-    Relhumidity = random:uniform(50) + 10,
+    Zipcode = rand:uniform(100000),
+    Temperature = rand:uniform(135),
+    Relhumidity = rand:uniform(50) + 10,
 
-    %% Send message to all subscribers
-    Msg = list_to_binary(
-            io_lib:format("~5..0b ~b ~b",
-                          [Zipcode, Temperature, Relhumidity])),
-    ok = erlzmq:send(Publisher, Msg),
-
+    BinZipCode = erlang:integer_to_binary(Zipcode),
+    BinTemperature = erlang:integer_to_binary(Temperature),
+    BinRelhumidity = erlang:integer_to_binary(Relhumidity),
+    ok = chumak:send(Publisher, [BinZipCode, " ", BinTemperature, " ", BinRelhumidity]),
     loop(Publisher).
