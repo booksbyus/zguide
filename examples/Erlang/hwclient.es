@@ -1,5 +1,4 @@
--module(hwclient).
--export([main/0]).
+#! /usr/bin/env escript
 
 %%
 %% "Hello world" client example.
@@ -7,10 +6,10 @@
 %% Sends <<"Hello">> to server and prints the response
 %%
 
-main() ->
+main(_Args) ->
     application:start(chumak),
     {ok, Socket} = chumak:socket(req, "my-req"),
-    {ok, Pid} = chumak:connect(Socket, tcp, "localhost", 5555),
+    {ok, _Pid} = chumak:connect(Socket, tcp, "localhost", 5555),
     loop(Socket).
 
 
