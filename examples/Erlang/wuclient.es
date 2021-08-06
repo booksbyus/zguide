@@ -6,35 +6,35 @@
 %%
 
 main(Args) ->
-    {ok, Context} = erlzmq:context(),
+    application:start(chumak),
+    {ok, Subscriber} = chumak:socket(sub),
 
-    %% Socket to talk to server
+    %% select default topic or from the args
+    Topic = case Args of
+            [] -> <<"10001">>;
+            [Arg1 | _] -> list_to_binary(Arg1)
+        end,
     io:format("Collecting updates from weather server...~n"),
-    {ok, Subscriber} = erlzmq:socket(Context, sub),
-    ok = erlzmq:connect(Subscriber, "tcp://localhost:5556"),
+    io:format("For zipcode: ~p\n", [Topic]),
+    chumak:subscribe(Subscriber, Topic),
+    case chumak:connect(Subscriber, tcp, "localhost", 5556) of
+        {ok, _BindPid} ->
+            io:format("Binding OK with Pid: ~p\n", [Subscriber]);
+        {error, Reason} ->
+            io:foramt("Connection failed for this reason: ~p\n", [Reason]);
+        X ->
+            io:format("Unhandled reply for bind ~p \n", [X])
+    end,
 
-    %% Subscribe to zipcode, default is NYC, 10001
-    Filter = case Args of
-                 [] -> <<"10001">>;
-                 [Arg1|_] -> list_to_binary(Arg1)
-             end,
-    ok = erlzmq:setsockopt(Subscriber, subscribe, Filter),
+    N = 10, %% number of records to collect
+    TotalTemp = collect_temperature(Subscriber, N, 0),
+    io:format("Average Temperature is ~p\n", [TotalTemp/N]).
 
-    %% Process 5 updates (Erlang server is slow relative to C)
-    UpdateNbr = 5,
-    TotalTemp = collect_temperature(Subscriber, UpdateNbr, 0),
-
-    io:format("Average temperature for zipcode '~s' was ~bF~n",
-              [Filter, trunc(TotalTemp / UpdateNbr)]),
-
-    ok = erlzmq:close(Subscriber),
-    ok = erlzmq:term(Context).
 
 collect_temperature(_Subscriber, 0, Total) -> Total;
 collect_temperature(Subscriber, N, Total) when N > 0 ->
-    {ok, Msg} = erlzmq:recv(Subscriber),
-    collect_temperature(Subscriber, N - 1, Total + msg_temperature(Msg)).
-
-msg_temperature(Msg) ->
-    {ok, [_, Temp, _], _} = io_lib:fread("~d ~d ~d", binary_to_list(Msg)),
-    Temp.
+    {ok, Data} = chumak:recv(Subscriber),
+    io:format("RECEIVED : ~p\n", [Data]),
+    [_, Temp, _] = string:split(Data, " ", all),
+    IntTemp = erlang:binary_to_integer(Temp),
+    collect_temperature(Subscriber, N-1, Total + IntTemp).
