@@ -8,34 +8,31 @@
 %%
 
 main(_) ->
-    {ok,Context} = erlzmq:context(),
+    application:start(chumak),
 
-    %% Socket to receive messages on
-    {ok ,Receiver} = erlzmq:socket(Context, pull),
-    ok = erlzmq:connect(Receiver, "tcp://localhost:5557"),
+    {ok, Receiver} = chumak:socket(pull),
 
-    %% Socket to send messages to
-    {ok, Sender} = erlzmq:socket(Context, push),
-    ok = erlzmq:connect(Sender, "tcp://localhost:5558"),
+    case chumak:connect(Receiver, tcp, "localhost", 5557) of
+        {ok, _ConnectPid} ->
+            io:format("Connection OK with Pid: ~p\n", [Receiver]);
+        {error, Reason} ->
+            io:format("Connection failed for this reason: ~p\n", [Reason])
+    end,
 
-    %% Process tasks forever
-    loop(Receiver,Sender),
+    {ok, Sender} = chumak:socket(push),
+    case chumak:connect(Sender, tcp, "localhost", 5558) of
+        {ok, _ConnectPid1} ->
+            io:format("Connection OK with Pid: ~p\n", [Sender])
+    end,
 
-    %% We never get here, but
-    ok = erlzmq:close(Receiver),
-    ok = erlzmq:close(Sender),
-    ok = erlzmq:term(Context).
+    loop(Receiver, Sender).
 
-loop(Receiver,Sender) ->
-    {ok, Work} = erlzmq:recv(Receiver),
+loop(Receiver, Sender) ->
+    {ok, Work} = chumak:recv(Receiver),
 
-    %% Simple progress indicator for the viewer
-    io:format("."),
+    io:format(" . "),
 
-    %% Do the work
     timer:sleep(list_to_integer(binary_to_list(Work))),
 
-    %% Send results to sink
-    ok = erlzmq:send(Sender, <<"">>),
-
+    ok = chumak:send(Sender, <<" ">>),
     loop(Receiver, Sender).
