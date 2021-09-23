@@ -70,8 +70,8 @@ std::unique_ptr<zmqpp::message> flclient::request(zmqpp::message &request) {
     auto endTime = std::chrono::system_clock::now() + std::chrono::milliseconds(GLOBAL_TIMEOUT);
     while (std::chrono::system_clock::now() < endTime) {
         int milliSecondsToWait = std::chrono::duration_cast<std::chrono::milliseconds>(
-                                    endTime - std::chrono::system_clock::now())
-                                    .count();
+                                     endTime - std::chrono::system_clock::now())
+                                     .count();
         if (poller.poll(milliSecondsToWait)) {
             if (poller.has_input(socket_)) {
                 reply = std::make_unique<zmqpp::message>();
@@ -82,6 +82,8 @@ std::unique_ptr<zmqpp::message> flclient::request(zmqpp::message &request) {
                 uint sequence;
                 reply->get(sequence, 0);
                 reply->pop_front();
+                // std::cout << "Current sequence: " << sequence_ << ", Server reply: " << sequence
+                //           << std::endl;
                 if (sequence == sequence_)
                     break;
                 else

@@ -29,8 +29,9 @@ int main(int argc, char *argv[]) {
         //  Fail nastily if run against wrong client
         assert(request.parts() == 2);
 
-        std::string identity;
-        identity = request.get(0);
+        uint identity;
+        request.get(identity, 0);
+        // std::cout << "Received sequence: " << identity << std::endl;
 
         zmqpp::message reply;
         reply.push_back(identity);
