@@ -18,7 +18,7 @@ int main () {
 
     //  Prepare our context and publisher
     zmq::context_t context (1);
-    zmq::socket_t publisher (context, ZMQ_PUB);
+    zmq::socket_t publisher (context, zmq::socket_type::pub);
     publisher.bind("tcp://*:5556");
     publisher.bind("ipc://weather.ipc");				// Not usable on Windows.
 
@@ -37,7 +37,7 @@ int main () {
         zmq::message_t message(20);
         snprintf ((char *) message.data(), 20 ,
         	"%05d %d %d", zipcode, temperature, relhumidity);
-        publisher.send(message);
+        publisher.send(message, zmq::send_flags::none);
 
     }
     return 0;
