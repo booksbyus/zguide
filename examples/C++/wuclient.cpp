@@ -14,7 +14,7 @@ int main (int argc, char *argv[])
 
     //  Socket to talk to server
     std::cout << "Collecting updates from weather server...\n" << std::endl;
-    zmq::socket_t subscriber (context, ZMQ_SUB);
+    zmq::socket_t subscriber (context, zmq::socket_type::sub);
     subscriber.connect("tcp://localhost:5556");
 
     //  Subscribe to zipcode, default is NYC, 10001
@@ -29,7 +29,7 @@ int main (int argc, char *argv[])
         zmq::message_t update;
         int zipcode, temperature, relhumidity;
 
-        subscriber.recv(&update);
+        subscriber.recv(update, zmq::recv_flags::none);
 
         std::istringstream iss(static_cast<char*>(update.data()));
 		iss >> zipcode >> temperature >> relhumidity ;
