@@ -12,12 +12,15 @@ $| = 1;
 $breaks = "none";
 $FIGNO = 1;
 $INDEX = 1;
+
 $examples = 0;
+%example_names = ();
+%languages_examples = (());
 
 @languages = ('Ada', 'Basic', 'C', 'C++', 'C#', 'Clojure', 'CL', 'Delphi',
               'Elixir', 'Erlang', 'F#', 'Felix', 'Go', 'Haskell', 'Haxe', 'Java', 'Julia', 'Lua',
-              'Node.js', 'Objective-C', 'ooc', 'Perl', 'PHP', 'Python', 'Q', 'Racket',
-              'Ruby', 'Scala', 'Tcl');
+              'Node.js', 'Objective-C', 'Ocaml', 'ooc', 'Perl', 'PHP', 'Python', 'Q', 'Racket',
+              'Ruby', 'Rust', 'Scala', 'Tcl');
 
 #   File extensions for each language
 %extension = ('Ada' => 'ada',
@@ -40,6 +43,7 @@ $examples = 0;
               'Lua' => 'lua',
               'Node.js' => 'js',
               'Objective-C' => 'm',
+              'Ocaml' => 'ml',
               'ooc' => 'ooc',
               'Perl' => 'pl',
               'PHP' => 'php',
@@ -47,6 +51,7 @@ $examples = 0;
               'Q' => 'q',
               'Racket' => 'rkt',
               'Ruby' => 'rb',
+              'Rust' => 'rs',
               'Scala' => 'scala',
               'Tcl' => 'tcl' );
 
@@ -231,11 +236,15 @@ sub process_source {
                     foreach $language (@languages) {
                         $filename = "$attributes{'name'}.$extension{$language}";
                         $filepath = "./examples/$language/$filename";
-                        if (-e $filepath) {
+                        if (-e $filepath and not(exists $languages_examples{$language}{$attributes{'name'}})) {
                             $translations {$language} += 1;
+                            $languages_examples{$language}{$attributes{'name'}} = 1;
                         }
                     }
-                    $examples++;
+                    if (not(exists $examples_set{$attributes{'name'}})) {
+                        $examples_set{$attributes{"name"}} = 1;
+                        $examples++;
+                    }
                 }
             }
             #  Process plain code block
