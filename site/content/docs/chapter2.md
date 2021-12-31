@@ -42,7 +42,7 @@ Like a favorite dish, ZeroMQ sockets are easy to digest. Sockets have a life in 
 
 * Using the sockets to carry data by writing and receiving messages on them (see <tt>[zmq_msg_send()](http://api.zeromq.org/master:zmq_msg_send)</tt>, <tt>[zmq_msg_recv()](http://api.zeromq.org/master:zmq_msg_recv)</tt>).
 
-Note that sockets are always void pointers, and messages (which we'll come to very soon) are structures. So in C you pass sockets as-such, but you pass addresses of messages in all functions that work with messages, like <tt>[zmq_msg_send()](http://api.zeromq.org/master:zmq_msg_send)</tt> and <tt>[zmq_msg_recv()](http://api.zeromq.org/master:zmq_msg_recv)</tt>. As a mnemonic, realize that "in ZeroMQ, all your sockets are belong to us", but messages are things you actually own in your code.
+Note that sockets are always void pointers, and messages (which we'll come to very soon) are structures. So in C you pass sockets as-such, but you pass addresses of messages in all functions that work with messages, like <tt>[zmq_msg_send()](http://api.zeromq.org/master:zmq_msg_send)</tt> and <tt>[zmq_msg_recv()](http://api.zeromq.org/master:zmq_msg_recv)</tt>. As a mnemonic, realize that "in ZeroMQ, all your sockets belong to us", but messages are things you actually own in your code.
 
 Creating, destroying, and configuring sockets works as you'd expect for any object. But remember that ZeroMQ is an asynchronous, elastic fabric. This has some impact on how we plug sockets into the network topology and how we use the sockets after that.
 
