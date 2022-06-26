@@ -3,9 +3,7 @@
 # Model 1
 #
 
-import os
 import socket
-import sys
 import time
 
 import zmq
@@ -51,7 +49,7 @@ def main():
         # Someone answered our ping
         if sock.fileno() in events:
             msg, addrinfo = sock.recvfrom(PING_MSG_SIZE)
-            print "Found peer %s:%d" % addrinfo
+            print("Found peer %s:%d" % addrinfo)
 
         if time.time() >= ping_at:
             # Broadcast our beacon

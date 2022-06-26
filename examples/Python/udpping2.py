@@ -3,14 +3,11 @@
 # Model 2
 #
 
-import os
-import sys
 import time
 
 import zmq
 from udplib import UDP
 
-#include <czmq.h>
 PING_PORT_NUMBER = 9999
 PING_MSG_SIZE    = 1
 PING_INTERVAL    = 1  # Once per second
@@ -42,7 +39,7 @@ def main():
         if time.time() >= ping_at:
             # Broadcast our beacon
             print ("Pinging peers...")
-            udp.send('!')
+            udp.send(b'!')
             ping_at = time.time() + PING_INTERVAL
 
 if __name__ == '__main__':
