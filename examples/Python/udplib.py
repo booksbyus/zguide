@@ -27,6 +27,11 @@ class UDP(object):
         # Ask operating system to let us do broadcasts from socket
         self.handle.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
+        # to udplib3.py
+        # Allow multiple processes to bind to socket; incoming
+        # messages will come to each process
+        self.handle.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
         # Bind UDP socket to local port so we can receive pings
         self.handle.bind(('', port))
 
