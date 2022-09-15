@@ -99,7 +99,7 @@ public:
        m_socket->bind(m_endpoint.c_str());
        s_console ("I: MDP broker/0.1.1 is active at %s", endpoint.c_str());
    }
-	
+
 private:
 
    //  ---------------------------------------------------------------------
@@ -114,9 +114,9 @@ private:
        {
            if ((*wrk)->m_expiry <= now)
                toCull.push_back(*wrk);
-	   }
+       }
        for (std::deque<worker*>::iterator wrk = toCull.begin(); wrk != toCull.end(); ++wrk)
-	   {
+       {
            if (m_verbose) {
                s_console ("I: deleting expired worker: %s",
                      (*wrk)->m_identity.c_str());
@@ -168,7 +168,7 @@ private:
               if ((*next)->m_expiry > (*wrk)->m_expiry)
                  wrk = next;
            }
-		   
+
            zmsg *msg = srv->m_requests.front();
            srv->m_requests.pop_front();
            worker_send (*wrk, (char*)MDPW_REQUEST, "", msg);
@@ -382,7 +382,7 @@ private:
            service_dispatch (srv, msg);
        }
    }
-	
+
 public:
 
    //  Get and process messages forever or until interrupted
@@ -470,5 +470,3 @@ int main (int argc, char *argv [])
 
     return 0;
 }
-
-

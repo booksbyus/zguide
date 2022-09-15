@@ -16,12 +16,12 @@ int main (void)
     zmq_connect (requester, "tcp://localhost:5555");
     int request_nbr;
     for (request_nbr = 0; request_nbr < 10; request_nbr++)
-	{
+    {
         printf ("Sending request msg: Hello NO=%d...\n", request_nbr+1);
-		//send request msg
+        //send request msg
         s_sendmore(requester, "");   //send empty delimiter frame
         s_send(requester, "Hello");  //send data frame
-		//recv reply msg
+        //recv reply msg
         char *empty=s_recv(requester);
         assert(empty[0]  == 0);
         char *reply=s_recv(requester);

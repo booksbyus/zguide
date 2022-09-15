@@ -12,12 +12,12 @@ int main () {
     subscriber.setsockopt( ZMQ_SUBSCRIBE, "B", 1);
 
     while (1) {
- 
-		//  Read envelope with address
-		std::string address = s_recv (subscriber);
-		//  Read message contents
-		std::string contents = s_recv (subscriber);
-		
+
+        //  Read envelope with address
+        std::string address = s_recv (subscriber);
+        //  Read message contents
+        std::string contents = s_recv (subscriber);
+
         std::cout << "[" << address << "] " << contents << std::endl;
     }
     return 0;

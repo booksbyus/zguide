@@ -8,7 +8,7 @@
 #define SUBSCRIBERS_EXPECTED  10
 
 int main () {
-	zmq::context_t context(1);
+    zmq::context_t context(1);
 
     //  Socket to talk to clients
     zmq::socket_t publisher (context, ZMQ_PUB);
@@ -25,23 +25,23 @@ int main () {
     //  Get synchronization from subscribers
     int subscribers = 0;
     while (subscribers < SUBSCRIBERS_EXPECTED) {
-        
-		//  - wait for synchronization request
-		s_recv (syncservice);
-       
-		//  - send synchronization reply
-		s_send (syncservice, "");
+
+        //  - wait for synchronization request
+        s_recv (syncservice);
+
+        //  - send synchronization reply
+        s_send (syncservice, "");
 
 
         subscribers++;
     }
-    
+
     //  Now broadcast exactly 1M updates followed by END
     int update_nbr;
-    for (update_nbr = 0; update_nbr < 1000000; update_nbr++) {	
-		s_send (publisher, "Rhubarb");
-	}
-	
+    for (update_nbr = 0; update_nbr < 1000000; update_nbr++) {
+        s_send (publisher, "Rhubarb");
+    }
+
     s_send (publisher, "END");
 
     sleep (1);              //  Give 0MQ time to flush output

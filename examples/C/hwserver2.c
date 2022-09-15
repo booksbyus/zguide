@@ -14,7 +14,7 @@ int main (void)
     int rc = zmq_bind (responder, "tcp://*:5555");
     assert (rc == 0);
     while (1)
-	{
+    {
         char buffer [10]={0};
         zmq_recv (responder, buffer, 10, 0);
         printf("Received request msg: %s\n", buffer);

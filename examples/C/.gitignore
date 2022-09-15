@@ -3,7 +3,13 @@ core
 *.lst
 *.log
 hwclient
+hwclient2
+hwclient3
+hwclient4
 hwserver
+hwserver2
+hwserver3
+hwserver4
 msgqueue
 mspoller
 msreader
@@ -54,6 +60,7 @@ mdclient
 mdbroker
 mdworker
 interrupt
+mktestdata
 mmiecho
 mdclient2
 callgrind.out.*
@@ -102,4 +109,3 @@ udpping3
 eagain
 rtreq
 dechat
-

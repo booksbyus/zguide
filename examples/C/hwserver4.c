@@ -14,7 +14,7 @@ int main (void)
     assert (rc == 0);
     
     while (1)
-	{
+    {
         char identity[10]={0};
         //recv client`s request msg
         //the 1st received frame is identity frame

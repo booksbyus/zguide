@@ -23,8 +23,8 @@ int main (int argc, char *argv [])
     subscriber.setsockopt( ZMQ_SUBSCRIBE, ss.str().c_str(), ss.str().size());
 
     while (1) {
-		std::string topic = s_recv (subscriber);
-		std::string data = s_recv (subscriber);
+        std::string topic = s_recv (subscriber);
+        std::string data = s_recv (subscriber);
         if (topic != ss.str())
             break;
         std::cout << data << std::endl;

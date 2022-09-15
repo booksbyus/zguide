@@ -14,7 +14,7 @@ int main (void)
     assert (rc == 0);
 
     while (1)
-	{
+    {
         char *identity, *string, *content;
         //receive client request msg
         identity=s_recv(responder);  //receive the first part is identity frame

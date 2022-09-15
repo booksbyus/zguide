@@ -30,7 +30,7 @@
 
 //  On some version of Windows, POSIX subsystem is not installed by default.
 //  So define srandom and random ourself.
-//  
+//
 #if (defined (WIN32))
 #   define srandom srand
 #   define random rand
@@ -43,29 +43,29 @@
 #define snprintf c99_snprintf
 #define vsnprintf c99_vsnprintf
 
-	inline int c99_vsnprintf(char *outBuf, size_t size, const char *format, va_list ap)
-	{
-		int count = -1;
+    inline int c99_vsnprintf(char *outBuf, size_t size, const char *format, va_list ap)
+    {
+        int count = -1;
 
-		if (size != 0)
-			count = _vsnprintf_s(outBuf, size, _TRUNCATE, format, ap);
-		if (count == -1)
-			count = _vscprintf(format, ap);
+        if (size != 0)
+            count = _vsnprintf_s(outBuf, size, _TRUNCATE, format, ap);
+        if (count == -1)
+            count = _vscprintf(format, ap);
 
-		return count;
-	}
+        return count;
+    }
 
-	inline int c99_snprintf(char *outBuf, size_t size, const char *format, ...)
-	{
-		int count;
-		va_list ap;
+    inline int c99_snprintf(char *outBuf, size_t size, const char *format, ...)
+    {
+        int count;
+        va_list ap;
 
-		va_start(ap, format);
-		count = c99_vsnprintf(outBuf, size, format, ap);
-		va_end(ap);
+        va_start(ap, format);
+        count = c99_vsnprintf(outBuf, size, format, ap);
+        va_end(ap);
 
-		return count;
-	}
+        return count;
+    }
 
 #endif
 
@@ -76,20 +76,20 @@
 //  Caller must free returned string.
 inline static char *
 s_recv(void *socket, int flags = 0) {
-	zmq_msg_t message;
-	zmq_msg_init(&message);
+    zmq_msg_t message;
+    zmq_msg_init(&message);
 
-	int rc = zmq_msg_recv(&message, socket, flags);
+    int rc = zmq_msg_recv(&message, socket, flags);
 
-	if (rc < 0)
-		return nullptr;           //  Context terminated, exit
+    if (rc < 0)
+        return nullptr;           //  Context terminated, exit
 
-	size_t size = zmq_msg_size(&message);
-	char *string = (char*)malloc(size + 1);
-	memcpy(string, zmq_msg_data(&message), size);
-	zmq_msg_close(&message);
-	string[size] = 0;
-	return (string);
+    size_t size = zmq_msg_size(&message);
+    char *string = (char*)malloc(size + 1);
+    memcpy(string, zmq_msg_data(&message), size);
+    zmq_msg_close(&message);
+    string[size] = 0;
+    return (string);
 }
 
 //  Receive 0MQ string from socket and convert into string
@@ -104,27 +104,27 @@ s_recv (zmq::socket_t & socket, int flags = 0) {
 
 inline static bool s_recv(zmq::socket_t & socket, std::string & ostring, int flags = 0)
 {
-	zmq::message_t message;
-	bool rc = socket.recv(&message, flags);
+    zmq::message_t message;
+    bool rc = socket.recv(&message, flags);
 
-	if (rc) {
-		ostring = std::string(static_cast<char*>(message.data()), message.size());
-	}
-	
-	return (rc);
+    if (rc) {
+        ostring = std::string(static_cast<char*>(message.data()), message.size());
+    }
+
+    return (rc);
 }
 
 //  Convert C string to 0MQ string and send to socket
 inline static int
 s_send(void *socket, const char *string, int flags = 0) {
-	int rc;
-	zmq_msg_t message;
-	zmq_msg_init_size(&message, strlen(string));
-	memcpy(zmq_msg_data(&message), string, strlen(string));
-	rc = zmq_msg_send(&message, socket, flags);
-	assert(-1 != rc);
-	zmq_msg_close(&message);
-	return (rc);
+    int rc;
+    zmq_msg_t message;
+    zmq_msg_init_size(&message, strlen(string));
+    memcpy(zmq_msg_data(&message), string, strlen(string));
+    rc = zmq_msg_send(&message, socket, flags);
+    assert(-1 != rc);
+    zmq_msg_close(&message);
+    return (rc);
 }
 
 //  Convert string to 0MQ string and send to socket
@@ -141,15 +141,15 @@ s_send (zmq::socket_t & socket, const std::string & string, int flags = 0) {
 //  Sends string as 0MQ string, as multipart non-terminal
 inline static int
 s_sendmore(void *socket, char *string) {
-	int rc;
-	zmq_msg_t message;
-	zmq_msg_init_size(&message, strlen(string));
-	memcpy(zmq_msg_data(&message), string, strlen(string));
-	//rc = zmq_send(socket, string, strlen(string), ZMQ_SNDMORE);
-	rc = zmq_msg_send(&message, socket, ZMQ_SNDMORE);
-	assert(-1 != rc);
-	zmq_msg_close(&message);
-	return (rc);
+    int rc;
+    zmq_msg_t message;
+    zmq_msg_init_size(&message, strlen(string));
+    memcpy(zmq_msg_data(&message), string, strlen(string));
+    //rc = zmq_send(socket, string, strlen(string), ZMQ_SNDMORE);
+    rc = zmq_msg_send(&message, socket, ZMQ_SNDMORE);
+    assert(-1 != rc);
+    zmq_msg_close(&message);
+    return (rc);
 }
 
 //  Sends string as 0MQ string, as multipart non-terminal
@@ -210,7 +210,7 @@ s_dump (zmq::socket_t & socket)
 //  Set simple random printable identity on socket
 //  Caution:
 //    DO NOT call this version of s_set_id from multiple threads on MS Windows
-//    since s_set_id will call rand() on MS Windows. rand(), however, is not 
+//    since s_set_id will call rand() on MS Windows. rand(), however, is not
 //    reentrant or thread-safe. See issue #521.
 inline std::string
 s_set_id (zmq::socket_t & socket)
@@ -264,13 +264,13 @@ inline static int64_t
 s_clock (void)
 {
 #if (defined (WIN32))
-	FILETIME fileTime;
-	GetSystemTimeAsFileTime(&fileTime);
-	unsigned __int64 largeInt = fileTime.dwHighDateTime;
-	largeInt <<= 32;
-	largeInt |= fileTime.dwLowDateTime;
-	largeInt /= 10000; // FILETIME is in units of 100 nanoseconds
-	return (int64_t)largeInt;
+    FILETIME fileTime;
+    GetSystemTimeAsFileTime(&fileTime);
+    unsigned __int64 largeInt = fileTime.dwHighDateTime;
+    largeInt <<= 32;
+    largeInt |= fileTime.dwLowDateTime;
+    largeInt /= 10000; // FILETIME is in units of 100 nanoseconds
+    return (int64_t)largeInt;
 #else
     struct timeval tv;
     gettimeofday (&tv, NULL);
