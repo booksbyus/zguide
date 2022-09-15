@@ -16,12 +16,12 @@ int main (void)
     zmq_connect (requester, "tcp://localhost:5555");
     int request_nbr;
     for (request_nbr = 0; request_nbr < 10; request_nbr++)
-	{
+    {
         char buffer [10]={0};
-		//send request msg
+        //send request msg
         printf ("Sending request msg: Hello NO=%d...\n", request_nbr+1);
         zmq_send (requester, "Hello", 5, 0);
-		//receive respond msg
+        //receive respond msg
         zmq_recv (requester, buffer, 10, 0);
         printf ("Received respond msg: %s NO=%d\n\n", buffer,request_nbr+1);
     }

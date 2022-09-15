@@ -18,7 +18,7 @@ int main (int argc, char *argv[])
     subscriber.connect("tcp://localhost:5556");
 
     //  Subscribe to zipcode, default is NYC, 10001
-	const char *filter = (argc > 1)? argv [1]: "10001 ";
+    const char *filter = (argc > 1)? argv [1]: "10001 ";
     subscriber.setsockopt(ZMQ_SUBSCRIBE, filter, strlen (filter));
 
     //  Process 100 updates
@@ -32,12 +32,12 @@ int main (int argc, char *argv[])
         subscriber.recv(update, zmq::recv_flags::none);
 
         std::istringstream iss(static_cast<char*>(update.data()));
-		iss >> zipcode >> temperature >> relhumidity ;
+        iss >> zipcode >> temperature >> relhumidity ;
 
-		total_temp += temperature;
+        total_temp += temperature;
     }
-    std::cout 	<< "Average temperature for zipcode '"<< filter
-    			<<"' was "<<(int) (total_temp / update_nbr) <<"F"
-    			<< std::endl;
+    std::cout   << "Average temperature for zipcode '" << filter
+                << "' was " << (int) (total_temp / update_nbr) << "F"
+                << std::endl;
     return 0;
 }

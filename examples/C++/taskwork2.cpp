@@ -9,7 +9,7 @@
 int main (int argc, char *argv[])
 {
     zmq::context_t context(1);
-    
+
     //  Socket to receive messages on
     zmq::socket_t receiver(context, ZMQ_PULL);
     receiver.connect("tcp://localhost:5557");
@@ -32,13 +32,13 @@ int main (int argc, char *argv[])
     while (1) {
         zmq::message_t message;
         zmq::poll (&items [0], 2, -1);
-        
+
         if (items [0].revents & ZMQ_POLLIN) {
             receiver.recv(&message);
 
             //  Process task
             int workload;           //  Workload in msecs
-           
+
             std::string sdata(static_cast<char*>(message.data()), message.size());
             std::istringstream iss(sdata);
             iss >> workload;
@@ -56,7 +56,7 @@ int main (int argc, char *argv[])
         }
         //  Any waiting controller command acts as 'KILL'
         if (items [1].revents & ZMQ_POLLIN) {
-        	std::cout << std::endl;
+            std::cout << std::endl;
             break;                      //  Exit loop
         }
     }

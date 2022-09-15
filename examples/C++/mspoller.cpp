@@ -16,7 +16,7 @@ int main (int argc, char *argv[])
 
     //  Connect to weather server
     zmq::socket_t subscriber(context, ZMQ_SUB);
-	subscriber.connect("tcp://localhost:5556");
+    subscriber.connect("tcp://localhost:5556");
     subscriber.setsockopt(ZMQ_SUBSCRIBE, "10001 ", 6);
 
     //  Initialize poll set
@@ -28,7 +28,7 @@ int main (int argc, char *argv[])
     while (1) {
         zmq::message_t message;
         zmq::poll (&items [0], 2, -1);
-        
+
         if (items [0].revents & ZMQ_POLLIN) {
             receiver.recv(&message);
             //  Process task
