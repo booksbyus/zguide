@@ -28,7 +28,7 @@ int main (int argc, char *argv[])
         //  Process any waiting tasks
         bool rc;
         do {
-        	zmq::message_t task;
+            zmq::message_t task;
             if ((rc = receiver.recv(&task, ZMQ_DONTWAIT)) == true) {
                 //  process task
             }
