@@ -13,10 +13,10 @@ int main () {
 
     while (1) {
         //  Write two messages, each with an envelope and content
-        s_sendmore (publisher, "A");
-        s_send (publisher, "We don't want to see this");
-        s_sendmore (publisher, "B");
-        s_send (publisher, "We would like to see this");
+        s_sendmore (publisher, std::string("A"));
+        s_send (publisher, std::string("We don't want to see this"));
+        s_sendmore (publisher, std::string("B"));
+        s_send (publisher, std::string("We would like to see this"));
         sleep (1);
     }
     return 0;

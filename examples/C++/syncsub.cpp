@@ -18,7 +18,7 @@ int main (int argc, char *argv[])
     syncclient.connect("tcp://localhost:5562");
 
     //  - send a synchronization request
-    s_send (syncclient, "");
+    s_send (syncclient, std::string(""));
 
     //  - wait for synchronization reply
     s_recv (syncclient);

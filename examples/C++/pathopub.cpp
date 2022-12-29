@@ -28,7 +28,7 @@ int main (int argc, char *argv [])
         ss << std::dec << std::setw(3) << std::setfill('0') << topic_nbr;
 
         s_sendmore (publisher, ss.str());
-        s_send (publisher, "Save Roger");
+        s_send (publisher, std::string("Save Roger"));
     }
 
     //  Send one random update per second
@@ -39,7 +39,7 @@ int main (int argc, char *argv [])
         ss << std::dec << std::setw(3) << std::setfill('0') << within(1000);
 
         s_sendmore (publisher, ss.str());
-        s_send (publisher, "Off with his head!");
+        s_send (publisher, std::string("Off with his head!"));
     }
     return 0;
 }

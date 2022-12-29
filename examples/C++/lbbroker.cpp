@@ -22,7 +22,7 @@ client_thread(void *arg) {
 #endif
 
     //  Send request, get reply
-    s_send(client, "HELLO");
+    s_send(client, std::string("HELLO"));
     std::string reply = s_recv(client);
     std::cout << "Client: " << reply << std::endl;
     return (NULL);
@@ -44,7 +44,7 @@ worker_thread(void *arg) {
 #endif
 
     //  Tell backend we're ready for work
-    s_send(worker, "READY");
+    s_send(worker, std::string("READY"));
 
     while (1) {
         //  Read and save all frames until we get an empty frame
@@ -60,8 +60,8 @@ worker_thread(void *arg) {
         std::cout << "Worker: " << request << std::endl;
 
         s_sendmore(worker, address);
-        s_sendmore(worker, "");
-        s_send(worker, "OK");
+        s_sendmore(worker, std::string(""));
+        s_send(worker, std::string("OK"));
     }
     return (NULL);
 }
@@ -140,7 +140,7 @@ int main(int argc, char *argv[])
 
                 std::string reply = s_recv(backend);
                 s_sendmore(frontend, client_addr);
-                s_sendmore(frontend, "");
+                s_sendmore(frontend, std::string(""));
                 s_send(frontend, reply);
 
                 if (--client_nbr == 0)
@@ -164,9 +164,9 @@ int main(int argc, char *argv[])
             worker_queue.pop();
 
             s_sendmore(backend, worker_addr);
-            s_sendmore(backend, "");
+            s_sendmore(backend, std::string(""));
             s_sendmore(backend, client_addr);
-            s_sendmore(backend, "");
+            s_sendmore(backend, std::string(""));
             s_send(backend, request);
         }
     }

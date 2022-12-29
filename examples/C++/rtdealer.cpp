@@ -22,8 +22,8 @@ worker_task(void *args)
     int total = 0;
     while (1) {
         //  Tell the broker we're ready for work
-        s_sendmore(worker, "");
-        s_send(worker, "Hi Boss");
+        s_sendmore(worker, std::string(""));
+        s_send(worker, std::string("Hi Boss"));
 
         //  Get workload from broker, until finished
         s_recv(worker);     //  Envelope delimiter
@@ -72,13 +72,13 @@ int main() {
         }
 
         s_sendmore(broker, identity);
-        s_sendmore(broker, "");
+        s_sendmore(broker, std::string(""));
 
         //  Encourage workers until it's time to fire them
         if (s_clock() < end_time)
-            s_send(broker, "Work harder");
+            s_send(broker, std::string("Work harder"));
         else {
-            s_send(broker, "Fired!");
+            s_send(broker, std::string("Fired!"));
             if (++workers_fired == NBR_WORKERS)
                 break;
         }

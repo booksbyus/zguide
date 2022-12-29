@@ -30,7 +30,7 @@ int main () {
 		s_recv (syncservice);
        
 		//  - send synchronization reply
-		s_send (syncservice, "");
+		s_send (syncservice, std::string(""));
 
 
         subscribers++;
@@ -39,10 +39,10 @@ int main () {
     //  Now broadcast exactly 1M updates followed by END
     int update_nbr;
     for (update_nbr = 0; update_nbr < 1000000; update_nbr++) {	
-		s_send (publisher, "Rhubarb");
+		s_send (publisher, std::string("Rhubarb"));
 	}
 	
-    s_send (publisher, "END");
+    s_send (publisher, std::string("END"));
 
     sleep (1);              //  Give 0MQ time to flush output
     return 0;

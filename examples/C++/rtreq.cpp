@@ -22,7 +22,7 @@ worker_thread(void *arg) {
     int total = 0;
     while (1) {
         //  Tell the broker we're ready for work
-        s_send(worker, "Hi Boss");
+        s_send(worker, std::string("Hi Boss"));
 
         //  Get workload from broker, until finished
         std::string workload = s_recv(worker);
@@ -64,12 +64,12 @@ int main() {
         s_recv(broker);     //  Response from worker       
         
         s_sendmore(broker, identity);
-        s_sendmore(broker, "");
+        s_sendmore(broker, std::string(""));
         //  Encourage workers until it's time to fire them
         if (s_clock() < end_time)
-            s_send(broker, "Work harder");
+            s_send(broker, std::string("Work harder"));
         else {
-            s_send(broker, "Fired!");
+            s_send(broker, std::string("Fired!"));
             if (++workers_fired == NBR_WORKERS)
                 break;
         }
