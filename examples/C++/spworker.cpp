@@ -19,7 +19,7 @@ int main (void)
 
     //  Tell queue we're ready for work
     std::cout << "I: (" << identity << ") worker ready" << std::endl;
-    s_send (worker, "READY");
+    s_send (worker, std::string("READY"));
 
     int cycles = 0;
     while (1) {

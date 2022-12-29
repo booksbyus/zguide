@@ -32,7 +32,7 @@ s_worker_socket (zmq::context_t &context) {
 
     //  Tell queue we're ready for work
     std::cout << "I: (" << identity << ") worker ready" << std::endl;
-    s_send (*worker, "READY");
+    s_send (*worker, std::string("READY"));
 
     return worker;
 }
@@ -113,7 +113,7 @@ int main (void)
         if (s_clock () > heartbeat_at) {
             heartbeat_at = s_clock () + HEARTBEAT_INTERVAL;
             std::cout << "I: (" << identity << ") worker heartbeat" << std::endl;
-            s_send (*worker, "HEARTBEAT");
+            s_send (*worker, std::string("HEARTBEAT"));
         }
     }
     delete worker;

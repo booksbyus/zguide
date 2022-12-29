@@ -16,7 +16,7 @@ int main () {
     zmq::socket_t anonymous(context, ZMQ_REQ);
     anonymous.connect( "inproc://example");
 
-    s_send (anonymous, "ROUTER uses a generated 5 byte identity");
+    s_send (anonymous, std::string("ROUTER uses a generated 5 byte identity"));
     s_dump (sink);
 
     //  Then set the identity ourselves
@@ -24,7 +24,7 @@ int main () {
     identified.setsockopt( ZMQ_IDENTITY, "PEER2", 5);
     identified.connect( "inproc://example");
 
-    s_send (identified, "ROUTER socket uses REQ's socket identity");
+    s_send (identified, std::string("ROUTER socket uses REQ's socket identity"));
     s_dump (sink);
 
     return 0;
