@@ -276,6 +276,7 @@ while true; do
     #   -g means compile/link with debugging symbols
     elif [ /$1/ = /-g/ ]; then
         BOOM_MODEL_DEBUG=1
+        CCOPTS="-g -DDEBUG $CCDEBUG $CCOPTS"
         unset BOOM_MODEL_RELEASE
         shift
 
