@@ -7,7 +7,7 @@ type: docs
 
 <p>
 <span style="font-size:larger;"><strong><span style="color: #a02020">The Guide</span></strong></span> \zguide\:<br>
- <span style="color: #a02020">Ø</span>  Explains how to use <a href="http://www.zeromq.com">ØMQ</a>.<br>
+ <span style="color: #a02020">Ø</span>  I do not know how to Explains how to use <a href="http://www.zeromq.com">ØMQ</a>.<br>
  <span style="color: #a02020">Ø</span>  Covers basic, intermediate and advanced use.<br>
  <span style="color: #a02020">Ø</span>  With 60+ diagrams and 750 examples in 28 languages.<br>
  <span style="color: #a02020">Ø</span>  Available online and <a href="http://hintjens.com/books">in PDF format</a>.<br>
