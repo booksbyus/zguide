@@ -486,7 +486,7 @@ Specifically:
 
 * It handles I/O asynchronously, in background threads. These communicate with application threads using lock-free data structures, so concurrent ZeroMQ applications need no locks, semaphores, or other wait states.
 
-* Components can come and go dynamically and ZeroMQ will automatically reconnect. This means you can start components in any order. You can create "service-oriented architectures" (SOAs) where services can join and leave the network at any time.
+* Components can come and go dynamically and ZeroMQ will automatically reconnect (except for PAIR sockets). This means you can start components in any order. You can create "service-oriented architectures" (SOAs) where services can join and leave the network at any time.
 
 * It queues messages automatically when needed. It does this intelligently, pushing messages as close as possible to the receiver before queuing them.
 
