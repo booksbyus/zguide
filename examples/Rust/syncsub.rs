@@ -33,5 +33,4 @@ fn main() {
         }
     }
     println!("Received {} updates", n);
-
 }

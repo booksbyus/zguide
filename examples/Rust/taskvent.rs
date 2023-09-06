@@ -4,8 +4,8 @@ extern crate rand;
 extern crate zmq;
 
 use rand::Rng;
-use std::{thread, time};
 use std::io::{self, BufRead};
+use std::{thread, time};
 
 fn main() {
     let context = zmq::Context::new();
