@@ -28,5 +28,5 @@ fn main() {
 
     let control = context.socket(zmq::PUB).unwrap();
     assert!(control.bind("tcp://*:5559").is_ok());
-    control.send_str("kill", 0).unwrap();
+    control.send("kill", 0).unwrap();
 }

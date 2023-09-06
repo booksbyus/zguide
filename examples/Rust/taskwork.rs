@@ -22,6 +22,6 @@ fn main() {
         println!("{}.", string);
         let _ = io::stdout().flush();
         thread::sleep(time::Duration::from_millis(atoi(&string) as u64));
-        sender.send_str(&"", 0).unwrap();
+        sender.send(&"", 0).unwrap();
     }
 }

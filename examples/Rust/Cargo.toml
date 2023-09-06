@@ -92,5 +92,5 @@ path = "./wuserver.rs"
 name = "wuserver"
 
 [dependencies]
-zmq = "0.8"
+zmq = "0.10"
 rand = "0.4"

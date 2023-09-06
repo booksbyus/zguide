@@ -18,6 +18,6 @@ fn main() {
         let relhumidity = rng.gen_range(10, 60);
 
         let update = format!("{:05} {} {}", zipcode, temperature, relhumidity);
-        publisher.send_str(&update, 0).unwrap();
+        publisher.send(&update, 0).unwrap();
     }
 }

@@ -12,7 +12,7 @@ fn worker_routine(context: &zmq::Context) {
         let string = receiver.recv_string(0).unwrap().unwrap();
         println!("Received request: {}", string);
         thread::sleep(time::Duration::from_secs(1));
-        receiver.send_str("World", 0).unwrap();
+        receiver.send("World", 0).unwrap();
     }
 }
 

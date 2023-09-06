@@ -14,6 +14,6 @@ fn main() {
         responder.recv_into(buffer, 0).unwrap();
         println!("Received Hello");
         thread::sleep(time::Duration::from_secs(1));
-        responder.send_str("World", 0).unwrap();
+        responder.send("World", 0).unwrap();
     }
 }

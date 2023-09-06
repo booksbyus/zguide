@@ -20,7 +20,7 @@ fn main() {
     stdin.lock().lines().next();
     println!("Sending tasks to workers...");
 
-    sink.send_str("0", 0).unwrap();
+    sink.send("0", 0).unwrap();
 
     let mut rng = rand::weak_rng();
 
@@ -29,7 +29,7 @@ fn main() {
         let workload = rng.gen_range(1, 101);
         total_msec += workload;
         let string = format!("{}", workload);
-        sender.send_str(&string, 0).unwrap();
+        sender.send(&string, 0).unwrap();
     }
     println!("Total expected cost: {} msec", total_msec);
     thread::sleep(time::Duration::from_secs(1));
