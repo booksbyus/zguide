@@ -33,7 +33,7 @@ fn main() {
             println!("{}.", string);
             let _ = io::stdout().flush();
             thread::sleep(time::Duration::from_millis(atoi(&string) as u64));
-            sender.send(&"", 0).unwrap();
+            sender.send("", 0).unwrap();
         }
         if (items[1].get_revents() & zmq::POLLIN) != zmq::POLLIN {
             break;

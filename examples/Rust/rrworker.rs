@@ -16,6 +16,6 @@ fn main() {
 
         thread::sleep(time::Duration::from_secs(1));
 
-        responder.send(&"World", 0).unwrap();
+        responder.send("World", 0).unwrap();
     }
 }
