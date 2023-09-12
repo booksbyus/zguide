@@ -28,14 +28,14 @@ fn main() {
 
     loop {
         zmq::poll(items, -1).unwrap();
-        if items[0].get_revents() & zmq::POLLIN != 0 {
+        if (items[0].get_revents() & zmq::POLLIN) != zmq::POLLIN {
             let string = receiver.recv_string(0).unwrap().unwrap();
             println!("{}.", string);
             let _ = io::stdout().flush();
             thread::sleep(time::Duration::from_millis(atoi(&string) as u64));
-            sender.send_str(&"", 0).unwrap();
+            sender.send("", 0).unwrap();
         }
-        if items[1].get_revents() & zmq::POLLIN != 0 {
+        if (items[1].get_revents() & zmq::POLLIN) != zmq::POLLIN {
             break;
         }
     }

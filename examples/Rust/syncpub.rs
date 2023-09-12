@@ -18,13 +18,13 @@ fn main() {
     let mut num_subscribers = 0;
     while num_subscribers < SUBSCRIBERS_EXPECTED {
         let _ = sync_service.recv_string(0).unwrap().unwrap();
-        assert!(sync_service.send_str("", 0).is_ok());
+        assert!(sync_service.send("", 0).is_ok());
         num_subscribers += 1;
     }
     //  Now broadcast exactly 1M updates followed by END
     println!("Broadcasting messages");
     for _ in 0..1_000_000 {
-        assert!(publisher.send_str("Rhubarb", 0).is_ok());
+        assert!(publisher.send("Rhubarb", 0).is_ok());
     }
-    assert!(publisher.send_str("END", 0).is_ok());
+    assert!(publisher.send("END", 0).is_ok());
 }

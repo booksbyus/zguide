@@ -24,7 +24,7 @@ fn main() {
                 } else {
                     0
                 };
-                backend.send_msg(message, more).unwrap();
+                backend.send(message, more).unwrap();
                 if more == 0 {
                     break;
                 };
@@ -38,7 +38,7 @@ fn main() {
                 } else {
                     0
                 };
-                frontend.send_msg(message, more).unwrap();
+                frontend.send(message, more).unwrap();
                 if more == 0 {
                     break;
                 }

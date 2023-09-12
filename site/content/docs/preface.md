@@ -7,7 +7,7 @@ weight: 0
 
 Please use the [issue tracker](https://github.com/booksbyus/zguide/issues) for all comments and errata. This version covers the latest stable release of ZeroMQ (3.2). If you are using older versions of ZeroMQ then some of the examples and explanations won't be accurate.
 
-The Guide is originally [in C](/page:all), but also in [PHP](/php:all), [Java](/java:all), [Python](/py:all), [Lua](/lua:all), and [Haxe](/hx:all). We've also translated most of the examples into C++, C#, CL, Delphi, Erlang, F#, Felix, Haskell, Julia, Objective-C, Ruby, Ada, Basic, Clojure, Go, Haxe, Node.js, ooc, Perl, and Scala.
+The Guide is originally [in C](/page:all), but also in [PHP](/php:all), [Java](/java:all), [Python](/py:all), [Lua](/lua:all), and [Haxe](/hx:all). We've also translated most of the examples into C++, C#, CL, Delphi, Erlang, F#, Felix, Haskell, Julia, Objective-C, Ruby, Ada, Basic, Clojure, Go, Haxe, Node.js, ooc, Perl, Scala, and Rust.
 
 # Preface
 
