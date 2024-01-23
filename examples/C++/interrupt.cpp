@@ -1,6 +1,7 @@
-/* 
- author: saad hussain (saadnasir31@gmail.com)
-*/
+//  Handling Interrupt Signals in C++
+//
+//  Saad Hussain <saadnasir31@gmail.com>
+
 #include <csignal>
 #include <iostream>
 #include <zmq.hpp>
