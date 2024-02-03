@@ -55,3 +55,4 @@ begin
   zmq_close(subscriber);
   zmq_ctx_destroy(context);
 end.
+
