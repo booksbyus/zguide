@@ -12,6 +12,14 @@ path = "./hwserver.rs"
 name = "hwserver"
 
 [[bin]]
+path = "./lpclient.rs"
+name = "lpclient"
+
+[[bin]]
+path = "./lpserver.rs"
+name = "lpserver"
+
+[[bin]]
 path = "./msgqueue.rs"
 name = "msgqueue"
 
