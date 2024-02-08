@@ -542,7 +542,7 @@ Cutting the amount of code we need to read and write complex messages is great: 
 
 * *Portable thread management.* Every nontrivial ZeroMQ application uses threads, but POSIX threads aren't portable. So a decent high-level API should hide this under a portable layer.
 
-* *Piping from parent to child threads.* It's a recurrent problem: how to signal between parent and child threads. Our API should provide a ZeroMQ message pipe (using PAIR sockets and <tt>inproc</tt> automatically.
+* *Piping from parent to child threads.* It's a recurrent problem: how to signal between parent and child threads. Our API should provide a ZeroMQ message pipe (using PAIR sockets and <tt>inproc</tt> automatically).
 
 * *Portable clocks.* Even getting the time to a millisecond resolution, or sleeping for some milliseconds, is not portable. Realistic ZeroMQ applications need portable clocks, so our API should provide them.
 
