@@ -1,66 +1,57 @@
-//
-//  Multithreaded relay in C++
-//
+/*
+author: Saad Hussain <saadnasir31@gmail.com>
+*/
 
-#include "zhelpers.hpp"
+#include <iostream>
+#include <thread>
+#include <zmq.hpp>
 
+void step1(zmq::context_t &context) {
+  // Connect to step2 and tell it we're ready
+  zmq::socket_t xmitter(context, zmq::socket_type::pair);
+  xmitter.connect("inproc://step2");
 
-//  Step 1 pushes one message to step 2
+  std::cout << "Step 1 ready, signaling step 2" << std::endl;
 
-void *step1 (void *arg) {
-	
-	zmq::context_t * context = static_cast<zmq::context_t*>(arg);
-	
-	//  Signal downstream to step 2
-	zmq::socket_t sender (*context, ZMQ_PAIR);
-	sender.connect("inproc://step2");
-
-	s_send (sender, std::string(""));
-
-	return (NULL);
+  zmq::message_t msg("READY");
+  xmitter.send(msg, zmq::send_flags::none);
 }
 
-//  Step 2 relays the signal to step 3
+void step2(zmq::context_t &context) {
+  // Bind inproc socket before starting step1
+  zmq::socket_t receiver(context, zmq::socket_type::pair);
+  receiver.bind("inproc://step2");
 
-void *step2 (void *arg) {
+  std::thread thd(step1, std::ref(context));
 
-	zmq::context_t * context = static_cast<zmq::context_t*>(arg);
-	
-    //  Bind to inproc: endpoint, then start upstream thread
-	zmq::socket_t receiver (*context, ZMQ_PAIR);
-    receiver.bind("inproc://step2");
+  // Wait for signal and pass it on
+  zmq::message_t msg;
+  receiver.recv(msg, zmq::recv_flags::none);
 
-    pthread_t thread;
-    pthread_create (&thread, NULL, step1, context);
+  // Connect to step3 and tell it we're ready
+  zmq::socket_t xmitter(context, zmq::socket_type::pair);
+  xmitter.connect("inproc://step3");
 
-    //  Wait for signal
-    s_recv (receiver);
+  std::cout << "Step 2 ready, signaling step 3" << std::endl;
 
-    //  Signal downstream to step 3
-    zmq::socket_t sender (*context, ZMQ_PAIR);
-    sender.connect("inproc://step3");
-    s_send (sender, std::string(""));
-
-    return (NULL);
+  xmitter.send(zmq::str_buffer("READY"), zmq::send_flags::none);
+  thd.join();
 }
 
-//  Main program starts steps 1 and 2 and acts as step 3
+int main() {
+  zmq::context_t context(1);
 
-int main () {
-	
-	zmq::context_t context(1);
+  // Bind inproc socket before starting step2
+  zmq::socket_t receiver(context, zmq::socket_type::pair);
+  receiver.bind("inproc://step3");
 
-    //  Bind to inproc: endpoint, then start upstream thread
-    zmq::socket_t receiver (context, ZMQ_PAIR);
-    receiver.bind("inproc://step3");
+  std::thread thd(step2, std::ref(context));
 
-    pthread_t thread;
-    pthread_create (&thread, NULL, step2, &context);
+  // Wait for signal
+  zmq::message_t msg;
+  receiver.recv(msg, zmq::recv_flags::none);
 
-    //  Wait for signal
-    s_recv (receiver);
-    
-    std::cout << "Test successful!" << std::endl;
-
-    return 0;
+  std::cout << "Test successful!" << std::endl;
+  thd.join();
+  return 0;
 }
