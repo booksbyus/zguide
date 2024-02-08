@@ -1,57 +1,47 @@
 /*
-    Multithreaded Hello World server in C
+author: Saad Hussain <saadnasir31@gmail.com>
+date: 30th January 2024
 */
 
-#include <pthread.h>
-#include <unistd.h>
-#include <cassert>
 #include <string>
 #include <iostream>
+#include <thread>
 #include <zmq.hpp>
 
-void *worker_routine (void *arg)
-{
-    zmq::context_t *context = (zmq::context_t *) arg;
+void worker_routine(zmq::context_t& ctx) {
+    zmq::socket_t socket(ctx, ZMQ_REP);
+    socket.connect("inproc://workers");
 
-    zmq::socket_t socket (*context, ZMQ_REP);
-    socket.connect ("inproc://workers");
-
-    while (true) {
-        //  Wait for next request from client
+    while(true) {
         zmq::message_t request;
-        socket.recv (&request);
+        socket.recv(&request);
         std::cout << "Received request: [" << (char*) request.data() << "]" << std::endl;
+        std::this_thread::sleep_for(std::chrono::seconds(1));
 
-        //  Do some 'work'
-        sleep (1);
-
-        //  Send reply back to client
-        zmq::message_t reply (6);
-        memcpy ((void *) reply.data (), "World", 6);
-        socket.send (reply);
+        zmq::message_t reply("World", 5);
+        socket.send(reply);
     }
-    return (NULL);
 }
 
+int main() {
+    zmq::context_t ctx(1);
+    zmq::socket_t clients(ctx, ZMQ_ROUTER);
+    clients.bind("tcp://localhost:5555");
 
-int main ()
-{
-    //  Prepare our context and sockets
-    zmq::context_t context (1);
-    zmq::socket_t clients (context, ZMQ_ROUTER);
-    clients.bind ("tcp://*:5555");
-    zmq::socket_t workers (context, ZMQ_DEALER);
-    workers.bind ("inproc://workers");
-
-    //  Launch pool of worker threads
-    for (int thread_nbr = 0; thread_nbr != 5; thread_nbr++) {
-        pthread_t worker;
-        pthread_create (&worker, NULL, worker_routine, (void *) &context);
-    }
-    //  Connect work threads to client threads via a queue
-    zmq::proxy (static_cast<void*>(clients),
-                static_cast<void*>(workers),
-                nullptr);
-    return 0;
-}
+    zmq::socket_t workers(ctx, ZMQ_DEALER);
+    workers.bind("inproc://workers");
     
+    std::vector<std::thread> worker_threads;
+    for (int thread_nbr = 0; thread_nbr != 5; ++thread_nbr) {
+        worker_threads.emplace_back([&ctx] { worker_routine(ctx); }); 
+    }
+
+    zmq::proxy(clients, workers, nullptr);
+
+    for (auto& thread : worker_threads) {
+        thread.join();
+    }
+    
+    return 0;
+
+}
