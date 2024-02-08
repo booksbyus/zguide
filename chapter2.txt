@@ -109,7 +109,7 @@ Let's look at the main differences between TCP sockets and ZeroMQ sockets when i
 
 * ZeroMQ sockets have one-to-N routing behavior built-in, according to the socket type.
 
-The {{zmq_send[3]}} method does not actually send the message to the socket connection(s). It queues the message so that the I/O thread can send it asynchronously. It does not block except in some exception cases. So the message is not necessarily sent when {{zmq_send[3]}} returns to your application.
+The {{zmq_msg_send[3]}} method does not actually send the message to the socket connection(s). It queues the message so that the I/O thread can send it asynchronously. It does not block except in some exception cases. So the message is not necessarily sent when {{zmq_msg_send[3]}} returns to your application.
 
 +++ Unicast Transports
 
