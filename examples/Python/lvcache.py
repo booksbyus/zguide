@@ -45,7 +45,7 @@ def main():
         if backend in events:
             event = backend.recv()
             # Event is one byte 0=unsub or 1=sub, followed by topic
-            if event[0] == b'\x01':
+            if event[0] == 1:
                 topic = event[1:]
                 if topic in cache:
                     print ("Sending cached topic %s" % topic)
