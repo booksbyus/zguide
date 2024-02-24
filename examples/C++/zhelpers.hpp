@@ -97,7 +97,8 @@ inline static std::string
 s_recv (zmq::socket_t & socket, int flags = 0) {
 
     zmq::message_t message;
-    socket.recv(&message, flags);
+    auto recv_flags = (flags ==0)? zmq::recv_flags::none: zmq::recv_flags::dontwait;
+    (void)socket.recv(message, recv_flags);
 
     return std::string(static_cast<char*>(message.data()), message.size());
 }
@@ -105,13 +106,16 @@ s_recv (zmq::socket_t & socket, int flags = 0) {
 inline static bool s_recv(zmq::socket_t & socket, std::string & ostring, int flags = 0)
 {
 	zmq::message_t message;
-	bool rc = socket.recv(&message, flags);
+    	auto recv_flags = (flags ==0)? zmq::recv_flags::none: zmq::recv_flags::dontwait;
+	auto rc = socket.recv(message, recv_flags);
+
 
 	if (rc) {
 		ostring = std::string(static_cast<char*>(message.data()), message.size());
+        return true;
 	}
 	
-	return (rc);
+	return false;
 }
 
 //  Convert C string to 0MQ string and send to socket
@@ -134,7 +138,7 @@ s_send (zmq::socket_t & socket, const std::string & string, int flags = 0) {
     zmq::message_t message(string.size());
     memcpy (message.data(), string.data(), string.size());
 
-    bool rc = socket.send (message, flags);
+    bool rc = socket.send (message, static_cast<zmq::send_flags>(flags)).has_value();
     return (rc);
 }
 
@@ -159,7 +163,7 @@ s_sendmore (zmq::socket_t & socket, const std::string & string) {
     zmq::message_t message(string.size());
     memcpy (message.data(), string.data(), string.size());
 
-    bool rc = socket.send (message, ZMQ_SNDMORE);
+    bool rc = socket.send (message,   static_cast<zmq::send_flags>(ZMQ_SNDMORE)).has_value();
     return (rc);
 }
 
@@ -173,7 +177,7 @@ s_dump (zmq::socket_t & socket)
     while (1) {
         //  Process all parts of the message
         zmq::message_t message;
-        socket.recv(&message);
+        (void)socket.recv(message);
 
         //  Dump the message as text or binary
         size_t size = message.size();
