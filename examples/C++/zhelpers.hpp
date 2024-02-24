@@ -219,7 +219,7 @@ s_set_id (zmq::socket_t & socket)
     ss << std::hex << std::uppercase
        << std::setw(4) << std::setfill('0') << within (0x10000) << "-"
        << std::setw(4) << std::setfill('0') << within (0x10000);
-    socket.setsockopt(ZMQ_IDENTITY, ss.str().c_str(), ss.str().length());
+    socket.set(zmq::sockopt::routing_id, ss.str().c_str());
     return ss.str();
 }
 #else
@@ -230,7 +230,7 @@ s_set_id(zmq::socket_t & socket, intptr_t id)
     std::stringstream ss;
     ss << std::hex << std::uppercase
         << std::setw(4) << std::setfill('0') << id;
-    socket.setsockopt(ZMQ_IDENTITY, ss.str().c_str(), ss.str().length());
+    socket.set(zmq::sockopt::routing_id, ss.str().c_str());
     return ss.str();
 }
 #endif

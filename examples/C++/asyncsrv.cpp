@@ -31,7 +31,7 @@ public:
         char identity[10] = {};
         sprintf(identity, "%04X-%04X", within(0x10000), within(0x10000));
         printf("%s\n", identity);
-        client_socket_.setsockopt(ZMQ_IDENTITY, identity, strlen(identity));
+        client_socket_.set(zmq::sockopt::routing_id, identity);
         client_socket_.connect("tcp://localhost:5570");
 
         zmq::pollitem_t items[] = {

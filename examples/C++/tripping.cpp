@@ -14,7 +14,7 @@ client_task (void *args)
 {
     zmq::context_t context (1);
     zmq::socket_t client (context, ZMQ_DEALER);
-    client.setsockopt (ZMQ_IDENTITY, "C", 1);
+    client.set(zmq::sockopt::routing_id, "C");
     client.connect ("tcp://localhost:5555");
 
     std::cout << "Setting up test..." << std::endl;
@@ -51,7 +51,7 @@ worker_task (void *args)
 {
     zmq::context_t context (1);
     zmq::socket_t worker (context, ZMQ_DEALER);
-    worker.setsockopt (ZMQ_IDENTITY, "W", 1);
+    worker.set(zmq::sockopt::routing_id, "W");
     worker.connect ("tcp://localhost:5556");
 
     while (1) {
