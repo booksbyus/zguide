@@ -30,7 +30,7 @@ void publisher_thread(zmq::context_t& ctx) {
 
 	while (true) {
 		char string[10];
-		sprintf_s(string, "%c-%05d", rand() % 10 + 'A', rand() % 100000);
+		sprintf(string, "%c-%05d", rand() % 10 + 'A', rand() % 100000);
 		zmq::message_t message(string, strlen(string));
 		publisher.send(message, zmq::send_flags::none);
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -59,19 +59,19 @@ int main() {
 	std::thread sub_thread(subscriber_thread, std::ref(context));
 
 	// Set up listener thread
-	std::thread listener_thread(listener_thread, std::ref(context));
+	std::thread lis_thread(listener_thread, std::ref(context));
 
 	// Main thread acts as the listener proxy
 	zmq::socket_t proxy(context, ZMQ_PAIR);
 	proxy.bind("inproc://listener");
 
 	// Proxy messages between SUB and PUB sockets
-	zmq_proxy(zmq::socket_t(context, ZMQ_XSUB), zmq::socket_t(context, ZMQ_XPUB), proxy);
+//	zmq_proxy(zmq::socket_t(context, ZMQ_XSUB), zmq::socket_t(context, ZMQ_XPUB), proxy);
 
 	// Wait for threads to finish
 	pub_thread.join();
 	sub_thread.join();
-	listener_thread.join();
+	lis_thread.join();
 
 	return 0;
 }
