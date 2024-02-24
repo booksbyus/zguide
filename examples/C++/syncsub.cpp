@@ -11,7 +11,7 @@ int main (int argc, char *argv[])
     //  First, connect our subscriber socket
     zmq::socket_t subscriber (context, ZMQ_SUB);
     subscriber.connect("tcp://localhost:5561");
-    subscriber.setsockopt(ZMQ_SUBSCRIBE, "", 0);
+    subscriber.set(zmq::sockopt::subscribe, "");
 
     //  Second, synchronize with publisher
     zmq::socket_t syncclient (context, ZMQ_REQ);

@@ -17,7 +17,7 @@ int main (int argc, char *argv[])
     backend.bind("tcp://10.1.1.0:8100");
 
     //  Subscribe on everything
-    frontend.setsockopt(ZMQ_SUBSCRIBE, "", 0);
+    frontend.set(zmq::sockopt::subscribe, "");
 
     //  Shunt messages out to our own subscribers
     while (1) {

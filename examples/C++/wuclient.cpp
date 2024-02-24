@@ -19,7 +19,7 @@ int main (int argc, char *argv[])
 
     //  Subscribe to zipcode, default is NYC, 10001
 	const char *filter = (argc > 1)? argv [1]: "10001 ";
-    subscriber.setsockopt(ZMQ_SUBSCRIBE, filter, strlen (filter));
+    subscriber.set(zmq::sockopt::subscribe, filter);
 
     //  Process 100 updates
     int update_nbr;

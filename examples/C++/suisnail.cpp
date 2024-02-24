@@ -19,7 +19,7 @@ subscriber (void *args) {
     // Subscribe to everything
     zmq::socket_t subscriber(context, ZMQ_SUB);
     subscriber.connect("tcp://localhost:5556");
-    subscriber.setsockopt (ZMQ_SUBSCRIBE, "", 0);
+    subscriber.set(zmq::sockopt::subscribe, "");
 
     std::stringstream ss;
     // Get and process messages

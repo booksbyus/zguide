@@ -14,7 +14,7 @@ int main ()
     backend.bind("tcp://*:5558");
 
     //  Subscribe to every single topic from publisher
-    frontend.setsockopt(ZMQ_SUBSCRIBE, "", 0);
+    frontend.set(zmq::sockopt::subscribe, "");
 
     //  Store last instance of each topic in a cache
     std::unordered_map<std::string, std::string> cache_map;
