@@ -3,6 +3,7 @@
 //
 // Andreas Hoelzlwimmer <andreas.hoelzlwimmer@fh-hagenberg.at>
 #include "zhelpers.hpp"
+#include <thread>
 
 // ---------------------------------------------------------------------
 // This is our subscriber
@@ -12,8 +13,12 @@
 
 #define MAX_ALLOWED_DELAY 1000 // msecs
 
+namespace {
+	bool Exit = false;
+};
+
 static void *
-subscriber (void *args) {
+subscriber () {
     zmq::context_t context(1);
 
     // Subscribe to everything
@@ -28,15 +33,16 @@ subscriber (void *args) {
         ss.str(s_recv (subscriber));
         int64_t clock;
         assert ((ss >> clock));
-
+	const auto delay = s_clock () - clock;
         // Suicide snail logic
-        if (s_clock () - clock > MAX_ALLOWED_DELAY) {
-            std::cerr << "E: subscriber cannot keep up, aborting" << std::endl;
+        if (delay> MAX_ALLOWED_DELAY) {
+            std::cerr << "E: subscriber cannot keep up, aborting. Delay=" <<delay<< std::endl;
             break;
         }
         // Work for 1 msec plus some random additional time
         s_sleep(1000*(1+within(2)));
     }
+    Exit = true;
     return (NULL);
 }
 
@@ -46,7 +52,7 @@ subscriber (void *args) {
 // It publishes a time-stamped message to its pub socket every 1ms.
 
 static void *
-publisher (void *args) {
+publisher () {
     zmq::context_t context (1);
 
     // Prepare publisher
@@ -55,7 +61,7 @@ publisher (void *args) {
 
     std::stringstream ss;
 
-    while (1) {
+    while (!Exit) {
         // Send current clock (msecs) to subscribers
         ss.str("");
         ss << s_clock();
@@ -72,13 +78,10 @@ publisher (void *args) {
 //
 int main (void)
 {
-    pthread_t server_thread;
-    pthread_create (&server_thread, NULL, publisher, NULL);
-
-    pthread_t client_thread;
-    pthread_create (&client_thread, NULL, subscriber, NULL);
-    pthread_join (client_thread, NULL);
-
+    std::thread server_thread(&publisher);
+    std::thread client_thread(&subscriber);
+    client_thread.join();
+    server_thread.join();
     return 0;
 }
 
