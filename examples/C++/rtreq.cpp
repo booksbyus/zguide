@@ -3,7 +3,8 @@
 //
 
 #include "zhelpers.hpp"
-#include <pthread.h>
+#include <thread>
+#include <vector>
 
 static void *
 worker_thread(void *arg) {
@@ -49,9 +50,9 @@ int main() {
 #endif
 
     const int NBR_WORKERS = 10;
-    pthread_t workers[NBR_WORKERS];
+    std::vector<std::thread> workers;
     for (int worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++) {
-        pthread_create(workers + worker_nbr, NULL, worker_thread, (void *)(intptr_t)worker_nbr);
+	workers.push_back(std::move(std::thread(worker_thread, (void *)(intptr_t)worker_nbr)));
     }
 
     //  Run for five seconds and then tell workers to end
@@ -76,7 +77,7 @@ int main() {
     }
 
     for (int worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++) {
-        pthread_join(workers[worker_nbr], NULL);
+	    workers[worker_nbr].join();
     }
     return 0;
 }

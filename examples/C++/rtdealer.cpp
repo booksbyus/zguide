@@ -3,7 +3,8 @@
 //
 
 #include "zhelpers.hpp"
-#include <pthread.h>
+#include <thread>
+#include <vector>
 
 static void *
 worker_task(void *args)
@@ -54,10 +55,12 @@ int main() {
     srandom((unsigned)time(NULL));
 
     const int NBR_WORKERS = 10;
-    pthread_t workers[NBR_WORKERS];
-    for (int worker_nbr = 0; worker_nbr < NBR_WORKERS; ++worker_nbr) {
-        pthread_create(workers + worker_nbr, NULL, worker_task, (void *)(intptr_t)worker_nbr);
+
+    std::vector<std::thread> workers;
+    for (int worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++) {
+	workers.push_back(std::move(std::thread(worker_task, (void *)(intptr_t)worker_nbr)));
     }
+    
 
 
     //  Run for five seconds and then tell workers to end
@@ -84,9 +87,10 @@ int main() {
         }
     }
 
-    for (int worker_nbr = 0; worker_nbr < NBR_WORKERS; ++worker_nbr) {
-        pthread_join(workers[worker_nbr], NULL);
+    for (int worker_nbr = 0; worker_nbr < NBR_WORKERS; worker_nbr++) {
+	    workers[worker_nbr].join();
     }
+    
 
     return 0;
 }
