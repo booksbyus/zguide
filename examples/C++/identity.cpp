@@ -21,7 +21,7 @@ int main () {
 
     //  Then set the identity ourselves
     zmq::socket_t identified (context, ZMQ_REQ);
-    identified.setsockopt( ZMQ_IDENTITY, "PEER2", 5);
+    identified.set( zmq::sockopt::routing_id, "PEER2");
     identified.connect( "inproc://example");
 
     s_send (identified, std::string("ROUTER socket uses REQ's socket identity"));
