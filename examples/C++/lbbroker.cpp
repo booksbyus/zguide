@@ -3,18 +3,23 @@
 //
 
 #include "zhelpers.hpp"
-#include <pthread.h>
+#include <thread>
 #include <queue>
 
 //  Basic request-reply client using REQ socket
 //
-static void *
-client_thread(void *arg) {
+void receive_empty_message(zmq::socket_t& sock)
+{
+    std::string empty = s_recv(sock);
+    assert(empty.size() == 0);
+}
+
+void client_thread(int id) {
     zmq::context_t context(1);
     zmq::socket_t client(context, ZMQ_REQ);
 
 #if (defined (WIN32))
-    s_set_id(client, (intptr_t)arg);
+    s_set_id(client, id);
     client.connect("tcp://localhost:5672"); // frontend
 #else
     s_set_id(client); // Set a printable identity
@@ -25,18 +30,17 @@ client_thread(void *arg) {
     s_send(client, std::string("HELLO"));
     std::string reply = s_recv(client);
     std::cout << "Client: " << reply << std::endl;
-    return (NULL);
+    return;
 }
 
 //  Worker using REQ socket to do LRU routing
 //
-static void *
-worker_thread(void *arg) {
+void worker_thread(int id) {
     zmq::context_t context(1);
     zmq::socket_t worker(context, ZMQ_REQ);
 
 #if (defined (WIN32))
-    s_set_id(worker, (intptr_t)arg);
+    s_set_id(worker, id);
     worker.connect("tcp://localhost:5673"); // backend
 #else
     s_set_id(worker);
@@ -50,11 +54,7 @@ worker_thread(void *arg) {
         //  Read and save all frames until we get an empty frame
         //  In this example there is only 1 but it could be more
         std::string address = s_recv(worker);
-        {
-            std::string empty = s_recv(worker);
-            assert(empty.size() == 0);
-        }
-
+	receive_empty_message(worker);
         //  Get request, send reply
         std::string request = s_recv(worker);
         std::cout << "Worker: " << request << std::endl;
@@ -63,8 +63,10 @@ worker_thread(void *arg) {
         s_sendmore(worker, std::string(""));
         s_send(worker, std::string("OK"));
     }
-    return (NULL);
+    return;
 }
+
+
 
 int main(int argc, char *argv[])
 {
@@ -82,15 +84,14 @@ int main(int argc, char *argv[])
     backend.bind("ipc://backend.ipc");
 #endif
 
-    int client_nbr;
-    for (client_nbr = 0; client_nbr < 10; client_nbr++) {
-        pthread_t client;
-        pthread_create(&client, NULL, client_thread, (void *)(intptr_t)client_nbr);
+    int client_nbr = 0;
+    for (; client_nbr < 10; client_nbr++) {
+        std::thread t(client_thread, client_nbr);
+	t.detach();
     }
-    int worker_nbr;
-    for (worker_nbr = 0; worker_nbr < 3; worker_nbr++) {
-        pthread_t worker;
-        pthread_create(&worker, NULL, worker_thread, (void *)(intptr_t)worker_nbr);
+    for (int worker_nbr = 0; worker_nbr < 3; worker_nbr++) {
+	    std::thread t (worker_thread, worker_nbr);
+            t.detach();
     }
     //  Logic of LRU loop
     //  - Poll backend always, frontend only if 1+ worker ready
@@ -120,24 +121,14 @@ int main(int argc, char *argv[])
 
             //  Queue worker address for LRU routing
             worker_queue.push(s_recv(backend));
-
-            {
-                //  Second frame is empty
-                std::string empty = s_recv(backend);
-                assert(empty.size() == 0);
-            }
+	    receive_empty_message(backend);
 
             //  Third frame is READY or else a client reply address
             std::string client_addr = s_recv(backend);
 
             //  If client reply, send rest back to frontend
             if (client_addr.compare("READY") != 0) {
-
-                    {
-                        std::string empty = s_recv(backend);
-                        assert(empty.size() == 0);
-                    }
-
+                receive_empty_message(backend);
                 std::string reply = s_recv(backend);
                 s_sendmore(frontend, client_addr);
                 s_sendmore(frontend, std::string(""));
