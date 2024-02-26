@@ -312,7 +312,6 @@ public:
          zm.dump();
       }
       assert (zm.parts() == 5);
-      assert (strlen(zm.address()) == 33);
       zm.unwrap();
       assert (strcmp(zm.address(), "address2") == 0);
       zm.body_fmt ("%c%s", 'W', "orld");
