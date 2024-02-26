@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
 
     // Connect statefe to all peers
     zmq::socket_t statefe(context, zmq::socket_type::sub);
-    statefe.setsockopt(ZMQ_SUBSCRIBE, "", 0);
+    statefe.set(zmq::sockopt::subscribe, "");
     for(int argn = 2 ; argn < argc ; ++argn) {
         std::string peer(argv[argn]);
         std::string peerURL = std::string("ipc://").append(peer).append("-state.ipc");

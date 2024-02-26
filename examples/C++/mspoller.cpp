@@ -17,7 +17,7 @@ int main (int argc, char *argv[])
     //  Connect to weather server
     zmq::socket_t subscriber(context, ZMQ_SUB);
 	subscriber.connect("tcp://localhost:5556");
-    subscriber.setsockopt(ZMQ_SUBSCRIBE, "10001 ", 6);
+    subscriber.set(zmq::sockopt::subscribe, "10001 ");
 
     //  Initialize poll set
     zmq::pollitem_t items [] = {

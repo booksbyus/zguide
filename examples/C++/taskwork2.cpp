@@ -21,7 +21,7 @@ int main (int argc, char *argv[])
     //  Socket for control input
     zmq::socket_t controller (context, ZMQ_SUB);
     controller.connect("tcp://localhost:5559");
-    controller.setsockopt(ZMQ_SUBSCRIBE, "", 0);
+    controller.set(zmq::sockopt::subscribe, "", 0);
 
     //  Process messages from receiver and controller
     zmq::pollitem_t items [] = {

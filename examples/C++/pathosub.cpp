@@ -20,7 +20,7 @@ int main (int argc, char *argv [])
     ss << std::dec << std::setw(3) << std::setfill('0') << within(1000);
     std::cout << "topic:" << ss.str() << std::endl;
 
-    subscriber.setsockopt( ZMQ_SUBSCRIBE, ss.str().c_str(), ss.str().size());
+    subscriber.set( zmq::sockopt::subscribe, ss.str().c_str());
 
     while (1) {
 		std::string topic = s_recv (subscriber);
