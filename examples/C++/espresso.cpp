@@ -47,7 +47,13 @@ void listener_thread(zmq::context_t& ctx) {
 		zmq::message_t message;
 		if (listener.recv(message)) {
 			std::string msg = std::string((char*)(message.data()), message.size());
-			std::cout << "Listener Received: " << msg << std::endl;
+			std::cout << "Listener Received: ";
+			if (msg[0] == 0 || msg[0] == 1){
+				std::cout << int(msg[0]);
+				std::cout << msg[1]<< std::endl;
+			} else {
+				std::cout << msg << std::endl;
+			}
 		}
 	}
 }
