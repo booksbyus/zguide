@@ -18,8 +18,8 @@
 #define MDPW_HEARTBEAT      "\004"
 #define MDPW_DISCONNECT     "\005"
 
-static char *mdps_commands [] = {
-    NULL, (char*)"READY", (char*)"REQUEST", (char*)"REPLY", (char*)"HEARTBEAT", (char*)"DISCONNECT"
+static const char *mdps_commands [] = {
+    nullptr, "READY", "REQUEST", "REPLY", "HEARTBEAT", "DISCONNECT"
 };
 
 #endif
