@@ -13,16 +13,10 @@ public:
    //  ---------------------------------------------------------------------
    //  Constructor
 
-   mdcli (std::string broker, int verbose)
+   mdcli (std::string broker, int verbose): m_broker(broker), m_verbose(verbose)
    {
        s_version_assert (4, 0);
-
-       m_broker = broker;
        m_context = new zmq::context_t (1);
-       m_verbose = verbose;
-       m_timeout = 2500;           //  msecs
-       m_client = 0;
-
        s_catch_signals ();
        connect_to_broker ();
    }
@@ -81,9 +75,9 @@ public:
        //  Frame 0: empty (REQ emulation)
        //  Frame 1: "MDPCxy" (six bytes, MDP/Client x.y)
        //  Frame 2: Service name (printable string)
-       request->push_front ((char*)service.c_str());
-       request->push_front ((char*)MDPC_CLIENT);
-       request->push_front ((char*)"");
+       request->push_front (service.c_str());
+       request->push_front (k_mdp_client.data());
+       request->push_front ("");
        if (m_verbose) {
            s_console ("I: send request to '%s' service:", service.c_str());
            request->dump ();
@@ -118,10 +112,10 @@ public:
 
            assert (msg->pop_front ().length() == 0);  // empty message
 
-           std::basic_string<unsigned char> header = msg->pop_front();
-           assert (header.compare((unsigned char *)MDPC_CLIENT) == 0);
+           ustring header = msg->pop_front();
+           assert (header.compare((unsigned char *)k_mdp_client.data()) == 0);
 
-           std::basic_string<unsigned char> service = msg->pop_front();
+           ustring service = msg->pop_front();
            assert (service.compare((unsigned char *)service.c_str()) == 0);
 
            return msg;     //  Success
@@ -136,11 +130,11 @@ public:
    }
 
 private:
-   std::string m_broker;
+   const std::string m_broker;
    zmq::context_t * m_context;
-   zmq::socket_t * m_client;     //  Socket to broker
-   int m_verbose;                //  Print activity to stdout
-   int m_timeout;                //  Request timeout
+   zmq::socket_t * m_client{};     //  Socket to broker
+   const int m_verbose;                //  Print activity to stdout
+   int m_timeout{2500};                //  Request timeout
 };
 
 #endif
