@@ -5,7 +5,6 @@
 #include "mdp.h"
 
 //  Reliability parameters
-#define HEARTBEAT_LIVENESS  3       //  3-5 is reasonable
 
 //  Structure of our class
 //  We access these properties only via class methods
@@ -15,19 +14,10 @@ public:
    //  ---------------------------------------------------------------------
    //  Constructor
 
-    mdwrk (std::string broker, std::string service, int verbose)
+    mdwrk (std::string broker, std::string service, int verbose): m_broker(broker), m_service(service),m_verbose(verbose)
     {
         s_version_assert (4, 0);
-
-        m_broker = broker;
-        m_service = service;
         m_context = new zmq::context_t (1);
-        m_worker = 0;
-        m_expect_reply = false;
-        m_verbose = verbose;
-        m_heartbeat = 2500;     //  msecs
-        m_reconnect = 2500;     //  msecs
-
         s_catch_signals ();
         connect_to_broker ();
     }
@@ -46,21 +36,21 @@ public:
     //  ---------------------------------------------------------------------
     //  Send message to broker
     //  If no _msg is provided, creates one internally
-    void send_to_broker(char *command, std::string option, zmsg *_msg)
+    void send_to_broker(const char *command, std::string option, zmsg *_msg)
     {
         zmsg *msg = _msg? new zmsg(*_msg): new zmsg ();
 
         //  Stack protocol envelope to start of message
-        if (option.length() != 0) {
-            msg->push_front ((char*)option.c_str());
+        if (!option.empty()) {
+            msg->push_front (option.c_str());
         }
         msg->push_front (command);
-        msg->push_front ((char*)MDPW_WORKER);
-        msg->push_front ((char*)"");
+        msg->push_front (k_mdpw_worker.data());
+        msg->push_front ("");
 
         if (m_verbose) {
             s_console ("I: sending %s to broker",
-                mdps_commands [(int) *command]);
+                mdps_commands [(int) *command].data());
             msg->dump ();
         }
         msg->send (*m_worker);
@@ -84,10 +74,10 @@ public:
             s_console ("I: connecting to broker at %s...", m_broker.c_str());
 
         //  Register service with broker
-        send_to_broker ((char*)MDPW_READY, m_service, NULL);
+        send_to_broker (k_mdpw_ready.data(), m_service, NULL);
 
         //  If liveness hits zero, queue is considered disconnected
-        m_liveness = HEARTBEAT_LIVENESS;
+        m_liveness = n_heartbeat_liveness;
         m_heartbeat_at = s_clock () + m_heartbeat;
     }
 
@@ -124,7 +114,7 @@ public:
             assert (m_reply_to.size()!=0);
             reply->wrap (m_reply_to.c_str(), "");
             m_reply_to = "";
-            send_to_broker ((char*)MDPW_REPLY, "", reply);
+            send_to_broker (k_mdpw_reply.data(), "", reply);
             delete reply_p;
             reply_p = 0;
         }
@@ -141,31 +131,31 @@ public:
                     s_console ("I: received message from broker:");
                     msg->dump ();
                 }
-                m_liveness = HEARTBEAT_LIVENESS;
+                m_liveness = n_heartbeat_liveness;
 
                 //  Don't try to handle errors, just assert noisily
                 assert (msg->parts () >= 3);
 
-                std::basic_string<unsigned char> empty = msg->pop_front ();
+                ustring empty = msg->pop_front ();
                 assert (empty.compare((unsigned char *)"") == 0);
                 //assert (strcmp (empty, "") == 0);
                 //free (empty);
 
-                std::basic_string<unsigned char> header = msg->pop_front ();
-                assert (header.compare((unsigned char *)MDPW_WORKER) == 0);
+                ustring header = msg->pop_front ();
+                assert (header.compare((unsigned char *)k_mdpw_worker.data()) == 0);
                 //free (header);
 
-                std::string command = (char*) msg->pop_front ().c_str();
-                if (command.compare (MDPW_REQUEST) == 0) {
+                std::string command =(char*) msg->pop_front ().c_str();
+                if (command.compare (k_mdpw_request.data()) == 0) {
                     //  We should pop and save as many addresses as there are
                     //  up to a null part, but for now, just save one...
                     m_reply_to = msg->unwrap ();
                     return msg;     //  We have a request to process
                 }
-                else if (command.compare (MDPW_HEARTBEAT) == 0) {
+                else if (command.compare (k_mdpw_heartbeat.data()) == 0) {
                     //  Do nothing for heartbeats
                 }
-                else if (command.compare (MDPW_DISCONNECT) == 0) {
+                else if (command.compare (k_mdpw_disconnect.data()) == 0) {
                     connect_to_broker ();
                 }
                 else {
@@ -185,7 +175,7 @@ public:
             }
             //  Send HEARTBEAT if it's time
             if (s_clock () >= m_heartbeat_at) {
-                send_to_broker ((char*)MDPW_HEARTBEAT, "", NULL);
+                send_to_broker (k_mdpw_heartbeat.data(), "", NULL);
                 m_heartbeat_at += m_heartbeat;
             }
         }
@@ -195,20 +185,22 @@ public:
     }
 
 private:
-    std::string m_broker;
-    std::string m_service;
+
+    static constexpr uint32_t n_heartbeat_liveness = 3;//   3-5 is reasonable
+    const std::string m_broker;
+    const std::string m_service;
     zmq::context_t *m_context;
-    zmq::socket_t  *m_worker;     //  Socket to broker
-    int m_verbose;                //  Print activity to stdout
+    zmq::socket_t  *m_worker{};     //  Socket to broker
+    const int m_verbose;                //  Print activity to stdout
 
     //  Heartbeat management
     int64_t m_heartbeat_at;      //  When to send HEARTBEAT
     size_t m_liveness;            //  How many attempts left
-    int m_heartbeat;              //  Heartbeat delay, msecs
-    int m_reconnect;              //  Reconnect delay, msecs
+    int m_heartbeat{2500};              //  Heartbeat delay, msecs
+    int m_reconnect{2500};              //  Reconnect delay, msecs
 
     //  Internal state
-    bool m_expect_reply;           //  Zero only at start
+    bool m_expect_reply{false};           //  Zero only at start
 
     //  Return address, if any
     std::string m_reply_to;

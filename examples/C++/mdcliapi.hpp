@@ -6,30 +6,24 @@
 #include "zmsg.hpp"
 #include "mdp.h"
 
+
 class mdcli {
 public:
 
    //  ---------------------------------------------------------------------
    //  Constructor
 
-   mdcli (std::string broker, int verbose)
+   mdcli (std::string broker, int verbose): m_broker(broker), m_verbose(verbose)
    {
        assert (broker.size()!=0);
        s_version_assert (4, 0);
-
-       m_broker = broker;
        m_context = new zmq::context_t(1);
-       m_verbose = verbose;
-       m_timeout = 2500;           //  msecs
-       m_retries = 3;              //  Before we abandon
-       m_client = 0;
-
        s_catch_signals ();
        connect_to_broker ();
    }
 
 
-   //  ---------------------------------------------------------------------
+
    //  Destructor
    virtual
    ~mdcli ()
@@ -50,7 +44,6 @@ public:
        s_set_id(*m_client);
        int linger = 0;
        m_client->setsockopt(ZMQ_LINGER, &linger, sizeof (linger));
-       //zmq_setsockopt (client, ZMQ_LINGER, &linger, sizeof (linger));
        m_client->connect (m_broker.c_str());
        if (m_verbose) {
            s_console ("I: connecting to broker at %s...", m_broker.c_str());
@@ -92,8 +85,8 @@ public:
        //  Prefix request with protocol frames
        //  Frame 1: "MDPCxy" (six bytes, MDP/Client x.y)
        //  Frame 2: Service name (printable string)
-       request->push_front((char*)service.c_str());
-       request->push_front((char*)MDPC_CLIENT);
+       request->push_front(service.c_str());
+       request->push_front(k_mdp_client.data());
        if (m_verbose) {
            s_console ("I: send request to '%s' service:", service.c_str());
            request->dump();
@@ -120,10 +113,10 @@ public:
                    //  Don't try to handle errors, just assert noisily
                    assert (recv_msg->parts () >= 3);
 
-                   std::basic_string<unsigned char> header = recv_msg->pop_front();
-                   assert (header.compare((unsigned char *)MDPC_CLIENT) == 0);
+                   ustring header = recv_msg->pop_front();
+                   assert (header.compare((unsigned char *)k_mdp_client.data()) == 0);
 
-                   std::basic_string<unsigned char> reply_service = recv_msg->pop_front();
+                   ustring reply_service = recv_msg->pop_front();
                    assert (reply_service.compare((unsigned char *)service.c_str()) == 0);
 
                    delete request;
@@ -156,12 +149,12 @@ public:
    }
 
 private:
-   std::string m_broker;
+   const std::string m_broker;
    zmq::context_t * m_context;
-   zmq::socket_t  * m_client;             //  Socket to broker
-   int m_verbose;                //  Print activity to stdout
-   int m_timeout;                //  Request timeout
-   int m_retries;                //  Request retries
+   zmq::socket_t  * m_client{nullptr};             //  Socket to broker
+   const int m_verbose;                //  Print activity to stdout
+   int m_timeout{2500};                //  Request timeout
+   int m_retries{3};                //  Request retries
 };
 
 #endif
