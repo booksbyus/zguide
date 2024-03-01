@@ -176,7 +176,7 @@ private:
    service_internal (std::string service_name, zmsg *msg)
    {
        if (service_name.compare("mmi.service") == 0) {
-           service * srv = m_services.at(msg->body());
+           service * srv = m_services[msg->body()];
            if (srv && srv->m_workers) {
                msg->body_set("200");
            } else {
