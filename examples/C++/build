@@ -5,7 +5,7 @@
 #
 ZMQOPTS='-lzmq -std=c++11'
 if pkg-config libzmq --exists; then
-    ZMQOPTS="$(pkg-config libzmq --libs) -std=c++11"
+    ZMQOPTS="$(pkg-config libzmq --libs) -std=c++20"
 fi
 if [ /$1/ = /all/ ]; then
     echo "Building C++ examples..."

@@ -166,6 +166,15 @@ s_sendmore (zmq::socket_t & socket, const std::string & string) {
     bool rc = socket.send (message,   static_cast<zmq::send_flags>(ZMQ_SNDMORE)).has_value();
     return (rc);
 }
+using ustring = std::basic_string<unsigned char>;
+inline static bool
+s_is_text_data(const ustring& data) {
+    for (int i = 0; i < data.size(); ++i) {
+        if (data[i]< 32 || data[i] > 127)
+            return false;
+    }
+    return true;
+}
 
 //  Receives all message parts from socket, prints neatly
 //
@@ -181,9 +190,9 @@ s_dump (zmq::socket_t & socket)
 
         //  Dump the message as text or binary
         size_t size = message.size();
-        std::string data(static_cast<char*>(message.data()), size);
+        ustring data(static_cast<unsigned char*>(message.data()), size);
 
-        bool is_text = true;
+        bool is_text = s_is_text_data(data);
 
         size_t char_nbr;
         unsigned char byte;
