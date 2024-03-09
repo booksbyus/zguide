@@ -115,7 +115,7 @@ public:
       if (m_part_data.size() > 0) {
          m_part_data.erase(m_part_data.end()-1);
       }
-      push_back((char*)body);
+      push_back(body);
    }
 
    void
@@ -140,12 +140,12 @@ public:
    }
 
    // zmsg_push
-   void push_front(char *part) {
+   void push_front(const char *part) {
       m_part_data.insert(m_part_data.begin(), (unsigned char*)part);
    }
 
    // zmsg_append
-   void push_back(char *part) {
+   void push_back(const char *part) {
       m_part_data.push_back((unsigned char*)part);
    }
 
@@ -216,7 +216,7 @@ public:
    void append (const char *part)
    {
        assert (part);
-       push_back((char*)part);
+       push_back(part);
    }
 
    char *address() {
@@ -229,9 +229,9 @@ public:
 
    void wrap(const char *address, const char *delim) {
       if (delim) {
-         push_front((char*)delim);
+         push_front(delim);
       }
-      push_front((char*)address);
+      push_front(address);
    }
 
    std::string unwrap() {
