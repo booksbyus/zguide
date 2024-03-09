@@ -64,7 +64,7 @@ public:
             if (!socket.recv(&message, 0)) {
                return false;
             }
-         } catch (zmq::error_t error) {
+         } catch (zmq::error_t& error) {
             std::cout << "E: " << error.what() << std::endl;
             return false;
          }
@@ -100,7 +100,7 @@ public:
           }
           try {
              socket.send(message, part_nbr < m_part_data.size() - 1 ? ZMQ_SNDMORE : 0);
-          } catch (zmq::error_t error) {
+          } catch (zmq::error_t& error) {
              assert(error.num()!=0);
           }
        }
@@ -251,10 +251,7 @@ public:
           ustring data = m_part_data [part_nbr];
 
           // Dump the message as text or binary
-          int is_text = 1;
-          for (unsigned int char_nbr = 0; char_nbr < data.size(); char_nbr++)
-              if (data [char_nbr] < 32 || data [char_nbr] > 127)
-                  is_text = 0;
+          int is_text = s_is_text_data(data);
 
           std::cerr << "[" << std::setw(3) << std::setfill('0') << (int) data.size() << "] ";
           for (unsigned int char_nbr = 0; char_nbr < data.size(); char_nbr++) {
@@ -275,13 +272,13 @@ public:
       zmq::socket_t output(context, ZMQ_DEALER);
       try {
          output.bind("ipc://zmsg_selftest.ipc");
-      } catch (zmq::error_t error) {
+      } catch (zmq::error_t& error) {
          assert(error.num()!=0);
       }
       zmq::socket_t input(context, ZMQ_ROUTER);
       try {
          input.connect("ipc://zmsg_selftest.ipc");
-      } catch (zmq::error_t error) {
+      } catch (zmq::error_t& error) {
          assert(error.num()!=0);
       }
 
