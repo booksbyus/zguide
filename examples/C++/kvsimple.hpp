@@ -1,77 +1,57 @@
 /*  =====================================================================
  *  kvsimple - simple key-value message class for example applications
  *  ===================================================================== */
-        
+
 #ifndef __KVSIMPLE_HPP_INCLUDED__
 #define __KVSIMPLE_HPP_INCLUDED__
 
 #include "zmq.hpp"
+#include <cstdint>
+#include <string>
+#include <optional>
 
-//  Opaque class structure
-typedef struct _kvmsg kvmsg_t;
+using ustring = std::basic_string<unsigned char>;
+struct kvmsg {
+  kvmsg(std::string key, int64_t sequence, ustring body);
+  kvmsg() = default;
+  //  Reads key-value message from socket, returns new kvmsg instance.
+  static std::optional<kvmsg> recv(zmq::socket_t &socket);
+  //  Send key-value message to socket; any empty frames are sent as such.
+  void send(zmq::socket_t &socket);
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+  //  Return key from last read message, if any, else NULL
+  std::string key() const;
+  //  Return sequence nbr from last read message, if any
+  int64_t sequence() const;
+  //  Return body from last read message, if any, else NULL
+  ustring body() const;
+  //  Return body size from last read message, if any, else zero
+  size_t size() const;
 
-//  Constructor, sets sequence as provided
-kvmsg_t *
-    kvmsg_new (int64_t sequence);
-//  Destructor
-void
-    kvmsg_destroy (kvmsg_t **self_p);
+  //  Set message key as provided
+  void set_key(std::string key);
+  //  Set message sequence number
+  void set_sequence(int64_t sequence);
+  //  Set message body
+  void set_body(ustring body);
 
-//  Reads key-value message from socket, returns new kvmsg instance.
-kvmsg_t *
-    kvmsg_recv (void *socket);
-//  Send key-value message to socket; any empty frames are sent as such.
-void
-    kvmsg_send (kvmsg_t *self, void *socket);
+  //  Dump message to stderr, for debugging and tracing
+  std::string to_string();
 
-//  Return key from last read message, if any, else NULL
-char *
-    kvmsg_key (kvmsg_t *self);
-//  Return sequence nbr from last read message, if any
-int64_t
-    kvmsg_sequence (kvmsg_t *self);
-//  Return body from last read message, if any, else NULL
-byte *
-    kvmsg_body (kvmsg_t *self);
-//  Return body size from last read message, if any, else zero
-size_t
-    kvmsg_size (kvmsg_t *self);
+  //  Runs self test of class
+  int test(int verbose);
 
-//  Set message key as provided
-void
-    kvmsg_set_key (kvmsg_t *self, char *key);
-//  Set message sequence number
-void
-    kvmsg_set_sequence (kvmsg_t *self, int64_t sequence);
-//  Set message body
-void
-    kvmsg_set_body (kvmsg_t *self, byte *body, size_t size);
-//  Set message key using printf format
-void
-    kvmsg_fmt_key (kvmsg_t *self, char *format, ...);
-//  Set message body using printf format
-void
-    kvmsg_fmt_body (kvmsg_t *self, char *format, ...);
+private:
+  static constexpr uint32_t kvmsg_key_max = 255;
+  static constexpr uint32_t frame_key = 0;
+  static constexpr uint32_t frame_seq = 1;
+  static constexpr uint32_t frame_body = 2;
+  static constexpr uint32_t kvmsg_frames = 3;
 
-//  Store entire kvmsg into hash map, if key/value are set
-//  Nullifies kvmsg reference, and destroys automatically when no longer
-//  needed.
-void
-    kvmsg_store (kvmsg_t **self_p, zhash_t *hash);
-//  Dump message to stderr, for debugging and tracing
-void
-    kvmsg_dump (kvmsg_t *self);
+  void clear();
+  std::string key_;
+  ustring body_;
+  int64_t sequence_{};
+};
 
-//  Runs self test of class
-int
-    kvmsg_test (int verbose);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif      //  Included
+#endif //  Included

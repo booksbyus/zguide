@@ -326,6 +326,9 @@ inline static void s_signal_handler (int signal_value)
     s_interrupted = 1;
 }
 
+
+
+
 inline static void s_catch_signals ()
 {
 #if (!defined(WIN32))
