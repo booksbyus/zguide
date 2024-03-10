@@ -1,7 +1,3 @@
-#![crate_name = "rrworker"]
-
-extern crate zmq;
-
 use std::{thread, time};
 
 fn main() {

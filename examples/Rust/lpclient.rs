@@ -1,8 +1,4 @@
-#![crate_name = "lpclient"]
-
-use std::time::Duration;
 use std::convert::TryInto;
-extern crate zmq;
 
 const REQUEST_TIMEOUT: i64 = 2500;
 const REQUEST_RETRIES: usize = 3;

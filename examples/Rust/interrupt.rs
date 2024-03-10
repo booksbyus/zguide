@@ -1,11 +1,6 @@
-#![crate_name = "interrupt"]
-
-extern crate nix;
-extern crate zmq;
-
+use nix::sys::signal;
 use std::os::unix::io::RawFd;
 use std::process;
-use nix::sys::signal;
 
 static mut S_FD: RawFd = -1;
 

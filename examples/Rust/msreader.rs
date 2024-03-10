@@ -1,7 +1,3 @@
-#![crate_name = "msreader"]
-
-extern crate zmq;
-
 use std::{thread, time};
 
 fn main() {

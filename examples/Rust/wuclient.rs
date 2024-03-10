@@ -1,7 +1,3 @@
-#![crate_name = "wuclient"]
-
-extern crate zmq;
-
 use std::env;
 
 fn atoi(s: &str) -> i64 {

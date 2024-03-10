@@ -1,9 +1,5 @@
-#![crate_name = "lpserver"]
-
 use rand::{thread_rng, Rng};
 use std::time::Duration;
-extern crate rand;
-extern crate zmq;
 
 fn main() {
     let context = zmq::Context::new();
@@ -18,12 +14,12 @@ fn main() {
         server.send(request, 0).unwrap();
         std::thread::sleep(Duration::from_secs(1));
 
-        if (i > 3) && (thread_rng().gen_range(0, 3) == 0) {
+        if (i > 3) && (thread_rng().gen_range(0..3) == 0) {
             // simulate a crash
             println!("Oh no! Server crashed.");
             break;
         }
-        if (i > 3) && (thread_rng().gen_range(0, 3) == 0) {
+        if (i > 3) && (thread_rng().gen_range(0..3) == 0) {
             // simulate overload
             println!("Server is busy.");
             std::thread::sleep(Duration::from_secs(2));

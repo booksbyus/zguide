@@ -1,8 +1,3 @@
-#![crate_name = "taskvent"]
-
-extern crate rand;
-extern crate zmq;
-
 use rand::Rng;
 use std::io::{self, BufRead};
 use std::{thread, time};
@@ -22,11 +17,11 @@ fn main() {
 
     sink.send("0", 0).unwrap();
 
-    let mut rng = rand::weak_rng();
+    let mut rng = rand::thread_rng();
 
     let mut total_msec = 0;
     for _ in 0..100 {
-        let workload = rng.gen_range(1, 101);
+        let workload = rng.gen_range(1..101);
         total_msec += workload;
         let string = format!("{}", workload);
         sender.send(&string, 0).unwrap();
