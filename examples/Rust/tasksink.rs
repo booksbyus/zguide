@@ -1,7 +1,3 @@
-#![crate_name = "tasksink"]
-
-extern crate zmq;
-
 use std::io::{self, Write};
 use std::time::Instant;
 

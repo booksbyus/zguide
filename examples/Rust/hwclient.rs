@@ -1,7 +1,3 @@
-#![crate_name = "hwclient"]
-
-extern crate zmq;
-
 fn main() {
     println!("Connecting to hello world server...");
     let context = zmq::Context::new();

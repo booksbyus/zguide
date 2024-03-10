@@ -1,7 +1,3 @@
-#![crate_name = "taskwork2"]
-
-extern crate zmq;
-
 use std::io::{self, Write};
 use std::{thread, time};
 

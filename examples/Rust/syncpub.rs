@@ -1,5 +1,3 @@
-extern crate zmq;
-
 fn main() {
     const SUBSCRIBERS_EXPECTED: usize = 10;
     let context = zmq::Context::new();

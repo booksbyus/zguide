@@ -1,7 +1,3 @@
-#![crate_name = "rrbroker"]
-
-extern crate zmq;
-
 fn main() {
     let context = zmq::Context::new();
     let frontend = context.socket(zmq::ROUTER).unwrap();

@@ -2,6 +2,7 @@
 name = "rust-examples"
 version = "0.1.0"
 authors = ["CjS77 <cayle.sharrock@gmail.com>"]
+edition = "2021"
 
 [[bin]]
 path = "./hwclient.rs"
@@ -101,4 +102,4 @@ name = "wuserver"
 
 [dependencies]
 zmq = "0.10"
-rand = "0.4"
+rand = "0.8"

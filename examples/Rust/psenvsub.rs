@@ -1,7 +1,3 @@
-#![crate_name = "psenvsub"]
-
-extern crate zmq;
-
 fn main() {
     let context = zmq::Context::new();
     let subscriber = context.socket(zmq::SUB).unwrap();

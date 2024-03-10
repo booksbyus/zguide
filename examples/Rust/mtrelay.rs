@@ -1,7 +1,3 @@
-#![crate_name = "mtrelay"]
-
-extern crate zmq;
-
 use std::thread;
 
 fn step1(context: &zmq::Context) {

@@ -1,7 +1,3 @@
-#![crate_name = "mtserver"]
-
-extern crate zmq;
-
 use std::{thread, time};
 
 fn worker_routine(context: &zmq::Context) {
