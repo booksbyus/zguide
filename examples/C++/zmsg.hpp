@@ -251,16 +251,7 @@ public:
           ustring data = m_part_data [part_nbr];
 
           // Dump the message as text or binary
-          int is_text = s_is_text_data(data);
-
-          std::cerr << "[" << std::setw(3) << std::setfill('0') << (int) data.size() << "] ";
-          for (unsigned int char_nbr = 0; char_nbr < data.size(); char_nbr++) {
-              if (is_text) {
-                  std::cerr << (char) data [char_nbr];
-              } else {
-                  std::cerr << std::hex << std::setw(2) << std::setfill('0') << (short int) data [char_nbr];
-              }
-          }
+          s_dump_message(std::cerr, data);
           std::cerr << std::endl;
       }
    }
