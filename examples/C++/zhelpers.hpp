@@ -196,11 +196,7 @@ s_dump (zmq::socket_t & socket)
 
         size_t char_nbr;
         unsigned char byte;
-        for (char_nbr = 0; char_nbr < size; char_nbr++) {
-            byte = data [char_nbr];
-            if (byte < 32 || byte > 127)
-                is_text = false;
-        }
+
         std::cout << "[" << std::setfill('0') << std::setw(3) << size << "]";
         for (char_nbr = 0; char_nbr < size; char_nbr++) {
             if (is_text)

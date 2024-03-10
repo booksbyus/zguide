@@ -39,7 +39,7 @@ struct kvmsg {
   std::string to_string();
 
   //  Runs self test of class
-  int test(int verbose);
+  static bool test(int verbose);
 
 private:
   static constexpr uint32_t kvmsg_key_max = 255;
@@ -48,7 +48,6 @@ private:
   static constexpr uint32_t frame_body = 2;
   static constexpr uint32_t kvmsg_frames = 3;
 
-  void clear();
   std::string key_;
   ustring body_;
   int64_t sequence_{};
