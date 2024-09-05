@@ -130,7 +130,7 @@ private:
        service * srv = new service(name);
        m_services.insert(std::pair{name, srv});
        if (m_verbose) {
-           s_console ("I: received message:");
+           s_console("I: added service: %s", name.c_str());
        }
        return srv;
    }
@@ -176,7 +176,8 @@ private:
    service_internal (std::string service_name, zmsg *msg)
    {
        if (service_name.compare("mmi.service") == 0) {
-           service * srv = m_services[msg->body()];
+           // service *srv = m_services[msg->body()]; // Dangerous! Silently add key with default value
+           service *srv = m_services.count(msg->body()) ? m_services.at(msg->body()) : nullptr;
            if (srv && srv->m_workers) {
                msg->body_set("200");
            } else {
