@@ -1,8 +1,6 @@
-#include <zmq.hpp>
 #include <iostream>
 #include <unordered_map>
-
-// Narendra Pratap Singh - github.com/Narendra010/
+#include "kvsimple.hpp"
 
 using namespace std;
 
@@ -19,24 +17,20 @@ int main() {
 
 	while (true) {
 		// Receive key-value message
-		zmq::message_t kvmsg;
-		updates.recv(kvmsg, zmq::recv_flags::none);
+		auto update_kv_msg = kvmsg::recv(updates);
+		if (!update_kv_msg) {
+			cout << "Interrupted" << endl;
+			return 0;
+		}
 
 		// Convert message to string and extract key-value pair
-		string kvString(static_cast<char*>(kvmsg.data()), kvmsg.size());
-		size_t pos = kvString.find('=');
-		string key = kvString.substr(0, pos);
-		string value = kvString.substr(pos + 1);
+		string key = update_kv_msg->key();
+		string value = (char *)update_kv_msg->body().c_str();
 		cout << key << " --- " << value << endl;
 
 		// Store key-value pair in map
 		kvmap[key] = value;
 		sequence++;
 	}
-
-	cout << "Interrupted" << endl;
-	cout << sequence << " messages in" << endl;
 	return 0;
 }
-
-// Narendra Pratap Singh - github.com/Narendra010/
