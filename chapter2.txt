@@ -725,27 +725,14 @@ Here is how we handle a signal in various languages:
 [[code type="example" title="Handling Ctrl-C cleanly" name="interrupt"]]
 [[/code]]
 
-The program provides {{s_catch_signals()}}, which traps Ctrl-C ({{SIGINT}}) and {{SIGTERM}}. When either of these signals arrive, the {{s_catch_signals()}} handler sets the global variable {{s_interrupted}}. Thanks to your signal handler, your application will not die automatically. Instead, you have a chance to clean up and exit gracefully. You have to now explicitly check for an interrupt and handle it properly. Do this by calling {{s_catch_signals()}} (copy this from {{interrupt.c}}) at the start of your main code. This sets up the signal handling. The interrupt will affect ZeroMQ calls as follows:
+The program provides {{s_catch_signals()}}, which traps Ctrl-C ({{SIGINT}}) and {{SIGTERM}}. When either of these signals arrive, the {{s_signal_handler()}} handler writes a single byte to the self pipe created in the main function startup code. Thanks to your signal handler, your application will not die automatically. Instead, you have a chance to clean up and exit gracefully. You have to now explicitly check for an interrupt and handle it properly. Do this by checking if the self pipe contains any data (copy this from {{interrupt.c}}) in the mainloop of your code. The interrupt will affect ZeroMQ calls as follows:
 
 * If your code is blocking in a blocking call (sending a message, receiving a message, or polling), then when a signal arrives, the call will return with {{EINTR}}.
 * Wrappers like {{s_recv()}} return NULL if they are interrupted.
 
-So check for an {{EINTR}} return code, a NULL return, and/or {{s_interrupted}}.
+So check for an {{EINTR}} return code, a NULL return, and/or if the self pipe has any data in its queue.
 
-Here is a typical code fragment:
-
-[[code]]
-s_catch_signals ();
-client = zmq_socket (...);
-while (!s_interrupted) {
-    char *message = s_recv (client);
-    if (!message)
-        break;          //  Ctrl-C used
-}
-zmq_close (client);
-[[/code]]
-
-If you call {{s_catch_signals()}} and don't test for interrupts, then your application will become immune to Ctrl-C and {{SIGTERM}}, which may be useful, but is usually not.
+If you call {{s_catch_signals()}} and don't test the self pipe for interrupts, then your application will become immune to Ctrl-C and {{SIGTERM}}, which may be useful, but is usually not.
 
 ++ Detecting Memory Leaks
 
