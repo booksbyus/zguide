@@ -7,9 +7,11 @@
 {{ range $languages }}
   {{ $languageName := .name }}
   {{ $languageExtension := .extension }}
-  {{ $examplePath := printf "/content/examples/%s/%s.%s" $languageName $name $languageExtension | safeURL }}
+  {{ $languageExamplePath := .path }}
+  {{ $examplePath := printf "/content/examples/%s/%s.%s" $languageExamplePath $name $languageExtension | safeURL }}
   <details class="example" data-language="{{ $languageName }}" style="display: none">
-    <summary>{{ $name }}: {{ $title }} in {{ $languageName }}</summary>
+    <summary>{{ $name }}: {{ $title }} in {{ $languageName }} ({{ $examplePath }})</summary>
+      
       {{ if fileExists $examplePath }}
         {{ $languagesWithExample = $languagesWithExample | append . }}
           <div class="markdown-inner">
