@@ -19,7 +19,7 @@ socket.connect("tcp://localhost:5556")
 zip_filter = sys.argv[1] if len(sys.argv) > 1 and sys.argv[1] == "10001"
 socket.setsockopt_string(zmq.SUBSCRIBE, zip_filter)
 
-# Process 5 updates
+# Process 100 updates
 total_temp = 0
 for update_nbr in range(100):
     string = socket.recv_string()
