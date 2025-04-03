@@ -16,7 +16,8 @@
 
 int main () {
     //  Prepare our context and socket
-    zmq::context_t context (2);
+    static const int kNumberOfThreads = 2;
+    zmq::context_t context (kNumberOfThreads);
     zmq::socket_t socket (context, zmq::socket_type::rep);
     socket.bind ("tcp://*:5555");
 
@@ -24,15 +25,17 @@ int main () {
         zmq::message_t request;
 
         //  Wait for next request from client
-        socket.recv (request, zmq::recv_flags::none);
+        auto result = socket.recv (request, zmq::recv_flags::none);
+        assert(result.value_or(0) != 0); // Check if bytes received is non-zero
         std::cout << "Received Hello" << std::endl;
 
-        //  Do some 'work'
+        //  Pretend to do some 'work'
         sleep(1);
 
         //  Send reply back to client
-        zmq::message_t reply (5);
-        memcpy (reply.data (), "World", 5);
+        constexpr std::string_view kReplyString = "World";
+        zmq::message_t reply (kReplyString.length());
+        memcpy (reply.data (), kReplyString.data(), kReplyString.length());
         socket.send (reply, zmq::send_flags::none);
     }
     return 0;
