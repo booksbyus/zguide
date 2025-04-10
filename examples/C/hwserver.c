@@ -11,15 +11,17 @@ int main (void)
     //  Socket to talk to clients
     void *context = zmq_ctx_new ();
     void *responder = zmq_socket (context, ZMQ_REP);
-    int rc = zmq_bind (responder, "tcp://*:5555");
-    assert (rc == 0);
+    int response = zmq_bind (responder, "tcp://*:5555");
+    assert (response == 0); // Check if the response code indicates success
 
     while (1) {
-        char buffer [10];
-        zmq_recv (responder, buffer, 10, 0);
+        static const size_t kReadBufferLength = 10;
+        char buffer [kReadBufferLength];
+        zmq_recv (responder, buffer, kReadBufferLength, 0);
         printf ("Received Hello\n");
-        sleep (1);          //  Do some 'work'
-        zmq_send (responder, "World", 5, 0);
+        sleep (1);          //  Pretend to do some 'work'
+        static const char kReplyString[] = "World";
+        zmq_send(responder, kReplyString, sizeof(kReplyString) - 1, 0);
     }
     return 0;
 }
