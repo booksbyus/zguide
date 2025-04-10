@@ -7,16 +7,18 @@
 {{ range $languages }}
   {{ $languageName := .name }}
   {{ $languageExtension := .extension }}
-  {{ $examplePath := printf "/content/examples/%s/%s.%s" $languageName $name $languageExtension | safeURL }}
+  {{ $languageExamplePath := .path }}
+  {{ $examplePath := printf "/content/examples/%s/%s.%s" $languageExamplePath $name $languageExtension | safeURL }}
   <details class="example" data-language="{{ $languageName }}" style="display: none">
     <summary>{{ $name }}: {{ $title }} in {{ $languageName }}</summary>
+      
       {{ if fileExists $examplePath }}
         {{ $languagesWithExample = $languagesWithExample | append . }}
           <div class="markdown-inner">
             {{ highlight (readFile $examplePath) $languageName "" }}
           </div>
           <div class="book-footer" style="padding: 0">
-              <a class="flex align-center" href="{{ $s.Params.BookRepo }}/edit/master/{{ printf "/examples/%s/%s.%s" $languageName $name $languageExtension | safeURL }}" target="_blank" rel="noopener">
+              <a class="flex align-center" href="{{ $s.Params.BookRepo }}/edit/master/{{ printf "/examples/%s/%s.%s" $languageExamplePath $name $languageExtension | safeURL }}" target="_blank" rel="noopener">
               <img src="{{ "svg/edit.svg" | relURL }}" class="book-icon" alt="Edit" />
               <span>Edit this example</span>
             </a>
