@@ -41,7 +41,7 @@ The examples live in a public [GitHub repository](https://github.com/imatix/zgui
 git clone --depth=1 https://github.com/imatix/zguide.git
 ```
 
-Next, browse the examples subdirectory. You'll find examples by language. If there are examples missing in a language you use, you're encouraged to [submit a translation](http://zguide.zeromq.org/main:translate). This is how this text became so useful, thanks to the work of many people. All examples are licensed under MIT/X11.
+Next, browse the examples subdirectory. You'll find examples by language. If there are examples missing in a language you use, you're encouraged to [submit a translation](https://zguide.zeromq.org/translate/). This is how this text became so useful, thanks to the work of many people. All examples are licensed under MIT/X11.
 
 ## Ask and Ye Shall Receive {#Ask-and-Ye-Shall-Receive}
 
