@@ -547,7 +547,9 @@ And here is the broker, which properly handles multipart messages:
 #---------#   #---------#   #---------#
 {{< /textdiagram >}}
 
-Using a request-reply broker makes your client/server architectures easier to scale because clients don't see workers, and workers don't see clients. The only static node is the broker in the middle.
+Using a request-reply broker makes your client/server architectures easier to scale because clients don't see workers, and workers don't see clients. The only static node is the broker in the middle. 
+
+You may wonder how a response is routed back to the right client. Router uses envelop for the message that has info on the client to the dealer and dealer response will include envelope that will be used to map the response back to the client.
 
 ### ZeroMQ's Built-In Proxy Function {#ZeroMQ-s-Built-In-Proxy-Function}
 
