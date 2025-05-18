@@ -1,51 +1,75 @@
 - name: Ada
   extension: ada
+  path: Ada
 - name: Basic
   extension: bas
+  path: Basic
 - name: C
   extension: c
+  path: C
 - name: C++
   extension: cpp
+  path: C++
 - name: C#
   extension: cs
+  path: CSharp
 - name: CL
   extension: lisp
+  path: CL
 - name: Delphi
   extension: dpr
+  path: Delphi
 - name: Erlang
   extension: es
+  path: Erlang
 - name: Elixir
   extension: exs
+  path: Elixir
 - name: F#
   extension: fsx
+  path: FSharp
 - name: Felix
   extension: flx
+  path: Felix
 - name: Go
   extension: go
+  path: Go
 - name: Haskell
   extension: hs
+  path: Haskell
 - name: Haxe
   extension: hx
+  path: Haxe
 - name: Java
   extension: java
+  path: Java
 - name: Julia
   extension: jl
+  path: Julia
 - name: Lua
   extension: lua
+  path: Lua
 - name: Node.js
   extension: js
+  path: Node.js
 - name: Objective-C
   extension: m
+  path: Objective-C
 - name: ooc
   extension: ooc
+  path: ooc
 - name: Perl
   extension: pl
+  path: Perl
 - name: PHP
   extension: php
+  path: PHP
 - name: Python
   extension: py
+  path: Python
 - name: Q
   extension: q
+  path: Q
 - name: Racket
   extension: rkt
 - name: Ruby
