@@ -30,7 +30,7 @@
 <script defer src="{{ $swJS.RelPermalink }}" integrity="{{ $swJS.Data.Integrity }}"></script>
 {{ end -}}
 
-{{- template "_internal/google_analytics_async.html" . -}}
+{{- template "_internal/google_analytics.html" . -}}
 
 <!-- RSS -->
 {{- with .OutputFormats.Get "rss" -}}
