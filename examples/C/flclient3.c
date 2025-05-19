@@ -15,7 +15,7 @@ int main (void)
     flcliapi_connect (client, "tcp://localhost:5557");
 
     //  Send a bunch of name resolution 'requests', measure time
-    int requests = 1000;
+    int requests = 10000;
     uint64_t start = zclock_time ();
     while (requests--) {
         zmsg_t *request = zmsg_new ();
