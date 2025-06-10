@@ -18,7 +18,7 @@ int main()
         char request[10];
         sprintf(request, "%d", ++sequence);
         zstr_send(client, request);
-        int expect_reply = 1;
+        bool expect_reply = true;
         while(expect_reply)
         {
             printf("Expecting reply....\n");
@@ -44,7 +44,7 @@ int main()
                 {
                     printf("I: server replied OK (%s)\n", reply);
                     retries_left=REQUEST_RETRIES;
-                    expect_reply = 0;
+                    expect_reply = false;
                 }
                 else
                 {
