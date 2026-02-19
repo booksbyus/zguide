@@ -1,0 +1,41 @@
+name: Regenerate Markdown from Source
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - '*.txt'
+      - 'zguide.book'
+      - 'bin/mkmarkdown'
+
+  workflow_dispatch:
+
+jobs:
+  mkmarkdown:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run mkmarkdown
+        run: perl bin/mkmarkdown < zguide.book
+
+      - name: Check for changes
+        id: diff
+        run: |
+          git diff --quiet site/content/ || echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Commit and push regenerated markdown
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add site/content/
+          git commit -m "Regenerate markdown from source txt files"
+          git push
