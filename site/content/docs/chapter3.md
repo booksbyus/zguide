@@ -270,7 +270,7 @@ Here is what the program prints:
 ----------------------------------------
 [005] PEER2
 [000]
-[038] ROUTER uses REQ's socket identity
+[040] ROUTER socket uses REQ's socket identity
 ```
 
 ### ROUTER Error Handling {#ROUTER-Error-Handling}
@@ -552,7 +552,7 @@ Cutting the amount of code we need to read and write complex messages is great: 
 
 ### The CZMQ High-Level API {#The-CZMQ-High-Level-API}
 
-Turning this wish list into reality for the C language gives us [CZMQ](http://zero.mq/c), a ZeroMQ language binding for C. This high-level binding, in fact, developed out of earlier versions of the examples. It combines nicer semantics for working with ZeroMQ with some portability layers, and (importantly for C, but less for other languages) containers like hashes and lists. CZMQ also uses an elegant object model that leads to frankly lovely code.
+Turning this wish list into reality for the C language gives us [CZMQ](http://czmq.zeromq.org/), a ZeroMQ language binding for C. This high-level binding, in fact, developed out of earlier versions of the examples. It combines nicer semantics for working with ZeroMQ with some portability layers, and (importantly for C, but less for other languages) containers like hashes and lists. CZMQ also uses an elegant object model that leads to frankly lovely code.
 
 Here is the load balancing broker rewritten to use a higher-level API (CZMQ for the C case):
 
